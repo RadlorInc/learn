@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { notFound } from 'next/navigation'
 import type { AgeBand } from '@/components/teen/types'
 import { TEEN_BANDS } from '@/components/teen/types'
 
@@ -231,6 +232,7 @@ function BandColumn({ band }: { band: AgeBand }) {
 }
 
 export default function KitPreviewPage() {
+  if (process.env.NODE_ENV === 'production') notFound()   // dev scaffolding — 404 in the shipped app
   return (
     <div style={{ padding: 24, fontFamily: 'var(--font-body)' }}>
       <h1 style={{ fontSize: 24, margin: '0 0 6px' }}>Teen &ldquo;Field Lab&rdquo; Kit Preview</h1>

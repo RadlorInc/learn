@@ -10,6 +10,8 @@ import BackButton from '@/components/ui/BackButton'
 import ChapterPicker from '@/components/ui/ChapterPicker'
 import PWAInstallBanner from '@/components/ui/PWAInstallBanner'
 import { getActiveLearner, clearActiveLearner } from '@/lib/supabase/useLearnerSession'
+import { useAuthGuard } from '@/lib/supabase/useAuthGuard'
+import { hasCheckup, isCheckupCached } from '@/lib/checkup'
 import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds } from '@/lib/supabase/queries'
 import type { LearnerState } from '@/lib/supabase/types'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/lib/lastPlayed'
@@ -43,6 +45,8 @@ function shopStateMatchesServer(
 
 export default function MainMenu() {
   const router = useRouter()
+  const authed = useAuthGuard()
+  const [checkupState, setCheckupState] = useState<'checking' | 'ok'>('checking')
   const { profile, startChapter, loadLearner, applyServerProgress } = useMiloStore()
   const { speak } = useMiloSpeaker()
   const [showPicker,   setShowPicker]   = useState(false)
@@ -53,6 +57,23 @@ export default function MainMenu() {
   const [lastPlayed,   setLastPlayedState] = useState<ChapterType | null>(null)
   const [daily,        setDaily]        = useState<{ available: boolean; streak: number; longest: number } | null>(null)
   const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number } | null>(null)
+
+  // Mandatory checkup gate (backstop for direct navigation to /menu): a child can't be here until
+  // their checkup is done. Cache-first for an instant pass; else check the account (DB) so it passes
+  // on a new device, and only redirect into the checkup when there's genuinely no record anywhere.
+  useEffect(() => {
+    const learner = getActiveLearner()
+    if (!learner) { setCheckupState('ok'); return }        // no active learner → main effect routes to /parent
+    if (isCheckupCached(learner.id)) { setCheckupState('ok'); return }
+    let cancelled = false
+    hasCheckup(learner.id).then(done => {
+      if (cancelled) return
+      if (done) setCheckupState('ok')
+      else router.replace(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
+    })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Milo's Daily streak: show the local value instantly, then reconcile against
   // the DB (daily_complete events = source of truth) so it's correct cross-device.
@@ -183,7 +204,7 @@ export default function MainMenu() {
   function handlePlay() { if (nextChapter) playChapter(nextChapter) }
   function handleResume() { if (resumeChapter) playChapter(resumeChapter) }
 
-  if (!ready) return (
+  if (authed === 'checking' || checkupState === 'checking' || !ready) return (
     <div style={{
       minHeight: '100dvh', display: 'flex',
       alignItems: 'center', justifyContent: 'center',

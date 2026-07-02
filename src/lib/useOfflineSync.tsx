@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useEffect, useState, useCallback, useRef } from 'react'
-import { syncSession } from './supabase/queries'
-import type { SessionPayload } from './supabase/queries'
+import { syncSession, saveDiagnostic } from './supabase/queries'
+import type { SessionPayload, DiagnosticPayload } from './supabase/queries'
 import { kv } from './kv'
 
 const QUEUE_KEY = 'milo_offline_queue'
+const DIAG_QUEUE_KEY = 'milo_offline_diagnostics'
 
 // ─── Queue helpers ────────────────────────────────────────────
 
@@ -23,6 +24,44 @@ export function getQueuedSessions(): SessionPayload[] {
   try { return JSON.parse(kv.get(QUEUE_KEY) ?? '[]') } catch { return [] }
 }
 
+// ─── Diagnostic queue (durability for the completed-diagnosis save) ──
+// The diagnosis row anchors the whole guarantee/re-check loop, so a save must survive a flaky
+// network / immediate navigation just like a gameplay session does. Enqueue first (durable in
+// IndexedDB), then flush; a failed flush leaves it queued to retry on the next online/mount trigger.
+// Deduped by clientId, so the idempotent RPC + this guard never double-write.
+
+export function enqueueDiagnostic(payload: DiagnosticPayload) {
+  try {
+    const q: DiagnosticPayload[] = JSON.parse(kv.get(DIAG_QUEUE_KEY) ?? '[]')
+    if (!q.find(p => p.clientId === payload.clientId)) {
+      q.push(payload)
+      kv.set(DIAG_QUEUE_KEY, JSON.stringify(q))
+    }
+  } catch {}
+}
+
+export function getQueuedDiagnostics(): DiagnosticPayload[] {
+  try { return JSON.parse(kv.get(DIAG_QUEUE_KEY) ?? '[]') } catch { return [] }
+}
+
+export async function flushDiagnosticQueue(): Promise<number> {
+  const q = getQueuedDiagnostics()
+  if (q.length === 0) return 0
+  let flushed = 0
+  const remaining: DiagnosticPayload[] = []
+  for (const payload of q) {
+    try {
+      const outcome = await saveDiagnostic(payload)
+      if (outcome === 'ok') flushed++
+      else if (outcome === 'retry') remaining.push(payload)
+      // 'drop' — permanently rejected (learner gone / not owned); discard.
+    } catch { remaining.push(payload) }   // threw → transient (network); keep
+  }
+  if (remaining.length === 0) kv.remove(DIAG_QUEUE_KEY)
+  else kv.set(DIAG_QUEUE_KEY, JSON.stringify(remaining))
+  return flushed
+}
+
 // App-wide lock: the banner, the hook, and chapter-sync all call flushQueue;
 // this guarantees only ONE flush runs at a time across the whole app, so the
 // same queued items aren't processed concurrently (which multiplied the errors).
@@ -32,6 +71,9 @@ export async function flushQueue(): Promise<number> {
   if (_flushing || !navigator.onLine) return 0
   _flushing = true
   try {
+    // Drain queued diagnoses too (same online/mount/banner triggers). Independent of sessions;
+    // errors are swallowed inside flushDiagnosticQueue, so a diagnostic hiccup can't block sessions.
+    await flushDiagnosticQueue().catch(() => {})
     const q = getQueuedSessions()
     if (q.length === 0) return 0
     let flushed = 0

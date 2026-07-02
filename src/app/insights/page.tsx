@@ -16,11 +16,16 @@ import { computeStreak } from '@/lib/daily'
 import type { Learner } from '@/lib/supabase/types'
 
 const DAY = 86_400_000
-type Sess = { learner_id: string; phase: string; correct_count: number; wrong_count: number; completed_at: string | null; created_at: string }
+// NOTE: `sessions` has no created_at — it uses started_at (always set) + completed_at (nullable).
+type Sess = { learner_id: string; phase: string; correct_count: number; wrong_count: number; completed_at: string | null; started_at: string }
 type Evt = { learner_id: string; event: string; created_at: string }
 
 const ms = (s: string) => new Date(s).getTime()
-const dayKey = (s: string) => new Date(s).toISOString().slice(0, 10)
+const pad2 = (n: number) => String(n).padStart(2, '0')
+// Local calendar day (matches daily.ts) — bucketing by UTC shifted retention days for non-UTC users.
+const dayKey = (s: string) => { const d = new Date(s); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}` }
+// Rolling window so these unpaginated reads don't grow unbounded as an account accumulates history.
+const WINDOW_DAYS = 90
 
 export default function InsightsPage() {
   const router = useRouter()
@@ -36,9 +41,10 @@ export default function InsightsPage() {
     const ls = await getMyLearners()
     const ids = ls.map(l => l.id)
     if (ids.length) {
+      const since = new Date(Date.now() - WINDOW_DAYS * DAY).toISOString()
       const [s, e] = await Promise.all([
-        supabase.from('sessions').select('learner_id, phase, correct_count, wrong_count, completed_at, created_at').in('learner_id', ids),
-        supabase.from('learner_events').select('learner_id, event, created_at').in('learner_id', ids),
+        supabase.from('sessions').select('learner_id, phase, correct_count, wrong_count, completed_at, started_at').in('learner_id', ids).gte('started_at', since),
+        supabase.from('learner_events').select('learner_id, event, created_at').in('learner_id', ids).gte('created_at', since),
       ])
       setSessions((s.data ?? []) as Sess[])
       setEvents((e.data ?? []) as Evt[])
@@ -127,7 +133,7 @@ function computeMetrics(learners: Learner[], sessions: Sess[], events: Evt[]) {
   const now = Date.now()
   const byLearner = new Map<string, number[]>()  // learner_id → session timestamps
   for (const s of sessions) {
-    const t = ms(s.completed_at ?? s.created_at)
+    const t = ms(s.completed_at ?? s.started_at)
     if (!byLearner.has(s.learner_id)) byLearner.set(s.learner_id, [])
     byLearner.get(s.learner_id)!.push(t)
   }

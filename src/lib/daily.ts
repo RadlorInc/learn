@@ -98,8 +98,14 @@ export function generateDaily(ageGroup: AgeGroup, learnerId: string, n = 5): Dai
 // ─── Streak (gentle: a missed day restarts warmly, never shames) ──
 export interface DailyState { lastDay: string; streak: number; longest: number }
 const stateKey = (id: string) => `milo_daily_${id}`
-const dayKey = (d = new Date()) => d.toISOString().slice(0, 10)
-const yesterdayKey = () => dayKey(new Date(Date.now() - 86_400_000))
+const pad2 = (n: number) => String(n).padStart(2, '0')
+// The child's LOCAL calendar day (YYYY-MM-DD). Using toISOString() here bucketed by UTC,
+// so for anyone not on UTC the "day" flipped hours early/late — silently breaking or
+// double-counting the streak around local midnight. Read local components instead.
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+// Yesterday's local key via calendar math anchored at local noon, so DST 23h/25h days
+// never skip or repeat a day (a raw now-86_400_000ms subtraction does on the transition).
+const yesterdayKey = () => { const n = new Date(); return dayKey(new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1, 12)) }
 
 function readState(id: string): DailyState {
   try { return JSON.parse(kv.get(stateKey(id)) ?? '') } catch { return { lastDay: '', streak: 0, longest: 0 } }
@@ -126,7 +132,11 @@ export function recordDailyDone(learnerId: string): { streak: number; longest: n
 }
 
 // ─── Streak from a set of completed-day keys (DB-derived source of truth) ──
-const dayMs = (k: string) => Date.parse(`${k}T00:00:00Z`)
+// Map a LOCAL calendar key to a canonical UTC-midnight instant. UTC has no DST, so
+// consecutive calendar days ALWAYS differ by exactly 86_400_000ms — which is what the
+// adjacency test below relies on. (Parsing the local key as local time would give 23h/25h
+// gaps across DST and mis-count the streak.)
+const dayMs = (k: string) => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d) }
 export function computeStreak(dayKeys: string[]): { current: number; longest: number; lastDay: string } {
   const days = [...new Set(dayKeys)].filter(Boolean).sort()
   if (days.length === 0) return { current: 0, longest: 0, lastDay: '' }
@@ -158,8 +168,11 @@ export async function reconcileStreakFromDB(learnerId: string): Promise<void> {
     if (typeof navigator !== 'undefined' && !navigator.onLine) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = createClient() as any
+    // Bound the read (runs on every menu mount). daily_complete is ≤1/day, so ~400 days is a generous
+    // cap that still covers any realistic current streak while keeping the payload small forever.
+    const since = new Date(Date.now() - 400 * 86_400_000).toISOString()
     const { data, error } = await supabase
-      .from('learner_events').select('created_at').eq('learner_id', learnerId).eq('event', 'daily_complete')
+      .from('learner_events').select('created_at').eq('learner_id', learnerId).eq('event', 'daily_complete').gte('created_at', since)
     if (error || !data) return
     const local = readState(learnerId)
     const days = new Set<string>(data.map((r: { created_at: string }) => dayKey(new Date(r.created_at))))

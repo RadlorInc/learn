@@ -5,6 +5,7 @@ import { toast } from '@/components/ui/Toast'
  * Supabase query helpers — all DB access goes through here
  */
 import { createClient } from './client'
+import { clearActiveLearner } from './useLearnerSession'
 import type { ChapterType, Learner, LearnerStats, LearnerProgress, LearnerState, Session, Grade } from './types'
 import type { AgeGroup } from '../chapters'
 
@@ -30,6 +31,7 @@ export async function getProfile() {
 export async function signOut() {
   const supabase = db()
   await supabase.auth.signOut()
+  clearActiveLearner()   // else the next account (same tab) briefly sees the previous child's profile
   window.location.href = '/auth'
 }
 
@@ -417,18 +419,22 @@ export interface DiagnosticPayload {
   planSkills:   string[]
   planChapters: string[]
   items:        { skill: string; correct: boolean }[]
+  clientId:     string   // dedupe key — the same value on a queue re-flush makes the RPC idempotent
 }
 
 /**
  * Persist a completed diagnosis (session + items + plan) via the SECURITY DEFINER
  * `sync_diagnostic` RPC, which checks learner_access ownership server-side (mirrors syncSession).
- * Resolves the auth session first so a genuinely signed-out preview run skips cleanly instead of
- * throwing an RLS/auth error. Returns false (not throwing) so the UI never blocks on it.
+ * Returns a SyncOutcome so the offline queue (useOfflineSync) can keep-and-retry a transient failure
+ * instead of dropping the diagnosis — the row is load-bearing for the whole guarantee/re-check loop.
+ *  - 'ok'    — saved (or already saved via client_id dedupe); drop from the queue
+ *  - 'retry' — signed out now / network hiccup; keep queued, try again on next flush
+ *  - 'drop'  — permanently rejected (learner gone / not owned); discard so it can't loop forever
  */
-export async function saveDiagnostic(p: DiagnosticPayload): Promise<boolean> {
+export async function saveDiagnostic(p: DiagnosticPayload): Promise<SyncOutcome> {
   const supabase = db()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
+  if (!user) return 'retry'   // session not resolved yet — keep it queued, don't lose it
   const { error } = await supabase.rpc('sync_diagnostic', {
     p_learner_id:    p.learnerId,
     p_band:          p.band,
@@ -440,19 +446,25 @@ export async function saveDiagnostic(p: DiagnosticPayload): Promise<boolean> {
     p_plan_skills:   p.planSkills,
     p_plan_chapters: p.planChapters,
     p_items:         p.items,
+    p_client_id:     p.clientId,
   })
-  if (error) { console.error('[saveDiagnostic] rpc failed:', error.message); return false }
-  return true
+  if (error) {
+    const outcome = classifySyncError(error)
+    console.error(`[saveDiagnostic] rpc failed (${outcome === 'drop' ? 'permanent — discarding' : 'will retry'}):`, error.message)
+    return outcome
+  }
+  return 'ok'
 }
 
 /** Step 8 — persist a week-N re-check result (did the root gap close?) via the sync_recheck RPC.
- *  Best-effort: returns false (never throws) if signed out or the RPC isn't deployed yet. */
-export async function saveRecheck(p: { learnerId: string; week: number; skill: string; gapClosed: boolean }): Promise<boolean> {
+ *  Best-effort: returns false (never throws) if signed out or the RPC isn't deployed yet. The
+ *  clientId makes the RPC idempotent against a double-fire / retry. */
+export async function saveRecheck(p: { learnerId: string; week: number; skill: string; gapClosed: boolean; clientId: string }): Promise<boolean> {
   const supabase = db()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
   const { error } = await supabase.rpc('sync_recheck', {
-    p_learner_id: p.learnerId, p_week: p.week, p_skill: p.skill, p_gap_closed: p.gapClosed,
+    p_learner_id: p.learnerId, p_week: p.week, p_skill: p.skill, p_gap_closed: p.gapClosed, p_client_id: p.clientId,
   })
   if (error) { console.error('[saveRecheck] rpc failed:', error.message); return false }
   return true

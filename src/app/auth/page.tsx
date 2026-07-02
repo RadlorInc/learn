@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 type Mode = 'login' | 'signup'
 
 export default function AuthPage() {
+  const router = useRouter()
   const [mode,     setMode]     = useState<Mode>('login')
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -28,47 +30,64 @@ export default function AuthPage() {
     setLoading(true); reset()
     const supabase = createClient()
 
-    if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-      if (error) {
-        setError(error.message)
+    try {
+      if (mode === 'signup') {
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        })
+        if (error) {
+          setError(error.message)
+        } else {
+          setSuccess('Check your email for a confirmation link!')
+        }
       } else {
-        setSuccess('Check your email for a confirmation link!')
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
+        if (error) {
+          setError(
+            error.message.includes('Invalid login')
+              ? 'Incorrect email or password'
+              : error.message
+          )
+        } else {
+          // On-page password sign-in does NOT round-trip through /auth/callback, so
+          // nothing else navigates — redirect here or the user is stranded on /auth.
+          router.replace('/parent')
+          return
+        }
       }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      })
-      if (error) {
-        setError(
-          error.message.includes('Invalid login')
-            ? 'Incorrect email or password'
-            : error.message
-        )
-      }
-      // On success Supabase triggers onAuthStateChange → callback page handles redirect
+    } catch {
+      // A genuine network failure (offline / Supabase unreachable) throws rather than
+      // returning { error } — without this the spinner would hang forever.
+      setError("Couldn't connect — check your connection and try again")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   async function signInWithGoogle() {
     setLoading(true); reset()
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      },
-    })
-    if (error) { setError(error.message); setLoading(false) }
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { access_type: 'offline', prompt: 'consent' },
+        },
+      })
+      if (error) { setError(error.message); setLoading(false) }
+      // On success the browser navigates to Google — leave loading true.
+    } catch {
+      setError("Couldn't connect — check your connection and try again")
+      setLoading(false)
+    }
   }
 
   return (

@@ -12,6 +12,7 @@ import { advancePlan } from '@/lib/activePlan'
 import CelebrationModal from '@/components/ui/CelebrationModal'
 import MiloPointer from '@/components/ui/MiloPointer'
 import { useChapterSync } from '@/lib/supabase/useChapterSync'
+import { useAuthGuard } from '@/lib/supabase/useAuthGuard'
 import { track } from '@/lib/analytics'
 
 // Maps each chapter id to its component. The set of chapters lives in the
@@ -108,6 +109,7 @@ const isTeenChapter = (id: ChapterType | null) =>
 
 export default function GamePage() {
   const router         = useRouter()
+  const authed         = useAuthGuard()
   const profile        = useMiloStore(s => s.profile)
   const currentChapter = useMiloStore(s => s.currentChapter)
   const celebration    = useMiloStore(s => s.celebration)
@@ -215,6 +217,10 @@ export default function GamePage() {
   if (!ready && !playingChapter) return null
 
   const props = { onComplete: handleComplete, childName: childName || profile.childName }
+
+  if (authed === 'checking') return (
+    <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FCEAB6', fontSize: 48 }}>🦊</div>
+  )
 
   return (
     <>

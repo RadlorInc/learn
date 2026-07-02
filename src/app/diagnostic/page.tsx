@@ -20,9 +20,19 @@ import {
 import { NODE_BY_ID, chapterFor, type Band } from '@/lib/skillGraph'
 import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/lib/diagnosticItems'
 import { CHAPTER_NAMES } from '@/lib/chapters'
-import { saveDiagnostic } from '@/lib/supabase/queries'
+import { enqueueDiagnostic, flushDiagnosticQueue } from '@/lib/useOfflineSync'
 import { stashPendingDiagnostic } from '@/lib/pendingDiagnostic'
 import { setActivePlan } from '@/lib/activePlan'
+import { markCheckupDone } from '@/lib/checkup'
+
+// UUID v4 dedupe key (matches the session-sync clientId pattern) — makes the save idempotent so a
+// queue re-flush can never duplicate the diagnosis. Generated ONCE per completed diagnosis.
+function newClientId(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+  })
+}
 import { PT, ACCENTS, LabBackdrop, BackChip, PromptCard, ChoiceButton, PtMilo, IntroCard, type Accent, type ChoiceState } from '@/components/story/preteen/kit'
 
 const BANDS: Band[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
@@ -74,16 +84,21 @@ function buildContext(attempt: number): DiagContext {
   const seed = l?.id || 'anon'
   return { name: l?.name || l?.display_name, theme: l?.theme || pickThemeFor(seed), seed, nonce: attempt }
 }
-async function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis) {
+function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis): Promise<void> {
   const id = activeLearner()?.id
-  if (!id) return   // preview run, no learner context — nothing to persist to
-  await saveDiagnostic({
+  if (!id) return Promise.resolve()   // preview run, no learner context — nothing to persist to
+  markCheckupDone(id)   // this child has now completed their mandatory checkup → passes the play gate
+  // Durable-first: enqueue to the offline store (survives a fast nav / flaky network / tab close),
+  // then attempt an immediate flush. A failed flush leaves it queued to retry on the next mount/online.
+  enqueueDiagnostic({
     learnerId: id, band,
     rootGap: dx.rootGap, secondGap: dx.secondGap,
     blocked: dx.blockedSkills, strengths: dx.strengths, workingLevel: dx.workingLevel,
     planSkills: dx.planSkills, planChapters: dx.planChapters,
     items: s.asked.map(sk => ({ skill: sk, correct: s.passed.includes(sk) })),
+    clientId: newClientId(),
   })
+  return flushDiagnosticQueue().then(() => {}).catch(() => {})
 }
 
 const label = (id: string) => NODE_BY_ID[id]?.label ?? id
@@ -149,15 +164,18 @@ export default function DiagnosticPage() {
   const startPlan = async () => {
     const chs = result?.planChapters ?? []
     const ch = chs[0]
-    if (ch == null) { window.location.href = window.location.origin + '/story'; return }
     const lid = activeLearner()?.id
+    // SIGNED-IN → always land in the REAL app. An on-track child (no gap → empty plan) still goes to
+    // /menu to "get ahead", NOT the anonymous /story preview (which would drop their real profile).
     if (hasLearner && lid) {
-      setActivePlan(lid, band, chs)
+      if (chs.length) setActivePlan(lid, band, chs)
       // Don't lose the diagnosis to a fast click: let the in-flight save finish (cap so we never hang).
       try { await Promise.race([persistRef.current ?? Promise.resolve(), new Promise(r => setTimeout(r, 4000))]) } catch { /* best-effort */ }
-      window.location.href = window.location.origin + '/menu?plan=1'
+      window.location.href = window.location.origin + '/menu' + (chs.length ? '?plan=1' : '')
       return
     }
+    // COLD, on-track (no plan) → just the free preview door.
+    if (ch == null) { window.location.href = window.location.origin + '/story'; return }
     // COLD: stash the result so a play-first visitor is still captured after the taste, then open the
     // free sample with the sign-up banner (?taste=1).
     stashResult()
@@ -183,6 +201,7 @@ export default function DiagnosticPage() {
       strengths: r.strengths, workingLevel: r.workingLevel,
       planSkills: r.planSkills, planChapters: r.planChapters,
       items: (s?.asked ?? []).map(sk => ({ skill: sk, correct: s!.passed.includes(sk) })),
+      clientId: newClientId(),   // reused verbatim on replay → the post-signup save is idempotent
     })
   }
   // Capture-at-peak-intent: a cold (logged-out) parent saves this plan by creating a free account.
@@ -404,9 +423,10 @@ function ReportShell({ accent, subtitle, heading = "Here's what we found", cta, 
           <>
             <button onClick={onSave} style={{ ...primary, width: '100%', marginTop: 12, fontSize: 17, padding: '15px 24px' }}>{saveCta}</button>
             <div style={{ fontFamily: PT.sans, fontSize: 12.5, color: PT.inkMute, textAlign: 'center', margin: '8px 0 0' }}>Free to start · we&apos;ll check back in at week 6</div>
+            {/* Mandatory sign-up: creating the free account is the only way forward (no play-first taste).
+                A returning parent uses the "Log in" button on the checkup screen instead. */}
             <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
               <button onClick={onRetake} style={ghost}>Retake</button>
-              <button onClick={onStart} style={{ ...ghost, borderColor: `${accent.base}66`, color: accent.base }}>{cta.replace('Start the plan', 'Just start playing').replace('Start playing', 'Just start playing')}</button>
             </div>
           </>
         ) : (
@@ -424,6 +444,8 @@ function ReportShell({ accent, subtitle, heading = "Here's what we found", cta, 
 function AgePicker({ accent, onPick }: { accent: Accent; onPick: (b: Band) => void }) {
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 6vw' }}>
+      {/* Returning user? Log in and their checkup comes from their account (even on a new device). */}
+      <a href="/auth" style={{ position: 'absolute', top: 16, right: 18, zIndex: 46, fontFamily: PT.mono, fontSize: 13, fontWeight: 700, color: accent.base, textDecoration: 'none', background: PT.panel, border: `1px solid ${accent.base}66`, borderRadius: 10, padding: '8px 14px' }}>Log in →</a>
       <div style={{ textAlign: 'center', maxWidth: 460 }}>
         <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2, color: accent.base, textTransform: 'uppercase', marginBottom: 8 }}>Free · 2 minutes · no account needed</div>
         <h2 style={{ margin: '0 0 6px', fontFamily: PT.sans, fontWeight: 700, fontSize: 24, color: PT.ink }}>How old is your child?</h2>

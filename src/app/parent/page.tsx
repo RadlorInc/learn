@@ -7,10 +7,12 @@ import {
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
   getMyAccessRole, deleteLearnerPermanently, removeMyselfFromLearner,
-  getMyGrades, getGradeChapterIds, saveDiagnostic, getLatestGap, type GradeSummary,
+  getMyGrades, getGradeChapterIds, getLatestGap, type GradeSummary,
 } from '@/lib/supabase/queries'
-import { takePendingDiagnostic } from '@/lib/pendingDiagnostic'
+import { enqueueDiagnostic, flushDiagnosticQueue } from '@/lib/useOfflineSync'
+import { peekPendingDiagnostic, takePendingDiagnostic } from '@/lib/pendingDiagnostic'
 import { setActivePlan } from '@/lib/activePlan'
+import { hasCheckup, markCheckupDone } from '@/lib/checkup'
 import { setActiveLearner } from '@/lib/supabase/useLearnerSession'
 import { createClient } from '@/lib/supabase/client'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner } from '@/lib/supabase/types'
@@ -127,9 +129,12 @@ export default function ParentDashboard() {
     }
   }
 
-  function launchGame(learner: Learner) {
+  // Play gate: a child can only enter the app once their mandatory checkup is done. If not, they're
+  // routed into the checkup instead (cache-first, then their account — so it passes cross-device).
+  async function launchGame(learner: Learner) {
     setActiveLearner(learner)
-    router.push('/menu')
+    if (await hasCheckup(learner.id)) router.push('/menu')
+    else router.push(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
   }
 
   // The diagnostic front door for a signed-in learner: set them active (so the result saves + items
@@ -417,7 +422,12 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
   const router = useRouter()
   const [name,        setName]        = useState('')
   const [avatarIndex, setAvatarIndex] = useState(0)
-  const [ageGroup,    setAgeGroup]    = useState<AgeGroup>('3-5')
+  // Prefill from a captured (logged-out) diagnostic so the default matches the band the parent already
+  // chose in the check — otherwise the replay's exact band match silently fails and the capture is lost.
+  const [ageGroup,    setAgeGroup]    = useState<AgeGroup>(() => {
+    const b = peekPendingDiagnostic()?.band
+    return AGE_GROUP_OPTIONS.some(o => o.value === b) ? (b as AgeGroup) : '3-5'
+  })
   const [grades,      setGrades]      = useState<GradeSummary[]>([])
   const [gradeId,     setGradeId]     = useState<string | null>(null) // null = no grade, pick a band directly
   const [loading,     setLoading]     = useState(false)
@@ -439,14 +449,22 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
     const learner = await createLearner(trimmed, avatarIndex, ageGroup, undefined, gradeId ?? undefined)
     if (!learner) { setError('Something went wrong. Please try again.'); setLoading(false); return }
     // Capture-at-report loop: if this parent just took the logged-out diagnostic, save that result
-    // against the child they're creating now (matched by band = age group). One-shot; drops if unused.
-    const pending = takePendingDiagnostic()
+    // against the child they're creating now — but ONLY when the bands match (a 9–11 plan is
+    // meaningless on a 3–5 learner). PEEK first, then CONSUME only on a match: a mismatch must leave
+    // the capture stashed so it can still attach to the diagnosed child if they add a sibling first.
+    const pending = peekPendingDiagnostic()
     if (pending && pending.band === learner.age_group) {
-      void saveDiagnostic({
+      takePendingDiagnostic()   // confirmed match → consume it (one-shot; never replays twice)
+      // Durable-first: enqueue (survives a failed post-signup write) then flush. Reuses the stashed
+      // clientId so the idempotent RPC won't double-write if a signed-in save ever also lands.
+      enqueueDiagnostic({
         learnerId: learner.id, band: pending.band, rootGap: pending.rootGap, secondGap: pending.secondGap,
         blocked: pending.blocked, strengths: pending.strengths, workingLevel: pending.workingLevel,
         planSkills: pending.planSkills, planChapters: pending.planChapters, items: pending.items,
+        clientId: pending.clientId,
       })
+      void flushDiagnosticQueue()
+      markCheckupDone(learner.id)   // replayed checkup → this new child passes the play gate
       setActivePlan(learner.id, pending.band, pending.planChapters)   // step 7: walkable plan for the new child
     }
     onAdded()

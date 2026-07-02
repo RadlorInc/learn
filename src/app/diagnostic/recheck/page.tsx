@@ -10,7 +10,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { recheckSkills } from '@/lib/diagnosticEngine'
 import { NODE_BY_ID, type Band } from '@/lib/skillGraph'
-import { makeItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/lib/diagnosticItems'
+import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/lib/diagnosticItems'
 import { saveRecheck } from '@/lib/supabase/queries'
 import { PT, ACCENTS, LabBackdrop, BackChip, PromptCard, ChoiceButton, PtMilo, IntroCard, type Accent } from '@/components/story/preteen/kit'
 
@@ -24,6 +24,10 @@ function activeLearner(): { id?: string; name?: string; display_name?: string; t
 
 interface Probe { skill: string; item: DiagItem }
 type Phase = 'intro' | 'probe' | 'done'
+// Parent-guided items pass via passSet ("Yes"/"With a little help"); MCQ items via the answer.
+const isPass = (item: DiagItem, choice: string) => item.passSet ? item.passSet.includes(choice) : choice === item.answer
+// UUID v4 dedupe key so a double-fire / retry of the re-check save is idempotent server-side.
+const newClientId = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16) })
 
 export default function RecheckPage() {
   const [band, setBand] = useState<Band>('9-11')
@@ -54,8 +58,12 @@ export default function RecheckPage() {
     const l = activeLearner()
     const seed = l?.id || 'anon'
     const ctx: DiagContext = { name: l?.name || l?.display_name, theme: l?.theme || pickThemeFor(seed), seed, nonce: week }
+    // Readiness-first: a 3–5 diagnosis can root at a parent-observed milestone (patterns/colors/
+    // measureCompare) that has NO child MCQ. Using makeItem alone yielded 0 probes → the re-check
+    // fell straight to "not closed" and saved gapClosed=false regardless of the child. Fall back to
+    // the child MCQ for every other skill.
     const built = recheckSkills(skill)
-      .map(s => { const item = makeItem(s, ctx); return item ? { skill: s, item } : null })
+      .map(s => { const item = makeReadinessItem(s, ctx) ?? makeItem(s, ctx); return item ? { skill: s, item } : null })
       .filter((p): p is Probe => p != null)
     if (built.length === 0) { setPhase('done'); return }   // nothing probeable → treat as inconclusive
     setProbes(built); setIdx(0); setPhase('probe')
@@ -65,7 +73,7 @@ export default function RecheckPage() {
     if (picked || !probes[idx]) return
     setPicked(choice)
     const p = probes[idx]
-    resultsRef.current[p.skill] = choice === p.item.answer   // record synchronously
+    resultsRef.current[p.skill] = isPass(p.item, choice)   // record synchronously (MCQ or parent item)
     window.setTimeout(() => {
       setPicked(null)
       if (idx + 1 < probes.length) setIdx(idx + 1)
@@ -81,7 +89,7 @@ export default function RecheckPage() {
     const l = activeLearner()
     if (l?.id && skill && !savedRef.current) {
       savedRef.current = true
-      void saveRecheck({ learnerId: l.id, week, skill, gapClosed })
+      void saveRecheck({ learnerId: l.id, week, skill, gapClosed, clientId: newClientId() })
     }
   }
 
@@ -107,6 +115,41 @@ export default function RecheckPage() {
           body={`A quick re-check on ${label(skill)} — the one thing we set out to fix. Just a couple of questions, same as before: no scores, no pressure.`}
           onStart={begin} />
         <PtMilo left={9} />
+      </div>
+    )
+  }
+
+  // Parent-guided readiness re-check item: a calm "do this together" card + stacked outcome buttons.
+  if (phase === 'probe' && probes[idx]?.item.kind === 'parent') {
+    const item = probes[idx].item
+    return (
+      <div style={{ position: 'relative', width: '100vw', minHeight: '100dvh', overflow: 'auto', background: `radial-gradient(125% 90% at 50% -10%, ${PT.bg1}, ${PT.bg0} 70%)` }}>
+        <BackChip onExit={() => history.back()} />
+        <div style={{ maxWidth: 520, margin: '0 auto', padding: '64px 20px 32px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ position: 'relative', background: PT.panel, backdropFilter: 'blur(8px)', border: `1px solid ${accent.base}66`, borderRadius: 18, padding: '20px 22px 22px', boxShadow: `0 0 24px ${accent.base}22, 0 14px 34px rgba(0,0,0,0.45)` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontFamily: PT.mono, fontSize: 10.5, letterSpacing: 1.5, color: accent.base, background: accent.soft, borderRadius: 6, padding: '4px 9px', textTransform: 'uppercase' }}>Do this together</span>
+              <span style={{ fontFamily: PT.mono, fontSize: 11, color: PT.inkMute }}>Check {idx + 1} of {probes.length}</span>
+            </div>
+            <p style={{ margin: 0, fontFamily: PT.sans, fontSize: 19, lineHeight: 1.5, color: PT.ink }}>{item.prompt}</p>
+          </div>
+          <div style={{ fontFamily: PT.sans, fontSize: 13, color: PT.inkMute, textAlign: 'center', marginTop: -6 }}>How did it go?</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+            {item.choices.map(c => {
+              const sel = picked === c
+              const dim = picked && !sel
+              return (
+                <button key={c} onClick={() => answer(c)} disabled={!!picked} style={{
+                  padding: '15px 18px', borderRadius: 14, cursor: picked ? 'default' : 'pointer', textAlign: 'left',
+                  background: sel ? accent.base : PT.panel, border: `1.5px solid ${sel ? accent.base : PT.lineStrong}`,
+                  color: sel ? '#06121f' : PT.ink, fontFamily: PT.sans, fontWeight: 600, fontSize: 16.5,
+                  opacity: dim ? 0.4 : 1, transition: 'all .16s ease',
+                  boxShadow: sel ? `0 0 20px ${accent.base}88` : '0 4px 12px rgba(0,0,0,0.3)',
+                }}>{c}</button>
+              )
+            })}
+          </div>
+        </div>
       </div>
     )
   }

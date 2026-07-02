@@ -10,10 +10,10 @@ export default function RootPage() {
     async function check() {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      // The /parent dashboard is the hub: it loads the parent's learners
-      // (or shows the "add your first learner" empty state) on its own, so
-      // signed-in users always land there. Unauthenticated users go to /auth.
-      router.replace(session ? '/parent' : '/auth')
+      // Signed-in → the /parent hub (loads their learners / empty state on its own).
+      // Cold visitor → the CHECKUP is the mandatory front door (it carries a "Log in" button up top
+      // for returning users). This makes the diagnostic the entry point, not an optional funnel.
+      router.replace(session ? '/parent' : '/diagnostic')
     }
     check()
   }, [router])

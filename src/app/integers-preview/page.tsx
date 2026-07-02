@@ -3,8 +3,10 @@
 // chapter component (which portals itself full-screen). No active learner here,
 // so finishAndSync is best-effort — gameplay (intro → lesson → practice → done)
 // is what we're verifying.
+import { notFound } from 'next/navigation'
 import IntegersChapter from '@/components/game/IntegersChapter'
 
 export default function IntegersPreviewPage() {
+  if (process.env.NODE_ENV === 'production') notFound()   // dev scaffolding — 404 in the shipped app
   return <IntegersChapter onComplete={() => {}} childName="Sam" />
 }
