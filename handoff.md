@@ -23,11 +23,17 @@ Senior-perf-engineer review + execution ("optimize for millions of users"). `tsc
 ### Pre-existing bug FOUND (not caused here, NOT fixed — needs an art/product call)
 `/assets/characters/milo-happy.png` + `milo-thinking.png` are referenced in **~18 places** (root `/`, auth, shop, daily, CountingChapter, MiloBubble, ~7 lessons…) but **exist in neither the tree nor the original backup** → 404 (most sites have an `onError`/emoji fallback, so it's silent). The real poses are `milo_idle.png`/`milo_a.png`/etc. Fix = copy an existing pose to those two filenames (zero code change) OR add the real art. Deferred: picking the pose is an art decision.
 
-### NEXT / still open from this pass
-1. **Commit + deploy** the whole batch (user must ask). The 2 RPCs are already live on prod but UNUSED until the client deploys.
-2. **Human signed-in verification** of the parent-dashboard RPC + insights rollup + the `getSession` swap on live (auth-gated; smoke-tested via SQL + covered by client fallbacks + build, but not driven signed-in).
-3. **Optional deeper wins not done:** full `<img>`→`next/image` migration (recompression already captured ~90% of the bytes; next/image adds AVIF/srcset on top) + `loading="lazy"` on the 117 raw imgs; fix the `milo-happy.png` 404.
-4. The pre-existing launch items still stand (custom SMTP, Sentry DSN, Stripe, full CSP, leaked-password toggle, real week-6 cohort).
+### SHIPPED (committed + deployed) — `main` now at `42df3f4`
+The whole perf pass IS committed + deployed to Vercel production (READY). Commits: `b1c078a` (assets) · `ad582dc` (data RPCs) · `116bfe0` (client) · `d5f924f` (handoff) · **`42df3f4` (next/image + lazy/async)**.
+
+**next/image + lazy/async migration (2026-07-02, DONE + deployed):**
+- **7 fixed-size hero/UI images → `next/image`** (landing, auth, auth/callback, shop, daily×2, CelebrationModal) → inherit the AVIF/WebP optimizer + srcset + 1yr cache; `priority` on the above-the-fold heroes. **Live-verified**: served via `/_next/image?...&w=256&q=75`.
+- **`decoding="async"` on every remaining raw `<img>` (108 total) + `loading="lazy"` on all foreground sprites/avatars (86)**. Full-bleed scene backgrounds (per-screen LCP) are decoding-only, never lazy. MiloBubble kept as `<img>` (shared emoji-DOM fallback) + lazy/async. Story chapter + optimized auth hero verified in preview, no console errors.
+- Note: a few dynamic-src avatars (menu/parent/profile fill-type) stayed `<img>` + lazy/async (next/image `fill` on those was low-value/higher-risk).
+
+### STILL OPEN
+1. **Human signed-in verification** of the parent-dashboard RPC + insights rollup + the `getSession` swap on live (auth-gated; smoke-tested via SQL + covered by client fallbacks + build, but not driven signed-in).
+2. The pre-existing launch items still stand (custom SMTP, Sentry DSN, Stripe, full CSP, leaked-password toggle, real week-6 cohort).
 
 ## LATEST SESSION (2026-07-02 — PRODUCTION-READINESS HARDENING + MANDATORY CHECKUP GATE) — **ALL SHIPPED**
 
