@@ -404,6 +404,47 @@ export async function syncSession(payload: SessionPayload): Promise<SyncOutcome>
   return 'ok'
 }
 
+// ─── Diagnostic persistence ───────────────────────────────────
+
+export interface DiagnosticPayload {
+  learnerId:    string
+  band:         string
+  rootGap:      string | null
+  secondGap:    string | null
+  blocked:      string[]
+  strengths:    string[]
+  workingLevel: string
+  planSkills:   string[]
+  planChapters: string[]
+  items:        { skill: string; correct: boolean }[]
+}
+
+/**
+ * Persist a completed diagnosis (session + items + plan) via the SECURITY DEFINER
+ * `sync_diagnostic` RPC, which checks learner_access ownership server-side (mirrors syncSession).
+ * Resolves the auth session first so a genuinely signed-out preview run skips cleanly instead of
+ * throwing an RLS/auth error. Returns false (not throwing) so the UI never blocks on it.
+ */
+export async function saveDiagnostic(p: DiagnosticPayload): Promise<boolean> {
+  const supabase = db()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+  const { error } = await supabase.rpc('sync_diagnostic', {
+    p_learner_id:    p.learnerId,
+    p_band:          p.band,
+    p_root_gap:      p.rootGap,
+    p_second_gap:    p.secondGap,
+    p_blocked:       p.blocked,
+    p_strengths:     p.strengths,
+    p_working_level: p.workingLevel,
+    p_plan_skills:   p.planSkills,
+    p_plan_chapters: p.planChapters,
+    p_items:         p.items,
+  })
+  if (error) { console.error('[saveDiagnostic] rpc failed:', error.message); return false }
+  return true
+}
+
 // Offline queueing lives entirely in the browser (IndexedDB via kv, see
 // useOfflineSync). The old DB-backed `offline_queue` table + its helpers were
 // dead code (only the removed sync.ts referenced them) and have been dropped.
