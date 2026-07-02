@@ -53,22 +53,28 @@ import GridPlotter from '@/components/story/GridPlotter'
 import AngleScope from '@/components/story/AngleScope'
 import DataDeck from '@/components/story/DataDeck'
 import MissionBrief from '@/components/story/MissionBrief'
+import TasteBanner from '@/components/story/TasteBanner'
 
 export default function StoryPage() {
   const [ch, setCh] = useState('counting')
   const [chapter, setChapter] = useState<Chapter | null>(null)
   const [orderWorld, setOrderWorld] = useState<string | undefined>(undefined)
   const [ready, setReady] = useState(false)
+  const [taste, setTaste] = useState(false)   // ?taste=1 → this is the logged-out free sample → show the sign-up banner
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     setCh(params.get('ch') || 'counting')
     setOrderWorld(params.get('world') || undefined)   // ?world=river|train|sky jumps into an ordering world
+    setTaste(params.get('taste') === '1')
     // ?story= jumps straight into a journey; otherwise the world picker shows.
     const forced = storytellingById(params.get('story'))
     if (forced) setChapter(makeCountingChapter(forced))
     setReady(true)
   }, [])
 
+  return <>{renderChapter()}{taste && <TasteBanner />}</>
+
+  function renderChapter() {
   if (ch === 'order') return <RiverCrossing world={orderWorld} />
   // ?world=kitchen|grocery|bakery jumps into a comparison world.
   if (ch === 'kitchen') return <Kitchen world={orderWorld} />
@@ -127,4 +133,5 @@ export default function StoryPage() {
   if (!ready) return null
   const worlds = STORYTELLINGS.map(s => ({ id: s.id, label: s.label, emoji: s.emoji, bgImage: BIOMES[s.biomes[0]].bgImage }))
   return <WorldSelect title="Where shall we count today?" worlds={worlds} onPick={(id) => { const s = storytellingById(id); if (s) setChapter(makeCountingChapter(s)) }} />
+  }
 }

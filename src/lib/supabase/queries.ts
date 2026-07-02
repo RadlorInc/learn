@@ -445,6 +445,35 @@ export async function saveDiagnostic(p: DiagnosticPayload): Promise<boolean> {
   return true
 }
 
+/** Step 8 — persist a week-N re-check result (did the root gap close?) via the sync_recheck RPC.
+ *  Best-effort: returns false (never throws) if signed out or the RPC isn't deployed yet. */
+export async function saveRecheck(p: { learnerId: string; week: number; skill: string; gapClosed: boolean }): Promise<boolean> {
+  const supabase = db()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+  const { error } = await supabase.rpc('sync_recheck', {
+    p_learner_id: p.learnerId, p_week: p.week, p_skill: p.skill, p_gap_closed: p.gapClosed,
+  })
+  if (error) { console.error('[saveRecheck] rpc failed:', error.message); return false }
+  return true
+}
+
+/** The learner's most recent diagnosis (band + root gap) — powers the "re-check the gap" trigger. */
+export async function getLatestGap(learnerId: string): Promise<{ band: string; rootGap: string | null } | null> {
+  const supabase = db()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data, error } = await supabase
+    .from('diagnostic_sessions')
+    .select('band, root_gap_skill')
+    .eq('learner_id', learnerId)
+    .order('completed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error || !data) return null
+  return { band: data.band as string, rootGap: (data.root_gap_skill as string | null) ?? null }
+}
+
 // Offline queueing lives entirely in the browser (IndexedDB via kv, see
 // useOfflineSync). The old DB-backed `offline_queue` table + its helpers were
 // dead code (only the removed sync.ts referenced them) and have been dropped.

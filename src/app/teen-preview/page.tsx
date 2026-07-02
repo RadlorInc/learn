@@ -2,6 +2,7 @@
 // Dev-only: preview any teen chapter by id, e.g. /teen-preview?c=coordinatePlane
 import { useEffect, useState } from 'react'
 import nextDynamic from 'next/dynamic'
+import TasteBanner from '@/components/story/TasteBanner'
 
 const MAP: Record<string, React.ComponentType<{ onComplete: (c: number, w: number) => void; childName: string }>> = {
   integers: nextDynamic(() => import('@/components/game/IntegersChapter'), { ssr: false }),
@@ -47,8 +48,13 @@ const MAP: Record<string, React.ComponentType<{ onComplete: (c: number, w: numbe
 
 export default function TeenPreviewPage() {
   const [c, setC] = useState('integers')
-  useEffect(() => { setC(new URLSearchParams(window.location.search).get('c') || 'integers') }, [])
+  const [taste, setTaste] = useState(false)   // ?taste=1 → logged-out free sample from the diagnostic
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    setC(p.get('c') || 'integers')
+    setTaste(p.get('taste') === '1')
+  }, [])
   const Chapter = MAP[c]
   if (!Chapter) return <div style={{ padding: 24, fontFamily: 'sans-serif' }}>Unknown chapter: {c}</div>
-  return <Chapter onComplete={() => {}} childName="Sam" />
+  return <>{<Chapter onComplete={() => {}} childName="Sam" />}{taste && <TasteBanner />}</>
 }

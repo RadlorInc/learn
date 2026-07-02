@@ -7,8 +7,10 @@ import {
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
   getMyAccessRole, deleteLearnerPermanently, removeMyselfFromLearner,
-  getMyGrades, getGradeChapterIds, type GradeSummary,
+  getMyGrades, getGradeChapterIds, saveDiagnostic, getLatestGap, type GradeSummary,
 } from '@/lib/supabase/queries'
+import { takePendingDiagnostic } from '@/lib/pendingDiagnostic'
+import { setActivePlan } from '@/lib/activePlan'
 import { setActiveLearner } from '@/lib/supabase/useLearnerSession'
 import { createClient } from '@/lib/supabase/client'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner } from '@/lib/supabase/types'
@@ -128,6 +130,21 @@ export default function ParentDashboard() {
   function launchGame(learner: Learner) {
     setActiveLearner(learner)
     router.push('/menu')
+  }
+
+  // The diagnostic front door for a signed-in learner: set them active (so the result saves + items
+  // personalize to their name) and open the probe pre-tuned to their age band.
+  function findStartingPoint(learner: Learner) {
+    setActiveLearner(learner)
+    router.push(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
+  }
+
+  // Step 8: the week-N re-check — pull the learner's last root gap and open the guarantee check.
+  async function recheckGap(learner: Learner) {
+    setActiveLearner(learner)
+    const g = await getLatestGap(learner.id)
+    if (!g?.rootGap) { setActionMsg('Run the check-up first — then we can re-check the gap.'); return }
+    router.push(`/diagnostic/recheck?skill=${encodeURIComponent(g.rootGap)}&band=${g.band}&week=6`)
   }
 
   const active = learners.find(d => d.learner.id === selected)
@@ -290,6 +307,14 @@ export default function ParentDashboard() {
               <button onClick={() => launchGame(active.learner)} style={{ width:'100%', padding:'14px', background:'#fff', color:'#F26B2C', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>
                 ▶ Start learning
               </button>
+              <div style={{ display:'flex', gap:10, marginTop:10 }}>
+                <button onClick={() => findStartingPoint(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
+                  🔍 Find starting point
+                </button>
+                <button onClick={() => recheckGap(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
+                  🔁 Re-check the gap
+                </button>
+              </div>
             </div>
 
             {/* Owner: Delete / Viewer: Remove self */}
@@ -413,6 +438,17 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
     setLoading(true)
     const learner = await createLearner(trimmed, avatarIndex, ageGroup, undefined, gradeId ?? undefined)
     if (!learner) { setError('Something went wrong. Please try again.'); setLoading(false); return }
+    // Capture-at-report loop: if this parent just took the logged-out diagnostic, save that result
+    // against the child they're creating now (matched by band = age group). One-shot; drops if unused.
+    const pending = takePendingDiagnostic()
+    if (pending && pending.band === learner.age_group) {
+      void saveDiagnostic({
+        learnerId: learner.id, band: pending.band, rootGap: pending.rootGap, secondGap: pending.secondGap,
+        blocked: pending.blocked, strengths: pending.strengths, workingLevel: pending.workingLevel,
+        planSkills: pending.planSkills, planChapters: pending.planChapters, items: pending.items,
+      })
+      setActivePlan(learner.id, pending.band, pending.planChapters)   // step 7: walkable plan for the new child
+    }
     onAdded()
   }
 

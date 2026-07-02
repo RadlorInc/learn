@@ -8,6 +8,7 @@ import { getChapter, type AgeGroup } from '@/lib/chapters'
 
 import { getActiveLearner } from '@/lib/supabase/useLearnerSession'
 import { setLastPlayed } from '@/lib/lastPlayed'
+import { advancePlan } from '@/lib/activePlan'
 import CelebrationModal from '@/components/ui/CelebrationModal'
 import MiloPointer from '@/components/ui/MiloPointer'
 import { useChapterSync } from '@/lib/supabase/useChapterSync'
@@ -205,6 +206,10 @@ export default function GamePage() {
     // Works offline — queues locally (IndexedDB via kv) if no network.
     // `mastered` (early finish at the top tier) forces the full 3 stars.
     await finishAndSync(playingChapter, correct, wrong, 'practice', mastered)
+    // Step 7: if this was the child's current diagnostic-plan chapter, advance the pointer so the
+    // menu's "Continue your plan" card moves to the next one.
+    const learner = getActiveLearner()
+    if (learner) advancePlan(learner.id, playingChapter)
   }
 
   if (!ready && !playingChapter) return null

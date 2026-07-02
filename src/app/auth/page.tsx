@@ -254,6 +254,16 @@ export default function AuthPage() {
           Your child's progress is saved securely to your account
         </p>
       </div>
+
+      {/* Front door for cold traffic: try the diagnostic before making an account. */}
+      <a href="/diagnostic" style={{
+        width: '100%', maxWidth: 380, textAlign: 'center', textDecoration: 'none',
+        background: '#fff', border: '2px dashed rgba(242,107,44,0.5)', borderRadius: 18,
+        padding: '14px 18px', color: '#F26B2C', fontWeight: 700, fontSize: 15,
+      }}>
+        🔍 Not sure where they are? Take the free 2-minute check →
+        <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#9ca3af', marginTop: 3 }}>No account needed to start</span>
+      </a>
     </div>
   )
 }
