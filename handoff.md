@@ -4,7 +4,38 @@ _Last updated: 2026-07-02_
 
 Concise, current state. Per-chapter detail + conventions live in the auto-memory (`project-milo-6-8-story-conversion.md`, `feedback-story-demo-audio-pattern.md`, `project-milo-*-chapter.md`, `project-milo-demo-voice.md`, `feedback-viewport-scaling.md`, …) — read those for the deep notes.
 
-## LATEST SESSION (2026-07-02 late) — **17–18 band BUILT (13/13 chapters) → the full 37-chapter teen set is code-complete** — NOT committed
+## LATEST SESSION (2026-07-02) — **shipped the big batch + built the ROOT-GAP DIAGNOSTIC (Phase 0 + Phase 1)** — COMMITTED + DEPLOYED
+
+Two workstreams; both **committed + pushed to `main` → Vercel production READY**, and both prod migrations **applied**.
+
+### 1. Shipped the accumulated batch — commit `4806b95` (deploy READY)
+- **Responsiveness audit — ALL 72 chapters across all 6 bands** (static audit + live spot-checks). 70/72 clean; fixed the 2 exceptions: **ShapeStudio** (6–8 `shapes2d3d` — short-landscape shape/button overlap → wrapped in `FitBox` + proper bottom-reserve) and **SliceShop `GroupView`** (6–8 `fractions` — the `fill:both` transform-override trap; split animation onto an outer wrapper). Both live-verified at 360×/740×360.
+- **Interactive "Explore" simulators added to ALL 12 of the 9–11 chapters** — a play-with-it-first phase inserted `intro → explore → demo → guided → practice`, via NEW shared kit primitives **`PtSlider` / `PtReadout` / `ExploreScaffold`** in `story/preteen/kit.tsx`. Each chapter has a bespoke slider-driven sim (FactorScope, PlaceBuilder, RoundScope, ArrayScope, ShareScope, FractionScope, DecimalScope, ConverterScope, PlotScope, AngleScopeSim, ChartScope, BriefScope). All 12 verified live at 375px; 2 overflow bugs fixed (NumberVault block chart → FitBox; DivisionShare equation → responsive clamp).
+- Plus the previously-uncommitted 6–8 story set + all 9–11 HUD chapters + 17–18 teen band (detail below).
+- **17–18 seed migration APPLIED to prod** (`20260702140000_…`; chapters 59 → 72, verified).
+
+### 2. NEW workstream: ROOT-GAP DIAGNOSTIC — commit `bf31982` (deploy READY) — live at `/diagnostic?band=9-11`
+The "reason-to-buy" product: a play-along diagnostic that finds a child's **root gap** (the deepest broken prerequisite), then shows the parent *strengths → the one snag → downstream cost → a plan → a 6-week guarantee* and launches the actual remediation chapter. **Cross-band by design** — a 15–16 student can root at a grade-4 gap (the moat: we own content at every depth). Design/spec docs: `docs/skill-graph.md`, `docs/diagnostic-engine.md`, `docs/skill-graph-validation.md`.
+- **`src/lib/skillGraph.ts`** — unified 3→18 graph (74 nodes → all 72 chapters, prereq edges + 7 cross-band spines). Source of truth in code (like `chapters.ts`). Integrity-checked (no dangling ids, no upward prereqs). `multFacts`/`fractionEquiv`/`fractionOps`/`signedOps`/`placeValue2` are the load-bearing nodes.
+- **`src/lib/diagnosticEngine.ts`** — pure, framework-free. `startProbe → nextSkill → record → diagnose`; DFS "descend into the failing prerequisite" → root gap + foundational-first plan + compelling downstream highlights. Anti-fear caps. **12/12 headless checks.**
+- **`src/lib/diagnosticItems.ts`** — one MCQ per 9–11-reachable skill.
+- **`src/app/diagnostic/page.tsx`** — intro → probe (kid-facing: no score, no red X) → parent report → **"Start the plan"** navigates to the real `/story?ch=` chapter. 9–11 entries cover all six strands (mult / fraction / division / decimal / geometry / data).
+- **Persistence** — `supabase/migrations/20260703090000_diagnostic_engine_schema.sql` **APPLIED to prod**: 5 result tables + read-only RLS (via `learner_access`) + **`sync_diagnostic` SECURITY DEFINER RPC** (mirrors `sync_session`). Client **`saveDiagnostic()`** in `supabase/queries.ts`, best-effort (skips cleanly in the unauthenticated preview). RPC happy-path smoke-tested on prod, then test rows deleted (prod clean).
+
+### DIAGNOSTIC PHASES — done vs remaining
+- **Phase 0 — unified skill graph:** ✅ **DONE** (committed + deployed).
+- **Phase 1 — engine + prove on 9–11 core band + persistence:** ✅ **BUILT** (committed + deployed). Remaining gates are **NOT code**: (a) **real teacher sign-off** on the graph's spine edges (`docs/skill-graph-validation.md`); (b) **a real 9–11 cohort → week-6 efficacy/retention number** — the actual *point* of Phase 1. Until those clear, don't scale the guarantee.
+- **Phase 2 — roll the diagnostic to the other 5 bands:** ⏳ **NOT STARTED.** 9–11 is the template. Each band = a 3-part job with **no engine changes** (engine/report/route are band-agnostic via `?band=`): (1) `PROBE_ENTRY[band]` covering that band's strands, (2) item generators in `diagnosticItems.ts`, (3) band-specific report framing.
+- **Phase 3 — 3–5 readiness variant:** ⏳ not started (different shape: readiness, not remediation; parent-guided items, soft guarantee).
+- **Phase 4 — per-child generated items:** ⏳ not started.
+- **Follow-ons:** week-6 **re-check flow** (`diagnostic_rechecks` table exists, flow unbuilt — needed for the guarantee); driving a **real authenticated save** from inside the signed-in app (preview is unauthenticated so it correctly skips).
+
+### NEXT SESSION — Phase 2, start with the **6–8 band**
+Cheapest next band (reuses most 9–11 items). Add `PROBE_ENTRY['6-8']` (strands: number/place-value, add/sub, multiplicative, fraction-intro), 6–8 item generators, and 6–8 report framing; live-verify at `/diagnostic?band=6-8`. Then 12–14 / 15–16 / 17–18, then the 3–5 readiness variant. Keep the "prove Phase 1 on a real cohort before scaling the guarantee" discipline.
+
+---
+
+## EARLIER THIS SESSION — 17–18 band build (NOW SHIPPED in `4806b95` + 17-18 migration APPLIED)
 
 Built the final teen band **17–18 (Algebra II / Pre-Calc / Statistics / intro Calculus)** — all 13 chapters, in the existing teen "Field Lab" design (NOT the 9–11 HUD). Each = a chapter component (portal → intro `CaseCard` → explore `ExploreStep`+sim → lesson `TeenLessonShell` → adaptive practice → `MasteryState`, mirroring `game/IntegersChapter.tsx`) + a lesson (`lessons/*TeenLesson.tsx`). `BAND='17-18'`, `TOTAL_ROUNDS=8`, `useAdaptive(skillId)` L1/L2/L3, reteach-after-3, mastery early-exit, ALL answers MCQ via `ChoiceGrid` (math-without-fear: no free-typed irrationals/complex). Built by 13 parallel subagents in 3 waves; `tsc --noEmit` clean project-wide.
 
@@ -18,10 +49,7 @@ Built the final teen band **17–18 (Algebra II / Pre-Calc / Statistics / intro 
 
 **RESPONSIVE — VERIFIED across the 17-18 band** (narrow portrait 360, short landscape 740×360, tablet/desktop). All 13 share the shipped teen layout (TeenTopbar + centered flex `main` + ChoiceGrid + ExploreStep + TeenLessonShell). Findings: (a) **labels never horizontally overflow** — even a worst-case spaceless matrix string "[[−12,−7],[13,−8]]" and coordinate/sentence answers wrap inside the 156px tile at 360px (injected-label measurement); (b) **practice screens fit cleanly** at 360 and 740×360 (4 choices in a 2×2 grid on-screen, no offscreen/overlap); (c) **every sim type scales to viewport** with no h-overflow at 360 — reused shipped sims (Transform/Parabola/Growth/System), CoordGrid inline (trig sine wave, conic circle), bespoke SVG (unit circle, secant→tangent), custom bars (stats mean-shift). Sample verified: functionToolkit, unitCircleTrig, introCalculus, complexNumbers, trigGraphsIdentities, statsInference, conicSections. **One shared behavior:** on SHORT LANDSCAPE the sim-heavy Explore step needs a vertical scroll (inside the portal's `overflowY:auto`) to reach Continue — this is the shared `ExploreStep` component, identical across the 24 already-shipped teen chapters; content stays reachable.
 
-### NEXT
-1. `next build` (final gate; tsc already clean).
-3. **Apply the 17-18 migration** to prod Supabase (only when asked).
-4. Then (only when asked) **commit the whole uncommitted batch** (6–8 + all 9–11 HUD + 17–18 band + kit/migration).
+### ✅ DONE (this session): `next build` passed · 17-18 migration applied to prod · whole batch committed (`4806b95`) + deployed. (Superseded — see LATEST SESSION at top.)
 
 ## EARLIER (2026-07-02 pm) — **ALL 12 of the 9–11 set now pre-teen Mission-HUD** (built the remaining 7 + retrofitted the 4 storybook ones) — NOT committed
 
