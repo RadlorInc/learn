@@ -12,7 +12,7 @@ import {
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/lib/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/lib/pendingDiagnostic'
 import { setActivePlan } from '@/lib/activePlan'
-import { markCheckupDone } from '@/lib/checkup'
+import { hasCheckup, markCheckupDone } from '@/lib/checkup'
 import { setActiveLearner } from '@/lib/supabase/useLearnerSession'
 import { createClient } from '@/lib/supabase/client'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner } from '@/lib/supabase/types'
@@ -142,11 +142,18 @@ export default function ParentDashboard() {
     }
   }
 
-  // The checkup is OPTIONAL — no gate before play. "Start learning" goes straight into the app.
-  // Parents can still run the checkup by choice via "Find starting point" (findStartingPoint).
-  function launchGame(learner: Learner) {
+  // A BRAND-NEW learner does the checkup once on their first "Start learning". Established kids —
+  // any who already have play history (progress / sessions / XP) OR have already done a checkup —
+  // skip straight into the app and are never asked again. So existing profiles are grandfathered
+  // (never force-gated), while a new child is sent to the checkup exactly once.
+  function isEstablished(d: LearnerData): boolean {
+    return !!d.stats?.last_played_at || (d.stats?.total_xp ?? 0) > 0 || d.progress.length > 0 || d.sessions.length > 0
+  }
+  async function launchGame(d: LearnerData) {
+    const learner = d.learner
     setActiveLearner(learner)
-    router.push('/menu')
+    if (isEstablished(d) || await hasCheckup(learner.id)) router.push('/menu')
+    else router.push(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
   }
 
   // The diagnostic front door for a signed-in learner: set them active (so the result saves + items
@@ -337,7 +344,7 @@ export default function ParentDashboard() {
                   🔔 It&apos;s been {recheckDue.weeks} weeks — time to re-check {active.learner.display_name}&apos;s gap →
                 </button>
               )}
-              <button onClick={() => launchGame(active.learner)} style={{ width:'100%', padding:'14px', background:'#fff', color:'#F26B2C', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>
+              <button onClick={() => launchGame(active)} style={{ width:'100%', padding:'14px', background:'#fff', color:'#F26B2C', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>
                 ▶ Start learning
               </button>
               <div style={{ display:'flex', gap:10, marginTop:10 }}>
@@ -413,7 +420,7 @@ export default function ParentDashboard() {
                   <div style={{ textAlign:'center', padding:'20px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
                     <div style={{ fontSize:36 }}>🎮</div>
                     <div style={{ fontSize:14, color:'#888', fontWeight:500 }}>No sessions yet — time to start playing!</div>
-                    <button onClick={() => launchGame(active.learner)} style={{ marginTop:4, background:'#F26B2C', color:'#fff', border:'none', borderRadius:50, padding:'10px 20px', fontSize:13, fontWeight:700, cursor:'pointer' }}>▶ Start first session</button>
+                    <button onClick={() => launchGame(active)} style={{ marginTop:4, background:'#F26B2C', color:'#fff', border:'none', borderRadius:50, padding:'10px 20px', fontSize:13, fontWeight:700, cursor:'pointer' }}>▶ Start first session</button>
                   </div>
                 ) : (
                   <div style={{ display:'flex', flexDirection:'column', gap:10 }}>

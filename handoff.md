@@ -31,7 +31,10 @@ The whole perf pass IS committed + deployed to Vercel production (READY). Commit
 - **`decoding="async"` on every remaining raw `<img>` (108 total) + `loading="lazy"` on all foreground sprites/avatars (86)**. Full-bleed scene backgrounds (per-screen LCP) are decoding-only, never lazy. MiloBubble kept as `<img>` (shared emoji-DOM fallback) + lazy/async. Story chapter + optimized auth hero verified in preview, no console errors.
 - Note: a few dynamic-src avatars (menu/parent/profile fill-type) stayed `<img>` + lazy/async (next/image `fill` on those was low-value/higher-risk).
 
-### CHECKUP GATE → NOW OPTIONAL (2026-07-03, user decision — DONE)
+### CHECKUP GATE → NEW-KIDS-ONCE + GRANDFATHER EXISTING (2026-07-03, FINAL user decision — DONE)
+Refined after the user saw "fully optional" also skipped it for NEW kids. **Final rule (user-picked): a brand-new learner does the checkup ONCE on first "Start learning"; established kids skip it and are never asked again.** `launchGame(d: LearnerData)` now: `isEstablished(d) || await hasCheckup(id)` → `/menu`, else → `/diagnostic?band=…`. `isEstablished` = any play history (`stats.last_played_at` / `total_xp>0` / `progress.length` / `sessions.length`). Both "Start learning" call sites pass the full `LearnerData`. Menu backstop stays REMOVED (the parent button is the real entry; avoids the earlier re-gate fighting). Completion sets `markCheckupDone` (localStorage) synchronously → "once" holds same-device even if the DB save lags. `tsc`+tests+build clean. **Committed + deployed.** (Superseded the "fully optional" commit `20992e8`.)
+
+### CHECKUP GATE → NOW OPTIONAL (2026-07-03, user decision — SUPERSEDED by the block above)
 User report: existing kid profiles were forced into the checkup on every "Start learning" (the mandatory gate from `065c443` — existing kids predate the feature so they had no checkup record → re-gated every time; nothing had saved since deploy). **Verified this was NOT the perf pass** (checkup/persist/save/active-learner code untouched by all perf commits). **User chose: make the checkup FULLY OPTIONAL.** Removed both play gates:
 - `parent/page.tsx` `launchGame` — no longer async, no `hasCheckup` gate; "Start learning" → `/menu` directly.
 - `menu/page.tsx` — deleted the `checkupState` redirect effect + splash-hold + `hasCheckup`/`isCheckupCached` import.
