@@ -14,7 +14,7 @@
  * score / red X); the failure cap is a generous safety backstop, not the primary UX lever.
  */
 import {
-  type Band, PROBE_ENTRY, NODE_BY_ID, prereqsOf, blockedBy, chapterFor,
+  type Band, PROBE_ENTRY, NODE_BY_ID, prereqsOf, dependentsOf, blockedBy, chapterFor,
 } from './skillGraph'
 
 const BAND_ORDER: Record<Band, number> = { '3-5': 0, '6-8': 1, '9-11': 2, '12-14': 3, '15-16': 4, '17-18': 5 }
@@ -23,13 +23,20 @@ const BAND_LABEL: Record<Band, string> = {
 }
 
 export interface ProbeConfig { maxItems: number; maxFailures: number }
+// maxItems bounds the probe LENGTH (the primary UX lever); maxFailures is a generous anti-fear
+// backstop, NOT the length lever (the descent gets EASIER toward the bottom, ending on success).
+// The teen bands probe MORE strands (6–8 entries) and can descend MANY bands to a cross-band root
+// (a grade-11 kid rooting at a grade-3 multiplication gap), so their caps scale up with band —
+// a too-tight failure cap gets spent on the entry probes alone and truncates before the true root.
 export const DEFAULT_CONFIG: Record<Band, ProbeConfig> = {
-  '3-5': { maxItems: 8, maxFailures: 4 },
+  // 3–5 is a READINESS check (Phase 3): probe every milestone for a complete picture. The items are
+  // parent-observed (the child isn't failing on-screen), so a higher failure cap isn't anti-fear-unsafe.
+  '3-5': { maxItems: 12, maxFailures: 8 },
   '6-8': { maxItems: 10, maxFailures: 5 },
   '9-11': { maxItems: 15, maxFailures: 7 },
-  '12-14': { maxItems: 14, maxFailures: 7 },
-  '15-16': { maxItems: 16, maxFailures: 8 },
-  '17-18': { maxItems: 16, maxFailures: 8 },
+  '12-14': { maxItems: 16, maxFailures: 12 },
+  '15-16': { maxItems: 20, maxFailures: 16 },
+  '17-18': { maxItems: 24, maxFailures: 20 },
 }
 
 interface Frame { node: string; queue: string[] }   // node failed; queue = untried prereqs (deepest-first)
@@ -84,8 +91,11 @@ function normalize(s: ProbeState): void {
     if (top.queue.length === 0) {
       // all prerequisites pass → `top.node` is the deepest broken skill on this branch = a root
       if (!s.roots.includes(top.node)) s.roots.push(top.node)
-      s.frames.length = 0   // this entry is diagnosed; move on
-      s.agenda.shift()
+      s.frames.length = 0   // this entry is diagnosed; move on to the next agenda entry
+      // NOTE: do NOT shift the agenda here — the failed entry was already shifted off in record()
+      // when it was first probed. Shifting again would skip the NEXT entry (breaking multi-gap
+      // detection and, for the 3–5 readiness band whose entries are leaves, dropping milestones).
+      // The skip-seen loop below advances past any entry already visited during this descent.
       continue
     }
     break // need to probe top.queue[0]
@@ -145,6 +155,8 @@ export interface Diagnosis {
   gapBandsBelow: number
   planSkills: string[]        // ordered, foundational-first
   planChapters: string[]      // remediation sequence (chapters.ts ids)
+  probedPassed: string[]      // all skills that passed (readiness report leads with these)
+  probedFailed: string[]      // all skills that failed (readiness "growing edges")
 }
 
 /** Fallback root finder if the probe stopped (caps) before confirming a clean root. */
@@ -195,6 +207,7 @@ export function diagnose(s: ProbeState): Diagnosis {
     rootGap, secondGap,
     blockedSkills: blocked, downstreamHighlights, reachesAlgebra,
     strengths, workingLevel, gapBandsBelow, planSkills, planChapters,
+    probedPassed: [...s.passed], probedFailed: [...s.failed],
   }
 }
 
@@ -204,6 +217,13 @@ export function runProbe(band: Band, answer: (skillId: string) => boolean, confi
   let id: string | null
   while ((id = nextSkill(s)) !== null) s = record(s, id, answer(id))
   return { state: s, result: diagnose(s) }
+}
+
+/** Step 8 — the week-N re-check. Re-probe the remediated root gap plus its 1–2 nearest dependents
+ *  (the skills it was blocking). "Gap closed" = the root skill now passes; the dependents are bonus
+ *  signal that the child can build on it again. Small on purpose (anti-fear; it's a check, not a test). */
+export function recheckSkills(rootSkill: string): string[] {
+  return [rootSkill, ...dependentsOf(rootSkill).slice(0, 2)]
 }
 
 /** Transitive prerequisite closure of a skill (tests use it to simulate a realistic learner). */

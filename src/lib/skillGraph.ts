@@ -113,12 +113,12 @@ export const SKILL_NODES: SkillNode[] = [
 
 /** Where the probe starts for each band (grade-expected nodes); it branches DOWN on failure. */
 export const PROBE_ENTRY: Record<Band, string[]> = {
-  '3-5':   ['e.matchQty', 'e.addWithin10'],
-  '6-8':   ['p.addTo100', 'p.multConcept', 'p.fractionsIntro'],
+  '3-5':   ['e.counting10', 'e.numeralRecog', 'e.matchQty', 'e.compare', 'e.numberOrder', 'e.addWithin10', 'e.shapes2d', 'e.patterns'],
+  '6-8':   ['p.compare100', 'p.addTo100', 'p.multConcept', 'p.fractionsIntro'],
   '9-11':  ['i.multFacts', 'i.fractionEquiv', 'i.division', 'i.decimals', 'i.areaPerimeter', 'i.dataGraphs'],
-  '12-14': ['m.equationsIneq', 'm.ratioProportion', 'm.signedOps', 'm.rationalOps'],
-  '15-16': ['a.linearEqIneq', 'a.factoring', 'a.functions'],
-  '17-18': ['c.functionToolkit', 'c.quadraticAnalysis', 'c.rationalFns'],
+  '12-14': ['m.signedOps', 'm.rationalOps', 'm.ratioProportion', 'm.equationsIneq', 'm.linearRel', 'm.geomMeasure'],
+  '15-16': ['a.signedFluency', 'a.linearEqIneq', 'a.functions', 'a.quadratics', 'a.systems', 'a.geomTransform', 'a.proofTrig'],
+  '17-18': ['c.introCalculus', 'c.trigGraphsId', 'c.expLog', 'c.complex', 'c.conics', 'c.systemsMatrices', 'c.sequencesSeries', 'c.statsInference'],
 }
 
 // ── Derived lookups + helpers (pure; the probe engine builds on these) ─────────
