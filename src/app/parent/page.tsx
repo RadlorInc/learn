@@ -12,7 +12,7 @@ import {
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/lib/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/lib/pendingDiagnostic'
 import { setActivePlan } from '@/lib/activePlan'
-import { hasCheckup, markCheckupDone } from '@/lib/checkup'
+import { markCheckupDone } from '@/lib/checkup'
 import { setActiveLearner } from '@/lib/supabase/useLearnerSession'
 import { createClient } from '@/lib/supabase/client'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner } from '@/lib/supabase/types'
@@ -142,12 +142,11 @@ export default function ParentDashboard() {
     }
   }
 
-  // Play gate: a child can only enter the app once their mandatory checkup is done. If not, they're
-  // routed into the checkup instead (cache-first, then their account — so it passes cross-device).
-  async function launchGame(learner: Learner) {
+  // The checkup is OPTIONAL — no gate before play. "Start learning" goes straight into the app.
+  // Parents can still run the checkup by choice via "Find starting point" (findStartingPoint).
+  function launchGame(learner: Learner) {
     setActiveLearner(learner)
-    if (await hasCheckup(learner.id)) router.push('/menu')
-    else router.push(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
+    router.push('/menu')
   }
 
   // The diagnostic front door for a signed-in learner: set them active (so the result saves + items

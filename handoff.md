@@ -31,8 +31,15 @@ The whole perf pass IS committed + deployed to Vercel production (READY). Commit
 - **`decoding="async"` on every remaining raw `<img>` (108 total) + `loading="lazy"` on all foreground sprites/avatars (86)**. Full-bleed scene backgrounds (per-screen LCP) are decoding-only, never lazy. MiloBubble kept as `<img>` (shared emoji-DOM fallback) + lazy/async. Story chapter + optimized auth hero verified in preview, no console errors.
 - Note: a few dynamic-src avatars (menu/parent/profile fill-type) stayed `<img>` + lazy/async (next/image `fill` on those was low-value/higher-risk).
 
+### CHECKUP GATE → NOW OPTIONAL (2026-07-03, user decision — DONE)
+User report: existing kid profiles were forced into the checkup on every "Start learning" (the mandatory gate from `065c443` — existing kids predate the feature so they had no checkup record → re-gated every time; nothing had saved since deploy). **Verified this was NOT the perf pass** (checkup/persist/save/active-learner code untouched by all perf commits). **User chose: make the checkup FULLY OPTIONAL.** Removed both play gates:
+- `parent/page.tsx` `launchGame` — no longer async, no `hasCheckup` gate; "Start learning" → `/menu` directly.
+- `menu/page.tsx` — deleted the `checkupState` redirect effect + splash-hold + `hasCheckup`/`isCheckupCached` import.
+- Kept: the diagnostic itself + the parent "Find starting point" / "Re-check the gap" buttons (now opt-in). `markCheckupDone` still recorded on completion (harmless). `tsc` + tests + build clean.
+- **NOT changed (separate marketing funnel, flag if unwanted):** the cold logged-out front door `/` → `/diagnostic` and the cold diagnostic report's signup CTA. Those are acquisition, not a play gate on existing kids.
+
 ### STILL OPEN
-1. **Human signed-in verification** of the parent-dashboard RPC + insights rollup + the `getSession` swap on live (auth-gated; smoke-tested via SQL + covered by client fallbacks + build, but not driven signed-in).
+1. **Human signed-in verification** of: (a) "Start learning" now goes straight to the menu (no checkup) — auth-gated, couldn't drive in preview; (b) the parent-dashboard RPC + insights rollup + `getSession` swap on live.
 2. The pre-existing launch items still stand (custom SMTP, Sentry DSN, Stripe, full CSP, leaked-password toggle, real week-6 cohort).
 
 ## LATEST SESSION (2026-07-02 — PRODUCTION-READINESS HARDENING + MANDATORY CHECKUP GATE) — **ALL SHIPPED**
