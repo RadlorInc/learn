@@ -39,9 +39,20 @@ Cold-traffic diagnostic capture was silently lost on signup: `takePendingDiagnos
 Local build → prod Supabase, throwaway account: signup → SQL email-confirm → **H1 redirect** → add 3–5 learner → diagnostic **saved (root `e.patterns`, client_id populated)** → **H5 recheck** (parent card renders, gap_closed=true saved). All test data deleted; prod clean.
 ⚠️ **LESSON: this triggered a Supabase email-bounce warning** (signed up `milo.e2e.check@gmail.com`, a non-existent address → bounced). **Future signed-in E2E must create the user via direct `insert into auth.users` with `email_confirmed_at` preset (NO email sent), not via app signup.** Consider custom SMTP for prod.
 
-### NOT DONE / next
-1. **Verify the Vercel deploy went READY** and smoke-test on prod (`www.mi2utor.com`): cold link → checkup + Log-in button; login redirect; checkup gate on an existing learner. The whole batch (audit fixes + checkup gate) is now shipped; the prod migrations were applied first + are backward-compatible.
-2. **M2** (network-error looks like empty "no learners"/"no activity") — deferred, needs a retry-affordance UX pass.
+### BACKLOG-CLEARING PASS (2026-07-02, later) — DONE this session
+- **M2 DONE** — `getMyLearners` now THROWS on a real DB error (was returning `[]` → looked like "kids deleted"); the parent dashboard's existing `loadError` + "Try again" catches it. `/insights` got an `error` state + "↻ Retry" (checks `s.error`/`e.error`). `queries.ts`, `insights/page.tsx`.
+- **anon-revoke DONE** — `revoke execute … from anon, public` on `sync_diagnostic`/`sync_recheck` (migration `20260703170000`, **APPLIED to prod**). Advisor re-run: the anon-executable WARNs are GONE; only the intended authenticated-executable WARNs remain (same as `sync_session`).
+- **Week-6 re-check nudge (in-app) DONE** — `getCheckupStatus(learnerId)` (latest diagnosis age + whether a later re-check closed it) → a **"🔔 It's been N weeks — re-check <name>'s gap"** button on the parent card when a real gap is ≥6 weeks old and not yet closed. `queries.ts`, `parent/page.tsx`.
+
+### GENUINELY REMAINING (needs a decision / dependency / is a separate track — NOT auto-doable)
+1. **Prod smoke test** on `www.mi2utor.com` (cold link → checkup + Log-in; login redirect; checkup gate; the week-6 nudge on an old diagnosis). ~2 min click-through.
+2. **Week-6 auto-nudge email/cron** — the IN-APP nudge is done; automating the reminder needs a cron/edge-function + **email, which is blocked on custom SMTP** (the built-in mailer already tripped a bounce warning). Set up SMTP (Resend/SES/Postmark) first, then a scheduled job.
+3. **Monetization (Stripe)** — deliberately deferred; needs pricing/business decisions + a Stripe account + keys. Best placed at the report or the week-6 "gap closed" moment. Not auto-buildable.
+4. **Full CSP** — needs a nonce-based Next 16 pass (script-src) or it breaks the app; `X-Frame-Options: DENY` already covers clickjacking. Separate careful task.
+5. **Leaked-password protection** — one-click enable in the Supabase dashboard (Auth → Password); no code/MCP path.
+6. **Baseline schema migration** — the base tables/policies live only in the prod dashboard (not in `supabase/migrations/`); a `supabase db dump` (CLI) into a baseline file makes migrations reproducible. Needs the CLI, not the MCP.
+7. **Marginal Lows (left on purpose):** progress-dots dead state (cosmetic), `advancePlan` localStorage-write stall (private-mode only; DB has the authoritative plan), cap-truncated plan under-listing later gaps (root is still correct — changing caps risks the anti-fear UX). Documented, not worth the churn/risk.
+8. **Efficacy discipline** (real cohort week-6 number + teacher sign-off on graph spine edges) — not code. Plus the older architectural backlog (vitest+CI, RPC consolidation, AR-hook cleanup) is a separate, larger track.
 3. Optional: full CSP; `revoke execute … from anon` on `sync_*` (pre-existing benign advisor WARN); the older deferred backlog below.
 
 ---

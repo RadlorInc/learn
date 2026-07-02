@@ -42,21 +42,25 @@ export async function getMyLearners(): Promise<Learner[]> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data: access } = await supabase
+  const { data: access, error: accessErr } = await supabase
     .from('learner_access')
     .select('learner_id')
     .eq('parent_id', user.id)
 
-  if (!access || access.length === 0) return []
+  // Distinguish a real failure from genuinely-empty: THROW on error so the caller shows a
+  // "couldn't load — retry" state instead of an empty list that reads as "your children vanished".
+  if (accessErr) throw new Error(`learner_access: ${accessErr.message}`)
+  if (!access || access.length === 0) return []   // no learners — a true empty
 
   const ids = access.map((a: { learner_id: string }) => a.learner_id)
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('learners')
     .select('*')
     .in('id', ids)
     .order('created_at', { ascending: true })
 
+  if (error) throw new Error(`learners: ${error.message}`)
   return (data ?? []) as Learner[]
 }
 
@@ -484,6 +488,36 @@ export async function getLatestGap(learnerId: string): Promise<{ band: string; r
     .maybeSingle()
   if (error || !data) return null
   return { band: data.band as string, rootGap: (data.root_gap_skill as string | null) ?? null }
+}
+
+/** Week-N re-check status for the guarantee loop: is a re-check DUE (a real gap, diagnosed ≥6 weeks
+ *  ago, and not already closed by a later re-check)? Powers the in-app nudge on the parent dashboard. */
+export async function getCheckupStatus(learnerId: string): Promise<
+  { rootGap: string | null; band: string; weeksSince: number; recheckDue: boolean } | null
+> {
+  const supabase = db()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data: sess } = await supabase
+    .from('diagnostic_sessions')
+    .select('band, root_gap_skill, completed_at')
+    .eq('learner_id', learnerId)
+    .order('completed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (!sess) return null
+  const completedAt = sess.completed_at ? new Date(sess.completed_at as string).getTime() : Date.now()
+  const weeksSince = Math.floor((Date.now() - completedAt) / (7 * 86_400_000))
+  const { data: rc } = await supabase
+    .from('diagnostic_rechecks')
+    .select('gap_closed')
+    .eq('learner_id', learnerId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const alreadyClosed = rc?.gap_closed === true
+  const recheckDue = !!sess.root_gap_skill && weeksSince >= 6 && !alreadyClosed
+  return { rootGap: (sess.root_gap_skill as string | null) ?? null, band: sess.band as string, weeksSince, recheckDue }
 }
 
 // Offline queueing lives entirely in the browser (IndexedDB via kv, see

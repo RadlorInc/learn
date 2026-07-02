@@ -29,34 +29,43 @@ const WINDOW_DAYS = 90
 
 export default function InsightsPage() {
   const router = useRouter()
-  const [state, setState] = useState<'loading' | 'ready' | 'no-auth'>('loading')
+  const [state, setState] = useState<'loading' | 'ready' | 'no-auth' | 'error'>('loading')
   const [learners, setLearners] = useState<Learner[]>([])
   const [sessions, setSessions] = useState<Sess[]>([])
   const [events, setEvents] = useState<Evt[]>([])
 
   async function load() {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setState('no-auth'); return }
-    const ls = await getMyLearners()
-    const ids = ls.map(l => l.id)
-    if (ids.length) {
-      const since = new Date(Date.now() - WINDOW_DAYS * DAY).toISOString()
-      const [s, e] = await Promise.all([
-        supabase.from('sessions').select('learner_id, phase, correct_count, wrong_count, completed_at, started_at').in('learner_id', ids).gte('started_at', since),
-        supabase.from('learner_events').select('learner_id, event, created_at').in('learner_id', ids).gte('created_at', since),
-      ])
-      setSessions((s.data ?? []) as Sess[])
-      setEvents((e.data ?? []) as Evt[])
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setState('no-auth'); return }
+      const ls = await getMyLearners()
+      const ids = ls.map(l => l.id)
+      if (ids.length) {
+        const since = new Date(Date.now() - WINDOW_DAYS * DAY).toISOString()
+        const [s, e] = await Promise.all([
+          supabase.from('sessions').select('learner_id, phase, correct_count, wrong_count, completed_at, started_at').in('learner_id', ids).gte('started_at', since),
+          supabase.from('learner_events').select('learner_id, event, created_at').in('learner_id', ids).gte('created_at', since),
+        ])
+        // Don't let a failed read masquerade as "no activity" — surface it as an error the user can retry.
+        if (s.error) throw new Error(s.error.message)
+        if (e.error) throw new Error(e.error.message)
+        setSessions((s.data ?? []) as Sess[])
+        setEvents((e.data ?? []) as Evt[])
+      }
+      setLearners(ls)
+      setState('ready')
+    } catch (err) {
+      console.warn('[insights] load failed:', err)
+      setState('error')
     }
-    setLearners(ls)
-    setState('ready')
   }
   useEffect(() => { load() }, [])
   useEffect(() => { if (state === 'no-auth') router.replace('/auth') }, [state, router])
 
   const m = useMemo(() => computeMetrics(learners, sessions, events), [learners, sessions, events])
 
+  if (state === 'error') return <Shell><p style={S.dim}>Couldn&apos;t load insights.</p><button onClick={() => { setState('loading'); load() }} style={S.refresh}>↻ Retry</button></Shell>
   if (state !== 'ready') return <Shell><p style={S.dim}>{state === 'no-auth' ? 'Sign in required…' : 'Loading insights…'}</p></Shell>
 
   return (

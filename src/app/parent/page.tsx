@@ -7,7 +7,7 @@ import {
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
   getMyAccessRole, deleteLearnerPermanently, removeMyselfFromLearner,
-  getMyGrades, getGradeChapterIds, getLatestGap, type GradeSummary,
+  getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
 } from '@/lib/supabase/queries'
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/lib/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/lib/pendingDiagnostic'
@@ -46,6 +46,7 @@ export default function ParentDashboard() {
   const [actionMsg,    setActionMsg]    = useState<string | null>(null)
   const [confirming,   setConfirming]   = useState<string | null>(null) // learnerId being confirmed
   const [activeChapterIds, setActiveChapterIds] = useState<ChapterType[]>([])
+  const [recheckDue, setRecheckDue] = useState<{ weeks: number } | null>(null)   // week-6 nudge for the active learner
 
   async function loadAll() {
     setLoading(true)
@@ -168,6 +169,17 @@ export default function ParentDashboard() {
       .catch(() => { if (!cancelled) setActiveChapterIds(fallback) })
     return () => { cancelled = true }
   }, [active?.learner.id, active?.learner.grade_id, active?.learner.age_group])
+
+  // Week-6 re-check nudge: surface the guarantee loop in-app when a re-check is due for this learner.
+  useEffect(() => {
+    setRecheckDue(null)
+    if (!active) return
+    let cancelled = false
+    getCheckupStatus(active.learner.id)
+      .then(st => { if (!cancelled && st?.recheckDue) setRecheckDue({ weeks: st.weeksSince }) })
+      .catch(() => { /* best-effort nudge */ })
+    return () => { cancelled = true }
+  }, [active?.learner.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return (
     <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#FCEAB6', fontSize:48 }}>🦊</div>
@@ -309,6 +321,11 @@ export default function ParentDashboard() {
                 ))}
               </div>
 
+              {recheckDue && (
+                <button onClick={() => recheckGap(active.learner)} style={{ width:'100%', padding:'13px 14px', marginBottom:10, background:'rgba(255,255,255,0.95)', color:'#B45309', border:'2px solid #F6C453', borderRadius:16, fontSize:14, fontWeight:800, cursor:'pointer', textAlign:'left', lineHeight:1.35 }}>
+                  🔔 It&apos;s been {recheckDue.weeks} weeks — time to re-check {active.learner.display_name}&apos;s gap →
+                </button>
+              )}
               <button onClick={() => launchGame(active.learner)} style={{ width:'100%', padding:'14px', background:'#fff', color:'#F26B2C', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>
                 ▶ Start learning
               </button>
