@@ -26,7 +26,7 @@ begin
   select id into v_session_id
   from public.diagnostic_sessions
   where learner_id = p_learner_id
-  order by completed_at desc nulls last, created_at desc
+  order by completed_at desc nulls last, started_at desc
   limit 1;
 
   if v_session_id is null then

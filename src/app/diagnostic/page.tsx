@@ -122,6 +122,7 @@ export default function DiagnosticPage() {
   const [attempt, setAttempt] = useState(0)
   const ctxRef = useRef<DiagContext>({})
   const finalStateRef = useRef<ProbeState | null>(null)   // probe state at report time (for capture/save)
+  const persistRef = useRef<Promise<void> | null>(null)   // the in-flight DB save (awaited before we navigate away)
 
   const accent = accentFor(band)
   const readiness = band === '3-5'
@@ -145,13 +146,15 @@ export default function DiagnosticPage() {
   // Launch the plan (step 6). SIGNED-IN → save the arranged plan for this learner + drop into the REAL
   // app (the menu owns learner-loading + progress-saving launch; the plan card walks them through it).
   // COLD/preview → the free preview door (a taste of the first chapter; no profile to save to yet).
-  const startPlan = () => {
+  const startPlan = async () => {
     const chs = result?.planChapters ?? []
     const ch = chs[0]
     if (ch == null) { window.location.href = window.location.origin + '/story'; return }
     const lid = activeLearner()?.id
     if (hasLearner && lid) {
       setActivePlan(lid, band, chs)
+      // Don't lose the diagnosis to a fast click: let the in-flight save finish (cap so we never hang).
+      try { await Promise.race([persistRef.current ?? Promise.resolve(), new Promise(r => setTimeout(r, 4000))]) } catch { /* best-effort */ }
       window.location.href = window.location.origin + '/menu?plan=1'
       return
     }
@@ -197,7 +200,7 @@ export default function DiagnosticPage() {
         const dx = diagnose(next.s)
         finalStateRef.current = next.s
         setResult(dx); setPhase('report')
-        void persistDiagnosis(band, next.s, dx)   // signed-in → saves; cold/preview → skips cleanly
+        persistRef.current = persistDiagnosis(band, next.s, dx)   // signed-in → saves; cold/preview → skips cleanly
       } else setSlot(next)
     }, 320)
   }
