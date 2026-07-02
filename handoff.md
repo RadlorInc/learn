@@ -1,14 +1,46 @@
 # Session Handoff — Milo Story Mode
 
-_Last updated: 2026-07-02 (production-readiness hardening pass)_
+_Last updated: 2026-07-02 (PERFORMANCE OPTIMIZATION PASS — NOT committed; 2 prod RPC migrations APPLIED)_
 
 Concise, current state. Per-chapter detail + conventions live in the auto-memory (`project-milo-6-8-story-conversion.md`, `feedback-story-demo-audio-pattern.md`, `project-milo-*-chapter.md`, `project-milo-demo-voice.md`, `feedback-viewport-scaling.md`, …) — read those for the deep notes.
 
-## LATEST SESSION (2026-07-02 — PRODUCTION-READINESS HARDENING + MANDATORY CHECKUP GATE) — **COMMITTED + PUSHED to `main` → Vercel; 2 migrations APPLIED to prod**
+## LATEST SESSION (2026-07-02 — PERFORMANCE OPTIMIZATION PASS) — **NOT COMMITTED; 2 migrations APPLIED to prod**
 
-Ran a broad production-readiness audit (6 parallel agents), fixed the findings, and built the mandatory checkup gate. **All code is COMMITTED + PUSHED to `main` → auto-deploys to Vercel production.** **Two migrations applied to prod** (both backward-compatible; they were applied before the deploy, so nothing broke). `tsc` + `next build` clean throughout.
+Senior-perf-engineer review + execution ("optimize for millions of users"). `tsc` + `npm test` (15/15) + `next build` all clean. **Nothing committed/pushed** (awaiting user OK). **2 additive SECURITY INVOKER RPC migrations APPLIED to prod** (`qaymxunzlarwusogwyak`) — advisors show ZERO new warnings (only the pre-existing intentional DEFINER + leaked-password ones).
 
-### MANDATORY CHECKUP GATE (new feature this session) — built + live-verified, NOT committed
+### Shipped this pass (all verified)
+- **Assets recompressed 244 MB → 22.8 MB (−90.7%)** via a one-time `sharp` pass (`public/assets`, 226 files, SAME filenames/formats → zero code refs changed; backgrounds cap 1536px, characters/shapes 768, objects 512; jpeg q78 / palette-png). **Originals backed up** in the session scratchpad (`.../scratchpad/assets-backup`). Sample decode-verified (alpha intact); Counting chapter live-verified in preview (crisp, no errors).
+- **`next.config.ts`:** added `images` (AVIF/WebP, deviceSizes, 1yr cache — `sharp` present) + `experimental.optimizePackageImports` for the Supabase clients.
+- **Parent dashboard N+1 killed:** new **`get_parent_dashboard()` RPC** (migration `20260703180000`, APPLIED) = whole dashboard in ONE round trip; client wired with a **fallback** to the per-learner path (`getParentDashboard` in `queries.ts`). Also: `access_role` now rides along on `getMyLearners` (`LearnerWithRole`), and the remaining per-learner reads run in parallel.
+- **`/insights` server-side aggregation:** new **`get_insights_rollup(p_since)` RPC** (migration `20260703190000`, APPLIED) pre-aggregates the heavy `sessions` table + returns only compact rollups + raw `daily_complete` rows (client keeps the tested LOCAL-day streak math). Page prefers the RPC, **falls back** to the legacy raw-row path. `active_days` is UTC-day (documented); first/last/retention/accuracy/streak exact.
+- **`getUser()` → `getSession()`** (no auth-server round trip) on the hot read paths: `getMyLearners`, `getMyAccessRole`, `getLearnerBootstrap`, parent load, insights load. RLS still the real boundary. ⚠️ worth one human signed-in tap-through of parent+menu to sanity-check auth.
+- **Shared `useViewport` hook** (`src/lib/useViewport.ts`, rAF-throttled + unchanged-dim guard + lazy window init) → migrated **34 duplicate story hooks + ForestWalk** onto it (kills resize re-render storms; `useScale`/scale-number variants left alone).
+- **ForestWalk `BiomeBackground`:** now mounts the heavy scrolling bg only for the active + fading-from biome (was ALL biomes at once → 3×8=24 bg imgs; steady state now 1). Cross-fade preserved. `ImageScroll` 8-copy left as-is (fw_bg −25% scroll math is tuned; not worth the seam risk).
+- **`/story` preview route code-split** (was static-importing ~40 chapter components) → `next/dynamic`, mirroring `/game`. (`/game` was already lazy; `/teen-preview` already lazy.)
+- **Menu bootstrap 30s TTL** (module-scoped) + **streak reconcile once-per-day guard** (`daily.ts` `milo_streak_recon_<id>`) → stop re-fetching on every menu mount / menu↔game bounce.
+- **FitBox:** dropped permanent `will-change:transform` (fewer persistent GPU layers). Removed dead `easy-speech` dep.
+
+### Pre-existing bug FOUND (not caused here, NOT fixed — needs an art/product call)
+`/assets/characters/milo-happy.png` + `milo-thinking.png` are referenced in **~18 places** (root `/`, auth, shop, daily, CountingChapter, MiloBubble, ~7 lessons…) but **exist in neither the tree nor the original backup** → 404 (most sites have an `onError`/emoji fallback, so it's silent). The real poses are `milo_idle.png`/`milo_a.png`/etc. Fix = copy an existing pose to those two filenames (zero code change) OR add the real art. Deferred: picking the pose is an art decision.
+
+### NEXT / still open from this pass
+1. **Commit + deploy** the whole batch (user must ask). The 2 RPCs are already live on prod but UNUSED until the client deploys.
+2. **Human signed-in verification** of the parent-dashboard RPC + insights rollup + the `getSession` swap on live (auth-gated; smoke-tested via SQL + covered by client fallbacks + build, but not driven signed-in).
+3. **Optional deeper wins not done:** full `<img>`→`next/image` migration (recompression already captured ~90% of the bytes; next/image adds AVIF/srcset on top) + `loading="lazy"` on the 117 raw imgs; fix the `milo-happy.png` 404.
+4. The pre-existing launch items still stand (custom SMTP, Sentry DSN, Stripe, full CSP, leaked-password toggle, real week-6 cohort).
+
+## LATEST SESSION (2026-07-02 — PRODUCTION-READINESS HARDENING + MANDATORY CHECKUP GATE) — **ALL SHIPPED**
+
+`main` at **`d3b77b8`** → Vercel production (3 deploys this session, all READY). Ran a broad production-readiness audit (6 parallel agents), fixed the findings, built the mandatory checkup gate, cleared the safe backlog, and added tests + CI.
+- **Commits:** `065c443` (audit fixes + checkup gate) · `80128cf` (M2 + anon-revoke + week-6 nudge) · `d3b77b8` (tests + CI). All pushed; all deployed READY.
+- **3 migrations APPLIED to prod** (all backward-compatible, applied before their deploy): `diagnostic_idempotency` (H3), `insights_streak_indexes`, `revoke_anon_sync_rpcs`.
+- **GitHub Actions CI is GREEN** (tsc + vitest + next build on push/PR to main).
+- `tsc` + `next build` clean throughout.
+
+### What each still-open item needs (none are code I can finish solo):
+**custom SMTP** (email deliverability — the real launch blocker) · **Sentry DSN** (error monitoring) · **a real week-6 cohort** (efficacy) · dashboard toggle (leaked-password). Detail in "GENUINELY REMAINING" below.
+
+### MANDATORY CHECKUP GATE (new feature this session)
 The checkup (diagnostic) is now a **mandatory, once-per-child gate before play**. Decisions (locked w/ user): **per-child** (each learner takes it once; adding a 2nd kid → that kid must take it), **hard gate** (no play until done; parent dashboard stays open), **cold visitor must sign up** to proceed (no play-first taste).
 - **`src/lib/checkup.ts`** (NEW) — `hasCheckup(learnerId)` = cache-first (`milo_checkup_done_<id>`) then DB (`getLatestGap`, which re-caches) → works cross-device; `markCheckupDone` / `isCheckupCached`. On-track kids (session, no gap) count as done.
 - **Set on persist:** `markCheckupDone` in `diagnostic/page.tsx` persistDiagnosis + parent `handleAdd` cold replay.
@@ -47,15 +79,14 @@ Local build → prod Supabase, throwaway account: signup → SQL email-confirm �
 - **Live prod smoke DONE** — `curl` on `milo-story-mode.vercel.app`: root **200** + security headers live (X-Frame-Options: DENY / nosniff / Referrer-Policy); `/diagnostic` **200**; `/teen-preview` **200** (funnel); the 3 dev-preview routes **serve not-found content in prod (blocked)** — NOTE it's a *soft* 404 (HTTP 200, not 404; cosmetic only, content is not accessible). The signed-in click-through on the live URL by a human is the only smoke bit left (equivalent was verified locally against prod Supabase).
 
 ### GENUINELY REMAINING (needs a decision / dependency / is a separate track — NOT auto-doable)
-1. **Prod smoke test** on `www.mi2utor.com` (cold link → checkup + Log-in; login redirect; checkup gate; the week-6 nudge on an old diagnosis). ~2 min click-through.
+1. **Human signed-in click-through** on the live `www.mi2utor.com` (cold link → checkup + Log-in; login redirect; checkup gate; the week-6 nudge on an old diagnosis). The edge/observable smoke is DONE (curl: headers + routes + dev-preview blocked); the equivalent signed-in flow was verified locally against prod Supabase — only a human tap-through on the live URL is left.
 2. **Week-6 auto-nudge email/cron** — the IN-APP nudge is done; automating the reminder needs a cron/edge-function + **email, which is blocked on custom SMTP** (the built-in mailer already tripped a bounce warning). Set up SMTP (Resend/SES/Postmark) first, then a scheduled job.
 3. **Monetization (Stripe)** — deliberately deferred; needs pricing/business decisions + a Stripe account + keys. Best placed at the report or the week-6 "gap closed" moment. Not auto-buildable.
 4. **Full CSP** — needs a nonce-based Next 16 pass (script-src) or it breaks the app; `X-Frame-Options: DENY` already covers clickjacking. Separate careful task.
 5. **Leaked-password protection** — one-click enable in the Supabase dashboard (Auth → Password); no code/MCP path.
 6. **Baseline schema migration** — the base tables/policies live only in the prod dashboard (not in `supabase/migrations/`); a `supabase db dump` (CLI) into a baseline file makes migrations reproducible. Needs the CLI, not the MCP.
 7. **Marginal Lows (left on purpose):** progress-dots dead state (cosmetic), `advancePlan` localStorage-write stall (private-mode only; DB has the authoritative plan), cap-truncated plan under-listing later gaps (root is still correct — changing caps risks the anti-fear UX). Documented, not worth the churn/risk.
-8. **Efficacy discipline** (real cohort week-6 number + teacher sign-off on graph spine edges) — not code. Plus the older architectural backlog (vitest+CI, RPC consolidation, AR-hook cleanup) is a separate, larger track.
-3. Optional: full CSP; `revoke execute … from anon` on `sync_*` (pre-existing benign advisor WARN); the older deferred backlog below.
+8. **Efficacy discipline** (real cohort week-6 number + teacher sign-off on graph spine edges) — not code. Plus the older architectural backlog (RPC consolidation, AR-hook cleanup) is a separate, larger track. (vitest+CI is now DONE.)
 
 ---
 
