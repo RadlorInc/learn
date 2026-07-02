@@ -1,12 +1,16 @@
 # Session Handoff — Milo Story Mode
 
-_Last updated: 2026-07-02 (PERFORMANCE OPTIMIZATION PASS — NOT committed; 2 prod RPC migrations APPLIED)_
+_Last updated: 2026-07-03 (PERFORMANCE PASS + CHECKUP-GATE FIX — ALL SHIPPED to prod, `main`@`171a306`)_
 
 Concise, current state. Per-chapter detail + conventions live in the auto-memory (`project-milo-6-8-story-conversion.md`, `feedback-story-demo-audio-pattern.md`, `project-milo-*-chapter.md`, `project-milo-demo-voice.md`, `feedback-viewport-scaling.md`, …) — read those for the deep notes.
 
-## LATEST SESSION (2026-07-02 — PERFORMANCE OPTIMIZATION PASS) — **NOT COMMITTED; 2 migrations APPLIED to prod**
+## CURRENT STATE (2026-07-03) — **ALL SHIPPED + DEPLOYED (Vercel READY)**
 
-Senior-perf-engineer review + execution ("optimize for millions of users"). `tsc` + `npm test` (15/15) + `next build` all clean. **Nothing committed/pushed** (awaiting user OK). **2 additive SECURITY INVOKER RPC migrations APPLIED to prod** (`qaymxunzlarwusogwyak`) — advisors show ZERO new warnings (only the pre-existing intentional DEFINER + leaked-password ones).
+`main` at **`171a306`** → Vercel production READY. Everything below is committed, pushed, and live. `tsc` + `npm test` (15/15) + `next build` clean; Supabase advisors show ZERO new warnings. **2 additive SECURITY INVOKER RPC migrations APPLIED to prod** (`qaymxunzlarwusogwyak`): `get_parent_dashboard`, `get_insights_rollup`.
+
+**Session commits (all pushed + deployed READY):** `b1c078a` assets · `ad582dc` data RPCs · `116bfe0` client · `42df3f4` next/image+lazy · `20992e8`→`171a306` checkup-gate fix (grandfather). Plus handoff docs commits.
+
+**Genuinely open (needs YOU — none solo-codeable):** (1) human signed-in tap-through on live of the checkup flow + parent-dashboard/insights RPCs; (2) launch blockers — custom SMTP (deliverability), Sentry DSN (monitoring), Stripe, full CSP, leaked-password toggle, baseline schema dump, real week-6 cohort. (3) Minor: an existing kid that never played AND never did a checkup still gets the one-time checkup — grandfather is by play-history; offer "mark all current kids done" if unwanted.
 
 ### Shipped this pass (all verified)
 - **Assets recompressed 244 MB → 22.8 MB (−90.7%)** via a one-time `sharp` pass (`public/assets`, 226 files, SAME filenames/formats → zero code refs changed; backgrounds cap 1536px, characters/shapes 768, objects 512; jpeg q78 / palette-png). **Originals backed up** in the session scratchpad (`.../scratchpad/assets-backup`). Sample decode-verified (alpha intact); Counting chapter live-verified in preview (crisp, no errors).
