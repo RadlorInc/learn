@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  getMyLearners, getLearnerStats, getLearnerProgress,
+  getMyLearners, getParentDashboard, getLearnerStats, getLearnerProgress,
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
-  getMyAccessRole, deleteLearnerPermanently, removeMyselfFromLearner,
+  deleteLearnerPermanently, removeMyselfFromLearner,
   getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
 } from '@/lib/supabase/queries'
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/lib/useOfflineSync'
@@ -53,27 +53,39 @@ export default function ParentDashboard() {
     setLoadError(false)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      // Local session (no auth-server round trip); RLS guards the reads below.
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.replace('/auth'); return }
       setParentName(user.user_metadata?.full_name?.split(' ')[0] ?? 'there')
 
-      const [list, pendingInvites] = await Promise.all([
-        getMyLearners(),
+      // One RPC for the whole dashboard (stats+progress+recent-sessions+role for every learner).
+      // `null` means the RPC is unavailable → fall back to the per-learner query path.
+      const [dash, pendingInvites] = await Promise.all([
+        getParentDashboard(),
         getReceivedInvites(),
       ])
       setInvites(pendingInvites)
 
-      if (list.length === 0) {
-        setLearners([]); setSelected(null); return
+      let data: LearnerData[]
+      if (dash !== null) {
+        data = dash.map(d => ({ ...d, accessRole: d.learner.accessRole }))
+      } else {
+        // Fallback: role rides along on getMyLearners(); the 3 per-learner reads run in parallel.
+        const list = await getMyLearners()
+        data = await Promise.all(list.map(async learner => {
+          const [stats, progress, sessions] = await Promise.all([
+            getLearnerStats(learner.id),
+            getLearnerProgress(learner.id),
+            getRecentSessions(learner.id, 3),
+          ])
+          return { learner, stats, progress, sessions, accessRole: learner.accessRole }
+        }))
       }
 
-      const data = await Promise.all(list.map(async learner => ({
-        learner,
-        stats:      await getLearnerStats(learner.id),
-        progress:   await getLearnerProgress(learner.id),
-        sessions:   await getRecentSessions(learner.id, 3),
-        accessRole: await getMyAccessRole(learner.id),
-      })))
+      if (data.length === 0) {
+        setLearners([]); setSelected(null); return
+      }
 
       setLearners(data)
       setSelected(prev => {

@@ -37,14 +37,19 @@ export async function signOut() {
 
 // ─── Learners ─────────────────────────────────────────────────
 
-export async function getMyLearners(): Promise<Learner[]> {
+export type LearnerWithRole = Learner & { accessRole: 'owner' | 'viewer' }
+
+export async function getMyLearners(): Promise<LearnerWithRole[]> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  // getSession() reads the JWT from local storage (no network) — RLS is the real boundary
+  // on the reads below, so a locally-cached identity is sufficient for the "am I signed in" gate.
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) return []
 
   const { data: access, error: accessErr } = await supabase
     .from('learner_access')
-    .select('learner_id')
+    .select('learner_id, access_role')   // pull the role here so the caller never round-trips per learner
     .eq('parent_id', user.id)
 
   // Distinguish a real failure from genuinely-empty: THROW on error so the caller shows a
@@ -52,7 +57,11 @@ export async function getMyLearners(): Promise<Learner[]> {
   if (accessErr) throw new Error(`learner_access: ${accessErr.message}`)
   if (!access || access.length === 0) return []   // no learners — a true empty
 
-  const ids = access.map((a: { learner_id: string }) => a.learner_id)
+  const roleById = new Map(
+    (access as { learner_id: string; access_role: 'owner' | 'viewer' }[])
+      .map(a => [a.learner_id, a.access_role]),
+  )
+  const ids = [...roleById.keys()]
 
   const { data, error } = await supabase
     .from('learners')
@@ -61,7 +70,10 @@ export async function getMyLearners(): Promise<Learner[]> {
     .order('created_at', { ascending: true })
 
   if (error) throw new Error(`learners: ${error.message}`)
-  return (data ?? []) as Learner[]
+  return ((data ?? []) as Learner[]).map(l => ({
+    ...l,
+    accessRole: roleById.get(l.id) ?? 'viewer',
+  }))
 }
 
 export async function createLearner(
@@ -257,6 +269,61 @@ export async function getRecentSessions(learnerId: string, limit = 5): Promise<S
   return (data ?? []) as Session[]
 }
 
+// ─── Parent dashboard (single round trip) ─────────────────────
+
+export interface DashboardEntry {
+  learner:    LearnerWithRole
+  stats:      LearnerStats | null
+  progress:   LearnerProgress[]
+  sessions:   Session[]
+}
+
+/**
+ * The whole parent dashboard in ONE RPC round trip (was 4 queries per learner). Returns:
+ *  - the entries on success (empty array = signed in, no learners),
+ *  - `null` to signal the caller should fall back to the per-learner path (RPC missing/errored).
+ */
+export async function getParentDashboard(): Promise<DashboardEntry[] | null> {
+  const supabase = db()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user) return []
+
+  const { data, error } = await supabase.rpc('get_parent_dashboard')
+  if (error) { console.warn('[getParentDashboard] rpc failed, falling back:', error.message); return null }
+
+  const rows = (data ?? []) as {
+    learner: Learner; role: 'owner' | 'viewer'
+    stats: LearnerStats | null; progress: LearnerProgress[] | null; sessions: Session[] | null
+  }[]
+  return rows.map(r => ({
+    learner:  { ...r.learner, accessRole: r.role },
+    stats:    r.stats ?? null,
+    progress: r.progress ?? [],
+    sessions: r.sessions ?? [],
+  }))
+}
+
+// ─── Insights rollup (server-side aggregation) ────────────────
+
+export interface InsightsRollup {
+  per_learner: { learner_id: string; first_ms: number | null; last_ms: number | null; sessions: number; active_days: number }[]
+  accuracy:    { correct: number; wrong: number; practice_sessions: number }
+  event_counts:{ chapter_open: number; practice_complete: number; lesson_skip: number; daily_open: number; daily_complete: number }
+  daily_days:  { learner_id: string; created_at: string }[]
+}
+
+/**
+ * Pre-aggregated retention/funnel data for /insights in ONE round trip — no raw session/event
+ * rows shipped to the browser. Returns `null` to signal the caller should fall back to the legacy
+ * raw-row path (RPC missing/errored). `sinceISO` bounds the window.
+ */
+export async function getInsightsRollup(sinceISO: string): Promise<InsightsRollup | null> {
+  const supabase = db()
+  const { data, error } = await supabase.rpc('get_insights_rollup', { p_since: sinceISO })
+  if (error) { console.warn('[getInsightsRollup] rpc failed, falling back:', error.message); return null }
+  return data as InsightsRollup
+}
+
 // ─── Menu bootstrap (single round trip) ───────────────────────
 
 export interface LearnerBootstrap {
@@ -282,8 +349,11 @@ export type BootstrapResult =
  */
 export async function getLearnerBootstrap(learnerId: string): Promise<BootstrapResult> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { status: 'no-auth' }
+  // Local session read (no network). The RPC below is SECURITY DEFINER and does its own
+  // auth.uid() ownership check, so this is only the "signed in at all?" gate — a null return
+  // from the RPC still signals no-access.
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user) return { status: 'no-auth' }
 
   const { data, error } = await supabase.rpc('get_learner_bootstrap', { p_learner_id: learnerId })
   if (error) { console.error('[getLearnerBootstrap] rpc failed:', error.message); return { status: 'no-auth' } }
@@ -675,7 +745,8 @@ export async function getMyAccessRole(
   learnerId: string
 ): Promise<'owner' | 'viewer' | null> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) return null
 
   const { data } = await supabase

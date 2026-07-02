@@ -163,21 +163,29 @@ export function computeStreak(dayKeys: string[]): { current: number; longest: nu
  * local last-completed day (covering a just-finished day not yet flushed) and
  * recompute. Best-effort, online-only, never throws.
  */
+const reconKey = (id: string) => `milo_streak_recon_${id}`
+
 export async function reconcileStreakFromDB(learnerId: string): Promise<void> {
   try {
     if (typeof navigator !== 'undefined' && !navigator.onLine) return
+    const today = dayKey()
+    const local = readState(learnerId)
+    // Once today's completion is already reflected locally AND we've reconciled today, the DB read
+    // cannot change the current streak — skip it. Without this, the 400-day events read fired on
+    // EVERY menu mount; now it runs at most once per learner per calendar day.
+    if (kv.get(reconKey(learnerId)) === today && local.lastDay === today) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = createClient() as any
-    // Bound the read (runs on every menu mount). daily_complete is ≤1/day, so ~400 days is a generous
-    // cap that still covers any realistic current streak while keeping the payload small forever.
+    // Bound the read. daily_complete is ≤1/day, so ~400 days is a generous cap that still covers any
+    // realistic current streak while keeping the payload small forever.
     const since = new Date(Date.now() - 400 * 86_400_000).toISOString()
     const { data, error } = await supabase
       .from('learner_events').select('created_at').eq('learner_id', learnerId).eq('event', 'daily_complete').gte('created_at', since)
     if (error || !data) return
-    const local = readState(learnerId)
     const days = new Set<string>(data.map((r: { created_at: string }) => dayKey(new Date(r.created_at))))
     if (local.lastDay) days.add(local.lastDay)
     const { current, longest, lastDay } = computeStreak([...days])
     kv.set(stateKey(learnerId), JSON.stringify({ lastDay, streak: current, longest: Math.max(longest, local.longest) }))
+    kv.set(reconKey(learnerId), today)
   } catch { /* offline / transient — local cache stands */ }
 }

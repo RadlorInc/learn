@@ -43,6 +43,12 @@ function shopStateMatchesServer(
   return true
 }
 
+// Short TTL so a menu→game→menu bounce doesn't re-run the full cross-device bootstrap (RPC +
+// merge + possible write) every time. Module-scoped so it survives component remounts within a
+// session; 30s is long enough to skip navigation churn, short enough to stay fresh.
+const _bootAt = new Map<string, number>()
+const BOOT_TTL_MS = 30_000
+
 export default function MainMenu() {
   const router = useRouter()
   const authed = useAuthGuard()
@@ -124,6 +130,10 @@ export default function MainMenu() {
           // Offline: local profile stands; nothing to pull/push.
           if (!navigator.onLine) return
 
+          // Skip the bootstrap round trip if we synced this learner very recently (navigation churn).
+          const lastBoot = _bootAt.get(learner.id) ?? 0
+          if (Date.now() - lastBoot < BOOT_TTL_MS) return
+
           // One round trip pulls access role + stats + progress + shop state.
           const boot = await getLearnerBootstrap(learner.id)
           // Not signed in yet / transient — leave the active learner untouched.
@@ -131,6 +141,9 @@ export default function MainMenu() {
           // Signed in but no access → stale or foreign active learner. Clear it
           // and bounce to the picker (stops the FK/RLS sync errors at the source).
           if (boot.status === 'no-access') { clearActiveLearner(); router.replace('/parent'); return }
+
+          // Successful sync — mark fresh so quick re-mounts within the TTL skip the round trip.
+          _bootAt.set(learner.id, Date.now())
 
           const { stats, progress, state } = boot.data
           applyServerProgress(stats, progress, state)
