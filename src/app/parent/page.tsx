@@ -291,7 +291,7 @@ export default function ParentDashboard() {
             <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
               {learners.map(({ learner }) => (
                 <button key={learner.id} onClick={() => setSelected(learner.id)} style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 16px', borderRadius:50, border:'2px solid', borderColor:selected === learner.id ? '#F26B2C' : '#e5e7eb', background:selected === learner.id ? '#FFF4D6' : '#fff', cursor:'pointer', fontSize:14, fontWeight:700, transition:'all 0.15s' }}>
-                  <img src={AVATAR_SRCS[learner.avatar_index]} alt="avatar" style={{width:28,height:28,objectFit:'cover',borderRadius:'50%',border:'2px solid var(--outline)'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+                  <img src={AVATAR_SRCS[learner.avatar_index]} alt="avatar" loading="lazy" decoding="async" style={{width:28,height:28,objectFit:'cover',borderRadius:'50%',border:'2px solid var(--outline)'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
                   {learner.display_name}
                 </button>
               ))}
@@ -306,7 +306,7 @@ export default function ParentDashboard() {
             <div style={{ background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', borderRadius:20, padding:'20px 20px 24px', color:'#fff', marginBottom:16, boxShadow:'0 4px 20px rgba(242,107,44,0.3)' }}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
                 <div style={{ width:52, height:52, borderRadius:14, background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>
-                  <img src={['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png'][active.learner.avatar_index]} alt="avatar" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:12}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+                  <img src={['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png'][active.learner.avatar_index]} alt="avatar" loading="lazy" decoding="async" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:12}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
                 </div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:20, fontWeight:800 }}>{active.learner.display_name}</div>

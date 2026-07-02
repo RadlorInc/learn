@@ -111,6 +111,8 @@ export default function ProfilePage() {
             <img
               src={AVATAR_SRCS[profile.avatarIndex] ?? AVATAR_SRCS[0]}
               alt="avatar"
+              loading="lazy"
+              decoding="async"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />

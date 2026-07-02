@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -100,10 +101,13 @@ export default function AuthPage() {
     }}>
       {/* Logo */}
       <div style={{ textAlign: 'center' }}>
-        <img
+        <Image
           src="/assets/characters/milo-happy.png"
           alt="Milo"
-          style={{ width: 90, height: 90, objectFit: 'contain', marginBottom: 8 }}
+          width={90}
+          height={90}
+          priority
+          style={{ objectFit: 'contain', marginBottom: 8 }}
           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
         <h1 style={{

@@ -99,7 +99,7 @@ function Background({ bg, world }: { bg: number; world: CmpWorld }) {
       {world.bgs.map((b, i) => (
         <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
-          <img src={b.img} alt="" draggable={false}
+          <img src={b.img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -119,7 +119,7 @@ function MiloHost({ left, milo }: { left: number; milo: CmpWorld['milo'] }) {
               <span style={{ fontSize: 80, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 34 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -129,7 +129,7 @@ function MiloHost({ left, milo }: { left: number; milo: CmpWorld['milo'] }) {
 function ItemImg({ item, size }: { item: Item; size: string }) {
   const [missing, setMissing] = useState(false)
   if (missing) return <span style={{ fontSize: size, lineHeight: 1 }}>{item.emoji}</span>
-  return <img src={item.img} alt="" draggable={false} onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
+  return <img src={item.img} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
 }
 
 // ─── A pan: a group of animals (small n) OR a numeral card (big n) + a numeral chip ────

@@ -96,7 +96,7 @@ function Background({ scene, scenes }: { scene: SceneId; scenes: SceneId[] }) {
       {scenes.map(s => (
         <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: SCENES[s].grad }} />
-          <img src={SCENES[s].img} alt="" draggable={false}
+          <img src={SCENES[s].img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -118,7 +118,7 @@ function MiloChef({ left, top, milo }: { left: number; top: number; milo: Kitche
               <span style={{ fontSize: 86, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', top: 2, fontSize: 40 }}>{milo.accessory}</span>
             </div>
-          : <img src={milo.srcs[step]} alt="Milo the chef" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={milo.srcs[step]} alt="Milo the chef" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -156,7 +156,7 @@ function CropSprite({ src, size, fallbackBg }: { src: string; size: number; fall
   if (missing) return <span style={{ display: 'block', width: boxW, height: size, borderRadius: '46%', background: fallbackBg, border: '2px solid rgba(0,0,0,.18)', animation: 'mk_appear .35s ease both' }} />
   return (
     <span style={{ display: 'block', position: 'relative', width: boxW, height: size, overflow: 'hidden', animation: 'mk_appear .35s ease both' }}>
-      <img src={src} alt="" draggable={false} onError={() => setMissing(true)}
+      <img src={src} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)}
         style={{ position: 'absolute', left: -b.x * s, top: -b.y * s, width: b.W * s, height: b.H * s, maxWidth: 'none' }} />
     </span>
   )
@@ -205,7 +205,7 @@ function BowlArt({ sprite, fallback, val, shown, symbolic }: { sprite: string; f
   const pile = buildPile(val, { cx: DES_W / 2, baseY: 112, size: sz, colFactor: 0.62, rowFactor: 0.56, rows: FRUIT_ROWS[val] ?? FRUIT_ROWS[9], rotSpread: 13 })
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <img src="/assets/objects/fruitbowl.png" alt="bowl" draggable={false} onError={() => setImgOk(false)} style={{ ...bowlImg, zIndex: 1 }} />
+      <img src="/assets/objects/fruitbowl.png" alt="bowl" draggable={false} decoding="async" loading="lazy" onError={() => setImgOk(false)} style={{ ...bowlImg, zIndex: 1 }} />
       {symbolic
         ? <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
             <div style={{ marginTop: -18 }}><Numeral val={val} color="#b3402e" /></div>
@@ -216,7 +216,7 @@ function BowlArt({ sprite, fallback, val, shown, symbolic }: { sprite: string; f
             </div>
           ))}
       {!symbolic && (
-        <img src="/assets/objects/fruitbowl.png" alt="" aria-hidden draggable={false} style={{ ...bowlImg, zIndex: 200, clipPath: 'inset(53% 0 0 0)', pointerEvents: 'none' }} />
+        <img src="/assets/objects/fruitbowl.png" alt="" aria-hidden draggable={false} decoding="async" loading="lazy" style={{ ...bowlImg, zIndex: 200, clipPath: 'inset(53% 0 0 0)', pointerEvents: 'none' }} />
       )}
     </div>
   )
@@ -254,7 +254,7 @@ function TrayArt({ sprite, fallback, val, shown, symbolic }: { sprite: string; f
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div style={{ position: 'absolute', left: trayLeft, top: trayTop, width: trayW, height: trayH, overflow: 'hidden', zIndex: 1 }}>
-        <img src="/assets/objects/bakingTray.png" alt="tray" draggable={false} onError={() => setImgOk(false)}
+        <img src="/assets/objects/bakingTray.png" alt="tray" draggable={false} decoding="async" loading="lazy" onError={() => setImgOk(false)}
           style={{ position: 'absolute', left: -TRAY_BBOX.x * sc, top: -TRAY_BBOX.y * sc, width: TRAY_BBOX.W * sc, height: TRAY_BBOX.H * sc, maxWidth: 'none' }} />
       </div>
       {symbolic
@@ -285,7 +285,7 @@ function TrayDrawn({ val, shown, symbolic, fallback }: { val: number; shown?: nu
 function Cherry() {
   const [m, setM] = useState(false)
   if (m) return <span style={{ fontSize: 24, marginBottom: -6, zIndex: 3, animation: 'mk_appear .35s ease both' }}>🍒</span>
-  return <img src="/assets/objects/cherry.png" alt="" draggable={false} onError={() => setM(true)} style={{ width: 32, height: 32, objectFit: 'contain', marginBottom: -10, zIndex: 3, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.25))', animation: 'mk_appear .35s ease both' }} />
+  return <img src="/assets/objects/cherry.png" alt="" draggable={false} decoding="async" loading="lazy" onError={() => setM(true)} style={{ width: 32, height: 32, objectFit: 'contain', marginBottom: -10, zIndex: 3, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.25))', animation: 'mk_appear .35s ease both' }} />
 }
 const CAKE_LAYERS = ['var(--apple-red-soft)', 'var(--sun-yellow-soft)', 'var(--garden-green-soft)', '#ffd6ea', 'var(--sky-blue-soft)', '#e6d6ff']
 const CAKE_LAYER_SRC = '/assets/objects/cakeLayer1.png'
@@ -295,7 +295,7 @@ function CakeArt({ val, shown }: { val: number; shown?: number }) {
   if (!imgOk) return <CakeDrawn val={val} shown={shown} />
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
-      <img src={CAKE_LAYER_SRC} alt="" onError={() => setImgOk(false)} style={{ display: 'none' }} />
+      <img src={CAKE_LAYER_SRC} alt="" decoding="async" loading="lazy" onError={() => setImgOk(false)} style={{ display: 'none' }} />
       {k > 0 && <Cherry />}
       {Array.from({ length: k }).map((_, i) => (
         <div key={i} style={{ width: 132, height: 28, backgroundImage: `url(${CAKE_LAYER_SRC})`, backgroundSize: '100% auto', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', animation: 'mk_appear .35s ease both' }} />

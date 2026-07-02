@@ -86,7 +86,7 @@ function Background({ scene, scenes }: { scene: Scene; scenes: Scene[] }) {
       {scenes.map(s => (
         <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: SCENE_INFO[s].grad }} />
-          <img src={SCENE_INFO[s].bg} alt="" draggable={false}
+          <img src={SCENE_INFO[s].bg} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -107,7 +107,7 @@ function MiloHost({ left, milo }: { left: number; milo: RecogWorld['milo'] }) {
               <span style={{ fontSize: 110, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 12, right: 20, fontSize: 50 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -154,7 +154,7 @@ function PaintedDoor({ scene, w, onError }: { scene: Scene; w: number; onError: 
   const s = w / bb.w
   return (
     <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: w, height: h, overflow: 'hidden' }}>
-      <img src={SCENE_SPRITE[scene]!} alt="" draggable={false} onError={onError}
+      <img src={SCENE_SPRITE[scene]!} alt="" draggable={false} decoding="async" loading="lazy" onError={onError}
         style={{ position: 'absolute', left: -bb.x * s, top: -bb.y * s, width: bb.W * s, height: bb.H * s, maxWidth: 'none' }} />
     </div>
   )
@@ -208,7 +208,7 @@ function RecogItem({ scene, kind, num, idx, state, scale, left, top, depth = 0.3
           filter: litFilter }}>
           {kind === 'door'
             ? (imgOk ? <PaintedDoor scene={scene} w={W} onError={() => setImgOk(false)} /> : <DoorFace scene={scene} scale={dscale} />)
-            : <img src={kind === 'balloon' ? '/assets/objects/balloon.png' : '/assets/objects/bus.png'} alt="" draggable={false}
+            : <img src={kind === 'balloon' ? '/assets/objects/balloon.png' : '/assets/objects/bus.png'} alt="" draggable={false} decoding="async" loading="lazy"
                 onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0.001' }}
                 style={{ width: '100%', height: '100%', objectFit: 'contain', filter: `hue-rotate(${hue}deg) saturate(1.05)` }} />}
         </div>

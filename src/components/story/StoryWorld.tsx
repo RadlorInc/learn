@@ -245,7 +245,7 @@ export default function StoryWorld({ world, onExit }: { world: World; onExit?: (
 
       {/* Milo + speech bubble */}
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, width: '100%', maxWidth: 540 }}>
-        <img src="/assets/characters/milo_idle.png" alt="Milo"
+        <img src="/assets/characters/milo_idle.png" alt="Milo" decoding="async" loading="lazy"
           style={{ width: 64, height: 64, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 4px 8px rgba(61,37,22,.2))', animation: 's_walk 3s ease-in-out infinite' }}
           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
         <div style={{ background: '#fff', border: '3px solid var(--outline)', borderRadius: '18px 18px 18px 4px', padding: '10px 14px', flex: 1,

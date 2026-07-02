@@ -20,7 +20,7 @@ export function TintedSprite({ src, size, hex, emoji }: { src: string; size: str
   return (
     <div style={{ width: size, height: size, position: 'relative', isolation: 'isolate', display: 'block' }}>
       <div style={{ position: 'absolute', inset: 0, background: hex, ...mask }} />
-      <img src={src} alt="" draggable={false} onError={() => setMissing(true)}
+      <img src={src} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
     </div>
   )

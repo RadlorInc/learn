@@ -127,7 +127,7 @@ function Background({ scenario, scenes }: { scenario: Scenario; scenes: Scenario
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#86ca63' }}>
       {scenes.map(s => {
         const c = SCENE[s]
-        return <img key={s} src={c.bg} alt="" draggable={false}
+        return <img key={s} src={c.bg} alt="" draggable={false} decoding="async"
           onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transform: c.zoom ? 'scale(1.4)' : 'none', transformOrigin: 'center', opacity: s === scenario ? 1 : 0, transition: 'opacity .6s ease' }} />
       })}
@@ -176,7 +176,7 @@ function MiloTop({ left, top, size = 148 }: { left: number; top: number; size?: 
     <div style={{ position: 'fixed', left: `${left}%`, top: `${top}%`, transform: 'translate(-50%,-50%)', zIndex: 40, width: sz, height: sz, transition: 'left .55s cubic-bezier(.34,1.3,.64,1), top .55s cubic-bezier(.34,1.3,.64,1)' }}>
       {missing
         ? <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle at 50% 38%, #ffb066, #f26b2c)', border: '4px solid #fff', boxShadow: '0 4px 10px rgba(0,0,0,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>🐴</div>
-        : <img src="/assets/characters/milo_top.png" alt="Milo" draggable={false} onError={() => setMissing(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.35))' }} />}
+        : <img src="/assets/characters/milo_top.png" alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.35))' }} />}
     </div>
   )
 }
@@ -195,7 +195,7 @@ function OrderItem({ n, left, top, placed, wrong, onTap, size = 124, src, aria }
         {missing
           ? <div style={{ width: '100%', height: '100%', borderRadius: '46% 46% 50% 50% / 56% 56% 44% 44%', background: placed ? '#a6dd84' : (wrong ? '#f3b0a0' : '#cabda9'), border: `4px solid ${placed ? '#6fbe3f' : (wrong ? '#d9512f' : '#9c8f7a')}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: sz * 0.42, color: '#3d2516' }}>{n}</div>
           : <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              <img src={src} alt="" draggable={false} onError={() => setMissing(true)}
+              <img src={src} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)}
                 style={{ width: '100%', height: '100%', objectFit: 'contain', filter: placed ? 'drop-shadow(0 0 12px rgba(111,190,63,.7))' : 'drop-shadow(0 4px 5px rgba(0,0,0,.4))' }} />
               <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: sz * 0.4, color: '#3d2516' }}>{n}</span>
             </div>}
@@ -299,7 +299,7 @@ function Leader({ left, y, src, emoji }: { left: number; y: number; src: string;
   return (
     <div style={{ position: 'fixed', left: `${left}%`, top: `${y}%`, transform: 'translate(-50%,-92%)', zIndex: 36, width: w, height: h }}>
       {m ? <div style={{ fontSize: 110, transform: 'scaleX(-1)' }}>{emoji}</div>
-        : <img src={src} alt="" draggable={false} onError={() => setM(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 5px 7px rgba(0,0,0,.3))' }} />}
+        : <img src={src} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setM(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 5px 7px rgba(0,0,0,.3))' }} />}
     </div>
   )
 }
@@ -307,7 +307,7 @@ function Leader({ left, y, src, emoji }: { left: number; y: number; src: string;
 function CornerMilo({ left, y }: { left: number; y: number }) {
   const [m, setM] = useState(false)
   const h = 150 * useScale()
-  return <img src={m ? '/assets/characters/milo_idle.png' : '/assets/characters/milo_idle.png'} alt="Milo" draggable={false} onError={() => setM(true)}
+  return <img src={m ? '/assets/characters/milo_idle.png' : '/assets/characters/milo_idle.png'} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setM(true)}
     style={{ position: 'fixed', left: `${left}%`, top: `${y}%`, transform: 'translate(-50%,-100%)', zIndex: 35, width: h * 0.8, height: h, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.3))' }} />
 }
 function LineItem({ n, left, top, placed, wrong, onTap, c }: { n: number; left: number; top: number; placed: boolean; wrong: boolean; onTap: () => void; c: SceneCfg }) {
@@ -324,7 +324,7 @@ function LineItem({ n, left, top, placed, wrong, onTap, c }: { n: number; left: 
         {m
           ? <div style={{ width: '100%', height: '100%', borderRadius: 14, background: placed ? '#a6dd84' : '#4f9fd4', border: '4px solid #2e6e9e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.3, color: '#fff' }}>{n}</div>
           : <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              <img src={c.src} alt="" draggable={false} onError={() => setM(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: placed ? 'drop-shadow(0 0 10px rgba(111,190,63,.8))' : 'drop-shadow(0 3px 4px rgba(0,0,0,.35))' }} />
+              <img src={c.src} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setM(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: placed ? 'drop-shadow(0 0 10px rgba(111,190,63,.8))' : 'drop-shadow(0 3px 4px rgba(0,0,0,.35))' }} />
               <NumChip d={d} n={n} />
             </div>}
       </button>
@@ -364,12 +364,12 @@ const LinePlay: React.FC<{ nums: number[]; c: SceneCfg; onSubmit: (correct: bool
 // ─── collect mechanic (Fishing: fish→bucket · Sky: stars→basket) ────────────────
 function Container({ src, left, top }: { src: string; left: number; top: number }) {
   const b = 118 * useScale()
-  return <img src={src} alt="" draggable={false} style={{ position: 'fixed', left: `${left}%`, top: `${top}%`, transform: 'translate(-50%,-50%)', zIndex: 28, width: b, height: b, objectFit: 'contain', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.3))' }} />
+  return <img src={src} alt="" draggable={false} decoding="async" loading="lazy" style={{ position: 'fixed', left: `${left}%`, top: `${top}%`, transform: 'translate(-50%,-50%)', zIndex: 28, width: b, height: b, objectFit: 'contain', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.3))' }} />
 }
 function Collector({ src, fallback, left, top }: { src: string; fallback: string; left: number; top: number }) {
   const [s, setS] = useState(src)
   const sz = 150 * useScale()
-  return <img src={s} alt="Milo" draggable={false} onError={() => setS(fallback)} style={{ position: 'fixed', left: `${left}%`, top: `${top}%`, transform: 'translate(-50%,-50%)', zIndex: 27, width: sz, height: sz, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.3))' }} />
+  return <img src={s} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setS(fallback)} style={{ position: 'fixed', left: `${left}%`, top: `${top}%`, transform: 'translate(-50%,-50%)', zIndex: 27, width: sz, height: sz, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.3))' }} />
 }
 function CollectItem({ n, left, top, caught, wrong, onTap, c }: { n: number; left: number; top: number; caught: boolean; wrong: boolean; onTap: () => void; c: SceneCfg }) {
   const [m, setM] = useState(false)
@@ -386,7 +386,7 @@ function CollectItem({ n, left, top, caught, wrong, onTap, c }: { n: number; lef
         {m
           ? <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#ffd34d', border: '4px solid #e0a020', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.4, color: '#7a5300' }}>{n}</div>
           : <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              <img src={c.src} alt="" draggable={false} onError={() => setM(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 3px 4px rgba(0,0,0,.3))' }} />
+              <img src={c.src} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setM(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 3px 4px rgba(0,0,0,.3))' }} />
               <span style={{ position: 'absolute', top: '-8%', left: '50%', transform: 'translateX(-50%)', background: '#fff', border: '3px solid var(--milo-orange)', borderRadius: '50%', width: d, height: d, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: d * 0.56, color: 'var(--milo-orange)' }}>{n}</span>
             </div>}
       </button>

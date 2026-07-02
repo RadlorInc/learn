@@ -104,7 +104,7 @@ export function PtMilo({ left = 9 }: { left?: number }) {
       <div style={{ width: '100%', height: '100%', animation: 'pt_float 3.6s ease-in-out infinite' }}>
         {missing
           ? <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}><span style={{ fontSize: 58, filter: 'drop-shadow(0 0 10px rgba(120,160,255,.6))' }}>🦊</span></div>
-          : <img src="/assets/characters/milo_explorer.png" alt="Milo" draggable={false} onError={() => setMissing(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 6px 14px rgba(0,0,0,.5))' }} />}
+          : <img src="/assets/characters/milo_explorer.png" alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 6px 14px rgba(0,0,0,.5))' }} />}
       </div>
     </div>
   )

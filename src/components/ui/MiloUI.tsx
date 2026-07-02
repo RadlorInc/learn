@@ -180,6 +180,8 @@ export function MiloBubble({ children, miloSrc = '/assets/characters/milo-happy.
       <img
         src={miloSrc}
         alt="Milo"
+        loading="lazy"
+        decoding="async"
         style={{ width: 80, height: 80, objectFit: 'contain', flexShrink: 0 }}
         onError={e => {
           const el = e.target as HTMLImageElement

@@ -20,7 +20,7 @@ function ItemBadge({ src, emoji, tint }: { src: string; emoji: string; tint?: st
   const wrap: React.CSSProperties = { position: 'absolute', bottom: 6, right: 8, width: 'clamp(46px,8vh,72px)', height: 'clamp(46px,8vh,72px)', filter: 'drop-shadow(0 3px 5px rgba(0,0,0,.4))' }
   if (tint) return <div style={wrap}><TintedSprite src={src} size="100%" hex={tint} emoji={emoji} /></div>
   if (missing) return <span style={{ position: 'absolute', bottom: 8, right: 10, fontSize: 'clamp(28px,5vh,44px)', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.35))' }}>{emoji}</span>
-  return <img src={src} alt="" draggable={false} onError={() => setMissing(true)}
+  return <img src={src} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)}
     style={{ ...wrap, objectFit: 'contain' }} />
 }
 
@@ -37,7 +37,7 @@ export default function WorldSelect({ title = 'Where shall we go today?', worlds
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <img src="/assets/characters/milo_explorer.png" alt="" draggable={false} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+        <img src="/assets/characters/milo_explorer.png" alt="" draggable={false} decoding="async" loading="lazy" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
           style={{ width: 'clamp(48px,8vh,76px)', height: 'clamp(48px,8vh,76px)', objectFit: 'contain' }} />
         <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(22px,4.4vh,38px)', color: 'var(--ink)' }}>{title}</h1>
       </div>
@@ -52,7 +52,7 @@ export default function WorldSelect({ title = 'Where shall we go today?', worlds
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 12px 0 rgba(61,37,22,.18)' }}
             onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 8px 0 rgba(61,37,22,.18)' }}>
             <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', background: '#cfe8df' }}>
-              {world.bgImage && <img src={world.bgImage} alt="" draggable={false} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+              {world.bgImage && <img src={world.bgImage} alt="" draggable={false} decoding="async" loading="lazy" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
               {/* a REAL item sprite from the world (not an emoji); emoji only if no sprite is given */}
               {world.itemImage

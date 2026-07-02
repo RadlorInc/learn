@@ -105,7 +105,7 @@ function Background({ bg, world }: { bg: number; world: TimeWorld }) {
       {world.bgs.map((b, i) => (
         <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
-          <img src={b.img} alt="" draggable={false}
+          <img src={b.img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: world.dark ? 0.8 : 1 }} />
         </div>
@@ -125,7 +125,7 @@ function MiloHost({ left, milo }: { left: number; milo: TimeWorld['milo'] }) {
               <span style={{ fontSize: 80, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 34 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -135,7 +135,7 @@ function MiloHost({ left, milo }: { left: number; milo: TimeWorld['milo'] }) {
 function Sprite({ img, emoji, size }: { img: string; emoji: string; size: string }) {
   const [missing, setMissing] = useState(false)
   if (missing) return <span style={{ fontSize: size, lineHeight: 1 }}>{emoji}</span>
-  return <img src={img} alt="" draggable={false} onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
+  return <img src={img} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
 }
 
 // The little "what Milo is doing now" card (top-left, below the Menu button); shuffles each round.

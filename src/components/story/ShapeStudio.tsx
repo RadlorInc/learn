@@ -80,7 +80,7 @@ function Background({ bg, world }: { bg: number; world: ShWorld }) {
       {world.bgs.map((b, i) => (
         <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
-          <img src={b.img} alt="" draggable={false} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          <img src={b.img} alt="" draggable={false} decoding="async" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       ))}
@@ -99,7 +99,7 @@ function MiloHost({ left, milo }: { left: number; milo: ShWorld['milo'] }) {
               <span style={{ fontSize: 72, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 10, right: 12, fontSize: 30 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -111,7 +111,7 @@ function Shape({ name, size }: { name: string; size: number }) {
   const [missing, setMissing] = useState(false)
   if (is3D(name)) {
     if (missing) return <span style={{ fontSize: size * 0.9, lineHeight: 1 }}>{EMOJI_3D[name]}</span>
-    return <img src={`/assets/objects/solid_${name}.png`} alt="" draggable={false} onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.25))' }} />
+    return <img src={`/assets/objects/solid_${name}.png`} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.25))' }} />
   }
   return <ShapeView name={name} size={size} />
 }

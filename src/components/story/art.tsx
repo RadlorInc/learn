@@ -88,7 +88,7 @@ export function Backdrop({ kind }: { kind: BackdropKind }) {
 // ─── Objects ───────────────────────────────────────────────────
 export function Firefly({ lit, size = 56 }: { lit: boolean; size?: number }) {
   return (
-    <img src="/assets/objects/firefly.png" alt="firefly" draggable={false} width={size} height={size}
+    <img src="/assets/objects/firefly.png" alt="firefly" draggable={false} decoding="async" loading="lazy" width={size} height={size}
       style={{ objectFit: 'contain', transition: 'opacity .3s ease, filter .3s ease',
         opacity: lit ? 1 : 0.5, filter: lit ? 'drop-shadow(0 0 9px #fff3b0)' : 'grayscale(.55) brightness(.92)' }} />
   )
@@ -224,7 +224,7 @@ export function CountItem({ kind, on, size = 56, variant = 0, blend = false }: {
     )
   }
   return (
-    <img src={srcs[variant % srcs.length]} alt={kind} draggable={false} width={size} height={size} onError={() => setMissing(true)}
+    <img src={srcs[variant % srcs.length]} alt={kind} draggable={false} decoding="async" loading="lazy" width={size} height={size} onError={() => setMissing(true)}
       style={{ objectFit: 'contain', transition: 'transform .18s ease, filter .25s ease',
         filter: on
           ? (glow ? 'drop-shadow(0 0 16px #fff3b0) brightness(1.05)' : 'drop-shadow(0 0 5px #fff) drop-shadow(0 6px 7px rgba(0,0,0,.45)) brightness(1.06)')
@@ -240,7 +240,7 @@ export function CountStage({ kind, children }: { kind: CountKind; children: Reac
   if (kind === 'apple') {
     return (
       <div style={{ position: 'relative', width: 250, height: 250, margin: '0 auto', display: 'flex', justifyContent: 'center' }}>
-        <img src={STAGE_TREE} alt="" aria-hidden draggable={false}
+        <img src={STAGE_TREE} alt="" aria-hidden draggable={false} decoding="async" loading="lazy"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
         {/* apples clustered over the canopy */}
         <div style={{ position: 'absolute', top: 26, left: '50%', transform: 'translateX(-50%)', width: 170,
@@ -274,7 +274,7 @@ export function DoorArt({ n, highlight }: { n: number; highlight?: boolean }) {
 }
 
 export function Apple({ size = 44 }: { size?: number }) {
-  return <img src="/assets/objects/apple.png" alt="apple" draggable={false} width={size} height={size} style={{ objectFit: 'contain' }} />
+  return <img src="/assets/objects/apple.png" alt="apple" draggable={false} decoding="async" loading="lazy" width={size} height={size} style={{ objectFit: 'contain' }} />
 }
 
 export function Berry({ size = 26 }: { size?: number }) {

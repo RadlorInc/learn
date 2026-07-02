@@ -263,7 +263,7 @@ function Shell({step,miloMood,bubble,children,nextReady,onBack,onSkip}:{
 
       {/* Milo + bubble */}
       <div style={{display:'flex',alignItems:'flex-end',gap:10,width:'100%',maxWidth:520}}>
-        <img src={src} alt="Milo" style={{
+        <img src={src} alt="Milo" loading="lazy" decoding="async" style={{
           width:66,height:66,objectFit:'contain',flexShrink:0,
           filter:'drop-shadow(0 4px 8px rgba(61,37,22,.2))',
           animation:miloMood==='celebrate'?'miloJump 0.7s ease-in-out infinite':'miloIdle 3s ease-in-out infinite',

@@ -149,7 +149,7 @@ function Background({ kind, scenes }: { kind: ItemKind; scenes: Scene[] }) {
       {scenes.map(s => (
         <div key={s.kind} style={{ position: 'absolute', inset: 0, opacity: s.kind === kind ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: s.grad }} />
-          <img src={s.img} alt="" draggable={false}
+          <img src={s.img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -238,7 +238,7 @@ function Item({ kind, color, size, state = 'idle', depth = 0, shadow = true }: {
         <div style={{ width: box, height: tintH, position: 'relative', isolation: 'isolate', animation: anim,
           filter: lit ? glowFilter : 'drop-shadow(0 3px 4px rgba(0,0,0,.28))' }}>
           <div style={{ position: 'absolute', inset: 0, background: hex, ...mask }} />
-          <img src={src} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: pos, mixBlendMode: 'multiply' }} />
+          <img src={src} alt="" draggable={false} decoding="async" loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: pos, mixBlendMode: 'multiply' }} />
         </div>
       )}
 
@@ -357,7 +357,7 @@ function MiloBead({ left, milo }: { left: number; milo: PatternWorld['milo'] }) 
               <span style={{ fontSize: 92, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 8, right: 10, fontSize: 40 }}>{milo.accessory}</span>
             </div>
-          : <img src={milo.srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={milo.srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>

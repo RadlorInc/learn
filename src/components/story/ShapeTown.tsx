@@ -109,7 +109,7 @@ function Background({ scene, scenes }: { scene: SceneId; scenes: SceneId[] }) {
       {scenes.map(s => (
         <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: SCENES[s].grad }} />
-          <img src={SCENES[s].img} alt="" draggable={false}
+          <img src={SCENES[s].img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -133,7 +133,7 @@ function MiloExplorer({ left, milo }: { left: number; milo: ShapeWorld['milo'] }
               <span style={{ fontSize: 104, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 10, right: 14, fontSize: 44 }}>{milo.accessory}</span>
             </div>
-          : <img src={milo.srcs[step]} alt="Milo the explorer" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={milo.srcs[step]} alt="Milo the explorer" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>

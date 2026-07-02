@@ -2,6 +2,7 @@
 export const dynamic = 'force-static'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import BackButton from '@/components/ui/BackButton'
 import { useMiloStore } from '@/lib/store'
@@ -146,10 +147,12 @@ export default function ShopPage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             position: 'relative',
           }}>
-            <img
+            <Image
               src="/assets/characters/milo-happy.png"
               alt="Milo"
-              style={{ width: 130, height: 130, objectFit: 'contain',
+              width={130}
+              height={130}
+              style={{ objectFit: 'contain',
                 filter: 'drop-shadow(0 4px 10px rgba(61,37,22,.15))',
               }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}

@@ -148,7 +148,7 @@ function Background({ bg, world }: { bg: number; world: SpWorld }) {
       {world.bgs.map((b, i) => (
         <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
-          <img src={b.img} alt="" draggable={false}
+          <img src={b.img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -168,7 +168,7 @@ function MiloHost({ left, milo }: { left: number; milo: SpWorld['milo'] }) {
               <span style={{ fontSize: 88, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 38 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -180,7 +180,7 @@ function ItemImg({ item, size }: { item: Item; size: string }) {
   const [missing, setMissing] = useState(false)
   if (item.tint) return <div style={{ filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.25))' }}><TintedSprite src={item.img} size={size} hex={item.tint} emoji={item.emoji} /></div>
   if (missing) return <span style={{ fontSize: size, lineHeight: 1, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.2))' }}>{item.emoji}</span>
-  return <img src={item.img} alt="" draggable={false} onError={() => setMissing(true)}
+  return <img src={item.img} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)}
     style={{ width: size, height: size, objectFit: 'contain', filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.25))' }} />
 }
 

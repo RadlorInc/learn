@@ -143,7 +143,7 @@ function Background({ scene, scenes }: { scene: Scene; scenes: Scene[] }) {
       {scenes.map(s => (
         <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: SCENE[s].bg.grad }} />
-          <img src={SCENE[s].bg.img} alt="" draggable={false}
+          <img src={SCENE[s].bg.img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -163,7 +163,7 @@ function MiloHost({ left, milo }: { left: number; milo: PvWorld['milo'] }) {
               <span style={{ fontSize: 80, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 34 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -175,7 +175,7 @@ function ItemImg({ item, size }: { item: Item; size: string }) {
   const [missing, setMissing] = useState(false)
   if (item.tint) return <TintedSprite src={item.src} size={size} hex={item.tint} emoji={item.emoji} />
   if (missing) return <span style={{ fontSize: size, lineHeight: 1 }}>{item.emoji}</span>
-  return <img src={item.src} alt="" draggable={false} onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
+  return <img src={item.src} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
 }
 
 // A "ten" = a 2×5 TEN-FRAME of the world's items with a "10" tag under it (compact, clearly ten).

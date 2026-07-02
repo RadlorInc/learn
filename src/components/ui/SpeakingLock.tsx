@@ -64,6 +64,8 @@ export default function SpeakingLock() {
         <img
           src="/assets/characters/milo-happy.png"
           alt="Milo speaking"
+          loading="lazy"
+          decoding="async"
           style={{
             width: 32,
             height: 32,

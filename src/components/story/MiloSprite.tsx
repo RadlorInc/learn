@@ -26,7 +26,7 @@ export default function MiloSprite({ play = true, fps = 5, flip = false, style }
   const src = play ? WALK[i] : IDLE
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', ...style }}>
-      <img src={src} alt="Milo" draggable={false} style={{
+      <img src={src} alt="Milo" draggable={false} decoding="async" loading="lazy" style={{
         position: 'absolute', inset: 0, width: '100%', height: '100%',
         objectFit: 'contain', objectPosition: 'bottom center',
         transform: flip && play ? 'scaleX(-1)' : 'none',

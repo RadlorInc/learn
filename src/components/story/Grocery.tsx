@@ -91,7 +91,7 @@ function Background({ scene, scenes }: { scene: Scene; scenes: Scene[] }) {
       {scenes.map(s => (
         <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: SCENE[s].bg.grad }} />
-          <img src={SCENE[s].bg.img} alt="" draggable={false}
+          <img src={SCENE[s].bg.img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -111,7 +111,7 @@ function MiloHost({ left, milo }: { left: number; milo: ShopWorld['milo'] }) {
               <span style={{ fontSize: 100, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 14, right: 16, fontSize: 44 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -130,7 +130,7 @@ function Item({ cfg, size }: { cfg: SceneCfg; size: string }) {
     const cy = (((b.y + b.h / 2) / b.H) * 100).toFixed(1)
     return <span style={{ display: 'block', width: size, height: size, backgroundImage: `url(${cfg.itemImg})`, backgroundSize: `auto ${bgH}%`, backgroundPosition: `${cx}% ${cy}%`, backgroundRepeat: 'no-repeat', filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.2))' }} />
   }
-  return <img src={cfg.itemImg} alt="" draggable={false} onError={() => setMissing(true)}
+  return <img src={cfg.itemImg} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)}
     style={{ width: size, height: size, objectFit: 'contain', filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.2))' }} />
 }
 
@@ -164,7 +164,7 @@ function Container({ cfg, picked }: { cfg: SceneCfg; picked: number }) {
   if (cfg.cType === 'pizza') {
     return (
       <div style={{ position: 'relative', width: 'clamp(150px, 27vmin, 290px)', height: 'clamp(150px, 27vmin, 290px)' }}>
-        <img src={cfg.containerImg} alt="" draggable={false} onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0.001' }}
+        <img src={cfg.containerImg} alt="" draggable={false} decoding="async" loading="lazy" onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0.001' }}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' }} />
         {Array.from({ length: picked }).map((_, i) => {
           const [x, y] = PIZZA_SPOTS[i % PIZZA_SPOTS.length]

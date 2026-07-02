@@ -34,7 +34,7 @@ function MiloAvatar({ biome, walking }: { biome: BiomeId; walking: boolean }) {
   const [underwaterOk, setUnderwaterOk] = useState(true)
   if (biome === 'underwater' && underwaterOk) {
     return (
-      <img src="/assets/characters/milo_underwater.png" alt="Milo underwater" draggable={false}
+      <img src="/assets/characters/milo_underwater.png" alt="Milo underwater" draggable={false} decoding="async" loading="lazy"
         onError={() => setUnderwaterOk(false)}
         style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom center', animation: 'fw_boat 3.2s ease-in-out infinite' }} />
     )
@@ -57,7 +57,7 @@ function ImageScroll({ src, moving }: { src: string; moving: boolean }) {
       transform: moving ? undefined : 'translateX(0)',
       transition: moving ? 'none' : 'transform .7s ease-out' }}>
       {Array.from({ length: 8 }).map((_, i) => (
-        <img key={i} src={src} alt="" draggable={false}
+        <img key={i} src={src} alt="" draggable={false} decoding="async"
           style={{ height: '100%', width: 'auto', display: 'block', flexShrink: 0, transform: i % 2 ? 'scaleX(-1)' : 'none' }} />
       ))}
     </div>

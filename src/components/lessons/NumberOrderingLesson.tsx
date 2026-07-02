@@ -232,7 +232,7 @@ function Shell({step,miloMood,bubble,children,nextReady,onBack,onSkip}:{
       </div>
 
       <div style={{display:'flex',alignItems:'flex-end',gap:10,width:'100%',maxWidth:520}}>
-        <img src={src} alt="Milo" style={{width:66,height:66,objectFit:'contain',flexShrink:0,filter:'drop-shadow(0 4px 8px rgba(61,37,22,.2))',animation:miloMood==='celebrate'?'no_jump 0.7s ease-in-out infinite':'no_idle 3s ease-in-out infinite'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+        <img src={src} alt="Milo" loading="lazy" decoding="async" style={{width:66,height:66,objectFit:'contain',flexShrink:0,filter:'drop-shadow(0 4px 8px rgba(61,37,22,.2))',animation:miloMood==='celebrate'?'no_jump 0.7s ease-in-out infinite':'no_idle 3s ease-in-out infinite'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
         <div style={{background:'#fff',border:'3px solid var(--outline)',borderRadius:'18px 18px 18px 4px',padding:'10px 14px',flex:1,fontFamily:'var(--font-display)',fontWeight:700,fontSize:15,color:'var(--ink)',lineHeight:1.4,boxShadow:'0 4px 0 rgba(61,37,22,.07)'}}>{bubble}</div>
       </div>
 

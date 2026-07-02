@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useMiloStore, CHAPTER_ORDER, CHAPTER_NAMES } from '@/lib/store'
 import { useMiloSpeaker } from '@/lib/useMiloSpeaker'
@@ -81,8 +82,8 @@ export default function CelebrationModal({ onPlayAgain, onExit, exitLabel, hideN
         maxWidth: 360, width: '100%', textAlign: 'center',
         boxShadow: '0 8px 0 var(--outline)', position: 'relative', zIndex: 1,
       }}>
-        <img src="/assets/characters/milo-happy.png" alt="Milo"
-          style={{ width: 110, height: 110, objectFit: 'contain', marginBottom: 4 }}
+        <Image src="/assets/characters/milo-happy.png" alt="Milo" width={110} height={110}
+          style={{ objectFit: 'contain', marginBottom: 4 }}
           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
 
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--t-h1)', color: 'var(--ink)', margin: '0 0 4px' }}>

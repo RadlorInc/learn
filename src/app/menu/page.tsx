@@ -270,6 +270,8 @@ export default function MainMenu() {
             <img
               src={avatarSrc}
               alt="avatar"
+              loading="lazy"
+              decoding="async"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={e => { (e.target as HTMLImageElement).style.display='none' }}
             />
@@ -412,6 +414,8 @@ export default function MainMenu() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
               <img
                 src={CHAPTER_ASSETS[nextChapter]}
+                loading="lazy"
+                decoding="async"
                 style={{ width: 56, height: 56, objectFit: 'contain' }}
                 alt=""
               />

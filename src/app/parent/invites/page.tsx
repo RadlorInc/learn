@@ -163,7 +163,7 @@ export default function InvitesPage() {
                     background: selectedId === l.id ? 'var(--milo-orange-soft)' : '#fff',
                     cursor: 'pointer',
                   }}>
-                    <img src={['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png'][l.avatar_index]} alt="avatar" style={{width:22,height:22,objectFit:'cover',borderRadius:'50%'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} /> {l.display_name}
+                    <img src={['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png'][l.avatar_index]} alt="avatar" loading="lazy" decoding="async" style={{width:22,height:22,objectFit:'cover',borderRadius:'50%'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} /> {l.display_name}
                   </button>
                 ))}
               </div>

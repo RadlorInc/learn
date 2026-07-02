@@ -94,7 +94,7 @@ function Background({ bg, world }: { bg: number; world: ASWorld }) {
       {world.bgs.map((b, i) => (
         <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
-          <img src={b.img} alt="" draggable={false} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          <img src={b.img} alt="" draggable={false} decoding="async" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: world.dark ? 0.8 : 1 }} />
         </div>
       ))}
@@ -113,7 +113,7 @@ function MiloHost({ left, milo }: { left: number; milo: ASWorld['milo'] }) {
               <span style={{ fontSize: 72, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 10, right: 12, fontSize: 30 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -123,7 +123,7 @@ function MiloHost({ left, milo }: { left: number; milo: ASWorld['milo'] }) {
 function ItemSprite({ item, size }: { item: Item; size: number }) {
   const [m, setM] = useState(false)
   if (m) return <span style={{ fontSize: size * 0.92, lineHeight: 1 }}>{item.emoji}</span>
-  return <img src={item.img} alt="" draggable={false} onError={() => setM(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
+  return <img src={item.img} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setM(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
 }
 
 // A "ten" = a framed box of ten of the world's object (a mini one inside, with a 10 badge).

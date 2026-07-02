@@ -120,7 +120,7 @@ function Background({ scene, scenes }: { scene: Scene; scenes: Scene[] }) {
       {scenes.map(s => (
         <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: SCENE[s].bg.grad }} />
-          <img src={SCENE[s].bg.img} alt="" draggable={false}
+          <img src={SCENE[s].bg.img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -140,7 +140,7 @@ function MiloHost({ left, milo }: { left: number; milo: MWorld['milo'] }) {
               <span style={{ fontSize: 86, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 10, right: 12, fontSize: 38 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -150,7 +150,7 @@ function MiloHost({ left, milo }: { left: number; milo: MWorld['milo'] }) {
 function Sprite({ obj, size }: { obj: Obj; size: string }) {
   const [missing, setMissing] = useState(false)
   if (missing) return <span style={{ fontSize: size, lineHeight: 1, filter: 'drop-shadow(0 3px 4px rgba(0,0,0,.25))' }}>{obj.emoji}</span>
-  return <img src={obj.img} alt="" draggable={false} onError={() => setMissing(true)}
+  return <img src={obj.img} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)}
     style={{ width: size, height: size, objectFit: 'contain', filter: 'drop-shadow(0 3px 5px rgba(0,0,0,.3))' }} />
 }
 
@@ -196,7 +196,7 @@ function LengthView({ left, right, grown, reveal, winner, onPick, short }: {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', height: h,
         width: `${grown ? widthPct(s.val) : 12}%`, transition: 'width .8s cubic-bezier(.4,0,.2,1)',
         filter: win ? 'drop-shadow(0 0 16px var(--sun-yellow))' : 'none' }}>
-        <img src={s.obj.img} alt="" draggable={false} onError={e => { const t = e.currentTarget; t.style.display = 'none'; (t.nextSibling as HTMLElement).style.display = 'flex' }}
+        <img src={s.obj.img} alt="" draggable={false} decoding="async" loading="lazy" onError={e => { const t = e.currentTarget; t.style.display = 'none'; (t.nextSibling as HTMLElement).style.display = 'flex' }}
           style={{ width: '100%', height: '100%', objectFit: 'fill', filter: 'drop-shadow(0 3px 5px rgba(0,0,0,.3))' }} />
         <span style={{ display: 'none', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', fontSize: h, lineHeight: 1 }}>{s.obj.emoji}</span>
       </div>

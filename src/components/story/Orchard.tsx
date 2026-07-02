@@ -97,7 +97,7 @@ function Background({ scene, scenes }: { scene: Scene; scenes: Scene[] }) {
       {scenes.map(s => (
         <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: SCENE[s].bg.grad }} />
-          <img src={SCENE[s].bg.img} alt="" draggable={false}
+          <img src={SCENE[s].bg.img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -117,7 +117,7 @@ function MiloHost({ left, milo }: { left: number; milo: AddWorld['milo'] }) {
               <span style={{ fontSize: 92, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
               <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 40 }}>{milo.accessory}</span>
             </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
@@ -128,7 +128,7 @@ function MiloHost({ left, milo }: { left: number; milo: AddWorld['milo'] }) {
 function Item({ cfg, size }: { cfg: SceneCfg; size: string }) {
   const [missing, setMissing] = useState(false)
   if (missing) return <span style={{ fontSize: size, lineHeight: 1, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.2))' }}>{cfg.item}</span>
-  return <img src={cfg.itemImg} alt="" draggable={false} onError={() => setMissing(true)}
+  return <img src={cfg.itemImg} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)}
     style={{ width: size, height: size, objectFit: 'contain', filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.25))' }} />
 }
 

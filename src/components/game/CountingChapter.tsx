@@ -192,7 +192,7 @@ export default function CountingChapter({onComplete,childName}:Props){
         {ada.isOnFire&&<span style={S.fireTag}>🔥 On a roll!</span>}
       </div>
       <div style={S.miloRow}>
-        <img src="/assets/characters/milo-happy.png" alt="Milo" style={S.milo}
+        <img src="/assets/characters/milo-happy.png" alt="Milo" loading="lazy" decoding="async" style={S.milo}
           onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
         <div className="milo-bubble" style={{flex:1,fontSize:20}}>{bubbleText}</div>
       </div>
@@ -321,7 +321,7 @@ function ReExplainOverlay({target,emoji,label,kind,again,onClose}:{
       <style>{POP_KEYFRAME}</style>
       <div style={{background:'var(--paper)',border:'4px solid var(--outline)',borderRadius:28,padding:'24px 22px 28px',maxWidth:420,width:'100%',textAlign:'center',boxShadow:'0 8px 0 rgba(61,37,22,.2)',maxHeight:'92vh',overflowY:'auto'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:4}}>
-          <img src="/assets/characters/milo-thinking.png" alt="Milo" style={{width:48,height:48,objectFit:'contain'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+          <img src="/assets/characters/milo-thinking.png" alt="Milo" loading="lazy" decoding="async" style={{width:48,height:48,objectFit:'contain'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
           <h3 style={{fontFamily:'var(--font-display)',fontSize:20,margin:0,color:'var(--milo-orange)'}}>{copy.title}</h3>
         </div>
         <p style={{fontFamily:'var(--font-body)',fontSize:14,color:'var(--ink-soft)',margin:'0 0 12px'}}>{copy.tip}</p>
@@ -400,7 +400,7 @@ function CheckQuestion({target,emoji,label,kind,onResult}:{
       <style>{POP_KEYFRAME}</style>
       <div style={{background:'var(--paper)',border:'4px solid var(--outline)',borderRadius:28,padding:'24px 22px 28px',maxWidth:420,width:'100%',textAlign:'center',boxShadow:'0 8px 0 rgba(61,37,22,.2)',maxHeight:'92vh',overflowY:'auto'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:4}}>
-          <img src="/assets/characters/milo-happy.png" alt="Milo" style={{width:48,height:48,objectFit:'contain'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+          <img src="/assets/characters/milo-happy.png" alt="Milo" loading="lazy" decoding="async" style={{width:48,height:48,objectFit:'contain'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
           <h3 style={{fontFamily:'var(--font-display)',fontSize:20,margin:0,color:'var(--garden-green-deep)'}}>Your turn!</h3>
         </div>
         <p style={{fontFamily:'var(--font-body)',fontSize:15,color:'var(--ink-soft)',margin:'0 0 14px'}}>

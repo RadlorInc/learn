@@ -6,6 +6,7 @@
  * shames — the streak just restarts warmly. Logs daily_open / daily_complete.
  */
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { getActiveLearner } from '@/lib/supabase/useLearnerSession'
 import { speak, stopSpeech } from '@/lib/useMiloSpeaker'
@@ -80,7 +81,7 @@ export default function DailyPage() {
     return (
       <Shell>
         <Confetti />
-        <img src="/assets/characters/milo-happy.png" alt="Milo" style={{ width: 120, height: 120, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <Image src="/assets/characters/milo-happy.png" alt="Milo" width={120} height={120} priority style={{ objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: 'var(--milo-orange)', margin: '6px 0 4px', textAlign: 'center' }}>{headline}</h1>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--ink-soft)', margin: 0, textAlign: 'center' }}>{sub}</p>
         <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: 'var(--garden-green-deep)', margin: '10px 0 0' }}>You got {correct} of {TOTAL}! 🌟</p>
@@ -98,7 +99,7 @@ export default function DailyPage() {
         ))}
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, width: '100%', maxWidth: 460 }}>
-        <img src="/assets/characters/milo-happy.png" alt="Milo" style={{ width: 64, height: 64, objectFit: 'contain', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <Image src="/assets/characters/milo-happy.png" alt="Milo" width={64} height={64} style={{ objectFit: 'contain', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
         <div style={{ background: '#fff', border: '3px solid var(--outline)', borderRadius: '18px 18px 18px 4px', padding: '10px 14px', flex: 1, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--ink)', boxShadow: '0 4px 0 rgba(61,37,22,.07)' }}>
           {selected === null ? q.say : feedback === 'correct' ? '🎉 Yes!' : `It's ${q.answer} — now you know! 🙂`}
         </div>
