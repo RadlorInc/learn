@@ -24,6 +24,7 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { numberToWords, CSS as KIT_CSS, BigCount, nounFor } from '../lessons/_kit'
 import { TensOnes } from '../lessons/Numbers100Lesson'
 import WorldSelect from './WorldSelect'
+import { useViewport } from '@/lib/useViewport'
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
@@ -77,17 +78,6 @@ const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji,
 
 // Live viewport size — so a short/landscape frame can shrink + reposition the stage so the
 // banner (top), the numbered objects, and Milo never collide.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 interface NumRound { scene: Scene; target: number; choices: number[] }
 

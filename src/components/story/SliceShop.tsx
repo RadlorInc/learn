@@ -24,6 +24,7 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
+import { useViewport } from '@/lib/useViewport'
 
 // ─── Treats & Worlds ─────────────────────────────────────────────────────────────────
 interface Item { img: string; emoji: string; one: string; many: string }
@@ -116,17 +117,6 @@ function makeFractionRound(world: FrWorld, d: 1 | 2 | 3, round: number): FrRound
 }
 
 // ─── Live viewport (short/landscape aware) ────────────────────────────────────────────
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 // ─── Background (crossfades across the world's bg list) ───────────────────────────────
 function Background({ bg, world }: { bg: number; world: FrWorld }) {

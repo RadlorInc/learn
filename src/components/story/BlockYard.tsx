@@ -25,18 +25,8 @@ import { numberToWords } from '../lessons/_kit'
 import { buildArithChoices, applyOp, type Op } from '../lessons/ArithmeticLesson'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
+import { useViewport } from '@/lib/useViewport'
 
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
 // Each world carries its OWN object: a "ten" is a box of ten of it, a "one" is a single one — so

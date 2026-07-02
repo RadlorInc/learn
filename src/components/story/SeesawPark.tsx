@@ -27,19 +27,9 @@ import { numberToWords } from '../lessons/_kit'
 import { SIGNS, compareSign } from '../lessons/CompareLesson'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
+import { useViewport } from '@/lib/useViewport'
 
 // Live viewport — so the scale, signs and banner never collide on short/landscape frames.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 // ─── Animals & Worlds ────────────────────────────────────────────────────────────────
 interface Item { img: string; emoji: string }

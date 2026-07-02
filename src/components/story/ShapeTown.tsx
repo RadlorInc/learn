@@ -24,6 +24,7 @@ import { speak, speakSteps, useIsSpeaking, stopSpeech, unlockSpeech } from '@/li
 import { SkillBeat, type Beat } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { ShapeSVG, SHAPES, SHAPE_ORDER, type ShapeName } from '../lessons/ShapesLesson'
+import { useViewport } from '@/lib/useViewport'
 
 // After a declaring tap, ignore further taps briefly — `useIsSpeaking()` only flips true
 // ~100-150ms after speak(), so a fast second tap would slip through. Same lesson as
@@ -37,17 +38,6 @@ const shuffle = <T,>(a: T[]): T[] => {
 
 // Live viewport size — so the stage can RESERVE room for the top banner + bottom Milo and
 // never overlap on a short/landscape phone. Copied verbatim from world1.tsx.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 // A viewport shorter than this is a landscape phone (812×375, 667×375): shrink objects + lift
 // the object band so the shape + its mount clears the top banner AND Milo below.
 const SHORT_H = 470

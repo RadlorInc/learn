@@ -11,6 +11,7 @@ import { type Difficulty } from '@/lib/adaptive'
 import type { World, Beat } from './StoryWorld'
 import { CountItem, CountStage, type CountKind, COUNT_LABEL, COUNT_PLURAL, DoorArt, Apple, Berry, Stone, Basket } from './art'
 import { BIOMES, type Band, type Biome, type BiomeId, type Storytelling } from './biomes'
+import { useViewport } from '@/lib/useViewport'
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 // Fisher-Yates — an unbiased shuffle. (The old `sort(() => Math.random() - 0.5)` left
@@ -52,17 +53,6 @@ function useScale() {
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 // ── Scene 1: COUNTING (tap each object; counts aloud; success-only) ──
 interface CountData { n: number; obj: CountKind; band?: Band }

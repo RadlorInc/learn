@@ -20,6 +20,7 @@ import { speak, stopSpeech } from '@/lib/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
 import { subPair } from '@/lib/adaptive'
 import WorldSelect from './WorldSelect'
+import { useViewport } from '@/lib/useViewport'
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
@@ -75,17 +76,6 @@ const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji,
 
 // Live viewport size — so the stage can RESERVE room and compact on short/landscape phones
 // (banner + objects + question box + answer buttons must all fit within vh, no overlap).
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 interface SubRound { scene: Scene; total: number; take: number }
 const qty = (n: number, cfg: SceneCfg) => `${n} ${n === 1 ? cfg.noun : cfg.nounPlural}`

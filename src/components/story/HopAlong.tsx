@@ -25,6 +25,7 @@ import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/lib/useMiloSpeake
 import { SkillBeat, type Beat } from './StoryWorld'
 import { numberToWords, CSS as KIT_CSS, BigCount } from '../lessons/_kit'
 import WorldSelect from './WorldSelect'
+import { useViewport } from '@/lib/useViewport'
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
@@ -92,17 +93,6 @@ const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji,
 
 // Live viewport size — so a short/landscape frame can shrink the group row + answer buttons and
 // reposition them so the banner, groups, ground band and buttons never overlap.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 interface HopRound {
   scene: Scene; item: Item; step: number; terms: number

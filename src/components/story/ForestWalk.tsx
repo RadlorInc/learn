@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { speak, speakSeq, stopSpeech } from '@/lib/useMiloSpeaker'
 import MiloSprite from './MiloSprite'
 import { SkillBeat, type Beat } from './StoryWorld'
+import { useViewport } from '@/lib/useViewport'
 import { type CountKind } from './art'
 import { FlyingCountDemo, FlyingCountPlay } from './world1'
 import { BIOMES, BIOME_ORDER, type BiomeId } from './biomes'
@@ -80,16 +81,32 @@ function SceneBg({ moving }: { id: BiomeId; moving: boolean }) {
 }
 
 function BiomeBackground({ biome, walking, ids = BIOME_ORDER }: { biome: BiomeId; walking: boolean; ids?: BiomeId[] }) {
+  // Keep the (cheap, empty) cross-fade container for every biome so opacity transitions still
+  // animate, but only mount the HEAVY scrolling background for the active biome and the one we're
+  // fading FROM — not all of the chapter's biomes at once. Steady state is a single background in
+  // the DOM instead of 3, which is the difference between ~3 and ~24 decoded background rasters.
+  const [prev, setPrev] = useState<BiomeId | null>(null)
+  const lastRef = useRef<BiomeId>(biome)
+  useEffect(() => {
+    if (lastRef.current === biome) return
+    const from = lastRef.current
+    lastRef.current = biome
+    setPrev(from)
+    const t = setTimeout(() => setPrev(p => (p === from ? null : p)), 1100)   // > the 1s opacity fade
+    return () => clearTimeout(t)
+  }, [biome])
+
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#bfe6f7' }}>
       {ids.map(id => {
         const active = id === biome
+        const render = active || id === prev
         const b = BIOMES[id]
         return (
           <div key={id} style={{ position: 'absolute', inset: 0, overflow: 'hidden', opacity: active ? 1 : 0, transition: 'opacity 1s ease', pointerEvents: 'none' }}>
-            {b.bgImage
+            {render && (b.bgImage
               ? <ImageScroll src={b.bgImage} moving={active && walking} />
-              : <SceneBg id={id} moving={active && walking} />}
+              : <SceneBg id={id} moving={active && walking} />)}
           </div>
         )
       })}
@@ -133,12 +150,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
 }) {
   const router = useRouter()
   const needsRotate = useNeedsRotate()
-  const [vp, setVp] = useState({ w: 0, h: 0 })
-  useEffect(() => {
-    const f = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    f(); window.addEventListener('resize', f); window.addEventListener('orientationchange', f)
-    return () => { window.removeEventListener('resize', f); window.removeEventListener('orientationchange', f) }
-  }, [])
+  const vp = useViewport()
   const miloH = Math.min(Math.round((vp.h || 450) * 0.46), 320)
   const miloW = Math.round(miloH * 0.82)
   // ?skip jumps straight to the catch/practice beat (dev shortcut to preview biome changes)

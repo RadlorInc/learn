@@ -22,22 +22,12 @@ import { speak, speakSteps, stopSpeech } from '@/lib/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
 import { matchTarget } from '@/lib/adaptive'
 import WorldSelect from './WorldSelect'
+import { useViewport } from '@/lib/useViewport'
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 // Live viewport size — for layouts that must RESERVE room (stage vs. the Done/Put-back
 // controls + the top order ticket) so they never overlap on a short/landscape screen.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =

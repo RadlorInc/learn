@@ -24,6 +24,7 @@ import { speak, speakSeq, useIsSpeaking, stopSpeech } from '@/lib/useMiloSpeaker
 import { SkillBeat, type Beat } from './StoryWorld'
 import { seqLength } from '@/lib/adaptive'
 import WorldSelect from './WorldSelect'
+import { useViewport } from '@/lib/useViewport'
 
 const SPEAK_LOCK_MS = 600
 const shuffle = <T,>(a: T[]): T[] => {
@@ -59,17 +60,6 @@ function useScale() {
 
 // Live viewport size — for the play surfaces that must compress their vertical scatter band
 // on a short/landscape screen so items clear the top prompt banner and stay on screen.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 // ─── Scenes & Worlds ─────────────────────────────────────────────────────────────
 type Scenario =

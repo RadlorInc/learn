@@ -7,6 +7,22 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
 
+  // Image optimization. `sharp` is already a dependency, so next/image transcodes the
+  // heavy PNG/JPEG art to AVIF/WebP at the requested display size on demand and caches
+  // it for a year. This is the single biggest bandwidth/LCP win for the story art
+  // (originals are 2–3 MB each) — as <img> tags migrate to next/image they inherit it.
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [360, 640, 768, 1024, 1280, 1536],
+    imageSizes: [64, 96, 128, 256],
+    minimumCacheTTL: 31536000,
+  },
+
+  // Tighten tree-shaking on the Supabase clients so authed routes only pull what they use.
+  experimental: {
+    optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr'],
+  },
+
   async headers() {
     return [
       {

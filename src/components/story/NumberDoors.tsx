@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation'
 import { speak, speakSteps, useIsSpeaking, stopSpeech } from '@/lib/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
 import WorldSelect from './WorldSelect'
+import { useViewport } from '@/lib/useViewport'
 
 const SPEAK_LOCK_MS = 600
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
@@ -32,17 +33,6 @@ const LOOKALIKE: Record<number, number> = { 6: 9, 9: 6, 7: 1, 1: 7, 3: 8, 8: 3, 
 
 // Live viewport size — so the row of items can RESERVE room below the top banner/prompt and
 // never clip or overlap on a short/landscape screen.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 // ─── Scenes & Worlds ─────────────────────────────────────────────────────────────────
 type ObjKind = 'door' | 'balloon' | 'bus'

@@ -21,18 +21,8 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { ShapeView, SHAPES_2D, SHAPES_3D, sidesOf, is3D, buildNameChoices } from '../lessons/Shapes2D3DLesson'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
+import { useViewport } from '@/lib/useViewport'
 
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
 interface Bg { grad: string; img: string }

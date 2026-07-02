@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation'
 import { speak, speakSteps, useIsSpeaking, stopSpeech, unlockSpeech } from '@/lib/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
 import WorldSelect from './WorldSelect'
+import { useViewport } from '@/lib/useViewport'
 
 // After a declaring tap, ignore further taps briefly — `useIsSpeaking()` only flips true
 // ~100-150ms after speak(), so a fast second tap would slip through. Same lesson as
@@ -36,17 +37,6 @@ const shuffle = <T,>(a: T[]): T[] => {
 
 // Live viewport size — so the object row RESERVES room for the top banner + bottom Milo and
 // never overlaps on a short/landscape phone. Copied verbatim from world1.tsx.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 // A viewport shorter than this is a landscape phone: shrink objects + lift the row.
 const SHORT_H = 470
 

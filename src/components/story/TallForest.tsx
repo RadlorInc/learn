@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation'
 import { speak, speakSteps, stopSpeech } from '@/lib/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
 import WorldSelect from './WorldSelect'
+import { useViewport } from '@/lib/useViewport'
 
 type Attr = 'height' | 'length' | 'weight'
 type Scene =
@@ -79,17 +80,6 @@ const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji,
 
 // Live viewport size — so the compare stage can compact on short/landscape phones (the two
 // side-by-side objects + the top prompt banner must fit within vh with no overlap).
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 function askWord(attr: Attr, ask: 'more' | 'less'): string {
   if (attr === 'height') return ask === 'more' ? 'taller' : 'shorter'

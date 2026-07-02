@@ -41,7 +41,10 @@ export default function FitBox({ availW, availH, max = 3, min = 0.2, children }:
   }, [availW, availH, max, min])
   return (
     <div style={{ width: dims.w || undefined, height: dims.h || undefined, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <div ref={inner} style={{ flex: 'none', transform: `scale(${scale})`, transformOrigin: 'center center', willChange: 'transform' }}>
+      {/* No permanent `will-change: transform`: the scale is applied once on measure and rarely
+          changes, so holding a dedicated compositor layer for every FitBox on screen just costs
+          GPU memory on low-end devices. The one-off repaint on a scale change is cheap. */}
+      <div ref={inner} style={{ flex: 'none', transform: `scale(${scale})`, transformOrigin: 'center center' }}>
         {children}
       </div>
     </div>

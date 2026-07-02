@@ -26,19 +26,9 @@ import { numberToWords } from '../lessons/_kit'
 import { timeLabel, makeTimeChoices } from '../lessons/TimeLesson'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
+import { useViewport } from '@/lib/useViewport'
 
 // Live viewport — so the clock, activity chip and answer pills never overlap on short frames.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: T[]) => a[rint(0, a.length - 1)]

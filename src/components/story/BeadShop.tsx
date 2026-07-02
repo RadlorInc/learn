@@ -28,6 +28,7 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
 import { patternUnitLen, type Difficulty } from '@/lib/adaptive'
+import { useViewport } from '@/lib/useViewport'
 
 const SPEAK_LOCK_MS = 600
 const shuffle = <T,>(a: T[]): T[] => {
@@ -38,17 +39,6 @@ const shuffle = <T,>(a: T[]): T[] => {
 
 // Live viewport size — so the necklace + tray bands can RESERVE room for the top banner and
 // Milo and never overlap on a short/landscape phone. Copied verbatim from world1.tsx.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 // A viewport shorter than this is a landscape phone: shrink beads + spread the two bands so the
 // necklace clears the banner and the tray clears the necklace + Milo.
 const SHORT_H = 470

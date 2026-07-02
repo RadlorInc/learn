@@ -25,19 +25,9 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
+import { useViewport } from '@/lib/useViewport'
 
 // Live viewport size — so the coins, price box and answer buttons never overlap on short frames.
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
-}
 
 // ─── Coins ───────────────────────────────────────────────────────────────────────────
 // value → sprite + relative size (bigger coin = worth more, like real life).
