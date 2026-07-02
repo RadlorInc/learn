@@ -83,6 +83,20 @@ const CHAPTER_COMPONENTS: Record<ChapterType, React.ComponentType<ChapterProps>>
   quadraticsParabolas:        lazyChapter(() => import('@/components/game/QuadraticsParabolasChapter')),
   geometryTransformations:    lazyChapter(() => import('@/components/game/GeometryTransformationsChapter')),
   geometryProofTrig:          lazyChapter(() => import('@/components/game/GeometryProofTrigChapter')),
+  // 17–18 (Algebra II / Pre-Calc / Statistics / intro Calculus)
+  functionToolkit:      lazyChapter(() => import('@/components/game/FunctionToolkitChapter')),
+  quadraticAnalysis:    lazyChapter(() => import('@/components/game/QuadraticAnalysisChapter')),
+  polynomialFunctions:  lazyChapter(() => import('@/components/game/PolynomialFunctionsChapter')),
+  complexNumbers:       lazyChapter(() => import('@/components/game/ComplexNumbersChapter')),
+  rationalFunctions:    lazyChapter(() => import('@/components/game/RationalFunctionsChapter')),
+  expLogFunctions:      lazyChapter(() => import('@/components/game/ExpLogFunctionsChapter')),
+  unitCircleTrig:       lazyChapter(() => import('@/components/game/UnitCircleTrigChapter')),
+  trigGraphsIdentities: lazyChapter(() => import('@/components/game/TrigGraphsIdentitiesChapter')),
+  conicSections:        lazyChapter(() => import('@/components/game/ConicSectionsChapter')),
+  systemsMatrices:      lazyChapter(() => import('@/components/game/SystemsMatricesChapter')),
+  sequencesSeries:      lazyChapter(() => import('@/components/game/SequencesSeriesChapter')),
+  statsInference:       lazyChapter(() => import('@/components/game/StatsInferenceChapter')),
+  introCalculus:        lazyChapter(() => import('@/components/game/IntroCalculusChapter')),
 }
 
 // Teen chapters render their own full-screen portal + MasteryState completion, so

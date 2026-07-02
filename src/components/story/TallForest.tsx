@@ -77,6 +77,20 @@ const WORLDS: MWorld[] = [
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: SCENE[w.scenes[0]].bg.img }))
 
+// Live viewport size — so the compare stage can compact on short/landscape phones (the two
+// side-by-side objects + the top prompt banner must fit within vh with no overlap).
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
+}
+
 function askWord(attr: Attr, ask: 'more' | 'less'): string {
   if (attr === 'height') return ask === 'more' ? 'taller' : 'shorter'
   if (attr === 'length') return ask === 'more' ? 'longer' : 'shorter'
@@ -151,10 +165,12 @@ function Sprite({ obj, size }: { obj: Obj; size: string }) {
 }
 
 // ─── HEIGHT: two grounded sprites, uniform-scaled by value (taller = bigger) ─────────
-function HeightView({ left, right, grown, reveal, winner, onPick }: {
-  left: Side; right: Side; grown: boolean; reveal: boolean; winner: 'left' | 'right'; onPick?: (s: 'left' | 'right') => void
+function HeightView({ left, right, grown, reveal, winner, onPick, short }: {
+  left: Side; right: Side; grown: boolean; reveal: boolean; winner: 'left' | 'right'; onPick?: (s: 'left' | 'right') => void; short?: boolean
 }) {
-  const base = 'clamp(80px, 17vmin, 168px)'
+  // On a short screen drop the clamp MIN-floor + cap the max so both objects (up to full
+  // height scale) clear the top prompt banner and don't overlap.
+  const base = short ? 'clamp(48px, 13vmin, 96px)' : 'clamp(80px, 17vmin, 168px)'
   const k = (v: number) => 0.42 + 0.58 * (v / MAXV)
   const cell = (s: Side, side: 'left' | 'right') => {
     const win = reveal && winner === side
@@ -179,10 +195,10 @@ function HeightView({ left, right, grown, reveal, winner, onPick }: {
 }
 
 // ─── LENGTH: two sprites stretched horizontally by value (longer = wider) ────────────
-function LengthView({ left, right, grown, reveal, winner, onPick }: {
-  left: Side; right: Side; grown: boolean; reveal: boolean; winner: 'left' | 'right'; onPick?: (s: 'left' | 'right') => void
+function LengthView({ left, right, grown, reveal, winner, onPick, short }: {
+  left: Side; right: Side; grown: boolean; reveal: boolean; winner: 'left' | 'right'; onPick?: (s: 'left' | 'right') => void; short?: boolean
 }) {
-  const h = 'clamp(46px, 9vmin, 96px)'
+  const h = short ? 'clamp(30px, 7vmin, 60px)' : 'clamp(46px, 9vmin, 96px)'
   const widthPct = (v: number) => 24 + 62 * (v / MAXV)
   const row = (s: Side, side: 'left' | 'right') => {
     const win = reveal && winner === side
@@ -200,19 +216,19 @@ function LengthView({ left, right, grown, reveal, winner, onPick }: {
       : <div style={{ width: '100%' }}>{inner}</div>
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(14px,3vh,34px)', width: 'min(80vw, 620px)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: short ? 'clamp(8px,2vh,18px)' : 'clamp(14px,3vh,34px)', width: 'min(80vw, 620px)' }}>
       {row(left, 'left')}{row(right, 'right')}
     </div>
   )
 }
 
 // ─── WEIGHT: a code-drawn seesaw balance — the heavier end tips DOWN ─────────────────
-function WeightView({ left, right, grown, reveal, winner, onPick }: {
-  left: Side; right: Side; grown: boolean; reveal: boolean; winner: 'left' | 'right'; onPick?: (s: 'left' | 'right') => void
+function WeightView({ left, right, grown, reveal, winner, onPick, short }: {
+  left: Side; right: Side; grown: boolean; reveal: boolean; winner: 'left' | 'right'; onPick?: (s: 'left' | 'right') => void; short?: boolean
 }) {
   const heavier: 'left' | 'right' = left.val >= right.val ? 'left' : 'right'
   const angle = grown ? (heavier === 'left' ? 9 : -9) : 0   // positive = left end down
-  const objSize = 'clamp(54px, 12vmin, 116px)'
+  const objSize = short ? 'clamp(34px, 8vmin, 68px)' : 'clamp(54px, 12vmin, 116px)'
   const cell = (s: Side, side: 'left' | 'right') => {
     const win = reveal && winner === side
     const inner = (
@@ -221,7 +237,7 @@ function WeightView({ left, right, grown, reveal, winner, onPick }: {
           <Sprite obj={s.obj} size={objSize} />
         </div>
         {/* the small pan the item rests in */}
-        <div style={{ width: 'clamp(70px,14vmin,130px)', height: 'clamp(12px,2.4vmin,22px)', background: 'linear-gradient(#e9c98f,#caa468)', border: '3px solid #9c7440', borderRadius: '0 0 45% 45%', boxShadow: '0 3px 5px rgba(0,0,0,.22)' }} />
+        <div style={{ width: short ? 'clamp(46px,9vmin,84px)' : 'clamp(70px,14vmin,130px)', height: short ? 'clamp(8px,1.6vmin,15px)' : 'clamp(12px,2.4vmin,22px)', background: 'linear-gradient(#e9c98f,#caa468)', border: '3px solid #9c7440', borderRadius: '0 0 45% 45%', boxShadow: '0 3px 5px rgba(0,0,0,.22)' }} />
       </div>
     )
     return (
@@ -232,7 +248,7 @@ function WeightView({ left, right, grown, reveal, winner, onPick }: {
     )
   }
   return (
-    <div style={{ position: 'relative', width: 'min(86vw, 560px)', height: 'clamp(230px,42vh,360px)', margin: '0 auto' }}>
+    <div style={{ position: 'relative', width: 'min(86vw, 560px)', height: short ? 'clamp(150px,60vh,230px)' : 'clamp(230px,42vh,360px)', margin: '0 auto' }}>
       {/* the tilting plank, pivoting on the fulcrum; objects sit on its ends and tip with it */}
       <div style={{ position: 'absolute', left: '50%', bottom: '24%', width: '94%', transform: `translateX(-50%) rotate(${angle}deg)`, transformOrigin: 'center', transition: 'transform .7s cubic-bezier(.34,1.56,.64,1)' }}>
         <div style={{ position: 'relative', height: 'clamp(12px,2.4vmin,18px)', background: 'linear-gradient(#b98a4e,#8d6736)', borderRadius: 8, boxShadow: '0 3px 0 rgba(61,37,22,.3)' }}>
@@ -242,7 +258,7 @@ function WeightView({ left, right, grown, reveal, winner, onPick }: {
       </div>
       {/* fulcrum triangle */}
       <div aria-hidden style={{ position: 'absolute', left: '50%', bottom: '7%', transform: 'translateX(-50%)', width: 0, height: 0,
-        borderLeft: 'clamp(42px,9vmin,78px) solid transparent', borderRight: 'clamp(42px,9vmin,78px) solid transparent', borderBottom: 'clamp(78px,17vh,150px) solid #9c7440' }} />
+        borderLeft: short ? 'clamp(26px,6vmin,50px) solid transparent' : 'clamp(42px,9vmin,78px) solid transparent', borderRight: short ? 'clamp(26px,6vmin,50px) solid transparent' : 'clamp(42px,9vmin,78px) solid transparent', borderBottom: short ? 'clamp(48px,20vh,90px) solid #9c7440' : 'clamp(78px,17vh,150px) solid #9c7440' }} />
       {/* ground base */}
       <div aria-hidden style={{ position: 'absolute', bottom: '3%', left: '50%', transform: 'translateX(-50%)', width: '58%', height: 'clamp(10px,2vmin,16px)', background: 'linear-gradient(#8d6736,#6b4f2a)', borderRadius: 8, boxShadow: '0 4px 7px rgba(0,0,0,.25)' }} />
     </div>
@@ -257,10 +273,15 @@ const pickBtn = (win: boolean): React.CSSProperties => ({
 function CompareStage({ world, data, grown, reveal, winner, onPick }: {
   world: MWorld; data: MRound; grown: boolean; reveal: boolean; winner: 'left' | 'right'; onPick?: (s: 'left' | 'right') => void
 }) {
+  const { h: vh } = useViewport()
+  const short = vh < 470
   const V = world.attr === 'height' ? HeightView : world.attr === 'length' ? LengthView : WeightView
+  // Height/length centre lower; weight's objects rise above the plank so it sits a little
+  // higher. When short, nudge the stage down a touch so the tall objects clear the banner.
+  const top = short ? (world.attr === 'weight' ? '58%' : '56%') : '52%'
   return (
-    <div style={{ position: 'fixed', left: 0, right: 0, top: '52%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 4vw' }}>
-      <V left={data.left} right={data.right} grown={grown} reveal={reveal} winner={winner} onPick={onPick} />
+    <div style={{ position: 'fixed', left: 0, right: 0, top, transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 4vw' }}>
+      <V left={data.left} right={data.right} grown={grown} reveal={reveal} winner={winner} onPick={onPick} short={short} />
     </div>
   )
 }
@@ -321,6 +342,7 @@ function makeMeasureBeat(world: MWorld): Beat<MRound> {
   return {
     skillId: 'measurement', rounds: 10, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.ask}|${d.left.val}|${d.right.val}`,   // dedupe on the comparison (not the rotating scene/sprite)
     prompt: d => `Tap the ${askWord(world.attr, d.ask)} one!`,
     say: d => `Tap the ${askWord(world.attr, d.ask)} one!`,
     Play: ({ data, onSubmit }) => <MeasurePlay world={world} data={data} mode="practice" onComplete={onSubmit} />,

@@ -2,14 +2,27 @@
 /**
  * WorldSelect — a reusable "pick a world" screen. The child chooses which storytelling
  * to play instead of it being chosen for them, so they have agency over where the
- * chapter goes. Each card previews a world's background + emoji + name. Generic over any
+ * chapter goes. Each card previews a world's background + a real item sprite (its `itemImage`,
+ * falling back to an emoji only if none is given) + name. Generic over any
  * chapter: pass the list of `worlds` and an `onPick(id)`. Used by the Counting chapter
  * (Nature/Farm/Space) and the Number-Order chapter (River/Train/Sky).
  */
 import React from 'react'
 import { speak, unlockSpeech } from '@/lib/useMiloSpeaker'
+import { TintedSprite } from './TintedSprite'
 
-export interface PickWorld { id: string; label: string; emoji: string; bgImage?: string }
+export interface PickWorld { id: string; label: string; emoji: string; bgImage?: string; itemImage?: string; itemTint?: string }
+
+// A real object sprite in the card corner (emoji fallback only if the PNG 404s). If the sprite is
+// a greyscale pat_* one, `tint` colours it so the card never shows a grey object.
+function ItemBadge({ src, emoji, tint }: { src: string; emoji: string; tint?: string }) {
+  const [missing, setMissing] = React.useState(false)
+  const wrap: React.CSSProperties = { position: 'absolute', bottom: 6, right: 8, width: 'clamp(46px,8vh,72px)', height: 'clamp(46px,8vh,72px)', filter: 'drop-shadow(0 3px 5px rgba(0,0,0,.4))' }
+  if (tint) return <div style={wrap}><TintedSprite src={src} size="100%" hex={tint} emoji={emoji} /></div>
+  if (missing) return <span style={{ position: 'absolute', bottom: 8, right: 10, fontSize: 'clamp(28px,5vh,44px)', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.35))' }}>{emoji}</span>
+  return <img src={src} alt="" draggable={false} onError={() => setMissing(true)}
+    style={{ ...wrap, objectFit: 'contain' }} />
+}
 
 export default function WorldSelect({ title = 'Where shall we go today?', worlds, onPick, onExit }: {
   title?: string
@@ -41,7 +54,10 @@ export default function WorldSelect({ title = 'Where shall we go today?', worlds
             <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', background: '#cfe8df' }}>
               {world.bgImage && <img src={world.bgImage} alt="" draggable={false} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
-              <span style={{ position: 'absolute', top: 8, right: 10, fontSize: 'clamp(28px,5vh,44px)', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.35))' }}>{world.emoji}</span>
+              {/* a REAL item sprite from the world (not an emoji); emoji only if no sprite is given */}
+              {world.itemImage
+                ? <ItemBadge src={world.itemImage} emoji={world.emoji} tint={world.itemTint} />
+                : <span style={{ position: 'absolute', bottom: 8, right: 10, fontSize: 'clamp(28px,5vh,44px)', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.35))' }}>{world.emoji}</span>}
             </div>
             <div style={{ padding: '12px 10px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(16px,2.6vh,22px)', color: 'var(--milo-orange)', textAlign: 'center' }}>{world.label.replace(/^Milo's /, '')}</span>

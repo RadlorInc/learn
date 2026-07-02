@@ -35,13 +35,33 @@ function useScale() {
     const calc = () => {
       const raw = window.innerWidth / DESIGN_W
       const damped = raw <= 1 ? raw : 1 + (raw - 1) * 0.4   // only 40% of the extra width
-      setS(Math.max(0.85, Math.min(1.45, damped)))
+      const wScale = Math.max(0.85, Math.min(1.45, damped))
+      // On SHORT viewports (landscape phones) shrink the creatures so they don't sprawl down
+      // into the answer buttons. Tall frames (portrait / tablet / desktop) keep hFactor = 1,
+      // so their look is unchanged.
+      const hFactor = Math.min(1, window.innerHeight / 560)
+      setS(Math.max(0.5, wScale * hFactor))
     }
     calc()
     window.addEventListener('resize', calc)
-    return () => window.removeEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
   }, [])
   return s
+}
+
+// Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
+// so they never overlap on a short/landscape screen.
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
 }
 
 // ── Scene 1: COUNTING (tap each object; counts aloud; success-only) ──
@@ -120,10 +140,11 @@ const seed = (i: number, s: number) => frac(Math.sin((i + 1) * s) * 43758.5453)
 type Spot = { left: number; top: number; size: number; dur: number; rot: number; delay: number; depth: number }
 // `band` is the per-biome spawn window (water low, sky high, leaves mid). Defaults
 // to the forest canopy so non-biome callers keep working.
-function scatter(n: number, band: Band = BIOMES.forest.band, demo = false): Spot[] {
+function scatter(n: number, band: Band = BIOMES.forest.band, demo = false, colsOverride?: number): Spot[] {
   // Favour WIDE layouts (landscape) and keep objects mostly in their grid cells so they
   // don't bunch up and overlap — overlapping objects made the right one hard to tap.
-  const cols = Math.min(6, Math.max(1, Math.round(Math.sqrt(n) * 1.7)))
+  // `colsOverride` lets a short/wide frame spread objects across more columns (fewer rows).
+  const cols = colsOverride ?? Math.min(6, Math.max(1, Math.round(Math.sqrt(n) * 1.7)))
   const rows = Math.ceil(n / cols)
   const { x0: X0, x1: X1, y0: Y0, y1: Y1 } = band       // this biome's spawn window
   const cw = (X1 - X0) / cols, ch = (Y1 - Y0) / rows
@@ -183,8 +204,8 @@ function canopyScatter(n: number, demo = false): Spot[] {
   })
 }
 // Fruit → canopy anchors; everything else → the normal band scatter.
-function spotsFor(n: number, obj: CountKind, band?: Band, demo = false): Spot[] {
-  return FRUIT.has(obj) ? canopyScatter(n, demo) : scatter(n, band, demo)
+function spotsFor(n: number, obj: CountKind, band?: Band, demo = false, colsOverride?: number): Spot[] {
+  return FRUIT.has(obj) ? canopyScatter(n, demo) : scatter(n, band, demo, colsOverride)
 }
 
 // One hidden object, perched: an outer flutter (gentle in-place bob, desynced per
@@ -204,9 +225,9 @@ const SIZE_BOOST: Partial<Record<CountKind, number>> = {
 // `num` (when given) shows the count number on the object once it's counted — used by
 // the explanation so the child sees 1, 2, 3… land on each one. Until an object is
 // counted (`on`) it BLINKS to invite a tap; tapping stops the blink. No more ✓ badge.
-const PerchedItem: React.FC<{ p: Spot; obj: CountKind; on: boolean; idx: number; num?: number }> = ({ p, obj, on, idx, num }) => {
+const PerchedItem: React.FC<{ p: Spot; obj: CountKind; on: boolean; idx: number; num?: number; cap?: number }> = ({ p, obj, on, idx, num, cap }) => {
   const scale = useScale()
-  const size = Math.round(p.size * (SIZE_BOOST[obj] ?? 1) * scale)
+  const size = Math.min(cap ?? Infinity, Math.round(p.size * (SIZE_BOOST[obj] ?? 1) * scale))
   const badge = Math.round(34 * scale)   // keep the count number proportional to the creature
   // GROUNDING CUE: a soft contact shadow cast on the ground/canopy directly BELOW each
   // creature — the "it belongs in the world, not pasted on" anchor RainbowTown adds. Unlike
@@ -347,7 +368,28 @@ const HowManyPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => void 
   const [tapped, setTapped] = useState<boolean[]>(() => Array(data.n).fill(false))
   const [picked, setPicked] = useState<number | null>(null)
   const speaking = useIsSpeaking()                 // taps are blocked until Milo finishes
-  const spots = useMemo(() => spotsFor(data.n, data.obj, data.band), [data.n, data.obj, data.band])
+  const { w: vw, h: vh } = useViewport()
+  const scale = useScale()
+  // Responsive answer buttons — shrink on a narrow OR short screen so 3 of them fit and leave
+  // room above for the objects.
+  const btn = Math.max(52, Math.min(94, Math.round(Math.min(vw / 8.8, vh / 5.2))))
+  // Reserve the bottom strip for the buttons; the objects live ABOVE it. An extra sprite-height
+  // allowance keeps the sprite BODY (not just its anchor point) clear of the buttons too.
+  const zoneBottomPct = ((vh - (btn + 34)) / vh) * 100
+  const objAllowPct = (Math.min(150, 108 * scale) / vh) * 100
+  const band = useMemo(() => {
+    const b = data.band ?? BIOMES.forest.band
+    const y1 = Math.min(b.y1, zoneBottomPct - objAllowPct)
+    const y0 = Math.min(b.y0, Math.max(6, y1 - 12))    // if the bottom pulled way up, lift the top with it
+    return { x0: b.x0, x1: b.x1, y0, y1 }
+  }, [data.band, zoneBottomPct, objAllowPct])
+  // A wide + short frame (landscape phone) spreads objects across more columns → fewer rows,
+  // so they never stack into each other in the shallow object zone.
+  const cols = (vw / vh > 1.55) ? Math.min(Math.max(3, data.n), 8) : undefined
+  const spots = useMemo(() => spotsFor(data.n, data.obj, band, false, cols), [data.n, data.obj, band, cols])
+  // Cap each sprite to its zone cell so rows can't overlap even for big-boost creatures.
+  const rowsN = Math.ceil(data.n / (cols ?? Math.min(6, Math.max(1, Math.round(Math.sqrt(data.n) * 1.7)))))
+  const cap = Math.max(38, Math.floor(((band.y1 - band.y0) / 100 * vh + Math.min(150, 108 * scale)) / rowsN * 0.94))
   const allTapped = tapped.every(Boolean)
   const asked = useRef(false)
   function tap(i: number) {
@@ -363,21 +405,26 @@ const HowManyPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => void 
       {spots.map((p, i) => (
         <button key={i} onClick={() => tap(i)} aria-label={data.obj} disabled={picked != null || speaking}
           style={{ ...bare, position: 'fixed', left: `${p.left}%`, top: `${p.top}%`, zIndex: 30 + Math.round((1 - p.depth) * 6) }}>
-          <PerchedItem p={p} obj={data.obj} on={tapped[i]} idx={i} />
+          <PerchedItem p={p} obj={data.obj} on={tapped[i]} idx={i} cap={cap} />
         </button>
       ))}
       {allTapped && (
-        <div style={{ position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)', zIndex: 30, display: 'flex', gap: 16, animation: 'fw_pop .35s ease both' }}>
-          {data.choices.map(v => {
-            const isPick = picked === v, ok = isPick && v === data.n
-            return (
-              <button key={v} onClick={() => choose(v)} disabled={picked != null || speaking} style={{
-                width: 96, height: 96, borderRadius: 22, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 46, cursor: picked != null ? 'default' : 'pointer',
-                color: ok ? '#fff' : 'var(--milo-orange)', background: ok ? 'var(--garden-green)' : 'var(--paper)',
-                border: `5px solid ${ok ? 'var(--garden-green-deep)' : 'var(--milo-orange)'}`, boxShadow: '0 6px 0 rgba(242,107,44,.3)',
-                transform: isPick ? 'translateY(-4px)' : 'none', transition: 'all .15s' }}>{v}</button>
-            )
-          })}
+        // Centre on the OUTER wrapper; animate the INNER row. (fw_pop's fill:both pins its own
+        // transform, which would clobber a translateX(-50%) on the same element and shove the
+        // buttons off-centre.)
+        <div style={{ position: 'fixed', bottom: Math.max(8, Math.round(btn * 0.18)), left: '50%', transform: 'translateX(-50%)', zIndex: 40 }}>
+          <div style={{ display: 'flex', gap: Math.round(btn * 0.2), animation: 'fw_pop .35s ease both' }}>
+            {data.choices.map(v => {
+              const isPick = picked === v, ok = isPick && v === data.n
+              return (
+                <button key={v} onClick={() => choose(v)} disabled={picked != null || speaking} style={{
+                  width: btn, height: btn, borderRadius: Math.round(btn * 0.23), fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.48), cursor: picked != null ? 'default' : 'pointer',
+                  color: ok ? '#fff' : 'var(--milo-orange)', background: ok ? 'var(--garden-green)' : 'var(--paper)',
+                  border: `${Math.max(3, Math.round(btn * 0.05))}px solid ${ok ? 'var(--garden-green-deep)' : 'var(--milo-orange)'}`, boxShadow: '0 6px 0 rgba(242,107,44,.3)',
+                  transform: isPick ? 'translateY(-4px)' : 'none', transition: 'all .15s' }}>{v}</button>
+              )
+            })}
+          </div>
         </div>
       )}
     </>

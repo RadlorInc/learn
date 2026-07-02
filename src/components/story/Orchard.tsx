@@ -23,6 +23,20 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { addPair } from '@/lib/adaptive'
 import WorldSelect from './WorldSelect'
 
+// Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
+// so they never overlap on a short/landscape screen.
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
+}
+
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
   | 'apple' | 'pear' | 'cherry'        // Orchard
@@ -136,11 +150,16 @@ function GroundedItem({ cfg, size, i, lit }: { cfg: SceneCfg; size: string; i: n
   const jx = [-1.4, 1.1, -0.6, 1.6, -1.1, 0.7][i % 6]
   const shOp = (0.24 - depth * 0.12).toFixed(2)
   const shW = `calc(${size} * 0.62)`
+  // OUTER wrapper holds the depth/jitter/lit transform; INNER child runs or_pop. or_pop has
+  // fill:both and its 100% keyframe sets transform:scale(1) — on the SAME element that would
+  // clobber the inline transform once the pop finished (losing jitter + the lit pop). Split them.
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center',
       transform: `translate(${jx}px, ${back ? -0.5 : 0}vmin) scale(${(1 - depth * 0.13) * (lit ? 1.18 : 1)})`, zIndex: back ? 1 : 2, transformOrigin: 'bottom center',
-      filter: lit ? 'drop-shadow(0 0 12px var(--sun-yellow))' : 'none', transition: 'transform .2s cubic-bezier(.34,1.56,.64,1), filter .2s ease', animation: 'or_pop .3s ease both' }}>
-      <Item cfg={cfg} size={size} />
+      filter: lit ? 'drop-shadow(0 0 12px var(--sun-yellow))' : 'none', transition: 'transform .2s cubic-bezier(.34,1.56,.64,1), filter .2s ease' }}>
+      <div style={{ animation: 'or_pop .3s ease both' }}>
+        <Item cfg={cfg} size={size} />
+      </div>
       <div aria-hidden style={{ width: shW, height: `calc(${shW} * 0.3)`, marginTop: '0.3vmin',
         background: `radial-gradient(ellipse at center, rgba(38,28,18,${shOp}) 0%, rgba(38,28,18,0) 72%)`, pointerEvents: 'none' }} />
     </div>
@@ -150,15 +169,16 @@ function GroundedItem({ cfg, size, i, lit }: { cfg: SceneCfg; size: string; i: n
 // A group that pops its objects in ONE AT A TIME (`shown` of `total`); the count badge
 // appears once the whole group has arrived. Keeps the question from dumping everything
 // on screen at once — the child watches the group build up.
-function Group({ cfg, shown, total, size, litN = 0 }: { cfg: SceneCfg; shown: number; total: number; size: string; litN?: number }) {
+function Group({ cfg, shown, total, size, litN = 0, short }: { cfg: SceneCfg; shown: number; total: number; size: string; litN?: number; short?: boolean }) {
   const ready = total > 0 && shown >= total
+  const badge = short ? 'clamp(28px,7vh,44px)' : 'clamp(40px,6.4vmin,56px)'
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6vh' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.2vmin', justifyContent: 'center', alignItems: 'flex-end', maxWidth: 'min(46vw, 400px)', minHeight: size }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? '0.2vh' : '0.6vh' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: short ? '0.7vmin' : '1.2vmin', justifyContent: 'center', alignItems: 'flex-end', maxWidth: 'min(46vw, 400px)', minHeight: size }}>
         {Array.from({ length: shown }).map((_, i) => <GroundedItem key={i} cfg={cfg} size={size} i={i} lit={i < litN} />)}
       </div>
-      <div style={{ width: 'clamp(40px,6.4vmin,56px)', height: 'clamp(40px,6.4vmin,56px)', borderRadius: '50%', background: 'var(--sky-blue)', border: '3px solid var(--sky-blue-deep)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(19px,3.2vmin,27px)', color: '#fff', boxShadow: '0 3px 0 rgba(61,37,22,.2)',
+      <div style={{ width: badge, height: badge, borderRadius: '50%', background: 'var(--sky-blue)', border: '3px solid var(--sky-blue-deep)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 'clamp(15px,4vh,24px)' : 'clamp(19px,3.2vmin,27px)', color: '#fff', boxShadow: '0 3px 0 rgba(61,37,22,.2)',
         opacity: ready ? 1 : 0, transform: ready ? 'scale(1)' : 'scale(0.5)', transition: 'opacity .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1)' }}>{total}</div>
     </div>
   )
@@ -169,37 +189,47 @@ function Group({ cfg, shown, total, size, litN = 0 }: { cfg: SceneCfg; shown: nu
 // answer box only appears once `showQ` is set. `lit` counts the objects one-by-one across both
 // groups (1..a in A, then a+1..total in B) while `boxValue` climbs — so "count them all" reads
 // WITHOUT any basket. `boxValue` is null → "?", a number → that count; `boxDone` = green final.
-function Stage({ cfg, a, b, aShown, bShown, showPlus, showQ, lit, boxValue, boxDone, dark }: {
-  cfg: SceneCfg; a: number; b: number; aShown: number; bShown: number; showPlus: boolean; showQ: boolean; lit: number; boxValue: number | null; boxDone: boolean; dark?: boolean
+function Stage({ cfg, a, b, aShown, bShown, showPlus, showQ, lit, boxValue, boxDone, dark, short }: {
+  cfg: SceneCfg; a: number; b: number; aShown: number; bShown: number; showPlus: boolean; showQ: boolean; lit: number; boxValue: number | null; boxDone: boolean; dark?: boolean; short?: boolean
 }) {
   // Big objects, but shrink a little when a group is large so they never wrap into the
   // answer box (esp. in short/landscape viewports). Small counts (the common case) stay BIG.
+  // On SHORT (landscape phone) frames, drop the clamp MIN-floors hard so the banner + objects
+  // + answer box + buttons all fit inside the height with no overlap.
   const maxN = Math.max(a, b)
-  const itemSize = maxN <= 3 ? 'clamp(96px, 18.5vmin, 220px)' : maxN <= 5 ? 'clamp(82px, 15vmin, 175px)' : 'clamp(64px, 11.5vmin, 135px)'
+  const itemSize = short
+    ? (maxN <= 3 ? 'clamp(40px, 13vmin, 92px)' : maxN <= 5 ? 'clamp(34px, 11vmin, 74px)' : 'clamp(28px, 8.5vmin, 58px)')
+    : (maxN <= 3 ? 'clamp(96px, 18.5vmin, 220px)' : maxN <= 5 ? 'clamp(82px, 15vmin, 175px)' : 'clamp(64px, 11.5vmin, 135px)')
   const op = dark ? '#fff' : 'var(--milo-orange)'
   const litA = Math.min(lit, a), litB = Math.max(0, lit - a)
+  // Positions: on a short frame lift the stage higher (clear of the banner) and pull the answer
+  // box up close under it, leaving the bottom strip for the choice buttons.
+  const stageTop = short ? '35%' : '40%'
+  const boxTop = short ? '64%' : '71%'
+  const boxSize = short ? 'clamp(56px,20vh,92px)' : 'clamp(100px,17vmin,150px)'
+  const boxFont = short ? 'clamp(30px,12vh,54px)' : 'clamp(52px,10vmin,82px)'
   return (
     <>
       {/* Two groups + operator, resting on the ground band */}
-      <div style={{ position: 'fixed', left: 0, right: 0, top: '40%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6vh' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 'clamp(10px,2.6vw,40px)', maxWidth: '94vw' }}>
-          <Group cfg={cfg} shown={aShown} total={a} size={itemSize} litN={litA} />
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(40px,8vmin,76px)', color: op, WebkitTextStroke: '2px var(--outline)', paintOrder: 'stroke fill', lineHeight: 1, marginBottom: '3.4vh',
+      <div style={{ position: 'fixed', left: 0, right: 0, top: stageTop, transform: 'translateY(-50%)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? '0.2vh' : '0.6vh' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: short ? 'clamp(6px,2vw,20px)' : 'clamp(10px,2.6vw,40px)', maxWidth: '94vw' }}>
+          <Group cfg={cfg} shown={aShown} total={a} size={itemSize} litN={litA} short={short} />
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 'clamp(28px,6vmin,50px)' : 'clamp(40px,8vmin,76px)', color: op, WebkitTextStroke: '2px var(--outline)', paintOrder: 'stroke fill', lineHeight: 1, marginBottom: short ? '2vh' : '3.4vh',
             opacity: showPlus ? 1 : 0, transform: showPlus ? 'scale(1)' : 'scale(0.4)', transition: 'opacity .3s ease, transform .3s cubic-bezier(.34,1.56,.64,1)' }}>+</span>
-          <Group cfg={cfg} shown={bShown} total={b} size={itemSize} litN={litB} />
+          <Group cfg={cfg} shown={bShown} total={b} size={itemSize} litN={litB} short={short} />
         </div>
-        <div style={{ width: 'min(74vw, 700px)', height: '2.1vh', minHeight: 12, background: dark ? 'linear-gradient(#5a4d7a,#3b3158)' : 'linear-gradient(#caa46a,#a07a44)', borderRadius: 6, boxShadow: '0 5px 9px rgba(0,0,0,.28)' }} />
+        <div style={{ width: 'min(74vw, 700px)', height: short ? '1.2vh' : '2.1vh', minHeight: short ? 8 : 12, background: dark ? 'linear-gradient(#5a4d7a,#3b3158)' : 'linear-gradient(#caa46a,#a07a44)', borderRadius: 6, boxShadow: '0 5px 9px rgba(0,0,0,.28)' }} />
       </div>
 
       {/* "How many altogether?" answer box — only after both groups have arrived */}
-      <div style={{ position: 'fixed', left: 0, right: 0, top: '71%', transform: 'translateY(-50%)', zIndex: 31, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6vh',
+      <div style={{ position: 'fixed', left: 0, right: 0, top: boxTop, transform: 'translateY(-50%)', zIndex: 31, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? '0.2vh' : '0.6vh',
         opacity: showQ ? 1 : 0, transition: 'opacity .4s ease', pointerEvents: showQ ? 'auto' : 'none' }}>
         <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(12px,1.9vh,16px)', letterSpacing: '.08em', color: dark ? '#dfe6ff' : 'var(--ink-soft)' }}>ALTOGETHER</span>
-        <div style={{ width: 'clamp(100px,17vmin,150px)', height: 'clamp(100px,17vmin,150px)', borderRadius: 28, border: '5px solid',
+        <div style={{ width: boxSize, height: boxSize, borderRadius: 28, border: '5px solid',
           background: boxDone ? 'var(--garden-green)' : 'var(--paper)', borderColor: boxDone ? 'var(--garden-green-deep)' : 'var(--outline)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 0 rgba(61,37,22,.2)', transition: 'all .3s ease',
           animation: boxDone ? 'or_pop .5s ease' : 'none', filter: boxDone ? 'drop-shadow(0 0 16px var(--garden-green))' : 'none' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(52px,10vmin,82px)', color: boxDone ? '#fff' : 'var(--ink-muted)', lineHeight: 1 }}>{boxValue ?? '?'}</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: boxFont, color: boxDone ? '#fff' : 'var(--ink-muted)', lineHeight: 1 }}>{boxValue ?? '?'}</span>
         </div>
       </div>
     </>
@@ -213,6 +243,10 @@ const AddPlay: React.FC<{ world: AddWorld; data: AddRound; mode: Mode; onComplet
   const cfg = SCENE[scene]
   const total = a + b
   const choices = useMemo(() => buildChoices(total), [scene, a, b])   // stable for this round
+  const { w: vw, h: vh } = useViewport()
+  const short = vh < 470
+  // Responsive choice buttons — shrink on a narrow OR short screen so they fit and leave room above.
+  const btn = Math.max(56, Math.min(124, Math.round(Math.min(vw / 8.8, vh / 5.2))))
   const [picked, setPicked] = useState<number | null>(null)
   // Staged reveal — the groups pop in one-by-one, THEN the "+", THEN group B, and only
   // then the answer choices appear. Builds focus instead of dumping it all at once.
@@ -264,18 +298,18 @@ const AddPlay: React.FC<{ world: AddWorld; data: AddRound; mode: Mode; onComplet
 
   return (
     <>
-      <Stage cfg={cfg} a={a} b={b} aShown={aShown} bShown={bShown} showPlus={showPlus} showQ={asking || picked !== null} lit={lit} boxValue={boxValue} boxDone={boxDone} dark={world.dark} />
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: '4%', zIndex: 31, display: 'flex', justifyContent: 'center', gap: 'clamp(14px,4vw,34px)', flexWrap: 'wrap', padding: '0 12px',
+      <Stage cfg={cfg} a={a} b={b} aShown={aShown} bShown={bShown} showPlus={showPlus} showQ={asking || picked !== null} lit={lit} boxValue={boxValue} boxDone={boxDone} dark={world.dark} short={short} />
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '4%', zIndex: 31, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.28) : 'clamp(14px,4vw,34px)', flexWrap: 'wrap', padding: '0 12px',
         opacity: asking ? 1 : 0, transform: asking ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity .4s ease, transform .4s ease', pointerEvents: asking ? 'auto' : 'none' }}>
         {choices.map(n => {
           const isPick = picked === n, isOk = n === total
           return (
             <button key={n} onClick={() => choose(n)} disabled={picked !== null} style={{
-              width: 'clamp(92px,16vmin,124px)', height: 'clamp(92px,16vmin,124px)', borderRadius: 24,
+              width: btn, height: btn, borderRadius: Math.round(btn * 0.2),
               background: (isPick && isOk) ? 'var(--garden-green-soft)' : 'var(--paper)',
               border: `4px solid ${(isPick && isOk) ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`,
               boxShadow: `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`,
-              fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(34px,6.4vmin,50px)', color: 'var(--ink)',
+              fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.42), color: 'var(--ink)',
               cursor: picked !== null ? 'default' : 'pointer', transform: (isPick && isOk) ? 'scale(1.08) translateY(-3px)' : 'scale(1)',
               transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease',
             }}>{n}</button>
@@ -291,6 +325,8 @@ const AddExplain: React.FC<{ world: AddWorld; data: AddRound; onDone: () => void
   const { scene, a, b } = data
   const cfg = SCENE[scene]
   const total = a + b
+  const { h: vh } = useViewport()
+  const short = vh < 470
   // The demo pops each object in ONE AT A TIME (counting as it appears), then the "+", then
   // group B one-by-one, then the reveal — so the explanation builds up exactly like the play.
   const [aShown, setAShown] = useState(0)
@@ -318,7 +354,7 @@ const AddExplain: React.FC<{ world: AddWorld; data: AddRound; onDone: () => void
     return () => T.forEach(id => window.clearTimeout(id))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  return <Stage cfg={cfg} a={a} b={b} aShown={aShown} bShown={bShown} showPlus={showPlus} showQ lit={lit} boxValue={boxValue} boxDone={boxDone} dark={world.dark} />
+  return <Stage cfg={cfg} a={a} b={b} aShown={aShown} bShown={bShown} showPlus={showPlus} showQ lit={lit} boxValue={boxValue} boxDone={boxDone} dark={world.dark} short={short} />
 }
 
 // ─── Value generation ──────────────────────────────────────────────────────────────
@@ -332,6 +368,7 @@ function makeAddBeat(world: AddWorld): Beat<AddRound> {
   return {
     skillId: 'addition', rounds: 10, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.a}+${d.b}`,   // dedupe on the sum operands (not the rotating scene)
     prompt: d => `${d.a} and ${d.b} more — how many altogether?`,
     say: d => `Milo has ${qty(d.a, SCENE[d.scene])} and ${d.b} more. Count them all — how many altogether?`,
     Play: ({ data, onSubmit }) => <AddPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,

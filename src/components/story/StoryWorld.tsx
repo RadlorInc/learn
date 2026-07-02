@@ -43,6 +43,12 @@ export interface Beat<T> {
   make: (d: Difficulty, round?: number) => T   // `round` lets one practice vary by
                                                // round (e.g. rotate the biome) while
                                                // staying ONE adaptive sequence
+  sig?: (data: T) => string              // dedupe key for makeDistinct — return a
+                                         // signature of the MATH only (not the scene,
+                                         // sprite, or shuffled choice order), so the
+                                         // same question isn't re-asked just because the
+                                         // dressing changed. Defaults to a full-object
+                                         // JSON sig, which over-counts cosmetic variety.
   prompt: (data: T) => string            // shown on screen
   say?: (data: T) => string              // spoken by Milo (defaults to prompt). Use
                                          // a different `say` when the answer must be
@@ -76,7 +82,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   // round could never complete. Difficulty is read at round start; `roundIdx` lets
   // the beat rotate the scene (biome) while staying one continuous practice.
   // makeDistinct re-rolls to avoid repeating a question already asked this session.
-  const data = useMemo(() => makeDistinct(() => beat.make(adaRef.current.difficulty, roundIdx), seen.current), [roundIdx, beat])
+  const data = useMemo(() => makeDistinct(() => beat.make(adaRef.current.difficulty, roundIdx), seen.current, beat.sig), [roundIdx, beat])
 
   // Announce each new round, and let the host react to it (e.g. follow the biome).
   useEffect(() => {

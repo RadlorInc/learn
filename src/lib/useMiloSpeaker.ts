@@ -71,17 +71,27 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 function _pickVoice(): SpeechSynthesisVoice | null {
   _loadVoices()
   if (!_voices.length) return null
-  const PREFER = [
-    'Google US English', 'Google UK English Female',
-    'Samantha', 'Karen', 'Moira', 'Daniel',
-    'Microsoft Zira', 'Microsoft David',
-  ]
-  for (const name of PREFER) {
+  // Prefer a nice-sounding LOCAL English voice. Chrome's "Google …" voices are network-backed
+  // and fail SILENTLY when the TTS endpoint is unreachable (no sound, sometimes no error) — a
+  // local voice (Samantha on macOS, Microsoft David/Zira on Windows, etc.) always produces audio.
+  // So local wins here; Google is only a last resort when no local English voice exists.
+  const LOCAL_PREFER = ['Samantha', 'Karen', 'Moira', 'Daniel', 'Alex', 'Microsoft Zira', 'Microsoft David', 'Microsoft Aria']
+  for (const name of LOCAL_PREFER) {
+    const v = _voices.find(v => v.name.includes(name) && v.localService)
+    if (v) return v
+  }
+  // Any local English voice.
+  const localEn =
+    _voices.find(v => v.localService && v.lang === 'en-US') ??
+    _voices.find(v => v.localService && v.lang?.startsWith('en'))
+  if (localEn) return localEn
+  // No local English voice at all → fall back to the nicer network voices, then anything English.
+  const NET_PREFER = ['Google US English', 'Google UK English Female', 'Google US English Female']
+  for (const name of NET_PREFER) {
     const v = _voices.find(v => v.name.includes(name))
     if (v) return v
   }
   return (
-    _voices.find(v => v.lang === 'en-US' && v.localService) ??
     _voices.find(v => v.lang === 'en-US') ??
     _voices.find(v => v.lang?.startsWith('en')) ??
     _voices[0] ?? null

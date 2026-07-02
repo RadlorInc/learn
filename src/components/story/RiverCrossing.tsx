@@ -41,11 +41,34 @@ const DESIGN_W = 1000
 function useScale() {
   const [s, setS] = useState(1)
   useEffect(() => {
-    const calc = () => setS(Math.max(0.8, Math.min(2.3, window.innerWidth / DESIGN_W)))
-    calc(); window.addEventListener('resize', calc)
-    return () => window.removeEventListener('resize', calc)
+    const calc = () => {
+      const wScale = Math.min(2.3, window.innerWidth / DESIGN_W)
+      // On SHORT viewports (landscape phones) the objects scatter across the full height and
+      // would sprawl into the prompt banner / off the bottom. Shrink them by a height factor so
+      // the whole scene fits. Tall/portrait frames keep hFactor = 1 → look unchanged.
+      const hFactor = Math.min(1, window.innerHeight / 560)
+      setS(Math.max(0.55, wScale * hFactor))
+    }
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
   }, [])
   return s
+}
+
+// Live viewport size — for the play surfaces that must compress their vertical scatter band
+// on a short/landscape screen so items clear the top prompt banner and stay on screen.
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
 }
 
 // ─── Scenes & Worlds ─────────────────────────────────────────────────────────────
@@ -149,11 +172,13 @@ function NumChip({ d, n }: { d: number; n: number }) {
 // ─── Top-down Milo + path geometry (River world) ────────────────────────────────
 const NEAR = { left: 50, top: 93 }
 const FAR = { left: 50, top: 7 }
-function pathSlot(rank: number, n: number, horizontal = false) {
+// `top1` = the FARTHEST-up a placed vertical-path item reaches. Short landscape passes a lower
+// value so the stepping path doesn't climb into the top prompt banner.
+function pathSlot(rank: number, n: number, horizontal = false, top1 = 14) {
   if (horizontal) return { left: n <= 1 ? 50 : 9 + rank * (82 / (n - 1)), top: 46 }
-  return { left: 50, top: n <= 1 ? 50 : 84 - rank * (70 / (n - 1)) }
+  return { left: 50, top: n <= 1 ? 50 : 84 - rank * ((84 - top1) / (n - 1)) }
 }
-function scatterPos(i: number) { return { left: 12 + seed(i, 12.9898) * 76, top: 24 + seed(i, 78.233) * 54 } }
+function scatterPos(i: number, t0 = 24, tRange = 54) { return { left: 12 + seed(i, 12.9898) * 76, top: t0 + seed(i, 78.233) * tRange } }
 function MiloTop({ left, top, size = 148 }: { left: number; top: number; size?: number }) {
   const [missing, setMissing] = useState(false)
   const sz = size * useScale()
@@ -193,7 +218,12 @@ function OrderItem({ n, left, top, placed, wrong, onTap, size = 124, src, aria }
 type Mode = 'demo' | 'guided' | 'practice'
 const CrossingPlay: React.FC<{ nums: number[]; mode: Mode; horizontal?: boolean; src: string; aria: string; onComplete: (correct: boolean) => void }> = ({ nums, mode, horizontal = false, src, aria, onComplete }) => {
   const sorted = useMemo(() => [...nums].sort((a, b) => a - b), [nums])
-  const scatter = useMemo(() => nums.map((_, i) => scatterPos(i)), [nums])
+  const { h: vh } = useViewport()
+  const short = vh < 470
+  // On short landscape, keep the un-placed scatter and the placed vertical path below the top
+  // prompt banner (t0 pulled down; the path stops climbing at top1 34 instead of 14).
+  const top1 = short ? 34 : 14
+  const scatter = useMemo(() => nums.map((_, i) => scatterPos(i, short ? 34 : 24, short ? 44 : 54)), [nums, short])
   const [placed, setPlaced] = useState(0)
   const [wrong, setWrong] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false), wrongLock = useRef(false), tapLock = useRef(false)
@@ -233,7 +263,7 @@ const CrossingPlay: React.FC<{ nums: number[]; mode: Mode; horizontal?: boolean;
     }
   }
 
-  const lastSlot = placed > 0 ? pathSlot(placed - 1, n, horizontal) : null
+  const lastSlot = placed > 0 ? pathSlot(placed - 1, n, horizontal, top1) : null
   const miloPos = done.current ? far : lastSlot ? (horizontal ? { left: lastSlot.left, top: 64 } : { left: 50, top: lastSlot.top - 6 }) : near
   return (
     <>
@@ -241,7 +271,7 @@ const CrossingPlay: React.FC<{ nums: number[]; mode: Mode; horizontal?: boolean;
         const rank = sorted.indexOf(v)
         const isPlaced = rank < placed
         if (mode === 'demo' && !isPlaced) return null
-        const pos = isPlaced ? pathSlot(rank, n, horizontal) : scatter[i]
+        const pos = isPlaced ? pathSlot(rank, n, horizontal, top1) : scatter[i]
         return <OrderItem key={i} n={v} left={pos.left} top={pos.top} placed={isPlaced} wrong={wrong === v} size={size} src={src} aria={aria} onTap={mode === 'demo' ? undefined : () => tap(v)} />
       })}
       <MiloTop left={miloPos.left} top={miloPos.top} />
@@ -313,12 +343,18 @@ function LineItem({ n, left, top, placed, wrong, onTap, c }: { n: number; left: 
 }
 const LinePlay: React.FC<{ nums: number[]; c: SceneCfg; onSubmit: (correct: boolean) => void }> = ({ nums, c, onSubmit }) => {
   const { sorted, placed, wrong, tap } = useOrderTaps(nums, onSubmit)
+  const { h: vh } = useViewport()
+  const short = vh < 470
   const n = sorted.length
-  const lineY = c.lineY ?? 70
+  // On short landscape, drop the whole line + its scatter DOWN so items clear the top prompt
+  // banner; on tall/portrait keep the original lineY. Sky items float, ground items stand.
+  const lineY = (c.lineY ?? 70) + (short ? (c.sky ? 12 : 8) : 0)
   const hasLeader = !!c.leaderSrc
+  // Pull the pre-placed scatter down (and compress it) when short so items don't spawn on the banner.
+  const scatterT0 = short ? (c.sky ? 26 : 34) : (c.sky ? 16 : 24)
   const scatter = useMemo(() => nums.map((_, i) => c.sky
-    ? ({ left: 14 + seed(i, 12.9898) * 70, top: 16 + seed(i, 3.17) * 22 })
-    : ({ left: 16 + seed(i, 12.9898) * 60, top: 24 + seed(i, 3.17) * 16 })), [nums, c.sky])
+    ? ({ left: 14 + seed(i, 12.9898) * 70, top: scatterT0 + seed(i, 3.17) * 22 })
+    : ({ left: 16 + seed(i, 12.9898) * 60, top: scatterT0 + seed(i, 3.17) * 16 })), [nums, c.sky, scatterT0])
   const gap = Math.min(15, 64 / (n + 1))
   const anchorX = hasLeader ? ANCHOR_X : 88
   return (
@@ -369,7 +405,12 @@ function CollectItem({ n, left, top, caught, wrong, onTap, c }: { n: number; lef
 }
 const CollectPlay: React.FC<{ nums: number[]; c: SceneCfg; onSubmit: (correct: boolean) => void }> = ({ nums, c, onSubmit }) => {
   const { sorted, placed, wrong, tap } = useOrderTaps(nums, onSubmit)
-  const band = c.band ?? { l0: 40, l1: 94, t0: 58, t1: 92 }
+  const { h: vh } = useViewport()
+  const short = vh < 470
+  const raw = c.band ?? { l0: 40, l1: 94, t0: 58, t1: 92 }
+  // On short landscape, nudge a HIGH catch band (stars: t0 16) down under the banner, and pull a
+  // LOW band (fish: t1 92) up off the bottom edge — so the whole catch zone stays on screen.
+  const band = short ? { ...raw, t0: Math.max(raw.t0, 24), t1: Math.min(raw.t1, 84) } : raw
   const scatter = useMemo(() => nums.map((_, i) => ({ left: band.l0 + seed(i, 12.9898) * (band.l1 - band.l0), top: band.t0 + seed(i, 3.17) * (band.t1 - band.t0) })), [nums, band.l0, band.l1, band.t0, band.t1])
   const container = c.container ?? { left: 22, top: 64 }
   const collector = c.collector ?? { left: 29, top: 54 }
@@ -407,6 +448,7 @@ function makeRiverOrderBeat(world: OrderWorld): Beat<OrderData> {
       }
       return { nums: shuffle(nums), scenario }
     },
+    sig: d => [...d.nums].sort((a, b) => a - b).join(','),   // dedupe on the SET to order (not the shuffled display order or rotating scenario)
     prompt: d => SCENE[d.scenario].prompt,
     say: d => SCENE[d.scenario].say,
     Play: ({ data, onSubmit }) => {

@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation'
 import { speak, speakSteps, useIsSpeaking, stopSpeech, unlockSpeech } from '@/lib/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
 import WorldSelect from './WorldSelect'
+import FitBox from './FitBox'
 import { patternUnitLen, type Difficulty } from '@/lib/adaptive'
 
 const SPEAK_LOCK_MS = 600
@@ -34,6 +35,23 @@ const shuffle = <T,>(a: T[]): T[] => {
   for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] }
   return r
 }
+
+// Live viewport size — so the necklace + tray bands can RESERVE room for the top banner and
+// Milo and never overlap on a short/landscape phone. Copied verbatim from world1.tsx.
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
+}
+// A viewport shorter than this is a landscape phone: shrink beads + spread the two bands so the
+// necklace clears the banner and the tray clears the necklace + Milo.
+const SHORT_H = 470
 
 // ─── Colours (the pattern variable) ──────────────────────────────────────────────────
 type BeadColor = 'red' | 'blue' | 'yellow' | 'green' | 'orange' | 'purple' | 'pink'
@@ -155,14 +173,23 @@ function useBeadSizes(seqLen: number): { stringBead: number; trayBead: number } 
   const [sz, setSz] = useState({ stringBead: 56, trayBead: 76 })
   useEffect(() => {
     const calc = () => {
-      const w = window.innerWidth
-      const stringBead = Math.max(26, Math.min((w * 0.84) / (seqLen + 1.5), 72))
-      const trayBead = Math.max(54, Math.min(w * 0.15, 92))
+      const w = window.innerWidth, h = window.innerHeight
+      const short = h < SHORT_H
+      let stringBead = Math.max(short ? 22 : 26, Math.min((w * 0.84) / (seqLen + 1.5), short ? 52 : 72))
+      let trayBead = Math.max(short ? 42 : 54, Math.min(w * (short ? 0.12 : 0.15), short ? 66 : 92))
+      // Short/landscape frame: the necklace band (~stringBead·1.18) and the tray band
+      // (~trayBead·1.18 + padding) must both fit between the banner and Milo. Cap each to a
+      // slice of the height so the two rows never grow into each other.
+      if (short) {
+        stringBead = Math.min(stringBead, h * 0.22)
+        trayBead = Math.min(trayBead, h * 0.26)
+      }
       setSz({ stringBead, trayBead })
     }
     calc()
     window.addEventListener('resize', calc)
-    return () => window.removeEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
   }, [seqLen])
   return sz
 }
@@ -330,8 +357,10 @@ function Tray({ kind, choices, beadPx, stateFor, onTap }: {
 // ─── Milo (per world) ────────────────────────────────────────────────────────────────
 function MiloBead({ left, milo }: { left: number; milo: PatternWorld['milo'] }) {
   const [step, setStep] = useState(0)
+  const { h: vh } = useViewport()
+  const dim = vh < SHORT_H ? 'min(26vh, 130px)' : 'min(30vh, 260px)'
   return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(30vh, 260px)', height: 'min(30vh, 260px)' }}>
+    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: dim, height: dim }}>
       <div style={{ width: '100%', height: '100%', animation: 'bs_float 3.4s ease-in-out infinite' }}>
         {step >= milo.srcs.length
           ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -347,6 +376,11 @@ function MiloBead({ left, milo }: { left: number; milo: PatternWorld['milo'] }) 
 
 const NECKLACE_TOP = 40
 const TRAY_TOP = 64
+// On a short/landscape frame push the two bands apart (necklace up, tray down) so they don't
+// stack on top of each other in the shallow height; on tall frames keep the original look.
+function bandTops(vh: number): { necklace: number; tray: number } {
+  return vh < SHORT_H ? { necklace: 33, tray: 74 } : { necklace: NECKLACE_TOP, tray: TRAY_TOP }
+}
 const bandStyle = (top: number): React.CSSProperties => ({
   position: 'fixed', top: `${top}%`, left: 0, right: 0, transform: 'translateY(-50%)',
   zIndex: 40, display: 'flex', justifyContent: 'center', padding: '0 12px',
@@ -362,6 +396,9 @@ const BeadsPlay: React.FC<{ data: PatternRound; mode: Mode; onComplete: (correct
   const { kind, sequence, choices, answer, answerIdx } = data
   const noun = ITEM_META[kind].noun
   const { stringBead, trayBead } = useBeadSizes(sequence.length)
+  const { w: vw, h: vh } = useViewport()
+  const short = vh < SHORT_H
+  const tops = bandTops(vh)
   const [pickedIdx, setPickedIdx] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false), wrongLock = useRef(false), tapLock = useRef(false)
@@ -395,10 +432,12 @@ const BeadsPlay: React.FC<{ data: PatternRound; mode: Mode; onComplete: (correct
 
   return (
     <>
-      <div style={bandStyle(NECKLACE_TOP)}>
-        <Strip kind={kind} sequence={sequence} fill={solved ? answer : null} beadPx={stringBead} />
+      <div style={bandStyle(tops.necklace)}>
+        <FitBox availW={vw * 0.94} availH={short ? vh * 0.17 : vh * 0.24} max={2.2}>
+          <Strip kind={kind} sequence={sequence} fill={solved ? answer : null} beadPx={stringBead} />
+        </FitBox>
       </div>
-      <div style={bandStyle(TRAY_TOP)}>
+      <div style={bandStyle(tops.tray)}>
         <Tray kind={kind} choices={choices} beadPx={trayBead}
           stateFor={(i) => pickedIdx === i ? 'glow' : wrongIdx === i ? 'wrong' : 'idle'}
           onTap={tap} />
@@ -412,6 +451,9 @@ const BeadsExplain: React.FC<{ data: PatternRound; onDone: () => void }> = ({ da
   const { kind, unit, sequence, choices, answer, answerIdx } = data
   const noun = ITEM_META[kind].noun
   const { stringBead, trayBead } = useBeadSizes(sequence.length)
+  const { w: vw, h: vh } = useViewport()
+  const short = vh < SHORT_H
+  const tops = bandTops(vh)
   const [revealed, setRevealed] = useState(false)
   const ran = useRef(false)
   useEffect(() => {
@@ -430,10 +472,12 @@ const BeadsExplain: React.FC<{ data: PatternRound; onDone: () => void }> = ({ da
   }, [])
   return (
     <>
-      <div style={bandStyle(NECKLACE_TOP)}>
-        <Strip kind={kind} sequence={sequence} fill={revealed ? answer : null} beadPx={stringBead} />
+      <div style={bandStyle(tops.necklace)}>
+        <FitBox availW={vw * 0.94} availH={short ? vh * 0.17 : vh * 0.24} max={2.2}>
+          <Strip kind={kind} sequence={sequence} fill={revealed ? answer : null} beadPx={stringBead} />
+        </FitBox>
       </div>
-      <div style={bandStyle(TRAY_TOP)}>
+      <div style={bandStyle(tops.tray)}>
         <Tray kind={kind} choices={choices} beadPx={trayBead}
           stateFor={(i) => revealed && i === answerIdx ? 'glow' : 'idle'} />
       </div>
@@ -446,6 +490,7 @@ function makePatternBeat(world: PatternWorld): Beat<PatternRound> {
   return {
     skillId: 'patterns', rounds: 10, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makePatternRound(world, (d || 1) as Difficulty, round),
+    sig: d => `${d.unit.join(',')}|${d.sequence.length}`,   // dedupe on the pattern unit + length (not the rotating item kind/choice order)
     prompt: () => promptFor(),
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <BeadsPlay data={data} mode="practice" onComplete={onSubmit} />,

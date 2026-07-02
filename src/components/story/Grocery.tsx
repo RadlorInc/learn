@@ -25,6 +25,20 @@ import WorldSelect from './WorldSelect'
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
+// Live viewport size — for layouts that must RESERVE room (stage vs. the Done/Put-back
+// controls + the top order ticket) so they never overlap on a short/landscape screen.
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
+}
+
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
   | 'produce' | 'bakery' | 'deli' | 'flowers' | 'sweets'   // Little Grocery
@@ -164,8 +178,13 @@ function Container({ cfg, picked }: { cfg: SceneCfg; picked: number }) {
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' }} />
         {Array.from({ length: picked }).map((_, i) => {
           const [x, y] = PIZZA_SPOTS[i % PIZZA_SPOTS.length]
-          return <span key={i} style={{ position: 'absolute', left: `${50 + x}%`, top: `${50 + y}%`, transform: 'translate(-50%,-50%)', animation: 'gr_pop .3s ease both' }}>
-            <Item cfg={cfg} size="clamp(22px, 4vmin, 46px)" />
+          // Centre on the OUTER span; animate the INNER one. (gr_pop is `both`, so its final
+          // keyframe pins transform:scale(1), which would clobber a translate(-50%,-50%) on
+          // the same element and shove the topping off its spot.)
+          return <span key={i} style={{ position: 'absolute', left: `${50 + x}%`, top: `${50 + y}%`, transform: 'translate(-50%,-50%)' }}>
+            <span style={{ display: 'block', animation: 'gr_pop .3s ease both' }}>
+              <Item cfg={cfg} size="clamp(22px, 4vmin, 46px)" />
+            </span>
           </span>
         })}
       </div>
@@ -187,11 +206,11 @@ function Container({ cfg, picked }: { cfg: SceneCfg; picked: number }) {
   )
 }
 
-function OrderTicket({ cfg, target }: { cfg: SceneCfg; target: number }) {
+function OrderTicket({ cfg, target, short }: { cfg: SceneCfg; target: number; short?: boolean }) {
   return (
     <div style={{ position: 'relative', background: 'var(--paper)', border: '4px solid var(--milo-orange)', borderRadius: 16, padding: 'clamp(6px,1.3vmin,14px) clamp(14px,2.4vmin,26px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2vh', boxShadow: '0 5px 0 rgba(242,107,44,.25)' }}>
-      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(46px,9.5vmin,104px)', color: 'var(--ink)', lineHeight: 1 }}>{target}</span>
-      <Item cfg={cfg} size="clamp(28px,5vmin,58px)" />
+      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 'clamp(34px,7vmin,104px)' : 'clamp(46px,9.5vmin,104px)', color: 'var(--ink)', lineHeight: 1 }}>{target}</span>
+      <Item cfg={cfg} size={short ? 'clamp(20px,3.6vmin,58px)' : 'clamp(28px,5vmin,58px)'} />
     </div>
   )
 }
@@ -221,10 +240,14 @@ function GroundScatter({ cfg, picked, glow }: { cfg: SceneCfg; picked: number; g
             {/* contact shadow pooled on the grass at the flower's base */}
             <div aria-hidden style={{ position: 'fixed', left: `${p.l}%`, top: `${p.t}%`, transform: 'translate(-50%,-50%)', zIndex: 28,
               width: shW, height: `calc(${shW} * 0.3)`, background: `radial-gradient(ellipse at center, rgba(38,28,18,${(0.22 - depth * 0.1).toFixed(2)}) 0%, rgba(38,28,18,0) 72%)`, pointerEvents: 'none' }} />
-            {/* the planted flower — anchored by its base on the spot */}
-            <div style={{ position: 'fixed', left: `${p.l}%`, top: `${p.t}%`, transform: 'translate(-50%,-100%)', zIndex: 30 + Math.round((1 - depth) * 6), animation: 'gr_pop .35s ease both',
-              filter: glow ? 'drop-shadow(0 0 14px var(--garden-green))' : 'drop-shadow(0 4px 5px rgba(0,0,0,.25))' }}>
-              <Item cfg={cfg} size={size} />
+            {/* the planted flower — anchored by its base on the spot. Anchor on the OUTER div;
+                animate the INNER one, or gr_pop's fill:both scale(1) would clobber the
+                translate(-50%,-100%) and un-anchor the flower. */}
+            <div style={{ position: 'fixed', left: `${p.l}%`, top: `${p.t}%`, transform: 'translate(-50%,-100%)', zIndex: 30 + Math.round((1 - depth) * 6) }}>
+              <div style={{ animation: 'gr_pop .35s ease both',
+                filter: glow ? 'drop-shadow(0 0 14px var(--garden-green))' : 'drop-shadow(0 4px 5px rgba(0,0,0,.25))' }}>
+                <Item cfg={cfg} size={size} />
+              </div>
             </div>
           </React.Fragment>
         )
@@ -233,17 +256,24 @@ function GroundScatter({ cfg, picked, glow }: { cfg: SceneCfg; picked: number; g
   )
 }
 
-function Stage({ cfg, target, shelf, picked, glow, shake, onPick }: {
-  cfg: SceneCfg; target: number; shelf: number; picked: number; glow: boolean; shake: boolean; onPick?: () => void
+function Stage({ cfg, target, shelf, picked, glow, shake, onPick, short }: {
+  cfg: SceneCfg; target: number; shelf: number; picked: number; glow: boolean; shake: boolean; onPick?: () => void; short?: boolean
 }) {
   const remaining = Math.max(0, shelf - picked)
   const isGround = cfg.cType === 'ground'
   // Flowers are big blooms — bigger shelf box than the compact grocery/pizza items.
-  const itemSize = isGround ? 'clamp(60px, 11vmin, 132px)' : 'clamp(42px, 7vmin, 82px)'
+  // On SHORT landscape phones the clamp MIN-floor forces items too big for the tiny height,
+  // so drop the floors (and the whole box shrinks) so the shelf clears the top banner and the
+  // customer/order/controls below. Tall/portrait keeps the original sizes.
+  const itemSize = isGround
+    ? (short ? 'clamp(38px, 9vmin, 132px)' : 'clamp(60px, 11vmin, 132px)')
+    : (short ? 'clamp(28px, 6vmin, 82px)' : 'clamp(42px, 7vmin, 82px)')
+  // Shelf row: pinned higher and shorter when short so it doesn't reach the lower zone.
+  const shelfTop = isGround ? (short ? '40%' : '50%') : (short ? '33%' : '40%')
   return (
     <>
-      <div style={{ position: 'fixed', left: 0, right: 0, top: isGround ? '50%' : '40%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4vh' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.6vmin', justifyContent: 'center', alignItems: 'flex-end', maxWidth: '74vw', minHeight: '13vh' }}>
+      <div style={{ position: 'fixed', left: 0, right: 0, top: shelfTop, transform: 'translateY(-50%)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4vh' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: short ? '1vmin' : '1.6vmin', justifyContent: 'center', alignItems: 'flex-end', maxWidth: '74vw', minHeight: short ? '8vh' : '13vh' }}>
           {Array.from({ length: remaining }).map((_, i) => (
             <ShelfItem key={i} cfg={cfg} size={itemSize} i={i} onPick={onPick} />
           ))}
@@ -253,19 +283,20 @@ function Stage({ cfg, target, shelf, picked, glow, shake, onPick }: {
       </div>
       {isGround ? (
         // Flower Garden: order pinned at the TOP (out of the grass), flowers planted below.
-        <div style={{ position: 'fixed', top: '15%', left: 0, right: 0, zIndex: 31, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 'clamp(12px, 2.5vw, 40px)' }}>
-          <OrderTicket cfg={cfg} target={target} />
-          <span style={{ fontSize: 'clamp(40px, 8vmin, 96px)', lineHeight: 1, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.25))', animation: glow ? 'gr_pop .5s ease' : 'gr_float 3.6s ease-in-out infinite' }}>{cfg.customer}</span>
+        // Short landscape: nudged DOWN (not up) so it clears the top prompt banner (~top 48–90px).
+        <div style={{ position: 'fixed', top: short ? '26%' : '15%', left: 0, right: 0, zIndex: 31, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 'clamp(12px, 2.5vw, 40px)' }}>
+          <OrderTicket cfg={cfg} target={target} short={short} />
+          <span style={{ fontSize: short ? 'clamp(30px, 6vmin, 96px)' : 'clamp(40px, 8vmin, 96px)', lineHeight: 1, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.25))', animation: glow ? 'gr_pop .5s ease' : 'gr_float 3.6s ease-in-out infinite' }}>{cfg.customer}</span>
         </div>
       ) : (
-        <div style={{ position: 'fixed', left: 0, right: 0, top: '70%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 'clamp(14px, 3vw, 50px)' }}>
-          <OrderTicket cfg={cfg} target={target} />
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1, transform: 'scale(0.93)', transformOrigin: 'bottom center' }}>
+        <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '62%' : '70%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 'clamp(14px, 3vw, 50px)' }}>
+          <OrderTicket cfg={cfg} target={target} short={short} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1, transform: short ? 'scale(0.7)' : 'scale(0.93)', transformOrigin: 'bottom center' }}>
             <span style={{ fontSize: 'clamp(46px, 9vmin, 108px)', lineHeight: 1, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.25))', animation: glow ? 'gr_pop .5s ease' : 'gr_float 3.6s ease-in-out infinite' }}>{cfg.customer}</span>
             <div aria-hidden style={{ width: 'clamp(40px, 7vmin, 90px)', height: 'clamp(12px, 2.1vmin, 27px)', marginTop: '0.3vmin',
               background: 'radial-gradient(ellipse at center, rgba(38,28,18,0.16) 0%, rgba(38,28,18,0) 72%)', pointerEvents: 'none' }} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, transformOrigin: 'bottom center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, transform: short ? 'scale(0.72)' : 'none', transformOrigin: 'bottom center' }}>
             <div style={{ position: 'relative', animation: shake ? 'gr_shake .42s ease' : 'none', filter: glow ? 'drop-shadow(0 0 18px var(--garden-green))' : 'drop-shadow(0 8px 10px rgba(0,0,0,.25))' }}>
               <Container cfg={cfg} picked={picked} />
             </div>
@@ -285,6 +316,8 @@ type Mode = 'guided' | 'practice'
 const ShopPlay: React.FC<{ world: ShopWorld; data: OrderRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
   const { scene, target, shelf } = data
   const cfg = SCENE[scene]
+  const { h: vh } = useViewport()
+  const short = vh < 470
   const [picked, setPicked] = useState(0)
   const pickedRef = useRef(0)
   const [glow, setGlow] = useState(false)
@@ -322,27 +355,32 @@ const ShopPlay: React.FC<{ world: ShopWorld; data: OrderRound; mode: Mode; onCom
     }
   }
 
+  const ctrl: React.CSSProperties = short ? CTRL_SHORT : CTRL
   return (
     <>
-      <Stage cfg={cfg} target={target} shelf={shelf} picked={picked} glow={glow} shake={shake} onPick={pick} />
+      <Stage cfg={cfg} target={target} shelf={shelf} picked={picked} glow={glow} shake={shake} onPick={pick} short={short} />
       {glow && (
         <div style={{ position: 'fixed', left: '50%', top: '53%', transform: 'translateX(-50%)', zIndex: 48, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(26px, 5vmin, 52px)', color: '#fff', background: 'var(--garden-green)', border: '4px solid #fff', borderRadius: 18, padding: '6px 26px', boxShadow: '0 6px 0 rgba(0,0,0,.2)', animation: 'gr_sold .5s cubic-bezier(.34,1.56,.64,1) both', whiteSpace: 'nowrap' }}>✓ Done!</div>
       )}
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: '4%', zIndex: 31, display: 'flex', justifyContent: 'center', gap: '3vw', flexWrap: 'wrap', padding: '0 12px' }}>
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? '2%' : '4%', zIndex: 31, display: 'flex', justifyContent: 'center', gap: short ? '2vw' : '3vw', flexWrap: 'wrap', padding: '0 12px' }}>
         <button onClick={putBack} disabled={picked <= 0}
-          style={{ ...CTRL, background: 'var(--paper)', color: 'var(--milo-orange)', border: '3px solid var(--milo-orange)', opacity: picked <= 0 ? 0.45 : 1, cursor: picked <= 0 ? 'default' : 'pointer' }}>↩ Put one back</button>
+          style={{ ...ctrl, background: 'var(--paper)', color: 'var(--milo-orange)', border: '3px solid var(--milo-orange)', opacity: picked <= 0 ? 0.45 : 1, cursor: picked <= 0 ? 'default' : 'pointer' }}>↩ Put one back</button>
         <button onClick={ringUp}
-          style={{ ...CTRL, background: 'linear-gradient(135deg,var(--garden-green),var(--garden-green-deep))', color: '#fff', border: 'none', cursor: 'pointer' }}>{world.verbEmoji} {world.verbLabel}</button>
+          style={{ ...ctrl, background: 'linear-gradient(135deg,var(--garden-green),var(--garden-green-deep))', color: '#fff', border: 'none', cursor: 'pointer' }}>{world.verbEmoji} {world.verbLabel}</button>
       </div>
     </>
   )
 }
 const CTRL: React.CSSProperties = { padding: '12px 26px', borderRadius: 50, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 18, boxShadow: '0 5px 0 rgba(0,0,0,.18)' }
+// Compact controls for short landscape phones so both buttons + the stage fit in ~375px.
+const CTRL_SHORT: React.CSSProperties = { padding: '7px 16px', borderRadius: 50, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 14, boxShadow: '0 4px 0 rgba(0,0,0,.18)' }
 
 // ─── The teaching demo (opening preview + 3-wrong re-teach) ─────────────────────────
 const ShopExplain: React.FC<{ world: ShopWorld; data: OrderRound; onDone: () => void }> = ({ world, data, onDone }) => {
   const { scene, target, shelf } = data
   const cfg = SCENE[scene]
+  const { h: vh } = useViewport()
+  const short = vh < 470
   const [filled, setFilled] = useState(0)
   const [glow, setGlow] = useState(false)
   const ran = useRef(false)
@@ -357,7 +395,7 @@ const ShopExplain: React.FC<{ world: ShopWorld; data: OrderRound; onDone: () => 
     return cancel
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  return <Stage cfg={cfg} target={target} shelf={shelf} picked={filled} glow={glow} shake={false} />
+  return <Stage cfg={cfg} target={target} shelf={shelf} picked={filled} glow={glow} shake={false} short={short} />
 }
 
 // ─── Value generation ──────────────────────────────────────────────────────────────
@@ -373,6 +411,7 @@ function makeGroceryBeat(world: ShopWorld): Beat<OrderRound> {
   return {
     skillId: 'matchingQuantities', rounds: 10, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeOrder(world, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.target}`,   // dedupe on the quantity to match (not the rotating shelf/scene)
     prompt: d => `Put ${qty(d.target, SCENE[d.scene])} ${world.prep} the ${SCENE[d.scene].container}.`,
     say: d => `This order would like ${qty(d.target, SCENE[d.scene])}. Tap them ${world.prep} the ${SCENE[d.scene].container}, then ${world.verbLabel.replace(/!$/, '')}!`,
     Play: ({ data, onSubmit }) => <ShopPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,

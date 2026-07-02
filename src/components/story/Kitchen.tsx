@@ -28,6 +28,20 @@ import WorldSelect from './WorldSelect'
 const SPEAK_LOCK_MS = 600
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
+// Live viewport height — so the vessel placement + ground line can compact on short/landscape
+// phones (banner + vessels + feast bar must fit within vh, no overlap).
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
+}
+
 // ─── Scenes & worlds ─────────────────────────────────────────────────────────────
 type Vessel = 'bowl' | 'tray' | 'jar' | 'cake'
 type Compare = 'more' | 'less'
@@ -104,15 +118,19 @@ function Background({ scene, scenes }: { scene: SceneId; scenes: SceneId[] }) {
 // ─── Milo the chef (per world) ─────────────────────────────────────────────────────
 function MiloChef({ left, top, milo }: { left: number; top: number; milo: KitchenWorld['milo'] }) {
   const [step, setStep] = useState(0)
+  // Centre on the OUTER wrapper; float the INNER child. (mk_float's keyframes set `transform`,
+  // which would clobber a `translate(-50%,-50%)` on the SAME element and shove Milo off-place.)
   return (
-    <div style={{ position: 'fixed', left: `${left}%`, top: `${top}%`, transform: 'translate(-50%,-50%)', zIndex: 26, width: 'min(26vh, 220px)', height: 'min(26vh, 220px)', animation: 'mk_float 3.4s ease-in-out infinite' }}>
-      {step >= milo.srcs.length
-        ? <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-            <span style={{ fontSize: 86, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-            <span style={{ position: 'absolute', top: 2, fontSize: 40 }}>{milo.accessory}</span>
-          </div>
-        : <img src={milo.srcs[step]} alt="Milo the chef" draggable={false} onError={() => setStep(s => s + 1)}
-            style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
+    <div style={{ position: 'fixed', left: `${left}%`, top: `${top}%`, transform: 'translate(-50%,-50%)', zIndex: 26, width: 'min(26vh, 220px)', height: 'min(26vh, 220px)' }}>
+      <div style={{ width: '100%', height: '100%', position: 'relative', animation: 'mk_float 3.4s ease-in-out infinite' }}>
+        {step >= milo.srcs.length
+          ? <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+              <span style={{ fontSize: 86, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
+              <span style={{ position: 'absolute', top: 2, fontSize: 40 }}>{milo.accessory}</span>
+            </div>
+          : <img src={milo.srcs[step]} alt="Milo the chef" draggable={false} onError={() => setStep(s => s + 1)}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
+      </div>
     </div>
   )
 }
@@ -386,12 +404,17 @@ function useVesselScale(n: number): number {
   useEffect(() => {
     const calc = () => {
       const w = window.innerWidth, h = window.innerHeight
+      const short = h < 470
       const byWidth = w * (n <= 2 ? 0.40 : 0.29)
-      const byHeight = (h * 0.64) / (DES_H / DES_W)
-      setScale(Math.max(1, Math.min(byWidth, byHeight) / DES_W))
+      // On a short screen reserve more of the height for the top banner + bottom feast bar
+      // (less of vh goes to the vessel) and drop the min-scale floor so the vessels shrink
+      // to fit instead of being forced large by the clamp.
+      const byHeight = (h * (short ? 0.5 : 0.64)) / (DES_H / DES_W)
+      setScale(Math.max(short ? 0.55 : 1, Math.min(byWidth, byHeight) / DES_W))
     }
     calc()
     window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
     return () => window.removeEventListener('resize', calc)
   }, [n])
   return scale
@@ -400,10 +423,13 @@ function useVesselScale(n: number): number {
 // ─── Grounded, depth-aware placement ────────────────────────────────────────────────
 interface Placed { left: number; top: number; depth: number }
 const VESSEL_GROUND = { baseTop: 56, rise: 6, groundLine: 86 }
+// On short/landscape phones the smaller vessels can sit a little lower-centre (banner is
+// out of the way, feast bar is thin) and the ground/shadow line drops with them.
+const VESSEL_GROUND_SHORT = { baseTop: 58, rise: 5, groundLine: 90 }
 const VESSEL_DEPTHS: Record<number, number[]> = { 2: [0.12, 0.55], 3: [0.5, 0.05, 0.65] }
 const VESSEL_XJIT: Record<number, number[]> = { 2: [-1.5, 1.5], 3: [-1.5, 0, 1.5] }
-function placeVessels(n: number): Placed[] {
-  const g = VESSEL_GROUND
+function placeVessels(n: number, short = false): Placed[] {
+  const g = short ? VESSEL_GROUND_SHORT : VESSEL_GROUND
   const xs = n === 2 ? [30, 73] : [21, 51, 81]
   const depths = VESSEL_DEPTHS[n] ?? xs.map((_, i) => (i % 2 ? 0.5 : 0.15))
   const jit = VESSEL_XJIT[n] ?? xs.map(() => 0)
@@ -436,8 +462,10 @@ type Mode = 'guided' | 'practice'
 const ComparePlay: React.FC<{ data: CompareData; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { scene, vals, answerIdx, symbolic } = data
   const n = vals.length
-  const slots = placeVessels(n)
-  const groundLine = VESSEL_GROUND.groundLine
+  const { h: vh } = useViewport()
+  const short = vh < 470
+  const slots = placeVessels(n, short)
+  const groundLine = short ? VESSEL_GROUND_SHORT.groundLine : VESSEL_GROUND.groundLine
   const scale = useVesselScale(n)
   const [picked, setPicked] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
@@ -486,8 +514,10 @@ const ComparePlay: React.FC<{ data: CompareData; mode: Mode; onComplete: (correc
 const CompareExplain: React.FC<{ data: CompareData; onDone: () => void }> = ({ data, onDone }) => {
   const { scene, vals, answerIdx, mode } = data
   const n = vals.length
-  const slots = placeVessels(n)
-  const groundLine = VESSEL_GROUND.groundLine
+  const { h: vh } = useViewport()
+  const short = vh < 470
+  const slots = placeVessels(n, short)
+  const groundLine = short ? VESSEL_GROUND_SHORT.groundLine : VESSEL_GROUND.groundLine
   const scale = useVesselScale(n)
   const [shown, setShown] = useState<number[]>(() => vals.map(() => 0))
   const [reveal, setReveal] = useState(false)
@@ -558,6 +588,7 @@ function makeCompareBeat(world: KitchenWorld): Beat<CompareData> {
   return {
     skillId: 'numberComparison', rounds: 10, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeCompare(world, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.mode}|${[...d.vals].sort((a, b) => a - b).join(',')}`,   // dedupe on the comparison (values + more/less), not the rotating scene
     prompt: d => promptFor(d),
     say: d => promptFor(d),
     Play: ({ data, onSubmit }) => <ComparePlay data={data} mode="practice" onComplete={onSubmit} />,

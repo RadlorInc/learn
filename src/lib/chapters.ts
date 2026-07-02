@@ -33,6 +33,9 @@ export type ChapterType =
   // 15–16 (Algebra I + Geometry)
   | 'signedNumberFluency' | 'expressionsVariables' | 'linearEquationsInequalities' | 'slopeLinearGraphs' | 'functionsFamilies' | 'systemsOfEquations'
   | 'exponentsPolynomials' | 'radicalsPythagorean' | 'factoringPolynomials' | 'quadraticsParabolas' | 'geometryTransformations' | 'geometryProofTrig'
+  // 17–18 (Algebra II / Pre-Calc / Statistics / intro Calculus)
+  | 'functionToolkit' | 'quadraticAnalysis' | 'polynomialFunctions' | 'complexNumbers' | 'rationalFunctions' | 'expLogFunctions'
+  | 'unitCircleTrig' | 'trigGraphsIdentities' | 'conicSections' | 'systemsMatrices' | 'sequencesSeries' | 'statsInference' | 'introCalculus'
 
 export interface ChapterMeta {
   id:          ChapterType
@@ -116,6 +119,21 @@ export const CHAPTERS: ChapterMeta[] = [
   { id: 'quadraticsParabolas',       name: 'Quadratics & Parabolas',    parentLabel: 'Quadratics',      emoji: '📉', asset: '/assets/objects/star.png', hint: 'Solve quadratics & graph parabolas.', ageGroups: ['15-16'] },
   { id: 'geometryTransformations',   name: 'Geometry & Transformations', parentLabel: 'Transformations', emoji: '🔷', asset: '/assets/objects/star.png', hint: 'Circles, solids & transformations.', ageGroups: ['15-16'] },
   { id: 'geometryProofTrig',         name: 'Proof & Right-Triangle Trig', parentLabel: 'Proof & Trig',   emoji: '📐', asset: '/assets/objects/star.png', hint: 'Angles, proofs & SOH-CAH-TOA.', ageGroups: ['15-16'] },
+
+  // ── 17–18 (Algebra II / Pre-Calc / Statistics / intro Calculus) ──
+  { id: 'functionToolkit',      name: 'Function Toolkit',        parentLabel: 'Functions',    emoji: '🧰', asset: '/assets/objects/star.png', hint: 'Notation, domain/range & transformations.', ageGroups: ['17-18'] },
+  { id: 'quadraticAnalysis',    name: 'Quadratic Analysis',      parentLabel: 'Quadratics',   emoji: '📉', asset: '/assets/objects/star.png', hint: 'Vertex, roots & the discriminant.', ageGroups: ['17-18'] },
+  { id: 'polynomialFunctions',  name: 'Polynomial Functions',    parentLabel: 'Polynomials',  emoji: '〰️', asset: '/assets/objects/star.png', hint: 'Degree, end behavior & zeros.', ageGroups: ['17-18'] },
+  { id: 'complexNumbers',       name: 'Complex Numbers',         parentLabel: 'Complex',      emoji: '🧩', asset: '/assets/objects/star.png', hint: 'i, arithmetic & the complex plane.', ageGroups: ['17-18'] },
+  { id: 'rationalFunctions',    name: 'Rational Functions',      parentLabel: 'Rational',     emoji: '➗', asset: '/assets/objects/star.png', hint: 'Asymptotes, holes & end behavior.', ageGroups: ['17-18'] },
+  { id: 'expLogFunctions',      name: 'Exponential & Log',       parentLabel: 'Exp & Log',    emoji: '📈', asset: '/assets/objects/star.png', hint: 'Growth, decay & logarithms.', ageGroups: ['17-18'] },
+  { id: 'unitCircleTrig',       name: 'Unit Circle & Trig',      parentLabel: 'Unit Circle',  emoji: '🧭', asset: '/assets/objects/star.png', hint: 'Radians, sine & cosine on the circle.', ageGroups: ['17-18'] },
+  { id: 'trigGraphsIdentities', name: 'Trig Graphs & Identities', parentLabel: 'Trig Graphs', emoji: '〽️', asset: '/assets/objects/star.png', hint: 'Waves, amplitude & identities.', ageGroups: ['17-18'] },
+  { id: 'conicSections',        name: 'Conic Sections',          parentLabel: 'Conics',       emoji: '🛰️', asset: '/assets/objects/star.png', hint: 'Circles, ellipses, parabolas & hyperbolas.', ageGroups: ['17-18'] },
+  { id: 'systemsMatrices',      name: 'Systems & Matrices',      parentLabel: 'Matrices',     emoji: '🔲', asset: '/assets/objects/star.png', hint: 'Solve systems; matrix operations.', ageGroups: ['17-18'] },
+  { id: 'sequencesSeries',      name: 'Sequences & Series',      parentLabel: 'Sequences',    emoji: '🔗', asset: '/assets/objects/star.png', hint: 'Arithmetic & geometric patterns.', ageGroups: ['17-18'] },
+  { id: 'statsInference',       name: 'Statistics & Inference',  parentLabel: 'Statistics',   emoji: '📊', asset: '/assets/objects/star.png', hint: 'Spread, sampling & inference.', ageGroups: ['17-18'] },
+  { id: 'introCalculus',        name: 'Intro to Calculus',       parentLabel: 'Calculus',     emoji: '♾️', asset: '/assets/objects/star.png', hint: 'Limits, rates of change & the derivative.', ageGroups: ['17-18'] },
 ]
 
 // ── Lookups ──────────────────────────────────────────────────────────────

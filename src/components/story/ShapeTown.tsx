@@ -35,6 +35,23 @@ const shuffle = <T,>(a: T[]): T[] => {
   return r
 }
 
+// Live viewport size — so the stage can RESERVE room for the top banner + bottom Milo and
+// never overlap on a short/landscape phone. Copied verbatim from world1.tsx.
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
+}
+// A viewport shorter than this is a landscape phone (812×375, 667×375): shrink objects + lift
+// the object band so the shape + its mount clears the top banner AND Milo below.
+const SHORT_H = 470
+
 // The classic look-alike pair — seeded as a distractor at the hardest tier so the child
 // must recognise the form, not eliminate.
 const TWIN: Partial<Record<ShapeName, ShapeName>> = { square: 'rectangle', rectangle: 'square' }
@@ -114,8 +131,12 @@ function Background({ scene, scenes }: { scene: SceneId; scenes: SceneId[] }) {
 // ─── Milo (per world) ────────────────────────────────────────────────────────────────
 function MiloExplorer({ left, milo }: { left: number; milo: ShapeWorld['milo'] }) {
   const [step, setStep] = useState(0)
+  const { h: vh } = useViewport()
+  // On a short/landscape frame a 36vh Milo is small in px but still eats the left column; keep
+  // him compact so the object row beside him stays clear.
+  const dim = vh < SHORT_H ? 'min(30vh, 150px)' : 'min(36vh, 320px)'
   return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(36vh, 320px)', height: 'min(36vh, 320px)' }}>
+    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: dim, height: dim }}>
       <div style={{ width: '100%', height: '100%', animation: 'st_float 3.4s ease-in-out infinite' }}>
         {step >= milo.srcs.length
           ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -266,16 +287,22 @@ function useThingScale(n: number): number {
   useEffect(() => {
     const calc = () => {
       const w = window.innerWidth, h = window.innerHeight
+      const short = h < SHORT_H
+      // On a short/landscape frame the whole thing (shape + mount band) must fit in the slim
+      // strip between the banner (~top 15%) and Milo/ground (~bottom 12%). Give height a much
+      // tighter budget and drop the min floor so it can actually shrink.
       const byWidth = w * (n <= 2 ? 0.28 : n === 3 ? 0.22 : 0.175)        // horizontal room per shape
-      const byHeight = (h * 0.42) / (THING_H / THING_W)                   // vertical room (keep aspect)
+      const byHeight = (h * (short ? 0.5 : 0.42)) / (THING_H / THING_W)   // vertical room (keep aspect)
       const s = Math.min(byWidth, byHeight, THING_W * 1.5) / THING_W
       const miloTop = h - Math.min(0.36 * h, 320)
       const clearScale = ((miloTop - (THING_BASE_TOP / 100) * h) * 2) / THING_H
-      setScale(Math.max(0.62, Math.min(s, clearScale)))
+      const floor = short ? 0.42 : 0.62
+      setScale(Math.max(floor, Math.min(s, clearScale)))
     }
     calc()
     window.addEventListener('resize', calc)
-    return () => window.removeEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
   }, [n])
   return scale
 }
@@ -291,14 +318,19 @@ const DEPTHS: Record<number, number[]> = { 1: [0.25], 2: [0.15, 0.6], 3: [0.5, 0
 const XJIT: Record<number, number[]> = { 1: [0], 2: [-2, 2], 3: [-1.5, 1.5, -1], 4: [-2, 1, -1.5, 2] }
 
 // Per-object placement (left%, top%, depth). Shapes spread across but stay right of Milo's
-// bottom-left column so a low object never collides.
-function placeFor(n: number, scene: SceneId): Placed[] {
+// bottom-left column so a low object never collides. On a SHORT/landscape frame the object
+// row is lifted up (smaller baseTop) so the shape + its mount band clears both the top banner
+// and Milo below; the depth rise is also flattened so nothing dips too low.
+function placeFor(n: number, scene: SceneId, vh: number): Placed[] {
   const g = SCENES[scene].ground
+  const short = vh < SHORT_H
+  const baseTop = short ? 40 : g.baseTop      // lift the whole band up on a short frame
+  const rise = short ? Math.min(g.rise, 6) : g.rise
   const xs = n <= 2 ? [36, 70] : n === 3 ? [27, 53, 79] : n === 4 ? [20, 42, 64, 87]
     : Array.from({ length: n }, (_, i) => 18 + (i * 70) / (n - 1))
   const depths = DEPTHS[n] ?? xs.map((_, i) => (i % 2 ? 0.55 : 0.2))
   const jit = XJIT[n] ?? xs.map(() => 0)
-  return xs.map((x, i) => { const depth = depths[i] ?? 0.3; return { left: x + (jit[i] ?? 0), top: g.baseTop - depth * g.rise, depth } })
+  return xs.map((x, i) => { const depth = depths[i] ?? 0.3; return { left: x + (jit[i] ?? 0), top: baseTop - depth * rise, depth } })
 }
 
 // ─── Round copy ──────────────────────────────────────────────────────────────────
@@ -314,8 +346,12 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; onComplete: (correct:
   const { scene, options, answerIdx } = data
   const label = SHAPES[options[answerIdx]].label
   const n = options.length
-  const slots = placeFor(n, scene)
-  const groundLine = SCENES[scene].ground.groundLine
+  const { h: vh } = useViewport()
+  const short = vh < SHORT_H
+  const slots = placeFor(n, scene, vh)
+  // On a short frame the objects lifted up; drop the shadow's ground line a fixed gap below the
+  // object band (not the tall default groundLine, which would leave the shadow marooned).
+  const groundLine = short ? Math.min(SCENES[scene].ground.groundLine, slots[0].top + 22) : SCENES[scene].ground.groundLine
   const scale = useThingScale(n)
   const [pickedIdx, setPickedIdx] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
@@ -363,8 +399,10 @@ const ShapesExplain: React.FC<{ data: ShapeRound; onDone: () => void }> = ({ dat
   const { scene, options, answerIdx } = data
   const label = SHAPES[options[answerIdx]].label
   const n = options.length
-  const slots = placeFor(n, scene)
-  const groundLine = SCENES[scene].ground.groundLine
+  const { h: vh } = useViewport()
+  const short = vh < SHORT_H
+  const slots = placeFor(n, scene, vh)
+  const groundLine = short ? Math.min(SCENES[scene].ground.groundLine, slots[0].top + 22) : SCENES[scene].ground.groundLine
   const scale = useThingScale(n)
   const [glow, setGlow] = useState(false)
   const ran = useRef(false)
@@ -401,9 +439,13 @@ const SHOWCASE_DWELL = 1500   // each item stays lit + named for this long
 const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   const [lit, setLit] = useState(-1)
   const [px, setPx] = useState(104)
+  const { h: vh } = useViewport()
+  const short = vh < SHORT_H
   const ran = useRef(false)
   useEffect(() => {
-    const calc = () => setPx(Math.max(58, Math.min(window.innerWidth * 0.14, 120)))
+    // Cap by HEIGHT too — the 6 shapes wrap onto 2 rows, so on a short frame a width-only size
+    // overflowed vertically. h*0.18 keeps two rows + labels inside the strip.
+    const calc = () => setPx(Math.max(48, Math.min(window.innerWidth * 0.14, window.innerHeight * 0.18, 120)))
     calc(); window.addEventListener('resize', calc)
     return () => window.removeEventListener('resize', calc)
   }, [])
@@ -422,8 +464,8 @@ const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '11% 4% 26%' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', columnGap: 'clamp(16px,4vw,56px)', rowGap: 'clamp(8px,2vw,24px)', justifyItems: 'center', alignItems: 'end' }}>
+    <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: short ? '13% 4% 14%' : '11% 4% 26%' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', columnGap: 'clamp(16px,4vw,56px)', rowGap: short ? '4px' : 'clamp(8px,2vw,24px)', justifyItems: 'center', alignItems: 'end' }}>
         {SHAPE_ORDER.map((s, i) => {
           const on = lit === i
           return (
@@ -469,6 +511,7 @@ function makeShapeBeat(world: ShapeWorld): Beat<ShapeRound> {
     // next spot" pause every 3 rounds keeps it from feeling rushed.
     walkEvery: 3,
     make: (d, round = 0) => makeShapeRound(world, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.options[d.answerIdx]}`,   // dedupe on the target shape (not the rotating scene/options order)
     prompt: d => promptFor(d),
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ShapesPlay data={data} mode="practice" onComplete={onSubmit} />,

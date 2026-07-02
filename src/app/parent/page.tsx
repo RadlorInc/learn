@@ -418,7 +418,7 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:50, background:'rgba(0,0,0,0.45)', display:'flex', alignItems:'flex-end', justifyContent:'center' }} onClick={onClose}>
-      <div style={{ background:'#fff', borderRadius:'24px 24px 0 0', padding:'28px 24px 48px', width:'100%', maxWidth:480, animation:'slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1)' }} onClick={e => e.stopPropagation()}>
+      <div style={{ background:'#fff', borderRadius:'24px 24px 0 0', padding:'28px 24px 48px', width:'100%', maxWidth:480, maxHeight:'92dvh', overflowY:'auto', WebkitOverflowScrolling:'touch', animation:'slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1)' }} onClick={e => e.stopPropagation()}>
         <h3 style={{ fontSize:20, fontWeight:800, margin:'0 0 20px', color:'#1a1a1a' }}>Add a learner</h3>
         <div style={{ display:'flex', gap:12, marginBottom:20, justifyContent:'center' }}>
           {AVATARS.map((emoji, i) => (

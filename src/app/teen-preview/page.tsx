@@ -29,6 +29,20 @@ const MAP: Record<string, React.ComponentType<{ onComplete: (c: number, w: numbe
   quadraticsParabolas: nextDynamic(() => import('@/components/game/QuadraticsParabolasChapter'), { ssr: false }),
   geometryTransformations: nextDynamic(() => import('@/components/game/GeometryTransformationsChapter'), { ssr: false }),
   geometryProofTrig: nextDynamic(() => import('@/components/game/GeometryProofTrigChapter'), { ssr: false }),
+  // 17–18
+  functionToolkit: nextDynamic(() => import('@/components/game/FunctionToolkitChapter'), { ssr: false }),
+  quadraticAnalysis: nextDynamic(() => import('@/components/game/QuadraticAnalysisChapter'), { ssr: false }),
+  expLogFunctions: nextDynamic(() => import('@/components/game/ExpLogFunctionsChapter'), { ssr: false }),
+  systemsMatrices: nextDynamic(() => import('@/components/game/SystemsMatricesChapter'), { ssr: false }),
+  polynomialFunctions: nextDynamic(() => import('@/components/game/PolynomialFunctionsChapter'), { ssr: false }),
+  rationalFunctions: nextDynamic(() => import('@/components/game/RationalFunctionsChapter'), { ssr: false }),
+  complexNumbers: nextDynamic(() => import('@/components/game/ComplexNumbersChapter'), { ssr: false }),
+  sequencesSeries: nextDynamic(() => import('@/components/game/SequencesSeriesChapter'), { ssr: false }),
+  statsInference: nextDynamic(() => import('@/components/game/StatsInferenceChapter'), { ssr: false }),
+  unitCircleTrig: nextDynamic(() => import('@/components/game/UnitCircleTrigChapter'), { ssr: false }),
+  trigGraphsIdentities: nextDynamic(() => import('@/components/game/TrigGraphsIdentitiesChapter'), { ssr: false }),
+  conicSections: nextDynamic(() => import('@/components/game/ConicSectionsChapter'), { ssr: false }),
+  introCalculus: nextDynamic(() => import('@/components/game/IntroCalculusChapter'), { ssr: false }),
 }
 
 export default function TeenPreviewPage() {

@@ -34,6 +34,22 @@ const shuffle = <T,>(a: T[]): T[] => {
   return r
 }
 
+// Live viewport size — so the object row RESERVES room for the top banner + bottom Milo and
+// never overlaps on a short/landscape phone. Copied verbatim from world1.tsx.
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
+}
+// A viewport shorter than this is a landscape phone: shrink objects + lift the row.
+const SHORT_H = 470
+
 // ─── Colours ───────────────────────────────────────────────────────────────────────
 type ColorName = 'red' | 'yellow' | 'blue' | 'green' | 'orange' | 'purple'
 // `deep` is a darker stroke so light fills (yellow especially) read against the backdrop.
@@ -131,8 +147,10 @@ function Background({ scene, scenes }: { scene: ObjKind; scenes: ObjKind[] }) {
 // world's sprites in turn (auto-upgrade), then an emoji.
 function MiloWalker({ left, milo }: { left: number; milo: ColorWorld['milo'] }) {
   const [step, setStep] = useState(0)
+  const { h: vh } = useViewport()
+  const dim = vh < SHORT_H ? 'min(30vh, 150px)' : 'min(36vh, 320px)'
   return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(36vh, 320px)', height: 'min(36vh, 320px)' }}>
+    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: dim, height: dim }}>
       <div style={{ width: '100%', height: '100%', animation: 'rt_float 3.4s ease-in-out infinite' }}>
         {step >= milo.srcs.length
           ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -329,17 +347,22 @@ function useThingScale(n: number, scene: ObjKind): number {
     const wide = SCENES[scene].wide
     const calc = () => {
       const w = window.innerWidth, h = window.innerHeight
+      const short = h < SHORT_H
+      const floor = short ? 0.42 : 0.62
       const byWidth = w * (n <= 2 ? 0.28 : n === 3 ? 0.22 : 0.175)        // horizontal room per object
-      const byHeight = h * 0.42                                           // vertical room (square box)
+      // On a short/landscape frame the object must fit the slim strip between banner and Milo:
+      // a tighter height budget + lower floor so it can actually shrink.
+      const byHeight = h * (short ? 0.34 : 0.42)                          // vertical room (square box)
       const s = Math.min(byWidth, byHeight, THING * 1.5) / THING
-      if (wide) { setScale(Math.max(0.62, s)); return }
+      if (wide) { setScale(Math.max(floor, s)); return }
       const miloTop = h - Math.min(0.36 * h, 320)
       const clearScale = ((miloTop - (THING_BASE_TOP / 100) * h) * 2) / THING
-      setScale(Math.max(0.62, Math.min(s, clearScale)))
+      setScale(Math.max(floor, Math.min(s, clearScale)))
     }
     calc()
     window.addEventListener('resize', calc)
-    return () => window.removeEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
   }, [n, scene])
   return scale
 }
@@ -356,14 +379,19 @@ const XJIT: Record<number, number[]> = { 1: [0], 2: [-2, 2], 3: [-1.5, 1.5, -1],
 
 // Per-object placement (left%, top%, depth). Wide (car-like) scenes group to Milo's right; the
 // others spread across but stay right of Milo's bottom-left column so a low object never collides.
-function placeFor(n: number, scene: ObjKind): Placed[] {
+function placeFor(n: number, scene: ObjKind, vh: number): Placed[] {
   const g = SCENES[scene].ground
+  const short = vh < SHORT_H
+  // On a short/landscape frame lift the object row up so it clears the top banner and stays
+  // above Milo below; flatten the depth rise so nothing dips too low.
+  const baseTop = short ? Math.min(g.baseTop, 42) : g.baseTop
+  const rise = short ? Math.min(g.rise, 6) : g.rise
   const xs = SCENES[scene].wide
     ? (n <= 2 ? [46, 76] : n === 3 ? [34, 58, 82] : n === 4 ? [30, 50, 70, 90] : Array.from({ length: n }, (_, i) => 30 + (i * 60) / (n - 1)))
     : (n <= 2 ? [36, 68] : n === 3 ? [30, 54, 80] : n === 4 ? [24, 45, 65, 86] : Array.from({ length: n }, (_, i) => 22 + (i * 66) / (n - 1)))
   const depths = DEPTHS[n] ?? xs.map((_, i) => (i % 2 ? 0.55 : 0.2))
   const jit = XJIT[n] ?? xs.map(() => 0)
-  return xs.map((x, i) => { const depth = depths[i] ?? 0.3; return { left: x + (jit[i] ?? 0), top: g.baseTop - depth * g.rise, depth } })
+  return xs.map((x, i) => { const depth = depths[i] ?? 0.3; return { left: x + (jit[i] ?? 0), top: baseTop - depth * rise, depth } })
 }
 
 // ─── Round copy ──────────────────────────────────────────────────────────────────
@@ -382,8 +410,12 @@ const ColorsPlay: React.FC<{ data: ColorRound; mode: Mode; onComplete: (correct:
   const { scene, options, answerIdx } = data
   const { label, noun } = targetOf(data)
   const n = options.length
-  const slots = placeFor(n, scene)
-  const groundLine = SCENES[scene].ground.groundLine
+  const { h: vh } = useViewport()
+  const short = vh < SHORT_H
+  const slots = placeFor(n, scene, vh)
+  // On a short frame the objects lifted up; drop the shadow's ground line a fixed gap below the
+  // object band so the shadow tracks the object instead of stranding low.
+  const groundLine = short ? Math.min(SCENES[scene].ground.groundLine, slots[0].top + 20) : SCENES[scene].ground.groundLine
   const scale = useThingScale(n, scene)
   const [pickedIdx, setPickedIdx] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
@@ -435,8 +467,10 @@ const ColorsExplain: React.FC<{ data: ColorRound; onDone: () => void }> = ({ dat
   const { scene, options, answerIdx } = data
   const { label, noun } = targetOf(data)
   const n = options.length
-  const slots = placeFor(n, scene)
-  const groundLine = SCENES[scene].ground.groundLine
+  const { h: vh } = useViewport()
+  const short = vh < SHORT_H
+  const slots = placeFor(n, scene, vh)
+  const groundLine = short ? Math.min(SCENES[scene].ground.groundLine, slots[0].top + 20) : SCENES[scene].ground.groundLine
   const scale = useThingScale(n, scene)
   const [glow, setGlow] = useState(false)
   const ran = useRef(false)
@@ -474,9 +508,13 @@ const SHOWCASE_DWELL = 1500   // each item stays lit + named for this long
 const ColorShowcase: React.FC<{ scene: ObjKind; onDone: () => void }> = ({ scene, onDone }) => {
   const [lit, setLit] = useState(-1)
   const [px, setPx] = useState(110)
+  const { h: vh } = useViewport()
+  const short = vh < SHORT_H
   const ran = useRef(false)
   useEffect(() => {
-    const calc = () => setPx(Math.max(62, Math.min(window.innerWidth * 0.15, 124)))
+    // Cap by HEIGHT too — the 6 objects wrap onto 2 rows, so a width-only size overflowed
+    // vertically on a short/landscape frame.
+    const calc = () => setPx(Math.max(50, Math.min(window.innerWidth * 0.15, window.innerHeight * 0.18, 124)))
     calc(); window.addEventListener('resize', calc)
     return () => window.removeEventListener('resize', calc)
   }, [])
@@ -495,8 +533,8 @@ const ColorShowcase: React.FC<{ scene: ObjKind; onDone: () => void }> = ({ scene
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '11% 4% 26%' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', columnGap: 'clamp(16px,4vw,56px)', rowGap: 'clamp(8px,2vw,24px)', justifyItems: 'center', alignItems: 'end' }}>
+    <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: short ? '13% 4% 14%' : '11% 4% 26%' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', columnGap: 'clamp(16px,4vw,56px)', rowGap: short ? '4px' : 'clamp(8px,2vw,24px)', justifyItems: 'center', alignItems: 'end' }}>
         {COLOR_ORDER.map((c, i) => {
           const on = lit === i
           return (
@@ -543,6 +581,7 @@ function makeColorBeat(world: ColorWorld): Beat<ColorRound> {
     // next spot" pause every 3 rounds keeps it from feeling rushed.
     walkEvery: 3,
     make: (d, round = 0) => makeColorRound(world, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.options[d.answerIdx]}`,   // dedupe on the target colour (not the rotating scene/options order)
     prompt: d => promptFor(d),
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ColorsPlay data={data} mode="practice" onComplete={onSubmit} />,

@@ -30,6 +30,20 @@ const shuffle = <T,>(a: T[]): T[] => {
 }
 const LOOKALIKE: Record<number, number> = { 6: 9, 9: 6, 7: 1, 1: 7, 3: 8, 8: 3, 5: 6, 2: 7 }
 
+// Live viewport size — so the row of items can RESERVE room below the top banner/prompt and
+// never clip or overlap on a short/landscape screen.
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
+}
+
 // ─── Scenes & Worlds ─────────────────────────────────────────────────────────────────
 type ObjKind = 'door' | 'balloon' | 'bus'
 type Scene =
@@ -220,12 +234,18 @@ function useItemScale(n: number, kind: ObjKind): number {
     const b = BASE[kind]
     const calc = () => {
       const w = window.innerWidth, h = window.innerHeight
+      const short = h < 470
       const byWidth = w * (n <= 2 ? 0.30 : n <= 3 ? 0.22 : 0.17) / b.w
-      const byHeight = (h * 0.5) / b.h
-      setScale(Math.max(0.8, Math.min(byWidth, byHeight, 2.6)))
+      // On short landscape, cap the object to a smaller slice of the (already tiny) height so
+      // a tall door + its numeral chip clear the top banner AND the grounded row stays on screen.
+      const byHeight = (h * (short ? 0.42 : 0.5)) / b.h
+      const floor = short ? 0.55 : 0.8
+      setScale(Math.max(floor, Math.min(byWidth, byHeight, 2.6)))
     }
-    calc(); window.addEventListener('resize', calc)
-    return () => window.removeEventListener('resize', calc)
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
   }, [n, kind])
   return scale
 }
@@ -238,12 +258,16 @@ const KIND_GROUND: Record<ObjKind, { baseTop: number; rise: number; groundLine: 
 }
 const DEPTHS: Record<number, number[]> = { 2: [0.12, 0.55], 3: [0.5, 0.05, 0.65], 4: [0.6, 0.18, 0.4, 0.78] }
 const XJIT: Record<number, number[]> = { 2: [-1.5, 1.5], 3: [-1.5, 1, -1], 4: [-1.5, 1, -1, 1.5] }
-function placeFor(n: number, kind: ObjKind): Placed[] {
+function placeFor(n: number, kind: ObjKind, short = false): Placed[] {
   const g = KIND_GROUND[kind]
+  // On short landscape, seat every kind a touch LOWER so tall objects + their numeral chip
+  // clear the top prompt banner (~top 48–90px). Objects are also smaller (useItemScale), and
+  // floaters have no controls below, so the row still fits inside the viewport with no overlap.
+  const baseTop = short ? g.baseTop + (g.float ? 8 : 6) : g.baseTop
   const xs = n <= 2 ? [33, 70] : n === 3 ? [26, 52, 80] : n === 4 ? [20, 42, 64, 87] : Array.from({ length: n }, (_, i) => 22 + (i * 66) / (n - 1))
   const depths = DEPTHS[n] ?? xs.map((_, i) => (i % 2 ? 0.55 : 0.2))
   const jit = XJIT[n] ?? xs.map(() => 0)
-  return xs.map((x, i) => { const depth = depths[i] ?? 0.3; return { left: x + (jit[i] ?? 0), top: g.baseTop - depth * g.rise, depth } })
+  return xs.map((x, i) => { const depth = depths[i] ?? 0.3; return { left: x + (jit[i] ?? 0), top: baseTop - depth * g.rise, depth } })
 }
 
 // ─── Round copy (per world) ────────────────────────────────────────────────────────
@@ -259,8 +283,11 @@ const ItemsPlay: React.FC<{ world: RecogWorld; data: DoorRound; mode: Mode; onCo
   const { scene, doors, answerIdx } = data
   const target = doors[answerIdx]
   const n = doors.length
-  const slots = placeFor(n, world.kind)
+  const { h: vh } = useViewport()
+  const short = vh < 470
+  const slots = placeFor(n, world.kind, short)
   const g = KIND_GROUND[world.kind]
+  const groundLine = short && !g.float ? g.groundLine + 6 : g.groundLine
   const scale = useItemScale(n, world.kind)
   const [openIdx, setOpenIdx] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
@@ -296,7 +323,7 @@ const ItemsPlay: React.FC<{ world: RecogWorld; data: DoorRound; mode: Mode; onCo
       {doors.map((num, i) => {
         const state: ItemState = openIdx === i ? 'open' : wrongIdx === i ? 'wrong' : 'idle'
         return <RecogItem key={i} scene={scene} kind={world.kind} num={num} idx={i} state={state} scale={scale}
-          left={slots[i].left} top={slots[i].top} depth={slots[i].depth} groundLine={g.groundLine} float={g.float} onTap={() => tap(i)} aria={`${world.noun} ${num}`} />
+          left={slots[i].left} top={slots[i].top} depth={slots[i].depth} groundLine={groundLine} float={g.float} onTap={() => tap(i)} aria={`${world.noun} ${num}`} />
       })}
     </>
   )
@@ -307,8 +334,11 @@ const ItemsExplain: React.FC<{ world: RecogWorld; data: DoorRound; onDone: () =>
   const { scene, doors, answerIdx } = data
   const target = doors[answerIdx]
   const n = doors.length
-  const slots = placeFor(n, world.kind)
+  const { h: vh } = useViewport()
+  const short = vh < 470
+  const slots = placeFor(n, world.kind, short)
   const g = KIND_GROUND[world.kind]
+  const groundLine = short && !g.float ? g.groundLine + 6 : g.groundLine
   const scale = useItemScale(n, world.kind)
   const [glow, setGlow] = useState(false)
   const ran = useRef(false)
@@ -327,7 +357,7 @@ const ItemsExplain: React.FC<{ world: RecogWorld; data: DoorRound; onDone: () =>
     <>
       {doors.map((num, i) => (
         <RecogItem key={i} scene={scene} kind={world.kind} num={num} idx={i} state={i === answerIdx && glow ? 'glow' : 'idle'} scale={scale}
-          left={slots[i].left} top={slots[i].top} depth={slots[i].depth} groundLine={g.groundLine} float={g.float} aria={`example ${num}`} />
+          left={slots[i].left} top={slots[i].top} depth={slots[i].depth} groundLine={groundLine} float={g.float} aria={`example ${num}`} />
       ))}
     </>
   )
@@ -350,6 +380,7 @@ function makeRecognizeBeat(world: RecogWorld): Beat<DoorRound> {
   return {
     skillId: 'numberRecognition', rounds: 10, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.doors[d.answerIdx]}`,   // dedupe on the target number (not the rotating scene/other doors)
     prompt: () => promptFor(world),
     say: d => sayFor(world, d),
     Play: ({ data, onSubmit }) => <ItemsPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,

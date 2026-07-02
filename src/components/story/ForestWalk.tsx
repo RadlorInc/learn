@@ -241,9 +241,11 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
 
       {/* Milo speech bubble (say beats) — top banner; auto-advances, no Next button */}
       {beat?.kind === 'say' && (
-        <div onClick={() => speak(beat.text)} style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', maxWidth: '64%', zIndex: 20, animation: 'fw_pop .4s ease both',
-          background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: '12px 18px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--ink)', lineHeight: 1.4, textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)', cursor: 'pointer' }}>
-          {beat.text} <span style={{ fontSize: 18 }}>🔊</span>
+        <div style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', maxWidth: '64%', zIndex: 20 }}>
+          <div onClick={() => speak(beat.text)} style={{ animation: 'fw_pop .4s ease both',
+            background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: '12px 18px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--ink)', lineHeight: 1.4, textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)', cursor: 'pointer' }}>
+            {beat.text} <span style={{ fontSize: 18 }}>🔊</span>
+          </div>
         </div>
       )}
 

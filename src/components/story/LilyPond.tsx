@@ -73,6 +73,20 @@ const WORLDS: SubWorld[] = [
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: SCENE[w.scenes[0]].bg.img }))
 
+// Live viewport size — so the stage can RESERVE room and compact on short/landscape phones
+// (banner + objects + question box + answer buttons must all fit within vh, no overlap).
+function useViewport() {
+  const [vp, setVp] = useState({ w: 1000, h: 700 })
+  useEffect(() => {
+    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    calc()
+    window.addEventListener('resize', calc)
+    window.addEventListener('orientationchange', calc)
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
+  }, [])
+  return vp
+}
+
 interface SubRound { scene: Scene; total: number; take: number }
 const qty = (n: number, cfg: SceneCfg) => `${n} ${n === 1 ? cfg.noun : cfg.nounPlural}`
 
@@ -134,17 +148,28 @@ function Item({ cfg, size }: { cfg: SceneCfg; size: string }) {
 function Stage({ cfg, total, take, shown, left, lit, showLeft, glow, dir, dark, showQ = true }: {
   cfg: SceneCfg; total: number; take: number; shown?: number; left: boolean; lit: number; showLeft: boolean; glow: boolean; dir: LeaveDir; dark?: boolean; showQ?: boolean
 }) {
+  const { h: vh } = useViewport()
+  const short = vh < 470       // short landscape phones (812×375, 667×375) + small portrait
   const answer = total - take
   const N = shown ?? total
   // Big objects, but shrink a little when there are many so they never collide with the
   // "how many left" box (esp. in short/landscape viewports). Small counts stay BIG.
-  const itemSize = total <= 4 ? 'clamp(94px, 18vmin, 210px)' : total <= 7 ? 'clamp(78px, 14vmin, 165px)' : 'clamp(62px, 11vmin, 135px)'
+  // On a SHORT screen, drop the clamp MIN-floor (which otherwise forces the sprites big
+  // even when vmin is tiny) and cap the max, so the objects + question box + buttons fit.
+  const itemSize = short
+    ? (total <= 4 ? 'clamp(48px, 15vmin, 96px)' : total <= 7 ? 'clamp(42px, 12vmin, 82px)' : 'clamp(36px, 10vmin, 70px)')
+    : (total <= 4 ? 'clamp(94px, 18vmin, 210px)' : total <= 7 ? 'clamp(78px, 14vmin, 165px)' : 'clamp(62px, 11vmin, 135px)')
   const drift = dir === 'down' ? '4.5vh' : '-6vh'
+  // Reposition the bands when short so banner + objects + question + buttons stack cleanly:
+  //   objects centred higher (clears the top banner), question box pulled up (clears the
+  //   bottom answer buttons). Tall/portrait keeps the original look.
+  const rowTop = short ? '30%' : '36%'
+  const qTop = short ? '61%' : '71%'
   return (
     <>
       {/* the row of friends, grounded; the last `take` leave (staggered) */}
-      <div style={{ position: 'fixed', left: 0, right: 0, top: '36%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6vh' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.6vmin', justifyContent: 'center', alignItems: 'flex-end', maxWidth: '88vw', minHeight: '13vh' }}>
+      <div style={{ position: 'fixed', left: 0, right: 0, top: rowTop, transform: 'translateY(-50%)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? '0.3vh' : '0.6vh' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: short ? '1vmin' : '1.6vmin', justifyContent: 'center', alignItems: 'flex-end', maxWidth: '92vw', minHeight: short ? '9vh' : '13vh' }}>
           {Array.from({ length: N }).map((_, i) => {
             const leaving = i >= total - take
             const gone = leaving && left
@@ -169,18 +194,18 @@ function Stage({ cfg, total, take, shown, left, lit, showLeft, glow, dir, dark, 
             )
           })}
         </div>
-        <div style={{ width: 'min(72vw, 660px)', height: '2.1vh', minHeight: 12, background: dark ? 'linear-gradient(#3a4a72,#283156)' : 'linear-gradient(#9ccb86,#6fa64f)', borderRadius: 6, boxShadow: '0 5px 9px rgba(0,0,0,.28)' }} />
+        <div style={{ width: 'min(72vw, 660px)', height: short ? '1.4vh' : '2.1vh', minHeight: short ? 7 : 12, background: dark ? 'linear-gradient(#3a4a72,#283156)' : 'linear-gradient(#9ccb86,#6fa64f)', borderRadius: 6, boxShadow: '0 5px 9px rgba(0,0,0,.28)' }} />
       </div>
 
       {/* "How many LEFT" box + answer — only after the take-away has played */}
-      <div style={{ position: 'fixed', left: 0, right: 0, top: '71%', transform: 'translateY(-50%)', zIndex: 31, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4vh',
+      <div style={{ position: 'fixed', left: 0, right: 0, top: qTop, transform: 'translateY(-50%)', zIndex: 31, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4vh',
         opacity: showQ ? 1 : 0, transition: 'opacity .4s ease' }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(12px,1.9vh,17px)', letterSpacing: '.08em', color: dark ? '#dfe6ff' : 'var(--ink-soft)' }}>HOW MANY LEFT?</span>
-        <div style={{ width: 'clamp(100px,17vmin,150px)', height: 'clamp(100px,17vmin,150px)', borderRadius: 28, border: '5px solid',
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: short ? 'clamp(10px,1.6vh,14px)' : 'clamp(12px,1.9vh,17px)', letterSpacing: '.08em', color: dark ? '#dfe6ff' : 'var(--ink-soft)' }}>HOW MANY LEFT?</span>
+        <div style={{ width: short ? 'clamp(56px,12vmin,90px)' : 'clamp(100px,17vmin,150px)', height: short ? 'clamp(56px,12vmin,90px)' : 'clamp(100px,17vmin,150px)', borderRadius: short ? 18 : 28, border: '5px solid',
           background: showLeft ? 'var(--garden-green)' : 'var(--paper)', borderColor: showLeft ? 'var(--garden-green-deep)' : 'var(--outline)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 0 rgba(61,37,22,.2)', transition: 'all .35s ease',
           animation: glow ? 'lp_pop .5s ease' : 'none', filter: glow ? 'drop-shadow(0 0 16px var(--garden-green))' : 'none' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(52px,10vmin,82px)', color: showLeft ? '#fff' : 'var(--ink-muted)', lineHeight: 1 }}>{showLeft ? answer : '?'}</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 'clamp(30px,7vmin,50px)' : 'clamp(52px,10vmin,82px)', color: showLeft ? '#fff' : 'var(--ink-muted)', lineHeight: 1 }}>{showLeft ? answer : '?'}</span>
         </div>
       </div>
     </>
@@ -200,6 +225,8 @@ const SubPlay: React.FC<{ world: SubWorld; data: SubRound; mode: Mode; onComplet
   const [lit, setLit] = useState(0)
   const [asking, setAsking] = useState(false)
   const erred = useRef(false), done = useRef(false)
+  const { h: vh } = useViewport()
+  const short = vh < 470
 
   // Staged: the friends pop in one-by-one, THEN `take` of them leave, and only THEN do the
   // answer choices appear — so the child watches the take-away instead of seeing it all at once.
@@ -238,17 +265,17 @@ const SubPlay: React.FC<{ world: SubWorld; data: SubRound; mode: Mode; onComplet
   return (
     <>
       <Stage cfg={cfg} total={total} take={take} shown={shown} left={left} lit={reveal ? lit : 0} showLeft={reveal} glow={reveal} dir={world.leave} dark={world.dark} showQ={asking || picked !== null} />
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: '4%', zIndex: 31, display: 'flex', justifyContent: 'center', gap: 'clamp(14px,4vw,34px)', flexWrap: 'wrap', padding: '0 12px',
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? '2%' : '4%', zIndex: 31, display: 'flex', justifyContent: 'center', gap: short ? 'clamp(8px,3vw,20px)' : 'clamp(14px,4vw,34px)', flexWrap: 'wrap', padding: '0 12px',
         opacity: asking ? 1 : 0, transform: asking ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity .4s ease, transform .4s ease', pointerEvents: asking ? 'auto' : 'none' }}>
         {choices.map(n => {
           const isPick = picked === n, isOk = n === answer
           return (
             <button key={n} onClick={() => choose(n)} disabled={picked !== null} style={{
-              width: 'clamp(92px,16vmin,124px)', height: 'clamp(92px,16vmin,124px)', borderRadius: 24,
+              width: short ? 'clamp(50px,11vmin,80px)' : 'clamp(92px,16vmin,124px)', height: short ? 'clamp(50px,11vmin,80px)' : 'clamp(92px,16vmin,124px)', borderRadius: short ? 16 : 24,
               background: (isPick && isOk) ? 'var(--garden-green-soft)' : 'var(--paper)',
               border: `4px solid ${(isPick && isOk) ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`,
               boxShadow: `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`,
-              fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(34px,6.4vmin,50px)', color: 'var(--ink)',
+              fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 'clamp(22px,5vmin,38px)' : 'clamp(34px,6.4vmin,50px)', color: 'var(--ink)',
               cursor: picked !== null ? 'default' : 'pointer', transform: (isPick && isOk) ? 'scale(1.08) translateY(-3px)' : 'scale(1)',
               transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease',
             }}>{n}</button>
@@ -305,6 +332,7 @@ function makeSubBeat(world: SubWorld): Beat<SubRound> {
   return {
     skillId: 'subtraction', rounds: 10, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.total}-${d.take}`,   // dedupe on the MATH only (not the rotating scene)
     prompt: d => `${d.total} take away ${d.take} — how many are left?`,
     say: d => `Milo has ${qty(d.total, SCENE[d.scene])}. ${world.leaveWord(d.take)} How many are left?`,
     Play: ({ data, onSubmit }) => <SubPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
