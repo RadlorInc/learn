@@ -26,13 +26,54 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Baseline hardening on every route. (No Content-Security-Policy yet — the app leans on
-        // inline styles + Google Fonts + Supabase, so a CSP needs its own careful allowlist pass.)
+        // Baseline hardening on every route.
         source: '/:path*',
         headers: [
           { key: 'X-Frame-Options', value: 'DENY' },                         // clickjacking: not embeddable
           { key: 'X-Content-Type-Options', value: 'nosniff' },               // no MIME sniffing
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // V3: force HTTPS for 2 years incl. subdomains (Vercel serves HTTPS but adds no HSTS itself).
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          // V3: the app uses the camera for AR hand-tracking + speech synthesis; deny everything else.
+          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), interest-cohort=()' },
+          // V3/V4 — CSP. The app is fully STATIC-rendered, so a nonce-based strict CSP is not viable
+          // (Next requires dynamic rendering on every page for nonces — killing static/CDN caching and
+          // risking the AR + OAuth flows). So we split it:
+          //
+          //  1) ENFORCED subset below — only directives with no legitimate use in this app, so they
+          //     cannot break anything: no <object>/<embed>, no <base> hijack, no external framing,
+          //     forms post only to self/Google, and http subresources auto-upgrade. Real protection now.
+          //     (Deliberately NO default-src here — that would cascade and restrict scripts/fetch/img.)
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "object-src 'none'",
+              "base-uri 'self'",
+              "frame-ancestors 'none'",
+              "form-action 'self' https://accounts.google.com",
+              'upgrade-insecure-requests',
+            ].join('; '),
+          },
+          //  2) REPORT-ONLY full strict policy — collects real violations (toward enforcing script-src
+          //     via experimental SRI, plus the exact connect/img/style allowlist) WITHOUT breaking the
+          //     app. Add a report-uri + flip to enforced once the reports are clean. The app now ships
+          //     no inline scripts of its own (SW registration moved to /public/sw-register.js), so the
+          //     only remaining script-src gap is Next's own static-hydration inline scripts.
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self' https://accounts.google.com",
+              "object-src 'none'",
+            ].join('; '),
+          },
         ],
       },
       {

@@ -1,0 +1,79 @@
+-- ============================================================================
+-- PUBLIC SCHEMA — SECURITY SURFACE BASELINE  (generated snapshot; do NOT re-apply)
+--
+-- WHY THIS FILE EXISTS: the base tables + their RLS were created in the Supabase
+-- dashboard, not in supabase/migrations/, so they were invisible to code review.
+-- That blind spot is exactly where V1 (the forged-invite escalation) hid. This is a
+-- committed, diffable snapshot of the security-relevant surface — RLS, policies,
+-- function security posture, grants, triggers — so drift is caught in review.
+--
+-- REGENERATE + DIFF: run the query in docs/security.md against prod and overwrite
+-- this file; a non-empty `git diff` means the live security posture changed.
+-- Last generated: 2026-07-03 (post V1–V11 hardening).
+-- ============================================================================
+
+-- ==== TABLES: RLS status — every data table has rls=t AND >=1 policy ====
+--   chapters                   rls=t  policies=1   (public catalog: SELECT using(true) — intentional)
+--   diagnostic_items           rls=t  policies=1
+--   diagnostic_plan_progress   rls=t  policies=1
+--   diagnostic_plans           rls=t  policies=1
+--   diagnostic_rechecks        rls=t  policies=1
+--   diagnostic_sessions        rls=t  policies=1
+--   grade_chapters             rls=t  policies=3
+--   grades                     rls=t  policies=4
+--   learner_access             rls=t  policies=3   (SELECT/INSERT/DELETE — DELETE added V11)
+--   learner_events             rls=t  policies=2
+--   learner_invites            rls=t  policies=3   (sender INSERT now requires learner ownership — V1)
+--   learner_progress           rls=t  policies=1
+--   learner_state              rls=t  policies=1
+--   learner_stats              rls=t  policies=1
+--   learners                   rls=t  policies=4
+--   profiles                   rls=t  policies=1
+--   sessions                   rls=t  policies=2
+
+-- ==== RLS POLICIES (every access predicate is scoped by auth.uid()/jwt email) ====
+--   chapters: select        SELECT  using(true)                          [public catalog]
+--   diagnostic_*            SELECT  using(learner_access join, parent_id = auth.uid())   [owner-scoped, read-only; writes via SECURITY DEFINER RPC]
+--   grades / grade_chapters SELECT/INSERT/UPDATE/DELETE scoped to grades.created_by = auth.uid() (+ learner_access for read)
+--   learner_access: select  SELECT  using(parent_id = auth.uid())
+--   learner_access: insert  INSERT  check(parent_id = auth.uid() AND can_self_grant_access(learner_id, access_role))
+--   learner_access: delete  DELETE  using(learner_id in owned learners)   [V11: owner can revoke]
+--   learner_events          INSERT/SELECT scoped by learner_access.parent_id = auth.uid()
+--   learner_invites: sender      ALL     using(invited_by = auth.uid())
+--                                        check(invited_by = auth.uid() AND EXISTS owned-learner)   [V1 FIX]
+--   learner_invites: recipient   SELECT/UPDATE  where invited_email = lower(jwt email)
+--   learner_progress/state/stats ALL     using+check EXISTS(learner_access where parent_id = auth.uid())
+--   learners: select        SELECT  using(created_by = auth.uid() OR id in learner_access)
+--   learners: insert        INSERT  check(created_by = auth.uid())
+--   learners: update        UPDATE  using+check(created_by = auth.uid())
+--   learners: delete        DELETE  using(created_by = auth.uid())        [owner-only]
+--   profiles: own row       ALL     using+check(auth.uid() = id)
+--   sessions: parent insert INSERT  check EXISTS(learner_access where parent_id = auth.uid())
+--   sessions: parent read   SELECT  using EXISTS(learner_access where parent_id = auth.uid())
+
+-- ==== FUNCTIONS (security posture — DEFINER functions must pin search_path + guard auth.uid()) ====
+--   DEFINER, authenticated-callable (each self-guards on learner ownership / auth.uid()):
+--     can_self_grant_access(uuid,text)        stable   search_path=public   [computes the grant check; V1-hardened]
+--     sync_session(...)                        volatile search_path=public   [learner_access guard; xp/coins server-derived — V2]
+--     sync_diagnostic(...)                     volatile search_path=public   [learner_access guard; payload bounds — V5]
+--     sync_recheck(...)                        volatile search_path=public   [learner_access guard]
+--   INVOKER, authenticated-callable (RLS is the gate):
+--     get_parent_dashboard()                   stable   search_path=public
+--     get_insights_rollup(timestamptz)         stable   search_path=public
+--     get_learner_bootstrap(uuid)              stable   search_path=public
+--   DEFINER, trigger-only (NOT granted to anon/authenticated — correct):
+--     grant_owner_access(), init_learner_stats(), handle_new_user(),
+--     enforce_learner_cap(), enforce_grade_cap(), enforce_grade_ownership(),
+--     rls_auto_enable()  [event trigger — auto-enables RLS on any new public table]
+--   INVOKER trigger helpers: set_updated_at() (revoked),
+--     touch_grades_updated_at()  [NOTE: still has anon+authenticated EXECUTE — harmless invoker trigger fn, minor cleanup candidate]
+
+-- ==== TRIGGERS (public tables) ====
+--   learners.on_learner_created           -> grant_owner_access      (owner gets learner_access on create)
+--   learners.on_learner_created_stats     -> init_learner_stats
+--   learners.trg_enforce_learner_cap      -> enforce_learner_cap      (<=25 per account)
+--   learners.trg_enforce_grade_ownership  -> enforce_grade_ownership
+--   learners.learners_updated_at          -> set_updated_at
+--   grades.trg_enforce_grade_cap          -> enforce_grade_cap
+--   grades.trg_touch_grades               -> touch_grades_updated_at
+--   learner_progress/learner_stats/profiles.*_updated_at -> set_updated_at

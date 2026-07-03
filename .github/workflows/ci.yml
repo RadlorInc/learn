@@ -27,3 +27,24 @@ jobs:
         run: npm test
       - name: Build
         run: npx next build
+      - name: Dependency audit (fail on high/critical)
+        # Moderate transitive advisories (e.g. postcss via next) don't gate — but a new
+        # HIGH or CRITICAL CVE fails the build instead of sitting unnoticed. See docs/security.md.
+        run: npm audit --audit-level=high
+
+  # RLS regression suite — proves the DB denies a cross-tenant attacker (guards against V1's return).
+  # Runs only when a SUPABASE_DB_URL secret is configured; point it at a TEST/branch DB, never prod.
+  rls-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run RLS regression suite
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::warning::SUPABASE_DB_URL not set — skipping RLS regression suite. See docs/security.md."
+            exit 0
+          fi
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql
