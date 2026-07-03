@@ -1,10 +1,28 @@
 # Session Handoff — Milo Story Mode
 
-_Last updated: 2026-07-03 (PERFORMANCE PASS + CHECKUP-GATE FIX — ALL SHIPPED to prod, `main`@`171a306`)_
+_Last updated: 2026-07-03 (CLEAN-ARCHITECTURE REFACTOR — ALL SHIPPED to prod, `main`@`cdfad07`)_
 
 > ✅ **ARCHITECTURE REFACTOR — COMPLETE (2026-07-03, SHIPPED — `main`@`2f27f07`, Vercel prod READY, live 200).** Clean-architecture principle is officially DONE. Final follow-ups: (1) store merge/streak math extracted into a tested pure module `state/progressMerge.ts` (`mergeServerProgress` + `nextStreak`, +10 unit tests → 25/25; `/insights` signed-in verified live via user screenshot); (2) the `toast`-in-repository coupling was deliberately KEPT (revert) to preserve exact failure-path behavior. No open architecture items. Clean-architecture layering applied; **all file paths below this banner referencing `src/lib/…`, `@/lib/…`, `@/data/supabase/queries`, and `src/components/…` are now STALE.** New layout (see [`docs/architecture.md`](docs/architecture.md)): `src/core` (pure domain), `src/data` (supabase — `data/auth.ts` + `data/repositories/*` replaced the 797-line `queries.ts`), `src/infra` (kv/analytics/speech/offline/ar/storage), `src/state` (store), `src/shared` (ui kit + hooks), `src/features` (`chapters/{game,story,lessons,teen}`, `daily`, `insights`). No `createClient()` in any page (use `@/data/auth`). Behavior UNCHANGED; `tsc` + `npm test` 15/15 + `next build` all green; preview + prod builds both green on Vercel; 3 diff-agents + runtime smoke PASS. **Still worth a signed-in tap-through on prod** (login → parent dashboard → play → /insights) — the one path not verifiable headlessly. Translate old paths → new when reading the notes below.
 
 Concise, current state. Per-chapter detail + conventions live in the auto-memory (`project-milo-6-8-story-conversion.md`, `feedback-story-demo-audio-pattern.md`, `project-milo-*-chapter.md`, `project-milo-demo-voice.md`, `feedback-viewport-scaling.md`, …) — read those for the deep notes.
+
+## LATEST SESSION (2026-07-03) — CLEAN-ARCHITECTURE REFACTOR — **SHIPPED + LIVE** (`main`@`cdfad07`)
+
+Rebuilt the `src/` structure on clean-architecture principles. **Behavior-preserving** (product unchanged); verified by 3 diff-agents (vs HEAD), a runtime smoke, a live signed-in `/insights` check, and green Vercel prod builds.
+
+**New layout** (full map in [`docs/architecture.md`](docs/architecture.md)) — dependency rule `app → features → data → core`, inward-only:
+- `src/core/` — pure domain (chapters, skillGraph, diagnosticEngine, diagnosticItems, adaptive, scoring, questionVariety, ageGroups, grammar, **leveling**). No React/Supabase/browser.
+- `src/data/` — the ONLY Supabase layer: `supabase/*` (client/server/types + session/sync/guard hooks), `auth.ts` (auth adapter — the sole `supabase.auth.*` caller), `repositories/*` (profile·learners·grades·progress·sessions·diagnostics·invites + `_shared` + barrel — replaced the 797-line `queries.ts`).
+- `src/infra/` — cross-cutting: `analytics`, `useMiloSpeaker`, `miloPointer`, `useOfflineSync`, `ar/*`, `storage/*` (kv, activePlan, lastPlayed, pendingDiagnostic, checkup).
+- `src/state/` — the Zustand store + `progressMerge.ts` (pure merge/streak math).
+- `src/shared/` — `ui/*` (the kit) + `hooks/*` (useViewport, useChapterPhase, useLearnerChapters).
+- `src/features/` — `chapters/{game,story,lessons,teen}`, `daily`, `insights` (pure `metrics.ts` + `useInsights.ts` hook + thin page).
+
+**Phases (all shipped):** P1 dissolve flat `src/lib` → layered dirs (281 git renames). P2 split `queries.ts` → repositories + barrel. P3 seal UI→Supabase boundary (new `data/auth.ts`; **no `createClient()` in any page**) + extract `/insights` feature slice. P4 extract `core/leveling.ts`; move `components/` → `shared/ui` + `features/chapters/*`. Follow-up: extract store merge/streak → `state/progressMerge.ts` **+10 tests**. (The `toast`-in-repository coupling was deliberately KEPT — reverted my decouple — to preserve exact failure-path behavior.)
+
+**Commits (on `main`, all deployed READY):** `0d86380` (refactor P1–P4, via PR #27 `520aee2`) · `2f27f07` (store hardening + tests) · `21434d6`/`cdfad07` (handoff). **`tsc` + `npm test` 25/25 + `next build` green.** No DB/migration changes.
+
+**Open items = none for architecture.** The only remaining human check is a fuller signed-in tap-through on prod (parent dashboard + playing a chapter to confirm coins/stars/streak); `/insights` already verified live. Pre-existing non-refactor item still standing: the `milo-happy.png`/`milo-thinking.png` 404s (silent, has fallbacks — needs an art/pose decision).
 
 ## CURRENT STATE (2026-07-03) — **ALL SHIPPED + DEPLOYED (Vercel READY)**
 
