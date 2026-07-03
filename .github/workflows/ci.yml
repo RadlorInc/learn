@@ -1,10 +1,9 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  workflow_call: # reused by deploy.yml on push to main (avoids double-running on push)
 
 jobs:
   verify:

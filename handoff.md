@@ -1,6 +1,6 @@
 # Session Handoff — Milo Story Mode
 
-_Last updated: 2026-07-03 (SECURITY AUDIT + HARDENING — ALL SHIPPED to prod, `main`@`c59bb1f`)_
+_Last updated: 2026-07-03 (DEVOPS / PRODUCTION-READINESS — code shipped, `main`@`c59bb1f`+; dashboard steps pending)_
 
 > 🔐 **SECURITY AUDIT + HARDENING — COMPLETE + SHIPPED (2026-07-03, `main`@`c59bb1f`, prod deploy BUILDING→READY).** Ran a full senior-level security audit (3 parallel agents + live DB inspection + Supabase advisors). Backend was already strong (RLS on all 17 tables, guarded RPCs). Found + fixed **one CRITICAL cross-tenant hole (V1)** — a forged-invite privilege escalation that let any signed-in user read another family's child PII/DOB (empirically confirmed against prod, rolled back; **0 rows were ever forged**). Fixed V1–V11 (2 migrations applied to prod + code) and built 3 tiers of durable guardrails (RLS regression suite proven green vs prod, committed schema baseline, enforced CSP subset + monitoring hook, CI audit gate + Dependabot). Full detail in the LATEST SESSION block below and the runbook [`docs/security.md`](docs/security.md). **⚠️ 4 MANUAL steps remain (dashboard-only, no code path) — see the "MANUAL TO-DO" list immediately below.**
 
@@ -13,6 +13,12 @@ These are the only outstanding items that have no MCP/code path. Everything else
 2. **Shorten the refresh-token lifetime** — Auth settings. Mitigates the session JWT living in `localStorage` (standard Supabase-SPA tradeoff; CSP + this are the mitigations).
 3. **Set the `SUPABASE_DB_URL` repo secret** (GitHub → repo → Settings → Secrets → Actions) → activates the CI RLS regression job. Point it at a **Supabase preview branch or a throwaway TEST project — never prod**.
 4. **Set `MONITORING_INGEST_URL`** (Vercel env) or add `@sentry/nextjs` → activates error forwarding from `src/instrumentation.ts`. Without it, server errors still land in Vercel logs.
+
+**DevOps / production-readiness (dashboards — the pipeline code is shipped; these activate it — full detail + checklist in [`docs/devops.md`](docs/devops.md)):**
+- **Supabase:** create a **staging project**; enable **PITR** on prod (+ run the quarterly restore drill in [`docs/runbooks/rollback.md`](docs/runbooks/rollback.md)); set **Auth rate limits** (the real API-abuse perimeter — the app talks to Supabase directly, so Vercel can't rate-limit auth/RPC); add a **log drain** (alert on `42501` RLS-denial spikes).
+- **Vercel:** create a **staging env**; enable **Speed Insights + Analytics**; add **Firewall/WAF** rate-limit rules; set **`MONITORING_INGEST_URL`** (activates error forwarding from `instrumentation.ts` + `/api/report-error`).
+- **GitHub:** create `staging` + `production` **Environments** with a **required reviewer** on `production` (the prod-migration approval gate for `deploy.yml`); add secrets `SUPABASE_ACCESS_TOKEN`, `STAGING_DB_PASSWORD`, `PROD_DB_PASSWORD`, `STAGING_DB_URL` + vars `STAGING_PROJECT_REF`, `PROD_PROJECT_REF`(=`qaymxunzlarwusogwyak`). This is what flips migrations from hand-applied (MCP) to gated CI (`supabase db push`).
+- **Uptime monitor** (BetterStack/Pingdom) on `/api/health` (now live) + a signed-in journey.
 
 **Previously-known launch blockers (still standing, need external accounts/decisions — not code):**
 5. **Custom SMTP** (Resend/SES/Postmark) — the real launch blocker for email deliverability; the built-in mailer already tripped a bounce warning. Unblocks the week-6 auto-nudge cron.
@@ -46,6 +52,23 @@ Full security review of the production app; fixed everything findable in code + 
 - Runbook: [`docs/security.md`](docs/security.md) (layers, RLS tests, drift check, CSP roadmap, monitoring, manual steps).
 
 **Files:** migrations `20260703200000_harden_invite_access.sql` + `20260703210000_harden_rpc_inputs.sql`; `next.config.ts`, `src/app/layout.tsx`, `public/sw-register.js`, `src/instrumentation.ts`, `src/app/auth/page.tsx`, `src/data/repositories/{invites,profile}.ts`, `src/infra/storage/pendingDiagnostic.ts`; `supabase/tests/rls_regression.sql`, `supabase/schema/security_baseline.sql`, `docs/security.md`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `package.json`.
+
+---
+
+## LATEST SESSION (2026-07-03) — DEVOPS / PRODUCTION-READINESS — **code SHIPPED; dashboard steps pending**
+
+Designed the production deployment architecture and implemented every codeable part of a 6-item roadmap. **Recommendation (locked): stay serverless (Vercel + Supabase) — do NOT move to K8s** (it'd be a downgrade for a mostly-static app); the real risks were elsewhere (hand-applied migrations, one environment, no monitoring/DR). Full design in [`docs/devops.md`](docs/devops.md); rollback/incident runbook in [`docs/runbooks/rollback.md`](docs/runbooks/rollback.md).
+
+**Shipped (code, all green — tsc + 25 tests + build + endpoints verified):**
+- **CI/CD pipeline** — `ci.yml` made reusable (`workflow_call`); new **`deploy.yml`**: CI → apply migrations to **staging** + RLS suite → apply to **prod behind a required-reviewer gate**, via `supabase db push` (CLI-managed, replacing the hand-applied-via-MCP flow — the #1 reliability fix). `supabase/config.toml` added so migrations are CLI-linkable.
+- **Monitoring** — `/api/health` (shallow liveness, 200, no DB — for uptime + K8s probe) and `/api/report-error` (client-crash sink → `MONITORING_INGEST_URL`/Vercel logs); `MiloErrorBoundary` now reports client crashes there (complements `instrumentation.ts` `onRequestError`, which is server-only). Both endpoints curl-verified 200.
+- **Docs** — `docs/devops.md` (architecture, 3-env topology, CI/CD, scaling notes, monitoring layers + SLOs, and the full dashboard setup checklist) and `docs/runbooks/rollback.md` (code rollback = Vercel promote-previous; data = PITR/forward-fix; PITR restore drill; security-incident steps).
+
+**Deliberately NOT done in code (correct calls):** no Docker/K8s (documented as the portability escape-hatch with a real Dockerfile + manifests in the chat design, to adopt only if an on-prem/multi-cloud requirement appears); rate-limiting is primarily **Supabase Auth limits** (dashboard) since the app calls Supabase directly (Vercel can't see that traffic) — the RPC surface is already bounded by ownership guards + learner cap + server-derived scores.
+
+**The remaining items are all dashboard/account actions** — see the DevOps block in the MANUAL TO-DO list at the top (staging project, PITR, GitHub Environments + secrets, Vercel staging/Firewall/Speed Insights, log drain, uptime monitor). The pipeline is inert until the GitHub Environments + secrets exist.
+
+**Files:** `.github/workflows/{ci,deploy}.yml`, `supabase/config.toml`, `src/app/api/health/route.ts`, `src/app/api/report-error/route.ts`, `src/shared/ui/ErrorBoundary.tsx`, `docs/devops.md`, `docs/runbooks/rollback.md`.
 
 ---
 

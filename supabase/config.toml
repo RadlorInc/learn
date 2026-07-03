@@ -1,0 +1,11 @@
+# Supabase CLI project config. Minimal on purpose (version-tolerant): enough for
+# `supabase link --project-ref <ref>` + `supabase db push` to apply supabase/migrations/*
+# deterministically from CI (see .github/workflows/deploy.yml). This replaces the old
+# hand-applied-via-MCP migration flow — the #1 production reliability fix.
+#
+# For local-stack development, run `supabase init` to regenerate the full config with
+# api/db/studio/auth port sections.
+project_id = "milo-story-mode"
+
+[db]
+major_version = 15

@@ -23,8 +23,22 @@ export class MiloErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo })
-    // Sentry-ready: swap for Sentry.captureException(error)
     console.error('[Milo Error]', error, errorInfo)
+    // Report to the monitoring sink (forwards to Sentry/Logtail when configured; else Vercel logs).
+    // Best-effort + guarded — a failed report must never mask the original error.
+    try {
+      void fetch('/api/report-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          message: error?.message,
+          stack: error?.stack,
+          componentStack: errorInfo?.componentStack,
+          url: typeof window !== 'undefined' ? window.location.href : undefined,
+        }),
+      }).catch(() => {})
+    } catch { /* ignore */ }
   }
 
   render() {

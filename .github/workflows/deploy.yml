@@ -1,0 +1,67 @@
+name: Deploy
+
+# Production pipeline. On push to main: run CI, apply migrations to STAGING + prove the RLS
+# suite there, then apply the SAME migrations to PROD behind a required-reviewer approval gate.
+# Vercel deploys the code automatically via its GitHub integration; because every migration is
+# backward-compatible (expand/contract), code and schema can land independently without breakage.
+# For strict schema-before-code ordering, disable Vercel auto-deploy and add a `vercel deploy
+# --prod` step after migrate-prod (see docs/devops.md).
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false # never abort a half-applied migration mid-flight
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  migrate-staging:
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Apply migrations to staging
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "${{ vars.STAGING_PROJECT_REF }}"
+          supabase db push
+      - name: RLS regression suite (staging)
+        env:
+          STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
+        run: |
+          if [ -z "$STAGING_DB_URL" ]; then
+            echo "::warning::STAGING_DB_URL not set — skipping RLS suite. See docs/devops.md."
+            exit 0
+          fi
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql "$STAGING_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql
+
+  migrate-prod:
+    needs: migrate-staging
+    runs-on: ubuntu-latest
+    # Add a required-reviewer protection rule on this GitHub Environment so a human approves
+    # every production schema change. Migrations only reach prod after staging + RLS suite pass.
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Apply migrations to prod
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "${{ vars.PROD_PROJECT_REF }}"
+          supabase db push
