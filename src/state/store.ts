@@ -5,6 +5,7 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import type { LearnerStats, LearnerProgress, LearnerState } from '@/data/supabase/types'
 import { CHAPTER_IDS, type ChapterType } from '@/core/chapters'
 import { scoreChapter, type ChapterScore } from '@/core/scoring'
+import { mergeServerProgress, nextStreak } from '@/state/progressMerge'
 
 // Chapter metadata now lives in the single registry (src/lib/chapters.ts).
 // Re-exported here so existing `@/state/store` imports keep working.
@@ -169,51 +170,7 @@ export const useMiloStore = create<MiloStore>()(
       //   coins balance   → earned (server learner_stats) − spent (max local/server)
       //   owned items     → union; equipped → server when present
       applyServerProgress: (stats, progress, state) =>
-        set(s => {
-          const cs = { ...s.profile.chapterStars }
-          for (const row of progress) {
-            const ch = row.chapter as ChapterType
-            if (ch in cs) cs[ch] = Math.max(cs[ch] ?? 0, row.best_stars ?? 0)
-          }
-          const totalXP        = Math.max(s.profile.totalXP, stats?.total_xp ?? 0)
-          const currentStreak  = Math.max(s.profile.currentStreak, stats?.current_streak ?? 0)
-          const lastPlayedDate = stats?.last_played_at
-            ? new Date(stats.last_played_at).toDateString()
-            : s.profile.lastPlayedDate
-
-          // ── Coins: balance = earned − spent, both monotonic so it never loses ──
-          const earned = stats?.total_coins ?? 0
-          // spent: from server when present; otherwise reconstruct from THIS device's
-          // known balance (handles existing users who spent before spent-tracking).
-          const spent = state
-            ? Math.max(s.profile.coinsSpent ?? 0, state.coins_spent ?? 0)
-            : Math.max(s.profile.coinsSpent ?? 0, earned - s.profile.totalCoins, 0)
-          // Keep at least the local balance so unsynced local earnings aren't lost.
-          const totalCoins = Math.max(s.profile.totalCoins, earned - spent)
-
-          // ── Shop items ──
-          const ownedItems = state
-            ? Array.from(new Set([...s.profile.ownedItems, ...(state.owned_items ?? [])]))
-            : s.profile.ownedItems
-          const equippedItems = state && state.equipped_items && Object.keys(state.equipped_items).length
-            ? { ...s.profile.equippedItems, ...state.equipped_items }
-            : s.profile.equippedItems
-
-          return {
-            profile: {
-              ...s.profile,
-              chapterStars: cs,
-              totalXP,
-              currentLevel: getLevelFromXP(totalXP),
-              currentStreak,
-              lastPlayedDate,
-              totalCoins,
-              coinsSpent: spent,
-              ownedItems,
-              equippedItems,
-            },
-          }
-        }),
+        set(s => ({ profile: mergeServerProgress(s.profile, stats, progress, state) })),
 
       completeSetup: (name, avatarIndex) =>
         set(s => ({
@@ -228,15 +185,10 @@ export const useMiloStore = create<MiloStore>()(
           const newLevel  = getLevelFromXP(newXP)
           const prevStars = s.profile.chapterStars[chapter]
 
-          // Streak: only increment once per calendar day
+          // Streak: only increment once per calendar day (pure calc in progressMerge)
           const today      = new Date().toDateString()
-          const lastPlayed = s.profile.lastPlayedDate
           const yesterday  = new Date(Date.now() - 86400000).toDateString()
-          const newStreak  = lastPlayed === today
-            ? s.profile.currentStreak       // already played today
-            : lastPlayed === yesterday
-              ? s.profile.currentStreak + 1 // consecutive day
-              : 1                           // missed a day — reset
+          const newStreak  = nextStreak(s.profile.lastPlayedDate, s.profile.currentStreak, today, yesterday)
 
           return {
             profile: {
