@@ -2,15 +2,14 @@
 import { useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { getCurrentSession } from '@/data/auth'
 
 export default function RootPage() {
   const router = useRouter()
 
   useEffect(() => {
     async function check() {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
+      const session = await getCurrentSession()
       // Signed-in → the /parent hub (loads their learners / empty state on its own).
       // Cold visitor → the CHECKUP is the mandatory front door (it carries a "Log in" button up top
       // for returning users). This makes the diagnostic the entry point, not an optional funnel.

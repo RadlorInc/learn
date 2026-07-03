@@ -8,11 +8,11 @@
  * diagnostic (no score, no red X). Saves best-effort for a signed-in learner (skips in preview).
  */
 import { useEffect, useRef, useState } from 'react'
-import { recheckSkills } from '@/lib/diagnosticEngine'
-import { NODE_BY_ID, type Band } from '@/lib/skillGraph'
-import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/lib/diagnosticItems'
-import { saveRecheck } from '@/lib/supabase/queries'
-import { PT, ACCENTS, LabBackdrop, BackChip, PromptCard, ChoiceButton, PtMilo, IntroCard, type Accent } from '@/components/story/preteen/kit'
+import { recheckSkills } from '@/core/diagnosticEngine'
+import { NODE_BY_ID, type Band } from '@/core/skillGraph'
+import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
+import { saveRecheck } from '@/data/repositories'
+import { PT, ACCENTS, LabBackdrop, BackChip, PromptCard, ChoiceButton, PtMilo, IntroCard, type Accent } from '@/features/chapters/story/preteen/kit'
 
 const BANDS = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan

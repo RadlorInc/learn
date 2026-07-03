@@ -1,14 +1,14 @@
 'use client'
 
-import BackButton from '@/components/ui/BackButton'
+import BackButton from '@/shared/ui/BackButton'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import {
   getMyLearners, getSentInvites, getReceivedInvites,
   sendInvite, acceptInvite, revokeInvite,
-} from '@/lib/supabase/queries'
-import type { Learner, InviteWithLearner } from '@/lib/supabase/types'
+} from '@/data/repositories'
+import type { Learner, InviteWithLearner } from '@/data/supabase/types'
 
 export default function InvitesPage() {
   const router = useRouter()

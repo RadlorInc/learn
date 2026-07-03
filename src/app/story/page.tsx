@@ -16,11 +16,11 @@
  */
 import { useEffect, useState } from 'react'
 import nextDynamic from 'next/dynamic'
-import { type Chapter } from '@/components/story/ForestWalk'
-import WorldSelect from '@/components/story/WorldSelect'
-import { makeCountingChapter } from '@/components/story/chapters'
-import { STORYTELLINGS, BIOMES, storytellingById } from '@/components/story/biomes'
-import TasteBanner from '@/components/story/TasteBanner'
+import { type Chapter } from '@/features/chapters/story/ForestWalk'
+import WorldSelect from '@/features/chapters/story/WorldSelect'
+import { makeCountingChapter } from '@/features/chapters/story/chapters'
+import { STORYTELLINGS, BIOMES, storytellingById } from '@/features/chapters/story/biomes'
+import TasteBanner from '@/features/chapters/story/TasteBanner'
 
 // Lazy-load each heavy chapter view so only the selected chapter's JS ships,
 // mirroring src/app/game/page.tsx. (WorldSelect / chapters / biomes / TasteBanner
@@ -28,40 +28,40 @@ import TasteBanner from '@/components/story/TasteBanner'
 const lazyStory = <P,>(loader: () => Promise<{ default: React.ComponentType<P> }>) =>
   nextDynamic(loader, { ssr: false })
 
-const ForestWalk = lazyStory(() => import('@/components/story/ForestWalk'))
-const RiverCrossing = lazyStory(() => import('@/components/story/RiverCrossing'))
-const Kitchen = lazyStory(() => import('@/components/story/Kitchen'))
-const NumberDoors = lazyStory(() => import('@/components/story/NumberDoors'))
-const Grocery = lazyStory(() => import('@/components/story/Grocery'))
-const ShapeTown = lazyStory(() => import('@/components/story/ShapeTown'))
-const RainbowTown = lazyStory(() => import('@/components/story/RainbowTown'))
-const BeadShop = lazyStory(() => import('@/components/story/BeadShop'))
-const Orchard = lazyStory(() => import('@/components/story/Orchard'))
-const LilyPond = lazyStory(() => import('@/components/story/LilyPond'))
-const TallForest = lazyStory(() => import('@/components/story/TallForest'))
-const NumberTown = lazyStory(() => import('@/components/story/NumberTown'))
-const BuildingBlocks = lazyStory(() => import('@/components/story/BuildingBlocks'))
-const HopAlong = lazyStory(() => import('@/components/story/HopAlong'))
-const SeesawPark = lazyStory(() => import('@/components/story/SeesawPark'))
-const StoryTime = lazyStory(() => import('@/components/story/StoryTime'))
-const MarketDay = lazyStory(() => import('@/components/story/MarketDay'))
-const SliceShop = lazyStory(() => import('@/components/story/SliceShop'))
-const CoinShop = lazyStory(() => import('@/components/story/CoinShop'))
-const TickTock = lazyStory(() => import('@/components/story/TickTock'))
-const BlockYard = lazyStory<{ op: '+' | '-'; world?: string }>(() => import('@/components/story/BlockYard'))
-const ShapeStudio = lazyStory(() => import('@/components/story/ShapeStudio'))
-const NumberVault = lazyStory(() => import('@/components/story/NumberVault'))
-const RoundingTrail = lazyStory(() => import('@/components/story/RoundingTrail'))
-const TimesGrid = lazyStory(() => import('@/components/story/TimesGrid'))
-const DivisionShare = lazyStory(() => import('@/components/story/DivisionShare'))
-const FactorLab = lazyStory(() => import('@/components/story/FactorLab'))
-const FractionForge = lazyStory(() => import('@/components/story/FractionForge'))
-const DecimalGrid = lazyStory(() => import('@/components/story/DecimalGrid'))
-const UnitConverter = lazyStory(() => import('@/components/story/UnitConverter'))
-const GridPlotter = lazyStory(() => import('@/components/story/GridPlotter'))
-const AngleScope = lazyStory(() => import('@/components/story/AngleScope'))
-const DataDeck = lazyStory(() => import('@/components/story/DataDeck'))
-const MissionBrief = lazyStory(() => import('@/components/story/MissionBrief'))
+const ForestWalk = lazyStory(() => import('@/features/chapters/story/ForestWalk'))
+const RiverCrossing = lazyStory(() => import('@/features/chapters/story/RiverCrossing'))
+const Kitchen = lazyStory(() => import('@/features/chapters/story/Kitchen'))
+const NumberDoors = lazyStory(() => import('@/features/chapters/story/NumberDoors'))
+const Grocery = lazyStory(() => import('@/features/chapters/story/Grocery'))
+const ShapeTown = lazyStory(() => import('@/features/chapters/story/ShapeTown'))
+const RainbowTown = lazyStory(() => import('@/features/chapters/story/RainbowTown'))
+const BeadShop = lazyStory(() => import('@/features/chapters/story/BeadShop'))
+const Orchard = lazyStory(() => import('@/features/chapters/story/Orchard'))
+const LilyPond = lazyStory(() => import('@/features/chapters/story/LilyPond'))
+const TallForest = lazyStory(() => import('@/features/chapters/story/TallForest'))
+const NumberTown = lazyStory(() => import('@/features/chapters/story/NumberTown'))
+const BuildingBlocks = lazyStory(() => import('@/features/chapters/story/BuildingBlocks'))
+const HopAlong = lazyStory(() => import('@/features/chapters/story/HopAlong'))
+const SeesawPark = lazyStory(() => import('@/features/chapters/story/SeesawPark'))
+const StoryTime = lazyStory(() => import('@/features/chapters/story/StoryTime'))
+const MarketDay = lazyStory(() => import('@/features/chapters/story/MarketDay'))
+const SliceShop = lazyStory(() => import('@/features/chapters/story/SliceShop'))
+const CoinShop = lazyStory(() => import('@/features/chapters/story/CoinShop'))
+const TickTock = lazyStory(() => import('@/features/chapters/story/TickTock'))
+const BlockYard = lazyStory<{ op: '+' | '-'; world?: string }>(() => import('@/features/chapters/story/BlockYard'))
+const ShapeStudio = lazyStory(() => import('@/features/chapters/story/ShapeStudio'))
+const NumberVault = lazyStory(() => import('@/features/chapters/story/NumberVault'))
+const RoundingTrail = lazyStory(() => import('@/features/chapters/story/RoundingTrail'))
+const TimesGrid = lazyStory(() => import('@/features/chapters/story/TimesGrid'))
+const DivisionShare = lazyStory(() => import('@/features/chapters/story/DivisionShare'))
+const FactorLab = lazyStory(() => import('@/features/chapters/story/FactorLab'))
+const FractionForge = lazyStory(() => import('@/features/chapters/story/FractionForge'))
+const DecimalGrid = lazyStory(() => import('@/features/chapters/story/DecimalGrid'))
+const UnitConverter = lazyStory(() => import('@/features/chapters/story/UnitConverter'))
+const GridPlotter = lazyStory(() => import('@/features/chapters/story/GridPlotter'))
+const AngleScope = lazyStory(() => import('@/features/chapters/story/AngleScope'))
+const DataDeck = lazyStory(() => import('@/features/chapters/story/DataDeck'))
+const MissionBrief = lazyStory(() => import('@/features/chapters/story/MissionBrief'))
 
 export default function StoryPage() {
   const [ch, setCh] = useState('counting')

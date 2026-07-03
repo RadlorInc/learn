@@ -1,8 +1,8 @@
 'use client'
 // Dev-only preview of the LineExplorer concept simulation in the 12–14 skin.
 import { notFound } from 'next/navigation'
-import BandScope from '@/components/teen/BandScope'
-import LineExplorer from '@/components/teen/sims/LineExplorer'
+import BandScope from '@/features/chapters/teen/BandScope'
+import LineExplorer from '@/features/chapters/teen/sims/LineExplorer'
 
 export default function SimPreviewPage() {
   if (process.env.NODE_ENV === 'production') notFound()   // dev scaffolding — 404 in the shipped app

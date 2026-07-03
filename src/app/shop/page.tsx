@@ -4,11 +4,11 @@ export const dynamic = 'force-static'
 import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import BackButton from '@/components/ui/BackButton'
-import { useMiloStore } from '@/lib/store'
-import { useMiloSpeaker } from '@/lib/useMiloSpeaker'
-import { getActiveLearner } from '@/lib/supabase/useLearnerSession'
-import { saveLearnerState } from '@/lib/supabase/queries'
+import BackButton from '@/shared/ui/BackButton'
+import { useMiloStore } from '@/state/store'
+import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { saveLearnerState } from '@/data/repositories'
 
 // Push the latest coins/owned/equipped to Supabase so the shop syncs across devices.
 function syncShopState() {

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { getCurrentSession, onAuthStateChange } from '@/data/auth'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
@@ -13,18 +13,16 @@ export default function AuthCallbackPage() {
     if (ran.current) return
     ran.current = true
 
-    const supabase = createClient()
-
     async function handleCallback() {
       // Try existing session first
-      const { data: { session } } = await supabase.auth.getSession()
+      const session = await getCurrentSession()
       if (session?.user) {
         router.replace('/parent')
         return
       }
 
       // Wait for OAuth exchange
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      const { subscription } = onAuthStateChange(
         (event, session) => {
           if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
             subscription.unsubscribe()
@@ -35,7 +33,7 @@ export default function AuthCallbackPage() {
 
       // 5s fallback
       window.setTimeout(async () => {
-        const { data: { session } } = await supabase.auth.getSession()
+        const session = await getCurrentSession()
         if (session?.user) {
           router.replace('/parent')
         } else {

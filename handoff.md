@@ -2,6 +2,8 @@
 
 _Last updated: 2026-07-03 (PERFORMANCE PASS + CHECKUP-GATE FIX — ALL SHIPPED to prod, `main`@`171a306`)_
 
+> ⚠️ **ARCHITECTURE REFACTOR (2026-07-03, UNCOMMITTED — pending user verify + push).** Clean-architecture layering applied; **all file paths below this banner referencing `src/lib/…`, `@/lib/…`, `@/data/supabase/queries`, and `src/components/…` are now STALE.** New layout (see [`docs/architecture.md`](docs/architecture.md)): `src/core` (pure domain), `src/data` (supabase — `data/auth.ts` + `data/repositories/*` replaced the 797-line `queries.ts`), `src/infra` (kv/analytics/speech/offline/ar/storage), `src/state` (store), `src/shared` (ui kit + hooks), `src/features` (`chapters/{game,story,lessons,teen}`, `daily`, `insights`). No `createClient()` in any page (use `@/data/auth`). Behavior UNCHANGED; `tsc` + `npm test` 15/15 + `next build` all green. Not committed — user will verify then push. Translate old paths → new when reading the notes below.
+
 Concise, current state. Per-chapter detail + conventions live in the auto-memory (`project-milo-6-8-story-conversion.md`, `feedback-story-demo-audio-pattern.md`, `project-milo-*-chapter.md`, `project-milo-demo-voice.md`, `feedback-viewport-scaling.md`, …) — read those for the deep notes.
 
 ## CURRENT STATE (2026-07-03) — **ALL SHIPPED + DEPLOYED (Vercel READY)**
