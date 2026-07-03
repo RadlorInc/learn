@@ -22,6 +22,9 @@ jobs:
 
   migrate-staging:
     needs: ci
+    # Inert until the staging project is configured (see docs/devops.md) — skips cleanly
+    # (green), so the pipeline never shows a false failure before the dashboard setup is done.
+    if: ${{ vars.STAGING_PROJECT_REF != '' }}
     runs-on: ubuntu-latest
     environment: staging
     steps:
@@ -49,6 +52,7 @@ jobs:
 
   migrate-prod:
     needs: migrate-staging
+    if: ${{ vars.PROD_PROJECT_REF != '' }}
     runs-on: ubuntu-latest
     # Add a required-reviewer protection rule on this GitHub Environment so a human approves
     # every production schema change. Migrations only reach prod after staging + RLS suite pass.
