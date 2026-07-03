@@ -38,7 +38,15 @@ export default function AuthPage() {
           `${window.location.origin}/auth/callback`,
         )
         if (error) {
-          setError(error.message)
+          // V10: don't leak whether an email is already registered (account enumeration).
+          // For an "already exists" collision, show the same neutral confirmation copy as a
+          // fresh signup; surface only genuinely actionable errors (weak password, invalid email).
+          const msg = error.message.toLowerCase()
+          if (msg.includes('already') || msg.includes('registered') || msg.includes('exists')) {
+            setSuccess('Check your email for a confirmation link!')
+          } else {
+            setError(error.message)
+          }
         } else {
           setSuccess('Check your email for a confirmation link!')
         }

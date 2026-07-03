@@ -103,13 +103,15 @@ export async function acceptInvite(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'Not logged in' }
 
-  // Get the invite
+  // Get the invite. Enforce the 7-day TTL here too (V8) — without the expires_at filter an
+  // expired-but-still-'pending' invite could be accepted, silently defeating the TTL.
   const { data: invite } = await supabase
     .from('learner_invites')
     .select('*')
     .eq('id', inviteId)
     .eq('invited_email', user.email?.toLowerCase().trim())
     .eq('status', 'pending')
+    .gt('expires_at', new Date().toISOString())
     .single()
 
   if (!invite) return { ok: false, error: 'Invite not found or already used' }

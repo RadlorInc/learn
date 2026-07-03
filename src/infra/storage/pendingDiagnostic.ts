@@ -15,7 +15,7 @@
 import type { DiagnosticPayload } from '@/data/repositories'
 
 const KEY = 'milo_pending_diagnostic'
-const TTL_MS = 14 * 24 * 60 * 60 * 1000   // 14 days — long enough to survive a delayed signup, short enough to not resurrect stale captures
+const TTL_MS = 7 * 24 * 60 * 60 * 1000   // 7 days — survives a delayed signup, while limiting how long child PII (name + gap profile) lingers in localStorage on a shared device (V9)
 /** Everything saveDiagnostic needs except the learnerId (assigned once the learner is created). */
 export type PendingDiagnostic = Omit<DiagnosticPayload, 'learnerId'> & { childName?: string }
 interface StoredPending extends PendingDiagnostic { savedAt?: number }
