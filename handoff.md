@@ -1,6 +1,6 @@
 # Session Handoff — Milo Story Mode
 
-_Last updated: 2026-07-03 (DEVOPS / PRODUCTION-READINESS — code shipped, `main`@`c59bb1f`+; dashboard steps pending)_
+_Last updated: 2026-07-03 (DEVOPS / PRODUCTION-READINESS — code shipped, `main`@`811a695`; dashboard steps pending)_
 
 > 🔐 **SECURITY AUDIT + HARDENING — COMPLETE + SHIPPED (2026-07-03, `main`@`c59bb1f`, prod deploy BUILDING→READY).** Ran a full senior-level security audit (3 parallel agents + live DB inspection + Supabase advisors). Backend was already strong (RLS on all 17 tables, guarded RPCs). Found + fixed **one CRITICAL cross-tenant hole (V1)** — a forged-invite privilege escalation that let any signed-in user read another family's child PII/DOB (empirically confirmed against prod, rolled back; **0 rows were ever forged**). Fixed V1–V11 (2 migrations applied to prod + code) and built 3 tiers of durable guardrails (RLS regression suite proven green vs prod, committed schema baseline, enforced CSP subset + monitoring hook, CI audit gate + Dependabot). Full detail in the LATEST SESSION block below and the runbook [`docs/security.md`](docs/security.md). **⚠️ 4 MANUAL steps remain (dashboard-only, no code path) — see the "MANUAL TO-DO" list immediately below.**
 
