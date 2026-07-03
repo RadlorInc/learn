@@ -8,16 +8,16 @@ import {
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
   getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
-} from '@/lib/supabase/queries'
-import { enqueueDiagnostic, flushDiagnosticQueue } from '@/lib/useOfflineSync'
-import { peekPendingDiagnostic, takePendingDiagnostic } from '@/lib/pendingDiagnostic'
-import { setActivePlan } from '@/lib/activePlan'
-import { hasCheckup, markCheckupDone } from '@/lib/checkup'
-import { setActiveLearner } from '@/lib/supabase/useLearnerSession'
-import { createClient } from '@/lib/supabase/client'
-import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner } from '@/lib/supabase/types'
-import { CHAPTER_PARENT_LABELS, chaptersForAge, type AgeGroup, type ChapterType } from '@/lib/chapters'
-import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/lib/ageGroups'
+} from '@/data/repositories'
+import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
+import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
+import { setActivePlan } from '@/infra/storage/activePlan'
+import { hasCheckup, markCheckupDone } from '@/infra/storage/checkup'
+import { setActiveLearner } from '@/data/supabase/useLearnerSession'
+import { getCurrentSession } from '@/data/auth'
+import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner } from '@/data/supabase/types'
+import { CHAPTER_PARENT_LABELS, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
+import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -52,9 +52,8 @@ export default function ParentDashboard() {
     setLoading(true)
     setLoadError(false)
     try {
-      const supabase = createClient()
       // Local session (no auth-server round trip); RLS guards the reads below.
-      const { data: { session } } = await supabase.auth.getSession()
+      const session = await getCurrentSession()
       const user = session?.user
       if (!user) { router.replace('/auth'); return }
       setParentName(user.user_metadata?.full_name?.split(' ')[0] ?? 'there')

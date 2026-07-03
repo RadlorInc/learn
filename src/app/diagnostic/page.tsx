@@ -16,14 +16,14 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   startProbe, nextSkill, record, diagnose, type ProbeState, type Diagnosis,
-} from '@/lib/diagnosticEngine'
-import { NODE_BY_ID, chapterFor, type Band } from '@/lib/skillGraph'
-import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/lib/diagnosticItems'
-import { CHAPTER_NAMES } from '@/lib/chapters'
-import { enqueueDiagnostic, flushDiagnosticQueue } from '@/lib/useOfflineSync'
-import { stashPendingDiagnostic } from '@/lib/pendingDiagnostic'
-import { setActivePlan } from '@/lib/activePlan'
-import { markCheckupDone } from '@/lib/checkup'
+} from '@/core/diagnosticEngine'
+import { NODE_BY_ID, chapterFor, type Band } from '@/core/skillGraph'
+import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
+import { CHAPTER_NAMES } from '@/core/chapters'
+import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
+import { stashPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
+import { setActivePlan } from '@/infra/storage/activePlan'
+import { markCheckupDone } from '@/infra/storage/checkup'
 
 // UUID v4 dedupe key (matches the session-sync clientId pattern) — makes the save idempotent so a
 // queue re-flush can never duplicate the diagnosis. Generated ONCE per completed diagnosis.
@@ -33,7 +33,7 @@ function newClientId(): string {
     return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
   })
 }
-import { PT, ACCENTS, LabBackdrop, BackChip, PromptCard, ChoiceButton, PtMilo, IntroCard, type Accent, type ChoiceState } from '@/components/story/preteen/kit'
+import { PT, ACCENTS, LabBackdrop, BackChip, PromptCard, ChoiceButton, PtMilo, IntroCard, type Accent, type ChoiceState } from '@/features/chapters/story/preteen/kit'
 
 const BANDS: Band[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan

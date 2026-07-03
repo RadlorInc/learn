@@ -3,11 +3,11 @@ export const dynamic = 'force-static'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import BackButton from '@/components/ui/BackButton'
-import { useMiloStore, CHAPTER_ORDER, CHAPTER_NAMES, getLevelProgress, getNextLevelXP } from '@/lib/store'
-import { getLearnerStats, getLearnerProgress } from '@/lib/supabase/queries'
-import { getActiveLearner } from '@/lib/supabase/useLearnerSession'
-import type { LearnerStats, LearnerProgress } from '@/lib/supabase/types'
+import BackButton from '@/shared/ui/BackButton'
+import { useMiloStore, CHAPTER_ORDER, CHAPTER_NAMES, getLevelProgress, getNextLevelXP } from '@/state/store'
+import { getLearnerStats, getLearnerProgress } from '@/data/repositories'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import type { LearnerStats, LearnerProgress } from '@/data/supabase/types'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
 const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']

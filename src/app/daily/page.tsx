@@ -8,11 +8,11 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { getActiveLearner } from '@/lib/supabase/useLearnerSession'
-import { speak, stopSpeech } from '@/lib/useMiloSpeaker'
-import { track } from '@/lib/analytics'
-import { generateDaily, recordSkillResult, recordDailyDone, type DailyQuestion } from '@/lib/daily'
-import type { AgeGroup } from '@/lib/chapters'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
+import { track } from '@/infra/analytics'
+import { generateDaily, recordSkillResult, recordDailyDone, type DailyQuestion } from '@/features/daily/daily'
+import type { AgeGroup } from '@/core/chapters'
 
 const TOTAL = 5
 

@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/data/auth'
 import {
   getMyGrades, createGrade, updateGrade, deleteGrade, getGradeChapterIds,
   type GradeSummary,
-} from '@/lib/supabase/queries'
-import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/lib/ageGroups'
-import { chaptersForAge, type AgeGroup, type ChapterType } from '@/lib/chapters'
+} from '@/data/repositories'
+import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
+import { chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
 
 export default function GradesPage() {
   const router = useRouter()
@@ -19,8 +19,7 @@ export default function GradesPage() {
 
   async function load() {
     setLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getCurrentUser()
     if (!user) { router.replace('/auth'); return }
     setGrades(await getMyGrades())
     setLoading(false)

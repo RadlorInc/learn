@@ -3,17 +3,17 @@ export const dynamic = 'force-static'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, Suspense } from 'react'
 import nextDynamic from 'next/dynamic'
-import { useMiloStore, type ChapterType } from '@/lib/store'
-import { getChapter, type AgeGroup } from '@/lib/chapters'
+import { useMiloStore, type ChapterType } from '@/state/store'
+import { getChapter, type AgeGroup } from '@/core/chapters'
 
-import { getActiveLearner } from '@/lib/supabase/useLearnerSession'
-import { setLastPlayed } from '@/lib/lastPlayed'
-import { advancePlan } from '@/lib/activePlan'
-import CelebrationModal from '@/components/ui/CelebrationModal'
-import MiloPointer from '@/components/ui/MiloPointer'
-import { useChapterSync } from '@/lib/supabase/useChapterSync'
-import { useAuthGuard } from '@/lib/supabase/useAuthGuard'
-import { track } from '@/lib/analytics'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { setLastPlayed } from '@/infra/storage/lastPlayed'
+import { advancePlan } from '@/infra/storage/activePlan'
+import CelebrationModal from '@/shared/ui/CelebrationModal'
+import MiloPointer from '@/shared/ui/MiloPointer'
+import { useChapterSync } from '@/data/supabase/useChapterSync'
+import { useAuthGuard } from '@/data/supabase/useAuthGuard'
+import { track } from '@/infra/analytics'
 
 // Maps each chapter id to its component. The set of chapters lives in the
 // registry (src/lib/chapters.ts); this map only wires ids → components, so a
@@ -23,82 +23,82 @@ const lazyChapter = (loader: () => Promise<{ default: React.ComponentType<Chapte
   nextDynamic(loader, { ssr: false })
 
 const CHAPTER_COMPONENTS: Record<ChapterType, React.ComponentType<ChapterProps>> = {
-  counting:           lazyChapter(() => import('@/components/game/CountingStoryChapter')),
-  numberOrdering:     lazyChapter(() => import('@/components/game/NumberOrderingChapter')),
-  numberRecognition:  lazyChapter(() => import('@/components/game/NumberDoorsChapter')),
-  matchingQuantities: lazyChapter(() => import('@/components/game/MatchingQuantitiesChapter')),
-  numberComparison:   lazyChapter(() => import('@/components/game/NumberComparisonChapter')),
-  shapes:             lazyChapter(() => import('@/components/game/ShapeHouseChapter')),
-  colors:             lazyChapter(() => import('@/components/game/ColorGardenChapter')),
-  patterns:           lazyChapter(() => import('@/components/game/PatternsChapter')),
-  addition:           lazyChapter(() => import('@/components/game/AdditionChapter')),
-  subtraction:        lazyChapter(() => import('@/components/game/SubtractionChapter')),
-  measurement:        lazyChapter(() => import('@/components/game/MeasurementChapter')),
-  numbersTo100:       lazyChapter(() => import('@/components/game/Numbers100Chapter')),
-  placeValue:         lazyChapter(() => import('@/components/game/PlaceValueChapter')),
-  skipCounting:       lazyChapter(() => import('@/components/game/SkipCountingChapter')),
-  storyProblems:      lazyChapter(() => import('@/components/game/StoryProblemsChapter')),
-  multiplication:     lazyChapter(() => import('@/components/game/MultiplicationChapter')),
-  fractions:          lazyChapter(() => import('@/components/game/FractionsChapter')),
-  money:              lazyChapter(() => import('@/components/game/MoneyChapter')),
-  time:               lazyChapter(() => import('@/components/game/TimeChapter')),
-  compareNumbers:     lazyChapter(() => import('@/components/game/CompareChapter')),
-  additionTo100:      lazyChapter(() => import('@/components/game/ArithmeticChapter').then(m => ({ default: m.AdditionTo100Chapter }))),
-  subtractionTo100:   lazyChapter(() => import('@/components/game/ArithmeticChapter').then(m => ({ default: m.SubtractionTo100Chapter }))),
-  shapes2d3d:         lazyChapter(() => import('@/components/game/Shapes2D3DChapter')),
+  counting:           lazyChapter(() => import('@/features/chapters/game/CountingStoryChapter')),
+  numberOrdering:     lazyChapter(() => import('@/features/chapters/game/NumberOrderingChapter')),
+  numberRecognition:  lazyChapter(() => import('@/features/chapters/game/NumberDoorsChapter')),
+  matchingQuantities: lazyChapter(() => import('@/features/chapters/game/MatchingQuantitiesChapter')),
+  numberComparison:   lazyChapter(() => import('@/features/chapters/game/NumberComparisonChapter')),
+  shapes:             lazyChapter(() => import('@/features/chapters/game/ShapeHouseChapter')),
+  colors:             lazyChapter(() => import('@/features/chapters/game/ColorGardenChapter')),
+  patterns:           lazyChapter(() => import('@/features/chapters/game/PatternsChapter')),
+  addition:           lazyChapter(() => import('@/features/chapters/game/AdditionChapter')),
+  subtraction:        lazyChapter(() => import('@/features/chapters/game/SubtractionChapter')),
+  measurement:        lazyChapter(() => import('@/features/chapters/game/MeasurementChapter')),
+  numbersTo100:       lazyChapter(() => import('@/features/chapters/game/Numbers100Chapter')),
+  placeValue:         lazyChapter(() => import('@/features/chapters/game/PlaceValueChapter')),
+  skipCounting:       lazyChapter(() => import('@/features/chapters/game/SkipCountingChapter')),
+  storyProblems:      lazyChapter(() => import('@/features/chapters/game/StoryProblemsChapter')),
+  multiplication:     lazyChapter(() => import('@/features/chapters/game/MultiplicationChapter')),
+  fractions:          lazyChapter(() => import('@/features/chapters/game/FractionsChapter')),
+  money:              lazyChapter(() => import('@/features/chapters/game/MoneyChapter')),
+  time:               lazyChapter(() => import('@/features/chapters/game/TimeChapter')),
+  compareNumbers:     lazyChapter(() => import('@/features/chapters/game/CompareChapter')),
+  additionTo100:      lazyChapter(() => import('@/features/chapters/game/ArithmeticChapter').then(m => ({ default: m.AdditionTo100Chapter }))),
+  subtractionTo100:   lazyChapter(() => import('@/features/chapters/game/ArithmeticChapter').then(m => ({ default: m.SubtractionTo100Chapter }))),
+  shapes2d3d:         lazyChapter(() => import('@/features/chapters/game/Shapes2D3DChapter')),
   // 9–11
-  bigNumbers:         lazyChapter(() => import('@/components/game/BigNumbersChapter')),
-  rounding:           lazyChapter(() => import('@/components/game/RoundingChapter')),
-  timesTables:        lazyChapter(() => import('@/components/game/TimesTablesChapter')),
-  division:           lazyChapter(() => import('@/components/game/DivisionChapter')),
-  factorsMultiples:   lazyChapter(() => import('@/components/game/FactorsChapter')),
-  fractionsCompare:   lazyChapter(() => import('@/components/game/FractionsCompareChapter')),
-  decimals:           lazyChapter(() => import('@/components/game/DecimalsChapter')),
-  measurementUnits:   lazyChapter(() => import('@/components/game/MeasureUnitsChapter')),
-  areaPerimeter:      lazyChapter(() => import('@/components/game/AreaPerimeterChapter')),
-  anglesSymmetry:     lazyChapter(() => import('@/components/game/AnglesSymmetryChapter')),
-  dataGraphs:         lazyChapter(() => import('@/components/game/DataGraphsChapter')),
-  wordProblems:       lazyChapter(() => import('@/components/game/WordProblemsChapter')),
+  bigNumbers:         lazyChapter(() => import('@/features/chapters/game/BigNumbersChapter')),
+  rounding:           lazyChapter(() => import('@/features/chapters/game/RoundingChapter')),
+  timesTables:        lazyChapter(() => import('@/features/chapters/game/TimesTablesChapter')),
+  division:           lazyChapter(() => import('@/features/chapters/game/DivisionChapter')),
+  factorsMultiples:   lazyChapter(() => import('@/features/chapters/game/FactorsChapter')),
+  fractionsCompare:   lazyChapter(() => import('@/features/chapters/game/FractionsCompareChapter')),
+  decimals:           lazyChapter(() => import('@/features/chapters/game/DecimalsChapter')),
+  measurementUnits:   lazyChapter(() => import('@/features/chapters/game/MeasureUnitsChapter')),
+  areaPerimeter:      lazyChapter(() => import('@/features/chapters/game/AreaPerimeterChapter')),
+  anglesSymmetry:     lazyChapter(() => import('@/features/chapters/game/AnglesSymmetryChapter')),
+  dataGraphs:         lazyChapter(() => import('@/features/chapters/game/DataGraphsChapter')),
+  wordProblems:       lazyChapter(() => import('@/features/chapters/game/WordProblemsChapter')),
   // 12–14 (teen "Field Lab")
-  integers:             lazyChapter(() => import('@/components/game/IntegersChapter')),
-  signedRationalOps:    lazyChapter(() => import('@/components/game/SignedRationalOpsChapter')),
-  rationalOps:          lazyChapter(() => import('@/components/game/RationalOpsChapter')),
-  ratioProportion:      lazyChapter(() => import('@/components/game/RatioProportionChapter')),
-  percentages:          lazyChapter(() => import('@/components/game/PercentagesChapter')),
-  exponentsRoots:       lazyChapter(() => import('@/components/game/ExponentsRootsChapter')),
-  orderOfOperations:    lazyChapter(() => import('@/components/game/OrderOfOperationsChapter')),
-  algebraicExpressions: lazyChapter(() => import('@/components/game/AlgebraicExpressionsChapter')),
-  equationsInequalities:lazyChapter(() => import('@/components/game/EquationsInequalitiesChapter')),
-  coordinatePlane:      lazyChapter(() => import('@/components/game/CoordinatePlaneChapter')),
-  linearRelationships:  lazyChapter(() => import('@/components/game/LinearRelationshipsChapter')),
-  geometryMeasurement:  lazyChapter(() => import('@/components/game/GeometryMeasurementChapter')),
+  integers:             lazyChapter(() => import('@/features/chapters/game/IntegersChapter')),
+  signedRationalOps:    lazyChapter(() => import('@/features/chapters/game/SignedRationalOpsChapter')),
+  rationalOps:          lazyChapter(() => import('@/features/chapters/game/RationalOpsChapter')),
+  ratioProportion:      lazyChapter(() => import('@/features/chapters/game/RatioProportionChapter')),
+  percentages:          lazyChapter(() => import('@/features/chapters/game/PercentagesChapter')),
+  exponentsRoots:       lazyChapter(() => import('@/features/chapters/game/ExponentsRootsChapter')),
+  orderOfOperations:    lazyChapter(() => import('@/features/chapters/game/OrderOfOperationsChapter')),
+  algebraicExpressions: lazyChapter(() => import('@/features/chapters/game/AlgebraicExpressionsChapter')),
+  equationsInequalities:lazyChapter(() => import('@/features/chapters/game/EquationsInequalitiesChapter')),
+  coordinatePlane:      lazyChapter(() => import('@/features/chapters/game/CoordinatePlaneChapter')),
+  linearRelationships:  lazyChapter(() => import('@/features/chapters/game/LinearRelationshipsChapter')),
+  geometryMeasurement:  lazyChapter(() => import('@/features/chapters/game/GeometryMeasurementChapter')),
   // 15–16 (Algebra I + Geometry)
-  signedNumberFluency:        lazyChapter(() => import('@/components/game/SignedNumberFluencyChapter')),
-  expressionsVariables:       lazyChapter(() => import('@/components/game/ExpressionsVariablesChapter')),
-  linearEquationsInequalities: lazyChapter(() => import('@/components/game/LinearEquationsInequalitiesChapter')),
-  slopeLinearGraphs:          lazyChapter(() => import('@/components/game/SlopeLinearGraphsChapter')),
-  functionsFamilies:          lazyChapter(() => import('@/components/game/FunctionsFamiliesChapter')),
-  systemsOfEquations:         lazyChapter(() => import('@/components/game/SystemsOfEquationsChapter')),
-  exponentsPolynomials:       lazyChapter(() => import('@/components/game/ExponentsPolynomialsChapter')),
-  radicalsPythagorean:        lazyChapter(() => import('@/components/game/RadicalsPythagoreanChapter')),
-  factoringPolynomials:       lazyChapter(() => import('@/components/game/FactoringPolynomialsChapter')),
-  quadraticsParabolas:        lazyChapter(() => import('@/components/game/QuadraticsParabolasChapter')),
-  geometryTransformations:    lazyChapter(() => import('@/components/game/GeometryTransformationsChapter')),
-  geometryProofTrig:          lazyChapter(() => import('@/components/game/GeometryProofTrigChapter')),
+  signedNumberFluency:        lazyChapter(() => import('@/features/chapters/game/SignedNumberFluencyChapter')),
+  expressionsVariables:       lazyChapter(() => import('@/features/chapters/game/ExpressionsVariablesChapter')),
+  linearEquationsInequalities: lazyChapter(() => import('@/features/chapters/game/LinearEquationsInequalitiesChapter')),
+  slopeLinearGraphs:          lazyChapter(() => import('@/features/chapters/game/SlopeLinearGraphsChapter')),
+  functionsFamilies:          lazyChapter(() => import('@/features/chapters/game/FunctionsFamiliesChapter')),
+  systemsOfEquations:         lazyChapter(() => import('@/features/chapters/game/SystemsOfEquationsChapter')),
+  exponentsPolynomials:       lazyChapter(() => import('@/features/chapters/game/ExponentsPolynomialsChapter')),
+  radicalsPythagorean:        lazyChapter(() => import('@/features/chapters/game/RadicalsPythagoreanChapter')),
+  factoringPolynomials:       lazyChapter(() => import('@/features/chapters/game/FactoringPolynomialsChapter')),
+  quadraticsParabolas:        lazyChapter(() => import('@/features/chapters/game/QuadraticsParabolasChapter')),
+  geometryTransformations:    lazyChapter(() => import('@/features/chapters/game/GeometryTransformationsChapter')),
+  geometryProofTrig:          lazyChapter(() => import('@/features/chapters/game/GeometryProofTrigChapter')),
   // 17–18 (Algebra II / Pre-Calc / Statistics / intro Calculus)
-  functionToolkit:      lazyChapter(() => import('@/components/game/FunctionToolkitChapter')),
-  quadraticAnalysis:    lazyChapter(() => import('@/components/game/QuadraticAnalysisChapter')),
-  polynomialFunctions:  lazyChapter(() => import('@/components/game/PolynomialFunctionsChapter')),
-  complexNumbers:       lazyChapter(() => import('@/components/game/ComplexNumbersChapter')),
-  rationalFunctions:    lazyChapter(() => import('@/components/game/RationalFunctionsChapter')),
-  expLogFunctions:      lazyChapter(() => import('@/components/game/ExpLogFunctionsChapter')),
-  unitCircleTrig:       lazyChapter(() => import('@/components/game/UnitCircleTrigChapter')),
-  trigGraphsIdentities: lazyChapter(() => import('@/components/game/TrigGraphsIdentitiesChapter')),
-  conicSections:        lazyChapter(() => import('@/components/game/ConicSectionsChapter')),
-  systemsMatrices:      lazyChapter(() => import('@/components/game/SystemsMatricesChapter')),
-  sequencesSeries:      lazyChapter(() => import('@/components/game/SequencesSeriesChapter')),
-  statsInference:       lazyChapter(() => import('@/components/game/StatsInferenceChapter')),
-  introCalculus:        lazyChapter(() => import('@/components/game/IntroCalculusChapter')),
+  functionToolkit:      lazyChapter(() => import('@/features/chapters/game/FunctionToolkitChapter')),
+  quadraticAnalysis:    lazyChapter(() => import('@/features/chapters/game/QuadraticAnalysisChapter')),
+  polynomialFunctions:  lazyChapter(() => import('@/features/chapters/game/PolynomialFunctionsChapter')),
+  complexNumbers:       lazyChapter(() => import('@/features/chapters/game/ComplexNumbersChapter')),
+  rationalFunctions:    lazyChapter(() => import('@/features/chapters/game/RationalFunctionsChapter')),
+  expLogFunctions:      lazyChapter(() => import('@/features/chapters/game/ExpLogFunctionsChapter')),
+  unitCircleTrig:       lazyChapter(() => import('@/features/chapters/game/UnitCircleTrigChapter')),
+  trigGraphsIdentities: lazyChapter(() => import('@/features/chapters/game/TrigGraphsIdentitiesChapter')),
+  conicSections:        lazyChapter(() => import('@/features/chapters/game/ConicSectionsChapter')),
+  systemsMatrices:      lazyChapter(() => import('@/features/chapters/game/SystemsMatricesChapter')),
+  sequencesSeries:      lazyChapter(() => import('@/features/chapters/game/SequencesSeriesChapter')),
+  statsInference:       lazyChapter(() => import('@/features/chapters/game/StatsInferenceChapter')),
+  introCalculus:        lazyChapter(() => import('@/features/chapters/game/IntroCalculusChapter')),
 }
 
 // Teen chapters render their own full-screen portal + MasteryState completion, so

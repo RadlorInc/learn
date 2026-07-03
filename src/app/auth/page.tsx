@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { signUpWithEmail, signInWithEmail, signInWithGoogleOAuth } from '@/data/auth'
 
 type Mode = 'login' | 'signup'
 
@@ -29,27 +29,21 @@ export default function AuthPage() {
     }
 
     setLoading(true); reset()
-    const supabase = createClient()
 
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
-          email: email.trim(),
+        const { error } = await signUpWithEmail(
+          email.trim(),
           password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-          },
-        })
+          `${window.location.origin}/auth/callback`,
+        )
         if (error) {
           setError(error.message)
         } else {
           setSuccess('Check your email for a confirmation link!')
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        })
+        const { error } = await signInWithEmail(email.trim(), password)
         if (error) {
           setError(
             error.message.includes('Invalid login')
@@ -75,14 +69,7 @@ export default function AuthPage() {
   async function signInWithGoogle() {
     setLoading(true); reset()
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: { access_type: 'offline', prompt: 'consent' },
-        },
-      })
+      const { error } = await signInWithGoogleOAuth(`${window.location.origin}/auth/callback`)
       if (error) { setError(error.message); setLoading(false) }
       // On success the browser navigates to Google — leave loading true.
     } catch {
