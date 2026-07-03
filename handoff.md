@@ -1,6 +1,53 @@
 # Session Handoff — Milo Story Mode
 
-_Last updated: 2026-07-03 (CLEAN-ARCHITECTURE REFACTOR — ALL SHIPPED to prod, `main`@`cdfad07`)_
+_Last updated: 2026-07-03 (SECURITY AUDIT + HARDENING — ALL SHIPPED to prod, `main`@`c59bb1f`)_
+
+> 🔐 **SECURITY AUDIT + HARDENING — COMPLETE + SHIPPED (2026-07-03, `main`@`c59bb1f`, prod deploy BUILDING→READY).** Ran a full senior-level security audit (3 parallel agents + live DB inspection + Supabase advisors). Backend was already strong (RLS on all 17 tables, guarded RPCs). Found + fixed **one CRITICAL cross-tenant hole (V1)** — a forged-invite privilege escalation that let any signed-in user read another family's child PII/DOB (empirically confirmed against prod, rolled back; **0 rows were ever forged**). Fixed V1–V11 (2 migrations applied to prod + code) and built 3 tiers of durable guardrails (RLS regression suite proven green vs prod, committed schema baseline, enforced CSP subset + monitoring hook, CI audit gate + Dependabot). Full detail in the LATEST SESSION block below and the runbook [`docs/security.md`](docs/security.md). **⚠️ 4 MANUAL steps remain (dashboard-only, no code path) — see the "MANUAL TO-DO" list immediately below.**
+
+## ⚠️ MANUAL TO-DO — things that CANNOT be done from code (someone must do these by hand)
+
+These are the only outstanding items that have no MCP/code path. Everything else this session is shipped + live.
+
+**Security (Supabase dashboard — do these first):**
+1. **Enable leaked-password protection** (V6) — Auth → Providers/Password → turn on the HaveIBeenPwned check. One toggle. (Supabase advisor WARN until done.)
+2. **Shorten the refresh-token lifetime** — Auth settings. Mitigates the session JWT living in `localStorage` (standard Supabase-SPA tradeoff; CSP + this are the mitigations).
+3. **Set the `SUPABASE_DB_URL` repo secret** (GitHub → repo → Settings → Secrets → Actions) → activates the CI RLS regression job. Point it at a **Supabase preview branch or a throwaway TEST project — never prod**.
+4. **Set `MONITORING_INGEST_URL`** (Vercel env) or add `@sentry/nextjs` → activates error forwarding from `src/instrumentation.ts`. Without it, server errors still land in Vercel logs.
+
+**Previously-known launch blockers (still standing, need external accounts/decisions — not code):**
+5. **Custom SMTP** (Resend/SES/Postmark) — the real launch blocker for email deliverability; the built-in mailer already tripped a bounce warning. Unblocks the week-6 auto-nudge cron.
+6. **Sentry DSN** — get a DSN + wire it (pairs with #4). Currently blind to prod errors beyond Vercel logs.
+7. **Stripe** — no monetization wired; needs a Stripe account + pricing/business decision. Best placed at the report or the week-6 "gap closed" moment.
+8. **Full CSP enforcement** — the safe subset is enforced now; flipping the strict policy from Report-Only → enforced needs a `report-uri` + experimental `experimental.sri` (keeps static rendering). Watch the Report-Only violations first. Steps in [`docs/security.md`](docs/security.md).
+9. **Baseline schema `supabase db dump`** — the true base schema still lives only in the dashboard. A committed **security-surface** snapshot now exists (`supabase/schema/security_baseline.sql`), but a full `supabase db dump` (needs the CLI + DB password) into `supabase/migrations/` would make the whole schema reproducible.
+10. **Human signed-in tap-through on prod** — login → parent dashboard → play a chapter (confirm coins/stars/streak still save after the V2 server-derive change) → /insights. The one path not verifiable headlessly.
+11. **Real week-6 cohort + teacher sign-off** on the skill-graph spine edges — efficacy discipline before scaling the guarantee (not code).
+12. **`milo-happy.png` / `milo-thinking.png` 404s** — referenced in ~18 places, exist nowhere (silent, has fallbacks). Fix = copy an existing pose to those two filenames (zero code change) OR add real art — an art/pose decision.
+
+---
+
+## LATEST SESSION (2026-07-03) — SECURITY AUDIT + HARDENING — **SHIPPED + LIVE** (`main`@`c59bb1f`)
+
+Full security review of the production app; fixed everything findable in code + built guardrails so it can't silently regress. **2 migrations applied to prod** (backward-compatible, before their code deploy); **2 commits pushed to `main`** (`eb5eed3` fixes, `c59bb1f` guardrails) → Vercel prod BUILDING→READY. `tsc` + `npm test` 25/25 + `next build` + `npm audit --audit-level=high` all green. No new Supabase advisor warnings.
+
+**The vulnerabilities (all fixed + verified live):**
+- **V1 · CRITICAL · cross-tenant escalation** — `learner_invites` INSERT only checked `invited_by = auth.uid()`, NOT learner ownership; `can_self_grant_access` trusted any pending invite to the caller's email. So any signed-in user could forge a self-invite for a stranger's `learner_id` → self-grant `viewer` → read/tamper another family's child (name, DOB, sessions, diagnostic profile). Proven exploitable against prod inside rolled-back txns; **0 rows ever forged**. Fix: invite INSERT now requires `learners.created_by = auth.uid()` + `can_self_grant_access` requires the inviter to own the learner (migration `20260703200000`).
+- **V2 · Med · client-authored scores** — `sync_session` trusted client `xp`/`coins`/`stars`. Now clamps stars/correct/wrong + **derives xp/coins server-side** from the real formula (`core/scoring.ts`); legit sessions byte-identical (migration `20260703210000`).
+- **V5 · Med** — `sync_diagnostic` now bounds band/skill strings + array/items lengths.
+- **V3 · Med** — added HSTS + Permissions-Policy + CSP (enforced zero-risk subset + full strict policy in Report-Only). Inline SW script externalized to `public/sw-register.js` (app ships no inline scripts). `next.config.ts`.
+- **V7 · Low** — bumped `vitest` 2→4 (cleared the critical + high **dev** CVEs; targeted, NOT the `--force` that would've downgraded Next to 9.x).
+- **V8** acceptInvite enforces `expires_at`; **V9** child-PII stash TTL 14d→7d + cleared on sign-out; **V10** signup no longer reveals whether an email is registered; **V11** owner-scoped DELETE policy on `learner_access` (access is now revocable — it wasn't).
+- **False-positive noted:** the 4 "SECURITY DEFINER executable" advisor WARNs are expected (all guarded); leaked-password WARN is V6 (manual).
+
+**The 3 durable guardrails (so V1-class holes can't recur):**
+- **Tier 1 (prevent):** `supabase/tests/rls_regression.sql` — impersonates attacker+owner, asserts attacker DENIED (read/forge-invite/self-grant/sessions/stats) + owner allowed; **proven green vs prod** (rolled back). `supabase/schema/security_baseline.sql` — committed, diffable snapshot of the base schema's security surface (which lived only in the dashboard — where V1 hid). CSP as above.
+- **Tier 2 (detect):** `src/instrumentation.ts` (`onRequestError`) structured error logging → Vercel logs now, forwards to `MONITORING_INGEST_URL`/Sentry when set.
+- **Tier 3 (don't rot):** CI `npm audit --audit-level=high` gate + guarded `rls-tests` job (runs when `SUPABASE_DB_URL` secret set); `.github/dependabot.yml` weekly npm + actions updates.
+- Runbook: [`docs/security.md`](docs/security.md) (layers, RLS tests, drift check, CSP roadmap, monitoring, manual steps).
+
+**Files:** migrations `20260703200000_harden_invite_access.sql` + `20260703210000_harden_rpc_inputs.sql`; `next.config.ts`, `src/app/layout.tsx`, `public/sw-register.js`, `src/instrumentation.ts`, `src/app/auth/page.tsx`, `src/data/repositories/{invites,profile}.ts`, `src/infra/storage/pendingDiagnostic.ts`; `supabase/tests/rls_regression.sql`, `supabase/schema/security_baseline.sql`, `docs/security.md`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `package.json`.
+
+---
 
 > ✅ **ARCHITECTURE REFACTOR — COMPLETE (2026-07-03, SHIPPED — `main`@`2f27f07`, Vercel prod READY, live 200).** Clean-architecture principle is officially DONE. Final follow-ups: (1) store merge/streak math extracted into a tested pure module `state/progressMerge.ts` (`mergeServerProgress` + `nextStreak`, +10 unit tests → 25/25; `/insights` signed-in verified live via user screenshot); (2) the `toast`-in-repository coupling was deliberately KEPT (revert) to preserve exact failure-path behavior. No open architecture items. Clean-architecture layering applied; **all file paths below this banner referencing `src/lib/…`, `@/lib/…`, `@/data/supabase/queries`, and `src/components/…` are now STALE.** New layout (see [`docs/architecture.md`](docs/architecture.md)): `src/core` (pure domain), `src/data` (supabase — `data/auth.ts` + `data/repositories/*` replaced the 797-line `queries.ts`), `src/infra` (kv/analytics/speech/offline/ar/storage), `src/state` (store), `src/shared` (ui kit + hooks), `src/features` (`chapters/{game,story,lessons,teen}`, `daily`, `insights`). No `createClient()` in any page (use `@/data/auth`). Behavior UNCHANGED; `tsc` + `npm test` 15/15 + `next build` all green; preview + prod builds both green on Vercel; 3 diff-agents + runtime smoke PASS. **Still worth a signed-in tap-through on prod** (login → parent dashboard → play → /insights) — the one path not verifiable headlessly. Translate old paths → new when reading the notes below.
 
