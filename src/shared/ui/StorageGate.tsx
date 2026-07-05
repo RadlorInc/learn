@@ -14,11 +14,16 @@ export default function StorageGate({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     let cancelled = false
-    kv.ready().then(async () => {
-      await useMiloStore.persist.rehydrate()
-      if (!cancelled) setReady(true)
-    })
-    return () => { cancelled = true }
+    const boot = () => { if (!cancelled) setReady(true) }
+    // Hard safety net: never let the splash outlast this, whatever storage does.
+    // (kv.ready() self-resolves within ~2.5s even if IndexedDB hangs; this backstops
+    // a hung rehydrate too, so Safari can never freeze the app on the fox splash.)
+    const t = setTimeout(boot, 4000)
+    kv.ready()
+      .then(async () => { try { await useMiloStore.persist.rehydrate() } catch { /* boot anyway */ } })
+      .catch(() => { /* boot anyway */ })
+      .finally(() => { clearTimeout(t); boot() })
+    return () => { cancelled = true; clearTimeout(t) }
   }, [])
 
   if (!ready) {

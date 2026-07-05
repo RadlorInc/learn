@@ -373,7 +373,7 @@ export default function UnitConverter({ onFinish, onExit }: { onFinish?: (correc
 
       {phase === 'intro' && (
         <IntroCard title="Unit Lab" accent={ACCENT} cta="Start converting"
-          body="Milo runs the metric converter — turn kilometres into metres, litres into millilitres, and pick the right unit for the job. Play with the converter, then watch one and run it yourself."
+          body="Milo runs the metric converter — turn kilometers into meters, liters into milliliters, and pick the right unit for the job. Play with the converter, then watch one and run it yourself."
           onStart={() => { unlockSpeech(); setPhase('explore') }} short={short} />
       )}
 

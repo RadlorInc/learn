@@ -154,7 +154,7 @@ export default function TimeLesson({ childName, onLessonComplete }: Props) {
   ]
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Wonderful, ${childName}! You can tell the time! Let’s practise!`} />
+      finalSpeech={`Wonderful, ${childName}! You can tell the time! Let’s practice!`} />
   )
 }
 

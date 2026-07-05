@@ -9,7 +9,7 @@
  * The learner watches the step-by-step evaluation re-derive a DIFFERENT result,
  * making vivid why order matters. Toggle-driven (not free-drag) so it's
  * touch-friendly and accessible. Mature Field Lab look — an instrument, not a
- * cartoon. Colours/fonts via CSS variables only.
+ * cartoon. Colors/fonts via CSS variables only.
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'

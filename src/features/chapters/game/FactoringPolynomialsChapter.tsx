@@ -48,7 +48,7 @@ function FactoringWorld({
           <CaseCard
             band={BAND}
             title="The Garden Plot"
-            why="A landscaper has x²+7x+12 square metres of paving to lay as one rectangle — factoring tells you the exact side lengths to cut."
+            why="A landscaper has x²+7x+12 square meters of paving to lay as one rectangle — factoring tells you the exact side lengths to cut."
             question="How do you un-multiply a polynomial back into the factors it came from?"
             startLabel="Start the commission"
             onStart={() => { unlockSpeech(); setPhase('explore') }}

@@ -6,7 +6,7 @@
  * with a literal square drawn on each side. The areas a² and b² combine into c², and
  * the hypotenuse c = √(a²+b²) updates live. Slider-driven (not free-drag) so it's
  * touch-friendly, accessible, and testable. Mature Field Lab look — an instrument,
- * not a cartoon. Reads theme from the ancestor data-band scope; colours/fonts via
+ * not a cartoon. Reads theme from the ancestor data-band scope; colors/fonts via
  * CSS variables only. Mirrors LineExplorer.
  */
 import { useEffect, useRef, useState } from 'react'

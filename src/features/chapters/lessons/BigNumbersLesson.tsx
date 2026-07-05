@@ -305,7 +305,7 @@ export default function BigNumbersLesson({ childName, onLessonComplete }: Props)
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Fantastic, ${childName}! You can read big numbers by their places! Let's practise!`}
+      finalSpeech={`Fantastic, ${childName}! You can read big numbers by their places! Let's practice!`}
     />
   )
 }

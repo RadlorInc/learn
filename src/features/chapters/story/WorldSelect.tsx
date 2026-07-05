@@ -14,7 +14,7 @@ import { TintedSprite } from './TintedSprite'
 export interface PickWorld { id: string; label: string; emoji: string; bgImage?: string; itemImage?: string; itemTint?: string }
 
 // A real object sprite in the card corner (emoji fallback only if the PNG 404s). If the sprite is
-// a greyscale pat_* one, `tint` colours it so the card never shows a grey object.
+// a grayscale pat_* one, `tint` colors it so the card never shows a gray object.
 function ItemBadge({ src, emoji, tint }: { src: string; emoji: string; tint?: string }) {
   const [missing, setMissing] = React.useState(false)
   const wrap: React.CSSProperties = { position: 'absolute', bottom: 6, right: 8, width: 'clamp(46px,8vh,72px)', height: 'clamp(46px,8vh,72px)', filter: 'drop-shadow(0 3px 5px rgba(0,0,0,.4))' }

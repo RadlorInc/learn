@@ -1,8 +1,8 @@
 'use client'
 export const dynamic = 'force-static'
 /**
- * Pattern Builder — AR pinch-to-drag activity. A colour pattern ends with a "?";
- * the child pinches the colour that continues it and drags it into the slot.
+ * Pattern Builder — AR pinch-to-drag activity. A color pattern ends with a "?";
+ * the child pinches the color that continues it and drags it into the slot.
  * Teaches patterns. On-device, consent-gated, adaptive.
  */
 import { useEffect, useRef, useState } from 'react'
@@ -41,9 +41,9 @@ export default function PatternBuilderActivity() {
   const isSpeakingRef = useRef(false)
   isSpeakingRef.current = isSpeaking
 
-  const patternRef = useRef<number[]>([])   // VISIBLE colour indices
-  const answerRef = useRef(0)               // colour index that continues it
-  const optionsRef = useRef<number[]>([])   // 3 colour-index choices
+  const patternRef = useRef<number[]>([])   // VISIBLE color indices
+  const answerRef = useRef(0)               // color index that continues it
+  const optionsRef = useRef<number[]>([])   // 3 color-index choices
   const grabbedRef = useRef(-1)
   const dragRef = useRef({ x: 0, y: 0 })
   const prevPinchRef = useRef(false)
@@ -140,16 +140,16 @@ export default function PatternBuilderActivity() {
       : ada.difficulty === 2 ? [[0, 1], [0, 1, 2], [0, 0, 1]]
       : [[0, 1, 2], [0, 1, 1], [0, 0, 1, 2]]
     const base = bases[Math.floor(Math.random() * bases.length)]
-    // Map abstract base indices → actual distinct colours.
-    const colours = [...Array(PAL.length).keys()].sort(() => Math.random() - .5)
-    const seq = Array.from({ length: VISIBLE + 1 }, (_, i) => colours[base[i % base.length]])
+    // Map abstract base indices → actual distinct colors.
+    const colors = [...Array(PAL.length).keys()].sort(() => Math.random() - .5)
+    const seq = Array.from({ length: VISIBLE + 1 }, (_, i) => colors[base[i % base.length]])
     patternRef.current = seq.slice(0, VISIBLE)
     answerRef.current = seq[VISIBLE]
-    const others = colours.filter(c => c !== answerRef.current).slice(0, 2)
+    const others = colors.filter(c => c !== answerRef.current).slice(0, 2)
     optionsRef.current = [answerRef.current, ...others].sort(() => Math.random() - .5)
     grabbedRef.current = -1; matchedRef.current = false; prevPinchRef.current = false
     setMatched(false)
-    speak(`What comes next? Pinch the right colour and drag it to the question mark!`)
+    speak(`What comes next? Pinch the right color and drag it to the question mark!`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundIdx, status, phase])
 
@@ -164,7 +164,7 @@ export default function PatternBuilderActivity() {
           <div style={{ fontSize: 64 }}>🎨</div>
           <h1 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', margin: '8px 0' }}>Pattern Builder</h1>
           {consented
-            ? <p style={muted}>Pinch the colour that comes next and drag it onto the question mark!</p>
+            ? <p style={muted}>Pinch the color that comes next and drag it onto the question mark!</p>
             : <p style={muted}>Ask a grown-up first! This uses the camera so Milo can see your hand. The video stays on this device and is never saved or sent anywhere.</p>}
           <button className="milo-btn tone-green size-lg" onClick={begin}>{consented ? '▶ Start' : '✅ Allow camera'}</button>
           <button className="milo-btn tone-cream" onClick={() => router.push('/play')}>← Back</button>
@@ -174,7 +174,7 @@ export default function PatternBuilderActivity() {
   }
 
   if (phase === 'howto') {
-    return <HowToPlay title="Pattern Builder" steps={['Pinch the colour that comes next.', 'Drag it onto the question mark!']} demo="pinch" onStart={() => setPhase('playing')} />
+    return <HowToPlay title="Pattern Builder" steps={['Pinch the color that comes next.', 'Drag it onto the question mark!']} demo="pinch" onStart={() => setPhase('playing')} />
   }
 
   if (phase === 'done') {

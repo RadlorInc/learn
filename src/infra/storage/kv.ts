@@ -9,7 +9,7 @@
  *
  * Callers must await `kv.ready()` before the first read — StorageGate gates the
  * UI on it, and the Zustand store rehydrates after it. SSR and browsers without
- * IndexedDB fall back to localStorage so behaviour degrades gracefully.
+ * IndexedDB fall back to localStorage so behavior degrades gracefully.
  *
  * NOT moved here on purpose: Supabase auth (`milo-auth`, managed by supabase-js
  * in localStorage) and the active learner (`milo_active_learner`, sessionStorage
@@ -31,10 +31,12 @@ const readyPromise = new Promise<void>((r) => { resolveReady = r })
 let dbPromise: Promise<IDBDatabase> | null = null
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1)
+    let req: IDBOpenDBRequest
+    try { req = indexedDB.open(DB_NAME, 1) } catch (e) { reject(e); return }  // Safari private mode can throw here
     req.onupgradeneeded = () => req.result.createObjectStore(STORE)
     req.onsuccess = () => resolve(req.result)
     req.onerror = () => reject(req.error)
+    req.onblocked = () => reject(new Error('indexedDB blocked'))
   })
 }
 function db(): Promise<IDBDatabase> { return (dbPromise ??= openDB()) }
@@ -55,6 +57,15 @@ function safeLS<T>(fn: () => T, fallback: T): T {
 
 async function hydrate(): Promise<void> {
   if (typeof indexedDB === 'undefined') { useFallback = true; resolveReady(); return }
+  // Safari (first load in a session, private browsing, or strict storage settings)
+  // can leave indexedDB.open() HANGING — it fires neither success nor error. That
+  // would freeze the whole app on the splash forever, since resolveReady() waits on
+  // the await below. Cap the wait: if IDB hasn't hydrated in time, fall back to
+  // localStorage and boot anyway. (A synchronous throw or a rejection is already
+  // handled by the try/catch; this timer is specifically for the silent hang.)
+  let settled = false
+  const finish = () => { if (!settled) { settled = true; resolveReady() } }
+  const timer = setTimeout(() => { useFallback = true; finish() }, 2500)
   try {
     const d = await db()
     const entries = await new Promise<[string, string][]>((resolve, reject) => {
@@ -66,6 +77,8 @@ async function hydrate(): Promise<void> {
       }
       cur.onerror = () => reject(cur.error)
     })
+    if (settled) return   // timed out already → stay in localStorage-fallback mode
+
     mem = new Map(entries)
 
     // One-time migration of existing localStorage gameplay data.
@@ -81,8 +94,10 @@ async function hydrate(): Promise<void> {
     }
   } catch {
     useFallback = true
+  } finally {
+    clearTimeout(timer)
+    finish()
   }
-  resolveReady()
 }
 
 if (typeof window !== 'undefined') hydrate()

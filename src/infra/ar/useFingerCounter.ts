@@ -8,7 +8,7 @@
  * hand leaves, there are no fingers, so it resets to 0 on its own.
  *
  * Game logic stays in the page via one callback, onCount(n), which fires when
- * the number of raised fingers changes. The reported count is lightly stabilised
+ * the number of raised fingers changes. The reported count is lightly stabilized
  * (must hold a few frames) so a one-frame detection blip can't fool the game.
  *
  * Reusable across future AR activities. On-device only.
@@ -83,7 +83,7 @@ export function useFingerCounter(
         ctx.fillText(String(i + 1), bx, by + 1)
       })
 
-      // Report the count, lightly stabilised so a 1-frame blip doesn't register.
+      // Report the count, lightly stabilized so a 1-frame blip doesn't register.
       const n = pts.length
       const s = stableRef.current
       if (n !== s.count) {
@@ -100,7 +100,7 @@ export function useFingerCounter(
       stableRef.current = { count: 0, cand: -1, streak: 0 }
       // Counting needs both hands; keep MediaPipe's default 0.5 presence/tracking
       // (the other AR surfaces loosen these to 0.3) — pass them explicitly so the
-      // shared helper reproduces this site's exact prior behaviour.
+      // shared helper reproduces this site's exact prior behavior.
       landmarkerRef.current = await createHandLandmarker({
         numHands: 2, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
       })

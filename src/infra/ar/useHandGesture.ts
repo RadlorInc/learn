@@ -5,7 +5,7 @@
  * Classifies the hand each frame (orientation-robust: fingers curled + thumb
  * above/below the knuckles), debounces, and fires onGesture('thumbsUp' |
  * 'thumbsDown') once when a steady gesture appears. Draws a 👍/👎 indicator so
- * the child can see it's recognised. Reusable (Thumbs quiz, Milo Says). On-device.
+ * the child can see it's recognized. Reusable (Thumbs quiz, Milo Says). On-device.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { disposeLandmarker } from '@/infra/ar/dispose'
@@ -78,7 +78,7 @@ export function useHandGesture(
       if (g === s.cand) s.streak++; else { s.cand = g; s.streak = 1 }
       if (s.streak >= STABLE_FRAMES && g !== s.g) { s.g = g; if (g) optsRef.current.onGesture?.(g) }
 
-      // Indicator of what's currently recognised.
+      // Indicator of what's currently recognized.
       if (s.g) {
         ctx.font = `${Math.round(Math.min(W, H) * 0.3)}px serif`
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle'

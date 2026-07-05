@@ -5,7 +5,7 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import type { LearnerStats, LearnerProgress, LearnerState } from '@/data/supabase/types'
 import { CHAPTER_IDS, type ChapterType } from '@/core/chapters'
 import { scoreChapter, type ChapterScore } from '@/core/scoring'
-import { mergeServerProgress, nextStreak } from '@/state/progressMerge'
+import { mergeServerProgress } from '@/state/progressMerge'
 
 // Chapter metadata now lives in the single registry (src/lib/chapters.ts).
 // Re-exported here so existing `@/state/store` imports keep working.
@@ -30,8 +30,6 @@ export interface PlayerProfile {
   totalCoins:        number      // spendable balance (earned − spent)
   coinsSpent:        number      // monotonic; lets balance merge across devices
   currentLevel:      number
-  currentStreak:     number
-  lastPlayedDate:    string
   chapterStars:      ChapterStars
   ownedItems:        string[]
   equippedItems:     Record<string, string>
@@ -59,8 +57,7 @@ const defaultChapterStars: ChapterStars =
 
 const defaultProfile: PlayerProfile = {
   childName: '', avatarIndex: 0, hasCompletedSetup: false,
-  totalXP: 0, totalCoins: 0, coinsSpent: 0, currentLevel: 1, currentStreak: 0,
-  lastPlayedDate: '',
+  totalXP: 0, totalCoins: 0, coinsSpent: 0, currentLevel: 1,
   chapterStars: { ...defaultChapterStars },
   ownedItems: [], equippedItems: {},
 }
@@ -185,19 +182,12 @@ export const useMiloStore = create<MiloStore>()(
           const newLevel  = getLevelFromXP(newXP)
           const prevStars = s.profile.chapterStars[chapter]
 
-          // Streak: only increment once per calendar day (pure calc in progressMerge)
-          const today      = new Date().toDateString()
-          const yesterday  = new Date(Date.now() - 86400000).toDateString()
-          const newStreak  = nextStreak(s.profile.lastPlayedDate, s.profile.currentStreak, today, yesterday)
-
           return {
             profile: {
               ...s.profile,
               totalXP:        newXP,
               totalCoins:     newCoins,
               currentLevel:   newLevel,
-              currentStreak:  newStreak,
-              lastPlayedDate: today,
               chapterStars: {
                 ...s.profile.chapterStars,
                 [chapter]: Math.max(prevStars, stars),

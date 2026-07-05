@@ -166,6 +166,34 @@ export const COUNT_SRC: Record<CountKind, string[]> = {
   moonRock: ['/assets/objects/moon_rock.png'],
   alien: ['/assets/objects/alien.png'],
 }
+// Side-facing "in motion" sprites, used ONLY by the counting parade (ParadeCountPlay) where creatures
+// walk/fly/swim across the scene facing their travel direction. Each faces RIGHT (the parade flips it
+// for left-travelling creatures). A missing file falls back to the normal sprite, so this can be
+// populated as art lands. Originals in COUNT_SRC are untouched — every other screen keeps them.
+export const COUNT_SIDE: Partial<Record<CountKind, string>> = {
+  rabbit: '/assets/objects/rabbit_side.png',
+  eagle: '/assets/objects/eagle_side.png',
+  fish: '/assets/objects/fish_side.png',
+  turtle: '/assets/objects/turtle_side.png',
+  shark: '/assets/objects/shark_side.png',
+  crab: '/assets/objects/crab_side.png',
+  squirrel: '/assets/objects/squirrel_side.png',
+  ant: '/assets/objects/ant_side.png',
+  ladybug: '/assets/objects/ladybug_side.png',
+  // Farm Day
+  lamb: '/assets/objects/lamb_side.png',
+  chick: '/assets/objects/chick_side.png',
+  duckling: '/assets/objects/duckling_side.png',
+  bee: '/assets/objects/bee_side.png',
+  frog: '/assets/objects/frog_side.png',
+  duck: '/assets/objects/duck_side.png',
+  dragonfly: '/assets/objects/dragonfly_side.png',
+  butterfly: '/assets/objects/butterfly_side.png',
+  firefly: '/assets/objects/firefly_side.png',
+  // Space
+  astronaut: '/assets/objects/astronaut_side.png',
+  alien: '/assets/objects/alien_side.png',
+}
 export const COUNT_EMOJI: Record<CountKind, string> = {
   firefly: '🪲', butterfly: '🦋',
   duck: '🦆', fish: '🐟', turtle: '🐢',
@@ -206,10 +234,13 @@ export const COUNT_PLURAL: Record<CountKind, string> = {
 //   • blend=true — soft natural shadow only, so it tucks INTO the forest foliage
 //     and the child has to HUNT for it (the forest-walk find-and-count beats).
 // Missing art (placeholders) falls back to a big emoji.
-export function CountItem({ kind, on, size = 56, variant = 0, blend = false }: { kind: CountKind; on: boolean; size?: number; variant?: number; blend?: boolean }) {
+export function CountItem({ kind, on, size = 56, variant = 0, blend = false, side = false }: { kind: CountKind; on: boolean; size?: number; variant?: number; blend?: boolean; side?: boolean }) {
   const [missing, setMissing] = useState(false)
+  const [sideFailed, setSideFailed] = useState(false)
   const glow = kind === 'firefly'
-  const srcs = COUNT_SRC[kind]
+  // Parade context wants the side-facing sprite; if it 404s, fall back to the normal art, then emoji.
+  const useSide = side && !!COUNT_SIDE[kind] && !sideFailed
+  const srcs = useSide ? [COUNT_SIDE[kind]!] : COUNT_SRC[kind]
   // Resting filter: blended objects sit in the leaves with just a soft contact
   // shadow (no bright halo); non-blended keep the stand-out white halo.
   const rest = blend
@@ -224,7 +255,7 @@ export function CountItem({ kind, on, size = 56, variant = 0, blend = false }: {
     )
   }
   return (
-    <img src={srcs[variant % srcs.length]} alt={kind} draggable={false} decoding="async" loading="lazy" width={size} height={size} onError={() => setMissing(true)}
+    <img src={srcs[variant % srcs.length]} alt={kind} draggable={false} decoding="async" loading="lazy" width={size} height={size} onError={() => (useSide ? setSideFailed(true) : setMissing(true))}
       style={{ objectFit: 'contain', transition: 'transform .18s ease, filter .25s ease',
         filter: on
           ? (glow ? 'drop-shadow(0 0 16px #fff3b0) brightness(1.05)' : 'drop-shadow(0 0 5px #fff) drop-shadow(0 6px 7px rgba(0,0,0,.45)) brightness(1.06)')

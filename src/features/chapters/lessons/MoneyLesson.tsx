@@ -168,7 +168,7 @@ export default function MoneyLesson({ childName, onLessonComplete }: Props) {
   ]
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Great job, ${childName}! You can count money! Let’s practise!`} />
+      finalSpeech={`Great job, ${childName}! You can count money! Let’s practice!`} />
   )
 }
 

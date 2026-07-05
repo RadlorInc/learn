@@ -7,7 +7,7 @@
  * model y = bˣ (compounding). A live read-out names the crossover — the x where
  * the exponential curve overtakes the line — so the big idea (exponential always
  * wins eventually) is something you *see*, not just hear. Slider-driven (not
- * free-drag) so it's touch-friendly and testable. Mature studio look; colours and
+ * free-drag) so it's touch-friendly and testable. Mature studio look; colors and
  * fonts via CSS variables only (theme comes from the ancestor data-band scope).
  */
 import { useEffect, useMemo, useRef, useState } from 'react'

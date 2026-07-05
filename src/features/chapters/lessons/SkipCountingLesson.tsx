@@ -144,6 +144,6 @@ export default function SkipCountingLesson({ childName, onLessonComplete }: Prop
   ]
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Awesome, ${childName}! You can skip count! Let’s practise!`} />
+      finalSpeech={`Awesome, ${childName}! You can skip count! Let’s practice!`} />
   )
 }

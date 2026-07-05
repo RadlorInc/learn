@@ -92,7 +92,7 @@ export default function CatchItActivity() {
     const catchR = W * 0.1
 
     if (video.readyState >= 2) {
-      // Basket follows the hand, smoothed. Use the PALM CENTRE (average of wrist
+      // Basket follows the hand, smoothed. Use the PALM CENTER (average of wrist
       // + knuckles) so a single jittery landmark can't make it jump, and a
       // snappier lerp so it doesn't lag behind fast moves. Mirror: x → 1-x.
       const res = lm.detectForVideo(video, performance.now())

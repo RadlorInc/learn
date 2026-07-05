@@ -1,9 +1,9 @@
 'use client'
 /**
- * /daily — "Milo's Daily": a short spaced-repetition review (5 questions) + a
- * gentle streak. The retention loop. Math-without-fear: no timer, warm wrong
- * answers (correct reveals green, the pick stays soft), and a missed day never
- * shames — the streak just restarts warmly. Logs daily_open / daily_complete.
+ * /daily — "Milo's Daily": a short spaced-repetition review (5 questions). The
+ * retention loop. Math-without-fear: no timer, warm wrong answers (correct reveals
+ * green, the pick stays soft), and a missed day never shames. Logs daily_open /
+ * daily_complete.
  */
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
@@ -24,7 +24,7 @@ export default function DailyPage() {
   const [selected, setSelected] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [correct, setCorrect] = useState(0)
-  const [reward, setReward] = useState<{ streak: number; isRecord: boolean; restarted: boolean } | null>(null)
+  const [reward, setReward] = useState(false)
   const spoken = useRef('')
 
   // Boot: load the active learner and build today's review once.
@@ -62,9 +62,9 @@ export default function DailyPage() {
     window.setTimeout(() => {
       if (idx + 1 >= TOTAL) {
         stopSpeech()
-        const r = recordDailyDone(learner.id)
-        track('daily_complete', { streak: r.streak, correct: correct + (ok ? 1 : 0) })
-        setReward({ streak: r.streak, isRecord: r.isRecord, restarted: r.restarted })
+        recordDailyDone(learner.id)
+        track('daily_complete', { correct: correct + (ok ? 1 : 0) })
+        setReward(true)
       } else {
         setIdx(i => i + 1); setSelected(null); setFeedback(null)
       }
@@ -72,18 +72,12 @@ export default function DailyPage() {
   }
 
   if (reward) {
-    const headline = reward.restarted
-      ? 'Welcome back! 🌱'
-      : `🔥 ${reward.streak} day${reward.streak === 1 ? '' : 's'} with Milo!`
-    const sub = reward.restarted
-      ? 'A fresh start — Day 1. Lovely to see you!'
-      : reward.isRecord ? 'A new best streak! ⭐' : 'You reviewed 5 skills today.'
     return (
       <Shell>
         <Confetti />
         <Image src="/assets/characters/milo-happy.png" alt="Milo" width={120} height={120} priority style={{ objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: 'var(--milo-orange)', margin: '6px 0 4px', textAlign: 'center' }}>{headline}</h1>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--ink-soft)', margin: 0, textAlign: 'center' }}>{sub}</p>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: 'var(--milo-orange)', margin: '6px 0 4px', textAlign: 'center' }}>All done! 🌟</h1>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--ink-soft)', margin: 0, textAlign: 'center' }}>You reviewed 5 skills today.</p>
         <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: 'var(--garden-green-deep)', margin: '10px 0 0' }}>You got {correct} of {TOTAL}! 🌟</p>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--ink-muted)', margin: '14px 0 0', textAlign: 'center' }}>Come back tomorrow for a new Daily! 🌙</p>
         <button onClick={() => { stopSpeech(); router.push('/menu') }} style={{ marginTop: 22, padding: '15px 32px', background: 'linear-gradient(135deg,var(--milo-orange) 0%,var(--milo-orange-deep) 100%)', color: '#fff', border: 'none', borderRadius: 50, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 18, cursor: 'pointer', boxShadow: '0 4px 18px rgba(242,107,44,0.35)' }}>Back to Milo 🏠</button>

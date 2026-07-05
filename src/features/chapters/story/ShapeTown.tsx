@@ -43,7 +43,7 @@ const shuffle = <T,>(a: T[]): T[] => {
 const SHORT_H = 470
 
 // The classic look-alike pair — seeded as a distractor at the hardest tier so the child
-// must recognise the form, not eliminate.
+// must recognize the form, not eliminate.
 const TWIN: Partial<Record<ShapeName, ShapeName>> = { square: 'rectangle', rectangle: 'square' }
 
 // ─── Scenes ────────────────────────────────────────────────────────────────────────
@@ -302,7 +302,7 @@ function useThingScale(n: number): number {
 // smaller and sit a little higher, and EVERY object casts a soft contact SHADOW on the scene's
 // ground line below it. The shadow + depth scatter break the row and anchor the objects.
 interface Placed { left: number; top: number; depth: number }
-// A gentle, balanced depth scatter per shape count (centre nearest) — never a flat line.
+// A gentle, balanced depth scatter per shape count (center nearest) — never a flat line.
 const DEPTHS: Record<number, number[]> = { 1: [0.25], 2: [0.15, 0.6], 3: [0.5, 0.05, 0.7], 4: [0.7, 0.2, 0.45, 0.85] }
 // Small deterministic x nudges so the columns aren't mechanically even.
 const XJIT: Record<number, number[]> = { 1: [0], 2: [-2, 2], 3: [-1.5, 1.5, -1], 4: [-2, 1, -1.5, 2] }

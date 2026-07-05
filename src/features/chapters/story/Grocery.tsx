@@ -156,7 +156,7 @@ function ShelfItem({ cfg, size, i, onPick }: { cfg: SceneCfg; size: string; i: n
 }
 
 // ─── The container the order fills into (bag / pizza / box). NO running count shown. ─
-// Radial spots for toppings ON the pizza disk (centre-out, never overlapping the crust).
+// Radial spots for toppings ON the pizza disk (center-out, never overlapping the crust).
 const PIZZA_SPOTS: Array<[number, number]> = [
   [0, -2], [-22, -16], [22, -14], [-26, 12], [24, 14], [0, 26], [-4, -28], [-34, -2], [34, 0], [2, 4],
 ]
@@ -168,7 +168,7 @@ function Container({ cfg, picked }: { cfg: SceneCfg; picked: number }) {
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' }} />
         {Array.from({ length: picked }).map((_, i) => {
           const [x, y] = PIZZA_SPOTS[i % PIZZA_SPOTS.length]
-          // Centre on the OUTER span; animate the INNER one. (gr_pop is `both`, so its final
+          // Center on the OUTER span; animate the INNER one. (gr_pop is `both`, so its final
           // keyframe pins transform:scale(1), which would clobber a translate(-50%,-50%) on
           // the same element and shove the topping off its spot.)
           return <span key={i} style={{ position: 'absolute', left: `${50 + x}%`, top: `${50 + y}%`, transform: 'translate(-50%,-50%)' }}>

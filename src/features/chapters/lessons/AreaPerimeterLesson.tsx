@@ -184,7 +184,7 @@ export default function AreaPerimeterLesson({ childName, onLessonComplete }: Pro
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Great work, ${childName}! Area counts the inside, perimeter goes around. Now let's practise!`}
+      finalSpeech={`Great work, ${childName}! Area counts the inside, perimeter goes around. Now let's practice!`}
     />
   )
 }

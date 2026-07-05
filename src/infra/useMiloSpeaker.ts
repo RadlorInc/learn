@@ -71,26 +71,30 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 function _pickVoice(): SpeechSynthesisVoice | null {
   _loadVoices()
   if (!_voices.length) return null
-  // Prefer a nice-sounding LOCAL English voice. Chrome's "Google …" voices are network-backed
-  // and fail SILENTLY when the TTS endpoint is unreachable (no sound, sometimes no error) — a
-  // local voice (Samantha on macOS, Microsoft David/Zira on Windows, etc.) always produces audio.
-  // So local wins here; Google is only a last resort when no local English voice exists.
-  const LOCAL_PREFER = ['Samantha', 'Karen', 'Moira', 'Daniel', 'Alex', 'Microsoft Zira', 'Microsoft David', 'Microsoft Aria']
+  // Prefer a warm, kid-friendly, US-ENGLISH LOCAL voice. Two reasons for "local first": Chrome's
+  // "Google …" voices are network-backed and fail SILENTLY when the endpoint is unreachable (no
+  // sound, sometimes no error), whereas a local voice always produces audio. Reason for "US": the
+  // product is American English, so we must NOT fall onto the British/Australian/Irish system voices
+  // (Daniel/Karen/Moira) that ship alongside the US ones — they were in this list before and gave
+  // Milo a non-US accent. Ordered warmest/most kid-appropriate first (Samantha & the enhanced US
+  // female voices read best for young children); male US voices and the Windows voices follow.
+  const LOCAL_PREFER = [
+    'Samantha', 'Ava', 'Allison', 'Susan', 'Nicky',   // macOS/iOS US female (warm)
+    'Aaron', 'Alex',                                   // macOS/iOS US male
+    'Microsoft Aria', 'Microsoft Jenny', 'Microsoft Zira', 'Microsoft David', // Windows US
+  ]
   for (const name of LOCAL_PREFER) {
-    const v = _voices.find(v => v.name.includes(name) && v.localService)
+    const v = _voices.find(v => v.name.includes(name) && v.localService && (v.lang === 'en-US' || v.lang?.startsWith('en')))
     if (v) return v
   }
-  // Any local English voice.
+  // Any local US-English voice, then any local English voice as a floor.
   const localEn =
     _voices.find(v => v.localService && v.lang === 'en-US') ??
     _voices.find(v => v.localService && v.lang?.startsWith('en'))
   if (localEn) return localEn
-  // No local English voice at all → fall back to the nicer network voices, then anything English.
-  const NET_PREFER = ['Google US English', 'Google UK English Female', 'Google US English Female']
-  for (const name of NET_PREFER) {
-    const v = _voices.find(v => v.name.includes(name))
-    if (v) return v
-  }
+  // No local English voice at all → the US network voice, then any US voice, then any English.
+  const net = _voices.find(v => v.name.includes('Google US English')) ?? _voices.find(v => /US English/i.test(v.name))
+  if (net) return net
   return (
     _voices.find(v => v.lang === 'en-US') ??
     _voices.find(v => v.lang?.startsWith('en')) ??
@@ -252,9 +256,9 @@ export function afterSpeech(cb: () => void) {
  */
 export function speakSeq(
   words: string[],
-  opts: { onWord?: (i: number) => void; onDone?: () => void; rate?: number; pitch?: number } = {},
+  opts: { onWord?: (i: number) => void; onDone?: () => void; rate?: number; pitch?: number; gapMs?: number } = {},
 ): () => void {
-  const { onWord, onDone, rate = 0.88, pitch = 1.05 } = opts
+  const { onWord, onDone, rate = 0.88, pitch = 1.05, gapMs = 0 } = opts
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) { onDone?.(); return () => {} }
   clearPointer()   // callers re-point per word via onWord if they want a pointer
   // Supersede any previous sequence cleanly.
@@ -262,10 +266,12 @@ export function speakSeq(
   if (_speakTimer) { clearTimeout(_speakTimer); _speakTimer = null }
   let cancelled = false
   let i = 0
+  let gapTimer: ReturnType<typeof setTimeout> | null = null
   const cancel = () => {
     if (cancelled) return
     cancelled = true
     if (_activeSeqCancel === cancel) _activeSeqCancel = null
+    if (gapTimer) { clearTimeout(gapTimer); gapTimer = null }
     try { window.speechSynthesis.cancel() } catch {}
     _setSpeaking(false)
   }
@@ -282,7 +288,15 @@ export function speakSeq(
     let moved = false, started = false
     let watch: ReturnType<typeof setTimeout> | null = null
     const clearWatch = () => { if (watch) { clearTimeout(watch); watch = null } }
-    const advance = () => { if (moved || cancelled) return; moved = true; clearWatch(); next() }
+    // A breathing pause between lines (gapMs) lets the listener absorb each step —
+    // but only after a line that really SPOKE (a blocked/errored line shouldn't crawl).
+    const advance = () => {
+      if (moved || cancelled) return
+      moved = true; clearWatch()
+      if (gapMs > 0 && started && i < words.length) {
+        gapTimer = setTimeout(() => { gapTimer = null; next() }, gapMs)
+      } else next()
+    }
     const u = new SpeechSynthesisUtterance(txt)
     u.rate = rate; u.pitch = pitch; u.volume = 1; u.lang = 'en-US'
     const v = _pickVoice(); if (v) u.voice = v
@@ -318,9 +332,9 @@ export function speakSeq(
  */
 export function speakSteps(
   lines: string[],
-  opts: { onStep?: (i: number) => void; onDone?: () => void; fallbackStepMs?: number; rate?: number; pitch?: number } = {},
+  opts: { onStep?: (i: number) => void; onDone?: () => void; fallbackStepMs?: number; rate?: number; pitch?: number; gapMs?: number } = {},
 ): () => void {
-  const { onStep, onDone, fallbackStepMs = 1400, rate, pitch } = opts
+  const { onStep, onDone, fallbackStepMs = 1400, rate, pitch, gapMs } = opts
   let started = false, doneOnce = false
   const timers: Array<ReturnType<typeof setTimeout>> = []
   const finish = () => { if (doneOnce) return; doneOnce = true; onDone?.() }
@@ -333,7 +347,7 @@ export function speakSteps(
     // timer-fallback below instead (which paces the reveals + finishes), so a silent demo plays at a
     // watchable speed rather than vanishing. A truly spoken run sets `started` and finishes normally.
     onDone: () => { if (started) finish() },
-    rate, pitch,
+    rate, pitch, gapMs,
   })
   // The fallback exists ONLY for the silent case (blocked autoplay / no voices). It must not
   // pre-empt a real voice that's just slow to start, so:

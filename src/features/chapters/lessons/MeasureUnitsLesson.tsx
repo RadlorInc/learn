@@ -8,7 +8,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { speak, speakSeq } from '@/infra/useMiloSpeaker'
 import { LessonScaffold, Confetti, type LessonStep } from './_kit'
 
-const UW: Record<string, string> = { m: 'metre', cm: 'centimetre', mm: 'millimetre', km: 'kilometre', kg: 'kilogram', g: 'gram', l: 'litre', ml: 'millilitre' }
+const UW: Record<string, string> = { m: 'meter', cm: 'centimeter', mm: 'millimeter', km: 'kilometer', kg: 'kilogram', g: 'gram', l: 'liter', ml: 'milliliter' }
 export function unitName(sym: string, n: number): string { const w = UW[sym] ?? sym; return n === 1 ? w : `${w}s` }
 
 // ─── Worked example: a unit-conversion FACT (1 big = factor small) ──
@@ -121,26 +121,26 @@ interface Props { childName: string; onLessonComplete: () => void }
 function buildSteps(childName: string): LessonStep[] {
   return [
     // ── Length: facts ──
-    { bubble: `Hi ${childName}! We measure length with metres. 📏`, mood: 'happy',
-      render: d => <UnitFactWatch emoji="📏" big="m" factor={100} small="cm" intro={`Hi ${childName}! How many centimetres are in one metre?`} outro="One metre is a hundred centimetres!" onDone={d} /> },
-    { bubble: 'Smaller still — millimetres! 📏', mood: 'thinking',
-      render: d => <UnitFactWatch emoji="📐" big="cm" factor={10} small="mm" intro="How many millimetres in one centimetre?" outro="Ten millimetres make a centimetre!" onDone={d} /> },
-    { bubble: 'Bigger — kilometres! 🛣️', mood: 'thinking',
-      render: d => <UnitFactWatch emoji="🛣️" big="km" factor={1000} small="m" intro="How many metres in one kilometre?" outro="One kilometre is a thousand metres!" onDone={d} /> },
+    { bubble: `Hi ${childName}! We measure length with meters. 📏`, mood: 'happy',
+      render: d => <UnitFactWatch emoji="📏" big="m" factor={100} small="cm" intro={`Hi ${childName}! How many centimeters are in one meter?`} outro="One meter is a hundred centimeters!" onDone={d} /> },
+    { bubble: 'Smaller still — millimeters! 📏', mood: 'thinking',
+      render: d => <UnitFactWatch emoji="📐" big="cm" factor={10} small="mm" intro="How many millimeters in one centimeter?" outro="Ten millimeters make a centimeter!" onDone={d} /> },
+    { bubble: 'Bigger — kilometers! 🛣️', mood: 'thinking',
+      render: d => <UnitFactWatch emoji="🛣️" big="km" factor={1000} small="m" intro="How many meters in one kilometer?" outro="One kilometer is a thousand meters!" onDone={d} /> },
     // ── Length: conversions ──
-    { bubble: 'Convert metres to centimetres! 🔁', mood: 'thinking',
-      render: d => <ConvertWatch value={3} from="m" factor={100} op="×" to="cm" intro="Three metres — how many centimetres? Times one hundred." outro="Three hundred centimetres!" onDone={d} /> },
+    { bubble: 'Convert meters to centimeters! 🔁', mood: 'thinking',
+      render: d => <ConvertWatch value={3} from="m" factor={100} op="×" to="cm" intro="Three meters — how many centimeters? Times one hundred." outro="Three hundred centimeters!" onDone={d} /> },
     { bubble: 'Another one! 🔁', mood: 'thinking',
-      render: d => <ConvertWatch value={4} from="m" factor={100} op="×" to="cm" intro="Four metres to centimetres." outro="Four hundred centimetres!" onDone={d} /> },
-    { bubble: 'Centimetres to millimetres! 🔁', mood: 'thinking',
-      render: d => <ConvertWatch value={7} from="cm" factor={10} op="×" to="mm" intro="Seven centimetres — times ten." outro="Seventy millimetres!" onDone={d} /> },
-    { bubble: 'Kilometres to metres! 🔁', mood: 'thinking',
-      render: d => <ConvertWatch value={5} from="km" factor={1000} op="×" to="m" intro="Five kilometres — times a thousand." outro="Five thousand metres!" onDone={d} /> },
+      render: d => <ConvertWatch value={4} from="m" factor={100} op="×" to="cm" intro="Four meters to centimeters." outro="Four hundred centimeters!" onDone={d} /> },
+    { bubble: 'Centimeters to millimeters! 🔁', mood: 'thinking',
+      render: d => <ConvertWatch value={7} from="cm" factor={10} op="×" to="mm" intro="Seven centimeters — times ten." outro="Seventy millimeters!" onDone={d} /> },
+    { bubble: 'Kilometers to meters! 🔁', mood: 'thinking',
+      render: d => <ConvertWatch value={5} from="km" factor={1000} op="×" to="m" intro="Five kilometers — times a thousand." outro="Five thousand meters!" onDone={d} /> },
     // ── Length: choose the unit ──
     { bubble: 'Pick the sensible unit! 👂', mood: 'thinking',
-      render: d => <MeasurePick prompt="Which unit measures a pencil?" options={['mm', 'cm', 'km']} answer="cm" visual={<div style={{ fontSize: 60 }}>✏️</div>} intro="Which unit measures a pencil?" outro="Yes! Centimetres!" onDone={d} /> },
+      render: d => <MeasurePick prompt="Which unit measures a pencil?" options={['mm', 'cm', 'km']} answer="cm" visual={<div style={{ fontSize: 60 }}>✏️</div>} intro="Which unit measures a pencil?" outro="Yes! Centimeters!" onDone={d} /> },
     { bubble: 'And this one? 👂', mood: 'thinking',
-      render: d => <MeasurePick prompt="Which unit measures a long car trip?" options={['cm', 'm', 'km']} answer="km" visual={<div style={{ fontSize: 60 }}>🚗</div>} intro="Which unit measures a long car trip?" outro="Yes! Kilometres!" onDone={d} /> },
+      render: d => <MeasurePick prompt="Which unit measures a long car trip?" options={['cm', 'm', 'km']} answer="km" visual={<div style={{ fontSize: 60 }}>🚗</div>} intro="Which unit measures a long car trip?" outro="Yes! Kilometers!" onDone={d} /> },
     // ── Mass ──
     { bubble: 'Mass is measured in grams! ⚖️', mood: 'happy',
       render: d => <UnitFactWatch emoji="⚖️" big="kg" factor={1000} small="g" intro="How many grams in one kilogram?" outro="One kilogram is a thousand grams!" onDone={d} /> },
@@ -155,21 +155,21 @@ function buildSteps(childName: string): LessonStep[] {
     { bubble: 'And a tiny feather? 👂', mood: 'thinking',
       render: d => <MeasurePick prompt="Which unit measures a feather?" options={['g', 'kg', 'l']} answer="g" visual={<div style={{ fontSize: 60 }}>🪶</div>} intro="Which unit measures a feather?" outro="Yes! Grams!" onDone={d} /> },
     // ── Capacity ──
-    { bubble: 'Capacity is measured in litres! 🥤', mood: 'happy',
-      render: d => <UnitFactWatch emoji="🥤" big="l" factor={1000} small="ml" intro="How many millilitres in one litre?" outro="One litre is a thousand millilitres!" onDone={d} /> },
-    { bubble: 'Litres to millilitres! 🔁', mood: 'thinking',
-      render: d => <ConvertWatch value={3} from="l" factor={1000} op="×" to="ml" intro="Three litres — times a thousand." outro="Three thousand millilitres!" onDone={d} /> },
-    { bubble: 'Millilitres back to litres! 🔁', mood: 'thinking',
-      render: d => <ConvertWatch value={5000} from="ml" factor={1000} op="÷" to="l" intro="Five thousand millilitres — divide by a thousand." outro="Five litres!" onDone={d} /> },
+    { bubble: 'Capacity is measured in liters! 🥤', mood: 'happy',
+      render: d => <UnitFactWatch emoji="🥤" big="l" factor={1000} small="ml" intro="How many milliliters in one liter?" outro="One liter is a thousand milliliters!" onDone={d} /> },
+    { bubble: 'Liters to milliliters! 🔁', mood: 'thinking',
+      render: d => <ConvertWatch value={3} from="l" factor={1000} op="×" to="ml" intro="Three liters — times a thousand." outro="Three thousand milliliters!" onDone={d} /> },
+    { bubble: 'Milliliters back to liters! 🔁', mood: 'thinking',
+      render: d => <ConvertWatch value={5000} from="ml" factor={1000} op="÷" to="l" intro="Five thousand milliliters — divide by a thousand." outro="Five liters!" onDone={d} /> },
     { bubble: 'Pick the unit for capacity! 👂', mood: 'thinking',
-      render: d => <MeasurePick prompt="Which unit measures a big juice carton?" options={['ml', 'l', 'g']} answer="l" visual={<div style={{ fontSize: 60 }}>🧃</div>} intro="Which unit measures a big juice carton?" outro="Yes! Litres!" onDone={d} /> },
+      render: d => <MeasurePick prompt="Which unit measures a big juice carton?" options={['ml', 'l', 'g']} answer="l" visual={<div style={{ fontSize: 60 }}>🧃</div>} intro="Which unit measures a big juice carton?" outro="Yes! Liters!" onDone={d} /> },
     // ── More divide conversions + your-turn ──
-    { bubble: 'Millimetres back to centimetres! 🔁', mood: 'thinking',
-      render: d => <ConvertWatch value={30} from="mm" factor={10} op="÷" to="cm" intro="Thirty millimetres — divide by ten." outro="Three centimetres!" onDone={d} /> },
+    { bubble: 'Millimeters back to centimeters! 🔁', mood: 'thinking',
+      render: d => <ConvertWatch value={30} from="mm" factor={10} op="÷" to="cm" intro="Thirty millimeters — divide by ten." outro="Three centimeters!" onDone={d} /> },
     { bubble: 'Your turn — convert! 👂', mood: 'thinking',
-      render: d => <MeasurePick prompt="300 cm = ? m" options={['3', '30', '3000']} answer="3" intro="Three hundred centimetres is how many metres? Divide by a hundred." outro="Yes! Three metres!" onDone={d} /> },
+      render: d => <MeasurePick prompt="300 cm = ? m" options={['3', '30', '3000']} answer="3" intro="Three hundred centimeters is how many meters? Divide by a hundred." outro="Yes! Three meters!" onDone={d} /> },
     { bubble: 'Last one — convert! 👂', mood: 'thinking',
-      render: d => <MeasurePick prompt="2 l = ? ml" options={['20', '200', '2000']} answer="2000" intro="Two litres is how many millilitres? Times a thousand." outro="Yes! Two thousand millilitres!" onDone={d} /> },
+      render: d => <MeasurePick prompt="2 l = ? ml" options={['20', '200', '2000']} answer="2000" intro="Two liters is how many milliliters? Times a thousand." outro="Yes! Two thousand milliliters!" onDone={d} /> },
   ]
 }
 export default function MeasureUnitsLesson({ childName, onLessonComplete }: Props) {
@@ -178,7 +178,7 @@ export default function MeasureUnitsLesson({ childName, onLessonComplete }: Prop
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Great measuring, ${childName}! Now let's practise!`}
+      finalSpeech={`Great measuring, ${childName}! Now let's practice!`}
     />
   )
 }

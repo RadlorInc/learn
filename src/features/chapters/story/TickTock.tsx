@@ -47,7 +47,7 @@ const AC = (img: string, emoji: string, caption: string): Activity => ({ img: `/
 interface Bg { grad: string; img: string }
 interface TimeWorld {
   id: string; label: string; emoji: string
-  rim: string                       // clock rim colour (per world)
+  rim: string                       // clock rim color (per world)
   bgs: Bg[]
   activities: Activity[]
   dark?: boolean

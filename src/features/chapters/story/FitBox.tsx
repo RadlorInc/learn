@@ -8,8 +8,8 @@
  *
  * Flow-safe: the OUTER wrapper takes the *scaled* dimensions as its real layout box, so when a FitBox
  * has flow siblings (e.g. answer buttons stacked below it in a column) they are pushed by the visible
- * size, not the small natural size — no overlap. Centres its content, so a flex-centred FitBox stays
- * centred at any scale.
+ * size, not the small natural size — no overlap. Centers its content, so a flex-centered FitBox stays
+ * centered at any scale.
  *
  * Usage: give it the width/height of the band the canvas may occupy (viewport minus the top banner
  * and the bottom answer buttons); pass the card as children.

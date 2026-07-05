@@ -7,7 +7,7 @@
  * plotted on a CoordGrid against the line y = 3x + 2 so the abstract rule and
  * its graph move together (PhET / Desmos style). Slider-driven (not free-drag)
  * so it's touch-friendly, accessible, and testable. Mature Field Lab look — an
- * instrument, not a cartoon. Colours/fonts via CSS variables only.
+ * instrument, not a cartoon. Colors/fonts via CSS variables only.
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'

@@ -22,7 +22,7 @@ export default function MiloPointer() {
     if (!active || !target) { setPos(null); return }
     const tick = () => {
       const r = target.getBoundingClientRect()
-      // Sit just under the target's centre and point up at it.
+      // Sit just under the target's center and point up at it.
       if (r.width || r.height) setPos({ x: r.left + r.width / 2, y: r.bottom })
       raf.current = requestAnimationFrame(tick)
     }

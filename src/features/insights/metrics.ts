@@ -1,10 +1,9 @@
 /**
  * Insights — pure metric computation (no React, no data access).
  *
- * Retention/funnel/streak aggregation over sessions + events, plus the
- * equivalent view built from the server-side rollup. Unit-testable in isolation.
+ * Retention/funnel aggregation over sessions + events, plus the equivalent view
+ * built from the server-side rollup. Unit-testable in isolation.
  */
-import { computeStreak } from '@/features/daily/daily'
 import type { Learner } from '@/data/supabase/types'
 import type { InsightsRollup } from '@/data/repositories'
 
@@ -34,12 +33,10 @@ export function computeMetrics(learners: Learner[], sessions: Sess[], events: Ev
     const times = (byLearner.get(l.id) ?? []).sort((a, b) => a - b)
     const days = new Set(times.map(t => dayKey(new Date(t).toISOString())))
     const first = times[0] ?? null, last = times[times.length - 1] ?? null
-    const st = computeStreak(events.filter(e => e.event === 'daily_complete' && e.learner_id === l.id).map(e => dayKey(e.created_at)))
     return {
       id: l.id, name: l.display_name, age: l.age_group ?? '3-5',
       firstMs: first, lastMs: last, activeDays: days.size, sessions: times.length,
       spanDays: first && last ? Math.round((last - first) / DAY) : 0,
-      streakCur: st.current, streakBest: st.longest,
       first: first ? dayKey(new Date(first).toISOString()) : '—',
       last: last ? dayKey(new Date(last).toISOString()) : '—',
     }
@@ -72,9 +69,6 @@ export function computeMetrics(learners: Learner[], sessions: Sess[], events: Ev
     d1: retention(1), d7: retention(7), d30: retention(30),
     opens, completes: completes || practice.length, skips, accuracy,
     dailyOpens, dailyCompletes,
-    activeStreaks: per.filter(p => p.streakCur >= 1).length,
-    maxStreak: Math.max(0, ...per.map(p => p.streakCur)),
-    bestStreak: Math.max(0, ...per.map(p => p.streakBest)),
     rows: per.sort((a, b) => (b.lastMs ?? 0) - (a.lastMs ?? 0)),
   }
 }
@@ -82,20 +76,14 @@ export function computeMetrics(learners: Learner[], sessions: Sess[], events: Ev
 export type Metrics = ReturnType<typeof computeMetrics>
 
 // Same metrics as computeMetrics(), but built from the server-side rollup (no raw rows). first/last/
-// retention/accuracy/streak are exact; `active_days` comes from the RPC (UTC calendar days).
+// retention/accuracy are exact; `active_days` comes from the RPC (UTC calendar days).
 export function computeMetricsFromRollup(learners: Learner[], r: InsightsRollup): Metrics {
   const now = Date.now()
   const plById = new Map(r.per_learner.map(p => [p.learner_id, p]))
-  const dailyByLearner = new Map<string, string[]>()
-  for (const d of r.daily_days) {
-    if (!dailyByLearner.has(d.learner_id)) dailyByLearner.set(d.learner_id, [])
-    dailyByLearner.get(d.learner_id)!.push(dayKey(d.created_at))
-  }
 
   const per = learners.map(l => {
     const pl = plById.get(l.id)
     const firstMs = pl?.first_ms ?? null, lastMs = pl?.last_ms ?? null
-    const st = computeStreak(dailyByLearner.get(l.id) ?? [])
     return {
       // Cast mirrors computeMetrics()'s (unsound-but-guarded) `number` typing; a learner with no
       // sessions is absent from per_learner, and every metric that reads firstMs/lastMs filters on
@@ -104,7 +92,6 @@ export function computeMetricsFromRollup(learners: Learner[], r: InsightsRollup)
       firstMs: firstMs as number, lastMs: lastMs as number,
       activeDays: pl?.active_days ?? 0, sessions: pl?.sessions ?? 0,
       spanDays: firstMs && lastMs ? Math.round((lastMs - firstMs) / DAY) : 0,
-      streakCur: st.current, streakBest: st.longest,
       first: firstMs ? dayKey(new Date(firstMs).toISOString()) : '—',
       last: lastMs ? dayKey(new Date(lastMs).toISOString()) : '—',
     }
@@ -132,9 +119,6 @@ export function computeMetricsFromRollup(learners: Learner[], r: InsightsRollup)
     skips: ec.lesson_skip,
     accuracy: totC + totW > 0 ? Math.round((totC / (totC + totW)) * 100) : null,
     dailyOpens: ec.daily_open, dailyCompletes: ec.daily_complete,
-    activeStreaks: per.filter(p => p.streakCur >= 1).length,
-    maxStreak: Math.max(0, ...per.map(p => p.streakCur)),
-    bestStreak: Math.max(0, ...per.map(p => p.streakBest)),
     rows: per.sort((a, b) => (b.lastMs ?? 0) - (a.lastMs ?? 0)),
   }
 }

@@ -8,7 +8,7 @@
  * SOH-CAH-TOA made tangible (PhET / Desmos style). Slider-driven (not free-drag) so
  * it's touch-friendly, accessible, and testable. Mature Field Lab look — an
  * instrument, not a cartoon. Reads theme from the ancestor data-band scope;
- * colours/fonts via CSS variables only (no literal hex/rgba).
+ * colors/fonts via CSS variables only (no literal hex/rgba).
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'

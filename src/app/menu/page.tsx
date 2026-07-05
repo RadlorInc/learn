@@ -4,7 +4,7 @@ export const dynamic = 'force-static'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useMiloStore, type ChapterType } from '@/state/store'
-import { CHAPTER_NAMES, CHAPTER_EMOJIS, CHAPTER_ASSETS, chaptersForAge, type AgeGroup } from '@/core/chapters'
+import { CHAPTER_NAMES, CHAPTER_EMOJIS, chaptersForAge, type AgeGroup } from '@/core/chapters'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 import BackButton from '@/shared/ui/BackButton'
 import ChapterPicker from '@/shared/ui/ChapterPicker'
@@ -15,7 +15,6 @@ import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds } from '@/dat
 import type { LearnerState } from '@/data/supabase/types'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
 import { track } from '@/infra/analytics'
-import { dailyStatus, reconcileStreakFromDB } from '@/features/daily/daily'
 import { currentPlanChapter, planProgress } from '@/infra/storage/activePlan'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -59,19 +58,10 @@ export default function MainMenu() {
   const [ageGroup,     setAgeGroup]     = useState<AgeGroup>('3-5')
   const [chapterIds,   setChapterIds]   = useState<ChapterType[]>([])
   const [lastPlayed,   setLastPlayedState] = useState<ChapterType | null>(null)
-  const [daily,        setDaily]        = useState<{ available: boolean; streak: number; longest: number } | null>(null)
   const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number } | null>(null)
 
   // The checkup is OPTIONAL — no play gate. A child can enter the menu directly; the checkup is
   // reachable by choice from the parent dashboard ("Find starting point"), never forced.
-
-  // Milo's Daily streak: show the local value instantly, then reconcile against
-  // the DB (daily_complete events = source of truth) so it's correct cross-device.
-  useEffect(() => {
-    if (!learnerId) return
-    setDaily(dailyStatus(learnerId))
-    reconcileStreakFromDB(learnerId).then(() => setDaily(dailyStatus(learnerId)))
-  }, [learnerId])
 
   // Step 7: the diagnostic plan, walkable. Read the current plan chapter for this learner; the card
   // launches it via the normal play path and advances (in /game) as chapters are completed.
@@ -198,7 +188,6 @@ export default function MainMenu() {
     router.push('/game')
   }
 
-  function handlePlay() { if (nextChapter) playChapter(nextChapter) }
   function handleResume() { if (resumeChapter) playChapter(resumeChapter) }
 
   if (authed === 'checking' || !ready) return (
@@ -217,21 +206,20 @@ export default function MainMenu() {
       <div className="kit-cloud" style={{ width: 100, height: 38, top: 110, left: 240 }} />
       <div className="kit-cloud" style={{ width: 110, height: 42, top: 50,  right: 200 }} />
 
-      {/* Topbar */}
+      {/* Topbar: Chapters · Level (top-left) + Wallet · Profile / Shop / Switch (top-right) */}
       <div className="kit-topbar" style={{ padding: '20px 28px' }}>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <span className="milo-chip tone-yellow">
-            <span className="kit-coin size-sm">C</span>
-            <span className="numeric">{profile.totalCoins}</span>
-          </span>
-          <span className="milo-chip tone-green">
-            <span className="numeric">{profile.currentStreak}</span>&nbsp;day streak
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button className="milo-btn tone-purple size-sm" onClick={() => setShowPicker(true)}>📚 Chapters</button>
           <span className="milo-chip tone-blue">
             Level {profile.currentLevel} · {levelName}
           </span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span className="milo-chip tone-yellow" title="Wallet">
+            👛 <span className="numeric">{profile.totalCoins}</span>&nbsp;Wallet
+          </span>
+          <button className="milo-btn tone-blue size-sm" onClick={() => router.push('/profile')} aria-label="Profile">👤</button>
+          <button className="milo-btn tone-yellow size-sm" onClick={() => router.push('/shop')} aria-label="Shop">🛍</button>
           <BackButton href='/parent' label='← Switch' size='sm' />
         </div>
       </div>
@@ -291,32 +279,6 @@ export default function MainMenu() {
           </button>
         )}
 
-        {/* ── Milo's Daily — the come-back-tomorrow loop ── */}
-        {daily && (() => {
-          const d = daily
-          return (
-            <button onClick={() => router.push('/daily')} className="milo-card" style={{
-              width: '100%', maxWidth: 700, padding: '14px 20px', textAlign: 'left', cursor: 'pointer',
-              background: d.available ? 'linear-gradient(135deg, var(--sun-yellow-soft) 0%, #fff 100%)' : 'var(--paper)',
-              border: `3px solid ${d.available ? 'var(--sun-yellow-deep)' : 'var(--outline)'}`,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
-                <div style={{ fontSize: 36 }}>{d.available ? '☀️' : '🌙'}</div>
-                <div style={{ flex: 1, minWidth: 150 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--sun-yellow-deep)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Milo&apos;s Daily</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>
-                    {d.available ? '5 quick reviews with Milo!' : 'All done today — see you tomorrow!'}
-                  </div>
-                  <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
-                    {d.streak > 0 ? `🔥 ${d.streak} day${d.streak === 1 ? '' : 's'} in a row${d.longest > d.streak ? ` · best ${d.longest}` : ''}` : 'Start your streak today!'}
-                  </div>
-                </div>
-                {d.available && <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: 'var(--sun-yellow)', border: '3px solid var(--sun-yellow-deep)', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: 'var(--ink)' }}>Start ▶</span>}
-              </div>
-            </button>
-          )
-        })()}
-
         {/* ── Story Mode — the 3–5 storyline adventure ── */}
         {ageGroup === '3-5' && (
           <button onClick={() => router.push('/story')} className="milo-card" style={{
@@ -370,67 +332,13 @@ export default function MainMenu() {
           </div>
         )}
 
-        {/* ── Next chapter ribbon ── */}
-        <div className="milo-card" style={{ width: '100%', maxWidth: 700, padding: '14px 20px', position: 'relative' }}>
-          {/* First time indicator */}
-          {doneCount === 0 && (
-            <div style={{
-              position: 'absolute', top: -14, right: 20,
-              background: 'var(--garden-green)', color: '#fff',
-              borderRadius: 50, padding: '4px 14px',
-              fontSize: 12, fontWeight: 800,
-              border: '2.5px solid var(--outline)',
-              boxShadow: '0 3px 0 rgba(61,37,22,.15)',
-              animation: 'pulse 1.5s ease-in-out infinite',
-            }}>
-              ★ Start here!
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span className="label" style={{ fontSize: 12 }}>
-              {allDone ? 'ALL DONE — REPLAY ANYTIME' : 'NEXT CHAPTER'}
-            </span>
-            <span className="numeric" style={{ fontSize: 14, color: 'var(--fg-2)' }}>
-              {doneCount} / {chapterIds.length} done
-            </span>
-          </div>
-          {nextChapter ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
-              <img
-                src={CHAPTER_ASSETS[nextChapter]}
-                loading="lazy"
-                decoding="async"
-                style={{ width: 56, height: 56, objectFit: 'contain' }}
-                alt=""
-              />
-              <div style={{ flex: 1, minWidth: 140 }}>
-                <h3 style={{ fontSize: 22, margin: 0 }}>{CHAPTER_NAMES[nextChapter]}</h3>
-                <p style={{ fontSize: 14, marginTop: 2, color: 'var(--ink-soft)' }}>
-                  {allDone ? 'Great job! All chapters complete!' : 'Tap Play to start!'}
-                </p>
-              </div>
-              <button className="milo-btn tone-green" onClick={handlePlay}>Play</button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ fontSize: 44 }}>🚧</div>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: 20, margin: 0 }}>New chapters coming soon!</h3>
-                <p style={{ fontSize: 14, marginTop: 2, color: 'var(--ink-soft)' }}>
-                  We&apos;re building activities for this age group. Try Hand Games meanwhile!
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* CTA row — no duplicate Play button, green one in the ribbon already handles it */}
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button className="milo-btn tone-purple size-lg" onClick={() => setShowPicker(true)}>📚 Chapter</button>
-          <button className="milo-btn tone-red size-lg" onClick={() => router.push('/play')}>✋ Hand Games</button>
-          <button className="milo-btn tone-blue size-lg" onClick={() => router.push('/profile')}>👤 Profile</button>
-          <button className="milo-btn tone-yellow size-lg" onClick={() => router.push('/shop')}>🛍 Shop</button>
-        </div>
+        {/* Pick what to play from the Chapters button (top-left). Empty-state hint when nothing
+            else is on screen (no plan / no resume / not the 3–5 story age). */}
+        {!planNext && !resumeChapter && ageGroup !== '3-5' && (
+          <button className="milo-btn tone-green size-lg" onClick={() => setShowPicker(true)}>
+            📚 Choose a chapter to play
+          </button>
+        )}
       </div>
 
       {showPicker && <ChapterPicker onClose={() => setShowPicker(false)} />}

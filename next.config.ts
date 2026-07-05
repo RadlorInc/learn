@@ -51,7 +51,10 @@ const nextConfig: NextConfig = {
               "base-uri 'self'",
               "frame-ancestors 'none'",
               "form-action 'self' https://accounts.google.com",
-              'upgrade-insecure-requests',
+              // upgrade-insecure-requests is production-only: Safari (unlike Chrome) applies it
+              // even on http://localhost, rewriting EVERY subresource to https:// — the plain-HTTP
+              // dev server can't answer, so no JS/CSS loads and the app never hydrates (blank splash).
+              ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
             ].join('; '),
           },
           //  2) REPORT-ONLY full strict policy — collects real violations (toward enforcing script-src

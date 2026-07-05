@@ -200,7 +200,7 @@ export default function CoordGrid({
     })
   }, [lines, xLo, xHi, yLo, yHi, sx, sy])
 
-  // Active point colour follows the grade state.
+  // Active point color follows the grade state.
   const activeColor =
     status === 'correct'
       ? 'var(--garden-green)'

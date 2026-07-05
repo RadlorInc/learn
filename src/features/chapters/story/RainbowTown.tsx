@@ -1,6 +1,6 @@
 'use client'
 /**
- * Chapter 7 — COLOUR-recognition (skill `colors`). Milo names a colour ("Can you find the
+ * Chapter 7 — COLOR-recognition (skill `colors`). Milo names a color ("Can you find the
  * red one?") and the child taps the matching object. The child first PICKS one of THREE
  * worlds; within the chosen world three object-scenes rotate across the 10 adaptive rounds
  * (one continuous SkillBeat — harder on a streak, easier when struggling, re-teach after 3
@@ -9,13 +9,13 @@
  *   🐠 Coral Reef   — fish · starfish · jellyfish
  *   🍭 Candy Shop   — lollipops · cupcakes · candies
  *
- * Each round shows the SAME object type in DIFFERENT colours, so the COLOUR is the only
+ * Each round shows the SAME object type in DIFFERENT colors, so the COLOR is the only
  * variable being tested. Objects are pure code-drawn SVG filled with the round's hex — NO
- * art is baked in (keeping the colour in code, not in a PNG, is what lets one shape serve
- * all six colours and stay EXACTLY consistent with the spoken labels + the showcase — the
- * standing rule for colour recognition). An optional greyscale <img> auto-upgrades by tint
+ * art is baked in (keeping the color in code, not in a PNG, is what lets one shape serve
+ * all six colors and stay EXACTLY consistent with the spoken labels + the showcase — the
+ * standing rule for color recognition). An optional grayscale <img> auto-upgrades by tint
  * if the art ever exists. Difficulty grows the field (3 → 4 choices) and, at the top tier,
- * guarantees a look-alike colour is present so it's recognition, not elimination. Mirrors
+ * guarantees a look-alike color is present so it's recognition, not elimination. Mirrors
  * NumberDoors' world-picker pattern; wrapped by game/ColorGardenChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
@@ -40,7 +40,7 @@ const shuffle = <T,>(a: T[]): T[] => {
 // A viewport shorter than this is a landscape phone: shrink objects + lift the row.
 const SHORT_H = 470
 
-// ─── Colours ───────────────────────────────────────────────────────────────────────
+// ─── Colors ───────────────────────────────────────────────────────────────────────
 type ColorName = 'red' | 'yellow' | 'blue' | 'green' | 'orange' | 'purple'
 // `deep` is a darker stroke so light fills (yellow especially) read against the backdrop.
 const COLORS: Record<ColorName, { label: string; hex: string; deep: string }> = {
@@ -51,10 +51,10 @@ const COLORS: Record<ColorName, { label: string; hex: string; deep: string }> = 
   orange: { label: 'orange', hex: '#F2872C', deep: '#C25E13' },
   purple: { label: 'purple', hex: '#9B5FD6', deep: '#6E3CA8' },
 }
-// Target cycles through all six so every colour gets covered and no two rounds repeat in a row.
+// Target cycles through all six so every color gets covered and no two rounds repeat in a row.
 const COLOR_ORDER: ColorName[] = ['red', 'yellow', 'blue', 'green', 'orange', 'purple']
 // The genuinely confusable partner for a 3–5 year old — seeded as a distractor at the hardest
-// tier so the child must recognise the colour, not eliminate the odd one out.
+// tier so the child must recognize the color, not eliminate the odd one out.
 const TWIN: Record<ColorName, ColorName> = {
   red: 'orange', orange: 'red', yellow: 'orange', green: 'blue', blue: 'green', purple: 'blue',
 }
@@ -62,7 +62,7 @@ const TWIN: Record<ColorName, ColorName> = {
 // ─── Object kinds (one per scene) ────────────────────────────────────────────────────
 // A "scene" within a world IS an object kind. Each kind carries its noun, a code-drawn SVG,
 // per-scene ground tuning (so it sits where it belongs — flyers high, grounded things low),
-// a backdrop gradient + an optional painted-sprite hook, and a short spoken flavour line.
+// a backdrop gradient + an optional painted-sprite hook, and a short spoken flavor line.
 type ObjKind =
   | 'balloon' | 'car' | 'flower'        // Rainbow Town
   | 'fish' | 'starfish' | 'jelly'       // Coral Reef
@@ -73,7 +73,7 @@ interface SceneDef {
   intro: string                                    // spoken when Milo "walks" to this spot
   grad: string                                     // code-drawn backdrop (always shows)
   img: string                                      // optional painted bg (fades in if it exists)
-  src?: string                                     // optional greyscale object sprite (tinted)
+  src?: string                                     // optional grayscale object sprite (tinted)
   ground: { baseTop: number; rise: number; groundLine: number }
   wide?: boolean                                   // car-like: grouped to Milo's right, no Milo-clearance clamp
 }
@@ -99,21 +99,21 @@ interface ColorWorld {
 const WORLDS: ColorWorld[] = [
   { id: 'town', label: 'Rainbow Town', emoji: '🌈', scenes: ['balloon', 'car', 'flower'],
     milo: { srcs: ['/assets/characters/milo_painter.png', '/assets/characters/milo_explorer.png', '/assets/characters/milo_idle.png'], emoji: '🐴', accessory: '🌈' },
-    intro: 'Milo is walking through Rainbow Town! Everything comes in every colour. Listen for the colour, then tap it. First, let’s meet the colours!' },
+    intro: 'Milo is walking through Rainbow Town! Everything comes in every color. Listen for the color, then tap it. First, let’s meet the colors!' },
   { id: 'reef', label: 'Coral Reef', emoji: '🐠', scenes: ['fish', 'starfish', 'jelly'],
     milo: { srcs: ['/assets/characters/milo_explorer.png', '/assets/characters/milo_idle.png'], emoji: '🐴', accessory: '🐠' },
-    intro: 'Milo is diving in the Coral Reef! The sea is full of colours. Listen for the colour, then tap it. First, let’s meet the colours!' },
+    intro: 'Milo is diving in the Coral Reef! The sea is full of colors. Listen for the color, then tap it. First, let’s meet the colors!' },
   { id: 'candy', label: 'Candy Shop', emoji: '🍭', scenes: ['lollipop', 'cupcake', 'candy'],
     milo: { srcs: ['/assets/characters/milo_idle.png', '/assets/characters/milo_explorer.png'], emoji: '🐴', accessory: '🍭' },
-    intro: 'Milo is at the Candy Shop! Sweets come in every colour. Listen for the colour, then tap it. First, let’s meet the colours!' },
+    intro: 'Milo is at the Candy Shop! Candy comes in every color. Listen for the color, then tap it. First, let’s meet the colors!' },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: SCENES[w.scenes[0]].img }))
 
 interface ColorRound {
   scene: ObjKind
-  options: ColorName[]   // colours shown, in display order (always includes the target)
-  answerIdx: number      // index of the target colour
+  options: ColorName[]   // colors shown, in display order (always includes the target)
+  answerIdx: number      // index of the target color
 }
 
 function Background({ scene, scenes }: { scene: ObjKind; scenes: ObjKind[] }) {
@@ -154,12 +154,12 @@ function MiloWalker({ left, milo }: { left: number; milo: ColorWorld['milo'] }) 
   )
 }
 
-// ─── Optional painted greyscale object sprites (auto-upgrade) ────────────────────────
-// If a greyscale PNG exists for a scene's object it is TINTED to the round's exact hex: a
-// solid-colour fill is shaped by the sprite's alpha (its silhouette), then the greyscale art
-// is multiplied back on top so its shading darkens the colour WITHOUT shifting the hue.
-// Keeping the colour in code — not baked into the PNG — is what lets ONE sprite serve all six
-// colours and stay exactly consistent with the labels. Falls back to the code-drawn SVG.
+// ─── Optional painted grayscale object sprites (auto-upgrade) ────────────────────────
+// If a grayscale PNG exists for a scene's object it is TINTED to the round's exact hex: a
+// solid-color fill is shaped by the sprite's alpha (its silhouette), then the grayscale art
+// is multiplied back on top so its shading darkens the color WITHOUT shifting the hue.
+// Keeping the color in code — not baked into the PNG — is what lets ONE sprite serve all six
+// colors and stay exactly consistent with the labels. Falls back to the code-drawn SVG.
 const _objLoaded: Record<string, boolean> = {}
 function usePaintedObject(src?: string): boolean {
   const [, force] = useState(0)   // bump to re-render once the probe resolves
@@ -174,7 +174,7 @@ function usePaintedObject(src?: string): boolean {
 }
 
 // ─── The recolorable object for each scene ──────────────────────────────────────────
-// Painted greyscale sprite tinted to the hex when present; otherwise a code-drawn SVG in a
+// Painted grayscale sprite tinted to the hex when present; otherwise a code-drawn SVG in a
 // 0 0 100 100 box (all share the same square footprint and scaling).
 function ObjectSVG({ scene, color, size }: { scene: ObjKind; color: ColorName; size: number }) {
   const { hex, deep } = COLORS[color]
@@ -295,7 +295,7 @@ function ObjectSVG({ scene, color, size }: { scene: ObjKind; color: ColorName; s
   }
 }
 
-// ─── A colour "thing" (the scene's object, filled with the colour) ──────────────────
+// ─── A color "thing" (the scene's object, filled with the color) ──────────────────
 // Designed at THING×THING; `scale` blows the whole thing up uniformly so it grows with the
 // viewport (never hard-coded px on a 100vw stage — see feedback-viewport-scaling).
 const THING = 112
@@ -362,7 +362,7 @@ function useThingScale(n: number, scene: ObjKind): number {
 // smaller and sit a little higher, and EVERY object casts a soft contact SHADOW on the scene's
 // ground line below it. The shadow + depth scatter break the row and anchor the objects.
 interface Placed { left: number; top: number; depth: number }
-// A gentle, balanced depth scatter per object count (centre nearest) — never a flat line.
+// A gentle, balanced depth scatter per object count (center nearest) — never a flat line.
 const DEPTHS: Record<number, number[]> = { 1: [0.25], 2: [0.15, 0.6], 3: [0.5, 0.05, 0.7], 4: [0.7, 0.2, 0.45, 0.85] }
 // Small deterministic x nudges so the columns aren't mechanically even.
 const XJIT: Record<number, number[]> = { 1: [0], 2: [-2, 2], 3: [-1.5, 1.5, -1], 4: [-2, 1, -1.5, 2] }
@@ -451,7 +451,7 @@ const ColorsPlay: React.FC<{ data: ColorRound; mode: Mode; onComplete: (correct:
 }
 
 // ─── The teaching demo (opening preview + 3-wrong re-teach) ─────────────────────────
-// Milo names the colour; the matching thing lights up. Timer-driven via speakSteps (lines
+// Milo names the color; the matching thing lights up. Timer-driven via speakSteps (lines
 // chain on `end`, can never overlap), with the speakSteps watchdog so it can't hang.
 const ColorsExplain: React.FC<{ data: ColorRound; onDone: () => void }> = ({ data, onDone }) => {
   const { scene, options, answerIdx } = data
@@ -488,11 +488,11 @@ const ColorsExplain: React.FC<{ data: ColorRound; onDone: () => void }> = ({ dat
   )
 }
 
-// ─── The "meet every colour" showcase (opens the explanation) ───────────────────────
-// Shows ALL six colours at once on the world's first object and Milo names each in turn (it
+// ─── The "meet every color" showcase (opens the explanation) ───────────────────────
+// Shows ALL six colors at once on the world's first object and Milo names each in turn (it
 // lights up). SELF-PACED on a deterministic timer — deliberately NOT driven by speech events
 // (tying short single words to onstart/onend made them RACE on real devices). A fixed dwell
-// per item keeps each colour shown + named for a full beat no matter how fast — or whether —
+// per item keeps each color shown + named for a full beat no matter how fast — or whether —
 // speech fires; if audio is blocked the visuals still pace deliberately and complete.
 const SHOWCASE_DWELL = 1500   // each item stays lit + named for this long
 const ColorShowcase: React.FC<{ scene: ObjKind; onDone: () => void }> = ({ scene, onDone }) => {
@@ -512,8 +512,8 @@ const ColorShowcase: React.FC<{ scene: ObjKind; onDone: () => void }> = ({ scene
     if (ran.current) return; ran.current = true
     const timers: Array<ReturnType<typeof setTimeout>> = []
     let cancelled = false
-    speak('These are the colours!')
-    let t = 2000   // let the intro line finish before the first colour
+    speak('These are the colors!')
+    let t = 2000   // let the intro line finish before the first color
     COLOR_ORDER.forEach((c, i) => {
       timers.push(setTimeout(() => { if (cancelled) return; setLit(i); speak(COLORS[c].label) }, t))
       t += SHOWCASE_DWELL
@@ -542,15 +542,15 @@ const ColorShowcase: React.FC<{ scene: ObjKind; onDone: () => void }> = ({ scene
 }
 
 // ─── Value generation ──────────────────────────────────────────────────────────────
-// Target cycles through all six colours by round (full coverage, never the same two in a
+// Target cycles through all six colors by round (full coverage, never the same two in a
 // row). Difficulty grows the field (3 → 4 choices) and, at the top tier, GUARANTEES the
-// look-alike colour is on screen so it's recognition, not guessing-by-elimination.
+// look-alike color is on screen so it's recognition, not guessing-by-elimination.
 function makeColorRound(world: ColorWorld, d: 1 | 2 | 3, round: number): ColorRound {
   const scene = world.scenes[round % world.scenes.length]
   const n = d === 1 ? 3 : 4
   const target = COLOR_ORDER[round % COLOR_ORDER.length]
   let pool = COLOR_ORDER.filter(c => c !== target)
-  // Easiest tier: don't pit a colour against its look-alike twin.
+  // Easiest tier: don't pit a color against its look-alike twin.
   if (d === 1) pool = pool.filter(c => c !== TWIN[target])
   let distractors: ColorName[]
   const twin = TWIN[target]
@@ -571,7 +571,7 @@ function makeColorBeat(world: ColorWorld): Beat<ColorRound> {
     // next spot" pause every 3 rounds keeps it from feeling rushed.
     walkEvery: 3,
     make: (d, round = 0) => makeColorRound(world, (d || 1) as 1 | 2 | 3, round),
-    sig: d => `${d.options[d.answerIdx]}`,   // dedupe on the target colour (not the rotating scene/options order)
+    sig: d => `${d.options[d.answerIdx]}`,   // dedupe on the target color (not the rotating scene/options order)
     prompt: d => promptFor(d),
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ColorsPlay data={data} mode="practice" onComplete={onSubmit} />,
@@ -614,7 +614,7 @@ export default function RainbowTown({ world: forcedWorldId, onFinish, onExit }: 
   if (!world || !beat) {
     return (
       <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-        <WorldSelect title="Where shall we find the colours?" worlds={PICK_WORLDS}
+        <WorldSelect title="Where shall we find the colors?" worlds={PICK_WORLDS}
           onPick={(id) => { const w = worldById(id); if (w) { setScene(w.scenes[0]); setWorld(w) } }} onExit={exit} />
       </div>
     )
@@ -658,14 +658,14 @@ export default function RainbowTown({ world: forcedWorldId, onFinish, onExit }: 
         </div>
       )}
 
-      {phase === 'showcase' && (<>{Banner('Meet the colours!')}
+      {phase === 'showcase' && (<>{Banner('Meet the colors!')}
         <ColorShowcase scene={world.scenes[0]} onDone={() => setPhase('demo')} /></>)}
 
-      {phase === 'demo' && (<>{Banner(`Find the colour Milo names  (${demoIdx + 1}/${DEMO_ROUNDS.length})`)}
+      {phase === 'demo' && (<>{Banner(`Find the color Milo names  (${demoIdx + 1}/${DEMO_ROUNDS.length})`)}
         <ColorsExplain key={`demo${demoIdx}`} data={DEMO_ROUNDS[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO_ROUNDS.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
-      {phase === 'guided' && (<>{Banner('Now you! Tap the colour Milo says')}
+      {phase === 'guided' && (<>{Banner('Now you! Tap the color Milo says')}
         <ColorsPlay key="guided" data={GUIDED_ROUND} mode="guided" onComplete={() => setPhase('practice')} /></>)}
 
       {phase === 'practice' && (

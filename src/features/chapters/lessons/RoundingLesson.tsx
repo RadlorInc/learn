@@ -278,7 +278,7 @@ export default function RoundingLesson({ childName, onLessonComplete }: Props) {
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Great rounding, ${childName}! Now let's practise!`}
+      finalSpeech={`Great rounding, ${childName}! Now let's practice!`}
     />
   )
 }

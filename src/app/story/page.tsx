@@ -8,7 +8,7 @@
  *   /story?ch=doors   → Recognition  (number doors)
  *   /story?ch=grocery → Matching qty (little grocery)
  *   /story?ch=shapes  → Shapes       (shape town walk)
- *   /story?ch=rainbow → Colours      (rainbow town walk)
+ *   /story?ch=rainbow → Colors       (rainbow town walk)
  *   /story?ch=beads   → Patterns     (bead shop)
  *
  * Counting opens a WORLD PICKER (Nature / Farm / Space). Skip it + jump straight into
@@ -91,7 +91,7 @@ export default function StoryPage() {
   if (ch === 'grocery') return <Grocery world={orderWorld} />
   // ?world=town|fair|beach jumps into a shape world.
   if (ch === 'shapes') return <ShapeTown world={orderWorld} />
-  // ?world=town|reef|candy jumps into a colour world.
+  // ?world=town|reef|candy jumps into a color world.
   if (ch === 'rainbow') return <RainbowTown world={orderWorld} />
   // ?world=beads|party|train jumps into a pattern world.
   if (ch === 'beads') return <BeadShop world={orderWorld} />

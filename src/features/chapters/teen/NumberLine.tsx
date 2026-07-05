@@ -70,7 +70,7 @@ export default function NumberLine({
   const interactive = mode === 'select'
   const graded = interactive && value != null && status !== 'idle'
 
-  // Colour of the active/selected marker, driven by grade state.
+  // Color of the active/selected marker, driven by grade state.
   const selectColor =
     status === 'correct'
       ? 'var(--garden-green)'

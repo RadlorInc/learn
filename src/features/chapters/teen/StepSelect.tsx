@@ -22,7 +22,7 @@ export interface StepSelectProps {
  *  - correct → the option settles into the ledger style with a garden-green edge.
  *  - wrong   → neutral dim + a gentle amber underline on the reason. NEVER red / X / "fail".
  *
- * Theme (accent / ink / paper / outline / status colours) comes from the ancestor
+ * Theme (accent / ink / paper / outline / status colors) comes from the ancestor
  * `data-band` scope — this component only reads CSS variables, never sets `data-band`.
  *
  * The learner's pick is tracked by the parent through `status`; once `status` leaves
@@ -143,7 +143,7 @@ export default function StepSelect({
         {options.map((opt, i) => {
           // Per-option state. We only know the picked option once it's graded;
           // the parent owns which index was chosen, so on a graded status we treat
-          // every visible option uniformly except for the status colouring, which
+          // every visible option uniformly except for the status coloring, which
           // the parent narrows by re-rendering with only the relevant feedback.
           const isCorrect = graded && status === 'correct'
           const isWrong = graded && status === 'wrong'

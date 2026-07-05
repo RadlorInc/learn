@@ -147,7 +147,7 @@ function GroupBadge({n,color}:{n:number,color:string}) {
   )
 }
 
-// Big number that pops in the centre as counting progresses (one at a time).
+// Big number that pops in the center as counting progresses (one at a time).
 function BigCount({n}:{n:number}) {
   if(n<=0) return null
   return (
@@ -261,7 +261,7 @@ export function WatchAdd({a,b,emoji,intro,outro,onDone}:{
 }) {
   const total=a+b
   const [shown,setShown]=useState(0)      // items revealed so far (group A first, then B)
-  const [bigN,setBigN]=useState(0)        // big centre count number
+  const [bigN,setBigN]=useState(0)        // big center count number
   const [showTotal,setShowTotal]=useState(false)
   const ran=useRef(false)
   const alive=useRef(false)
@@ -647,7 +647,7 @@ export default function AdditionLesson({childName,onLessonComplete}:Props) {
     if(!nextReady)return
     stopSpeech()
     if(step>=TOTAL_STEPS-1){
-      speak(`Brilliant work, ${childName}! You're an adding star! Let's practise now!`)
+      speak(`Brilliant work, ${childName}! You're an adding star! Let's practice now!`)
       window.setTimeout(onLessonComplete,3200)
       return
     }

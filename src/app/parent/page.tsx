@@ -8,6 +8,7 @@ import {
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
   getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
+  getMyRole, setMyRole,
 } from '@/data/repositories'
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
@@ -15,7 +16,7 @@ import { setActivePlan } from '@/infra/storage/activePlan'
 import { hasCheckup, markCheckupDone } from '@/infra/storage/checkup'
 import { setActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getCurrentSession } from '@/data/auth'
-import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner } from '@/data/supabase/types'
+import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { CHAPTER_PARENT_LABELS, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 
@@ -47,6 +48,7 @@ export default function ParentDashboard() {
   const [confirming,   setConfirming]   = useState<string | null>(null) // learnerId being confirmed
   const [activeChapterIds, setActiveChapterIds] = useState<ChapterType[]>([])
   const [recheckDue, setRecheckDue] = useState<{ weeks: number } | null>(null)   // week-6 nudge for the active learner
+  const [role, setRole] = useState<UserRole | null | 'loading'>('loading')       // null = show the one-time Teacher/Parent picker
 
   async function loadAll() {
     setLoading(true)
@@ -60,11 +62,13 @@ export default function ParentDashboard() {
 
       // One RPC for the whole dashboard (stats+progress+recent-sessions+role for every learner).
       // `null` means the RPC is unavailable → fall back to the per-learner query path.
-      const [dash, pendingInvites] = await Promise.all([
+      const [dash, pendingInvites, myRole] = await Promise.all([
         getParentDashboard(),
         getReceivedInvites(),
+        getMyRole(),
       ])
       setInvites(pendingInvites)
+      setRole(myRole)   // null → the render shows the one-time Teacher/Parent picker
 
       let data: LearnerData[]
       if (dash !== null) {
@@ -141,6 +145,13 @@ export default function ParentDashboard() {
     }
   }
 
+  // First-login role choice: persist it, then teachers jump to Grades (parents stay on the dashboard).
+  async function handlePickRole(r: UserRole) {
+    setRole(r)                    // optimistic — the picker disappears immediately
+    await setMyRole(r)
+    if (r === 'teacher') router.replace('/parent/grades')
+  }
+
   // A BRAND-NEW learner does the checkup once on their first "Start learning". Established kids —
   // any who already have play history (progress / sessions / XP) OR have already done a checkup —
   // skip straight into the app and are never asked again. So existing profiles are grandfathered
@@ -201,6 +212,9 @@ export default function ParentDashboard() {
   if (loading) return (
     <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#FCEAB6', fontSize:48 }}>🦊</div>
   )
+
+  // One-time gate: a fresh account (role still null) picks Teacher or Parent before seeing the dashboard.
+  if (role === null) return <RolePicker name={parentName} onPick={handlePickRole} />
 
   if (loadError) return (
     <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, background:'#FCEAB6', padding:24, textAlign:'center' }}>
@@ -329,7 +343,6 @@ export default function ParentDashboard() {
                 {[
                   { label:'XP',     value: active.stats?.total_xp ?? 0 },
                   { label:'Coins',  value: active.stats?.total_coins ?? 0 },
-                  { label:'Streak', value: `${active.stats?.current_streak ?? 0}d` },
                 ].map(s => (
                   <div key={s.label} style={{ flex:1, background:'rgba(255,255,255,0.15)', borderRadius:12, padding:'10px 8px', textAlign:'center' }}>
                     <div style={{ fontSize:20, fontWeight:800 }}>{s.value}</div>
@@ -448,6 +461,48 @@ export default function ParentDashboard() {
           onAdded={async () => { setShowAddModal(false); await loadAll() }}
         />
       )}
+    </div>
+  )
+}
+
+// One-time Teacher/Parent picker shown on first login (profiles.role still null). The choice is
+// persisted on the profile; teachers then land on Grades, parents on the learner dashboard.
+function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRole) => void }) {
+  const [busy, setBusy] = useState<UserRole | null>(null)
+  const choose = (r: UserRole) => { if (busy) return; setBusy(r); onPick(r) }
+  const cards: { role: UserRole; emoji: string; title: string; sub: string; bg: string; border: string }[] = [
+    { role: 'parent',  emoji: '👪', title: "I'm a Parent",  sub: 'Set up your children and follow their progress.',        bg: '#FFF4D6', border: '#F6C453' },
+    { role: 'teacher', emoji: '🎓', title: "I'm a Teacher", sub: 'Create grades and choose what each class works on.',       bg: '#E7F3FF', border: '#8EC5FF' },
+  ]
+  return (
+    <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20, padding:'32px 20px', background:'linear-gradient(180deg,#FFF4D6 0%,#f9f9f9 45%)', fontFamily:'var(--font-body)' }}>
+      <div style={{ fontSize:56 }}>🦊</div>
+      <div style={{ textAlign:'center' }}>
+        <h1 style={{ fontSize:26, fontWeight:900, color:'#3D2516', margin:'0 0 6px' }}>Welcome{name && name !== 'there' ? `, ${name}` : ''}!</h1>
+        <p style={{ fontSize:15, color:'#7a6a55', margin:0 }}>How will you be using Milo?</p>
+      </div>
+      <div style={{ display:'flex', flexDirection:'column', gap:14, width:'100%', maxWidth:380, marginTop:6 }}>
+        {cards.map(c => (
+          <button
+            key={c.role}
+            onClick={() => choose(c.role)}
+            disabled={!!busy}
+            style={{
+              display:'flex', alignItems:'center', gap:16, textAlign:'left',
+              padding:'18px 20px', background:c.bg, border:`3px solid ${c.border}`, borderRadius:22,
+              cursor: busy ? 'default' : 'pointer', opacity: busy && busy !== c.role ? 0.5 : 1,
+              boxShadow:'0 4px 0 rgba(61,37,22,0.10)', transition:'opacity 150ms ease',
+            }}
+          >
+            <span style={{ fontSize:40, flexShrink:0 }}>{c.emoji}</span>
+            <span>
+              <span style={{ display:'block', fontSize:18, fontWeight:900, color:'#3D2516' }}>{busy === c.role ? 'Setting up…' : c.title}</span>
+              <span style={{ display:'block', fontSize:13, color:'#7a6a55', marginTop:2, lineHeight:1.35 }}>{c.sub}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      <p style={{ fontSize:12, color:'#9a8b78', margin:'6px 0 0', textAlign:'center' }}>You can add children either way — this just tailors your home screen.</p>
     </div>
   )
 }

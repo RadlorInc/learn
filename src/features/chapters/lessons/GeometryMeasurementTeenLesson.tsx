@@ -331,7 +331,7 @@ export default function GeometryMeasurementTeenLesson({ childName, onLessonCompl
         <FigureWatch
           lines={[
             'For a circle, area is pi times the radius squared.',
-            'With radius 5, that is about 3.14 times 25, which is 78.5 square centimetres.',
+            'With radius 5, that is about 3.14 times 25, which is 78.5 square centimeters.',
           ]}
           kind="circle" labels={{ r: 'r = 5 cm' }} highlight="r" onDone={d}
         />
@@ -343,7 +343,7 @@ export default function GeometryMeasurementTeenLesson({ childName, onLessonCompl
         <FigureWatch
           lines={[
             'Volume of a box is length times width times height.',
-            'Stack the layers: 4 by 3 by 2 fills 24 cubic centimetres.',
+            'Stack the layers: 4 by 3 by 2 fills 24 cubic centimeters.',
           ]}
           kind="prism" labels={{ length: '4 cm', height: '2 cm', depth: '3 cm' }} highlight="length" onDone={d}
         />

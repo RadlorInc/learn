@@ -9,7 +9,7 @@
  * deterministic. Mature Field Lab look — an instrument, not a cartoon. Reuses
  * CoordGrid for the grid; the pre-image + image triangles are drawn as inline SVG
  * overlaid in the same viewBox so they share the grid's coordinate mapping.
- * Theme comes from the ancestor data-band scope; colours/fonts via CSS vars only.
+ * Theme comes from the ancestor data-band scope; colors/fonts via CSS vars only.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AgeBand, Pt } from '@/features/chapters/teen/types'

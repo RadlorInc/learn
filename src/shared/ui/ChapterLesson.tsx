@@ -1,7 +1,7 @@
 /**
  * ChapterLesson — Interactive lesson shell (5 examples before practice)
  *
- * Chrome autoplay behaviour (per developer.chrome.com/blog/autoplay):
+ * Chrome autoplay behavior (per developer.chrome.com/blog/autoplay):
  *  - PWA installed to home screen → autoplay always works, no button needed
  *  - Browser tab, first visit → blocked until user taps something
  *
@@ -70,7 +70,7 @@ export default function ChapterLesson({
   function goNext() {
     if (idx + 1 >= TOTAL_EXAMPLES) {
       setLeaving(true)
-      speak("Amazing! Now it's your turn! Let's practise!")
+      speak("Amazing! Now it's your turn! Let's practice!")
       setTimeout(onLessonComplete, 1400)
       return
     }
@@ -196,7 +196,7 @@ export default function ChapterLesson({
           width: '100%', maxWidth: 340,
         }}
       >
-        {isLast ? '🎉 Start Practising!' : 'Next Example →'}
+        {isLast ? '🎉 Start Practicing!' : 'Next Example →'}
       </button>
 
       <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center' }}>

@@ -43,7 +43,7 @@ const IT = {
   tulip:    { img: '/assets/objects/flower_tulip.png',   emoji: '🌷', one: 'tulip',    many: 'tulips' },
   daisy:    { img: '/assets/objects/flower_daisy.png',   emoji: '🌼', one: 'daisy',    many: 'daisies' },
   sunflower:{ img: '/assets/objects/flower_sunflower.png',emoji: '🌻', one: 'sunflower',many: 'sunflowers' },
-  // pat_* sprites are GREYSCALE by design → tint them to a colour (see TintedSprite).
+  // pat_* sprites are GRAYSCALE by design → tint them to a color (see TintedSprite).
   bead:     { img: '/assets/objects/pat_bead.png',       emoji: '🔵', one: 'bead',     many: 'beads',   tint: '#1a9ea0' },
   button:   { img: '/assets/objects/pat_button.png',     emoji: '🔘', one: 'button',   many: 'buttons', tint: '#d8524f' },
   gem:      { img: '/assets/objects/pat_gem.png',        emoji: '💎', one: 'gem',      many: 'gems',    tint: '#9b59b6' },

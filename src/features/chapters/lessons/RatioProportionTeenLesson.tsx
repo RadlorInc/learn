@@ -172,7 +172,7 @@ export function makeRound(d: 1 | 2 | 3): Round {
   }
 }
 
-// flavour pools
+// flavor pools
 function pickNoun() {
   const nouns = [
     { singular: 'apple', plural: 'apples' },

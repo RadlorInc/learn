@@ -211,7 +211,7 @@ export default function TimesTablesLesson({ childName, onLessonComplete }: Props
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Super multiplying, ${childName}! Now let's practise!`}
+      finalSpeech={`Super multiplying, ${childName}! Now let's practice!`}
     />
   )
 }

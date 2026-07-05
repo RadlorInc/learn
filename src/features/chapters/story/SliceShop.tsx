@@ -11,10 +11,10 @@
  * SEPARATE from the 3–5 Grocery "Pizza Parlor": different backgrounds + a bakery treat list).
  *   🍕 Pizzeria       — pizza · cookie · pie          (round wedges;  kitchen/bakery scenes)
  *   🎂 Party          — cake · watermelon · orange      (round wedges;  party scenes)
- *   🍫 Chocolate Shop — chocolate bar · wafer · biscuit  (rectangular bars; sweet-shop scenes)
+ *   🍫 Chocolate Shop — chocolate bar · wafer · cookie  (rectangular bars; sweet-shop scenes)
  *
  * Wholes are code-drawn (SVG wedges / bar segments) so any denominator divides cleanly, tinted to
- * the CHOSEN treat's colours; group items are real sprites. Demo + 3-wrong re-teach narrate via ONE
+ * the CHOSEN treat's colors; group items are real sprites. Demo + 3-wrong re-teach narrate via ONE
  * speakSteps. Responsive (short/landscape aware). Wrapped by game/FractionsChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
@@ -65,12 +65,12 @@ const WORLDS: FrWorld[] = [
       { grad: 'linear-gradient(#fdeede 0%, #f6e6f2 60%, #eee0f6 100%)', img: '/assets/backgrounds/party_lanterns.png' },
     ],
     milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🎈' },
-    intro: "It's a party! Milo shares cake, watermelon and oranges in EQUAL parts. See how many equal parts, and how many are coloured — then tap the answer. First, watch Milo!" },
+    intro: "It's a party! Milo shares cake, watermelon and oranges in EQUAL parts. See how many equal parts, and how many are colored — then tap the answer. First, watch Milo!" },
   { id: 'choc', label: 'Chocolate Shop', emoji: '🍫', shape: 'bar',
     treats: [
       { name: 'chocolate bar', colors: { base: '#a9713c', shaded: '#8a5a2c', edge: '#4a2b14', dot: '#3a2010' }, topping: '/assets/objects/topping_choc.png', group: IT('cookie', '🍪', 'chocolate', 'chocolates') },
       { name: 'wafer', colors: { base: '#e6c99a', shaded: '#d8b478', edge: '#a06a30', dot: '#7a4a20' }, topping: '/assets/objects/topping_wafer.png', group: IT('candy_candy', '🍬', 'wafer', 'wafers') },
-      { name: 'biscuit', colors: { base: '#d9a860', shaded: '#c2934a', edge: '#7a4a20', dot: '#5a3418' }, topping: '/assets/objects/topping_biscuit.png', group: IT('grocery_candy', '🍬', 'biscuit', 'biscuits') },
+      { name: 'cookie', colors: { base: '#d9a860', shaded: '#c2934a', edge: '#7a4a20', dot: '#5a3418' }, topping: '/assets/objects/topping_biscuit.png', group: IT('grocery_candy', '🍬', 'cookie', 'cookies') },
     ],
     bgs: [
       { grad: 'linear-gradient(#efe0cf 0%, #ecd8c2 60%, #e0c8a8 100%)', img: '/assets/backgrounds/grocery_sweets.jpeg' },
@@ -78,7 +78,7 @@ const WORLDS: FrWorld[] = [
       { grad: 'linear-gradient(#eee0d0 0%, #e8d8c2 60%, #dcc6a8 100%)', img: '/assets/backgrounds/grocery_deli.jpeg' },
     ],
     milo: { src: '/assets/characters/milo_chef.png', emoji: '🦊', accessory: '🍫' },
-    intro: 'Welcome to the Chocolate Shop! Milo snaps chocolate bars, wafers and biscuits into EQUAL pieces. Count the equal pieces, and how many are wrapped — then tap the answer. First, watch Milo!' },
+    intro: 'Welcome to the Chocolate Shop! Milo snaps chocolate bars, wafers and cookies into EQUAL pieces. Count the equal pieces, and how many are wrapped — then tap the answer. First, watch Milo!' },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: w.bgs[0].img, itemImage: w.treats[0].group.img }))
@@ -368,7 +368,7 @@ const FrExplain: React.FC<{ world: FrWorld; data: FrRound; onDone: () => void }>
     if (type === 'name') {
       lines.push(`Here's a whole ${treat.name}.`); steps.push(() => set({ shaded: 0 }))
       lines.push(`Cut it into ${numberToWords(den)} equal parts.`); steps.push(() => set({ shaded: 0 }))
-      lines.push(`Colour in one part.`); steps.push(() => set({ shaded: 1, glow: true }))
+      lines.push(`Color in one part.`); steps.push(() => set({ shaded: 1, glow: true }))
       lines.push(`One part out of ${numberToWords(den)} — that's one ${fracWord(den)}!`)
       steps.push(() => setTag(<Frac n={1} d={den} size={30} color="#fff" />))
     } else {

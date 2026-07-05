@@ -222,7 +222,7 @@ function makeL3(): Round {
     kind: 'choice',
     topic: 'Find the angle of elevation.',
     promptText: `A ramp rises ${opp} m over a ${adj} m run. What is the angle of elevation? (nearest degree)`,
-    say: `A ramp rises ${opp} metres over a run of ${adj} metres. To the nearest degree, what is the angle of elevation?`,
+    say: `A ramp rises ${opp} meters over a run of ${adj} meters. To the nearest degree, what is the angle of elevation?`,
     answer: choices.findIndex((c) => c.value === angle),
     choices,
     figure: { kind: 'right-triangle', labels: { base: adj, height: opp, rightAngle: '' }, highlight: 'hypotenuse' },
@@ -355,7 +355,7 @@ export default function GeometryProofTrigTeenLesson({ childName, onLessonComplet
       render: (d) => (
         <ProofAsk
           prompt="A ramp rises 3 m over a 4 m run. Angle of elevation? (nearest degree)"
-          say="A ramp rises three metres over a four metre run. To the nearest degree, what is the angle of elevation?"
+          say="A ramp rises three meters over a four meter run. To the nearest degree, what is the angle of elevation?"
           choices={checkChoices}
           answerIdx={checkAnswerIdx}
           onDone={d}

@@ -164,7 +164,7 @@ function PaintedDoor({ scene, w, onError }: { scene: Scene; w: number; onError: 
 // Per-kind footprint @1000px stage. Doors stand tall; balloons are roundish & float; buses
 // are wide & stand on the road.
 const BASE: Record<ObjKind, { w: number; h: number }> = { door: { w: 128, h: 190 }, balloon: { w: 118, h: 150 }, bus: { w: 210, h: 132 } }
-// Colour variety for the recolourable sprites (balloon/bus) — a CSS hue-rotate per index so a
+// Color variety for the recolorable sprites (balloon/bus) — a CSS hue-rotate per index so a
 // row never looks identical; the numeral stays readable on its chip.
 const HUES = [0, 45, 95, 150, 205, 280]
 type ItemState = 'idle' | 'glow' | 'wrong' | 'open'

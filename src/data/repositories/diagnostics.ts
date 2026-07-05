@@ -18,6 +18,18 @@ export interface DiagnosticPayload {
 }
 
 /**
+ * Cold-funnel lead capture: record the email a logged-out visitor gives before the checkup, so a
+ * visitor who never signs up is still counted. Best-effort + fire-and-forget — never blocks or throws
+ * (the checkup starts regardless). The diagnostic_leads table is insert-only for anon (no reads).
+ */
+export async function captureDiagnosticLead(email: string, band: string): Promise<void> {
+  try {
+    const supabase = db()
+    await supabase.from('diagnostic_leads').insert({ email: email.slice(0, 254), band })
+  } catch { /* best-effort — a failed lead capture must never stop the checkup */ }
+}
+
+/**
  * Persist a completed diagnosis (session + items + plan) via the SECURITY DEFINER
  * `sync_diagnostic` RPC, which checks learner_access ownership server-side (mirrors syncSession).
  * Returns a SyncOutcome so the offline queue (useOfflineSync) can keep-and-retry a transient failure

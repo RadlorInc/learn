@@ -1,18 +1,18 @@
 'use client'
 /**
- * Chapter 8 — PATTERNS (skill `patterns`). A repeating colour pattern runs along a line with one
+ * Chapter 8 — PATTERNS (skill `patterns`). A repeating color pattern runs along a line with one
  * empty slot at the end; the child taps the item that comes NEXT from the tray. Pure "what comes
  * next" — one clean loop. The child first PICKS one of THREE storytellings; within the chosen one,
  * three object-scenes rotate across the 10 adaptive rounds (each scene = its own background + its
- * own repeating item), exactly like the colours chapter rotates fish→starfish→jelly:
- *   📿 Bead Shop — beads (necklace) · buttons (sewing table) · gems (jewellery counter)
+ * own repeating item), exactly like the colors chapter rotates fish→starfish→jelly:
+ *   📿 Bead Shop — beads (necklace) · buttons (sewing table) · gems (jewelry counter)
  *   🎉 Party     — flags (bunting) · balloons (party wall) · lanterns (garden)
  *   🧸 Toy Box   — train cars (track) · blocks (playroom) · ducks (toy shelf)
  *
  * Difficulty grows the repeating unit (the adaptive `patternUnitLen`): AB → ABC → ABCD. The choices
- * are the unit's own colours, so the child must READ the pattern and pick the right next item. Items
- * are pure code-drawn and COLOUR-tinted in code (colour is the pattern variable, so it must stay
- * exact — same rule as the colours chapter); a greyscale sprite auto-upgrades each by tint when the
+ * are the unit's own colors, so the child must READ the pattern and pick the right next item. Items
+ * are pure code-drawn and COLOR-tinted in code (color is the pattern variable, so it must stay
+ * exact — same rule as the colors chapter); a grayscale sprite auto-upgrades each by tint when the
  * art exists, falling back to the code-drawn shape. One continuous adaptive SkillBeat (harder on a
  * streak, easier when struggling, re-teach after 3 wrong); wrapped by game/PatternsChapter.tsx.
  *
@@ -43,7 +43,7 @@ const shuffle = <T,>(a: T[]): T[] => {
 // necklace clears the banner and the tray clears the necklace + Milo.
 const SHORT_H = 470
 
-// ─── Colours (the pattern variable) ──────────────────────────────────────────────────
+// ─── Colors (the pattern variable) ──────────────────────────────────────────────────
 type BeadColor = 'red' | 'blue' | 'yellow' | 'green' | 'orange' | 'purple' | 'pink'
 const BEADS: Record<BeadColor, { label: string; hex: string; deep: string }> = {
   red:    { label: 'red',    hex: '#E64545', deep: '#B5302F' },
@@ -57,9 +57,9 @@ const BEADS: Record<BeadColor, { label: string; hex: string; deep: string }> = {
 const BEAD_ORDER: BeadColor[] = ['red', 'blue', 'yellow', 'green', 'orange', 'purple', 'pink']
 
 // ─── Item kinds ───────────────────────────────────────────────────────────────────────
-// Each kind: its spoken noun, how its line is drawn (string through centre / cord at top / track at
+// Each kind: its spoken noun, how its line is drawn (string through center / cord at top / track at
 // bottom / none for free-floating), the connector y as a fraction of the item box, and an optional
-// greyscale sprite that gets tinted (the colour stays in code; dark parts like wheels/holes stay
+// grayscale sprite that gets tinted (the color stays in code; dark parts like wheels/holes stay
 // dark via multiply). Flags/lanterns/balloons hang or float → no ground shadow.
 type ItemKind = 'bead' | 'button' | 'gem' | 'flag' | 'balloon' | 'lantern' | 'car' | 'block' | 'duck'
 type Connector = 'string' | 'cord' | 'track' | 'none'
@@ -94,7 +94,7 @@ const WORLDS: PatternWorld[] = [
       { kind: 'gem',    grad: 'linear-gradient(#f3e9ff 0%, #fbf3ff 52%, #e6d8f2 100%)', img: '/assets/backgrounds/craft_gems.png' },
     ],
     milo: { srcs: ['/assets/characters/milo_beads.png', '/assets/characters/milo_idle.png'], emoji: '🐴', accessory: '📿' },
-    intro: 'Milo is making jewellery in his Bead Shop! The colours make a pattern that repeats. Find what comes next. First, watch Milo!' },
+    intro: 'Milo is making jewelry in his Bead Shop! The colors make a pattern that repeats. Find what comes next. First, watch Milo!' },
   { id: 'party', label: 'Party', emoji: '🎉',
     scenes: [
       { kind: 'flag',    grad: 'linear-gradient(#e7f3ff 0%, #fff3e2 52%, #ffe2ef 100%)', img: '/assets/backgrounds/party_banner.png' },
@@ -102,7 +102,7 @@ const WORLDS: PatternWorld[] = [
       { kind: 'lantern', grad: 'linear-gradient(#cdd6f0 0%, #e3e7f6 52%, #d7c9e6 100%)', img: '/assets/backgrounds/party_lanterns.png' },
     ],
     milo: { srcs: ['/assets/characters/milo_idle.png', '/assets/characters/milo_explorer.png'], emoji: '🐴', accessory: '🎉' },
-    intro: 'Milo is decorating for a party! The colours make a pattern that repeats. Find what comes next. First, watch Milo!' },
+    intro: 'Milo is decorating for a party! The colors make a pattern that repeats. Find what comes next. First, watch Milo!' },
   { id: 'toys', label: 'Toy Box', emoji: '🧸',
     scenes: [
       { kind: 'car',   grad: 'linear-gradient(#dff0ff 0%, #eef6ff 52%, #d7e3ec 100%)', img: '/assets/backgrounds/train_station.png' },
@@ -110,7 +110,7 @@ const WORLDS: PatternWorld[] = [
       { kind: 'duck',  grad: 'linear-gradient(#e7f6ff 0%, #f2fbff 52%, #d9ecd6 100%)', img: '/assets/backgrounds/toy_ducks.png' },
     ],
     milo: { srcs: ['/assets/characters/milo_idle.png', '/assets/characters/milo_explorer.png'], emoji: '🐴', accessory: '🧸' },
-    intro: 'Milo is lining up his toys! The colours make a pattern that repeats. Find what comes next. First, watch Milo!' },
+    intro: 'Milo is lining up his toys! The colors make a pattern that repeats. Find what comes next. First, watch Milo!' },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: w.scenes[0].img }))
@@ -184,7 +184,7 @@ function useBeadSizes(seqLen: number): { stringBead: number; trayBead: number } 
   return sz
 }
 
-// ─── Optional painted greyscale sprites (auto-upgrade by tint) ───────────────────────
+// ─── Optional painted grayscale sprites (auto-upgrade by tint) ───────────────────────
 const _objLoaded: Record<string, boolean> = {}
 function usePaintedObject(src?: string): boolean {
   const [, force] = useState(0)
@@ -233,7 +233,7 @@ function Item({ kind, color, size, state = 'idle', depth = 0, shadow = true }: {
           background: `radial-gradient(ellipse at center, rgba(38,28,18,${shOp}) 0%, rgba(38,28,18,0) 72%)` }} />
       )}
 
-      {/* painted greyscale sprite, tinted to the hex (auto-upgrade); else the code-drawn shape */}
+      {/* painted grayscale sprite, tinted to the hex (auto-upgrade); else the code-drawn shape */}
       {painted && (
         <div style={{ width: box, height: tintH, position: 'relative', isolation: 'isolate', animation: anim,
           filter: lit ? glowFilter : 'drop-shadow(0 3px 4px rgba(0,0,0,.28))' }}>

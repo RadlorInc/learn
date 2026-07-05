@@ -6,7 +6,7 @@
  * of dots grow to a·k and b·k while the equation a:b = (a·k):(b·k) updates live —
  * the equivalence stays true no matter how far you scale. Slider-driven (not
  * free-drag) so it's touch-friendly, accessible, and testable. Mature Field Lab
- * look — an instrument, not a cartoon. Colours/fonts via CSS variables only.
+ * look — an instrument, not a cartoon. Colors/fonts via CSS variables only.
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'

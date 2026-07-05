@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { getCurrentSession, onAuthStateChange } from '@/data/auth'
+import { getMyRole, homeForRole } from '@/data/repositories'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
@@ -13,11 +14,17 @@ export default function AuthCallbackPage() {
     if (ran.current) return
     ran.current = true
 
+    // Land on the role's home (teacher → grades, parent → dashboard). A brand-new signup has no role
+    // yet → homeForRole(null) sends them to /parent, where the one-time Teacher/Parent picker shows.
+    async function goHome() {
+      router.replace(homeForRole(await getMyRole()))
+    }
+
     async function handleCallback() {
       // Try existing session first
       const session = await getCurrentSession()
       if (session?.user) {
-        router.replace('/parent')
+        await goHome()
         return
       }
 
@@ -26,7 +33,7 @@ export default function AuthCallbackPage() {
         (event, session) => {
           if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
             subscription.unsubscribe()
-            router.replace('/parent')
+            goHome()
           }
         }
       )
@@ -35,7 +42,7 @@ export default function AuthCallbackPage() {
       window.setTimeout(async () => {
         const session = await getCurrentSession()
         if (session?.user) {
-          router.replace('/parent')
+          await goHome()
         } else {
           router.replace('/auth')
         }

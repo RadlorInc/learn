@@ -130,8 +130,8 @@ export default function GamePage() {
   const completedRef = useRef(false)
   const zoomRef = useRef(1)
   const [zoom, setZoom] = useState(1)
-  // The chapter's themed background, painted across the whole stage so the colour
-  // fills the screen even when the (centred) content is narrower/shorter than it.
+  // The chapter's themed background, painted across the whole stage so the color
+  // fills the screen even when the (centered) content is narrower/shorter than it.
   const [stageBg, setStageBg] = useState<{ backgroundColor: string; backgroundImage: string }>({ backgroundColor: 'var(--bg-page)', backgroundImage: 'none' })
   useEffect(() => {
     const MIN = 0.5, PAD = 0.985
@@ -139,7 +139,7 @@ export default function GamePage() {
       const wrap = fitRef.current
       const content = wrap?.firstElementChild as HTMLElement | null
       if (!wrap || !content) return
-      // Lessons are full-height (nav pinned top, canvas centred, ScaleToFill grows
+      // Lessons are full-height (nav pinned top, canvas centered, ScaleToFill grows
       // the content) — they aren't zoom-scaled. Only practice chapters are scaled.
       if (content.classList.contains('milo-lesson')) {
         if (zoomRef.current !== 1) { zoomRef.current = 1; setZoom(1) }
@@ -225,7 +225,7 @@ export default function GamePage() {
   return (
     <>
     {/* Full-screen stage: holds the background and clips so nothing scrolls. The
-        chapter is centred-at-top and scaled by the fit controller. */}
+        chapter is centered-at-top and scaled by the fit controller. */}
     <div className="kit-screen" style={{ backgroundColor: stageBg.backgroundColor, backgroundImage: stageBg.backgroundImage, position: 'fixed', inset: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       <div ref={fitRef} className="game-zoom" style={{ width: 'min(100vw, 680px)', ['--game-zoom' as any]: zoom } as React.CSSProperties}>
         {/* GameTopbar is rendered inside each chapter component */}

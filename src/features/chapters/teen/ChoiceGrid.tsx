@@ -22,7 +22,7 @@ export interface ChoiceGridProps {
  *    Once a wrong pick is locked in (`correctValue` provided), the actual answer
  *    is revealed in calm garden-green so the learner sees where it lands.
  *
- * Theme (accent / ink / paper / outline / status colours) comes from the ancestor
+ * Theme (accent / ink / paper / outline / status colors) comes from the ancestor
  * `data-band` scope — we only read CSS variables, never set `data-band`.
  */
 export default function ChoiceGrid({

@@ -8,7 +8,7 @@
  *
  * Difficulty ramp (curriculum id "linearRelationships"):
  *   L1 — complete a table from a rule (y = mx + b) → NumericEntry.
- *   L2 — slope / rate from a table or two points; recognise y = mx → NumericEntry.
+ *   L2 — slope / rate from a table or two points; recognize y = mx → NumericEntry.
  *   L3 — match an equation to a graphed line → ChoiceGrid; read y = mx + b
  *        features (slope / intercept) from a graph.
  */

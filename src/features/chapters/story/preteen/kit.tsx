@@ -68,12 +68,17 @@ export function Brackets({ color, gap = -6 }: { color: string; gap?: number }) {
 }
 
 // ─── HUD task banner ────────────────────────────────────────────────────────────────────
-export function PromptCard({ tag = 'Task', text, accent, short }: { tag?: string; text: string; accent: Accent; short?: boolean }) {
+// `big` opts into a larger, more prominent prompt (used by the checkup/diagnostic, where the question
+// is the focus). Regular chapters leave it off and keep the compact HUD pill.
+export function PromptCard({ tag = 'Task', text, accent, short, big }: { tag?: string; text: string; accent: Accent; short?: boolean; big?: boolean }) {
+  const textSize = big
+    ? (short ? 'clamp(18px,4.8vh,24px)' : 'clamp(22px,3.4vh,32px)')
+    : (short ? 'clamp(14px,3.6vh,17px)' : 'clamp(16px,2.3vh,20px)')
   return (
     <div style={{ position: 'fixed', top: short ? 46 : 66, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-      <div style={{ maxWidth: 'min(92vw,660px)', display: 'flex', alignItems: 'center', gap: 12, background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 13, border: `1px solid ${accent.base}66`, padding: short ? '7px 8px 7px 14px' : '10px 12px 10px 18px', boxShadow: `0 0 20px ${accent.base}33, 0 8px 22px rgba(0,0,0,0.4)` }}>
-        <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: 10.5, color: accent.base, background: accent.soft, borderRadius: 6, padding: '3px 8px', letterSpacing: 1, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{tag}</span>
-        <span style={{ fontFamily: PT.sans, fontWeight: 600, fontSize: short ? 'clamp(14px,3.6vh,17px)' : 'clamp(16px,2.3vh,20px)', color: PT.ink }}>{text}</span>
+      <div style={{ maxWidth: big ? 'min(94vw,720px)' : 'min(92vw,660px)', display: 'flex', flexDirection: big ? 'column' : 'row', alignItems: big ? 'flex-start' : 'center', gap: big ? 8 : 12, background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 15, border: `1px solid ${accent.base}66`, padding: big ? (short ? '12px 16px' : '16px 22px') : (short ? '7px 8px 7px 14px' : '10px 12px 10px 18px'), boxShadow: `0 0 20px ${accent.base}33, 0 8px 22px rgba(0,0,0,0.4)` }}>
+        <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: big ? 11.5 : 10.5, color: accent.base, background: accent.soft, borderRadius: 6, padding: '3px 8px', letterSpacing: 1, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{tag}</span>
+        <span style={{ fontFamily: PT.sans, fontWeight: big ? 700 : 600, fontSize: textSize, lineHeight: big ? 1.32 : 1.2, color: PT.ink }}>{text}</span>
       </div>
     </div>
   )

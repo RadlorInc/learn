@@ -43,8 +43,8 @@ const IT = {
   crab:    { img: '/assets/objects/crab.png',      emoji: '🦀', one: 'crab',    many: 'crabs' },
   turtle:  { img: '/assets/objects/turtle.png',    emoji: '🐢', one: 'turtle',  many: 'turtles' },
   octopus: { img: '/assets/objects/octopus.png',   emoji: '🐙', one: 'octopus', many: 'octopuses' },
-  balloon: { img: '/assets/objects/balloon.png',     emoji: '🎈', one: 'balloon', many: 'balloons' },   // already colour
-  // pat_* are GREYSCALE → tint them (star.png dropped: it has an opaque grey background, not a cutout).
+  balloon: { img: '/assets/objects/balloon.png',     emoji: '🎈', one: 'balloon', many: 'balloons' },   // already color
+  // pat_* are GRAYSCALE → tint them (star.png dropped: it has an opaque gray background, not a cutout).
   flag:    { img: '/assets/objects/pat_flag.png',    emoji: '🚩', one: 'flag',    many: 'flags',    tint: '#e0483f' },
   lantern: { img: '/assets/objects/pat_lantern.png', emoji: '🏮', one: 'lantern', many: 'lanterns', tint: '#e8912a' },
 } satisfies Record<string, Item>

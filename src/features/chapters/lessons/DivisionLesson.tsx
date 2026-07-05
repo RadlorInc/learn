@@ -165,7 +165,7 @@ export default function DivisionLesson({ childName, onLessonComplete }: Props) {
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Great dividing, ${childName}! Now let's practise!`}
+      finalSpeech={`Great dividing, ${childName}! Now let's practice!`}
     />
   )
 }

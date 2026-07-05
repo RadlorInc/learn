@@ -110,7 +110,7 @@ export default function CompareLesson({ childName, onLessonComplete }: Props) {
   ]
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Great job, ${childName}! You can compare numbers! Let’s practise!`} />
+      finalSpeech={`Great job, ${childName}! You can compare numbers! Let’s practice!`} />
   )
 }
 

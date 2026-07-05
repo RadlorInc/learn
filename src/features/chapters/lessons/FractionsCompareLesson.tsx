@@ -146,7 +146,7 @@ export function FracOpWatch({ op, n1, n2, den, intro, outro, onDone }: { op: '+'
     return () => cl.forEach(f => f())
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  // Bar: for add, base n1 + second n2 (different colour at stage2); for sub, base shows n1 then result.
+  // Bar: for add, base n1 + second n2 (different color at stage2); for sub, base shows n1 then result.
   const barNum = op === '+' ? (stage >= 1 ? n1 : 0) : (stage >= 2 ? result : stage >= 1 ? n1 : 0)
   const barN2 = op === '+' ? (stage >= 2 ? n2 : 0) : 0
   return (
@@ -249,7 +249,7 @@ export default function FractionsCompareLesson({ childName, onLessonComplete }: 
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Wonderful fractions, ${childName}! Now let's practise!`}
+      finalSpeech={`Wonderful fractions, ${childName}! Now let's practice!`}
     />
   )
 }

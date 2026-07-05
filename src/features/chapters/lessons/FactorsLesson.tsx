@@ -318,7 +318,7 @@ export default function FactorsLesson({ childName, onLessonComplete }: Props) {
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Brilliant, ${childName}! Even, odd, multiples, factors and primes — now let's practise!`}
+      finalSpeech={`Brilliant, ${childName}! Even, odd, multiples, factors and primes — now let's practice!`}
     />
   )
 }

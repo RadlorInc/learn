@@ -11,7 +11,7 @@ const GAMES = [
   { emoji: '➕', title: 'Add with Fingers', desc: 'Show the answer on your hands!', href: '/play/finger-addition' },
   { emoji: '🧺', title: 'Catch It!', desc: 'Catch the falling apples!', href: '/play/catch-it' },
   { emoji: '🔢', title: 'Catch the Number', desc: 'Catch the number Milo calls!', href: '/play/catch-number' },
-  { emoji: '🎨', title: 'Catch the Color', desc: 'Catch the colour Milo names!', href: '/play/catch-color' },
+  { emoji: '🎨', title: 'Catch the Color', desc: 'Catch the color Milo names!', href: '/play/catch-color' },
   { emoji: '📦', title: 'Sort the Sizes', desc: 'Big left, small right!', href: '/play/sort-bins' },
   { emoji: '🔢', title: 'Match the Number', desc: 'Pinch & drag the number!', href: '/play/match-number' },
   { emoji: '🔢', title: 'Number Order', desc: 'Drag numbers into order!', href: '/play/number-order' },

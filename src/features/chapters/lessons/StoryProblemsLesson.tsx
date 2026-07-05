@@ -198,7 +198,7 @@ export default function StoryProblemsLesson({ childName, onLessonComplete }: Pro
   ]
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Wonderful, ${childName}! You can solve story problems! Let’s practise!`} />
+      finalSpeech={`Wonderful, ${childName}! You can solve story problems! Let’s practice!`} />
   )
 }
 

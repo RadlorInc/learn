@@ -298,7 +298,7 @@ function Shell({step,miloMood,bubble,children,nextReady,onBack,onSkip}:{
   )
 }
 
-// Big number that pops in the centre as counting progresses — one at a time.
+// Big number that pops in the center as counting progresses — one at a time.
 // Give it `key={n}` at the call site so each change remounts and replays the pop.
 function BigCount({n}:{n:number}) {
   if(n<=0) return null
@@ -1069,7 +1069,7 @@ export default function CountingLesson({childName,onLessonComplete}:Props) {
     if(!nextReady)return
     stopSpeech()
     if(step>=TOTAL_STEPS-1){
-      speak(`Incredible work, ${childName}! You are a counting champion! Let's practise now!`)
+      speak(`Incredible work, ${childName}! You are a counting champion! Let's practice now!`)
       window.setTimeout(onLessonComplete,3500)
       return
     }

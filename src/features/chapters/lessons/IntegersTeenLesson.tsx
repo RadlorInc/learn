@@ -25,6 +25,7 @@ export const fmtInt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 export const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 const toChoice = (v: number): Choice => ({ value: v, label: fmtInt(v) })
 const shuffle = <T,>(a: T[]): T[] => [...a].sort(() => Math.random() - 0.5)
+const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 
 function distinctInts(count: number, lo: number, hi: number, seed?: number[]): number[] {
   const s = new Set<number>(seed ?? [])
@@ -67,6 +68,20 @@ export function makeRound(d: 1 | 2 | 3): Round {
     if (Math.random() < 0.5) {
       const n = rint(-9, -1)
       const ans = Math.abs(n)
+      // ~half in a weather/depth context (the real-world hook), half bare notation.
+      if (Math.random() < 0.5) {
+        const cold = pick([
+          { p: `It is ${fmtInt(n)}°C outside. How many degrees below freezing is that?`, s: `It is ${spoken(n)} degrees Celsius outside. How many degrees below freezing is that?` },
+          { p: `A diver is at ${fmtInt(n)} m (below sea level). How deep is the dive?`, s: `A diver is at ${spoken(n)} meters below sea level. How deep is the dive?` },
+        ])
+        return {
+          promptText: cold.p,
+          say: cold.s,
+          choices: choicesFrom(ans, [ans + 1, ans - 1, ans + 2, n]),
+          answer: ans,
+          explain: `Distance from zero is the absolute value, so |${fmtInt(n)}| = ${ans}.`,
+        }
+      }
       return {
         promptText: `What is |${fmtInt(n)}|?`,
         say: `What is the absolute value of ${spoken(n)}?`,
@@ -77,6 +92,15 @@ export function makeRound(d: 1 | 2 | 3): Round {
     }
     const three = distinctInts(3, -9, 9)
     const ans = Math.min(...three)
+    if (Math.random() < 0.5) {
+      return {
+        promptText: `Mon ${fmtInt(three[0])}°, Tue ${fmtInt(three[1])}°, Wed ${fmtInt(three[2])}°. Which day was coldest?`,
+        say: `Monday ${spoken(three[0])}, Tuesday ${spoken(three[1])}, Wednesday ${spoken(three[2])} degrees. Which day was coldest?`,
+        choices: shuffle(three).map(toChoice),
+        answer: ans,
+        explain: `${fmtInt(ans)} is furthest below zero, so it is the coldest.`,
+      }
+    }
     return {
       promptText: 'Which is smallest?',
       say: `Which is smallest: ${three.map(spoken).join(', ')}?`,
@@ -92,6 +116,15 @@ export function makeRound(d: 1 | 2 | 3): Round {
     let guard = 0
     while ((Math.abs(a) === Math.abs(b) || a === b) && guard++ < 50) b = rint(-9, 9)
     const ans = Math.abs(a) > Math.abs(b) ? a : b
+    if (Math.random() < 0.5) {
+      return {
+        promptText: `Which temperature is more extreme: ${fmtInt(a)}°C or ${fmtInt(b)}°C?`,
+        say: `Which temperature is more extreme: ${spoken(a)} or ${spoken(b)} degrees?`,
+        choices: shuffle([a, b]).map(toChoice),
+        answer: ans,
+        explain: `${fmtInt(ans)} is ${Math.abs(ans)} degrees from freezing — farther than ${Math.abs(ans === a ? b : a)}.`,
+      }
+    }
     return {
       promptText: 'Which is farther from zero?',
       say: `Which is farther from zero: ${spoken(a)} or ${spoken(b)}?`,
@@ -103,6 +136,15 @@ export function makeRound(d: 1 | 2 | 3): Round {
   const m = rint(-4, 4)
   const k = rint(2, 7)
   const ans = m - k
+  if (Math.random() < 0.55) {
+    return {
+      promptText: `It was ${fmtInt(m)}°C, then dropped ${k} degrees overnight. What is the temperature now?`,
+      say: `It was ${spoken(m)} degrees, then dropped ${k} degrees overnight. What is the temperature now?`,
+      choices: choicesFrom(ans, [m + k, ans + 1, ans - 1, ans + 2]),
+      answer: ans,
+      explain: `Start at ${fmtInt(m)} and drop ${k}: step ${k} to the left to ${fmtInt(ans)}.`,
+    }
+  }
   return {
     promptText: `What is ${k} less than ${fmtInt(m)}?`,
     say: `What is ${k} less than ${spoken(m)}?`,

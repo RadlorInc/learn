@@ -14,7 +14,7 @@ import type { AgeBand, MiloMood } from '@/features/chapters/teen/types'
  *  - 17-18 → a restrained "M·" mark; when `mood` is thinking/speaking it gains a
  *    subtle waveform (speaking) or blinking cursor (thinking).
  *
- * Motion stays calm (150–300ms) and honours `prefers-reduced-motion`.
+ * Motion stays calm (150–300ms) and honors `prefers-reduced-motion`.
  */
 export interface MiloMarkProps {
   band: AgeBand

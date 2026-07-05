@@ -314,7 +314,7 @@ export default function Numbers100Lesson({ childName, onLessonComplete }: Props)
   ]
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Amazing, ${childName}! You can read numbers up to one hundred! Let’s practise!`}
+      finalSpeech={`Amazing, ${childName}! You can read numbers up to one hundred! Let’s practice!`}
       chart={<NumberChart />} />
   )
 }

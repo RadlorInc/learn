@@ -3,7 +3,7 @@
  * Chapter (9–11) — FACTORS & MULTIPLES (skill `factorsMultiples`) in the PRE-TEEN "Number Lab" look.
  *
  * A more grown-up shell than the 3–8 storybook worlds: crisp cool console, blueprint grid, mono
- * numerals, HUD chrome, Milo as an explorer (see story/preteen/kit.tsx). Milo "analyses" a number:
+ * numerals, HUD chrome, Milo as an explorer (see story/preteen/kit.tsx). Milo "analyzes" a number:
  *   • EVEN / ODD  → pair the units; one left over ⇒ odd
  *   • MULTIPLE of b → the skip-count pattern (b, 2b, 3b …); pick the number on the list
  *   • FACTOR of n → split n into equal rows; the divisor that leaves no gap is a factor

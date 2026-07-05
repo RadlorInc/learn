@@ -2,7 +2,7 @@
 export const dynamic = 'force-static'
 /**
  * Thumbs Up / Thumbs Down — AR quiz. Milo shows + says a true/false question
- * (mixed: counting, comparison, shapes, colours, number facts); the child
+ * (mixed: counting, comparison, shapes, colors, number facts); the child
  * answers with 👍 (yes) or 👎 (no). On-device, consent-gated, adaptive.
  */
 import { useEffect, useRef, useState } from 'react'

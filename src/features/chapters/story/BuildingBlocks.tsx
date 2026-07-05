@@ -55,7 +55,7 @@ const IT = {
   apple:   { src: '/assets/objects/apple.png',          emoji: '🍎', one: 'apple',    many: 'apples' },
   pear:    { src: '/assets/objects/pear.png',           emoji: '🍐', one: 'pear',     many: 'pears' },
   cherry:  { src: '/assets/objects/cherry.png',         emoji: '🍒', one: 'cherry',   many: 'cherries' },
-  // pat_* toys are GREYSCALE by design → tint them to bright toy colours (see TintedSprite).
+  // pat_* toys are GRAYSCALE by design → tint them to bright toy colors (see TintedSprite).
   duck:    { src: '/assets/objects/pat_duck.png',       emoji: '🦆', one: 'duck',     many: 'ducks',   tint: '#f2c230' },
   car:     { src: '/assets/objects/pat_car.png',        emoji: '🚗', one: 'car',      many: 'cars',    tint: '#e0483f' },
   block:   { src: '/assets/objects/pat_block.png',      emoji: '🧱', one: 'block',    many: 'blocks',  tint: '#4a86d8' },
@@ -84,7 +84,7 @@ const WORLDS: PvWorld[] = [
   { id: 'candy', label: 'Candy Factory', emoji: '🍭', scenes: ['shop', 'counter', 'tray'],
     items: [IT.candy, IT.cupcake, IT.lolly],
     milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🍬' },
-    intro: 'At the Candy Factory, sweets come in STACKS of ten and loose ones! Count the stacks and the loose sweets, then tap the right answer. First, watch Milo count!' },
+    intro: 'At the Candy Factory, candy comes in STACKS of ten and loose ones! Count the stacks and the loose candies, then tap the right answer. First, watch Milo count!' },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: SCENE[w.scenes[0]].bg.img, itemImage: w.items[0].src, itemTint: w.items[0].tint }))

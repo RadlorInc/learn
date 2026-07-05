@@ -101,7 +101,7 @@ export default function PlaceValueLesson({ childName, onLessonComplete }: Props)
 
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Great job, ${childName}! You know tens and ones! Let’s practise!`}
+      finalSpeech={`Great job, ${childName}! You know tens and ones! Let’s practice!`}
       chart={<NumberChart />} />
   )
 }

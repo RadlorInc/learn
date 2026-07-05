@@ -24,6 +24,8 @@ import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
 import { stashPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
 import { setActivePlan } from '@/infra/storage/activePlan'
 import { markCheckupDone } from '@/infra/storage/checkup'
+import { setLeadEmail, getLeadEmail } from '@/infra/storage/leadEmail'
+import { captureDiagnosticLead } from '@/data/repositories'
 
 // UUID v4 dedupe key (matches the session-sync clientId pattern) — makes the save idempotent so a
 // queue re-flush can never duplicate the diagnosis. Generated ONCE per completed diagnosis.
@@ -33,7 +35,7 @@ function newClientId(): string {
     return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
   })
 }
-import { PT, ACCENTS, LabBackdrop, BackChip, PromptCard, ChoiceButton, PtMilo, IntroCard, type Accent, type ChoiceState } from '@/features/chapters/story/preteen/kit'
+import { PT, ACCENTS, LabBackdrop, BackChip, ChoiceButton, PtMilo, IntroCard, type Accent, type ChoiceState } from '@/features/chapters/story/preteen/kit'
 
 const BANDS: Band[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan
@@ -121,12 +123,12 @@ function resolve(state: ProbeState, band: Band, ctx: DiagContext): Slot {
 /** Whether the chosen response counts as "passing" the skill (parent items use passSet; MCQ uses answer). */
 const isPass = (item: DiagItem, choice: string) => item.passSet ? item.passSet.includes(choice) : choice === item.answer
 
-type Phase = 'intro' | 'probe' | 'report'
+type Phase = 'intro' | 'email' | 'probe' | 'report'
 
 export default function DiagnosticPage() {
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
-  const btn = Math.max(56, Math.min(short ? 88 : 108, Math.round(Math.min(vw / 6.5, vh / (short ? 4.6 : 5.4)))))
+  const btn = Math.max(64, Math.min(short ? 100 : 128, Math.round(Math.min(vw / 5.2, vh / (short ? 4.4 : 5.0)))))
   const [band, setBand] = useState<Band>('9-11')
   const [bandKnown, setBandKnown] = useState(false)   // false for cold traffic → show the age picker
   const [hasLearner, setHasLearner] = useState(false) // signed-in with an active learner → save + skip capture
@@ -153,9 +155,21 @@ export default function DiagnosticPage() {
 
   const pickBand = (b: Band) => { setBand(b); setBandKnown(true) }
 
-  const begin = () => {
+  const startProbeNow = () => {
     ctxRef.current = buildContext(attempt)          // Phase 4: seed the probe for this child + attempt
     setSlot(resolve(startProbe(band), band, ctxRef.current)); setPhase('probe')
+  }
+  // Cold (logged-out) visitors give an email first — required, for lead capture. Signed-in users
+  // already have an account, so they go straight in. Once captured (this or a prior visit), we don't
+  // re-ask on a retake.
+  const begin = () => {
+    if (!hasLearner && !getLeadEmail()) { setPhase('email'); return }
+    startProbeNow()
+  }
+  const submitEmail = (email: string) => {
+    setLeadEmail(email)                    // prefill the later "free account" signup
+    void captureDiagnosticLead(email, band)  // durable lead (best-effort — never blocks the checkup)
+    startProbeNow()
   }
 
   // Launch the plan (step 6). SIGNED-IN → save the arranged plan for this learner + drop into the REAL
@@ -244,6 +258,17 @@ export default function DiagnosticPage() {
     )
   }
 
+  // ── EMAIL GATE (cold traffic only) ────────────────────────────────────────────────────
+  if (phase === 'email') {
+    return (
+      <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
+        <LabBackdrop accent={accent} /><BackChip onExit={() => setPhase('intro')} />
+        <EmailGate accent={accent} short={short} onSubmit={submitEmail} />
+        <PtMilo left={9} />
+      </div>
+    )
+  }
+
   // ── PROBE ────────────────────────────────────────────────────────────────────────────
   if (phase === 'probe' && slot?.item) {
     const asked = slot.s.asked.length
@@ -260,18 +285,18 @@ export default function DiagnosticPage() {
                 <span style={{ fontFamily: PT.mono, fontSize: 10.5, letterSpacing: 1.5, color: accent.base, background: accent.soft, borderRadius: 6, padding: '4px 9px', textTransform: 'uppercase' }}>Do this together</span>
                 <span style={{ fontFamily: PT.mono, fontSize: 11, color: PT.inkMute }}>Step {asked + 1}</span>
               </div>
-              <p style={{ margin: 0, fontFamily: PT.sans, fontSize: 19, lineHeight: 1.5, color: PT.ink }}>{item.prompt}</p>
+              <p style={{ margin: 0, fontFamily: PT.sans, fontWeight: 600, fontSize: 'clamp(20px,3.2vh,26px)', lineHeight: 1.42, color: PT.ink }}>{item.prompt}</p>
             </div>
-            <div style={{ fontFamily: PT.sans, fontSize: 13, color: PT.inkMute, textAlign: 'center', marginTop: -6 }}>How did it go?</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+            <div style={{ fontFamily: PT.sans, fontSize: 14, color: PT.inkMute, textAlign: 'center', marginTop: -6 }}>How did it go?</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {item.choices.map(c => {
                 const sel = picked === c
                 const dim = picked && !sel
                 return (
                   <button key={c} onClick={() => answer(c)} disabled={!!picked} style={{
-                    padding: '15px 18px', borderRadius: 14, cursor: picked ? 'default' : 'pointer', textAlign: 'left',
+                    padding: '18px 20px', borderRadius: 14, cursor: picked ? 'default' : 'pointer', textAlign: 'left',
                     background: sel ? accent.base : PT.panel, border: `1.5px solid ${sel ? accent.base : PT.lineStrong}`,
-                    color: sel ? '#06121f' : PT.ink, fontFamily: PT.sans, fontWeight: 600, fontSize: 16.5,
+                    color: sel ? '#06121f' : PT.ink, fontFamily: PT.sans, fontWeight: 600, fontSize: 'clamp(16px,2.4vh,19px)',
                     opacity: dim ? 0.4 : 1, transition: 'all .16s ease',
                     boxShadow: sel ? `0 0 20px ${accent.base}88` : '0 4px 12px rgba(0,0,0,0.3)',
                   }}>{c}</button>
@@ -288,11 +313,18 @@ export default function DiagnosticPage() {
       <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
         <style>{`@keyframes pt_float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes pt_twinkle{0%,100%{opacity:.25}50%{opacity:.8}}`}</style>
         <LabBackdrop accent={accent} /><BackChip onExit={() => history.back()} />
-        <PromptCard tag={`Question ${asked + 1}`} text={item.prompt} accent={accent} short={short} />
-        <div style={{ position: 'fixed', left: 0, right: 0, top: '46%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', gap: 8 }}>
-          {Array.from({ length: Math.min(asked + 1, 10) }).map((_, i) => (
-            <span key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i <= asked ? accent.base : PT.line, boxShadow: i <= asked ? `0 0 8px ${accent.base}` : 'none' }} />
-          ))}
+        {/* The question — centered, large + responsive. Sits in the band between the top chip and the
+            bottom answer tiles (bottom reserve derives from the tile size), so it stays clear at every
+            viewport. Replaces the old top pill + progress dots. */}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: `${short ? 52 : 76}px 6vw ${short ? btn + 28 : btn + 48}px`, pointerEvents: 'none' }}>
+          <div style={{ maxWidth: 'min(94vw,780px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 8 : 16, textAlign: 'center',
+            background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 20, border: `1px solid ${accent.base}66`,
+            padding: short ? '14px clamp(20px,5vw,40px)' : 'clamp(20px,4vh,40px) clamp(26px,5vw,60px)',
+            boxShadow: `0 0 30px ${accent.base}33, 0 14px 34px rgba(0,0,0,0.45)` }}>
+            <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: short ? 11 : 12.5, letterSpacing: 1.5, color: accent.base, background: accent.soft, borderRadius: 7, padding: '4px 10px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{`Question ${asked + 1}`}</span>
+            <span style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: short ? 'clamp(22px,6vh,36px)' : 'clamp(30px,6.6vh,60px)', lineHeight: 1.18, color: PT.ink }}>{item.prompt}</span>
+          </div>
         </div>
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(12px,3vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
           {item.choices.map(c => {
@@ -435,6 +467,32 @@ function ReportShell({ accent, subtitle, heading = "Here's what we found", cta, 
             <button onClick={onStart} style={primary}>{cta}</button>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ── Required email gate (cold traffic): capture a lead before the checkup, prefill signup later ──
+function EmailGate({ accent, short, onSubmit }: { accent: Accent; short?: boolean; onSubmit: (email: string) => void }) {
+  const [email, setEmail] = useState(() => getLeadEmail() ?? '')
+  const [err, setErr] = useState<string | null>(null)
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const submit = () => { if (!valid) { setErr('Please enter a valid email'); return } onSubmit(email.trim()) }
+  return (
+    <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 440, background: PT.panel, backdropFilter: 'blur(8px)', border: `1px solid ${accent.base}66`, borderRadius: 20, padding: short ? '22px 20px' : '30px 28px', boxShadow: `0 0 30px ${accent.base}22, 0 18px 40px rgba(0,0,0,0.5)`, textAlign: 'center' }}>
+        <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2.5, color: accent.base, textTransform: 'uppercase', marginBottom: 10 }}>One quick thing</div>
+        <h1 style={{ margin: '0 0 8px', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 22 : 26, color: PT.ink }}>Where should we send the results?</h1>
+        <p style={{ margin: '0 0 20px', fontFamily: PT.sans, fontSize: 14.5, lineHeight: 1.5, color: PT.inkMute }}>Enter your email so we can save your child&apos;s starting point and plan. No spam — just the results.</p>
+        <input
+          type="email" inputMode="email" autoFocus value={email} placeholder="you@example.com"
+          onChange={e => { setEmail(e.target.value); if (err) setErr(null) }}
+          onKeyDown={e => { if (e.key === 'Enter') submit() }}
+          style={{ width: '100%', boxSizing: 'border-box', padding: '15px 16px', borderRadius: 12, border: `1.5px solid ${err ? '#e0483f' : PT.lineStrong}`, background: 'rgba(255,255,255,0.06)', color: PT.ink, fontFamily: PT.sans, fontSize: 17, outline: 'none', textAlign: 'center' }}
+        />
+        {err && <div style={{ marginTop: 8, fontFamily: PT.sans, fontSize: 13, color: '#ff8a80' }}>{err}</div>}
+        <button onClick={submit} disabled={!valid} style={{ marginTop: 16, width: '100%', padding: 16, borderRadius: 50, border: 'none', cursor: valid ? 'pointer' : 'not-allowed', background: valid ? accent.base : PT.line, color: valid ? '#06121f' : PT.inkMute, fontFamily: PT.sans, fontWeight: 800, fontSize: 17, boxShadow: valid ? `0 0 22px ${accent.base}66` : 'none', transition: 'all .16s ease' }}>Start the check →</button>
+        <p style={{ margin: '12px 0 0', fontFamily: PT.sans, fontSize: 11.5, color: PT.inkMute }}>Free · takes about 2 minutes</p>
       </div>
     </div>
   )

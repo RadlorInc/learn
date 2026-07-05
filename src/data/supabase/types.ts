@@ -5,7 +5,7 @@ import type { AgeGroup, ChapterType } from '@/core/chapters'
 // Chapter ids live in the single registry (src/lib/chapters.ts); re-exported
 // here so existing `@/data/supabase/types` imports keep working.
 export type { ChapterType } from '@/core/chapters'
-export type UserRole    = 'parent' | 'learner'
+export type UserRole    = 'parent' | 'learner' | 'teacher'
 export type InviteStatus = 'pending' | 'accepted' | 'expired'
 
 export interface Database {
@@ -14,7 +14,7 @@ export interface Database {
       profiles: {
         Row: {
           id:           string
-          role:         UserRole
+          role:         UserRole | null   // null = signed up but hasn't picked Teacher/Parent yet
           display_name: string
           avatar_index: number
           created_at:   string
@@ -134,8 +134,6 @@ export interface Database {
           total_xp:        number
           total_coins:     number
           current_level:   number
-          current_streak:  number
-          longest_streak:  number
           last_played_at:  string | null
           updated_at:      string
         }

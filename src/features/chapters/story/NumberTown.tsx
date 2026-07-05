@@ -34,7 +34,7 @@ type Scene =
 
 interface SceneCfg {
   noun: string; item: string; itemImg: string
-  hue?: number                            // recolour a reused sprite (lockers)
+  hue?: number                            // recolor a reused sprite (lockers)
   bg: { grad: string; img: string }
 }
 const LOCKER_BG = { grad: 'linear-gradient(#efe6d6 0%, #f2ead9 55%, #e6d6b8 100%)', img: '/assets/backgrounds/locker_room.png' }
@@ -58,7 +58,7 @@ interface NumWorld {
   scenes: Scene[]
   milo: { src: string; emoji: string; accessory: string }
   dark?: boolean
-  groundY?: string                        // vertical centre of the object row (grounds them per scene)
+  groundY?: string                        // vertical center of the object row (grounds them per scene)
   objSize?: string                        // per-world object size (some sprites are taller/narrower)
   intro: string
 }

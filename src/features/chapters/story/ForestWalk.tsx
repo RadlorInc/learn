@@ -3,7 +3,7 @@
  * ForestWalk — a single chapter told as a LANDSCAPE side-scroll story.
  * Milo walks (side profile) through a parallax forest built from real PNG art
  * (tree.png, fireflies, ground objects); the world scrolls past him. He stops at
- * "stations" to demonstrate counting, to talk, and to practise (SkillBeat:
+ * "stations" to demonstrate counting, to talk, and to practice (SkillBeat:
  * adaptive + re-teach + voice). One chapter = one ForestWalk. See docs/story-mode-3-5.md.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
@@ -22,6 +22,15 @@ const CSS = `
 @keyframes fw_fly { 0%{transform:translate(0,0) rotate(0)} 25%{transform:translate(12px,-14px) rotate(5deg)} 50%{transform:translate(-9px,9px) rotate(-4deg)} 75%{transform:translate(9px,5px) rotate(3deg)} 100%{transform:translate(0,0) rotate(0)} }
 @keyframes fw_bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
 @keyframes fw_blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.05)} }
+/* Continuous "alive" gaits, by locomotion — each creature keeps moving the way it really moves while
+   it's on stage (walkers bob + step, flyers hover, swimmers undulate, insects scuttle). Run on an
+   inner span so they never clash with the outer travel (left) transition or the facing flip. */
+@keyframes gait_walk  { 0%,100%{transform:translateY(0) rotate(-2.5deg)} 50%{transform:translateY(-9%) rotate(2.5deg)} }
+@keyframes gait_fly   { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-16%) rotate(2deg)} }
+@keyframes gait_swim  { 0%,100%{transform:rotate(-6deg) translateY(2%)} 50%{transform:rotate(6deg) translateY(-4%)} }
+@keyframes gait_crawl { 0%{transform:translate(-4%,0)} 25%{transform:translate(4%,-5%)} 50%{transform:translate(-4%,0)} 75%{transform:translate(4%,-5%)} 100%{transform:translate(-4%,0)} }
+/* A soft "counted" pop when the child taps a parading creature, just before it walks off. */
+@keyframes fw_count { 0%{transform:scale(1)} 45%{transform:scale(1.5)} 100%{transform:scale(1.18)} }
 @keyframes fw_tap { 0%{transform:scale(1)} 30%{transform:scale(1.65)} 65%{transform:scale(1.1)} 100%{transform:scale(1.25)} }
 @keyframes fw_check { 0%{transform:scale(0) rotate(-45deg);opacity:0} 60%{transform:scale(1.3) rotate(5deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
 @keyframes fw_drift { from{transform:translateX(0)} to{transform:translateX(-60px)} }

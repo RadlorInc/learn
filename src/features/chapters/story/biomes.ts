@@ -72,8 +72,10 @@ export const BIOMES: Record<BiomeId, Biome> = {
   },
   orchard: {
     id: 'orchard', label: 'Orchard', emoji: '🍎',
-    arrive: 'The orchard! Fruit on the trees and busy bees.',
-    objects: ['apple', 'pear', 'bee'],
+    arrive: 'The orchard! Busy bees and butterflies among the trees.',
+    // Fruit doesn't parade naturally (an apple can't walk in) — so the orchard counts the little
+    // creatures that live among the trees instead: bees + butterflies flitting, ladybugs on the leaves.
+    objects: ['bee', 'butterfly', 'ladybug'],
     band: { x0: 14, x1: 84, y0: 16, y1: 74 },        // up in the trees + bees buzzing
     bgImage: '/assets/backgrounds/farm_orchard.png',
   },
@@ -96,14 +98,16 @@ export const BIOMES: Record<BiomeId, Biome> = {
   deepspace: {
     id: 'deepspace', label: 'Deep Space', emoji: '🪐',
     arrive: "We're out in deep space! Look at everything floating.",
-    objects: ['planet', 'comet', 'satellite'],
+    // comet dropped — a streaking comet doesn't read as a countable parading object.
+    objects: ['planet', 'satellite'],
     band: { x0: 10, x1: 86, y0: 12, y1: 78 },        // floating across the whole frame
     bgImage: '/assets/backgrounds/space_deepspace.png',
   },
   moon: {
     id: 'moon', label: 'The Moon', emoji: '🌙',
-    arrive: 'We landed on the Moon! Who and what can we count?',
-    objects: ['astronaut', 'moonRock', 'alien'],
+    arrive: 'We landed on the Moon! Who can we count?',
+    // moon rock dropped — an inanimate rock can't parade; count the astronaut + alien instead.
+    objects: ['astronaut', 'alien'],
     band: { x0: 16, x1: 86, y0: 60, y1: 85 },        // standing on the moon's surface
     bgImage: '/assets/backgrounds/space_moon.png',
   },

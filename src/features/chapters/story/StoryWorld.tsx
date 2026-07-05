@@ -99,7 +99,9 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     setPhase('feedback')
     const newRun = correct ? 0 : wrongRun + 1
     setWrongRun(newRun)
-    speak(correct ? ada.praise : ada.encouragement)
+    // No spoken compliment on a correct answer — a tick is enough (kids don't need praise every
+    // question). Only gently encourage on a wrong one.
+    if (!correct) speak(ada.encouragement)
     window.setTimeout(() => {
       setFeedback(null)
       if (!correct && newRun >= (beat.reteachAfter ?? 2)) { setPhase('reteach'); return }
@@ -151,7 +153,6 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
             fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)',
             background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '8px 20px', textAlign: 'center', boxShadow: '0 4px 0 rgba(242,107,44,.25)' }}>
           <span>{beat.prompt(data)}</span>
-          <span style={{ fontSize: 22, lineHeight: 1 }}>🔊</span>
         </button>
       )}
       {phase === 'reteach'
@@ -159,12 +160,20 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
         : phase === 'interlude'
           ? null
           : <beat.Play key={roundIdx} data={data} onSubmit={onSubmit} />}
-      {feedback && (
+      {/* Correct = just a quiet green tick (no "Yes!" celebration, no spoken praise). Wrong keeps a
+          gentle nudge. */}
+      {feedback === 'correct' && (
         <div style={{ position: 'fixed', top: '40%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 60,
-          background: feedback === 'correct' ? 'var(--garden-green)' : 'var(--milo-orange)', color: '#fff',
+          width: 96, height: 96, borderRadius: '50%', background: 'var(--garden-green)', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 58, fontWeight: 900, lineHeight: 1,
+          border: '5px solid var(--outline)', boxShadow: '0 8px 0 rgba(61,37,22,.2)', animation: 'k_bounceIn .4s cubic-bezier(.34,1.56,.64,1) both' }}>✓</div>
+      )}
+      {feedback === 'wrong' && (
+        <div style={{ position: 'fixed', top: '40%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 60,
+          background: 'var(--milo-orange)', color: '#fff',
           fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, padding: '14px 36px', borderRadius: 24,
           border: '4px solid var(--outline)', boxShadow: '0 8px 0 rgba(61,37,22,.2)', animation: 'k_bounceIn .4s cubic-bezier(.34,1.56,.64,1) both' }}>
-          {feedback === 'correct' ? '🎉 Yes!' : 'Let\'s look together! 🙂'}
+          Let&apos;s look together! 🙂
         </div>
       )}
     </div>

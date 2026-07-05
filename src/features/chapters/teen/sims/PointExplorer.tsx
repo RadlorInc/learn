@@ -6,7 +6,7 @@
  * coordinate plane, with the ordered pair and the quadrant (or axis) it sits in
  * updating live. Slider-driven (not free-drag) so it's touch-friendly,
  * accessible, and testable. Mature Field Lab look — an instrument, not a
- * cartoon. Reads theme from the ancestor data-band scope; colours/fonts via CSS
+ * cartoon. Reads theme from the ancestor data-band scope; colors/fonts via CSS
  * variables only.
  */
 import { useEffect, useRef, useState } from 'react'

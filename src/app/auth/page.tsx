@@ -4,13 +4,15 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { signUpWithEmail, signInWithEmail, signInWithGoogleOAuth } from '@/data/auth'
+import { getMyRole, homeForRole } from '@/data/repositories'
+import { getLeadEmail } from '@/infra/storage/leadEmail'
 
 type Mode = 'login' | 'signup'
 
 export default function AuthPage() {
   const router = useRouter()
   const [mode,     setMode]     = useState<Mode>('login')
-  const [email,    setEmail]    = useState('')
+  const [email,    setEmail]    = useState(() => getLeadEmail() ?? '')   // prefill from the checkup lead capture
   const [password, setPassword] = useState('')
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
@@ -61,7 +63,8 @@ export default function AuthPage() {
         } else {
           // On-page password sign-in does NOT round-trip through /auth/callback, so
           // nothing else navigates — redirect here or the user is stranded on /auth.
-          router.replace('/parent')
+          // Role-aware: teachers land on Grades; a role-less account lands on /parent (picker).
+          router.replace(homeForRole(await getMyRole()))
           return
         }
       }

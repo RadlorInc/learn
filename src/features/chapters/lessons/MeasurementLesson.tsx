@@ -335,7 +335,7 @@ export default function MeasurementLesson({childName,onLessonComplete}:Props){
     if(!nextReady)return
     stopSpeech()
     if(step>=TOTAL_STEPS-1){
-      speak(`Brilliant, ${childName}! You can compare sizes! Let's practise now!`)
+      speak(`Brilliant, ${childName}! You can compare sizes! Let's practice now!`)
       window.setTimeout(onLessonComplete,3000)
       return
     }

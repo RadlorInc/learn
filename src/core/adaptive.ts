@@ -120,7 +120,7 @@ interface AdaptiveSnapshot {
   encouragement: string
 }
 
-export function useAdaptive(chapter: ChapterType): AdaptiveState {
+export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty = 1): AdaptiveState {
   // All mutable counters live in ONE snapshot object that is mirrored in a ref.
   // The ref is the synchronous source of truth: when several record() calls land
   // in the same render tick (rapid taps), each one reads the previous call's
@@ -128,16 +128,20 @@ export function useAdaptive(chapter: ChapterType): AdaptiveState {
   // streak/wrongStreak/difficulty from the closure and wrote them with plain
   // setters, so a fast second tap recomputed from stale values and could corrupt
   // promote/demote. Driving everything off the ref removes that hazard.
+  //
+  // `initialDifficulty` lets a chapter RESUME at the tier the child last left off
+  // on (see infra/storage/chapterLevel). Default 1 = start easy (unchanged). The
+  // engine stays pure — the caller loads/saves the level.
   const [snapshot, setSnapshot] = useState<AdaptiveSnapshot>(() => ({
-    difficulty:    1,
+    difficulty:    initialDifficulty,
     streak:        0,
     wrongStreak:   0,
     correct:       0,
     wrong:         0,
     isOnFire:      false,
     shouldHint:    false,
-    praise:        pick(PRAISE[0]),
-    encouragement: pick(ENCOURAGEMENT[0]),
+    praise:        pick(PRAISE[Math.min(initialDifficulty - 1, 2)]),
+    encouragement: pick(ENCOURAGEMENT[Math.min(initialDifficulty - 1, 2)]),
   }))
   const ref = useRef(snapshot)
 

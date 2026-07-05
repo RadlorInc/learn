@@ -17,6 +17,7 @@ import type { LessonStep } from '@/features/chapters/lessons/_kit'
 import type { AgeBand, Choice } from '@/features/chapters/teen/types'
 import TeenLessonShell from '@/features/chapters/teen/TeenLessonShell'
 import ChoiceGrid from '@/features/chapters/teen/ChoiceGrid'
+import PriceCard from '@/features/chapters/teen/scenes/PriceCard'
 
 const BAND: AgeBand = '12-14'
 
@@ -55,6 +56,15 @@ const BENCH: { pct: number; frac: string; dec: number }[] = [
 // answer mode tells the practice screen which input primitive to render
 export type RoundMode = 'choice' | 'numeric'
 
+// A price/receipt card shown alongside a contextual question (never reveals the answer).
+export interface PercentScene {
+  title?: string
+  price: number
+  badge: string            // "25% OFF" / "20% TIP"
+  tone?: 'sale' | 'tip'
+  note?: string            // e.g. "you saved $15"
+}
+
 export interface Round {
   mode: RoundMode
   promptText: string
@@ -64,6 +74,7 @@ export interface Round {
   choices: Choice[]        // populated for mode === 'choice'
   explain: string          // re-teach line(s) joined into one prompt
   watch: string[]          // narrated re-teach steps
+  scene?: PercentScene     // optional scenario visual
 }
 
 /** Difficulty-aware round generator. */
@@ -148,6 +159,34 @@ function makePercentOf(): Round {
     const pct = pick([10, 20, 25, 50, 75])
     const base = pick([40, 60, 80, 120, 200, 240])
     const ans = (pct / 100) * base
+    // ~half framed as a real sale/tip/tax; half as bare "percent of".
+    if (Math.random() < 0.55) {
+      const item = pick(['Hoodie', 'Game', 'Sneakers', 'Backpack', 'Jacket'])
+      const templates: { p: string; s: string; scene: PercentScene }[] = [
+        {
+          p: `A ${fmtMoney(base)} ${item.toLowerCase()} is ${pct}% off. How much do you SAVE?`,
+          s: `A ${item.toLowerCase()} costing ${base} dollars is ${pct} percent off. How much do you save?`,
+          scene: { title: item, price: base, badge: `${pct}% OFF`, tone: 'sale' },
+        },
+      ]
+      // A tip only reads naturally at a realistic rate.
+      if (pct <= 25) templates.push({
+        p: `A ${fmtMoney(base)} meal has a ${pct}% tip. How much is the TIP?`,
+        s: `A meal costing ${base} dollars has a ${pct} percent tip. How much is the tip?`,
+        scene: { title: 'Dinner', price: base, badge: `${pct}% TIP`, tone: 'tip' },
+      })
+      const ctx = pick(templates)
+      return {
+        mode: 'numeric',
+        promptText: ctx.p,
+        say: ctx.s,
+        answer: tidy(ans),
+        choices: [],
+        explain: `${pct}% of ${fmtMoney(base)} = ${fmtNum(pct / 100)} × ${base} = ${fmtMoney(ans)}.`,
+        watch: [`Turn ${pct} percent into the decimal ${fmtNum(pct / 100)}.`, `Then multiply: ${fmtNum(pct / 100)} times ${base} equals ${fmtNum(ans)}.`],
+        scene: ctx.scene,
+      }
+    }
     return {
       mode: 'numeric',
       promptText: `What is ${pct}% of ${base}?`,
@@ -162,6 +201,19 @@ function makePercentOf(): Round {
   const pct = pick([10, 20, 25, 50, 75])
   const base = pick([20, 40, 60, 80, 200])
   const part = (pct / 100) * base
+  if (Math.random() < 0.55) {
+    return {
+      mode: 'numeric',
+      promptText: `You saved ${fmtMoney(part)} on a ${fmtMoney(base)} item. What percent OFF was it?`,
+      say: `You saved ${fmtNum(part)} dollars on an item that cost ${base} dollars. What percent off was it?`,
+      answer: pct,
+      suffix: '%',
+      choices: [],
+      explain: `Divide the saving by the original, then × 100: ${fmtNum(part)} ÷ ${base} = ${fmtNum(part / base)}, so ${pct}%.`,
+      watch: [`Divide the part by the whole: ${fmtNum(part)} divided by ${base} is ${fmtNum(part / base)}.`, `Multiply by one hundred to get ${pct} percent.`],
+      scene: { title: 'Item', price: base, badge: '? % OFF', tone: 'sale', note: `you saved ${fmtMoney(part)}` },
+    }
+  }
   return {
     mode: 'numeric',
     promptText: `${fmtNum(part)} is what percent of ${base}?`,
@@ -191,6 +243,7 @@ function makeChange(): Round {
       choices: [],
       explain: `Add the increase: ${base} + ${pct}% of ${base} = ${base} + ${fmtNum((pct / 100) * base)} = ${fmtMoney(ans)}.`,
       watch: [`${pct} percent of ${base} is ${fmtNum((pct / 100) * base)}.`, `Add it on: ${base} plus ${fmtNum((pct / 100) * base)} equals ${fmtNum(ans)}.`],
+      scene: { title: 'Ticket', price: base, badge: `${pct}% UP`, tone: 'tip' },
     }
   }
   if (roll < 0.75) {
@@ -207,6 +260,7 @@ function makeChange(): Round {
       choices: [],
       explain: `Take off the discount: ${base} − ${pct}% of ${base} = ${base} − ${fmtNum((pct / 100) * base)} = ${fmtMoney(ans)}.`,
       watch: [`${pct} percent of ${base} is ${fmtNum((pct / 100) * base)}.`, `Subtract it: ${base} minus ${fmtNum((pct / 100) * base)} equals ${fmtNum(ans)}.`],
+      scene: { title: 'Sale item', price: base, badge: `${pct}% OFF`, tone: 'sale' },
     }
   }
   // reverse: scaffolded division (find the original before a known % change)
@@ -223,7 +277,35 @@ function makeChange(): Round {
     choices: [],
     explain: `A ${pct}% increase means the new price is ${fmtNum(factor)} × the original, so divide back: ${fmtNum(after)} ÷ ${fmtNum(factor)} = ${fmtMoney(orig)}.`,
     watch: [`A ${pct} percent increase multiplies the original by ${fmtNum(factor)}.`, `So divide back: ${fmtNum(after)} divided by ${fmtNum(factor)} equals ${fmtNum(orig)}.`],
+    scene: { title: 'Now', price: after, badge: `${pct}% UP`, tone: 'tip', note: 'find the original' },
   }
+}
+
+// ── PriceCardWatch: a narrated worked example that SHOWS the markdown happen ──
+// The tag starts at full price, Milo narrates, then it reveals the save/pay.
+export function PriceCardWatch({
+  title, price, pct, lines, onDone,
+}: {
+  title: string; price: number; pct: number; lines: string[]; onDone: () => void
+}) {
+  const [solved, setSolved] = React.useState(false)
+  const doneRef = useRef(onDone)
+  doneRef.current = onDone
+  const save = tidy((pct / 100) * price)
+  const pay = tidy(price - save)
+  useEffect(() => {
+    const reveal = window.setTimeout(() => setSolved(true), 1600)
+    const cancel = speakSeq(lines, { onDone: () => window.setTimeout(() => doneRef.current(), 1200) })
+    return () => { window.clearTimeout(reveal); cancel() }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%' }}>
+      <PriceCard title={title} price={price} badge={`${pct}% OFF`} tone="sale" solved={solved ? { save, pay } : undefined} />
+      <p style={{ margin: 0, maxWidth: 460, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: 'var(--ink)' }}>
+        {solved ? lines[lines.length - 1] : lines[0]}
+      </p>
+    </div>
+  )
 }
 
 // ── PercentWatch: a narrated worked example (reused for re-teach) ───────────
@@ -308,9 +390,12 @@ export default function PercentagesTeenLesson({ childName, onLessonComplete }: P
     {
       bubble: 'A discount? Find the part, then subtract.', mood: 'thinking',
       render: (d) => (
-        <PercentWatch
+        <PriceCardWatch
+          title="Jacket"
+          price={50}
+          pct={10}
           lines={[
-            'A $50 jacket is 10 percent off. Ten percent of 50 is 5.',
+            'This $50 jacket is 10 percent off. Ten percent of 50 is 5.',
             'Subtract the discount: 50 minus 5 is 45. The sale price is $45.',
           ]}
           onDone={d}

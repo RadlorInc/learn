@@ -249,7 +249,7 @@ export default function DecimalsLesson({ childName, onLessonComplete }: Props) {
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Great work with decimals, ${childName}! Now let's practise!`}
+      finalSpeech={`Great work with decimals, ${childName}! Now let's practice!`}
     />
   )
 }

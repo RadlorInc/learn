@@ -58,7 +58,7 @@ export const CHAPTERS: ChapterMeta[] = [
   { id: 'matchingQuantities', name: 'Little Grocery',     parentLabel: 'Little Grocery',    emoji: '🛒', asset: '/assets/objects/basket.png',         hint: 'Fill each order — exactly N.', ageGroups: ['3-5'] },
   { id: 'numberComparison',   name: 'Bigger or Smaller',  parentLabel: 'Bigger or Smaller', emoji: '⚖️', asset: '/assets/objects/star-alt.png',       hint: 'Which is bigger?',           ageGroups: ['3-5'] },
   { id: 'shapes',             name: 'Shape House',        parentLabel: 'Shape House',       emoji: '🏠', asset: '/assets/shapes/house-complete.png',  hint: "Build Milo's house.",        ageGroups: ['3-5'] },
-  { id: 'colors',             name: 'Rainbow Town',       parentLabel: 'Rainbow Town',      emoji: '🌈', asset: '/assets/objects/flower-red.png',     hint: 'Tap the colour Milo names!', ageGroups: ['3-5'] },
+  { id: 'colors',             name: 'Rainbow Town',       parentLabel: 'Rainbow Town',      emoji: '🌈', asset: '/assets/objects/flower-red.png',     hint: 'Tap the color Milo names!', ageGroups: ['3-5'] },
   { id: 'patterns',           name: 'Bead Shop',          parentLabel: 'Bead Shop',         emoji: '📿', asset: '/assets/objects/star.png',           hint: 'Tap the bead that comes next!', ageGroups: ['3-5'] },
   { id: 'addition',           name: 'Simple Addition',    parentLabel: 'Addition',          emoji: '➕', asset: '/assets/objects/apple.png',          hint: 'Add apples together!',       ageGroups: ['3-5'] },
   { id: 'subtraction',        name: 'Simple Subtraction', parentLabel: 'Subtraction',       emoji: '➖', asset: '/assets/objects/firefly.png',        hint: 'How many are left?',         ageGroups: ['3-5'] },

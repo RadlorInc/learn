@@ -201,7 +201,7 @@ export default function AnglesSymmetryLesson({ childName, onLessonComplete }: Pr
       childName={childName}
       onLessonComplete={onLessonComplete}
       steps={buildSteps(childName)}
-      finalSpeech={`Great work, ${childName}! Angles and symmetry — now let's practise!`}
+      finalSpeech={`Great work, ${childName}! Angles and symmetry — now let's practice!`}
     />
   )
 }

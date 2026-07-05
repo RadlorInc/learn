@@ -54,8 +54,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ToastProvider />
         </MiloErrorBoundary>
         {/* SW registration lives in a static /public file (not inline) so the app ships no
-            inline scripts of its own — a prerequisite for a strict script-src CSP. See next.config.ts. */}
-        <script src="/sw-register.js" defer />
+            inline scripts of its own — a prerequisite for a strict script-src CSP. See next.config.ts.
+            No `defer`: it must run mid-parse — if the HTML stream never finishes, a deferred
+            script (and its localhost self-heal) would never execute. */}
+        <script src="/sw-register.js" />
       </body>
     </html>
   )

@@ -263,7 +263,7 @@ const HopPlay: React.FC<{ world: HopWorld; data: HopRound; mode: Mode; onComplet
   const btnStyle: React.CSSProperties = btn != null
     ? { width: btn, height: btn, borderRadius: Math.round(btn * 0.24), fontSize: Math.round(btn * 0.44) }
     : { width: 'clamp(74px,14vmin,104px)', height: 'clamp(74px,14vmin,104px)', borderRadius: 24, fontSize: 'clamp(30px,6vmin,44px)' }
-  // Milo sits far-left, so the centred group-row + ground band + buttons are horizontally clear of
+  // Milo sits far-left, so the centered group-row + ground band + buttons are horizontally clear of
   // him and can drop LOWER — centring in the band below the banner keeps the group row off it.
   const stackTop = short ? '55%' : '44%'
   const stackGap = short ? '1vh' : '2vh'

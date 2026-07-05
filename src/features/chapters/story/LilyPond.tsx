@@ -151,7 +151,7 @@ function Stage({ cfg, total, take, shown, left, lit, showLeft, glow, dir, dark, 
     : (total <= 4 ? 'clamp(94px, 18vmin, 210px)' : total <= 7 ? 'clamp(78px, 14vmin, 165px)' : 'clamp(62px, 11vmin, 135px)')
   const drift = dir === 'down' ? '4.5vh' : '-6vh'
   // Reposition the bands when short so banner + objects + question + buttons stack cleanly:
-  //   objects centred higher (clears the top banner), question box pulled up (clears the
+  //   objects centered higher (clears the top banner), question box pulled up (clears the
   //   bottom answer buttons). Tall/portrait keeps the original look.
   const rowTop = short ? '30%' : '36%'
   const qTop = short ? '61%' : '71%'

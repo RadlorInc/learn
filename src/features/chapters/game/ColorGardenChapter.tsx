@@ -4,7 +4,7 @@
  *
  * Same shape as ShapeHouseChapter / NumberDoorsChapter: keep the story portal mounted and
  * render the celebration over it (no cut to a blank screen). The pedagogy lives in the
- * colour-recognition walk (see story/RainbowTown.tsx). Reuses skill `colors`.
+ * color-recognition walk (see story/RainbowTown.tsx). Reuses skill `colors`.
  */
 import { createPortal } from 'react-dom'
 import { useEffect, useState, useRef, useCallback } from 'react'

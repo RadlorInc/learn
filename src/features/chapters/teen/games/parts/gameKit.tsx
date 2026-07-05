@@ -1,0 +1,503 @@
+'use client'
+/**
+ * gameKit — shared presentation + instrument library for the 12–14 PLAYABLE
+ * GAMES (the "Sale Day" template, generalized). ShopRush was the first, fully
+ * self-contained build; this kit lifts its proven bits so the other 11 chapters
+ * are a thin *data* file (palette + task pools + demo) over `GameShell`.
+ *
+ * Everything is palette-parameterized (each world re-tints `Palette`), pointer-
+ * driven (touch + mouse), and responsive (clamp-based sizing). No MCQ anywhere —
+ * every instrument produces a value by manipulation; grading compares it to the
+ * task answer (see GameShell).
+ */
+import { useRef, useState } from 'react'
+
+// ── palette (each world supplies its own; shape matches ShopRush's P) ─────────
+export interface Palette {
+  nightTop: string; nightBot: string
+  cream: string; creamSoft: string
+  inkOnPaper: string; mutedOnPaper: string
+  gold: string; goldDeep: string
+  coral: string; coralDeep: string; mint: string
+  glass: string; glassBorder: string
+}
+
+// ── number helpers ────────────────────────────────────────────────────────────
+export const tidy = (n: number) => Math.round(n * 1000) / 1000
+export const money = (n: number) => `$${tidy(n).toFixed(tidy(n) % 1 === 0 ? 0 : 2)}`
+export const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
+export const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b))
+export function reduce(n: number, d: number): string { const g = gcd(n, d) || 1; return `${n / g}/${d / g}` }
+export const signed = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
+
+/** Animate a numeric instrument from→to (used on a wrong answer to reveal it). */
+export function glideNumber(from: number, to: number, setValue: (n: number) => void, later: (fn: () => void, ms: number) => void, steps = 16) {
+  for (let i = 1; i <= steps; i++) later(() => setValue(tidy(from + ((to - from) * i) / steps)), 480 + i * 80)
+}
+
+// ── themed styles (functions of palette) ──────────────────────────────────────
+// Sizes use clamp(mobilePx, vw-term, maxPx): phones stay at the mobile floor, but on
+// a roomy laptop the vw term wins so everything scales up to fill the wide screen.
+export const headerChip = (P: Palette): React.CSSProperties => ({
+  background: P.glass, border: `1px solid ${P.glassBorder}`, borderRadius: 8, color: P.creamSoft,
+  fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'clamp(13px, 1.2vw, 17px)', padding: '6px 12px', cursor: 'pointer',
+})
+export const bigBtn = (P: Palette): React.CSSProperties => ({
+  padding: 'clamp(13px, 1.4vw, 19px) clamp(34px, 3.6vw, 56px)', borderRadius: 14, background: `linear-gradient(${P.coral}, ${P.coralDeep})`,
+  border: 'none', color: '#fff', fontFamily: 'var(--font-body)', fontWeight: 900, fontSize: 'clamp(16px, 1.6vw, 24px)',
+  letterSpacing: '0.05em', cursor: 'pointer', boxShadow: `0 6px 20px ${P.coralDeep}66`,
+})
+const ticketStyle = (P: Palette): React.CSSProperties => ({
+  position: 'relative', width: '100%', maxWidth: 'clamp(340px, 46vw, 560px)', background: P.cream, borderRadius: 12,
+  padding: 'clamp(10px, 1.2vw, 18px) clamp(16px, 2vw, 28px) clamp(14px, 1.5vw, 22px)', boxSizing: 'border-box', color: P.inkOnPaper,
+  boxShadow: '0 10px 28px rgba(0,0,0,0.42)', transform: 'rotate(-0.6deg)',
+})
+
+// ── presentation components ───────────────────────────────────────────────────
+export function Ticket({ P, children }: { P: Palette; children: React.ReactNode }) {
+  return <div className="gk-ticket" style={ticketStyle(P)}>{children}</div>
+}
+export function TicketHead({ P, n, label }: { P: Palette; n: number; label: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px dashed ${P.mutedOnPaper}`, paddingBottom: 6, fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1vw, 15px)', letterSpacing: '0.1em', textTransform: 'uppercase', color: P.mutedOnPaper }}>
+      <span>#{String(n).padStart(2, '0')}</span><span>{label}</span>
+    </div>
+  )
+}
+export function Row({ P, title, price, badge, tone = 'a', struck }: { P: Palette; title: string; price?: string; badge: string; tone?: 'a' | 'b'; struck?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 'clamp(10px, 1.2vw, 16px)', padding: '8px 0 2px', flexWrap: 'wrap' }}>
+      <span style={{ fontWeight: 700, fontSize: 'clamp(16px, 1.6vw, 23px)' }}>{title}</span>
+      {price && <span style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(24px, 2.5vw, 36px)', textDecoration: struck ? 'line-through' : 'none', color: struck ? P.mutedOnPaper : P.inkOnPaper }}>{price}</span>}
+      <span style={{ fontSize: 'clamp(12px, 1.15vw, 17px)', fontWeight: 800, color: '#fff', background: tone === 'b' ? '#7a6bb5' : P.coral, borderRadius: 16, padding: '4px 12px', whiteSpace: 'nowrap' }}>{badge}</span>
+    </div>
+  )
+}
+export function Stamp({ P, text = 'DONE ✓' }: { P: Palette; text?: string }) {
+  return <div className="gk-stamp" style={{ position: 'absolute', right: 10, top: 6, border: `3px solid ${P.mint}`, borderRadius: 8, color: P.mint, fontWeight: 900, fontSize: 'clamp(14px, 1.3vw, 19px)', letterSpacing: '0.12em', padding: '2px 8px', background: 'rgba(255,244,221,0.85)' }}>{text}</div>
+}
+export function Says({ P, text }: { P: Palette; text: string }) {
+  return <div style={{ width: '100%', maxWidth: 'clamp(460px, 56vw, 680px)', background: P.glass, border: `1px solid ${P.glassBorder}`, borderRadius: 12, padding: 'clamp(9px, 1.1vw, 16px) clamp(14px, 1.6vw, 24px)', fontWeight: 600, fontSize: 'clamp(15px, 1.5vw, 22px)', lineHeight: 1.45, color: P.cream, minHeight: 40, boxSizing: 'border-box', textAlign: 'center', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>{text}</div>
+}
+export function Readout({ P, text, reveal }: { P: Palette; text: string; reveal?: boolean }) {
+  return <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(26px, 4.4vw, 50px)', fontWeight: 800, color: reveal ? P.mint : P.gold, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55` }}>{text}</div>
+}
+export function CommitBtn({ P, label, onClick, disabled }: { P: Palette; label: string; onClick: () => void; disabled?: boolean }) {
+  return <button type="button" onClick={onClick} disabled={disabled} style={{ ...bigBtn(P), opacity: disabled ? 0.5 : 1 }}>{label}</button>
+}
+function Nudge({ P, label, onClick, disabled }: { P: Palette; label: string; onClick: () => void; disabled?: boolean }) {
+  return <button type="button" onClick={onClick} disabled={disabled} style={{ width: 'clamp(44px, 4.4vw, 60px)', height: 'clamp(44px, 4.4vw, 60px)', borderRadius: '50%', border: `1px solid ${P.glassBorder}`, background: P.glass, color: P.cream, fontFamily: 'var(--font-numeric)', fontWeight: 700, fontSize: 'clamp(22px, 2.2vw, 30px)', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1 }}>{label}</button>
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INSTRUMENTS — each produces a value by manipulation, calls onCommit(value).
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** Horizontal value dial (the workhorse — slide/nudge to a number, then commit). */
+export function SlideValue({
+  P, value, setValue, min, max, step = 1, disabled, reveal, onCommit, commitLabel = 'CONFIRM ✓', format,
+}: {
+  P: Palette; value: number; setValue: (n: number) => void; min: number; max: number; step?: number
+  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string; format?: (n: number) => string
+}) {
+  const fmt = format ?? ((n: number) => `${tidy(n)}`)
+  const clamp = (n: number) => Math.min(max, Math.max(min, tidy(n)))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
+      <input type="range" min={min} max={max} step={step} value={value} disabled={disabled}
+        onChange={(e) => setValue(Number(e.target.value))}
+        style={{ width: '100%', maxWidth: 'clamp(400px, 52vw, 620px)', height: 'clamp(34px, 3.4vw, 46px)', accentColor: P.gold, cursor: disabled ? 'default' : 'pointer' }} aria-label="value dial" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Nudge P={P} label="−" disabled={disabled} onClick={() => setValue(clamp(value - step))} />
+        <div style={{ minWidth: 120, textAlign: 'center' }}><Readout P={P} text={fmt(value)} reveal={reveal} /></div>
+        <Nudge P={P} label="+" disabled={disabled} onClick={() => setValue(clamp(value + step))} />
+      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
+    </div>
+  )
+}
+
+/** Vertical thermometer — pull the mercury up/down a signed track (drag or ± tap). */
+export function VThermo({
+  P, value, setValue, min, max, disabled, reveal, onCommit, commitLabel = 'LOCK IN ✓', unit = '°',
+}: {
+  P: Palette; value: number; setValue: (n: number) => void; min: number; max: number
+  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string; unit?: string
+}) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const dragging = useRef(false)
+  const frac = (value - min) / (max - min)         // 0 bottom … 1 top
+  const zeroFrac = (0 - min) / (max - min)
+  const fill = reveal ? P.mint : P.coral
+  const fromY = (clientY: number) => {
+    const el = trackRef.current; if (!el) return
+    const r = el.getBoundingClientRect()
+    const f = 1 - Math.min(1, Math.max(0, (clientY - r.top) / r.height))
+    setValue(Math.round(min + f * (max - min)))
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'stretch', gap: 14 }}>
+        <div
+          ref={trackRef}
+          onPointerDown={(e) => { if (disabled) return; dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); fromY(e.clientY) }}
+          onPointerMove={(e) => { if (dragging.current) fromY(e.clientY) }}
+          onPointerUp={() => { dragging.current = false }}
+          style={{ position: 'relative', width: 'clamp(46px, 5.4vw, 72px)', height: 'clamp(210px, 27vh, 270px)', borderRadius: 24, background: P.glass, border: `1px solid ${P.glassBorder}`, touchAction: 'none', cursor: disabled ? 'default' : 'ns-resize' }}
+        >
+          {/* zero tick */}
+          <div style={{ position: 'absolute', left: -6, right: -6, bottom: `${zeroFrac * 100}%`, height: 2, background: P.glassBorder }} />
+          <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: `calc(${frac * 100}% - 16px)`, minHeight: 6, borderRadius: 16, background: `linear-gradient(${fill}, ${fill}cc)`, transition: 'height 90ms' }} />
+          {/* knob */}
+          <div style={{ position: 'absolute', left: '50%', bottom: `calc(${frac * 100}% - 12px)`, transform: 'translateX(-50%)', width: 30, height: 24, borderRadius: 8, background: P.cream, boxShadow: '0 2px 8px rgba(0,0,0,0.4)', transition: 'bottom 90ms' }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Nudge P={P} label="+" disabled={disabled} onClick={() => setValue(Math.min(max, value + 1))} />
+          <Readout P={P} text={`${value}${unit}`} reveal={reveal} />
+          <Nudge P={P} label="−" disabled={disabled} onClick={() => setValue(Math.max(min, value - 1))} />
+        </div>
+      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
+    </div>
+  )
+}
+
+/** Segmented bar — shade `count` of `segments` parts (fractions / part-of-part). */
+export function BarShade({
+  P, count, setCount, segments, disabled, reveal, onCommit, commitLabel = 'CONFIRM ✓', label,
+}: {
+  P: Palette; count: number; setCount: (n: number) => void; segments: number
+  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string; label?: string
+}) {
+  const painting = useRef(false)
+  const fill = reveal ? P.mint : P.gold
+  const rim = reveal ? '#3fa77c' : P.goldDeep
+  const set = (i: number) => { if (!disabled) setCount(i + 1) }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
+      <div
+        onPointerUp={() => { painting.current = false }}
+        onPointerLeave={() => { painting.current = false }}
+        style={{ display: 'grid', gridTemplateColumns: `repeat(${segments}, 1fr)`, gap: 3, width: 'min(86vw, 540px)', padding: 8, borderRadius: 12, background: P.glass, border: `1px solid ${P.glassBorder}`, touchAction: 'none', userSelect: 'none' }}
+      >
+        {Array.from({ length: segments }, (_, i) => {
+          const on = i < count
+          return (
+            <div key={i}
+              onPointerDown={() => { if (disabled) return; painting.current = true; set(i) }}
+              onPointerEnter={() => { if (painting.current) set(i) }}
+              style={{ height: 54, borderRadius: 4, background: on ? fill : 'rgba(255,244,221,0.10)', border: `1px solid ${on ? rim : 'rgba(255,244,221,0.18)'}`, cursor: disabled ? 'default' : 'pointer', transition: 'background 90ms' }} />
+          )
+        })}
+      </div>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(20px, 2vw, 29px)', fontWeight: 800, color: fill }}>{count}/{segments}{count > 0 ? ` = ${reduce(count, segments)}` : ''}</div>
+      {label && <div style={{ fontSize: 12, color: P.creamSoft }}>{label}</div>}
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(count)} />
+    </div>
+  )
+}
+
+/** A GRAB-AND-TURN rotary crank — the kid holds the handle and physically turns
+ *  the gear. One full turn forward = one ×base crank; turning BACK = ÷base (undo),
+ *  floored at `floor` (default 1) so it can't slip below the start into fractions.
+ *  The gear also spins when `value` is set programmatically (so the tutorial demo
+ *  visibly rotates it). Pointer-driven → works with touch + mouse. */
+const CRANK_DEG = 360   // degrees of turn per one ×base crank (one full revolution)
+export function CrankGear({
+  P, value, setValue, base, disabled, reveal, onCommit, commitLabel = 'RUN IT ✓', floor = 1,
+}: {
+  P: Palette; value: number; setValue: (n: number) => void; base: number
+  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string; floor?: number
+}) {
+  const ref = useRef<SVGSVGElement>(null)
+  const dragging = useRef(false)
+  const lastA = useRef(0)
+  const acc = useRef(0)                 // accumulated turn since the last crank tick
+  const valRef = useRef(value); valRef.current = value
+  const [dragRot, setDragRot] = useState<number | null>(null)
+  const fill = reveal ? P.mint : P.gold
+  const rim = reveal ? '#3fa77c' : P.goldDeep
+
+  // how many ×base cranks from the floor we are at → drives the resting rotation
+  const turns = value > floor ? Math.round(Math.log(value / floor) / Math.log(base)) : 0
+  const restRot = turns * CRANK_DEG
+  const rot = dragRot ?? restRot
+
+  const angle = (x: number, y: number) => {
+    const el = ref.current; if (!el) return 0
+    const r = el.getBoundingClientRect()
+    return (Math.atan2(y - (r.top + r.height / 2), x - (r.left + r.width / 2)) * 180) / Math.PI
+  }
+  const applyTicks = (n: number) => {
+    let v = valRef.current
+    if (n > 0) { for (let i = 0; i < n; i++) v = tidy(v * base) }
+    else { for (let i = 0; i < -n; i++) { const b = tidy(v / base); if (b < floor - 1e-9) break; v = b } }
+    valRef.current = v; setValue(v)
+  }
+  const onDown = (e: React.PointerEvent) => {
+    if (disabled) return
+    dragging.current = true; acc.current = 0; lastA.current = angle(e.clientX, e.clientY)
+    setDragRot(restRot); try { (e.currentTarget as Element).setPointerCapture(e.pointerId) } catch {}
+  }
+  const onMove = (e: React.PointerEvent) => {
+    if (!dragging.current) return
+    const a = angle(e.clientX, e.clientY)
+    let d = a - lastA.current; if (d > 180) d -= 360; if (d < -180) d += 360
+    lastA.current = a; acc.current += d
+    setDragRot((r) => (r ?? restRot) + d)
+    let ticks = 0
+    while (acc.current >= CRANK_DEG) { acc.current -= CRANK_DEG; ticks++ }
+    while (acc.current <= -CRANK_DEG) { acc.current += CRANK_DEG; ticks-- }
+    if (ticks) applyTicks(ticks)
+  }
+  const onUp = () => { dragging.current = false; acc.current = 0; setDragRot(null) }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <svg ref={ref} viewBox="0 0 100 100"
+        onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+        style={{ width: 'min(56vw, 300px)', height: 'min(56vw, 300px)', touchAction: 'none', cursor: disabled ? 'default' : 'grab', userSelect: 'none' }}>
+        <g transform={`rotate(${rot} 50 50)`} style={{ transition: dragging.current ? 'none' : 'transform 340ms cubic-bezier(.2,1.05,.35,1)' }}>
+          {Array.from({ length: 8 }, (_, i) => (
+            <rect key={i} x={46} y={1} width={8} height={15} rx={2} fill={fill} transform={`rotate(${i * 45} 50 50)`} />
+          ))}
+          <circle cx={50} cy={50} r={34} fill={P.glass} stroke={rim} strokeWidth={2} />
+          <circle cx={50} cy={50} r={7} fill={rim} />
+          {/* the grab handle — sits on the rim so it clearly reads as "turn me" */}
+          <circle cx={50} cy={18} r={8} fill={fill} stroke="#fff" strokeWidth={1.5} />
+          <circle cx={50} cy={18} r={3} fill={rim} />
+        </g>
+      </svg>
+      <Readout P={P} text={`${tidy(value)}`} reveal={reveal} />
+      {!disabled && <div style={{ fontSize: 12, color: P.creamSoft, textAlign: 'center' }}>grab the handle &amp; turn — ×{base} each turn, back to undo</div>}
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
+    </div>
+  )
+}
+
+export interface XY { x: number; y: number }
+/** Tap the coordinate grid to drop a pin at (x, y). Four quadrants. */
+export function PlotGrid({
+  P, point, setPoint, range = 6, disabled, reveal, onCommit, commitLabel = 'DELIVER ✓',
+}: {
+  P: Palette; point: XY | null; setPoint: (p: XY) => void; range?: number
+  disabled?: boolean; reveal?: boolean; onCommit: (p: XY) => void; commitLabel?: string
+}) {
+  const S = 300, pad = 16, span = 2 * range
+  const cell = (S - 2 * pad) / span
+  const toPx = (v: number) => pad + (v + range) * cell
+  const dotColor = reveal ? P.mint : P.gold
+  const onTap = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (disabled) return
+    const r = e.currentTarget.getBoundingClientRect()
+    const gx = Math.round(((e.clientX - r.left) / r.width * S - pad) / cell - range)
+    const gy = Math.round(range - ((e.clientY - r.top) / r.height * S - pad) / cell)
+    setPoint({ x: Math.max(-range, Math.min(range, gx)), y: Math.max(-range, Math.min(range, gy)) })
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <svg viewBox={`0 0 ${S} ${S}`} onPointerDown={onTap} style={{ width: 'min(80vw, 34vh)', height: 'min(80vw, 34vh)', touchAction: 'none', background: P.glass, border: `1px solid ${P.glassBorder}`, borderRadius: 12, cursor: disabled ? 'default' : 'crosshair' }}>
+        {Array.from({ length: span + 1 }, (_, i) => (
+          <g key={i}>
+            <line x1={toPx(-range) + i * cell} y1={pad} x2={toPx(-range) + i * cell} y2={S - pad} stroke={P.glassBorder} strokeWidth={i === range ? 1.6 : 0.6} />
+            <line x1={pad} y1={pad + i * cell} x2={S - pad} y2={pad + i * cell} stroke={P.glassBorder} strokeWidth={i === range ? 1.6 : 0.6} />
+          </g>
+        ))}
+        {point && (
+          <g>
+            <line x1={toPx(point.x)} y1={toPx(0)} x2={toPx(point.x)} y2={S - toPx(point.y)} stroke={`${dotColor}66`} strokeDasharray="3 3" />
+            <circle cx={toPx(point.x)} cy={S - toPx(point.y)} r={7} fill={dotColor} stroke="#fff" strokeWidth={1.5} />
+          </g>
+        )}
+      </svg>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(20px, 2vw, 29px)', fontWeight: 800, color: dotColor }}>{point ? `(${point.x}, ${point.y})` : 'tap the map'}</div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled || !point} onClick={() => point && onCommit(point)} />
+    </div>
+  )
+}
+
+export interface Line { m: number; b: number }
+/** Set a line's slope & intercept with two dials; live line drawn on a grid. */
+export function LineSetter({
+  P, line, setLine, range = 6, disabled, reveal, onCommit, commitLabel = 'SET LINE ✓',
+}: {
+  P: Palette; line: Line; setLine: (l: Line) => void; range?: number
+  disabled?: boolean; reveal?: boolean; onCommit: (l: Line) => void; commitLabel?: string
+}) {
+  const S = 260, pad = 14, span = 2 * range
+  const cell = (S - 2 * pad) / span
+  const toPx = (v: number) => pad + (v + range) * cell
+  const yAt = (x: number) => line.m * x + line.b
+  const col = reveal ? P.mint : P.gold
+  const clampY = (y: number) => Math.max(-range - 2, Math.min(range + 2, y))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
+      <svg viewBox={`0 0 ${S} ${S}`} style={{ width: 'min(80vw, 40vh)', height: 'min(80vw, 40vh)', background: P.glass, border: `1px solid ${P.glassBorder}`, borderRadius: 12 }}>
+        {Array.from({ length: span + 1 }, (_, i) => (
+          <g key={i}>
+            <line x1={pad + i * cell} y1={pad} x2={pad + i * cell} y2={S - pad} stroke={P.glassBorder} strokeWidth={i === range ? 1.6 : 0.5} />
+            <line x1={pad} y1={pad + i * cell} x2={S - pad} y2={pad + i * cell} stroke={P.glassBorder} strokeWidth={i === range ? 1.6 : 0.5} />
+          </g>
+        ))}
+        <line x1={toPx(-range)} y1={S - toPx(clampY(yAt(-range)))} x2={toPx(range)} y2={S - toPx(clampY(yAt(range)))} stroke={col} strokeWidth={3} strokeLinecap="round" />
+        <circle cx={toPx(0)} cy={S - toPx(clampY(line.b))} r={5} fill={col} stroke="#fff" strokeWidth={1.4} />
+      </svg>
+      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <DialCol P={P} label="slope" value={line.m} col={col} disabled={disabled} onDown={() => setLine({ ...line, m: Math.max(-5, line.m - 1) })} onUp={() => setLine({ ...line, m: Math.min(5, line.m + 1) })} />
+        <DialCol P={P} label="start" value={line.b} col={col} disabled={disabled} onDown={() => setLine({ ...line, b: Math.max(-range, line.b - 1) })} onUp={() => setLine({ ...line, b: Math.min(range, line.b + 1) })} />
+      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(line)} />
+    </div>
+  )
+}
+function DialCol({ P, label, value, col, disabled, onDown, onUp }: { P: Palette; label: string; value: number; col: string; disabled?: boolean; onDown: () => void; onUp: () => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+      <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: P.creamSoft }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Nudge P={P} label="−" disabled={disabled} onClick={onDown} />
+        <span style={{ minWidth: 40, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(26px, 2.6vw, 38px)', fontWeight: 800, color: col }}>{value}</span>
+        <Nudge P={P} label="+" disabled={disabled} onClick={onUp} />
+      </div>
+    </div>
+  )
+}
+
+/** Balance beam — slide x; the beam tips until left(x) == right, then it's level. */
+export function BalanceBeam({
+  P, x, setX, min, max, leftOf, right, leftExpr, disabled, reveal, onCommit, commitLabel = 'BALANCE ✓',
+}: {
+  P: Palette; x: number; setX: (n: number) => void; min: number; max: number
+  leftOf: (x: number) => number; right: number; leftExpr: string
+  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string
+}) {
+  const diff = leftOf(x) - right
+  const tilt = Math.max(-14, Math.min(14, -diff * 2))   // beam tips toward heavier side
+  const col = reveal ? P.mint : P.gold
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
+      <svg viewBox="0 0 260 120" style={{ width: 'min(84vw, 440px)', height: 'auto' }}>
+        <g transform="translate(130 40)">
+          <g transform={`rotate(${tilt})`} style={{ transition: 'transform 200ms' }}>
+            <rect x={-110} y={-4} width={220} height={8} rx={4} fill={col} />
+            <rect x={-104} y={-40} width={64} height={30} rx={6} fill={P.glass} stroke={P.glassBorder} />
+            <rect x={40} y={-40} width={64} height={30} rx={6} fill={P.glass} stroke={P.glassBorder} />
+            <text x={-72} y={-20} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={15} fill={P.cream}>{tidy(leftOf(x))}</text>
+            <text x={72} y={-20} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={15} fill={P.cream}>{right}</text>
+          </g>
+          <polygon points="0,4 -14,56 14,56" fill={P.glassBorder} />
+        </g>
+      </svg>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 16, fontWeight: 700, color: Math.abs(diff) < 1e-6 ? P.mint : P.creamSoft }}>
+        {leftExpr} {Math.abs(diff) < 1e-6 ? '= ' : diff > 0 ? '> ' : '< '} {right}{Math.abs(diff) < 1e-6 ? '  ✓ level' : ''}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', justifyContent: 'center' }}>
+        <Nudge P={P} label="−" disabled={disabled} onClick={() => setX(Math.max(min, tidy(x - 1)))} />
+        <div style={{ minWidth: 90, textAlign: 'center' }}><Readout P={P} text={`x = ${tidy(x)}`} reveal={reveal} /></div>
+        <Nudge P={P} label="+" disabled={disabled} onClick={() => setX(Math.min(max, tidy(x + 1)))} />
+      </div>
+      <input type="range" min={min} max={max} step={1} value={x} disabled={disabled} onChange={(e) => setX(Number(e.target.value))} style={{ width: '100%', maxWidth: 'clamp(360px, 46vw, 560px)', height: 'clamp(30px, 3vw, 44px)', accentColor: P.gold }} aria-label="x dial" />
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(x)} />
+    </div>
+  )
+}
+
+export interface Mix { a: number; b: number }
+/** Two taps filling one tank — set both pours; grade the one the task asks for. */
+export function TwoTaps({
+  P, mix, setMix, max, labelA, labelB, fixed, disabled, reveal, onCommit, commitLabel = 'POUR ✓',
+}: {
+  P: Palette; mix: Mix; setMix: (m: Mix) => void; max: number; labelA: string; labelB: string
+  fixed?: 'a' | 'b'; disabled?: boolean; reveal?: boolean; onCommit: (m: Mix) => void; commitLabel?: string
+}) {
+  const col = reveal ? P.mint : P.gold
+  const Tank = ({ v, label, tint, lock }: { v: number; label: string; tint: string; lock?: boolean }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+      <div style={{ position: 'relative', width: 'clamp(46px, 5.4vw, 72px)', height: 'clamp(150px, 22vh, 210px)', borderRadius: 10, background: P.glass, border: `1px solid ${P.glassBorder}`, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${(v / max) * 100}%`, background: tint, transition: 'height 120ms' }} />
+      </div>
+      <span style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(18px, 1.9vw, 27px)', color: lock ? P.creamSoft : col }}>{v}</span>
+      <span style={{ fontSize: 'clamp(12px, 1.1vw, 16px)', color: P.creamSoft }}>{label}{lock ? ' 🔒' : ''}</span>
+    </div>
+  )
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%' }}>
+      <div style={{ display: 'flex', gap: 26 }}>
+        <Tank v={mix.a} label={labelA} tint={P.gold} lock={fixed === 'a'} />
+        <Tank v={mix.b} label={labelB} tint={P.coral} lock={fixed === 'b'} />
+      </div>
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {fixed !== 'a' && <SmallStepper P={P} label={labelA} value={mix.a} disabled={disabled} onDown={() => setMix({ ...mix, a: Math.max(0, mix.a - 1) })} onUp={() => setMix({ ...mix, a: Math.min(max, mix.a + 1) })} />}
+        {fixed !== 'b' && <SmallStepper P={P} label={labelB} value={mix.b} disabled={disabled} onDown={() => setMix({ ...mix, b: Math.max(0, mix.b - 1) })} onUp={() => setMix({ ...mix, b: Math.min(max, mix.b + 1) })} />}
+      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(mix)} />
+    </div>
+  )
+}
+function SmallStepper({ P, label, value, disabled, onDown, onUp }: { P: Palette; label: string; value: number; disabled?: boolean; onDown: () => void; onUp: () => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <Nudge P={P} label="−" disabled={disabled} onClick={onDown} />
+      <span style={{ minWidth: 54, textAlign: 'center', fontSize: 12, color: P.creamSoft }}>{label}<br /><b style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(18px, 1.8vw, 26px)', color: P.cream }}>{value}</b></span>
+      <Nudge P={P} label="+" disabled={disabled} onClick={onUp} />
+    </div>
+  )
+}
+
+// ── tutorial hand cue — an animated finger showing the gesture ──
+//    drag = horizontal · dragV = vertical (up/down) · tap · crank (rotate)
+export type HandKind = 'drag' | 'dragV' | 'tap' | 'crank'
+export function HandCue({ P, kind, label }: { P: Palette; kind: HandKind; label?: string }) {
+  const text = label ?? (kind === 'tap' ? 'tap' : kind === 'crank' ? 'turn' : 'drag')
+  return (
+    <div className={`hc hc-${kind}`} aria-hidden style={{ display: 'flex', alignItems: 'center', gap: 8, color: P.creamSoft, fontSize: 13, fontWeight: 700, letterSpacing: '0.04em' }}>
+      <span className="hc-hand" style={{ fontSize: 26, display: 'inline-block', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>👆</span>
+      <span>{text}</span>
+      <style>{`
+        .hc-drag .hc-hand { animation: hcDrag 1.5s ease-in-out infinite; }
+        @keyframes hcDrag { 0%,100% { transform: translateX(-14px) } 50% { transform: translateX(14px) } }
+        .hc-dragV .hc-hand { animation: hcDragV 1.5s ease-in-out infinite; }
+        @keyframes hcDragV { 0%,100% { transform: translateY(-12px) } 50% { transform: translateY(12px) } }
+        .hc-tap .hc-hand { animation: hcTap 1s ease-in-out infinite; }
+        @keyframes hcTap { 0%,100% { transform: translateY(0) scale(1) } 45% { transform: translateY(5px) scale(0.82) } }
+        .hc-crank .hc-hand { animation: hcCrank 1.6s linear infinite; transform-origin: 50% 50%; }
+        @keyframes hcCrank { from { transform: rotate(0deg) translateX(9px) rotate(0deg) } to { transform: rotate(360deg) translateX(9px) rotate(-360deg) } }
+        @media (prefers-reduced-motion: reduce) { .hc-hand { animation: none !important } }
+      `}</style>
+    </div>
+  )
+}
+
+// ── Blackboard — Milo's chalkboard. As he SPEAKS each walkthrough step, the
+//    matching math is WRITTEN here, one line at a time (chalk wipes in
+//    left-to-right, like a teacher writing while talking). `writingIndex` is the
+//    line currently being written (gets the animation); earlier lines stay up.
+export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: string[]; writingIndex: number }) {
+  if (!lines.length) return null
+  return (
+    <div style={{
+      width: '100%', maxWidth: 'clamp(340px, 46vw, 560px)', minHeight: 48, boxSizing: 'border-box',
+      background: 'linear-gradient(160deg, #21473c, #16302a)',
+      border: '4px solid #7a5230', borderRadius: 12,
+      boxShadow: 'inset 0 0 26px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4)',
+      padding: 'clamp(10px, 1.6vw, 22px) clamp(16px, 2vw, 30px)', display: 'flex', flexDirection: 'column', gap: 'clamp(3px, 0.7vw, 10px)', alignItems: 'center',
+    }}>
+      {lines.map((ln, k) => (
+        <div key={k} className={k === writingIndex ? 'mb-chalk mb-writing' : 'mb-chalk'}
+          style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(18px, 2.1vw, 31px)', fontWeight: 700, letterSpacing: '0.03em', color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.4)', lineHeight: 1.25, textAlign: 'center' }}>
+          {ln}
+        </div>
+      ))}
+      <style>{`
+        .mb-writing { animation: mbWrite 1.6s cubic-bezier(.36,0,.25,1) both; }
+        @keyframes mbWrite {
+          from { clip-path: inset(0 100% 0 0); opacity: 0.35 }
+          to   { clip-path: inset(0 0 0 0);   opacity: 1 }
+        }
+        @media (prefers-reduced-motion: reduce) { .mb-writing { animation: none } }
+      `}</style>
+    </div>
+  )
+}
+
+export { Nudge }

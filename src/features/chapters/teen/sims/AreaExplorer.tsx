@@ -7,7 +7,7 @@
  * triangle ½×b×h — recomputing in real time (PhET / Desmos style). Slider-driven
  * (not free-drag) so it's touch-friendly, accessible, and testable. Mature Field
  * Lab look — an instrument, not a cartoon. Reads theme from the ancestor
- * data-band scope; colours/fonts via CSS variables only.
+ * data-band scope; colors/fonts via CSS variables only.
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'

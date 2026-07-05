@@ -69,7 +69,7 @@ function mkRead(d: 1 | 2 | 3): DgRound {
   const shaded = d === 1 ? rint(1, 9) * 10 : rint(11, 96)   // L1 tenths (multiple of 10), L2/L3 any hundredths
   const correct = dec(shaded)
   const opts = new Set<string>([correct])
-  // a tenths/hundredths confusion (0.4 ↔ 0.04, or 0.37 ↔ 0.73) + ±0.1 neighbours
+  // a tenths/hundredths confusion (0.4 ↔ 0.04, or 0.37 ↔ 0.73) + ±0.1 neighbors
   if (shaded % 10 === 0) opts.add(dec(shaded / 10))            // 0.4 vs 0.04
   else opts.add(dec(((shaded % 10) * 10) + Math.floor(shaded / 10)))  // swap digits: 0.37 → 0.73
   for (const cand of shuffle([shaded + 10, shaded - 10, shaded + 1, shaded - 1, shaded + 11])) {

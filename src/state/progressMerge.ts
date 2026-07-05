@@ -14,7 +14,7 @@ import { getLevelFromXP } from '@/core/leveling'
 /**
  * Merge a learner's server-side state (cross-device) into their local profile.
  * Everything is MONOTONIC — it never regresses:
- *   - stars/XP/streak → max(local, server)
+ *   - stars/XP        → max(local, server)
  *   - coins balance   → earned (server) − spent, spent itself monotonic
  *   - owned items     → union; equipped → server when present
  */
@@ -31,10 +31,6 @@ export function mergeServerProgress(
   }
 
   const totalXP        = Math.max(profile.totalXP, stats?.total_xp ?? 0)
-  const currentStreak  = Math.max(profile.currentStreak, stats?.current_streak ?? 0)
-  const lastPlayedDate = stats?.last_played_at
-    ? new Date(stats.last_played_at).toDateString()
-    : profile.lastPlayedDate
 
   // ── Coins: balance = earned − spent, both monotonic so it never loses ──
   const earned = stats?.total_coins ?? 0
@@ -59,30 +55,9 @@ export function mergeServerProgress(
     chapterStars: cs,
     totalXP,
     currentLevel: getLevelFromXP(totalXP),
-    currentStreak,
-    lastPlayedDate,
     totalCoins,
     coinsSpent: spent,
     ownedItems,
     equippedItems,
   }
-}
-
-/**
- * The streak value after finishing a chapter today. Increments once per calendar
- * day: same day → unchanged, consecutive day → +1, a missed day → reset to 1.
- * Day comparison is done on caller-supplied day-strings (Date#toDateString) so
- * this stays pure and testable.
- */
-export function nextStreak(
-  lastPlayedDate: string,
-  currentStreak: number,
-  today: string,
-  yesterday: string,
-): number {
-  return lastPlayedDate === today
-    ? currentStreak       // already played today
-    : lastPlayedDate === yesterday
-      ? currentStreak + 1 // consecutive day
-      : 1                 // missed a day — reset
 }

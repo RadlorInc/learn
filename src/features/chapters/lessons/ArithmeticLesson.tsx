@@ -147,6 +147,6 @@ export default function ArithmeticLesson({ op, childName, onLessonComplete }: Pr
   ]
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Great work, ${childName}! You can ${verb} big numbers! Let’s practise!`} />
+      finalSpeech={`Great work, ${childName}! You can ${verb} big numbers! Let’s practice!`} />
   )
 }

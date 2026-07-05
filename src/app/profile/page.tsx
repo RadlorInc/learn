@@ -41,7 +41,6 @@ export default function ProfilePage() {
   const totalXP      = stats?.total_xp      ?? profile.totalXP
   const totalCoins   = stats?.total_coins   ?? profile.totalCoins
   const currentLevel = stats?.current_level ?? profile.currentLevel
-  const streak       = stats?.current_streak ?? profile.currentStreak
 
   const levelName   = LEVEL_NAMES[Math.min(currentLevel - 1, LEVEL_NAMES.length - 1)]
   const levelPct    = Math.round(getLevelProgress(totalXP, currentLevel) * 100)
@@ -153,11 +152,10 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Coins + streak */}
+          {/* Coins */}
           <div style={{ display: 'flex', gap: 10, width: '100%' }}>
             {[
               { label: 'COINS',      value: totalCoins, bg: 'var(--sun-yellow-soft)', border: 'var(--sun-yellow-deep)', dot: '🪙' },
-              { label: 'DAY STREAK', value: streak,     bg: 'var(--garden-green-soft)', border: 'var(--garden-green)', dot: '•' },
             ].map(s => (
               <div key={s.label} style={{
                 flex: 1, background: s.bg,

@@ -55,15 +55,12 @@ export default function InsightsPage() {
           <div style={S.cardsRow}>
             <Stat label="Daily opened" value={m.dailyOpens} />
             <Stat label="Daily finished" value={m.dailyCompletes} sub={`${pct(m.dailyCompletes, m.dailyOpens)} completion`} />
-            <Stat label="On a streak now" value={m.activeStreaks} sub={`${pct(m.activeStreaks, m.learners)} of learners`} hot />
-            <Stat label="Longest current" value={`${m.maxStreak}d`} />
-            <Stat label="Longest ever" value={`${m.bestStreak}d`} />
           </div>
 
           <h2 style={S.h2}>Per learner</h2>
           <div style={{ overflowX: 'auto' }}>
             <table style={S.table}>
-              <thead><tr>{['Learner', 'Age', 'First seen', 'Last seen', 'Days active', 'Sessions', 'Span', 'Streak'].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Learner', 'Age', 'First seen', 'Last seen', 'Days active', 'Sessions', 'Span'].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
               <tbody>
                 {m.rows.map(r => (
                   <tr key={r.id}>
@@ -74,7 +71,6 @@ export default function InsightsPage() {
                     <td style={S.td}>{r.activeDays}</td>
                     <td style={S.td}>{r.sessions}</td>
                     <td style={S.td}>{r.spanDays}d</td>
-                    <td style={S.td}>{r.streakCur > 0 ? `🔥 ${r.streakCur}` : '—'}{r.streakBest > r.streakCur ? ` (best ${r.streakBest})` : ''}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,9 +1,9 @@
 'use client'
 export const dynamic = 'force-static'
 /**
- * Catch by Color — AR activity. Coloured items fall; Milo names a colour and the
+ * Catch by Color — AR activity. Colored items fall; Milo names a color and the
  * child catches only the matching ones with their open-hand basket. Teaches
- * colour recognition / sorting. On-device, consent-gated, adaptive.
+ * color recognition / sorting. On-device, consent-gated, adaptive.
  */
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -75,7 +75,7 @@ export default function CatchColorActivity() {
     const next = roundIdx + 1
     window.setTimeout(() => { if (next >= TOTAL_ROUNDS) finish(); else setRoundIdx(next) }, 1500)
   }
-  failRef.current = () => ada.record(false) // wrong colour → counts toward demotion
+  failRef.current = () => ada.record(false) // wrong color → counts toward demotion
 
   function stop() {
     cancelAnimationFrame(rafRef.current)
@@ -198,7 +198,7 @@ export default function CatchColorActivity() {
           <div style={{ fontSize: 64 }}>🎨</div>
           <h1 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', margin: '8px 0' }}>Catch the Color</h1>
           {consented
-            ? <p style={muted}>Milo names a colour — catch only those with your hand!</p>
+            ? <p style={muted}>Milo names a color — catch only those with your hand!</p>
             : <p style={muted}>Ask a grown-up first! This uses the camera so Milo can see your hand. The video stays on this device and is never saved or sent anywhere.</p>}
           <button className="milo-btn tone-green size-lg" onClick={begin}>{consented ? '▶ Start' : '✅ Allow camera'}</button>
           <button className="milo-btn tone-cream" onClick={() => router.push('/play')}>← Back</button>
@@ -208,7 +208,7 @@ export default function CatchColorActivity() {
   }
 
   if (phase === 'howto') {
-    return <HowToPlay title="Catch the Color" steps={['Milo names a colour.', 'Catch only those ones!']} demo="catch" onStart={() => setPhase('playing')} />
+    return <HowToPlay title="Catch the Color" steps={['Milo names a color.', 'Catch only those ones!']} demo="catch" onStart={() => setPhase('playing')} />
   }
 
   if (phase === 'done') {

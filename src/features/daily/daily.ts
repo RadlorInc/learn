@@ -1,13 +1,12 @@
 'use client'
 /**
  * daily — "Milo's Daily": the retention loop. A short spaced-repetition review of
- * already-learned skills + a gentle streak. Built for "math without fear": no
- * timer, no shame on a missed day (streak just restarts warmly), wrong answers
- * stay kind. State is local-first (kv, per learner). Engagement is logged via
- * analytics (daily_open / daily_complete) and read on /insights.
+ * already-learned skills. Built for "math without fear": no timer, no shame on a
+ * missed day, wrong answers stay kind. State is local-first (kv, per learner).
+ * Engagement is logged via analytics (daily_open / daily_complete) and read on
+ * /insights.
  */
 import { kv } from '@/infra/storage/kv'
-import { createClient } from '@/data/supabase/client'
 import type { AgeGroup } from '@/core/chapters'
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
@@ -95,97 +94,24 @@ export function generateDaily(ageGroup: AgeGroup, learnerId: string, n = 5): Dai
   return chosen.map(s => s.gen())
 }
 
-// ─── Streak (gentle: a missed day restarts warmly, never shames) ──
-export interface DailyState { lastDay: string; streak: number; longest: number }
+// ─── Daily completion state (local-first, per learner) ──
+export interface DailyState { lastDay: string }
 const stateKey = (id: string) => `milo_daily_${id}`
 const pad2 = (n: number) => String(n).padStart(2, '0')
-// The child's LOCAL calendar day (YYYY-MM-DD). Using toISOString() here bucketed by UTC,
-// so for anyone not on UTC the "day" flipped hours early/late — silently breaking or
-// double-counting the streak around local midnight. Read local components instead.
+// The child's LOCAL calendar day (YYYY-MM-DD). toISOString() buckets by UTC, which would flip the
+// "day" hours early/late for anyone not on UTC around local midnight — read local components instead.
 const dayKey = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
-// Yesterday's local key via calendar math anchored at local noon, so DST 23h/25h days
-// never skip or repeat a day (a raw now-86_400_000ms subtraction does on the transition).
-const yesterdayKey = () => { const n = new Date(); return dayKey(new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1, 12)) }
 
 function readState(id: string): DailyState {
-  try { return JSON.parse(kv.get(stateKey(id)) ?? '') } catch { return { lastDay: '', streak: 0, longest: 0 } }
+  try { return JSON.parse(kv.get(stateKey(id)) ?? '') } catch { return { lastDay: '' } }
 }
 
 /** Is today's Daily still available (not yet completed today)? */
-export function dailyStatus(learnerId: string): { available: boolean; streak: number; longest: number } {
-  const s = readState(learnerId)
-  return { available: s.lastDay !== dayKey(), streak: s.streak, longest: s.longest }
+export function dailyStatus(learnerId: string): { available: boolean } {
+  return { available: readState(learnerId).lastDay !== dayKey() }
 }
 
-/** Mark today's Daily done; advance/restart the streak. Idempotent per day. */
-export function recordDailyDone(learnerId: string): { streak: number; longest: number; isRecord: boolean; restarted: boolean } {
-  const s = readState(learnerId)
-  const today = dayKey()
-  if (s.lastDay === today) return { streak: s.streak, longest: s.longest, isRecord: false, restarted: false }
-  const continued = s.lastDay === yesterdayKey()
-  const streak = continued ? s.streak + 1 : 1
-  const restarted = !continued && s.streak > 0
-  const longest = Math.max(s.longest, streak)
-  const isRecord = streak >= longest && streak > 1
-  try { kv.set(stateKey(learnerId), JSON.stringify({ lastDay: today, streak, longest })) } catch {}
-  return { streak, longest, isRecord, restarted }
-}
-
-// ─── Streak from a set of completed-day keys (DB-derived source of truth) ──
-// Map a LOCAL calendar key to a canonical UTC-midnight instant. UTC has no DST, so
-// consecutive calendar days ALWAYS differ by exactly 86_400_000ms — which is what the
-// adjacency test below relies on. (Parsing the local key as local time would give 23h/25h
-// gaps across DST and mis-count the streak.)
-const dayMs = (k: string) => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d) }
-export function computeStreak(dayKeys: string[]): { current: number; longest: number; lastDay: string } {
-  const days = [...new Set(dayKeys)].filter(Boolean).sort()
-  if (days.length === 0) return { current: 0, longest: 0, lastDay: '' }
-  let longest = 1, run = 1
-  for (let i = 1; i < days.length; i++) {
-    if (dayMs(days[i]) - dayMs(days[i - 1]) === 86_400_000) { run++; longest = Math.max(longest, run) }
-    else run = 1
-  }
-  const lastDay = days[days.length - 1]
-  let current = 0
-  if (lastDay === dayKey() || lastDay === yesterdayKey()) {
-    current = 1
-    for (let i = days.length - 1; i > 0; i--) {
-      if (dayMs(days[i]) - dayMs(days[i - 1]) === 86_400_000) current++
-      else break
-    }
-  }
-  return { current, longest: Math.max(longest, current), lastDay }
-}
-
-/**
- * Reconcile the local streak with the DB. `daily_complete` events are the source
- * of truth (so the streak is correct across devices); we union them with the
- * local last-completed day (covering a just-finished day not yet flushed) and
- * recompute. Best-effort, online-only, never throws.
- */
-const reconKey = (id: string) => `milo_streak_recon_${id}`
-
-export async function reconcileStreakFromDB(learnerId: string): Promise<void> {
-  try {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) return
-    const today = dayKey()
-    const local = readState(learnerId)
-    // Once today's completion is already reflected locally AND we've reconciled today, the DB read
-    // cannot change the current streak — skip it. Without this, the 400-day events read fired on
-    // EVERY menu mount; now it runs at most once per learner per calendar day.
-    if (kv.get(reconKey(learnerId)) === today && local.lastDay === today) return
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const supabase = createClient() as any
-    // Bound the read. daily_complete is ≤1/day, so ~400 days is a generous cap that still covers any
-    // realistic current streak while keeping the payload small forever.
-    const since = new Date(Date.now() - 400 * 86_400_000).toISOString()
-    const { data, error } = await supabase
-      .from('learner_events').select('created_at').eq('learner_id', learnerId).eq('event', 'daily_complete').gte('created_at', since)
-    if (error || !data) return
-    const days = new Set<string>(data.map((r: { created_at: string }) => dayKey(new Date(r.created_at))))
-    if (local.lastDay) days.add(local.lastDay)
-    const { current, longest, lastDay } = computeStreak([...days])
-    kv.set(stateKey(learnerId), JSON.stringify({ lastDay, streak: current, longest: Math.max(longest, local.longest) }))
-    kv.set(reconKey(learnerId), today)
-  } catch { /* offline / transient — local cache stands */ }
+/** Mark today's Daily done. Idempotent per day. */
+export function recordDailyDone(learnerId: string): void {
+  try { kv.set(stateKey(learnerId), JSON.stringify({ lastDay: dayKey() })) } catch {}
 }

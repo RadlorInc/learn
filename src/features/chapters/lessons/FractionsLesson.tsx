@@ -221,7 +221,7 @@ export default function FractionsLesson({ childName, onLessonComplete }: Props) 
   ]
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Wonderful, ${childName}! You know halves, thirds and quarters! Let’s practise!`} />
+      finalSpeech={`Wonderful, ${childName}! You know halves, thirds and quarters! Let’s practice!`} />
   )
 }
 

@@ -1,10 +1,10 @@
 'use client'
 /**
- * TintedSprite — colour a GREYSCALE sprite (the `pat_*` pattern set: beads, buttons, gems,
- * flags, lanterns, toy duck/car/block) so it doesn't render grey. Technique (same as the
- * pattern/colour chapters): a solid-colour layer masked to the sprite's silhouette, with the
- * greyscale PNG multiplied on top so its shading/highlights are preserved — a natural, evenly
- * lit coloured object. Falls back to the emoji only if the PNG 404s.
+ * TintedSprite — color a GRAYSCALE sprite (the `pat_*` pattern set: beads, buttons, gems,
+ * flags, lanterns, toy duck/car/block) so it doesn't render gray. Technique (same as the
+ * pattern/color chapters): a solid-color layer masked to the sprite's silhouette, with the
+ * grayscale PNG multiplied on top so its shading/highlights are preserved — a natural, evenly
+ * lit colored object. Falls back to the emoji only if the PNG 404s.
  */
 import React, { useState } from 'react'
 

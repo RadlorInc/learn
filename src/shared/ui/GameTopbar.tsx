@@ -14,7 +14,7 @@ interface Props {
   roundIdx:      number
   totalRounds:   number
   starsEarned?:  number   // 0-3 stars earned so far this session
-  onBack?:       () => void  // override default back behaviour
+  onBack?:       () => void  // override default back behavior
 }
 
 export default function GameTopbar({

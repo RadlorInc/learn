@@ -180,7 +180,7 @@ export default function MultiplicationLesson({ childName, onLessonComplete }: Pr
   ]
   return (
     <LessonScaffold childName={childName} onLessonComplete={onLessonComplete} steps={steps}
-      finalSpeech={`Brilliant, ${childName}! You started multiplying! Let’s practise!`} />
+      finalSpeech={`Brilliant, ${childName}! You started multiplying! Let’s practice!`} />
   )
 }
 

@@ -266,7 +266,7 @@ function CompareStage({ world, data, grown, reveal, winner, onPick }: {
   const { h: vh } = useViewport()
   const short = vh < 470
   const V = world.attr === 'height' ? HeightView : world.attr === 'length' ? LengthView : WeightView
-  // Height/length centre lower; weight's objects rise above the plank so it sits a little
+  // Height/length center lower; weight's objects rise above the plank so it sits a little
   // higher. When short, nudge the stage down a touch so the tall objects clear the banner.
   const top = short ? (world.attr === 'weight' ? '58%' : '56%') : '52%'
   return (

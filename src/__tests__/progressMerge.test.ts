@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { mergeServerProgress, nextStreak } from '@/state/progressMerge'
+import { mergeServerProgress } from '@/state/progressMerge'
 import type { PlayerProfile } from '@/state/store'
 import type { LearnerStats, LearnerProgress, LearnerState } from '@/data/supabase/types'
 
 function profile(over: Partial<PlayerProfile> = {}): PlayerProfile {
   return {
     childName: 'Kid', avatarIndex: 0, hasCompletedSetup: true,
-    totalXP: 0, totalCoins: 0, coinsSpent: 0, currentLevel: 1, currentStreak: 0,
-    lastPlayedDate: '', chapterStars: {} as PlayerProfile['chapterStars'],
+    totalXP: 0, totalCoins: 0, coinsSpent: 0, currentLevel: 1,
+    chapterStars: {} as PlayerProfile['chapterStars'],
     ownedItems: [], equippedItems: {},
     ...over,
   } as PlayerProfile
@@ -22,11 +22,6 @@ describe('mergeServerProgress — monotonic (never regresses)', () => {
     const up = mergeServerProgress(profile({ totalXP: 300 }), stats({ total_xp: 500 }), [], null)
     expect(up.totalXP).toBe(500)
     expect(up.currentLevel).toBe(2) // getLevelFromXP(500) — threshold[1] === 500
-  })
-
-  it('takes the max streak', () => {
-    expect(mergeServerProgress(profile({ currentStreak: 4 }), stats({ current_streak: 2 }), [], null).currentStreak).toBe(4)
-    expect(mergeServerProgress(profile({ currentStreak: 1 }), stats({ current_streak: 7 }), [], null).currentStreak).toBe(7)
   })
 
   it('takes the max stars per chapter, and ignores rows for chapters not tracked locally', () => {
@@ -72,24 +67,11 @@ describe('mergeServerProgress — monotonic (never regresses)', () => {
   })
 
   it('null stats + null state leaves the profile intact (recomputes level only)', () => {
-    const p = profile({ totalXP: 200, totalCoins: 0, coinsSpent: 0, lastPlayedDate: 'Mon Jan 01 2026' })
+    const p = profile({ totalXP: 200, totalCoins: 0, coinsSpent: 0 })
     const merged = mergeServerProgress(p, null, [], null)
     expect(merged.totalXP).toBe(200)
     expect(merged.currentLevel).toBe(1)
-    expect(merged.lastPlayedDate).toBe('Mon Jan 01 2026')
     expect(merged.totalCoins).toBe(0)
     expect(merged.coinsSpent).toBe(0)
-  })
-})
-
-describe('nextStreak', () => {
-  it('is unchanged when already played today', () => {
-    expect(nextStreak('today', 5, 'today', 'yesterday')).toBe(5)
-  })
-  it('increments on a consecutive day', () => {
-    expect(nextStreak('yesterday', 5, 'today', 'yesterday')).toBe(6)
-  })
-  it('resets to 1 after a missed day', () => {
-    expect(nextStreak('last-week', 5, 'today', 'yesterday')).toBe(1)
   })
 })

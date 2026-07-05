@@ -240,7 +240,7 @@ const PerchedItem: React.FC<{ p: Spot; obj: CountKind; on: boolean; idx: number;
         <CountItem kind={obj} on={on} size={size} variant={idx} blend />
       </span>
       {on && num != null && (
-        // Centred ON the object (outer span centres; inner pops) so the number clearly
+        // Centered ON the object (outer span centers; inner pops) so the number clearly
         // belongs to that object — not floating off in a far corner.
         <span aria-hidden style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 2, pointerEvents: 'none' }}>
           <span style={{ display: 'flex', minWidth: badge, height: badge, padding: `0 ${Math.round(7 * scale)}px`, alignItems: 'center', justifyContent: 'center',
@@ -260,30 +260,95 @@ const CountBadge: React.FC<{ value: number | string }> = ({ value }) => (
     background: 'var(--paper)', border: '5px solid var(--milo-orange)', borderRadius: 999,
     fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 66, lineHeight: 1, color: 'var(--milo-orange)', boxShadow: '0 6px 0 rgba(242,107,44,.3)' }}>{value}</div>
 )
+
+// A persistent "collected" tray: one small icon of the counted object per tap, in a row just below
+// the prompt — so as the child counts, the objects DON'T vanish, they gather here and the child can
+// see how many they've got. Used by both the guided step and the scored practice.
+const CollectTray: React.FC<{ obj: CountKind; n: number; maxCell: number; vw: number }> = ({ obj, n, maxCell, vw }) => {
+  if (n <= 0) return null
+  // ALWAYS a single row (never wrap). Use the big `maxCell` when few objects fit; if many wouldn't
+  // fit the width, shrink the cell just enough that all n still sit in one row.
+  const gap = Math.round(maxCell * 0.16)
+  const avail = vw * 0.92 - 28                                   // usable width minus the box padding
+  const cell = Math.max(22, Math.min(maxCell, Math.floor((avail - gap * (n - 1)) / n)))
+  return (
+    <div style={{ position: 'fixed', top: 112, left: '50%', transform: 'translateX(-50%)', zIndex: 41,
+      maxWidth: '94vw', display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap,
+      padding: `${Math.round(cell * 0.2)}px ${Math.round(cell * 0.34)}px`,
+      background: 'rgba(255,255,255,.6)', border: '3px solid var(--milo-orange)', borderRadius: 18, boxShadow: '0 4px 0 rgba(242,107,44,.2)' }}>
+      {Array.from({ length: n }).map((_, i) => (
+        <span key={i} style={{ display: 'block', flex: '0 0 auto', animation: 'fw_count .3s ease both' }}>
+          <CountItem kind={obj} on={false} size={cell} />
+        </span>
+      ))}
+    </div>
+  )
+}
+// The GUIDED count — now the same come-and-go PARADE as the demo/practice, but the CHILD does
+// the counting: creatures walk/fly/swim through ~2 at a time and the child taps each one to count
+// it (it pops, walks off, and the next enters). The running number climbs on the pill. There's no
+// "how many?" question here — that stays exclusive to the scored practice; once all N are counted
+// this guided beat is done.
 export const FlyingCountPlay: React.FC<{ data: CountData; onSubmit: (c: boolean) => void }> = ({ data, onSubmit }) => {
-  const [lit, setLit] = useState<boolean[]>(() => Array(data.n).fill(false))
+  const [stage, setStage] = useState<(Slot | null)[]>([null, null])
+  const [counted, setCounted] = useState(0)
+  const speaking = useIsSpeaking()              // block taps while Milo says a number, so fast taps can't skip the count
+  const { w: vw, h: vh } = useViewport()
+  const scale = useScale()
+  const spawnedRef = useRef(0)
+  const keyRef = useRef(0)
+  const didInit = useRef(false)
   const done = useRef(false)
-  const speaking = useIsSpeaking()              // block taps while Milo says a number,
-  const spots = useMemo(() => spotsFor(data.n, data.obj, data.band), [data.n, data.obj, data.band])  // so fast taps can't skip the count
-  const count = lit.filter(Boolean).length
-  function tap(i: number) {
-    if (lit[i] || done.current || speaking) return
-    const nl = lit.slice(); nl[i] = true; setLit(nl)
-    const c = nl.filter(Boolean).length
-    speak(String(c))
-    if (c === data.n) { done.current = true; window.setTimeout(() => onSubmit(true), 950) }
+
+  const size = Math.max(48, Math.min(Math.round(vh * 0.3), Math.round(88 * (SIZE_BOOST[data.obj] ?? 1) * scale)))
+  const bnd = data.band ?? BIOMES.forest.band
+  const allCounted = counted >= data.n
+
+  // Fill the opening one/two slots (didInit guards React strict-mode double effects).
+  useEffect(() => {
+    if (didInit.current) return
+    didInit.current = true
+    setStage(() => {
+      const next: (Slot | null)[] = [null, null]
+      for (let s = 0 as 0 | 1; s < 2; s++) {
+        if (spawnedRef.current < data.n) { next[s] = { key: keyRef.current++, slot: s, leaving: false }; spawnedRef.current++ }
+      }
+      return next
+    })
+  }, [data.n])
+
+  function tap(slot: 0 | 1) {
+    if (speaking || done.current) return
+    const inst = stage[slot]
+    if (!inst || inst.leaving) return
+    setStage(prev => prev.map((it, i) => (i === slot && it ? { ...it, leaving: true } : it)))
+    setCounted(c => { const n = c + 1; speak(String(n)); return n })
   }
+  // A creature finished walking off: clear its slot and send in the next queued creature.
+  function gone(slot: 0 | 1) {
+    setStage(prev => {
+      const next = [...prev]
+      next[slot] = spawnedRef.current < data.n ? { key: keyRef.current++, slot, leaving: false } : null
+      if (next[slot]) spawnedRef.current++
+      return next
+    })
+  }
+  useEffect(() => {
+    if (allCounted && !done.current) { done.current = true; window.setTimeout(() => onSubmit(true), 950) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allCounted])
+
   return (
     <>
-      {spots.map((p, i) => (
-        // nearer (low/depth→0) creatures sit in FRONT of farther ones (depth-aware z-order)
-        <button key={i} onClick={() => tap(i)} aria-label={data.obj} disabled={speaking}
-          style={{ ...bare, position: 'fixed', left: `${p.left}%`, top: `${p.top}%`, zIndex: 30 + Math.round((1 - p.depth) * 6) }}>
-          <PerchedItem p={p} obj={data.obj} on={lit[i]} idx={i} />
-        </button>
-      ))}
-      {/* running count, pinned at the bottom so it never hides an object */}
-      <CountBadge value={count} />
+      {([0, 1] as const).map(s => {
+        const inst = stage[s]
+        return inst ? (
+          <Parader key={inst.key} obj={data.obj} band={bnd} slot={s} size={size} leaving={inst.leaving}
+            travelSecs={1.8} disabled={done.current || speaking} onTap={() => tap(s)} onGone={() => gone(s)} />
+        ) : null
+      })}
+      {/* Collected objects — each tapped creature gathers into this single row so the child sees the count. */}
+      <CollectTray obj={data.obj} n={counted} maxCell={Math.max(44, Math.round(size * 0.6))} vw={vw} />
     </>
   )
 }
@@ -304,40 +369,92 @@ export function flyingCountBeatFor(obj: CountKind): Beat<CountData> {
   }
 }
 
-// The opening demo, in the SAME flying-in-the-scene style as the practice: Milo
-// reveals one object per number and says 1…N aloud, so explanation → practice is
-// one continuous flow (no jump to a different-looking canvas).
+// The opening demo, now in the SAME come-and-go PARADE as the practice: creatures walk/
+// fly/swim into the scene ~2 at a time, Milo counts each one aloud (1…N, the number pops
+// on the pill) and then it strolls off the far side so the next can enter — instead of all
+// N piling up on the screen at once. Explanation → practice is one continuous look.
 export const FlyingCountDemo: React.FC<{ to: number; obj: CountKind; band?: Band; onDone: () => void }> = ({ to, obj, band, onDone }) => {
-  const [shown, setShown] = useState(0)
-  const ran = useRef(false)
-  const spots = useMemo(() => spotsFor(to, obj, band, true), [to, obj, band])
+  const [stage, setStage] = useState<(Slot | null)[]>([null, null])
+  const [counted, setCounted] = useState(0)
+  const { h: vh } = useViewport()
+  const scale = useScale()
+  const spawnedRef = useRef(0)
+  const keyRef = useRef(0)
+  const didInit = useRef(false)
+  const timers = useRef<number[]>([])
+  const stageRef = useRef<(Slot | null)[]>([null, null])
+  const countedRef = useRef(0)
+  const finished = useRef(false)
+  stageRef.current = stage
+
+  const size = Math.max(48, Math.min(Math.round(vh * 0.3), Math.round(88 * (SIZE_BOOST[obj] ?? 1) * scale)))
+  const bnd = band ?? BIOMES.forest.band
+
+  // A creature finished walking off: clear its slot and send in the next queued creature.
+  function gone(slot: 0 | 1) {
+    setStage(prev => {
+      const next = [...prev]
+      next[slot] = spawnedRef.current < to ? { key: keyRef.current++, slot, leaving: false } : null
+      if (next[slot]) spawnedRef.current++
+      return next
+    })
+  }
+
   useEffect(() => {
-    if (ran.current) return; ran.current = true
-    // Reveal one object per number on a fixed TIMER — NOT on speech events. The
-    // very first slide plays before the child has tapped, so the browser blocks
-    // Milo's voice and speech `onstart`/`onWord` never fire; a speech-gated demo
-    // would show no fireflies at all and skip straight to the next beat. Driving
-    // the reveal off setTimeout makes the counting concept always play and the
-    // fireflies always appear (scattered in the tree). We still speak each number,
-    // best effort — the visuals never wait on it.
-    const ids: number[] = []
-    const step = 780
+    if (didInit.current) return
+    didInit.current = true
     speak("Let's count together!")
-    for (let k = 1; k <= to; k++) {
-      ids.push(window.setTimeout(() => { setShown(k); speak(String(k)) }, 600 + k * step))
+    // Fill the opening one/two slots (same spawn machinery as the practice parade).
+    setStage(() => {
+      const next: (Slot | null)[] = [null, null]
+      for (let s = 0 as 0 | 1; s < 2; s++) {
+        if (spawnedRef.current < to) { next[s] = { key: keyRef.current++, slot: s, leaving: false }; spawnedRef.current++ }
+      }
+      return next
+    })
+
+    // Auto-count the paraders — the demo taps for the child. Each step marks the creature
+    // that entered EARLIEST (smallest key) as "counted": it pops, walks off (→ a replacement
+    // enters), the number ticks up, and the next step is scheduled. Alternating between the two
+    // slots means every replacement gets ~2 cadences to walk in before it's its turn, so a
+    // creature is never counted mid-entrance. If nothing has settled yet, wait briefly + retry.
+    // Calm, slow pacing for the explanation (young kids) — creatures amble (TRAVEL) and there's a
+    // long beat between counts. Faster than this reads as a race, not a count.
+    const CADENCE = 2700
+    function step() {
+      if (finished.current) return
+      const s = stageRef.current
+      let pick: 0 | 1 | null = null
+      for (const i of [0, 1] as const) {
+        const it = s[i]
+        if (it && !it.leaving && (pick === null || (s[pick] as Slot).key > it.key)) pick = i
+      }
+      if (pick === null) { timers.current.push(window.setTimeout(step, 300)); return }
+      const slot = pick
+      const n = countedRef.current + 1
+      countedRef.current = n
+      // Mark this creature counted AND stamp its number (shown floating above it via Parader).
+      setStage(prev => prev.map((it, i) => (i === slot && it ? { ...it, leaving: true, num: n } : it)))
+      setCounted(n)
+      speak(String(n))
+      if (n >= to) { finished.current = true; timers.current.push(window.setTimeout(onDone, 2200)) }
+      else timers.current.push(window.setTimeout(step, CADENCE))
     }
-    ids.push(window.setTimeout(onDone, 600 + to * step + 1300))
-    return () => ids.forEach(clearTimeout)
+    // Let the first (slower) creatures fully walk in before the counting starts.
+    timers.current.push(window.setTimeout(step, 2000))
+    return () => timers.current.forEach(clearTimeout)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
   return (
     <>
-      {spots.map((p, i) => i < shown && (
-        <span key={i} style={{ position: 'fixed', left: `${p.left}%`, top: `${p.top}%`, zIndex: 30 + Math.round((1 - p.depth) * 6) }}>
-          <PerchedItem p={p} obj={obj} on idx={i} num={i + 1} />
-        </span>
-      ))}
-      <CountBadge value={shown} />
+      {([0, 1] as const).map(s => {
+        const inst = stage[s]
+        return inst ? (
+          <Parader key={inst.key} obj={obj} band={bnd} slot={s} size={size} leaving={inst.leaving}
+            num={inst.num} travelSecs={2.6} disabled onTap={() => {}} onGone={() => gone(s)} />
+        ) : null
+      })}
     </>
   )
 }
@@ -351,57 +468,175 @@ interface HowManyData { n: number; obj: CountKind; choices: number[]; band?: Ban
 // Two steps: (1) the child taps each flying object to COUNT it — each tap grows the
 // object (so none are recounted or missed) and Milo says the running count; (2) once
 // every object is tapped, the number choices appear and the child picks the answer.
-const HowManyPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => void }> = ({ data, onSubmit }) => {
-  // The child just taps each object to count it — it grows so it isn't recounted.
-  // No number on the object, no running-count pill: only the tap. Once every object
-  // is tapped, the number choices appear.
-  const [tapped, setTapped] = useState<boolean[]>(() => Array(data.n).fill(false))
+// ── Object-aware locomotion — how each creature moves through the scene ──────────────────
+// flyers fly, swimmers swim, walkers walk, insects scuttle. Drives both WHERE a creature travels
+// (its lane) and the ongoing gait it plays while on stage, so the counting scene reads like a
+// living animated video rather than static sprites popping in.
+type Loco = 'air' | 'ground' | 'water'
+const LOCO: Partial<Record<CountKind, Loco>> = {
+  // flyers
+  butterfly: 'air', firefly: 'air', eagle: 'air', bee: 'air', dragonfly: 'air', pigeon: 'air',
+  star: 'air', comet: 'air', satellite: 'air', cloud: 'air', planet: 'air', rocket: 'air',
+  // swimmers
+  fish: 'water', shark: 'water', turtle: 'water', octopus: 'water',
+  // everything else walks (or crawls) on the ground — the default below (rabbit, squirrel, ant,
+  // ladybug, chick, lamb, duckling, frog, duck, crab, astronaut, moonRock, alien…). The duck sprite
+  // is a walking duck, so it waddles along the ground rather than swimming mid-water.
+}
+const locoOf = (k: CountKind): Loco => LOCO[k] ?? 'ground'
+// Small ground creatures scuttle rather than plod.
+const CRAWLERS = new Set<CountKind>(['ant', 'ladybug', 'crab', 'snail'])
+type Gait = 'walk' | 'fly' | 'swim' | 'crawl'
+const GAIT: Record<Gait, { name: string; dur: number }> = {
+  walk:  { name: 'gait_walk',  dur: 0.52 },
+  fly:   { name: 'gait_fly',   dur: 1.5 },
+  swim:  { name: 'gait_swim',  dur: 1.7 },
+  crawl: { name: 'gait_crawl', dur: 0.34 },
+}
+function gaitFor(obj: CountKind): Gait {
+  const l = locoOf(obj)
+  if (l === 'air') return 'fly'
+  if (l === 'water') return 'swim'
+  return CRAWLERS.has(obj) ? 'crawl' : 'walk'
+}
+// The vertical lane (viewport %) a creature travels along is taken from ITS OWN habitat band
+// (bandFor already tunes this per biome — a forest rabbit on the grass, an eagle in the treetops, a
+// crab on the seabed). Ground creatures sit near the BOTTOM of their band so they walk ON the ground
+// (not float mid-scene); flyers ride the upper part of their sky band; swimmers the mid-water.
+function laneFor(loco: Loco, band: Band, slot: 0 | 1): number {
+  const h = Math.max(6, band.y1 - band.y0)
+  const base = loco === 'ground' ? band.y1 - h * 0.20
+             : loco === 'air'    ? band.y0 + h * 0.28
+             :                     band.y0 + h * 0.45
+  const off = slot === 0 ? -Math.min(7, h * 0.12) : Math.min(9, h * 0.15)
+  return Math.max(10, Math.min(82, base + off))
+}
+// Side sprites are drawn facing RIGHT; a few came out of image-gen facing LEFT (verified per file) —
+// flag them so the parade's direction-flip still points them the way they travel.
+const BASE_FACES_LEFT = new Set<CountKind>(['shark', 'rabbit'])
+
+// One parading creature: enters from its side moving in its gait, holds mid-scene (still moving in
+// place, so it stays alive + tappable), and on tap plays a "counted" pop then walks/flies/swims off
+// the far side. Slot 0 travels left→right (faces right); slot 1 travels right→left (faces left), so
+// two on stage never sit on top of each other. Travel is a `left` transition on the OUTER button;
+// the facing flip and the gait loop live on nested INNER spans, so none of them clobber each other.
+const Parader: React.FC<{ obj: CountKind; band: Band; slot: 0 | 1; size: number; leaving: boolean; disabled: boolean; onTap: () => void; onGone: () => void; num?: number; travelSecs?: number }>
+  = ({ obj, band, slot, size, leaving, disabled, onTap, onGone, num, travelSecs = 1.15 }) => {
+  const loco = locoOf(obj)
+  const gait = GAIT[gaitFor(obj)]
+  const enterX = slot === 0 ? -16 : 116
+  const restX  = slot === 0 ? 36 : 64
+  const exitX  = slot === 0 ? 120 : -20
+  const lane   = laneFor(loco, band, slot)
+  const artDir = BASE_FACES_LEFT.has(obj) ? -1 : 1   // which way the source sprite is drawn facing
+  const face   = (slot === 0 ? 1 : -1) * artDir      // display it facing its travel direction
+  const [x, setX] = useState(enterX)
+  // Mount off-screen, then next frame glide to the resting spot (the CSS `left` transition = the walk-in).
+  useEffect(() => { const r = requestAnimationFrame(() => setX(restX)); return () => cancelAnimationFrame(r) }, [restX])
+  // On tap, continue off the far side, then despawn after the exit finishes (scaled to the travel speed).
+  useEffect(() => { if (!leaving) return; setX(exitX); const t = window.setTimeout(onGone, Math.round(travelSecs * 950)); return () => window.clearTimeout(t) }, [leaving, exitX, onGone, travelSecs])
+  return (
+    <button onClick={onTap} disabled={disabled} aria-label={obj}
+      style={{ ...bare, position: 'fixed', left: `${x}%`, top: `${lane}%`, transform: 'translate(-50%,-50%)', transition: `left ${travelSecs}s linear`, zIndex: 35 + slot }}>
+      {/* The count number, floating ABOVE the creature (used by the explanation demo — each one is
+          labelled with its number as it's counted). Direct child of the button so the gait/facing
+          transforms below don't move or flip it. */}
+      {num != null && (
+        <span aria-hidden style={{ position: 'absolute', left: '50%', top: 0, transform: 'translate(-50%,-116%)',
+          minWidth: 54, height: 54, padding: '0 14px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--paper)', border: '4px solid var(--milo-orange)', borderRadius: 999,
+          fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 34, color: 'var(--milo-orange)',
+          boxShadow: '0 4px 0 rgba(242,107,44,.3)', animation: 'fw_count .4s ease', zIndex: 2, pointerEvents: 'none' }}>{num}</span>
+      )}
+      {/* Soft contact shadow anchors ground/water creatures to the scene (grounded, not pasted-on).
+          Sits below the sprite and travels with it, but does NOT gait-bob, so it reads as ground. */}
+      {loco !== 'air' && (
+        <span aria-hidden style={{ position: 'absolute', left: '50%', top: `calc(100% - ${Math.round(size * 0.18)}px)`, transform: 'translateX(-50%)',
+          width: Math.round(size * 0.58), height: Math.round(size * 0.16), borderRadius: '50%',
+          background: 'radial-gradient(ellipse at center, rgba(20,14,8,0.32) 0%, rgba(20,14,8,0) 70%)', pointerEvents: 'none' }} />
+      )}
+      {/* `blend` = soft natural shadow only (no bright white halo), so the creature tucks INTO the
+          scene instead of looking cut out. relative → paints above the contact shadow. */}
+      <span style={{ position: 'relative', display: 'block', animation: leaving ? 'fw_count .4s ease both' : 'none' }}>
+        <span style={{ display: 'block', transform: `scaleX(${face})` }}>
+          <span style={{ display: 'block', animation: `${gait.name} ${gait.dur}s ease-in-out infinite` }}>
+            <CountItem kind={obj} on={false} size={size} side blend />
+          </span>
+        </span>
+      </span>
+    </button>
+  )
+}
+
+interface Slot { key: number; slot: 0 | 1; leaving: boolean; num?: number }
+const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => void }> = ({ data, onSubmit }) => {
+  // The creatures parade through ~2 at a time, moving naturally. The child taps each to count it —
+  // it pops, then walks/flies/swims off and the next one comes in. Once all N have been counted, the
+  // number choices appear and the child taps how many they counted (kept as the assessment).
+  const [stage, setStage] = useState<(Slot | null)[]>([null, null])
+  const [counted, setCounted] = useState(0)
   const [picked, setPicked] = useState<number | null>(null)
-  const speaking = useIsSpeaking()                 // taps are blocked until Milo finishes
+  const speaking = useIsSpeaking()
   const { w: vw, h: vh } = useViewport()
   const scale = useScale()
-  // Responsive answer buttons — shrink on a narrow OR short screen so 3 of them fit and leave
-  // room above for the objects.
-  const btn = Math.max(52, Math.min(94, Math.round(Math.min(vw / 8.8, vh / 5.2))))
-  // Reserve the bottom strip for the buttons; the objects live ABOVE it. An extra sprite-height
-  // allowance keeps the sprite BODY (not just its anchor point) clear of the buttons too.
-  const zoneBottomPct = ((vh - (btn + 34)) / vh) * 100
-  const objAllowPct = (Math.min(150, 108 * scale) / vh) * 100
-  const band = useMemo(() => {
-    const b = data.band ?? BIOMES.forest.band
-    const y1 = Math.min(b.y1, zoneBottomPct - objAllowPct)
-    const y0 = Math.min(b.y0, Math.max(6, y1 - 12))    // if the bottom pulled way up, lift the top with it
-    return { x0: b.x0, x1: b.x1, y0, y1 }
-  }, [data.band, zoneBottomPct, objAllowPct])
-  // A wide + short frame (landscape phone) spreads objects across more columns → fewer rows,
-  // so they never stack into each other in the shallow object zone.
-  const cols = (vw / vh > 1.55) ? Math.min(Math.max(3, data.n), 8) : undefined
-  const spots = useMemo(() => spotsFor(data.n, data.obj, band, false, cols), [data.n, data.obj, band, cols])
-  // Cap each sprite to its zone cell so rows can't overlap even for big-boost creatures.
-  const rowsN = Math.ceil(data.n / (cols ?? Math.min(6, Math.max(1, Math.round(Math.sqrt(data.n) * 1.7)))))
-  const cap = Math.max(38, Math.floor(((band.y1 - band.y0) / 100 * vh + Math.min(150, 108 * scale)) / rowsN * 0.94))
-  const allTapped = tapped.every(Boolean)
+  const spawnedRef = useRef(0)
+  const keyRef = useRef(0)
+  const didInit = useRef(false)
   const asked = useRef(false)
-  function tap(i: number) {
-    if (tapped[i] || picked != null || speaking) return
-    const nt = tapped.slice(); nt[i] = true; setTapped(nt)   // mark counted; no voice, no number
+
+  const size = Math.max(48, Math.min(Math.round(vh * 0.3), Math.round(88 * (SIZE_BOOST[data.obj] ?? 1) * scale)))
+  const btn = Math.max(52, Math.min(94, Math.round(Math.min(vw / 8.8, vh / 5.2))))
+  const allCounted = counted >= data.n
+
+  // Fill the initial one/two slots on mount (didInit guards React strict-mode double effects).
+  useEffect(() => {
+    if (didInit.current) return
+    didInit.current = true
+    setStage(() => {
+      const next: (Slot | null)[] = [null, null]
+      for (let s = 0 as 0 | 1; s < 2; s++) {
+        if (spawnedRef.current < data.n) { next[s] = { key: keyRef.current++, slot: s, leaving: false }; spawnedRef.current++ }
+      }
+      return next
+    })
+  }, [data.n])
+
+  function tap(slot: 0 | 1) {
+    if (speaking || picked != null) return
+    const inst = stage[slot]
+    if (!inst || inst.leaving) return
+    setStage(prev => prev.map((it, i) => (i === slot && it ? { ...it, leaving: true } : it)))
+    setCounted(c => c + 1)
+  }
+  // A creature finished walking off: clear its slot and send in the next queued creature.
+  function gone(slot: 0 | 1) {
+    setStage(prev => {
+      const next = [...prev]
+      next[slot] = spawnedRef.current < data.n ? { key: keyRef.current++, slot, leaving: false } : null
+      if (next[slot]) spawnedRef.current++
+      return next
+    })
   }
   function choose(v: number) { if (picked != null || speaking) return; setPicked(v); window.setTimeout(() => onSubmit(v === data.n), 450) }
   useEffect(() => {
-    if (allTapped && !asked.current) { asked.current = true; speakAfterCurrent('So how many? Tap the number!') }
-  }, [allTapped])
+    if (allCounted && !asked.current) { asked.current = true; speakAfterCurrent('So how many did you count? Tap the number!') }
+  }, [allCounted])
+
   return (
     <>
-      {spots.map((p, i) => (
-        <button key={i} onClick={() => tap(i)} aria-label={data.obj} disabled={picked != null || speaking}
-          style={{ ...bare, position: 'fixed', left: `${p.left}%`, top: `${p.top}%`, zIndex: 30 + Math.round((1 - p.depth) * 6) }}>
-          <PerchedItem p={p} obj={data.obj} on={tapped[i]} idx={i} cap={cap} />
-        </button>
-      ))}
-      {allTapped && (
-        // Centre on the OUTER wrapper; animate the INNER row. (fw_pop's fill:both pins its own
-        // transform, which would clobber a translateX(-50%) on the same element and shove the
-        // buttons off-centre.)
+      {([0, 1] as const).map(s => {
+        const inst = stage[s]
+        return inst ? (
+          <Parader key={inst.key} obj={data.obj} band={data.band ?? BIOMES.forest.band} slot={s} size={size} leaving={inst.leaving}
+            travelSecs={1.8} disabled={picked != null || speaking} onTap={() => tap(s)} onGone={() => gone(s)} />
+        ) : null
+      })}
+
+      {/* Collected objects — each tapped creature gathers into this single row (they don't just
+          vanish), so the child sees how many they've counted. Stays through the number-choice step. */}
+      <CollectTray obj={data.obj} n={counted} maxCell={Math.max(44, Math.round(size * 0.6))} vw={vw} />
+
+      {allCounted && (
         <div style={{ position: 'fixed', bottom: Math.max(8, Math.round(btn * 0.18)), left: '50%', transform: 'translateX(-50%)', zIndex: 40 }}>
           <div style={{ display: 'flex', gap: Math.round(btn * 0.2), animation: 'fw_pop .35s ease both' }}>
             {data.choices.map(v => {
@@ -536,9 +771,9 @@ export function makePracticeCountBeat(story: Storytelling): Beat<HowManyData> {
       const cell = plan[round] ?? plan[plan.length - 1] ?? { biome: fallbackBiome, obj: fallbackObj }
       return howManyData(cell.biome, cell.obj, d)
     },
-    prompt: d => `Tap and count the ${COUNT_PLURAL[d.obj]}!`,
-    say: d => `Tap and count the ${COUNT_PLURAL[d.obj]}! Tap each one.`,
-    Play: HowManyPlay, Reteach: FlyingReteach,
+    prompt: d => `Count the ${COUNT_PLURAL[d.obj]}!`,
+    say: d => `Here come the ${COUNT_PLURAL[d.obj]}! Tap each one to count it.`,
+    Play: ParadeCountPlay, Reteach: FlyingReteach,
   }
 }
 

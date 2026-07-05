@@ -255,7 +255,7 @@ export default function ShapesLesson({childName,onLessonComplete}:Props){
     if(!nextReady)return
     stopSpeech()
     if(step>=TOTAL_STEPS-1){
-      speak(`Brilliant, ${childName}! You know your shapes! Let's practise now!`)
+      speak(`Brilliant, ${childName}! You know your shapes! Let's practice now!`)
       window.setTimeout(onLessonComplete,3000)
       return
     }

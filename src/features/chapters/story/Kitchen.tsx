@@ -3,7 +3,7 @@
  * Chapter 3 — number-COMPARISON (skill `numberComparison`). Milo the chef picks the bigger /
  * "more" one. The child first PICKS one of THREE storytellings; within the chosen one, three
  * vessel-scenes rotate across the 10 adaptive rounds (each scene = its own vessel + countable
- * item + background), exactly like the colours chapter rotates its object-scenes:
+ * item + background), exactly like the colors chapter rotates its object-scenes:
  *   🍳 Kitchen — apple bowls · cookie trays · candy jars
  *   🛒 Grocery — orange bowls · egg trays · strawberry jars
  *   🧁 Bakery  — cupcake trays · cake towers · cherry bowls
@@ -12,7 +12,7 @@
  *   scene · reasoning (count → cake height → symbolic numerals) · polarity (more/fewer) ·
  *   choice count (2 → 3 "the most") · per-scene payoff (the feast tray).
  *
- * ART: comparison is about QUANTITY, not colour, so it uses the established COLOURED object
+ * ART: comparison is about QUANTITY, not color, so it uses the established COLORED object
  * sprites directly (no tinting) — reusing the consistent library (apple/cookie/candy/orange/
  * egg/strawberry/cupcake/cherry + cake layers) over existing painted backgrounds. The vessel
  * renderers (bowl / tray / jar / cake) are parameterised by the item sprite, so one renderer
@@ -43,7 +43,7 @@ type SceneId =
 interface SceneDef {
   vessel: Vessel
   sprite: string                 // item sprite (ignored for cake — it stacks layers)
-  fallback: string               // colour fallback if the sprite PNG is missing
+  fallback: string               // color fallback if the sprite PNG is missing
   noun: string                   // "apples"
   vesselNoun: string             // "bowl"
   food: string                   // emoji for the feast tray
@@ -108,7 +108,7 @@ function Background({ scene, scenes }: { scene: SceneId; scenes: SceneId[] }) {
 // ─── Milo the chef (per world) ─────────────────────────────────────────────────────
 function MiloChef({ left, top, milo }: { left: number; top: number; milo: KitchenWorld['milo'] }) {
   const [step, setStep] = useState(0)
-  // Centre on the OUTER wrapper; float the INNER child. (mk_float's keyframes set `transform`,
+  // Center on the OUTER wrapper; float the INNER child. (mk_float's keyframes set `transform`,
   // which would clobber a `translate(-50%,-50%)` on the SAME element and shove Milo off-place.)
   return (
     <div style={{ position: 'fixed', left: `${left}%`, top: `${top}%`, transform: 'translate(-50%,-50%)', zIndex: 26, width: 'min(26vh, 220px)', height: 'min(26vh, 220px)' }}>
@@ -413,7 +413,7 @@ function useVesselScale(n: number): number {
 // ─── Grounded, depth-aware placement ────────────────────────────────────────────────
 interface Placed { left: number; top: number; depth: number }
 const VESSEL_GROUND = { baseTop: 56, rise: 6, groundLine: 86 }
-// On short/landscape phones the smaller vessels can sit a little lower-centre (banner is
+// On short/landscape phones the smaller vessels can sit a little lower-center (banner is
 // out of the way, feast bar is thin) and the ground/shadow line drops with them.
 const VESSEL_GROUND_SHORT = { baseTop: 58, rise: 5, groundLine: 90 }
 const VESSEL_DEPTHS: Record<number, number[]> = { 2: [0.12, 0.55], 3: [0.5, 0.05, 0.65] }

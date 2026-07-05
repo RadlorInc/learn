@@ -12,7 +12,7 @@ import { recheckSkills } from '@/core/diagnosticEngine'
 import { NODE_BY_ID, type Band } from '@/core/skillGraph'
 import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
 import { saveRecheck } from '@/data/repositories'
-import { PT, ACCENTS, LabBackdrop, BackChip, PromptCard, ChoiceButton, PtMilo, IntroCard, type Accent } from '@/features/chapters/story/preteen/kit'
+import { PT, ACCENTS, LabBackdrop, BackChip, ChoiceButton, PtMilo, IntroCard, type Accent } from '@/features/chapters/story/preteen/kit'
 
 const BANDS = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan
@@ -160,7 +160,19 @@ export default function RecheckPage() {
       <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
         <style>{`@keyframes pt_float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes pt_twinkle{0%,100%{opacity:.25}50%{opacity:.8}}`}</style>
         <LabBackdrop accent={accent} /><BackChip onExit={() => history.back()} />
-        <PromptCard tag={`Check ${idx + 1} of ${probes.length}`} text={item.prompt} accent={accent} />
+        {/* Question — centered, large + responsive (mirrors the main checkup; replaces the top pill).
+            Sits in the band between the top chip and the fixed 100px answer tiles, so it stays clear
+            at every viewport. Fonts scale by vh via clamp() (no JS viewport flag needed here). */}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '72px 6vw 160px', pointerEvents: 'none' }}>
+          <div style={{ maxWidth: 'min(94vw,780px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px,1.6vh,16px)', textAlign: 'center',
+            background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 20, border: `1px solid ${accent.base}66`,
+            padding: 'clamp(16px,4vh,40px) clamp(22px,5vw,60px)',
+            boxShadow: `0 0 30px ${accent.base}33, 0 14px 34px rgba(0,0,0,0.45)` }}>
+            <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: 'clamp(10px,1.5vh,12.5px)', letterSpacing: 1.5, color: accent.base, background: accent.soft, borderRadius: 7, padding: '4px 10px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{`Check ${idx + 1} of ${probes.length}`}</span>
+            <span style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: 'clamp(24px,6vh,56px)', lineHeight: 1.18, color: PT.ink }}>{item.prompt}</span>
+          </div>
+        </div>
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: 'clamp(12px,3vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
           {item.choices.map(c => (
             <ChoiceButton key={c} label={c} accent={accent} state={picked === c ? 'idle' : picked ? 'dim' : 'idle'} size={100} onClick={() => answer(c)} disabled={!!picked} />

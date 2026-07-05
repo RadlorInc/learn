@@ -278,7 +278,7 @@ export default function UnitCircleTrigTeenLesson({ childName, onLessonComplete }
       render: (d) => (
         <UnitCircleWatch
           lines={[
-            'Draw a circle of radius one, centred at the origin.',
+            'Draw a circle of radius one, centerd at the origin.',
             'Sweep out an angle θ from the positive x-axis. Where it meets the circle, the point is cosine θ, sine θ — cosine across, sine up.',
           ]}
           angleDeg={50}
