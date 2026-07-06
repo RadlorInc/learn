@@ -192,7 +192,12 @@ export function Game<V, T extends BaseTask>({
     const d = warmup && nextIdx < WARMUP_COUNT ? warmupDiff : ada.difficulty
     const t = nextTask(d)
     setTask(t); setValue(config.initialValue(t)); setSub('active'); setIdx(nextIdx)
-    speakAfterCurrent(t.say)
+    // Tier-linked scaffolding (ux-design.md §2/§6.4): Milo reads the task aloud at
+    // the lower tiers as a support, but at the TOP tier the child works from the
+    // board unaided — that independent success is the competence reward. The board
+    // still carries the question (info is never audio-only), and the spoken hint
+    // returns automatically on a demotion, since it tracks the live tier.
+    if (d < 3) speakAfterCurrent(t.say)
   }, [ada.difficulty, onFinish, nextTask, config, effTotal, warmup, warmupDiff])
 
   const demoDone = useRef(false)
@@ -212,8 +217,12 @@ export function Game<V, T extends BaseTask>({
   }, [config])
 
   const afterDemo = useCallback(() => {
-    if (config.guided) enterGuided(); else finishDemo()
-  }, [config.guided, enterGuided, finishDemo])
+    // Fade the "we do" coached round for a child who RESUMES at the top tier — a
+    // returning expert doesn't need the bridge from watching to doing (ux-design.md
+    // §2/§5). Everyone else still gets it. (The walkthrough is shown regardless,
+    // with the "I've got it →" skip for the fast learner.)
+    if (config.guided && startDiff < 3) enterGuided(); else finishDemo()
+  }, [config.guided, enterGuided, finishDemo, startDiff])
 
   // scored submit (the "you do" loop)
   function submit(v: V) {
