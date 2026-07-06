@@ -97,6 +97,7 @@ const GUIDED_TASK: Task = {
 // by the walkthrough's per-step `value` (how many tiles/blocks are laid so far)
 // plus the step index. Only CSS transitions — Safari-safe, no JS animation loop.
 const TILE_GLIDE = 'opacity 420ms ease, transform 480ms cubic-bezier(.34,1.4,.5,1)'
+const ART = '/assets/teen/objects'
 
 function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
   palette: Palette; task: Task; value: number; stepIndex: number; frameCount: number; ended: boolean
@@ -130,6 +131,8 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
     return (
       <div style={sceneBox(P, boxW, boxH)}>
         <style>{TILE_KEYFRAMES}</style>
+        <img src={`${ART}/tile_factory_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}e6)` }} />
         <div style={{ position: 'absolute', top: '9%', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(20px,3.4vw,30px)', color: resultPhase ? P.mint : P.cream }}>
           {label}{resultPhase ? ` = ${answerText}` : ''}
         </div>
@@ -158,6 +161,8 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
   return (
     <div style={sceneBox(P, boxW, boxH)}>
       <style>{TILE_KEYFRAMES}</style>
+      <img src={`${ART}/tile_factory_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}e6)` }} />
 
       {/* header: the power/root label, → answer on the result beat */}
       <div style={{ position: 'absolute', top: '8%', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(20px,3.4vw,30px)', color: resultPhase ? P.mint : P.cream, transition: 'color 400ms' }}>
@@ -171,18 +176,27 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
             {Array.from({ length: side }).map((_, c) => {
               const idx = r * side + c
               const on = idx < placed
+              const cellSize = `clamp(${side > 6 ? 16 : 22}px, ${side > 6 ? 4 : 6}vw, ${side > 6 ? 30 : 44}px)`
               return (
                 <div key={c} style={{
-                  width: `clamp(${side > 6 ? 16 : 22}px, ${side > 6 ? 4 : 6}vw, ${side > 6 ? 30 : 44}px)`,
-                  height: `clamp(${side > 6 ? 16 : 22}px, ${side > 6 ? 4 : 6}vw, ${side > 6 ? 30 : 44}px)`,
+                  position: 'relative',
+                  width: cellSize,
+                  height: cellSize,
                   borderRadius: 6,
-                  background: on ? tileColor : 'rgba(255,240,230,0.09)',
-                  border: `1.5px solid ${on ? P.goldDeep : P.glassBorder}`,
-                  boxShadow: on ? `inset 0 -3px 0 ${done || resultPhase ? P.mint : P.goldDeep}88, 0 2px 6px rgba(0,0,0,0.4)` : 'none',
+                  background: on ? 'transparent' : 'rgba(255,240,230,0.09)',
+                  border: on ? 'none' : `1.5px solid ${P.glassBorder}`,
                   opacity: on ? 1 : 0.5,
                   transform: on ? 'scale(1)' : 'scale(0.82)',
                   transition: TILE_GLIDE,
-                }} />
+                }}>
+                  {on && (
+                    <img src={`${ART}/tile_ceramic.png`} alt="" style={{
+                      position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                      borderRadius: 6,
+                      filter: done || resultPhase ? `drop-shadow(0 0 6px ${P.mint}) saturate(0.9)` : 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
+                    }} />
+                  )}
+                </div>
               )
             })}
           </div>
@@ -216,7 +230,7 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
 const TILE_KEYFRAMES = '@keyframes tfPop{0%{opacity:0;transform:translateX(-50%) scale(.7)}100%{opacity:1;transform:translateX(-50%) scale(1)}}'
 const sceneBox = (P: Palette, w: string, h: string): React.CSSProperties => ({
   position: 'relative', width: w, height: h, borderRadius: 16,
-  background: `linear-gradient(${P.nightTop}, ${P.nightBot})`,
+  background: P.nightBot,
   border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden',
   boxShadow: '0 12px 34px rgba(0,0,0,0.42)',
 })
@@ -265,6 +279,15 @@ const CONFIG: GameConfig<number, Task> = {
     blurb: <><strong style={{ color: P.cream }}>You&apos;re running the Tile Factory.</strong> Lay tile patches and stack block cubes to build powers — and slide to find the side length of a square patch.</>,
     ticket: { title: 'Two cubed', badge: '2³', tone: 'a' },
     startLabel: 'Fire up the kiln →',
+  },
+  overview: {
+    say: "Here is what we are figuring out: what a small number with a tiny two above it really means. Today's order is three squared, and we will build it by laying three rows of three tiles — that is three times three.",
+    problem: <>What is <strong>3²</strong> (three squared)? We&apos;ll lay a <strong>3 × 3 tile patch</strong> and count the tiles.</>,
+    points: [
+      <>That little <strong>²</strong> means &quot;multiply the number by itself&quot; — so <strong>3² = 3 × 3</strong>.</>,
+      <>We build starting at <strong>1</strong>, then crank <strong>×3</strong> for each row of tiles.</>,
+      <>Fill the whole square and count the tiles — that&apos;s our answer.</>,
+    ],
   },
   sig: (t) => t.badge,
 }

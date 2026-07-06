@@ -82,6 +82,7 @@ const GUIDED_TASK: Task = {
 // "balanced". The final beats settle the beam LEVEL, glow it mint, and reveal x on
 // the suitcase. Driven purely by the walkthrough's per-step `value` (x) + index.
 const DEMO_M = 3, DEMO_RIGHT = 8, DEMO_ANS = 5
+const ART = '/assets/teen/objects'
 function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: {
   palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
 }) {
@@ -112,45 +113,47 @@ function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: 
     </g>
   )
 
-  // the mystery suitcase (unknown x) — grows a touch as it fills
+  // the mystery suitcase (unknown x) — an illustrated case that grows a touch as it fills
   const Suitcase = () => {
-    const w = 30, h = 22 + Math.min(x, DEMO_ANS) * 1.2
+    const w = 34, h = 26 + Math.min(x, DEMO_ANS) * 1.4
     return (
       <g transform={`translate(${-w / 2} ${-h})`} style={{ transition: 'transform 620ms' }}>
-        <rect x={0} y={0} width={w} height={h} rx={4} fill={caseReveal ? P.mint : P.coral}
-          stroke={caseReveal ? P.mint : P.coralDeep} strokeWidth={1.4}
-          style={{ transition: 'fill 500ms', filter: caseReveal ? `drop-shadow(0 0 7px ${P.mint})` : undefined }} />
-        <rect x={w / 2 - 7} y={-5} width={14} height={7} rx={3} fill="none" stroke={caseReveal ? P.mint : P.coralDeep} strokeWidth={1.6} />
-        <line x1={0} y1={h * 0.42} x2={w} y2={h * 0.42} stroke="rgba(0,0,0,0.22)" strokeWidth={1.2} />
-        <text x={w / 2} y={h / 2 + 4} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800}
-          fontSize={13} fill={P.inkOnPaper}>{caseReveal ? x : 'x'}</text>
+        <image href={`${ART}/bag_suitcase.png`} x={0} y={0} width={w} height={h} preserveAspectRatio="none"
+          style={{ transition: 'filter 500ms', filter: caseReveal ? `hue-rotate(110deg) saturate(1.2) drop-shadow(0 0 7px ${P.mint})` : undefined }} />
+        {/* code-drawn x / value label centred on the case */}
+        <text x={w / 2} y={h * 0.5 + 5} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800}
+          fontSize={14} fill={P.inkOnPaper} style={{ paintOrder: 'stroke', stroke: P.cream, strokeWidth: 3, strokeLinejoin: 'round' }}>{caseReveal ? x : 'x'}</text>
       </g>
     )
   }
 
-  // the three known kg weights stacked on the left pan
+  // the three known kg weights stacked on the left pan (illustrated gold blocks)
   const KnownWeights = () => (
-    <g transform="translate(24 0)">
+    <g transform="translate(26 0)">
       {[0, 1, 2].map((i) => (
-        <g key={i} transform={`translate(0 ${-13 - i * 12})`}>
-          <rect x={-9} y={0} width={18} height={11} rx={2} fill={P.goldDeep} stroke={P.gold} strokeWidth={1} />
-          <text x={0} y={8.5} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={7} fill={P.cream}>1</text>
+        <g key={i} transform={`translate(0 ${-15 - i * 13})`}>
+          <image href={`${ART}/bag_weight.png`} x={-10} y={0} width={20} height={13} preserveAspectRatio="none" />
+          <text x={0} y={9.5} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={7} fill={P.inkOnPaper}>1</text>
         </g>
       ))}
     </g>
   )
 
   return (
-    <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 372px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 372px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: P.nightTop, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <style>{'@keyframes bsPop{0%{opacity:0;transform:translate(-50%,6px)}100%{opacity:1;transform:translate(-50%,0)}}@keyframes bsBob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}@keyframes bsGlow{0%,100%{opacity:.5}50%{opacity:1}}'}</style>
 
+      {/* illustrated airport check-in backdrop + a soft dark scrim so the scale reads clearly */}
+      <img src={`${ART}/bag_checkin_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}dd)` }} />
+
       {/* equation banner across the top */}
-      <div style={{ marginTop: '7%', padding: '4px 16px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(15px,2vw,20px)', color: caseReveal ? P.mint : P.cream, transition: 'color 400ms' }}>
+      <div style={{ position: 'relative', zIndex: 1, marginTop: '7%', padding: '4px 16px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(15px,2vw,20px)', color: caseReveal ? P.mint : P.cream, transition: 'color 400ms' }}>
         x + 3 = 8
       </div>
 
       {/* the scale */}
-      <svg viewBox="0 0 240 210" style={{ width: '92%', height: 'auto', marginTop: '2%' }}>
+      <svg viewBox="0 0 240 210" style={{ position: 'relative', zIndex: 1, width: '92%', height: 'auto', marginTop: '2%' }}>
         <g transform="translate(120 74)">
           {/* the beam + its pans rotate together */}
           <g transform={`rotate(${tilt})`} style={{ transition: 'transform 620ms cubic-bezier(.45,.05,.25,1)' }}>
@@ -160,9 +163,9 @@ function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: 
             <circle cx={84} cy={0} r={4} fill={beamCol} />
             <Pan side={-1}><Suitcase /><KnownWeights /></Pan>
             <Pan side={1}>
-              <g transform="translate(0 -20)">
-                <rect x={-16} y={0} width={32} height={20} rx={4} fill={P.goldDeep} stroke={P.gold} strokeWidth={1.3} />
-                <text x={0} y={14} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={12} fill={P.cream}>8</text>
+              <g transform="translate(0 -22)">
+                <image href={`${ART}/bag_weight.png`} x={-17} y={0} width={34} height={22} preserveAspectRatio="none" />
+                <text x={0} y={15} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={13} fill={P.inkOnPaper}>8</text>
               </g>
             </Pan>
           </g>
@@ -173,7 +176,7 @@ function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: 
       </svg>
 
       {/* the running arithmetic line — the board math, echoed */}
-      <div style={{ marginTop: 'auto', marginBottom: '22%', fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(16px,2.4vw,24px)', color: caseReveal ? P.mint : P.cream, transition: 'color 400ms' }}>
+      <div style={{ position: 'relative', zIndex: 1, marginTop: 'auto', marginBottom: '22%', fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(16px,2.4vw,24px)', color: caseReveal ? P.mint : P.cream, transition: 'color 400ms' }}>
         {caseReveal ? '5 + 3 = 8' : intro ? '' : `${x} + 3 = ${left}`}
       </div>
 
@@ -233,6 +236,15 @@ const CONFIG: GameConfig<number, Task> = {
   },
   TutorialScene: BaggageScaleScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re running the check-in scale.</strong> Work out x — the mystery case&apos;s weight — that makes each equation balance, set the dial, then weigh it. Balanced means solved; over or under means try again.</>, ticket: { title: 'Find x', badge: '2x + 3 = 11', tone: 'a' }, startLabel: 'Step up to the scale →' },
+  overview: {
+    say: "Here is what we are figuring out: a check-in scale balances only when both pans weigh the same. The left pan holds a mystery case plus a three-kilo weight, and the right pan reads eight kilos. We will find the case's weight — the x that makes x plus three equal eight — and it comes out to five.",
+    problem: <>What does the mystery case weigh? We&apos;ll solve <strong>x + 3 = 8</strong> so both pans balance.</>,
+    points: [
+      <>The scale balances only when the two pans weigh <strong>exactly the same</strong>.</>,
+      <>The left pan is <strong>x + 3</strong> (the case plus a 3&nbsp;kg weight); the right pan reads <strong>8</strong>.</>,
+      <>We&apos;ll build x up one kilo at a time until it balances — <strong>x = 5</strong>.</>,
+    ],
+  },
   sig: (t) => t.badge,
 }
 

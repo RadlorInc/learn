@@ -110,6 +110,8 @@ const HUE_A = '#4f7cff'   // Blue
 const HUE_B = '#ffcf3d'   // Yellow
 const HUE_MIX = '#5fd67a' // Blue + Yellow → green (the mixed result)
 const GLIDE = '620ms cubic-bezier(.45,.05,.25,1)'
+const ART = '/assets/teen/objects'
+const BUCKET_IMG: Record<string, string> = { [HUE_A]: `${ART}/paint_bucket_blue.png`, [HUE_B]: `${ART}/paint_bucket_yellow.png` }
 
 function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
   palette: Palette; task: Task; value: Mix; stepIndex: number; frameCount: number; ended: boolean
@@ -138,16 +140,15 @@ function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ende
     hue: string; label: string; count: number; need: number; pouring: boolean; side: 'l' | 'r'
   }) => (
     <div style={{ position: 'absolute', top: '4%', [side === 'l' ? 'left' : 'right']: '7%', width: 'clamp(58px,15vw,84px)', textAlign: 'center' }}>
-      {/* the paint bucket */}
-      <div style={{
-        position: 'relative', height: 'clamp(46px,9vh,64px)', borderRadius: '8px 8px 12px 12px',
-        background: `linear-gradient(160deg, ${hue}, ${hue}cc)`, border: `1.5px solid rgba(255,255,255,0.4)`,
-        boxShadow: pouring ? `0 0 16px ${hue}, 0 4px 10px rgba(0,0,0,0.4)` : '0 4px 10px rgba(0,0,0,0.4)',
-        transition: `box-shadow ${GLIDE}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-      }}>
-        {/* bucket rim */}
-        <div style={{ position: 'absolute', top: -4, left: '8%', right: '8%', height: 7, borderRadius: 6, background: hue, border: '1.5px solid rgba(255,255,255,0.5)' }} />
-        <div style={{ marginTop: 'clamp(10px,2vh,16px)', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: 'rgba(0,0,0,0.55)', fontSize: 'clamp(15px,2.6vw,22px)' }}>{count}</div>
+      {/* the illustrated paint bucket */}
+      <div style={{ position: 'relative', height: 'clamp(60px,12vh,86px)' }}>
+        <img src={BUCKET_IMG[hue]} alt="" style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain',
+          filter: pouring ? `drop-shadow(0 0 16px ${hue}) drop-shadow(0 4px 8px rgba(0,0,0,0.45))` : 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
+          transition: `filter ${GLIDE}`,
+        }} />
+        {/* the count numeral overlaid on the paint */}
+        <div style={{ position: 'absolute', top: '38%', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: 'rgba(0,0,0,0.62)', fontSize: 'clamp(15px,2.6vw,22px)', textShadow: '0 1px 2px rgba(255,255,255,0.35)' }}>{count}</div>
       </div>
       <div style={{ marginTop: 5, fontWeight: 800, color: P.creamSoft, fontSize: 'clamp(9px,1.3vw,12px)', whiteSpace: 'nowrap' }}>{label}</div>
       <div style={{ marginTop: 1, fontFamily: 'var(--font-numeric)', fontWeight: 800, color: hue, fontSize: 'clamp(10px,1.4vw,13px)' }}>need {need}</div>
@@ -166,6 +167,9 @@ function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ende
 
   return (
     <div style={{ position: 'relative', width: 'clamp(244px,44vw,356px)', height: 'clamp(300px,46vh,440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
+      {/* illustrated art-studio backdrop + a scrim so the tray/buckets read clearly */}
+      <img src={`${ART}/paint_studio_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}e6)` }} />
       <style>{'@keyframes psPop{0%{opacity:0;transform:translate(-50%,6px) scale(.8)}100%{opacity:1;transform:translate(-50%,0) scale(1)}}@keyframes psGlow{0%,100%{box-shadow:0 0 18px var(--g),0 6px 16px rgba(0,0,0,.4)}50%{box-shadow:0 0 34px var(--g),0 6px 16px rgba(0,0,0,.4)}}'}</style>
 
       {/* the ratio ticket, top-centre */}
@@ -257,6 +261,15 @@ const CONFIG: GameConfig<Mix, Task> = {
     blurb: <><strong style={{ color: P.cream }}>You&apos;re running the paint studio.</strong> Add the parts so every order keeps its mix ratio — that&apos;s what makes the colour come out right every time.</>,
     ticket: { title: 'Blue & yellow', badge: '2 : 3', tone: 'a' },
     startLabel: 'Open the studio →',
+  },
+  overview: {
+    say: "Here is what we are figuring out: a paint mix only looks right if the colours stay in the same ratio. We will build a blue and yellow mix that is two to three — two parts blue for every three parts yellow — by adding one part at a time.",
+    problem: <>How do you keep a colour looking right? We&apos;ll mix <strong>Blue : Yellow = 2 : 3</strong> — two parts blue, three parts yellow.</>,
+    points: [
+      <>The ratio <strong>2 : 3</strong> means for every <strong>2 parts blue</strong> we add <strong>3 parts yellow</strong>.</>,
+      <>We&apos;ll build it part by part: tap <strong>2 blue</strong>, then tap <strong>3 yellow</strong>.</>,
+      <>When both sides match the ratio, the mix is <strong>2 : 3</strong> — the colour comes out right.</>,
+    ],
   },
   sig: (t) => `${t.ratioA}:${t.ratioB}|${t.expA}:${t.expB}|${t.fixed ?? '-'}`,
 }

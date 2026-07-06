@@ -97,14 +97,18 @@ const GUIDED_TASK: Task = {
   work: ['Floor area = width × height.', '3 × 2 = 6.'],
 }
 
-// ── Animated walkthrough scene — the storyboard, in motion ────────────────────
-// A code-drawn cutaway ROOM floor plan. The 6×4 floor is a grid of 24 unit tiles.
-// As the narration counts rows, tiles POP IN row by row (CSS transition on
-// opacity/scale, keyed to the step's `value` = tiles laid so far), the running
-// count climbs, and at the end the full floor glows mint under "6 × 4 = 24 m²".
+// ── Animated walkthrough scene — the storyboard, in motion (ILLUSTRATED) ──────
+// A cutaway ROOM floor plan dressed in generated illustrations (Nano Banana 2):
+// a bold-cartoon empty renovation-room backdrop, and a real terracotta floor TILE
+// image laid into each grid cell. The 6×4 floor is a grid of 24 unit tiles. As the
+// narration counts rows, tiles POP IN row by row (CSS transition on opacity/scale,
+// keyed to the step's `value` = tiles laid so far), the running count climbs, and
+// at the end the full floor glows mint under "6 × 4 = 24 m²". Unlaid cells keep the
+// faint code-drawn placeholder. The one tile image is reused across all 24 cells.
 // Driven purely by the walkthrough's per-step `value` + step index. No JS loops.
 const ROOM_W = 6, ROOM_H = 4, ROOM_TILES = ROOM_W * ROOM_H
 const TILE_POP = 'opacity 420ms ease, transform 420ms cubic-bezier(.34,1.4,.5,1), background 500ms, box-shadow 500ms'
+const ART = '/assets/teen/objects'
 
 function RoomRenoScene({ palette: P, value, stepIndex, frameCount, ended }: {
   palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
@@ -117,16 +121,20 @@ function RoomRenoScene({ palette: P, value, stepIndex, frameCount, ended }: {
   const counting = stepIndex >= 6 && !resultPhase                     // laying tiles row by row
 
   return (
-    <div style={{ position: 'relative', width: 'clamp(232px, 44vw, 360px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '18px 14px' }}>
+    <div style={{ position: 'relative', width: 'clamp(232px, 44vw, 360px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: P.nightBot, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '18px 14px' }}>
       <style>{'@keyframes rrPulse{0%,100%{opacity:.55}50%{opacity:1}}@keyframes rrPop{0%{opacity:0;transform:translateX(-50%) scale(.7)}100%{opacity:1;transform:translateX(-50%) scale(1)}}'}</style>
 
+      {/* illustrated empty-renovation-room backdrop + a soft dark scrim so the grid + labels read clearly */}
+      <img src={`${ART}/room_empty_reno.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(36,26,18,0.42), rgba(36,26,18,0.66))' }} />
+
       {/* header — the job, then the running count */}
-      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px,1.3vw,14px)', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: resultPhase ? P.mint : P.gold, marginBottom: 10, transition: 'color 400ms', textAlign: 'center' }}>
+      <div style={{ position: 'relative', zIndex: 2, fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px,1.3vw,14px)', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: resultPhase ? P.mint : P.gold, marginBottom: 10, transition: 'color 400ms', textAlign: 'center' }}>
         {intro ? 'Room Reno · tile the floor' : resultPhase ? `6 × 4 = ${ROOM_TILES} m²` : counting ? `laid: ${laid} tile${laid === 1 ? '' : 's'}` : 'the floor: 6 × 4'}
       </div>
 
       {/* the floor plan: a bordered room with a 6×4 tile grid */}
-      <div style={{ position: 'relative', padding: 'clamp(10px,2.2vw,18px)' }}>
+      <div style={{ position: 'relative', zIndex: 2, padding: 'clamp(10px,2.2vw,18px)' }}>
         {/* width label above */}
         {showDims && (
           <div style={{ position: 'absolute', top: 'clamp(-6px,-0.4vw,-2px)', left: '50%', transform: 'translateX(-50%)', color: P.coral, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(11px,1.4vw,15px)', whiteSpace: 'nowrap', animation: 'rrPop 300ms ease' }}>← 6 m →</div>
@@ -140,26 +148,37 @@ function RoomRenoScene({ palette: P, value, stepIndex, frameCount, ended }: {
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${ROOM_W}, 1fr)`, gridTemplateRows: `repeat(${ROOM_H}, 1fr)`, gap: 'clamp(2px,0.5vw,4px)', width: 'clamp(180px,32vw,264px)', height: 'clamp(120px,22vw,176px)', padding: 'clamp(3px,0.7vw,6px)', borderRadius: 8, background: 'rgba(0,0,0,0.28)', border: `2px solid ${resultPhase ? P.mint : P.glassBorder}`, boxShadow: resultPhase ? `0 0 20px ${P.mint}66` : 'none', transition: 'border-color 500ms, box-shadow 500ms' }}>
           {Array.from({ length: ROOM_TILES }).map((_, i) => {
             const row = Math.floor(i / ROOM_W)       // 0..3 (top row laid first)
-            const shown = i < laid
+            const shown = i < laid                    // laid cell → real tile image
             const inFreshRow = counting && shown && row === rowsDone - 1
             return (
               <div key={i} style={{
+                position: 'relative',
                 borderRadius: 3,
+                overflow: 'hidden',
                 transition: TILE_POP,
                 transitionDelay: shown ? `${(i % ROOM_W) * 55}ms` : '0ms',
                 opacity: shown ? 1 : 0.12,
                 transform: shown ? 'scale(1)' : 'scale(0.6)',
-                background: shown ? (resultPhase ? P.mint : inFreshRow ? P.gold : P.goldDeep) : 'rgba(255,244,232,0.05)',
-                border: `1px solid ${shown ? 'rgba(0,0,0,0.18)' : P.glassBorder}`,
+                background: shown ? 'transparent' : 'rgba(255,244,232,0.05)',
+                border: `1px solid ${shown ? 'rgba(0,0,0,0.28)' : P.glassBorder}`,
                 boxShadow: resultPhase && shown ? `0 0 8px ${P.mint}88` : 'none',
-              }} />
+              }}>
+                {shown && (
+                  <>
+                    {/* real terracotta floor tile fills the cell */}
+                    <img src={`${ART}/room_floor_tile.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    {/* fresh-row highlight (warm wash) while counting; mint glow at the result */}
+                    <div style={{ position: 'absolute', inset: 0, transition: 'background 500ms, box-shadow 500ms', background: resultPhase ? `${P.mint}55` : inFreshRow ? `${P.gold}44` : 'transparent', boxShadow: resultPhase ? `inset 0 0 6px ${P.mint}` : 'none' }} />
+                  </>
+                )}
+              </div>
             )
           })}
         </div>
       </div>
 
       {/* footer cue */}
-      <div style={{ marginTop: 12, minHeight: 'clamp(20px,2.6vh,26px)', display: 'flex', alignItems: 'center' }}>
+      <div style={{ position: 'relative', zIndex: 2, marginTop: 12, minHeight: 'clamp(20px,2.6vh,26px)', display: 'flex', alignItems: 'center' }}>
         {intro && (
           <div style={{ color: P.creamSoft, fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'clamp(11px,1.4vw,15px)' }}>area = length × width</div>
         )}
@@ -216,6 +235,15 @@ const CONFIG: GameConfig<number, Task> = {
   },
   TutorialScene: RoomRenoScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re renovating a room.</strong> Work out each floor area, skirting length, volume and brace, then dial it in and order it.</>, ticket: { title: 'Floor area', badge: '4 × 3', tone: 'a' }, startLabel: 'Start the job →' },
+  overview: {
+    say: "Here is what we are figuring out: we are tiling a room floor and need to know how much tile to buy. The floor is six metres long and four metres wide, so we will work out its area — six times four square metres.",
+    problem: <>How much tile covers the floor? We&apos;ll measure a room that&apos;s <strong>6 m by 4 m</strong> and find its <strong>AREA</strong>.</>,
+    points: [
+      <>Floor <strong>area = length × width</strong> — that&apos;s how much tile it takes to cover it.</>,
+      <>We&apos;re working out <strong>6 × 4</strong> by counting the tiles row by row.</>,
+      <>The answer is in <strong>square metres (m²)</strong> — watch it land on <strong>24</strong>.</>,
+    ],
+  },
   sig: (t) => t.badge,
 }
 

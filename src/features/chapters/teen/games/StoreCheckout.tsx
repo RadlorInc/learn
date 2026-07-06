@@ -147,7 +147,10 @@ const GUIDED_TASK: Task = {
 //     GLIDES down from the full price to the sale price as the step value drops; a
 //     "− $X" saving chip pops in; the tag glows mint and stamps SALE at the end.
 // Driven purely by props (value / task / stepIndex) — CSS transitions only.
+// The counter dressing is an illustrated backdrop (Nano Banana 2), the same style
+// as WeatherStation's BankAccountScene; a scrim keeps the code-drawn grid/tag legible.
 const SCENE_GLIDE = 'all 720ms cubic-bezier(.45,.05,.25,1)'
+const ART = '/assets/teen/objects'
 
 function StoreCheckoutScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
   palette: Palette; task: Task; value: number; stepIndex: number; frameCount: number; ended: boolean
@@ -161,6 +164,10 @@ function StoreCheckoutScene({ palette: P, task, value, stepIndex, frameCount, en
 
   return (
     <div style={{ position: 'relative', width: 'clamp(248px, 44vw, 372px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(14px,3vw,22px)', gap: 'clamp(12px,2.4vh,20px)' }}>
+      {/* illustrated store-checkout backdrop + a soft scrim so the grid/tag read clearly */}
+      <img src={`${ART}/shop_checkout_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(6,20,16,.42), rgba(6,20,16,.66))' }} />
+
       <style>{'@keyframes scPop{0%{opacity:0;transform:translateY(6px) scale(.8)}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes scStamp{0%{opacity:0;transform:rotate(-14deg) scale(1.5)}60%{opacity:1;transform:rotate(-14deg) scale(.92)}100%{opacity:1;transform:rotate(-14deg) scale(1)}}@keyframes scGlow{0%,100%{opacity:.5}50%{opacity:1}}'}</style>
 
       {isPaint
@@ -219,6 +226,9 @@ function PriceAct({ P, task, value, resultPhase }: { P: Palette; task: Task; val
 
   return (
     <>
+      {/* the item on sale — sits above the price tag; glows mint once the discount lands */}
+      <img src={`${ART}/shop_hoodie.png`} alt="" style={{ position: 'absolute', top: '6%', left: '50%', transform: 'translateX(-50%)', width: 'clamp(46px,10vw,74px)', height: 'auto', zIndex: 1, transition: 'filter 400ms', filter: resultPhase ? `drop-shadow(0 0 9px ${P.mint})` : 'drop-shadow(0 3px 6px rgba(0,0,0,0.45))' }} />
+
       <div style={{ fontSize: 'clamp(11px,1.4vw,14px)', fontWeight: 700, color: P.creamSoft, letterSpacing: 0.4, textAlign: 'center' }}>
         {task.title.toUpperCase()} · {task.badge.split('·').slice(-1)[0].trim().toUpperCase()}
       </div>
@@ -282,6 +292,15 @@ const CONFIG: GameConfig<number, Task> = {
     blurb: <><strong style={{ color: P.cream }}>You&apos;re on the till at the store.</strong> Ring up each order — work out the discount, the sale price, the saving, the tax or the tip — and set the right amount.</>,
     ticket: { title: 'Hoodie', badge: '25% off', tone: 'a' },
     startLabel: 'Open the till →',
+  },
+  overview: {
+    say: "Here is what we are figuring out: a store is taking twenty-five percent off an eighty dollar hoodie, and we want the sale price. First we will see that twenty-five percent is just one quarter of the grid, then we take a quarter off eighty dollars — that is finding a percent of a price and subtracting it.",
+    problem: <>What is the sale price? We&apos;ll take <strong>25% off an $80 hoodie</strong>.</>,
+    points: [
+      <><strong>25%</strong> means 25 of 100 squares — the same as <strong>one quarter</strong>.</>,
+      <>A quarter of $80 is <strong>$20</strong> — that is the discount coming off.</>,
+      <>Take it off: <strong>$80 − $20 = $60</strong>, the sale price we ring up.</>,
+    ],
   },
   sig: (t) => `${t.mech}:${t.badge}:${t.answer}`,
 }

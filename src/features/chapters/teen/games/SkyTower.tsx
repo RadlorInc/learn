@@ -92,16 +92,20 @@ const GUIDED_TASK: Task = {
   work: ['Start at 1, go 3 down.', '1 − 3 = −2.'],
 }
 
-// ── Animated walkthrough scene — the storyboard, in motion ────────────────────
-// A code-drawn cutaway tower shaft. The car GLIDES between floors (CSS transition
-// on its position) one floor per narrated beat, crosses the gold ground line into
-// the shaded basement, and lands mint at the answer — like a cartoon explainer.
-// Driven purely by the walkthrough's per-step `value` (floor) + step index.
+// ── Animated walkthrough scene — the storyboard, in motion (ILLUSTRATED) ──────
+// A cutaway tower shaft dressed in generated illustrations (Nano Banana 2): a
+// faint night-skyscraper backdrop and a cartoon lift-CAR sprite. The car GLIDES
+// between floors (CSS transition on its position) one floor per narrated beat,
+// crosses the gold ground line into the shaded basement, and lands mint at the
+// answer — like a cartoon explainer. The shaft, floor marks/labels, gold ground
+// line, readout, arrows, "below" bracket + counter stay code-drawn so the math +
+// motion are exact. Driven purely by the walkthrough's per-step `value` (floor).
 const TOP_FLOOR = 3, BOT_FLOOR = -4
 const SCENE_FLOORS = [3, 2, 1, 0, -1, -2, -3, -4]
 const pctFromTop = (f: number) => ((TOP_FLOOR - f) / (TOP_FLOOR - BOT_FLOOR)) * 100
 const floorLabel = (f: number) => (f === 0 ? 'G' : f < 0 ? `B${-f}` : `${f}`)
 const GLIDE = 'top 880ms cubic-bezier(.45,.05,.25,1)'
+const ART = '/assets/teen/objects'
 
 function SkyTowerScene({ palette: P, value, stepIndex, frameCount, ended }: {
   palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
@@ -115,12 +119,15 @@ function SkyTowerScene({ palette: P, value, stepIndex, frameCount, ended }: {
   const atGround = v === 0 && stepIndex > 0
   const descending = stepIndex >= 2 && !resultPhase && v < 2
   const floorsDown = 2 - v                                   // 0..5 through the ride
-  const carColor = resultPhase ? P.mint : P.cream
   const readColor = v < 0 ? P.coral : v === 0 ? P.gold : P.cream
 
   return (
     <div style={{ position: 'relative', width: 'clamp(232px, 42vw, 344px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
       <style>{'@keyframes stGroundFlash{0%,100%{opacity:.55}50%{opacity:1}}@keyframes stBob{0%,100%{transform:translateY(-1px)}50%{transform:translateY(4px)}}@keyframes stPopIn{0%{opacity:0;transform:translate(-50%,-40%) scale(.7)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}'}</style>
+
+      {/* illustrated night-skyscraper backdrop + a soft scrim so the shaft reads clearly */}
+      <img src={`${ART}/tower_shaft_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(20,16,40,0.30), rgba(20,16,40,0.60))' }} />
 
       {/* the shaft — the coordinate space for everything below */}
       <div style={{ position: 'absolute', top: '7%', bottom: '7%', left: '31%', width: '38%', borderRadius: 9, background: 'rgba(0,0,0,0.26)', border: `1px solid ${P.glassBorder}` }}>
@@ -136,10 +143,8 @@ function SkyTowerScene({ palette: P, value, stepIndex, frameCount, ended }: {
           </div>
         ))}
 
-        {/* the lift car — glides between floors */}
-        <div style={{ position: 'absolute', left: '50%', top: `${carPct}%`, transform: 'translate(-50%,-50%)', transition: GLIDE, width: '74%', height: 'clamp(20px,4.4vh,28px)', borderRadius: 6, background: carColor, boxShadow: resultPhase ? `0 0 14px ${P.mint}, 0 3px 9px rgba(0,0,0,0.5)` : '0 3px 9px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>
-          <div style={{ width: 2, height: '66%', background: 'rgba(0,0,0,0.22)' }} />
-        </div>
+        {/* the lift car — an illustrated cabin that glides between floors */}
+        <img src={`${ART}/tower_lift_car.png`} alt="" style={{ position: 'absolute', left: '50%', top: `${carPct}%`, transform: 'translate(-50%,-50%)', transition: GLIDE, width: '74%', height: 'auto', zIndex: 3, filter: resultPhase ? `drop-shadow(0 0 14px ${P.mint}) drop-shadow(0 3px 9px rgba(0,0,0,0.5))` : 'drop-shadow(0 3px 9px rgba(0,0,0,0.5))' }} />
 
         {/* floor readout — big number, follows the car */}
         <div style={{ position: 'absolute', left: '126%', top: `${carPct}%`, transform: 'translateY(-50%)', transition: GLIDE, fontFamily: 'var(--font-numeric)', fontSize: 'clamp(26px,4.6vw,40px)', fontWeight: 800, color: readColor, whiteSpace: 'nowrap' }}>{v}</div>
@@ -211,6 +216,15 @@ const CONFIG: GameConfig<number, Task> = {
   },
   TutorialScene: SkyTowerScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re running the tower lift.</strong> Move the car up and down the shaft to log every ride — above the ground into the high floors, and below it into the basements.</>, ticket: { title: 'First ride', badge: '−3 + 5', tone: 'a' }, startLabel: 'Start your shift →' },
+  overview: {
+    say: "Here is what we are figuring out: when a lift drops further than it can climb, it goes below the ground into the basements. We will ride the car from floor two, down five floors, and land underground — that is working out two minus five and getting a negative number.",
+    problem: <>Where does the lift stop? We&apos;ll ride from <strong>floor 2, then down 5 floors</strong> — and end up <strong>below the ground</strong>.</>,
+    points: [
+      <>Floors above the ground are <strong>positive</strong>; basements below it are <strong>negative</strong>.</>,
+      <>We&apos;re working out <strong>2 − 5</strong> by dropping the car one floor at a time.</>,
+      <>Watch it cross the ground floor (zero) and keep going — that&apos;s where the answer turns <strong>negative</strong>.</>,
+    ],
+  },
   sig: (t) => t.badge,
 }
 

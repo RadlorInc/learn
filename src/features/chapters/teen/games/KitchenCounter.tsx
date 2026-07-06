@@ -155,6 +155,7 @@ const GUIDED_TASK: Task = {
 // reading. Everything moves via CSS transitions so it glides between beats.
 // Driven purely by the walkthrough's per-step `value`, the `task`, and step index.
 const GLIDE = 'cubic-bezier(.45,.05,.25,1)'
+const ART = '/assets/teen/objects'
 
 function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
   palette: Palette; task: Task; value: number; stepIndex: number; frameCount: number; ended: boolean
@@ -178,7 +179,6 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
   const keyframes = '@keyframes cbPop{0%{opacity:0;transform:translate(-50%,4px) scale(.8)}100%{opacity:1;transform:translate(-50%,0) scale(1)}}@keyframes cbGlow{0%,100%{opacity:.6}50%{opacity:1}}'
 
   // shared wood tones
-  const WOOD = 'linear-gradient(180deg,#c98f4e,#a9702f)'
   const WOOD_EDGE = '#7a4f1e'
 
   if (task.mech === 'bar') {
@@ -190,13 +190,18 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
     return (
       <div style={box}>
         <style>{keyframes}</style>
-        <div style={{ color: P.creamSoft, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(14px,2vw,18px)', marginBottom: 'clamp(10px,2.4vh,18px)', letterSpacing: 0.3 }}>
+        {/* workshop backdrop */}
+        <img src={`${ART}/cut_workshop_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}cc)` }} />
+        <div style={{ position: 'relative', color: P.creamSoft, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(14px,2vw,18px)', marginBottom: 'clamp(10px,2.4vh,18px)', letterSpacing: 0.3 }}>
           {task.badge}
         </div>
 
         {/* the plank */}
         <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
-          <div style={{ display: 'flex', width: '100%', height: 'clamp(56px,10vh,84px)', borderRadius: 8, overflow: 'hidden', border: `3px solid ${WOOD_EDGE}`, boxShadow: resultPhase ? `0 0 18px ${P.mint}` : '0 6px 16px rgba(0,0,0,0.45)', transition: `box-shadow 500ms ${GLIDE}` }}>
+          <div style={{ position: 'relative', display: 'flex', width: '100%', height: 'clamp(56px,10vh,84px)', borderRadius: 8, overflow: 'hidden', border: `3px solid ${WOOD_EDGE}`, boxShadow: resultPhase ? `0 0 18px ${P.mint}` : '0 6px 16px rgba(0,0,0,0.45)', transition: `box-shadow 500ms ${GLIDE}` }}>
+            {/* the plank illustration sits BEHIND the code-drawn cut-lines + shading */}
+            <img src={`${ART}/cut_plank.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0 }} />
             {Array.from({ length: SEG }).map((_, i) => {
               const on = i < shaded
               const isBoard = boardOn && i < 8
@@ -206,9 +211,10 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
               return (
                 <div key={i} style={{
                   flex: 1,
-                  background: on ? fill : WOOD,
+                  background: on ? fill : 'transparent',
                   borderRight: i < SEG - 1 ? `1.5px solid ${WOOD_EDGE}` : 'none',
                   position: 'relative',
+                  zIndex: 1,
                   transition: `background 640ms ${GLIDE}`,
                 }}>
                   {!on && isBoard && <div style={{ position: 'absolute', inset: 0, background: fill, transition: `background 640ms ${GLIDE}` }} />}
@@ -229,7 +235,7 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
         </div>
 
         {/* intro / result caption */}
-        <div style={{ marginTop: 'clamp(12px,3vh,20px)', minHeight: 22, color: resultPhase ? P.mint : P.mutedOnPaper, fontWeight: 700, fontSize: 'clamp(11px,1.6vw,14px)', textAlign: 'center' }}>
+        <div style={{ position: 'relative', marginTop: 'clamp(12px,3vh,20px)', minHeight: 22, color: resultPhase ? P.mint : P.mutedOnPaper, fontWeight: 700, fontSize: 'clamp(11px,1.6vw,14px)', textAlign: 'center' }}>
           {resultPhase ? `${reduce(shaded, SEG)} of the board` : stepIndex === 0 ? 'a board in 12 equal parts' : `board = ${denom} of a metre`}
         </div>
       </div>
@@ -248,13 +254,18 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
   return (
     <div style={box}>
       <style>{keyframes}</style>
-      <div style={{ color: P.creamSoft, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(14px,2vw,18px)', marginBottom: 'clamp(42px,7vh,56px)', letterSpacing: 0.3 }}>
+      {/* workshop backdrop */}
+      <img src={`${ART}/cut_workshop_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />
+      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}cc)` }} />
+      <div style={{ position: 'relative', color: P.creamSoft, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(14px,2vw,18px)', marginBottom: 'clamp(42px,7vh,56px)', letterSpacing: 0.3 }}>
         {task.badge}
       </div>
 
       <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
         {/* the tape body */}
-        <div style={{ position: 'relative', width: '100%', height: 'clamp(40px,7.5vh,58px)', borderRadius: 7, background: WOOD, border: `3px solid ${WOOD_EDGE}`, boxShadow: resultPhase ? `0 0 18px ${P.mint}` : '0 6px 16px rgba(0,0,0,0.45)', transition: `box-shadow 500ms ${GLIDE}`, overflow: 'hidden' }}>
+        <div style={{ position: 'relative', width: '100%', height: 'clamp(40px,7.5vh,58px)', borderRadius: 7, border: `3px solid ${WOOD_EDGE}`, boxShadow: resultPhase ? `0 0 18px ${P.mint}` : '0 6px 16px rgba(0,0,0,0.45)', transition: `box-shadow 500ms ${GLIDE}`, overflow: 'hidden' }}>
+          {/* the tape-measure illustration sits BEHIND the ticks, fill, brackets + needle */}
+          <img src={`${ART}/cut_tape.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0 }} />
           {/* filled portion (how far measured) glides */}
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: resultPhase ? 'rgba(127,214,160,0.34)' : 'rgba(255,198,92,0.30)', transition: `width 760ms ${GLIDE}, background 500ms ${GLIDE}` }} />
           {/* tick marks */}
@@ -291,7 +302,7 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
       </div>
 
       {/* caption */}
-      <div style={{ marginTop: 'clamp(14px,3vh,22px)', minHeight: 22, color: resultPhase ? P.mint : P.mutedOnPaper, fontWeight: 700, fontSize: 'clamp(11px,1.6vw,14px)', textAlign: 'center' }}>
+      <div style={{ position: 'relative', marginTop: 'clamp(14px,3vh,22px)', minHeight: 22, color: resultPhase ? P.mint : P.mutedOnPaper, fontWeight: 700, fontSize: 'clamp(11px,1.6vw,14px)', textAlign: 'center' }}>
         {resultPhase ? (isDiv ? `${Math.round(v)} pieces fit` : `${task.badge} = ${v}`) : isDiv ? 'count the pieces that fit' : 'slide the tape to the reading'}
       </div>
     </div>
@@ -325,6 +336,15 @@ const CONFIG: GameConfig<number, Task> = {
     blurb: <><strong style={{ color: P.cream }}>You&apos;re at the bench in Milo&apos;s workshop.</strong> Mark the board or run the tape measure to make every cut on the list exactly right.</>,
     ticket: { title: 'Half of a half', badge: '½ × ½', tone: 'a' },
     startLabel: 'Step up to the bench →',
+  },
+  overview: {
+    say: "Here is what we are figuring out: taking a part of a part. Our board is two-thirds of a metre, and we need half of that — so we will work out half of two-thirds by marking a board split into twelve equal parts.",
+    problem: <>What is <strong>half of ⅔</strong>? We&apos;ll take a board that&apos;s <strong>⅔ of a metre</strong> and mark <strong>half of it</strong> on the 12-part bench.</>,
+    points: [
+      <>&ldquo;of&rdquo; means multiply — we&apos;re working out <strong>½ × ⅔</strong>.</>,
+      <>Split the board into 12 equal parts: <strong>⅔ is 8 parts</strong>, then take half of those.</>,
+      <>Half of 8 parts is <strong>4 parts</strong> — that&apos;s <strong>4/12</strong>, the same as <strong>⅓ of a metre</strong>.</>,
+    ],
   },
   sig: (t) => t.badge,
 }

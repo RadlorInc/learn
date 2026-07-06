@@ -22,7 +22,7 @@
  */
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useAdaptive } from '@/core/adaptive'
-import { speak, speakAfterCurrent, speakSeq, speakSteps, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, speakSeq, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import type { ChapterType } from '@/state/store'
@@ -119,6 +119,21 @@ export interface GameConfig<V, T extends BaseTask> {
    *  Keeps the background uncluttered so it never competes with the interactive. */
   motif?: string
   start: { blurb: React.ReactNode; ticket: { title: string; price?: string; badge: string; tone: 'a' | 'b' }; startLabel: string }
+  /** A plain-language SUMMARY of the problem, shown + spoken BEFORE the step-by-step
+   *  walkthrough begins — so the child grasps WHAT they're solving and WHICH
+   *  calculation they're about to do before diving into the baby steps. Milo reads
+   *  `say`; the card shows the `problem` (the goal in one line) + a few short
+   *  `points` (what we know / what we'll do). Universal ask (feedback: give the
+   *  big picture before the baby steps). */
+  overview?: {
+    /** Spoken + shown as a word-by-word read-along (each word highlights as Milo
+     *  says it, so the child can track along). This is the summary text. */
+    say: string
+    /** A one-line goal shown as the headline above the read-along. */
+    problem: React.ReactNode
+    /** Optional supporting bullets. Shown under the read-along on roomy screens. */
+    points?: React.ReactNode[]
+  }
   /** "I do" walkthrough. If present, replaces the one-shot Demo. Can be a single
    *  worked example, or an ARRAY of examples played back-to-back (each may use a
    *  different instrument/task — good for chapters that teach several operations). */
@@ -137,7 +152,7 @@ export interface GameConfig<V, T extends BaseTask> {
 }
 
 type Sub = 'active' | 'reveal' | 'reteach' | 'sold'
-type Stage = 'start' | 'demo' | 'guided' | 'play'
+type Stage = 'start' | 'intro' | 'demo' | 'guided' | 'play'
 
 export function Game<V, T extends BaseTask>({
   config, childName, onFinish, onExit,
@@ -170,10 +185,19 @@ export function Game<V, T extends BaseTask>({
   const [correct, setCorrect] = useState(0)
   const [wrong, setWrong] = useState(0)
 
+  // Legible "I do → your turn → you did it" hand-off cue (feedback-your-turn-cue):
+  // a brief popup the moment control passes to the child ('turn') and when they
+  // succeed ('solved'), on top of a persistent "your turn" label by the instrument.
+  const [cue, setCue] = useState<null | 'turn' | 'solved'>(null)
+
   const seen = useRef<Set<string>>(new Set())
   const timers = useRef<number[]>([])
   const later = useCallback((fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); stopSpeech() }, [])
+  const flashCue = useCallback((k: 'turn' | 'solved') => {
+    setCue(k)
+    later(() => setCue((c) => (c === k ? null : c)), k === 'turn' ? 1600 : 1500)
+  }, [later])
 
   const nextTask = useCallback((d: 1 | 2 | 3): T => {
     let t = config.makeTask(d)
@@ -192,13 +216,14 @@ export function Game<V, T extends BaseTask>({
     const d = warmup && nextIdx < WARMUP_COUNT ? warmupDiff : ada.difficulty
     const t = nextTask(d)
     setTask(t); setValue(config.initialValue(t)); setSub('active'); setIdx(nextIdx)
+    flashCue('turn')
     // Tier-linked scaffolding (ux-design.md §2/§6.4): Milo reads the task aloud at
     // the lower tiers as a support, but at the TOP tier the child works from the
     // board unaided — that independent success is the competence reward. The board
     // still carries the question (info is never audio-only), and the spoken hint
     // returns automatically on a demotion, since it tracks the live tier.
     if (d < 3) speakAfterCurrent(t.say)
-  }, [ada.difficulty, onFinish, nextTask, config, effTotal, warmup, warmupDiff])
+  }, [ada.difficulty, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue])
 
   const demoDone = useRef(false)
   const finishDemo = useCallback(() => {
@@ -213,8 +238,9 @@ export function Game<V, T extends BaseTask>({
   const enterGuided = useCallback(() => {
     const g = config.guided!
     setStage('guided'); setTask(g.task); setValue(config.initialValue(g.task)); setSub('active')
+    flashCue('turn')
     speakAfterCurrent(`${g.coach} ${g.task.say}`)
-  }, [config])
+  }, [config, flashCue])
 
   const afterDemo = useCallback(() => {
     // Fade the "we do" coached round for a child who RESUMES at the top tier — a
@@ -235,6 +261,7 @@ export function Game<V, T extends BaseTask>({
     if (ok) {
       const c = correct + 1
       setCorrect(c); setSub('sold'); setWrongRun(0)
+      flashCue('solved')
       speak(`Nice! ${ada.praise}`)
       later(() => loadTask(idx + 1, c, wrong, res.mastered), 1650)
       return
@@ -259,6 +286,7 @@ export function Game<V, T extends BaseTask>({
     const ok = config.grade(task, v)
     if (ok) {
       setSub('sold')
+      flashCue('solved')
       speak(`You did it, ${childName}! Now let's play.`)
       later(finishDemo, 1700)
     } else {
@@ -318,14 +346,20 @@ export function Game<V, T extends BaseTask>({
                     You left off at <span style={{ color: P.gold }}>{ada.difficultyLabel}</span>. Want a quick warm-up first?
                   </p>
                   <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(true); setStage('demo') }} style={headerChip(P)}>☀️ Warm up first</button>
-                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(false); setStage('demo') }} style={bigBtn(P)}>Continue →</button>
+                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(true); setStage(config.overview ? 'intro' : 'demo') }} style={headerChip(P)}>☀️ Warm up first</button>
+                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(false); setStage(config.overview ? 'intro' : 'demo') }} style={bigBtn(P)}>Continue →</button>
                   </div>
                 </div>
               ) : (
-                <button type="button" onClick={() => { unlockSpeech(); setStage('demo') }} style={bigBtn(P)}>{config.start.startLabel}</button>
+                <button type="button" onClick={() => { unlockSpeech(); setStage(config.overview ? 'intro' : 'demo') }} style={bigBtn(P)}>{config.start.startLabel}</button>
               )}
             </div>
+          </CenterFill>
+        )}
+
+        {stage === 'intro' && config.overview && (
+          <CenterFill>
+            <OverviewCard P={P} overview={config.overview} onDone={() => setStage('demo')} />
           </CenterFill>
         )}
 
@@ -354,6 +388,9 @@ export function Game<V, T extends BaseTask>({
               {stage === 'guided' && sub === 'active' && (
                 <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Try this one with me</div>
               )}
+              {stage === 'play' && sub === 'active' && (
+                <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Your turn — solve it</div>
+              )}
               <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
                 <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
                 {stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind={config.guided.hand} />}
@@ -362,6 +399,16 @@ export function Game<V, T extends BaseTask>({
           </>
         )}
       </main>
+
+      {/* Hand-off popup: a brief, legible "your turn" / "you solved it" flash at the
+          moment control passes to the child and when they succeed. */}
+      {cue && (
+        <div aria-live="polite" style={{ position: 'fixed', top: 'clamp(60px, 12vh, 122px)', left: '50%', transform: 'translateX(-50%)', zIndex: 6, pointerEvents: 'none' }}>
+          <div key={cue} className="gk-cue" style={{ background: cue === 'solved' ? P.mint : P.gold, color: '#12241b', fontWeight: 900, fontSize: 'clamp(16px, 1.9vw, 25px)', padding: '12px 28px', borderRadius: 999, boxShadow: '0 12px 34px rgba(0,0,0,0.45)', whiteSpace: 'nowrap' }}>
+            {cue === 'solved' ? 'You solved it! ✓' : "Now it's your turn!"}
+          </div>
+        </div>
+      )}
 
       {/* Milo, always in the scene */}
       <div style={{ position: 'fixed', left: 14, bottom: 12, zIndex: 2, background: P.cream, borderRadius: '50%', padding: 5, boxShadow: '0 4px 16px rgba(0,0,0,0.45)' }}>
@@ -373,7 +420,9 @@ export function Game<V, T extends BaseTask>({
         @keyframes gkSlide { from { transform: translateX(60vw) rotate(3deg); opacity: 0 } to { transform: rotate(-0.6deg); opacity: 1 } }
         .gk-stamp { animation: gkStamp 420ms cubic-bezier(.2,1.4,.3,1) both; }
         @keyframes gkStamp { from { transform: rotate(-14deg) scale(2.4); opacity: 0 } to { transform: rotate(-8deg) scale(1); opacity: 1 } }
-        @media (prefers-reduced-motion: reduce) { .gk-ticket,.gk-stamp { animation: none } }
+        .gk-cue { animation: gkCue 320ms cubic-bezier(.2,1.5,.3,1) both; }
+        @keyframes gkCue { from { transform: translateY(-10px) scale(.8); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
+        @media (prefers-reduced-motion: reduce) { .gk-ticket,.gk-stamp,.gk-cue { animation: none } }
       `}</style>
     </div>
   )
@@ -497,6 +546,55 @@ function ArtProp({ src }: { src: string }) {
     <div key={src} style={{ marginTop: 'clamp(8px, 1.4vh, 16px)', display: 'flex', justifyContent: 'center', alignItems: 'center', animation: 'gsArtPop 420ms ease' }}>
       <style>{'@keyframes gsArtPop{0%{opacity:0;transform:translateY(8px) scale(.9)}60%{transform:translateY(0) scale(1.04)}100%{opacity:1;transform:translateY(0) scale(1)}}'}</style>
       <img src={src} alt="" style={{ height: 'clamp(80px, 14vh, 156px)', width: 'auto', maxWidth: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.35))' }} />
+    </div>
+  )
+}
+
+/** The pre-walkthrough SUMMARY card — the big picture before the baby steps. Milo
+ *  speaks the plan while it is shown as a WORD-BY-WORD READ-ALONG: each word
+ *  highlights as he says it, so the child can track where the sentence is going
+ *  (feedback: highlight the word Milo is speaking). Then "Show me how →" starts the
+ *  step-by-step walkthrough. */
+function OverviewCard({ P, overview, onDone }: {
+  P: Palette
+  overview: NonNullable<GameConfig<unknown, BaseTask>['overview']>
+  onDone: () => void
+}) {
+  const words = useMemo(() => splitWords(overview.say), [overview.say])
+  const [hi, setHi] = useState(-1)
+  useEffect(() => {
+    setHi(-1)
+    const cancel = speakWithHighlight(overview.say, { onWord: setHi })
+    return () => { cancel(); setHi(-1) }
+  }, [overview.say])
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(14px, 1.8vh, 22px)', textAlign: 'center', maxWidth: 'clamp(400px, 56vw, 680px)' }}>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 16px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold }}>Here&apos;s the plan</div>
+      <p style={{ margin: 0, fontSize: 'clamp(18px, 2vw, 28px)', fontWeight: 800, lineHeight: 1.4, color: P.cream, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>{overview.problem}</p>
+      {/* Read-along: one span per word; the spoken word lights up so the kid can follow. */}
+      <p aria-label={overview.say} style={{ margin: 0, fontSize: 'clamp(16px, 1.7vw, 23px)', lineHeight: 1.7, color: P.creamSoft, background: P.glass, border: `1px solid ${P.glassBorder}`, borderRadius: 16, padding: 'clamp(12px, 1.8vh, 18px) clamp(16px, 2vw, 24px)', maxWidth: 'clamp(360px, 52vw, 620px)' }}>
+        {words.map((w, i) => {
+          // Don't paint a highlight pill around a lone punctuation token (e.g. "—").
+          const lit = i === hi && /[A-Za-z0-9]/.test(w.word)
+          return (
+          <span
+            key={i}
+            aria-hidden
+            style={{
+              background: lit ? P.gold : 'transparent',
+              color: lit ? '#12241b' : 'inherit',
+              fontWeight: lit ? 800 : 400,
+              borderRadius: 6,
+              padding: '1px 3px',
+              boxDecorationBreak: 'clone',
+              WebkitBoxDecorationBreak: 'clone',
+              transition: 'background 120ms ease, color 120ms ease',
+            }}
+          >{w.word}{i < words.length - 1 ? ' ' : ''}</span>
+          )
+        })}
+      </p>
+      <button type="button" onClick={onDone} style={bigBtn(P)}>Show me how →</button>
     </div>
   )
 }

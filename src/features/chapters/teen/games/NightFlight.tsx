@@ -90,6 +90,7 @@ function makeTask(d: 1 | 2 | 3): Task {
 // Driven purely by the walkthrough's per-step `value` ({x,y}) + step index.
 const SCENE_RANGE = 5 // grid spans −5..5 on each axis; worked example is (3, −2)
 const GLIDE = 'left 760ms cubic-bezier(.45,.05,.25,1), top 760ms cubic-bezier(.45,.05,.25,1)'
+const ART = '/assets/teen/objects'
 
 function DeliveryDroneScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
   palette: Palette; task: Task; value: XY; stepIndex: number; frameCount: number; ended: boolean
@@ -106,13 +107,15 @@ function DeliveryDroneScene({ palette: P, task, value, stepIndex, frameCount, en
   const intro = stepIndex === 0
   const movedX = cx !== 0
   const movedY = cy !== 0
-  const droneColor = resultPhase ? P.mint : P.cream
 
   const ticks = Array.from({ length: 2 * R + 1 }, (_, i) => i - R)
 
   return (
     <div style={{ position: 'relative', width: 'clamp(248px, 44vw, 372px)', height: 'clamp(248px, 44vw, 372px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
       <style>{'@keyframes nfHover{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 3px))}}@keyframes nfPin{0%{opacity:0;transform:translate(-50%,-88%) scale(.6)}100%{opacity:1;transform:translate(-50%,-100%) scale(1)}}@keyframes nfPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}@keyframes nfPulse{0%,100%{opacity:.5}50%{opacity:1}}'}</style>
+
+      {/* illustrated aerial-map backdrop — very low opacity so the grid stays readable on top */}
+      <img src={`${ART}/drone_aerial_map.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.14, pointerEvents: 'none' }} />
 
       {/* the plot — the coordinate space for everything below (inset square) */}
       <div style={{ position: 'absolute', top: '9%', left: '11%', right: '5%', bottom: '9%' }}>
@@ -143,25 +146,14 @@ function DeliveryDroneScene({ palette: P, task, value, stepIndex, frameCount, en
 
         {/* destination pin — appears once the across move begins, glows at the drop-off */}
         <div style={{ position: 'absolute', left: `${px(dest.x)}%`, top: `${py(dest.y)}%`, transform: 'translate(-50%,-100%)', animation: 'nfPin 420ms ease', pointerEvents: 'none', zIndex: 2 }}>
-          <div style={{ fontSize: 'clamp(20px,3vw,30px)', lineHeight: 1, filter: resultPhase ? `drop-shadow(0 0 10px ${P.mint})` : 'none', animation: resultPhase ? undefined : 'nfPulse 1200ms ease-in-out infinite' }}>📍</div>
+          <img src={`${ART}/drone_dropoff_pin.png`} alt="" style={{ display: 'block', width: 'clamp(18px,2.6vw,26px)', height: 'auto', filter: resultPhase ? `drop-shadow(0 0 10px ${P.mint})` : 'drop-shadow(0 2px 3px rgba(0,0,0,0.45))', animation: resultPhase ? undefined : 'nfPulse 1200ms ease-in-out infinite' }} />
         </div>
 
         {/* the drone — glides across then down; hovers in place */}
         <div style={{ position: 'absolute', left: `${px(cx)}%`, top: `${py(cy)}%`, transition: GLIDE, zIndex: 4 }}>
           <div style={{ position: 'absolute', left: 0, top: 0, transform: 'translate(-50%,-50%)', animation: 'nfHover 1400ms ease-in-out infinite' }}>
-            <div style={{ position: 'relative', width: 'clamp(26px,4vw,36px)', height: 'clamp(26px,4vw,36px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {/* rotor bar */}
-              <div style={{ position: 'absolute', top: '18%', left: '-6%', right: '-6%', height: 3, borderRadius: 2, background: droneColor, opacity: 0.85 }} />
-              {/* rotors */}
-              <div style={{ position: 'absolute', top: '4%', left: '-6%', width: 9, height: 9, borderRadius: '50%', border: `2px solid ${droneColor}`, opacity: 0.8 }} />
-              <div style={{ position: 'absolute', top: '4%', right: '-6%', width: 9, height: 9, borderRadius: '50%', border: `2px solid ${droneColor}`, opacity: 0.8 }} />
-              {/* body */}
-              <div style={{ width: '58%', height: '48%', borderRadius: 5, background: droneColor, boxShadow: resultPhase ? `0 0 14px ${P.mint}, 0 3px 8px rgba(0,0,0,0.5)` : '0 3px 8px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: resultPhase ? P.mint : P.goldDeep }} />
-              </div>
-              {/* package slung underneath */}
-              <div style={{ position: 'absolute', bottom: '-2%', left: '50%', transform: 'translateX(-50%)', width: '30%', height: '26%', borderRadius: 2, background: P.gold, opacity: resultPhase ? 0.35 : 0.95, transition: 'opacity 400ms' }} />
-            </div>
+            {/* illustrated quadcopter — kept small so it never covers gridlines */}
+            <img src={`${ART}/drone_quadcopter.png`} alt="" style={{ display: 'block', width: 'clamp(26px,4vw,36px)', height: 'auto', filter: resultPhase ? `drop-shadow(0 0 12px ${P.mint})` : 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))', transition: 'filter 400ms' }} />
           </div>
         </div>
 
@@ -239,6 +231,15 @@ const CONFIG: GameConfig<XY, Task> = {
   },
   TutorialScene: DeliveryDroneScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re piloting the delivery drone.</strong> Read each GPS drop-off, fly across then up or down, and drop the package right on the map.</>, ticket: { title: 'First drop', badge: '(3, 2)', tone: 'a' }, startLabel: 'Launch the drone →' },
+  overview: {
+    say: "Here is what we are figuring out: every drop-off on the map is two numbers — an across number and an up-or-down number. We will fly the drone to three, minus two: three across, then two down, so you can read a coordinate and land right on it.",
+    problem: <>Where is <strong>(3, −2)</strong>? We&apos;ll fly the drone <strong>3 across, then 2 down</strong> and drop the package there.</>,
+    points: [
+      <>The first number is <strong>x = 3</strong> (across) — positive means go <strong>right</strong>.</>,
+      <>The second number is <strong>y = −2</strong> (up/down) — negative means go <strong>down</strong>.</>,
+      <>Always start from the base at <strong>(0, 0)</strong>: across first, then up or down.</>,
+    ],
+  },
   sig: (t) => t.badge,
 }
 

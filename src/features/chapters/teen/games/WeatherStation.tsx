@@ -104,6 +104,105 @@ const GUIDED_TASK: Task = {
   work: ['−5 sits 5 below zero.', 'Count 5 marks down into overdraft from zero and stop.'],
 }
 
+// ── Animated walkthrough scene — the storyboard, in motion (ILLUSTRATED) ──────
+// A balance meter dressed in generated illustrations (Nano Banana 2): a bank-vault
+// backdrop, a GOLD COIN STACK that fills up while in credit, a RED "IOU" STACK that
+// fills down into overdraft, a coin-token marker, and a hand that withdraws. The
+// precise skeleton — dollar marks, gold zero line, $ readout, overdraft bracket —
+// stays code-drawn so the math + motion are exact. The illustrated fills are the
+// full credit/debt zones revealed by an animated clip-path up/down to the balance.
+// Driven by the walkthrough's per-step `value`.
+const TOP_BAL = 5, BOT_BAL = -5
+const BAL_MARKS = [5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5]
+const balPct = (n: number) => ((TOP_BAL - n) / (TOP_BAL - BOT_BAL)) * 100
+const MGLIDE = 'top 820ms cubic-bezier(.45,.05,.25,1), height 820ms cubic-bezier(.45,.05,.25,1)'
+const CLIP = 'clip-path 820ms cubic-bezier(.45,.05,.25,1)'
+const ART = '/assets/teen/objects'
+
+function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
+  palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
+}) {
+  const v = Math.max(BOT_BAL, Math.min(TOP_BAL, value))
+  const zeroPct = balPct(0)
+  const vPct = balPct(v)
+  const resultPhase = ended || stepIndex >= frameCount - 2   // last 2 beats: the answer
+  const intro = stepIndex <= 1
+  const overdrawn = v < 0
+  const atZero = v === 0 && stepIndex > 1
+  const withdrawing = stepIndex >= 3 && !resultPhase && v < 4
+  const taken = 4 - v                                        // dollars withdrawn so far (0..7)
+  const readColor = v < 0 ? P.coral : v === 0 ? P.gold : P.mint
+  const credit = Math.max(0, v)     // dollars of credit shown (gold coin stack)
+  const debt = Math.max(0, -v)      // dollars of debt shown (red IOU stack)
+
+  return (
+    <div style={{ position: 'relative', width: 'clamp(232px, 42vw, 344px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, overflow: 'hidden', border: `1.5px solid ${P.glassBorder}`, boxShadow: '0 12px 34px rgba(0,0,0,0.42)', background: '#0d2a1e' }}>
+      <style>{'@keyframes baZeroFlash{0%,100%{opacity:.55}50%{opacity:1}}@keyframes baBob{0%,100%{transform:translateY(-1px)}50%{transform:translateY(4px)}}@keyframes baPop{0%{opacity:0;transform:translateX(-50%) scale(.7)}100%{opacity:1;transform:translateX(-50%) scale(1)}}'}</style>
+
+      {/* illustrated bank-vault backdrop + a soft scrim so the meter reads clearly */}
+      <img src={`${ART}/bank_scene_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(9,30,22,0.28), rgba(9,30,22,0.58))' }} />
+
+      {/* the balance column — coordinate space for everything below */}
+      <div style={{ position: 'absolute', top: '7%', bottom: '7%', left: '31%', width: '38%', borderRadius: 9, background: 'rgba(6,26,18,0.42)', border: `1px solid ${P.glassBorder}` }}>
+        {/* overdraft zone tint (below zero) */}
+        <div style={{ position: 'absolute', left: 0, right: 0, top: `${zeroPct}%`, bottom: 0, background: overdrawn ? 'rgba(0,0,0,0.40)' : 'rgba(0,0,0,0.20)', transition: 'background 500ms' }} />
+        {overdrawn && <div style={{ position: 'absolute', left: 0, right: 0, top: `${zeroPct}%`, bottom: 0, background: P.coral, opacity: 0.10 }} />}
+
+        {/* CREDIT fill — a gold coin stack, revealed from the zero line UP to the balance */}
+        <div style={{ position: 'absolute', left: '9%', right: '9%', top: `${balPct(TOP_BAL)}%`, height: `${zeroPct - balPct(TOP_BAL)}%`, overflow: 'hidden', clipPath: `inset(${((TOP_BAL - credit) / TOP_BAL) * 100}% 0 0 0)`, transition: CLIP }}>
+          <img src={`${ART}/bank_coin_column.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'bottom', filter: resultPhase ? `drop-shadow(0 0 8px ${P.mint})` : undefined }} />
+        </div>
+
+        {/* DEBT fill — a red IOU stack, revealed from the zero line DOWN to the balance */}
+        <div style={{ position: 'absolute', left: '9%', right: '9%', top: `${zeroPct}%`, height: `${balPct(BOT_BAL) - zeroPct}%`, overflow: 'hidden', clipPath: `inset(0 0 ${((TOP_BAL - debt) / TOP_BAL) * 100}% 0)`, transition: CLIP }}>
+          <img src={`${ART}/bank_debt_column.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', filter: resultPhase ? `drop-shadow(0 0 8px ${P.coral})` : undefined }} />
+        </div>
+
+        {/* dollar marks + left-edge labels */}
+        {BAL_MARKS.map((n) => (
+          <div key={n}>
+            <div style={{ position: 'absolute', left: 0, right: 0, top: `${balPct(n)}%`, height: n === 0 ? 3 : 1, background: n === 0 ? P.gold : P.glassBorder, opacity: n === 0 ? 1 : 0.24, animation: n === 0 && atZero ? 'baZeroFlash 700ms ease 2' : undefined, boxShadow: n === 0 ? `0 0 6px ${P.gold}` : undefined, zIndex: 2 }} />
+            <div style={{ position: 'absolute', left: '-15%', top: `${balPct(n)}%`, transform: 'translateY(-50%)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,1.1vw,12px)', fontWeight: 800, color: n === 0 ? P.gold : n < 0 ? P.coral : P.creamSoft, textShadow: '0 1px 4px rgba(0,0,0,0.7)', zIndex: 2 }}>{n}</div>
+          </div>
+        ))}
+
+        {/* balance marker — a gold coin token that glides between dollar marks */}
+        <img src={`${ART}/bank_coin_token.png`} alt="" style={{ position: 'absolute', left: '50%', top: `${vPct}%`, transform: 'translate(-50%,-50%)', transition: MGLIDE, width: 'clamp(30px,6.4vw,46px)', height: 'auto', zIndex: 4, filter: 'drop-shadow(0 3px 7px rgba(0,0,0,0.55))' }} />
+
+        {/* big $ readout — follows the marker */}
+        <div style={{ position: 'absolute', left: '128%', top: `${vPct}%`, transform: 'translateY(-50%)', transition: MGLIDE, fontFamily: 'var(--font-numeric)', fontSize: 'clamp(22px,4vw,36px)', fontWeight: 800, color: readColor, textShadow: '0 2px 8px rgba(0,0,0,0.6)', whiteSpace: 'nowrap', zIndex: 4 }}>{v < 0 ? `-$${-v}` : `$${v}`}</div>
+
+        {/* the hand withdrawing a coin — replaces the plain down-arrow */}
+        {withdrawing && (
+          <img src={`${ART}/bank_withdraw_hand.png`} alt="" style={{ position: 'absolute', left: '90%', top: `${vPct}%`, transform: 'translateY(-50%)', transition: MGLIDE, width: 'clamp(34px,7vw,52px)', height: 'auto', zIndex: 4, animation: 'baBob 900ms ease-in-out infinite', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))' }} />
+        )}
+
+        {/* intro: up = deposit (green), down = withdraw (coral) */}
+        {intro && (
+          <>
+            <div style={{ position: 'absolute', left: '108%', top: '16%', color: P.mint, fontWeight: 800, fontSize: 'clamp(11px,1.4vw,14px)', whiteSpace: 'nowrap', textShadow: '0 1px 6px rgba(0,0,0,0.7)', zIndex: 4 }}>↑ deposit +</div>
+            <div style={{ position: 'absolute', left: '108%', top: '78%', color: P.coral, fontWeight: 800, fontSize: 'clamp(11px,1.4vw,14px)', whiteSpace: 'nowrap', textShadow: '0 1px 6px rgba(0,0,0,0.7)', zIndex: 4 }}>↓ withdraw −</div>
+          </>
+        )}
+
+        {/* result: a bracket from the zero line down to the balance */}
+        {resultPhase && overdrawn && (
+          <>
+            <div style={{ position: 'absolute', left: '104%', top: `${zeroPct}%`, height: `${vPct - zeroPct}%`, width: 8, borderTop: `2px solid ${P.cream}`, borderBottom: `2px solid ${P.cream}`, borderRight: `2px solid ${P.cream}`, transition: MGLIDE, zIndex: 4 }} />
+            <div style={{ position: 'absolute', left: '118%', top: `${(zeroPct + vPct) / 2}%`, transform: 'translateY(-50%)', color: P.cream, fontWeight: 700, fontSize: 'clamp(10px,1.3vw,13px)', whiteSpace: 'nowrap', textShadow: '0 1px 6px rgba(0,0,0,0.7)', transition: MGLIDE, zIndex: 4 }}>${-v} overdrawn</div>
+          </>
+        )}
+      </div>
+
+      {/* counter pill — "$k of $7 out" through the withdrawal */}
+      {withdrawing && taken >= 1 && taken <= 7 && (
+        <div style={{ position: 'absolute', bottom: '2.5%', left: '50%', transform: 'translateX(-50%)', padding: '3px 12px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, color: P.coral, fontWeight: 800, fontSize: 'clamp(10px,1.2vw,13px)', animation: 'baPop 260ms ease' }}>${taken} of $7 out</div>
+      )}
+    </div>
+  )
+}
+
 const CONFIG: GameConfig<number, Task> = {
   chapterId: 'integers',
   title: 'BANK ACCOUNT',
@@ -144,7 +243,17 @@ const CONFIG: GameConfig<number, Task> = {
     coach: 'Your turn — I will help.',
     hand: 'dragV',
   },
+  TutorialScene: BankAccountScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re keeping the books.</strong> Move the balance up for deposits and down for withdrawals — even when it dips below zero into overdraft.</>, ticket: { title: 'Opening balance', badge: '−3', tone: 'b' }, startLabel: 'Open the ledger →' },
+  overview: {
+    say: "Here is what we are figuring out: a bank balance can go below zero when you spend more than you have. We will track a balance that starts at four dollars, take away seven, and land in overdraft — that is subtracting to get a negative number.",
+    problem: <>How low can a balance go? We&apos;ll track <strong>$4, then withdraw $7</strong> — and end up <strong>below zero</strong>.</>,
+    points: [
+      <>Above zero is money you have; below zero is <strong>overdraft</strong> (money you owe).</>,
+      <>We&apos;re working out <strong>4 − 7</strong> by counting down, one dollar at a time.</>,
+      <>Watch where it lands past zero — that&apos;s a <strong>negative number</strong>.</>,
+    ],
+  },
   sig: (t) => `${t.title}:${t.answer}`,
 }
 

@@ -90,6 +90,7 @@ const KM_MARKS = [0, 1, 2, 3, 4]
 const DRIVE = 'left 820ms cubic-bezier(.42,.02,.28,1)'
 const RISE = 'height 720ms cubic-bezier(.4,.02,.3,1), background 500ms'
 const TICK = 'color 380ms, transform 380ms'
+const ART = '/assets/teen/objects'
 
 function TaxiMeterScene({ palette: P, value, stepIndex, frameCount, ended }: {
   palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
@@ -110,8 +111,12 @@ function TaxiMeterScene({ palette: P, value, stepIndex, frameCount, ended }: {
   const fareColor = resultPhase ? P.mint : fare > BASE ? P.gold : P.cream
 
   return (
-    <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 360px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
+    <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 360px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', background: P.nightBot }}>
       <style>{'@keyframes tmPop{0%{opacity:0;transform:translateY(6px) scale(.85)}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes tmRoll{0%{transform:translateY(0)}50%{transform:translateY(-1.5px)}100%{transform:translateY(0)}}@keyframes tmGlow{0%,100%{box-shadow:0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 16px var(--g)}}@keyframes tmSpin{to{transform:rotate(360deg)}}'}</style>
+
+      {/* illustrated city-street backdrop + a soft scrim so the meter/road read clearly */}
+      <img src={`${ART}/taxi_street_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(9,18,34,0.30), rgba(9,18,34,0.62))' }} />
 
       {/* ── the METER — a dark readout panel at the top ── */}
       <div style={{ position: 'absolute', top: '6%', left: '8%', right: '8%', height: 'clamp(76px,17vh,104px)', borderRadius: 12, background: P.glass, border: `1px solid ${P.glassBorder}`, padding: '9px 13px', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.35)' }}>
@@ -159,20 +164,9 @@ function TaxiMeterScene({ palette: P, value, stepIndex, frameCount, ended }: {
           )
         })}
 
-        {/* the TAXI — glides forward down the road */}
+        {/* the TAXI — an illustrated cab that glides forward down the road (faces right = travel dir) */}
         <div style={{ position: 'absolute', bottom: '30%', left: `${taxiLeft}%`, transform: 'translateX(-50%)', transition: DRIVE, zIndex: 3, animation: rolling ? 'tmRoll 620ms ease-in-out infinite' : undefined }}>
-          <div style={{ position: 'relative', width: 'clamp(46px,9vw,68px)', height: 'clamp(26px,5vh,38px)' }}>
-            {/* cab body */}
-            <div style={{ position: 'absolute', left: 0, right: 0, bottom: '22%', top: '30%', borderRadius: '7px 9px 5px 5px', background: resultPhase ? P.mint : P.gold, boxShadow: resultPhase ? `0 0 14px ${P.mint}` : '0 2px 6px rgba(0,0,0,0.5)' }} />
-            {/* roof + windows */}
-            <div style={{ position: 'absolute', left: '20%', right: '26%', top: 0, height: '42%', borderRadius: '6px 6px 0 0', background: resultPhase ? P.mint : P.goldDeep }} />
-            <div style={{ position: 'absolute', left: '26%', right: '32%', top: '10%', height: '26%', borderRadius: 3, background: P.creamSoft, opacity: 0.85 }} />
-            {/* taxi lamp */}
-            <div style={{ position: 'absolute', left: '38%', top: '-14%', width: '24%', height: '16%', borderRadius: 3, background: P.cream, boxShadow: `0 0 6px ${P.gold}` }} />
-            {/* wheels — spin while rolling */}
-            <div style={{ position: 'absolute', left: '15%', bottom: 0, width: 'clamp(11px,2vw,15px)', height: 'clamp(11px,2vw,15px)', borderRadius: '50%', background: '#111', border: `2.5px solid ${P.mutedOnPaper}`, animation: rolling ? 'tmSpin 700ms linear infinite' : undefined }} />
-            <div style={{ position: 'absolute', right: '15%', bottom: 0, width: 'clamp(11px,2vw,15px)', height: 'clamp(11px,2vw,15px)', borderRadius: '50%', background: '#111', border: `2.5px solid ${P.mutedOnPaper}`, animation: rolling ? 'tmSpin 700ms linear infinite' : undefined }} />
-          </div>
+          <img src={`${ART}/taxi_cab.png`} alt="" style={{ display: 'block', width: 'clamp(58px,12vw,88px)', height: 'auto', filter: resultPhase ? `drop-shadow(0 0 14px ${P.mint})` : 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))' }} />
         </div>
       </div>
 
@@ -244,6 +238,15 @@ const CONFIG: GameConfig<number, Task> = {
   },
   TutorialScene: TaxiMeterScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re driving the taxi.</strong> For each ride, use the fare rule, work out the cost, and set the meter.</>, ticket: { title: 'Fare 2x + 1', badge: 'x km → ?', tone: 'a' }, startLabel: 'Start the meter →' },
+  overview: {
+    say: "Here is what we are figuring out: a taxi fare follows a rule with a letter in it. Our rule is three x plus two, where x is the number of km. This ride is four km, so we swap x for four and work out three times four plus two.",
+    problem: <>What does the meter show? We&apos;ll use the fare rule <strong>3x + 2</strong> for a <strong>4 km ride</strong>.</>,
+    points: [
+      <>The <strong>x</strong> just stands for the distance — here <strong>x = 4</strong> km.</>,
+      <>Swap x for 4, so we&apos;re working out <strong>3 × 4 + 2</strong>.</>,
+      <>Times before plus: <strong>3 × 4 = 12</strong>, then <strong>+ 2</strong> gives the fare.</>,
+    ],
+  },
   sig: (t) => t.badge,
 }
 

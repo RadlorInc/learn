@@ -369,6 +369,155 @@ export function speakSteps(
   return () => { cancelSeq(); clearTimeout(fb); timers.forEach(clearTimeout) }
 }
 
+/** A word token in a passage, with its character range in the original text
+ *  (so a speech `onboundary` charIndex can be mapped back to the word). */
+export interface SpokenWord { word: string; start: number; end: number }
+
+/** Split a passage into word tokens with their char offsets. Both the renderer
+ *  (to draw one span per word) and the speaker (to map boundaries) use this, so
+ *  the indices always line up. */
+export function splitWords(text: string): SpokenWord[] {
+  const out: SpokenWord[] = []
+  const re = /\S+/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(text))) out.push({ word: m[0], start: m.index, end: m.index + m[0].length })
+  return out
+}
+
+function _wordDur(word: string, rate: number): number {
+  // Rough per-word speaking time, length-weighted, with a little extra after a
+  // clause/sentence break — used only when the browser gives no word boundaries.
+  let ms = Math.max(230, word.length * 62) / rate
+  if (/[,.;:!?—-]$/.test(word)) ms += 190 / rate
+  return ms
+}
+
+/**
+ * Speak one passage AND drive a word-by-word "read-along" highlight. `onWord(i)`
+ * fires with the index (into splitWords(text)) of the word currently being spoken,
+ * and -1 when it finishes (clear the highlight). Uses the utterance's `onboundary`
+ * events for exact sync where the browser fires them (Chrome); where it doesn't
+ * (Safari) — or when audio is blocked — it falls back to an even, length-weighted
+ * timed sweep that still tracks along and finishes with the audio. Returns a cancel
+ * fn (call from effect cleanup). Registers as the active speech so a later speak()
+ * or stopSpeech() supersedes it cleanly.
+ */
+export function speakWithHighlight(
+  text: string,
+  opts: { onWord?: (i: number) => void; onDone?: () => void; rate?: number; pitch?: number } = {},
+): () => void {
+  const { onWord, onDone, rate = 0.84, pitch = 1.05 } = opts
+  const tokens = splitWords(text)
+  const emit = (i: number) => { try { onWord?.(i) } catch {} }
+
+  // Supersede any previous sequence/utterance cleanly.
+  if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
+  if (_speakTimer) { clearTimeout(_speakTimer); _speakTimer = null }
+
+  let mode: 'pending' | 'boundary' | 'timed' = 'pending'
+  let started = false
+  let done = false
+  let lastIdx = -1
+  const timers: Array<ReturnType<typeof setTimeout>> = []
+  let grace: ReturnType<typeof setTimeout> | null = null
+  let watch: ReturnType<typeof setTimeout> | null = null
+  const clearTimers = () => { timers.forEach(clearTimeout); timers.length = 0 }
+  const step = (i: number) => { if (i > lastIdx) { lastIdx = i; emit(i) } }  // forward-only
+
+  const cancel = () => {
+    if (done) return
+    done = true
+    if (_activeSeqCancel === cancel) _activeSeqCancel = null
+    clearTimers()
+    if (grace) { clearTimeout(grace); grace = null }
+    if (watch) { clearTimeout(watch); watch = null }
+    try { window.speechSynthesis.cancel() } catch {}
+    _setSpeaking(false)
+  }
+  const finish = () => {
+    if (done) return
+    cancel()
+    emit(-1)
+    onDone?.()
+  }
+
+  // Timed sweep — highlights the remaining words on estimated timers. Used when no
+  // boundaries arrive at all (Safari/blocked) AND as a recovery when the browser
+  // fires some boundaries then stalls (Chrome does this mid-sentence). `autoFinish`
+  // closes it out for the silent case where onend won't come.
+  const startTimed = (from: number, autoFinish: boolean) => {
+    if (mode === 'timed') return
+    mode = 'timed'
+    if (watch) { clearTimeout(watch); watch = null }
+    clearTimers()
+    let t = 0
+    for (let i = Math.max(from, lastIdx + 1); i < tokens.length; i++) {
+      const at = t
+      timers.push(setTimeout(() => { if (!done) step(i) }, at))
+      t += _wordDur(tokens[i].word, rate)
+    }
+    if (autoFinish) timers.push(setTimeout(finish, t + 400))
+  }
+
+  // Re-arm after each boundary: if the next one doesn't arrive in time (Chrome
+  // stalls, especially on long passages), fall through to the timed sweep so the
+  // highlight never freezes while Milo keeps talking.
+  const armWatch = (ms: number) => {
+    if (watch) clearTimeout(watch)
+    watch = setTimeout(() => { if (!done && mode !== 'timed') startTimed(lastIdx + 1, false) }, ms)
+  }
+
+  _activeSeqCancel = cancel
+
+  if (typeof window === 'undefined' || !('speechSynthesis' in window) || !tokens.length) {
+    // No speech engine → still sweep the highlight so the read-along works.
+    if (tokens.length) startTimed(0, true); else finish()
+    return cancel
+  }
+
+  try { window.speechSynthesis.cancel() } catch {}
+  _speakTimer = setTimeout(() => {
+    _speakTimer = null
+    if (done) return
+    const u = new SpeechSynthesisUtterance(text)
+    u.rate = rate; u.pitch = pitch; u.volume = 1; u.lang = 'en-US'
+    const v = _pickVoice(); if (v) u.voice = v
+
+    u.onboundary = (e: SpeechSynthesisEvent) => {
+      if (done || mode === 'timed') return
+      if (e.name && e.name !== 'word') return
+      mode = 'boundary'
+      const ci = e.charIndex ?? 0
+      let idx = tokens.findIndex((t) => ci >= t.start && ci < t.end)
+      if (idx < 0) idx = tokens.findIndex((t) => t.start >= ci)
+      if (idx >= 0) step(idx)
+      armWatch(1400)   // if the next boundary stalls, hand off to the timed sweep
+    }
+    u.onstart = () => {
+      started = true; _setBlocked(false); _setSpeaking(true)
+      if (_keepalive) clearInterval(_keepalive)
+      _keepalive = setInterval(() => { try { if (window.speechSynthesis.paused) window.speechSynthesis.resume() } catch {} }, 5000)
+      step(0)
+      // Give real word boundaries a moment; if none arrive, sweep on a timer.
+      armWatch(900)
+    }
+    u.onend = finish
+    u.onerror = (e) => {
+      if (e.error === 'not-allowed') _setBlocked(true)
+      // If it never started (blocked autoplay / no voice), let the grace timer run
+      // the silent sweep; otherwise this is a normal end/cancel → finish.
+      if (started) finish()
+    }
+    try { window.speechSynthesis.speak(u) } catch { startTimed(0, true) }
+  }, 110)
+
+  // If speech never STARTS (blocked autoplay / Safari drop), sweep silently so the
+  // read-along still tracks and completes.
+  grace = setTimeout(() => { if (!done && !started) startTimed(0, true) }, 1700)
+
+  return cancel
+}
+
 export function useIsSpeaking(): boolean {
   return useSyncExternalStore(
     (cb) => { _subs.add(cb); return () => _subs.delete(cb) },

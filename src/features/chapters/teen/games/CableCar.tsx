@@ -86,6 +86,7 @@ const GUIDED_TASK: Task = {
 // (the intercept, shown in blue), then for each "minute" it rises by m (the rate,
 // shown stacked in cyan on top of the base). The level rises via a CSS height
 // transition (Safari-safe). Labels pop in. No JS animation loops.
+const ART = '/assets/teen/objects'
 const TANK_MAX = 6                                   // top of the tank = 6 litres
 const pctForLevel = (l: number) => (Math.max(0, Math.min(TANK_MAX, l)) / TANK_MAX) * 100
 const FILL = 'height 780ms cubic-bezier(.4,.05,.2,1), background 500ms'
@@ -114,13 +115,16 @@ function WaterTankScene({ palette: P, value, stepIndex, frameCount, ended }: {
   const tapping = (hasBase && base > 0 && minutes === 0) || (filling)
 
   return (
-    <div style={{ position: 'relative', width: 'clamp(232px, 42vw, 344px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
+    <div style={{ position: 'relative', width: 'clamp(232px, 42vw, 344px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: '#0d2233', border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
       <style>{'@keyframes wtDrip{0%{transform:translateY(-2px) scaleY(.7);opacity:.3}60%{opacity:1}100%{transform:translateY(10px) scaleY(1);opacity:0}}@keyframes wtRipple{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}@keyframes wtPop{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}@keyframes wtGlow{0%,100%{box-shadow:0 0 0 rgba(95,224,176,0)}50%{box-shadow:0 0 22px rgba(95,224,176,.65)}}'}</style>
 
-      {/* inflow tap + falling drip */}
+      {/* illustrated pump-room backdrop + scrim so the tank reads clearly */}
+      <img src={`${ART}/tank_pump_room_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(10,26,40,0.30), rgba(10,26,40,0.60))' }} />
+
+      {/* inflow tap (illustrated faucet) + falling drip */}
       <div style={{ position: 'absolute', top: '6%', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 4 }}>
-        <div style={{ width: 'clamp(34px,7vw,50px)', height: 'clamp(9px,1.6vh,13px)', borderRadius: 4, background: P.glass, border: `1.5px solid ${P.glassBorder}` }} />
-        <div style={{ width: 'clamp(7px,1.4vw,10px)', height: 'clamp(8px,1.4vh,12px)', background: P.goldDeep, borderRadius: '0 0 3px 3px' }} />
+        <img src={`${ART}/tank_faucet_tap.png`} alt="" style={{ width: 'clamp(38px,7.5vw,54px)', height: 'auto', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))' }} />
         {tapping && <div style={{ width: 3, height: 12, borderRadius: 2, background: P.gold, animation: 'wtDrip 620ms ease-in infinite' }} />}
       </div>
 
@@ -150,6 +154,9 @@ function WaterTankScene({ palette: P, value, stepIndex, frameCount, ended }: {
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${totalPct}%`, transition: FILL, borderRadius: '0 0 10px 10px', border: `2px solid ${P.mint}`, animation: 'wtGlow 1.5s ease-in-out infinite', pointerEvents: 'none' }} />
         )}
       </div>
+
+      {/* illustrated glass vessel — overlays the tank so the water shows through */}
+      <img src={`${ART}/tank_glass_vessel.png`} alt="" style={{ position: 'absolute', top: '20%', bottom: '9%', left: '30%', width: '40%', objectFit: 'fill', zIndex: 2, pointerEvents: 'none', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.4))' }} />
 
       {/* running level readout — big number by the water line */}
       <div style={{ position: 'absolute', right: '10%', bottom: `calc(9% + ${totalPct * 0.71}%)`, transform: 'translateY(50%)', transition: 'bottom 780ms cubic-bezier(.4,.05,.2,1)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(26px,4.6vw,40px)', fontWeight: 800, color: resultPhase ? P.mint : level > 0 ? P.gold : P.mutedOnPaper, whiteSpace: 'nowrap', zIndex: 3 }}>
@@ -222,6 +229,15 @@ const CONFIG: GameConfig<Line, Task> = {
     blurb: <><strong style={{ color: P.cream }}>You&apos;re logging how the tank fills.</strong> Set the start level and fill rate so the water level over time runs straight through both readings.</>,
     ticket: { title: 'Two readings', badge: '(0,1) & (1,3)', tone: 'a' },
     startLabel: 'Open the valve →',
+  },
+  overview: {
+    say: "Here is what we are figuring out: a water tank fills at a steady rate, so its level makes a straight line over time. We will track a tank that starts at one litre and fills two litres every minute, and write that as y = 2x + 1 — the start plus the rate times the minutes.",
+    problem: <>How does the tank fill? We&apos;ll set a tank that <strong>starts at 1 litre and rises 2 litres a minute</strong> — and write it as <strong>y = 2x + 1</strong>.</>,
+    points: [
+      <>The number on its own is the <strong>start level (b = 1)</strong> — where the water begins.</>,
+      <>The number stuck to x is the <strong>fill rate (m = 2)</strong> — litres added each minute.</>,
+      <>We&apos;ll check it: after 2 minutes the level is <strong>1 + 2×2 = 5 litres</strong>.</>,
+    ],
   },
   sig: (t) => t.badge,
 }

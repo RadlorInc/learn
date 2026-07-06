@@ -92,6 +92,7 @@ function makeTask(d: 1 | 2 | 3): Task {
 // The stage tracks `value` (0 → 12 → 14) so the running total climbs in step with
 // the narration, exactly like the slider does in play.
 const EB_GLIDE = 'all 760ms cubic-bezier(.45,.05,.25,1)'
+const ART = '/assets/teen/objects'
 
 function EventBudgetScene({ palette: P, value, stepIndex, frameCount, ended }: {
   palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
@@ -123,19 +124,24 @@ function EventBudgetScene({ palette: P, value, stepIndex, frameCount, ended }: {
   })
 
   return (
-    <div style={{ position: 'relative', width: 'clamp(238px, 44vw, 356px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(10px,2.5vw,18px)' }}>
+    <div style={{ position: 'relative', width: 'clamp(238px, 44vw, 356px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(10px,2.5vw,18px)' }}>
       <style>{'@keyframes ebPop{0%{opacity:0;transform:translateY(8px) scale(.85)}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes ebGlow{0%,100%{box-shadow:0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 16px var(--eb-glow)}}@keyframes ebBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}'}</style>
 
-      {/* the receipt / budget slip */}
-      <div style={{ position: 'relative', width: '100%', maxWidth: 'clamp(210px,40vw,300px)', background: P.cream, borderRadius: 12, boxShadow: '0 8px 22px rgba(0,0,0,0.4)', padding: 'clamp(12px,3vw,18px) clamp(12px,3vw,16px)', display: 'flex', flexDirection: 'column', gap: 'clamp(8px,2vh,12px)' }}>
+      {/* illustrated event-planning desk backdrop + a soft scrim so the receipt reads clearly */}
+      <img src={`${ART}/budget_desk_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(28,19,39,0.30), rgba(28,19,39,0.52))' }} />
+
+      {/* the receipt / budget slip — a blank illustrated slip backs the code-drawn math */}
+      <div style={{ position: 'relative', width: '100%', maxWidth: 'clamp(210px,40vw,300px)', padding: 'clamp(12px,3vw,18px) clamp(12px,3vw,16px)', display: 'flex', flexDirection: 'column', gap: 'clamp(8px,2vh,12px)' }}>
+        <img src={`${ART}/budget_receipt_blank.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', filter: 'drop-shadow(0 8px 22px rgba(0,0,0,0.4))', zIndex: 0 }} />
         {/* header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `2px dashed ${P.mutedOnPaper}`, paddingBottom: 6 }}>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `2px dashed ${P.mutedOnPaper}`, paddingBottom: 6 }}>
           <span style={{ fontSize: 'clamp(15px,2.6vw,19px)' }}>🧾</span>
           <span style={{ color: P.mutedOnPaper, fontWeight: 800, letterSpacing: 1, fontSize: 'clamp(9px,1.4vw,12px)' }}>EVENT BUDGET</span>
         </div>
 
         {/* the expression, printed on the slip — with the do-first portion spotlighted */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 'clamp(3px,0.8vw,6px)', minHeight: 'clamp(40px,7vh,54px)', opacity: printed ? 1 : 0.25, transition: EB_GLIDE }}>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 'clamp(3px,0.8vw,6px)', minHeight: 'clamp(40px,7vh,54px)', opacity: printed ? 1 : 0.25, transition: EB_GLIDE }}>
           {/* the "$2 fee" term — dims while the snacks are being worked out first */}
           <span style={{ ...cell('transparent', combining || done ? P.mutedOnPaper : P.inkOnPaper), opacity: marked ? 0.4 : 1, textDecoration: combining || done ? 'line-through' : 'none' }}>2</span>
           <span style={op(marked ? '#c9b8dd' : P.inkOnPaper)}>+</span>
@@ -154,7 +160,7 @@ function EventBudgetScene({ palette: P, value, stepIndex, frameCount, ended }: {
         </div>
 
         {/* line items — tick in as each cost is settled */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, borderTop: `1px solid ${P.mutedOnPaper}55`, paddingTop: 8, minHeight: 'clamp(46px,8vh,60px)' }}>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 4, borderTop: `1px solid ${P.mutedOnPaper}55`, paddingTop: 8, minHeight: 'clamp(46px,8vh,60px)' }}>
           {snackShown && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', animation: 'ebPop 380ms ease', color: P.inkOnPaper }}>
               <span style={{ fontWeight: 700, fontSize: 'clamp(11px,1.7vw,14px)' }}>3 snacks × $4</span>
@@ -170,7 +176,7 @@ function EventBudgetScene({ palette: P, value, stepIndex, frameCount, ended }: {
         </div>
 
         {/* the running TOTAL — glides 0 → 12 → 14, glows mint when settled */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `2px dashed ${P.mutedOnPaper}`, paddingTop: 8 }}>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `2px dashed ${P.mutedOnPaper}`, paddingTop: 8 }}>
           <span style={{ color: P.mutedOnPaper, fontWeight: 800, letterSpacing: 1, fontSize: 'clamp(10px,1.6vw,13px)' }}>TOTAL</span>
           <span style={{ ['--eb-glow' as string]: P.mint, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(24px,5vw,38px)', color: totalColor, transition: EB_GLIDE, animation: done ? 'ebGlow 1.4s ease-in-out infinite' : undefined }}>
             ${Math.max(0, Math.min(14, Math.round(value)))}
@@ -235,6 +241,15 @@ const CONFIG: GameConfig<number, Task> = {
   },
   TutorialScene: EventBudgetScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re planning the event budget.</strong> Total up each cost in the right order — brackets first, then × and ÷ (each item&apos;s cost), then + and − — and set the total.</>, ticket: { title: 'Budget', badge: '3 + 2 × 5', tone: 'a' }, startLabel: 'Plan the event →' },
+  overview: {
+    say: "Here is what we are figuring out: an event budget has to be totalled in the right order. We have a two dollar entry fee plus three snacks at four dollars each — written as two plus three times four. We will work out the snacks first, because times comes before plus, then add the fee.",
+    problem: <>What is the total budget for <strong>2 + 3 × 4</strong>? A <strong>$2 fee</strong> plus <strong>3 snacks at $4 each</strong>.</>,
+    points: [
+      <>Do the <strong>× first</strong> — that is each item&apos;s cost: <strong>3 × 4 = $12</strong> of snacks.</>,
+      <>Then add the fee: <strong>12 + 2</strong> — the plus comes <strong>after</strong> the times.</>,
+      <>Watch the total land on <strong>$14</strong> — that is the whole budget in order.</>,
+    ],
+  },
   sig: (t) => t.badge,
 }
 
