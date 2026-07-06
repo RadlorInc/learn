@@ -32,6 +32,10 @@ import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, h
 
 const BAND: AgeBand = '12-14'
 const RETEACH_AFTER = 3
+// How many of the most-recent walkthrough board lines to keep on the chalkboard.
+// The longest examples write ~14 lines; capping the visible window keeps working
+// memory (and the pinned board slot) from overflowing. (ux-design.md §6.3)
+const BOARD_WINDOW = 4
 // When a child RESUMES a chapter above easy, they can opt into a short warm-up:
 // this many gentler questions (one tier below where they left off) get prepended
 // to the set before it climbs back to their level. Opt-in so it doesn't lengthen
@@ -428,13 +432,27 @@ function TutorialPlayer<V, T extends BaseTask>({
 
   useEffect(() => { run(); return () => cancelRef.current() }, [run])
 
+  // A child who's got it can jump straight to practice — cancel the narration
+  // timeline + any in-flight speech, then advance. (Autonomy + respects the fast
+  // learner; see ux-design.md §2/§6.3.)
+  const skip = useCallback(() => { cancelRef.current(); stopSpeech(); onDone() }, [onDone])
+
   const cur = frames[Math.min(i, frames.length - 1)] ?? frames[0]
+
+  // WINDOW the chalkboard to the last few lines. The longest walkthroughs
+  // accumulate ~14 board lines; showing them all is itself a working-memory load
+  // (cognitive-load theory) and overflows the pinned slot. Keep only the most
+  // recent lines and re-base the "currently writing" index into the window so the
+  // chalk animation still lands on the newest line. (ux-design.md §6.3)
+  const boardStart = Math.max(0, cur.board.length - BOARD_WINDOW)
+  const windowBoard = cur.board.slice(boardStart)
+  const windowWriting = cur.writingIndex < 0 ? -1 : cur.writingIndex - boardStart
 
   return (
     <>
       <BoardSlot roomy={roomy}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-          <Blackboard P={P} lines={cur.board} writingIndex={cur.writingIndex} />
+          <Blackboard P={P} lines={windowBoard} writingIndex={windowWriting} />
           {cur.art && <ArtProp src={cur.art} />}
         </div>
       </BoardSlot>
@@ -447,11 +465,15 @@ function TutorialPlayer<V, T extends BaseTask>({
             {!ended && <HandCue P={P} kind={cur.hand} />}
           </>
         )}
-        {ended && (
+        {ended ? (
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
             <button type="button" onClick={run} style={headerChip(P)}>↺ Watch again</button>
             <button type="button" onClick={onDone} style={bigBtn(P)}>Let&apos;s try →</button>
           </div>
+        ) : (
+          // Mid-walkthrough opt-out — quiet, so it never pulls focus from the
+          // lesson, but always there for the kid who doesn't need the rest.
+          <button type="button" onClick={skip} style={{ ...headerChip(P), opacity: 0.72, fontSize: 'clamp(11px, 1.05vw, 15px)' }}>I&apos;ve got it →</button>
         )}
       </CenterFill>
     </>
