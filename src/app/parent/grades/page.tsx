@@ -79,6 +79,7 @@ export default function GradesPage() {
                       </div>
                     </div>
                     <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+                      <button onClick={() => router.push(`/parent/grades/triage?g=${g.id}`)} style={{ background:'#FFF4D6', border:'none', borderRadius:10, padding:'7px 12px', fontSize:13, fontWeight:700, color:'#B45309', cursor:'pointer' }} title="Group this class by shared learning gap">Triage</button>
                       <button onClick={() => setEditing(g)} style={{ background:'#f3f4f6', border:'none', borderRadius:10, padding:'7px 12px', fontSize:13, fontWeight:700, color:'#374151', cursor:'pointer' }}>Edit</button>
                       <button onClick={() => setConfirming(g.id)} style={{ background:'none', border:'1.5px solid #FCA5A5', borderRadius:10, padding:'7px 11px', fontSize:13, fontWeight:700, color:'#DC2626', cursor:'pointer' }}>🗑</button>
                     </div>
