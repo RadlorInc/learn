@@ -1,26 +1,25 @@
 'use client'
 /**
  * FunctionFactory — the Algebraic Expressions chapter as a PLAYABLE GAME.
- * World: a machine on a factory line that eats a number input and outputs
- * another by a posted rule. The kid runs work orders by SLIDING the dial to
- * the output — sometimes evaluating a rule, sometimes working backwards to the
- * input, sometimes combining like terms to a coefficient. No slides, no MCQ.
- * Shared adaptive engine underneath.
+ * World: a TAXI METER. The fare follows a rule (fare = base + rate × km). The kid
+ * works fares by SLIDING the meter to the cost — sometimes evaluating a rule for a
+ * given km, sometimes working backwards to how far the ride was, sometimes combining
+ * like per-km rates to a total rate. No slides, no MCQ. Shared adaptive engine underneath.
  *
  * Teaching is "I do → we do → you do": a step-by-step WALKTHROUGH (config.tutorial)
- * evaluates 3x + 2 at x = 4 stage by stage, then a GUIDED order (config.guided)
- * lets the kid run x + 2 at x = 3 with Milo coaching (not scored), then the scored loop.
+ * works 3x + 2 at x = 4 km stage by stage, then a GUIDED ride (config.guided)
+ * lets the kid do x + 2 at x = 3 with Milo coaching (not scored), then the scored loop.
  */
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, SlideValue, pick, glideNumber } from './parts/gameKit'
 
 const P: Palette = {
-  nightTop: '#0d2926', nightBot: '#16403a',
-  cream: '#eafff7', creamSoft: 'rgba(234,255,247,0.82)',
-  inkOnPaper: '#1c302b', mutedOnPaper: '#77958b',
-  gold: '#f5a623', goldDeep: '#c9781a',
-  coral: '#ff8a4c', coralDeep: '#e05f28', mint: '#4fd6a8',
-  glass: 'rgba(10,34,30,0.6)', glassBorder: 'rgba(234,255,247,0.22)',
+  nightTop: '#1c1a10', nightBot: '#282412',
+  cream: '#fffdf0', creamSoft: 'rgba(255,253,240,0.82)',
+  inkOnPaper: '#2a2612', mutedOnPaper: '#9a9068',
+  gold: '#ffd21f', goldDeep: '#d9a800',
+  coral: '#ff8a4b', coralDeep: '#e2622a', mint: '#7fd0a0',
+  glass: 'rgba(28,26,16,0.62)', glassBorder: 'rgba(255,253,240,0.22)',
 }
 
 interface Task extends BaseTask { answer: number }
@@ -34,9 +33,9 @@ function evaluate(hard = false): Task {
   const [rule, x, answer] = pick(hard ? [...easy, ...tough] : easy)
   const filled = rule.replace(/x/g, `${x}`)
   return {
-    title: 'Run the rule', badge: `${rule} @ x=${x}`, tone: 'a',
-    prompt: `Feed x = ${x} into ${rule}. Set the output.`,
-    say: `Feed ${x} into the rule ${rule}. Slide the dial to the output.`,
+    title: 'Work out the fare', badge: `${rule} where x=${x}`, tone: 'a',
+    prompt: `The fare rule is ${rule}, where x is the km. For ${x} km, set the meter.`,
+    say: `The fare rule is ${rule}, where x is the number of km. Work it out for ${x} km, then set the meter.`,
     answer,
     work: [`Put ${x} in place of x.`, `${filled} = ${answer}.`],
   }
@@ -46,9 +45,9 @@ function solve(): Task {
   const set: [string, number, number][] = [['2x + 1', 11, 5], ['3x − 2', 10, 4], ['x + 7', 12, 5], ['4x', 20, 5]]
   const [rule, out, answer] = pick(set)
   return {
-    title: 'Back-track', badge: `${rule} = ${out}`, tone: 'b',
-    prompt: `The machine output ${out} using rule ${rule}. Set the INPUT x.`,
-    say: `The machine gave ${out} using the rule ${rule}. Slide to the input x.`,
+    title: 'How far?', badge: `${rule} = ${out}`, tone: 'b',
+    prompt: `The fare came to ${out} with rule ${rule}. Set how many km (x) the ride was.`,
+    say: `The fare came to ${out} using the rule ${rule}. Slide to how many km the ride was.`,
     answer,
     work: [`Work backwards from ${out}.`, `x = ${answer} gives ${out}.`],
   }
@@ -59,11 +58,11 @@ function combine(): Task {
   const [a, b, answer] = pick(set)
   const sign = b < 0 ? '−' : '+'
   return {
-    title: 'Combine terms', badge: `${a}x ${sign} ${Math.abs(b)}x`, tone: 'a',
-    prompt: `Combine ${a}x ${sign} ${Math.abs(b)}x. Set the coefficient (the number in front of x).`,
-    say: `Combine ${a} x ${b < 0 ? 'minus' : 'plus'} ${Math.abs(b)} x. Slide to the coefficient.`,
+    title: 'Combine the rates', badge: `${a}x ${sign} ${Math.abs(b)}x`, tone: 'a',
+    prompt: `Two charges per km add up: ${a}x ${sign} ${Math.abs(b)}x. Set the total rate (the number in front of x).`,
+    say: `Two charges per km add up: ${a} x ${b < 0 ? 'minus' : 'plus'} ${Math.abs(b)} x. Slide to the total rate.`,
     answer,
-    work: [`Add the like terms' coefficients.`, `${a} ${sign} ${Math.abs(b)} = ${answer}.`],
+    work: [`Add the like terms' rates.`, `${a} ${sign} ${Math.abs(b)} = ${answer}.`],
   }
 }
 
@@ -75,19 +74,143 @@ function makeTask(d: 1 | 2 | 3): Task {
   return pick(pool)()
 }
 
-// ── the worked example for the walkthrough (3x + 2 @ x = 4) and the guided order (x + 2 @ x = 3) ──
-const DEMO_TASK: Task = { title: 'Run the rule', badge: '3x + 2 @ x=4', tone: 'a', answer: 14, prompt: '', say: '', work: [] }
+// ── the worked example for the walkthrough (3x + 2 where x = 4) and the guided order (x + 2 where x = 3) ──
+const DEMO_TASK: Task = { title: 'Work out the fare', badge: '3x + 2 where x=4', tone: 'a', answer: 14, prompt: '', say: '', work: [] }
+
+// ── Animated walkthrough scene — the worked example, in motion ────────────────
+// A code-drawn TAXI on a ROAD with km markers, plus a METER readout. The worked
+// example is 3x + 2 where x = 4: a $2 flag-fall (the constant) plus $3 per km (the
+// rate). As the walkthrough's `value` (the running fare) climbs, the taxi DRIVES
+// forward down the road and the meter ticks up — the base shown as a fixed start
+// amount, the rate×x as the accumulating part. Everything GLIDES via CSS
+// transitions. Driven purely by the per-step `value` + step index. No timers.
+const RATE = 3, BASE = 2, KM = 4                 // 3x + 2 at x = 4
+const FARE_MAX = RATE * KM + BASE                // 14
+const KM_MARKS = [0, 1, 2, 3, 4]
+const DRIVE = 'left 820ms cubic-bezier(.42,.02,.28,1)'
+const RISE = 'height 720ms cubic-bezier(.4,.02,.3,1), background 500ms'
+const TICK = 'color 380ms, transform 380ms'
+
+function TaxiMeterScene({ palette: P, value, stepIndex, frameCount, ended }: {
+  palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
+}) {
+  const fare = Math.max(0, Math.min(FARE_MAX, value))
+  // Below the base fare the taxi is still at the stand; above it, km covered so far.
+  const driven = fare <= BASE ? 0 : (fare - BASE) / RATE            // 0..4 km
+  const kmFrac = Math.max(0, Math.min(1, driven / KM))
+  const resultPhase = ended || stepIndex >= frameCount - 2          // last 2 beats: the answer
+  const intro = stepIndex <= 1
+  const rolling = fare > BASE && !resultPhase
+  const showBase = stepIndex >= 1
+  const flagFall = fare >= BASE                                     // the $2 base is "on"
+  const risePct = (fare / FARE_MAX) * 100                           // meter bar fill
+
+  // taxi rides from the left stand (6%) to the far marker (86%)
+  const taxiLeft = 6 + kmFrac * 80
+  const fareColor = resultPhase ? P.mint : fare > BASE ? P.gold : P.cream
+
+  return (
+    <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 360px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
+      <style>{'@keyframes tmPop{0%{opacity:0;transform:translateY(6px) scale(.85)}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes tmRoll{0%{transform:translateY(0)}50%{transform:translateY(-1.5px)}100%{transform:translateY(0)}}@keyframes tmGlow{0%,100%{box-shadow:0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 16px var(--g)}}@keyframes tmSpin{to{transform:rotate(360deg)}}'}</style>
+
+      {/* ── the METER — a dark readout panel at the top ── */}
+      <div style={{ position: 'absolute', top: '6%', left: '8%', right: '8%', height: 'clamp(76px,17vh,104px)', borderRadius: 12, background: P.glass, border: `1px solid ${P.glassBorder}`, padding: '9px 13px', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.35)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 'clamp(9px,1.1vw,12px)', fontWeight: 800, letterSpacing: 1, color: P.mutedOnPaper }}>METER · fare</div>
+          <div style={{ fontSize: 'clamp(9px,1.05vw,11px)', fontWeight: 700, color: P.mutedOnPaper }}>{driven.toFixed(driven % 1 === 0 ? 0 : 1)} km</div>
+        </div>
+        <div style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(30px,6vw,48px)', lineHeight: 1, color: fareColor, transition: TICK, textShadow: resultPhase ? `0 0 18px ${P.mint}` : undefined }}>
+          ${fare}
+        </div>
+        {/* base + rate breakdown chips */}
+        <div style={{ display: 'flex', gap: 6, marginTop: 5, minHeight: 18 }}>
+          {showBase && (
+            <span style={{ animation: 'tmPop 300ms ease', padding: '2px 8px', borderRadius: 999, fontSize: 'clamp(8px,1vw,11px)', fontWeight: 800, background: flagFall ? `${P.coral}22` : 'rgba(255,255,255,0.06)', color: flagFall ? P.coral : P.mutedOnPaper, border: `1px solid ${flagFall ? P.coral : P.glassBorder}` }}>
+              base ${BASE}
+            </span>
+          )}
+          {stepIndex >= 4 && (
+            <span style={{ animation: 'tmPop 300ms ease', padding: '2px 8px', borderRadius: 999, fontSize: 'clamp(8px,1vw,11px)', fontWeight: 800, background: `${P.gold}22`, color: P.gold, border: `1px solid ${P.gold}` }}>
+              ${RATE}/km × {(driven || KM)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* ── side rise-bar: base (coral) stacked under rate (gold), climbs with the fare ── */}
+      <div style={{ position: 'absolute', top: '6%', right: '2.5%', width: 'clamp(9px,1.4vw,13px)', height: 'clamp(76px,17vh,104px)', borderRadius: 999, background: 'rgba(0,0,0,0.3)', overflow: 'hidden', border: `1px solid ${P.glassBorder}` }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${risePct}%`, transition: RISE, background: `linear-gradient(${P.gold}, ${P.coral})`, borderRadius: 999 }} />
+      </div>
+
+      {/* ── the ROAD ── */}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: '12%', height: 'clamp(58px,13vh,82px)', background: 'rgba(0,0,0,0.34)', borderTop: `2px solid ${P.glassBorder}` }}>
+        {/* dashed centre line */}
+        <div style={{ position: 'absolute', top: '48%', left: '3%', right: '3%', height: 2, background: `repeating-linear-gradient(90deg, ${P.mutedOnPaper} 0 14px, transparent 14px 28px)`, opacity: 0.5 }} />
+
+        {/* km markers along the road */}
+        {KM_MARKS.map((k) => {
+          const passed = driven >= k
+          const isDest = k === KM
+          return (
+            <div key={k} style={{ position: 'absolute', left: `${6 + (k / KM) * 80}%`, bottom: 4, transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <div style={{ width: isDest ? 4 : 2, height: isDest ? 16 : 10, borderRadius: 2, background: passed ? (isDest ? P.mint : P.gold) : P.mutedOnPaper, transition: 'background 400ms', boxShadow: passed && isDest ? `0 0 8px ${P.mint}` : undefined }} />
+              <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(8px,1vw,11px)', fontWeight: 800, color: passed ? (isDest ? P.mint : P.gold) : P.mutedOnPaper, transition: 'color 400ms' }}>{k}</div>
+            </div>
+          )
+        })}
+
+        {/* the TAXI — glides forward down the road */}
+        <div style={{ position: 'absolute', bottom: '30%', left: `${taxiLeft}%`, transform: 'translateX(-50%)', transition: DRIVE, zIndex: 3, animation: rolling ? 'tmRoll 620ms ease-in-out infinite' : undefined }}>
+          <div style={{ position: 'relative', width: 'clamp(46px,9vw,68px)', height: 'clamp(26px,5vh,38px)' }}>
+            {/* cab body */}
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: '22%', top: '30%', borderRadius: '7px 9px 5px 5px', background: resultPhase ? P.mint : P.gold, boxShadow: resultPhase ? `0 0 14px ${P.mint}` : '0 2px 6px rgba(0,0,0,0.5)' }} />
+            {/* roof + windows */}
+            <div style={{ position: 'absolute', left: '20%', right: '26%', top: 0, height: '42%', borderRadius: '6px 6px 0 0', background: resultPhase ? P.mint : P.goldDeep }} />
+            <div style={{ position: 'absolute', left: '26%', right: '32%', top: '10%', height: '26%', borderRadius: 3, background: P.creamSoft, opacity: 0.85 }} />
+            {/* taxi lamp */}
+            <div style={{ position: 'absolute', left: '38%', top: '-14%', width: '24%', height: '16%', borderRadius: 3, background: P.cream, boxShadow: `0 0 6px ${P.gold}` }} />
+            {/* wheels — spin while rolling */}
+            <div style={{ position: 'absolute', left: '15%', bottom: 0, width: 'clamp(11px,2vw,15px)', height: 'clamp(11px,2vw,15px)', borderRadius: '50%', background: '#111', border: `2.5px solid ${P.mutedOnPaper}`, animation: rolling ? 'tmSpin 700ms linear infinite' : undefined }} />
+            <div style={{ position: 'absolute', right: '15%', bottom: 0, width: 'clamp(11px,2vw,15px)', height: 'clamp(11px,2vw,15px)', borderRadius: '50%', background: '#111', border: `2.5px solid ${P.mutedOnPaper}`, animation: rolling ? 'tmSpin 700ms linear infinite' : undefined }} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── the rule, shown between meter and road ── */}
+      <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center', width: '92%' }}>
+        <div style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(17px,3.4vw,27px)', color: resultPhase ? P.mint : P.cream, transition: 'color 400ms', letterSpacing: 0.5 }}>
+          {resultPhase
+            ? <>3 × 4 + 2 = <span style={{ color: P.mint }}>14</span></>
+            : intro
+              ? <span style={{ color: P.gold }}>fare = 3x + 2</span>
+              : <>3 × <span style={{ color: P.gold }}>4</span> + 2</>}
+        </div>
+        {!intro && !resultPhase && (
+          <div style={{ marginTop: 3, fontSize: 'clamp(9px,1.2vw,12px)', fontWeight: 700, color: P.mutedOnPaper }}>
+            x = 4 km · ${RATE}/km, then + ${BASE} base
+          </div>
+        )}
+        {resultPhase && (
+          <div style={{ marginTop: 4, animation: 'tmPop 380ms ease', display: 'inline-block', padding: '3px 12px', borderRadius: 999, background: `${P.mint}1f`, border: `1px solid ${P.mint}`, color: P.mint, fontWeight: 800, fontSize: 'clamp(10px,1.3vw,13px)' }}>
+            the fare is $14 ✓
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 const GUIDED_TASK: Task = {
-  title: 'Run the rule', badge: 'x + 2 @ x=3', tone: 'a', answer: 5,
-  prompt: 'Feed x = 3 into x + 2. Slide the dial to the output, then press RUN.',
-  say: 'Feed three into the rule x plus two. Slide the dial to the output, then press run.',
+  title: 'Work out the fare', badge: 'x + 2 where x=3', tone: 'a', answer: 5,
+  prompt: 'The fare rule is x + 2, where x is the km. For a 3 km ride, set the meter, then press SET FARE.',
+  say: 'The fare rule is x plus two. For a three km ride, work out the fare, set the meter, then press set fare.',
   work: ['Put 3 in place of x.', '3 + 2 = 5.'],
 }
 
 const CONFIG: GameConfig<number, Task> = {
   chapterId: 'algebraicExpressions',
-  title: 'FUNCTION FACTORY',
-  ticketLabel: 'work order',
+  title: 'TAXI METER',
+  motif: '🚕',
+  ticketLabel: 'fare card',
   palette: P,
   makeTask,
   initialValue: () => 0,
@@ -95,20 +218,23 @@ const CONFIG: GameConfig<number, Task> = {
   revealText: (t) => `${t.answer}`,
   glide: (t, from, setValue, later) => glideNumber(from, t.answer, setValue, later),
   Instrument: ({ value, setValue, disabled, reveal, palette, onCommit }) => (
-    <SlideValue P={palette} value={value} setValue={setValue} min={MIN} max={MAX} step={1} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="RUN ✓" />
+    <SlideValue P={palette} value={value} setValue={setValue} min={MIN} max={MAX} step={1} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="SET FARE ✓" />
   ),
   tutorial: {
     task: DEMO_TASK,
     initial: 0,
     hand: 'drag',
     steps: [
-      { say: "Welcome to the Function Factory! Each machine changes a number by its rule — you slide the dial to set the output.", value: 0, hand: 'drag' },
-      { say: 'This machine follows the rule three x plus two, and we feed it x equals four.', value: 0, hand: 'drag', board: '3x + 2,  x = 4' },
-      { say: 'First, put four in place of x: three times four, plus two.', value: 0, board: '3 × 4 + 2' },
-      { say: 'Multiply first: three times four is twelve. Watch the dial climb to twelve.', value: 12, hand: 'drag', board: '= 12 + 2' },
-      { say: 'Now add the two: twelve plus two is fourteen.', value: 14, hand: 'drag', board: '= 14' },
-      { say: 'So the machine turns four into fourteen — that is three x plus two at work.', value: 14 },
-      { say: "When your output is set, press Run. Now let's try one together.", value: 14, hand: 'tap' },
+      { say: "Welcome to the taxi meter! The fare follows a rule — you set the meter to how much the ride costs.", value: 0, hand: 'drag' },
+      { say: 'The fare rule for this taxi is three x plus two, where x is the number of km.', value: 0, board: 'fare = 3x + 2' },
+      { say: 'The little x just stands for how far the ride is — the number of km.', value: 0, board: 'x = the number of km' },
+      { say: 'This ride is four km. So x is four.', value: 0, board: 'x = 4' },
+      { say: 'For a four km ride, we put four in place of x — everywhere we see an x, we write a four.', value: 0, board: '3 × 4 + 2' },
+      { say: 'Now we just work it out. The times comes before the plus, so do three times four first.', value: 0, board: 'do 3 × 4 first' },
+      { say: 'Three times four is twelve. Watch the meter climb to twelve.', value: 12, hand: 'drag', board: '= 12 + 2' },
+      { say: 'Now add the two base fare. Twelve plus two is fourteen. Watch the meter climb the last two.', value: 14, hand: 'drag', board: '= 14' },
+      { say: 'So the fare for a four km ride is fourteen dollars — that is three x plus two at work.', value: 14, board: 'the fare is $14' },
+      { say: "When the meter is set, press Set Fare. Now let's try one together.", value: 14, hand: 'tap' },
     ],
   },
   guided: {
@@ -116,7 +242,8 @@ const CONFIG: GameConfig<number, Task> = {
     coach: 'Your turn — I will help.',
     hand: 'drag',
   },
-  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re running the Function Factory.</strong> Feed each machine its number, follow the rule, and slide the dial to the output.</>, ticket: { title: 'Rule 2x + 1', badge: 'x → ?', tone: 'a' }, startLabel: 'Start the line →' },
+  TutorialScene: TaxiMeterScene,
+  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re driving the taxi.</strong> For each ride, use the fare rule, work out the cost, and set the meter.</>, ticket: { title: 'Fare 2x + 1', badge: 'x km → ?', tone: 'a' }, startLabel: 'Start the meter →' },
   sig: (t) => t.badge,
 }
 

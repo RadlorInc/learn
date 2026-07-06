@@ -2,9 +2,9 @@
 /**
  * PercentagesChapter (12–14) — "Sale Day", the PLAYABLE-GAME chapter shape.
  *
- * No slides: the whole chapter is ONE continuous shop scene (ShopRush). Milo
- * demos the first order in-scene, then the kid runs the counter — order tickets
- * slide in, they set the price on a dial (or tap the right tag) and SELL.
+ * No slides: the whole chapter is ONE continuous checkout scene (StoreCheckout,
+ * on the shared GameShell). Milo demos the first order in-scene, then the kid runs
+ * the till — set the amount on the dial or shade the percent on the grid, and ring it up.
  * Teaching, hints, and reteach all happen inside the game. Same engine
  * underneath: useAdaptive L1/L2/L3 (invisible), makeDistinct, mastery
  * early-exit, finishAndSync. This is the template for making the whole
@@ -17,7 +17,7 @@ import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { stopSpeech } from '@/infra/useMiloSpeaker'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import MasteryState from '@/features/chapters/teen/MasteryState'
-import ShopRush from '@/features/chapters/teen/games/ShopRush'
+import StoreCheckout from '@/features/chapters/teen/games/StoreCheckout'
 
 const BAND: AgeBand = '12-14'
 
@@ -45,7 +45,7 @@ function PercentagesWorld({
   }
 
   return (
-    <ShopRush
+    <StoreCheckout
       childName={childName}
       onExit={onExit}
       onFinish={(c, w, mastered) => { onFinish(c, w, mastered); setPhase('done') }}

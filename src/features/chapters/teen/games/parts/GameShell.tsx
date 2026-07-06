@@ -20,7 +20,7 @@
  *   • mastery early-exit (top tier + clean streak → finish early, full stars)
  * Math-without-fear: no timer, no red X, no score, no coins.
  */
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useAdaptive } from '@/core/adaptive'
 import { speak, speakAfterCurrent, speakSeq, speakSteps, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -28,7 +28,7 @@ import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import type { ChapterType } from '@/state/store'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import MiloMark from '@/features/chapters/teen/MiloMark'
-import { Palette, Ticket, TicketHead, Row, Stamp, Says, HandCue, Blackboard, headerChip, bigBtn, type HandKind } from './gameKit'
+import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, headerChip, bigBtn, type HandKind } from './gameKit'
 
 const BAND: AgeBand = '12-14'
 const RETEACH_AFTER = 3
@@ -73,6 +73,11 @@ export interface DemoStep<V> {
   value?: V
   hand?: HandKind
   board?: string
+  /** Optional object sprite (path under /assets) shown beside the chalkboard for
+   *  this step — a real picture of what the board line is describing (e.g. a coin
+   *  stack for "start: 4", an overdrawn sign for "below 0"). Persists until the
+   *  next step sets a different one, so you only mark it where the picture changes. */
+  art?: string
 }
 
 /** The "I do" walkthrough script for a chapter. */
@@ -103,11 +108,24 @@ export interface GameConfig<V, T extends BaseTask> {
   /** Animate the instrument to the correct answer on a wrong answer. */
   glide: (t: T, from: V, setValue: (v: V) => void, later: (fn: () => void, ms: number) => void) => void
   Instrument: (p: InstrumentProps<V, T>) => React.ReactElement
+  /** Optional custom render of the QUESTION on the chalkboard (e.g. to highlight
+   *  the portion evaluated first). Defaults to the task's badge/expression. */
+  question?: (t: T) => React.ReactNode
+  /** One emoji shown huge + very faint as the "sweet & simple" themed backdrop.
+   *  Keeps the background uncluttered so it never competes with the interactive. */
+  motif?: string
   start: { blurb: React.ReactNode; ticket: { title: string; price?: string; badge: string; tone: 'a' | 'b' }; startLabel: string }
-  /** "I do" walkthrough. If present, replaces the one-shot Demo. */
-  tutorial?: TutorialScript<V, T>
+  /** "I do" walkthrough. If present, replaces the one-shot Demo. Can be a single
+   *  worked example, or an ARRAY of examples played back-to-back (each may use a
+   *  different instrument/task — good for chapters that teach several operations). */
+  tutorial?: TutorialScript<V, T> | TutorialScript<V, T>[]
   /** "we do" guided order, shown after the walkthrough. */
   guided?: GuidedConfig<T>
+  /** Optional ANIMATED SCENE that replaces the static instrument during the "I do"
+   *  walkthrough — an in-engine explainer (code-drawn, CSS-glide) that acts the math
+   *  out like a cartoon video. Driven by the same narration timeline: it receives the
+   *  current step's value + step index, and CSS transitions animate the change. */
+  TutorialScene?: (p: { palette: Palette; task: T; value: V; stepIndex: number; frameCount: number; ended: boolean }) => React.ReactElement
   /** Legacy one-shot demo (used when `tutorial` is absent). */
   Demo?: (p: DemoProps) => React.ReactElement
   /** math-only signature so a re-drawn ticket / shuffled dressing isn't "new". */
@@ -240,18 +258,19 @@ export function Game<V, T extends BaseTask>({
 
   const busy = sub !== 'active'
   const inOrder = stage === 'play' || stage === 'guided'
-  const saysText = !task ? '' :
-    sub === 'reveal' ? (stage === 'guided' ? "Here's where it goes." : `It was ${config.revealText(task)}.`) :
-    sub === 'reteach' ? task.work[0] :
-    sub === 'sold' ? 'Nice ✓' : task.prompt
+  const roomy = useRoomy()
 
   return (
     <div className="milo-lesson milo-game" style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, color: P.cream, fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/assets/teen/scene_${config.chapterId}.png`} alt="" aria-hidden loading="lazy" decoding="async"
-        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.88 }} />
-      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}44 0%, ${P.nightTop}66 40%, ${P.nightTop}dd 78%, ${P.nightTop} 100%)` }} />
+      {/* Sweet & simple backdrop: the palette gradient (on the root) + ONE big, very
+          faint themed motif — so nothing in the background competes with the
+          interactive objects. (Bespoke painted art can replace this later.) */}
+      {config.motif && (
+        <div aria-hidden style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', userSelect: 'none' }}>
+          <span style={{ fontSize: 'min(54vh, 66vw)', lineHeight: 1, opacity: 0.07, filter: 'saturate(0.7)' }}>{config.motif}</span>
+        </div>
+      )}
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(130% 100% at 50% -10%, ${P.nightBot}00 0%, ${P.nightBot}55 100%)` }} />
 
       <header style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 'clamp(660px, 66vw, 820px)', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px 4px', boxSizing: 'border-box' }}>
         <button type="button" onClick={() => { stopSpeech(); onExit() }} style={headerChip(P)}>‹ Menu</button>
@@ -268,56 +287,65 @@ export function Game<V, T extends BaseTask>({
         </div>
       )}
 
-      <main style={{ position: 'relative', zIndex: 1, flex: 1, width: '100%', maxWidth: 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(10px, 1vw, 16px)', padding: '8px 18px 24px', boxSizing: 'border-box' }}>
+      <main style={{ position: 'relative', zIndex: 1, flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '8px 16px 20px', boxSizing: 'border-box' }}>
 
         {stage === 'start' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, textAlign: 'center' }}>
-            <Ticket P={P}>
-              <TicketHead P={P} n={1} label={config.ticketLabel} />
-              <Row P={P} title={config.start.ticket.title} price={config.start.ticket.price} badge={config.start.ticket.badge} tone={config.start.ticket.tone} />
-            </Ticket>
-            <p style={{ margin: 0, maxWidth: 'clamp(400px, 48vw, 600px)', fontSize: 'clamp(15px, 1.5vw, 22px)', lineHeight: 1.55, color: P.creamSoft, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>{config.start.blurb}</p>
-            {canWarmUp ? (
-              // Returning above easy → offer an optional warm-up (a few gentler
-              // questions first) or jump straight back in at their level.
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
-                <p style={{ margin: 0, maxWidth: 'clamp(360px, 46vw, 560px)', fontSize: 'clamp(14px, 1.4vw, 20px)', fontWeight: 700, color: P.cream, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
-                  You left off at <span style={{ color: P.gold }}>{ada.difficultyLabel}</span>. Want a quick warm-up first?
-                </p>
-                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <button type="button" onClick={() => { unlockSpeech(); setWarmup(true); setStage('demo') }} style={headerChip(P)}>☀️ Warm up first</button>
-                  <button type="button" onClick={() => { unlockSpeech(); setWarmup(false); setStage('demo') }} style={bigBtn(P)}>Continue →</button>
+          <CenterFill>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, textAlign: 'center' }}>
+              <Ticket P={P}>
+                <TicketHead P={P} n={1} label={config.ticketLabel} />
+                <Row P={P} title={config.start.ticket.title} price={config.start.ticket.price} badge={config.start.ticket.badge} tone={config.start.ticket.tone} />
+              </Ticket>
+              <p style={{ margin: 0, maxWidth: 'clamp(400px, 48vw, 600px)', fontSize: 'clamp(15px, 1.5vw, 22px)', lineHeight: 1.55, color: P.creamSoft, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>{config.start.blurb}</p>
+              {canWarmUp ? (
+                // Returning above easy → offer an optional warm-up (a few gentler
+                // questions first) or jump straight back in at their level.
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
+                  <p style={{ margin: 0, maxWidth: 'clamp(360px, 46vw, 560px)', fontSize: 'clamp(14px, 1.4vw, 20px)', fontWeight: 700, color: P.cream, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+                    You left off at <span style={{ color: P.gold }}>{ada.difficultyLabel}</span>. Want a quick warm-up first?
+                  </p>
+                  <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(true); setStage('demo') }} style={headerChip(P)}>☀️ Warm up first</button>
+                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(false); setStage('demo') }} style={bigBtn(P)}>Continue →</button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <button type="button" onClick={() => { unlockSpeech(); setStage('demo') }} style={bigBtn(P)}>{config.start.startLabel}</button>
-            )}
-          </div>
+              ) : (
+                <button type="button" onClick={() => { unlockSpeech(); setStage('demo') }} style={bigBtn(P)}>{config.start.startLabel}</button>
+              )}
+            </div>
+          </CenterFill>
         )}
 
         {stage === 'demo' && (
           config.tutorial
-            ? <TutorialPlayer config={config} script={config.tutorial} onDone={afterDemo} />
+            ? <TutorialPlayer config={config} script={config.tutorial} roomy={roomy} onDone={afterDemo} />
             : config.Demo
-              ? <config.Demo palette={P} childName={childName} onDone={afterDemo} />
+              ? <CenterFill><config.Demo palette={P} childName={childName} onDone={afterDemo} /></CenterFill>
               : null
         )}
 
         {inOrder && task && value != null && (
           <>
-            {stage === 'guided' && (
-              <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Try this one with me</div>
-            )}
-            <Says P={P} text={saysText} />
-            <div key={stage === 'guided' ? 'g' : idx} style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-              <Ticket P={P}>
-                <TicketHead P={P} n={stage === 'guided' ? 1 : idx + 2} label={config.ticketLabel} />
-                <Row P={P} title={task.title} price={task.price} badge={task.badge} tone={task.tone} struck={sub === 'sold'} />
-                {sub === 'sold' && <Stamp P={P} />}
-              </Ticket>
-            </div>
-            <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
-            {stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind={config.guided.hand} />}
+            {/* the QUESTION lives on the chalkboard — top-left on a roomy screen,
+                across the top on mobile — and is the same everywhere (universal). */}
+            <BoardSlot roomy={roomy}>
+              <QuestionBoard
+                P={P}
+                title={task.title}
+                expr={config.question ? config.question(task) : task.badge}
+                answer={sub === 'active' ? '?' : config.revealText(task)}
+                tone={sub === 'active' ? 'ask' : sub === 'sold' ? 'ok' : 'reveal'}
+              />
+            </BoardSlot>
+            <CenterFill>
+              {stage === 'guided' && sub === 'active' && (
+                <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Try this one with me</div>
+              )}
+              <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
+                <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
+                {stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind={config.guided.hand} />}
+              </div>
+            </CenterFill>
           </>
         )}
       </main>
@@ -339,107 +367,135 @@ export function Game<V, T extends BaseTask>({
 }
 
 // ── "I do" walkthrough player — narrated, step-by-step, hand cue + replay ──────
+// Same universal layout as practice: the explanation is WRITTEN on the chalkboard
+// (top-left on a roomy screen / across the top on mobile) while Milo speaks it; the
+// instrument is centred with the action buttons below. No Milo dialog is printed on
+// screen — the spoken narration carries the words, the board carries the math.
 function TutorialPlayer<V, T extends BaseTask>({
-  config, script, onDone,
+  config, script, roomy, onDone,
 }: {
   config: GameConfig<V, T>
-  script: TutorialScript<V, T>
+  script: TutorialScript<V, T> | TutorialScript<V, T>[]
+  roomy: boolean
   onDone: () => void
 }) {
   const P = config.palette
   const [i, setI] = useState(0)
-  const [value, setValue] = useState<V>(script.initial)
-  const [hand, setHand] = useState<HandKind>(script.hand)
   const [ended, setEnded] = useState(false)
   const cancelRef = useRef<() => void>(() => {})
 
+  // Flatten one-or-many worked examples into a single timeline of frames. Each
+  // frame carries its example's task (so the instrument switches per example),
+  // the instrument value at that moment, the hand cue, and the chalkboard lines
+  // written so far WITHIN that example (the board resets between examples). A
+  // multi-example tutorial thus teaches several operations, one baby step at a time.
+  const frames = useMemo(() => {
+    const scripts = Array.isArray(script) ? script : [script]
+    const out: { task: T; value: V; hand: HandKind; board: string[]; writingIndex: number; say: string; art: string }[] = []
+    for (const sc of scripts) {
+      let val = sc.initial
+      let hnd = sc.hand
+      let art = ''
+      const board: string[] = []
+      for (const st of sc.steps) {
+        if (st.value !== undefined) val = st.value as V
+        if (st.hand) hnd = st.hand
+        if (st.art !== undefined) art = st.art
+        let writingIndex = -1
+        if (st.board) { board.push(st.board); writingIndex = board.length - 1 }
+        out.push({ task: sc.task, value: val, hand: hnd, board: [...board], writingIndex, say: st.say, art })
+      }
+    }
+    return out
+  }, [script])
+
   const run = useCallback(() => {
     cancelRef.current()
-    setEnded(false); setI(0); setValue(script.initial); setHand(script.hand)
+    setEnded(false); setI(0)
     unlockSpeech()
     // Deliberately SLOW: a walkthrough is teaching, not narration. Slower voice
     // (rate), a ~1.1s breathing pause after each spoken step (gapMs) so the kid can
     // watch the instrument move before the next sentence, and a slow silent-mode
     // fallback (fallbackStepMs) so a blocked-audio run is just as watchable.
-    cancelRef.current = speakSteps(script.steps.map((s) => s.say), {
+    cancelRef.current = speakSteps(frames.map((f) => f.say), {
       rate: 0.8,
       gapMs: 1100,
       fallbackStepMs: 3200,
-      onStep: (idx) => {
-        setI(idx)
-        const s = script.steps[idx]
-        if (s && s.value !== undefined) setValue(s.value as V)
-        if (s && s.hand) setHand(s.hand)
-      },
+      onStep: (idx) => setI(idx),
       onDone: () => setEnded(true),
     })
-  }, [script])
+  }, [frames])
 
   useEffect(() => { run(); return () => cancelRef.current() }, [run])
 
-  const t = script.task
+  const cur = frames[Math.min(i, frames.length - 1)] ?? frames[0]
 
-  // Build the chalkboard: every step's `board` line written so far (0..i). The
-  // line added AT the current step is the one being written (gets the animation).
-  const board: string[] = []
-  let writingIndex = -1
-  for (let k = 0; k <= i && k < script.steps.length; k++) {
-    const b = script.steps[k]?.board
-    if (b) { board.push(b); if (k === i) writingIndex = board.length - 1 }
-  }
-
-  // On a roomy landscape screen (laptop), stand the walkthrough in TWO columns —
-  // Milo's talk + chalkboard on the left, the ticket + instrument on the right — so
-  // it fills the width and the taller elements don't overflow the height. Phones and
-  // portrait keep the single stacked column.
-  const wide = useWideLandscape()
-
-  const talk = (
+  return (
     <>
-      <Says P={P} text={script.steps[i]?.say ?? ''} />
-      <Blackboard P={P} lines={board} writingIndex={writingIndex} />
-    </>
-  )
-  const work = (
-    <>
-      <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-        <Ticket P={P}>
-          <TicketHead P={P} n={1} label={config.ticketLabel} />
-          <Row P={P} title={t.title} price={t.price} badge={t.badge} tone={t.tone} />
-        </Ticket>
-      </div>
-      <config.Instrument task={t} value={value} setValue={() => {}} disabled reveal={false} palette={P} onCommit={() => {}} />
-      {!ended && <HandCue P={P} kind={hand} />}
-      {ended && (
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <button type="button" onClick={run} style={headerChip(P)}>↺ Watch again</button>
-          <button type="button" onClick={onDone} style={bigBtn(P)}>Let&apos;s try →</button>
+      <BoardSlot roomy={roomy}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+          <Blackboard P={P} lines={cur.board} writingIndex={cur.writingIndex} />
+          {cur.art && <ArtProp src={cur.art} />}
         </div>
-      )}
+      </BoardSlot>
+      <CenterFill>
+        {config.TutorialScene ? (
+          <config.TutorialScene palette={P} task={cur.task} value={cur.value} stepIndex={Math.min(i, frames.length - 1)} frameCount={frames.length} ended={ended} />
+        ) : (
+          <>
+            <config.Instrument task={cur.task} value={cur.value} setValue={() => {}} disabled reveal={false} palette={P} onCommit={() => {}} />
+            {!ended && <HandCue P={P} kind={cur.hand} />}
+          </>
+        )}
+        {ended && (
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button type="button" onClick={run} style={headerChip(P)}>↺ Watch again</button>
+            <button type="button" onClick={onDone} style={bigBtn(P)}>Let&apos;s try →</button>
+          </div>
+        )}
+      </CenterFill>
     </>
   )
-
-  if (wide) {
-    const colStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(14px, 1.6vw, 22px)', flex: '1 1 0', minWidth: 0, maxWidth: 560 }
-    return (
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 'clamp(28px, 4vw, 64px)', width: '100%' }}>
-        <div style={colStyle}>{talk}</div>
-        <div style={colStyle}>{work}</div>
-      </div>
-    )
-  }
-  return <>{talk}{work}</>
 }
 
-/** true on a roomy landscape viewport (laptop/desktop) — used to switch the
- *  walkthrough to a two-column layout. Portrait / phones stay single-column. */
-function useWideLandscape(): boolean {
-  const [wide, setWide] = useState(false)
+/** The real-world object picture that appears beside the chalkboard during the
+ *  walkthrough — a visual of what the board line is describing. Pops in fresh each
+ *  time the sprite changes (keyed on src) so a new picture reads as a new beat. */
+function ArtProp({ src }: { src: string }) {
+  return (
+    <div key={src} style={{ marginTop: 'clamp(8px, 1.4vh, 16px)', display: 'flex', justifyContent: 'center', alignItems: 'center', animation: 'gsArtPop 420ms ease' }}>
+      <style>{'@keyframes gsArtPop{0%{opacity:0;transform:translateY(8px) scale(.9)}60%{transform:translateY(0) scale(1.04)}100%{opacity:1;transform:translateY(0) scale(1)}}'}</style>
+      <img src={src} alt="" style={{ height: 'clamp(80px, 14vh, 156px)', width: 'auto', maxWidth: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.35))' }} />
+    </div>
+  )
+}
+
+// ── universal layout helpers ──────────────────────────────────────────────────
+/** true when there's horizontal room (laptop/desktop) → pin the chalkboard
+ *  top-left. Below this the board stacks across the top (phones/tablets). */
+function useRoomy(): boolean {
+  const [roomy, setRoomy] = useState(false)
   useEffect(() => {
-    const calc = () => setWide(window.innerWidth >= 900 && window.innerWidth > window.innerHeight * 1.15)
+    const calc = () => setRoomy(window.innerWidth >= 820)
     calc()
     window.addEventListener('resize', calc)
     return () => window.removeEventListener('resize', calc)
   }, [])
-  return wide
+  return roomy
+}
+
+/** The chalkboard slot — pinned top-left on a roomy screen (absolute, out of flow
+ *  so the interactive stays centred), or stacked full-width across the top on
+ *  mobile. Universal: present in every chapter, in both explanation and practice. */
+function BoardSlot({ roomy, children }: { roomy: boolean; children: React.ReactNode }) {
+  if (roomy) {
+    return <div style={{ position: 'absolute', top: 'clamp(4px, 1vh, 18px)', left: 'clamp(10px, 1.6vw, 28px)', width: 'clamp(280px, 30vw, 420px)', zIndex: 3 }}>{children}</div>
+  }
+  return <div style={{ width: '100%', maxWidth: 480, display: 'flex', justifyContent: 'center', margin: '0 auto 10px' }}>{children}</div>
+}
+
+/** The centred interactive column — instrument in the middle, its action button
+ *  directly below. Fills the space left of / beneath the board. */
+function CenterFill({ children }: { children: React.ReactNode }) {
+  return <div style={{ flex: 1, width: '100%', maxWidth: 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(10px, 1vw, 16px)', margin: '0 auto', minHeight: 0, padding: '2px 0 6px', boxSizing: 'border-box' }}>{children}</div>
 }

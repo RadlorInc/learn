@@ -162,6 +162,103 @@ export function VThermo({
   )
 }
 
+/** Vertical lift shaft — a signed number line you read at a glance: floors ABOVE
+ *  the ground line are positive, basements BELOW it are negative. Drag the car
+ *  up/down (or ± tap). No fill bar (unlike VThermo) so the two vertical chapters
+ *  stay visually distinct. */
+export function ElevatorShaft({
+  P, value, setValue, min, max, disabled, reveal, onCommit, commitLabel = 'GO ✓',
+}: {
+  P: Palette; value: number; setValue: (n: number) => void; min: number; max: number
+  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string
+}) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const dragging = useRef(false)
+  const span = max - min
+  const frac = (value - min) / span                 // 0 bottom … 1 top
+  const zeroFrac = (0 - min) / span
+  const car = reveal ? P.mint : P.cream
+  const fromY = (clientY: number) => {
+    const el = trackRef.current; if (!el) return
+    const r = el.getBoundingClientRect()
+    const f = 1 - Math.min(1, Math.max(0, (clientY - r.top) / r.height))
+    setValue(Math.round(min + f * span))
+  }
+  // Marker lines every 5 floors (+ the ground line) — enough to orient the eye
+  // without turning the shaft into a barcode. The car still steps by 1.
+  const floors: number[] = []
+  for (let n = min; n <= max; n++) if (n % 5 === 0) floors.push(n)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'stretch', gap: 14 }}>
+        <div
+          ref={trackRef}
+          onPointerDown={(e) => { if (disabled) return; dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); fromY(e.clientY) }}
+          onPointerMove={(e) => { if (dragging.current) fromY(e.clientY) }}
+          onPointerUp={() => { dragging.current = false }}
+          style={{ position: 'relative', width: 'clamp(58px, 6.4vw, 88px)', height: 'clamp(210px, 27vh, 270px)', borderRadius: 10, background: P.glass, border: `1px solid ${P.glassBorder}`, overflow: 'hidden', touchAction: 'none', cursor: disabled ? 'default' : 'ns-resize' }}
+        >
+          {/* below-ground shade → negatives read as "underground" */}
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${zeroFrac * 100}%`, background: 'rgba(0,0,0,0.3)' }} />
+          {/* floor lines: ground (0) bold gold, every-5th medium, rest faint */}
+          {floors.map((n) => (
+            <div key={n} style={{ position: 'absolute', left: 0, right: 0, bottom: `${((n - min) / span) * 100}%`, height: n === 0 ? 3 : 1, background: n === 0 ? P.gold : P.glassBorder, opacity: n === 0 ? 1 : n % 5 === 0 ? 0.5 : 0.22 }} />
+          ))}
+          <div style={{ position: 'absolute', right: 5, bottom: `calc(${zeroFrac * 100}% + 2px)`, fontFamily: 'var(--font-numeric)', fontSize: 10, fontWeight: 800, color: P.gold, letterSpacing: '0.06em' }}>G</div>
+          {/* the lift car (the knob) — split doors so it reads as an elevator */}
+          <div style={{ position: 'absolute', left: '50%', bottom: `calc(${frac * 100}% - 15px)`, transform: 'translateX(-50%)', width: '72%', height: 30, borderRadius: 6, background: car, boxShadow: '0 2px 9px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'bottom 90ms' }}>
+            <div style={{ width: 2, height: '68%', background: 'rgba(0,0,0,0.22)' }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Nudge P={P} label="+" disabled={disabled} onClick={() => setValue(Math.min(max, value + 1))} />
+          <Readout P={P} text={`${value}`} reveal={reveal} />
+          <Nudge P={P} label="−" disabled={disabled} onClick={() => setValue(Math.max(min, value - 1))} />
+        </div>
+      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
+    </div>
+  )
+}
+
+/** Percent paint grid — a 10×10 board (100 squares). Drag across to fill `value`
+ *  squares (0..100 = a percentage). Reads out the count as percent = fraction =
+ *  decimal. Used by the Store Checkout chapter to "shade the percent". */
+export function PaintGrid({
+  P, value, setValue, disabled, reveal, onCommit, commitLabel = 'SHADE IT ✓',
+}: {
+  P: Palette; value: number; setValue: (n: number) => void
+  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string
+}) {
+  const painting = useRef(false)
+  const set = (i: number) => { if (!disabled) setValue(i + 1) }
+  const fill = reveal ? P.mint : P.gold
+  const rim = reveal ? '#3fa77c' : P.goldDeep
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <div
+        onPointerUp={() => { painting.current = false }}
+        onPointerLeave={() => { painting.current = false }}
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 2, width: 'min(72vw, 380px)', padding: 8, borderRadius: 12, background: P.glass, border: `1px solid ${P.glassBorder}`, touchAction: 'none', userSelect: 'none' }}
+      >
+        {Array.from({ length: 100 }, (_, i) => {
+          const on = i < value
+          return (
+            <div key={i}
+              onPointerDown={() => { if (disabled) return; painting.current = true; set(i) }}
+              onPointerEnter={() => { if (painting.current) set(i) }}
+              style={{ aspectRatio: '1', borderRadius: 2, background: on ? fill : 'rgba(255,244,221,0.10)', border: `1px solid ${on ? rim : 'rgba(255,244,221,0.18)'}`, cursor: disabled ? 'default' : 'pointer', transition: 'background 90ms' }} />
+          )
+        })}
+      </div>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(20px, 2vw, 30px)', fontWeight: 800, color: fill, textShadow: `0 0 16px ${rim}55` }}>
+        {value}% = {reduce(value, 100)} = {tidy(value / 100)}
+      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
+    </div>
+  )
+}
+
 /** Segmented bar — shade `count` of `segments` parts (fractions / part-of-part). */
 export function BarShade({
   P, count, setCount, segments, disabled, reveal, onCommit, commitLabel = 'CONFIRM ✓', label,
@@ -372,7 +469,13 @@ export function BalanceBeam({
   disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string
 }) {
   const diff = leftOf(x) - right
-  const tilt = Math.max(-14, Math.min(14, -diff * 2))   // beam tips toward heavier side
+  // While the kid is still setting x (active), the beam stays LEVEL and the left pan
+  // shows the expression (e.g. 2x), not its value — so they must actually solve for x,
+  // not just wiggle until it looks straight. It only tips AFTER they weigh (disabled),
+  // and in the teaching walkthrough (also disabled) so Milo can demo it tilting.
+  const active = !disabled
+  const balanced = Math.abs(diff) < 1e-6
+  const tilt = active ? 0 : Math.max(-14, Math.min(14, -diff * 2))   // tips toward the heavier side
   const col = reveal ? P.mint : P.gold
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
@@ -382,14 +485,15 @@ export function BalanceBeam({
             <rect x={-110} y={-4} width={220} height={8} rx={4} fill={col} />
             <rect x={-104} y={-40} width={64} height={30} rx={6} fill={P.glass} stroke={P.glassBorder} />
             <rect x={40} y={-40} width={64} height={30} rx={6} fill={P.glass} stroke={P.glassBorder} />
-            <text x={-72} y={-20} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={15} fill={P.cream}>{tidy(leftOf(x))}</text>
+            <text x={-72} y={-20} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={active ? 13 : 15} fill={P.cream}>{active ? leftExpr : tidy(leftOf(x))}</text>
             <text x={72} y={-20} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={15} fill={P.cream}>{right}</text>
           </g>
           <polygon points="0,4 -14,56 14,56" fill={P.glassBorder} />
         </g>
       </svg>
-      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 16, fontWeight: 700, color: Math.abs(diff) < 1e-6 ? P.mint : P.creamSoft }}>
-        {leftExpr} {Math.abs(diff) < 1e-6 ? '= ' : diff > 0 ? '> ' : '< '} {right}{Math.abs(diff) < 1e-6 ? '  ✓ level' : ''}
+      {/* neutral while setting x; the weigh RESULT (over / under / balanced) once committed */}
+      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 16, fontWeight: 700, minHeight: 22, color: active ? P.creamSoft : balanced ? P.mint : P.coral }}>
+        {active ? 'Set x, then weigh' : balanced ? 'Balanced ✓' : diff > 0 ? 'Overweight — too heavy' : 'Underweight — too light'}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', justifyContent: 'center' }}>
         <Nudge P={P} label="−" disabled={disabled} onClick={() => setX(Math.max(min, tidy(x - 1)))} />
@@ -464,6 +568,29 @@ export function HandCue({ P, kind, label }: { P: Palette; kind: HandKind; label?
         @keyframes hcCrank { from { transform: rotate(0deg) translateX(9px) rotate(0deg) } to { transform: rotate(360deg) translateX(9px) rotate(-360deg) } }
         @media (prefers-reduced-motion: reduce) { .hc-hand { animation: none !important } }
       `}</style>
+    </div>
+  )
+}
+
+// ── QuestionBoard — the chalkboard that always shows the current QUESTION during
+//    practice/guided (pinned top-left by GameShell). The expression sits big; a
+//    second line shows "= ?" while solving, then "= answer" (green on correct,
+//    warm on reveal). `expr` is a node so a chapter can highlight a portion. ──────
+export function QuestionBoard({ P, title, expr, answer, tone = 'ask' }: {
+  P: Palette; title?: string; expr: React.ReactNode; answer?: React.ReactNode; tone?: 'ask' | 'reveal' | 'ok'
+}) {
+  const ansColor = tone === 'ok' ? '#8ef0c2' : tone === 'reveal' ? '#ffb59c' : '#cfe0d8'
+  return (
+    <div style={{
+      width: '100%', maxWidth: 'clamp(280px, 40vw, 460px)', boxSizing: 'border-box',
+      background: 'linear-gradient(160deg, #21473c, #16302a)',
+      border: '4px solid #7a5230', borderRadius: 12,
+      boxShadow: 'inset 0 0 26px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4)',
+      padding: 'clamp(12px, 1.6vw, 22px) clamp(16px, 2vw, 28px)', display: 'flex', flexDirection: 'column', gap: 'clamp(5px, 0.8vw, 11px)', alignItems: 'center',
+    }}>
+      {title && <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(11px, 1vw, 15px)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bcd8c9' }}>{title}</div>}
+      <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.4)', lineHeight: 1.2, textAlign: 'center' }}>{expr}</div>
+      {answer !== undefined && <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(22px, 2.8vw, 36px)', fontWeight: 800, color: ansColor, textShadow: '0 0 10px rgba(0,0,0,0.35)', lineHeight: 1.1 }}>= {answer}</div>}
     </div>
   )
 }

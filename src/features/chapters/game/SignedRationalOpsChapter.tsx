@@ -1,7 +1,7 @@
 'use client'
 /**
  * SignedRationalOpsChapter (12–14) — PLAYABLE-GAME chapter shape (no slides, no MCQ).
- * One continuous FrogPond scene; Milo demos order #1 in-scene, then the kid plays.
+ * One continuous SkyTower (tower-lift) scene; Milo demos order #1 in-scene, then the kid plays.
  * Same engine underneath: useAdaptive L1/L2/L3 (invisible), reteach after 3
  * wrong in a row, mastery early-exit, finishAndSync.
  */
@@ -12,7 +12,7 @@ import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { stopSpeech } from '@/infra/useMiloSpeaker'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import MasteryState from '@/features/chapters/teen/MasteryState'
-import FrogPond from '@/features/chapters/teen/games/FrogPond'
+import SkyTower from '@/features/chapters/teen/games/SkyTower'
 
 const BAND: AgeBand = '12-14'
 
@@ -40,7 +40,7 @@ function SignedRationalWorld({
   }
 
   return (
-    <FrogPond
+    <SkyTower
       childName={childName}
       onExit={onExit}
       onFinish={(c, w, mastered) => { onFinish(c, w, mastered); setPhase('done') }}

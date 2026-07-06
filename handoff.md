@@ -1,11 +1,92 @@
 # Session Handoff — Milo Story Mode
 
+> 🎬 **2026-07-06 (later) — ANIMATED "EXPLAINER-VIDEO" WALKTHROUGHS FOR ALL 12–14 CHAPTERS + WHOLE BATCH COMMITTED.** `tsc` clean · `npm test` **21/21** · `next build` **green**. **Committed to `main` this session (NOT pushed — no deploy yet).** This commit bundles the entire prior-session 12–14 overhaul (the block just below — universal layout + real-world re-theme + baby-step explanations) TOGETHER with this session's animated explanations. Dev server port 3017.
+>
+> **The idea (founder-directed):** each chapter's "I do" walkthrough should ACT THE MATH OUT like a cartoon explainer video — a moving scene synced to Milo's narration — not a static diagram.
+>
+> ### New generic hook — `TutorialScene` ([GameShell.tsx](src/features/chapters/teen/games/parts/GameShell.tsx))
+> - Optional `GameConfig.TutorialScene?: (p: { palette, task, value, stepIndex, frameCount, ended }) => ReactElement`. When present it **REPLACES the static instrument during the walkthrough** (practice/guided keep the real interactive instrument). Driven by the SAME `TutorialPlayer` narration timeline (`speakSteps`) — the scene reads the current step's `value`/`stepIndex` and CSS transitions animate the change, so motion stays in sync with the voice (and the silent-audio fallback). Reference impl: **`SkyTowerScene` in [SkyTower.tsx](src/features/chapters/teen/games/SkyTower.tsx)** — mirror it for any new chapter.
+> - Also added `DemoStep.art?: string` + an `ArtProp` (a sprite shown beside the chalkboard per step). Used ONLY by Ch1 (Bank Account) — the "swap a picture per beat" style the founder asked to keep as-is.
+>
+> ### Ch1 — Bank Account 🏦 (integers / [WeatherStation.tsx](src/features/chapters/teen/games/WeatherStation.tsx)) — SPRITE-SWAP style
+> - **6 generated object sprites** (Nano Banana 2, ~15 Higgsfield credits incl. bg-removal) → `public/assets/teen/objects/bank_{coins,cash,deposit,withdraw,vault,overdrawn}.png` (referenced the existing `coin_gold` art for style). Each walkthrough step sets `art:` → the matching object pops in beside the board (coins for the balance, red withdraw token while counting down, empty vault at zero, OVERDRAWN sign below zero). `bank_cash` is generated but unused in the withdrawal example (reserved for deposit-heavy tasks).
+>
+> ### Ch2–12 — 11 bespoke CODE-DRAWN animated scenes (ZERO credits)
+> Each acts out its worked example, gliding via CSS transitions only (no JS anim loops, no deps, Safari-safe). All **verified live** reaching the correct final answer state:
+> - **Sky Tower** 🏢 signedRationalOps — elevator car glides floor-by-floor, crosses the gold ground line into the shaded basement, lands mint at −3 with a "3 below" bracket (`2 − 5 = −3`). *(the template)*
+> - **Cutting Bench** 🪚 rationalOps — 3 examples: plank split into 12ths (saw glides) + tape-measure needle (decimal) + `¾ ÷ ¼ = 3` pieces.
+> - **Paint Studio** 🎨 ratioProportion — buckets pour Blue 2 : Yellow 3 into a tray → "5 parts ✓".
+> - **Tile Factory** 🧱 exponentsRoots — unit tiles fill a 3×3 grid → `3² = 9` ("9 tiles").
+> - **Event Budget** 🧾 orderOfOperations — receipt; `3×4` highlights gold + collapses to **12**, `2` struck → TOTAL **$14**.
+> - **Taxi Meter** 🚕 algebraicExpressions — taxi drives to 4 km, meter ticks base $2 + $3/km×4 → **$14**.
+> - **Baggage Scale** 🧳 equationsInequalities — beam tips then balances level, suitcase reveals **x = 5**.
+> - **Delivery Drone** 📍 coordinatePlane — flies across x:3 then down y:−2 → **(3, −2)**.
+> - **Water Tank** 💧 linearRelationships — fills to base 1, stacks +2/min → **5 L** (`y = 2x+1`).
+> - **Room Reno** 🏠 geometryMeasurement — floor tiles row-by-row → **24** (`6×4 m²`).
+> - **Store Checkout** 🛒 percentages — 2 examples: hundred-grid shades 25% + price tag slides $80 → **$60** SALE.
+>
+> ### Build method + polish
+> - Ch3–12 built by **10 parallel subagents** (one per file — independent, no conflicts), each given `SkyTowerScene` as the gold standard. All returned tsc-clean; one fixed a `??`/`||` paren issue it introduced in GearLab.
+> - **Polish pass** fixed 5 cosmetic overlaps (all verified): Store Checkout SALE stamp → corner; Cutting Bench tape value-bubble clearance; Baggage Scale verdict pill centered (missing `translateX(-50%)`) + arithmetic line lifted; Room Reno "4 m" label off the tiles. (The "RECEIPT watermark" was a false alarm — it's the faint 🧾 motif backdrop.)
+>
+> ### Not in this commit / still open
+> - **NOT pushed** — commit only. Push when ready (main auto-deploys to Vercel; then the usual prod checks). Pre-push: bump `public/sw.js` VERSION per deploy.
+> - `docs/ux-design-brief.md` (untracked, a standalone UX-design prompt — unrelated, left out) and `labs-demo/` (separate project) deliberately excluded.
+> - Prior **NEEDS-YOUR-APPROVAL** items still open (bespoke painted backdrops needing credit allowance; deeper custom themed instrument objects). The founder's cut-off "point 3" was never received — still worth asking.
+>
+> _(the block below is the prior session — its "UNCOMMITTED / HEAD=a8296b4" status is now SUPERSEDED: it's all in this commit.)_
+
+> 🎮 **2026-07-06 — 12–14 GAMES: UNIVERSAL LAYOUT + REAL-WORLD RE-THEME OF **ALL 12** CHAPTERS + BABY-STEP EXPLANATIONS (UNCOMMITTED).** `tsc` clean · `npm test` **21/21** · `next build` **green**. Dev server port 3017. HEAD still `main`@`a8296b4` (nothing committed/pushed this session). Big founder-directed overhaul of the whole 12–14 band; **all 12 chapters now run on the shared GameShell** with one consistent layout + real-world themes. Items needing founder allowance are in **NEEDS-YOUR-APPROVAL** below (nothing spent).
+>
+> ### A. Universal layout — shared shell ([GameShell.tsx](src/features/chapters/teen/games/parts/GameShell.tsx) + [gameKit.tsx](src/features/chapters/teen/games/parts/gameKit.tsx))
+> - **Permanent chalkboard**, pinned **top-left on laptop** (`useRoomy` ≥820px → `BoardSlot` absolute) / **full-width across the top on mobile** (`BoardSlot` in-flow). Shows the **explanation** during the walkthrough and the **question** during practice (new shared `QuestionBoard`).
+> - **No Milo dialog printed on screen** — removed the `Says` bubble + the receipt `Ticket` from play; Milo still SPEAKS, the board carries the math.
+> - **Interactive centred, action button directly below** (`CenterFill`). Old two-column `useWideLandscape` walkthrough replaced; `TutorialPlayer` uses the same BoardSlot+CenterFill. Responsive verified laptop (1440×900) + mobile (375×812).
+> - **Sweet & simple backdrops (ZERO cost):** removed the busy `scene_*.png` photos; backdrop is now the palette gradient + **one big, very faint themed motif emoji** (`config.motif`), so nothing competes with the interactive. `public/assets/teen/scene_*.png` are now **UNUSED** (left in place; bespoke art can replace them later).
+> - **New optional `GameConfig` fields:** `question?(t)` (custom board render, e.g. portion highlight), `motif?: string`, and `tutorial` now accepts a **single `TutorialScript` OR an array** (multi-example walkthroughs).
+>
+> ### B. All 12 chapters re-themed to real-world use-cases
+> (copy + palette + motif + labels only; **math, answers, instrument mechanics, chapterId all UNCHANGED**. Filenames/exports keep old names — wrappers import by those, so untouched.)
+>
+> | chapterId | theme | motif | file |
+> |---|---|---|---|
+> | integers | **Bank Account** (deposits/withdrawals, overdraft) | 🏦 | WeatherStation.tsx |
+> | signedRationalOps | **Sky Tower** (lift; floors above/below ground; new `ElevatorShaft` instrument) | 🏢 | SkyTower.tsx |
+> | rationalOps | **Cutting Bench** (carpentry: board fractions + tape decimals) | 🪚 | KitchenCounter.tsx |
+> | ratioProportion | **Paint Studio** (mix colours in ratio) | 🎨 | JuiceBar.tsx |
+> | exponentsRoots | **Tile Factory** (n² tiles, n³ blocks, roots=side) | 🧱 | GearLab.tsx |
+> | orderOfOperations | **Event Budget** (total costs: ×/÷ = each item's cost first; portion-marked) | 🧾 | ScoreMachine.tsx |
+> | algebraicExpressions | **Taxi Meter** (fare = base + rate×km) | 🚕 | FunctionFactory.tsx |
+> | equationsInequalities | **Baggage Scale** (find unknown case weight) | 🧳 | BalanceBench.tsx |
+> | coordinatePlane | **Delivery Drone** (GPS to (x,y)) | 📍 | NightFlight.tsx |
+> | linearRelationships | **Water Tank** (start level + fill rate) | 💧 | CableCar.tsx |
+> | geometryMeasurement | **Room Reno** (floor area for tiles, perimeter for skirting) | 🏠 | BuildSite.tsx |
+> | percentages | **Store Checkout** (discount/sale/saving/tax/tip/reverse) | 🛒 | StoreCheckout.tsx |
+>
+> - **Percentages MIGRATED off the old self-contained ShopRush onto GameShell** → new `StoreCheckout.tsx`; `ShopRush.tsx` **deleted**; wrapper `PercentagesChapter.tsx` rewired. New shared **`PaintGrid`** instrument in gameKit (ported from ShopRush's 10×10 PaintPad); prices use `SlideValue`; dual-instrument via `mech:'paint'|'slide'` (like KitchenCounter). **⇒ all 12 chapters are on GameShell now.**
+>
+> ### C. Pedagogy / UX fixes this session
+> - **BABY STEPS in EVERY chapter's explanation** — expanded each walkthrough from ~6 steps to **~9–14 baby steps**, each conceptual jump its own slow narrated step + an intermediate chalkboard line. Counts: Bank Account 14 (count each $ down through zero) · Sky Tower 9 · Cutting Bench 3-example (bar→tape) · Paint Studio 10 · Tile Factory 11 · Event Budget 11 · Taxi Meter 10 · Baggage Scale 11 · Delivery Drone 13 (across then down) · Water Tank 10 · Room Reno 12 · Store Checkout 2-example. Verified live (Delivery Drone grid animates each micro-step; Bank Account's 14-line board fits the pinned slot). *NB: longest boards (~14 lines) sit tall but fit; windowing to the last N lines is an easy follow-up if any feel cramped.*
+> - **Multi-example walkthroughs** — `TutorialPlayer` flattens an array of examples into one timeline, switching the instrument + resetting the board per example (single-script still works). Cutting Bench (fractions/decimals) walks 3 examples across its two instruments; Store Checkout walks 2.
+> - **Journey tasks START at the stated value** (`start` field on the Task → `initialValue`): Sky Tower rides begin on the first floor `a` (×/÷ stay at 0); Bank Account transactions begin at the current balance `s` ("set balance to X" stay at 0); Store Checkout "slide down to sale price" begins at full price. (Fixes "lift is on floor 1 but car starts at 0".)
+> - **Baggage Scale — no more watch-the-tilt cheat:** in `BalanceBeam`, while actively setting x the beam stays **level** and the left pan shows the EXPRESSION (`2x`), with a neutral "Set x, then weigh". It only tilts AFTER Weigh (or in the teaching walkthrough — both `disabled`), showing **"Balanced ✓ / Overweight — too heavy / Underweight — too light"** (wrong weigh tips, then glides to balanced to reveal the answer). Copy updated to "work out x, set the dial, then Weigh".
+> - **Order of Operations:** "dial"→**"drag"**; the do-first **portion highlighted in gold parentheses** via `markPortion()` (brackets → exponent → first ×/÷), e.g. **(12 ÷ 2)** + 3 = ?.
+> - **Taxi Meter:** `@` → **`where`** in the fare badge (`3x + 2 where x=4`).
+>
+> ### D. ⚠️ NEEDS-YOUR-APPROVAL / next (deferred — didn't spend allowance or over-build)
+> - **Bespoke simple painted backgrounds** (12, ~1.5 Higgsfield credits each) to replace the faint-emoji motifs with real sweet-simple themed art. Needs your credit allowance. (Sky Tower's earlier detailed cutaway PNG is unused — was too cluttered per your feedback.)
+> - **Deep custom themed interactive OBJECTS** — instruments are re-labelled/re-tinted but still the generic mechanics (thermometer→balance meter, dial, beam…). Building true object-widgets (a receipt, a suitcase on the scale, tiles laid, a taxi-meter face) is significant per-chapter work — do chapter-by-chapter when back.
+> - **COMMIT + push** this whole batch when you're ready (it's all uncommitted; `tsc`+tests+build green). Then the usual prod checks.
+> - **Open thread:** the founder's message had a "point 3" that got cut off (twice) — never received; ask what it was.
+>
+> _(everything below is prior sessions — still valid)_
+
 > 🚢 **2026-07-05 — WHOLE BATCH SHIPPED: `main`@`a8296b4` → Vercel production deploy READY (live on `milo-story-mode.vercel.app`).** Everything below (this session's Safari fix / tutorial + blackboard / laptop sizing / resume-difficulty / warm-up, PLUS the earlier uncommitted multi-session batch: full 12–14 game fan-out, tutorial engine, US-English sweep, counting overhaul, diagnostic, grades, day-streak removal, security/devops) is now committed and pushed. `tsc` + `npm test` 21/21 + `next build` all green before push.
 > - **Deliberately NOT committed:** `labs-demo/` (separate standalone Vite/Three/MindAR project, 506MB incl. its own node_modules — deploys to its own Vercel `labs-demo-jade.vercel.app`; keep it out of the app repo / give it its own repo) and `public/_voicetest/` (7.7MB voice A/B WAVs — **deleted**).
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-05 night (NEW: **SAFARI-BOOT BUG SOLVED + TUTORIAL FAN-OUT COMPLETE (all 12/12 chapters).** Safari fix = CSP `upgrade-insecure-requests` made prod-only (user confirmed it now boots after clearing localhost data). "I do → we do → you do" tutorial + slow narrated step pacing (rate 0.8, 1.1s inter-step pause) now on ALL 12 of the 12–14 game chapters incl. a bespoke ShopRush walkthrough. `tsc` green; `npm test` 17/17. All uncommitted; HEAD=`b93182c`, last pushed `main`@`811a695`)_
+_Last updated: 2026-07-06 (NEW: **12–14 GAMES OVERHAUL — universal chalkboard-question layout, all 12 chapters re-themed to real-world use-cases + on GameShell (percentages migrated off ShopRush → StoreCheckout), motif backdrops, baby-step explanations in every chapter, Baggage-Scale no-live-tilt fix, order-of-ops portion-marking, journey `start` values.** `tsc` + `npm test` 21/21 + `next build` all green. ALL UNCOMMITTED; HEAD=`main`@`a8296b4`. See the 2026-07-06 block at the top for the full detail + the NEEDS-YOUR-APPROVAL list.)_
 
 > 🎯 **RESUME HERE (next session) — two threads:**
 > **(A) SAFARI "GAME NOT LOADING" — TRUE ROOT CAUSE FOUND + FIXED IN CODE (2026-07-05 pm). One manual step left: clear localhost website data in Safari, then confirm.**
