@@ -758,3 +758,29 @@ p, .p {
   .kit-topbar { position: relative; flex-wrap: wrap; row-gap: 8px; padding: 12px 16px; }
   .kit-wordmark { font-size: 36px !important; }
 }
+
+/* ── Accessibility: prefers-reduced-motion (global fallback) ────────────────────
+   Honor the OS "Reduce Motion" setting for motion-sensitive / vestibular / ADHD
+   learners — a core audience for a fear-free math product, not an edge case.
+
+   We do NOT strip information. Animations run to their FINAL frame (so `fill:both`
+   entrance end-states are preserved — elements that start at opacity:0 still become
+   visible) and transitions SNAP to their target value, rather than being cut.
+   `animation: none` is deliberately NOT used here: it would leave opacity:0 entrance
+   elements permanently invisible. This is the end-state-preserving pattern the design
+   doc calls for (docs/ux-design.md §7, docs/ux-invariants.md #22).
+
+   JS-timer-driven staged reveals (the 3–5 counting parade, count-ups, the walkthrough
+   narration timeline) are unaffected — they convey through discrete steps, not smooth
+   motion, which is exactly the right behavior under reduced motion.
+
+   The teen band already ships component-level reduced-motion handling; this is the
+   global safety net that also covers the 3–11 story chapters. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

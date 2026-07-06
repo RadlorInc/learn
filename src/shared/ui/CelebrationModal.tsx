@@ -100,23 +100,28 @@ export default function CelebrationModal({ onPlayAgain, onExit, exitLabel, hideN
           ))}
         </div>
 
-        {/* XP + coins */}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 24 }}>
-          {[
-            { label: 'XP', value: `+${xpGained}`, bg: 'var(--sky-blue-soft)', border: 'var(--sky-blue)' },
-            { label: '🪙', value: `+${coinsGained}`, bg: 'var(--sun-yellow-soft)', border: 'var(--sun-yellow-deep)' },
-          ].map(s => (
-            <div key={s.label} style={{
-              background: s.bg, border: `3px solid ${s.border}`,
-              borderRadius: 14, padding: '8px 16px',
-              fontFamily: 'var(--font-display)', fontWeight: 900,
-              fontSize: 18, color: 'var(--ink)',
-              boxShadow: '0 3px 0 rgba(61,37,22,.10)',
-            }}>
-              {s.value} {s.label}
-            </div>
-          ))}
+        {/* Progress — XP is the competence/growth signal and stays the headline.
+            Coins are DEMOTED to a quiet wallet top-up (not a co-equal reward
+            trophy): they're cosmetic shop currency for self-expression, never the
+            headline reward for answering. Keeps coins from becoming an
+            extrinsic-only motivator (overjustification). See ux-design.md §6.1 /
+            ux-invariants.md #14. */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: coinsGained > 0 ? 10 : 24 }}>
+          <div style={{
+            background: 'var(--sky-blue-soft)', border: '3px solid var(--sky-blue)',
+            borderRadius: 14, padding: '8px 18px',
+            fontFamily: 'var(--font-display)', fontWeight: 900,
+            fontSize: 18, color: 'var(--ink)',
+            boxShadow: '0 3px 0 rgba(61,37,22,.10)',
+          }}>
+            +{xpGained} XP
+          </div>
         </div>
+        {coinsGained > 0 && (
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--ink-soft)', margin: '0 0 22px', opacity: 0.85 }}>
+            🪙 +{coinsGained} in your wallet — for the Shop
+          </p>
+        )}
 
         {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
