@@ -303,6 +303,15 @@ export function Game<V, T extends BaseTask>({
   const inOrder = stage === 'play' || stage === 'guided'
   const roomy = useRoomy()
 
+  // Overview: show the summary ON the chalkboard while the illustration sits in the
+  // middle (same universal layout as the walkthrough/practice), instead of a big
+  // centre card followed later by the illustration. Needs the illustrated scene +
+  // its first worked example to pose the middle; otherwise falls back to the card.
+  const Scene = config.TutorialScene
+  const introScript = config.tutorial
+    ? (Array.isArray(config.tutorial) ? config.tutorial[0] : config.tutorial)
+    : undefined
+
   return (
     <div className="milo-lesson milo-game" style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, color: P.cream, fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
       {/* Sweet & simple backdrop: the palette gradient (on the root) + ONE big, very
@@ -360,9 +369,24 @@ export function Game<V, T extends BaseTask>({
         )}
 
         {stage === 'intro' && config.overview && (
-          <CenterFill>
-            <OverviewCard P={P} overview={config.overview} onDone={() => setStage('demo')} />
-          </CenterFill>
+          Scene && introScript ? (
+            <>
+              {/* Summary on the chalkboard (top-left / top), illustration in the
+                  middle — read the plan while already seeing what we're solving.
+                  When Milo finishes reading, the baby-step walkthrough starts on its
+                  own (no "Show me how" tap needed). */}
+              <BoardSlot roomy={roomy}>
+                <OverviewBoard P={P} overview={config.overview} onDone={() => setStage('demo')} />
+              </BoardSlot>
+              <CenterFill>
+                <Scene palette={P} task={introScript.task} value={introScript.initial} stepIndex={0} frameCount={1} ended={false} />
+              </CenterFill>
+            </>
+          ) : (
+            <CenterFill>
+              <OverviewCard P={P} overview={config.overview} onDone={() => setStage('demo')} />
+            </CenterFill>
+          )
         )}
 
         {stage === 'demo' && (
@@ -564,9 +588,14 @@ function OverviewCard({ P, overview, onDone }: {
 }) {
   const words = useMemo(() => splitWords(overview.say), [overview.say])
   const [hi, setHi] = useState(-1)
+  // Auto-advance to the baby-step walkthrough once Milo finishes reading (fires
+  // once, incl. the blocked-audio fallback). Ref keeps a new onDone identity from
+  // restarting the read-along.
+  const doneRef = useRef(onDone)
+  doneRef.current = onDone
   useEffect(() => {
     setHi(-1)
-    const cancel = speakWithHighlight(overview.say, { onWord: setHi })
+    const cancel = speakWithHighlight(overview.say, { onWord: setHi, onDone: () => doneRef.current() })
     return () => { cancel(); setHi(-1) }
   }, [overview.say])
   return (
@@ -596,7 +625,65 @@ function OverviewCard({ P, overview, onDone }: {
           )
         })}
       </p>
-      <button type="button" onClick={onDone} style={bigBtn(P)}>Show me how →</button>
+    </div>
+  )
+}
+
+/** The overview SUMMARY rendered ON the chalkboard (top-left / top slot) — a slate
+ *  panel matching the walkthrough board, with the problem headline + the word-by-word
+ *  read-along. Shown alongside the illustration (in the middle) during the intro, so
+ *  the child reads the plan while already seeing what they're about to solve. The
+ *  "Show me how →" button lives with the illustration in the centre column. */
+function OverviewBoard({ P, overview, onDone }: {
+  P: Palette
+  overview: NonNullable<GameConfig<unknown, BaseTask>['overview']>
+  onDone: () => void
+}) {
+  const words = useMemo(() => splitWords(overview.say), [overview.say])
+  const [hi, setHi] = useState(-1)
+  // Ref so a new onDone identity never restarts the read-along; it fires once when
+  // the summary finishes (real speech OR the blocked-audio fallback), then the
+  // baby-step walkthrough starts automatically.
+  const doneRef = useRef(onDone)
+  doneRef.current = onDone
+  useEffect(() => {
+    setHi(-1)
+    const cancel = speakWithHighlight(overview.say, { onWord: setHi, onDone: () => doneRef.current() })
+    return () => { cancel(); setHi(-1) }
+  }, [overview.say])
+  return (
+    <div style={{
+      width: '100%', boxSizing: 'border-box',
+      background: 'linear-gradient(160deg, #21473c, #16302a)',
+      border: '4px solid #7a5230', borderRadius: 12,
+      boxShadow: 'inset 0 0 26px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4)',
+      padding: 'clamp(12px, 1.6vw, 20px) clamp(14px, 1.8vw, 24px)',
+      display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.2vh, 14px)',
+    }}>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1.05vw, 14px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold }}>Here&apos;s the plan</div>
+      <p style={{ margin: 0, fontSize: 'clamp(15px, 1.55vw, 21px)', fontWeight: 800, lineHeight: 1.35, color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
+      {/* Read-along: one span per word; the spoken word lights up so the kid can follow. */}
+      <p aria-label={overview.say} style={{ margin: 0, fontSize: 'clamp(14px, 1.4vw, 19px)', lineHeight: 1.65, color: '#dbe9d6' }}>
+        {words.map((w, i) => {
+          const lit = i === hi && /[A-Za-z0-9]/.test(w.word)
+          return (
+            <span
+              key={i}
+              aria-hidden
+              style={{
+                background: lit ? P.gold : 'transparent',
+                color: lit ? '#12241b' : 'inherit',
+                fontWeight: lit ? 800 : 400,
+                borderRadius: 6,
+                padding: '1px 3px',
+                boxDecorationBreak: 'clone',
+                WebkitBoxDecorationBreak: 'clone',
+                transition: 'background 120ms ease, color 120ms ease',
+              }}
+            >{w.word}{i < words.length - 1 ? ' ' : ''}</span>
+          )
+        })}
+      </p>
     </div>
   )
 }
