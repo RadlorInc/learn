@@ -261,8 +261,10 @@ export function Game<V, T extends BaseTask>({
     if (ok) {
       const c = correct + 1
       setCorrect(c); setSub('sold'); setWrongRun(0)
+      // Correct = the quiet "You solved it! ✓" visual cue only. No spoken praise
+      // ("Good job / Nice / unstoppable") on every right answer — mirrors the
+      // 3–11 story chapters (StoryWorld: a tick is enough).
       flashCue('solved')
-      speak(`Nice! ${ada.praise}`)
       later(() => loadTask(idx + 1, c, wrong, res.mastered), 1650)
       return
     }

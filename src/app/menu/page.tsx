@@ -47,6 +47,12 @@ function shopStateMatchesServer(
 const _bootAt = new Map<string, number>()
 const BOOT_TTL_MS = 30_000
 
+// Speak the welcome greeting only ONCE per app load — not on every menu→game→menu
+// bounce (the component remounts each return, which re-ran the greeting). Module-scoped
+// so it survives remounts within a session; a full page reload (real "app load") resets it.
+// Keyed by learner id so switching to a different child still greets the new child once.
+const _greeted = new Set<string>()
+
 export default function MainMenu() {
   const router = useRouter()
   const authed = useAuthGuard()
@@ -145,13 +151,18 @@ export default function MainMenu() {
         } catch { /* offline / transient — local profile stands until next online load */ }
       })()
 
-      // Personalised greeting based on whether they've played before
-      const ids = chaptersForAge(learner.age_group ?? '3-5').map(c => c.id)
-      const doneCount = ids.filter(ch => (profile.chapterStars[ch] ?? 0) > 0).length
-      if (lp && doneCount > 0) {
-        speak(`Welcome back, ${learner.display_name}! Ready to continue ${CHAPTER_NAMES[lp]}?`)
-      } else {
-        speak(`Welcome, ${learner.display_name}! Which chapter do you want to play?`)
+      // Personalised greeting — but only ONCE per app load. Returning to the menu
+      // from a chapter remounts this component; without the guard it re-greeted every
+      // time. Speak only the first time we see this learner this session.
+      if (!_greeted.has(learner.id)) {
+        _greeted.add(learner.id)
+        const ids = chaptersForAge(learner.age_group ?? '3-5').map(c => c.id)
+        const doneCount = ids.filter(ch => (profile.chapterStars[ch] ?? 0) > 0).length
+        if (lp && doneCount > 0) {
+          speak(`Welcome back, ${learner.display_name}! Ready to continue ${CHAPTER_NAMES[lp]}?`)
+        } else {
+          speak(`Welcome, ${learner.display_name}! Which chapter do you want to play?`)
+        }
       }
       return
     }

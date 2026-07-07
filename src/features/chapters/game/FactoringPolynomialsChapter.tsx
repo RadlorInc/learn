@@ -142,7 +142,7 @@ function FactoringPractice({
     const res = ada.record(ok)
     const run = ok ? 0 : wrongRun + 1
     setWrongRun(run)
-    if (ok) { setCorrect((c) => c + 1); speak(`Correct. ${ada.praise}`) }
+    if (ok) { setCorrect((c) => c + 1) }
     else { setWrong((w) => w + 1); speak(`The answer is ${round.answer}. ${ada.encouragement}`) }
     window.setTimeout(() => advance(ok, run, round, res.mastered), FEEDBACK_MS)
   }
