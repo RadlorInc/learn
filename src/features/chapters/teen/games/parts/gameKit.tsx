@@ -627,4 +627,136 @@ export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: stri
   )
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// HS PICKERS — the game-scene answer controls for SYMBOLIC answers (15–16 / 17–18).
+// Some high-school answers can't be a slider — factored forms, radical roots,
+// classifications, proof steps. These keep the game feel: the options are physical
+// cards in the scene; pick one, then commit. Same value/grade model as every
+// instrument — V is the chosen option id; GameShell's grade compares it to the
+// task's answer id. '' means "nothing picked yet" (GameShell needs a non-null value).
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface SpecChoice { id: string; label: React.ReactNode }
+
+/** SpecPicker — pick the right "spec card" (short symbolic/numeric options laid out
+ *  as a compact grid), then LOCK IN. On reveal the correct card glows mint, a wrong
+ *  pick glows coral. */
+export function SpecPicker({
+  P, choices, value, setValue, correct, disabled, reveal, onCommit, commitLabel = 'LOCK IN ✓', prompt,
+}: {
+  P: Palette; choices: SpecChoice[]; value: string; setValue: (id: string) => void
+  correct?: string; disabled?: boolean; reveal?: boolean; onCommit: (id: string) => void
+  commitLabel?: string; prompt?: string
+}) {
+  const cols = choices.length >= 3 ? 2 : 1
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1.2vw, 16px)', width: '100%' }}>
+      {prompt && <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1.1vw, 15px)', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: P.creamSoft }}>{prompt}</div>}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 'clamp(8px, 1vw, 14px)', width: '100%', maxWidth: 'clamp(320px, 44vw, 560px)' }}>
+        {choices.map((c) => {
+          const sel = value === c.id
+          const isRight = reveal && correct === c.id
+          const isWrong = reveal && sel && correct !== c.id
+          const border = isRight ? P.mint : isWrong ? P.coral : sel ? P.gold : P.glassBorder
+          const bg = isRight ? 'rgba(63,167,124,0.18)' : isWrong ? 'rgba(224,72,63,0.16)' : sel ? 'rgba(255,255,255,0.10)' : P.glass
+          return (
+            <button key={c.id} type="button" disabled={disabled} onClick={() => setValue(c.id)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+                minHeight: 'clamp(50px, 6.4vh, 76px)', padding: 'clamp(9px, 1.1vw, 15px) clamp(10px, 1.2vw, 18px)',
+                borderRadius: 12, border: `2px solid ${border}`, background: bg, color: P.cream,
+                fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums',
+                fontSize: 'clamp(17px, 1.95vw, 27px)', fontWeight: 700, lineHeight: 1.2,
+                cursor: disabled ? 'default' : 'pointer',
+                boxShadow: sel && !reveal ? `0 0 0 3px ${P.gold}33` : 'none',
+                transition: 'border-color 140ms, background 140ms',
+              }}>
+              {c.label}
+            </button>
+          )
+        })}
+      </div>
+      <CommitBtn P={P} label={commitLabel} onClick={() => { if (value) onCommit(value) }} disabled={disabled || !value} />
+    </div>
+  )
+}
+
+/** StepPicker — "pick the next correct move" for multi-step equations, systems, and
+ *  proofs. A vertical stack of full-statement cards (distractors should be common
+ *  errors). Same commit model as SpecPicker. */
+export function StepPicker({
+  P, choices, value, setValue, correct, disabled, reveal, onCommit, commitLabel = "THAT'S THE MOVE ✓", prompt,
+}: {
+  P: Palette; choices: SpecChoice[]; value: string; setValue: (id: string) => void
+  correct?: string; disabled?: boolean; reveal?: boolean; onCommit: (id: string) => void
+  commitLabel?: string; prompt?: string
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1.2vw, 16px)', width: '100%' }}>
+      {prompt && <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1.1vw, 15px)', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: P.creamSoft }}>{prompt}</div>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(7px, 0.9vw, 12px)', width: '100%', maxWidth: 'clamp(340px, 48vw, 600px)' }}>
+        {choices.map((c) => {
+          const sel = value === c.id
+          const isRight = reveal && correct === c.id
+          const isWrong = reveal && sel && correct !== c.id
+          const border = isRight ? P.mint : isWrong ? P.coral : sel ? P.gold : P.glassBorder
+          const bg = isRight ? 'rgba(63,167,124,0.16)' : isWrong ? 'rgba(224,72,63,0.14)' : sel ? 'rgba(255,255,255,0.09)' : P.glass
+          return (
+            <button key={c.id} type="button" disabled={disabled} onClick={() => setValue(c.id)}
+              style={{
+                display: 'flex', alignItems: 'center', textAlign: 'left', gap: 10, width: '100%',
+                minHeight: 'clamp(44px, 5.2vh, 60px)', padding: 'clamp(10px, 1.1vw, 15px) clamp(13px, 1.4vw, 20px)',
+                borderRadius: 11, border: `2px solid ${border}`, background: bg, color: P.cream,
+                fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums',
+                fontSize: 'clamp(15px, 1.6vw, 22px)', fontWeight: 700, lineHeight: 1.3,
+                cursor: disabled ? 'default' : 'pointer',
+                transition: 'border-color 140ms, background 140ms',
+              }}>
+              {c.label}
+            </button>
+          )
+        })}
+      </div>
+      <CommitBtn P={P} label={commitLabel} onClick={() => { if (value) onCommit(value) }} disabled={disabled || !value} />
+    </div>
+  )
+}
+
+// ── PartsBuilder — a "build the answer" input (production, not recognition) ────
+// Two integer steppers assemble a live template — e.g. (x + a)(x + b) for factoring,
+// or x = a, b for roots. The student CONSTRUCTS the answer instead of picking it from
+// four. V = {a,b}; the caller's grade compares (order-independent where it wants).
+export interface Parts { a: number; b: number }
+export function PartsBuilder({
+  P, value, setValue, min = -9, max = 9, template, labels = ['first', 'second'],
+  disabled, reveal, onCommit, commitLabel = 'BUILD IT ✓',
+}: {
+  P: Palette; value: Parts; setValue: (v: Parts) => void; min?: number; max?: number
+  template: (a: number, b: number) => React.ReactNode; labels?: [string, string]
+  disabled?: boolean; reveal?: boolean; onCommit: (v: Parts) => void; commitLabel?: string
+}) {
+  const step = (k: 'a' | 'b', dv: number) => {
+    const nv = Math.max(min, Math.min(max, value[k] + dv))
+    setValue({ ...value, [k]: nv })
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(12px, 1.6vw, 20px)', width: '100%' }}>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(26px, 3.6vw, 46px)', fontWeight: 800, color: reveal ? P.mint : P.gold, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55`, letterSpacing: '0.02em', textAlign: 'center' }}>
+        {template(value.a, value.b)}
+      </div>
+      <div style={{ display: 'flex', gap: 'clamp(20px, 3vw, 46px)' }}>
+        {(['a', 'b'] as const).map((k, i) => (
+          <div key={k} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px, 0.8vw, 10px)' }}>
+            <Nudge P={P} label="▲" onClick={() => step(k, +1)} disabled={disabled} />
+            <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(26px, 3vw, 40px)', fontWeight: 800, color: P.cream, minWidth: '1.8em', textAlign: 'center' }}>{value[k] > 0 ? `+${value[k]}` : value[k]}</div>
+            <Nudge P={P} label="▼" onClick={() => step(k, -1)} disabled={disabled} />
+            <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px, 1vw, 13px)', letterSpacing: '0.1em', textTransform: 'uppercase', color: P.creamSoft }}>{labels[i]}</div>
+          </div>
+        ))}
+      </div>
+      <CommitBtn P={P} label={commitLabel} onClick={() => onCommit(value)} disabled={disabled} />
+    </div>
+  )
+}
+
 export { Nudge }
