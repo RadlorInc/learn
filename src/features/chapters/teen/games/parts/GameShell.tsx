@@ -313,7 +313,7 @@ export function Game<V, T extends BaseTask>({
     : undefined
 
   return (
-    <div className="milo-lesson milo-game" style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, color: P.cream, fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
+    <div className="milo-lesson milo-game" style={{ position: 'relative', height: '100dvh', maxHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, color: P.cream, fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
       {/* Sweet & simple backdrop: the palette gradient (on the root) + ONE big, very
           faint themed motif — so nothing in the background competes with the
           interactive objects. (Bespoke painted art can replace this later.) */}
@@ -339,7 +339,7 @@ export function Game<V, T extends BaseTask>({
         </div>
       )}
 
-      <main style={{ position: 'relative', zIndex: 1, flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '8px 16px 20px', boxSizing: 'border-box' }}>
+      <main style={{ position: 'relative', zIndex: 1, flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '8px 16px 20px', boxSizing: 'border-box' }}>
 
         {stage === 'start' && (
           <CenterFill>
@@ -370,18 +370,15 @@ export function Game<V, T extends BaseTask>({
 
         {stage === 'intro' && config.overview && (
           Scene && introScript ? (
-            <>
-              {/* Summary on the chalkboard (top-left / top), illustration in the
-                  middle — read the plan while already seeing what we're solving.
-                  When Milo finishes reading, the baby-step walkthrough starts on its
-                  own (no "Show me how" tap needed). */}
-              <BoardSlot roomy={roomy}>
-                <OverviewBoard P={P} overview={config.overview} onDone={() => setStage('demo')} />
-              </BoardSlot>
-              <CenterFill>
-                <Scene palette={P} task={introScript.task} value={introScript.initial} stepIndex={0} frameCount={1} ended={false} />
-              </CenterFill>
-            </>
+            // The explanation (summary) sits on its own chalkboard on the LEFT and
+            // reads word-by-word; the illustration poses on the right. No baby-step
+            // board yet — the walkthrough hasn't started. When Milo finishes reading,
+            // it rolls into the walkthrough on its own (the explanation STAYS put).
+            <TeachFrame
+              roomy={roomy}
+              explanation={<ExplanationPanel P={P} overview={config.overview} read onDone={() => setStage('demo')} />}
+              illustration={<Scene palette={P} task={introScript.task} value={introScript.initial} stepIndex={0} frameCount={1} ended={false} />}
+            />
           ) : (
             <CenterFill>
               <OverviewCard P={P} overview={config.overview} onDone={() => setStage('demo')} />
@@ -448,6 +445,9 @@ export function Game<V, T extends BaseTask>({
         @keyframes gkStamp { from { transform: rotate(-14deg) scale(2.4); opacity: 0 } to { transform: rotate(-8deg) scale(1); opacity: 1 } }
         .gk-cue { animation: gkCue 320ms cubic-bezier(.2,1.5,.3,1) both; }
         @keyframes gkCue { from { transform: translateY(-10px) scale(.8); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
+        /* Let any chapter's illustrated scene shrink to fit its height-bounded box so
+           the teaching view never scrolls (SVG keeps its aspect ratio). */
+        .teach-illo svg { max-width: 100%; max-height: 100%; }
         @media (prefers-reduced-motion: reduce) { .gk-ticket,.gk-stamp,.gk-cue { animation: none } }
       `}</style>
     </div>
@@ -532,33 +532,49 @@ function TutorialPlayer<V, T extends BaseTask>({
   const windowBoard = cur.board.slice(boardStart)
   const windowWriting = cur.writingIndex < 0 ? -1 : cur.writingIndex - boardStart
 
+  const controls = ended ? (
+    <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <button type="button" onClick={run} style={headerChip(P)}>↺ Watch again</button>
+      <button type="button" onClick={onDone} style={bigBtn(P)}>Let&apos;s try →</button>
+    </div>
+  ) : (
+    // Mid-walkthrough opt-out — quiet, so it never pulls focus from the lesson,
+    // but always there for the kid who doesn't need the rest.
+    <button type="button" onClick={skip} style={{ ...headerChip(P), opacity: 0.72, fontSize: 'clamp(11px, 1.05vw, 15px)' }}>I&apos;ve got it →</button>
+  )
+
+  // The baby-step chalkboard — its own board, distinct from the explanation.
+  const babyBoard = (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+      <Blackboard P={P} lines={windowBoard} writingIndex={windowWriting} />
+      {cur.art && <ArtProp src={cur.art} />}
+    </div>
+  )
+
+  // Illustrated chapters (all 12–18 games): keep the explanation on the LEFT for the
+  // whole walkthrough, the baby-step board ABOVE the illustration on the right. On
+  // mobile it stacks explanation → baby-step board → illustration, top to bottom.
+  if (config.TutorialScene) {
+    return (
+      <TeachFrame
+        roomy={roomy}
+        explanation={config.overview ? <ExplanationPanel P={P} overview={config.overview} read={false} onDone={() => {}} /> : undefined}
+        board={babyBoard}
+        illustration={<config.TutorialScene palette={P} task={cur.task} value={cur.value} stepIndex={Math.min(i, frames.length - 1)} frameCount={frames.length} ended={ended} />}
+        controls={controls}
+      />
+    )
+  }
+
+  // Legacy fallback (chapters with no illustrated scene): board on top, instrument
+  // below — the original one-column walkthrough.
   return (
     <>
-      <BoardSlot roomy={roomy}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-          <Blackboard P={P} lines={windowBoard} writingIndex={windowWriting} />
-          {cur.art && <ArtProp src={cur.art} />}
-        </div>
-      </BoardSlot>
+      <BoardSlot roomy={roomy}>{babyBoard}</BoardSlot>
       <CenterFill>
-        {config.TutorialScene ? (
-          <config.TutorialScene palette={P} task={cur.task} value={cur.value} stepIndex={Math.min(i, frames.length - 1)} frameCount={frames.length} ended={ended} />
-        ) : (
-          <>
-            <config.Instrument task={cur.task} value={cur.value} setValue={() => {}} disabled reveal={false} palette={P} onCommit={() => {}} />
-            {!ended && <HandCue P={P} kind={cur.hand} />}
-          </>
-        )}
-        {ended ? (
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button type="button" onClick={run} style={headerChip(P)}>↺ Watch again</button>
-            <button type="button" onClick={onDone} style={bigBtn(P)}>Let&apos;s try →</button>
-          </div>
-        ) : (
-          // Mid-walkthrough opt-out — quiet, so it never pulls focus from the
-          // lesson, but always there for the kid who doesn't need the rest.
-          <button type="button" onClick={skip} style={{ ...headerChip(P), opacity: 0.72, fontSize: 'clamp(11px, 1.05vw, 15px)' }}>I&apos;ve got it →</button>
-        )}
+        <config.Instrument task={cur.task} value={cur.value} setValue={() => {}} disabled reveal={false} palette={P} onCommit={() => {}} />
+        {!ended && <HandCue P={P} kind={cur.hand} />}
+        {controls}
       </CenterFill>
     </>
   )
@@ -629,14 +645,17 @@ function OverviewCard({ P, overview, onDone }: {
   )
 }
 
-/** The overview SUMMARY rendered ON the chalkboard (top-left / top slot) — a slate
- *  panel matching the walkthrough board, with the problem headline + the word-by-word
- *  read-along. Shown alongside the illustration (in the middle) during the intro, so
- *  the child reads the plan while already seeing what they're about to solve. The
- *  "Show me how →" button lives with the illustration in the centre column. */
-function OverviewBoard({ P, overview, onDone }: {
+/** The overview SUMMARY (explanation) rendered on its OWN chalkboard — a slate panel
+ *  matching the baby-step board. It is PERSISTENT through the whole teaching phase:
+ *  it sits on the left (or on top, on mobile) and stays put while the walkthrough
+ *  runs on the separate baby-step board. When `read` is true (the intro), Milo speaks
+ *  it as a word-by-word read-along and calls `onDone` when finished (which rolls into
+ *  the walkthrough); when `read` is false (during the walkthrough) it just shows the
+ *  plan, silent and unhighlighted, so the two chalkboards don't talk over each other. */
+function ExplanationPanel({ P, overview, read, onDone }: {
   P: Palette
   overview: NonNullable<GameConfig<unknown, BaseTask>['overview']>
+  read: boolean
   onDone: () => void
 }) {
   const words = useMemo(() => splitWords(overview.say), [overview.say])
@@ -648,22 +667,23 @@ function OverviewBoard({ P, overview, onDone }: {
   doneRef.current = onDone
   useEffect(() => {
     setHi(-1)
+    if (!read) return
     const cancel = speakWithHighlight(overview.say, { onWord: setHi, onDone: () => doneRef.current() })
     return () => { cancel(); setHi(-1) }
-  }, [overview.say])
+  }, [overview.say, read])
   return (
     <div style={{
-      width: '100%', boxSizing: 'border-box',
+      width: '100%', maxHeight: '100%', boxSizing: 'border-box', overflow: 'hidden',
       background: 'linear-gradient(160deg, #21473c, #16302a)',
       border: '4px solid #7a5230', borderRadius: 12,
       boxShadow: 'inset 0 0 26px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4)',
       padding: 'clamp(12px, 1.6vw, 20px) clamp(14px, 1.8vw, 24px)',
-      display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.2vh, 14px)',
+      display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1.1vh, 14px)',
     }}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1.05vw, 14px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold }}>Here&apos;s the plan</div>
       <p style={{ margin: 0, fontSize: 'clamp(15px, 1.55vw, 21px)', fontWeight: 800, lineHeight: 1.35, color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
       {/* Read-along: one span per word; the spoken word lights up so the kid can follow. */}
-      <p aria-label={overview.say} style={{ margin: 0, fontSize: 'clamp(14px, 1.4vw, 19px)', lineHeight: 1.65, color: '#dbe9d6' }}>
+      <p aria-label={overview.say} style={{ margin: 0, fontSize: 'clamp(14px, 1.4vw, 19px)', lineHeight: 1.6, color: '#dbe9d6' }}>
         {words.map((w, i) => {
           const lit = i === hi && /[A-Za-z0-9]/.test(w.word)
           return (
@@ -716,4 +736,53 @@ function BoardSlot({ roomy, children }: { roomy: boolean; children: React.ReactN
  *  directly below. Fills the space left of / beneath the board. */
 function CenterFill({ children }: { children: React.ReactNode }) {
   return <div style={{ flex: 1, width: '100%', maxWidth: 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(10px, 1vw, 16px)', margin: '0 auto', minHeight: 0, padding: '2px 0 6px', boxSizing: 'border-box' }}>{children}</div>
+}
+
+/** The three-panel TEACHING layout (intro + walkthrough) — keeps the explanation
+ *  visible the whole time and gives the baby steps their own board:
+ *   • roomy (laptop/desktop): explanation on the LEFT, and on the right the
+ *     baby-step chalkboard ABOVE the illustration (controls under it).
+ *   • mobile: a single column — explanation → baby-step board → illustration →
+ *     controls, top to bottom (both boards come BEFORE the illustration).
+ *  The whole frame is height-bounded (`minHeight:0` + `overflow:hidden` down the
+ *  flex chain) so the illustration shrinks to fit and the view never scrolls; the
+ *  `.teach-illo svg` cap lets any chapter's scene scale down inside its box. */
+function TeachFrame({ roomy, explanation, board, illustration, controls }: {
+  roomy: boolean
+  explanation?: React.ReactNode
+  board?: React.ReactNode
+  illustration: React.ReactNode
+  controls?: React.ReactNode
+}) {
+  const illo = (
+    <div className="teach-illo" style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      {illustration}
+    </div>
+  )
+  const rightCol = (
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: 'clamp(8px, 1.4vh, 18px)', overflow: 'hidden' }}>
+      {board && <div style={{ width: '100%', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>{board}</div>}
+      {illo}
+      {controls && <div style={{ flexShrink: 0 }}>{controls}</div>}
+    </div>
+  )
+
+  if (roomy && explanation) {
+    return (
+      <div style={{ flex: 1, minHeight: 0, width: '100%', maxWidth: 'clamp(880px, 94vw, 1260px)', margin: '0 auto', display: 'flex', gap: 'clamp(16px, 2.2vw, 36px)', alignItems: 'stretch', overflow: 'hidden' }}>
+        <div style={{ width: 'clamp(270px, 30vw, 400px)', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: 0, overflow: 'hidden' }}>{explanation}</div>
+        {rightCol}
+      </div>
+    )
+  }
+
+  // mobile / no-explanation → single column, explanation + board BEFORE the illustration
+  return (
+    <div style={{ flex: 1, minHeight: 0, width: '100%', maxWidth: 540, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px, 1.4vh, 16px)', overflow: 'hidden' }}>
+      {explanation && <div style={{ width: '100%', flexShrink: 0 }}>{explanation}</div>}
+      {board && <div style={{ width: '100%', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>{board}</div>}
+      {illo}
+      {controls && <div style={{ flexShrink: 0 }}>{controls}</div>}
+    </div>
+  )
 }
