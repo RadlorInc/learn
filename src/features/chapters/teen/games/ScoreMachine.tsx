@@ -14,6 +14,8 @@
  * works 2 + 3 × 4 in stages on the slider (item cost first, then the fee), then a
  * GUIDED total (config.guided) with Milo coaching (not scored), then the scored loop.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, SlideValue, pick, glideNumber } from './parts/gameKit'
 
@@ -90,7 +92,9 @@ function makeTask(d: 1 | 2 | 3): Task {
 //   • it COLLAPSES to its value 12 — the sub-expression shrinks/fades into "$12";
 //   • the "+ 2" fee combines in, and the TOTAL glides up to $14 and glows mint.
 // The stage tracks `value` (0 → 12 → 14) so the running total climbs in step with
-// the narration, exactly like the slider does in play.
+// the narration, exactly like the slider does in play. The running TOTAL now rides
+// a Framer-Motion spring (continuous 60fps count-up, overdamped so it never
+// overshoots past the true total); reduced-motion snaps.
 const EB_GLIDE = 'all 760ms cubic-bezier(.45,.05,.25,1)'
 const ART = '/assets/teen/objects'
 
@@ -109,6 +113,18 @@ function EventBudgetScene({ palette: P, value, stepIndex, frameCount, ended }: {
   // line-items tick in as the sum is worked out
   const snackShown = collapsed
   const feeShown = combining || done
+
+  // ── Framer Motion: the running TOTAL climbs on a spring and the number ticks
+  //    with it (0 → 12 → 14). Overdamped (damping ≫ 2√(k·m)) so it never overshoots
+  //    past the true total. Reduced-motion → snaps to the final value. ──
+  const clamped = Math.max(0, Math.min(14, value))
+  const reduce = useReducedMotion()
+  const tv = useMotionValue(clamped)
+  useEffect(() => {
+    const controls = animate(tv, clamped, reduce ? { duration: 0 } : { type: 'spring', stiffness: 90, damping: 30, mass: 1 })
+    return () => controls.stop()
+  }, [clamped, reduce, tv])
+  const totalText = useTransform(tv, (x) => `$${Math.round(x)}`)
 
   // shared cell style for a boxed number on the receipt
   const cell = (bg: string, fg: string): React.CSSProperties => ({
@@ -178,9 +194,9 @@ function EventBudgetScene({ palette: P, value, stepIndex, frameCount, ended }: {
         {/* the running TOTAL — glides 0 → 12 → 14, glows mint when settled */}
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `2px dashed ${P.mutedOnPaper}`, paddingTop: 8 }}>
           <span style={{ color: P.mutedOnPaper, fontWeight: 800, letterSpacing: 1, fontSize: 'clamp(10px,1.6vw,13px)' }}>TOTAL</span>
-          <span style={{ ['--eb-glow' as string]: P.mint, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(24px,5vw,38px)', color: totalColor, transition: EB_GLIDE, animation: done ? 'ebGlow 1.4s ease-in-out infinite' : undefined }}>
-            ${Math.max(0, Math.min(14, Math.round(value)))}
-          </span>
+          <motion.div style={{ ['--eb-glow' as string]: P.mint, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(24px,5vw,38px)', color: totalColor, transition: 'color 500ms', animation: done ? 'ebGlow 1.4s ease-in-out infinite' : undefined }}>
+            {totalText}
+          </motion.div>
         </div>
       </div>
 

@@ -12,6 +12,8 @@
  * builds 3² layer-by-layer, then a GUIDED order (config.guided) lets the kid build
  * 2³ with Milo coaching (not scored), then the scored loop.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, CrankGear, SlideValue, pick, glideNumber } from './parts/gameKit'
 
@@ -95,9 +97,41 @@ const GUIDED_TASK: Task = {
 // patch is filled and labelled n². For a CUBE (n³) a small stack of blocks grows.
 // For a ROOT it shows a filled square and reveals the side length. Driven purely
 // by the walkthrough's per-step `value` (how many tiles/blocks are laid so far)
-// plus the step index. Only CSS transitions — Safari-safe, no JS animation loop.
-const TILE_GLIDE = 'opacity 420ms ease, transform 480ms cubic-bezier(.34,1.4,.5,1)'
+// plus the step index. A single Framer-Motion value (`pv` = tiles placed) glides on
+// a spring, and each cell derives its own fade-in from where that sweeping front has
+// reached — so the patch fills continuously at 60fps instead of snapping row-by-row.
 const ART = '/assets/teen/objects'
+
+// One tile/block. As the shared `pv` (placed count) sweeps past this cell's index it
+// crossfades from empty slot → filled unit and springs to full scale. Every animated
+// prop is a MotionValue, so the motion is continuous (no per-step CSS jump). Under
+// reduced motion `pv` snaps, so `fill` snaps 0→1 too — nothing is ever hidden.
+function SmoothTile({ pv, idx, size, kind, filled, P }: {
+  pv: MotionValue<number>; idx: number; size: string; kind: 'tile' | 'block'; filled: boolean; P: Palette
+}) {
+  const fill = useTransform(pv, [idx, idx + 1], [0, 1])          // 0 → 1 as the front passes
+  const scale = useTransform(fill, [0, 1], [0.82, 1])
+  const emptyOpacity = useTransform(fill, [0, 1], [0.55, 0])
+  const radius = kind === 'tile' ? 6 : 5
+  return (
+    <motion.div style={{ position: 'relative', width: size, height: size, borderRadius: radius, scale }}>
+      <motion.div style={{ position: 'absolute', inset: 0, borderRadius: radius, background: 'rgba(255,240,230,0.10)', border: `1.5px solid ${P.glassBorder}`, opacity: emptyOpacity }} />
+      {kind === 'tile' ? (
+        <motion.img src={`${ART}/tile_ceramic.png`} alt="" style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: radius, opacity: fill,
+          filter: filled ? `drop-shadow(0 0 6px ${P.mint}) saturate(0.9)` : 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
+        }} />
+      ) : (
+        <motion.div style={{
+          position: 'absolute', inset: 0, borderRadius: radius, opacity: fill,
+          background: filled ? P.mint : P.gold, border: `1.5px solid ${P.goldDeep}`,
+          boxShadow: `inset 0 -3px 0 ${P.goldDeep}, 0 2px 6px rgba(0,0,0,0.4)`,
+          transition: 'background 300ms, border-color 300ms',
+        }} />
+      )}
+    </motion.div>
+  )
+}
 
 function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
   palette: Palette; task: Task; value: number; stepIndex: number; frameCount: number; ended: boolean
@@ -118,16 +152,24 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
   const label = isRoot ? `√${total}` : `${base}${sup(exp)}`
   const answerText = isRoot ? `${task.answer}` : `${total}`
 
-  const tileColor = done || resultPhase ? P.mint : P.gold
   const boxW = 'clamp(232px, 42vw, 344px)'
   const boxH = 'clamp(300px, 46vh, 440px)'
 
-  // ── CUBE: a small isometric-ish growing stack (base layers of base²) ──
+  // ── Framer Motion: `pv` = tiles/blocks placed, glides on a spring (continuous
+  //    60fps, not a per-step CSS jump). Each cell reads the sweeping front off it.
+  //    Overdamped so it never overshoots past `total`; reduced-motion → snaps. ──
+  const reduce = useReducedMotion()
+  const pv = useMotionValue(placed)
+  useEffect(() => {
+    const controls = animate(pv, placed, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => controls.stop()
+  }, [placed, reduce, pv])
+  const countText = useTransform(pv, (p) => `${Math.max(0, Math.round(p))}`)
+
+  // ── CUBE: a small growing stack (base layers of base²) ──
   if (isCube) {
     const layers = base                                    // e.g. 2³ → 2 layers
     const perLayer = base * base
-    const filledLayers = Math.min(layers, Math.floor(placed / perLayer))
-    const partialInLayer = placed - filledLayers * perLayer
     return (
       <div style={sceneBox(P, boxW, boxH)}>
         <style>{TILE_KEYFRAMES}</style>
@@ -137,18 +179,13 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
           {label}{resultPhase ? ` = ${answerText}` : ''}
         </div>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column-reverse', alignItems: 'center', justifyContent: 'center', gap: 'clamp(4px,0.9vh,8px)', paddingTop: '10%' }}>
-          {Array.from({ length: layers }).map((_, li) => {
-            const layerActive = li < filledLayers
-            const layerPartial = li === filledLayers
-            return (
-              <div key={li} style={{ display: 'grid', gridTemplateColumns: `repeat(${base}, 1fr)`, gap: 'clamp(3px,0.7vw,6px)', opacity: layerActive || (layerPartial && partialInLayer > 0) ? 1 : 0.16, transform: layerActive ? 'translateY(0)' : 'translateY(-6px)', transition: TILE_GLIDE }}>
-                {Array.from({ length: perLayer }).map((_, ci) => {
-                  const on = layerActive || (layerPartial && ci < partialInLayer)
-                  return <div key={ci} style={{ width: 'clamp(20px,3.8vw,32px)', height: 'clamp(20px,3.8vw,32px)', borderRadius: 5, background: on ? tileColor : 'rgba(255,240,230,0.10)', border: `1.5px solid ${on ? P.goldDeep : P.glassBorder}`, boxShadow: on ? `inset 0 -3px 0 ${P.goldDeep}, 0 2px 6px rgba(0,0,0,0.4)` : 'none', transition: 'background 300ms, border-color 300ms' }} />
-                })}
-              </div>
-            )
-          })}
+          {Array.from({ length: layers }).map((_, li) => (
+            <div key={li} style={{ display: 'grid', gridTemplateColumns: `repeat(${base}, 1fr)`, gap: 'clamp(3px,0.7vw,6px)' }}>
+              {Array.from({ length: perLayer }).map((_, ci) => (
+                <SmoothTile key={ci} pv={pv} idx={li * perLayer + ci} size={'clamp(20px,3.8vw,32px)'} kind="block" filled={done || resultPhase} P={P} />
+              ))}
+            </div>
+          ))}
         </div>
         {(resultPhase || done) && (
           <div style={{ position: 'absolute', bottom: '7%', left: '50%', transform: 'translateX(-50%)', padding: '4px 16px', borderRadius: 999, background: P.glass, border: `1px solid ${P.mint}`, color: P.mint, fontWeight: 800, fontSize: 'clamp(12px,1.6vw,16px)', animation: 'tfPop 300ms ease' }}>{total} blocks</div>
@@ -158,6 +195,7 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
   }
 
   // ── SQUARE (n²) and ROOT — an n×n tile grid that fills row by row ──
+  const cellSize = `clamp(${side > 6 ? 16 : 22}px, ${side > 6 ? 4 : 6}vw, ${side > 6 ? 30 : 44}px)`
   return (
     <div style={sceneBox(P, boxW, boxH)}>
       <style>{TILE_KEYFRAMES}</style>
@@ -173,32 +211,9 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
       <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', display: 'flex', flexDirection: 'column', gap: 'clamp(3px,0.7vw,6px)', padding: 'clamp(6px,1.4vw,12px)', borderRadius: 12, background: 'rgba(0,0,0,0.24)', border: `1.5px solid ${P.glassBorder}`, boxShadow: (resultPhase || done) ? `0 0 22px ${P.mint}66` : 'none' }}>
         {Array.from({ length: side }).map((_, r) => (
           <div key={r} style={{ display: 'flex', gap: 'clamp(3px,0.7vw,6px)' }}>
-            {Array.from({ length: side }).map((_, c) => {
-              const idx = r * side + c
-              const on = idx < placed
-              const cellSize = `clamp(${side > 6 ? 16 : 22}px, ${side > 6 ? 4 : 6}vw, ${side > 6 ? 30 : 44}px)`
-              return (
-                <div key={c} style={{
-                  position: 'relative',
-                  width: cellSize,
-                  height: cellSize,
-                  borderRadius: 6,
-                  background: on ? 'transparent' : 'rgba(255,240,230,0.09)',
-                  border: on ? 'none' : `1.5px solid ${P.glassBorder}`,
-                  opacity: on ? 1 : 0.5,
-                  transform: on ? 'scale(1)' : 'scale(0.82)',
-                  transition: TILE_GLIDE,
-                }}>
-                  {on && (
-                    <img src={`${ART}/tile_ceramic.png`} alt="" style={{
-                      position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                      borderRadius: 6,
-                      filter: done || resultPhase ? `drop-shadow(0 0 6px ${P.mint}) saturate(0.9)` : 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
-                    }} />
-                  )}
-                </div>
-              )
-            })}
+            {Array.from({ length: side }).map((_, c) => (
+              <SmoothTile key={c} pv={pv} idx={r * side + c} size={cellSize} kind="tile" filled={done || resultPhase} P={P} />
+            ))}
           </div>
         ))}
       </div>
@@ -210,10 +225,10 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
         </div>
       </div>
 
-      {/* running tile counter through the build */}
+      {/* running tile counter through the build — ticks with the sweeping front */}
       {!isRoot && !resultPhase && placed > 0 && (
         <div style={{ position: 'absolute', bottom: '8%', left: '50%', transform: 'translateX(-50%)', padding: '3px 14px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, color: done ? P.mint : P.gold, fontWeight: 800, fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px,1.4vw,15px)', animation: 'tfPop 240ms ease' }}>
-          {placed} {placed === 1 ? 'tile' : 'tiles'}
+          <motion.span>{countText}</motion.span> {placed === 1 ? 'tile' : 'tiles'}
         </div>
       )}
 

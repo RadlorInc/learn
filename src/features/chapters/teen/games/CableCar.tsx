@@ -12,9 +12,10 @@
  * then a GUIDED order (config.guided) lets the kid run an easy cable with Milo
  * coaching (not scored), then the scored loop.
  */
+import { useEffect, type ReactElement } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, LineSetter, type Line, pick } from './parts/gameKit'
-import type { ReactElement } from 'react'
 
 const P: Palette = {
   nightTop: '#0d2230', nightBot: '#123444',
@@ -84,12 +85,12 @@ const GUIDED_TASK: Task = {
 // the walkthrough's per-step `value` (the line {m,b}) + step index, it acts out
 // y = 2x + 1 like a cartoon explainer: first the water fills to the START level b
 // (the intercept, shown in blue), then for each "minute" it rises by m (the rate,
-// shown stacked in cyan on top of the base). The level rises via a CSS height
-// transition (Safari-safe). Labels pop in. No JS animation loops.
+// shown stacked in cyan on top of the base). The level (and the litre readout)
+// rise CONTINUOUSLY on a Framer-Motion spring (60fps, overdamped so the number
+// never overshoots the answer). Labels pop in. No CSS layout transitions.
 const ART = '/assets/teen/objects'
 const TANK_MAX = 6                                   // top of the tank = 6 litres
 const pctForLevel = (l: number) => (Math.max(0, Math.min(TANK_MAX, l)) / TANK_MAX) * 100
-const FILL = 'height 780ms cubic-bezier(.4,.05,.2,1), background 500ms'
 
 function WaterTankScene({ palette: P, value, stepIndex, frameCount, ended }: {
   palette: Palette; value: Line; stepIndex: number; frameCount: number; ended: boolean
@@ -109,10 +110,29 @@ function WaterTankScene({ palette: P, value, stepIndex, frameCount, ended }: {
   const intro = stepIndex === 0
   const filling = rateSet && minutes >= 1 && !resultPhase
 
-  const basePct = pctForLevel(base)
-  const totalPct = pctForLevel(level)
-  const addedPct = totalPct - basePct
+  const addedPct = pctForLevel(level) - pctForLevel(base)
   const tapping = (hasBase && base > 0 && minutes === 0) || (filling)
+
+  // ── Framer Motion: the base level and the total level each ride a spring, so
+  //    the water and its litre readout rise CONTINUOUSLY (60fps) instead of a
+  //    per-step CSS jump. Overdamped → the number never overshoots the answer.
+  //    Reduced-motion → snaps straight to the final level. ──
+  const reduce = useReducedMotion()
+  const baseMv = useMotionValue(base)
+  const levelMv = useMotionValue(level)
+  useEffect(() => {
+    const c = animate(baseMv, base, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => c.stop()
+  }, [base, reduce, baseMv])
+  useEffect(() => {
+    const c = animate(levelMv, level, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => c.stop()
+  }, [level, reduce, levelMv])
+  const baseH = useTransform(baseMv, (x) => `${pctForLevel(x)}%`)
+  const addedH = useTransform([baseMv, levelMv], ([b2, l2]: number[]) => `${Math.max(0, pctForLevel(l2) - pctForLevel(b2))}%`)
+  const totalH = useTransform(levelMv, (x) => `${pctForLevel(x)}%`)
+  const readNum = useTransform(levelMv, (x) => `${Math.round(x)}`)
+  const readBottom = useTransform(levelMv, (x) => `calc(9% + ${pctForLevel(x) * 0.71}%)`)
 
   return (
     <div style={{ position: 'relative', width: 'clamp(232px, 42vw, 344px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: '#0d2233', border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
@@ -140,28 +160,28 @@ function WaterTankScene({ palette: P, value, stepIndex, frameCount, ended }: {
         ))}
 
         {/* base water (the START level b — the intercept), blue */}
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${basePct}%`, transition: FILL, background: `linear-gradient(${P.goldDeep}, ${P.gold})`, opacity: 0.9 }}>
+        <motion.div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: baseH, background: `linear-gradient(${P.goldDeep}, ${P.gold})`, opacity: 0.9 }}>
           {base > 0 && <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 3, background: P.cream, opacity: 0.5, animation: filling ? undefined : 'wtRipple 2.4s ease-in-out infinite' }} />}
-        </div>
+        </motion.div>
 
         {/* added water (the fill-rate stack m·x), lighter cyan, sits on the base */}
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: `${basePct}%`, height: `${Math.max(0, addedPct)}%`, transition: FILL, background: `linear-gradient(${P.mint}, ${P.gold})`, opacity: addedPct > 0 ? 0.72 : 0 }}>
+        <motion.div style={{ position: 'absolute', left: 0, right: 0, bottom: baseH, height: addedH, background: `linear-gradient(${P.mint}, ${P.gold})`, opacity: addedPct > 0 ? 0.72 : 0 }}>
           {addedPct > 0 && <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 3, background: P.cream, opacity: 0.6, animation: 'wtRipple 2.4s ease-in-out infinite' }} />}
-        </div>
+        </motion.div>
 
         {/* result glow ring at the final level */}
         {resultPhase && (
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${totalPct}%`, transition: FILL, borderRadius: '0 0 10px 10px', border: `2px solid ${P.mint}`, animation: 'wtGlow 1.5s ease-in-out infinite', pointerEvents: 'none' }} />
+          <motion.div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: totalH, borderRadius: '0 0 10px 10px', border: `2px solid ${P.mint}`, animation: 'wtGlow 1.5s ease-in-out infinite', pointerEvents: 'none' }} />
         )}
       </div>
 
       {/* illustrated glass vessel — overlays the tank so the water shows through */}
       <img src={`${ART}/tank_glass_vessel.png`} alt="" style={{ position: 'absolute', top: '20%', bottom: '9%', left: '30%', width: '40%', objectFit: 'fill', zIndex: 2, pointerEvents: 'none', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.4))' }} />
 
-      {/* running level readout — big number by the water line */}
-      <div style={{ position: 'absolute', right: '10%', bottom: `calc(9% + ${totalPct * 0.71}%)`, transform: 'translateY(50%)', transition: 'bottom 780ms cubic-bezier(.4,.05,.2,1)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(26px,4.6vw,40px)', fontWeight: 800, color: resultPhase ? P.mint : level > 0 ? P.gold : P.mutedOnPaper, whiteSpace: 'nowrap', zIndex: 3 }}>
-        {level}<span style={{ fontSize: '0.42em', fontWeight: 700, color: P.mutedOnPaper }}> L</span>
-      </div>
+      {/* running level readout — big number by the water line, ticks as it fills */}
+      <motion.div style={{ position: 'absolute', right: '10%', bottom: readBottom, y: '50%', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(26px,4.6vw,40px)', fontWeight: 800, color: resultPhase ? P.mint : level > 0 ? P.gold : P.mutedOnPaper, whiteSpace: 'nowrap', zIndex: 3 }}>
+        <motion.span>{readNum}</motion.span><span style={{ fontSize: '0.42em', fontWeight: 700, color: P.mutedOnPaper }}> L</span>
+      </motion.div>
 
       {/* intro: the two dials of a tank */}
       {intro && (

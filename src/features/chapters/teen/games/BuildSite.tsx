@@ -11,6 +11,8 @@
  * (config.guided) lets the kid measure a 3×2 floor with Milo coaching (not scored),
  * then the scored loop.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, SlideValue, pick, glideNumber } from './parts/gameKit'
 
@@ -107,8 +109,47 @@ const GUIDED_TASK: Task = {
 // faint code-drawn placeholder. The one tile image is reused across all 24 cells.
 // Driven purely by the walkthrough's per-step `value` + step index. No JS loops.
 const ROOM_W = 6, ROOM_H = 4, ROOM_TILES = ROOM_W * ROOM_H
-const TILE_POP = 'opacity 420ms ease, transform 420ms cubic-bezier(.34,1.4,.5,1), background 500ms, box-shadow 500ms'
 const ART = '/assets/teen/objects'
+const TILE_SPRING = { type: 'spring' as const, stiffness: 120, damping: 24, mass: 0.9 }
+
+// One floor tile. Its reveal (opacity + scale) is driven continuously off the
+// SHARED laid-tiles motion value: as the count springs up and sweeps past this
+// tile's index, it fades + pops in — so a whole row cascades in smoothly instead
+// of snapping. The discrete dressing (real-tile image, fresh-row wash, mint glow)
+// stays keyed to the settled `laid` count / phase.
+function Tile({ index, lv, laid, resultPhase, counting, rowsDone, P, reduce }: {
+  index: number; lv: MotionValue<number>; laid: number; resultPhase: boolean
+  counting: boolean; rowsDone: number; P: Palette; reduce: boolean
+}) {
+  const row = Math.floor(index / ROOM_W)
+  const shown = index < laid
+  const inFreshRow = counting && shown && row === rowsDone - 1
+  const t = useTransform(lv, [index, index + 1], [0, 1], { clamp: true })
+  const mOpacity = useTransform(t, (x) => 0.12 + 0.88 * x)
+  const mScale = useTransform(t, (x) => 0.6 + 0.4 * x)
+  return (
+    <motion.div style={{
+      position: 'relative',
+      borderRadius: 3,
+      overflow: 'hidden',
+      opacity: reduce ? (shown ? 1 : 0.12) : mOpacity,
+      scale: reduce ? (shown ? 1 : 0.6) : mScale,
+      background: shown ? 'transparent' : 'rgba(255,244,232,0.05)',
+      border: `1px solid ${shown ? 'rgba(0,0,0,0.28)' : P.glassBorder}`,
+      boxShadow: resultPhase && shown ? `0 0 8px ${P.mint}88` : 'none',
+      transition: 'background 500ms, box-shadow 500ms, border-color 500ms',
+    }}>
+      {shown && (
+        <>
+          {/* real terracotta floor tile fills the cell */}
+          <img src={`${ART}/room_floor_tile.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          {/* fresh-row highlight (warm wash) while counting; mint glow at the result */}
+          <div style={{ position: 'absolute', inset: 0, transition: 'background 500ms, box-shadow 500ms', background: resultPhase ? `${P.mint}55` : inFreshRow ? `${P.gold}44` : 'transparent', boxShadow: resultPhase ? `inset 0 0 6px ${P.mint}` : 'none' }} />
+        </>
+      )}
+    </motion.div>
+  )
+}
 
 function RoomRenoScene({ palette: P, value, stepIndex, frameCount, ended }: {
   palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
@@ -120,6 +161,18 @@ function RoomRenoScene({ palette: P, value, stepIndex, frameCount, ended }: {
   const showDims = stepIndex >= 3                                     // once the 6×4 is stated
   const counting = stepIndex >= 6 && !resultPhase                     // laying tiles row by row
 
+  // ── Framer Motion: one shared spring drives the tiles-laid count. Tiles reveal
+  //    off it (Tile subcomponent) and the running count ticks with it, gliding
+  //    continuously (60fps) instead of jumping per step. Overdamped + clamped so
+  //    the counter never overshoots past 24. Reduced-motion → snaps. ──
+  const reduce = useReducedMotion() ?? false
+  const lv = useMotionValue(laid)
+  useEffect(() => {
+    const controls = animate(lv, laid, reduce ? { duration: 0 } : TILE_SPRING)
+    return () => controls.stop()
+  }, [laid, reduce, lv])
+  const laidText = useTransform(lv, (x) => `${Math.max(0, Math.min(ROOM_TILES, Math.round(x)))}`)
+
   return (
     <div style={{ position: 'relative', width: 'clamp(232px, 44vw, 360px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: P.nightBot, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '18px 14px' }}>
       <style>{'@keyframes rrPulse{0%,100%{opacity:.55}50%{opacity:1}}@keyframes rrPop{0%{opacity:0;transform:translateX(-50%) scale(.7)}100%{opacity:1;transform:translateX(-50%) scale(1)}}'}</style>
@@ -130,7 +183,7 @@ function RoomRenoScene({ palette: P, value, stepIndex, frameCount, ended }: {
 
       {/* header — the job, then the running count */}
       <div style={{ position: 'relative', zIndex: 2, fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px,1.3vw,14px)', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: resultPhase ? P.mint : P.gold, marginBottom: 10, transition: 'color 400ms', textAlign: 'center' }}>
-        {intro ? 'Room Reno · tile the floor' : resultPhase ? `6 × 4 = ${ROOM_TILES} m²` : counting ? `laid: ${laid} tile${laid === 1 ? '' : 's'}` : 'the floor: 6 × 4'}
+        {intro ? 'Room Reno · tile the floor' : resultPhase ? `6 × 4 = ${ROOM_TILES} m²` : counting ? <>laid: <motion.span>{laidText}</motion.span> tiles</> : 'the floor: 6 × 4'}
       </div>
 
       {/* the floor plan: a bordered room with a 6×4 tile grid */}
@@ -146,34 +199,9 @@ function RoomRenoScene({ palette: P, value, stepIndex, frameCount, ended }: {
 
         {/* room outline + tile grid */}
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${ROOM_W}, 1fr)`, gridTemplateRows: `repeat(${ROOM_H}, 1fr)`, gap: 'clamp(2px,0.5vw,4px)', width: 'clamp(180px,32vw,264px)', height: 'clamp(120px,22vw,176px)', padding: 'clamp(3px,0.7vw,6px)', borderRadius: 8, background: 'rgba(0,0,0,0.28)', border: `2px solid ${resultPhase ? P.mint : P.glassBorder}`, boxShadow: resultPhase ? `0 0 20px ${P.mint}66` : 'none', transition: 'border-color 500ms, box-shadow 500ms' }}>
-          {Array.from({ length: ROOM_TILES }).map((_, i) => {
-            const row = Math.floor(i / ROOM_W)       // 0..3 (top row laid first)
-            const shown = i < laid                    // laid cell → real tile image
-            const inFreshRow = counting && shown && row === rowsDone - 1
-            return (
-              <div key={i} style={{
-                position: 'relative',
-                borderRadius: 3,
-                overflow: 'hidden',
-                transition: TILE_POP,
-                transitionDelay: shown ? `${(i % ROOM_W) * 55}ms` : '0ms',
-                opacity: shown ? 1 : 0.12,
-                transform: shown ? 'scale(1)' : 'scale(0.6)',
-                background: shown ? 'transparent' : 'rgba(255,244,232,0.05)',
-                border: `1px solid ${shown ? 'rgba(0,0,0,0.28)' : P.glassBorder}`,
-                boxShadow: resultPhase && shown ? `0 0 8px ${P.mint}88` : 'none',
-              }}>
-                {shown && (
-                  <>
-                    {/* real terracotta floor tile fills the cell */}
-                    <img src={`${ART}/room_floor_tile.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    {/* fresh-row highlight (warm wash) while counting; mint glow at the result */}
-                    <div style={{ position: 'absolute', inset: 0, transition: 'background 500ms, box-shadow 500ms', background: resultPhase ? `${P.mint}55` : inFreshRow ? `${P.gold}44` : 'transparent', boxShadow: resultPhase ? `inset 0 0 6px ${P.mint}` : 'none' }} />
-                  </>
-                )}
-              </div>
-            )
-          })}
+          {Array.from({ length: ROOM_TILES }).map((_, i) => (
+            <Tile key={i} index={i} lv={lv} laid={laid} resultPhase={resultPhase} counting={counting} rowsDone={rowsDone} P={P} reduce={reduce} />
+          ))}
         </div>
       </div>
 

@@ -12,6 +12,8 @@
  * (config.guided) lets the kid set a below-zero balance with Milo coaching (not
  * scored), then the scored loop.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, VThermo, pick, signed, glideNumber } from './parts/gameKit'
 
@@ -115,8 +117,6 @@ const GUIDED_TASK: Task = {
 const TOP_BAL = 5, BOT_BAL = -5
 const BAL_MARKS = [5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5]
 const balPct = (n: number) => ((TOP_BAL - n) / (TOP_BAL - BOT_BAL)) * 100
-const MGLIDE = 'top 820ms cubic-bezier(.45,.05,.25,1), height 820ms cubic-bezier(.45,.05,.25,1)'
-const CLIP = 'clip-path 820ms cubic-bezier(.45,.05,.25,1)'
 const ART = '/assets/teen/objects'
 
 function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
@@ -124,7 +124,6 @@ function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
 }) {
   const v = Math.max(BOT_BAL, Math.min(TOP_BAL, value))
   const zeroPct = balPct(0)
-  const vPct = balPct(v)
   const resultPhase = ended || stepIndex >= frameCount - 2   // last 2 beats: the answer
   const intro = stepIndex <= 1
   const overdrawn = v < 0
@@ -132,8 +131,26 @@ function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
   const withdrawing = stepIndex >= 3 && !resultPhase && v < 4
   const taken = 4 - v                                        // dollars withdrawn so far (0..7)
   const readColor = v < 0 ? P.coral : v === 0 ? P.gold : P.mint
-  const credit = Math.max(0, v)     // dollars of credit shown (gold coin stack)
-  const debt = Math.max(0, -v)      // dollars of debt shown (red IOU stack)
+
+  // ── Framer Motion: the balance rides on a spring (continuous 60fps, not a
+  //    per-step CSS jump). The coin token, $ readout, credit/debt fills, hand and
+  //    overdraft bracket all glide off ONE motion value. Overdamped so it never
+  //    overshoots into a wrong balance. Reduced-motion → snaps to the final value. ──
+  const reduce = useReducedMotion()
+  const bv = useMotionValue(v)
+  useEffect(() => {
+    const controls = animate(bv, v, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => controls.stop()
+  }, [v, reduce, bv])
+  const markerTop = useTransform(bv, (n) => `${balPct(n)}%`)
+  const creditClip = useTransform(bv, (n) => `inset(${((TOP_BAL - Math.max(0, n)) / TOP_BAL) * 100}% 0 0 0)`)
+  const debtClip = useTransform(bv, (n) => `inset(0 0 ${((TOP_BAL - Math.max(0, -n)) / TOP_BAL) * 100}% 0)`)
+  const brHeight = useTransform(bv, (n) => `${balPct(n) - zeroPct}%`)
+  const brMidTop = useTransform(bv, (n) => `${(zeroPct + balPct(n)) / 2}%`)
+  const readText = useTransform(bv, (n) => {
+    const r = Math.round(Math.max(BOT_BAL, Math.min(TOP_BAL, n)))
+    return r < 0 ? `-$${-r}` : `$${r}`
+  })
 
   return (
     <div style={{ position: 'relative', width: 'clamp(232px, 42vw, 344px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, overflow: 'hidden', border: `1.5px solid ${P.glassBorder}`, boxShadow: '0 12px 34px rgba(0,0,0,0.42)', background: '#0d2a1e' }}>
@@ -150,14 +167,14 @@ function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
         {overdrawn && <div style={{ position: 'absolute', left: 0, right: 0, top: `${zeroPct}%`, bottom: 0, background: P.coral, opacity: 0.10 }} />}
 
         {/* CREDIT fill — a gold coin stack, revealed from the zero line UP to the balance */}
-        <div style={{ position: 'absolute', left: '9%', right: '9%', top: `${balPct(TOP_BAL)}%`, height: `${zeroPct - balPct(TOP_BAL)}%`, overflow: 'hidden', clipPath: `inset(${((TOP_BAL - credit) / TOP_BAL) * 100}% 0 0 0)`, transition: CLIP }}>
+        <motion.div style={{ position: 'absolute', left: '9%', right: '9%', top: `${balPct(TOP_BAL)}%`, height: `${zeroPct - balPct(TOP_BAL)}%`, overflow: 'hidden', clipPath: creditClip }}>
           <img src={`${ART}/bank_coin_column.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'bottom', filter: resultPhase ? `drop-shadow(0 0 8px ${P.mint})` : undefined }} />
-        </div>
+        </motion.div>
 
         {/* DEBT fill — a red IOU stack, revealed from the zero line DOWN to the balance */}
-        <div style={{ position: 'absolute', left: '9%', right: '9%', top: `${zeroPct}%`, height: `${balPct(BOT_BAL) - zeroPct}%`, overflow: 'hidden', clipPath: `inset(0 0 ${((TOP_BAL - debt) / TOP_BAL) * 100}% 0)`, transition: CLIP }}>
+        <motion.div style={{ position: 'absolute', left: '9%', right: '9%', top: `${zeroPct}%`, height: `${balPct(BOT_BAL) - zeroPct}%`, overflow: 'hidden', clipPath: debtClip }}>
           <img src={`${ART}/bank_debt_column.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', filter: resultPhase ? `drop-shadow(0 0 8px ${P.coral})` : undefined }} />
-        </div>
+        </motion.div>
 
         {/* dollar marks + left-edge labels */}
         {BAL_MARKS.map((n) => (
@@ -168,14 +185,16 @@ function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
         ))}
 
         {/* balance marker — a gold coin token that glides between dollar marks */}
-        <img src={`${ART}/bank_coin_token.png`} alt="" style={{ position: 'absolute', left: '50%', top: `${vPct}%`, transform: 'translate(-50%,-50%)', transition: MGLIDE, width: 'clamp(30px,6.4vw,46px)', height: 'auto', zIndex: 4, filter: 'drop-shadow(0 3px 7px rgba(0,0,0,0.55))' }} />
+        <motion.img src={`${ART}/bank_coin_token.png`} alt="" style={{ position: 'absolute', left: '50%', top: markerTop, x: '-50%', y: '-50%', width: 'clamp(30px,6.4vw,46px)', height: 'auto', zIndex: 4, filter: 'drop-shadow(0 3px 7px rgba(0,0,0,0.55))' }} />
 
-        {/* big $ readout — follows the marker */}
-        <div style={{ position: 'absolute', left: '128%', top: `${vPct}%`, transform: 'translateY(-50%)', transition: MGLIDE, fontFamily: 'var(--font-numeric)', fontSize: 'clamp(22px,4vw,36px)', fontWeight: 800, color: readColor, textShadow: '0 2px 8px rgba(0,0,0,0.6)', whiteSpace: 'nowrap', zIndex: 4 }}>{v < 0 ? `-$${-v}` : `$${v}`}</div>
+        {/* big $ readout — follows the marker and ticks as it glides */}
+        <motion.div style={{ position: 'absolute', left: '128%', top: markerTop, y: '-50%', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(22px,4vw,36px)', fontWeight: 800, color: readColor, textShadow: '0 2px 8px rgba(0,0,0,0.6)', whiteSpace: 'nowrap', zIndex: 4 }}>{readText}</motion.div>
 
         {/* the hand withdrawing a coin — replaces the plain down-arrow */}
         {withdrawing && (
-          <img src={`${ART}/bank_withdraw_hand.png`} alt="" style={{ position: 'absolute', left: '90%', top: `${vPct}%`, transform: 'translateY(-50%)', transition: MGLIDE, width: 'clamp(34px,7vw,52px)', height: 'auto', zIndex: 4, animation: 'baBob 900ms ease-in-out infinite', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))' }} />
+          <motion.div style={{ position: 'absolute', left: '90%', top: markerTop, y: '-50%', width: 'clamp(34px,7vw,52px)', zIndex: 4 }}>
+            <img src={`${ART}/bank_withdraw_hand.png`} alt="" style={{ display: 'block', width: '100%', height: 'auto', animation: 'baBob 900ms ease-in-out infinite', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))' }} />
+          </motion.div>
         )}
 
         {/* intro: up = deposit (green), down = withdraw (coral) */}
@@ -189,8 +208,8 @@ function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
         {/* result: a bracket from the zero line down to the balance */}
         {resultPhase && overdrawn && (
           <>
-            <div style={{ position: 'absolute', left: '104%', top: `${zeroPct}%`, height: `${vPct - zeroPct}%`, width: 8, borderTop: `2px solid ${P.cream}`, borderBottom: `2px solid ${P.cream}`, borderRight: `2px solid ${P.cream}`, transition: MGLIDE, zIndex: 4 }} />
-            <div style={{ position: 'absolute', left: '118%', top: `${(zeroPct + vPct) / 2}%`, transform: 'translateY(-50%)', color: P.cream, fontWeight: 700, fontSize: 'clamp(10px,1.3vw,13px)', whiteSpace: 'nowrap', textShadow: '0 1px 6px rgba(0,0,0,0.7)', transition: MGLIDE, zIndex: 4 }}>${-v} overdrawn</div>
+            <motion.div style={{ position: 'absolute', left: '104%', top: `${zeroPct}%`, height: brHeight, width: 8, borderTop: `2px solid ${P.cream}`, borderBottom: `2px solid ${P.cream}`, borderRight: `2px solid ${P.cream}`, zIndex: 4 }} />
+            <motion.div style={{ position: 'absolute', left: '118%', top: brMidTop, y: '-50%', color: P.cream, fontWeight: 700, fontSize: 'clamp(10px,1.3vw,13px)', whiteSpace: 'nowrap', textShadow: '0 1px 6px rgba(0,0,0,0.7)', zIndex: 4 }}>${-v} overdrawn</motion.div>
           </>
         )}
       </div>

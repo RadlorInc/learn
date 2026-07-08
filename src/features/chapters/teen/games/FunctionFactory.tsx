@@ -10,6 +10,8 @@
  * works 3x + 2 at x = 4 km stage by stage, then a GUIDED ride (config.guided)
  * lets the kid do x + 2 at x = 3 with Milo coaching (not scored), then the scored loop.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, SlideValue, pick, glideNumber } from './parts/gameKit'
 
@@ -82,14 +84,13 @@ const DEMO_TASK: Task = { title: 'Work out the fare', badge: '3x + 2 where x=4',
 // example is 3x + 2 where x = 4: a $2 flag-fall (the constant) plus $3 per km (the
 // rate). As the walkthrough's `value` (the running fare) climbs, the taxi DRIVES
 // forward down the road and the meter ticks up — the base shown as a fixed start
-// amount, the rate×x as the accumulating part. Everything GLIDES via CSS
-// transitions. Driven purely by the per-step `value` + step index. No timers.
+// amount, the rate×x as the accumulating part. The fare, taxi position, km readout
+// and rise-bar GLIDE continuously on a Framer-Motion spring (60fps, not per-step
+// CSS jumps); overdamped so the meter never overshoots past the true fare.
+// Driven purely by the per-step `value` + step index. No timers.
 const RATE = 3, BASE = 2, KM = 4                 // 3x + 2 at x = 4
 const FARE_MAX = RATE * KM + BASE                // 14
 const KM_MARKS = [0, 1, 2, 3, 4]
-const DRIVE = 'left 820ms cubic-bezier(.42,.02,.28,1)'
-const RISE = 'height 720ms cubic-bezier(.4,.02,.3,1), background 500ms'
-const TICK = 'color 380ms, transform 380ms'
 const ART = '/assets/teen/objects'
 
 function TaxiMeterScene({ palette: P, value, stepIndex, frameCount, ended }: {
@@ -97,18 +98,36 @@ function TaxiMeterScene({ palette: P, value, stepIndex, frameCount, ended }: {
 }) {
   const fare = Math.max(0, Math.min(FARE_MAX, value))
   // Below the base fare the taxi is still at the stand; above it, km covered so far.
-  const driven = fare <= BASE ? 0 : (fare - BASE) / RATE            // 0..4 km
-  const kmFrac = Math.max(0, Math.min(1, driven / KM))
+  const driven = fare <= BASE ? 0 : (fare - BASE) / RATE            // 0..4 km (target — for markers/chips)
   const resultPhase = ended || stepIndex >= frameCount - 2          // last 2 beats: the answer
   const intro = stepIndex <= 1
   const rolling = fare > BASE && !resultPhase
   const showBase = stepIndex >= 1
   const flagFall = fare >= BASE                                     // the $2 base is "on"
-  const risePct = (fare / FARE_MAX) * 100                           // meter bar fill
-
-  // taxi rides from the left stand (6%) to the far marker (86%)
-  const taxiLeft = 6 + kmFrac * 80
   const fareColor = resultPhase ? P.mint : fare > BASE ? P.gold : P.cream
+
+  // ── Framer Motion: the fare rides a spring (continuous 60fps, not a per-step CSS
+  //    jump). The meter number, km readout, taxi position and rise-bar all derive
+  //    from it so they move together. Overdamped so the number never overshoots
+  //    past the true fare. Reduced-motion → snaps to the final value. ──
+  const reduce = useReducedMotion()
+  const fv = useMotionValue(fare)
+  useEffect(() => {
+    const controls = animate(fv, fare, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => controls.stop()
+  }, [fare, reduce, fv])
+  const clampF = (f: number) => Math.max(0, Math.min(FARE_MAX, f))
+  const fareText = useTransform(fv, (f) => `$${Math.round(clampF(f))}`)
+  const drivenText = useTransform(fv, (f) => {
+    const dr = clampF(f) <= BASE ? 0 : (clampF(f) - BASE) / RATE
+    return `${dr % 1 === 0 ? dr.toFixed(0) : dr.toFixed(1)} km`
+  })
+  const risePctMV = useTransform(fv, (f) => `${(clampF(f) / FARE_MAX) * 100}%`)
+  // taxi rides from the left stand (6%) to the far marker (86%)
+  const taxiLeftMV = useTransform(fv, (f) => {
+    const dr = clampF(f) <= BASE ? 0 : (clampF(f) - BASE) / RATE
+    return `${6 + Math.max(0, Math.min(1, dr / KM)) * 80}%`
+  })
 
   return (
     <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 360px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', background: P.nightBot }}>
@@ -122,11 +141,11 @@ function TaxiMeterScene({ palette: P, value, stepIndex, frameCount, ended }: {
       <div style={{ position: 'absolute', top: '6%', left: '8%', right: '8%', height: 'clamp(76px,17vh,104px)', borderRadius: 12, background: P.glass, border: `1px solid ${P.glassBorder}`, padding: '9px 13px', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.35)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 'clamp(9px,1.1vw,12px)', fontWeight: 800, letterSpacing: 1, color: P.mutedOnPaper }}>METER · fare</div>
-          <div style={{ fontSize: 'clamp(9px,1.05vw,11px)', fontWeight: 700, color: P.mutedOnPaper }}>{driven.toFixed(driven % 1 === 0 ? 0 : 1)} km</div>
+          <motion.div style={{ fontSize: 'clamp(9px,1.05vw,11px)', fontWeight: 700, color: P.mutedOnPaper }}>{drivenText}</motion.div>
         </div>
-        <div style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(30px,6vw,48px)', lineHeight: 1, color: fareColor, transition: TICK, textShadow: resultPhase ? `0 0 18px ${P.mint}` : undefined }}>
-          ${fare}
-        </div>
+        <motion.div style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(30px,6vw,48px)', lineHeight: 1, color: fareColor, transition: 'color 380ms', textShadow: resultPhase ? `0 0 18px ${P.mint}` : undefined }}>
+          {fareText}
+        </motion.div>
         {/* base + rate breakdown chips */}
         <div style={{ display: 'flex', gap: 6, marginTop: 5, minHeight: 18 }}>
           {showBase && (
@@ -144,7 +163,7 @@ function TaxiMeterScene({ palette: P, value, stepIndex, frameCount, ended }: {
 
       {/* ── side rise-bar: base (coral) stacked under rate (gold), climbs with the fare ── */}
       <div style={{ position: 'absolute', top: '6%', right: '2.5%', width: 'clamp(9px,1.4vw,13px)', height: 'clamp(76px,17vh,104px)', borderRadius: 999, background: 'rgba(0,0,0,0.3)', overflow: 'hidden', border: `1px solid ${P.glassBorder}` }}>
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${risePct}%`, transition: RISE, background: `linear-gradient(${P.gold}, ${P.coral})`, borderRadius: 999 }} />
+        <motion.div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: risePctMV, transition: 'background 500ms', background: `linear-gradient(${P.gold}, ${P.coral})`, borderRadius: 999 }} />
       </div>
 
       {/* ── the ROAD ── */}
@@ -165,9 +184,11 @@ function TaxiMeterScene({ palette: P, value, stepIndex, frameCount, ended }: {
         })}
 
         {/* the TAXI — an illustrated cab that glides forward down the road (faces right = travel dir) */}
-        <div style={{ position: 'absolute', bottom: '30%', left: `${taxiLeft}%`, transform: 'translateX(-50%)', transition: DRIVE, zIndex: 3, animation: rolling ? 'tmRoll 620ms ease-in-out infinite' : undefined }}>
-          <img src={`${ART}/taxi_cab.png`} alt="" style={{ display: 'block', width: 'clamp(58px,12vw,88px)', height: 'auto', filter: resultPhase ? `drop-shadow(0 0 14px ${P.mint})` : 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))' }} />
-        </div>
+        <motion.div style={{ position: 'absolute', bottom: '30%', left: taxiLeftMV, x: '-50%', zIndex: 3 }}>
+          <div style={{ animation: rolling ? 'tmRoll 620ms ease-in-out infinite' : undefined }}>
+            <img src={`${ART}/taxi_cab.png`} alt="" style={{ display: 'block', width: 'clamp(58px,12vw,88px)', height: 'auto', filter: resultPhase ? `drop-shadow(0 0 14px ${P.mint})` : 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))' }} />
+          </div>
+        </motion.div>
       </div>
 
       {/* ── the rule, shown between meter and road ── */}

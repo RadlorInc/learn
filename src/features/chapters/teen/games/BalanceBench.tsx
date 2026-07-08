@@ -11,7 +11,8 @@
  * toward five, watch the pans level — then a GUIDED weigh-in (config.guided) lets
  * the kid balance x + 1 = 4 with Milo coaching (not scored), then the scored loop.
  */
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, BalanceBeam, pick, glideNumber } from './parts/gameKit'
 
@@ -83,6 +84,7 @@ const GUIDED_TASK: Task = {
 // the suitcase. Driven purely by the walkthrough's per-step `value` (x) + index.
 const DEMO_M = 3, DEMO_RIGHT = 8, DEMO_ANS = 5
 const ART = '/assets/teen/objects'
+const TILT_GAIN = 3, MAX_TILT = 15, ARM = 84  // beam half-span to each pan's hang point
 function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: {
   palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
 }) {
@@ -92,26 +94,37 @@ function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: 
   const resultPhase = ended || stepIndex >= frameCount - 2   // last 2 beats: the answer
   const intro = stepIndex === 0
   const balanced = Math.abs(diff) < 1e-6
-  // beam tips toward the heavier side; left too light → right pan drops (positive rotate)
-  const tilt = balanced ? 0 : Math.max(-15, Math.min(15, -diff * 3))
   const beamCol = resultPhase && balanced ? P.mint : P.gold
   const caseReveal = resultPhase && balanced       // reveal x's value on the case
   const verdict = balanced ? 'Balanced ✓' : diff < 0 ? 'Too light — right pan drops' : 'Too heavy'
   const verdictCol = balanced ? P.mint : P.coral
 
-  // a single upright pan (counter-rotates the beam so it hangs level)
-  const Pan = ({ side, children }: { side: -1 | 1; children: ReactNode }) => (
-    <g transform={`translate(${side * 84} 0)`}>
-      {/* hanging cords */}
-      <line x1={-18} y1={0} x2={0} y2={30} stroke={P.glassBorder} strokeWidth={1.4} />
-      <line x1={18} y1={0} x2={0} y2={30} stroke={P.glassBorder} strokeWidth={1.4} />
-      {/* the pan keeps itself upright by cancelling the beam's tilt */}
-      <g transform={`rotate(${-tilt})`} style={{ transition: 'transform 620ms cubic-bezier(.45,.05,.25,1)' }}>
-        <path d={`M -26 30 Q 0 44 26 30`} fill={P.glass} stroke={P.glassBorder} strokeWidth={1.4} />
-        <g transform="translate(0 30)">{children}</g>
-      </g>
-    </g>
-  )
+  // ── Framer Motion: x rides a spring (continuous 60fps, not a per-step CSS jump).
+  //    The beam ANGLE is derived from x, so the beam tilts and the pans glide as one
+  //    fluid motion; the pans ride the rotated arm ends yet stay upright (the scale
+  //    hangs level). The arithmetic readout ticks with x. Overdamped → never
+  //    overshoots into a heavier tilt than the step. Reduced-motion → snaps. ──
+  const reduce = useReducedMotion()
+  const xv = useMotionValue(x)
+  useEffect(() => {
+    const controls = animate(xv, x, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => controls.stop()
+  }, [x, reduce, xv])
+  // beam tips toward the heavier side; left too light → right pan drops (positive rotate)
+  const tiltDeg = useTransform(xv, (xVal) => Math.max(-MAX_TILT, Math.min(MAX_TILT, -((xVal + DEMO_M) - DEMO_RIGHT) * TILT_GAIN)))
+  const tiltRad = useTransform(tiltDeg, (d) => (d * Math.PI) / 180)
+  // each pan hangs from its arm end, which swings along the beam's rotation; the pan
+  // itself stays upright, so drive its position (not a counter-rotation) from the angle.
+  const panLX = useTransform(tiltRad, (a) => -ARM * Math.cos(a))
+  const panLY = useTransform(tiltRad, (a) => -ARM * Math.sin(a))
+  const panRX = useTransform(tiltRad, (a) => ARM * Math.cos(a))
+  const panRY = useTransform(tiltRad, (a) => ARM * Math.sin(a))
+  const readText = useTransform(xv, (xVal) => {
+    if (caseReveal) return '5 + 3 = 8'
+    if (intro) return ''
+    const xr = Math.max(0, Math.round(xVal))
+    return `${xr} + 3 = ${xr + DEMO_M}`
+  })
 
   // the mystery suitcase (unknown x) — an illustrated case that grows a touch as it fills
   const Suitcase = () => {
@@ -139,6 +152,17 @@ function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: 
     </g>
   )
 
+  // a single upright pan that rides its arm end (glides via x/y from the beam angle)
+  const Pan = ({ mx, my, children }: { mx: typeof panLX; my: typeof panLY; children: ReactNode }) => (
+    <motion.g style={{ x: mx, y: my }}>
+      {/* hanging cords */}
+      <line x1={-18} y1={0} x2={0} y2={30} stroke={P.glassBorder} strokeWidth={1.4} />
+      <line x1={18} y1={0} x2={0} y2={30} stroke={P.glassBorder} strokeWidth={1.4} />
+      <path d={`M -26 30 Q 0 44 26 30`} fill={P.glass} stroke={P.glassBorder} strokeWidth={1.4} />
+      <g transform="translate(0 30)">{children}</g>
+    </motion.g>
+  )
+
   return (
     <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 372px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: P.nightTop, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <style>{'@keyframes bsPop{0%{opacity:0;transform:translate(-50%,6px)}100%{opacity:1;transform:translate(-50%,0)}}@keyframes bsBob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}@keyframes bsGlow{0%,100%{opacity:.5}50%{opacity:1}}'}</style>
@@ -155,30 +179,31 @@ function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: 
       {/* the scale */}
       <svg viewBox="0 0 240 210" style={{ position: 'relative', zIndex: 1, width: '92%', height: 'auto', marginTop: '2%' }}>
         <g transform="translate(120 74)">
-          {/* the beam + its pans rotate together */}
-          <g transform={`rotate(${tilt})`} style={{ transition: 'transform 620ms cubic-bezier(.45,.05,.25,1)' }}>
+          {/* the beam bar — springs about its centre pivot (Framer rotate) */}
+          <motion.g style={{ rotate: tiltDeg, transformBox: 'fill-box', transformOrigin: 'center' }}>
             <rect x={-92} y={-4} width={184} height={8} rx={4} fill={beamCol}
               style={{ transition: 'fill 500ms', filter: resultPhase && balanced ? `drop-shadow(0 0 9px ${P.mint})` : undefined }} />
             <circle cx={-84} cy={0} r={4} fill={beamCol} />
             <circle cx={84} cy={0} r={4} fill={beamCol} />
-            <Pan side={-1}><Suitcase /><KnownWeights /></Pan>
-            <Pan side={1}>
-              <g transform="translate(0 -22)">
-                <image href={`${ART}/bag_weight.png`} x={-17} y={0} width={34} height={22} preserveAspectRatio="none" />
-                <text x={0} y={15} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={13} fill={P.inkOnPaper}>8</text>
-              </g>
-            </Pan>
-          </g>
+          </motion.g>
+          {/* the pans hang from the swinging arm ends yet stay upright (glide via x/y) */}
+          <Pan mx={panLX} my={panLY}><Suitcase /><KnownWeights /></Pan>
+          <Pan mx={panRX} my={panRY}>
+            <g transform="translate(0 -22)">
+              <image href={`${ART}/bag_weight.png`} x={-17} y={0} width={34} height={22} preserveAspectRatio="none" />
+              <text x={0} y={15} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={13} fill={P.inkOnPaper}>8</text>
+            </g>
+          </Pan>
           {/* the pivot / stand (fixed) */}
           <polygon points="0,4 -15,64 15,64" fill={P.glassBorder} />
           <rect x={-34} y={64} width={68} height={7} rx={3} fill={P.glassBorder} />
         </g>
       </svg>
 
-      {/* the running arithmetic line — the board math, echoed */}
-      <div style={{ position: 'relative', zIndex: 1, marginTop: 'auto', marginBottom: '22%', fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(16px,2.4vw,24px)', color: caseReveal ? P.mint : P.cream, transition: 'color 400ms' }}>
-        {caseReveal ? '5 + 3 = 8' : intro ? '' : `${x} + 3 = ${left}`}
-      </div>
+      {/* the running arithmetic line — the board math, ticks with x as it glides */}
+      <motion.div style={{ position: 'relative', zIndex: 1, marginTop: 'auto', marginBottom: '22%', fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(16px,2.4vw,24px)', color: caseReveal ? P.mint : P.cream, transition: 'color 400ms' }}>
+        {readText}
+      </motion.div>
 
       {/* verdict pill — glides between too-light and balanced */}
       {!intro && (

@@ -14,6 +14,8 @@
  * on the grid to see it is a quarter, then apply 25% off $80 on the price slider),
  * then a GUIDED order (50% off $10) coached but not scored, then the scored loop.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, PaintGrid, SlideValue, pick, reduce, tidy, money, glideNumber } from './parts/gameKit'
 
@@ -146,10 +148,14 @@ const GUIDED_TASK: Task = {
 //   • SLIDE act (task.mech==='slide'): a PRICE TAG on a till readout. The number
 //     GLIDES down from the full price to the sale price as the step value drops; a
 //     "− $X" saving chip pops in; the tag glows mint and stamps SALE at the end.
-// Driven purely by props (value / task / stepIndex) — CSS transitions only.
-// The counter dressing is an illustrated backdrop (Nano Banana 2), the same style
-// as WeatherStation's BankAccountScene; a scrim keeps the code-drawn grid/tag legible.
-const SCENE_GLIDE = 'all 720ms cubic-bezier(.45,.05,.25,1)'
+// Driven by props (value / task / stepIndex). The animated quantities — the number
+// of shaded grid squares, and the sliding PRICE / saving / tag-drop — ride on Framer
+// Motion springs (useMotionValue + animate, re-targeted whenever `value` changes) so
+// they glide continuously at 60fps instead of snapping per narration step. Reduced
+// motion snaps to the final value. The counter dressing is an illustrated backdrop
+// (Nano Banana 2), the same style as WeatherStation's BankAccountScene; a scrim keeps
+// the code-drawn grid/tag legible.
+const SPRING = { type: 'spring' as const, stiffness: 120, damping: 26, mass: 0.9 }
 const ART = '/assets/teen/objects'
 
 function StoreCheckoutScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
@@ -177,34 +183,46 @@ function StoreCheckoutScene({ palette: P, task, value, stepIndex, frameCount, en
   )
 }
 
+// one shaded/unshaded grid square — lights up as the spring-driven count sweeps past it
+function GridSquare({ i, count, fill, rim, resultPhase }: {
+  i: number; count: MotionValue<number>; fill: string; rim: string; resultPhase: boolean
+}) {
+  const bg = useTransform(count, (x) => (i < x - 1e-6 ? fill : 'rgba(255,244,221,0.10)'))
+  const bc = useTransform(count, (x) => (i < x - 1e-6 ? rim : 'rgba(255,244,221,0.18)'))
+  const shadow = useTransform(count, (x) => (i < x - 1e-6 && resultPhase ? `0 0 5px ${fill}88` : 'none'))
+  return (
+    <motion.div style={{ aspectRatio: '1', borderRadius: 2, background: bg, borderStyle: 'solid', borderWidth: 1, borderColor: bc, boxShadow: shadow }} />
+  )
+}
+
 // ── the hundred-grid act ──────────────────────────────────────────────────────
 function PaintAct({ P, value, resultPhase }: { P: Palette; value: number; resultPhase: boolean }) {
   const fill = resultPhase ? P.mint : P.gold
   const rim = resultPhase ? '#3fa77c' : P.goldDeep
+
+  // the shaded-square count glides continuously on a spring; squares light in reading
+  // order as it sweeps, and the readout ticks with it. Re-targets whenever value changes.
+  const reduceMotion = useReducedMotion()
+  const count = useMotionValue(value)
+  useEffect(() => {
+    const controls = animate(count, value, reduceMotion ? { duration: 0 } : SPRING)
+    return () => controls.stop()
+  }, [value, reduceMotion, count])
+  const pctText = useTransform(count, (x) => `${Math.round(x)}`)
+
   return (
     <>
       <div style={{ fontSize: 'clamp(11px,1.4vw,14px)', fontWeight: 700, color: P.creamSoft, letterSpacing: 0.4 }}>
         PERCENT = OUT OF 100
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 'clamp(1.5px,0.4vw,3px)', width: 'clamp(180px,32vw,268px)', padding: 'clamp(6px,1.2vw,9px)', borderRadius: 12, background: P.glass, border: `1px solid ${P.glassBorder}` }}>
-        {Array.from({ length: 100 }, (_, i) => {
-          const on = i < value
-          // reveal in reading order (row by row) with a tiny per-square stagger
-          const delay = on ? Math.min(i, value) * 8 : 0
-          return (
-            <div key={i} style={{
-              aspectRatio: '1', borderRadius: 2,
-              background: on ? fill : 'rgba(255,244,221,0.10)',
-              border: `1px solid ${on ? rim : 'rgba(255,244,221,0.18)'}`,
-              boxShadow: on && resultPhase ? `0 0 5px ${fill}88` : undefined,
-              transition: `background 260ms ${delay}ms, border-color 260ms ${delay}ms, box-shadow 300ms`,
-            }} />
-          )
-        })}
+        {Array.from({ length: 100 }, (_, i) => (
+          <GridSquare key={i} i={i} count={count} fill={fill} rim={rim} resultPhase={resultPhase} />
+        ))}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 34 }}>
         <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(20px,2.6vw,32px)', fontWeight: 800, color: fill, textShadow: `0 0 16px ${rim}55`, transition: 'color 400ms' }}>
-          {value}% <span style={{ color: P.mutedOnPaper, fontWeight: 700 }}>= {value} of 100</span>
+          <motion.span>{pctText}</motion.span>% <span style={{ color: P.mutedOnPaper, fontWeight: 700 }}>= <motion.span>{pctText}</motion.span> of 100</span>
         </div>
         {resultPhase && value === 25 && (
           <div style={{ padding: '3px 11px', borderRadius: 999, background: P.mint, color: P.inkOnPaper, fontWeight: 800, fontSize: 'clamp(13px,1.6vw,17px)', animation: 'scPop 320ms ease' }}>= ¼</div>
@@ -218,11 +236,22 @@ function PaintAct({ P, value, resultPhase }: { P: Palette; value: number; result
 function PriceAct({ P, task, value, resultPhase }: { P: Palette; task: Task; value: number; resultPhase: boolean }) {
   const full = task.start                // full price ($80)
   const sale = task.answer               // sale price ($60)
-  const saving = tidy(full - value)      // how much has come off so far
   const tagColor = resultPhase ? P.mint : P.gold
   const showSaving = value < full - 0.5
+
+  // the price rides a spring (overdamped so it never overshoots a dollar it shouldn't):
+  // the tag number, its vertical drop, and the saving chip all glide continuously from
+  // the current value to the step's target, re-targeting whenever value changes.
+  const reduceMotion = useReducedMotion()
+  const price = useMotionValue(value)
+  useEffect(() => {
+    const controls = animate(price, value, reduceMotion ? { duration: 0 } : SPRING)
+    return () => controls.stop()
+  }, [value, reduceMotion, price])
   // the tag's vertical drop: 0 at full price, grows as the price falls (visual "slide down")
-  const dropPct = full > sale ? ((full - value) / (full - sale)) * 26 : 0
+  const tagTransform = useTransform(price, (x) => `translateY(${full > sale ? ((full - x) / (full - sale)) * 26 : 0}%)`)
+  const priceText = useTransform(price, (x) => money(Math.round(x)))
+  const savingText = useTransform(price, (x) => `− ${money(Math.round(full - x))} off`)
 
   return (
     <>
@@ -239,7 +268,7 @@ function PriceAct({ P, task, value, resultPhase }: { P: Palette; task: Task; val
       </div>
 
       {/* the price tag — glides down as the number falls */}
-      <div style={{ position: 'relative', transform: `translateY(${dropPct}%)`, transition: SCENE_GLIDE }}>
+      <motion.div style={{ position: 'relative', transform: tagTransform }}>
         <div style={{
           position: 'relative', padding: 'clamp(12px,2.4vw,20px) clamp(20px,4vw,34px)', borderRadius: 14,
           background: P.glass, border: `2.5px solid ${tagColor}`,
@@ -248,21 +277,21 @@ function PriceAct({ P, task, value, resultPhase }: { P: Palette; task: Task; val
         }}>
           {/* tag hole + string dot */}
           <div style={{ position: 'absolute', top: -7, left: '50%', transform: 'translateX(-50%)', width: 10, height: 10, borderRadius: '50%', background: P.nightBot, border: `2px solid ${tagColor}`, transition: 'border-color 400ms' }} />
-          <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(38px,7vw,60px)', fontWeight: 800, color: tagColor, lineHeight: 1, textShadow: resultPhase ? `0 0 20px ${P.mint}66` : 'none', transition: 'color 400ms', letterSpacing: -1 }}>
-            {money(value)}
-          </div>
+          <motion.div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(38px,7vw,60px)', fontWeight: 800, color: tagColor, lineHeight: 1, textShadow: resultPhase ? `0 0 20px ${P.mint}66` : 'none', transition: 'color 400ms', letterSpacing: -1 }}>
+            {priceText}
+          </motion.div>
           {resultPhase && (
             <div style={{ position: 'absolute', top: 'clamp(-16px,-2.2vw,-12px)', right: 'clamp(-16px,-2.4vw,-12px)', transform: 'rotate(-14deg)', padding: '4px 12px', borderRadius: 8, background: P.mint, color: P.inkOnPaper, fontWeight: 900, fontSize: 'clamp(12px,1.6vw,16px)', letterSpacing: 1, animation: 'scStamp 460ms ease', boxShadow: '0 3px 10px rgba(0,0,0,0.4)' }}>SALE</div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* saving chip — how much has come off */}
       <div style={{ minHeight: 30, display: 'flex', alignItems: 'center' }}>
         {showSaving && (
-          <div style={{ padding: '4px 14px', borderRadius: 999, background: resultPhase ? P.mint : P.coral, color: P.inkOnPaper, fontWeight: 800, fontSize: 'clamp(13px,1.7vw,17px)', animation: 'scPop 300ms ease', fontFamily: 'var(--font-numeric)' }}>
-            − {money(saving)} off
-          </div>
+          <motion.div style={{ padding: '4px 14px', borderRadius: 999, background: resultPhase ? P.mint : P.coral, color: P.inkOnPaper, fontWeight: 800, fontSize: 'clamp(13px,1.7vw,17px)', animation: 'scPop 300ms ease', fontFamily: 'var(--font-numeric)' }}>
+            {savingText}
+          </motion.div>
         )}
       </div>
     </>

@@ -576,10 +576,11 @@ export function HandCue({ P, kind, label }: { P: Palette; kind: HandKind; label?
 //    practice/guided (pinned top-left by GameShell). The expression sits big; a
 //    second line shows "= ?" while solving, then "= answer" (green on correct,
 //    warm on reveal). `expr` is a node so a chapter can highlight a portion. ──────
-export function QuestionBoard({ P, title, expr, answer, tone = 'ask' }: {
-  P: Palette; title?: string; expr: React.ReactNode; answer?: React.ReactNode; tone?: 'ask' | 'reveal' | 'ok'
+export function QuestionBoard({ P, title, prompt, expr, answer, tone = 'ask', cue }: {
+  P: Palette; title?: string; prompt?: React.ReactNode; expr: React.ReactNode; answer?: React.ReactNode; tone?: 'ask' | 'reveal' | 'ok'; cue?: string
 }) {
   const ansColor = tone === 'ok' ? '#8ef0c2' : tone === 'reveal' ? '#ffb59c' : '#cfe0d8'
+  const asking = tone === 'ask'
   return (
     <div style={{
       width: '100%', maxWidth: 'clamp(280px, 40vw, 460px)', boxSizing: 'border-box',
@@ -588,7 +589,16 @@ export function QuestionBoard({ P, title, expr, answer, tone = 'ask' }: {
       boxShadow: 'inset 0 0 26px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4)',
       padding: 'clamp(12px, 1.6vw, 22px) clamp(16px, 2vw, 28px)', display: 'flex', flexDirection: 'column', gap: 'clamp(5px, 0.8vw, 11px)', alignItems: 'center',
     }}>
-      {title && <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(11px, 1vw, 15px)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bcd8c9' }}>{title}</div>}
+      {/* Permanent "Solve it" cue while the question is open — so a child who missed
+          Milo's voice still knows it's on them to answer. Swaps to ✓ once solved. */}
+      {cue && asking && (
+        <div style={{ background: P.gold, color: '#12241b', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(11px, 1vw, 14px)', letterSpacing: '0.14em', textTransform: 'uppercase', borderRadius: 999, padding: '3px 15px' }}>{cue}</div>
+      )}
+      {tone === 'ok' && <div style={{ color: '#8ef0c2', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(11px, 1vw, 14px)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Solved ✓</div>}
+      {/* The question WRITTEN OUT, so it reads on its own without the audio. */}
+      {prompt
+        ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(13px, 1.35vw, 19px)', fontWeight: 600, lineHeight: 1.35, color: '#e7f2e1', textAlign: 'center' }}>{prompt}</div>
+        : title ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(11px, 1vw, 15px)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bcd8c9' }}>{title}</div> : null}
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.4)', lineHeight: 1.2, textAlign: 'center' }}>{expr}</div>
       {answer !== undefined && <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(22px, 2.8vw, 36px)', fontWeight: 800, color: ansColor, textShadow: '0 0 10px rgba(0,0,0,0.35)', lineHeight: 1.1 }}>= {answer}</div>}
     </div>

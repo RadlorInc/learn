@@ -401,7 +401,8 @@ export function Game<V, T extends BaseTask>({
             <BoardSlot roomy={roomy}>
               <QuestionBoard
                 P={P}
-                title={task.title}
+                cue="Solve it"
+                prompt={task.prompt || task.title}
                 expr={config.question ? config.question(task) : task.badge}
                 answer={sub === 'active' ? '?' : config.revealText(task)}
                 tone={sub === 'active' ? 'ask' : sub === 'sold' ? 'ok' : 'reveal'}
@@ -410,9 +411,6 @@ export function Game<V, T extends BaseTask>({
             <CenterFill>
               {stage === 'guided' && sub === 'active' && (
                 <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Try this one with me</div>
-              )}
-              {stage === 'play' && sub === 'active' && (
-                <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Your turn — solve it</div>
               )}
               <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
                 <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />

@@ -8,6 +8,8 @@
  * dividing signed numbers land it on the floor it reaches. No slides, no MCQ.
  * Shared adaptive engine underneath.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, ElevatorShaft, pick, signed, glideNumber } from './parts/gameKit'
 
@@ -104,7 +106,6 @@ const TOP_FLOOR = 3, BOT_FLOOR = -4
 const SCENE_FLOORS = [3, 2, 1, 0, -1, -2, -3, -4]
 const pctFromTop = (f: number) => ((TOP_FLOOR - f) / (TOP_FLOOR - BOT_FLOOR)) * 100
 const floorLabel = (f: number) => (f === 0 ? 'G' : f < 0 ? `B${-f}` : `${f}`)
-const GLIDE = 'top 880ms cubic-bezier(.45,.05,.25,1)'
 const ART = '/assets/teen/objects'
 
 function SkyTowerScene({ palette: P, value, stepIndex, frameCount, ended }: {
@@ -112,7 +113,6 @@ function SkyTowerScene({ palette: P, value, stepIndex, frameCount, ended }: {
 }) {
   const v = Math.max(BOT_FLOOR, Math.min(TOP_FLOOR, value))
   const groundPct = pctFromTop(0)
-  const carPct = pctFromTop(v)
   const resultPhase = ended || stepIndex >= frameCount - 2   // last 2 beats: the answer
   const intro = stepIndex === 0
   const belowGround = v < 0
@@ -120,6 +120,20 @@ function SkyTowerScene({ palette: P, value, stepIndex, frameCount, ended }: {
   const descending = stepIndex >= 2 && !resultPhase && v < 2
   const floorsDown = 2 - v                                   // 0..5 through the ride
   const readColor = v < 0 ? P.coral : v === 0 ? P.gold : P.cream
+
+  // ── Framer Motion: the car rides on a spring (continuous 60fps, not a per-step
+  //    CSS jump) and the floor number ticks with it. Overdamped so it never
+  //    overshoots into a floor that isn't the answer. Reduced-motion → snaps. ──
+  const reduce = useReducedMotion()
+  const fv = useMotionValue(v)
+  useEffect(() => {
+    const controls = animate(fv, v, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => controls.stop()
+  }, [v, reduce, fv])
+  const carTop = useTransform(fv, (f) => `${pctFromTop(f)}%`)
+  const midTop = useTransform(fv, (f) => `${(groundPct + pctFromTop(f)) / 2}%`)
+  const brHeight = useTransform(fv, (f) => `${Math.max(0, pctFromTop(f) - groundPct)}%`)
+  const readText = useTransform(fv, (f) => `${Math.round(Math.max(BOT_FLOOR, Math.min(TOP_FLOOR, f)))}`)
 
   return (
     <div style={{ position: 'relative', width: 'clamp(232px, 42vw, 344px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
@@ -144,14 +158,16 @@ function SkyTowerScene({ palette: P, value, stepIndex, frameCount, ended }: {
         ))}
 
         {/* the lift car — an illustrated cabin that glides between floors */}
-        <img src={`${ART}/tower_lift_car.png`} alt="" style={{ position: 'absolute', left: '50%', top: `${carPct}%`, transform: 'translate(-50%,-50%)', transition: GLIDE, width: '74%', height: 'auto', zIndex: 3, filter: resultPhase ? `drop-shadow(0 0 14px ${P.mint}) drop-shadow(0 3px 9px rgba(0,0,0,0.5))` : 'drop-shadow(0 3px 9px rgba(0,0,0,0.5))' }} />
+        <motion.img src={`${ART}/tower_lift_car.png`} alt="" style={{ position: 'absolute', left: '50%', top: carTop, x: '-50%', y: '-50%', width: '74%', height: 'auto', zIndex: 3, filter: resultPhase ? `drop-shadow(0 0 14px ${P.mint}) drop-shadow(0 3px 9px rgba(0,0,0,0.5))` : 'drop-shadow(0 3px 9px rgba(0,0,0,0.5))' }} />
 
-        {/* floor readout — big number, follows the car */}
-        <div style={{ position: 'absolute', left: '126%', top: `${carPct}%`, transform: 'translateY(-50%)', transition: GLIDE, fontFamily: 'var(--font-numeric)', fontSize: 'clamp(26px,4.6vw,40px)', fontWeight: 800, color: readColor, whiteSpace: 'nowrap' }}>{v}</div>
+        {/* floor readout — big number, follows the car and ticks as it glides */}
+        <motion.div style={{ position: 'absolute', left: '126%', top: carTop, y: '-50%', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(26px,4.6vw,40px)', fontWeight: 800, color: readColor, whiteSpace: 'nowrap' }}>{readText}</motion.div>
 
         {/* moving down-arrow cue beside the car during the descent */}
         {descending && (
-          <div style={{ position: 'absolute', left: '104%', top: `${carPct}%`, transform: 'translateY(-50%)', transition: GLIDE, color: P.coral, fontSize: 'clamp(16px,2.2vw,22px)', fontWeight: 800, animation: 'stBob 900ms ease-in-out infinite' }}>↓</div>
+          <motion.div style={{ position: 'absolute', left: '104%', top: carTop, y: '-50%', color: P.coral, fontSize: 'clamp(16px,2.2vw,22px)', fontWeight: 800 }}>
+            <div style={{ animation: 'stBob 900ms ease-in-out infinite' }}>↓</div>
+          </motion.div>
         )}
 
         {/* intro: up = positive (green), down = negative (coral) */}
@@ -165,8 +181,8 @@ function SkyTowerScene({ palette: P, value, stepIndex, frameCount, ended }: {
         {/* result: a measuring bracket from ground down to the car */}
         {resultPhase && belowGround && (
           <>
-            <div style={{ position: 'absolute', left: '104%', top: `${groundPct}%`, height: `${carPct - groundPct}%`, width: 8, borderTop: `2px solid ${P.cream}`, borderBottom: `2px solid ${P.cream}`, borderRight: `2px solid ${P.cream}`, transition: GLIDE }} />
-            <div style={{ position: 'absolute', left: '118%', top: `${(groundPct + carPct) / 2}%`, transform: 'translateY(-50%)', color: P.cream, fontWeight: 700, fontSize: 'clamp(11px,1.3vw,14px)', whiteSpace: 'nowrap', transition: GLIDE }}>{-v} below</div>
+            <motion.div style={{ position: 'absolute', left: '104%', top: `${groundPct}%`, height: brHeight, width: 8, borderTop: `2px solid ${P.cream}`, borderBottom: `2px solid ${P.cream}`, borderRight: `2px solid ${P.cream}` }} />
+            <motion.div style={{ position: 'absolute', left: '118%', top: midTop, y: '-50%', color: P.cream, fontWeight: 700, fontSize: 'clamp(11px,1.3vw,14px)', whiteSpace: 'nowrap' }}>{-v} below</motion.div>
           </>
         )}
       </div>

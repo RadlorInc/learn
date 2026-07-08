@@ -11,6 +11,8 @@
  * works "half of two thirds" on the twelfths board, then a GUIDED cut (config.guided)
  * lets the kid mark "half of a half" with Milo coaching (not scored), then the scored loop.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, BarShade, SlideValue, pick, reduce, tidy, glideNumber } from './parts/gameKit'
 
@@ -161,6 +163,31 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
   palette: Palette; task: Task; value: number; stepIndex: number; frameCount: number; ended: boolean
 }) {
   const resultPhase = ended || stepIndex >= frameCount - 2
+
+  // ── Framer Motion: a single spring-driven progress value the whole scene reads
+  //    from, so the saw marker / tape fill / needle / readout all GLIDE at 60fps
+  //    instead of jumping per narration step. Overdamped so it settles cleanly on
+  //    the step's target and never overshoots. Reduced-motion → snaps. ──
+  const SEG = 12
+  const barMin = task.min ?? 0
+  const barMax = task.max ?? 1
+  const isDivT = task.badge.includes('÷')
+  const clampV = (x: number) => Math.max(barMin, Math.min(barMax, x))
+  const prefersReduced = useReducedMotion()
+  const mv = useMotionValue(value)
+  useEffect(() => {
+    const controls = animate(mv, value, prefersReduced ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => controls.stop()
+  }, [value, prefersReduced, mv])
+  // bar: saw marker glides to the shaded edge
+  const sawLeft = useTransform(mv, (x) => `${(Math.max(0, Math.min(SEG, x)) / SEG) * 100}%`)
+  // slide: fill width / needle / bubble all follow the same reading
+  const slidePct = useTransform(mv, (x) => `${((clampV(x) - barMin) / (barMax - barMin)) * 100}%`)
+  const slideRead = useTransform(mv, (x) => {
+    const vv = clampV(x)
+    return isDivT ? `${Math.round(vv)}` : (vv % 1 === 0 ? vv.toFixed(0) : (Math.round(vv * 100) % 10 === 0 ? vv.toFixed(1) : vv.toFixed(2)))
+  })
+
   const box = {
     position: 'relative' as const,
     width: 'clamp(240px, 74vw, 400px)',
@@ -183,7 +210,6 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
 
   if (task.mech === 'bar') {
     // ── PLANK: 12 parts, shade `value` of them from the left ──────────────────
-    const SEG = 12
     const shaded = Math.max(0, Math.min(SEG, Math.round(value)))
     const denom = task.badge.split('×')[1]?.trim() || '⅔'   // "½ × ⅔" → ⅔
     const boardOn = stepIndex >= 4 && stepIndex <= 5          // the "⅔ board = 8" beats
@@ -223,8 +249,8 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
             })}
           </div>
 
-          {/* saw / pencil marker gliding to the shaded edge */}
-          <div style={{ position: 'absolute', top: 'clamp(-22px,-3vh,-16px)', left: `${(shaded / SEG) * 100}%`, transform: 'translateX(-50%)', transition: `left 700ms ${GLIDE}`, fontSize: 'clamp(18px,3vw,26px)', filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.5))' }}>🪚</div>
+          {/* saw / pencil marker gliding to the shaded edge (spring) */}
+          <motion.div style={{ position: 'absolute', top: 'clamp(-22px,-3vh,-16px)', left: sawLeft, transform: 'translateX(-50%)', fontSize: 'clamp(18px,3vw,26px)', filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.5))' }}>🪚</motion.div>
 
           {/* count readout under the plank */}
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'clamp(12px,3vh,20px)' }}>
@@ -243,11 +269,10 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
   }
 
   // ── TAPE MEASURE (decimal ×, fraction ÷): marker glides to the reading ──────
-  const min = task.min ?? 0
-  const max = task.max ?? 1
-  const v = Math.max(min, Math.min(max, value))
-  const pct = ((v - min) / (max - min)) * 100
-  const isDiv = task.badge.includes('÷')
+  const min = barMin
+  const max = barMax
+  const v = clampV(value)
+  const isDiv = isDivT
   const readColor = resultPhase ? P.mint : P.gold
   // tick marks along the tape
   const ticks = isDiv ? max : 10   // ÷: whole units 0..max; ×: tenths 0..1
@@ -266,8 +291,8 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
         <div style={{ position: 'relative', width: '100%', height: 'clamp(40px,7.5vh,58px)', borderRadius: 7, border: `3px solid ${WOOD_EDGE}`, boxShadow: resultPhase ? `0 0 18px ${P.mint}` : '0 6px 16px rgba(0,0,0,0.45)', transition: `box-shadow 500ms ${GLIDE}`, overflow: 'hidden' }}>
           {/* the tape-measure illustration sits BEHIND the ticks, fill, brackets + needle */}
           <img src={`${ART}/cut_tape.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0 }} />
-          {/* filled portion (how far measured) glides */}
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: resultPhase ? 'rgba(127,214,160,0.34)' : 'rgba(255,198,92,0.30)', transition: `width 760ms ${GLIDE}, background 500ms ${GLIDE}` }} />
+          {/* filled portion (how far measured) glides (spring) */}
+          <motion.div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: slidePct, background: resultPhase ? 'rgba(127,214,160,0.34)' : 'rgba(255,198,92,0.30)', transition: `background 500ms ${GLIDE}` }} />
           {/* tick marks */}
           {Array.from({ length: ticks + 1 }).map((_, i) => {
             const tp = (i / ticks) * 100
@@ -287,12 +312,12 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
           })}
         </div>
 
-        {/* the red marker / needle glides to the reading */}
-        <div style={{ position: 'absolute', top: 'clamp(-8px,-1.5vh,-6px)', bottom: 'clamp(-8px,-1.5vh,-6px)', left: `${pct}%`, transform: 'translateX(-50%)', transition: `left 760ms ${GLIDE}`, width: 3, background: resultPhase ? P.mint : P.coral, borderRadius: 2, boxShadow: `0 0 8px ${resultPhase ? P.mint : P.coral}`, zIndex: 3 }} />
-        {/* marker value bubble rides above */}
-        <div style={{ position: 'absolute', top: 'clamp(-40px,-5.5vh,-30px)', left: `${pct}%`, transform: 'translateX(-50%)', transition: `left 760ms ${GLIDE}`, padding: '3px 12px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, color: readColor, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(14px,2.4vw,20px)', whiteSpace: 'nowrap', zIndex: 4 }}>
-          {isDiv ? Math.round(v) : v.toFixed(v % 1 === 0 ? 0 : (Math.round(v * 100) % 10 === 0 ? 1 : 2))}
-        </div>
+        {/* the red marker / needle glides to the reading (spring) */}
+        <motion.div style={{ position: 'absolute', top: 'clamp(-8px,-1.5vh,-6px)', bottom: 'clamp(-8px,-1.5vh,-6px)', left: slidePct, transform: 'translateX(-50%)', width: 3, background: resultPhase ? P.mint : P.coral, borderRadius: 2, boxShadow: `0 0 8px ${resultPhase ? P.mint : P.coral}`, zIndex: 3 }} />
+        {/* marker value bubble rides above, number ticks as it glides (spring) */}
+        <motion.div style={{ position: 'absolute', top: 'clamp(-40px,-5.5vh,-30px)', left: slidePct, transform: 'translateX(-50%)', padding: '3px 12px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, color: readColor, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(14px,2.4vw,20px)', whiteSpace: 'nowrap', zIndex: 4 }}>
+          {slideRead}
+        </motion.div>
 
         {/* endpoint labels */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'clamp(12px,3vh,18px)', color: P.mutedOnPaper, fontFamily: 'var(--font-numeric)', fontWeight: 700, fontSize: 'clamp(10px,1.4vw,13px)' }}>

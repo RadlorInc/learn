@@ -12,6 +12,8 @@
  * (config.guided) lets the kid add a simple one-to-two mix with Milo coaching
  * (not scored), then the scored loop.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, TwoTaps, type Mix, pick } from './parts/gameKit'
 
@@ -125,19 +127,40 @@ function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ende
   const pouringA = !resultPhase && a > 0 && b === 0
   const pouringB = !resultPhase && b > 0 && b < task.ratioB
 
-  // one small cup per part-slot in each stack; filled ones show, empty are faint
-  const cup = (idx: number, filled: boolean, hue: string) => (
-    <div key={idx} style={{
-      width: '100%', height: 'clamp(14px,3.1vh,22px)', borderRadius: 5,
-      background: filled ? hue : 'rgba(255,255,255,0.05)',
-      border: `1px solid ${filled ? 'rgba(255,255,255,0.35)' : P.glassBorder}`,
-      boxShadow: filled ? `inset 0 -3px 6px rgba(0,0,0,0.22)` : undefined,
-      opacity: filled ? 1 : 0.5, transition: `background ${GLIDE}, opacity ${GLIDE}`,
-    }} />
-  )
+  // ── Framer Motion: the blue (a) and yellow (b) part counts each ride a spring,
+  //    so the cups fill and the numerals tick CONTINUOUSLY instead of jumping one
+  //    step at a time. Overdamped so they never overshoot past the target part.
+  //    Reduced-motion → snaps straight to the value. ──
+  const reduce = useReducedMotion()
+  const av = useMotionValue(a)
+  const bv = useMotionValue(b)
+  useEffect(() => {
+    const c = animate(av, a, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => c.stop()
+  }, [a, reduce, av])
+  useEffect(() => {
+    const c = animate(bv, b, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => c.stop()
+  }, [b, reduce, bv])
+  const aText = useTransform(av, (x) => `${Math.round(x)}`)
+  const bText = useTransform(bv, (x) => `${Math.round(x)}`)
 
-  const Bucket = ({ hue, label, count, need, pouring, side }: {
-    hue: string; label: string; count: number; need: number; pouring: boolean; side: 'l' | 'r'
+  // one small cup per part-slot in each stack; its hue fill grows continuously as
+  // the count crosses this slot (fill fraction = clamp(count − idx, 0, 1))
+  const Cup = ({ mv, idx, hue }: { mv: MotionValue<number>; idx: number; hue: string }) => {
+    const fill = useTransform(mv, (x) => Math.max(0, Math.min(1, x - idx)))
+    return (
+      <div style={{
+        position: 'relative', width: '100%', height: 'clamp(14px,3.1vh,22px)', borderRadius: 5,
+        background: 'rgba(255,255,255,0.05)', border: `1px solid ${P.glassBorder}`, overflow: 'hidden',
+      }}>
+        <motion.div style={{ position: 'absolute', inset: 0, transformOrigin: 'bottom', scaleY: fill, background: hue, borderRadius: 4, boxShadow: 'inset 0 -3px 6px rgba(0,0,0,0.22)' }} />
+      </div>
+    )
+  }
+
+  const Bucket = ({ hue, label, countText, need, pouring, side }: {
+    hue: string; label: string; countText: MotionValue<string>; need: number; pouring: boolean; side: 'l' | 'r'
   }) => (
     <div style={{ position: 'absolute', top: '4%', [side === 'l' ? 'left' : 'right']: '7%', width: 'clamp(58px,15vw,84px)', textAlign: 'center' }}>
       {/* the illustrated paint bucket */}
@@ -147,8 +170,8 @@ function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ende
           filter: pouring ? `drop-shadow(0 0 16px ${hue}) drop-shadow(0 4px 8px rgba(0,0,0,0.45))` : 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
           transition: `filter ${GLIDE}`,
         }} />
-        {/* the count numeral overlaid on the paint */}
-        <div style={{ position: 'absolute', top: '38%', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: 'rgba(0,0,0,0.62)', fontSize: 'clamp(15px,2.6vw,22px)', textShadow: '0 1px 2px rgba(255,255,255,0.35)' }}>{count}</div>
+        {/* the count numeral overlaid on the paint (ticks with the spring) */}
+        <motion.div style={{ position: 'absolute', top: '38%', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: 'rgba(0,0,0,0.62)', fontSize: 'clamp(15px,2.6vw,22px)', textShadow: '0 1px 2px rgba(255,255,255,0.35)' }}>{countText}</motion.div>
       </div>
       <div style={{ marginTop: 5, fontWeight: 800, color: P.creamSoft, fontSize: 'clamp(9px,1.3vw,12px)', whiteSpace: 'nowrap' }}>{label}</div>
       <div style={{ marginTop: 1, fontFamily: 'var(--font-numeric)', fontWeight: 800, color: hue, fontSize: 'clamp(10px,1.4vw,13px)' }}>need {need}</div>
@@ -178,8 +201,8 @@ function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ende
       </div>
 
       {/* two paint buckets */}
-      <Bucket hue={HUE_A} label={task.labelA} count={a} need={task.ratioA} pouring={pouringA} side="l" />
-      <Bucket hue={HUE_B} label={task.labelB} count={b} need={task.ratioB} pouring={pouringB} side="r" />
+      <Bucket hue={HUE_A} label={task.labelA} countText={aText} need={task.ratioA} pouring={pouringA} side="l" />
+      <Bucket hue={HUE_B} label={task.labelB} countText={bText} need={task.ratioB} pouring={pouringB} side="r" />
 
       {/* falling drops */}
       {drop(HUE_A, 'l', pouringA)}
@@ -190,17 +213,17 @@ function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ende
         <div style={{ display: 'flex', gap: 'clamp(6px,1.6vw,12px)', alignItems: 'flex-end' }}>
           {/* colour A stack */}
           <div style={{ flex: task.ratioA, display: 'flex', flexDirection: 'column-reverse', gap: 3 }}>
-            {Array.from({ length: task.ratioA }, (_, i) => cup(i, i < a, HUE_A))}
+            {Array.from({ length: task.ratioA }, (_, i) => <Cup key={i} mv={av} idx={i} hue={HUE_A} />)}
           </div>
           {/* colour B stack */}
           <div style={{ flex: task.ratioB, display: 'flex', flexDirection: 'column-reverse', gap: 3 }}>
-            {Array.from({ length: task.ratioB }, (_, i) => cup(i, i < b, HUE_B))}
+            {Array.from({ length: task.ratioB }, (_, i) => <Cup key={i} mv={bv} idx={i} hue={HUE_B} />)}
           </div>
         </div>
-        {/* stack labels */}
+        {/* stack labels (tick with the spring) */}
         <div style={{ display: 'flex', gap: 'clamp(6px,1.6vw,12px)', marginTop: 5 }}>
-          <div style={{ flex: task.ratioA, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: HUE_A, fontSize: 'clamp(11px,1.6vw,15px)' }}>{a}</div>
-          <div style={{ flex: task.ratioB, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: HUE_B, fontSize: 'clamp(11px,1.6vw,15px)' }}>{b}</div>
+          <motion.div style={{ flex: task.ratioA, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: HUE_A, fontSize: 'clamp(11px,1.6vw,15px)' }}>{aText}</motion.div>
+          <motion.div style={{ flex: task.ratioB, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: HUE_B, fontSize: 'clamp(11px,1.6vw,15px)' }}>{bText}</motion.div>
         </div>
       </div>
 

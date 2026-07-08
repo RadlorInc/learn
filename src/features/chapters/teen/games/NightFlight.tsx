@@ -7,6 +7,8 @@
  * flipping a sign; midpoints as flying to the halfway point. No slides, no MCQ.
  * Shared adaptive engine underneath.
  */
+import { useEffect } from 'react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, PlotGrid, type XY, pick } from './parts/gameKit'
 
@@ -89,7 +91,6 @@ function makeTask(d: 1 | 2 | 3): Task {
 // and lands on the destination pin. Labels pop in with the running coordinate.
 // Driven purely by the walkthrough's per-step `value` ({x,y}) + step index.
 const SCENE_RANGE = 5 // grid spans −5..5 on each axis; worked example is (3, −2)
-const GLIDE = 'left 760ms cubic-bezier(.45,.05,.25,1), top 760ms cubic-bezier(.45,.05,.25,1)'
 const ART = '/assets/teen/objects'
 
 function DeliveryDroneScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
@@ -110,6 +111,29 @@ function DeliveryDroneScene({ palette: P, task, value, stepIndex, frameCount, en
 
   const ticks = Array.from({ length: 2 * R + 1 }, (_, i) => i - R)
 
+  // ── Framer Motion: the drone flies on springs (continuous 60fps, not a per-step
+  //    CSS jump). x and y are independent springs, so setting x first then y in the
+  //    narration steps naturally reads as "fly ACROSS, then up/down". Overdamped so
+  //    it never overshoots the target coordinate. Reduced-motion → snaps. ──
+  const reduce = useReducedMotion()
+  const mx = useMotionValue(cx)
+  const my = useMotionValue(cy)
+  useEffect(() => {
+    const c = animate(mx, cx, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => c.stop()
+  }, [cx, reduce, mx])
+  useEffect(() => {
+    const c = animate(my, cy, reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24, mass: 0.9 })
+    return () => c.stop()
+  }, [cy, reduce, my])
+  const droneLeft = useTransform(mx, (x) => `${px(x)}%`)
+  const droneTop = useTransform(my, (y) => `${py(y)}%`)
+  const trailLeft = useTransform(mx, (x) => `${px(Math.min(0, x))}%`)
+  const trailWidth = useTransform(mx, (x) => `${Math.abs(px(x) - px(0))}%`)
+  const vLeft = useTransform(mx, (x) => `${px(x)}%`)
+  const vTop = useTransform(my, (y) => `${py(Math.max(0, y))}%`)
+  const vHeight = useTransform(my, (y) => `${Math.abs(py(y) - py(0))}%`)
+
   return (
     <div style={{ position: 'relative', width: 'clamp(248px, 44vw, 372px)', height: 'clamp(248px, 44vw, 372px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
       <style>{'@keyframes nfHover{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 3px))}}@keyframes nfPin{0%{opacity:0;transform:translate(-50%,-88%) scale(.6)}100%{opacity:1;transform:translate(-50%,-100%) scale(1)}}@keyframes nfPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}@keyframes nfPulse{0%,100%{opacity:.5}50%{opacity:1}}'}</style>
@@ -129,11 +153,11 @@ function DeliveryDroneScene({ palette: P, task, value, stepIndex, frameCount, en
 
         {/* horizontal trail: base → x (lit as the drone flies across) */}
         {movedX && (
-          <div style={{ position: 'absolute', top: `${py(0)}%`, left: `${px(Math.min(0, cx))}%`, width: `${Math.abs(px(cx) - px(0))}%`, height: 4, marginTop: -2, borderRadius: 2, background: P.gold, boxShadow: `0 0 8px ${P.gold}`, transition: 'left 760ms cubic-bezier(.45,.05,.25,1), width 760ms cubic-bezier(.45,.05,.25,1)' }} />
+          <motion.div style={{ position: 'absolute', top: `${py(0)}%`, left: trailLeft, width: trailWidth, height: 4, marginTop: -2, borderRadius: 2, background: P.gold, boxShadow: `0 0 8px ${P.gold}` }} />
         )}
         {/* vertical trail: (x,0) → (x,y) (lit as the drone flies up/down) */}
         {movedY && (
-          <div style={{ position: 'absolute', left: `${px(cx)}%`, top: `${py(Math.max(0, cy))}%`, height: `${Math.abs(py(cy) - py(0))}%`, width: 4, marginLeft: -2, borderRadius: 2, background: P.coral, boxShadow: `0 0 8px ${P.coral}`, transition: 'left 760ms cubic-bezier(.45,.05,.25,1), top 760ms cubic-bezier(.45,.05,.25,1), height 760ms cubic-bezier(.45,.05,.25,1)' }} />
+          <motion.div style={{ position: 'absolute', left: vLeft, top: vTop, height: vHeight, width: 4, marginLeft: -2, borderRadius: 2, background: P.coral, boxShadow: `0 0 8px ${P.coral}` }} />
         )}
 
         {/* axis tick numbers along the x-axis (0 and the destination x light up) */}
@@ -149,20 +173,20 @@ function DeliveryDroneScene({ palette: P, task, value, stepIndex, frameCount, en
           <img src={`${ART}/drone_dropoff_pin.png`} alt="" style={{ display: 'block', width: 'clamp(18px,2.6vw,26px)', height: 'auto', filter: resultPhase ? `drop-shadow(0 0 10px ${P.mint})` : 'drop-shadow(0 2px 3px rgba(0,0,0,0.45))', animation: resultPhase ? undefined : 'nfPulse 1200ms ease-in-out infinite' }} />
         </div>
 
-        {/* the drone — glides across then down; hovers in place */}
-        <div style={{ position: 'absolute', left: `${px(cx)}%`, top: `${py(cy)}%`, transition: GLIDE, zIndex: 4 }}>
+        {/* the drone — glides across then down on springs; hovers in place */}
+        <motion.div style={{ position: 'absolute', left: droneLeft, top: droneTop, zIndex: 4 }}>
           <div style={{ position: 'absolute', left: 0, top: 0, transform: 'translate(-50%,-50%)', animation: 'nfHover 1400ms ease-in-out infinite' }}>
             {/* illustrated quadcopter — kept small so it never covers gridlines */}
             <img src={`${ART}/drone_quadcopter.png`} alt="" style={{ display: 'block', width: 'clamp(26px,4vw,36px)', height: 'auto', filter: resultPhase ? `drop-shadow(0 0 12px ${P.mint})` : 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))', transition: 'filter 400ms' }} />
           </div>
-        </div>
+        </motion.div>
 
-        {/* running coordinate label — pops beside the drone */}
-        <div style={{ position: 'absolute', left: `${px(cx)}%`, top: `${py(cy)}%`, transition: GLIDE, zIndex: 5 }}>
+        {/* running coordinate label — pops beside the drone, glides with it */}
+        <motion.div style={{ position: 'absolute', left: droneLeft, top: droneTop, zIndex: 5 }}>
           <div key={`${cx},${cy},${resultPhase}`} style={{ position: 'absolute', left: cx > R - 1.5 ? -14 : 20, top: cy < -R + 1.5 ? -34 : -8, transform: 'translate(-50%,-50%)', animation: 'nfPop 300ms ease', padding: '3px 9px', borderRadius: 999, background: resultPhase ? P.mint : P.glass, border: `1px solid ${resultPhase ? P.mint : P.glassBorder}`, color: resultPhase ? P.inkOnPaper : P.cream, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(12px,1.5vw,16px)', whiteSpace: 'nowrap' }}>
             ({cx}, {cy})
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* axis captions */}
