@@ -50,6 +50,17 @@ export interface BaseTask {
   prompt: string
   say: string
   work: string[]        // narrated 3-in-a-row reteach
+  // ── Structured question fields (question-clarity spec). When set, the chalkboard
+  //    renders three clear zones instead of one prose `prompt`: a short story line
+  //    (`context`), the math (the `badge`/`question`), and a single action chip
+  //    (`instruction`). Both optional & backward-compatible — a chapter that sets
+  //    neither keeps rendering `prompt` exactly as before. ──
+  /** One short plain-language line of story/setup. No math symbols, no UI verbs.
+   *  Omit entirely when the chapter has no real story (the math stands alone). */
+  context?: string
+  /** The single "what to do with the tool" action. Starts with a verb; shown as a
+   *  distinct chip under the math so it never blends into the story or the equation. */
+  instruction?: string
 }
 
 export interface InstrumentProps<V, T extends BaseTask> {
@@ -403,6 +414,8 @@ export function Game<V, T extends BaseTask>({
                 P={P}
                 cue="Solve it"
                 prompt={task.prompt || task.title}
+                context={task.context}
+                instruction={task.instruction}
                 expr={config.question ? config.question(task) : task.badge}
                 answer={sub === 'active' ? '?' : config.revealText(task)}
                 tone={sub === 'active' ? 'ask' : sub === 'sold' ? 'ok' : 'reveal'}
@@ -656,19 +669,20 @@ function ExplanationPanel({ P, overview, read, onDone }: {
   read: boolean
   onDone: () => void
 }) {
-  const words = useMemo(() => splitWords(overview.say), [overview.say])
-  const [hi, setHi] = useState(-1)
-  // Ref so a new onDone identity never restarts the read-along; it fires once when
+  // Ref so a new onDone identity never restarts the narration; it fires once when
   // the summary finishes (real speech OR the blocked-audio fallback), then the
   // baby-step walkthrough starts automatically.
   const doneRef = useRef(onDone)
   doneRef.current = onDone
   useEffect(() => {
-    setHi(-1)
     if (!read) return
-    const cancel = speakWithHighlight(overview.say, { onWord: setHi, onDone: () => doneRef.current() })
-    return () => { cancel(); setHi(-1) }
+    // Milo still SPEAKS the full plan (the audio is unchanged); we just no longer
+    // dump that whole paragraph on the board as text — the panel shows the concise
+    // problem + bullets instead. `onDone` still rolls the intro into the walkthrough.
+    const cancel = speakWithHighlight(overview.say, { onWord: () => {}, onDone: () => doneRef.current() })
+    return () => cancel()
   }, [overview.say, read])
+  const points = overview.points ?? []
   return (
     <div style={{
       width: '100%', maxHeight: '100%', boxSizing: 'border-box', overflow: 'hidden',
@@ -676,32 +690,23 @@ function ExplanationPanel({ P, overview, read, onDone }: {
       border: '4px solid #7a5230', borderRadius: 12,
       boxShadow: 'inset 0 0 26px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4)',
       padding: 'clamp(12px, 1.6vw, 20px) clamp(14px, 1.8vw, 24px)',
-      display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1.1vh, 14px)',
+      display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.3vh, 16px)',
     }}>
-      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1.05vw, 14px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold }}>Here&apos;s the plan</div>
-      <p style={{ margin: 0, fontSize: 'clamp(15px, 1.55vw, 21px)', fontWeight: 800, lineHeight: 1.35, color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
-      {/* Read-along: one span per word; the spoken word lights up so the kid can follow. */}
-      <p aria-label={overview.say} style={{ margin: 0, fontSize: 'clamp(14px, 1.4vw, 19px)', lineHeight: 1.6, color: '#dbe9d6' }}>
-        {words.map((w, i) => {
-          const lit = i === hi && /[A-Za-z0-9]/.test(w.word)
-          return (
-            <span
-              key={i}
-              aria-hidden
-              style={{
-                background: lit ? P.gold : 'transparent',
-                color: lit ? '#12241b' : 'inherit',
-                fontWeight: lit ? 800 : 400,
-                borderRadius: 6,
-                padding: '1px 3px',
-                boxDecorationBreak: 'clone',
-                WebkitBoxDecorationBreak: 'clone',
-                transition: 'background 120ms ease, color 120ms ease',
-              }}
-            >{w.word}{i < words.length - 1 ? ' ' : ''}</span>
-          )
-        })}
-      </p>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1.05vw, 14px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold }}>The plan</div>
+      {/* The question, in one concise line — the hero of the panel. */}
+      <p style={{ margin: 0, fontSize: 'clamp(16px, 1.7vw, 23px)', fontWeight: 800, lineHeight: 1.35, color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
+      {/* What we know / what we'll do — short, scannable bullets instead of a
+          paragraph of spoken text. Clarity over karaoke. */}
+      {points.length > 0 && (
+        <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)' }}>
+          {points.map((pt, i) => (
+            <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontSize: 'clamp(13px, 1.35vw, 18px)', lineHeight: 1.45, color: '#dbe9d6' }}>
+              <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em' }}>▸</span>
+              <span>{pt}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

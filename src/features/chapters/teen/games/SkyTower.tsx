@@ -30,24 +30,34 @@ const MIN = -20, MAX = 20
 
 const toneFor = (n: number): 'a' | 'b' => (n < 0 ? 'b' : 'a')
 
+// Question-clarity spec: each task fills three board zones — a short `context`
+// (the story, no math symbols / no UI verbs), the math (`badge`, shown big), and
+// one `instruction` chip (the action, starts with a verb). `prompt` is kept as a
+// plain fallback but the board reads from context/instruction.
 function addSub(): Task {
   const [a, b] = pick([[-3, 5], [4, -6], [-2, -3], [-7, 7], [5, -8], [2, -9], [-4, 3], [6, -4]])
   const ans = a + b
-  const move = b > 0 ? `up ${b}` : `down ${-b}`
+  const dir = b > 0 ? 'up' : 'down'
+  const n = Math.abs(b)
+  const floors = n === 1 ? 'floor' : 'floors'
   return {
-    title: 'One ride', badge: `${a} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`, tone: toneFor(ans),
-    prompt: `The lift is on floor ${a}. It goes ${move} floors. Move the car to where it stops.`,
-    say: `The lift is on floor ${signed(a)}. It goes ${b > 0 ? `up ${b}` : `down ${-b}`} floors. Move the car to where it stops.`,
+    title: 'One ride', badge: `${a} ${b < 0 ? '−' : '+'} ${n}`, tone: toneFor(ans),
+    context: `The lift is on floor ${a}, then rides ${dir} ${n} ${floors}.`,
+    instruction: 'Move the car to the floor it stops on.',
+    prompt: `The lift is on floor ${a} and rides ${dir} ${n} ${floors}.`,
+    say: `The lift is on floor ${signed(a)}. It rides ${dir} ${n} ${floors}. Move the car to where it stops.`,
     answer: ans, start: a,
-    work: [`Start at ${a}, go ${Math.abs(b)} ${b > 0 ? 'up' : 'down'}.`, `${a} ${b > 0 ? '+' : '−'} ${Math.abs(b)} = ${ans}.`],
+    work: [`Start at ${a}, go ${n} ${dir}.`, `${a} ${b > 0 ? '+' : '−'} ${n} = ${ans}.`],
   }
 }
 function mul(): Task {
   const [a, b] = pick([[-4, 3], [-5, -2], [6, -2], [-3, 4], [2, -7], [-6, -3]])
   const ans = a * b
   return {
+    // No real story here — the math stands alone (clarity rule #2: cut context).
     title: 'Repeat ride', badge: `${a} × ${b}`, tone: toneFor(ans),
-    prompt: `${a} × ${b} = ? Move the car to the floor it reaches.`,
+    instruction: 'Move the car to the floor it reaches.',
+    prompt: `${a} × ${b} = ?`,
     say: `${signed(a)} times ${signed(b)}. Move the car to the floor it reaches.`,
     answer: ans, start: 0,
     work: [`Same signs → up (positive), different signs → down (negative).`, `${a} × ${b} = ${ans}.`],
@@ -58,7 +68,8 @@ function div(): Task {
   const ans = a / b
   return {
     title: 'Split ride', badge: `${a} ÷ ${b}`, tone: toneFor(ans),
-    prompt: `${a} ÷ ${b} = ? Move the car to the floor it reaches.`,
+    instruction: 'Move the car to the floor it reaches.',
+    prompt: `${a} ÷ ${b} = ?`,
     say: `${signed(a)} divided by ${signed(b)}. Move the car to the floor it reaches.`,
     answer: ans, start: 0,
     work: [`Same signs → up (positive), different signs → down (negative).`, `${a} ÷ ${b} = ${ans}.`],
@@ -70,6 +81,8 @@ function chain(): Task {
   const expr = `${a} ${b < 0 ? '−' : '+'} ${Math.abs(b)} ${c < 0 ? '−' : '+'} ${Math.abs(c)}`
   return {
     title: 'Long ride', badge: expr, tone: toneFor(ans),
+    context: `The lift starts on floor ${a}, then rides ${b < 0 ? `down ${-b}` : `up ${b}`}, then ${c < 0 ? `down ${-c}` : `up ${c}`}.`,
+    instruction: 'Ride the car to where it ends up.',
     prompt: `Ride the lift: ${expr}.`,
     say: `Ride the lift. ${signed(a)}, then ${b < 0 ? `down ${-b}` : `up ${b}`}, then ${c < 0 ? `down ${-c}` : `up ${c}`}.`,
     answer: ans, start: a,
@@ -89,7 +102,9 @@ function makeTask(d: 1 | 2 | 3): Task {
 const DEMO_TASK: Task = { title: 'One ride', badge: '2 − 5', tone: 'b', answer: -3, start: 2, prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
   title: 'One ride', badge: '1 − 3', tone: 'b', answer: -2, start: 1,
-  prompt: 'The lift is on floor 1. It goes down 3 floors. Move the car to where it stops, then press GO ✓.',
+  context: 'The lift is on floor 1, then rides down 3 floors.',
+  instruction: 'Move the car to the floor it stops on, then press GO.',
+  prompt: 'The lift is on floor 1 and rides down 3 floors.',
   say: 'The lift is on floor one. It goes down three floors. Move the car below the ground to where it stops, then press go.',
   work: ['Start at 1, go 3 down.', '1 − 3 = −2.'],
 }
@@ -214,14 +229,14 @@ const CONFIG: GameConfig<number, Task> = {
     initial: 0,
     hand: 'dragV',
     steps: [
-      { say: 'This is the tower lift. Drag the car UP to add floors, and DOWN to subtract. Floors above the ground are positive, basements below are negative.', value: 0, hand: 'dragV' },
-      { say: 'Our ride is two minus five. Let us take it one floor at a time. First, the lift starts on floor two — that is two floors ABOVE the ground.', value: 2, hand: 'dragV', board: 'start: floor 2' },
-      { say: 'Now it goes DOWN five floors. We will count each one as the car drops. Down one — from floor two to floor one.', value: 1, hand: 'dragV', board: '2 − 5 …' },
-      { say: 'Down two — from floor one to floor zero. That zero is the GROUND floor. So far we have gone two floors down.', value: 0, hand: 'dragV', board: '2 down so far → ground' },
-      { say: 'But we still have three more floors to go. Now the car goes BELOW the ground, into the basements. Down three — into basement floor minus one.', value: -1, hand: 'dragV', board: 'below ground: −1' },
-      { say: 'Keep going. Down four — the car drops to basement floor minus two.', value: -2, hand: 'dragV', board: '−2' },
-      { say: 'And down five — the last floor. The car lands on basement floor minus three.', value: -3, hand: 'dragV', board: '−3' },
-      { say: 'It stopped on floor minus three — three floors below the ground. That is what two minus five means.', value: -3, board: '2 − 5 = −3' },
+      { say: 'This is the tower lift. Drag the car UP to add floors, and DOWN to subtract. Floors above the ground are positive; basements below are negative.', value: 0, hand: 'dragV' },
+      { say: 'Our ride is two minus five. The lift starts on floor two — two floors above the ground.', value: 2, hand: 'dragV', board: 'Start on floor 2' },
+      { say: 'Now it goes down five floors. Going down means we subtract. Down one — to floor one.', value: 1, hand: 'dragV', board: 'Going down 5 means subtract' },
+      { say: 'Down two — to floor zero, the ground floor. Two floors down so far.', value: 0, hand: 'dragV' },
+      { say: 'Three more to go, so the car drops below the ground. Down three — basement floor minus one.', value: -1, hand: 'dragV', board: 'Count past the ground: 1, 0, −1, −2, −3' },
+      { say: 'Down four — basement floor minus two.', value: -2, hand: 'dragV' },
+      { say: 'Down five — the car lands on basement floor minus three.', value: -3, hand: 'dragV' },
+      { say: 'It stopped three floors below the ground. So two minus five is minus three.', value: -3, board: '2 − 5 = −3' },
       { say: 'When the car is in place, press go. Now let’s try one together.', value: -3, hand: 'tap' },
     ],
   },
@@ -233,12 +248,12 @@ const CONFIG: GameConfig<number, Task> = {
   TutorialScene: SkyTowerScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re running the tower lift.</strong> Move the car up and down the shaft to log every ride — above the ground into the high floors, and below it into the basements.</>, ticket: { title: 'First ride', badge: '−3 + 5', tone: 'a' }, startLabel: 'Start your shift →' },
   overview: {
-    say: "Here is what we are figuring out: when a lift drops further than it can climb, it goes below the ground into the basements. We will ride the car from floor two, down five floors, and land underground — that is working out two minus five and getting a negative number.",
-    problem: <>Where does the lift stop? We&apos;ll ride from <strong>floor 2, then down 5 floors</strong> — and end up <strong>below the ground</strong>.</>,
+    say: "Here's the plan. The lift starts on floor two and rides down five floors — past the ground and into the basements. We're working out two minus five, and the answer will be a negative number.",
+    problem: <>Ride from <strong>floor 2</strong>, then <strong>down 5</strong> — where does the lift stop?</>,
     points: [
-      <>Floors above the ground are <strong>positive</strong>; basements below it are <strong>negative</strong>.</>,
-      <>We&apos;re working out <strong>2 − 5</strong> by dropping the car one floor at a time.</>,
-      <>Watch it cross the ground floor (zero) and keep going — that&apos;s where the answer turns <strong>negative</strong>.</>,
+      <>Above ground is <strong>positive</strong>, below ground is <strong>negative</strong>.</>,
+      <>We&apos;re working out <strong>2 − 5</strong>.</>,
+      <>Count down past zero — the answer goes <strong>negative</strong>.</>,
     ],
   },
   sig: (t) => t.badge,

@@ -576,11 +576,15 @@ export function HandCue({ P, kind, label }: { P: Palette; kind: HandKind; label?
 //    practice/guided (pinned top-left by GameShell). The expression sits big; a
 //    second line shows "= ?" while solving, then "= answer" (green on correct,
 //    warm on reveal). `expr` is a node so a chapter can highlight a portion. ──────
-export function QuestionBoard({ P, title, prompt, expr, answer, tone = 'ask', cue }: {
-  P: Palette; title?: string; prompt?: React.ReactNode; expr: React.ReactNode; answer?: React.ReactNode; tone?: 'ask' | 'reveal' | 'ok'; cue?: string
+export function QuestionBoard({ P, title, prompt, context, instruction, expr, answer, tone = 'ask', cue }: {
+  P: Palette; title?: string; prompt?: React.ReactNode; context?: React.ReactNode; instruction?: React.ReactNode; expr: React.ReactNode; answer?: React.ReactNode; tone?: 'ask' | 'reveal' | 'ok'; cue?: string
 }) {
   const ansColor = tone === 'ok' ? '#8ef0c2' : tone === 'reveal' ? '#ffb59c' : '#cfe0d8'
   const asking = tone === 'ask'
+  // Structured mode: when a chapter supplies `context`/`instruction`, the board reads
+  // as three clear zones (story → math → action). Otherwise fall back to the single
+  // prose `prompt` (unchanged for chapters not yet migrated to the clarity spec).
+  const structured = context != null || instruction != null
   return (
     <div style={{
       width: '100%', maxWidth: 'clamp(280px, 40vw, 460px)', boxSizing: 'border-box',
@@ -595,12 +599,23 @@ export function QuestionBoard({ P, title, prompt, expr, answer, tone = 'ask', cu
         <div style={{ background: P.gold, color: '#12241b', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(11px, 1vw, 14px)', letterSpacing: '0.14em', textTransform: 'uppercase', borderRadius: 999, padding: '3px 15px' }}>{cue}</div>
       )}
       {tone === 'ok' && <div style={{ color: '#8ef0c2', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(11px, 1vw, 14px)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Solved ✓</div>}
-      {/* The question WRITTEN OUT, so it reads on its own without the audio. */}
-      {prompt
-        ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(13px, 1.35vw, 19px)', fontWeight: 600, lineHeight: 1.35, color: '#e7f2e1', textAlign: 'center' }}>{prompt}</div>
-        : title ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(11px, 1vw, 15px)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bcd8c9' }}>{title}</div> : null}
+      {/* Zone 1 — the story, one short line. In structured mode this is `context`;
+          otherwise the legacy prose `prompt` (or the uppercase title as last resort). */}
+      {structured
+        ? (context ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(12px, 1.2vw, 16px)', fontWeight: 500, lineHeight: 1.4, color: '#bcd8c9', textAlign: 'center' }}>{context}</div> : null)
+        : prompt
+          ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(13px, 1.35vw, 19px)', fontWeight: 600, lineHeight: 1.35, color: '#e7f2e1', textAlign: 'center' }}>{prompt}</div>
+          : title ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(11px, 1vw, 15px)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bcd8c9' }}>{title}</div> : null}
+      {/* Zone 2 — the math, the hero of the board. */}
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.4)', lineHeight: 1.2, textAlign: 'center' }}>{expr}</div>
       {answer !== undefined && <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(22px, 2.8vw, 36px)', fontWeight: 800, color: ansColor, textShadow: '0 0 10px rgba(0,0,0,0.35)', lineHeight: 1.1 }}>= {answer}</div>}
+      {/* Zone 3 — the single action, in its own chip. Shown only while it's the
+          child's turn to act (hidden once the answer is revealed/solved). */}
+      {instruction && asking && (
+        <div style={{ marginTop: 'clamp(1px, 0.3vw, 4px)', background: '#bcd8c9', color: '#10231a', fontFamily: 'var(--font-body)', fontWeight: 650, fontSize: 'clamp(11px, 1.05vw, 15px)', lineHeight: 1.3, borderRadius: 8, padding: 'clamp(5px,0.6vw,8px) clamp(10px,1.2vw,15px)', textAlign: 'center', display: 'inline-flex', gap: 7, alignItems: 'baseline' }}>
+          <span style={{ color: P.goldDeep ?? '#7a5230', fontWeight: 800 }}>→</span>{instruction}
+        </div>
+      )}
     </div>
   )
 }
@@ -617,14 +632,25 @@ export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: stri
       background: 'linear-gradient(160deg, #21473c, #16302a)',
       border: '4px solid #7a5230', borderRadius: 12,
       boxShadow: 'inset 0 0 26px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4)',
-      padding: 'clamp(10px, 1.6vw, 22px) clamp(16px, 2vw, 30px)', display: 'flex', flexDirection: 'column', gap: 'clamp(3px, 0.7vw, 10px)', alignItems: 'center',
+      padding: 'clamp(10px, 1.6vw, 20px) clamp(14px, 1.8vw, 26px)', display: 'flex', flexDirection: 'column', gap: 'clamp(5px, 0.9vw, 12px)', alignItems: 'stretch',
     }}>
-      {lines.map((ln, k) => (
-        <div key={k} className={k === writingIndex ? 'mb-chalk mb-writing' : 'mb-chalk'}
-          style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(18px, 2.1vw, 31px)', fontWeight: 700, letterSpacing: '0.03em', color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.4)', lineHeight: 1.25, textAlign: 'center' }}>
-          {ln}
-        </div>
-      ))}
+      {/* A clear label so this reads as THE SOLVE — the steps to get the answer —
+          not a loose pile of chalk lines. */}
+      <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px, 0.95vw, 13px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold, textAlign: 'center', marginBottom: 'clamp(1px,0.3vw,4px)' }}>Solving it, step by step</div>
+      {/* Each step is NUMBERED and left-aligned — a readable list, not centred prose.
+          The current step still writes in with the chalk sweep. */}
+      {lines.map((ln, k) => {
+        const done = writingIndex < 0 || k < writingIndex
+        return (
+          <div key={k} style={{ display: 'grid', gridTemplateColumns: 'clamp(20px,2.2vw,26px) 1fr', gap: 'clamp(8px,1vw,13px)', alignItems: 'baseline', opacity: k === writingIndex || done ? 1 : 0.42 }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(10px,0.95vw,13px)', color: '#12241b', background: '#bcd8c9', width: 'clamp(20px,2.2vw,26px)', height: 'clamp(20px,2.2vw,26px)', borderRadius: 999, display: 'grid', placeItems: 'center', lineHeight: 1 }}>{k + 1}</span>
+            <span className={k === writingIndex ? 'mb-chalk mb-writing' : 'mb-chalk'}
+              style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(16px, 1.9vw, 26px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.4)', lineHeight: 1.3, textAlign: 'left' }}>
+              {ln}
+            </span>
+          </div>
+        )
+      })}
       <style>{`
         .mb-writing { animation: mbWrite 1.6s cubic-bezier(.36,0,.25,1) both; }
         @keyframes mbWrite {
