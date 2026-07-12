@@ -1,20 +1,28 @@
 'use client'
 /**
- * BuildSite — the Geometry & Measurement chapter as a PLAYABLE GAME.
- * World: a ROOM RENOVATION. The kid runs each job by DIALLING in the
- * measurement — floor area (tiles/carpet), skirting-board perimeter, box volume,
- * brace length (Pythagoras) and gable area — on a warm SlideValue and locking it in.
- * No slides, no MCQ. Shared adaptive engine underneath.
+ * BuildSite — the Geometry & Measurement chapter as a PLAYABLE GAME where the child
+ * SOLVES ON the illustration (a ROOM RENOVATION), never by recalling a formula and
+ * dialing the answer:
  *
- * Teaching is "I do → we do → you do": a step-by-step WALKTHROUGH (config.tutorial)
- * works a 6×4 floor area, dialling the value up strip by strip, then a GUIDED job
- * (config.guided) lets the kid measure a 3×2 floor with Milo coaching (not scored),
- * then the scored loop.
+ *   • AREA — lay unit tiles across the floor; the tiles you place ARE the area.
+ *   • PERIMETER — walk the skirting board around the edge; the segments you lay ARE
+ *     the perimeter.
+ *   • CIRCLE (in terms of π) — tile the SQUARE ON THE RADIUS (r × r → the r²π area),
+ *     or lay the DIAMETER across the pond (2r → the dπ edge).
+ *   • VOLUME — stack unit cubes layer by layer; the cubes you stack ARE the volume.
+ *   • PYTHAGORAS — build the SQUARE ON THE SLOPED SIDE out of the two smaller squares'
+ *     tiles; its side length is the answer (find the n whose n×n square matches).
+ *   • TRIANGLE (½·b·h) — a right triangle can't be tiled into whole unit squares, so
+ *     instead we tile the FULL b×h rectangle (an honest count) and then FOLD it in half
+ *     along the diagonal: the two triangles are identical, so one roof = half the tiles.
+ *     The ½ is PERFORMED (fold), not computed — and the child sees WHY area = ½·b·h.
+ *
+ * The measurement always EMERGES from the tiles — nothing is worked out in the head.
+ * No slides, no MCQ. Shared adaptive engine underneath (branches by task.kind).
  */
-import { useEffect } from 'react'
-import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
+import { useRef } from 'react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, SlideValue, pick, glideNumber } from './parts/gameKit'
+import { Palette, CommitBtn, Nudge, pick, glideNumber } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#241a12', nightBot: '#33251a',
@@ -25,235 +33,381 @@ const P: Palette = {
   glass: 'rgba(36,26,18,0.6)', glassBorder: 'rgba(255,244,232,0.22)',
 }
 
-interface Task extends BaseTask { answer: number }
-const MIN = 0, MAX = 60
+type Kind = 'fill' | 'border' | 'square' | 'tri'
+interface Task extends BaseTask {
+  kind: Kind; answer: number; suffix?: string
+  rows?: number; cols?: number; layers?: number    // fill / tri (area / circle / volume / triangle rect)
+  w?: number; h?: number                            // border room (perimeter)
+  targetArea?: number; legA?: number; legB?: number; subtract?: boolean // square (Pythagoras)
+  unit?: string                                     // what the count is (tiles / m …)
+}
+// fill/border → `fill` counts tiles/segments laid; square → `side` is the built length;
+// tri → `fill` tiles the rectangle, then `folded` halves it and `half` holds the answer.
+interface GV { fill: number; side: number; folded?: boolean; half?: number }
 
+// ── generators (math preserved; answers identical to the shipped version) ──
 function area(d: 1 | 2 | 3): Task {
-  const [w, h] = d === 1 ? pick([[4, 3], [5, 2]]) : pick([[6, 3]])
+  const [w, h] = d === 1 ? pick([[4, 3], [5, 2]]) : d === 3 ? pick([[7, 4], [6, 5]]) : pick([[6, 3]])
   const answer = w * h
   return {
-    title: 'Floor area', badge: `area ${w}×${h}`, tone: 'a',
-    prompt: `This room floor is ${w} by ${h} metres. Dial the floor AREA — that's how much carpet to buy.`,
-    say: `This room floor is ${w} by ${h} metres. Dial the floor area — that's how much carpet to buy.`,
+    kind: 'fill', rows: h, cols: w, title: 'Floor area', badge: `area ${w}×${h}`, tone: 'a', unit: 'm²',
+    context: `A room floor is ${w} by ${h} metres, ready for new tiles.`,
+    instruction: 'Lay tiles across the whole floor.',
+    prompt: `This floor is ${w} by ${h} metres. Lay tiles across it — the tiles you place are the AREA.`,
+    say: `This floor is ${w} by ${h} metres. Lay tiles across the whole floor. The tiles you place are the area.`,
     answer,
-    work: ['Floor area = width × height.', `${w} × ${h} = ${answer}.`],
+    work: ['Floor area = the tiles that cover it = length × width.', `${w} × ${h} = ${answer}.`],
   }
 }
 function perimeter(): Task {
-  const [w, h] = pick([[4, 3]])
+  const [w, h] = pick([[4, 3], [5, 3]])
   const answer = 2 * (w + h)
   return {
-    title: 'Skirting board', badge: `perim ${w}×${h}`, tone: 'a',
-    prompt: `This room is ${w} by ${h} metres. Dial the PERIMETER — the length of skirting board around the whole room.`,
-    say: `This room is ${w} by ${h} metres. Dial the perimeter, the length of skirting board around the whole room.`,
+    kind: 'border', w, h, title: 'Skirting board', badge: `perim ${w}×${h}`, tone: 'a', unit: 'm',
+    context: `A room is ${w} by ${h} metres and needs skirting board around the edge.`,
+    instruction: 'Lay skirting all the way around the edge.',
+    prompt: `This room is ${w} by ${h} metres. Lay skirting around the edge — the segments you lay are the PERIMETER.`,
+    say: `This room is ${w} by ${h} metres. Lay skirting all the way around the edge. The segments you lay are the perimeter.`,
     answer,
-    work: ['Perimeter = 2 × (width + height).', `2 × (${w} + ${h}) = ${answer}.`],
+    work: ['Perimeter = the edge all the way round = 2 × (width + height).', `2 × (${w} + ${h}) = ${answer}.`],
   }
 }
 function volume(): Task {
-  const [l, w, h] = Math.random() < 0.5 ? pick([[2, 3, 4]]) : pick([[3, 3, 3]])
+  const [l, w, h] = Math.random() < 0.5 ? [2, 3, 2] : [3, 2, 2]
   const answer = l * w * h
   return {
-    title: 'Storage box', badge: `vol ${l}×${w}×${h}`, tone: 'b',
-    prompt: `A storage box is ${l} × ${w} × ${h}. Dial the VOLUME.`,
-    say: `A storage box is ${l} by ${w} by ${h}. Dial the volume.`,
+    kind: 'fill', rows: w, cols: l, layers: h, title: 'Storage box', badge: `vol ${l}×${w}×${h}`, tone: 'b', unit: 'm³',
+    context: `A storage box is ${l} by ${w} by ${h} metres — ${h} layers of cubes.`,
+    instruction: 'Stack cubes to fill every layer.',
+    prompt: `This box is ${l} × ${w} × ${h}. Stack cubes to fill it — the cubes are the VOLUME.`,
+    say: `This box is ${l} by ${w} by ${h} metres. Fill every layer with cubes. The cubes you stack are the volume.`,
     answer,
-    work: ['Volume = length × width × height.', `${l} × ${w} × ${h} = ${answer}.`],
+    work: ['Volume = the cubes that fill it = length × width × height.', `${l} × ${w} × ${h} = ${answer}.`],
+  }
+}
+function circleArea(): Task {
+  const r = pick([2, 3, 4, 5])
+  const answer = r * r
+  return {
+    kind: 'fill', rows: r, cols: r, title: 'Round patio', badge: `circle r=${r}`, tone: 'a', suffix: 'π', unit: '',
+    context: `A round patio has radius ${r} m. Its area is π lots of the square on the radius.`,
+    instruction: 'Tile the r × r square on the radius.',
+    prompt: `A round patio has radius ${r} m. Tile the SQUARE ON THE RADIUS (${r} × ${r}) — that many π is the area.`,
+    say: `A round patio has radius ${r} metres. The area is pi times the square on the radius. Tile the ${r} by ${r} square.`,
+    answer,
+    work: ['Circle area = π × radius² = π × the square on the radius.', `${r}² = ${answer}, so the area is ${answer}π.`],
+  }
+}
+function circleCircumference(): Task {
+  const r = pick([2, 3, 4, 5, 6])
+  const d = 2 * r
+  return {
+    kind: 'fill', rows: 1, cols: d, title: 'Round pond', badge: `circle d=${d}`, tone: 'a', suffix: 'π', unit: '',
+    context: `A round pond has radius ${r} m, so the diameter is ${d} m. Its edge is π lots of the diameter.`,
+    instruction: 'Lay the diameter across the pond.',
+    prompt: `A round pond has diameter ${d} m. Lay the DIAMETER (${d} tiles) — that many π is the edge length.`,
+    say: `A round pond has radius ${r} metres, so its diameter is ${d}. The edge is pi times the diameter. Lay the ${d} tiles across.`,
+    answer: d,
+    work: ['Circumference = π × diameter.', `diameter = 2 × ${r} = ${d}, so the edge is ${d}π.`],
   }
 }
 function hypotenuse(): Task {
-  const [a, b] = Math.random() < 0.5 ? pick([[3, 4]]) : pick([[6, 8]])
+  const [a, b] = Math.random() < 0.5 ? [3, 4] : [6, 8]
   const answer = Math.round(Math.sqrt(a * a + b * b))
   return {
-    title: 'Wall brace', badge: `brace ${a},${b}`, tone: 'b',
-    prompt: `A diagonal brace fits a corner ${a} and ${b} metres. Dial the length of the sloped BRACE (the hypotenuse).`,
-    say: `A diagonal brace fits a corner ${a} and ${b} metres. Dial the length of the sloped brace, the hypotenuse.`,
+    kind: 'square', legA: a, legB: b, targetArea: a * a + b * b, title: 'Wall brace', badge: `brace ${a},${b}`, tone: 'b', unit: 'm',
+    context: `A diagonal brace crosses a corner ${a} m one way and ${b} m the other.`,
+    instruction: 'Build the square on the brace to match the two side squares.',
+    prompt: `A brace crosses a corner ${a} and ${b} m. Build the square on the sloped BRACE — its side is the length.`,
+    say: `A brace crosses a corner ${a} and ${b} metres. Build the square on the sloped brace so it matches the two side squares. Its side is the length.`,
     answer,
-    work: [`Pythagoras: brace² = ${a}² + ${b}².`, `√(${a * a} + ${b * b}) = ${answer}.`],
+    work: [`The square on the brace = the two side squares: ${a}² + ${b}² = ${a * a + b * b}.`, `Its side is √${a * a + b * b} = ${answer}.`],
   }
 }
-function triangle(): Task {
-  const [base, height] = pick([[6, 4]])
-  const answer = (base * height) / 2
+function missingLeg(): Task {
+  const [leg, hyp, other] = pick([[3, 5, 4], [4, 5, 3], [6, 10, 8], [8, 10, 6], [5, 13, 12]])
   return {
-    title: 'Attic gable', badge: `tri ${base}×${height}`, tone: 'b',
-    prompt: `An attic gable wall has base ${base} and height ${height}. Dial its AREA.`,
-    say: `An attic gable wall has base ${base} and height ${height}. Dial its area.`,
+    kind: 'square', legA: hyp, legB: leg, targetArea: hyp * hyp - leg * leg, subtract: true, title: 'Missing leg', badge: `leg? ${leg},${hyp}`, tone: 'b', unit: 'm',
+    context: `A right corner has a ${hyp} m sloped side and one ${leg} m side.`,
+    instruction: 'Build the square on the missing side.',
+    prompt: `A right corner has a ${hyp} m sloped side and one ${leg} m side. Build the square on the OTHER side — its side is the length.`,
+    say: `A right corner has a sloped side of ${hyp} metres and one side of ${leg}. Build the square on the missing side. Its side is the length.`,
+    answer: other,
+    work: [`The square on the missing side = big square − known square: ${hyp}² − ${leg}² = ${hyp * hyp - leg * leg}.`, `Its side is √${hyp * hyp - leg * leg} = ${other}.`],
+  }
+}
+
+// TRIANGLE (½·b·h): a right triangle won't tile into whole unit squares, so tile the
+// full b×h rectangle (honest count) then FOLD along the diagonal — one of the two equal
+// triangles is the area. Dims are chosen so the diagonal splits the cells exactly 50/50.
+function triangle(): Task {
+  const [b, h] = pick([[4, 3], [6, 4], [8, 3], [4, 5], [3, 4], [5, 4]])
+  const rect = b * h
+  const answer = rect / 2
+  return {
+    kind: 'tri', rows: h, cols: b, title: 'Roof panel', badge: `triangle ${b}×${h}`, tone: 'b', unit: 'm²',
+    context: `A triangular roof panel sits on a ${b} by ${h} metre rectangle.`,
+    instruction: 'Tile the rectangle, then fold it in half.',
+    prompt: `This roof is HALF of a ${b} by ${h} rectangle. Tile the rectangle, then fold along the diagonal — one half is the AREA.`,
+    say: `This triangular roof is half of a ${b} by ${h} metre rectangle. Tile the whole rectangle, then fold it in half along the diagonal. One half is the area.`,
     answer,
-    work: ['Triangle area = ½ × base × height.', `½ × ${base} × ${height} = ${answer}.`],
+    work: [`A triangle is half its rectangle: ${b} × ${h} = ${rect} tiles.`, `Fold in half: ${rect} ÷ 2 = ${answer}.`],
   }
 }
 
 function makeTask(d: 1 | 2 | 3): Task {
   if (d === 1) return pick([() => area(1), perimeter, () => area(1)])()
-  if (d === 2) return pick([volume, hypotenuse, () => area(2)])()
-  return pick([hypotenuse, volume, triangle])()
+  if (d === 2) return pick([circleArea, circleCircumference, volume, triangle])()
+  return pick([hypotenuse, missingLeg, triangle])()
 }
 
-// ── worked example for the walkthrough (6×4 floor area → 24) + guided order (3×2 → 6) ──
-const DEMO_TASK: Task = { title: 'Floor area', badge: 'area 6×4', tone: 'a', answer: 24, prompt: '', say: '', work: [] }
-const GUIDED_TASK: Task = {
-  title: 'Floor area', badge: 'area 3×2', tone: 'a', answer: 6,
-  prompt: 'This room floor is 3 by 2 metres. Work out the floor area, dial it, then press Order.',
-  say: 'This room floor is three by two metres. Floor area is length times width. Dial it, then press order.',
-  work: ['Floor area = width × height.', '3 × 2 = 6.'],
-}
-
-// ── Animated walkthrough scene — the storyboard, in motion (ILLUSTRATED) ──────
-// A cutaway ROOM floor plan dressed in generated illustrations (Nano Banana 2):
-// a bold-cartoon empty renovation-room backdrop, and a real terracotta floor TILE
-// image laid into each grid cell. The 6×4 floor is a grid of 24 unit tiles. As the
-// narration counts rows, tiles POP IN row by row (CSS transition on opacity/scale,
-// keyed to the step's `value` = tiles laid so far), the running count climbs, and
-// at the end the full floor glows mint under "6 × 4 = 24 m²". Unlaid cells keep the
-// faint code-drawn placeholder. The one tile image is reused across all 24 cells.
-// Driven purely by the walkthrough's per-step `value` + step index. No JS loops.
-const ROOM_W = 6, ROOM_H = 4, ROOM_TILES = ROOM_W * ROOM_H
-const ART = '/assets/teen/objects'
-const TILE_SPRING = { type: 'spring' as const, stiffness: 120, damping: 24, mass: 0.9 }
-
-// One floor tile. Its reveal (opacity + scale) is driven continuously off the
-// SHARED laid-tiles motion value: as the count springs up and sweeps past this
-// tile's index, it fades + pops in — so a whole row cascades in smoothly instead
-// of snapping. The discrete dressing (real-tile image, fresh-row wash, mint glow)
-// stays keyed to the settled `laid` count / phase.
-function Tile({ index, lv, laid, resultPhase, counting, rowsDone, P, reduce }: {
-  index: number; lv: MotionValue<number>; laid: number; resultPhase: boolean
-  counting: boolean; rowsDone: number; P: Palette; reduce: boolean
-}) {
-  const row = Math.floor(index / ROOM_W)
-  const shown = index < laid
-  const inFreshRow = counting && shown && row === rowsDone - 1
-  const t = useTransform(lv, [index, index + 1], [0, 1], { clamp: true })
-  const mOpacity = useTransform(t, (x) => 0.12 + 0.88 * x)
-  const mScale = useTransform(t, (x) => 0.6 + 0.4 * x)
+// ── shared job panel ──
+function JobPanel({ P, children, height }: { P: Palette; children: React.ReactNode; height?: string }) {
   return (
-    <motion.div style={{
-      position: 'relative',
-      borderRadius: 3,
-      overflow: 'hidden',
-      opacity: reduce ? (shown ? 1 : 0.12) : mOpacity,
-      scale: reduce ? (shown ? 1 : 0.6) : mScale,
-      background: shown ? 'transparent' : 'rgba(255,244,232,0.05)',
-      border: `1px solid ${shown ? 'rgba(0,0,0,0.28)' : P.glassBorder}`,
-      boxShadow: resultPhase && shown ? `0 0 8px ${P.mint}88` : 'none',
-      transition: 'background 500ms, box-shadow 500ms, border-color 500ms',
-    }}>
-      {shown && (
-        <>
-          {/* real terracotta floor tile fills the cell */}
-          <img src={`${ART}/room_floor_tile.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          {/* fresh-row highlight (warm wash) while counting; mint glow at the result */}
-          <div style={{ position: 'absolute', inset: 0, transition: 'background 500ms, box-shadow 500ms', background: resultPhase ? `${P.mint}55` : inFreshRow ? `${P.gold}44` : 'transparent', boxShadow: resultPhase ? `inset 0 0 6px ${P.mint}` : 'none' }} />
-        </>
-      )}
-    </motion.div>
+    <div style={{ width: 'clamp(268px, 50vw, 460px)', height, minHeight: height ? undefined : 'clamp(180px,28vh,260px)', boxSizing: 'border-box', borderRadius: 16, background: `linear-gradient(160deg, ${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,1.4vh,14px)', padding: 'clamp(14px,2.2vw,24px)' }}>
+      {children}
+    </div>
   )
 }
+const jobHead = (P: Palette): React.CSSProperties => ({ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: P.creamSoft, textAlign: 'center' })
+const countBig = (P: Palette, on: boolean): React.CSSProperties => ({ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(26px,4.2vw,44px)', lineHeight: 1, color: on ? P.mint : P.gold })
 
-function RoomRenoScene({ palette: P, value, stepIndex, frameCount, ended }: {
-  palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
+// ── FILL: lay unit tiles across the region (area / circle / volume). The child
+//    drag-paints the cells; the count of laid tiles IS the answer. ──
+function TileFill({ P, task, value, setValue, disabled, reveal, onCommit, scene }: {
+  P: Palette; task: Task; value: GV; setValue: (v: GV) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: GV) => void; scene?: boolean
 }) {
-  const laid = Math.max(0, Math.min(ROOM_TILES, Math.round(value)))   // tiles placed so far
-  const rowsDone = Math.floor(laid / ROOM_W)                          // completed rows (0..4)
-  const resultPhase = ended || stepIndex >= frameCount - 2            // last 2 beats: the answer
-  const intro = stepIndex === 0
-  const showDims = stepIndex >= 3                                     // once the 6×4 is stated
-  const counting = stepIndex >= 6 && !resultPhase                     // laying tiles row by row
-
-  // ── Framer Motion: one shared spring drives the tiles-laid count. Tiles reveal
-  //    off it (Tile subcomponent) and the running count ticks with it, gliding
-  //    continuously (60fps) instead of jumping per step. Overdamped + clamped so
-  //    the counter never overshoots past 24. Reduced-motion → snaps. ──
-  const reduce = useReducedMotion() ?? false
-  const lv = useMotionValue(laid)
-  useEffect(() => {
-    const controls = animate(lv, laid, reduce ? { duration: 0 } : TILE_SPRING)
-    return () => controls.stop()
-  }, [laid, reduce, lv])
-  const laidText = useTransform(lv, (x) => `${Math.max(0, Math.min(ROOM_TILES, Math.round(x)))}`)
-
+  const rows = task.rows!, cols = task.cols!, layers = task.layers ?? 1
+  const per = rows * cols
+  const total = per * layers
+  const painting = useRef(false)
+  const laid = value.fill
+  const fillCol = reveal || scene ? P.mint : P.gold
+  const cellPx = `clamp(16px, ${Math.max(5, 40 / cols)}vw, 46px)`
+  const setLaid = (n: number) => { if (!disabled && !scene) setValue({ ...value, fill: Math.max(0, Math.min(total, n)) }) }
+  const grid = (layer: number) => (
+    <div key={layer} onPointerUp={() => { painting.current = false }} onPointerLeave={() => { painting.current = false }}
+      style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, ${cellPx})`, gap: 3, padding: 6, borderRadius: 8, background: 'rgba(0,0,0,0.28)', border: `2px solid ${P.glassBorder}`, touchAction: 'none' }}>
+      {Array.from({ length: per }, (_, i) => {
+        const idx = layer * per + i
+        const on = idx < laid
+        return (
+          <div key={i}
+            onPointerDown={() => { if (disabled || scene) return; painting.current = true; setLaid(idx + 1) }}
+            onPointerEnter={() => { if (painting.current) setLaid(idx + 1) }}
+            style={{ width: cellPx, height: cellPx, borderRadius: 3, background: on ? `linear-gradient(${fillCol}, ${P.goldDeep})` : 'rgba(255,244,232,0.06)', border: `1px solid ${on ? P.goldDeep : 'rgba(255,244,232,0.18)'}`, cursor: disabled || scene ? 'default' : 'pointer', transition: 'background 90ms' }} />
+        )
+      })}
+    </div>
+  )
   return (
-    <div style={{ position: 'relative', width: 'clamp(232px, 44vw, 360px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: P.nightBot, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '18px 14px' }}>
-      <style>{'@keyframes rrPulse{0%,100%{opacity:.55}50%{opacity:1}}@keyframes rrPop{0%{opacity:0;transform:translateX(-50%) scale(.7)}100%{opacity:1;transform:translateX(-50%) scale(1)}}'}</style>
-
-      {/* illustrated empty-renovation-room backdrop + a soft dark scrim so the grid + labels read clearly */}
-      <img src={`${ART}/room_empty_reno.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(36,26,18,0.42), rgba(36,26,18,0.66))' }} />
-
-      {/* header — the job, then the running count */}
-      <div style={{ position: 'relative', zIndex: 2, fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px,1.3vw,14px)', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: resultPhase ? P.mint : P.gold, marginBottom: 10, transition: 'color 400ms', textAlign: 'center' }}>
-        {intro ? 'Room Reno · tile the floor' : resultPhase ? `6 × 4 = ${ROOM_TILES} m²` : counting ? <>laid: <motion.span>{laidText}</motion.span> tiles</> : 'the floor: 6 × 4'}
-      </div>
-
-      {/* the floor plan: a bordered room with a 6×4 tile grid */}
-      <div style={{ position: 'relative', zIndex: 2, padding: 'clamp(10px,2.2vw,18px)' }}>
-        {/* width label above */}
-        {showDims && (
-          <div style={{ position: 'absolute', top: 'clamp(-6px,-0.4vw,-2px)', left: '50%', transform: 'translateX(-50%)', color: P.coral, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(11px,1.4vw,15px)', whiteSpace: 'nowrap', animation: 'rrPop 300ms ease' }}>← 6 m →</div>
-        )}
-        {/* height label at left */}
-        {showDims && (
-          <div style={{ position: 'absolute', left: 'clamp(-30px,-3vw,-8px)', top: '50%', transform: 'translateY(-50%) rotate(-90deg)', transformOrigin: 'center', color: P.mint, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(11px,1.4vw,15px)', whiteSpace: 'nowrap' }}>← 4 m →</div>
-        )}
-
-        {/* room outline + tile grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${ROOM_W}, 1fr)`, gridTemplateRows: `repeat(${ROOM_H}, 1fr)`, gap: 'clamp(2px,0.5vw,4px)', width: 'clamp(180px,32vw,264px)', height: 'clamp(120px,22vw,176px)', padding: 'clamp(3px,0.7vw,6px)', borderRadius: 8, background: 'rgba(0,0,0,0.28)', border: `2px solid ${resultPhase ? P.mint : P.glassBorder}`, boxShadow: resultPhase ? `0 0 20px ${P.mint}66` : 'none', transition: 'border-color 500ms, box-shadow 500ms' }}>
-          {Array.from({ length: ROOM_TILES }).map((_, i) => (
-            <Tile key={i} index={i} lv={lv} laid={laid} resultPhase={resultPhase} counting={counting} rowsDone={rowsDone} P={P} reduce={reduce} />
-          ))}
-        </div>
-      </div>
-
-      {/* footer cue */}
-      <div style={{ position: 'relative', zIndex: 2, marginTop: 12, minHeight: 'clamp(20px,2.6vh,26px)', display: 'flex', alignItems: 'center' }}>
-        {intro && (
-          <div style={{ color: P.creamSoft, fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'clamp(11px,1.4vw,15px)' }}>area = length × width</div>
-        )}
-        {counting && (
-          <div style={{ padding: '4px 14px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, color: P.gold, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(11px,1.3vw,14px)', animation: 'rrPulse 900ms ease-in-out infinite' }}>
-            {rowsDone > 0 ? `${rowsDone} row${rowsDone === 1 ? '' : 's'} of 6 = ${laid}` : 'laying tiles…'}
-          </div>
-        )}
-        {resultPhase && (
-          <div style={{ color: P.mint, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(14px,1.8vw,20px)', textShadow: `0 0 14px ${P.mint}66` }}>{ROOM_TILES} m² of tiles ✓</div>
-        )}
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.4vw,16px)', width: '100%' }}>
+      <JobPanel P={P} height={scene ? 'clamp(300px,46vh,440px)' : undefined}>
+        <div style={jobHead(P)}>🏠 {task.badge}{layers > 1 ? ` · ${layers} layers` : ''}</div>
+        <div style={{ display: 'flex', gap: 'clamp(6px,1.2vw,12px)', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}>{Array.from({ length: layers }, (_, L) => grid(L))}</div>
+        <div style={countBig(P, laid === total)}>{laid}{task.suffix ?? ''} {task.unit}</div>
+        <div style={{ minHeight: '1.3em', fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,14px)', color: laid === total ? P.mint : P.creamSoft }}>{laid === total ? 'floor covered ✓' : `${laid} of ${total} laid`}</div>
+      </JobPanel>
+      {!scene && <CommitBtn P={P} label="ORDER ✓" disabled={disabled} onClick={() => onCommit(value)} />}
     </div>
   )
 }
 
-const CONFIG: GameConfig<number, Task> = {
+// ── BORDER: lay skirting on each edge segment around the room (perimeter). ──
+function BorderWalk({ P, task, value, setValue, disabled, reveal, onCommit, scene }: {
+  P: Palette; task: Task; value: GV; setValue: (v: GV) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: GV) => void; scene?: boolean
+}) {
+  const w = task.w!, h = task.h!
+  const total = 2 * (w + h)
+  const laid = value.fill
+  const col = reveal || scene ? P.mint : P.gold
+  const S = 220, pad = 26, cw = (S - 2 * pad) / w, ch = (S - 2 * pad) / h
+  // ordered boundary segments: top L→R, right T→B, bottom R→L, left B→T
+  const segs: { x1: number; y1: number; x2: number; y2: number }[] = []
+  for (let i = 0; i < w; i++) segs.push({ x1: pad + i * cw, y1: pad, x2: pad + (i + 1) * cw, y2: pad })
+  for (let i = 0; i < h; i++) segs.push({ x1: S - pad, y1: pad + i * ch, x2: S - pad, y2: pad + (i + 1) * ch })
+  for (let i = 0; i < w; i++) segs.push({ x1: S - pad - i * cw, y1: S - pad, x2: S - pad - (i + 1) * cw, y2: S - pad })
+  for (let i = 0; i < h; i++) segs.push({ x1: pad, y1: S - pad - i * ch, x2: pad, y2: S - pad - (i + 1) * ch })
+  const setLaid = (n: number) => { if (!disabled && !scene) setValue({ ...value, fill: Math.max(0, Math.min(total, n)) }) }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.4vw,16px)', width: '100%' }}>
+      <JobPanel P={P} height={scene ? 'clamp(300px,46vh,440px)' : undefined}>
+        <div style={jobHead(P)}>🏠 skirting · {w} × {h} room</div>
+        <svg viewBox={`0 0 ${S} ${S}`} style={{ width: 'min(70vw, 300px)', height: 'auto', touchAction: 'none' }}>
+          <rect x={pad} y={pad} width={S - 2 * pad} height={S - 2 * pad} fill="rgba(0,0,0,0.28)" stroke={P.glassBorder} strokeWidth={1} />
+          {segs.map((s, i) => {
+            const on = i < laid
+            return <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={on ? col : 'rgba(255,244,232,0.22)'} strokeWidth={on ? 7 : 4} strokeLinecap="round"
+              onPointerDown={() => setLaid(i + 1)} style={{ cursor: disabled || scene ? 'default' : 'pointer' }} />
+          })}
+        </svg>
+        <div style={countBig(P, laid === total)}>{laid} {task.unit}</div>
+        <div style={{ minHeight: '1.3em', fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,14px)', color: laid === total ? P.mint : P.creamSoft }}>{laid === total ? 'edge covered ✓' : `${laid} of ${total} laid · tap the next segment`}</div>
+      </JobPanel>
+      {!scene && <CommitBtn P={P} label="ORDER ✓" disabled={disabled} onClick={() => onCommit(value)} />}
+    </div>
+  )
+}
+
+// ── SQUARE: build the square on the sloped side to match the two smaller squares
+//    (Pythagoras). Set the side n; its area n² must equal the target area. ──
+function BuildSquare({ P, task, value, setValue, disabled, reveal, onCommit, scene }: {
+  P: Palette; task: Task; value: GV; setValue: (v: GV) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: GV) => void; scene?: boolean
+}) {
+  const n = value.side
+  const target = task.targetArea!
+  const built = n * n
+  const hit = built === target
+  const col = reveal || scene ? P.mint : hit ? P.mint : P.gold
+  const set = (nn: number) => { if (!disabled && !scene) setValue({ ...value, side: Math.max(0, Math.min(15, nn)) }) }
+  const cellPx = `clamp(9px, ${Math.max(3, 26 / Math.max(1, n))}vw, 22px)`
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.4vw,16px)', width: '100%' }}>
+      <JobPanel P={P} height={scene ? 'clamp(300px,46vh,440px)' : undefined}>
+        <div style={jobHead(P)}>🏠 square on the sloped side</div>
+        <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px,1.3vw,16px)', color: P.creamSoft }}>{task.subtract ? `${task.legA}² − ${task.legB}²` : `${task.legA}² + ${task.legB}²`} = {target}</div>
+        {/* the square the child is building */}
+        {n > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${n}, ${cellPx})`, gap: 2, padding: 5, borderRadius: 8, background: 'rgba(0,0,0,0.28)', border: `2px solid ${col}` }}>
+            {Array.from({ length: built }, (_, i) => <div key={i} style={{ width: cellPx, height: cellPx, borderRadius: 2, background: `linear-gradient(${col}, ${P.goldDeep})` }} />)}
+          </div>
+        ) : <div style={{ fontSize: 'clamp(10px,1.1vw,13px)', color: P.mutedOnPaper }}>set the side below</div>}
+        <div style={countBig(P, hit)}>{built} {hit ? '= ✓' : built < target ? '· too small' : '· too big'}</div>
+        <div style={{ minHeight: '1.3em', fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,14px)', color: hit ? P.mint : P.creamSoft }}>{hit ? `side = ${n} m ✓` : `match the area ${target}`}</div>
+      </JobPanel>
+      {!scene && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <Nudge P={P} label="−" disabled={disabled} onClick={() => set(n - 1)} />
+            <div style={{ minWidth: 120, textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(22px,2.4vw,32px)', fontWeight: 800, color: reveal ? P.mint : P.gold }}>side {n}</div>
+              <div style={{ fontSize: 'clamp(11px,1.1vw,14px)', color: P.creamSoft }}>metres</div>
+            </div>
+            <Nudge P={P} label="+" disabled={disabled} onClick={() => set(n + 1)} />
+          </div>
+          <CommitBtn P={P} label="ORDER ✓" disabled={disabled} onClick={() => onCommit(value)} />
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── TRIANGLE: tile the full b×h rectangle, then FOLD it in half along the diagonal.
+//    The two triangles are identical, so one roof = half the tiles = the area. The child
+//    lays every tile (honest count) then taps "fold in half" — the ½ is performed, not
+//    computed, and they see WHY a triangle is half its rectangle. ──
+function RoofFold({ P, task, value, setValue, disabled, reveal, onCommit, scene }: {
+  P: Palette; task: Task; value: GV; setValue: (v: GV) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: GV) => void; scene?: boolean
+}) {
+  const rows = task.rows!, cols = task.cols!
+  const total = rows * cols
+  const answer = total / 2
+  const painting = useRef(false)
+  const laid = value.fill
+  const folded = !!value.folded
+  const full = laid >= total
+  const cellPx = `clamp(16px, ${Math.max(5, 40 / cols)}vw, 46px)`
+  // bottom-left triangle (below the top-left→bottom-right diagonal) = the roof / answer half
+  const isRoof = (c: number, r: number) => (r + 0.5) * cols > (c + 0.5) * rows
+  const setLaid = (n: number) => { if (!disabled && !scene && !folded) setValue({ ...value, fill: Math.max(0, Math.min(total, n)) }) }
+  const doFold = () => { if (!disabled && !scene) setValue({ ...value, folded: true, half: answer }) }
+  const count = folded ? answer : laid
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.4vw,16px)', width: '100%' }}>
+      <JobPanel P={P} height={scene ? 'clamp(300px,46vh,440px)' : undefined}>
+        <div style={jobHead(P)}>🏠 {task.badge} · roof = half the rectangle</div>
+        <div style={{ position: 'relative', touchAction: 'none' }}
+          onPointerUp={() => { painting.current = false }} onPointerLeave={() => { painting.current = false }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, ${cellPx})`, gap: 3, padding: 6, borderRadius: 8, background: 'rgba(0,0,0,0.28)', border: `2px solid ${P.glassBorder}` }}>
+            {Array.from({ length: total }, (_, i) => {
+              const c = i % cols, r = Math.floor(i / cols)
+              const on = i < laid
+              const roof = isRoof(c, r)
+              let bg = 'rgba(255,244,232,0.06)', bd = 'rgba(255,244,232,0.18)', op = 1
+              if (folded) {
+                if (roof) { bg = `linear-gradient(${P.mint}, ${P.goldDeep})`; bd = P.mint }
+                else { op = 0.28 }
+              } else if (on) {
+                bg = `linear-gradient(${P.gold}, ${P.goldDeep})`; bd = P.goldDeep
+              }
+              return (
+                <div key={i}
+                  onPointerDown={() => { if (disabled || scene || folded) return; painting.current = true; setLaid(i + 1) }}
+                  onPointerEnter={() => { if (painting.current && !folded) setLaid(i + 1) }}
+                  style={{ width: cellPx, height: cellPx, borderRadius: 3, background: bg, border: `1px solid ${bd}`, opacity: op, cursor: disabled || scene || folded ? 'default' : 'pointer', transition: 'background 160ms, opacity 300ms' }} />
+              )
+            })}
+          </div>
+          {(full || folded) && (
+            <svg viewBox={`0 0 ${cols} ${rows}`} preserveAspectRatio="none" style={{ position: 'absolute', inset: 6, width: 'calc(100% - 12px)', height: 'calc(100% - 12px)', pointerEvents: 'none' }}>
+              <line x1={0} y1={0} x2={cols} y2={rows} stroke={folded ? P.mint : 'rgba(255,244,232,0.55)'} strokeWidth={folded ? 3 : 2} strokeDasharray={folded ? undefined : '6 5'} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+            </svg>
+          )}
+        </div>
+        <div style={countBig(P, folded)}>{count} {task.unit}</div>
+        <div style={{ minHeight: '1.3em', fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,14px)', color: folded ? P.mint : P.creamSoft }}>
+          {folded ? `two equal halves → one roof = ${answer} ✓` : full ? 'rectangle tiled — now fold it in half ▽' : `${laid} of ${total} tiles`}
+        </div>
+      </JobPanel>
+      {!scene && !disabled && (
+        folded
+          ? <CommitBtn P={P} label="ORDER ✓" onClick={() => onCommit(value)} />
+          : full
+            ? <CommitBtn P={P} label="Fold in half ▽" onClick={doFold} />
+            : <div style={{ fontSize: 'clamp(10px,1.1vw,13px)', color: P.mutedOnPaper }}>tile the whole rectangle first</div>
+      )}
+    </div>
+  )
+}
+
+const InstrumentFor = (p: { P: Palette; task: Task; value: GV; setValue: (v: GV) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: GV) => void; scene?: boolean }) =>
+  p.task.kind === 'fill' ? <TileFill {...p} /> : p.task.kind === 'border' ? <BorderWalk {...p} /> : p.task.kind === 'tri' ? <RoofFold {...p} /> : <BuildSquare {...p} />
+
+// ── worked example (6×4 floor area → 24) + guided (3×2 → 6) ──
+const DEMO_TASK: Task = { kind: 'fill', rows: 4, cols: 6, title: 'Floor area', badge: 'area 6×4', tone: 'a', answer: 24, unit: 'm²', context: 'A room floor is 6 by 4 metres.', instruction: 'Lay tiles across the whole floor.', prompt: '', say: '', work: [] }
+const GUIDED_TASK: Task = {
+  kind: 'fill', rows: 2, cols: 3, title: 'Floor area', badge: 'area 3×2', tone: 'a', answer: 6, unit: 'm²',
+  context: 'A room floor is 3 by 2 metres, ready for tiles.',
+  instruction: 'Lay tiles across the whole floor.',
+  prompt: 'This floor is 3 by 2 metres. Lay tiles across it — the tiles are the area.',
+  say: 'This floor is three by two metres. Lay tiles across the whole floor. The tiles you place are the area.',
+  work: ['Area = the tiles that cover it.', '3 × 2 = 6.'],
+}
+const DEMO_STATES: GV[] = [{ fill: 0, side: 0 }, { fill: 6, side: 0 }, { fill: 12, side: 0 }, { fill: 18, side: 0 }, { fill: 24, side: 0 }]
+
+const CONFIG: GameConfig<GV, Task> = {
   chapterId: 'geometryMeasurement',
   title: 'ROOM RENO',
   motif: '🏠',
   ticketLabel: 'job sheet',
   palette: P,
   makeTask,
-  initialValue: () => 0,
-  grade: (t, v) => Math.abs(v - t.answer) < 1e-6,
-  revealText: (t) => `${t.answer}`,
-  glide: (t, from, setValue, later) => glideNumber(from, t.answer, setValue, later),
-  Instrument: ({ value, setValue, disabled, reveal, palette, onCommit }) => (
-    <SlideValue P={palette} value={value} setValue={setValue} min={MIN} max={MAX} step={1} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="ORDER ✓" />
-  ),
+  initialValue: () => ({ fill: 0, side: 0 }),
+  grade: (t, v) => (t.kind === 'square' ? v.side === t.answer : t.kind === 'tri' ? v.half === t.answer : v.fill === t.answer),
+  revealText: (t) => `${t.answer}${t.suffix ?? ''}`,
+  glide: (t, from, setValue, later) => {
+    if (t.kind === 'square') { glideNumber(from.side, t.answer, (n) => setValue({ fill: 0, side: n }), later); return }
+    if (t.kind === 'tri') {
+      const total = t.rows! * t.cols!
+      glideNumber(from.fill, total, (n) => setValue({ fill: n, side: 0 }), later)
+      later(() => setValue({ fill: total, side: 0, folded: true, half: t.answer }), 2000)
+      return
+    }
+    glideNumber(from.fill, t.answer, (n) => setValue({ fill: n, side: 0 }), later)
+  },
+  Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) =>
+    <InstrumentFor P={palette} task={task} value={value} setValue={setValue} disabled={disabled} reveal={reveal} onCommit={onCommit} />,
   tutorial: {
     task: DEMO_TASK,
-    initial: 0,
+    initial: DEMO_STATES[0],
     hand: 'drag',
     steps: [
-      { say: "Time to renovate a room! Drag this dial to set a measurement, then order it.", value: 0, hand: 'drag' },
-      { say: "First job: we're tiling the floor, so we need its AREA — that's how much tile to buy.", value: 0, hand: 'drag', board: 'tiles: need the AREA' },
-      { say: "To find the area of a floor, we multiply its length by its width. Let's build it up slowly.", value: 0, board: 'area = length × width' },
-      { say: "This room is six metres long and four metres wide.", value: 0, board: 'floor: 6 long, 4 wide' },
-      { say: "Picture the floor covered in tiles. Along one edge, six tiles fit in a row.", value: 0, board: '6 tiles in a row' },
-      { say: "And the room is four metres wide, so there are four of those rows, one behind another.", value: 0, board: '4 rows of 6' },
-      { say: "Now count the tiles, row by row. One row is six.", value: 6, hand: 'drag', board: 'row 1: 6' },
-      { say: "Two rows: six and six more makes twelve. Watch the dial climb.", value: 12, hand: 'drag', board: 'rows 1–2: 12' },
-      { say: "Three rows: twelve and six is eighteen.", value: 18, hand: 'drag', board: 'rows 1–3: 18' },
-      { say: "Four rows: eighteen and six is twenty-four. Six, twelve, eighteen, twenty-four.", value: 24, hand: 'drag', board: 'rows 1–4: 24' },
-      { say: "So six times four is twenty-four. We need twenty-four square metres of tiles.", value: 24, hand: 'drag', board: '6 × 4 = 24 m²' },
-      { say: "When the number is right, press order to buy them. Now let's try one together.", value: 24, hand: 'tap' },
+      { say: "Time to renovate! First job: tile a floor. To find the AREA, we don't calculate — we lay tiles and count them. This floor is six metres long and four wide.", value: DEMO_STATES[0], hand: 'drag', board: 'floor: 6 long, 4 wide' },
+      { say: "Lay the first row — six tiles fit along the length.", value: DEMO_STATES[1], hand: 'drag', board: 'row 1: 6 tiles' },
+      { say: "Lay the second row — that's twelve tiles so far.", value: DEMO_STATES[2], hand: 'drag', board: 'rows 1–2: 12' },
+      { say: "Third row — eighteen.", value: DEMO_STATES[3], hand: 'drag', board: 'rows 1–3: 18' },
+      { say: "The last row fills the floor — twenty-four tiles. That's four rows of six.", value: DEMO_STATES[4], hand: 'drag', board: '6 × 4 = 24 tiles' },
+      { say: "The tiles cover twenty-four square metres — that IS the area. When it's covered, order them. Now let's try one together.", value: DEMO_STATES[4], hand: 'drag', board: 'area = 24 m²' },
     ],
   },
   guided: {
@@ -261,15 +415,15 @@ const CONFIG: GameConfig<number, Task> = {
     coach: 'Your turn — I will help.',
     hand: 'drag',
   },
-  TutorialScene: RoomRenoScene,
-  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re renovating a room.</strong> Work out each floor area, skirting length, volume and brace, then dial it in and order it.</>, ticket: { title: 'Floor area', badge: '4 × 3', tone: 'a' }, startLabel: 'Start the job →' },
+  TutorialScene: ({ palette, task, value }) => <InstrumentFor P={palette} task={task} value={value} setValue={() => {}} disabled onCommit={() => {}} scene />,
+  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re renovating a room.</strong> Tile the floors, lay the skirting, stack the storage cubes and build the braces — the tiles you place are the measurement.</>, ticket: { title: 'Floor area', badge: '4 × 3', tone: 'a' }, startLabel: 'Start the job →' },
   overview: {
-    say: "Here is what we are figuring out: we are tiling a room floor and need to know how much tile to buy. The floor is six metres long and four metres wide, so we will work out its area — six times four square metres.",
-    problem: <>How much tile covers the floor? We&apos;ll measure a room that&apos;s <strong>6 m by 4 m</strong> and find its <strong>AREA</strong>.</>,
+    say: "Here is what we are figuring out: we are tiling a room floor, and to find the area we don't calculate — we lay tiles and count them. The floor is six metres long and four wide, so we lay four rows of six tiles and the tiles that cover it are the area.",
+    problem: <>How many tiles cover a <strong>6 m by 4 m</strong> floor? That count <em>is</em> the <strong>area</strong>.</>,
     points: [
-      <>Floor <strong>area = length × width</strong> — that&apos;s how much tile it takes to cover it.</>,
-      <>We&apos;re working out <strong>6 × 4</strong> by counting the tiles row by row.</>,
-      <>The answer is in <strong>square metres (m²)</strong> — watch it land on <strong>24</strong>.</>,
+      <>Don&apos;t calculate — <strong>lay the tiles</strong> and count them.</>,
+      <>Four rows of six: <strong>6, 12, 18, 24</strong>.</>,
+      <>The tiles cover <strong>24 m²</strong> — that&apos;s the area.</>,
     ],
   },
   sig: (t) => t.badge,

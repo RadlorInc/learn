@@ -88,11 +88,15 @@ export function makeRound(d: 1 | 2 | 3): Round {
     const plus = Math.random() < 0.5
     // On subtraction, keep the result strictly positive (negatives are out of scope
     // at this tier, and a − b = 0 is a degenerate question): order the operands so
-    // a/b > c/d2, and if they're equal bump the larger fraction's numerator up
-    // (it stays a proper fraction since a < b, so a+1 ≤ b−1+1 = b).
+    // a/b > c/d2, and if they're equal break the tie while keeping BOTH proper —
+    // bump the larger fraction up only if it isn't already maximal (a = b−1), else
+    // nudge the smaller one down (c ≥ 2 is guaranteed in that case).
     if (!plus) {
       if (a * d2 < c * b) { [a, b, c, d2] = [c, d2, a, b] }
-      if (a * d2 === c * b) a = a + 1
+      if (a * d2 === c * b) {
+        if (a < b - 1) a = a + 1
+        else c = c - 1
+      }
     }
     const num = plus ? a * d2 + c * b : a * d2 - c * b
     const den = b * d2

@@ -26,45 +26,199 @@ const P: Palette = {
   glass: 'rgba(13,34,48,0.6)', glassBorder: 'rgba(234,250,255,0.22)',
 }
 
-interface Task extends BaseTask { p1: [number, number]; p2: [number, number]; answer: Line }
+// A single value type across the game: the dial tasks read {m,b}; the tap tasks
+// read `pick`. `pick` is optional so the tutorial's {m,b} step literals still fit.
+type LV = Line & { pick?: string }
 
-type Spec = { p1: [number, number]; p2: [number, number]; m: number; b: number }
+interface Task extends BaseTask {
+  kind?: Kind
+  // dial tasks (build the line)
+  p1?: [number, number]; p2?: [number, number]; answer?: Line
+  // isFn (tap): a sensor log to judge
+  rows?: { x: number; y: number }[]
+  // readGraph (tap): a line the app draws, read its rule
+  gline?: Line; choices?: string[]
+  // shared tap answer
+  answerPick?: string
+}
 
-const L1: Spec[] = [
-  { p1: [0, 1], p2: [1, 3], m: 2, b: 1 },
-  { p1: [0, 0], p2: [1, 2], m: 2, b: 0 },
-  { p1: [0, 2], p2: [1, 3], m: 1, b: 2 },
+// Each tier is a DIFFERENT linear demand, not just bigger numbers:
+//   'isFn'      — TAP: is this sensor log a steady tank (one level per minute)? = function or not.
+//   'rate'      — DIAL: empty tank (y = mx) — find just the fill rate (proportional).
+//   'full'      — DIAL: start + rate (y = mx + b) — the intercept enters.
+//   'drain'     — DIAL: a full line whose rate is NEGATIVE (draining).
+//   'start'     — DIAL: told the rate; reason the start from one reading (b never shown).
+//   'readGraph' — TAP: the app DRAWS a line; read its rule (graph → equation).
+type Kind = 'isFn' | 'rate' | 'full' | 'drain' | 'start' | 'readGraph'
+
+type DialSpec = { kind: 'rate' | 'full' | 'drain' | 'start'; p1: [number, number]; p2: [number, number]; m: number; b: number }
+type FnSpec = { kind: 'isFn'; rows: [number, number][]; fn: boolean }
+type GraphSpec = { kind: 'readGraph'; m: number; b: number }
+type Spec = DialSpec | FnSpec | GraphSpec
+
+const eqStr = (m: number, b: number): string => {
+  const mp = m === 1 ? 'x' : m === -1 ? '−x' : `${m < 0 ? '−' : ''}${Math.abs(m)}x`
+  return b === 0 ? `y = ${mp}` : `y = ${mp} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`
+}
+const shuffleArr = <T,>(a: T[]): T[] => [...a].sort(() => Math.random() - 0.5)
+
+const L1: Spec[] = [ // is-it-a-function (concept) + pure rate (y = mx) — the foundation
+  { kind: 'isFn', rows: [[0, 2], [1, 4], [2, 6], [3, 8]], fn: true },
+  { kind: 'isFn', rows: [[0, 1], [2, 4], [2, 7], [3, 9]], fn: false }, // minute 2 has TWO levels
+  { kind: 'isFn', rows: [[0, 0], [1, 3], [2, 6], [3, 9]], fn: true },
+  { kind: 'rate', p1: [0, 0], p2: [1, 2], m: 2, b: 0 },
+  { kind: 'rate', p1: [0, 0], p2: [2, 6], m: 3, b: 0 },
+  { kind: 'rate', p1: [0, 0], p2: [1, 1], m: 1, b: 0 },
 ]
-const L2: Spec[] = [
-  { p1: [0, -1], p2: [2, 3], m: 2, b: -1 },
-  { p1: [0, 4], p2: [1, 2], m: -2, b: 4 },
-  { p1: [0, 1], p2: [2, 5], m: 2, b: 1 },
+const L2: Spec[] = [ // start + rate (y = mx + b) — the intercept joins the rate
+  { kind: 'full', p1: [0, 1], p2: [1, 3], m: 2, b: 1 },
+  { kind: 'full', p1: [0, 2], p2: [1, 3], m: 1, b: 2 },
+  { kind: 'full', p1: [0, 1], p2: [2, 5], m: 2, b: 1 },
+  { kind: 'full', p1: [0, 3], p2: [1, 4], m: 1, b: 3 },
 ]
-const L3: Spec[] = [
-  { p1: [1, 1], p2: [3, 7], m: 3, b: -2 },
-  { p1: [0, 3], p2: [2, -1], m: -2, b: 3 },
-  { p1: [0, -2], p2: [1, 1], m: 3, b: -2 },
+const L3: Spec[] = [ // read a drawn line + interpret (negative rate, reason the start)
+  { kind: 'readGraph', m: 2, b: 1 },
+  { kind: 'readGraph', m: -1, b: 2 },
+  { kind: 'readGraph', m: 3, b: 0 },
+  { kind: 'drain', p1: [0, 4], p2: [1, 2], m: -2, b: 4 },
+  { kind: 'start', p1: [0, 1], p2: [2, 5], m: 2, b: 1 },
+  { kind: 'start', p1: [0, 1], p2: [1, 4], m: 3, b: 1 },
 ]
 
 function makeFrom(s: Spec): Task {
-  const { p1, p2, m, b } = s
+  if (s.kind === 'isFn') {
+    const rows = s.rows.map(([x, y]) => ({ x, y }))
+    const prompt = 'A sensor logged the tank over time. Is it a STEADY tank — exactly one level at each minute?'
+    return {
+      kind: 'isFn', title: 'Steady or glitch?', badge: 'one level per minute?', tone: 'a',
+      context: 'A sensor logged the tank.', instruction: 'Tap steady or glitch',
+      prompt, say: prompt, rows, answerPick: s.fn ? 'yes' : 'no',
+      work: s.fn
+        ? ['Every minute has exactly ONE level — that is a function.', 'One input, one output: a steady tank.']
+        : ['One minute shows TWO different levels — a steady tank cannot do that.', 'A time with two outputs is NOT a function.'],
+    }
+  }
+  if (s.kind === 'readGraph') {
+    const { m, b } = s
+    const correct = eqStr(m, b)
+    const set = new Set<string>([correct])
+    set.add(eqStr(-m, b))                                   // wrong slope sign
+    if (b !== 0) { set.add(eqStr(m, 0)); set.add(eqStr(m, -b)) } // dropped / wrong-sign intercept
+    else { set.add(eqStr(m, 1)); set.add(eqStr(m, -1)) }    // spurious intercept on a y=mx line
+    set.add(eqStr(m + (m > 0 ? 1 : -1), b))                 // slightly steeper
+    const distract = shuffleArr([...set].filter((x) => x !== correct)).slice(0, 3)
+    const choices = shuffleArr([correct, ...distract])
+    const prompt = "The sensor drew the tank's fill as this line. Which rule matches it?"
+    return {
+      kind: 'readGraph', title: 'Read the line', badge: 'which rule fits the line?', tone: (m < 0 ? 'b' : 'a'),
+      context: "The sensor drew the tank's line.", instruction: 'Tap the matching rule',
+      prompt, say: prompt, gline: { m, b }, choices, answerPick: correct,
+      work: [`Where the line crosses the middle is the START (b = ${b}).`, `It climbs ${m} for each step right — the RATE. So ${correct}.`],
+    }
+  }
+  // dial kinds: rate / full / drain / start
+  const { p1, p2, m, b, kind } = s
+  const [x1, y1] = p1, [x2, y2] = p2
+  const base = { kind, p1, p2, answer: { m, b }, tone: (m < 0 ? 'b' : 'a') as 'a' | 'b' }
+  if (kind === 'rate') {
+    const prompt = `The tank starts EMPTY. After ${x2} min it reads ${y2} litres. Set the start to 0, then the fill rate so the line runs through both readings.`
+    return {
+      ...base, title: 'Empty start', badge: `empty · (${x2},${y2})`, prompt, say: prompt,
+      context: 'The tank starts empty and fills at a steady rate.',
+      instruction: 'Set the start and fill rate to fit both readings.',
+      work: ['No starting water, so it is just rate × time — y = mx.', `Rate = ${y2} ÷ ${x2} = ${m} litres a minute; start 0.`],
+    }
+  }
+  if (kind === 'drain') {
+    const prompt = `This tank is DRAINING. It reads (${x1}, ${y1}) then (${x2}, ${y2}). Set the start level and the fill rate — the rate is negative — so the line hits both.`
+    return {
+      ...base, title: 'Draining', badge: `draining · (${x1},${y1})&(${x2},${y2})`, prompt, say: prompt,
+      context: 'This tank is draining at a steady rate.',
+      instruction: 'Set the start level and fill rate to fit both readings.',
+      work: ['Draining means the rate is NEGATIVE.', `Rate = (${y2} − ${y1}) ÷ (${x2} − ${x1}) = ${m}; start ${b}.`],
+    }
+  }
+  if (kind === 'start') {
+    const prompt = `The tank fills ${m} litres a minute. After ${x2} min it reads ${y2} litres. Set the rate to ${m}, then find the START level so the line fits.`
+    return {
+      ...base, title: 'Find the start', badge: `rate ${m} · reads (${x2},${y2})`, prompt, say: prompt,
+      context: 'The tank fills at a steady, known rate.',
+      instruction: 'Set the rate, then find the start level.',
+      work: [`The rate is given: ${m} litres a minute.`, `Start = level − rate × time = ${y2} − ${m}×${x2} = ${b}.`],
+    }
+  }
+  const prompt = `Match the tank's fill: it reads (${x1}, ${y1}) and (${x2}, ${y2}). Set the start level and fill rate so the water level over time hits both readings.`
   return {
-    title: 'Two readings',
-    badge: `(${p1[0]},${p1[1]}) & (${p2[0]},${p2[1]})`,
-    tone: m < 0 ? 'b' : 'a',
-    prompt: `Match the tank's fill: it reads (${p1[0]}, ${p1[1]}) and (${p2[0]}, ${p2[1]}). Set the start level and fill rate so the water level over time hits both readings.`,
-    say: `Match the tank's fill: it reads (${p1[0]}, ${p1[1]}) and (${p2[0]}, ${p2[1]}). Set the start level and fill rate so the water level over time hits both readings.`,
-    p1, p2, answer: { m, b },
-    work: [
-      'Fill rate = change in level ÷ change in time between the readings.',
-      `Fills ${m} litres a minute, starting at ${b}.`,
-    ],
+    ...base, title: 'Two readings', badge: `(${x1},${y1}) & (${x2},${y2})`, prompt, say: prompt,
+    context: 'A tank fills at a steady rate over time.',
+    instruction: 'Set the start level and fill rate to fit both readings.',
+    work: ['Fill rate = change in level ÷ change in time between the readings.', `Fills ${m} litres a minute, starting at ${b}.`],
   }
 }
 
 function makeTask(d: 1 | 2 | 3): Task {
   const pool = d === 1 ? L1 : d === 2 ? L2 : L3
   return makeFrom(pick(pool))
+}
+
+// ── Read-only surfaces for the TAP tasks ────────────────────────────────────
+/** A static line on a grid — the "graph" the child reads (no dials). */
+function MiniLineGraph({ P, m, b, range = 6 }: { P: Palette; m: number; b: number; range?: number }): ReactElement {
+  const S = 220, pad = 14, span = 2 * range, cell = (S - 2 * pad) / span
+  const toPx = (v: number) => pad + (v + range) * cell
+  const clampY = (y: number) => Math.max(-range - 2, Math.min(range + 2, y))
+  return (
+    <svg viewBox={`0 0 ${S} ${S}`} style={{ width: 'min(72vw, 32vh)', height: 'min(72vw, 32vh)', background: P.glass, border: `1px solid ${P.glassBorder}`, borderRadius: 12 }}>
+      {Array.from({ length: span + 1 }, (_, i) => (
+        <g key={i}>
+          <line x1={pad + i * cell} y1={pad} x2={pad + i * cell} y2={S - pad} stroke={P.glassBorder} strokeWidth={i === range ? 1.6 : 0.5} />
+          <line x1={pad} y1={pad + i * cell} x2={S - pad} y2={pad + i * cell} stroke={P.glassBorder} strokeWidth={i === range ? 1.6 : 0.5} />
+        </g>
+      ))}
+      <line x1={toPx(-range)} y1={S - toPx(clampY(m * -range + b))} x2={toPx(range)} y2={S - toPx(clampY(m * range + b))} stroke={P.gold} strokeWidth={3} strokeLinecap="round" />
+      <circle cx={toPx(0)} cy={S - toPx(clampY(b))} r={5} fill={P.gold} stroke="#fff" strokeWidth={1.4} />
+    </svg>
+  )
+}
+
+/** A compact time/level readings table — the "sensor log" the child judges. */
+function ReadingsTable({ P, rows }: { P: Palette; rows: { x: number; y: number }[] }): ReactElement {
+  const cell: React.CSSProperties = { border: `1px solid ${P.glassBorder}`, padding: '5px 12px', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontSize: 16, color: P.cream, fontVariantNumeric: 'tabular-nums', minWidth: 34 }
+  const head: React.CSSProperties = { ...cell, color: P.creamSoft, fontWeight: 700, background: P.glass }
+  return (
+    <table style={{ borderCollapse: 'collapse', background: P.glass, borderRadius: 8, overflow: 'hidden' }}>
+      <tbody>
+        <tr><td style={head}>min</td>{rows.map((r, i) => <td key={i} style={cell}>{r.x}</td>)}</tr>
+        <tr><td style={head}>litres</td>{rows.map((r, i) => <td key={i} style={cell}>{r.y}</td>)}</tr>
+      </tbody>
+    </table>
+  )
+}
+
+/** Tap-to-answer surface (a picture above + option buttons). Auto-commits on tap;
+ *  on reveal it highlights the correct option. The non-dial answer surface. */
+function TapChoices({ P, above, options, disabled, reveal, correct, onPick }: {
+  P: Palette; above?: ReactElement; options: { v: string; label: string }[]
+  disabled?: boolean; reveal?: boolean; correct?: string; onPick: (v: string) => void
+}): ReactElement {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%' }}>
+      {above}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 360 }}>
+        {options.map((o) => {
+          const hit = reveal && o.v === correct
+          return (
+            <button key={o.v} disabled={disabled} onClick={() => onPick(o.v)} style={{
+              padding: '12px 18px', borderRadius: 12, cursor: disabled ? 'default' : 'pointer',
+              fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(15px, 1.9vw, 20px)',
+              background: hit ? P.mint : P.glass, color: hit ? '#06231c' : P.cream,
+              border: `1.5px solid ${hit ? P.mint : P.glassBorder}`, transition: 'background 160ms, border-color 160ms',
+            }}>{o.label}</button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 // ── worked example for the walkthrough (y = 2x + 1) + guided order (y = x + 1) ──
@@ -75,6 +229,8 @@ const DEMO_TASK: Task = {
 const GUIDED_TASK: Task = {
   title: 'Two readings', badge: '(0,1) & (1,2)', tone: 'a',
   p1: [0, 1], p2: [1, 2], answer: { m: 1, b: 1 },
+  context: 'A tank fills at a steady rate over time.',
+  instruction: 'Set the start and rate, then press Set line.',
   prompt: 'Match the tank at (0,1) and (1,2): starts at 1 litre, rises 1 litre each minute. Set it, then press Set line.',
   say: 'Set the start level to one litre, then a fill rate of one — up one litre every minute. Then press set line.',
   work: ['Starts at 1 litre; it rises 1 litre each minute.', 'Fill rate 1, start 1.'],
@@ -208,7 +364,9 @@ function WaterTankScene({ palette: P, value, stepIndex, frameCount, ended }: {
   )
 }
 
-const CONFIG: GameConfig<Line, Task> = {
+const isTap = (t: Task) => t.kind === 'isFn' || t.kind === 'readGraph'
+
+const CONFIG: GameConfig<LV, Task> = {
   chapterId: 'linearRelationships',
   title: 'WATER TANK',
   motif: '💧',
@@ -216,12 +374,36 @@ const CONFIG: GameConfig<Line, Task> = {
   palette: P,
   makeTask,
   initialValue: () => ({ m: 1, b: 0 }),
-  grade: (t, v) => v.m === t.answer.m && v.b === t.answer.b,
-  revealText: (t) => `fill rate ${t.answer.m}, start ${t.answer.b}`,
-  glide: (t, _from, setValue) => setValue(t.answer),
-  Instrument: ({ value, setValue, disabled, reveal, palette, onCommit }) => (
-    <LineSetter P={palette} line={value} setLine={setValue} range={6} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="SET LINE ✓" />
-  ),
+  grade: (t, v) => (isTap(t) ? v.pick === t.answerPick : !!t.answer && v.m === t.answer.m && v.b === t.answer.b),
+  revealText: (t) => {
+    if (t.kind === 'isFn') return t.answerPick === 'yes' ? 'yes — one level each minute' : 'no — a minute had two levels'
+    if (t.kind === 'readGraph') return t.answerPick as string
+    return `fill rate ${t.answer!.m}, start ${t.answer!.b}`
+  },
+  glide: (t, _from, setValue) => {
+    if (isTap(t)) setValue({ m: 0, b: 0, pick: t.answerPick })
+    else if (t.answer) setValue({ m: t.answer.m, b: t.answer.b })
+  },
+  Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => {
+    if (task.kind === 'isFn')
+      return (
+        <TapChoices P={palette} disabled={disabled} reveal={reveal} correct={task.answerPick}
+          above={<ReadingsTable P={palette} rows={task.rows!} />}
+          options={[{ v: 'yes', label: 'Steady tank ✓' }, { v: 'no', label: 'Sensor glitch ✗' }]}
+          onPick={(p) => onCommit({ ...value, pick: p })} />
+      )
+    if (task.kind === 'readGraph')
+      return (
+        <TapChoices P={palette} disabled={disabled} reveal={reveal} correct={task.answerPick}
+          above={<MiniLineGraph P={palette} m={task.gline!.m} b={task.gline!.b} />}
+          options={task.choices!.map((c) => ({ v: c, label: c }))}
+          onPick={(p) => onCommit({ ...value, pick: p })} />
+      )
+    return (
+      <LineSetter P={palette} line={{ m: value.m, b: value.b }} setLine={(l) => setValue({ ...value, m: l.m, b: l.b })}
+        range={6} disabled={disabled} reveal={reveal} onCommit={(l) => onCommit({ ...value, m: l.m, b: l.b })} commitLabel="SET LINE ✓" />
+    )
+  },
   tutorial: {
     task: DEMO_TASK,
     initial: { m: 1, b: 0 },
@@ -259,7 +441,10 @@ const CONFIG: GameConfig<Line, Task> = {
       <>We&apos;ll check it: after 2 minutes the level is <strong>1 + 2×2 = 5 litres</strong>.</>,
     ],
   },
-  sig: (t) => t.badge,
+  sig: (t) =>
+    t.kind === 'isFn' ? `fn:${t.answerPick}:${(t.rows || []).map((r) => `${r.x},${r.y}`).join(';')}`
+      : t.kind === 'readGraph' ? `rg:${t.gline!.m},${t.gline!.b}`
+        : t.badge,
 }
 
 export default function CableCar(props: { childName: string; onFinish: (c: number, w: number, mastered?: boolean) => void; onExit: () => void }) {

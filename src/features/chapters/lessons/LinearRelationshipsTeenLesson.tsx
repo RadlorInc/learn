@@ -113,8 +113,15 @@ export function makeRound(d: 1 | 2 | 3): Round {
   // and swapped m/b — all classic "read the graph" slips.
   const distractors = new Set<string>()
   distractors.add(eqString(-m, b))           // wrong slope sign
-  distractors.add(eqString(m, 0))            // forgot the y-intercept
-  if (b !== 0) distractors.add(eqString(m, -b)) // wrong intercept sign
+  if (b !== 0) {
+    distractors.add(eqString(m, 0))          // forgot the y-intercept
+    distractors.add(eqString(m, -b))         // wrong intercept sign
+  } else {
+    // y = mx line: eqString(m,0) would equal the answer, so use spurious
+    // intercepts instead — keeps a full 4-option grid (no 3-option collapse).
+    distractors.add(eqString(m, 1))          // read a y-intercept that isn't there
+    distractors.add(eqString(m, -1))
+  }
   distractors.add(eqString(m + (m > 0 ? 1 : -1), b)) // slightly steeper
   const opts = [correct, ...[...distractors].filter((s) => s !== correct)].slice(0, 4)
   const choices: Choice[] = shuffle(opts).map((s) => ({ value: s, label: s }))

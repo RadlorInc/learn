@@ -26,15 +26,38 @@ interface Task extends BaseTask { answer: XY }
 function plot(level: 1 | 2): Task {
   const pts: XY[] =
     level === 1
-      ? [{ x: 3, y: 2 }, { x: -2, y: 3 }, { x: 4, y: -1 }, { x: 0, y: 3 }]
-      : [{ x: -3, y: -2 }, { x: -4, y: 2 }, { x: 2, y: -4 }, { x: 5, y: -3 }]
+      // L1: first quadrant only — the gentle "x across, y up" with no negatives yet.
+      ? [{ x: 3, y: 2 }, { x: 2, y: 4 }, { x: 4, y: 1 }, { x: 1, y: 3 }, { x: 5, y: 2 }]
+      // L2: negatives enter — points in every quadrant.
+      : [{ x: -3, y: -2 }, { x: -4, y: 2 }, { x: 2, y: -4 }, { x: 5, y: -3 }, { x: -2, y: -3 }]
   const a = pick(pts)
   return {
     title: 'Drop-off', badge: `(${a.x}, ${a.y})`, tone: a.x < 0 || a.y < 0 ? 'b' : 'a',
+    context: `A package is ready for delivery.`,
+    instruction: 'Tap the map to drop the package.',
     prompt: `Fly the drone to the drop-off at (${a.x}, ${a.y}). Tap the map.`,
     say: `Fly the drone to ${a.x}, ${a.y}. Tap the map.`,
     answer: a,
     work: [`Fly ${a.x} across first (x), then ${a.y} up or down (y).`, `That drops it at (${a.x}, ${a.y}).`],
+  }
+}
+
+// L2's new demand: APPLY a move to a starting point (translation), not just read a
+// pair off the prompt — a genuinely different operation on the same tap-the-map tool.
+function translate(): Task {
+  const start = pick([{ x: 1, y: 1 }, { x: -2, y: 1 }, { x: 2, y: -1 }, { x: 2, y: 2 }, { x: -1, y: -2 }])
+  const [dx, dy] = pick([[3, -2], [2, 3], [-3, 1], [-2, -2], [1, -3]])
+  const ans: XY = { x: start.x + dx, y: start.y + dy } // all stay within the ±6 grid
+  const hx = dx < 0 ? `${Math.abs(dx)} left` : `${dx} right`
+  const vy = dy < 0 ? `${Math.abs(dy)} down` : `${dy} up`
+  return {
+    title: 'Reroute', badge: `(${ans.x}, ${ans.y})`, tone: 'b',
+    context: `Air traffic reroutes the drone to a new drop-off.`,
+    instruction: 'Tap where the drone lands.',
+    prompt: `The drone is at (${start.x}, ${start.y}). Move it ${hx} and ${vy}, then tap where it lands.`,
+    say: `The drone is at ${start.x}, ${start.y}. Move it ${hx} and ${vy}, then tap where it lands.`,
+    answer: ans,
+    work: [`Change x by ${dx > 0 ? '+' : ''}${dx}, and y by ${dy > 0 ? '+' : ''}${dy}.`, `(${start.x}, ${start.y}) → (${ans.x}, ${ans.y}).`],
   }
 }
 
@@ -46,6 +69,8 @@ function transform(): Task {
     const ans: XY = { x: from.x, y: -from.y }
     return {
       title: 'Mirror drop-off', badge: `(${ans.x}, ${ans.y})`, tone: 'b',
+      context: `A matching drop-off waits across the map.`,
+      instruction: 'Tap the map to drop it.',
       prompt: `Reflect the drop-off (${from.x}, ${from.y}) across the x-axis, then deliver.`,
       say: `Reflect the drop-off ${from.x}, ${from.y} across the x-axis, then deliver it.`,
       answer: ans,
@@ -58,6 +83,8 @@ function transform(): Task {
     const ans: XY = { x: -from.x, y: from.y }
     return {
       title: 'Mirror drop-off', badge: `(${ans.x}, ${ans.y})`, tone: 'b',
+      context: `A matching drop-off waits across the map.`,
+      instruction: 'Tap the map to drop it.',
       prompt: `Reflect the drop-off (${from.x}, ${from.y}) across the y-axis, then deliver.`,
       say: `Reflect the drop-off ${from.x}, ${from.y} across the y-axis, then deliver it.`,
       answer: ans,
@@ -73,6 +100,8 @@ function transform(): Task {
   const ans: XY = { x: (pair.a.x + pair.b.x) / 2, y: (pair.a.y + pair.b.y) / 2 }
   return {
     title: 'Halfway drop-off', badge: `(${ans.x}, ${ans.y})`, tone: 'a',
+    context: `A rest stop sits between two delivery points.`,
+    instruction: 'Tap where the drone lands.',
     prompt: `Fly to the halfway point between (${pair.a.x}, ${pair.a.y}) and (${pair.b.x}, ${pair.b.y}).`,
     say: `Fly the drone to the halfway point between ${pair.a.x}, ${pair.a.y} and ${pair.b.x}, ${pair.b.y}.`,
     answer: ans,
@@ -81,7 +110,8 @@ function transform(): Task {
 }
 
 function makeTask(d: 1 | 2 | 3): Task {
-  return d === 1 ? plot(1) : d === 2 ? plot(2) : transform()
+  // L1 plot first-quadrant → L2 plot with negatives + apply a translation → L3 reflect/midpoint.
+  return d === 1 ? plot(1) : d === 2 ? pick([() => plot(2), translate])() : transform()
 }
 
 // ── Animated walkthrough scene — the storyboard, in motion ────────────────────

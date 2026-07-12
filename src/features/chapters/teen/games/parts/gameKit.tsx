@@ -795,4 +795,122 @@ export function PartsBuilder({
   )
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// EXPRESSION ENGINE — tokens the child COLLAPSES one operation at a time, so the
+// answer EMERGES from the illustration (order of operations / substitution) instead
+// of being worked out in the head and dialed. Shared by the Order-of-Operations and
+// Algebraic-Expressions chapters. Pure + additive (touches no existing export).
+// ══════════════════════════════════════════════════════════════════════════════
+export type ETok =
+  | { k: 'num'; v: number }
+  | { k: 'op'; op: '+' | '−' | '×' | '÷' }
+  | { k: 'pow'; base: number; exp: number }
+  | { k: 'lp' }
+  | { k: 'rp' }
+
+const SUPS = '⁰¹²³⁴⁵⁶⁷⁸⁹'
+const supToInt = (s: string) => parseInt([...s].map((c) => `${SUPS.indexOf(c)}`).join(''), 10)
+
+/** Parse a spaced expression string ("3 + 2 × 5", "(3 + 2) × 5", "2³ − 4"). Operands
+ *  are non-negative; − is the unicode minus used across these chapters. */
+export function parseExpr(s: string): ETok[] {
+  const out: ETok[] = []
+  for (const chunk of s.trim().split(/\s+/)) {
+    let c = chunk
+    while (c[0] === '(') { out.push({ k: 'lp' }); c = c.slice(1) }
+    let rp = 0
+    while (c[c.length - 1] === ')') { rp++; c = c.slice(0, -1) }
+    if (c === '+' || c === '−' || c === '×' || c === '÷') out.push({ k: 'op', op: c })
+    else if ([...c].some((ch) => SUPS.includes(ch))) {
+      const base = parseInt(c.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, ''), 10)
+      const exp = supToInt(c.replace(/[^⁰¹²³⁴⁵⁶⁷⁸⁹]/g, ''))
+      out.push({ k: 'pow', base, exp })
+    } else out.push({ k: 'num', v: parseInt(c, 10) })
+    for (let i = 0; i < rp; i++) out.push({ k: 'rp' })
+  }
+  return out
+}
+
+const applyOp = (a: number, op: string, b: number) => (op === '+' ? a + b : op === '−' ? a - b : op === '×' ? a * b : a / b)
+
+/** Indices that can be evaluated right now: a pow, or an op whose BOTH neighbours are
+ *  plain numbers — so an op locked inside brackets can't fire until the bracket
+ *  collapses, which is exactly what forces "brackets first". */
+export function evaluable(toks: ETok[]): Set<number> {
+  const s = new Set<number>()
+  toks.forEach((t, i) => {
+    if (t.k === 'pow') s.add(i)
+    else if (t.k === 'op' && toks[i - 1]?.k === 'num' && toks[i + 1]?.k === 'num') s.add(i)
+  })
+  return s
+}
+
+/** Collapse the token at i (pow or op) to its value, dropping a wrapping pair of
+ *  parens if the op is the sole thing inside them. */
+export function collapseAt(toks: ETok[], i: number): ETok[] {
+  const t = toks[i]
+  if (t.k === 'pow') return [...toks.slice(0, i), { k: 'num', v: Math.pow(t.base, t.exp) } as ETok, ...toks.slice(i + 1)]
+  if (t.k !== 'op') return toks
+  const a = (toks[i - 1] as { v: number }).v, b = (toks[i + 1] as { v: number }).v
+  const v = tidy(applyOp(a, t.op, b))
+  const wrapped = toks[i - 2]?.k === 'lp' && toks[i + 2]?.k === 'rp'
+  const lo = wrapped ? i - 2 : i - 1
+  const hi = wrapped ? i + 2 : i + 1
+  return [...toks.slice(0, lo), { k: 'num', v } as ETok, ...toks.slice(hi + 1)]
+}
+
+/** The index precedence says to evaluate NEXT (pow → bracketed → ×÷ → +−, leftmost).
+ *  Auto-solves on a wrong answer and spotlights the next step while teaching. */
+export function correctNextIndex(toks: ETok[]): number {
+  const idx = [...evaluable(toks)]
+  if (!idx.length) return -1
+  const pow = idx.filter((i) => toks[i].k === 'pow')
+  if (pow.length) return Math.min(...pow)
+  const bracketed = idx.filter((i) => toks[i - 2]?.k === 'lp' && toks[i + 2]?.k === 'rp')
+  if (bracketed.length) return Math.min(...bracketed)
+  const md = idx.filter((i) => { const t = toks[i]; return t.k === 'op' && (t.op === '×' || t.op === '÷') })
+  if (md.length) return Math.min(...md)
+  return Math.min(...idx)
+}
+
+/** Render an expression as chips. When `onTap` is given, evaluable ops/pow become
+ *  buttons — the child taps one to work that step out; `highlight` spotlights the
+ *  next step with a gold ring; a fully-collapsed single value shows big (mint on
+ *  reveal). Numbers and parens are plain, non-interactive chips. */
+export function ExprChips({ P, toks, onTap, highlight, reveal, size = 'md' }: {
+  P: Palette; toks: ETok[]; onTap?: (i: number) => void; highlight?: number; reveal?: boolean; size?: 'md' | 'lg'
+}) {
+  const ev = onTap ? evaluable(toks) : new Set<number>()
+  if (toks.length === 1 && toks[0].k === 'num') {
+    return <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(40px,8.4vw,74px)', lineHeight: 1, color: reveal ? P.mint : P.gold, textShadow: `0 0 22px ${(reveal ? '#3fa77c' : P.goldDeep)}66` }}>{tidy((toks[0] as { v: number }).v)}</div>
+  }
+  const numFs = size === 'lg' ? 'clamp(26px,4.8vw,46px)' : 'clamp(22px,3.8vw,36px)'
+  const numStyle: React.CSSProperties = { fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: numFs, lineHeight: 1, color: P.cream, padding: '4px 6px' }
+  const parenStyle: React.CSSProperties = { ...numStyle, color: P.gold }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 'clamp(3px,0.8vw,8px)', maxWidth: '100%' }}>
+      {toks.map((t, i) => {
+        if (t.k === 'num') return <span key={i} style={numStyle}>{tidy(t.v)}</span>
+        if (t.k === 'lp') return <span key={i} style={parenStyle}>(</span>
+        if (t.k === 'rp') return <span key={i} style={parenStyle}>)</span>
+        const label = t.k === 'pow' ? <span>{t.base}<sup style={{ fontSize: '0.6em' }}>{t.exp}</sup></span> : t.op
+        const hot = highlight === i
+        const tappable = ev.has(i)
+        if (!tappable) {
+          return <span key={i} style={{ ...numStyle, color: hot ? P.goldDeep : P.cream, opacity: t.k === 'op' ? 0.9 : 1 }}>{label}</span>
+        }
+        return (
+          <button key={i} type="button" onClick={() => onTap!(i)} className={hot ? 'gk-hot' : undefined}
+            style={{
+              fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: numFs, lineHeight: 1,
+              padding: '5px 12px', borderRadius: 10, cursor: 'pointer', transition: 'background 140ms, border-color 140ms, transform 120ms',
+              background: hot ? P.gold : P.glass, color: hot ? '#241c3a' : P.cream, border: `2px solid ${hot ? P.goldDeep : P.glassBorder}`,
+            }}>{label}</button>
+        )
+      })}
+      <style>{'.gk-hot{animation:gkHot 1.1s ease-in-out infinite}@keyframes gkHot{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}@media (prefers-reduced-motion:reduce){.gk-hot{animation:none}}'}</style>
+    </div>
+  )
+}
+
 export { Nudge }

@@ -38,40 +38,49 @@ interface Task extends BaseTask {
 const MAX = 12
 const PAIRS: [string, string][] = [['Blue', 'Yellow'], ['Red', 'White'], ['Crimson', 'Teal']]
 
-function fillA(): Task {
+function fillA(hard = false): Task {
   const [labelA, labelB] = pick(PAIRS)
-  const [ratioA, ratioB, expA] = pick<[number, number, number]>([[1, 2, 2], [2, 3, 4], [3, 2, 6], [1, 3, 3]])
+  const [ratioA, ratioB, expA] = pick<[number, number, number]>(
+    hard ? [[2, 5, 4], [3, 4, 6], [2, 3, 8], [4, 3, 8]] : [[1, 2, 2], [2, 3, 4], [3, 2, 6], [1, 3, 3]])
   const per = expA / ratioA
   const expB = per * ratioB
   return {
     title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'a',
+    context: `The ${labelA} is already poured — now the ${labelB} keeps the shade looking right.`,
+    instruction: `Add the ${labelB} to match.`,
     prompt: `Mix is ${labelA}:${labelB} = ${ratioA}:${ratioB}. You've added ${expA} ${labelA}. Add the ${labelB} to match.`,
     say: `The mix is ${labelA} to ${labelB}, ${ratioA} to ${ratioB}. You've already added ${expA} ${labelA}. Add the ${labelB} to keep the colour right.`,
     ratioA, ratioB, expA, expB, fixed: 'a', labelA, labelB,
     work: [`Each part is ${per}.`, `So ${labelB} = ${expB}.`],
   }
 }
-function fillB(): Task {
+function fillB(hard = false): Task {
   const [labelA, labelB] = pick(PAIRS)
-  const [ratioA, ratioB, expB] = pick<[number, number, number]>([[2, 3, 6], [3, 4, 8]])
+  const [ratioA, ratioB, expB] = pick<[number, number, number]>(
+    hard ? [[3, 4, 12], [2, 5, 10], [2, 3, 9]] : [[2, 3, 6], [3, 4, 8]])
   const per = expB / ratioB
   const expA = per * ratioA
   return {
     title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'b',
+    context: `The ${labelB} is already poured — now the ${labelA} keeps the shade looking right.`,
+    instruction: `Add the ${labelA} to match.`,
     prompt: `The mix is ${labelA}:${labelB} = ${ratioA}:${ratioB}. You've added ${expB} ${labelB}. Add the ${labelA} to match.`,
     say: `The mix is ${labelA} to ${labelB}, ${ratioA} to ${ratioB}. You've added ${expB} ${labelB}. Add the ${labelA} to match.`,
     ratioA, ratioB, expA, expB, fixed: 'b', labelA, labelB,
     work: [`Each part is ${per}.`, `So ${labelA} = ${expA}.`],
   }
 }
-function scaleTotal(): Task {
+function scaleTotal(hard = false): Task {
   const [labelA, labelB] = pick(PAIRS)
-  const [ratioA, ratioB, total] = pick<[number, number, number]>([[2, 3, 10], [1, 1, 8], [3, 2, 10], [1, 3, 8]])
+  const [ratioA, ratioB, total] = pick<[number, number, number]>(
+    hard ? [[1, 2, 12], [1, 3, 12], [3, 1, 12], [1, 5, 12]] : [[2, 3, 10], [1, 1, 8], [3, 2, 10], [1, 3, 8]])
   const k = total / (ratioA + ratioB)
   const expA = k * ratioA
   const expB = k * ratioB
   return {
     title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'a',
+    context: `Milo needs a full batch of this ${labelA} and ${labelB} paint, and the shade has to stay the same.`,
+    instruction: 'Add both colours to make the batch.',
     prompt: `Mix ${labelA}:${labelB} ${ratioA}:${ratioB} to make ${total} parts. Add BOTH colours.`,
     say: `Mix ${labelA} to ${labelB}, ${ratioA} to ${ratioB}, to make ${total} parts. Add both colours.`,
     ratioA, ratioB, expA, expB, labelA, labelB,
@@ -83,7 +92,7 @@ function makeTask(d: 1 | 2 | 3): Task {
   const pool: (() => Task)[] =
     d === 1 ? [fillA, fillA, fillA]
     : d === 2 ? [scaleTotal, fillB, fillA]
-    : [scaleTotal, fillB, fillA]
+    : [() => scaleTotal(true), () => fillB(true), () => fillA(true)]  // tier 3: harder seed pools (bigger totals, non-unit per-part)
   return pick(pool)()
 }
 
@@ -91,10 +100,14 @@ function makeTask(d: 1 | 2 | 3): Task {
 //    and the guided order (1 : 2 — add the yellow to 2) ──
 const DEMO_TASK: Task = {
   title: 'Blue & Yellow', badge: '2 : 3', tone: 'a', prompt: '', say: '', work: [],
+  context: 'Milo is mixing Blue and Yellow paint so the shade comes out just right.',
+  instruction: 'Add both colours to match the mix.',
   ratioA: 2, ratioB: 3, expA: 2, expB: 3, labelA: 'Blue', labelB: 'Yellow',
 }
 const GUIDED_TASK: Task = {
   title: 'Blue & Yellow', badge: '1 : 2', tone: 'a',
+  context: 'The Blue is already poured — now the Yellow keeps the shade looking right.',
+  instruction: 'Add the Yellow to match.',
   prompt: 'One Blue is in. Tap + on Yellow until it shows 2, then press MIX.',
   say: 'One blue is already in, and the mix is one to two. Tap the yellow up to two, then press mix.',
   ratioA: 1, ratioB: 2, expA: 1, expB: 2, fixed: 'a', labelA: 'Blue', labelB: 'Yellow',

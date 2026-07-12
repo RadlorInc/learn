@@ -48,6 +48,8 @@ function fromSpec(s: Spec): Task {
   const badge = `${s.leftExpr} = ${s.right}`
   return {
     title: 'Find x', badge, tone: s.right < 0 ? 'b' : 'a',
+    context: 'A mystery case sits on the check-in scale, balanced against the marked weights.',
+    instruction: 'Set the case weight, then press Weigh.',
     prompt: `Weigh the case: ${s.leftExpr} = ${s.right}. Work out x, set the dial, then press Weigh to check.`,
     say: `Weigh the case so that ${s.leftExpr} equals ${s.right} kilograms. Work out x, set the dial, then press weigh to check if it balances.`,
     m: s.m, c: s.c, right: s.right, answer: s.answer, leftExpr: s.leftExpr, min: s.min, max: s.max,
@@ -69,6 +71,8 @@ const DEMO_TASK: Task = {
 const GUIDED_TASK: Task = {
   title: 'Find x', badge: 'x + 1 = 4', tone: 'a',
   m: 1, c: 1, right: 4, answer: 3, leftExpr: 'x + 1', min: 0, max: 10,
+  context: 'A mystery case sits on the check-in scale, balanced against the marked weights.',
+  instruction: 'Set the case weight, then press Weigh.',
   prompt: 'Weigh x + 1 = 4. Work out x, set the dial, then press Weigh.',
   say: 'Weigh the case so x plus one equals four. Work out x, set the dial, then press weigh to check.',
   work: ['Find the x that makes x + 1 equal 4.', 'x = 3 makes both pans read 4.'],

@@ -11,10 +11,10 @@
  * works "half of two thirds" on the twelfths board, then a GUIDED cut (config.guided)
  * lets the kid mark "half of a half" with Milo coaching (not scored), then the scored loop.
  */
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, BarShade, SlideValue, pick, reduce, tidy, glideNumber } from './parts/gameKit'
+import { Palette, BarShade, Nudge, CommitBtn, pick, reduce, tidy, glideNumber } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#2a1c10', nightBot: '#3a2815',
@@ -26,11 +26,13 @@ const P: Palette = {
 }
 
 interface Task extends BaseTask {
-  mech: 'bar' | 'slide'
+  mech: 'bar' | 'slide' | 'area' | 'pieces'
   answer: number
   min?: number
   max?: number
   step?: number
+  da?: number; db?: number                 // area (decimal × decimal): the two factors
+  denom?: number; board?: number; piece?: number  // pieces (fraction ÷ fraction)
 }
 
 // ── part-of-a-part on a 12-part tray (answer = twelfths) ──────────────────────
@@ -47,6 +49,8 @@ function barPart(): Task {
   const { a, b, ans } = pick(BAR_PAIRS)
   return {
     mech: 'bar', title: 'Part of a part', badge: `${a} × ${b}`, tone: 'a',
+    context: `A plank measures ${b} of a metre, and the job calls for ${a} of that piece.`,
+    instruction: 'Shade the parts of the board.',
     prompt: `A board is ${b} of a metre. Take ${a} of it — mark your section of the 12 parts.`,
     say: `A board is ${b} of a metre. Take ${a} of that. Mark your section of the twelve parts.`,
     answer: ans,
@@ -54,34 +58,39 @@ function barPart(): Task {
   }
 }
 
-// ── decimal × decimal (slide 0..1) ────────────────────────────────────────────
+// ── decimal × decimal — SOLVE ON a 10×10 hundredths AREA MODEL: shade `a` of the
+//    columns and `b` of the rows; the OVERLAP squares ARE the product (÷100). The
+//    child never dials a decimal worked out in the head — the grid computes it. ──
 const DEC_PAIRS: [number, number][] = [[0.5, 0.4], [0.2, 0.3], [0.5, 0.6], [0.4, 0.5]]
 function decMul(): Task {
   const [a, b] = pick(DEC_PAIRS)
   const ans = tidy(a * b)
   return {
-    mech: 'slide', title: 'Measure it out', badge: `${a} × ${b}`, tone: 'b',
-    min: 0, max: 1, step: 0.01, answer: ans,
-    prompt: `${a} × ${b} = ? Slide the tape measure to the answer.`,
-    say: `${a} times ${b}. Slide the tape measure to the answer.`,
-    work: ['Multiply the decimals.', `${a} × ${b} = ${ans}.`],
+    mech: 'area', title: 'Measure it out', badge: `${a} × ${b}`, tone: 'b', answer: ans, da: a, db: b,
+    instruction: 'Shade the columns and rows — the overlap is the answer.',
+    prompt: `${a} × ${b} on the metre grid: shade ${a} across and ${b} down. The overlap squares are the answer.`,
+    say: `${a} times ${b}. Shade ${a} of the columns across and ${b} of the rows down. Where they overlap is the answer.`,
+    work: ['Shade a of the width and b of the height; the overlap is a × b.', `${a} × ${b} = ${ans}.`],
   }
 }
 
-// ── fraction ÷ fraction (slide 0..6, whole answer) ────────────────────────────
-const DIV_ITEMS: [string, string, number][] = [
-  ['¾', '¼', 3],
-  ['½', '¼', 2],
-  ['⅔', '⅓', 2],
-  ['1', '¼', 4],
+// ── fraction ÷ fraction — SOLVE ON the illustration by LAYING the small pieces into
+//    the board and COUNTING how many fit (¾ = ¼+¼+¼ → 3). No quotient dialled. Each
+//    piece is one unit of a `denom`-part metre; the board is the first `board` units. ──
+const DIV_ITEMS: { a: string; b: string; denom: number; board: number; piece: number; ans: number }[] = [
+  { a: '¾', b: '¼', denom: 4, board: 3, piece: 1, ans: 3 },
+  { a: '½', b: '¼', denom: 4, board: 2, piece: 1, ans: 2 },
+  { a: '⅔', b: '⅓', denom: 3, board: 2, piece: 1, ans: 2 },
+  { a: '1', b: '¼', denom: 4, board: 4, piece: 1, ans: 4 },
 ]
 function fracDiv(): Task {
-  const [a, b, ans] = pick(DIV_ITEMS)
+  const { a, b, denom, board, piece, ans } = pick(DIV_ITEMS)
   return {
-    mech: 'slide', title: 'How many fit?', badge: `${a} ÷ ${b}`, tone: 'a',
-    min: 0, max: 6, step: 1, answer: ans,
-    prompt: `How many ${b} pieces cut from ${a} of a board? ${a} ÷ ${b} = ? Slide to it.`,
-    say: `How many ${b} pieces can you cut from ${a} of a board? ${a} divided by ${b}. Slide to it.`,
+    mech: 'pieces', title: 'How many fit?', badge: `${a} ÷ ${b}`, tone: 'a', answer: ans, denom, board, piece,
+    context: `A board is ${a} of a metre long, and each piece must be ${b} of a metre.`,
+    instruction: 'Lay the pieces into the board and count them.',
+    prompt: `How many ${b} pieces cut from ${a} of a board? Lay ${b} pieces along the board — the count is the answer.`,
+    say: `How many ${b} pieces can you cut from ${a} of a board? Lay the pieces along the board and count how many fit.`,
     work: ['Dividing by a fraction asks how many pieces fit.', `${a} ÷ ${b} = ${ans}.`],
   }
 }
@@ -98,9 +107,9 @@ function makeTask(d: 1 | 2 | 3): Task {
 //    into baby steps so the concept builds up slowly. The tutorial plays them
 //    back-to-back (part-of-a-part on the board → decimal × on the tape → fraction
 //    ÷ on the tape), then the guided order. ──────────────────────────────────────
-const DEMO_BAR: Task = { mech: 'bar', title: 'Part of a part', badge: '½ × ⅔', tone: 'a', answer: 4, prompt: '', say: '', work: [] }
-const DEMO_DEC: Task = { mech: 'slide', min: 0, max: 1, step: 0.01, title: 'Measure it out', badge: '0.5 × 0.4', tone: 'b', answer: 0.2, prompt: '', say: '', work: [] }
-const DEMO_DIV: Task = { mech: 'slide', min: 0, max: 6, step: 1, title: 'How many fit?', badge: '¾ ÷ ¼', tone: 'a', answer: 3, prompt: '', say: '', work: [] }
+const DEMO_BAR: Task = { mech: 'bar', title: 'Part of a part', badge: '½ × ⅔', tone: 'a', answer: 4, context: 'The board is ⅔ of a metre, and this cut needs half of that piece.', instruction: 'Shade the parts of the board.', prompt: '', say: '', work: [] }
+const DEMO_DEC: Task = { mech: 'slide', min: 0, max: 1, step: 0.01, title: 'Measure it out', badge: '0.5 × 0.4', tone: 'b', answer: 0.2, instruction: 'Set the tape to the length.', prompt: '', say: '', work: [] }
+const DEMO_DIV: Task = { mech: 'slide', min: 0, max: 6, step: 1, title: 'How many fit?', badge: '¾ ÷ ¼', tone: 'a', answer: 3, context: 'A board is ¾ of a metre long, and each piece must be ¼ of a metre.', instruction: 'Set how many pieces fit.', prompt: '', say: '', work: [] }
 
 // Example 1 — a FRACTION of a fraction, built up on the 12-part board.
 const SCRIPT_BAR = {
@@ -144,6 +153,8 @@ const SCRIPT_DIV = {
 
 const GUIDED_TASK: Task = {
   mech: 'bar', title: 'Half of a half', badge: '½ × ½', tone: 'a', answer: 3,
+  context: 'The board is half a metre, and this cut needs half of that piece.',
+  instruction: 'Shade the parts of the board.',
   prompt: 'Take half of a half board — mark 3 of the 12 parts, then press CUT ✓.',
   say: 'Take half of a half board. Mark three of the twelve parts, then press cut.',
   work: ['Half of a half is a quarter.', 'A quarter of the 12 parts is 3 parts.'],
@@ -334,6 +345,111 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
   )
 }
 
+// ── panel shell shared by the two new solve-on-the-illustration instruments ──
+function benchPanel(P: Palette): React.CSSProperties {
+  return { width: 'clamp(248px, 50vw, 420px)', minHeight: 'clamp(170px,26vh,240px)', boxSizing: 'border-box', borderRadius: 16, background: `linear-gradient(160deg, ${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,1.4vh,14px)', padding: 'clamp(14px,2.2vw,22px)' }
+}
+const benchHead = (P: Palette): React.CSSProperties => ({ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: P.creamSoft, textAlign: 'center' })
+
+// ── DECIMAL × DECIMAL — a 10×10 metre grid. Shade `a` columns across and `b` rows
+//    down; the OVERLAP squares are a×b (÷100). The product EMERGES from the grid. ──
+function DecimalArea({ P, task, setValue, disabled, reveal, onCommit }: {
+  P: Palette; task: Task; setValue: (v: number) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: number) => void
+}) {
+  const da = Math.round((task.da ?? 0) * 10)   // columns for factor a (tenths)
+  const db = Math.round((task.db ?? 0) * 10)   // rows for factor b
+  const [ca, setCa] = useState(0)
+  const [rb, setRb] = useState(0)
+  useEffect(() => { setCa(0); setRb(0) }, [task])
+  useEffect(() => { if (reveal) { setCa(da); setRb(db) } }, [reveal, da, db])
+  const overlap = ca * rb
+  const product = tidy(overlap / 100)
+  const hit = Math.abs(product - task.answer) < 1e-6
+  const setAcross = (v: number) => { if (disabled) return; const n = Math.max(0, Math.min(10, v)); setCa(n); setValue(tidy(n * rb / 100)) }
+  const setDown = (v: number) => { if (disabled) return; const n = Math.max(0, Math.min(10, v)); setRb(n); setValue(tidy(ca * n / 100)) }
+  const cell = 'clamp(13px, 3vw, 24px)'
+  const overlapCol = reveal || hit ? P.mint : P.gold
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.4vw,16px)', width: '100%' }}>
+      <div style={benchPanel(P)}>
+        <div style={benchHead(P)}>🪚 {task.badge} · 1 metre grid</div>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(10, ${cell})`, gap: 1.5, padding: 5, borderRadius: 8, background: 'rgba(0,0,0,0.28)', border: `2px solid ${P.glassBorder}` }}>
+          {Array.from({ length: 100 }, (_, i) => {
+            const c = i % 10, r = Math.floor(i / 10)
+            const across = c < ca, down = r < rb, both = across && down
+            const bg = both ? `linear-gradient(${overlapCol}, ${P.goldDeep})`
+              : across ? 'rgba(255,198,92,0.20)'
+              : down ? 'rgba(127,214,160,0.16)'
+              : 'rgba(255,244,226,0.05)'
+            return <div key={i} style={{ width: cell, height: cell, borderRadius: 2, background: bg, border: `1px solid ${both ? P.goldDeep : 'rgba(255,244,226,0.14)'}` }} />
+          })}
+        </div>
+        <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,3vw,30px)', lineHeight: 1, color: hit ? P.mint : P.gold }}>
+          {tidy(ca / 10)} × {tidy(rb / 10)} = <span style={{ color: hit ? P.mint : P.creamSoft }}>{overlap}/100 = {product}</span>
+        </div>
+        <div style={{ minHeight: '1.2em', fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', color: hit ? P.mint : P.mutedOnPaper }}>{hit ? 'the overlap is the answer ✓' : 'shade a across, b down — read the overlap'}</div>
+      </div>
+      <div style={{ display: 'flex', gap: 'clamp(14px,3vw,30px)', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Nudge P={P} label="−" disabled={disabled} onClick={() => setAcross(ca - 1)} />
+          <div style={{ minWidth: 78, textAlign: 'center' }}><div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(16px,2vw,22px)', fontWeight: 800, color: P.gold }}>{tidy(ca / 10)}</div><div style={{ fontSize: 'clamp(9px,1vw,12px)', color: P.creamSoft }}>across</div></div>
+          <Nudge P={P} label="+" disabled={disabled} onClick={() => setAcross(ca + 1)} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Nudge P={P} label="−" disabled={disabled} onClick={() => setDown(rb - 1)} />
+          <div style={{ minWidth: 78, textAlign: 'center' }}><div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(16px,2vw,22px)', fontWeight: 800, color: P.mint }}>{tidy(rb / 10)}</div><div style={{ fontSize: 'clamp(9px,1vw,12px)', color: P.creamSoft }}>down</div></div>
+          <Nudge P={P} label="+" disabled={disabled} onClick={() => setDown(rb + 1)} />
+        </div>
+      </div>
+      <CommitBtn P={P} label="CUT ✓" disabled={disabled} onClick={() => onCommit(product)} />
+    </div>
+  )
+}
+
+// ── FRACTION ÷ FRACTION — lay the small pieces along the board and count how many
+//    fit. The board is the first `board` units of a `denom`-part metre; each piece is
+//    one unit. Overshoot past the board is flagged, so the count IS the quotient. ──
+function PieceTape({ P, task, value, setValue, disabled, reveal, onCommit }: {
+  P: Palette; task: Task; value: number; setValue: (v: number) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: number) => void
+}) {
+  const denom = task.denom!, board = task.board!
+  const laid = Math.max(0, Math.min(denom, Math.round(value)))
+  const fits = laid === board
+  const set = (v: number) => { if (!disabled) setValue(Math.max(0, Math.min(denom, v))) }
+  const col = reveal || fits ? P.mint : P.gold
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.4vw,16px)', width: '100%' }}>
+      <div style={benchPanel(P)}>
+        <div style={benchHead(P)}>🪚 {task.badge} · lay the pieces</div>
+        <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
+          <div style={{ display: 'flex', width: '100%', height: 'clamp(44px,8vh,64px)', borderRadius: 8, overflow: 'hidden', border: `3px solid #7a4f1e` }}>
+            {Array.from({ length: denom }, (_, i) => {
+              const inBoard = i < board
+              const on = i < laid
+              const over = on && !inBoard
+              const bg = on ? (over ? P.coral : col) : inBoard ? 'rgba(255,198,92,0.12)' : 'rgba(0,0,0,0.28)'
+              return <div key={i} style={{ flex: 1, background: bg, borderRight: i < denom - 1 ? '1.5px solid #7a4f1e' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(12px,1.8vw,17px)', color: P.inkOnPaper }}>{on ? i + 1 : ''}</div>
+            })}
+          </div>
+          {/* board bracket — marks where the board (a) ends */}
+          <div style={{ position: 'absolute', left: 0, width: `${(board / denom) * 100}%`, top: 'calc(100% + 4px)', height: 8, borderLeft: `2px solid ${P.creamSoft}`, borderRight: `2px solid ${P.creamSoft}`, borderBottom: `2px solid ${P.creamSoft}` }} />
+          <div style={{ position: 'absolute', left: `${(board / denom) * 50}%`, transform: 'translateX(-50%)', top: 'calc(100% + 14px)', color: P.creamSoft, fontSize: 'clamp(9px,1.1vw,12px)', fontWeight: 700, whiteSpace: 'nowrap' }}>the board = {task.badge.split('÷')[0].trim()}</div>
+        </div>
+        <div style={{ marginTop: 'clamp(14px,2.4vh,22px)', fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(18px,3vw,30px)', color: fits ? P.mint : laid > board ? P.coral : P.gold }}>
+          {laid} {laid === 1 ? 'piece' : 'pieces'}
+        </div>
+        <div style={{ minHeight: '1.2em', fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', color: fits ? P.mint : P.mutedOnPaper }}>{fits ? 'the pieces fill the board exactly ✓' : laid > board ? 'past the board — too many' : 'fill the board with pieces'}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Nudge P={P} label="−" disabled={disabled} onClick={() => set(laid - 1)} />
+        <div style={{ minWidth: 100, textAlign: 'center' }}><div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(20px,2.4vw,30px)', fontWeight: 800, color: reveal ? P.mint : P.gold }}>{laid}</div><div style={{ fontSize: 'clamp(10px,1.1vw,13px)', color: P.creamSoft }}>pieces</div></div>
+        <Nudge P={P} label="+" disabled={disabled} onClick={() => set(laid + 1)} />
+      </div>
+      <CommitBtn P={P} label="CUT ✓" disabled={disabled} onClick={() => onCommit(laid)} />
+    </div>
+  )
+}
+
 const CONFIG: GameConfig<number, Task> = {
   chapterId: 'rationalOps',
   title: 'CUTTING BENCH',
@@ -344,11 +460,14 @@ const CONFIG: GameConfig<number, Task> = {
   initialValue: () => 0,
   grade: (t, v) => t.mech === 'bar' ? v === t.answer : Math.abs(v - t.answer) < 1e-6,
   revealText: (t) => t.mech === 'bar' ? reduce(t.answer, 12) : `${t.answer}`,
-  glide: (t, from, setValue, later) => t.mech === 'bar' ? later(() => setValue(t.answer), 600) : glideNumber(from, t.answer, setValue, later),
+  glide: (t, from, setValue, later) =>
+    t.mech === 'pieces' ? glideNumber(from, t.answer, setValue, later) : later(() => setValue(t.answer), 600),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => (
     task.mech === 'bar'
       ? <BarShade P={palette} count={value} setCount={setValue} segments={12} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="CUT ✓" />
-      : <SlideValue P={palette} value={value} setValue={setValue} min={task.min!} max={task.max!} step={task.step!} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="CUT ✓" />
+      : task.mech === 'area'
+        ? <DecimalArea P={palette} task={task} setValue={setValue} disabled={disabled} reveal={reveal} onCommit={onCommit} />
+        : <PieceTape P={palette} task={task} value={value} setValue={setValue} disabled={disabled} reveal={reveal} onCommit={onCommit} />
   ),
   tutorial: [SCRIPT_BAR, SCRIPT_DEC, SCRIPT_DIV],
   TutorialScene: CuttingBenchScene,

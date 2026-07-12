@@ -73,7 +73,7 @@ export const SKILL_NODES: SkillNode[] = [
   { id: 'm.rationalOps',   band: '12-14', label: 'Fraction/decimal ×÷',      chapter: 'rationalOps',        prereqs: ['i.fractionOps', 'i.decimals', 'i.multFacts'] },
   { id: 'm.ratioProportion',band: '12-14', label: 'Ratios & proportions',    chapter: 'ratioProportion',    prereqs: ['i.fractionEquiv', 'i.division'] },
   { id: 'm.percentages',   band: '12-14', label: 'Percentages',              chapter: 'percentages',        prereqs: ['m.ratioProportion', 'i.decimals'] },
-  { id: 'm.exponentsRoots',band: '12-14', label: 'Exponents, roots, sci notation', chapter: 'exponentsRoots', prereqs: ['i.multFacts', 'i.factors'] },
+  { id: 'm.exponentsRoots',band: '12-14', label: 'Exponents, roots, sci notation', chapter: 'exponentsRoots', prereqs: ['i.multFacts', 'i.factors', 'i.decimals'] },
   { id: 'm.orderOps',      band: '12-14', label: 'Order of operations',      chapter: 'orderOfOperations',  prereqs: ['m.signedOps', 'm.exponentsRoots'] },
   { id: 'm.algExpressions',band: '12-14', label: 'Algebraic expressions',    chapter: 'algebraicExpressions', prereqs: ['m.orderOps', 'm.signedOps'] },
   { id: 'm.equationsIneq', band: '12-14', label: 'Equations & inequalities (1-var)', chapter: 'equationsInequalities', prereqs: ['m.algExpressions', 'm.signedOps'] },

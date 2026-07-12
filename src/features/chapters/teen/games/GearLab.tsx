@@ -3,9 +3,11 @@
  * GearLab — the Exponents & Roots chapter as a PLAYABLE GAME.
  * World: a TILE FACTORY where laying/stacking another layer MULTIPLIES a number
  * (powers: square tile patches n² and cube block stacks n³) and roots UNDO it
- * (given the area/number of tiles, find the side length). Powers are built by
- * cranking ×base up to the target (value starts at 1); roots are found by
- * sliding to the number that squares back. No slides of theory, no MCQ. Shared
+ * (given the number of tiles, find the side length). Powers are built by cranking
+ * ×base up to the target (value starts at 1); roots are SOLVED ON the illustration
+ * by BUILDING a square out of the n tiles — set the side and the patch shows too
+ * small / too big / fits, so the side that uses all n tiles is the answer (never a
+ * √ worked out in the head and dialled). No slides of theory, no MCQ. Shared
  * adaptive engine underneath.
  *
  * Teaching is "I do → we do → you do": a step-by-step WALKTHROUGH (config.tutorial)
@@ -15,7 +17,7 @@
 import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CrankGear, SlideValue, pick, glideNumber } from './parts/gameKit'
+import { Palette, CrankGear, Nudge, CommitBtn, pick, glideNumber } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#2a1712', nightBot: '#3a201a',
@@ -26,7 +28,7 @@ const P: Palette = {
   glass: 'rgba(42,23,18,0.6)', glassBorder: 'rgba(255,240,230,0.22)',
 }
 
-interface Task extends BaseTask { mech: 'crank' | 'slide'; answer: number; base?: number; min?: number; max?: number }
+interface Task extends BaseTask { mech: 'crank' | 'root'; answer: number; base?: number; n?: number }
 
 const SUPER: Record<number, string> = { 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶' }
 const sup = (e: number) => SUPER[e] ?? `^${e}`
@@ -48,10 +50,18 @@ const ROOT: Record<1 | 2 | 3, number[]> = {
 function powerCrank(d: 1 | 2 | 3): Task {
   const [base, exp] = pick(POW[d])
   const answer = Math.round(base ** exp)
+  // Story fits a square of tiles (n²) or a cube of blocks (n³); higher powers
+  // aren't a real square/cube shape, so no context — instruction only.
+  const context =
+    exp === 2 ? 'A square patch has the same number of tiles across as down.'
+    : exp === 3 ? 'A cube stacks as many block layers as there are blocks along each edge.'
+    : undefined
   return {
     mech: 'crank', answer, base,
     title: exp === 2 ? `${base} squared` : exp === 3 ? `${base} cubed` : `${base} to the ${exp}`,
     badge: `${base}${sup(exp)}`, tone: 'a',
+    ...(context ? { context } : {}),
+    instruction: 'Crank the gear to the power.',
     prompt: exp === 2
       ? `Lay a ${base}×${base} tile patch — ${base}${sup(exp)}. Turn to add each layer (×${base}).`
       : `Stack a ${base} block cube — ${base}${sup(exp)}. Turn to add each layer (×${base}).`,
@@ -66,10 +76,12 @@ function rootSlide(d: 1 | 2 | 3): Task {
   const answer = pick(ROOT[d])
   const n = answer * answer
   return {
-    mech: 'slide', answer, min: 0, max: 12,
+    mech: 'root', answer, n,
     title: `Side of ${n}`, badge: `√${n}`, tone: 'b',
-    prompt: `A square patch has ${n} tiles. How long is each side? Slide to the side length.`,
-    say: `A square patch has ${n} tiles. How long is each side? Slide to the number that squares back to ${n}.`,
+    context: `You have ${n} tiles to lay into one square patch.`,
+    instruction: 'Build the square that uses every tile.',
+    prompt: `A square patch has ${n} tiles. Build the square — set the side until it uses all ${n} tiles. That side is √${n}.`,
+    say: `You have ${n} tiles. Build them into one square patch. Set the side until the square uses every tile — that side length is the square root.`,
     work: [`Finding the side of a square patch undoes squaring it.`, `${answer} × ${answer} = ${n}, so a ${n}-tile square has sides of ${answer}.`],
   }
 }
@@ -86,6 +98,8 @@ function makeTask(d: 1 | 2 | 3): Task {
 const DEMO_TASK: Task = { mech: 'crank', answer: 9, base: 3, title: '3 squared', badge: '3²', tone: 'a', prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
   mech: 'crank', answer: 8, base: 2, title: '2 cubed', badge: '2³', tone: 'a',
+  context: 'A cube stacks as many block layers as there are blocks along each edge.',
+  instruction: 'Crank the gear to the power.',
   prompt: 'Stack a 2-block cube — 2³. Add three layers (×2 each turn), then press Build.',
   say: 'Stack a two-block cube. Add three layers — each layer doubles the blocks — then press build.',
   work: ['2³ means 2 multiplied 3 times.', '1 ×2 ×2 ×2 = 8 blocks.'],
@@ -137,7 +151,7 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
   palette: Palette; task: Task; value: number; stepIndex: number; frameCount: number; ended: boolean
 }) {
   const resultPhase = ended || stepIndex >= frameCount - 2
-  const isRoot = task.mech === 'slide'
+  const isRoot = task.mech === 'root'
   const base = task.base ?? (Math.round(Math.sqrt(task.answer)) || 3)
   const exp = task.answer === base * base ? 2 : task.answer === base ** 3 ? 3 : 2
   const isCube = !isRoot && exp === 3
@@ -250,6 +264,44 @@ const sceneBox = (P: Palette, w: string, h: string): React.CSSProperties => ({
   boxShadow: '0 12px 34px rgba(0,0,0,0.42)',
 })
 
+// ── ROOT: SOLVE √n ON the illustration by BUILDING a square out of the n tiles.
+//    Set the side; the patch shows side² vs n as "too small / too big / fits ✓", so
+//    the side that uses every tile IS the root — no √ worked out in the head. ──
+function RootPatch({ P, task, value, setValue, disabled, reveal, onCommit }: {
+  P: Palette; task: Task; value: number; setValue: (v: number) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: number) => void
+}) {
+  const n = task.n!
+  const side = Math.max(0, Math.min(12, Math.round(value)))
+  const built = side * side
+  const hit = built === n
+  const col = reveal || hit ? P.mint : P.gold
+  const set = (s: number) => { if (!disabled) setValue(Math.max(0, Math.min(12, s))) }
+  const cellPx = `clamp(9px, ${Math.max(3, 26 / Math.max(1, side))}vw, 24px)`
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.4vw,16px)', width: '100%' }}>
+      <div style={{ width: 'clamp(240px, 46vw, 400px)', minHeight: 'clamp(180px,28vh,260px)', boxSizing: 'border-box', borderRadius: 16, background: `linear-gradient(160deg, ${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,1.4vh,14px)', padding: 'clamp(14px,2.2vw,24px)' }}>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: P.creamSoft }}>🧱 √{n} · build the square</div>
+        {side > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${side}, ${cellPx})`, gap: 2, padding: 5, borderRadius: 8, background: 'rgba(0,0,0,0.28)', border: `2px solid ${col}` }}>
+            {Array.from({ length: built }, (_, i) => <div key={i} style={{ width: cellPx, height: cellPx, borderRadius: 2, background: `linear-gradient(${col}, ${P.goldDeep})` }} />)}
+          </div>
+        ) : <div style={{ fontSize: 'clamp(10px,1.1vw,13px)', color: P.mutedOnPaper }}>set the side below</div>}
+        <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(22px,3.6vw,38px)', lineHeight: 1, color: hit ? P.mint : P.gold }}>{built} {hit ? '= ✓' : built < n ? '· too few' : '· too many'}</div>
+        <div style={{ minHeight: '1.3em', fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,14px)', color: hit ? P.mint : P.creamSoft }}>{hit ? `side = ${side}, uses all ${n} tiles ✓` : `use all ${n} tiles`}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Nudge P={P} label="−" disabled={disabled} onClick={() => set(side - 1)} />
+        <div style={{ minWidth: 120, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(22px,2.4vw,32px)', fontWeight: 800, color: reveal ? P.mint : P.gold }}>side {side}</div>
+          <div style={{ fontSize: 'clamp(11px,1.1vw,14px)', color: P.creamSoft }}>tiles across</div>
+        </div>
+        <Nudge P={P} label="+" disabled={disabled} onClick={() => set(side + 1)} />
+      </div>
+      <CommitBtn P={P} label="BUILD ✓" disabled={disabled} onClick={() => onCommit(side)} />
+    </div>
+  )
+}
+
 const CONFIG: GameConfig<number, Task> = {
   chapterId: 'exponentsRoots',
   title: 'TILE FACTORY',
@@ -265,7 +317,7 @@ const CONFIG: GameConfig<number, Task> = {
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) =>
     task.mech === 'crank'
       ? <CrankGear P={palette} value={value} setValue={setValue} base={task.base!} floor={1} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="BUILD ✓" />
-      : <SlideValue P={palette} value={value} setValue={setValue} min={task.min!} max={task.max!} step={1} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="BUILD ✓" />,
+      : <RootPatch P={palette} task={task} value={value} setValue={setValue} disabled={disabled} reveal={reveal} onCommit={onCommit} />,
   tutorial: {
     task: DEMO_TASK,
     initial: 1,

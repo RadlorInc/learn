@@ -88,7 +88,9 @@ export function makeRound(d: 1 | 2 | 3): Round {
       // Exponent law: product or quotient (choice — answer in exponent form).
       const base = rint(2, 6)
       if (Math.random() < 0.5) {
-        const a = rint(2, 5), b = rint(2, 5)
+        const a = rint(2, 5)
+        let b = rint(2, 5)
+        while (b === a) b = rint(2, 5) // a≠b: else pow(base,a·b) === pow(base,a+b) at a=b=2 → a distractor duplicates the answer
         const ans = pow(base, a + b)
         return {
           promptText: `Simplify ${pow(base, a)} × ${pow(base, b)}.`,
@@ -200,11 +202,15 @@ export function makeRound(d: 1 | 2 | 3): Round {
   const exp = rint(1, 3)
   const denom = base ** exp
   const ans = `1/${denom}`
+  // "multiplied base × exp instead of exponentiating" distractor — but base·exp
+  // equals baseᵉˣᵖ when exp=1 or base=exp=2, which would duplicate the answer and
+  // drop the MCQ to 3 options. Fall back to an off-by-one denominator in that case.
+  const mulErr = base * exp === denom ? `1/${denom + 1}` : `1/${base * exp}`
   return {
     promptText: `What is ${pow(base, -exp)}?`,
     say: `What is ${base} to the power of negative ${exp}?`,
     mode: 'choice',
-    choices: mcq(ans, [`−${denom}`, `1/${base * exp}`, `${denom}`]),
+    choices: mcq(ans, [`−${denom}`, mulErr, `${denom}`]),
     answerStr: ans,
     explain: `A negative exponent means reciprocal: ${pow(base, -exp)} = 1 ÷ ${pow(base, exp)} = 1/${denom}.`,
     watch: [`A negative exponent flips the power into a fraction.`, `${base} to the negative ${exp} is one over ${base} to the ${exp}, which is one over ${denom}.`],

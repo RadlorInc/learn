@@ -38,6 +38,8 @@ function setPoint(): Task {
     title: 'Set balance', badge: `${t}`, tone: t < 0 ? 'b' : 'a',
     prompt: `Set the balance to ${t}.`,
     say: `Log a balance of ${signed(t)} dollars.`,
+    context: `Your latest statement shows this balance.`,
+    instruction: 'Set the balance meter to it.',
     answer: t, start: 0,
     work: [`${signed(t)} sits ${Math.abs(t)} ${t < 0 ? 'below' : 'above'} zero.`, `Count ${Math.abs(t)} marks ${t < 0 ? 'down into overdraft from' : 'up from'} zero and stop there.`],
   }
@@ -46,12 +48,15 @@ function colder(): Task {
   let a = pick([-8, -6, -5, -3, -2, 4, 6]); let b = pick([-9, -7, -4, -1, 3, 5])
   if (a === b) b = a - 1
   const ans = Math.min(a, b)
+  const neg = ans < 0   // only frame it as debt/overdraft when the lower balance is actually below zero
   return {
-    title: 'Deeper debt', badge: `${a} vs ${b}`, tone: 'b',
+    title: neg ? 'Deeper debt' : 'Lower balance', badge: `${a} vs ${b}`, tone: neg ? 'b' : 'a',
     prompt: `Which balance is lower — ${a} or ${b}? Set to it.`,
     say: `Which balance is lower, ${signed(a)} or ${signed(b)} dollars? Set the meter to the lower one.`,
+    context: `Two accounts each hold a balance.`,
+    instruction: 'Set the meter to the lower balance.',
     answer: ans, start: 0,
-    work: [`On the meter, a lower balance means further down into overdraft.`, `${signed(ans)} is below ${signed(Math.max(a, b))}, so ${signed(ans)} is lower.`],
+    work: [neg ? `On the meter, a lower balance means further down into overdraft.` : `On the meter, a lower balance sits further down.`, `${signed(ans)} is below ${signed(Math.max(a, b))}, so ${signed(ans)} is lower.`],
   }
 }
 function afterChange(): Task {
@@ -62,6 +67,8 @@ function afterChange(): Task {
     title: 'Transaction', badge: `${s} ${d < 0 ? '↓' : '↑'}`, tone: d < 0 ? 'b' : 'a',
     prompt: `Balance is ${s}. You ${dir}. Set the new balance.`,
     say: `The balance was ${signed(s)} dollars, then you ${dir}. Set the meter to the new balance.`,
+    context: `The balance is ${s} dollars, then you ${dir}.`,
+    instruction: 'Move the meter to the new balance.',
     answer: ans, start: s,
     work: [`Start at ${signed(s)} and move ${Math.abs(d)} ${d < 0 ? 'down' : 'up'}.`, `${s} ${d < 0 ? '−' : '+'} ${Math.abs(d)} is ${signed(ans)}.`],
   }
@@ -73,6 +80,7 @@ function opposite(): Task {
     title: 'Opposite', badge: `opp of ${t}`, tone: 'a',
     prompt: `Set the balance to the opposite of ${t}.`,
     say: `Set the meter to the opposite of ${signed(t)} dollars.`,
+    instruction: 'Set the balance meter to the opposite.',
     answer: ans, start: 0,
     work: [`The opposite is the same distance from zero, other side.`, `The opposite of ${signed(t)} is ${signed(ans)}.`],
   }
@@ -84,6 +92,7 @@ function distance(): Task {
     title: 'Distance', badge: `|${t}|`, tone: 'a',
     prompt: `How far is ${t} from zero? Set to that distance.`,
     say: `How many dollars is ${signed(t)} from zero? Set the meter up to that distance.`,
+    instruction: 'Set the meter to that distance.',
     answer: ans, start: 0,
     work: [`Distance from zero ignores the sign — that's absolute value.`, `${signed(t)} is ${ans} away from zero, so the answer is ${ans}.`],
   }
@@ -103,6 +112,8 @@ const GUIDED_TASK: Task = {
   title: 'Set balance', badge: '−5', tone: 'b', answer: -5, start: 0,
   prompt: 'Set the balance down to −5, then press Record.',
   say: 'Set the balance to minus five. Pull the meter down below zero into overdraft, then record it.',
+  context: `The account is overdrawn, sitting below zero.`,
+  instruction: 'Set the balance meter to it.',
   work: ['−5 sits 5 below zero.', 'Count 5 marks down into overdraft from zero and stop.'],
 }
 

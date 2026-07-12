@@ -1,23 +1,22 @@
 'use client'
 /**
- * ScoreMachine (file kept; theme = EVENT BUDGET PLANNER) — the Order of Operations
- * chapter as a PLAYABLE GAME. Real-world use: totalling an event budget in the
- * right order — work out each item's cost (quantity × price, ÷) FIRST, then add and
- * subtract. The kid evaluates the expression with correct precedence and DRAGS the
- * total on a slider (SlideValue). No slides, no MCQ. Shared adaptive engine underneath.
+ * ScoreMachine (file kept; theme = EVENT BUDGET) — the Order of Operations chapter as
+ * a PLAYABLE GAME where the child SOLVES ON the illustration: the budget expression is
+ * a row of tappable chips, and the child TAPS an operation to work it out. The
+ * illustration does the arithmetic and COLLAPSES that piece — 3 × 4 becomes 12 —
+ * until one number is left. That number IS the total. Nothing is worked out in the
+ * head and dialed: the answer emerges from doing the steps in the right order.
  *
- * The QUESTION shows on the chalkboard with the PORTION that must be evaluated
- * first highlighted in a different colour + parentheses (via config.question), so
- * a kid can SEE which part goes first — e.g. 3 + (2 × 5) = "each item's cost first".
+ * Precedence is TAUGHT by the mechanic, not a rule to recall: an op inside brackets
+ * (or a × next to a number that isn't ready) can't fire until its neighbours are
+ * plain numbers, so brackets collapse first; and if the child taps + before ×, the
+ * board faithfully computes the wrong total — the mistake is visible, then reteaches.
  *
- * Teaching is "I do → we do → you do": a step-by-step WALKTHROUGH (config.tutorial)
- * works 2 + 3 × 4 in stages on the slider (item cost first, then the fee), then a
- * GUIDED total (config.guided) with Milo coaching (not scored), then the scored loop.
+ * No slides, no MCQ. Shared adaptive engine underneath. The expression engine
+ * (parseExpr / collapseAt / correctNextIndex / ExprChips) lives in gameKit.
  */
-import { useEffect } from 'react'
-import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, SlideValue, pick, glideNumber } from './parts/gameKit'
+import { Palette, CommitBtn, headerChip, pick, ExprChips, parseExpr, collapseAt, correctNextIndex, type ETok } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#1c1327', nightBot: '#2a1838',
@@ -29,15 +28,14 @@ const P: Palette = {
 }
 
 interface Task extends BaseTask { expr: string; answer: number }
-const MIN = 0, MAX = 40
 
 // Highlight colour for the "work out this part first" portion on the chalkboard.
 const HL = '#ffd45e'
 const SUP = /[¹²³⁴⁵⁶⁷⁸⁹⁰]/
 
 /** Wrap the part that must be worked out FIRST in parentheses + a highlight colour,
- *  so the kid can see it (= each item's cost). Brackets → the bracketed group; else
- *  an exponent term; else the first × / ÷ and its two operands. */
+ *  so the kid can see it on the reference chalkboard (= each item's cost). Brackets →
+ *  the bracketed group; else an exponent term; else the first × / ÷ and its operands. */
 function markPortion(expr: string): React.ReactNode {
   const open = expr.indexOf('(')
   if (open !== -1) {
@@ -68,202 +66,123 @@ function fromPool(pool: [string, number][]): Task {
   const [expr, answer] = pick(pool)
   return {
     title: 'Budget', badge: expr, tone: 'a',
-    prompt: `Add up the budget: ${expr}. Work out × and ÷ first, then + and −. Drag to the total.`,
-    say: `Add up the budget. ${expr}. Remember, brackets first, then times and divide, then add and subtract. Drag the slider to the total.`,
+    instruction: 'Tap × and ÷ first, then + and −.',
+    prompt: `Total the budget: ${expr}. Tap an operation to work it out — × and ÷ before + and −.`,
+    say: `Total the budget. ${expr}. Tap the times and divide first, then the plus and minus. Work out one step at a time.`,
     expr, answer,
     work: [`Brackets first, then × and ÷ (each item's cost), then + and −.`, `${expr} = ${answer}.`],
   }
 }
-function comboL1(): Task { return fromPool(L1) }
-function comboL2(): Task { return fromPool(L2) }
-function comboL3(): Task { return fromPool(L3) }
-
 function makeTask(d: 1 | 2 | 3): Task {
-  return d === 1 ? comboL1() : d === 2 ? comboL2() : comboL3()
+  return d === 1 ? fromPool(L1) : d === 2 ? fromPool(L2) : fromPool(L3)
 }
 
-// ── Animated walkthrough scene — the receipt, in motion ───────────────────────
-// A code-drawn budget receipt for the worked example 2 + 3 × 4 = 14. The scene
-// ACTS OUT order of operations like a cartoon explainer, driven purely by the
-// walkthrough's per-step `value` + step index (no JS animation loops — only CSS
-// transitions, Safari-safe):
-//   • the expression "2 + 3 × 4" prints on the receipt;
-//   • the do-first portion "3 × 4" (the snacks) HIGHLIGHTS in gold with a bracket;
-//   • it COLLAPSES to its value 12 — the sub-expression shrinks/fades into "$12";
-//   • the "+ 2" fee combines in, and the TOTAL glides up to $14 and glows mint.
-// The stage tracks `value` (0 → 12 → 14) so the running total climbs in step with
-// the narration, exactly like the slider does in play. The running TOTAL now rides
-// a Framer-Motion spring (continuous 60fps count-up, overdamped so it never
-// overshoots past the true total); reduced-motion snaps.
-const EB_GLIDE = 'all 760ms cubic-bezier(.45,.05,.25,1)'
-const ART = '/assets/teen/objects'
-
-function EventBudgetScene({ palette: P, value, stepIndex, frameCount, ended }: {
-  palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
+// ── the interactive: tap an operation → the illustration works it out & collapses.
+//    When one number is left, LOCK IN it in. A quiet "start over" re-lays the slip so
+//    a child can re-plan the order before committing. ──
+function BudgetSlip({ P, task, value, setValue, disabled, reveal, onCommit }: {
+  P: Palette; task: Task; value: ETok[]; setValue: (v: ETok[]) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: ETok[]) => void
 }) {
-  const resultPhase = ended || stepIndex >= frameCount - 2   // last 2 beats: the answer
-  // Phase of the worked example (indices match the `tutorial.steps` timeline above).
-  const printed = stepIndex >= 2                 // "2 + 3 × 4" is on the receipt
-  const marked = stepIndex >= 3 && value < 12    // the "3 × 4" snacks part is spotlighted
-  const collapsed = value >= 12                  // snacks collapsed → $12 line item
-  const combining = stepIndex >= 7               // adding the fee: 12 + 2
-  const done = value >= 14 || resultPhase        // total revealed
-
-  const totalColor = done ? P.mint : P.gold
-  // line-items tick in as the sum is worked out
-  const snackShown = collapsed
-  const feeShown = combining || done
-
-  // ── Framer Motion: the running TOTAL climbs on a spring and the number ticks
-  //    with it (0 → 12 → 14). Overdamped (damping ≫ 2√(k·m)) so it never overshoots
-  //    past the true total. Reduced-motion → snaps to the final value. ──
-  const clamped = Math.max(0, Math.min(14, value))
-  const reduce = useReducedMotion()
-  const tv = useMotionValue(clamped)
-  useEffect(() => {
-    const controls = animate(tv, clamped, reduce ? { duration: 0 } : { type: 'spring', stiffness: 90, damping: 30, mass: 1 })
-    return () => controls.stop()
-  }, [clamped, reduce, tv])
-  const totalText = useTransform(tv, (x) => `$${Math.round(x)}`)
-
-  // shared cell style for a boxed number on the receipt
-  const cell = (bg: string, fg: string): React.CSSProperties => ({
-    minWidth: 'clamp(30px,7vw,44px)', padding: '4px 8px', borderRadius: 9,
-    background: bg, color: fg, fontFamily: 'var(--font-numeric)',
-    fontWeight: 800, fontSize: 'clamp(20px,4vw,30px)', textAlign: 'center',
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    lineHeight: 1, transition: EB_GLIDE,
-  })
-  const op = (c: string): React.CSSProperties => ({
-    color: c, fontFamily: 'var(--font-numeric)', fontWeight: 800,
-    fontSize: 'clamp(18px,3.4vw,26px)', transition: EB_GLIDE, padding: '0 1px',
-  })
-
+  const solved = value.length === 1 && value[0].k === 'num'
+  const original = parseExpr(task.expr)
+  const worked = value.length < original.length          // at least one step done
+  const tap = (i: number) => { if (!disabled) setValue(collapseAt(value, i)) }
   return (
-    <div style={{ position: 'relative', width: 'clamp(238px, 44vw, 356px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(10px,2.5vw,18px)' }}>
-      <style>{'@keyframes ebPop{0%{opacity:0;transform:translateY(8px) scale(.85)}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes ebGlow{0%,100%{box-shadow:0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 16px var(--eb-glow)}}@keyframes ebBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}'}</style>
-
-      {/* illustrated event-planning desk backdrop + a soft scrim so the receipt reads clearly */}
-      <img src={`${ART}/budget_desk_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(28,19,39,0.30), rgba(28,19,39,0.52))' }} />
-
-      {/* the receipt / budget slip — a blank illustrated slip backs the code-drawn math */}
-      <div style={{ position: 'relative', width: '100%', maxWidth: 'clamp(210px,40vw,300px)', padding: 'clamp(12px,3vw,18px) clamp(12px,3vw,16px)', display: 'flex', flexDirection: 'column', gap: 'clamp(8px,2vh,12px)' }}>
-        <img src={`${ART}/budget_receipt_blank.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', filter: 'drop-shadow(0 8px 22px rgba(0,0,0,0.4))', zIndex: 0 }} />
-        {/* header */}
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `2px dashed ${P.mutedOnPaper}`, paddingBottom: 6 }}>
-          <span style={{ fontSize: 'clamp(15px,2.6vw,19px)' }}>🧾</span>
-          <span style={{ color: P.mutedOnPaper, fontWeight: 800, letterSpacing: 1, fontSize: 'clamp(9px,1.4vw,12px)' }}>EVENT BUDGET</span>
-        </div>
-
-        {/* the expression, printed on the slip — with the do-first portion spotlighted */}
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 'clamp(3px,0.8vw,6px)', minHeight: 'clamp(40px,7vh,54px)', opacity: printed ? 1 : 0.25, transition: EB_GLIDE }}>
-          {/* the "$2 fee" term — dims while the snacks are being worked out first */}
-          <span style={{ ...cell('transparent', combining || done ? P.mutedOnPaper : P.inkOnPaper), opacity: marked ? 0.4 : 1, textDecoration: combining || done ? 'line-through' : 'none' }}>2</span>
-          <span style={op(marked ? '#c9b8dd' : P.inkOnPaper)}>+</span>
-
-          {/* the "3 × 4" snacks portion — highlights in gold, then COLLAPSES into one $12 cell */}
-          {!collapsed ? (
-            <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 'clamp(3px,0.8vw,6px)', padding: marked ? '3px 7px' : 0, borderRadius: 11, background: marked ? 'rgba(255,207,92,0.28)' : 'transparent', boxShadow: marked ? `0 0 0 2px ${P.goldDeep}` : 'none', transition: EB_GLIDE }}>
-              <span style={cell('transparent', marked ? P.goldDeep : P.inkOnPaper)}>3</span>
-              <span style={op(marked ? P.goldDeep : P.inkOnPaper)}>×</span>
-              <span style={cell('transparent', marked ? P.goldDeep : P.inkOnPaper)}>4</span>
-              {marked && <span style={{ position: 'absolute', top: '-52%', left: 0, right: 0, textAlign: 'center', color: P.goldDeep, fontWeight: 800, fontSize: 'clamp(8px,1.3vw,11px)', whiteSpace: 'nowrap', animation: 'ebBob 1.1s ease-in-out infinite' }}>do first ↓</span>}
-            </span>
-          ) : (
-            <span style={{ ...cell(P.gold, P.inkOnPaper), animation: 'ebPop 420ms ease' }}>12</span>
-          )}
-        </div>
-
-        {/* line items — tick in as each cost is settled */}
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 4, borderTop: `1px solid ${P.mutedOnPaper}55`, paddingTop: 8, minHeight: 'clamp(46px,8vh,60px)' }}>
-          {snackShown && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', animation: 'ebPop 380ms ease', color: P.inkOnPaper }}>
-              <span style={{ fontWeight: 700, fontSize: 'clamp(11px,1.7vw,14px)' }}>3 snacks × $4</span>
-              <span style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(13px,2vw,17px)' }}>$12</span>
-            </div>
-          )}
-          {feeShown && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', animation: 'ebPop 380ms ease', color: P.inkOnPaper }}>
-              <span style={{ fontWeight: 700, fontSize: 'clamp(11px,1.7vw,14px)' }}>entry fee</span>
-              <span style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(13px,2vw,17px)' }}>$2</span>
-            </div>
-          )}
-        </div>
-
-        {/* the running TOTAL — glides 0 → 12 → 14, glows mint when settled */}
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `2px dashed ${P.mutedOnPaper}`, paddingTop: 8 }}>
-          <span style={{ color: P.mutedOnPaper, fontWeight: 800, letterSpacing: 1, fontSize: 'clamp(10px,1.6vw,13px)' }}>TOTAL</span>
-          <motion.div style={{ ['--eb-glow' as string]: P.mint, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(24px,5vw,38px)', color: totalColor, transition: 'color 500ms', animation: done ? 'ebGlow 1.4s ease-in-out infinite' : undefined }}>
-            {totalText}
-          </motion.div>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(12px,1.6vw,20px)', width: '100%' }}>
+      {/* the budget slip — the tappable working */}
+      <div style={{ width: 'clamp(268px, 48vw, 440px)', minHeight: 'clamp(120px,20vh,180px)', boxSizing: 'border-box', borderRadius: 16, background: `linear-gradient(160deg, ${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,1.4vh,14px)', padding: 'clamp(16px,2.4vw,26px)' }}>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: P.creamSoft }}>{solved ? 'total' : 'work it out'}</div>
+        <ExprChips P={P} toks={value} onTap={disabled ? undefined : tap} reveal={reveal} size="lg" />
+        {!solved && <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(11px,1.2vw,15px)', color: P.creamSoft }}>tap an operation to work it out</div>}
       </div>
-
-      {/* the maths rule, whispered under the slip */}
-      <div style={{ position: 'absolute', bottom: '3%', left: '50%', transform: 'translateX(-50%)', padding: '3px 12px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, color: done ? P.mint : P.gold, fontWeight: 800, fontSize: 'clamp(9px,1.2vw,12px)', whiteSpace: 'nowrap', transition: 'color 500ms' }}>
-        {done ? '× first, then + ✓' : marked || collapsed ? '× before +' : 'order of operations'}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+        {worked && !solved && !disabled && (
+          <button type="button" onClick={() => setValue(parseExpr(task.expr))} style={{ ...headerChip(P), opacity: 0.82 }}>↺ start over</button>
+        )}
+        <CommitBtn P={P} label="LOCK IN ✓" disabled={disabled || !solved} onClick={() => onCommit(value)} />
       </div>
     </div>
   )
 }
 
-// ── the worked example for the walkthrough (2 + 3 × 4 → 14) and the guided total (1 + 2 × 3 → 7) ──
-const DEMO_TASK: Task = { title: 'Budget', badge: '2 + 3 × 4', tone: 'a', expr: '2 + 3 × 4', answer: 14, prompt: '', say: '', work: [] }
+// ── the walkthrough scene — the SAME slip, collapsing step by step, the next step
+//    to do spotlighted in gold. Teach = play. ──
+function BudgetScene({ palette: P, value }: { palette: Palette; task: Task; value: ETok[]; stepIndex: number; frameCount: number; ended: boolean }) {
+  const solved = value.length === 1 && value[0].k === 'num'
+  return (
+    <div style={{ width: 'clamp(240px, 46vw, 400px)', height: 'clamp(300px, 46vh, 440px)', boxSizing: 'border-box', borderRadius: 16, background: `linear-gradient(160deg, ${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(12px,2vh,20px)', padding: 'clamp(16px,2.4vw,26px)' }}>
+      <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: P.gold }}>🧾 event budget</div>
+      <ExprChips P={P} toks={value} highlight={solved ? undefined : correctNextIndex(value)} reveal={solved} size="lg" />
+      <div style={{ minHeight: '1.4em', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'clamp(11px,1.3vw,15px)', color: solved ? P.mint : P.creamSoft, textAlign: 'center' }}>
+        {solved ? 'that is the total ✓' : '× and ÷ before + and −'}
+      </div>
+    </div>
+  )
+}
+
+// ── the worked example (2 + 3 × 4 → 14) as collapsing token states ──
+const D0 = parseExpr('2 + 3 × 4')                 // 2 + 3 × 4
+const D1 = collapseAt(D0, correctNextIndex(D0))   // 2 + 12
+const D2 = collapseAt(D1, correctNextIndex(D1))   // 14
+const DEMO_TASK: Task = { title: 'Budget', badge: '2 + 3 × 4', tone: 'a', context: 'A $2 entry fee, plus 3 snacks at $4 each.', instruction: 'Tap × first, then +.', expr: '2 + 3 × 4', answer: 14, prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
   title: 'Budget', badge: '1 + 2 × 3', tone: 'a', expr: '1 + 2 × 3', answer: 7,
-  prompt: 'Work out 1 + 2 × 3 — the times first — then drag to the total and press SET TOTAL.',
-  say: 'A one dollar fee, plus two items at three dollars each. Do the times first, then add. Drag the slider to the total and set it.',
+  context: 'A $1 entry fee, plus 2 items at $3 each.', instruction: 'Tap × first, then +.',
+  prompt: 'Total 1 + 2 × 3 — tap the times first, then the plus.',
+  say: 'A one dollar fee, plus two items at three dollars each. Tap the times first, then the plus.',
   work: ['Item cost first: 2 × 3 is 6.', '1 + 6 is 7.'],
 }
 
-const CONFIG: GameConfig<number, Task> = {
+const CONFIG: GameConfig<ETok[], Task> = {
   chapterId: 'orderOfOperations',
   title: 'EVENT BUDGET',
   ticketLabel: 'budget',
   palette: P,
   makeTask,
-  initialValue: () => 0,
-  grade: (t, v) => Math.abs(v - t.answer) < 1e-6,
+  initialValue: (t) => parseExpr(t.expr),
+  grade: (t, v) => v.length === 1 && v[0].k === 'num' && Math.abs(v[0].v - t.answer) < 1e-6,
   revealText: (t) => `${t.answer}`,
   motif: '🧾',
   question: (t) => markPortion(t.expr),
-  glide: (t, from, setValue, later) => glideNumber(from, t.answer, setValue, later),
-  Instrument: ({ value, setValue, disabled, reveal, palette, onCommit }) => (
-    <SlideValue P={palette} value={value} setValue={setValue} min={MIN} max={MAX} step={1} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="SET TOTAL ✓" />
+  // On a wrong answer: re-lay the slip and collapse it in the CORRECT order, step by
+  // step, so the child sees the right sequence land on the answer.
+  glide: (t, _from, setValue, later) => {
+    const run = (toks: ETok[], delay: number) => later(() => {
+      setValue(toks)
+      if (toks.length > 1) { const idx = correctNextIndex(toks); if (idx >= 0) run(collapseAt(toks, idx), 850) }
+    }, delay)
+    run(parseExpr(t.expr), 450)
+  },
+  Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => (
+    <BudgetSlip P={palette} task={task} value={value} setValue={setValue} disabled={disabled} reveal={reveal} onCommit={onCommit} />
   ),
   tutorial: {
     task: DEMO_TASK,
-    initial: 0,
-    hand: 'drag',
+    initial: D0,
+    hand: 'tap',
     steps: [
-      { say: 'This is the budget planner. You drag the slider to set the total cost. Let us plan one together.', value: 0, hand: 'drag' },
-      { say: "Here is today's budget: a two dollar entry fee, plus three snacks at four dollars each.", value: 0, board: '$2 fee + 3 snacks at $4' },
-      { say: 'Written as a sum, that is two plus three times four.', value: 0, board: '2 + 3 × 4' },
-      { say: 'The rule: work out each item’s cost first — that is the times part. Three snacks at four dollars each.', value: 0, board: 'do × first: 3 × 4' },
-      { say: 'Why not just add left to right, two plus three? Because times comes before plus. We must total the snacks first.', value: 0, board: '× before +' },
-      { say: 'So do the snacks. Three snacks times four dollars — count it up: four, eight, twelve. That is twelve dollars.', value: 12, hand: 'drag', board: '3 × 4 = 12' },
-      { say: 'Watch the total climb to twelve dollars — that is all the snacks paid for.', value: 12, hand: 'drag', board: 'snacks = $12' },
-      { say: 'Now the only thing left is the plus. Add the two dollar fee: twelve plus two.', value: 12, board: '12 + 2' },
-      { say: 'Twelve plus two is fourteen. Slide the total up to fourteen dollars.', value: 14, hand: 'drag', board: '12 + 2 = 14' },
-      { say: 'The whole budget totals fourteen dollars — snacks first, then the fee.', value: 14, board: '2 + 3 × 4 = 14' },
-      { say: "When the total is right, press Set total. Now let's try one together.", value: 14, hand: 'tap' },
+      { say: 'This is the budget slip. Every part is a cost. You tap an operation to work it out — but the rule is: do times and divide before plus and minus.', value: D0, hand: 'tap', board: 'total: 2 + 3 × 4' },
+      { say: 'Here the snacks are three times four. Times comes first, so we work that out before the plus.', value: D0, hand: 'tap', board: 'do × first' },
+      { say: 'Tap the times. Three times four is twelve — watch it fold into a single twelve.', value: D1, hand: 'tap', board: '3 × 4 = 12' },
+      { say: 'Now only the plus is left. Two plus twelve.', value: D1, hand: 'tap', board: '2 + 12' },
+      { say: 'Tap it — two plus twelve is fourteen. One number is left, so that is the total.', value: D2, hand: 'tap', board: '2 + 3 × 4 = 14' },
+      { say: "When one number is left, lock it in. Now let's try one together.", value: D2, hand: 'tap' },
     ],
   },
   guided: {
     task: GUIDED_TASK,
     coach: 'Your turn — I will help.',
-    hand: 'drag',
+    hand: 'tap',
   },
-  TutorialScene: EventBudgetScene,
-  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re planning the event budget.</strong> Total up each cost in the right order — brackets first, then × and ÷ (each item&apos;s cost), then + and − — and set the total.</>, ticket: { title: 'Budget', badge: '3 + 2 × 5', tone: 'a' }, startLabel: 'Plan the event →' },
+  TutorialScene: BudgetScene,
+  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re totalling the event budget.</strong> Tap each cost to work it out — times and divide first (each item&apos;s cost), then plus and minus — until one number is left.</>, ticket: { title: 'Budget', badge: '3 + 2 × 5', tone: 'a' }, startLabel: 'Plan the event →' },
   overview: {
-    say: "Here is what we are figuring out: an event budget has to be totalled in the right order. We have a two dollar entry fee plus three snacks at four dollars each — written as two plus three times four. We will work out the snacks first, because times comes before plus, then add the fee.",
-    problem: <>What is the total budget for <strong>2 + 3 × 4</strong>? A <strong>$2 fee</strong> plus <strong>3 snacks at $4 each</strong>.</>,
+    say: "Here is what we are figuring out: an event budget has to be totalled in the right order. We have a two dollar entry fee plus three snacks at four dollars each — written as two plus three times four. We tap the snacks first, because times comes before plus, then add the fee — one step at a time until a single total is left.",
+    problem: <>Total the budget <strong>2 + 3 × 4</strong> — a <strong>$2 fee</strong> plus <strong>3 snacks at $4 each</strong>.</>,
     points: [
-      <>Do the <strong>× first</strong> — that is each item&apos;s cost: <strong>3 × 4 = $12</strong> of snacks.</>,
-      <>Then add the fee: <strong>12 + 2</strong> — the plus comes <strong>after</strong> the times.</>,
-      <>Watch the total land on <strong>$14</strong> — that is the whole budget in order.</>,
+      <>Tap the <strong>× first</strong> — each item&apos;s cost: <strong>3 × 4 = 12</strong> of snacks.</>,
+      <>Then tap the <strong>+</strong>: <strong>2 + 12</strong> — the plus comes <strong>after</strong> the times.</>,
+      <>One number is left — <strong>14</strong> — and that is the whole budget.</>,
     ],
   },
   sig: (t) => t.badge,

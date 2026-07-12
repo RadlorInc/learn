@@ -56,9 +56,15 @@ export interface Round {
   explain: string
 }
 
-/** Tolerance grade for a numeric submission (handles the π≈3.14 rounding). */
+/**
+ * Tolerance grade for a numeric submission.
+ * Wide enough (±0.5) to accept a student who used a more precise π than 3.14
+ * (a calculator π diverges by ~0.1 at r=8 for circle area) — math-without-fear
+ * must never wrong-mark the *more* accurate answer. Safe because every non-π
+ * answer in this chapter is an integer, so nothing wrong lands within 0.5.
+ */
 export function gradeNumeric(submitted: number, answer: number): boolean {
-  return numericEqual(submitted, answer, 0.05)
+  return numericEqual(submitted, answer, 0.5)
 }
 
 /** Difficulty-aware round generator: L1 area/perimeter · L2 circle/prism · L3 Pythagoras/composite. */

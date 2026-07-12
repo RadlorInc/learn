@@ -83,7 +83,7 @@ export function makeRound(d: 1 | 2 | 3): Round {
         answerValue: ansLabel,
         choices,
         columns: 2,
-        explain: `Divide both parts by ${g}: ${A}÷${g} = ${sa} and ${B}÷${g} = ${sb}, so ${A}:${B} = ${sa}:${sb}.`,
+        explain: `Divide both parts by ${k}: ${A}÷${k} = ${sa} and ${B}÷${k} = ${sb}, so ${A}:${B} = ${sa}:${sb}.`,
       }
     }
     // Fill the equivalent ratio:  a : b  =  (a·k) : ?   (numeric)

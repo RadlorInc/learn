@@ -222,6 +222,10 @@ export function Game<V, T extends BaseTask>({
   const loadTask = useCallback((nextIdx: number, c: number, w: number, mastered: boolean) => {
     if (mastered) { onFinish(c, w, true); return }
     if (nextIdx >= effTotal) { onFinish(c, w); return }
+    // Cancel any still-pending animation timers from the PREVIOUS question (a wrong-
+    // answer glide/reveal can schedule setValue frames that would otherwise land on —
+    // and clobber — the new question's fresh instrument value).
+    timers.current.forEach(clearTimeout); timers.current = []
     // Warm-up: the first WARMUP_COUNT questions run one tier below the resumed
     // level to ease back in; after that, the normal adaptive tier takes over.
     const d = warmup && nextIdx < WARMUP_COUNT ? warmupDiff : ada.difficulty

@@ -105,7 +105,8 @@ function roundL2(): Round {
     // brackets: a × (b + c)   — and ask "which step first?" half the time
     const a = rint(2, 6)
     const b = rint(2, 8)
-    const c = rint(2, 8)
+    let c = rint(2, 8)
+    while (c === b) c = rint(2, 8) // distinct so the "a × b" / "a × c" first-step distractors never render identically
     const expr = `${a} × (${b} + ${c})`
     const inner = b + c
     const answer = a * inner

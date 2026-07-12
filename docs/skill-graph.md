@@ -117,7 +117,7 @@ the content at every node.** Ranked by how often they are the true root of later
 | m.rationalOps | Fraction/decimal ×÷ | rationalOps | ⇑i.fractionOps, ⇑i.decimals, ⇑i.multFacts |
 | m.ratioProportion | Ratios & proportions | ratioProportion | ⇑i.fractionEquiv, ⇑i.division |
 | m.percentages | Percentages | percentages | m.ratioProportion, ⇑i.decimals |
-| m.exponentsRoots | Exponents, roots, sci notation | exponentsRoots | ⇑i.multFacts, ⇑i.factors |
+| m.exponentsRoots | Exponents, roots, sci notation | exponentsRoots | ⇑i.multFacts, ⇑i.factors, ⇑i.decimals |
 | m.orderOps | Order of operations | orderOfOperations | m.signedOps, m.exponentsRoots |
 | m.algExpressions | Algebraic expressions | algebraicExpressions | m.orderOps, m.signedOps |
 | m.equationsIneq | Equations & inequalities (1-var) | equationsInequalities | m.algExpressions, m.signedOps |
