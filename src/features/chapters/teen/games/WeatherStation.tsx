@@ -285,6 +285,9 @@ const CONFIG: GameConfig<number, Task> = {
     ],
   },
   sig: (t) => `${t.title}:${t.answer}`,
+  // Pilot: in practice, work the first question out for the child automatically, and
+  // give every question a "Show me how ▸" button. A shown question isn't scored.
+  showSolve: true,
 }
 
 export default function WeatherStation(props: { childName: string; onFinish: (c: number, w: number, mastered?: boolean) => void; onExit: () => void }) {

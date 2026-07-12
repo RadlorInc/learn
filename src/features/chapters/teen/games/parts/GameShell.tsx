@@ -160,9 +160,16 @@ export interface GameConfig<V, T extends BaseTask> {
   Demo?: (p: DemoProps) => React.ReactElement
   /** math-only signature so a re-drawn ticket / shuffled dressing isn't "new". */
   sig?: (t: T) => string
+  /** Opt in to the in-practice "show me how" helper: the FIRST practice question is
+   *  worked out for the child automatically (steps written on a board + the
+   *  instrument solved on the illustration), and every question after carries a quiet
+   *  "Show me how ▸" button. A question that's been shown is NOT scored (it doesn't
+   *  touch the adaptive tier or the correct/wrong tally). Uses the task's `work` lines
+   *  as the steps. Off by default — piloted per chapter. */
+  showSolve?: boolean
 }
 
-type Sub = 'active' | 'reveal' | 'reteach' | 'sold'
+type Sub = 'active' | 'reveal' | 'reteach' | 'sold' | 'showing'
 type Stage = 'start' | 'intro' | 'demo' | 'guided' | 'play'
 
 export function Game<V, T extends BaseTask>({
@@ -195,6 +202,14 @@ export function Game<V, T extends BaseTask>({
   const [wrongRun, setWrongRun] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [wrong, setWrong] = useState(0)
+  // "Show me how" state (config.showSolve): which solve-step line is being written.
+  const [showStep, setShowStep] = useState(-1)
+  const showCancel = useRef<() => void>(() => {})
+  const firstShown = useRef(false)
+  // Latest task/value in refs so startShow (called from an effect right after a task
+  // loads, before state settles) reads the current question, not a stale one.
+  const taskRef = useRef<T | null>(null); taskRef.current = task
+  const valueRef = useRef<V | null>(null); valueRef.current = value
 
   // Legible "I do → your turn → you did it" hand-off cue (feedback-your-turn-cue):
   // a brief popup the moment control passes to the child ('turn') and when they
@@ -204,7 +219,7 @@ export function Game<V, T extends BaseTask>({
   const seen = useRef<Set<string>>(new Set())
   const timers = useRef<number[]>([])
   const later = useCallback((fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
-  useEffect(() => () => { timers.current.forEach(clearTimeout); stopSpeech() }, [])
+  useEffect(() => () => { timers.current.forEach(clearTimeout); showCancel.current(); stopSpeech() }, [])
   const flashCue = useCallback((k: 'turn' | 'solved') => {
     setCue(k)
     later(() => setCue((c) => (c === k ? null : c)), k === 'turn' ? 1600 : 1500)
@@ -239,6 +254,45 @@ export function Game<V, T extends BaseTask>({
     // returns automatically on a demotion, since it tracks the live tier.
     if (d < 3) speakAfterCurrent(t.say)
   }, [ada.difficulty, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue])
+
+  // ── "Show me how" (config.showSolve) ──────────────────────────────────────────
+  // A shown question is un-scored: advance to the next one WITHOUT recording it to
+  // the adaptive engine or the correct/wrong tally, so using the helper never counts
+  // for or against the child.
+  const advanceUnscored = useCallback(() => {
+    loadTask(idx + 1, correct, wrong, false)
+  }, [idx, correct, wrong, loadTask])
+
+  // Work out the CURRENT question for the child: write its `work` steps on a board
+  // (chalk-synced to Milo's voice) while the instrument glides to the answer on the
+  // illustration — solved, not just told. Then advance, un-scored.
+  const startShow = useCallback(() => {
+    const t = taskRef.current
+    if (!t) return
+    const steps = t.work && t.work.length ? t.work : [config.revealText(t)]
+    showCancel.current()          // cancel any prior show
+    stopSpeech()                  // drop a queued `say` so it doesn't fight the steps
+    setCue(null)                  // clear the "your turn" popup — we're demonstrating
+    setSub('showing'); setShowStep(-1)
+    const from = valueRef.current
+    if (from != null) config.glide(t, from, setValue, later)   // solve on the illustration
+    unlockSpeech()
+    showCancel.current = speakSteps(steps, {
+      rate: 0.85, gapMs: 900, fallbackStepMs: 2600,
+      onStep: (s) => setShowStep(s),
+      onDone: () => { later(advanceUnscored, 1400) },
+    })
+  }, [config, later, advanceUnscored])
+
+  // Mandatory FIRST practice question: work it out automatically the first time the
+  // child reaches the scored loop (then it's a button from there on). Fires once.
+  useEffect(() => {
+    if (config.showSolve && stage === 'play' && idx === 0 && sub === 'active'
+        && !firstShown.current && task && value != null) {
+      firstShown.current = true
+      startShow()
+    }
+  }, [config.showSolve, stage, idx, sub, task, value, startShow])
 
   const demoDone = useRef(false)
   const finishDemo = useCallback(() => {
@@ -424,14 +478,26 @@ export function Game<V, T extends BaseTask>({
                 answer={sub === 'active' ? '?' : config.revealText(task)}
                 tone={sub === 'active' ? 'ask' : sub === 'sold' ? 'ok' : 'reveal'}
               />
+              {/* "Show me how" — the worked solve steps, written line-by-line in sync
+                  with Milo's voice while the instrument glides to the answer. */}
+              {sub === 'showing' && task.work.length > 0 && (
+                <div style={{ marginTop: 'clamp(8px, 1.2vh, 14px)', display: 'flex', justifyContent: 'center' }}>
+                  <Blackboard P={P} lines={task.work} writingIndex={showStep} />
+                </div>
+              )}
             </BoardSlot>
             <CenterFill>
               {stage === 'guided' && sub === 'active' && (
                 <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Try this one with me</div>
               )}
               <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
-                <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
+                <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach' || sub === 'showing'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
                 {stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind={config.guided.hand} />}
+                {/* Quiet on-demand helper — always there in practice for a stuck child.
+                    Using it doesn't score the question (see startShow/advanceUnscored). */}
+                {stage === 'play' && sub === 'active' && config.showSolve && (
+                  <button type="button" onClick={startShow} style={{ ...headerChip(P), opacity: 0.82, fontSize: 'clamp(11px, 1.05vw, 15px)' }}>Show me how ▸</button>
+                )}
               </div>
             </CenterFill>
           </>
