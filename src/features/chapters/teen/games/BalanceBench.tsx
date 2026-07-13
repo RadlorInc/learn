@@ -1,6 +1,7 @@
 'use client'
 /**
- * BalanceBench — the Equations & Inequalities chapter as a PLAYABLE GAME.
+/**
+ * BalanceBench — the Equations & Inequalities chapter (equations + inequalities) as a PLAYABLE GAME.
  * World: an airport check-in baggage scale. The kid finds an unknown suitcase's
  * weight by SLIDING x until the two pans balance — the left pan (m·x + c) matches
  * the right pan (the total). When the scale reads equal, you've solved the
@@ -14,7 +15,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, BalanceBeam, pick, glideNumber } from './parts/gameKit'
+import { Palette, BalanceBeam, Nudge, CommitBtn, pick, glideNumber } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#101d24', nightBot: '#152a33',
@@ -25,7 +26,26 @@ const P: Palette = {
   glass: 'rgba(16,29,36,0.6)', glassBorder: 'rgba(234,250,255,0.22)',
 }
 
-interface Task extends BaseTask { m: number; c: number; right: number; answer: number; leftExpr: string; min: number; max: number }
+// The four inequality relations. le/ge include the boundary (● filled dot); lt/gt
+// exclude it (○ hollow dot). le/lt shade toward the low end, ge/gt toward the high.
+type IneqOp = 'le' | 'lt' | 'ge' | 'gt'
+const OPSYM: Record<IneqOp, string> = { le: '≤', lt: '<', ge: '≥', gt: '>' }
+const OPWORD: Record<IneqOp, string> = { le: 'at most', lt: 'under', ge: 'at least', gt: 'over' }
+const shadesLeft = (op: IneqOp) => op === 'le' || op === 'lt'
+const isClosed = (op: IneqOp) => op === 'le' || op === 'ge'
+
+interface Task extends BaseTask {
+  m: number; c: number; right: number; answer: number; leftExpr: string; min: number; max: number
+  // ── inequality tasks: the solution is a RAY (x < / ≤ / ≥ / > bound), shaded on a
+  //    number line with an open/closed endpoint, instead of a single balancing x. ──
+  kind?: 'ineq'; op?: IneqOp; bound?: number
+}
+
+// The solution to an inequality = a boundary + which relation. Equations use a plain
+// number (x); the chapter's value is the union of the two.
+type RaySol = { bound: number; op: IneqOp }
+type Val = number | RaySol
+const isRay = (v: Val): v is RaySol => typeof v === 'object'
 
 interface Spec { leftExpr: string; m: number; c: number; right: number; answer: number; min: number; max: number }
 const L1: Spec[] = [
@@ -57,9 +77,45 @@ function fromSpec(s: Spec): Task {
   }
 }
 
+// ── inequalities: solve m·x + c OP right for x → a boundary + relation. Shown as a
+//    weight rule; the child shades the ray of allowed weights with an open (< >) or
+//    closed (≤ ≥) endpoint. Both strict and inclusive appear so all four are taught. ──
+interface IneqSpec { leftExpr: string; op: IneqOp; right: number; bound: number; min: number; max: number }
+const IN2: IneqSpec[] = [
+  { leftExpr: 'x + 2', op: 'le', right: 6, bound: 4, min: 0, max: 8 },   // x ≤ 4
+  { leftExpr: '2x', op: 'ge', right: 6, bound: 3, min: 0, max: 8 },       // x ≥ 3
+  { leftExpr: 'x + 1', op: 'lt', right: 5, bound: 4, min: 0, max: 8 },    // x < 4
+  { leftExpr: '2x', op: 'gt', right: 6, bound: 3, min: 0, max: 8 },       // x > 3
+]
+const IN3: IneqSpec[] = [
+  { leftExpr: '2x + 1', op: 'le', right: 9, bound: 4, min: 0, max: 8 },   // x ≤ 4
+  { leftExpr: '3x', op: 'gt', right: 12, bound: 4, min: 0, max: 8 },      // x > 4
+  { leftExpr: 'x + 5', op: 'lt', right: 8, bound: 3, min: 0, max: 8 },    // x < 3
+  { leftExpr: 'x − 1', op: 'ge', right: 3, bound: 4, min: 0, max: 8 },    // x ≥ 4
+]
+function fromIneq(s: IneqSpec): Task {
+  const badge = `${s.leftExpr} ${OPSYM[s.op]} ${s.right}`
+  const dw = OPWORD[s.op]
+  const edgeNote = isClosed(s.op)
+    ? `${s.bound} itself is allowed, so the dot is filled.`
+    : `${s.bound} is NOT allowed, so the dot is hollow.`
+  return {
+    title: 'Weight rule', badge, tone: 'b', kind: 'ineq', op: s.op, bound: s.bound,
+    m: 0, c: 0, right: s.right, answer: s.bound, leftExpr: s.leftExpr, min: s.min, max: s.max,
+    context: 'The case has a weight rule — every weight that obeys it is allowed.',
+    instruction: 'Shade every weight the case can be.',
+    prompt: `Solve ${badge}. Work out x, then shade every case weight that's allowed on the number line.`,
+    say: `Solve ${s.leftExpr} ${dw} ${s.right}. Work out x, then shade every weight that's allowed on the number line.`,
+    work: [`Solve for x: ${badge} means x ${OPSYM[s.op]} ${s.bound}.`, `${edgeNote} Shade every weight ${dw} ${s.bound}.`],
+  }
+}
+
 function makeTask(d: 1 | 2 | 3): Task {
-  const pool = d === 1 ? L1 : d === 2 ? L2 : L3
-  return fromSpec(pick(pool))
+  if (d === 1) return fromSpec(pick(L1))
+  // tiers 2 & 3 mix equations and inequalities so both concepts keep coming up
+  const eq = d === 2 ? L2 : L3
+  const ineq = d === 2 ? IN2 : IN3
+  return Math.random() < 0.5 ? fromSpec(pick(eq)) : fromIneq(pick(ineq))
 }
 
 // ── worked example for the walkthrough (x + 3 = 8 → 5) + guided order (x + 1 = 4 → 3) ──
@@ -89,9 +145,10 @@ const GUIDED_TASK: Task = {
 const DEMO_M = 3, DEMO_RIGHT = 8, DEMO_ANS = 5
 const ART = '/assets/teen/objects'
 const TILT_GAIN = 3, MAX_TILT = 15, ARM = 84  // beam half-span to each pan's hang point
-function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: {
-  palette: Palette; value: number; stepIndex: number; frameCount: number; ended: boolean
+function BaggageScaleScene({ palette: P, value: rawValue, stepIndex, frameCount, ended }: {
+  palette: Palette; value: Val; stepIndex: number; frameCount: number; ended: boolean
 }) {
+  const value = typeof rawValue === 'number' ? rawValue : 0   // scene only plays the equation example
   const x = Math.max(0, Math.min(DEMO_ANS + 1, value))
   const left = x + DEMO_M                       // left pan weight = x + 3
   const diff = left - DEMO_RIGHT                // <0 too light, 0 balanced, >0 heavy
@@ -226,21 +283,155 @@ function BaggageScaleScene({ palette: P, value, stepIndex, frameCount, ended }: 
   )
 }
 
-const CONFIG: GameConfig<number, Task> = {
+// ── RAY VIZ — the number line + shaded solution ray + open/closed endpoint. Shared
+//    by the interactive RayLine and the walkthrough scene, so both read identically. ──
+function RayViz({ P, min, max, sol, col }: { P: Palette; min: number; max: number; sol: RaySol; col: string }) {
+  const pct = (n: number) => ((n - min) / (max - min)) * 100
+  const left = shadesLeft(sol.op)
+  const closed = isClosed(sol.op)
+  const rayLeft = left ? 0 : pct(sol.bound)
+  const rayRight = left ? 100 - pct(sol.bound) : 0
+  return (
+    <div style={{ position: 'relative', width: '100%', height: 44 }}>
+      <div style={{ position: 'absolute', top: 20, left: 0, right: 0, height: 3, background: P.glassBorder, borderRadius: 2 }} />
+      {/* shaded solution ray */}
+      <div style={{ position: 'absolute', top: 18.5, left: `${rayLeft}%`, right: `${rayRight}%`, height: 6, background: col, borderRadius: 3, boxShadow: `0 0 8px ${col}`, transition: 'left 220ms, right 220ms' }} />
+      {/* integer ticks + labels */}
+      {Array.from({ length: max - min + 1 }, (_, i) => {
+        const n = min + i
+        const on = left ? (closed ? n <= sol.bound : n < sol.bound) : (closed ? n >= sol.bound : n > sol.bound)
+        return (
+          <div key={n} style={{ position: 'absolute', left: `${pct(n)}%`, top: 0, transform: 'translateX(-50%)', textAlign: 'center' }}>
+            <div style={{ width: 2, height: 12, margin: '14px auto 0', background: on ? col : P.mutedOnPaper }} />
+            <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,1.1vw,12px)', fontWeight: on ? 800 : 600, color: on ? col : P.mutedOnPaper }}>{n}</div>
+          </div>
+        )
+      })}
+      {/* boundary endpoint — FILLED for ≤/≥ (edge allowed), HOLLOW for </> (edge excluded) */}
+      <div style={{ position: 'absolute', left: `${pct(sol.bound)}%`, top: 14.5, transform: 'translateX(-50%)', width: 14, height: 14, borderRadius: '50%', background: closed ? col : P.nightBot, border: `2.5px solid ${closed ? P.cream : col}`, boxShadow: `0 0 8px ${col}`, transition: 'left 220ms' }} />
+    </div>
+  )
+}
+
+// ── RAY LINE — solve an inequality ON the illustration: shade the ray of every allowed
+//    weight. The child sets the boundary and picks the relation (< ≤ ≥ >); the shaded
+//    ray with its open/closed endpoint IS the solution set. ──
+function RayLine({ P, task, value, setValue, disabled, reveal, onCommit }: {
+  P: Palette; task: Task; value: RaySol; setValue: (v: RaySol) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: RaySol) => void
+}) {
+  const { min, max } = task
+  const sol = reveal ? { bound: task.bound!, op: task.op! } : value
+  const solved = sol.bound === task.bound && sol.op === task.op
+  const col = reveal || solved ? P.mint : P.gold
+  const setBound = (b: number) => { if (!disabled) setValue({ ...sol, bound: Math.max(min, Math.min(max, b)) }) }
+  const setOp = (op: IneqOp) => { if (!disabled) setValue({ ...sol, op }) }
+  const opChip = (op: IneqOp, label: string): React.CSSProperties => ({
+    flex: '1 1 44%', padding: '8px 6px', borderRadius: 10, cursor: disabled ? 'default' : 'pointer',
+    fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(11px,1.3vw,15px)', textAlign: 'center',
+    border: `2px solid ${sol.op === op ? P.gold : P.glassBorder}`,
+    background: sol.op === op ? 'rgba(95,208,230,0.16)' : 'transparent', color: sol.op === op ? P.gold : P.creamSoft,
+  })
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.4vw,16px)', width: '100%' }}>
+      <div style={{ width: 'clamp(250px, 52vw, 430px)', minHeight: 'clamp(150px,22vh,200px)', boxSizing: 'border-box', borderRadius: 16, background: `linear-gradient(160deg, ${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(12px,2vh,20px)', padding: 'clamp(18px,2.6vw,28px)' }}>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: P.creamSoft }}>🧳 {task.badge} · allowed weights</div>
+        <RayViz P={P} min={min} max={max} sol={sol} col={col} />
+        <div style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(16px,2.4vw,24px)', color: solved ? P.mint : P.gold }}>
+          x {OPSYM[sol.op]} {sol.bound}
+        </div>
+      </div>
+      {/* relation picker — the four inequality symbols */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, width: 'clamp(250px,52vw,430px)', justifyContent: 'center' }}>
+        <div style={opChip('lt', '< under')} onClick={() => setOp('lt')}>&lt; under</div>
+        <div style={opChip('le', '≤ at most')} onClick={() => setOp('le')}>≤ at most</div>
+        <div style={opChip('ge', '≥ at least')} onClick={() => setOp('ge')}>≥ at least</div>
+        <div style={opChip('gt', '> over')} onClick={() => setOp('gt')}>&gt; over</div>
+      </div>
+      {/* boundary nudge */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Nudge P={P} label="−" disabled={disabled} onClick={() => setBound(sol.bound - 1)} />
+        <div style={{ minWidth: 110, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(20px,2.4vw,30px)', fontWeight: 800, color: reveal ? P.mint : P.gold }}>{sol.bound} kg</div>
+          <div style={{ fontSize: 'clamp(10px,1.1vw,13px)', color: P.creamSoft }}>the edge</div>
+        </div>
+        <Nudge P={P} label="+" disabled={disabled} onClick={() => setBound(sol.bound + 1)} />
+      </div>
+      <CommitBtn P={P} label="SET RULE ✓" disabled={disabled} onClick={() => onCommit(sol)} />
+    </div>
+  )
+}
+
+// ── the inequality walkthrough (x + 2 ≤ 6 → x ≤ 4), so the child is TAUGHT the ray
+//    before meeting it in practice: solve to the boundary, shade the ray, and see why
+//    the endpoint is filled (≤) vs hollow (<). ──
+const DEMO_INEQ: Task = {
+  title: 'Weight rule', badge: 'x + 2 ≤ 6', tone: 'b', kind: 'ineq', op: 'le', bound: 4,
+  m: 0, c: 0, right: 6, answer: 4, leftExpr: 'x + 2', min: 0, max: 8, prompt: '', say: '', work: [],
+}
+const INEQ_SCRIPT = {
+  task: DEMO_INEQ,
+  initial: { bound: 0, op: 'le' } as RaySol,
+  hand: 'tap' as const,
+  steps: [
+    { say: "Now a different kind of rule. Sometimes a case doesn't need an exact weight — it just has a LIMIT. This case plus its two-kilo tag must weigh at most six kilos.", value: { bound: 0, op: 'le' } as RaySol, board: 'x + 2 ≤ 6' },
+    { say: "Solve it just like an equation. Take two off both sides: x is at most four.", value: { bound: 4, op: 'le' } as RaySol, board: 'x ≤ 4' },
+    { say: "But four isn't the only answer. Three works, two works, even zero works — every weight four or under is allowed.", value: { bound: 4, op: 'le' } as RaySol, board: 'x ≤ 4' },
+    { say: "So we shade the whole line from four downward. That shaded ray is every weight the case is allowed to be.", value: { bound: 4, op: 'le' } as RaySol, board: 'shade ≤ 4' },
+    { say: "The dot on four is FILLED IN, because four itself is allowed. 'At most four' includes four.", value: { bound: 4, op: 'le' } as RaySol, board: '● 4 is allowed' },
+    { say: "If the rule said UNDER four instead — less than four — the dot would be HOLLOW, because four would no longer count.", value: { bound: 4, op: 'lt' } as RaySol, board: '○ x < 4' },
+    { say: "Ours is 'at most', so keep it filled. Pick the symbol, set the edge, then set the rule. Now let's try one together.", value: { bound: 4, op: 'le' } as RaySol, board: 'x ≤ 4  ✓' },
+  ],
+}
+
+// ── the inequality walkthrough SCENE — the number line + ray, driven by the step's
+//    RaySol value, so the shading builds and the endpoint flips filled/hollow live. ──
+function RayScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
+  palette: Palette; task: Task; value: Val; stepIndex: number; frameCount: number; ended: boolean
+}) {
+  const sol: RaySol = isRay(value) ? value : { bound: task.bound ?? 0, op: task.op ?? 'le' }
+  const resultPhase = ended || stepIndex >= frameCount - 2
+  const col = resultPhase ? P.mint : P.gold
+  return (
+    <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 372px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: P.nightTop, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(16px,3.4vh,30px)', padding: 'clamp(16px,3vw,26px)' }}>
+      <img src={`${ART}/bag_checkin_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}dd)` }} />
+      <div style={{ position: 'relative', zIndex: 1, padding: '4px 16px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(15px,2vw,20px)', color: resultPhase ? P.mint : P.cream }}>{task.badge}</div>
+      <div style={{ position: 'relative', zIndex: 1, width: '86%' }}><RayViz P={P} min={task.min} max={task.max} sol={sol} col={col} /></div>
+      <div style={{ position: 'relative', zIndex: 1, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(18px,2.6vw,26px)', color: col }}>x {OPSYM[sol.op]} {sol.bound}</div>
+      <div style={{ position: 'relative', zIndex: 1, minHeight: 20, color: resultPhase ? P.mint : P.creamSoft, fontWeight: 700, fontSize: 'clamp(11px,1.5vw,14px)', textAlign: 'center' }}>
+        {isClosed(sol.op) ? '● filled — the edge is allowed' : '○ hollow — the edge is not allowed'}
+      </div>
+    </div>
+  )
+}
+
+// Pick the right walkthrough scene per example: balance scale for the equation, number
+// line for the inequality.
+function TeachScene(props: { palette: Palette; task: Task; value: Val; stepIndex: number; frameCount: number; ended: boolean }) {
+  return props.task.kind === 'ineq' ? <RayScene {...props} /> : <BaggageScaleScene {...props} />
+}
+
+const CONFIG: GameConfig<Val, Task> = {
   chapterId: 'equationsInequalities',
   title: 'BAGGAGE SCALE',
   motif: '🧳',
   ticketLabel: 'weigh-in',
   palette: P,
   makeTask,
-  initialValue: (t) => t.min,
-  grade: (t, v) => Math.abs(v - t.answer) < 1e-6,
-  revealText: (t) => `x = ${t.answer}`,
-  glide: (t, from, setValue, later) => glideNumber(from, t.answer, setValue, later),
+  initialValue: (t) => t.kind === 'ineq' ? { bound: t.min, op: 'le' } as RaySol : t.min,
+  grade: (t, v) => t.kind === 'ineq'
+    ? isRay(v) && v.bound === t.bound && v.op === t.op
+    : !isRay(v) && Math.abs(v - t.answer) < 1e-6,
+  revealText: (t) => t.kind === 'ineq' ? `x ${OPSYM[t.op!]} ${t.bound}` : `x = ${t.answer}`,
+  glide: (t, from, setValue, later) => t.kind === 'ineq'
+    ? later(() => setValue({ bound: t.bound!, op: t.op! } as RaySol), 500)
+    : glideNumber(from as number, t.answer, setValue as (v: number) => void, later),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => (
-    <BalanceBeam P={palette} x={value} setX={setValue} min={task.min} max={task.max} leftOf={(x) => task.m * x + task.c} right={task.right} leftExpr={task.leftExpr} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="WEIGH ✓" />
+    task.kind === 'ineq'
+      ? <RayLine P={palette} task={task} value={value as RaySol} setValue={setValue as (v: RaySol) => void} disabled={disabled} reveal={reveal} onCommit={onCommit as (v: RaySol) => void} />
+      : <BalanceBeam P={palette} x={value as number} setX={setValue as (v: number) => void} min={task.min} max={task.max} leftOf={(x) => task.m * x + task.c} right={task.right} leftExpr={task.leftExpr} disabled={disabled} reveal={reveal} onCommit={onCommit as (v: number) => void} commitLabel="WEIGH ✓" />
   ),
-  tutorial: {
+  tutorial: [{
     task: DEMO_TASK,
     initial: 0,
     hand: 'drag',
@@ -255,15 +446,15 @@ const CONFIG: GameConfig<number, Task> = {
       { say: "x equals four: four plus three is seven kilos. Almost balanced — just one kilo short.", value: 4, hand: 'drag', board: '4 + 3 = 7' },
       { say: "x equals five: five plus three is eight kilos. Now both pans read eight — the scale is balanced!", value: 5, hand: 'drag', board: '5 + 3 = 8  ✓' },
       { say: "Another way to see it: take three kilos off both pans and the case alone equals five. Same answer.", value: 5, hand: 'drag', board: '8 − 3 = 5' },
-      { say: "Balanced means solved: the mystery case weighs five kilos. Press weigh when it's level. Now let's try one together.", value: 5, hand: 'tap', board: 'x = 5' },
+      { say: "Balanced means solved: the mystery case weighs five kilos. Press weigh when it's level. Next, a different kind of rule.", value: 5, hand: 'tap', board: 'x = 5' },
     ],
-  },
+  }, INEQ_SCRIPT],
   guided: {
     task: GUIDED_TASK,
     coach: 'Your turn — I will help.',
     hand: 'drag',
   },
-  TutorialScene: BaggageScaleScene,
+  TutorialScene: TeachScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re running the check-in scale.</strong> Work out x — the mystery case&apos;s weight — that makes each equation balance, set the dial, then weigh it. Balanced means solved; over or under means try again.</>, ticket: { title: 'Find x', badge: '2x + 3 = 11', tone: 'a' }, startLabel: 'Step up to the scale →' },
   overview: {
     say: "Here is what we are figuring out: a check-in scale balances only when both pans weigh the same. The left pan holds a mystery case plus a three-kilo weight, and the right pan reads eight kilos. We will find the case's weight — the x that makes x plus three equal eight — and it comes out to five.",

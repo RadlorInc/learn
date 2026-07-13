@@ -28,7 +28,7 @@ const P: Palette = {
   glass: 'rgba(42,23,18,0.6)', glassBorder: 'rgba(255,240,230,0.22)',
 }
 
-interface Task extends BaseTask { mech: 'crank' | 'root'; answer: number; base?: number; n?: number }
+interface Task extends BaseTask { mech: 'crank' | 'root'; answer: number; base?: number; n?: number; coef?: number }
 
 const SUPER: Record<number, string> = { 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶' }
 const sup = (e: number) => SUPER[e] ?? `^${e}`
@@ -86,11 +86,33 @@ function rootSlide(d: 1 | 2 | 3): Task {
   }
 }
 
+// ── scientific notation a × 10ᵏ → standard form, SOLVED ON the crank: start at the
+//    coefficient `a` and crank ×10 exactly k times (each turn shifts it up a place),
+//    so a × 10ᵏ is BUILT, never worked out in the head. ──
+const SCI: Record<1 | 2 | 3, [number, number][]> = {   // [coefficient, exponent]
+  1: [[3, 2], [4, 2], [5, 2]],
+  2: [[6, 2], [2, 3], [7, 2]],
+  3: [[3, 3], [5, 3], [2, 4]],
+}
+function sciNotation(d: 1 | 2 | 3): Task {
+  const [a, k] = pick(SCI[d])
+  const answer = Math.round(a * 10 ** k)
+  return {
+    mech: 'crank', answer, base: 10, coef: a,
+    title: 'Scientific notation', badge: `${a} × 10${sup(k)}`, tone: 'b',
+    context: 'Scientific notation packs a big number as a digit times a power of ten.',
+    instruction: 'Crank ×10 once for each power.',
+    prompt: `Write ${a} × 10${sup(k)} in full. Start at ${a} and crank ×10 — each turn makes it ten times bigger.`,
+    say: `${a} times ten to the power ${k}. Start at ${a}, then crank times ten, ${k} times. Each turn shifts it up a place.`,
+    work: [`10${sup(k)} means multiply by ten ${k} times.`, `${a} × 10${sup(k)} = ${answer}.`],
+  }
+}
+
 function makeTask(d: 1 | 2 | 3): Task {
   const pool: (() => Task)[] =
     d === 1 ? [() => powerCrank(1), () => powerCrank(1), () => rootSlide(1)]
-    : d === 2 ? [() => powerCrank(2), () => rootSlide(2), () => powerCrank(2)]
-    : [() => powerCrank(3), () => rootSlide(3), () => powerCrank(3)]
+    : d === 2 ? [() => powerCrank(2), () => rootSlide(2), () => sciNotation(2)]
+    : [() => powerCrank(3), () => rootSlide(3), () => sciNotation(3)]
   return pick(pool)()
 }
 
@@ -309,14 +331,14 @@ const CONFIG: GameConfig<number, Task> = {
   ticketLabel: 'build order',
   palette: P,
   makeTask,
-  initialValue: (t) => (t.mech === 'crank' ? 1 : 0),
+  initialValue: (t) => (t.mech === 'crank' ? (t.coef ?? 1) : 0),
   grade: (t, v) => Math.abs(v - t.answer) < 1e-6,
   revealText: (t) => `${t.answer}`,
   glide: (t, from, setValue, later) =>
     t.mech === 'crank' ? later(() => setValue(t.answer), 600) : glideNumber(from, t.answer, setValue, later),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) =>
     task.mech === 'crank'
-      ? <CrankGear P={palette} value={value} setValue={setValue} base={task.base!} floor={1} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="BUILD ✓" />
+      ? <CrankGear P={palette} value={value} setValue={setValue} base={task.base!} floor={task.coef ?? 1} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel={task.coef ? 'WRITE ✓' : 'BUILD ✓'} />
       : <RootPatch P={palette} task={task} value={value} setValue={setValue} disabled={disabled} reveal={reveal} onCommit={onCommit} />,
   tutorial: {
     task: DEMO_TASK,

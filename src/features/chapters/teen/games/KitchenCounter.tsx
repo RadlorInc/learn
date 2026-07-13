@@ -95,11 +95,32 @@ function fracDiv(): Task {
   }
 }
 
+// ── decimal ÷ decimal — SAME "how many pieces fit" illustration as fraction ÷: a
+//    1.5 m board cut into 0.5 m pieces is "how many 0.5s fit in 1.5" → 3. The tape
+//    slots are the pieces; the count IS the quotient. Values chosen to fit whole. ──
+const DECDIV_ITEMS: { a: string; b: string; denom: number; board: number; piece: number; ans: number }[] = [
+  { a: '1.5', b: '0.5', denom: 5, board: 3, piece: 1, ans: 3 },
+  { a: '2.0', b: '0.5', denom: 5, board: 4, piece: 1, ans: 4 },
+  { a: '2.4', b: '0.6', denom: 6, board: 4, piece: 1, ans: 4 },
+  { a: '1.5', b: '0.3', denom: 6, board: 5, piece: 1, ans: 5 },
+]
+function decDiv(): Task {
+  const { a, b, denom, board, piece, ans } = pick(DECDIV_ITEMS)
+  return {
+    mech: 'pieces', title: 'How many fit?', badge: `${a} ÷ ${b}`, tone: 'b', answer: ans, denom, board, piece,
+    context: `A board is ${a} metres long, and each piece must be ${b} of a metre.`,
+    instruction: 'Lay the pieces into the board and count them.',
+    prompt: `How many ${b} m pieces fit in ${a} m? Lay them along the board — the count is the answer.`,
+    say: `How many ${b} metre pieces fit in ${a} metres? Lay the pieces along the board and count how many fit.`,
+    work: ['Dividing asks how many pieces fit.', `${a} ÷ ${b} = ${ans}.`],
+  }
+}
+
 function makeTask(d: 1 | 2 | 3): Task {
   const pool: (() => Task)[] =
     d === 1 ? [barPart, barPart, barPart]
     : d === 2 ? [barPart, decMul, barPart]
-    : [fracDiv, decMul, barPart]
+    : [fracDiv, decDiv, decMul, barPart]
   return pick(pool)()
 }
 
