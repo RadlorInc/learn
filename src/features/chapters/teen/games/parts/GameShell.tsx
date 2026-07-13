@@ -28,7 +28,7 @@ import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import type { ChapterType } from '@/state/store'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import MiloMark from '@/features/chapters/teen/MiloMark'
-import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, headerChip, bigBtn, type HandKind } from './gameKit'
+import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, headerChip, bigBtn, type HandKind, type CoachCue } from './gameKit'
 
 const BAND: AgeBand = '12-14'
 const RETEACH_AFTER = 3
@@ -71,6 +71,10 @@ export interface InstrumentProps<V, T extends BaseTask> {
   reveal: boolean
   palette: Palette
   onCommit: (v: V) => void
+  /** Set during "show me how" so the instrument can SPOTLIGHT the exact control the
+   *  child would use next: 'move' (the value control) then 'commit' (the confirm
+   *  button). Optional — an instrument that doesn't implement it just ignores it. */
+  coach?: CoachCue
 }
 
 export interface DemoProps {
@@ -513,7 +517,7 @@ export function Game<V, T extends BaseTask>({
                 <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Try this one with me</div>
               )}
               <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
-                <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach' || sub === 'showing'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
+                <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach' || sub === 'showing'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} coach={sub === 'showing' ? (onFinalSolveStep ? 'commit' : 'move') : undefined} />
                 {stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind={config.guided.hand} />}
                 {/* During "show me how": demonstrate the interaction, not just the answer —
                     the gesture cue points at the instrument while it solves, then swaps

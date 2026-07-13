@@ -244,8 +244,8 @@ const CONFIG: GameConfig<number, Task> = {
   grade: (t, v) => Math.abs(v - t.answer) < 1e-6,
   revealText: (t) => `${t.answer}`,
   glide: (t, from, setValue, later) => glideNumber(from, t.answer, setValue, later),
-  Instrument: ({ value, setValue, disabled, reveal, palette, onCommit }) => (
-    <VThermo P={palette} value={value} setValue={setValue} min={MIN} max={MAX} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="RECORD ✓" unit="" />
+  Instrument: ({ value, setValue, disabled, reveal, palette, onCommit, coach }) => (
+    <VThermo P={palette} value={value} setValue={setValue} min={MIN} max={MAX} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="RECORD ✓" unit="" coach={coach} />
   ),
   tutorial: {
     task: DEMO_TASK,

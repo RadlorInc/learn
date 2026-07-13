@@ -82,11 +82,24 @@ export function Says({ P, text }: { P: Palette; text: string }) {
 export function Readout({ P, text, reveal }: { P: Palette; text: string; reveal?: boolean }) {
   return <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(26px, 4.4vw, 50px)', fontWeight: 800, color: reveal ? P.mint : P.gold, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55` }}>{text}</div>
 }
-export function CommitBtn({ P, label, onClick, disabled }: { P: Palette; label: string; onClick: () => void; disabled?: boolean }) {
-  return <button type="button" onClick={onClick} disabled={disabled} style={{ ...bigBtn(P), opacity: disabled ? 0.5 : 1 }}>{label}</button>
+// During "show me how" an instrument can SPOTLIGHT the exact control the child would
+// use next — a pulsing gold ring on that button (overriding the dimmed/disabled look),
+// like a proper interaction tutorial. `highlight` turns it on per-control.
+export type CoachCue = 'move' | 'commit'
+export function CommitBtn({ P, label, onClick, disabled, highlight }: { P: Palette; label: string; onClick: () => void; disabled?: boolean; highlight?: boolean }) {
+  return <button type="button" onClick={onClick} disabled={disabled} className={highlight ? 'gk-coach' : undefined} style={{ ...bigBtn(P), opacity: disabled && !highlight ? 0.5 : 1, boxShadow: highlight ? `0 0 0 3px ${P.gold}, 0 0 22px ${P.gold}` : undefined }}>{label}<CoachCSS /></button>
 }
-function Nudge({ P, label, onClick, disabled }: { P: Palette; label: string; onClick: () => void; disabled?: boolean }) {
-  return <button type="button" onClick={onClick} disabled={disabled} style={{ width: 'clamp(44px, 4.4vw, 60px)', height: 'clamp(44px, 4.4vw, 60px)', borderRadius: '50%', border: `1px solid ${P.glassBorder}`, background: P.glass, color: P.cream, fontFamily: 'var(--font-numeric)', fontWeight: 700, fontSize: 'clamp(22px, 2.2vw, 30px)', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1 }}>{label}</button>
+function Nudge({ P, label, onClick, disabled, highlight }: { P: Palette; label: string; onClick: () => void; disabled?: boolean; highlight?: boolean }) {
+  return <button type="button" onClick={onClick} disabled={disabled} className={highlight ? 'gk-coach' : undefined} style={{ width: 'clamp(44px, 4.4vw, 60px)', height: 'clamp(44px, 4.4vw, 60px)', borderRadius: '50%', border: `1px solid ${highlight ? P.gold : P.glassBorder}`, background: P.glass, color: P.cream, fontFamily: 'var(--font-numeric)', fontWeight: 700, fontSize: 'clamp(22px, 2.2vw, 30px)', cursor: disabled ? 'default' : 'pointer', opacity: disabled && !highlight ? 0.5 : 1, boxShadow: highlight ? `0 0 0 3px ${P.gold}, 0 0 16px ${P.gold}` : undefined }}>{label}<CoachCSS /></button>
+}
+/** Shared pulse animation for a coached (spotlighted) control. Rendered once inside
+ *  each highlighted control (deduped by identical CSS text). */
+function CoachCSS() {
+  return <style>{`
+    .gk-coach { animation: gkCoachPulse 1.1s ease-in-out infinite; }
+    @keyframes gkCoachPulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.06) } }
+    @media (prefers-reduced-motion: reduce) { .gk-coach { animation: none } }
+  `}</style>
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -119,16 +132,18 @@ export function SlideValue({
 
 /** Vertical thermometer — pull the mercury up/down a signed track (drag or ± tap). */
 export function VThermo({
-  P, value, setValue, min, max, disabled, reveal, onCommit, commitLabel = 'LOCK IN ✓', unit = '°',
+  P, value, setValue, min, max, disabled, reveal, onCommit, commitLabel = 'LOCK IN ✓', unit = '°', coach,
 }: {
   P: Palette; value: number; setValue: (n: number) => void; min: number; max: number
-  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string; unit?: string
+  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string; unit?: string; coach?: CoachCue
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
   const frac = (value - min) / (max - min)         // 0 bottom … 1 top
   const zeroFrac = (0 - min) / (max - min)
   const fill = reveal ? P.mint : P.coral
+  const moveCoach = coach === 'move'       // spotlight the track + ± steppers ("set it here")
+  const commitCoach = coach === 'commit'   // spotlight the RECORD button ("now press this")
   const fromY = (clientY: number) => {
     const el = trackRef.current; if (!el) return
     const r = el.getBoundingClientRect()
@@ -140,10 +155,11 @@ export function VThermo({
       <div style={{ display: 'flex', alignItems: 'stretch', gap: 14 }}>
         <div
           ref={trackRef}
+          className={moveCoach ? 'gk-coach' : undefined}
           onPointerDown={(e) => { if (disabled) return; dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); fromY(e.clientY) }}
           onPointerMove={(e) => { if (dragging.current) fromY(e.clientY) }}
           onPointerUp={() => { dragging.current = false }}
-          style={{ position: 'relative', width: 'clamp(46px, 5.4vw, 72px)', height: 'clamp(210px, 27vh, 270px)', borderRadius: 24, background: P.glass, border: `1px solid ${P.glassBorder}`, touchAction: 'none', cursor: disabled ? 'default' : 'ns-resize' }}
+          style={{ position: 'relative', width: 'clamp(46px, 5.4vw, 72px)', height: 'clamp(210px, 27vh, 270px)', borderRadius: 24, background: P.glass, border: `1px solid ${moveCoach ? P.gold : P.glassBorder}`, boxShadow: moveCoach ? `0 0 0 3px ${P.gold}, 0 0 20px ${P.gold}` : undefined, touchAction: 'none', cursor: disabled ? 'default' : 'ns-resize' }}
         >
           {/* zero tick */}
           <div style={{ position: 'absolute', left: -6, right: -6, bottom: `${zeroFrac * 100}%`, height: 2, background: P.glassBorder }} />
@@ -152,12 +168,12 @@ export function VThermo({
           <div style={{ position: 'absolute', left: '50%', bottom: `calc(${frac * 100}% - 12px)`, transform: 'translateX(-50%)', width: 30, height: 24, borderRadius: 8, background: P.cream, boxShadow: '0 2px 8px rgba(0,0,0,0.4)', transition: 'bottom 90ms' }} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Nudge P={P} label="+" disabled={disabled} onClick={() => setValue(Math.min(max, value + 1))} />
+          <Nudge P={P} label="+" disabled={disabled} highlight={moveCoach} onClick={() => setValue(Math.min(max, value + 1))} />
           <Readout P={P} text={`${value}${unit}`} reveal={reveal} />
-          <Nudge P={P} label="−" disabled={disabled} onClick={() => setValue(Math.max(min, value - 1))} />
+          <Nudge P={P} label="−" disabled={disabled} highlight={moveCoach} onClick={() => setValue(Math.max(min, value - 1))} />
         </div>
       </div>
-      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} highlight={commitCoach} onClick={() => onCommit(value)} />
     </div>
   )
 }
