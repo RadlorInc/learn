@@ -20,7 +20,7 @@
  *   • mastery early-exit (top tier + clean streak → finish early, full stars)
  * Math-without-fear: no timer, no red X, no score, no coins.
  */
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo, isValidElement } from 'react'
 import { useAdaptive } from '@/core/adaptive'
 import { speak, speakAfterCurrent, speakSeq, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -461,7 +461,7 @@ export function Game<V, T extends BaseTask>({
             // it rolls into the walkthrough on its own (the explanation STAYS put).
             <TeachFrame
               roomy={roomy}
-              explanation={<ExplanationPanel P={P} overview={config.overview} read onDone={() => setStage('demo')} />}
+              explanation={<ExplanationPanel P={P} overview={config.overview} read wordReveal={!!config.showSolve} onDone={() => setStage('demo')} />}
               illustration={<Scene palette={P} task={introScript.task} value={introScript.initial} stepIndex={0} frameCount={1} ended={false} />}
             />
           ) : (
@@ -756,49 +756,72 @@ function OverviewCard({ P, overview, onDone }: {
  *  it as a word-by-word read-along and calls `onDone` when finished (which rolls into
  *  the walkthrough); when `read` is false (during the walkthrough) it just shows the
  *  plan, silent and unhighlighted, so the two chalkboards don't talk over each other. */
-function ExplanationPanel({ P, overview, read, onDone }: {
+/** Flatten a ReactNode (strings, numbers, fragments, <strong>, arrays) to plain text,
+ *  so the plan can be BOTH spoken and revealed word-by-word from the same content. */
+function nodeText(node: React.ReactNode): string {
+  if (node == null || typeof node === 'boolean') return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(nodeText).join('')
+  if (isValidElement(node)) return nodeText((node.props as { children?: React.ReactNode }).children)
+  return ''
+}
+
+function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
   P: Palette
   overview: NonNullable<GameConfig<unknown, BaseTask>['overview']>
   read: boolean
   onDone: () => void
+  /** When set, Milo narrates EXACTLY the board text (problem + points) and each word
+   *  appears as he says it — instead of speaking a separate `say` summary. */
+  wordReveal?: boolean
 }) {
-  // Ref so a new onDone identity never restarts the narration; it fires once when
-  // the summary finishes (real speech OR the blocked-audio fallback), then the
-  // baby-step walkthrough starts automatically.
+  // Ref so a new onDone identity never restarts the narration; it fires once when the
+  // summary finishes (real speech OR the blocked-audio fallback), then the walkthrough
+  // starts automatically.
   const doneRef = useRef(onDone)
   doneRef.current = onDone
   const points = overview.points ?? []
-  const totalBlocks = 1 + points.length   // the problem line + each bullet
-  // Reveal the plan progressively AS Milo narrates (problem first, then each point),
-  // rather than showing the whole board up front. Driven by speech progress so the
-  // last block lands as he finishes. When not reading (the panel persists through the
-  // walkthrough) everything is already shown.
-  const [shown, setShown] = useState(read ? 0 : totalBlocks)
+
+  // Plain-text blocks (problem + each point), tokenised the SAME way the speaker maps
+  // boundaries (splitWords), so the word reveal stays in lock-step with the voice.
+  const blocks = useMemo(
+    () => (wordReveal ? [overview.problem, ...points].map((n) => nodeText(n).trim()) : []),
+    [wordReveal, overview.problem, points],
+  )
+  const blockTokens = useMemo(() => blocks.map((b) => splitWords(b).map((w) => w.word)), [blocks])
+  const offsets = useMemo(() => {
+    const o: number[] = []; let acc = 0
+    for (const t of blockTokens) { o.push(acc); acc += t.length }
+    return o
+  }, [blockTokens])
+  const totalWords = blockTokens.reduce((a, t) => a + t.length, 0)
+  const spoken = blocks.join(' ')
+
+  // `said` = how many words Milo has spoken so far → reveal words with index < said.
+  const [said, setSaid] = useState(read && wordReveal ? 0 : totalWords)
   useEffect(() => {
-    if (!read) { setShown(totalBlocks); return }
-    setShown(0)
-    const words = Math.max(1, splitWords(overview.say).length)
-    // Pace the reveal across the estimated narration length so the last block lands
-    // about when Milo finishes. A timed schedule drives it (works even where the
-    // browser doesn't fire word-boundary events, e.g. blocked audio); real speech
-    // events, when they fire, only ever pull the reveal FORWARD (Math.max).
-    const per = Math.max(1200, Math.round((words * 340) / totalBlocks))
-    const bump = (n: number) => setShown((s) => Math.max(s, Math.min(totalBlocks, n)))
-    const tids = Array.from({ length: totalBlocks }, (_, b) =>
-      window.setTimeout(() => bump(b + 1), 450 + b * per))
-    const cancel = speakWithHighlight(overview.say, {
-      onWord: (i) => bump(Math.ceil(((i + 1) / words) * totalBlocks)),
-      onDone: () => { setShown(totalBlocks); doneRef.current() },
+    if (!read || !wordReveal) { setSaid(totalWords); return }
+    setSaid(0)
+    const bump = (n: number) => setSaid((s) => Math.max(s, Math.min(totalWords, n)))
+    // Timed fallback so words still appear even where no word-boundary events fire
+    // (blocked audio); real speech events only pull the reveal forward.
+    const tids = Array.from({ length: totalWords }, (_, i) => window.setTimeout(() => bump(i + 1), 350 + i * 300))
+    const cancel = speakWithHighlight(spoken, {
+      onWord: (i) => { if (i >= 0) bump(i + 1) },
+      onDone: () => { setSaid(totalWords); doneRef.current() },
     })
     return () => { tids.forEach(clearTimeout); cancel() }
-  }, [overview.say, read, totalBlocks])
-  // Each block fades/rises in when the narration reaches it.
-  const reveal = (idx: number): React.CSSProperties => ({
-    opacity: idx < shown ? 1 : 0,
-    transform: idx < shown ? 'none' : 'translateY(7px)',
-    transition: 'opacity 420ms ease, transform 420ms ease',
-  })
-  return (
+  }, [spoken, read, wordReveal, totalWords])
+
+  // Non-word chapters: speak the `say` summary; the board shows in full (unchanged).
+  useEffect(() => {
+    if (!read || wordReveal) return
+    const cancel = speakWithHighlight(overview.say, { onWord: () => {}, onDone: () => doneRef.current() })
+    return () => cancel()
+  }, [overview.say, read, wordReveal])
+
+  const wordStyle = (idx: number): React.CSSProperties => ({ opacity: idx < said ? 1 : 0, transition: 'opacity 200ms ease' })
+  const shell = (children: React.ReactNode) => (
     <div style={{
       width: '100%', maxHeight: '100%', boxSizing: 'border-box', overflow: 'hidden',
       background: 'linear-gradient(160deg, #21473c, #16302a)',
@@ -808,22 +831,51 @@ function ExplanationPanel({ P, overview, read, onDone }: {
       display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.3vh, 16px)',
     }}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1.05vw, 14px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold }}>The plan</div>
-      {/* The question, in one concise line — the hero of the panel. Chalk hand: this
-          is teaching narration on the board, not a precise value the child reads to act. */}
-      <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 26px)', fontWeight: 700, lineHeight: 1.3, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)', ...reveal(0) }}>{overview.problem}</p>
-      {/* What we know / what we'll do — short, scannable bullets instead of a
-          paragraph of spoken text. Clarity over karaoke. */}
+      {children}
+    </div>
+  )
+
+  // Word-by-word mode (pilot): render the SAME text Milo speaks, each word fading in.
+  if (wordReveal) {
+    const probTokens = blockTokens[0] ?? []
+    return shell(
+      <>
+        <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 26px)', fontWeight: 700, lineHeight: 1.3, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>
+          {probTokens.map((w, wi) => <span key={wi} style={wordStyle(offsets[0] + wi)}>{w}{wi < probTokens.length - 1 ? ' ' : ''}</span>)}
+        </p>
+        {points.length > 0 && (
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)' }}>
+            {points.map((_, i) => {
+              const toks = blockTokens[1 + i] ?? []
+              const base = offsets[1 + i] ?? 0
+              return (
+                <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(15px, 1.5vw, 20px)', lineHeight: 1.35, color: '#dbe9d6' }}>
+                  <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em', opacity: base < said ? 1 : 0, transition: 'opacity 200ms ease' }}>▸</span>
+                  <span>{toks.map((w, wi) => <span key={wi} style={wordStyle(base + wi)}>{w}{wi < toks.length - 1 ? ' ' : ''}</span>)}</span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </>,
+    )
+  }
+
+  // Static render (full text) — other chapters.
+  return shell(
+    <>
+      <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 26px)', fontWeight: 700, lineHeight: 1.3, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
       {points.length > 0 && (
         <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)' }}>
           {points.map((pt, i) => (
-            <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(15px, 1.5vw, 20px)', lineHeight: 1.35, color: '#dbe9d6', ...reveal(1 + i) }}>
+            <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(15px, 1.5vw, 20px)', lineHeight: 1.35, color: '#dbe9d6' }}>
               <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em' }}>▸</span>
               <span>{pt}</span>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </>,
   )
 }
 
