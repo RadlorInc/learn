@@ -102,6 +102,24 @@ function CoachCSS() {
   `}</style>
 }
 
+/** An animated finger that sits ON a control during "show me how" and acts out the
+ *  interaction — a repeated TAP (press) or a vertical DRAG. Position it over the
+ *  target with `style` (left/top); the motion is baked into the keyframes. */
+export function CoachPointer({ kind, style }: { kind: 'tap' | 'dragV'; style?: React.CSSProperties }) {
+  return (
+    <span aria-hidden className={`gk-ptr gk-ptr-${kind}`} style={{ position: 'absolute', fontSize: 'clamp(32px, 4vw, 44px)', lineHeight: 1, pointerEvents: 'none', zIndex: 8, filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.65))', ...style }}>
+      👆
+      <style>{`
+        .gk-ptr-tap { animation: gkPtrTap 1s ease-in-out infinite; }
+        @keyframes gkPtrTap { 0%,100% { transform: translate(-50%, 0) scale(1) } 45% { transform: translate(-50%, 9px) scale(0.86) } }
+        .gk-ptr-dragV { animation: gkPtrDragV 1.7s ease-in-out infinite; }
+        @keyframes gkPtrDragV { 0%,100% { transform: translate(-50%, -32px) } 50% { transform: translate(-50%, 34px) } }
+        @media (prefers-reduced-motion: reduce) { .gk-ptr { animation: none } }
+      `}</style>
+    </span>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // INSTRUMENTS — each produces a value by manipulation, calls onCommit(value).
 // ══════════════════════════════════════════════════════════════════════════════
@@ -166,6 +184,8 @@ export function VThermo({
           <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: `calc(${frac * 100}% - 16px)`, minHeight: 6, borderRadius: 16, background: `linear-gradient(${fill}, ${fill}cc)`, transition: 'height 90ms' }} />
           {/* knob */}
           <div style={{ position: 'absolute', left: '50%', bottom: `calc(${frac * 100}% - 12px)`, transform: 'translateX(-50%)', width: 30, height: 24, borderRadius: 8, background: P.cream, boxShadow: '0 2px 8px rgba(0,0,0,0.4)', transition: 'bottom 90ms' }} />
+          {/* coach: a finger dragging the meter up/down */}
+          {moveCoach && <CoachPointer kind="dragV" style={{ left: '50%', top: '42%' }} />}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center' }}>
           <Nudge P={P} label="+" disabled={disabled} highlight={moveCoach} onClick={() => setValue(Math.min(max, value + 1))} />
@@ -173,7 +193,11 @@ export function VThermo({
           <Nudge P={P} label="−" disabled={disabled} highlight={moveCoach} onClick={() => setValue(Math.max(min, value - 1))} />
         </div>
       </div>
-      <CommitBtn P={P} label={commitLabel} disabled={disabled} highlight={commitCoach} onClick={() => onCommit(value)} />
+      {/* coach: a finger tapping the RECORD button */}
+      <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+        <CommitBtn P={P} label={commitLabel} disabled={disabled} highlight={commitCoach} onClick={() => onCommit(value)} />
+        {commitCoach && <CoachPointer kind="tap" style={{ left: '50%', top: '54%' }} />}
+      </div>
     </div>
   )
 }

@@ -288,7 +288,6 @@ const CONFIG: GameConfig<number, Task> = {
   // Pilot: in practice, work the first question out for the child automatically, and
   // give every question a "Show me how ▸" button. A shown question isn't scored.
   showSolve: true,
-  solveHand: 'dragV',
   solveCommitLabel: 'RECORD ✓',
 }
 

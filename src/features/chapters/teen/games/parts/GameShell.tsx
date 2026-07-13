@@ -171,10 +171,6 @@ export interface GameConfig<V, T extends BaseTask> {
    *  touch the adaptive tier or the correct/wrong tally). Uses the task's `work` lines
    *  as the steps. Off by default — piloted per chapter. */
   showSolve?: boolean
-  /** The gesture cue shown during "show me how" so the child sees HOW to work the
-   *  instrument (e.g. drag the meter), not just the answer. Defaults to the guided /
-   *  walkthrough hand. */
-  solveHand?: HandKind
   /** Label for the commit button, echoed in the final "then press …" cue during
    *  "show me how" (e.g. "RECORD ✓"). Defaults to a generic "✓". */
   solveCommitLabel?: string
@@ -397,12 +393,6 @@ export function Game<V, T extends BaseTask>({
     ? (Array.isArray(config.tutorial) ? config.tutorial[0] : config.tutorial)
     : undefined
 
-  // Gesture cue for "show me how": which way to work the instrument. Falls back to the
-  // guided / walkthrough hand so a chapter usually needs no extra config.
-  const solveHand: HandKind = config.solveHand
-    ?? config.guided?.hand
-    ?? introScript?.hand
-    ?? 'tap'
   const solveCommitLabel = config.solveCommitLabel ?? '✓'
   // Last narrated step of the current solve → switch the cue to "then press <commit>".
   const onFinalSolveStep = !!task && task.work.length > 0 && showStep >= task.work.length - 1
@@ -519,13 +509,12 @@ export function Game<V, T extends BaseTask>({
               <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
                 <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach' || sub === 'showing'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} coach={sub === 'showing' ? (onFinalSolveStep ? 'commit' : 'move') : undefined} />
                 {stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind={config.guided.hand} />}
-                {/* During "show me how": demonstrate the interaction, not just the answer —
-                    the gesture cue points at the instrument while it solves, then swaps
-                    to "press <commit>" so the child learns the full move. */}
+                {/* During "show me how" the finger pointer (on the control itself) acts
+                    out the interaction; this is just the words alongside it. */}
                 {sub === 'showing' && (
-                  onFinalSolveStep
-                    ? <HandCue P={P} kind="tap" label={`then press ${solveCommitLabel}`} />
-                    : <HandCue P={P} kind={solveHand} label="move it to the answer" />
+                  <div style={{ color: P.creamSoft, fontSize: 'clamp(12px, 1.2vw, 15px)', fontWeight: 700, letterSpacing: '0.04em', textAlign: 'center' }}>
+                    {onFinalSolveStep ? `then press ${solveCommitLabel}` : 'move it to the answer'}
+                  </div>
                 )}
                 {/* Quiet on-demand helper — always there in practice for a stuck child.
                     Using it doesn't score the question (see startShow/advanceUnscored). */}
