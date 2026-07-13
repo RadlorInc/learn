@@ -786,14 +786,15 @@ function ExplanationPanel({ P, overview, read, onDone }: {
       display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.3vh, 16px)',
     }}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1.05vw, 14px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold }}>The plan</div>
-      {/* The question, in one concise line — the hero of the panel. */}
-      <p style={{ margin: 0, fontSize: 'clamp(16px, 1.7vw, 23px)', fontWeight: 800, lineHeight: 1.35, color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
+      {/* The question, in one concise line — the hero of the panel. Chalk hand: this
+          is teaching narration on the board, not a precise value the child reads to act. */}
+      <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 26px)', fontWeight: 700, lineHeight: 1.3, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
       {/* What we know / what we'll do — short, scannable bullets instead of a
           paragraph of spoken text. Clarity over karaoke. */}
       {points.length > 0 && (
         <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)' }}>
           {points.map((pt, i) => (
-            <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontSize: 'clamp(13px, 1.35vw, 18px)', lineHeight: 1.45, color: '#dbe9d6' }}>
+            <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(15px, 1.5vw, 20px)', lineHeight: 1.35, color: '#dbe9d6' }}>
               <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em' }}>▸</span>
               <span>{pt}</span>
             </li>
