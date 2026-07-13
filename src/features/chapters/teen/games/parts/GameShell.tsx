@@ -802,15 +802,15 @@ function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
   useEffect(() => {
     if (!read || !wordReveal) { setSaid(totalWords); return }
     setSaid(0)
-    const bump = (n: number) => setSaid((s) => Math.max(s, Math.min(totalWords, n)))
-    // Timed fallback so words still appear even where no word-boundary events fire
-    // (blocked audio); real speech events only pull the reveal forward.
-    const tids = Array.from({ length: totalWords }, (_, i) => window.setTimeout(() => bump(i + 1), 350 + i * 300))
+    // Reveal each word exactly when Milo SAYS it. speakWithHighlight drives onWord off
+    // the real speech boundaries (in sync with the voice), and falls back to its own
+    // word-paced sweep when the browser fires none (blocked audio) — so the reveal
+    // always tracks the voice instead of racing ahead of it.
     const cancel = speakWithHighlight(spoken, {
-      onWord: (i) => { if (i >= 0) bump(i + 1) },
+      onWord: (i) => { if (i >= 0) setSaid((s) => Math.max(s, Math.min(totalWords, i + 1))) },
       onDone: () => { setSaid(totalWords); doneRef.current() },
     })
-    return () => { tids.forEach(clearTimeout); cancel() }
+    return () => cancel()
   }, [spoken, read, wordReveal, totalWords])
 
   // Non-word chapters: speak the `say` summary; the board shows in full (unchanged).
