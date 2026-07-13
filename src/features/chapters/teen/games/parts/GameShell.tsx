@@ -20,7 +20,7 @@
  *   • mastery early-exit (top tier + clean streak → finish early, full stars)
  * Math-without-fear: no timer, no red X, no score, no coins.
  */
-import { useEffect, useRef, useState, useCallback, useMemo, isValidElement } from 'react'
+import { Fragment, useEffect, useRef, useState, useCallback, useMemo, isValidElement } from 'react'
 import { useAdaptive } from '@/core/adaptive'
 import { speak, speakAfterCurrent, speakSeq, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -829,7 +829,18 @@ function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
     return () => cancel()
   }, [overview.say, read, wordReveal])
 
-  const wordStyle = (idx: number): React.CSSProperties => ({ opacity: idx < said ? 1 : 0, transition: 'opacity 200ms ease' })
+  // Reveal each word as Milo says it; the just-spoken word (idx === said-1) writes on
+  // letter-by-letter (clip sweep), the rest just hold. Keeps the voice pacing exactly.
+  const renderWords = (toks: string[], base: number) =>
+    toks.map((w, wi) => {
+      const gi = base + wi; const writing = gi === said - 1
+      return (
+        <Fragment key={wi}>
+          <span className={writing ? 'mb-word-write' : undefined} style={{ opacity: gi < said ? 1 : 0, transition: writing ? undefined : 'opacity 200ms ease', animationTimingFunction: writing ? `steps(${Math.max(w.length, 1)}, end)` : undefined }}>{w}</span>
+          {wi < toks.length - 1 ? ' ' : ''}
+        </Fragment>
+      )
+    })
   const shell = (children: React.ReactNode) => (
     <div style={{
       width: '100%', maxHeight: '100%', boxSizing: 'border-box', overflow: 'hidden',
@@ -849,8 +860,13 @@ function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
     const probTokens = blockTokens[0] ?? []
     return shell(
       <>
+        <style>{`
+          .mb-word-write { display: inline-block; animation: mbWordWrite 0.42s steps(8, end) both; }
+          @keyframes mbWordWrite { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
+          @media (prefers-reduced-motion: reduce) { .mb-word-write { animation: none; clip-path: none } }
+        `}</style>
         <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(22px, 2.5vw, 34px)', fontWeight: 700, lineHeight: 1.28, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>
-          {probTokens.map((w, wi) => <span key={wi} style={wordStyle(offsets[0] + wi)}>{w}{wi < probTokens.length - 1 ? ' ' : ''}</span>)}
+          {renderWords(probTokens, offsets[0])}
         </p>
         {points.length > 0 && (
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)' }}>
@@ -860,7 +876,7 @@ function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
               return (
                 <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 25px)', lineHeight: 1.35, color: '#dbe9d6' }}>
                   <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em', opacity: base < said ? 1 : 0, transition: 'opacity 200ms ease' }}>▸</span>
-                  <span>{toks.map((w, wi) => <span key={wi} style={wordStyle(base + wi)}>{w}{wi < toks.length - 1 ? ' ' : ''}</span>)}</span>
+                  <span>{renderWords(toks, base)}</span>
                 </li>
               )
             })}

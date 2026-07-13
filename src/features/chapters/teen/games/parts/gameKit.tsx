@@ -10,7 +10,7 @@
  * every instrument produces a value by manipulation; grading compares it to the
  * task answer (see GameShell).
  */
-import { useRef, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 
 // ── palette (each world supplies its own; shape matches ShopRush's P) ─────────
 export interface Palette {
@@ -693,9 +693,15 @@ export function Blackboard({ P, lines, writingIndex, saidWords }: { P: Palette; 
             <div key={k} style={{ display: 'grid', gridTemplateColumns: 'clamp(20px,2.2vw,26px) 1fr', gap: 'clamp(8px,1vw,13px)', alignItems: 'baseline' }}>
               <span style={{ ...numChip, opacity: started ? 1 : 0.28, transition: 'opacity 200ms ease' }}>{k + 1}</span>
               <span className="mb-chalk" style={CHALK_TEXT}>
-                {toks.map((w, wi) => (
-                  <span key={wi} style={{ opacity: base + wi < sw ? 1 : 0, transition: 'opacity 180ms ease' }}>{w}{wi < toks.length - 1 ? ' ' : ''}</span>
-                ))}
+                {toks.map((w, wi) => {
+                  const gi = base + wi; const writing = gi === sw - 1
+                  return (
+                    <Fragment key={wi}>
+                      <span className={writing ? 'mb-word-write' : undefined} style={{ opacity: gi < sw ? 1 : 0, transition: writing ? undefined : 'opacity 180ms ease', animationTimingFunction: writing ? `steps(${Math.max(w.length, 1)}, end)` : undefined }}>{w}</span>
+                      {wi < toks.length - 1 ? ' ' : ''}
+                    </Fragment>
+                  )
+                })}
               </span>
             </div>
           )
@@ -715,7 +721,13 @@ export function Blackboard({ P, lines, writingIndex, saidWords }: { P: Palette; 
           from { clip-path: inset(0 100% 0 0); }
           to   { clip-path: inset(0 0 0 0);   }
         }
-        @media (prefers-reduced-motion: reduce) { .mb-writing { animation: none; clip-path: none } }
+        /* Per-word write-on: the word Milo is saying reveals letter-by-letter. */
+        .mb-word-write { display: inline-block; animation: mbWordWrite 0.42s steps(8, end) both; }
+        @keyframes mbWordWrite {
+          from { clip-path: inset(0 100% 0 0); }
+          to   { clip-path: inset(0 0 0 0);   }
+        }
+        @media (prefers-reduced-motion: reduce) { .mb-writing, .mb-word-write { animation: none; clip-path: none } }
       `}</style>
     </div>
   )
