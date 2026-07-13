@@ -660,12 +660,21 @@ export function QuestionBoard({ P, title, prompt, context, instruction, expr, an
   )
 }
 
-// ── Blackboard — Milo's chalkboard. As he SPEAKS each walkthrough step, the
-//    matching math is WRITTEN here, one line at a time (chalk wipes in
-//    left-to-right, like a teacher writing while talking). `writingIndex` is the
-//    line currently being written (gets the animation); earlier lines stay up.
-export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: string[]; writingIndex: number }) {
+// ── Blackboard — Milo's chalkboard. The matching math is WRITTEN here as he SPEAKS.
+//    Two modes:
+//    • `saidWords` given (show-me-how): reveal WORD-BY-WORD in step with the voice —
+//      each word fades in as Milo says it (indices align with splitWords).
+//    • else (walkthrough): `writingIndex` is the line being chalk-wiped in.
+const CHALK_TEXT: React.CSSProperties = { fontFamily: 'var(--font-chalk)', fontSize: 'clamp(19px, 2.3vw, 32px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.6), 0 1px 1px rgba(0,0,0,0.28), 0 0 11px rgba(214,240,206,0.4)', lineHeight: 1.25, textAlign: 'left' }
+export function Blackboard({ P, lines, writingIndex, saidWords }: { P: Palette; lines: string[]; writingIndex: number; saidWords?: number }) {
   if (!lines.length) return null
+  const wordMode = saidWords != null
+  // Tokenise each line the same way the speaker maps boundaries (whitespace runs), and
+  // the running word offset per line, so word index ↔ voice stays aligned.
+  const tokens = lines.map((l) => l.split(/\s+/).filter(Boolean))
+  const offsets: number[] = []
+  { let acc = 0; for (const t of tokens) { offsets.push(acc); acc += t.length } }
+  const numChip: React.CSSProperties = { fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(10px,0.95vw,13px)', color: '#12241b', background: '#bcd8c9', width: 'clamp(20px,2.2vw,26px)', height: 'clamp(20px,2.2vw,26px)', borderRadius: 999, display: 'grid', placeItems: 'center', lineHeight: 1 }
   return (
     <div style={{
       width: '100%', maxWidth: 'clamp(340px, 46vw, 560px)', minHeight: 48, boxSizing: 'border-box',
@@ -674,26 +683,33 @@ export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: stri
       boxShadow: 'inset 0 0 26px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4)',
       padding: 'clamp(10px, 1.6vw, 20px) clamp(14px, 1.8vw, 26px)', display: 'flex', flexDirection: 'column', gap: 'clamp(5px, 0.9vw, 12px)', alignItems: 'stretch',
     }}>
-      {/* A clear label so this reads as THE SOLVE — the steps to get the answer —
-          not a loose pile of chalk lines. */}
+      {/* A clear label so this reads as THE SOLVE — the steps to get the answer. */}
       <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px, 0.95vw, 13px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold, textAlign: 'center', marginBottom: 'clamp(1px,0.3vw,4px)' }}>Solving it, step by step</div>
-      {/* Each step is NUMBERED and left-aligned — a readable list, not centred prose.
-          The current step still writes in with the chalk sweep. */}
       {lines.map((ln, k) => {
+        if (wordMode) {
+          const toks = tokens[k]; const base = offsets[k]; const sw = saidWords
+          const started = base < sw   // this line has begun
+          return (
+            <div key={k} style={{ display: 'grid', gridTemplateColumns: 'clamp(20px,2.2vw,26px) 1fr', gap: 'clamp(8px,1vw,13px)', alignItems: 'baseline' }}>
+              <span style={{ ...numChip, opacity: started ? 1 : 0.28, transition: 'opacity 200ms ease' }}>{k + 1}</span>
+              <span className="mb-chalk" style={CHALK_TEXT}>
+                {toks.map((w, wi) => (
+                  <span key={wi} style={{ opacity: base + wi < sw ? 1 : 0, transition: 'opacity 180ms ease' }}>{w}{wi < toks.length - 1 ? ' ' : ''}</span>
+                ))}
+              </span>
+            </div>
+          )
+        }
         const done = writingIndex < 0 || k < writingIndex
         return (
           <div key={k} style={{ display: 'grid', gridTemplateColumns: 'clamp(20px,2.2vw,26px) 1fr', gap: 'clamp(8px,1vw,13px)', alignItems: 'baseline', opacity: k === writingIndex || done ? 1 : 0.42 }}>
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(10px,0.95vw,13px)', color: '#12241b', background: '#bcd8c9', width: 'clamp(20px,2.2vw,26px)', height: 'clamp(20px,2.2vw,26px)', borderRadius: 999, display: 'grid', placeItems: 'center', lineHeight: 1 }}>{k + 1}</span>
-            <span className={k === writingIndex ? 'mb-chalk mb-writing' : 'mb-chalk'}
-              style={{ fontFamily: 'var(--font-chalk)', fontSize: 'clamp(19px, 2.3vw, 32px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.6), 0 1px 1px rgba(0,0,0,0.28), 0 0 11px rgba(214,240,206,0.4)', lineHeight: 1.25, textAlign: 'left' }}>
-              {ln}
-            </span>
+            <span style={numChip}>{k + 1}</span>
+            <span className={k === writingIndex ? 'mb-chalk mb-writing' : 'mb-chalk'} style={CHALK_TEXT}>{ln}</span>
           </div>
         )
       })}
       <style>{`
-        /* Chalk write-on: revealed left-to-right in short steps, like a hand scratching
-           the line out in chalk (segmented, not a smooth wipe). */
+        /* Chalk write-on (walkthrough mode): revealed left-to-right in short steps. */
         .mb-writing { animation: mbWrite 1.7s steps(26, end) both; }
         @keyframes mbWrite {
           from { clip-path: inset(0 100% 0 0); }

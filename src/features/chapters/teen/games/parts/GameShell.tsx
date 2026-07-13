@@ -209,8 +209,9 @@ export function Game<V, T extends BaseTask>({
   const [wrongRun, setWrongRun] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [wrong, setWrong] = useState(0)
-  // "Show me how" state (config.showSolve): which solve-step line is being written.
-  const [showStep, setShowStep] = useState(-1)
+  // "Show me how" state (config.showSolve): how many solve-step WORDS Milo has said so
+  // far — the board reveals words up to here, in step with his voice.
+  const [showWord, setShowWord] = useState(0)
   const showCancel = useRef<() => void>(() => {})
   const firstShown = useRef(false)
   // Latest task/value in refs so startShow (called from an effect right after a task
@@ -259,7 +260,10 @@ export function Game<V, T extends BaseTask>({
     // board unaided — that independent success is the competence reward. The board
     // still carries the question (info is never audio-only), and the spoken hint
     // returns automatically on a demotion, since it tracks the live tier.
-    if (d < 3) speakAfterCurrent(t.say)
+    // Skip the spoken question-readout for the auto-shown FIRST question (showSolve) —
+    // the "show me how" narration takes over, and speakAfterCurrent would otherwise
+    // schedule a late utterance that cancels it.
+    if (d < 3 && !(config.showSolve && nextIdx === 0)) speakAfterCurrent(t.say)
   }, [ada.difficulty, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue])
 
   // ── "Show me how" (config.showSolve) ──────────────────────────────────────────
@@ -280,14 +284,17 @@ export function Game<V, T extends BaseTask>({
     showCancel.current()          // cancel any prior show
     stopSpeech()                  // drop a queued `say` so it doesn't fight the steps
     setCue(null)                  // clear the "your turn" popup — we're demonstrating
-    setSub('showing'); setShowStep(-1)
+    setSub('showing'); setShowWord(0)
     const from = valueRef.current
     if (from != null) config.glide(t, from, setValue, later)   // solve on the illustration
     unlockSpeech()
-    showCancel.current = speakSteps(steps, {
-      rate: 0.85, gapMs: 900, fallbackStepMs: 2600,
-      onStep: (s) => setShowStep(s),
-      onDone: () => { later(advanceUnscored, 1400) },
+    // Narrate the steps as ONE passage and reveal each word on the board as Milo says
+    // it (word-boundary events, or the engine's word-paced sweep when audio is blocked)
+    // — so the chalk fills in exactly in step with his voice, like the plan panel.
+    const totalW = steps.reduce((a, s) => a + splitWords(s).length, 0)
+    showCancel.current = speakWithHighlight(steps.join(' '), {
+      onWord: (i) => { if (i >= 0) setShowWord((w) => Math.max(w, Math.min(totalW, i + 1))) },
+      onDone: () => { setShowWord(totalW); later(advanceUnscored, 1400) },
     })
   }, [config, later, advanceUnscored])
 
@@ -394,8 +401,10 @@ export function Game<V, T extends BaseTask>({
     : undefined
 
   const solveCommitLabel = config.solveCommitLabel ?? '✓'
-  // Last narrated step of the current solve → switch the cue to "then press <commit>".
-  const onFinalSolveStep = !!task && task.work.length > 0 && showStep >= task.work.length - 1
+  // Once Milo reaches the LAST solve step (by word count) → switch the coach cue from
+  // "move it" to "then press <commit>".
+  const showLastStart = task ? task.work.slice(0, -1).reduce((a, s) => a + splitWords(s).length, 0) : 0
+  const onFinalSolveStep = !!task && task.work.length > 0 && showWord > showLastStart
 
   return (
     <div className="milo-lesson milo-game" style={{ position: 'relative', height: '100dvh', maxHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, color: P.cream, fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
@@ -498,7 +507,7 @@ export function Game<V, T extends BaseTask>({
                   with Milo's voice while the instrument glides to the answer. */}
               {sub === 'showing' && task.work.length > 0 && (
                 <div style={{ marginTop: 'clamp(8px, 1.2vh, 14px)', display: 'flex', justifyContent: 'center' }}>
-                  <Blackboard P={P} lines={task.work} writingIndex={showStep} />
+                  <Blackboard P={P} lines={task.work} writingIndex={-1} saidWords={showWord} />
                 </div>
               )}
             </BoardSlot>
