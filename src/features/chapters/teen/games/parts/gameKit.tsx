@@ -96,7 +96,7 @@ function Nudge({ P, label, onClick, disabled, highlight }: { P: Palette; label: 
  *  each highlighted control (deduped by identical CSS text). */
 function CoachCSS() {
   return <style>{`
-    .gk-coach { animation: gkCoachPulse 1.1s ease-in-out infinite; }
+    .gk-coach { animation: gkCoachPulse 1.9s ease-in-out infinite; }
     @keyframes gkCoachPulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.06) } }
     @media (prefers-reduced-motion: reduce) { .gk-coach { animation: none } }
   `}</style>
@@ -110,9 +110,9 @@ export function CoachPointer({ kind, style }: { kind: 'tap' | 'dragV'; style?: R
     <span aria-hidden className={`gk-ptr gk-ptr-${kind}`} style={{ position: 'absolute', fontSize: 'clamp(32px, 4vw, 44px)', lineHeight: 1, pointerEvents: 'none', zIndex: 8, filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.65))', ...style }}>
       👆
       <style>{`
-        .gk-ptr-tap { animation: gkPtrTap 1s ease-in-out infinite; }
+        .gk-ptr-tap { animation: gkPtrTap 1.9s ease-in-out infinite; }
         @keyframes gkPtrTap { 0%,100% { transform: translate(-50%, 0) scale(1) } 45% { transform: translate(-50%, 9px) scale(0.86) } }
-        .gk-ptr-dragV { animation: gkPtrDragV 1.7s ease-in-out infinite; }
+        .gk-ptr-dragV { animation: gkPtrDragV 3.2s ease-in-out infinite; }
         @keyframes gkPtrDragV { 0%,100% { transform: translate(-50%, -32px) } 50% { transform: translate(-50%, 34px) } }
         @media (prefers-reduced-motion: reduce) { .gk-ptr { animation: none } }
       `}</style>
@@ -685,19 +685,21 @@ export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: stri
           <div key={k} style={{ display: 'grid', gridTemplateColumns: 'clamp(20px,2.2vw,26px) 1fr', gap: 'clamp(8px,1vw,13px)', alignItems: 'baseline', opacity: k === writingIndex || done ? 1 : 0.42 }}>
             <span style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(10px,0.95vw,13px)', color: '#12241b', background: '#bcd8c9', width: 'clamp(20px,2.2vw,26px)', height: 'clamp(20px,2.2vw,26px)', borderRadius: 999, display: 'grid', placeItems: 'center', lineHeight: 1 }}>{k + 1}</span>
             <span className={k === writingIndex ? 'mb-chalk mb-writing' : 'mb-chalk'}
-              style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(16px, 1.9vw, 26px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.4)', lineHeight: 1.3, textAlign: 'left' }}>
+              style={{ fontFamily: 'var(--font-chalk)', fontSize: 'clamp(19px, 2.3vw, 32px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.6), 0 1px 1px rgba(0,0,0,0.28), 0 0 11px rgba(214,240,206,0.4)', lineHeight: 1.25, textAlign: 'left' }}>
               {ln}
             </span>
           </div>
         )
       })}
       <style>{`
-        .mb-writing { animation: mbWrite 1.6s cubic-bezier(.36,0,.25,1) both; }
+        /* Chalk write-on: revealed left-to-right in short steps, like a hand scratching
+           the line out in chalk (segmented, not a smooth wipe). */
+        .mb-writing { animation: mbWrite 1.7s steps(26, end) both; }
         @keyframes mbWrite {
-          from { clip-path: inset(0 100% 0 0); opacity: 0.35 }
-          to   { clip-path: inset(0 0 0 0);   opacity: 1 }
+          from { clip-path: inset(0 100% 0 0); }
+          to   { clip-path: inset(0 0 0 0);   }
         }
-        @media (prefers-reduced-motion: reduce) { .mb-writing { animation: none } }
+        @media (prefers-reduced-motion: reduce) { .mb-writing { animation: none; clip-path: none } }
       `}</style>
     </div>
   )
