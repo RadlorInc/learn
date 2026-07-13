@@ -849,7 +849,7 @@ function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
     const probTokens = blockTokens[0] ?? []
     return shell(
       <>
-        <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 26px)', fontWeight: 700, lineHeight: 1.3, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>
+        <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(22px, 2.5vw, 34px)', fontWeight: 700, lineHeight: 1.28, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>
           {probTokens.map((w, wi) => <span key={wi} style={wordStyle(offsets[0] + wi)}>{w}{wi < probTokens.length - 1 ? ' ' : ''}</span>)}
         </p>
         {points.length > 0 && (
@@ -858,7 +858,7 @@ function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
               const toks = blockTokens[1 + i] ?? []
               const base = offsets[1 + i] ?? 0
               return (
-                <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(15px, 1.5vw, 20px)', lineHeight: 1.35, color: '#dbe9d6' }}>
+                <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 25px)', lineHeight: 1.35, color: '#dbe9d6' }}>
                   <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em', opacity: base < said ? 1 : 0, transition: 'opacity 200ms ease' }}>▸</span>
                   <span>{toks.map((w, wi) => <span key={wi} style={wordStyle(base + wi)}>{w}{wi < toks.length - 1 ? ' ' : ''}</span>)}</span>
                 </li>
@@ -873,11 +873,11 @@ function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
   // Static render (full text) — other chapters.
   return shell(
     <>
-      <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 26px)', fontWeight: 700, lineHeight: 1.3, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
+      <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(22px, 2.5vw, 34px)', fontWeight: 700, lineHeight: 1.28, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
       {points.length > 0 && (
         <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)' }}>
           {points.map((pt, i) => (
-            <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(15px, 1.5vw, 20px)', lineHeight: 1.35, color: '#dbe9d6' }}>
+            <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 25px)', lineHeight: 1.35, color: '#dbe9d6' }}>
               <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em' }}>▸</span>
               <span>{pt}</span>
             </li>
