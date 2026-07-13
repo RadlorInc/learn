@@ -767,15 +767,37 @@ function ExplanationPanel({ P, overview, read, onDone }: {
   // baby-step walkthrough starts automatically.
   const doneRef = useRef(onDone)
   doneRef.current = onDone
-  useEffect(() => {
-    if (!read) return
-    // Milo still SPEAKS the full plan (the audio is unchanged); we just no longer
-    // dump that whole paragraph on the board as text — the panel shows the concise
-    // problem + bullets instead. `onDone` still rolls the intro into the walkthrough.
-    const cancel = speakWithHighlight(overview.say, { onWord: () => {}, onDone: () => doneRef.current() })
-    return () => cancel()
-  }, [overview.say, read])
   const points = overview.points ?? []
+  const totalBlocks = 1 + points.length   // the problem line + each bullet
+  // Reveal the plan progressively AS Milo narrates (problem first, then each point),
+  // rather than showing the whole board up front. Driven by speech progress so the
+  // last block lands as he finishes. When not reading (the panel persists through the
+  // walkthrough) everything is already shown.
+  const [shown, setShown] = useState(read ? 0 : totalBlocks)
+  useEffect(() => {
+    if (!read) { setShown(totalBlocks); return }
+    setShown(0)
+    const words = Math.max(1, splitWords(overview.say).length)
+    // Pace the reveal across the estimated narration length so the last block lands
+    // about when Milo finishes. A timed schedule drives it (works even where the
+    // browser doesn't fire word-boundary events, e.g. blocked audio); real speech
+    // events, when they fire, only ever pull the reveal FORWARD (Math.max).
+    const per = Math.max(1200, Math.round((words * 340) / totalBlocks))
+    const bump = (n: number) => setShown((s) => Math.max(s, Math.min(totalBlocks, n)))
+    const tids = Array.from({ length: totalBlocks }, (_, b) =>
+      window.setTimeout(() => bump(b + 1), 450 + b * per))
+    const cancel = speakWithHighlight(overview.say, {
+      onWord: (i) => bump(Math.ceil(((i + 1) / words) * totalBlocks)),
+      onDone: () => { setShown(totalBlocks); doneRef.current() },
+    })
+    return () => { tids.forEach(clearTimeout); cancel() }
+  }, [overview.say, read, totalBlocks])
+  // Each block fades/rises in when the narration reaches it.
+  const reveal = (idx: number): React.CSSProperties => ({
+    opacity: idx < shown ? 1 : 0,
+    transform: idx < shown ? 'none' : 'translateY(7px)',
+    transition: 'opacity 420ms ease, transform 420ms ease',
+  })
   return (
     <div style={{
       width: '100%', maxHeight: '100%', boxSizing: 'border-box', overflow: 'hidden',
@@ -788,13 +810,13 @@ function ExplanationPanel({ P, overview, read, onDone }: {
       <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1.05vw, 14px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold }}>The plan</div>
       {/* The question, in one concise line — the hero of the panel. Chalk hand: this
           is teaching narration on the board, not a precise value the child reads to act. */}
-      <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 26px)', fontWeight: 700, lineHeight: 1.3, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
+      <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 26px)', fontWeight: 700, lineHeight: 1.3, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)', ...reveal(0) }}>{overview.problem}</p>
       {/* What we know / what we'll do — short, scannable bullets instead of a
           paragraph of spoken text. Clarity over karaoke. */}
       {points.length > 0 && (
         <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)' }}>
           {points.map((pt, i) => (
-            <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(15px, 1.5vw, 20px)', lineHeight: 1.35, color: '#dbe9d6' }}>
+            <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(15px, 1.5vw, 20px)', lineHeight: 1.35, color: '#dbe9d6', ...reveal(1 + i) }}>
               <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em' }}>▸</span>
               <span>{pt}</span>
             </li>
