@@ -299,9 +299,11 @@ export function Game<V, T extends BaseTask>({
     if (demoDone.current) return
     demoDone.current = true
     setStage('play')
-    speak(`Your turn, ${childName}.`)
+    // With "show me how" on, the first question is demonstrated (not the child's turn
+    // yet), so hold the "Your turn" line — startShow will narrate the solve instead.
+    if (!config.showSolve) speak(`Your turn, ${childName}.`)
     loadTask(0, 0, 0, false)
-  }, [childName, loadTask])
+  }, [childName, loadTask, config.showSolve])
 
   // "we do" — one live, coached, NON-scored order before real play.
   const enterGuided = useCallback(() => {
@@ -312,12 +314,15 @@ export function Game<V, T extends BaseTask>({
   }, [config, flashCue])
 
   const afterDemo = useCallback(() => {
-    // Fade the "we do" coached round for a child who RESUMES at the top tier — a
-    // returning expert doesn't need the bridge from watching to doing (ux-design.md
-    // §2/§5). Everyone else still gets it. (The walkthrough is shown regardless,
-    // with the "I've got it →" skip for the fast learner.)
-    if (config.guided && startDiff < 3) enterGuided(); else finishDemo()
-  }, [config.guided, enterGuided, finishDemo, startDiff])
+    // With "show me how" on, the FIRST practice question is worked out for the child
+    // automatically — that IS the bridge from watching to doing, so the separate
+    // "we do" guided round would just ask them to solve one before they've been shown
+    // how (confusing). Skip straight to practice in that case.
+    // Otherwise: fade the guided round only for a returning expert (resumes at the top
+    // tier); everyone else still gets it (ux-design.md §2/§5). The walkthrough is shown
+    // regardless, with the "I've got it →" skip for the fast learner.
+    if (config.guided && startDiff < 3 && !config.showSolve) enterGuided(); else finishDemo()
+  }, [config.guided, enterGuided, finishDemo, startDiff, config.showSolve])
 
   // scored submit (the "you do" loop)
   function submit(v: V) {
