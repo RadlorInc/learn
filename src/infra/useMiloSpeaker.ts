@@ -450,11 +450,16 @@ export function speakWithHighlight(
     mode = 'timed'
     if (watch) { clearTimeout(watch); watch = null }
     clearTimers()
+    // Silent case (autoFinish): no voice to pace against, so _wordDur (tuned to match
+    // real speech) reads as words flicking by. Slow it to a readable pace. The Safari
+    // recovery case (autoFinish false — voice IS speaking) keeps real-speech pacing so
+    // the highlight stays in sync.
+    const slow = autoFinish ? 2.1 : 1
     let t = 0
     for (let i = Math.max(from, lastIdx + 1); i < tokens.length; i++) {
       const at = t
       timers.push(setTimeout(() => { if (!done) step(i) }, at))
-      t += _wordDur(tokens[i].word, rate)
+      t += _wordDur(tokens[i].word, rate) * slow
     }
     if (autoFinish) timers.push(setTimeout(finish, t + 400))
   }
