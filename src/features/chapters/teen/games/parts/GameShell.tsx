@@ -28,7 +28,7 @@ import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import type { ChapterType } from '@/state/store'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import MiloMark from '@/features/chapters/teen/MiloMark'
-import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, headerChip, bigBtn, type HandKind, type CoachCue } from './gameKit'
+import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, AnswerPad, headerChip, bigBtn, type HandKind, type CoachCue } from './gameKit'
 
 const BAND: AgeBand = '12-14'
 const RETEACH_AFTER = 3
@@ -61,6 +61,11 @@ export interface BaseTask {
   /** The single "what to do with the tool" action. Starts with a verb; shown as a
    *  distinct chip under the math so it never blends into the story or the equation. */
   instruction?: string
+  /** Whether the board shows an "= ?" (then "= answer") line under the math. Default
+   *  true. Set false for "place a stated value" tasks (set X on the meter, pick the
+   *  lower of two) where the math is a target to place, not an expression to evaluate
+   *  — an "= ?" there reads as a broken equation. */
+  showEquals?: boolean
 }
 
 export interface InstrumentProps<V, T extends BaseTask> {
@@ -174,6 +179,12 @@ export interface GameConfig<V, T extends BaseTask> {
   /** Label for the commit button, echoed in the final "then press …" cue during
    *  "show me how" (e.g. "RECORD ✓"). Defaults to a generic "✓". */
   solveCommitLabel?: string
+  /** When set, the child answers a practice question by TAPPING a number choice or
+   *  TYPING it on a keypad (the familiar quiz way) instead of dragging the instrument
+   *  to the value. Returns the tap-choices (include the correct answer + distractors,
+   *  any order — the pad shuffles nothing, so pre-shuffle). The instrument stays on
+   *  screen as a read-only illustration (and for "show me how"). Numeric answers only. */
+  answerPad?: (t: T) => number[]
 }
 
 type Sub = 'active' | 'reveal' | 'reteach' | 'sold' | 'showing'
@@ -206,6 +217,9 @@ export function Game<V, T extends BaseTask>({
   const [task, setTask] = useState<T | null>(null)
   const [value, setValue] = useState<V | null>(null)
   const [sub, setSub] = useState<Sub>('active')
+  // Pad answer-choices: built once per question (task ref is stable until the next
+  // one loads), so the distractors don't reshuffle on every keystroke re-render.
+  const padChoices = useMemo(() => (config.answerPad && task ? config.answerPad(task) : []), [config, task])
   const [wrongRun, setWrongRun] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [wrong, setWrong] = useState(0)
@@ -500,7 +514,7 @@ export function Game<V, T extends BaseTask>({
                 context={task.context}
                 instruction={task.instruction}
                 expr={config.question ? config.question(task) : task.badge}
-                answer={sub === 'active' ? '?' : config.revealText(task)}
+                answer={task.showEquals === false ? undefined : (sub === 'active' ? '?' : config.revealText(task))}
                 tone={sub === 'active' ? 'ask' : sub === 'sold' ? 'ok' : 'reveal'}
               />
               {/* "Show me how" — the worked solve steps, written line-by-line in sync
@@ -516,11 +530,19 @@ export function Game<V, T extends BaseTask>({
                 <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Try this one with me</div>
               )}
               <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
-                <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach' || sub === 'showing'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} coach={sub === 'showing' ? (onFinalSolveStep ? 'commit' : 'move') : undefined} />
+                {config.answerPad ? (
+                  // Answer-pad chapters never show the instrument: the child taps a
+                  // number choice while active, and "show me how" is carried entirely
+                  // by the solve board (no meter glide anywhere).
+                  sub === 'active' && <AnswerPad P={P} choices={padChoices} disabled={busy} onSubmit={(n) => (stage === 'guided' ? submitGuided : submit)(n as unknown as V)} />
+                ) : (
+                  <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach' || sub === 'showing'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} coach={sub === 'showing' ? (onFinalSolveStep ? 'commit' : 'move') : undefined} />
+                )}
                 {stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind={config.guided.hand} />}
                 {/* During "show me how" the finger pointer (on the control itself) acts
-                    out the interaction; this is just the words alongside it. */}
-                {sub === 'showing' && (
+                    out the interaction; this is just the words alongside it. Instrument
+                    chapters only — answer-pad chapters have no control to point at. */}
+                {sub === 'showing' && !config.answerPad && (
                   <div style={{ color: P.creamSoft, fontSize: 'clamp(12px, 1.2vw, 15px)', fontWeight: 700, letterSpacing: '0.04em', textAlign: 'center' }}>
                     {onFinalSolveStep ? `then press ${solveCommitLabel}` : 'move it to the answer'}
                   </div>

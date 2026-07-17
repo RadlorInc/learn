@@ -733,6 +733,25 @@ export function Blackboard({ P, lines, writingIndex, saidWords }: { P: Palette; 
   )
 }
 
+// ── AnswerPad — a plain, familiar way to give a numeric answer: tap one of the
+//    number choices. `choices` are pre-built (correct + distractors, pre-shuffled);
+//    tapping one calls onSubmit(n) and GameShell grades it. ──
+const dispN = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
+export function AnswerPad({ P, choices, onSubmit, disabled }: { P: Palette; choices: number[]; onSubmit: (n: number) => void; disabled?: boolean }) {
+  return (
+    <div style={{ display: 'flex', gap: 'clamp(10px, 1.4vw, 18px)', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+      {choices.map((c, i) => (
+        <button key={i} type="button" disabled={disabled} onClick={() => !disabled && onSubmit(c)} style={{
+          fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800,
+          fontSize: 'clamp(24px, 2.8vw, 38px)', minWidth: 'clamp(76px, 8vw, 108px)', padding: 'clamp(12px,1.4vw,20px) clamp(16px,1.8vw,26px)',
+          borderRadius: 16, border: `2.5px solid ${P.gold}`, background: P.glass, color: P.cream, cursor: disabled ? 'default' : 'pointer',
+          boxShadow: '0 3px 12px rgba(0,0,0,0.3)',
+        }}>{dispN(c)}</button>
+      ))}
+    </div>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // HS PICKERS — the game-scene answer controls for SYMBOLIC answers (15–16 / 17–18).
 // Some high-school answers can't be a slider — factored forms, radical roots,

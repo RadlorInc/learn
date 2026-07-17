@@ -26,95 +26,103 @@ const P: Palette = {
   glass: 'rgba(9,40,28,0.6)', glassBorder: 'rgba(234,255,242,0.22)',
 }
 
-// `start` = the balance the meter BEGINS on. For a transaction ("balance is s,
-// you deposit/withdraw") it starts at the current balance s so the kid moves from
-// there; for "set the balance to X" tasks it starts at 0 (a blank slate to set).
-interface Task extends BaseTask { answer: number; start: number }
+// `start` = where the number-line marker BEGINS. A "move" question starts on the
+// first number so the child can see the jump; the others start at 0.
+// `choices` = the tap-answer options (correct + distractors) for the AnswerPad.
+interface Task extends BaseTask { answer: number; start: number; choices?: number[] }
 const MIN = -20, MAX = 20
-
-function setPoint(): Task {
-  const t = pick([-5, -4, -3, -2, 2, 3, 4, 5])
-  return {
-    title: 'Set balance', badge: `${t}`, tone: t < 0 ? 'b' : 'a',
-    prompt: `Set the balance to ${t}.`,
-    say: `Log a balance of ${signed(t)} dollars.`,
-    context: `Your latest statement shows this balance.`,
-    instruction: 'Set the balance meter to it.',
-    answer: t, start: 0,
-    work: [`${signed(t)} sits ${Math.abs(t)} ${t < 0 ? 'below' : 'above'} zero.`, `Count ${Math.abs(t)} marks ${t < 0 ? 'down into overdraft from' : 'up from'} zero and stop there.`],
+// Visible-math formatter: a proper minus glyph, e.g. −5 (NOT signed()'s spoken
+// "negative 5", which is only for the say/work lines Milo reads aloud).
+const disp = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
+const shuffle = <T,>(a: T[]): T[] => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
+// Build 4 tap-choices: the answer + up to 3 plausible distractors (in range, distinct).
+function numChoices(ans: number, ...extra: number[]): number[] {
+  const out: number[] = [ans]
+  for (const n of [...extra, -ans, ans + 1, ans - 1, ans + 2, ans - 2]) {
+    if (n >= MIN && n <= MAX && !out.includes(n)) out.push(n)
+    if (out.length >= 4) break
   }
+  return shuffle(out)
 }
+
+// Compare two balances: which is lower / higher.
 function colder(): Task {
   let a = pick([-8, -6, -5, -3, -2, 4, 6]); let b = pick([-9, -7, -4, -1, 3, 5])
   if (a === b) b = a - 1
-  const ans = Math.min(a, b)
-  const neg = ans < 0   // only frame it as debt/overdraft when the lower balance is actually below zero
+  const low = Math.random() < 0.5
+  const ans = low ? Math.min(a, b) : Math.max(a, b)
+  const neg = ans < 0
   return {
-    title: neg ? 'Deeper debt' : 'Lower balance', badge: `${a} vs ${b}`, tone: neg ? 'b' : 'a',
-    prompt: `Which balance is lower — ${a} or ${b}? Set to it.`,
-    say: `Which balance is lower, ${signed(a)} or ${signed(b)} dollars? Set the meter to the lower one.`,
-    context: `Two accounts each hold a balance.`,
-    instruction: 'Set the meter to the lower balance.',
-    answer: ans, start: 0,
-    work: [neg ? `On the meter, a lower balance means further down into overdraft.` : `On the meter, a lower balance sits further down.`, `${signed(ans)} is below ${signed(Math.max(a, b))}, so ${signed(ans)} is lower.`],
+    title: low ? 'Lower balance' : 'Higher balance', badge: `${disp(a)}  or  ${disp(b)}`, tone: neg ? 'b' : 'a', showEquals: false,
+    prompt: `Which balance is ${low ? 'lower' : 'higher'} — ${a} or ${b}?`,
+    say: `Which balance is ${low ? 'lower' : 'higher'}, ${signed(a)} or ${signed(b)} dollars?`,
+    context: `Two accounts, two balances:`,
+    instruction: `Which is ${low ? 'lower' : 'higher'}? Tap it.`,
+    answer: ans, start: 0, choices: shuffle([a, b]),
+    work: [`${low ? 'A lower balance sits further down; being in overdraft (below zero) is lower than any credit.' : 'A higher balance sits further up.'}`, `${signed(ans)} is ${low ? 'below' : 'above'} ${signed(low ? Math.max(a, b) : Math.min(a, b))}, so it is ${low ? 'lower' : 'higher'}.`],
   }
 }
+// A transaction: start at balance s, then deposit/withdraw d.
 function afterChange(): Task {
   const s = pick([-4, -2, 1, 3, 4, 6]); const d = pick([-9, -7, -5, 5, 7])
-  const ans = s + d
-  const dir = d < 0 ? `withdraw ${Math.abs(d)}` : `deposit ${d}`
+  const ans = s + d, out = d < 0
+  const dir = out ? `withdraw ${Math.abs(d)}` : `deposit ${d}`
   return {
-    title: 'Transaction', badge: `${s} ${d < 0 ? '↓' : '↑'}`, tone: d < 0 ? 'b' : 'a',
-    prompt: `Balance is ${s}. You ${dir}. Set the new balance.`,
-    say: `The balance was ${signed(s)} dollars, then you ${dir}. Set the meter to the new balance.`,
-    context: `The balance is ${s} dollars, then you ${dir}.`,
-    instruction: 'Move the meter to the new balance.',
-    answer: ans, start: s,
-    work: [`Start at ${signed(s)} and move ${Math.abs(d)} ${d < 0 ? 'down' : 'up'}.`, `${s} ${d < 0 ? '−' : '+'} ${Math.abs(d)} is ${signed(ans)}.`],
+    title: 'Transaction', badge: `${disp(s)} ${out ? '−' : '+'} ${Math.abs(d)}`, tone: out ? 'b' : 'a',
+    prompt: `Balance is ${s}. You ${dir}. What's the new balance?`,
+    say: `The balance was ${signed(s)} dollars, then you ${dir}. What is the new balance?`,
+    context: `Balance ${disp(s)}, then you ${dir}:`,
+    instruction: 'Work out the new balance, then tap it.',
+    answer: ans, start: s, choices: numChoices(ans, s - d),
+    work: [`Start at ${signed(s)}, then ${out ? 'go DOWN' : 'go UP'} ${Math.abs(d)} (${dir}).`, `${s} ${out ? '−' : '+'} ${Math.abs(d)} is ${signed(ans)}.`],
   }
 }
+// Opposite (additive inverse): flip to the other side of 0.
 function opposite(): Task {
-  const t = pick([-8, -6, -5, 4, 5, 7, 8])
-  const ans = -t
+  const t = pick([-8, -6, -5, 4, 5, 7, 8]); const ans = -t
   return {
-    title: 'Opposite', badge: `opp of ${t}`, tone: 'a',
-    prompt: `Set the balance to the opposite of ${t}.`,
-    say: `Set the meter to the opposite of ${signed(t)} dollars.`,
-    instruction: 'Set the balance meter to the opposite.',
-    answer: ans, start: 0,
-    work: [`The opposite is the same distance from zero, other side.`, `The opposite of ${signed(t)} is ${signed(ans)}.`],
+    title: 'Opposite', badge: `opposite of ${disp(t)}`, tone: 'a',
+    prompt: `What is the opposite of ${t}?`,
+    say: `What is the opposite of ${signed(t)} dollars?`,
+    context: `The opposite is the same distance from 0, on the other side:`,
+    instruction: 'Tap the opposite.',
+    answer: ans, start: 0, choices: numChoices(ans, t),
+    work: [`The opposite of a number is the same distance from 0, on the other side.`, `The opposite of ${signed(t)} is ${signed(ans)}.`],
   }
 }
+// Distance from 0 (absolute value), without the |x| notation.
 function distance(): Task {
-  const t = pick([-9, -8, -7, -6, 6, 7, 8])
-  const ans = Math.abs(t)
+  const t = pick([-9, -8, -7, -6, 6, 7, 8]); const ans = Math.abs(t)
   return {
-    title: 'Distance', badge: `|${t}|`, tone: 'a',
-    prompt: `How far is ${t} from zero? Set to that distance.`,
-    say: `How many dollars is ${signed(t)} from zero? Set the meter up to that distance.`,
-    instruction: 'Set the meter to that distance.',
-    answer: ans, start: 0,
-    work: [`Distance from zero ignores the sign — that's absolute value.`, `${signed(t)} is ${ans} away from zero, so the answer is ${ans}.`],
+    title: 'Distance from 0', badge: `how far is ${disp(t)} from 0?`, tone: 'a',
+    prompt: `How far is ${t} from 0?`,
+    say: `How far is ${signed(t)} from zero?`,
+    context: `Distance is always a positive number of steps:`,
+    instruction: 'Tap how many steps.',
+    answer: ans, start: 0, choices: numChoices(ans, t),
+    work: [`Distance from 0 ignores the sign — just count the steps.`, `${signed(t)} is ${ans} steps from 0, so the answer is ${ans}.`],
   }
 }
 
 function makeTask(d: 1 | 2 | 3): Task {
   const pool: (() => Task)[] =
-    d === 1 ? [setPoint, setPoint, colder]
-    : d === 2 ? [afterChange, opposite, colder]
-    : [distance, opposite, afterChange]
+    d === 1 ? [colder, afterChange, opposite]
+    : d === 2 ? [afterChange, opposite, distance]
+    : [distance, opposite, afterChange, colder]
   return pick(pool)()
 }
 
 // ── the worked example for the walkthrough (4 withdraw 7 → −3) and the guided order (set −5) ──
-const DEMO_TASK: Task = { title: 'Transaction', badge: '4 ↓', tone: 'b', answer: -3, start: 4, prompt: '', say: '', work: [] }
+const DEMO_TASK: Task = { title: 'Transaction', badge: '4 − 7', tone: 'b', answer: -3, start: 4, prompt: '', say: '', work: [] }
+// (guided round is skipped when showSolve is on, but kept for completeness)
 const GUIDED_TASK: Task = {
-  title: 'Set balance', badge: '−5', tone: 'b', answer: -5, start: 0,
-  prompt: 'Set the balance down to −5, then press Record.',
-  say: 'Set the balance to minus five. Pull the meter down below zero into overdraft, then record it.',
-  context: `The account is overdrawn, sitting below zero.`,
-  instruction: 'Set the balance meter to it.',
-  work: ['−5 sits 5 below zero.', 'Count 5 marks down into overdraft from zero and stop.'],
+  title: 'Transaction', badge: '−1 − 4', tone: 'b',
+  prompt: 'Balance is −1. Withdraw 4. What\'s the new balance?',
+  say: 'The balance was minus one, then you withdraw four. What is the new balance?',
+  context: 'Balance −1, then you withdraw 4:',
+  instruction: 'Work out the new balance, then tap it.',
+  answer: -5, start: -1, choices: [-5, 3, -3, 5],
+  work: ['Start at −1, then go DOWN 4 (withdraw 4).', '−1 − 4 is −5.'],
 }
 
 // ── Animated walkthrough scene — the storyboard, in motion (ILLUSTRATED) ──────
@@ -244,6 +252,9 @@ const CONFIG: GameConfig<number, Task> = {
   grade: (t, v) => Math.abs(v - t.answer) < 1e-6,
   revealText: (t) => `${t.answer}`,
   glide: (t, from, setValue, later) => glideNumber(from, t.answer, setValue, later),
+  // Answer by tapping a choice or typing it (not by dragging the meter). The balance
+  // meter stays on screen as the picture + drives the "show me how" solve.
+  answerPad: (t) => t.choices ?? [],
   Instrument: ({ value, setValue, disabled, reveal, palette, onCommit, coach }) => (
     <VThermo P={palette} value={value} setValue={setValue} min={MIN} max={MAX} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="RECORD ✓" unit="" coach={coach} />
   ),
@@ -252,20 +263,20 @@ const CONFIG: GameConfig<number, Task> = {
     initial: 0,
     hand: 'dragV',
     steps: [
-      { say: 'This is your account meter. Zero is the middle line. Drag the balance up for money in, down for overdraft. Let us log one transaction together, nice and slow.', value: 0, hand: 'dragV' },
-      { say: 'Our job: the balance starts at four dollars, then you withdraw seven. Let us build it up one step at a time.', value: 0, board: '4 − 7 = ?' },
-      { say: 'First, set the starting balance. Four dollars, up here above zero.', value: 4, hand: 'dragV', board: 'start: 4' },
-      { say: 'Withdraw means money goes OUT, so we count DOWN. We need to take away seven, one dollar at a time.', value: 4, board: 'withdraw 7 → count down' },
+      { say: 'This is your account meter. Zero is the middle line. Above zero is money you have, below zero is overdraft. Let us work one out together, nice and slow.', value: 0, hand: 'dragV' },
+      { say: 'Our question: the balance starts at four dollars, then you withdraw seven. Let us build it up one step at a time.', value: 0, board: '4 − 7 = ?' },
+      { say: 'First, the starting balance. Four dollars, up here above zero.', value: 4, hand: 'dragV', board: 'start: 4' },
+      { say: 'Withdraw means money goes OUT, so we count DOWN. Take away seven, one dollar at a time.', value: 4, board: 'withdraw 7 → count down' },
       { say: 'Take one dollar: four goes down to three.', value: 3, hand: 'dragV', board: '4 → 3   (1 gone)' },
       { say: 'Take another: three goes down to two.', value: 2, hand: 'dragV', board: '3 → 2   (2 gone)' },
       { say: 'Again: two goes down to one.', value: 1, hand: 'dragV', board: '2 → 1   (3 gone)' },
       { say: 'And one more brings us all the way down to zero. That is four dollars gone — the account is empty.', value: 0, hand: 'dragV', board: '1 → 0   (4 gone)' },
-      { say: 'But we had to take away SEVEN, and we have only taken four so far. Three more still to go — so now we drop BELOW zero, into overdraft.', value: 0, board: '4 taken, 3 left → below 0' },
+      { say: 'But we had to take away SEVEN, and we have only taken four. Three more to go — so now we drop BELOW zero, into overdraft.', value: 0, board: '4 taken, 3 left → below 0' },
       { say: 'Take the fifth dollar: zero goes down to minus one. We are now in the red.', value: -1, hand: 'dragV', board: '0 → −1   (5 gone)' },
       { say: 'The sixth dollar: minus one goes down to minus two.', value: -2, hand: 'dragV', board: '−1 → −2   (6 gone)' },
       { say: 'The seventh and last dollar: minus two goes down to minus three.', value: -3, hand: 'dragV', board: '−2 → −3   (7 gone)' },
       { say: 'We took away all seven. It landed on minus three — three dollars in overdraft. So four minus seven is minus three.', value: -3, board: '4 − 7 = −3' },
-      { say: "When your balance is set, press Record. Now let's try one together.", value: -3, hand: 'tap' },
+      { say: "In practice you just tap your answer. Now let's try one together.", value: -3, hand: 'tap' },
     ],
   },
   guided: {
@@ -274,9 +285,9 @@ const CONFIG: GameConfig<number, Task> = {
     hand: 'dragV',
   },
   TutorialScene: BankAccountScene,
-  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re keeping the books.</strong> Move the balance up for deposits and down for withdrawals — even when it dips below zero into overdraft.</>, ticket: { title: 'Opening balance', badge: '−3', tone: 'b' }, startLabel: 'Open the ledger →' },
+  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re keeping the books.</strong> A balance goes up with deposits and down with withdrawals — even below zero into overdraft. Work each one out, then tap your answer.</>, ticket: { title: 'Opening balance', badge: '−3', tone: 'b' }, startLabel: 'Open the ledger →' },
   overview: {
-    say: "Here is what we are figuring out: a bank balance can go below zero when you spend more than you have. We will track a balance that starts at four dollars, take away seven, and land in overdraft — that is subtracting to get a negative number.",
+    say: "Here is what we are figuring out: a bank balance can go below zero when you spend more than you have. We will start at four dollars, take away seven, and land in overdraft — that is subtracting to get a negative number.",
     problem: <>How low can a balance go? We&apos;ll track <strong>$4, then withdraw $7</strong> — and end up <strong>below zero</strong>.</>,
     points: [
       <>Above zero is money you have; below zero is <strong>overdraft</strong> (money you owe).</>,
@@ -285,10 +296,9 @@ const CONFIG: GameConfig<number, Task> = {
     ],
   },
   sig: (t) => `${t.title}:${t.answer}`,
-  // Pilot: in practice, work the first question out for the child automatically, and
-  // give every question a "Show me how ▸" button. A shown question isn't scored.
-  showSolve: true,
-  solveCommitLabel: 'RECORD ✓',
+  // "Show me how" is off here: the child answers by tapping a number choice, so there's
+  // no instrument to solve on. Teaching is the walkthrough ("I do") + a guided round
+  // ("we do"), then scored practice ("you do").
 }
 
 export default function WeatherStation(props: { childName: string; onFinish: (c: number, w: number, mastered?: boolean) => void; onExit: () => void }) {
