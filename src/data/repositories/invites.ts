@@ -98,7 +98,7 @@ export async function getReceivedInvites(): Promise<InviteWithLearner[]> {
 /** Accept a received invite — grants viewer access to the learner */
 export async function acceptInvite(
   inviteId: string
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; accessGranted?: boolean }> {
   const supabase = db()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'Not logged in' }
@@ -118,7 +118,8 @@ export async function acceptInvite(
 
   const inv = invite as { learner_id: string }
 
-  // Grant access
+  // Grant access FIRST — can_self_grant_access() requires the invite to still be
+  // status='pending', so the status flip below must stay second. Do not reorder.
   const { error: accessError } = await supabase
     .from('learner_access')
     .upsert(
@@ -128,11 +129,21 @@ export async function acceptInvite(
 
   if (accessError) return { ok: false, error: accessError.message }
 
-  // Mark invite as accepted
-  await supabase
+  // Mark invite as accepted. If this fails the access grant above already landed, so
+  // report failure (not success-with-warning): the invite is still 'pending' and the
+  // whole function is idempotent — a retry re-selects the pending invite, no-ops the
+  // upsert (ignoreDuplicates) and re-attempts the flip. Reporting ok:true would leave a
+  // permanently-pending invite that nothing ever retries.
+  const { error: statusError } = await supabase
     .from('learner_invites')
     .update({ status: 'accepted' })
     .eq('id', inviteId)
+
+  if (statusError) return {
+    ok: false,
+    accessGranted: true,
+    error: `Access was granted, but the invite could not be marked as accepted (${statusError.message}). Refresh and try again.`,
+  }
 
   return { ok: true }
 }

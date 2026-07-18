@@ -93,7 +93,10 @@ export interface Database {
           created_at:     string
         }
         Insert: Omit<Database['public']['Tables']['learner_invites']['Row'], 'id' | 'created_at'>
-        Update: Partial<Database['public']['Tables']['learner_invites']['Insert']>
+        // Only `status` is UPDATE-grantable to `authenticated` (migration
+        // 20260718120000_harden_invite_accept_columns) — any other column would 403 at
+        // runtime, so keep the type narrow enough that tsc catches it first.
+        Update: { status: InviteStatus }
       }
       sessions: {
         Row: {

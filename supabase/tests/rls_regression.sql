@@ -24,6 +24,8 @@ declare
   v_owner    uuid := gen_random_uuid();
   v_attacker uuid := gen_random_uuid();
   v_learner  uuid := gen_random_uuid();
+  v_alearner uuid := gen_random_uuid();   -- a learner the attacker legitimately owns
+  v_invite   uuid := gen_random_uuid();   -- an invite addressed to the attacker's own email
   v_chapter  text;
   v_cnt      int;
   v_blocked  boolean;
@@ -43,6 +45,13 @@ begin
   insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
                                stars_earned, xp_earned, coins_earned, client_id)
     values (v_learner, v_chapter, 'practice', 5, 1, 3, 200, 15, gen_random_uuid()::text);
+
+  -- Attacker owns their OWN learner and has a legit pending invite to their own email for it —
+  -- the raw material for the V12 repoint exploit (rewrite this invite to point at the victim).
+  insert into public.learners (id, display_name, created_by)
+    values (v_alearner, 'Attacker Kid', v_attacker);
+  insert into public.learner_invites (id, learner_id, invited_by, invited_email, status, expires_at)
+    values (v_invite, v_alearner, v_attacker, 'attacker.rlstest@milo.invalid', 'pending', now() + interval '7 days');
 
   -- ── Impersonate the ATTACKER ──────────────────────────────────────────────
   set local role authenticated;
@@ -70,6 +79,23 @@ begin
   exception when insufficient_privilege or check_violation then v_blocked := true;
   end;
   if not v_blocked then raise exception 'RLS FAIL A3: attacker self-granted access to a learner they do not own'; end if;
+
+  -- A6 (V12 regression): the recipient of an invite cannot REPOINT it. The accept flow only flips
+  -- status; column-level GRANT(status) must make rewriting learner_id / invited_by fail. Without the
+  -- fix this UPDATE succeeds and re-opens the V1 self-grant path via can_self_grant_access().
+  v_blocked := false;
+  begin
+    update public.learner_invites
+       set learner_id = v_learner, invited_by = v_owner, expires_at = now() + interval '30 days'
+     where id = v_invite;
+  exception when insufficient_privilege or check_violation then v_blocked := true;
+  end;
+  if not v_blocked then raise exception 'RLS FAIL A6: recipient repointed an invite''s learner_id/invited_by (V12 → V1 self-grant path is back!)'; end if;
+
+  -- A6b: the addressee CAN still flip status (accept must keep working).
+  update public.learner_invites set status = 'accepted' where id = v_invite;
+  select count(*) into v_cnt from public.learner_invites where id = v_invite and status = 'accepted';
+  if v_cnt <> 1 then raise exception 'RLS FAIL A6b: recipient can no longer accept their own invite (% rows)', v_cnt; end if;
 
   -- A4/A5: attacker cannot read the learner's sessions or stats.
   select count(*) into v_cnt from public.sessions where learner_id = v_learner;
