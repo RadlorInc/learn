@@ -10,7 +10,7 @@
  * every instrument produces a value by manipulation; grading compares it to the
  * task answer (see GameShell).
  */
-import { Fragment, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
 // ── palette (each world supplies its own; shape matches ShopRush's P) ─────────
 export interface Palette {
@@ -82,42 +82,11 @@ export function Says({ P, text }: { P: Palette; text: string }) {
 export function Readout({ P, text, reveal }: { P: Palette; text: string; reveal?: boolean }) {
   return <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(26px, 4.4vw, 50px)', fontWeight: 800, color: reveal ? P.mint : P.gold, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55` }}>{text}</div>
 }
-// During "show me how" an instrument can SPOTLIGHT the exact control the child would
-// use next — a pulsing gold ring on that button (overriding the dimmed/disabled look),
-// like a proper interaction tutorial. `highlight` turns it on per-control.
-export type CoachCue = 'move' | 'commit'
-export function CommitBtn({ P, label, onClick, disabled, highlight }: { P: Palette; label: string; onClick: () => void; disabled?: boolean; highlight?: boolean }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className={highlight ? 'gk-coach' : undefined} style={{ ...bigBtn(P), opacity: disabled && !highlight ? 0.5 : 1, boxShadow: highlight ? `0 0 0 3px ${P.gold}, 0 0 22px ${P.gold}` : undefined }}>{label}<CoachCSS /></button>
+export function CommitBtn({ P, label, onClick, disabled }: { P: Palette; label: string; onClick: () => void; disabled?: boolean }) {
+  return <button type="button" onClick={onClick} disabled={disabled} style={{ ...bigBtn(P), opacity: disabled ? 0.5 : 1 }}>{label}</button>
 }
-function Nudge({ P, label, onClick, disabled, highlight }: { P: Palette; label: string; onClick: () => void; disabled?: boolean; highlight?: boolean }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className={highlight ? 'gk-coach' : undefined} style={{ width: 'clamp(44px, 4.4vw, 60px)', height: 'clamp(44px, 4.4vw, 60px)', borderRadius: '50%', border: `1px solid ${highlight ? P.gold : P.glassBorder}`, background: P.glass, color: P.cream, fontFamily: 'var(--font-numeric)', fontWeight: 700, fontSize: 'clamp(22px, 2.2vw, 30px)', cursor: disabled ? 'default' : 'pointer', opacity: disabled && !highlight ? 0.5 : 1, boxShadow: highlight ? `0 0 0 3px ${P.gold}, 0 0 16px ${P.gold}` : undefined }}>{label}<CoachCSS /></button>
-}
-/** Shared pulse animation for a coached (spotlighted) control. Rendered once inside
- *  each highlighted control (deduped by identical CSS text). */
-function CoachCSS() {
-  return <style>{`
-    .gk-coach { animation: gkCoachPulse 1.9s ease-in-out infinite; }
-    @keyframes gkCoachPulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.06) } }
-    @media (prefers-reduced-motion: reduce) { .gk-coach { animation: none } }
-  `}</style>
-}
-
-/** An animated finger that sits ON a control during "show me how" and acts out the
- *  interaction — a repeated TAP (press) or a vertical DRAG. Position it over the
- *  target with `style` (left/top); the motion is baked into the keyframes. */
-export function CoachPointer({ kind, style }: { kind: 'tap' | 'dragV'; style?: React.CSSProperties }) {
-  return (
-    <span aria-hidden className={`gk-ptr gk-ptr-${kind}`} style={{ position: 'absolute', fontSize: 'clamp(32px, 4vw, 44px)', lineHeight: 1, pointerEvents: 'none', zIndex: 8, filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.65))', ...style }}>
-      👆
-      <style>{`
-        .gk-ptr-tap { animation: gkPtrTap 1.9s ease-in-out infinite; }
-        @keyframes gkPtrTap { 0%,100% { transform: translate(-50%, 0) scale(1) } 45% { transform: translate(-50%, 9px) scale(0.86) } }
-        .gk-ptr-dragV { animation: gkPtrDragV 3.2s ease-in-out infinite; }
-        @keyframes gkPtrDragV { 0%,100% { transform: translate(-50%, -32px) } 50% { transform: translate(-50%, 34px) } }
-        @media (prefers-reduced-motion: reduce) { .gk-ptr { animation: none } }
-      `}</style>
-    </span>
-  )
+function Nudge({ P, label, onClick, disabled }: { P: Palette; label: string; onClick: () => void; disabled?: boolean }) {
+  return <button type="button" onClick={onClick} disabled={disabled} style={{ width: 'clamp(44px, 4.4vw, 60px)', height: 'clamp(44px, 4.4vw, 60px)', borderRadius: '50%', border: `1px solid ${P.glassBorder}`, background: P.glass, color: P.cream, fontFamily: 'var(--font-numeric)', fontWeight: 700, fontSize: 'clamp(22px, 2.2vw, 30px)', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1 }}>{label}</button>
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -150,18 +119,16 @@ export function SlideValue({
 
 /** Vertical thermometer — pull the mercury up/down a signed track (drag or ± tap). */
 export function VThermo({
-  P, value, setValue, min, max, disabled, reveal, onCommit, commitLabel = 'LOCK IN ✓', unit = '°', coach,
+  P, value, setValue, min, max, disabled, reveal, onCommit, commitLabel = 'LOCK IN ✓', unit = '°',
 }: {
   P: Palette; value: number; setValue: (n: number) => void; min: number; max: number
-  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string; unit?: string; coach?: CoachCue
+  disabled?: boolean; reveal?: boolean; onCommit: (n: number) => void; commitLabel?: string; unit?: string
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
   const frac = (value - min) / (max - min)         // 0 bottom … 1 top
   const zeroFrac = (0 - min) / (max - min)
   const fill = reveal ? P.mint : P.coral
-  const moveCoach = coach === 'move'       // spotlight the track + ± steppers ("set it here")
-  const commitCoach = coach === 'commit'   // spotlight the RECORD button ("now press this")
   const fromY = (clientY: number) => {
     const el = trackRef.current; if (!el) return
     const r = el.getBoundingClientRect()
@@ -173,31 +140,24 @@ export function VThermo({
       <div style={{ display: 'flex', alignItems: 'stretch', gap: 14 }}>
         <div
           ref={trackRef}
-          className={moveCoach ? 'gk-coach' : undefined}
           onPointerDown={(e) => { if (disabled) return; dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); fromY(e.clientY) }}
           onPointerMove={(e) => { if (dragging.current) fromY(e.clientY) }}
           onPointerUp={() => { dragging.current = false }}
-          style={{ position: 'relative', width: 'clamp(46px, 5.4vw, 72px)', height: 'clamp(210px, 27vh, 270px)', borderRadius: 24, background: P.glass, border: `1px solid ${moveCoach ? P.gold : P.glassBorder}`, boxShadow: moveCoach ? `0 0 0 3px ${P.gold}, 0 0 20px ${P.gold}` : undefined, touchAction: 'none', cursor: disabled ? 'default' : 'ns-resize' }}
+          style={{ position: 'relative', width: 'clamp(46px, 5.4vw, 72px)', height: 'clamp(210px, 27vh, 270px)', borderRadius: 24, background: P.glass, border: `1px solid ${P.glassBorder}`, touchAction: 'none', cursor: disabled ? 'default' : 'ns-resize' }}
         >
           {/* zero tick */}
           <div style={{ position: 'absolute', left: -6, right: -6, bottom: `${zeroFrac * 100}%`, height: 2, background: P.glassBorder }} />
           <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: `calc(${frac * 100}% - 16px)`, minHeight: 6, borderRadius: 16, background: `linear-gradient(${fill}, ${fill}cc)`, transition: 'height 90ms' }} />
           {/* knob */}
           <div style={{ position: 'absolute', left: '50%', bottom: `calc(${frac * 100}% - 12px)`, transform: 'translateX(-50%)', width: 30, height: 24, borderRadius: 8, background: P.cream, boxShadow: '0 2px 8px rgba(0,0,0,0.4)', transition: 'bottom 90ms' }} />
-          {/* coach: a finger dragging the meter up/down */}
-          {moveCoach && <CoachPointer kind="dragV" style={{ left: '50%', top: '42%' }} />}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Nudge P={P} label="+" disabled={disabled} highlight={moveCoach} onClick={() => setValue(Math.min(max, value + 1))} />
+          <Nudge P={P} label="+" disabled={disabled} onClick={() => setValue(Math.min(max, value + 1))} />
           <Readout P={P} text={`${value}${unit}`} reveal={reveal} />
-          <Nudge P={P} label="−" disabled={disabled} highlight={moveCoach} onClick={() => setValue(Math.max(min, value - 1))} />
+          <Nudge P={P} label="−" disabled={disabled} onClick={() => setValue(Math.max(min, value - 1))} />
         </div>
       </div>
-      {/* coach: a finger tapping the RECORD button */}
-      <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-        <CommitBtn P={P} label={commitLabel} disabled={disabled} highlight={commitCoach} onClick={() => onCommit(value)} />
-        {commitCoach && <CoachPointer kind="tap" style={{ left: '50%', top: '54%' }} />}
-      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
     </div>
   )
 }
@@ -616,8 +576,11 @@ export function HandCue({ P, kind, label }: { P: Palette; kind: HandKind; label?
 //    practice/guided (pinned top-left by GameShell). The expression sits big; a
 //    second line shows "= ?" while solving, then "= answer" (green on correct,
 //    warm on reveal). `expr` is a node so a chapter can highlight a portion. ──────
-export function QuestionBoard({ P, title, prompt, context, instruction, expr, answer, tone = 'ask', cue }: {
+export function QuestionBoard({ P, title, prompt, context, instruction, expr, answer, tone = 'ask', cue, testHooks }: {
   P: Palette; title?: string; prompt?: React.ReactNode; context?: React.ReactNode; instruction?: React.ReactNode; expr: React.ReactNode; answer?: React.ReactNode; tone?: 'ask' | 'reveal' | 'ok'; cue?: string
+  /** Dev-only E2E hooks (data-test-answer/data-test-phase) spread onto the board
+   *  root. Emitted only by `next dev` — see GameShell (compile-time gated). */
+  testHooks?: Record<string, string>
 }) {
   const ansColor = tone === 'ok' ? '#8ef0c2' : tone === 'reveal' ? '#ffb59c' : '#cfe0d8'
   const asking = tone === 'ask'
@@ -626,7 +589,7 @@ export function QuestionBoard({ P, title, prompt, context, instruction, expr, an
   // prose `prompt` (unchanged for chapters not yet migrated to the clarity spec).
   const structured = context != null || instruction != null
   return (
-    <div style={{
+    <div {...testHooks} style={{
       width: '100%', maxWidth: 'clamp(280px, 40vw, 460px)', boxSizing: 'border-box',
       background: 'linear-gradient(160deg, #21473c, #16302a)',
       border: '4px solid #7a5230', borderRadius: 12,
@@ -660,20 +623,11 @@ export function QuestionBoard({ P, title, prompt, context, instruction, expr, an
   )
 }
 
-// ── Blackboard — Milo's chalkboard. The matching math is WRITTEN here as he SPEAKS.
-//    Two modes:
-//    • `saidWords` given (show-me-how): reveal WORD-BY-WORD in step with the voice —
-//      each word fades in as Milo says it (indices align with splitWords).
-//    • else (walkthrough): `writingIndex` is the line being chalk-wiped in.
+// ── Blackboard — Milo's chalkboard. The matching math is WRITTEN here as he SPEAKS,
+//    one line at a time: `writingIndex` is the line being chalk-wiped in.
 const CHALK_TEXT: React.CSSProperties = { fontFamily: 'var(--font-chalk)', fontSize: 'clamp(19px, 2.3vw, 32px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.6), 0 1px 1px rgba(0,0,0,0.28), 0 0 11px rgba(214,240,206,0.4)', lineHeight: 1.25, textAlign: 'left' }
-export function Blackboard({ P, lines, writingIndex, saidWords }: { P: Palette; lines: string[]; writingIndex: number; saidWords?: number }) {
+export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: string[]; writingIndex: number }) {
   if (!lines.length) return null
-  const wordMode = saidWords != null
-  // Tokenise each line the same way the speaker maps boundaries (whitespace runs), and
-  // the running word offset per line, so word index ↔ voice stays aligned.
-  const tokens = lines.map((l) => l.split(/\s+/).filter(Boolean))
-  const offsets: number[] = []
-  { let acc = 0; for (const t of tokens) { offsets.push(acc); acc += t.length } }
   const numChip: React.CSSProperties = { fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(10px,0.95vw,13px)', color: '#12241b', background: '#bcd8c9', width: 'clamp(20px,2.2vw,26px)', height: 'clamp(20px,2.2vw,26px)', borderRadius: 999, display: 'grid', placeItems: 'center', lineHeight: 1 }
   return (
     <div style={{
@@ -686,26 +640,6 @@ export function Blackboard({ P, lines, writingIndex, saidWords }: { P: Palette; 
       {/* A clear label so this reads as THE SOLVE — the steps to get the answer. */}
       <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px, 0.95vw, 13px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold, textAlign: 'center', marginBottom: 'clamp(1px,0.3vw,4px)' }}>Solving it, step by step</div>
       {lines.map((ln, k) => {
-        if (wordMode) {
-          const toks = tokens[k]; const base = offsets[k]; const sw = saidWords
-          const started = base < sw   // this line has begun
-          return (
-            <div key={k} style={{ display: 'grid', gridTemplateColumns: 'clamp(20px,2.2vw,26px) 1fr', gap: 'clamp(8px,1vw,13px)', alignItems: 'baseline' }}>
-              <span style={{ ...numChip, opacity: started ? 1 : 0.28, transition: 'opacity 200ms ease' }}>{k + 1}</span>
-              <span className="mb-chalk" style={CHALK_TEXT}>
-                {toks.map((w, wi) => {
-                  const gi = base + wi; const writing = gi === sw - 1
-                  return (
-                    <Fragment key={wi}>
-                      <span className={writing ? 'mb-word-write' : undefined} style={{ opacity: gi < sw ? 1 : 0, transition: writing ? undefined : 'opacity 180ms ease', animationTimingFunction: writing ? `steps(${Math.max(w.length, 1)}, end)` : undefined }}>{w}</span>
-                      {wi < toks.length - 1 ? ' ' : ''}
-                    </Fragment>
-                  )
-                })}
-              </span>
-            </div>
-          )
-        }
         const done = writingIndex < 0 || k < writingIndex
         return (
           <div key={k} style={{ display: 'grid', gridTemplateColumns: 'clamp(20px,2.2vw,26px) 1fr', gap: 'clamp(8px,1vw,13px)', alignItems: 'baseline', opacity: k === writingIndex || done ? 1 : 0.42 }}>
@@ -721,13 +655,7 @@ export function Blackboard({ P, lines, writingIndex, saidWords }: { P: Palette; 
           from { clip-path: inset(0 100% 0 0); }
           to   { clip-path: inset(0 0 0 0);   }
         }
-        /* Per-word write-on: the word Milo is saying reveals letter-by-letter. */
-        .mb-word-write { display: inline-block; animation: mbWordWrite 0.42s steps(8, end) both; }
-        @keyframes mbWordWrite {
-          from { clip-path: inset(0 100% 0 0); }
-          to   { clip-path: inset(0 0 0 0);   }
-        }
-        @media (prefers-reduced-motion: reduce) { .mb-writing, .mb-word-write { animation: none; clip-path: none } }
+        @media (prefers-reduced-motion: reduce) { .mb-writing { animation: none; clip-path: none } }
       `}</style>
     </div>
   )

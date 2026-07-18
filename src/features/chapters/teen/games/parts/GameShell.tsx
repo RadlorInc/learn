@@ -20,7 +20,7 @@
  *   • mastery early-exit (top tier + clean streak → finish early, full stars)
  * Math-without-fear: no timer, no red X, no score, no coins.
  */
-import { Fragment, useEffect, useRef, useState, useCallback, useMemo, isValidElement } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useAdaptive } from '@/core/adaptive'
 import { speak, speakAfterCurrent, speakSeq, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -28,7 +28,7 @@ import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import type { ChapterType } from '@/state/store'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import MiloMark from '@/features/chapters/teen/MiloMark'
-import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, AnswerPad, headerChip, bigBtn, type HandKind, type CoachCue } from './gameKit'
+import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, AnswerPad, headerChip, bigBtn, type HandKind } from './gameKit'
 
 const BAND: AgeBand = '12-14'
 const RETEACH_AFTER = 3
@@ -76,10 +76,6 @@ export interface InstrumentProps<V, T extends BaseTask> {
   reveal: boolean
   palette: Palette
   onCommit: (v: V) => void
-  /** Set during "show me how" so the instrument can SPOTLIGHT the exact control the
-   *  child would use next: 'move' (the value control) then 'commit' (the confirm
-   *  button). Optional — an instrument that doesn't implement it just ignores it. */
-  coach?: CoachCue
 }
 
 export interface DemoProps {
@@ -169,16 +165,6 @@ export interface GameConfig<V, T extends BaseTask> {
   Demo?: (p: DemoProps) => React.ReactElement
   /** math-only signature so a re-drawn ticket / shuffled dressing isn't "new". */
   sig?: (t: T) => string
-  /** Opt in to the in-practice "show me how" helper: the FIRST practice question is
-   *  worked out for the child automatically (steps written on a board + the
-   *  instrument solved on the illustration), and every question after carries a quiet
-   *  "Show me how ▸" button. A question that's been shown is NOT scored (it doesn't
-   *  touch the adaptive tier or the correct/wrong tally). Uses the task's `work` lines
-   *  as the steps. Off by default — piloted per chapter. */
-  showSolve?: boolean
-  /** Label for the commit button, echoed in the final "then press …" cue during
-   *  "show me how" (e.g. "RECORD ✓"). Defaults to a generic "✓". */
-  solveCommitLabel?: string
   /** When set, the child answers a practice question by TAPPING a number choice or
    *  TYPING it on a keypad (the familiar quiz way) instead of dragging the instrument
    *  to the value. Returns the tap-choices (include the correct answer + distractors,
@@ -187,7 +173,7 @@ export interface GameConfig<V, T extends BaseTask> {
   answerPad?: (t: T) => number[]
 }
 
-type Sub = 'active' | 'reveal' | 'reteach' | 'sold' | 'showing'
+type Sub = 'active' | 'reveal' | 'reteach' | 'sold'
 type Stage = 'start' | 'intro' | 'demo' | 'guided' | 'play'
 
 export function Game<V, T extends BaseTask>({
@@ -223,15 +209,6 @@ export function Game<V, T extends BaseTask>({
   const [wrongRun, setWrongRun] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [wrong, setWrong] = useState(0)
-  // "Show me how" state (config.showSolve): how many solve-step WORDS Milo has said so
-  // far — the board reveals words up to here, in step with his voice.
-  const [showWord, setShowWord] = useState(0)
-  const showCancel = useRef<() => void>(() => {})
-  const firstShown = useRef(false)
-  // Latest task/value in refs so startShow (called from an effect right after a task
-  // loads, before state settles) reads the current question, not a stale one.
-  const taskRef = useRef<T | null>(null); taskRef.current = task
-  const valueRef = useRef<V | null>(null); valueRef.current = value
 
   // Legible "I do → your turn → you did it" hand-off cue (feedback-your-turn-cue):
   // a brief popup the moment control passes to the child ('turn') and when they
@@ -241,7 +218,7 @@ export function Game<V, T extends BaseTask>({
   const seen = useRef<Set<string>>(new Set())
   const timers = useRef<number[]>([])
   const later = useCallback((fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
-  useEffect(() => () => { timers.current.forEach(clearTimeout); showCancel.current(); stopSpeech() }, [])
+  useEffect(() => () => { timers.current.forEach(clearTimeout); stopSpeech() }, [])
   const flashCue = useCallback((k: 'turn' | 'solved') => {
     setCue(k)
     later(() => setCue((c) => (c === k ? null : c)), k === 'turn' ? 1600 : 1500)
@@ -274,64 +251,17 @@ export function Game<V, T extends BaseTask>({
     // board unaided — that independent success is the competence reward. The board
     // still carries the question (info is never audio-only), and the spoken hint
     // returns automatically on a demotion, since it tracks the live tier.
-    // Skip the spoken question-readout for the auto-shown FIRST question (showSolve) —
-    // the "show me how" narration takes over, and speakAfterCurrent would otherwise
-    // schedule a late utterance that cancels it.
-    if (d < 3 && !(config.showSolve && nextIdx === 0)) speakAfterCurrent(t.say)
+    if (d < 3) speakAfterCurrent(t.say)
   }, [ada.difficulty, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue])
-
-  // ── "Show me how" (config.showSolve) ──────────────────────────────────────────
-  // A shown question is un-scored: advance to the next one WITHOUT recording it to
-  // the adaptive engine or the correct/wrong tally, so using the helper never counts
-  // for or against the child.
-  const advanceUnscored = useCallback(() => {
-    loadTask(idx + 1, correct, wrong, false)
-  }, [idx, correct, wrong, loadTask])
-
-  // Work out the CURRENT question for the child: write its `work` steps on a board
-  // (chalk-synced to Milo's voice) while the instrument glides to the answer on the
-  // illustration — solved, not just told. Then advance, un-scored.
-  const startShow = useCallback(() => {
-    const t = taskRef.current
-    if (!t) return
-    const steps = t.work && t.work.length ? t.work : [config.revealText(t)]
-    showCancel.current()          // cancel any prior show
-    stopSpeech()                  // drop a queued `say` so it doesn't fight the steps
-    setCue(null)                  // clear the "your turn" popup — we're demonstrating
-    setSub('showing'); setShowWord(0)
-    const from = valueRef.current
-    if (from != null) config.glide(t, from, setValue, later)   // solve on the illustration
-    unlockSpeech()
-    // Narrate the steps as ONE passage and reveal each word on the board as Milo says
-    // it (word-boundary events, or the engine's word-paced sweep when audio is blocked)
-    // — so the chalk fills in exactly in step with his voice, like the plan panel.
-    const totalW = steps.reduce((a, s) => a + splitWords(s).length, 0)
-    showCancel.current = speakWithHighlight(steps.join(' '), {
-      onWord: (i) => { if (i >= 0) setShowWord((w) => Math.max(w, Math.min(totalW, i + 1))) },
-      onDone: () => { setShowWord(totalW); later(advanceUnscored, 1400) },
-    })
-  }, [config, later, advanceUnscored])
-
-  // Mandatory FIRST practice question: work it out automatically the first time the
-  // child reaches the scored loop (then it's a button from there on). Fires once.
-  useEffect(() => {
-    if (config.showSolve && stage === 'play' && idx === 0 && sub === 'active'
-        && !firstShown.current && task && value != null) {
-      firstShown.current = true
-      startShow()
-    }
-  }, [config.showSolve, stage, idx, sub, task, value, startShow])
 
   const demoDone = useRef(false)
   const finishDemo = useCallback(() => {
     if (demoDone.current) return
     demoDone.current = true
     setStage('play')
-    // With "show me how" on, the first question is demonstrated (not the child's turn
-    // yet), so hold the "Your turn" line — startShow will narrate the solve instead.
-    if (!config.showSolve) speak(`Your turn, ${childName}.`)
+    speak(`Your turn, ${childName}.`)
     loadTask(0, 0, 0, false)
-  }, [childName, loadTask, config.showSolve])
+  }, [childName, loadTask])
 
   // "we do" — one live, coached, NON-scored order before real play.
   const enterGuided = useCallback(() => {
@@ -342,15 +272,11 @@ export function Game<V, T extends BaseTask>({
   }, [config, flashCue])
 
   const afterDemo = useCallback(() => {
-    // With "show me how" on, the FIRST practice question is worked out for the child
-    // automatically — that IS the bridge from watching to doing, so the separate
-    // "we do" guided round would just ask them to solve one before they've been shown
-    // how (confusing). Skip straight to practice in that case.
-    // Otherwise: fade the guided round only for a returning expert (resumes at the top
-    // tier); everyone else still gets it (ux-design.md §2/§5). The walkthrough is shown
+    // Fade the guided round only for a returning expert (resumes at the top tier);
+    // everyone else still gets it (ux-design.md §2/§5). The walkthrough is shown
     // regardless, with the "I've got it →" skip for the fast learner.
-    if (config.guided && startDiff < 3 && !config.showSolve) enterGuided(); else finishDemo()
-  }, [config.guided, enterGuided, finishDemo, startDiff, config.showSolve])
+    if (config.guided && startDiff < 3) enterGuided(); else finishDemo()
+  }, [config.guided, enterGuided, finishDemo, startDiff])
 
   // scored submit (the "you do" loop)
   function submit(v: V) {
@@ -414,11 +340,27 @@ export function Game<V, T extends BaseTask>({
     ? (Array.isArray(config.tutorial) ? config.tutorial[0] : config.tutorial)
     : undefined
 
-  const solveCommitLabel = config.solveCommitLabel ?? '✓'
-  // Once Milo reaches the LAST solve step (by word count) → switch the coach cue from
-  // "move it" to "then press <commit>".
-  const showLastStart = task ? task.work.slice(0, -1).reduce((a, s) => a + splitWords(s).length, 0) : 0
-  const onFinalSolveStep = !!task && task.work.length > 0 && showWord > showLastStart
+  // Dev-only E2E hook: expose the current task's correct answer + phase on the
+  // question board so deterministic test personas (aceKid/strugglerKid) can drive
+  // the real adaptive engine without an LLM solving the math. The whole block is
+  // compile-time dead-code-eliminated when NODE_ENV==='production' (Vercel preview
+  // AND prod both run `next build` with NODE_ENV=production), so the answer is only
+  // ever emitted by the local `next dev` server — never in any deployed DOM.
+  // `data-test-answer` is the exact value the correct AnswerPad choice holds (pad
+  // chapters) or the revealed answer string (instrument chapters), and is present
+  // only while a question is live (sub==='active'). See e2e/README.md.
+  const testHooks: Record<string, string> | undefined =
+    process.env.NODE_ENV !== 'production' && task
+      ? {
+          'data-test-answer':
+            sub === 'active'
+              ? config.answerPad
+                ? String(padChoices.find((c) => config.grade(task, c as unknown as V)) ?? '')
+                : config.revealText(task)
+              : '',
+          'data-test-phase': sub === 'sold' ? 'solved' : stage === 'guided' ? 'guided' : 'practice',
+        }
+      : undefined
 
   return (
     <div className="milo-lesson milo-game" style={{ position: 'relative', height: '100dvh', maxHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, color: P.cream, fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
@@ -484,7 +426,7 @@ export function Game<V, T extends BaseTask>({
             // it rolls into the walkthrough on its own (the explanation STAYS put).
             <TeachFrame
               roomy={roomy}
-              explanation={<ExplanationPanel P={P} overview={config.overview} read wordReveal={!!config.showSolve} onDone={() => setStage('demo')} />}
+              explanation={<ExplanationPanel P={P} overview={config.overview} read onDone={() => setStage('demo')} />}
               illustration={<Scene palette={P} task={introScript.task} value={introScript.initial} stepIndex={0} frameCount={1} ended={false} />}
             />
           ) : (
@@ -509,6 +451,7 @@ export function Game<V, T extends BaseTask>({
             <BoardSlot roomy={roomy}>
               <QuestionBoard
                 P={P}
+                testHooks={testHooks}
                 cue="Solve it"
                 prompt={task.prompt || task.title}
                 context={task.context}
@@ -517,13 +460,6 @@ export function Game<V, T extends BaseTask>({
                 answer={task.showEquals === false ? undefined : (sub === 'active' ? '?' : config.revealText(task))}
                 tone={sub === 'active' ? 'ask' : sub === 'sold' ? 'ok' : 'reveal'}
               />
-              {/* "Show me how" — the worked solve steps, written line-by-line in sync
-                  with Milo's voice while the instrument glides to the answer. */}
-              {sub === 'showing' && task.work.length > 0 && (
-                <div style={{ marginTop: 'clamp(8px, 1.2vh, 14px)', display: 'flex', justifyContent: 'center' }}>
-                  <Blackboard P={P} lines={task.work} writingIndex={-1} saidWords={showWord} />
-                </div>
-              )}
             </BoardSlot>
             <CenterFill>
               {stage === 'guided' && sub === 'active' && (
@@ -532,26 +468,12 @@ export function Game<V, T extends BaseTask>({
               <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
                 {config.answerPad ? (
                   // Answer-pad chapters never show the instrument: the child taps a
-                  // number choice while active, and "show me how" is carried entirely
-                  // by the solve board (no meter glide anywhere).
+                  // number choice while active.
                   sub === 'active' && <AnswerPad P={P} choices={padChoices} disabled={busy} onSubmit={(n) => (stage === 'guided' ? submitGuided : submit)(n as unknown as V)} />
                 ) : (
-                  <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach' || sub === 'showing'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} coach={sub === 'showing' ? (onFinalSolveStep ? 'commit' : 'move') : undefined} />
+                  <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
                 )}
                 {stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind={config.guided.hand} />}
-                {/* During "show me how" the finger pointer (on the control itself) acts
-                    out the interaction; this is just the words alongside it. Instrument
-                    chapters only — answer-pad chapters have no control to point at. */}
-                {sub === 'showing' && !config.answerPad && (
-                  <div style={{ color: P.creamSoft, fontSize: 'clamp(12px, 1.2vw, 15px)', fontWeight: 700, letterSpacing: '0.04em', textAlign: 'center' }}>
-                    {onFinalSolveStep ? `then press ${solveCommitLabel}` : 'move it to the answer'}
-                  </div>
-                )}
-                {/* Quiet on-demand helper — always there in practice for a stuck child.
-                    Using it doesn't score the question (see startShow/advanceUnscored). */}
-                {stage === 'play' && sub === 'active' && config.showSolve && (
-                  <button type="button" onClick={startShow} style={{ ...headerChip(P), opacity: 0.82, fontSize: 'clamp(11px, 1.05vw, 15px)' }}>Show me how ▸</button>
-                )}
               </div>
             </CenterFill>
           </>
@@ -730,8 +652,8 @@ function ArtProp({ src }: { src: string }) {
 /** The pre-walkthrough SUMMARY card — the big picture before the baby steps. Milo
  *  speaks the plan while it is shown as a WORD-BY-WORD READ-ALONG: each word
  *  highlights as he says it, so the child can track where the sentence is going
- *  (feedback: highlight the word Milo is speaking). Then "Show me how →" starts the
- *  step-by-step walkthrough. */
+ *  (feedback: highlight the word Milo is speaking). It rolls into the step-by-step
+ *  walkthrough on its own once Milo finishes reading. */
 function OverviewCard({ P, overview, onDone }: {
   P: Palette
   overview: NonNullable<GameConfig<unknown, BaseTask>['overview']>
@@ -784,27 +706,14 @@ function OverviewCard({ P, overview, onDone }: {
  *  matching the baby-step board. It is PERSISTENT through the whole teaching phase:
  *  it sits on the left (or on top, on mobile) and stays put while the walkthrough
  *  runs on the separate baby-step board. When `read` is true (the intro), Milo speaks
- *  it as a word-by-word read-along and calls `onDone` when finished (which rolls into
- *  the walkthrough); when `read` is false (during the walkthrough) it just shows the
- *  plan, silent and unhighlighted, so the two chalkboards don't talk over each other. */
-/** Flatten a ReactNode (strings, numbers, fragments, <strong>, arrays) to plain text,
- *  so the plan can be BOTH spoken and revealed word-by-word from the same content. */
-function nodeText(node: React.ReactNode): string {
-  if (node == null || typeof node === 'boolean') return ''
-  if (typeof node === 'string' || typeof node === 'number') return String(node)
-  if (Array.isArray(node)) return node.map(nodeText).join('')
-  if (isValidElement(node)) return nodeText((node.props as { children?: React.ReactNode }).children)
-  return ''
-}
-
-function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
+ *  the summary and calls `onDone` when finished (which rolls into the walkthrough);
+ *  when `read` is false (during the walkthrough) it just shows the plan, silent, so
+ *  the two chalkboards don't talk over each other. */
+function ExplanationPanel({ P, overview, read, onDone }: {
   P: Palette
   overview: NonNullable<GameConfig<unknown, BaseTask>['overview']>
   read: boolean
   onDone: () => void
-  /** When set, Milo narrates EXACTLY the board text (problem + points) and each word
-   *  appears as he says it — instead of speaking a separate `say` summary. */
-  wordReveal?: boolean
 }) {
   // Ref so a new onDone identity never restarts the narration; it fires once when the
   // summary finishes (real speech OR the blocked-audio fallback), then the walkthrough
@@ -813,56 +722,13 @@ function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
   doneRef.current = onDone
   const points = overview.points ?? []
 
-  // Plain-text blocks (problem + each point), tokenised the SAME way the speaker maps
-  // boundaries (splitWords), so the word reveal stays in lock-step with the voice.
-  const blocks = useMemo(
-    () => (wordReveal ? [overview.problem, ...points].map((n) => nodeText(n).trim()) : []),
-    [wordReveal, overview.problem, points],
-  )
-  const blockTokens = useMemo(() => blocks.map((b) => splitWords(b).map((w) => w.word)), [blocks])
-  const offsets = useMemo(() => {
-    const o: number[] = []; let acc = 0
-    for (const t of blockTokens) { o.push(acc); acc += t.length }
-    return o
-  }, [blockTokens])
-  const totalWords = blockTokens.reduce((a, t) => a + t.length, 0)
-  const spoken = blocks.join(' ')
-
-  // `said` = how many words Milo has spoken so far → reveal words with index < said.
-  const [said, setSaid] = useState(read && wordReveal ? 0 : totalWords)
+  // In the intro, Milo speaks the `say` summary; the board shows the plan in full.
   useEffect(() => {
-    if (!read || !wordReveal) { setSaid(totalWords); return }
-    setSaid(0)
-    // Reveal each word exactly when Milo SAYS it. speakWithHighlight drives onWord off
-    // the real speech boundaries (in sync with the voice), and falls back to its own
-    // word-paced sweep when the browser fires none (blocked audio) — so the reveal
-    // always tracks the voice instead of racing ahead of it.
-    const cancel = speakWithHighlight(spoken, {
-      onWord: (i) => { if (i >= 0) setSaid((s) => Math.max(s, Math.min(totalWords, i + 1))) },
-      onDone: () => { setSaid(totalWords); doneRef.current() },
-    })
-    return () => cancel()
-  }, [spoken, read, wordReveal, totalWords])
-
-  // Non-word chapters: speak the `say` summary; the board shows in full (unchanged).
-  useEffect(() => {
-    if (!read || wordReveal) return
+    if (!read) return
     const cancel = speakWithHighlight(overview.say, { onWord: () => {}, onDone: () => doneRef.current() })
     return () => cancel()
-  }, [overview.say, read, wordReveal])
+  }, [overview.say, read])
 
-  // Reveal each word as Milo says it; the just-spoken word (idx === said-1) writes on
-  // letter-by-letter (clip sweep), the rest just hold. Keeps the voice pacing exactly.
-  const renderWords = (toks: string[], base: number) =>
-    toks.map((w, wi) => {
-      const gi = base + wi; const writing = gi === said - 1
-      return (
-        <Fragment key={wi}>
-          <span className={writing ? 'mb-word-write' : undefined} style={{ opacity: gi < said ? 1 : 0, transition: writing ? undefined : 'opacity 200ms ease', animationTimingFunction: writing ? `steps(${Math.max(w.length, 1)}, end)` : undefined }}>{w}</span>
-          {wi < toks.length - 1 ? ' ' : ''}
-        </Fragment>
-      )
-    })
   const shell = (children: React.ReactNode) => (
     <div style={{
       width: '100%', maxHeight: '100%', boxSizing: 'border-box', overflow: 'hidden',
@@ -877,38 +743,6 @@ function ExplanationPanel({ P, overview, read, onDone, wordReveal = false }: {
     </div>
   )
 
-  // Word-by-word mode (pilot): render the SAME text Milo speaks, each word fading in.
-  if (wordReveal) {
-    const probTokens = blockTokens[0] ?? []
-    return shell(
-      <>
-        <style>{`
-          .mb-word-write { display: inline-block; animation: mbWordWrite 0.42s steps(8, end) both; }
-          @keyframes mbWordWrite { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
-          @media (prefers-reduced-motion: reduce) { .mb-word-write { animation: none; clip-path: none } }
-        `}</style>
-        <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(22px, 2.5vw, 34px)', fontWeight: 700, lineHeight: 1.28, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>
-          {renderWords(probTokens, offsets[0])}
-        </p>
-        {points.length > 0 && (
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)' }}>
-            {points.map((_, i) => {
-              const toks = blockTokens[1 + i] ?? []
-              const base = offsets[1 + i] ?? 0
-              return (
-                <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 25px)', lineHeight: 1.35, color: '#dbe9d6' }}>
-                  <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em', opacity: base < said ? 1 : 0, transition: 'opacity 200ms ease' }}>▸</span>
-                  <span>{renderWords(toks, base)}</span>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </>,
-    )
-  }
-
-  // Static render (full text) — other chapters.
   return shell(
     <>
       <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(22px, 2.5vw, 34px)', fontWeight: 700, lineHeight: 1.28, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>

@@ -112,9 +112,8 @@ function makeTask(d: 1 | 2 | 3): Task {
   return pick(pool)()
 }
 
-// ── the worked example for the walkthrough (4 withdraw 7 → −3) and the guided order (set −5) ──
+// ── the worked example for the walkthrough (4 withdraw 7 → −3) and the guided order ──
 const DEMO_TASK: Task = { title: 'Transaction', badge: '4 − 7', tone: 'b', answer: -3, start: 4, prompt: '', say: '', work: [] }
-// (guided round is skipped when showSolve is on, but kept for completeness)
 const GUIDED_TASK: Task = {
   title: 'Transaction', badge: '−1 − 4', tone: 'b',
   prompt: 'Balance is −1. Withdraw 4. What\'s the new balance?',
@@ -252,11 +251,11 @@ const CONFIG: GameConfig<number, Task> = {
   grade: (t, v) => Math.abs(v - t.answer) < 1e-6,
   revealText: (t) => `${t.answer}`,
   glide: (t, from, setValue, later) => glideNumber(from, t.answer, setValue, later),
-  // Answer by tapping a choice or typing it (not by dragging the meter). The balance
-  // meter stays on screen as the picture + drives the "show me how" solve.
+  // Answer by tapping a choice (not by dragging the meter). The balance meter stays
+  // on screen only as the illustration.
   answerPad: (t) => t.choices ?? [],
-  Instrument: ({ value, setValue, disabled, reveal, palette, onCommit, coach }) => (
-    <VThermo P={palette} value={value} setValue={setValue} min={MIN} max={MAX} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="RECORD ✓" unit="" coach={coach} />
+  Instrument: ({ value, setValue, disabled, reveal, palette, onCommit }) => (
+    <VThermo P={palette} value={value} setValue={setValue} min={MIN} max={MAX} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="RECORD ✓" unit="" />
   ),
   tutorial: {
     task: DEMO_TASK,
@@ -296,9 +295,8 @@ const CONFIG: GameConfig<number, Task> = {
     ],
   },
   sig: (t) => `${t.title}:${t.answer}`,
-  // "Show me how" is off here: the child answers by tapping a number choice, so there's
-  // no instrument to solve on. Teaching is the walkthrough ("I do") + a guided round
-  // ("we do"), then scored practice ("you do").
+  // Teaching is the walkthrough ("I do") + a guided round ("we do"), then scored
+  // practice ("you do") where the child taps a number choice.
 }
 
 export default function WeatherStation(props: { childName: string; onFinish: (c: number, w: number, mastered?: boolean) => void; onExit: () => void }) {

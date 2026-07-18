@@ -42,3 +42,8 @@ next-env.d.ts
 
 # claude code (local tooling/session)
 .claude/
+
+# Playwright
+/test-results/
+/playwright-report/
+/e2e/.last-run.json
