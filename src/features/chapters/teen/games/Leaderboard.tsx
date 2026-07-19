@@ -13,19 +13,21 @@
  * on the RULING BENCH, where the sign is an action you take. Per-task gating: a
  * question keeps the meter when moving along a line IS the operation.
  *
- * FOUR ways to answer, gated PER QUESTION (never per chapter):
- *   • SCORE  → the ElevatorShaft meter: + and −, where sliding along a line IS
- *              the operation.
- *   • CARDS  → the RULING BENCH: × and ÷. Penalty/bonus cards worth `b`, applied
- *              or revoked. Revoke three −4 penalties → the score climbs 12.
- *   • TAP    → AnswerPad: the order-of-ops and exponent questions (a + b×c, a − c²,
- *              k × b²). The meter never solved these — the child worked them out in
- *              their head and dialled the result — so they are choices now, and the
- *              distractors are the real misconceptions (left-to-right; "squared
- *              means times two"), making a wrong tap a wrong METHOD.
+ * THREE ways to answer, gated PER QUESTION (never per chapter):
+ *   • TAP    → AnswerPad, the familiar 12–14 way: every question whose answer is a
+ *              single number (+ and −, a + b×c, a − c², k × b²). Distractors are
+ *              real misconceptions — ignoring the signs, left-to-right, "squared
+ *              means times two" — so a wrong tap is a wrong METHOD, not a slip.
+ *   • CARDS  → the RULING BENCH: × and ÷, whose answer is a ruling (how many cards,
+ *              applied or revoked), NOT a single number — so it keeps its
+ *              instrument. Revoke three −4 penalties → the score climbs 12.
  *   • SORT   → the rational-vs-irrational SORTER: drop a number into the
  *              "ends or repeats" bin or the "never ends" bin (2 SpecPicker cards
  *              styled as sorting bins — not a quiz).
+ *
+ * The ElevatorShaft meter is no longer an answering surface — it survives only as
+ * the walkthrough's scoreboard (ScoreScene) and as the Instrument fallback for any
+ * future `score` task that ships without `pad`.
  *
  * The 12–14 shape: overview read-along + a code-drawn leaderboard scene → a TWO-
  * example baby-step walkthrough (the meter, then the ruling bench) → scored play.
@@ -79,16 +81,20 @@ interface Task extends BaseTask {
 
 // ── SCORE tasks: dial the signed result on the meter ───────────────────────────
 
-/** L1 — add / subtract signed integers (the score after two rounds). */
+/** L1 — add / subtract signed integers (the score after two rounds).
+ *  ANSWERED BY TAPPING, like the 12–14 integers chapter. Distractors are the
+ *  signed-arithmetic misconceptions: ignoring the signs and just adding the
+ *  sizes, subtracting instead of adding, and flipping the final sign. */
 function addTask(): Task {
   const a = rint(-6, 6), b = rint(-6, 6)
   const n = a + b
   return {
     kind: 'score', title: 'Combine the round', badge: `${sumExpr(a, b)}`, tone: 'a',
     prompt: `Set the score for ${sumExpr(a, b)}.`,
-    say: `Your score changed by ${spoken(a)}, then by ${spoken(b)}. Set the new score.`,
+    padInstruction: 'Tap the new score.',
+    say: `Your score changed by ${spoken(a)}, then by ${spoken(b)}. Which is the new score?`,
     work: [`Start at ${fmt(a)} and move ${Math.abs(b)} to the ${b < 0 ? 'left' : 'right'}: you land on ${fmt(n)}.`],
-    n, lo: -18, hi: 18,
+    n, pad: [Math.abs(a) + Math.abs(b), a - b, -n],
   }
 }
 
@@ -623,6 +629,9 @@ const CONFIG: GameConfig<V, Task> = {
       : t.kind === 'cards' ? { k: 'cards', count: Math.abs(t.signedCount ?? 0), dir: (t.signedCount ?? 1) < 0 ? -1 : 1 }
         : { k: 'pick', id: t.correctId ?? '' }), 320),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => {
+    // Fallback only: every `score` task ships with `pad`, so GameShell renders the
+    // AnswerPad and never reaches this. Kept so a future score task without `pad`
+    // degrades to the meter rather than to nothing.
     if (task.kind === 'score') {
       const n = value.k === 'num' ? value.n : 0
       return <ElevatorShaft P={palette} value={n} setValue={(x) => setValue({ k: 'num', n: x })} min={task.lo ?? -18} max={task.hi ?? 18}
