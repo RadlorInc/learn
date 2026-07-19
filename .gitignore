@@ -41,7 +41,11 @@ yarn-error.log*
 next-env.d.ts
 
 # claude code (local tooling/session)
-.claude/
+# .claude/ is local config, EXCEPT the agent definitions — those are project
+# infrastructure (the 12-agent roster) and must be versioned. Note: exclude the
+# CONTENTS (.claude/*), not the dir itself, or the negation below can't re-include.
+.claude/*
+!.claude/agents/
 
 # Playwright
 /test-results/
