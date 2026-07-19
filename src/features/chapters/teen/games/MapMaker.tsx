@@ -190,6 +190,30 @@ function coneTask(): Task {
   }
 }
 
+/** L3 — a dome, ⁴⁄₃πr³. RESTORED after being cut for demanding a decimal: once
+ *  round figures are answered IN TERMS OF π that reason is gone, and ⁴⁄₃r³ is a
+ *  whole number at r = 3 (36π) AND r = 6 (288π) — two seeds, not the one the
+ *  removal note claimed. The curriculum doc lists spheres for this chapter, so
+ *  dropping them was a real coverage loss with a stale justification. */
+function domeTask(): Task {
+  const r = pick([3, 6])
+  const n = (4 * r * r * r) / 3
+  return {
+    kind: 'measure', suffix: 'π',
+    title: 'Dome', tone: 'b',
+    badge: `volume = ? × π    (r = ${r})`,
+    context: `A domed roof, ${r} squares from its middle to the edge.`,
+    prompt: `Volume of a sphere with radius ${r}, in terms of π.`,
+    padInstruction: 'Tap the number that goes in front of π.',
+    showEquals: false,
+    say: `A dome with radius ${r}. A sphere holds four thirds of r cubed, times pi. How many pi is that?`,
+    work: [`A sphere is four thirds of r cubed, times π. r cubed is ${r} × ${r} × ${r} = ${r * r * r}. Four thirds of ${r * r * r} is ${n}, so the dome is ${n} π.`],
+    n,
+    // forgot the ⁴⁄₃ (just r³) · squared instead of cubed · used the diameter
+    pad: [r * r * r, r * r, (4 * (2 * r) ** 3) / 3],
+  }
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // TRANSFORMATIONS — dragged on the level grid. The answer is a PAIR, so these
 // keep their instrument; and the drag IS the transformation, not a way of typing
@@ -303,7 +327,9 @@ function moveTask(mv: Move): Task {
 function makeTask(d: 1 | 2 | 3): Task {
   if (d === 1) return Math.random() < 0.5 ? circleTask() : moveTask('translate')
   if (d === 2) return Math.random() < 0.5 ? solidTask() : moveTask(Math.random() < 0.5 ? 'reflect' : 'rot180')
-  return Math.random() < 0.5 ? coneTask() : moveTask(pick<Move>(['rot90', 'dilate', 'midpoint']))
+  return Math.random() < 0.5
+    ? (Math.random() < 0.5 ? coneTask() : domeTask())
+    : moveTask(pick<Move>(['rot90', 'dilate', 'midpoint']))
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

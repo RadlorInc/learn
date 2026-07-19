@@ -492,11 +492,18 @@ const CONFIG: GameConfig<V, Task> = {
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => {
     // `missing` ships with `pad`, so the shell renders the AnswerPad and never gets
     // here; the branch keeps a future pad-less missing task from rendering nothing.
+    // ⚠️ NO LIVE TILE SCENE HERE — deliberately, and it was tried. Rendering the
+    // child's current sides as tiles also renders their EXPANDED PRODUCT
+    // ("x² + 5x + 4") right beside the target area on the board, which lets them
+    // dial until the two strings match and never factor anything. That is the
+    // hot/cold guessing the partner rejected on BalanceBench's live tilt; the
+    // absence of a "✓" does not make it less of an oracle. It is worse here than
+    // there, because BalanceBeam showing `2x` does not reveal x, whereas the
+    // expansion IS the answer. The tiles teach in the WALKTHROUGH, where watching
+    // them is the point and nothing is being scored.
     const parts = value.k === 'sides' ? { a: value.a, b: value.b } : { a: 0, b: 0 }
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px, 1.2vh, 16px)', width: '100%' }}>
-        <PlotScene palette={palette} p={parts.a} q={parts.b} areaTxt={areaExpr(parts.a + parts.b, parts.a * parts.b)}
-          phase={PH_SIDES} compact />
         <PartsBuilder P={palette} value={parts} setValue={(v) => setValue({ k: 'sides', a: v.a, b: v.b })}
           min={-9} max={9} template={(a, b) => `${fac(a)}${fac(b)}`} labels={['side 1', 'side 2']}
           disabled={disabled} reveal={reveal} onCommit={(v) => onCommit({ k: 'sides', a: v.a, b: v.b })}
