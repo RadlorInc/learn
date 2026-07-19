@@ -19,7 +19,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, PaintGrid, Nudge, CommitBtn, pick, reduce, tidy, money } from './parts/gameKit'
+import { Palette, PaintGrid, Nudge, CommitBtn, numChoices, pick, reduce, tidy, money } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#10212e', nightBot: '#183245',
@@ -47,7 +47,7 @@ const ITEMS = ['Hoodie', 'Sneakers', 'Backpack', 'Game', 'Jacket', 'Cap', 'Bottl
 function paintTask(): Task {
   const pct = pick([10, 20, 25, 40, 50, 60, 75])
   return {
-    mech: 'paint', title: 'Shade the percent', badge: `${pct}%`, tone: 'a', answer: pct, start: 0,
+    mech: 'paint', title: 'Shade the percent', badge: `${pct}%`, tone: 'a', answer: pct, start: 0, showEquals: false,
     instruction: 'Shade the percent on the grid.',
     prompt: `Shade ${pct}% on the grid.`,
     say: `Shade ${pct} percent on the grid — that many of the hundred squares.`,
@@ -62,7 +62,9 @@ function slideSale(): Task {
   const pct = pick([10, 20, 25, 50]); const price = pick([40, 60, 80, 120, 200]); const disc = tidy((pct / 100) * price); const ans = tidy(price - disc); const item = pick(ITEMS)
   return {
     mech: 'price', mode: 'sale', pct, basePrice: price, title: item, badge: `${money(price)} · ${pct}% off`, tone: 'a', answer: ans, start: price,
-    context: `The ${item.toLowerCase()} is marked down in today's sale.`,
+    answerLabel: 'sale price =',
+    context: `The ${item.toLowerCase()} was ${money(price)}. It is ${pct}% off today — what do you PAY for it now?`,
+    padInstruction: `Tap the SALE PRICE — the dollars you hand over now (not the amount taken off).`,
     instruction: `Shade ${pct}% off — what's left is the sale price.`,
     prompt: `${item} is ${pct}% off ${money(price)}. Shade the ${pct}% discount on the price grid — the rest is the sale price.`,
     say: `This ${item.toLowerCase()} is ${pct} percent off ${money(price)}. Shade the ${pct} percent discount on the grid. What's left is the sale price.`,
@@ -74,7 +76,9 @@ function slideSaving(): Task {
   const pct = pick([10, 20, 25, 50]); const price = pick([40, 60, 80, 120]); const save = tidy((pct / 100) * price); const item = pick(ITEMS)
   return {
     mech: 'price', mode: 'part', pct, basePrice: price, title: 'How much saved?', badge: `${money(price)} · ${pct}% off`, tone: 'a', answer: save, start: 0,
-    context: `A shopper grabs the ${item.toLowerCase()} while it's discounted.`,
+    answerLabel: 'saved =',
+    context: `A shopper grabs the ${item.toLowerCase()}, marked ${money(price)}, at ${pct}% off — how much do they SAVE?`,
+    padInstruction: `Tap the MONEY SAVED — the dollars taken off the price (not the new price).`,
     instruction: `Shade ${pct}% — the shaded dollars are the saving.`,
     prompt: `${item} is ${pct}% off ${money(price)}. Shade the ${pct}% on the price grid — the shaded dollars are what they SAVE.`,
     say: `This ${item.toLowerCase()} is ${pct} percent off ${money(price)}. Shade the ${pct} percent on the grid. The shaded dollars are the saving.`,
@@ -87,7 +91,9 @@ function slideTax(): Task {
   const item = pick(['Console', 'Bike', 'Headphones', 'Sneakers'])
   return {
     mech: 'price', mode: 'plus', pct, basePrice: price, title: item, badge: `${money(price)} · +${pct}% tax`, tone: 'b', answer: ans, start: price,
-    context: `The ${item.toLowerCase()} rings up at the till with tax added.`,
+    answerLabel: 'total =',
+    context: `The ${item.toLowerCase()} is ${money(price)} and ${pct}% tax is added at the till — what is the TOTAL bill?`,
+    padInstruction: `Tap the TOTAL TO PAY — the price with the tax added on (not the tax by itself).`,
     instruction: `Shade the ${pct}% tax — it adds onto the price.`,
     prompt: `${item} is ${money(price)} plus ${pct}% tax. Shade the ${pct}% tax on the price grid — it adds onto the total.`,
     say: `This ${item.toLowerCase()} is ${money(price)} plus ${pct} percent tax. Shade the ${pct} percent tax on the grid. It adds onto the total.`,
@@ -99,7 +105,9 @@ function slideTip(): Task {
   const pct = pick([10, 15, 20, 25]); const price = pick([20, 40, 60, 80]); const tip = tidy((pct / 100) * price)
   return {
     mech: 'price', mode: 'part', pct, basePrice: price, title: 'Tip', badge: `${money(price)} bill · ${pct}% tip`, tone: 'b', answer: tip, start: 0,
-    context: `You're leaving a tip after a meal out.`,
+    answerLabel: 'tip =',
+    context: `The meal comes to ${money(price)} and you leave a ${pct}% tip — how big is the TIP itself?`,
+    padInstruction: `Tap the TIP ALONE — the extra dollars you leave (not the bill plus the tip).`,
     instruction: `Shade the ${pct}% tip — the shaded dollars are the tip.`,
     prompt: `The bill is ${money(price)} and the tip is ${pct}%. Shade the ${pct}% on the bill grid — the shaded dollars are the tip.`,
     say: `The bill is ${price} dollars and you tip ${pct} percent. Shade the ${pct} percent on the grid. The shaded dollars are the tip.`,
@@ -141,6 +149,9 @@ const SCRIPT_SLIDE = {
 
 const GUIDED_TASK: Task = {
   mech: 'price', mode: 'sale', pct: 50, basePrice: 10, title: 'Cap', badge: '$10 · 50% off', tone: 'a', answer: 5, start: 10,
+  answerLabel: 'sale price =',
+  context: 'The cap was $10. It is 50% off today — what do you PAY for it now?',
+  padInstruction: 'Tap the SALE PRICE — the dollars you hand over now (not the amount taken off).',
   instruction: 'Shade 50% off — what’s left is the sale price.',
   prompt: 'Half off $10 — shade the 50% discount on the grid, then ring up what’s left.',
   say: 'This cap is fifty percent off ten dollars. Fifty percent is half. Shade half the grid, then ring up what is left.',
@@ -356,6 +367,30 @@ function PriceGrid({ P, task, setValue, disabled, reveal, onCommit }: {
   )
 }
 
+// ── ANSWER PAD — the money orders are answered by TAPPING a dollar amount. The
+//    distractors are the real checkout misconceptions, not arithmetic noise:
+//      • sale  — the SAVING instead of the sale price (the single most common miss),
+//                the price left un-discounted, the discount ADDED, applied twice, and
+//                the percent subtracted as if it were dollars.
+//      • part  — (saving / tip) the OTHER side of the same split: the sale price /
+//                bill-minus-tip, the un-adjusted price, the total, and the bare percent.
+//      • plus  — (tax) the base price un-taxed, and the tax SUBTRACTED instead of added.
+//    Every answer here is a whole number of dollars, so numChoices stays whole-dollar
+//    (no $40.01 neighbours); `min: 1` drops nonsense negatives and `max` keeps a choice
+//    from being a giveaway by scale. The SHADE-a-percent task keeps the grid — its
+//    answer is printed in the badge, so a tap pad would make it a reading exercise.
+function answerPad(t: Task): number[] {
+  if (t.mech !== 'price') return []
+  const pct = t.pct!, price = t.basePrice!
+  const amt = tidy((pct / 100) * price)     // the shaded dollars
+  const near = t.mode === 'sale'
+    ? [amt, price, tidy(price + amt), tidy(price - 2 * amt), tidy(price - pct), tidy(price + pct)]
+    : t.mode === 'plus'
+      ? [price, tidy(price - amt), amt, tidy(price + 2 * amt), tidy(price + pct)]
+      : [tidy(price - amt), price, tidy(price + amt), pct]
+  return numChoices(t.answer, near, { min: 1, max: price * 2, count: 4 })
+}
+
 const CONFIG: GameConfig<number, Task> = {
   chapterId: 'percentages',
   title: 'STORE CHECKOUT',
@@ -363,6 +398,7 @@ const CONFIG: GameConfig<number, Task> = {
   motif: '🛒',
   palette: P,
   makeTask,
+  answerPad,
   initialValue: (t) => t.start,
   grade: (t, v) => t.mech === 'paint' ? v === t.answer : Math.abs(v - t.answer) < 1e-6,
   revealText: (t) => t.mech === 'paint' ? `${t.answer}%` : money(t.answer),

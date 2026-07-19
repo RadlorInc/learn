@@ -23,6 +23,11 @@ const P: Palette = {
 
 interface Task extends BaseTask { answer: XY }
 
+// The tutorial board hard-codes a proper minus (U+2212). Every badge the child
+// reads goes through this so the visible math matches what they were taught.
+const disp = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
+const pt = (p: XY) => `(${disp(p.x)}, ${disp(p.y)})`
+
 function plot(level: 1 | 2): Task {
   const pts: XY[] =
     level === 1
@@ -32,13 +37,13 @@ function plot(level: 1 | 2): Task {
       : [{ x: -3, y: -2 }, { x: -4, y: 2 }, { x: 2, y: -4 }, { x: 5, y: -3 }, { x: -2, y: -3 }]
   const a = pick(pts)
   return {
-    title: 'Drop-off', badge: `(${a.x}, ${a.y})`, tone: a.x < 0 || a.y < 0 ? 'b' : 'a',
+    title: 'Drop-off', badge: pt(a), tone: a.x < 0 || a.y < 0 ? 'b' : 'a', showEquals: false,
     context: `A package is ready for delivery.`,
-    instruction: 'Tap the map to drop the package.',
+    instruction: 'Tap the map: across first, then up or down.',
     prompt: `Fly the drone to the drop-off at (${a.x}, ${a.y}). Tap the map.`,
     say: `Fly the drone to ${a.x}, ${a.y}. Tap the map.`,
     answer: a,
-    work: [`Fly ${a.x} across first (x), then ${a.y} up or down (y).`, `That drops it at (${a.x}, ${a.y}).`],
+    work: [`Fly ${disp(a.x)} across first (x), then ${disp(a.y)} up or down (y).`, `That drops it at ${pt(a)}.`],
   }
 }
 
@@ -51,13 +56,18 @@ function translate(): Task {
   const hx = dx < 0 ? `${Math.abs(dx)} left` : `${dx} right`
   const vy = dy < 0 ? `${Math.abs(dy)} down` : `${dy} up`
   return {
-    title: 'Reroute', badge: `(${ans.x}, ${ans.y})`, tone: 'b',
+    // The badge carries the QUESTION (start + move), never the answer — the child
+    // works the landing spot out and taps it.
+    title: 'Reroute', badge: `from ${pt(start)}, move ${hx} and ${vy}`, tone: 'b', showEquals: false,
     context: `Air traffic reroutes the drone to a new drop-off.`,
     instruction: 'Tap where the drone lands.',
     prompt: `The drone is at (${start.x}, ${start.y}). Move it ${hx} and ${vy}, then tap where it lands.`,
     say: `The drone is at ${start.x}, ${start.y}. Move it ${hx} and ${vy}, then tap where it lands.`,
     answer: ans,
-    work: [`Change x by ${dx > 0 ? '+' : ''}${dx}, and y by ${dy > 0 ? '+' : ''}${dy}.`, `(${start.x}, ${start.y}) → (${ans.x}, ${ans.y}).`],
+    work: [
+      `Across: ${disp(start.x)} ${dx < 0 ? '−' : '+'} ${Math.abs(dx)} = ${disp(ans.x)}. Up/down: ${disp(start.y)} ${dy < 0 ? '−' : '+'} ${Math.abs(dy)} = ${disp(ans.y)}.`,
+      `${pt(start)} → ${pt(ans)}.`,
+    ],
   }
 }
 
@@ -68,13 +78,15 @@ function transform(): Task {
     const from = pick([{ x: 3, y: 2 }, { x: -2, y: 4 }])
     const ans: XY = { x: from.x, y: -from.y }
     return {
-      title: 'Mirror drop-off', badge: `(${ans.x}, ${ans.y})`, tone: 'b',
-      context: `A matching drop-off waits across the map.`,
-      instruction: 'Tap the map to drop it.',
+      // Tier 3 → `say` is silent and `prompt` never renders, so the badge must BE
+      // the whole question: the source point and the flip, in the tutorial's words.
+      title: 'Mirror drop-off', badge: `flip ${pt(from)} up ↔ down`, tone: 'b', showEquals: false,
+      context: `A matching drop-off is mirrored over the middle line.`,
+      instruction: 'Tap where the mirrored drop-off lands.',
       prompt: `Reflect the drop-off (${from.x}, ${from.y}) across the x-axis, then deliver.`,
       say: `Reflect the drop-off ${from.x}, ${from.y} across the x-axis, then deliver it.`,
       answer: ans,
-      work: [`Reflecting across the x-axis flips the sign of y.`, `(${from.x}, ${from.y}) → (${ans.x}, ${ans.y}).`],
+      work: [`Flipping up ↔ down keeps the across number and flips the sign of the up/down number.`, `${pt(from)} → ${pt(ans)}.`],
     }
   }
 
@@ -82,13 +94,13 @@ function transform(): Task {
     const from = pick([{ x: -2, y: 4 }, { x: 3, y: -1 }])
     const ans: XY = { x: -from.x, y: from.y }
     return {
-      title: 'Mirror drop-off', badge: `(${ans.x}, ${ans.y})`, tone: 'b',
-      context: `A matching drop-off waits across the map.`,
-      instruction: 'Tap the map to drop it.',
+      title: 'Mirror drop-off', badge: `flip ${pt(from)} left ↔ right`, tone: 'b', showEquals: false,
+      context: `A matching drop-off is mirrored over the middle line.`,
+      instruction: 'Tap where the mirrored drop-off lands.',
       prompt: `Reflect the drop-off (${from.x}, ${from.y}) across the y-axis, then deliver.`,
       say: `Reflect the drop-off ${from.x}, ${from.y} across the y-axis, then deliver it.`,
       answer: ans,
-      work: [`Reflecting across the y-axis flips the sign of x.`, `(${from.x}, ${from.y}) → (${ans.x}, ${ans.y}).`],
+      work: [`Flipping left ↔ right keeps the up/down number and flips the sign of the across number.`, `${pt(from)} → ${pt(ans)}.`],
     }
   }
 
@@ -99,13 +111,16 @@ function transform(): Task {
   ])
   const ans: XY = { x: (pair.a.x + pair.b.x) / 2, y: (pair.a.y + pair.b.y) / 2 }
   return {
-    title: 'Halfway drop-off', badge: `(${ans.x}, ${ans.y})`, tone: 'a',
+    title: 'Halfway drop-off', badge: `halfway between ${pt(pair.a)} and ${pt(pair.b)}`, tone: 'a', showEquals: false,
     context: `A rest stop sits between two delivery points.`,
-    instruction: 'Tap where the drone lands.',
+    instruction: 'Tap the halfway point: across first, then up or down.',
     prompt: `Fly to the halfway point between (${pair.a.x}, ${pair.a.y}) and (${pair.b.x}, ${pair.b.y}).`,
     say: `Fly the drone to the halfway point between ${pair.a.x}, ${pair.a.y} and ${pair.b.x}, ${pair.b.y}.`,
     answer: ans,
-    work: [`Average the x's and the y's.`, `Midpoint = (${ans.x}, ${ans.y}).`],
+    work: [
+      `Halfway across: (${disp(pair.a.x)} + ${disp(pair.b.x)}) ÷ 2 = ${disp(ans.x)}.`,
+      `Halfway up/down: (${disp(pair.a.y)} + ${disp(pair.b.y)}) ÷ 2 = ${disp(ans.y)}. So ${pt(ans)}.`,
+    ],
   }
 }
 
@@ -239,11 +254,16 @@ function DeliveryDroneScene({ palette: P, task, value, stepIndex, frameCount, en
 const DEMO_TASK: Task = { title: 'Drop-off', badge: '(3, −2)', tone: 'b', answer: { x: 3, y: -2 }, prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
   title: 'Drop-off', badge: '(2, 1)', tone: 'a', answer: { x: 2, y: 1 },
-  prompt: 'Deliver to (2, 1): two across, one up. Tap the map, then press Deliver.',
-  say: 'Deliver to two, one. Fly two across, then one up, then press deliver.',
+  prompt: 'Deliver to (2, 1): two across, one up. Tap the map, then press DROP ✓.',
+  say: 'Deliver to two, one. Fly two across, then one up, then press drop.',
   work: ['Fly 2 across first (x), then 1 up (y).', 'That drops it at (2, 1).'],
 }
 
+// NO `answerPad` here, deliberately: every task in this chapter (drop-off, reroute,
+// mirror, midpoint) answers with a coordinate PAIR, which is two numbers and cannot
+// be one number tap. Tapping the map IS the answer — and it's also how the "across
+// then up/down" idea is taught. Splitting a pair into two pads would teach reading
+// x and y separately, which is the misconception this chapter exists to prevent.
 const CONFIG: GameConfig<XY, Task> = {
   chapterId: 'coordinatePlane',
   title: 'DELIVERY DRONE',

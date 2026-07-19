@@ -15,7 +15,7 @@
 import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, TwoTaps, type Mix, pick } from './parts/gameKit'
+import { Palette, TwoTaps, numChoices, type Mix, pick } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#1a1230', nightBot: '#241640',
@@ -36,7 +36,8 @@ interface Task extends BaseTask {
   labelB: string
 }
 const MAX = 12
-const PAIRS: [string, string][] = [['Blue', 'Yellow'], ['Red', 'White'], ['Crimson', 'Teal']]
+const PAIRS: [string, string][] = [['Blue', 'Yellow'], ['Red', 'White'], ['Green', 'Orange']]
+const scoops = (n: number) => `${n} ${n === 1 ? 'scoop' : 'scoops'}`
 
 function fillA(hard = false): Task {
   const [labelA, labelB] = pick(PAIRS)
@@ -46,12 +47,13 @@ function fillA(hard = false): Task {
   const expB = per * ratioB
   return {
     title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'a',
-    context: `The ${labelA} is already poured — now the ${labelB} keeps the shade looking right.`,
-    instruction: `Add the ${labelB} to match.`,
-    prompt: `Mix is ${labelA}:${labelB} = ${ratioA}:${ratioB}. You've added ${expA} ${labelA}. Add the ${labelB} to match.`,
-    say: `The mix is ${labelA} to ${labelB}, ${ratioA} to ${ratioB}. You've already added ${expA} ${labelA}. Add the ${labelB} to keep the colour right.`,
+    answerLabel: `${labelB} parts =`,
+    context: `${expA} parts of ${labelA} are already poured. Now the ${labelB} has to keep the shade right.`,
+    padInstruction: `How many parts of ${labelB} go in?`,
+    prompt: `Mix is ${labelA}:${labelB} = ${ratioA}:${ratioB}. You've added ${expA} ${labelA}. How many parts of ${labelB} keep the mix right?`,
+    say: `The mix is ${labelA} to ${labelB}, ${ratioA} to ${ratioB}. You've already added ${expA} ${labelA}. How many parts of ${labelB} keep the colour right?`,
     ratioA, ratioB, expA, expB, fixed: 'a', labelA, labelB,
-    work: [`Each part is ${per}.`, `So ${labelB} = ${expB}.`],
+    work: [`Each part is ${scoops(per)}.`, `So ${labelB} = ${expB}.`],
   }
 }
 function fillB(hard = false): Task {
@@ -62,12 +64,13 @@ function fillB(hard = false): Task {
   const expA = per * ratioA
   return {
     title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'b',
-    context: `The ${labelB} is already poured — now the ${labelA} keeps the shade looking right.`,
-    instruction: `Add the ${labelA} to match.`,
-    prompt: `The mix is ${labelA}:${labelB} = ${ratioA}:${ratioB}. You've added ${expB} ${labelB}. Add the ${labelA} to match.`,
-    say: `The mix is ${labelA} to ${labelB}, ${ratioA} to ${ratioB}. You've added ${expB} ${labelB}. Add the ${labelA} to match.`,
+    answerLabel: `${labelA} parts =`,
+    context: `${expB} parts of ${labelB} are already poured. Now the ${labelA} has to keep the shade right.`,
+    padInstruction: `How many parts of ${labelA} go in?`,
+    prompt: `The mix is ${labelA}:${labelB} = ${ratioA}:${ratioB}. You've added ${expB} ${labelB}. How many parts of ${labelA} keep the mix right?`,
+    say: `The mix is ${labelA} to ${labelB}, ${ratioA} to ${ratioB}. You've added ${expB} ${labelB}. How many parts of ${labelA} keep the colour right?`,
     ratioA, ratioB, expA, expB, fixed: 'b', labelA, labelB,
-    work: [`Each part is ${per}.`, `So ${labelA} = ${expA}.`],
+    work: [`Each part is ${scoops(per)}.`, `So ${labelA} = ${expA}.`],
   }
 }
 function scaleTotal(hard = false): Task {
@@ -78,9 +81,9 @@ function scaleTotal(hard = false): Task {
   const expA = k * ratioA
   const expB = k * ratioB
   return {
-    title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'a',
-    context: `Milo needs a full batch of this ${labelA} and ${labelB} paint, and the shade has to stay the same.`,
-    instruction: 'Add both colours to make the batch.',
+    title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'a', showEquals: false,
+    context: `Milo needs a batch of ${total} parts of ${labelA} and ${labelB} paint, and the shade has to stay the same.`,
+    instruction: `Add both colours until the batch is ${total} parts.`,
     prompt: `Mix ${labelA}:${labelB} ${ratioA}:${ratioB} to make ${total} parts. Add BOTH colours.`,
     say: `Mix ${labelA} to ${labelB}, ${ratioA} to ${ratioB}, to make ${total} parts. Add both colours.`,
     ratioA, ratioB, expA, expB, labelA, labelB,
@@ -99,19 +102,23 @@ function makeTask(d: 1 | 2 | 3): Task {
 // ── the worked example for the walkthrough (blue & yellow, 2 : 3, built part by part)
 //    and the guided order (1 : 2 — add the yellow to 2) ──
 const DEMO_TASK: Task = {
-  title: 'Blue & Yellow', badge: '2 : 3', tone: 'a', prompt: '', say: '', work: [],
+  title: 'Blue & Yellow', badge: '2 : 3', tone: 'a', showEquals: false, prompt: '', say: '', work: [],
   context: 'Milo is mixing Blue and Yellow paint so the shade comes out just right.',
   instruction: 'Add both colours to match the mix.',
   ratioA: 2, ratioB: 3, expA: 2, expB: 3, labelA: 'Blue', labelB: 'Yellow',
 }
+// The guided seed pours 3 Blue (not 1), so the answer (6) is NOT one of the numbers
+// printed on the badge — reading the ratio off the badge can't work here, the same as
+// in the scored questions.
 const GUIDED_TASK: Task = {
   title: 'Blue & Yellow', badge: '1 : 2', tone: 'a',
-  context: 'The Blue is already poured — now the Yellow keeps the shade looking right.',
-  instruction: 'Add the Yellow to match.',
-  prompt: 'One Blue is in. Tap + on Yellow until it shows 2, then press MIX.',
-  say: 'One blue is already in, and the mix is one to two. Tap the yellow up to two, then press mix.',
-  ratioA: 1, ratioB: 2, expA: 1, expB: 2, fixed: 'a', labelA: 'Blue', labelB: 'Yellow',
-  work: ['Each part is 1 scoop.', 'So Yellow = 2.'],
+  answerLabel: 'Yellow parts =',
+  context: '3 parts of Blue are already poured. Now the Yellow has to keep the shade right.',
+  padInstruction: 'How many parts of Yellow go in?',
+  prompt: 'Three Blue are in and the mix is 1 : 2. How many parts of Yellow do you need?',
+  say: 'Three blue are already in, and the mix is one to two. How many parts of yellow do you need?',
+  ratioA: 1, ratioB: 2, expA: 3, expB: 6, fixed: 'a', labelA: 'Blue', labelB: 'Yellow',
+  work: ['Each part is 3 scoops.', 'So Yellow = 6.'],
 }
 
 // ── Animated walkthrough scene — the storyboard, in motion ────────────────────
@@ -264,8 +271,28 @@ const CONFIG: GameConfig<Mix, Task> = {
   palette: P,
   makeTask,
   initialValue: (t) => ({ a: t.fixed === 'a' ? t.expA : 0, b: t.fixed === 'b' ? t.expB : 0 }),
-  grade: (t, v) => t.fixed === 'a' ? v.b === t.expB : t.fixed === 'b' ? v.a === t.expA : (v.a === t.expA && v.b === t.expB),
-  revealText: (t) => `${t.expA} : ${t.expB}`,
+  // A pad question submits a raw number (the one missing part) instead of a Mix.
+  grade: (t, v) => typeof (v as unknown) === 'number'
+    ? (v as unknown as number) === (t.fixed === 'a' ? t.expB : t.expA)
+    : t.fixed === 'a' ? v.b === t.expB : t.fixed === 'b' ? v.a === t.expA : (v.a === t.expA && v.b === t.expB),
+  // PER-TASK pad: when one colour is already poured (`fixed`), the answer is a single
+  // number → tap it. When BOTH parts are free (scaleTotal) the answer is a PAIR, which
+  // no number pad can express — those keep the TwoTaps instrument.
+  answerPad: (t) => {
+    if (!t.fixed) return []
+    const givenR = t.fixed === 'a' ? t.ratioA : t.ratioB   // ratio part of the poured colour
+    const wantR = t.fixed === 'a' ? t.ratioB : t.ratioA    // ratio part of the one they supply
+    const given = t.fixed === 'a' ? t.expA : t.expB
+    const ans = t.fixed === 'a' ? t.expB : t.expA
+    return numChoices(ans, [
+      given + (wantR - givenR),      // added the difference instead of scaling it
+      (given * givenR) / wantR,      // scaled with the two parts swapped
+      wantR,                         // answered with the bare ratio number
+    ], { min: 1, max: MAX })
+  },
+  // A `fixed` question asks for ONE number (the missing colour's parts), so the reveal
+  // — shown on the board and spoken as "It was …" — must be that number, not the pair.
+  revealText: (t) => t.fixed === 'a' ? `${t.expB}` : t.fixed === 'b' ? `${t.expA}` : `${t.expA} : ${t.expB}`,
   glide: (t, _from, setValue) => setValue({ a: t.expA, b: t.expB }),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => (
     <TwoTaps P={palette} mix={value} setMix={setValue} max={MAX} labelA={task.labelA} labelB={task.labelB} fixed={task.fixed} disabled={disabled} reveal={reveal} onCommit={onCommit} commitLabel="MIX ✓" />

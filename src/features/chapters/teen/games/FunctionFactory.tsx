@@ -15,7 +15,7 @@
  * engine underneath (branches by task.mode). The expression engine lives in gameKit.
  */
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CommitBtn, Nudge, headerChip, pick, glideNumber, ExprChips, parseExpr, collapseAt, correctNextIndex, type ETok } from './parts/gameKit'
+import { Palette, CommitBtn, Nudge, headerChip, pick, glideNumber, numChoices, ExprChips, parseExpr, evaluable, collapseAt, correctNextIndex, type ETok } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#1c1a10', nightBot: '#282412',
@@ -30,6 +30,10 @@ type Mode = 'eval' | 'solve' | 'combine'
 interface Task extends BaseTask {
   mode: Mode; answer: number
   rule?: string; x?: number; expr?: string; target?: number; coA?: number; coB?: number
+  /** The number a classic mistake lands on for THIS rule — seeded per pool entry
+   *  because the generic misconception functions collapse onto the correct answer
+   *  for bracketed rules (2(x+3)) and coefficient-less ones (x + 5). */
+  miss?: number
 }
 // One value shape across the three modes (GameShell holds a single V): eval uses
 // `toks` (the collapsing expression), solve uses `x` (the dialled distance), combine
@@ -50,32 +54,60 @@ function fullEval(expr: string): number {
 }
 const evalRule = (rule: string, x: number) => fullEval(substitute(rule, x))
 
+const headNum = (t: ETok[]) => (t[0]?.k === 'num' ? t[0].v : NaN)
+/** Misconception: reading "3x" as concatenation → 3x + 2 at x=4 becomes 34 + 2. */
+function concatEval(rule: string, x: number): number {
+  return fullEval(rule.replace(/(\d)\(/g, '$1 × (').replace(/(\d)x/g, (_, d) => `${d}${x}`).replace(/x/g, `${x}`))
+}
+/** Misconception: doing + and − before × and ÷ → 3 × 4 + 2 becomes 3 × 6. */
+function addFirstEval(expr: string): number {
+  let t = parseExpr(expr)
+  for (let n = 0; n < 12 && t.length > 1; n++) {
+    const ev = [...evaluable(t)]
+    if (!ev.length) break
+    const plus = ev.filter((i) => { const k = t[i]; return k.k === 'op' && (k.op === '+' || k.op === '−') })
+    t = collapseAt(t, plus.length ? Math.min(...plus) : Math.min(...ev))
+  }
+  return headNum(t)
+}
+
 // ── generators (math preserved) ───────────────────────────────────────────────
+/** [rule, x, answer, the number a classic mistake lands on]. The board shows only the
+ *  RULE (the badge) — the substitution is stated in `context` — so the answer line
+ *  never chains onto an equals sign that isn't there. */
+type EvalSpec = [string, number, number, number]
 function evaluate(hard = false): Task {
-  const easy: [string, number, number][] = [['2x + 1', 3, 7], ['x + 5', 4, 9], ['3x', 3, 9]]
-  const tough: [string, number, number][] = [['4x − 3', 5, 17], ['2(x + 3)', 4, 14]]
-  const [rule, x, answer] = pick(hard ? [...easy, ...tough] : easy)
+  const easy: EvalSpec[] = [
+    ['2x + 1', 3, 7, 8],    // 2 × (3 + 1) — added before multiplying
+    ['x + 5', 4, 9, 20],    // 4 × 5 — read the letter as a times sign
+    ['3x', 3, 9, 6],        // 3 + 3 — added instead of multiplying
+  ]
+  const tough: EvalSpec[] = [
+    ['4x − 3', 5, 17, 20],  // 4 × 5, then forgot the − 3
+    ['2(x + 3)', 4, 14, 11], // 2 × 4 + 3 — forgot to multiply the 3 as well
+  ]
+  const [rule, x, answer, miss] = pick(hard ? [...easy, ...tough] : easy)
   return {
-    mode: 'eval', title: 'Work out the fare', badge: `${rule} where x=${x}`, tone: 'a',
-    context: `A taxi ride goes ${x} km across town.`,
-    instruction: 'Drop x in, then tap × and ÷ before + and −.',
+    mode: 'eval', title: 'Work out the fare', badge: rule, tone: 'a', answerLabel: 'fare $',
+    context: `A taxi ride goes ${x} km across town, so x = ${x}.`,
+    padInstruction: 'Work out the fare, then tap it in dollars.',
     prompt: `The fare rule is ${rule}, for x = ${x} km. Drop x in and work it out.`,
     say: `The fare rule is ${rule}, where x is the km. Drop in ${x} for x, then work it out — times before plus.`,
-    answer, rule, x, expr: substitute(rule, x),
-    work: [`Put ${x} in place of x: ${substitute(rule, x)}.`, `Work it out in order = ${answer}.`],
+    answer, rule, x, miss, expr: substitute(rule, x),
+    work: [`Put ${x} in place of x: ${substitute(rule, x)}.`, `${substitute(rule, x)} = ${answer}.`],
   }
 }
 function solve(): Task {
   const set: [string, number, number][] = [['2x + 1', 11, 5], ['3x − 2', 10, 4], ['x + 7', 12, 5], ['4x', 20, 5]]
   const [rule, out, answer] = pick(set)
   return {
-    mode: 'solve', title: 'How far?', badge: `${rule} = ${out}`, tone: 'b',
-    context: `A taxi ride ends and the fare comes to $${out}.`,
-    instruction: 'Dial the km until the meter hits the target.',
-    prompt: `The fare came to $${out} with rule ${rule}. Dial the km until the meter matches.`,
-    say: `The fare came to ${out} dollars using the rule ${rule}. Dial the km until the meter hits ${out}.`,
+    mode: 'solve', title: 'How far?', badge: `${rule} = ${out}`, tone: 'b', answerLabel: 'x =',
+    context: `The fare for a ride comes to $${out}. x is how far it went, in km.`,
+    padInstruction: 'Tap how many km the ride was.',
+    prompt: `The fare came to $${out} with rule ${rule}. Work out how far the ride was.`,
+    say: `The fare came to ${out} dollars using the rule ${rule}. How many km was the ride?`,
     answer, rule, target: out,
-    work: [`Try distances until the fare is ${out}.`, `x = ${answer} gives ${out}.`],
+    work: [`Which x makes ${rule} equal ${out}?`, `x = ${answer} km: ${substitute(rule, answer)} = ${out}.`],
   }
 }
 function combine(): Task {
@@ -84,10 +116,14 @@ function combine(): Task {
   const sign = b < 0 ? '−' : '+'
   return {
     mode: 'combine', title: 'Combine the rates', badge: `${a}x ${sign} ${Math.abs(b)}x`, tone: 'a',
-    context: `Two charges per km: ${a} dollars and ${b < 0 ? `minus ${-b}` : b} dollars each km.`,
-    instruction: 'Gather the x-tiles into one rate.',
-    prompt: `Combine the per-km charges ${a}x ${sign} ${Math.abs(b)}x — gather the tiles and count the total rate.`,
-    say: `Two charges per km add up: ${a} x ${b < 0 ? 'minus' : 'plus'} ${Math.abs(b)} x. Gather the tiles into one rate.`,
+    context: b < 0
+      ? `The meter charges $${a} for every km, then takes $${-b} per km back off as a discount.`
+      : `The meter charges $${a} for every km, then $${b} more per km on top.`,
+    padInstruction: 'Tap what the ride costs per km altogether, in dollars.',
+    prompt: `Combine the per-km charges ${a}x ${sign} ${Math.abs(b)}x into one rate.`,
+    say: b < 0
+      ? `The meter charges ${a} dollars a km, then takes ${-b} dollars a km back off. What does one km cost altogether?`
+      : `The meter charges ${a} dollars a km, then ${b} dollars a km on top. What does one km cost altogether?`,
     answer, coA: a, coB: b,
     work: [`Combine like terms — add the counts of x.`, `${a} ${sign} ${Math.abs(b)} = ${answer}.`],
   }
@@ -222,9 +258,9 @@ const E1 = collapseAt(E0, correctNextIndex(E0))   // 12 + 2
 const E2 = collapseAt(E1, correctNextIndex(E1))   // 14
 const DEMO_TASK: Task = { mode: 'eval', title: 'Work out the fare', badge: '3x + 2 where x=4', tone: 'a', answer: 14, rule: '3x + 2', x: 4, expr: '3 × 4 + 2', context: 'A taxi ride goes 4 km across town.', instruction: 'Drop x in, then tap × first.', prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
-  mode: 'eval', title: 'Work out the fare', badge: 'x + 2 where x=3', tone: 'a', answer: 5, rule: 'x + 2', x: 3, expr: '3 + 2',
-  context: 'A taxi ride goes 3 km across town.',
-  instruction: 'Drop x in, then tap the +.',
+  mode: 'eval', title: 'Work out the fare', badge: 'x + 2', tone: 'a', answerLabel: 'fare $', answer: 5, rule: 'x + 2', x: 3, expr: '3 + 2', miss: 6,
+  context: 'A taxi ride goes 3 km across town, so x = 3.',
+  padInstruction: 'Work out the fare, then tap it in dollars.',
   prompt: 'The fare rule is x + 2, for x = 3 km. Drop x in and work it out.',
   say: 'The fare rule is x plus two. Drop in three for x, then tap the plus.',
   work: ['Put 3 in place of x: 3 + 2.', '3 + 2 = 5.'],
@@ -238,8 +274,17 @@ const CONFIG: GameConfig<FV, Task> = {
   palette: P,
   makeTask,
   initialValue: (t) => t.mode === 'eval' ? { toks: parseExpr(t.expr!), x: t.x ?? 0, count: 0 } : t.mode === 'solve' ? { toks: [], x: 1, count: 0 } : { toks: [], x: 0, count: 0 },
+  // Every mode's answer is a single number (the fare / the km / the combined rate),
+  // so the child can tap it instead of working the meter.
+  answerPad: (t) =>
+    // t.miss FIRST: for bracketed / coefficient-less rules both generic misconception
+    // functions return the correct answer and dedupe away, leaving only ±1 noise.
+    t.mode === 'eval' ? numChoices(t.answer, [t.miss!, concatEval(t.rule!, t.x!), addFirstEval(t.expr!)], { min: 0 })
+    : t.mode === 'solve' ? numChoices(t.answer, [t.target!, t.answer + 1, t.answer - 1], { min: 0 })
+    : numChoices(t.answer, [t.coA! + Math.abs(t.coB!), t.coA! - Math.abs(t.coB!), t.coA!, Math.abs(t.coB!)], { min: 0 }),
   grade: (t, v) =>
-    t.mode === 'eval' ? v.toks.length === 1 && v.toks[0].k === 'num' && Math.abs(v.toks[0].v - t.answer) < 1e-6
+    typeof (v as unknown) === 'number' ? (v as unknown as number) === t.answer
+    : t.mode === 'eval' ? v.toks.length === 1 && v.toks[0].k === 'num' && Math.abs(v.toks[0].v - t.answer) < 1e-6
     : t.mode === 'solve' ? v.x === t.answer
     : v.count === t.answer,
   revealText: (t) => `${t.answer}${t.mode === 'combine' ? 'x' : ''}`,

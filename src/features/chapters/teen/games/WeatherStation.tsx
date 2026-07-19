@@ -56,10 +56,10 @@ function colder(): Task {
     title: low ? 'Lower balance' : 'Higher balance', badge: `${disp(a)}  or  ${disp(b)}`, tone: neg ? 'b' : 'a', showEquals: false,
     prompt: `Which balance is ${low ? 'lower' : 'higher'} — ${a} or ${b}?`,
     say: `Which balance is ${low ? 'lower' : 'higher'}, ${signed(a)} or ${signed(b)} dollars?`,
-    context: `Two accounts, two balances:`,
-    instruction: `Which is ${low ? 'lower' : 'higher'}? Tap it.`,
+    context: `Two accounts. Which balance is ${low ? 'lower' : 'higher'}?`,
+    padInstruction: `Tap the ${low ? 'lower' : 'higher'} balance.`,
     answer: ans, start: 0, choices: shuffle([a, b]),
-    work: [`${low ? 'A lower balance sits further down; being in overdraft (below zero) is lower than any credit.' : 'A higher balance sits further up.'}`, `${signed(ans)} is ${low ? 'below' : 'above'} ${signed(low ? Math.max(a, b) : Math.min(a, b))}, so it is ${low ? 'lower' : 'higher'}.`],
+    work: [`${low ? 'A lower balance sits further down the meter. Below zero is lower than above zero.' : 'A higher balance sits further up the meter.'}`, `${signed(ans)} is ${low ? 'below' : 'above'} ${signed(low ? Math.max(a, b) : Math.min(a, b))}, so it is ${low ? 'lower' : 'higher'}.`],
   }
 }
 // A transaction: start at balance s, then deposit/withdraw d.
@@ -72,9 +72,9 @@ function afterChange(): Task {
     prompt: `Balance is ${s}. You ${dir}. What's the new balance?`,
     say: `The balance was ${signed(s)} dollars, then you ${dir}. What is the new balance?`,
     context: `Balance ${disp(s)}, then you ${dir}:`,
-    instruction: 'Work out the new balance, then tap it.',
+    padInstruction: 'Work out the new balance, then tap it.',
     answer: ans, start: s, choices: numChoices(ans, s - d),
-    work: [`Start at ${signed(s)}, then ${out ? 'go DOWN' : 'go UP'} ${Math.abs(d)} (${dir}).`, `${s} ${out ? '−' : '+'} ${Math.abs(d)} is ${signed(ans)}.`],
+    work: [`Start at ${signed(s)}, then ${out ? 'go DOWN' : 'go UP'} ${Math.abs(d)} (${dir}).`, `${signed(s)} ${out ? 'minus' : 'plus'} ${Math.abs(d)} is ${signed(ans)}.`],
   }
 }
 // Opposite (additive inverse): flip to the other side of 0.
@@ -85,7 +85,7 @@ function opposite(): Task {
     prompt: `What is the opposite of ${t}?`,
     say: `What is the opposite of ${signed(t)} dollars?`,
     context: `The opposite is the same distance from 0, on the other side:`,
-    instruction: 'Tap the opposite.',
+    padInstruction: 'Tap the opposite.',
     answer: ans, start: 0, choices: numChoices(ans, t),
     work: [`The opposite of a number is the same distance from 0, on the other side.`, `The opposite of ${signed(t)} is ${signed(ans)}.`],
   }
@@ -94,11 +94,11 @@ function opposite(): Task {
 function distance(): Task {
   const t = pick([-9, -8, -7, -6, 6, 7, 8]); const ans = Math.abs(t)
   return {
-    title: 'Distance from 0', badge: `how far is ${disp(t)} from 0?`, tone: 'a',
+    title: 'Distance from 0', badge: `${disp(t)}`, tone: 'a', showEquals: false,
     prompt: `How far is ${t} from 0?`,
     say: `How far is ${signed(t)} from zero?`,
-    context: `Distance is always a positive number of steps:`,
-    instruction: 'Tap how many steps.',
+    context: `How far is this balance from 0? Distance is always a positive number of steps.`,
+    padInstruction: 'Tap how many steps.',
     answer: ans, start: 0, choices: numChoices(ans, t),
     work: [`Distance from 0 ignores the sign — just count the steps.`, `${signed(t)} is ${ans} steps from 0, so the answer is ${ans}.`],
   }
@@ -119,8 +119,8 @@ const GUIDED_TASK: Task = {
   prompt: 'Balance is −1. Withdraw 4. What\'s the new balance?',
   say: 'The balance was minus one, then you withdraw four. What is the new balance?',
   context: 'Balance −1, then you withdraw 4:',
-  instruction: 'Work out the new balance, then tap it.',
-  answer: -5, start: -1, choices: [-5, 3, -3, 5],
+  padInstruction: 'Work out the new balance, then tap it.',
+  answer: -5, start: -1, choices: shuffle([-5, 3, -3, 5]),
   work: ['Start at −1, then go DOWN 4 (withdraw 4).', '−1 − 4 is −5.'],
 }
 
@@ -249,7 +249,7 @@ const CONFIG: GameConfig<number, Task> = {
   makeTask,
   initialValue: (t) => t.start,
   grade: (t, v) => Math.abs(v - t.answer) < 1e-6,
-  revealText: (t) => `${t.answer}`,
+  revealText: (t) => disp(t.answer),
   glide: (t, from, setValue, later) => glideNumber(from, t.answer, setValue, later),
   // Answer by tapping a choice (not by dragging the meter). The balance meter stays
   // on screen only as the illustration.

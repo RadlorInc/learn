@@ -576,8 +576,16 @@ export function HandCue({ P, kind, label }: { P: Palette; kind: HandKind; label?
 //    practice/guided (pinned top-left by GameShell). The expression sits big; a
 //    second line shows "= ?" while solving, then "= answer" (green on correct,
 //    warm on reveal). `expr` is a node so a chapter can highlight a portion. ──────
-export function QuestionBoard({ P, title, prompt, context, instruction, expr, answer, tone = 'ask', cue, testHooks }: {
+export function QuestionBoard({ P, title, prompt, context, instruction, expr, answer, answerLabel = '=', tone = 'ask', cue, compact, testHooks }: {
   P: Palette; title?: string; prompt?: React.ReactNode; context?: React.ReactNode; instruction?: React.ReactNode; expr: React.ReactNode; answer?: React.ReactNode; tone?: 'ask' | 'reveal' | 'ok'; cue?: string
+  /** Short frame (landscape phone): drop the px floors so the board fits above the
+   *  answer controls. The long context/instruction lines are NEVER truncated — a
+   *  child must be able to answer from the board alone — only shrunk and reflowed. */
+  compact?: boolean
+  /** What sits left of the answer. Defaults to '='. A chapter whose `expr` is ALREADY
+   *  a full equation must override it (BalanceBench: 'x =') — otherwise the board
+   *  reads "x + 1 = 4" then "= ?", which is a broken equation chain. */
+  answerLabel?: React.ReactNode
   /** Dev-only E2E hooks (data-test-answer/data-test-phase) spread onto the board
    *  root. Emitted only by `next dev` — see GameShell (compile-time gated). */
   testHooks?: Record<string, string>
@@ -590,32 +598,32 @@ export function QuestionBoard({ P, title, prompt, context, instruction, expr, an
   const structured = context != null || instruction != null
   return (
     <div {...testHooks} style={{
-      width: '100%', maxWidth: 'clamp(280px, 40vw, 460px)', boxSizing: 'border-box',
+      width: '100%', maxWidth: compact ? 'min(96vw, 640px)' : 'clamp(280px, 40vw, 460px)', boxSizing: 'border-box',
       background: 'linear-gradient(160deg, #21473c, #16302a)',
-      border: '4px solid #7a5230', borderRadius: 12,
+      border: compact ? '3px solid #7a5230' : '4px solid #7a5230', borderRadius: 12,
       boxShadow: 'inset 0 0 26px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4)',
-      padding: 'clamp(12px, 1.6vw, 22px) clamp(16px, 2vw, 28px)', display: 'flex', flexDirection: 'column', gap: 'clamp(5px, 0.8vw, 11px)', alignItems: 'center',
+      padding: compact ? '6px 12px' : 'clamp(12px, 1.6vw, 22px) clamp(16px, 2vw, 28px)', display: 'flex', flexDirection: 'column', gap: compact ? 3 : 'clamp(5px, 0.8vw, 11px)', alignItems: 'center',
     }}>
       {/* Permanent "Solve it" cue while the question is open — so a child who missed
           Milo's voice still knows it's on them to answer. Swaps to ✓ once solved. */}
       {cue && asking && (
-        <div style={{ background: P.gold, color: '#12241b', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(11px, 1vw, 14px)', letterSpacing: '0.14em', textTransform: 'uppercase', borderRadius: 999, padding: '3px 15px' }}>{cue}</div>
+        <div style={{ background: P.gold, color: '#12241b', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: compact ? 9 : 'clamp(11px, 1vw, 14px)', letterSpacing: '0.14em', textTransform: 'uppercase', borderRadius: 999, padding: compact ? '1px 11px' : '3px 15px' }}>{cue}</div>
       )}
-      {tone === 'ok' && <div style={{ color: '#8ef0c2', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(11px, 1vw, 14px)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Solved ✓</div>}
+      {tone === 'ok' && <div style={{ color: '#8ef0c2', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: compact ? 9 : 'clamp(11px, 1vw, 14px)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Solved ✓</div>}
       {/* Zone 1 — the story, one short line. In structured mode this is `context`;
           otherwise the legacy prose `prompt` (or the uppercase title as last resort). */}
       {structured
-        ? (context ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(12px, 1.2vw, 16px)', fontWeight: 500, lineHeight: 1.4, color: '#bcd8c9', textAlign: 'center' }}>{context}</div> : null)
+        ? (context ? <div style={{ fontFamily: 'var(--font-body)', fontSize: compact ? 11 : 'clamp(12px, 1.2vw, 16px)', fontWeight: 500, lineHeight: compact ? 1.25 : 1.4, color: '#bcd8c9', textAlign: 'center' }}>{context}</div> : null)
         : prompt
-          ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(13px, 1.35vw, 19px)', fontWeight: 600, lineHeight: 1.35, color: '#e7f2e1', textAlign: 'center' }}>{prompt}</div>
-          : title ? <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(11px, 1vw, 15px)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bcd8c9' }}>{title}</div> : null}
+          ? <div style={{ fontFamily: 'var(--font-body)', fontSize: compact ? 12 : 'clamp(13px, 1.35vw, 19px)', fontWeight: 600, lineHeight: compact ? 1.25 : 1.35, color: '#e7f2e1', textAlign: 'center' }}>{prompt}</div>
+          : title ? <div style={{ fontFamily: 'var(--font-body)', fontSize: compact ? 10 : 'clamp(11px, 1vw, 15px)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bcd8c9' }}>{title}</div> : null}
       {/* Zone 2 — the math, the hero of the board. */}
-      <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.4)', lineHeight: 1.2, textAlign: 'center' }}>{expr}</div>
-      {answer !== undefined && <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(22px, 2.8vw, 36px)', fontWeight: 800, color: ansColor, textShadow: '0 0 10px rgba(0,0,0,0.35)', lineHeight: 1.1 }}>= {answer}</div>}
+      <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: compact ? 20 : 'clamp(24px, 3vw, 40px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f2f8ec', textShadow: '0 0 8px rgba(214,240,206,0.4)', lineHeight: 1.15, textAlign: 'center' }}>{expr}</div>
+      {answer !== undefined && <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: compact ? 18 : 'clamp(22px, 2.8vw, 36px)', fontWeight: 800, color: ansColor, textShadow: '0 0 10px rgba(0,0,0,0.35)', lineHeight: 1.1 }}>{answerLabel} {answer}</div>}
       {/* Zone 3 — the single action, in its own chip. Shown only while it's the
           child's turn to act (hidden once the answer is revealed/solved). */}
       {instruction && asking && (
-        <div style={{ marginTop: 'clamp(1px, 0.3vw, 4px)', background: '#bcd8c9', color: '#10231a', fontFamily: 'var(--font-body)', fontWeight: 650, fontSize: 'clamp(11px, 1.05vw, 15px)', lineHeight: 1.3, borderRadius: 8, padding: 'clamp(5px,0.6vw,8px) clamp(10px,1.2vw,15px)', textAlign: 'center', display: 'inline-flex', gap: 7, alignItems: 'baseline' }}>
+        <div style={{ marginTop: compact ? 0 : 'clamp(1px, 0.3vw, 4px)', background: '#bcd8c9', color: '#10231a', fontFamily: 'var(--font-body)', fontWeight: 650, fontSize: compact ? 10 : 'clamp(11px, 1.05vw, 15px)', lineHeight: compact ? 1.2 : 1.3, borderRadius: 8, padding: compact ? '3px 9px' : 'clamp(5px,0.6vw,8px) clamp(10px,1.2vw,15px)', textAlign: 'center', display: 'inline-flex', gap: compact ? 5 : 7, alignItems: 'baseline' }}>
           <span style={{ color: P.goldDeep ?? '#7a5230', fontWeight: 800 }}>→</span>{instruction}
         </div>
       )}
@@ -661,21 +669,57 @@ export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: stri
   )
 }
 
+// ── numChoices — build the tap-choices for one question: the answer plus plausible
+//    distractors, shuffled. Pass the chapter's OWN near-misses first (the number a
+//    child lands on when they make the classic mistake for that skill — wrong
+//    operation order, forgotten sign, halved instead of doubled); the generic ±step
+//    neighbours only fill the remaining slots. Distractors inherit the answer's
+//    decimal places, so a 0.35 answer never sits next to a 1.35.
+const shuffleArr = <T,>(a: T[]): T[] => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
+export function numChoices(ans: number, near: number[] = [], opts: { min?: number; max?: number; count?: number } = {}): number[] {
+  const { min = -Infinity, max = Infinity, count = 4 } = opts
+  const decimals = (String(ans).split('.')[1] ?? '').length
+  const step = decimals ? 10 ** -decimals : 1
+  const round = (n: number) => Number(n.toFixed(decimals))
+  const out: number[] = [ans]
+  for (const raw of [...near, ans + step, ans - step, ans + 2 * step, ans - 2 * step, ans * 2, -ans]) {
+    const n = round(raw)
+    if (n >= min && n <= max && !out.includes(n)) out.push(n)
+    if (out.length >= count) break
+  }
+  return shuffleArr(out)
+}
+
 // ── AnswerPad — a plain, familiar way to give a numeric answer: tap one of the
 //    number choices. `choices` are pre-built (correct + distractors, pre-shuffled);
 //    tapping one calls onSubmit(n) and GameShell grades it. ──
 const dispN = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
-export function AnswerPad({ P, choices, onSubmit, disabled }: { P: Palette; choices: number[]; onSubmit: (n: number) => void; disabled?: boolean }) {
+export function AnswerPad({ P, choices, onSubmit, disabled, reveal, correct, picked, compact }: {
+  P: Palette; choices: number[]; onSubmit: (n: number) => void; disabled?: boolean
+  /** On a wrong answer the pad STAYS on screen (an instrument chapter glides its
+   *  instrument to the answer here; a pad chapter would otherwise show an empty
+   *  stage). The correct choice glows mint, the child's wrong pick coral. */
+  reveal?: boolean; correct?: number; picked?: number
+  /** Short frame (landscape phone): smaller buttons so the pad clears the board.
+   *  Still ~44px tall — a child-finger target, never a desktop-sized hit box. */
+  compact?: boolean
+}) {
   return (
-    <div style={{ display: 'flex', gap: 'clamp(10px, 1.4vw, 18px)', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
-      {choices.map((c, i) => (
-        <button key={i} type="button" disabled={disabled} onClick={() => !disabled && onSubmit(c)} style={{
-          fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800,
-          fontSize: 'clamp(24px, 2.8vw, 38px)', minWidth: 'clamp(76px, 8vw, 108px)', padding: 'clamp(12px,1.4vw,20px) clamp(16px,1.8vw,26px)',
-          borderRadius: 16, border: `2.5px solid ${P.gold}`, background: P.glass, color: P.cream, cursor: disabled ? 'default' : 'pointer',
-          boxShadow: '0 3px 12px rgba(0,0,0,0.3)',
-        }}>{dispN(c)}</button>
-      ))}
+    <div style={{ display: 'flex', gap: compact ? 8 : 'clamp(10px, 1.4vw, 18px)', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+      {choices.map((c, i) => {
+        const isRight = reveal && c === correct
+        const isWrong = reveal && c === picked && c !== correct
+        return (
+          <button key={i} type="button" disabled={disabled} onClick={() => !disabled && onSubmit(c)} style={{
+            fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800,
+            fontSize: compact ? 22 : 'clamp(24px, 2.8vw, 38px)', minWidth: compact ? 66 : 'clamp(76px, 8vw, 108px)', padding: compact ? '7px 14px' : 'clamp(12px,1.4vw,20px) clamp(16px,1.8vw,26px)',
+            borderRadius: 16, border: `2.5px solid ${isRight ? P.mint : isWrong ? P.coral : P.gold}`,
+            background: isRight ? `${P.mint}22` : P.glass, color: isRight ? P.mint : isWrong ? P.coral : P.cream,
+            opacity: reveal && !isRight && !isWrong ? 0.45 : 1,
+            cursor: disabled ? 'default' : 'pointer', boxShadow: '0 3px 12px rgba(0,0,0,0.3)',
+          }}>{dispN(c)}</button>
+        )
+      })}
     </div>
   )
 }

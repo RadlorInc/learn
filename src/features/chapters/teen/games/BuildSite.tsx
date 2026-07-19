@@ -22,7 +22,7 @@
  */
 import { useRef } from 'react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CommitBtn, Nudge, pick, glideNumber } from './parts/gameKit'
+import { Palette, CommitBtn, Nudge, pick, glideNumber, numChoices } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#241a12', nightBot: '#33251a',
@@ -50,11 +50,11 @@ function area(d: 1 | 2 | 3): Task {
   const [w, h] = d === 1 ? pick([[4, 3], [5, 2]]) : d === 3 ? pick([[7, 4], [6, 5]]) : pick([[6, 3]])
   const answer = w * h
   return {
-    kind: 'fill', rows: h, cols: w, title: 'Floor area', badge: `area ${w}×${h}`, tone: 'a', unit: 'm²',
+    kind: 'fill', rows: h, cols: w, title: 'Floor area', badge: `area ${w} m × ${h} m`, tone: 'a', unit: 'm²',
     context: `A room floor is ${w} by ${h} metres, ready for new tiles.`,
-    instruction: 'Lay tiles across the whole floor.',
+    padInstruction: 'Tap the FLOOR AREA in square metres (m²).',
     prompt: `This floor is ${w} by ${h} metres. Lay tiles across it — the tiles you place are the AREA.`,
-    say: `This floor is ${w} by ${h} metres. Lay tiles across the whole floor. The tiles you place are the area.`,
+    say: `This floor is ${w} by ${h} metres. Its area is how many one-metre tiles cover it.`,
     answer,
     work: ['Floor area = the tiles that cover it = length × width.', `${w} × ${h} = ${answer}.`],
   }
@@ -63,24 +63,26 @@ function perimeter(): Task {
   const [w, h] = pick([[4, 3], [5, 3]])
   const answer = 2 * (w + h)
   return {
-    kind: 'border', w, h, title: 'Skirting board', badge: `perim ${w}×${h}`, tone: 'a', unit: 'm',
-    context: `A room is ${w} by ${h} metres and needs skirting board around the edge.`,
-    instruction: 'Lay skirting all the way around the edge.',
+    kind: 'border', w, h, title: 'Skirting board', badge: `distance around a ${w} m × ${h} m room`, tone: 'a', unit: 'm',
+    context: `A room is ${w} by ${h} metres. Skirting board has to run all the way around its edge.`,
+    padInstruction: 'Tap the DISTANCE ALL THE WAY AROUND the edge, in metres (m) — not the floor space inside.',
     prompt: `This room is ${w} by ${h} metres. Lay skirting around the edge — the segments you lay are the PERIMETER.`,
-    say: `This room is ${w} by ${h} metres. Lay skirting all the way around the edge. The segments you lay are the perimeter.`,
+    say: `This room is ${w} by ${h} metres. The perimeter is the whole distance around its edge — all four sides added up.`,
     answer,
     work: ['Perimeter = the edge all the way round = 2 × (width + height).', `2 × (${w} + ${h}) = ${answer}.`],
   }
 }
 function volume(): Task {
-  const [l, w, h] = Math.random() < 0.5 ? [2, 3, 2] : [3, 2, 2]
+  // seeds deliberately give DIFFERENT answers (8·12·16·18·24) so the same volume
+  // can't repeat within one set — `sig` is the badge, and the badge carries the dims.
+  const [l, w, h] = pick([[2, 2, 2], [2, 3, 2], [4, 2, 2], [3, 3, 2], [3, 2, 3], [4, 3, 2]])
   const answer = l * w * h
   return {
-    kind: 'fill', rows: w, cols: l, layers: h, title: 'Storage box', badge: `vol ${l}×${w}×${h}`, tone: 'b', unit: 'm³',
-    context: `A storage box is ${l} by ${w} by ${h} metres — ${h} layers of cubes.`,
-    instruction: 'Stack cubes to fill every layer.',
+    kind: 'fill', rows: w, cols: l, layers: h, title: 'Storage box', badge: `volume of a ${l} m × ${w} m × ${h} m box`, tone: 'b', unit: 'm³',
+    context: `A storage box measures ${l} metres long, ${w} metres wide and ${h} metres tall.`,
+    padInstruction: 'Tap the VOLUME in cubic metres (m³) — how many 1-metre cubes fill the box.',
     prompt: `This box is ${l} × ${w} × ${h}. Stack cubes to fill it — the cubes are the VOLUME.`,
-    say: `This box is ${l} by ${w} by ${h} metres. Fill every layer with cubes. The cubes you stack are the volume.`,
+    say: `This box is ${l} by ${w} by ${h} metres. Its volume is how many one-metre cubes fit inside it.`,
     answer,
     work: ['Volume = the cubes that fill it = length × width × height.', `${l} × ${w} × ${h} = ${answer}.`],
   }
@@ -89,51 +91,51 @@ function circleArea(): Task {
   const r = pick([2, 3, 4, 5])
   const answer = r * r
   return {
-    kind: 'fill', rows: r, cols: r, title: 'Round patio', badge: `circle r=${r}`, tone: 'a', suffix: 'π', unit: '',
-    context: `A round patio has radius ${r} m. Its area is π lots of the square on the radius.`,
-    instruction: 'Tile the r × r square on the radius.',
+    kind: 'fill', rows: r, cols: r, title: 'Round patio', badge: `π × ${r}²`, tone: 'a', suffix: 'π', unit: '',
+    context: `A round patio is ${r} metres from the middle to the edge. That is its area, written with π.`,
+    padInstruction: 'Tap HOW MANY π — the number that goes in front of π.',
     prompt: `A round patio has radius ${r} m. Tile the SQUARE ON THE RADIUS (${r} × ${r}) — that many π is the area.`,
-    say: `A round patio has radius ${r} metres. The area is pi times the square on the radius. Tile the ${r} by ${r} square.`,
+    say: `A round patio is ${r} metres from the middle to the edge. Work out ${r} squared — that is how many pi the area is.`,
     answer,
-    work: ['Circle area = π × radius² = π × the square on the radius.', `${r}² = ${answer}, so the area is ${answer}π.`],
+    work: ['A circle’s area = π × radius × radius.', `${r} × ${r} = ${answer}, so the area is ${answer}π.`],
   }
 }
 function circleCircumference(): Task {
   const r = pick([2, 3, 4, 5, 6])
   const d = 2 * r
   return {
-    kind: 'fill', rows: 1, cols: d, title: 'Round pond', badge: `circle d=${d}`, tone: 'a', suffix: 'π', unit: '',
-    context: `A round pond has radius ${r} m, so the diameter is ${d} m. Its edge is π lots of the diameter.`,
-    instruction: 'Lay the diameter across the pond.',
+    kind: 'fill', rows: 1, cols: d, title: 'Round pond', badge: `2 × π × ${r}`, tone: 'a', suffix: 'π', unit: '',
+    context: `A round pond is ${r} metres from the middle to the edge. That is the distance all the way round it, written with π.`,
+    padInstruction: 'Tap HOW MANY π — the number that goes in front of π.',
     prompt: `A round pond has diameter ${d} m. Lay the DIAMETER (${d} tiles) — that many π is the edge length.`,
-    say: `A round pond has radius ${r} metres, so its diameter is ${d}. The edge is pi times the diameter. Lay the ${d} tiles across.`,
+    say: `A round pond is ${r} metres from the middle to the edge. Work out two times ${r} — that is how many pi the distance round it is.`,
     answer: d,
-    work: ['Circumference = π × diameter.', `diameter = 2 × ${r} = ${d}, so the edge is ${d}π.`],
+    work: ['The distance round a circle = 2 × π × radius.', `2 × ${r} = ${d}, so it is ${d}π.`],
   }
 }
 function hypotenuse(): Task {
   const [a, b] = Math.random() < 0.5 ? [3, 4] : [6, 8]
   const answer = Math.round(Math.sqrt(a * a + b * b))
   return {
-    kind: 'square', legA: a, legB: b, targetArea: a * a + b * b, title: 'Wall brace', badge: `brace ${a},${b}`, tone: 'b', unit: 'm',
-    context: `A diagonal brace crosses a corner ${a} m one way and ${b} m the other.`,
-    instruction: 'Build the square on the brace to match the two side squares.',
+    kind: 'square', legA: a, legB: b, targetArea: a * a + b * b, title: 'Wall brace', badge: `sloping brace across ${a} m and ${b} m`, tone: 'b', unit: 'm',
+    context: `A straight brace cuts across a square corner — ${a} metres along one wall and ${b} metres up the other.`,
+    padInstruction: 'Tap how long the SLOPING BRACE is, in metres (m) — the side across the corner, not along the walls.',
     prompt: `A brace crosses a corner ${a} and ${b} m. Build the square on the sloped BRACE — its side is the length.`,
-    say: `A brace crosses a corner ${a} and ${b} metres. Build the square on the sloped brace so it matches the two side squares. Its side is the length.`,
+    say: `A brace cuts across a square corner, ${a} metres along one wall and ${b} up the other. Square each wall length, add them, then find what number times itself gives that.`,
     answer,
-    work: [`The square on the brace = the two side squares: ${a}² + ${b}² = ${a * a + b * b}.`, `Its side is √${a * a + b * b} = ${answer}.`],
+    work: [`Square each wall side and add: ${a} × ${a} + ${b} × ${b} = ${a * a + b * b}.`, `The brace times itself must give ${a * a + b * b}, so the brace is ${answer} m.`],
   }
 }
 function missingLeg(): Task {
   const [leg, hyp, other] = pick([[3, 5, 4], [4, 5, 3], [6, 10, 8], [8, 10, 6], [5, 13, 12]])
   return {
-    kind: 'square', legA: hyp, legB: leg, targetArea: hyp * hyp - leg * leg, subtract: true, title: 'Missing leg', badge: `leg? ${leg},${hyp}`, tone: 'b', unit: 'm',
-    context: `A right corner has a ${hyp} m sloped side and one ${leg} m side.`,
-    instruction: 'Build the square on the missing side.',
+    kind: 'square', legA: hyp, legB: leg, targetArea: hyp * hyp - leg * leg, subtract: true, title: 'Missing leg', badge: `sloping side ${hyp} m, one wall ${leg} m — other wall?`, tone: 'b', unit: 'm',
+    context: `A square corner has a sloping side of ${hyp} metres. One of its two walls is ${leg} metres.`,
+    padInstruction: 'Tap how long the OTHER WALL is, in metres (m) — the straight side that is missing, not the sloping one.',
     prompt: `A right corner has a ${hyp} m sloped side and one ${leg} m side. Build the square on the OTHER side — its side is the length.`,
-    say: `A right corner has a sloped side of ${hyp} metres and one side of ${leg}. Build the square on the missing side. Its side is the length.`,
+    say: `A square corner has a sloping side of ${hyp} metres and one wall of ${leg}. Square the sloping side, take away the square of the wall you know, then find what number times itself gives what is left.`,
     answer: other,
-    work: [`The square on the missing side = big square − known square: ${hyp}² − ${leg}² = ${hyp * hyp - leg * leg}.`, `Its side is √${hyp * hyp - leg * leg} = ${other}.`],
+    work: [`Square the sloping side, take away the known wall squared: ${hyp} × ${hyp} − ${leg} × ${leg} = ${hyp * hyp - leg * leg}.`, `The missing wall times itself must give ${hyp * hyp - leg * leg}, so it is ${other} m.`],
   }
 }
 
@@ -145,13 +147,33 @@ function triangle(): Task {
   const rect = b * h
   const answer = rect / 2
   return {
-    kind: 'tri', rows: h, cols: b, title: 'Roof panel', badge: `triangle ${b}×${h}`, tone: 'b', unit: 'm²',
-    context: `A triangular roof panel sits on a ${b} by ${h} metre rectangle.`,
-    instruction: 'Tile the rectangle, then fold it in half.',
+    kind: 'tri', rows: h, cols: b, title: 'Roof panel', badge: `half of a ${b} m × ${h} m rectangle`, tone: 'b', unit: 'm²',
+    context: `A triangular roof panel is exactly half of a ${b} by ${h} metre rectangle, cut corner to corner.`,
+    padInstruction: 'Tap the area of the TRIANGLE in square metres (m²) — HALF the rectangle, not the whole one.',
     prompt: `This roof is HALF of a ${b} by ${h} rectangle. Tile the rectangle, then fold along the diagonal — one half is the AREA.`,
-    say: `This triangular roof is half of a ${b} by ${h} metre rectangle. Tile the whole rectangle, then fold it in half along the diagonal. One half is the area.`,
+    say: `This roof is half of a ${b} by ${h} metre rectangle. Work out the whole rectangle first, then halve it.`,
     answer,
-    work: [`A triangle is half its rectangle: ${b} × ${h} = ${rect} tiles.`, `Fold in half: ${rect} ÷ 2 = ${answer}.`],
+    work: [`The whole rectangle: ${b} × ${h} = ${rect} m².`, `The triangle is half of it: ${rect} ÷ 2 = ${answer} m².`],
+  }
+}
+
+// ── ANSWER PAD — the child taps a number instead of working the tiles. Every kind
+//    stores its answer in `t.answer` (v.fill / v.side / v.half all compare to it), so
+//    the pad is uniform; the distractors are the real geometry misconceptions.
+//    Circle tasks answer IN TERMS OF π: the number IS the coefficient (revealText
+//    appends the π), so the pad stays bare numbers — same as the count readout.
+function padNear(t: Task): number[] {
+  const a = t.answer
+  switch (t.kind) {
+    case 'border': return [t.w! * t.h!]                                       // area instead of perimeter
+    case 'tri': return [2 * a]                                                // forgot to fold — the whole rectangle
+    case 'square': return t.subtract
+      ? [t.legA! - t.legB!, t.legB!]                                          // hyp − leg (not √); the given leg
+      : [t.legA! + t.legB!, t.legB!]                                          // a + b (not √); a leg, not the hypotenuse
+    default:
+      if (t.suffix) return t.rows === 1 ? [(t.cols! / 2) ** 2] : [2 * t.rows!] // circle: area ↔ circumference coefficient
+      if (t.layers) return [t.rows! * t.cols!]                                // base area, height forgotten
+      return [2 * (t.rows! + t.cols!)]                                        // perimeter instead of area
   }
 }
 
@@ -366,9 +388,9 @@ const InstrumentFor = (p: { P: Palette; task: Task; value: GV; setValue: (v: GV)
 // ── worked example (6×4 floor area → 24) + guided (3×2 → 6) ──
 const DEMO_TASK: Task = { kind: 'fill', rows: 4, cols: 6, title: 'Floor area', badge: 'area 6×4', tone: 'a', answer: 24, unit: 'm²', context: 'A room floor is 6 by 4 metres.', instruction: 'Lay tiles across the whole floor.', prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
-  kind: 'fill', rows: 2, cols: 3, title: 'Floor area', badge: 'area 3×2', tone: 'a', answer: 6, unit: 'm²',
+  kind: 'fill', rows: 2, cols: 3, title: 'Floor area', badge: 'area 3 m × 2 m', tone: 'a', answer: 6, unit: 'm²',
   context: 'A room floor is 3 by 2 metres, ready for tiles.',
-  instruction: 'Lay tiles across the whole floor.',
+  padInstruction: 'Tap the FLOOR AREA in square metres (m²).',
   prompt: 'This floor is 3 by 2 metres. Lay tiles across it — the tiles are the area.',
   say: 'This floor is three by two metres. Lay tiles across the whole floor. The tiles you place are the area.',
   work: ['Area = the tiles that cover it.', '3 × 2 = 6.'],
@@ -383,7 +405,11 @@ const CONFIG: GameConfig<GV, Task> = {
   palette: P,
   makeTask,
   initialValue: () => ({ fill: 0, side: 0 }),
-  grade: (t, v) => (t.kind === 'square' ? v.side === t.answer : t.kind === 'tri' ? v.half === t.answer : v.fill === t.answer),
+  answerPad: (t) => numChoices(t.answer, padNear(t), { min: 1 }),
+  // AnswerPad submits a raw number (V is an object), so grade takes it on the fast path.
+  grade: (t, v) => typeof (v as unknown) === 'number'
+    ? (v as unknown as number) === t.answer
+    : (t.kind === 'square' ? v.side === t.answer : t.kind === 'tri' ? v.half === t.answer : v.fill === t.answer),
   revealText: (t) => `${t.answer}${t.suffix ?? ''}`,
   glide: (t, from, setValue, later) => {
     if (t.kind === 'square') { glideNumber(from.side, t.answer, (n) => setValue({ fill: 0, side: n }), later); return }

@@ -26,7 +26,7 @@
  */
 import { useRef, type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CommitBtn, Nudge, pick, signed, glideNumber } from './parts/gameKit'
+import { Palette, CommitBtn, Nudge, pick, signed, glideNumber, numChoices } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#241f3a', nightBot: '#15122a',
@@ -42,30 +42,40 @@ const P: Palette = {
 // take away / 0 = not chosen). One shape across the game so GameShell holds it.
 interface SV { worth: number; groups: number; dir: 0 | 1 | -1 }
 type Op = 'add' | 'mul' | 'div'
-interface Task extends BaseTask { op: Op; answer: number; start: number; a?: number; b?: number }
+// `miss` = this task's OWN classic near-misses (the number a child lands on making
+// the typical signed-arithmetic mistake) — fed to numChoices as the tap distractors.
+interface Task extends BaseTask { op: Op; answer: number; start: number; a?: number; b?: number; miss?: number[] }
 
 const toneFor = (n: number): 'a' | 'b' => (n < 0 ? 'b' : 'a')
 const W = (worth: number): SV => ({ worth, groups: 0, dir: 0 })                 // a worth-meter value
 const M = (groups: number, dir: 0 | 1 | -1): SV => ({ worth: 0, groups, dir })  // a money-card value
 const money = (n: number) => (n < 0 ? `−$${Math.abs(n)}` : `$${n}`)
+// Visible-math formatter: a proper minus glyph, e.g. −5. Every badge uses it so the
+// board, the context line and the answer pad all show the SAME minus character.
+// (Spoken lines — say/work — use signed() instead; TTS drops a bare "−".)
+const disp = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
 const worthWord = (n: number) => (n < 0 ? `$${-n} in debt` : `$${n}`)          // "$3 in debt" / "$4"
 
 // Question-clarity spec: each task fills three board zones — a short `context`
-// (story, no math symbols / no UI verbs), the math (`badge`, shown big), and one
-// `instruction` chip (the action). `prompt` is kept as a plain fallback.
+// (the story, carrying EVERY number and rule needed to answer), the math (`badge`,
+// shown big), and one `padInstruction` chip naming exactly which number to tap.
+// The instrument is not rendered in practice, so the board must stand alone.
+// `prompt` is kept as a plain fallback.
 function addSub(): Task {
   const [a, b] = pick([[-3, 5], [4, -6], [-2, -3], [-7, 7], [5, -8], [2, -9], [-4, 3], [6, -4]])
   const ans = a + b
   const inOut = b > 0 ? `get $${b}` : `pay $${-b}`
   const spoken = b > 0 ? `receive ${b}` : `pay ${-b}`
   return {
-    op: 'add', title: 'Your balance', badge: `${a} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`, tone: toneFor(ans),
+    op: 'add', title: 'Your balance', badge: `${disp(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`, tone: toneFor(ans),
     context: `You have ${worthWord(a)}, then ${inOut}.`,
-    instruction: 'Slide your worth to where it lands.',
+    padInstruction: 'Work out your worth now, then tap it.',
     prompt: `You have ${worthWord(a)}, then ${inOut}. Where's your worth?`,
-    say: `You ${a < 0 ? `owe ${-a} dollars` : `have ${a} dollars`}. You ${spoken} dollars. Slide your worth to where it lands.`,
+    say: `You ${a < 0 ? `owe ${-a} dollars` : `have ${a} dollars`}. You ${spoken} dollars. What is your worth now? Tap your answer.`,
     answer: ans, start: a,
-    work: [`Start at ${worthWord(a)}.`, `${b > 0 ? `Get $${b}` : `Pay $${-b}`} → ${money(ans)}.`, `So ${a} ${b < 0 ? '−' : '+'} ${Math.abs(b)} = ${ans}.`],
+    // classic misses: moved the wrong way (added when they should pay), and the sign flip.
+    miss: [a - b, -ans],
+    work: [`Start ${worthWord(a)}.`, `${b > 0 ? `Get ${b} dollars` : `Pay ${-b} dollars`}, so your worth is ${worthWord(ans)}.`, `So ${signed(a)} ${b < 0 ? 'minus' : 'plus'} ${Math.abs(b)} is ${signed(ans)}.`],
   }
 }
 function mul(): Task {
@@ -75,13 +85,18 @@ function mul(): Task {
   const card = b < 0 ? `$${bMag} debt` : `$${bMag} coin`
   const act = a < 0 ? 'take away' : 'add'
   return {
-    op: 'mul', a, b, title: 'Do the action', badge: `${a} × ${b}`, tone: toneFor(ans),
-    context: `${aMag} cards, each a ${card}.`,
-    instruction: 'Add them or take them away, then read your worth.',
+    op: 'mul', a, b, title: 'Do the action', badge: `${disp(a)} × ${disp(b)}`, tone: toneFor(ans),
+    // The ACTION (add / take away) is the whole reason the sign comes out as it does,
+    // so it leads the context line — the child can no longer see it anywhere else.
+    context: `${act === 'take away' ? 'Take away' : 'Add'} ${aMag} cards, each a ${card}. You started at $0.`,
+    padInstruction: 'Work out your worth after that, then tap it.',
     prompt: `${a} × ${b} = ?`,
-    say: `${signed(a)} times ${signed(b)}. ${aMag} cards, each a ${card}. ${act[0].toUpperCase() + act.slice(1)} ${aMag} of them and read your worth.`,
+    say: `${signed(a)} times ${signed(b)}. ${act === 'take away' ? 'Take away' : 'Add'} ${aMag} cards, each a ${card}. What is your worth then? Tap your answer.`,
     answer: ans, start: 0,
-    work: [`${aMag} cards of ${card}, ${act === 'take away' ? 'taken away' : 'added'}.`, `Worth = ${money(ans)}, so ${a} × ${b} = ${ans}.`],
+    // classic misses: sign flip (thinking taking debt away makes you poorer), and adding
+    // the two numbers instead of laying out the cards.
+    miss: [-ans, a + b],
+    work: [`${aMag} cards, each a ${card}, ${act === 'take away' ? 'taken away' : 'added'}.`, `That leaves your worth ${worthWord(ans)}.`, `So ${signed(a)} times ${signed(b)} is ${signed(ans)}.`],
   }
 }
 function div(): Task {
@@ -90,27 +105,35 @@ function div(): Task {
   const bMag = Math.abs(b)
   const card = b < 0 ? `$${bMag} debt` : `$${bMag} coin`
   return {
-    op: 'div', a, b, title: 'Reach the target', badge: `${a} ÷ ${b}`, tone: toneFor(ans),
-    context: `Reach a worth of ${money(a)} using ${card} cards.`,
-    instruction: 'Add or take away cards until your worth hits the target.',
+    op: 'div', a, b, title: 'Reach the target', badge: `${disp(a)} ÷ ${disp(b)}`, tone: toneFor(ans),
+    // The SIGN CONVENTION has to be on the board: the count alone is ambiguous
+    // (both +n and −n sit on the pad), and knowing "how many cards" is not the
+    // same as knowing the answer. Cards added count up, cards taken away count down.
+    context: `You start at $0. Reach a worth of ${money(a)} using ${card} cards. Cards you add count up (+); cards you take away count down (−).`,
+    padInstruction: 'Tap the card count, with its + or − sign.',
     prompt: `${a} ÷ ${b} = ?`,
-    say: `${signed(a)} divided by ${signed(b)}. Reach a worth of ${money(a)} with ${card} cards. Add or take them away; the count is your answer.`,
+    say: `${signed(a)} divided by ${signed(b)}. Start at zero and reach a worth of ${worthWord(a)} with ${card} cards. Cards you add count up, cards you take away count down. Tap your answer.`,
     answer: ans, start: 0,
-    work: [`Reach ${money(a)} with ${card} cards.`, `That takes ${Math.abs(ans)} ${ans < 0 ? 'taken away' : 'added'}, so ${a} ÷ ${b} = ${ans}.`],
+    // classic misses: sign flip (added when they took away, or vice versa), and
+    // miscounting the cards by one.
+    miss: [-ans, ans + 1, ans - 1],
+    work: [`Reach a worth of ${worthWord(a)} with ${card} cards.`, `That takes ${Math.abs(ans)} cards, ${ans < 0 ? 'taken away — and taking away counts down' : 'added — and adding counts up'}.`, `So ${signed(a)} divided by ${signed(b)} is ${signed(ans)}.`],
   }
 }
 function chain(): Task {
   const [a, b, c] = pick([[-7, 10, -5], [3, -8, 2], [-4, -4, 6]])
   const ans = a + b + c
-  const expr = `${a} ${b < 0 ? '−' : '+'} ${Math.abs(b)} ${c < 0 ? '−' : '+'} ${Math.abs(c)}`
+  const expr = `${disp(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b)} ${c < 0 ? '−' : '+'} ${Math.abs(c)}`
   return {
     op: 'add', title: 'A busy day', badge: expr, tone: toneFor(ans),
     context: `Start ${worthWord(a)}. ${b > 0 ? `Get $${b}` : `Pay $${-b}`}, then ${c > 0 ? `get $${c}` : `pay $${-c}`}.`,
-    instruction: 'Slide your worth to the final total.',
+    padInstruction: 'Work out your worth at the end, then tap it.',
     prompt: `Money moves: ${expr}. Where's your worth?`,
-    say: `Start ${a < 0 ? `owing ${-a}` : `with ${a}`} dollars. ${b > 0 ? `Get ${b}` : `Pay ${-b}`}, then ${c > 0 ? `get ${c}` : `pay ${-c}`}. Slide your worth to the end.`,
+    say: `Start ${a < 0 ? `owing ${-a}` : `with ${a}`} dollars. ${b > 0 ? `Get ${b}` : `Pay ${-b}`}, then ${c > 0 ? `get ${c}` : `pay ${-c}`}. What is your worth at the end? Tap your answer.`,
     answer: ans, start: a,
-    work: [`Work the moves in order from ${worthWord(a)}.`, `${expr} = ${ans}.`],
+    // classic misses: ignored the minus signs entirely, and got only the last move backwards.
+    miss: [Math.abs(a) + Math.abs(b) + Math.abs(c), a + b - c, -ans],
+    work: [`Work the moves in order, starting ${worthWord(a)}.`, `${b > 0 ? `Get ${b} dollars` : `Pay ${-b} dollars`}, then ${c > 0 ? `get ${c} dollars` : `pay ${-c} dollars`}.`, `You end ${worthWord(ans)}, so the answer is ${signed(ans)}.`],
   }
 }
 
@@ -382,10 +405,10 @@ const DEMO_DIV: Task = { op: 'div', a: -18, b: -6, title: 'Reach the target', ba
 const GUIDED_TASK: Task = {
   op: 'add', title: 'Your balance', badge: '−3 + 5', tone: 'a', answer: 2, start: -3,
   context: `You're $3 in debt, then you get $5.`,
-  instruction: 'Slide your worth up to where it lands.',
+  padInstruction: 'Work out your worth now, then tap it.',
   prompt: `You owe $3, then get $5. Where's your worth?`,
-  say: 'You owe three dollars. Then you get five. Slide your worth up, past zero, to where it lands.',
-  work: [`Start $3 in debt.`, `Get $5 → climb past zero to $2.`, `So −3 + 5 = 2.`],
+  say: 'You owe three dollars. Then you get five. That climbs you past zero. What is your worth now? Tap your answer.',
+  work: [`Start $3 in debt.`, `Get 5 dollars, so you climb past zero to 2 dollars.`, `So negative 3 plus 5 is 2.`],
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -412,11 +435,16 @@ const CONFIG: GameConfig<SV, Task> = {
   palette: P,
   makeTask,
   initialValue: (t) => (t.op === 'add' ? W(t.start) : M(0, 0)),
+  // Every task in this chapter resolves to ONE number (a net worth, or a signed card
+  // count), so every question can be answered by tapping a choice.
+  answerPad: (t) => numChoices(t.answer, t.miss ?? []),
   grade: (t, v) =>
-    t.op === 'add' ? v.worth === t.answer
+    // AnswerPad hands back the tapped raw number, not an SV.
+    typeof (v as unknown) === 'number' ? (v as unknown as number) === t.answer
+    : t.op === 'add' ? v.worth === t.answer
     : t.op === 'mul' ? v.dir !== 0 && v.dir * v.groups * t.b! === t.answer
     : v.dir !== 0 && v.dir * v.groups === t.answer,
-  revealText: (t) => `${t.answer}`,
+  revealText: (t) => disp(t.answer),
   motif: '💰',
   glide: (t, from, setValue, later) => {
     if (t.op === 'add') { glideNumber(from.worth, t.answer, (n) => setValue(W(n)), later); return }

@@ -14,7 +14,7 @@
 import { useEffect, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, BarShade, Nudge, CommitBtn, pick, reduce, tidy, glideNumber } from './parts/gameKit'
+import { Palette, BarShade, Nudge, CommitBtn, pick, reduce, tidy, glideNumber, numChoices } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#2a1c10', nightBot: '#3a2815',
@@ -36,6 +36,8 @@ interface Task extends BaseTask {
 }
 
 // ── part-of-a-part on a 12-part tray (answer = twelfths) ──────────────────────
+// Every `b` divides the 12-part board into whole parts (so the child can shade the
+// board first), and every a × b lands on a whole number of twelfths.
 const BAR_PAIRS: { a: string; b: string; ans: number }[] = [
   { a: '½', b: '½', ans: 3 },
   { a: '⅓', b: '½', ans: 2 },
@@ -43,18 +45,30 @@ const BAR_PAIRS: { a: string; b: string; ans: number }[] = [
   { a: '¼', b: '⅔', ans: 2 },
   { a: '⅓', b: '¾', ans: 3 },
   { a: '⅔', b: '¾', ans: 6 },
-  { a: '½', b: '⅓', ans: 2 },
+  { a: '½', b: '⅙', ans: 1 },
+  { a: '⅓', b: '¼', ans: 1 },
+  { a: '½', b: '⅚', ans: 5 },
+  { a: '⅓', b: '1', ans: 4 },
+  { a: '¼', b: '1', ans: 3 },
 ]
+// Fraction glyphs are for the BADGE (and the printed context). Spoken lines and plain
+// story lines spell them out — TTS mangles ⅔, and a struggling reader shouldn't have to
+// decode a symbol to understand the story.
+const FRACW: Record<string, string> = {
+  '½': 'half', '⅓': 'a third', '⅔': 'two thirds', '¼': 'a quarter',
+  '¾': 'three quarters', '⅙': 'a sixth', '⅚': 'five sixths', '1': 'a whole',
+}
+const lenOf = (f: string) => (f === '1' ? 'a whole metre' : `${FRACW[f]} of a metre`)
 function barPart(): Task {
   const { a, b, ans } = pick(BAR_PAIRS)
   return {
     mech: 'bar', title: 'Part of a part', badge: `${a} × ${b}`, tone: 'a',
-    context: `A plank measures ${b} of a metre, and the job calls for ${a} of that piece.`,
-    instruction: 'Shade the parts of the board.',
+    context: `A plank is ${lenOf(b)} long, and this cut needs ${FRACW[a]} of that piece.`,
+    instruction: 'Shade your part of the 12-part board.',
     prompt: `A board is ${b} of a metre. Take ${a} of it — mark your section of the 12 parts.`,
-    say: `A board is ${b} of a metre. Take ${a} of that. Mark your section of the twelve parts.`,
+    say: `A board is ${lenOf(b)}. Take ${FRACW[a]} of that. Mark your section of the twelve parts.`,
     answer: ans,
-    work: [`${a} of ${b} means multiply: ${a} × ${b}.`, `That's ${reduce(ans, 12)} of the board — ${ans} of the 12 parts.`],
+    work: [`${FRACW[a]} of ${FRACW[b]} means multiply them.`, `That's ${reduce(ans, 12)} of the board — ${ans} of the 12 parts.`],
   }
 }
 
@@ -65,12 +79,13 @@ const DEC_PAIRS: [number, number][] = [[0.5, 0.4], [0.2, 0.3], [0.5, 0.6], [0.4,
 function decMul(): Task {
   const [a, b] = pick(DEC_PAIRS)
   const ans = tidy(a * b)
+  const ta = Math.round(a * 10), tb = Math.round(b * 10)   // the two factors in tenths
   return {
     mech: 'area', title: 'Measure it out', badge: `${a} × ${b}`, tone: 'b', answer: ans, da: a, db: b,
-    instruction: 'Shade the columns and rows — the overlap is the answer.',
+    padInstruction: `Tap the answer to ${a} × ${b}.`,
     prompt: `${a} × ${b} on the metre grid: shade ${a} across and ${b} down. The overlap squares are the answer.`,
-    say: `${a} times ${b}. Shade ${a} of the columns across and ${b} of the rows down. Where they overlap is the answer.`,
-    work: ['Shade a of the width and b of the height; the overlap is a × b.', `${a} × ${b} = ${ans}.`],
+    say: `What is ${a} times ${b}? Think in tenths: ${ta} tenths times ${tb} tenths makes hundredths. Then tap your answer.`,
+    work: [`${ta} tenths times ${tb} tenths is ${ta * tb} hundredths.`, `${a} × ${b} = ${ans}.`],
   }
 }
 
@@ -87,11 +102,11 @@ function fracDiv(): Task {
   const { a, b, denom, board, piece, ans } = pick(DIV_ITEMS)
   return {
     mech: 'pieces', title: 'How many fit?', badge: `${a} ÷ ${b}`, tone: 'a', answer: ans, denom, board, piece,
-    context: `A board is ${a} of a metre long, and each piece must be ${b} of a metre.`,
-    instruction: 'Lay the pieces into the board and count them.',
+    context: `A board is ${a === '1' ? 'a whole metre' : `${a} of a metre`} long, and each piece must be ${b} of a metre.`,
+    padInstruction: `How many ${b}-metre pieces fit?`,
     prompt: `How many ${b} pieces cut from ${a} of a board? Lay ${b} pieces along the board — the count is the answer.`,
-    say: `How many ${b} pieces can you cut from ${a} of a board? Lay the pieces along the board and count how many fit.`,
-    work: ['Dividing by a fraction asks how many pieces fit.', `${a} ÷ ${b} = ${ans}.`],
+    say: `How many pieces of ${FRACW[b]} of a metre can you cut from ${lenOf(a)}? Count how many fit.`,
+    work: ['Dividing by a fraction asks how many pieces fit.', `${FRACW[a]} divided by ${FRACW[b]} is ${ans}.`],
   }
 }
 
@@ -100,7 +115,7 @@ function fracDiv(): Task {
 //    slots are the pieces; the count IS the quotient. Values chosen to fit whole. ──
 const DECDIV_ITEMS: { a: string; b: string; denom: number; board: number; piece: number; ans: number }[] = [
   { a: '1.5', b: '0.5', denom: 5, board: 3, piece: 1, ans: 3 },
-  { a: '2.0', b: '0.5', denom: 5, board: 4, piece: 1, ans: 4 },
+  { a: '2', b: '0.5', denom: 5, board: 4, piece: 1, ans: 4 },
   { a: '2.4', b: '0.6', denom: 6, board: 4, piece: 1, ans: 4 },
   { a: '1.5', b: '0.3', denom: 6, board: 5, piece: 1, ans: 5 },
 ]
@@ -108,10 +123,10 @@ function decDiv(): Task {
   const { a, b, denom, board, piece, ans } = pick(DECDIV_ITEMS)
   return {
     mech: 'pieces', title: 'How many fit?', badge: `${a} ÷ ${b}`, tone: 'b', answer: ans, denom, board, piece,
-    context: `A board is ${a} metres long, and each piece must be ${b} of a metre.`,
-    instruction: 'Lay the pieces into the board and count them.',
+    context: `A board is ${a} metres long, and each piece must be ${b} metres.`,
+    padInstruction: `How many ${b} m pieces fit?`,
     prompt: `How many ${b} m pieces fit in ${a} m? Lay them along the board — the count is the answer.`,
-    say: `How many ${b} metre pieces fit in ${a} metres? Lay the pieces along the board and count how many fit.`,
+    say: `How many ${b} metre pieces fit in ${a} metres? Count them, then tap your answer.`,
     work: ['Dividing asks how many pieces fit.', `${a} ÷ ${b} = ${ans}.`],
   }
 }
@@ -175,7 +190,7 @@ const SCRIPT_DIV = {
 const GUIDED_TASK: Task = {
   mech: 'bar', title: 'Half of a half', badge: '½ × ½', tone: 'a', answer: 3,
   context: 'The board is half a metre, and this cut needs half of that piece.',
-  instruction: 'Shade the parts of the board.',
+  instruction: 'Shade your part of the 12-part board.',
   prompt: 'Take half of a half board — mark 3 of the 12 parts, then press CUT ✓.',
   say: 'Take half of a half board. Mark three of the twelve parts, then press cut.',
   work: ['Half of a half is a quarter.', 'A quarter of the 12 parts is 3 parts.'],
@@ -490,6 +505,19 @@ const CONFIG: GameConfig<number, Task> = {
         ? <DecimalArea P={palette} task={task} setValue={setValue} disabled={disabled} reveal={reveal} onCommit={onCommit} />
         : <PieceTape P={palette} task={task} value={value} setValue={setValue} disabled={disabled} reveal={reveal} onCommit={onCommit} />
   ),
+  // Tap-a-number answering, per TASK. `bar` keeps its instrument: its answer is a
+  // COUNT OF TWELFTHS (½ × ⅔ → 4), so bare number choices under a "½ × ⅔" badge
+  // would read as wrong math. `area` and `pieces` answers ARE the badge's value.
+  answerPad: (t) =>
+    t.mech === 'area'
+      // decimal ×: the classic misses are the decimal point one place off (0.5×0.4 → 2)
+      // and adding instead of multiplying.
+      ? numChoices(t.answer, [tidy(t.answer * 10), tidy((t.da ?? 0) + (t.db ?? 0))], { min: 0 })
+      : t.mech === 'pieces'
+        // ÷: off-by-one on the count, and counting every slot on the tape instead of
+        // only the pieces that fill the board.
+        ? numChoices(t.answer, [t.answer + 1, t.answer - 1, t.denom ?? 0], { min: 1 })
+        : [],
   tutorial: [SCRIPT_BAR, SCRIPT_DEC, SCRIPT_DIV],
   TutorialScene: CuttingBenchScene,
   guided: {

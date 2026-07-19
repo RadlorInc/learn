@@ -17,7 +17,7 @@
 import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CrankGear, Nudge, CommitBtn, pick, glideNumber } from './parts/gameKit'
+import { Palette, CrankGear, Nudge, CommitBtn, pick, glideNumber, numChoices } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#2a1712', nightBot: '#3a201a',
@@ -31,7 +31,15 @@ const P: Palette = {
 interface Task extends BaseTask { mech: 'crank' | 'root'; answer: number; base?: number; n?: number; coef?: number }
 
 const SUPER: Record<number, string> = { 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶' }
+/** VISIBLE badge only. Never put a superscript glyph in `say`/`work` — those are read
+ *  aloud, and TTS either drops "²" or reads "3²" as "three two" (which is the very
+ *  misconception this chapter fights). Spoken strings use powName() words instead. */
 const sup = (e: number) => SUPER[e] ?? `^${e}`
+const COUNT_WORD: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' }
+const powName = (b: number, e: number) => (e === 2 ? `${b} squared` : e === 3 ? `${b} cubed` : `${b} to the power of ${e}`)
+/** "3 × 3 × 3" — the full factor chain, so a reteach line is TRUE for every seed
+ *  (no "…" hiding a factor, and no "multiplied 3 times" wording that reads as ×3). */
+const chain = (b: number, e: number) => Array.from({ length: e }, () => `${b}`).join(' × ')
 
 // [base, exp] — the answer (base^exp) is computed. Squares, cubes & a few higher
 // powers, spread across the difficulty tiers (bigger / less familiar = harder).
@@ -50,25 +58,25 @@ const ROOT: Record<1 | 2 | 3, number[]> = {
 function powerCrank(d: 1 | 2 | 3): Task {
   const [base, exp] = pick(POW[d])
   const answer = Math.round(base ** exp)
-  // Story fits a square of tiles (n²) or a cube of blocks (n³); higher powers
-  // aren't a real square/cube shape, so no context — instruction only.
+  // Story fits a square of tiles (n²) or a cube of blocks (n³); a higher power is no
+  // longer a square/cube shape, so it gets the plain meaning of a power instead.
   const context =
     exp === 2 ? 'A square patch has the same number of tiles across as down.'
     : exp === 3 ? 'A cube stacks as many block layers as there are blocks along each edge.'
-    : undefined
+    : 'A power says how many of the same number are multiplied together.'
+  const name = powName(base, exp)
+  const many = COUNT_WORD[exp] ?? `${exp}`
   return {
     mech: 'crank', answer, base,
-    title: exp === 2 ? `${base} squared` : exp === 3 ? `${base} cubed` : `${base} to the ${exp}`,
+    title: name,
     badge: `${base}${sup(exp)}`, tone: 'a',
-    ...(context ? { context } : {}),
-    instruction: 'Crank the gear to the power.',
+    context,
+    padInstruction: `Work out ${name}, then tap that number.`,
     prompt: exp === 2
       ? `Lay a ${base}×${base} tile patch — ${base}${sup(exp)}. Turn to add each layer (×${base}).`
       : `Stack a ${base} block cube — ${base}${sup(exp)}. Turn to add each layer (×${base}).`,
-    say: exp === 2
-      ? `Lay ${base} rows of ${base} tiles to build ${base} squared — each turn adds a layer of ${base}.`
-      : `Stack blocks ${exp} layers deep to build ${base} to the power ${exp} — each turn adds a layer of ${base}.`,
-    work: [`${base}${sup(exp)} means ${base} multiplied ${exp} times.`, `1 ×${base} … = ${answer} tiles.`],
+    say: `${name} means ${many} ${base}s multiplied together. Multiply them out, then tap your answer.`,
+    work: [`${name} means ${many} ${base}s multiplied together.`, `${chain(base, exp)} = ${answer}.`],
   }
 }
 
@@ -79,9 +87,9 @@ function rootSlide(d: 1 | 2 | 3): Task {
     mech: 'root', answer, n,
     title: `Side of ${n}`, badge: `√${n}`, tone: 'b',
     context: `You have ${n} tiles to lay into one square patch.`,
-    instruction: 'Build the square that uses every tile.',
+    padInstruction: `Tap how many tiles go along one side of the square.`,
     prompt: `A square patch has ${n} tiles. Build the square — set the side until it uses all ${n} tiles. That side is √${n}.`,
-    say: `You have ${n} tiles. Build them into one square patch. Set the side until the square uses every tile — that side length is the square root.`,
+    say: `A square patch of ${n} tiles has the same number across as down. Find the number that times itself makes ${n}, then tap it.`,
     work: [`Finding the side of a square patch undoes squaring it.`, `${answer} × ${answer} = ${n}, so a ${n}-tile square has sides of ${answer}.`],
   }
 }
@@ -89,22 +97,23 @@ function rootSlide(d: 1 | 2 | 3): Task {
 // ── scientific notation a × 10ᵏ → standard form, SOLVED ON the crank: start at the
 //    coefficient `a` and crank ×10 exactly k times (each turn shifts it up a place),
 //    so a × 10ᵏ is BUILT, never worked out in the head. ──
-const SCI: Record<1 | 2 | 3, [number, number][]> = {   // [coefficient, exponent]
-  1: [[3, 2], [4, 2], [5, 2]],
+// Tier 1 never draws this task (makeTask routes sciNotation to tiers 2–3 only).
+const SCI: Record<2 | 3, [number, number][]> = {   // [coefficient, exponent]
   2: [[6, 2], [2, 3], [7, 2]],
   3: [[3, 3], [5, 3], [2, 4]],
 }
-function sciNotation(d: 1 | 2 | 3): Task {
+function sciNotation(d: 2 | 3): Task {
   const [a, k] = pick(SCI[d])
   const answer = Math.round(a * 10 ** k)
+  const tens = Array.from({ length: k }, () => '10').join(' × ')
   return {
     mech: 'crank', answer, base: 10, coef: a,
     title: 'Scientific notation', badge: `${a} × 10${sup(k)}`, tone: 'b',
-    context: 'Scientific notation packs a big number as a digit times a power of ten.',
-    instruction: 'Crank ×10 once for each power.',
+    context: `This is a short way to write a big number: start at ${a} and multiply by 10 ${k} times.`,
+    padInstruction: 'Tap the big number this is short for.',
     prompt: `Write ${a} × 10${sup(k)} in full. Start at ${a} and crank ×10 — each turn makes it ten times bigger.`,
-    say: `${a} times ten to the power ${k}. Start at ${a}, then crank times ten, ${k} times. Each turn shifts it up a place.`,
-    work: [`10${sup(k)} means multiply by ten ${k} times.`, `${a} × 10${sup(k)} = ${answer}.`],
+    say: `${a} times ten to the power of ${k}. That means start at ${a} and multiply by ten ${k} times. Work it out, then tap your answer.`,
+    work: [`Ten to the power of ${k} means multiply by ten ${k} times.`, `${a} × ${tens} = ${answer}.`],
   }
 }
 
@@ -121,10 +130,10 @@ const DEMO_TASK: Task = { mech: 'crank', answer: 9, base: 3, title: '3 squared',
 const GUIDED_TASK: Task = {
   mech: 'crank', answer: 8, base: 2, title: '2 cubed', badge: '2³', tone: 'a',
   context: 'A cube stacks as many block layers as there are blocks along each edge.',
-  instruction: 'Crank the gear to the power.',
+  padInstruction: 'Work out 2 cubed, then tap that number.',
   prompt: 'Stack a 2-block cube — 2³. Add three layers (×2 each turn), then press Build.',
-  say: 'Stack a two-block cube. Add three layers — each layer doubles the blocks — then press build.',
-  work: ['2³ means 2 multiplied 3 times.', '1 ×2 ×2 ×2 = 8 blocks.'],
+  say: '2 cubed means three 2s multiplied together. Work out 2 times 2 times 2, then tap your answer.',
+  work: ['2 cubed means three 2s multiplied together.', '2 × 2 × 2 = 8.'],
 }
 
 // ── Animated walkthrough scene — the storyboard, in motion ────────────────────
@@ -333,6 +342,22 @@ const CONFIG: GameConfig<number, Task> = {
   makeTask,
   initialValue: (t) => (t.mech === 'crank' ? (t.coef ?? 1) : 0),
   grade: (t, v) => Math.abs(v - t.answer) < 1e-6,
+  // Tap-a-number answering. Distractors are this chapter's real misconceptions:
+  //   powers → base×exp instead of baseᵉˣᵖ (3² → 6), plus the next/previous power
+  //            (×base / ÷base — meaningful neighbours when the answer is 1000 or 4096,
+  //            where ±1 would be noise)
+  //   roots  → halving n instead of rooting it, plus the side one off either way.
+  //            Past n = 36 that half (72 for √144) is nowhere near the root — a child
+  //            eliminates it without doing any maths — so big n uses near sides instead.
+  //   sci    → one power of ten too many/too few, plus the bare coefficient
+  answerPad: (t) => {
+    const a = t.answer
+    if (t.mech === 'root') return numChoices(a, t.n! > 36 ? [a + 2, a + 1, a - 1] : [Math.round(t.n! / 2), a + 1, a - 1], { min: 1 })
+    if (t.coef) return numChoices(a, [a * 10, a / 10, t.coef], { min: 1 })
+    const base = t.base!
+    const exp = Math.round(Math.log(a) / Math.log(base))
+    return numChoices(a, [base * exp, a * base, a / base], { min: 1 })
+  },
   revealText: (t) => `${t.answer}`,
   glide: (t, from, setValue, later) =>
     t.mech === 'crank' ? later(() => setValue(t.answer), 600) : glideNumber(from, t.answer, setValue, later),

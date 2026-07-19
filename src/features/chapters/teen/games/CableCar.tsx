@@ -15,7 +15,7 @@
 import { useEffect, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, LineSetter, type Line, pick } from './parts/gameKit'
+import { Palette, LineSetter, numChoices, type Line, pick } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#0d2230', nightBot: '#123444',
@@ -90,8 +90,10 @@ function makeFrom(s: Spec): Task {
     const rows = s.rows.map(([x, y]) => ({ x, y }))
     const prompt = 'A sensor logged the tank over time. Is it a STEADY tank — exactly one level at each minute?'
     return {
-      kind: 'isFn', title: 'Steady or glitch?', badge: 'one level per minute?', tone: 'a',
-      context: 'A sensor logged the tank.', instruction: 'Tap steady or glitch',
+      kind: 'isFn', title: 'Steady or glitch?', badge: 'one level per minute?', tone: 'a', showEquals: false,
+      // "Glitch" is defined right here — it is named nowhere else on the board.
+      context: 'A glitch means one minute logged two different levels.',
+      instruction: 'Read the table, then tap steady or glitch.',
       prompt, say: prompt, rows, answerPick: s.fn ? 'yes' : 'no',
       work: s.fn
         ? ['Every minute has exactly ONE level — that is a function.', 'One input, one output: a steady tank.']
@@ -110,48 +112,56 @@ function makeFrom(s: Spec): Task {
     const choices = shuffleArr([correct, ...distract])
     const prompt = "The sensor drew the tank's fill as this line. Which rule matches it?"
     return {
-      kind: 'readGraph', title: 'Read the line', badge: 'which rule fits the line?', tone: (m < 0 ? 'b' : 'a'),
+      kind: 'readGraph', title: 'Read the line', badge: 'which rule fits the line?', tone: (m < 0 ? 'b' : 'a'), showEquals: false,
       context: "The sensor drew the tank's line.", instruction: 'Tap the matching rule',
       prompt, say: prompt, gline: { m, b }, choices, answerPick: correct,
-      work: [`Where the line crosses the middle is the START (b = ${b}).`, `It climbs ${m} for each step right — the RATE. So ${correct}.`],
+      work: [`Read the line's height at minute 0 — where it crosses the up-and-down middle line. That is the START (b = ${b}).`, `It climbs ${m} for each step right — the RATE. So ${correct}.`],
     }
   }
   // dial kinds: rate / full / drain / start
   const { p1, p2, m, b, kind } = s
   const [x1, y1] = p1, [x2, y2] = p2
-  const base = { kind, p1, p2, answer: { m, b }, tone: (m < 0 ? 'b' : 'a') as 'a' | 'b' }
+  // showEquals: false on ALL four — none of these badges is an expression, so a
+  // trailing "= ?" read as nonsense ("0 min → 4 L  = ?").
+  const base = { kind, p1, p2, answer: { m, b }, tone: (m < 0 ? 'b' : 'a') as 'a' | 'b', showEquals: false }
   if (kind === 'rate') {
-    const prompt = `The tank starts EMPTY. After ${x2} min it reads ${y2} litres. Set the start to 0, then the fill rate so the line runs through both readings.`
+    // Answered on the AnswerPad: the start is fixed at 0, so the fill rate is the
+    // ONE unknown — the prompt asks for that number, not for two dial settings.
+    const prompt = `The tank starts EMPTY. After ${x2} min it reads ${y2} litres. How many litres does it fill each minute?`
     return {
-      ...base, title: 'Empty start', badge: `empty · (${x2},${y2})`, prompt, say: prompt,
+      ...base, title: 'Empty start', badge: `starts empty · ${x2} min → ${y2} L`, prompt, say: prompt,
       context: 'The tank starts empty and fills at a steady rate.',
-      instruction: 'Set the start and fill rate to fit both readings.',
+      padInstruction: 'Tap the fill rate.',
       work: ['No starting water, so it is just rate × time — y = mx.', `Rate = ${y2} ÷ ${x2} = ${m} litres a minute; start 0.`],
     }
   }
   if (kind === 'drain') {
     const prompt = `This tank is DRAINING. It reads (${x1}, ${y1}) then (${x2}, ${y2}). Set the start level and the fill rate — the rate is negative — so the line hits both.`
     return {
-      ...base, title: 'Draining', badge: `draining · (${x1},${y1})&(${x2},${y2})`, prompt, say: prompt,
-      context: 'This tank is draining at a steady rate.',
-      instruction: 'Set the start level and fill rate to fit both readings.',
+      // Tier 3: prompt unrendered AND unspoken, so "going DOWN" must live on the
+      // badge — it was the only signal that the rate is negative.
+      ...base, title: 'Draining', badge: `going DOWN · ${x1} min → ${y1} L,  ${x2} min → ${y2} L`, prompt, say: prompt,
+      context: 'This tank is draining — the level drops every minute.',
+      instruction: 'Set the "start" dial, then the "slope" dial (the fill rate), to hit both readings.',
       work: ['Draining means the rate is NEGATIVE.', `Rate = (${y2} − ${y1}) ÷ (${x2} − ${x1}) = ${m}; start ${b}.`],
     }
   }
   if (kind === 'start') {
-    const prompt = `The tank fills ${m} litres a minute. After ${x2} min it reads ${y2} litres. Set the rate to ${m}, then find the START level so the line fits.`
+    // Answered on the AnswerPad: the rate is GIVEN, so the start level is the ONE unknown.
+    const prompt = `The tank fills ${m} litres a minute. After ${x2} min it reads ${y2} litres. How many litres did it START with?`
     return {
-      ...base, title: 'Find the start', badge: `rate ${m} · reads (${x2},${y2})`, prompt, say: prompt,
-      context: 'The tank fills at a steady, known rate.',
-      instruction: 'Set the rate, then find the start level.',
+      // The rate is the number needed to answer, so it is stated, not hidden.
+      ...base, title: 'Find the start', badge: `fills ${m} L each min · ${x2} min → ${y2} L`, prompt, say: prompt,
+      context: `The tank fills at a steady ${m} litres a minute.`,
+      padInstruction: 'Tap the start level.',
       work: [`The rate is given: ${m} litres a minute.`, `Start = level − rate × time = ${y2} − ${m}×${x2} = ${b}.`],
     }
   }
   const prompt = `Match the tank's fill: it reads (${x1}, ${y1}) and (${x2}, ${y2}). Set the start level and fill rate so the water level over time hits both readings.`
   return {
-    ...base, title: 'Two readings', badge: `(${x1},${y1}) & (${x2},${y2})`, prompt, say: prompt,
+    ...base, title: 'Two readings', badge: `${x1} min → ${y1} L,  ${x2} min → ${y2} L`, prompt, say: prompt,
     context: 'A tank fills at a steady rate over time.',
-    instruction: 'Set the start level and fill rate to fit both readings.',
+    instruction: 'Set the "start" dial, then the "slope" dial (the fill rate), to hit both readings.',
     work: ['Fill rate = change in level ÷ change in time between the readings.', `Fills ${m} litres a minute, starting at ${b}.`],
   }
 }
@@ -223,14 +233,14 @@ function TapChoices({ P, above, options, disabled, reveal, correct, onPick }: {
 
 // ── worked example for the walkthrough (y = 2x + 1) + guided order (y = x + 1) ──
 const DEMO_TASK: Task = {
-  title: 'Two readings', badge: '(0,1) & (1,3)', tone: 'a',
+  title: 'Two readings', badge: '0 min → 1 L,  1 min → 3 L', tone: 'a', showEquals: false,
   p1: [0, 1], p2: [1, 3], answer: { m: 2, b: 1 }, prompt: '', say: '', work: [],
 }
 const GUIDED_TASK: Task = {
-  title: 'Two readings', badge: '(0,1) & (1,2)', tone: 'a',
+  title: 'Two readings', badge: '0 min → 1 L,  1 min → 2 L', tone: 'a', showEquals: false,
   p1: [0, 1], p2: [1, 2], answer: { m: 1, b: 1 },
   context: 'A tank fills at a steady rate over time.',
-  instruction: 'Set the start and rate, then press Set line.',
+  instruction: 'Set the "start" dial, then the "slope" dial (the fill rate), then press SET LINE ✓.',
   prompt: 'Match the tank at (0,1) and (1,2): starts at 1 litre, rises 1 litre each minute. Set it, then press Set line.',
   say: 'Set the start level to one litre, then a fill rate of one — up one litre every minute. Then press set line.',
   work: ['Starts at 1 litre; it rises 1 litre each minute.', 'Fill rate 1, start 1.'],
@@ -366,6 +376,16 @@ function WaterTankScene({ palette: P, value, stepIndex, frameCount, ended }: {
 
 const isTap = (t: Task) => t.kind === 'isFn' || t.kind === 'readGraph'
 
+// ── Which tasks are ONE number? ──────────────────────────────────────────────
+// 'rate'  — the start is fixed at 0, so the fill rate (m) is the only unknown.
+// 'start' — the rate is given in the prompt, so the start level (b) is the only unknown.
+// 'full' / 'drain' set BOTH m and b: two numbers, so they keep the LineSetter — the
+// line running through both readings IS the answer there.
+// 'isFn' / 'readGraph' answer with a STRING (steady/glitch, y = 2x + 1) on the
+// purpose-built TapChoices surface — untouched.
+const padAnswer = (t: Task): number | null =>
+  t.kind === 'rate' ? t.answer!.m : t.kind === 'start' ? t.answer!.b : null
+
 const CONFIG: GameConfig<LV, Task> = {
   chapterId: 'linearRelationships',
   title: 'WATER TANK',
@@ -374,10 +394,24 @@ const CONFIG: GameConfig<LV, Task> = {
   palette: P,
   makeTask,
   initialValue: () => ({ m: 1, b: 0 }),
-  grade: (t, v) => (isTap(t) ? v.pick === t.answerPick : !!t.answer && v.m === t.answer.m && v.b === t.answer.b),
+  // The pad submits a bare number, so that case is graded FIRST (V is an object here).
+  grade: (t, v) =>
+    typeof (v as unknown) === 'number'
+      ? (v as unknown as number) === padAnswer(t)
+      : (isTap(t) ? v.pick === t.answerPick : !!t.answer && v.m === t.answer.m && v.b === t.answer.b),
+  answerPad: (t) => {
+    const a = padAnswer(t)
+    if (a === null) return []
+    // Classic misses: reading the level off a single point instead of a difference,
+    // and swapping the rate with the start.
+    const near = t.kind === 'rate' ? [t.p2![1], t.p2![0]] : [t.answer!.m, t.p2![1]]
+    return numChoices(a, near, { min: 0 })
+  },
   revealText: (t) => {
     if (t.kind === 'isFn') return t.answerPick === 'yes' ? 'yes — one level each minute' : 'no — a minute had two levels'
     if (t.kind === 'readGraph') return t.answerPick as string
+    if (t.kind === 'rate') return `${t.answer!.m} litres a minute`
+    if (t.kind === 'start') return `starts at ${t.answer!.b} litres`
     return `fill rate ${t.answer!.m}, start ${t.answer!.b}`
   },
   glide: (t, _from, setValue) => {
@@ -389,7 +423,9 @@ const CONFIG: GameConfig<LV, Task> = {
       return (
         <TapChoices P={palette} disabled={disabled} reveal={reveal} correct={task.answerPick}
           above={<ReadingsTable P={palette} rows={task.rows!} />}
-          options={[{ v: 'yes', label: 'Steady tank ✓' }, { v: 'no', label: 'Sensor glitch ✗' }]}
+          // NO ✓/✗ on these labels: the glyphs marked one button "right" and the
+          // other "wrong", so a child could score without ever reading the table.
+          options={[{ v: 'yes', label: 'Steady tank' }, { v: 'no', label: 'Sensor glitch' }]}
           onPick={(p) => onCommit({ ...value, pick: p })} />
       )
     if (task.kind === 'readGraph')
@@ -414,7 +450,7 @@ const CONFIG: GameConfig<LV, Task> = {
       { say: "First the start level — the number on its own. Here it is one, so the tank begins at one litre.", value: { m: 1, b: 0 }, hand: 'tap', board: 'start (b) = 1' },
       { say: "So I lift the start to one litre. Watch the whole line rise up to begin at one.", value: { m: 1, b: 1 }, hand: 'tap', board: 'begins at 1 litre' },
       { say: "Now the fill RATE — the number with x. Here it is two, so the level rises two litres every single minute.", value: { m: 1, b: 1 }, hand: 'tap', board: 'rate (m) = 2' },
-      { say: "I set the fill rate to two litres a minute. Now the line tilts up two for every step across.", value: { m: 2, b: 1 }, hand: 'tap', board: '+2 litres each minute' },
+      { say: "The dial for the fill rate is labelled slope. I set it to two litres a minute. Now the line tilts up two for every step across.", value: { m: 2, b: 1 }, hand: 'tap', board: 'slope dial = fill rate = 2' },
       { say: "Let us check it. Start at one. After one minute add two: one plus two is three litres.", value: { m: 2, b: 1 }, hand: 'tap', board: '1 min: 1 + 2 = 3' },
       { say: "After two minutes add two more: one plus four is five litres. Every point sits right on the line.", value: { m: 2, b: 1 }, hand: 'tap', board: '2 min: 1 + 4 = 5' },
       { say: "That straight line IS the tank filling — start at one, up two each minute.", value: { m: 2, b: 1 }, hand: 'tap', board: 'y = 2x + 1 ✓' },
@@ -429,7 +465,7 @@ const CONFIG: GameConfig<LV, Task> = {
   TutorialScene: WaterTankScene,
   start: {
     blurb: <><strong style={{ color: P.cream }}>You&apos;re logging how the tank fills.</strong> Set the start level and fill rate so the water level over time runs straight through both readings.</>,
-    ticket: { title: 'Two readings', badge: '(0,1) & (1,3)', tone: 'a' },
+    ticket: { title: 'Two readings', badge: '0 min → 1 L,  1 min → 3 L', tone: 'a' },
     startLabel: 'Open the valve →',
   },
   overview: {

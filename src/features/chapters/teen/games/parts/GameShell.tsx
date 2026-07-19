@@ -28,6 +28,7 @@ import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import type { ChapterType } from '@/state/store'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import MiloMark from '@/features/chapters/teen/MiloMark'
+import FitBox from '@/features/chapters/story/FitBox'
 import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, AnswerPad, headerChip, bigBtn, type HandKind } from './gameKit'
 
 const BAND: AgeBand = '12-14'
@@ -61,6 +62,15 @@ export interface BaseTask {
   /** The single "what to do with the tool" action. Starts with a verb; shown as a
    *  distinct chip under the math so it never blends into the story or the equation. */
   instruction?: string
+  /** The action chip to show INSTEAD of `instruction` when this question is answered
+   *  on the AnswerPad — because the pad hides the instrument, so an instruction naming
+   *  a gesture ("crank the gear", "shade the grid") tells the child to do something
+   *  the screen no longer offers. Omit and a padded question falls back to a generic
+   *  tap line, which is always true even if it is less specific. */
+  padInstruction?: string
+  /** What sits left of the answer on the board (default '='). Set when `badge` is
+   *  already a complete equation, so the board doesn't read "x + 1 = 4" then "= ?". */
+  answerLabel?: string
   /** Whether the board shows an "= ?" (then "= answer") line under the math. Default
    *  true. Set false for "place a stated value" tasks (set X on the meter, pick the
    *  lower of two) where the math is a target to place, not an expression to evaluate
@@ -165,11 +175,13 @@ export interface GameConfig<V, T extends BaseTask> {
   Demo?: (p: DemoProps) => React.ReactElement
   /** math-only signature so a re-drawn ticket / shuffled dressing isn't "new". */
   sig?: (t: T) => string
-  /** When set, the child answers a practice question by TAPPING a number choice or
-   *  TYPING it on a keypad (the familiar quiz way) instead of dragging the instrument
-   *  to the value. Returns the tap-choices (include the correct answer + distractors,
-   *  any order — the pad shuffles nothing, so pre-shuffle). The instrument stays on
-   *  screen as a read-only illustration (and for "show me how"). Numeric answers only. */
+  /** PER-TASK tap-answering. Return the tap-choices for THIS question (correct +
+   *  distractors, pre-shuffled — the pad shuffles nothing) and the child answers by
+   *  tapping a number instead of working the instrument; the instrument is hidden
+   *  while the pad is up. Return `[]` for a question whose illustration IS how you
+   *  solve it, and that question keeps its instrument. Numeric answers only, so this
+   *  only applies to chapters whose value type is `number` (or where a number round-
+   *  trips to V). */
   answerPad?: (t: T) => number[]
 }
 
@@ -206,6 +218,9 @@ export function Game<V, T extends BaseTask>({
   // Pad answer-choices: built once per question (task ref is stable until the next
   // one loads), so the distractors don't reshuffle on every keystroke re-render.
   const padChoices = useMemo(() => (config.answerPad && task ? config.answerPad(task) : []), [config, task])
+  // The choice the child actually tapped, so the reveal can mark it (an instrument
+  // chapter shows the mistake by gliding; a pad chapter has to show it on the pad).
+  const [picked, setPicked] = useState<number | null>(null)
   const [wrongRun, setWrongRun] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [wrong, setWrong] = useState(0)
@@ -244,7 +259,7 @@ export function Game<V, T extends BaseTask>({
     // level to ease back in; after that, the normal adaptive tier takes over.
     const d = warmup && nextIdx < WARMUP_COUNT ? warmupDiff : ada.difficulty
     const t = nextTask(d)
-    setTask(t); setValue(config.initialValue(t)); setSub('active'); setIdx(nextIdx)
+    setTask(t); setValue(config.initialValue(t)); setSub('active'); setIdx(nextIdx); setPicked(null)
     flashCue('turn')
     // Tier-linked scaffolding (ux-design.md §2/§6.4): Milo reads the task aloud at
     // the lower tiers as a support, but at the TOP tier the child works from the
@@ -329,7 +344,7 @@ export function Game<V, T extends BaseTask>({
 
   const busy = sub !== 'active'
   const inOrder = stage === 'play' || stage === 'guided'
-  const roomy = useRoomy()
+  const { roomy, short } = useFrame()
 
   // Overview: show the summary ON the chalkboard while the illustration sits in the
   // middle (same universal layout as the walkthrough/practice), instead of a big
@@ -354,7 +369,7 @@ export function Game<V, T extends BaseTask>({
       ? {
           'data-test-answer':
             sub === 'active'
-              ? config.answerPad
+              ? padChoices.length
                 ? String(padChoices.find((c) => config.grade(task, c as unknown as V)) ?? '')
                 : config.revealText(task)
               : '',
@@ -448,32 +463,70 @@ export function Game<V, T extends BaseTask>({
           <>
             {/* the QUESTION lives on the chalkboard — top-left on a roomy screen,
                 across the top on mobile — and is the same everywhere (universal). */}
-            <BoardSlot roomy={roomy}>
+            {/* The pinned top-left board is an ABSOLUTE overlay — it shares its
+                horizontal band with the centred column and only clears it because a
+                tall INSTRUMENT leaves vertical room beside it. Two cases where that
+                assumption fails, so the board goes back in flow (stacked) instead:
+                  • short frame (e.g. 1024×400) — the centred controls ride through it;
+                  • a pad question — a row of tap-choices isn't a tall instrument, it
+                    sits mid-screen right under the board (measured 9px clearance at
+                    1280×800, i.e. one wrapped line from colliding).
+                Instrument questions on a roomy, tall screen keep the pinned board. */}
+            <BoardSlot roomy={roomy && !short && !padChoices.length} short={short}>
               <QuestionBoard
                 P={P}
+                compact={short}
                 testHooks={testHooks}
                 cue="Solve it"
                 prompt={task.prompt || task.title}
                 context={task.context}
-                instruction={task.instruction}
+                instruction={padChoices.length ? (task.padInstruction ?? 'Work it out, then tap your answer.') : task.instruction}
                 expr={config.question ? config.question(task) : task.badge}
                 answer={task.showEquals === false ? undefined : (sub === 'active' ? '?' : config.revealText(task))}
+                answerLabel={task.answerLabel}
                 tone={sub === 'active' ? 'ask' : sub === 'sold' ? 'ok' : 'reveal'}
               />
             </BoardSlot>
             <CenterFill>
-              {stage === 'guided' && sub === 'active' && (
+              {/* Decorative on a short frame — the board's instruction must survive,
+                  this label is what gets dropped when the height runs out. */}
+              {stage === 'guided' && sub === 'active' && !short && (
                 <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', fontWeight: 800, letterSpacing: '0.14em', color: P.gold, textTransform: 'uppercase' }}>Try this one with me</div>
               )}
-              <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
-                {config.answerPad ? (
-                  // Answer-pad chapters never show the instrument: the child taps a
-                  // number choice while active.
-                  sub === 'active' && <AnswerPad P={P} choices={padChoices} disabled={busy} onSubmit={(n) => (stage === 'guided' ? submitGuided : submit)(n as unknown as V)} />
+              {/* The INSTRUMENT column takes the whole leftover band (flex:1) so FitSlot
+                  can scale it to fit; the PAD is auto-height and stays centred as-is. */}
+              <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', flex: padChoices.length ? undefined : 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
+                {padChoices.length ? (
+                  // PER-TASK: a question that supplies pad choices is answered by
+                  // tapping a number (and hides the instrument); one that doesn't
+                  // falls through to its instrument, so a chapter can keep the
+                  // illustration for the questions where it does the teaching.
+                  sub !== 'sold' && (
+                    <AnswerPad
+                      P={P} choices={padChoices} compact={short} disabled={sub !== 'active' || busy}
+                      reveal={sub === 'reveal' || sub === 'reteach'}
+                      correct={padChoices.find((c) => config.grade(task, c as unknown as V))}
+                      picked={picked ?? undefined}
+                      onSubmit={(n) => { setPicked(n); (stage === 'guided' ? submitGuided : submit)(n as unknown as V) }}
+                    />
+                  )
                 ) : (
-                  <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
+                  <FitSlot>
+                    <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
+                    {/* Inside the FitSlot so the cue counts toward the measured column
+                        height — otherwise it would push the scaled instrument back out.
+                        Dropped on a short frame (same call as the "TRY THIS ONE WITH ME"
+                        label above): it is a decorative gesture hint worth ~47px, and on
+                        a 320px-tall frame that height is the difference between a
+                        finger-sized commit button and a scaled-down one. The board's
+                        instruction still tells the child what to do. */}
+                    {stage === 'guided' && sub === 'active' && config.guided && !short && <HandCue P={P} kind={config.guided.hand} />}
+                  </FitSlot>
                 )}
-                {stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind={config.guided.hand} />}
+                {/* The chapter's hand cue describes its INSTRUMENT gesture ('drag',
+                    'crank'…). On a padded question there is no instrument to drag, so
+                    the cue must show the gesture the child can actually make. */}
+                {padChoices.length > 0 && stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind="tap" />}
               </div>
             </CenterFill>
           </>
@@ -761,33 +814,81 @@ function ExplanationPanel({ P, overview, read, onDone }: {
 }
 
 // ── universal layout helpers ──────────────────────────────────────────────────
-/** true when there's horizontal room (laptop/desktop) → pin the chalkboard
- *  top-left. Below this the board stacks across the top (phones/tablets). */
-function useRoomy(): boolean {
-  const [roomy, setRoomy] = useState(false)
+/** roomy = horizontal room (laptop/desktop) → pin the chalkboard top-left; below
+ *  that it stacks across the top (phones/tablets).
+ *  short = a SHORT frame (landscape phone). Every size in this shell is a
+ *  clamp(px, vw, px), so a wide-but-short frame gets near-desktop sizes with no
+ *  vertical room for them — the board and the answer pad then collide. `short`
+ *  is the repo's standard gate (see the 3–11 story chapters) for dropping those
+ *  px floors and tightening the stack. */
+function useFrame(): { roomy: boolean; short: boolean } {
+  const [f, setF] = useState({ roomy: false, short: false })
   useEffect(() => {
-    const calc = () => setRoomy(window.innerWidth >= 820)
+    const calc = () => setF((p) => {
+      const n = { roomy: window.innerWidth >= 820, short: window.innerHeight < 470 }
+      return p.roomy === n.roomy && p.short === n.short ? p : n
+    })
     calc()
     window.addEventListener('resize', calc)
     return () => window.removeEventListener('resize', calc)
   }, [])
-  return roomy
+  return f
 }
 
 /** The chalkboard slot — pinned top-left on a roomy screen (absolute, out of flow
  *  so the interactive stays centred), or stacked full-width across the top on
  *  mobile. Universal: present in every chapter, in both explanation and practice. */
-function BoardSlot({ roomy, children }: { roomy: boolean; children: React.ReactNode }) {
+function BoardSlot({ roomy, short, children }: { roomy: boolean; short?: boolean; children: React.ReactNode }) {
   if (roomy) {
     return <div style={{ position: 'absolute', top: 'clamp(4px, 1vh, 18px)', left: 'clamp(10px, 1.6vw, 28px)', width: 'clamp(280px, 30vw, 420px)', zIndex: 3 }}>{children}</div>
   }
-  return <div style={{ width: '100%', maxWidth: 480, display: 'flex', justifyContent: 'center', margin: '0 auto 10px' }}>{children}</div>
+  // On a short frame let the board run WIDER: the long context/instruction lines
+  // then wrap into fewer rows, which is height back for the answer pad.
+  return <div style={{ width: '100%', maxWidth: short ? 640 : 480, display: 'flex', justifyContent: 'center', margin: short ? '0 auto 4px' : '0 auto 10px' }}>{children}</div>
 }
 
 /** The centred interactive column — instrument in the middle, its action button
  *  directly below. Fills the space left of / beneath the board. */
 function CenterFill({ children }: { children: React.ReactNode }) {
   return <div style={{ flex: 1, width: '100%', maxWidth: 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(10px, 1vw, 16px)', margin: '0 auto', minHeight: 0, padding: '2px 0 6px', boxSizing: 'border-box' }}>{children}</div>
+}
+
+/** Scale-to-fit slot for the INSTRUMENT column (the instrument + its own commit
+ *  button, which every instrument renders itself).
+ *
+ *  Instrument sizes are vw/vmin-based with px floors, so on a SHORT frame they stay
+ *  near their desktop height while the band between the board and the bottom of the
+ *  screen collapses. CenterFill centres with `justify-content: center`, and a flex
+ *  item that can't shrink below its content overflows BOTH ways — up under the
+ *  question board and down past the commit button. (`safe center` / `flex-start`
+ *  only move the overflow to one end; the button then leaves the screen.)
+ *
+ *  Rather than give ~10 shared instruments + ~9 in-file ones their own vh terms, this
+ *  reuses the 3–11 chapters' `FitBox`: measure the natural column, scale it to the
+ *  band. `max: 1` — never enlarge, so every frame that already fits is untouched.
+ *  Instrument pointer math normalises by getBoundingClientRect(), which reflects the
+ *  CSS transform, so dragging/tapping stays accurate under scale. */
+const Col = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>{children}</div>
+)
+
+function FitSlot({ children }: { children: React.ReactNode }) {
+  const box = useRef<HTMLDivElement>(null)
+  const [av, setAv] = useState({ w: 0, h: 0 })
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setAv({ w: el.clientWidth, h: el.clientHeight }))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return (
+    <div ref={box} style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {av.h > 0
+        ? <FitBox availW={av.w} availH={av.h} max={1}><Col>{children}</Col></FitBox>
+        : <Col>{children}</Col>}
+    </div>
+  )
 }
 
 /** The three-panel TEACHING layout (intro + walkthrough) — keeps the explanation

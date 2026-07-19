@@ -15,7 +15,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, BalanceBeam, Nudge, CommitBtn, pick, glideNumber } from './parts/gameKit'
+import { Palette, BalanceBeam, Nudge, CommitBtn, numChoices, pick, glideNumber } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#101d24', nightBot: '#152a33',
@@ -47,19 +47,29 @@ type RaySol = { bound: number; op: IneqOp }
 type Val = number | RaySol
 const isRay = (v: Val): v is RaySol => typeof v === 'object'
 
+/** Speech form of an expression: TTS reads bare ÷ and U+2212 unreliably (and "/" as
+ *  "slash"), so the SPOKEN line uses words while the board keeps the real symbols. */
+const speakExpr = (e: string) => e.replace(/÷/g, 'divided by').replace(/−/g, 'minus').replace(/\+/g, 'plus')
+
 interface Spec { leftExpr: string; m: number; c: number; right: number; answer: number; min: number; max: number }
+// Tier 1 stays on the case-plus-weights story the walkthrough actually acts out
+// (things ADDED to the pan). A "take 4 kg OFF the case" spec (c < 0) is never
+// modelled there, so those start at tier 2.
 const L1: Spec[] = [
   { leftExpr: 'x + 3', m: 1, c: 3, right: 7, answer: 4, min: 0, max: 10 },
   { leftExpr: '2x', m: 2, c: 0, right: 10, answer: 5, min: 0, max: 10 },
-  { leftExpr: 'x − 4', m: 1, c: -4, right: 1, answer: 5, min: 0, max: 12 },
+  { leftExpr: '3x', m: 3, c: 0, right: 12, answer: 4, min: 0, max: 10 },
 ]
 const L2: Spec[] = [
   { leftExpr: '2x + 3', m: 2, c: 3, right: 11, answer: 4, min: 0, max: 10 },
   { leftExpr: '3x − 2', m: 3, c: -2, right: 10, answer: 4, min: 0, max: 10 },
-  { leftExpr: '5x', m: 5, c: 0, right: -15, answer: -3, min: -6, max: 6 },
+  { leftExpr: 'x − 4', m: 1, c: -4, right: 1, answer: 5, min: 0, max: 12 },
+  // was 5x = −15 → x = −3: a suitcase cannot weigh minus three kilos, and the
+  // chapter's own scale can't show it. Same "undo the ×5" idea, weighable.
+  { leftExpr: '5x', m: 5, c: 0, right: 15, answer: 3, min: 0, max: 10 },
 ]
 const L3: Spec[] = [
-  { leftExpr: 'x/2', m: 0.5, c: 0, right: 6, answer: 12, min: 0, max: 16 },
+  { leftExpr: 'x ÷ 2', m: 0.5, c: 0, right: 6, answer: 12, min: 0, max: 16 },
   { leftExpr: '4x − 1', m: 4, c: -1, right: 11, answer: 3, min: 0, max: 10 },
   { leftExpr: '2x + 5', m: 2, c: 5, right: 17, answer: 6, min: 0, max: 12 },
 ]
@@ -67,11 +77,11 @@ const L3: Spec[] = [
 function fromSpec(s: Spec): Task {
   const badge = `${s.leftExpr} = ${s.right}`
   return {
-    title: 'Find x', badge, tone: s.right < 0 ? 'b' : 'a',
+    title: 'Find x', badge, tone: s.right < 0 ? 'b' : 'a', answerLabel: 'x =',
     context: 'A mystery case sits on the check-in scale, balanced against the marked weights.',
-    instruction: 'Set the case weight, then press Weigh.',
-    prompt: `Weigh the case: ${s.leftExpr} = ${s.right}. Work out x, set the dial, then press Weigh to check.`,
-    say: `Weigh the case so that ${s.leftExpr} equals ${s.right} kilograms. Work out x, set the dial, then press weigh to check if it balances.`,
+    padInstruction: 'Tap the case weight in kg.',
+    prompt: `Weigh the case: ${s.leftExpr} = ${s.right}. Work out x — what does the case weigh?`,
+    say: `The case balances when ${speakExpr(s.leftExpr)} equals ${s.right} kilograms. Work out x. What does the case weigh, in kilograms?`,
     m: s.m, c: s.c, right: s.right, answer: s.answer, leftExpr: s.leftExpr, min: s.min, max: s.max,
     work: [`Find the x that makes ${s.leftExpr} equal ${s.right}.`, `x = ${s.answer} makes both pans read ${s.right}.`],
   }
@@ -100,12 +110,12 @@ function fromIneq(s: IneqSpec): Task {
     ? `${s.bound} itself is allowed, so the dot is filled.`
     : `${s.bound} is NOT allowed, so the dot is hollow.`
   return {
-    title: 'Weight rule', badge, tone: 'b', kind: 'ineq', op: s.op, bound: s.bound,
+    title: 'Weight rule', badge, tone: 'b', showEquals: false, kind: 'ineq', op: s.op, bound: s.bound,
     m: 0, c: 0, right: s.right, answer: s.bound, leftExpr: s.leftExpr, min: s.min, max: s.max,
-    context: 'The case has a weight rule — every weight that obeys it is allowed.',
-    instruction: 'Shade every weight the case can be.',
+    context: 'Check-in will only take this case if its weight fits the rule below.',
+    instruction: 'Pick the symbol, then set the edge weight in kg.',
     prompt: `Solve ${badge}. Work out x, then shade every case weight that's allowed on the number line.`,
-    say: `Solve ${s.leftExpr} ${dw} ${s.right}. Work out x, then shade every weight that's allowed on the number line.`,
+    say: `Solve: ${speakExpr(s.leftExpr)} is ${dw} ${s.right}. Work out x, then pick the symbol and set the edge weight.`,
     work: [`Solve for x: ${badge} means x ${OPSYM[s.op]} ${s.bound}.`, `${edgeNote} Shade every weight ${dw} ${s.bound}.`],
   }
 }
@@ -120,17 +130,17 @@ function makeTask(d: 1 | 2 | 3): Task {
 
 // ── worked example for the walkthrough (x + 3 = 8 → 5) + guided order (x + 1 = 4 → 3) ──
 const DEMO_TASK: Task = {
-  title: 'Find x', badge: 'x + 3 = 8', tone: 'a',
+  title: 'Find x', badge: 'x + 3 = 8', tone: 'a', answerLabel: 'x =',
   m: 1, c: 3, right: 8, answer: 5, leftExpr: 'x + 3', min: 0, max: 10,
   prompt: '', say: '', work: [],
 }
 const GUIDED_TASK: Task = {
-  title: 'Find x', badge: 'x + 1 = 4', tone: 'a',
+  title: 'Find x', badge: 'x + 1 = 4', tone: 'a', answerLabel: 'x =',
   m: 1, c: 1, right: 4, answer: 3, leftExpr: 'x + 1', min: 0, max: 10,
   context: 'A mystery case sits on the check-in scale, balanced against the marked weights.',
-  instruction: 'Set the case weight, then press Weigh.',
-  prompt: 'Weigh x + 1 = 4. Work out x, set the dial, then press Weigh.',
-  say: 'Weigh the case so x plus one equals four. Work out x, set the dial, then press weigh to check.',
+  padInstruction: 'Tap the case weight in kg.',
+  prompt: 'Weigh x + 1 = 4. Work out x — what does the case weigh?',
+  say: 'The case balances when x plus one equals four. Work out x. What does the case weigh?',
   work: ['Find the x that makes x + 1 equal 4.', 'x = 3 makes both pans read 4.'],
 }
 
@@ -365,7 +375,7 @@ function RayLine({ P, task, value, setValue, disabled, reveal, onCommit }: {
 //    before meeting it in practice: solve to the boundary, shade the ray, and see why
 //    the endpoint is filled (≤) vs hollow (<). ──
 const DEMO_INEQ: Task = {
-  title: 'Weight rule', badge: 'x + 2 ≤ 6', tone: 'b', kind: 'ineq', op: 'le', bound: 4,
+  title: 'Weight rule', badge: 'x + 2 ≤ 6', tone: 'b', showEquals: false, kind: 'ineq', op: 'le', bound: 4,
   m: 0, c: 0, right: 6, answer: 4, leftExpr: 'x + 2', min: 0, max: 8, prompt: '', say: '', work: [],
 }
 const INEQ_SCRIPT = {
@@ -421,7 +431,18 @@ const CONFIG: GameConfig<Val, Task> = {
   initialValue: (t) => t.kind === 'ineq' ? { bound: t.min, op: 'le' } as RaySol : t.min,
   grade: (t, v) => t.kind === 'ineq'
     ? isRay(v) && v.bound === t.bound && v.op === t.op
-    : !isRay(v) && Math.abs(v - t.answer) < 1e-6,
+    : !isRay(v) && Math.abs(v - t.answer) < 1e-6,   // a pad question submits a plain number → lands here already
+  // PER-TASK pad: an equation answers with a single x → tap it. An INEQUALITY answers
+  // with a whole solution RAY (relation + boundary + open/closed endpoint), which no
+  // number pad can express — those keep the RayLine instrument.
+  // NB the bound is `min: 0` (a case cannot weigh less than nothing), NOT the beam's
+  // min/max — that slider range is narrower than the misconception answers, so it was
+  // filtering every one of them out and leaving four near-identical neighbours.
+  answerPad: (t) => t.kind === 'ineq' ? [] : numChoices(t.answer, [
+    t.right + t.c,   // added c when they should have subtracted it (x + 3 = 8 → 11)
+    t.right * t.m,   // multiplied by m when they should have divided (2x = 10 → 20)
+    t.right - t.c,   // undid c but forgot to divide by m (2x + 3 = 11 → 8)
+  ], { min: 0 }),
   revealText: (t) => t.kind === 'ineq' ? `x ${OPSYM[t.op!]} ${t.bound}` : `x = ${t.answer}`,
   glide: (t, from, setValue, later) => t.kind === 'ineq'
     ? later(() => setValue({ bound: t.bound!, op: t.op! } as RaySol), 500)
@@ -455,7 +476,7 @@ const CONFIG: GameConfig<Val, Task> = {
     hand: 'drag',
   },
   TutorialScene: TeachScene,
-  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re running the check-in scale.</strong> Work out x — the mystery case&apos;s weight — that makes each equation balance, set the dial, then weigh it. Balanced means solved; over or under means try again.</>, ticket: { title: 'Find x', badge: '2x + 3 = 11', tone: 'a' }, startLabel: 'Step up to the scale →' },
+  start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re running the check-in scale.</strong> Work out x — the mystery case&apos;s weight — that makes each equation balance. When a case has a weight <em>rule</em> instead, shade every weight it&apos;s allowed to be.</>, ticket: { title: 'Find x', badge: '2x + 3 = 11', tone: 'a' }, startLabel: 'Step up to the scale →' },
   overview: {
     say: "Here is what we are figuring out: a check-in scale balances only when both pans weigh the same. The left pan holds a mystery case plus a three-kilo weight, and the right pan reads eight kilos. We will find the case's weight — the x that makes x plus three equal eight — and it comes out to five.",
     problem: <>What does the mystery case weigh? We&apos;ll solve <strong>x + 3 = 8</strong> so both pans balance.</>,

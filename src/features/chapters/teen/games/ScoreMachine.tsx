@@ -16,7 +16,7 @@
  * (parseExpr / collapseAt / correctNextIndex / ExprChips) lives in gameKit.
  */
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CommitBtn, headerChip, pick, ExprChips, parseExpr, collapseAt, correctNextIndex, type ETok } from './parts/gameKit'
+import { Palette, CommitBtn, headerChip, pick, numChoices, ExprChips, parseExpr, collapseAt, correctNextIndex, evaluable, type ETok } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#1c1327', nightBot: '#2a1838',
@@ -29,46 +29,61 @@ const P: Palette = {
 
 interface Task extends BaseTask { expr: string; answer: number }
 
-// Highlight colour for the "work out this part first" portion on the chalkboard.
-const HL = '#ffd45e'
-const SUP = /[¹²³⁴⁵⁶⁷⁸⁹⁰]/
+// NOTE: the board deliberately shows the BARE expression. It used to render
+// "3 + 2 × 5" as "3 + (2 × 5)" — inserting brackets that were never in the
+// expression. Deciding what to do first IS the skill this chapter teaches, so
+// marking it hands over the answer and makes the left-to-right distractor (25)
+// unreachable. `config.question` only receives the task, not the reveal state,
+// so there is no way to show the mark on reveal only — hence no mark at all.
 
-/** Wrap the part that must be worked out FIRST in parentheses + a highlight colour,
- *  so the kid can see it on the reference chalkboard (= each item's cost). Brackets →
- *  the bracketed group; else an exponent term; else the first × / ÷ and its operands. */
-function markPortion(expr: string): React.ReactNode {
-  const open = expr.indexOf('(')
-  if (open !== -1) {
-    const close = expr.indexOf(')', open)
-    if (close !== -1) return (<>{expr.slice(0, open)}<span style={{ color: HL }}>{expr.slice(open, close + 1)}</span>{expr.slice(close + 1)}</>)
+// ── the two order-of-operations misconceptions, computed from the expression itself
+//    so the WRONG-ORDER value is always on the answer pad. ──
+/** Collapse repeatedly at the LEFTMOST workable spot = strict left-to-right, ignoring
+ *  that × and ÷ come first: "2 + 3 × 4" → 5 × 4 → 20 (the classic wrong total). */
+function ltrValue(expr: string): number | null {
+  let toks = parseExpr(expr)
+  for (let guard = 0; toks.length > 1 && guard < 20; guard++) {
+    const idx = [...evaluable(toks)]
+    if (!idx.length) return null
+    toks = collapseAt(toks, Math.min(...idx))
   }
-  const sup = expr.search(SUP)
-  if (sup > 0) {
-    let end = sup
-    while (end < expr.length && SUP.test(expr[end])) end++
-    return (<>{expr.slice(0, sup - 1)}<span style={{ color: HL }}>{expr.slice(sup - 1, end)}</span>{expr.slice(end)}</>)
+  const t = toks[0]
+  return t?.k === 'num' ? t.v : null
+}
+/** Same expression with the brackets thrown away, then done correctly:
+ *  "(3 + 2) × 5" → "3 + 2 × 5" → 13. */
+function noBracketValue(expr: string): number | null {
+  if (!expr.includes('(')) return null
+  let toks = parseExpr(expr.replace(/[()]/g, ''))
+  for (let guard = 0; toks.length > 1 && guard < 20; guard++) {
+    const i = correctNextIndex(toks)
+    if (i < 0) return null
+    toks = collapseAt(toks, i)
   }
-  const tokens = expr.split(' ')
-  const opIdx = tokens.findIndex((t) => t === '×' || t === '÷')
-  if (opIdx > 0 && opIdx < tokens.length - 1) {
-    const before = tokens.slice(0, opIdx - 1).join(' ')
-    const after = tokens.slice(opIdx + 2).join(' ')
-    return (<>{before ? before + ' ' : ''}<span style={{ color: HL }}>{`(${tokens[opIdx - 1]} ${tokens[opIdx]} ${tokens[opIdx + 1]})`}</span>{after ? ' ' + after : ''}</>)
-  }
-  return expr
+  const t = toks[0]
+  return t?.k === 'num' ? t.v : null
+}
+function padFor(t: Task): number[] {
+  const near = [ltrValue(t.expr), noBracketValue(t.expr)].filter((n): n is number => n !== null)
+  return numChoices(t.answer, near, { min: 0, count: 4 })
 }
 
-const L1: [string, number][] = [['3 + 2 × 5', 13], ['10 − 2 × 3', 4], ['4 × 2 + 1', 9], ['12 ÷ 2 + 3', 9]]
+const L1: [string, number][] =[['3 + 2 × 5', 13], ['10 − 2 × 3', 4], ['4 × 2 + 1', 9], ['12 ÷ 2 + 3', 9]]
 const L2: [string, number][] = [['(3 + 2) × 5', 25], ['2 × (4 + 1)', 10], ['20 − 3 × 4', 8], ['6 + 8 ÷ 2', 10]]
-const L3: [string, number][] = [['3 + 4 × 2 − 1', 10], ['(6 − 2) × 3', 12], ['2³ − 4', 4], ['5 × 2 − 3 × 2', 4]]
+// `2³ − 4` was dropped from this tier: nothing in this chapter ever teaches exponents,
+// AND its precedence trap is empty — the power evaluates first in ANY order, so the
+// wrong-order value equals the answer and the pad degrades to ±1 noise. Replaced with
+// a two-precedence expression whose left-to-right value (15) is a real misconception.
+const L3: [string, number][] = [['3 + 4 × 2 − 1', 10], ['(6 − 2) × 3', 12], ['12 ÷ 4 + 2 × 3', 9], ['5 × 2 − 3 × 2', 4]]
 
 function fromPool(pool: [string, number][]): Task {
   const [expr, answer] = pick(pool)
   return {
     title: 'Budget', badge: expr, tone: 'a',
-    instruction: 'Tap × and ÷ first, then + and −.',
+    context: 'One line of the event budget — a fee plus items that each cost the same.',
+    padInstruction: 'Work out × and ÷ first, then tap your total.',
     prompt: `Total the budget: ${expr}. Tap an operation to work it out — × and ÷ before + and −.`,
-    say: `Total the budget. ${expr}. Tap the times and divide first, then the plus and minus. Work out one step at a time.`,
+    say: `Total the budget. ${expr}. Work out the times and divide first, then the plus and minus. Then tap your total.`,
     expr, answer,
     work: [`Brackets first, then × and ÷ (each item's cost), then + and −.`, `${expr} = ${answer}.`],
   }
@@ -127,9 +142,10 @@ const D2 = collapseAt(D1, correctNextIndex(D1))   // 14
 const DEMO_TASK: Task = { title: 'Budget', badge: '2 + 3 × 4', tone: 'a', context: 'A $2 entry fee, plus 3 snacks at $4 each.', instruction: 'Tap × first, then +.', expr: '2 + 3 × 4', answer: 14, prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
   title: 'Budget', badge: '1 + 2 × 3', tone: 'a', expr: '1 + 2 × 3', answer: 7,
-  context: 'A $1 entry fee, plus 2 items at $3 each.', instruction: 'Tap × first, then +.',
+  context: 'A $1 entry fee, plus 2 items at $3 each.',
+  padInstruction: 'Work out × first, then tap your total.',
   prompt: 'Total 1 + 2 × 3 — tap the times first, then the plus.',
-  say: 'A one dollar fee, plus two items at three dollars each. Tap the times first, then the plus.',
+  say: 'A one dollar fee, plus two items at three dollars each. Work out the times first, then tap your total.',
   work: ['Item cost first: 2 × 3 is 6.', '1 + 6 is 7.'],
 }
 
@@ -140,10 +156,13 @@ const CONFIG: GameConfig<ETok[], Task> = {
   palette: P,
   makeTask,
   initialValue: (t) => parseExpr(t.expr),
-  grade: (t, v) => v.length === 1 && v[0].k === 'num' && Math.abs(v[0].v - t.answer) < 1e-6,
+  answerPad: padFor,
+  // The pad hands GameShell a raw number; the chips hand it ETok[]. Grade both.
+  grade: (t, v) => typeof (v as unknown) === 'number'
+    ? (v as unknown as number) === t.answer
+    : v.length === 1 && v[0].k === 'num' && Math.abs(v[0].v - t.answer) < 1e-6,
   revealText: (t) => `${t.answer}`,
   motif: '🧾',
-  question: (t) => markPortion(t.expr),
   // On a wrong answer: re-lay the slip and collapse it in the CORRECT order, step by
   // step, so the child sees the right sequence land on the answer.
   glide: (t, _from, setValue, later) => {
