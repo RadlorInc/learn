@@ -45,7 +45,10 @@ interface Task extends BaseTask {
 }
 
 function evalTask(d: 1 | 2 | 3): Task {
-  const a = rint(2, 5), b = rnz(-6, 8), v = rint(-4, 5)
+  // Ticket count and booking fee stay non-negative — you cannot buy −4 tickets, and a
+  // negative fee is not a fee. (Substituting a negative x is exercised in the 12–14
+  // band and in Leaderboard; here it would make the story lie.)
+  const a = rint(2, 5), b = rint(1, 8), v = rint(1, 6)
   const n = a * v + b
   return {
     kind: 'eval', title: 'Ticket order', badge: `${lin(a, b)},  x = ${v < 0 ? `(${v})` : v}`, tone: 'a',

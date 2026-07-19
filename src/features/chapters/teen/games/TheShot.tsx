@@ -66,9 +66,12 @@ function fromRoots(a: number, r1: number, r2: number) {
 
 // ── L1: read roots OR vertex off a shown integer-rooted parabola ────────────
 function readTask(): Task {
-  const a = pick([1, 1, -1])
-  let r1 = rint(-4, 4), r2 = rint(-4, 4), g = 0
-  while (r2 === r1 && g++ < 20) r2 = rint(-4, 4)
+  // A shot arcs DOWN (a < 0, so the vertex is a peak, which is what the prompt asks
+  // for) and both crossings sit in front of the shooter — the scene is drawn beside
+  // this task, so an upward U or a landing at x < 0 contradicts the picture.
+  const a = -1
+  let r1 = rint(0, 3), r2 = rint(1, 8), g = 0
+  while (r2 === r1 && g++ < 20) r2 = rint(1, 8)
   const q = fromRoots(a, r1, r2)
   if (Math.random() < 0.5) {
     return {
@@ -92,6 +95,10 @@ function readTask(): Task {
 function solveTask(): Task {
   if (Math.random() < 0.5) {
     // factor x² + bx + c = 0, integer roots
+    // NOT clamped to positive roots on purpose: forcing both roots ≥ 1 would leave only
+    // ONE of the four factoring sign-cases, which is a worse loss than the story strain.
+    // The honest fix is a world with two real crossings (see docs/lessons.md) — flagged,
+    // not faked.
     let r1 = rint(-6, 6), r2 = rint(-6, 6), g = 0
     while ((r2 === r1 || r1 === 0 || r2 === 0) && g++ < 30) { r1 = rint(-6, 6); r2 = rint(-6, 6) }
     const q = fromRoots(1, r1, r2)

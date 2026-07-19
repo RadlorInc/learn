@@ -37,6 +37,11 @@ const P: Palette = {
 const RANGE = 5 // LineSetter grid: slope clamps ±5, start clamps ±RANGE
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const rnz = (lo: number, hi: number) => { let n = rint(lo, hi); while (n === 0) n = rint(lo, hi); return n }
+/** A follower count is never negative. Start counts are ≥ 0, and a LOSING slope is
+ *  capped so the line still sits at or above zero at every week the task names. */
+const startB = (hi = RANGE) => rint(0, hi)
+const slopeFor = (b: number, lastWeek: number, lo: number, hi: number) =>
+  rnz(Math.max(lo, -Math.floor(b / Math.max(1, lastWeek))), hi)
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 
 /** y = mx + b as a tidy string (m integer). */
@@ -62,7 +67,7 @@ interface Task extends BaseTask {
 // ── L1: read the slope (dial) OR build a line from its start + growth ────────
 function readSlopeTask(): Task {
   const m = rnz(-4, 4)
-  const b = rint(-RANGE, RANGE)
+  const b = startB()
   return {
     kind: 'slope', title: 'Growth rate', badge: eqStr(m, b), tone: 'a',
     prompt: `Dial the growth per week (the slope) of the line ${eqStr(m, b)}.`,
@@ -73,7 +78,7 @@ function readSlopeTask(): Task {
 }
 
 function buildStartGrowthTask(): Task {
-  const b = rint(-RANGE, RANGE)
+  const b = startB()
   const m = rnz(-4, 4)
   return {
     kind: 'line', title: 'Growth plan', badge: `start ${b}, +${m}/week`, tone: 'a',
@@ -86,11 +91,11 @@ function buildStartGrowthTask(): Task {
 
 // ── L2: slope from two weeks → build the matching line (from a point too) ────
 function twoPointsTask(): Task {
-  const m = rnz(-3, 3)
   let x1 = rint(0, 3), x2 = rint(1, 4)
   let guard = 0
   while (x2 === x1 && guard++ < 20) x2 = rint(1, 4)
-  const b = rint(-RANGE, RANGE - 1)
+  const b = startB(RANGE - 1)
+  const m = slopeFor(b, Math.max(x1, x2), -3, 3)   // both logged weeks stay ≥ 0 followers
   const y1 = m * x1 + b
   const y2 = m * x2 + b
   return {
@@ -105,7 +110,7 @@ function twoPointsTask(): Task {
 // ── L3: write / build the line's equation from a graph or point + slope ─────
 function writeEqTask(): Task {
   const m = rnz(-4, 4)
-  const b = rint(-RANGE, RANGE)
+  const b = startB()
   return {
     kind: 'line', title: 'Write the line', badge: `graph → ${eqStr(m, b)}`, tone: 'b',
     prompt: `A follower graph crosses the y-axis at ${b} and rises ${m} per step. Build y = mx + b.`,
@@ -116,9 +121,9 @@ function writeEqTask(): Task {
 }
 
 function pointSlopeTask(): Task {
-  const m = rnz(-3, 3)
-  const b = rint(-(RANGE - 1), RANGE - 1)
+  const b = startB(RANGE - 1)
   const px = rint(1, 3)
+  const m = slopeFor(b, px, -3, 3)                 // the named week stays ≥ 0 followers
   const py = m * px + b
   return {
     kind: 'line', title: 'Point + slope', badge: `slope ${m}, thru (${px}, ${py})`, tone: 'b',

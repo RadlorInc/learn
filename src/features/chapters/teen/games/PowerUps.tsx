@@ -56,7 +56,10 @@ function crankTask(base: number, exp: number, d: 1 | 2 | 3): Task {
     kind: 'crank', title: 'Charge the power-up', badge: `${pow(base, exp)} = ?`, tone: d === 3 ? 'b' : 'a',
     prompt: `Crank the stat up ${exp} levels — each level multiplies by ${base}. Reach ${pow(base, exp)}.`,
     say: `Build the power-up ${base} to the ${exp}. Crank it up ${exp} levels — each turn multiplies your stat by ${base}.`,
-    work: [`${pow(base, exp)} means ${base} multiplied ${exp} times: ${Array.from({ length: exp }, () => base).join(' × ')} = ${val}.`],
+    // "multiplied N times" is the misconception itself (it yields base×exp) — and this
+    // string is SPOKEN after three wrong in a row, when the child is most suggestible.
+    // Say what the crank does: start at 1, multiply by the base once per level.
+    work: [`${pow(base, exp)} means ${base} used as a factor ${exp} times — start at 1 and multiply by ${base} once per level: ${Array.from({ length: exp }, () => base).join(' × ')} = ${val}.`],
     n: val, base,
   }
 }
