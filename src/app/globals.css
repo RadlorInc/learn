@@ -13,6 +13,11 @@
 /* Chalk handwriting for the "solving it, step by step" chalkboard. */
 @import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap');
 
+/* Chalk write-on: a word appears letter-by-letter (--n = its letter count). */
+@keyframes mb-write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.mb-word-write { display: inline-block; animation: mb-write 280ms steps(var(--n, 4)) both; }
+@media (prefers-reduced-motion: reduce) { .mb-word-write { animation: none; } }
+
 /* ── Reset ──────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 

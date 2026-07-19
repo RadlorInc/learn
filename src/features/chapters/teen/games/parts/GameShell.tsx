@@ -20,7 +20,7 @@
  *   • mastery early-exit (top tier + clean streak → finish early, full stars)
  * Math-without-fear: no timer, no red X, no score, no coins.
  */
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useAdaptive } from '@/core/adaptive'
 import { speak, speakAfterCurrent, speakSeq, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -766,6 +766,47 @@ function OverviewCard({ P, overview, onDone }: {
   )
 }
 
+/** Visit every word in a ReactNode tree, in reading order. */
+function walkWords(node: React.ReactNode, visit: (w: string) => void): void {
+  if (node == null || typeof node === 'boolean') return
+  if (typeof node === 'string' || typeof node === 'number') {
+    for (const w of splitWords(String(node))) visit(w.word)
+    return
+  }
+  if (Array.isArray(node)) { for (const c of node) walkWords(c, visit); return }
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) walkWords(node.props.children, visit)
+}
+
+/** Re-render a ReactNode with each word wrapped so it writes on letter-by-letter,
+ *  hidden until `next()`'s index has been spoken. Element wrappers are preserved. */
+function mapWords(node: React.ReactNode, next: () => number, hi: number): React.ReactNode {
+  if (node == null || typeof node === 'boolean') return node
+  if (typeof node === 'string' || typeof node === 'number') {
+    // Keep the ORIGINAL spacing between words (re-adding a space after every word puts
+    // a gap before punctuation that follows a <strong>: "below zero ." ).
+    const text = String(node)
+    let at = 0
+    const out = splitWords(text).map((w, i) => {
+      const gap = text.slice(at, w.start)
+      at = w.end
+      const shown = next() <= hi
+      return (
+        <React.Fragment key={i}>
+          {gap}
+          <span className={shown ? 'mb-word-write' : undefined}
+            style={shown ? ({ ['--n' as string]: w.word.length }) : { visibility: 'hidden' }}>{w.word}</span>
+        </React.Fragment>
+      )
+    })
+    return <>{out}{text.slice(at)}</>   // keep any trailing whitespace before the next leaf
+  }
+  if (Array.isArray(node)) return node.map((c, i) => <React.Fragment key={i}>{mapWords(c, next, hi)}</React.Fragment>)
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return React.cloneElement(node, undefined, mapWords(node.props.children, next, hi))
+  }
+  return node
+}
+
 /** The overview SUMMARY (explanation) rendered on its OWN chalkboard — a slate panel
  *  matching the baby-step board. It is PERSISTENT through the whole teaching phase:
  *  it sits on the left (or on top, on mobile) and stays put while the walkthrough
@@ -784,14 +825,38 @@ function ExplanationPanel({ P, overview, read, onDone }: {
   // starts automatically.
   const doneRef = useRef(onDone)
   doneRef.current = onDone
-  const points = overview.points ?? []
+  const points = useMemo(() => overview.points ?? [], [overview.points])
 
-  // In the intro, Milo speaks the `say` summary; the board shows the plan in full.
+  // Milo speaks EXACTLY what the board says (not the separate `say` summary), and each
+  // word writes itself on letter-by-letter as he says it. The board lines are ReactNodes
+  // (they carry <strong> on the math), so words are counted per text leaf and the spoken
+  // passage is those same tokens joined — the two can never drift apart.
+  const { spoken, starts } = useMemo(() => {
+    const starts: number[] = []
+    const words: string[] = []
+    for (const part of [overview.problem, ...points]) {
+      starts.push(words.length)
+      walkWords(part, (w) => { words.push(w) })
+    }
+    return { spoken: words.join(' '), starts }
+  }, [overview.problem, points])
+
+  const [hi, setHi] = useState(-1)
   useEffect(() => {
-    if (!read) return
-    const cancel = speakWithHighlight(overview.say, { onWord: () => {}, onDone: () => doneRef.current() })
+    if (!read) { setHi(Infinity); return }
+    setHi(-1)
+    const cancel = speakWithHighlight(spoken, {
+      onWord: (i) => setHi((h) => (i < 0 ? Infinity : Math.max(h, i))),
+      onDone: () => { setHi(Infinity); doneRef.current() },
+    })
     return () => cancel()
-  }, [overview.say, read])
+  }, [spoken, read])
+
+  /** One board line, revealed word-by-word — markup (<strong> …) preserved. */
+  const line = (node: React.ReactNode, idx: number) => {
+    let n = starts[idx]
+    return mapWords(node, () => n++, hi)
+  }
 
   const shell = (children: React.ReactNode) => (
     <div style={{
@@ -809,13 +874,13 @@ function ExplanationPanel({ P, overview, read, onDone }: {
 
   return shell(
     <>
-      <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(22px, 2.5vw, 34px)', fontWeight: 700, lineHeight: 1.28, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>{overview.problem}</p>
+      <p style={{ margin: 0, fontFamily: 'var(--font-chalk)', fontSize: 'clamp(22px, 2.5vw, 34px)', fontWeight: 700, lineHeight: 1.28, color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.5), 0 0 8px rgba(214,240,206,0.35)' }}>{line(overview.problem, 0)}</p>
       {points.length > 0 && (
         <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)' }}>
           {points.map((pt, i) => (
             <li key={i} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 'clamp(7px,0.9vw,11px)', alignItems: 'baseline', fontFamily: 'var(--font-chalk)', fontSize: 'clamp(18px, 1.9vw, 25px)', lineHeight: 1.35, color: '#dbe9d6' }}>
               <span aria-hidden style={{ color: P.gold, fontWeight: 900, fontSize: '0.9em' }}>▸</span>
-              <span>{pt}</span>
+              <span>{line(pt, i + 1)}</span>
             </li>
           ))}
         </ul>
