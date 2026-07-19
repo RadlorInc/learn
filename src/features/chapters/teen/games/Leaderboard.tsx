@@ -3,12 +3,21 @@
  * Leaderboard — the Signed Numbers & Real-Number Fluency chapter (15–16) as a
  * PLAYABLE GAME.
  * World: a game leaderboard. Your SCORE swings up for wins and down for losses,
- * so signed arithmetic IS the score meter. Work out the combined result and set
- * the score with the ElevatorShaft meter — the answer is PRODUCED, not picked.
+ * so signed arithmetic IS the score meter. The answer is PRODUCED, not picked.
  *
- * NON-MCQ, two production interactions on GameShell:
- *   • SCORE  → the ElevatorShaft meter: dial the signed result (add/subtract,
- *              multiply/divide, order-of-ops with negatives & exponents).
+ * ⚠️ WHY THERE ARE TWO INSTRUMENTS. A meter is a number line: it performs + and −
+ * honestly, but there is no meter gesture for (−8) × (−6). This chapter used to
+ * dial × and ÷ on the meter too, so its `work` fell back to reciting "same signs
+ * give a positive" and the child dialled an answer they had already worked out in
+ * their head — the elevator failure named in docs/lessons.md. × and ÷ now happen
+ * on the RULING BENCH, where the sign is an action you take. Per-task gating: a
+ * question keeps the meter when moving along a line IS the operation.
+ *
+ * NON-MCQ, three production interactions on GameShell:
+ *   • SCORE  → the ElevatorShaft meter: + and −, and the order-of-ops tasks whose
+ *              skill is the SEQUENCING (a + b×c, a − c², k×b²).
+ *   • CARDS  → the RULING BENCH: × and ÷. Penalty/bonus cards worth `b`, applied
+ *              or revoked. Revoke three −4 penalties → the score climbs 12.
  *   • SORT   → the rational-vs-irrational SORTER: drop a number into the
  *              "ends or repeats" bin or the "never ends" bin (2 SpecPicker cards
  *              styled as sorting bins — not a quiz).
@@ -19,10 +28,10 @@
  * The math mirrors SignedNumberFluencyTeenLesson.makeRound (same L1/L2/L3 ramp),
  * but written as STRUCTURED generators that expose the numeric answer for the meter.
  */
-import { useEffect } from 'react'
+import { useEffect, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
-import { Palette, ElevatorShaft, SpecPicker } from './parts/gameKit'
+import { Palette, ElevatorShaft, SpecPicker, CommitBtn, Nudge } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#16233d', nightBot: '#0a1120',
@@ -42,12 +51,17 @@ const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 /** "a + b" / "a − |b|" — a signed expression read cleanly. */
 const sumExpr = (a: number, b: number) => `${fmt(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`
 
-// The answer is either a signed NUMBER (score meter) or a classification (sort bin).
-type V = { k: 'num'; n: number } | { k: 'pick'; id: string }
+// The answer is a signed NUMBER (score meter), a signed CARD COUNT (the ruling
+// bench — see CardBoard), or a classification (sort bin).
+type V = { k: 'num'; n: number } | { k: 'cards'; count: number; dir: 0 | 1 | -1 } | { k: 'pick'; id: string }
 
 interface Task extends BaseTask {
-  kind: 'score' | 'sort'
+  kind: 'score' | 'cards' | 'sort'
   n?: number; lo?: number; hi?: number      // score
+  cardVal?: number                          // cards — what ONE card is worth (signed)
+  signedCount?: number                      // cards — the signed count the child must produce
+  slots?: number                            // cards — how many card frames to lay out
+  target?: number                           // cards (÷ only) — the total swing to reach
   correctId?: string                        // sort
   choices?: { id: string; label: string }[] // sort
 }
@@ -67,26 +81,52 @@ function addTask(): Task {
   }
 }
 
-/** L2 — multiply / divide with sign rules. */
+/** L2 — multiply / divide, PERFORMED on the ruling bench.
+ *
+ *  This is the chapter's hardest operation and the reason the meter alone was not
+ *  enough: you cannot ride a meter to see why (−8) × (−6) is positive, so the old
+ *  version just recited "same signs give a positive" and the child dialled a
+ *  remembered answer. Here the sign is something you DO. A card is worth `b` — a
+ *  PENALTY when b < 0, a BONUS when b > 0 — and the ruling either APPLIES the
+ *  cards (+) or REVOKES them (−). Revoke eight −6 penalties and the score climbs
+ *  by 48: two negatives making a positive, watched rather than recalled.
+ *
+ *  ×  — the signed count IS the first factor: |a| cards, applied if a > 0, revoked
+ *       if a < 0. The board shows the swing it produces.
+ *  ÷  — the swing is GIVEN (the target) and the signed count is the answer: how
+ *       many `b` cards, applied or revoked, move the score by `a`? (This also
+ *       retires "a total swing of −48, shared into −6", which asked the child to
+ *       share something into a negative number of parts.)
+ */
+/** The ruling a task asks for, as pure data: `count` cards worth `cardVal`, with
+ *  `dir` telling you to apply (+1) or revoke (−1). Exported so the fairness
+ *  property can be asserted in a test — the child is graded on the signed count,
+ *  so exactly ONE (count, dir) pair may reach the answer. See __tests__/ruling. */
+export function ruling(a: number, b: number, isDiv: boolean): { cardVal: number; signedCount: number; swing: number } {
+  const signedCount = isDiv ? a / b : a
+  return { cardVal: b, signedCount, swing: signedCount * b }
+}
+
 function mulTask(): Task {
   if (Math.random() < 0.5) {
     const a = rnz(-8, 8), b = rnz(-6, 6)
     const n = a * b
+    const kind = b < 0 ? 'penalty' : 'bonus'
     return {
-      kind: 'score', title: 'Score multiplier', badge: `(${fmt(a)}) × (${fmt(b)})`, tone: 'a',
-      prompt: `Set the score for (${fmt(a)}) × (${fmt(b)}).`,
-      say: `A ${spoken(a)} point swing, ${spoken(b)} times over. Set the score.`,
-      work: [`Same signs give a positive, different signs a negative. ${fmt(a)} × ${fmt(b)} = ${fmt(n)}.`],
-      n, lo: Math.min(-30, n - 6), hi: Math.max(30, n + 6),
+      kind: 'cards', title: 'Rule on the cards', badge: `(${fmt(a)}) × (${fmt(b)})`, tone: 'a',
+      prompt: `${a < 0 ? 'Revoke' : 'Apply'} ${Math.abs(a)} ${kind} ${Math.abs(a) === 1 ? 'card' : 'cards'} worth ${fmt(b)} each.`,
+      say: `${spoken(a)} times ${spoken(b)}. Lay out ${Math.abs(a)} ${kind} cards worth ${spoken(b)} each, then ${a < 0 ? 'revoke' : 'apply'} them.`,
+      work: [`${Math.abs(a)} cards worth ${fmt(b)} each, ${a < 0 ? 'REVOKED — taking away' : 'APPLIED — adding'} ${a < 0 ? 'a' : 'a'} ${b < 0 ? 'penalty' : 'bonus'} moves the score ${n < 0 ? 'DOWN' : 'UP'}. The swing is ${fmt(n)}.`],
+      cardVal: b, signedCount: a, slots: Math.abs(a), n,
     }
   }
   const b = rnz(-6, 6), q = rnz(-6, 6), a = b * q  // clean division
   return {
-    kind: 'score', title: 'Split the score', badge: `(${fmt(a)}) ÷ (${fmt(b)})`, tone: 'a',
-    prompt: `Set the score for (${fmt(a)}) ÷ (${fmt(b)}).`,
-    say: `A total swing of ${spoken(a)}, shared into ${spoken(b)}. Set the score.`,
-    work: [`Same signs give a positive, different signs a negative. ${fmt(a)} ÷ ${fmt(b)} = ${fmt(q)}.`],
-    n: q, lo: -18, hi: 18,
+    kind: 'cards', title: 'Reach the swing', badge: `(${fmt(a)}) ÷ (${fmt(b)})`, tone: 'a',
+    prompt: `The score moved ${fmt(a)}. How many ${fmt(b)} cards did that — applied or revoked?`,
+    say: `The score swung by ${spoken(a)}, and every card is worth ${spoken(b)}. Find how many cards, and whether they were applied or revoked.`,
+    work: [`Each card is worth ${fmt(b)}, and the swing is ${fmt(a)}. ${Math.abs(q)} of them ${q < 0 ? 'REVOKED' : 'APPLIED'} gets there, so the answer is ${fmt(q)}.`],
+    cardVal: b, signedCount: q, slots: Math.abs(q), target: a, n: q,
   }
 }
 
@@ -125,6 +165,140 @@ function powerTask(): Task {
     work: [`Exponent first: ${b}² = ${b * b}. Then ${fmt(k)} × ${b * b} = ${fmt(n)}.`],
     n, lo: Math.min(-40, n - 6), hi: Math.max(40, n + 6),
   }
+}
+
+// ── THE RULING BENCH — the × and ÷ instrument ─────────────────────────────────
+// Mirrors the 12–14 debt-card board (SkyTower's MoneyBoard), re-costumed for a
+// 15–16 leaderboard. Two ideas do all the work: the CARD says what it is worth
+// (a penalty is negative, a bonus positive), and the RULING says what you do with
+// it (apply = add, revoke = take away). The swing meter is the consequence, never
+// the input — the child never dials the answer here.
+const SWING_RANGE = 50
+const swingClamp = (v: number) => Math.max(-SWING_RANGE, Math.min(SWING_RANGE, v))
+
+function CardBoard({ P, task, count, dir, reveal }: {
+  P: Palette; task: Task; count: number; dir: 0 | 1 | -1; reveal?: boolean
+}): ReactElement {
+  const b = task.cardVal ?? 0
+  const isPenalty = b < 0
+  const isDiv = task.target !== undefined
+  const chosen = dir !== 0 && count > 0
+  const swing = dir === 0 ? 0 : dir * count * b
+  const hit = isDiv && chosen && swing === task.target
+  const tint = !chosen ? P.gold : swing < 0 ? P.coral : P.mint
+
+  // The plain-word sentence is the whole point: the sign is a consequence of an
+  // action, stated in English, not a rule to recall.
+  const why = dir === 0 ? '' : isPenalty
+    ? (dir === 1 ? 'Apply a penalty → score goes DOWN' : 'Revoke a penalty → score goes UP')
+    : (dir === 1 ? 'Apply a bonus → score goes UP' : 'Revoke a bonus → score goes DOWN')
+
+  const fr = swingClamp(swing) / SWING_RANGE
+  const tf = swingClamp(task.target ?? 0) / SWING_RANGE
+
+  const meter = (
+    <div style={{ position: 'relative', width: 'clamp(30px,4vw,42px)', height: '100%', borderRadius: 8, background: P.glass, border: `1px solid ${P.glassBorder}`, flexShrink: 0 }}>
+      <div style={{ position: 'absolute', left: -4, right: -4, top: '50%', height: 2, background: P.glassBorder }} />
+      <div style={{ position: 'absolute', right: 'calc(100% + 3px)', top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(8px,1vw,11px)', color: P.mutedOnPaper }}>0</div>
+      {swing !== 0 && (
+        <div style={{ position: 'absolute', left: 4, right: 4, background: swing < 0 ? P.coral : P.mint, borderRadius: 5, transition: 'height 260ms, top 260ms, bottom 260ms',
+          ...(swing >= 0 ? { bottom: '50%', height: `${fr * 50}%` } : { top: '50%', height: `${-fr * 50}%` }) }} />
+      )}
+      {isDiv && (
+        <div style={{ position: 'absolute', left: -5, right: -5, bottom: `${50 + tf * 50}%`, height: 3, background: P.gold, boxShadow: `0 0 6px ${P.gold}`, transform: 'translateY(50%)' }} />
+      )}
+    </div>
+  )
+
+  const cardEl = (real: boolean, k: number) => (
+    <div key={k} style={{
+      width: 'clamp(32px,4.6vw,46px)', height: 'clamp(42px,6vw,58px)', flexShrink: 0, borderRadius: 6,
+      display: 'grid', placeItems: 'center', textAlign: 'center', lineHeight: 1.05, whiteSpace: 'pre-line',
+      fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(10px,1.3vw,14px)',
+      background: real ? (isPenalty ? 'linear-gradient(#ff9d82,#e25b3f)' : 'linear-gradient(#8fe9c6,#34a97f)') : 'transparent',
+      color: real ? (isPenalty ? '#fff' : '#0d3025') : P.mutedOnPaper,
+      border: real ? `2px solid ${isPenalty ? '#c0442e' : '#1f7f5c'}` : `2px dashed ${P.glassBorder}`,
+      opacity: real && dir === -1 ? 0.5 : 1,                       // revoked cards fade out
+      textDecoration: real && dir === -1 ? 'line-through' : 'none',
+      transition: 'opacity 200ms',
+    }}>{real ? `${isPenalty ? 'PEN' : 'BON'}\n${fmt(b)}` : ''}</div>
+  )
+  // × lays out every frame up front (the count is the thing being chosen); ÷ grows
+  // the row as the child hunts for the count that reaches the target.
+  const frames = isDiv ? count : Math.max(task.slots ?? 0, count)
+  const cards = Array.from({ length: frames }, (_, k) => cardEl(isDiv || k < count, k))
+
+  return (
+    <div style={{ width: 'clamp(268px, 46vw, 400px)', height: 'clamp(250px, 38vh, 350px)', boxSizing: 'border-box', borderRadius: 16, background: `linear-gradient(160deg, ${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: 'clamp(12px,2vh,20px) clamp(12px,1.8vw,20px)', gap: 'clamp(6px,1.2vh,12px)' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: P.creamSoft }}>
+          {isDiv ? `how many cards${hit ? ' — swing matched ✓' : ''}` : 'score swing'}
+        </div>
+        <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(32px,5.8vw,50px)', lineHeight: 1, color: chosen ? (reveal ? P.mint : tint) : P.gold, textShadow: '0 0 18px rgba(0,0,0,0.5)' }}>
+          {chosen ? fmt(isDiv ? dir * count : swing) : '?'}
+        </div>
+        {isDiv && <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1.15vw,13px)', color: P.creamSoft }}>target swing {fmt(task.target ?? 0)} · now {fmt(swing)}</div>}
+      </div>
+
+      <div style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', alignItems: 'stretch', justifyContent: 'center', gap: 'clamp(10px,1.6vw,18px)' }}>
+        {meter}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(4px,0.9vh,9px)' }}>
+          <div style={{ fontSize: 'clamp(10px,1.1vw,13px)', color: P.creamSoft }}>each card: {isPenalty ? `${fmt(b)} penalty` : `+${b} bonus`}</div>
+          <div style={{ display: 'flex', gap: 'clamp(4px,0.7vw,8px)', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '100%' }}>{cards}</div>
+        </div>
+      </div>
+
+      <div style={{ minHeight: '1.4em', textAlign: 'center', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'clamp(11px,1.25vw,15px)', color: chosen ? tint : 'transparent' }}>{why || '—'}</div>
+    </div>
+  )
+}
+
+function CardLoader({ P, task, value, setValue, disabled, reveal, onCommit }: {
+  P: Palette; task: Task; value: V; setValue: (v: V) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: V) => void
+}): ReactElement {
+  const count = value.k === 'cards' ? value.count : 0
+  const dir = value.k === 'cards' ? value.dir : 0
+  const isDiv = task.target !== undefined
+  const maxCount = isDiv ? 12 : (task.slots ?? 8)
+  const set = (c: number, d: 0 | 1 | -1) => setValue({ k: 'cards', count: c, dir: d })
+  const rightDir = (task.signedCount ?? 1) < 0 ? -1 : 1
+  const ready = count > 0 && dir !== 0
+
+  const actBtn = (d: 1 | -1, label: string) => {
+    const lit = dir === d || (reveal && rightDir === d)
+    return (
+      <button type="button" disabled={disabled} onClick={() => set(count, d)}
+        style={{ flex: 1, padding: 'clamp(10px,1.2vw,14px)', borderRadius: 12, cursor: disabled ? 'default' : 'pointer',
+          fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(13px,1.45vw,17px)',
+          background: lit ? P.gold : P.glass, color: lit ? '#16233d' : P.cream,
+          border: `2px solid ${lit ? P.gold : P.glassBorder}`, transition: 'background 140ms, border-color 140ms' }}>{label}</button>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.4vw,16px)', width: '100%' }}>
+      <CardBoard P={P} task={task} count={count} dir={dir} reveal={reveal} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Nudge P={P} label="−" disabled={disabled} onClick={() => set(Math.max(0, count - 1), dir)} />
+        <div style={{ minWidth: 140, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(24px,2.6vw,34px)', fontWeight: 800, color: reveal ? P.mint : P.gold }}>{count}</div>
+          <div style={{ fontSize: 'clamp(11px,1.15vw,14px)', color: P.creamSoft }}>{isDiv ? 'how many cards' : `cards · use ${task.slots}`}</div>
+        </div>
+        <Nudge P={P} label="+" disabled={disabled} onClick={() => set(Math.min(maxCount, count + 1), dir)} />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, width: '100%', maxWidth: 'clamp(280px,42vw,440px)' }}>
+        <div style={{ fontSize: 'clamp(11px,1.1vw,14px)', color: P.creamSoft, fontWeight: 700, letterSpacing: '0.04em' }}>Apply them or revoke them?</div>
+        <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+          {actBtn(1, '＋ Apply')}
+          {actBtn(-1, '－ Revoke')}
+        </div>
+      </div>
+
+      <CommitBtn P={P} label="RULE ON IT ✓" disabled={disabled || !ready} onClick={() => onCommit(value)} />
+    </div>
+  )
 }
 
 // ── SORT task (L3): drop the number into the right bin ─────────────────────────
@@ -389,15 +563,26 @@ const CONFIG: GameConfig<V, Task> = {
   palette: P,
   motif: '🎮',
   makeTask,
-  initialValue: (t) => (t.kind === 'score' ? { k: 'num', n: 0 } : { k: 'pick', id: '' }),
-  grade: (t, v) => (t.kind === 'score' ? v.k === 'num' && v.n === t.n : v.k === 'pick' && v.id === t.correctId),
-  revealText: (t) => (t.kind === 'score' ? fmt(t.n ?? 0) : (t.choices?.find((c) => c.id === t.correctId)?.label ?? '')),
-  glide: (t, _from, setValue, later) => later(() => setValue(t.kind === 'score' ? { k: 'num', n: t.n ?? 0 } : { k: 'pick', id: t.correctId ?? '' }), 320),
+  initialValue: (t) => (t.kind === 'score' ? { k: 'num', n: 0 } : t.kind === 'cards' ? { k: 'cards', count: 0, dir: 0 } : { k: 'pick', id: '' }),
+  // Cards grade on the SIGNED COUNT the child built (dir · count), not on a number
+  // they typed — `b` is fixed, so dir·count·b = answer has exactly one solution.
+  grade: (t, v) => t.kind === 'score' ? v.k === 'num' && v.n === t.n
+    : t.kind === 'cards' ? v.k === 'cards' && v.dir !== 0 && v.dir * v.count === t.signedCount
+      : v.k === 'pick' && v.id === t.correctId,
+  revealText: (t) => (t.kind === 'sort' ? (t.choices?.find((c) => c.id === t.correctId)?.label ?? '') : fmt(t.n ?? 0)),
+  glide: (t, _from, setValue, later) => later(() => setValue(
+    t.kind === 'score' ? { k: 'num', n: t.n ?? 0 }
+      : t.kind === 'cards' ? { k: 'cards', count: Math.abs(t.signedCount ?? 0), dir: (t.signedCount ?? 1) < 0 ? -1 : 1 }
+        : { k: 'pick', id: t.correctId ?? '' }), 320),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => {
     if (task.kind === 'score') {
       const n = value.k === 'num' ? value.n : 0
       return <ElevatorShaft P={palette} value={n} setValue={(x) => setValue({ k: 'num', n: x })} min={task.lo ?? -18} max={task.hi ?? 18}
         disabled={disabled} reveal={reveal} onCommit={(x) => onCommit({ k: 'num', n: x })} commitLabel="POST SCORE ✓" />
+    }
+    if (task.kind === 'cards') {
+      return <CardLoader P={palette} task={task} value={value} setValue={setValue}
+        disabled={disabled} reveal={reveal} onCommit={onCommit} />
     }
     const id = value.k === 'pick' ? value.id : ''
     return <SpecPicker P={palette} choices={task.choices ?? []} value={id} setValue={(x) => setValue({ k: 'pick', id: x })}
@@ -408,7 +593,7 @@ const CONFIG: GameConfig<V, Task> = {
     <ScoreScene palette={palette} value={value} stepIndex={stepIndex} frameCount={frameCount} ended={ended} />
   ),
   start: {
-    blurb: <><strong>You&apos;re on the leaderboard.</strong> Wins push your score <strong>up</strong>, losses drop it <strong>below the line</strong>. Combine the swings and post the score — some numbers even get sorted by how their decimals behave.</>,
+    blurb: <><strong>You&apos;re on the leaderboard.</strong> Wins push your score <strong>up</strong>, losses drop it <strong>below the line</strong>. Combine the swings and post the score — and when the referee <strong>revokes a penalty</strong>, watch which way your score moves.</>,
     ticket: { title: 'Round result', badge: '3 − 5', tone: 'a' },
     startLabel: 'Check the board →',
   },
@@ -419,18 +604,35 @@ const CONFIG: GameConfig<V, Task> = {
       <>Above the line is <strong>positive</strong>; below it is <strong>negative</strong>.</>,
       <>A loss is a <strong>jump down</strong>; a win is a <strong>jump up</strong>.</>,
       <>Cross the <strong>zero line</strong> and the score goes below.</>,
+      <><strong>Revoke</strong> a penalty and the score goes <strong>up</strong>.</>,
     ],
   },
   tutorial: { task: DEMO_TASK, initial: { k: 'num', n: 0 }, hand: 'dragV', steps: DEMO_STEPS },
-  guided: {
-    task: {
-      kind: 'score', title: 'Combine the round', badge: '−4 + 6', tone: 'a', prompt: '',
-      say: 'You lost four, then won six. Set the new score.',
-      work: ['Start at −4, move 6 up: you land on 2.'],
-      n: 2, lo: -18, hi: 18,
+  // TWO guided rounds. The walkthrough teaches the meter, but the ruling bench is a
+  // separate gesture that scored play grades — an unrehearsed graded step is exactly
+  // the trap where a child gets the maths right and loses the mark on a move nobody
+  // showed them. The second round is deliberately the TWO-NEGATIVES case, because
+  // that is the one the old meter could never explain.
+  guided: [
+    {
+      task: {
+        kind: 'score', title: 'Combine the round', badge: '−4 + 6', tone: 'a', prompt: '',
+        say: 'You lost four, then won six. Set the new score.',
+        work: ['Start at −4, move 6 up: you land on 2.'],
+        n: 2, lo: -18, hi: 18,
+      },
+      coach: 'Your turn — I will help. Set this score.', hand: 'dragV',
     },
-    coach: 'Your turn — I will help. Set this score.', hand: 'dragV',
-  },
+    {
+      task: {
+        kind: 'cards', title: 'Rule on the cards', badge: '(−3) × (−4)', tone: 'a', prompt: '',
+        say: 'One more — a ruling this time. Three penalty cards worth negative four each were given by mistake. Revoke all three, and watch what the score does.',
+        work: ['3 penalty cards worth −4 each, REVOKED. Taking away a penalty moves the score UP. The swing is +12.'],
+        cardVal: -4, signedCount: -3, slots: 3, n: 12,
+      },
+      coach: 'Lay out the three penalties, then revoke them.', hand: 'tap',
+    },
+  ],
   sig: (t) => `${t.kind}:${t.badge}`,
 }
 
