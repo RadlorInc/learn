@@ -135,3 +135,46 @@ export const strugglerKid = {
 /** Console/page errors that are known environment noise, not real defects. */
 export const IGNORED_ERRORS =
   /React DevTools|Autoplay|speechSynthesis|AudioContext|user gesture|not allowed to (start|play)|ResizeObserver loop/i
+
+// ── reachPractice — walk a teen chapter from its start card into the scored loop ──
+// The intro auto-rolls on Milo's narration finishing; headless has no voice, so it
+// falls back to a TIMER, which is why this polls rather than waits a fixed beat.
+// Sequence: start card ("… →") → intro → walkthrough ("I've got it →") → guided
+// ("Let's try →" on some chapters) → practice.
+export async function reachPractice(page: Page, opts: { timeoutMs?: number } = {}): Promise<boolean> {
+  const deadline = Date.now() + (opts.timeoutMs ?? 120_000)
+
+  const clickMatching = async (re: RegExp): Promise<boolean> => {
+    for (const btn of await page.locator('button:not([disabled])').all()) {
+      const label = (await btn.innerText().catch(() => '')).trim()
+      if (re.test(label)) { await btn.click({ timeout: 1000 }).catch(() => {}); return true }
+    }
+    return false
+  }
+
+  // 1. start card — the only button ending in an arrow before the board exists.
+  await clickMatching(/→\s*$/)
+
+  // 2. poll: skip the walkthrough / enter guided as soon as either offer appears,
+  //    and stop the moment a live question board is on screen.
+  while (Date.now() < deadline) {
+    const board = page.locator('[data-test-answer]').first()
+    if (await board.count()) {
+      const phase = await board.getAttribute('data-test-phase').catch(() => null)
+      if (phase === 'guided' || phase === 'practice') return true
+    }
+    if (!(await clickMatching(/I've got it|Let's try|→\s*$/))) await page.waitForTimeout(700)
+  }
+  return false
+}
+
+/** Instrument gestures — a padded question must never tell a child to do one of these,
+ *  because on a padded question the instrument is not on screen. */
+export const GESTURE_VERBS =
+  // Trailing \b matters on verbs that are prefixes of legitimate nouns — "weigh"
+  // inside "the case weight", "tile" inside "tiles" — or correct copy gets flagged.
+  // Trailing \b matters on verbs that are prefixes of legitimate nouns — "weigh" inside
+  // "the case weight". And match "tile the"/"shade the" as VERB PHRASES: "tiles" and
+  // "shaded" appear legitimately as nouns in correct copy ("how many tiles go along one
+  // side"), so the bare word would flag questions that are actually fine.
+  /\b(drag|slide|crank|lay|stack|pour|dial|weigh)\b|\b(tile the|shade the|set the|turn the|press |tap the (map|grid|tile|meter|gear|square))/i
