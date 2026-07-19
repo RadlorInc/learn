@@ -13,17 +13,24 @@
  * on the RULING BENCH, where the sign is an action you take. Per-task gating: a
  * question keeps the meter when moving along a line IS the operation.
  *
- * NON-MCQ, three production interactions on GameShell:
- *   • SCORE  → the ElevatorShaft meter: + and −, and the order-of-ops tasks whose
- *              skill is the SEQUENCING (a + b×c, a − c², k×b²).
+ * FOUR ways to answer, gated PER QUESTION (never per chapter):
+ *   • SCORE  → the ElevatorShaft meter: + and −, where sliding along a line IS
+ *              the operation.
  *   • CARDS  → the RULING BENCH: × and ÷. Penalty/bonus cards worth `b`, applied
  *              or revoked. Revoke three −4 penalties → the score climbs 12.
+ *   • TAP    → AnswerPad: the order-of-ops and exponent questions (a + b×c, a − c²,
+ *              k × b²). The meter never solved these — the child worked them out in
+ *              their head and dialled the result — so they are choices now, and the
+ *              distractors are the real misconceptions (left-to-right; "squared
+ *              means times two"), making a wrong tap a wrong METHOD.
  *   • SORT   → the rational-vs-irrational SORTER: drop a number into the
  *              "ends or repeats" bin or the "never ends" bin (2 SpecPicker cards
  *              styled as sorting bins — not a quiz).
  *
- * Exactly the 12–14 shape: overview read-along + a code-drawn leaderboard scene →
- * baby-step walkthrough → guided → scored play. Scene is code-drawn (no assets).
+ * The 12–14 shape: overview read-along + a code-drawn leaderboard scene → a TWO-
+ * example baby-step walkthrough (the meter, then the ruling bench) → scored play.
+ * No guided round: both graded gestures are already worked in the walkthrough.
+ * Scene is code-drawn (no assets).
  *
  * The math mirrors SignedNumberFluencyTeenLesson.makeRound (same L1/L2/L3 ramp),
  * but written as STRUCTURED generators that expose the numeric answer for the meter.
@@ -31,7 +38,7 @@
 import { useEffect, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
-import { Palette, ElevatorShaft, SpecPicker, CommitBtn, Nudge } from './parts/gameKit'
+import { Palette, ElevatorShaft, SpecPicker, CommitBtn, Nudge, numChoices } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#16233d', nightBot: '#0a1120',
@@ -58,6 +65,10 @@ type V = { k: 'num'; n: number } | { k: 'cards'; count: number; dir: 0 | 1 | -1 
 interface Task extends BaseTask {
   kind: 'score' | 'cards' | 'sort'
   n?: number; lo?: number; hi?: number      // score
+  /** Set → this question is answered by TAPPING a choice instead of dialling. Carries
+   *  the misconception values that become the distractors, so a wrong tap is a wrong
+   *  METHOD (left-to-right, "squared means ×2"), not a slip of the finger. */
+  pad?: number[]
   cardVal?: number                          // cards — what ONE card is worth (signed)
   signedCount?: number                      // cards — the signed count the child must produce
   slots?: number                            // cards — how many card frames to lay out
@@ -130,40 +141,52 @@ function mulTask(): Task {
   }
 }
 
-/** L2 — two-step signed order of operations: a + b × c (multiply first). */
+/** L2 — two-step signed order of operations: a + b × c (multiply first).
+ *  ANSWERED BY TAPPING. The meter never solved this one — the child worked the
+ *  whole thing out in their head and then dialled the number. The skill here is
+ *  the ORDER, so the distractors are the wrong orders. */
 function twoStepTask(): Task {
   const a = rint(-6, 6), b = rnz(-5, 5), c = rnz(-4, 4)
   const n = a + b * c
   return {
     kind: 'score', title: 'Two-step swing', badge: `${fmt(a)} + (${fmt(b)}) × (${fmt(c)})`, tone: 'b',
     prompt: `Set the score for ${fmt(a)} + (${fmt(b)}) × (${fmt(c)}).`,
-    say: `Base score ${spoken(a)}, plus a bonus of ${spoken(b)} times ${spoken(c)}. Set the total.`,
+    padInstruction: 'Tap the total score.',
+    say: `Base score ${spoken(a)}, plus a bonus of ${spoken(b)} times ${spoken(c)}. Which total is right?`,
     work: [`Multiply first: ${fmt(b)} × ${fmt(c)} = ${fmt(b * c)}. Then ${fmt(a)} + ${fmt(b * c)} = ${fmt(n)}.`],
-    n, lo: Math.min(-30, n - 6), hi: Math.max(30, n + 6),
+    n, pad: [(a + b) * c, a - b * c, a + b + c],   // left-to-right · sign slip · all-added
   }
 }
 
-/** L3 — order of operations with negatives & exponents: a − c²  or  k × b². */
+/** L3 — order of operations with negatives & exponents: a − c²  or  k × b².
+ *  ANSWERED BY TAPPING, same reasoning as twoStepTask. The headline distractor is
+ *  the "squared means times two" misconception (c² → 2c), which is the one worth
+ *  catching — the child who taps it has a wrong RULE, not a wrong sum. */
 function powerTask(): Task {
   if (Math.random() < 0.5) {
-    const c = rint(2, 5), a = rint(-8, 8)
+    // c ≥ 3: at c = 2 the "squared means ×2" distractor (a − 2c) EQUALS the answer
+    // (2c = c²), so numChoices drops it and the one misconception worth catching
+    // disappears from the pad.
+    const c = rint(3, 5), a = rint(-8, 8)
     const n = a - c * c
     return {
       kind: 'score', title: 'Penalty squared', badge: `${fmt(a)} − ${c}²`, tone: 'b',
       prompt: `Set the score for ${fmt(a)} − ${c}².`,
-      say: `Score ${spoken(a)}, then a penalty of ${c} squared. Set the result.`,
+      padInstruction: 'Tap the score after the penalty.',
+      say: `Score ${spoken(a)}, then a penalty of ${c} squared. Which score is right?`,
       work: [`Exponent first: ${c}² = ${c * c}. Then ${fmt(a)} − ${c * c} = ${fmt(n)}.`],
-      n, lo: Math.min(-40, n - 6), hi: Math.max(20, n + 6),
+      n, pad: [a - 2 * c, a + c * c, c * c - a],  // squared→×2 · sign slip · reversed order
     }
   }
-  const b = rint(2, 5), k = rnz(-4, 4)
+  const b = rint(3, 5), k = rnz(-4, 4)   // b ≥ 3 for the same reason as above
   const n = k * (b * b)
   return {
     kind: 'score', title: 'Bonus squared', badge: `(${fmt(k)}) × ${b}²`, tone: 'b',
     prompt: `Set the score for (${fmt(k)}) × ${b}².`,
-    say: `A multiplier of ${spoken(k)}, times ${b} squared. Set the score.`,
+    padInstruction: 'Tap the score the bonus gives.',
+    say: `A multiplier of ${spoken(k)}, times ${b} squared. Which score is right?`,
     work: [`Exponent first: ${b}² = ${b * b}. Then ${fmt(k)} × ${b * b} = ${fmt(n)}.`],
-    n, lo: Math.min(-40, n - 6), hi: Math.max(40, n + 6),
+    n, pad: [k * 2 * b, -n, k + b * b],                  // squared→×2 · sign slip · added not multiplied
   }
 }
 
@@ -583,6 +606,11 @@ const CONFIG: GameConfig<V, Task> = {
   palette: P,
   motif: '🎮',
   makeTask,
+  // PER-TASK gating, the same rule the 12–14 band uses: a question shows the pad
+  // when the instrument was never doing the solving. + and − keep the meter (moving
+  // along a line IS that operation) and × and ÷ keep the ruling bench; the
+  // order-of-ops and exponent questions were compute-then-dial, so they get choices.
+  answerPad: (t) => (t.pad ? numChoices(t.n ?? 0, t.pad) : []),
   initialValue: (t) => (t.kind === 'score' ? { k: 'num', n: 0 } : t.kind === 'cards' ? { k: 'cards', count: 0, dir: 0 } : { k: 'pick', id: '' }),
   // Cards grade on the SIGNED COUNT the child built (dir · count), not on a number
   // they typed — `b` is fixed, so dir·count·b = answer has exactly one solution.
@@ -635,20 +663,9 @@ const CONFIG: GameConfig<V, Task> = {
     { task: DEMO_TASK, initial: { k: 'num', n: 0 }, hand: 'dragV', steps: DEMO_STEPS },
     { task: DEMO_CARDS, initial: { k: 'cards', count: 0, dir: 0 }, hand: 'tap', steps: DEMO_CARD_STEPS },
   ],
-  // ONE guided round, matching the 12–14 shape. The ruling bench is still a
-  // separately-graded gesture, so it is rehearsed in the WALKTHROUGH (example 2)
-  // rather than here — exactly how the 12–14 signed chapter teaches its own
-  // card mechanic. A graded gesture taught nowhere is the trap where a child gets
-  // the maths right and loses the mark on a move nobody showed them.
-  guided: {
-    task: {
-      kind: 'score', title: 'Combine the round', badge: '−4 + 6', tone: 'a', prompt: '',
-      say: 'You lost four, then won six. Set the new score.',
-      work: ['Start at −4, move 6 up: you land on 2.'],
-      n: 2, lo: -18, hi: 18,
-    },
-    coach: 'Your turn — I will help. Set this score.', hand: 'dragV',
-  },
+  // No guided round: the walkthrough works BOTH examples (the meter, then the
+  // ruling bench), so every gesture scored play grades has already been shown.
+  // Walkthrough → straight into play.
   sig: (t) => `${t.kind}:${t.badge}`,
 }
 
