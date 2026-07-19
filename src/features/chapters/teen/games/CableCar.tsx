@@ -142,7 +142,7 @@ function makeFrom(s: Spec): Task {
       // badge — it was the only signal that the rate is negative.
       ...base, title: 'Draining', badge: `going DOWN · ${x1} min → ${y1} L,  ${x2} min → ${y2} L`, prompt, say: prompt,
       context: 'This tank is draining — the level drops every minute.',
-      instruction: 'Set the "start" dial, then the "slope" dial (the fill rate), to hit both readings.',
+      instruction: 'Set the start level, then the fill rate, to hit both readings.',
       work: ['Draining means the rate is NEGATIVE.', `Rate = (${y2} − ${y1}) ÷ (${x2} − ${x1}) = ${m}; start ${b}.`],
     }
   }
@@ -161,7 +161,7 @@ function makeFrom(s: Spec): Task {
   return {
     ...base, title: 'Two readings', badge: `${x1} min → ${y1} L,  ${x2} min → ${y2} L`, prompt, say: prompt,
     context: 'A tank fills at a steady rate over time.',
-    instruction: 'Set the "start" dial, then the "slope" dial (the fill rate), to hit both readings.',
+    instruction: 'Set the start level, then the fill rate, to hit both readings.',
     work: ['Fill rate = change in level ÷ change in time between the readings.', `Fills ${m} litres a minute, starting at ${b}.`],
   }
 }
@@ -240,7 +240,7 @@ const GUIDED_TASK: Task = {
   title: 'Two readings', badge: '0 min → 1 L,  1 min → 2 L', tone: 'a', showEquals: false,
   p1: [0, 1], p2: [1, 2], answer: { m: 1, b: 1 },
   context: 'A tank fills at a steady rate over time.',
-  instruction: 'Set the "start" dial, then the "slope" dial (the fill rate), then press SET LINE ✓.',
+  instruction: 'Set the start level and the fill rate, then press SET LINE ✓.',
   prompt: 'Match the tank at (0,1) and (1,2): starts at 1 litre, rises 1 litre each minute. Set it, then press Set line.',
   say: 'Set the start level to one litre, then a fill rate of one — up one litre every minute. Then press set line.',
   work: ['Starts at 1 litre; it rises 1 litre each minute.', 'Fill rate 1, start 1.'],
@@ -436,7 +436,7 @@ const CONFIG: GameConfig<LV, Task> = {
           onPick={(p) => onCommit({ ...value, pick: p })} />
       )
     return (
-      <LineSetter P={palette} line={{ m: value.m, b: value.b }} setLine={(l) => setValue({ ...value, m: l.m, b: l.b })}
+      <LineSetter P={palette} labels={{ m: 'rate', b: 'start' }} line={{ m: value.m, b: value.b }} setLine={(l) => setValue({ ...value, m: l.m, b: l.b })}
         range={6} disabled={disabled} reveal={reveal} onCommit={(l) => onCommit({ ...value, m: l.m, b: l.b })} commitLabel="SET LINE ✓" />
     )
   },
@@ -450,7 +450,7 @@ const CONFIG: GameConfig<LV, Task> = {
       { say: "First the start level — the number on its own. Here it is one, so the tank begins at one litre.", value: { m: 1, b: 0 }, hand: 'tap', board: 'start (b) = 1' },
       { say: "So I lift the start to one litre. Watch the whole line rise up to begin at one.", value: { m: 1, b: 1 }, hand: 'tap', board: 'begins at 1 litre' },
       { say: "Now the fill RATE — the number with x. Here it is two, so the level rises two litres every single minute.", value: { m: 1, b: 1 }, hand: 'tap', board: 'rate (m) = 2' },
-      { say: "The dial for the fill rate is labelled slope. I set it to two litres a minute. Now the line tilts up two for every step across.", value: { m: 2, b: 1 }, hand: 'tap', board: 'slope dial = fill rate = 2' },
+      { say: "I set the rate dial to two litres a minute. Now the line tilts up two for every step across.", value: { m: 2, b: 1 }, hand: 'tap', board: 'fill rate = 2 L a minute' },
       { say: "Let us check it. Start at one. After one minute add two: one plus two is three litres.", value: { m: 2, b: 1 }, hand: 'tap', board: '1 min: 1 + 2 = 3' },
       { say: "After two minutes add two more: one plus four is five litres. Every point sits right on the line.", value: { m: 2, b: 1 }, hand: 'tap', board: '2 min: 1 + 4 = 5' },
       { say: "That straight line IS the tank filling — start at one, up two each minute.", value: { m: 2, b: 1 }, hand: 'tap', board: 'y = 2x + 1 ✓' },

@@ -416,10 +416,14 @@ export function PlotGrid({
 export interface Line { m: number; b: number }
 /** Set a line's slope & intercept with two dials; live line drawn on a grid. */
 export function LineSetter({
-  P, line, setLine, range = 6, disabled, reveal, onCommit, commitLabel = 'SET LINE ✓',
+  P, line, setLine, range = 6, disabled, reveal, onCommit, commitLabel = 'SET LINE ✓', labels,
 }: {
   P: Palette; line: Line; setLine: (l: Line) => void; range?: number
   disabled?: boolean; reveal?: boolean; onCommit: (l: Line) => void; commitLabel?: string
+  /** Dial captions. Default 'slope'/'start' — override so the control speaks the
+   *  chapter's OWN vocabulary (Water Tank teaches "fill rate", and a child hunting
+   *  for the word the prompt used must find it on the dial, not a synonym). */
+  labels?: { m?: string; b?: string }
 }) {
   const S = 260, pad = 14, span = 2 * range
   const cell = (S - 2 * pad) / span
@@ -440,8 +444,8 @@ export function LineSetter({
         <circle cx={toPx(0)} cy={S - toPx(clampY(line.b))} r={5} fill={col} stroke="#fff" strokeWidth={1.4} />
       </svg>
       <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
-        <DialCol P={P} label="slope" value={line.m} col={col} disabled={disabled} onDown={() => setLine({ ...line, m: Math.max(-5, line.m - 1) })} onUp={() => setLine({ ...line, m: Math.min(5, line.m + 1) })} />
-        <DialCol P={P} label="start" value={line.b} col={col} disabled={disabled} onDown={() => setLine({ ...line, b: Math.max(-range, line.b - 1) })} onUp={() => setLine({ ...line, b: Math.min(range, line.b + 1) })} />
+        <DialCol P={P} label={labels?.m ?? 'slope'} value={line.m} col={col} disabled={disabled} onDown={() => setLine({ ...line, m: Math.max(-5, line.m - 1) })} onUp={() => setLine({ ...line, m: Math.min(5, line.m + 1) })} />
+        <DialCol P={P} label={labels?.b ?? 'start'} value={line.b} col={col} disabled={disabled} onDown={() => setLine({ ...line, b: Math.max(-range, line.b - 1) })} onUp={() => setLine({ ...line, b: Math.min(range, line.b + 1) })} />
       </div>
       <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(line)} />
     </div>

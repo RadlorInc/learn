@@ -118,7 +118,10 @@ export interface TutorialScript<V, T extends BaseTask> {
   steps: DemoStep<V>[]
 }
 
-/** The "we do" guided order — live instrument, coached, NOT scored. */
+/** The "we do" guided order — live instrument, coached, NOT scored. A chapter may
+ *  supply an ARRAY when it has more than one interaction to rehearse (BalanceBench:
+ *  one equation on the pad, one inequality on the RayLine — the symbol chip is a
+ *  separately-graded step a child must meet unscored before it can cost them). */
 export interface GuidedConfig<T extends BaseTask> {
   task: T
   coach: string     // spoken when the guided order appears
@@ -164,8 +167,8 @@ export interface GameConfig<V, T extends BaseTask> {
    *  worked example, or an ARRAY of examples played back-to-back (each may use a
    *  different instrument/task — good for chapters that teach several operations). */
   tutorial?: TutorialScript<V, T> | TutorialScript<V, T>[]
-  /** "we do" guided order, shown after the walkthrough. */
-  guided?: GuidedConfig<T>
+  /** "we do" guided order(s), shown after the walkthrough. An array runs in sequence. */
+  guided?: GuidedConfig<T> | GuidedConfig<T>[]
   /** Optional ANIMATED SCENE that replaces the static instrument during the "I do"
    *  walkthrough — an in-engine explainer (code-drawn, CSS-glide) that acts the math
    *  out like a cartoon video. Driven by the same narration timeline: it receives the
@@ -278,20 +281,24 @@ export function Game<V, T extends BaseTask>({
     loadTask(0, 0, 0, false)
   }, [childName, loadTask])
 
-  // "we do" — one live, coached, NON-scored order before real play.
-  const enterGuided = useCallback(() => {
-    const g = config.guided!
+  // "we do" — live, coached, NON-scored order(s) before real play. `guidedIdx`
+  // walks the array form; the single-object form is a one-element walk.
+  const guidedList = useMemo(() => (config.guided ? (Array.isArray(config.guided) ? config.guided : [config.guided]) : []), [config.guided])
+  const guidedIdx = useRef(0)
+  const enterGuided = useCallback((i: number) => {
+    const g = guidedList[i]
+    guidedIdx.current = i
     setStage('guided'); setTask(g.task); setValue(config.initialValue(g.task)); setSub('active')
     flashCue('turn')
     speakAfterCurrent(`${g.coach} ${g.task.say}`)
-  }, [config, flashCue])
+  }, [guidedList, config, flashCue])
 
   const afterDemo = useCallback(() => {
     // Fade the guided round only for a returning expert (resumes at the top tier);
     // everyone else still gets it (ux-design.md §2/§5). The walkthrough is shown
     // regardless, with the "I've got it →" skip for the fast learner.
-    if (config.guided && startDiff < 3) enterGuided(); else finishDemo()
-  }, [config.guided, enterGuided, finishDemo, startDiff])
+    if (guidedList.length && startDiff < 3) enterGuided(0); else finishDemo()
+  }, [guidedList, enterGuided, finishDemo, startDiff])
 
   // scored submit (the "you do" loop)
   function submit(v: V) {
@@ -325,20 +332,24 @@ export function Game<V, T extends BaseTask>({
     }
   }
 
-  // guided submit — encouraging either way, NOT scored, then into real play.
+  // guided submit — encouraging either way, NOT scored; walks to the next guided
+  // order if the chapter supplied several, then into real play.
   function submitGuided(v: V) {
     if (!task || sub !== 'active') return
     const ok = config.grade(task, v)
+    const next = guidedIdx.current + 1
+    const after = next < guidedList.length ? () => enterGuided(next) : finishDemo
+    const lastWords = next < guidedList.length ? `One more with me.` : `Now let's play.`
     if (ok) {
       setSub('sold')
       flashCue('solved')
-      speak(`You did it, ${childName}! Now let's play.`)
-      later(finishDemo, 1700)
+      speak(`You did it, ${childName}! ${lastWords}`)
+      later(after, 1700)
     } else {
       setSub('reveal')
-      speak(`Almost — here's where it goes. Now let's play it for real.`)
+      speak(`Almost — here's where it goes. ${lastWords}`)
       if (value != null) config.glide(task, value, setValue, later)
-      later(finishDemo, 2800)
+      later(after, 2800)
     }
   }
 
@@ -373,7 +384,7 @@ export function Game<V, T extends BaseTask>({
                 ? String(padChoices.find((c) => config.grade(task, c as unknown as V)) ?? '')
                 : config.revealText(task)
               : '',
-          'data-test-phase': sub === 'sold' ? 'solved' : stage === 'guided' ? 'guided' : 'practice',
+          'data-test-phase': sub === 'sold' ? 'solved' : sub === 'reveal' || sub === 'reteach' ? 'reveal' : stage === 'guided' ? 'guided' : 'practice',
         }
       : undefined
 
@@ -520,13 +531,13 @@ export function Game<V, T extends BaseTask>({
                         a 320px-tall frame that height is the difference between a
                         finger-sized commit button and a scaled-down one. The board's
                         instruction still tells the child what to do. */}
-                    {stage === 'guided' && sub === 'active' && config.guided && !short && <HandCue P={P} kind={config.guided.hand} />}
+                    {stage === 'guided' && sub === 'active' && guidedList.length > 0 && !short && <HandCue P={P} kind={guidedList[guidedIdx.current].hand} />}
                   </FitSlot>
                 )}
                 {/* The chapter's hand cue describes its INSTRUMENT gesture ('drag',
                     'crank'…). On a padded question there is no instrument to drag, so
                     the cue must show the gesture the child can actually make. */}
-                {padChoices.length > 0 && stage === 'guided' && sub === 'active' && config.guided && <HandCue P={P} kind="tap" />}
+                {padChoices.length > 0 && stage === 'guided' && sub === 'active' && guidedList.length > 0 && <HandCue P={P} kind="tap" />}
               </div>
             </CenterFill>
           </>

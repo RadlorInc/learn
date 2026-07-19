@@ -144,6 +144,16 @@ const GUIDED_TASK: Task = {
   work: ['Find the x that makes x + 1 equal 4.', 'x = 3 makes both pans read 4.'],
 }
 
+const GUIDED_INEQ: Task = {
+  title: 'Weight rule', badge: 'x + 2 \u2264 6', tone: 'b', showEquals: false, kind: 'ineq', op: 'le', bound: 4,
+  m: 0, c: 0, right: 6, answer: 4, leftExpr: 'x + 2', min: 0, max: 8,
+  context: 'Check-in will only take this case if its weight fits the rule below.',
+  instruction: 'Pick the symbol, then set the edge weight in kg.',
+  prompt: 'Solve x + 2 \u2264 6. Work out x, then shade every case weight that\u2019s allowed.',
+  say: 'This case has a rule: x plus 2 is at most 6. Work out x, then pick the symbol and set the edge weight.',
+  work: ['Solve for x: x + 2 \u2264 6 means x \u2264 4.', '4 itself is allowed, so the dot is filled. Shade every weight at most 4.'],
+}
+
 // ── Animated walkthrough scene — the storyboard, in motion ────────────────────
 // A code-drawn cartoon BALANCE SCALE that acts out the worked example x + 3 = 8.
 // The LEFT pan carries a SUITCASE (the unknown x) plus a stack of three known
@@ -470,11 +480,13 @@ const CONFIG: GameConfig<Val, Task> = {
       { say: "Balanced means solved: the mystery case weighs five kilos. Press weigh when it's level. Next, a different kind of rule.", value: 5, hand: 'tap', board: 'x = 5' },
     ],
   }, INEQ_SCRIPT],
-  guided: {
-    task: GUIDED_TASK,
-    coach: 'Your turn — I will help.',
-    hand: 'drag',
-  },
+  // Two guided orders: the equation on the pad, then ONE inequality on the RayLine
+  // — the symbol chip is a separately-graded step (default 'le'), so a child must
+  // rehearse picking it unscored before it can ever cost them a mark.
+  guided: [
+    { task: GUIDED_TASK, coach: 'Your turn — I will help.', hand: 'drag' },
+    { task: GUIDED_INEQ, coach: 'One more — a weight rule this time.', hand: 'tap' },
+  ],
   TutorialScene: TeachScene,
   start: { blurb: <><strong style={{ color: P.cream }}>You&apos;re running the check-in scale.</strong> Work out x — the mystery case&apos;s weight — that makes each equation balance. When a case has a weight <em>rule</em> instead, shade every weight it&apos;s allowed to be.</>, ticket: { title: 'Find x', badge: '2x + 3 = 11', tone: 'a' }, startLabel: 'Step up to the scale →' },
   overview: {
