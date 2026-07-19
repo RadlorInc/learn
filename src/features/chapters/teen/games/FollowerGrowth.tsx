@@ -6,23 +6,33 @@
  * slope). Building the line → LineSetter (set start b + growth m, the line draws
  * live). "Read the slope" → SlideValue dial.
  *
- * NON-MCQ, two production interactions on GameShell:
- *   • BUILD  → LineSetter: construct y = mx + b (set slope + intercept).
- *   • SLOPE  → SlideValue: dial the growth-per-week (the slope).
- * Exactly the 12–14 shape: overview on the chalkboard + a code-drawn growth chart
- * → baby-step walkthrough → guided → scored play. Scene is code-drawn (no assets).
+ * TWO ways to answer, gated PER QUESTION (never per chapter) — the Leaderboard rule:
+ *   • TAP   → AnswerPad. A question whose answer is ONE NUMBER is tapped. Both
+ *             "what is the growth per week" questions are single numbers, and the
+ *             SlideValue dial was never doing the solving there — the child worked
+ *             the rate out in their head and then dialled it. Distractors are real
+ *             misconceptions (see `pad` on Task), so a wrong tap is a wrong METHOD.
+ *   • BUILD → LineSetter. y = mx + b is a PAIR (m and b), not a single number, so
+ *             these keep their instrument: setting the start dial and the growth
+ *             dial IS constructing the line, and the line redraws as you do it.
+ *             Its dials are labelled in this chapter's own words ("growth/week",
+ *             "start"), not the generic "slope"/"start".
+ *
+ * No guided round: the walkthrough works BOTH graded gestures — the concept on the
+ * growth chart, then the LineSetter dials themselves — so nothing scored play grades
+ * is a gesture the child has never seen.
  *
  * Curriculum ramp (id "slopeLinearGraphs"):
- *   L1 — read slope & intercept (dial the slope / build a line from start+growth)
- *   L2 — slope from two points; match/build the line for y = mx + b
- *   L3 — write the line's equation from a graph / point + slope / two points (build)
+ *   L1 — read the slope off the rule (TAP) / build a line from start + growth
+ *   L2 — slope from two logged weeks (TAP, rise ÷ run) / build the line from two weeks
+ *   L3 — write the line from a graph description / from a point + slope (build)
  * Math mirrors makeRound in SlopeLinearGraphsTeenLesson (integers only), rebuilt
  * as structured generators that expose {m, b} / a numeric slope.
  */
 import { useEffect, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion, useMotionValueEvent } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
-import { Palette, LineSetter, SlideValue, type Line } from './parts/gameKit'
+import { Palette, LineSetter, SlideValue, numChoices, type Line } from './parts/gameKit'
 
 // Growth palette — a bright analytics/social-green vibe over a dark night.
 const P: Palette = {
@@ -43,6 +53,10 @@ const startB = (hi = RANGE) => rint(0, hi)
 const slopeFor = (b: number, lastWeek: number, lo: number, hi: number) =>
   rnz(Math.max(lo, -Math.floor(b / Math.max(1, lastWeek))), hi)
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
+/** Display integer with a real minus glyph. Never used inside `say`/`work` — U+2212
+ *  speaks as nothing, so spoken strings keep the ASCII hyphen (docs/lessons.md). */
+const disp = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
+const pick = <T,>(xs: T[]): T => xs[rint(0, xs.length - 1)]
 
 /** y = mx + b as a tidy string (m integer). */
 function eqStr(m: number, b: number): string {
@@ -61,20 +75,90 @@ interface Task extends BaseTask {
   kind: 'line' | 'slope'
   m: number
   b: number
-  lo?: number; hi?: number // slope dial bounds
+  lo?: number; hi?: number // slope dial bounds (fallback instrument only)
+  /** Set → this question is answered by TAPPING a number instead of working an
+   *  instrument, and carries the misconception values that become the distractors.
+   *  ⚠️ A distractor that EQUALS the answer for some parameter values is silently
+   *  dropped by numChoices, so the one misconception the item exists to catch can
+   *  vanish for a quarter of seeds (this is exactly what happened on Leaderboard,
+   *  where a − 2c equals a − c² at c = 2). Every generator below therefore excludes
+   *  the colliding parameters BY CONSTRUCTION rather than by hoping — the domains
+   *  are exported so the whole space can be swept. */
+  pad?: number[]
+  /** The walkthrough example that poses on the real LineSetter dials. */
+  dialDemo?: boolean
 }
 
-// ── L1: read the slope (dial) OR build a line from its start + growth ────────
-function readSlopeTask(): Task {
-  const m = rnz(-4, 4)
-  const b = startB()
+// ── L1: read the growth per week off the rule (TAP) ───────────────────────────
+// The answer is one number, and the dial was never solving it — the child read the
+// coefficient in their head and then moved a slider to it. Now they tap it.
+export const READ_SLOPES = [-4, -3, -2, -1, 1, 2, 3, 4]
+/** Starts that keep all three misconception distractors distinct from the answer
+ *  AND from each other:  b ≠ |m|  (else "read the start instead of the rate" IS the
+ *  answer, or is its mirror), b ≠ 0 (else "the count after one week" is the answer),
+ *  b ≠ −2m (else that same distractor collides with the sign-flip one). */
+export const readStarts = (m: number): number[] =>
+  [1, 2, 3, 4, 5].filter((b) => b !== Math.abs(m) && b !== -2 * m)
+
+export function readSlopeTaskFrom(m: number, b: number): Task {
   return {
     kind: 'slope', title: 'Growth rate', badge: eqStr(m, b), tone: 'a',
-    prompt: `Dial the growth per week (the slope) of the line ${eqStr(m, b)}.`,
-    say: `Here's a follower line. Dial its growth per week — the slope of ${sayEq(m, b)}.`,
-    work: [`In y = mx + b, the number in front of x is the slope. Here it's ${m} — so the followers grow by ${m} each week.`],
+    context: `This rule tracks one creator's followers, week by week.`,
+    padInstruction: 'Tap the followers gained each week — a fall counts as negative.',
+    answerLabel: 'growth per week',
+    prompt: `How many followers does the line ${eqStr(m, b)} gain each week?`,
+    say: `A creator's follower line is ${sayEq(m, b)}. How many followers do they gain each week?`,
+    work: [`In y = mx + b the b is where they start and the m is how many they gain each week. Here the start is ${b} and the gain is ${m}, so the followers change by ${m} every week.`],
     m, b, lo: -6, hi: 6,
+    // read-the-start-instead-of-the-rate · sign flipped · the total after one week
+    pad: [b, -m, m + b],
   }
+}
+const readSlopeTask = (): Task => {
+  const m = pick(READ_SLOPES)
+  return readSlopeTaskFrom(m, pick(readStarts(m)))
+}
+
+// ── L2: the growth per week from two logged weeks (TAP) — rise ÷ run ──────────
+// New STRUCTURE, not bigger numbers: L1 hands you the rate written down, this one
+// makes you find it from two readings. That is also the only place the rise/run
+// misconceptions are real, so this is where they become the distractors.
+export const WEEK_STARTS = [0, 1, 2]          // the first logged week
+export const WEEK_RUNS = [2, 3, 4]            // run ≥ 2, else "the rise" IS the rate
+export const WEEK_BASES = [0, 1, 2, 3, 4]
+/** Slopes that (a) keep BOTH named weeks at or above zero followers and (b) keep the
+ *  three misconception distractors distinct.  |m| ≠ run kills "reported the run"
+ *  colliding with the answer or its sign-flip; m ≠ 1 kills "the rise" and "the run"
+ *  collapsing onto each other. */
+export const weekSlopes = (b: number, lastWeek: number, run: number): number[] => {
+  // m ≥ −⌊b / lastWeek⌋ keeps m·lastWeek ≥ −b, i.e. the later named week never
+  // drops below zero followers (the earlier one sits between b and it).
+  const min = Math.max(-4, -Math.floor(b / Math.max(1, lastWeek)))
+  const out: number[] = []
+  for (let m = min; m <= 4; m++) if (m !== 0 && m !== 1 && Math.abs(m) !== run) out.push(m)
+  return out
+}
+
+export function weeksTaskFrom(x1: number, run: number, b: number, m: number): Task {
+  const x2 = x1 + run
+  const y1 = m * x1 + b, y2 = m * x2 + b
+  const rise = y2 - y1
+  return {
+    kind: 'slope', title: 'Read the log', badge: `wk ${x1}: ${disp(y1)}  →  wk ${x2}: ${disp(y2)}`, tone: 'a',
+    context: `Two weeks from the creator's follower log.`,
+    padInstruction: 'Tap the followers gained each week — a fall counts as negative.',
+    answerLabel: 'growth per week',
+    prompt: `Week ${x1} had ${y1} followers and week ${x2} had ${y2}. How many are gained each week?`,
+    say: `At week ${spoken(x1)} they had ${spoken(y1)} followers, and at week ${spoken(x2)} they had ${spoken(y2)}. How many followers do they gain each week?`,
+    work: [`From week ${x1} to week ${x2} is ${run} weeks, and the followers changed by ${rise}. Share that change across the ${run} weeks: ${rise} divided by ${run} is ${m} each week.`],
+    m, b,
+    // the whole rise, undivided · the run reported instead of the rate · sign flipped
+    pad: [rise, run, -m],
+  }
+}
+const slopeFromWeeksTask = (): Task => {
+  const x1 = pick(WEEK_STARTS), run = pick(WEEK_RUNS), b = pick(WEEK_BASES)
+  return weeksTaskFrom(x1, run, b, pick(weekSlopes(b, x1 + run, run)))
 }
 
 function buildStartGrowthTask(): Task {
@@ -112,7 +196,9 @@ function writeEqTask(): Task {
   const m = rnz(-4, 4)
   const b = startB()
   return {
-    kind: 'line', title: 'Write the line', badge: `graph → ${eqStr(m, b)}`, tone: 'b',
+    // The badge must NOT contain eqStr(m, b) — that is the answer, printed on the
+    // board (the coordinatePlane defect: the badge WAS the answer).
+    kind: 'line', title: 'Write the line', badge: `crosses at ${b} · ${disp(m)} per step`, tone: 'b',
     prompt: `A follower graph crosses the y-axis at ${b} and rises ${m} per step. Build y = mx + b.`,
     say: `Write this line as y equals m x plus b. It crosses the y-axis at ${spoken(b)} and rises ${spoken(m)} for every step right.`,
     work: [`The y-intercept is b = ${b}. The slope is m = ${m}. So the equation is ${eqStr(m, b)}.`],
@@ -135,9 +221,13 @@ function pointSlopeTask(): Task {
 }
 
 function makeTask(d: 1 | 2 | 3): Task {
-  if (d === 1) return Math.random() < 0.5 ? readSlopeTask() : buildStartGrowthTask()
-  if (d === 2) return Math.random() < 0.45 ? twoPointsTask() : buildStartGrowthTask()
-  return Math.random() < 0.5 ? writeEqTask() : pointSlopeTask()
+  const t = d === 1 ? (Math.random() < 0.5 ? readSlopeTask() : buildStartGrowthTask())
+    : d === 2 ? (Math.random() < 0.5 ? slopeFromWeeksTask() : twoPointsTask())
+      : (Math.random() < 0.5 ? writeEqTask() : pointSlopeTask())
+  // A `line` answer is the whole equation, so the board's default "=" would read
+  // "start 1, +2/week  =  y = 2x + 1" — a double-equals chain. Name the quantity
+  // instead, in one place rather than on every generator.
+  return t.kind === 'line' ? { ...t, answerLabel: 'the line is' } : t
 }
 
 // ── fixed worked example (walkthrough) — build start 1, +2/week ─────────────
@@ -164,8 +254,31 @@ const DEMO_STEPS: DemoStep<V>[] = [
   { say: 'And it keeps going — another week, up two again; another week, up two again. The same climb, every single week.', value: { k: 'line', m: 2, b: 1 }, board: 'grow 2 every week' },
   { say: 'Join all those steps together and they line up into one straight line — the growth line. Watch the followers climb from one up to five.', value: { k: 'line', m: 2, b: 1 }, board: 'join the steps → a line' },
   { say: 'We read it as y equals m x plus b. The m is two, the b is one — so y equals two x plus one.', value: { k: 'line', m: 2, b: 1 }, board: 'y = 2x + 1' },
-  { say: "Start at one, grow by two each week: y equals two x plus one. Now it's your turn — build that line.", value: { k: 'line', m: 2, b: 1 }, board: 'y = 2x + 1 ✓' },
+  { say: 'Start at one, grow by two each week: y equals two x plus one.', value: { k: 'line', m: 2, b: 1 }, board: 'y = 2x + 1 ✓' },
 ]
+
+// ── worked example 2: the same build, on the ACTUAL dials it is graded on ──────
+// Scored play grades the LineSetter build, and the chart above is not the LineSetter
+// — a child who watched only the chart has still never seen the control. (This
+// replaces the old guided round, which rehearsed exactly this line but scored the
+// child on a gesture the walkthrough had skipped.) Five baby steps: name the two
+// dials, set the start, set the growth, commit.
+const DEMO_DIAL: Task = {
+  kind: 'line', title: 'Growth plan', badge: 'start 2, +1/week', tone: 'a',
+  prompt: '', say: '', work: [], m: 1, b: 2, dialDemo: true,
+}
+const DEMO_DIAL_STEPS: DemoStep<V>[] = [
+  { say: 'One more — this time on the dials you will actually use. This creator starts with two followers and gains one a week.', value: { k: 'line', m: 0, b: 0 }, board: 'start 2, +1/week' },
+  { say: 'There are two dials under the grid. START is where week zero sits — that is the b. GROWTH PER WEEK is how fast it climbs — that is the m.', value: { k: 'line', m: 0, b: 0 }, board: 'start = b · growth = m' },
+  { say: 'Set START to two. Watch the dot lift to two followers, where the line begins.', value: { k: 'line', m: 0, b: 2 }, board: 'start → 2' },
+  { say: 'Now GROWTH PER WEEK. One follower a week, so nudge it up to one — and the line tips into a climb.', value: { k: 'line', m: 1, b: 2 }, board: 'growth → 1' },
+  { say: 'That is the line: y equals x plus two. When yours looks like this, press PLOT THE GROWTH. Now it is your turn.', value: { k: 'line', m: 1, b: 2 }, board: 'y = x + 2 ✓' },
+]
+
+/** The LineSetter dials speak this chapter's vocabulary, not the generic
+ *  "slope"/"start" — a child hunting for the words the prompt used must find them on
+ *  the control, not a synonym. */
+const DIAL_LABELS = { m: 'growth/week', b: 'start' }
 
 // ── hand-authored SVG analytics stage (storyboard: docs/storyboards/follower-growth.md)
 // A creator's growth dashboard: a profile stat card whose follower count ticks up,
@@ -374,13 +487,28 @@ const CONFIG: GameConfig<V, Task> = {
   palette: P,
   motif: '📈',
   makeTask,
+  // PER-QUESTION gating: a question shows the pad only when its answer is a single
+  // number AND the instrument was never doing the solving. Both "growth per week"
+  // questions qualify; every `line` question keeps LineSetter, because y = mx + b is
+  // a PAIR and setting the two dials IS the construction.
+  answerPad: (t) => (t.pad ? numChoices(t.m, t.pad) : []),
   initialValue: (t) => (t.kind === 'slope' ? { k: 'slope', m: t.lo ?? -6 } : { k: 'line', m: 0, b: 0 }),
-  grade: (t, v) => (t.kind === 'slope' ? v.k === 'slope' && v.m === t.m : v.k === 'line' && v.m === t.m && v.b === t.b),
+  grade: (t, v) => {
+    // A padded question hands the TAPPED NUMBER straight through as V (GameShell
+    // casts it), so grade has to accept a bare number as well as a value object.
+    const raw = v as unknown
+    if (typeof raw === 'number') return raw === t.m
+    return t.kind === 'slope' ? v.k === 'slope' && v.m === t.m : v.k === 'line' && v.m === t.m && v.b === t.b
+  },
+  // ASCII hyphen, not U+2212: revealText is SPOKEN ("It was −3" reads as "It was 3").
   revealText: (t) => (t.kind === 'slope' ? `${t.m}` : eqStr(t.m, t.b)),
   glide: (t, _from, setValue, later) =>
     later(() => setValue(t.kind === 'slope' ? { k: 'slope', m: t.m } : { k: 'line', m: t.m, b: t.b }), 320),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => {
     if (task.kind === 'slope') {
+      // Fallback only: every `slope` task ships with `pad`, so GameShell renders the
+      // AnswerPad and never reaches this. Kept so a future slope task without `pad`
+      // degrades to the dial rather than to nothing.
       const m = value.k === 'slope' ? value.m : 0
       return (
         <SlideValue P={palette} value={m} setValue={(x) => setValue({ k: 'slope', m: x })}
@@ -388,16 +516,26 @@ const CONFIG: GameConfig<V, Task> = {
           onCommit={(x) => onCommit({ k: 'slope', m: x })} commitLabel="LOG THE RATE ✓" />
       )
     }
+    // KEPT: the answer here is the PAIR (m, b), not a single number, so there is
+    // nothing to put on a pad — building it on the dials IS the answer.
     const line: Line = value.k === 'line' ? { m: value.m, b: value.b } : { m: 0, b: 0 }
     return (
       <LineSetter P={palette} line={line} setLine={(l) => setValue({ k: 'line', m: l.m, b: l.b })}
-        range={RANGE} disabled={disabled} reveal={reveal}
+        range={RANGE} disabled={disabled} reveal={reveal} labels={DIAL_LABELS}
         onCommit={(l) => onCommit({ k: 'line', m: l.m, b: l.b })} commitLabel="PLOT THE GROWTH ✓" />
     )
   },
-  TutorialScene: ({ palette, value, stepIndex, frameCount, ended }) => (
-    <GrowthScene palette={palette} value={value} stepIndex={stepIndex} frameCount={frameCount} ended={ended} />
-  ),
+  // Branches by example: the concept example poses on the growth chart, the dial
+  // example on the real LineSetter — so the child watches the gesture they will be
+  // graded on, not a different picture of it.
+  TutorialScene: ({ palette, task, value, stepIndex, frameCount, ended }) =>
+    task.dialDemo ? (
+      <LineSetter P={palette} line={value.k === 'line' ? { m: value.m, b: value.b } : { m: 0, b: 0 }}
+        setLine={() => {}} range={RANGE} disabled labels={DIAL_LABELS}
+        onCommit={() => {}} commitLabel="PLOT THE GROWTH ✓" />
+    ) : (
+      <GrowthScene palette={palette} value={value} stepIndex={stepIndex} frameCount={frameCount} ended={ended} />
+    ),
   start: {
     blurb: <><strong>You&apos;re charting a creator&apos;s followers over weeks.</strong> The growth is a <strong>straight line</strong> — a starting count plus a steady gain each week. Read its slope, or build the whole line.</>,
     ticket: { title: 'Growth line', badge: 'y = 2x + 1', tone: 'a' },
@@ -412,11 +550,12 @@ const CONFIG: GameConfig<V, Task> = {
       <>Put them together as <strong>y = mx + b</strong>.</>,
     ],
   },
-  tutorial: { task: DEMO_TASK, initial: { k: 'line', m: 0, b: 0 }, hand: 'tap', steps: DEMO_STEPS },
-  guided: {
-    task: { kind: 'line', title: 'Growth plan', badge: 'start 2, +1/week', tone: 'a', prompt: '', say: 'Your turn. Build the line that starts at two followers and gains one each week.', work: ['Intercept b = 2, slope m = 1, so y = x + 2.'], m: 1, b: 2 },
-    coach: 'Your turn — I will help. Set the start, then the growth.', hand: 'tap',
-  },
+  tutorial: [
+    { task: DEMO_TASK, initial: { k: 'line', m: 0, b: 0 }, hand: 'tap', steps: DEMO_STEPS },
+    { task: DEMO_DIAL, initial: { k: 'line', m: 0, b: 0 }, hand: 'tap', steps: DEMO_DIAL_STEPS },
+  ],
+  // No guided round: the walkthrough works BOTH graded gestures — the concept on the
+  // chart, then the LineSetter dials themselves. Walkthrough → straight into play.
   sig: (t) => t.badge,
 }
 

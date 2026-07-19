@@ -4,18 +4,27 @@
  * World: buying event tickets online, where the price is an EXPRESSION with a
  * variable (booking fee + price × tickets).
  *
- * NON-MCQ, two production interactions (variety within the chapter):
- *   • EVALUATE  → a number DIAL (SlideValue): produce the total.
- *   • SIMPLIFY  → an EXPRESSION BUILDER (two steppers → ▢x + ▢): construct the
- *                 tidied form.
+ * TWO ways to answer, gated PER QUESTION (never per chapter):
+ *   • TAP    → AnswerPad. EVALUATE asks for the order total — a single number, and
+ *              the dial was never doing the solving: the child worked out 3(2)+5 in
+ *              their head and then slid to 11. It now taps. The distractors are the
+ *              three real expression misconceptions — reading `ax` as `a + x`,
+ *              collapsing `ax + b` into `(a+b)x`, and dropping the booking fee — so
+ *              a wrong tap names a wrong METHOD, not a slipped finger.
+ *   • BUILD  → SIMPLIFY keeps its EXPRESSION BUILDER (two steppers → ▢x + ▢),
+ *              because its answer is not a single number: it is a coefficient AND a
+ *              constant, and choosing them separately is the skill (x-terms join
+ *              x-terms, numbers join numbers). A pad would hide exactly that.
+ *
  * Exactly the 12–14 shape on GameShell: overview on the chalkboard + a code-drawn
- * ticket scene → baby-step walkthrough → guided → scored play. Illustration assets
- * deferred; the scene is code-drawn.
+ * ticket scene → a TWO-example baby-step walkthrough (the checkout, then the price
+ * builder) → scored play. No guided round: both graded gestures are worked in the
+ * walkthrough. Illustration assets deferred; the scenes are code-drawn.
  */
 import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
-import { Palette, SlideValue, PartsBuilder, type Parts } from './parts/gameKit'
+import { Palette, SlideValue, PartsBuilder, numChoices } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#12233b', nightBot: '#0b1626',
@@ -41,22 +50,42 @@ type V = { k: 'num'; n: number } | { k: 'lin'; a: number; b: number }
 interface Task extends BaseTask {
   kind: 'eval' | 'build'
   n?: number; lo?: number; hi?: number      // eval
-  a?: number; b?: number                     // build
+  a?: number; b?: number                     // build (and the eval task's own a, b)
+  /** Set → this question is answered by TAPPING a choice instead of dialling. Carries
+   *  the misconception values that become the distractors, so a wrong tap is a wrong
+   *  METHOD (`ax` read as `a + x`, `ax + b` collapsed to `(a+b)x`, the fee dropped),
+   *  not a slip of the finger. */
+  pad?: number[]
+  /** Walkthrough only — the ordered source terms the price-builder scene lays out as
+   *  chips (`2x`, `+3`, `4x`, `+1`) before they gather into the two slots. */
+  srcTerms?: { v: number; isX: boolean }[]
 }
 
-function evalTask(d: 1 | 2 | 3): Task {
+function evalTask(): Task {
   // Ticket count and booking fee stay non-negative — you cannot buy −4 tickets, and a
   // negative fee is not a fee. (Substituting a negative x is exercised in the 12–14
   // band and in Leaderboard; here it would make the story lie.)
-  const a = rint(2, 5), b = rint(1, 8), v = rint(1, 6)
+  //
+  // x ≥ 2, NOT 1: at x = 1 the "collapse ax + b into (a+b)x" distractor equals the
+  // answer ((a+b)·1 = a·1 + b), so numChoices would silently drop the misconception
+  // this question exists to catch. One ticket is a degenerate order anyway.
+  const a = rint(2, 5), b = rint(1, 8)
+  let v = rint(2, 6)
+  // (a, x) = (2, 2) is the single pair where a + x = a·x, which would likewise
+  // collapse the "`ax` means `a + x`" distractor onto the answer.
+  while (a === 2 && v === 2) v = rint(2, 6)
   const n = a * v + b
   return {
-    kind: 'eval', title: 'Ticket order', badge: `${lin(a, b)},  x = ${v < 0 ? `(${v})` : v}`, tone: 'a',
-    prompt: `Dial the total for ${lin(a, b)} when x = ${v}.`,
-    say: `Work out ${a}x ${b < 0 ? 'minus' : 'plus'} ${Math.abs(b)} when x is ${spoken(v)}. Dial the total.`,
-    work: [`Substitute x = ${v}: ${a}(${v}) ${b < 0 ? '−' : '+'} ${Math.abs(b)} = ${a * v} ${b < 0 ? '−' : '+'} ${Math.abs(b)} = ${n}.`],
+    kind: 'eval', title: 'Ticket order', badge: `${lin(a, b)},  x = ${v}`, tone: 'a',
+    prompt: `What is ${lin(a, b)} when x = ${v}?`,
+    padInstruction: 'Tap the total cost of the order.',
+    answerLabel: 'total',
+    say: `Work out ${a}x plus ${b} when x is ${spoken(v)}. Which total is right?`,
+    work: [`Substitute x = ${v}: ${a}(${v}) + ${b} = ${a * v} + ${b} = ${n}.`],
     n, lo: Math.min(-15, n - 10), hi: Math.max(25, n + 10),
     a, b,
+    // collapsed ax + b → (a+b)x · read ax as a + x · dropped the booking fee
+    pad: [(a + b) * v, a + v + b, a * v],
   }
 }
 
@@ -85,7 +114,7 @@ function buildTask(d: 1 | 2 | 3): Task {
 }
 
 function makeTask(d: 1 | 2 | 3): Task {
-  if (d === 1) return Math.random() < 0.5 ? evalTask(d) : buildTask(1)
+  if (d === 1) return Math.random() < 0.5 ? evalTask() : buildTask(1)
   return buildTask(d)
 }
 
@@ -113,7 +142,30 @@ const DEMO_STEPS: DemoStep<V>[] = [
   { say: 'Now the order reads six plus five.', value: { k: 'num', n: 6 }, board: '6 + 5' },
   { say: 'Add the five-dollar booking fee on top.', value: { k: 'num', n: 6 }, board: 'add the $5 fee' },
   { say: 'Six plus five is eleven.', value: { k: 'num', n: 11 }, board: '= 11' },
-  { say: "So the whole order comes to eleven dollars. On the dial, that's eleven.", value: { k: 'num', n: 11 }, board: 'total = $11' },
+  { say: 'So the whole order comes to eleven dollars. Eleven is the total.', value: { k: 'num', n: 11 }, board: 'total = $11' },
+]
+
+// ── worked example 2: the PRICE BUILDER, on the gesture the checkout never showed ──
+// Scored play grades `build` on two steppers (▢x + ▢), and the old walkthrough
+// stopped at the checkout total — so a child was graded on a gesture nobody had
+// demonstrated, and on the idea behind it (x-terms join x-terms, plain numbers join
+// plain numbers) with no worked instance. Eight baby steps: name the four parts,
+// sort them into the two kinds, join each kind, set each slot, read the tidy price.
+const DEMO_BUILD: Task = {
+  kind: 'build', title: 'Tidy the price', badge: '2x + 3 + 4x + 1', tone: 'a',
+  prompt: '', say: '', work: [],
+  a: 6, b: 4,
+  srcTerms: [{ v: 2, isX: true }, { v: 3, isX: false }, { v: 4, isX: true }, { v: 1, isX: false }],
+}
+const DEMO_BUILD_STEPS: DemoStep<V>[] = [
+  { say: 'Same shop, a messier price. This one was written out in four pieces, and we want it tidy.', value: { k: 'lin', a: 0, b: 0 }, board: '2x + 3 + 4x + 1' },
+  { say: 'Two of the pieces carry an x. Two x and four x — those are ticket pieces, priced per ticket.', value: { k: 'lin', a: 0, b: 0 }, board: 'x pieces: 2x, 4x' },
+  { say: 'The other two are plain numbers. Three and one — those are fees, paid once.', value: { k: 'lin', a: 0, b: 0 }, board: 'plain: 3, 1' },
+  { say: 'Only pieces of the same kind can join. Ticket pieces join ticket pieces, fees join fees.', value: { k: 'lin', a: 0, b: 0 }, board: 'same kind joins' },
+  { say: 'Join the ticket pieces first. Two x and four x make six x.', value: { k: 'lin', a: 0, b: 0 }, board: '2x + 4x = 6x' },
+  { say: 'So the per-ticket slot is six. Set it to six.', value: { k: 'lin', a: 6, b: 0 }, board: 'per ticket = 6' },
+  { say: 'Now the fees. Three and one make four.', value: { k: 'lin', a: 6, b: 0 }, board: '3 + 1 = 4' },
+  { say: 'Set the fee slot to four. Six x plus four — the same price, written tidily.', value: { k: 'lin', a: 6, b: 4 }, board: '6x + 4' },
 ]
 
 // ── hand-authored SVG checkout scene (storyboard: docs/storyboards/ticket-checkout.md)
@@ -271,6 +323,81 @@ function TicketScene({ palette, value, stepIndex, ended }: {
   )
 }
 
+// ── the PRICE BUILDER board — the walkthrough stage for `build` ────────────────
+// Poses on the instrument the child will actually be graded on: the same two slots
+// PartsBuilder gives them (▢x + ▢), with the source terms above as chips. Ticket
+// pieces are gold, fees are mint, so "same kind joins same kind" is a colour you can
+// see before it is a rule you are told. The slots read straight off `value`, so the
+// walkthrough's steps fill them exactly as a child's taps would.
+function TidyBoard({ P, task, value, stepIndex, ended }: {
+  P: Palette; task: Task; value: V; stepIndex: number; ended: boolean
+}) {
+  const a = value.k === 'lin' ? value.a : 0
+  const b = value.k === 'lin' ? value.b : 0
+  const step = ended ? 99 : stepIndex
+  const terms = task.srcTerms ?? []
+  // Highlight exactly the kind the current step is TALKING about (step 3 names both).
+  const litX = step === 1 || (step >= 3 && step <= 5)   // ticket pieces named / joined
+  const litC = step === 2 || step === 3 || step >= 6    // fees named / joined
+  const done = step >= 7
+
+  const chip = (t: { v: number; isX: boolean }, i: number) => {
+    const lit = t.isX ? litX : litC
+    const col = t.isX ? P.gold : P.mint
+    return (
+      <div key={i} style={{
+        padding: 'clamp(6px,0.9vh,10px) clamp(9px,1.2vw,14px)', borderRadius: 10,
+        fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(15px,2vw,22px)',
+        background: lit ? col : P.glass, color: lit ? P.nightBot : P.cream,
+        border: `2px solid ${lit ? col : P.glassBorder}`,
+        transform: lit ? 'translateY(-3px)' : 'none',
+        transition: 'background 220ms, color 220ms, border-color 220ms, transform 220ms',
+      }}>{t.isX ? `${t.v}x` : `${t.v}`}</div>
+    )
+  }
+
+  const slot = (label: string, val: number, suffix: string, col: string, filled: boolean) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+      <div style={{
+        minWidth: 'clamp(56px,7vw,84px)', padding: 'clamp(6px,1vh,10px) clamp(8px,1vw,12px)', borderRadius: 12,
+        fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(20px,2.8vw,32px)', textAlign: 'center',
+        background: filled ? col : 'transparent', color: filled ? P.nightBot : P.mutedOnPaper,
+        border: `2px ${filled ? 'solid' : 'dashed'} ${filled ? col : P.glassBorder}`,
+        transition: 'background 260ms, color 260ms, border-color 260ms',
+      }}>{filled ? `${val}${suffix}` : '▢'}</div>
+      <div style={{ fontSize: 'clamp(9px,1vw,12px)', letterSpacing: '0.1em', textTransform: 'uppercase', color: P.creamSoft }}>{label}</div>
+    </div>
+  )
+
+  return (
+    <div style={{
+      width: 'clamp(268px, 44vw, 380px)', boxSizing: 'border-box', borderRadius: 16,
+      background: `linear-gradient(160deg, ${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`,
+      boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center',
+      gap: 'clamp(10px,1.8vh,18px)', padding: 'clamp(14px,2.4vh,22px) clamp(12px,1.8vw,20px)',
+    }}>
+      <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px,1.1vw,13px)', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: P.creamSoft }}>price builder</div>
+
+      <div style={{ display: 'flex', gap: 'clamp(5px,0.8vw,9px)', flexWrap: 'wrap', justifyContent: 'center' }}>{terms.map(chip)}</div>
+
+      <div style={{ fontSize: 'clamp(10px,1.1vw,13px)', color: P.creamSoft, minHeight: '1.3em', textAlign: 'center' }}>
+        {done ? 'same price, tidied' : litX && !litC ? 'ticket pieces — priced per ticket' : litC && !litX ? 'fees — paid once' : 'sort them by kind'}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px,1.2vw,14px)' }}>
+        {slot('per ticket', a, 'x', P.gold, a !== 0)}
+        <div style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(18px,2.2vw,26px)', color: P.creamSoft }}>+</div>
+        {slot('fee', b, '', P.mint, b !== 0)}
+      </div>
+
+      <div style={{
+        fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(20px,2.8vw,32px)',
+        color: done ? P.mint : 'transparent', transition: 'color 300ms', minHeight: '1.2em',
+      }}>{lin(a, b)}</div>
+    </div>
+  )
+}
+
 const CONFIG: GameConfig<V, Task> = {
   chapterId: 'expressionsVariables',
   title: 'TICKET CHECKOUT',
@@ -278,12 +405,24 @@ const CONFIG: GameConfig<V, Task> = {
   palette: P,
   motif: '🎟️',
   makeTask,
+  // PER-TASK gating, the same rule the 12–14 band uses: a question shows the pad when
+  // the instrument was never doing the solving. EVALUATE was compute-then-dial, so it
+  // taps; SIMPLIFY keeps the builder because its answer is a coefficient AND a
+  // constant — two decisions, not one number, and separating them IS the skill.
+  answerPad: (t) => (t.pad ? numChoices(t.n ?? 0, t.pad) : []),
   initialValue: (t) => (t.kind === 'eval' ? { k: 'num', n: t.lo ?? 0 } : { k: 'lin', a: 0, b: 0 }),
+  // REQUIRED: V is a tagged union, so a bare tapped number would never match
+  // `v.k === 'num'` and every padded answer would grade wrong (it did, in prod,
+  // on Leaderboard — a wrong answer still advances, so the flow looks fine).
+  padValue: (n) => ({ k: 'num' as const, n }),
   grade: (t, v) => (t.kind === 'eval' ? v.k === 'num' && v.n === t.n : v.k === 'lin' && v.a === t.a && v.b === t.b),
   revealText: (t) => (t.kind === 'eval' ? `${t.n}` : lin(t.a ?? 0, t.b ?? 0)),
   glide: (t, _from, setValue, later) => later(() => setValue(t.kind === 'eval' ? { k: 'num', n: t.n ?? 0 } : { k: 'lin', a: t.a ?? 0, b: t.b ?? 0 }), 320),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => {
     if (task.kind === 'eval') {
+      // Fallback only: every `eval` task ships with `pad`, so GameShell renders the
+      // AnswerPad and never reaches this. Kept so a future eval task without `pad`
+      // degrades to the dial rather than to nothing.
       const n = value.k === 'num' ? value.n : 0
       return <SlideValue P={palette} value={n} setValue={(x) => setValue({ k: 'num', n: x })} min={task.lo ?? -15} max={task.hi ?? 25}
         disabled={disabled} reveal={reveal} onCommit={(x) => onCommit({ k: 'num', n: x })} commitLabel="RING IT UP ✓" />
@@ -293,9 +432,13 @@ const CONFIG: GameConfig<V, Task> = {
       template={(x, y) => lin(x, y)} labels={['per ticket', 'fee']}
       disabled={disabled} reveal={reveal} onCommit={(pr) => onCommit({ k: 'lin', a: pr.a, b: pr.b })} commitLabel="SET THE PRICE ✓" />
   },
-  TutorialScene: ({ palette, value, stepIndex, ended }) => (
-    <TicketScene palette={palette} value={value} stepIndex={stepIndex} ended={ended} />
-  ),
+  // Branches by example: the checkout example poses on the ticket window, the tidying
+  // example on the price builder itself — so the child watches the gesture they will
+  // be graded on, not a different picture.
+  TutorialScene: ({ palette, task, value, stepIndex, ended }) =>
+    task.kind === 'build'
+      ? <TidyBoard P={palette} task={task} value={value} stepIndex={stepIndex} ended={ended} />
+      : <TicketScene palette={palette} value={value} stepIndex={stepIndex} ended={ended} />,
   start: {
     blurb: <><strong>You&apos;re checking out event tickets.</strong> The price is an <strong>expression</strong> — a booking fee plus a price per ticket. Work out the total, or tidy the formula.</>,
     ticket: { title: 'Ticket price', badge: '3x + 5', tone: 'a' },
@@ -308,10 +451,15 @@ const CONFIG: GameConfig<V, Task> = {
       <>The letter <strong>x</strong> stands for a number — here, how many tickets.</>,
       <>To evaluate, <strong>swap x for its value</strong>, then do the math.</>,
       <>3 × 2 is the ticket part; <strong>+ 5</strong> is the booking fee.</>,
+      <>To tidy a long price, <strong>join the x-parts</strong>, then join the plain numbers.</>,
     ],
   },
-  tutorial: { task: DEMO_TASK, initial: { k: 'num', n: 0 }, hand: 'drag', steps: DEMO_STEPS },
-  guided: { task: { kind: 'eval', title: 'Ticket order', badge: '2x + 4,  x = 3', tone: 'a', prompt: '', say: 'Work out two x plus four when x is three. Dial the total.', work: ['Substitute x = 3: 2(3) + 4 = 6 + 4 = 10.'], n: 10, lo: 0, hi: 20, a: 2, b: 4 }, coach: 'Your turn — I will help. Dial this total.', hand: 'drag' },
+  tutorial: [
+    { task: DEMO_TASK, initial: { k: 'num', n: 0 }, hand: 'tap', steps: DEMO_STEPS },
+    { task: DEMO_BUILD, initial: { k: 'lin', a: 0, b: 0 }, hand: 'tap', steps: DEMO_BUILD_STEPS },
+  ],
+  // No guided round: the walkthrough works BOTH examples (the checkout total, then
+  // the price builder), so every gesture scored play grades has already been shown.
   sig: (t) => t.badge,
 }
 

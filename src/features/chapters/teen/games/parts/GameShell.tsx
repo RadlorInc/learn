@@ -182,10 +182,19 @@ export interface GameConfig<V, T extends BaseTask> {
    *  distractors, pre-shuffled — the pad shuffles nothing) and the child answers by
    *  tapping a number instead of working the instrument; the instrument is hidden
    *  while the pad is up. Return `[]` for a question whose illustration IS how you
-   *  solve it, and that question keeps its instrument. Numeric answers only, so this
-   *  only applies to chapters whose value type is `number` (or where a number round-
-   *  trips to V). */
+   *  solve it, and that question keeps its instrument. Numeric answers only. */
   answerPad?: (t: T) => number[]
+  /** How a TAPPED pad number becomes this chapter's value type.
+   *
+   *  ⚠️ REQUIRED for any chapter whose V is not `number` — e.g. a tagged union like
+   *  `{k:'num',n} | {k:'pick',id}`. Without it the shell hands `grade` the raw number,
+   *  `v.k` is `undefined`, EVERY answer grades wrong, the correct chip never lights,
+   *  and `data-test-answer` resolves to '' (so the E2E gate cannot see it either).
+   *  That shipped once — a padded chapter marked correct answers wrong in production
+   *  and it took three independent readers to spot, because a wrong answer still
+   *  advances and so the flow looks fine. Defaults to the identity cast, which is
+   *  correct for the `V = number` chapters and only those. */
+  padValue?: (n: number) => V
 }
 
 type Sub = 'active' | 'reveal' | 'reteach' | 'sold'
@@ -221,6 +230,12 @@ export function Game<V, T extends BaseTask>({
   // Pad answer-choices: built once per question (task ref is stable until the next
   // one loads), so the distractors don't reshuffle on every keystroke re-render.
   const padChoices = useMemo(() => (config.answerPad && task ? config.answerPad(task) : []), [config, task])
+  // A tapped pad number → this chapter's value type. See GameConfig.padValue for why
+  // the identity cast is only safe when V really is `number`.
+  const toV = useCallback(
+    (n: number): V => (config.padValue ? config.padValue(n) : (n as unknown as V)),
+    [config],
+  )
   // The choice the child actually tapped, so the reveal can mark it (an instrument
   // chapter shows the mistake by gliding; a pad chapter has to show it on the pad).
   const [picked, setPicked] = useState<number | null>(null)
@@ -381,7 +396,7 @@ export function Game<V, T extends BaseTask>({
           'data-test-answer':
             sub === 'active'
               ? padChoices.length
-                ? String(padChoices.find((c) => config.grade(task, c as unknown as V)) ?? '')
+                ? String(padChoices.find((c) => config.grade(task, toV(c))) ?? '')
                 : config.revealText(task)
               : '',
           'data-test-phase': sub === 'sold' ? 'solved' : sub === 'reveal' || sub === 'reteach' ? 'reveal' : stage === 'guided' ? 'guided' : 'practice',
@@ -516,9 +531,9 @@ export function Game<V, T extends BaseTask>({
                     <AnswerPad
                       P={P} choices={padChoices} compact={short} disabled={sub !== 'active' || busy}
                       reveal={sub === 'reveal' || sub === 'reteach'}
-                      correct={padChoices.find((c) => config.grade(task, c as unknown as V))}
+                      correct={padChoices.find((c) => config.grade(task, toV(c)))}
                       picked={picked ?? undefined}
-                      onSubmit={(n) => { setPicked(n); (stage === 'guided' ? submitGuided : submit)(n as unknown as V) }}
+                      onSubmit={(n) => { setPicked(n); (stage === 'guided' ? submitGuided : submit)(toV(n)) }}
                     />
                   )
                 ) : (

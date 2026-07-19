@@ -1,27 +1,45 @@
 'use client'
 /**
  * SavingGoal — the Linear Equations & Inequalities chapter (15–16) as a PLAYABLE
- * GAME. World: saving up toward a goal — you put money away each week and want to
- * know WHEN you can afford the thing.
+ * GAME. World: a money jar. You put money in each week (or take it out), and the
+ * question is always WHEN — which week does the jar reach the line?
  *
- * NON-MCQ, two production interactions (variety within the chapter), each themed:
- *   • EQUATION   → a BALANCE BEAM (slide x until both pans balance): "how many
- *                  weeks until saved = price?" Solving ax + b = c for x = weeks.
- *   • INEQUALITY → a number DIAL (SlideValue): "at least how many weeks/sales to
- *                  have ENOUGH?" Dial the boundary integer.
- * Exactly the 12–14 shape on GameShell: overview on the chalkboard + a code-drawn
- * savings-tracker scene → baby-step walkthrough → guided → scored play. The scene
- * is code-drawn (pure CSS/SVG); no image assets.
+ * ⚠️ ONE WORLD, ONE PICTURE. This chapter used to run TWO instruments — a balance
+ * beam for equations and a savings dial for inequalities — which is a hybrid, and a
+ * hybrid is the smell docs/lessons.md names: the world was chosen for the easy case.
+ * Both were also compute-then-dial: the beam deliberately stays level while you set
+ * x (so you cannot wiggle to the answer), which means the child solves in their head
+ * and the instrument only records a number they already had. The beam and the dial
+ * are both gone. The JAR is the whole chapter.
  *
- * Vetted math mirrors LinearEquationsInequalitiesTeenLesson (L1 one/two-step
- * equations, L2 multi-step / variables both sides, L3 inequalities w/ sign-flip and
- * |x| = a). Every equation reduces to an integer x; here we frame those x-values as
- * "weeks", which stay non-negative small integers.
+ * TWO ways to answer, gated PER QUESTION (never per chapter):
+ *   • TAP  → AnswerPad, for EQUATIONS, whose answer is a single number of weeks.
+ *            The distractors are this skill's real method errors — dividing before
+ *            undoing the constant, undoing the constant and forgetting to divide,
+ *            and adding the constant instead of subtracting it — so a wrong tap
+ *            names a wrong METHOD, not a slip.
+ *   • RAY  → the WEEK RAY, for INEQUALITIES, whose answer is a SET of weeks, not a
+ *            number: set the boundary week, then shade which side works. The
+ *            direction is graded, which is where the sign flip finally lives.
+ *
+ * ⚠️ THE SIGN FLIP, MADE REAL. The old L3 "spending limit" was `goal − cx ≥ 0`,
+ * asked as "how long until you hit zero" — which is goal ÷ c from story sense
+ * alone, so the flip the task existed to teach was never exercised. Two changes:
+ * (1) there is now a RESERVE you must not spend into (bus fare), so the boundary is
+ * (start − reserve) ÷ rate and a plain start ÷ rate is WRONG; (2) the direction is
+ * a graded step on the ray, so a child who divides by a negative and keeps the sign
+ * pointing the same way is caught. The flip is also worked, one step at a time, in
+ * the second walkthrough example.
+ *
+ * The 12–14 shape: overview read-along + the jar scene → a TWO-example baby-step
+ * walkthrough (the equation jar, then the spending jar and the ray) → scored play.
+ * No guided round: both graded gestures are already worked in the walkthrough.
+ * Scene is code-drawn (pure CSS/SVG); no image assets.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, useMotionValueEvent, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
-import { Palette, BalanceBeam, SlideValue } from './parts/gameKit'
+import { Palette, CommitBtn, Nudge, numChoices } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#132a3b', nightBot: '#0a1622',
@@ -33,9 +51,8 @@ const P: Palette = {
 }
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-const rnz = (lo: number, hi: number) => { let n = rint(lo, hi); while (n === 0) n = rint(lo, hi); return n }
+const pick = <T,>(a: T[]): T => a[rint(0, a.length - 1)]
 const fmtInt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
-const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 /** Coefficient prefix on x: "2x", "−x", "x". */
 const coef = (n: number) => (n === 1 ? 'x' : n === -1 ? '−x' : `${fmtInt(n)}x`)
 /** A signed term joined into an expression: " + 3" / " − 3" (leading space). */
@@ -43,123 +60,148 @@ const term = (n: number) => (n < 0 ? ` − ${Math.abs(n)}` : ` + ${n}`)
 /** "ax + b" as a whole expression. */
 const lin = (a: number, b: number) => (b === 0 ? coef(a) : `${coef(a)}${term(b)}`)
 
-// The answer is either an equation's x (weeks) or an inequality boundary n.
-type V = { k: 'x'; x: number } | { k: 'n'; n: number }
+/** Which side of the boundary works. −1 → x ≤ n · +1 → x ≥ n · 0 → not chosen yet. */
+type Dir = 0 | 1 | -1
+
+// An equation's answer is a NUMBER of weeks (tapped on the pad). An inequality's
+// answer is a SET of weeks — a boundary plus a direction — so it keeps a surface.
+type V = number | { k: 'ray'; n: number; dir: Dir }
 
 interface Task extends BaseTask {
   kind: 'equation' | 'inequality'
-  // equation (BalanceBeam):  a·x + b = c  →  x is the answer
+  // equation:  a·x + b = c  →  x is the answer, tapped
   a?: number; b?: number; c?: number; x?: number
-  // inequality (SlideValue): boundary integer is the answer
-  n?: number; lo?: number; hi?: number
+  /** Set → this question is answered by TAPPING. Carries the misconception values
+   *  that become the distractors, so a wrong tap is a wrong METHOD. */
+  pad?: number[]
+  // inequality: the jar story + the graded (boundary, direction) pair
+  mode?: 'save' | 'spend'
+  rate?: number          // dollars per week, always positive
+  base?: number          // save: money already have · spend: money you start with
+  limit?: number         // save: the goal · spend: the reserve you must not spend
+  top?: number           // the top of the jar's dollar scale
+  n?: number             // the boundary week (graded)
+  dir?: 1 | -1           // the direction (graded) — where the sign flip lives
+  hi?: number            // how many weeks the ray shows
 }
 
-// ── EQUATIONS ──────────────────────────────────────────────────────────────────
-// Every equation is a·x + b = c that reduces to an integer x = weeks (kept small,
-// non-negative, so "weeks until you can afford it" reads naturally).
+// ── EQUATIONS — answered by tapping ────────────────────────────────────────────
+// a·x + b = c, where b is a WHOLE number of weeks' saving already banked (or owed).
+// That is not cosmetic: it is what makes every misconception land on a whole number
+// of weeks, so a wrong tap is a wrong method rather than an obviously silly decimal
+// the child can eliminate without doing any algebra.
+//   L1  a small head start you already have.
+//   L2  a bigger head start, bigger numbers of weeks.
+//   L3  a DEBT — b is negative, so the first weeks clear what you owe before you
+//       save anything. New structure, not bigger numbers.
 function equationTask(d: 1 | 2 | 3): Task {
-  const a = rint(2, 6)                 // $/week saved
-  const x = rint(1, 9)                 // weeks (the answer)
-  const b = d === 1 ? rnz(-8, 12) : rnz(-12, 18)
-  const c = a * x + b
+  const a = d === 1 ? rint(2, 5) : rint(2, 6)
+  const x = d === 1 ? rint(2, 6) : d === 2 ? rint(2, 9) : rint(4, 9)
+  const ks = d === 1 ? [1, 2] : d === 2 ? [1, 2, 3, 4] : [-2, -1]
+  // x + k ≥ 2 keeps the goal a positive amount worth at least two weeks of saving.
+  const k = pick(ks.filter((v) => x + v >= 2))
+  const b = a * k
+  const c = a * (x + k)
   const expr = lin(a, b)
+  const owe = b < 0
   return {
     kind: 'equation',
     title: 'Weeks to goal', badge: `${expr} = ${fmtInt(c)}`, tone: d === 3 ? 'b' : 'a',
-    prompt: `Slide the weeks x until ${expr} balances ${fmtInt(c)}.`,
-    say: `You save ${a} dollars a week${b !== 0 ? `, and you already have ${b < 0 ? `a ${Math.abs(b)} dollar shortfall` : `${b} dollars`}` : ''}. The goal costs ${spoken(c)} dollars. Slide the weeks until both sides balance.`,
+    context: owe
+      ? `You save $${a} a week, but you owe $${Math.abs(b)} first. The goal costs $${c}.`
+      : `You save $${a} a week and already have $${b}. The goal costs $${c}.`,
+    padInstruction: 'Tap the number of weeks.',
+    showEquals: false,
+    prompt: `How many weeks until you have $${c}?`,
+    say: owe
+      ? `You save ${a} dollars a week, but you owe ${Math.abs(b)} dollars first. The goal costs ${c} dollars. How many weeks until you can buy it?`
+      : `You save ${a} dollars a week, and you already have ${b} dollars. The goal costs ${c} dollars. How many weeks until you can buy it?`,
     work: [
-      `Saved after x weeks: ${expr}. Set it equal to the goal: ${expr} = ${fmtInt(c)}.`,
-      `${b < 0 ? 'Add' : 'Subtract'} ${Math.abs(b)} from both sides: ${coef(a)} = ${fmtInt(c - b)}.`,
-      `Divide both sides by ${a}: x = ${fmtInt(x)}. So ${x} weeks.`,
+      `After x weeks you have ${expr} dollars, and the goal is ${fmtInt(c)}.`,
+      `Undo the ${owe ? 'debt' : 'head start'} FIRST — ${owe ? 'add' : 'subtract'} ${Math.abs(b)} on both sides: ${coef(a)} = ${fmtInt(c - b)}.`,
+      `Now divide both sides by ${a}: x = ${x}. That is ${x} weeks.`,
     ],
     a, b, c, x,
+    //  c/a      → divided before undoing the head start
+    //  c−b      → undid the head start, then forgot to divide
+    // (c+b)/a   → added the head start instead of subtracting it
+    pad: [c / a, c - b, (c + b) / a],
   }
 }
 
-// ── INEQUALITIES ────────────────────────────────────────────────────────────────
-// Boundary problems: "at LEAST how many …". The dialed answer is the boundary
-// integer. Includes a sign-flip case (dividing by a negative) at L3.
-function inequalityTask(d: 1 | 2 | 3): Task {
-  const roll = Math.random()
-  if (d >= 3 && roll < 0.4) {
-    // Sign-flip: goal minus spending. "goal − c·x ≥ 0" → x ≤ goal/c. Boundary = goal/c.
-    const c = rint(2, 6)               // $/week spent
-    const bnd = rint(3, 9)             // the boundary week count
-    const goal = c * bnd
-    return {
-      kind: 'inequality',
-      title: 'Spending limit', badge: `${fmtInt(goal)} − ${coef(c)} ≥ 0`, tone: 'b',
-      prompt: `Dial the most weeks x you can spend $${c}/week and still not go below zero.`,
-      say: `You start with ${goal} dollars and spend ${c} dollars each week. Dial the most weeks you can go before you hit zero.`,
-      work: [
-        `You need ${fmtInt(goal)} − ${coef(c)} ≥ 0. Subtract ${goal}: −${coef(c)} ≥ ${fmtInt(-goal)}.`,
-        `Divide by −${c} — dividing by a negative FLIPS the sign: x ≤ ${bnd}.`,
-        `So the most weeks is ${bnd}.`,
-      ],
-      n: bnd, lo: 0, hi: bnd + 8,
-    }
-  }
-  // "At least" savings: save p/week toward a goal, how many weeks to have ≥ goal?
-  const p = rint(3, 8)                 // $/week
-  const bnd = rint(3, 10)              // weeks needed (boundary)
-  const have = d === 1 ? 0 : rint(0, p * 2)
-  const goal = p * bnd + have
-  const expr = have === 0 ? coef(p) : `${coef(p)}${term(have)}`
+// ── INEQUALITIES — answered on the week ray ────────────────────────────────────
+// The answer is a set of weeks: a boundary AND a direction, both graded.
+
+/** "At least enough" — save toward a goal. No flip: x ≥ boundary. This is the
+ *  CONTRAST case; without it the flip below means nothing. */
+function reachTask(d: 2 | 3): Task {
+  const rate = rint(3, 8)
+  const n = rint(3, 9)
+  const base = d === 2 ? rint(0, 6) : rint(1, 2 * rate)
+  const goal = rate * n + base
+  const expr = base === 0 ? coef(rate) : `${coef(rate)}${term(base)}`
   return {
-    kind: 'inequality',
+    kind: 'inequality', mode: 'save',
     title: 'Weeks to afford', badge: `${expr} ≥ ${fmtInt(goal)}`, tone: d === 3 ? 'b' : 'a',
-    prompt: `Dial the fewest weeks x to save at least $${goal}.`,
-    say: `You save ${p} dollars a week${have ? `, on top of ${have} you already have` : ''}. The goal is ${goal} dollars. Dial the fewest weeks to have at least enough.`,
+    context: base === 0
+      ? `You save $${rate} a week from nothing. The goal is $${goal}.`
+      : `You already have $${base} and save $${rate} more each week. The goal is $${goal}.`,
+    instruction: 'Set the boundary week, then shade the weeks that reach the goal.',
+    showEquals: false,
+    prompt: `Which weeks get you to $${goal}?`,
+    say: `You save ${rate} dollars a week${base ? `, on top of ${base} you already have` : ''}, and the goal is ${goal} dollars. Find the boundary week, then shade the weeks that work.`,
     work: [
-      `Saved after x weeks: ${expr}. You need it to be at least ${fmtInt(goal)}: ${expr} ≥ ${fmtInt(goal)}.`,
-      have === 0
-        ? `Divide by ${p}: x ≥ ${bnd}.`
-        : `Subtract ${have}: ${coef(p)} ≥ ${fmtInt(goal - have)}. Divide by ${p}: x ≥ ${bnd}.`,
-      `So the fewest whole weeks is ${bnd}.`,
+      `After x weeks you have ${expr} dollars, and you need at least ${fmtInt(goal)}.`,
+      base === 0
+        ? `Divide both sides by ${rate}: x is at least ${n}.`
+        : `Take the ${base} you already have off both sides: ${coef(rate)} is at least ${fmtInt(goal - base)}. Divide by ${rate}: x is at least ${n}.`,
+      `Dividing by a POSITIVE keeps the direction, so week ${n} and every week after it works.`,
     ],
-    n: bnd, lo: 0, hi: bnd + 8,
+    rate, base, limit: goal, top: goal, n, dir: 1, hi: n + 5,
+  }
+}
+
+/** L3 — the SIGN FLIP, with the story-sense shortcut closed.
+ *
+ *  You start with `base`, spend `rate` a week, and must keep `limit` back for the
+ *  bus. base − rate·x ≥ limit. The old version had limit = 0, so "how long until
+ *  the money runs out" answered it by plain division and the flip was never used.
+ *  With a reserve, base ÷ rate is WRONG — you have to take the reserve off first —
+ *  and then dividing by −rate turns "at least" into "at most", which is the graded
+ *  direction on the ray.
+ */
+function limitTask(): Task {
+  const rate = rint(2, 6)
+  const n = rint(3, 8)
+  const limit = rate * rint(1, 3)      // a whole number of weeks held back
+  const base = rate * n + limit
+  return {
+    kind: 'inequality', mode: 'spend',
+    title: 'Spending limit', badge: `${fmtInt(base)} − ${coef(rate)} ≥ ${fmtInt(limit)}`, tone: 'b',
+    context: `You have $${base} and spend $${rate} a week — but $${limit} must stay in the jar for the bus.`,
+    instruction: 'Set the boundary week, then shade the weeks that keep the bus money safe.',
+    showEquals: false,
+    prompt: `Which weeks leave at least $${limit} in the jar?`,
+    say: `You have ${base} dollars and spend ${rate} dollars a week, but ${limit} dollars must stay in the jar for the bus. Find the boundary week, then shade the weeks that work.`,
+    work: [
+      `The bus money is not yours to spend, so take it off first: ${fmtInt(base)} minus ${fmtInt(limit)} leaves ${fmtInt(base - limit)} to spend.`,
+      `In symbols: ${fmtInt(base)} − ${coef(rate)} is at least ${fmtInt(limit)}, so −${coef(rate)} is at least ${fmtInt(limit - base)}.`,
+      `Dividing by NEGATIVE ${rate} flips the direction — "at least" becomes "at most": x is at most ${n}. Week ${n} leaves exactly ${fmtInt(limit)}, and every week after that dips below it.`,
+    ],
+    rate, base, limit, top: base, n, dir: -1, hi: n + 5,
   }
 }
 
 function makeTask(d: 1 | 2 | 3): Task {
   if (d === 1) return equationTask(1)
-  if (d === 2) return Math.random() < 0.6 ? equationTask(2) : inequalityTask(2)
-  return Math.random() < 0.5 ? equationTask(3) : inequalityTask(3)
+  if (d === 2) return Math.random() < 0.6 ? equationTask(2) : reachTask(2)
+  const r = Math.random()
+  return r < 0.4 ? equationTask(3) : r < 0.7 ? limitTask() : reachTask(3)
 }
-
-// ── fixed worked example (walkthrough) — a two-step equation ────────────────────
-// Save $5/week, already have $3, goal is $28 → 5x + 3 = 28 → x = 5 weeks.
-const DEMO_A = 5, DEMO_B = 3, DEMO_C = 28, DEMO_X = 5
-const DEMO_TASK: Task = {
-  kind: 'equation', title: 'Weeks to goal', badge: '5x + 3 = 28', tone: 'a',
-  prompt: '', say: '',
-  work: ['5x + 3 = 28. Subtract 3: 5x = 25. Divide by 5: x = 5. So 5 weeks.'],
-  a: DEMO_A, b: DEMO_B, c: DEMO_C, x: DEMO_X,
-}
-// The walkthrough ACTS OUT the save-up: the money jar's inside is the dollar
-// number line ($0 at the floor, the $28 goal at the top). `x` carries the weeks
-// (0 until the "climb" beat, then 5) and the scene reads `stepIndex` to reveal
-// each overlay — head start → weekly rate → equation → peel the $3 → divide into
-// $5 weeks → climb → unlocked. Eleven BABY steps: ONE idea + ONE board line +
-// ONE beat each; the physical save-up is the hook, then the algebra unfolds one
-// inverse operation per step. (storyboard: docs/storyboards/saving-goal.md)
-const DEMO_STEPS: DemoStep<V>[] = [
-  { say: "You've got your eye on a $28 skateboard. Let's work out when you can buy it.", value: { k: 'x', x: 0 }, board: 'goal = $28' },
-  { say: 'Good news — you already have three dollars saved. That is your head start, sitting at the bottom of the jar.', value: { k: 'x', x: 0 }, board: 'have $3' },
-  { say: 'And every week you drop in five dollars more. So your savings grow five dollars at a time.', value: { k: 'x', x: 0 }, board: '+ $5 each week' },
-  { say: 'After x weeks, the weekly saving adds up to five x, and you still have that three dollars on top.', value: { k: 'x', x: 0 }, board: '5x + 3' },
-  { say: 'You can afford it when your savings reach twenty-eight dollars. So five x plus three equals twenty-eight — that is the equation.', value: { k: 'x', x: 0 }, board: '5x + 3 = 28' },
-  { say: 'To find x, get it on its own. First undo the plus three — take the three-dollar head start off both sides.', value: { k: 'x', x: 0 }, board: '−3 both sides' },
-  { say: 'Twenty-eight minus three is twenty-five. So five x equals twenty-five — that part comes purely from weekly saving.', value: { k: 'x', x: 0 }, board: '5x = 25' },
-  { say: 'Now undo the times five. Split that twenty-five into equal five-dollar weeks.', value: { k: 'x', x: 0 }, board: 'x = 25 ÷ 5' },
-  { say: 'Watch the jar fill one week at a time — five, ten, fifteen, twenty, twenty-five.', value: { k: 'x', x: 5 }, board: '5, 10, 15, 20, 25' },
-  { say: 'That took five weeks. So x equals five.', value: { k: 'x', x: 5 }, board: 'x = 5' },
-  { say: 'Add back your three-dollar head start and the jar hits twenty-eight — skateboard unlocked. Five weeks!', value: { k: 'x', x: 5 }, board: '= 5 weeks ✓' },
-]
 
 // ── scene geometry (shared) ─────────────────────────────────────────────────
-// The money jar's INSIDE is the dollar number line: J_BOT = $0, J_TOP = goal.
+// The money jar's INSIDE is the dollar number line: J_BOT = $0, J_TOP = the top of
+// the scale.
 const S_W = 340, S_H = 300
 const JX = 112, JW = 100, J_RIM = 46, J_TOP = 56, J_BOT = 250
 const JCX = JX + JW / 2
@@ -179,24 +221,38 @@ function Skateboard({ x, y, mint }: { x: number; y: number; mint: boolean }) {
   )
 }
 
-/** SavingScene — a hand-authored SVG money jar that ACTS OUT the walkthrough beat
- *  by beat with Framer Motion. The jar interior is the exact dollar scale ($0 at
- *  the floor, the $28 goal at the top); a gold savings column rides a continuous
- *  `useMotionValue` progress so it FLOWS between beats, a week-marker rides its
- *  surface, and the skateboard prize hops when the jar hits the goal. The math
- *  skeleton (fill heights, $5 week ticks, goal line) sits on the real dollar→pixel
- *  mapping. `useReducedMotion` collapses to the end state. During real play the
- *  jar marks the task as today. Storyboard: docs/storyboards/saving-goal.md */
-function SavingScene({ palette, task, value, stepIndex, frameCount, ended }: {
-  palette: Palette; task: Task; value: V; stepIndex: number; frameCount: number; ended: boolean
-}) {
-  const isDemo = task.badge === '5x + 3 = 28'
-  return isDemo
-    ? <DemoJar palette={palette} value={value} stepIndex={stepIndex} frameCount={frameCount} ended={ended} />
-    : <LiveJar palette={palette} task={task} value={value} ended={ended} />
-}
-
 // ── the walkthrough jar (5x + 3 = 28 → x = 5 weeks) ─────────────────────────────
+// Save $5/week, already have $3, goal is $28 → 5x + 3 = 28 → x = 5 weeks.
+const DEMO_A = 5, DEMO_B = 3, DEMO_C = 28, DEMO_X = 5
+const DEMO_TASK: Task = {
+  kind: 'equation', title: 'Weeks to goal', badge: '5x + 3 = 28', tone: 'a',
+  prompt: '', say: '',
+  work: ['5x + 3 = 28. Subtract 3: 5x = 25. Divide by 5: x = 5. So 5 weeks.'],
+  a: DEMO_A, b: DEMO_B, c: DEMO_C, x: DEMO_X,
+}
+// Eleven BABY steps: ONE idea + ONE board line + ONE beat each; the physical
+// save-up is the hook, then the algebra unfolds one inverse operation per step.
+// (storyboard: docs/storyboards/saving-goal.md)
+const DEMO_STEPS: DemoStep<V>[] = [
+  { say: "You've got your eye on a $28 skateboard. Let's work out when you can buy it.", value: 0, board: 'goal = $28' },
+  { say: 'Good news — you already have three dollars saved. That is your head start, sitting at the bottom of the jar.', value: 0, board: 'have $3' },
+  { say: 'And every week you drop in five dollars more. So your savings grow five dollars at a time.', value: 0, board: '+ $5 each week' },
+  { say: 'After x weeks, the weekly saving adds up to five x, and you still have that three dollars on top.', value: 0, board: '5x + 3' },
+  { say: 'You can afford it when your savings reach twenty-eight dollars. So five x plus three equals twenty-eight — that is the equation.', value: 0, board: '5x + 3 = 28' },
+  { say: 'To find x, get it on its own. First undo the plus three — take the three-dollar head start off both sides.', value: 0, board: '−3 both sides' },
+  { say: 'Twenty-eight minus three is twenty-five. So five x equals twenty-five — that part comes purely from weekly saving.', value: 0, board: '5x = 25' },
+  { say: 'Now undo the times five. Split that twenty-five into equal five-dollar weeks.', value: 0, board: 'x = 25 ÷ 5' },
+  { say: 'Watch the jar fill one week at a time — five, ten, fifteen, twenty, twenty-five.', value: 5, board: '5, 10, 15, 20, 25' },
+  { say: 'That took five weeks. So x equals five.', value: 5, board: 'x = 5' },
+  { say: 'Add back your three-dollar head start and the jar hits twenty-eight — skateboard unlocked. Five weeks!', value: 5, board: '= 5 weeks ✓' },
+]
+
+/** DemoJar — a hand-authored SVG money jar that ACTS OUT the walkthrough beat by
+ *  beat with Framer Motion. The jar interior is the exact dollar scale ($0 at the
+ *  floor, the $28 goal at the top); a gold savings column rides a continuous
+ *  `useMotionValue` so it FLOWS between beats, a week-marker rides its surface, and
+ *  the skateboard hops when the jar hits the goal. `useReducedMotion` collapses to
+ *  the end state. */
 function DemoJar({ palette, value, stepIndex, frameCount, ended }: {
   palette: Palette; value: V; stepIndex: number; frameCount: number; ended: boolean
 }) {
@@ -214,7 +270,7 @@ function DemoJar({ palette, value, stepIndex, frameCount, ended }: {
 
   // ── CONTINUOUS savings climb: motion value in DOLLARS-from-weekly-saving (0→25). ──
   const savedWeekly = useMotionValue(0)
-  const targetWeekly = value.k === 'x' ? Math.min(25, value.x * 5) : 0
+  const targetWeekly = typeof value === 'number' ? Math.min(25, value * 5) : 0
   useEffect(() => {
     const c = animate(savedWeekly, targetWeekly, { duration: reduce ? 0 : 1.6, ease: [0.45, 0.05, 0.25, 1] })
     return () => c.stop()
@@ -335,48 +391,164 @@ function DemoJar({ palette, value, stepIndex, frameCount, ended }: {
   )
 }
 
-// ── the live jar (guided / scored / reveal) — marks the current task as today ──
-function LiveJar({ palette, task, value, ended }: { palette: Palette; task: Task; value: V; ended: boolean }) {
-  const p = palette
-  const a = task.a ?? DEMO_A, b = task.b ?? DEMO_B, goal = Math.max(1, task.c ?? DEMO_C)
-  const weeks = value.k === 'x' ? value.x : 0
-  const saved = a * weeks + b
-  const reached = saved >= goal - 1e-6
-  const solved = (ended || reached) && weeks > 0
-  const dY = (d: number) => J_BOT - (Math.max(0, Math.min(goal, d)) / goal) * (J_BOT - J_TOP)
-  const fillTop = dY(saved)
-  const gold = solved ? 'url(#lg_win)' : 'url(#lg_gold)'
+// ── THE WEEK RAY — the inequality instrument ──────────────────────────────────
+// An inequality's answer is a SET of weeks, so this is the one question type that
+// keeps a surface: set the boundary, then shade which side works.
+//
+// ⚠️ THE JAR DOES NOT TRACK THE DIAL while you are answering. It shows the story —
+// the money you start with, the line you must not cross, the weekly rate — and it
+// only moves on the reveal. A jar that reacted live would turn solving into
+// hot-and-cold nudging (find the level, never do the algebra), which is exactly why
+// BalanceBench's beam stays level while the child sets x. The ray is where the
+// answer is produced; the jar is why the answer is what it is.
+
+/** The static story jar for an inequality: fill level, the line you must not cross,
+ *  and the weekly arrow. `settled` drains/fills it to the boundary week — the check,
+ *  shown on the reveal and on the walkthrough's landing beat. */
+function StoryJar({ p, task, settled }: { p: Palette; task: Task; settled: boolean }): ReactElement {
+  const top = Math.max(1, task.top ?? 1)
+  const rate = task.rate ?? 0, base = task.base ?? 0, limit = task.limit ?? 0, n = task.n ?? 0
+  const spend = task.mode === 'spend'
+  const dY = (d: number) => J_BOT - (Math.max(0, Math.min(top, d)) / top) * (J_BOT - J_TOP)
+  const level = settled ? (spend ? base - rate * n : rate * n + base) : (spend ? base : base)
+  const fillTop = dY(level)
+  const lineY = dY(limit)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px, 1vh, 12px)', width: 'clamp(230px, 30vw, 340px)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px, 1vw, 14px)', letterSpacing: '0.12em', textTransform: 'uppercase', color: p.mutedOnPaper }}>
-        <span>🎯 saving up</span><span style={{ color: p.coral, fontWeight: 800 }}>goal ${goal}</span>
-      </div>
-      <svg viewBox={`0 0 ${S_W} ${S_H}`} width="clamp(220px, 30vw, 340px)" height="auto" style={{ borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
-        <defs>
-          <linearGradient id="lg_sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#173245" /><stop offset="1" stopColor="#0a1622" /></linearGradient>
-          <linearGradient id="lg_gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={p.gold} /><stop offset="1" stopColor={p.goldDeep} /></linearGradient>
-          <linearGradient id="lg_win" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5cd6ac" /><stop offset="1" stopColor="#2fb37f" /></linearGradient>
-          <clipPath id="lg_jar"><rect x={JX} y={J_RIM} width={JW} height={J_BOT - J_RIM} rx={12} /></clipPath>
-        </defs>
-        <rect x={0} y={0} width={S_W} height={S_H} fill="url(#lg_sky)" />
-        <ellipse cx={JCX} cy={J_BOT} rx={JW * 0.62} ry={7} fill="#000" opacity={0.28} />
-        <line x1={JCX - 40} y1={30} x2={JCX + 40} y2={30} stroke={p.glassBorder} strokeWidth={2} opacity={0.6} />
-        <Skateboard x={JCX} y={20} mint={solved} />
-        <g clipPath="url(#lg_jar)">
-          <rect x={JX} y={fillTop} width={JW} height={J_BOT - fillTop} fill={gold} style={{ transition: 'y 300ms ease, height 300ms ease' }} />
+    <svg viewBox={`0 0 ${S_W} ${S_H}`} width="clamp(200px, 27vw, 300px)" height="auto" style={{ borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
+      <defs>
+        <linearGradient id="ry_sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#173245" /><stop offset="1" stopColor="#0a1622" /></linearGradient>
+        <linearGradient id="ry_gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={p.gold} /><stop offset="1" stopColor={p.goldDeep} /></linearGradient>
+        <linearGradient id="ry_win" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5cd6ac" /><stop offset="1" stopColor="#2fb37f" /></linearGradient>
+        <clipPath id="ry_jar"><rect x={JX} y={J_RIM} width={JW} height={J_BOT - J_RIM} rx={12} /></clipPath>
+      </defs>
+      <rect x={0} y={0} width={S_W} height={S_H} fill="url(#ry_sky)" />
+      <ellipse cx={JCX} cy={J_BOT} rx={JW * 0.62} ry={7} fill="#000" opacity={0.28} />
+      <g clipPath="url(#ry_jar)">
+        <rect x={JX} y={fillTop} width={JW} height={J_BOT - fillTop} fill={settled ? 'url(#ry_win)' : 'url(#ry_gold)'} style={{ transition: 'y 420ms ease, height 420ms ease' }} />
+      </g>
+      <path d={`M${JX},${J_RIM} L${JX},${J_BOT} Q ${JX},${J_BOT + 10} ${JX + 12},${J_BOT + 10} L${JX + JW - 12},${J_BOT + 10} Q ${JX + JW},${J_BOT + 10} ${JX + JW},${J_BOT} L${JX + JW},${J_RIM}`} fill="none" stroke={p.creamSoft} strokeWidth={2} strokeLinecap="round" />
+      <line x1={JX - 6} y1={J_RIM} x2={JX + JW + 6} y2={J_RIM} stroke={p.creamSoft} strokeWidth={3} strokeLinecap="round" opacity={0.9} />
+      {/* the line you must not cross — the goal above (save) or the reserve below (spend) */}
+      <line x1={JX - 6} y1={lineY} x2={JX + JW + 6} y2={lineY} stroke={p.coral} strokeWidth={2.4} strokeDasharray={spend ? '6 4' : undefined} />
+      <text x={JX + JW + 10} y={lineY + 4} fill={p.coral} fontSize={11} fontFamily="var(--font-numeric)" fontWeight={800}>${limit}</text>
+      <text x={JX + JW + 10} y={lineY + 17} fill={p.mutedOnPaper} fontSize={8.5} fontFamily="var(--font-numeric)">{spend ? 'bus money' : 'goal'}</text>
+      {/* the weekly move */}
+      <text x={JX - 12} y={(J_TOP + J_BOT) / 2} textAnchor="end" fill={spend ? p.coral : p.mint} fontSize={13} fontFamily="var(--font-numeric)" fontWeight={800}>{spend ? '↓' : '↑'} ${rate}</text>
+      <text x={JX - 12} y={(J_TOP + J_BOT) / 2 + 13} textAnchor="end" fill={p.mutedOnPaper} fontSize={9} fontFamily="var(--font-numeric)">a week</text>
+      <text x={JCX} y={J_BOT - 12} textAnchor="middle" fill={p.cream} fontSize={22} fontFamily="var(--font-numeric)" fontWeight={800} style={{ textShadow: '0 2px 8px rgba(0,0,0,0.55)' }}>${Math.max(0, Math.round(level))}</text>
+      {settled && <text x={JCX} y={J_RIM - 12} textAnchor="middle" fill={p.mint} fontSize={12} fontFamily="var(--font-numeric)" fontWeight={800}>after week {n}</text>}
+    </svg>
+  )
+}
+
+/** The week line: ticks from 0, a boundary dot, and the shaded side once chosen. */
+function WeekRay({ p, n, dir, hi, reveal }: { p: Palette; n: number; dir: Dir; hi: number; reveal?: boolean }): ReactElement {
+  const W = 320, H = 56, L = 22, R = W - 22, y = 28
+  const xf = (w: number) => L + (w / Math.max(1, hi)) * (R - L)
+  const col = reveal ? p.mint : p.gold
+  const x0 = xf(n)
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="clamp(240px, 34vw, 340px)" height="auto" style={{ display: 'block' }}>
+      <text x={L} y={11} fill={p.mutedOnPaper} fontSize={9} fontFamily="var(--font-numeric)" letterSpacing="0.14em">WEEKS</text>
+      <line x1={L} y1={y} x2={R} y2={y} stroke={p.glassBorder} strokeWidth={2} />
+      {Array.from({ length: hi + 1 }, (_, w) => (
+        <g key={w}>
+          <line x1={xf(w)} y1={y - 5} x2={xf(w)} y2={y + 5} stroke={p.mutedOnPaper} strokeWidth={1} />
+          <text x={xf(w)} y={y + 18} textAnchor="middle" fill={p.mutedOnPaper} fontSize={9} fontFamily="var(--font-numeric)">{w}</text>
         </g>
-        <path d={`M${JX},${J_RIM} L${JX},${J_BOT} Q ${JX},${J_BOT + 10} ${JX + 12},${J_BOT + 10} L${JX + JW - 12},${J_BOT + 10} Q ${JX + JW},${J_BOT + 10} ${JX + JW},${J_BOT} L${JX + JW},${J_RIM}`} fill="none" stroke={p.creamSoft} strokeWidth={2} strokeLinecap="round" />
-        <line x1={JX - 6} y1={J_RIM} x2={JX + JW + 6} y2={J_RIM} stroke={p.creamSoft} strokeWidth={3} strokeLinecap="round" opacity={0.9} />
-        <line x1={JX} y1={J_TOP} x2={JX + JW} y2={J_TOP} stroke={solved ? p.mint : p.coral} strokeWidth={2.4} />
-        <text x={JX + JW + 8} y={J_TOP + 4} fill={solved ? p.mint : p.coral} fontSize={11} fontFamily="var(--font-numeric)" fontWeight={800}>${goal}</text>
-        <text x={JCX} y={(J_TOP + J_BOT) / 2} textAnchor="middle" fill={p.cream} fontSize={26} fontFamily="var(--font-numeric)" fontWeight={800} style={{ textShadow: '0 2px 8px rgba(0,0,0,0.55)' }}>${Math.max(0, saved)}</text>
-      </svg>
-      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.3vw, 17px)', fontWeight: 800, color: solved ? '#2fb37f' : p.mutedOnPaper }}>
-        {solved ? `reached in ${weeks} weeks ✓` : `week ${weeks}`}
-      </div>
+      ))}
+      {dir !== 0 && (
+        <line x1={x0} y1={y} x2={dir < 0 ? L : R} y2={y} stroke={col} strokeWidth={6} strokeLinecap="round" opacity={0.9}
+          style={{ transition: 'x1 200ms ease, x2 200ms ease' }} />
+      )}
+      <circle cx={x0} cy={y} r={6.5} fill={dir === 0 ? 'none' : col} stroke={dir === 0 ? p.gold : p.cream} strokeWidth={2}
+        strokeDasharray={dir === 0 ? '3 3' : undefined} style={{ transition: 'cx 200ms ease' }} />
+    </svg>
+  )
+}
+
+/** RayBoard — the read-only picture: story jar + week ray. Used as the instrument's
+ *  display AND as the walkthrough scene, so the child watches the exact surface
+ *  they will be graded on. */
+function RayBoard({ P: p, task, n, dir, settled, reveal }: {
+  P: Palette; task: Task; n: number; dir: Dir; settled?: boolean; reveal?: boolean
+}): ReactElement {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px, 1vh, 10px)' }}>
+      <StoryJar p={p} task={task} settled={!!settled} />
+      <WeekRay p={p} n={n} dir={dir} hi={task.hi ?? 12} reveal={reveal} />
     </div>
   )
 }
+
+function RayLoader({ P: p, task, value, setValue, disabled, reveal, onCommit }: {
+  P: Palette; task: Task; value: V; setValue: (v: V) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: V) => void
+}): ReactElement {
+  const cur = typeof value === 'object' ? value : { k: 'ray' as const, n: 0, dir: 0 as Dir }
+  const hi = task.hi ?? 12
+  const set = (n: number, dir: Dir) => setValue({ k: 'ray', n, dir })
+  const ready = cur.dir !== 0
+
+  const chip = (d: 1 | -1, label: string) => {
+    const lit = cur.dir === d || (reveal && task.dir === d)
+    return (
+      <button type="button" disabled={disabled} onClick={() => set(cur.n, d)}
+        style={{
+          flex: 1, padding: 'clamp(10px,1.2vw,14px)', borderRadius: 12, cursor: disabled ? 'default' : 'pointer',
+          fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(12px,1.35vw,16px)',
+          background: lit ? p.gold : p.glass, color: lit ? '#12283a' : p.cream,
+          border: `2px solid ${lit ? p.gold : p.glassBorder}`, transition: 'background 140ms, border-color 140ms',
+        }}>{label}</button>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px,1.2vw,14px)', width: '100%' }}>
+      <RayBoard P={p} task={task} n={cur.n} dir={cur.dir} settled={!!reveal} reveal={reveal} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Nudge P={p} label="−" disabled={disabled} onClick={() => set(Math.max(0, cur.n - 1), cur.dir)} />
+        <div style={{ minWidth: 140, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(24px,2.6vw,34px)', fontWeight: 800, color: reveal ? p.mint : p.gold }}>{cur.n}</div>
+          <div style={{ fontSize: 'clamp(11px,1.15vw,14px)', color: p.creamSoft }}>boundary week</div>
+        </div>
+        <Nudge P={p} label="+" disabled={disabled} onClick={() => set(Math.min(hi, cur.n + 1), cur.dir)} />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, width: '100%', maxWidth: 'clamp(280px,42vw,440px)' }}>
+        <div style={{ fontSize: 'clamp(11px,1.1vw,14px)', color: p.creamSoft, fontWeight: 700, letterSpacing: '0.04em' }}>Which weeks work?</div>
+        <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+          {chip(-1, `◀ ${cur.n} or fewer`)}
+          {chip(1, `${cur.n} or more ▶`)}
+        </div>
+      </div>
+
+      <CommitBtn P={p} label="SHADE IT ✓" disabled={disabled || !ready} onClick={() => onCommit(cur)} />
+    </div>
+  )
+}
+
+// ── worked example 2: the SIGN FLIP, on the ray ────────────────────────────────
+// $28 in the jar, $4 a week going out, $8 that must stay for the bus:
+// 28 − 4x ≥ 8 → −4x ≥ −20 → x ≤ 5. The walkthrough works BOTH halves the scored
+// question grades — the boundary AND the direction — so no gesture is graded that
+// the child has never seen. (This is why there is no guided round.)
+const DEMO_RAY: Task = {
+  kind: 'inequality', mode: 'spend', title: 'Spending limit', badge: '28 − 4x ≥ 8', tone: 'b',
+  prompt: '', say: '', work: [],
+  rate: 4, base: 28, limit: 8, top: 28, n: 5, dir: -1, hi: 10,
+}
+const DEMO_RAY_STEPS: DemoStep<V>[] = [
+  { say: 'One more, a harder kind. The jar has twenty-eight dollars in it — but this time money is going OUT.', value: { k: 'ray', n: 0, dir: 0 }, board: 'have $28' },
+  { say: 'Eight of those dollars are your bus money. That dashed line is the floor: the jar must never drop below it.', value: { k: 'ray', n: 0, dir: 0 }, board: 'keep $8 for the bus' },
+  { say: 'Every week you spend four dollars. So after x weeks the jar holds twenty-eight minus four x, and that has to stay at or above eight.', value: { k: 'ray', n: 0, dir: 0 }, board: '28 − 4x ≥ 8' },
+  { say: 'Take the bus money off both sides. Negative four x is at least negative twenty.', value: { k: 'ray', n: 0, dir: 0 }, board: '−4x ≥ −20' },
+  { say: 'Now divide both sides by negative four. Here is the part to watch: dividing by a NEGATIVE flips the direction. At least becomes at most.', value: { k: 'ray', n: 0, dir: 0 }, board: 'x ≤ 5  (flipped)' },
+  { say: 'So the boundary week is five. Set the dot on five.', value: { k: 'ray', n: 5, dir: 0 }, board: 'boundary = week 5' },
+  { say: 'Check it against the jar. Five weeks of spending four dollars is twenty dollars, and the jar lands exactly on the eight-dollar bus line.', value: { k: 'ray', n: 5, dir: 0 }, board: '28 − 20 = 8 ✓' },
+  { say: 'Fewer weeks leaves more in the jar, so those are fine. More weeks eats the bus money. Shade five and everything below it.', value: { k: 'ray', n: 5, dir: -1 }, board: 'shade 5 and below' },
+  { say: 'Up to five weeks. That is the answer — a boundary and a direction, and the flip is what gave you the direction.', value: { k: 'ray', n: 5, dir: -1 }, board: 'x ≤ 5 ✓' },
+]
 
 const CONFIG: GameConfig<V, Task> = {
   chapterId: 'linearEquationsInequalities',
@@ -385,78 +557,54 @@ const CONFIG: GameConfig<V, Task> = {
   palette: P,
   motif: '🎯',
   makeTask,
-  // NB: instrument only renders when value != null → initialValue must be non-null.
-  initialValue: (t) => (t.kind === 'equation' ? { k: 'x', x: 0 } : { k: 'n', n: t.lo ?? 0 }),
-  grade: (t, v) => (t.kind === 'equation' ? v.k === 'x' && v.x === t.x : v.k === 'n' && v.n === t.n),
-  revealText: (t) => (t.kind === 'equation' ? `${fmtInt(t.x ?? 0)} weeks` : `${fmtInt(t.n ?? 0)} weeks`),
+  // PER-TASK gating: a question shows the pad when its answer is a single number and
+  // the instrument was never doing the solving. Equations were compute-then-dial on a
+  // beam that deliberately does not react, so they get choices. Inequalities keep the
+  // ray — a solution SET is not a number, and the direction is where the flip lives.
+  answerPad: (t) => (t.pad ? numChoices(t.x ?? 0, t.pad, { min: 0 }) : []),
+  initialValue: (t) => (t.kind === 'equation' ? 0 : { k: 'ray', n: 0, dir: 0 }),
+  grade: (t, v) => t.kind === 'equation'
+    ? typeof v === 'number' && v === t.x
+    : typeof v === 'object' && v.n === t.n && v.dir === t.dir,
+  revealText: (t) => (t.kind === 'equation'
+    ? `${t.x} weeks`
+    : t.dir === -1 ? `up to ${t.n} weeks` : `${t.n} weeks or more`),
   glide: (t, _from, setValue, later) =>
-    later(() => setValue(t.kind === 'equation' ? { k: 'x', x: t.x ?? 0 } : { k: 'n', n: t.n ?? 0 }), 320),
-  Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => {
-    if (task.kind === 'equation') {
-      const x = value.k === 'x' ? value.x : 0
-      const a = task.a ?? 1, b = task.b ?? 0, c = task.c ?? 0
-      return (
-        <BalanceBeam
-          P={palette}
-          x={x}
-          setX={(n) => setValue({ k: 'x', x: n })}
-          min={0}
-          max={(task.x ?? 6) + 6}
-          leftOf={(w) => a * w + b}
-          right={c}
-          leftExpr={lin(a, b)}
-          disabled={disabled}
-          reveal={reveal}
-          onCommit={(n) => onCommit({ k: 'x', x: n })}
-          commitLabel="CHECK THE WEEKS ✓"
-        />
-      )
-    }
-    const n = value.k === 'n' ? value.n : 0
-    return (
-      <SlideValue
-        P={palette}
-        value={n}
-        setValue={(m) => setValue({ k: 'n', n: m })}
-        min={task.lo ?? 0}
-        max={task.hi ?? 20}
-        disabled={disabled}
-        reveal={reveal}
-        onCommit={(m) => onCommit({ k: 'n', n: m })}
-        commitLabel="SET THE WEEKS ✓"
-        format={(m) => `${m} wk`}
-      />
-    )
-  },
-  TutorialScene: ({ palette, task, value, stepIndex, frameCount, ended }) => (
-    <SavingScene palette={palette} task={task} value={value} stepIndex={stepIndex} frameCount={frameCount} ended={ended} />
-  ),
+    later(() => setValue(t.kind === 'equation' ? (t.x ?? 0) : { k: 'ray', n: t.n ?? 0, dir: t.dir ?? 1 }), 320),
+  Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) =>
+    <RayLoader P={palette} task={task} value={value} setValue={setValue}
+      disabled={disabled} reveal={reveal} onCommit={onCommit} />,
+  // Branches by example: the equation poses on the savings jar, the inequality on the
+  // ray itself — so the child watches the surface they will be graded on, not a
+  // different picture.
+  TutorialScene: ({ palette, task, value, stepIndex, frameCount, ended }) =>
+    task.kind === 'inequality'
+      ? <RayBoard P={palette} task={task} n={typeof value === 'object' ? value.n : 0}
+        dir={typeof value === 'object' ? value.dir : 0} settled={stepIndex >= 6} reveal={ended} />
+      : <DemoJar palette={palette} value={value} stepIndex={stepIndex} frameCount={frameCount} ended={ended} />,
   start: {
-    blurb: <><strong>You&apos;re saving up for something.</strong> Money goes in each week — the question is <strong>when</strong> you can afford it. That&apos;s an <strong>equation</strong> to solve, or an <strong>inequality</strong> for &ldquo;at least enough&rdquo;.</>,
+    blurb: <><strong>You&apos;re saving up for something.</strong> Money goes in each week — the question is <strong>when</strong> you can afford it. That&apos;s an <strong>equation</strong> to solve. And when money goes <strong>out</strong> instead, you shade every week that still keeps you safe.</>,
     ticket: { title: 'Weeks to goal', badge: '5x + 3 = 28', tone: 'a' },
     startLabel: 'Open the savings plan →',
   },
   overview: {
-    say: 'Here is the plan. When you save the same amount every week, the money you have is an expression with a letter x for the number of weeks. To find WHEN you can afford your goal, you set that equal to the price and peel it apart, one step at a time, until x is on its own. Let us do one together, nice and slow.',
+    say: 'Here is the plan. When you save the same amount every week, the money you have is an expression with a letter x for the number of weeks. To find WHEN you can afford your goal, you set that equal to the price and peel it apart, one step at a time, until x is on its own. Then we will do one where money goes out instead, and the answer is a whole stretch of weeks. Let us work them out together, nice and slow.',
     problem: <>How many weeks until <strong>5x + 3 = 28</strong>?</>,
     points: [
       <>After x weeks you have saved <strong>5x + 3</strong> dollars.</>,
       <>Set it equal to the goal, then <strong>undo</strong> each step to free x.</>,
       <><strong>Subtract the 3</strong>, then <strong>divide by 5</strong> — that&apos;s the number of weeks.</>,
+      <>Divide by a <strong>negative</strong> and the direction <strong>flips</strong>.</>,
     ],
   },
-  tutorial: { task: DEMO_TASK, initial: { k: 'x', x: 0 }, hand: 'drag', steps: DEMO_STEPS },
-  guided: {
-    task: {
-      kind: 'equation', title: 'Weeks to goal', badge: '4x + 2 = 18', tone: 'a',
-      prompt: '', say: 'You save four dollars a week and already have two. The goal is eighteen dollars. Slide the weeks until it balances.',
-      work: ['4x + 2 = 18. Subtract 2: 4x = 16. Divide by 4: x = 4. So 4 weeks.'],
-      a: 4, b: 2, c: 18, x: 4,
-    },
-    coach: 'Your turn — I will help. Slide the weeks until the scale balances.',
-    hand: 'drag',
-  },
-  sig: (t) => t.badge,
+  tutorial: [
+    { task: DEMO_TASK, initial: 0, hand: 'drag', steps: DEMO_STEPS },
+    { task: DEMO_RAY, initial: { k: 'ray', n: 0, dir: 0 }, hand: 'tap', steps: DEMO_RAY_STEPS },
+  ],
+  // No guided round: the walkthrough works BOTH examples (the equation, then the
+  // boundary AND direction on the ray), so every gesture scored play grades has
+  // already been shown. Walkthrough → straight into play.
+  sig: (t) => `${t.kind}:${t.badge}`,
 }
 
 export default function SavingGoal(props: { childName: string; onFinish: (c: number, w: number, mastered?: boolean) => void; onExit: () => void }) {

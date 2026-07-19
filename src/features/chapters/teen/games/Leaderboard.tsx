@@ -617,6 +617,9 @@ const CONFIG: GameConfig<V, Task> = {
   // along a line IS that operation) and × and ÷ keep the ruling bench; the
   // order-of-ops and exponent questions were compute-then-dial, so they get choices.
   answerPad: (t) => (t.pad ? numChoices(t.n ?? 0, t.pad) : []),
+  // REQUIRED here: V is a tagged union, so a bare tapped number would never match
+  // `v.k === 'num'` and every padded answer would grade wrong. (It did, in prod.)
+  padValue: (n) => ({ k: 'num', n }),
   initialValue: (t) => (t.kind === 'score' ? { k: 'num', n: 0 } : t.kind === 'cards' ? { k: 'cards', count: 0, dir: 0 } : { k: 'pick', id: '' }),
   // Cards grade on the SIGNED COUNT the child built (dir · count), not on a number
   // they typed — `b` is fixed, so dir·count·b = answer has exactly one solution.

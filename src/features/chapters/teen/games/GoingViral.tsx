@@ -5,19 +5,35 @@
  * adds the same amount each day (a straight LINE); a viral hit multiplies each day
  * (a doubling CURVE).
  *
- * NON-MCQ except the classify sub-type (which is a 2-way pick, not a quiz):
- *   • EVALUATE   f(x) = views on day x  → a number DIAL (SlideValue).
- *   • SEQUENCE   continue the doubling  → a number DIAL (SlideValue).
- *   • GROWTH     the growth factor        → a number DIAL (SlideValue).
- *   • CLASSIFY   steady line vs viral curve → SpecPicker (two theme cards).
+ * TWO ways to answer, gated PER QUESTION (never per chapter):
+ *   • TAP   → AnswerPad, the familiar 12–14 way. Every question whose answer is a
+ *             single NUMBER: evaluate f(x) = mx + c, continue the doubling, read
+ *             the growth factor. Dialling those was compute-then-dial — the child
+ *             worked the answer out in their head and moved a slider to it, so the
+ *             slider taught nothing. Distractors are real misconceptions, so a
+ *             wrong tap names a wrong METHOD, not a slip of the finger.
+ *   • CARDS → CLASSIFY keeps its SpecPicker: "steady line" vs "viral curve" is a
+ *             CLASSIFICATION, not a number, so there is nothing to put on a pad.
+ *
+ * ⚠️ THE DISTRACTOR THAT CARRIES THE CHAPTER. On the sequence task the headline
+ * distractor is CONTINUING LINEARLY — adding the last difference instead of
+ * multiplying by the ratio. That is the exact confusion this chapter exists to
+ * teach, so it must be present on every single sequence pad. It is chosen as
+ * 2·t₃ − t₂, which equals the true t₄ = s·r³ only when r = 1; with r ∈ {2,3} it
+ * can never collide with the answer and be silently dropped by numChoices.
+ * (Leaderboard shipped exactly that bug: a − 2c equals a − c² whenever c = 2, so a
+ * quarter of its pads lost the one option worth catching. Parameter ranges here are
+ * chosen so no misconception can ever equal the answer — swept over the FULL space.)
+ *
  * Exactly the 12–14 shape on GameShell: overview on the chalkboard + a code-drawn
- * views-over-days chart → baby-step walkthrough → guided → scored play. The scene
- * is code-drawn (pure CSS/SVG, no image assets).
+ * views-over-days chart → a TWO-example baby-step walkthrough (evaluate on the
+ * chart, then classify on the bins) → scored play. No guided round: both graded
+ * gestures are already worked in the walkthrough. Scene is code-drawn (no assets).
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { motion, useMotionValue, useMotionValueEvent, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
-import { Palette, SlideValue, SpecPicker } from './parts/gameKit'
+import { Palette, SlideValue, SpecPicker, numChoices } from './parts/gameKit'
 
 const P: Palette = {
   nightTop: '#1a1230', nightBot: '#0d0820',
@@ -39,50 +55,106 @@ type V = { k: 'num'; n: number } | { k: 'pick'; id: string }
 interface Task extends BaseTask {
   kind: 'eval' | 'sequence' | 'growth' | 'classify'
   n?: number; lo?: number; hi?: number     // numeric answer bounds
+  /** Set → this question is answered by TAPPING a choice instead of dialling. Carries
+   *  the misconception values that become the distractors, so a wrong tap is a wrong
+   *  METHOD (continued linearly, multiplied the constant too), not a slip of the
+   *  finger. Every value here is provably ≠ the answer across the generator's whole
+   *  parameter range — see the ranges chosen in each generator below. */
+  pad?: number[]
   id?: string                              // classify answer id
 }
 
+// ── the pad math, as PURE functions + their full parameter spaces ──────────────
+// Split out of the generators so the fairness property can be swept over the WHOLE
+// range instead of over a hand-copied sample of it: no misconception distractor may
+// ever equal the answer, or numChoices silently drops it and the pad loses exactly
+// the option worth catching. Each `*Valid` guard is the one the generator applies.
+export const EVAL_RANGE = { m: [2, 3, 4, 5, 6], c: Array.from({ length: 20 }, (_, i) => i + 1), x: [2, 3, 4, 5, 6, 7, 8] }
+export const SEQ_RANGE = { start: [2, 3], r: [2, 3] }
+export const GROWTH_RANGE = { a: [2, 3, 5, 10], b: [2, 3, 4] }
+export const evalValid = (m: number, x: number) => x !== m
+export const growthValid = (a: number, b: number) => a !== b
+
+/** multiplied the constant too · added before multiplying · never multiplied */
+export const evalMath = (m: number, c: number, x: number) =>
+  ({ n: m * x + c, pad: [(m + c) * x, m * (x + c), m + x + c] })
+/** ★ continued LINEARLY (added the last gap) · added the ratio · one step too far */
+export const seqMath = (start: number, r: number) => {
+  const seq = [start, start * r, start * r * r]
+  return { seq, n: start * r * r * r, pad: [2 * seq[2] - seq[1], seq[2] + r, seq[2] * r * r] }
+}
+/** took the starting count · multiplied them · added them */
+export const growthMath = (a: number, b: number) => ({ n: b, pad: [a, a * b, a + b] })
+
 // ── L1 — evaluate a steady (linear) views model f(x) = m·x + c ────────────────
+//  ANSWERED BY TAPPING. Distractors are the three ways a child mis-evaluates
+//  m·x + c, all of them a wrong ORDER or a wrong SCOPE for the multiplication.
+//  RANGES: c ≥ 1 and x ≥ 2 and x ≠ m, so that
+//    (m+c)·x = m·x + c  ⟺ c(x−1) = 0        → impossible (c ≥ 1, x ≥ 2)
+//    m·(x+c) = m·x + c  ⟺ c(m−1) = 0        → impossible (c ≥ 1, m ≥ 2)
+//    m + x + c = m·x + c ⟺ (m−1)(x−1) = 1   → only m = x = 2, killed by x ≠ m
+//  so no misconception can ever equal the answer and be dropped from the pad.
 function evalTask(d: 1 | 2 | 3): Task {
-  const m = rint(2, 6), c = rint(0, 20), x = rint(1, 8)
-  const n = m * x + c
-  const cs = c === 0 ? '' : ` + ${c}`
+  const m = rint(2, 6), c = rint(1, 20)
+  let x = rint(2, 8); while (!evalValid(m, x)) x = rint(2, 8)
+  const { n, pad } = evalMath(m, c, x)
   return {
-    kind: 'eval', title: 'Steady channel', badge: `f(x) = ${m}x${cs},  x = ${x}`, tone: 'a',
-    prompt: `Dial the views on day ${x} for f(x) = ${m}x${cs}.`,
-    say: `A steady channel gains views by f of x equals ${m} x${c ? ` plus ${c}` : ''}. Dial the views on day ${x}.`,
-    work: [`Substitute x = ${x}: ${m}(${x})${c ? ` + ${c}` : ''} = ${m * x}${c ? ` + ${c}` : ''} = ${n} views.`],
-    n, lo: 0, hi: Math.max(60, n + 20),
+    kind: 'eval', title: 'Steady channel', badge: `f(x) = ${m}x + ${c},  x = ${x}`, tone: 'a',
+    prompt: `Find the views on day ${x} for f(x) = ${m}x + ${c}.`,
+    padInstruction: `Tap the number of views on day ${x}.`,
+    showEquals: false,
+    say: `A steady channel gains views by f of x equals ${m} x plus ${c}. Which number is the views on day ${x}?`,
+    work: [`Substitute x = ${x}: ${m}(${x}) + ${c} = ${m * x} + ${c} = ${n} views.`],
+    n, lo: 0, hi: Math.max(60, n + 20), pad,
   }
 }
 
 // ── L3 — continue a geometric (viral / doubling) sequence ─────────────────────
+//  ANSWERED BY TAPPING, and this is the chapter's most valuable pad. The headline
+//  distractor is CONTINUING LINEARLY — reading the last gap (t₃ − t₂) as a common
+//  difference and adding it, which is exactly the linear-vs-exponential confusion
+//  the chapter teaches. It is 2·t₃ − t₂ = s·r·(2r − 1), and equals the true
+//  t₄ = s·r³ only when (r−1)² = 0, i.e. r = 1 — impossible here (r ∈ {2,3}), so it
+//  survives on every seed. start ∈ {2,3} (not 1) so the two "adding" distractors
+//  stay distinct from each other: t₃ + r = 2·t₃ − t₂ ⟺ s(r−1) = 1 ⟺ s = 1, r = 2.
 function sequenceTask(d: 1 | 2 | 3): Task {
-  const start = pick([1, 2, 3]), r = pick([2, 3])
-  const seq = [start, start * r, start * r * r]
-  const n = start * r * r * r
+  const start = pick(SEQ_RANGE.start), r = pick(SEQ_RANGE.r)
+  const { seq, n, pad } = seqMath(start, r)
   return {
     kind: 'sequence', title: 'Going viral', badge: `${seq.join(', ')}, …`, tone: 'b',
-    prompt: `Views are multiplying by ${r} each day: ${seq.join(', ')}. Dial the next day.`,
-    say: `The views are going viral — each day multiplies by ${r}. The pattern so far is ${seq.join(', ')}. Dial what comes next.`,
-    work: [`Each term multiplies by ${r}, so the next term is ${seq[2]} × ${r} = ${n}.`],
-    n, lo: 0, hi: Math.max(90, n + 20),
+    prompt: `Views multiply by ${r} each day: ${seq.join(', ')}. What comes next?`,
+    padInstruction: 'Tap the views on the next day.',
+    showEquals: false,
+    say: `The views are going viral — each day multiplies by ${r}. The pattern so far is ${seq.join(', ')}. Which number comes next?`,
+    work: [`Each day MULTIPLIES by ${r} — it does not add. So the next day is ${seq[2]} × ${r} = ${n}.`],
+    n, lo: 0, hi: Math.max(90, n + 20), pad,
   }
 }
 
 // ── L3 — read the growth factor (base) off a viral model y = a·bˣ ─────────────
+//  ANSWERED BY TAPPING. Distractors: the starting count mistaken for the growth
+//  factor, and the two ways of mashing a and b together. a ≥ 2 and a ≠ b keeps
+//  every one of them off the answer (a = b, a·b = b ⟺ a = 1, a + b = b ⟺ a = 0).
 function growthTask(d: 1 | 2 | 3): Task {
-  const a = pick([1, 2, 5, 10]), b = pick([2, 3, 4])
+  const b = pick(GROWTH_RANGE.b)
+  let a = pick(GROWTH_RANGE.a); while (!growthValid(a, b)) a = pick(GROWTH_RANGE.a)
+  const { n, pad } = growthMath(a, b)
   return {
     kind: 'growth', title: 'Growth factor', badge: `y = ${a}·${b}ˣ`, tone: 'b',
-    prompt: `In the viral model y = ${a}·${b}ˣ, dial the growth factor (how many times it multiplies each day).`,
-    say: `A viral model is y equals ${a} times ${b} to the x. Dial the growth factor — the number the views multiply by each day.`,
-    work: [`In y = a·bˣ, the base b is the growth factor. Here b = ${b}, so the views multiply by ${b} each day.`],
-    n: b, lo: 0, hi: 12,
+    prompt: `In the viral model y = ${a}·${b}ˣ, which number is the growth factor?`,
+    padInstruction: 'Tap the number the views multiply by each day.',
+    showEquals: false,
+    say: `A viral model is y equals ${a} times ${b} to the x. Which number do the views multiply by each day?`,
+    work: [`In y = a·bˣ the starting count is a and the growth factor is the base b — the number in the power. Here b = ${b}, so the views multiply by ${b} each day.`],
+    n, lo: 0, hi: 12, pad,
   }
 }
 
 // ── L2 — classify: steady posting (a LINE) vs viral doubling (a CURVE) ─────────
+//  KEEPS ITS PICKER, deliberately. The answer here is a CLASSIFICATION — "which
+//  family does this rule belong to" — not a single number, so there is nothing to
+//  put on an AnswerPad. Sorting the rule into a bin IS the skill; the two cards
+//  show the two shapes, so the child chooses between pictures, not between words.
 function classifyTask(d: 1 | 2 | 3): Task {
   const viral = Math.random() < 0.5
   const id = viral ? 'curve' : 'line'
@@ -91,6 +163,8 @@ function classifyTask(d: 1 | 2 | 3): Task {
   return {
     kind: 'classify', title: 'Steady or viral?', badge, tone: 'a',
     prompt: `Is ${badge} steady posting or going viral?`,
+    instruction: 'Drop it into the right card.',
+    showEquals: false,
     say: viral
       ? `Look at ${base} to the x. Each day the views multiply. Is that steady posting, or going viral?`
       : `Look at ${m} x. Each day the views go up by the same amount. Is that steady posting, or going viral?`,
@@ -135,7 +209,27 @@ const DEMO_STEPS: DemoStep<V>[] = [
   { say: 'Evaluate means swap every x for the day number. So x becomes five: three times five, plus four.', value: { k: 'num', n: 4 }, board: 'f(5) = 3(5) + 4' },
   { say: 'First the multiplying part. Three times five is fifteen.', value: { k: 'num', n: 15 }, board: '= 15 + 4' },
   { say: 'Then add the four views it started with. Fifteen plus four is nineteen.', value: { k: 'num', n: 19 }, board: '= 19' },
-  { say: 'So on day five the steady channel has nineteen views. On the dial, that is nineteen.', value: { k: 'num', n: 19 }, board: 'day 5 → 19 views' },
+  { say: 'So on day five the steady channel has nineteen views. That is the number to tap: nineteen.', value: { k: 'num', n: 19 }, board: 'day 5 → 19 views' },
+]
+
+// ── worked example 2: the SORT, on the gesture the walkthrough never showed ─────
+// Classify is graded from the very first tier, but until now the only rehearsal of
+// its card-tap was a guided round — and the guided round is gone. Seven baby steps
+// build the distinction the child is actually being asked for: steady ADDS the same
+// amount (equal jumps), viral MULTIPLIES (jumps that keep growing), so read the
+// rule day by day, watch the jumps grow, and drop it in the viral card.
+const DEMO_SORT: Task = {
+  kind: 'classify', title: 'Steady or viral?', badge: 'y = 2ˣ', tone: 'a',
+  prompt: '', say: '', work: [], id: 'curve',
+}
+const DEMO_SORT_STEPS: DemoStep<V>[] = [
+  { say: 'One more, a different kind of question. A new video posts, and its rule is y equals two to the x. We have to say which family it belongs to.', value: { k: 'pick', id: '' }, board: 'y = 2ˣ' },
+  { say: 'Steady posting means the views go up by the SAME amount every day. Plus three, plus three, plus three. Equal jumps make a straight line.', value: { k: 'pick', id: '' }, board: 'steady → equal jumps' },
+  { say: 'Going viral means the views MULTIPLY every day instead. Times two, times two, times two. That bends upward.', value: { k: 'pick', id: '' }, board: 'viral → multiplies' },
+  { say: 'So read this rule day by day. Day one gives two views. Day two gives four. Day three gives eight. Day four gives sixteen.', value: { k: 'pick', id: '' }, board: '2, 4, 8, 16' },
+  { say: 'Now look at the jumps between them. Two to four is a jump of two. Four to eight is a jump of four. Eight to sixteen is a jump of eight.', value: { k: 'pick', id: '' }, board: 'jumps: +2, +4, +8' },
+  { say: 'The jumps are not equal — they keep growing. So this is not adding the same amount each day. It is multiplying by two each day.', value: { k: 'pick', id: '' }, board: 'not equal → × 2 each day' },
+  { say: 'That makes it a curve, not a line. So drop it into going viral.', value: { k: 'pick', id: 'curve' }, board: 'y = 2ˣ → going viral' },
 ]
 
 // ── hand-authored SVG analytics screen (storyboard: docs/storyboards/going-viral.md)
@@ -341,6 +435,97 @@ function ViralScene({ palette, value, stepIndex, ended }: { palette: Palette; va
   )
 }
 
+// ── SORT walkthrough scene — the two bins, and the evidence for choosing one ────
+// Deliberately NOT the racing chart: this example is about reading a rule day by
+// day and watching the JUMPS, so the beats are a value row, a jump row (equal vs
+// growing), the shape those jumps draw, and the card lighting up. Same two cards
+// the child taps in scored play, so the gesture rehearsed is the gesture graded.
+const SORT_DAYS = [1, 2, 3, 4]
+const SORT_VALS = [2, 4, 8, 16]           // y = 2ˣ
+const SORT_JUMPS = ['+2', '+4', '+8']     // the gaps between them — they GROW
+
+function SortScene({ palette, value, stepIndex }: { palette: Palette; value: V; stepIndex: number }): ReactElement {
+  const p = palette
+  const reduce = useReducedMotion()
+  const picked = value.k === 'pick' ? value.id : ''
+  const showVals = stepIndex >= 3
+  const showJumps = stepIndex >= 4
+  const showShape = stepIndex >= 5
+
+  // mini chart: y = 2ˣ over days 0..4, next to a straight reference of equal jumps
+  const W = 300, H = 108, mL = 26, mB = 16, mT = 10, mR = 10
+  const sx = (x: number) => mL + (x / 4) * (W - mL - mR)
+  const sy = (y: number) => H - mB - (Math.min(y, 16) / 16) * (H - mT - mB)
+  const curveD = Array.from({ length: 33 }, (_, i) => {
+    const x = (i / 32) * 4
+    return `${i ? 'L' : 'M'}${sx(x).toFixed(1)},${sy(Math.pow(2, x)).toFixed(1)}`
+  }).join(' ')
+  const straightD = `M${sx(0)},${sy(1)} L${sx(4)},${sy(16)}`
+
+  const chip = (text: string, on: boolean, col: string) => (
+    <span key={text} style={{
+      minWidth: 34, textAlign: 'center', padding: '3px 8px', borderRadius: 8,
+      fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(11px,1.3vw,15px)',
+      background: on ? p.glass : 'transparent', border: `1.5px solid ${on ? col : 'transparent'}`,
+      color: on ? col : 'transparent', transition: 'color 260ms, border-color 260ms, background 260ms',
+    }}>{text}</span>
+  )
+
+  const bin = (id: string, emoji: string, title: string, sub: string) => {
+    const lit = picked === id
+    return (
+      <div style={{
+        flex: 1, padding: 'clamp(8px,1.2vh,13px) clamp(6px,1vw,12px)', borderRadius: 12, textAlign: 'center',
+        background: lit ? 'rgba(92,214,172,0.14)' : p.glass,
+        border: `2px solid ${lit ? p.mint : p.glassBorder}`,
+        boxShadow: lit ? `0 0 16px rgba(92,214,172,0.35)` : 'none',
+        transition: 'border-color 260ms, background 260ms, box-shadow 260ms',
+      }}>
+        <div style={{ fontSize: 'clamp(15px,1.9vw,21px)' }}>{emoji}</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(11px,1.25vw,14px)', color: lit ? p.mint : p.cream }}>{title}</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(9px,1vw,12px)', color: p.creamSoft, opacity: 0.85 }}>{sub}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px,1.1vh,12px)', width: 'clamp(268px, 36vw, 400px)' }}>
+      {/* the rule, read day by day */}
+      <div style={{ width: '100%', borderRadius: 14, background: `linear-gradient(160deg, ${p.nightTop}, ${p.nightBot})`, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 28px rgba(0,0,0,0.4)', padding: 'clamp(9px,1.4vh,14px) clamp(8px,1.2vw,14px)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+          {SORT_DAYS.map((d) => (
+            <div key={d} style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,1vw,11px)', color: p.mutedOnPaper }}>day {d}</div>
+              {chip(String(SORT_VALS[d - 1]), showVals, p.mint)}
+            </div>
+          ))}
+        </div>
+        {/* the jumps — the evidence: they are NOT equal, they keep growing */}
+        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', marginTop: 4, paddingInline: '11%' }}>
+          {SORT_JUMPS.map((j) => chip(j, showJumps, p.gold))}
+        </div>
+        {/* the shape those growing jumps draw, against an equal-jump straight line */}
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block', marginTop: 4, opacity: showShape ? 1 : 0.18, transition: 'opacity 400ms' }}>
+          <line x1={mL} y1={mT} x2={mL} y2={H - mB} stroke={p.creamSoft} strokeWidth={1.2} opacity={0.6} />
+          <line x1={mL} y1={H - mB} x2={W - mR} y2={H - mB} stroke={p.creamSoft} strokeWidth={1.2} opacity={0.6} />
+          <path d={straightD} fill="none" stroke={p.gold} strokeWidth={1.6} strokeDasharray="4 4" opacity={0.5} />
+          <motion.path d={curveD} fill="none" stroke={p.mint} strokeWidth={2.6} strokeLinecap="round"
+            initial={{ pathLength: 0 }} animate={{ pathLength: showShape ? 1 : 0 }}
+            transition={{ duration: reduce ? 0 : 0.7, ease: 'easeInOut' }}
+            style={{ filter: showShape ? `drop-shadow(0 0 5px ${p.mint})` : 'none' }} />
+          <text x={W - mR} y={mT + 8} textAnchor="end" fill={p.gold} fontSize={9} opacity={0.65} fontFamily="var(--font-numeric)">equal jumps</text>
+        </svg>
+      </div>
+
+      {/* the two cards — the same pair scored play shows */}
+      <div style={{ display: 'flex', gap: 'clamp(7px,1vw,12px)', width: '100%' }}>
+        {bin('line', '📈', 'Steady posting', 'a straight LINE')}
+        {bin('curve', '🚀', 'Going viral', 'a doubling CURVE')}
+      </div>
+    </div>
+  )
+}
+
 const CONFIG: GameConfig<V, Task> = {
   chapterId: 'functionsFamilies',
   title: 'GOING VIRAL',
@@ -348,7 +533,17 @@ const CONFIG: GameConfig<V, Task> = {
   palette: P,
   motif: '🚀',
   makeTask,
+  // PER-TASK gating, the same rule the 12–14 band uses: a question shows the pad
+  // when the instrument was never doing the solving. Evaluating, continuing the
+  // sequence and reading the growth factor were all compute-then-dial, so they get
+  // choices; CLASSIFY keeps its cards, because its answer is not a number at all.
+  // min: 0 — a view count is never negative, so no distractor may be.
+  answerPad: (t) => (t.pad ? numChoices(t.n ?? 0, t.pad, { min: 0 }) : []),
   initialValue: (t) => (t.kind === 'classify' ? { k: 'pick', id: '' } : { k: 'num', n: t.lo ?? 0 }),
+  // REQUIRED: V is a tagged union, so a bare tapped number would never match
+  // `v.k === 'num'` and every padded answer would grade wrong (it did, in prod,
+  // on Leaderboard — a wrong answer still advances, so the flow looks fine).
+  padValue: (n) => ({ k: 'num' as const, n }),
   grade: (t, v) => (t.kind === 'classify' ? v.k === 'pick' && v.id === t.id : v.k === 'num' && v.n === t.n),
   revealText: (t) => (t.kind === 'classify' ? (t.id === 'curve' ? 'Going viral' : 'Steady posting') : `${t.n}`),
   glide: (t, _from, setValue, later) =>
@@ -360,14 +555,21 @@ const CONFIG: GameConfig<V, Task> = {
         correct={task.id} disabled={disabled} reveal={reveal} onCommit={(x) => onCommit({ k: 'pick', id: x })}
         commitLabel="POST IT ✓" prompt="Steady posting or going viral?" />
     }
+    // Fallback only: every numeric task ships with `pad`, so GameShell renders the
+    // AnswerPad and never reaches this. Kept so a future numeric task without `pad`
+    // degrades to the dial rather than to nothing.
     const n = value.k === 'num' ? value.n : 0
     const label = task.kind === 'sequence' ? 'DIAL NEXT DAY ✓' : task.kind === 'growth' ? 'SET THE FACTOR ✓' : 'COUNT THE VIEWS ✓'
     return <SlideValue P={palette} value={n} setValue={(x) => setValue({ k: 'num', n: x })} min={task.lo ?? 0} max={task.hi ?? 60}
       disabled={disabled} reveal={reveal} onCommit={(x) => onCommit({ k: 'num', n: x })} commitLabel={label} />
   },
-  TutorialScene: ({ palette, value, stepIndex, ended }) => (
-    <ViralScene palette={palette} value={value} stepIndex={stepIndex} ended={ended} />
-  ),
+  // Branches by example, like the 12–14 signed chapter: the evaluate example poses
+  // on the racing chart, the sort example on the bins themselves — so the child
+  // watches the gesture they will be graded on, not a different picture.
+  TutorialScene: ({ palette, task, value, stepIndex, ended }) =>
+    task.kind === 'classify'
+      ? <SortScene palette={palette} value={value} stepIndex={stepIndex} />
+      : <ViralScene palette={palette} value={value} stepIndex={stepIndex} ended={ended} />,
   start: {
     blurb: <><strong>Your video is racking up views.</strong> A <strong>steady</strong> channel adds the same amount each day (a straight line); a <strong>viral</strong> one multiplies each day (a curve). Work out the views, or spot which is which.</>,
     ticket: { title: "Today's post", badge: 'f(x) = 3x + 4', tone: 'a' },
@@ -382,15 +584,13 @@ const CONFIG: GameConfig<V, Task> = {
       <><strong>Steady</strong> adds each day (line); <strong>viral</strong> multiplies (curve).</>,
     ],
   },
-  tutorial: { task: DEMO_TASK, initial: { k: 'num', n: 4 }, hand: 'drag', steps: DEMO_STEPS },
-  guided: {
-    task: {
-      kind: 'eval', title: 'Steady channel', badge: 'f(x) = 2x + 3,  x = 4', tone: 'a', prompt: '',
-      say: 'Your turn. A steady channel is f of x equals two x plus three. Dial the views on day four.',
-      work: ['Substitute x = 4: 2(4) + 3 = 8 + 3 = 11 views.'], n: 11, lo: 0, hi: 25,
-    },
-    coach: 'Your turn — I will help. Dial the views on day four.', hand: 'drag',
-  },
+  tutorial: [
+    { task: DEMO_TASK, initial: { k: 'num', n: 4 }, hand: 'drag', steps: DEMO_STEPS },
+    { task: DEMO_SORT, initial: { k: 'pick', id: '' }, hand: 'tap', steps: DEMO_SORT_STEPS },
+  ],
+  // No guided round: the walkthrough works BOTH examples (evaluate on the chart,
+  // then sort into the cards), so every gesture scored play grades has already been
+  // shown. Walkthrough → straight into play.
   sig: (t) => t.badge,
 }
 
