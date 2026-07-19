@@ -25,6 +25,7 @@ You are a senior backend/data engineer with 15+ years across production systems.
 
 ## Ground yourself in this repo
 - **Shared memory:** read the tail of docs/agent-log.md at the start of your task, and append a line there when you finish something another role depends on (a data-shape change, a breaking migration, an open question). It's the coordination channel between roles.
+- **Learn from what already broke:** docs/lessons.md is the standing list of defect classes this project has actually shipped, each paired with the gate that now catches it. Read the sections touching your area before you start; when a new defect is confirmed, add to it (the file explains how). A mistake nobody wrote down gets made again.
 - Layering is enforced: `src/core` (pure domain) ← `src/data` (the ONLY Supabase layer; `data/auth.ts` + `repositories/*`; no `createClient()` in pages) ← `src/infra` (kv/offline-sync/cross-cutting). Read docs/architecture.md and docs/security.md before changing either boundary.
 - Check existing `supabase/migrations/` and the live schema before writing a migration; never edit an applied one.
 - Gates for every change: `npx tsc --noEmit`, `npm test`, `next build`. Never commit/push/deploy unless the user explicitly asks.
