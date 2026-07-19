@@ -1,27 +1,42 @@
 'use client'
 /**
  * SkateRamp — the Triangles, Proof & Right-Triangle Trig chapter (15–16) as a
- * PLAYABLE GAME. World: a skate ramp / building whose STEEPNESS (angle of
- * elevation) and side lengths you work out — the same right-triangle math a
- * builder uses to keep a ramp within code.
+ * PLAYABLE GAME. World: a skate ramp. A ramp IS a right triangle: its steepness is
+ * an angle of elevation and its sides obey SOH-CAH-TOA — the same math a builder
+ * uses to keep a ramp within code.
  *
- * NON-MCQ except the ONE allowed proof sub-type (assemble-in-order, not a quiz):
- *   • DIAL  (SlideValue) — dial a missing ANGLE in degrees, a SIDE length, or a
- *            trig RATIO (graded with a small tolerance). Covers L1 angle
- *            relationships and L3 SOH-CAH-TOA + inverse-trig.
- *   • PROOF (StepPicker) — assemble the NEXT statement of a congruence proof
- *            (SAS / ASA). This is the single non-numeric interaction: you pick the
- *            statement that comes next in order, not a multiple-choice quiz answer.
+ * ⚠️ WHY THE ANGLE IS MEASURED, NOT COMPUTED.
+ * This chapter used to ask a child to dial arctan(3/4) ≈ 37°. There is no way for
+ * a 15-year-old to produce that number — not on the platform (no calculator) and
+ * not off it. It was the "dial an answer you got somewhere else" failure with the
+ * "somewhere else" missing entirely. It also asked for `sin 30° = 0.5`, a table
+ * lookup with no ramp referent at all.
+ *   Both are gone. An angle of elevation is now MEASURED on the PROTRACTOR: the
+ * child swings the ramp until it reaches the marked height at the marked run, and
+ * reads the degrees off the protractor scale. That is not hot/cold guessing (the
+ * BalanceBench objection) — there is no arithmetic being bypassed, because arctan
+ * cannot be reasoned to. Measuring IS the skill, so the gesture IS the answer.
+ *   Trig RATIOS are now read off a fully-labelled triangle (opp 3, adj 4, hyp 5 →
+ * sin θ = 3/5 = 0.6). Every number the child needs is on the screen.
  *
- * Exactly the 12–14 shape on GameShell: overview on the chalkboard + a code-drawn
- * ramp/right-triangle scene → baby-step walkthrough → guided → scored play. The
- * math mirrors GeometryProofTrigTeenLesson.makeRound (L1/L2/L3); illustration
- * assets deferred, the scene is pure CSS/SVG.
+ * THREE ways to answer, gated PER QUESTION (never per chapter):
+ *   • TAP     → AnswerPad, for every question whose answer is a single number:
+ *               angle relationships (L1), the missing side of a triple, and a trig
+ *               ratio read off the labelled sides. Distractors are real
+ *               misconceptions — complement used for supplement, opposite/adjacent
+ *               swapped, sides subtracted instead of their squares.
+ *   • DRAG    → the PROTRACTOR: measure the angle of elevation. Keeps its
+ *               instrument because the measurement is the skill (see above).
+ *   • CARDS   → the PROOF BENCH: pick which congruence claim the givens actually
+ *               support. Not a single number, so it keeps its instrument.
+ *
+ * No guided round: both graded gestures (protractor, proof) are worked in the
+ * WALKTHROUGH, which runs two examples. Scene is code-drawn (no assets).
  */
-import { useEffect } from 'react'
+import { useEffect, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
-import { Palette, SlideValue, StepPicker, type SpecChoice } from './parts/gameKit'
+import { Palette, SlideValue, StepPicker, numChoices, type SpecChoice } from './parts/gameKit'
 
 // Steep concrete-ramp palette (dark first, safety-cone accents).
 const P: Palette = {
@@ -34,152 +49,218 @@ const P: Palette = {
 }
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
-const shuffle = <T,>(a: T[]): T[] => [...a].sort(() => Math.random() - 0.5)
+const shuffle = <T,>(a: T[]): T[] => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
+const D2R = Math.PI / 180
+const r2 = (n: number) => Math.round(n * 100) / 100
 
-// Pythagorean triples → clean integer trig sides for the L3 "missing side" rounds.
+// Pythagorean triples → clean integer sides for the "missing side" rounds.
 const TRIPLES: [number, number, number][] = [
   [3, 4, 5], [6, 8, 10], [5, 12, 13], [8, 15, 17], [9, 12, 15], [7, 24, 25],
 ]
+// rise/run pairs a protractor can actually resolve: both fit the board, and the
+// nearest-degree reading is never ambiguous.
+const RAMPS: [number, number][] = [
+  [3, 4], [4, 3], [6, 8], [8, 6], [5, 12], [12, 5], [9, 12], [12, 9],
+]
+// Ratio rounds use the 3-4-5 family ONLY, because those are the sides whose three
+// ratios (0.6, 0.8, 0.75) are exact to two decimals. A 5-12-13 sine is 0.3846…,
+// which would ask the child to round a number they cannot divide cleanly.
+const RATIO_TRIPLES: [number, number, number][] = [[3, 4, 5], [6, 8, 10], [9, 12, 15]]
 
-/** Answer value: a dialled number (angle°, side, or ratio) OR a picked proof step. */
+/** Answer value: a number (angle°, side, ratio) OR a picked proof claim. */
 type V = { k: 'num'; n: number } | { k: 'step'; id: string }
 
 interface Task extends BaseTask {
-  kind: 'dial' | 'proof'
-  // dial:
-  n?: number            // the correct number to dial
-  lo?: number; hi?: number
-  dstep?: number        // slider step (1 for angles/sides, 0.01 for ratios)
-  tol?: number          // grading tolerance (0 for integers, small for ratios)
-  unit?: string         // readout suffix ("°", "m", "")
-  // proof:
-  shown?: string[]      // statements already locked in (rendered on the scene)
+  kind: 'pad' | 'measure' | 'proof'
+  n?: number            // the correct number (pad + measure)
+  pad?: number[]        // misconception values → AnswerPad distractors
+  tol?: number          // measure: grading tolerance in degrees
+  rise?: number; run?: number   // measure: the ramp the protractor must match
+  givens?: string[]     // proof: the statements the child must compare against
   options?: SpecChoice[]
   answerId?: string
+  revealShort?: string  // proof: a short reveal string for the board
 }
 
-// ── L1: angle relationships → dial the missing angle (SlideValue, integer °) ─────
+// ── L1: angle relationships → TAP the missing angle ─────────────────────────────
+// Every answer is one number, so the pad applies. Distractors are the two angle
+// relationships a child mixes up: using the COMPLEMENT (90 − a) where the
+// supplement was wanted, and treating a supplementary pair as if it were vertical
+// (so the answer "is" the given angle).
 function makeL1(): Task {
   const roll = Math.random()
   if (roll < 0.34) {
-    // Supplementary — angles on a straight line sum to 180.
-    const a = rint(35, 145)
+    // Supplementary. a ≠ 90, or 180 − a would equal a and the vertical-confusion
+    // distractor collapses onto the answer.
+    let a = rint(35, 145); while (a === 90) a = rint(35, 145)
     const x = 180 - a
     return {
-      kind: 'dial', title: 'Ramp edge', badge: `${a}° + x = 180°`, tone: 'a',
-      prompt: `Dial the missing angle: ${a}° and x° sit on a straight line.`,
-      say: `A ramp's edge meets the ground. One angle is ${a} degrees; the angle beside it, x, sits on the same straight line. Dial x.`,
-      work: [`Angles on a straight line are supplementary: x = 180° − ${a}° = ${x}°.`],
-      n: x, lo: 0, hi: 180, dstep: 1, tol: 0, unit: '°',
+      kind: 'pad', title: 'Ramp edge', badge: `${a}° + x = 180°`, tone: 'a',
+      prompt: `The ramp edge and the ground make ${a}°. Find x on the same straight line.`,
+      padInstruction: 'Tap the size of angle x, in degrees.',
+      showEquals: false,
+      say: `A ramp edge meets the ground. One angle is ${a} degrees and the angle beside it, x, sits on the same straight line. Which is x?`,
+      work: [`Angles on a straight line add to 180 degrees, so x is 180 minus ${a}, which is ${x} degrees.`],
+      n: x, pad: [a, 90 - a],   // treated it as vertical (equal) · used the complement
     }
   }
   if (roll < 0.62) {
-    // Vertical angles are equal.
-    const a = rint(25, 150)
+    // Vertical angles are equal. Same exclusion: at 90 the supplement distractor
+    // equals the answer.
+    let a = rint(25, 150); while (a === 90) a = rint(25, 150)
     return {
-      kind: 'dial', title: 'Crossing rails', badge: `x = ? (vertical to ${a}°)`, tone: 'a',
-      prompt: `Dial x — its vertical angle is ${a}°.`,
-      say: `Two rails cross. One angle is ${a} degrees. Dial its vertical angle, x.`,
-      work: [`Vertical angles are equal, so x = ${a}°.`],
-      n: a, lo: 0, hi: 180, dstep: 1, tol: 0, unit: '°',
+      kind: 'pad', title: 'Crossing rails', badge: `x is vertical to ${a}°`, tone: 'a',
+      prompt: `Two rails cross. The angle vertical to x is ${a}°. Find x.`,
+      padInstruction: 'Tap the size of angle x, in degrees.',
+      showEquals: false,
+      say: `Two rails cross. One angle is ${a} degrees. Which is its vertical angle, x?`,
+      work: [`Vertical angles are the pair opposite each other where two lines cross, and they are always equal, so x is ${a} degrees.`],
+      n: a, pad: [180 - a, 90 - a],  // used the supplement · used the complement
     }
   }
-  // Triangle-angle-sum — the ramp triangle: two angles known, dial the third.
+  // Triangle angle sum. Keep a + b ≠ 90 so the "added instead of subtracted"
+  // distractor cannot equal the answer.
   const a = rint(30, 90)
   let b = rint(30, 90)
-  while (a + b >= 165) b = rint(20, 80)
+  while (a + b >= 165 || a + b === 90) b = rint(20, 80)
   const x = 180 - a - b
   return {
-    kind: 'dial', title: 'Ramp triangle', badge: `${a}° + ${b}° + x = 180°`, tone: 'a',
-    prompt: `Dial the third angle of a ramp triangle with angles ${a}°, ${b}°, x°.`,
-    say: `The ramp forms a triangle with angles ${a} degrees, ${b} degrees, and x degrees. Dial x.`,
-    work: [`The angles of a triangle sum to 180°: x = 180° − ${a}° − ${b}° = ${x}°.`],
-    n: x, lo: 0, hi: 180, dstep: 1, tol: 0, unit: '°',
+    kind: 'pad', title: 'Ramp triangle', badge: `${a}° + ${b}° + x = 180°`, tone: 'a',
+    prompt: `A ramp triangle has angles ${a}°, ${b}° and x°. Find x.`,
+    padInstruction: 'Tap the size of angle x, in degrees.',
+    showEquals: false,
+    say: `The ramp forms a triangle with angles ${a} degrees, ${b} degrees and x degrees. Which is x?`,
+    work: [`The three angles of a triangle add to 180 degrees, so x is 180 minus ${a} minus ${b}, which is ${x} degrees.`],
+    n: x, pad: [180 - a, a + b],   // forgot the second angle · added instead of subtracting
   }
 }
 
-// ── L2: congruence — assemble the NEXT proof statement (StepPicker) ──────────────
+// ── L2: congruence — which claim do the GIVENS actually support? ────────────────
+// The old options said "AAA (only proves similarity)" and "SSA (not a valid rule)",
+// so the item was answerable by reading English with no geometry at all. Now every
+// option names a REAL congruence rule and cites three specific parts. Exactly one
+// option cites three parts that all appear in the givens list on the board; the
+// others quietly cite a side or angle nobody gave you. Choosing therefore means
+// comparing the claim against the triangles, which is the actual skill.
 function makeL2(): Task {
   if (Math.random() < 0.5) {
-    // SAS: two sides + the included angle → △ABC ≅ △ADC.
+    // Ramp brace: AB ≅ AD, ∠BAC ≅ ∠DAC (the INCLUDED angle), AC shared.
     const options: SpecChoice[] = shuffle([
-      { id: 'sas', label: '△ABC ≅ △ADC  —  SAS (two sides + included angle)' },
-      { id: 'aaa', label: '△ABC ≅ △ADC  —  AAA (only proves similarity)' },
-      { id: 'ssa', label: '△ABC ≅ △ADC  —  SSA (not a valid rule)' },
+      { id: 'sas', label: '△ABC ≅ △ADC by SAS — AB ≅ AD, ∠BAC ≅ ∠DAC, AC ≅ AC' },
+      { id: 'sss', label: '△ABC ≅ △ADC by SSS — AB ≅ AD, AC ≅ AC, BC ≅ DC' },
+      { id: 'asa', label: '△ABC ≅ △ADC by ASA — ∠BAC ≅ ∠DAC, AC ≅ AC, ∠ACB ≅ ∠ACD' },
     ])
     return {
-      kind: 'proof', title: 'Ramp brace', badge: 'AB ≅ AD,  ∠BAC ≅ ∠DAC,  AC shared', tone: 'a',
-      prompt: 'Assemble the statement that finishes the proof.',
-      say: 'A B is congruent to A D, the included angles at A are congruent, and A C is shared by both braces. Assemble the statement that finishes the proof.',
-      work: ['Two sides and the angle BETWEEN them match → SAS proves △ABC ≅ △ADC.'],
-      shown: ['AB ≅ AD  (given)', '∠BAC ≅ ∠DAC  (given, included angle)', 'AC ≅ AC  (reflexive — shared side)'],
-      options, answerId: 'sas',
+      kind: 'proof', title: 'Ramp brace', badge: 'AB ≅ AD · ∠BAC ≅ ∠DAC · AC shared', tone: 'a',
+      prompt: 'Which claim do the given statements actually support?',
+      instruction: 'Check each claim against the givens, then pick the one they support.',
+      showEquals: false,
+      say: 'Two braces run from the top of the ramp. A B is congruent to A D, the angles at A are congruent, and the brace A C is shared. Three claims are on the bench. Only one of them uses parts you were actually given.',
+      work: ['The givens name two sides, A B and A D, and the angle at A that sits between them, plus the shared side A C. Two sides with the angle between them is side, angle, side, so S A S is the claim the givens support.'],
+      givens: ['AB ≅ AD', '∠BAC ≅ ∠DAC', 'AC ≅ AC  (shared)'],
+      options, answerId: 'sas', revealShort: 'SAS ✓',
     }
   }
-  // ASA: two angles + the included side → △PQR ≅ △PSR.
+  // Rail joint: ∠QPR ≅ ∠SPR, PR shared (the INCLUDED side), ∠QRP ≅ ∠SRP.
   const options: SpecChoice[] = shuffle([
-    { id: 'asa', label: '△PQR ≅ △PSR  —  ASA (two angles + included side)' },
-    { id: 'ssa', label: '△PQR ≅ △PSR  —  SSA (not a valid rule)' },
-    { id: 'sim', label: '△PQR ~ △PSR  —  Similar (ASA gives congruence)' },
+    { id: 'asa', label: '△PQR ≅ △PSR by ASA — ∠QPR ≅ ∠SPR, PR ≅ PR, ∠QRP ≅ ∠SRP' },
+    { id: 'sas', label: '△PQR ≅ △PSR by SAS — PQ ≅ PS, ∠QPR ≅ ∠SPR, PR ≅ PR' },
+    { id: 'aas', label: '△PQR ≅ △PSR by AAS — ∠QPR ≅ ∠SPR, ∠QRP ≅ ∠SRP, QR ≅ SR' },
   ])
   return {
-    kind: 'proof', title: 'Rail joint', badge: '∠QPR ≅ ∠SPR,  ∠QRP ≅ ∠SRP,  PR shared', tone: 'a',
-    prompt: 'Assemble the statement that finishes the proof.',
-    say: 'The angles at P are congruent, the angles at R are congruent, and the rail P R between them is shared. Assemble the statement that finishes the proof.',
-    work: ['Two angles with the side BETWEEN them match → ASA proves △PQR ≅ △PSR.'],
-    shown: ['∠QPR ≅ ∠SPR  (given)', 'PR ≅ PR  (reflexive — included side)', '∠QRP ≅ ∠SRP  (given)'],
-    options, answerId: 'asa',
+    kind: 'proof', title: 'Rail joint', badge: '∠QPR ≅ ∠SPR · ∠QRP ≅ ∠SRP · PR shared', tone: 'a',
+    prompt: 'Which claim do the given statements actually support?',
+    instruction: 'Check each claim against the givens, then pick the one they support.',
+    showEquals: false,
+    say: 'A rail joint. The angles at P are congruent, the angles at R are congruent, and the rail P R between them is shared. Only one claim on the bench uses parts you were actually given.',
+    work: ['The givens name the angle at P, the angle at R, and the rail P R that runs between those two angles. Two angles with the side between them is angle, side, angle, so A S A is the claim the givens support.'],
+    givens: ['∠QPR ≅ ∠SPR', 'PR ≅ PR  (shared)', '∠QRP ≅ ∠SRP'],
+    options, answerId: 'asa', revealShort: 'ASA ✓',
   }
 }
 
-// ── L3: SOH-CAH-TOA — dial a missing side, an angle of elevation, or a ratio ─────
+// ── L3: SOH-CAH-TOA ─────────────────────────────────────────────────────────────
+
+/** Missing side of a right triangle — TAP. The headline misconception is
+ *  subtracting the LENGTHS instead of their squares (hyp − leg), which is why so
+ *  many children answer 2 for a 3-4-5 triangle. */
+function sideTask(): Task {
+  const [p, q, h] = TRIPLES[rint(0, TRIPLES.length - 1)]
+  const giveFirst = Math.random() < 0.5
+  const known = giveFirst ? p : q
+  const want = giveFirst ? q : p
+  return {
+    kind: 'pad', title: 'Ramp side', badge: `hyp ${h} m · one leg ${known} m`, tone: 'b',
+    prompt: `A right-triangle ramp has hypotenuse ${h} m and one leg ${known} m. Find the other leg.`,
+    padInstruction: 'Tap the length of the other leg, in metres.',
+    showEquals: false,
+    say: `A ramp is a right triangle with hypotenuse ${h} metres and one leg ${known} metres. How long is the other leg?`,
+    work: [`Square the hypotenuse and take away the square of the known leg: ${h} squared is ${h * h}, minus ${known} squared which is ${known * known}, leaves ${want * want}. The side whose square is ${want * want} is ${want} metres.`],
+    n: want,
+    pad: [h - known, h + known],   // subtracted the lengths · added the lengths
+  }
+}
+
+/** A trig RATIO read straight off the labelled triangle — TAP.
+ *  Every side is printed on the board, so this is a division the child can do.
+ *  Distractors are the opposite/adjacent/hypotenuse mix-ups, i.e. the OTHER two
+ *  ratios of the same triangle plus the flipped one. */
+function ratioTask(): Task {
+  const [o, a, h] = RATIO_TRIPLES[rint(0, RATIO_TRIPLES.length - 1)]
+  const sin = r2(o / h), cos = r2(a / h), tan = r2(o / a), flip = r2(a / o)
+  const which = rint(0, 2)
+  const sides = `opp ${o} · adj ${a} · hyp ${h}`
+  if (which === 0) return {
+    kind: 'pad', title: 'Ramp ratio', badge: `sin θ = ?   (${sides})`, tone: 'b',
+    prompt: `The ramp has opposite ${o} m, adjacent ${a} m, hypotenuse ${h} m. Find sin θ.`,
+    padInstruction: 'Tap the value of sin θ.',
+    showEquals: false,
+    say: `The ramp's sides are: opposite ${o} metres, adjacent ${a} metres, hypotenuse ${h} metres. What is the sine of theta?`,
+    work: [`Sine is opposite over hypotenuse. That is ${o} divided by ${h}, which is ${sin.toFixed(2)}.`],
+    n: sin, pad: [cos, tan],     // used adjacent (cos) · used the other leg (tan)
+  }
+  if (which === 1) return {
+    kind: 'pad', title: 'Ramp ratio', badge: `cos θ = ?   (${sides})`, tone: 'b',
+    prompt: `The ramp has opposite ${o} m, adjacent ${a} m, hypotenuse ${h} m. Find cos θ.`,
+    padInstruction: 'Tap the value of cos θ.',
+    showEquals: false,
+    say: `The ramp's sides are: opposite ${o} metres, adjacent ${a} metres, hypotenuse ${h} metres. What is the cosine of theta?`,
+    work: [`Cosine is adjacent over hypotenuse. That is ${a} divided by ${h}, which is ${cos.toFixed(2)}.`],
+    n: cos, pad: [sin, tan],     // used opposite (sin) · used the other leg (tan)
+  }
+  return {
+    kind: 'pad', title: 'Ramp ratio', badge: `tan θ = ?   (${sides})`, tone: 'b',
+    prompt: `The ramp has opposite ${o} m, adjacent ${a} m, hypotenuse ${h} m. Find tan θ.`,
+    padInstruction: 'Tap the value of tan θ.',
+    showEquals: false,
+    say: `The ramp's sides are: opposite ${o} metres, adjacent ${a} metres, hypotenuse ${h} metres. What is the tangent of theta?`,
+    work: [`Tangent is opposite over adjacent. That is ${o} divided by ${a}, which is ${tan.toFixed(2)}.`],
+    n: tan, pad: [sin, flip],    // used the hypotenuse (sin) · flipped the ratio
+  }
+}
+
+/** MEASURE the angle of elevation on the protractor — keeps its instrument.
+ *  The answer is arctan(rise/run), which no child can compute; the protractor is
+ *  how it is obtained, so the gesture IS the answer and there is nothing to pad. */
+function measureTask(): Task {
+  const [rise, run] = RAMPS[rint(0, RAMPS.length - 1)]
+  const deg = Math.round(Math.atan2(rise, run) / D2R)
+  return {
+    kind: 'measure', title: 'Ramp steepness', badge: `rise ${rise} m · run ${run} m`, tone: 'b',
+    prompt: `Swing the ramp until it reaches ${rise} m up at ${run} m out, then read the protractor.`,
+    instruction: 'Swing the ramp onto the marker, then read off the degrees.',
+    showEquals: false,
+    say: `This ramp rises ${rise} metres over a run of ${run} metres. Swing the ramp until its top edge hits the marker, then read the angle of elevation off the protractor.`,
+    work: [`Swing the ramp until it passes through the marker at ${run} metres out and ${rise} metres up. The protractor then reads about ${deg} degrees, and that is the angle of elevation.`],
+    n: deg, tol: 1, rise, run,
+  }
+}
+
 function makeL3(): Task {
   const roll = Math.random()
-  if (roll < 0.4) {
-    // Missing SIDE from a Pythagorean triple (clean integer).
-    const [p, q, h] = TRIPLES[rint(0, TRIPLES.length - 1)]
-    const giveOpp = Math.random() < 0.5
-    const known = giveOpp ? p : q
-    const want = giveOpp ? q : p
-    return {
-      kind: 'dial', title: 'Ramp side', badge: `hyp ${h}, leg ${known} → other leg = ?`, tone: 'b',
-      prompt: `Dial the missing side: a right-triangle ramp has hypotenuse ${h} m and one leg ${known} m.`,
-      say: `A ramp is a right triangle with hypotenuse ${h} meters and one leg ${known} meters. Dial the length of the other leg.`,
-      work: [`By the Pythagorean theorem, the other leg = √(${h}² − ${known}²) = ${want} m.`],
-      n: want, lo: 0, hi: Math.max(30, h + 4), dstep: 1, tol: 0, unit: ' m',
-    }
-  }
-  if (roll < 0.72) {
-    // Missing ANGLE of elevation via inverse tangent (rounded integer degrees).
-    const pick = TRIPLES[rint(0, TRIPLES.length - 1)]
-    const opp = pick[0], adj = pick[1]
-    const angle = Math.round((Math.atan2(opp, adj) * 180) / Math.PI)
-    return {
-      kind: 'dial', title: 'Ramp steepness', badge: `rise ${opp} m, run ${adj} m → angle = ?`, tone: 'b',
-      prompt: `Dial the angle of elevation: the ramp rises ${opp} m over a ${adj} m run (nearest degree).`,
-      say: `The skate ramp rises ${opp} meters over a run of ${adj} meters. To the nearest degree, dial its angle of elevation.`,
-      work: [`tan θ = rise / run = ${opp}/${adj}, so θ = arctan(${opp}/${adj}) ≈ ${angle}°.`],
-      n: angle, lo: 0, hi: 90, dstep: 1, tol: 0, unit: '°',
-    }
-  }
-  // A trig RATIO for a common angle → dial the value to two decimals (tolerance).
-  const opts: { deg: number; fn: 'sine' | 'cosine' | 'tangent'; sym: string }[] = [
-    { deg: 30, fn: 'sine', sym: 'sin 30°' }, { deg: 60, fn: 'sine', sym: 'sin 60°' },
-    { deg: 45, fn: 'cosine', sym: 'cos 45°' }, { deg: 30, fn: 'cosine', sym: 'cos 30°' },
-    { deg: 45, fn: 'tangent', sym: 'tan 45°' },
-  ]
-  const o = opts[rint(0, opts.length - 1)]
-  const rad = (o.deg * Math.PI) / 180
-  const val = o.fn === 'sine' ? Math.sin(rad) : o.fn === 'cosine' ? Math.cos(rad) : Math.tan(rad)
-  const rounded = Math.round(val * 100) / 100
-  return {
-    kind: 'dial', title: 'Ramp ratio', badge: `${o.sym} = ?`, tone: 'b',
-    prompt: `Dial the value of ${o.sym} (two decimals).`,
-    say: `The ramp's steepness ratio is ${o.sym}. Dial its value to two decimal places.`,
-    work: [`${o.sym} ≈ ${rounded.toFixed(2)}.`],
-    n: rounded, lo: 0, hi: 1.5, dstep: 0.01, tol: 0.02, unit: '',
-  }
+  if (roll < 0.36) return sideTask()
+  if (roll < 0.7) return measureTask()
+  return ratioTask()
 }
 
 function makeTask(d: 1 | 2 | 3): Task {
@@ -188,202 +269,221 @@ function makeTask(d: 1 | 2 | 3): Task {
   return makeL3()
 }
 
-// ── fixed worked example (walkthrough) — the ramp triangle, angle of elevation ───
-const DEMO_TASK: Task = {
-  kind: 'dial', title: 'Ramp steepness', badge: 'rise 3 m, run 4 m → angle = ?', tone: 'b',
-  prompt: '', say: '', work: ['tan θ = 3/4, so θ = arctan(0.75) ≈ 37°.'],
-  n: 37, lo: 0, hi: 90, dstep: 1, tol: 0, unit: '°',
-}
-// Eleven BABY steps: the ramp is the hook (draw it → measure rise → measure run),
-// then the trig unfolds one move per step (name the angle → tag opposite/adjacent →
-// pick tangent → plug in → divide → invert → solve). Each step = one idea + one
-// chalkboard line + its own scene beat. `value.n` drives the angle arc continuously:
-// it opens to an indicative θ when we name the angle, widens as we invert, then
-// sweeps to the true 37° on the solve beat.
-//   beats: idx0 draw triangle · 1 rise · 2 run · 3 arc opens (θ named) · 4 tag sides
-//          5–7 build tan θ readout · 8 arc widens · 9 arc → 37° + sight-line · 10 dial
-const DEMO_STEPS: DemoStep<V>[] = [
-  { say: "Here's a skate ramp. It's really a right triangle — watch it take shape.", value: { k: 'num', n: 0 }, board: 'a skate ramp (right triangle)' },
-  { say: 'It rises three meters — straight up the tall side.', value: { k: 'num', n: 0 }, board: 'rise = 3 m' },
-  { say: 'And it runs four meters flat along the ground.', value: { k: 'num', n: 0 }, board: 'run = 4 m' },
-  { say: 'How steeply it leans is the angle of elevation — the angle a skater looks up. Call it θ.', value: { k: 'num', n: 16 }, board: 'θ = angle of elevation' },
-  { say: 'Line the sides up with θ. The rise is OPPOSITE the angle; the run is ADJACENT, right next to it.', value: { k: 'num', n: 16 }, board: 'opp = 3,  adj = 4' },
-  { say: 'Opposite over adjacent is the tangent ratio. So we use tangent.', value: { k: 'num', n: 16 }, board: 'tan θ = opp / adj' },
-  { say: 'Put the numbers in: tangent of θ is three over four.', value: { k: 'num', n: 16 }, board: 'tan θ = 3 / 4' },
-  { say: 'Three divided by four is zero point seven five.', value: { k: 'num', n: 16 }, board: 'tan θ = 0.75' },
-  { say: 'Now undo the tangent. To turn that ratio back into the angle, take the inverse tangent of zero point seven five.', value: { k: 'num', n: 26 }, board: 'θ = arctan(0.75)' },
-  { say: 'That comes out to about thirty-seven degrees. Watch the ramp lean to exactly that.', value: { k: 'num', n: 37 }, board: 'θ ≈ 37°' },
-  { say: 'So the ramp sits at about thirty-seven degrees. On the dial, that is thirty-seven.', value: { k: 'num', n: 37 }, board: 'dial 37° ✓' },
-]
+// ══════════════════════════════════════════════════════════════════════════════
+// THE PROTRACTOR — the instrument that MEASURES an angle of elevation.
+// The ramp pivots at A. A gold marker sits at (run, rise): the height the ramp
+// must reach at the given run. The readout states, in metres, how high the ramp
+// currently is at that run — so the child adjusts against a real measurement, not
+// a colour cue. When the edge sits on the marker, the protractor scale beside it
+// reads the answer. This is a protractor used as a protractor.
+// ══════════════════════════════════════════════════════════════════════════════
+function ProtractorBoard({ P: p, task, deg, reveal }: {
+  P: Palette; task: Task; deg: number; reveal?: boolean
+}): ReactElement {
+  const rise = task.rise ?? 3, run = task.run ?? 4
+  const W = 340, H = 214
+  const groundY = 176, Ax = 44
+  const perM = Math.min(258 / run, 128 / rise)
+  const Tx = Ax + run * perM, Ty = groundY - rise * perM
+  const AR = 58                                  // protractor radius
 
-// ── hand-authored SVG skate-ramp scene (storyboard: docs/storyboards/skate-ramp.md)
-// A dusk skate spot, all vector. The ramp IS the right triangle, drawn on an exact
-// px-per-metre mapping so the pictured lean equals arctan(3/4) ≈ 37°:
-//   A (bottom-left)  = the angle-of-elevation corner θ, a skater looks up from here
-//   B (bottom-right) = the right angle (rise ⟂ run)
-//   C (top-right)    = the top of the ramp (a flag)
-//   run  = A→B (ADJACENT to θ) · rise = B→C (OPPOSITE θ) · hyp = A→C (the ramp / sight-line)
-// During the WALKTHROUGH the ramp draws in, the sides highlight, and the angle arc at A
-// sweeps open — driven CONTINUOUSLY by a useMotionValue tracking `value.n` — first to an
-// indicative θ, then to the true 37° as we invert the tangent, ending with a mint
-// sight-line up to the flag. The math skeleton stays exact; only the stage is art.
-const D2R = Math.PI / 180
-function RampScene({ palette, task, value, stepIndex, ended }: { palette: Palette; task: Task; value: V; stepIndex: number; ended: boolean }) {
-  void task
-  const p = palette
-  const reduce = useReducedMotion()
-  const W = 340, H = 210
-  const groundY = 176
-  const perM = 55                          // px per metre (run 4 m = 220 px, rise 3 m = 165 px)
-  const Ax = 56, Ay = groundY              // elevation corner θ (skater's eye)
-  const Bx = Ax + 4 * perM, By = groundY   // right-angle corner
-  const Cx = Bx, Cy = groundY - 3 * perM   // top of the ramp
-
-  // beat gating (baby steps: see DEMO_STEPS)
-  const drawn = stepIndex >= 0
-  const showRise = stepIndex >= 1
-  const showRun = stepIndex >= 2
-  const showAngle = stepIndex >= 3
-  const showTags = stepIndex >= 4
-  const showRatio = stepIndex >= 5
-  const solved = ended || stepIndex >= 9
-
-  const targetDeg = ended ? 37 : (value.k === 'num' ? Math.max(0, Math.min(90, value.n)) : 0)
-  const angleTxt = solved ? '37°' : 'θ'
-  const col = solved ? '#2fb37f' : p.goldDeep
-  const spring = { type: 'spring' as const, stiffness: 300, damping: 18 }
-
-  // ── CONTINUOUS angle sweep: a motion value animated toward `value.n` at 60fps, so
-  //    the arc OPENS between beats instead of snapping. useTransform rebuilds the arc
-  //    path `d` (and the θ-label position) live from the animated degree. ──
-  const AR = 50
-  const angle = useMotionValue(reduce ? targetDeg : 0)
-  useEffect(() => {
-    const c = animate(angle, targetDeg, { duration: reduce ? 0 : (solved ? 0.9 : 0.8), ease: [0.33, 0.02, 0.2, 1] })
-    return () => c.stop()
-  }, [targetDeg, reduce, solved, angle])
-  const arcD = useTransform(angle, (d) => {
-    const ex = Ax + AR * Math.cos(d * D2R)
-    const ey = Ay - AR * Math.sin(d * D2R)
-    return `M ${(Ax + AR).toFixed(1)} ${Ay} A ${AR} ${AR} 0 0 0 ${ex.toFixed(1)} ${ey.toFixed(1)}`
-  })
-  const labX = useTransform(angle, (d) => Ax + (AR + 16) * Math.cos((d / 2) * D2R))
-  const labY = useTransform(angle, (d) => Ay - (AR + 16) * Math.sin((d / 2) * D2R) + 5)
-
-  const triD = `M ${Ax} ${Ay} L ${Cx} ${Cy} L ${Bx} ${By} Z`
-  const fadeT = { duration: reduce ? 0 : 0.4 }
+  const hAtRun = run * Math.tan(deg * D2R)       // ramp height at the marked run, in metres
+  const endY = Math.max(8, groundY - hAtRun * perM)
+  const hit = Math.abs(hAtRun - rise) < 0.03
+  const col = reveal || hit ? p.mint : p.gold
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px, 1vh, 12px)' }}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: 'clamp(240px, 32vw, 360px)', height: 'auto', borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }} role="img" aria-label="skate ramp right triangle acting out the angle of elevation">
-        <defs>
-          <linearGradient id="sr_sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#23303f" />
-            <stop offset="0.6" stopColor="#182430" />
-            <stop offset="1" stopColor="#101820" />
-          </linearGradient>
-          <radialGradient id="sr_sun" cx="0.82" cy="0.2" r="0.5">
-            <stop offset="0" stopColor="#ffd98a" stopOpacity="0.34" />
-            <stop offset="1" stopColor="#ffd98a" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="sr_ramp" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#8a99a8" />
-            <stop offset="1" stopColor="#5a6875" />
-          </linearGradient>
-          <linearGradient id="sr_rampM" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#5cd6ac" />
-            <stop offset="1" stopColor="#2fb37f" />
-          </linearGradient>
-        </defs>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(4px, 0.8vh, 10px)' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: 'clamp(240px, 34vw, 380px)', height: 'auto', borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}
+        role="img" aria-label={`protractor: ramp set to ${deg} degrees`}>
+        <rect x={0} y={0} width={W} height={H} fill={p.nightBot} />
+        <rect x={0} y={0} width={W} height={groundY} fill={p.nightTop} opacity={0.7} />
 
-        {/* ── dusk backdrop ── */}
-        <rect x={0} y={0} width={W} height={H} fill="url(#sr_sky)" />
-        <rect x={0} y={0} width={W} height={H} fill="url(#sr_sun)" />
-        <circle cx={W * 0.82} cy={H * 0.2} r={16} fill="#ffdf9a" opacity={0.5} />
+        {/* metre grid — so "3 m up, 4 m out" is countable, not asserted */}
+        {Array.from({ length: Math.floor(run) + 1 }, (_, i) => (
+          <line key={`vx${i}`} x1={Ax + i * perM} y1={groundY} x2={Ax + i * perM} y2={groundY - (rise + 1) * perM}
+            stroke={p.glassBorder} strokeWidth={1} opacity={0.35} />
+        ))}
+        {Array.from({ length: Math.floor(rise) + 2 }, (_, i) => (
+          <line key={`hz${i}`} x1={Ax} y1={groundY - i * perM} x2={Ax + run * perM} y2={groundY - i * perM}
+            stroke={p.glassBorder} strokeWidth={1} opacity={0.35} />
+        ))}
 
-        {/* ground line = the run's baseline (draws L→R) */}
-        <motion.line x1={0} y1={groundY} x2={W} y2={groundY} stroke={p.creamSoft} strokeWidth={2}
-          initial={{ pathLength: reduce ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: reduce ? 0 : 0.7, ease: 'easeInOut' }} />
+        {/* protractor face at A: scale + labelled ticks */}
+        <path d={`M ${Ax + AR} ${groundY} A ${AR} ${AR} 0 0 0 ${Ax} ${groundY - AR}`} fill="none" stroke={p.creamSoft} strokeWidth={1.2} opacity={0.55} />
+        {[0, 15, 30, 45, 60, 75, 90].map((t) => {
+          const c = Math.cos(t * D2R), s = Math.sin(t * D2R)
+          return (
+            <g key={t}>
+              <line x1={Ax + (AR - 7) * c} y1={groundY - (AR - 7) * s} x2={Ax + AR * c} y2={groundY - AR * s} stroke={p.creamSoft} strokeWidth={1.4} opacity={0.7} />
+              <text x={Ax + (AR + 12) * c} y={groundY - (AR + 12) * s + 4} textAnchor="middle" fill={p.mutedOnPaper} fontSize={9} fontFamily="var(--font-numeric)">{t}</text>
+            </g>
+          )
+        })}
+        {/* live angle wedge */}
+        <path d={`M ${Ax} ${groundY} L ${Ax + AR * Math.cos(deg * D2R)} ${groundY - AR * Math.sin(deg * D2R)} A ${AR} ${AR} 0 0 1 ${Ax + AR} ${groundY} Z`}
+          fill={col} opacity={0.16} />
 
-        {/* ── the ramp (the right triangle) ── */}
-        {/* solid ramp fill, colour eases to mint when solved */}
-        <motion.path d={triD} fill={solved ? 'url(#sr_rampM)' : 'url(#sr_ramp)'} opacity={0.9}
-          initial={{ opacity: 0 }} animate={{ opacity: drawn ? 0.9 : 0 }} transition={{ duration: reduce ? 0 : 0.5, delay: reduce ? 0 : 0.25 }} />
-        {/* outline draws in on step 0 */}
-        <motion.path d={triD} fill="none" stroke={col} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round"
-          initial={{ pathLength: reduce ? 1 : 0 }} animate={{ pathLength: drawn ? 1 : 0 }} transition={{ duration: reduce ? 0 : 0.75, ease: 'easeInOut' }} style={{ transition: 'stroke 400ms' }} />
+        {/* ground */}
+        <line x1={0} y1={groundY} x2={W} y2={groundY} stroke={p.creamSoft} strokeWidth={2} />
 
-        {/* rise edge (right side, OPPOSITE θ) highlights on step 1 */}
-        <motion.line x1={Bx} y1={By} x2={Cx} y2={Cy} stroke={p.gold} strokeWidth={4.5} strokeLinecap="round"
-          initial={{ pathLength: reduce ? 1 : 0, opacity: 0 }} animate={{ pathLength: showRise ? 1 : 0, opacity: showRise ? 1 : 0 }} transition={{ duration: reduce ? 0 : 0.45 }} />
-        {/* run edge (bottom, ADJACENT to θ) highlights on step 2 */}
-        <motion.line x1={Ax} y1={Ay} x2={Bx} y2={By} stroke={p.gold} strokeWidth={4.5} strokeLinecap="round"
-          initial={{ pathLength: reduce ? 1 : 0, opacity: 0 }} animate={{ pathLength: showRun ? 1 : 0, opacity: showRun ? 1 : 0 }} transition={{ duration: reduce ? 0 : 0.45 }} />
+        {/* the TARGET marker: rise m up at run m out */}
+        <line x1={Tx} y1={groundY} x2={Tx} y2={Ty} stroke={p.gold} strokeWidth={1.4} strokeDasharray="4 4" opacity={0.75} />
+        <line x1={Ax} y1={Ty} x2={Tx} y2={Ty} stroke={p.gold} strokeWidth={1.4} strokeDasharray="4 4" opacity={0.75} />
+        <circle cx={Tx} cy={Ty} r={6.5} fill="none" stroke={p.gold} strokeWidth={2.4} />
+        <circle cx={Tx} cy={Ty} r={2.2} fill={p.gold} />
+        <text x={Tx + 10} y={Ty - 6} fill={p.gold} fontSize={11} fontWeight={800} fontFamily="var(--font-numeric)">{rise} m up</text>
+        <text x={(Ax + Tx) / 2} y={groundY + 16} textAnchor="middle" fill={p.creamSoft} fontSize={11} fontWeight={800} fontFamily="var(--font-numeric)">{run} m out</text>
 
-        {/* right-angle square at B — springs in when the angle is named */}
-        <motion.rect x={Bx - 15} y={By - 15} width={15} height={15} fill="none" stroke={p.mutedOnPaper} strokeWidth={1.6}
-          initial={false} animate={{ opacity: showAngle ? 1 : 0, scale: showAngle ? 1 : 0.4 }} transition={reduce ? { duration: 0 } : spring} style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+        {/* the RAMP edge — swings with the dial */}
+        <line x1={Ax} y1={groundY} x2={Tx} y2={endY} stroke={col} strokeWidth={4} strokeLinecap="round" style={{ transition: 'stroke 220ms' }} />
+        <circle cx={Ax} cy={groundY} r={3.6} fill={p.cream} />
 
-        {/* angle arc at A — continuous sweep to `value.n` degrees */}
-        <motion.path d={arcD} fill="none" stroke={col} strokeWidth={2.8} strokeLinecap="round"
-          initial={false} animate={{ opacity: showAngle ? 1 : 0 }} transition={fadeT} style={{ transition: 'stroke 400ms' }} />
-        {/* θ / 37° label riding the arc's bisector */}
-        <motion.text style={{ x: labX, y: labY, transition: 'fill 400ms' }} textAnchor="middle" fill={col} fontSize={16} fontWeight={800} fontFamily="var(--font-numeric)"
-          initial={false} animate={{ opacity: showAngle ? 1 : 0 }} transition={fadeT}>{angleTxt}</motion.text>
-
-        {/* ── the flag at the top of the ramp ── */}
-        <motion.g initial={false} animate={{ opacity: drawn ? 1 : 0, scale: drawn ? 1 : 0.4 }} transition={reduce ? { duration: 0 } : { ...spring, delay: 0.5 }} style={{ transformBox: 'fill-box', transformOrigin: `${Cx}px ${Cy}px` }}>
-          <line x1={Cx} y1={Cy} x2={Cx} y2={Cy - 20} stroke={p.cream} strokeWidth={1.6} />
-          <path d={`M ${Cx} ${Cy - 20} L ${Cx + 16} ${Cy - 15} L ${Cx} ${Cy - 10} Z`} fill={solved ? p.mint : p.coral} />
-        </motion.g>
-
-        {/* ── the skater at A, looking up the ramp ── */}
-        <g>
-          <line x1={Ax - 18} y1={groundY} x2={Ax - 6} y2={groundY} stroke={p.mutedOnPaper} strokeWidth={2.4} strokeLinecap="round" />
-          <circle cx={Ax - 16} cy={groundY - 2} r={2.4} fill={p.mutedOnPaper} />
-          <circle cx={Ax - 8} cy={groundY - 2} r={2.4} fill={p.mutedOnPaper} />
-          <line x1={Ax - 12} y1={groundY - 4} x2={Ax - 12} y2={groundY - 18} stroke={p.coralDeep} strokeWidth={3.4} strokeLinecap="round" />
-          <circle cx={Ax - 12} cy={groundY - 23} r={4.6} fill="#f0c9a0" stroke="#22303e" strokeWidth={1} />
-          {/* arm — points up the ramp; lifts on solve */}
-          <motion.line x1={Ax - 12} y1={groundY - 15} x2={Ax - 2} y2={groundY - 20}
-            stroke={p.coralDeep} strokeWidth={2.8} strokeLinecap="round"
-            initial={false} animate={{ x2: Ax + (solved ? 6 : 0), y2: groundY - (solved ? 30 : 20) }} transition={reduce ? { duration: 0 } : spring} />
-        </g>
-
-        {/* ── side length labels ── */}
-        {/* rise 3 m (right of the vertical side) */}
-        <motion.g initial={false} animate={{ opacity: showRise ? 1 : 0, x: showRise ? 0 : 8 }} transition={reduce ? { duration: 0 } : spring}>
-          <text x={Bx + 8} y={(By + Cy) / 2 - 2} fill={p.cream} fontSize={14} fontWeight={800} fontFamily="var(--font-numeric)" textAnchor="start">rise 3 m</text>
-          <motion.text x={Bx + 8} y={(By + Cy) / 2 + 13} fill={p.gold} fontSize={10} fontWeight={700} fontFamily="var(--font-numeric)" letterSpacing="0.06em" textAnchor="start"
-            initial={false} animate={{ opacity: showTags ? 1 : 0 }} transition={fadeT}>opposite</motion.text>
-        </motion.g>
-        {/* run 4 m (below the bottom side) */}
-        <motion.g initial={false} animate={{ opacity: showRun ? 1 : 0, y: showRun ? 0 : 6 }} transition={reduce ? { duration: 0 } : spring}>
-          <text x={(Ax + Bx) / 2} y={groundY + 17} fill={p.cream} fontSize={14} fontWeight={800} fontFamily="var(--font-numeric)" textAnchor="middle">run 4 m</text>
-          <motion.text x={(Ax + Bx) / 2} y={groundY + 30} fill={p.gold} fontSize={10} fontWeight={700} fontFamily="var(--font-numeric)" letterSpacing="0.06em" textAnchor="middle"
-            initial={false} animate={{ opacity: showTags ? 1 : 0 }} transition={fadeT}>adjacent</motion.text>
-        </motion.g>
-
-        {/* ── final sight-line up the ramp (A→C) — grows via pathLength on solve ── */}
-        <motion.line x1={Ax} y1={Ay} x2={Cx} y2={Cy} stroke={p.mint} strokeWidth={2.4} strokeDasharray="6 5" strokeLinecap="round"
-          initial={false} animate={{ pathLength: solved ? 1 : 0, opacity: solved ? 1 : 0 }} transition={{ duration: reduce ? 0 : 0.6, ease: [0.4, 0.05, 0.25, 1] }} />
-        <motion.circle cx={Cx} cy={Cy} r={4.5} fill={p.mint} stroke={p.cream} strokeWidth={1.3}
-          initial={false} animate={{ opacity: solved ? 1 : 0, scale: solved ? 1 : 0.4 }} transition={reduce ? { duration: 0 } : { ...spring, delay: solved ? 0.5 : 0 }} style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+        {/* the degree reading, right where a protractor shows it */}
+        <text x={Ax + (AR + 34) * Math.cos((deg / 2) * D2R)} y={groundY - (AR + 34) * Math.sin((deg / 2) * D2R) + 5}
+          textAnchor="middle" fill={col} fontSize={17} fontWeight={800} fontFamily="var(--font-numeric)" style={{ transition: 'fill 220ms' }}>{deg}°</text>
       </svg>
 
-      {/* running trig readout under the ramp */}
-      <div key={solved ? 's' : showRatio ? `r${stepIndex}` : 'i'} style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(14px, 1.5vw, 21px)', fontWeight: 800, color: col, transition: 'color 400ms', animation: reduce ? 'none' : 'srFade 350ms ease both' }}>
-        {solved ? 'θ ≈ 37°'
-          : stepIndex >= 7 ? 'tan θ = 0.75'
-            : stepIndex >= 6 ? 'tan θ = 3 / 4'
-              : showRatio ? 'tan θ = opp / adj'
-                : 'rise 3 m · run 4 m'}
+      {/* the measurement the child adjusts against */}
+      <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(12px, 1.35vw, 17px)', fontWeight: 800, color: col, transition: 'color 220ms', textAlign: 'center' }}>
+        at {run} m out the ramp is {hAtRun.toFixed(2)} m high{hit ? ' — on the marker ✓' : ` · marker ${rise.toFixed(2)} m`}
       </div>
-      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px, 1vw, 13px)', letterSpacing: '0.12em', textTransform: 'uppercase', color: p.mutedOnPaper }}>ramp steepness</div>
-      <style>{`@keyframes srFade { from { opacity: 0 } to { opacity: 1 } }`}</style>
     </div>
   )
 }
+
+function ProtractorInstrument({ P: p, task, value, setValue, disabled, reveal, onCommit }: {
+  P: Palette; task: Task; value: V; setValue: (v: V) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: V) => void
+}): ReactElement {
+  const deg = value.k === 'num' ? value.n : 0
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px, 1.2vw, 14px)', width: '100%' }}>
+      <ProtractorBoard P={p} task={task} deg={deg} reveal={reveal} />
+      <SlideValue P={p} value={deg} setValue={(x) => setValue({ k: 'num', n: x })}
+        min={0} max={90} step={1} format={(m) => `${m}°`}
+        disabled={disabled} reveal={reveal} onCommit={(x) => onCommit({ k: 'num', n: x })} commitLabel="READ IT OFF ✓" />
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// THE PROOF BENCH — the givens, rendered. Without this panel the child would be
+// comparing three claims against statements that live only in the badge; the
+// claims cite specific parts, so the parts they are checked against have to be on
+// screen next to them.
+// ══════════════════════════════════════════════════════════════════════════════
+function GivensPanel({ P: p, givens, lit = 99 }: { P: Palette; givens: string[]; lit?: number }): ReactElement {
+  return (
+    <div style={{ width: '100%', maxWidth: 'clamp(340px, 48vw, 600px)', borderRadius: 12, background: p.glass, border: `1px solid ${p.glassBorder}`, padding: 'clamp(9px,1.1vw,14px) clamp(12px,1.4vw,18px)' }}>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1vw,13px)', fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: p.creamSoft, marginBottom: 6 }}>what you are given</div>
+      {givens.map((g, i) => (
+        <div key={g} style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(14px,1.5vw,20px)', fontWeight: 700, lineHeight: 1.55, color: i <= lit ? p.cream : p.mutedOnPaper, opacity: i <= lit ? 1 : 0.4, transition: 'color 260ms, opacity 260ms' }}>▸ {g}</div>
+      ))}
+    </div>
+  )
+}
+
+// The two braces as a kite: A on top, C below, B and D to the sides. Triangles
+// ABC and ADC share AC. Parts light up as the walkthrough reads each given, so the
+// child sees WHICH parts the givens name before comparing the claims.
+function ProofScene({ palette: p, task, stepIndex, ended }: { palette: Palette; task: Task; stepIndex: number; ended: boolean }): ReactElement {
+  const reduce = useReducedMotion()
+  const W = 340, H = 214
+  const Apt = { x: 170, y: 24 }, Cpt = { x: 170, y: 186 }
+  const Bpt = { x: 44, y: 108 }, Dpt = { x: 296, y: 108 }
+  const sides = stepIndex >= 1        // AB ≅ AD
+  const ang = stepIndex >= 2          // the included angle at A
+  const shared = stepIndex >= 3       // AC
+  const done = ended || stepIndex >= 5
+  const fade = { duration: reduce ? 0 : 0.4 }
+  const lab = (x: number, y: number, t: string) => <text x={x} y={y} textAnchor="middle" fill={p.cream} fontSize={14} fontWeight={800} fontFamily="var(--font-numeric)">{t}</text>
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(4px, 0.8vh, 10px)' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: 'clamp(240px, 34vw, 380px)', height: 'auto', borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}
+        role="img" aria-label="two ramp braces meeting at A, sharing the brace AC">
+        <rect x={0} y={0} width={W} height={H} fill={p.nightBot} />
+        <path d={`M ${Apt.x} ${Apt.y} L ${Bpt.x} ${Bpt.y} L ${Cpt.x} ${Cpt.y} Z`} fill={done ? p.mint : p.creamSoft} opacity={done ? 0.18 : 0.07} style={{ transition: 'fill 400ms, opacity 400ms' }} />
+        <path d={`M ${Apt.x} ${Apt.y} L ${Dpt.x} ${Dpt.y} L ${Cpt.x} ${Cpt.y} Z`} fill={done ? p.mint : p.creamSoft} opacity={done ? 0.18 : 0.07} style={{ transition: 'fill 400ms, opacity 400ms' }} />
+
+        {/* the two congruent sides AB, AD — tick-marked when the given is read */}
+        {[Bpt, Dpt].map((q, i) => (
+          <g key={i}>
+            <motion.line x1={Apt.x} y1={Apt.y} x2={q.x} y2={q.y} stroke={sides ? p.gold : p.creamSoft} strokeWidth={sides ? 4 : 2.4} strokeLinecap="round" initial={false} animate={{ opacity: 1 }} style={{ transition: 'stroke 300ms, stroke-width 300ms' }} />
+            <motion.line x1={(Apt.x + q.x) / 2 - 4} y1={(Apt.y + q.y) / 2 - 6} x2={(Apt.x + q.x) / 2 + 4} y2={(Apt.y + q.y) / 2 + 6}
+              stroke={p.gold} strokeWidth={2.4} initial={false} animate={{ opacity: sides ? 1 : 0 }} transition={fade} />
+          </g>
+        ))}
+        {/* the outer sides BC, DC — never given */}
+        {[Bpt, Dpt].map((q, i) => <line key={`o${i}`} x1={q.x} y1={q.y} x2={Cpt.x} y2={Cpt.y} stroke={p.creamSoft} strokeWidth={2.4} strokeLinecap="round" opacity={0.55} />)}
+
+        {/* the shared brace AC */}
+        <motion.line x1={Apt.x} y1={Apt.y} x2={Cpt.x} y2={Cpt.y} stroke={shared ? p.coral : p.creamSoft} strokeWidth={shared ? 4 : 2.2} strokeDasharray={shared ? undefined : '5 4'} strokeLinecap="round" initial={false} animate={{ opacity: 1 }} style={{ transition: 'stroke 300ms, stroke-width 300ms' }} />
+
+        {/* the INCLUDED angle at A, both halves */}
+        <motion.g initial={false} animate={{ opacity: ang ? 1 : 0 }} transition={fade}>
+          <path d={`M ${Apt.x - 26} ${Apt.y + 26} A 37 37 0 0 1 ${Apt.x} ${Apt.y + 37}`} fill="none" stroke={p.mint} strokeWidth={2.6} />
+          <path d={`M ${Apt.x} ${Apt.y + 37} A 37 37 0 0 1 ${Apt.x + 26} ${Apt.y + 26}`} fill="none" stroke={p.mint} strokeWidth={2.6} />
+        </motion.g>
+
+        {lab(Apt.x, Apt.y - 7, 'A')}
+        {lab(Bpt.x - 13, Bpt.y + 5, 'B')}
+        {lab(Dpt.x + 13, Dpt.y + 5, 'D')}
+        {lab(Cpt.x, Cpt.y + 18, 'C')}
+
+        <motion.text x={W / 2} y={H - 6} textAnchor="middle" fill={p.mint} fontSize={14} fontWeight={800} fontFamily="var(--font-numeric)"
+          initial={false} animate={{ opacity: done ? 1 : 0 }} transition={fade}>△ABC ≅ △ADC by SAS</motion.text>
+      </svg>
+      <GivensPanel P={p} givens={task.givens ?? []} lit={stepIndex - 1} />
+    </div>
+  )
+}
+
+// ── walkthrough example 1: MEASURE the angle on the protractor ──────────────────
+const DEMO_MEASURE: Task = {
+  kind: 'measure', title: 'Ramp steepness', badge: 'rise 3 m · run 4 m', tone: 'b',
+  prompt: '', say: '', work: [], n: 37, tol: 1, rise: 3, run: 4, showEquals: false,
+}
+// Nine baby steps. The old script narrated "take the inverse tangent of 0.75",
+// which is exactly the move the child cannot make. This one measures: lay the
+// protractor on, swing the ramp, watch the height readout climb toward the marker,
+// and read the degrees off the scale when it lands.
+const MEASURE_STEPS: DemoStep<V>[] = [
+  { say: "Here's a skate ramp, pivoting at the bottom corner. How steeply it leans is its angle of elevation.", value: { k: 'num', n: 0 }, board: 'ramp: angle of elevation' },
+  { say: 'The plan says it must rise three metres by the time it is four metres out. That is the gold marker.', value: { k: 'num', n: 0 }, board: 'must reach 3 m up at 4 m out' },
+  { say: 'A protractor sits on the pivot, marked from zero to ninety degrees. Whatever the ramp reaches, we can read it off here.', value: { k: 'num', n: 0 }, board: 'protractor on the pivot' },
+  { say: 'Start swinging the ramp up. At twenty degrees it is only about one and a half metres high at the marker. Too shallow.', value: { k: 'num', n: 20 }, board: '20° → 1.46 m — too low' },
+  { say: 'Keep going. Thirty degrees gives about two point three metres. Still under the marker.', value: { k: 'num', n: 30 }, board: '30° → 2.31 m — still low' },
+  { say: 'Thirty-five degrees, and the ramp is about two point eight. Very close now.', value: { k: 'num', n: 35 }, board: '35° → 2.80 m — close' },
+  { say: 'Forty degrees overshoots — three point three six, above the marker. So the answer is between thirty-five and forty.', value: { k: 'num', n: 40 }, board: '40° → 3.36 m — too high' },
+  { say: 'Thirty-seven degrees. Three point zero one metres — the ramp edge sits right on the marker.', value: { k: 'num', n: 37 }, board: '37° → 3.01 m — on the marker' },
+  { say: 'Now read the protractor: thirty-seven degrees. That is the angle of elevation, measured, not guessed.', value: { k: 'num', n: 37 }, board: 'angle of elevation ≈ 37°' },
+]
+
+// ── walkthrough example 2: the proof bench ─────────────────────────────────────
+const DEMO_PROOF: Task = {
+  kind: 'proof', title: 'Ramp brace', badge: 'AB ≅ AD · ∠BAC ≅ ∠DAC · AC shared', tone: 'a',
+  prompt: '', say: '', work: [], showEquals: false,
+  givens: ['AB ≅ AD', '∠BAC ≅ ∠DAC', 'AC ≅ AC  (shared)'],
+  options: [
+    { id: 'sas', label: '△ABC ≅ △ADC by SAS — AB ≅ AD, ∠BAC ≅ ∠DAC, AC ≅ AC' },
+    { id: 'sss', label: '△ABC ≅ △ADC by SSS — AB ≅ AD, AC ≅ AC, BC ≅ DC' },
+    { id: 'asa', label: '△ABC ≅ △ADC by ASA — ∠BAC ≅ ∠DAC, AC ≅ AC, ∠ACB ≅ ∠ACD' },
+  ],
+  answerId: 'sas', revealShort: 'SAS ✓',
+}
+// Seven baby steps. The point of this example is the CHECK: read what you were
+// given, then test each claim against that list. That is the gesture scored play
+// grades, so it happens here first.
+const PROOF_STEPS: DemoStep<V>[] = [
+  { say: 'Two braces run from the top of the ramp down to the deck. We want to show the two triangles they make are identical.', value: { k: 'step', id: '' }, board: 'prove △ABC ≅ △ADC' },
+  { say: 'First given: brace A B is congruent to brace A D. Two matching sides — watch the tick marks appear.', value: { k: 'step', id: '' }, board: 'AB ≅ AD  (side)' },
+  { say: 'Second given: the two angles at A are congruent. Notice where that angle sits — right between the two matching braces.', value: { k: 'step', id: '' }, board: '∠BAC ≅ ∠DAC  (included angle)' },
+  { say: 'Third: the brace A C belongs to both triangles, so it is congruent to itself. Side, angle, side.', value: { k: 'step', id: '' }, board: 'AC ≅ AC  (shared side)' },
+  { say: 'Now check the claims. The S S S claim needs B C congruent to D C — but nobody gave you that side, so you cannot use it.', value: { k: 'step', id: '' }, board: 'SSS needs BC ≅ DC — not given' },
+  { say: 'The A S A claim needs the angles at C — also not on the list. Only the S A S claim uses three parts you actually have.', value: { k: 'step', id: 'sas' }, board: 'ASA needs ∠ACB ≅ ∠ACD — not given' },
+  { say: 'So pick the S A S claim. Two sides with the angle between them proves the braces are identical.', value: { k: 'step', id: 'sas' }, board: '△ABC ≅ △ADC by SAS ✓' },
+]
 
 const numGrade = (t: Task, n: number) => Math.abs(n - (t.n ?? 0)) <= (t.tol ?? 0)
 
@@ -394,59 +494,68 @@ const CONFIG: GameConfig<V, Task> = {
   palette: P,
   motif: '🛹',
   makeTask,
-  initialValue: (t) => (t.kind === 'dial' ? { k: 'num', n: t.lo ?? 0 } : { k: 'step', id: '' }),
-  grade: (t, v) => (t.kind === 'dial' ? v.k === 'num' && numGrade(t, v.n) : v.k === 'step' && v.id === t.answerId),
-  revealText: (t) => (t.kind === 'dial'
-    ? `${(t.dstep ?? 1) < 1 ? (t.n ?? 0).toFixed(2) : t.n}${t.unit ?? ''}`
-    : (t.options?.find((o) => o.id === t.answerId)?.label as string) ?? '✓'),
-  glide: (t, _from, setValue, later) => later(() => setValue(t.kind === 'dial' ? { k: 'num', n: t.n ?? 0 } : { k: 'step', id: t.answerId ?? '' }), 320),
+  // PER-TASK gating. A question shows the pad when its answer is a single number
+  // the child can produce from what is on the board. The protractor and the proof
+  // bench keep their instruments: one because measuring IS the skill, the other
+  // because "which claim do the givens support" is not a number.
+  answerPad: (t) => (t.pad ? numChoices(t.n ?? 0, t.pad, { min: 0 }) : []),
+  // REQUIRED: V is a tagged union, so a bare tapped number would never satisfy
+  // `v.k === 'num'` and every padded question would mark correct answers WRONG,
+  // silently. See src/__tests__/answerPadGrading.test.ts.
+  padValue: (n) => ({ k: 'num', n }),
+  initialValue: (t) => (t.kind === 'proof' ? { k: 'step', id: '' } : { k: 'num', n: 0 }),
+  grade: (t, v) => (t.kind === 'proof'
+    ? v.k === 'step' && v.id === t.answerId
+    : v.k === 'num' && numGrade(t, v.n)),
+  revealText: (t) => (t.kind === 'proof'
+    ? (t.revealShort ?? '✓')
+    : t.kind === 'measure' ? `${t.n}°`
+      : Number.isInteger(t.n) ? `${t.n}` : (t.n ?? 0).toFixed(2)),
+  glide: (t, _from, setValue, later) => later(() => setValue(
+    t.kind === 'proof' ? { k: 'step', id: t.answerId ?? '' } : { k: 'num', n: t.n ?? 0 }), 320),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => {
-    if (task.kind === 'dial') {
-      const n = value.k === 'num' ? value.n : 0
-      const dec = (task.dstep ?? 1) < 1
+    if (task.kind === 'proof') {
+      const id = value.k === 'step' ? value.id : ''
       return (
-        <SlideValue P={palette} value={n} setValue={(x) => setValue({ k: 'num', n: x })}
-          min={task.lo ?? 0} max={task.hi ?? 180} step={task.dstep ?? 1}
-          format={(m) => `${dec ? m.toFixed(2) : m}${task.unit ?? ''}`}
-          disabled={disabled} reveal={reveal} onCommit={(x) => onCommit({ k: 'num', n: x })} commitLabel="SET IT ✓" />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px, 1.1vw, 14px)', width: '100%' }}>
+          <GivensPanel P={palette} givens={task.givens ?? []} />
+          <StepPicker P={palette} choices={task.options ?? []} value={id} setValue={(x) => setValue({ k: 'step', id: x })}
+            correct={task.answerId} disabled={disabled} reveal={reveal}
+            onCommit={(x) => onCommit({ k: 'step', id: x })} commitLabel="THAT'S THE ONE ✓"
+            prompt="which claim do the givens support?" />
+        </div>
       )
     }
-    const id = value.k === 'step' ? value.id : ''
-    return (
-      <StepPicker P={palette} choices={task.options ?? []} value={id} setValue={(x) => setValue({ k: 'step', id: x })}
-        correct={task.answerId} disabled={disabled} reveal={reveal}
-        onCommit={(x) => onCommit({ k: 'step', id: x })} commitLabel="THAT'S THE STEP ✓"
-        prompt="assemble the next statement" />
-    )
+    // `measure` — and the fallback for any future numeric task that ships no `pad`.
+    return <ProtractorInstrument P={palette} task={task} value={value} setValue={setValue}
+      disabled={disabled} reveal={reveal} onCommit={onCommit} />
   },
-  TutorialScene: ({ palette, task, value, stepIndex, ended }) => (
-    <RampScene palette={palette} task={task} value={value} stepIndex={stepIndex} ended={ended} />
-  ),
+  // Branches by example, so the child watches the gesture they will be graded on.
+  TutorialScene: ({ palette, task, value, stepIndex, ended }) =>
+    task.kind === 'proof'
+      ? <ProofScene palette={palette} task={task} stepIndex={stepIndex} ended={ended} />
+      : <ProtractorBoard P={palette} task={task} deg={value.k === 'num' ? value.n : 0} reveal={ended} />,
   start: {
-    blurb: <><strong>You&apos;re inspecting a skate ramp.</strong> A ramp is a <strong>right triangle</strong> — its steepness is an <strong>angle</strong>, and its sides obey <strong>SOH-CAH-TOA</strong>. Dial missing angles and sides, and prove braces are identical.</>,
-    ticket: { title: 'Ramp steepness', badge: 'rise 3, run 4', tone: 'b' },
+    blurb: <><strong>You&apos;re inspecting a skate ramp.</strong> A ramp is a <strong>right triangle</strong> — its steepness is an <strong>angle you measure</strong>, and its sides obey <strong>SOH-CAH-TOA</strong>. Find missing angles and sides, and check which braces are provably identical.</>,
+    ticket: { title: 'Ramp steepness', badge: 'rise 3 · run 4', tone: 'b' },
     startLabel: 'Inspect the ramp →',
   },
   overview: {
-    say: 'Here is the plan. A skate ramp is really a right triangle. How steep it leans is an angle of elevation, and we can find it from two measured sides. The rise is opposite the angle and the run is next to it, so opposite over adjacent gives the tangent, and the inverse tangent gives the angle back. Let us work one out together, nice and slow.',
-    problem: <>A ramp <strong>rises 3 m</strong> over a <strong>4 m run</strong>. What&apos;s its angle of elevation?</>,
+    say: 'Here is the plan. A skate ramp is really a right triangle. How steep it leans is its angle of elevation, and we find it by measuring: swing the ramp until it reaches the height the plan asks for, then read the degrees straight off the protractor. Later we compare two braces and decide which congruence claim the givens actually support. Let us work through both, nice and slow.',
+    problem: <>A ramp must <strong>rise 3 m</strong> by <strong>4 m out</strong>. How steep is that?</>,
     points: [
-      <>The <strong>rise</strong> is opposite the angle; the <strong>run</strong> is adjacent to it.</>,
-      <>Opposite ÷ adjacent = <strong>tan θ</strong> = 3 ÷ 4 = 0.75.</>,
-      <>Undo the tangent: <strong>θ = arctan(0.75) ≈ 37°</strong>.</>,
+      <>The <strong>marker</strong> shows the height the ramp must reach at that run.</>,
+      <>Swing the ramp onto the marker, then <strong>read the protractor</strong>.</>,
+      <>For a proof, a claim only counts if <strong>every part it names was given</strong>.</>,
     ],
   },
-  tutorial: { task: DEMO_TASK, initial: { k: 'num', n: 0 }, hand: 'drag', steps: DEMO_STEPS },
-  guided: {
-    task: {
-      kind: 'dial', title: 'Ramp triangle', badge: '60° + 70° + x = 180°', tone: 'a',
-      prompt: '', say: 'Your turn. A ramp triangle has angles sixty degrees, seventy degrees, and x. Dial x.',
-      work: ['x = 180° − 60° − 70° = 50°.'],
-      n: 50, lo: 0, hi: 180, dstep: 1, tol: 0, unit: '°',
-    },
-    coach: 'Your turn — I will help. Dial the missing angle.', hand: 'drag',
-  },
-  sig: (t) => t.badge,
+  // Two examples: the protractor, then the proof bench. Both graded gestures are
+  // rehearsed here, which is why there is NO guided round.
+  tutorial: [
+    { task: DEMO_MEASURE, initial: { k: 'num', n: 0 }, hand: 'drag', steps: MEASURE_STEPS },
+    { task: DEMO_PROOF, initial: { k: 'step', id: '' }, hand: 'tap', steps: PROOF_STEPS },
+  ],
+  sig: (t) => `${t.kind}:${t.badge}`,
 }
 
 export default function SkateRamp(props: { childName: string; onFinish: (c: number, w: number, mastered?: boolean) => void; onExit: () => void }) {
