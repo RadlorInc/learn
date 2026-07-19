@@ -360,6 +360,26 @@ const DEMO_STEPS: DemoStep<V>[] = [
   { say: 'That is your new score: negative two. Set the meter to negative two.', value: { k: 'num', n: -2 }, board: 'score = −2' },
 ]
 
+// ── worked example 2: the ruling bench, on the case the meter could never explain ──
+// (−3) × (−4). The old walkthrough stopped at 3 − 5, so × and ÷ were graded on a
+// gesture the child had never seen. Seven baby steps: name the card, lay them out
+// one at a time, read the ruling's SIGN as the action, revoke, watch the score
+// climb, then say the arithmetic that just happened.
+const DEMO_CARDS: Task = {
+  kind: 'cards', title: 'Rule on the cards', badge: '(−3) × (−4)', tone: 'a',
+  prompt: '', say: '', work: [],
+  cardVal: -4, signedCount: -3, slots: 3, n: 12,
+}
+const DEMO_CARD_STEPS: DemoStep<V>[] = [
+  { say: 'Now a harder one. Three penalty cards were handed out — and the referee is about to look at them again.', value: { k: 'cards', count: 0, dir: 0 }, board: '(−3) × (−4)' },
+  { say: 'Each penalty card is worth negative four. That is the second number: what one card IS.', value: { k: 'cards', count: 1, dir: 0 }, board: 'each card = −4' },
+  { say: 'There are three of them. Lay out the second.', value: { k: 'cards', count: 2, dir: 0 }, board: '3 cards' },
+  { say: 'And the third. Three penalty cards, worth negative four each.', value: { k: 'cards', count: 3, dir: 0 }, board: '3 cards of −4' },
+  { say: 'Now the first number, negative three. The minus sign is not part of the count — it is the ACTION. Minus means revoke them.', value: { k: 'cards', count: 3, dir: 0 }, board: 'minus = revoke' },
+  { say: 'So revoke all three. Watch the score: taking away a penalty pushes it UP, not down.', value: { k: 'cards', count: 3, dir: -1 }, board: 'revoke all 3 → +12' },
+  { say: 'That is why negative three times negative four is positive twelve. Take away a penalty enough times and your score climbs.', value: { k: 'cards', count: 3, dir: -1 }, board: '(−3) × (−4) = 12' },
+]
+
 // ── hand-authored SVG arcade scoreboard (storyboard: docs/storyboards/leaderboard.md)
 // A stylised e-sports scoreboard — night backdrop + glow + rank rows on the left,
 // and on the RIGHT the load-bearing math: a vertical signed score meter with a
@@ -589,9 +609,13 @@ const CONFIG: GameConfig<V, Task> = {
       correct={task.correctId} disabled={disabled} reveal={reveal} onCommit={(x) => onCommit({ k: 'pick', id: x })}
       commitLabel="DROP IT IN ✓" prompt={`sort  ${task.badge}`} />
   },
-  TutorialScene: ({ palette, value, stepIndex, frameCount, ended }) => (
-    <ScoreScene palette={palette} value={value} stepIndex={stepIndex} frameCount={frameCount} ended={ended} />
-  ),
+  // Branches by example, like the 12–14 signed chapter: the meter example poses on
+  // the arcade scoreboard, the ruling example on the bench itself — so the child
+  // watches the gesture they will be graded on, not a different picture.
+  TutorialScene: ({ palette, task, value, stepIndex, frameCount, ended }) =>
+    task.kind === 'cards'
+      ? <CardBoard P={palette} task={task} count={value.k === 'cards' ? value.count : 0} dir={value.k === 'cards' ? value.dir : 0} />
+      : <ScoreScene palette={palette} value={value} stepIndex={stepIndex} frameCount={frameCount} ended={ended} />,
   start: {
     blurb: <><strong>You&apos;re on the leaderboard.</strong> Wins push your score <strong>up</strong>, losses drop it <strong>below the line</strong>. Combine the swings and post the score — and when the referee <strong>revokes a penalty</strong>, watch which way your score moves.</>,
     ticket: { title: 'Round result', badge: '3 − 5', tone: 'a' },
@@ -607,32 +631,24 @@ const CONFIG: GameConfig<V, Task> = {
       <><strong>Revoke</strong> a penalty and the score goes <strong>up</strong>.</>,
     ],
   },
-  tutorial: { task: DEMO_TASK, initial: { k: 'num', n: 0 }, hand: 'dragV', steps: DEMO_STEPS },
-  // TWO guided rounds. The walkthrough teaches the meter, but the ruling bench is a
-  // separate gesture that scored play grades — an unrehearsed graded step is exactly
-  // the trap where a child gets the maths right and loses the mark on a move nobody
-  // showed them. The second round is deliberately the TWO-NEGATIVES case, because
-  // that is the one the old meter could never explain.
-  guided: [
-    {
-      task: {
-        kind: 'score', title: 'Combine the round', badge: '−4 + 6', tone: 'a', prompt: '',
-        say: 'You lost four, then won six. Set the new score.',
-        work: ['Start at −4, move 6 up: you land on 2.'],
-        n: 2, lo: -18, hi: 18,
-      },
-      coach: 'Your turn — I will help. Set this score.', hand: 'dragV',
-    },
-    {
-      task: {
-        kind: 'cards', title: 'Rule on the cards', badge: '(−3) × (−4)', tone: 'a', prompt: '',
-        say: 'One more — a ruling this time. Three penalty cards worth negative four each were given by mistake. Revoke all three, and watch what the score does.',
-        work: ['3 penalty cards worth −4 each, REVOKED. Taking away a penalty moves the score UP. The swing is +12.'],
-        cardVal: -4, signedCount: -3, slots: 3, n: 12,
-      },
-      coach: 'Lay out the three penalties, then revoke them.', hand: 'tap',
-    },
+  tutorial: [
+    { task: DEMO_TASK, initial: { k: 'num', n: 0 }, hand: 'dragV', steps: DEMO_STEPS },
+    { task: DEMO_CARDS, initial: { k: 'cards', count: 0, dir: 0 }, hand: 'tap', steps: DEMO_CARD_STEPS },
   ],
+  // ONE guided round, matching the 12–14 shape. The ruling bench is still a
+  // separately-graded gesture, so it is rehearsed in the WALKTHROUGH (example 2)
+  // rather than here — exactly how the 12–14 signed chapter teaches its own
+  // card mechanic. A graded gesture taught nowhere is the trap where a child gets
+  // the maths right and loses the mark on a move nobody showed them.
+  guided: {
+    task: {
+      kind: 'score', title: 'Combine the round', badge: '−4 + 6', tone: 'a', prompt: '',
+      say: 'You lost four, then won six. Set the new score.',
+      work: ['Start at −4, move 6 up: you land on 2.'],
+      n: 2, lo: -18, hi: 18,
+    },
+    coach: 'Your turn — I will help. Set this score.', hand: 'dragV',
+  },
   sig: (t) => `${t.kind}:${t.badge}`,
 }
 
