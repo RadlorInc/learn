@@ -36,6 +36,16 @@ measurement grabbed an inner element instead of the board container and reported
 measurement was wrong. **A measurement that disagrees with the pixels is guilty until
 proven innocent** — screenshot first, then trust the number.
 
+**"It advanced" is not "it was graded correct".** 2026-07-19, shipped to production:
+a padded chapter marked EVERY answer wrong — including the right one — and I
+hand-verified it and passed it. The loop reveals a wrong answer and then advances, so
+a wrong grade and a right grade look identical from the outside: the next question
+appears either way. What I actually confirmed was that the question advanced.
+**Assert on `data-test-phase`** (`solved` vs `reveal`), or on `data-test-answer` being
+non-empty — never on the screen having moved on. Three separate readers had to notice
+this independently before it was caught; two more chapters reproduced it the same day.
+Root cause and its gate are under "Teen game shell".
+
 **A heuristic gate needs its own test.** The same session, the phantom-gesture regex
 matched `weigh` inside "the case **weigh**t" and `tile` inside "how many **tile**s",
 flagging correct copy twice. Tightening a regex to kill false positives can silently
@@ -77,6 +87,36 @@ from the generator's variables so they are true for every seed.
 **Visible math and spoken math are different artifacts.** A proper minus (U+2212) reads
 correctly and speaks as nothing; superscripts speak as "three two"; `x/2` speaks as
 "x slash 2". This repo separates them: `disp()` for display, `signed()`/words for speech.
+
+**A tapped pad choice reaches `grade` as a RAW NUMBER.** 2026-07-19, shipped to prod.
+`GameShell` cast it to the chapter's value type, which is honest only where that type
+IS `number`. A chapter with a tagged union (`{k:'num',n} | {k:'pick',id}`) evaluated
+`v.k === 'num'` on a number, got `undefined`, and marked every answer wrong; the correct
+chip never lit and `data-test-answer` resolved to `''`. Invisible in play, because a
+wrong answer still advances (see Verification). **Fix:** `GameConfig.padValue?: (n) => V`.
+**Gate:** `src/__tests__/answerPadGrading.test.ts` fails any chapter with `answerPad`, a
+tagged-union value type, and neither a `padValue` nor a raw-number guard.
+
+**A live instrument that computes the child's current answer is an oracle.** The
+partner rejected BalanceBench's live tilt because a child can nudge to level without
+reasoning. The same trap reappeared in BuildPlot's tile scene, which rendered the
+EXPANSION of the sides being dialled ("x² + 5x + 4") beside the target area — dial,
+compare the strings, adjust, never factor. **A verdict is not required for something to
+be hot/cold.** The test: does the instrument display anything the child could otherwise
+only get by doing the maths? `BalanceBeam` passes because it shows `2x`, not its value.
+
+**An instrument answers what a pad cannot: a PAIR or a construction.** The per-question
+rule the 15–16 rebuild settled on — a single number is tapped; a coordinate, a factor
+pair, a boundary-plus-direction, a ruling of how-many-and-which-way keeps its
+instrument. Gate the decision on the SHAPE of the answer, not on chapter identity.
+
+**A misconception distractor can silently equal the answer.** `numChoices` drops
+duplicates, so a distractor that coincides with the answer for some parameter values
+takes the item's whole point with it. Real cases found: "squared means ×2" at c = 2
+(2c = c²), circumference-for-area at r = 2 (2r = r²), collapse-unlike-terms at x = 1,
+the supplement at 90°, the fee gap at a rate gap of 1. Each cost ~25% of that
+generator's seeds. **Exclude the colliding parameters by construction and sweep the
+full space to prove it** — do not hope, and do not retry-loop.
 
 **Stale animation timers bleed across questions.** A wrong-answer glide schedules
 `setValue` frames; if the next question loads before they fire, a stale value lands on
