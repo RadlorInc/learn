@@ -36,7 +36,14 @@ const RETEACH_AFTER = 3
 // How many of the most-recent walkthrough board lines to keep on the chalkboard.
 // The longest examples write ~14 lines; capping the visible window keeps working
 // memory (and the pinned board slot) from overflowing. (ux-design.md §6.3)
+// MEASURED, not guessed: on a 390×844 phone the teaching stack is a single column
+// (explanation → step board → illustration), and the step board's 4 lines are ~110px
+// of it. `short` is the LANDSCAPE-phone gate and never fires on a tall phone, so the
+// gate here is the same predicate that picks the single-column layout in TeachFrame:
+// !roomy && !short. A short-landscape frame keeps 4 because its board sits in the
+// right column, not on top of the illustration.
 const BOARD_WINDOW = 4
+const BOARD_WINDOW_STACKED = 2
 // When a child RESUMES a chapter above easy, they can opt into a short warm-up:
 // this many gentler questions (one tier below where they left off) get prepended
 // to the set before it climbs back to their level. Opt-in so it doesn't lengthen
@@ -370,7 +377,7 @@ export function Game<V, T extends BaseTask>({
 
   const busy = sub !== 'active'
   const inOrder = stage === 'play' || stage === 'guided'
-  const { roomy, short } = useFrame()
+  const { roomy, short, tall } = useFrame()
 
   // Overview: show the summary ON the chalkboard while the illustration sits in the
   // middle (same universal layout as the walkthrough/practice), instead of a big
@@ -415,7 +422,9 @@ export function Game<V, T extends BaseTask>({
       )}
       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(130% 100% at 50% -10%, ${P.nightBot}00 0%, ${P.nightBot}55 100%)` }} />
 
-      <header style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 'clamp(660px, 66vw, 820px)', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px 4px', boxSizing: 'border-box' }}>
+      {/* On a short frame the chrome is the cheapest height to buy back — every px
+          here is a px the interactive doesn't have to be scaled out of. */}
+      <header style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 'clamp(660px, 66vw, 820px)', display: 'flex', alignItems: 'center', gap: 10, padding: short ? '4px 14px 0' : '12px 16px 4px', boxSizing: 'border-box' }}>
         <button type="button" onClick={() => { stopSpeech(); onExit() }} style={headerChip(P)}>‹ Menu</button>
         <span style={{ fontWeight: 900, fontSize: 'clamp(15px, 1.7vw, 26px)', letterSpacing: '0.05em', color: P.gold, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{config.title}</span>
         <span style={{ flex: 1 }} />
@@ -423,14 +432,14 @@ export function Game<V, T extends BaseTask>({
       </header>
 
       {stage === 'play' && (
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 5, marginTop: 6 }}>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 5, marginTop: short ? 2 : 6 }}>
           {Array.from({ length: effTotal }, (_, i) => (
             <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: i < idx ? P.gold : i === idx ? P.cream : 'rgba(255,244,221,0.28)', transition: 'background 300ms' }} />
           ))}
         </div>
       )}
 
-      <main style={{ position: 'relative', zIndex: 1, flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '8px 16px 20px', boxSizing: 'border-box' }}>
+      <main style={{ position: 'relative', zIndex: 1, flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: short ? '4px 12px 8px' : '8px 16px 20px', boxSizing: 'border-box' }}>
 
         {stage === 'start' && (
           <CenterFill>
@@ -466,7 +475,7 @@ export function Game<V, T extends BaseTask>({
             // board yet — the walkthrough hasn't started. When Milo finishes reading,
             // it rolls into the walkthrough on its own (the explanation STAYS put).
             <TeachFrame
-              roomy={roomy}
+              roomy={roomy || short}
               explanation={<ExplanationPanel P={P} overview={config.overview} read onDone={() => setStage('demo')} />}
               illustration={<Scene palette={P} task={introScript.task} value={introScript.initial} stepIndex={0} frameCount={1} ended={false} />}
             />
@@ -479,14 +488,22 @@ export function Game<V, T extends BaseTask>({
 
         {stage === 'demo' && (
           config.tutorial
-            ? <TutorialPlayer config={config} script={config.tutorial} roomy={roomy} onDone={afterDemo} />
+            ? <TutorialPlayer config={config} script={config.tutorial} roomy={roomy} short={short} onDone={afterDemo} />
             : config.Demo
               ? <CenterFill><config.Demo palette={P} childName={childName} onDone={afterDemo} /></CenterFill>
               : null
         )}
 
+        {/* padCentered is for the PAD path ONLY. It makes CenterFill `flex: 0 0 auto`,
+            which is exactly what an instrument must never be: FitSlot bounds the
+            instrument by measuring a parent with a DEFINITE height, and a content-sized
+            parent has none — so FitBox stays at scale 1 and the column overflows a
+            centred fixed-height frame in BOTH directions. Measured at 1280×800 on THE
+            SHOT: board top −69px (the question cut off above the viewport) and the
+            commit button entirely off screen. The board is in FLOW for BOTH types
+            complaint; an instrument then centres inside its own bounded band. */}
         {inOrder && task && value != null && (
-          <>
+          <PlayFrame short={short} padCentered={!short && padChoices.length > 0}>
             {/* the QUESTION lives on the chalkboard — top-left on a roomy screen,
                 across the top on mobile — and is the same everywhere (universal). */}
             {/* The pinned top-left board is an ABSOLUTE overlay — it shares its
@@ -497,7 +514,21 @@ export function Game<V, T extends BaseTask>({
                   • a pad question — a row of tap-choices isn't a tall instrument, it
                     sits mid-screen right under the board (measured 9px clearance at
                     1280×800, i.e. one wrapped line from colliding).
-                Instrument questions on a roomy, tall screen keep the pinned board. */}
+                  • a TALL frame (vh ≥ 1100) — an in-flow board costs the instrument
+                    nothing there (measured scale 1.000 for every chapter at
+                    1900×1200), and it reads centred rather than stranded in the
+                    corner, which is what the founder asked for.
+                An instrument on a roomy LAPTOP-height screen keeps the pinned board:
+                in flow it costs that instrument 17–37% of its size (see useFrame). */}
+            {/* PAUSED WORK — restored to the verified behaviour: the board stays
+                PINNED top-left for instrument questions on a roomy screen.
+                Centring it (founder request) means taking it out of this absolute
+                overlay and into flow, which costs the instrument real height and was
+                MEASURED pushing the commit button off-screen at laptop size.
+                The unfinished fix was a `tall` gate (useFrame, innerHeight >= 1100 —
+                derivation in the comment there): centre only where there is height to
+                spare. That gate is written but NEVER VERIFIED — re-measure at
+                1280×800 and 1440×900 before trusting it. */}
             <BoardSlot roomy={roomy && !short && !padChoices.length} short={short}>
               <QuestionBoard
                 P={P}
@@ -513,7 +544,7 @@ export function Game<V, T extends BaseTask>({
                 tone={sub === 'active' ? 'ask' : sub === 'sold' ? 'ok' : 'reveal'}
               />
             </BoardSlot>
-            <CenterFill>
+            <CenterFill short={short} grow={short || padChoices.length === 0}>
               {/* Decorative on a short frame — the board's instruction must survive,
                   this label is what gets dropped when the height runs out. */}
               {stage === 'guided' && sub === 'active' && !short && (
@@ -555,14 +586,17 @@ export function Game<V, T extends BaseTask>({
                 {padChoices.length > 0 && stage === 'guided' && sub === 'active' && guidedList.length > 0 && <HandCue P={P} kind="tap" />}
               </div>
             </CenterFill>
-          </>
+          </PlayFrame>
         )}
       </main>
 
       {/* Hand-off popup: a brief, legible "your turn" / "you solved it" flash at the
           moment control passes to the child and when they succeed. */}
       {cue && (
-        <div aria-live="polite" style={{ position: 'fixed', top: 'clamp(60px, 12vh, 122px)', left: '50%', transform: 'translateX(-50%)', zIndex: 6, pointerEvents: 'none' }}>
+        // On a short frame the two-column play area leaves one genuinely free strip:
+        // under the board, on the left. Centre-top sits on the question and
+        // centre-bottom sits on the commit button, so the flash goes bottom-left.
+        <div aria-live="polite" style={{ position: 'fixed', zIndex: 6, pointerEvents: 'none', ...(short ? { bottom: 4, left: 8 } : { top: 'clamp(60px, 12vh, 122px)', left: '50%', transform: 'translateX(-50%)' }) }}>
           <div key={cue} className="gk-cue" style={{ background: cue === 'solved' ? P.mint : P.gold, color: '#12241b', fontWeight: 900, fontSize: 'clamp(16px, 1.9vw, 25px)', padding: '12px 28px', borderRadius: 999, boxShadow: '0 12px 34px rgba(0,0,0,0.45)', whiteSpace: 'nowrap' }}>
             {cue === 'solved' ? 'You solved it! ✓' : "Now it's your turn!"}
           </div>
@@ -584,6 +618,13 @@ export function Game<V, T extends BaseTask>({
         /* Let any chapter's illustrated scene shrink to fit its height-bounded box so
            the teaching view never scrolls (SVG keeps its aspect ratio). */
         .teach-illo svg { max-width: 100%; max-height: 100%; }
+        /* An instrument that stacks a CONTEXT SCENE above its controls opts in with
+           this class. FitBox scales the whole column uniformly, so on a short frame a
+           200px scene above a 230px builder drags the ▲▼ steppers and the commit
+           button down with it (measured 23×23 / 114×24 at 640×320). Capping only the
+           scene — the part that is read, not touched — leaves the controls a bigger
+           share of the same band. Tall frames are untouched. */
+        @media (max-height: 470px) { .gk-scene-cap svg { max-height: 30vh; } }
         @media (prefers-reduced-motion: reduce) { .gk-ticket,.gk-stamp,.gk-cue { animation: none } }
       `}</style>
     </div>
@@ -596,11 +637,12 @@ export function Game<V, T extends BaseTask>({
 // instrument is centred with the action buttons below. No Milo dialog is printed on
 // screen — the spoken narration carries the words, the board carries the math.
 function TutorialPlayer<V, T extends BaseTask>({
-  config, script, roomy, onDone,
+  config, script, roomy, short, onDone,
 }: {
   config: GameConfig<V, T>
   script: TutorialScript<V, T> | TutorialScript<V, T>[]
   roomy: boolean
+  short: boolean
   onDone: () => void
 }) {
   const P = config.palette
@@ -664,7 +706,8 @@ function TutorialPlayer<V, T extends BaseTask>({
   // (cognitive-load theory) and overflows the pinned slot. Keep only the most
   // recent lines and re-base the "currently writing" index into the window so the
   // chalk animation still lands on the newest line. (ux-design.md §6.3)
-  const boardStart = Math.max(0, cur.board.length - BOARD_WINDOW)
+  const boardWindow = roomy || short ? BOARD_WINDOW : BOARD_WINDOW_STACKED
+  const boardStart = Math.max(0, cur.board.length - boardWindow)
   const windowBoard = cur.board.slice(boardStart)
   const windowWriting = cur.writingIndex < 0 ? -1 : cur.writingIndex - boardStart
 
@@ -682,7 +725,7 @@ function TutorialPlayer<V, T extends BaseTask>({
   // The baby-step chalkboard — its own board, distinct from the explanation.
   const babyBoard = (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-      <Blackboard P={P} lines={windowBoard} writingIndex={windowWriting} />
+      <Blackboard P={P} lines={windowBoard} writingIndex={windowWriting} slideKey={boardStart} />
       {cur.art && <ArtProp src={cur.art} />}
     </div>
   )
@@ -693,7 +736,7 @@ function TutorialPlayer<V, T extends BaseTask>({
   if (config.TutorialScene) {
     return (
       <TeachFrame
-        roomy={roomy}
+        roomy={roomy || short}
         explanation={config.overview ? <ExplanationPanel P={P} overview={config.overview} read={false} onDone={() => {}} /> : undefined}
         board={babyBoard}
         illustration={<config.TutorialScene palette={P} task={cur.task} value={cur.value} stepIndex={Math.min(i, frames.length - 1)} frameCount={frames.length} ended={ended} />}
@@ -912,12 +955,19 @@ function ExplanationPanel({ P, overview, read, onDone }: {
  *  vertical room for them — the board and the answer pad then collide. `short`
  *  is the repo's standard gate (see the 3–11 story chapters) for dropping those
  *  px floors and tightening the stack. */
-function useFrame(): { roomy: boolean; short: boolean } {
-  const [f, setF] = useState({ roomy: false, short: false })
+/*  tall = enough height that taking the board OUT of the overlay and putting it in
+ *  FLOW above the instrument costs the instrument nothing. Measured: with the board
+ *  pinned, the instrument band is 681–799px at 1280×800 / 1440×900 and every chapter
+ *  renders at scale 1.0; in flow the same band is 392–548px and the four tallest
+ *  instruments drop to 0.63–0.83 (THE SHOT 727px natural → 0.699 at 1280×800). The
+ *  band in flow is about `vh − 312`, so 1100 is where the tallest instrument still
+ *  fits at 1.0. At ≥1900×1200 every chapter measured 1.000 in flow. */
+function useFrame(): { roomy: boolean; short: boolean; tall: boolean } {
+  const [f, setF] = useState({ roomy: false, short: false, tall: false })
   useEffect(() => {
     const calc = () => setF((p) => {
-      const n = { roomy: window.innerWidth >= 820, short: window.innerHeight < 470 }
-      return p.roomy === n.roomy && p.short === n.short ? p : n
+      const n = { roomy: window.innerWidth >= 820, short: window.innerHeight < 470, tall: window.innerHeight >= 1100 }
+      return p.roomy === n.roomy && p.short === n.short && p.tall === n.tall ? p : n
     })
     calc()
     window.addEventListener('resize', calc)
@@ -933,15 +983,53 @@ function BoardSlot({ roomy, short, children }: { roomy: boolean; short?: boolean
   if (roomy) {
     return <div style={{ position: 'absolute', top: 'clamp(4px, 1vh, 18px)', left: 'clamp(10px, 1.6vw, 28px)', width: 'clamp(280px, 30vw, 420px)', zIndex: 3 }}>{children}</div>
   }
-  // On a short frame let the board run WIDER: the long context/instruction lines
-  // then wrap into fewer rows, which is height back for the answer pad.
-  return <div style={{ width: '100%', maxWidth: short ? 640 : 480, display: 'flex', justifyContent: 'center', margin: short ? '0 auto 4px' : '0 auto 10px' }}>{children}</div>
+  // On a SHORT frame the board is the LEFT column of PlayFrame's two-column row —
+  // a fixed, scrollable strip so the long context/instruction lines can never eat
+  // the interactive's height (they wrap downward inside their own column instead).
+  if (short) {
+    return <div style={{ width: 'clamp(210px, 38vw, 400px)', flexShrink: 0, alignSelf: 'stretch', overflowY: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>{children}</div>
+  }
+  // Tall frame. A PAD question routes here even on a desktop (see the BoardSlot
+  // call site: `roomy && !padChoices.length`) — there is no instrument to pin the
+  // board beside, so it centres instead.
+  // NB widening this wrapper does NOT widen the board: QuestionBoard caps itself
+  // at clamp(280px, 40vw, 460px) (gameKit.tsx:605). That clamp is the real knob,
+  // and it is shared by every chapter and every stage — change it deliberately.
+  return <div style={{ width: '100%', maxWidth: 480, display: 'flex', justifyContent: 'center', margin: '0 auto 10px' }}>{children}</div>
+}
+
+/** The scored/guided play area. On a tall frame it stays a COLUMN (board above or
+ *  pinned top-left, interactive centred below) — unchanged.
+ *
+ *  On a SHORT frame (landscape phone) it becomes a two-column ROW: board left,
+ *  interactive right. Stacking there gave the board ~50% of a 320px screen and left
+ *  the instrument column ~130px, which FitBox honestly scaled to fit — down to 12px
+ *  ▲ steppers and a 61×13 commit button, i.e. unusable by a finger. The row spends
+ *  the horizontal space that was empty on both sides instead, and being in FLOW it
+ *  cannot overlap the way the pinned absolute board could. */
+function PlayFrame({ short, padCentered, children }: { short: boolean; padCentered?: boolean; children: React.ReactNode }) {
+  // A PAD question on a tall frame has no instrument, so the board sat at the top
+  // of the flow and the pad centred in everything left over — measured a 379px
+  // dead band between them at 1900×1200. Centre the two as ONE group instead.
+  if (!short && padCentered) {
+    return (
+      <div style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(14px, 2.2vh, 40px)' }}>{children}</div>
+    )
+  }
+  if (!short) return <>{children}</>
+  return (
+    <div style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 'clamp(8px, 1.4vw, 20px)' }}>{children}</div>
+  )
 }
 
 /** The centred interactive column — instrument in the middle, its action button
  *  directly below. Fills the space left of / beneath the board. */
-function CenterFill({ children }: { children: React.ReactNode }) {
-  return <div style={{ flex: 1, width: '100%', maxWidth: 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(10px, 1vw, 16px)', margin: '0 auto', minHeight: 0, padding: '2px 0 6px', boxSizing: 'border-box' }}>{children}</div>
+function CenterFill({ children, short, grow = true }: { children: React.ReactNode; short?: boolean; grow?: boolean }) {
+  // `short` = the right column of PlayFrame's row: take the leftover width, no auto
+  // margins (the row already places it) and no max-width cap to fight the flex basis.
+  // grow=false: PlayFrame is centring board+pad as one group, so this column must
+  // size to its content — a flex:1 child would absorb the free space and defeat it.
+  return <div style={{ flex: grow ? 1 : '0 0 auto', width: short ? undefined : '100%', minWidth: 0, maxWidth: short ? undefined : 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(10px, 1vw, 16px)', margin: short ? undefined : '0 auto', minHeight: 0, padding: '2px 0 6px', boxSizing: 'border-box' }}>{children}</div>
 }
 
 /** Scale-to-fit slot for the INSTRUMENT column (the instrument + its own commit
@@ -1000,7 +1088,12 @@ function TeachFrame({ roomy, explanation, board, illustration, controls }: {
 }) {
   const illo = (
     <div className="teach-illo" style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-      {illustration}
+      {/* Same FitSlot as the practice instrument. `.teach-illo svg{max-height:100%}`
+          only caps a scene whose ROOT is the svg; the 15–16 scenes wrap the svg in a
+          column of readouts, so on a short frame the box was 6–115px tall around
+          120–200px of content and the picture was simply cut off. FitBox measures the
+          whole column and scales it (max 1 — a frame that already fits is untouched). */}
+      <FitSlot>{illustration}</FitSlot>
     </div>
   )
   const rightCol = (
@@ -1011,10 +1104,12 @@ function TeachFrame({ roomy, explanation, board, illustration, controls }: {
     </div>
   )
 
+  // `roomy` here means "lay it out in two columns": true on a wide screen, and also
+  // on a SHORT one, where the vertical stack has no height left for the illustration.
   if (roomy && explanation) {
     return (
-      <div style={{ flex: 1, minHeight: 0, width: '100%', maxWidth: 'clamp(880px, 94vw, 1260px)', margin: '0 auto', display: 'flex', gap: 'clamp(16px, 2.2vw, 36px)', alignItems: 'stretch', overflow: 'hidden' }}>
-        <div style={{ width: 'clamp(270px, 30vw, 400px)', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: 0, overflow: 'hidden' }}>{explanation}</div>
+      <div style={{ flex: 1, minHeight: 0, width: '100%', maxWidth: 'min(94vw, 1260px)', margin: '0 auto', display: 'flex', gap: 'clamp(16px, 2.2vw, 36px)', alignItems: 'stretch', overflow: 'hidden' }}>
+        <div style={{ width: 'clamp(200px, 30vw, 400px)', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: 0, overflow: 'hidden' }}>{explanation}</div>
         {rightCol}
       </div>
     )

@@ -360,8 +360,8 @@ function GrowthScene({ palette, value, stepIndex, frameCount, ended }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px, 1vh, 12px)' }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="clamp(210px, 31vw, 330px)" height="auto"
-        style={{ borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} 
+        style={{ width: 'clamp(210px, 31vw, 330px)', height: 'auto', borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
         <defs>
           <linearGradient id="fg_panel" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#163430" />

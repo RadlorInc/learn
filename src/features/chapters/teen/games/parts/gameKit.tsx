@@ -638,7 +638,12 @@ export function QuestionBoard({ P, title, prompt, context, instruction, expr, an
 // ── Blackboard — Milo's chalkboard. The matching math is WRITTEN here as he SPEAKS,
 //    one line at a time: `writingIndex` is the line being chalk-wiped in.
 const CHALK_TEXT: React.CSSProperties = { fontFamily: 'var(--font-chalk)', fontSize: 'clamp(19px, 2.3vw, 32px)', fontWeight: 700, letterSpacing: '0.02em', color: '#f6faf0', textShadow: '0 0 1px rgba(255,255,255,0.6), 0 1px 1px rgba(0,0,0,0.28), 0 0 11px rgba(214,240,206,0.4)', lineHeight: 1.25, textAlign: 'left' }
-export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: string[]; writingIndex: number }) {
+export function Blackboard({ P, lines, writingIndex, slideKey }: { P: Palette; lines: string[]; writingIndex: number
+  /** Changes when the visible window SLIDES (an older line dropped off the top).
+   *  Keying the line list on it replays a one-line scroll-up so the shift reads as
+   *  motion rather than a jump. Only the newest line carries a write-on animation,
+   *  and that line is new on a slide anyway, so the remount costs nothing. */
+  slideKey?: number }) {
   if (!lines.length) return null
   const numChip: React.CSSProperties = { fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'clamp(10px,0.95vw,13px)', color: '#12241b', background: '#bcd8c9', width: 'clamp(20px,2.2vw,26px)', height: 'clamp(20px,2.2vw,26px)', borderRadius: 999, display: 'grid', placeItems: 'center', lineHeight: 1 }
   return (
@@ -651,6 +656,7 @@ export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: stri
     }}>
       {/* A clear label so this reads as THE SOLVE — the steps to get the answer. */}
       <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(10px, 0.95vw, 13px)', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.gold, textAlign: 'center', marginBottom: 'clamp(1px,0.3vw,4px)' }}>Solving it, step by step</div>
+      <div key={slideKey} className="mb-slide" style={{ display: 'flex', flexDirection: 'column', gap: 'inherit' }}>
       {lines.map((ln, k) => {
         const done = writingIndex < 0 || k < writingIndex
         return (
@@ -660,7 +666,18 @@ export function Blackboard({ P, lines, writingIndex }: { P: Palette; lines: stri
           </div>
         )
       })}
+      </div>
       <style>{`
+        /* The window sliding up by one line — a short travel so it reads as the board
+           scrolling, not as the lines jumping. Reduced motion: animation:none is SAFE
+           here (unlike an enter-from-invisible effect) because the un-animated state
+           IS the end state — the lines start visible and untranslated. */
+        .mb-slide { animation: mbSlide 320ms cubic-bezier(.22,.61,.36,1) both; }
+        @keyframes mbSlide {
+          from { transform: translateY(1.15em); opacity: 0.55 }
+          to   { transform: translateY(0);      opacity: 1 }
+        }
+        @media (prefers-reduced-motion: reduce) { .mb-slide { animation: none } }
         /* Chalk write-on (walkthrough mode): revealed left-to-right in short steps. */
         .mb-writing { animation: mbWrite 1.7s steps(26, end) both; }
         @keyframes mbWrite {
@@ -716,7 +733,7 @@ export function AnswerPad({ P, choices, onSubmit, disabled, reveal, correct, pic
         return (
           <button key={i} type="button" disabled={disabled} onClick={() => !disabled && onSubmit(c)} style={{
             fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800,
-            fontSize: compact ? 22 : 'clamp(24px, 2.8vw, 38px)', minWidth: compact ? 66 : 'clamp(76px, 8vw, 108px)', padding: compact ? '7px 14px' : 'clamp(12px,1.4vw,20px) clamp(16px,1.8vw,26px)',
+            fontSize: compact ? 22 : 'clamp(24px, 2.8vw, 52px)', minWidth: compact ? 66 : 'clamp(76px, 8vw, 150px)', padding: compact ? '7px 14px' : 'clamp(12px,1.4vw,28px) clamp(16px,1.8vw,36px)',
             borderRadius: 16, border: `2.5px solid ${isRight ? P.mint : isWrong ? P.coral : P.gold}`,
             background: isRight ? `${P.mint}22` : P.glass, color: isRight ? P.mint : isWrong ? P.coral : P.cream,
             opacity: reveal && !isRight && !isWrong ? 0.45 : 1,

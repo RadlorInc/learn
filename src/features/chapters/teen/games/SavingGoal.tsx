@@ -293,7 +293,7 @@ function DemoJar({ palette, value, stepIndex, frameCount, ended }: {
         <span>🎯 saving up</span><span style={{ color: p.coral, fontWeight: 800 }}>goal $28</span>
       </div>
 
-      <svg viewBox={`0 0 ${S_W} ${S_H}`} width="clamp(230px, 32vw, 360px)" height="auto" style={{ borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
+      <svg viewBox={`0 0 ${S_W} ${S_H}`}  style={{ width: 'clamp(230px, 32vw, 360px)', height: 'auto', borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
         <defs>
           <linearGradient id="sg_sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#173245" /><stop offset="0.6" stopColor="#0f2434" /><stop offset="1" stopColor="#0a1622" />
@@ -414,7 +414,7 @@ function StoryJar({ p, task, settled }: { p: Palette; task: Task; settled: boole
   const fillTop = dY(level)
   const lineY = dY(limit)
   return (
-    <svg viewBox={`0 0 ${S_W} ${S_H}`} width="clamp(200px, 27vw, 300px)" height="auto" style={{ borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
+    <svg viewBox={`0 0 ${S_W} ${S_H}`}  style={{ width: 'clamp(200px, 27vw, 300px)', height: 'auto', borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
       <defs>
         <linearGradient id="ry_sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#173245" /><stop offset="1" stopColor="#0a1622" /></linearGradient>
         <linearGradient id="ry_gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={p.gold} /><stop offset="1" stopColor={p.goldDeep} /></linearGradient>
@@ -448,7 +448,7 @@ function WeekRay({ p, n, dir, hi, reveal }: { p: Palette; n: number; dir: Dir; h
   const col = reveal ? p.mint : p.gold
   const x0 = xf(n)
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="clamp(240px, 34vw, 340px)" height="auto" style={{ display: 'block' }}>
+    <svg viewBox={`0 0 ${W} ${H}`}  style={{ width: 'clamp(240px, 34vw, 340px)', height: 'auto', display: 'block' }}>
       <text x={L} y={11} fill={p.mutedOnPaper} fontSize={9} fontFamily="var(--font-numeric)" letterSpacing="0.14em">WEEKS</text>
       <line x1={L} y1={y} x2={R} y2={y} stroke={p.glassBorder} strokeWidth={2} />
       {Array.from({ length: hi + 1 }, (_, w) => (

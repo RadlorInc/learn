@@ -248,8 +248,8 @@ function TicketScene({ palette, value, stepIndex, ended }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px, 1vh, 12px)' }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="clamp(230px, 32vw, 348px)" height="auto"
-        style={{ borderRadius: 14, filter: 'drop-shadow(0 12px 30px rgba(0,0,0,0.42))', display: 'block', transform: 'rotate(-0.8deg)' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} 
+        style={{ width: 'clamp(230px, 32vw, 348px)', height: 'auto', borderRadius: 14, filter: 'drop-shadow(0 12px 30px rgba(0,0,0,0.42))', display: 'block', transform: 'rotate(-0.8deg)' }}>
         <defs>
           <linearGradient id="tc_paper" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#ffffff" />

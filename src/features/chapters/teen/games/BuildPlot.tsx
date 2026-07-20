@@ -319,8 +319,8 @@ function PlotScene({ palette, p: pp, q: qq, areaTxt, phase, compact }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(4px, 0.8vh, 10px)' }}>
       <svg viewBox={`0 0 ${VW} ${VH}`}
-        width={compact ? 'clamp(180px, 22vw, 250px)' : 'clamp(220px, 30vw, 330px)'} height="auto"
-        style={{ borderRadius: 14, border: `1px solid ${pal.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
+        
+        style={{ width: (compact ? 'clamp(180px, 22vw, 250px)' : 'clamp(220px, 30vw, 330px)'), height: 'auto', borderRadius: 14, border: `1px solid ${pal.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
         <defs>
           <linearGradient id="bp_ground" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#193527" />

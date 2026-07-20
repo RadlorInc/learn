@@ -576,8 +576,8 @@ function ZoneScene({ palette, task, value, stepIndex, ended }: {
 
   return (
     <div style={wrap}>
-      <svg viewBox="0 0 244 244" width="clamp(180px, 26vw, 300px)" height="clamp(180px, 26vw, 300px)"
-        style={{ background: p.glass, border: `1px solid ${p.glassBorder}`, borderRadius: 12, display: 'block' }}>
+      <svg viewBox="0 0 244 244" 
+        style={{ width: 'clamp(180px, 26vw, 300px)', height: 'clamp(180px, 26vw, 300px)', background: p.glass, border: `1px solid ${p.glassBorder}`, borderRadius: 12, display: 'block' }}>
         {grid}
         <motion.rect x={6} y={6} width={232} height={232} rx={10} fill="none" stroke={p.glassBorder} strokeWidth={1.2}
           initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={reduce ? { duration: 0 } : { duration: 0.8, ease: 'easeInOut' }} />

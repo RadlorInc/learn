@@ -311,7 +311,9 @@ function CrossReader({ P: p, task, value, setValue, disabled, reveal, onCommit }
   const onCrossing = a === task.x && b === task.y
   const mk = reveal || onCrossing ? p.mint : p.gold
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px, 1.4vh, 16px)', width: '100%' }}>
+    // gk-scene-cap: on a short frame the chart is capped so the builder's ▲▼ and the
+    // commit button keep a finger-sized share of the scaled column (see GameShell).
+    <div className="gk-scene-cap" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px, 1.4vh, 16px)', width: '100%' }}>
       <svg viewBox={`0 0 ${CW} ${CH}`} style={{ width: 'clamp(240px, 31vw, 340px)', height: 'auto', background: p.glass, border: `1px solid ${p.glassBorder}`, borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.35)' }}>
         <ChartFrame p={p} lines={lines} />
         <g style={{ fontFamily: 'var(--font-numeric)' }}>

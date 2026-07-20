@@ -365,14 +365,19 @@ function ArcScene({ palette, task, value, walk, ended }: {
   // the graphed parabola — the SAME curve the ball flies along
   const graphD = useMemo(() => {
     const f = (x: number) => task.pa * x * x + task.pb * x + task.pc
+    // Pen-up flag, not bare 'M' markers: a run of off-frame samples used to push one
+    // 'M' each and the `replace(/M M/g)` only collapsed non-overlapping PAIRS, so a
+    // steep parabola emitted "M M M M M" (and a trailing 'M') — an invalid `d`.
     const pts: string[] = []
+    let up = true
     for (let i = 0; i <= 120; i++) {
       const x = -R + (i / 120) * (2 * R)
       const y = f(x)
-      if (y < -R - 2 || y > R + 2) { if (pts.length) pts.push('M'); continue }
-      pts.push(`${pts.length && pts[pts.length - 1] !== 'M' ? 'L' : 'M'}${sx(x).toFixed(1)},${sy(y).toFixed(1)}`)
+      if (y < -R - 2 || y > R + 2) { up = true; continue }
+      pts.push(`${up ? 'M' : 'L'}${sx(x).toFixed(1)},${sy(y).toFixed(1)}`)
+      up = false
     }
-    return pts.join(' ').replace(/M M/g, 'M').trim()
+    return pts.join(' ')
   }, [task.pa, task.pb, task.pc])
 
   const hasRoots = task.r1 !== undefined && task.r2 !== undefined
@@ -428,7 +433,7 @@ function ArcScene({ palette, task, value, walk, ended }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px, 1vh, 12px)' }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="clamp(230px, 32vw, 360px)" height="auto" style={{ borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
+      <svg viewBox={`0 0 ${W} ${H}`}  style={{ width: 'clamp(230px, 32vw, 360px)', height: 'auto', borderRadius: 14, border: `1px solid ${p.glassBorder}`, boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'block' }}>
         <defs>
           <linearGradient id="ts_sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#241634" />
@@ -517,11 +522,14 @@ function ArcScene({ palette, task, value, walk, ended }: {
           <line x1={shX + 3} y1={floorY} x2={shX + 3} y2={floorY - 12} stroke="#2a1a3d" strokeWidth={3.4} strokeLinecap="round" />
           <line x1={shX} y1={floorY - 11} x2={shX} y2={floorY - 26} stroke={p.coralDeep} strokeWidth={5} strokeLinecap="round" />
           <circle cx={shX} cy={floorY - 31} r={5} fill="#f0c9a0" stroke="#2a1a3d" strokeWidth={1} />
+          {/* initial={false} — motion has no read-from value for the x2/y2 SVG
+              attributes on mount and wrote `undefined` into them for a frame
+              ("<line> attribute x2: Expected length"). Snap to the animate state. */}
           <motion.line x1={shX} y1={floorY - 22} x2={shX + 9} y2={released ? floorY - 34 : floorY - 20}
-            stroke={p.coralDeep} strokeWidth={3.2} strokeLinecap="round"
+            stroke={p.coralDeep} strokeWidth={3.2} strokeLinecap="round" initial={false}
             animate={{ y2: released ? floorY - 34 : floorY - 20, x2: released ? shX + 11 : shX + 9 }} transition={reduce ? { duration: 0 } : spring} />
           <motion.line x1={shX} y1={floorY - 22} x2={shX - 9} y2={released ? floorY - 34 : floorY - 20}
-            stroke={p.coralDeep} strokeWidth={3.2} strokeLinecap="round"
+            stroke={p.coralDeep} strokeWidth={3.2} strokeLinecap="round" initial={false}
             animate={{ y2: released ? floorY - 34 : floorY - 20, x2: released ? shX - 11 : shX - 9 }} transition={reduce ? { duration: 0 } : spring} />
         </g>
 
@@ -627,8 +635,12 @@ const CONFIG: GameConfig<V, Task> = {
     }
     // The L1 questions ask the child to READ the court, so the court is rendered
     // above the builder. Without it the instruction names a picture that is not there.
+    // gk-scene-cap: on a short frame the court is capped so the builder's ▲▼ and
+    // commit button keep a finger-sized share of the scaled column (see GameShell).
     const arc = task.showArc
-      ? <ArcScene palette={palette} task={task} value={value} ended={!!reveal} />
+      ? <div className="gk-scene-cap" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <ArcScene palette={palette} task={task} value={value} ended={!!reveal} />
+        </div>
       : null
     if (task.kind === 'vertex') {
       const a = value.k === 'vertex' ? value.a : 0, b = value.k === 'vertex' ? value.b : 0
