@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { getCurrentSession, onAuthStateChange } from '@/data/auth'
+import { getCurrentSession, onAuthStateChange, logAuthEvent } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
 
 export default function AuthCallbackPage() {
@@ -33,6 +33,10 @@ export default function AuthCallbackPage() {
         (event, session) => {
           if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
             subscription.unsubscribe()
+            // A session materialising HERE is a fresh sign-in (OAuth exchange or the
+            // email-confirmation landing) — password logins log inside signInWithEmail
+            // and never route through this exchange wait, so no double-log.
+            void logAuthEvent('login', session.user.id)
             goHome()
           }
         }

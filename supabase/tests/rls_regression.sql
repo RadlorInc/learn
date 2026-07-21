@@ -97,6 +97,24 @@ begin
   select count(*) into v_cnt from public.learner_invites where id = v_invite and status = 'accepted';
   if v_cnt <> 1 then raise exception 'RLS FAIL A6b: recipient can no longer accept their own invite (% rows)', v_cnt; end if;
 
+  -- A7 (auth_events, 2026-07-21): the account-access log is WRITE-ONLY from the API.
+  -- A7a: nobody can READ it — not even their own rows (reads are dashboard/service-role only).
+  v_blocked := false;
+  begin
+    perform * from public.auth_events limit 1;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  if not v_blocked then raise exception 'RLS FAIL A7a: authenticated user can read auth_events'; end if;
+  -- A7b: cannot log an event AS ANOTHER USER (forging someone's login history).
+  v_blocked := false;
+  begin
+    insert into public.auth_events (user_id, event) values (v_owner, 'login');
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  if not v_blocked then raise exception 'RLS FAIL A7b: attacker inserted an auth event for another user'; end if;
+  -- A7c (positive control): logging your OWN event works — else the feature is dead.
+  insert into public.auth_events (user_id, event, client_id) values (v_attacker, 'login', gen_random_uuid());
+
   -- A4/A5: attacker cannot read the learner's sessions or stats.
   select count(*) into v_cnt from public.sessions where learner_id = v_learner;
   if v_cnt <> 0 then raise exception 'RLS FAIL A4: attacker read another learner''s sessions (% rows)', v_cnt; end if;

@@ -26,9 +26,26 @@ export function signUpWithEmail(email: string, password: string, emailRedirectTo
   return createClient().auth.signUp({ email, password, options: { emailRedirectTo } })
 }
 
-/** Email + password sign-in. */
+/** Durable account-access log → `auth_events` (insert-only; reads are dashboard-only).
+ *  Supabase's own auth logs are short-retention platform logs and `last_sign_in_at` is
+ *  latest-only, so without this a login history simply does not exist. Best-effort:
+ *  never throws, never blocks the auth flow it rides on. `client_id` dedupes retries.
+ *  NOTE `logout` only captures the explicit sign-out tap — closing the tab logs nothing
+ *  (true of any SPA); play activity/retention math reads `sessions`, not this. */
+export function logAuthEvent(event: 'login' | 'logout', userId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- learner_events pattern: table not in generated types
+  return (createClient() as any)
+    .from('auth_events')
+    .insert({ user_id: userId, event, client_id: crypto.randomUUID() })
+    .then(() => undefined, () => undefined)
+}
+
+/** Email + password sign-in. Logs a durable `login` event on success. */
 export function signInWithEmail(email: string, password: string) {
-  return createClient().auth.signInWithPassword({ email, password })
+  return createClient().auth.signInWithPassword({ email, password }).then((res) => {
+    if (!res.error && res.data.user) void logAuthEvent('login', res.data.user.id)
+    return res
+  })
 }
 
 /** Google OAuth — the browser navigates away to Google on success. */

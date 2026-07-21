@@ -2,6 +2,7 @@
 
 /** Auth / profile data access. */
 import { db } from '@/data/repositories/_shared'
+import { logAuthEvent } from '@/data/auth'
 import { clearActiveLearner } from '@/data/supabase/useLearnerSession'
 import { clearPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
 import type { UserRole } from '@/data/supabase/types'
@@ -49,6 +50,18 @@ export const homeForRole = (role: UserRole | null): string =>
 
 export async function signOut() {
   const supabase = db()
+  // Log the logout BEFORE revoking the token (an insert after signOut would 401).
+  // Race against a short timeout so a dead network can never hang the sign-out —
+  // losing the event beats trapping the user in a signed-in state.
+  try {
+    const { data: { session } } = await supabase.auth.getSession()   // local read, no network
+    if (session?.user) {
+      await Promise.race([
+        logAuthEvent('logout', session.user.id),
+        new Promise<void>((r) => setTimeout(r, 800)),
+      ])
+    }
+  } catch { /* best-effort — never block sign-out */ }
   await supabase.auth.signOut()
   clearActiveLearner()        // else the next account (same tab) briefly sees the previous child's profile
   clearPendingDiagnostic()    // V9: don't leave a child's name + gap profile in localStorage after sign-out

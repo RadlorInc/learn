@@ -42,6 +42,12 @@ union all select 'mau  (learners active, 30d)', count(distinct learner_id)::text
 union all select 'accounts (total)',        count(*)::text from real_users
 union all select 'accounts (new, 30d)',     count(*)::text from real_users where created_at > now() - interval '30 days'
 union all select 'learner profiles',        count(*)::text from real_learners
+-- account logins from auth_events (durable history since 2026-07-21; before that only
+-- last_sign_in_at existed, latest-only). Parent/teacher ACCOUNT activity — kids playing
+-- is the engagement section above.
+union all select 'accounts logged in (30d)', count(distinct user_id)::text from auth_events a
+  where a.event = 'login' and a.created_at > now() - interval '30 days'
+    and a.user_id not in (select id from internal)
 
 -- ── 3. Funnel ────────────────────────────────────────────────────
 -- Every stage already lands in a table. leads → diagnostics → plan → play.
