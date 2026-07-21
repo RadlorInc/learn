@@ -8,7 +8,8 @@ import { getChapter, type AgeGroup } from '@/core/chapters'
 
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { setLastPlayed } from '@/infra/storage/lastPlayed'
-import { advancePlan } from '@/infra/storage/activePlan'
+import { advancePlan, getActivePlan, revisePlanDeeper } from '@/infra/storage/activePlan'
+import { deeperChapter } from '@/core/diagnosticEngine'
 import CelebrationModal from '@/shared/ui/CelebrationModal'
 import MiloPointer from '@/shared/ui/MiloPointer'
 import { useChapterSync } from '@/data/supabase/useChapterSync'
@@ -211,7 +212,29 @@ export default function GamePage() {
     // Step 7: if this was the child's current diagnostic-plan chapter, advance the pointer so the
     // menu's "Continue your plan" card moves to the next one.
     const learner = getActiveLearner()
-    if (learner) advancePlan(learner.id, playingChapter)
+    if (learner) {
+      // Play-data feedback (claim-2 evidence): the probe's root can sit one level SHALLOW when a
+      // prerequisite was lucky-guessed (~25%/item — a guess looks like a pass, so the probe cannot
+      // catch it). The plan's FIRST chapter is a dozen adaptive questions on that very skill —
+      // far stronger evidence than the single probe item. Struggle there ⇒ revise the plan one
+      // prerequisite deeper instead of advancing. "Struggle" = under half right across the set
+      // even though the adaptive engine was easing the questions on every miss (`mastered` can
+      // never coincide — it requires a correct streak). Threshold is deliberately conservative:
+      // a false trigger silently rewrites a child's plan, a miss just means chapter one is slow.
+      const total = correct + wrong
+      const struggled = !mastered && total >= 4 && correct / total < 0.5
+      const plan = getActivePlan(learner.id)
+      const atRoot = plan != null && plan.index === 0 && plan.chapters[0] === playingChapter
+      if (atRoot && struggled) {
+        const deeper = deeperChapter(playingChapter)
+        const applied = deeper ? revisePlanDeeper(learner.id, playingChapter, deeper) : null
+        if (applied) {
+          track('plan_revised_deeper', { from: playingChapter, to: applied, correct, wrong })
+          return   // pointer now rests on the deeper chapter — do not advance past the root
+        }
+      }
+      advancePlan(learner.id, playingChapter)
+    }
   }
 
   if (!ready && !playingChapter) return null

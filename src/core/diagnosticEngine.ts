@@ -14,7 +14,7 @@
  * score / red X); the failure cap is a generous safety backstop, not the primary UX lever.
  */
 import {
-  type Band, PROBE_ENTRY, NODE_BY_ID, prereqsOf, dependentsOf, blockedBy, chapterFor,
+  type Band, PROBE_ENTRY, NODE_BY_ID, SKILL_NODES, prereqsOf, dependentsOf, blockedBy, chapterFor,
 } from '@/core/skillGraph'
 
 const BAND_ORDER: Record<Band, number> = { '3-5': 0, '6-8': 1, '9-11': 2, '12-14': 3, '15-16': 4, '17-18': 5 }
@@ -22,7 +22,21 @@ const BAND_LABEL: Record<Band, string> = {
   '3-5': 'Pre-K–K', '6-8': 'Grade 1–2', '9-11': 'Grade 3–5', '12-14': 'Grade 6–8', '15-16': 'Grade 9–10', '17-18': 'Grade 11–12',
 }
 
-export interface ProbeConfig { maxItems: number; maxFailures: number }
+export interface ProbeConfig {
+  maxItems: number
+  maxFailures: number
+  /** Require TWO misses on a skill before treating it as failed (a fresh item is offered in
+   *  between). One careless slip on a known skill used to send the probe descending and could
+   *  report a FALSE root — the worst diagnostic outcome, since it produces a wrong 6-week plan.
+   *  A single miss is now a "strike": the skill is re-offered, a pass forgives the slip, a second
+   *  miss confirms the fail. Also anti-fear-positive: the child gets a second chance instead of
+   *  being silently branded. Defaults ON except the 3–5 band, whose items are PARENT-OBSERVED
+   *  readiness reports ("not yet" is an observation, not a miss — re-asking the parent the same
+   *  question is nonsense). NOTE this guards false FAILS (slips); a lucky GUESS on an MCQ
+   *  (~25% with 4 choices) can still end a descent one level early — confirming passes too would
+   *  double the length of every probe, a bad trade against anti-fear. */
+  confirmFails?: boolean
+}
 // maxItems bounds the probe LENGTH (the primary UX lever); maxFailures is a generous anti-fear
 // backstop, NOT the length lever (the descent gets EASIER toward the bottom, ending on success).
 // The teen bands probe MORE strands (6–8 entries) and can descend MANY bands to a cross-band root
@@ -31,13 +45,21 @@ export interface ProbeConfig { maxItems: number; maxFailures: number }
 export const DEFAULT_CONFIG: Record<Band, ProbeConfig> = {
   // 3–5 is a READINESS check (Phase 3): probe every milestone for a complete picture. The items are
   // parent-observed (the child isn't failing on-screen), so a higher failure cap isn't anti-fear-unsafe.
-  '3-5': { maxItems: 12, maxFailures: 8 },
-  '6-8': { maxItems: 10, maxFailures: 5 },
-  '9-11': { maxItems: 15, maxFailures: 7 },
-  '12-14': { maxItems: 16, maxFailures: 12 },
-  '15-16': { maxItems: 20, maxFailures: 16 },
-  '17-18': { maxItems: 24, maxFailures: 20 },
+  '3-5': { maxItems: 12, maxFailures: 8, confirmFails: false },
+  // The confirming bands carry +CONFIRM_UNTIL_FAILS maxItems headroom (the exact worst-case cost
+  // of the retries, since confirmation stops after that many confirmed fails). Verified by the
+  // full planted-gap matrix: every reachable gap in every band resolves to the EXACT root at
+  // these caps, including the extreme cross-band floors. Passes are unchanged, so a grade-level
+  // child's probe is exactly as long as before.
+  '6-8': { maxItems: 14, maxFailures: 5, confirmFails: true },
+  '9-11': { maxItems: 19, maxFailures: 7, confirmFails: true },
+  '12-14': { maxItems: 20, maxFailures: 12, confirmFails: true },
+  '15-16': { maxItems: 24, maxFailures: 16, confirmFails: true },
+  '17-18': { maxItems: 28, maxFailures: 20, confirmFails: true },
 }
+
+/** Confirm fails only while confirmed fails are below this (see the comment in record()). */
+const CONFIRM_UNTIL_FAILS = 4
 
 interface Frame { node: string; queue: string[] }   // node failed; queue = untried prereqs (deepest-first)
 
@@ -50,6 +72,10 @@ export interface ProbeState {
   failed: string[]
   asked: string[]
   roots: string[]         // confirmed root gaps (≤1 per entry branch)
+  /** Skills with ONE unconfirmed miss (confirmFails). The skill stays at the front of its
+   *  agenda/queue, so nextSkill re-offers it; the item layer must serve a FRESH item for a
+   *  repeat ask (see resolve() in diagnostic/page.tsx). Never reaches `failed`/diagnose. */
+  strikes: string[]
 }
 
 // Prerequisite depth (foundational = low). Graph is acyclic (verified), guard anyway.
@@ -106,7 +132,7 @@ function normalize(s: ProbeState): void {
 }
 
 export function startProbe(band: Band, config: ProbeConfig = DEFAULT_CONFIG[band]): ProbeState {
-  return { band, config, agenda: [...PROBE_ENTRY[band]], frames: [], passed: [], failed: [], asked: [], roots: [] }
+  return { band, config, agenda: [...PROBE_ENTRY[band]], frames: [], passed: [], failed: [], asked: [], roots: [], strikes: [] }
 }
 
 /** The next skill to probe, or null when the probe is done (caps hit or nothing left). */
@@ -126,7 +152,26 @@ export function record(s: ProbeState, id: string, passed: boolean): ProbeState {
     agenda: s.agenda.slice(),
     frames: s.frames.map(f => ({ node: f.node, queue: f.queue.slice() })),
     passed: s.passed.slice(), failed: s.failed.slice(), asked: [...s.asked, id], roots: s.roots.slice(),
+    strikes: (s.strikes ?? []).slice(),
   }
+  // Fail confirmation: a FIRST miss is a strike, not a verdict. Leave the agenda/queue untouched
+  // so nextSkill re-offers the same skill (with a fresh item); a pass on the retry forgives the
+  // slip, a second miss falls through to the real fail path below.
+  //
+  // Only while confirmed fails are FEW. The catastrophic slip is the near-grade-level child whose
+  // single fumble sends the probe descending and reports a gap that does not exist — that child
+  // has 1–3 fails, all guarded. A child already at 4 confirmed fails isn't slipping; their
+  // pattern IS the signal, and confirming every level of a deep descent would mean failing
+  // everything twice (measured: 62 asks for a 17-18 learner rooting at pre-K — an ordeal, not a
+  // probe). Past the threshold a mid-descent slip costs at most a root one level too DEEP — a
+  // plan that starts one chapter early and climbs, mild next to a false root. Bounds the retry
+  // overhead to ≤ CONFIRM_UNTIL_FAILS extra asks, priced into the maxItems caps above.
+  if (!passed && (ns.config.confirmFails ?? ns.band !== '3-5')
+      && ns.failed.length < CONFIRM_UNTIL_FAILS && !ns.strikes.includes(id)) {
+    ns.strikes.push(id)
+    return ns
+  }
+  ns.strikes = ns.strikes.filter(x => x !== id)   // verdict reached either way — clear the strike
   if (ns.frames.length === 0) {
     // entry probe
     if (id === ns.agenda[0]) ns.agenda.shift()
@@ -224,6 +269,26 @@ export function runProbe(band: Band, answer: (skillId: string) => boolean, confi
  *  signal that the child can build on it again. Small on purpose (anti-fear; it's a check, not a test). */
 export function recheckSkills(rootSkill: string): string[] {
   return [rootSkill, ...dependentsOf(rootSkill).slice(0, 2)]
+}
+
+/** Play-data feedback: when the child STRUGGLES in the plan's first (root) chapter, the true gap
+ *  sits deeper than the probe found — a prerequisite the descent stopped at (the ~25% lucky-guess
+ *  case the probe structurally cannot catch, since a guess looks like a pass). This returns the
+ *  chapter to prepend to the plan: the most load-bearing direct prerequisite of the root skill
+ *  that has its own chapter (same most-unlocking-then-deepest ranking diagnose() uses for roots).
+ *  Returns null at the graph floor — nothing deeper exists to revise to.
+ *  NOTE the signal is asymmetric by design: struggle ⇒ revise deeper, but BREEZE ⇒ nothing —
+ *  a child cruising the root chapter may simply have been taught by it, so it is no evidence
+ *  the diagnosis was wrong. */
+export function deeperChapter(rootChapterId: string): string | null {
+  const rootSkill = SKILL_NODES.find(n => n.chapter === rootChapterId)?.id
+  if (!rootSkill) return null
+  const cands = prereqsOf(rootSkill)
+    .filter(p => NODE_BY_ID[p]?.chapter && NODE_BY_ID[p].chapter !== rootChapterId)
+    .sort((a, b) =>
+      blockedBy(b).length - blockedBy(a).length ||
+      BAND_ORDER[NODE_BY_ID[a].band] - BAND_ORDER[NODE_BY_ID[b].band])
+  return cands.length ? NODE_BY_ID[cands[0]].chapter : null
 }
 
 /** Transitive prerequisite closure of a skill (tests use it to simulate a realistic learner). */

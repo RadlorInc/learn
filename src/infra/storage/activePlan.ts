@@ -14,6 +14,7 @@ export interface ActivePlan {
   chapters: string[]   // chapters.ts ids, foundational-first
   index: number        // pointer to the current (next-to-play) chapter
   startedAt: string
+  revised?: boolean    // play-data revision already applied (fires at most once)
 }
 
 const key = (learnerId: string) => `milo_active_plan_${learnerId}`
@@ -50,6 +51,22 @@ export function advancePlan(learnerId: string, completedChapterId: string): stri
   p.index += 1
   try { localStorage.setItem(key(learnerId), JSON.stringify(p)) } catch { /* ignore */ }
   return p.index < p.chapters.length ? p.chapters[p.index] : null
+}
+
+/** Play-data revision: the child STRUGGLED in the plan's FIRST chapter (the diagnosed root), so
+ *  the true gap sits deeper — prepend the deeper prerequisite chapter so it becomes the new
+ *  current step. Fires at most ONCE per plan (one level of revision is evidence-driven; repeated
+ *  automatic descent without a fresh diagnostic would be guessing) and only while the pointer is
+ *  still on step 0 — struggle later in the plan is normal learning, not a wrong diagnosis.
+ *  Returns the new current chapter, or null if no revision applied. */
+export function revisePlanDeeper(learnerId: string, struggledChapterId: string, deeperChapterId: string): string | null {
+  const p = getActivePlan(learnerId)
+  if (!p || p.revised || p.index !== 0) return null
+  if (p.chapters[0] !== struggledChapterId || p.chapters.includes(deeperChapterId)) return null
+  p.chapters.unshift(deeperChapterId)
+  p.revised = true
+  try { localStorage.setItem(key(learnerId), JSON.stringify(p)) } catch { /* ignore */ }
+  return deeperChapterId
 }
 
 /** { done, total } for a progress readout ("Step 2 of 5"). */

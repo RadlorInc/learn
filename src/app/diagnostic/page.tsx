@@ -114,7 +114,14 @@ function resolve(state: ProbeState, band: Band, ctx: DiagContext): Slot {
   for (let guard = 0; guard < 200; guard++) {
     const skill = nextSkill(s)
     if (!skill) return { s, skill: null, item: null }
-    const item = (band === '3-5' ? makeReadinessItem(skill, ctx) : null) ?? makeItem(skill, ctx)
+    // A repeat ask (fail-confirmation strike) must serve a FRESH item: the seeded generators key
+    // on `seed|skill|nonce`, so an unchanged ctx would reproduce the identical question and the
+    // child could simply pick a different choice. Folding the ask count into the nonce keeps it
+    // deterministic (same child + same answer history → same items) while varying the retry.
+    // First asks keep the exact ctx (and items) they had before this change.
+    const priorAsks = s.asked.filter(a => a === skill).length
+    const ictx = priorAsks > 0 && ctx.seed != null ? { ...ctx, nonce: (ctx.nonce ?? 0) + priorAsks * 101 } : ctx
+    const item = (band === '3-5' ? makeReadinessItem(skill, ictx) : null) ?? makeItem(skill, ictx)
     if (!item) { s = record(s, skill, true); continue }
     return { s, skill, item }
   }
@@ -370,8 +377,12 @@ function RemediationReport({ r, accent, onStart, onRetake, onSave }: { r: Diagno
             </Card>
           )}
           <Card accent={accent} title="🎯 The one snag">
-            The real block is <strong style={{ color: accent.base }}>{label(root)}</strong> — everything built on it
-            feels harder than it should. <strong>It&apos;s one specific gap, and it&apos;s fixable.</strong>
+            {/* Claim strength matches evidence strength: a 6–8 question screener POINTS TO a root;
+                the plan's first chapters (a dozen adaptive questions each) are what confirm it.
+                Saying "is" here would claim more than the probe can carry. */}
+            Every sign points to <strong style={{ color: accent.base }}>{label(root)}</strong> — everything built on it
+            feels harder than it should. <strong>It&apos;s one specific gap, and it&apos;s fixable.</strong> The
+            first days of the plan double-check it as your child plays, and adjust if the real snag sits deeper.
           </Card>
           <Card accent={{ base: PT.warn } as Accent} title="⏳ Why it matters now">
             This skill is the foundation for {highlightNames.join(', ') || 'the skills above it'}
