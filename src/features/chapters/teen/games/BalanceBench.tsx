@@ -78,8 +78,8 @@ function fromSpec(s: Spec): Task {
   const badge = `${s.leftExpr} = ${s.right}`
   return {
     title: 'Find x', badge, tone: s.right < 0 ? 'b' : 'a', answerLabel: 'x =',
-    context: 'A mystery case sits on the check-in scale, balanced against the marked weights.',
-    padInstruction: 'Tap the case weight in kg.',
+    context: `A scale is level only when both sides weigh the same. Here the other side weighs ${s.right} kg.`,
+    padInstruction: 'Work out what the mystery case weighs, then tap that number.',
     prompt: `Weigh the case: ${s.leftExpr} = ${s.right}. Work out x — what does the case weigh?`,
     say: `The case balances when ${speakExpr(s.leftExpr)} equals ${s.right} kilograms. Work out x. What does the case weigh, in kilograms?`,
     m: s.m, c: s.c, right: s.right, answer: s.answer, leftExpr: s.leftExpr, min: s.min, max: s.max,
@@ -112,8 +112,8 @@ function fromIneq(s: IneqSpec): Task {
   return {
     title: 'Weight rule', badge, tone: 'b', showEquals: false, kind: 'ineq', op: s.op, bound: s.bound,
     m: 0, c: 0, right: s.right, answer: s.bound, leftExpr: s.leftExpr, min: s.min, max: s.max,
-    context: 'Check-in will only take this case if its weight fits the rule below.',
-    instruction: 'Pick the symbol, then set the edge weight in kg.',
+    context: 'Some cases do not need an exact weight — just a limit. This case is allowed a whole range of weights.',
+    instruction: 'Look at the number line. Pick the symbol, set the edge weight, then shade every weight the case is allowed. Use a filled ● dot for ≤ or ≥, an open ○ dot for < or >.',
     prompt: `Solve ${badge}. Work out x, then shade every case weight that's allowed on the number line.`,
     say: `Solve: ${speakExpr(s.leftExpr)} is ${dw} ${s.right}. Work out x, then pick the symbol and set the edge weight.`,
     work: [`Solve for x: ${badge} means x ${OPSYM[s.op]} ${s.bound}.`, `${edgeNote} Shade every weight ${dw} ${s.bound}.`],
@@ -137,8 +137,8 @@ const DEMO_TASK: Task = {
 const GUIDED_TASK: Task = {
   title: 'Find x', badge: 'x + 1 = 4', tone: 'a', answerLabel: 'x =',
   m: 1, c: 1, right: 4, answer: 3, leftExpr: 'x + 1', min: 0, max: 10,
-  context: 'A mystery case sits on the check-in scale, balanced against the marked weights.',
-  padInstruction: 'Tap the case weight in kg.',
+  context: 'A scale is level only when both sides weigh the same. Here the other side weighs 4 kg.',
+  padInstruction: 'Work out what the mystery case weighs, then tap that number.',
   prompt: 'Weigh x + 1 = 4. Work out x — what does the case weigh?',
   say: 'The case balances when x plus one equals four. Work out x. What does the case weigh?',
   work: ['Find the x that makes x + 1 equal 4.', 'x = 3 makes both pans read 4.'],
@@ -147,8 +147,8 @@ const GUIDED_TASK: Task = {
 const GUIDED_INEQ: Task = {
   title: 'Weight rule', badge: 'x + 2 \u2264 6', tone: 'b', showEquals: false, kind: 'ineq', op: 'le', bound: 4,
   m: 0, c: 0, right: 6, answer: 4, leftExpr: 'x + 2', min: 0, max: 8,
-  context: 'Check-in will only take this case if its weight fits the rule below.',
-  instruction: 'Pick the symbol, then set the edge weight in kg.',
+  context: 'Some cases do not need an exact weight \u2014 just a limit. This case is allowed a whole range of weights.',
+  instruction: 'Look at the number line. Pick the symbol, set the edge weight, then shade every weight the case is allowed. Use a filled \u25cf dot for \u2264 or \u2265, an open \u25cb dot for < or >.',
   prompt: 'Solve x + 2 \u2264 6. Work out x, then shade every case weight that\u2019s allowed.',
   say: 'This case has a rule: x plus 2 is at most 6. Work out x, then pick the symbol and set the edge weight.',
   work: ['Solve for x: x + 2 \u2264 6 means x \u2264 4.', '4 itself is allowed, so the dot is filled. Shade every weight at most 4.'],

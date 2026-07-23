@@ -51,8 +51,8 @@ function area(d: 1 | 2 | 3): Task {
   const answer = w * h
   return {
     kind: 'fill', rows: h, cols: w, title: 'Floor area', badge: `area ${w} m × ${h} m`, tone: 'a', unit: 'm²',
-    context: `A room floor is ${w} by ${h} metres, ready for new tiles.`,
-    padInstruction: 'Tap the FLOOR AREA in square metres (m²).',
+    context: `This floor is ${w} metres wide and ${h} metres deep. Area means how many 1-metre tiles cover it.`,
+    padInstruction: 'Work out how many tiles cover the whole floor, then tap that number of square metres (m²).',
     prompt: `This floor is ${w} by ${h} metres. Lay tiles across it — the tiles you place are the AREA.`,
     say: `This floor is ${w} by ${h} metres. Its area is how many one-metre tiles cover it.`,
     answer,
@@ -64,8 +64,8 @@ function perimeter(): Task {
   const answer = 2 * (w + h)
   return {
     kind: 'border', w, h, title: 'Skirting board', badge: `distance around a ${w} m × ${h} m room`, tone: 'a', unit: 'm',
-    context: `A room is ${w} by ${h} metres. Skirting board has to run all the way around its edge.`,
-    padInstruction: 'Tap the DISTANCE ALL THE WAY AROUND the edge, in metres (m) — not the floor space inside.',
+    context: `This room is ${w} metres wide and ${h} metres deep. Perimeter means the distance all the way around the edge.`,
+    padInstruction: 'Work out the distance around all four sides, then tap that number of metres (m).',
     prompt: `This room is ${w} by ${h} metres. Lay skirting around the edge — the segments you lay are the PERIMETER.`,
     say: `This room is ${w} by ${h} metres. The perimeter is the whole distance around its edge — all four sides added up.`,
     answer,
@@ -79,8 +79,8 @@ function volume(): Task {
   const answer = l * w * h
   return {
     kind: 'fill', rows: w, cols: l, layers: h, title: 'Storage box', badge: `volume of a ${l} m × ${w} m × ${h} m box`, tone: 'b', unit: 'm³',
-    context: `A storage box measures ${l} metres long, ${w} metres wide and ${h} metres tall.`,
-    padInstruction: 'Tap the VOLUME in cubic metres (m³) — how many 1-metre cubes fill the box.',
+    context: `This box is ${l} metres long, ${w} metres wide and ${h} metres tall. Volume means how many 1-metre cubes fill it up.`,
+    padInstruction: 'Work out how many cubes fill the whole box, then tap that number of cubic metres (m³).',
     prompt: `This box is ${l} × ${w} × ${h}. Stack cubes to fill it — the cubes are the VOLUME.`,
     say: `This box is ${l} by ${w} by ${h} metres. Its volume is how many one-metre cubes fit inside it.`,
     answer,
@@ -92,8 +92,8 @@ function circleArea(): Task {
   const answer = r * r
   return {
     kind: 'fill', rows: r, cols: r, title: 'Round patio', badge: `π × ${r}²`, tone: 'a', suffix: 'π', unit: '',
-    context: `A round patio is ${r} metres from the middle to the edge. That is its area, written with π.`,
-    padInstruction: 'Tap HOW MANY π — the number that goes in front of π.',
+    context: `A round patio reaches ${r} metres from the middle to the edge. A circle's size is written with the special number π (say "pie").`,
+    padInstruction: 'The area comes out as some number of π. Tap how many π that is.',
     prompt: `A round patio has radius ${r} m. Tile the SQUARE ON THE RADIUS (${r} × ${r}) — that many π is the area.`,
     say: `A round patio is ${r} metres from the middle to the edge. Work out ${r} squared — that is how many pi the area is.`,
     answer,
@@ -105,8 +105,8 @@ function circleCircumference(): Task {
   const d = 2 * r
   return {
     kind: 'fill', rows: 1, cols: d, title: 'Round pond', badge: `2 × π × ${r}`, tone: 'a', suffix: 'π', unit: '',
-    context: `A round pond is ${r} metres from the middle to the edge. That is the distance all the way round it, written with π.`,
-    padInstruction: 'Tap HOW MANY π — the number that goes in front of π.',
+    context: `A round pond reaches ${r} metres from the middle to the edge. The distance all the way round a circle is written with the number π (say "pie").`,
+    padInstruction: 'The distance round comes out as some number of π. Tap how many π that is.',
     prompt: `A round pond has diameter ${d} m. Lay the DIAMETER (${d} tiles) — that many π is the edge length.`,
     say: `A round pond is ${r} metres from the middle to the edge. Work out two times ${r} — that is how many pi the distance round it is.`,
     answer: d,
@@ -118,8 +118,8 @@ function hypotenuse(): Task {
   const answer = Math.round(Math.sqrt(a * a + b * b))
   return {
     kind: 'square', legA: a, legB: b, targetArea: a * a + b * b, title: 'Wall brace', badge: `sloping brace across ${a} m and ${b} m`, tone: 'b', unit: 'm',
-    context: `A straight brace cuts across a square corner — ${a} metres along one wall and ${b} metres up the other.`,
-    padInstruction: 'Tap how long the SLOPING BRACE is, in metres (m) — the side across the corner, not along the walls.',
+    context: `A brace slopes across a square corner. It runs ${a} metres along one wall and ${b} metres up the other.`,
+    padInstruction: 'Tap how long the sloping brace is, in metres (m) — the slanted side, not the two walls.',
     prompt: `A brace crosses a corner ${a} and ${b} m. Build the square on the sloped BRACE — its side is the length.`,
     say: `A brace cuts across a square corner, ${a} metres along one wall and ${b} up the other. Square each wall length, add them, then find what number times itself gives that.`,
     answer,
@@ -130,8 +130,8 @@ function missingLeg(): Task {
   const [leg, hyp, other] = pick([[3, 5, 4], [4, 5, 3], [6, 10, 8], [8, 10, 6], [5, 13, 12]])
   return {
     kind: 'square', legA: hyp, legB: leg, targetArea: hyp * hyp - leg * leg, subtract: true, title: 'Missing leg', badge: `sloping side ${hyp} m, one wall ${leg} m — other wall?`, tone: 'b', unit: 'm',
-    context: `A square corner has a sloping side of ${hyp} metres. One of its two walls is ${leg} metres.`,
-    padInstruction: 'Tap how long the OTHER WALL is, in metres (m) — the straight side that is missing, not the sloping one.',
+    context: `A square corner has a sloping side ${hyp} metres long. One of its two straight walls is ${leg} metres.`,
+    padInstruction: 'Tap how long the other wall is, in metres (m) — the straight side you don\'t know yet, not the slanted one.',
     prompt: `A right corner has a ${hyp} m sloped side and one ${leg} m side. Build the square on the OTHER side — its side is the length.`,
     say: `A square corner has a sloping side of ${hyp} metres and one wall of ${leg}. Square the sloping side, take away the square of the wall you know, then find what number times itself gives what is left.`,
     answer: other,
@@ -148,8 +148,8 @@ function triangle(): Task {
   const answer = rect / 2
   return {
     kind: 'tri', rows: h, cols: b, title: 'Roof panel', badge: `half of a ${b} m × ${h} m rectangle`, tone: 'b', unit: 'm²',
-    context: `A triangular roof panel is exactly half of a ${b} by ${h} metre rectangle, cut corner to corner.`,
-    padInstruction: 'Tap the area of the TRIANGLE in square metres (m²) — HALF the rectangle, not the whole one.',
+    context: `This roof is a triangle. It is exactly half of a ${b} by ${h} metre rectangle, cut corner to corner.`,
+    padInstruction: 'Work out the whole rectangle first, then take half. Tap that area in square metres (m²).',
     prompt: `This roof is HALF of a ${b} by ${h} rectangle. Tile the rectangle, then fold along the diagonal — one half is the AREA.`,
     say: `This roof is half of a ${b} by ${h} metre rectangle. Work out the whole rectangle first, then halve it.`,
     answer,
@@ -386,11 +386,11 @@ const InstrumentFor = (p: { P: Palette; task: Task; value: GV; setValue: (v: GV)
   p.task.kind === 'fill' ? <TileFill {...p} /> : p.task.kind === 'border' ? <BorderWalk {...p} /> : p.task.kind === 'tri' ? <RoofFold {...p} /> : <BuildSquare {...p} />
 
 // ── worked example (6×4 floor area → 24) + guided (3×2 → 6) ──
-const DEMO_TASK: Task = { kind: 'fill', rows: 4, cols: 6, title: 'Floor area', badge: 'area 6×4', tone: 'a', answer: 24, unit: 'm²', context: 'A room floor is 6 by 4 metres.', instruction: 'Lay tiles across the whole floor.', prompt: '', say: '', work: [] }
+const DEMO_TASK: Task = { kind: 'fill', rows: 4, cols: 6, title: 'Floor area', badge: 'area 6×4', tone: 'a', answer: 24, unit: 'm²', context: 'This floor is 6 metres wide and 4 metres deep. Area means how many tiles cover it.', instruction: 'Look at the floor grid. Drag across every square to lay a tile, then count the tiles.', prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
   kind: 'fill', rows: 2, cols: 3, title: 'Floor area', badge: 'area 3 m × 2 m', tone: 'a', answer: 6, unit: 'm²',
-  context: 'A room floor is 3 by 2 metres, ready for tiles.',
-  padInstruction: 'Tap the FLOOR AREA in square metres (m²).',
+  context: 'This floor is 3 metres wide and 2 metres deep. Area means how many tiles cover it.',
+  padInstruction: 'Work out how many tiles cover the whole floor, then tap that number of square metres (m²).',
   prompt: 'This floor is 3 by 2 metres. Lay tiles across it — the tiles are the area.',
   say: 'This floor is three by two metres. Lay tiles across the whole floor. The tiles you place are the area.',
   work: ['Area = the tiles that cover it.', '3 × 2 = 6.'],

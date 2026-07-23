@@ -36,10 +36,12 @@ function plot(level: 1 | 2): Task {
       // L2: negatives enter — points in every quadrant.
       : [{ x: -3, y: -2 }, { x: -4, y: 2 }, { x: 2, y: -4 }, { x: 5, y: -3 }, { x: -2, y: -3 }]
   const a = pick(pts)
+  const ax = a.x < 0 ? `${Math.abs(a.x)} left` : `${a.x} right`
+  const ay = a.y < 0 ? `${Math.abs(a.y)} down` : `${a.y} up`
   return {
     title: 'Drop-off', badge: pt(a), tone: a.x < 0 || a.y < 0 ? 'b' : 'a', showEquals: false,
-    context: `A package is ready for delivery.`,
-    instruction: 'Tap the map: across first, then up or down.',
+    context: `The drop-off is at ${pt(a)}. The first number is how far across, the second is how far up or down.`,
+    instruction: `Look at the map. Start in the middle. Go ${ax}, then ${ay}, and tap that spot.`,
     prompt: `Fly the drone to the drop-off at (${a.x}, ${a.y}). Tap the map.`,
     say: `Fly the drone to ${a.x}, ${a.y}. Tap the map.`,
     answer: a,
@@ -59,8 +61,8 @@ function translate(): Task {
     // The badge carries the QUESTION (start + move), never the answer — the child
     // works the landing spot out and taps it.
     title: 'Reroute', badge: `from ${pt(start)}, move ${hx} and ${vy}`, tone: 'b', showEquals: false,
-    context: `Air traffic reroutes the drone to a new drop-off.`,
-    instruction: 'Tap where the drone lands.',
+    context: `The drone starts at ${pt(start)}. It has to move to a new drop-off.`,
+    instruction: `Look at the map. Start at ${pt(start)}, go ${hx}, then ${vy}, and tap where the drone lands.`,
     prompt: `The drone is at (${start.x}, ${start.y}). Move it ${hx} and ${vy}, then tap where it lands.`,
     say: `The drone is at ${start.x}, ${start.y}. Move it ${hx} and ${vy}, then tap where it lands.`,
     answer: ans,
@@ -81,8 +83,8 @@ function transform(): Task {
       // Tier 3 → `say` is silent and `prompt` never renders, so the badge must BE
       // the whole question: the source point and the flip, in the tutorial's words.
       title: 'Mirror drop-off', badge: `flip ${pt(from)} up ↔ down`, tone: 'b', showEquals: false,
-      context: `A matching drop-off is mirrored over the middle line.`,
-      instruction: 'Tap where the mirrored drop-off lands.',
+      context: `A drop-off is at ${pt(from)}. Its mirror is the same spot flipped to the other side, up ↔ down.`,
+      instruction: `Look at the map. Find ${pt(from)}, flip it up ↔ down across the middle line, and tap where it lands.`,
       prompt: `Reflect the drop-off (${from.x}, ${from.y}) across the x-axis, then deliver.`,
       say: `Reflect the drop-off ${from.x}, ${from.y} across the x-axis, then deliver it.`,
       answer: ans,
@@ -95,8 +97,8 @@ function transform(): Task {
     const ans: XY = { x: -from.x, y: from.y }
     return {
       title: 'Mirror drop-off', badge: `flip ${pt(from)} left ↔ right`, tone: 'b', showEquals: false,
-      context: `A matching drop-off is mirrored over the middle line.`,
-      instruction: 'Tap where the mirrored drop-off lands.',
+      context: `A drop-off is at ${pt(from)}. Its mirror is the same spot flipped to the other side, left ↔ right.`,
+      instruction: `Look at the map. Find ${pt(from)}, flip it left ↔ right across the middle line, and tap where it lands.`,
       prompt: `Reflect the drop-off (${from.x}, ${from.y}) across the y-axis, then deliver.`,
       say: `Reflect the drop-off ${from.x}, ${from.y} across the y-axis, then deliver it.`,
       answer: ans,
@@ -112,8 +114,8 @@ function transform(): Task {
   const ans: XY = { x: (pair.a.x + pair.b.x) / 2, y: (pair.a.y + pair.b.y) / 2 }
   return {
     title: 'Halfway drop-off', badge: `halfway between ${pt(pair.a)} and ${pt(pair.b)}`, tone: 'a', showEquals: false,
-    context: `A rest stop sits between two delivery points.`,
-    instruction: 'Tap the halfway point: across first, then up or down.',
+    context: `Two drop-offs are at ${pt(pair.a)} and ${pt(pair.b)}. The rest stop is exactly halfway between them.`,
+    instruction: `Look at the map. Find the spot right in the middle, halfway between ${pt(pair.a)} and ${pt(pair.b)}, and tap it.`,
     prompt: `Fly to the halfway point between (${pair.a.x}, ${pair.a.y}) and (${pair.b.x}, ${pair.b.y}).`,
     say: `Fly the drone to the halfway point between ${pair.a.x}, ${pair.a.y} and ${pair.b.x}, ${pair.b.y}.`,
     answer: ans,

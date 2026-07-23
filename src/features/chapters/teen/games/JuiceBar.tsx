@@ -48,8 +48,8 @@ function fillA(hard = false): Task {
   return {
     title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'a',
     answerLabel: `${labelB} parts =`,
-    context: `${expA} parts of ${labelA} are already poured. Now the ${labelB} has to keep the shade right.`,
-    padInstruction: `How many parts of ${labelB} go in?`,
+    context: `The mix must stay ${ratioA} to ${ratioB} — for every ${ratioA} parts of ${labelA}, add ${ratioB} parts of ${labelB}. You already poured ${expA} ${labelA}.`,
+    padInstruction: `Work out how many parts of ${labelB} keep the mix right, then tap that number.`,
     prompt: `Mix is ${labelA}:${labelB} = ${ratioA}:${ratioB}. You've added ${expA} ${labelA}. How many parts of ${labelB} keep the mix right?`,
     say: `The mix is ${labelA} to ${labelB}, ${ratioA} to ${ratioB}. You've already added ${expA} ${labelA}. How many parts of ${labelB} keep the colour right?`,
     ratioA, ratioB, expA, expB, fixed: 'a', labelA, labelB,
@@ -65,8 +65,8 @@ function fillB(hard = false): Task {
   return {
     title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'b',
     answerLabel: `${labelA} parts =`,
-    context: `${expB} parts of ${labelB} are already poured. Now the ${labelA} has to keep the shade right.`,
-    padInstruction: `How many parts of ${labelA} go in?`,
+    context: `The mix must stay ${ratioA} to ${ratioB} — for every ${ratioA} parts of ${labelA}, add ${ratioB} parts of ${labelB}. You already poured ${expB} ${labelB}.`,
+    padInstruction: `Work out how many parts of ${labelA} keep the mix right, then tap that number.`,
     prompt: `The mix is ${labelA}:${labelB} = ${ratioA}:${ratioB}. You've added ${expB} ${labelB}. How many parts of ${labelA} keep the mix right?`,
     say: `The mix is ${labelA} to ${labelB}, ${ratioA} to ${ratioB}. You've added ${expB} ${labelB}. How many parts of ${labelA} keep the colour right?`,
     ratioA, ratioB, expA, expB, fixed: 'b', labelA, labelB,
@@ -82,8 +82,8 @@ function scaleTotal(hard = false): Task {
   const expB = k * ratioB
   return {
     title: `${labelA} & ${labelB}`, badge: `${ratioA} : ${ratioB}`, tone: 'a', showEquals: false,
-    context: `Milo needs a batch of ${total} parts of ${labelA} and ${labelB} paint, and the shade has to stay the same.`,
-    instruction: `Add both colours until the batch is ${total} parts.`,
+    context: `The mix must stay ${ratioA} to ${ratioB}. Milo needs ${total} parts in all, split between ${labelA} and ${labelB} so the shade stays the same.`,
+    instruction: `Look at the two paint taps. Tap to add ${labelA} and ${labelB}, keeping the mix ${ratioA} to ${ratioB}, until the batch is ${total} parts.`,
     prompt: `Mix ${labelA}:${labelB} ${ratioA}:${ratioB} to make ${total} parts. Add BOTH colours.`,
     say: `Mix ${labelA} to ${labelB}, ${ratioA} to ${ratioB}, to make ${total} parts. Add both colours.`,
     ratioA, ratioB, expA, expB, labelA, labelB,
@@ -103,8 +103,8 @@ function makeTask(d: 1 | 2 | 3): Task {
 //    and the guided order (1 : 2 — add the yellow to 2) ──
 const DEMO_TASK: Task = {
   title: 'Blue & Yellow', badge: '2 : 3', tone: 'a', showEquals: false, prompt: '', say: '', work: [],
-  context: 'Milo is mixing Blue and Yellow paint so the shade comes out just right.',
-  instruction: 'Add both colours to match the mix.',
+  context: 'Milo mixes Blue and Yellow so the shade comes out right. Keep the mix 2 to 3 — for every 2 parts of Blue, add 3 parts of Yellow.',
+  instruction: 'Look at the two paint taps. Tap Blue twice, then tap Yellow three times, to match the mix.',
   ratioA: 2, ratioB: 3, expA: 2, expB: 3, labelA: 'Blue', labelB: 'Yellow',
 }
 // The guided seed pours 3 Blue (not 1), so the answer (6) is NOT one of the numbers
@@ -113,8 +113,8 @@ const DEMO_TASK: Task = {
 const GUIDED_TASK: Task = {
   title: 'Blue & Yellow', badge: '1 : 2', tone: 'a',
   answerLabel: 'Yellow parts =',
-  context: '3 parts of Blue are already poured. Now the Yellow has to keep the shade right.',
-  padInstruction: 'How many parts of Yellow go in?',
+  context: 'The mix must stay 1 to 2 — for every 1 part of Blue, add 2 parts of Yellow. You already poured 3 Blue.',
+  padInstruction: 'Work out how many parts of Yellow keep the mix right, then tap that number.',
   prompt: 'Three Blue are in and the mix is 1 : 2. How many parts of Yellow do you need?',
   say: 'Three blue are already in, and the mix is one to two. How many parts of yellow do you need?',
   ratioA: 1, ratioB: 2, expA: 3, expB: 6, fixed: 'a', labelA: 'Blue', labelB: 'Yellow',

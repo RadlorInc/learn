@@ -80,8 +80,8 @@ function fromPool(pool: [string, number][]): Task {
   const [expr, answer] = pick(pool)
   return {
     title: 'Budget', badge: expr, tone: 'a',
-    context: 'One line of the event budget — a fee plus items that each cost the same.',
-    padInstruction: 'Work out × and ÷ first, then tap your total.',
+    context: `One line of the budget is ${expr}. Times and divide are always done before plus and minus.`,
+    padInstruction: 'Work out × and ÷ first, then + and −. Tap that number.',
     prompt: `Total the budget: ${expr}. Tap an operation to work it out — × and ÷ before + and −.`,
     say: `Total the budget. ${expr}. Work out the times and divide first, then the plus and minus. Then tap your total.`,
     expr, answer,
@@ -139,11 +139,11 @@ function BudgetScene({ palette: P, value }: { palette: Palette; task: Task; valu
 const D0 = parseExpr('2 + 3 × 4')                 // 2 + 3 × 4
 const D1 = collapseAt(D0, correctNextIndex(D0))   // 2 + 12
 const D2 = collapseAt(D1, correctNextIndex(D1))   // 14
-const DEMO_TASK: Task = { title: 'Budget', badge: '2 + 3 × 4', tone: 'a', context: 'A $2 entry fee, plus 3 snacks at $4 each.', instruction: 'Tap × first, then +.', expr: '2 + 3 × 4', answer: 14, prompt: '', say: '', work: [] }
+const DEMO_TASK: Task = { title: 'Budget', badge: '2 + 3 × 4', tone: 'a', context: 'A $2 entry fee, plus 3 snacks at $4 each. Work out the snacks (the ×) before you add the fee.', instruction: 'Look at the budget slip. Tap the × first (3 × 4), then tap the +.', expr: '2 + 3 × 4', answer: 14, prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
   title: 'Budget', badge: '1 + 2 × 3', tone: 'a', expr: '1 + 2 × 3', answer: 7,
-  context: 'A $1 entry fee, plus 2 items at $3 each.',
-  padInstruction: 'Work out × first, then tap your total.',
+  context: 'A $1 entry fee, plus 2 items at $3 each. Work out the items (the ×) before you add the fee.',
+  padInstruction: 'Work out the × first, then the +. Tap that number.',
   prompt: 'Total 1 + 2 × 3 — tap the times first, then the plus.',
   say: 'A one dollar fee, plus two items at three dollars each. Work out the times first, then tap your total.',
   work: ['Item cost first: 2 × 3 is 6.', '1 + 6 is 7.'],

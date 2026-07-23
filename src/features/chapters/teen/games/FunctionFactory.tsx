@@ -89,8 +89,8 @@ function evaluate(hard = false): Task {
   const [rule, x, answer, miss] = pick(hard ? [...easy, ...tough] : easy)
   return {
     mode: 'eval', title: 'Work out the fare', badge: rule, tone: 'a', answerLabel: 'fare $',
-    context: `A taxi ride goes ${x} km across town, so x = ${x}.`,
-    padInstruction: 'Work out the fare, then tap it in dollars.',
+    context: `In the rule ${rule}, the letter x means the km. This ride is ${x} km, so x is ${x}. Put ${x} in for x.`,
+    padInstruction: 'Work out what the fare comes to, then tap that number.',
     prompt: `The fare rule is ${rule}, for x = ${x} km. Drop x in and work it out.`,
     say: `The fare rule is ${rule}, where x is the km. Drop in ${x} for x, then work it out — times before plus.`,
     answer, rule, x, miss, expr: substitute(rule, x),
@@ -102,8 +102,8 @@ function solve(): Task {
   const [rule, out, answer] = pick(set)
   return {
     mode: 'solve', title: 'How far?', badge: `${rule} = ${out}`, tone: 'b', answerLabel: 'x =',
-    context: `The fare for a ride comes to $${out}. x is how far it went, in km.`,
-    padInstruction: 'Tap how many km the ride was.',
+    context: `The rule ${rule} works out the fare. This fare came to $${out}. The letter x is how far the ride went, in km — that is what we need.`,
+    padInstruction: `Work out how many km makes the fare $${out}, then tap that number.`,
     prompt: `The fare came to $${out} with rule ${rule}. Work out how far the ride was.`,
     say: `The fare came to ${out} dollars using the rule ${rule}. How many km was the ride?`,
     answer, rule, target: out,
@@ -117,9 +117,9 @@ function combine(): Task {
   return {
     mode: 'combine', title: 'Combine the rates', badge: `${a}x ${sign} ${Math.abs(b)}x`, tone: 'a',
     context: b < 0
-      ? `The meter charges $${a} for every km, then takes $${-b} per km back off as a discount.`
-      : `The meter charges $${a} for every km, then $${b} more per km on top.`,
-    padInstruction: 'Tap what the ride costs per km altogether, in dollars.',
+      ? `The meter charges $${a} for each km. Then it takes $${-b} off each km. Put the two together to get one charge per km.`
+      : `The meter charges $${a} for each km. Then it adds $${b} more for each km. Put the two together to get one charge per km.`,
+    padInstruction: 'Work out the one charge per km, then tap that number.',
     prompt: `Combine the per-km charges ${a}x ${sign} ${Math.abs(b)}x into one rate.`,
     say: b < 0
       ? `The meter charges ${a} dollars a km, then takes ${-b} dollars a km back off. What does one km cost altogether?`
@@ -256,11 +256,11 @@ function TaxiScene({ palette: P, task, value }: { palette: Palette; task: Task; 
 const E0 = parseExpr('3 × 4 + 2')
 const E1 = collapseAt(E0, correctNextIndex(E0))   // 12 + 2
 const E2 = collapseAt(E1, correctNextIndex(E1))   // 14
-const DEMO_TASK: Task = { mode: 'eval', title: 'Work out the fare', badge: '3x + 2 where x=4', tone: 'a', answer: 14, rule: '3x + 2', x: 4, expr: '3 × 4 + 2', context: 'A taxi ride goes 4 km across town.', instruction: 'Drop x in, then tap × first.', prompt: '', say: '', work: [] }
+const DEMO_TASK: Task = { mode: 'eval', title: 'Work out the fare', badge: '3x + 2 where x=4', tone: 'a', answer: 14, rule: '3x + 2', x: 4, expr: '3 × 4 + 2', context: 'In the rule 3x + 2, x means the km. This ride is 4 km, so x is 4. Put 4 in for x.', instruction: 'Look at the meter. It shows 3 × 4 + 2. Tap the × first, then tap the +.', prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
   mode: 'eval', title: 'Work out the fare', badge: 'x + 2', tone: 'a', answerLabel: 'fare $', answer: 5, rule: 'x + 2', x: 3, expr: '3 + 2', miss: 6,
-  context: 'A taxi ride goes 3 km across town, so x = 3.',
-  padInstruction: 'Work out the fare, then tap it in dollars.',
+  context: 'In the rule x + 2, x means the km. This ride is 3 km, so x is 3. Put 3 in for x.',
+  padInstruction: 'Work out what the fare comes to, then tap that number.',
   prompt: 'The fare rule is x + 2, for x = 3 km. Drop x in and work it out.',
   say: 'The fare rule is x plus two. Drop in three for x, then tap the plus.',
   work: ['Put 3 in place of x: 3 + 2.', '3 + 2 = 5.'],

@@ -92,8 +92,8 @@ function makeFrom(s: Spec): Task {
     return {
       kind: 'isFn', title: 'Steady or glitch?', badge: 'one level per minute?', tone: 'a', showEquals: false,
       // "Glitch" is defined right here — it is named nowhere else on the board.
-      context: 'A glitch means one minute logged two different levels.',
-      instruction: 'Read the table, then tap steady or glitch.',
+      context: 'A steady tank shows one water level each minute. A glitch is when one minute shows two different levels.',
+      instruction: 'Look at the table. Check if any minute has two different litre readings, then tap steady or glitch.',
       prompt, say: prompt, rows, answerPick: s.fn ? 'yes' : 'no',
       work: s.fn
         ? ['Every minute has exactly ONE level — that is a function.', 'One input, one output: a steady tank.']
@@ -113,7 +113,7 @@ function makeFrom(s: Spec): Task {
     const prompt = "The sensor drew the tank's fill as this line. Which rule matches it?"
     return {
       kind: 'readGraph', title: 'Read the line', badge: 'which rule fits the line?', tone: (m < 0 ? 'b' : 'a'), showEquals: false,
-      context: "The sensor drew the tank's line.", instruction: 'Tap the matching rule',
+      context: "The sensor drew the tank's water level as a line. Each rule says where the line starts and how fast it climbs.", instruction: 'Look at the line. See where it starts and how fast it climbs, then tap the rule that matches.',
       prompt, say: prompt, gline: { m, b }, choices, answerPick: correct,
       work: [`Read the line's height at minute 0 — where it crosses the up-and-down middle line. That is the START (b = ${b}).`, `It climbs ${m} for each step right — the RATE. So ${correct}.`],
     }
@@ -130,8 +130,8 @@ function makeFrom(s: Spec): Task {
     const prompt = `The tank starts EMPTY. After ${x2} min it reads ${y2} litres. How many litres does it fill each minute?`
     return {
       ...base, title: 'Empty start', badge: `starts empty · ${x2} min → ${y2} L`, prompt, say: prompt,
-      context: 'The tank starts empty and fills at a steady rate.',
-      padInstruction: 'Tap the fill rate.',
+      context: `The tank starts empty. After ${x2} minutes it holds ${y2} litres. It fills the same amount every minute.`,
+      padInstruction: 'Work out how many litres it fills each minute, then tap that number.',
       work: ['No starting water, so it is just rate × time — y = mx.', `Rate = ${y2} ÷ ${x2} = ${m} litres a minute; start 0.`],
     }
   }
@@ -141,8 +141,8 @@ function makeFrom(s: Spec): Task {
       // Tier 3: prompt unrendered AND unspoken, so "going DOWN" must live on the
       // badge — it was the only signal that the rate is negative.
       ...base, title: 'Draining', badge: `going DOWN · ${x1} min → ${y1} L,  ${x2} min → ${y2} L`, prompt, say: prompt,
-      context: 'This tank is draining — the level drops every minute.',
-      instruction: 'Set the start level, then the fill rate, to hit both readings.',
+      context: `This tank is draining. It reads ${y1} litres at ${x1} minutes, then ${y2} litres at ${x2} minutes. The level drops every minute.`,
+      instruction: 'Look at the two dials. Set the start level, then the fill rate, so the line hits both readings.',
       work: ['Draining means the rate is NEGATIVE.', `Rate = (${y2} − ${y1}) ÷ (${x2} − ${x1}) = ${m}; start ${b}.`],
     }
   }
@@ -152,16 +152,16 @@ function makeFrom(s: Spec): Task {
     return {
       // The rate is the number needed to answer, so it is stated, not hidden.
       ...base, title: 'Find the start', badge: `fills ${m} L each min · ${x2} min → ${y2} L`, prompt, say: prompt,
-      context: `The tank fills at a steady ${m} litres a minute.`,
-      padInstruction: 'Tap the start level.',
+      context: `The tank fills ${m} litres every minute. After ${x2} minutes it holds ${y2} litres. It had some water in it before it started filling.`,
+      padInstruction: 'Work out how many litres the tank started with, then tap that number.',
       work: [`The rate is given: ${m} litres a minute.`, `Start = level − rate × time = ${y2} − ${m}×${x2} = ${b}.`],
     }
   }
   const prompt = `Match the tank's fill: it reads (${x1}, ${y1}) and (${x2}, ${y2}). Set the start level and fill rate so the water level over time hits both readings.`
   return {
     ...base, title: 'Two readings', badge: `${x1} min → ${y1} L,  ${x2} min → ${y2} L`, prompt, say: prompt,
-    context: 'A tank fills at a steady rate over time.',
-    instruction: 'Set the start level, then the fill rate, to hit both readings.',
+    context: `A tank fills at a steady rate. It reads ${y1} litres at ${x1} minutes, then ${y2} litres at ${x2} minutes.`,
+    instruction: 'Look at the two dials. Set the start level, then the fill rate, so the line hits both readings.',
     work: ['Fill rate = change in level ÷ change in time between the readings.', `Fills ${m} litres a minute, starting at ${b}.`],
   }
 }
@@ -239,8 +239,8 @@ const DEMO_TASK: Task = {
 const GUIDED_TASK: Task = {
   title: 'Two readings', badge: '0 min → 1 L,  1 min → 2 L', tone: 'a', showEquals: false,
   p1: [0, 1], p2: [1, 2], answer: { m: 1, b: 1 },
-  context: 'A tank fills at a steady rate over time.',
-  instruction: 'Set the start level and the fill rate, then press SET LINE ✓.',
+  context: 'A tank fills at a steady rate, so its level makes a straight line.',
+  instruction: 'Look at the two dials. Set the start level, then the fill rate, then press SET LINE ✓.',
   prompt: 'Match the tank at (0,1) and (1,2): starts at 1 litre, rises 1 litre each minute. Set it, then press Set line.',
   say: 'Set the start level to one litre, then a fill rate of one — up one litre every minute. Then press set line.',
   work: ['Starts at 1 litre; it rises 1 litre each minute.', 'Fill rate 1, start 1.'],

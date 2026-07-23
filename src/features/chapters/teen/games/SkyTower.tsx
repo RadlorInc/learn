@@ -68,8 +68,8 @@ function addSub(): Task {
   const spoken = b > 0 ? `receive ${b}` : `pay ${-b}`
   return {
     op: 'add', title: 'Your balance', badge: `${disp(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`, tone: toneFor(ans),
-    context: `You have ${worthWord(a)}, then ${inOut}.`,
-    padInstruction: 'Work out your worth now, then tap it.',
+    context: `You have ${worthWord(a)}, then you ${inOut}. Money coming in moves your worth up. Money going out moves it down.`,
+    padInstruction: 'Work out your worth now, then tap that number.',
     prompt: `You have ${worthWord(a)}, then ${inOut}. Where's your worth?`,
     say: `You ${a < 0 ? `owe ${-a} dollars` : `have ${a} dollars`}. You ${spoken} dollars. What is your worth now? Tap your answer.`,
     answer: ans, start: a,
@@ -88,8 +88,8 @@ function mul(): Task {
     op: 'mul', a, b, title: 'Do the action', badge: `${disp(a)} × ${disp(b)}`, tone: toneFor(ans),
     // The ACTION (add / take away) is the whole reason the sign comes out as it does,
     // so it leads the context line — the child can no longer see it anywhere else.
-    context: `${act === 'take away' ? 'Take away' : 'Add'} ${aMag} cards, each a ${card}. You started at $0.`,
-    padInstruction: 'Work out your worth after that, then tap it.',
+    context: `You start at $0. ${act === 'take away' ? 'Take away' : 'Add'} ${aMag} cards, each a ${card}. A coin adds money; a debt is money you owe.`,
+    padInstruction: 'Work out your worth after that, then tap that number.',
     prompt: `${a} × ${b} = ?`,
     say: `${signed(a)} times ${signed(b)}. ${act === 'take away' ? 'Take away' : 'Add'} ${aMag} cards, each a ${card}. What is your worth then? Tap your answer.`,
     answer: ans, start: 0,
@@ -109,7 +109,7 @@ function div(): Task {
     // The SIGN CONVENTION has to be on the board: the count alone is ambiguous
     // (both +n and −n sit on the pad), and knowing "how many cards" is not the
     // same as knowing the answer. Cards added count up, cards taken away count down.
-    context: `You start at $0. Reach a worth of ${money(a)} using ${card} cards. Cards you add count up (+); cards you take away count down (−).`,
+    context: `You start at $0. Use ${card} cards to reach a worth of ${money(a)}. Adding cards counts up (+); taking cards away counts down (−).`,
     padInstruction: 'Tap the card count, with its + or − sign.',
     prompt: `${a} ÷ ${b} = ?`,
     say: `${signed(a)} divided by ${signed(b)}. Start at zero and reach a worth of ${worthWord(a)} with ${card} cards. Cards you add count up, cards you take away count down. Tap your answer.`,
@@ -126,8 +126,8 @@ function chain(): Task {
   const expr = `${disp(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b)} ${c < 0 ? '−' : '+'} ${Math.abs(c)}`
   return {
     op: 'add', title: 'A busy day', badge: expr, tone: toneFor(ans),
-    context: `Start ${worthWord(a)}. ${b > 0 ? `Get $${b}` : `Pay $${-b}`}, then ${c > 0 ? `get $${c}` : `pay $${-c}`}.`,
-    padInstruction: 'Work out your worth at the end, then tap it.',
+    context: `Start ${worthWord(a)}. ${b > 0 ? `Get $${b}` : `Pay $${-b}`}, then ${c > 0 ? `get $${c}` : `pay $${-c}`}. Getting money moves your worth up; paying moves it down.`,
+    padInstruction: 'Work out your worth at the end, then tap that number.',
     prompt: `Money moves: ${expr}. Where's your worth?`,
     say: `Start ${a < 0 ? `owing ${-a}` : `with ${a}`} dollars. ${b > 0 ? `Get ${b}` : `Pay ${-b}`}, then ${c > 0 ? `get ${c}` : `pay ${-c}`}. What is your worth at the end? Tap your answer.`,
     answer: ans, start: a,
@@ -404,8 +404,8 @@ const DEMO_DIV: Task = { op: 'div', a: -18, b: -6, title: 'Reach the target', ba
 //    easing into tier-1 (which is all add/subtract). ──
 const GUIDED_TASK: Task = {
   op: 'add', title: 'Your balance', badge: '−3 + 5', tone: 'a', answer: 2, start: -3,
-  context: `You're $3 in debt, then you get $5.`,
-  padInstruction: 'Work out your worth now, then tap it.',
+  context: `You're $3 in debt, then you get $5. Getting money moves your worth up, back toward zero.`,
+  padInstruction: 'Work out your worth now, then tap that number.',
   prompt: `You owe $3, then get $5. Where's your worth?`,
   say: 'You owe three dollars. Then you get five. That climbs you past zero. What is your worth now? Tap your answer.',
   work: [`Start $3 in debt.`, `Get 5 dollars, so you climb past zero to 2 dollars.`, `So negative 3 plus 5 is 2.`],

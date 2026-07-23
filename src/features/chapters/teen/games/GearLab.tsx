@@ -58,20 +58,20 @@ const ROOT: Record<1 | 2 | 3, number[]> = {
 function powerCrank(d: 1 | 2 | 3): Task {
   const [base, exp] = pick(POW[d])
   const answer = Math.round(base ** exp)
+  const name = powName(base, exp)
+  const many = COUNT_WORD[exp] ?? `${exp}`
   // Story fits a square of tiles (n²) or a cube of blocks (n³); a higher power is no
   // longer a square/cube shape, so it gets the plain meaning of a power instead.
   const context =
-    exp === 2 ? 'A square patch has the same number of tiles across as down.'
-    : exp === 3 ? 'A cube stacks as many block layers as there are blocks along each edge.'
-    : 'A power says how many of the same number are multiplied together.'
-  const name = powName(base, exp)
-  const many = COUNT_WORD[exp] ?? `${exp}`
+    exp === 2 ? `${name} means you multiply ${base} by itself. A square has the same number of tiles across as down.`
+    : exp === 3 ? `${name} means you multiply ${base} by itself ${many} times. A cube has the same number of blocks along each edge.`
+    : `${name} means you multiply ${base} by itself ${many} times.`
   return {
     mech: 'crank', answer, base,
     title: name,
     badge: `${base}${sup(exp)}`, tone: 'a',
     context,
-    padInstruction: `Work out ${name}, then tap that number.`,
+    padInstruction: `Multiply it out to get ${name}, then tap that number.`,
     prompt: exp === 2
       ? `Lay a ${base}×${base} tile patch — ${base}${sup(exp)}. Turn to add each layer (×${base}).`
       : `Stack a ${base} block cube — ${base}${sup(exp)}. Turn to add each layer (×${base}).`,
@@ -86,8 +86,8 @@ function rootSlide(d: 1 | 2 | 3): Task {
   return {
     mech: 'root', answer, n,
     title: `Side of ${n}`, badge: `√${n}`, tone: 'b',
-    context: `You have ${n} tiles to lay into one square patch.`,
-    padInstruction: `Tap how many tiles go along one side of the square.`,
+    context: `You have ${n} tiles to make one square patch. A square has the same number of tiles across as down.`,
+    padInstruction: `Work out how many tiles go along one side, then tap that number.`,
     prompt: `A square patch has ${n} tiles. Build the square — set the side until it uses all ${n} tiles. That side is √${n}.`,
     say: `A square patch of ${n} tiles has the same number across as down. Find the number that times itself makes ${n}, then tap it.`,
     work: [`Finding the side of a square patch undoes squaring it.`, `${answer} × ${answer} = ${n}, so a ${n}-tile square has sides of ${answer}.`],
@@ -109,8 +109,8 @@ function sciNotation(d: 2 | 3): Task {
   return {
     mech: 'crank', answer, base: 10, coef: a,
     title: 'Scientific notation', badge: `${a} × 10${sup(k)}`, tone: 'b',
-    context: `This is a short way to write a big number: start at ${a} and multiply by 10 ${k} times.`,
-    padInstruction: 'Tap the big number this is short for.',
+    context: `This is a short way to write a big number. Start at ${a} and multiply by 10 ${k} times.`,
+    padInstruction: `Work out the full number, then tap it.`,
     prompt: `Write ${a} × 10${sup(k)} in full. Start at ${a} and crank ×10 — each turn makes it ten times bigger.`,
     say: `${a} times ten to the power of ${k}. That means start at ${a} and multiply by ten ${k} times. Work it out, then tap your answer.`,
     work: [`Ten to the power of ${k} means multiply by ten ${k} times.`, `${a} × ${tens} = ${answer}.`],
@@ -129,8 +129,8 @@ function makeTask(d: 1 | 2 | 3): Task {
 const DEMO_TASK: Task = { mech: 'crank', answer: 9, base: 3, title: '3 squared', badge: '3²', tone: 'a', prompt: '', say: '', work: [] }
 const GUIDED_TASK: Task = {
   mech: 'crank', answer: 8, base: 2, title: '2 cubed', badge: '2³', tone: 'a',
-  context: 'A cube stacks as many block layers as there are blocks along each edge.',
-  padInstruction: 'Work out 2 cubed, then tap that number.',
+  context: '2 cubed means you multiply 2 by itself three times. A cube has the same number of blocks along each edge.',
+  padInstruction: 'Multiply it out to get 2 cubed, then tap that number.',
   prompt: 'Stack a 2-block cube — 2³. Add three layers (×2 each turn), then press Build.',
   say: '2 cubed means three 2s multiplied together. Work out 2 times 2 times 2, then tap your answer.',
   work: ['2 cubed means three 2s multiplied together.', '2 × 2 × 2 = 8.'],

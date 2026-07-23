@@ -63,8 +63,8 @@ function barPart(): Task {
   const { a, b, ans } = pick(BAR_PAIRS)
   return {
     mech: 'bar', title: 'Part of a part', badge: `${a} × ${b}`, tone: 'a',
-    context: `A plank is ${lenOf(b)} long, and this cut needs ${FRACW[a]} of that piece.`,
-    instruction: 'Shade your part of the 12-part board.',
+    context: `The board is ${lenOf(b)} long. You need ${FRACW[a]} of it — that means one part of the board, not the whole thing.`,
+    instruction: 'Look at the board with 12 equal parts. Shade the parts this cut covers, then press CUT.',
     prompt: `A board is ${b} of a metre. Take ${a} of it — mark your section of the 12 parts.`,
     say: `A board is ${lenOf(b)}. Take ${FRACW[a]} of that. Mark your section of the twelve parts.`,
     answer: ans,
@@ -82,7 +82,8 @@ function decMul(): Task {
   const ta = Math.round(a * 10), tb = Math.round(b * 10)   // the two factors in tenths
   return {
     mech: 'area', title: 'Measure it out', badge: `${a} × ${b}`, tone: 'b', answer: ans, da: a, db: b,
-    padInstruction: `Tap the answer to ${a} × ${b}.`,
+    context: `This cut measures ${a} × ${b} of a metre. When you multiply two numbers under 1, the piece comes out smaller than both.`,
+    padInstruction: `Work out ${a} × ${b}, then tap that number.`,
     prompt: `${a} × ${b} on the metre grid: shade ${a} across and ${b} down. The overlap squares are the answer.`,
     say: `What is ${a} times ${b}? Think in tenths: ${ta} tenths times ${tb} tenths makes hundredths. Then tap your answer.`,
     work: [`${ta} tenths times ${tb} tenths is ${ta * tb} hundredths.`, `${a} × ${b} = ${ans}.`],
@@ -102,8 +103,8 @@ function fracDiv(): Task {
   const { a, b, denom, board, piece, ans } = pick(DIV_ITEMS)
   return {
     mech: 'pieces', title: 'How many fit?', badge: `${a} ÷ ${b}`, tone: 'a', answer: ans, denom, board, piece,
-    context: `A board is ${a === '1' ? 'a whole metre' : `${a} of a metre`} long, and each piece must be ${b} of a metre.`,
-    padInstruction: `How many ${b}-metre pieces fit?`,
+    context: `A board is ${lenOf(a)} long. Each piece you cut must be ${lenOf(b)}. Dividing means finding how many of those pieces fit.`,
+    padInstruction: `Work out how many pieces of ${FRACW[b]} of a metre fit, then tap that number.`,
     prompt: `How many ${b} pieces cut from ${a} of a board? Lay ${b} pieces along the board — the count is the answer.`,
     say: `How many pieces of ${FRACW[b]} of a metre can you cut from ${lenOf(a)}? Count how many fit.`,
     work: ['Dividing by a fraction asks how many pieces fit.', `${FRACW[a]} divided by ${FRACW[b]} is ${ans}.`],
@@ -123,8 +124,8 @@ function decDiv(): Task {
   const { a, b, denom, board, piece, ans } = pick(DECDIV_ITEMS)
   return {
     mech: 'pieces', title: 'How many fit?', badge: `${a} ÷ ${b}`, tone: 'b', answer: ans, denom, board, piece,
-    context: `A board is ${a} metres long, and each piece must be ${b} metres.`,
-    padInstruction: `How many ${b} m pieces fit?`,
+    context: `A board is ${a} metres long. Each piece you cut must be ${b} metres. Dividing means finding how many of those pieces fit.`,
+    padInstruction: `Work out how many ${b} m pieces fit, then tap that number.`,
     prompt: `How many ${b} m pieces fit in ${a} m? Lay them along the board — the count is the answer.`,
     say: `How many ${b} metre pieces fit in ${a} metres? Count them, then tap your answer.`,
     work: ['Dividing asks how many pieces fit.', `${a} ÷ ${b} = ${ans}.`],
@@ -143,9 +144,9 @@ function makeTask(d: 1 | 2 | 3): Task {
 //    into baby steps so the concept builds up slowly. The tutorial plays them
 //    back-to-back (part-of-a-part on the board → decimal × on the tape → fraction
 //    ÷ on the tape), then the guided order. ──────────────────────────────────────
-const DEMO_BAR: Task = { mech: 'bar', title: 'Part of a part', badge: '½ × ⅔', tone: 'a', answer: 4, context: 'The board is ⅔ of a metre, and this cut needs half of that piece.', instruction: 'Shade the parts of the board.', prompt: '', say: '', work: [] }
-const DEMO_DEC: Task = { mech: 'slide', min: 0, max: 1, step: 0.01, title: 'Measure it out', badge: '0.5 × 0.4', tone: 'b', answer: 0.2, instruction: 'Set the tape to the length.', prompt: '', say: '', work: [] }
-const DEMO_DIV: Task = { mech: 'slide', min: 0, max: 6, step: 1, title: 'How many fit?', badge: '¾ ÷ ¼', tone: 'a', answer: 3, context: 'A board is ¾ of a metre long, and each piece must be ¼ of a metre.', instruction: 'Set how many pieces fit.', prompt: '', say: '', work: [] }
+const DEMO_BAR: Task = { mech: 'bar', title: 'Part of a part', badge: '½ × ⅔', tone: 'a', answer: 4, context: 'The board is ⅔ of a metre. This cut needs half of that — one part of the board, not all of it.', instruction: 'Look at the 12-part board. Shade the parts this cut covers.', prompt: '', say: '', work: [] }
+const DEMO_DEC: Task = { mech: 'slide', min: 0, max: 1, step: 0.01, title: 'Measure it out', badge: '0.5 × 0.4', tone: 'b', answer: 0.2, instruction: 'Look at the tape measure. Slide it to the length.', prompt: '', say: '', work: [] }
+const DEMO_DIV: Task = { mech: 'slide', min: 0, max: 6, step: 1, title: 'How many fit?', badge: '¾ ÷ ¼', tone: 'a', answer: 3, context: 'A board is ¾ of a metre long. Each piece must be ¼ of a metre. Dividing finds how many pieces fit.', instruction: 'Look at the tape. Slide it to count how many pieces fit.', prompt: '', say: '', work: [] }
 
 // Example 1 — a FRACTION of a fraction, built up on the 12-part board.
 const SCRIPT_BAR = {
@@ -189,8 +190,8 @@ const SCRIPT_DIV = {
 
 const GUIDED_TASK: Task = {
   mech: 'bar', title: 'Half of a half', badge: '½ × ½', tone: 'a', answer: 3,
-  context: 'The board is half a metre, and this cut needs half of that piece.',
-  instruction: 'Shade your part of the 12-part board.',
+  context: 'The board is half a metre. This cut needs half of that — one part of it, not the whole board.',
+  instruction: 'Look at the 12-part board. Shade the parts this cut covers, then press CUT ✓.',
   prompt: 'Take half of a half board — mark 3 of the 12 parts, then press CUT ✓.',
   say: 'Take half of a half board. Mark three of the twelve parts, then press cut.',
   work: ['Half of a half is a quarter.', 'A quarter of the 12 parts is 3 parts.'],
