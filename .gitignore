@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# labs-demo — a separate standalone project (own package.json, own Vercel deploy).
+# It carries its own node_modules; never let it into this repo.
+/labs-demo/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
