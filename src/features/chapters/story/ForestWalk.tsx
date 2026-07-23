@@ -215,9 +215,15 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
       return () => window.clearTimeout(id)
     }
     if (beat.kind === 'say') {
-      // speakSeq finishes the whole line before advancing — Milo is never cut off.
-      const cancel = speakSeq([beat.text], { onDone: () => window.setTimeout(advance, 700) })
-      return () => cancel()
+      // Advance when Milo finishes the line — but NEVER depend on it. A hard cap
+      // guarantees the intro can't hang if the speech layer never fires onDone
+      // (Chrome with no voice + a wedged clip/manifest fetch). Walk beats already
+      // have this guarantee; say beats didn't, so the intro could freeze forever.
+      let done = false
+      const go = () => { if (done) return; done = true; advance() }
+      const cancel = speakSeq([beat.text], { onDone: () => window.setTimeout(go, 700) })
+      const cap = window.setTimeout(go, Math.max(4500, beat.text.length * 90))
+      return () => { cancel(); window.clearTimeout(cap) }
     }
     if (beat.kind === 'guide') { speak('Now you count! Tap each one you see.') }
     return () => stopSpeech()
