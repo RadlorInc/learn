@@ -35,13 +35,15 @@ const MODEL = 'eleven_v3'                 // most expressive; honours the audio 
 const FORMAT = 'mp3_22050_32'             // speech at 32kbps — ~4x smaller than 128, no audible loss
 const OUT = `public/audio/${voiceId}`
 
-type Line = { key: string; text: string; chars: number; sources: string[] }
+type Line = { key: string; text: string; chars: number; kind?: string; sources: string[] }
 const corpus: Line[] = JSON.parse(readFileSync('scripts/.voice-corpus.json', 'utf8'))
 
 /** Direction per line type. Milo teaches — he does not cheer. */
 function tagFor(l: Line): string {
   const t = l.text
-  if (/^Here is the plan|^Here's the plan/i.test(t)) return '[warm]'       // THE PLAN panel
+  // THE PLAN sets up the whole chapter — warm and unhurried, not lecture-clear.
+  if (l.kind === 'plan')                              return '[warm]'
+  if (/^Here is the plan|^Here's the plan/i.test(t))  return '[warm]'
   if (/^Not quite|^Almost|try again/i.test(t))        return '[gently]'    // wrong answer
   if (/your turn/i.test(t))                           return '[encouraging]'
   return '[clearly]'                                                       // explanation — the default

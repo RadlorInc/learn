@@ -27,7 +27,43 @@ const FIELD_D = /\b(?:say|coach|work|blurb)\s*:\s*"((?:[^"\\]|\\.){4,300})"/g
 const SPEAK = /\bspeak(?:AfterCurrent)?\(\s*'((?:[^'\\]|\\.){4,300})'/g
 const SPEAK_D = /\bspeak(?:AfterCurrent)?\(\s*"((?:[^"\\]|\\.){4,300})"/g
 
-const seen = new Map<string, { text: string; sources: string[] }>()
+const seen = new Map<string, { text: string; sources: string[]; kind?: string }>()
+
+// ── THE PLAN panel ────────────────────────────────────────────────────────────
+// ExplanationPanel speaks `overview.problem` + `points` flattened from JSX at RUNTIME
+// (walkWords in GameShell), so that sentence exists nowhere as a source literal. We
+// rebuild it here from the JSX source instead of duplicating it in every chapter.
+//
+// It must match walkWords EXACTLY or the clip is never found. walkWords tokenizes each
+// TEXT LEAF separately with /\S+/g and the panel joins every token with one space — so
+// `zero</strong>.` becomes "zero ." (two tokens), which a naive tag-strip would render
+// as "zero." and miss.
+const ENTITIES: Record<string, string> = {
+  '&apos;': "'", '&quot;': '"', '&amp;': '&', '&lt;': '<', '&gt;': '>', '&nbsp;': ' ',
+  '&mdash;': '—', '&ndash;': '–', '&hellip;': '…',
+}
+const decode = (s: string) => s.replace(/&[a-z]+;/g, (m) => ENTITIES[m] ?? m)
+
+/** Tokens of one JSX fragment, tokenized per text leaf exactly as walkWords does. */
+function jsxTokens(jsx: string): string[] {
+  const out: string[] = []
+  // Splitting on tags yields the text runs between them — i.e. the text leaves, in order.
+  for (const leaf of jsx.split(/<[^>]*>/)) {
+    const text = decode(leaf)
+    for (const m of text.matchAll(/\S+/g)) out.push(m[0])
+  }
+  return out
+}
+
+/** The exact string ExplanationPanel speaks for one chapter, or null if it has no overview. */
+function planLine(src: string): string | null {
+  const problem = src.match(/problem:\s*(<>[\s\S]*?<\/>)\s*,/)
+  if (!problem) return null
+  const tokens = [...jsxTokens(problem[1])]
+  const pts = src.match(/points:\s*\[([\s\S]*?)\n\s{4}\]/)
+  if (pts) for (const m of pts[1].matchAll(/<>[\s\S]*?<\/>/g)) tokens.push(...jsxTokens(m[0]))
+  return tokens.join(' ') || null
+}
 
 for (const file of FILES) {
   let src: string
@@ -43,10 +79,16 @@ for (const file of FILES) {
       else seen.set(key, { text, sources: [file] })
     }
   }
+
+  const plan = planLine(src)
+  if (plan) {
+    const key = clipKey(plan)
+    if (!seen.has(key)) seen.set(key, { text: plan, sources: [file], kind: 'plan' })
+  }
 }
 
 const lines = [...seen.entries()]
-  .map(([key, v]) => ({ key, text: v.text, chars: v.text.length, sources: v.sources }))
+  .map(([key, v]) => ({ key, text: v.text, chars: v.text.length, kind: v.kind, sources: v.sources }))
   .sort((a, b) => b.chars - a.chars)
 
 const chars = lines.reduce((n, l) => n + l.chars, 0)
