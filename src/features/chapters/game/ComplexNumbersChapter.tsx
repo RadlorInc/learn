@@ -179,7 +179,7 @@ function ComplexNumbersPractice({
     const run = ok ? 0 : wrongRun + 1
     setWrongRun(run)
     if (ok) { setCorrect((c) => c + 1) }
-    else { setWrong((w) => w + 1); speak(`The answer is ${round.sayAnswer ?? round.answer}. ${ada.encouragement}`) }
+    else { setWrong((w) => w + 1); speak(`The answer is ${round.sayAnswer ?? round.answer}.`) }
     window.setTimeout(() => advance(ok, run, round, res.mastered), FEEDBACK_MS)
   }
 

@@ -214,7 +214,6 @@ const TtPlay: React.FC<{ data: TtRound; mode: Mode; onComplete: (correct: boolea
     if (n === data.answer) {
       done.current = true
       reward()
-      if (mode === 'guided') speak('Correct.')
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1700)
     } else { erred.current = true; speak(data.qType === 'twoDigit' ? 'Not quite — split it into tens and ones. Try again.' : 'Not quite — count the rows again. Try once more.'); window.setTimeout(() => setPicked(null), 1050) }
   }

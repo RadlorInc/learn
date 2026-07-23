@@ -190,7 +190,6 @@ const DsPlay: React.FC<{ data: DsRound; mode: Mode; onComplete: (correct: boolea
     if (c === data.answer) {
       done.current = true
       deal(() => setS(v => ({ ...v, dealt: dealTarget, showLeftover: true, boxValue: data.answer, boxDone: true })))
-      if (mode === 'guided') speak('Correct.')
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 2100)
     } else { erred.current = true; speak(data.rem > 0 ? 'Not quite — deal them out evenly, then count the leftovers. Try again.' : 'Not quite — share them out evenly and count one bay. Try again.'); window.setTimeout(() => setPicked(null), 1100) }
   }

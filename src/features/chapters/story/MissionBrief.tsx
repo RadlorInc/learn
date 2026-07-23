@@ -152,7 +152,6 @@ const FlPlay: React.FC<{ data: WpRound; mode: Mode; onComplete: (correct: boolea
     setPicked(c)
     if (Number(c) === data.answer) {
       done.current = true; setS({ revealed: true })
-      if (mode === 'guided') speak('Correct.')
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1600)
     } else { erred.current = true; speak('Not quite. Read the brief again and try once more.'); window.setTimeout(() => setPicked(null), 1050) }
   }

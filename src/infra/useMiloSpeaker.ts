@@ -16,6 +16,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react'
 import { pointAt, clearPointer } from '@/infra/miloPointer'
+import { speakLine, stopClip } from '@/infra/voiceClipPlayer'
 
 // ─── Singleton state ──────────────────────────────────────────────────────────
 let _voices: SpeechSynthesisVoice[] = []
@@ -109,6 +110,17 @@ function _doSpeak(text: string, rate: number, pitch: number) {
 
   // A new single utterance supersedes any running sequence (stop it for real).
   if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
+  stopClip()
+
+  // A pre-rendered clip if we hold one; otherwise the browser path below, unchanged.
+  speakLine(text, {
+    onStart: () => _setSpeaking(true),
+    onDone: () => _setSpeaking(false),
+    fallback: () => _doSpeakBrowser(text, rate, pitch),
+  })
+}
+
+function _doSpeakBrowser(text: string, rate: number, pitch: number) {
 
   _lastText  = text
   _lastRate  = rate
@@ -227,6 +239,7 @@ export function stopSpeech() {
   if (_speakTimer) { clearTimeout(_speakTimer); _speakTimer = null }
   _onEndCbs = []
   clearPointer()
+  stopClip()
   // Truly stop any running sequence so it can't advance to its next line.
   if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
   _setSpeaking(false)
@@ -257,6 +270,7 @@ export function speakSeq(
     cancelled = true
     if (_activeSeqCancel === cancel) _activeSeqCancel = null
     if (gapTimer) { clearTimeout(gapTimer); gapTimer = null }
+    stopClip()
     try { window.speechSynthesis.cancel() } catch {}
     _setSpeaking(false)
   }
@@ -282,21 +296,34 @@ export function speakSeq(
         gapTimer = setTimeout(() => { gapTimer = null; next() }, gapMs)
       } else next()
     }
-    const u = new SpeechSynthesisUtterance(txt)
-    u.rate = rate; u.pitch = pitch; u.volume = 1; u.lang = 'en-US'
-    const v = _pickVoice(); if (v) u.voice = v
-    u.onstart = () => {
-      started = true; _setSpeaking(true); try { onWord?.(idx) } catch {}
-      // It started — guard against an end event that never arrives.
-      clearWatch(); watch = setTimeout(advance, Math.max(5000, txt.length * 140))
+    const speakBrowser = () => {
+      if (moved || cancelled) return
+      const u = new SpeechSynthesisUtterance(txt)
+      u.rate = rate; u.pitch = pitch; u.volume = 1; u.lang = 'en-US'
+      const v = _pickVoice(); if (v) u.voice = v
+      u.onstart = () => {
+        started = true; _setSpeaking(true); try { onWord?.(idx) } catch {}
+        // It started — guard against an end event that never arrives.
+        clearWatch(); watch = setTimeout(advance, Math.max(5000, txt.length * 140))
+      }
+      u.onend   = advance
+      u.onerror = advance
+      try { window.speechSynthesis.speak(u) } catch { advance(); return }
+      // If speech never even STARTS (iOS/Safari can silently drop speak() with no
+      // onstart/onend/onerror), advance anyway so the lesson can never hang on a
+      // frozen, silent slide. This is the safety net for older speakSeq-only steps.
+      watch = setTimeout(() => { if (!started) advance() }, 2200)
     }
-    u.onend   = advance
-    u.onerror = advance
-    try { window.speechSynthesis.speak(u) } catch { advance(); return }
-    // If speech never even STARTS (iOS/Safari can silently drop speak() with no
-    // onstart/onend/onerror), advance anyway so the lesson can never hang on a
-    // frozen, silent slide. This is the safety net for older speakSeq-only steps.
-    watch = setTimeout(() => { if (!started) advance() }, 2200)
+    // Try a pre-rendered clip first; ANY miss runs the browser path above unchanged.
+    speakLine(txt, {
+      onStart: () => {
+        started = true; _setSpeaking(true); try { onWord?.(idx) } catch {}
+        // A clip has a real duration, but guard a stuck element the same way.
+        clearWatch(); watch = setTimeout(advance, Math.max(8000, txt.length * 160))
+      },
+      onDone: advance,
+      fallback: speakBrowser,
+    })
   }
   _activeSeqCancel = cancel
   try { window.speechSynthesis.cancel() } catch {}
@@ -409,6 +436,7 @@ export function speakWithHighlight(
   const clearTimers = () => { timers.forEach(clearTimeout); timers.length = 0 }
   const step = (i: number) => { if (i > lastIdx) { lastIdx = i; emit(i) } }  // forward-only
 
+  let cancelClip: (() => void) | null = null
   const cancel = () => {
     if (done) return
     done = true
@@ -416,6 +444,7 @@ export function speakWithHighlight(
     clearTimers()
     if (grace) { clearTimeout(grace); grace = null }
     if (watch) { clearTimeout(watch); watch = null }
+    if (cancelClip) { cancelClip(); cancelClip = null }
     try { window.speechSynthesis.cancel() } catch {}
     _setSpeaking(false)
   }
@@ -425,6 +454,21 @@ export function speakWithHighlight(
     emit(-1)
     onDone?.()
   }
+
+  // A pre-rendered clip drives the highlight off its REAL duration — strictly better
+  // sync than the timed sweep below, which has nothing to pace against when the speech
+  // engine fires no boundary events. Any miss runs the original path unchanged.
+  let usedClip = false
+  cancelClip = speakLine(text, {
+    words: tokens.length,
+    onStart: () => { usedClip = true; started = true; mode = 'boundary'; _setSpeaking(true) },
+    onWord: step,
+    onDone: finish,
+    fallback: () => { if (!usedClip) startBrowser() },
+  })
+  return cancel
+
+  function startBrowser() {
 
   // Timed sweep — highlights the remaining words on estimated timers. Used when no
   // boundaries arrive at all (Safari/blocked) AND as a recovery when the browser
@@ -504,8 +548,7 @@ export function speakWithHighlight(
   // If speech never STARTS (blocked autoplay / Safari drop), sweep silently so the
   // read-along still tracks and completes.
   grace = setTimeout(() => { if (!done && !started) startTimed(0, true) }, 1700)
-
-  return cancel
+  }
 }
 
 export function useIsSpeaking(): boolean {

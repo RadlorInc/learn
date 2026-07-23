@@ -200,7 +200,6 @@ const RtPlay: React.FC<{ data: RtRound; mode: Mode; onComplete: (correct: boolea
     if (n === data.answer) {
       done.current = true
       if (data.qType !== 'estimate') setS(v => ({ ...v, stage: 4 }))   // snap: the nearer stop glows
-      if (mode === 'guided') speak('Correct.')
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1500)
     } else { erred.current = true; speak(data.qType === 'estimate' ? 'Not quite — round each number first, then add. Try again.' : 'Not quite — which stop is nearer? Try once more.'); window.setTimeout(() => setPicked(null), 1050) }
   }

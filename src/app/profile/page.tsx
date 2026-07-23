@@ -4,6 +4,7 @@ export const dynamic = 'force-static'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BackButton from '@/shared/ui/BackButton'
+import VoicePicker from '@/shared/ui/VoicePicker'
 import { useMiloStore, CHAPTER_ORDER, CHAPTER_NAMES, getLevelProgress, getNextLevelXP } from '@/state/store'
 import { getLearnerStats, getLearnerProgress } from '@/data/repositories'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -245,6 +246,8 @@ export default function ProfilePage() {
             )
           })}
         </div>
+
+        <VoicePicker />
       </div>
     </div>
   )

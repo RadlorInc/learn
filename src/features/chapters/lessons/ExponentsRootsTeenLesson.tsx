@@ -247,7 +247,7 @@ function PowerAsk({ prompt, say, choices, answer, onDone }: {
   function pick(v: string | number) {
     if (status === 'correct') return
     setSelected(v)
-    if (String(v) === answer) { setStatus('correct'); speak('Yes — that’s it.'); window.setTimeout(onDone, 1400) }
+    if (String(v) === answer) { setStatus('correct'); window.setTimeout(onDone, 1400) }
     else { setStatus('wrong'); speak('Not quite — take another look.'); window.setTimeout(() => { setSelected(null); setStatus('idle') }, 1200) }
   }
   return (

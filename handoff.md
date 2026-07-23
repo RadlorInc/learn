@@ -1,6 +1,43 @@
 # Session Handoff — Milo Story Mode
 
-> 🧹 **2026-07-23 LATEST (SECOND SESSION SAME DAY) — DEAD-CODE SWEEP: SHIPPED TO PROD. `src` IS 73,815 → 62,158 LINES (−11,657, ~16%), 337 → 255 FILES, −1 DEPENDENCY, −9MB ASSETS. `main`@`7e29cc6`, prod serving sw v42, post-deploy smoke green. `tsc` · 62/62 vitest · `next build` (34 routes).**
+> 🔊 **2026-07-23 (THIRD SESSION SAME DAY) — MILO HAS A REAL RECORDED VOICE IN THE TEEN GAME BANDS. 409 pre-rendered ElevenLabs clips (12 MB) cover every static spoken line in 12–14 + 15–16; browser speech remains the fallback everywhere else. Also cut 39 spoken correct-answer cheers. Branch `feat/milo-voice-clips`, NOT merged, NOT deployed. `tsc` · 64/64 vitest · `next build` (34 routes) · 0 console errors.**
+>
+> ## Why: Chrome ships no usable local voice on many machines, so Milo was SILENT there — and the teen walkthroughs are where the actual teaching lives.
+>
+> ## The pipeline (all new)
+> | file | role |
+> |---|---|
+> | [src/core/voiceClips.ts](src/core/voiceClips.ts) | `clipKey(text)` — FNV-1a, **shared by build script and runtime**. If these ever drift, every lookup misses silently. |
+> | [scripts/voice-corpus.mts](scripts/voice-corpus.mts) | extracts the corpus → **409 lines / 38,954 chars** → `scripts/.voice-corpus.json` (untracked, regenerable) |
+> | [scripts/voice-generate.mts](scripts/voice-generate.mts) | renders clips. **Idempotent** — skips what's on disk, stops clean on 401/429, resumes exactly where it stopped. Writes the manifest from what ACTUALLY exists. |
+> | [src/infra/voiceClipPlayer.ts](src/infra/voiceClipPlayer.ts) | clip-first playback; **any** miss (no clip, decode error, autoplay refused) runs the original browser path |
+> | [src/infra/storage/voicePref.ts](src/infra/storage/voicePref.ts) | per-DEVICE voice pref (not per-learner — it's an output setting like volume) |
+> | [src/shared/ui/VoicePicker.tsx](src/shared/ui/VoicePicker.tsx) | the setting, on `/profile`; plays a sample on select |
+>
+> **Voice = Stevie (`IvUJKFyjVb5hItY9dJAT`)**, model `eleven_v3`, format `mp3_22050_32` (32kbps keeps 409 files at 12 MB instead of ~45 MB). Expression comes from inline v3 audio tags chosen per line TYPE in `tagFor()` — `[warm]` for THE PLAN, `[gently]` for wrong answers, `[clearly]` for explanation (the default).
+>
+> **Four hook points in [useMiloSpeaker.ts](src/infra/useMiloSpeaker.ts):** `_doSpeak` (covers speak/speakAt/speakAfterCurrent), `speakSeq` (which `speakSteps` delegates to → the whole walkthrough), `speakWithHighlight`, and `stopSpeech`→`stopClip`. **The word highlight is now paced by the clip's REAL duration** — strictly better sync than the old length-weighted guess.
+>
+> ## ⚠️ NOT COVERED — THE PLAN panel, and it cannot be fixed by static extraction
+> In chapters WITH a `TutorialScene`, `ExplanationPanel` builds its narration at runtime by flattening the `overview.problem` + `points` **JSX nodes** into words (`spoken` in GameShell ~line 855). That string exists nowhere in the source. It falls back to browser speech ⇒ **silent on Chrome**. One line per chapter (~24). Options: leave it · add an `overview.spokenText` mirror (duplication, drifts) · flatten the JSX offline (needs React in the build script). **Recommendation: leave it** — the walkthrough is covered and the child also reads THE PLAN on screen with the highlight.
+> Related: `overview.say` IS still rendered as clips but is only spoken by chapters WITHOUT a TutorialScene, so a handful of those clips may never play. Harmless, already paid for.
+>
+> ## Two bugs found by verification, both worth remembering
+> • **The extractor only matched SINGLE-quoted strings** — the codebase mixes quote styles, so 80 `say:`/`coach:` lines were silently missing. Caught only because a live check showed no mp3 request where one was expected. Corpus went 329 → 409.
+> • **The manifest must be written by the GENERATOR, not the extractor.** Listing a key with no mp3 makes every miss cost a failed fetch before falling back.
+>
+> ## Budget / quota
+> ~34.5k of the 40,000-char Starter month used; **resets 2026-07-27**. The API key itself carried a separate **20,000 cap** that stopped the run mid-way (account had plenty left) — raised in the dashboard, run resumed with zero loss. Re-rendering after a voice or tag change costs the FULL corpus again.
+>
+> ## ▶ OPEN
+> 1. **Nobody has confirmed Stevie sounds right in the app.** Verified structurally (clips resolve and chain in narration order, 0 errors) but never listened to end-to-end by a human. Do this before merging.
+> 2. **`public/audio/` is 12 MB committed to git.** Assets were previously squeezed 244 MB → 22.8 MB, so decide if this should be CI-built or LFS instead.
+> 3. **3–11 bands have NO clips** — that corpus is ~2.9k chars and mostly TEMPLATED (numbers), so it needs fragment-stitching, not whole lines. This is where Chrome silence hurts most (counting).
+> 4. Not merged, not deployed. **sw bumped v42 → v43** for whenever it does deploy.
+>
+> _(the block below is the same day's dead-code sweep.)_
+
+> 🧹 **2026-07-23 (SECOND SESSION SAME DAY) — DEAD-CODE SWEEP: SHIPPED TO PROD. `src` IS 73,815 → 62,158 LINES (−11,657, ~16%), 337 → 255 FILES, −1 DEPENDENCY, −9MB ASSETS. `main`@`7e29cc6`, prod serving sw v42, post-deploy smoke green. `tsc` · 62/62 vitest · `next build` (34 routes).**
 >
 > **The parade work from earlier today shipped with it** (`6f6e5de`, the first of the 11 commits) — the "nothing is committed" open item is closed, and the drawn walk cycles are live.
 >

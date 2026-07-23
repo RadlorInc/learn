@@ -211,7 +211,6 @@ const NvPlay: React.FC<{ data: NvRound; mode: Mode; onComplete: (correct: boolea
     setPicked(n)
     if (n === data.answer) {
       done.current = true; setS(revealState(data))
-      if (mode === 'guided') speak('Correct.')
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1500)
     } else { erred.current = true; speak('Not quite — read the places again. Try once more.'); window.setTimeout(() => setPicked(null), 1050) }
   }

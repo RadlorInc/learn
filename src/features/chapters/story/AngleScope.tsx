@@ -181,7 +181,6 @@ const AsPlay: React.FC<{ data: AsRound; mode: Mode; onComplete: (correct: boolea
     setPicked(c)
     if (c === data.answer) {
       done.current = true; setS(revealState(data))
-      if (mode === 'guided') speak('Correct.')
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1600)
     } else { erred.current = true; speak('Not quite. Look at the scope and try again.'); window.setTimeout(() => setPicked(null), 1050) }
   }
