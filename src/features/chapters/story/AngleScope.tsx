@@ -46,7 +46,7 @@ function symmetryChoices(correct: number): string[] {
 }
 function mkSym(shape: ShapeKind): AsRound {
   const n = SHAPE_LINES[shape]
-  return { qType: 'symmetry', deg: 90, shape, prompt: 'How many lines of symmetry?', tag: 'Symmetry scan', say: `How many lines of symmetry does the ${SHAPE_LABEL[shape].toLowerCase()} have?`, answer: String(n), choices: symmetryChoices(n), verdict: `${SHAPE_LABEL[shape]} — ${n} line${n === 1 ? '' : 's'}` }
+  return { qType: 'symmetry', deg: 90, shape, prompt: `How many lines of symmetry does this ${SHAPE_LABEL[shape].toLowerCase()} have?`, tag: 'Symmetry scan', say: `How many lines of symmetry does the ${SHAPE_LABEL[shape].toLowerCase()} have?`, answer: String(n), choices: symmetryChoices(n), verdict: `${SHAPE_LABEL[shape]} — ${n} line${n === 1 ? '' : 's'}` }
 }
 function makeRound(d: 1 | 2 | 3): AsRound {
   const wantAngle = Math.random() < 0.5

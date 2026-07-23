@@ -88,7 +88,7 @@ function makeRound(d: 1 | 2 | 3): NvRound {
   const qType = pick(pool)
   if (qType === 'place') {
     const c = pick(cols)
-    return { n, qType, prompt: `How many ${c.plural}?`, tag: tagFor(qType), say: `How many ${c.plural} in ${numWords(n)}?`, answer: c.digit, choices: nearDigits(c.digit), showNumeral: true, highlight: cols.indexOf(c) }
+    return { n, qType, prompt: `How many ${c.plural} in ${fmt(n)}?`, tag: tagFor(qType), say: `How many ${c.plural} in ${numWords(n)}?`, answer: c.digit, choices: nearDigits(c.digit), showNumeral: true, highlight: cols.indexOf(c) }
   }
   if (qType === 'value') {
     const counts: Record<number, number> = {}; cols.forEach(c => { counts[c.digit] = (counts[c.digit] ?? 0) + 1 })
@@ -306,7 +306,7 @@ type Phase = 'intro' | 'explore' | 'demo' | 'guided' | 'practice'
 
 const mk = (n: number, qType: QType): NvRound => {
   const cols = placeColumns(n)
-  if (qType === 'place') { const i = cols.length - 2; const c = cols[i]; return { n, qType, prompt: `How many ${c.plural}?`, tag: tagFor(qType), say: `How many ${c.plural} in ${numWords(n)}?`, answer: c.digit, choices: nearDigits(c.digit), showNumeral: true, highlight: i } }
+  if (qType === 'place') { const i = cols.length - 2; const c = cols[i]; return { n, qType, prompt: `How many ${c.plural} in ${fmt(n)}?`, tag: tagFor(qType), say: `How many ${c.plural} in ${numWords(n)}?`, answer: c.digit, choices: nearDigits(c.digit), showNumeral: true, highlight: i } }
   return { n, qType: 'whole', prompt: 'What number is this?', tag: tagFor('whole'), say: 'What number is this? Read the places.', answer: n, choices: nearNumbers(n), showNumeral: false, highlight: -1 }
 }
 const DEMO: NvRound[] = [mk(342, 'whole'), mk(3472, 'whole')]
