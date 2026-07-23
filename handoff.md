@@ -1,5 +1,49 @@
 # Session Handoff — Milo Story Mode
 
+> ✍️ **2026-07-24 — QUESTION WORDING MADE CRYSTAL-CLEAR / "EXPLAINING-TYPE" ACROSS 12–14 + DIAGNOSTIC, THEN A FULL NO-SENSE AUDIT OF EVERY BAND. ALL SHIPPED. prod serving sw v51, `main`@`fb7b5fe`. `tsc` · 64/64 vitest throughout.**
+>
+> ## What the founder wanted, in order (each shipped before the next)
+> 1. **Questions a low-IQ kid can follow** — plain wording, name the numbers, and *tell the child to look at the illustration when there is one* (their words). Then: **"more explaining type — every question should have sense"** (explain the idea in the question, but see #3).
+> 2. **Roll it to all 12 of the 12–14 chapters and the diagnostic.**
+> 3. **Then the correction that shaped everything after:** *"we should NOT give hint/explanation in the diagnostic — but questions should have sense."* → **A diagnostic is a TEST: make the wording clear/unambiguous, but never teach the method (that contaminates the measurement). A chapter is a LESSON: explaining is the point.** This split is now the rule.
+> 4. **"How many Climb?"** (a real screenshot) → questions must **name their subject**; a label must fit the sentence. → led to a **full no-sense audit of every chapter**.
+>
+> ## The commits (all on `main`, all live)
+> | commit | sw | what |
+> |---|---|---|
+> | `217d80a` | v44 | **fix**: the 3–5 counting intro could HANG. The `say` beat advanced only via `speakSeq().onDone`; walk beats have a hard timer, say beats didn't — so with no voice + a wedged voice-clip fetch the intro froze on slide 1 (the founder's screenshot). Added a one-shot hard cap ([ForestWalk.tsx](src/features/chapters/story/ForestWalk.tsx):217). |
+> | `86f796f`·`5203ebd` | v45·v46 | Bank Account (integers) as the **sample**: crystal-clear → then "explaining-type" (each Q teaches the idea in plain words, never the answer). |
+> | `03361ec` | v47 | **The other 11 of the 12–14 chapters** — one focused agent per file (copy-only), verified. |
+> | `40fe258` | v48 | **Diagnostic**: clear prompts (`Solve:`→`What is x?`, bare seq→`…what comes next?`, `= ? cm`→`is how many cm?`) + "look at the chart/line/…" ONLY where a picture exists. **Bundled the founder's in-progress picture WIP** — a `DiagVisual` type + `visual:` fields + [features/diagnostic/DiagVisual.tsx](src/features/diagnostic/DiagVisual.tsx) renderer wired into the checkup + recheck pages — now verified end-to-end. |
+> | `1df3c56` | v49 | **DataDeck** "How many Climb?" fixed: labels were verbs/colours/days; now every dataset is a real subject ("Pets at the shelter") with countable-noun bars, drawn as the chart title. |
+> | `2759985` | v50 | **The full no-sense audit** (7 read-only agents, ~70 files) + all 12 fixes — table below. |
+> | `fb7b5fe` | v51 | The 2 borderline items tightened (AngleScope names the shape, NumberVault names the number). |
+>
+> ## ⚠️ THE ONE OPEN ITEM — AUDIO DOESN'T MATCH THE NEW TEXT YET
+> All the above changed the **text a kid READS** (`context` / `padInstruction` / `instruction` / diagnostic `prompt`). Milo's **spoken voice** (`say` / `work`) was deliberately **left untouched** — those are the 605 pre-rendered ElevenLabs clips (see the 🔊 block below); changing `say` would silence them or force a full-corpus re-render. So in 12–14 a kid **reads** the new explaining question but **hears** the older phrasing. Both work (separate channels), but they're not word-for-word.
+> **▶ WHEN THE QUOTA RESETS (2026-07-27):** decide whether to re-render `say`/`work` to match the new question wording. It's the full corpus again (~40k chars, and a wording change is not free). The generator is idempotent per line, so you *could* re-render only the lines whose `say` you rewrite — but this session did NOT rewrite any `say`, so today the clips are still valid; this is only needed if you want the audio to speak the new explaining phrasing.
+>
+> ## The no-sense audit — every finding, all fixed (`2759985` + `fb7b5fe`)
+> A question is "no-sense" if a child reading it can't tell WHAT it asks: missing subject, a label that doesn't fit the sentence, a dangling "it", an off-screen reference, or wording that fights the picture. **NOT hints/teaching — that's out of scope (esp. the diagnostic).**
+> | band | fix |
+> |---|---|
+> | 3–5 | NumberDoors + counting door beat: *"Which door did Milo **say**?"* (you don't say a door) → *"Tap the door with the number you heard!"* |
+> | 6–8 | MarketDay: *"3 rows of 4 — how many in all?"* → *"…4 **cookies** …"* · SliceShop: *"…**shaded**?"* in the bar-shape Chocolate Shop → shape-aware *"covered"/"shaded"* |
+> | 9–11 | DivisionShare: *"Share 20 among 4"* → *"Share 20 **nodes** among 4 **bays**"* · MissionBrief: *"packs 5 crates into each of 6 **crates**"* → dropped the colliding item noun · **DataDeck** (v49) · **borderline (v51):** AngleScope *"…does this **square** have?"*, NumberVault *"How many hundreds **in 3,482**?"* |
+> | 12–14 | **CLEAN** — the explaining pass (v47) already covered it; the auditor found nothing. |
+> | 15–16 | TheShot peak: *"top of the **arc**"* with no arc drawn → added a context line |
+> | 17–18 | SystemsMatrices rendered *"3x − −y = 5"* (double minus) → fixed the sign join; cosmetic *"(x − 0)²"* / *"+ 0"* collapsed in Quadratic/Conic/Rational |
+> | diagnostic | `e.compare` *"Which is more?"* (numbers only in the tap choices) → *"Which is more, 8 or 5?"* |
+>
+> ## How it was verified + what's the rule now
+> **Verified live in the dev preview** (not just tsc): Bank Account guided+scored, Delivery Drone (illustration + "Look at the map"), DataDeck ("Pets at the shelter" / "How many Dogs?"), DivisionShare ("Share 14 nodes among 3 bays"), NumberVault ("How many tens in 253?"), AngleScope ("…this rectangle…"). All copy/display-only — **no `answer` / `badge` / `choices` / math touched anywhere** (a false-positive grep check confirmed the DEMO one-line constants kept their non-text fields byte-identical).
+> **The locked rule:** every question **names its subject**; template labels are always countable nouns that fit the sentence; the diagnostic (and any screener) stays clear-but-non-teaching; a lesson chapter may explain the idea but never the answer.
+>
+> ## Housekeeping / not mine
+> The working tree still carries **uncommitted `.gitignore` + `scripts/.voice-corpus.json` / `.voice-fragments.json`** changes from the prior voice session — NOT touched this session, left as-is. Only diagnostic-related files + the audited chapters were staged per-commit (never `git add .`).
+>
+> _(the 🔊 block below is the prior session — the recorded-voice work, still the source of truth for how audio playback + the clip corpus work.)_
+
 > 🔊 **2026-07-23 (THIRD SESSION SAME DAY) — MILO HAS A REAL RECORDED VOICE IN THE TEEN GAME BANDS: SHIPPED TO PROD. 605 pre-rendered ElevenLabs clips (16 MB) — every static spoken line in 12–14 + 15–16, THE PLAN in all 24 chapters, and 25 of 41 scored-question prompts stitched from fragments. Also cut 39 spoken correct-answer cheers. `main`@`227ece5`, prod serving sw v43, post-deploy smoke green. `tsc` · 64/64 vitest · `next build` (34 routes) · 0 console errors.**
 >
 > ## ⚠️ READ THIS FIRST — NOBODY HAS LISTENED TO ANY OF IT
