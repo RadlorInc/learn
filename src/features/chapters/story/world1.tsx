@@ -9,7 +9,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { speak, speakSeq, speakAfterCurrent, useIsSpeaking } from '@/infra/useMiloSpeaker'
 import { type Difficulty } from '@/core/adaptive'
 import type { World, Beat } from './StoryWorld'
-import { CountItem, CountStage, type CountKind, COUNT_LABEL, COUNT_PLURAL, DoorArt, Apple, Berry, Stone, Basket } from './art'
+import { CountItem, CountStage, type CountKind, COUNT_LABEL, COUNT_PLURAL, COUNT_SRC, COUNT_SIDE, DoorArt, Apple, Berry, Stone, Basket } from './art'
+import { ParadeCanvas } from './canvas/ParadeCanvas'
 import { BIOMES, type Band, type Biome, type BiomeId, type Storytelling } from './biomes'
 import { useViewport } from '@/shared/hooks/useViewport'
 
@@ -109,8 +110,6 @@ export function countBeatFor(obj: CountKind): Beat<CountData> {
   }
 }
 export const countBeat = countBeatFor('firefly')
-export const countApples = countBeatFor('apple')
-export const countMushrooms = countBeatFor('mushroom')
 
 // ── In-scene counting: objects HIDE in the forest, the child hunts & counts ──
 // Fireflies/butterflies are tucked into the leafy FOLIAGE BAND of the
@@ -272,7 +271,10 @@ const CollectTray: React.FC<{ obj: CountKind; n: number; maxCell: number; vw: nu
   const avail = vw * 0.92 - 28                                   // usable width minus the box padding
   const cell = Math.max(22, Math.min(maxCell, Math.floor((avail - gap * (n - 1)) / n)))
   return (
-    <div style={{ position: 'fixed', top: 112, left: '50%', transform: 'translateX(-50%)', zIndex: 41,
+    <div style={{
+      // NOT fixed/positioned: the tray used to sit pinned at top-centre, which is exactly where the
+      // parade creatures come to rest — so it covered the very things the child was counting. It now
+      // lives in the bottom stack alongside the answer buttons, clear of every creature lane.
       maxWidth: '94vw', display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap,
       padding: `${Math.round(cell * 0.2)}px ${Math.round(cell * 0.34)}px`,
       background: 'rgba(255,255,255,.6)', border: '3px solid var(--milo-orange)', borderRadius: 18, boxShadow: '0 4px 0 rgba(242,107,44,.2)' }}>
@@ -347,8 +349,10 @@ export const FlyingCountPlay: React.FC<{ data: CountData; onSubmit: (c: boolean)
             travelSecs={1.8} disabled={done.current || speaking} onTap={() => tap(s)} onGone={() => gone(s)} />
         ) : null
       })}
-      {/* Collected objects — each tapped creature gathers into this single row so the child sees the count. */}
-      <CollectTray obj={data.obj} n={counted} maxCell={Math.max(44, Math.round(size * 0.6))} vw={vw} />
+      {/* Collected objects — gathered along the BOTTOM, clear of the creature lanes above. */}
+      <div style={{ position: 'fixed', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 41, pointerEvents: 'none' }}>
+        <CollectTray obj={data.obj} n={counted} maxCell={Math.max(40, Math.round(size * 0.42))} vw={vw} />
+      </div>
     </>
   )
 }
@@ -356,17 +360,6 @@ const CATCH_INTRO: Partial<Record<CountKind, string>> = {
   firefly: 'Fireflies are out!', butterfly: 'Look, butterflies!', eagle: 'Eagles in the trees!',
   chick: 'Fluffy chicks!', lamb: 'Little lambs!', duckling: 'Baby ducklings!',
   rocket: 'Rockets ready to fly!', star: 'Stars are out!', planet: 'Look, planets!', alien: 'Friendly aliens!',
-}
-export function flyingCountBeatFor(obj: CountKind): Beat<CountData> {
-  return {
-    skillId: 'counting', rounds: 1,
-    make: d => ({ n: d === 1 ? rint(2, 3) : d === 2 ? rint(4, 5) : rint(6, 8), obj }),
-    prompt: d => `Tap each ${COUNT_LABEL[d.obj]} you see!`,
-    // Spoken when the practice auto-starts — the explanation IS the practice intro,
-    // so there's no separate "Next" step between telling and doing.
-    say: d => `${CATCH_INTRO[d.obj] ?? ''} Tap each ${COUNT_LABEL[d.obj]} you see!`.trim(),
-    Play: FlyingCountPlay, Reteach: AutoCountReteach,
-  }
 }
 
 // The opening demo, now in the SAME come-and-go PARADE as the practice: creatures walk/
@@ -569,54 +562,30 @@ const Parader: React.FC<{ obj: CountKind; band: Band; slot: 0 | 1; size: number;
 }
 
 interface Slot { key: number; slot: 0 | 1; leaving: boolean; num?: number }
+
+// Off-screen but focusable — the keyboard/screen-reader path to a canvas-only interaction.
+const srOnly: React.CSSProperties = {
+  position: 'fixed', width: 1, height: 1, padding: 0, margin: -1,
+  overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
+}
 const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => void }> = ({ data, onSubmit }) => {
   // The creatures parade through ~2 at a time, moving naturally. The child taps each to count it —
   // it pops, then walks/flies/swims off and the next one comes in. Once all N have been counted, the
   // number choices appear and the child taps how many they counted (kept as the assessment).
-  const [stage, setStage] = useState<(Slot | null)[]>([null, null])
   const [counted, setCounted] = useState(0)
   const [picked, setPicked] = useState<number | null>(null)
   const speaking = useIsSpeaking()
   const { w: vw, h: vh } = useViewport()
   const scale = useScale()
-  const spawnedRef = useRef(0)
-  const keyRef = useRef(0)
-  const didInit = useRef(false)
   const asked = useRef(false)
 
   const size = Math.max(48, Math.min(Math.round(vh * 0.3), Math.round(88 * (SIZE_BOOST[data.obj] ?? 1) * scale)))
   const btn = Math.max(52, Math.min(94, Math.round(Math.min(vw / 8.8, vh / 5.2))))
   const allCounted = counted >= data.n
+  const paradeBand = data.band ?? BIOMES.forest.band
 
-  // Fill the initial one/two slots on mount (didInit guards React strict-mode double effects).
-  useEffect(() => {
-    if (didInit.current) return
-    didInit.current = true
-    setStage(() => {
-      const next: (Slot | null)[] = [null, null]
-      for (let s = 0 as 0 | 1; s < 2; s++) {
-        if (spawnedRef.current < data.n) { next[s] = { key: keyRef.current++, slot: s, leaving: false }; spawnedRef.current++ }
-      }
-      return next
-    })
-  }, [data.n])
-
-  function tap(slot: 0 | 1) {
-    if (speaking || picked != null) return
-    const inst = stage[slot]
-    if (!inst || inst.leaving) return
-    setStage(prev => prev.map((it, i) => (i === slot && it ? { ...it, leaving: true } : it)))
-    setCounted(c => c + 1)
-  }
-  // A creature finished walking off: clear its slot and send in the next queued creature.
-  function gone(slot: 0 | 1) {
-    setStage(prev => {
-      const next = [...prev]
-      next[slot] = spawnedRef.current < data.n ? { key: keyRef.current++, slot, leaving: false } : null
-      if (next[slot]) spawnedRef.current++
-      return next
-    })
-  }
+  // The canvas owns spawning, gaits and exits; all React needs back is "one more was counted".
+  const countOne = () => setCounted(c => Math.min(data.n, c + 1))
   function choose(v: number) { if (picked != null || speaking) return; setPicked(v); window.setTimeout(() => onSubmit(v === data.n), 450) }
   useEffect(() => {
     if (allCounted && !asked.current) { asked.current = true; speakAfterCurrent('So how many did you count? Tap the number!') }
@@ -624,21 +593,34 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
 
   return (
     <>
-      {([0, 1] as const).map(s => {
-        const inst = stage[s]
-        return inst ? (
-          <Parader key={inst.key} obj={data.obj} band={data.band ?? BIOMES.forest.band} slot={s} size={size} leaving={inst.leaving}
-            travelSecs={1.8} disabled={picked != null || speaking} onTap={() => tap(s)} onGone={() => gone(s)} />
-        ) : null
-      })}
+      <ParadeCanvas
+        key={`${data.obj}-${data.n}`}
+        src={COUNT_SIDE[data.obj] ?? COUNT_SRC[data.obj]?.[0] ?? ''}
+        gait={gaitFor(data.obj)}
+        n={data.n}
+        size={size}
+        lane0={laneFor(locoOf(data.obj), paradeBand, 0)}
+        lane1={laneFor(locoOf(data.obj), paradeBand, 1)}
+        artFacesLeft={BASE_FACES_LEFT.has(data.obj)}
+        grounded={locoOf(data.obj) !== 'air'}
+        interactive={picked == null && !speaking}
+        onCount={countOne}
+      />
+      {/* The parade lives on a canvas, so it is invisible to keyboard and screen readers. This is
+          the equivalent affordance: one press counts the next creature, same as one tap. */}
+      {!allCounted && (
+        <button onClick={countOne} disabled={picked != null || speaking} style={srOnly}>
+          Count one {COUNT_LABEL[data.obj] ?? 'thing'}
+        </button>
+      )}
 
-      {/* Collected objects — each tapped creature gathers into this single row (they don't just
-          vanish), so the child sees how many they've counted. Stays through the number-choice step. */}
-      <CollectTray obj={data.obj} n={counted} maxCell={Math.max(44, Math.round(size * 0.6))} vw={vw} />
-
-      {allCounted && (
-        <div style={{ position: 'fixed', bottom: Math.max(8, Math.round(btn * 0.18)), left: '50%', transform: 'translateX(-50%)', zIndex: 40 }}>
-          <div style={{ display: 'flex', gap: Math.round(btn * 0.2), animation: 'fw_pop .35s ease both' }}>
+      {/* Bottom stack: the answer choices sit ABOVE the collected-objects tray. Both live in one
+          column so they can never overlap each other, and neither can sit on top of the parade —
+          which is what went wrong when the tray was pinned at top-centre. */}
+      <div style={{ position: 'fixed', bottom: Math.max(8, Math.round(btn * 0.18)), left: '50%', transform: 'translateX(-50%)', zIndex: 41,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: Math.round(btn * 0.16), pointerEvents: 'none' }}>
+        {allCounted && (
+          <div style={{ display: 'flex', gap: Math.round(btn * 0.2), animation: 'fw_pop .35s ease both', pointerEvents: 'auto' }}>
             {data.choices.map(v => {
               const isPick = picked === v, ok = isPick && v === data.n
               return (
@@ -650,8 +632,10 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
               )
             })}
           </div>
-        </div>
-      )}
+        )}
+        {/* Each tapped creature gathers here (they don't just vanish), so the child sees the count grow. */}
+        <CollectTray obj={data.obj} n={counted} maxCell={Math.max(40, Math.round(size * 0.42))} vw={vw} />
+      </div>
     </>
   )
 }
@@ -728,6 +712,17 @@ function howManyData(biome: Biome, obj: CountKind, d: 1 | 2 | 3): HowManyData {
 //   • a walk interlude plays every 3 rounds so Milo stays animated,
 //   • after 3 wrong IN A ROW Milo re-explains by counting that exact quantity out.
 // Background cross-fades smoothly via BiomeBackground's 1s opacity transition.
+/**
+ * Dev-only `?obj=<creature>` override for the practice rounds — stripped from production builds.
+ * Exists so a specific creature's animation can be looked at on demand instead of replaying the
+ * chapter until the shuffled plan happens to serve it up.
+ */
+function devForcedObj(): CountKind | null {
+  if (process.env.NODE_ENV === 'production' || typeof window === 'undefined') return null
+  const q = new URLSearchParams(window.location.search).get('obj')
+  return q && q in COUNT_PLURAL ? (q as CountKind) : null
+}
+
 type PlanCell = { biome: Biome; obj: CountKind }
 // Every creature in the storytelling's biomes EXCEPT the two used by the opening demo +
 // guided slide — kept OUT of the practice so a single session NEVER repeats a creature.
@@ -769,7 +764,10 @@ export function makePracticeCountBeat(story: Storytelling): Beat<HowManyData> {
     make: (d, round = 0) => {
       if (round === 0) plan = buildPlan(story)
       const cell = plan[round] ?? plan[plan.length - 1] ?? { biome: fallbackBiome, obj: fallbackObj }
-      return howManyData(cell.biome, cell.obj, d)
+      // Dev-only: `?obj=rabbit` pins every round to one creature. The plan is shuffled, so without
+      // this you replay the chapter until the one you want to look at happens to come up.
+      const forced = devForcedObj()
+      return howManyData(cell.biome, forced ?? cell.obj, d)
     },
     prompt: d => `Count the ${COUNT_PLURAL[d.obj]}!`,
     say: d => `Here come the ${COUNT_PLURAL[d.obj]}! Tap each one to count it.`,

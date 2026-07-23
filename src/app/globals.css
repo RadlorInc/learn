@@ -708,6 +708,12 @@ p, .p {
   from { transform: scale(0);   opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }
 }
+/* Sprite-sheet playback for the DOM parade (the counting demo + guided rounds, which are plain
+   elements rather than the Pixi canvas). The strip is an <img> inside a cell-sized clipping box;
+   translateX is a percentage of the IMG's own width, so -100% is exactly the whole strip and
+   steps(n) lands precisely on cell boundaries — no need to know the cell width in CSS. */
+@keyframes ci-walk { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
 @keyframes star-pop {
   0%   { transform: scale(0);    }
   60%  { transform: scale(1.25); }

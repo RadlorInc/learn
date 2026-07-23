@@ -5,6 +5,7 @@
  * from emoji while the premium Rive/Lottie pipeline is sorted. See docs/story-mode-3-5.md.
  */
 import React, { useState } from 'react'
+import { SHEETS } from './canvas/sheets'
 
 // ─── Full-bleed scene backdrops ────────────────────────────────
 export type BackdropKind = 'meadow' | 'dusk' | 'stream' | 'orchard'
@@ -82,15 +83,6 @@ export function Backdrop({ kind }: { kind: BackdropKind }) {
         <path d="M150 320 Q 200 280 200 250 Q 200 220 250 210" fill="none" stroke="#e8d5a8" strokeWidth="26" strokeLinecap="round" opacity="0.85" />
       )}
     </svg>
-  )
-}
-
-// ─── Objects ───────────────────────────────────────────────────
-export function Firefly({ lit, size = 56 }: { lit: boolean; size?: number }) {
-  return (
-    <img src="/assets/objects/firefly.png" alt="firefly" draggable={false} decoding="async" loading="lazy" width={size} height={size}
-      style={{ objectFit: 'contain', transition: 'opacity .3s ease, filter .3s ease',
-        opacity: lit ? 1 : 0.5, filter: lit ? 'drop-shadow(0 0 9px #fff3b0)' : 'grayscale(.55) brightness(.92)' }} />
   )
 }
 
@@ -237,6 +229,7 @@ export const COUNT_PLURAL: Record<CountKind, string> = {
 export function CountItem({ kind, on, size = 56, variant = 0, blend = false, side = false }: { kind: CountKind; on: boolean; size?: number; variant?: number; blend?: boolean; side?: boolean }) {
   const [missing, setMissing] = useState(false)
   const [sideFailed, setSideFailed] = useState(false)
+  const [sheetFailed, setSheetFailed] = useState(false)
   const glow = kind === 'firefly'
   // Parade context wants the side-facing sprite; if it 404s, fall back to the normal art, then emoji.
   const useSide = side && !!COUNT_SIDE[kind] && !sideFailed
@@ -246,6 +239,32 @@ export function CountItem({ kind, on, size = 56, variant = 0, blend = false, sid
   const rest = blend
     ? (glow ? 'drop-shadow(0 0 5px rgba(255,246,194,.5))' : 'drop-shadow(0 2px 5px rgba(0,0,0,.42))')
     : (glow ? 'drop-shadow(0 0 8px #fff6c2)' : 'drop-shadow(0 0 5px rgba(255,255,255,.92)) drop-shadow(0 4px 6px rgba(0,0,0,.5))')
+  // A creature with a drawn walk cycle plays it here too. Without this the sheets only reached the
+  // scored round (the Pixi canvas) and the explanation + guided rounds still showed a static sprite,
+  // so the same creature was alive in one half of the chapter and frozen in the other.
+  const sheet = useSide ? SHEETS[COUNT_SIDE[kind]!] : undefined
+  if (sheet && !sheetFailed) {
+    const cellW = Math.round(size * sheet.cellAspect)
+    return (
+      <span role="img" aria-label={kind} style={{
+        display: 'inline-block', width: cellW, height: size, overflow: 'hidden', position: 'relative',
+        transition: 'transform .18s ease, filter .25s ease',
+        filter: on
+          ? (glow ? 'drop-shadow(0 0 16px #fff3b0) brightness(1.05)' : 'drop-shadow(0 0 5px #fff) drop-shadow(0 6px 7px rgba(0,0,0,.45)) brightness(1.06)')
+          : rest,
+        transform: on ? 'translateY(-7px) scale(1.24)' : 'none',
+      }}>
+        <img src={sheet.url} alt="" aria-hidden draggable={false} decoding="async"
+          onError={() => setSheetFailed(true)}
+          style={{
+            position: 'absolute', left: 0, top: 0, height: size, width: cellW * sheet.frames,
+            maxWidth: 'none', imageRendering: 'auto',
+            animation: `ci-walk ${(sheet.frames / sheet.fps).toFixed(3)}s steps(${sheet.frames}) infinite`,
+          }} />
+      </span>
+    )
+  }
+
   if (missing || !srcs.length) {
     return (
       <span role="img" aria-label={kind} style={{ display: 'inline-block', width: size, height: size, lineHeight: `${size}px`, textAlign: 'center',
