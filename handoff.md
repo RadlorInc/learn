@@ -1,6 +1,99 @@
 # Session Handoff — Milo Story Mode
 
-> 🔭 **2026-07-20/21 LATEST — RESPONSIVE 15–16 SHIPPED · THE AGENT ROSTER DELETED · DIAGNOSTIC MADE EVIDENCE-GRADE · AUTH LOGGING · AND THE REAL HEADLINE: THE PRODUCT HAS ~ZERO REAL USERS. `main`@`886895e`, prod sw v41, smoke green.** Six commits: `9be523e` (responsive) · `9e68ba2` (remove agents) · `037dd0d` (metrics query) · `f60c33f` (sw v39) · `94abc32` (diagnostic) · `886895e` (auth_events, sw v41). Gates at each push: `tsc` · **62/62 vitest** · `next build`.
+> 🧹 **2026-07-23 LATEST (SECOND SESSION SAME DAY) — DEAD-CODE SWEEP: `src` IS 73,815 → 62,158 LINES (−11,657, ~16%), 337 → 255 FILES, −1 DEPENDENCY, −9MB ASSETS. Committed as 9 slices on branch `chore/dead-code-sweep`, NOT merged, NOT pushed. `tsc` · 62/62 vitest · `next build` (34 routes) green.**
+>
+> **The parade work from earlier today is the FIRST commit on this branch** (`6f6e5de`) — handoff item "nothing is committed" is now closed.
+>
+> ## Why a branch, and what to do with it
+> `main` auto-deploys to Vercel on push, and this is a wide refactor touching every chapter's entry point. It is parked on `chore/dead-code-sweep` for review. To ship: `git checkout main && git merge --ff-only chore/dead-code-sweep`, bump `public/sw.js` VERSION, push. **Nothing here is deployed.**
+>
+> ## The 9 slices, oldest first
+> | commit | what |
+> |---|---|
+> | `6f6e5de` | **feat**: the 2D walk-cycle parade (the earlier session's work) |
+> | `6852c30` | chore: gitignore `labs-demo/` — 505MB was one `git add .` away |
+> | `5dbb907` | **refactor**: delete 29 unreachable files, −7,869 lines |
+> | `b1118a9` | chore: drop the unused `@supabase/ssr` dep |
+> | `24d193d` | refactor: 12 inline `FitBox` copies → the shared component |
+> | `1db62b3` | refactor: 30 dead exports + 5 dead `GameConfig` fields |
+> | `72d7357` | chore: delete 26 unreferenced teen assets (8.9MB) |
+> | `262317f` | **refactor**: 55 chapter wrappers → `ChapterPortal` + `registry`, −3,719 lines |
+> | `86d334f` | chore: drop a tracked `.next` trace dir inside `src` |
+>
+> ## ⚠️ THE ONE THING TO RE-VERIFY BEFORE MERGING
+> **Chapter COMPLETION is not verified.** The wrapper collapse relocated `finishAndSync` into `ChapterPortal`; the call is unchanged but reaching it needs a full 10-round playthrough per chapter, which I did not do. Everything up to that point WAS driven live through the real dispatch map — story (CoinShop, TimesGrid), teen without Explore (Bank Account), teen with Explore (Ticket Checkout: sim renders, skip→game transitions), 0 console errors. **Play one chapter to the end signed-in and confirm the session saves.** Also: only 3 of the 12 `FitBox` chapters were driven live.
+>
+> ## What the collapse changed, structurally
+> **[ChapterPortal.tsx](src/features/chapters/ChapterPortal.tsx)** owns the plumbing all 55 wrappers repeated (portal mount, one-shot result sync, replay), in two shapes — story (CelebrationModal over a per-chapter backdrop) and teen (`data-band` skin, MasteryState, stopSpeech, optional Explore sim). **[registry.tsx](src/features/chapters/registry.tsx)** is the table and now owns the complete id→component map, so `app/game/page.tsx` imports it rather than defining it and `/teen-preview` drops its own 40-line duplicate. **Adding a chapter is one row.** Code-splitting is preserved — each row keeps its own dynamic import and the portal is built inside the loader.
+> **16 bespoke wrappers remain** (17–18 mostly) — their phases/copy didn't fit the table. They live in `BESPOKE_CHAPTERS` in the same file.
+>
+> ## Deliberately NOT done — these are decisions, not oversights
+> 1. **`/play` (10 AR routes, 2,244 lines) and `/daily` (261 lines) still exist and are still unlinked from anywhere.** They are *parked features*, not dead code, and the handoff marks AR as "user's call". Deleting `/play` also frees `@mediapipe/tasks-vision` and `infra/ar` (525 lines) — its only consumer. **~2,770 lines + 1 dep whenever you say so.**
+> 2. **~130 symbols exported but used only inside their own file.** Dropping the `export` keyword saves no lines and risks breaking a call site — churn, not a cut.
+> 3. **6 teen kit components (1,706 lines) reachable only from `/kit-preview`**, a gallery that 404s in production. Deleting them means deleting the gallery. Real cut, needs your call. (`BandScope` is NOT one of them — it is live via TeenLessonShell.)
+> 4. **`shuffle` is still redefined 46× and `pick`/`rnd` ~95×.** One `core/rand.ts` would save ~300 lines AND fix four copies that use the biased `sort(() => Math.random() - 0.5)`.
+> 5. **The `repositories` barrel is bypassed by half its callers** (18 barrel / 17 direct).
+>
+> ## Two mistakes I made, so the next session doesn't repeat them
+> • **Brace-matching to delete a declaration breaks on destructured params** — the first `{` closes the param list, not the body, so three functions lost their signature and kept their body. `tsc` caught all three. Prefer explicit edits over clever extent-finding.
+> • **`rm -rf .next` while the dev server is running corrupts Turbopack** and produces a wall of alarming-but-stale parse errors in the log. Stop the server first. The browser console buffer also persists across navigations — open a fresh tab before trusting "0 errors".
+> • Minor: `git commit` with no pathspec commits the WHOLE index, not what you just `git add`ed. Use `git commit -- <paths>`. (And zsh does not word-split unquoted `$VARS` — use arrays.)
+>
+> ## Impurity worth knowing about
+> `package-lock.json` landed entirely in the parade commit `6f6e5de`, so that commit's lock reflects the `@supabase/ssr` removal while its `package.json` still lists the dep. Transient and harmless for a squash-merge; it would bite a bisect that runs `npm ci`.
+>
+> **⚠️ Unchanged and still more important than any of this: excluding dev accounts the product has 3 accounts, 2 learners, 0 DAU/WAU/MAU, 0 signups in 30 days. Watch one real child play; start the attorney conversation.**
+>
+> _(the block below is the same day's earlier session — the parade build itself.)_
+
+> 🎞️ **2026-07-23 — THE 3–5 COUNTING PARADE IS NOW REAL 2D ANIMATION. Storytelling 1 (Nature Walk) complete: 11 creatures with drawn walk cycles. NOW COMMITTED as `6f6e5de` (see the block above). `tsc` · 62/62 vitest · `next build` green; 0 console errors.**
+>
+> **⚠️ The 2026-07-20/21 block below is NOT superseded — the product still has ~zero real users, and "watch one real child play" + "start the attorney conversation" are still the two highest-value actions. This session was engineering on the 3–5 chapter; it did not change that.**
+>
+> ## The road taken — two approaches were built and thrown away, on evidence
+> 1. **Rive vector rabbit — ABANDONED.** Drew a full cut-out rabbit in Rive via MCP (16 shapes, 4-beat walk, state machine). Founder: *"not looking good"* — correct; hand-authoring beziers blind through MCP calls cannot match painted AI art. The `.riv` still exists locally as a comparison. Gotchas saved to the `reference-rive-mcp-gotchas` memory (**rotation is RADIANS not degrees**; draw order is reverse-creation; **no render tool and no export tool**, so you cannot see what you drew and a human must export).
+> 2. **Cut-out puppet rig — SUPERSEDED, now dead code.** Cut the legs out of each PNG and swung them from their joints ([rigs.ts](src/features/chapters/story/canvas/rigs.ts) + `buildRig` in ParadeStage, plus `scripts/creature-legs.py` and `scripts/creature-preview.py`). Founder: *"not proper animation"* — also correct, and the honest diagnosis is structural: **one rigid piece per limb on a rigid body cannot change SHAPE, and shape change is most of what reads as animation.** I tuned timing for two rounds before naming that; should have named it first.
+>
+> ## ✅ What shipped — the founder's idea, and it worked
+> **Generate a walk-cycle VIDEO per creature → split to frames → key the background → sprite sheet.** A video model gives temporally coherent frames *by construction*, which is exactly what independently-generated stills cannot do (style drift). Legs bend, bodies deform, silhouettes change frame to frame.
+>
+> • **[scripts/creature-frames.py](scripts/creature-frames.py)** — the whole pipeline, one command per creature: decode (imageio ships its own ffmpeg, no brew) → soft chroma key + despill → **ONE shared bbox across all frames** (per-frame bboxes make the sheet wobble) → cycle-period detection → palette-quantised strip + preview GIF.
+> • **[sheets.ts](src/features/chapters/story/canvas/sheets.ts)** — 11 entries, keyed by sprite URL. `fps` is per-creature cadence AND, for grounded creatures, sets ground speed.
+> • **Runtime** — `AnimatedSprite` in ParadeStage (it *extends* Sprite, so anchor/scale/facing/hit-area applied unchanged), plus the DOM path in `CountItem` so the **explanation and guided rounds** animate too — they were still static after the first pass, because only the Pixi canvas had sheets.
+> • **11 sheets, 4.2MB** (11MB before quantising), each loaded only when its creature appears.
+>
+> ## ✅ Travel rewritten — creatures WALK in, they are not pushed in
+> Travel was a spring easing to a target at a speed unrelated to the legs → feet skated, read as a sticker being dragged. Now **one cycle carries one stride** (`STRIDE = 0.67` of body height), so ground speed and leg speed agree by construction. Measured: constant 8–9px/step with no decay (a spring shrinks every step), easing only over the last stride. **Standing creatures PAUSE the cycle** and breathe instead — leaving it running is skating on the spot. Flyers/swimmers cruise at a set speed (no ground contact to betray a mismatch).
+>
+> **On tap:** the next creature is now requested **0.1ms** after the tap (was: after the whole ~2s exit walk — the child answered then watched dead time), and the counted one exits at **2.4× with its leg cycle sped up to match**. Safe because within a slot both travel the same direction, so outgoing and incoming never cross.
+>
+> ## 🐛 Two bugs the founder caught from a screenshot
+> • **Taps hit the wrong creature.** The hit area was measured from `o.texture` — the **1024×1024 source sprite** — but a sheeted creature draws a CELL (fish: 351×256). Hit spans were `[-80,814]` and `[210,1104]`: ~600px of overlap. Now measured off the drawn texture → `[241,493]` and `[531,783]`, a 38px gap, and a real tap verified to land on the correct creature.
+> • **The collect tray covered the creatures.** It was `position:fixed; top:112` centred — exactly where creatures rest (36%/64% of width). Now in one bottom-anchored column with the answer buttons stacked above it, so neither can collide with the other or with the parade.
+>
+> ## 🔬 Video-generation gotchas — READ BEFORE GENERATING THE REMAINING 9
+> • **Never key green on a green creature.** The turtle's own flippers were keyed away (`alphacov 0.31`). Regenerated on **magenta** (`--key magenta`). **The farm frog will hit this.**
+> • **Kling fades the background white→green across the clip** rather than starting green. Always use the settled tail (`--start 0.5`, shark needed `0.78`), or generate 10s so the settled part is long enough to hold real motion.
+> • **Motion-blurred edges are half-key-coloured** — a hard threshold ringed the eagle in green smudges. The key is now a soft alpha ramp.
+> • **Cycle detection must be capped at half the clip** — otherwise it "finds" a 49-of-61-frame period it cannot verify and the loop hitches. Falls back to spanning the whole clip when no real repeat exists; `--pingpong` for oscillating limbs with no clean cycle (the turtle: 14 cells).
+> • **A "server isn't responding" error may still have submitted** — cost 7.5 credits on a duplicate firefly. Check before retrying.
+> • Judge sheets on `motion` vs `loopgap` numbers, not on a strip — and at real display size, not 1024px.
+>
+> ## 📊 Credits: **120 spent, 649.2 left** (Higgsfield Plus). 7.5/video at 5s, 15 at 10s. ~30 went on retries.
+>
+> ## ▶ OPEN — this chapter
+> 1. ~~**Nothing is committed.**~~ ✅ **DONE** — committed as `6f6e5de` on `chore/dead-code-sweep` (see the 🧹 block above). Still unmerged and unpushed.
+> 2. **DELETE THE DEAD RIG — STILL OPEN.** `rigs.ts`, `buildRig` + `SWING_RATE`/`STANCE`/leg code in ParadeStage, `scripts/creature-legs.py`, `scripts/creature-preview.py`. Unused on every Nature creature; keeping two systems is pure debt. *(The dead-code sweep did NOT do this — `rigs.ts` is still imported by ParadeStage, so it isn't dead by the import graph; removing it means editing live animation code, which belongs with parade work, not a mechanical sweep.)*
+> 3. **Farm + Space storytellings — 9 creatures, ~70 credits** (lamb, chick, duckling, bee, frog, duck, dragonfly, astronaut, alien). Frog needs the magenta key.
+> 4. **Cadence tuning is one number each in sheets.ts.** Founder already flagged eagle (0.67→1.33s) and ladybug (0.55→1.00s) as too fast. **`ant` is now the fastest at 0.46s** and may be next. Also unjudged: whether 2.4× exit and the instant refill feel right (briefly 3 creatures on screen).
+> 5. **Not checked: Safari, real device, short-landscape.** All of this was headless Chromium at 1024×600.
+> 6. Minor: the collect tray renders butterflies as the 🦋 emoji while the parade shows the painted one (`COUNT_SRC.butterfly = []` is a deliberate older founder call, now inconsistent).
+>
+> **Verify recipe:** `/story?obj=<creature>` — a **dev-only** override (stripped from production) that pins every scored round to one creature, because the round plan is shuffled. Landscape only; the demo/guided rounds use their own fixed creatures.
+>
+> _(everything below is prior sessions — the 🔭 block was the previous LATEST and its headline still stands.)_
+
+> 🔭 **2026-07-20/21 — RESPONSIVE 15–16 SHIPPED · THE AGENT ROSTER DELETED · DIAGNOSTIC MADE EVIDENCE-GRADE · AUTH LOGGING · AND THE REAL HEADLINE: THE PRODUCT HAS ~ZERO REAL USERS. `main`@`886895e`, prod sw v41, smoke green.** Six commits: `9be523e` (responsive) · `9e68ba2` (remove agents) · `037dd0d` (metrics query) · `f60c33f` (sw v39) · `94abc32` (diagnostic) · `886895e` (auth_events, sw v41). Gates at each push: `tsc` · **62/62 vitest** · `next build`.
 >
 > ## ⚠️ READ THIS FIRST — the numbers, because they should reorder everything
 > A founder-metrics query run against prod, **excluding the two dev accounts** (which own 13 of 15 learners):
@@ -394,7 +487,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-21 (see the top 🔭 block. Shipped: 15–16 responsive across 144 measured screens + a recurring Safari-class SVG-attribute bug; the diagnostic made evidence-grade (fail confirmation + play-data plan revision, 175/175 planted gaps exact); durable auth-event logging. Removed at founder request: the 12-agent roster and docs/agent-log.md — do not spawn named specialists. **⚠️ THE HEADLINE IS NOT ENGINEERING: excluding dev accounts the product has 3 accounts, 2 learners, 6 sessions, 0 DAU/WAU/MAU, 0 signups in 30 days, 0 recorded gap closures.** The next two actions are human — watch one real child play, and start the attorney conversation (no privacy policy/ToS/COPPA exists; it blocks launch AND charging and has the longest lead time). Deliberately unfinished and documented in place: centring the board on instrument questions (measured pushing the commit button off-screen; a `tall` gate is written but unverified at 1440×900).)_
+_Last updated: 2026-07-23 (SECOND session same day — see the top 🧹 block. A dead-code sweep took `src` from 73,815 to 62,158 lines (−16%), 337 → 255 files, dropped one dependency and 9MB of assets, and collapsed 55 near-identical chapter wrappers into one shared portal plus a table — adding a chapter is now one row. Committed as **9 slices on branch `chore/dead-code-sweep`, unmerged and unpushed**; the earlier parade work is the first of them. **Before merging, play one chapter to the end signed-in** — chapter COMPLETION is the one path not verified, because it needs a full playthrough. Deliberately left alone: `/play` and `/daily` (unlinked but parked features, not dead code — ~2,770 lines + `@mediapipe/tasks-vision` whenever you want them gone) and the `/kit-preview`-only components. **Still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
+
+_Prior update: 2026-07-21 (Shipped: 15–16 responsive across 144 measured screens + a recurring Safari-class SVG-attribute bug; the diagnostic made evidence-grade (fail confirmation + play-data plan revision, 175/175 planted gaps exact); durable auth-event logging. Removed at founder request: the 12-agent roster and docs/agent-log.md — do not spawn named specialists. **⚠️ THE HEADLINE IS NOT ENGINEERING: excluding dev accounts the product has 3 accounts, 2 learners, 6 sessions, 0 DAU/WAU/MAU, 0 signups in 30 days, 0 recorded gap closures.** The next two actions are human — watch one real child play, and start the attorney conversation (no privacy policy/ToS/COPPA exists; it blocks launch AND charging and has the longest lead time). Deliberately unfinished and documented in place: centring the board on instrument questions (measured pushing the commit button off-screen; a `tall` gate is written but unverified at 1440×900).)_
 
 _Prior update: 2026-07-19 (third update — the ENTIRE 15–16 band (12/12 chapters) rebuilt and LIVE on `main`@`aea76a5`, prod sw v38. Single-number answers are tapped with misconception distractors; an instrument is kept only where the answer is a PAIR or a construction; the guided round is gone and every graded gesture is worked in the walkthrough. Six chapters whose WORLD gave out at their hardest operation were rebuilt mechanically, not clamped (ruling bench, signed tiles, shared bill, climb route, level counter, protractor). ⚠️ MOST IMPORTANT: I shipped a bug that marked every correct answer WRONG in a padded chapter and my own live check passed it, because a wrong answer still ADVANCES — verify on `data-test-phase`, never on the screen moving on. Fixed via `GameConfig.padValue` + a gate proven to fail on the real bug. NEXT: extend the question-quality E2E spec to the 15–16 ids (would have caught it automatically), then short-landscape — nothing in this band has been checked there.)_
 <!-- prior: 2026-07-12 — full `milo-math-mentor` audit of the 12–14 band, then live-game correctness + structure + coverage fixes + the question-clarity 3-zone rollout to all 12 chapters — ALL UNCOMMITTED.** Key discovery: the twelve `*TeenLesson.tsx` `makeRound` generators are ORPHANED (the child plays the GameShell games), so fixes were redone against the LIVE games. Fixed: FunctionFactory false-arithmetic reteach, JuiceBar identical tiers 2/3, WeatherStation debt-framing, NightFlight L1≈L2 (+ new translate task), BuildSite L3⊂L2 (+ CLOSED the circle coverage gap via answers in terms of π), CableCar/linearRelationships keystone rebuilt (distinct tiers + non-dial tap tasks: is-it-a-function + read-a-graph), and the `m.exponentsRoots ← i.decimals` graph edge (doc + code). Question-clarity `context`/`instruction` added to all 11 remaining chapters (10 parallel agents + CableCar). `tsc` + **26/26 tests** clean; headless invariant tests + live browser drives, 0 console errors. NEXT: commit the whole batch (this + the 07-10 SkyTower pilot) + bump `public/sw.js` v20→v21 + deploy.)_ -->
