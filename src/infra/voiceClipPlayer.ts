@@ -18,6 +18,7 @@ let _keys: Set<string> | null = null
 let _loading: Promise<void> | null = null
 let _loadedFor: string | null = null
 let _active: HTMLAudioElement | null = null
+let cancelClip: (() => void) | null = null
 
 function loadManifest(voice: string): Promise<void> {
   if (_keys && _loadedFor === voice) return Promise.resolve()
@@ -39,6 +40,83 @@ if (typeof window !== 'undefined') {
 
 /** Warm the manifest early so the first line of a chapter isn't a guaranteed miss. */
 export function preloadVoiceClips(): void { void loadManifest(getVoicePref()) }
+
+// ── Fragment stitching ────────────────────────────────────────────────────────
+// A question prompt carries its numbers ("negative 5 times 3…"), so it can't be one
+// clip. We pre-render the literal RUNS between the numbers and a small value
+// vocabulary, then play run → value → run. Only the seams are joins; most of the
+// sentence is still real speech.
+type Frag = { segments: string[]; re: RegExp }
+let _frags: Frag[] | null = null
+let _fragKeys: Set<string> | null = null
+let _fragLoading: Promise<void> | null = null
+
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+function loadFragments(voice: string): Promise<void> {
+  if (_frags) return Promise.resolve()
+  if (!_fragLoading) {
+    _fragLoading = Promise.all([
+      fetch(`/audio/${voice}/frag/fragments.json`).then((r) => (r.ok ? r.json() : [])),
+      fetch('/audio/fragment-templates.json').then((r) => (r.ok ? r.json() : [])),
+    ])
+      .then(([keys, tpls]: [string[], { segments: string[] }[]]) => {
+        _fragKeys = new Set(keys)
+        // Anchored, non-greedy holes: the literal runs pin the match, the gaps are values.
+        _frags = tpls.map((t) => ({
+          segments: t.segments,
+          re: new RegExp('^' + t.segments.map(esc).join('([^]*?)') + '$'),
+        }))
+      })
+      .catch(() => { _fragKeys = new Set(); _frags = [] })
+  }
+  return _fragLoading
+}
+
+/** Clip keys for a stitched line, or null if any piece is missing. */
+function stitchKeys(text: string): string[] | null {
+  if (!_frags || !_fragKeys) return null
+  for (const f of _frags) {
+    const m = text.match(f.re)
+    if (!m) continue
+    const keys: string[] = []
+    for (let i = 0; i < f.segments.length; i++) {
+      const seg = f.segments[i].trim()
+      if (seg && /[a-zA-Z]/.test(seg)) keys.push(clipKey(seg))
+      const val = m[i + 1]?.trim()
+      if (val) {
+        // "negative 5" is two fragments, so the vocabulary stays 0–100 plus one word.
+        for (const tok of val.split(/\s+/)) {
+          const k = clipKey(`#${tok}`)
+          if (!_fragKeys.has(k)) return null      // an unvoiceable value ⇒ fall back whole
+          keys.push(k)
+        }
+      }
+    }
+    // Every piece must exist. A gap mid-sentence reads as a bug; browser speech doesn't.
+    return keys.every((k) => _fragKeys!.has(k)) ? keys : null
+  }
+  return null
+}
+
+/** Play clips back to back. Resolves when the last ends; rejects if any fails to load. */
+function playSequence(urls: string[], onStart?: () => void): { done: Promise<void>; cancel: () => void } {
+  let i = 0, cancelled = false
+  let cur: HTMLAudioElement | null = null
+  const done = new Promise<void>((resolve, reject) => {
+    const next = () => {
+      if (cancelled) return resolve()
+      if (i >= urls.length) return resolve()
+      const a = new Audio(urls[i++])
+      cur = a; _active = a
+      a.onended = next
+      a.onerror = () => reject(new Error('fragment missing'))
+      a.play().then(() => { if (i === 1) onStart?.() }).catch(reject)
+    }
+    next()
+  })
+  return { done, cancel: () => { cancelled = true; if (cur) { try { cur.pause() } catch {} } } }
+}
 
 /** Stop any clip in flight. Called by stopSpeech() so one stop covers both paths. */
 export function stopClip(): void {
@@ -69,16 +147,28 @@ export function speakLine(text: string, opts: Opts): () => void {
     if (cancelled) return
     cancelled = true
     if (sweep) { clearInterval(sweep); sweep = null }
+    if (cancelClip) { cancelClip(); cancelClip = null }   // also stops a running stitch
     stopClip()
   }
 
   const voice = getVoicePref()
   if (voice === 'device') { fallback(); return cancel }
 
-  void loadManifest(voice).then(() => {
+  void loadManifest(voice).then(async () => {
     if (cancelled) return
     const key = clipKey(text)
-    if (!_keys?.has(key)) { fallback(); return }
+    if (!_keys?.has(key)) {
+      // No whole-line clip — try stitching it from pre-rendered runs + values.
+      await loadFragments(voice)
+      if (cancelled) return
+      const keys = stitchKeys(text)
+      if (!keys?.length) { fallback(); return }
+      const seq = playSequence(keys.map((k) => `/audio/${voice}/frag/${k}.mp3`), () => onStart?.())
+      cancelClip = seq.cancel
+      seq.done.then(() => { if (!cancelled) { _active = null; onDone?.() } })
+         .catch(() => { if (!cancelled) { _active = null; fallback() } })
+      return
+    }
 
     const audio = new Audio(`/audio/${voice}/${key}.mp3`)
     _active = audio

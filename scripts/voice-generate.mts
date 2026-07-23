@@ -33,15 +33,35 @@ if (!KEY && !DRY) {
 
 const MODEL = 'eleven_v3'                 // most expressive; honours the audio tags below
 const FORMAT = 'mp3_22050_32'             // speech at 32kbps — ~4x smaller than 128, no audible loss
-const OUT = `public/audio/${voiceId}`
 
 type Line = { key: string; text: string; chars: number; kind?: string; sources: string[] }
-const corpus: Line[] = JSON.parse(readFileSync('scripts/.voice-corpus.json', 'utf8'))
+
+const FRAGMENTS = rest.includes('--fragments')
+// Fragments live in their own folder and manifest — they must never be mistaken for a
+// whole-line clip, or a bare segment would be spoken in place of a full sentence.
+const OUT = FRAGMENTS ? `public/audio/${voiceId}/frag` : `public/audio/${voiceId}`
+const MANIFEST = FRAGMENTS ? 'fragments.json' : 'manifest.json'
+const corpus: Line[] = FRAGMENTS ? loadFragments() : JSON.parse(readFileSync('scripts/.voice-corpus.json', 'utf8'))
+
+/**
+ * Fragment corpus: the literal runs of a templated prompt, plus the value vocabulary.
+ * Values are rendered from a spoken form ("negative", "17") so pronunciation is stable;
+ * the KEY is the raw token the runtime captures, so lookup needs no conversion table.
+ */
+function loadFragments(): Line[] {
+  const f = JSON.parse(readFileSync('scripts/.voice-fragments.json', 'utf8'))
+  const segs: Line[] = f.segments.map((s: { key: string; text: string }) =>
+    ({ key: s.key, text: s.text, chars: s.text.length, kind: 'segment', sources: [] }))
+  const vals: Line[] = f.values.map((v: { key: string; text: string }) =>
+    ({ key: v.key, text: v.text, chars: v.text.length, kind: 'value', sources: [] }))
+  return [...segs, ...vals]
+}
 
 /** Direction per line type. Milo teaches — he does not cheer. */
 function tagFor(l: Line): string {
   const t = l.text
   // THE PLAN sets up the whole chapter — warm and unhurried, not lecture-clear.
+  if (l.kind === 'value' || l.kind === 'segment') return ''   // fragments: no tag, they are stitched
   if (l.kind === 'plan')                              return '[warm]'
   if (/^Here is the plan|^Here's the plan/i.test(t))  return '[warm]'
   if (/^Not quite|^Almost|try again/i.test(t))        return '[gently]'    // wrong answer
@@ -85,7 +105,7 @@ for (const [i, l] of todo.entries()) {
 
 // Manifest = exactly what's on disk, so a runtime lookup never promises a missing clip.
 const have = corpus.filter((l) => existsSync(`${OUT}/${l.key}.mp3`))
-writeFileSync(`${OUT}/manifest.json`, JSON.stringify(have.map((l) => l.key)))
+writeFileSync(`${OUT}/${MANIFEST}`, JSON.stringify(have.map((l) => l.key)))
 
 const bytes = have.reduce((n, l) => n + statSync(`${OUT}/${l.key}.mp3`).size, 0)
 console.log(`\ndone: ${ok} rendered, ${failed} failed`)
