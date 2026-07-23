@@ -13,6 +13,8 @@ import { NODE_BY_ID, type Band } from '@/core/skillGraph'
 import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
 import { saveRecheck } from '@/data/repositories'
 import { PT, ACCENTS, LabBackdrop, BackChip, ChoiceButton, PtMilo, IntroCard, type Accent } from '@/features/chapters/story/preteen/kit'
+import { useViewport } from '@/shared/hooks/useViewport'
+import { DiagVisualView } from '@/features/diagnostic/DiagVisual'
 
 const BANDS = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan
@@ -30,6 +32,15 @@ const isPass = (item: DiagItem, choice: string) => item.passSet ? item.passSet.i
 const newClientId = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16) })
 
 export default function RecheckPage() {
+  // The question card clears the MEASURED answer strip: long labels ("Quadrant III") wrap to two
+  // rows on a narrow frame, and the old fixed 160px reserve got covered by them.
+  const { w: vw, h: vh } = useViewport()
+  // Tiles scale with the viewport (same formula as the checkup) — fixed 100px tiles wrapped to two
+  // rows on a short landscape frame and swallowed the question.
+  const btn = Math.max(64, Math.min(vh < 470 ? 100 : 128, Math.round(Math.min(vw / 5.2, vh / (vh < 470 ? 4.4 : 5.0)))))
+  const tilesRef = useRef<HTMLDivElement>(null)
+  const [tilesH, setTilesH] = useState(0)
+  useEffect(() => { const h = tilesRef.current?.offsetHeight ?? 0; setTilesH(prev => (prev === h ? prev : h)) })
   const [band, setBand] = useState<Band>('9-11')
   const [skill, setSkill] = useState<string | null>(null)
   const [week, setWeek] = useState(6)
@@ -164,18 +175,19 @@ export default function RecheckPage() {
             Sits in the band between the top chip and the fixed 100px answer tiles, so it stays clear
             at every viewport. Fonts scale by vh via clamp() (no JS viewport flag needed here). */}
         <div style={{ position: 'fixed', inset: 0, zIndex: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '72px 6vw 160px', pointerEvents: 'none' }}>
+          padding: `72px 6vw ${(tilesH || 100) + 48}px`, pointerEvents: 'none' }}>
           <div style={{ maxWidth: 'min(94vw,780px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px,1.6vh,16px)', textAlign: 'center',
             background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 20, border: `1px solid ${accent.base}66`,
             padding: 'clamp(16px,4vh,40px) clamp(22px,5vw,60px)',
             boxShadow: `0 0 30px ${accent.base}33, 0 14px 34px rgba(0,0,0,0.45)` }}>
             <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: 'clamp(10px,1.5vh,12.5px)', letterSpacing: 1.5, color: accent.base, background: accent.soft, borderRadius: 7, padding: '4px 10px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{`Check ${idx + 1} of ${probes.length}`}</span>
-            <span style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: 'clamp(24px,6vh,56px)', lineHeight: 1.18, color: PT.ink }}>{item.prompt}</span>
+            <span style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: item.visual ? 'clamp(22px,4.6vh,42px)' : 'clamp(24px,6vh,56px)', lineHeight: 1.18, color: PT.ink }}>{item.prompt}</span>
+            {item.visual && <DiagVisualView v={item.visual} accent={accent} />}
           </div>
         </div>
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: 'clamp(12px,3vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
+        <div ref={tilesRef} style={{ position: 'fixed', left: 0, right: 0, bottom: '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: 'clamp(12px,3vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
           {item.choices.map(c => (
-            <ChoiceButton key={c} label={c} accent={accent} state={picked === c ? 'idle' : picked ? 'dim' : 'idle'} size={100} onClick={() => answer(c)} disabled={!!picked} />
+            <ChoiceButton key={c} label={c} accent={accent} state={picked === c ? 'idle' : picked ? 'dim' : 'idle'} size={btn} onClick={() => answer(c)} disabled={!!picked} />
           ))}
         </div>
         <PtMilo left={9} />

@@ -14,7 +14,20 @@
 /** A probe item. `kind:'parent'` = a 3–5 readiness activity the PARENT does with the child, then
  *  reports the outcome (the `choices`); `passSet` is which outcomes count as "can do". `kind:'child'`
  *  (default, undefined) = a child-facing MCQ where `choices`/`answer` are literal. */
-export interface DiagItem { prompt: string; choices: string[]; answer: string; kind?: 'child' | 'parent'; passSet?: string[] }
+export interface DiagItem { prompt: string; choices: string[]; answer: string; kind?: 'child' | 'parent'; passSet?: string[]; visual?: DiagVisual }
+
+/** A picture for a probe item — DECLARATIVE (core stays React-free); drawn by features/diagnostic/DiagVisual.
+ *  Only added where the words alone are abstract (a chart, a point, a fraction, an angle…); plain
+ *  arithmetic stays text-only — a picture of "47 + 26" teaches nothing. */
+export type DiagVisual =
+  | { t: 'bars'; labels: string[]; vals: number[] }              // a bar chart to read
+  | { t: 'point'; x: number; y: number }                         // a point on the coordinate plane
+  | { t: 'slope'; rise: number; run: number }                    // rise-over-run staircase
+  | { t: 'frac'; parts: [number, number][] }                     // 1–2 bars, each [numerator, denominator]
+  | { t: 'array'; rows: number; cols: number }                   // rows × cols of unit squares
+  | { t: 'angle'; deg: number }                                  // two rays + an arc
+  | { t: 'rtri'; a: number; b: number; labels: [string, string, string] }  // right triangle [base, height, hyp]
+  | { t: 'numline'; lo: number; hi: number; mark: number }        // a value between two landmarks
 
 // ── Phase 4 — per-child generated items ──────────────────────────────────────────────────
 // A given child gets a STABLE, reproducible probe seeded from (learner, skill, attempt): re-takes
@@ -67,26 +80,28 @@ export const ITEM_GENERATORS: Record<string, Gen> = {
   'p.numbersTo100': () => { const n = R(31, 89); return { prompt: `What comes just after ${n}?`, ...mc(n + 1, [n - 1, n + 10, n + 2]) } },
   'p.placeValue2': () => { const n = R(23, 89); return { prompt: `How many tens are in ${n}?`, ...mc(Math.floor(n / 10), [n % 10, Math.floor(n / 10) + 1, n]) } },
   'p.compare100': () => { const a = R(21, 98), b = a + pick([1, -1, 10, -10, 7]); return { prompt: `Which is greater, ${a} or ${b}?`, ...mc(Math.max(a, b), [Math.min(a, b)]) } },
-  'p.skipCount': () => { const s = pick([2, 5, 10]), k = R(2, 5), a = s * k; return { prompt: `${a}, ${a + s}, ${a + 2 * s}, ?`, ...mc(a + 3 * s, [a + 2 * s, a + 4 * s, a + 3 * s + 1]) } },
+  'p.skipCount': () => { const s = pick([2, 5, 10]), k = R(2, 5), a = s * k; return { prompt: `${a}, ${a + s}, ${a + 2 * s}, … what number comes next?`, ...mc(a + 3 * s, [a + 2 * s, a + 4 * s, a + 3 * s + 1]) } },
   'p.addTo100': () => { const a = R(24, 68), b = R(15, 30); return { prompt: `${a} + ${b} = ?`, ...mc(a + b, [a + b + 10, a + b - 1, a + b + 1]) } },
   'p.subTo100': () => { const a = R(52, 96), b = R(15, 39); return { prompt: `${a} − ${b} = ?`, ...mc(a - b, [a - b + 10, a - b - 1, a - b + 1]) } },
-  'p.multConcept': () => { const g = R(2, 5), per = R(2, 5); return { prompt: `${g} groups of ${per} — how many altogether?`, ...mc(g * per, [g + per, g * per + per, g * per - 1]) } },
-  'p.fractionsIntro': () => { const d = pick([2, 3, 4]); const w = d === 2 ? 'half' : d === 3 ? 'third' : 'quarter'; return { prompt: `A pizza is cut into ${d} equal parts and you take 1. What fraction is that?`, ...mc(`1/${d}`, [`1/${d + 1}`, `${d}/1`, `2/${d}`]) } },
+  'p.multConcept': () => { const g = R(2, 5), per = R(2, 5); return { prompt: `${g} groups of ${per} — how many altogether?`, visual: { t: 'array', rows: g, cols: per }, ...mc(g * per, [g + per, g * per + per, g * per - 1]) } },
+  'p.fractionsIntro': () => { const d = pick([2, 3, 4]); const w = d === 2 ? 'half' : d === 3 ? 'third' : 'quarter'; return { prompt: `A pizza is cut into ${d} equal parts and you take 1. What fraction is that?`, visual: { t: 'frac', parts: [[1, d]] }, ...mc(`1/${d}`, [`1/${d + 1}`, `${d}/1`, `2/${d}`]) } },
 
   // ── 9–11 core ──
   'i.bigNumbers': () => { const a = R(2, 9) * 1000 + R(0, 999); const b = a + pick([1000, -1000, 100, -100, 111]); return { prompt: `Which is greater, ${a.toLocaleString()} or ${b.toLocaleString()}?`, ...mc(Math.max(a, b).toLocaleString(), [Math.min(a, b).toLocaleString()]) } },
-  'i.rounding': () => { const n = R(11, 89); return { prompt: `Round ${n} to the nearest 10.`, ...mc(Math.round(n / 10) * 10, [Math.floor(n / 10) * 10, Math.ceil(n / 10) * 10 + 10, n]) } },
-  'i.multFacts': () => { const a = R(4, 9), b = R(4, 9); return { prompt: `${a} × ${b} = ?`, ...mc(a * b, [a * b + a, a * b - b, a * b + 1]) } },
+  // n is never a multiple of 10 — "round 30 to the nearest 10" asks nothing (and puts the number
+  // line's marker on top of a landmark).
+  'i.rounding': () => { const n = R(1, 8) * 10 + R(1, 9); return { prompt: `Look at the number line. Round ${n} to the nearest 10 — which end is it closer to?`, visual: { t: 'numline', lo: Math.floor(n / 10) * 10, hi: Math.floor(n / 10) * 10 + 10, mark: n }, ...mc(Math.round(n / 10) * 10, [Math.floor(n / 10) * 10, Math.ceil(n / 10) * 10 + 10, n]) } },
+  'i.multFacts': () => { const a = R(4, 9), b = R(4, 9); return { prompt: `${a} × ${b} = ?`, visual: { t: 'array', rows: a, cols: b }, ...mc(a * b, [a * b + a, a * b - b, a * b + 1]) } },
   'i.multMultiDigit': () => { const a = R(13, 29), b = R(3, 6); return { prompt: `${a} × ${b} = ?`, ...mc(a * b, [a * b + b, a * b - a, a * b + 10]) } },
   'i.division': () => { const b = R(3, 9), q = R(3, 9), a = b * q; return { prompt: `${a} ÷ ${b} = ?`, ...mc(q, [q + 1, q - 1, q + 2]) } },
   'i.factors': () => { const n = pick([12, 16, 18, 20, 24]); const f = pick([2, 3, 4, 6].filter(x => n % x === 0)); const non = [5, 7, 9, 11].filter(x => n % x !== 0); return { prompt: `Which is a factor of ${n}?`, ...mc(f, non) } },
-  'i.fractionEquiv': () => { const d = pick([2, 3, 4, 5]), k = pick([2, 3]); return { prompt: `Which fraction equals 1/${d}?`, ...mc(`${k}/${k * d}`, [`${k}/${k * d + 1}`, `${k + 1}/${k * d}`, `1/${d + 1}`]) } },
-  'i.fractionOps': () => { const d = pick([4, 5, 6, 8]); const a = R(1, d - 2), b = R(1, d - 1 - a); return { prompt: `${a}/${d} + ${b}/${d} = ?`, ...mc(`${a + b}/${d}`, [`${a + b}/${2 * d}`, `${a + b + 1}/${d}`, `${a * b}/${d}`]) } },
+  'i.fractionEquiv': () => { const d = pick([2, 3, 4, 5]), k = pick([2, 3]); return { prompt: `Which fraction equals 1/${d}?`, visual: { t: 'frac', parts: [[1, d]] }, ...mc(`${k}/${k * d}`, [`${k}/${k * d + 1}`, `${k + 1}/${k * d}`, `1/${d + 1}`]) } },
+  'i.fractionOps': () => { const d = pick([4, 5, 6, 8]); const a = R(1, d - 2), b = R(1, d - 1 - a); return { prompt: `${a}/${d} + ${b}/${d} = ?`, visual: { t: 'frac', parts: [[a, d], [b, d]] }, ...mc(`${a + b}/${d}`, [`${a + b}/${2 * d}`, `${a + b + 1}/${d}`, `${a * b}/${d}`]) } },
   'i.decimals': () => { const a = R(2, 8) / 10, b = R(21, 79) / 100; const A = a.toFixed(1), B = b.toFixed(2); return { prompt: `Which is greater, ${A} or ${B}?`, ...mc(a > b ? A : B, [a > b ? B : A]) } },
-  'i.measureUnits': () => { const m = R(2, 6); return { prompt: `${m} meters = ? centimeters`, ...mc(m * 100, [m * 10, m * 1000, m * 100 + 10]) } },
-  'i.areaPerimeter': () => { const w = R(2, 9), h = R(2, 9); return { prompt: `A rectangle is ${w} by ${h}. What is its area?`, ...mc(w * h, [2 * (w + h), w * h + w, w * h - h]) } },
-  'i.anglesSymmetry': () => { const [d, k] = pick([[40, 'Acute'], [55, 'Acute'], [90, 'Right'], [120, 'Obtuse'], [135, 'Obtuse']] as [number, string][]); return { prompt: `An angle measures ${d}°. Is it acute, right, or obtuse?`, ...mc(k, (['Acute', 'Right', 'Obtuse'] as string[]).filter(x => x !== k)) } },
-  'i.dataGraphs': () => { const labels = ['Red', 'Blue', 'Green', 'Gold']; const vals = labels.map(() => R(2, 9)); let mi = 0; for (let i = 1; i < vals.length; i++) if (vals[i] > vals[mi]) mi = i; if (vals.filter(v => v === vals[mi]).length > 1) vals[mi] += 1; return { prompt: `A chart shows ${labels.map((l, i) => `${l} ${vals[i]}`).join(', ')}. Which has the most?`, ...mc(labels[mi], labels.filter((_, i) => i !== mi)) } },
+  'i.measureUnits': () => { const m = R(2, 6); return { prompt: `${m} meters is how many centimeters?`, ...mc(m * 100, [m * 10, m * 1000, m * 100 + 10]) } },
+  'i.areaPerimeter': () => { const w = R(2, 9), h = R(2, 9); return { prompt: `A rectangle is ${w} by ${h}. What is its area?`, visual: { t: 'array', rows: h, cols: w }, ...mc(w * h, [2 * (w + h), w * h + w, w * h - h]) } },
+  'i.anglesSymmetry': () => { const [d, k] = pick([[40, 'Acute'], [55, 'Acute'], [90, 'Right'], [120, 'Obtuse'], [135, 'Obtuse']] as [number, string][]); return { prompt: `Look at the angle. It measures ${d}°. Is it acute, right, or obtuse?`, visual: { t: 'angle', deg: d }, ...mc(k, (['Acute', 'Right', 'Obtuse'] as string[]).filter(x => x !== k)) } },
+  'i.dataGraphs': () => { const labels = ['Red', 'Blue', 'Green', 'Gold']; const vals = labels.map(() => R(2, 9)); let mi = 0; for (let i = 1; i < vals.length; i++) if (vals[i] > vals[mi]) mi = i; if (vals.filter(v => v === vals[mi]).length > 1) vals[mi] += 1; return { prompt: `Look at the chart. Which color has the most?`, visual: { t: 'bars', labels, vals }, ...mc(labels[mi], labels.filter((_, i) => i !== mi)) } },
 
   // ── 12–14 (middle) ── (new for the 12–14 band; MCQ, math-without-fear: no free-typed answers)
   'm.integers': () => { const s = new Set<number>(); while (s.size < 4) s.add(R(-9, 9)); const xs = [...s]; const ans = Math.max(...xs); return { prompt: `Which is greatest:  ${xs.join(',  ')} ?`, ...mc(ans, xs.filter(x => x !== ans)) } },
@@ -96,10 +111,10 @@ export const ITEM_GENERATORS: Record<string, Gen> = {
   'm.exponentsRoots': () => { if (_rand() < 0.5) { const b = R(3, 12); return { prompt: `What is ${b}²?`, ...mc(b * b, [b * 2, b * b - b, (b + 1) * (b + 1), b * b + b]) } } const b = R(3, 12), s = b * b; return { prompt: `√${s} = ?`, ...mc(b, [b + 1, b - 1, Math.round(s / 2)]) } },
   'm.orderOps': () => { const a = R(2, 6), b = R(2, 5), c = R(2, 5); return { prompt: `${a} + ${b} × ${c} = ?`, ...mc(a + b * c, [(a + b) * c, a + b + c, a * b + c, a + b * c + 1]) } },
   'm.algExpressions': () => { const x = R(2, 6), m = R(2, 5), b = R(1, 6); return { prompt: `If x = ${x}, what is ${m}x + ${b}?`, ...mc(m * x + b, [m + x + b, m * x, m * (x + b), m * x + b + 1]) } },
-  'm.equationsIneq': () => { const a = R(2, 5), x = R(2, 8), b = R(1, 9), c = a * x + b; return { prompt: `Solve:  ${a}x + ${b} = ${c}`, ...mc(x, [x + 1, x - 1, c - b, Math.round(c / a)]) } },
-  'm.coordinatePlane': () => { const x = pick([-1, 1]) * R(1, 6), y = pick([-1, 1]) * R(1, 6); const q = x > 0 && y > 0 ? 'Quadrant I' : x < 0 && y > 0 ? 'Quadrant II' : x < 0 && y < 0 ? 'Quadrant III' : 'Quadrant IV'; return { prompt: `Which quadrant is (${x}, ${y}) in?`, ...mc(q, (['Quadrant I', 'Quadrant II', 'Quadrant III', 'Quadrant IV'] as string[]).filter(z => z !== q)) } },
-  'm.linearRel': () => { const run = pick([2, 3, 4]), slope = R(2, 5), rise = slope * run; return { prompt: `A line goes up ${rise} for every ${run} across. What is its slope?`, ...mc(slope, [rise, run, slope + 1, rise + run]) } },
-  'm.geomMeasure': () => { const b = R(2, 6) * 2, h = R(3, 9); return { prompt: `A triangle has base ${b} and height ${h}. What is its area?`, ...mc(b * h / 2, [b * h, b + h, b * h / 2 + b, b * h / 2 - h]) } },
+  'm.equationsIneq': () => { const a = R(2, 5), x = R(2, 8), b = R(1, 9), c = a * x + b; return { prompt: `What is x?    ${a}x + ${b} = ${c}`, ...mc(x, [x + 1, x - 1, c - b, Math.round(c / a)]) } },
+  'm.coordinatePlane': () => { const x = pick([-1, 1]) * R(1, 6), y = pick([-1, 1]) * R(1, 6); const q = x > 0 && y > 0 ? 'Quadrant I' : x < 0 && y > 0 ? 'Quadrant II' : x < 0 && y < 0 ? 'Quadrant III' : 'Quadrant IV'; return { prompt: `Look at the grid. Which corner (quadrant) is the point (${x}, ${y}) in?`, visual: { t: 'point', x, y }, ...mc(q, (['Quadrant I', 'Quadrant II', 'Quadrant III', 'Quadrant IV'] as string[]).filter(z => z !== q)) } },
+  'm.linearRel': () => { const run = pick([2, 3, 4]), slope = R(2, 5), rise = slope * run; return { prompt: `Look at the line. It goes up ${rise} for every ${run} across. What is its slope?`, visual: { t: 'slope', rise, run }, ...mc(slope, [rise, run, slope + 1, rise + run]) } },
+  'm.geomMeasure': () => { const b = R(2, 6) * 2, h = R(3, 9); return { prompt: `Look at the triangle. Its base is ${b} and its height is ${h}. What is its area?`, visual: { t: 'rtri', a: b, b: h, labels: [`${b}`, `${h}`, ''] }, ...mc(b * h / 2, [b * h, b + h, b * h / 2 + b, b * h / 2 - h]) } },
   'm.percentages': () => { const p = pick([10, 20, 25, 50]), n = pick([20, 40, 60, 80]); const r = n * p / 100; return { prompt: `What is ${p}% of ${n}?`, ...mc(r, [n * p / 10, n - p, p, r + 1]) } },
 
   // ── 15–16 (Algebra I / Geometry) ── (new for the 15–16 band; MCQ only, no free-typed answers)
@@ -110,10 +125,10 @@ export const ITEM_GENERATORS: Record<string, Gen> = {
   'a.functions': () => { const m = R(2, 4), b = R(1, 5), x = R(2, 6); return { prompt: `If f(x) = ${m}x + ${b}, what is f(${x})?`, ...mc(m * x + b, [m + x + b, m * x, m * (x + b), m * x + b + 1]) } },
   'a.systems': () => { const x = R(4, 9), y = R(2, x - 1), sum = x + y, diff = x - y; return { prompt: `If x + y = ${sum} and x − y = ${diff}, what is x?`, ...mc(x, [y, Math.round(sum / 2), diff, x + 1]) } },
   'a.expPolynomials': () => { const a = R(2, 5), b = R(2, 5); return { prompt: `x^${a} · x^${b} = ?`, ...mc(`x^${a + b}`, [`x^${a * b}`, `x^${a}`, `x^${Math.abs(a - b) || 1}`, `2x^${a + b}`]) } },
-  'a.radicals': () => { const [a, b, c] = pick([[3, 4, 5], [6, 8, 10], [5, 12, 13], [8, 15, 17], [9, 12, 15], [7, 24, 25]] as [number, number, number][]); return { prompt: `A right triangle has legs ${a} and ${b}. What is the hypotenuse?`, ...mc(c, [a + b, c - 1, c + 2, Math.max(a, b) + 1]) } },
+  'a.radicals': () => { const [a, b, c] = pick([[3, 4, 5], [6, 8, 10], [5, 12, 13], [8, 15, 17], [9, 12, 15], [7, 24, 25]] as [number, number, number][]); return { prompt: `Look at the right triangle. Its two legs are ${a} and ${b}. How long is the slanted side (the hypotenuse)?`, visual: { t: 'rtri', a, b, labels: [`${a}`, `${b}`, '?'] }, ...mc(c, [a + b, c - 1, c + 2, Math.max(a, b) + 1]) } },
   'a.factoring': () => { const r1 = R(2, 5), r2 = R(2, 6); return { prompt: `Factor:  x² + ${r1 + r2}x + ${r1 * r2}`, ...mc(`(x+${r1})(x+${r2})`, [`(x+${r1})(x+${r2 + 1})`, `(x+${r1 * r2})(x+1)`, `(x+${r1 + r2})(x+1)`, `(x+${r1 + 1})(x+${r2})`]) } },
   'a.quadratics': () => { const r1 = R(2, 5), r2 = r1 + R(1, 4); return { prompt: `Solve:  x² − ${r1 + r2}x + ${r1 * r2} = 0`, ...mc(`x = ${r1} or ${r2}`, [`x = ${-r1} or ${-r2}`, `x = ${r1} or ${r2 + 1}`, `x = ${r1 + r2} or ${r1 * r2}`, `x = ${r1 - 1} or ${r2}`]) } },
-  'a.geomTransform': () => { const x = R(1, 6), y = R(1, 6); return { prompt: `Reflect the point (${x}, ${y}) over the x-axis. Where does it land?`, ...mc(`(${x}, ${-y})`, [`(${-x}, ${y})`, `(${-x}, ${-y})`, `(${y}, ${x})`]) } },
+  'a.geomTransform': () => { const x = R(1, 6), y = R(1, 6); return { prompt: `Look at the grid. Flip the point (${x}, ${y}) over the x-axis (the line across the middle). Where does it land?`, visual: { t: 'point', x, y }, ...mc(`(${x}, ${-y})`, [`(${-x}, ${y})`, `(${-x}, ${-y})`, `(${y}, ${x})`]) } },
   'a.proofTrig': () => { const a = pick([20, 25, 30, 35, 40, 50, 55, 60, 65, 70]); return { prompt: `One acute angle of a right triangle is ${a}°. What is the other acute angle?`, ...mc(`${90 - a}°`, [`${180 - a}°`, `${a}°`, `${90 + a}°`, `${90 - a + 5}°`]) } },
 
   // ── 17–18 (Algebra II / Pre-Calc / Stats / Calc) ── (new for the 17–18 band; MCQ only)

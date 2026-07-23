@@ -37,6 +37,7 @@ function newClientId(): string {
 }
 import { PT, ACCENTS, LabBackdrop, BackChip, ChoiceButton, PtMilo, IntroCard, type Accent, type ChoiceState } from '@/features/chapters/story/preteen/kit'
 import { useViewport } from '@/shared/hooks/useViewport'
+import { DiagVisualView } from '@/features/diagnostic/DiagVisual'
 
 const BANDS: Band[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan
@@ -127,6 +128,11 @@ export default function DiagnosticPage() {
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
   const btn = Math.max(64, Math.min(short ? 100 : 128, Math.round(Math.min(vw / 5.2, vh / (short ? 4.4 : 5.0)))))
+  // The question card clears the MEASURED answer strip, not one assumed row: long labels
+  // ("Quadrant III") wrap to two rows on a narrow frame and a fixed one-row reserve gets covered.
+  const tilesRef = useRef<HTMLDivElement>(null)
+  const [tilesH, setTilesH] = useState(0)
+  useEffect(() => { const h = tilesRef.current?.offsetHeight ?? 0; setTilesH(prev => (prev === h ? prev : h)) })
   const [band, setBand] = useState<Band>('9-11')
   const [bandKnown, setBandKnown] = useState(false)   // false for cold traffic → show the age picker
   const [hasLearner, setHasLearner] = useState(false) // signed-in with an active learner → save + skip capture
@@ -315,16 +321,17 @@ export default function DiagnosticPage() {
             bottom answer tiles (bottom reserve derives from the tile size), so it stays clear at every
             viewport. Replaces the old top pill + progress dots. */}
         <div style={{ position: 'fixed', inset: 0, zIndex: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: `${short ? 52 : 76}px 6vw ${short ? btn + 28 : btn + 48}px`, pointerEvents: 'none' }}>
+          padding: `${short ? 52 : 76}px 6vw ${(tilesH || btn) + (short ? 28 : 48)}px`, pointerEvents: 'none' }}>
           <div style={{ maxWidth: 'min(94vw,780px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 8 : 16, textAlign: 'center',
             background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 20, border: `1px solid ${accent.base}66`,
             padding: short ? '14px clamp(20px,5vw,40px)' : 'clamp(20px,4vh,40px) clamp(26px,5vw,60px)',
             boxShadow: `0 0 30px ${accent.base}33, 0 14px 34px rgba(0,0,0,0.45)` }}>
             <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: short ? 11 : 12.5, letterSpacing: 1.5, color: accent.base, background: accent.soft, borderRadius: 7, padding: '4px 10px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{`Question ${asked + 1}`}</span>
-            <span style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: short ? 'clamp(22px,6vh,36px)' : 'clamp(30px,6.6vh,60px)', lineHeight: 1.18, color: PT.ink }}>{item.prompt}</span>
+            <span style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: short ? 'clamp(22px,6vh,36px)' : item.visual ? 'clamp(24px,4.8vh,44px)' : 'clamp(30px,6.6vh,60px)', lineHeight: 1.18, color: PT.ink }}>{item.prompt}</span>
+            {item.visual && <DiagVisualView v={item.visual} accent={accent} />}
           </div>
         </div>
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(12px,3vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
+        <div ref={tilesRef} style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(12px,3vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
           {item.choices.map(c => {
             const st: ChoiceState = picked === c ? 'right' : picked ? 'dim' : 'idle'
             // 'right' just gives a neutral selected highlight here — correctness is never revealed.
