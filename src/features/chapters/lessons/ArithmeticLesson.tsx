@@ -28,16 +28,6 @@ export function buildArithChoices(answer: number, op: Op, a: number, b: number):
   return [...opts].sort(() => Math.random() - 0.5)
 }
 
-export function Equation({ a, op, b, answer }: { a: number; op: Op; b: number; answer: number | null }) {
-  return (
-    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(34px, 9vw, 52px)', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 10 }}>
-      <span>{a}</span><span style={{ color: 'var(--milo-orange)' }}>{opSym(op)}</span><span>{b}</span>
-      <span style={{ color: 'var(--milo-orange)' }}>=</span>
-      <span style={{ color: answer == null ? 'var(--ink-muted)' : 'var(--garden-green-deep)' }}>{answer == null ? '?' : answer}</span>
-    </div>
-  )
-}
-
 // Base-ten block view of "a op b = answer" (tens rods + ones dots) so two-digit
 // arithmetic is concrete: the rods and dots combine (or take away) to the answer.
 function blocks(n: number) { return <TensOnes n={n} revealTens={Math.floor(n / 10)} revealOnes={n % 10} /> }

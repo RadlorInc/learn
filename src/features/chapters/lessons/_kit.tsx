@@ -64,17 +64,6 @@ export function Confetti() {
   )
 }
 
-export function SparkleAt({x,y}:{x:number,y:number}) {
-  return (
-    <div style={{position:'absolute',left:x-20,top:y-20,width:40,height:40,pointerEvents:'none',zIndex:20}}>
-      {['⭐','✨','💫','🌟'].map((s,i)=>(
-        <span key={i} style={{position:'absolute',fontSize:14,top:'50%',left:'50%',
-          animation:`k_sparkleOut 0.6s ease-out ${i*0.08}s both`,transformOrigin:'center',marginLeft:-7,marginTop:-7}}>{s}</span>
-      ))}
-    </div>
-  )
-}
-
 export function CountBadge({n,color}:{n:number,color:string}) {
   return (
     <div style={{position:'absolute',top:-6,right:-6,width:26,height:26,borderRadius:'50%',background:color,color:'#fff',
@@ -87,28 +76,6 @@ export function BigCount({n}:{n:number|string}) {
   return (
     <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:60,lineHeight:1,color:'var(--milo-orange)',
       textShadow:'0 5px 0 rgba(61,37,22,.12)',animation:'k_countBadge 0.4s cubic-bezier(.34,1.56,.64,1)'}}>{n}</div>
-  )
-}
-
-export function SectionBreak({emoji,title,subtitle,onDone}:{
-  emoji:string,title:string,subtitle:string,onDone:()=>void
-}) {
-  // Run-once timer (calls the latest onDone via a ref) so a re-render can't keep
-  // resetting it — that would stall the lesson with Next disabled forever.
-  const doneRef = useRef(onDone); doneRef.current = onDone
-  useEffect(()=>{
-    speak(`${title}. ${subtitle}`)
-    const t=window.setTimeout(()=>doneRef.current(),2800)
-    return ()=>window.clearTimeout(t)
-  },[]) // eslint-disable-line react-hooks/exhaustive-deps
-  return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,padding:'20px 0',position:'relative'}}>
-      <Confetti/>
-      <div style={{fontSize:72,animation:'k_miloJump 0.8s ease-in-out infinite'}}>{emoji}</div>
-      <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:28,color:'var(--milo-orange)',textAlign:'center',
-        lineHeight:1.2,animation:'k_sectionIn 0.6s cubic-bezier(.34,1.56,.64,1)',textShadow:'0 3px 0 rgba(61,37,22,.1)'}}>{title}</div>
-      <div style={{fontFamily:'var(--font-body)',fontSize:16,color:'var(--ink-soft)',textAlign:'center',animation:'k_slideUp 0.5s ease 0.2s both'}}>{subtitle}</div>
-    </div>
   )
 }
 
