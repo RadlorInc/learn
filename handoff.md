@@ -1,6 +1,16 @@
 # Session Handoff — Milo Story Mode
 
-> 🔊 **2026-07-23 (THIRD SESSION SAME DAY) — MILO HAS A REAL RECORDED VOICE IN THE TEEN GAME BANDS. 409 pre-rendered ElevenLabs clips (12 MB) cover every static spoken line in 12–14 + 15–16; browser speech remains the fallback everywhere else. Also cut 39 spoken correct-answer cheers. Branch `feat/milo-voice-clips`, NOT merged, NOT deployed. `tsc` · 64/64 vitest · `next build` (34 routes) · 0 console errors.**
+> 🔊 **2026-07-23 (THIRD SESSION SAME DAY) — MILO HAS A REAL RECORDED VOICE IN THE TEEN GAME BANDS: SHIPPED TO PROD. 605 pre-rendered ElevenLabs clips (16 MB) — every static spoken line in 12–14 + 15–16, THE PLAN in all 24 chapters, and 25 of 41 scored-question prompts stitched from fragments. Also cut 39 spoken correct-answer cheers. `main`@`227ece5`, prod serving sw v43, post-deploy smoke green. `tsc` · 64/64 vitest · `next build` (34 routes) · 0 console errors.**
+>
+> ## ⚠️ READ THIS FIRST — NOBODY HAS LISTENED TO ANY OF IT
+> 605 clips are LIVE and not one has been heard by a human. Everything below was verified **structurally** — clips resolve, chain in narration order, stitch to the right pieces, zero console errors — which is not the same as sounding right. The **stitched** prompts are the real risk: they either sound natural or audibly broken at the seams, and that judgement needs ears. **Play one 12–14 chapter through to the scored questions.** The generator is idempotent, so fixing specific lines costs only those lines.
+>
+> ## The three commits
+> | commit | what |
+> |---|---|
+> | `0d21106` | the pipeline + 409 static line clips + cheer removal + voice picker (sw v42→v43) |
+> | `2f5efc0` | THE PLAN panel, 24 clips, reconstructed from JSX |
+> | `227ece5` | fragment stitching for the templated question prompts, 172 fragments |
 >
 > ## Why: Chrome ships no usable local voice on many machines, so Milo was SILENT there — and the teen walkthroughs are where the actual teaching lives.
 >
@@ -8,32 +18,42 @@
 > | file | role |
 > |---|---|
 > | [src/core/voiceClips.ts](src/core/voiceClips.ts) | `clipKey(text)` — FNV-1a, **shared by build script and runtime**. If these ever drift, every lookup misses silently. |
-> | [scripts/voice-corpus.mts](scripts/voice-corpus.mts) | extracts the corpus → **409 lines / 38,954 chars** → `scripts/.voice-corpus.json` (untracked, regenerable) |
+> | [scripts/voice-corpus.mts](scripts/voice-corpus.mts) | extracts whole lines → **433 lines / 45,208 chars** (incl. the 24 reconstructed PLAN lines) → `scripts/.voice-corpus.json` (untracked, regenerable) |
+> | [scripts/voice-fragments.mts](scripts/voice-fragments.mts) | cuts the TEMPLATED prompts into segments + a value vocabulary → `scripts/.voice-fragments.json` + `public/audio/fragment-templates.json` (the latter IS committed — the runtime matcher needs it) |
 > | [scripts/voice-generate.mts](scripts/voice-generate.mts) | renders clips. **Idempotent** — skips what's on disk, stops clean on 401/429, resumes exactly where it stopped. Writes the manifest from what ACTUALLY exists. |
-> | [src/infra/voiceClipPlayer.ts](src/infra/voiceClipPlayer.ts) | clip-first playback; **any** miss (no clip, decode error, autoplay refused) runs the original browser path |
+> | [src/infra/voiceClipPlayer.ts](src/infra/voiceClipPlayer.ts) | playback order: whole-line clip → **fragment stitch** → browser speech. **Any** miss at any stage falls back cleanly; a line is never left with a gap |
 > | [src/infra/storage/voicePref.ts](src/infra/storage/voicePref.ts) | per-DEVICE voice pref (not per-learner — it's an output setting like volume) |
 > | [src/shared/ui/VoicePicker.tsx](src/shared/ui/VoicePicker.tsx) | the setting, on `/profile`; plays a sample on select |
 >
-> **Voice = Stevie (`IvUJKFyjVb5hItY9dJAT`)**, model `eleven_v3`, format `mp3_22050_32` (32kbps keeps 409 files at 12 MB instead of ~45 MB). Expression comes from inline v3 audio tags chosen per line TYPE in `tagFor()` — `[warm]` for THE PLAN, `[gently]` for wrong answers, `[clearly]` for explanation (the default).
+> **Voice = Stevie (`IvUJKFyjVb5hItY9dJAT`)**, model `eleven_v3`, format `mp3_22050_32` (32kbps keeps 605 files at 16 MB instead of ~60 MB). Expression comes from inline v3 audio tags chosen per line TYPE in `tagFor()` — `[warm]` for THE PLAN, `[gently]` for wrong answers, `[clearly]` for explanation (the default). Fragments carry **no tag** — they are stitched, so a direction on the word "17" is wasted and would fight the run around it.
 >
 > **Four hook points in [useMiloSpeaker.ts](src/infra/useMiloSpeaker.ts):** `_doSpeak` (covers speak/speakAt/speakAfterCurrent), `speakSeq` (which `speakSteps` delegates to → the whole walkthrough), `speakWithHighlight`, and `stopSpeech`→`stopClip`. **The word highlight is now paced by the clip's REAL duration** — strictly better sync than the old length-weighted guess.
 >
-> ## ⚠️ NOT COVERED — THE PLAN panel, and it cannot be fixed by static extraction
-> In chapters WITH a `TutorialScene`, `ExplanationPanel` builds its narration at runtime by flattening the `overview.problem` + `points` **JSX nodes** into words (`spoken` in GameShell ~line 855). That string exists nowhere in the source. It falls back to browser speech ⇒ **silent on Chrome**. One line per chapter (~24). Options: leave it · add an `overview.spokenText` mirror (duplication, drifts) · flatten the JSX offline (needs React in the build script). **Recommendation: leave it** — the walkthrough is covered and the child also reads THE PLAN on screen with the highlight.
+> ## ✅ THE PLAN — solved by reconstructing it from JSX, not by duplicating it
+> In chapters WITH a `TutorialScene`, `ExplanationPanel` builds its narration at RUNTIME by flattening `overview.problem` + `points` **JSX nodes** into words (`spoken`, GameShell ~line 855). That string exists nowhere in source, so static extraction couldn't reach it. `planLine()` in [voice-corpus.mts](scripts/voice-corpus.mts) now rebuilds it from the JSX — **no per-chapter `spokenText` field, so nothing can drift**: edit the JSX, re-run the extractor, the key changes with it.
+> **The subtlety that makes it work:** `walkWords` tokenizes each TEXT LEAF separately and the panel joins every token with ONE space — so `below zero</strong>.` speaks as `"zero ."`, two tokens. A naive tag-strip yields `"zero."` and every key misses. Split on tags to recover the leaves, tokenize each.
+> Tagged `[warm]` (it sets the chapter up; it isn't a lecture). Verified on TWO chapters, because one match could be coincidence — Bank Account → `2spm7z.mp3`, Baggage Scale → `lz8qyg.mp3`.
 > Related: `overview.say` IS still rendered as clips but is only spoken by chapters WITHOUT a TutorialScene, so a handful of those clips may never play. Harmless, already paid for.
 >
-> ## Two bugs found by verification, both worth remembering
+> ## ✅ Fragment stitching — the scored-question prompts
+> A prompt carries its numbers (`The balance was 12 dollars, then you withdraw 7…`), so no clip can cover it. [voice-fragments.mts](scripts/voice-fragments.mts) cuts each template at its holes: the **literal runs become multi-word clips** (natural prosody) and only the values are stitched. Joins land on the numbers, so most of the sentence is real speech — not word-by-word robot. 63 segments + a 0–100 value vocabulary = **172 fragments, 1.2 MB**, in their own `frag/` folder and manifest so a bare segment can never be mistaken for a whole-line clip.
+> **Degradation is strict on purpose:** if ANY piece is missing the WHOLE line falls back. A silent gap mid-sentence reads as a bug; the browser voice just reads it.
+> **16 of 41 templates are NOT covered** — open-ended holes (item names, `speakExpr`, fraction words). Several are blocked only by a two-way ternary (`${low ? 'lower' : 'higher'}`) and would be cheap to add.
+>
+> ## Three bugs found by verification, all worth remembering
 > • **The extractor only matched SINGLE-quoted strings** — the codebase mixes quote styles, so 80 `say:`/`coach:` lines were silently missing. Caught only because a live check showed no mp3 request where one was expected. Corpus went 329 → 409.
 > • **The manifest must be written by the GENERATOR, not the extractor.** Listing a key with no mp3 makes every miss cost a failed fetch before falling back.
+> • **A bare identifier in a hole is NOT necessarily a number.** `${dir}` renders `"withdraw 7"` — a word plus a number — so those templates matched and then always fell back. Caught by reading the real source instead of trusting a synthetic test string. Fixed by adding the seven verbs (deposit/withdraw/pay/receive/owing/get/with) to the value vocabulary. *Same lesson as the padValue bug: a synthetic check that passes proves less than one real value.*
 >
-> ## Budget / quota
-> ~34.5k of the 40,000-char Starter month used; **resets 2026-07-27**. The API key itself carried a separate **20,000 cap** that stopped the run mid-way (account had plenty left) — raised in the dashboard, run resumed with zero loss. Re-rendering after a voice or tag change costs the FULL corpus again.
+> ## Budget / quota — ESSENTIALLY SPENT
+> **~38.5k of the 40,000-char Starter month used; resets 2026-07-27.** Almost nothing left this cycle. Two quota facts worth keeping: the API key carried its OWN **20,000 cap** separate from the account's 40k (it stopped a run mid-way while the account had plenty left — raised in the dashboard, resumed with zero loss); and **re-rendering after a voice or tag change costs the FULL corpus again**, so a voice change is not a cheap experiment.
 >
 > ## ▶ OPEN
-> 1. **Nobody has confirmed Stevie sounds right in the app.** Verified structurally (clips resolve and chain in narration order, 0 errors) but never listened to end-to-end by a human. Do this before merging.
-> 2. **`public/audio/` is 12 MB committed to git.** Assets were previously squeezed 244 MB → 22.8 MB, so decide if this should be CI-built or LFS instead.
-> 3. **3–11 bands have NO clips** — that corpus is ~2.9k chars and mostly TEMPLATED (numbers), so it needs fragment-stitching, not whole lines. This is where Chrome silence hurts most (counting).
-> 4. Not merged, not deployed. **sw bumped v42 → v43** for whenever it does deploy.
+> 1. **LISTEN TO IT.** See the block at the top. This is the only item that matters and it cannot be done by an agent.
+> 2. **`public/audio/` is 16 MB committed to git.** Assets were previously squeezed 244 MB → 22.8 MB, so this roughly undoes a chunk of that. Decide CI-built or LFS. Cheap to restructure now, permanent once it's deep in history.
+> 3. **3–11 bands have NO clips.** ~2.9k chars, mostly numeric templates — the fragment machinery built this session is exactly what that band needs, and it's where Chrome silence hurts most (counting). Probably the highest-value next voice work.
+> 4. **16 uncovered templates**, several blocked only by a two-way ternary — cheap coverage win after the quota resets.
+> 5. Rollback if the voice turns out wrong in front of a child: **Vercel promote-previous** (v42 predates all voice work), per [docs/runbooks/rollback.md](docs/runbooks/rollback.md).
 >
 > _(the block below is the same day's dead-code sweep.)_
 
@@ -535,7 +555,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-23 (SECOND session same day — see the top 🧹 block. **A dead-code sweep SHIPPED TO PROD**: `src` 73,815 → 62,158 lines (−16%), 337 → 255 files, one dependency and 9MB of assets gone, and 55 near-identical chapter wrappers collapsed into one shared portal plus a table — adding a chapter is now one row. `main`@`7e29cc6`, prod serving **sw v42**, post-deploy smoke green (all routes 200, dev previews blocked, deleted assets 404, zero console errors). The earlier parade work shipped with it, so the drawn walk cycles are live. **Three things are NOT verified on prod: signed-in progress SAVING, the Pixi parade canvas, and story-chapter completion** — play one chapter to the end signed-in. Rollback = Vercel promote-previous. Deliberately left alone: `/play` and `/daily` (unlinked but parked features, not dead code — ~2,770 lines + `@mediapipe/tasks-vision` whenever you want them gone) and the `/kit-preview`-only components. **Still the headline, still unchanged by any of this: ~zero real users. Watch one real child play; start the attorney conversation.**)_
+_Last updated: 2026-07-23 (THIRD session same day — see the top 🔊 block. **Milo now has a real recorded voice in the teen game bands, live on prod**: 605 ElevenLabs clips (16 MB) covering every static spoken line in 12–14 + 15–16, THE PLAN in all 24 chapters (reconstructed from JSX, so no chapter carries a duplicate string that can drift), and 25 of 41 scored-question prompts stitched from 172 fragments. Browser speech remains the fallback everywhere and any miss degrades to it cleanly. Also cut 39 spoken correct-answer cheers — wrong-answer lines deliberately kept. `main`@`227ece5`, prod serving **sw v43**, post-deploy smoke green. **⚠️ NOT ONE OF THE 605 CLIPS HAS BEEN HEARD BY A HUMAN** — everything was verified structurally, which is not the same as sounding right, and the stitched prompts either sound natural or audibly broken at the seams. Play one 12–14 chapter to the scored questions. Budget is spent (~38.5k of 40k, resets 2026-07-27) and a voice change costs the full corpus again. **Still the headline, still unchanged by any of this: ~zero real users. Watch one real child play; start the attorney conversation.**)_
 
 _Prior update: 2026-07-21 (Shipped: 15–16 responsive across 144 measured screens + a recurring Safari-class SVG-attribute bug; the diagnostic made evidence-grade (fail confirmation + play-data plan revision, 175/175 planted gaps exact); durable auth-event logging. Removed at founder request: the 12-agent roster and docs/agent-log.md — do not spawn named specialists. **⚠️ THE HEADLINE IS NOT ENGINEERING: excluding dev accounts the product has 3 accounts, 2 learners, 6 sessions, 0 DAU/WAU/MAU, 0 signups in 30 days, 0 recorded gap closures.** The next two actions are human — watch one real child play, and start the attorney conversation (no privacy policy/ToS/COPPA exists; it blocks launch AND charging and has the longest lead time). Deliberately unfinished and documented in place: centring the board on instrument questions (measured pushing the commit button off-screen; a `tall` gate is written but unverified at 1440×900).)_
 
