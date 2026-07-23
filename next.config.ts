@@ -18,9 +18,9 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 31536000,
   },
 
-  // Tighten tree-shaking on the Supabase clients so authed routes only pull what they use.
+  // Tighten tree-shaking on the Supabase client so authed routes only pull what they use.
   experimental: {
-    optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr'],
+    optimizePackageImports: ['@supabase/supabase-js'],
   },
 
   async headers() {
