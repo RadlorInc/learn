@@ -1,13 +1,20 @@
 # Session Handoff — Milo Story Mode
 
-> 🧹 **2026-07-23 LATEST (SECOND SESSION SAME DAY) — DEAD-CODE SWEEP: `src` IS 73,815 → 62,158 LINES (−11,657, ~16%), 337 → 255 FILES, −1 DEPENDENCY, −9MB ASSETS. Committed as 9 slices on branch `chore/dead-code-sweep`, NOT merged, NOT pushed. `tsc` · 62/62 vitest · `next build` (34 routes) green.**
+> 🧹 **2026-07-23 LATEST (SECOND SESSION SAME DAY) — DEAD-CODE SWEEP: SHIPPED TO PROD. `src` IS 73,815 → 62,158 LINES (−11,657, ~16%), 337 → 255 FILES, −1 DEPENDENCY, −9MB ASSETS. `main`@`7e29cc6`, prod serving sw v42, post-deploy smoke green. `tsc` · 62/62 vitest · `next build` (34 routes).**
 >
-> **The parade work from earlier today is the FIRST commit on this branch** (`6f6e5de`) — handoff item "nothing is committed" is now closed.
+> **The parade work from earlier today shipped with it** (`6f6e5de`, the first of the 11 commits) — the "nothing is committed" open item is closed, and the drawn walk cycles are live.
 >
-> ## Why a branch, and what to do with it
-> `main` auto-deploys to Vercel on push, and this is a wide refactor touching every chapter's entry point. It is parked on `chore/dead-code-sweep` for review. To ship: `git checkout main && git merge --ff-only chore/dead-code-sweep`, bump `public/sw.js` VERSION, push. **Nothing here is deployed.**
+> ## Post-deploy smoke on `milo-story-mode.vercel.app` — all green
+> `/` `/auth` `/diagnostic` `/story` `/menu` `/parent` `/teen-preview` `/api/health` → **200**. The three dev preview routes → correctly not-found. Deleted assets (`scene_integers.png`, `tower_lift_car.png`) → **404**; new + still-live assets (`rabbit_walk.png`, `rabbit_side.png`) → **200**. A teen chapter and a story chapter both mount through the new registry (Times Grid's backdrop `#0a1026` matches its row). The counting chapter runs and fetches `firefly_walk.png`. **Zero console errors** across the whole prod drive.
 >
-> ## The 9 slices, oldest first
+> ## ⚠️ What is NOT verified on prod — check these when you next play
+> 1. **Signed-in progress saving.** Needs a real account; runs through the relocated `finishAndSync`. **Play one chapter to the end signed-in and confirm the session lands.**
+> 2. **The Pixi parade CANVAS on prod.** Sheet loading is confirmed; I did not sit through to the scored parade where the canvas mounts.
+> 3. **Story-chapter completion** (the CelebrationModal-on-finish path). Story chapters have no dev test hook, so reaching the end means solving 10 rounds of real math. The portal structure is verified; that one branch is not.
+>
+> Rollback if anything surfaces: **Vercel promote-previous** (v41 is one deploy behind), per [docs/runbooks/rollback.md](docs/runbooks/rollback.md).
+>
+> ## The 11 commits in the deploy, oldest first *(this handoff update is a 12th, docs-only — no sw bump needed, the app output is unchanged)*
 > | commit | what |
 > |---|---|
 > | `6f6e5de` | **feat**: the 2D walk-cycle parade (the earlier session's work) |
@@ -19,9 +26,12 @@
 > | `72d7357` | chore: delete 26 unreferenced teen assets (8.9MB) |
 > | `262317f` | **refactor**: 55 chapter wrappers → `ChapterPortal` + `registry`, −3,719 lines |
 > | `86d334f` | chore: drop a tracked `.next` trace dir inside `src` |
+> | `0303a88` | docs: this handoff block |
+> | `7e29cc6` | chore(sw): bump cache version v41 → v42 for the deploy |
 >
-> ## ⚠️ THE ONE THING TO RE-VERIFY BEFORE MERGING
-> **Chapter COMPLETION is not verified.** The wrapper collapse relocated `finishAndSync` into `ChapterPortal`; the call is unchanged but reaching it needs a full 10-round playthrough per chapter, which I did not do. Everything up to that point WAS driven live through the real dispatch map — story (CoinShop, TimesGrid), teen without Explore (Bank Account), teen with Explore (Ticket Checkout: sim renders, skip→game transitions), 0 console errors. **Play one chapter to the end signed-in and confirm the session saves.** Also: only 3 of the 12 `FitBox` chapters were driven live.
+> ## How the collapse was verified — two checks worth reusing
+> **① The registry was proved against the wrappers it replaced.** All 55 rows were re-extracted from the pre-collapse files in git (`262317f^`) and diffed against the committed `registry.tsx`: **0 mismatches** across skill id, backdrop, band, game import, sim import, Explore copy, concepts list and nextPointer. Because the rows were generated mechanically, this — not spot-checking — was the check that mattered. *(A first run reported 2 false mismatches on `nextPointer`: `json.dumps` without `ensure_ascii=False` escapes the em dash. Checker bug, not a data bug.)*
+> **② A chapter was played to completion through the new portal**, using the dev-only `data-test-answer`/`data-test-phase` hook on the teen QuestionBoard: intro → walkthrough → guided → 8 scored → mastery early-exit → `onFinish` → MasteryState → Done → exit. Every answer registered **`phase=solved`, 0 reveals** — i.e. graded CORRECT, not merely "the screen advanced" (the distinction the `padValue` bug taught us). **Note: MasteryState's 12–14 variant IS the quiet "SOLVED" stamp** — `conceptsConfirmed` only surfaces in the 17–18 variant. It looks like a different component; it isn't.
 >
 > ## What the collapse changed, structurally
 > **[ChapterPortal.tsx](src/features/chapters/ChapterPortal.tsx)** owns the plumbing all 55 wrappers repeated (portal mount, one-shot result sync, replay), in two shapes — story (CelebrationModal over a per-chapter backdrop) and teen (`data-band` skin, MasteryState, stopSpeech, optional Explore sim). **[registry.tsx](src/features/chapters/registry.tsx)** is the table and now owns the complete id→component map, so `app/game/page.tsx` imports it rather than defining it and `/teen-preview` drops its own 40-line duplicate. **Adding a chapter is one row.** Code-splitting is preserved — each row keeps its own dynamic import and the portal is built inside the loader.
@@ -34,13 +44,14 @@
 > 4. **`shuffle` is still redefined 46× and `pick`/`rnd` ~95×.** One `core/rand.ts` would save ~300 lines AND fix four copies that use the biased `sort(() => Math.random() - 0.5)`.
 > 5. **The `repositories` barrel is bypassed by half its callers** (18 barrel / 17 direct).
 >
-> ## Two mistakes I made, so the next session doesn't repeat them
+> ## Mistakes made this session, so the next one doesn't repeat them
 > • **Brace-matching to delete a declaration breaks on destructured params** — the first `{` closes the param list, not the body, so three functions lost their signature and kept their body. `tsc` caught all three. Prefer explicit edits over clever extent-finding.
-> • **`rm -rf .next` while the dev server is running corrupts Turbopack** and produces a wall of alarming-but-stale parse errors in the log. Stop the server first. The browser console buffer also persists across navigations — open a fresh tab before trusting "0 errors".
-> • Minor: `git commit` with no pathspec commits the WHOLE index, not what you just `git add`ed. Use `git commit -- <paths>`. (And zsh does not word-split unquoted `$VARS` — use arrays.)
+> • **`rm -rf .next` while the dev server is running corrupts Turbopack** and produces a wall of alarming-but-stale parse errors in the log. Stop the server first. The browser console buffer also persists across navigations — **open a fresh tab before trusting "0 errors"** (I twice read stale errors as live ones).
+> • **`git commit` with no pathspec commits the WHOLE index**, not what you just `git add`ed — the first slicing attempt swallowed 133 files into one commit. Use `git commit -- <paths>`. (And zsh does **not** word-split unquoted `$VARS` — use arrays.)
+> • **A checker that disagrees with the code is guilty until proven innocent.** Two "mismatches" and one "orphaned file" this session were bugs in my own scripts (em-dash escaping; a grep needing a `lessons/` prefix). Same lesson as the E2E flakes in the 07-19 block: *a measurement that disagrees with the pixels is guilty.*
 >
 > ## Impurity worth knowing about
-> `package-lock.json` landed entirely in the parade commit `6f6e5de`, so that commit's lock reflects the `@supabase/ssr` removal while its `package.json` still lists the dep. Transient and harmless for a squash-merge; it would bite a bisect that runs `npm ci`.
+> `package-lock.json` landed entirely in the parade commit `6f6e5de`, so that commit's lock reflects the `@supabase/ssr` removal while its `package.json` still lists the dep. Harmless now that it's all merged; it would only bite a bisect that runs `npm ci` between `6f6e5de` and `b1118a9`.
 >
 > **⚠️ Unchanged and still more important than any of this: excluding dev accounts the product has 3 accounts, 2 learners, 0 DAU/WAU/MAU, 0 signups in 30 days. Watch one real child play; start the attorney conversation.**
 >
@@ -82,7 +93,7 @@
 > ## 📊 Credits: **120 spent, 649.2 left** (Higgsfield Plus). 7.5/video at 5s, 15 at 10s. ~30 went on retries.
 >
 > ## ▶ OPEN — this chapter
-> 1. ~~**Nothing is committed.**~~ ✅ **DONE** — committed as `6f6e5de` on `chore/dead-code-sweep` (see the 🧹 block above). Still unmerged and unpushed.
+> 1. ~~**Nothing is committed.**~~ ✅ **SHIPPED** — `6f6e5de`, merged to `main` and live on prod (sw v42). See the 🧹 block above.
 > 2. **DELETE THE DEAD RIG — STILL OPEN.** `rigs.ts`, `buildRig` + `SWING_RATE`/`STANCE`/leg code in ParadeStage, `scripts/creature-legs.py`, `scripts/creature-preview.py`. Unused on every Nature creature; keeping two systems is pure debt. *(The dead-code sweep did NOT do this — `rigs.ts` is still imported by ParadeStage, so it isn't dead by the import graph; removing it means editing live animation code, which belongs with parade work, not a mechanical sweep.)*
 > 3. **Farm + Space storytellings — 9 creatures, ~70 credits** (lamb, chick, duckling, bee, frog, duck, dragonfly, astronaut, alien). Frog needs the magenta key.
 > 4. **Cadence tuning is one number each in sheets.ts.** Founder already flagged eagle (0.67→1.33s) and ladybug (0.55→1.00s) as too fast. **`ant` is now the fastest at 0.46s** and may be next. Also unjudged: whether 2.4× exit and the instant refill feel right (briefly 3 creatures on screen).
@@ -487,7 +498,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-23 (SECOND session same day — see the top 🧹 block. A dead-code sweep took `src` from 73,815 to 62,158 lines (−16%), 337 → 255 files, dropped one dependency and 9MB of assets, and collapsed 55 near-identical chapter wrappers into one shared portal plus a table — adding a chapter is now one row. Committed as **9 slices on branch `chore/dead-code-sweep`, unmerged and unpushed**; the earlier parade work is the first of them. **Before merging, play one chapter to the end signed-in** — chapter COMPLETION is the one path not verified, because it needs a full playthrough. Deliberately left alone: `/play` and `/daily` (unlinked but parked features, not dead code — ~2,770 lines + `@mediapipe/tasks-vision` whenever you want them gone) and the `/kit-preview`-only components. **Still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
+_Last updated: 2026-07-23 (SECOND session same day — see the top 🧹 block. **A dead-code sweep SHIPPED TO PROD**: `src` 73,815 → 62,158 lines (−16%), 337 → 255 files, one dependency and 9MB of assets gone, and 55 near-identical chapter wrappers collapsed into one shared portal plus a table — adding a chapter is now one row. `main`@`7e29cc6`, prod serving **sw v42**, post-deploy smoke green (all routes 200, dev previews blocked, deleted assets 404, zero console errors). The earlier parade work shipped with it, so the drawn walk cycles are live. **Three things are NOT verified on prod: signed-in progress SAVING, the Pixi parade canvas, and story-chapter completion** — play one chapter to the end signed-in. Rollback = Vercel promote-previous. Deliberately left alone: `/play` and `/daily` (unlinked but parked features, not dead code — ~2,770 lines + `@mediapipe/tasks-vision` whenever you want them gone) and the `/kit-preview`-only components. **Still the headline, still unchanged by any of this: ~zero real users. Watch one real child play; start the attorney conversation.**)_
 
 _Prior update: 2026-07-21 (Shipped: 15–16 responsive across 144 measured screens + a recurring Safari-class SVG-attribute bug; the diagnostic made evidence-grade (fail confirmation + play-data plan revision, 175/175 planted gaps exact); durable auth-event logging. Removed at founder request: the 12-agent roster and docs/agent-log.md — do not spawn named specialists. **⚠️ THE HEADLINE IS NOT ENGINEERING: excluding dev accounts the product has 3 accounts, 2 learners, 6 sessions, 0 DAU/WAU/MAU, 0 signups in 30 days, 0 recorded gap closures.** The next two actions are human — watch one real child play, and start the attorney conversation (no privacy policy/ToS/COPPA exists; it blocks launch AND charging and has the longest lead time). Deliberately unfinished and documented in place: centring the board on instrument questions (measured pushing the commit button off-screen; a `tall` gate is written but unverified at 1440×900).)_
 
