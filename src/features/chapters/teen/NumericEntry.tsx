@@ -7,11 +7,6 @@ import type { AgeBand, AnswerStatus } from '@/features/chapters/teen/types'
  * Tolerance-aware numeric equality for grading clean decimals.
  * The parent owns correctness; this helper is the shared comparator.
  */
-export function numericEqual(a: number, b: number, tol = 1e-9): boolean {
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return false
-  return Math.abs(a - b) <= tol
-}
-
 export interface NumericEntryProps {
   band: AgeBand
   onSubmit: (value: number, raw: string) => void

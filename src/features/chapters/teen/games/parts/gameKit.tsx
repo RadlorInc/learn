@@ -73,9 +73,6 @@ export function Row({ P, title, price, badge, tone = 'a', struck }: { P: Palette
     </div>
   )
 }
-export function Stamp({ P, text = 'DONE ✓' }: { P: Palette; text?: string }) {
-  return <div className="gk-stamp" style={{ position: 'absolute', right: 10, top: 6, border: `3px solid ${P.mint}`, borderRadius: 8, color: P.mint, fontWeight: 900, fontSize: 'clamp(14px, 1.3vw, 19px)', letterSpacing: '0.12em', padding: '2px 8px', background: 'rgba(255,244,221,0.85)' }}>{text}</div>
-}
 export function Says({ P, text }: { P: Palette; text: string }) {
   return <div style={{ width: '100%', maxWidth: 'clamp(460px, 56vw, 680px)', background: P.glass, border: `1px solid ${P.glassBorder}`, borderRadius: 12, padding: 'clamp(9px, 1.1vw, 16px) clamp(14px, 1.6vw, 24px)', fontWeight: 600, fontSize: 'clamp(15px, 1.5vw, 22px)', lineHeight: 1.45, color: P.cream, minHeight: 40, boxSizing: 'border-box', textAlign: 'center', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>{text}</div>
 }

@@ -158,16 +158,6 @@ export async function getLearnerBootstrap(learnerId: string): Promise<BootstrapR
 
 // ─── Shop / coins state (cross-device) ────────────────────────
 
-export async function getLearnerState(learnerId: string): Promise<LearnerState | null> {
-  const supabase = db()
-  const { data } = await supabase
-    .from('learner_state')
-    .select('*')
-    .eq('learner_id', learnerId)
-    .maybeSingle()
-  return (data ?? null) as LearnerState | null
-}
-
 export async function saveLearnerState(
   learnerId: string,
   state: { coinsSpent: number; ownedItems: string[]; equippedItems: Record<string, string> },

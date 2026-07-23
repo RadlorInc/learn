@@ -52,7 +52,3 @@ export function takePendingDiagnostic(): PendingDiagnostic | null {
 export function clearPendingDiagnostic(): void {
   try { localStorage.removeItem(KEY) } catch { /* ignore */ }
 }
-
-export function hasPendingDiagnostic(): boolean {
-  return readFresh() != null
-}

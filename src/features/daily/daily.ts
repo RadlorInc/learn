@@ -106,11 +106,6 @@ function readState(id: string): DailyState {
   try { return JSON.parse(kv.get(stateKey(id)) ?? '') } catch { return { lastDay: '' } }
 }
 
-/** Is today's Daily still available (not yet completed today)? */
-export function dailyStatus(learnerId: string): { available: boolean } {
-  return { available: readState(learnerId).lastDay !== dayKey() }
-}
-
 /** Mark today's Daily done. Idempotent per day. */
 export function recordDailyDone(learnerId: string): void {
   try { kv.set(stateKey(learnerId), JSON.stringify({ lastDay: dayKey() })) } catch {}

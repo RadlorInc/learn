@@ -162,10 +162,6 @@ export const CHAPTER_EMOJIS = Object.fromEntries(
   CHAPTERS.map(c => [c.id, c.emoji]),
 ) as Record<ChapterType, string>
 
-export const CHAPTER_ASSETS = Object.fromEntries(
-  CHAPTERS.map(c => [c.id, c.asset]),
-) as Record<ChapterType, string>
-
 export const CHAPTER_PARENT_LABELS = Object.fromEntries(
   CHAPTERS.map(c => [c.id, c.parentLabel]),
 ) as Record<ChapterType, string>

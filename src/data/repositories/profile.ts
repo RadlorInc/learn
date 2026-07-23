@@ -7,18 +7,6 @@ import { clearActiveLearner } from '@/data/supabase/useLearnerSession'
 import { clearPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
 import type { UserRole } from '@/data/supabase/types'
 
-export async function getProfile() {
-  const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-  return data as { id: string; role: UserRole | null; display_name: string; avatar_index: number } | null
-}
-
 /**
  * The signed-in user's role, or null if they haven't picked Teacher/Parent yet
  * (a fresh signup — the app shows the one-time role picker on that signal).

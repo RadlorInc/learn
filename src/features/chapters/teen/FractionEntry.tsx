@@ -16,21 +16,6 @@ export interface FractionEntryProps {
   status?: AnswerStatus
 }
 
-/**
- * Equivalence-aware fraction grading (math-without-fear): a learner who writes
- * 6/4, 1½, or 3/2 has all expressed the same value, so all are accepted.
- *
- * Each FractionValue is collapsed to an improper rational (whole·den + num)/den,
- * sign-normalized, then cross-multiplied so we never lose precision to floats.
- */
-export function fractionsEqual(a: FractionValue, b: FractionValue): boolean {
-  const ra = toRational(a)
-  const rb = toRational(b)
-  if (ra === null || rb === null) return false
-  // a.n/a.d === b.n/b.d  ⟺  a.n·b.d === b.n·a.d   (dens already > 0)
-  return ra.n * rb.d === rb.n * ra.d
-}
-
 interface Rational { n: number; d: number }
 
 function toRational(v: FractionValue): Rational | null {

@@ -34,9 +34,6 @@ export function makeCountingChapter(story: Storytelling): Chapter {
   }
 }
 
-// Nature Walk as a static default — for any caller that doesn't pick a storytelling.
-export const countingChapter: Chapter = makeCountingChapter(STORYTELLINGS[0])
-
 // Number Order (Chapter 2) is no longer a ForestWalk chapter — it was redesigned as the
 // top-down RiverCrossing experience. See story/RiverCrossing.tsx (wrapped by
 // game/NumberOrderingChapter.tsx).

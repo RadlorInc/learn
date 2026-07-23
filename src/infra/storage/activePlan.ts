@@ -74,7 +74,3 @@ export function planProgress(learnerId: string): { done: number; total: number }
   const p = getActivePlan(learnerId)
   return p ? { done: Math.min(p.index, p.chapters.length), total: p.chapters.length } : null
 }
-
-export function clearActivePlan(learnerId: string): void {
-  try { localStorage.removeItem(key(learnerId)) } catch { /* ignore */ }
-}

@@ -11,7 +11,7 @@
  *   • WE DO — one GUIDED order (config.guided): the instrument is live, Milo
  *     coaches, it is NOT scored — a soft bridge from watching to doing.
  *   • YOU DO — the scored practice loop below.
- * (Chapters without tutorial/guided fall back to the old one-shot config.Demo.)
+ * (Every chapter supplies a `tutorial`; `guided` is optional.)
  *
  * Foundation is the shared adaptive engine, UNCHANGED:
  *   • invisible tiers L1→L2→L3 via useAdaptive
@@ -54,7 +54,6 @@ export interface BaseTask {
   title: string
   badge: string
   tone: 'a' | 'b'
-  price?: string
   prompt: string
   say: string
   work: string[]        // narrated 3-in-a-row reteach
@@ -95,12 +94,6 @@ export interface InstrumentProps<V, T extends BaseTask> {
   onCommit: (v: V) => void
 }
 
-export interface DemoProps {
-  palette: Palette
-  childName: string
-  onDone: () => void
-}
-
 /** One narrated step of a walkthrough: speak `say`, move the instrument to
  *  `value` (if given), show the `hand` gesture cue, and — like a teacher writing
  *  on the board while talking — WRITE `board` (a short line of math) onto the
@@ -110,11 +103,6 @@ export interface DemoStep<V> {
   value?: V
   hand?: HandKind
   board?: string
-  /** Optional object sprite (path under /assets) shown beside the chalkboard for
-   *  this step — a real picture of what the board line is describing (e.g. a coin
-   *  stack for "start: 4", an overdrawn sign for "below 0"). Persists until the
-   *  next step sets a different one, so you only mark it where the picture changes. */
-  art?: string
 }
 
 /** The "I do" walkthrough script for a chapter. */
@@ -140,7 +128,6 @@ export interface GameConfig<V, T extends BaseTask> {
   title: string             // header title, e.g. MILO'S WEATHER STATION
   ticketLabel: string       // ticket footer label, e.g. "station log"
   palette: Palette
-  total?: number
   makeTask: (d: 1 | 2 | 3) => T
   initialValue: (t: T) => V
   grade: (t: T, v: V) => boolean
@@ -148,13 +135,10 @@ export interface GameConfig<V, T extends BaseTask> {
   /** Animate the instrument to the correct answer on a wrong answer. */
   glide: (t: T, from: V, setValue: (v: V) => void, later: (fn: () => void, ms: number) => void) => void
   Instrument: (p: InstrumentProps<V, T>) => React.ReactElement
-  /** Optional custom render of the QUESTION on the chalkboard (e.g. to highlight
-   *  the portion evaluated first). Defaults to the task's badge/expression. */
-  question?: (t: T) => React.ReactNode
   /** One emoji shown huge + very faint as the "sweet & simple" themed backdrop.
    *  Keeps the background uncluttered so it never competes with the interactive. */
   motif?: string
-  start: { blurb: React.ReactNode; ticket: { title: string; price?: string; badge: string; tone: 'a' | 'b' }; startLabel: string }
+  start: { blurb: React.ReactNode; ticket: { title: string; badge: string; tone: 'a' | 'b' }; startLabel: string }
   /** A plain-language SUMMARY of the problem, shown + spoken BEFORE the step-by-step
    *  walkthrough begins — so the child grasps WHAT they're solving and WHICH
    *  calculation they're about to do before diving into the baby steps. Milo reads
@@ -181,8 +165,6 @@ export interface GameConfig<V, T extends BaseTask> {
    *  out like a cartoon video. Driven by the same narration timeline: it receives the
    *  current step's value + step index, and CSS transitions animate the change. */
   TutorialScene?: (p: { palette: Palette; task: T; value: V; stepIndex: number; frameCount: number; ended: boolean }) => React.ReactElement
-  /** Legacy one-shot demo (used when `tutorial` is absent). */
-  Demo?: (p: DemoProps) => React.ReactElement
   /** math-only signature so a re-drawn ticket / shuffled dressing isn't "new". */
   sig?: (t: T) => string
   /** PER-TASK tap-answering. Return the tap-choices for THIS question (correct +
@@ -216,7 +198,7 @@ export function Game<V, T extends BaseTask>({
   onExit: () => void
 }) {
   const P = config.palette
-  const TOTAL = config.total ?? 8
+  const TOTAL = 8
   // Resume at the difficulty this child last left off on (see chapterLevel). No
   // learner (logged-out preview) → starts at easy, unchanged. Computed once.
   const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
@@ -446,7 +428,7 @@ export function Game<V, T extends BaseTask>({
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, textAlign: 'center' }}>
               <Ticket P={P}>
                 <TicketHead P={P} n={1} label={config.ticketLabel} />
-                <Row P={P} title={config.start.ticket.title} price={config.start.ticket.price} badge={config.start.ticket.badge} tone={config.start.ticket.tone} />
+                <Row P={P} title={config.start.ticket.title} badge={config.start.ticket.badge} tone={config.start.ticket.tone} />
               </Ticket>
               <p style={{ margin: 0, maxWidth: 'clamp(400px, 48vw, 600px)', fontSize: 'clamp(15px, 1.5vw, 22px)', lineHeight: 1.55, color: P.creamSoft, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>{config.start.blurb}</p>
               {canWarmUp ? (
@@ -486,12 +468,8 @@ export function Game<V, T extends BaseTask>({
           )
         )}
 
-        {stage === 'demo' && (
-          config.tutorial
-            ? <TutorialPlayer config={config} script={config.tutorial} roomy={roomy} short={short} onDone={afterDemo} />
-            : config.Demo
-              ? <CenterFill><config.Demo palette={P} childName={childName} onDone={afterDemo} /></CenterFill>
-              : null
+        {stage === 'demo' && config.tutorial && (
+          <TutorialPlayer config={config} script={config.tutorial} roomy={roomy} short={short} onDone={afterDemo} />
         )}
 
         {/* padCentered is for the PAD path ONLY. It makes CenterFill `flex: 0 0 auto`,
@@ -538,7 +516,7 @@ export function Game<V, T extends BaseTask>({
                 prompt={task.prompt || task.title}
                 context={task.context}
                 instruction={padChoices.length ? (task.padInstruction ?? 'Work it out, then tap your answer.') : task.instruction}
-                expr={config.question ? config.question(task) : task.badge}
+                expr={task.badge}
                 answer={task.showEquals === false ? undefined : (sub === 'active' ? '?' : config.revealText(task))}
                 answerLabel={task.answerLabel}
                 tone={sub === 'active' ? 'ask' : sub === 'sold' ? 'ok' : 'reveal'}
@@ -657,19 +635,17 @@ function TutorialPlayer<V, T extends BaseTask>({
   // multi-example tutorial thus teaches several operations, one baby step at a time.
   const frames = useMemo(() => {
     const scripts = Array.isArray(script) ? script : [script]
-    const out: { task: T; value: V; hand: HandKind; board: string[]; writingIndex: number; say: string; art: string }[] = []
+    const out: { task: T; value: V; hand: HandKind; board: string[]; writingIndex: number; say: string }[] = []
     for (const sc of scripts) {
       let val = sc.initial
       let hnd = sc.hand
-      let art = ''
       const board: string[] = []
       for (const st of sc.steps) {
         if (st.value !== undefined) val = st.value as V
         if (st.hand) hnd = st.hand
-        if (st.art !== undefined) art = st.art
         let writingIndex = -1
         if (st.board) { board.push(st.board); writingIndex = board.length - 1 }
-        out.push({ task: sc.task, value: val, hand: hnd, board: [...board], writingIndex, say: st.say, art })
+        out.push({ task: sc.task, value: val, hand: hnd, board: [...board], writingIndex, say: st.say })
       }
     }
     return out
@@ -726,7 +702,6 @@ function TutorialPlayer<V, T extends BaseTask>({
   const babyBoard = (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
       <Blackboard P={P} lines={windowBoard} writingIndex={windowWriting} slideKey={boardStart} />
-      {cur.art && <ArtProp src={cur.art} />}
     </div>
   )
 
@@ -756,18 +731,6 @@ function TutorialPlayer<V, T extends BaseTask>({
         {controls}
       </CenterFill>
     </>
-  )
-}
-
-/** The real-world object picture that appears beside the chalkboard during the
- *  walkthrough — a visual of what the board line is describing. Pops in fresh each
- *  time the sprite changes (keyed on src) so a new picture reads as a new beat. */
-function ArtProp({ src }: { src: string }) {
-  return (
-    <div key={src} style={{ marginTop: 'clamp(8px, 1.4vh, 16px)', display: 'flex', justifyContent: 'center', alignItems: 'center', animation: 'gsArtPop 420ms ease' }}>
-      <style>{'@keyframes gsArtPop{0%{opacity:0;transform:translateY(8px) scale(.9)}60%{transform:translateY(0) scale(1.04)}100%{opacity:1;transform:translateY(0) scale(1)}}'}</style>
-      <img src={src} alt="" style={{ height: 'clamp(80px, 14vh, 156px)', width: 'auto', maxWidth: '100%', objectFit: 'contain', filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.35))' }} />
-    </div>
   )
 }
 

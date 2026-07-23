@@ -158,15 +158,6 @@ export const STORYTELLINGS: Storytelling[] = [
 // localStorage; falls back to the first storytelling on the server / when storage
 // is unavailable.
 const STORY_KEY = 'milo.counting.storyIdx'
-export function pickStorytelling(): Storytelling {
-  if (typeof window === 'undefined') return STORYTELLINGS[0]
-  let prev = -1
-  try { prev = parseInt(window.localStorage.getItem(STORY_KEY) || '-1', 10) } catch { /* storage blocked */ }
-  if (!Number.isFinite(prev)) prev = -1
-  const next = (prev + 1) % STORYTELLINGS.length
-  try { window.localStorage.setItem(STORY_KEY, String(next)) } catch { /* storage blocked */ }
-  return STORYTELLINGS[next]
-}
 
 export function storytellingById(id: string | null | undefined): Storytelling | undefined {
   return STORYTELLINGS.find(s => s.id === id)

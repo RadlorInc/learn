@@ -15,6 +15,3 @@ export function setLeadEmail(email: string): void {
 export function getLeadEmail(): string | null {
   try { return kv.get(KEY) || null } catch { return null }
 }
-export function clearLeadEmail(): void {
-  try { kv.remove(KEY) } catch { /* non-fatal */ }
-}

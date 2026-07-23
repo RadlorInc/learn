@@ -36,7 +36,3 @@ export function extendedFingerTips(lm: Landmark[], handedness: string): FingerTi
 
   return tips
 }
-
-export function countExtendedFingers(lm: Landmark[], handedness: string): number {
-  return extendedFingerTips(lm, handedness).length
-}

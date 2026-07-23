@@ -206,13 +206,6 @@ export function speakAfterCurrent(text: string, rate = 0.88, pitch = 1.05) {
   }
 }
 
-export function replayLast() {
-  if (_lastText) {
-    _setBlocked(false)
-    _doSpeak(_lastText, _lastRate, _lastPitch)
-  }
-}
-
 /**
  * Unlock the speech engine from inside a user gesture (a tap/click handler). Mobile browsers
  * (iOS Safari especially) only allow speechSynthesis after the FIRST speak() that runs
@@ -238,14 +231,6 @@ export function stopSpeech() {
   if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
   _setSpeaking(false)
   try { window.speechSynthesis.cancel() } catch {}
-}
-
-export function afterSpeech(cb: () => void) {
-  if (_speaking) {
-    _onEndCbs.push(cb)
-  } else {
-    cb()
-  }
 }
 
 /**
@@ -527,14 +512,6 @@ export function useIsSpeaking(): boolean {
   return useSyncExternalStore(
     (cb) => { _subs.add(cb); return () => _subs.delete(cb) },
     () => _speaking,
-    () => false,
-  )
-}
-
-export function useIsBlocked(): boolean {
-  return useSyncExternalStore(
-    (cb) => { _subs.add(cb); return () => _subs.delete(cb) },
-    () => _blocked,
     () => false,
   )
 }

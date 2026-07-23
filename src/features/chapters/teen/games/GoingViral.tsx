@@ -69,7 +69,6 @@ interface Task extends BaseTask {
 // range instead of over a hand-copied sample of it: no misconception distractor may
 // ever equal the answer, or numChoices silently drops it and the pad loses exactly
 // the option worth catching. Each `*Valid` guard is the one the generator applies.
-export const EVAL_RANGE = { m: [2, 3, 4, 5, 6], c: Array.from({ length: 20 }, (_, i) => i + 1), x: [2, 3, 4, 5, 6, 7, 8] }
 export const SEQ_RANGE = { start: [2, 3], r: [2, 3] }
 export const GROWTH_RANGE = { a: [2, 3, 5, 10], b: [2, 3, 4] }
 export const evalValid = (m: number, x: number) => x !== m

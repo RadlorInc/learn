@@ -117,33 +117,6 @@ export function PtMilo({ left = 9 }: { left?: number }) {
 
 // ─── Mission picker ────────────────────────────────────────────────────────────────────
 export interface Mission { id: string; label: string; tag: string; accent: Accent; glyph: React.ReactNode }
-export function MissionSelect({ eyebrow = 'Number Lab', title, missions, onPick, onExit }: { eyebrow?: string; title: string; missions: Mission[]; onPick: (id: string) => void; onExit?: () => void }) {
-  return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(18px,4vh,32px)', padding: '5vh 5vw', overflow: 'hidden', background: `radial-gradient(125% 90% at 50% -10%, ${PT.bg1}, ${PT.bg0} 70%)` }}>
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${PT.line} 1px,transparent 1px),linear-gradient(90deg,${PT.line} 1px,transparent 1px)`, backgroundSize: '40px 40px', WebkitMaskImage: 'radial-gradient(120% 100% at 50% 30%,#000 40%,transparent 100%)', maskImage: 'radial-gradient(120% 100% at 50% 30%,#000 40%,transparent 100%)', opacity: 0.55 }} />
-      {onExit && <BackChip onExit={onExit} />}
-      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontFamily: PT.mono, fontSize: 12, letterSpacing: 3, color: PT.inkMute, textTransform: 'uppercase' }}>{eyebrow}</span>
-        <h1 style={{ margin: 0, fontFamily: PT.sans, fontWeight: 700, fontSize: 'clamp(21px,4.2vh,34px)', color: PT.ink, textAlign: 'center' }}>{title}</h1>
-      </div>
-      <div style={{ position: 'relative', display: 'flex', gap: 'clamp(14px,2.6vw,26px)', flexWrap: 'wrap', justifyContent: 'center' }}>
-        {missions.map(m => (
-          <button key={m.id} onClick={() => { unlockSpeech(); speak(m.label); onPick(m.id) }}
-            style={{ width: 'clamp(188px,23vw,244px)', textAlign: 'left', cursor: 'pointer', padding: 0, borderRadius: 16, overflow: 'hidden', background: PT.panel, backdropFilter: 'blur(8px)', border: `1px solid ${m.accent.base}55`, boxShadow: `0 0 22px ${m.accent.base}22, 0 12px 30px rgba(0,0,0,0.4)`, transition: 'transform .16s ease, box-shadow .16s ease' }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = `0 0 34px ${m.accent.base}55, 0 16px 38px rgba(0,0,0,0.5)` }}
-            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 22px ${m.accent.base}22, 0 12px 30px rgba(0,0,0,0.4)` }}>
-            <div style={{ height: 8, background: m.accent.base, boxShadow: `0 0 14px ${m.accent.base}` }} />
-            <div style={{ padding: '18px 18px 20px' }}>
-              <div style={{ width: 54, height: 54, borderRadius: 13, background: m.accent.soft, border: `1px solid ${m.accent.base}66`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, color: m.accent.base, fontFamily: PT.mono, fontWeight: 800, fontSize: 26 }}>{m.glyph}</div>
-              <div style={{ fontFamily: PT.sans, fontWeight: 700, fontSize: 19, color: PT.ink, marginBottom: 4 }}>{m.label}</div>
-              <div style={{ fontFamily: PT.mono, fontSize: 10.5, letterSpacing: .6, color: PT.inkMute, textTransform: 'uppercase' }}>{m.tag}</div>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 // ─── Explore-phase primitives (interactive "play with it first" sim) ────────────────────
 // A HUD range slider: label · neon track · mono value readout. Touch-friendly + testable.

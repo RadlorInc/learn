@@ -203,12 +203,6 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
 // These are the shared building blocks chapters call to get
 // appropriate numbers for the current difficulty.
 
-export function countTarget(difficulty: Difficulty): number {
-  if (difficulty === 1) return Math.floor(Math.random() * 3) + 1   // 1–3
-  if (difficulty === 2) return Math.floor(Math.random() * 4) + 3   // 3–6
-  return Math.floor(Math.random() * 5) + 5                          // 5–9
-}
-
 export function patternUnitLen(difficulty: Difficulty): number {
   // Patterns: how many distinct items in the repeating unit. A demotion makes
   // the unit shorter again (ABCD → ABC → AB), i.e. genuinely easier.
@@ -255,12 +249,6 @@ export function subPair(difficulty: Difficulty): [number, number] {
   const total = Math.floor(Math.random() * 4) + 7     // 7–10
   const take  = Math.floor(Math.random() * 4) + 3     // 3–6
   return [total, take]
-}
-
-export function seqStart(difficulty: Difficulty): number {
-  if (difficulty === 1) return Math.floor(Math.random() * 3) + 1   // start 1–3
-  if (difficulty === 2) return Math.floor(Math.random() * 5) + 3   // start 3–7
-  return Math.floor(Math.random() * 8) + 1                          // start 1–8
 }
 
 export function seqLength(difficulty: Difficulty): number {
