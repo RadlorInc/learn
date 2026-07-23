@@ -29,16 +29,19 @@ function shuffle<T>(a: T[]): T[] { const r = a.slice(); for (let i = r.length - 
 
 type QType = 'most' | 'howMany' | 'diff' | 'total'
 interface Cat { label: string; value: number }
-interface DdRound { qType: QType; cats: Cat[]; highlight: number[]; prompt: string; tag: string; say: string; answer: string; choices: string[] }
+interface DdRound { qType: QType; cats: Cat[]; highlight: number[]; prompt: string; tag: string; say: string; answer: string; choices: string[]; subject: string }
 
-// themed pools of 4-category label sets
-const LABEL_SETS: string[][] = [
-  ['Red', 'Blue', 'Green', 'Gold'],
-  ['Cats', 'Dogs', 'Fish', 'Birds'],
-  ['Mon', 'Tue', 'Wed', 'Thu'],
-  ['Apple', 'Pear', 'Plum', 'Lime'],
-  ['Jump', 'Run', 'Swim', 'Climb'],
-  ['Star', 'Moon', 'Sun', 'Comet'],
+// Each dataset has a SUBJECT (what the chart counts) and 4 countable, plural noun
+// categories — so every question makes sense: "How many Snails?" reads, "How many Climb?"
+// does not. The subject is drawn as the chart's title so "which had the most / altogether"
+// have a referent too.
+const DATASETS: { subject: string; cats: string[] }[] = [
+  { subject: 'Pets at the shelter', cats: ['Cats', 'Dogs', 'Fish', 'Birds'] },
+  { subject: 'Fruit in the bowl', cats: ['Apples', 'Pears', 'Plums', 'Limes'] },
+  { subject: 'Bugs in the garden', cats: ['Bees', 'Ants', 'Snails', 'Moths'] },
+  { subject: 'Toys in the box', cats: ['Cars', 'Blocks', 'Dolls', 'Kites'] },
+  { subject: 'Snacks on the shelf', cats: ['Chips', 'Cookies', 'Muffins', 'Donuts'] },
+  { subject: 'Shapes on the wall', cats: ['Circles', 'Squares', 'Stars', 'Hearts'] },
 ]
 
 // four distinct values in 1..9 (distinct guarantees a unique max)
@@ -59,18 +62,19 @@ function numChoices(correct: number, spread: number, lo: number): { answer: stri
 function makeRound(d: 1 | 2 | 3): DdRound {
   const pool: QType[] = d === 1 ? ['most', 'most', 'howMany'] : d === 2 ? ['most', 'howMany', 'diff', 'diff'] : ['howMany', 'diff', 'total', 'total']
   const t = pick(pool)
-  const labels = pick(LABEL_SETS)
+  const set = pick(DATASETS)
+  const subject = set.subject
   const values = fourDistinct()
-  const cats: Cat[] = labels.map((label, i) => ({ label, value: values[i] }))
+  const cats: Cat[] = set.cats.map((label, i) => ({ label, value: values[i] }))
 
   if (t === 'most') {
     let top = 0; for (let i = 1; i < cats.length; i++) if (cats[i].value > cats[top].value) top = i
-    return { qType: 'most', cats, highlight: [top], prompt: 'Which had the most?', tag: 'Read the chart', say: 'Which one had the most?', answer: cats[top].label, choices: shuffle(cats.map(c => c.label)) }
+    return { qType: 'most', cats, highlight: [top], subject, prompt: 'Which has the most?', tag: 'Read the chart', say: 'Which one has the most?', answer: cats[top].label, choices: shuffle(cats.map(c => c.label)) }
   }
   if (t === 'howMany') {
     const idx = rint(0, 3); const c = cats[idx]
     const { answer, choices } = numChoices(c.value, 1, 1)
-    return { qType: 'howMany', cats, highlight: [idx], prompt: `How many ${c.label}?`, tag: 'Read one bar', say: `How many ${c.label}?`, answer, choices }
+    return { qType: 'howMany', cats, highlight: [idx], subject, prompt: `How many ${c.label}?`, tag: 'Read one bar', say: `How many ${c.label}?`, answer, choices }
   }
   if (t === 'diff') {
     // pick two indices where a > b
@@ -79,11 +83,11 @@ function makeRound(d: 1 | 2 | 3): DdRound {
     if (cats[a].value < cats[b].value) { const tmp = a; a = b; b = tmp }
     const diff = cats[a].value - cats[b].value
     const { answer, choices } = numChoices(diff, 1, 1)
-    return { qType: 'diff', cats, highlight: [a, b], prompt: `How many more ${cats[a].label} than ${cats[b].label}?`, tag: 'Compare bars', say: `How many more ${cats[a].label} than ${cats[b].label}?`, answer, choices }
+    return { qType: 'diff', cats, highlight: [a, b], subject, prompt: `How many more ${cats[a].label} than ${cats[b].label}?`, tag: 'Compare bars', say: `How many more ${cats[a].label} than ${cats[b].label}?`, answer, choices }
   }
   const total = cats.reduce((s, c) => s + c.value, 0)
   const { answer, choices } = numChoices(total, 2, 4)
-  return { qType: 'total', cats, highlight: [0, 1, 2, 3], prompt: 'How many altogether?', tag: 'Add every bar', say: 'How many altogether?', answer, choices }
+  return { qType: 'total', cats, highlight: [0, 1, 2, 3], subject, prompt: 'How many altogether?', tag: 'Add every bar', say: 'How many altogether?', answer, choices }
 }
 
 // ─── Bar chart visual ───────────────────────────────────────────────────────────────────
@@ -133,7 +137,8 @@ function Chart({ data, s }: { data: DdRound; s: StageState }) {
         <span style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 1.5, color: PT.inkMute, textTransform: 'uppercase' }}>{header}</span>
         <span style={{ width: 9, height: 9, borderRadius: '50%', background: s.revealed ? PT.ok : ACCENT.base, boxShadow: `0 0 8px ${s.revealed ? PT.ok : ACCENT.base}` }} />
       </div>
-      <div style={{ padding: '20px 24px 22px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+      <div style={{ padding: '16px 24px 22px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: 16, color: PT.ink, textAlign: 'center' }}>{data.subject}</div>
         <BarChart cats={data.cats} highlight={data.highlight} revealed={s.revealed} />
         <div style={{ height: 34 }}>
           {s.verdict && <div style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: 17, padding: '5px 16px', borderRadius: 999, animation: 'pt_pop .4s ease both',
@@ -226,7 +231,8 @@ const FlExplain: React.FC<{ data: DdRound; onDone: () => void }> = ({ data, onDo
 
 // ─── Explore sim: slide four bars and watch the chart, the "most", and the total update live ──
 function ChartScope() {
-  const LABELS = ['Red', 'Blue', 'Green', 'Gold']
+  const SUBJECT = 'Bugs in the garden'
+  const LABELS = ['Bees', 'Ants', 'Snails', 'Moths']
   const [vals, setVals] = useState([4, 7, 3, 5])
   const cats: Cat[] = LABELS.map((label, i) => ({ label, value: vals[i] }))
   let top = 0; for (let i = 1; i < cats.length; i++) if (cats[i].value > cats[top].value) top = i
@@ -234,6 +240,7 @@ function ChartScope() {
   const setAt = (i: number) => (v: number) => setVals(prev => { const r = prev.slice(); r[i] = v; return r })
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
+      <div style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: 16, color: PT.ink }}>{SUBJECT}</div>
       <BarChart cats={cats} highlight={[top]} revealed />
       <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
         <PtReadout label="most" value={cats[top].label} accent={ACCENT} />
@@ -261,15 +268,15 @@ function makeBeat(): Beat<DdRound> {
 }
 
 // deterministic demo/guided rounds (small fixed datasets)
-function fixedRound(qType: QType, cats: Cat[]): DdRound {
+function fixedRound(qType: QType, subject: string, cats: Cat[]): DdRound {
   if (qType === 'most') {
     let top = 0; for (let i = 1; i < cats.length; i++) if (cats[i].value > cats[top].value) top = i
-    return { qType, cats, highlight: [top], prompt: 'Which had the most?', tag: 'Read the chart', say: 'Which one had the most?', answer: cats[top].label, choices: shuffle(cats.map(c => c.label)) }
+    return { qType, cats, highlight: [top], subject, prompt: 'Which has the most?', tag: 'Read the chart', say: 'Which one has the most?', answer: cats[top].label, choices: shuffle(cats.map(c => c.label)) }
   }
   // howMany fixed on the second bar
   const idx = 1; const c = cats[idx]
   const { answer, choices } = numChoices(c.value, 1, 1)
-  return { qType: 'howMany', cats, highlight: [idx], prompt: `How many ${c.label}?`, tag: 'Read one bar', say: `How many ${c.label}?`, answer, choices }
+  return { qType: 'howMany', cats, highlight: [idx], subject, prompt: `How many ${c.label}?`, tag: 'Read one bar', say: `How many ${c.label}?`, answer, choices }
 }
 
 type Phase = 'intro' | 'explore' | 'demo' | 'guided' | 'practice'
@@ -290,10 +297,10 @@ export default function DataDeck({ onFinish, onExit }: { onFinish?: (correct: nu
   const beat = useMemo(() => makeBeat(), [])
 
   const DEMO: DdRound[] = [
-    fixedRound('most', [{ label: 'Red', value: 4 }, { label: 'Blue', value: 7 }, { label: 'Green', value: 3 }, { label: 'Gold', value: 5 }]),
-    fixedRound('howMany', [{ label: 'Cats', value: 5 }, { label: 'Dogs', value: 8 }, { label: 'Fish', value: 2 }, { label: 'Birds', value: 4 }]),
+    fixedRound('most', 'Bugs in the garden', [{ label: 'Bees', value: 4 }, { label: 'Ants', value: 8 }, { label: 'Snails', value: 3 }, { label: 'Moths', value: 5 }]),
+    fixedRound('howMany', 'Pets at the shelter', [{ label: 'Cats', value: 5 }, { label: 'Dogs', value: 8 }, { label: 'Fish', value: 2 }, { label: 'Birds', value: 4 }]),
   ]
-  const GUIDED: DdRound = fixedRound('most', [{ label: 'Mon', value: 6 }, { label: 'Tue', value: 3 }, { label: 'Wed', value: 9 }, { label: 'Thu', value: 5 }])
+  const GUIDED: DdRound = fixedRound('most', 'Fruit in the bowl', [{ label: 'Apples', value: 6 }, { label: 'Pears', value: 3 }, { label: 'Plums', value: 9 }, { label: 'Limes', value: 5 }])
 
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 12, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
