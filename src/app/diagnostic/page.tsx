@@ -36,6 +36,7 @@ function newClientId(): string {
   })
 }
 import { PT, ACCENTS, LabBackdrop, BackChip, ChoiceButton, PtMilo, IntroCard, type Accent, type ChoiceState } from '@/features/chapters/story/preteen/kit'
+import { useViewport } from '@/shared/hooks/useViewport'
 
 const BANDS: Band[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan
@@ -63,16 +64,6 @@ const STORY_KEY: Record<string, string> = {
   factorsMultiples: 'factors', fractionsCompare: 'fcompare', decimals: 'decimals',
   measurementUnits: 'units', areaPerimeter: 'area', anglesSymmetry: 'angles',
   dataGraphs: 'data', wordProblems: 'word',
-}
-
-function useViewport() {
-  const [vp, setVp] = useState({ w: 1000, h: 700 })
-  useEffect(() => {
-    const calc = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    calc(); window.addEventListener('resize', calc); window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return vp
 }
 
 // Active learner (set by the in-app flow via setActiveLearner). Absent for cold traffic (no account)
