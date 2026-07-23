@@ -21,26 +21,9 @@ import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpea
 import { SkillBeat, type Beat } from './StoryWorld'
 import { PT, ACCENTS, PT_CSS, LabBackdrop, BackChip, Brackets, PromptCard, ChoiceButton, PtMilo, IntroCard, PtSlider, PtReadout, ExploreScaffold, type ChoiceState } from './preteen/kit'
 import { useViewport } from '@/shared/hooks/useViewport'
+import FitBox from './FitBox'
 
 const ACCENT = ACCENTS.gold
-
-
-// ─── FitBox (measure natural size → scale to fill the band) ────────────────────────────
-function FitBox({ availW, availH, max = 2.4, children }: { availW: number; availH: number; max?: number; children: React.ReactNode }) {
-  const inner = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(1)
-  const [dims, setDims] = useState({ w: 0, h: 0 })
-  useEffect(() => {
-    const el = inner.current; if (!el) return
-    const measure = () => { const nw = el.offsetWidth, nh = el.offsetHeight; if (!nw || !nh || availW <= 0 || availH <= 0) return; const s = Math.max(0.3, Math.min(availW / nw, availH / nh, max)); setScale(s); setDims({ w: nw * s, h: nh * s }) }
-    measure(); const ro = new ResizeObserver(measure); ro.observe(el); return () => ro.disconnect()
-  }, [availW, availH, max])
-  return (
-    <div style={{ width: dims.w || undefined, height: dims.h || undefined, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <div ref={inner} style={{ flex: 'none', transform: `scale(${scale})`, transformOrigin: 'center center' }}>{children}</div>
-    </div>
-  )
-}
 
 // ─── Number words (0–9999) ────────────────────────────────────────────────────────────
 const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
@@ -198,7 +181,7 @@ function Stage({ data, s, short }: { data: NvRound; s: StageState; short?: boole
   const availH = short ? vh * 0.42 : vh * 0.54
   return (
     <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '45%' : '47%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw' }}>
-      <FitBox availW={availW} availH={availH} max={2.6}><Analyzer data={data} s={s} /></FitBox>
+      <FitBox availW={availW} availH={availH} max={2.6} min={0.3}><Analyzer data={data} s={s} /></FitBox>
     </div>
   )
 }
@@ -288,7 +271,7 @@ function PlaceBuilder() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
       <div style={{ fontFamily: PT.mono, fontWeight: 800, fontSize: 52, lineHeight: 1, color: PT.ink, letterSpacing: 1, textShadow: `0 0 24px ${ACCENT.base}66` }}>{fmt(n)}</div>
-      <FitBox availW={Math.min(vw * 0.82, 460)} availH={300} max={1}>
+      <FitBox availW={Math.min(vw * 0.82, 460)} availH={300} max={1} min={0.3}>
         <div style={{ display: 'flex', gap: 11, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'nowrap' }}>
           {cols.map(col => <PlaceCol key={col.v} col={col} u={u} showNumeral highlighted={col.digit > 0} />)}
         </div>
