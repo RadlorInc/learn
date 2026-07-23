@@ -282,8 +282,8 @@ type Mode = 'guided' | 'practice'
 const sayFor = (world: FrWorld, d: FrRound) => d.type === 'name'
   ? `This ${d.treat.name} is cut into ${numberToWords(d.den)} equal parts. One part is ${world.shape === 'bar' ? 'wrapped' : 'covered'}. What fraction is that?`
   : `Share ${numberToWords(d.total)} ${d.treat.group.many} into ${numberToWords(d.den)} equal groups. How many are in one ${fracWord(d.den)}?`
-const promptFor = (d: FrRound) => d.type === 'name'
-  ? 'What fraction is shaded?'
+const promptFor = (world: FrWorld, d: FrRound) => d.type === 'name'
+  ? `What fraction is ${world.shape === 'bar' ? 'covered' : 'shaded'}?`
   : `One ${fracWord(d.den)} of ${d.total} ${d.treat.group.many}?`
 
 const FrPlay: React.FC<{ world: FrWorld; data: FrRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
@@ -328,7 +328,7 @@ const FrPlay: React.FC<{ world: FrWorld; data: FrRound; mode: Mode; onComplete: 
       <div style={{ position: 'fixed', top: short ? 78 : 82, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
         <div style={{ maxWidth: 'min(90vw, 560px)', background: 'rgba(255,255,255,.92)', border: '3px solid var(--outline)', borderRadius: 18, padding: short ? '5px 14px' : '10px 18px',
           fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 'clamp(12px,3.4vh,15px)' : 'clamp(15px,2.2vh,19px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.14)' }}>
-          {promptFor(data)}
+          {promptFor(world, data)}
         </div>
       </div>
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '4%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.22) : 'clamp(14px,4vw,30px)', flexWrap: 'wrap', padding: '0 12px',
@@ -402,7 +402,7 @@ function makeFrBeat(world: FrWorld): Beat<FrRound> {
     skillId: 'fractions', rounds: 10, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeFractionRound(world, (d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.type}|${d.den}|${d.total}`,   // dedupe on the MATH (not the rotating treat/scene)
-    prompt: d => promptFor(d),
+    prompt: d => promptFor(world, d),
     say: d => sayFor(world, d),
     Play: ({ data, onSubmit }) => <FrPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <FrExplain world={world} data={data} onDone={onDone} />,

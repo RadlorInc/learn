@@ -71,7 +71,7 @@ export const ITEM_GENERATORS: Record<string, Gen> = {
   'e.counting10': () => { const n = R(3, 8); return { prompt: `${n - 2}, ${n - 1}, ${n}, ?`, ...mc(n + 1, [n, n + 2, n - 1]) } },
   'e.numeralRecog': () => { const n = R(4, 9); return { prompt: `Tap the number ${n}.`, ...mc(n, [n + 1, n - 1, n + 2]) } },
   'e.matchQty': () => { const n = R(3, 7); return { prompt: `How many? ${glyph().repeat(n)}`, ...mc(n, [n + 1, n - 1, n + 2]) } },
-  'e.compare': () => { const a = R(2, 9), b = R(2, 9); const x = a, y = a === b ? b + 1 : b; return { prompt: `Which is more?`, ...mc(Math.max(x, y), [Math.min(x, y)]) } },
+  'e.compare': () => { const a = R(2, 9), b = R(2, 9); const x = a, y = a === b ? b + 1 : b; return { prompt: `Which is more, ${x} or ${y}?`, ...mc(Math.max(x, y), [Math.min(x, y)]) } },
   'e.numberOrder': () => { const n = R(3, 8); return { prompt: `What comes just after ${n}?`, ...mc(n + 1, [n - 1, n + 2, n]) } },
   'e.addWithin10': () => { const a = R(1, 5), b = R(1, 4); return { prompt: `${a} + ${b} = ?`, ...mc(a + b, [a + b + 1, a + b - 1, a + b + 2]) } },
   'e.subWithin10': () => { const a = R(5, 9), b = R(1, 4); return { prompt: `${a} − ${b} = ?`, ...mc(a - b, [a - b + 1, a - b - 1, a - b + 2]) } },

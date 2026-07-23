@@ -229,7 +229,7 @@ function signTerm(b: number): string { return b === 0 ? '' : b < 0 ? `− ${Math
 /** "ax + by = c" with signs cleaned up. */
 function lin(a: number, b: number, c: number): string {
   const aPart = a === 1 ? 'x' : a === -1 ? '−x' : `${fmtInt(a)}x`
-  const bPart = b === 1 ? 'y' : b === -1 ? '−y' : `${fmtInt(Math.abs(b))}y`
+  const bPart = Math.abs(b) === 1 ? 'y' : `${fmtInt(Math.abs(b))}y`
   const join = b < 0 ? '−' : '+'
   return `${aPart} ${join} ${bPart} = ${fmtInt(c)}`
 }

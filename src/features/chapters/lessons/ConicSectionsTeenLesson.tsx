@@ -69,7 +69,10 @@ export function makeRound(d: 1 | 2 | 3): Round {
     const h = rint(-4, 4)
     const k = rint(-4, 4)
     const r = rint(2, 6)
-    const eqn = `(x ${h >= 0 ? `− ${h}` : `+ ${Math.abs(h)}`})² + (y ${k >= 0 ? `− ${k}` : `+ ${Math.abs(k)}`})² = ${r * r}`
+    // h or k can be 0 — collapse "(x − 0)²" → "x²" (and same for y).
+    const hFac = h === 0 ? 'x' : `(x ${h > 0 ? `− ${h}` : `+ ${-h}`})`
+    const kFac = k === 0 ? 'y' : `(y ${k > 0 ? `− ${k}` : `+ ${-k}`})`
+    const eqn = `${hFac}² + ${kFac}² = ${r * r}`
     if (Math.random() < 0.5) {
       // Ask for the center — the sign flip is the trap.
       const ans = centerLabel(h, k)

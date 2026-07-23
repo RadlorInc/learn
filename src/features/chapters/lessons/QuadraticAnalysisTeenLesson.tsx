@@ -59,7 +59,10 @@ export function makeRound(d: 1 | 2 | 3): Round {
     const h = rint(-4, 4)
     const k = rint(-4, 4)
     const aStr = a === 1 ? '' : '−'
-    const eqn = `y = ${aStr}(x ${h < 0 ? '+' : '−'} ${Math.abs(h)})² ${k < 0 ? '−' : '+'} ${Math.abs(k)}`
+    // h or k can be 0 — collapse "(x − 0)²" → "x²" and drop a trailing "+ 0".
+    const hFac = h === 0 ? 'x' : `(x ${h < 0 ? '+' : '−'} ${Math.abs(h)})`
+    const kPart = k === 0 ? '' : ` ${k < 0 ? '−' : '+'} ${Math.abs(k)}`
+    const eqn = `y = ${aStr}${hFac}²${kPart}`
     const kind = Math.random()
     if (kind < 0.34) {
       const answer = coord(h, k)

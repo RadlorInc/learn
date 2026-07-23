@@ -326,7 +326,7 @@ const MultPlay: React.FC<{ world: MultWorld; data: MultRound; mode: Mode; onComp
       <div style={{ position: 'fixed', top: short ? 58 : 82, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
         <div style={{ maxWidth: 'min(88vw, 600px)', background: world.dark ? 'rgba(20,22,44,.82)' : 'rgba(255,255,255,.92)', border: `3px solid ${world.dark ? '#8fb4ff' : 'var(--outline)'}`, borderRadius: 18, padding: short ? '5px 14px' : '10px 18px',
           fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 'clamp(12px,3.4vh,15px)' : 'clamp(15px,2.2vh,19px)', color: world.dark ? '#fff' : 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.14)' }}>
-          {g} {groupWord(world, data.view)} of {per} — how many in all?
+          {g} {groupWord(world, data.view)} of {per} {data.item.many} — how many in all?
         </div>
       </div>
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(12px,3.5vw,30px)', flexWrap: 'wrap', padding: '0 12px',
@@ -393,7 +393,7 @@ function makeMultBeat(world: MultWorld): Beat<MultRound> {
     skillId: 'multiplication', rounds: 10, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeMultRound(world, (d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.g}x${d.per}|${d.view}`,   // dedupe on the MATH (factors + view), not the rotating scene/item
-    prompt: d => `${d.g} ${groupWord(world, d.view)} of ${d.per} — how many in all?`,
+    prompt: d => `${d.g} ${groupWord(world, d.view)} of ${d.per} ${d.item.many} — how many in all?`,
     say: d => sayFor(world, d),
     Play: ({ data, onSubmit }) => <MultPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <MultExplain world={world} data={data} onDone={onDone} />,

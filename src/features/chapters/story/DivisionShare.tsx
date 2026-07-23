@@ -62,7 +62,7 @@ function mk(groups: number, q: number, rem: number): DsRound {
   const say = rem > 0
     ? `Share ${numWords(total)} among ${numWords(groups)}. How many each, and how many left over?`
     : `Share ${numWords(total)} among ${numWords(groups)}. How many each?`
-  return { total, groups, q, rem, prompt: `Share ${total} among ${groups}`, say, answer, choices }
+  return { total, groups, q, rem, prompt: `Share ${total} nodes among ${groups} bays`, say, answer, choices }
 }
 function makeRound(d: 1 | 2 | 3): DsRound {
   if (d === 1) return mk(rint(2, 5), rint(2, 5), 0)

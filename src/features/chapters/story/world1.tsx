@@ -819,7 +819,7 @@ const doorBeat: Beat<DoorData> = {
   },
   // Number-recognition: the target is HEARD, not written — the child must
   // listen, then find the matching numeral on the doors. 🔊 replays the number.
-  prompt: () => 'Which door did I say? Tap it!',
+  prompt: () => 'Tap the door with the number you heard!',
   say: data => `Knock on door number ${data.target}!`,
   Play: DoorPlay, Reteach: DoorReteach,
 }

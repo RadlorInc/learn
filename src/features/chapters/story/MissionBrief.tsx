@@ -36,7 +36,7 @@ interface WpRound {
 }
 
 // theme vocab — countable "space cargo" nouns; keep answers positive integers
-const ITEMS = ['crystals', 'rovers', 'bolts', 'cells', 'samples', 'crates']
+const ITEMS = ['crystals', 'rovers', 'bolts', 'cells', 'samples', 'pods']
 
 // build 3 numeric choices: correct + two plausible near/wrong-op distractors
 function choicesFor(answer: number, distractors: number[]): string[] {

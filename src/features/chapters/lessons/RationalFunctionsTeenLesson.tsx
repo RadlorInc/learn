@@ -129,7 +129,7 @@ export function makeRound(d: 1 | 2 | 3): Round {
   const h = rint(1, 4)          // the cancelling factor's zero → a HOLE here
   let k = rint(-3, 4)           // the remaining denominator zero → an asymptote here
   let guard = 0
-  while (k === h && guard++ < 20) k = rint(-3, 4)
+  while ((k === h || k === 0) && guard++ < 20) k = rint(-3, 4)
   const base = `f(x) = (x − ${h})(x + ${Math.abs(k) === k ? k : Math.abs(k)}) / (x − ${h})`
   // Build a clean, honest expression: (x − h)(x − k?) / (x − h) → common factor is (x − h).
   const remDen = `x ${k >= 0 ? `− ${k}` : `+ ${Math.abs(k)}`}`

@@ -250,8 +250,9 @@ function peakTask(): Task {
   const q = shotThrough(ra, rb)
   return {
     kind: 'peak', title: 'How high', badge: `h = ${quad(q.pa, q.pb, q.pc)}`, tone: 'b', showEquals: false,
+    context: "This rule gives the ball's height as it flies up and back down.",
     prompt: 'Tap how high the ball gets at the top of its arc.',
-    padInstruction: 'Tap the height at the top of the arc.',
+    padInstruction: 'Work out the greatest height it reaches, then tap that number.',
     say: `This shot's height is ${spQuad(q.pa, q.pb, q.pc)}. Tap how high the ball gets at the very top.`,
     work: [
       `The peak sits at x equals negative b, divided by 2 a. That is ${spoken(-q.pb)} divided by ${spoken(2 * q.pa)}, so x equals ${spoken(q.h)}.`,

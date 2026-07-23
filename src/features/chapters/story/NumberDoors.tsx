@@ -261,7 +261,7 @@ function placeFor(n: number, kind: ObjKind, short = false): Placed[] {
 }
 
 // ─── Round copy (per world) ────────────────────────────────────────────────────────
-function promptFor(w: RecogWorld): string { return `Which ${w.noun} did Milo say?` }
+function promptFor(w: RecogWorld): string { return `Tap the ${w.noun} with the number you heard!` }
 function sayFor(w: RecogWorld, d: DoorRound): string {
   const t = d.doors[d.answerIdx]
   return `${w.verb} ${w.noun} number ${t}! Number ${t}.`
