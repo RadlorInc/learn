@@ -1,5 +1,17 @@
 # Session Handoff — Milo Story Mode
 
+> 📐 **READ [docs/chapter-craft.md](docs/chapter-craft.md) FIRST, EVERY SESSION, BEFORE TOUCHING ANY 3–11 STORY CHAPTER.**
+> It is the standing answer to *how we want the animation, the art and the voice* — the shape of a
+> chapter, how cycles and travel must agree, what may be an answer object, how to choose a backdrop,
+> how to generate a new drawn cycle, how Milo speaks, and how to verify any of it.
+> Everything in it was paid for by a founder catching it on a screenshot. **Most of those rules were
+> already learned in chapter 1, forgotten, and re-learned the hard way in a later chapter** — that
+> file exists so the next session starts from them instead of rediscovering them.
+> When a new correction lands, put the GENERAL rule there, not just the fix.
+>
+> _(Everything below is the running session history — newest first. The craft rules live in that
+> file, not here.)_
+
 > 🦆 **2026-07-24 (LATEST) — CHAPTER 2 (NUMBER ORDER) REBUILT AS "FOLLOW THE LEADER" AND SHIPPED TO PROD, TOGETHER WITH THE PREVIOUSLY-UNCOMMITTED NEST TREE. `main`@`02f5437`, prod serving sw v56, post-deploy smoke green.**
 >
 > **Deploy:** merged `feat/story-chapter-2-follow-the-leader` → `main` (fast-forward) → pushed → Vercel `dpl_2bJB7ex…` READY and aliased to `milo-story-mode.vercel.app`. Gates before push: `tsc` · **64/64 vitest** · `next build`. Post-deploy smoke: `/` `/story?ch=order` `/story?ch=nest` `/menu` `/diagnostic` `/api/health` all **200**; the new assets (`milo_side`/`milo_walk`, `bird_walk`, `nest_walk`, `farm_barnyard`) all **200**; prod `sw.js` serving **v56**. Drove `/story?ch=order` on PROD through intro → demo → guided with `fish_walk.png` loading and three tappable fish — the chapter runs live.
