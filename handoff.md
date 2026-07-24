@@ -12,7 +12,91 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🏡 **2026-07-24 (LATEST) — CHAPTER 4 (MATCHING QUANTITIES) REBUILT AS "HOME TIME" AND SHIPPED TO PROD, TOGETHER WITH THE SHARED CREATURE ENGINE EXTRACTED OUT OF CHAPTER 2. `main`@`c129e5c`, prod serving sw v57, post-deploy smoke green.**
+> ✏️ **2026-07-24 (LATEST) — THE 12–14 PRACTICE LOOP NOW HAS SCRATCH PAPER. SHIPPED TO PROD. `main`@`68a4aeb`, prod serving sw v58, post-deploy smoke green + driven live on prod.**
+>
+> **The ask (founder):** *"the kids use touch screen ipads and laptop so we need to add a scribble
+> pad so kids can solve the practice questions in age group 12-14."* Fair and overdue — these
+> chapters ask a child to work out `−1 − 4` or a Pythagorean leg **in their head**, because the only
+> writing surface on screen was the answer itself.
+>
+> **Deploy:** branch `feat/teen-scribble-pad` → `main` (fast-forward) → pushed → prod serving **v58**.
+> Gates: `tsc` · **66/66 vitest** · `next build`. Smoke: `/` `/menu` `/diagnostic` `/api/health`
+> `/teen-preview?c=integers` `/story?ch=home` all **200**. Then DROVE PROD: opened the pad in Bank
+> Account's guided round, stamped a shape (3634 ink px), stamped a second (7275), **Undo returned to
+> exactly 3634 and Clear to exactly 0**, freehand still drew over a stamped shape, backing store
+> 1088×408 on a 544×204 pad (dpr-correct), board + all four answer tiles clear of the drawer.
+> 0 console errors.
+>
+> ## ① What it is — [ScribblePad.tsx](src/features/chapters/teen/games/parts/ScribblePad.tsx) (new, ~260 lines) + 3 lines of [GameShell.tsx](src/features/chapters/teen/games/parts/GameShell.tsx)
+> A "✏️ Scratch pad" button in the guided and scored rounds opens squared paper along the bottom:
+> **Write · Erase · ◇ Shape… · Undo · Clear · Close**. Pointer events throughout, so finger, Apple
+> Pencil and mouse all work, and `touch-action: none` stops an iPad scrolling the page instead of
+> drawing. Marks are kept as POINTS, not pixels — so undo, and the resize/rotate redraw, are free.
+> A new question is a clean sheet (`resetKey` = the question index).
+>
+> ## ② The two decisions that matter, and the measurements behind them
+> • **It is NOT modal.** No backdrop, nothing disabled behind it — the child scribbles and then taps
+>   the answer without closing anything. Verified: answering with the pad open advances the round.
+> • **It is NOT a floating panel — it is IN FLOW, the last child of the shell's flex column**, so
+>   opening it SHRINKS the play area. Two earlier versions were measured and thrown away:
+>   a bottom-right floating panel sat on the question board and **two of the four answer tiles**;
+>   the fix after that (fixed panel + a matching height reserved in `main`) kept **two `vh` values in
+>   sync by hand, and they disagreed** — tiles still covered. In flow, the geometry cannot drift.
+>   **Generalise: when two elements must not overlap, make one take the other's space in layout —
+>   do not compute a matching reserve.** Same family as the shadow-outran-the-feet fix in chapter 2.
+> • `main` also gains `overflowY:auto` while the drawer is open, because at **740×360** the board and
+>   answers genuinely do not fit what is left. Content scrolls rather than hiding under the paper.
+>
+> ## ③ Shapes — a native `<select>`, because the platform already has this control
+> Founder follow-ups: *"add shapes options so that kids can click on a shape and that shape will
+> automatically get drawn"* → then *"put the shapes in dropdown"* → then *"in dropdown show the shape
+> also with the names."* Five stamps — **Rectangle · Circle · Triangle · Right triangle · Axes** —
+> chosen for what this band is actually asked (area/perimeter, circles, Pythagoras, plotting), all of
+> them slow and wobbly to draw freehand. A native `<select>` gives a touch device a proper picker and
+> a laptop a keyboard-navigable menu with **no outside-click, focus-trap or portal code to get wrong**;
+> bound to `''` so the same shape can be picked twice in a row.
+> • Shapes **TILE** left-to-right and wrap down a row. A small cascade offset was tried first and five
+>   shapes piled into one unreadable knot; the tile size is 0.15 of the pad width so one of each fits
+>   a row (0.18 fitted only four and the fifth wrapped back onto the first).
+> • A stamp is a NORMAL mark — Undo, Clear, Erase and the resize redraw all treat it like a stroke.
+> • **A glyph preview sits beside each name, and one of them was invisible.** `┼` (U+253C) for axes
+>   measured at *exactly* the missing-glyph width, i.e. it was rendering as tofu. Swapped to plain
+>   ASCII `+`; the other four were confirmed present the same way (each is narrower than the tofu box).
+>   **Reusable trick: to test whether a font has a glyph, compare its rendered width to U+10FFFD.**
+>
+> ## ④ Two lessons about MEASURING that cost real time this session
+> • **A canvas snapshot taken before the first sized redraw is worthless.** Undo/Clear call `redraw`,
+>   which re-sets `canvas.width/height` — so a baseline captured at the default 300×150 was compared
+>   against a 1088×408 buffer and reported nonsense (an "undo" that *added* 35k pixels). Both on dev
+>   AND again on prod. **Clear once to settle the size, THEN take the baseline.**
+> • **The preview pane's JS context intermittently reports `innerWidth/innerHeight` as 0**, which
+>   makes every `vw`/`vh` read and some `getBoundingClientRect` calls lie. Trust the screenshot, and
+>   re-measure before believing an alarming number. (This is also how the first bug got in: a bare
+>   `min(94vw, 620px)` collapsed to 0 → a 0-wide canvas keeps its default backing store → strokes land
+>   nowhere near the pen. **Every width in this shell is `clamp(px, vw, px)` for exactly that reason.**)
+> • Stale-console warning applies as usual: HMR left `redrawRef`/`SCRIBBLE_H`/`ShapeIcon` errors in the
+>   buffer from intermediate edits, all long since deleted. A fresh tab showed **zero**.
+>
+> ## ⑤ Scope note — 15–16 GETS THE PAD TOO
+> `GameShell` is shared by both teen bands, and `BAND` is hardcoded `'12-14'` inside it, so there is
+> no in-shell way to tell them apart. The pad is therefore live on all **24** teen chapters. Left on
+> deliberately — algebra needs paper as much as ratios do — but it is scope beyond what was asked, so
+> say if it should be gated (cheapest gate: a `scribble?: boolean` on `GameConfig`).
+>
+> ## ▶ OPEN — pick up here
+> 1. **NOBODY HAS WRITTEN ON IT WITH A REAL FINGER OR PENCIL.** Every check above was synthetic
+>    `PointerEvent`s in a desktop browser. Palm rejection, Pencil pressure, and whether a 204px-tall
+>    strip is enough paper for a 13-year-old's working are all unknown. **Try it on the actual iPad.**
+> 2. **No test covers it.** The pad has no unit test and no E2E — the 66 vitest specs are untouched by
+>    it. If it regresses, nothing catches it. The invariant worth gating is the one that already broke
+>    twice: *the drawer never overlaps the question board or an answer tile.*
+> 3. Deliberately skipped, add when asked: saving work across questions, colours, pinch-zoom,
+>    dragging/resizing a stamped shape.
+> 4. Everything in the 🏡 block below is unchanged and still open — above all **watch a child play**.
+>
+> _(the 🏡 block below is the previous session — chapter 4.)_
+
+> 🏡 **2026-07-24 — CHAPTER 4 (MATCHING QUANTITIES) REBUILT AS "HOME TIME" AND SHIPPED TO PROD, TOGETHER WITH THE SHARED CREATURE ENGINE EXTRACTED OUT OF CHAPTER 2. `main`@`c129e5c`, prod serving sw v57, post-deploy smoke green.**
 >
 > **Deploy:** branch `feat/story-chapter-4-home-time` → `main` (fast-forward) → pushed → Vercel READY.
 > Gates before push: `tsc` · **66/66 vitest** · `next build`. Post-deploy smoke on
@@ -135,7 +219,7 @@
 >
 > _(the 🦆 block below is the previous session — chapter 2.)_
 
-> 🦆 **2026-07-24 (LATEST) — CHAPTER 2 (NUMBER ORDER) REBUILT AS "FOLLOW THE LEADER" AND SHIPPED TO PROD, TOGETHER WITH THE PREVIOUSLY-UNCOMMITTED NEST TREE. `main`@`02f5437`, prod serving sw v56, post-deploy smoke green.**
+> 🦆 **2026-07-24 — CHAPTER 2 (NUMBER ORDER) REBUILT AS "FOLLOW THE LEADER" AND SHIPPED TO PROD, TOGETHER WITH THE PREVIOUSLY-UNCOMMITTED NEST TREE. `main`@`02f5437`, prod serving sw v56, post-deploy smoke green.**
 >
 > **Deploy:** merged `feat/story-chapter-2-follow-the-leader` → `main` (fast-forward) → pushed → Vercel `dpl_2bJB7ex…` READY and aliased to `milo-story-mode.vercel.app`. Gates before push: `tsc` · **64/64 vitest** · `next build`. Post-deploy smoke: `/` `/story?ch=order` `/story?ch=nest` `/menu` `/diagnostic` `/api/health` all **200**; the new assets (`milo_side`/`milo_walk`, `bird_walk`, `nest_walk`, `farm_barnyard`) all **200**; prod `sw.js` serving **v56**. Drove `/story?ch=order` on PROD through intro → demo → guided with `fish_walk.png` loading and three tappable fish — the chapter runs live.
 > **Committed as ONE commit deliberately:** Nest Tree needed the same rotate gate and the same `animation` longhand fix, so splitting the two chapters would have left a broken intermediate commit. Left untracked on purpose: `scripts/.voice-*.json` (regenerable, from the older voice session). The `.gitignore` change WAS included — it ignores `.mcp.json`, which holds API keys.
@@ -887,7 +971,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-24 (LATEST session — see the top 🏡 block. **Shipped to prod, `main`@`c129e5c`, sw v57:** chapter 4 (matching quantities) rebuilt as **🏡 Home Time** — Milo asks for exactly N, the little one the child taps really WALKS to him, and one tapped again walks BACK, so the miscount repair is a journey too. **There are always spares left over**: nothing on screen says when to stop, and deciding that is the entire skill — Little Grocery's shelf emptied at exactly the target and did the stopping for the child. Cost 0 new art. Chapter 2's engine was extracted to **`critters.tsx`** so the shadow-as-child / longhand-animation / linear-easing fixes live in ONE place (FollowTheLeader 708 → 464 lines, behaviour unchanged) — put a fix there, not in a chapter. **The founder's catch is the one to carry:** the Ready button turned green the moment the count matched, which quietly replaced the chapter with a hot/cold game — *a child could win it without counting once*. **No signal that the answer is right may appear BEFORE the commit**; celebration goes after. Also fixed in BOTH chapters 2 and 4: taps were gated on `useIsSpeaking()`, and `speechSynthesis.speaking` measures **3.2s+ true after one spoken digit** — seconds of dead screen per tap. **A new lesson about checks themselves:** the 960-combination invariant sweep passed on its first run, and mutation-testing showed 2 of 5 planted regressions walked straight through it — *a gate that has never been seen to fail is not evidence*. ▶ **Live and unvalidated — watch a child play it;** four of this session's faults were invisible to every passing script. Chapter 2 is now changed in prod with no test of its own. Nest Tree's cumulative arc is still missing. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
+_Last updated: 2026-07-24 (LATEST session — see the top ✏️ block. **Shipped to prod, `main`@`68a4aeb`, sw v58:** the 12–14 practice loop now has **scratch paper** — squared paper in a drawer along the bottom with Write/Erase/Undo/Clear and a shape dropdown (rectangle · circle · triangle · right triangle · axes) that stamps onto the page. Founder's point was that these chapters ask a child to work out `−1 − 4` **in their head**, because the only writing surface was the answer itself. Two design calls carry: it is **not modal** (scribble, then tap the answer, nothing to close) and it is **in flow, not floating** — opening it shrinks the play area, because two earlier versions were MEASURED sitting on the question board and two of the four answer tiles, the second of them because a fixed panel and a hand-matched height reserve kept two `vh` values in sync and they disagreed. **Generalise: when two elements must not overlap, make one take the other's space in layout rather than computing a matching reserve.** Also banked: to test whether a font has a glyph, compare its rendered width to U+10FFFD — that is how the axes `┼` was caught rendering as tofu. ▶ **Nobody has written on it with a real finger or Pencil** — every check was synthetic pointer events in a desktop browser; try it on the actual iPad. It has no test of its own, and it is live on the 15–16 chapters too (shared `GameShell`). _Prior session:_ chapter 4 shipped as **🏡 Home Time** (sw v57) — chapter 4 (matching quantities) rebuilt as **🏡 Home Time** — Milo asks for exactly N, the little one the child taps really WALKS to him, and one tapped again walks BACK, so the miscount repair is a journey too. **There are always spares left over**: nothing on screen says when to stop, and deciding that is the entire skill — Little Grocery's shelf emptied at exactly the target and did the stopping for the child. Cost 0 new art. Chapter 2's engine was extracted to **`critters.tsx`** so the shadow-as-child / longhand-animation / linear-easing fixes live in ONE place (FollowTheLeader 708 → 464 lines, behaviour unchanged) — put a fix there, not in a chapter. **The founder's catch is the one to carry:** the Ready button turned green the moment the count matched, which quietly replaced the chapter with a hot/cold game — *a child could win it without counting once*. **No signal that the answer is right may appear BEFORE the commit**; celebration goes after. Also fixed in BOTH chapters 2 and 4: taps were gated on `useIsSpeaking()`, and `speechSynthesis.speaking` measures **3.2s+ true after one spoken digit** — seconds of dead screen per tap. **A new lesson about checks themselves:** the 960-combination invariant sweep passed on its first run, and mutation-testing showed 2 of 5 planted regressions walked straight through it — *a gate that has never been seen to fail is not evidence*. ▶ **Live and unvalidated — watch a child play it;** four of this session's faults were invisible to every passing script. Chapter 2 is now changed in prod with no test of its own. Nest Tree's cumulative arc is still missing. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
 
 _Prior update: 2026-07-24 (chapter 2 (number order) rebuilt as **🦆 Follow the Leader** and shipped with the previously-uncommitted **🐣 Nest Tree**, `main`@`02f5437`, sw v56. A stepping-stone version was built and thrown away first, producing the rule the whole 3–5 band now runs on: **a numbered PROP cannot blend into painted art and cannot be alive before it is tapped — make the numbered things CREATURES.** Six founder corrections drove that session — the moonwalk, the pile-up, the cut-off leader, the shadow outrunning the feet, the frozen slide, and travel too fast to see — and every one traced to the same root: **a walk cycle and the travel it belongs to must be given the SAME number**, and **layout must be invariants, not constants that happen to hold at 1024×600**. Milo also gained his first drawn walk cycle there, kept from the rejected build — chapter 4 is what finally uses it.)_
 
