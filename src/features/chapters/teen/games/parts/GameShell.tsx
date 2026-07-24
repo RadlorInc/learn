@@ -30,6 +30,7 @@ import type { AgeBand } from '@/features/chapters/teen/types'
 import MiloMark from '@/features/chapters/teen/MiloMark'
 import FitBox from '@/features/chapters/story/FitBox'
 import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, AnswerPad, headerChip, bigBtn, type HandKind } from './gameKit'
+import ScribblePad from './ScribblePad'
 
 const BAND: AgeBand = '12-14'
 const RETEACH_AFTER = 3
@@ -360,6 +361,8 @@ export function Game<V, T extends BaseTask>({
   const busy = sub !== 'active'
   const inOrder = stage === 'play' || stage === 'guided'
   const { roomy, short, tall } = useFrame()
+  // Scratch paper — kids work on iPads and laptops and had nowhere to do the sums.
+  const [scratch, setScratch] = useState(false)
 
   // Overview: show the summary ON the chalkboard while the illustration sits in the
   // middle (same universal layout as the walkthrough/practice), instead of a big
@@ -421,7 +424,12 @@ export function Game<V, T extends BaseTask>({
         </div>
       )}
 
-      <main style={{ position: 'relative', zIndex: 1, flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: short ? '4px 12px 8px' : '8px 16px 20px', boxSizing: 'border-box' }}>
+      <main style={{ position: 'relative', zIndex: 1, flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: short ? '4px 12px 8px' : '8px 16px 20px', boxSizing: 'border-box',
+        // The scratch drawer takes real height out of this column. On a short
+        // landscape phone (measured 740×360) the board + answers no longer fit the
+        // 230px that leaves, so let the play area scroll rather than push a tile
+        // under the paper. Nothing changes while the drawer is closed.
+        ...(scratch ? { overflowY: 'auto' as const } : null) }}>
 
         {stage === 'start' && (
           <CenterFill>
@@ -567,6 +575,11 @@ export function Game<V, T extends BaseTask>({
           </PlayFrame>
         )}
       </main>
+
+      {/* Scratch paper — only where there is a question to work out. Sits AFTER main
+          in the same flex column, so opening it shrinks the play area instead of
+          covering it. `idx`/stage keys the page: a new question is a clean sheet. */}
+      {inOrder && <ScribblePad P={P} resetKey={stage === 'guided' ? 'g' : idx} open={scratch} onToggle={setScratch} />}
 
       {/* Hand-off popup: a brief, legible "your turn" / "you solved it" flash at the
           moment control passes to the child and when they succeed. */}
