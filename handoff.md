@@ -12,6 +12,102 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
+> 🏡 **2026-07-24 (LATEST) — CHAPTER 4 (MATCHING QUANTITIES) REBUILT AS "HOME TIME"; THE SHARED CREATURE ENGINE EXTRACTED OUT OF CHAPTER 2. UNCOMMITTED. `tsc` · 66/66 vitest · `next build` green; 0 console errors; driven live at 1280×800, 1024×600, 640×320 and portrait.**
+>
+> ## What was wrong with Little Grocery, and why polish could not fix it
+> Chapter 4 was the last 3–5 chapter still built the old way, and it broke most of the craft rules at
+> once: fruit sat as **dead props on a wooden shelf**, a tap made one vanish and `gr_pop` into a
+> **CSS-gradient paper bag**, and the customer was an **emoji** (🐰🐻🐱🐺) bobbing in a painted scene.
+> Nothing was alive before a tap, no tap caused a journey, and there was no rotate gate. Same class of
+> fault as the rejected stepping stones and the code-drawn nest bowl — **a numbered/countable PROP
+> cannot blend and cannot be alive**, so the fix is creatures, not better props.
+>
+> ## ① HOME TIME — what it is
+> Milo asks for **exactly N** on a painted marker above him. A huddle of little ones waits (breathing,
+> the odd idle hop). **Tap one and it really walks to him**, its drawn cycle running the whole way,
+> counting aloud as it goes. **Tap one that is already with him and it walks back** — the miscount
+> repair is a journey too, facing the other way, not a "put one back" button. Tap **Ready** to commit.
+> **There are ALWAYS spares left over** — nothing on screen tells the child when to stop, and deciding
+> that is the entire skill. A shelf that empties at exactly the target does the stopping for you, which
+> is what the old chapter did. Correct → Milo leads that group off and **the spares stay behind**,
+> making the point one last time: only the number he asked for went.
+> **Cost: 0 new art.** Chapter 1's eleven drawn cycles carry it, plus Milo's own walk sheet — the first
+> chapter to use the cycle that was generated for him and kept.
+> Difficulty grows the count AND the temptation: 1–3 with 2 spares → 3–6 → 6–7 with 3 spares.
+>
+> ## ② THE SHARED ENGINE IS NOW A MODULE — [critters.tsx](src/features/chapters/story/critters.tsx)
+> Chapter 2's hardest-won code (the `Critter` component, `travelMs`/`groundSpeed`, the huddle
+> invariants, `fitBands`, the cast and habitats) was module-private inside a 708-line file. Copying it
+> into chapter 4 would have meant two divergent copies of the shadow-as-child fix, the longhand
+> `animation` fix and the linear-easing fix. It is extracted verbatim; **FollowTheLeader went 708 → 464
+> lines** importing it, behaviour unchanged. A fix now lands in every creature chapter at once.
+>
+> ## ③ FIVE REAL BUGS FOUND BY VERIFYING, NOT BY BUILDING — and three were only visible to the eye
+> • **Milo stood in the treetops.** The sky habitat's bands sit at 40% because *butterflies fly*; a pony
+>   dropped on that band hovered over the hedge at the frame edge — **exactly the "he read as clutter"
+>   note that got Milo cut from chapter 2.** Fixed with chapter-4-specific `BANDS`: the leader gets its
+>   own GROUND line per habitat. Chapter 2's HABITATS were deliberately left untouched (shipped, and
+>   verified across 330 combinations — not worth perturbing for a new chapter's needs).
+> • **He had his back to them.** They walk in from his left; he faced right. Now he faces the incoming
+>   little ones and only turns to lead once everyone is gathered.
+> • **The group gathered nowhere near him** — the cluster filled from a fixed left edge and grew toward
+>   Milo, so the first two arrivals stood a quarter-screen from the character they had walked to. It
+>   now anchors ON him and grows away.
+> • **THE ONE THAT WOULD HAVE BROKEN THE CHAPTER: taps were gated on `useIsSpeaking()`.** Measured live
+>   — `speechSynthesis.speaking` stays true **over 3.2 SECONDS** after a single spoken digit, and the
+>   watchdog ceiling is 6s. In a chapter wanting up to seven taps a round that is half a minute of dead
+>   screen, and it is the same complaint the founder already raised on chapter 2 (*"let them click the
+>   next"*). The gate was never needed: `speak()` already cancels the utterance in flight, so fast taps
+>   simply speak the newest count. Replaced with a 260ms double-tap lock.
+>   **FIXED IN CHAPTER 2 TOO** (founder call, same session): `SPEAK_LOCK_MS` 600 → `TAP_LOCK_MS` 260 and
+>   `speaking` dropped from the guard in [FollowTheLeader.tsx](src/features/chapters/story/FollowTheLeader.tsx).
+>   Re-verified live there: three in-order taps 300ms apart ALL register (they used to be swallowed), a
+>   wrong-order tap is still refused, and a triple-tap in one tick still counts exactly once — so the
+>   ordering rule and the no-double-count rule both survive. A full round completes and marches. 0 console errors.
+> • **THE READY BUTTON TURNED GREEN AT THE RIGHT COUNT — founder caught it.** It lit up the moment
+>   `chosen === target`, and the number sign did the same. That quietly replaces the whole chapter with
+>   a hot/cold game: tap, check the colour, tap, check — **a child can win it without counting once.**
+>   Both are now identical at every count (verified byte-identical at 0, 1 and 2 sent, including at the
+>   exact target); the sign turns green only as they SET OFF, confirming an answer already given. The
+>   general rule is now in the craft doc, alongside the teen band's rejected live-tilt balance beam.
+> • **Feet 1px behind the Ready button** at 640×320: the bottom reserve was 56px against a 57px button,
+>   AND the huddle's organic jitter was ADDED to its band, pushing feet below the floor `fitBands` had
+>   just proved. Jitter now nudges upward only (so `waitY1` is a true floor) and the reserve is 64px.
+>
+> ## ④ THE INVARIANT SWEEP, AND WHY ITS FIRST GREEN RUN WAS WORTHLESS
+> [homeTimeGeometry.test.ts](src/__tests__/homeTimeGeometry.test.ts) sweeps **12 screen sizes × 8 pool
+> sizes × all 10 creatures** and asserts travel runs left→right, nothing crosses an edge, same-row
+> creatures never overlap, sprites/tap targets stay above their floors, and heads/feet clear the prompt
+> and the button. **It passed on the first run, so I mutation-tested it — and 2 of 5 planted regressions
+> walked straight through.** One was the test being correct; the other was real (it checked "head off
+> the top of the SCREEN" instead of "head clears the PROMPT"). It also read the band instead of the real
+> spots, which is precisely how the 1px button overlap survived a clean sweep. All 5 mutations now fail
+> it. **A gate that has never been seen to fail is not evidence.**
+>
+> ## ⑤ Verified by measurement, not by "the screen moved"
+> Travel is **constant 48px per 180ms, dead linear**, legs running end to end; the return journey runs
+> 795→606 leftward with `scaleX(-1)`, so it faces the way it walks. Three clicks in one tick count as
+> **one**; four taps 300ms apart all count. An early Ready is rejected and the round does not advance.
+> On commit, Milo + the chosen ones leave the frame and the spares remain. Rotate gate shows in
+> portrait and recovers cleanly (the early return sits below every hook). 0 console errors throughout.
+>
+> ## ▶ OPEN — pick up here
+> 1. **NOT COMMITTED.** Files: new `critters.tsx`, `HomeTime.tsx`, `homeTimeGeometry.test.ts`; edited
+>    `FollowTheLeader.tsx`, `registry.tsx`, `app/story/page.tsx`, `core/chapters.ts`, `docs/chapter-craft.md`;
+>    **deleted `Grocery.tsx`**. `?ch=grocery` still resolves (now to Home Time); `?ch=home` is the new key.
+>    Bump `public/sw.js` v56→v57 on deploy.
+> 2. **The change set now touches a SHIPPED chapter** — chapter 2's speech gate was fixed too (above).
+>    Its behaviour was re-driven live, but chapter 2 has no invariant test of its own, so the regression
+>    evidence there is the live drive rather than a gate. Worth a play-through before deploying.
+> 3. **Nobody has watched a child play any of this**, chapter 4 included. Every fault above was caught by
+>    a measurement or a screenshot, and three of them only by looking.
+> 4. Nest Tree's cumulative arc is still missing (see the 🦆 block). Home Time ships the pattern: the
+>    strip lives OUTSIDE `SkillBeat`, driven by `onRound`.
+> 5. The gathered butterflies land near the backdrop's tree on some sky scenes — not an overlap, but
+>    worth an eye if it reads busy.
+>
+> _(the 🦆 block below is the previous session — chapter 2.)_
+
 > 🦆 **2026-07-24 (LATEST) — CHAPTER 2 (NUMBER ORDER) REBUILT AS "FOLLOW THE LEADER" AND SHIPPED TO PROD, TOGETHER WITH THE PREVIOUSLY-UNCOMMITTED NEST TREE. `main`@`02f5437`, prod serving sw v56, post-deploy smoke green.**
 >
 > **Deploy:** merged `feat/story-chapter-2-follow-the-leader` → `main` (fast-forward) → pushed → Vercel `dpl_2bJB7ex…` READY and aliased to `milo-story-mode.vercel.app`. Gates before push: `tsc` · **64/64 vitest** · `next build`. Post-deploy smoke: `/` `/story?ch=order` `/story?ch=nest` `/menu` `/diagnostic` `/api/health` all **200**; the new assets (`milo_side`/`milo_walk`, `bird_walk`, `nest_walk`, `farm_barnyard`) all **200**; prod `sw.js` serving **v56**. Drove `/story?ch=order` on PROD through intro → demo → guided with `fish_walk.png` loading and three tappable fish — the chapter runs live.

@@ -19,6 +19,12 @@ Reference implementations, in order of how closely to copy them:
 | 1 · Counting | [world1.tsx](../src/features/chapters/story/world1.tsx), [ForestWalk.tsx](../src/features/chapters/story/ForestWalk.tsx) | the parade, drawn cycles, ground speed, the rotate gate |
 | 2 · Number order | [FollowTheLeader.tsx](../src/features/chapters/story/FollowTheLeader.tsx) | layout as invariants, per-journey timing, cumulative strip |
 | 3 · Number recognition | [NestTree.tsx](../src/features/chapters/story/NestTree.tsx) | still scene + one travelling character |
+| 4 · Matching quantities | [HomeTime.tsx](../src/features/chapters/story/HomeTime.tsx) | journeys in BOTH directions, a commit gesture, leader bands |
+
+The shared engine all of these run on is [critters.tsx](../src/features/chapters/story/critters.tsx) —
+cast, habitats, `Critter`, the travel timing and the huddle invariants. **Put a fix there, not in a
+chapter**, or the next chapter copies the bug back in. Chapter 4's invariants are swept by
+[homeTimeGeometry.test.ts](../src/__tests__/homeTimeGeometry.test.ts).
 
 ---
 
@@ -56,6 +62,13 @@ intro (one card, one button)  →  demo (Milo/an adult does it)  →  guided (ch
    the movement. A creature that has already been chosen may travel — by then it has been read.
 3. **The tap causes a journey, and the journey is the reward.** A correct tap should send something
    somewhere. A number lighting up green is not a reward.
+4. **Nothing may signal that the answer is right BEFORE the child commits it.** Where a chapter has
+   a commit gesture, the commit control and every marker around it must look *identical* at every
+   state. Chapter 4 briefly turned its Ready button green the moment the count matched, which
+   quietly replaced the chapter with a hot/cold game — tap, check the colour, tap, check — and a
+   child can win it without counting once. Same reason the teen band rejected a balance beam that
+   tilts live while you dial x: *a verdict is not required for something to be hot/cold.*
+   Celebration goes **after** the commit, where it confirms an answer already given.
 
 ### Cycles and travel — the rule broken most often
 
@@ -93,6 +106,29 @@ check them with a script:
 - no two objects in the same row overlap; add a row rather than shrink everyone
 - a sprite never drops below ~40px, its number tag never below 24px, its tap target never below 44px
 - draw order is **stated explicitly** (an explicit `z` prop), never derived from a coordinate
+- a reserved band is measured against **the real control it protects**, and nothing may cross it.
+  Chapter 4's bottom reserve was 56px against a 57px button, so feet landed 1px behind it and only
+  escaped notice because the creature that low happened not to be over the button. In the same
+  place, the huddle's organic jitter was ADDED to its band — pushing feet below the floor `fitBands`
+  had just finished proving. **Jitter away from a limit, never toward it**, or the fit means nothing.
+- **check the real spots, not the band they came from.** A sweep that reads `waitY1` instead of the
+  positions `waitSpot` actually returns cannot see any of the jitter, and passes clean.
+
+### The leader is not always one of the flock
+
+Chapter 2 can stand its mother straight on the line because she IS one of them — a mother butterfly
+belongs at a butterfly's height. **The moment the leader is a different creature from the group, it
+needs its own GROUND line.** Milo dropped onto the sky habitat's flier band left a pony hovering
+over the hedge at the edge of frame, which is exactly the "he read as clutter" note that got him cut
+from chapter 2. A habitat's bands are tuned for the things that live in it.
+
+And **a group that collects around a character must anchor ON that character and grow away from
+them** — filled from a fixed far edge instead, the first two arrivals stood a quarter of a screen
+from the person they had just walked to.
+
+**Depth cues have to agree with each other.** Nearer means lower on screen AND bigger. An early pass
+had the sky flock waiting above its gathering point, so arrivals came out lower *and* smaller at
+once — a child reading depth off size gets the opposite answer from the one they read off height.
 
 ### The scene must change across the ten rounds
 
@@ -196,11 +232,16 @@ Gotchas that have each cost real credits:
 
 ### Never let two voices overlap
 
-- Gate taps on **the voice**, not on the animation. A child who has already found the next answer
-  should not be made to watch the previous journey finish — but they must not be able to trigger a
-  second number before the first is spoken.
-- A short `tapLock` (~600ms) plus the `useIsSpeaking()` guard is the pattern. Verify it by hammering
-  every answer inside 150ms and asserting exactly **one** is accepted.
+- Never gate a tap on the animation — a child who has already found the next answer should not be
+  made to watch the previous journey finish.
+- **And do not gate it on `useIsSpeaking()` either.** Measured live in Chrome:
+  `speechSynthesis.speaking` stays true for **over 3.2 seconds** after a single spoken digit, and
+  the watchdog ceiling that eventually clears it is 6s. In a chapter where one round wants seven
+  taps that is half a minute of dead screen. Overlap is already prevented where it actually
+  happens: `speak()` cancels the utterance in flight, so a fast run of taps simply speaks the newest
+  number — which is the right one to hear anyway.
+- A short `tapLock` (~260ms) is enough. Verify it by hammering every answer inside one tick and
+  asserting exactly **one** is accepted, then again at ~300ms apart asserting **all** are.
 
 ### What Milo says
 

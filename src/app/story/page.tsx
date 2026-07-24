@@ -32,7 +32,7 @@ const ForestWalk = lazyStory(() => import('@/features/chapters/story/ForestWalk'
 const FollowTheLeader = lazyStory(() => import("@/features/chapters/story/FollowTheLeader"))
 const Kitchen = lazyStory(() => import('@/features/chapters/story/Kitchen'))
 const NestTree = lazyStory(() => import('@/features/chapters/story/NestTree'))
-const Grocery = lazyStory(() => import('@/features/chapters/story/Grocery'))
+const HomeTime = lazyStory(() => import('@/features/chapters/story/HomeTime'))
 const ShapeTown = lazyStory(() => import('@/features/chapters/story/ShapeTown'))
 const RainbowTown = lazyStory(() => import('@/features/chapters/story/RainbowTown'))
 const BeadShop = lazyStory(() => import('@/features/chapters/story/BeadShop'))
@@ -88,7 +88,8 @@ export default function StoryPage() {
   if (ch === 'kitchen') return <Kitchen world={orderWorld} />
   // ?world=meadow|splash|sky jumps into a race world.
   if (ch === 'nest' || ch === 'race' || ch === 'doors') return <NestTree world={orderWorld} />
-  if (ch === 'grocery') return <Grocery world={orderWorld} />
+  // ?ch=home is the current key; ?ch=grocery is the old Little Grocery link, kept working.
+  if (ch === 'home' || ch === 'grocery') return <HomeTime world={orderWorld} />
   // ?world=town|fair|beach jumps into a shape world.
   if (ch === 'shapes') return <ShapeTown world={orderWorld} />
   // ?world=town|reef|candy jumps into a color world.
