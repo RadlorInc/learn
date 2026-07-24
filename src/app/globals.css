@@ -798,3 +798,8 @@ p, .p {
     scroll-behavior: auto !important;
   }
 }
+
+/* THE PLAN dropdown (mobile walkthrough) — hide the native disclosure marker. */
+summary.plan-toggle,
+.plan-toggle > summary { list-style: none; }
+.plan-toggle > summary::-webkit-details-marker { display: none; }

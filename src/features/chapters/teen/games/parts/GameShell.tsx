@@ -712,6 +712,8 @@ function TutorialPlayer<V, T extends BaseTask>({
     return (
       <TeachFrame
         roomy={roomy || short}
+        P={P}
+        collapsible
         explanation={config.overview ? <ExplanationPanel P={P} overview={config.overview} read={false} onDone={() => {}} /> : undefined}
         board={babyBoard}
         illustration={<config.TutorialScene palette={P} task={cur.task} value={cur.value} stepIndex={Math.min(i, frames.length - 1)} frameCount={frames.length} ended={ended} />}
@@ -1042,12 +1044,17 @@ function FitSlot({ children }: { children: React.ReactNode }) {
  *  The whole frame is height-bounded (`minHeight:0` + `overflow:hidden` down the
  *  flex chain) so the illustration shrinks to fit and the view never scrolls; the
  *  `.teach-illo svg` cap lets any chapter's scene scale down inside its box. */
-function TeachFrame({ roomy, explanation, board, illustration, controls }: {
+function TeachFrame({ roomy, explanation, board, illustration, controls, P, collapsible }: {
   roomy: boolean
   explanation?: React.ReactNode
   board?: React.ReactNode
   illustration: React.ReactNode
   controls?: React.ReactNode
+  P?: Palette
+  // Collapse the explanation into a tap-to-review dropdown (mobile walkthrough only):
+  // Milo has already read THE PLAN, so keeping it fully expanded above the baby-step
+  // board just squeezes the illustration to nothing on a phone.
+  collapsible?: boolean
 }) {
   const illo = (
     <div className="teach-illo" style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -1081,7 +1088,17 @@ function TeachFrame({ roomy, explanation, board, illustration, controls }: {
   // mobile / no-explanation → single column, explanation + board BEFORE the illustration
   return (
     <div style={{ flex: 1, minHeight: 0, width: '100%', maxWidth: 540, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px, 1.4vh, 16px)', overflow: 'hidden' }}>
-      {explanation && <div style={{ width: '100%', flexShrink: 0 }}>{explanation}</div>}
+      {explanation && (collapsible ? (
+        <details className="plan-toggle" style={{ width: '100%', flexShrink: 0 }}>
+          <summary style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-numeric)', fontSize: 13, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: P?.gold ?? '#e0b64a', background: P?.glass ?? 'rgba(255,255,255,0.06)', border: `1px solid ${P?.glassBorder ?? 'rgba(255,255,255,0.14)'}`, borderRadius: 10, padding: '8px 14px' }}>
+            <span>The plan</span>
+            <span aria-hidden style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.8 }}>tap to review ▾</span>
+          </summary>
+          <div style={{ marginTop: 8 }}>{explanation}</div>
+        </details>
+      ) : (
+        <div style={{ width: '100%', flexShrink: 0 }}>{explanation}</div>
+      ))}
       {board && <div style={{ width: '100%', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>{board}</div>}
       {illo}
       {controls && <div style={{ flexShrink: 0 }}>{controls}</div>}
