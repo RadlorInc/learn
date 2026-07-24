@@ -16,7 +16,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react'
 import { pointAt, clearPointer } from '@/infra/miloPointer'
-import { speakLine, stopClip } from '@/infra/voiceClipPlayer'
+import { speakLine, stopClip, unlockVoiceClips } from '@/infra/voiceClipPlayer'
 
 // ─── Singleton state ──────────────────────────────────────────────────────────
 let _voices: SpeechSynthesisVoice[] = []
@@ -227,6 +227,10 @@ export function speakAfterCurrent(text: string, rate = 0.88, pitch = 1.05) {
  * from the intro button's onClick. Cheap and idempotent.
  */
 export function unlockSpeech() {
+  // Also unlock the pre-rendered clip element in the same gesture — mobile grants
+  // <audio> autoplay only to an element played inside a tap, else the auto-started
+  // walkthrough clips are rejected and every line falls back to browser TTS.
+  unlockVoiceClips()
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   try {
     const u = new SpeechSynthesisUtterance(' ')

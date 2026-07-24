@@ -20,6 +20,25 @@ let _loadedFor: string | null = null
 let _active: HTMLAudioElement | null = null
 let cancelClip: (() => void) | null = null
 
+// ONE reused <audio> for every clip. Mobile (iOS Safari especially) grants autoplay
+// only to the exact element that was played inside a user gesture — a fresh `new Audio()`
+// created later when the walkthrough auto-starts is rejected, so speakLine falls back to
+// browser TTS. Playing this element (silently) in the intro tap unlocks it for the whole
+// session; all clip playback then goes through it. See unlockVoiceClips().
+let _el: HTMLAudioElement | null = null
+function audioEl(): HTMLAudioElement {
+  if (!_el) _el = new Audio()
+  return _el
+}
+// A valid 0-sample WAV — decodes everywhere, ends instantly; enough to unlock the element.
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='
+
+/** Unlock clip audio from inside a user gesture (call next to unlockSpeech, e.g. the intro tap). */
+export function unlockVoiceClips(): void {
+  const a = audioEl()
+  try { a.src = SILENT; void a.play().then(() => { a.pause(); a.currentTime = 0 }).catch(() => {}) } catch {}
+}
+
 function loadManifest(voice: string): Promise<void> {
   if (_keys && _loadedFor === voice) return Promise.resolve()
   if (!_loading || _loadedFor !== voice) {
@@ -102,20 +121,19 @@ function stitchKeys(text: string): string[] | null {
 /** Play clips back to back. Resolves when the last ends; rejects if any fails to load. */
 function playSequence(urls: string[], onStart?: () => void): { done: Promise<void>; cancel: () => void } {
   let i = 0, cancelled = false
-  let cur: HTMLAudioElement | null = null
+  const a = audioEl(); _active = a
   const done = new Promise<void>((resolve, reject) => {
     const next = () => {
       if (cancelled) return resolve()
       if (i >= urls.length) return resolve()
-      const a = new Audio(urls[i++])
-      cur = a; _active = a
       a.onended = next
       a.onerror = () => reject(new Error('fragment missing'))
+      a.src = urls[i++]
       a.play().then(() => { if (i === 1) onStart?.() }).catch(reject)
     }
     next()
   })
-  return { done, cancel: () => { cancelled = true; if (cur) { try { cur.pause() } catch {} } } }
+  return { done, cancel: () => { cancelled = true; try { a.pause() } catch {} } }
 }
 
 /** Stop any clip in flight. Called by stopSpeech() so one stop covers both paths. */
@@ -170,7 +188,8 @@ export function speakLine(text: string, opts: Opts): () => void {
       return
     }
 
-    const audio = new Audio(`/audio/${voice}/${key}.mp3`)
+    const audio = audioEl()
+    audio.src = `/audio/${voice}/${key}.mp3`
     _active = audio
 
     audio.onended = () => {
