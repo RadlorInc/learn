@@ -58,4 +58,20 @@ export const SHEETS: Record<string, Sheet> = {
   // A ladybug ambles, it does not sprint. Lower fps also slows its WALK — for a grounded creature
   // ground speed is derived from fps/frames, so legs and travel stay locked and the feet never skate.
   '/assets/objects/ladybug_side.png': { url: '/assets/objects/ladybug_walk.png', cellAspect: 1.469, frames: 12, fps: 12 },
+  // ── Nest Tree (number recognition) ──
+  // The mother bird, generated for that chapter rather than borrowed from the parade — she is
+  // on screen every single round, so she is the one place bespoke art earns its keep. 14fps =
+  // a small songbird's beat; the eagle's 9 would read as gliding, not carrying food home.
+  '/assets/objects/bird_side.png': { url: '/assets/objects/bird_walk.png', cellAspect: 1.094, frames: 12, fps: 14 },
+  // The hungry chick in its nest — the object the child reads and taps, so it is painted and
+  // alive rather than a CSS bowl. 22 cells because the clip is PING-PONGED: a chirp oscillates
+  // (beak opens, beak shuts) with no clean cycle, so playing it forward-then-back loops
+  // seamlessly by construction. 16fps ≈ one bob per 1.4s — eager, not frantic.
+  '/assets/objects/nest_side.png': { url: '/assets/objects/nest_walk.png', cellAspect: 1.113, frames: 22, fps: 16 },
+  // ── Milo himself (Stepping Stones / number order) ──
+  // The first drawn cycle for the CHARACTER rather than a creature, so it is not chapter-specific:
+  // any later chapter where Milo has to actually go somewhere can key off this same sprite.
+  // 12 cells span one 22-frame source cycle (~0.9s), so 14fps plays it at close to natural pace —
+  // and since he only walks while hopping, slightly brisk reads as effort rather than a stroll.
+  '/assets/characters/milo_side.png': { url: '/assets/characters/milo_walk.png', cellAspect: 0.586, frames: 12, fps: 14 },
 }

@@ -35,5 +35,5 @@ export function makeCountingChapter(story: Storytelling): Chapter {
 }
 
 // Number Order (Chapter 2) is no longer a ForestWalk chapter — it was redesigned as the
-// top-down RiverCrossing experience. See story/RiverCrossing.tsx (wrapped by
+// top-down ordering experience. See story/FollowTheLeader.tsx (wrapped by
 // game/NumberOrderingChapter.tsx).

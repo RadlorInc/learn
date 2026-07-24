@@ -5,7 +5,7 @@
  *   /story            → Counting    (forest walk)        [default]
  *   /story?ch=order   → Number Order (river crossing)
  *   /story?ch=kitchen → Comparison   (kitchen)
- *   /story?ch=doors   → Recognition  (number doors)
+ *   /story?ch=race    → Recognition  (number race)
  *   /story?ch=grocery → Matching qty (little grocery)
  *   /story?ch=shapes  → Shapes       (shape town walk)
  *   /story?ch=rainbow → Colors       (rainbow town walk)
@@ -29,9 +29,9 @@ const lazyStory = <P,>(loader: () => Promise<{ default: React.ComponentType<P> }
   nextDynamic(loader, { ssr: false })
 
 const ForestWalk = lazyStory(() => import('@/features/chapters/story/ForestWalk'))
-const RiverCrossing = lazyStory(() => import('@/features/chapters/story/RiverCrossing'))
+const FollowTheLeader = lazyStory(() => import("@/features/chapters/story/FollowTheLeader"))
 const Kitchen = lazyStory(() => import('@/features/chapters/story/Kitchen'))
-const NumberDoors = lazyStory(() => import('@/features/chapters/story/NumberDoors'))
+const NestTree = lazyStory(() => import('@/features/chapters/story/NestTree'))
 const Grocery = lazyStory(() => import('@/features/chapters/story/Grocery'))
 const ShapeTown = lazyStory(() => import('@/features/chapters/story/ShapeTown'))
 const RainbowTown = lazyStory(() => import('@/features/chapters/story/RainbowTown'))
@@ -83,11 +83,11 @@ export default function StoryPage() {
   return <>{renderChapter()}{taste && <TasteBanner />}</>
 
   function renderChapter() {
-  if (ch === 'order') return <RiverCrossing world={orderWorld} />
+  if (ch === 'order') return <FollowTheLeader world={orderWorld} />
   // ?world=kitchen|grocery|bakery jumps into a comparison world.
   if (ch === 'kitchen') return <Kitchen world={orderWorld} />
-  // ?world=doors|balloons|buses jumps into a recognition world.
-  if (ch === 'doors') return <NumberDoors world={orderWorld} />
+  // ?world=meadow|splash|sky jumps into a race world.
+  if (ch === 'nest' || ch === 'race' || ch === 'doors') return <NestTree world={orderWorld} />
   if (ch === 'grocery') return <Grocery world={orderWorld} />
   // ?world=town|fair|beach jumps into a shape world.
   if (ch === 'shapes') return <ShapeTown world={orderWorld} />

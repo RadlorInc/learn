@@ -141,7 +141,9 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
           </div>
           <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 25, background: 'var(--paper)', border: '3px solid var(--garden-green)', borderRadius: 999,
             padding: '3px 14px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 16, color: 'var(--garden-green-deep)' }}>
-            {Math.min(roundIdx + 1, beat.rounds)} / {beat.rounds}
+            {/* Just which question they are on — not "of 10". The bar above already shows how far
+                along they are, and a visible total turns a game into a countdown. */}
+            {Math.min(roundIdx + 1, beat.rounds)}
           </div>
         </>
       )}
