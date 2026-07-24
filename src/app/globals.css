@@ -803,3 +803,4 @@ p, .p {
 summary.plan-toggle,
 .plan-toggle > summary { list-style: none; }
 .plan-toggle > summary::-webkit-details-marker { display: none; }
+.plan-toggle[open] .plan-arrow { transform: rotate(180deg); }

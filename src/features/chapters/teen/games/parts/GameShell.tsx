@@ -1092,7 +1092,9 @@ function TeachFrame({ roomy, explanation, board, illustration, controls, P, coll
         <details className="plan-toggle" style={{ width: '100%', flexShrink: 0 }}>
           <summary style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-numeric)', fontSize: 13, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: P?.gold ?? '#e0b64a', background: P?.glass ?? 'rgba(255,255,255,0.06)', border: `1px solid ${P?.glassBorder ?? 'rgba(255,255,255,0.14)'}`, borderRadius: 10, padding: '8px 14px' }}>
             <span>The plan</span>
-            <span aria-hidden style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.8 }}>tap to review ▾</span>
+            <span aria-hidden style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.8, display: 'flex', alignItems: 'center', gap: 5 }}>
+              tap to review <span className="plan-arrow" style={{ display: 'inline-block', transition: 'transform 160ms ease' }}>▾</span>
+            </span>
           </summary>
           <div style={{ marginTop: 8 }}>{explanation}</div>
         </details>
