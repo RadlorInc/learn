@@ -12,7 +12,20 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🏡 **2026-07-24 (LATEST) — CHAPTER 4 (MATCHING QUANTITIES) REBUILT AS "HOME TIME"; THE SHARED CREATURE ENGINE EXTRACTED OUT OF CHAPTER 2. UNCOMMITTED. `tsc` · 66/66 vitest · `next build` green; 0 console errors; driven live at 1280×800, 1024×600, 640×320 and portrait.**
+> 🏡 **2026-07-24 (LATEST) — CHAPTER 4 (MATCHING QUANTITIES) REBUILT AS "HOME TIME" AND SHIPPED TO PROD, TOGETHER WITH THE SHARED CREATURE ENGINE EXTRACTED OUT OF CHAPTER 2. `main`@`c129e5c`, prod serving sw v57, post-deploy smoke green.**
+>
+> **Deploy:** branch `feat/story-chapter-4-home-time` → `main` (fast-forward) → pushed → Vercel READY.
+> Gates before push: `tsc` · **66/66 vitest** · `next build`. Post-deploy smoke on
+> `milo-story-mode.vercel.app`: `/` `/menu` `/diagnostic` `/api/health` `/story?ch=home`
+> `/story?ch=grocery` `/story?ch=order` `/story?ch=nest` all **200**; Milo's walk sheet + underwater
+> pose, the creature sheets and all three habitats' backdrops all **200**; prod `sw.js` serving **v57**.
+> Then DROVE PROD, not just status codes: chapter 4 intro → demo → guided with five tappable fish,
+> two taps 300ms apart both registering, the Ready button **byte-identical at 0 sent and at the exact
+> target**, commit → march (cycles running, out of frame) → round 1; and chapter 2's three in-order
+> taps 300ms apart all registering. 0 console errors.
+>
+> **⚠️ Still true after shipping: nobody has watched a child play this.** Every fault below was caught
+> by a measurement or a screenshot — and four of them ONLY by looking, one of those by the founder.
 >
 > ## What was wrong with Little Grocery, and why polish could not fix it
 > Chapter 4 was the last 3–5 chapter still built the old way, and it broke most of the craft rules at
@@ -74,7 +87,20 @@
 >   AND the huddle's organic jitter was ADDED to its band, pushing feet below the floor `fitBands` had
 >   just proved. Jitter now nudges upward only (so `waitY1` is a true floor) and the reserve is 64px.
 >
-> ## ④ THE INVARIANT SWEEP, AND WHY ITS FIRST GREEN RUN WAS WORTHLESS
+> ## ④ THE FOUNDER'S CATCH — THE GREEN "READY" BUTTON, AND WHY IT WOULD HAVE HOLLOWED THE CHAPTER OUT
+> The commit button turned green the moment `chosen === target`, and the number sign above Milo did the
+> same. Founder: *"don't do that ready button green automatically because by this the kid will wait to
+> the button get green."* Exactly right, and the damage is total rather than cosmetic: **a child can
+> win the whole chapter without counting once** — tap, glance at the colour, tap, glance. The one skill
+> the chapter exists to teach is deciding when to stop, and a colour decides it for them.
+> Both are now identical at every count (verified byte-identical at 0, 1 and 2 sent, INCLUDING at the
+> exact target, on prod); the sign turns green only as they SET OFF, confirming an answer already
+> given. The only cue left is the guided round's one-time nudge, on a round that is not scored.
+> **The general rule is now in the craft doc**, next to the teen band's rejected live-tilt balance
+> beam: *a verdict is not required for something to be hot/cold.* Any signal that the set is right
+> BEFORE the child commits is the answer, handed over.
+>
+> ## ⑤ THE INVARIANT SWEEP, AND WHY ITS FIRST GREEN RUN WAS WORTHLESS
 > [homeTimeGeometry.test.ts](src/__tests__/homeTimeGeometry.test.ts) sweeps **12 screen sizes × 8 pool
 > sizes × all 10 creatures** and asserts travel runs left→right, nothing crosses an edge, same-row
 > creatures never overlap, sprites/tap targets stay above their floors, and heads/feet clear the prompt
@@ -84,7 +110,7 @@
 > spots, which is precisely how the 1px button overlap survived a clean sweep. All 5 mutations now fail
 > it. **A gate that has never been seen to fail is not evidence.**
 >
-> ## ⑤ Verified by measurement, not by "the screen moved"
+> ## ⑥ Verified by measurement, not by "the screen moved"
 > Travel is **constant 48px per 180ms, dead linear**, legs running end to end; the return journey runs
 > 795→606 leftward with `scaleX(-1)`, so it faces the way it walks. Three clicks in one tick count as
 > **one**; four taps 300ms apart all count. An early Ready is rejected and the round does not advance.
@@ -92,15 +118,16 @@
 > portrait and recovers cleanly (the early return sits below every hook). 0 console errors throughout.
 >
 > ## ▶ OPEN — pick up here
-> 1. **NOT COMMITTED.** Files: new `critters.tsx`, `HomeTime.tsx`, `homeTimeGeometry.test.ts`; edited
->    `FollowTheLeader.tsx`, `registry.tsx`, `app/story/page.tsx`, `core/chapters.ts`, `docs/chapter-craft.md`;
->    **deleted `Grocery.tsx`**. `?ch=grocery` still resolves (now to Home Time); `?ch=home` is the new key.
->    Bump `public/sw.js` v56→v57 on deploy.
-> 2. **The change set now touches a SHIPPED chapter** — chapter 2's speech gate was fixed too (above).
->    Its behaviour was re-driven live, but chapter 2 has no invariant test of its own, so the regression
->    evidence there is the live drive rather than a gate. Worth a play-through before deploying.
-> 3. **Nobody has watched a child play any of this**, chapter 4 included. Every fault above was caught by
->    a measurement or a screenshot, and three of them only by looking.
+> 1. **WATCH A CHILD PLAY IT.** Chapter 4 is live and unvalidated. Four of this session's faults were
+>    invisible to every script that passed — Milo in the treetops, his back turned, the group gathering
+>    a quarter-screen from him, and the green button the founder caught. A three-year-old will find the
+>    next one faster than any check.
+> 2. **CHAPTER 2 IS ALSO CHANGED IN PRODUCTION** — its tap gate no longer waits on `useIsSpeaking()`.
+>    Re-driven live before and after the deploy, but chapter 2 has **no invariant test of its own**, so
+>    that evidence is a live drive rather than a gate. If anything reads wrong in Follow the Leader,
+>    `c129e5c` is the first commit to look at.
+> 3. **`?ch=grocery` now resolves to Home Time** and `Grocery.tsx` is deleted; `?ch=home` is the new key.
+>    Left untracked on purpose: `scripts/.voice-*.json` (regenerable, from the older voice session).
 > 4. Nest Tree's cumulative arc is still missing (see the 🦆 block). Home Time ships the pattern: the
 >    strip lives OUTSIDE `SkillBeat`, driven by `onRound`.
 > 5. The gathered butterflies land near the backdrop's tree on some sky scenes — not an overlap, but
@@ -860,7 +887,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-24 (LATEST session — see the top 🦆 block. **Shipped to prod, `main`@`02f5437`, sw v56:** chapter 2 (number order) rebuilt as **🦆 Follow the Leader** — mother waits, her little ones are scattered, and the one the child taps really WALKS into place behind her; the finished row 1·2·3·4·5 IS the answer, held on screen before the family marches off. The previously-uncommitted **🐣 Nest Tree** shipped in the same commit (it needed the same rotate gate and animation fix). A stepping-stone version was built and thrown away first, producing the rule worth carrying: **a numbered PROP cannot blend into painted art and cannot be alive before it is tapped — make the numbered things CREATURES.** Cost ~0 new art: chapter 1's eleven drawn cycles carry it and a mother is her own sprite drawn 1.25× bigger. Milo also gained his first drawn walk cycle (kept from the rejected build, reusable by any later 'Milo goes somewhere' chapter). **Six founder corrections drove the whole session** — the moonwalk, the pile-up, the cut-off leader, the shadow outrunning the feet, the frozen slide, and travel too fast to see — and every one traced to the same root: **a walk cycle and the travel it belongs to must be given the SAME number**, and **layout must be invariants, not constants that happen to hold at 1024×600**. Short landscape and portrait are now checked (330 geometry combos, 0 failures; portrait is a rotate gate, added to Nest Tree too). ▶ **It is live and unvalidated — watch a child play it.** Nest Tree's cumulative arc is still missing. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
+_Last updated: 2026-07-24 (LATEST session — see the top 🏡 block. **Shipped to prod, `main`@`c129e5c`, sw v57:** chapter 4 (matching quantities) rebuilt as **🏡 Home Time** — Milo asks for exactly N, the little one the child taps really WALKS to him, and one tapped again walks BACK, so the miscount repair is a journey too. **There are always spares left over**: nothing on screen says when to stop, and deciding that is the entire skill — Little Grocery's shelf emptied at exactly the target and did the stopping for the child. Cost 0 new art. Chapter 2's engine was extracted to **`critters.tsx`** so the shadow-as-child / longhand-animation / linear-easing fixes live in ONE place (FollowTheLeader 708 → 464 lines, behaviour unchanged) — put a fix there, not in a chapter. **The founder's catch is the one to carry:** the Ready button turned green the moment the count matched, which quietly replaced the chapter with a hot/cold game — *a child could win it without counting once*. **No signal that the answer is right may appear BEFORE the commit**; celebration goes after. Also fixed in BOTH chapters 2 and 4: taps were gated on `useIsSpeaking()`, and `speechSynthesis.speaking` measures **3.2s+ true after one spoken digit** — seconds of dead screen per tap. **A new lesson about checks themselves:** the 960-combination invariant sweep passed on its first run, and mutation-testing showed 2 of 5 planted regressions walked straight through it — *a gate that has never been seen to fail is not evidence*. ▶ **Live and unvalidated — watch a child play it;** four of this session's faults were invisible to every passing script. Chapter 2 is now changed in prod with no test of its own. Nest Tree's cumulative arc is still missing. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
+
+_Prior update: 2026-07-24 (chapter 2 (number order) rebuilt as **🦆 Follow the Leader** and shipped with the previously-uncommitted **🐣 Nest Tree**, `main`@`02f5437`, sw v56. A stepping-stone version was built and thrown away first, producing the rule the whole 3–5 band now runs on: **a numbered PROP cannot blend into painted art and cannot be alive before it is tapped — make the numbered things CREATURES.** Six founder corrections drove that session — the moonwalk, the pile-up, the cut-off leader, the shadow outrunning the feet, the frozen slide, and travel too fast to see — and every one traced to the same root: **a walk cycle and the travel it belongs to must be given the SAME number**, and **layout must be invariants, not constants that happen to hold at 1024×600**. Milo also gained his first drawn walk cycle there, kept from the rejected build — chapter 4 is what finally uses it.)_
 
 _Prior update: 2026-07-23 (THIRD session same day — see the top 🔊 block. **Milo now has a real recorded voice in the teen game bands, live on prod**: 605 ElevenLabs clips (16 MB) covering every static spoken line in 12–14 + 15–16, THE PLAN in all 24 chapters (reconstructed from JSX, so no chapter carries a duplicate string that can drift), and 25 of 41 scored-question prompts stitched from 172 fragments. Browser speech remains the fallback everywhere and any miss degrades to it cleanly. Also cut 39 spoken correct-answer cheers — wrong-answer lines deliberately kept. `main`@`227ece5`, prod serving **sw v43**, post-deploy smoke green. **⚠️ NOT ONE OF THE 605 CLIPS HAS BEEN HEARD BY A HUMAN** — everything was verified structurally, which is not the same as sounding right, and the stitched prompts either sound natural or audibly broken at the seams. Play one 12–14 chapter to the scored questions. Budget is spent (~38.5k of 40k, resets 2026-07-27) and a voice change costs the full corpus again. **Still the headline, still unchanged by any of this: ~zero real users. Watch one real child play; start the attorney conversation.**)_
 
@@ -1563,7 +1592,11 @@ auto-memory `project-milo-{12-14,15-16,17-18}-curriculum`, `project-milo-teen-fr
 ## Resources
 
 - **Live app (Vercel production):** https://milo-story-mode.vercel.app/ · also https://www.mi2utor.com
-  - Latest production deploy: commit `4bfa6eb` (all 11 of the 3–5 chapters in story mode) — state READY.
-  - Preview a 3–5 chapter directly: `https://milo-story-mode.vercel.app/story?ch=add|sub|measure|order|kitchen|doors|grocery|shapes|rainbow|beads`
+  - Latest production deploy: commit `c129e5c` (chapter 4 as Home Time + the shared creature engine), sw **v57** — READY.
+  - Preview a 3–5 chapter directly: `https://milo-story-mode.vercel.app/story?ch=<key>` — the four
+    rebuilt ones are **`home`** (ch4, matching quantities · `grocery` still resolves here), **`order`**
+    (ch2, Follow the Leader), **`nest`** (ch3, Nest Tree) and the default (ch1, counting parade).
+    The rest: `kitchen` `shapes` `rainbow` `beads` `add` `sub` `measure`.
+    All four rebuilt chapters are **landscape-only** — a portrait window shows the rotate gate, not the chapter.
 - **Repo:** github.com/Rafiquekuwari/milo — `main` auto-deploys to Vercel production (project `milo-story-mode`, team `team_HQsF3tfxAuGgZi7CcdhSdN7Y`).
 - **Detail:** the auto-memory `project-milo-*` files (one per chapter + sync/scaling/voice/launch-readiness).
