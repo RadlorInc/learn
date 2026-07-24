@@ -161,8 +161,10 @@ function mixedPair(): { pos: number; neg: number } {
 }
 
 function makeTask(d: 1 | 2 | 3): Task {
-  // L1 — two EXTENSIONS. Nothing is cut, so nothing cancels.
-  if (d === 1) return sidesTask(rint(1, 5), rint(1, 5), d)
+  // L1 — two EXTENSIONS. Nothing is cut, so nothing cancels. Keep the two sides
+  // DISTINCT: equal sides draw a square, which reads wrong under the "rectangular
+  // plot" framing (and gives away that both factors are the same).
+  if (d === 1) { const p = rint(1, 5); let q = rint(1, 5); while (q === p) q = rint(1, 5); return sidesTask(p, q, d) }
   // L2 — the CUT arrives. Either it cancels the extension exactly (difference of
   // squares, every strip pairs off) or one side is handed over and the child finds
   // the cut. Both are "a cut appears", which L1 never had.
