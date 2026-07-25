@@ -36,6 +36,10 @@ let _singleWatch: ReturnType<typeof setTimeout> | null = null
 // sequence is truly stopped — otherwise cancelling its current utterance just
 // makes it advance to the next line (it would keep talking after Skip).
 let _activeSeqCancel: (() => void) | null = null
+// Cancel fn for an in-flight single-line speakLine(). The clip lookup is async, so a
+// superseding speak() must cancel it — otherwise the previous line's clip resolves late
+// and plays ON TOP of the new one (heard as clip + browser TTS, or two clips, at once).
+let _activeLineCancel: (() => void) | null = null
 
 const _subs = new Set<() => void>()
 function _notify() { _subs.forEach(f => f()) }
@@ -108,16 +112,22 @@ function _doSpeak(text: string, rate: number, pitch: number) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   if (!text?.trim()) return
 
-  // A new single utterance supersedes any running sequence (stop it for real).
+  // A new single utterance supersedes everything currently speaking — a running
+  // sequence, a prior single line (incl. its pending async clip lookup), a pending
+  // fallback timer, and any leftover browser utterance — so two lines can never overlap.
   if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
+  if (_activeLineCancel) { const c = _activeLineCancel; _activeLineCancel = null; c() }
+  if (_speakTimer) { clearTimeout(_speakTimer); _speakTimer = null }
   stopClip()
+  try { window.speechSynthesis.cancel() } catch {}
 
   // A pre-rendered clip if we hold one; otherwise the browser path below, unchanged.
-  speakLine(text, {
+  const cancel = speakLine(text, {
     onStart: () => _setSpeaking(true),
-    onDone: () => _setSpeaking(false),
+    onDone: () => { _setSpeaking(false); if (_activeLineCancel === cancel) _activeLineCancel = null },
     fallback: () => _doSpeakBrowser(text, rate, pitch),
   })
+  _activeLineCancel = cancel
 }
 
 function _doSpeakBrowser(text: string, rate: number, pitch: number) {
@@ -246,6 +256,7 @@ export function stopSpeech() {
   stopClip()
   // Truly stop any running sequence so it can't advance to its next line.
   if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
+  if (_activeLineCancel) { const c = _activeLineCancel; _activeLineCancel = null; c() }
   _setSpeaking(false)
   try { window.speechSynthesis.cancel() } catch {}
 }
@@ -265,6 +276,7 @@ export function speakSeq(
   clearPointer()   // callers re-point per word via onWord if they want a pointer
   // Supersede any previous sequence cleanly.
   if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
+  if (_activeLineCancel) { const c = _activeLineCancel; _activeLineCancel = null; c() }
   if (_speakTimer) { clearTimeout(_speakTimer); _speakTimer = null }
   let cancelled = false
   let i = 0
@@ -428,6 +440,7 @@ export function speakWithHighlight(
 
   // Supersede any previous sequence/utterance cleanly.
   if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
+  if (_activeLineCancel) { const c = _activeLineCancel; _activeLineCancel = null; c() }
   if (_speakTimer) { clearTimeout(_speakTimer); _speakTimer = null }
 
   let mode: 'pending' | 'boundary' | 'timed' = 'pending'

@@ -14,6 +14,13 @@
 import { clipKey } from '@/core/voiceClips'
 import { getVoicePref } from '@/infra/storage/voicePref'
 
+// When on, a selected custom voice is the ONLY voice: a line with no clip stays silent
+// rather than falling back to browser TTS, so the teen game never mixes the two voices.
+// Only bites when a real voice is picked — with 'device' there are no clips, so we must
+// still fall back or teen games would be silent. Set by the teen GameShell while mounted.
+let _clipOnly = false
+export function setClipOnly(v: boolean): void { _clipOnly = v }
+
 let _keys: Set<string> | null = null
 let _loading: Promise<void> | null = null
 let _loadedFor: string | null = null
@@ -172,6 +179,10 @@ export function speakLine(text: string, opts: Opts): () => void {
   const voice = getVoicePref()
   if (voice === 'device') { fallback(); return cancel }
 
+  // A miss with a custom voice selected: stay silent (custom-voice-only) instead of the
+  // free voice, unless clip-only is off — then fall back exactly as before.
+  const miss = () => { if (cancelled) return; _active = null; if (_clipOnly) onDone?.(); else fallback() }
+
   void loadManifest(voice).then(async () => {
     if (cancelled) return
     const key = clipKey(text)
@@ -180,11 +191,11 @@ export function speakLine(text: string, opts: Opts): () => void {
       await loadFragments(voice)
       if (cancelled) return
       const keys = stitchKeys(text)
-      if (!keys?.length) { fallback(); return }
+      if (!keys?.length) { miss(); return }
       const seq = playSequence(keys.map((k) => `/audio/${voice}/frag/${k}.mp3`), () => onStart?.())
       cancelClip = seq.cancel
       seq.done.then(() => { if (!cancelled) { _active = null; onDone?.() } })
-         .catch(() => { if (!cancelled) { _active = null; fallback() } })
+         .catch(() => miss())
       return
     }
 
@@ -200,8 +211,8 @@ export function speakLine(text: string, opts: Opts): () => void {
       _active = null
       onDone?.()
     }
-    // Any failure at all → the browser-speech path, so a bad clip is never a silent line.
-    audio.onerror = () => { if (!cancelled) { _active = null; fallback() } }
+    // Any failure at all → the browser-speech path (or silence under clip-only).
+    audio.onerror = () => miss()
 
     audio.play().then(() => {
       if (cancelled) { stopClip(); return }
@@ -219,10 +230,7 @@ export function speakLine(text: string, opts: Opts): () => void {
           onWord(i)
         }, step)
       }
-    }).catch(() => {
-      // Autoplay refused (no user gesture yet) — fall back rather than going silent.
-      if (!cancelled) { _active = null; fallback() }
-    })
+    }).catch(() => miss())   // autoplay refused (no gesture yet) → fall back, or silent under clip-only
   })
 
   return cancel

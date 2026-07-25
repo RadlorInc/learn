@@ -31,6 +31,7 @@ import MiloMark from '@/features/chapters/teen/MiloMark'
 import FitBox from '@/features/chapters/story/FitBox'
 import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, AnswerPad, headerChip, bigBtn, type HandKind } from './gameKit'
 import ScribblePad from './ScribblePad'
+import { setClipOnly } from '@/infra/voiceClipPlayer'
 
 const BAND: AgeBand = '12-14'
 const RETEACH_AFTER = 3
@@ -242,6 +243,13 @@ export function Game<V, T extends BaseTask>({
   const timers = useRef<number[]>([])
   const later = useCallback((fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); stopSpeech() }, [])
+  // 12–14 ONLY: a chosen custom voice is the ONLY voice — no browser-TTS fallback, so the
+  // recorded and free voices never mix. Other bands (incl. 15–16 on this same shell) keep
+  // the fallback. Off again when we leave the shell.
+  useEffect(() => {
+    if (getActiveLearner()?.age_group !== '12-14') return
+    setClipOnly(true); return () => setClipOnly(false)
+  }, [])
   const flashCue = useCallback((k: 'turn' | 'solved') => {
     setCue(k)
     later(() => setCue((c) => (c === k ? null : c)), k === 'turn' ? 1600 : 1500)
