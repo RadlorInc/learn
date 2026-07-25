@@ -56,11 +56,13 @@ function traceShape(g: CanvasRenderingContext2D, k: ShapeKind, x: number, y: num
 }
 
 export default function ScribblePad({ P, resetKey, open, onToggle }: { P: Palette; resetKey: string | number; open: boolean; onToggle: (open: boolean) => void }) {
-  const [erasing, setErasing] = useState(false)
+  const [tool, setTool] = useState<'write' | 'erase' | 'size'>('write')
+  const erasing = tool === 'erase'
   const [, bump] = useState(0)            // re-render after undo/clear (marks live in a ref)
   const strokes = useRef<Mark[]>([])
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const cur = useRef<Extract<Mark, { kind: 'ink' }> | null>(null)
+  const grab = useRef<{ i: number } | null>(null)   // shape being resized in 'size' mode
 
   const paint = useCallback((s: Mark, from = 0) => {
     const c = canvasRef.current
@@ -132,18 +134,40 @@ export default function ScribblePad({ P, resetKey, open, onToggle }: { P: Palett
     const r = e.currentTarget.getBoundingClientRect()
     return { x: e.clientX - r.left, y: e.clientY - r.top }
   }
+  /** Nearest stamped shape to a point, but only if the point is roughly on it —
+   *  so grabbing in empty space does nothing rather than yanking a far-off shape. */
+  const pickShape = (p: { x: number; y: number }) => {
+    let best = -1, bestD = Infinity
+    strokes.current.forEach((m, i) => {
+      if (m.kind !== 'shape') return
+      const d = Math.hypot(p.x - m.x, p.y - m.y)
+      if (d < bestD) { bestD = d; best = i }
+    })
+    const m = strokes.current[best]
+    return best >= 0 && m.kind === 'shape' && bestD <= Math.max(m.s * 0.75, 70) ? best : -1
+  }
   const down = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId)
+    if (tool === 'size') { const i = pickShape(at(e)); grab.current = i >= 0 ? { i } : null; return }
     cur.current = { kind: 'ink', pts: [at(e)], erase: erasing }
     strokes.current.push(cur.current)
     paint(cur.current)
   }
   const move = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (grab.current) {
+      const m = strokes.current[grab.current.i]
+      if (m && m.kind === 'shape') {
+        const p = at(e)
+        m.s = Math.max(30, Math.min(600, 2 * Math.hypot(p.x - m.x, p.y - m.y)))  // pointer sits on the edge
+        redraw()
+      }
+      return
+    }
     if (!cur.current) return
     cur.current.pts.push(at(e))
     paint(cur.current, cur.current.pts.length - 1)
   }
-  const up = () => { cur.current = null; bump((n) => n + 1) }
+  const up = () => { cur.current = null; grab.current = null; bump((n) => n + 1) }
 
   /** Stamp a shape on the paper. Shapes TILE left-to-right and wrap down a row, so a
    *  second one lands beside the first with room to label it — a small cascade offset
@@ -220,8 +244,9 @@ export default function ScribblePad({ P, resetKey, open, onToggle }: { P: Palett
             toolbar that wrapped to three rows on a phone would eat the paper it sits
             above. Close stays outside the scroller so it is always reachable. */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflowX: 'auto' }}>
-          <button type="button" aria-pressed={!erasing} onClick={() => setErasing(false)} style={chip(!erasing)}>✏️ Write</button>
-          <button type="button" aria-pressed={erasing} onClick={() => setErasing(true)} style={chip(erasing)}>🧽 Erase</button>
+          <button type="button" aria-pressed={tool === 'write'} onClick={() => setTool('write')} style={chip(tool === 'write')}>✏️ Write</button>
+          <button type="button" aria-pressed={tool === 'erase'} onClick={() => setTool('erase')} style={chip(tool === 'erase')}>🧽 Erase</button>
+          <button type="button" aria-pressed={tool === 'size'} onClick={() => setTool('size')} style={chip(tool === 'size')}>↔ Size</button>
           <span aria-hidden style={{ width: 1, alignSelf: 'stretch', background: P.glassBorder, flex: '0 0 auto', margin: '0 2px' }} />
           {/* A native <select>: it is the one control that already gives a touch
               device a proper picker and a laptop a keyboard-navigable menu, with no
