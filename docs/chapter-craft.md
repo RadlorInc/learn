@@ -20,6 +20,8 @@ Reference implementations, in order of how closely to copy them:
 | 2 · Number order | [FollowTheLeader.tsx](../src/features/chapters/story/FollowTheLeader.tsx) | layout as invariants, per-journey timing, cumulative strip |
 | 3 · Number recognition | [NestTree.tsx](../src/features/chapters/story/NestTree.tsx) | still scene + one travelling character |
 | 4 · Matching quantities | [HomeTime.tsx](../src/features/chapters/story/HomeTime.tsx) | journeys in BOTH directions, a commit gesture, leader bands |
+| 5 · Comparing quantities | [BigOrSmall.tsx](../src/features/chapters/story/BigOrSmall.tsx) | two countable groups, group separation, concrete → symbolic tiers |
+| 9 & 10 · Addition / subtraction | [PlayTime.tsx](../src/features/chapters/story/PlayTime.tsx) | one component for two mirrored operations, a countable set, an exported layout chain |
 
 The shared engine all of these run on is [critters.tsx](../src/features/chapters/story/critters.tsx) —
 cast, habitats, `Critter`, the travel timing and the huddle invariants. **Put a fix there, not in a
@@ -83,8 +85,25 @@ sliding and moonwalking bug this project has shipped is one of these:
 | legs ran forwards while the body went backwards | layout let a creature sit right of its destination | layout must **guarantee** travel direction |
 
 - **One cycle carries one stride.** A sheet playing `fps/frames` cycles per second, each carrying
-  `STRIDE` (0.67) body-heights, gives a real ground speed; the duration falls out of it. A creature
-  crossing twice the distance takes twice as long. Clamp it (≈1100–2400ms) so nothing crawls.
+  `STRIDE` body-heights, gives a real ground speed; the duration falls out of it. A creature
+  crossing twice the distance takes twice as long.
+- **A CLAMP ON THAT DURATION IS A SECOND HALF OF THE RULE, NOT A DETAIL.** The moment you write
+  `min(MAX, …)` the body stops moving at the speed the legs are running, and the whole invariant is
+  gone. This is not hypothetical and it was not rare: measured across the cast, a journey of 60% of
+  the screen wants **5–10 seconds** at a walking pace, so *every* long journey in the 3–5 band sat
+  pinned at `TRAVEL_MAX` with the body covering ground **2–4× faster than its legs claimed**, for
+  months. Each chapter dutifully computed a `cycleScale` for the showy march and passed a bare `1`
+  for ordinary journeys — so the ordinary ones were the ones that skated. Use `journeyOf`, which
+  returns `{ms, cycleScale}` together, and pass BOTH to `Critter`. There is deliberately no
+  duration-only helper any more: the old `travelMs` was deleted rather than documented, because
+  returning the pair is what makes the correct thing the only thing.
+- **Speed looks natural when the legs match, not when it is slow.** A creature hurrying on legs
+  that agree with the ground reads as hurrying; the same speed with legs at the wrong rate reads as
+  broken, and "it moves too fast" is what a person says when they see it.
+- On a *clamped* journey the resulting leg cycle works out to `ms · STRIDE · h / dist` — **the
+  cadence cancels out entirely.** So when long journeys look frantic, `fps` is not the lever;
+  sprite height, the ceiling, or the distance are. (This is why the sprite cap is a pacing number:
+  a creature pinned small on a wide screen must cover more of its own body-lengths to cross it.)
 - **Easing is `linear`** for travel. A walking creature moves at constant speed; ease-out puts most
   of the distance in the first third and reads as a slide.
 - **A stationary creature PAUSES its cycle** and breathes instead. A cycle looping in place is
@@ -113,6 +132,48 @@ check them with a script:
   had just finished proving. **Jitter away from a limit, never toward it**, or the fit means nothing.
 - **check the real spots, not the band they came from.** A sweep that reads `waitY1` instead of the
   positions `waitSpot` actually returns cannot see any of the jitter, and passes clean.
+- **a boundary next to another character is measured off THAT character, never guessed.** Chapter 2
+  learned this as the cut-off leader; it applies to any adjacency. Chapters 9–10 gave their set a
+  flat right limit of 74% and the three widest reef creatures (fish 1.37, turtle 1.53, shark 1.75 : 1)
+  ran their last member into Milo at 640 wide. Derive the limit from the neighbour's own half-width
+  and give back only what it needs — every percent kept is a percent the set loses.
+
+### Countability is a layout constraint, not a nicety
+
+**How far apart a set stands depends on how the child is asked to count it.** Chapter 4 packs its
+gathered group 5.4% of the screen apart — a deliberate overlapping huddle, and correct there,
+because that set is counted out one deliberate tap at a time and never exceeds seven. Chapters 9–10
+ask for a set of up to **ten counted in one glance**, so the same huddle would be a pile, and a pile
+the child cannot count is a wrong answer *the chapter caused*. Spread those evenly, with spacing
+derived from each sprite's own width, and cap the sprite against its slot.
+
+Ten on screen is also the ceiling on the arithmetic itself: everything in these chapters is
+object-driven, so the sum cannot outgrow what a short landscape phone holds at a countable size.
+That is a feature — it dragged addition back from sums of 14 to sums within 10, which is where this
+band actually belongs. **The ceiling is per-picture, not a constant**: the comparison chapter spends
+width on the gap that separates its bunches, so it holds nine across two bunches and only five
+across three. Derive it, measure it in the sweep, and let the number fall where it falls.
+
+**Rows are only room if the rows are visually SEPARATE.** `huddleRows` returns up to 3, and for
+chapters 2 and 4 that is right — their cross-row overlap reads as a huddle because those sets are
+counted out one deliberate tap at a time. In a chapter counted in ONE LOOK it is a trap: measured on
+the reef at 640×320, three rows sat 29px apart against an 83px sprite and the creatures simply
+buried each other. Two rules follow, both now in `critters.tsx`:
+- cap counting chapters at **two** rows, and
+- cap the sprite by `maxSizeForRows` and widen the band with `spreadBand`, so the two rows are at
+  least `ROW_SEP` (0.55) of a sprite height apart. `fitBands` alone will not do this — it proves
+  heads clear the prompt and feet clear the strip, and is perfectly happy to return a band a few
+  pixels tall with both rows on the same line.
+
+**A clamp must budget for anything applied after it.** `spreadBand` raised the far row to exactly
+the head-clearance limit, and the organic jitter then lifted it 2% further — straight behind the
+prompt. The jitter is now the shared `BAND_JITTER` so the clamp and the spot function cannot
+disagree about its size.
+
+**Separation between groups is measured against the SAME-ROW spacing, not the raw step.** Members
+alternate rows, so neighbours in one row sit `step × rows` apart. A gap defined as 2.2 × step looks
+generous and is, at rows = 2, a 10% difference — the two bunches merge into one line and there is
+nothing left to compare.
 
 ### The leader is not always one of the flock
 
@@ -285,6 +346,19 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   sprites. Overlap and draw-order checks have to be visual or geometric.
 - Sweep the size matrix with a script, not by hand: widths × heights × question counts × every
   creature. Chapter 2's layout is 330 combinations and the script is what made the last pass clean.
+- **The sweep must call the SAME layout function the scene renders from.** Chapter 4's sweep
+  re-implements its sizing chain inside the test, so the check can agree with its own copy of the
+  constants while the screen it protects falls apart. Chapters 9–10 export `playLayout` and the test
+  imports it; do that instead.
+- **Mutation-test the gate, and tell an inert mutation from a missed regression.** Of seven planted
+  against the chapters 9–10 sweep, five were caught and two passed — and both survivors turned out
+  to change no behaviour at all (one constant was shadowed by a tighter one, one cap was covered by
+  a second mechanism). "It passed" is only good news once you have checked which of the two it is.
+- **`requestAnimationFrame` is frozen while the preview is backgrounded**, so rAF-throttled hooks —
+  `useViewport` among them — never see a live `resize`. Resizing the preview and re-measuring
+  reports a layout still computed for the OLD size, which looks exactly like a responsive bug.
+  Reload at the target size instead of resizing into it. (This burned three separate measurements in
+  one session; each time the instrument was wrong and the code was fine.)
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---
