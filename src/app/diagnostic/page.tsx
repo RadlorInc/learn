@@ -512,7 +512,7 @@ function AgePicker({ accent, onPick }: { accent: Accent; onPick: (b: Band) => vo
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 6vw' }}>
       {/* Returning user? Log in and their checkup comes from their account (even on a new device). */}
-      <a href="/auth" style={{ position: 'absolute', top: 16, right: 18, zIndex: 46, fontFamily: PT.mono, fontSize: 13, fontWeight: 700, color: accent.base, textDecoration: 'none', background: PT.panel, border: `1px solid ${accent.base}66`, borderRadius: 10, padding: '8px 14px' }}>Log in →</a>
+      <a href="/auth" style={{ position: 'absolute', top: 'calc(16px + env(safe-area-inset-top))', right: 18, zIndex: 46, fontFamily: PT.mono, fontSize: 13, fontWeight: 700, color: accent.base, textDecoration: 'none', background: PT.panel, border: `1px solid ${accent.base}66`, borderRadius: 10, padding: '8px 14px' }}>Log in →</a>
       <div style={{ textAlign: 'center', maxWidth: 460 }}>
         <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2, color: accent.base, textTransform: 'uppercase', marginBottom: 8 }}>Free · 2 minutes · no account needed</div>
         <h2 style={{ margin: '0 0 6px', fontFamily: PT.sans, fontWeight: 700, fontSize: 24, color: PT.ink }}>How old is your child?</h2>
