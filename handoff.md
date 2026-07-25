@@ -12,11 +12,18 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🎨 **2026-07-25 (LATEST) — GROUP B REBUILT (EACH SKILL GETS ITS OWN VERB), THEN THE COLOURING CHAPTER RE-CUT AS *TEACH ONE PAGE → TEST ON ANOTHER* AND FIVE FOUNDER CATCHES FIXED. COMMITTED on `feat/story-3-5-group-b-teach-then-test`, sw v60→v61. NOT MERGED, NOT DEPLOYED.**
+> 🎨 **2026-07-25 (LATEST) — GROUP B REBUILT (EACH SKILL GETS ITS OWN VERB), THEN THE COLOURING CHAPTER RE-CUT AS *TEACH ONE PAGE → TEST ON ANOTHER* AND FIVE FOUNDER CATCHES FIXED. SHIPPED TO PROD. `main`@`f44ce11`, prod serving sw v61, smoke green + DRIVEN LIVE ON PROD.**
 >
-> **STATE, PLAINLY.** `tsc` clean · **79/79 vitest** · `next build` green · 0 console errors in a fresh
-> tab · sw bumped to **v61** · committed to a branch, **`main` untouched and prod still serving v60**.
-> Modified [ShapeTown](src/features/chapters/story/ShapeTown.tsx) ·
+> **Deploy:** `feat/story-3-5-group-b-teach-then-test` → `main` (fast-forward) → pushed → prod **v61**.
+> Gates: `tsc` · **79/79 vitest** · `next build` · 0 console errors in a fresh tab. Smoke: `/` `/menu`
+> `/api/health` `/diagnostic` and all six rebuilt story chapters (`shapes` `rainbow` `beads` `home`
+> `order` `nest`) **200**; both new `colour_*.png` and the two backdrops **200**. Then DROVE PROD, not
+> just status codes: the colouring lesson filled **red `230,69,69` → yellow `255,201,60` → blue
+> `63,163,238`** and moved on to "4 of 6 · This is GREEN" with the green pot cued; the shapes chapter
+> reported **no build during the showcase**, the house clearing the fence by **46px** and the prompt by
+> **94px**. 0 console errors on prod.
+>
+> **Files.** Modified [ShapeTown](src/features/chapters/story/ShapeTown.tsx) ·
 > [RainbowTown](src/features/chapters/story/RainbowTown.tsx) ·
 > [BeadShop](src/features/chapters/story/BeadShop.tsx) ·
 > [ShapesLesson](src/features/chapters/lessons/ShapesLesson.tsx) ·
@@ -180,17 +187,24 @@
 >   pane still intermittently reports `innerWidth 0`, which makes every rect read lie.
 >
 > ## ▶ OPEN — pick up here, in order
-> 1. **MERGE AND DEPLOY.** Everything above is committed to
->    `feat/story-3-5-group-b-teach-then-test` and **nothing is on `main`; prod is still serving v60**.
->    Gates are already green (`tsc` · 79/79 · `next build`) and sw is bumped to v61 in the branch. The
->    usual shape: fast-forward `main` → push → post-deploy smoke (`/`, `/menu`, `/api/health`, and
->    `?ch=shapes` `?ch=rainbow` `?ch=beads`, plus the two `colour_*.png` returning 200) → confirm prod
->    `sw.js` says v61.
-> 2. **THE SIX COLOUR CLIPS — now the single highest-value job, and more load-bearing than before.**
->    red/yellow/blue/green/orange/purple. Naming colours IS the skill, so no silent fallback exists
->    that does not hand over the answer, and the chapter now opens *directly* into a spoken lesson —
->    on a Chrome box with no TTS a child gets six silent beats and then an unanswerable test. ~30
->    characters of ElevenLabs quota.
+> 1. **THE SIX COLOUR CLIPS — the top job, and the shipping of this chapter is what made it urgent.**
+>    ⚠️ **CONFIRMED IN THE CODE, NOT ASSUMED: THE WHOLE 3–11 BAND HAS ZERO RECORDED CLIPS.** The 435
+>    clips on disk are teen-only — [voice-corpus.mts](scripts/voice-corpus.mts) has a hardcoded file
+>    list of the 24 teen game components plus `GameShell`, and nothing under `features/chapters/story/`
+>    is in it. So 3–11 runs on browser `speechSynthesis` alone, which **Safari has and many Chrome
+>    installs do not** (why `_pickVoice` prefers LOCAL voices — Chrome's "Google …" ones fail silently).
+>    What that means for this chapter, precisely:
+>    | | on a silent device |
+>    |---|---|
+>    | **lesson** (garden) | still playable — the right pot bounces — but it teaches NOTHING, and hearing the word attached to the thing is the entire point |
+>    | **test** (toy room) | **unanswerable.** No cue, and a toy has no default colour, so nothing on screen can tell them which paint |
+>    That second row is a direct consequence of making the toy room an honest test: a picture that
+>    cannot answer for the child also cannot rescue them when the voice is missing. The design is
+>    right; it now depends on audio the band does not have.
+>    **Do:** red · yellow · blue · green · orange · purple, ~30 characters, stitched the way the teen
+>    prompts already are. ElevenLabs quota was ~38.5k/40k used and **resets 2026-07-27** (checking it
+>    this session failed — the MCP tool was erroring). The fuller job is the whole 3–11 static corpus,
+>    ~2.9k characters, which fixes the band rather than one chapter.
 > 3. **Measurement (TallForest)** — the last 3–5 chapter. Ask its verb first, per §0a: it compares an
 >    ATTRIBUTE, so neither the creature engine nor any of these templates obviously fits.
 > 4. **Small, known, not done:** the shapes chapter's `Explain`/re-teach copy still reads as a first
@@ -1297,7 +1311,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-25 (LATEST session — see the top 🎨 block. **COMMITTED to `feat/story-3-5-group-b-teach-then-test`, sw v60→v61 — NOT MERGED, prod still on v60.** `tsc` · 79/79 · `next build` green · 0 console errors in a fresh tab. Group B rebuilt so each "exact form" chapter has its OWN VERB — **Shape House is a shape sorter**, **Bead Shop is one string that gets longer**, **the Colouring Book is a real colouring game** on a genuine flood fill. Then the founder re-cut the colouring chapter: **one page TEACHES the six colour words, a second page TESTS them** — and the split is what makes the score mean anything, because a garden is full of things with one true colour (so it can answer for the child) while a toy is whatever colour it was made (so only the spoken word can). Five founder catches followed, and every one was invisible to checks that had passed: a tulip that silently ate 40% of taps aimed at it (the ink is a wall, and the rescue sat *behind* the bail-out written for it); a glow too faint to see on a small shape; *"That's the tulip!"* said to a child who tapped a tulip; "colour the cloud purple" asked of a white cloud; and a ghost house drawn as a wireframe, then standing in front of a fence painted into the backdrop. **The real lesson is about testing** — every script I wrote tapped each target's stored probe point, its dead centre, the single easiest tap on the page, so the mechanic was only ever verified where it could not fail. ▶ Next: merge + deploy, then the six colour clips (the chapter now opens straight into a spoken lesson, so a silent device gets six silent beats and an unanswerable test), then measurement — asking its verb first.)_
+_Last updated: 2026-07-25 (LATEST session — see the top 🎨 block. **SHIPPED — `main`@`f44ce11`, prod serving sw v61, smoke green and driven live on prod.** `tsc` · 79/79 · `next build` green · 0 console errors in a fresh tab. Group B rebuilt so each "exact form" chapter has its OWN VERB — **Shape House is a shape sorter**, **Bead Shop is one string that gets longer**, **the Colouring Book is a real colouring game** on a genuine flood fill. Then the founder re-cut the colouring chapter: **one page TEACHES the six colour words, a second page TESTS them** — and the split is what makes the score mean anything, because a garden is full of things with one true colour (so it can answer for the child) while a toy is whatever colour it was made (so only the spoken word can). Five founder catches followed, and every one was invisible to checks that had passed: a tulip that silently ate 40% of taps aimed at it (the ink is a wall, and the rescue sat *behind* the bail-out written for it); a glow too faint to see on a small shape; *"That's the tulip!"* said to a child who tapped a tulip; "colour the cloud purple" asked of a white cloud; and a ghost house drawn as a wireframe, then standing in front of a fence painted into the backdrop. **The real lesson is about testing** — every script I wrote tapped each target's stored probe point, its dead centre, the single easiest tap on the page, so the mechanic was only ever verified where it could not fail. ▶ Next: **the six colour clips.** Confirmed in the code this session that the ENTIRE 3–11 band has zero recorded audio — the 435 clips are teen-only, because the extractor's file list is teen-only — so this chapter runs on browser TTS that many Chrome installs simply do not have. On a silent device the lesson still plays but teaches nothing, and the toy-room test is *unanswerable*, which is the price of making it an honest test: a picture that cannot answer for the child cannot rescue them either. ElevenLabs quota resets 2026-07-27. Then measurement — the last 3–5 chapter — asking its verb first.)_
 
 _Prior update: 2026-07-25 (the 🐾 block. **Shipped to prod, `main`@`3c391b6`, sw v60, driven live on prod:** three more 3–5 chapters moved onto the creature engine — **addition + subtraction as one shared Play Time** (creatures walk IN to join or OUT to leave, so the operation itself is the thing that moves) and **comparison as Bigger or Smaller** (tap the bigger bunch, it walks off with Milo, the other stays). **But the bigger find was the motion:** the founder said the animation looked too fast, and measuring showed `travelMs` clamped every duration to 2400ms while a 60%-of-screen journey wants **5–10 SECONDS** at a walking pace — so every long journey had the body covering ground **2–4× faster than its legs**, band-wide, for months. Each chapter computed a `cycleScale` for the showy march and passed a bare `1` for ordinary journeys, so **the ordinary ones were the ones that skated**. `journeyOf` now returns `{ms, cycleScale}` together and **`travelMs` was deleted rather than documented** — a duration without its correction IS the bug. Cadence calmed ~28%, ceiling 2400→3600ms, sprite cap 140→230px (a PACING number: on a clamped journey the cycle is `ms·STRIDE·h/dist`, so cadence cancels and only height reaches it). **Two lessons about checks:** a sweep must import the SAME layout function the scene renders from, and must be DERIVED FROM THE CHAPTER'S OWN GENERATOR — twice a hand-written grid failed on screens no child can reach, and both times the test was wrong, not the code. **And the one the sweep could not see:** three rows in a 58px band buried the creatures, because the check only compared same-row pairs — *rows are only room if the rows are visually separate*. ▶ **Remaining in 3–5: shapes · colors · patterns** (augmentations, not rebuilds — keep the exact SVG/hex core, add a travelling creature and the arc each name already promises), then measurement. **Nobody has watched a child play any of it** — the burial was invisible to every passing check and only showed up on screen. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
 
