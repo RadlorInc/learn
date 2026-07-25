@@ -2004,11 +2004,25 @@ auto-memory `project-milo-{12-14,15-16,17-18}-curriculum`, `project-milo-teen-fr
 ## Resources
 
 - **Live app (Vercel production):** https://milo-story-mode.vercel.app/ · also https://www.mi2utor.com
-  - Latest production deploy: commit `c129e5c` (chapter 4 as Home Time + the shared creature engine), sw **v57** — READY.
-  - Preview a 3–5 chapter directly: `https://milo-story-mode.vercel.app/story?ch=<key>` — the four
-    rebuilt ones are **`home`** (ch4, matching quantities · `grocery` still resolves here), **`order`**
-    (ch2, Follow the Leader), **`nest`** (ch3, Nest Tree) and the default (ch1, counting parade).
-    The rest: `kitchen` `shapes` `rainbow` `beads` `add` `sub` `measure`.
-    All four rebuilt chapters are **landscape-only** — a portrait window shows the rotate gate, not the chapter.
+  - Latest production deploy: commit **`f20ec32`** (Group B's three verbs + colour taught on one page
+    and tested on another), sw **v61** — READY, smoke green, driven live on prod.
+  - Preview a 3–5 chapter directly: `https://milo-story-mode.vercel.app/story?ch=<key>`. Keys are in
+    [story/page.tsx](src/app/story/page.tsx) and are the source of truth; the 3–5 band is:
+
+    | key | chapter | state |
+    |---|---|---|
+    | *(none)* | ch1 · counting parade | rebuilt |
+    | `order` | ch2 · Follow the Leader | rebuilt |
+    | `nest` | ch3 · Nest Tree (`race`/`doors` also resolve) | rebuilt |
+    | `home` | ch4 · Home Time (`grocery` also resolves) | rebuilt |
+    | `kitchen` | ch5 · Bigger or Smaller — **the old Milo's Kitchen is gone; the key stayed** | rebuilt |
+    | `add` `sub` | ch9/10 · Play Time, one component run both ways | rebuilt |
+    | `shapes` | ch6 · Shape House — a shape sorter | rebuilt |
+    | `rainbow` | ch7 · Colouring Book — garden teaches, toy room tests | rebuilt |
+    | `beads` | ch8 · Bead Shop — one growing string | rebuilt |
+    | `measure` | ch11 · TallForest | **the last one not rebuilt** |
+
+    Every rebuilt chapter is **landscape-only** — a portrait window shows the rotate gate, not the
+    chapter, so a portrait screenshot is not evidence of anything.
 - **Repo:** github.com/Rafiquekuwari/milo — `main` auto-deploys to Vercel production (project `milo-story-mode`, team `team_HQsF3tfxAuGgZi7CcdhSdN7Y`).
 - **Detail:** the auto-memory `project-milo-*` files (one per chapter + sync/scaling/voice/launch-readiness).
