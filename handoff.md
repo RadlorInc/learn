@@ -12,7 +12,122 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> ✏️ **2026-07-24 (LATEST) — THE 12–14 PRACTICE LOOP NOW HAS SCRATCH PAPER. SHIPPED TO PROD. `main`@`68a4aeb`, prod serving sw v58, post-deploy smoke green + driven live on prod.**
+> 🐾 **2026-07-25 (LATEST) — THREE MORE 3–5 CHAPTERS ON THE CREATURE ENGINE (addition · subtraction · comparison), AND THE MOTION ACROSS THE WHOLE BAND MADE NATURAL. SHIPPED. `main`@`3c391b6`, prod serving sw v60, smoke green + DRIVEN LIVE ON PROD.**
+>
+> **Deploy:** `feat/story-3-5-play-time-compare-and-natural-motion` → `main` (fast-forward) → pushed → prod **v60**.
+> Gates: `tsc` · **79/79 vitest** (was 66) · `next build`. Smoke: `/` `/menu` `/diagnostic` `/api/health`
+> and all six story chapters (`add` `sub` `kitchen` `home` `order` `nest`) **200**; walk sheets, Milo's
+> underwater pose and the reef backdrops **200**. Then DROVE PROD: the arrivals measure **1986ms and
+> 3411ms with a 0.75s leg cycle**, both inside the ceiling and running at the creature's true gait,
+> stationary ones `paused` — the same numbers as local, so the motion fix is genuinely live. 0 console errors.
+> Net **+1841 / −1626 lines**: Kitchen, Orchard and LilyPond (~1575 lines) deleted, three new sweeps added.
+>
+> ## ⓪ THE REMAINING 3–5 CHAPTERS WERE RE-THOUGHT FIRST, AND THE ANSWER IS TWO TEMPLATES, NOT ONE
+> Surveying all seven leftovers against the craft doc, they fail the same four rules — nothing alive
+> before a tap, no journey, no cumulative arc, no rotate gate — but they split into two groups needing
+> **opposite** treatments, and each already has a shipped template here. No new engine was needed.
+> • **Group A — countable quantity** (comparison · addition · subtraction): the HomeTime/FollowTheLeader
+>   template, `critters.tsx`, **0 new art**. ✅ ALL THREE DONE THIS SESSION.
+> • **Group B — exact form** (shapes · colors · patterns): each file's own header says the answer must
+>   stay geometrically or chromatically exact, and the handoff already recorded *"do NOT animate Shape
+>   House the same way."* These want the **NestTree** template — answer stays exact and STILL, one live
+>   creature makes the journey — and are **augmentations, not rebuilds**. Their names already promise the
+>   missing arc: a house that gets built, a town that gets painted, a necklace that grows. ▶ NOT STARTED.
+> • **Measurement** is the odd one out (an attribute, not a count) — lowest confidence, do it last.
+> Founder calls taken: **landscape-only across all 7**, and Group A first.
+>
+> ## ① PLAY TIME — addition + subtraction, ONE component ([PlayTime.tsx](src/features/chapters/story/PlayTime.tsx))
+> They are the same journey run in opposite directions, so they share a component with an `op` prop —
+> the 6–8 band already does this for add/subtract (BlockYard). `a` are playing with Milo and `b` MORE
+> **walk in from off-frame**, or `b` of them **walk out and leave**. The operation itself is the thing
+> that moves. Before, both groups POPPED in with a CSS scale and subtraction's leavers "left" by fading
+> a stationary sprite's opacity — the arithmetic happened in a jump-cut.
+> • **Slot order is the trick:** movers always own the LEFTMOST slots, so an arrival stops at the near
+>   edge of the group and a leaver walks straight out — neither passes through anyone.
+> • **Sums capped at ten on screen.** Forced by object-driven counting, not chosen — and it happens to
+>   put the chapter ON grade level (K.OA, within 10) instead of the old ceiling of 14. Be honest about
+>   the ordering: the cap came first, the standard was a post-hoc check, and the strongest child in the
+>   band does lose sums 11–14.
+>
+> ## ② BIGGER OR SMALLER — comparison ([BigOrSmall.tsx](src/features/chapters/story/BigOrSmall.tsx))
+> Two bunches wait; the one you tap really walks off with Milo and the other stays behind. Replaces
+> Milo's Kitchen (bowls and jars — dead props, CSS-gradient bowl beside painted art).
+> **The area shortcut is deliberately NOT defeated at the lower tiers.** Rigging the spacing so only
+> counting wins is the Piagetian conservation task, it belongs a year or two later, and K.CC.C.6
+> explicitly allows matching/perceptual strategies — comparing by eye IS the expected entry strategy at
+> Pre-K/K. The honest progression to *"you cannot just look"* is the **tier-3 NUMERAL round**: two
+> creatures each wearing a painted number, nothing to count, un-shortcuttable by construction rather
+> than by trickery (K.CC.C.7). *(This reverses the adversarial-spacing plan floated earlier in the session.)*
+>
+> ## ③ THE MOTION FIX — THE CLAMP WAS BREAKING THE GAIT, BAND-WIDE
+> Founder: *the animations move too fast.* Measuring first found something much bigger than cadence.
+> **A journey across 60% of the screen wants FIVE TO TEN SECONDS at a walking pace, and `travelMs`
+> clamped every duration to 2400ms.** So every long journey in the band had the body covering ground
+> **2–4× faster than its legs were running** — the engine's cardinal rule thrown away by a `Math.min`,
+> with nothing telling the sprite. Each chapter computed a `cycleScale` for the showy march and passed
+> a bare `1` for ordinary journeys, **so the ORDINARY journeys were the ones that skated.** That
+> mismatch, not raw speed, is what reads as unnatural.
+> • `journeyOf` now returns **`{ms, cycleScale}` together** so a clamp reports its own correction;
+>   wired through chapters 2, 4, 9, 10. **`travelMs` was DELETED, not documented** — a duration without
+>   its correction *is* the bug, so the ability to ask for one is gone.
+> • Cadence calmed **~28%** across the cast, finishing the job flagged on the eagle and ladybug back in
+>   chapter 1 (ant 0.46→0.63s, butterfly/firefly 0.50→0.71s, bunny 0.55→0.75s).
+> • Ceiling 2400→**3600ms**, sprite cap 140→**230px**. **The cap is a PACING number:** on a clamped
+>   journey the leg cycle is `ms·STRIDE·h/dist` — the cadence CANCELS OUT — so sprite height is the only
+>   lever that reaches it. A creature pinned small on a wide screen must cover more of its own
+>   body-lengths to cross it.
+> • **Chapter 1's parade is untouched** — it keeps its own `STRIDE` in `ParadeStage.ts` and travels at a
+>   constant derived speed with no clamp, so it never skated. It does inherit the calmer cadence.
+>
+> ## ④ THREE NEW GATES, AND WHAT THEY CAUGHT THAT NO EYE DID
+> [playTimeGeometry](src/__tests__/playTimeGeometry.test.ts) · [bigOrSmallGeometry](src/__tests__/bigOrSmallGeometry.test.ts) · [critterJourney](src/__tests__/critterJourney.test.ts).
+> They import the **same `playLayout`/`compareLayout` the scenes render from** — chapter 4's sweep
+> re-implements its chain, which lets a check agree with itself while the screen falls apart.
+> Caught, none of it visible by eye: Milo overlapping the set on the three widest reef creatures · a
+> tie where **`[2,1,1]` asked for the fewest had TWO right answers** (breaking a tie with `max(1,best−1)`
+> is a no-op at 1 — a child marked wrong for being right) · a tie-fixer that breached the on-screen cap ·
+> a between-bunch gap defined against the raw step when same-row neighbours already sit `2×step` apart,
+> so the bunches merged into one line.
+> **Mutation-tested throughout** — every planted regression trips a gate; the survivors were verified
+> INERT (a shadowed constant, a cap covered by a second mechanism), which is the distinction that matters.
+>
+> ## ⑤ THE ONE THE SCREEN CAUGHT AND THE SWEEP DID NOT
+> `huddleRows` chose **THREE rows inside a band ~58px tall**, so rows sat 29px apart against an 83px
+> sprite and the fish **buried each other** — fatal in a counting chapter. The sweep missed it because
+> it only checked SAME-ROW pairs, treating cross-row overlap as the intended huddle. **Rows are only
+> room if the rows are visually SEPARATE.** Fixed shared: `maxSizeForRows` + `spreadBand` in
+> `critters.tsx` (`fitBands` proves heads clear the prompt and feet clear the strip and is perfectly
+> happy to return a 6%-tall band with both rows on one line), plus `BAND_JITTER` — `spreadBand` raised
+> the far row to exactly the head-clearance limit and the jitter then lifted it 2% further, behind the
+> prompt. **A clamp must budget for anything applied after it.**
+>
+> ## ⑥ MEASUREMENT TRAPS THAT COST REAL TIME (all now in the craft doc)
+> • **`requestAnimationFrame` is FROZEN while the preview is backgrounded**, so rAF-throttled hooks —
+>   `useViewport` among them — never see a resize. Resizing the pane and re-measuring reports a layout
+>   computed for the OLD size and looks exactly like a responsive bug. **Reload at the target size.**
+> • **A sweep must be derived from the chapter's own generator.** Twice I hand-wrote a grid and it
+>   failed on screens no child can reach (three bunches of one; a 45px sprite crossing a 1920px display
+>   — height and width are CORRELATED). Both times the test was wrong and the code was fine.
+> • The preview screenshot lags the DOM by up to a whole phase, and can paint CSS elements while
+>   omitting images. Three separate alarms this session were the instrument, not the app.
+>
+> ## ▶ OPEN — pick up here
+> 1. **WATCH A CHILD PLAY.** Three chapters are live and unvalidated. The burial in ⑤ was invisible to
+>    every passing check and only showed up when I actually looked at the screen.
+> 2. **Group B is the remaining work: shapes · colors · patterns** — augmentations, not rebuilds (keep
+>    the exact SVG/hex core, add a travelling creature + the arc their names already promise). Then
+>    **measurement**, the least certain.
+> 3. **Counts came down and it is worth confirming:** two bunches hold nine, three hold five, addition
+>    tops out at ten. All measured (at 640×320 a shark needs 70px of slot and six leave 69.6px), and the
+>    gate was kept strict rather than given a 1px tolerance — the craft doc records a real 1px bug.
+> 4. Chapter 3 (Nest Tree) still has **no cumulative arc**, and chapters 2/3/4 still have no gates of
+>    their own beyond chapter 4's.
+> 5. **Still the headline, still unchanged: ~zero real users. Watch one real child play; start the
+>    attorney conversation.**
+>
+> _(the ✏️ block below is the previous session — the 12–14 scratch pad.)_
+
+> ✏️ **2026-07-24 — THE 12–14 PRACTICE LOOP NOW HAS SCRATCH PAPER. SHIPPED TO PROD. `main`@`68a4aeb`, prod serving sw v58, post-deploy smoke green + driven live on prod.**
 >
 > **The ask (founder):** *"the kids use touch screen ipads and laptop so we need to add a scribble
 > pad so kids can solve the practice questions in age group 12-14."* Fair and overdue — these
@@ -971,7 +1086,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-24 (LATEST session — see the top ✏️ block. **Shipped to prod, `main`@`68a4aeb`, sw v58:** the 12–14 practice loop now has **scratch paper** — squared paper in a drawer along the bottom with Write/Erase/Undo/Clear and a shape dropdown (rectangle · circle · triangle · right triangle · axes) that stamps onto the page. Founder's point was that these chapters ask a child to work out `−1 − 4` **in their head**, because the only writing surface was the answer itself. Two design calls carry: it is **not modal** (scribble, then tap the answer, nothing to close) and it is **in flow, not floating** — opening it shrinks the play area, because two earlier versions were MEASURED sitting on the question board and two of the four answer tiles, the second of them because a fixed panel and a hand-matched height reserve kept two `vh` values in sync and they disagreed. **Generalise: when two elements must not overlap, make one take the other's space in layout rather than computing a matching reserve.** Also banked: to test whether a font has a glyph, compare its rendered width to U+10FFFD — that is how the axes `┼` was caught rendering as tofu. ▶ **Nobody has written on it with a real finger or Pencil** — every check was synthetic pointer events in a desktop browser; try it on the actual iPad. It has no test of its own, and it is live on the 15–16 chapters too (shared `GameShell`). _Prior session:_ chapter 4 shipped as **🏡 Home Time** (sw v57) — chapter 4 (matching quantities) rebuilt as **🏡 Home Time** — Milo asks for exactly N, the little one the child taps really WALKS to him, and one tapped again walks BACK, so the miscount repair is a journey too. **There are always spares left over**: nothing on screen says when to stop, and deciding that is the entire skill — Little Grocery's shelf emptied at exactly the target and did the stopping for the child. Cost 0 new art. Chapter 2's engine was extracted to **`critters.tsx`** so the shadow-as-child / longhand-animation / linear-easing fixes live in ONE place (FollowTheLeader 708 → 464 lines, behaviour unchanged) — put a fix there, not in a chapter. **The founder's catch is the one to carry:** the Ready button turned green the moment the count matched, which quietly replaced the chapter with a hot/cold game — *a child could win it without counting once*. **No signal that the answer is right may appear BEFORE the commit**; celebration goes after. Also fixed in BOTH chapters 2 and 4: taps were gated on `useIsSpeaking()`, and `speechSynthesis.speaking` measures **3.2s+ true after one spoken digit** — seconds of dead screen per tap. **A new lesson about checks themselves:** the 960-combination invariant sweep passed on its first run, and mutation-testing showed 2 of 5 planted regressions walked straight through it — *a gate that has never been seen to fail is not evidence*. ▶ **Live and unvalidated — watch a child play it;** four of this session's faults were invisible to every passing script. Chapter 2 is now changed in prod with no test of its own. Nest Tree's cumulative arc is still missing. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
+_Last updated: 2026-07-25 (LATEST session — see the top 🐾 block. **Shipped to prod, `main`@`3c391b6`, sw v60, driven live on prod:** three more 3–5 chapters moved onto the creature engine — **addition + subtraction as one shared Play Time** (creatures walk IN to join or OUT to leave, so the operation itself is the thing that moves) and **comparison as Bigger or Smaller** (tap the bigger bunch, it walks off with Milo, the other stays). **But the bigger find was the motion:** the founder said the animation looked too fast, and measuring showed `travelMs` clamped every duration to 2400ms while a 60%-of-screen journey wants **5–10 SECONDS** at a walking pace — so every long journey had the body covering ground **2–4× faster than its legs**, band-wide, for months. Each chapter computed a `cycleScale` for the showy march and passed a bare `1` for ordinary journeys, so **the ordinary ones were the ones that skated**. `journeyOf` now returns `{ms, cycleScale}` together and **`travelMs` was deleted rather than documented** — a duration without its correction IS the bug. Cadence calmed ~28%, ceiling 2400→3600ms, sprite cap 140→230px (a PACING number: on a clamped journey the cycle is `ms·STRIDE·h/dist`, so cadence cancels and only height reaches it). **Two lessons about checks:** a sweep must import the SAME layout function the scene renders from, and must be DERIVED FROM THE CHAPTER'S OWN GENERATOR — twice a hand-written grid failed on screens no child can reach, and both times the test was wrong, not the code. **And the one the sweep could not see:** three rows in a 58px band buried the creatures, because the check only compared same-row pairs — *rows are only room if the rows are visually separate*. ▶ **Remaining in 3–5: shapes · colors · patterns** (augmentations, not rebuilds — keep the exact SVG/hex core, add a travelling creature and the arc each name already promises), then measurement. **Nobody has watched a child play any of it** — the burial was invisible to every passing check and only showed up on screen. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
 
 _Prior update: 2026-07-24 (chapter 2 (number order) rebuilt as **🦆 Follow the Leader** and shipped with the previously-uncommitted **🐣 Nest Tree**, `main`@`02f5437`, sw v56. A stepping-stone version was built and thrown away first, producing the rule the whole 3–5 band now runs on: **a numbered PROP cannot blend into painted art and cannot be alive before it is tapped — make the numbered things CREATURES.** Six founder corrections drove that session — the moonwalk, the pile-up, the cut-off leader, the shadow outrunning the feet, the frozen slide, and travel too fast to see — and every one traced to the same root: **a walk cycle and the travel it belongs to must be given the SAME number**, and **layout must be invariants, not constants that happen to hold at 1024×600**. Milo also gained his first drawn walk cycle there, kept from the rejected build — chapter 4 is what finally uses it.)_
 
