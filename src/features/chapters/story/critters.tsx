@@ -18,8 +18,13 @@
 import React, { useState } from 'react'
 import { SHEETS } from './canvas/sheets'
 
-export const STRIDE = 0.67                      // how far one cycle carries a body, in body heights
-export const TRAVEL_MIN = 1100, TRAVEL_MAX = 2400   // bounds on one creature's journey
+export const STRIDE = 0.85                      // how far one cycle carries a body, in body heights
+// 3600, not the old 2400. The ceiling is what decides how hard a creature has to hurry: the cycle
+// is scaled to whatever speed the clamp imposes, so a tighter ceiling buys a shorter wait at the
+// price of whirling legs. 3600 is the point where the WORST reachable journey — the smallest sprite
+// a chapter produces (45px) crossing the longest distance one asks for (~75% of the width) — still
+// cycles no faster than ~0.34s. Most journeys are far shorter and never reach it at all.
+export const TRAVEL_MIN = 1100, TRAVEL_MAX = 3600   // bounds on one creature's journey
 
 const frac = (x: number) => x - Math.floor(x)
 export const seeded = (i: number, s: number) => frac(Math.sin((i + 1) * s) * 43758.5453)
@@ -223,6 +228,47 @@ export function fitBands(h: Habitat, vh: number, sizePx: number, leadScale = 1.2
   return { ...h, lineY, waitY0, waitY1 }
 }
 
+/**
+ * How far apart two rows must sit, as a fraction of sprite height, before they read as two rows
+ * rather than one pile. Below this the near row simply covers the far one.
+ */
+export const ROW_SEP = 0.55
+
+/**
+ * The organic upward nudge applied to a standing spot, in screen-%. Shared, because any clamp that
+ * protects a boundary has to BUDGET for it: `spreadBand` raised the far row to exactly the
+ * head-clearance limit and the jitter then lifted it 2% further, straight behind the prompt. A
+ * clamp that ignores a nudge applied after it is not a clamp.
+ */
+export const BAND_JITTER = 2
+
+/**
+ * The largest sprite that still lets `rows` SEPARATED rows fit between the prompt and the bottom
+ * strip. Counting chapters need this: `fitBands` guarantees heads clear the prompt and feet clear
+ * the strip, but it says nothing about the rows being distinguishable from each other, so on a
+ * short screen it happily returns a band of a few pixels and both rows land on the same line.
+ */
+export function maxSizeForRows(vh: number, rows: number): number {
+  const usable = Math.max(1, vh - BANNER_PX - STRIP_PX)
+  return usable / (1 + ROW_SEP * Math.max(0, rows - 1))
+}
+
+/**
+ * Widen a standing band until `rows` rows are genuinely separated, pulling the FAR edge up (never
+ * the near edge down — feet must stay clear of the bottom strip). Clamped by head clearance, so it
+ * can only take room that is actually there.
+ *
+ * On a roomy screen the band already satisfies this and is returned untouched, which keeps each
+ * habitat's art direction intact — fish mid-water, fliers high — exactly as fitBands intends.
+ */
+export function spreadBand(b: Habitat, vh: number, size: number, rows: number): Habitat {
+  if (rows <= 1) return b
+  const needPct = (size * ROW_SEP * (rows - 1)) / Math.max(1, vh) * 100
+  if (b.waitY1 - b.waitY0 >= needPct) return b
+  const headroomPct = (BANNER_PX + size) / Math.max(1, vh) * 100 + BAND_JITTER
+  return { ...b, waitY0: Math.max(b.waitY1 - needPct, headroomPct) }
+}
+
 // ─── Timing: one cycle carries one stride ────────────────────────────────────────────
 /**
  * A sheet playing `fps/frames` cycles a second, each carrying `STRIDE` body-heights, gives a real
@@ -236,10 +282,31 @@ export function groundSpeed(src: string, h: number): number {
   const cyclesPerSec = sheet ? sheet.fps / sheet.frames : 2
   return Math.max(60, cyclesPerSec * STRIDE * h)      // px per second
 }
-export function travelMs(a: Spot, b: Spot, vw: number, vh: number, h: number, src: string): number {
+/**
+ * A journey: how long it takes, AND how much the walk cycle has to be scaled to match it.
+ *
+ * THE SECOND HALF IS NOT OPTIONAL, and leaving it out is how every chapter ended up skating. The
+ * duration is derived from the creature's own gait — and then CLAMPED, and the clamp is not a rare
+ * edge case: measured across the cast, a journey of 60% of the screen wants 5–10 SECONDS at a
+ * natural walking pace, so every long journey was pinned to TRAVEL_MAX and the body then covered
+ * ground at 2–4× the speed its legs were running at. That is the "one cycle carries one stride"
+ * invariant this whole engine is built on, silently thrown away by a `Math.min`.
+ *
+ * So the clamp now returns its own correction: if the body is forced to move faster than the gait,
+ * the cycle is sped up by exactly that ratio (and slowed, when TRAVEL_MIN stretches a short hop).
+ * Callers must pass `cycleScale` straight through to Critter — the same treatment the march has
+ * always had, now applied to every journey rather than only the showy one.
+ */
+export interface Journey { ms: number; cycleScale: number }
+export function journeyOf(a: Spot, b: Spot, vw: number, vh: number, h: number, src: string): Journey {
   const dist = Math.hypot((b.left - a.left) / 100 * vw, (b.top - a.top) / 100 * vh)
-  return Math.round(Math.min(TRAVEL_MAX, Math.max(TRAVEL_MIN, dist / groundSpeed(src, h) * 1000)))
+  const natural = dist / groundSpeed(src, h) * 1000
+  const ms = Math.round(Math.min(TRAVEL_MAX, Math.max(TRAVEL_MIN, natural)))
+  return { ms, cycleScale: Math.max(0.4, natural / ms) }
 }
+// There is deliberately NO duration-only helper. `travelMs` used to be one, and every caller that
+// reached for it got a clamped duration with no way to know the clamp had happened — which is the
+// entire bug above. Returning the pair is what makes the correct thing the only thing.
 
 // ─── A creature: sprite + its drawn cycle ────────────────────────────────────────────
 /**
