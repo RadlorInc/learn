@@ -13,6 +13,12 @@
  *
  *     python3 scripts/creature-frames.py <clip>.mp4 rabbit --frames 12 --start 0.55
  *
+ * CADENCE WAS RE-TUNED DOWN ~28% ACROSS THE CAST (2026-07-25). Everything read as hurried: an ant
+ * cycled every 0.46s and a butterfly every 0.50s, which is a sprint, not a walk. Because a grounded
+ * creature's ground speed is DERIVED from fps/frames, lowering it slows the legs and the travel
+ * together, so the two stay locked and the feet still never skate. The founder had already flagged
+ * the eagle and the ladybug on the very first parade; this finishes that job for all of them.
+ *
  * A creature with no entry here just renders its static sprite with the procedural gait, exactly
  * as before — this is purely additive.
  */
@@ -40,38 +46,38 @@ export interface Sheet {
  */
 export const SHEETS: Record<string, Sheet> = {
   // ── forest ──
-  '/assets/objects/rabbit_side.png': { url: '/assets/objects/rabbit_walk.png', cellAspect: 0.805, frames: 12, fps: 22 },
+  '/assets/objects/rabbit_side.png': { url: '/assets/objects/rabbit_walk.png', cellAspect: 0.805, frames: 12, fps: 16 },
   // 9fps = a wing-beat every ~1.3s. An eagle glides; at 18 it looked like it was panicking.
-  '/assets/objects/eagle_side.png': { url: '/assets/objects/eagle_walk.png', cellAspect: 1.027, frames: 12, fps: 9 },
-  '/assets/objects/butterfly_side.png': { url: '/assets/objects/butterfly_walk.png', cellAspect: 0.844, frames: 12, fps: 24 },
-  '/assets/objects/firefly_side.png': { url: '/assets/objects/firefly_walk.png', cellAspect: 1.176, frames: 12, fps: 24 },
+  '/assets/objects/eagle_side.png': { url: '/assets/objects/eagle_walk.png', cellAspect: 1.027, frames: 12, fps: 7 },
+  '/assets/objects/butterfly_side.png': { url: '/assets/objects/butterfly_walk.png', cellAspect: 0.844, frames: 12, fps: 17 },
+  '/assets/objects/firefly_side.png': { url: '/assets/objects/firefly_walk.png', cellAspect: 1.176, frames: 12, fps: 17 },
   // ── underwater ──
-  '/assets/objects/fish_side.png': { url: '/assets/objects/fish_walk.png', cellAspect: 1.371, frames: 12, fps: 14 },
-  '/assets/objects/shark_side.png': { url: '/assets/objects/shark_walk.png', cellAspect: 1.746, frames: 12, fps: 12 },
+  '/assets/objects/fish_side.png': { url: '/assets/objects/fish_walk.png', cellAspect: 1.371, frames: 12, fps: 10 },
+  '/assets/objects/shark_side.png': { url: '/assets/objects/shark_walk.png', cellAspect: 1.746, frames: 12, fps: 9 },
   // 14 cells: the turtle clip had no clean paddle cycle, so its sheet is ping-ponged (forward then
   // back) — seamless by construction, and correct for a limb that just oscillates.
-  '/assets/objects/turtle_side.png': { url: '/assets/objects/turtle_walk.png', cellAspect: 1.531, frames: 14, fps: 12 },
-  '/assets/objects/crab_side.png': { url: '/assets/objects/crab_walk.png', cellAspect: 1.461, frames: 12, fps: 22 },
+  '/assets/objects/turtle_side.png': { url: '/assets/objects/turtle_walk.png', cellAspect: 1.531, frames: 14, fps: 9 },
+  '/assets/objects/crab_side.png': { url: '/assets/objects/crab_walk.png', cellAspect: 1.461, frames: 12, fps: 16 },
   // ── garden ──
-  '/assets/objects/squirrel_side.png': { url: '/assets/objects/squirrel_walk.png', cellAspect: 0.996, frames: 12, fps: 20 },
-  '/assets/objects/ant_side.png': { url: '/assets/objects/ant_walk.png', cellAspect: 1.117, frames: 12, fps: 26 },
+  '/assets/objects/squirrel_side.png': { url: '/assets/objects/squirrel_walk.png', cellAspect: 0.996, frames: 12, fps: 14 },
+  '/assets/objects/ant_side.png': { url: '/assets/objects/ant_walk.png', cellAspect: 1.117, frames: 12, fps: 19 },
   // A ladybug ambles, it does not sprint. Lower fps also slows its WALK — for a grounded creature
   // ground speed is derived from fps/frames, so legs and travel stay locked and the feet never skate.
-  '/assets/objects/ladybug_side.png': { url: '/assets/objects/ladybug_walk.png', cellAspect: 1.469, frames: 12, fps: 12 },
+  '/assets/objects/ladybug_side.png': { url: '/assets/objects/ladybug_walk.png', cellAspect: 1.469, frames: 12, fps: 9 },
   // ── Nest Tree (number recognition) ──
   // The mother bird, generated for that chapter rather than borrowed from the parade — she is
   // on screen every single round, so she is the one place bespoke art earns its keep. 14fps =
   // a small songbird's beat; the eagle's 9 would read as gliding, not carrying food home.
-  '/assets/objects/bird_side.png': { url: '/assets/objects/bird_walk.png', cellAspect: 1.094, frames: 12, fps: 14 },
+  '/assets/objects/bird_side.png': { url: '/assets/objects/bird_walk.png', cellAspect: 1.094, frames: 12, fps: 10 },
   // The hungry chick in its nest — the object the child reads and taps, so it is painted and
   // alive rather than a CSS bowl. 22 cells because the clip is PING-PONGED: a chirp oscillates
   // (beak opens, beak shuts) with no clean cycle, so playing it forward-then-back loops
   // seamlessly by construction. 16fps ≈ one bob per 1.4s — eager, not frantic.
-  '/assets/objects/nest_side.png': { url: '/assets/objects/nest_walk.png', cellAspect: 1.113, frames: 22, fps: 16 },
+  '/assets/objects/nest_side.png': { url: '/assets/objects/nest_walk.png', cellAspect: 1.113, frames: 22, fps: 12 },
   // ── Milo himself (Stepping Stones / number order) ──
   // The first drawn cycle for the CHARACTER rather than a creature, so it is not chapter-specific:
   // any later chapter where Milo has to actually go somewhere can key off this same sprite.
   // 12 cells span one 22-frame source cycle (~0.9s), so 14fps plays it at close to natural pace —
   // and since he only walks while hopping, slightly brisk reads as effort rather than a stroll.
-  '/assets/characters/milo_side.png': { url: '/assets/characters/milo_walk.png', cellAspect: 0.586, frames: 12, fps: 14 },
+  '/assets/characters/milo_side.png': { url: '/assets/characters/milo_walk.png', cellAspect: 0.586, frames: 12, fps: 10 },
 }

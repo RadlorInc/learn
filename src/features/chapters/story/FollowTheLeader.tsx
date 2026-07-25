@@ -42,7 +42,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import {
   type Habitat, type Spot, HABITATS, CAST, kindAt, homeOf, aspectOf, shuffle,
   Background, Critter, CRITTER_CSS, huddleGeom, huddleRows, waitSpot, leadX, fitBands,
-  groundSpeed, travelMs, TRAVEL_MIN,
+  groundSpeed, journeyOf, TRAVEL_MIN, type Journey,
 } from './critters'
 
 // Just long enough to swallow a double-tap. It is deliberately NOT tied to Milo's voice: measured
@@ -179,7 +179,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   const joinedRef = useRef<number[]>([])                 // same list, readable synchronously mid-tap
   // value → how long ITS journey takes. Several can be under way at once, so this is a map and
   // not a single slot: the child may tap 2 while 1 is still walking.
-  const [flying, setFlying] = useState<Record<number, number>>({})
+  const [flying, setFlying] = useState<Record<number, Journey>>({})
   const [wiggling, setWiggling] = useState<number | null>(null)
   const [idleHop, setIdleHop] = useState<number | null>(null)
   const [marching, setMarching] = useState(false)
@@ -206,16 +206,18 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
 
   /** Send one little one into the line, then hand back when it has arrived. */
   const sendToLine = useCallback((v: number, onArrive?: () => void) => {
-    // Timed from THIS creature's own journey, so the leg cycle and the ground always agree.
+    // Timed from THIS creature's own journey, so the leg cycle and the ground always agree — which
+    // needs the cycleScale journeyOf returns as well as its duration. The duration alone was a half
+    // fix: the clamp routinely overrode it and the legs then ran at a speed the body was not moving.
     // The place in the line is claimed from the REF, which updates synchronously — two quick taps
     // would otherwise read the same stale state and both walk to the same spot.
     const from = waitSpot(nums.indexOf(v), n, band, lineRight(n, mx), edgePct, rows)
     const to = lineSpot(joinedRef.current.length, band, mx)
-    const ms = travelMs(from, to, vw, vh, babySize, kind.src)
+    const j = journeyOf(from, to, vw, vh, babySize, kind.src)
     joinedRef.current = [...joinedRef.current, v]
     setJoined(joinedRef.current)
-    setFlying(f => ({ ...f, [v]: ms }))
-    after(ms, () => {
+    setFlying(f => ({ ...f, [v]: j }))
+    after(j.ms, () => {
       setFlying(f => { const next = { ...f }; delete next[v]; return next })
       onArrive?.()
     })
@@ -307,8 +309,8 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
                 the one behind it. The number is the whole question. */}
             <Critter src={kind.src} facesLeft={kind.facesLeft} at={at} size={babySize} move={world.move}
               z={inLine ? 24 : 30 + (i % 2) * 2}
-              durMs={marching ? MARCH_MS : (flying[v] ?? TRAVEL_MIN)}
-              cycleScale={marching ? marchCycle : 1}
+              durMs={marching ? MARCH_MS : (flying[v]?.ms ?? TRAVEL_MIN)}
+              cycleScale={marching ? marchCycle : (flying[v]?.cycleScale ?? 1)}
               moving={isTravelling || (marching && inLine)} facingLeft={false}
               breathe={!inLine && !isTravelling} hop={idleHop === v} wiggle={wiggling === v}
               dim={inLine && !marching}>

@@ -40,7 +40,7 @@ import {
   type Habitat, type Spot, HABITATS, CAST, kindAt, homeOf, aspectOf,
   Background, Critter, CRITTER_CSS, huddleGeom, huddleRows, waitSpot, clusterSpot, leadX, fitBands,
   GATHER_LEFT, GATHER_COL, HUDDLE_RIGHT, LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, STRIP_PX,
-  groundSpeed, travelMs, TRAVEL_MIN,
+  groundSpeed, journeyOf, TRAVEL_MIN, type Journey,
 } from './critters'
 
 // Just long enough to swallow a double-tap. It is deliberately NOT tied to Milo's voice: measured
@@ -163,7 +163,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   // compact without anyone ever teleporting.
   const [slots, setSlots] = useState<Record<number, number>>({})
   const slotsRef = useRef<Record<number, number>>({})
-  const [travelling, setTravelling] = useState<Record<number, number>>({})   // index → its own duration
+  const [travelling, setTravelling] = useState<Record<number, Journey>>({})   // index → its own journey
   const [returning, setReturning] = useState<Record<number, boolean>>({})
   const [idleHop, setIdleHop] = useState<number | null>(null)
   const [marching, setMarching] = useState(false)
@@ -207,11 +207,11 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
     // the same stale length and both walk to the same place.
     const used = new Set(Object.values(slotsRef.current))
     let slot = 0; while (used.has(slot)) slot++
-    const ms = travelMs(spotOf(i, undefined), gatherSpot(slot, band, mx), vw, vh, babySize, kind.src)
+    const j = journeyOf(spotOf(i, undefined), gatherSpot(slot, band, mx), vw, vh, babySize, kind.src)
     slotsRef.current = { ...slotsRef.current, [i]: slot }
     setSlots(slotsRef.current)
-    setTravelling(t => ({ ...t, [i]: ms }))
-    after(ms, () => setTravelling(t => { const next = { ...t }; delete next[i]; return next }))
+    setTravelling(t => ({ ...t, [i]: j }))
+    after(j.ms, () => setTravelling(t => { const next = { ...t }; delete next[i]; return next }))
   }, [after, spotOf, band, mx, vw, vh, babySize, kind.src])
 
   /** Send one back to the others. The return is a journey too — and it faces the other way, which
@@ -219,13 +219,13 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   const sendBack = useCallback((i: number) => {
     const slot = slotsRef.current[i]
     if (slot === undefined) return
-    const ms = travelMs(gatherSpot(slot, band, mx), spotOf(i, undefined), vw, vh, babySize, kind.src)
+    const j = journeyOf(gatherSpot(slot, band, mx), spotOf(i, undefined), vw, vh, babySize, kind.src)
     const next = { ...slotsRef.current }; delete next[i]
     slotsRef.current = next
     setSlots(next)
-    setTravelling(t => ({ ...t, [i]: ms }))
+    setTravelling(t => ({ ...t, [i]: j }))
     setReturning(r => ({ ...r, [i]: true }))
-    after(ms, () => {
+    after(j.ms, () => {
       setTravelling(t => { const n2 = { ...t }; delete n2[i]; return n2 })
       setReturning(r => { const n2 = { ...r }; delete n2[i]; return n2 })
     })
@@ -345,8 +345,8 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
                 waiting huddle nearest — with its FRONT row above its back row. */}
             <Critter src={kind.src} facesLeft={kind.facesLeft} at={at} size={babySize} move={world.move}
               z={withMilo ? 24 : 30 + (i % 2) * 2}
-              durMs={marching ? MARCH_MS : (travelling[i] ?? TRAVEL_MIN)}
-              cycleScale={marching ? cycleFor(kind.src, babySize * 0.8) : 1}
+              durMs={marching ? MARCH_MS : (travelling[i]?.ms ?? TRAVEL_MIN)}
+              cycleScale={marching ? cycleFor(kind.src, babySize * 0.8) : (travelling[i]?.cycleScale ?? 1)}
               moving={isTravelling || (marching && withMilo)}
               facingLeft={!!returning[i]}
               breathe={!withMilo && !isTravelling} hop={idleHop === i}
