@@ -50,8 +50,131 @@ intro (one card, one button)  →  demo (Milo/an adult does it)  →  guided (ch
 - Landscape-first. Every chapter mounts [`RotateGate`](../src/features/chapters/story/RotateGate.tsx);
   the early return must sit **below every hook** or turning the phone changes the hook count and
   React tears the chapter into the error boundary.
+- **MASTERY EARLY-EXIT MEANS THE LAST ROUNDS MAY NEVER BE ASKED.** Six right in a row at the top
+  tier ends the chapter, so anything sitting late in a fixed question order is asked only of a child
+  who is struggling. If a chapter teaches a closed set — six colours, four shapes — **every member of
+  that set must appear before mastery can fire**, or the strong child finishes never having been
+  asked the one they were shakiest on, skipped as a reward for doing well. The colouring chapter had
+  purple living on a single late target and hit exactly this.
+- **The memoized `Beat` must not depend on anything that changes DURING a round.** `SkillBeat`
+  memoizes the round on `[roundIdx, beat]`, so a beat rebuilt when the child picks up a paint pot
+  regenerates the question under them and reshuffles the answers mid-answer. Keep per-round UI state
+  out of the beat's deps and let the play surface measure or subscribe to it itself.
 
 ---
+
+## 0a. Every skill needs its OWN verb
+
+The three "exact form" chapters — shapes, colours, patterns — spent a year as one surface with
+different nouns on it: *Milo names a thing, tap it among three.* That is a quiz with the skill
+painted on the outside, and it is the fault a founder will name as "it doesn't feel like anything".
+
+**Ask what a three-year-old already DOES with this idea, and make that the answering gesture:**
+
+| skill | what it really is | the verb | so the question comes from… |
+|---|---|---|---|
+| shapes | a form defined by its **outline** | **FIT** — a shape sorter | a hole in the picture (visual) |
+| colours | a **property** you apply | **COLOUR IT IN** | a spoken name (auditory) |
+| patterns | a **rhythm** over a sequence | **CONTINUE** | the sequence itself (temporal) |
+
+Two consequences worth having in advance:
+
+- **A different verb means a different question channel**, and that decides whether the chapter works
+  with the sound off. Shape House states its question as a picture, so it does. The colours chapter
+  cannot — naming colours IS the skill, and every silent fallback hands over the answer. Know which
+  kind you are building before you rely on speech that Chrome often does not have.
+- **Implement the real activity, not a gesture that mimes it.** A colouring game is not "recolour
+  one of five objects per round" — it is one picture, cut into far more areas than there are
+  questions, filled by tapping. Getting this wrong twice cost a rebuild each time. The test: could a
+  child do this for ten minutes with nobody asking them anything? If not, it is a quiz wearing the
+  activity's clothes.
+- **The lesson rides ON TOP of the activity and never replaces it.** In the colouring chapter every
+  area Milo has NOT asked for is still fillable, in any colour, ungraded. Locking those to protect
+  the scoring would turn it straight back into a quiz.
+
+## 0b. Ask only the skill, and only ask what is true
+
+Two founder corrections on the colouring chapter, both of which generalise past it.
+
+**SHOW WHICH, TEST ONLY THE SKILL.** A question of the form "colour the roof red" is really two
+questions — *which shape is the roof* and *which paint is red* — and only the second one is what the
+chapter measures. A child who knows red perfectly well but cannot pick the roof out of a line drawing
+is scored as not knowing red. So the asked-for thing is **shown** — it glows — and the only decision
+left is the skill itself. Two consequences follow, and both are part of the rule:
+- **The pointer must not name the answer.** The glow is a neutral grey, the one mark on the page that
+  is not one of the six paints. A highlight tinted the target colour would be the answer, handed over.
+- **Failing the shown half is not a wrong answer.** Tapping the wrong shape is a redirect back to the
+  glow; only the wrong *paint* is scored. Anything else scores motor precision and object vocabulary
+  under a colour-recognition heading.
+
+Related: where the skill is a small on-screen area, **a near miss on a shown target counts**. The
+smallest area on the colouring page renders 32×28 CSS px at 640×320, under the 44px tap floor, and
+this band is three-year-olds; a tap just outside the shape they were plainly aiming at snaps to it.
+It can never turn a wrong answer right, only a wrong finger.
+
+**AND A TAP THAT DOES NOTHING AT ALL IS THE WORST OUTCOME THERE IS.** Worse than a wrong answer: a
+wrong answer at least tells the child the game is listening. The colouring chapter shipped a version
+where tapping the tulip did nothing — the ink is a wall to the flood fill, thickened another 2px to
+close the artwork's gaps, and the outline of a small shape is most of it. Measured over a realistic
+aim spread, **40% of taps aimed at a tulip landed on ink and were silently discarded**, and there is
+ink 7px from its centre. Two rules out of that, and the second is the one that actually bit:
+- **Silence is never an acceptable response to a tap.** Fill something, say something, or nudge.
+- **A bail-out must not sit in front of the rescue written to handle it.** The near-miss rescue was
+  already there and correct; it ran *after* `if (!region) return`, so the exact case it existed for
+  never reached it. Check the order of the guards, not just their contents.
+
+**A cue is only as strong as its WORST case, not its best.** The same grey highlight at 10–44%
+opacity read clearly on the sky — a quarter of the screen — and was invisible on a 76px tulip sitting
+next to an identical tulip that was not the answer. Tune a highlight on the smallest, most ambiguous
+thing it has to mark, and check the FLOOR of the pulse as well as the peak; a cue that vanishes for
+half of every second is a cue a child will miss at the moment they look.
+
+**Two things with the same name need the words to admit it.** With two tulips on the page, tapping
+the wrong one answered *"That's the tulip!"* — while the prompt said *"colour the tulip"*. Where a
+redirect can name the thing the child thinks they just tapped, say **"the other one"**.
+
+**A free-play surface still owes the child a way back to the question.** Everything unasked stays
+colourable, which is the point — but with no named area under the finger there is no feedback either,
+so a child can paint the whole page and never once meet the question, and it looks from outside like
+the game only refuses the one thing it asked for. Count the off-question actions and have the
+character ask again after a few. Repeat the QUESTION, never the answer.
+
+**And this is a TESTING lesson first.** Every check that passed had tapped the target's stored probe
+point — its dead centre, the single easiest tap on the page — so the mechanic was only ever verified
+where it could not fail. **Exercise an interaction at the EDGES of its target, and on the boundary
+itself.** Same family as reading a band instead of the spots the layout really returns. The founder
+found this in one try by using their finger.
+
+**TEACH WHERE THE WORLD BACKS THE ANSWER UP; TEST WHERE IT CANNOT HELP.** The colouring chapter runs
+the garden first and the toy room second, and the split is what makes the score mean anything. A
+garden is made of things with ONE colour in the world — sun yellow, sky blue, grass green — so
+*"colour the sun yellow"* is answerable by a child who knows suns and has never learned the word
+*yellow*. That is exactly what you want while TEACHING: the object anchors the word, which is how a
+three-year-old acquires one. It is exactly what you must not have while testing, because the picture
+is quietly answering for them. A toy has no default colour, so in the toy room nothing on screen can
+help and the spoken word is the only thing that can — a child who gets it right knows the word.
+Generalise: **if the scene can answer the question, you are teaching, not measuring.** Ask of any
+scored round: could a child who does not have this skill still get it right from world knowledge?
+
+The two halves must also be visibly different, or the child cannot tell that the help has stopped.
+In the lesson the correct paint pot bounces and the tray keeps a fixed order; in the test the cue is
+gone and the pots shuffle. A handover screen says so out loud, because the picture, the tray and the
+hint all change at once and a child who is not told has simply had the game taken away.
+
+**PICK THE SUBJECT THAT CAN CARRY THE WHOLE SKILL.** The garden page can only spend six paints by
+hunting for the two objects on it that are not one fixed colour; the toy room spends them without
+strain, because a toy is whatever colour it was made — a green car, a purple teddy and an orange rug
+are all simply true. When a chapter teaches a PROPERTY, choose a world whose objects vary in that
+property. Half the difficulty of writing honest questions is chosen at the moment you pick the scene.
+
+**NEVER ASK FOR A PROPERTY THE THING CANNOT HONESTLY HAVE.** "Colour the cloud purple" teaches a
+three-year-old that the colour words do not mean anything — the whole point of the chapter is that
+red *means* red, and a question that contradicts the world undoes it. The paint box holds six colours
+and none of them is white, grey or brown, so the clouds and the tree trunk are simply **not
+questions**; they stay free to colour, they are just never asked for. When a page runs short of
+honest targets, the fix is to find the objects that genuinely can be any colour — flowers, painted
+surfaces — not to relax the standard. Generalised: **an attribute question must be true of its
+object.** The same test kills "which is taller, the pond or the song".
 
 ## 1. Animation
 
@@ -211,6 +334,16 @@ the world**:
   rings, and a faded flipped reflection. In the air: nothing, because nothing touches.
 - **Soft, cool, close shadows** (`rgba(30,42,60,.26)`), never hard black. A harsh drop-shadow is the
   loudest "pasted on" tell there is.
+- **NEVER DRAW AN EMPTY OUTLINE.** A hairline stroke with no fill is a wireframe, and a wireframe is
+  the one thing a painted scene contains none of, so it reads as a diagram laid over the picture no
+  matter how faint you make it. Fading it down does not help — it just becomes a wireframe nobody can
+  see. **A hole in the world is a soft SHADOW with light catching its rim**: a translucent warm dark
+  fill and a near-white 4px stroke, which painted art is full of. The shapes chapter drew its empty
+  sockets as 20%-opacity outlines and the whole unbuilt house read as a blueprint pasted on the lawn.
+
+Related: **something with no job in the current beat should not be on screen.** That same ghost house
+stood behind the six shapes during "meet the shapes", where it meant nothing yet and was simply a
+second thing to look at. It appears with the demo, when it starts to matter.
 - `blend` in [art.tsx](../src/features/chapters/story/art.tsx) means soft natural shadow and **no
   white halo** — use it for anything sitting in a painted scene.
 
@@ -230,6 +363,20 @@ the world**:
 
 ### Choosing a backdrop
 
+- **YOU CANNOT PUT SOMETHING BEHIND SCENERY THAT IS PAINTED INTO THE BACKDROP.** The garden's picket
+  fence is part of the image, so no z-index will ever place a house behind it — in a painted scene
+  depth is VERTICAL POSITION, and the only way back is further up the frame. Standing at 8% from the
+  bottom put the shapes chapter's house in front of the fence, in the same plane as the near flowers.
+- **Moving something back means shrinking it too**, or you get a giant house halfway down the lawn.
+  Depth cues have to agree: further back is higher AND smaller.
+- **The ground line is PER BACKDROP, never a shared constant.** The garden's fence top lands 16–20%
+  up depending on how `cover` crops it; the beach behind the same chapter's boat is open water with
+  nothing in front at all. Same lesson as chapter 4's leader needing its own ground line per habitat.
+- **Raising a thing's feet raises its head by the same amount.** Standing the house back off the
+  fence pushed its roof to 5px under the prompt pill at 640×320, horizontally overlapping it — one
+  size from the collision, and invisible at the size it was designed on. Once the feet are pinned by
+  a ground line, HEIGHT is the only lever left, so cap it against the band the prompt really occupies.
+  (Swept afterwards across 8 sizes × both builds: fence clearance 32–111px, prompt clearance 13–208px.)
 - **A grounded scene needs a backdrop whose painted ground is most of the frame.** Check the horizon
   line first. The forest scenes paint ground only in the bottom ~25%, so anything standing at 62%
   is in the treetops — that is literally the "rabbits look like they are flying" bug.
@@ -276,6 +423,36 @@ Gotchas that have each cost real credits:
 - **Never `--pingpong` a walk** — reversed legs moonwalk. Ping-pong is only for motion that
   oscillates with no clean cycle (a chirping beak, paddling flippers).
 - Judge a sheet on its `motion` / `loopgap` numbers and at real display size, not on the strip.
+
+**Line-art pipeline** (the colouring chapter, and anything else that must be filled with colour):
+
+```
+generate_image  "children's colouring book … THICK uniform outlines, EVERY shape fully closed,
+                 flat white fill, no shading/hatching/dots"   ← on flat MAGENTA for a cutout,
+                                                                on WHITE for a full page
+      ↓
+python3 <chroma key>   min(R,B) − G, soft ramp + despill      ← only when a cutout is needed
+      ↓
+verify it FLOODS  (threshold → dilate 2px → connected components; see the scratch `regions.py`)
+```
+
+- **Do not use `remove_background` on line art.** It is an AI matte, and these subjects are pure
+  white inside a black outline — a matte that decides "white is background" eats the interior, which
+  is exactly the region the paint has to fill. A flat magenta backdrop keyed by hand is more
+  reliable AND free.
+- **A full PAGE needs no cutout at all**: `mix-blend-mode: multiply` drops its white straight out
+  onto the paper.
+- **Colouring is a two-layer composite, and it is exact**: a solid fill shaped by the drawing's
+  silhouette, with the drawing multiplied on top. White fill × colour is the colour; black ink ×
+  colour is still black ink, so the lines never muddy at any hue. This is also why painted sprites
+  fought it — greyscaling and brightening them to fake line art was three filters of guesswork that
+  line art makes unnecessary.
+- **PROVE the artwork floods before wiring it.** One hairline gap where two strokes nearly meet lets
+  the fill escape and swallow the page. Dilate the ink ~2px to close near-misses, then count the
+  regions: a good page returns ~100 with the largest around 20% (the sky). One giant region means
+  the line work is open and the art is unusable — regenerate rather than patch.
+- **An area's colour must differ from whatever it sits inside.** A blue cloud on a blue sky gave a
+  correct tap no feedback at all.
 - Greyscale `pat_*` sprites are greyscale **by design** — code-tint them, never bake colour in.
 
 ---
@@ -343,7 +520,25 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   `Module not found` from the stale buffer. Open a fresh tab before believing it. This repo has lost
   three sessions to that.
 - **`elementFromPoint` cannot see `pointerEvents:none` elements** — it looks straight through
-  sprites. Overlap and draw-order checks have to be visual or geometric.
+  sprites. Overlap and draw-order checks have to be visual or geometric. Where a tap is the mechanic,
+  it is also the only honest way to prove a control is reachable: use it to check that the thing
+  under the finger is the thing you expect.
+- **A full-width overlay lying across the play surface must be `pointerEvents:none`.** The prompt
+  banner spans the screen and is mostly transparent, and left tappable it carves a dead stripe
+  through the picture — the colouring chapter's sky could not be tapped where the banner crossed it.
+  Give the class the passthrough and its real buttons their events back
+  (`.x{pointer-events:none} .x button{pointer-events:auto}`).
+- **Never bump a React `key` to restart an animation.** It remounts the subtree, and anything
+  imperative in there — a canvas, a scroll position, a media element — is destroyed with it. In the
+  colouring chapter one wrong answer wiped every colour the child had put down. Use
+  `el.animate(...)`, which retriggers without touching the DOM.
+- **A re-teach runs AFTER the round was submitted**, and a round is submitted when the child finally
+  gets it right — so anything the re-teach applies has ALREADY been applied. Bead Shop threaded a
+  second copy of the same bead and broke its own repeating pattern; caught by reading the strand back
+  as `RBRBBB|RBBBRBR`. A demo must place; a re-teach must only demonstrate.
+- **Two taps in the same tick are a TEST artefact, not a user.** React commits state between events,
+  so a `ref` mirrored during render is still stale if the script picks a colour and taps the page in
+  one synchronous statement. Cost half an hour of chasing a fill that was never broken.
 - Sweep the size matrix with a script, not by hand: widths × heights × question counts × every
   creature. Chapter 2's layout is 330 combinations and the script is what made the last pass clean.
 - **The sweep must call the SAME layout function the scene renders from.** Chapter 4's sweep

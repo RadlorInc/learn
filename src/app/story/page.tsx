@@ -90,10 +90,10 @@ export default function StoryPage() {
   if (ch === 'nest' || ch === 'race' || ch === 'doors') return <NestTree world={orderWorld} />
   // ?ch=home is the current key; ?ch=grocery is the old Little Grocery link, kept working.
   if (ch === 'home' || ch === 'grocery') return <HomeTime world={orderWorld} />
-  // ?world=town|fair|beach jumps into a shape world.
-  if (ch === 'shapes') return <ShapeTown world={orderWorld} />
-  // ?world=town|reef|candy jumps into a color world.
-  if (ch === 'rainbow') return <RainbowTown world={orderWorld} />
+  // One build site — the BUILD changes (house, then boat), so there is no world to pick.
+  if (ch === 'shapes') return <ShapeTown />
+  // A colouring book — one book, the PAGE turns, so there is no world to pick.
+  if (ch === 'rainbow') return <RainbowTown />
   // ?world=beads|party|train jumps into a pattern world.
   if (ch === 'beads') return <BeadShop world={orderWorld} />
   // ?world=orchard|reef|space jumps into an addition world.

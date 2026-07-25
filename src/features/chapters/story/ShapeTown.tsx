@@ -1,115 +1,172 @@
 'use client'
 /**
- * Chapter 6 — SHAPE-recognition (skill `shapes`). Milo names a shape ("Can you find the
- * triangle?") and the child taps the matching one. The child first PICKS one of THREE
- * worlds; within the chosen world three object-scenes rotate across the 10 adaptive rounds
- * (one continuous SkillBeat — harder on a streak, easier when struggling, re-teach after 3
- * wrong):
- *   🏙️ Shape Town — balloons · shop signs · flowers
- *   🎪 Fun Fair    — kites · lollipops · prize rosettes
- *   🏖️ Beach Day   — sandcastle flags · sailboats · picnic plates
+ * Chapter 6 — SHAPE recognition (skill `shapes`), as a SHAPE SORTER.
  *
- * The 6 shapes are pure SVG (ShapeSVG from ShapesLesson) — they MUST stay code-drawn so the
- * geometry is exact (a painted "triangle" could round off and break recognition). Each scene
- * only DRESSES a shape as a town object via a small code-drawn "mount" hanging below it (a
- * balloon string / signpost / kite tail / lollipop stick / ribbon / flagpole / boat hull /
- * plate), over a backdrop with an auto-upgrade <img> hook. Difficulty grows the field (3 → 4
- * choices) and, at the top tier, guarantees the square/rectangle look-alike is present so it's
- * recognition, not elimination. Mirrors RainbowTown's world-picker pattern; wrapped by
- * game/ShapeHouseChapter.tsx.
+ * WHAT CHANGED AND WHY. This chapter used to be "Milo names a shape, tap it among three" — the same
+ * surface as the colours chapter and the patterns chapter with different nouns on it. Three skills,
+ * one verb. A shape is not a name, it is an OUTLINE, and the way a three-year-old proves they know
+ * one is to FIT it: the shape sorter is the canonical activity for this age and this skill.
+ *
+ * So the question is now a HOLE in the picture. Milo is building; one socket sits empty and pulsing;
+ * the child taps the piece that fits and it FLIES INTO PLACE. Three consequences, all of them the
+ * point:
+ *   • the question is a picture, so this chapter is answerable WITH THE SOUND OFF — which none of the
+ *     three "exact form" chapters were, and Chrome frequently ships no usable TTS at all
+ *   • the journey IS the mechanic. The thing that travels is the answer going where it belongs, not
+ *     an escort creature commuting to it and back while the child waits
+ *   • the arc needs no widget. The build is the scene, so it grows in place instead of ticking over
+ *     in a corner card
+ * The keeper and the bottom-right house card are both gone; nothing here replaces them.
+ *
+ * WHAT MAY NOT CHANGE. The pieces and the sockets are the SAME `ShapeSVG` paths, drawn solid and
+ * `outline` — so a triangle is matched against a real triangle by construction, and no scaling here
+ * is anything but uniform. A squashed roof is not the shape the child tapped.
+ *
+ * NO WORLD PICKER (founder call, matching chapter 2). One continuous site, and the BUILD changes
+ * instead: Milo builds a house in the garden, then walks to the beach and builds a boat. That is
+ * what makes round 10 look nothing like round 1.
+ *
+ * Landscape-first, wrapped by the registry / `?ch=shapes`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { speak, speakSteps, useIsSpeaking, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
-import WorldSelect from './WorldSelect'
 import { ShapeSVG, SHAPES, SHAPE_ORDER, type ShapeName } from '../lessons/ShapesLesson'
 import { useViewport } from '@/shared/hooks/useViewport'
+import { useNeedsRotate, RotateGate } from './RotateGate'
 
-// After a declaring tap, ignore further taps briefly — `useIsSpeaking()` only flips true
-// ~100-150ms after speak(), so a fast second tap would slip through. Same lesson as
-// NumberDoors/Kitchen/RiverCrossing.
-const SPEAK_LOCK_MS = 600
+/**
+ * The ONLY thing a tap waits for. Deliberately not `useIsSpeaking()`: a wrong tap speaks a line,
+ * and `speechSynthesis.speaking` stays true for over three seconds after one — measured live in
+ * chapter 4, where gating on it left the screen dead for half a minute in a round wanting several
+ * taps. `speak()` already cancels the utterance in flight, so a quick retry simply speaks the
+ * newest line, which is the one worth hearing. This lock exists only so one double-tap is not
+ * counted twice.
+ */
+const TAP_LOCK_MS = 260
+// A viewport shorter than this is a landscape phone (812×375, 667×375): the prompt banner alone
+// owns the top third, so everything below is sized against what is left.
+const SHORT_H = 470
+/**
+ * The top strip the prompt pill owns, measured rather than guessed: the pill sits at `top: 50` and
+ * its bottom edge lands at 99px, so 112 is that plus real clearance. Nothing that stands in the
+ * scene may reach into it.
+ */
+const PROMPT_BAND = 112
+
 const shuffle = <T,>(a: T[]): T[] => {
   const r = a.slice()
   for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] }
   return r
 }
 
-// Live viewport size — so the stage can RESERVE room for the top banner + bottom Milo and
-// never overlap on a short/landscape phone. Copied verbatim from world1.tsx.
-// A viewport shorter than this is a landscape phone (812×375, 667×375): shrink objects + lift
-// the object band so the shape + its mount clears the top banner AND Milo below.
-const SHORT_H = 470
-
-// The classic look-alike pair — seeded as a distractor at the hardest tier so the child
-// must recognize the form, not eliminate.
+// The classic look-alike pair — seeded as a distractor at the hardest tier so the child must
+// recognize the form rather than eliminate the odd one out.
 const TWIN: Partial<Record<ShapeName, ShapeName>> = { square: 'rectangle', rectangle: 'square' }
 
-// ─── Scenes ────────────────────────────────────────────────────────────────────────
-// A "scene" within a world dresses the shapes as a particular town object via its `deco`
-// mount, over its own backdrop, with its own ground tuning. `board` frames the shape on a
-// little paper board (a hanging shop sign).
-type DecoKind = 'balloon' | 'sign' | 'stem' | 'kite' | 'stick' | 'ribbon' | 'flag' | 'boat' | 'plate'
-type SceneId =
-  | 'park' | 'street' | 'garden'           // Shape Town
-  | 'kites' | 'sweets' | 'prizes'          // Fun Fair
-  | 'sandcastle' | 'boats' | 'picnic'      // Beach Day
+// ─── The builds ──────────────────────────────────────────────────────────────────────
+/**
+ * A build is a picture assembled out of the six exact shapes. Coordinates are in units of 1/100 of
+ * the build's WIDTH; the box is `aspect` of that tall. Each part's `size` is the ShapeSVG size in
+ * the same units, and every number below was derived from where that path's own bbox sits inside
+ * its 100×100 viewBox — which is why nothing here needs a non-uniform scale to line up.
+ *
+ * `parts` is also the BUILD ORDER, and the build order is the question order: walls before roof,
+ * hull before sail. It is what a child watching someone build would expect to happen next.
+ */
+interface Part { name: ShapeName; left: number; top: number; size: number; rotate?: number; label: string }
+/**
+ * `ground` and `depth` are what stand a build IN its scene rather than on top of it, and they have to
+ * be PER BUILD because each backdrop's ground is in a different place — the same lesson chapter 4
+ * learned when Milo, dropped on the flier band, ended up hovering in the treetops.
+ *
+ * `ground` is how far up from the bottom the build's feet rest, as a percent. The garden paints a
+ * picket fence across its foreground whose top edge lands 16–20% up (it moves with the `cover` crop),
+ * so a house standing at 8% was planted in FRONT of the fence, in the same plane as the near flowers
+ * — the fence is in the backdrop image, so no amount of z-index puts it behind; the only way back is
+ * further UP the frame. The beach is open water with nothing in front, so its boat stays low.
+ *
+ * `depth` then does what distance does: further back is SMALLER. Moving the house up without
+ * shrinking it would just make a giant house halfway down the lawn.
+ */
+interface BuildDef { id: string; aspect: number; ground: number; depth: number; bg: string; grad: string; opening: string; parts: Part[] }
 
-interface SceneDef {
-  intro: string                                  // spoken when Milo "walks" to this spot
-  grad: string                                   // code-drawn backdrop (always shows)
-  img: string                                    // optional painted bg (fades in if it exists)
-  deco: DecoKind
-  board?: boolean
-  ground: { baseTop: number; rise: number; groundLine: number }
-}
-const SCENES: Record<SceneId, SceneDef> = {
-  park:       { intro: 'Look at the balloons in the park!',     deco: 'balloon', grad: 'linear-gradient(#bfe7ff 0%, #d8f1e6 55%, #b6e29a 100%)', img: '/assets/backgrounds/town_park.jpeg',   ground: { baseTop: 48, rise: 10, groundLine: 84 } },
-  street:     { intro: 'Look at the shop signs on the street!',  deco: 'sign', board: true, grad: 'linear-gradient(#ffe7c9 0%, #fff1df 48%, #ecd8bd 100%)', img: '/assets/backgrounds/town_street.jpeg', ground: { baseTop: 52, rise: 8, groundLine: 86 } },
-  garden:     { intro: 'Look at the flowers in the garden!',     deco: 'stem', grad: 'linear-gradient(#cdeeff 0%, #e7f6d8 52%, #aedd86 100%)', img: '/assets/backgrounds/town_garden.jpeg', ground: { baseTop: 50, rise: 9, groundLine: 84 } },
-  kites:      { intro: 'Look at the kites in the sky!',          deco: 'kite', grad: 'linear-gradient(#afdcff 0%, #d4ecff 55%, #bfe6c2 100%)', img: '/assets/backgrounds/fair_sky.png',     ground: { baseTop: 44, rise: 11, groundLine: 86 } },
-  sweets:     { intro: 'Look at the lollipops at the stand!',    deco: 'stick', grad: 'linear-gradient(#ffe2f1 0%, #ffeef6 52%, #ffd9c2 100%)', img: '/assets/backgrounds/fair_sweets.png',  ground: { baseTop: 52, rise: 8, groundLine: 86 } },
-  prizes:     { intro: 'Look at the prize ribbons at the fair!', deco: 'ribbon', grad: 'linear-gradient(#ffe8cf 0%, #fff2e0 50%, #ffe0c8 100%)', img: '/assets/backgrounds/fair_prizes.png',  ground: { baseTop: 50, rise: 9, groundLine: 85 } },
-  sandcastle: { intro: 'Look at the flags on the sandcastles!',  deco: 'flag', grad: 'linear-gradient(#bfe9ff 0%, #d8f1ff 50%, #f0dcab 100%)', img: '/assets/backgrounds/beach_sand.png',   ground: { baseTop: 52, rise: 8, groundLine: 86 } },
-  boats:      { intro: 'Look at the sailboats on the water!',    deco: 'boat', grad: 'linear-gradient(#bfe9ff 0%, #a9defa 52%, #5fb6e6 100%)', img: '/assets/backgrounds/beach_sea.png',    ground: { baseTop: 50, rise: 9, groundLine: 84 } },
-  picnic:     { intro: 'Look at the treats on the picnic rug!',  deco: 'plate', grad: 'linear-gradient(#cdeeff 0%, #e7f6d8 52%, #aedd86 100%)', img: '/assets/backgrounds/beach_picnic.png', ground: { baseTop: 54, rise: 7, groundLine: 84 } },
-}
-
-// ─── Worlds ──────────────────────────────────────────────────────────────────────────
-interface ShapeWorld {
-  id: string; label: string; emoji: string
-  scenes: SceneId[]
-  milo: { srcs: string[]; emoji: string; accessory: string }
-  intro: string
-}
-const WORLDS: ShapeWorld[] = [
-  { id: 'town', label: 'Shape Town', emoji: '🏙️', scenes: ['park', 'street', 'garden'],
-    milo: { srcs: ['/assets/characters/milo_explorer.png', '/assets/characters/milo_idle.png'], emoji: '🐴', accessory: '🗺️' },
-    intro: 'Milo is exploring Shape Town! Everything is made of shapes. Listen for the shape, then tap it. First, let’s meet the shapes!' },
-  { id: 'fair', label: 'Fun Fair', emoji: '🎪', scenes: ['kites', 'sweets', 'prizes'],
-    milo: { srcs: ['/assets/characters/milo_explorer.png', '/assets/characters/milo_idle.png'], emoji: '🐴', accessory: '🎪' },
-    intro: 'Milo is at the Fun Fair! Everything here is made of shapes. Listen for the shape, then tap it. First, let’s meet the shapes!' },
-  { id: 'beach', label: 'Beach Day', emoji: '🏖️', scenes: ['sandcastle', 'boats', 'picnic'],
-    milo: { srcs: ['/assets/characters/milo_explorer.png', '/assets/characters/milo_idle.png'], emoji: '🐴', accessory: '🏖️' },
-    intro: 'Milo is at the beach! Everything here is made of shapes. Listen for the shape, then tap it. First, let’s meet the shapes!' },
+const BUILDS: BuildDef[] = [
+  {
+    id: 'house', aspect: 1.35, ground: 26, depth: 0.78,
+    bg: '/assets/backgrounds/town_garden.jpeg',
+    grad: 'linear-gradient(#cdeeff 0%, #e7f6d8 52%, #aedd86 100%)',
+    opening: 'Milo is building a house!',
+    parts: [
+      { name: 'square',    left: 15,   top: 63,   size: 70,   label: 'walls' },
+      { name: 'triangle',  left: 14.4, top: 2.4,  size: 71.1, label: 'roof' },
+      // The same rectangle bar, stood upright. The rotation lives on the positioned box, never on
+      // an element that also carries a keyframe — stack the two and the animation silently wins and
+      // lays the door flat (the transform-override trap this codebase has paid for three times).
+      { name: 'rectangle', left: 34,   top: 95.5, size: 32, rotate: 90, label: 'door' },
+      { name: 'circle',    left: 24.8, top: 78.8, size: 22.5, label: 'window' },
+      { name: 'star',      left: 40.3, top: 33.3, size: 19.4, label: 'star on the roof' },
+      { name: 'heart',     left: 59.1, top: 83.1, size: 17.8, label: 'heart on the wall' },
+    ],
+  },
+  {
+    id: 'boat', aspect: 0.9, ground: 10, depth: 1,
+    bg: '/assets/backgrounds/beach_sea.png',
+    grad: 'linear-gradient(#bfe9ff 0%, #a9defa 52%, #5fb6e6 100%)',
+    opening: 'Now Milo is building a boat!',
+    parts: [
+      { name: 'rectangle', left: 3,  top: 18, size: 94, label: 'hull' },
+      { name: 'triangle',  left: 20, top: -2, size: 56, label: 'sail' },
+      { name: 'circle',    left: 26, top: 55, size: 22, label: 'porthole' },
+      { name: 'star',      left: 38, top: 12, size: 20, label: 'flag' },
+    ],
+  },
 ]
-const worldById = (id: string) => WORLDS.find(w => w.id === id)
-const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: SCENES[w.scenes[0]].img }))
 
-interface ShapeRound {
-  scene: SceneId
-  options: ShapeName[]   // shapes shown, in display order (always includes the target)
-  answerIdx: number      // index of the target shape
+/**
+ * Every part of every build, flattened — the chapter's whole question sequence in one list, and the
+ * reason the build can never drift out of step with the round number. Step 0 is Milo's worked
+ * example, step 1 is the guided one, and the eight scored rounds are steps 2–9, so the two builds
+ * finish exactly as the practice does.
+ */
+interface Step { bi: number; pi: number }
+const SEQUENCE: Step[] = BUILDS.flatMap((b, bi) => b.parts.map((_, pi) => ({ bi, pi })))
+const DEMO_STEP = 0, GUIDED_STEP = 1, FIRST_SCORED = 2
+const SCORED_ROUNDS = SEQUENCE.length - FIRST_SCORED
+// The round the second build starts on, so the walk interlude lands there rather than on a count.
+const BUILD_CHANGE_ROUND = SEQUENCE.findIndex(s => s.bi === 1) - FIRST_SCORED
+
+const keyOf = (s: Step) => `${s.bi}:${s.pi}`
+const partOf = (s: Step) => BUILDS[s.bi].parts[s.pi]
+
+// ─── Round shape ─────────────────────────────────────────────────────────────────────
+interface ShapeRound { seq: number; options: ShapeName[]; answerIdx: number }
+
+function makeShapeRound(d: 1 | 2 | 3, round: number): ShapeRound {
+  const seq = Math.min(FIRST_SCORED + round, SEQUENCE.length - 1)
+  const target = partOf(SEQUENCE[seq]).name
+  const n = d === 1 ? 3 : 4
+  let pool = SHAPE_ORDER.filter(s => s !== target)
+  if (d === 1 && TWIN[target]) pool = pool.filter(s => s !== TWIN[target])
+  const twin = TWIN[target]
+  const distractors = (d >= 3 && twin && pool.includes(twin))
+    ? shuffle([twin, ...shuffle(pool.filter(s => s !== twin)).slice(0, n - 2)])
+    : shuffle(pool).slice(0, n - 1)
+  const options = shuffle([target, ...distractors])
+  return { seq, options, answerIdx: options.indexOf(target) }
 }
+const roundForStep = (seq: number, options: ShapeName[]): ShapeRound =>
+  ({ seq, options, answerIdx: options.indexOf(partOf(SEQUENCE[seq]).name) })
 
-function Background({ scene, scenes }: { scene: SceneId; scenes: SceneId[] }) {
+// ─── Backdrop (cross-fades when the build changes) ───────────────────────────────────
+function Background({ buildIdx }: { buildIdx: number }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#dff0e4' }}>
-      {scenes.map(s => (
-        <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
-          <div style={{ position: 'absolute', inset: 0, background: SCENES[s].grad }} />
-          <img src={SCENES[s].img} alt="" draggable={false} decoding="async"
+      {BUILDS.map((b, i) => (
+        <div key={b.id} style={{ position: 'absolute', inset: 0, opacity: i === buildIdx ? 1 : 0, transition: 'opacity .6s ease' }}>
+          <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
+          <img src={b.bg} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -118,353 +175,141 @@ function Background({ scene, scenes }: { scene: SceneId; scenes: SceneId[] }) {
   )
 }
 
-// ─── Milo (per world) ────────────────────────────────────────────────────────────────
-function MiloExplorer({ left, milo }: { left: number; milo: ShapeWorld['milo'] }) {
+// ─── Milo, the builder ───────────────────────────────────────────────────────────────
+// Far bottom-left and deliberately small: the pieces and the build own the frame, and a big Milo
+// beside a pile of parts is the "he read as clutter" note that got him cut from chapter 2.
+function MiloBuilder() {
   const [step, setStep] = useState(0)
   const { h: vh } = useViewport()
-  // On a short/landscape frame a 36vh Milo is small in px but still eats the left column; keep
-  // him compact so the object row beside him stays clear.
-  const dim = vh < SHORT_H ? 'min(30vh, 150px)' : 'min(36vh, 320px)'
+  const srcs = ['/assets/characters/milo_explorer.png', '/assets/characters/milo_idle.png']
+  const dim = vh < SHORT_H ? 'min(24vh, 118px)' : 'min(26vh, 210px)'
   return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: dim, height: dim }}>
-      <div style={{ width: '100%', height: '100%', animation: 'st_float 3.4s ease-in-out infinite' }}>
-        {step >= milo.srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 104, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 10, right: 14, fontSize: 44 }}>{milo.accessory}</span>
+    <div style={{ position: 'fixed', left: '8%', bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: dim, height: dim }}>
+      <div style={{ width: '100%', height: '100%', animation: 'bh_float 3.4s ease-in-out infinite' }}>
+        {step >= srcs.length
+          ? <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+              <span style={{ fontSize: 84, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>🐴</span>
             </div>
-          : <img src={milo.srcs[step]} alt="Milo the explorer" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
+          : <img src={srcs[step]} alt="Milo the builder" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
       </div>
     </div>
   )
 }
 
-// ─── A shape "thing" (the shape, dressed as a town object) ──────────────────────────
-// Designed at THING_W×THING_H; `scale` blows the whole thing up uniformly so it grows
-// with the viewport (never hard-coded px on a 100vw stage — see feedback-viewport-scaling).
-// The shape sits in the top square; the scene's mount hangs in the band below it.
-const THING_W = 112, DECO_H = 48, THING_H = THING_W + DECO_H
-type ThingState = 'idle' | 'glow' | 'wrong' | 'picked'
-
-// The scene-specific "mount" the shape becomes. All mounts hang BELOW the shape so the form
-// stays unmistakable (recognition must read clearly).
-function Decoration({ deco, scale }: { deco: DecoKind; scale: number }) {
-  const band = DECO_H * scale
-  const mid = { position: 'absolute' as const, left: '50%', transform: 'translateX(-50%)' }
-  const wrap = { position: 'absolute' as const, left: 0, right: 0, top: THING_W * scale, height: band }
-  switch (deco) {
-    case 'balloon':   // a thin string + knot
-      return (
-        <div style={wrap}>
-          <div style={{ ...mid, top: 0, width: 0, height: 0, borderLeft: `${4 * scale}px solid transparent`, borderRight: `${4 * scale}px solid transparent`, borderTop: `${7 * scale}px solid rgba(80,66,45,.55)` }} />
-          <div style={{ ...mid, top: 6 * scale, width: Math.max(1.5, 2 * scale), height: band - 6 * scale, background: 'rgba(80,66,45,.5)', borderRadius: 2 }} />
-        </div>
-      )
-    case 'kite':      // a tail with little bows
-      return (
-        <div style={wrap}>
-          <div style={{ ...mid, top: 0, width: Math.max(1.5, 2 * scale), height: band, background: 'rgba(80,66,45,.5)', borderRadius: 2 }} />
-          {[0.3, 0.6, 0.9].map((f, i) => (
-            <div key={i} style={{ ...mid, top: band * f, width: 0, height: 0, borderTop: `${5 * scale}px solid transparent`, borderBottom: `${5 * scale}px solid transparent`, borderLeft: `${7 * scale}px solid #e58aa6`, marginLeft: -7 * scale }} />
-          ))}
-        </div>
-      )
-    case 'stem':      // a green stem + two leaves
-      return (
-        <div style={wrap}>
-          <div style={{ ...mid, top: 0, width: Math.max(2.5, 4 * scale), height: band, background: '#5a9c3a', borderRadius: 3 }} />
-          <div style={{ ...mid, top: band * 0.36, marginLeft: -10 * scale, width: 16 * scale, height: 9 * scale, background: '#6fbe3f', borderRadius: '60% 0 60% 0', transform: 'translateX(-50%) rotate(-18deg)' }} />
-          <div style={{ ...mid, top: band * 0.5, marginLeft: 10 * scale, width: 16 * scale, height: 9 * scale, background: '#6fbe3f', borderRadius: '0 60% 0 60%', transform: 'translateX(-50%) rotate(18deg)' }} />
-        </div>
-      )
-    case 'sign':      // a signpost the shape-sign sits on
-      return (
-        <div style={wrap}>
-          <div style={{ ...mid, top: 0, width: 9 * scale, height: band, background: '#9c7b51', borderRadius: 3, boxShadow: 'inset -2px 0 0 rgba(0,0,0,.18)' }} />
-          <div style={{ ...mid, bottom: 0, width: 26 * scale, height: 6 * scale, background: '#7d5f3a', borderRadius: 3 }} />
-        </div>
-      )
-    case 'stick':     // a lollipop / candy stick
-      return (
-        <div style={wrap}>
-          <div style={{ ...mid, top: 0, width: Math.max(3, 5 * scale), height: band, background: '#efe7d6', borderRadius: 4, boxShadow: 'inset -2px 0 0 rgba(0,0,0,.12)' }} />
-        </div>
-      )
-    case 'ribbon':    // a prize rosette: knot at top + two ribbon tails
-      return (
-        <div style={wrap}>
-          <div style={{ ...mid, top: 0, width: 14 * scale, height: 10 * scale, background: '#e6679a', borderRadius: '50%', boxShadow: 'inset 0 -2px 3px rgba(0,0,0,.18)' }} />
-          <div style={{ ...mid, top: 7 * scale, marginLeft: -6 * scale, width: 9 * scale, height: band - 7 * scale, background: '#e6679a', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%)', transform: 'translateX(-50%) rotate(-9deg)' }} />
-          <div style={{ ...mid, top: 7 * scale, marginLeft: 6 * scale, width: 9 * scale, height: band - 7 * scale, background: '#d4548a', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%)', transform: 'translateX(-50%) rotate(9deg)' }} />
-        </div>
-      )
-    case 'flag':      // a flagpole planted in a small sand mound
-      return (
-        <div style={wrap}>
-          <div style={{ ...mid, top: 0, width: Math.max(2.5, 4 * scale), height: band, background: '#b79356', borderRadius: 2 }} />
-          <div style={{ ...mid, bottom: 0, width: 34 * scale, height: 12 * scale, background: 'radial-gradient(ellipse at center, #e9d3a0 0%, #d8bd83 75%, rgba(216,189,131,0) 100%)' }} />
-        </div>
-      )
-    case 'boat':      // a boat hull (shape is the sail), with a short mast
-      return (
-        <div style={wrap}>
-          <div style={{ ...mid, top: 0, width: Math.max(2, 3 * scale), height: band * 0.55, background: '#8a6a44', borderRadius: 2 }} />
-          <div style={{ ...mid, bottom: 0, width: 46 * scale, height: 16 * scale, background: 'linear-gradient(#c45b3a,#a8472b)', borderRadius: `0 0 ${22 * scale}px ${22 * scale}px`, boxShadow: 'inset 0 2px 3px rgba(255,255,255,.18)' }} />
-        </div>
-      )
-    case 'plate':     // a round plate the treat rests on
-    default:
-      return (
-        <div style={wrap}>
-          <div style={{ ...mid, bottom: 0, width: 56 * scale, height: 16 * scale, background: 'radial-gradient(ellipse at center, #ffffff 0%, #e7e2d8 70%, #d2ccbe 100%)', borderRadius: '50%', boxShadow: '0 2px 3px rgba(0,0,0,.12)' }} />
-        </div>
-      )
-  }
+// ─── Sizing ──────────────────────────────────────────────────────────────────────────
+// Both numbers are derived, never tuned per screen: the build takes a slice of the HEIGHT (which is
+// what is scarce on a landscape phone) and the pieces take a slice of the left column. On a 640×320
+// frame the prompt banner already owns the top third, and these two are what has to live in the
+// rest without touching each other or Milo.
+function useLayout(aspect: number, depth = 1, ground = 8) {
+  const { w: vw, h: vh } = useViewport()
+  const short = vh < SHORT_H
+  // The 0.36 is a CLEARANCE number, not a taste one: the boat is much wider than the house at the
+  // same height, and at 0.40 its hull ran to within 11px of the pieces on one side and the screen
+  // edge on the other. Cap the width too, so a wide build cannot eat the column beside it.
+  // `depth` shrinks a build that stands further back — applied AFTER the clearance caps, so standing
+  // something deeper in can only ever give the column beside it more room, never less.
+  const raw = Math.min(vh * (short ? 0.54 : 0.56), vw * 0.36 * aspect, 460) * depth
+  // AND THEN THE HEADROOM, because raising the build's feet raised its ROOF by the same amount.
+  // Standing the house back off the fence pushed its apex to 5px under the prompt pill at 640×320,
+  // horizontally overlapping it — one size away from the collision. The build's own height is the
+  // only lever left once its feet are fixed by the ground line, so it is capped against the band the
+  // prompt actually occupies rather than trusted to fit.
+  const buildH = Math.min(raw, Math.max(120, vh * (1 - ground / 100) - PROMPT_BAND))
+  const buildW = buildH / aspect
+  const pieceBox = Math.round(Math.max(38, Math.min(vw * 0.13, vh * 0.23, 96)))
+  return { vw, vh, short, buildW, buildH, pieceBox }
 }
 
-function ShapeThing({ scene, name, state, scale, left, top, depth = 0.3, groundLine, onTap, aria }: {
-  scene: SceneId; name: ShapeName; state: ThingState; scale: number
-  left: number; top: number; depth?: number; groundLine: number; onTap?: () => void; aria: string
+// ─── The build ───────────────────────────────────────────────────────────────────────
+/**
+ * Standing in the scene on its own ground shadow, at real size — not a card in the corner. Three
+ * states per part, and the difference between the last two is the whole design:
+ *   • BUILT       — solid, and it popped as it landed
+ *   • THE SOCKET  — the current question, an outline that pulses. This is a question being STATED,
+ *                   not a hint: it says nothing about whether the piece the child is about to tap
+ *                   is right, so it cannot go hot/cold the way chapter 4's green Ready button did.
+ *   • still to do — a faint ghost, so the goal is legible without competing with the socket
+ */
+function Build({ buildIdx, built, target, elsRef }: {
+  buildIdx: number; built: Set<string>; target: Step | null
+  elsRef: React.MutableRefObject<Record<string, HTMLDivElement | null>>
 }) {
-  // Farther things are a touch smaller (depth falloff) — the WHOLE thing (shape + its mount
-  // band) shrinks together so the form-to-mount proportion is preserved.
-  const ds = scale * (1 - depth * 0.22)
-  const W = THING_W * ds, H = THING_H * ds
-  const shapePx = THING_W * ds * 0.96
-  const lit = state === 'glow' || state === 'picked'
-  const onBoard = !!SCENES[scene].board
-  // Contact shadow: a soft ellipse on the scene's ground line where the mount's foot touches.
-  const shW = W * 0.58
-  const shOp = Math.max(0.06, (0.26 - depth * 0.13) * (lit ? 0.5 : 1))
+  const b = BUILDS[buildIdx]
+  const { short, buildW, buildH } = useLayout(b.aspect, b.depth, b.ground)
+  const done = b.parts.every((_, pi) => built.has(keyOf({ bi: buildIdx, pi })))
   return (
-    <>
-      <div aria-hidden style={{ position: 'fixed', left: `${left}%`, top: `${groundLine}%`, transform: 'translate(-50%,-50%)', zIndex: 28,
-        width: shW, height: shW * 0.32, background: `radial-gradient(ellipse at center, rgba(38,28,18,${shOp}) 0%, rgba(38,28,18,0) 72%)`, pointerEvents: 'none' }} />
-      <button onClick={onTap} disabled={!onTap} aria-label={aria}
-        style={{ position: 'fixed', left: `${left}%`, top: `${top}%`, transform: 'translate(-50%,-50%)', zIndex: 30 + Math.round((1 - depth) * 6), width: W, height: H, padding: 0, border: 'none', background: 'transparent', cursor: onTap ? 'pointer' : 'default' }}>
-        <Decoration deco={SCENES[scene].deco} scale={ds} />
-        {/* Centering lives on this outer wrapper; the animation (which sets `transform`) lives on
-            the inner div, so the sway/pop keyframes can't clobber the centering. The box width
-            equals the button width, so left:0 + width keeps the shape centered over its mount. */}
-        <div style={{ position: 'absolute', left: 0, top: 0, width: THING_W * ds, height: THING_W * ds, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '100%', height: '100%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          animation: state === 'wrong' ? 'st_shake .42s ease' : lit ? 'st_pop .45s ease' : 'st_sway 4s ease-in-out infinite',
-          filter: lit ? 'drop-shadow(0 0 16px var(--garden-green)) drop-shadow(0 0 10px var(--garden-green))' : 'drop-shadow(0 6px 8px rgba(0,0,0,.22))' }}>
-          {onBoard && (
-            <div style={{ position: 'absolute', inset: `${6 * ds}px`, background: 'var(--paper)', borderRadius: 14 * ds, border: `${3 * ds}px solid #b88a52`, boxShadow: 'inset 0 2px 4px rgba(0,0,0,.1)' }} />
-          )}
-          <div style={{ position: 'relative', lineHeight: 0 }}>
-            <ShapeSVG name={name} size={onBoard ? shapePx * 0.74 : shapePx} />
-          </div>
-        </div>
-        </div>
-      </button>
-    </>
-  )
-}
-
-// Base footprint top, used only by the scale clamp below (keep objects clear of Milo). Shapes
-// sit a little higher than the door siblings because each shape has a mount band hanging BELOW
-// it — the layout needs that headroom so the mount doesn't dangle off the bottom.
-const THING_BASE_TOP = 50
-// How big to draw the shapes — as large as fits given the count and viewport, CAPPED so a huge
-// sprite never reads as oversized/crowded, narrow phones shrink to fit, and short viewports keep
-// the whole thing (shape + mount band) above Milo's bottom-left sprite. One row only (max 4).
-function useThingScale(n: number): number {
-  const [scale, setScale] = useState(1.3)
-  useEffect(() => {
-    const calc = () => {
-      const w = window.innerWidth, h = window.innerHeight
-      const short = h < SHORT_H
-      // On a short/landscape frame the whole thing (shape + mount band) must fit in the slim
-      // strip between the banner (~top 15%) and Milo/ground (~bottom 12%). Give height a much
-      // tighter budget and drop the min floor so it can actually shrink.
-      const byWidth = w * (n <= 2 ? 0.28 : n === 3 ? 0.22 : 0.175)        // horizontal room per shape
-      const byHeight = (h * (short ? 0.5 : 0.42)) / (THING_H / THING_W)   // vertical room (keep aspect)
-      const s = Math.min(byWidth, byHeight, THING_W * 1.5) / THING_W
-      const miloTop = h - Math.min(0.36 * h, 320)
-      const clearScale = ((miloTop - (THING_BASE_TOP / 100) * h) * 2) / THING_H
-      const floor = short ? 0.42 : 0.62
-      setScale(Math.max(floor, Math.min(s, clearScale)))
-    }
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [n])
-  return scale
-}
-
-// ─── Grounded, depth-aware placement ────────────────────────────────────────────────
-// Each shape gets a small DEPTH (0 = near/front, 1 = far/back): farther shapes are a touch
-// smaller and sit a little higher, and EVERY object casts a soft contact SHADOW on the scene's
-// ground line below it. The shadow + depth scatter break the row and anchor the objects.
-interface Placed { left: number; top: number; depth: number }
-// A gentle, balanced depth scatter per shape count (center nearest) — never a flat line.
-const DEPTHS: Record<number, number[]> = { 1: [0.25], 2: [0.15, 0.6], 3: [0.5, 0.05, 0.7], 4: [0.7, 0.2, 0.45, 0.85] }
-// Small deterministic x nudges so the columns aren't mechanically even.
-const XJIT: Record<number, number[]> = { 1: [0], 2: [-2, 2], 3: [-1.5, 1.5, -1], 4: [-2, 1, -1.5, 2] }
-
-// Per-object placement (left%, top%, depth). Shapes spread across but stay right of Milo's
-// bottom-left column so a low object never collides. On a SHORT/landscape frame the object
-// row is lifted up (smaller baseTop) so the shape + its mount band clears both the top banner
-// and Milo below; the depth rise is also flattened so nothing dips too low.
-function placeFor(n: number, scene: SceneId, vh: number): Placed[] {
-  const g = SCENES[scene].ground
-  const short = vh < SHORT_H
-  const baseTop = short ? 40 : g.baseTop      // lift the whole band up on a short frame
-  const rise = short ? Math.min(g.rise, 6) : g.rise
-  const xs = n <= 2 ? [36, 70] : n === 3 ? [27, 53, 79] : n === 4 ? [20, 42, 64, 87]
-    : Array.from({ length: n }, (_, i) => 18 + (i * 70) / (n - 1))
-  const depths = DEPTHS[n] ?? xs.map((_, i) => (i % 2 ? 0.55 : 0.2))
-  const jit = XJIT[n] ?? xs.map(() => 0)
-  return xs.map((x, i) => { const depth = depths[i] ?? 0.3; return { left: x + (jit[i] ?? 0), top: baseTop - depth * rise, depth } })
-}
-
-// ─── Round copy ──────────────────────────────────────────────────────────────────
-function promptFor(d: ShapeRound): string { return `Find the ${SHAPES[d.options[d.answerIdx]].label}!` }
-function sayFor(d: ShapeRound): string {
-  const label = SHAPES[d.options[d.answerIdx]].label
-  return `${SCENES[d.scene].intro} Can you find the ${label}? Tap the ${label}!`
-}
-
-// ─── The interactive play surface (guided / practice) ──────────────────────────────
-type Mode = 'guided' | 'practice'
-const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
-  const { scene, options, answerIdx } = data
-  const label = SHAPES[options[answerIdx]].label
-  const n = options.length
-  const { h: vh } = useViewport()
-  const short = vh < SHORT_H
-  const slots = placeFor(n, scene, vh)
-  // On a short frame the objects lifted up; drop the shadow's ground line a fixed gap below the
-  // object band (not the tall default groundLine, which would leave the shadow marooned).
-  const groundLine = short ? Math.min(SCENES[scene].ground.groundLine, slots[0].top + 22) : SCENES[scene].ground.groundLine
-  const scale = useThingScale(n)
-  const [pickedIdx, setPickedIdx] = useState<number | null>(null)
-  const [wrongIdx, setWrongIdx] = useState<number | null>(null)
-  const erred = useRef(false), done = useRef(false), wrongLock = useRef(false), tapLock = useRef(false)
-  const speaking = useIsSpeaking()
-
-  const finish = useCallback(() => {
-    if (done.current) return; done.current = true
-    if (mode === 'guided') speak(`Yes! The ${label}! Great job!`)
-    window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 950)
-  }, [mode, label, onComplete])
-
-  useEffect(() => {
-    if (mode === 'guided') speak(`Now you! Find the ${label}. Tap it!`)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  function tap(i: number) {
-    if (done.current || speaking || tapLock.current) return
-    if (i === answerIdx) {
-      setPickedIdx(i)
-      tapLock.current = true; window.setTimeout(() => { tapLock.current = false }, SPEAK_LOCK_MS)
-      window.setTimeout(finish, 650)
-    } else {
-      erred.current = true
-      setWrongIdx(i)
-      if (!wrongLock.current) { wrongLock.current = true; speak(`That's a ${SHAPES[options[i]].label}. Find the ${label}!`); window.setTimeout(() => { wrongLock.current = false }, 1300) }
-      window.setTimeout(() => setWrongIdx(w => (w === i ? null : w)), 600)
-    }
-  }
-
-  return (
-    <>
-      {options.map((name, i) => {
-        const state: ThingState = pickedIdx === i ? 'picked' : wrongIdx === i ? 'wrong' : 'idle'
-        return <ShapeThing key={i} scene={scene} name={name} state={state} scale={scale}
-          left={slots[i].left} top={slots[i].top} depth={slots[i].depth} groundLine={groundLine} onTap={() => tap(i)} aria={`${SHAPES[name].label}`} />
-      })}
-    </>
-  )
-}
-
-// ─── The teaching demo (opening preview + 3-wrong re-teach) ─────────────────────────
-const ShapesExplain: React.FC<{ data: ShapeRound; onDone: () => void }> = ({ data, onDone }) => {
-  const { scene, options, answerIdx } = data
-  const label = SHAPES[options[answerIdx]].label
-  const n = options.length
-  const { h: vh } = useViewport()
-  const short = vh < SHORT_H
-  const slots = placeFor(n, scene, vh)
-  const groundLine = short ? Math.min(SCENES[scene].ground.groundLine, slots[0].top + 22) : SCENES[scene].ground.groundLine
-  const scale = useThingScale(n)
-  const [glow, setGlow] = useState(false)
-  const ran = useRef(false)
-  useEffect(() => {
-    if (ran.current) return; ran.current = true
-    const lines = [
-      `${SCENES[scene].intro} Milo is looking for the ${label}.`,
-      `The ${label}! Can you see it?`,
-      `There it is! The ${label}.`,
-    ]
-    const cancel = speakSteps(lines, {
-      onStep: (i) => { if (i === 2) setGlow(true) },
-      onDone: () => window.setTimeout(onDone, 700),
-    })
-    return cancel
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  return (
-    <>
-      {options.map((name, i) => (
-        <ShapeThing key={i} scene={scene} name={name} state={i === answerIdx && glow ? 'glow' : 'idle'} scale={scale}
-          left={slots[i].left} top={slots[i].top} depth={slots[i].depth} groundLine={groundLine} aria={`example ${SHAPES[name].label}`} />
-      ))}
-    </>
-  )
-}
-
-// ─── The "meet every shape" showcase (opens the explanation) ────────────────────────
-// Shows ALL six shapes at once and Milo names each in turn (it lights up). SELF-PACED on a
-// deterministic timer — deliberately NOT driven by speech events (tying short single words to
-// onstart/onend made them RACE on real devices). A fixed dwell per item keeps each shape shown
-// + named for a full beat no matter how fast — or whether — speech fires.
-const SHOWCASE_DWELL = 1500   // each item stays lit + named for this long
-const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
-  const [lit, setLit] = useState(-1)
-  const [px, setPx] = useState(104)
-  const { h: vh } = useViewport()
-  const short = vh < SHORT_H
-  const ran = useRef(false)
-  useEffect(() => {
-    // Cap by HEIGHT too — the 6 shapes wrap onto 2 rows, so on a short frame a width-only size
-    // overflowed vertically. h*0.18 keeps two rows + labels inside the strip.
-    const calc = () => setPx(Math.max(48, Math.min(window.innerWidth * 0.14, window.innerHeight * 0.18, 120)))
-    calc(); window.addEventListener('resize', calc)
-    return () => window.removeEventListener('resize', calc)
-  }, [])
-  useEffect(() => {
-    if (ran.current) return; ran.current = true
-    const timers: Array<ReturnType<typeof setTimeout>> = []
-    let cancelled = false
-    speak('These are the shapes!')
-    let t = 2000   // let the intro line finish before the first shape
-    SHAPE_ORDER.forEach((s, i) => {
-      timers.push(setTimeout(() => { if (cancelled) return; setLit(i); speak(SHAPES[s].label) }, t))
-      t += SHOWCASE_DWELL
-    })
-    timers.push(setTimeout(() => { if (!cancelled) onDone() }, t + 600))
-    return () => { cancelled = true; timers.forEach(clearTimeout) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: short ? '13% 4% 14%' : '11% 4% 26%' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', columnGap: 'clamp(16px,4vw,56px)', rowGap: short ? '4px' : 'clamp(8px,2vw,24px)', justifyItems: 'center', alignItems: 'end' }}>
-        {SHAPE_ORDER.map((s, i) => {
-          const on = lit === i
+    <div style={{ position: 'fixed', left: '74%', bottom: `${b.ground}%`, transform: 'translateX(-50%)', zIndex: 28, pointerEvents: 'none' }}>
+      <div style={{ position: 'relative', width: buildW, height: buildH,
+        filter: done ? 'drop-shadow(0 0 14px var(--garden-green))' : 'drop-shadow(0 5px 7px rgba(0,0,0,.2))', transition: 'filter .5s' }}>
+        {b.parts.map((p, pi) => {
+          const k = keyOf({ bi: buildIdx, pi })
+          const has = built.has(k)
+          const isTarget = !has && target?.bi === buildIdx && target?.pi === pi
+          const px = (p.size / 100) * buildW
           return (
-            <div key={s} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, transform: on ? 'scale(1.14)' : 'scale(1)', transition: 'transform .3s cubic-bezier(.34,1.56,.64,1)' }}>
-              <div style={{ filter: on ? 'drop-shadow(0 0 14px var(--garden-green)) drop-shadow(0 0 9px var(--garden-green))' : 'drop-shadow(0 5px 7px rgba(0,0,0,.22))' }}>
-                <ShapeSVG name={s} size={px} />
+            // Position + rotation on the OUTER box; every keyframe on an INNER one, so a pulse or a
+            // landing pop can never overwrite the door's rotate(90deg).
+            <div key={k} ref={el => { elsRef.current[k] = el }}
+              style={{ position: 'absolute', left: (p.left / 100) * buildW, top: (p.top / 100) * buildW,
+                width: px, height: px, lineHeight: 0, transform: p.rotate ? `rotate(${p.rotate}deg)` : undefined }}>
+              <div style={{ width: '100%', height: '100%',
+                animation: has ? 'bh_land .5s cubic-bezier(.34,1.56,.64,1) both' : isTarget ? 'bh_socket 1.5s ease-in-out infinite' : undefined,
+                // A hole can be seen. The still-to-do parts were at 0.2, which on a painted garden is
+                // a hairline that neither reads as part of the house nor disappears — the worst of
+                // both. As shadowed sockets they can sit at half strength and still look like the
+                // building they belong to; the current one keeps the pulse and the orange rim, so it
+                // is still unmistakably the one being asked for.
+                opacity: has ? 1 : isTarget ? 1 : 0.5,
+                filter: isTarget ? 'drop-shadow(0 0 7px var(--milo-orange)) drop-shadow(0 0 4px var(--milo-orange))' : undefined }}>
+                <ShapeSVG name={p.name} size={px} socket={!has} />
               </div>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(13px,2.2vw,20px)', color: 'var(--ink)', textTransform: 'capitalize', opacity: on ? 1 : 0.8 }}>{SHAPES[s].label}</span>
             </div>
+          )
+        })}
+      </div>
+      {/* Contact shadow — the "it is standing here" cue, same as every other grounded thing in the band. */}
+      <div aria-hidden style={{ position: 'absolute', left: '50%', bottom: short ? -8 : -12, transform: 'translateX(-50%)',
+        width: buildW * 0.8, height: buildW * 0.2,
+        background: 'radial-gradient(ellipse at center, rgba(38,28,18,.26) 0%, rgba(38,28,18,0) 72%)' }} />
+    </div>
+  )
+}
+
+// ─── The pieces ──────────────────────────────────────────────────────────────────────
+// A pile of parts on the ground between Milo and the build, wrapping two to a row so three reads as
+// a heap rather than a quiz row. Each rests on its own contact shadow.
+type PieceState = 'idle' | 'wrong' | 'taken'
+function PiecePile({ options, stateFor, onTap, boxRef, aspect }: {
+  options: ShapeName[]; stateFor: (i: number) => PieceState
+  onTap?: (i: number, el: HTMLElement) => void
+  boxRef?: React.RefObject<HTMLDivElement | null>; aspect: number
+}) {
+  const { pieceBox } = useLayout(aspect)
+  const gap = Math.round(pieceBox * 0.22)
+  return (
+    <div ref={boxRef} style={{ position: 'fixed', left: '14%', width: '34%', top: '65%', transform: 'translateY(-50%)',
+      zIndex: 32, display: 'flex', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-end', gap,
+        maxWidth: pieceBox * 2 + gap }}>
+        {options.map((name, i) => {
+          const st = stateFor(i)
+          return (
+            <button key={i} onClick={onTap ? e => onTap(i, e.currentTarget) : undefined} disabled={!onTap}
+              aria-label={SHAPES[name].label}
+              style={{ position: 'relative', width: pieceBox, height: pieceBox * 1.16, padding: 0, border: 'none',
+                background: 'transparent', cursor: onTap ? 'pointer' : 'default', lineHeight: 0,
+                opacity: st === 'taken' ? 0 : 1, transition: 'opacity .15s' }}>
+              <div aria-hidden style={{ position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)',
+                width: pieceBox * 0.66, height: pieceBox * 0.17,
+                background: 'radial-gradient(ellipse at center, rgba(38,28,18,.24) 0%, rgba(38,28,18,0) 72%)' }} />
+              <div style={{ width: pieceBox, height: pieceBox,
+                animation: st === 'wrong' ? 'bh_shake .42s ease' : 'bh_idle 4s ease-in-out infinite',
+                filter: 'drop-shadow(0 4px 5px rgba(0,0,0,.22))' }}>
+                <ShapeSVG name={name} size={pieceBox} />
+              </div>
+            </button>
           )
         })}
       </div>
@@ -472,100 +317,234 @@ const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   )
 }
 
-// ─── Value generation ──────────────────────────────────────────────────────────────
-// Target cycles through all six shapes by round (full coverage, never the same two in a
-// row). Difficulty grows the field (3 → 4 choices) and, at the top tier, GUARANTEES the
-// look-alike twin is on screen so it's recognition, not guessing-by-elimination.
-function makeShapeRound(world: ShapeWorld, d: 1 | 2 | 3, round: number): ShapeRound {
-  const scene = world.scenes[round % world.scenes.length]
-  const n = d === 1 ? 3 : 4
-  const target = SHAPE_ORDER[round % SHAPE_ORDER.length]
-  let pool = SHAPE_ORDER.filter(s => s !== target)
-  if (d === 1 && TWIN[target]) pool = pool.filter(s => s !== TWIN[target])
-  let distractors: ShapeName[]
-  const twin = TWIN[target]
-  if (d >= 3 && twin && pool.includes(twin)) {
-    distractors = shuffle([twin, ...shuffle(pool.filter(s => s !== twin)).slice(0, n - 2)])
-  } else {
-    distractors = shuffle(pool).slice(0, n - 1)
-  }
-  const options = shuffle([target, ...distractors])
-  return { scene, options, answerIdx: options.indexOf(target) }
+// ─── Fitting a piece: the tap causes the journey, and the journey is the answer ──────
+// Hands a play surface the tapped element and gets back how long the flight takes, so the round can
+// end when the piece LANDS rather than after a fixed delay that drifts out of step with it.
+type Fit = (from: HTMLElement) => number
+
+// ─── Round copy ──────────────────────────────────────────────────────────────────────
+const partFor = (d: ShapeRound) => partOf(SEQUENCE[d.seq])
+const promptFor = (d: ShapeRound) => `Find the ${SHAPES[partFor(d).name].label} for the ${partFor(d).label}!`
+const sayFor = (d: ShapeRound) => {
+  const p = partFor(d)
+  return `The ${p.label} needs a ${SHAPES[p.name].label}. Find the ${SHAPES[p.name].label}!`
 }
 
-// ─── The scored practice (SkillBeat) — one continuous adaptive sequence ────────────
-function makeShapeBeat(world: ShapeWorld): Beat<ShapeRound> {
+// ─── Play (guided + scored) ──────────────────────────────────────────────────────────
+type Mode = 'guided' | 'practice'
+const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete: (correct: boolean) => void }> = ({ data, mode, fit, onComplete }) => {
+  const { options, answerIdx } = data
+  const part = partFor(data)
+  const label = SHAPES[part.name].label
+  const [taken, setTaken] = useState<number | null>(null)
+  const [wrongIdx, setWrongIdx] = useState<number | null>(null)
+  const erred = useRef(false), done = useRef(false), tapLock = useRef(false)
+
+  useEffect(() => {
+    if (mode === 'guided') speak(`Now you! The ${part.label} needs a ${label}. Tap it!`)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function tap(i: number, el: HTMLElement) {
+    if (done.current || tapLock.current) return
+    tapLock.current = true
+    window.setTimeout(() => { tapLock.current = false }, TAP_LOCK_MS)
+    if (i !== answerIdx) {
+      erred.current = true
+      setWrongIdx(i)
+      speak(`That's a ${SHAPES[options[i]].label}. It doesn't fit. Look at the hole!`)
+      window.setTimeout(() => setWrongIdx(w => (w === i ? null : w)), 600)
+      return
+    }
+    done.current = true
+    setTaken(i)
+    // The piece leaves the pile and travels into its socket; the round ends when it lands. A fixed
+    // delay would drift out of step with the flight, and the flight is what completes the build.
+    const ms = fit(el)
+    if (mode === 'guided') speak(`Yes! The ${label} fits!`)
+    window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), ms + 260)
+  }
+
+  return <PiecePile options={options} aspect={BUILDS[SEQUENCE[data.seq].bi].aspect}
+    stateFor={i => (taken === i ? 'taken' : wrongIdx === i ? 'wrong' : 'idle')} onTap={tap} />
+}
+
+// ─── Milo shows how (opening demo + the 3-wrong re-teach) ────────────────────────────
+/**
+ * Milo picks the piece up and fits it himself — so the demo is a real build step, not a mime of one.
+ * It DOES complete its part, and it has to: after a re-teach `SkillBeat` moves to the next round
+ * rather than re-asking, so a demonstration that placed nothing would leave a permanent hole in the
+ * build exactly where the child struggled.
+ */
+const ShapesExplain: React.FC<{ data: ShapeRound; fit: Fit; onDone: () => void }> = ({ data, fit, onDone }) => {
+  const { options, answerIdx } = data
+  const part = partFor(data)
+  const label = SHAPES[part.name].label
+  const [taken, setTaken] = useState<number | null>(null)
+  const pile = useRef<HTMLDivElement | null>(null)
+  const ran = useRef(false)
+  useEffect(() => {
+    if (ran.current) return; ran.current = true
+    const cancel = speakSteps([
+      `Look — the ${part.label} is missing. It needs a ${label}.`,
+      `This one is a ${label}. Watch it fit!`,
+    ], {
+      onStep: i => {
+        if (i !== 1) return
+        const el = pile.current?.querySelectorAll('button')[answerIdx]
+        if (!el) return
+        setTaken(answerIdx)
+        fit(el as HTMLElement)
+      },
+      onDone: () => window.setTimeout(onDone, 1400),
+    })
+    return cancel
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return <PiecePile options={options} boxRef={pile} aspect={BUILDS[SEQUENCE[data.seq].bi].aspect}
+    stateFor={i => (taken === i ? 'taken' : 'idle')} />
+}
+
+// ─── "Meet the shapes" ───────────────────────────────────────────────────────────────
+// Self-paced on a deterministic timer, NOT on speech events — tying short single words to
+// onstart/onend made them race on real devices. Tap anywhere to skip: a child on their fifth run
+// does not need the vocabulary lap, and this is the longest stretch in the chapter before they get
+// to touch anything.
+const SHOWCASE_DWELL = 1200
+const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
+  const [lit, setLit] = useState(-1)
+  const { w: vw, h: vh } = useViewport()
+  const short = vh < SHORT_H
+  const px = Math.max(48, Math.min(vw * 0.14, vh * 0.18, 120))
+  const ran = useRef(false)
+  const fired = useRef(false)
+  const finish = useCallback(() => { if (fired.current) return; fired.current = true; stopSpeech(); onDone() }, [onDone])
+  useEffect(() => {
+    if (ran.current) return; ran.current = true
+    const timers: Array<ReturnType<typeof setTimeout>> = []
+    speak('These are the shapes!')
+    let t = 1800
+    SHAPE_ORDER.forEach((s, i) => {
+      timers.push(setTimeout(() => { setLit(i); speak(SHAPES[s].label) }, t))
+      t += SHOWCASE_DWELL
+    })
+    timers.push(setTimeout(finish, t + 500))
+    return () => timers.forEach(clearTimeout)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return (
+    <div onClick={finish} style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: short ? '13% 4% 12%' : '11% 4% 20%' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', columnGap: 'clamp(16px,4vw,56px)', rowGap: short ? '4px' : 'clamp(8px,2vw,24px)', justifyItems: 'center', alignItems: 'end' }}>
+        {SHAPE_ORDER.map((s, i) => (
+          <div key={s} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, transform: lit === i ? 'scale(1.14)' : 'scale(1)', transition: 'transform .3s cubic-bezier(.34,1.56,.64,1)' }}>
+            <div style={{ filter: lit === i ? 'drop-shadow(0 0 14px var(--garden-green)) drop-shadow(0 0 9px var(--garden-green))' : 'drop-shadow(0 5px 7px rgba(0,0,0,.22))' }}>
+              <ShapeSVG name={s} size={px} />
+            </div>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(13px,2.2vw,20px)', color: 'var(--ink)', textTransform: 'capitalize', opacity: lit === i ? 1 : 0.8 }}>{SHAPES[s].label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── The scored practice ─────────────────────────────────────────────────────────────
+function makeShapeBeat(fit: Fit): Beat<ShapeRound> {
   return {
-    skillId: 'shapes', rounds: 10, reteachAfter: 3,
-    // The place already changes EVERY round (via the bg cross-fade); a short "walk to the
-    // next spot" pause every 3 rounds keeps it from feeling rushed.
-    walkEvery: 3,
-    make: (d, round = 0) => makeShapeRound(world, (d || 1) as 1 | 2 | 3, round),
-    sig: d => `${d.options[d.answerIdx]}`,   // dedupe on the target shape (not the rotating scene/options order)
-    prompt: d => promptFor(d),
-    say: d => sayFor(d),
-    Play: ({ data, onSubmit }) => <ShapesPlay data={data} mode="practice" onComplete={onSubmit} />,
-    Reteach: ({ data, onDone }) => <ShapesExplain data={data} onDone={onDone} />,
+    skillId: 'shapes', rounds: SCORED_ROUNDS, reteachAfter: 3,
+    // One walk, on the round the second build starts — so the change of place reads as Milo
+    // travelling there rather than the backdrop simply swapping under him.
+    walkBeforeRound: r => r === BUILD_CHANGE_ROUND,
+    make: (d, round = 0) => makeShapeRound((d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.seq}`,   // one question per part; the shuffled option order is not variety
+    prompt: promptFor,
+    say: sayFor,
+    Play: ({ data, onSubmit }) => <ShapesPlay data={data} mode="practice" fit={fit} onComplete={onSubmit} />,
+    Reteach: ({ data, onDone }) => <ShapesExplain data={data} fit={fit} onDone={onDone} />,
   }
 }
 
-// ─── Orchestrator ──────────────────────────────────────────────────────────────────
-const ST_CSS = `
-@keyframes st_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-@keyframes st_sway { 0%,100%{transform:rotate(-2deg)} 50%{transform:rotate(2deg)} }
-@keyframes st_pop { 0%{transform:scale(1)} 40%{transform:scale(1.12)} 100%{transform:scale(1)} }
-@keyframes st_shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px) rotate(-2deg)} 75%{transform:translateX(6px) rotate(2deg)} }
+// ─── Orchestrator ────────────────────────────────────────────────────────────────────
+const BH_CSS = `
+@keyframes bh_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes bh_idle { 0%,100%{transform:rotate(-2deg)} 50%{transform:rotate(2deg)} }
+@keyframes bh_shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px) rotate(-3deg)} 75%{transform:translateX(6px) rotate(3deg)} }
+@keyframes bh_socket { 0%,100%{opacity:.5;transform:scale(.97)} 50%{opacity:1;transform:scale(1.03)} }
+@keyframes bh_land { 0%{transform:scale(1.25);opacity:.6} 60%{transform:scale(.94)} 100%{transform:scale(1);opacity:1} }
 `
 
+/**
+ * The piece in flight. It is positioned by its CENTRE and scaled, rather than by its box — a box
+ * whose width/height animate would also have to re-render the SVG at a new size on every frame, and
+ * the size attribute jumps instead of tweening. One fixed-size SVG, moved and scaled, cannot.
+ */
+interface Flight { name: ShapeName; size: number; ms: number; from: { x: number; y: number }; to: { x: number; y: number; scale: number; rotate: number }; go: boolean }
+
 type Phase = 'intro' | 'showcase' | 'demo' | 'guided' | 'practice'
-export default function ShapeTown({ world: forcedWorldId, onFinish, onExit }: {
-  world?: string
+export default function ShapeTown({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
   const router = useRouter()
-  const [world, setWorld] = useState<ShapeWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
+  const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
-  const [scene, setScene] = useState<SceneId>('park')
-  const [demoIdx, setDemoIdx] = useState(0)
+  // The build lives HERE, not inside SkillBeat, which rebuilds its contents every round — anything
+  // mounted in there resets with them, so a cumulative arc drawn inside a round can never accumulate.
+  const [built, setBuilt] = useState<Set<string>>(() => new Set())
+  const [stepIdx, setStepIdx] = useState(DEMO_STEP)
+  const [flight, setFlight] = useState<Flight | null>(null)
+  const partEls = useRef<Record<string, HTMLDivElement | null>>({})
+  const stepRef = useRef(stepIdx); stepRef.current = stepIdx
+  const timers = useRef<number[]>([])
+  useEffect(() => () => { timers.current.forEach(clearTimeout) }, [])
+
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
   const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
   const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
     if (finished.current) return; finished.current = true
     stopSpeech()
     if (onFinish) onFinish(c, w, mastered); else exit()
   }, [onFinish, exit])
 
+  /**
+   * The flight. Both ends are MEASURED — the socket because only the build knows where it drew that
+   * part, the piece because flexbox, not this component, decided where it sits in the pile. The
+   * duration comes from the distance, so a piece crossing twice as far takes twice as long instead
+   * of teleporting the same way every time.
+   */
+  const fit = useCallback<Fit>((fromEl) => {
+    const step = SEQUENCE[stepRef.current]
+    const to = partEls.current[keyOf(step)]?.getBoundingClientRect()
+    const from = fromEl.getBoundingClientRect()
+    const land = () => setBuilt(b => (b.has(keyOf(step)) ? b : new Set(b).add(keyOf(step))))
+    if (!to) { land(); return 0 }   // never leave a hole in the build if the socket is not mounted
+    const part = partOf(step)
+    const a = { x: from.x + from.width / 2, y: from.y + from.height / 2 }
+    const b = { x: to.x + to.width / 2, y: to.y + to.height / 2 }
+    const dist = Math.hypot(b.x - a.x, b.y - a.y)
+    const ms = Math.round(Math.max(620, Math.min(dist * 1.35, 1150)))
+    setFlight({ name: part.name, size: from.width, ms, from: a, go: false,
+      to: { ...b, scale: to.width / Math.max(1, from.width), rotate: part.rotate ?? 0 } })
+    // Two frames, so the start position is committed before the transition target replaces it.
+    requestAnimationFrame(() => requestAnimationFrame(() => setFlight(f => (f ? { ...f, go: true } : f))))
+    timers.current.push(window.setTimeout(() => { land(); setFlight(null) }, ms + 40))
+    return ms
+  }, [])
+
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
-  const beat = useMemo(() => (world ? makeShapeBeat(world) : null), [world])
+  const beat = useMemo(() => makeShapeBeat(fit), [fit])
+  // Memoized because they SHUFFLE: rebuilt on every render, the option order — and so `answerIdx` —
+  // would change under the surface that is already showing them.
+  const demoData = useMemo(() => roundForStep(DEMO_STEP, shuffle([partOf(SEQUENCE[DEMO_STEP]).name, 'circle', 'star'])), [])
+  const guidedData = useMemo(() => roundForStep(GUIDED_STEP, shuffle([partOf(SEQUENCE[GUIDED_STEP]).name, 'circle', 'heart'])), [])
 
-  if (!world || !beat) {
-    return (
-      <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-        <WorldSelect title="Where shall we find the shapes?" worlds={PICK_WORLDS}
-          onPick={(id) => { const w = worldById(id); if (w) { setScene(w.scenes[0]); setWorld(w) } }} onExit={exit} />
-      </div>
-    )
-  }
+  // Landscape-first, like the rest of the 3–5 set. Sits BELOW every hook — an early return above one
+  // makes turning the phone change the hook count, which tore chapter 2 into the error boundary.
+  if (needsRotate) return <RotateGate line="Shape House plays in landscape! 🏠" />
 
-  // Per-world demo + guided rounds, drawn from this world's scenes.
-  const DEMO_ROUNDS: ShapeRound[] = [
-    { scene: world.scenes[0], options: ['circle', 'triangle'], answerIdx: 1 },
-    { scene: world.scenes[1] ?? world.scenes[0], options: ['square', 'circle', 'star'], answerIdx: 0 },
-  ]
-  const GUIDED_ROUND: ShapeRound = { scene: world.scenes[2] ?? world.scenes[0], options: ['triangle', 'circle'], answerIdx: 1 }
-  const bgScene: SceneId = phase === 'practice' ? scene
-    : phase === 'guided' ? GUIDED_ROUND.scene
-    : phase === 'demo' ? DEMO_ROUNDS[demoIdx].scene
-    : world.scenes[0]
+  const step = SEQUENCE[stepIdx]
 
-  const TopBar = (
-    <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-      <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
-    </div>
-  )
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '10px 24px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
@@ -574,39 +553,66 @@ export default function ShapeTown({ world: forcedWorldId, onFinish, onExit }: {
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-      <style>{ST_CSS}</style>
-      <Background scene={bgScene} scenes={world.scenes} />
-      {TopBar}
+      <style>{BH_CSS}</style>
+      <Background buildIdx={step.bi} />
+
+      <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
+        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+      </div>
 
       {phase === 'intro' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
           <div style={{ maxWidth: '74%', background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 19, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)' }}>
-            {world.intro}
+            Milo is building a house out of shapes! Every part needs the shape that fits. First, let&apos;s meet the shapes!
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('showcase') }}
-            style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>Let&apos;s explore! ▶</button>
+            style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>Let&apos;s build! ▶</button>
         </div>
       )}
 
       {phase === 'showcase' && (<>{Banner('Meet the shapes!')}
-        <ShapeShowcase onDone={() => setPhase('demo')} /></>)}
+        <ShapeShowcase onDone={() => { setStepIdx(DEMO_STEP); setPhase('demo') }} /></>)}
 
-      {phase === 'demo' && (<>{Banner(`Find the shape Milo names  (${demoIdx + 1}/${DEMO_ROUNDS.length})`)}
-        <ShapesExplain key={`demo${demoIdx}`} data={DEMO_ROUNDS[demoIdx]}
-          onDone={() => { if (demoIdx + 1 < DEMO_ROUNDS.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
+      {phase === 'demo' && (<>{Banner('Watch Milo fit the first piece')}
+        <ShapesExplain data={demoData} fit={fit} onDone={() => { setStepIdx(GUIDED_STEP); setPhase('guided') }} /></>)}
 
-      {phase === 'guided' && (<>{Banner('Now you! Tap the shape Milo says')}
-        <ShapesPlay key="guided" data={GUIDED_ROUND} mode="guided" onComplete={() => setPhase('practice')} /></>)}
+      {phase === 'guided' && (<>{Banner('Now you! Tap the piece that fits')}
+        <ShapesPlay key="guided" data={guidedData} mode="guided" fit={fit}
+          onComplete={() => { setStepIdx(FIRST_SCORED); setPhase('practice') }} /></>)}
 
       {phase === 'practice' && (
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
-            onRound={(data) => { if (data?.scene) setScene(data.scene as SceneId) }}
+            onRound={(data) => { if (typeof data?.seq === 'number') setStepIdx(data.seq) }}
             onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
         </div>
       )}
 
-      {phase !== 'intro' && <MiloExplorer left={12} milo={world.milo} />}
+      {/* NOT during the showcase. "Meet the shapes" is six shapes being named one at a time, and an
+          entire empty house standing behind them is a second thing to look at during the one beat
+          that wants undivided attention — it read as a diagram pasted over the garden. The build
+          arrives with the demo, which is the moment it starts to mean anything. */}
+      {phase !== 'intro' && phase !== 'showcase' && (
+        <>
+          <Build buildIdx={step.bi} built={built} target={step} elsRef={partEls} />
+          <MiloBuilder />
+        </>
+      )}
+      {phase === 'showcase' && <MiloBuilder />}
+
+      {/* The piece in flight: one element that travels from the pile into its socket, growing or
+          shrinking to the socket's size and taking on the part's rotation on the way. */}
+      {flight && (
+        <div aria-hidden style={{ position: 'fixed', zIndex: 55, pointerEvents: 'none', lineHeight: 0,
+          width: flight.size, height: flight.size,
+          left: flight.go ? flight.to.x : flight.from.x,
+          top: flight.go ? flight.to.y : flight.from.y,
+          transform: `translate(-50%,-50%) scale(${flight.go ? flight.to.scale : 1}) rotate(${flight.go ? flight.to.rotate : 0}deg)`,
+          transition: `left ${flight.ms}ms cubic-bezier(.34,.85,.35,1), top ${flight.ms}ms cubic-bezier(.34,.85,.35,1), transform ${flight.ms}ms cubic-bezier(.34,.85,.35,1)`,
+          filter: 'drop-shadow(0 6px 10px rgba(0,0,0,.3))' }}>
+          <ShapeSVG name={flight.name} size={flight.size} />
+        </div>
+      )}
     </div>
   )
 }

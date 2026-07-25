@@ -12,7 +12,218 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🐾 **2026-07-25 (LATEST) — THREE MORE 3–5 CHAPTERS ON THE CREATURE ENGINE (addition · subtraction · comparison), AND THE MOTION ACROSS THE WHOLE BAND MADE NATURAL. SHIPPED. `main`@`3c391b6`, prod serving sw v60, smoke green + DRIVEN LIVE ON PROD.**
+> 🎨 **2026-07-25 (LATEST) — GROUP B REBUILT (EACH SKILL GETS ITS OWN VERB), THEN THE COLOURING CHAPTER RE-CUT AS *TEACH ONE PAGE → TEST ON ANOTHER* AND FIVE FOUNDER CATCHES FIXED. COMMITTED on `feat/story-3-5-group-b-teach-then-test`, sw v60→v61. NOT MERGED, NOT DEPLOYED.**
+>
+> **STATE, PLAINLY.** `tsc` clean · **79/79 vitest** · `next build` green · 0 console errors in a fresh
+> tab · sw bumped to **v61** · committed to a branch, **`main` untouched and prod still serving v60**.
+> Modified [ShapeTown](src/features/chapters/story/ShapeTown.tsx) ·
+> [RainbowTown](src/features/chapters/story/RainbowTown.tsx) ·
+> [BeadShop](src/features/chapters/story/BeadShop.tsx) ·
+> [ShapesLesson](src/features/chapters/lessons/ShapesLesson.tsx) ·
+> [story/page.tsx](src/app/story/page.tsx). New:
+> [floodFill.ts](src/features/chapters/story/floodFill.ts) ·
+> [lessonSeen.ts](src/infra/storage/lessonSeen.ts) · 2 art files (31KB).
+> **DELETED: `keeper.tsx`** — the previous session's whole approach, see ⓪.
+>
+> | chapter | verb now | verified |
+> |---|---|---|
+> | 🏠 Shape House (`shapes`) | **FIT** — a shape sorter | 1024×620 + 640×320, full run, flight + depth swept 8 sizes |
+> | 📿 Bead Shop (`beads`) | **CONTINUE** — one growing necklace/bunting/train | 1024×620 + 1280×720 + 640×320, full run, strand read back |
+> | 🎨 Colouring Book (`rainbow`) | **COLOUR IT IN** — teach in the garden, test in the toy room | 1024×620 + 640×320, both pages driven, pixels sampled |
+> | 📏 Measurement (TallForest) | **NOT STARTED** | — |
+>
+> ## ⑥ THE COLOURING CHAPTER IS NOW *TEACH THEN TEST*, AND THE PAGE SPLIT IS WHAT MAKES THE SCORE MEAN ANYTHING
+> Founder: *"use one image to teach all color names and use second image to test them."* Right, and
+> the reason it works is worth keeping. **A garden is made of things with ONE colour in the world** —
+> sun yellow, sky blue, grass green — so *"colour the sun yellow"* is answerable by a child who knows
+> suns and has never learned the word *yellow*. That is exactly what you want while TEACHING (the
+> object anchors the word) and exactly what you must not have while testing. **A toy has no default
+> colour**, so in the toy room nothing on screen can help and the spoken word is the only thing that
+> can. Generalised in the craft doc: *if the scene can answer the question, you are teaching, not
+> measuring.*
+> • **Lesson** = 6 beats, one per colour, in a fixed order. Each says the word three times (naming the
+>   paint, on the tray, and again on the finished colour). The right pot BOUNCES; the tray keeps a
+>   stable order so the child builds a "red lives here" map. Nothing scored — a wrong pot is the thing
+>   being taught, so Milo just names what they picked and points again.
+> • **Test** = the toy room, cue gone, pots shuffled, 10 rounds. Verified `cue: null` throughout.
+> • **A handover screen sits between them**, because the picture, the tray order and the hint all stop
+>   at once and a child not told that has had the game taken away.
+> • **The demo and guided rounds are GONE** — the lesson is the scaffold; six taught beats plus a demo
+>   plus a guided round is three kinds of hand-holding in a row.
+> • **Skip** ([lessonSeen.ts](src/infra/storage/lessonSeen.ts)) appears in the lesson only from the
+>   SECOND run. Offered on the first it is just a big button a three-year-old presses to leave the
+>   teaching, then meets a test nothing prepared them for. ⚠️ Falls back to a **device** key when
+>   nobody is signed in — otherwise `/story?ch=rainbow` (how the founder tests) never writes the flag
+>   and the skip never appears at all.
+> • ⚠️ **THE ONE TAP THAT CANNOT BE REMOVED.** Founder asked to start straight in the lesson; the
+>   screen is stripped to a single button over the picture and no more. `unlockSpeech()` MUST run in a
+>   real gesture or mobile autoplay silences Milo for the whole chapter, and **nothing upstream
+>   unlocks it** — every chapter does its own. This is the one chapter that is unanswerable without
+>   voice. To truly remove it, unlock on the menu tap that launches the chapter (shared launch path).
+>
+> ## ⑦ FIVE FOUNDER CATCHES, AND EVERY ONE WAS INVISIBLE TO THE CHECKS THAT PASSED
+> • **"I'm clicking the tulip and it isn't colouring."** The ink is a WALL to the flood fill and for a
+>   small shape the outline is most of the shape — measured, **40% of taps aimed at a tulip landed on
+>   ink and were silently discarded**, and there is ink 7px from its centre. A near-miss rescue
+>   already existed and ran *after* `if (!region) return`, so the exact case it was written for never
+>   reached it. **A bail-out must not sit in front of the rescue that handles it.** Now 91%/83%.
+>   → Then `floodNearest` (founder-approved): a tap on ANY line takes the nearest area, so silent taps
+>   are **0% on every target** (was 40% tulip, 38% wall, 30% rabbit, 26% roof/sun). It picks the
+>   SMALLER neighbour — a line is the outline *of* the small shape, and an accidental petal beats an
+>   accidental lawn (it filled the whole lawn before that).
+> • **"Except the tulip, wherever I click gets purple."** Three faults at once: the glow was tuned at
+>   10–44% grey — fine on the sky, invisible on a 76px tulip beside an identical one; tapping the
+>   other tulip said *"That's the tulip!"* while the prompt said *colour the tulip*; and every unnamed
+>   area filled silently, so you could paint the whole page while the task sat undone. Now 42–86%,
+>   *"That's the **other** tulip"*, and Milo re-asks after three off-question fills.
+> • **"Colour the cloud purple" is not a correct thing.** Clouds are white and the trunk is brown;
+>   neither exists in a six-paint box, so both stopped being questions (still free to colour). The
+>   honest replacements were already in the drawing — **tulips**, which can be any colour. Daisies
+>   cannot: every petal floods separately at ~1,400px, so "the flower" is not one area.
+> • **The shapes chapter's ghost house was a WIREFRAME.** Empty sockets were a hairline stroke at 20%
+>   opacity; painted scenes contain no hairlines, so it read as a blueprint on the lawn and fading it
+>   further just makes an invisible wireframe. Now shadowed sockets (translucent warm dark + near-white
+>   rim) at 50%. Also removed from the "meet the shapes" beat entirely — it meant nothing there.
+> • **"Move the house behind the fence."** The fence is painted INTO the backdrop, so no z-index can
+>   do it: in a painted scene depth is vertical position. Feet 8%→26%, scaled to 0.78 (further back
+>   must also be smaller), and the ground line is now **per build** — the beach behind the boat is open
+>   water with nothing in front. ⚠️ **Raising its feet raised its roof**: the apex landed 5px under the
+>   prompt pill at 640×320, overlapping horizontally. Capped against the prompt band; swept 8 sizes ×
+>   2 builds → 0 failures, fence clearance 32–111px, prompt clearance 13–208px.
+>
+> ## ⑧ THE TESTING LESSON, WHICH IS THE REAL ONE
+> Every check I ran tapped a target's stored **probe point — its dead centre, the single easiest tap
+> on the page** — so the mechanic was only ever verified where it could not fail. The founder found
+> the dead tulip in one try with a finger. **Exercise an interaction at the EDGES of its target and on
+> the boundary itself.** Same family as reading a band instead of the spots a layout really returns.
+> Also re-learned: a stale HMR console (`PAGE is not defined`, `short is not defined`) and a stale
+> preview screenshot both cost real time again — a fresh tab and a re-shoot are the answers, both
+> already in the craft doc.
+>
+> ## ⓪ THE FOUNDER'S CORRECTION, AND WHY THE LAST SESSION'S WORK WAS DELETED
+> These three had been one surface with different nouns on it — *Milo names a thing, tap it among
+> three* — and the previous session's fix was to bolt a shared travelling creature (the "keeper") onto
+> all three. **That was the same mistake one layer up: one decoration for three different skills.**
+> The keeper changed nothing the child DID; it commuted to the answer and back while they waited.
+> Founder, on the colouring chapter: *"did you know how coloring games work?? I want that concept."*
+> **A skill's verb has to be the answering gesture.** The table is now in
+> [docs/chapter-craft.md §0a](docs/chapter-craft.md) along with the two traps it implies — that the
+> verb decides whether a chapter is playable with the sound off, and that you must implement the real
+> ACTIVITY rather than a gesture that mimes it.
+>
+> ## ① 🏠 SHAPE HOUSE — the question is a HOLE, not a name
+> Milo is building; one socket in the build pulses empty; the child taps the piece that fits and it
+> **flies into place**. Ten parts across two builds — a house in the garden, then a walk to the beach
+> and a boat — so round 10 looks nothing like round 1 and the arc needs no widget.
+> • **It is answerable with the sound off**, the only one of the three that is, because the question
+>   is a picture. Milo still names the shape, so the vocabulary is still taught.
+> • Exactness holds by construction: the socket is the SAME `ShapeSVG` path as the piece, drawn
+>   `outline`. Nothing is ever non-uniformly scaled.
+> • `SEQUENCE` is the whole chapter's question list (demo=0, guided=1, scored=2–9), so the build can
+>   never drift out of step with the round.
+> • Measured: flight target `left 824.5 / top 459.8` against a socket centre of `(825, 460)` — exact —
+>   `scale(0.477)` = the socket/piece ratio, duration derived from distance.
+> • ⚠️ **A perfect run ends with the boat part-built** (mastery early-exit ~round 7, full stars). Correct
+>   per the band's rule, but this is the one chapter whose reward is the finished thing. Founder's call.
+>
+> ## ② 📿 BEAD SHOP — one string, and it gets longer
+> The old chapter strung a fresh pattern each round, threw it away, and drew a SECOND necklace in a
+> corner card — two necklaces, one to read and one to admire, and on a short frame the card sat on the
+> tray. **Fixed by deletion: there is one string.** The round's run is its front; the tapped item
+> threads on and stays; items that scroll off shrink and dim into a tail so the thing is visibly long.
+> A gold joint marks where a new pattern starts when the tier changes the unit.
+> • The picker became a real choice of WHAT to make — necklace (beads/string) · bunting (flags/cord) ·
+>   train (cars/track) — one material per run, because you do not thread a bead then a button.
+> • The pattern is also a **chant**: "red, blue, red, blue… what comes next?"
+>
+> ## ③ 🎨 THE COLOURING BOOK — this one took three attempts, and the last two are the lesson
+> **v1** was the line-up (colour as a quiz answer). **v2** put five whole objects on a greyed painted
+> backdrop and recoloured one per round — founder: *"not a proper blend"*, and he was right twice
+> over: four drawing styles on a photo, AND a picture is not five things floating on emptiness.
+> **v3 is the actual thing.** One generated line-art scene, cut by its own ink into **113 enclosed
+> areas**; pick a colour, tap an area, it floods. [floodFill.ts](src/features/chapters/story/floodFill.ts)
+> is a scanline flood fill — the regions are not layers or masks cut by hand, they are whatever the
+> drawing encloses, which is why a tree's trunk and crown are separate without anyone deciding so, and
+> why **one 32KB PNG carries the whole chapter**.
+> • **The same flood answers both questions**: which pixels to paint, and WHICH area was tapped — by
+>   testing a stored probe point against the flooded mask. One pass, no labelling.
+> • **The lesson rides on top.** Milo asks for a colour AND a thing ("colour the roof red"), so both
+>   words are learned and a wrong tap names what was touched. **Everything he has not asked for is
+>   still fillable, any colour, ungraded** — verified: a flower petal went green while the round was
+>   still "colour the tree green". Locking those to protect the scoring would make it a quiz again.
+> • Art: 2 pages generated, **BOTH now wired** — see ⑥, the garden teaches and the toy room tests.
+>   ~18 credits total, **602.7 left**. The chroma key was done in Python rather than paying for
+>   `remove_background`, which would have eaten the white interiors.
+>
+> ## ④ FIVE REAL BUGS, ALL FOUND BY DRIVING IT — the general rules are in the craft doc
+> • **A wrong answer wiped the whole picture.** I bumped a React `key` to restart the nudge animation;
+>   that remounts the subtree, and the canvas is in it. Every colour the child had put down was
+>   destroyed by getting one thing wrong. → `el.animate(...)`, no remount.
+> • **The prompt banner swallowed taps on the sky** — a transparent full-width bar carving a dead
+>   stripe through the picture. → passthrough class, buttons keep their events.
+> • **Bead Shop threaded a DUPLICATE bead.** A re-teach only runs after the round was submitted, and a
+>   round is submitted when the child finally gets it right — so the item was already on the string.
+>   Caught by reading the strand back as `RBRBBB|RBBBRBR`; clean `RBRBRBRBRBRBR` after.
+> • **Bead Shop's tray was unpositioned in the scored rounds** — correct in the demo, on top of the
+>   strand in practice, because `SkillBeat` renders the play surface in its own flow. The band has to
+>   be owned by the tray, not applied at the call site.
+> • **A blue cloud on a blue sky is invisible** — a correct tap gave no feedback at all.
+> • Plus the one I re-introduced and had to strip again: **`useIsSpeaking()` in the tap gate**, which
+>   swallows the child's retry for 3+ seconds. It is in the craft doc; I still copied it in.
+>
+> ## ⑤ TWO MEASUREMENT TRAPS THAT COST REAL TIME (both now in the craft doc)
+> • **Two taps in the same tick are a TEST artefact, not a user.** React commits state between events,
+>   so a script that picks a colour and taps the page in one statement reads a stale ref — half an
+>   hour chasing a fill that was never broken.
+> • **A backgrounded preview collapses nested `setTimeout`s**, so a driver with 150ms/400ms taps
+>   silently fires only the first. Drive one step per call instead of trusting in-page timers. And the
+>   pane still intermittently reports `innerWidth 0`, which makes every rect read lie.
+>
+> ## ▶ OPEN — pick up here, in order
+> 1. **MERGE AND DEPLOY.** Everything above is committed to
+>    `feat/story-3-5-group-b-teach-then-test` and **nothing is on `main`; prod is still serving v60**.
+>    Gates are already green (`tsc` · 79/79 · `next build`) and sw is bumped to v61 in the branch. The
+>    usual shape: fast-forward `main` → push → post-deploy smoke (`/`, `/menu`, `/api/health`, and
+>    `?ch=shapes` `?ch=rainbow` `?ch=beads`, plus the two `colour_*.png` returning 200) → confirm prod
+>    `sw.js` says v61.
+> 2. **THE SIX COLOUR CLIPS — now the single highest-value job, and more load-bearing than before.**
+>    red/yellow/blue/green/orange/purple. Naming colours IS the skill, so no silent fallback exists
+>    that does not hand over the answer, and the chapter now opens *directly* into a spoken lesson —
+>    on a Chrome box with no TTS a child gets six silent beats and then an unanswerable test. ~30
+>    characters of ElevenLabs quota.
+> 3. **Measurement (TallForest)** — the last 3–5 chapter. Ask its verb first, per §0a: it compares an
+>    ATTRIBUTE, so neither the creature engine nor any of these templates obviously fits.
+> 4. **Small, known, not done:** the shapes chapter's `Explain`/re-teach copy still reads as a first
+>    demonstration in places; and `lessonSeen` is per-device when signed out, so two siblings on one
+>    tablet share the "skip" flag.
+> 5. **Still the headline, still unchanged: ~zero real users, and nobody has watched a child play any
+>    of the 3–5 band.** Nearly every fault this session was found by the FOUNDER using a finger, after
+>    scripted checks had passed — because those checks all tapped the easiest pixel on the page.
+>
+> _(the 🐾 block below is the previous session — Group A and the motion fix. The 🏠 keeper block that
+> sat here has been removed: `keeper.tsx` is deleted and every chapter it touched was rebuilt.)_
+
+<details><summary>Superseded — the keeper pass (2026-07-25, deleted the same day)</summary>
+
+> 🏠 **GROUP B, FIRST ATTEMPT — a shared travelling creature ("keeper") bolted onto shapes, colours and
+> patterns, plus a bottom-right card for each chapter's arc. Rebuilt from scratch the same day when the
+> founder pointed out that one decoration for three different skills is the same fault one layer up.
+> `keeper.tsx` and all three cards are deleted. Two findings survive it:**
+>
+> • **A swallowed crash looks exactly like a dead button.** `keeperFor` did `KEEPERS[i % len]`, and JS
+>   `%` KEEPS THE SIGN — so the `-1` that `Array.indexOf` returns for "not found" became `KEEPERS[-1]`
+>   → `undefined` → the chapter died on `kind.src` inside `MiloErrorBoundary`, where a crash is
+>   indistinguishable from taps doing nothing. Callers passed `WORLDS.indexOf(world)`, which really
+>   does return -1 after a hot reload leaves a held object with a stale identity. **Check the console
+>   before debugging the handler.**
+> • **A backgrounded preview throttles `setInterval` to ~1Hz.** A 100ms sampler returned 6 rows in 8.5
+>   seconds, which reads exactly like "nothing moved". Sample STATE (transition duration, play state,
+>   computed style), not interpolated positions. (Now generalised in the craft doc.)
+</details>
+
+> _(the 🐾 block below is the session before Group B — Group A and the motion fix.)_
+
+> 🐾 **2026-07-25 — THREE MORE 3–5 CHAPTERS ON THE CREATURE ENGINE (addition · subtraction · comparison), AND THE MOTION ACROSS THE WHOLE BAND MADE NATURAL. SHIPPED. `main`@`3c391b6`, prod serving sw v60, smoke green + DRIVEN LIVE ON PROD.**
 >
 > **Deploy:** `feat/story-3-5-play-time-compare-and-natural-motion` → `main` (fast-forward) → pushed → prod **v60**.
 > Gates: `tsc` · **79/79 vitest** (was 66) · `next build`. Smoke: `/` `/menu` `/diagnostic` `/api/health`
@@ -1086,7 +1297,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-25 (LATEST session — see the top 🐾 block. **Shipped to prod, `main`@`3c391b6`, sw v60, driven live on prod:** three more 3–5 chapters moved onto the creature engine — **addition + subtraction as one shared Play Time** (creatures walk IN to join or OUT to leave, so the operation itself is the thing that moves) and **comparison as Bigger or Smaller** (tap the bigger bunch, it walks off with Milo, the other stays). **But the bigger find was the motion:** the founder said the animation looked too fast, and measuring showed `travelMs` clamped every duration to 2400ms while a 60%-of-screen journey wants **5–10 SECONDS** at a walking pace — so every long journey had the body covering ground **2–4× faster than its legs**, band-wide, for months. Each chapter computed a `cycleScale` for the showy march and passed a bare `1` for ordinary journeys, so **the ordinary ones were the ones that skated**. `journeyOf` now returns `{ms, cycleScale}` together and **`travelMs` was deleted rather than documented** — a duration without its correction IS the bug. Cadence calmed ~28%, ceiling 2400→3600ms, sprite cap 140→230px (a PACING number: on a clamped journey the cycle is `ms·STRIDE·h/dist`, so cadence cancels and only height reaches it). **Two lessons about checks:** a sweep must import the SAME layout function the scene renders from, and must be DERIVED FROM THE CHAPTER'S OWN GENERATOR — twice a hand-written grid failed on screens no child can reach, and both times the test was wrong, not the code. **And the one the sweep could not see:** three rows in a 58px band buried the creatures, because the check only compared same-row pairs — *rows are only room if the rows are visually separate*. ▶ **Remaining in 3–5: shapes · colors · patterns** (augmentations, not rebuilds — keep the exact SVG/hex core, add a travelling creature and the arc each name already promises), then measurement. **Nobody has watched a child play any of it** — the burial was invisible to every passing check and only showed up on screen. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
+_Last updated: 2026-07-25 (LATEST session — see the top 🎨 block. **COMMITTED to `feat/story-3-5-group-b-teach-then-test`, sw v60→v61 — NOT MERGED, prod still on v60.** `tsc` · 79/79 · `next build` green · 0 console errors in a fresh tab. Group B rebuilt so each "exact form" chapter has its OWN VERB — **Shape House is a shape sorter**, **Bead Shop is one string that gets longer**, **the Colouring Book is a real colouring game** on a genuine flood fill. Then the founder re-cut the colouring chapter: **one page TEACHES the six colour words, a second page TESTS them** — and the split is what makes the score mean anything, because a garden is full of things with one true colour (so it can answer for the child) while a toy is whatever colour it was made (so only the spoken word can). Five founder catches followed, and every one was invisible to checks that had passed: a tulip that silently ate 40% of taps aimed at it (the ink is a wall, and the rescue sat *behind* the bail-out written for it); a glow too faint to see on a small shape; *"That's the tulip!"* said to a child who tapped a tulip; "colour the cloud purple" asked of a white cloud; and a ghost house drawn as a wireframe, then standing in front of a fence painted into the backdrop. **The real lesson is about testing** — every script I wrote tapped each target's stored probe point, its dead centre, the single easiest tap on the page, so the mechanic was only ever verified where it could not fail. ▶ Next: merge + deploy, then the six colour clips (the chapter now opens straight into a spoken lesson, so a silent device gets six silent beats and an unanswerable test), then measurement — asking its verb first.)_
+
+_Prior update: 2026-07-25 (the 🐾 block. **Shipped to prod, `main`@`3c391b6`, sw v60, driven live on prod:** three more 3–5 chapters moved onto the creature engine — **addition + subtraction as one shared Play Time** (creatures walk IN to join or OUT to leave, so the operation itself is the thing that moves) and **comparison as Bigger or Smaller** (tap the bigger bunch, it walks off with Milo, the other stays). **But the bigger find was the motion:** the founder said the animation looked too fast, and measuring showed `travelMs` clamped every duration to 2400ms while a 60%-of-screen journey wants **5–10 SECONDS** at a walking pace — so every long journey had the body covering ground **2–4× faster than its legs**, band-wide, for months. Each chapter computed a `cycleScale` for the showy march and passed a bare `1` for ordinary journeys, so **the ordinary ones were the ones that skated**. `journeyOf` now returns `{ms, cycleScale}` together and **`travelMs` was deleted rather than documented** — a duration without its correction IS the bug. Cadence calmed ~28%, ceiling 2400→3600ms, sprite cap 140→230px (a PACING number: on a clamped journey the cycle is `ms·STRIDE·h/dist`, so cadence cancels and only height reaches it). **Two lessons about checks:** a sweep must import the SAME layout function the scene renders from, and must be DERIVED FROM THE CHAPTER'S OWN GENERATOR — twice a hand-written grid failed on screens no child can reach, and both times the test was wrong, not the code. **And the one the sweep could not see:** three rows in a 58px band buried the creatures, because the check only compared same-row pairs — *rows are only room if the rows are visually separate*. ▶ **Remaining in 3–5: shapes · colors · patterns** (augmentations, not rebuilds — keep the exact SVG/hex core, add a travelling creature and the arc each name already promises), then measurement. **Nobody has watched a child play any of it** — the burial was invisible to every passing check and only showed up on screen. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
 
 _Prior update: 2026-07-24 (chapter 2 (number order) rebuilt as **🦆 Follow the Leader** and shipped with the previously-uncommitted **🐣 Nest Tree**, `main`@`02f5437`, sw v56. A stepping-stone version was built and thrown away first, producing the rule the whole 3–5 band now runs on: **a numbered PROP cannot blend into painted art and cannot be alive before it is tapped — make the numbered things CREATURES.** Six founder corrections drove that session — the moonwalk, the pile-up, the cut-off leader, the shadow outrunning the feet, the frozen slide, and travel too fast to see — and every one traced to the same root: **a walk cycle and the travel it belongs to must be given the SAME number**, and **layout must be invariants, not constants that happen to hold at 1024×600**. Milo also gained his first drawn walk cycle there, kept from the rejected build — chapter 4 is what finally uses it.)_
 

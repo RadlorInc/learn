@@ -45,11 +45,26 @@ export const CSS = `
   @keyframes sh_float {0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
 `
 
-export function ShapeSVG({ name, size = 96, outline = false }: { name: ShapeName; size?: number; outline?: boolean }) {
+/**
+ * `socket` is the EMPTY version of a shape — a hole waiting for its piece, used by the shape-sorter
+ * chapter. It REPLACED an `outline` variant (a hairline stroke, no fill) and the difference is the
+ * whole reason it exists: a wireframe is the one thing a painted scene never contains, so an empty
+ * outline read as a diagram laid over the garden rather than a part of it. A hole in the world is a
+ * soft SHADOW with light catching its rim, and painted art is full of those.
+ *
+ * Same `path` as the solid piece either way, which is what keeps the sorter honest: a triangle is
+ * matched against a real triangle by construction.
+ */
+export function ShapeSVG({ name, size = 96, socket = false }: {
+  name: ShapeName; size?: number; socket?: boolean
+}) {
   const s = SHAPES[name]
   return (
     <svg width={size} height={size} viewBox="0 0 100 100">
-      <path d={s.path} fill={outline ? 'none' : COLORS[name]} stroke={outline ? 'var(--ink-muted)' : 'none'} strokeWidth={outline ? 7 : 0} strokeLinejoin="round" />
+      <path d={s.path}
+        fill={socket ? 'rgba(44,30,18,.30)' : COLORS[name]}
+        stroke={socket ? 'rgba(255,252,244,.8)' : 'none'}
+        strokeWidth={socket ? 4 : 0} strokeLinejoin="round" />
     </svg>
   )
 }
