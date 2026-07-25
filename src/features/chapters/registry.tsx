@@ -31,7 +31,7 @@ const teen = (
 )
 
 const PORTAL_CHAPTERS = {
-  addition: story("addition", "#dff0c8", () => import("@/features/chapters/story/Orchard")),
+  addition: story("addition", "#dff0c8", () => import("@/features/chapters/story/PlayTime")),
   anglesSymmetry: story("anglesSymmetry", "#0a1026", () => import("@/features/chapters/story/AngleScope")),
   areaPerimeter: story("areaPerimeter", "#0a1026", () => import("@/features/chapters/story/GridPlotter")),
   bigNumbers: story("bigNumbers", "#0a1026", () => import("@/features/chapters/story/NumberVault")),
@@ -48,7 +48,7 @@ const PORTAL_CHAPTERS = {
   measurement: story("measurement", "#cfe9f7", () => import("@/features/chapters/story/TallForest")),
   money: story("money", "#f3ead8", () => import("@/features/chapters/story/CoinShop")),
   multiplication: story("multiplication", "#f3ead8", () => import("@/features/chapters/story/MarketDay")),
-  numberComparison: story("numberComparison", "#241c39", () => import("@/features/chapters/story/Kitchen")),
+  numberComparison: story("numberComparison", "#dff0c8", () => import("@/features/chapters/story/BigOrSmall")),
   numberRecognition: story("numberRecognition", "#241c39", () => import("@/features/chapters/story/NestTree")),
   numberOrdering: story("numberOrdering", "#bfe6f7", () => import("@/features/chapters/story/FollowTheLeader")),
   numbersTo100: story("numbersTo100", "#cfe6f7", () => import("@/features/chapters/story/NumberTown")),
@@ -58,7 +58,7 @@ const PORTAL_CHAPTERS = {
   shapes2d3d: story("shapes2d3d", "#efe6d8", () => import("@/features/chapters/story/ShapeStudio")),
   skipCounting: story("skipCounting", "#dcecdb", () => import("@/features/chapters/story/HopAlong")),
   storyProblems: story("storyProblems", "#f3ead8", () => import("@/features/chapters/story/StoryTime")),
-  subtraction: story("subtraction", "#bfe7ff", () => import("@/features/chapters/story/LilyPond")),
+  subtraction: story("subtraction", "#bfe7ff", () => import("@/features/chapters/story/PlayTimeSub")),
   time: story("time", "#f3ead8", () => import("@/features/chapters/story/TickTock")),
   timesTables: story("timesTables", "#0a1026", () => import("@/features/chapters/story/TimesGrid")),
   wordProblems: story("wordProblems", "#0a1026", () => import("@/features/chapters/story/MissionBrief")),

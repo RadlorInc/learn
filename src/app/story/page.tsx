@@ -30,14 +30,14 @@ const lazyStory = <P,>(loader: () => Promise<{ default: React.ComponentType<P> }
 
 const ForestWalk = lazyStory(() => import('@/features/chapters/story/ForestWalk'))
 const FollowTheLeader = lazyStory(() => import("@/features/chapters/story/FollowTheLeader"))
-const Kitchen = lazyStory(() => import('@/features/chapters/story/Kitchen'))
+const BigOrSmall = lazyStory(() => import('@/features/chapters/story/BigOrSmall'))
 const NestTree = lazyStory(() => import('@/features/chapters/story/NestTree'))
 const HomeTime = lazyStory(() => import('@/features/chapters/story/HomeTime'))
 const ShapeTown = lazyStory(() => import('@/features/chapters/story/ShapeTown'))
 const RainbowTown = lazyStory(() => import('@/features/chapters/story/RainbowTown'))
 const BeadShop = lazyStory(() => import('@/features/chapters/story/BeadShop'))
-const Orchard = lazyStory(() => import('@/features/chapters/story/Orchard'))
-const LilyPond = lazyStory(() => import('@/features/chapters/story/LilyPond'))
+const PlayTime = lazyStory(() => import('@/features/chapters/story/PlayTime'))
+const PlayTimeSub = lazyStory(() => import('@/features/chapters/story/PlayTimeSub'))
 const TallForest = lazyStory(() => import('@/features/chapters/story/TallForest'))
 const NumberTown = lazyStory(() => import('@/features/chapters/story/NumberTown'))
 const BuildingBlocks = lazyStory(() => import('@/features/chapters/story/BuildingBlocks'))
@@ -85,7 +85,7 @@ export default function StoryPage() {
   function renderChapter() {
   if (ch === 'order') return <FollowTheLeader world={orderWorld} />
   // ?world=kitchen|grocery|bakery jumps into a comparison world.
-  if (ch === 'kitchen') return <Kitchen world={orderWorld} />
+  if (ch === 'kitchen') return <BigOrSmall />
   // ?world=meadow|splash|sky jumps into a race world.
   if (ch === 'nest' || ch === 'race' || ch === 'doors') return <NestTree world={orderWorld} />
   // ?ch=home is the current key; ?ch=grocery is the old Little Grocery link, kept working.
@@ -97,9 +97,9 @@ export default function StoryPage() {
   // ?world=beads|party|train jumps into a pattern world.
   if (ch === 'beads') return <BeadShop world={orderWorld} />
   // ?world=orchard|reef|space jumps into an addition world.
-  if (ch === 'add') return <Orchard world={orderWorld} />
+  if (ch === 'add') return <PlayTime />
   // ?world=pond|party|night jumps into a subtraction world.
-  if (ch === 'sub') return <LilyPond world={orderWorld} />
+  if (ch === 'sub') return <PlayTimeSub />
   // ?world=forest|trail|market jumps into a measurement world.
   if (ch === 'measure') return <TallForest world={orderWorld} />
   // ── 6–8 ──
