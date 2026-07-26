@@ -12,7 +12,7 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 📱 **2026-07-26 (LATEST) — PORTRAIT IS NOW A REAL LAYOUT FOR 12–18, NOT JUST AN ALLOWED ONE. ✅ COMMITTED, NOT PUSHED — `feat/teen-17-18-gameshell`@`496c2dd`. `tsc` · 136/136 vitest · `next build` · **the full e2e question-quality gate 35/35 in 21.0m, 0 failures and 0 flakes** · measured at 390×844 · 834×1194 · 640×320 · 1280×800.**
+> 📱 **2026-07-26 (LATEST) — PORTRAIT IS NOW A REAL LAYOUT FOR 12–18, NOT JUST AN ALLOWED ONE. 🚀 SHIPPED TO PROD — `main`@`a81bc43`, prod serving sw v64, smoke green + DRIVEN LIVE ON PROD IN PORTRAIT. `tsc` · 136/136 vitest · `next build` · **the full e2e question-quality gate 35/35 in 21.0m, 0 failures and 0 flakes** · measured at 390×844 · 834×1194 · 640×320 · 1280×800.**
 >
 > **The ask:** *"for the age group 12-18 I want portrait mode also."*
 >
@@ -58,14 +58,15 @@
 > 35.84px, flex** (exactly 8vw and 2.8vw of 1280). No overflow, nothing offscreen, at any of the four
 > sizes. Grading re-verified on a portrait phone (`data-test-phase` → `solved`).
 >
-> ## ④ THE BRANCH — three sessions committed, ⚠️ NOT PUSHED AND NOT DEPLOYED
-> `main` is untouched at `9800be3`; everything sits on **`feat/teen-17-18-gameshell`**, split so each
-> commit is one idea rather than one afternoon:
+> ## ④ THE DEPLOY — three sessions, fast-forwarded to `main` and pushed
+> Built on **`feat/teen-17-18-gameshell`**, split so each commit is one idea rather than one
+> afternoon, then **fast-forwarded into `main` (no merge commit) and pushed → Vercel prod**:
 > | commit | what |
 > |---|---|
 > | `4539b2d` | the 17–18 band onto GameShell — 10 chapters, 9 extracted sims, the plan doc, the curriculum amendment, the gate fix, 20 deletions |
 > | `496c2dd` | portrait for 12–18 (`GameShell` + `gameKit` only) |
-> | `b7529b8` | this handoff |
+> | `b7529b8` · `69b158d` · `626421f` | this handoff, in three passes |
+> | `a81bc43` | sw v63 → v64 for the deploy |
 >
 > **⚠️ AND A GIT TRAP THAT NEARLY MIS-SPLIT IT, which AMENDS the advice already in this file.** The
 > 2026-07-23 block says *"`git commit` with no pathspec commits the WHOLE index — use
@@ -85,8 +86,17 @@
 > enough evidence on their own. The suite's viewport is **1280×820, i.e. landscape**, which is exactly
 > the surface the portrait change had to leave alone, and it does.
 >
-> **Still NOT done before a deploy:** bump `public/sw.js` VERSION. That is a deploy step, deliberately
-> left out of the branch.
+> ## ⑥ POST-DEPLOY SMOKE — and what prod CANNOT prove
+> Prod `sw.js` reached **v64** on the fourth poll. `/` `/menu` `/api/health` `/diagnostic` `/auth`
+> `/parent` and **all 10 migrated 17–18 chapters → 200**. Then DROVE it rather than trusting status
+> codes: Cold Snap on a **390×844 portrait phone**, explore sim → start → THE PLAN → walkthrough →
+> scored round 1, board full-width at the top with finger-sized switches and a full-width commit —
+> the portrait layout, live. Committed a deliberately WRONG answer (`↘↗` on `f(x) = 3x⁴`, which
+> climbs at both ends) and **the glide corrected it to `↗↗` on screen**. 0 console errors.
+> ⚠️ **What prod cannot show, stated plainly:** `data-test-answer`/`data-test-phase` are compile-time
+> stripped from production builds, so the live drive proves the boards render, the instrument works
+> and a wrong answer reveals — **not that a correct answer grades correct.** That assertion comes from
+> the 35/35 e2e run on a dev build of the identical code.
 >
 > ## ▶ OPEN
 > 1. **This is 12–18 ONLY.** The 3–11 story band still has its `RotateGate` and is landscape-only by
@@ -101,7 +111,7 @@
 >
 > _(the 🌡️ block below is the same session's earlier work — the four 17–18 chapters.)_
 
-> 🌡️ **2026-07-26 — THE FOUR NO-PRIMITIVE 17–18 CHAPTERS BUILT: THE BAND IS NOW 10 OF 13. ✅ COMMITTED, NOT PUSHED — folded into `feat/teen-17-18-gameshell`@`4539b2d` with the 🎛️ block below (one workstream, and the two share registry.tsx and the e2e spec). `tsc` · 136/136 vitest · `next build` · e2e question-quality 4/4 on the new ids · all four driven live, 0 console errors.**
+> 🌡️ **2026-07-26 — THE FOUR NO-PRIMITIVE 17–18 CHAPTERS BUILT: THE BAND IS NOW 10 OF 13. 🚀 SHIPPED — landed in `4539b2d`, on prod as part of `main`@`a81bc43` / sw v64. `tsc` · 136/136 vitest · `next build` · e2e question-quality 4/4 on the new ids · all four driven live, 0 console errors.**
 >
 > **The ask:** *"do the remaining four chapters."* Those are the four the plan lists as needing no new
 > engine work: **#3 Cold Snap 🌡️** (polynomialFunctions) · **#6 The Balance That Grows 💳**
@@ -195,14 +205,14 @@
 >
 > _(the 🎛️ block below is the first half of this work — the design, and the first 6 chapters.)_
 
-> 🎛️ **2026-07-26 — THE 17–18 BAND STARTED ON GAMESHELL: DESIGNED, THEN 6 OF 13 CHAPTERS BUILT. ✅ COMMITTED, NOT PUSHED — `feat/teen-17-18-gameshell`@`4539b2d`, together with the four chapters in the 🌡️ block above. `tsc` · 128/128 vitest · `next build` · e2e question-quality 6/6 · every chapter driven live.**
+> 🎛️ **2026-07-26 — THE 17–18 BAND STARTED ON GAMESHELL: DESIGNED, THEN 6 OF 13 CHAPTERS BUILT. 🚀 SHIPPED in `4539b2d` with the four chapters in the 🌡️ block above; prod `main`@`a81bc43` / sw v64. `tsc` · 128/128 vitest · `next build` · e2e question-quality 6/6 · every chapter driven live.**
 >
 > **The ask:** *"design the chapters of age group 17-18 the way we designed 12–14 and 15–16."* Then,
 > after the first world list: *"can be more daily life examples."* Then build the pilot, then the
 > five cheap chapters.
 >
-> **⚠️ COMMITTED BUT NOT DEPLOYED.** Prod is still `main`@`9800be3` / sw v63, so every one of these
-> chapters is live only on a branch. Gates are green; a human has not seen any of it.
+> **🚀 NOW LIVE.** Prod serves these chapters at `main`@`a81bc43` / sw v64. Gates are green and one
+> chapter was driven on prod; **a human still has not played any of them.**
 >
 > ## ① WHERE THE BAND WAS, AND WHY IT WAS WORTH DOING
 > All 13 of the 17–18 chapters were still on the **pre-GameShell "Field Lab"** shape — the one 15–16
@@ -306,8 +316,8 @@
 > neither, and porting is not the moment to grow the syllabus.
 >
 > ## ▶ OPEN — pick up here
-> 1. ~~**COMMIT THIS.**~~ ✅ Done — `4539b2d`. Still **not pushed**; prod serves the old Field Lab
->    for all 13.
+> 1. ~~**COMMIT THIS.**~~ ✅ Done — `4539b2d`, and **shipped**: prod now serves GameShell for 10 of
+>    the 13; the last three still run the old Field Lab.
 > 2. **The engine wave** — `MatrixPad`, `CurveMatch`, `CircleTap`, plus lifting `RayLine` out of
 >    BalanceBench. **#7 The Big Wheel, #8 Daylight Hours and #10 Two Receipts are blocked on it.**
 > 3. **The four no-primitive chapters left:** #3 Cold Snap, #6 The Balance That Grows, #9 Torch on the
@@ -1862,7 +1872,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-26 (LATEST — see the top 📱 block. **✅ COMMITTED on `feat/teen-17-18-gameshell` — three commits, `4539b2d` the band, `496c2dd` portrait, `b7529b8` this file. ⚠️ NOT PUSHED AND NOT DEPLOYED: `main` is untouched at `9800be3`, prod still serves sw v63 and the old Field Lab for all 13 of the 17–18 chapters.** Portrait is now a real layout for **12–18**, not merely an allowed one. It always rendered — there is no rotate gate in the teen path — but **every size in the teen shell is `clamp(px, vw, px)`, width-derived with no vh term**, so a tall frame landed on the clamp MINIMUM everywhere while its height went unused: a 390×844 phone drew **76×60 tap buttons at 24px with 204px of dead space below them**, and a 834×1194 tablet was worse, because 834 ≥ 820 made it `roomy` and **pinned the chalkboard into a corner with the bottom third of the screen empty**. One gate — `portrait = innerHeight >= innerWidth × 1.2` — with three consequences: `roomy` excludes portrait (the board stacks instead of pinning), `FitSlot` may now ENLARGE (its `max: 1` cap was the thing blocking it, and lifting it fixes ~19 instruments and 24 scenes without touching one of them), and `AnswerPad` gains a vh term. Phone pad is now **98×84 at 34px**, a 61% bigger target. **Two things measurement caught that the formula did not:** the first vh coefficient came out UNDER the clamp floor and changed literally nothing while looking plausible, and the bigger buttons then wrapped **3 + 1**, leaving a lone tap target — now a 2×2 grid. Landscape is unchanged by construction and was measured anyway (640×320 and 1280×800 both byte-identical). ▶ **This is 12–18 only** — the 3–11 story band keeps its `RotateGate` and is landscape-only by design. Not checked on a real device. **The full gate has now run: `question-quality` 35/35 in 21.0m, zero failures and zero flakes** — the run the merge was waiting on, because the portrait commit touches `GameShell`/`gameKit`, shared by all 24 existing teen chapters, and its 1280×820 viewport is exactly the landscape surface the change had to leave alone. **A git trap nearly mis-split the commit and is written up in §④:** a pathspec that is a DIRECTORY commits the working tree under it and ignores the index, so `git commit -- src/…/teen/games` swallowed the portrait changes to `games/parts/*` despite an explicit `git reset` — caught by grepping `git show --stat` before moving on, and the 2026-07-23 git note has been amended in place. Only `public/sw.js` VERSION is left before a deploy, and that is deliberately a deploy step.)_
+_Last updated: 2026-07-26 (LATEST — see the top 📱 block. **🚀 SHIPPED TO PROD — `main`@`a81bc43`, prod serving sw v64, fast-forwarded (no merge commit) and pushed. Smoke green on `/` `/menu` `/api/health` `/diagnostic` `/auth` `/parent` and all 10 migrated 17–18 chapters, then DRIVEN LIVE ON PROD in portrait.** Portrait is now a real layout for **12–18**, not merely an allowed one. It always rendered — there is no rotate gate in the teen path — but **every size in the teen shell is `clamp(px, vw, px)`, width-derived with no vh term**, so a tall frame landed on the clamp MINIMUM everywhere while its height went unused: a 390×844 phone drew **76×60 tap buttons at 24px with 204px of dead space below them**, and a 834×1194 tablet was worse, because 834 ≥ 820 made it `roomy` and **pinned the chalkboard into a corner with the bottom third of the screen empty**. One gate — `portrait = innerHeight >= innerWidth × 1.2` — with three consequences: `roomy` excludes portrait (the board stacks instead of pinning), `FitSlot` may now ENLARGE (its `max: 1` cap was the thing blocking it, and lifting it fixes ~19 instruments and 24 scenes without touching one of them), and `AnswerPad` gains a vh term. Phone pad is now **98×84 at 34px**, a 61% bigger target. **Two things measurement caught that the formula did not:** the first vh coefficient came out UNDER the clamp floor and changed literally nothing while looking plausible, and the bigger buttons then wrapped **3 + 1**, leaving a lone tap target — now a 2×2 grid. Landscape is unchanged by construction and was measured anyway (640×320 and 1280×800 both byte-identical). ▶ **This is 12–18 only** — the 3–11 story band keeps its `RotateGate` and is landscape-only by design. Not checked on a real device. **The full gate has now run: `question-quality` 35/35 in 21.0m, zero failures and zero flakes** — the run the merge was waiting on, because the portrait commit touches `GameShell`/`gameKit`, shared by all 24 existing teen chapters, and its 1280×820 viewport is exactly the landscape surface the change had to leave alone. **A git trap nearly mis-split the commit and is written up in §④:** a pathspec that is a DIRECTORY commits the working tree under it and ignores the index, so `git commit -- src/…/teen/games` swallowed the portrait changes to `games/parts/*` despite an explicit `git reset` — caught by grepping `git show --stat` before moving on, and the 2026-07-23 git note has been amended in place. **Driven on prod at 390×844**: Cold Snap through explore → walkthrough → scored round 1 with the portrait layout live, and a deliberately wrong answer (`↘↗` on `3x⁴`) **corrected to `↗↗` on screen** by the glide; 0 console errors. ⚠️ Prod cannot prove GRADING — `data-test-*` is compile-time stripped from production builds — so that assertion rests on the 35/35 e2e run against a dev build of identical code. **Nobody has played any of the ten chapters, and none of the wording has been read aloud to a 17-year-old.**)_
 
 _Prior update: 2026-07-26 (the 🌡️ block. **✅ COMMITTED in `4539b2d`, folded in with the 🎛️ session below — one workstream, and the two share registry.tsx and the e2e spec. Not pushed.** The four no-primitive 17–18 chapters were built — **Cold Snap** (polynomials), **The Balance That Grows** (exp/log), **Torch on the Wall** (conics), **The Reviews** (stats) — taking the band to **10 of 13**. `tsc` · 136/136 vitest (was 128) · `next build` · e2e question-quality 4/4 on the new ids · every question kind driven by hand and asserted on `data-test-phase`, 0 console errors. **The picker budget is holding at 6 of ~10** across ten chapters, and two of those were bought back by re-asking rather than re-wording: Torch's classify needs **no card at all** — the tilt IS the classification, which beats the plan's own design — and its ellipse-orientation two-carder became "how far does the beam reach". Reviews lost two conceptual MCQs to one gesture. **Two real bugs, both found by looking, both the same root cause:** a chart scaled to its data's RANGE rather than to the feature being read — Cold Snap's polynomial ends squashed the dip below freezing, and the exponential's sixth month pinned the target line to the floor. A first fix clamped instead of clipping, which made the curve flatten along the top edge, and a saturated exponential reads as a balance levelling off — the opposite of the point. **Two instruments deliberately withhold a number** (the month dial does not print the balance at the marker; the review slider does not print the running average until reveal) because a dial that confirms the answer is hot/cold. ▶ Next: the engine wave — `MatrixPad`, `CurveMatch`, `CircleTap`, and lifting `RayLine` — which is the only thing blocking the last three chapters. Short-landscape still unchecked across the whole band; ten chapters of wording still unread by a teenager; the voice corpus still the top job overall, quota resets tomorrow.)_
 
