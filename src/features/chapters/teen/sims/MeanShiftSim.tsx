@@ -11,6 +11,7 @@
  */
 import { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export default function MeanShiftSim(_props: { band: AgeBand }) {
   const base = [4, 5, 6, 7, 8]
@@ -22,7 +23,7 @@ export default function MeanShiftSim(_props: { band: AgeBand }) {
   const round1 = (n: number) => Math.round(n * 10) / 10
 
   return (
-    <div style={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <SimLayout visual={
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 10, height: 140, padding: '10px 8px', background: 'var(--bg-1)', border: '1px solid var(--outline)', borderRadius: 12, position: 'relative' }}>
         {data.map((v, i) => {
           const isExtra = i === data.length - 1
@@ -34,7 +35,7 @@ export default function MeanShiftSim(_props: { band: AgeBand }) {
           )
         })}
       </div>
-
+    }>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <label htmlFor="mean-shift" style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--ink-soft)' }}>
           Drag the added value (amber bar): <span style={{ fontFamily: 'var(--font-numeric)', color: 'var(--note-amber)', fontWeight: 600 }}>{extra}</span>
@@ -57,6 +58,6 @@ export default function MeanShiftSim(_props: { band: AgeBand }) {
       <p style={{ margin: 0, fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
         Push the amber value far out and watch the mean chase it — that pull is why an outlier makes the mean a poor summary.
       </p>
-    </div>
+    </SimLayout>
   )
 }

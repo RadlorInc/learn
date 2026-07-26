@@ -16,6 +16,7 @@
 import { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 /** Pretty integer: a real minus sign for negatives. */
 const fmtInt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
@@ -50,10 +51,11 @@ export default function ComplexPlaneExplorer({ band }: { band: AgeBand }) {
       : `${fmtInt(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b) === 1 ? 'i' : `${Math.abs(b)}i`}`
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 420 }}>
+    <SimLayout maxWidth={420} gap={16} align="center" visual={<>
       <div style={{ width: '100%', maxWidth: 320 }}>
         <CoordGrid band={band} xRange={[-range, range]} yRange={[-range, range]} mode="read" variant="complex" points={[{ x: a, y: b }]} highlight={{ x: a, y: b }} />
       </div>
+    </>}>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
         <Slider text="real (a)" value={a} onChange={setA} />
@@ -64,6 +66,6 @@ export default function ComplexPlaneExplorer({ band }: { band: AgeBand }) {
         The point <strong style={{ color: 'var(--ink)', fontFamily: 'var(--font-numeric)' }}>{label}</strong> sits at <strong style={{ color: 'var(--ink)', fontFamily: 'var(--font-numeric)' }}>({fmtInt(a)}, {fmtInt(b)})</strong> on the plane.<br />
         Its <strong style={{ color: 'var(--ink)' }}>modulus</strong> is <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-numeric)' }}>√({a * a} + {b * b}) = {clean ? mod : `√${a * a + b * b} ≈ ${mod}`}</strong> — its distance from the origin.
       </p>
-    </div>
+    </SimLayout>
   )
 }

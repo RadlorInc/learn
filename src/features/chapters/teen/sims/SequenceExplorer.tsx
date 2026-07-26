@@ -12,6 +12,7 @@
 import { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export default function SequenceExplorer({ band }: { band: AgeBand }) {
   const [mode, setMode] = useState<'arith' | 'geo'>('arith')
@@ -28,7 +29,17 @@ export default function SequenceExplorer({ band }: { band: AgeBand }) {
   const yHi = Math.ceil(yMax / s) * s
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 340 }}>
+    <SimLayout maxWidth={340} gap={16} align="center" visual={<>
+      <div style={{ width: '100%' }}>
+        <CoordGrid
+          band={band}
+          xRange={[0, N + 1]}
+          yRange={[0, yHi]}
+          mode="read"
+          points={points}
+        />
+      </div>
+    </>}>
       <div style={{ display: 'flex', gap: 8 }}>
         {(['arith', 'geo'] as const).map((m) => (
           <button
@@ -48,15 +59,6 @@ export default function SequenceExplorer({ band }: { band: AgeBand }) {
         ))}
       </div>
 
-      <div style={{ width: '100%' }}>
-        <CoordGrid
-          band={band}
-          xRange={[0, N + 1]}
-          yRange={[0, yHi]}
-          mode="read"
-          points={points}
-        />
-      </div>
 
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <label style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)' }}>
@@ -77,6 +79,6 @@ export default function SequenceExplorer({ band }: { band: AgeBand }) {
       <p style={{ margin: 0, fontFamily: 'var(--font-numeric)', fontSize: 14, color: 'var(--ink)', textAlign: 'center' }}>
         {terms.map((t) => (t < 0 ? `−${Math.abs(t)}` : t)).join(',  ')}, …
       </p>
-    </div>
+    </SimLayout>
   )
 }

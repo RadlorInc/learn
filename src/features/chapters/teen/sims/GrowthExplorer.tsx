@@ -13,6 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface GrowthExplorerProps {
   band: AgeBand
@@ -71,7 +72,7 @@ export default function GrowthExplorer({ band, onReady }: GrowthExplorerProps) {
     : `Within this window the line y = ${a}x is still ahead — but keep going and the curve always wins.`
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 400 }}>
+    <SimLayout maxWidth={400} gap={16} align="center" visual={<>
       <div style={{ width: '100%' }}>
         <CoordGrid
           band={band}
@@ -83,6 +84,7 @@ export default function GrowthExplorer({ band, onReady }: GrowthExplorerProps) {
           curves={[expo]}
         />
       </div>
+    </>}>
 
       {/* Live readout of the two models */}
       <div style={{ display: 'flex', gap: 18, fontFamily: 'var(--font-numeric)', fontSize: 22, fontWeight: 600, minHeight: 30 }}>
@@ -102,6 +104,6 @@ export default function GrowthExplorer({ band, onReady }: GrowthExplorerProps) {
         <strong style={{ color: 'var(--ink)' }}>Exponential</strong> multiplies by {b} every step — it bends upward.<br />
         {overtakes}
       </p>
-    </div>
+    </SimLayout>
   )
 }

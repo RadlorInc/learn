@@ -13,6 +13,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import NumberLine from '@/features/chapters/teen/NumberLine'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface SignedJumpExplorerProps {
   band: AgeBand
@@ -120,11 +121,12 @@ export default function SignedJumpExplorer({ band, onReady }: SignedJumpExplorer
   const marked = a === sum ? [a] : [a, sum]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 420 }}>
+    <SimLayout maxWidth={420} gap={16} align="center" visual={<>
       <div style={{ width: '100%' }}>
         <JumpArrow a={a} b={b} />
         <NumberLine band={band} min={MIN} max={MAX} mode="read" marked={marked} />
       </div>
+    </>}>
 
       {/* Live sum readout */}
       <div style={{
@@ -145,6 +147,6 @@ export default function SignedJumpExplorer({ band, onReady }: SignedJumpExplorer
         Start at <strong style={{ color: 'var(--ink)' }}>{sgn(a)}</strong>, then {dir}.<br />
         You land on <strong style={{ color: 'var(--ink)' }}>{sgn(sum)}</strong>.
       </p>
-    </div>
+    </SimLayout>
   )
 }

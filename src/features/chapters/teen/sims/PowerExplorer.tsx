@@ -13,6 +13,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import { pow } from '@/features/chapters/lessons/ExponentsRootsTeenLesson'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface PowerExplorerProps {
   band: AgeBand
@@ -88,7 +89,7 @@ export default function PowerExplorer({ band, onReady }: PowerExplorerProps) {
       : `${pow(base, exp)} means ${base} multiplied by itself ${exp} times, which gives ${value}.`
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={18} align="center" visual={<>
       {/* Repeated-multiplication expansion */}
       <div style={{
         minHeight: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -105,6 +106,7 @@ export default function PowerExplorer({ band, onReady }: PowerExplorerProps) {
           <SquareGrid n={base} />
         </div>
       )}
+    </>}>
 
       {/* Live equation readout: base^exp = value */}
       <div style={{
@@ -125,6 +127,6 @@ export default function PowerExplorer({ band, onReady }: PowerExplorerProps) {
       <p style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
         {sentence}
       </p>
-    </div>
+    </SimLayout>
   )
 }

@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface LineExplorerProps {
   band: AgeBand
@@ -63,7 +64,7 @@ export default function LineExplorer({ band, onReady }: LineExplorerProps) {
     : `for every 1 step right, the line goes ${m > 0 ? 'up' : 'down'} ${Math.abs(m)}`
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       <div style={{ width: '100%' }}>
         <CoordGrid
           band={band}
@@ -74,6 +75,7 @@ export default function LineExplorer({ band, onReady }: LineExplorerProps) {
           points={[{ x: 0, y: b }]}
         />
       </div>
+    </>}>
 
       {/* Live equation readout */}
       <div style={{
@@ -94,6 +96,6 @@ export default function LineExplorer({ band, onReady }: LineExplorerProps) {
         <strong style={{ color: 'var(--ink)' }}>Slope {m < 0 ? `−${Math.abs(m)}` : m}:</strong> {riseText}.<br />
         <strong style={{ color: 'var(--ink)' }}>Intercept {b < 0 ? `−${Math.abs(b)}` : b}:</strong> the line crosses the y-axis there.
       </p>
-    </div>
+    </SimLayout>
   )
 }

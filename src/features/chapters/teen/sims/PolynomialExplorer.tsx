@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export default function PolynomialExplorer({ band }: { band: AgeBand }) {
   const [sign, setSign] = useState(1)   // +1 or −1 leading coefficient
@@ -22,7 +23,7 @@ export default function PolynomialExplorer({ band }: { band: AgeBand }) {
     ? sign > 0 ? 'Up on both ends' : 'Down on both ends'
     : sign > 0 ? 'Down-left, up-right' : 'Up-left, down-right'
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%', maxWidth: 340 }}>
+    <SimLayout maxWidth={340} gap={14} align="center" visual={<>
       <CoordGrid
         band={band}
         xRange={[-3, 3]}
@@ -30,6 +31,7 @@ export default function PolynomialExplorer({ band }: { band: AgeBand }) {
         mode="read"
         curves={[{ kind: 'curve', fn }]}
       />
+    </>}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 15, fontWeight: 700, color: 'var(--accent)' }}>
         {sign > 0 ? '' : '−'}x{even ? '⁴' : '³'} · degree {even ? 4 : 3} · {ends}
       </div>
@@ -49,6 +51,6 @@ export default function PolynomialExplorer({ band }: { band: AgeBand }) {
           {even ? 'Try odd degree' : 'Try even degree'}
         </button>
       </div>
-    </div>
+    </SimLayout>
   )
 }

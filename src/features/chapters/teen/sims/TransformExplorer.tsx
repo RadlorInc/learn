@@ -14,6 +14,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AgeBand, Pt } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface TransformExplorerProps {
   band: AgeBand
@@ -107,7 +108,7 @@ export default function TransformExplorer({ band, onReady }: TransformExplorerPr
   const imgPoly = image.map((p) => `${sx(p.x)},${sy(p.y)}`).join(' ')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       <div style={{ position: 'relative', width: '100%' }}>
         <CoordGrid band={band} xRange={[-RANGE, RANGE]} yRange={[-RANGE, RANGE]} mode="read" />
         {/* Overlay the two triangles in the SAME viewBox so they share CoordGrid's mapping. */}
@@ -139,6 +140,7 @@ export default function TransformExplorer({ band, onReady }: TransformExplorerPr
           ))}
         </svg>
       </div>
+    </>}>
 
       {/* Live rule readout */}
       <div style={{
@@ -183,6 +185,6 @@ export default function TransformExplorer({ band, onReady }: TransformExplorerPr
       <p style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
         The dashed triangle is the <strong style={{ color: 'var(--ink)' }}>pre-image</strong>; the solid one is the <strong style={{ color: 'var(--ink)' }}>image</strong>. Translate and reflect keep its size; scaling makes it larger.
       </p>
-    </div>
+    </SimLayout>
   )
 }

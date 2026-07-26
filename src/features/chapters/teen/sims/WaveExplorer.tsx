@@ -11,6 +11,7 @@
 import React, { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export default function WaveExplorer({ band }: { band: AgeBand }) {
   const [A, setA] = useState(3)
@@ -20,10 +21,7 @@ export default function WaveExplorer({ band }: { band: AgeBand }) {
   const sliderStyle: React.CSSProperties = { width: '100%', accentColor: 'var(--accent)' }
   const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-numeric)', fontSize: 13, color: 'var(--ink-soft)', display: 'flex', justifyContent: 'space-between' }
   return (
-    <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ textAlign: 'center', fontFamily: 'var(--font-numeric)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>
-        y = {A}·sin({B}x)
-      </div>
+    <SimLayout maxWidth={380} gap={14} visual={<>
       <CoordGrid
         band={band}
         xRange={[-6, 6]}
@@ -32,6 +30,10 @@ export default function WaveExplorer({ band }: { band: AgeBand }) {
         curves={[{ kind: 'curve', fn: (x) => A * Math.sin(B * x) }]}
         lines={[{ kind: 'line', m: 0, b: 0 }]}
       />
+    </>}>
+      <div style={{ textAlign: 'center', fontFamily: 'var(--font-numeric)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>
+        y = {A}·sin({B}x)
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <div style={labelStyle}><span>Amplitude A</span><span>{A}</span></div>
         <input type="range" min={1} max={5} step={1} value={A} onChange={(e) => setA(Number(e.target.value))} style={sliderStyle} aria-label="Amplitude" />
@@ -43,6 +45,6 @@ export default function WaveExplorer({ band }: { band: AgeBand }) {
       <div style={{ textAlign: 'center', fontFamily: 'var(--font-numeric)', fontSize: 14, color: 'var(--ink-muted)' }}>
         amplitude {A} · period {periodStr(B)}
       </div>
-    </div>
+    </SimLayout>
   )
 }

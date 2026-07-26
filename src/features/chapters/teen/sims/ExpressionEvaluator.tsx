@@ -12,6 +12,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface ExpressionEvaluatorProps {
   band: AgeBand
@@ -65,7 +66,7 @@ export default function ExpressionEvaluator({ band, onReady }: ExpressionEvaluat
   const value = A * x + B
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       <div style={{ width: '100%' }}>
         <CoordGrid
           band={band}
@@ -77,6 +78,7 @@ export default function ExpressionEvaluator({ band, onReady }: ExpressionEvaluat
           highlight={{ x, y: value }}
         />
       </div>
+    </>}>
 
       {/* The fixed expression */}
       <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
@@ -107,6 +109,6 @@ export default function ExpressionEvaluator({ band, onReady }: ExpressionEvaluat
         That pair <span style={{ fontFamily: 'var(--font-numeric)' }}>({fmt(x)}, {fmt(value)})</span> is
         the point on the line.
       </p>
-    </div>
+    </SimLayout>
   )
 }

@@ -16,6 +16,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface SystemExplorerProps {
   band: AgeBand
@@ -96,7 +97,7 @@ export default function SystemExplorer({ band, onReady }: SystemExplorerProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       <div style={{ width: '100%' }}>
         <CoordGrid
           band={band}
@@ -108,6 +109,7 @@ export default function SystemExplorer({ band, onReady }: SystemExplorerProps) {
           points={showMark ? [{ x: xSol as number, y: ySol as number }] : []}
         />
       </div>
+    </>}>
 
       {/* Live equations readout */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontFamily: 'var(--font-numeric)', fontSize: 20, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.01em', minHeight: 56, textAlign: 'center' }}>
@@ -127,6 +129,6 @@ export default function SystemExplorer({ band, onReady }: SystemExplorerProps) {
         The <strong style={{ color: 'var(--ink)' }}>solution</strong> of a system is where the lines meet.<br />
         {readout}
       </p>
-    </div>
+    </SimLayout>
   )
 }

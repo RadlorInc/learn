@@ -11,6 +11,7 @@
 import { useMemo, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export default function RationalExplorer({ band }: { band: AgeBand }) {
   const [a, setA] = useState(2)
@@ -23,7 +24,7 @@ export default function RationalExplorer({ band }: { band: AgeBand }) {
   const ax = PAD + ((a - -RANGE) / span) * PLOT
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       <div style={{ position: 'relative', width: '100%' }}>
         <CoordGrid band={band} xRange={[-RANGE, RANGE]} yRange={[-RANGE, RANGE]} mode="read" curves={[{ kind: 'curve', fn }]} />
         <svg
@@ -35,6 +36,7 @@ export default function RationalExplorer({ band }: { band: AgeBand }) {
           <line x1={ax} y1={PAD} x2={ax} y2={VW - PAD} stroke="var(--accent)" strokeWidth="1.5" strokeDasharray="4 4" opacity={0.85} />
         </svg>
       </div>
+    </>}>
 
       <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 18, fontWeight: 600, color: 'var(--accent)', textAlign: 'center', lineHeight: 1.4 }}>
         f(x) = 1 / (x {a >= 0 ? `− ${a}` : `+ ${Math.abs(a)}`}) &nbsp;·&nbsp; asymptote at x = {a < 0 ? `−${Math.abs(a)}` : a}
@@ -56,6 +58,6 @@ export default function RationalExplorer({ band }: { band: AgeBand }) {
       <p style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
         Slide <strong style={{ color: 'var(--ink)' }}>a</strong> and watch the curve break at the dashed <strong style={{ color: 'var(--ink)' }}>vertical asymptote</strong> x = a — the one input the function can’t take.
       </p>
-    </div>
+    </SimLayout>
   )
 }

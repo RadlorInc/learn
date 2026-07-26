@@ -11,6 +11,7 @@
  */
 import { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export default function UnitCircleExplorer(_props: { band: AgeBand }) {
   const [deg, setDeg] = useState(45)
@@ -27,7 +28,7 @@ export default function UnitCircleExplorer(_props: { band: AgeBand }) {
   const radLabel = piMul === 0 ? '0' : `${piMul.toFixed(2)}π`
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       <svg viewBox="0 0 260 260" role="img" aria-label={`Unit circle, angle ${deg} degrees`}
         style={{ display: 'block', width: '100%', height: 'auto', border: '1px solid var(--outline)', borderRadius: 8, background: 'var(--paper)' }}>
         {/* axes */}
@@ -44,6 +45,7 @@ export default function UnitCircleExplorer(_props: { band: AgeBand }) {
         <text x={cx + R + 6} y={cy - 6} style={{ fontFamily: 'var(--font-numeric)', fontSize: 11, fill: 'var(--ink-muted)' }}>x</text>
         <text x={cx + 6} y={cy - R - 6} style={{ fontFamily: 'var(--font-numeric)', fontSize: 11, fill: 'var(--ink-muted)' }}>y</text>
       </svg>
+    </>}>
 
       {/* live readout */}
       <div style={{ display: 'flex', width: '100%', gap: 8, padding: '4px 0' }}>
@@ -70,6 +72,6 @@ export default function UnitCircleExplorer(_props: { band: AgeBand }) {
         {' '}<strong style={{ color: 'var(--ink)' }}>x-coordinate is cos θ</strong> and its
         {' '}<strong style={{ color: 'var(--ink)' }}>y-coordinate is sin θ</strong>. Both live between −1 and 1.
       </p>
-    </div>
+    </SimLayout>
   )
 }

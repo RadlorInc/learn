@@ -12,6 +12,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface BalanceExplorerProps {
   band: AgeBand
@@ -91,7 +92,7 @@ export default function BalanceExplorer({ band, onReady }: BalanceExplorerProps)
   const rightColor = sideColor(diff < 0)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       {/* The balance beam */}
       <svg
         viewBox="0 0 320 200"
@@ -134,6 +135,7 @@ export default function BalanceExplorer({ band, onReady }: BalanceExplorerProps)
           </text>
         </g>
       </svg>
+    </>}>
 
       {/* Live readout: 2x + 3 = 11 → x = ? */}
       <div style={{
@@ -176,6 +178,6 @@ export default function BalanceExplorer({ band, onReady }: BalanceExplorerProps)
           </span>
         )}
       </div>
-    </div>
+    </SimLayout>
   )
 }

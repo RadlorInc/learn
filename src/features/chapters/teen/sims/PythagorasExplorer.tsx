@@ -11,6 +11,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface PythagorasExplorerProps {
   band: AgeBand
@@ -73,7 +74,7 @@ export default function PythagorasExplorer({ band, onReady }: PythagorasExplorer
   const Ay = cornerY - a * u                  // far end of vertical leg a
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       <div style={{ width: '100%', border: '1px solid var(--outline)', borderRadius: 8, background: 'var(--paper)' }}>
         <svg viewBox={`0 0 ${VB} ${VB}`} role="img" aria-label="right triangle with a square on each side" style={{ display: 'block', width: '100%', height: 'auto' }}>
           {/* square on leg b (below, going down) */}
@@ -108,6 +109,7 @@ export default function PythagorasExplorer({ band, onReady }: PythagorasExplorer
             style={{ fontFamily: 'var(--font-numeric)', fontSize: 14, fontWeight: 600, fill: 'var(--accent)' }}>c = {cText}</text>
         </svg>
       </div>
+    </>}>
 
       {/* Live readout: a² + b² = c² */}
       <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 22, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.01em', minHeight: 30, textAlign: 'center' }}>
@@ -127,6 +129,6 @@ export default function PythagorasExplorer({ band, onReady }: PythagorasExplorer
         The two small squares (areas <strong style={{ color: 'var(--ink)' }}>{a2}</strong> and <strong style={{ color: 'var(--ink)' }}>{b2}</strong>) always add up to the square on the slanted side — so{' '}
         <strong style={{ color: 'var(--ink)' }}>c² = {c2}</strong>, which makes <strong style={{ color: 'var(--ink)' }}>c = {cText}</strong>.
       </p>
-    </div>
+    </SimLayout>
   )
 }

@@ -12,6 +12,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface TrigTriangleExplorerProps {
   band: AgeBand
@@ -84,7 +85,7 @@ export default function TrigTriangleExplorer({ band, onReady }: TrigTriangleExpl
   const f2 = (n: number) => n.toFixed(2)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       <svg
         viewBox={`0 0 ${VB_W} ${VB_H}`}
         role="img"
@@ -131,6 +132,7 @@ export default function TrigTriangleExplorer({ band, onReady }: TrigTriangleExpl
         <text x={apexX + 8} y={(OY + apexY) / 2} textAnchor="start" style={{ fontFamily: 'var(--font-body)', fontSize: 12, fill: 'var(--ink-soft)' }}>opposite</text>
         <text x={(OX + apexX) / 2 - 6} y={(OY + apexY) / 2 - 8} textAnchor="end" style={{ fontFamily: 'var(--font-body)', fontSize: 12, fill: 'var(--accent)', fontWeight: 600 }}>hypotenuse</text>
       </svg>
+    </>}>
 
       {/* Live ratios readout */}
       <div style={{ display: 'flex', width: '100%', gap: 8, padding: '4px 0' }}>
@@ -150,6 +152,6 @@ export default function TrigTriangleExplorer({ band, onReady }: TrigTriangleExpl
         {' '}<strong style={{ color: 'var(--ink)' }}>sin θ</strong> and <strong style={{ color: 'var(--ink)' }}>tan θ</strong> climb,
         while <strong style={{ color: 'var(--ink)' }}>cos θ</strong> shrinks. The ratios depend only on the angle.
       </p>
-    </div>
+    </SimLayout>
   )
 }

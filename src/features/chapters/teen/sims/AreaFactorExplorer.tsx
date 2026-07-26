@@ -14,6 +14,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface AreaFactorExplorerProps {
   band: AgeBand
@@ -104,7 +105,7 @@ export default function AreaFactorExplorer({ band, onReady }: AreaFactorExplorer
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 380 }}>
+    <SimLayout maxWidth={380} gap={16} align="center" visual={<>
       {/* The box model */}
       <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
         <svg
@@ -141,6 +142,7 @@ export default function AreaFactorExplorer({ band, onReady }: AreaFactorExplorer
           <rect x={pad} y={pad} width={totalW} height={totalH} fill="none" stroke="var(--ink-soft)" strokeWidth={1.5} />
         </svg>
       </div>
+    </>}>
 
       {/* Live readouts */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -163,6 +165,6 @@ export default function AreaFactorExplorer({ band, onReady }: AreaFactorExplorer
         <strong style={{ color: 'var(--ink)' }}>Middle term {num(a + b)}:</strong> it&apos;s a + b, the two strips.<br />
         <strong style={{ color: 'var(--ink)' }}>Constant {num(a * b)}:</strong> it&apos;s a × b, the corner.
       </p>
-    </div>
+    </SimLayout>
   )
 }

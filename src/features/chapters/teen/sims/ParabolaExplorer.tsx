@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AgeBand, Pt } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export interface ParabolaExplorerProps {
   band: AgeBand
@@ -126,7 +127,7 @@ export default function ParabolaExplorer({ band, onReady }: ParabolaExplorerProp
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', maxWidth: 400 }}>
+    <SimLayout maxWidth={400} gap={16} align="center" visual={<>
       <div style={{ width: '100%' }}>
         <CoordGrid
           band={band}
@@ -138,6 +139,7 @@ export default function ParabolaExplorer({ band, onReady }: ParabolaExplorerProp
           highlight={Math.abs(vertexPt.x) <= RANGE && Math.abs(vertexPt.y) <= RANGE ? vertexPt : null}
         />
       </div>
+    </>}>
 
       {/* Live equation readout */}
       <div style={{
@@ -170,6 +172,6 @@ export default function ParabolaExplorer({ band, onReady }: ParabolaExplorerProp
         The <strong style={{ color: 'var(--ink)' }}>discriminant</strong> tells you the number of real roots:{' '}
         positive → 2, zero → 1 (the vertex sits on the x-axis), negative → 0 (the curve never crosses x).
       </p>
-    </div>
+    </SimLayout>
   )
 }

@@ -12,6 +12,7 @@
  */
 import { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 // Both lifted from the deleted IntroCalculusTeenLesson, which owned them.
 // ── SecantTangent: a lightweight inline secant→tangent visual (SVG) ─────────
@@ -77,8 +78,9 @@ export default function SecantExplorer({ band }: { band: AgeBand }) {
   const [t, setT] = useState(0)
   const { h, secSlope, tanSlope } = secantSlopeInfo(t)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%', maxWidth: 340 }}>
+    <SimLayout maxWidth={340} gap={14} align="center" visual={<>
       <SecantTangent t={t} />
+    </>}>
       <input
         type="range"
         min={0}
@@ -103,6 +105,6 @@ export default function SecantExplorer({ band }: { band: AgeBand }) {
       <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, textAlign: 'center', color: 'var(--ink-muted)', maxWidth: 300 }}>
         Slide Q toward P. As the gap h shrinks to zero, the secant slope closes in on the tangent slope — that limit is the derivative.
       </p>
-    </div>
+    </SimLayout>
   )
 }

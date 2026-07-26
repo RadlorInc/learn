@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
+import SimLayout from '@/features/chapters/teen/sims/SimLayout'
 
 export default function ConicExplorer({ band }: { band: AgeBand }) {
   const a = 4
@@ -26,7 +27,7 @@ export default function ConicExplorer({ band }: { band: AgeBand }) {
   }
   const isCircle = Math.abs(b - a) < 0.001
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%', maxWidth: 340 }}>
+    <SimLayout maxWidth={340} gap={14} align="center" visual={<>
       <div style={{ width: '100%' }}>
         <CoordGrid
           band={band}
@@ -37,6 +38,7 @@ export default function ConicExplorer({ band }: { band: AgeBand }) {
           points={[{ x: 0, y: 0 }]}
         />
       </div>
+    </>}>
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <label htmlFor="conic-b" style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-numeric)', fontSize: 14, color: 'var(--ink-soft)' }}>
           <span>vertical radius b</span>
@@ -56,6 +58,6 @@ export default function ConicExplorer({ band }: { band: AgeBand }) {
       <p style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
         x²/{a * a} + y²/{b * b} = 1 — {isCircle ? 'when b equals a it is a circle.' : 'stretch b away from a and the circle becomes an ellipse.'}
       </p>
-    </div>
+    </SimLayout>
   )
 }
