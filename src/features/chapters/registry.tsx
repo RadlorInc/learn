@@ -67,6 +67,46 @@ const PORTAL_CHAPTERS = {
     { skill: "algebraicExpressions", band: "12-14", conceptsConfirmed: ["Evaluating expressions", "Solving for the input", "Combining like terms", "Reading a rule"], nextPointer: "Next: equations & inequalities." },
     () => import("@/features/chapters/teen/games/FunctionFactory"),
   ),
+  conicSections: teen(
+    { skill: "conicSections", band: "17-18", conceptsConfirmed: ["Identifying the conic", "Circle: center & radius", "Parabola & ellipse features", "Hyperbola basics"], nextPointer: "Next: systems & matrices.", explore: { title: "Stretch a circle", intro: "Slide the vertical radius and watch a circle stretch into an ellipse. Get a feel for how the equation's denominators shape the curve, then continue.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/TorchOnTheWall"), () => import("@/features/chapters/teen/sims/ConicExplorer"),
+  ),
+  expLogFunctions: teen(
+    { skill: "expLogFunctions", band: "17-18", conceptsConfirmed: ["Growth vs decay", "Evaluating exponentials", "Logs as inverses", "Exponential ↔ log form"], nextPointer: "Next: the unit circle & trigonometry.", explore: { title: "Race the models", intro: "Slide the rates and watch a straight line lose to an exponential curve. Get a feel for how fast compounding takes over, then continue.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/BalanceThatGrows"), () => import("@/features/chapters/teen/sims/GrowthExplorer"),
+  ),
+  polynomialFunctions: teen(
+    { skill: "polynomialFunctions", band: "17-18", conceptsConfirmed: ["Degree & leading term", "End behavior", "Real zeros & multiplicity", "Turning points"], nextPointer: "Next: rational functions.", explore: { title: "Trace the ends", intro: "Flip the leading sign and switch between odd and even degree. Watch how the ends of the curve swing to match — then continue.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/ColdSnap"), () => import("@/features/chapters/teen/sims/PolynomialExplorer"),
+  ),
+  statsInference: teen(
+    { skill: "statsInference", band: "17-18", conceptsConfirmed: ["Mean, median, mode", "Range & spread", "Outliers & resistance", "Sampling & inference"], nextPointer: "Next: intro to calculus.", explore: { title: "Watch the mean move", intro: "Slide the added data point and watch the mean shift. Get a feel for how one far-out value drags the average, then continue.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/TheReviews"), () => import("@/features/chapters/teen/sims/MeanShiftSim"),
+  ),
+  complexNumbers: teen(
+    { skill: "complexNumbers", band: "17-18", conceptsConfirmed: ["i and powers of i", "Adding & subtracting", "Multiplying", "Modulus & the plane"], nextPointer: "Next: rational functions.", explore: { title: "Plot on the plane", intro: "Slide the real and imaginary parts and watch the point move on the complex plane — and its modulus, the distance from the origin, update with it. Get a feel for it, or skip straight to the game.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/WalkHome"), () => import("@/features/chapters/teen/sims/ComplexPlaneExplorer"),
+  ),
+  functionToolkit: teen(
+    { skill: "functionToolkit", band: "17-18", conceptsConfirmed: ["Function notation & evaluation", "Domain & range", "Transformations", "Composition & inverse"], nextPointer: "Next: analyzing quadratics.", explore: { title: "Reshape a figure", intro: "Slide the controls and watch the transformation rule update with the graph. Get a feel for how shifts, reflections and scaling move a shape, or skip straight to the game.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/PhotoFilters"), () => import("@/features/chapters/teen/sims/TransformExplorer"),
+  ),
+  introCalculus: teen(
+    { skill: "introCalculus", band: "17-18", conceptsConfirmed: ["Limits by substitution", "Average rate of change", "Secant → tangent", "Derivative & the power rule"], nextPointer: "You've reached the top of the ladder — Module complete.", explore: { title: "Zoom in on the instant", intro: "Slide the second point Q toward the fixed point P and watch the secant slope close in on the tangent slope. The value it approaches is the derivative — or skip straight to the game.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/Pace"), () => import("@/features/chapters/teen/sims/SecantExplorer"),
+  ),
+  quadraticAnalysis: teen(
+    { skill: "quadraticAnalysis", band: "17-18", conceptsConfirmed: ["Vertex & axis of symmetry", "Roots / x-intercepts", "The discriminant", "Direction & width"], nextPointer: "Next: polynomial functions.", explore: { title: "Reshape the parabola", intro: "Drag a, b, and c and watch the vertex, roots, and discriminant respond together. Get a feel for it, or skip straight to the game.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/ResaleFlip"), () => import("@/features/chapters/teen/sims/ParabolaExplorer"),
+  ),
+  rationalFunctions: teen(
+    { skill: "rationalFunctions", band: "17-18", conceptsConfirmed: ["Domain restrictions", "Vertical asymptotes", "Horizontal asymptotes", "Holes"], nextPointer: "Next: exponential & log functions.", explore: { title: "Break at the edge", intro: "Plot y = 1/(x − a) and slide a. Watch the curve tear apart at the dashed vertical asymptote — the single input the function forbids. Or skip straight to the game.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/ShareTheWifi"), () => import("@/features/chapters/teen/sims/RationalExplorer"),
+  ),
+  sequencesSeries: teen(
+    { skill: "sequencesSeries", band: "17-18", conceptsConfirmed: ["Arithmetic: common difference", "Geometric: common ratio", "nth-term formulas", "Series sums"], nextPointer: "Next: statistics & inference.", explore: { title: "Grow a sequence", intro: "Switch between adding a fixed step (arithmetic) and multiplying by a fixed factor (geometric), then slide the control and watch the terms climb the graph. Or skip straight to the game.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/TrainingBlock"), () => import("@/features/chapters/teen/sims/SequenceExplorer"),
+  ),
   coordinatePlane: teen(
     { skill: "coordinatePlane", band: "12-14", conceptsConfirmed: ["Plotting (x, y)", "All four quadrants", "Reflecting across an axis", "Finding a midpoint"], nextPointer: "Next: linear relationships." },
     () => import("@/features/chapters/teen/games/NightFlight"),
@@ -168,19 +208,9 @@ const BESPOKE_CHAPTERS = {
   patterns:           lazy(() => import('@/features/chapters/game/PatternsChapter')),
   additionTo100:      lazy(() => import('@/features/chapters/game/ArithmeticChapter').then(m => ({ default: m.AdditionTo100Chapter }))),
   subtractionTo100:   lazy(() => import('@/features/chapters/game/ArithmeticChapter').then(m => ({ default: m.SubtractionTo100Chapter }))),
-  functionToolkit:      lazy(() => import('@/features/chapters/game/FunctionToolkitChapter')),
-  quadraticAnalysis:    lazy(() => import('@/features/chapters/game/QuadraticAnalysisChapter')),
-  polynomialFunctions:  lazy(() => import('@/features/chapters/game/PolynomialFunctionsChapter')),
-  complexNumbers:       lazy(() => import('@/features/chapters/game/ComplexNumbersChapter')),
-  rationalFunctions:    lazy(() => import('@/features/chapters/game/RationalFunctionsChapter')),
-  expLogFunctions:      lazy(() => import('@/features/chapters/game/ExpLogFunctionsChapter')),
   unitCircleTrig:       lazy(() => import('@/features/chapters/game/UnitCircleTrigChapter')),
   trigGraphsIdentities: lazy(() => import('@/features/chapters/game/TrigGraphsIdentitiesChapter')),
-  conicSections:        lazy(() => import('@/features/chapters/game/ConicSectionsChapter')),
   systemsMatrices:      lazy(() => import('@/features/chapters/game/SystemsMatricesChapter')),
-  sequencesSeries:      lazy(() => import('@/features/chapters/game/SequencesSeriesChapter')),
-  statsInference:       lazy(() => import('@/features/chapters/game/StatsInferenceChapter')),
-  introCalculus:        lazy(() => import('@/features/chapters/game/IntroCalculusChapter')),
 }
 
 /** id → component for every chapter in the app. Record<> enforces completeness. */

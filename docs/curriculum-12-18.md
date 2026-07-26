@@ -99,6 +99,15 @@ Near-adults heading to college/work. Sleek, no mascot; analyst/STEM-explorer ton
 hooks (signal processing, growth/decay, orbits, polling, risk, motion) as compact applied
 cards. Milo is a quiet lab-assistant coach. Carries the shared HS kit — almost no new primitives.
 
+> **AMENDED 2026-07-26 (founder call) — the TONE above stands, the WORLDS do not.**
+> Sleek and mascot-free is right; professional settings are not. The named hooks
+> (signal processing, orbits, polling) are workplaces a 17-year-old reads about rather
+> than lives in, so the GameShell migration re-cast all thirteen around **things they
+> touch in a normal week** — a photo app, the house wifi, a torch on a wall, a running
+> app, two receipts. The locked world list and the reasoning are in
+> [teen-17-18-gameshell-plan.md §5](teen-17-18-gameshell-plan.md). Recorded here so
+> the spec and the code do not disagree silently, as they once did for `mapMaker`.
+
 | # | Chapter | id | Type | New primitive |
 |---|---|---|---|---|
 | 1 | Functions, Transformations & Composition | `functionToolkit` | EXTEND ← functionsFamilies | — |

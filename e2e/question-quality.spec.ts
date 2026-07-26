@@ -26,6 +26,10 @@ const CHAPTERS = [
   'slopeLinearGraphs', 'functionsFamilies', 'systemsOfEquations',
   'exponentsPolynomials', 'radicalsPythagorean', 'factoringPolynomials',
   'quadraticsParabolas', 'geometryTransformations', 'geometryProofTrig',
+  // 17–18 — added as each chapter moves onto GameShell (docs/teen-17-18-gameshell-plan.md §7).
+  'complexNumbers', 'sequencesSeries', 'introCalculus', 'rationalFunctions',
+  'functionToolkit', 'quadraticAnalysis', 'polynomialFunctions', 'expLogFunctions',
+  'conicSections', 'statsInference',
 ]
 
 interface Board { badge: string; instruction: string; answerLine: string; padded: boolean; answer: string }

@@ -39,11 +39,30 @@ const GAMES = join(process.cwd(), 'src/features/chapters/teen/games')
  * `context` then covered a missing one. A planted regression walked straight through
  * it. Splitting on more lines can only make the check STRICTER, never looser.
  */
-function taskChunks(src: string): string[] {
+/**
+ * ⚠️ The TITLE is resolved by looking BACK from the chunk's first line, never
+ * forward into it. A chunk starts at the `badge:` line, so a task written across
+ * two lines —
+ *     kind: 'mod', title: 'As the crow flies', tone: 'a',
+ *     badge: `|${fmtComplex(a, b)}|`,
+ * — keeps its title OUTSIDE its own chunk, and a forward `title:` search then finds
+ * the NEXT task's title instead. Detection was always right; the failure message
+ * named the wrong task, which sends the next reader to the wrong place. Taking the
+ * last `title:` at or before the end of the chunk's first line covers both layouts:
+ * a one-line task has its title on the badge line itself, a two-line task on the
+ * line above, and neither can reach the following task.
+ */
+function taskChunks(src: string): { body: string; title: string }[] {
   const starts: number[] = []
   const re = /^[^\n]*\bbadge:/gm
   for (let m = re.exec(src); m; m = re.exec(src)) starts.push(m.index)
-  return starts.map((s, i) => src.slice(s, starts[i + 1] ?? src.length))
+  return starts.map((s, i) => {
+    const eol = src.indexOf('\n', s)
+    const head = src.slice(0, eol === -1 ? src.length : eol)
+    const titles = head.match(/title: '([^']+)'/g)
+    const last = titles?.[titles.length - 1]?.match(/title: '([^']+)'/)
+    return { body: src.slice(s, starts[i + 1] ?? src.length), title: last?.[1] ?? '(untitled)' }
+  })
 }
 
 describe('padded questions keep their story line', () => {
@@ -64,9 +83,9 @@ describe('padded questions keep their story line', () => {
       // `context,` fed by a local computed above the literal (GearLab picks its
       // wording off the exponent that way). Matching only `context:` reported that
       // as a missing story line, which it is not.
-      .filter((c) => /\bpadInstruction:/.test(c) && !/^\s*context\s*[,:]/m.test(c))
-      // The chunk's own title, for a failure message that names the task.
-      .map((c) => (c.match(/title: '([^']+)'/) ?? [, '(untitled)'])[1])
+      .filter((c) => /\bpadInstruction:/.test(c.body) && !/^\s*context\s*[,:]/m.test(c.body))
+      // The chunk's own title, for a failure message that names the right task.
+      .map((c) => c.title)
 
     expect(naked, `${file}: ${naked.length} padded task(s) — ${naked.join(', ')} — set ` +
       '`padInstruction` but no `context`. GameShell maps padInstruction onto the board\'s ' +
