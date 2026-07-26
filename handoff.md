@@ -12,7 +12,99 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🎡 **2026-07-26 (LATEST) — THE BAND IS COMPLETE: 13 OF 13. 🚀 SHIPPED TO PROD — `main`@`a7ad21d`, prod serving sw v65, smoke green + DRIVEN LIVE ON PROD. `tsc` · 142/142 vitest · `next build` · e2e question-quality **38/38 in 23.9m, 0 failures and 0 flakes** · every one of the 16 new question kinds driven by hand to `solved`.**
+> 📐 **2026-07-27 (LATEST) — SHORT-LANDSCAPE SWEPT ACROSS THE 17–18 BAND (the last open item from the 🎡 block), AND IT FOUND ONE REAL DEFECT — IN A COMPONENT SHARED BY ALL 37 TEEN CHAPTERS. ⚠️ NOT COMMITTED WHEN THIS WAS WRITTEN → now on `feat/teen-explore-short-landscape`, NOT pushed, NOT deployed. Prod is still `main`@`413414a` / sw v65.** `tsc` · 142/142 vitest · `next build` · **two new e2e sweeps: 100 passed / 48 skipped / 0 failed (explore, 37 chapters × 4 sizes) and 52/52 (walkthrough + practice, 13 × 4 × 2 stages)**.
+>
+> **The ask:** *"short-landscape unchecked across the whole 17–18 band."* `640×320 · 667×375 · 740×360 · 1024×400`.
+>
+> ## ① THE ANSWER TO THE QUESTION ASKED: THE BAND IS CLEAN
+> **156 measured screens, 0 failures.** No clipping, no board-on-instrument overlap, no horizontal
+> overflow, nothing under the 24px operable floor, no console errors. `GameShell`'s short-frame
+> layout — the two-column row plus `FitSlot` — holds at every size in all 13 chapters. The tightest
+> answering controls are complexNumbers' PartsBuilder `±` at **31×31** with its commit at 127×34,
+> which is the same class as the 15–16 band's stated 29×29 ceiling.
+>
+> **New gate: [e2e/short-landscape.spec.ts](e2e/short-landscape.spec.ts).** Measures three stages
+> (explore · walkthrough · practice) against four invariants: nothing clipped, nothing overlapping,
+> no h-overflow, no control under 24px. It distinguishes **clipped** from **merely scrollable** by
+> walking ancestors for a scrollable one — that distinction is the whole point, because the defect
+> below was reachable-by-scrolling and therefore invisible to every check that had passed.
+>
+> ## ② THE DEFECT — AND IT IS NOT A 17–18 REGRESSION
+> All 128 below-fold elements were in **explore**, none in walkthrough or practice. The culprit is
+> the shared [ExploreStep](src/features/chapters/teen/ExploreStep.tsx), which every teen chapter
+> opens on. Measured at 640×320 **before**: header 125px (39% of the screen), 187 of the graph's
+> 380px visible, the sim's own sliders at y≈690 and **"Skip to the game →" at y=824 — 504px below
+> the fold**, ≈870px of content in a 320px port. Three things compound:
+> `minHeight: 100dvh` is a FLOOR not a cap · `main` is `flex:1` with no `minHeight:0`, so it cannot
+> shrink below its content · the sim's size is width-derived with no vh term. The portal's
+> `overflowY:auto` then turns the overflow into a scroll, which is exactly why it never looked broken.
+>
+> ## ③ ⚠️ SCALE-TO-FIT IS NOT REFLOW — I PROPOSED THE WRONG FIX FIRST, AND THE ARITHMETIC KILLED IT
+> The first plan was "cap at 100dvh and wrap the sim in `FitBox`, exactly the pattern `FitSlot`
+> proves." **Wrong.** `FitSlot` works inside `GameShell` only because `PlayFrame` **reflows to two
+> columns first** and scaling handles the modest remainder. Here the fit scale is `320/870 ≈ 0.37`,
+> i.e. **13px sliders** — the identical wall the 15–16 pass hit (12×12 steppers, a 61×13 commit
+> button). The height had to come out of the LAYOUT. *(This rule was already in the handoff; I
+> re-derived it the hard way.)*
+>
+> ## ④ THE FOUNDER CAUGHT ME HIDING TEXT — TWICE
+> To buy height I hid the intro paragraph; founder, from a 915×412 device: *"the paragraph got
+> disappear."* Fixed by condensing rather than hiding — then the next pass hid the sim's own closing
+> paragraph and he caught that too. **The rule is now a comment in both files: buy height from the
+> VISUAL, which has room to give, and from the page chrome — never from the prose that says what the
+> sim is for and what to notice in it.** A sim that fits and explains nothing is not a fix.
+>
+> ## ⑤ THE GENERIC CSS OVERRIDE WAS WRONG IN KIND, NOT DEGREE
+> I first reflowed the sim from ExploreStep with a descendant selector treating **the first child as
+> the visual**. Reading all 21 sims to convert them proved that is simply false for **SequenceExplorer**
+> (first child is a mode-toggle row, the chart is second) and **WaveExplorer** (first child is an
+> equation readout). Those two reflowed the *buttons* into the visual slot at every size. Founder:
+> *"first make the things proper in one chapter then we can do the correction in rest"* — right call.
+> **[SimLayout.tsx](src/features/chapters/teen/sims/SimLayout.tsx) now takes an explicit `visual` prop**;
+> a sim declares its own parts and the shell cannot guess wrong, including for a sim written later.
+> All 21 converted. **Generalise: do not infer structure across a set of hand-written components — the
+> two that break the pattern are exactly the ones you will not think to check.**
+>
+> ## ⑥ TWO CSS TRAPS WORTH KEEPING
+> • **CSS grid is the wrong primitive for "group children 2..n".** It needs the visual to span every
+>   row, and **a spanning item's surplus height is DISTRIBUTED ACROSS EVERY TRACK IT SPANS** —
+>   measured on statsInference, 97 supposedly-empty implicit rows came out at **1.33px each**,
+>   inflating a 140px sim to 209px. An earlier attempt was worse: with a row-gap, `99 × 8px = 792px`
+>   of pure gap put column 2 at **y = −340**, which rendered as an empty right-hand column.
+> • **A backtick in a CSS comment silently ends a JS template literal.** Broke the build three times
+>   in one session. There is now a note in the file saying so.
+> • And a testing trap: **`npx tsc --noEmit | tail -5 && echo OK` always echoes OK**, because `tail`
+>   exits 0 — one run printed real errors *and* "TSC OK". Check the exit code, not the pipeline's.
+>
+> ## ⑦ TALL FRAMES ARE UNCHANGED, AND THAT WAS MEASURED RATHER THAN ASSUMED
+> `SimLayout` takes each sim's original `maxWidth` (340/380/400/420), `gap` (14/16/18) and
+> `alignItems` as props precisely so it is invisible above the 469px breakpoint. Verified across all
+> 25 explore chapters at 1280×800: `flex-direction: column`, original maxWidth, controls width ==
+> sim width. **That check caught a real regression before it shipped** — `.mb-sim-controls` had no
+> width, so under `align: center` it shrank to its content and every `width: '100%'` slider would
+> have measured against the shrunk box.
+> **Also verified NOT a regression:** 7 chapters scroll at 1280×800, and they are 595–779px tall
+> against a ~610px band — they never fit. The committed original had no cap, so the same overflow
+> pushed the footer down and scrolled the page; now the page does not scroll, the footer is pinned
+> and **Continue is visible in all 7**. Strictly better.
+>
+> ## ▶ OPEN
+> 1. **Commit is on a branch, NOT pushed and NOT deployed.** Deploying needs the usual `public/sw.js`
+>    VERSION bump (v65 → v66) as its own commit.
+> 2. **The gate measures only the FIRST scored question** per chapter/size, and its kind is a
+>    generator draw — so each chapter gets one of its 4–6 instruments sampled per run. Visible in the
+>    data: complexNumbers showed its compass at 640×320 and its (tighter) PartsBuilder at 1024×400.
+>    Repeat runs widen the sample; forcing every kind needs a per-chapter hook.
+> 3. **No real device.** Everything is a resized Chromium viewport — no browser chrome bar, no
+>    safe-area inset, no soft keyboard.
+> 4. **The 12–14 band has no explore sim at all** (48 of the 148 explore cases skip), so this change
+>    cannot affect it. 15–16 and 17–18 have 25 between them and are all covered.
+> 5. **The voice corpus is still the top job overall** — the whole 3–11 band has zero clips.
+> 6. Still the headline: **~zero real users.**
+>
+> _(the 🎡 block below is the previous session — the 17–18 band completed.)_
+
+> 🎡 **2026-07-26  — THE BAND IS COMPLETE: 13 OF 13. 🚀 SHIPPED TO PROD — `main`@`a7ad21d`, prod serving sw v65, smoke green + DRIVEN LIVE ON PROD. `tsc` · 142/142 vitest · `next build` · e2e question-quality **38/38 in 23.9m, 0 failures and 0 flakes** · every one of the 16 new question kinds driven by hand to `solved`.**
 >
 > **The ask:** *"complete that 3 remaining chapters also."* Those were the three blocked on primitives
 > that did not exist: **#7 The Big Wheel** 🎡 (unitCircleTrig) · **#8 Daylight Hours** 🌅
@@ -1955,7 +2047,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-26 (LATEST — see the top 🎡 block. **🚀 SHIPPED — `main`@`a7ad21d`, prod serving sw v65, fast-forwarded and pushed; smoke green on all 13 chapters and driven live on prod.** **The 17–18 band is COMPLETE — 13 of 13**, and `BESPOKE_CHAPTERS` now holds only 3–11 story chapters, so every teen chapter in the app runs on GameShell. The engine wave landed three primitives in gameKit — **`MatrixPad`** (the answer IS a matrix), **`CurveMatch`** (LineSetter generalised from a line to a wave), **`CircleTap`** (the read-only unit-circle sim promoted into an answering instrument) — then the last three chapters: **The Big Wheel**, **Daylight Hours**, **Two Receipts**. The plan's fourth item, lifting `RayLine`, was deliberately skipped: the two chapters that want it have already shipped with working answer surfaces, and none of these three needs it. `tsc` · 142/142 vitest · **16 question kinds each forced to the surface and driven by hand to `solved`**. **A third chart scaled to the wrong range**: CurveMatch drew ±7 about the centre when a daylight year lives at 12±5, so the whole target sat above the top edge and the child had nothing to match — the same bug as Cold Snap's ends and the exponential's sixth month, and all three graded correctly while being unreadable, so no gate could see any of them. **And 56 taps to build one matrix** — caught by watching, fixed by starting the pad at the first operand, which also models what addition is. **The picker budget landed exactly on 10**, the number plan §3 set and risk #4 warned would creep. **The full gate ran: 38/38 in 23.9m, zero failures and zero flakes.** ⚠️ And a standing claim in this file is too pessimistic: prod strips `data-test-*`, but the board's **`SOLVED ✓`** label is grade-derived and visible — a correct build showed it on prod and a deliberately wrong tap did not, so a correct grade IS observable in production. What prod still cannot give is the machine-readable hook, so the sweep still needs a dev build. ▶ Short-landscape still unchecked band-wide; thirteen chapters of wording still unread by a teenager; the voice corpus still the top job overall. _(prior footer follows.)_)_
+_Last updated: 2026-07-27 (LATEST — see the top 📐 block. **Short-landscape swept across the 17–18 band — the last open item from the 🎡 block — and the band itself is CLEAN: 156 measured screens, 0 failures.** No clipping, no overlap, no h-overflow, nothing under the 24px operable floor; tightest control is a 31×31 stepper, in line with 15–16's stated ceiling. **The one real defect was in `ExploreStep`, shared by ALL 37 teen chapters, so it is not a 17–18 regression** — at 640×320 it was 2.7 screens of content with "Skip to the game →" **504px below the fold**, invisible to every prior check because it scrolled rather than clipped. ⚠️ **My first fix was wrong and the arithmetic killed it**: wrapping the sim in `FitBox` gives a 0.37 scale, i.e. 13px sliders — *scale-to-fit is not reflow*, the rule this repo already learned in 15–16. ⚠️ **And the founder caught me hiding text twice** (the intro, then the sim's closing paragraph) — height comes out of the visual and the chrome, never the prose. **The generic CSS override was wrong in kind**: it guessed "first child is the visual", which is false for SequenceExplorer and WaveExplorer, so each of the 21 sims now DECLARES its visual via the new `SimLayout`. Two CSS traps banked: a grid spanner's surplus height distributes across every track it spans (97 "empty" rows at 1.33px each inflated a 140px sim to 209px), and a backtick in a CSS comment silently ends a JS template literal (three build breaks). Tall frames verified unchanged across all 25 explore chapters — that check caught a real width regression before it shipped. `tsc` · 142/142 vitest · `next build` · 100/48-skipped/0-failed + 52/52. ▶ **On a branch, NOT pushed, NOT deployed** (prod still `main`@`413414a` / sw v65); the gate samples only the first scored question per run; nothing checked on a real device. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-26 (see the top 🎡 block. **🚀 SHIPPED — `main`@`a7ad21d`, prod serving sw v65, fast-forwarded and pushed; smoke green on all 13 chapters and driven live on prod.** **The 17–18 band is COMPLETE — 13 of 13**, and `BESPOKE_CHAPTERS` now holds only 3–11 story chapters, so every teen chapter in the app runs on GameShell. The engine wave landed three primitives in gameKit — **`MatrixPad`** (the answer IS a matrix), **`CurveMatch`** (LineSetter generalised from a line to a wave), **`CircleTap`** (the read-only unit-circle sim promoted into an answering instrument) — then the last three chapters: **The Big Wheel**, **Daylight Hours**, **Two Receipts**. The plan's fourth item, lifting `RayLine`, was deliberately skipped: the two chapters that want it have already shipped with working answer surfaces, and none of these three needs it. `tsc` · 142/142 vitest · **16 question kinds each forced to the surface and driven by hand to `solved`**. **A third chart scaled to the wrong range**: CurveMatch drew ±7 about the centre when a daylight year lives at 12±5, so the whole target sat above the top edge and the child had nothing to match — the same bug as Cold Snap's ends and the exponential's sixth month, and all three graded correctly while being unreadable, so no gate could see any of them. **And 56 taps to build one matrix** — caught by watching, fixed by starting the pad at the first operand, which also models what addition is. **The picker budget landed exactly on 10**, the number plan §3 set and risk #4 warned would creep. **The full gate ran: 38/38 in 23.9m, zero failures and zero flakes.** ⚠️ And a standing claim in this file is too pessimistic: prod strips `data-test-*`, but the board's **`SOLVED ✓`** label is grade-derived and visible — a correct build showed it on prod and a deliberately wrong tap did not, so a correct grade IS observable in production. What prod still cannot give is the machine-readable hook, so the sweep still needs a dev build. ▶ Short-landscape still unchecked band-wide; thirteen chapters of wording still unread by a teenager; the voice corpus still the top job overall. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-26 (the 📱 block. **🚀 SHIPPED TO PROD — `main`@`a81bc43`, prod serving sw v64, fast-forwarded (no merge commit) and pushed. Smoke green on `/` `/menu` `/api/health` `/diagnostic` `/auth` `/parent` and all 10 migrated 17–18 chapters, then DRIVEN LIVE ON PROD in portrait.** Portrait is now a real layout for **12–18**, not merely an allowed one. It always rendered — there is no rotate gate in the teen path — but **every size in the teen shell is `clamp(px, vw, px)`, width-derived with no vh term**, so a tall frame landed on the clamp MINIMUM everywhere while its height went unused: a 390×844 phone drew **76×60 tap buttons at 24px with 204px of dead space below them**, and a 834×1194 tablet was worse, because 834 ≥ 820 made it `roomy` and **pinned the chalkboard into a corner with the bottom third of the screen empty**. One gate — `portrait = innerHeight >= innerWidth × 1.2` — with three consequences: `roomy` excludes portrait (the board stacks instead of pinning), `FitSlot` may now ENLARGE (its `max: 1` cap was the thing blocking it, and lifting it fixes ~19 instruments and 24 scenes without touching one of them), and `AnswerPad` gains a vh term. Phone pad is now **98×84 at 34px**, a 61% bigger target. **Two things measurement caught that the formula did not:** the first vh coefficient came out UNDER the clamp floor and changed literally nothing while looking plausible, and the bigger buttons then wrapped **3 + 1**, leaving a lone tap target — now a 2×2 grid. Landscape is unchanged by construction and was measured anyway (640×320 and 1280×800 both byte-identical). ▶ **This is 12–18 only** — the 3–11 story band keeps its `RotateGate` and is landscape-only by design. Not checked on a real device. **The full gate has now run: `question-quality` 35/35 in 21.0m, zero failures and zero flakes** — the run the merge was waiting on, because the portrait commit touches `GameShell`/`gameKit`, shared by all 24 existing teen chapters, and its 1280×820 viewport is exactly the landscape surface the change had to leave alone. **A git trap nearly mis-split the commit and is written up in §④:** a pathspec that is a DIRECTORY commits the working tree under it and ignores the index, so `git commit -- src/…/teen/games` swallowed the portrait changes to `games/parts/*` despite an explicit `git reset` — caught by grepping `git show --stat` before moving on, and the 2026-07-23 git note has been amended in place. **Driven on prod at 390×844**: Cold Snap through explore → walkthrough → scored round 1 with the portrait layout live, and a deliberately wrong answer (`↘↗` on `3x⁴`) **corrected to `↗↗` on screen** by the glide; 0 console errors. ⚠️ Prod cannot prove GRADING — `data-test-*` is compile-time stripped from production builds — so that assertion rests on the 35/35 e2e run against a dev build of identical code. **Nobody has played any of the ten chapters, and none of the wording has been read aloud to a 17-year-old.**)_
 
