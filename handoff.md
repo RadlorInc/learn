@@ -12,7 +12,75 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 📱 **2026-07-26 (LATEST) — PORTRAIT IS NOW A REAL LAYOUT FOR 12–18, NOT JUST AN ALLOWED ONE. 🚀 SHIPPED TO PROD — `main`@`a81bc43`, prod serving sw v64, smoke green + DRIVEN LIVE ON PROD IN PORTRAIT. `tsc` · 136/136 vitest · `next build` · **the full e2e question-quality gate 35/35 in 21.0m, 0 failures and 0 flakes** · measured at 390×844 · 834×1194 · 640×320 · 1280×800.**
+> 🎡 **2026-07-26 (LATEST) — THE BAND IS COMPLETE: 13 OF 13. The engine wave, then the last three chapters. ⚠️ UNCOMMITTED. `tsc` · 142/142 vitest · every one of the 16 new question kinds driven by hand to `solved`.**
+>
+> **The ask:** *"complete that 3 remaining chapters also."* Those were the three blocked on primitives
+> that did not exist: **#7 The Big Wheel** 🎡 (unitCircleTrig) · **#8 Daylight Hours** 🌅
+> (trigGraphsIdentities) · **#10 Two Receipts** 🧾 (systemsMatrices). `BESPOKE_CHAPTERS` now holds
+> only 3–11 story chapters — **every teen chapter in the app runs on GameShell.**
+>
+> ## ① THE ENGINE WAVE — three primitives in [gameKit](src/features/chapters/teen/games/parts/gameKit.tsx)
+> | primitive | what it is | who needs it |
+> |---|---|---|
+> | **`MatrixPad`** | a bracketed grid of ± steppers; the answer IS a matrix | Two Receipts, which cannot exist without it |
+> | **`CurveMatch`** | labelled dials reshaping a wave against a faint target trace — LineSetter generalised from a line to `a·sin(b(x−h))+k` | Daylight Hours |
+> | **`CircleTap`** | step a pod round a circle and stop it; promotes the read-only `UnitCircleExplorer` sim into an answering instrument | The Big Wheel |
+>
+> **The plan's fourth item — lifting `RayLine` out of BalanceBench — was deliberately NOT done**, and
+> the reason is in the code: it is wanted by functionToolkit and rationalFunctions, both of which have
+> already SHIPPED with working answer surfaces. Lifting it now means reopening two live chapters for
+> no gain to the three being built. None of these three needs it.
+>
+> ## ② A THIRD CHART SCALED TO THE WRONG RANGE — the band's most repeated bug
+> `CurveMatch` first drew its vertical as **±7 about the centre**. A daylight year lives at 12 ± 5,
+> entirely positive, so the whole target curve was drawn ABOVE the top edge and the clamp flattened it
+> into a line along the ceiling — **the child had nothing to match.** Now 0..18, with the 12 h equinox
+> line drawn in. That is the THIRD time this band has been bitten by the same thing (Cold Snap's
+> polynomial ends, the exponential's sixth month), and all three were invisible to every gate because
+> the answer still graded correctly. **The rule is now a comment in gameKit: scale a chart off the
+> FEATURE BEING READ, not off the data's range.**
+>
+> ## ③ 56 TAPS IS A SLOG, NOT A LESSON
+> Building `[[12,16],[20,8]]` up from zeros on the MatrixPad is 56 taps. Caught by watching it, not by
+> a gate. The pad now **starts at the first operand** — which also models what addition actually is
+> (take A, add B onto it), and gives nothing away because A is already on the board — and the scalar
+> multiplier is capped at 3 rather than 4.
+>
+> ## ④ THE PICKER BUDGET LANDED EXACTLY ON ITS NUMBER: 10
+> Big Wheel **1** (the exact coordinate pair — (√3/2, 1/2) is neither tappable nor buildable),
+> Daylight Hours **2** (the two identity questions, the seam plan §5.1 already named), Two Receipts
+> **1**. Band total **10** against the ~10 budgeted in plan §3 — the thing risk #4 warned would creep,
+> counted at the end as it asked.
+>
+> ## ⑤ THREE DELIBERATE DEVIATIONS, each argued in the file that makes it
+> • **No law of cosines in The Big Wheel**, even though it is the reason the world was chosen and the
+>   gap between two pods really is it with the radius as both sides. The old lesson never generated it
+>   and `conceptsConfirmed` does not claim it — adding it is growing the syllabus during a port. Same
+>   call as TrainingBlock's Pascal and Cold Snap's synthetic division, and it is flagged as the first
+>   thing to add if the chapter is extended.
+> • **Two Receipts keeps ONE picker** where the plan said zero. "Infinitely many" is not a number, and
+>   a pad offering 0/1/2/3 is a badly-posed board for a child who correctly thinks *infinite* and
+>   finds no option.
+> • **Matrix multiplication stays one entry on the pad**, not four dot products built on the MatrixPad.
+>   Addition and scalar multiply build the whole result, which is where the pad earns its place.
+>
+> ## ⑥ WHAT WAS ACTUALLY VERIFIED
+> Every question kind was forced to the surface with a temp cycle, driven by hand and asserted on
+> `data-test-phase` — **16 kinds → `solved`**: Big Wheel's radian builder · quarter-turn pad ·
+> CircleTap · reference-angle pad · sign switches · coordinate picker; Daylight Hours' CurveMatch at
+> both tiers · extreme pad · both identity pickers; Two Receipts' price builder · MatrixPad · the
+> solutions picker · determinant and product pads. All temp patches reverted and grepped for.
+>
+> ## ▶ OPEN
+> 1. **The full 37-chapter e2e run** was launched at the end of this session — check it before merging.
+> 2. **Short-landscape is STILL unchecked across the whole band**, now with three more instruments.
+> 3. **Nobody has read any of this aloud to a 17-year-old**, and it is now thirteen chapters of it.
+> 4. **The voice corpus is still the top job overall** — the whole 3–11 band has zero clips.
+> 5. Still the headline: **~zero real users.**
+>
+> _(the 📱 block below is the previous session — portrait for 12–18.)_
+
+> 📱 **2026-07-26 — PORTRAIT IS NOW A REAL LAYOUT FOR 12–18, NOT JUST AN ALLOWED ONE. 🚀 SHIPPED TO PROD — `main`@`a81bc43`, prod serving sw v64, smoke green + DRIVEN LIVE ON PROD IN PORTRAIT. `tsc` · 136/136 vitest · `next build` · **the full e2e question-quality gate 35/35 in 21.0m, 0 failures and 0 flakes** · measured at 390×844 · 834×1194 · 640×320 · 1280×800.**
 >
 > **The ask:** *"for the age group 12-18 I want portrait mode also."*
 >
@@ -1872,7 +1940,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-26 (LATEST — see the top 📱 block. **🚀 SHIPPED TO PROD — `main`@`a81bc43`, prod serving sw v64, fast-forwarded (no merge commit) and pushed. Smoke green on `/` `/menu` `/api/health` `/diagnostic` `/auth` `/parent` and all 10 migrated 17–18 chapters, then DRIVEN LIVE ON PROD in portrait.** Portrait is now a real layout for **12–18**, not merely an allowed one. It always rendered — there is no rotate gate in the teen path — but **every size in the teen shell is `clamp(px, vw, px)`, width-derived with no vh term**, so a tall frame landed on the clamp MINIMUM everywhere while its height went unused: a 390×844 phone drew **76×60 tap buttons at 24px with 204px of dead space below them**, and a 834×1194 tablet was worse, because 834 ≥ 820 made it `roomy` and **pinned the chalkboard into a corner with the bottom third of the screen empty**. One gate — `portrait = innerHeight >= innerWidth × 1.2` — with three consequences: `roomy` excludes portrait (the board stacks instead of pinning), `FitSlot` may now ENLARGE (its `max: 1` cap was the thing blocking it, and lifting it fixes ~19 instruments and 24 scenes without touching one of them), and `AnswerPad` gains a vh term. Phone pad is now **98×84 at 34px**, a 61% bigger target. **Two things measurement caught that the formula did not:** the first vh coefficient came out UNDER the clamp floor and changed literally nothing while looking plausible, and the bigger buttons then wrapped **3 + 1**, leaving a lone tap target — now a 2×2 grid. Landscape is unchanged by construction and was measured anyway (640×320 and 1280×800 both byte-identical). ▶ **This is 12–18 only** — the 3–11 story band keeps its `RotateGate` and is landscape-only by design. Not checked on a real device. **The full gate has now run: `question-quality` 35/35 in 21.0m, zero failures and zero flakes** — the run the merge was waiting on, because the portrait commit touches `GameShell`/`gameKit`, shared by all 24 existing teen chapters, and its 1280×820 viewport is exactly the landscape surface the change had to leave alone. **A git trap nearly mis-split the commit and is written up in §④:** a pathspec that is a DIRECTORY commits the working tree under it and ignores the index, so `git commit -- src/…/teen/games` swallowed the portrait changes to `games/parts/*` despite an explicit `git reset` — caught by grepping `git show --stat` before moving on, and the 2026-07-23 git note has been amended in place. **Driven on prod at 390×844**: Cold Snap through explore → walkthrough → scored round 1 with the portrait layout live, and a deliberately wrong answer (`↘↗` on `3x⁴`) **corrected to `↗↗` on screen** by the glide; 0 console errors. ⚠️ Prod cannot prove GRADING — `data-test-*` is compile-time stripped from production builds — so that assertion rests on the 35/35 e2e run against a dev build of identical code. **Nobody has played any of the ten chapters, and none of the wording has been read aloud to a 17-year-old.**)_
+_Last updated: 2026-07-26 (LATEST — see the top 🎡 block. **⚠️ UNCOMMITTED.** **The 17–18 band is COMPLETE — 13 of 13**, and `BESPOKE_CHAPTERS` now holds only 3–11 story chapters, so every teen chapter in the app runs on GameShell. The engine wave landed three primitives in gameKit — **`MatrixPad`** (the answer IS a matrix), **`CurveMatch`** (LineSetter generalised from a line to a wave), **`CircleTap`** (the read-only unit-circle sim promoted into an answering instrument) — then the last three chapters: **The Big Wheel**, **Daylight Hours**, **Two Receipts**. The plan's fourth item, lifting `RayLine`, was deliberately skipped: the two chapters that want it have already shipped with working answer surfaces, and none of these three needs it. `tsc` · 142/142 vitest · **16 question kinds each forced to the surface and driven by hand to `solved`**. **A third chart scaled to the wrong range**: CurveMatch drew ±7 about the centre when a daylight year lives at 12±5, so the whole target sat above the top edge and the child had nothing to match — the same bug as Cold Snap's ends and the exponential's sixth month, and all three graded correctly while being unreadable, so no gate could see any of them. **And 56 taps to build one matrix** — caught by watching, fixed by starting the pad at the first operand, which also models what addition is. **The picker budget landed exactly on 10**, the number plan §3 set and risk #4 warned would creep. ▶ The full 37-chapter e2e was launched at the end of the session — **check it before merging**. Short-landscape still unchecked band-wide; thirteen chapters of wording still unread by a teenager; the voice corpus still the top job overall. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-26 (the 📱 block. **🚀 SHIPPED TO PROD — `main`@`a81bc43`, prod serving sw v64, fast-forwarded (no merge commit) and pushed. Smoke green on `/` `/menu` `/api/health` `/diagnostic` `/auth` `/parent` and all 10 migrated 17–18 chapters, then DRIVEN LIVE ON PROD in portrait.** Portrait is now a real layout for **12–18**, not merely an allowed one. It always rendered — there is no rotate gate in the teen path — but **every size in the teen shell is `clamp(px, vw, px)`, width-derived with no vh term**, so a tall frame landed on the clamp MINIMUM everywhere while its height went unused: a 390×844 phone drew **76×60 tap buttons at 24px with 204px of dead space below them**, and a 834×1194 tablet was worse, because 834 ≥ 820 made it `roomy` and **pinned the chalkboard into a corner with the bottom third of the screen empty**. One gate — `portrait = innerHeight >= innerWidth × 1.2` — with three consequences: `roomy` excludes portrait (the board stacks instead of pinning), `FitSlot` may now ENLARGE (its `max: 1` cap was the thing blocking it, and lifting it fixes ~19 instruments and 24 scenes without touching one of them), and `AnswerPad` gains a vh term. Phone pad is now **98×84 at 34px**, a 61% bigger target. **Two things measurement caught that the formula did not:** the first vh coefficient came out UNDER the clamp floor and changed literally nothing while looking plausible, and the bigger buttons then wrapped **3 + 1**, leaving a lone tap target — now a 2×2 grid. Landscape is unchanged by construction and was measured anyway (640×320 and 1280×800 both byte-identical). ▶ **This is 12–18 only** — the 3–11 story band keeps its `RotateGate` and is landscape-only by design. Not checked on a real device. **The full gate has now run: `question-quality` 35/35 in 21.0m, zero failures and zero flakes** — the run the merge was waiting on, because the portrait commit touches `GameShell`/`gameKit`, shared by all 24 existing teen chapters, and its 1280×820 viewport is exactly the landscape surface the change had to leave alone. **A git trap nearly mis-split the commit and is written up in §④:** a pathspec that is a DIRECTORY commits the working tree under it and ignores the index, so `git commit -- src/…/teen/games` swallowed the portrait changes to `games/parts/*` despite an explicit `git reset` — caught by grepping `git show --stat` before moving on, and the 2026-07-23 git note has been amended in place. **Driven on prod at 390×844**: Cold Snap through explore → walkthrough → scored round 1 with the portrait layout live, and a deliberately wrong answer (`↘↗` on `3x⁴`) **corrected to `↗↗` on screen** by the glide; 0 console errors. ⚠️ Prod cannot prove GRADING — `data-test-*` is compile-time stripped from production builds — so that assertion rests on the 35/35 e2e run against a dev build of identical code. **Nobody has played any of the ten chapters, and none of the wording has been read aloud to a 17-year-old.**)_
 
 _Prior update: 2026-07-26 (the 🌡️ block. **✅ COMMITTED in `4539b2d`, folded in with the 🎛️ session below — one workstream, and the two share registry.tsx and the e2e spec. Not pushed.** The four no-primitive 17–18 chapters were built — **Cold Snap** (polynomials), **The Balance That Grows** (exp/log), **Torch on the Wall** (conics), **The Reviews** (stats) — taking the band to **10 of 13**. `tsc` · 136/136 vitest (was 128) · `next build` · e2e question-quality 4/4 on the new ids · every question kind driven by hand and asserted on `data-test-phase`, 0 console errors. **The picker budget is holding at 6 of ~10** across ten chapters, and two of those were bought back by re-asking rather than re-wording: Torch's classify needs **no card at all** — the tilt IS the classification, which beats the plan's own design — and its ellipse-orientation two-carder became "how far does the beam reach". Reviews lost two conceptual MCQs to one gesture. **Two real bugs, both found by looking, both the same root cause:** a chart scaled to its data's RANGE rather than to the feature being read — Cold Snap's polynomial ends squashed the dip below freezing, and the exponential's sixth month pinned the target line to the floor. A first fix clamped instead of clipping, which made the curve flatten along the top edge, and a saturated exponential reads as a balance levelling off — the opposite of the point. **Two instruments deliberately withhold a number** (the month dial does not print the balance at the marker; the review slider does not print the running average until reveal) because a dial that confirms the answer is hot/cold. ▶ Next: the engine wave — `MatrixPad`, `CurveMatch`, `CircleTap`, and lifting `RayLine` — which is the only thing blocking the last three chapters. Short-landscape still unchecked across the whole band; ten chapters of wording still unread by a teenager; the voice corpus still the top job overall, quota resets tomorrow.)_
 
