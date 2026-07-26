@@ -67,6 +67,18 @@ const PORTAL_CHAPTERS = {
     { skill: "algebraicExpressions", band: "12-14", conceptsConfirmed: ["Evaluating expressions", "Solving for the input", "Combining like terms", "Reading a rule"], nextPointer: "Next: equations & inequalities." },
     () => import("@/features/chapters/teen/games/FunctionFactory"),
   ),
+  systemsMatrices: teen(
+    { skill: "systemsMatrices", band: "17-18", conceptsConfirmed: ["Solving 2\u00d72 systems", "One / none / infinite solutions", "Matrix add & scalar multiply", "2\u00d72 determinant"], nextPointer: "Next: sequences & series.", explore: { title: "Cross the lines", intro: "Slide the slopes and intercept and watch where the two lines meet. Equal slopes never cross. Get a feel for it, then continue.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/TwoReceipts"), () => import("@/features/chapters/teen/sims/SystemExplorer"),
+  ),
+  trigGraphsIdentities: teen(
+    { skill: "trigGraphsIdentities", band: "17-18", conceptsConfirmed: ["Amplitude & period", "Midline & shift", "Reading a trig graph", "The Pythagorean identity"], nextPointer: "Next: conic sections.", explore: { title: "Tune a sine wave", intro: "Slide the amplitude A and the period factor B in y = A\u00b7sin(Bx). Watch the curve stretch and squeeze \u2014 and how the period 2\u03c0/B changes \u2014 then continue.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/DaylightHours"), () => import("@/features/chapters/teen/sims/WaveExplorer"),
+  ),
+  unitCircleTrig: teen(
+    { skill: "unitCircleTrig", band: "17-18", conceptsConfirmed: ["Degrees \u2194 radians", "Sine & cosine as coordinates", "Special angles", "Signs by quadrant"], nextPointer: "Next: trig graphs & identities.", explore: { title: "Spin the circle", intro: "Drag the angle around the unit circle and watch the point's coordinates \u2014 cosine across, sine up \u2014 change with it. Get a feel for it, then continue.", continueLabel: "Skip to the game" } },
+    () => import("@/features/chapters/teen/games/BigWheel"), () => import("@/features/chapters/teen/sims/UnitCircleExplorer"),
+  ),
   conicSections: teen(
     { skill: "conicSections", band: "17-18", conceptsConfirmed: ["Identifying the conic", "Circle: center & radius", "Parabola & ellipse features", "Hyperbola basics"], nextPointer: "Next: systems & matrices.", explore: { title: "Stretch a circle", intro: "Slide the vertical radius and watch a circle stretch into an ellipse. Get a feel for how the equation's denominators shape the curve, then continue.", continueLabel: "Skip to the game" } },
     () => import("@/features/chapters/teen/games/TorchOnTheWall"), () => import("@/features/chapters/teen/sims/ConicExplorer"),
@@ -208,9 +220,6 @@ const BESPOKE_CHAPTERS = {
   patterns:           lazy(() => import('@/features/chapters/game/PatternsChapter')),
   additionTo100:      lazy(() => import('@/features/chapters/game/ArithmeticChapter').then(m => ({ default: m.AdditionTo100Chapter }))),
   subtractionTo100:   lazy(() => import('@/features/chapters/game/ArithmeticChapter').then(m => ({ default: m.SubtractionTo100Chapter }))),
-  unitCircleTrig:       lazy(() => import('@/features/chapters/game/UnitCircleTrigChapter')),
-  trigGraphsIdentities: lazy(() => import('@/features/chapters/game/TrigGraphsIdentitiesChapter')),
-  systemsMatrices:      lazy(() => import('@/features/chapters/game/SystemsMatricesChapter')),
 }
 
 /** id → component for every chapter in the app. Record<> enforces completeness. */

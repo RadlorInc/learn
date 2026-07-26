@@ -896,6 +896,165 @@ export function PartsBuilder({
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// THE 17–18 PRIMITIVES — three answering instruments the last three chapters of
+// that band cannot exist without (docs/teen-17-18-gameshell-plan.md §4). Each one
+// exists so a structured answer can be BUILT rather than picked off a card, which
+// is the whole argument the band's migration rests on.
+//
+// ⚠️ The plan also lists "lift RayLine out of BalanceBench" in this wave. It is NOT
+// done here: RayLine is wanted by functionToolkit and rationalFunctions, both of
+// which have already shipped with their own working answer surfaces. Lifting it now
+// would mean reopening two live chapters for no gain to the three being built.
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** MatrixPad — the answer IS a matrix, built entry by entry on ± steppers.
+ *  `value` is row-major; the shape is taken from it, so the same control serves a
+ *  2×2 result, a column of prices, or a 2×3. */
+export function MatrixPad({
+  P, value, setValue, min = -20, max = 20, disabled, reveal, onCommit, commitLabel = 'TOTAL IT ✓', caption,
+}: {
+  P: Palette; value: number[][]; setValue: (m: number[][]) => void
+  min?: number; max?: number; disabled?: boolean; reveal?: boolean
+  onCommit: (m: number[][]) => void; commitLabel?: string; caption?: string
+}) {
+  const col = reveal ? P.mint : P.gold
+  const set = (r: number, c: number, dv: number) =>
+    setValue(value.map((row, i) => row.map((v, j) => (i === r && j === c ? Math.max(min, Math.min(max, v + dv)) : v))))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.3vw,18px)', width: '100%' }}>
+      {caption && <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1vw,13px)', letterSpacing: '0.1em', textTransform: 'uppercase', color: P.mutedOnPaper }}>{caption}</div>}
+      {/* Square brackets drawn either side, so it reads as a matrix and not a form. */}
+      <div style={{ display: 'flex', alignItems: 'stretch', gap: 'clamp(5px,0.7vw,10px)' }}>
+        <div style={{ width: 10, borderLeft: `2.5px solid ${col}`, borderTop: `2.5px solid ${col}`, borderBottom: `2.5px solid ${col}`, borderRadius: '4px 0 0 4px' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${value[0]?.length ?? 2}, minmax(0, 1fr))`, gap: 'clamp(6px,0.9vw,14px)', padding: 'clamp(4px,0.6vw,9px) clamp(2px,0.4vw,6px)' }}>
+          {value.flatMap((row, r) => row.map((v, c) => (
+            <div key={`${r}-${c}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <Nudge P={P} label="▲" disabled={disabled} onClick={() => set(r, c, +1)} />
+              <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(17px,2vw,28px)', color: P.cream, minWidth: '2.1em', textAlign: 'center' }}>
+                {v < 0 ? `−${Math.abs(v)}` : v}
+              </div>
+              <Nudge P={P} label="▼" disabled={disabled} onClick={() => set(r, c, -1)} />
+            </div>
+          )))}
+        </div>
+        <div style={{ width: 10, borderRight: `2.5px solid ${col}`, borderTop: `2.5px solid ${col}`, borderBottom: `2.5px solid ${col}`, borderRadius: '0 4px 4px 0' }} />
+      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
+    </div>
+  )
+}
+
+export interface Wave { a: number; b: number; h: number; k: number }
+/** CurveMatch — reshape a drawn wave against a target trace with labelled dials.
+ *  The generalisation of LineSetter from a straight line to `a·sin(b(x−h))+k`, and
+ *  the answer IS the match: the child stops when their curve lies on the target.
+ *  `dials` names which of the four are live, so a chapter only exposes the ones its
+ *  question is about (a period question should not hand over the amplitude). */
+export function CurveMatch({
+  P, value, setValue, target, dials = ['a', 'b', 'k'], disabled, reveal, onCommit, commitLabel = 'MATCH IT ✓', unit = '',
+}: {
+  P: Palette; value: Wave; setValue: (w: Wave) => void
+  /** The wave to lie on top of. Omit to draw the child's curve alone. */
+  target?: Wave
+  dials?: ('a' | 'b' | 'h' | 'k')[]
+  disabled?: boolean; reveal?: boolean; onCommit: (w: Wave) => void; commitLabel?: string
+  /** Suffix on the readout, e.g. ' h' for hours of daylight. */
+  unit?: string
+}) {
+  const W = 260, H = 150, pad = 16
+  /** ⚠️ The vertical runs 0..TOP, NOT ±TOP about the centre. A daylight year lives
+   *  at 12 ± 5 — entirely positive — so a zero-centred axis draws the whole target
+   *  above the top edge, where the clamp flattens it into a line along the ceiling
+   *  and the child has nothing to match. (Third time this band has been bitten by a
+   *  chart scaled to the wrong range; see ColdSnap and BalanceThatGrows.) */
+  const TOP = 18
+  const yFor = (v: number) => H - pad - (v / TOP) * (H - 2 * pad)
+  const col = reveal ? P.mint : P.gold
+  const path = (w: Wave) => Array.from({ length: 97 }, (_, i) => {
+    const t = (i / 96) * 2 * Math.PI
+    const x = pad + (i / 96) * (W - 2 * pad)
+    const y = yFor(w.a * Math.sin(w.b * (t - w.h)) + w.k)
+    return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${Math.max(2, Math.min(H - 2, y)).toFixed(1)}`
+  }).join(' ')
+  const LABEL: Record<string, string> = { a: 'swing', b: 'cycles', h: 'shift', k: 'middle' }
+  const LIMIT: Record<string, [number, number]> = { a: [0, 7], b: [1, 4], h: [-3, 3], k: [0, 14] }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(9px,1.2vw,16px)', width: '100%' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: 'clamp(200px, 27vw, 330px)', display: 'block' }} aria-hidden>
+        <rect x={0} y={0} width={W} height={H} rx={10} fill="rgba(0,0,0,0.26)" stroke={P.glassBorder} strokeWidth={1} />
+        <line x1={pad} y1={yFor(value.k)} x2={W - pad} y2={yFor(value.k)} stroke={P.glassBorder} strokeWidth={1} strokeDasharray="4 4" />
+        {/* 12 h — the equinox line every daylight year wanders around */}
+        <line x1={pad} y1={yFor(12)} x2={W - pad} y2={yFor(12)} stroke={P.creamSoft} strokeWidth={0.8} opacity={0.3} />
+        <text x={pad + 2} y={yFor(12) - 3} fill={P.mutedOnPaper} fontSize={7} fontFamily="var(--font-numeric)">12 h</text>
+        {/* the year to match, drawn faint underneath */}
+        {target && <path d={path(target)} fill="none" stroke={P.creamSoft} strokeWidth={3} opacity={0.42} />}
+        <path d={path(value)} fill="none" stroke={col} strokeWidth={2.4} />
+      </svg>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(13px,1.5vw,19px)', fontWeight: 800, color: col }}>
+        {dials.map((d) => `${LABEL[d]} ${d === 'a' ? value.a : d === 'b' ? value.b : d === 'h' ? value.h : value.k}${d === 'b' ? '' : unit}`).join(' · ')}
+      </div>
+      <div style={{ display: 'flex', gap: 'clamp(10px,1.6vw,26px)', flexWrap: 'wrap', justifyContent: 'center' }}>
+        {dials.map((d) => (
+          <DialCol key={d} P={P} label={LABEL[d]} value={value[d]} col={col} disabled={disabled}
+            onDown={() => setValue({ ...value, [d]: Math.max(LIMIT[d][0], value[d] - 1) })}
+            onUp={() => setValue({ ...value, [d]: Math.min(LIMIT[d][1], value[d] + 1) })} />
+        ))}
+      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
+    </div>
+  )
+}
+
+/** CircleTap — put the pod at an angle on a circle. Promotes the read-only
+ *  UnitCircleExplorer sim into an answering instrument: `stops` are the angles the
+ *  child may land on (the special angles), stepped rather than dragged so the answer
+ *  is exact. `showCoords` draws the cos/sin projections without ever printing the
+ *  exact pair — printing it would answer a coordinate question outright. */
+export function CircleTap({
+  P, value, setValue, stops, disabled, reveal, onCommit, commitLabel = 'STOP HERE ✓', showCoords,
+}: {
+  P: Palette; value: number; setValue: (deg: number) => void; stops: number[]
+  disabled?: boolean; reveal?: boolean; onCommit: (deg: number) => void
+  commitLabel?: string; showCoords?: boolean
+}) {
+  const S = 210, R = 76, cx = S / 2, cy = S / 2
+  const col = reveal ? P.mint : P.gold
+  const rad = (value * Math.PI) / 180
+  const px = cx + R * Math.cos(rad), py = cy - R * Math.sin(rad)
+  const i = Math.max(0, stops.indexOf(value))
+  const step = (d: number) => setValue(stops[(i + d + stops.length) % stops.length])
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(9px,1.2vw,16px)', width: '100%' }}>
+      <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: 'clamp(170px, 22vw, 260px)', display: 'block' }} aria-hidden>
+        <circle cx={cx} cy={cy} r={R + 14} fill="rgba(0,0,0,0.26)" stroke={P.glassBorder} strokeWidth={1} />
+        <line x1={cx - R - 10} y1={cy} x2={cx + R + 10} y2={cy} stroke={P.glassBorder} strokeWidth={1} />
+        <line x1={cx} y1={cy - R - 10} x2={cx} y2={cy + R + 10} stroke={P.glassBorder} strokeWidth={1} />
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke={P.creamSoft} strokeWidth={1.4} opacity={0.6} />
+        {/* every pod on the wheel, so the stops are visible before you move */}
+        {stops.map((s) => {
+          const r2 = (s * Math.PI) / 180
+          return <circle key={s} cx={cx + R * Math.cos(r2)} cy={cy - R * Math.sin(r2)} r={2.6} fill={P.mutedOnPaper} />
+        })}
+        {showCoords && (
+          <>
+            <line x1={px} y1={py} x2={px} y2={cy} stroke={col} strokeWidth={1} strokeDasharray="3 3" opacity={0.8} />
+            <line x1={px} y1={py} x2={cx} y2={py} stroke={col} strokeWidth={1} strokeDasharray="3 3" opacity={0.8} />
+          </>
+        )}
+        <line x1={cx} y1={cy} x2={px} y2={py} stroke={col} strokeWidth={2.6} />
+        <circle cx={px} cy={py} r={6} fill={col} stroke={P.nightBot} strokeWidth={1.5} />
+      </svg>
+      <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(20px,2.6vw,34px)', fontWeight: 800, color: col }}>{value}°</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px,1vw,14px)' }}>
+        <Nudge P={P} label="↺" disabled={disabled} onClick={() => step(-1)} />
+        <Nudge P={P} label="↻" disabled={disabled} onClick={() => step(+1)} />
+      </div>
+      <CommitBtn P={P} label={commitLabel} disabled={disabled} onClick={() => onCommit(value)} />
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // EXPRESSION ENGINE — tokens the child COLLAPSES one operation at a time, so the
 // answer EMERGES from the illustration (order of operations / substitution) instead
 // of being worked out in the head and dialed. Shared by the Order-of-Operations and
