@@ -12,7 +12,292 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🎓 **2026-07-26 (LATEST) — THE 15–16 BAND BROUGHT UP TO THE 12–14 STRUCTURE. SHIPPED TO PROD. `main`@`eb96a72`, prod serving sw v63, smoke green + DRIVEN LIVE ON PROD.**
+> 📱 **2026-07-26 (LATEST) — PORTRAIT IS NOW A REAL LAYOUT FOR 12–18, NOT JUST AN ALLOWED ONE. ⚠️ UNCOMMITTED, on top of everything below. `tsc` · 136/136 vitest · `next build` · e2e question-quality 7/7 across all three teen bands · measured at 390×844 · 834×1194 · 640×320 · 1280×800.**
+>
+> **The ask:** *"for the age group 12-18 I want portrait mode also."*
+>
+> **What was actually wrong.** There is no rotate gate in the teen path, so portrait already
+> rendered and nothing overflowed — the 2026-07-20 responsive audit was right that "portrait passed".
+> It passed the wrong test. **Every size in the teen shell is `clamp(px, vw, px)` — width-derived,
+> with no vh term anywhere** — so a tall narrow frame lands on the clamp MINIMUM everywhere while its
+> height goes unused. Measured before the fix:
+> • **390×844 phone** — tap buttons **76×60 at 24px type**, with **204px of dead space below them**.
+> • **834×1194 tablet** — worse, because 834 ≥ 820 made it `roomy`, which **PINS the chalkboard into
+>   the top-left corner**. Right on a laptop; on a portrait tablet the board sat in a corner with the
+>   **bottom third of the screen empty**.
+>
+> ## ① THE FIX — one gate, three consequences, ~40 lines
+> `useFrame` gains **`portrait` = `innerHeight >= innerWidth * 1.2`** (a SHAPE, not a size):
+> 1. **`roomy` now excludes portrait**, so a portrait tablet stops pinning the board into a corner and
+>    stacks it above the interactive — the layout that frame actually wants.
+> 2. **`FitSlot` may ENLARGE on portrait** (`max` 1 → 1.5). It already existed to shrink an instrument
+>    onto a short frame; the `max: 1` cap was the thing stopping a portrait frame using its height.
+>    Covers the practice instrument AND the walkthrough scene, so ~19 instruments and 24 scenes are
+>    fixed without touching one of them.
+> 3. **`AnswerPad` gains `big`**, which swaps `Xvw` for `max(Xvw, X·1.45vh)`.
+>
+> **After, same frames:** phone pad **98×84 at 34px** (a 61% bigger tap target), the vault scene
+> filling the width instead of floating in a dead band; tablet board full-width across the top with
+> the scene scaled up and centred.
+>
+> ## ② TWO THINGS THE MEASUREMENT CAUGHT THAT THE FORMULA DID NOT
+> • **The first vh coefficient (0.42) changed nothing at all** — the vh term came out UNDER the clamp
+>   floor, so it clamped to exactly the old value and the screenshot looked identical. **1.45 is
+>   derived, not chosen**: a portrait phone should land in the MIDDLE of each clamp, and 34px of the
+>   24–52 font range at 844 high is 4.0vh against the 2.8vw it is written with. *Measure the rendered
+>   px; a formula that "should" be bigger may be under the floor.*
+> • **Bigger buttons then wrapped 3 + 1**, leaving a lone tap target on its own row — worse than the
+>   small buttons it replaced. `big` now GRIDS at 2 columns for the 4-choice case (a clean 2×2) and
+>   keeps one row for 3. **A size change is not done until you have looked at how it wraps.**
+>
+> ## ③ LANDSCAPE IS UNTOUCHED, AND THAT WAS CHECKED RATHER THAN ASSUMED
+> For any landscape frame `portrait` is false, so `roomy` is the original expression, `FitSlot max` is
+> 1, and `size()` returns the original literal `clamp(px, vw, px)` string — unchanged **by
+> construction**. This repo has been burned by "provably" before, so it was measured anyway:
+> **640×320 → 66×48 at 22px, flex** (the `compact` path, identical) and **1280×800 → 102×87 at
+> 35.84px, flex** (exactly 8vw and 2.8vw of 1280). No overflow, nothing offscreen, at any of the four
+> sizes. Grading re-verified on a portrait phone (`data-test-phase` → `solved`).
+>
+> ## ▶ OPEN
+> 1. **This is 12–18 ONLY.** The 3–11 story band still has its `RotateGate` and is landscape-only by
+>    design — those chapters are built around a horizontal journey. Portrait is not app-wide.
+> 2. **Not checked on a real device.** Everything here is a resized Chromium viewport; a real phone
+>    adds a browser chrome bar, a safe-area inset and a soft keyboard the ScribblePad may fight.
+> 3. **The portrait TABLET still has generous empty space** on a pad question (the board+pad group is
+>    centred in a 1194px column). It reads as deliberate symmetry rather than broken, and it is the
+>    honest state of things: that frame has more height than the content needs. Raising
+>    `PORTRAIT_MAX` past 1.5 pushes the commit button off the bottom on a phone, so it is one number
+>    that cannot serve both — a per-frame max would be the follow-up if the tablet matters.
+>
+> _(the 🌡️ block below is the same session's earlier work — the four 17–18 chapters.)_
+
+> 🌡️ **2026-07-26 — THE FOUR NO-PRIMITIVE 17–18 CHAPTERS BUILT: THE BAND IS NOW 10 OF 13. ⚠️ STILL UNCOMMITTED — this sits on top of the 🎛️ block below, which is also uncommitted. `tsc` · 136/136 vitest · `next build` · e2e question-quality 4/4 on the new ids · all four driven live, 0 console errors.**
+>
+> **The ask:** *"do the remaining four chapters."* Those are the four the plan lists as needing no new
+> engine work: **#3 Cold Snap 🌡️** (polynomialFunctions) · **#6 The Balance That Grows 💳**
+> (expLogFunctions) · **#9 Torch on the Wall 🔦** (conicSections) · **#12 The Reviews ⭐**
+> (statsInference). All four sims were already extracted, so nothing was lost to a deleted wrapper
+> this time.
+>
+> **⚠️ NOTHING IS COMMITTED OR DEPLOYED.** Prod is still `main`@`9800be3` / sw v63. Net for this
+> session: **+1,711 lines of game against −2,441 deleted** (8 files: 4 wrappers + 4 lessons), 4
+> registry rows moved `BESPOKE_CHAPTERS` → `PORTAL_CHAPTERS`, 4 ids added to the e2e gate (now 34 of
+> the eventual 37).
+>
+> ## ① THE PICKER BUDGET IS HOLDING — 6 of ~10 across ten chapters
+> The design rests on reaching for a card LAST ([plan §3](docs/teen-17-18-gameshell-plan.md)). Cold
+> Snap has **zero** pickers, Torch **one**, ExpLog **two**, Reviews **one** — band total **6** with
+> ten of thirteen built. Two of those were bought back by re-asking the question rather than
+> re-wording it:
+> • **Torch's classify needs no card at all, which beats the plan.** §5.2 had the child tilt the torch
+>   and then commit on a 4-card SpecPicker. The tilt already IS the classification — 0° is a circle,
+>   part-way is an ellipse, 60° (where a beam edge runs parallel to the wall) is a parabola, past that
+>   a hyperbola — so the picker was dropped and the band's most-recalled question became a hand
+>   gesture. Any tilt inside a band grades correct, because any tilt inside it really does make that
+>   shape.
+> • **Torch's ellipse orientation was "horizontal or vertical", a two-card choice.** Re-asked as HOW
+>   FAR the beam reaches the long way, which needs the identical reading (find the bigger denominator)
+>   and comes out as a number.
+> • **Reviews lost TWO conceptual MCQs to one gesture** — "which summary resists an outlier" and "what
+>   does adding one do to the mean" are both now the incoming-review slider: set the fifth review's
+>   rating so the listing's average lands on a stated figure.
+>
+> ## ② TWO REAL BUGS, BOTH FOUND BY LOOKING, BOTH THE SAME ROOT CAUSE
+> Neither was visible to any gate — both graded correct while being unreadable.
+> • **Cold Snap's temperature trace was normalised by its PEAK.** A polynomial's ends run away from
+>   everything in the middle, so the dip below freezing — the only part of the curve the chapter is
+>   about — was squashed to a few pixels. Now scaled off the **70th percentile of |f|**, with the ends
+>   running off the top and clipped.
+> • **The Balance That Grows drew its curve scaled to its SIX-MONTH value.** 25 × 3⁶ is 18,225 against
+>   a £225 target, so the target line sat on the floor and the crossing the child has to read was
+>   unreadable. Now scaled off the **target**, curve clipped. A first fix clamped the y instead, which
+>   made the curve flatten along the top edge — **a saturated exponential reads as a balance levelling
+>   off, the exact opposite of the point** — so the clamp was replaced by a clip.
+> **The general rule, now true twice: scale a chart off the FEATURE BEING READ, not off the data's
+> range.** Exponentials and polynomials both dwarf their own interesting part.
+>
+> ## ③ TWO PLACES THE INSTRUMENT DELIBERATELY WITHHOLDS A NUMBER
+> Both are the hot/cold rule ([chapter-craft §1](docs/chapter-craft.md)) applied to a dial that could
+> otherwise verify the answer for the child:
+> • **The month dial does not print the balance at the marker.** Printing it would let them slide
+>   until the screen agreed. They read the crossing, or they do the log.
+> • **The review slider does not print the running average** until the reveal, for the same reason.
+> The plan's §5.2 wording for #6 ("read off the curve") was followed; what it does NOT do is confirm.
+>
+> ## ④ DELIBERATE NARROWINGS AND ONE ADDITION, each commented where it lives
+> • **Cold Snap's roots are positive**, so every factor reads `(x − r)` and every crossing lands inside
+>   the drawn week. That drops the `(x + r)` case the old lesson had — a crossing on day −3 is not
+>   something this chart can show. Same call as ShareTheWifi's positive-only break point.
+> • **Cold Snap GAINS a sign chart**, which the old lesson did not have. Kept because it needs no math
+>   the zeros task has not already generated (the sign of a product) and it is the one question this
+>   world makes vivid — which hours are icy. **Nothing else was added**: no synthetic division, no
+>   build-from-zeros, per the TrainingBlock precedent that porting is not the moment to grow a
+>   syllabus. Verified live that the answer does not simply alternate — a doubled root gives
+>   `below, below, above`.
+> • **Reviews' poll-inference MCQ became the margin of error as a number** (100 ÷ √n, the standard
+>   conservative rule, with review counts chosen so it always lands on a whole percent).
+>
+> ## ⑤ WHAT THE VERIFICATION ACTUALLY COVERED
+> Every question kind in all four chapters was driven by hand and asserted on `data-test-phase`, not
+> on the screen advancing — the 15–16 lesson. **21 distinct question kinds → `solved`**: Cold Snap's
+> end switches · sign chart · crossings trace · four pads; ExpLog's rate dial · month dial · two
+> pickers · two pads; Torch's tilt · aim pad ×2 · direction picker · two pads; Reviews' star slider ·
+> bias picker · four pads including **a decimal mean (3.8) on the tap pad**, which was the one float-
+> equality risk worth checking. A wrong answer on Cold Snap's trace → `reveal`, and the glide moved
+> the markers to the right days on screen. All four then passed `question-quality` (1.8m, 4/4).
+>
+> ## ▶ OPEN — pick up here
+> 1. **COMMIT IT.** Ten chapters of working-tree-only change now, across two sessions.
+> 2. **The engine wave is the only thing left blocking the band** — `MatrixPad`, `CurveMatch`,
+>    `CircleTap`, plus lifting `RayLine` out of BalanceBench. #7 The Big Wheel, #8 Daylight Hours and
+>    #10 Two Receipts cannot start without it. That is the whole remainder: 3 chapters.
+> 3. **Short-landscape is still unchecked across the entire band** — now twelve new instruments over
+>    ten chapters. `640×320 · 667×375 · 740×360 · 1024×400`.
+> 4. **Nobody has read any of this wording aloud to a 17-year-old**, and it is now ten chapters of it.
+> 5. **#3 Cold Snap remains on notice** as the weakest world of the thirteen, for the reason the plan
+>    already gives: a real week of temperature is closer to sinusoidal than polynomial. Building it
+>    did not change that judgement — it reads well because zeros, multiplicity, sign chart and end
+>    behaviour are all vivid in it, and the end-behaviour `context` says out loud that a fitted curve
+>    is not to be trusted outside the week, so the world is not made to claim something false.
+> 6. **The voice corpus is still the top job overall and is still untouched** — the whole 3–11 band has
+>    zero clips and the ElevenLabs quota resets 2026-07-27 (tomorrow).
+> 7. Still the headline, still unchanged: **~zero real users.**
+>
+> _(the 🎛️ block below is the first half of this work — the design, and the first 6 chapters.)_
+
+> 🎛️ **2026-07-26 — THE 17–18 BAND STARTED ON GAMESHELL: DESIGNED, THEN 6 OF 13 CHAPTERS BUILT. ⚠️ UNCOMMITTED — everything below is in the working tree only. `tsc` · 128/128 vitest · `next build` · e2e question-quality 6/6 · every chapter driven live.**
+>
+> **The ask:** *"design the chapters of age group 17-18 the way we designed 12–14 and 15–16."* Then,
+> after the first world list: *"can be more daily life examples."* Then build the pilot, then the
+> five cheap chapters.
+>
+> **⚠️ NOTHING HERE IS COMMITTED OR DEPLOYED.** Prod is still `main`@`9800be3` / sw v63. The working
+> tree holds 6 new game files, 4 extracted sims, the plan doc, a curriculum amendment, a gate fix,
+> and 12 deleted files. Gates are green; a human has not seen any of it.
+>
+> ## ① WHERE THE BAND WAS, AND WHY IT WAS WORTH DOING
+> All 13 of the 17–18 chapters were still on the **pre-GameShell "Field Lab"** shape — the one 15–16
+> was migrated off on 2026-07-07 — as bespoke wrappers in `BESPOKE_CHAPTERS`. That is ~3,829 lines of
+> wrapper + ~4,214 of lesson re-implementing, thirteen times, the loop `GameShell` already owns, with
+> every question answered on a `ChoiceGrid` MCQ. No chalkboard, no overview read-along, no
+> walkthrough, no instrument, no `padValue`, and not in the e2e gate.
+>
+> ## ② THE DESIGN — [docs/teen-17-18-gameshell-plan.md](docs/teen-17-18-gameshell-plan.md)
+> Same shape as the 15–16 plan, and it follows 15–16's settings deliberately: **no guided round**
+> (every graded gesture worked in the walkthrough), **explore sim on all 13**, tutorial always an
+> array, `context` written FIRST on every padded task.
+>
+> **The one decision that mattered.** Counting the answer types across all 13 lesson files:
+> **40 numeric vs 57 string**, with four chapters at *zero* numeric. Ported straight, over half the
+> band becomes "tap the right card" — the [§0a](docs/chapter-craft.md) failure. But reading the
+> generators, **most of those strings are structured numbers wearing a string costume**, because
+> `ChoiceGrid` takes strings: `"(3, −4)"` is two integers, `"x = 2"` is one, `"5 + 2i"` is two in a
+> template, `"Shift right 2"` is a knob setting. So the rule for the band is a three-rung ladder —
+> **tap a number → BUILD the value → pick a card, last** — which leaves ~10 pickers across all 13.
+> *The band looks ~60% symbolic and is ~15% symbolic.* Six chapters in, the running total is **2**.
+>
+> ## ③ THE FOUNDER CORRECTION THAT RESHAPED IT: DAILY LIFE, NOT CAREERS
+> The first world list was professional — patch bay, server rack, radar, ops board, orbits — because
+> [curriculum-12-18.md](docs/curriculum-12-18.md) frames the band as *"math studio / analyst"* with
+> hooks like signal processing and polling. Founder: **"can be more daily life examples."** Right:
+> those are workplaces a 17-year-old reads about, not ones they live in. Re-cast around what they
+> touch in a normal week. **[curriculum-12-18.md carries a dated amendment](docs/curriculum-12-18.md)**
+> so the spec and the code do not disagree silently — the `mapMaker` lesson from 15–16.
+>
+> | # | chapter | world | built? |
+> |---|---|---|---|
+> | 1 | `functionToolkit` | **Photo Filters** 🎚️ — the curves panel is literally a function | ✅ |
+> | 2 | `quadraticAnalysis` | **The Resale Flip** 👟 — price vs profit | ✅ |
+> | 3 | `polynomialFunctions` | **Cold Snap** 🌡️ — a week of temperature | — |
+> | 4 | `complexNumbers` | **The Walk Home** 🗺️ — grid streets; ×*i* is a left turn | ✅ pilot |
+> | 5 | `rationalFunctions` | **Share the Wifi** 📶 | ✅ |
+> | 6 | `expLogFunctions` | **The Balance That Grows** 💳 | — |
+> | 7 | `unitCircleTrig` | **The Big Wheel** 🎡 | — |
+> | 8 | `trigGraphsIdentities` | **Daylight Hours** 🌅 | — |
+> | 9 | `conicSections` | **Torch on the Wall** 🔦 | — |
+> | 10 | `systemsMatrices` | **Two Receipts** 🧾 | — |
+> | 11 | `sequencesSeries` | **The Training Block** 🏋️ | ✅ |
+> | 12 | `statsInference` | **The Reviews** ⭐ | — |
+> | 13 | `introCalculus` | **Pace** 🏃 — average pace vs the pace right now | ✅ |
+>
+> Two stopped being decoration: **#9** tilting a torch IS cutting a cone with a plane, and **#7** the
+> gap between two pods on a Ferris wheel IS the law of cosines with the radius as both sides.
+> **Five seams are named in §5.1 of the plan rather than papered over** — synthetic division,
+> conjugate roots, a removable hole, trig identities, nonlinear systems. Those are algebra with no
+> daily anchor in ANY world; they are framed as algebra on the ScribblePad.
+>
+> ## ④ THE PILOT (complexNumbers → The Walk Home) AND THE THREE BUGS DRIVING IT FOUND
+> Chosen because it was the sharpest test of §②: 8 string-answer sites, **0 pickers** proposed.
+> • **The compass arrow never turned.** `style={{ rotate }}` got a MotionValue *string* → computed
+>   `transform: none`. Invisible on a screenshot, because the last step lands back on east — where a
+>   stuck arrow already points.
+> • **Fixed that, and it then lagged a full heading behind** the narration for the whole example.
+>   Replaced with the plain CSS transition the interactive compass already used. **One way of turning
+>   an arrow, not two.**
+> • **`WalkScene` derived its route from `stepIndex`, which is GLOBAL across worked examples**
+>   (GameShell flattens them into one timeline) — correct only while that example happens to be
+>   first. Now derived from the value.
+>
+> ## ⑤ A FLAW IN A GATE, FOUND BY MUTATION-TESTING IT
+> Both static gates cover new files automatically. Mutation-tested against the pilot: removing
+> `padValue` → `answerPadGrading` fails; removing a `context` → `paddedQuestionContext` fails. **But
+> the second one named the WRONG TASK.** A chunk starts at the `badge:` line, so a task written
+> across two lines keeps its title outside its own chunk and a forward `title:` search finds the NEXT
+> task's. Detection was always right; the message sent you to the wrong place. Fixed — the title is
+> now resolved by looking BACK from the chunk's first line. Re-mutated: names "As the crow flies".
+>
+> ## ⑥ WHAT THE e2e PROVES HERE, AND WHAT IT DOES NOT — READ THIS BEFORE TRUSTING IT
+> All 6 chapters pass `question-quality` with 0 console errors. **But the spec `break`s at the first
+> instrument question** (`if (!turn.acted) break`), and these chapters open on one. So it proves the
+> boards are well-posed and the console is clean — **NOT grading, and not that the set completes.**
+> Grading was hand-driven, asserting `data-test-phase`, never that the screen advanced:
+> • pad → `solved` on all six · plan dial `+ 4` → `solved` · compass → `solved` · walk pad → `solved`
+>   · filter rack *invert* → `solved` · price board `(−2, −3)` → `solved` · SpecPicker → `solved`
+> • level dial set deliberately WRONG → `reveal`, instrument still mounted with the child's value,
+>   then the **glide corrected it on screen** before advancing. Same for the walk pad (`−2, 5`).
+> ⚠️ **Not reached by hand:** Pace's window trace + rule builder, PhotoFilters' range limit,
+> ShareTheWifi's fault marker, TrainingBlock's nth/sum pads — all L2/L3, behind several right answers.
+>
+> ## ⑦ THE NEAR-MISS, AND TWO CORRECTIONS TO MY OWN PLAN
+> • **I deleted `IntroCalculusChapter.tsx` before extracting its inline `SecantExplorer`** — the exact
+>   mistake §6 of the plan warns about, one step after writing the warning. Recovered via
+>   `git show HEAD:`; it also depended on two helpers in the lesson file I had deleted, now inlined
+>   into the sim. **8 of the 13 sims are inline in wrappers that are about to die — extract first.**
+> • §7 proposed a new "union-`V` needs `padValue`" static check. **It already exists**
+>   ([answerPadGrading.test.ts](src/__tests__/answerPadGrading.test.ts)).
+> • §6's "−8,000 lines" was optimistic. The pilot came out **break-even** (−633/+652); the five-chapter
+>   batch is a real net cut (−3,711 deleted vs ~2,900 added). The saving is shared machinery, not lines.
+>
+> ## ⑧ DELIBERATE NARROWINGS, each commented where it lives
+> ShareTheWifi's break point is positive only (a negative device count is not a thing — this drops the
+> `x + 3 → −3` sign case) and its equal-degree ratio is forced whole so a dial can express it.
+> WalkHome dropped the degenerate modulus pairs `(3,0)`/`(0,4)` and narrowed L3 mult factors to ±(1..3)
+> so a built answer stays inside a reachable slider. Pace replaces the one conceptual MCQ with the
+> window gesture. TrainingBlock does NOT add Pascal or convergent series — the old lesson generated
+> neither, and porting is not the moment to grow the syllabus.
+>
+> ## ▶ OPEN — pick up here
+> 1. **COMMIT THIS.** It is 6 chapters of working-tree-only change with green gates. Nothing is
+>    deployed; prod still serves the old Field Lab for all 13.
+> 2. **The engine wave** — `MatrixPad`, `CurveMatch`, `CircleTap`, plus lifting `RayLine` out of
+>    BalanceBench. **#7 The Big Wheel, #8 Daylight Hours and #10 Two Receipts are blocked on it.**
+> 3. **The four no-primitive chapters left:** #3 Cold Snap, #6 The Balance That Grows, #9 Torch on the
+>    Wall, #12 The Reviews.
+> 4. **Nothing has been checked at short-landscape** — eight new instruments across six chapters, and
+>    this repo has shipped short-landscape collisions before. `640×320 · 667×375 · 740×360 · 1024×400`.
+> 5. **Nobody has read any of the new wording aloud to a 17-year-old**, and there is a lot of it —
+>    six chapters of `context` lines written this session, all unread by a human.
+> 6. **#3 Cold Snap is on notice** as the weakest world of the thirteen: a week of real temperature is
+>    closer to sinusoidal than polynomial. It earns its place only because zeros, sign chart,
+>    multiplicity and end behaviour all read clearly and nothing else in daily life crosses zero
+>    repeatedly.
+> 7. **The voice corpus is still the top job overall and is untouched here** — the whole 3–11 band has
+>    zero clips, and the ElevenLabs quota resets 2026-07-27 (tomorrow).
+> 8. Still the headline, still unchanged: **~zero real users.**
+>
+> _(the 🎓 block below is the previous session — the 15–16 clarity pass.)_
+
+> 🎓 **2026-07-26 — THE 15–16 BAND BROUGHT UP TO THE 12–14 STRUCTURE. SHIPPED TO PROD. `main`@`eb96a72`, prod serving sw v63, smoke green + DRIVEN LIVE ON PROD.**
 >
 > **Deploy:** `feat/teen-15-16-question-clarity` → `main` (fast-forward) → pushed → prod **v63**.
 > Gates: `tsc` · **116/116 vitest** (was 91) · `next build` · **e2e question-quality 25/25 across BOTH
@@ -1548,9 +1833,15 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-26 (LATEST session — see the top 🎓 block. **SHIPPED — `main`@`eb96a72`, prod serving sw v63, smoke green and driven live on prod.** `tsc` · 116/116 vitest (was 91) · `next build` · **e2e question-quality 25/25 across BOTH teen bands, 0 console errors per chapter.** The question was whether the 15–16 chapters have the same structure as 12–14. They run the same `GameShell`, and their two real differences — no guided round, an explore sim per chapter — are deliberate. **But the "explaining-type" wording pass of 2026-07-24 never reached the band**, because 15–16 had been rebuilt five days earlier: five of its twelve chapters carried no `context` at all. That is not cosmetic — `QuestionBoard` goes structured the moment `context` OR `instruction` is set, structured mode never renders `prompt`, and `GameShell` sets `instruction` from `padInstruction` on every padded question, so each of those tasks' carefully written story sentence **was dead code** and the child saw a badge and a tap chip over an empty zone. 19 context lines added across 8 files, padded tasks only. **Two things I got wrong and had to fix:** my own first draft carried the very defect it was repairing — Leaderboard told a child two changes "partly cancel out" when the live seed drew 4 and 5, both positive, because `a` and `b` are independently signed (three more sign-dependent claims found in the same audit; **a generated sentence must be true for every seed its generator can draw**). And the new gate passed on its first run, so it was mutation-tested — **two planted regressions walked straight through it**, one because the task delimiter missed every task written `title: …, badge: …`, one because it matched `context:` only and so reported GearLab's shorthand `context,` as a false defect I nearly reported as real. Both fixed; 7/7 mutations now caught. Also widened PowerUps' power-of-a-power off base 2, where every answer it ever produced was a power of two. ▶ Next: **the voice corpus — quota reset 2026-07-27** and the whole 3–11 band still has zero clips; and **19 new sentences went to production unread by a human**, which is the one thing no gate here covers. Still the headline, still unchanged: ~zero real users.)_
+_Last updated: 2026-07-26 (LATEST — see the top 📱 block. **⚠️ UNCOMMITTED, and it stacks on two more uncommitted sessions below.** Portrait is now a real layout for **12–18**, not merely an allowed one. It always rendered — there is no rotate gate in the teen path — but **every size in the teen shell is `clamp(px, vw, px)`, width-derived with no vh term**, so a tall frame landed on the clamp MINIMUM everywhere while its height went unused: a 390×844 phone drew **76×60 tap buttons at 24px with 204px of dead space below them**, and a 834×1194 tablet was worse, because 834 ≥ 820 made it `roomy` and **pinned the chalkboard into a corner with the bottom third of the screen empty**. One gate — `portrait = innerHeight >= innerWidth × 1.2` — with three consequences: `roomy` excludes portrait (the board stacks instead of pinning), `FitSlot` may now ENLARGE (its `max: 1` cap was the thing blocking it, and lifting it fixes ~19 instruments and 24 scenes without touching one of them), and `AnswerPad` gains a vh term. Phone pad is now **98×84 at 34px**, a 61% bigger target. **Two things measurement caught that the formula did not:** the first vh coefficient came out UNDER the clamp floor and changed literally nothing while looking plausible, and the bigger buttons then wrapped **3 + 1**, leaving a lone tap target — now a 2×2 grid. Landscape is unchanged by construction and was measured anyway (640×320 and 1280×800 both byte-identical). ▶ **This is 12–18 only** — the 3–11 story band keeps its `RotateGate` and is landscape-only by design. Not checked on a real device. Everything before this is still uncommitted too.)_
 
-_Prior update: 2026-07-26 (the 📏 block — the measurement chapter. **SHIPPED — `main`@`1e129ab`, prod serving sw v62, smoke green and driven live on prod.** `tsc` · 91/91 vitest · `next build` green, 0 console errors in a fresh tab, driven live at 1024×620 and 640×320 in both worlds. **The measurement chapter was re-thought and rebuilt: the verb is MEASURE IT.** The old one was *tap the taller one* — chapter 5 with a different adjective on it — and reading the file made it worse: height was faked by uniform-scaling one sprite (so "taller" was really "bigger"), length was a non-uniform stretch, and the balance tipped toward the heavier side BEFORE the child committed. Now the child lays one repeating block end to end against the thing and decides when to stop; a ruler is nothing but a repeated unit, counted, and that is the one idea measurement has that counting and comparison do not. The thing and the run agree by CONSTRUCTION — a thing's unit count is its identity, so it is drawn at exactly `units × unitPx` — verified on screen at Δ0. **Weight is deliberately not a world**: any beam that responds while you add counters levels exactly when the count is right, which hands the answer over before the commit. Four real bugs found by driving it, and the general rule for each is now in the craft doc — a demo that raced past in 4s because `speakSteps` advances on utterance `end` and a one-word utterance ends instantly on a voiceless device; the thing being measured jumping a whole unit when the first block landed, because a lane that will fill must be reserved from empty; a contact shadow left in flow putting the two ends of the measure 28px apart; and 22px blocks on a landscape phone, now 39px. The gate passed first run so it was mutation-tested — three planted regressions caught, one survivor CHECKED and found genuinely inert, and the gate then caught a real consequence of the band change and was restated rather than relaxed. ▶ Next: **the six colour clips — the ElevenLabs quota has now reset (2026-07-27)**, and the colouring chapter's toy-room test is still unanswerable on a silent device. **3–5 is now complete: all eleven chapters rebuilt.** Still unchanged and still the headline: ~zero real users, and nobody has watched a child play any of it.)_
+_Prior update: 2026-07-26 (the 🌡️ block. **⚠️ STILL UNCOMMITTED, and it now stacks on the 🎛️ session below, which is also uncommitted.** The four no-primitive 17–18 chapters were built — **Cold Snap** (polynomials), **The Balance That Grows** (exp/log), **Torch on the Wall** (conics), **The Reviews** (stats) — taking the band to **10 of 13**. `tsc` · 136/136 vitest (was 128) · `next build` · e2e question-quality 4/4 on the new ids · every question kind driven by hand and asserted on `data-test-phase`, 0 console errors. **The picker budget is holding at 6 of ~10** across ten chapters, and two of those were bought back by re-asking rather than re-wording: Torch's classify needs **no card at all** — the tilt IS the classification, which beats the plan's own design — and its ellipse-orientation two-carder became "how far does the beam reach". Reviews lost two conceptual MCQs to one gesture. **Two real bugs, both found by looking, both the same root cause:** a chart scaled to its data's RANGE rather than to the feature being read — Cold Snap's polynomial ends squashed the dip below freezing, and the exponential's sixth month pinned the target line to the floor. A first fix clamped instead of clipping, which made the curve flatten along the top edge, and a saturated exponential reads as a balance levelling off — the opposite of the point. **Two instruments deliberately withhold a number** (the month dial does not print the balance at the marker; the review slider does not print the running average until reveal) because a dial that confirms the answer is hot/cold. ▶ Next: **commit it**, then the engine wave — `MatrixPad`, `CurveMatch`, `CircleTap`, and lifting `RayLine` — which is the only thing blocking the last three chapters. Short-landscape still unchecked across the whole band; ten chapters of wording still unread by a teenager; the voice corpus still the top job overall, quota resets tomorrow.)_
+
+_Prior update: 2026-07-26 (the 🎛️ block. **⚠️ UNCOMMITTED — the only block in this file that is not shipped.** Prod is still `main`@`9800be3` / sw v63. The 17–18 band was designed onto GameShell and **6 of its 13 chapters built**: complexNumbers (The Walk Home, the pilot), sequencesSeries (The Training Block), introCalculus (Pace), rationalFunctions (Share the Wifi), functionToolkit (Photo Filters), quadraticAnalysis (The Resale Flip). `tsc` · 128/128 vitest · `next build` · e2e question-quality 6/6 with 0 console errors · every chapter driven live. **The design rests on one measured finding:** the band reads 40 numeric vs 57 string answers, which looks like a quiz waiting to happen — but most of those strings are structured numbers wearing a string costume, so the rule is tap a number → BUILD the value → pick a card LAST. Six chapters in, **2 pickers**. The founder's correction reshaped the worlds: the first list was professional (patch bay, radar, ops board) and became daily life (photo filters, a Ferris wheel, two receipts, a torch on a wall); [curriculum-12-18.md](docs/curriculum-12-18.md) carries a dated amendment so spec and code do not disagree silently. **Three bugs found by driving the pilot** — a compass arrow that never turned (a MotionValue string fed to `rotate`), then the same arrow lagging a whole heading behind, then a scene deriving its route from a step index that is global across worked examples. **A gate was wrong too:** mutation-testing showed `paddedQuestionContext` detecting correctly but naming the WRONG task, because a two-line task keeps its title outside its own chunk; fixed. ⚠️ **The e2e proves less than it looks here** — it breaks at the first instrument question, so grading was hand-driven on every surface, asserting `data-test-phase`. And I deleted a wrapper before extracting its inline sim, exactly as the plan warns; recovered from git. ▶ Next: **commit it**, then the engine wave (`MatrixPad`, `CurveMatch`, `CircleTap`) that unblocks the last three, or the four no-primitive chapters. Nothing checked at short-landscape; no new wording read aloud to a teenager. Still the headline: ~zero real users.)_
+
+_Prior update: 2026-07-26 (the 🎓 block — the 15–16 clarity pass. **SHIPPED — `main`@`eb96a72`, prod serving sw v63, smoke green and driven live on prod.** `tsc` · 116/116 vitest (was 91) · `next build` · **e2e question-quality 25/25 across BOTH teen bands, 0 console errors per chapter.** The question was whether the 15–16 chapters have the same structure as 12–14. They run the same `GameShell`, and their two real differences — no guided round, an explore sim per chapter — are deliberate. **But the "explaining-type" wording pass of 2026-07-24 never reached the band**, because 15–16 had been rebuilt five days earlier: five of its twelve chapters carried no `context` at all. That is not cosmetic — `QuestionBoard` goes structured the moment `context` OR `instruction` is set, structured mode never renders `prompt`, and `GameShell` sets `instruction` from `padInstruction` on every padded question, so each of those tasks' carefully written story sentence **was dead code** and the child saw a badge and a tap chip over an empty zone. 19 context lines added across 8 files, padded tasks only. **Two things I got wrong and had to fix:** my own first draft carried the very defect it was repairing — Leaderboard told a child two changes "partly cancel out" when the live seed drew 4 and 5, both positive, because `a` and `b` are independently signed (three more sign-dependent claims found in the same audit; **a generated sentence must be true for every seed its generator can draw**). And the new gate passed on its first run, so it was mutation-tested — **two planted regressions walked straight through it**, one because the task delimiter missed every task written `title: …, badge: …`, one because it matched `context:` only and so reported GearLab's shorthand `context,` as a false defect I nearly reported as real. Both fixed; 7/7 mutations now caught. Also widened PowerUps' power-of-a-power off base 2, where every answer it ever produced was a power of two. ▶ Next: **the voice corpus — quota reset 2026-07-27** and the whole 3–11 band still has zero clips; and **19 new sentences went to production unread by a human**, which is the one thing no gate here covers. Still the headline, still unchanged: ~zero real users.)_
+
+_Prior update: 2026-07-26 (the 📏 block — the measurement chapter. **SHIPPED — `main`@`1e129ab`, prod serving sw v62, smoke green and driven live on prod.** `tsc` · 91/91 vitest · `next build` green, 0 console errors in a fresh tab, driven live at 1024×620 and 640×320 in both worlds. **The measurement chapter was re-thought and rebuilt: the verb is MEASURE IT.** The old one was *tap the taller one* — chapter 5 with a different adjective on it — and reading the file made it worse: height was faked by uniform-scaling one sprite (so "taller" was really "bigger"), length was a non-uniform stretch, and the balance tipped toward the heavier side BEFORE the child committed. Now the child lays one repeating block end to end against the thing and decides when to stop; a ruler is nothing but a repeated unit, counted, and that is the one idea measurement has that counting and comparison do not. The thing and the run agree by CONSTRUCTION — a thing's unit count is its identity, so it is drawn at exactly `units × unitPx` — verified on screen at Δ0. **Weight is deliberately not a world**: any beam that responds while you add counters levels exactly when the count is right, which hands the answer over before the commit. Four real bugs found by driving it, and the general rule for each is now in the craft doc — a demo that raced past in 4s because `speakSteps` advances on utterance `end` and a one-word utterance ends instantly on a voiceless device; the thing being measured jumping a whole unit when the first block landed, because a lane that will fill must be reserved from empty; a contact shadow left in flow putting the two ends of the measure 28px apart; and 22px blocks on a landscape phone, now 39px. The gate passed first run so it was mutation-tested — three planted regressions caught, one survivor CHECKED and found genuinely inert, and the gate then caught a real consequence of the band change and was restated rather than relaxed. ▶ Next: **the six colour clips — the ElevenLabs quota resets 2026-07-27** (this line originally read "has now reset", which was wrong: it was written on the 26th), and the colouring chapter's toy-room test is still unanswerable on a silent device. **3–5 is now complete: all eleven chapters rebuilt.** Still unchanged and still the headline: ~zero real users, and nobody has watched a child play any of it.)_
 
 _Prior update: 2026-07-25 (session — see the top 🎨 block. **SHIPPED — `main`@`f44ce11`, prod serving sw v61, smoke green and driven live on prod.** `tsc` · 79/79 · `next build` green · 0 console errors in a fresh tab. Group B rebuilt so each "exact form" chapter has its OWN VERB — **Shape House is a shape sorter**, **Bead Shop is one string that gets longer**, **the Colouring Book is a real colouring game** on a genuine flood fill. Then the founder re-cut the colouring chapter: **one page TEACHES the six colour words, a second page TESTS them** — and the split is what makes the score mean anything, because a garden is full of things with one true colour (so it can answer for the child) while a toy is whatever colour it was made (so only the spoken word can). Five founder catches followed, and every one was invisible to checks that had passed: a tulip that silently ate 40% of taps aimed at it (the ink is a wall, and the rescue sat *behind* the bail-out written for it); a glow too faint to see on a small shape; *"That's the tulip!"* said to a child who tapped a tulip; "colour the cloud purple" asked of a white cloud; and a ghost house drawn as a wireframe, then standing in front of a fence painted into the backdrop. **The real lesson is about testing** — every script I wrote tapped each target's stored probe point, its dead centre, the single easiest tap on the page, so the mechanic was only ever verified where it could not fail. ▶ Next: **the six colour clips.** Confirmed in the code this session that the ENTIRE 3–11 band has zero recorded audio — the 435 clips are teen-only, because the extractor's file list is teen-only — so this chapter runs on browser TTS that many Chrome installs simply do not have. On a silent device the lesson still plays but teaches nothing, and the toy-room test is *unanswerable*, which is the price of making it an honest test: a picture that cannot answer for the child cannot rescue them either. ElevenLabs quota resets 2026-07-27. Then measurement — the last 3–5 chapter — asking its verb first.)_
 
