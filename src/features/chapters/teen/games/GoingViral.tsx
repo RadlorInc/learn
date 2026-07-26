@@ -100,6 +100,7 @@ function evalTask(d: 1 | 2 | 3): Task {
   return {
     kind: 'eval', title: 'Steady channel', badge: `f(x) = ${m}x + ${c},  x = ${x}`, tone: 'a',
     prompt: `Find the views on day ${x} for f(x) = ${m}x + ${c}.`,
+    context: `A steady channel opened with ${c} views and picks up ${m} more every day. Day ${x} means the daily gain has happened ${x} times on top of the ${c} it started with.`,
     padInstruction: `Tap the number of views on day ${x}.`,
     showEquals: false,
     say: `A steady channel gains views by f of x equals ${m} x plus ${c}. Which number is the views on day ${x}?`,
@@ -122,6 +123,7 @@ function sequenceTask(d: 1 | 2 | 3): Task {
   return {
     kind: 'sequence', title: 'Going viral', badge: `${seq.join(', ')}, …`, tone: 'b',
     prompt: `Views multiply by ${r} each day: ${seq.join(', ')}. What comes next?`,
+    context: `This channel is going viral: every day the views MULTIPLY by ${r} rather than growing by a fixed amount. The gap between days keeps getting bigger because each day multiplies a larger number.`,
     padInstruction: 'Tap the views on the next day.',
     showEquals: false,
     say: `The views are going viral — each day multiplies by ${r}. The pattern so far is ${seq.join(', ')}. Which number comes next?`,
@@ -141,6 +143,7 @@ function growthTask(d: 1 | 2 | 3): Task {
   return {
     kind: 'growth', title: 'Growth factor', badge: `y = ${a}·${b}ˣ`, tone: 'b',
     prompt: `In the viral model y = ${a}·${b}ˣ, which number is the growth factor?`,
+    context: `A viral model has two numbers doing different jobs: one is how many views the channel started with, the other is what the views multiply by each day. Only the second one sits underneath the power.`,
     padInstruction: 'Tap the number the views multiply by each day.',
     showEquals: false,
     say: `A viral model is y equals ${a} times ${b} to the x. Which number do the views multiply by each day?`,

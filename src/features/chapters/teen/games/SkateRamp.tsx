@@ -97,6 +97,7 @@ function makeL1(): Task {
     return {
       kind: 'pad', title: 'Ramp edge', badge: `${a}° + x = 180°`, tone: 'a',
       prompt: `The ramp edge and the ground make ${a}°. Find x on the same straight line.`,
+      context: `The ramp edge leans off the ground at ${a}°, and x is the angle beside it on that same straight line. A straight line is worth 180° in total, and the two angles share all of it between them.`,
       padInstruction: 'Tap the size of angle x, in degrees.',
       showEquals: false,
       say: `A ramp edge meets the ground. One angle is ${a} degrees and the angle beside it, x, sits on the same straight line. Which is x?`,
@@ -111,6 +112,7 @@ function makeL1(): Task {
     return {
       kind: 'pad', title: 'Crossing rails', badge: `x is vertical to ${a}°`, tone: 'a',
       prompt: `Two rails cross. The angle vertical to x is ${a}°. Find x.`,
+      context: `Two rails cross, and x sits directly opposite the ${a}° angle through the crossing point — not beside it. Angles facing each other across a crossing are a different relationship from angles sitting side by side.`,
       padInstruction: 'Tap the size of angle x, in degrees.',
       showEquals: false,
       say: `Two rails cross. One angle is ${a} degrees. Which is its vertical angle, x?`,
@@ -127,6 +129,7 @@ function makeL1(): Task {
   return {
     kind: 'pad', title: 'Ramp triangle', badge: `${a}° + ${b}° + x = 180°`, tone: 'a',
     prompt: `A ramp triangle has angles ${a}°, ${b}° and x°. Find x.`,
+    context: `The ramp frame makes a triangle with corners of ${a}° and ${b}°, and x is the third. However a triangle is stretched, its three corners always come to 180° between them.`,
     padInstruction: 'Tap the size of angle x, in degrees.',
     showEquals: false,
     say: `The ramp forms a triangle with angles ${a} degrees, ${b} degrees and x degrees. Which is x?`,
@@ -192,6 +195,7 @@ function sideTask(): Task {
   return {
     kind: 'pad', title: 'Ramp side', badge: `hyp ${h} m · one leg ${known} m`, tone: 'b',
     prompt: `A right-triangle ramp has hypotenuse ${h} m and one leg ${known} m. Find the other leg.`,
+    context: `The ${h} m hypotenuse is the ramp's slanted face; ${known} m is one of the two sides meeting at the square corner. The squares on those two account for the square on the slanted face.`,
     padInstruction: 'Tap the length of the other leg, in metres.',
     showEquals: false,
     say: `A ramp is a right triangle with hypotenuse ${h} metres and one leg ${known} metres. How long is the other leg?`,
@@ -205,6 +209,14 @@ function sideTask(): Task {
  *  Every side is printed on the board, so this is a division the child can do.
  *  Distractors are the opposite/adjacent/hypotenuse mix-ups, i.e. the OTHER two
  *  ratios of the same triangle plus the flipped one. */
+// Names the three sides without naming which PAIR each ratio uses — the pairing is
+// the question. Naming the sides is the part a child genuinely cannot guess, and it
+// is what the distractors (the other two ratios of the same triangle) turn on.
+const RATIO_CONTEXT =
+  'θ is the angle at the foot of the ramp. The side straight across from it is the opposite, '
+  + 'the straight side running along beside it is the adjacent, and the slanted face is the '
+  + 'hypotenuse. Each ratio divides a different two of those three.'
+
 function ratioTask(): Task {
   const [o, a, h] = RATIO_TRIPLES[rint(0, RATIO_TRIPLES.length - 1)]
   const sin = r2(o / h), cos = r2(a / h), tan = r2(o / a), flip = r2(a / o)
@@ -213,6 +225,7 @@ function ratioTask(): Task {
   if (which === 0) return {
     kind: 'pad', title: 'Ramp ratio', badge: `sin θ = ?   (${sides})`, tone: 'b',
     prompt: `The ramp has opposite ${o} m, adjacent ${a} m, hypotenuse ${h} m. Find sin θ.`,
+    context: RATIO_CONTEXT,
     padInstruction: 'Tap the value of sin θ.',
     showEquals: false,
     say: `The ramp's sides are: opposite ${o} metres, adjacent ${a} metres, hypotenuse ${h} metres. What is the sine of theta?`,
@@ -222,6 +235,7 @@ function ratioTask(): Task {
   if (which === 1) return {
     kind: 'pad', title: 'Ramp ratio', badge: `cos θ = ?   (${sides})`, tone: 'b',
     prompt: `The ramp has opposite ${o} m, adjacent ${a} m, hypotenuse ${h} m. Find cos θ.`,
+    context: RATIO_CONTEXT,
     padInstruction: 'Tap the value of cos θ.',
     showEquals: false,
     say: `The ramp's sides are: opposite ${o} metres, adjacent ${a} metres, hypotenuse ${h} metres. What is the cosine of theta?`,
@@ -231,6 +245,7 @@ function ratioTask(): Task {
   return {
     kind: 'pad', title: 'Ramp ratio', badge: `tan θ = ?   (${sides})`, tone: 'b',
     prompt: `The ramp has opposite ${o} m, adjacent ${a} m, hypotenuse ${h} m. Find tan θ.`,
+    context: RATIO_CONTEXT,
     padInstruction: 'Tap the value of tan θ.',
     showEquals: false,
     say: `The ramp's sides are: opposite ${o} metres, adjacent ${a} metres, hypotenuse ${h} metres. What is the tangent of theta?`,

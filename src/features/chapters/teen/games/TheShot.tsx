@@ -231,6 +231,7 @@ function landTask(): Task {
   return {
     kind: 'land', title: 'Where it lands', badge: `h = −${factorOf(near)}${factorOf(far)}`, tone: 'a', showEquals: false,
     prompt: `Tap the x where the ball comes down — the touch-down further down the court.`,
+    context: 'Each bracket marks a touch-down — a spot on the court where the ball is level with the ground. There are two: one nearer half-court, one further down where it lands.',
     padInstruction: 'Tap the x value of the far touch-down — the bigger one.',
     say: `Here is the shot in factored form. Each bracket gives one touch-down. Tap the x value of the far one, further down the court.`,
     work: [`A bracket is zero when x makes it zero. ${spFactor(near)} is zero at x equals ${spoken(near)}, and ${spFactor(far)} is zero at x equals ${spoken(far)}. The far one, the bigger x, is ${spoken(far)}.`],
@@ -250,7 +251,7 @@ function peakTask(): Task {
   const q = shotThrough(ra, rb)
   return {
     kind: 'peak', title: 'How high', badge: `h = ${quad(q.pa, q.pb, q.pc)}`, tone: 'b', showEquals: false,
-    context: "This rule gives the ball's height as it flies up and back down.",
+    context: "This rule gives the ball's height along the court. It climbs, turns over at one highest point, then drops — so WHERE the top sits and HOW HIGH it gets there are two different numbers.",
     prompt: 'Tap how high the ball gets at the top of its arc.',
     padInstruction: 'Work out the greatest height it reaches, then tap that number.',
     say: `This shot's height is ${spQuad(q.pa, q.pb, q.pc)}. Tap how high the ball gets at the very top.`,

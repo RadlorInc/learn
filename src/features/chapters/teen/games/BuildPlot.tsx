@@ -137,7 +137,7 @@ function missingTask(p: number, q: number, d: 1 | 2 | 3): Task {
   const area = areaExpr(b, c)
   return {
     kind: 'missing', title: 'Plot', badge: `${area}  =  ${fac(p)}(x + ▢)`, tone: d === 3 ? 'b' : 'a',
-    context: `One side is surveyed already: ${fac(p)}.`,
+    context: `One side is surveyed already: ${fac(p)}. The two side numbers have to do two jobs at once — multiply to the last number of the area, and add to the middle one.`,
     padInstruction: 'Tap the number that belongs in the box — it can be negative.',
     answerLabel: '▢ =',
     prompt: `The area is ${area} and one side is ${fac(p)}. What number is in the other side?`,

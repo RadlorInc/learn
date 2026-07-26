@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test'
 import { aceKid, strugglerKid, reachPractice, GESTURE_VERBS, IGNORED_ERRORS } from './personas'
 
-// Regression gate for the 2026-07-19 question-clarity pass. Every 12–14 chapter is
+// Regression gate for the 2026-07-19 question-clarity pass. Every teen chapter is
 // driven into its scored loop and each question board is checked against the invariants
 // that pass established. These are STRUCTURAL checks — they cannot judge whether wording
 // reads well, but they do catch the defect classes that shipped:
@@ -11,10 +11,21 @@ import { aceKid, strugglerKid, reachPractice, GESTURE_VERBS, IGNORED_ERRORS } fr
 //   • a double-equals chain ("x + 1 = 4" over "= ?")
 //   • a blank stage on a wrong answer (pad unmounted, no instrument to glide)
 // Slow by nature: headless has no speech, so every intro falls back to a timer.
+//
+// The 15–16 ids matter MORE than the 12–14 ones here, not less: the pad-contains-its-
+// own-answer check is exactly the `padValue` defect that shipped to production in this
+// band (Leaderboard, `293030a`) and survived a hand-drive, because a wrong answer still
+// advances. See src/__tests__/answerPadGrading.test.ts for the unit-level twin.
 const CHAPTERS = [
+  // 12–14
   'integers', 'signedRationalOps', 'rationalOps', 'ratioProportion',
   'percentages', 'exponentsRoots', 'orderOfOperations', 'algebraicExpressions',
   'equationsInequalities', 'coordinatePlane', 'linearRelationships', 'geometryMeasurement',
+  // 15–16
+  'signedNumberFluency', 'expressionsVariables', 'linearEquationsInequalities',
+  'slopeLinearGraphs', 'functionsFamilies', 'systemsOfEquations',
+  'exponentsPolynomials', 'radicalsPythagorean', 'factoringPolynomials',
+  'quadraticsParabolas', 'geometryTransformations', 'geometryProofTrig',
 ]
 
 interface Board { badge: string; instruction: string; answerLine: string; padded: boolean; answer: string }

@@ -149,8 +149,14 @@ function quotientTask(): Task {
 
 /** power of a power: (b^m)^n — run the SAME batch of m cranks, n times over. */
 function powerOfPowerTask(): Task {
-  const b = 2
-  const [m, n] = pick([[2, 2], [2, 3], [3, 2]])   // m·n ≤ 6 → top stat 64
+  // Base 3 belongs here as much as it does in productTask/quotientTask above. Pinned
+  // to 2 alone, every answer this task ever produced was a power of two, which a
+  // child can pattern-match without touching the law it exists to teach.
+  // Same readable-stat ceiling as its neighbours: 2⁷ = 128, 3⁴ = 81.
+  const b = pick([2, 3])
+  const [m, n] = b === 2
+    ? pick([[2, 2], [2, 3], [3, 2]])              // m·n ≤ 6 → top stat 64
+    : pick([[2, 2]])                              // m·n ≤ 4 → top stat 81
   const val = Math.round(Math.pow(b, m * n))
   return {
     kind: 'crank', title: 'Power of a power-up', badge: `(${pow(b, m)})${sup(n)}`, tone: 'b',

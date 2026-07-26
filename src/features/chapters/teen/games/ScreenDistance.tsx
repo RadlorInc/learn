@@ -120,6 +120,7 @@ function gapTask(): Task {
   return {
     kind: 'gap', title: 'Measure the gap', badge: `${RAD}(${dx}² + ${dy}²)`, tone: 'a',
     prompt: `Two holds sit ${dx} across and ${dy} up. How far apart are they?`,
+    context: `Two holds sit ${dx} across and ${dy} up from each other. The straight reach between them is the slanted side of that right-angled corner — longer than either side alone, shorter than walking the two.`,
     padInstruction: 'Tap how far apart the two holds are.',
     say: `Two holds sit ${dx} across and ${dy} up from each other. How far apart are they?`,
     work: [`Square each side and add: ${dx}² + ${dy}² = ${dx * dx} + ${dy * dy} = ${c * c}. The gap is ${RAD}${c * c}, which is ${c}.`],
@@ -137,6 +138,7 @@ function legTask(): Task {
   return {
     kind: 'leg', title: 'Find the other side', badge: `${RAD}(${c}² − ${known}²)`, tone: 'b',
     prompt: `The gap between two holds is ${c}, and ${known} of that is across. How far up?`,
+    context: `This time the slanted reach is known, and so is the ${known} across. The two shorter sides together account for the slanted one, so the rise is what is left once the across is taken out.`,
     padInstruction: 'Tap how far up the second hold sits.',
     say: `The gap between two holds is ${c}. ${known} of it is across. How far up is the second hold?`,
     work: [`Un-square it the other way: ${c}² − ${known}² = ${c * c} − ${known * known} = ${missing * missing}. So the rise is ${RAD}${missing * missing}, which is ${missing}.`],

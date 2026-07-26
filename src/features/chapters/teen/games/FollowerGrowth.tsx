@@ -103,7 +103,7 @@ export const readStarts = (m: number): number[] =>
 export function readSlopeTaskFrom(m: number, b: number): Task {
   return {
     kind: 'slope', title: 'Growth rate', badge: eqStr(m, b), tone: 'a',
-    context: `This rule tracks one creator's followers, week by week.`,
+    context: `This rule tracks one creator's followers week by week. Two numbers in it do different jobs — one is where they started, the other is how far the count moves each week.`,
     padInstruction: 'Tap the followers gained each week — a fall counts as negative.',
     answerLabel: 'growth per week',
     prompt: `How many followers does the line ${eqStr(m, b)} gain each week?`,
@@ -145,7 +145,9 @@ export function weeksTaskFrom(x1: number, run: number, b: number, m: number): Ta
   const rise = y2 - y1
   return {
     kind: 'slope', title: 'Read the log', badge: `wk ${x1}: ${disp(y1)}  →  wk ${x2}: ${disp(y2)}`, tone: 'a',
-    context: `Two weeks from the creator's follower log.`,
+    // The slope can be negative, so this says "change", never "gain" — a losing week
+    // is still a change, and calling it a gain would be false for half the seeds.
+    context: `Two weeks from the creator's log, and they are not next to each other. The weekly rate is the whole change shared evenly across the weeks in between — spread over more weeks, the same change is a smaller rate.`,
     padInstruction: 'Tap the followers gained each week — a fall counts as negative.',
     answerLabel: 'growth per week',
     prompt: `Week ${x1} had ${y1} followers and week ${x2} had ${y2}. How many are gained each week?`,

@@ -12,7 +12,101 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 📏 **2026-07-26 (LATEST) — THE MEASUREMENT CHAPTER RE-THOUGHT AND REBUILT: THE VERB IS *MEASURE IT*. SHIPPED TO PROD. `main`@`1e129ab`, prod serving sw v62, smoke green + DRIVEN LIVE ON PROD.**
+> 🎓 **2026-07-26 (LATEST) — THE 15–16 BAND BROUGHT UP TO THE 12–14 STRUCTURE. NOT COMMITTED.**
+> Gates: `tsc` · **116/116 vitest** (was 91) · `next build` · **e2e question-quality 25/25 across BOTH
+> bands, 13.7m, 0 console errors per chapter** · driven live at 1024×620 and 640×320.
+>
+> **The question asked was "do the 15–16 chapters have the same structure as 12–14".** Answer, after
+> reading all 24 game files field by field: **the engine is identical and two differences are
+> deliberate — but one whole pass had never reached the band.**
+>
+> ## ① WHAT IS THE SAME, AND WHAT DIFFERS ON PURPOSE
+> Both bands are 12 chapters on the same `GameShell`: `overview` (THE PLAN) → `tutorial` +
+> Framer-Motion `TutorialScene` → scored loop, plus `answerPad` · `motif` · `glide` · `work` · `say` ·
+> ScribblePad. Deliberate, from the 2026-07-19 rebuild — **leave these alone**:
+> | | 12–14 | 15–16 |
+> |---|---|---|
+> | `guided:` round | 12/12 | **0/12** — every graded gesture is worked in the WALKTHROUGH instead |
+> | `explore:` sim | 0/12 | **12/12** |
+> | `tutorial` shape | mixed object/array | always an array (multi-example) |
+> | `padValue` | 0 needed (V is `number`) | 8/12 (V is a tagged union) |
+>
+> ## ② THE REAL GAP — THE EXPLAINING PASS NEVER REACHED 15–16, AND THE BOARD SILENTLY ATE THE PROMPT
+> The "explaining-type" wording pass (`03361ec`, sw v47, 2026-07-24) covered all twelve 12–14
+> chapters. **The 15–16 band was rebuilt five days EARLIER and never got it** — five chapters
+> (Leaderboard · TicketCheckout · GoingViral · ScreenDistance · SkateRamp) had **zero `context:`**.
+> That is not cosmetic, because of a chain worth remembering:
+> `QuestionBoard` goes **structured** the moment `context` OR `instruction` is set
+> ([gameKit.tsx](src/features/chapters/teen/games/parts/gameKit.tsx):599), structured mode **never
+> renders `prompt`**, and [GameShell.tsx](src/features/chapters/teen/games/parts/GameShell.tsx):534
+> sets `instruction` from `padInstruction` on **every padded question**. So in those five chapters the
+> sentence each task had carefully written — *"Two holds sit 3 across and 4 up. How far apart are
+> they?"* — **was dead code**, and the child saw badge + tap-chip over an empty story zone.
+> **19 `context` lines added/rewritten across 8 files** (all four padded generators in Leaderboard,
+> seven in SkateRamp, two in ScreenDistance, three in GoingViral, one in TicketCheckout, plus the
+> label-only one-liners in TheShot/BuildPlot/FollowerGrowth expanded into real explanations).
+> Only PADDED tasks were touched: an instrument task has no `padInstruction`, so it is unstructured
+> and still renders its `prompt` — adding `context` there without `instruction` would have *created*
+> this bug rather than fixed it.
+> ⚠️ **They were written 68% too long at first** (median 198 chars vs 12–14's 118) and trimmed back
+> inside the band's own envelope after measuring both. Boards verified at 1024×620 and **640×320**,
+> where the layout goes two-column — the board sits left of the pad, so a naive vertical-gap check
+> reported an 81px "overlap" that the screenshot showed was nothing. *Trust the pixels.*
+>
+> ## ③ THE BUG I SHIPPED INTO THE FIX, CAUGHT BY DRIVING IT
+> Leaderboard's new line read *"…so two moves in opposite directions partly cancel out"* — and the
+> live seed drew **2 and 6, both positive**. `a` and `b` are independently signed, so the sentence was
+> simply FALSE for most seeds. Same class as the "Deeper debt" line for two positive balances that the
+> 12–14 audit fixed, and the craft doc's *an attribute question must be true of its object*. Audited
+> every line I had written for sign-dependence and found **three more**: a bonus landing "`c` times
+> over" when `c` can be negative, a "bonus" that is a debuff when `k < 0`, and a "gain" that is a loss
+> when the slope is negative. **A generated sentence must hold for EVERY seed the generator can draw**
+> — the reason is now a comment on each of the four.
+>
+> ## ④ TWO GATES, AND THE SECOND ONE WAS WRONG TWICE BEFORE IT WAS RIGHT
+> • **[question-quality.spec.ts](e2e/question-quality.spec.ts) now drives all 24 teen chapters**, not
+>   just 12–14. This was open item #1 from 2026-07-19 and it matters MORE here than in 12–14: the
+>   pad-contains-its-own-answer check is exactly the `padValue` defect that **shipped to prod in this
+>   band** and survived a hand-drive. No harness change was needed — `reachPractice` already stops on
+>   phase `guided` **or** `practice`, so a guided-less band lands straight in the scored loop.
+> • **NEW [paddedQuestionContext.test.ts](src/__tests__/paddedQuestionContext.test.ts)** (25 tests) —
+>   a source check that every task setting `padInstruction` also sets `context`, so §② cannot recur.
+>   **It passed on the first run, so it was mutation-tested, and two planted regressions walked
+>   through it:**
+>   – it anchored the task delimiter on `badge:` at line start, missing every task written
+>     `title: …, badge: …` — WeatherStation's four collapsed into ONE chunk and a neighbour's
+>     `context` covered a deleted one;
+>   – it matched `context:` only, so GearLab's computed-local **shorthand `context,`** read as
+>     missing and it reported a false defect in a 12–14 chapter.
+>   Both fixed; **7/7 planted regressions now caught**, each naming the offending task by title.
+>   *A gate that has never been seen to fail is not evidence — and a "finding" it produces is guilty
+>   until the mutation proves the gate, not the code, is right.*
+>
+> ## ⑤ ONE REAL COVERAGE GAP CLOSED, AND A CORRECTION TO MY OWN FIRST ANSWER
+> I first reported the old 15–16 coverage gaps as "already closed" from a grep. **That was wrong for
+> one of them:** PowerUps' power-of-a-power was pinned `const b = 2`, so *every answer it ever
+> produced was a power of two* — pattern-matchable without touching the law it teaches. Now
+> `pick([2, 3])` with the same readable-stat ceiling its two neighbours already use (2⁷=128, 3⁴=81).
+> The others really are closed (SkateRamp has 6 triples, MapMaker has arc/sector), and
+> ScreenDistance's missing √12/√27/√48/√75 is a **documented design limit** — only sums of two squares
+> are climbable — not a bug.
+>
+> ## ▶ OPEN — pick up here
+> 1. **NOT COMMITTED.** 10 files changed + 1 new test file. Bump `public/sw.js` before deploying.
+> 2. **Instrument tasks in 15–16 are still 2-zone by construction** — they have no `padInstruction`,
+>    so they render their `prompt` and nothing is lost. Bringing them to the 12–14 3-zone shape
+>    (NightFlight's `context` + `instruction`) is a real but purely-cosmetic follow-up; doing it
+>    requires adding BOTH fields or the prompt vanishes.
+> 3. **Nobody has read the new wording aloud to a teenager.** The gate is structural — it cannot tell
+>    you whether *"Angles facing each other across a crossing are a different relationship from angles
+>    sitting side by side"* parses for a struggling 15-year-old.
+> 4. **The voice corpus is still the top job and is untouched here** (explicitly out of scope this
+>    session). ElevenLabs quota reset 2026-07-27; the whole 3–11 band still has zero clips.
+> 5. Still the headline, still unchanged: **~zero real users.**
+>
+> _(the 📏 block below is the previous session — the measurement chapter.)_
+
+> 📏 **2026-07-26 — THE MEASUREMENT CHAPTER RE-THOUGHT AND REBUILT: THE VERB IS *MEASURE IT*. SHIPPED TO PROD. `main`@`1e129ab`, prod serving sw v62, smoke green + DRIVEN LIVE ON PROD.**
 >
 > **Deploy:** `feat/story-3-5-measure-it` → `main` (fast-forward) → pushed → prod **v62**.
 > Gates: `tsc` · **91/91 vitest** (was 79) · `next build` · 0 console errors in a fresh tab. Smoke:

@@ -91,6 +91,9 @@ function addTask(): Task {
   return {
     kind: 'score', title: 'Combine the round', badge: `${sumExpr(a, b)}`, tone: 'a',
     prompt: `Set the score for ${sumExpr(a, b)}.`,
+    // Must hold for EVERY seed: a and b are each independently signed, so this
+    // cannot claim the two moves oppose each other (they often do not).
+    context: `Your score changed by ${fmt(a)}, then by ${fmt(b)}. A change below zero drags the score down and one above zero lifts it, so the two moves may build on each other or partly cancel.`,
     padInstruction: 'Tap the new score.',
     say: `Your score changed by ${spoken(a)}, then by ${spoken(b)}. Which is the new score?`,
     work: [`Start at ${fmt(a)} and move ${Math.abs(b)} to the ${b < 0 ? 'left' : 'right'}: you land on ${fmt(n)}.`],
@@ -157,6 +160,9 @@ function twoStepTask(): Task {
   return {
     kind: 'score', title: 'Two-step swing', badge: `${fmt(a)} + (${fmt(b)}) × (${fmt(c)})`, tone: 'b',
     prompt: `Set the score for ${fmt(a)} + (${fmt(b)}) × (${fmt(c)}).`,
+    // `c` is signed, so this must not say the card "lands c times" — a negative count
+    // of landings is not a thing. Naming it a swing keeps the sentence true either way.
+    context: `You start on ${fmt(a)}, and a second swing is built from ${fmt(b)} and ${fmt(c)} together. That swing is worked out on its own first, before it joins the starting score.`,
     padInstruction: 'Tap the total score.',
     say: `Base score ${spoken(a)}, plus a bonus of ${spoken(b)} times ${spoken(c)}. Which total is right?`,
     work: [`Multiply first: ${fmt(b)} × ${fmt(c)} = ${fmt(b * c)}. Then ${fmt(a)} + ${fmt(b * c)} = ${fmt(n)}.`],
@@ -178,6 +184,7 @@ function powerTask(): Task {
     return {
       kind: 'score', title: 'Penalty squared', badge: `${fmt(a)} − ${c}²`, tone: 'b',
       prompt: `Set the score for ${fmt(a)} − ${c}².`,
+      context: `Your score is ${fmt(a)} when a penalty of ${c} squared lands. Squared means ${c} multiplied by itself, not ${c} doubled, and the penalty is worked out before it comes off the score.`,
       padInstruction: 'Tap the score after the penalty.',
       say: `Score ${spoken(a)}, then a penalty of ${c} squared. Which score is right?`,
       work: [`Exponent first: ${c}² = ${c * c}. Then ${fmt(a)} − ${c * c} = ${fmt(n)}.`],
@@ -189,6 +196,8 @@ function powerTask(): Task {
   return {
     kind: 'score', title: 'Bonus squared', badge: `(${fmt(k)}) × ${b}²`, tone: 'b',
     prompt: `Set the score for (${fmt(k)}) × ${b}².`,
+    // `k` is signed — calling it a bonus would be false when the swing goes down.
+    context: `A multiplier of ${fmt(k)} is applied to ${b} squared. Squared means ${b} multiplied by itself, and that is worked out before the multiplier goes on.`,
     padInstruction: 'Tap the score the bonus gives.',
     say: `A multiplier of ${spoken(k)}, times ${b} squared. Which score is right?`,
     work: [`Exponent first: ${b}² = ${b * b}. Then ${fmt(k)} × ${b * b} = ${fmt(n)}.`],

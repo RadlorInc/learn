@@ -78,6 +78,7 @@ function evalTask(): Task {
   return {
     kind: 'eval', title: 'Ticket order', badge: `${lin(a, b)},  x = ${v}`, tone: 'a',
     prompt: `What is ${lin(a, b)} when x = ${v}?`,
+    context: `Tickets are ${a} each and the order carries a ${b} booking fee. Someone is buying ${v} of them — the ticket part grows with how many you buy, but the fee is charged once however big the order.`,
     padInstruction: 'Tap the total cost of the order.',
     answerLabel: 'total',
     say: `Work out ${a}x plus ${b} when x is ${spoken(v)}. Which total is right?`,
