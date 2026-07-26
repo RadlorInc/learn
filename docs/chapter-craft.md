@@ -22,6 +22,7 @@ Reference implementations, in order of how closely to copy them:
 | 4 · Matching quantities | [HomeTime.tsx](../src/features/chapters/story/HomeTime.tsx) | journeys in BOTH directions, a commit gesture, leader bands |
 | 5 · Comparing quantities | [BigOrSmall.tsx](../src/features/chapters/story/BigOrSmall.tsx) | two countable groups, group separation, concrete → symbolic tiers |
 | 9 & 10 · Addition / subtraction | [PlayTime.tsx](../src/features/chapters/story/PlayTime.tsx) | one component for two mirrored operations, a countable set, an exported layout chain |
+| 11 · Measurement | [MeasureIt.tsx](../src/features/chapters/story/MeasureIt.tsx) | an answer the child BUILDS, drawing a sprite by its own ink box, reserving a lane before it fills |
 
 The shared engine all of these run on is [critters.tsx](../src/features/chapters/story/critters.tsx) —
 cast, habitats, `Critter`, the travel timing and the huddle invariants. **Put a fix there, not in a
@@ -76,6 +77,14 @@ painted on the outside, and it is the fault a founder will name as "it doesn't f
 | shapes | a form defined by its **outline** | **FIT** — a shape sorter | a hole in the picture (visual) |
 | colours | a **property** you apply | **COLOUR IT IN** | a spoken name (auditory) |
 | patterns | a **rhythm** over a sequence | **CONTINUE** | the sequence itself (temporal) |
+| measurement | a **magnitude**, which has no number until you choose a unit | **MEASURE IT** — lay one unit end to end and count | the thing itself, beside an empty lane (visual) |
+
+**Beware the skill that is a near neighbour of one already built.** Measurement spent a year as
+*tap the taller one*, which is chapter 5 (*tap the bigger bunch*) with a different adjective — and
+its height view faked the attribute anyway, uniformly scaling one sprite so "taller" was really
+"bigger" and could be won on area. Two neighbouring skills need two different VERBS, not two
+different adjectives over one gesture. What separates measurement from comparison is the unit: a
+ruler is nothing but a repeated unit, counted, so laying the unit is the thing to build.
 
 Two consequences worth having in advance:
 
@@ -255,6 +264,16 @@ check them with a script:
   had just finished proving. **Jitter away from a limit, never toward it**, or the fit means nothing.
 - **check the real spots, not the band they came from.** A sweep that reads `waitY1` instead of the
   positions `waitSpot` actually returns cannot see any of the jitter, and passes clean.
+- **A LANE THAT WILL FILL MUST BE RESERVED FROM EMPTY.** Anything that grows — a run of blocks, a
+  gathered group, a strand — is zero-sized before the first item lands, so its neighbours sit in the
+  wrong place until then and jump a whole item when it arrives. In the measurement chapter the thing
+  that jumped was *the thing being measured*, which is the one element the child is reading. Give
+  the container the full width or height it will end at; empty and unstyled, it gives nothing away.
+- **A decoration must not add layout height to the thing it decorates.** A contact shadow left in
+  flow made the measuring run bottom-align against the shadow rather than the ground, so the two
+  ends of the measure stood 28px apart — a measure whose ends do not share a ground line measures
+  nothing. Position shadows, labels and glows out of flow (or inside the subject, per the
+  shadow-as-child rule above).
 - **a boundary next to another character is measured off THAT character, never guessed.** Chapter 2
   learned this as the cut-off leader; it applies to any adjacency. Chapters 9–10 gave their set a
   flat right limit of 74% and the three widest reef creatures (fish 1.37, turtle 1.53, shark 1.75 : 1)
@@ -465,6 +484,13 @@ verify it FLOODS  (threshold → dilate 2px → connected components; see the sc
   timer for the visuals plus separate `speak()` calls — they drift on Safari and cut each other off
   on Chrome. When audio is blocked, `speakSteps` still paces the steps on a timer, so the demo works
   silently.
+- **EXCEPT when the steps are single WORDS — those are self-paced on a deterministic timer.**
+  `speakSteps` advances on each utterance's `end`, and a device with no usable voice ends a
+  one-word utterance in milliseconds, so a counting demo ("one… two… three") races past instead of
+  falling through to the timer fallback. Measured in the measurement chapter: both demos AND the
+  guided round arrived inside four seconds. Lay the steps on your own timer and `speak()` alongside
+  — the colour and shape showcases already do, and it is the same reason. Sentences are fine on
+  `speakSteps`; single words are not.
 - Never fire rapid consecutive `speak()` calls; each cancels the last.
 - Demos are deliberately slow: `rate: 0.8`, `gapMs: 1100`, and a slow fallback step when silent.
 
@@ -516,6 +542,13 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
 - **The preview screenshot lags the DOM.** A frame showing the wrong backdrop with creatures missing
   entirely was pure staleness; a DOM query at the same moment was correct. Re-shoot before believing
   anything alarming.
+- **AN ELEMENT WITH AN ENTRANCE ANIMATION IS A LIE FOR ITS FIRST FEW HUNDRED MS — and a backgrounded
+  tab freezes it there indefinitely.** `getBoundingClientRect` includes transforms, so a block
+  scaling in from 0.5 measures half its real size, and a screenshot catches it translated and
+  half-faded. Both happened in one session on the measurement chapter and both read as real bugs
+  (blocks the wrong size; blocks hidden behind the controls). CSS animations are throttled in a
+  background tab exactly like `rAF` and `setTimeout`, so "wait longer" is not enough — front the tab,
+  then wait, then measure.
 - **The console buffer survives navigation.** After a rename you will see a wall of
   `Module not found` from the stale buffer. Open a fresh tab before believing it. This repo has lost
   three sessions to that.

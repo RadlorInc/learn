@@ -38,7 +38,7 @@ const RainbowTown = lazyStory(() => import('@/features/chapters/story/RainbowTow
 const BeadShop = lazyStory(() => import('@/features/chapters/story/BeadShop'))
 const PlayTime = lazyStory(() => import('@/features/chapters/story/PlayTime'))
 const PlayTimeSub = lazyStory(() => import('@/features/chapters/story/PlayTimeSub'))
-const TallForest = lazyStory(() => import('@/features/chapters/story/TallForest'))
+const MeasureIt = lazyStory(() => import('@/features/chapters/story/MeasureIt'))
 const NumberTown = lazyStory(() => import('@/features/chapters/story/NumberTown'))
 const BuildingBlocks = lazyStory(() => import('@/features/chapters/story/BuildingBlocks'))
 const HopAlong = lazyStory(() => import('@/features/chapters/story/HopAlong'))
@@ -100,8 +100,8 @@ export default function StoryPage() {
   if (ch === 'add') return <PlayTime />
   // ?world=pond|party|night jumps into a subtraction world.
   if (ch === 'sub') return <PlayTimeSub />
-  // ?world=forest|trail|market jumps into a measurement world.
-  if (ch === 'measure') return <TallForest world={orderWorld} />
+  // ?world=forest|trail jumps into a measurement world.
+  if (ch === 'measure') return <MeasureIt world={orderWorld} />
   // ── 6–8 ──
   // ?world=town|train|space jumps into a numbers-to-100 world.
   if (ch === 'numbers') return <NumberTown world={orderWorld} />

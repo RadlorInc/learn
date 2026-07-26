@@ -12,7 +12,115 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🎨 **2026-07-25 (LATEST) — GROUP B REBUILT (EACH SKILL GETS ITS OWN VERB), THEN THE COLOURING CHAPTER RE-CUT AS *TEACH ONE PAGE → TEST ON ANOTHER* AND FIVE FOUNDER CATCHES FIXED. SHIPPED TO PROD. `main`@`f44ce11`, prod serving sw v61, smoke green + DRIVEN LIVE ON PROD.**
+> 📏 **2026-07-26 (LATEST) — THE MEASUREMENT CHAPTER RE-THOUGHT AND REBUILT: THE VERB IS *MEASURE IT*. NOT COMMITTED, NOT DEPLOYED.** `tsc` · **91/91 vitest** (was 79) · `next build` green · 0 console errors in a fresh tab · driven live at 1024×620 and 640×320, both worlds.
+>
+> **Files.** `TallForest.tsx` → **[MeasureIt.tsx](src/features/chapters/story/MeasureIt.tsx)** (rewritten, not renamed — nothing of the old chapter survives). New
+> [measureItGeometry.test.ts](src/__tests__/measureItGeometry.test.ts) (12 tests). Rewired:
+> [registry.tsx](src/features/chapters/registry.tsx):48 · [story/page.tsx](src/app/story/page.tsx):41.
+> `?ch=measure` unchanged; `?world=` is now `forest|trail` (**`market` is gone — see ③**). **0 new art.**
+>
+> ## ① WHY IT WAS RE-THOUGHT, AND WHAT THE VERB IS NOW
+> The old chapter was *tap the taller / longer / heavier one* — which is **chapter 5 (Bigger or
+> Smaller) with a different adjective on it**, the §0a fault that got Group B rebuilt twice. Reading
+> the file made it worse than that:
+> • **Height was faked.** It uniform-scaled ONE sprite by value, so "taller" was really "bigger" and
+>   a child could win on area without ever reading height.
+> • **Length was a distortion** — `objectFit:'fill'` stretched the sprite non-uniformly.
+> • **Weight was hot/cold.** The plank tipped toward the heavier side BEFORE the child committed, so
+>   the answer was "tap the low end". Same fault as chapter 4's green Ready button.
+> Founder chose the verb: **MEASURE IT.** The child lays one repeating unit — a block — end to end
+> against the thing and decides when the run has reached the end of it. *A ruler is nothing but a
+> repeated unit, counted*, and that is the one idea measurement has that counting and comparison do
+> not. Three things follow, and they are why this verb was the right pick:
+> • **The eyeball shortcut is gone by construction.** You cannot guess "6 blocks".
+> • **It is playable with the sound OFF** — the question is a picture. That matters a lot right now:
+>   the band still has zero recorded clips, and the colouring chapter is already the one that is
+>   unanswerable in silence. We did not want a second.
+> • **The answer is one the child MADE**, and deciding when to stop is the whole skill — the same
+>   shape as chapter 4, so the pile always holds more blocks than the thing needs and nothing on
+>   screen says "that's enough" until they commit.
+>
+> ## ② THE CONSTRUCTION — the thing and the run agree, they are not tuned to agree
+> A thing's unit count is its IDENTITY (a tulip IS 3 blocks, a pine IS 6), so the sprite is drawn at
+> exactly `units × unitPx` on the measured axis and the completed run is the same product. Same trick
+> as Shape House's socket being the same path as its piece. Difficulty picks WHICH thing to measure,
+> never a hidden scale — so the unit never changes size, which it must not: a ruler whose marks
+> resize is not a ruler.
+> • ⚠️ **The PNGs are square-padded and that would have made the measure LIE** — a tulip's ink fills
+>   only 87% of its file, so drawing it by its file box puts the flower's tip well below the top of
+>   the frame while the blocks reach the frame. Every sprite is drawn from its own **alpha box**,
+>   measured with PIL and stored per thing. (Kitchen's `SPRITE_BBOX` had the same need.)
+> • Verified live, which is the only claim that matters: at 1024×620 thing and run measured
+>   **identically — top 277.4, bottom 538, height 260.6** for a 4-unit sunflower; at 640×320 the
+>   train engine and its 3 blocks came out **Δ0 on both width and left**.
+>
+> ## ③ WEIGHT IS DELIBERATELY NOT A WORLD, AND THE REASON IS THE RULE
+> The obvious build — pile counters into the empty pan until the beam levels — **levels exactly when
+> the count is right**, so it hands the answer over before the child commits. That is the same fault
+> as the tipping seesaw it would replace. An honest version needs the beam LOCKED until Done, which
+> needs a latch that reads as intentional rather than broken. **Deferred with the reason written into
+> the file header**, not forgotten. The chapter hint in `chapters.ts` still says "heavy, light" —
+> worth updating if this stays two worlds.
+>
+> ## ④ FOUR REAL BUGS, ALL FOUND BY DRIVING IT — the general rules are now in the craft doc
+> • **The demo raced past in 4 seconds.** `speakSteps` advances on each utterance's `end`, and a
+>   device with no usable voice ends a ONE-WORD utterance in milliseconds — so the counting steps
+>   never reached the timer fallback that exists for exactly this. Measured: both demos AND the
+>   guided round arrived inside four seconds. Now self-paced on a deterministic timer with `speak()`
+>   alongside, the way the colour and shape showcases already run. Re-measured: blocks land at
+>   **exactly 1000ms intervals**, 20s of demo. **Sentences are fine on `speakSteps`; single words
+>   are not.**
+> • **The thing being measured JUMPED a whole unit when the first block landed** — the run's lane is
+>   zero-sized until then. The lane is now reserved at full size from empty. Verified by sampling:
+>   **one distinct position across 0, 1, 2 and 3 blocks.**
+> • **The contact shadow was in flow**, so the run bottom-aligned against the shadow rather than the
+>   ground and the two ends of the measure stood **28px apart**. A measure whose ends do not share a
+>   ground line measures nothing. Shadow is now out of flow.
+> • **22px blocks on a landscape phone.** `PROMPT_BAND` at the roomy 112 eats 35% of a 320px screen,
+>   and the unit is `band ÷ 6.6`, so that was 35% off the size of the blocks a three-year-old has to
+>   count. The band and the pill now shrink together on short screens → **39px** at 640×320.
+>
+> ## ⑤ THE GATE, AND THE MUTATION THAT SURVIVED IT
+> [measureItGeometry.test.ts](src/__tests__/measureItGeometry.test.ts) imports **`measureLayout` —
+> the same function the scene draws from** (chapter 4's sweep re-implements its chain, which lets a
+> check agree with its own copy of the constants). 12 tests × 13 sizes × 12 things. It passed first
+> run, so it was **mutation-tested**: over-sizing the unit, removing the cap and giving a thing more
+> than `MAX_UNITS` blocks all fail it. **One survived — widening the layout's width term** — and it
+> was CHECKED rather than assumed: at every size where that term binds, the 76px cap holds the run to
+> 456px, which fits a 640px frame. **Inert, not a missed regression**, and the classification is
+> written into the test. Chasing it also showed the sweep had no narrow-but-tall sizes at all
+> (640×620, 700×800 — a half screen, a portrait tablet), which are the ONLY sizes where that term
+> binds; they are in the list now.
+> **And the gate then caught a real consequence**: raising the short band grew the phone unit
+> 21.8→39px and broke an assertion calibrated to the old squeeze. It was restated, not relaxed —
+> it now says what it means (the unit reaches its cap on a laptop, and is never under 26px on a phone).
+>
+> ## ⑥ THE MEASURING LESSON, AGAIN, IN A NEW COSTUME
+> Three separate alarms this session were the instrument, not the app: a block measuring **half its
+> real size**, blocks **hidden behind the controls**, and a **backdrop showing the wrong scene**. All
+> three were entrance animations caught mid-flight — `getBoundingClientRect` includes transforms, and
+> **a backgrounded tab freezes a CSS animation there indefinitely**, so waiting is not enough; the tab
+> has to be fronted first. Also re-learned: in-page `setTimeout` chains collapse when the tab is
+> backgrounded, so three taps 300ms apart landed in one tick and the tap lock correctly ate two of
+> them — drive one step per call.
+>
+> ## ▶ OPEN — pick up here
+> 1. **NOT COMMITTED.** Branch, gates are green, then the usual: bump `public/sw.js` v61 → v62, merge,
+>    push, smoke, and **drive it on prod** rather than reading status codes.
+> 2. **THE SIX COLOUR CLIPS ARE STILL THE TOP JOB** and the ElevenLabs quota **resets 2026-07-27
+>    (tomorrow)**. Unchanged from the last session: the whole 3–11 band has zero recorded audio, so
+>    the colouring chapter's toy-room test is unanswerable on a silent device. This chapter was
+>    deliberately built to be playable in silence so it does not add to that debt.
+> 3. **Weight, if it should exist** — needs the locked-beam design in ③, or the founder's call that
+>    two worlds is enough. Update the `measurement` hint in `chapters.ts` either way.
+> 4. **Nobody has watched a child play it.** Specifically unknown: whether a three-year-old
+>    understands "stop when you reach the top" without being told, and whether 39px blocks are
+>    countable by eye on a real phone. Every check here tapped a button through JS.
+> 5. **3–5 IS NOW COMPLETE** — all eleven chapters rebuilt. There is no next chapter in the band.
+>
+> _(the 🎨 block below is the previous session — Group B and the colouring chapter.)_
+
+> 🎨 **2026-07-25 — GROUP B REBUILT (EACH SKILL GETS ITS OWN VERB), THEN THE COLOURING CHAPTER RE-CUT AS *TEACH ONE PAGE → TEST ON ANOTHER* AND FIVE FOUNDER CATCHES FIXED. SHIPPED TO PROD. `main`@`f44ce11`, prod serving sw v61, smoke green + DRIVEN LIVE ON PROD.**
 >
 > **Deploy:** `feat/story-3-5-group-b-teach-then-test` → `main` (fast-forward) → pushed → prod **v61**.
 > Gates: `tsc` · **79/79 vitest** · `next build` · 0 console errors in a fresh tab. Smoke: `/` `/menu`
@@ -37,7 +145,7 @@
 > | 🏠 Shape House (`shapes`) | **FIT** — a shape sorter | 1024×620 + 640×320, full run, flight + depth swept 8 sizes |
 > | 📿 Bead Shop (`beads`) | **CONTINUE** — one growing necklace/bunting/train | 1024×620 + 1280×720 + 640×320, full run, strand read back |
 > | 🎨 Colouring Book (`rainbow`) | **COLOUR IT IN** — teach in the garden, test in the toy room | 1024×620 + 640×320, both pages driven, pixels sampled |
-> | 📏 Measurement (TallForest) | **NOT STARTED** | — |
+> | 📏 Measurement (MeasureIt) | **MEASURE IT** — lay a unit end to end and count | done in the 2026-07-26 session above |
 >
 > ## ⑥ THE COLOURING CHAPTER IS NOW *TEACH THEN TEST*, AND THE PAGE SPLIT IS WHAT MAKES THE SCORE MEAN ANYTHING
 > Founder: *"use one image to teach all color names and use second image to test them."* Right, and
@@ -1311,7 +1419,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-25 (LATEST session — see the top 🎨 block. **SHIPPED — `main`@`f44ce11`, prod serving sw v61, smoke green and driven live on prod.** `tsc` · 79/79 · `next build` green · 0 console errors in a fresh tab. Group B rebuilt so each "exact form" chapter has its OWN VERB — **Shape House is a shape sorter**, **Bead Shop is one string that gets longer**, **the Colouring Book is a real colouring game** on a genuine flood fill. Then the founder re-cut the colouring chapter: **one page TEACHES the six colour words, a second page TESTS them** — and the split is what makes the score mean anything, because a garden is full of things with one true colour (so it can answer for the child) while a toy is whatever colour it was made (so only the spoken word can). Five founder catches followed, and every one was invisible to checks that had passed: a tulip that silently ate 40% of taps aimed at it (the ink is a wall, and the rescue sat *behind* the bail-out written for it); a glow too faint to see on a small shape; *"That's the tulip!"* said to a child who tapped a tulip; "colour the cloud purple" asked of a white cloud; and a ghost house drawn as a wireframe, then standing in front of a fence painted into the backdrop. **The real lesson is about testing** — every script I wrote tapped each target's stored probe point, its dead centre, the single easiest tap on the page, so the mechanic was only ever verified where it could not fail. ▶ Next: **the six colour clips.** Confirmed in the code this session that the ENTIRE 3–11 band has zero recorded audio — the 435 clips are teen-only, because the extractor's file list is teen-only — so this chapter runs on browser TTS that many Chrome installs simply do not have. On a silent device the lesson still plays but teaches nothing, and the toy-room test is *unanswerable*, which is the price of making it an honest test: a picture that cannot answer for the child cannot rescue them either. ElevenLabs quota resets 2026-07-27. Then measurement — the last 3–5 chapter — asking its verb first.)_
+_Last updated: 2026-07-26 (LATEST session — see the top 📏 block. **NOT COMMITTED, NOT DEPLOYED**; `tsc` · 91/91 vitest · `next build` green, 0 console errors in a fresh tab, driven live at 1024×620 and 640×320 in both worlds. **The measurement chapter was re-thought and rebuilt: the verb is MEASURE IT.** The old one was *tap the taller one* — chapter 5 with a different adjective on it — and reading the file made it worse: height was faked by uniform-scaling one sprite (so "taller" was really "bigger"), length was a non-uniform stretch, and the balance tipped toward the heavier side BEFORE the child committed. Now the child lays one repeating block end to end against the thing and decides when to stop; a ruler is nothing but a repeated unit, counted, and that is the one idea measurement has that counting and comparison do not. The thing and the run agree by CONSTRUCTION — a thing's unit count is its identity, so it is drawn at exactly `units × unitPx` — verified on screen at Δ0. **Weight is deliberately not a world**: any beam that responds while you add counters levels exactly when the count is right, which hands the answer over before the commit. Four real bugs found by driving it, and the general rule for each is now in the craft doc — a demo that raced past in 4s because `speakSteps` advances on utterance `end` and a one-word utterance ends instantly on a voiceless device; the thing being measured jumping a whole unit when the first block landed, because a lane that will fill must be reserved from empty; a contact shadow left in flow putting the two ends of the measure 28px apart; and 22px blocks on a landscape phone, now 39px. The gate passed first run so it was mutation-tested — three planted regressions caught, one survivor CHECKED and found genuinely inert, and the gate then caught a real consequence of the band change and was restated rather than relaxed. ▶ Next: commit + ship (sw v61 → v62), then **the six colour clips — the ElevenLabs quota resets 2026-07-27, tomorrow**. **3–5 is now complete: all eleven chapters rebuilt.** Still unchanged and still the headline: ~zero real users, and nobody has watched a child play any of it.)_
+
+_Prior update: 2026-07-25 (session — see the top 🎨 block. **SHIPPED — `main`@`f44ce11`, prod serving sw v61, smoke green and driven live on prod.** `tsc` · 79/79 · `next build` green · 0 console errors in a fresh tab. Group B rebuilt so each "exact form" chapter has its OWN VERB — **Shape House is a shape sorter**, **Bead Shop is one string that gets longer**, **the Colouring Book is a real colouring game** on a genuine flood fill. Then the founder re-cut the colouring chapter: **one page TEACHES the six colour words, a second page TESTS them** — and the split is what makes the score mean anything, because a garden is full of things with one true colour (so it can answer for the child) while a toy is whatever colour it was made (so only the spoken word can). Five founder catches followed, and every one was invisible to checks that had passed: a tulip that silently ate 40% of taps aimed at it (the ink is a wall, and the rescue sat *behind* the bail-out written for it); a glow too faint to see on a small shape; *"That's the tulip!"* said to a child who tapped a tulip; "colour the cloud purple" asked of a white cloud; and a ghost house drawn as a wireframe, then standing in front of a fence painted into the backdrop. **The real lesson is about testing** — every script I wrote tapped each target's stored probe point, its dead centre, the single easiest tap on the page, so the mechanic was only ever verified where it could not fail. ▶ Next: **the six colour clips.** Confirmed in the code this session that the ENTIRE 3–11 band has zero recorded audio — the 435 clips are teen-only, because the extractor's file list is teen-only — so this chapter runs on browser TTS that many Chrome installs simply do not have. On a silent device the lesson still plays but teaches nothing, and the toy-room test is *unanswerable*, which is the price of making it an honest test: a picture that cannot answer for the child cannot rescue them either. ElevenLabs quota resets 2026-07-27. Then measurement — the last 3–5 chapter — asking its verb first.)_
 
 _Prior update: 2026-07-25 (the 🐾 block. **Shipped to prod, `main`@`3c391b6`, sw v60, driven live on prod:** three more 3–5 chapters moved onto the creature engine — **addition + subtraction as one shared Play Time** (creatures walk IN to join or OUT to leave, so the operation itself is the thing that moves) and **comparison as Bigger or Smaller** (tap the bigger bunch, it walks off with Milo, the other stays). **But the bigger find was the motion:** the founder said the animation looked too fast, and measuring showed `travelMs` clamped every duration to 2400ms while a 60%-of-screen journey wants **5–10 SECONDS** at a walking pace — so every long journey had the body covering ground **2–4× faster than its legs**, band-wide, for months. Each chapter computed a `cycleScale` for the showy march and passed a bare `1` for ordinary journeys, so **the ordinary ones were the ones that skated**. `journeyOf` now returns `{ms, cycleScale}` together and **`travelMs` was deleted rather than documented** — a duration without its correction IS the bug. Cadence calmed ~28%, ceiling 2400→3600ms, sprite cap 140→230px (a PACING number: on a clamped journey the cycle is `ms·STRIDE·h/dist`, so cadence cancels and only height reaches it). **Two lessons about checks:** a sweep must import the SAME layout function the scene renders from, and must be DERIVED FROM THE CHAPTER'S OWN GENERATOR — twice a hand-written grid failed on screens no child can reach, and both times the test was wrong, not the code. **And the one the sweep could not see:** three rows in a 58px band buried the creatures, because the check only compared same-row pairs — *rows are only room if the rows are visually separate*. ▶ **Remaining in 3–5: shapes · colors · patterns** (augmentations, not rebuilds — keep the exact SVG/hex core, add a travelling creature and the arc each name already promises), then measurement. **Nobody has watched a child play any of it** — the burial was invisible to every passing check and only showed up on screen. **And still the headline, still unchanged: ~zero real users. Watch one real child play; start the attorney conversation.**)_
 
@@ -2034,7 +2144,7 @@ auto-memory `project-milo-{12-14,15-16,17-18}-curriculum`, `project-milo-teen-fr
     | `shapes` | ch6 · Shape House — a shape sorter | rebuilt |
     | `rainbow` | ch7 · Colouring Book — garden teaches, toy room tests | rebuilt |
     | `beads` | ch8 · Bead Shop — one growing string | rebuilt |
-    | `measure` | ch11 · TallForest | **the last one not rebuilt** |
+    | `measure` | ch11 · Measure It — lay a unit and count | rebuilt |
 
     Every rebuilt chapter is **landscape-only** — a portrait window shows the rotate gate, not the
     chapter, so a portrait screenshot is not evidence of anything.
