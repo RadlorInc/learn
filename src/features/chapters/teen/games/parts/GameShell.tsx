@@ -368,7 +368,7 @@ export function Game<V, T extends BaseTask>({
 
   const busy = sub !== 'active'
   const inOrder = stage === 'play' || stage === 'guided'
-  const { roomy, short, tall } = useFrame()
+  const { roomy, short, tall, portrait } = useFrame()
   // Scratch paper — kids work on iPads and laptops and had nowhere to do the sums.
   const [scratch, setScratch] = useState(false)
 
@@ -474,6 +474,7 @@ export function Game<V, T extends BaseTask>({
             // it rolls into the walkthrough on its own (the explanation STAYS put).
             <TeachFrame
               roomy={roomy || short}
+              portrait={portrait}
               explanation={<ExplanationPanel P={P} overview={config.overview} read onDone={() => setStage('demo')} />}
               illustration={<Scene palette={P} task={introScript.task} value={introScript.initial} stepIndex={0} frameCount={1} ended={false} />}
             />
@@ -485,7 +486,7 @@ export function Game<V, T extends BaseTask>({
         )}
 
         {stage === 'demo' && config.tutorial && (
-          <TutorialPlayer config={config} script={config.tutorial} roomy={roomy} short={short} onDone={afterDemo} />
+          <TutorialPlayer config={config} script={config.tutorial} roomy={roomy} short={short} portrait={portrait} onDone={afterDemo} />
         )}
 
         {/* padCentered is for the PAD path ONLY. It makes CenterFill `flex: 0 0 auto`,
@@ -554,7 +555,7 @@ export function Game<V, T extends BaseTask>({
                   // illustration for the questions where it does the teaching.
                   sub !== 'sold' && (
                     <AnswerPad
-                      P={P} choices={padChoices} compact={short} disabled={sub !== 'active' || busy}
+                      P={P} choices={padChoices} compact={short} big={portrait} disabled={sub !== 'active' || busy}
                       reveal={sub === 'reveal' || sub === 'reteach'}
                       correct={padChoices.find((c) => config.grade(task, toV(c)))}
                       picked={picked ?? undefined}
@@ -562,7 +563,7 @@ export function Game<V, T extends BaseTask>({
                     />
                   )
                 ) : (
-                  <FitSlot>
+                  <FitSlot max={portrait ? PORTRAIT_MAX : 1}>
                     <config.Instrument task={task} value={value} setValue={setValue} disabled={busy} reveal={sub === 'reveal' || sub === 'reteach'} palette={P} onCommit={stage === 'guided' ? submitGuided : submit} />
                     {/* Inside the FitSlot so the cue counts toward the measured column
                         height — otherwise it would push the scaled instrument back out.
@@ -636,12 +637,13 @@ export function Game<V, T extends BaseTask>({
 // instrument is centred with the action buttons below. No Milo dialog is printed on
 // screen — the spoken narration carries the words, the board carries the math.
 function TutorialPlayer<V, T extends BaseTask>({
-  config, script, roomy, short, onDone,
+  config, script, roomy, short, portrait, onDone,
 }: {
   config: GameConfig<V, T>
   script: TutorialScript<V, T> | TutorialScript<V, T>[]
   roomy: boolean
   short: boolean
+  portrait: boolean
   onDone: () => void
 }) {
   const P = config.palette
@@ -733,6 +735,7 @@ function TutorialPlayer<V, T extends BaseTask>({
     return (
       <TeachFrame
         roomy={roomy || short}
+        portrait={portrait}
         P={P}
         collapsible
         explanation={config.overview ? <ExplanationPanel P={P} overview={config.overview} read={false} onDone={() => {}} /> : undefined}
@@ -948,12 +951,29 @@ function ExplanationPanel({ P, overview, read, onDone }: {
  *  instruments drop to 0.63–0.83 (THE SHOT 727px natural → 0.699 at 1280×800). The
  *  band in flow is about `vh − 312`, so 1100 is where the tallest instrument still
  *  fits at 1.0. At ≥1900×1200 every chapter measured 1.000 in flow. */
-function useFrame(): { roomy: boolean; short: boolean; tall: boolean } {
-  const [f, setF] = useState({ roomy: false, short: false, tall: false })
+function useFrame(): { roomy: boolean; short: boolean; tall: boolean; portrait: boolean } {
+  const [f, setF] = useState({ roomy: false, short: false, tall: false, portrait: false })
   useEffect(() => {
     const calc = () => setF((p) => {
-      const n = { roomy: window.innerWidth >= 820, short: window.innerHeight < 470, tall: window.innerHeight >= 1100 }
-      return p.roomy === n.roomy && p.short === n.short && p.tall === n.tall ? p : n
+      // PORTRAIT is a shape, not a size: taller than it is wide by a clear margin.
+      // Two things follow, and both are about the fact that every size in this shell
+      // is `clamp(px, vw, px)` — WIDTH-derived, with no vh term anywhere:
+      //   • a portrait frame lands on the clamp MINIMUM everywhere while its height
+      //     goes unused (measured 390×844: tap buttons 76×60 at 24px type, with
+      //     204px of dead space below them), so FitSlot is allowed to scale UP and
+      //     the tap pad gets a vh term. See `portraitMax` and AnswerPad's `big`.
+      //   • `roomy` PINS the chalkboard into the top-left corner, which is right on a
+      //     laptop and wrong on a portrait tablet — measured 834×1194, the board sat
+      //     in a corner with the bottom third of the screen empty. A portrait frame
+      //     is never roomy, so it stacks the board above the interactive instead.
+      const portrait = window.innerHeight >= window.innerWidth * 1.2
+      const n = {
+        roomy: window.innerWidth >= 820 && !portrait,
+        short: window.innerHeight < 470,
+        tall: window.innerHeight >= 1100,
+        portrait,
+      }
+      return p.roomy === n.roomy && p.short === n.short && p.tall === n.tall && p.portrait === n.portrait ? p : n
     })
     calc()
     window.addEventListener('resize', calc)
@@ -1037,7 +1057,13 @@ const Col = ({ children }: { children: React.ReactNode }) => (
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>{children}</div>
 )
 
-function FitSlot({ children }: { children: React.ReactNode }) {
+/** How far FitSlot may ENLARGE on a portrait frame. 1.5 is not a taste number: at
+ *  390×844 the instrument column measures ~62% of the band it is given, and 1.5×
+ *  fills it without pushing the commit button off the bottom. Landscape keeps
+ *  max 1 — a frame that already fits must stay untouched. */
+const PORTRAIT_MAX = 1.5
+
+function FitSlot({ children, max = 1 }: { children: React.ReactNode; max?: number }) {
   const box = useRef<HTMLDivElement>(null)
   const [av, setAv] = useState({ w: 0, h: 0 })
   useEffect(() => {
@@ -1050,7 +1076,7 @@ function FitSlot({ children }: { children: React.ReactNode }) {
   return (
     <div ref={box} style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {av.h > 0
-        ? <FitBox availW={av.w} availH={av.h} max={1}><Col>{children}</Col></FitBox>
+        ? <FitBox availW={av.w} availH={av.h} max={max}><Col>{children}</Col></FitBox>
         : <Col>{children}</Col>}
     </div>
   )
@@ -1065,8 +1091,11 @@ function FitSlot({ children }: { children: React.ReactNode }) {
  *  The whole frame is height-bounded (`minHeight:0` + `overflow:hidden` down the
  *  flex chain) so the illustration shrinks to fit and the view never scrolls; the
  *  `.teach-illo svg` cap lets any chapter's scene scale down inside its box. */
-function TeachFrame({ roomy, explanation, board, illustration, controls, P, collapsible }: {
+function TeachFrame({ roomy, portrait, explanation, board, illustration, controls, P, collapsible }: {
   roomy: boolean
+  /** Let the scene ENLARGE into a portrait frame's spare height — same call as the
+   *  practice instrument (see useFrame). Landscape keeps max 1. */
+  portrait?: boolean
   explanation?: React.ReactNode
   board?: React.ReactNode
   illustration: React.ReactNode
@@ -1084,7 +1113,7 @@ function TeachFrame({ roomy, explanation, board, illustration, controls, P, coll
           column of readouts, so on a short frame the box was 6–115px tall around
           120–200px of content and the picture was simply cut off. FitBox measures the
           whole column and scales it (max 1 — a frame that already fits is untouched). */}
-      <FitSlot>{illustration}</FitSlot>
+      <FitSlot max={portrait ? PORTRAIT_MAX : 1}>{illustration}</FitSlot>
     </div>
   )
   const rightCol = (

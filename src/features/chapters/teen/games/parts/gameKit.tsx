@@ -712,7 +712,7 @@ export function numChoices(ans: number, near: number[] = [], opts: { min?: numbe
 //    number choices. `choices` are pre-built (correct + distractors, pre-shuffled);
 //    tapping one calls onSubmit(n) and GameShell grades it. ──
 const dispN = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
-export function AnswerPad({ P, choices, onSubmit, disabled, reveal, correct, picked, compact }: {
+export function AnswerPad({ P, choices, onSubmit, disabled, reveal, correct, picked, compact, big }: {
   P: Palette; choices: number[]; onSubmit: (n: number) => void; disabled?: boolean
   /** On a wrong answer the pad STAYS on screen (an instrument chapter glides its
    *  instrument to the answer here; a pad chapter would otherwise show an empty
@@ -721,16 +721,37 @@ export function AnswerPad({ P, choices, onSubmit, disabled, reveal, correct, pic
   /** Short frame (landscape phone): smaller buttons so the pad clears the board.
    *  Still ~44px tall — a child-finger target, never a desktop-sized hit box. */
   compact?: boolean
+  /** PORTRAIT frame: add a vh term. Every size here is `clamp(px, vw, px)`, so a
+   *  tall narrow screen lands on the MINIMUM (measured 390×844: 76×60 buttons at
+   *  24px type) while 200px of height below them goes unused. `max(vw, vh)` lets
+   *  whichever dimension has room drive; the same max caps it, so no frame that
+   *  already fits grows past what it had.
+   *
+   *  ⚠️ The 1.45 is DERIVED, not chosen: a portrait phone should land in the MIDDLE
+   *  of each clamp, not on its floor. At 390×844 the font wants ~34 of its 24–52
+   *  range, i.e. 4.0vh against the 2.8vw it is written with — and 4.0/2.8 ≈ 1.45,
+   *  which lands the width (8vw → 11.6vh ≈ 98px of 76–150) and both paddings in the
+   *  same place. A first pass used 0.42 and changed nothing, because the vh term
+   *  came out UNDER the floor — measure the rendered px, do not trust the formula. */
+  big?: boolean
 }) {
+  const size = (minPx: number, vw: number, maxPx: number) =>
+    `clamp(${minPx}px, ${big ? `max(${vw}vw, ${(vw * 1.45).toFixed(2)}vh)` : `${vw}vw`}, ${maxPx}px)`
   return (
-    <div style={{ display: 'flex', gap: compact ? 8 : 'clamp(10px, 1.4vw, 18px)', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+    // ⚠️ `big` must GRID, not wrap. Wrapping laid 4 portrait-sized buttons out as
+    // 3 + 1 at 390 wide — a lone tap target on its own row, which is worse than the
+    // small buttons it replaced. A 2-column grid gives the 4-choice case a clean
+    // 2×2; 3 choices still fit one row at this size, so they keep it.
+    <div style={big
+      ? { display: 'grid', gridTemplateColumns: `repeat(${choices.length === 4 ? 2 : choices.length}, minmax(0, 1fr))`, gap: 'clamp(10px, 1.4vw, 18px)', justifyItems: 'center', width: '100%', maxWidth: 'min(94vw, 460px)' }
+      : { display: 'flex', gap: compact ? 8 : 'clamp(10px, 1.4vw, 18px)', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
       {choices.map((c, i) => {
         const isRight = reveal && c === correct
         const isWrong = reveal && c === picked && c !== correct
         return (
           <button key={i} type="button" disabled={disabled} onClick={() => !disabled && onSubmit(c)} style={{
             fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800,
-            fontSize: compact ? 22 : 'clamp(24px, 2.8vw, 52px)', minWidth: compact ? 66 : 'clamp(76px, 8vw, 150px)', padding: compact ? '7px 14px' : 'clamp(12px,1.4vw,28px) clamp(16px,1.8vw,36px)',
+            fontSize: compact ? 22 : size(24, 2.8, 52), minWidth: compact ? 66 : size(76, 8, 150), padding: compact ? '7px 14px' : `${size(12, 1.4, 28)} ${size(16, 1.8, 36)}`,
             borderRadius: 16, border: `2.5px solid ${isRight ? P.mint : isWrong ? P.coral : P.gold}`,
             background: isRight ? `${P.mint}22` : P.glass, color: isRight ? P.mint : isWrong ? P.coral : P.cream,
             opacity: reveal && !isRight && !isWrong ? 0.45 : 1,
