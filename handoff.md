@@ -60,7 +60,11 @@
 > 1. **The support promise is now ON SCREEN: "we reply within 2 working days."** That is a commitment
 >    to an inbox nobody is checking daily yet. Either keep it or change the copy.
 > 2. **COPPA parental review/deletion still has no defined path** and learner deletion is still not
->    audit-logged. It is a support request with legal teeth. Belongs in the open lawyer conversation.
+>    audit-logged. It is a support request with legal teeth. Belongs in the open lawyer conversation
+>    — and **two payment questions should ride along in that same conversation** (support.md §11),
+>    because both are cheap to ask now and awkward to settle later: the **refund policy** (a written
+>    one turns every refund email from a negotiation into a lookup) and **what happens to a child's
+>    data on cancellation**, which sits directly on top of the COPPA deletion question.
 > 3. ✅ **[support.md](docs/support.md) is now the full operating manual** — daily routine · the
 >    four-step flow (**acknowledge in 5 min, solve later** — that alone keeps the 2-day promise) ·
 >    triage · reply templates · reading the block. [support-log.md](docs/support-log.md) exists and

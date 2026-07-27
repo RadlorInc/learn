@@ -205,3 +205,62 @@ in the lawyer conversation that is already open; the design should come out of t
 rather than be guessed at here.
 
 **Until then:** handle any such request personally and immediately, and write down what you did.
+
+---
+
+## 11. When payments arrive — ⚠️ NOT BUILT YET
+
+Nothing here applies today; there is no payment system. It is written down now because two of its
+items are decisions that must be made **before** the code exists, and one is a design constraint
+that is expensive to retrofit.
+
+### Two questions for the lawyer conversation that is already open
+
+Ask these in the same conversation as COPPA — they are cheap to add there and awkward to resolve
+later:
+
+1. **Refund policy.** Three lines, published on the site (e.g. *"full refund within 30 days, no
+   questions asked"*). The point is not generosity — it is that **a written policy turns every
+   refund email from a negotiation into a lookup.** That saves more time and thought than any
+   tooling would.
+2. **What happens to a child's data when a parent cancels.** Deleted immediately? Kept 30 days?
+   This sits directly on top of the COPPA deletion question in §10, so answer both together.
+
+### Turn on the Stripe Customer Portal on day one
+
+Stripe ships a hosted page where the user cancels, updates their card, downloads invoices and sees
+their history — **without contacting you.** Leave it off and every one of those becomes an email.
+One toggle removes most payment support before it can exist. Do not build any of it yourself.
+
+### ⚠️ The one failure that will actually hurt: paid, but not unlocked
+
+Money left their account and the product did not change. It is the angriest ticket there is, and
+it happens when Stripe's webhook never lands or the entitlement write fails — Stripe has the
+money, your database never heard about it.
+
+**So the design constraint, decided before the code is written:** payment state must always be
+**reconcilable**. It must be possible, at any moment, to ask Stripe *"did this person pay?"* and
+repair the app side from the answer. Never let the webhook be the only source of truth. Claude can
+run that reconciliation and fix the entitlement; it cannot do so if the app has no way to ask.
+
+### Claude cannot touch money — a hard rule, not a limitation to route around
+
+**No refunds, no charges, no cancellations, no transfers. Ever.**
+
+Claude can: read Stripe and confirm whether a double charge really happened (with the charge id),
+repair the unlock in the database, draft the reply.
+
+**Pressing the refund button is always yours.** Budget for learning two or three screens of the
+Stripe dashboard when payments ship — that is the whole skill required.
+
+### The priority table gains a rule
+
+**Anything involving money is P1**, regardless of how calm the email sounds. The practical reason:
+an unanswered payment complaint becomes a **chargeback**, which costs you the money *and* damages
+your standing with Stripe. A fast reply prevents both.
+
+### Build none of this now
+
+At zero users and no payment system, the Stripe dashboard plus the hosted portal *is* the tooling.
+When payments are actually built, this section gets its own reply templates and the P1 rule folds
+into §4.
