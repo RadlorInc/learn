@@ -12,7 +12,326 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> ✂️ **2026-07-27 (LATEST) — A REPO-WIDE OVER-ENGINEERING AUDIT, THEN THE TWO BIGGEST CUTS TAKEN: `src` IS 62,489 → 57,255 LINES (−5,234, 8.4%), 34 ROUTES → 22, 9 DEPS → 8. 🚀 SHIPPED — fast-forwarded into `main` and pushed, prod serving sw v67.** `tsc` · 142/142 vitest · `next build` · the changed security header verified on a running server.
+> 🛟 **2026-07-27 (LATEST) — THE SUPPORT + PER-USER ERROR LAYER, BUILT BECAUSE THE FOUNDER ASKED HOW A COMPANY RUNS AN APP AFTER LAUNCH. 🚀 SHIPPED — `main`@`3492abe`, prod serving sw v68, deploy landed in 30s, post-deploy smoke green.** `tsc` 0 · 142/142 vitest · `next build` 0 · driven live, both error classes captured end-to-end. Smoke: all 8 routes 200 · **prod `sw.js` confirmed carrying the new VERSION handler** (so the code shipped, not merely the version bump) · `/api/report-error` accepts a `learnerId` payload · all five security headers byte-intact.
+>
+> ⚠️ **THE A2 STORY BATCH IS STILL UNCOMMITTED AND WAS DELIBERATELY LEFT THAT WAY.** This shipped as
+> its own branch → fast-forward → push, touching **9 files with zero overlap** with the story work
+> (verified by staging file-by-file, never a directory pathspec — the 2026-07-26 git trap — and
+> confirming with `git show --stat`). So a rollback of either does not disturb the other. That
+> separation is the point: it is the "ship one thing at a time" habit this file keeps recommending
+> and this repo keeps not doing.
+>
+> **The question behind it:** *"how will we give support to users, and how do we manage an error for a
+> SPECIFIC user"* — from a founder who does not read code. So everything here is built to be operated
+> by reading, not by debugging.
+>
+> ## ① THE DIAGNOSIS: THIS APP'S REAL FAILURES ARE INVISIBLE FROM THE SERVER
+> Milo is local-first — progress lives in IndexedDB and syncs afterwards — so the failures a parent
+> actually writes in about produce **no Supabase row and no Vercel log line**: a wedged offline queue,
+> a stale service-worker shell, IndexedDB blocked in private browsing, speech never unlocking. The only
+> time this repo ever diagnosed one (the Safari `upgrade-insecure-requests` boot failure) it was by
+> hand-adding beacons to the service worker, which is not repeatable on a stranger's iPad. **So the
+> user now carries the evidence to us, on purpose.**
+>
+> ## ② WHAT WAS BUILT — 40 added lines across 5 files, plus 4 new ones
+> | file | what |
+> |---|---|
+> | `infra/storage/lastError.ts` (new) | 3-deep local ring of recent errors + `installErrorCapture()` for `window.error` and `unhandledrejection` — **the classes the React ErrorBoundary never sees**, and the class the Safari bug actually was |
+> | `infra/diagnostics.ts` (new) | the snapshot: sw version · kv mode · queue depths · storage · recent errors · learner id. Shape-only by design — **no token, no child name, no DOB** |
+> | `shared/ui/SupportPanel.tsx` (new) | "Need help?" on the parent dashboard → describe it + the block. **Two send paths** (`mailto:` AND Copy) because mailto silently does nothing on a desktop with no mail client |
+> | `docs/support.md` (new) | the runbook: **a field-by-field table mapping each diagnostic line to its bug class**, written for a non-coder |
+> | `kv.ts` | exposes `kv.mode()` — `local` means IndexedDB hung/was blocked and the 2.5s fallback fired. **This was previously module-private, i.e. the single most likely cause of "her progress vanished" was unobservable** |
+> | `public/sw.js` | replies to a `VERSION` postMessage. A device pinned on an old shell while prod serves newer IS the stale-shell bug ⚠️ **only works once a SW carrying this handler is installed — until then the block reads `no reply`, which is itself the signal** |
+> | `ErrorBoundary.tsx` · `api/report-error` | **identity on the error.** `learnerId` read synchronously from sessionStorage — an async session lookup would race the navigation a crash triggers, and learner → account is one DB join |
+>
+> ## ③ A DAILY CLOUD CHECK NOW WATCHES PROD — `trig_01GKnmbsiyHjvsC58jMTeiG6`, 02:30 UTC (08:00 IST)
+> Read-only agent: curls health + 7 routes + sw VERSION + the 4 security headers, pulls Vercel runtime
+> errors, counts Supabase signups/sessions. **Instructed to answer in ONE line when healthy** — a daily
+> wall of green trains you to stop reading it. ⚠️ The `schedule` skill reported "no MCP connectors
+> found" and that was **STALE** — Vercel and Supabase both attached fine. Verified created/enabled/
+> fired/next-run; **the run's OUTPUT is not returned by the API**, so the report's readability is the
+> one thing unverified — look once at `https://claude.ai/code/routines/trig_01GKnmbsiyHjvsC58jMTeiG6`.
+>
+> ## ④ SENTRY DELIBERATELY NOT ADDED
+> Vercel already captures both seams and is queryable over MCP. A vendor for search-and-retention at
+> ~0 users is cost with no consumer; the identity work above makes adopting it a config change later.
+>
+> ## ▶ OPEN
+> 1. **The support promise is now ON SCREEN: "we reply within 2 working days."** That is a commitment
+>    to an inbox nobody is checking daily yet. Either keep it or change the copy.
+> 2. **COPPA parental review/deletion still has no defined path** and learner deletion is still not
+>    audit-logged. It is a support request with legal teeth. Belongs in the open lawyer conversation.
+> 3. `docs/support-log.md` does not exist yet — one line per contact; after ~20 lines the top 3
+>    problems ARE the next engineering work.
+> 4. Nothing here has been exercised by a real parent, because there are no real parents.
+>
+> _(the 🚚 block below is the same day's story work — untouched by this, and still uncommitted.)_
+
+> 🚚 **2026-07-27 — A2 DONE, THEN THE PICKER CAME OUT AND THE STATIC OBJECTS WENT: STORYTIME AND MARKETDAY ARE NOW ONE CONTINUOUS RUN OF LIVING CREATURES, AND THREE COLLISIONS THAT WERE ALREADY IN PRODUCTION WENT WITH THEM. ⚠️ STILL NOTHING COMMITTED — prod is `main`@`5966de3` / sw v67.** `tsc` 0 · 142/142 vitest · `next build` · 0 console errors in a fresh tab · driven at 1024×620 and 640×320 in every setting of both chapters.
+>
+> **The asks, in order:** *"start A2"* (item 2 of the build order in
+> [docs/story-6-8-rethink.md](docs/story-6-8-rethink.md)) → *"remove the picker… add all in the one
+> for each chapter"* → *"in the story problem use the generated animation objects not the fruits… in
+> the multiplication also use the generated animated objects not the static images"*.
+>
+> **The three asks turned out to be one idea arriving in stages, and it is worth reading them
+> together:** make the arithmetic move → stop making the child choose a world before they know what
+> they are choosing → and then the thing that moves has to be something that *can* move. A fruit
+> cannot arrive; it can only be slid across the picture like a cut-out being dragged, which is exactly
+> what the first ask had just asked it to do.
+>
+> ## ① THE FAULT, AND THE ONE THING THAT FIXES IT
+> StoryTime's joiners `_pop`ped into existence and its leavers **faded a stationary sprite** — the
+> exact fault PlayTime was built to fix in the 3–5 band. So the arithmetic happened in a jump cut.
+> Now they **travel**: joiners come in from off-frame, leavers walk out, staggered so a group files
+> in rather than swarming.
+> • **Direction is the whole trick, and it is PlayTime's slot order mirrored.** There the movers own
+>   the LEFTMOST slots and travel left→right; here they own the RIGHT-hand end of the row (group B in
+>   an addition, the trailing few in a take-away), so **arrivals come from off-frame right and
+>   departures leave the same way** — the only direction that never walks something through the group
+>   being counted. A leaver turns round first, or the cycle contradicts the travel.
+> • **The reef world is now ALIVE.** Its items are the `_side` sprites, every one of which has a
+>   drawn cycle, so fish/crabs/turtles swim in and out instead of being dragged sideways as cut-outs.
+>   **Octopus dropped** — no cycle, and a still creature beside a living one reads as broken art, the
+>   same call SeesawPark's cast re-pick made. Picnic and Fun Fair stay objects and simply travel: an
+>   apple carried on has no feet to skate.
+> • **MarketDay took the cheap option** the plan named: each tray is **lowered onto its place** one
+>   at a time with an **empty socket waiting for it**, instead of scale-popping in. Load-the-trays
+>   remains the real verb whenever it is wanted.
+> • **The choreography is derived, not picked** — the question opens when the last mover has actually
+>   landed, where a fixed 700ms used to offer the answer buttons mid-take-away.
+>
+> ## ② ⚠️ `SheetSprite`'S WALK-IN WAS SKATING FROM THE DAY IT WAS WRITTEN — in yesterday's own code
+> `arrived` gated BOTH the transform target and the leg cycle, and flipped once at `delayMs + ms`.
+> So a creature **walked on the spot for the whole delay, then slid the entire distance with its legs
+> parked.** That is the engine's cardinal rule — *a walk cycle and the travel it belongs to must be
+> given the same number* — broken inside the helper written to enforce it, and it shipped into
+> SeesawPark yesterday unnoticed because the end state looks perfectly fine.
+> Travel now lives in a new shared **`Arrive`**, which hands its child a `moving` flag; **`SheetCell`**
+> (split out of `SheetSprite`) runs the cycle on exactly that flag. The split also exists so a caller
+> drawing something UNDER the sprite — a contact shadow — wraps `Arrive` around the PAIR and travels
+> them as one element; a shadow left outside the travel is the sibling-shadow bug this repo already
+> shipped once.
+>
+> ## ③ THREE COLLISIONS THAT WERE ALREADY IN PRODUCTION, all the same class
+> Every one is a percentage of the height *guessing* at a gap it should have measured:
+> | where | what | was |
+> |---|---|---|
+> | StoryTime | answer box vs the answer buttons | **−29px**, sitting on the middle answer |
+> | MarketDay | equation box vs the answer buttons | **−33px** |
+> | both | their own prompt pill vs **`SkillBeat`'s** | unreadable at 640×320 |
+> The first two are now anchored off the same numbers the buttons are laid out with. The third was
+> fixed by **deletion**: `beat.prompt` returns `''` (SkillBeat then renders nothing) and the chapter's
+> own, richer pill takes SkillBeat's tap-to-replay with it. MissionBrief had already made that call
+> and the reason was never written down — it is in the craft doc now.
+>
+> ## ④ AND A TRAP IN THE INSTRUMENT, WHICH COST MOST OF THE VERIFICATION TIME
+> **The browser pane's tab is `visibilityState: hidden` except during a screenshot, and a hidden tab
+> freezes CSS transitions AND `requestAnimationFrame` outright.** So the sprites read as "started
+> off-frame, never moved" for four seconds and then teleported; the fair world's objects read as
+> *missing entirely* because their entrance keyframe was frozen at `opacity: 0`. Both were the
+> instrument. `computer wait` does NOT front the tab, and a screenshot fronts it for ~40ms — far too
+> short to catch a 3.6s journey. **What works instead: a `MutationObserver` on `style` (it fires
+> regardless of throttling) plus a `setInterval` reading the transform TARGET and the
+> `animationPlayState`.** That proves the invariant that actually matters — legs run exactly while
+> the body is covering ground — without needing to watch the pixels move. Measured: `paused` off-frame
+> → `running` in flight → `paused` on arrival, **and again on a late scored round, not just round 1.**
+>
+> ## ⑤ THEN THE PICKER CAME OUT — ALL THREE REBUILT CHAPTERS ARE NOW ONE RUN
+> Founder: *"remove the picker… add all in the one for each chapter."* A world picker asks a child to
+> choose before they know what they are choosing, and then spends all ten rounds in one backdrop.
+> **SeesawPark, StoryTime and MarketDay now open straight on the intro**, and the SETTING CHANGES
+> EVERY ROUND — consecutive questions differ in place as well as in number. Same call chapter 2 took
+> when its three biomes were merged.
+> • The shape, in all three: a flat **`PLAN`** of item+setting pairs, **interleaved** so consecutive
+>   rounds change setting (10 pairs against 10 rounds in StoryTime/MarketDay, 9 in SeesawPark), and
+>   the setting is **carried on the round** (`data.w`) rather than held in component state. Everything
+>   that used to be per-world then follows the round: the backdrop, **Milo's own sprite** (scuba in the
+>   reef, chef in the bakery, fishing at the pond), the group noun, the friend's name.
+> • Each pair fixes its **own backdrop**, which is load-bearing for the Craft Table — its scenes are
+>   item-specific, so a scene must never be chosen independently of what it is showing.
+> • The demo now walks a DIFFERENT setting per beat, so the first thing a child learns is that the
+>   place changes but the rule does not — which is exactly what the scored rounds then do.
+> • `WorldSelect` itself stays: nine other chapters still use it until they are rebuilt.
+> Verified live: no picker on any of the three; StoryTime ran picnic → reef (Milo swaps to scuba) →
+> guided picnic → **Fun Fair by round 6**; MarketDay opened on the bakery with the chef; SeesawPark's
+> guided round is the forest, with the beam still **level** while the question is open.
+>
+> ## ⑥ AND THE STATIC OBJECTS WENT — BOTH CHAPTERS ARE NOW ENTIRELY DRAWN CYCLES
+> Founder: *"in the story problem use the generated animation objects not the fruits… in the
+> multiplication also."* Right, and the reason is sharper than it first looks: **a fruit cannot
+> ARRIVE.** It can only be slid across the picture like a cut-out being dragged — which is exactly
+> what §① had just asked it to do. A creature walks in on its own legs, so the verb and the art
+> finally agree. Same generalised rule as SeesawPark's cast re-pick: a still object beside a living
+> one reads as broken art, so the cast is all-or-nothing.
+> • **StoryTime** — apples/balloons/flags → 🐠 **Coral Reef** (fish · crab · shark) · 🏖️ **Sandy
+>   Shore** (duck · turtle · eagle) · 🌙 **Moon Base** (astronaut · alien). That last one **finally
+>   spends the two space cycles** the handoff flagged as having no named consumer.
+> • **MarketDay** — cupcakes/flowers/beads → 🐔 **The Farm** (PENS of chicks · ducklings · lambs) ·
+>   🌸 **The Garden** (PATCHES of bees · ladybugs · ants) · 🌲 **The Woods** (NESTS of birds ·
+>   squirrels · eagles). "3 pens of 2 chicks" is the same math with a living manipulative.
+> • The verbs moved with the cast, because the sentences have to stay TRUE: the picnic's *"2 get
+>   eaten"* would have been grim with creatures — it is *"swim away"* / *"wander off"* / *"float
+>   away"* now.
+> • ⚠️ **SIZE A CREATURE BY AREA, NOT BY HEIGHT.** Their aspects run from **0.457** (the alien: tall
+>   and thin) to **1.746** (the shark), and a chain that sets only HEIGHT drew ten aliens as **18px
+>   slivers** — fatal in a chapter about counting them — while making a shark hog its row. Dividing
+>   by `√aspect` holds the drawn AREA constant. Caught on screen, not by a gate.
+> • Because every item is sheeted, the static-image and colour-tint paths in both chapters are gone —
+>   `SheetCell` is the only renderer, and it still falls back to a plain still if a sheet is ever
+>   missing. `TintedSprite` stays for the three chapters that still need it.
+>
+> ## ▶ OPEN
+> 1. **STILL NOTHING COMMITTED — and the tree is now large.** `SeesawPark.tsx` · `StoryTime.tsx` ·
+>    `MarketDay.tsx` · `critters.tsx` · `canvas/sheets.ts` · `chapter-craft.md` · `handoff.md`, plus
+>    the untracked `docs/story-6-8-rethink.md` and **10 new PNGs** in `public/assets/`. Deploying
+>    needs the usual `public/sw.js` bump (v67 → v68). Leave `scripts/.voice-*.json` out — regenerable.
+> 2. **Next in the order: A3 — HopAlong** (`milo_hop` + the discrete `hop(from, to)`; `Critter`
+>    cannot carry a hop). Then **B** — one bundling engine serving placeValue + additionTo100 +
+>    subtractionTo100.
+> 3. **Three band-wide items are now DONE in all three rebuilt chapters and must be repeated in every
+>    later one:** `RotateGate` + landscape-only · **no world picker** · **an all-drawn-cycle cast**.
+>    Three are still NOT done: teaching is a modal white card, there is no cumulative arc outside
+>    `SkillBeat`, and emoji still render in the painted world (StoryTime's compare rows label Milo and
+>    his friend 🦊/🧒).
+> 4. ⚠️ **The 6–8 world registry in this file is now stale for three chapters.** Story problems are
+>    Coral Reef · Sandy Shore · Moon Base (was Picnic Meadow · Coral Reef · Fun Fair); multiplication
+>    is The Farm · The Garden · The Woods (was Bakery · Flower Garden · Craft Table). **One known
+>    backdrop overlap**: MarketDay's Woods and SeesawPark's forest share `forest_1`/`forest_2` — there
+>    are only four forest images and two chapters wanted three each. Left deliberately: a balance
+>    scale and a grid of nests cannot be mistaken for one another. **HopAlong's planned "Farmyard"
+>    world now clashes with MarketDay's Farm** and should be re-picked when A3 lands.
+> 5. **The `fps` cadences are still unverified by eye** — and there are now MORE of them on screen,
+>    since chick · duckling · lamb · bee · dragonfly · alien · astronaut all went live this session
+>    with the numbers that were tuned by ear. That is the cheapest remaining win: watch one run and
+>    adjust one number each in `sheets.ts`.
+> 6. **524.7 Higgsfield credits expire ~2026-07-30**, and the two orphan sheets (astronaut, alien)
+>    now have a home, so the honest uses left are a retry if a cycle reads wrong on screen, or
+>    cat/fox/bear (~27) if those are ever wanted back.
+> 7. **Nobody has watched a child play any of it**, and every fault this session that mattered was
+>    found by looking at the screen — the 18px aliens, the two answer boxes sitting on their own
+>    button rows, the doubled prompt pill. None of them would have failed a gate.
+>
+> _(the 🎞️ block below is the same day's earlier work — the audit, the art and SeesawPark.)_
+
+> 🎞️ **2026-07-27 — THE 6–8 BAND RE-THOUGHT AGAINST THE 3–5 ANIMATION CRITERIA, 10 NEW DRAWN CYCLES GENERATED BEFORE THE QUOTA EXPIRED, AND THE FIRST CHAPTER REBUILT. ⚠️ NOTHING COMMITTED — prod is still `main`@`5966de3` / sw v67.** `tsc` 0 · 142/142 vitest · `next build` · 0 console errors in a fresh tab · driven live at 1024×620 and 390×844.
+>
+> **The asks, in order:** *"rethink the chapters of the age group 6-8 with the criteria of animations which we have used in the age group 3-5"* → *"save it as doc first"* → *"you can use the higgsfield to generate new video… in 3 days our month gets complete and we have almost 600 credits"* → *"lets start animating the chapters"* → *"can we use animated objects in the balances?"* → *"use the already generated one suitable for forest"*.
+>
+> ## ① THE AUDIT — [docs/story-6-8-rethink.md](docs/story-6-8-rethink.md) is the standing spec for the band
+> The 6–8 set was converted to story mode on 2026-07-01; the 3–5 band was **rebuilt** on 07-24→26.
+> So 6–8 runs the OLDER pattern, and it is the pattern §0a exists to name. Two greps carry the whole
+> diagnosis: **the band's entire animation vocabulary is two keyframes per file — `_float` (Milo bobs
+> in place) and `_pop` (an object scales in).** Nothing travels, nothing has a cycle.
+>
+> | | 3–5 (rebuilt) | 6–8 (as shipped) |
+> |---|---|---|
+> | drawn cycles (`critters.tsx`) | 5 chapters + 4 test suites | **0** |
+> | journeys (`journeyOf`) | every chapter | **0** |
+> | answering gesture | a different verb per skill | **tap 1 of 3 chips, all 12** |
+> | teaching | in-world | a **modal white card** over the scene |
+> | cumulative arc outside `SkillBeat` | strip · tray · build | `onRound` swaps the **backdrop only** |
+> | `RotateGate` | all | **none** |
+>
+> The doc carries a verb per chapter (DELIVER IT · BUNDLE IT · HOP IT · LOAD THE TRAYS · CUT IT ·
+> PAY IT · SET IT · REGROUP IT · BUILD IT), the A/B/C build order, and the band-wide items. **Founder
+> decision taken: 6–8 goes LANDSCAPE-ONLY** — journeys need horizontal room. ⚠️ That is a behaviour
+> change: 6–8 works in portrait today via a `short = vh<470` path, which becomes dead weight in every
+> chapter that gets rebuilt.
+> **The band is TAP-ONLY** (no `onPointerDown` anywhere in 3–11), so every proposal is taps — I nearly
+> specified drag for the clock and the bundling.
+>
+> ## ② THE ONE DEFECT THAT WAS NOT A STYLE MATTER — and it was live
+> **SeesawPark was hot/cold in production.** `setTimeout(() => setTilt(true), 400)` tipped the beam
+> toward the bigger side **before the child answered**, and the heavier pan glowed with it. The whole
+> chapter was winnable by reading the tilt and tapping the matching sign, never comparing two numbers
+> — the only thing it exists to teach. Same fault as chapter 4's green Ready button and the teen
+> band's rejected live-tilt beam, and the rule was already in the craft doc when it shipped.
+>
+> ## ③ THE ART — 10 DRAWN CYCLES FOR 75 CREDITS, ZERO RETRIES (524.7 left, expires ~2026-07-30)
+> This **closes the parade's long-parked "Farm + Space — 9 creatures, ~70 credits"** item: lamb ·
+> chick · duckling · bee · frog · duck · dragonfly · astronaut · alien, plus **Milo's HOP**.
+> All 9 already had `_side` stills, so this was **image-to-video** — no `generate_image` step, and the
+> still itself locks the style. Findings, all now in [chapter-craft.md](docs/chapter-craft.md):
+> • **Derive the chroma field, don't recall it.** `scratchpad/chroma.py` measures green-vs-magenta
+>   clearance to the nearest subject pixel. Run blind it reproduced every case earlier sessions paid
+>   for — frog (green 156), alien (173), **Milo, whose green backpack gives green 172 vs magenta 209**
+>   — and flagged the dragonfly as marginal both ways.
+> • ⚠️ **The SUBJECT settles, not just the background.** The magenta field was solid from frame 0, but
+>   the model spent **20 of 121 frames re-rendering the subject** (610→360px wide, drifting 89px).
+>   Adding *"at a CONSTANT size, must not drift, grow or shrink"* fixed it: 8 of 9 then settled at
+>   frame 0. Measure per-frame bbox to find the lock-in; don't guess `--start`.
+> • **`creature-frames.py`'s cycle detector gives misleading verdicts.** It called lamb and Milo's hop
+>   "no clean cycle"; a plain autocorrelation found them at lag 21 with corr **+0.84 / +0.87**.
+>   Re-cutting to one measured period fixed both — **no credits wasted on a retry that wasn't needed.**
+>   Worth patching the script.
+> • Reported output geometry ≠ delivered (params said 1280×720, file was 960×960 square). Preset
+>   interceptions are pre-submission notices, not charges ("wings **beating**" matched a music preset);
+>   balance confirmed exactly 10 × 7.5.
+> • ⚠️ **A HOP IS NOT A WALK AND `Critter` CANNOT CARRY ONE.** The frog is coiled 9 of 12 frames and
+>   airborne 3; linear travel makes it slide while crouched. A hop needs a discrete `hop(from, to)`.
+>   **This corrected my own plan**, which had said HopAlong was "`critters.tsx` unchanged".
+> • All 10 registered in [sheets.ts](src/features/chapters/story/canvas/sheets.ts) with **measured**
+>   `cellAspect`; the `fps` values are **proposals tuned by ear**, flagged as such in the file, because
+>   cadence is the number the founder has twice called too fast and it also sets ground speed.
+>
+> ## ④ A1 SEESAWPARK REBUILT — the template every later 6–8 chapter repeats
+> • **The beam now confirms an answer instead of previewing one.** `tilt = picked !== null`. Verified
+>   by measurement, not by the screen moving: pan bottoms **Δ0px** and `rotate(0deg)` while the
+>   question is open (2 vs 3, answer nowhere on screen), then `rotate(7deg)` on commit.
+> • **A level beam needed a BEAM ARREST to read as deliberate** — a scale showing 6 against 3 dead
+>   level just looks faulty, which is the exact "reads as broken" risk that **deferred the measurement
+>   chapter's weight world**. Two props hold it and drop away on commit (2 → 0). **This is the pattern
+>   to reuse if weight ever becomes a MeasureIt world.**
+> • **`RotateGate` + landscape-only**, early return below every hook. Gate at 390×844, clean recovery
+>   to 1024×620, no error boundary.
+> • **The animals are ALIVE.** New shared **`SheetSprite`** in `critters.tsx` — an in-flow living
+>   sprite for the many 6–8 chapters that lay creatures out in a GRID (`Critter` is `position:fixed`
+>   and cannot serve them). They **walk onto the pan with the cycle playing, then pause and breathe**:
+>   they are being weighed, so a looping walk cycle would be skating on the spot. Walk-in duration
+>   comes from each creature's own gait via `groundSpeed` (turtle 533ms), so one cycle still carries
+>   one stride.
+> • **The cast was re-picked so EVERY animal has a sheet** — a pan of stills beside a pan of living
+>   creatures reads as broken art, not a choice. cat/fox/bear dropped; replacements chosen to BELONG
+>   in each world rather than merely to be available (lamb and chick were available and rejected — a
+>   lamb is not a forest animal): playground **rabbit · duck · ladybug**, forest **squirrel ·
+>   butterfly · ant**, pond **frog · fish · turtle**. Verified live (5 forest rounds, `everAStill: []`)
+>   and statically (all 9 items resolve to a registered sheet). **Zero credits spent on this.**
+>
+> ## ⑤ ⚠️ THE BUG WORTH CARRYING: THE WALK-IN PLAYED ONCE AND DIED
+> It ran on round 1 and was **dead for rounds 2–10**. React reconciles those sprite elements across
+> rounds — same component, same position, same key — so the element is REUSED and `arrived` survived
+> from the previous round. **This is invisible to a single check**: you look once, it works, you move
+> on. Caught only by arming a `MutationObserver` and finding it logged **zero** mounts on a new round.
+> Fixed with an explicit `resetKey`. **The general rule is now in the craft doc: verify an animation on
+> the SECOND round, never the first.**
+> *(Also: my own probes were wrong three times before the code was — pan TOPS legitimately differ
+> because a 7-pan is two rows tall; a breath read as `none` because I sampled the wrong nesting level;
+> and resizing while the pane was hidden never reached the page. Suspect the instrument first.)*
+>
+> ## ⑥ A STALE ITEM IN THIS FILE, CORRECTED
+> The `milo-happy.png` / `milo-thinking.png` 404 (listed as an open art decision with ~18 call sites)
+> **is closed — both files now exist.** No spend needed.
+>
+> ## ▶ OPEN
+> 1. **NOTHING IS COMMITTED.** Working tree: `docs/story-6-8-rethink.md` (new) · `chapter-craft.md` ·
+>    `SeesawPark.tsx` · `critters.tsx` · `canvas/sheets.ts` · **10 new PNGs** in `public/assets/`.
+>    Deploying needs the usual `public/sw.js` bump (v67 → v68).
+> 2. **Next in the order: A2 — StoryTime + MarketDay onto `critters`**, so joiners walk in from
+>    off-frame and leavers walk out instead of a stationary sprite fading (the exact fault PlayTime was
+>    built to fix). No new art, PlayTime is a direct template, `SheetSprite` is ready for their item
+>    grids. Then **A3 HopAlong** (`milo_hop` + the discrete `hop(from, to)`), then **B** — one bundling
+>    engine serving placeValue + additionTo100 + subtractionTo100.
+> 3. **The `fps` cadences are UNVERIFIED BY EYE** on all 10 new sheets. One number each in `sheets.ts`.
+> 4. **524.7 Higgsfield credits expire ~2026-07-30** and nothing in the app has a named consumer for
+>    them — 9–11 is code-drawn neon HUD, teen has no sprites. Honest uses: a retry if a cycle reads
+>    wrong on screen, or cat/fox/bear (~27) only if those three are ever wanted back.
+> 5. **Nobody has watched a child play any of this**, and the 6–8 wording is unread aloud.
+> 6. Still the headline: **~zero real users.**
+>
+> _(the ✂️ block below is the previous session — the over-engineering audit, SHIPPED.)_
+
+> ✂️ **2026-07-27 — A REPO-WIDE OVER-ENGINEERING AUDIT, THEN THE TWO BIGGEST CUTS TAKEN: `src` IS 62,489 → 57,255 LINES (−5,234, 8.4%), 34 ROUTES → 22, 9 DEPS → 8. 🚀 SHIPPED — fast-forwarded into `main` and pushed, prod serving sw v67.** `tsc` · 142/142 vitest · `next build` · the changed security header verified on a running server.
 >
 > **The ask:** a `/ponytail-audit` over the whole tree, then *"delete /play and the kit-preview components"*, then the one follow-up the deletion exposed.
 >
@@ -2143,7 +2462,13 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-27 (LATEST — see the top ✂️ block. **A repo-wide over-engineering audit, then the two biggest cuts taken and SHIPPED: `src` is 62,489 → 57,255 lines (−5,234, 8.4%), 34 routes → 22, 9 deps → 8.** Deleted the parked **`/play` AR track** (10 webcam mini-games + `src/infra/ar` + 3 `/play`-only UI components, −2,923 lines and `@mediapipe/tasks-vision`) and **`/kit-preview`** with the 9 pre-GameShell teen components only it imported (−2,311). **The two cuts were not the same risk:** kit-preview called `notFound()` in production so those components were never in a prod bundle — provably zero; `/play` was genuinely LIVE (200), and `git log -S` showed a "Hand Games" menu link existed until `a8296b4`, so *"unlinked now"* is not *"was never reachable"* — **check the history, not just HEAD.** A `/play → /menu` redirect was offered and deliberately declined as the same speculative flexibility the audit was cutting. **The one real finding the deletion produced: `Permissions-Policy` still granted `camera=(self)`** for AR that no longer exists — now `camera=()`, verified on a running server, with the other five hardening headers byte-identical. ⚠️ **Two instrument failures worth carrying:** a curl probe grepping the body for "could not be found" reported `/play` already dead — but that string ships in EVERY Next route's HTML shell (`/menu` and `/story` match it too), so only the HTTP status means anything; and an inline zsh-quoted grep silently matched nothing and flagged every file in `src` as an orphan — **a sweep that flags everything is a broken sweep.** Also: deleting a route leaves stale `.next/dev/types` validators that fail `tsc` while the code is fine. ▶ **The audit found more than was taken** — two walk-cycle sprite engines where Pixi's `ParadeStage` has exactly ONE caller (~839 lines + the `pixi.js` dep), the cut-out puppet rig now *proven* dead (~485 lines, all 6 `RIGS` keys have a `SHEETS` entry so frames always win), unlinked `/daily` (256), and 99 redefinitions of `shuffle`/`pick`/`rint` (~90, of which 15 are the biased sort-random). `docs/ar-phase0-brief.md` now describes deleted code. _(prior footer follows.)_)_
+_Last updated: 2026-07-27 (LATEST — see the top 🛟 block. **The support + per-user error layer, SHIPPED — `main`@`3492abe`, prod sw v68, smoke green.** It answers a founder question rather than a bug: *how does a company give support, and how do you manage an error for a SPECIFIC user*, asked by someone who does not read code. The diagnosis is the useful part: **this app is local-first, so the failures a parent actually writes in about leave no server-side trace at all** — a wedged offline queue, a stale service-worker shell, IndexedDB blocked in private browsing. The only time this repo ever diagnosed one (the Safari `upgrade-insecure-requests` boot failure) it was by hand-adding beacons to the service worker, which does not repeat on a stranger's iPad. So the user now carries the evidence to us on purpose: a "Need help?" panel attaches a device snapshot — sw version, kv mode, queue depths, recent errors — to a support email. Three things that were previously unobservable are now visible: **`kv.mode()`** (the IndexedDB fallback was module-private, i.e. the most likely cause of "her progress vanished" could not be seen), the **sw VERSION reply** (stale-shell detection), and **`learnerId` on every client error** (a log stops being an anonymous pile of stack traces). Plus capture of `window.error` and `unhandledrejection` — the classes the React ErrorBoundary never sees, and the class that Safari failure actually was. A **daily cloud health check** now curls prod and reads Vercel + Supabase, instructed to answer in ONE line when healthy because a daily wall of green trains you to stop reading it. **Sentry deliberately not added** — Vercel already captures both seams and is queryable; a vendor at ~0 users is cost with no consumer, and the identity work makes adopting it later a config change. ⚠️ **The A2 story batch is still uncommitted and was deliberately left that way** — this shipped as 9 files with zero overlap. ▶ Open: the support promise *"we reply within 2 working days"* is now ON SCREEN against an inbox nobody checks daily yet; **COPPA parental review/deletion still has no defined path**; and the daily check's own report has never been read by a human. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-27 (**A2 done, then the picker came out and the static objects went: StoryTime and MarketDay are now one continuous run of living creatures.** Three asks that turned out to be one idea in stages — make the arithmetic MOVE, stop making the child choose a world before they know what they are choosing, and then make the thing that moves something that *can* move. **A fruit cannot arrive**; it can only be slid across the picture like a cut-out being dragged, which is exactly what the first ask had just asked it to do. So joiners now travel in from off-frame and leavers travel out (movers own the RIGHT-hand end of the row, the only direction that never walks something through the group being counted); the world picker is gone from all three rebuilt chapters, with the SETTING carried on the round so it changes every question; and both casts are entirely drawn cycles — Coral Reef · Sandy Shore · **Moon Base** for story problems (finally spending the orphan astronaut and alien sheets), PENS of chicks · PATCHES of bees · NESTS of birds for multiplication. ⚠️ **Three faults it turned up were already in production**, all the same class — a percentage of the height guessing at a gap it should have measured: two answer boxes sitting 29px and 33px inside their own button rows, and both chapters drawing a second prompt pill on top of SkillBeat's. ⚠️ **And `SheetSprite`'s walk-in had been skating since the day it was written** — one flag gated both the transform target and the leg cycle, so a creature walked on the spot through its delay then slid the whole distance with its legs parked; travel now lives in a shared `Arrive` that hands its child a `moving` flag. Two rules banked in [chapter-craft.md](docs/chapter-craft.md): **size a creature by AREA, not height** (aspects run 0.457 to 1.746; ten aliens came out as 18px slivers) and **a travel distance inside a scaled container must be relative, not px**. ⚠️ Most of the verification time went to an instrument trap: **the browser pane's tab is hidden except during a screenshot, and a hidden tab freezes CSS transitions and rAF outright** — a `MutationObserver` plus a transform-TARGET read is what actually proves the invariant. `tsc` 0 · 142/142 vitest · `next build` · 0 console errors. ▶ Still nothing committed; next is A3 HopAlong, whose planned "Farmyard" world now clashes with MarketDay's Farm. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-27 (the 🎞️ block — the audit, the art and SeesawPark. **The 6–8 band re-thought against the 3–5 animation criteria, 10 new drawn cycles generated before the Higgsfield month expired, and the first chapter (SeesawPark) rebuilt. ⚠️ NOTHING COMMITTED — prod is still `main`@`5966de3` / sw v67.** `tsc` 0 · 142/142 vitest · `next build` · 0 console errors. **The audit's finding in one line: the whole 6–8 band's animation vocabulary is TWO keyframes — `_float` (Milo bobs) and `_pop` (an object scales in). Nothing travels, nothing has a cycle, all 12 chapters answer by tapping 1 of 3 chips.** [docs/story-6-8-rethink.md](docs/story-6-8-rethink.md) is now the standing spec: a verb per chapter, the A/B/C build order, and the founder decision that **6–8 goes landscape-only**. **One live defect found: SeesawPark was hot/cold** — the beam tipped toward the bigger side 400ms BEFORE the child answered and the heavier pan glowed, so the chapter was winnable without ever comparing two numbers. Fixed and verified by measurement (Δ0px level → `rotate(7deg)` on commit), and a **beam arrest** was added because a scale sitting dead level just looks faulty — the same latch problem that deferred MeasureIt's weight world. **Art: 10 sheets for 75 credits, zero retries**, closing the parade's long-parked 9-creature item plus Milo's HOP; `scratchpad/chroma.py` now DERIVES green-vs-magenta per subject and reproduced every case earlier sessions paid for. ⚠️ **A hop is not a walk and `Critter` cannot carry one** (coiled 9 of 12 frames), which corrected my own plan for HopAlong. ⚠️ **And the bug worth carrying: the new walk-on played on round 1 and was DEAD for rounds 2–10**, because React reuses those sprite elements so `arrived` survived — invisible to a single check, caught only by a `MutationObserver` logging zero mounts. **Verify an animation on the SECOND round, never the first.** ▶ Next: A2 StoryTime + MarketDay onto `critters`, then A3 HopAlong. The 10 new `fps` cadences are unverified by eye; 524.7 credits expire ~2026-07-30 with no named consumer left. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-27 (the ✂️ block — the over-engineering audit, SHIPPED. **A repo-wide over-engineering audit, then the two biggest cuts taken and SHIPPED: `src` is 62,489 → 57,255 lines (−5,234, 8.4%), 34 routes → 22, 9 deps → 8.** Deleted the parked **`/play` AR track** (10 webcam mini-games + `src/infra/ar` + 3 `/play`-only UI components, −2,923 lines and `@mediapipe/tasks-vision`) and **`/kit-preview`** with the 9 pre-GameShell teen components only it imported (−2,311). **The two cuts were not the same risk:** kit-preview called `notFound()` in production so those components were never in a prod bundle — provably zero; `/play` was genuinely LIVE (200), and `git log -S` showed a "Hand Games" menu link existed until `a8296b4`, so *"unlinked now"* is not *"was never reachable"* — **check the history, not just HEAD.** A `/play → /menu` redirect was offered and deliberately declined as the same speculative flexibility the audit was cutting. **The one real finding the deletion produced: `Permissions-Policy` still granted `camera=(self)`** for AR that no longer exists — now `camera=()`, verified on a running server, with the other five hardening headers byte-identical. ⚠️ **Two instrument failures worth carrying:** a curl probe grepping the body for "could not be found" reported `/play` already dead — but that string ships in EVERY Next route's HTML shell (`/menu` and `/story` match it too), so only the HTTP status means anything; and an inline zsh-quoted grep silently matched nothing and flagged every file in `src` as an orphan — **a sweep that flags everything is a broken sweep.** Also: deleting a route leaves stale `.next/dev/types` validators that fail `tsc` while the code is fine. ▶ **The audit found more than was taken** — two walk-cycle sprite engines where Pixi's `ParadeStage` has exactly ONE caller (~839 lines + the `pixi.js` dep), the cut-out puppet rig now *proven* dead (~485 lines, all 6 `RIGS` keys have a `SHEETS` entry so frames always win), unlinked `/daily` (256), and 99 redefinitions of `shuffle`/`pick`/`rint` (~90, of which 15 are the biased sort-random). `docs/ar-phase0-brief.md` now describes deleted code. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-27 (**Short-landscape swept across the 17–18 band — the last open item from the 🎡 block — and the band itself is CLEAN: 156 measured screens, 0 failures.** No clipping, no overlap, no h-overflow, nothing under the 24px operable floor; tightest control is a 31×31 stepper, in line with 15–16's stated ceiling. **The one real defect was in `ExploreStep`, shared by ALL 37 teen chapters, so it is not a 17–18 regression** — at 640×320 it was 2.7 screens of content with "Skip to the game →" **504px below the fold**, invisible to every prior check because it scrolled rather than clipped. ⚠️ **My first fix was wrong and the arithmetic killed it**: wrapping the sim in `FitBox` gives a 0.37 scale, i.e. 13px sliders — *scale-to-fit is not reflow*, the rule this repo already learned in 15–16. ⚠️ **And the founder caught me hiding text twice** (the intro, then the sim's closing paragraph) — height comes out of the visual and the chrome, never the prose. **The generic CSS override was wrong in kind**: it guessed "first child is the visual", which is false for SequenceExplorer and WaveExplorer, so each of the 21 sims now DECLARES its visual via the new `SimLayout`. Two CSS traps banked: a grid spanner's surplus height distributes across every track it spans (97 "empty" rows at 1.33px each inflated a 140px sim to 209px), and a backtick in a CSS comment silently ends a JS template literal (three build breaks). Tall frames verified unchanged across all 25 explore chapters — that check caught a real width regression before it shipped. `tsc` · 142/142 vitest · `next build` · 100/48-skipped/0-failed + 52/52. ▶ **On a branch, NOT pushed, NOT deployed** (prod still `main`@`413414a` / sw v65); the gate samples only the first scored question per run; nothing checked on a real device. _(prior footer follows.)_)_
 
@@ -2277,7 +2602,7 @@ These are the only outstanding items that have no MCP/code path. Everything else
 9. **Baseline schema `supabase db dump`** — the true base schema still lives only in the dashboard. A committed **security-surface** snapshot now exists (`supabase/schema/security_baseline.sql`), but a full `supabase db dump` (needs the CLI + DB password) into `supabase/migrations/` would make the whole schema reproducible.
 10. **Human signed-in tap-through on prod** — login → parent dashboard → play a chapter (confirm coins/stars/streak still save after the V2 server-derive change) → /insights. The one path not verifiable headlessly.
 11. **Real week-6 cohort + teacher sign-off** on the skill-graph spine edges — efficacy discipline before scaling the guarantee (not code).
-12. **`milo-happy.png` / `milo-thinking.png` 404s** — referenced in ~18 places, exist nowhere (silent, has fallbacks). Fix = copy an existing pose to those two filenames (zero code change) OR add real art — an art/pose decision.
+12. ~~**`milo-happy.png` / `milo-thinking.png` 404s**~~ ✅ **CLOSED (verified 2026-07-27) — both files now exist** in `public/assets/characters/`. Nothing to decide, nothing to spend.
 
 ---
 
