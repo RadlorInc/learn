@@ -12,7 +12,103 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 📐 **2026-07-27 (LATEST) — SHORT-LANDSCAPE SWEPT ACROSS THE 17–18 BAND (the last open item from the 🎡 block), AND IT FOUND ONE REAL DEFECT — IN A COMPONENT SHARED BY ALL 37 TEEN CHAPTERS. ⚠️ NOT COMMITTED WHEN THIS WAS WRITTEN → now on `feat/teen-explore-short-landscape`, NOT pushed, NOT deployed. Prod is still `main`@`413414a` / sw v65.** `tsc` · 142/142 vitest · `next build` · **two new e2e sweeps: 100 passed / 48 skipped / 0 failed (explore, 37 chapters × 4 sizes) and 52/52 (walkthrough + practice, 13 × 4 × 2 stages)**.
+> ✂️ **2026-07-27 (LATEST) — A REPO-WIDE OVER-ENGINEERING AUDIT, THEN THE TWO BIGGEST CUTS TAKEN: `src` IS 62,489 → 57,255 LINES (−5,234, 8.4%), 34 ROUTES → 22, 9 DEPS → 8. 🚀 SHIPPED — fast-forwarded into `main` and pushed, prod serving sw v67.** `tsc` · 142/142 vitest · `next build` · the changed security header verified on a running server.
+>
+> **The ask:** a `/ponytail-audit` over the whole tree, then *"delete /play and the kit-preview components"*, then the one follow-up the deletion exposed.
+>
+> ## ① WHAT WAS DELETED
+> | | lines |
+> |---|---|
+> | `src/app/play/` — 10 webcam AR mini-games + their hub | 2,244 |
+> | `src/infra/ar/` — the three un-consolidated hand hooks + landmarker | 521 |
+> | `CameraError` · `HowToPlay` · `DifficultyBadge` — found `/play`-only during the cut | 158 |
+> | `src/app/kit-preview/` | 256 |
+> | 9 teen kit components only that gallery imported | 2,055 |
+>
+> `src/infra/ar` was the sole consumer of **`@mediapipe/tasks-vision`**, so the dep went too. The 9
+> components — StreakMarker · CaseCard · FindingsLog · NumericEntry · FractionEntry · FigureDiagram ·
+> StepSelect · StudioSkyline · TeenTopbar — are pre-GameShell "Field Lab" leftovers; every teen
+> chapter has run on GameShell since the 17–18 migration. **Kept:** CoordGrid (12 importers), MiloMark,
+> ChoiceGrid, NumberLine, CalmAdvance, MasteryState, TeenLessonShell, ExploreStep, and BandScope +
+> `/sim-preview` (which previews a LIVE sim, not dead kit).
+>
+> ## ② THE TWO CUTS WERE NOT THE SAME RISK, AND IT IS WORTH KNOWING WHY
+> • **kit-preview: provably zero.** The page called `notFound()` in production, so those 9 components
+>   were never in a production bundle and no user has ever rendered one.
+> • **`/play`: genuinely live** — 200 on prod. Nothing in the current app linked it, but `git log -S`
+>   showed a **"Hand Games" menu entry existed and was removed in `a8296b4`**, so a user from that
+>   window could hold a bookmark. Against 0 DAU/WAU/MAU and 2 real learners the exposure is nobody,
+>   but *"unlinked now"* is not *"was never reachable"* — **check the history, not just HEAD.**
+> A `/play → /menu` redirect was offered and **deliberately declined**: ~10 lines of permanent config
+> to serve a hypothetical bookmark is the same speculative flexibility the audit was cutting.
+>
+> ## ③ DELETING A FEATURE LEAVES ITS PERMISSIONS BEHIND — the one real finding the cut produced
+> `Permissions-Policy` carried **`camera=(self)`**, granted for the AR hand-tracking. With `/play`
+> gone nothing calls `getUserMedia`, touches a MediaStream or renders a `<video>` — so the app was
+> advertising a capability with no consumer. Now `camera=()`. Its comment also justified the grant by
+> *"speech synthesis"*, which was **never true**: `speechSynthesis` is output-only and is not gated by
+> Permissions-Policy at all. **Generalise: when a feature dies, grep the headers, the manifest and the
+> CSP for the capabilities it asked for.** Verified on a running server, not in the config file — the
+> served header is now `camera=(), microphone=(), geolocation=(), interest-cohort=()` and the other
+> five hardening headers come back byte-identical.
+>
+> ## ④ A MEASUREMENT TRAP THAT NEARLY PUT A FALSE CLAIM IN THIS FILE
+> To answer *"is `/play` actually live on prod?"* I curled it and grepped the body for
+> `"could not be found"`. It matched — so I reported the route was already dead. **It was not.** That
+> string is part of the Next.js not-found boundary **shipped in the HTML shell of every route**:
+> `/menu`, `/story` and `/diagnostic` all match it too. Only the **HTTP status** distinguishes them
+> (a truly absent route gives 404; `/play` gave 200). Caught by running the same probe against routes
+> known to be live — *the control is what makes the measurement mean anything.* Same family as the
+> repo's standing rule that a measurement disagreeing with the pixels is guilty until proven innocent.
+> **Also burned, twice:** an inline `grep` pattern quoted for zsh silently matched nothing and reported
+> every file in `src` as an orphan. A throwaway `.mjs` script did the job correctly. **A sweep that
+> flags everything is a broken sweep, not a discovery.**
+>
+> ## ⑤ ⚠️ tsc "FAILED" ON DELETED ROUTES AND THE CODE WAS FINE
+> After the deletions `npx tsc --noEmit` reported 24 errors — all `Cannot find module
+> '../../src/app/play/*/page.js'` inside **`.next/types/` and `.next/dev/types/`**, which `tsconfig.json`
+> includes. Those are generated route validators. `next build` regenerates `.next/types` but **not**
+> `.next/dev/types`, which is written by `next dev` and goes stale on a route delete. Clearing it
+> (safe — no dev server was running; see the standing warning about doing this mid-`next dev`) gave a
+> clean exit 0. **Delete a route and expect one stale-validator failure that is not yours.**
+>
+> ## ⑥ THE AUDIT FOUND MORE THAN WAS TAKEN — this is the actionable residue
+> Ranked, biggest first. The two taken above, then:
+> 1. **Two walk-cycle sprite engines.** `ParadeStage` (Pixi, 601 + 97 lines) serves **exactly one
+>    caller** — `world1.tsx:596` — while `critters.tsx` (DOM, 388 lines) serves five chapters and four
+>    test suites. Porting the parade onto `critters` cuts **~839 lines and frees `pixi.js`**. It is a
+>    rewrite of chapter 1's parade, not a deletion, so it carries real risk.
+> 2. **The cut-out puppet rig is dead by construction** and this is now *proven*, not suspected:
+>    `rigged = !!o.rig && !o.frames?.length`, and **all 6 `RIGS` keys (ant, crab, ladybug, rabbit,
+>    squirrel, turtle) have a `SHEETS` entry**, so drawn frames always win. `rigs.ts` (141) + the rig
+>    branches in `ParadeStage` (~130) + `scripts/creature-legs.py` + `creature-preview.py` = **~485
+>    lines**. This closes the long-standing "DELETE THE DEAD RIG" item with evidence. *(Subset of #1 —
+>    do not count both.)*
+> 3. **`/daily` is unlinked** — no reference from any page, and the streak it existed for was dropped
+>    from the DB in July. **256 lines.**
+> 4. **`shuffle`/`pick`/`rint`/`rnd` are redefined 99 times.** One `src/core/rand.ts` saves **~90
+>    lines**; **15 of the copies are the biased `sort(() => Math.random() - 0.5)`**, which is a
+>    correctness matter for a normal review pass rather than this one.
+> 5. `src/data/repositories/index.ts` is bypassed by 9 of 26 callers — pick one or the other.
+>
+> **Checked and found clean** (worth recording so it is not re-audited): no hand-rolled stdlib
+> anywhere, no orphan modules beyond the above, no dead `GameConfig` fields, and all 8 remaining
+> runtime deps earn their place. The July dead-code sweep did its job — what was left is the handful
+> of things it deliberately parked as "decisions, not oversights".
+>
+> ## ▶ OPEN
+> 1. **`docs/ar-phase0-brief.md` now describes deleted code.** The AR track is a decision TAKEN, not
+>    one pending. Either annotate it or drop it.
+> 2. **The residue in ⑥ is un-taken**, in that order. #2 (the dead rig) is the safest real cut left.
+> 3. **No signed-in tap-through since this landed.** Nothing here touches an authed path, but the
+>    routes changed, so the service worker's cached shell is worth one look on a real device.
+> 4. **The voice corpus is still the top job overall** — the whole 3–11 band has zero clips.
+> 5. Still the headline: **~zero real users.**
+>
+> _(the 📐 block below is the previous session — the short-landscape sweep, since SHIPPED: it is on
+> `main` and prod reached sw v66, so that block's "NOT pushed, NOT deployed" status line is stale.)_
+
+> 📐 **2026-07-27 — SHORT-LANDSCAPE SWEPT ACROSS THE 17–18 BAND (the last open item from the 🎡 block), AND IT FOUND ONE REAL DEFECT — IN A COMPONENT SHARED BY ALL 37 TEEN CHAPTERS. ⚠️ NOT COMMITTED WHEN THIS WAS WRITTEN → now on `feat/teen-explore-short-landscape`, NOT pushed, NOT deployed. Prod is still `main`@`413414a` / sw v65.** `tsc` · 142/142 vitest · `next build` · **two new e2e sweeps: 100 passed / 48 skipped / 0 failed (explore, 37 chapters × 4 sizes) and 52/52 (walkthrough + practice, 13 × 4 × 2 stages)**.
 >
 > **The ask:** *"short-landscape unchecked across the whole 17–18 band."* `640×320 · 667×375 · 740×360 · 1024×400`.
 >
@@ -2047,7 +2143,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-27 (LATEST — see the top 📐 block. **Short-landscape swept across the 17–18 band — the last open item from the 🎡 block — and the band itself is CLEAN: 156 measured screens, 0 failures.** No clipping, no overlap, no h-overflow, nothing under the 24px operable floor; tightest control is a 31×31 stepper, in line with 15–16's stated ceiling. **The one real defect was in `ExploreStep`, shared by ALL 37 teen chapters, so it is not a 17–18 regression** — at 640×320 it was 2.7 screens of content with "Skip to the game →" **504px below the fold**, invisible to every prior check because it scrolled rather than clipped. ⚠️ **My first fix was wrong and the arithmetic killed it**: wrapping the sim in `FitBox` gives a 0.37 scale, i.e. 13px sliders — *scale-to-fit is not reflow*, the rule this repo already learned in 15–16. ⚠️ **And the founder caught me hiding text twice** (the intro, then the sim's closing paragraph) — height comes out of the visual and the chrome, never the prose. **The generic CSS override was wrong in kind**: it guessed "first child is the visual", which is false for SequenceExplorer and WaveExplorer, so each of the 21 sims now DECLARES its visual via the new `SimLayout`. Two CSS traps banked: a grid spanner's surplus height distributes across every track it spans (97 "empty" rows at 1.33px each inflated a 140px sim to 209px), and a backtick in a CSS comment silently ends a JS template literal (three build breaks). Tall frames verified unchanged across all 25 explore chapters — that check caught a real width regression before it shipped. `tsc` · 142/142 vitest · `next build` · 100/48-skipped/0-failed + 52/52. ▶ **On a branch, NOT pushed, NOT deployed** (prod still `main`@`413414a` / sw v65); the gate samples only the first scored question per run; nothing checked on a real device. _(prior footer follows.)_)_
+_Last updated: 2026-07-27 (LATEST — see the top ✂️ block. **A repo-wide over-engineering audit, then the two biggest cuts taken and SHIPPED: `src` is 62,489 → 57,255 lines (−5,234, 8.4%), 34 routes → 22, 9 deps → 8.** Deleted the parked **`/play` AR track** (10 webcam mini-games + `src/infra/ar` + 3 `/play`-only UI components, −2,923 lines and `@mediapipe/tasks-vision`) and **`/kit-preview`** with the 9 pre-GameShell teen components only it imported (−2,311). **The two cuts were not the same risk:** kit-preview called `notFound()` in production so those components were never in a prod bundle — provably zero; `/play` was genuinely LIVE (200), and `git log -S` showed a "Hand Games" menu link existed until `a8296b4`, so *"unlinked now"* is not *"was never reachable"* — **check the history, not just HEAD.** A `/play → /menu` redirect was offered and deliberately declined as the same speculative flexibility the audit was cutting. **The one real finding the deletion produced: `Permissions-Policy` still granted `camera=(self)`** for AR that no longer exists — now `camera=()`, verified on a running server, with the other five hardening headers byte-identical. ⚠️ **Two instrument failures worth carrying:** a curl probe grepping the body for "could not be found" reported `/play` already dead — but that string ships in EVERY Next route's HTML shell (`/menu` and `/story` match it too), so only the HTTP status means anything; and an inline zsh-quoted grep silently matched nothing and flagged every file in `src` as an orphan — **a sweep that flags everything is a broken sweep.** Also: deleting a route leaves stale `.next/dev/types` validators that fail `tsc` while the code is fine. ▶ **The audit found more than was taken** — two walk-cycle sprite engines where Pixi's `ParadeStage` has exactly ONE caller (~839 lines + the `pixi.js` dep), the cut-out puppet rig now *proven* dead (~485 lines, all 6 `RIGS` keys have a `SHEETS` entry so frames always win), unlinked `/daily` (256), and 99 redefinitions of `shuffle`/`pick`/`rint` (~90, of which 15 are the biased sort-random). `docs/ar-phase0-brief.md` now describes deleted code. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-27 (**Short-landscape swept across the 17–18 band — the last open item from the 🎡 block — and the band itself is CLEAN: 156 measured screens, 0 failures.** No clipping, no overlap, no h-overflow, nothing under the 24px operable floor; tightest control is a 31×31 stepper, in line with 15–16's stated ceiling. **The one real defect was in `ExploreStep`, shared by ALL 37 teen chapters, so it is not a 17–18 regression** — at 640×320 it was 2.7 screens of content with "Skip to the game →" **504px below the fold**, invisible to every prior check because it scrolled rather than clipped. ⚠️ **My first fix was wrong and the arithmetic killed it**: wrapping the sim in `FitBox` gives a 0.37 scale, i.e. 13px sliders — *scale-to-fit is not reflow*, the rule this repo already learned in 15–16. ⚠️ **And the founder caught me hiding text twice** (the intro, then the sim's closing paragraph) — height comes out of the visual and the chrome, never the prose. **The generic CSS override was wrong in kind**: it guessed "first child is the visual", which is false for SequenceExplorer and WaveExplorer, so each of the 21 sims now DECLARES its visual via the new `SimLayout`. Two CSS traps banked: a grid spanner's surplus height distributes across every track it spans (97 "empty" rows at 1.33px each inflated a 140px sim to 209px), and a backtick in a CSS comment silently ends a JS template literal (three build breaks). Tall frames verified unchanged across all 25 explore chapters — that check caught a real width regression before it shipped. `tsc` · 142/142 vitest · `next build` · 100/48-skipped/0-failed + 52/52. ▶ **On a branch, NOT pushed, NOT deployed** (prod still `main`@`413414a` / sw v65); the gate samples only the first scored question per run; nothing checked on a real device. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-26 (see the top 🎡 block. **🚀 SHIPPED — `main`@`a7ad21d`, prod serving sw v65, fast-forwarded and pushed; smoke green on all 13 chapters and driven live on prod.** **The 17–18 band is COMPLETE — 13 of 13**, and `BESPOKE_CHAPTERS` now holds only 3–11 story chapters, so every teen chapter in the app runs on GameShell. The engine wave landed three primitives in gameKit — **`MatrixPad`** (the answer IS a matrix), **`CurveMatch`** (LineSetter generalised from a line to a wave), **`CircleTap`** (the read-only unit-circle sim promoted into an answering instrument) — then the last three chapters: **The Big Wheel**, **Daylight Hours**, **Two Receipts**. The plan's fourth item, lifting `RayLine`, was deliberately skipped: the two chapters that want it have already shipped with working answer surfaces, and none of these three needs it. `tsc` · 142/142 vitest · **16 question kinds each forced to the surface and driven by hand to `solved`**. **A third chart scaled to the wrong range**: CurveMatch drew ±7 about the centre when a daylight year lives at 12±5, so the whole target sat above the top edge and the child had nothing to match — the same bug as Cold Snap's ends and the exponential's sixth month, and all three graded correctly while being unreadable, so no gate could see any of them. **And 56 taps to build one matrix** — caught by watching, fixed by starting the pad at the first operand, which also models what addition is. **The picker budget landed exactly on 10**, the number plan §3 set and risk #4 warned would creep. **The full gate ran: 38/38 in 23.9m, zero failures and zero flakes.** ⚠️ And a standing claim in this file is too pessimistic: prod strips `data-test-*`, but the board's **`SOLVED ✓`** label is grade-derived and visible — a correct build showed it on prod and a deliberately wrong tap did not, so a correct grade IS observable in production. What prod still cannot give is the machine-readable hook, so the sweep still needs a dev build. ▶ Short-landscape still unchecked band-wide; thirteen chapters of wording still unread by a teenager; the voice corpus still the top job overall. _(prior footer follows.)_)_
 
