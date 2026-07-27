@@ -21,6 +21,10 @@ export async function POST(req: Request) {
       componentStack: cap(body.componentStack, 2000),
       url: cap(body.url, 500),
       ua: cap(req.headers.get('user-agent'), 300),
+      // WHO. Turns the log from a pile of stack traces into something answerable when a parent
+      // writes in: grep this id. A learner id is a UUID, not PII, and it joins to the owning
+      // account in one hop. Capped like every other field so this public endpoint stays bounded.
+      learnerId: cap(body.learnerId, 64),
     }
     console.error('[milo.client-error]', JSON.stringify(record))
     if (INGEST_URL) {

@@ -19,6 +19,7 @@ import { getCurrentSession } from '@/data/auth'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { CHAPTER_PARENT_LABELS, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
+import { SupportPanel } from '@/shared/ui/SupportPanel'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -452,6 +453,13 @@ export default function ParentDashboard() {
             )}
           </>
         )}
+      </div>
+
+      {/* Support footer. Deliberately the LAST thing on the page and visually quiet — a parent
+          only looks for it when something is wrong, and it must be findable then. If they cannot
+          reach us, our support system is that they leave. */}
+      <div style={{ padding:'8px 16px 28px', textAlign:'center' }}>
+        <SupportPanel learnerId={selected ?? undefined} />
       </div>
 
       {/* Add child modal */}

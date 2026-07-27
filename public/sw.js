@@ -1,4 +1,4 @@
-const VERSION      = 'v67'
+const VERSION      = 'v68'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
@@ -139,6 +139,12 @@ async function cacheFirst(request, cacheName) {
 }
 
 self.addEventListener('message', event => {
+  // Report which shell version is actually controlling this device. A parent running an old
+  // VERSION while prod serves a newer one IS the stale-shell bug class — and it is invisible
+  // from the server, so support has no other way to find out. Replies to the asking client only.
+  if (event.data?.type === 'VERSION') {
+    event.source?.postMessage({ type: 'VERSION', version: VERSION })
+  }
   if (event.data?.type === 'CHECK_ONLINE') {
     fetch('/manifest.json', { cache: 'no-store' })
       .then(() => self.clients.matchAll().then(cs => cs.forEach(c => c.postMessage({ type: 'ONLINE' }))))

@@ -1,6 +1,8 @@
 'use client'
 
 import React from 'react'
+import { installErrorCapture, recordError } from '@/infra/storage/lastError'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 
 interface State {
   hasError:  boolean
@@ -21,9 +23,18 @@ export class MiloErrorBoundary extends React.Component<
     return { hasError: true, error }
   }
 
+  // App-wide capture of the errors this boundary never sees — plain throws outside render and
+  // unhandled promise rejections. Idempotent, so a remount is harmless.
+  componentDidMount() {
+    installErrorCapture()
+  }
+
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo })
     console.error('[Milo Error]', error, errorInfo)
+    // Keep a local breadcrumb even if the network report below never lands — this is what
+    // travels to support in the diagnostic block when the parent reports the problem.
+    recordError(error, 'react')
     // Report to the monitoring sink (forwards to Sentry/Logtail when configured; else Vercel logs).
     // Best-effort + guarded — a failed report must never mask the original error.
     try {
@@ -36,6 +47,11 @@ export class MiloErrorBoundary extends React.Component<
           stack: error?.stack,
           componentStack: errorInfo?.componentStack,
           url: typeof window !== 'undefined' ? window.location.href : undefined,
+          // WHO it happened to. Without this a log is a pile of stack traces that cannot be
+          // matched to the parent who wrote in. Read synchronously from sessionStorage — an
+          // async session lookup would race the navigation a crash usually triggers, and
+          // learner → owning account is one join away in the DB anyway.
+          learnerId: getActiveLearner()?.id,
         }),
       }).catch(() => {})
     } catch { /* ignore */ }

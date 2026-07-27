@@ -106,6 +106,12 @@ export const kv = {
   /** Resolves once the in-memory cache has hydrated from IndexedDB. */
   ready: (): Promise<void> => readyPromise,
 
+  /** Which backing store is actually in use. `local` means IndexedDB was unavailable, blocked,
+   *  or HUNG (Safari private browsing / strict storage settings) and the 2.5s timer above fell
+   *  back to localStorage. That state is invisible from the server and explains a whole class of
+   *  "my child's progress vanished" reports, so diagnostics surfaces it. */
+  mode: (): 'idb' | 'local' => (useFallback ? 'local' : 'idb'),
+
   get(key: string): string | null {
     if (useFallback) return safeLS(() => localStorage.getItem(key), null)
     return mem.has(key) ? mem.get(key)! : null
