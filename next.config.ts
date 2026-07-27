@@ -34,8 +34,11 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           // V3: force HTTPS for 2 years incl. subdomains (Vercel serves HTTPS but adds no HSTS itself).
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          // V3: the app uses the camera for AR hand-tracking + speech synthesis; deny everything else.
-          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), interest-cohort=()' },
+          // V3: deny every powerful feature. The camera grant existed only for the AR hand-tracking
+          // games under /play/* — those are deleted and nothing calls getUserMedia now, so the app
+          // was advertising a capability it cannot use. (Milo's voice is speechSynthesis, which is
+          // output-only and needs no Permissions-Policy grant.)
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
           // V3/V4 — CSP. The app is fully STATIC-rendered, so a nonce-based strict CSP is not viable
           // (Next requires dynamic rendering on every page for nonces — killing static/CDN caching and
           // risking the AR + OAuth flows). So we split it:
