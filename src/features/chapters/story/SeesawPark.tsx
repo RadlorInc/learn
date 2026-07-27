@@ -10,9 +10,15 @@
  * The pans stay LEVEL (counter-rotated) so the animals/numbers are always upright. The child PICKS
  * one of three worlds; the animals SHUFFLE and the scene rotates across the 10 adaptive rounds (one
  * continuous SkillBeat — wider range on a streak, gentler when struggling, re-teach after 3 wrong):
- *   🛝 Playground — bunny · cat · duck
- *   🌲 Forest     — squirrel · fox · bear
+ *   🛝 Playground — rabbit · duck · ladybug      (park & garden)
+ *   🌲 Forest     — squirrel · butterfly · ant   (woodland floor & glade)
  *   🐸 Pond       — frog · fish · turtle
+ *
+ * EVERY animal here is one the walk sheets cover, so the cast is uniformly ALIVE — they walk onto
+ * the pan and then stand still and breathe. cat / fox / bear were dropped for exactly that reason:
+ * they have no drawn cycle, and a pan of stills beside a pan of living creatures reads as broken
+ * art rather than as a choice. Each world's picks are chosen to belong in it — a lamb is not a
+ * forest animal even though its sheet exists.
  *
  * Difficulty widens the range: L1 → to 10 (objects) · L2 → to 50 · L3 → to 100. The demo + 3-wrong
  * re-teach TILT the beam and reveal the sign via ONE speakSteps ("six is greater than three — the
@@ -25,79 +31,93 @@ import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpea
 import { SkillBeat, type Beat } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { SIGNS, compareSign } from '../lessons/CompareLesson'
-import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
+import { useNeedsRotate, RotateGate } from './RotateGate'
+import { SheetSprite, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 
 // Live viewport — so the scale, signs and banner never collide on short/landscape frames.
 
 // ─── Animals & Worlds ────────────────────────────────────────────────────────────────
-interface Item { img: string; emoji: string }
-const IT = (img: string, emoji: string): Item => ({ img: `/assets/objects/${img}.png`, emoji })
+interface Item { img: string; emoji: string; facesLeft?: boolean }
+// The `_side` sprites are the ones the walk sheets are keyed to (see canvas/sheets.ts), so an item
+// pointing at one comes alive; anything else falls back to a still. `facesLeft` mirrors the art's
+// own facing — rabbit and shark were drawn looking left.
+const IT = (img: string, emoji: string, facesLeft?: boolean): Item => ({ img: `/assets/objects/${img}.png`, emoji, facesLeft })
 interface Bg { grad: string; img: string }
 interface CmpWorld {
-  id: string; label: string; emoji: string
+  id: string
   bgs: Bg[]
   items: Item[]
   milo: { src: string; emoji: string; accessory: string }
-  intro: string
 }
-const WORLDS: CmpWorld[] = [
-  { id: 'playground', label: 'Playground', emoji: '🛝',
+const SETTINGS: CmpWorld[] = [
+  { id: 'playground',
     bgs: [
       { grad: 'linear-gradient(#cfe9f7 0%, #dff0d8 52%, #b6db94 100%)', img: '/assets/backgrounds/town_park.jpeg' },
       { grad: 'linear-gradient(#d6efff 0%, #e6f5d8 52%, #c2e69a 100%)', img: '/assets/backgrounds/garden_park.png' },
       { grad: 'linear-gradient(#d2eefc 0%, #e4f2d6 52%, #c0e498 100%)', img: '/assets/backgrounds/town_garden.jpeg' },
     ],
-    items: [IT('bunny', '🐰'), IT('cat', '🐱'), IT('duck', '🦆')],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🛝' },
-    intro: 'At the Playground, Milo puts animals on each side of the balance. The bigger number tips DOWN! Pick the sign that opens toward the bigger number. First, watch Milo!' },
-  { id: 'forest', label: 'Forest', emoji: '🌲',
+    items: [IT('rabbit_side', '🐰', true), IT('duck_side', '🦆'), IT('ladybug_side', '🐞')],
+    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🛝' } },
+  { id: 'forest',
     bgs: [
       { grad: 'linear-gradient(#dbeecb 0%, #cfe4b4 55%, #a9cf88 100%)', img: '/assets/backgrounds/forest_1.jpeg' },
       { grad: 'linear-gradient(#d6ecc6 0%, #cae0ae 55%, #a4ca82 100%)', img: '/assets/backgrounds/forest_2.jpeg' },
       { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/forest_3.jpeg' },
     ],
-    items: [IT('squirrel', '🐿️'), IT('fox', '🦊'), IT('bear', '🐻')],
-    milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🌲' },
-    intro: 'In the Forest, Milo balances woodland friends. Whichever side has more tips DOWN! Pick the sign that opens toward the bigger number. First, watch Milo!' },
-  { id: 'pond', label: 'Pond', emoji: '🐸',
+    items: [IT('squirrel_side', '🐿️'), IT('butterfly_side', '🦋'), IT('ant_side', '🐜')],
+    milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🌲' } },
+  { id: 'pond',
     bgs: [
       { grad: 'linear-gradient(#cfeaf4 0%, #cfe6de 55%, #a9d3bc 100%)', img: '/assets/backgrounds/pond.jpeg' },
       { grad: 'linear-gradient(#d2ecf4 0%, #cfe8e0 55%, #acd6be 100%)', img: '/assets/backgrounds/pond_top.jpeg' },
       { grad: 'linear-gradient(#cfe8f4 0%, #cce4e2 55%, #a6d2c0 100%)', img: '/assets/backgrounds/lake.jpeg' },
     ],
-    items: [IT('frog', '🐸'), IT('fish', '🐟'), IT('turtle', '🐢')],
-    milo: { src: '/assets/characters/milo_fishing.png', emoji: '🦊', accessory: '🐸' },
-    intro: 'Down at the Pond, Milo balances pond friends. The bigger number sinks DOWN! Pick the sign that opens toward the bigger number. First, watch Milo!' },
+    items: [IT('frog_side', '🐸'), IT('fish_side', '🐟'), IT('turtle_side', '🐢')],
+    milo: { src: '/assets/characters/milo_fishing.png', emoji: '🦊', accessory: '🐸' } },
 ]
-const worldById = (id: string) => WORLDS.find(w => w.id === id)
-const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: w.bgs[0].img, itemImage: w.items[0].img }))
+const INTRO = 'Milo puts animals on each side of the balance. The side with MORE tips DOWN! Pick the sign that opens toward the bigger number. First, watch Milo!'
+/** Every backdrop in the chapter, so one <Background> can crossfade between any two of them. */
+const ALL_BGS = SETTINGS.flatMap(w => w.bgs)
 
-interface CmpRound { bg: number; item: Item; a: number; b: number; answer: string }
+/**
+ * The run: one animal+setting pair per round, INTERLEAVED across the settings rather than grouped,
+ * so consecutive rounds change place as well as animal. Nine pairs against ten rounds means only
+ * the last round repeats one. A picker would instead make a child choose before they know what they
+ * are choosing, and then give them ten rounds of one backdrop.
+ */
+const PLAN: { w: CmpWorld; item: Item; bg: number }[] = (() => {
+  const out: { w: CmpWorld; item: Item; bg: number }[] = []
+  const deepest = Math.max(...SETTINGS.map(w => w.items.length))
+  for (let i = 0; i < deepest; i++)
+    for (const w of SETTINGS) if (i < w.items.length) out.push({ w, item: w.items[i], bg: i % w.bgs.length })
+  return out
+})()
+
+interface CmpRound { w: CmpWorld; bg: number; item: Item; a: number; b: number; answer: string }
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 function signWord(sign: string): string { return sign === '>' ? 'greater than' : sign === '<' ? 'less than' : 'equal to' }
 
 // Range widens with difficulty: 1 → to 10 (objects), 2 → to 50, 3 → to 100 (numerals).
-function makeRound(world: CmpWorld, d: 1 | 2 | 3, round: number): CmpRound {
-  const idx = round % world.items.length
-  const item = world.items[idx]
-  const bg = round % world.bgs.length
+function makeRound(d: 1 | 2 | 3, round: number): CmpRound {
+  const { w, item, bg } = PLAN[round % PLAN.length]
   const hi = d === 1 ? 10 : d === 2 ? 50 : 100
   const a = rint(1, hi)
   let b = rint(1, hi)
   if (rint(1, 4) === 1) b = a   // ~1 in 4 rounds force equal so '=' shows up
-  return { bg, item, a, b, answer: compareSign(a, b) }
+  return { w, bg, item, a, b, answer: compareSign(a, b) }
 }
 const objectsMode = (a: number, b: number) => Math.max(a, b) <= 10
 
-// ─── Background (crossfades across the world's scenes) ────────────────────────────────
-function Background({ bg, world }: { bg: number; world: CmpWorld }) {
+// ─── Background — crossfades between ANY two backdrops in the chapter, since the setting now
+// changes every round rather than being chosen once up front. ──────────────────────────
+function Background({ bg }: { bg: Bg }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#dbe8ef' }}>
-      {world.bgs.map((b, i) => (
-        <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
+      {ALL_BGS.map(b => (
+        <div key={b.img} style={{ position: 'absolute', inset: 0, opacity: b === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
           <img src={b.img} alt="" draggable={false} decoding="async"
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
@@ -126,14 +146,9 @@ function MiloHost({ left, milo }: { left: number; milo: CmpWorld['milo'] }) {
   )
 }
 
-function ItemImg({ item, size }: { item: Item; size: string }) {
-  const [missing, setMissing] = useState(false)
-  if (missing) return <span style={{ fontSize: size, lineHeight: 1 }}>{item.emoji}</span>
-  return <img src={item.img} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
-}
 
 // ─── A pan: a group of animals (small n) OR a numeral card (big n) + a numeral chip ────
-function Pan({ n, item, mode, glow, short }: { n: number; item: Item; mode: 'objects' | 'numeral'; glow: boolean; short?: boolean }) {
+function Pan({ n, item, mode, glow, short, px, roundKey }: { n: number; item: Item; mode: 'objects' | 'numeral'; glow: boolean; short?: boolean; px: number; roundKey: string }) {
   const border = glow ? 'var(--sun-yellow)' : 'var(--outline)'
   const shadow = glow ? '0 0 18px var(--sun-yellow), 0 5px 0 rgba(61,37,22,.2)' : '0 5px 0 rgba(61,37,22,.2)'
   if (mode === 'numeral') {
@@ -147,14 +162,18 @@ function Pan({ n, item, mode, glow, short }: { n: number; item: Item; mode: 'obj
     )
   }
   const cols = n <= 3 ? n : n <= 6 ? 3 : 5
-  const sz = short ? 'clamp(13px,3.2vh,22px)' : 'clamp(17px,3.3vmin,29px)'
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 2 : 4, padding: short ? '5px 7px' : 'clamp(6px,1.5vmin,11px)',
       borderRadius: 18, background: 'var(--paper)', border: `4px solid ${border}`, boxShadow: shadow, transition: 'border-color .3s ease, box-shadow .3s ease',
     }}>
+      {/* The animals WALK ONTO the pan and then stand still and breathe. They are being weighed, so
+          a looping walk cycle here would be skating on the spot — SheetSprite pauses on arrival for
+          exactly that reason. Staggered by index so a group files in rather than marching in step. */}
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, auto)`, gap: short ? 1 : 'clamp(1px,0.5vmin,4px)', justifyItems: 'center' }}>
-        {Array.from({ length: n }).map((_, i) => <ItemImg key={i} item={item} size={sz} />)}
+        {Array.from({ length: n }).map((_, i) => (
+          <SheetSprite key={i} src={item.img} h={px} facesLeft={item.facesLeft} delayMs={i * 90} resetKey={roundKey} />
+        ))}
       </div>
       <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 'clamp(16px,4vh,24px)' : 'clamp(18px,4vmin,30px)', color: 'var(--ink)', lineHeight: 1 }}>{n}</span>
     </div>
@@ -165,12 +184,19 @@ function Pan({ n, item, mode, glow, short }: { n: number; item: Item; mode: 'obj
 function Scale({ a, b, item, tilt, short }: { a: number; b: number; item: Item; tilt: boolean; short?: boolean }) {
   const { w: vw, h: vh } = useViewport()
   const angle = tilt ? (a > b ? -7 : a < b ? 7 : 0) : 0   // bigger side tips DOWN (−ve rotates left end down)
+  // SheetSprite crops a strip, so it needs a NUMBER — this is the clamp the pans used to carry,
+  // resolved here where the viewport is already known rather than guessed inside Pan.
+  const roundKey = `${a}:${b}:${item.img}`
+  const vmin = Math.min(vw, vh)
+  const itemPx = Math.round(short
+    ? Math.max(13, Math.min(vh * 0.032, 22))
+    : Math.max(17, Math.min(vmin * 0.033, 29)))
   const mode = objectsMode(a, b) ? 'objects' : 'numeral'
   const beamGrad = 'linear-gradient(#b98a4e,#8d6736)'
   const cell = (n: number, side: 'left' | 'right', big: boolean) => (
     // positioned at the beam end (so it rides up/down with the tilt) but counter-rotated to stay LEVEL
     <div style={{ position: 'absolute', [side]: '1%', bottom: '100%', transformOrigin: 'bottom center', transform: `rotate(${-angle}deg)`, transition: 'transform .8s cubic-bezier(.34,1.56,.64,1)', padding: '0 4px' }}>
-      <Pan n={n} item={item} mode={mode} glow={tilt && big} short={short} />
+      <Pan n={n} item={item} mode={mode} glow={tilt && big} short={short} px={itemPx} roundKey={roundKey} />
     </div>
   )
   return (
@@ -183,6 +209,19 @@ function Scale({ a, b, item, tilt, short }: { a: number; b: number; item: Item; 
             <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: short ? 14 : 20, height: short ? 14 : 20, borderRadius: '50%', background: '#6b4f2a', border: '2px solid #4a340f' }} />
           </div>
         </div>
+        {/* Beam arrest — two props holding the beam level until the child commits.
+            A real balance has exactly this, and it is what makes a level beam read as DELIBERATELY
+            held rather than broken: without them a scale showing 6 against 3 dead level just looks
+            faulty. They drop away on commit, which is the moment the beam is allowed to answer.
+            (Same problem that deferred the measurement chapter's weight world — see MeasureIt.) */}
+        {!tilt && ([['left', '4%'], ['right', '4%']] as const).map(([side, off]) => (
+          <div key={side} aria-hidden style={{
+            position: 'absolute', [side]: off, bottom: '26%', width: short ? 7 : 'clamp(8px,1.4vmin,11px)',
+            height: short ? 26 : 'clamp(30px,5.5vh,52px)', background: 'linear-gradient(#a8823f,#7d5f2c)',
+            border: '2px solid #6b4f2a', borderRadius: 4, boxShadow: '0 2px 0 rgba(61,37,22,.25)',
+            animation: 'sp_prop .25s ease both',
+          }} />
+        ))}
         {/* fulcrum */}
         <div aria-hidden style={{ position: 'absolute', left: '50%', bottom: '6%', transform: 'translateX(-50%)', width: 0, height: 0,
           borderLeft: short ? '34px solid transparent' : 'clamp(40px,8vmin,72px) solid transparent', borderRight: short ? '34px solid transparent' : 'clamp(40px,8vmin,72px) solid transparent',
@@ -223,18 +262,21 @@ function SignRow({ picked, answer, onPick, revealed, short }: { picked: string |
 type Mode = 'guided' | 'practice'
 const sayFor = (d: CmpRound) => `${numberToWords(d.a)} and ${numberToWords(d.b)}. Which sign is right?`
 
-const ComparePlay: React.FC<{ world: CmpWorld; data: CmpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
+const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { a, b, item, answer } = data
   const { h: vh } = useViewport()
   const short = vh < 470
-  const [tilt, setTilt] = useState(false)
   const [picked, setPicked] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false)
+  // ⚠️ THE BEAM CONFIRMS AN ANSWER, IT NEVER PREVIEWS ONE. This used to tip 400ms after the
+  // question loaded — before the child had answered — and the heavier pan glowed with it, so the
+  // whole chapter could be won by reading the tilt and tapping the matching sign without ever
+  // comparing two numbers. Same fault as chapter 4's green Ready button and the teen band's
+  // rejected live-tilt balance beam; see chapter-craft.md §1. It now tips only once they commit.
+  const tilt = picked !== null
 
   useEffect(() => {
-    const t = window.setTimeout(() => setTilt(true), 400)
     if (mode === 'guided') speak(sayFor(data))
-    return () => window.clearTimeout(t)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -267,7 +309,7 @@ const ComparePlay: React.FC<{ world: CmpWorld; data: CmpRound; mode: Mode; onCom
 }
 
 // ─── Teaching demo (opening preview + 3-wrong re-teach): tilt + reveal via ONE speakSteps ─
-const CompareExplain: React.FC<{ world: CmpWorld; data: CmpRound; onDone: () => void }> = ({ data, onDone }) => {
+const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data, onDone }) => {
   const { a, b, item, answer } = data
   const { h: vh } = useViewport()
   const short = vh < 470
@@ -310,35 +352,38 @@ const CompareExplain: React.FC<{ world: CmpWorld; data: CmpRound; onDone: () => 
 }
 
 // ─── Beat ───────────────────────────────────────────────────────────────────────────
-function makeCompareBeat(world: CmpWorld): Beat<CmpRound> {
+function makeCompareBeat(): Beat<CmpRound> {
   return {
     skillId: 'compareNumbers', rounds: 10, reteachAfter: 3, walkEvery: 3,
-    make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
+    make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.a}:${d.b}`,   // dedupe on the MATH (the pair), not the rotating scene/animal
     prompt: () => 'Which sign is right?',
     say: d => sayFor(d),
-    Play: ({ data, onSubmit }) => <ComparePlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
-    Reteach: ({ data, onDone }) => <CompareExplain world={world} data={data} onDone={onDone} />,
+    Play: ({ data, onSubmit }) => <ComparePlay data={data} mode="practice" onComplete={onSubmit} />,
+    Reteach: ({ data, onDone }) => <CompareExplain data={data} onDone={onDone} />,
   }
 }
 
 // ─── Orchestrator ──────────────────────────────────────────────────────────────────
 const SP_CSS = `
 @keyframes sp_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes sp_prop { from{transform:scaleY(0);opacity:0} to{transform:scaleY(1);opacity:1} }
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
-export default function SeesawPark({ world: forcedWorldId, onFinish, onExit }: {
-  world?: string
+export default function SeesawPark({ onFinish, onExit }: {
+  world?: string     // accepted for the /story route's shared signature; the chapter is one run
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
   const router = useRouter()
-  const [world, setWorld] = useState<CmpWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
+  // The SETTING is now part of the round, not a choice made before the chapter starts.
+  const [scene, setScene] = useState<CmpWorld>(SETTINGS[0])
   const [phase, setPhase] = useState<Phase>('intro')
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()
   const short = vh < 470
+  const needsRotate = useNeedsRotate()
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
   const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
@@ -350,26 +395,23 @@ export default function SeesawPark({ world: forcedWorldId, onFinish, onExit }: {
   }, [onFinish, exit])
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
-  const beat = useMemo(() => (world ? makeCompareBeat(world) : null), [world])
+  const beat = useMemo(() => makeCompareBeat(), [])
 
-  if (!world || !beat) {
-    return (
-      <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-        <WorldSelect title="Where shall we compare numbers today?" worlds={PICK_WORLDS}
-          onPick={(id) => { const w = worldById(id); if (w) { setBg(0); setWorld(w) } }} onExit={exit} />
-      </div>
-    )
-  }
+  // ⚠️ EVERY early return below this line must sit BELOW every hook — putting one above a useMemo
+  // changes the hook count when the phone turns and React tears the chapter into the error
+  // boundary. That crashed chapter 2 the first time the gate was wired.
+  if (needsRotate) return <RotateGate line="Milo&apos;s balance scale needs a wide screen! ⚖️" />
 
-  // Demo teaches all three signs: greater (>), less (<), then equal (=) — all object-driven.
+  // Demo teaches all three signs: greater (>), less (<), then equal (=) — all object-driven, and
+  // each in a DIFFERENT setting, so the first thing a child learns is that the place changes but
+  // the rule does not, which is also what the scored rounds then do.
   const DEMO: CmpRound[] = [
-    { bg: 0, item: world.items[0], a: 6, b: 3, answer: compareSign(6, 3) },
-    { bg: 1 % world.bgs.length, item: world.items[1] ?? world.items[0], a: 2, b: 8, answer: compareSign(2, 8) },
-    { bg: 2 % world.bgs.length, item: world.items[2] ?? world.items[0], a: 4, b: 4, answer: compareSign(4, 4) },
+    { w: SETTINGS[0], bg: 0, item: SETTINGS[0].items[0], a: 6, b: 3, answer: compareSign(6, 3) },
+    { w: SETTINGS[1], bg: 1, item: SETTINGS[1].items[1], a: 2, b: 8, answer: compareSign(2, 8) },
+    { w: SETTINGS[2], bg: 2, item: SETTINGS[2].items[2], a: 4, b: 4, answer: compareSign(4, 4) },
   ]
-  const guidedIdx = 2 % world.items.length
-  const GUIDED: CmpRound = { bg: guidedIdx % world.bgs.length, item: world.items[guidedIdx], a: 3, b: 7, answer: compareSign(3, 7) }
-  const bgIdx = phase === 'practice' ? bg : phase === 'guided' ? GUIDED.bg : DEMO[Math.min(demoIdx, DEMO.length - 1)].bg
+  const GUIDED: CmpRound = { w: SETTINGS[1], bg: 0, item: SETTINGS[1].items[0], a: 3, b: 7, answer: compareSign(3, 7) }
+  const shown = phase === 'practice' ? { w: scene, bg } : phase === 'guided' ? GUIDED : DEMO[Math.min(demoIdx, DEMO.length - 1)]
 
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 12, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
@@ -379,8 +421,8 @@ export default function SeesawPark({ world: forcedWorldId, onFinish, onExit }: {
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-      <style>{SP_CSS}</style>
-      <Background bg={bgIdx} world={world} />
+      <style>{SP_CSS + CRITTER_CSS}</style>
+      <Background bg={shown.w.bgs[shown.bg]} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
         <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
@@ -388,7 +430,7 @@ export default function SeesawPark({ world: forcedWorldId, onFinish, onExit }: {
       {phase === 'intro' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
           <div style={{ maxWidth: '76%', background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 15 : 19, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)' }}>
-            {world.intro}
+            {INTRO}
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('demo') }}
             style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>Let&apos;s compare! ▶</button>
@@ -396,21 +438,22 @@ export default function SeesawPark({ world: forcedWorldId, onFinish, onExit }: {
       )}
 
       {phase === 'demo' && (<>{Banner(`Watch Milo compare  (${demoIdx + 1}/${DEMO.length})`)}
-        <CompareExplain key={`demo${demoIdx}`} world={world} data={DEMO[demoIdx]}
+        <CompareExplain key={`demo${demoIdx}`} data={DEMO[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
       {phase === 'guided' && (<>{Banner('Now you! Pick the right sign')}
-        <ComparePlay key="guided" world={world} data={GUIDED} mode="guided" onComplete={() => setPhase('practice')} /></>)}
+        <ComparePlay key="guided" data={GUIDED} mode="guided" onComplete={() => setPhase('practice')} /></>)}
 
       {phase === 'practice' && (
         <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
-            onRound={(data) => { if (typeof data?.bg === 'number') setBg(data.bg) }}
+            onRound={(data) => { if (data?.w) { setScene(data.w); setBg(data.bg) } }}
             onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
         </div>
       )}
 
-      <MiloHost left={10} milo={world.milo} />
+      {/* Milo belongs to the round's setting — explorer at the playground, fishing at the pond. */}
+      <MiloHost left={10} milo={shown.w.milo} />
     </div>
   )
 }

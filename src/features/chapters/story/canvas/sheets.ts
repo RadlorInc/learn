@@ -80,4 +80,26 @@ export const SHEETS: Record<string, Sheet> = {
   // 12 cells span one 22-frame source cycle (~0.9s), so 14fps plays it at close to natural pace —
   // and since he only walks while hopping, slightly brisk reads as effort rather than a stroll.
   '/assets/characters/milo_side.png': { url: '/assets/characters/milo_walk.png', cellAspect: 0.586, frames: 12, fps: 10 },
+
+  // ── Farm · Pond · Space (generated 2026-07-27; closes the parade's long-parked "9 creatures") ──
+  // Image-to-video off each creature's existing `_side` still, so the still IS the style lock. Every
+  // cellAspect below is measured off the delivered strip, not guessed. ⚠️ THE fps VALUES ARE
+  // PROPOSALS TUNED BY EAR, NOT MEASUREMENTS — cadence is the one number the founder has twice
+  // called too fast, and for a grounded creature it also sets ground speed. Check on screen.
+  '/assets/objects/duck_side.png': { url: '/assets/objects/duck_walk.png', cellAspect: 0.758, frames: 12, fps: 12 },
+  '/assets/objects/duckling_side.png': { url: '/assets/objects/duckling_walk.png', cellAspect: 0.766, frames: 12, fps: 15 },
+  // A chick scurries — the briskest of the farm cast, in the same family as the ant's 19.
+  '/assets/objects/chick_side.png': { url: '/assets/objects/chick_walk.png', cellAspect: 0.770, frames: 12, fps: 18 },
+  '/assets/objects/lamb_side.png': { url: '/assets/objects/lamb_walk.png', cellAspect: 0.965, frames: 12, fps: 12 },
+  // A hop, not a walk: coiled for 9 of 12 frames and airborne for 3. That shape does NOT fit
+  // Critter's linear travel — see chapter-craft.md. Play it for a discrete jump, not a journey.
+  '/assets/objects/frog_side.png': { url: '/assets/objects/frog_walk.png', cellAspect: 0.637, frames: 12, fps: 14 },
+  '/assets/objects/bee_side.png': { url: '/assets/objects/bee_walk.png', cellAspect: 1.066, frames: 12, fps: 17 },
+  '/assets/objects/dragonfly_side.png': { url: '/assets/objects/dragonfly_walk.png', cellAspect: 1.074, frames: 12, fps: 18 },
+  '/assets/objects/alien_side.png': { url: '/assets/objects/alien_walk.png', cellAspect: 0.457, frames: 12, fps: 14 },
+  // Low gravity: a slow, buoyant stride. 8fps for the same reason the eagle sits at 7 — anything
+  // brisker stops reading as weightless.
+  '/assets/objects/astronaut_side.png': { url: '/assets/objects/astronaut_walk.png', cellAspect: 0.523, frames: 12, fps: 8 },
+  // Milo's HOP, for a chapter where he jumps between places rather than walking to one.
+  '/assets/characters/milo_hop_side.png': { url: '/assets/characters/milo_hop.png', cellAspect: 0.633, frames: 12, fps: 14 },
 }

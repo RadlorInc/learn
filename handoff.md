@@ -12,7 +12,124 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🛟 **2026-07-27 (LATEST) — THE SUPPORT + PER-USER ERROR LAYER, BUILT BECAUSE THE FOUNDER ASKED HOW A COMPANY RUNS AN APP AFTER LAUNCH. 🚀 SHIPPED — `main`@`3492abe`, prod serving sw v68, deploy landed in 30s, post-deploy smoke green.** `tsc` 0 · 142/142 vitest · `next build` 0 · driven live, both error classes captured end-to-end. Smoke: all 8 routes 200 · **prod `sw.js` confirmed carrying the new VERSION handler** (so the code shipped, not merely the version bump) · `/api/report-error` accepts a `learnerId` payload · all five security headers byte-intact.
+> 🦆 **2026-07-27 (LATEST) — THE A2 CHAPTERS STOPPED LOOKING PASTED ON: EVERYTHING NOW ARRIVES ON ITS OWN LEGS, STANDS ON PAINTED GROUND, AND CLUSTERS INSTEAD OF QUEUEING. ⚠️ STILL NOTHING COMMITTED — prod is `main`@`8ccf764` / sw v68; the story batch is 6 modified files + 11 untracked assets.** `tsc` 0 · 142/142 vitest · `next build` · 0 console errors · driven live at 1024×620 and 640×320 in both chapters.
+>
+> **The asks, in order:** *"in the chapters of A2 i want the things comes with animation not a random
+> apearing and proper movement which we have in the 3-5 age group"* → *"the things are not looking
+> naturally… the chicks should be on ground the ducks can be on ground. They should be little split
+> not in a queue"* → *"the ducks are looking floating, for ducks use a different background with
+> ground; remove the astronaut and use a different background with a different object"*.
+>
+> **Read them together and they are one complaint arriving in three passes, each one a layer deeper:
+> the arithmetic MOVES but the things doing it do not BELONG.** The previous session made the sum a
+> journey and stopped there; a journey between two wrong places is still wrong.
+>
+> ## ① NOTHING MATERIALISES ANY MORE — INCLUDING THE THINGS THAT WERE ALREADY THERE
+> The previous session gave the EVENT a journey and left the rest popping, which is the Orchard /
+> LilyPond fault PlayTime was built to delete in the 3–5 band, still live one layer in:
+> • **StoryTime's group A** — the ones Milo already has — `st_pop`ped in one at a time, scale 0→1.
+> • **MarketDay's creatures never moved AT ALL.** `ItemImg` was a bare `SheetCell` with `moving`
+>   defaulting to false; the only thing that travelled was the TRAY, lowered onto the counter with
+>   them riding inside it. **A creature that arrives as cargo has not arrived.**
+> Now: group A **steps in** over 1.8 body-heights at its own gait, the joiners still come the whole
+> way from off-frame right, and MarketDay's creatures **walk into the pen** while the pen itself only
+> fades — a container is scenery.
+> • ⚠️ **A standing group must NOT be given the movers' distance.** At ~0.9 × the width every one of
+>   them clamps to `TRAVEL_MAX` and the legs whirl at ~4× to cover it, for a group that is not the
+>   event. Short distance, same machinery, no clamp.
+>
+> ## ② TWO BUGS IN `Arrive` THAT THE TRACE FOUND, BOTH FIXED IN THE SHARED ENGINE
+> • A **transition was live during phase 0**, so anything switching travel on later (a group that
+>   walks in only when its turn comes) animated OUT to its start point and back. Phase 0 is a
+>   PLACEMENT, not a journey.
+> • **Phase was reset in an effect, which runs after paint** — a landed creature told to leave was
+>   painted one frame lurching toward the exit before the effect pulled it back. Measured: `922px`
+>   with the legs running, snap to slot, then the real walk. Now derived from the journey's identity
+>   during render. Trace after: `0 (transition:none) → 922 (3600ms, running)`, no lurch frame.
+>
+> ## ③ THE PLACEMENT WAS THE REAL FAULT, AND IT WAS IN BOTH CHAPTERS
+> The group was anchored by its **CENTRE at 40% of the height** — which on every one of these
+> backdrops is above the painted ground. That is why StoryTime drew a **wooden plank** across the
+> frame: the creatures needed a surface, so one was invented for them, over a reef, over the sea,
+> over the moon. **When you find yourself drawing a floor, the group is in the wrong place.**
+> Measured the horizons instead (mean row colour, largest jump):
+> `farm 50–62% · garden 45–60% · forest 88% · reef 36–62% · beach 44–76% · space 54–84%`.
+> Both chapters now carry a per-setting ground line and anchor by the **FEET** (`translateY(-100%)`),
+> growing upward into whatever room is free. The plank is deleted. The forest is left high on purpose
+> — birds, squirrels and eagles live in a canopy, so what was wrong there was the container.
+> • **To make room, the answer furniture shrank** (116px → 92px buttons, and a much smaller box on a
+>   short frame). A 116px answer square is bigger than any 6–8 child needs — the 3–5 band's markers
+>   top out at 54 — and every pixel of it was pushing the creatures off the grass.
+>
+> ## ④ A QUEUE IS NOT A GROUP, AND A CARD IS NOT A PEN
+> • Evenly spaced, one baseline, one size = a row of identical stickers. Alternate members now stand
+>   further back — higher and smaller, which is what depth is in a painted scene — with an organic
+>   sideways nudge, both as a share of the sprite's own height. Kept small: a scatter a child cannot
+>   count is a wrong answer the chapter caused.
+> • MarketDay's pens were **rounded rectangles with a blue stroke and a white fill** — a UI panel, and
+>   over a painted forest that is exactly what it looked like: a pane of glass with birds behind it.
+>   Now a stadium-shaped translucent warm-dark patch with light on its rim and a contact shadow under
+>   it. ⚠️ **First attempt dropped the fill to .20 and it vanished**, leaving only the rim — which is
+>   the empty-outline wireframe fault wearing a new costume. The fill has to be SEEN.
+>
+> ## ⑤ THE DUCKS: THE FIX WAS THE BACKDROP, NOT THE NUMBER
+> A walking cast on a flat plane of open sea cannot be rescued by a ground line — there is nothing
+> painted to stand on. **🏖️ Sandy Shore → 🌳 Green Park**: `garden_park` · `town_garden` ·
+> `farm_barnyard`, cast **duck · turtle · rabbit**, feet at 62%.
+> ⚠️ **`town_park` was tried and pulled, and this is the rule worth carrying:** it looks like grass in
+> a thumbnail, but its grass does not start until ~65% — BELOW the ground line — so the ducks stood on
+> the pale haze just above it and still read as hovering. **Sample the pixel where the feet actually
+> land**: `(207,242,217)` washed-out mist against `(196,223,135)` for a scene that really is grass
+> there. "Does the picture have grass in it" is not the test.
+> **`farm_barnyard` is deliberately shared with MarketDay's farm** — only three scenes in the library
+> have grass that high. Pens of chicks in a fenced yard and a row of ducks walking across it cannot be
+> confused; same call already made for the forest scenes SeesawPark and MarketDay share.
+>
+> ## ⑥ THE ASTRONAUT IS GONE — 🌙 MOON BASE → 🪷 LILY POND
+> Founder's call. The moon cast were the only creatures in the chapter that could not belong anywhere
+> a child has been. Replaced with **dragonfly · butterfly** on `pond` · `lake` · `pond_top`, and the
+> choice of a FLYING cast is the point: hovering over water is what they actually do, so nothing there
+> needs ground and nothing reads as floating by accident. They carry **no contact shadow** — a shadow
+> is a contact cue and a flier touches nothing. ⚠️ **This orphans the astronaut and alien cycles
+> again** (this chapter was the home the last session found for them); the PNGs stay on disk.
+> **Frog deliberately NOT used** despite being free: it is coiled 9 of 12 frames and would slide while
+> crouched — the "a hop is not a walk" rule, applied before it cost anything.
+>
+> ## ⑦ ONE REAL BREAK FOUND WHILE VERIFYING
+> **Compare could not fit 640×320.** Two stacked rows bottom-anchored on the ground line leave ~19% of
+> the height, so Milo's row was pushed up behind the banner. They go **side by side** on a short frame
+> — one row's height instead of two, the same call BigOrSmall makes for its two bunches.
+> Also: the demo narration reached "then two wander off" while the last ducks were still walking in,
+> and they snapped to their places before turning round. Hold lines are now derived from the journey
+> (not one line per member). Measured: land 22.2s → leave 24.2s, was a 3ms gap.
+>
+> ## ⑧ HOW IT WAS VERIFIED — the pane freezes CSS transitions, so pixels prove nothing
+> `MutationObserver` on `style` (fires regardless of throttling) reading the transform TARGET plus
+> `animationPlayState`. Every sprite: **paused at its start offset → running while covering ground →
+> paused on arrival**. StoryTime `-162px` step-in and `922px` off-frame; MarketDay `-73.6 / -40 /
+> -60.8` scaling with sprite size. Geometry at 1024×620: feet 53.6% → answer box 60.5% → buttons
+> 81.7%. At 640×320: feet 52.1% → equation 60.3%, no page scroll.
+>
+> ## ▶ OPEN
+> 1. **STILL NOTHING COMMITTED**, and the tree is now: `StoryTime.tsx` · `MarketDay.tsx` ·
+>    `critters.tsx` · `SeesawPark.tsx` · `canvas/sheets.ts` · `chapter-craft.md` · this file, plus
+>    untracked `docs/story-6-8-rethink.md` and **10 new PNGs**. Deploying needs `public/sw.js`
+>    v68 → v69. Leave `scripts/.voice-*.json` out.
+> 2. **Next in the order: A3 — HopAlong** (`milo_hop` + a discrete `hop(from, to)`). Its planned
+>    "Farmyard" world clashes with MarketDay's Farm and must be re-picked. Then **B** — one bundling
+>    engine serving placeValue + additionTo100 + subtractionTo100.
+> 3. **The `fps` cadences are STILL unverified by eye**, and there are more of them moving now that
+>    MarketDay's cast actually walks. One number each in `sheets.ts`; cheapest remaining win.
+> 4. **StoryTime's compare rows still label Milo and his friend with 🦊/🧒 emoji** — in the painted
+>    world, which the craft doc forbids. Unchanged this session, still open.
+> 5. **MarketDay's Woods scenes paint ground only at 88%**, so that setting reads as canopy rather
+>    than forest floor. Correct for birds and squirrels; a backdrop swap if it should be the floor.
+> 6. **Nobody has watched a child play any of it**, and every fault in this session was found by the
+>    founder looking at a screenshot — none of them would have failed a gate.
+>
+> _(the 🛟 block below is the same day's shipped support work — untouched by this.)_
+
+> 🛟 **2026-07-27 — THE SUPPORT + PER-USER ERROR LAYER, BUILT BECAUSE THE FOUNDER ASKED HOW A COMPANY RUNS AN APP AFTER LAUNCH. 🚀 SHIPPED IN FOUR COMMITS — `3492abe` (the code, sw v67→v68) · `a32c174` · `5ddf250` (triage + templates + the contact log) · `8ccf764` (the payments section), prod serving sw v68, deploy landed in 30s, post-deploy smoke green.** `tsc` 0 · 142/142 vitest · `next build` 0 · driven live, both error classes captured end-to-end. Smoke: all 8 routes 200 · **prod `sw.js` confirmed carrying the new VERSION handler** (so the code shipped, not merely the version bump) · `/api/report-error` accepts a `learnerId` payload · all five security headers byte-intact.
 >
 > ⚠️ **THE A2 STORY BATCH IS STILL UNCOMMITTED AND WAS DELIBERATELY LEFT THAT WAY.** This shipped as
 > its own branch → fast-forward → push, touching **9 files with zero overlap** with the story work
@@ -52,7 +169,29 @@
 > fired/next-run; **the run's OUTPUT is not returned by the API**, so the report's readability is the
 > one thing unverified — look once at `https://claude.ai/code/routines/trig_01GKnmbsiyHjvsC58jMTeiG6`.
 >
-> ## ④ SENTRY DELIBERATELY NOT ADDED
+> ## ④ [support.md](docs/support.md) IS THE OPERATING MANUAL, NOT A REFERENCE — 11 sections
+> Written so that **nothing has to be worked out at the moment an email lands**. The daily routine
+> (two things, ten minutes, one fixed time — checking the inbox repeatedly is the failure mode, not
+> missing an email) · the four-step flow · triage · four reply templates in English (the users are
+> American) · reading the block · [support-log.md](docs/support-log.md), created and empty.
+> • ⚠️ **THE TRIAGE RULE WORTH CARRYING: the best priority signal is NOT the email, it is the daily
+>   health check.** Green + one report means that one device (P2). Green + several at once means
+>   something systemic the check is missing (P1). Red means everyone — **roll back first, diagnose
+>   after**. Read the check BEFORE the email.
+> • **Acknowledge within 5 minutes, solve later.** People rarely resent that something broke; they
+>   resent that nobody answered. One line keeps the 2-day promise and buys the time to fix it.
+> • **Data deletion / access sits at P1 because it carries a legal deadline**, not because the sender
+>   is upset — those arrive looking like perfectly ordinary mail. One Gmail filter recommended for
+>   exactly that keyword set, and **explicitly no ticketing system** until the founder says they are
+>   losing track of the inbox.
+> • **§11 covers payments and is marked NOT BUILT YET throughout.** It exists only because two of its
+>   items are decisions needed BEFORE the code and one is expensive to retrofit: the design constraint
+>   that **payment state must always be RECONCILABLE** (ask Stripe "did they pay?" and repair the app
+>   side — never let the webhook be the only source of truth, because *paid-but-not-unlocked* is the
+>   angriest ticket there is), and the hard rule that **Claude may never touch money** — no refunds,
+>   charges, cancellations or transfers, ever. Diagnose and draft, yes; press the button, no.
+>
+> ## ⑤ SENTRY DELIBERATELY NOT ADDED
 > Vercel already captures both seams and is queryable over MCP. A vendor for search-and-retention at
 > ~0 users is cost with no consumer; the identity work above makes adopting it a config change later.
 >
@@ -206,13 +345,16 @@
 >    Three are still NOT done: teaching is a modal white card, there is no cumulative arc outside
 >    `SkillBeat`, and emoji still render in the painted world (StoryTime's compare rows label Milo and
 >    his friend 🦊/🧒).
-> 4. ⚠️ **The 6–8 world registry in this file is now stale for three chapters.** Story problems are
->    Coral Reef · Sandy Shore · Moon Base (was Picnic Meadow · Coral Reef · Fun Fair); multiplication
->    is The Farm · The Garden · The Woods (was Bakery · Flower Garden · Craft Table). **One known
->    backdrop overlap**: MarketDay's Woods and SeesawPark's forest share `forest_1`/`forest_2` — there
->    are only four forest images and two chapters wanted three each. Left deliberately: a balance
->    scale and a grid of nests cannot be mistaken for one another. **HopAlong's planned "Farmyard"
->    world now clashes with MarketDay's Farm** and should be re-picked when A3 lands.
+> 4. ⚠️ **The 6–8 world registry in this file is now stale for three chapters. THE CURRENT TRUTH,
+>    superseding both the registry near the bottom of this file and the line this item used to
+>    carry:** story problems are **🐠 Coral Reef · 🌳 Green Park · 🪷 Lily Pond**; multiplication is
+>    **The Farm · The Garden · The Woods**; comparison (SeesawPark) is playground · forest · pond.
+>    **Two deliberate backdrop overlaps**: MarketDay's Woods and SeesawPark's forest share
+>    `forest_1`/`forest_2` (only four forest images exist and two chapters wanted three each), and
+>    StoryTime's Green Park shares `farm_barnyard` with MarketDay's Farm (only three scenes in the
+>    library have grass above the ground line). Both left on purpose — a balance scale, a grid of
+>    nests and a row of walking ducks cannot be mistaken for one another. **HopAlong's planned
+>    "Farmyard" world clashes with MarketDay's Farm** and should be re-picked when A3 lands.
 > 5. **The `fps` cadences are still unverified by eye** — and there are now MORE of them on screen,
 >    since chick · duckling · lamb · bee · dragonfly · alien · astronaut all went live this session
 >    with the numbers that were tuned by ear. That is the cheapest remaining win: watch one run and
@@ -2474,7 +2616,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-27 (LATEST — see the top 🛟 block. **The support + per-user error layer, SHIPPED — `main`@`3492abe`, prod sw v68, smoke green.** It answers a founder question rather than a bug: *how does a company give support, and how do you manage an error for a SPECIFIC user*, asked by someone who does not read code. The diagnosis is the useful part: **this app is local-first, so the failures a parent actually writes in about leave no server-side trace at all** — a wedged offline queue, a stale service-worker shell, IndexedDB blocked in private browsing. The only time this repo ever diagnosed one (the Safari `upgrade-insecure-requests` boot failure) it was by hand-adding beacons to the service worker, which does not repeat on a stranger's iPad. So the user now carries the evidence to us on purpose: a "Need help?" panel attaches a device snapshot — sw version, kv mode, queue depths, recent errors — to a support email. Three things that were previously unobservable are now visible: **`kv.mode()`** (the IndexedDB fallback was module-private, i.e. the most likely cause of "her progress vanished" could not be seen), the **sw VERSION reply** (stale-shell detection), and **`learnerId` on every client error** (a log stops being an anonymous pile of stack traces). Plus capture of `window.error` and `unhandledrejection` — the classes the React ErrorBoundary never sees, and the class that Safari failure actually was. A **daily cloud health check** now curls prod and reads Vercel + Supabase, instructed to answer in ONE line when healthy because a daily wall of green trains you to stop reading it. **Sentry deliberately not added** — Vercel already captures both seams and is queryable; a vendor at ~0 users is cost with no consumer, and the identity work makes adopting it later a config change. ⚠️ **The A2 story batch is still uncommitted and was deliberately left that way** — this shipped as 9 files with zero overlap. ▶ Open: the support promise *"we reply within 2 working days"* is now ON SCREEN against an inbox nobody checks daily yet; **COPPA parental review/deletion still has no defined path**; and the daily check's own report has never been read by a human. _(prior footer follows.)_)_
+_Last updated: 2026-07-27 (LATEST — see the top 🦆 block. **The A2 chapters stopped looking pasted on. ⚠️ Still nothing committed — prod is `main`@`8ccf764` / sw v68.** Three founder asks that are one complaint arriving in three passes, each a layer deeper: the arithmetic MOVES but the things doing it do not BELONG. (1) **Nothing materialises any more, including the things already there** — the previous session gave the EVENT a journey and left the rest popping, and MarketDay's creatures never moved at all: the only thing that travelled was the TRAY, lowered onto the counter with them riding inside it. **A creature that arrives as cargo has not arrived.** (2) **The placement was the real fault** — the group was anchored by its CENTRE at 40% of the height, which on every one of these backdrops is above the painted ground, which is why StoryTime drew a *wooden plank* across the frame to give its creatures a surface. **When you find yourself drawing a floor, the group is in the wrong place.** Horizons measured, both chapters anchored by the FEET, plank deleted, answer furniture shrunk to give the band back. (3) **The ducks needed a different backdrop, not a different number** — a walking cast on a flat plane of open sea cannot be rescued by a ground line. ⚠️ And `town_park` was tried and pulled: it looks like grass in a thumbnail but its grass starts BELOW the ground line, so **sample the pixel where the feet actually land** — `(207,242,217)` haze against `(196,223,135)` real grass. The moon base is gone at the founder's request → 🪷 Lily Pond with dragonfly · butterfly, a deliberately FLYING cast so hovering is correct and no contact shadow is drawn; that re-orphans the astronaut and alien cycles. Two bugs fixed in the shared `Arrive`: a transition live during a placement, and a phase reset in an effect that painted one frame lurching toward the exit. One real break found: compare could not fit 640×320 and now lays side by side. `tsc` 0 · 142/142 vitest · `next build` · 0 console errors, verified with a `MutationObserver` because the pane freezes CSS transitions. ▶ Open: still nothing committed (deploy needs sw v68 → v69); next is A3 HopAlong, whose "Farmyard" world clashes with MarketDay's Farm; the `fps` cadences are still unverified by eye; StoryTime's compare rows still put 🦊/🧒 emoji in the painted world. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-27 (see the 🛟 block. **The support + per-user error layer, SHIPPED in four commits — `3492abe` (code, sw v68) · `a32c174` · `5ddf250` (triage, templates, contact log) · `8ccf764` (payments section); prod sw v68, smoke green.** It answers a founder question rather than a bug: *how does a company give support, and how do you manage an error for a SPECIFIC user*, asked by someone who does not read code. The diagnosis is the useful part: **this app is local-first, so the failures a parent actually writes in about leave no server-side trace at all** — a wedged offline queue, a stale service-worker shell, IndexedDB blocked in private browsing. The only time this repo ever diagnosed one (the Safari `upgrade-insecure-requests` boot failure) it was by hand-adding beacons to the service worker, which does not repeat on a stranger's iPad. So the user now carries the evidence to us on purpose: a "Need help?" panel attaches a device snapshot — sw version, kv mode, queue depths, recent errors — to a support email. Three things that were previously unobservable are now visible: **`kv.mode()`** (the IndexedDB fallback was module-private, i.e. the most likely cause of "her progress vanished" could not be seen), the **sw VERSION reply** (stale-shell detection), and **`learnerId` on every client error** (a log stops being an anonymous pile of stack traces). Plus capture of `window.error` and `unhandledrejection` — the classes the React ErrorBoundary never sees, and the class that Safari failure actually was. A **daily cloud health check** now curls prod and reads Vercel + Supabase, instructed to answer in ONE line when healthy because a daily wall of green trains you to stop reading it. **Sentry deliberately not added** — Vercel already captures both seams and is queryable; a vendor at ~0 users is cost with no consumer, and the identity work makes adopting it later a config change. ⚠️ **The A2 story batch is still uncommitted and was deliberately left that way** — this shipped as 9 files with zero overlap. ▶ Open: the support promise *"we reply within 2 working days"* is now ON SCREEN against an inbox nobody checks daily yet; **COPPA parental review/deletion still has no defined path**; and the daily check's own report has never been read by a human. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-27 (**A2 done, then the picker came out and the static objects went: StoryTime and MarketDay are now one continuous run of living creatures.** Three asks that turned out to be one idea in stages — make the arithmetic MOVE, stop making the child choose a world before they know what they are choosing, and then make the thing that moves something that *can* move. **A fruit cannot arrive**; it can only be slid across the picture like a cut-out being dragged, which is exactly what the first ask had just asked it to do. So joiners now travel in from off-frame and leavers travel out (movers own the RIGHT-hand end of the row, the only direction that never walks something through the group being counted); the world picker is gone from all three rebuilt chapters, with the SETTING carried on the round so it changes every question; and both casts are entirely drawn cycles — Coral Reef · Sandy Shore · **Moon Base** for story problems (finally spending the orphan astronaut and alien sheets), PENS of chicks · PATCHES of bees · NESTS of birds for multiplication. ⚠️ **Three faults it turned up were already in production**, all the same class — a percentage of the height guessing at a gap it should have measured: two answer boxes sitting 29px and 33px inside their own button rows, and both chapters drawing a second prompt pill on top of SkillBeat's. ⚠️ **And `SheetSprite`'s walk-in had been skating since the day it was written** — one flag gated both the transform target and the leg cycle, so a creature walked on the spot through its delay then slid the whole distance with its legs parked; travel now lives in a shared `Arrive` that hands its child a `moving` flag. Two rules banked in [chapter-craft.md](docs/chapter-craft.md): **size a creature by AREA, not height** (aspects run 0.457 to 1.746; ten aliens came out as 18px slivers) and **a travel distance inside a scaled container must be relative, not px**. ⚠️ Most of the verification time went to an instrument trap: **the browser pane's tab is hidden except during a screenshot, and a hidden tab freezes CSS transitions and rAF outright** — a `MutationObserver` plus a transform-TARGET read is what actually proves the invariant. `tsc` 0 · 142/142 vitest · `next build` · 0 console errors. ▶ Still nothing committed; next is A3 HopAlong, whose planned "Farmyard" world now clashes with MarketDay's Farm. _(prior footer follows.)_)_
 
@@ -3031,7 +3175,7 @@ Everything below is on top of the (still-uncommitted) 6–8 + early-9–11 work 
 3. **Demo/reteach audio+visual via ONE `speakSteps`** — voice-synced when audio plays, timer-paced when blocked. NEVER rapid `speak()` calls (they wedge Chrome silent) and NEVER a fixed-timer visual decoupled from voice (Safari drifts). See `feedback-story-demo-audio-pattern`.
 4. **NO storytelling (world/setting) may repeat across chapters in the SAME age group.** Each world is used exactly ONCE across all 6–8 chapters. Strictness = **exact repeats only** (a bug garden AND a flower garden are fine; two "Space Station"s are not). Space Station lives ONLY in numbersTo100. Pick from the registry below for every new chapter.
 
-**6–8 STORYTELLING REGISTRY — COMPLETE, all 36 worlds used ONCE (no-repeat rule is PER age group):** Number Street·Locker Room·Space Station *(numbersTo100)* · Fruit Orchard·Toy Workshop·Candy Factory *(placeValue)* · Lily Pond·Bug Garden·Farmyard *(skipCounting)* · Picnic Meadow·Coral Reef·Fun Fair *(storyProblems)* · Bakery·Flower Garden·Craft Table *(multiplication)* · Pizzeria·Party·Chocolate Shop *(fractions)* · Grocery Market·Train Station·Beach Kiosk *(money)* · Morning·Afternoon·Nighttime *(time)* · Playground·Forest·Pond *(compareNumbers)* · Apple Barn·Egg Ranch·Cookie Jar *(additionTo100)* · Star Lab·Flower Patch·Fish Dock *(subtractionTo100)* · Art Studio·Build Site·Playroom *(shapes2d3d)*. (**9–11 is a NEW age group → these names are all reusable there.**)
+**6–8 STORYTELLING REGISTRY (⚠️ HISTORICAL — the four rebuilt chapters have moved on; see open item 4 of the 🚚 block for the current worlds) — all 36 worlds used ONCE (no-repeat rule is PER age group):** Number Street·Locker Room·Space Station *(numbersTo100)* · Fruit Orchard·Toy Workshop·Candy Factory *(placeValue)* · Lily Pond·Bug Garden·Farmyard *(skipCounting)* · Picnic Meadow·Coral Reef·Fun Fair *(storyProblems)* · Bakery·Flower Garden·Craft Table *(multiplication)* · Pizzeria·Party·Chocolate Shop *(fractions)* · Grocery Market·Train Station·Beach Kiosk *(money)* · Morning·Afternoon·Nighttime *(time)* · Playground·Forest·Pond *(compareNumbers)* · Apple Barn·Egg Ranch·Cookie Jar *(additionTo100)* · Star Lab·Flower Patch·Fish Dock *(subtractionTo100)* · Art Studio·Build Site·Playroom *(shapes2d3d)*. (**9–11 is a NEW age group → these names are all reusable there.**)
 
 **VOICE / audio:** `_pickVoice` in `src/lib/useMiloSpeaker.ts` now **prefers LOCAL voices** (Chrome's "Google …" network voices fail silently). **Safari = voice works perfectly. Chrome = still NO voice** even after the local-voice fix — user DEFERRED this: the app will move to **ElevenLabs** audio, so revisit then.
 

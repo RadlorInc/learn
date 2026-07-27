@@ -215,6 +215,29 @@ sliding and moonwalking bug this project has shipped is one of these:
 | creature walked, then slid frozen for 1.9s | duration inferred from a `moving` flag that cleared earlier | state duration **per phase** as an explicit prop |
 | shadow arrived before the feet | shadow was a SIBLING with its own `transition` | make it a **child** — two things that must move as one should be one element |
 | legs ran forwards while the body went backwards | layout let a creature sit right of its destination | layout must **guarantee** travel direction |
+| a group appeared instead of arriving | only the *movers* were given a journey; the standing group scale-popped and the container was what moved | **everything on the stage travels** — see below |
+
+**NOTHING MATERIALISES, INCLUDING THE THINGS THAT ARE ALREADY THERE.** It is not enough to give the
+*event* a journey. StoryTime's joiners travelled in from off-frame while the group they were joining
+still scale-popped into existence one at a time, and MarketDay's creatures never moved at all — the
+*tray* was lowered onto the counter with them riding inside it. Both read as things appearing,
+because they are, and a creature that arrives as cargo has not arrived. Two rules out of that:
+- **A container is scenery.** A pen, a tray, a frame may fade up; it must not be the thing that
+  carries the creatures in. Give the container the fade and the creatures the walk.
+- **A standing group STEPS in — it does not come from off-frame.** Handing it the movers' distance
+  is wrong the other way: at ~0.9 × the width every one of them clamps to `TRAVEL_MAX` and the legs
+  whirl at ~4× to cover it, for a group that is not the event. The same journey machinery over
+  1.6–1.8 body-heights gives a real step at the creature's own gait, with no clamp — and it is short
+  enough that the opening does not outlast the sum it is setting up.
+
+⚠️ **AND A JOURNEY'S PHASE MUST BE RESET DURING RENDER, NOT IN AN EFFECT.** Effects run after paint,
+so when a landed creature is told to leave, its phase still belongs to the previous journey for one
+render — "done" plus a fresh `leave` reads as *already gone*, and the element is painted one frame
+lurching toward the exit before the effect pulls it back. Measured on the take-away: a `922px`
+target with the legs running, then a snap back to the slot, then the real walk. Derive the phase
+from the journey's identity during render instead (React's own escape hatch). Same shape as the
+"waiting at the start position needs no transition" rule: **a placement is not a journey**, and
+anything that lets the two be confused produces a slide in the wrong direction.
 
 - **One cycle carries one stride.** A sheet playing `fps/frames` cycles per second, each carrying
   `STRIDE` body-heights, gives a real ground speed; the duration falls out of it. A creature
@@ -244,6 +267,14 @@ sliding and moonwalking bug this project has shipped is one of these:
   of that speed to walking speed** rather than slowing the travel down.
 - Sprites are **drawn cycles from video**, never cut-out puppet rigs. One rigid piece per limb
   cannot change SHAPE, and shape change is most of what reads as animation.
+- ⚠️ **A HOP IS NOT A WALK, AND `Critter` CANNOT CARRY ONE.** Everything above assumes a *walk*: the
+  feet cycle continuously and the body moves at constant speed, so linear travel across the cycle is
+  correct. A hop is **ballistic** — measured on the generated frog sheet, the creature is coiled for
+  9 of 12 frames and airborne for 3. Give that to `Critter` and it slides along the ground while
+  crouched, which is the skating fault wearing a new costume. A hopping creature needs a **discrete
+  `hop(from, to)`**: one cycle played against a matched arc, landing, stopping. Do not reach for
+  `journeyOf` for it. (This is why the 6–8 HopAlong rebuild is not "`critters.tsx` unchanged" —
+  see [story-6-8-rethink.md](story-6-8-rethink.md).)
 
 ### Layout is a set of invariants, not a set of nice numbers
 
@@ -269,6 +300,17 @@ check them with a script:
   wrong place until then and jump a whole item when it arrives. In the measurement chapter the thing
   that jumped was *the thing being measured*, which is the one element the child is reading. Give
   the container the full width or height it will end at; empty and unstyled, it gives nothing away.
+- **WHEN TWO THINGS MUST NOT OVERLAP, MEASURE ONE OFF THE OTHER — never pick a percentage of the
+  height.** `top: 73%` for an answer readout and `bottom: 3.5%` for the answer buttons are two
+  independent guesses about the same gap, and at 1024×620 they put the readout **29px inside the
+  button row, sitting on the middle answer** (StoryTime; MarketDay's equation box was 33px in). Both
+  had shipped. The fix is to derive the readout's offset from the same numbers the buttons are laid
+  out with. Same family as the ScribblePad rule *(when two elements must not overlap, make one take
+  the other's space in layout — do not compute a matching reserve)*.
+- **A TRAVEL DISTANCE INSIDE A SCALED CONTAINER MUST BE RELATIVE, NOT PX.** `FitBox` scales its
+  child by up to 2.6×, so a 54px "lift the tray and set it down" became a ~140px launch that started
+  a tray **off the top of the screen** at 640×320. `translateY(-38%)` is a share of the thing's own
+  height and travels with whatever size it is currently drawn at.
 - **A decoration must not add layout height to the thing it decorates.** A contact shadow left in
   flow made the measuring run bottom-align against the shadow rather than the ground, so the two
   ends of the measure stood 28px apart — a measure whose ends do not share a ground line measures
@@ -340,6 +382,13 @@ chapter a visible cumulative arc outside `SkillBeat` — a collect tray, a journ
 tree. *(Nest Tree shipped without one and feels static across a run; that is the open bug to copy
 the pattern into.)*
 
+**TWO PILLS SAYING THE SAME THING IS A DUPLICATE, NOT A FALLBACK.** `SkillBeat` draws a prompt pill
+from `beat.prompt`, so a chapter whose own play surface also states the question ends up with two —
+and at 640×320 they land on top of each other and neither can be read. Give `beat.prompt` an empty
+string (it then renders nothing) and let the richer one own the pill, carrying SkillBeat's
+tap-to-replay across so nothing is lost. StoryTime and MarketDay both shipped with the pair;
+MissionBrief had already made this call and the reason was never written down here.
+
 ---
 
 ## 2. Images and art
@@ -396,9 +445,52 @@ second thing to look at. It appears with the demo, when it starts to matter.
   size from the collision, and invisible at the size it was designed on. Once the feet are pinned by
   a ground line, HEIGHT is the only lever left, so cap it against the band the prompt really occupies.
   (Swept afterwards across 8 sizes × both builds: fence clearance 32–111px, prompt clearance 13–208px.)
+- **ANCHOR A GROUP BY ITS FEET, NEVER BY ITS CENTRE.** `top: 40%; translateY(-50%)` reads as a
+  perfectly reasonable way to place a scene and it is how both A2 chapters shipped — with the result
+  that pens of chicks hung in the sky above the barn and a row of ducks stood over open sea. Anchor
+  the BOTTOM to a ground line (`top: <ground>%; translateY(-100%)`) and let the group grow upward
+  into whatever room is actually free. A group centred at a share of the height is floating; it just
+  happens to look deliberate on the one screen it was tuned on.
+- **A prop invented to stand something on is the tell.** StoryTime drew a wooden plank across the
+  middle of the frame purely so its creatures had a surface — over a reef, over the sea, over the
+  moon. When you find yourself drawing a floor, the group is in the wrong place: the painted scene
+  already has one.
+- **MEASURE THE HORIZON, DO NOT EYE IT.** Mean row colour down the image, largest jump in the middle
+  band, is enough and takes a minute:
+  farm 50–62% · garden 45–60% · forest **88%** · reef 36–62% · beach 44–76% · space 54–84%.
+  Note `object-fit: cover` — at 1024×620 these 16:9 backdrops crop at the SIDES, so image-% is
+  screen-%; a 3:2 one crops top and bottom and needs converting first.
+- ⚠️ **THE TEST IS THE PIXEL UNDER THE FEET, NOT "does the picture have grass in it".** A scene whose
+  ground starts BELOW the ground line is not ground — the creatures stand on the pale haze just under
+  its horizon and read as hovering exactly as if there were nothing there. `town_park` failed this
+  and looked fine in a thumbnail: sampled at the ground line it is `(207,242,217)`, washed-out mist,
+  against `(196,223,135)` for a scene that really is grass there. Sample the colour at the ground
+  line before choosing a backdrop.
+- **A WALKING cast cannot be rescued by a ground line — it needs a scene with ground.** StoryTime's
+  ducks stood on a flat plane of open sea; no placement fixes that, because there is nothing painted
+  to stand on. The fix was the backdrop, not the number. Conversely a FLYING cast wants water or
+  sky under it and no contact shadow at all — a shadow is a contact cue, and a dragonfly touches
+  nothing. Pick the scene from what the cast DOES.
+- **When the answer furniture will not let the creatures reach the ground, shrink the FURNITURE.**
+  On a 320px-tall frame a 19vh answer box plus 116px buttons owned half the screen, so the ground
+  line had to be clamped up into the sky to clear them. The picture is the chapter; a 116px answer
+  square is not (the 3–5 band's markers top out at 54).
 - **A grounded scene needs a backdrop whose painted ground is most of the frame.** Check the horizon
   line first. The forest scenes paint ground only in the bottom ~25%, so anything standing at 62%
-  is in the treetops — that is literally the "rabbits look like they are flying" bug.
+  is in the treetops — that is literally the "rabbits look like they are flying" bug. The exception
+  is a cast that BELONGS up there: birds, squirrels and eagles in a canopy are correctly placed, and
+  what reads as wrong is then the container, not the height.
+- **A GROUP IS A HUDDLE, NOT A QUEUE.** Evenly spaced, one baseline, one size, and a set of animals
+  reads as a row of identical stickers. Alternate members stand further back — higher and smaller,
+  which is what depth is in a painted scene — with an organic sideways nudge, both as a share of the
+  sprite's own height so the cluster holds its shape at every size. Keep it small where the group is
+  the thing being counted: a scatter a child cannot count is a wrong answer the chapter caused.
+- **A GROUPING DEVICE MUST BE PART OF THE WORLD.** A rounded rectangle with a stroke and a pale fill
+  is a UI card, and laid over a painted forest that is exactly what it looks like — a pane of glass
+  with birds behind it. The same job is done by a translucent warm-dark patch with light on its rim
+  and a contact shadow under it: still unmistakably one group, but a pen rather than a panel. ⚠️ And
+  the fill has to be SEEN — dropped too low it leaves only the rim, which is the empty-outline
+  wireframe fault in a new costume.
   `farm_barnyard.png` (grass from 52%), `garden.png` (55%) and `garden_meadow.png` are the safe ones.
 - **Fliers are exempt** — being off the ground is correct for a butterfly, which is why a sky band
   that would be wrong for a rabbit is right for them. Check a creature's locomotion in
@@ -432,11 +524,41 @@ python3 scripts/creature-frames.py <clip>.mp4 <name> --frames 12 --start 0.5 [--
 register in canvas/sheets.ts  { url, frames, fps, cellAspect }
 ```
 
+**When a side-facing still already exists, this is IMAGE-TO-VIDEO and the `generate_image` step is
+skipped entirely.** Composite the transparent cutout onto a flat chroma field (Kling needs an opaque
+start frame), pass it as `start_image`, and the still itself locks the style — cheaper and far more
+reliable than generating a fresh still. `scratchpad/chroma.py` does the compositing.
+
+**DERIVE the chroma field, don't remember it.** Measure the distance from green and from magenta to
+the subject's *nearest actual pixel* and take whichever is further. Run blind on the existing cast
+this independently reproduced every case the sessions below learned by burning credits — frog
+(green clearance 156 vs magenta 206), alien (173), and Milo, whose green backpack gives green a
+clearance of 172 against magenta's 209. It also flags the marginal ones: the dragonfly is 169 green
+/ 153 magenta, i.e. neither field is comfortable and it is the one to expect a retry on.
+
 Gotchas that have each cost real credits:
 - **Key on MAGENTA whenever the subject contains green** — a green key eats a green backpack or a
-  turtle's own flippers.
+  turtle's own flippers. (Now derived automatically; see above.)
 - **Kling fades the background in** rather than starting flat; always use the settled tail
   (`--start 0.5`), or generate 10s so the settled part holds real motion.
+- ⚠️ **THE SUBJECT SETTLES TOO, AND THAT IS THE BIGGER EFFECT.** On an image-to-video run the
+  magenta field was solid from frame 0 — but the model spent the **first 20 of 121 frames
+  re-rendering the subject**, shrinking it from 610px to 360px wide and drifting it 89px right,
+  before locking in. From frame 20 on it was stable to 6%. So `--start` is not only about the
+  background; discard the front regardless. Measure per-frame bbox width and centre to find where it
+  locks, rather than guessing.
+- **Say "at a CONSTANT size, must not drift, grow or shrink."** The prompts that settle fastest all
+  carry that clause; the one that omitted it produced the 20-frame settle above.
+- **The reported output geometry is not the delivered geometry.** A job whose params said
+  `1280×720` delivered a **960×960 square** file. Check the actual frames before concluding a square
+  subject got cropped.
+- **The preset matcher intercepts on keywords and it is a pre-submission notice, not a charge.**
+  "wings **beating**" matched a music preset; other prompts matched a lighting one. Pass the
+  suggested id back as `declined_preset_id` to generate literally — but it suppresses only **that
+  one id**, so a retry can match a different preset and need a second decline. Three interceptions
+  across a 10-video batch cost nothing: the balance came out at exactly 10 × 7.5.
+- **Verify the spend against the balance after a batch**, which is how you catch the
+  "server isn't responding but it submitted anyway" duplicate.
 - **The safety filter false-positives.** Rephrasing in the same register as a known-good prompt
   clears it; the first Milo prompt returned `status: "nsfw"` for nothing.
 - **Never `--pingpong` a walk** — reversed legs moonwalk. Ping-pong is only for motion that
@@ -565,6 +687,14 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   imperative in there — a canvas, a scroll position, a media element — is destroyed with it. In the
   colouring chapter one wrong answer wiped every colour the child had put down. Use
   `el.animate(...)`, which retriggers without touching the DOM.
+- ⚠️ **AND THE MIRROR IMAGE OF THAT: A PER-ROUND ANIMATION IN A REUSED COMPONENT NEEDS AN EXPLICIT
+  RESET, OR IT PLAYS ONCE AND NEVER AGAIN.** React reconciles a sprite across rounds — same
+  component, same position, same key — so the element is REUSED and any "have I arrived yet" state
+  survives into the next round. SeesawPark's walk-on therefore played on round 1 and was dead for
+  rounds 2–10. **This is invisible to a single check**: you look once, the animation works, you move
+  on. Take a `resetKey` that changes per round and drive the state off it in an effect. Caught only
+  by arming a `MutationObserver` and finding it logged **zero** mounts on a new round — if you are
+  verifying an animation, verify it on the SECOND round, never the first.
 - **A re-teach runs AFTER the round was submitted**, and a round is submitted when the child finally
   gets it right — so anything the re-teach applies has ALREADY been applied. Bead Shop threaded a
   second copy of the same bead and broke its own repeating pattern; caught by reading the strand back

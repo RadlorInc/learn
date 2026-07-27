@@ -15,7 +15,7 @@
  * Moved out of FollowTheLeader.tsx verbatim — see the git history there for the bug each comment
  * is describing.
  */
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { SHEETS } from './canvas/sheets'
 
 export const STRIDE = 0.85                      // how far one cycle carries a body, in body heights
@@ -283,6 +283,13 @@ export function groundSpeed(src: string, h: number): number {
   return Math.max(60, cyclesPerSec * STRIDE * h)      // px per second
 }
 /**
+ * How fast a thing with NO gait of its own travels, in px/sec — an apple carried on, a balloon
+ * drifting in. A creature's speed is derived from its cycle so the feet cannot skate; an object has
+ * no feet, so the number is simply stated here rather than pretended to be derived from something.
+ */
+export const CARRY_SPEED = 620
+export const hasSheet = (src: string) => !!SHEETS[src]
+/**
  * A journey: how long it takes, AND how much the walk cycle has to be scaled to match it.
  *
  * THE SECOND HALF IS NOT OPTIONAL, and leaving it out is how every chapter ended up skating. The
@@ -307,6 +314,72 @@ export function journeyOf(a: Spot, b: Spot, vw: number, vh: number, h: number, s
 // There is deliberately NO duration-only helper. `travelMs` used to be one, and every caller that
 // reached for it got a clamped duration with no way to know the clamp had happened — which is the
 // entire bug above. Returning the pair is what makes the correct thing the only thing.
+
+/**
+ * The same journey, for something laid out IN FLOW rather than at screen percentages: it travels a
+ * stated number of px instead of between two spots. Exported so a chapter can time its own
+ * choreography (when to open the question) off the SAME numbers the sprite is animated with, rather
+ * than guessing a duration that then disagrees with what is on screen.
+ */
+export function inFlowJourney(src: string, h: number, distPx: number): Journey {
+  const speed = SHEETS[src] ? groundSpeed(src, h) : CARRY_SPEED
+  const natural = Math.abs(distPx) / speed * 1000
+  const ms = Math.round(Math.min(TRAVEL_MAX, Math.max(240, natural)))
+  return { ms, cycleScale: Math.max(0.4, natural / ms) }
+}
+
+/**
+ * Travel for an IN-FLOW element: it starts off (or ends up) `dist` px from its slot and moves there
+ * at a constant speed. `transform` never touches layout, so the slot is reserved from the moment the
+ * thing mounts — the row does not reflow around it as it arrives, and a group already being counted
+ * cannot shuffle sideways underneath the child.
+ *
+ * The child is a FUNCTION of whether the thing is currently moving, because a drawn cycle must run
+ * during the travel and stop dead at both ends. Handing the flag down is what stops a sprite walking
+ * on the spot through its stagger delay, or sliding the last leg with its legs already parked —
+ * which is the same "cycle and travel given different numbers" fault, one layer in.
+ */
+export function Arrive({ dist, ms, delayMs = 0, leave = false, resetKey, children }: {
+  dist: number; ms: number; delayMs?: number
+  /** Travel OUT to `dist` instead of in from it. A departure is a journey too. */
+  leave?: boolean
+  /** Changes per round where the element is REUSED across rounds — without it the travel plays
+   *  once and is silently dead every round after (see chapter-craft.md). */
+  resetKey?: string | number
+  children: (moving: boolean) => React.ReactNode
+}) {
+  const [phase, setPhase] = useState<0 | 1 | 2>(ms <= 0 ? 2 : 0)   // waiting · travelling · done
+  /**
+   * The journey's identity. When it changes — a group whose travel is switched on when its turn
+   * comes, or a creature that has landed and is now being sent back out — `phase` belongs to the
+   * PREVIOUS journey for one render, and effects run after paint. At phase 2 a freshly-set `leave`
+   * reads as "already gone", so the element is painted one frame lurching toward the exit before
+   * the effect resets it. Resetting during render (React's own derive-state-from-props escape
+   * hatch) means there is no such frame.
+   */
+  const sig = `${resetKey}|${leave}|${dist}|${ms}|${delayMs}`
+  const [seen, setSeen] = useState(sig)
+  if (seen !== sig) { setSeen(sig); setPhase(ms <= 0 ? 2 : 0) }
+  useEffect(() => {
+    if (ms <= 0) { setPhase(2); return }
+    setPhase(0)
+    // One frame minimum, so the start state is painted before the transition is asked for.
+    const go = window.setTimeout(() => setPhase(1), Math.max(delayMs, 16))
+    const land = window.setTimeout(() => setPhase(2), delayMs + ms)
+    return () => { window.clearTimeout(go); window.clearTimeout(land) }
+  }, [resetKey, leave, ms, delayMs])
+  const away = leave ? phase >= 1 : phase === 0
+  return (
+    <span style={{ display: 'block', transform: away ? `translateX(${dist}px)` : 'translateX(0)',
+      // NO transition while waiting at the start position — phase 0 is a PLACEMENT, not a journey.
+      // Without this, a caller that switches travel on later (a group that walks in only when its
+      // turn comes, so `ms` goes 0 → n) animates the element OUT to its start point and back, which
+      // is a slide in the wrong direction followed by the real one.
+      transition: phase === 0 ? 'none' : `transform ${ms}ms linear` }}>
+      {children(phase === 1)}
+    </span>
+  )
+}
 
 // ─── A creature: sprite + its drawn cycle ────────────────────────────────────────────
 /**
@@ -378,6 +451,108 @@ export function Critter({ src, facesLeft, at, size, move, z, durMs, cycleScale =
       </div>
       {children}
     </div>
+  )
+}
+
+/**
+ * An IN-FLOW living sprite, for the chapters that lay their creatures out in a grid or a row rather
+ * than at absolute screen positions (a balance pan, a tray of treats, a group of ten).
+ *
+ * `Critter` cannot serve those: it is `position: fixed` and drives itself off screen percentages.
+ * This is the same sheet mechanism sized to whatever cell it is dropped into.
+ *
+ * ⚠️ IT ARRIVES, THEN IT STOPS. A creature standing in a balance pan with its legs pumping is
+ * skating on the spot — the rule the parade learned and every chapter since has had to be re-told.
+ * So the cycle runs ONLY during the walk-in and is `paused` the moment it lands, after which the
+ * creature is kept alive by a breath rather than by a lie. The walk-in DURATION is derived from the
+ * sprite's own gait through `groundSpeed`, so one cycle still carries one stride and the feet never
+ * outrun the body.
+ *
+ * A sprite with no sheet still travels — an apple carried on, a balloon drifting over — it simply
+ * has no legs to run while it does. Travel and cycle are separate concerns: `walkIn` decides whether
+ * the thing moves, the sheet decides whether anything about it is alive while it moves.
+ */
+export function SheetSprite({ src, h, facesLeft, delayMs = 0, walkIn = true, breathe = true, fromX, leave = false, resetKey }: {
+  src: string; h: number; facesLeft?: boolean
+  /** Stagger, so a group files in instead of marching in lockstep. */
+  delayMs?: number
+  walkIn?: boolean; breathe?: boolean
+  /**
+   * Where the journey starts, in px from the slot — signed, so a positive value brings it in from
+   * the RIGHT. Defaults to 1.6 body-heights to the left: a step onto a pan or a tray. Pass a real
+   * off-frame distance when the thing is meant to come in from outside the picture.
+   */
+  fromX?: number
+  /** Travel OUT to `fromX` instead of in from it, and stay gone. */
+  leave?: boolean
+  /**
+   * ⚠️ REQUIRED WHEREVER THE ELEMENT SURVIVES A ROUND, and leaving it out is a silent failure.
+   * React reconciles these sprites across rounds — same component, same position, same key — so the
+   * element is REUSED and its arrival state survives from the last round. Without a resetKey the
+   * walk-in plays on the very first round and never again, which looks perfectly fine the one time
+   * anybody checks it. Pass something that changes per round (the question itself will do).
+   */
+  resetKey?: string | number
+}) {
+  const dist = fromX ?? -h * 1.6
+  // The cycle and the travel are given the SAME number, and the clamp reports its own correction —
+  // exactly as a screen-percentage journey does. Without the second half a long arrival covers
+  // ground faster than the legs claim, which is the skating fault this engine exists to prevent.
+  const { ms, cycleScale } = inFlowJourney(src, h, dist)
+  return (
+    <Arrive dist={walkIn ? dist : 0} ms={walkIn ? ms : 0} delayMs={delayMs} leave={leave} resetKey={resetKey}>
+      {moving => <SheetCell src={src} h={h} facesLeft={facesLeft} moving={moving}
+        breathe={breathe && !leave} delayMs={delayMs} cycleScale={cycleScale} />}
+    </Arrive>
+  )
+}
+
+/**
+ * Just the drawn creature, at a given size — no travel of its own. Split out of `SheetSprite`
+ * because a chapter that puts something UNDER the sprite (a contact shadow, a name tag) has to
+ * travel the pair as ONE element: a shadow positioned alongside its subject is one duration change
+ * away from sliding out ahead of the feet, which is a bug this repo has already shipped once. Those
+ * callers wrap `Arrive` around the whole group themselves and drop this inside it.
+ */
+export function SheetCell({ src, h, facesLeft, moving = false, breathe = true, delayMs = 0, cycleScale = 1 }: {
+  src: string; h: number; facesLeft?: boolean
+  /** Is the body covering ground right now? The legs run only then. */
+  moving?: boolean
+  breathe?: boolean; delayMs?: number; cycleScale?: number
+}) {
+  const [failed, setFailed] = useState(false)
+  const sheet = failed ? undefined : SHEETS[src]
+  const w = Math.round(h * (sheet?.cellAspect ?? 1))
+  return (
+    // One transform per wrapper: the breath and the facing flip are separate elements. Stack two on
+    // one and the later silently wins — the bug that cost this codebase a day across three chapters.
+    <span style={{ display: 'block', width: w, height: h,
+      // It breathes only once it has stopped. A creature that is walking does not also bob.
+      animation: !moving && breathe ? `ci_breathe 3.1s ease-in-out ${delayMs}ms infinite` : 'none' }}>
+      <span style={{ display: 'block', width: '100%', height: '100%',
+        transform: facesLeft ? 'scaleX(-1)' : 'none',
+        filter: 'drop-shadow(0 2px 3px rgba(30,42,60,.26))' }}>
+        {sheet ? (
+          <span style={{ display: 'block', width: w, height: h, overflow: 'hidden', position: 'relative' }}>
+            <img src={sheet.url} alt="" aria-hidden draggable={false} decoding="async" onError={() => setFailed(true)}
+              style={{ position: 'absolute', left: 0, top: 0, height: h, width: w * sheet.frames, maxWidth: 'none',
+                // Longhand beside animationPlayState — the shorthand resets the play state when
+                // rewritten, and this one is rewritten the moment the creature lands.
+                animationName: 'ci-walk',
+                animationDuration: `${(sheet.frames / sheet.fps / cycleScale).toFixed(3)}s`,
+                animationTimingFunction: `steps(${sheet.frames})`,
+                animationIterationCount: 'infinite',
+                // Runs ONLY while the body is actually covering ground: parked through the stagger
+                // delay (it is standing still) and parked on arrival (it has stopped).
+                animationPlayState: moving ? 'running' : 'paused' }} />
+          </span>
+        ) : (
+          <img src={src} alt="" draggable={false} decoding="async" loading="lazy"
+            onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0.001' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+        )}
+      </span>
+    </span>
   )
 }
 
