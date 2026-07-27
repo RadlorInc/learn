@@ -61,9 +61,17 @@
 >    to an inbox nobody is checking daily yet. Either keep it or change the copy.
 > 2. **COPPA parental review/deletion still has no defined path** and learner deletion is still not
 >    audit-logged. It is a support request with legal teeth. Belongs in the open lawyer conversation.
-> 3. `docs/support-log.md` does not exist yet — one line per contact; after ~20 lines the top 3
->    problems ARE the next engineering work.
-> 4. Nothing here has been exercised by a real parent, because there are no real parents.
+> 3. ✅ **[support.md](docs/support.md) is now the full operating manual** — daily routine · the
+>    four-step flow (**acknowledge in 5 min, solve later** — that alone keeps the 2-day promise) ·
+>    triage · reply templates · reading the block. [support-log.md](docs/support-log.md) exists and
+>    is empty. **The triage rule worth carrying: the best priority signal is NOT the email, it is
+>    the daily health check** — green + one report means that one device, red means everyone, so
+>    read the check BEFORE the email. One Gmail filter recommended (legal keywords → star), and
+>    explicitly no ticketing system until the founder says they are losing track of the inbox.
+> 4. **An email connector was deliberately NOT connected** — at 0 emails it automates nothing, and
+>    an unused connector is still a standing access grant. Trigger to revisit: >5 emails/week, or
+>    the founder travelling and unable to check daily.
+> 5. Nothing here has been exercised by a real parent, because there are no real parents.
 >
 > _(the 🚚 block below is the same day's story work — untouched by this, and still uncommitted.)_
 
