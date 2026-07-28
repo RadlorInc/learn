@@ -15,7 +15,7 @@
  * Moved out of FollowTheLeader.tsx verbatim — see the git history there for the bug each comment
  * is describing.
  */
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { SHEETS } from './canvas/sheets'
 
 export const STRIDE = 0.85                      // how far one cycle carries a body, in body heights
@@ -377,6 +377,129 @@ export function Arrive({ dist, ms, delayMs = 0, leave = false, resetKey, childre
       // is a slide in the wrong direction followed by the real one.
       transition: phase === 0 ? 'none' : `transform ${ms}ms linear` }}>
       {children(phase === 1)}
+    </span>
+  )
+}
+
+// ─── A HOP: a discrete ballistic jump, which is not a journey ────────────────────────
+/**
+ * How far one hop carries the body, in body heights. A stride is 0.85 (STRIDE); a jump covers more
+ * ground than a step, which is most of why it reads as a jump rather than a bouncy walk.
+ */
+export const HOP_STRIDE = 1.5
+
+/**
+ * WHY THIS EXISTS AT ALL, given `journeyOf` and `Critter` are right there: a walk and a hop are
+ * different in kind, not in degree, and three of the engine's assumptions break.
+ *
+ *  1. A WALK'S BODY MOVES AT A CONSTANT SPEED. A hopper is stationary while it gathers itself and
+ *     only travels once it is off the ground. Hand a hop to `Critter` and it slides along the
+ *     ground while crouched — the skating fault in a new costume.
+ *  2. A WALK'S CYCLE RUNS EXACTLY WHILE THE BODY COVERS GROUND, which is the invariant `Arrive`'s
+ *     `moving` flag exists to enforce. For a hop the cycle runs the WHOLE time — the crouch is
+ *     animation too — while the translation happens only over the airborne part. So the two cannot
+ *     share one flag here, and that is precisely why `Arrive` cannot be bent to do this.
+ *  3. THE VERTICAL IS ALREADY DRAWN. A generated hop carries its arc inside the frames (Milo's feet
+ *     lift 0 → 47 → 0 px in a 256px cell). Adding a CSS arc on top makes him rise twice.
+ *
+ * The happy consequence of (3): the CONTAINER never leaves the ground — only the pixels inside it
+ * do — so a contact shadow sitting at the container's bottom stays on the ground by construction
+ * while travelling horizontally with him. No shadow/feet desync is possible here.
+ *
+ * Timing is locked the same way a walk's is: one cycle carries one hop. The sheet's own
+ * `frames / fps` IS the hop duration, so the legs and the ground can never disagree.
+ */
+export interface HopJourney {
+  /** How many separate jumps this journey takes. */
+  hops: number
+  /** One jump, ms — the sheet's own cycle length. */
+  cycleMs: number
+  /** hops × cycleMs. Choreograph off this, never off a guess. */
+  totalMs: number
+  /** Ground covered per jump, px (signed — negative travels left). */
+  dxPx: number
+  /** Of one cycle: gathering on the ground, then airborne. They sum to cycleMs. */
+  holdMs: number
+  airMs: number
+}
+export function hopOf(src: string, h: number, distPx: number): HopJourney {
+  const sheet = SHEETS[src]
+  const cycleMs = sheet ? (sheet.frames / sheet.fps) * 1000 : 700
+  const hops = Math.max(1, Math.round(Math.abs(distPx) / Math.max(1, HOP_STRIDE * h)))
+  const holdMs = Math.round(cycleMs * (sheet?.groundShare ?? 0.4))
+  return { hops, cycleMs, totalMs: hops * cycleMs, dxPx: distPx / hops, holdMs, airMs: cycleMs - holdMs }
+}
+
+/**
+ * Travels `distPx` in whole jumps, landing on each one. `onLand(i)` fires as each jump lands, so a
+ * chapter can reveal something exactly when the feet touch rather than on a guessed timer.
+ *
+ * State machine rather than one long CSS animation, deliberately: this mirrors `Arrive`'s shape
+ * (phase + timeouts), and a generated keyframes string per (hop count × distance) would be the kind
+ * of clever that this codebase has repeatedly had to debug at 3am.
+ */
+export function Hop({ src, h, facesLeft, distPx, delayMs = 0, resetKey, onLand, onDone, children }: {
+  src: string; h: number; facesLeft?: boolean
+  distPx: number; delayMs?: number
+  /** Changes per round where the element is REUSED — without it the hop plays once and is silently
+   *  dead every round after, which is invisible to a single check (see chapter-craft.md). */
+  resetKey?: string | number
+  onLand?: (index: number) => void
+  onDone?: () => void
+  /**
+   * Anything that must travel WITH him — a sign over his head, a label, a held object. It renders
+   * inside the moving element, positioned against the sprite's own box, because two things that
+   * must move as one should BE one element: left outside, they are one duration change away from
+   * drifting apart, which is the shadow-outran-the-feet bug this repo has already shipped once.
+   */
+  children?: React.ReactNode
+}) {
+  const j = hopOf(src, h, distPx)
+  const [landed, setLanded] = useState(0)          // jumps completed
+  const [going, setGoing] = useState(false)
+  const land = useRef(onLand); land.current = onLand
+  const done = useRef(onDone); done.current = onDone
+
+  // Reset during RENDER, not in an effect: effects run after paint, so a re-hop would be painted
+  // one frame at the previous journey's end offset before being pulled back. Same reason as Arrive.
+  const sig = `${resetKey}|${distPx}|${j.hops}`
+  const [seen, setSeen] = useState(sig)
+  if (seen !== sig) { setSeen(sig); setLanded(0); setGoing(false) }
+
+  useEffect(() => {
+    setLanded(0); setGoing(false)
+    const timers: number[] = []
+    // One frame minimum before the first transition is asked for, so the start state is painted at
+    // x=0 rather than the browser coalescing it into the target and skipping the move entirely.
+    const t0 = Math.max(delayMs, 16)
+    timers.push(window.setTimeout(() => setGoing(true), t0))
+    for (let i = 1; i <= j.hops; i++) {
+      // The TARGET advances at the START of jump i, so its hold+flight fills that cycle...
+      timers.push(window.setTimeout(() => setLanded(i), t0 + (i - 1) * j.cycleMs))
+      // ...and the landing is reported at its END, which is when the feet actually touch.
+      timers.push(window.setTimeout(() => land.current?.(i - 1), t0 + i * j.cycleMs))
+    }
+    timers.push(window.setTimeout(() => { setGoing(false); done.current?.() }, t0 + j.totalMs + 16))
+    return () => timers.forEach(window.clearTimeout)
+  }, [sig, delayMs, j.hops, j.cycleMs, j.totalMs])
+
+  // The translation holds through the crouch and then runs at constant speed — real ballistics, and
+  // the reason a hopper does not skate. `landed` steps one jump at a time, so each leg is its own
+  // linear transition rather than one long slide across the whole distance.
+  const x = landed * j.dxPx
+  return (
+    <span style={{ display: 'block', width: Math.round(h * (SHEETS[src]?.cellAspect ?? 1)), height: h,
+      transform: `translateX(${x}px)`,
+      transitionProperty: 'transform',
+      transitionDuration: `${j.airMs}ms`,
+      transitionDelay: `${j.holdMs}ms`,
+      transitionTimingFunction: 'linear' }}>
+      <span style={{ display: 'block', position: 'relative' }}>
+        {children}
+        {/* The cycle runs for the WHOLE journey — the crouch is animation too. This is the one place
+            the engine's "legs run exactly while the body covers ground" rule does NOT apply. */}
+        <SheetCell src={src} h={h} facesLeft={facesLeft} moving={going} breathe={!going} />
+      </span>
     </span>
   )
 }

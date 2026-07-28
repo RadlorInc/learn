@@ -124,7 +124,13 @@ Milo hops pad to pad for real, and a total appears **only where he has been**. T
 pad he should land on next; he hops there. The blank is not a gap in a printed row, it is
 somewhere he hasn't got to yet.
 
-- Best fit in the band for `critters.tsx` unchanged.
+- 🚫 **"Best fit in the band for `critters.tsx` unchanged" — WRONG, corrected 2026-07-28.** A hop is
+  ballistic, so `Critter`'s linear travel slides it along the ground while crouched. It needs a
+  discrete `hop(from, to)` in `critters.tsx`, and SeesawPark's dropped frog is a second consumer.
+- 🚫 **And the art it was promised did not exist.** `milo_hop.png` was a WALK cycle under a hop
+  filename (measured lift 0 in every frame), and its registry key pointed at a file that was not on
+  disk. A real hop was generated 2026-07-28 — 19 cells @ 24fps, arc drawn in. See chapter-craft.md:
+  *a sheet's name is a claim, not a fact.*
 - Template: FollowTheLeader (tap → that one travels). **Cost: medium.**
 
 ### 4 · StoryTime — `storyProblems` → keep the verb, **make the operation move** ✅ DONE

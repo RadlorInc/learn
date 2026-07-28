@@ -75,10 +75,15 @@ it('every drawn walk cycle in sheets.ts is actually used by a chapter', () => {
   // "We have enough moving objects — use them all." Anything registered here and consumed by nobody
   // is art that was paid for and never reached a child. The exceptions are named, with the reason.
   const UNUSED_ON_PURPOSE = new Set([
-    '/assets/objects/frog_side.png',        // a HOP, not a walk — needs a discrete hop(from,to)
+    // A HOP, not a walk. `hop(from,to)` now exists in critters.tsx (2026-07-28) so this is no longer
+    // unusable — just not yet cast in a chapter. HopAlong is its natural home if it ever wants a
+    // hopping creature alongside Milo.
+    '/assets/objects/frog_side.png',
     '/assets/objects/alien_side.png',       // orphaned when the moon base was dropped
     '/assets/objects/astronaut_side.png',   // ditto
     '/assets/objects/nest_side.png',        // NestTree's chick-in-a-nest, a prop rather than a mover
+    // Milo's own sprites. Not cast entries at all — this sweep only covers the creatures a chapter
+    // lays out as countable items, and he is never one of those. (milo_hop IS in use, by HopAlong.)
     '/assets/characters/milo_side.png',
     '/assets/characters/milo_hop_side.png',
   ])

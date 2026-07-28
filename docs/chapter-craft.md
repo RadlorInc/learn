@@ -122,7 +122,24 @@ this band is three-year-olds; a tap just outside the shape they were plainly aim
 It can never turn a wrong answer right, only a wrong finger.
 
 **AND A TAP THAT DOES NOTHING AT ALL IS THE WORST OUTCOME THERE IS.** Worse than a wrong answer: a
-wrong answer at least tells the child the game is listening. The colouring chapter shipped a version
+wrong answer at least tells the child the game is listening.
+
+⚠️ **THE COMMONEST WAY TO SHIP THIS IS TO ANSWER ONLY IN SPEECH.** A handler that calls `speak()`
+and changes nothing on screen looks complete in the source and is a dead button on every device
+without a voice — which is *most Chrome installs*, as this repo has documented for months. HopAlong
+shipped a Ready button that spoke *"that's too many"* and drew nothing; the founder pressed it and
+watched nothing happen. **Everything spoken in response to a tap must ALSO be written.** The test is
+to read the handler and ask what it does with the sound off.
+
+**AND IF A CHILD CAN OVERSHOOT, THEY MUST BE ABLE TO COME BACK — BY THE SAME JOURNEY.** Any chapter
+where the child builds a set can be built PAST the answer, and without a way back that state is a
+dead end; take every spare and the round becomes unwinnable, with nothing left to tap. The repair is
+never a Back button: **tap what is already gathered and it travels home**, facing the way it goes
+(HomeTime settled this, and HopAlong had to learn it again). Two rules fall out:
+- the undo affordance must look **the same at every count** — one that appears only once the set is
+  wrong is a verdict handed over before the commit; and
+- reaching for it must be **predictable**, so make it a stack: only the most recent addition can
+  leave, never an arbitrary one from the middle. The colouring chapter shipped a version
 where tapping the tulip did nothing — the ink is a wall to the flood fill, thickened another 2px to
 close the artwork's gaps, and the outline of a small shape is most of it. Measured over a realistic
 aim spread, **40% of taps aimed at a tulip landed on ink and were silently discarded**, and there is
@@ -216,6 +233,15 @@ sliding and moonwalking bug this project has shipped is one of these:
 | shadow arrived before the feet | shadow was a SIBLING with its own `transition` | make it a **child** — two things that must move as one should be one element |
 | legs ran forwards while the body went backwards | layout let a creature sit right of its destination | layout must **guarantee** travel direction |
 | a group appeared instead of arriving | only the *movers* were given a journey; the standing group scale-popped and the container was what moved | **everything on the stage travels** — see below |
+| a crowd FOLLOWING a character slid with its feet parked | a hand-rolled `transition: left` beside `Arrive`, with `moving` gated on the wrong phase | **use `Arrive` for anything that travels, including a follow** |
+
+⚠️ **THAT LAST ONE IS THE COMMONEST WAY THE RULE GETS BROKEN NOW, because the position change does not
+look like a journey.** A set that follows someone, closes up a gap, or shuffles along is travelling,
+and if you move it with a raw CSS transition there is nothing connecting the legs to it — the flag
+ends up gated on whatever phase you happened to be thinking about. `Arrive` takes its child as a
+FUNCTION of whether the thing is currently moving precisely so the two cannot be set independently.
+Reaching past it to write a `transition: left` is how HopAlong ended up sliding a dozen creatures at
+once behind a correctly-animated Milo.
 
 **NOTHING MATERIALISES, INCLUDING THE THINGS THAT ARE ALREADY THERE.** It is not enough to give the
 *event* a journey. StoryTime's joiners travelled in from off-frame while the group they were joining
@@ -275,6 +301,21 @@ anything that lets the two be confused produces a slide in the wrong direction.
   `hop(from, to)`**: one cycle played against a matched arc, landing, stopping. Do not reach for
   `journeyOf` for it. (This is why the 6–8 HopAlong rebuild is not "`critters.tsx` unchanged" —
   see [story-6-8-rethink.md](story-6-8-rethink.md).)
+- ⚠️ **IF THE SHEET CARRIES ITS OWN ARC, THE CODE SUPPLIES ONLY THE HORIZONTAL.** A generated hop has
+  the vertical drawn INTO the frames — measured on the frog, its feet lift `0 → 8 → 44 → 27 → 0` px
+  in a 256px cell, i.e. 17% of body height. Add a CSS arc on top of that and the creature rises
+  twice, which is the shadow-outran-the-feet fault in a new place: **two sources animating one axis
+  and nothing keeping them in step.** Measure the per-frame lift before writing any vertical motion;
+  if it is non-zero, the sheet owns the Y axis and you own the X.
+- **A WALK'S FRAMES ARE EVENLY SPACED; A HOP'S ARE NOT — SO KEEP THE SOURCE'S OWN FRAMES.** A walk is
+  uniform, which is why twelve samples carry it and `steps(12)` looks right. A hop's whole character
+  is its UNEVEN timing — the animator holds the anticipation, races the rise, hangs at the top — and
+  cutting it to 12 averages those holds away. **Do not hand-author a timing chart to put them back:
+  the generated clip already has them.** Find the true period by autocorrelation, cut that many
+  frames at the source's own rate, and `steps(n)` reproduces the original exactly. Milo's hop is
+  19 cells at 24fps for this reason; the nest's 22 and the turtle's 14 are the same principle.
+  *(The chart-authoring version of this rule was written first and thrown away — measuring the clip
+  showed the work had already been done upstream.)*
 
 ### Layout is a set of invariants, not a set of nice numbers
 
@@ -532,6 +573,15 @@ second thing to look at. It appears with the demo, when it starts to matter.
   that would be wrong for a rabbit is right for them. Check a creature's locomotion in
   [world1.tsx](../src/features/chapters/story/world1.tsx) (`LOCO` / `CRAWLERS`) before assigning it
   a band. A ladybug is a CRAWLER, not a flier.
+- ⚠️ **AND A FLIER NEEDS A PLAIN BAND AT HOVERING HEIGHT, WHICH IS A SECOND, DIFFERENT CHECK.**
+  Getting a butterfly off the ground is only half of it: it then has to be VISIBLE where it now is,
+  and a group the child cannot pick out is a wrong answer the chapter caused. HopAlong put its
+  butterflies at Milo's head over `garden.png` — whose flower bed and fence sit exactly there — and
+  they vanished into it. Measure the pixel variation across the hovering band (mean per-channel σ)
+  the same way you measure the horizon: `garden_meadow` **22** (open sky, reads cleanly) ·
+  `garden_park` **46** · `garden` **71** (a butterfly disappears). **Cast fliers where the sky is**;
+  the lift is not the thing to tune. Ground creatures are unaffected — they stand on the grass below
+  the busy band.
 - **The background must match its objects** — orchard↔apples, pond↔fish, kitchen↔cookies. Where a
   world's backdrops are object-specific, pair the backdrop TO the item so a scene never shows the
   wrong object.
@@ -597,6 +647,16 @@ Gotchas that have each cost real credits:
   "server isn't responding but it submitted anyway" duplicate.
 - **The safety filter false-positives.** Rephrasing in the same register as a known-good prompt
   clears it; the first Milo prompt returned `status: "nsfw"` for nothing.
+- ⚠️ **A SHEET'S NAME IS A CLAIM, NOT A FACT — MEASURE IT BEFORE YOU DESIGN ON IT.**
+  `milo_hop.png` shipped, was registered with a comment reading *"Milo's HOP, for a chapter where he
+  jumps between places"*, and was named as the foundation of A3 in both the handoff and the rethink
+  doc. **It is a walk cycle** — a second take of `milo_walk.png`, measured lift `0` in all 12 frames
+  and height varying by under 2%. A whole chapter was designed on it before anyone opened it. The
+  check is thirty seconds: split the strip and print each cell's alpha bbox — **lift ≠ 0 somewhere
+  means it leaves the ground, and a flat 0 down the column means it does not.** Then render a
+  contact sheet and look. Do this the moment a sheet becomes load-bearing, not after.
+  (Its registry key `milo_hop_side.png` also pointed at a file that did not exist, which nothing
+  caught because no caller had ever used it.)
 - **Never `--pingpong` a walk** — reversed legs moonwalk. Ping-pong is only for motion that
   oscillates with no clean cycle (a chirping beak, paddling flippers).
 - Judge a sheet on its `motion` / `loopgap` numbers and at real display size, not on the strip.

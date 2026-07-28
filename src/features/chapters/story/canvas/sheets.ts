@@ -36,6 +36,19 @@ export interface Sheet {
    * cannot know a cell's width until the image has loaded.
    */
   cellAspect: number
+  /**
+   * BALLISTIC SHEETS ONLY (a hop). The share of the cycle the creature spends ON THE GROUND,
+   * gathering itself, before it leaves — so `hop()` knows to hold the horizontal there and only
+   * travel over the remainder. Without it a hopper SLIDES along the ground while crouched, which is
+   * the exact fault that makes a hop unfit for `Critter`'s linear travel.
+   *
+   * MEASURE IT, don't guess: split the strip, take each cell's alpha bbox, and count the leading
+   * frames whose feet are still down. It differs wildly per creature — Milo is grounded for 8 of 19
+   * frames (0.42) and the frog for 9 of 12 (0.75), because a frog is mostly a coiled spring and Milo
+   * is mostly a pony. Cutting the clip so the cycle STARTS on a grounded frame is what makes this a
+   * single leading share rather than a window straddling the loop boundary.
+   */
+  groundShare?: number
 }
 
 /**
@@ -93,13 +106,33 @@ export const SHEETS: Record<string, Sheet> = {
   '/assets/objects/lamb_side.png': { url: '/assets/objects/lamb_walk.png', cellAspect: 0.965, frames: 12, fps: 12 },
   // A hop, not a walk: coiled for 9 of 12 frames and airborne for 3. That shape does NOT fit
   // Critter's linear travel — see chapter-craft.md. Play it for a discrete jump, not a journey.
-  '/assets/objects/frog_side.png': { url: '/assets/objects/frog_walk.png', cellAspect: 0.637, frames: 12, fps: 14 },
+  // Measured feet-lift per frame: 0 0 0 0 0 0 8 44 27 0 0 0 — so the arc is drawn in (peak 44px of
+  // a 256px cell, 17% of body height) and `hop()` must supply ONLY the horizontal.
+  // ⚠️ groundShare is 0.75 but its cycle is NOT phase-aligned (it is grounded at BOTH ends, f0-5 and
+  // f9-11), so re-cut it to start on a grounded frame before using it — see Milo's entry below.
+  '/assets/objects/frog_side.png': { url: '/assets/objects/frog_walk.png', cellAspect: 0.637, frames: 12, fps: 14, groundShare: 9 / 12 },
   '/assets/objects/bee_side.png': { url: '/assets/objects/bee_walk.png', cellAspect: 1.066, frames: 12, fps: 17 },
   '/assets/objects/dragonfly_side.png': { url: '/assets/objects/dragonfly_walk.png', cellAspect: 1.074, frames: 12, fps: 18 },
   '/assets/objects/alien_side.png': { url: '/assets/objects/alien_walk.png', cellAspect: 0.457, frames: 12, fps: 14 },
   // Low gravity: a slow, buoyant stride. 8fps for the same reason the eagle sits at 7 — anything
   // brisker stops reading as weightless.
   '/assets/objects/astronaut_side.png': { url: '/assets/objects/astronaut_walk.png', cellAspect: 0.523, frames: 12, fps: 8 },
-  // Milo's HOP, for a chapter where he jumps between places rather than walking to one.
-  '/assets/characters/milo_hop_side.png': { url: '/assets/characters/milo_hop.png', cellAspect: 0.633, frames: 12, fps: 14 },
+  /**
+   * Milo's HOP — a real ballistic jump, for a chapter where he goes between places rather than
+   * walking to one. ⚠️ THE FILE THAT SAT HERE UNTIL 2026-07-28 WAS A WALK: a second take of
+   * `milo_walk.png`, measured lift 0 in all 12 frames, registered under this comment and named in
+   * two docs as the foundation of HopAlong. Nobody had opened it. A sheet's name is a claim — split
+   * the strip and print each cell's alpha bbox before designing on it (chapter-craft.md).
+   *
+   * 19 CELLS, not the usual 12, and that is the point: a walk is uniform so twelve samples carry it,
+   * but a hop's whole character is in its UNEVEN timing, and down-sampling averages the hold frames
+   * away. These are the source's own frames at its own rate, so playing 19 @ 24fps reproduces the
+   * generated animation exactly — the anticipation and the hang time come free, with no hand-authored
+   * timing chart. Measured: 7 grounded frames crouching (body 215px → 177px, real squash), 3 frames
+   * rising, a 3-frame hang at the top, 4 descending.
+   *
+   * ⚠️ THE ARC IS DRAWN INTO THE FRAMES — feet lift 0 → 47 → 0 px in a 256px cell, 22% of body
+   * height. `hop()` therefore animates ONLY the horizontal; adding a CSS arc makes him rise twice.
+   */
+  '/assets/characters/milo_hop_side.png': { url: '/assets/characters/milo_hop.png', cellAspect: 0.621, frames: 19, fps: 24, groundShare: 8 / 19 },
 }
