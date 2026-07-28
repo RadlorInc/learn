@@ -72,7 +72,8 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#d6ebf4 0%, #dfeeca 55%, #c2dc98 100%)', img: '/assets/backgrounds/farm_orchard.png' },
       { grad: 'linear-gradient(#cfe8f2 0%, #d8ebcc 55%, #b6d6a0 100%)', img: '/assets/backgrounds/farm_pond.png' },
     ],
-    items: [IT('chick', 'chick', 'chicks'), IT('duckling', 'duckling', 'ducklings'), IT('lamb', 'lamb', 'lambs')],
+    items: [IT('chick', 'chick', 'chicks'), IT('duckling', 'duckling', 'ducklings'), IT('lamb', 'lamb', 'lambs'),
+      IT('duck', 'duck', 'ducks'), IT('rabbit', 'rabbit', 'rabbits')],
     milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🐔' } },
   { id: 'garden', ground: 64, group: 'patch', groupPlural: 'patches',
     bgs: [
@@ -80,7 +81,8 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#d3e9f6 0%, #dfeedb 60%, #c8e2b8 100%)', img: '/assets/backgrounds/garden_meadow.png' },
       { grad: 'linear-gradient(#cfe8f5 0%, #dcecda 60%, #c4dfb4 100%)', img: '/assets/backgrounds/garden_fence.png' },
     ],
-    items: [IT('bee', 'bee', 'bees'), IT('ladybug', 'ladybug', 'ladybugs'), IT('ant', 'ant', 'ants')],
+    items: [IT('bee', 'bee', 'bees'), IT('ladybug', 'ladybug', 'ladybugs'), IT('ant', 'ant', 'ants'),
+      IT('butterfly', 'butterfly', 'butterflies'), IT('dragonfly', 'dragonfly', 'dragonflies')],
     milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌼' } },
   { id: 'woods', ground: 62, group: 'nest', groupPlural: 'nests',
     bgs: [
@@ -88,7 +90,8 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#d6ecc6 0%, #cae0ae 55%, #a4ca82 100%)', img: '/assets/backgrounds/forest_2.jpeg' },
       { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/forest_4.jpeg' },
     ],
-    items: [IT('bird', 'bird', 'birds'), IT('squirrel', 'squirrel', 'squirrels'), IT('eagle', 'eagle', 'eagles')],
+    items: [IT('bird', 'bird', 'birds'), IT('squirrel', 'squirrel', 'squirrels'), IT('eagle', 'eagle', 'eagles'),
+      IT('firefly', 'firefly', 'fireflies')],
     milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🌲' } },
 ]
 const INTRO = 'Milo makes things in EQUAL groups. Count the groups and how many are in each, then tap how many there are in all. First, watch Milo count!'
@@ -97,11 +100,18 @@ const ALL_BGS = SETTINGS.flatMap(w => w.bgs)
 
 /**
  * The run: one item+setting pair per round, INTERLEAVED across the settings rather than grouped, so
- * consecutive rounds change place as well as object. Ten pairs against ten rounds means a full run
- * never repeats one. The backdrop is fixed BY the item, which is load-bearing for the Craft Table:
- * its scenes are item-specific (buttons bg → buttons, gems bg → gems), so a scene must never be
- * chosen independently of what it is showing.
+ * consecutive rounds change place as well as object. The backdrop is fixed BY the item, which is
+ * load-bearing where a setting's scenes are item-specific — a scene must never be chosen
+ * independently of what it is showing.
+ *
+ * ⚠️ IT COVERS THE WHOLE CHAPTER — the demo beats, then the guided round, then every scored round —
+ * and NO CREATURE IS EVER SHOWN TWICE. It used to hold 9 pairs read as `PLAN[round % PLAN.length]`
+ * against 10 scored rounds, so the last round wrapped onto the chick the chapter opened with, and
+ * the demo and guided round picked out of `items[]` by hand on top of that. The cast is now
+ * `DEMO_N + 1 + SCORED_N` deep and every index is read straight, never modulo.
  */
+export const DEMO_N = 2   // this chapter opens with two beats (groups, then array), not three
+export const SCORED_N = 10
 const PLAN: { w: MultWorld; item: Item; bg: number }[] = (() => {
   const out: { w: MultWorld; item: Item; bg: number }[] = []
   const deepest = Math.max(...SETTINGS.map(w => w.items.length))
@@ -109,6 +119,16 @@ const PLAN: { w: MultWorld; item: Item; bg: number }[] = (() => {
     for (const w of SETTINGS) if (i < w.items.length) out.push({ w, item: w.items[i], bg: i % w.bgs.length })
   return out
 })()
+/**
+ * THE RUN, as the ONE sequence both the chapter and its gate read: the demo beats, then the guided
+ * round, then the scored rounds, one entry per question. Exported because a gate that re-derives
+ * this order can agree with its own copy while the screen repeats a creature — the same trap that
+ * let chapter 4's geometry sweep pass while the layout was wrong. `scoredSlot` is the only way the
+ * scored rounds reach it, so mutating the index is a thing the gate can actually catch.
+ */
+export const RUN = PLAN.slice(0, DEMO_N + 1 + SCORED_N)
+export const scoredSlot = (round: number): { w: MultWorld; item: Item; bg: number } =>
+  RUN[DEMO_N + 1 + round] ?? PLAN[round % PLAN.length]
 
 type View = 'groups' | 'array'
 interface MultRound { w: MultWorld; bg: number; item: Item; view: View; g: number; per: number; answer: number }
@@ -129,7 +149,7 @@ function multChoices(answer: number, g: number, per: number): number[] {
 }
 // Numbers stay small enough to SHOW every object; difficulty widens the factors + adds the array view.
 function makeMultRound(d: 1 | 2 | 3, round: number): MultRound {
-  const { w, item, bg } = PLAN[round % PLAN.length]
+  const { w, item, bg } = scoredSlot(round)
   let g: number, per: number, view: View
   if (d === 1) { g = rint(2, 3); per = rint(2, 4); view = 'groups' }
   else if (d === 2) { g = rint(2, 5); per = rint(2, 5); view = coin() ? 'groups' : 'array' }
@@ -503,7 +523,7 @@ const MultExplain: React.FC<{ data: MultRound; onDone: () => void }> = ({ data, 
 // ─── Value generation ──────────────────────────────────────────────────────────────
 function makeMultBeat(): Beat<MultRound> {
   return {
-    skillId: 'multiplication', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'multiplication', rounds: SCORED_N, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeMultRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.g}x${d.per}|${d.view}`,   // dedupe on the MATH (factors + view), not the rotating scene/item
     // Deliberately EMPTY, so SkillBeat draws no pill of its own: the play surface renders the same
@@ -553,11 +573,14 @@ export default function MarketDay({ onFinish, onExit }: {
 
   // One of each view, each in a DIFFERENT setting — so the first thing a child learns is that the
   // place changes but the rule does not, which is also what the scored rounds then do.
+  // Creatures come off the FRONT of the same ordered run the scored rounds read, rather than being
+  // picked out of `items[]` by hand — by hand they landed on the same entries the scored rounds
+  // then served again. Taking them from the plan is what makes "no creature twice" structural.
   const DEMO: MultRound[] = [
-    { w: SETTINGS[0], bg: 0, item: SETTINGS[0].items[0], view: 'groups', g: 3, per: 2, answer: 6 },
-    { w: SETTINGS[1], bg: 1, item: SETTINGS[1].items[1], view: 'array', g: 3, per: 4, answer: 12 },
+    { ...RUN[0], view: 'groups', g: 3, per: 2, answer: 6 },
+    { ...RUN[1], view: 'array', g: 3, per: 4, answer: 12 },
   ]
-  const GUIDED: MultRound = { w: SETTINGS[2], bg: 0, item: SETTINGS[2].items[0], view: 'groups', g: 2, per: 3, answer: 6 }
+  const GUIDED: MultRound = { ...RUN[DEMO_N], view: 'groups', g: 2, per: 3, answer: 6 }
   const shown = phase === 'practice' ? { w: scene, bg } : phase === 'guided' ? GUIDED : DEMO[Math.min(demoIdx, DEMO.length - 1)]
 
   const Banner = (text: string) => (

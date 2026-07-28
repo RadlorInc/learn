@@ -316,6 +316,13 @@ check them with a script:
   ends of the measure stood 28px apart — a measure whose ends do not share a ground line measures
   nothing. Position shadows, labels and glows out of flow (or inside the subject, per the
   shadow-as-child rule above).
+  ⚠️ **This recurs the moment a group is bottom-anchored on a ground line**, and it is the exact
+  shape of "the creatures are still floating". StoryTime shipped it: the shadow sat in flow under
+  the sprite, so the anchored bottom was where the SHADOW ended and every creature stood a whole
+  shadow above the painted ground. Measured at 1024×620 — ground 384.4px, duck feet 363.5px, i.e.
+  21px of clear air under a 93px duck. Out of flow and centred on the feet: 2px. **The number to
+  check is the sprite's own `getBoundingClientRect().bottom` against the ground line — not the
+  container's**, because the container is exactly the thing that is lying to you.
 - **a boundary next to another character is measured off THAT character, never guessed.** Chapter 2
   learned this as the cut-off leader; it applies to any adjacency. Chapters 9–10 gave their set a
   flat right limit of 74% and the three widest reef creatures (fish 1.37, turtle 1.53, shark 1.75 : 1)
@@ -382,6 +389,26 @@ chapter a visible cumulative arc outside `SkillBeat` — a collect tray, a journ
 tree. *(Nest Tree shipped without one and feels static across a run; that is the open bug to copy
 the pattern into.)*
 
+**NO CREATURE MAY BE SHOWN TWICE IN ONE RUN — founder's rule, and it is a COUNTING problem, not a
+shuffling one.** A run is `demo beats + the guided round + every scored round`; all three of the
+rebuilt 6–8 chapters were short of that and broke it the same two ways at once: the plan held fewer
+pairs than the run and was read as `PLAN[round % PLAN.length]`, so the last rounds wrapped back onto
+the creature the chapter opened with; and the demo and guided round picked out of `items[]` by hand,
+landing on the very entries the scored rounds then served again. Meanwhile a third of the drawn
+cycles in `sheets.ts` had no chapter using them at all.
+
+- **Build ONE ordered run for the whole chapter and index it straight, never modulo.** Export it
+  (`RUN`) plus the single accessor the scored rounds use (`scoredSlot`), and have the demo and
+  guided round take the first slots off the same array. Then "no repeat" is structural rather than
+  remembered.
+- ⚠️ **A gate that reads the plan ARRAY cannot see how the chapter INDEXES it** — restore the old
+  `PLAN[round % …]` and a plan-only check still passes while the screen repeats. The gate has to go
+  through the same exported accessor the component calls. (Caught by mutation-testing;
+  [chapterCastDistinct.test.ts](../src/__tests__/chapterCastDistinct.test.ts) fails on all five.)
+- **Growing the cast is the fix, not shrinking the run** — there are 18 drawn cycles and each
+  setting can usually take one or two more that genuinely belong in it. Check what is idle before
+  reaching for new art.
+
 **TWO PILLS SAYING THE SAME THING IS A DUPLICATE, NOT A FALLBACK.** `SkillBeat` draws a prompt pill
 from `beat.prompt`, so a chapter whose own play surface also states the question ends up with two —
 and at 640×320 they land on top of each other and neither can be read. Give `beat.prompt` an empty
@@ -431,6 +458,15 @@ second thing to look at. It appears with the demo, when it starts to matter.
 
 ### Choosing a backdrop
 
+- **THE BACKDROP MUST BE IN THE APP'S PAINTED STYLE, AND THIS IS THE FIRST THING TO CHECK.** The
+  library holds two different kinds of picture, and they are not interchangeable: soft *painted*
+  scenes with brushwork and no outlines (`garden_meadow`, `garden_park`, `garden`, `reef_*`,
+  `beach_*`, `farm_*`) and flat *vector cartoon* ones with thick uniform outlines and flat fills
+  (`pond`, `lake`, `pond_top`, `sky`, `River`). Every sprite in the app is painted, so a painted
+  creature over a flat-vector scene is a STYLE mismatch — and no ground line, shadow or placement
+  fixes it, because nothing about the placement is what is wrong. A founder sees it immediately and
+  says the background "isn't blending with the animation". Open the candidate and look at whether
+  it has ink outlines before you check anything else about it.
 - **YOU CANNOT PUT SOMETHING BEHIND SCENERY THAT IS PAINTED INTO THE BACKDROP.** The garden's picket
   fence is part of the image, so no z-index will ever place a house behind it — in a painted scene
   depth is VERTICAL POSITION, and the only way back is further up the frame. Standing at 8% from the

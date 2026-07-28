@@ -58,7 +58,8 @@ const SETTINGS: CmpWorld[] = [
       { grad: 'linear-gradient(#d6efff 0%, #e6f5d8 52%, #c2e69a 100%)', img: '/assets/backgrounds/garden_park.png' },
       { grad: 'linear-gradient(#d2eefc 0%, #e4f2d6 52%, #c0e498 100%)', img: '/assets/backgrounds/town_garden.jpeg' },
     ],
-    items: [IT('rabbit_side', '🐰', true), IT('duck_side', '🦆'), IT('ladybug_side', '🐞')],
+    items: [IT('rabbit_side', '🐰', true), IT('duck_side', '🦆'), IT('ladybug_side', '🐞'),
+      IT('chick_side', '🐤'), IT('lamb_side', '🐑')],
     milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🛝' } },
   { id: 'forest',
     bgs: [
@@ -66,15 +67,34 @@ const SETTINGS: CmpWorld[] = [
       { grad: 'linear-gradient(#d6ecc6 0%, #cae0ae 55%, #a4ca82 100%)', img: '/assets/backgrounds/forest_2.jpeg' },
       { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/forest_3.jpeg' },
     ],
-    items: [IT('squirrel_side', '🐿️'), IT('butterfly_side', '🦋'), IT('ant_side', '🐜')],
+    items: [IT('squirrel_side', '🐿️'), IT('butterfly_side', '🦋'), IT('ant_side', '🐜'),
+      IT('eagle_side', '🦅'), IT('bird_side', '🐦')],
     milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🌲' } },
+  /**
+   * ⚠️ THE THREE SCENES THIS REPLACES WERE FLAT VECTOR CARTOONS — `pond` / `lake` / `pond_top`, all
+   * thick uniform outlines and flat fills, under painted sprites. That is a STYLE mismatch, not a
+   * placement one, so nothing about where the animals sat could have fixed it. StoryTime shipped
+   * the identical three and a founder named it on sight; they are swapped in both chapters together
+   * so the fault does not survive next door.
+   *
+   * The cast is frog · fish · turtle, so unlike StoryTime's fliers this one could NOT move to the
+   * garden — a fish on a lawn is a worse answer than a mismatched style. These three are painted
+   * WATER: a lily pond, open sea, and a sunlit shallow. `farm_pond` is MarketDay's farm as well,
+   * the same deliberate overlap as the shared forests — a balance scale weighing two frogs cannot
+   * be mistaken for pens of ducklings.
+   */
   { id: 'pond',
     bgs: [
-      { grad: 'linear-gradient(#cfeaf4 0%, #cfe6de 55%, #a9d3bc 100%)', img: '/assets/backgrounds/pond.jpeg' },
-      { grad: 'linear-gradient(#d2ecf4 0%, #cfe8e0 55%, #acd6be 100%)', img: '/assets/backgrounds/pond_top.jpeg' },
-      { grad: 'linear-gradient(#cfe8f4 0%, #cce4e2 55%, #a6d2c0 100%)', img: '/assets/backgrounds/lake.jpeg' },
+      { grad: 'linear-gradient(#cfeaf4 0%, #cfe6de 55%, #a9d3bc 100%)', img: '/assets/backgrounds/farm_pond.png' },
+      { grad: 'linear-gradient(#d2ecf4 0%, #cfe8e0 55%, #acd6be 100%)', img: '/assets/backgrounds/underwater.jpeg' },
+      { grad: 'linear-gradient(#cfe8f4 0%, #cce4e2 55%, #a6d2c0 100%)', img: '/assets/backgrounds/beach_sea.png' },
     ],
-    items: [IT('frog_side', '🐸'), IT('fish_side', '🐟'), IT('turtle_side', '🐢')],
+    // ⚠️ THE FROG IS GONE, and not to make room — its sheet is a HOP: coiled for 9 of 12 frames and
+    // airborne for 3. These animals WALK onto a pan at a constant speed, so a hop cycle slides the
+    // creature along the ground while it is crouched. A hop needs a discrete hop(from, to), which
+    // does not exist yet; HopAlong is where that sheet earns its place.
+    items: [IT('fish_side', '🐟'), IT('turtle_side', '🐢'), IT('crab_side', '🦀'),
+      IT('duckling_side', '🐥')],
     milo: { src: '/assets/characters/milo_fishing.png', emoji: '🦊', accessory: '🐸' } },
 ]
 const INTRO = 'Milo puts animals on each side of the balance. The side with MORE tips DOWN! Pick the sign that opens toward the bigger number. First, watch Milo!'
@@ -82,11 +102,18 @@ const INTRO = 'Milo puts animals on each side of the balance. The side with MORE
 const ALL_BGS = SETTINGS.flatMap(w => w.bgs)
 
 /**
- * The run: one animal+setting pair per round, INTERLEAVED across the settings rather than grouped,
- * so consecutive rounds change place as well as animal. Nine pairs against ten rounds means only
- * the last round repeats one. A picker would instead make a child choose before they know what they
- * are choosing, and then give them ten rounds of one backdrop.
+ * The run: one animal+setting pair per QUESTION, covering the WHOLE chapter — the demo beats, then
+ * the guided round, then every scored round — INTERLEAVED across the settings so consecutive
+ * questions change place as well as animal.
+ *
+ * ⚠️ NO ANIMAL IS EVER SHOWN TWICE. It used to hold 9 pairs read as `PLAN[round % PLAN.length]`
+ * against 10 scored rounds — the file's own comment admitted the last round repeated one — and the
+ * demo and guided round picked out of `items[]` by hand on top of that, landing on animals the
+ * scored rounds then served again. The cast is now `DEMO_N + 1 + SCORED_N` deep and every index is
+ * read straight, never modulo, so a repeat is impossible rather than merely rare.
  */
+export const DEMO_N = 3
+export const SCORED_N = 10
 const PLAN: { w: CmpWorld; item: Item; bg: number }[] = (() => {
   const out: { w: CmpWorld; item: Item; bg: number }[] = []
   const deepest = Math.max(...SETTINGS.map(w => w.items.length))
@@ -94,6 +121,16 @@ const PLAN: { w: CmpWorld; item: Item; bg: number }[] = (() => {
     for (const w of SETTINGS) if (i < w.items.length) out.push({ w, item: w.items[i], bg: i % w.bgs.length })
   return out
 })()
+/**
+ * THE RUN, as the ONE sequence both the chapter and its gate read: the demo beats, then the guided
+ * round, then the scored rounds, one entry per question. Exported because a gate that re-derives
+ * this order can agree with its own copy while the screen repeats a creature — the same trap that
+ * let chapter 4's geometry sweep pass while the layout was wrong. `scoredSlot` is the only way the
+ * scored rounds reach it, so mutating the index is a thing the gate can actually catch.
+ */
+export const RUN = PLAN.slice(0, DEMO_N + 1 + SCORED_N)
+export const scoredSlot = (round: number): { w: CmpWorld; item: Item; bg: number } =>
+  RUN[DEMO_N + 1 + round] ?? PLAN[round % PLAN.length]
 
 interface CmpRound { w: CmpWorld; bg: number; item: Item; a: number; b: number; answer: string }
 
@@ -102,7 +139,7 @@ function signWord(sign: string): string { return sign === '>' ? 'greater than' :
 
 // Range widens with difficulty: 1 → to 10 (objects), 2 → to 50, 3 → to 100 (numerals).
 function makeRound(d: 1 | 2 | 3, round: number): CmpRound {
-  const { w, item, bg } = PLAN[round % PLAN.length]
+  const { w, item, bg } = scoredSlot(round)
   const hi = d === 1 ? 10 : d === 2 ? 50 : 100
   const a = rint(1, hi)
   let b = rint(1, hi)
@@ -354,7 +391,7 @@ const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data
 // ─── Beat ───────────────────────────────────────────────────────────────────────────
 function makeCompareBeat(): Beat<CmpRound> {
   return {
-    skillId: 'compareNumbers', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'compareNumbers', rounds: SCORED_N, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.a}:${d.b}`,   // dedupe on the MATH (the pair), not the rotating scene/animal
     prompt: () => 'Which sign is right?',
@@ -405,12 +442,15 @@ export default function SeesawPark({ onFinish, onExit }: {
   // Demo teaches all three signs: greater (>), less (<), then equal (=) — all object-driven, and
   // each in a DIFFERENT setting, so the first thing a child learns is that the place changes but
   // the rule does not, which is also what the scored rounds then do.
+  // Animals come off the FRONT of the same ordered run the scored rounds read, rather than being
+  // picked out of `items[]` by hand — by hand they landed on entries the scored rounds then served
+  // again. Taking them from the plan is what makes "no animal twice" structural.
   const DEMO: CmpRound[] = [
-    { w: SETTINGS[0], bg: 0, item: SETTINGS[0].items[0], a: 6, b: 3, answer: compareSign(6, 3) },
-    { w: SETTINGS[1], bg: 1, item: SETTINGS[1].items[1], a: 2, b: 8, answer: compareSign(2, 8) },
-    { w: SETTINGS[2], bg: 2, item: SETTINGS[2].items[2], a: 4, b: 4, answer: compareSign(4, 4) },
+    { ...RUN[0], a: 6, b: 3, answer: compareSign(6, 3) },
+    { ...RUN[1], a: 2, b: 8, answer: compareSign(2, 8) },
+    { ...RUN[2], a: 4, b: 4, answer: compareSign(4, 4) },
   ]
-  const GUIDED: CmpRound = { w: SETTINGS[1], bg: 0, item: SETTINGS[1].items[0], a: 3, b: 7, answer: compareSign(3, 7) }
+  const GUIDED: CmpRound = { ...RUN[DEMO_N], a: 3, b: 7, answer: compareSign(3, 7) }
   const shown = phase === 'practice' ? { w: scene, bg } : phase === 'guided' ? GUIDED : DEMO[Math.min(demoIdx, DEMO.length - 1)]
 
   const Banner = (text: string) => (

@@ -11,11 +11,12 @@
  * CHANGES EVERY ROUND, so consecutive questions differ in place as well as in number — a picker
  * makes a child choose before they know what they are choosing, and then gives them ten rounds of
  * one backdrop. Same call chapter 2 took when its three biomes were merged.
- *   🐠 Coral Reef  — fish · crab · shark           (swim over · swim away · who has more)
- *   🌳 Green Park  — duck · turtle · rabbit        (wander over · wander off · who has more)
- *   🪷 Lily Pond   — dragonfly · butterfly         (flutter over · flutter away · who has more)
- * EVERY item is a drawn walk cycle, so the things that join and leave do it on their own legs.
- * The plan is 8 item+setting pairs, interleaved, so consecutive rounds change setting.
+ *   🐠 Coral Reef  — fish · crab · shark · turtle                  (swim over/away · who has more)
+ *   🌳 Green Park  — duck · rabbit · squirrel · lamb · chick · duckling  (wander · who has more)
+ *   🌼 Flower Beds — dragonfly · butterfly · bee · ladybug          (flutter · who has more)
+ * EVERY item is a drawn walk cycle, so the things that join and leave do it on their own legs — and
+ * the cast is 14 deep against 14 questions (3 demo + guided + 10 scored), so NO CREATURE IS EVER
+ * SHOWN TWICE in a run. See ROUND_PLAN / RUN below and chapterCastDistinct.test.ts.
  *
  * Numbers stay small enough to SHOW the objects (object-driven, per the locked 6–8 rules) — the
  * difficulty grows by mixing in take-away then compare and nudging the totals up, not by going
@@ -78,7 +79,8 @@ const SETTINGS: SpWorld[] = [
       { grad: 'linear-gradient(#a9dff0 0%, #79c6e4 55%, #469fc8 100%)', img: '/assets/backgrounds/reef_deep.png' },
     ],
     ground: 57,
-    items: [IT('fish', 'fish', 'fish'), IT('crab', 'crab', 'crabs'), IT('shark', 'shark', 'sharks', true)],
+    items: [IT('fish', 'fish', 'fish'), IT('crab', 'crab', 'crabs'), IT('shark', 'shark', 'sharks', true),
+      IT('turtle', 'turtle', 'turtles')],
     friend: 'Finn', join: 'meets', leave: 'swim away',
     milo: { src: '/assets/characters/milo_underwater.png', emoji: '🐢', accessory: '🫧' } },
   /**
@@ -106,38 +108,68 @@ const SETTINGS: SpWorld[] = [
       { grad: 'linear-gradient(#cfe6f7 0%, #dcecc8 55%, #bcd894 100%)', img: '/assets/backgrounds/farm_barnyard.png' },
     ],
     ground: 62,
-    items: [IT('duck', 'duck', 'ducks'), IT('turtle', 'turtle', 'turtles'), IT('rabbit', 'rabbit', 'rabbits', true)],
+    items: [IT('duck', 'duck', 'ducks'), IT('rabbit', 'rabbit', 'rabbits', true), IT('squirrel', 'squirrel', 'squirrels'),
+      IT('lamb', 'lamb', 'lambs'), IT('chick', 'chick', 'chicks'), IT('duckling', 'duckling', 'ducklings')],
     friend: 'Pat', join: 'spots', leave: 'wander off',
     milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌼' } },
   /**
-   * Replaces the moon base. Its astronaut and alien were the only cast in the chapter that could not
-   * belong anywhere a child has been, and they leave the two space cycles orphaned again — which is
-   * the honest trade for a scene that reads true.
+   * Replaces the moon base (its astronaut and alien were the only cast here that could not belong
+   * anywhere a child has been), and then replaced the LILY POND that first stood in for it.
    *
-   * These two FLY, and that is why the setting is a pond: hovering over water is what a dragonfly
-   * and a butterfly actually do, so nothing here needs ground and nothing reads as floating by
-   * mistake. They carry no contact shadow for the same reason (see `flies`).
+   * ⚠️ THE POND'S FAULT WAS THE ART STYLE, WHICH IS A DIFFERENT KIND OF WRONG FROM A GROUND LINE.
+   * `pond` / `lake` / `pond_top` are flat VECTOR cartoons — thick uniform outlines, flat fills, no
+   * brushwork — and every sprite in this app is painted. A painted dragonfly over an outlined river
+   * is a style mismatch, so no placement, shadow or horizon fixes it; a founder simply sees that it
+   * "isn't blending". `sky` and `fishing_bg` are the same family. Check for ink outlines BEFORE
+   * checking anything else about a candidate backdrop.
+   *
+   * These two FLY, so nothing here needs painted ground and they carry no contact shadow (see
+   * `flies`) — a flier touches nothing. A flower garden is where a dragonfly and a butterfly
+   * actually are, which the pond only half was.
+   *
+   * The three scenes are MarketDay's Garden, shared deliberately — founder's call, and the same
+   * trade already made for the forests SeesawPark and MarketDay share and the barnyard this
+   * chapter shares with MarketDay's farm. Those are the only painted flower scenes in the library,
+   * and a row of butterflies drifting across a lawn cannot be mistaken for a grid of bee patches.
    */
-  { id: 'pond',
+  { id: 'garden',
     bgs: [
-      { grad: 'linear-gradient(#cfe9f7 0%, #bfe3ee 55%, #8fc9dd 100%)', img: '/assets/backgrounds/pond.jpeg' },
-      { grad: 'linear-gradient(#d3ecf6 0%, #c2e6f0 55%, #93cbe0 100%)', img: '/assets/backgrounds/lake.jpeg' },
-      { grad: 'linear-gradient(#d6edf7 0%, #c6e8f2 55%, #98cfe2 100%)', img: '/assets/backgrounds/pond_top.jpeg' },
+      { grad: 'linear-gradient(#cfe9f7 0%, #dcecc8 52%, #b9d894 100%)', img: '/assets/backgrounds/garden.png' },
+      { grad: 'linear-gradient(#d3ecf6 0%, #dfeeca 52%, #bcda98 100%)', img: '/assets/backgrounds/garden_meadow.png' },
+      { grad: 'linear-gradient(#d6edf7 0%, #dcecc8 55%, #bcd894 100%)', img: '/assets/backgrounds/garden_fence.png' },
     ],
     ground: 64,
-    items: [IT('dragonfly', 'dragonfly', 'dragonflies', false, true), IT('butterfly', 'butterfly', 'butterflies', false, true)],
+    // `flies` is per CREATURE, not per setting: a dragonfly, a butterfly and a bee hover and so carry
+    // no contact shadow, while a ladybug walks the flowerbed on its legs and needs one. The garden
+    // has painted grass under all four, so the walker is on the ground and the fliers are above it.
+    items: [IT('dragonfly', 'dragonfly', 'dragonflies', false, true), IT('butterfly', 'butterfly', 'butterflies', false, true),
+      IT('bee', 'bee', 'bees', false, true), IT('ladybug', 'ladybug', 'ladybugs')],
     friend: 'Bo', join: 'meets', leave: 'flutter away',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🪷' } },
+    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌼' } },
 ]
 const INTRO = "Milo has a story for you! Listen, watch it happen, then tap the number that answers it. Ready? First, let's hear one together!"
 /** Every backdrop in the chapter, so one <Background> can crossfade between any two of them. */
 const ALL_BGS = SETTINGS.flatMap(w => w.bgs)
 
+/** How many demo beats the chapter opens with. The guided round follows, then the scored rounds. */
+export const DEMO_N = 3
+/** Scored rounds — must match `rounds` on the beat below. */
+export const SCORED_N = 10
+
 /**
- * The run: one item+setting pair per round, INTERLEAVED across the settings rather than grouped, so
- * consecutive rounds change place as well as object. Ten pairs against ten rounds means a full run
- * never repeats one. Each pair also fixes its own backdrop, so a setting with item-specific scenes
- * can never show the wrong object.
+ * THE RUN: one item+setting pair per QUESTION, covering the WHOLE chapter — the demo beats first,
+ * then the guided round, then every scored round — INTERLEAVED across the settings so consecutive
+ * questions change place as well as object.
+ *
+ * ⚠️ NO CREATURE IS EVER SHOWN TWICE IN A RUN, and that is what the length is for. The plan used to
+ * hold 8 pairs and be read as `PLAN[round % PLAN.length]`, so rounds 9 and 10 wrapped back onto the
+ * fish and the duck the chapter had already opened with — and the demo and guided round drew from
+ * `items[0]`/`items[1]` separately, which are the same two again. Meanwhile half the drawn cycles in
+ * sheets.ts had no chapter using them at all. The cast is now `DEMO_N + 1 + SCORED_N` deep and every
+ * index is read straight, never modulo, so a repeat is impossible rather than unlikely.
+ *
+ * Each pair also fixes its own backdrop, so a setting with item-specific scenes can never show the
+ * wrong object.
  */
 const PLAN: { w: SpWorld; item: Item; bg: number }[] = (() => {
   const out: { w: SpWorld; item: Item; bg: number }[] = []
@@ -146,6 +178,16 @@ const PLAN: { w: SpWorld; item: Item; bg: number }[] = (() => {
     for (const w of SETTINGS) if (i < w.items.length) out.push({ w, item: w.items[i], bg: i % w.bgs.length })
   return out
 })()
+/**
+ * THE RUN, as the ONE sequence both the chapter and its gate read: the demo beats, then the guided
+ * round, then the scored rounds, one entry per question. Exported because a gate that re-derives
+ * this order can agree with its own copy while the screen repeats a creature — the same trap that
+ * let chapter 4's geometry sweep pass while the layout was wrong. `scoredSlot` is the only way the
+ * scored rounds reach it, so mutating the index is a thing the gate can actually catch.
+ */
+export const RUN = PLAN.slice(0, DEMO_N + 1 + SCORED_N)
+export const scoredSlot = (round: number): { w: SpWorld; item: Item; bg: number } =>
+  RUN[DEMO_N + 1 + round] ?? PLAN[round % PLAN.length]
 
 type Op = 'add' | 'sub' | 'compare'
 interface SpRound { w: SpWorld; bg: number; item: Item; op: Op; a: number; b: number; answer: number }
@@ -168,7 +210,10 @@ function buildChoices(answer: number): number[] {
 
 // Numbers stay small enough to SHOW the objects; difficulty mixes in more operations + bigger totals.
 function makeStoryRound(d: 1 | 2 | 3, round: number): SpRound {
-  const { w, item, bg } = PLAN[round % PLAN.length]
+  // The scored rounds start AFTER the demo beats and the guided round have each taken a creature,
+  // so the child never meets one twice. `%` is a backstop only — the plan is built long enough that
+  // it can never fire, and the gate asserts exactly that.
+  const { w, item, bg } = PLAN[(DEMO_N + 1 + round) % PLAN.length]
   const ops: Op[] = d === 1 ? ['add', 'sub'] : d === 2 ? ['add', 'sub', 'sub'] : ['add', 'sub', 'compare', 'compare']
   const op = pick(ops)
   let a: number, b: number, answer: number
@@ -196,8 +241,9 @@ const boxLabel = (op: Op) => op === 'add' ? 'ALTOGETHER' : op === 'sub' ? 'LEFT'
 
 // Stagger between one mover and the next, so a group files in rather than swarming.
 const ARRIVE_GAP = 380
-// The tighter stagger for a group STEPPING into place (see storyLayout's stepDist) — a short move
-// deserves a short queue, or the opening takes longer than the sum it is setting up.
+// The tighter stagger for the group that is already Milo's. It walks the same distance as the
+// joiners, so the queue is what keeps the opening from outlasting the sum it is setting up: they
+// file in together rather than one behind the other across the whole width.
 const STEP_GAP = 180
 
 /**
@@ -234,16 +280,7 @@ function storyLayout(vw: number, vh: number, op: Op, a: number, b: number, itemI
   // clips it, so nothing is ever seen materialising in mid-air.
   const dist = Math.round(vw * 0.9)
   const { ms } = inFlowJourney(itemImg, size, dist)
-  // ⚠️ THE GROUP THAT IS ALREADY THERE STEPS IN — it does not pop, and it does not come from
-  // off-frame either. It used to scale-pop one at a time, which is the Orchard/LilyPond fault
-  // PlayTime was built to delete in the 3–5 band: a creature does not materialise. But giving it
-  // the off-frame distance is wrong the other way — at 0.9 × the width every one of them clamps to
-  // TRAVEL_MAX and the legs whirl at ~4× to cover it, for a group that is not the event. So it is
-  // the same journey machinery over a SHORT distance: 1.8 body-heights at the creature's own gait,
-  // no clamp, one cycle still carrying one stride.
-  const stepDist = Math.round(size * 1.8)
-  const { ms: stepMs } = inFlowJourney(itemImg, size, stepDist)
-  return { short, two, size, dist, ms, stepDist, stepMs }
+  return { short, two, size, dist, ms }
 }
 
 // ─── Background — crossfades between ANY two backdrops in the chapter, since the setting now
@@ -325,7 +362,7 @@ function GroundedItem({ item, size, i, lit, arriving, leaving, delayMs, dist }: 
       transition: 'transform .45s cubic-bezier(.34,1.56,.64,1), filter .2s ease' }}>
       <Arrive dist={travels ? dist : 0} ms={travels ? journey.ms : 0} delayMs={delayMs} leave={leaving}>
         {moving => (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center',
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center',
             // Only the ones that stay put still pop in — the movers walk in instead, which is
             // the point. A pop on top of a journey would be two arrivals for one event.
             animation: travels ? 'none' : 'st_pop .3s ease both' }}>
@@ -333,9 +370,16 @@ function GroundedItem({ item, size, i, lit, arriving, leaving, delayMs, dist }: 
               cycleScale={journey.cycleScale} delayMs={delayMs} />
             {/* A contact shadow is a CONTACT cue — a flier touches nothing, and giving one a shadow
                 on the water is the same "doesn't belong" fault as denying one to a creature that
-                really is standing on the grass. The lane is kept either way so the row does not
-                shift when the cast changes. */}
-            <div aria-hidden style={{ width: shW, height: Math.round(shW * 0.3), marginTop: '0.3vmin',
+                really is standing on the grass.
+                ⚠️ OUT OF FLOW, centred on the feet. In flow it added its own height to the column,
+                and the group is bottom-anchored on the ground line — so the line was where the
+                SHADOW ended and every creature stood a whole shadow above it. Measured at 1024×620:
+                ground 384.4px, duck feet 363.5px, i.e. 21px of clear air under a 93px duck, which
+                is exactly what a founder sees and calls floating. Same fault as the 28px gap
+                between the two ends of MeasureIt's run: a decoration must never add layout height
+                to the thing it decorates. */}
+            <div aria-hidden style={{ position: 'absolute', left: '50%', bottom: 0, width: shW, height: Math.round(shW * 0.3),
+              transform: 'translate(-50%, 50%)',
               background: item.flies ? 'none'
                 : `radial-gradient(ellipse at center, rgba(38,28,18,${shOp}) 0%, rgba(38,28,18,0) 72%)`,
               pointerEvents: 'none' }} />
@@ -423,11 +467,21 @@ function AnswerBox({ label, value, done, show, dark, short, topPct, bottomPx }: 
 interface StageState { aShown: number; bShown: number; showOp: boolean; leaving: boolean; litA: number; litExtra: number; boxValue: number | null; boxDone: boolean; showBox: boolean }
 function Stage({ world, item, op, a, b, s, short, boxBottomPx }: { world: SpWorld; item: Item; op: Op; a: number; b: number; s: StageState; short?: boolean; boxBottomPx?: number }) {
   const { w: vw, h: vh } = useViewport()
-  const { two, size: itemSize, dist, stepDist } = storyLayout(vw, vh, op, a, b, item.img)
+  const { two, size: itemSize, dist } = storyLayout(vw, vh, op, a, b, item.img)
   const dark = world.dark
-  // Every row STEPS in — nothing on this stage is ever seen materialising. `arriveFrom={0}` on the
-  // standing groups is what replaced their one-at-a-time scale-pop.
-  const stepIn = { arriveFrom: 0, arriveDist: -stepDist, arriveGap: STEP_GAP }
+  /**
+   * EVERY ROW WALKS ON FROM OFF-FRAME — nothing on this stage is ever seen materialising, and
+   * nothing takes a token step either. An earlier pass gave the standing group a short 1.8
+   * body-height step to spare it the clamp, and a founder read that exactly as it is: "random
+   * appearing and little movement". A move too short to leave the picture is not an arrival.
+   *
+   * The distance is the joiners' own `dist`, negated: they own the right-hand end of the row and
+   * come in from off-frame right, so the group that is already there comes in from off-frame LEFT.
+   * It has to be the FULL width — the rightmost member of a centred take-away row sits near 72%,
+   * so anything shorter starts it inside the frame and it pops after all. `STEP_GAP` keeps the
+   * stagger tight so a group files in together rather than trailing across the whole opening.
+   */
+  const stepIn = { arriveFrom: 0, arriveDist: -dist, arriveGap: STEP_GAP }
 
   const friendTag = (name: string, emoji: string) => (
     <span style={{ minWidth: 'clamp(48px,9vmin,74px)', textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(13px,2.3vmin,18px)',
@@ -512,7 +566,7 @@ const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boo
     // opened the answer buttons while the take-away was still happening on screen. A group is
     // MOUNTED all at once and the queue lives in each one's own stagger delay, so no timer chain
     // can ever put a creature on screen before it has travelled there.
-    const stepFor = (n: number) => (n > 0 ? (n - 1) * STEP_GAP + L.stepMs : 0)
+    const stepFor = (n: number) => (n > 0 ? (n - 1) * STEP_GAP + L.ms : 0)
     const movers = op === 'compare' ? 0 : b
     const travel = movers ? (movers - 1) * ARRIVE_GAP + L.ms : 0
     let t = 300
@@ -619,7 +673,7 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
      */
     const L = storyLayout(vw, vh, op, a, b, item.img)
     const holdsFor = (n: number) =>
-      Array.from({ length: Math.max(0, Math.ceil(((Math.max(1, n) - 1) * STEP_GAP + L.stepMs) / 950) - 1) })
+      Array.from({ length: Math.max(0, Math.ceil(((Math.max(1, n) - 1) * STEP_GAP + L.ms) / 950) - 1) })
     if (op === 'add') {
       lines.push(`Milo has ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
       holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
@@ -673,7 +727,7 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
 // ─── Value generation ──────────────────────────────────────────────────────────────
 function makeStoryBeat(): Beat<SpRound> {
   return {
-    skillId: 'storyProblems', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'storyProblems', rounds: SCORED_N, reteachAfter: 3, walkEvery: 3,
     make: (d, round = 0) => makeStoryRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.op}|${d.a}|${d.b}`,   // dedupe on the MATH (op + operands), not the rotating scene/item
     // Deliberately EMPTY, so SkillBeat draws no pill of its own: the play surface already renders
@@ -725,12 +779,18 @@ export default function StoryTime({ onFinish, onExit }: {
 
   // One of each kind, each in a DIFFERENT setting — so the first thing a child learns is that the
   // place changes but the rule does not, which is also what the scored rounds then do.
+  //
+  // The creatures come from the SAME plan the scored rounds read, at its first four slots, rather
+  // than being picked out of `items[]` by hand. Picked by hand they were `items[0]` and `items[1]`
+  // — which is exactly where the scored rounds also started, so the chapter opened on a fish and
+  // then served the same fish again as a question. Taking them off the front of the one ordered run
+  // is what makes "no creature twice" true by construction instead of by remembering.
   const DEMO: SpRound[] = [
-    { w: SETTINGS[0], bg: 0, item: SETTINGS[0].items[0], op: 'add', a: 3, b: 2, answer: 5 },
-    { w: SETTINGS[1], bg: 1, item: SETTINGS[1].items[0], op: 'sub', a: 5, b: 2, answer: 3 },
-    { w: SETTINGS[2], bg: 2, item: SETTINGS[2].items[0], op: 'compare', a: 4, b: 2, answer: 2 },
+    { ...RUN[0], op: 'add', a: 3, b: 2, answer: 5 },
+    { ...RUN[1], op: 'sub', a: 5, b: 2, answer: 3 },
+    { ...RUN[2], op: 'compare', a: 4, b: 2, answer: 2 },
   ]
-  const GUIDED: SpRound = { w: SETTINGS[0], bg: 1, item: SETTINGS[0].items[1], op: 'add', a: 2, b: 2, answer: 4 }
+  const GUIDED: SpRound = { ...RUN[DEMO_N], op: 'add', a: 2, b: 2, answer: 4 }
   const shown = phase === 'practice' ? { w: scene, bg } : phase === 'guided' ? GUIDED : DEMO[Math.min(demoIdx, DEMO.length - 1)]
 
   const Banner = (text: string) => (
