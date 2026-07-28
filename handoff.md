@@ -12,7 +12,129 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🦆 **2026-07-27 (LATEST) — THE A2 CHAPTERS STOPPED LOOKING PASTED ON: EVERYTHING NOW ARRIVES ON ITS OWN LEGS, STANDS ON PAINTED GROUND, AND CLUSTERS INSTEAD OF QUEUEING. ⚠️ STILL NOTHING COMMITTED — prod is `main`@`8ccf764` / sw v68; the story batch is 6 modified files + 11 untracked assets.** `tsc` 0 · 142/142 vitest · `next build` · 0 console errors · driven live at 1024×620 and 640×320 in both chapters.
+> 🦢 **2026-07-28 (LATEST) — FOUR FOUNDER CATCHES ON THE A2 CHAPTERS, AND EACH ONE IS THE SAME COMPLAINT A LAYER FURTHER IN: THE THINGS MOVE, BUT THEY STILL DO NOT BELONG. ✅ COMMITTED `7f45814` — NOT pushed, NOT deployed; prod is `main`@`ba8c57e` / sw v69.** `tsc` 0 · **155/155 vitest** (was 142) · `next build` · 0 console errors · driven live at 1024×620.
+>
+> **The asks:** *"the objects which are on left let them come completely from that side not just random
+> apearly and little movement"* → *"the ducks are still floating put them properly on ground"* →
+> *"don't use this background.. its not blending with the animation"* → *"we have enough moving
+> objects so use them all… once it is used in one question don't use that object in the other
+> question in that chapter"*.
+>
+> ## ⓪ FIRST, A CORRECTION TO THIS FILE
+> The 🦆 block below said **"STILL NOTHING COMMITTED — prod is `8ccf764` / sw v68"**. That was stale
+> the moment it was written: the A2 story batch IS committed (`fc93fc2`), the sw bump went with it
+> (`ba8c57e`, v68→v69), `origin/main` matches local, and **prod serves v69**. Verified by `git
+> rev-parse` and `curl`ing prod's `sw.js`, not by reading the block. *A status line in this file is a
+> claim like any other — check it before building on it.*
+>
+> ## ① A TOKEN STEP IS NOT AN ARRIVAL — and the previous session's own warning is what caused it
+> The 🦆 block below states the rule *"a standing group must NOT be given the movers' distance"* and
+> settled on **1.8 body-heights** to dodge the `TRAVEL_MAX` clamp. That is the fault the founder then
+> named: **a move too short to leave the picture is not an arrival**, so it reads as popping with a
+> twitch. The group now travels the joiners' own `dist`, negated — they own the right-hand end of the
+> row and come from off-frame RIGHT, so the standing group comes from off-frame **LEFT**.
+> • **It has to be the FULL width.** The rightmost member of a centred take-away row sits near 72%,
+>   so anything shorter starts it inside the frame and it pops after all. `STEP_GAP` (180ms) keeps
+>   the queue tight so a group files in together instead of trailing across the whole opening.
+> • The clamp cost is real and accepted: at 0.9 × width the cycle scales ~3×. **The joiners have
+>   always done exactly this and nobody has complained about them** — so the honest answer was
+>   symmetry, not a second special case.
+> Measured: `translateX(-922px)` with `transition: none` (a placement is not a journey) → `0px` over
+> `3600ms linear`, legs `running` throughout, `paused` on arrival.
+>
+> ## ② THE DUCKS WERE FLOATING BY 21px, AND IT WAS THE SHADOW — the MeasureIt bug, recurring
+> The contact shadow sat **in flow** under the sprite, and the group is bottom-anchored on the ground
+> line — so the line was where the **SHADOW** ended and every creature stood a whole shadow above the
+> painted grass. Measured at 1024×620: ground **384.4px**, duck feet **363.5px** — 21px of clear air
+> under a 93px duck, i.e. 23% of its own height. Out of flow and centred on the feet: **2px**.
+> • **The general rule was ALREADY in the craft doc** (from MeasureIt's 28px measuring run) and it
+>   still shipped here, so it now carries the recurrence: ⚠️ **this comes back the moment a group is
+>   bottom-anchored on a ground line, and the number to check is the SPRITE's own
+>   `getBoundingClientRect().bottom` against the line — never the container's, because the container
+>   is exactly the thing lying to you.**
+> • MarketDay was checked and is CLEAN — its pens already position their shadow out of flow, citing
+>   the MeasureIt lesson in a comment. So this was StoryTime only, not a shared-engine fault.
+>
+> ## ③ THE BACKDROP WAS THE WRONG ART STYLE, WHICH IS A DIFFERENT KIND OF WRONG
+> `pond` · `lake` · `pond_top` are **flat VECTOR cartoons** — thick uniform outlines, flat fills, no
+> brushwork — under painted sprites. **No ground line, shadow or placement fixes that**, which is why
+> the previous session's careful pond reasoning did not save it. `sky` and `fishing_bg` are the same
+> family; `colour_garden` is the colouring chapter's line art.
+> • **StoryTime and SeesawPark shipped the IDENTICAL three files**, so both were swapped together.
+> • **StoryTime's fliers → MarketDay's painted garden** (`garden` · `garden_meadow` · `garden_fence`)
+>   — founder's call when given the options, the same deliberate overlap as the shared forests.
+> • **SeesawPark keeps a pond, but a painted one** — `farm_pond` (a real lily pond, which is what the
+>   flat one was pretending to be) · `underwater` · `beach_sea`. It could NOT follow StoryTime into
+>   the garden: its cast is frog · fish · turtle, and **a fish on a lawn is a worse answer than a
+>   mismatched style.** The founder's "fix both" did not cover that; it needed deciding, not applying.
+> • Rule now in the craft doc: **check a candidate backdrop for ink outlines BEFORE anything else.**
+>
+> ## ④ A CREATURE WAS SHOWN TWICE IN A RUN, AND A THIRD OF THE ART WAS IDLE
+> Broken **two ways at once**, in all three chapters:
+> • the plan held fewer pairs than the run and was read as `PLAN[round % PLAN.length]`, so the last
+>   scored rounds wrapped onto the creature the chapter opened with — **SeesawPark's own comment
+>   admitted this** (*"only the last round repeats one"*) and it was left in; and
+> • the demo beats and the guided round picked out of `items[]` **by hand**, landing on the very
+>   entries the scored rounds then served again. So the fish in demo 1 was also question 1.
+> Meanwhile **12 of the 18 drawn cycles** in `sheets.ts` were carrying all three chapters.
+> Each chapter now builds **ONE ordered run** covering demo → guided → scored, **indexed straight and
+> never modulo**, with the demo and guided round taking the first slots off that same array. Casts
+> grown to cover it; **all 18 cycles are now in use.**
+>
+> | | added | questions | distinct |
+> |---|---|---|---|
+> | StoryTime | turtle→reef · squirrel, lamb, chick, duckling→park · bee, ladybug→flowers | 14 | **14** |
+> | MarketDay | duck, rabbit→farm · butterfly, dragonfly→garden · firefly→woods | 13 | **13** |
+> | SeesawPark | chick, lamb→playground · eagle, bird→forest · crab, duckling→pond | 14 | **14** |
+>
+> • ⚠️ **SeesawPark's FROG was dropped, not kept.** Its sheet is a HOP — coiled 9 of 12 frames — and
+>   these animals walk onto a pan at constant speed, so it was **sliding along the ground while
+>   crouched**. That is the craft doc's own rule, live in production. HopAlong (A3) is its home.
+> • **Growing the cast is the fix, not shrinking the run.** Check what is idle before reaching for
+>   new art — this needed zero credits.
+>
+> ## ⑤ THE GATE CAUGHT A HOLE IN ITSELF, AND IT IS THE INTERESTING PART
+> [chapterCastDistinct.test.ts](src/__tests__/chapterCastDistinct.test.ts) (13 tests) passed on the
+> first run, so it was mutation-tested — and **the first version read the plan ARRAY**, which meant
+> restoring the old `PLAN[round % …]` walked straight through it: *the plan stays distinct while the
+> screen repeats.* ⚠️ **A gate that reads a chapter's DATA cannot see how the chapter INDEXES it.**
+> Fixed by exporting the single accessor the scored rounds call (`scoredSlot`) and driving the gate
+> through it. **5/5 planted regressions now fail it** — wrapped index, duplicated cast entry, cast one
+> short, an item with no walk sheet, two consecutive questions in one setting.
+>
+> ## ⑥ HOW IT WAS VERIFIED
+> Geometry by `getBoundingClientRect` (the pane freezes CSS transitions, so pixels prove nothing);
+> travel by reading the transform TARGET plus `animationPlayState`. Live sequence driven end-to-end:
+> **fish → duck → dragonfly → crab → rabbit → butterfly → shark → squirrel → bee**, matching the
+> derived plan exactly, **zero duplicates, zero broken sprites**, 0 console errors.
+>
+> ## ▶ OPEN
+> 1. **`7f45814` is COMMITTED but NOT pushed and NOT deployed.** Deploying needs `public/sw.js`
+>    v69 → v70 as its own commit. Leave `scripts/.voice-*.json` untracked.
+> 2. ⚠️ **THE FLAT-VECTOR BACKDROPS ARE STILL LIVE IN FOUR OTHER CHAPTERS** — `BlockYard`,
+>    `NestTree`, `MeasureIt` and `HopAlong` use `pond` / `lake` / `pond_top` / `sky` / `fishing_bg`.
+>    Same style fault, unflagged by the founder so far, and a one-line swap each once a painted
+>    replacement is chosen per scene.
+> 3. **StoryTime's last two rounds are both Green Park** (chick, duckling) — the reef holds only four
+>    water creatures, so the interleave runs out. Settings still rotate for the first 12 of 14. Fix
+>    is a fourth setting, not a longer reef.
+> 4. **Next in the order: A3 — HopAlong** (`milo_hop` + a discrete `hop(from, to)`), which now has a
+>    second consumer waiting: SeesawPark's frog. Its planned "Farmyard" world clashes with MarketDay's
+>    Farm and must be re-picked. Then **B** — one bundling engine for placeValue + add/subTo100.
+> 5. **The `fps` cadences are STILL unverified by eye**, and there are now SIX more of them on screen
+>    (turtle, squirrel, lamb, chick, duckling, bee in StoryTime alone). One number each in
+>    `sheets.ts`; still the cheapest remaining win.
+> 6. **StoryTime's compare rows still label Milo and his friend with 🦊/🧒 emoji** in the painted
+>    world, which the craft doc forbids. Untouched again this session.
+> 7. **524.7 Higgsfield credits expire ~2026-07-30 (two days)** — confirmed live, not remembered.
+>    They were offered for painted lily-pond scenes and the founder chose the free option, so they
+>    now have **no named consumer at all**.
+> 8. **Nobody has watched a child play any of it**, and all four faults this session were found by
+>    the founder looking at a screenshot. None would have failed a gate.
+>
+> _(the 🦆 block below is the previous session — the A2 rebuild it corrects.)_
+
+> 🦆 **2026-07-27 — THE A2 CHAPTERS STOPPED LOOKING PASTED ON: EVERYTHING NOW ARRIVES ON ITS OWN LEGS, STANDS ON PAINTED GROUND, AND CLUSTERS INSTEAD OF QUEUEING. ✅ SINCE SHIPPED as `fc93fc2` + `ba8c57e` (sw v68→v69) — the "nothing committed" line this block used to carry was stale; see ⓪ above.** `tsc` 0 · 142/142 vitest · `next build` · 0 console errors · driven live at 1024×620 and 640×320 in both chapters.
 >
 > **The asks, in order:** *"in the chapters of A2 i want the things comes with animation not a random
 > apearing and proper movement which we have in the 3-5 age group"* → *"the things are not looking
@@ -37,6 +159,11 @@
 > • ⚠️ **A standing group must NOT be given the movers' distance.** At ~0.9 × the width every one of
 >   them clamps to `TRAVEL_MAX` and the legs whirl at ~4× to cover it, for a group that is not the
 >   event. Short distance, same machinery, no clamp.
+> • 🚫 **OVERTURNED THE NEXT DAY — see §① of the 🦢 block above.** The founder read the 1.8
+>   body-height step as *"random appearing and little movement"*, and he is right: **a move too short
+>   to leave the picture is not an arrival.** The group now travels the full off-frame distance,
+>   clamp and all, exactly like the joiners that nobody has ever complained about. Sparing it the
+>   clamp was optimising the wrong thing.
 >
 > ## ② TWO BUGS IN `Arrive` THAT THE TRACE FOUND, BOTH FIXED IN THE SHARED ENGINE
 > • A **transition was live during phase 0**, so anything switching travel on later (a group that
@@ -74,7 +201,9 @@
 >
 > ## ⑤ THE DUCKS: THE FIX WAS THE BACKDROP, NOT THE NUMBER
 > A walking cast on a flat plane of open sea cannot be rescued by a ground line — there is nothing
-> painted to stand on. **🏖️ Sandy Shore → 🌳 Green Park**: `garden_park` · `town_garden` ·
+> painted to stand on. *(🚫 And the ground line alone did not finish the job: the ducks were still
+> 21px above it, because the contact shadow sat in flow and the group anchored on the SHADOW's
+> bottom. See §② of the 🦢 block.)* **🏖️ Sandy Shore → 🌳 Green Park**: `garden_park` · `town_garden` ·
 > `farm_barnyard`, cast **duck · turtle · rabbit**, feet at 62%.
 > ⚠️ **`town_park` was tried and pulled, and this is the rule worth carrying:** it looks like grass in
 > a thumbnail, but its grass does not start until ~65% — BELOW the ground line — so the ducks stood on
@@ -85,7 +214,7 @@
 > have grass that high. Pens of chicks in a fenced yard and a row of ducks walking across it cannot be
 > confused; same call already made for the forest scenes SeesawPark and MarketDay share.
 >
-> ## ⑥ THE ASTRONAUT IS GONE — 🌙 MOON BASE → 🪷 LILY POND
+> ## ⑥ THE ASTRONAUT IS GONE — 🌙 MOON BASE → 🪷 LILY POND  *(🚫 the pond itself lasted one day — see §③ of the 🦢 block: its three backdrops were flat VECTOR art under painted sprites, so the setting is now MarketDay's painted garden. The flying cast and the no-shadow reasoning below both survive.)*
 > Founder's call. The moon cast were the only creatures in the chapter that could not belong anywhere
 > a child has been. Replaced with **dragonfly · butterfly** on `pond` · `lake` · `pond_top`, and the
 > choice of a FLYING cast is the point: hovering over water is what they actually do, so nothing there
@@ -111,10 +240,8 @@
 > 81.7%. At 640×320: feet 52.1% → equation 60.3%, no page scroll.
 >
 > ## ▶ OPEN
-> 1. **STILL NOTHING COMMITTED**, and the tree is now: `StoryTime.tsx` · `MarketDay.tsx` ·
->    `critters.tsx` · `SeesawPark.tsx` · `canvas/sheets.ts` · `chapter-craft.md` · this file, plus
->    untracked `docs/story-6-8-rethink.md` and **10 new PNGs**. Deploying needs `public/sw.js`
->    v68 → v69. Leave `scripts/.voice-*.json` out.
+> 1. ✅ **SHIPPED after all** — `fc93fc2` (the batch) + `ba8c57e` (sw v68→v69), pushed, prod serving
+>    v69. This item's "STILL NOTHING COMMITTED" was stale when written.
 > 2. **Next in the order: A3 — HopAlong** (`milo_hop` + a discrete `hop(from, to)`). Its planned
 >    "Farmyard" world clashes with MarketDay's Farm and must be re-picked. Then **B** — one bundling
 >    engine serving placeValue + additionTo100 + subtractionTo100.
@@ -355,6 +482,12 @@
 >    library have grass above the ground line). Both left on purpose — a balance scale, a grid of
 >    nests and a row of walking ducks cannot be mistaken for one another. **HopAlong's planned
 >    "Farmyard" world clashes with MarketDay's Farm** and should be re-picked when A3 lands.
+>    • 🚫 **SUPERSEDED 2026-07-28 — THE CURRENT TRUTH IS THE TABLE IN §④ OF THE 🦢 BLOCK.** Story
+>      problems' third world is **🌼 Flower Beds**, not Lily Pond, and it is a **THIRD** deliberate
+>      overlap: it shares MarketDay's Garden backdrops (founder's call — the only painted flower
+>      scenes in the library). SeesawPark's pond moved to `farm_pond` · `underwater` · `beach_sea`.
+>      And every cast listed anywhere in this file is now LARGER: each chapter carries one creature
+>      per question so none repeats, which is what the source of truth has to state from now on.
 > 5. **The `fps` cadences are still unverified by eye** — and there are now MORE of them on screen,
 >    since chick · duckling · lamb · bee · dragonfly · alien · astronaut all went live this session
 >    with the numbers that were tuned by ear. That is the cheapest remaining win: watch one run and
@@ -2616,7 +2749,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-27 (LATEST — see the top 🦆 block. **The A2 chapters stopped looking pasted on. ⚠️ Still nothing committed — prod is `main`@`8ccf764` / sw v68.** Three founder asks that are one complaint arriving in three passes, each a layer deeper: the arithmetic MOVES but the things doing it do not BELONG. (1) **Nothing materialises any more, including the things already there** — the previous session gave the EVENT a journey and left the rest popping, and MarketDay's creatures never moved at all: the only thing that travelled was the TRAY, lowered onto the counter with them riding inside it. **A creature that arrives as cargo has not arrived.** (2) **The placement was the real fault** — the group was anchored by its CENTRE at 40% of the height, which on every one of these backdrops is above the painted ground, which is why StoryTime drew a *wooden plank* across the frame to give its creatures a surface. **When you find yourself drawing a floor, the group is in the wrong place.** Horizons measured, both chapters anchored by the FEET, plank deleted, answer furniture shrunk to give the band back. (3) **The ducks needed a different backdrop, not a different number** — a walking cast on a flat plane of open sea cannot be rescued by a ground line. ⚠️ And `town_park` was tried and pulled: it looks like grass in a thumbnail but its grass starts BELOW the ground line, so **sample the pixel where the feet actually land** — `(207,242,217)` haze against `(196,223,135)` real grass. The moon base is gone at the founder's request → 🪷 Lily Pond with dragonfly · butterfly, a deliberately FLYING cast so hovering is correct and no contact shadow is drawn; that re-orphans the astronaut and alien cycles. Two bugs fixed in the shared `Arrive`: a transition live during a placement, and a phase reset in an effect that painted one frame lurching toward the exit. One real break found: compare could not fit 640×320 and now lays side by side. `tsc` 0 · 142/142 vitest · `next build` · 0 console errors, verified with a `MutationObserver` because the pane freezes CSS transitions. ▶ Open: still nothing committed (deploy needs sw v68 → v69); next is A3 HopAlong, whose "Farmyard" world clashes with MarketDay's Farm; the `fps` cadences are still unverified by eye; StoryTime's compare rows still put 🦊/🧒 emoji in the painted world. _(prior footer follows.)_)_
+_Last updated: 2026-07-28 (LATEST — see the top 🦢 block. **Four founder catches on the A2 chapters, each the same complaint a layer further in: the things move, but they still do not belong. ✅ COMMITTED `7f45814` — NOT pushed, NOT deployed; prod is `main`@`ba8c57e` / sw v69.** (0) **This file was stale** — the block below claimed nothing was committed and prod was v68; the A2 batch had in fact shipped. *Check a status line before building on it.* (1) **A token step is not an arrival.** The previous session deliberately gave the standing group 1.8 body-heights to dodge the `TRAVEL_MAX` clamp, and the founder read exactly that as "random appearing and little movement" — **a move too short to leave the picture is not an arrival**. It now travels the joiners' own full off-frame distance, clamp and all, because the joiners have always done that and nobody has complained about them. (2) **The ducks were floating by 21px and it was the SHADOW** — in flow, so the bottom-anchored group sat on the shadow's bottom rather than the feet (ground 384.4px, feet 363.5px, now 2px). The general rule was already in the craft doc from MeasureIt and shipped again anyway, so it now carries the recurrence: **measure the SPRITE's own bottom against the ground line, never the container's.** (3) **The pond backdrop was the wrong ART STYLE** — `pond`/`lake`/`pond_top` are flat VECTOR cartoons under painted sprites, which no placement can fix. StoryTime's fliers moved to MarketDay's painted garden (founder's call); SeesawPark kept a pond but a painted one, because its cast is frog·fish·turtle and **a fish on a lawn is a worse answer than a mismatched style**. (4) **A creature was shown twice per run and a third of the art was idle** — the plan was shorter than the run and read modulo, AND the demo/guided picked by hand onto the same entries. Each chapter now builds ONE ordered run indexed straight; casts grown; **all 18 drawn cycles now in use, up from 12**; SeesawPark's frog DROPPED because a hop cycle slides while crouched. ⚠️ **The new gate caught a hole in itself**: reading the plan ARRAY let a restored `PLAN[round % …]` walk straight through, so it now goes through the same exported accessor the component calls — **a gate that reads a chapter's DATA cannot see how the chapter INDEXES it**. 5/5 mutations fail it. `tsc` 0 · 155/155 vitest · `next build` · 0 console errors; live run fish → duck → dragonfly → crab → rabbit → butterfly → shark → squirrel → bee, zero duplicates. ▶ Open: not pushed (needs sw v69 → v70); **the same flat-vector backdrops are still live in BlockYard, NestTree, MeasureIt and HopAlong**; `fps` cadences still unverified by eye with six more movers on screen; 524.7 Higgsfield credits expire ~2026-07-30 with no consumer left. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-27 (the 🦆 block. **The A2 chapters stopped looking pasted on. ✅ Since shipped as `fc93fc2` + `ba8c57e` (sw v69).** Three founder asks that are one complaint arriving in three passes, each a layer deeper: the arithmetic MOVES but the things doing it do not BELONG. (1) **Nothing materialises any more, including the things already there** — the previous session gave the EVENT a journey and left the rest popping, and MarketDay's creatures never moved at all: the only thing that travelled was the TRAY, lowered onto the counter with them riding inside it. **A creature that arrives as cargo has not arrived.** (2) **The placement was the real fault** — the group was anchored by its CENTRE at 40% of the height, which on every one of these backdrops is above the painted ground, which is why StoryTime drew a *wooden plank* across the frame to give its creatures a surface. **When you find yourself drawing a floor, the group is in the wrong place.** Horizons measured, both chapters anchored by the FEET, plank deleted, answer furniture shrunk to give the band back. (3) **The ducks needed a different backdrop, not a different number** — a walking cast on a flat plane of open sea cannot be rescued by a ground line. ⚠️ And `town_park` was tried and pulled: it looks like grass in a thumbnail but its grass starts BELOW the ground line, so **sample the pixel where the feet actually land** — `(207,242,217)` haze against `(196,223,135)` real grass. The moon base is gone at the founder's request → 🪷 Lily Pond with dragonfly · butterfly, a deliberately FLYING cast so hovering is correct and no contact shadow is drawn; that re-orphans the astronaut and alien cycles. Two bugs fixed in the shared `Arrive`: a transition live during a placement, and a phase reset in an effect that painted one frame lurching toward the exit. One real break found: compare could not fit 640×320 and now lays side by side. `tsc` 0 · 142/142 vitest · `next build` · 0 console errors, verified with a `MutationObserver` because the pane freezes CSS transitions. ▶ Open: still nothing committed (deploy needs sw v68 → v69); next is A3 HopAlong, whose "Farmyard" world clashes with MarketDay's Farm; the `fps` cadences are still unverified by eye; StoryTime's compare rows still put 🦊/🧒 emoji in the painted world. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-27 (see the 🛟 block. **The support + per-user error layer, SHIPPED in four commits — `3492abe` (code, sw v68) · `a32c174` · `5ddf250` (triage, templates, contact log) · `8ccf764` (payments section); prod sw v68, smoke green.** It answers a founder question rather than a bug: *how does a company give support, and how do you manage an error for a SPECIFIC user*, asked by someone who does not read code. The diagnosis is the useful part: **this app is local-first, so the failures a parent actually writes in about leave no server-side trace at all** — a wedged offline queue, a stale service-worker shell, IndexedDB blocked in private browsing. The only time this repo ever diagnosed one (the Safari `upgrade-insecure-requests` boot failure) it was by hand-adding beacons to the service worker, which does not repeat on a stranger's iPad. So the user now carries the evidence to us on purpose: a "Need help?" panel attaches a device snapshot — sw version, kv mode, queue depths, recent errors — to a support email. Three things that were previously unobservable are now visible: **`kv.mode()`** (the IndexedDB fallback was module-private, i.e. the most likely cause of "her progress vanished" could not be seen), the **sw VERSION reply** (stale-shell detection), and **`learnerId` on every client error** (a log stops being an anonymous pile of stack traces). Plus capture of `window.error` and `unhandledrejection` — the classes the React ErrorBoundary never sees, and the class that Safari failure actually was. A **daily cloud health check** now curls prod and reads Vercel + Supabase, instructed to answer in ONE line when healthy because a daily wall of green trains you to stop reading it. **Sentry deliberately not added** — Vercel already captures both seams and is queryable; a vendor at ~0 users is cost with no consumer, and the identity work makes adopting it later a config change. ⚠️ **The A2 story batch is still uncommitted and was deliberately left that way** — this shipped as 9 files with zero overlap. ▶ Open: the support promise *"we reply within 2 working days"* is now ON SCREEN against an inbox nobody checks daily yet; **COPPA parental review/deletion still has no defined path**; and the daily check's own report has never been read by a human. _(prior footer follows.)_)_
 
