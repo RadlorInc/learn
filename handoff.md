@@ -12,7 +12,228 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🦢 **2026-07-28 (LATEST) — FOUR FOUNDER CATCHES ON THE A2 CHAPTERS, AND EACH ONE IS THE SAME COMPLAINT A LAYER FURTHER IN: THE THINGS MOVE, BUT THEY STILL DO NOT BELONG. ✅ COMMITTED `7f45814` — NOT pushed, NOT deployed; prod is `main`@`ba8c57e` / sw v69.** `tsc` 0 · **155/155 vitest** (was 142) · `next build` · 0 console errors · driven live at 1024×620.
+> 🦘 **2026-07-28 (LATEST) — A3 HOPALONG REBUILT, AFTER THE FOUNDER ASKED WHAT THE CHAPTER ACTUALLY TEACHES AND THE ANSWER TURNED OUT TO BE "NOT SKIP COUNTING". ✅ COMMITTED `c8600e0` (+ this handoff, + `sw` v69 → v70) — NOT pushed, NOT deployed; prod is still `main`@`ba8c57e` / sw v69.** `tsc` 0 · **175/175 vitest** (was 155) · `next build` · 0 console errors in a fresh tab · driven live at 1024×620 and 640×320.
+>
+> ⚠️ **`main` IS NOW 5 COMMITS AHEAD OF `origin/main`** — `7f45814` + `76b793a` (the A2 batch from the
+> previous session) and `c8600e0` + the two below from this one. **The sw bump to v70 covers BOTH
+> batches**, so pushing ships the A2 work and this chapter together. Nothing has been pushed, so a
+> deploy is still one `git push` away and entirely reversible until then.
+>
+> **The asks, in order:** *"how you will design A3 so it look more animated and just like we have our recently updated chapters?"* → *"my vision is that it should look proper animation just like we see in the animated videos… what approach you want to take… take it"* → **"i'm not satisfied what we have done now. can you tell me like what we are trying to teach the kid in this skip counting chapter?"** → *"can we rethink this chapter properly so we can do proper video like animation for this"*.
+>
+> **Read them together and the last one is the real one.** The first two asked for better animation and I started building it. The third stopped the work and asked what it was for — and that question invalidated most of the first two.
+>
+> ## ① THE CHAPTER WAS NOT TEACHING SKIP COUNTING, AND ONE TEST SETTLES IT
+> Every question the old generator could produce, at all three difficulties, is a bare arithmetic
+> sequence with a hole — `4 · 6 · 8 · ?` · `40 · ? · 60 · 70` · `15 · 20 · ? · 30 · 35` — solved by
+> adding the step to the number beside it.
+> **DELETE EVERY ANIMAL FROM THE SCREEN AND ALL THIRTY QUESTIONS STILL WORK.** So the grouping — the
+> entire content of skip counting — was never taught or assessed. It measured sequence completion.
+> • The curriculum's own line is *"count by 2s, 5s, 10s **(bridges to multiplication)**"*, and the
+>   bridge is **UNITISING**: five stops being five things and becomes ONE FIVE. The chapter never
+>   asked for it once.
+> • ⚠️ **AND MY OWN REDESIGN DID NOT FIX THIS.** Hiding each running total until Milo landed on it
+>   stops the child reading the answer off the neighbour — i.e. it made cheating harder at a task
+>   that was measuring the wrong thing. That is §0a one layer up: *how should it move* settled
+>   before *what is the child doing*. **Ask what the skill is FOR before designing how it looks.**
+>
+> ## ② ⚠️ THE ART A3 WAS DESIGNED AROUND DID NOT EXIST — `milo_hop.png` WAS A WALK
+> Measured lift **0 in all 12 frames**, height varying under 2%: a second take of `milo_walk.png`.
+> It shipped in `fc93fc2`, was registered under a comment reading *"Milo's HOP, for a chapter where
+> he jumps between places"*, and was named as A3's foundation in BOTH this file and
+> [story-6-8-rethink.md](docs/story-6-8-rethink.md). Its registry key `milo_hop_side.png` pointed at
+> a file **that was not on disk**. Nobody had ever opened it.
+> **The rule, now in the craft doc: a sheet's NAME is a claim, not a fact.** Split the strip, print
+> each cell's alpha bbox — a flat 0 down the lift column means it never leaves the ground. Thirty
+> seconds, and it would have saved a chapter's worth of design.
+>
+> ## ③ A REAL HOP, FOR 15 OF THE CREDITS THAT EXPIRE IN TWO DAYS (524.7 → 509.7)
+> Image-to-video off `milo_side.png` on **magenta** — derived, not recalled (clearance 210 vs green's
+> 173, reproducing the craft doc's recorded numbers). Two variants: **A had more air but the model
+> rotated him to face the camera**; B held the side profile, which is non-negotiable for a character
+> crossing the screen, and its baked drop shadow keyed out because it was magenta-tinted.
+> • **19 CELLS, NOT 12, AND THAT IS THE ANIMATION ANSWER.** A walk is uniform so twelve samples carry
+>   it; a hop's whole character is its UNEVEN timing, and down-sampling averages the holds away.
+>   Cutting the source's own period (found by autocorrelation, +0.893 at lag 19) at its own rate
+>   reproduces the generated animation exactly — anticipation and hang time for free, **no
+>   hand-authored timing chart**. I wrote that chart rule first and threw it away; the work had
+>   already been done upstream.
+> • Measured in the sheet: **7 grounded frames with the body compressing 215px → 177px** (real
+>   anticipation), 3 rising, a **3-frame hang**, 4 descending. Re-cut so the cycle STARTS grounded,
+>   which is what makes the hold a single leading share instead of straddling the loop boundary.
+>
+> ## ④ `hop(from, to)` IN [critters.tsx](src/features/chapters/story/critters.tsx) — THREE THINGS `Critter` CANNOT DO
+> 1. **The horizontal holds through the crouch** and travels only once airborne. Give a hop linear
+>    travel and it slides along the ground while coiled.
+> 2. **The cycle runs the WHOLE time** — the crouch is animation too — so cycle-running and
+>    travelling are *not* the same interval. That is precisely why `Arrive`'s `moving` flag could not
+>    be bent to do this.
+> 3. ⚠️ **THE ARC IS DRAWN INTO THE FRAMES** (Milo 0→47px, 22% of body height; the frog 0→44px, 17%).
+>    Add a CSS arc on top and he rises twice — the shadow-outran-the-feet fault in a new place. My
+>    first sketch had exactly that bug. **Happy consequence: the container never leaves the ground,
+>    so a contact shadow stays put by construction.**
+> Verified live: `0 (paused) → 206.7 → 413.3 → 620 (running) → paused`, three equal jumps, and
+> computed style **delay 0.333s + duration 0.4587s = 792ms = the sheet's own cycle**.
+>
+> ## ⑤ THE CHAPTER: **COUNT THE FAST WAY** — [docs/hopalong-design.md](docs/hopalong-design.md)
+> Milo needs a number of little ones. They are NOT in a countable row — they are in FAMILIES, so
+> counting by ones is unavailable and the only stable thing on screen is the family. He hops to one
+> and it falls in behind him; his sign goes up by the family's SIZE. **There are always spares and
+> nothing says "that's enough"** — deciding it is the skill (HomeTime's rule).
+> **The test from ① now passes the other way: delete the animals and there is no question left.**
+> • **The demo is a joke and the joke is the lesson**: Milo counts one at a time, they wander, he
+>   loses his place (`?` on his sign) — then they group up and he gets there in four hops. It plays
+>   on the SAME surface as the round, so the modal white teaching card is deleted, not restyled.
+> • ⚠️ **"Show the running total" (founder's call) is NOT hot/cold, for one reason: it updates only
+>   AFTER a family lands.** The decision to fetch a fourth family of five is taken while the sign
+>   still reads 15, so it is a prediction and the sign confirms it. **Verified byte-identical Ready
+>   button at total=0 and at total=target** across background, colour, shadow, radius, size and
+>   opacity — chapter 4's green Ready button is the reason that check exists.
+> • Band-wide items now carried: `RotateGate` (early return below every hook) · **no world picker**,
+>   one interleaved 13-slot `RUN` indexed straight · feet on a MEASURED ground line (horizons 51% /
+>   38% / 43%, all sampled green at 64%) · an all-drawn-cycle cast · painted patches not UI panels ·
+>   no emoji. **Zero new art beyond the hop.**
+> • ⚠️ **Mixed group sizes in one round were designed and deliberately NOT built** — summing a
+>   five-family and a ten-family is addition of unequal groups, a different skill in this chapter's
+>   clothes.
+>
+> ## ⑥ THE GATE FOUND TWO FAULTS THE EYE MISSED, AND THE EYE FOUND ONE THE GATE MISSED
+> [hopAlongGeometry.test.ts](src/__tests__/hopAlongGeometry.test.ts), 17 tests, imports the same
+> `fetchLayout` the scene renders from.
+> • **It caught**: a 0.33% Milo/family overlap at group 2 (fixed structurally — **he now lands
+>   BESIDE a family, never on its spot**), and families drawn *touching* at 640×320 (one ending at
+>   305px, the next starting at 306 — six clusters in an unbroken row read as one row, which undoes
+>   counting FAMILIES).
+> • **The screen caught**: Milo rendering at `left:-2px`, half off the frame, because his start was a
+>   flat 5% — less than his own half-width. Now derived; assertion added.
+> • **8/8 planted mutations fail it.** Two smaller lessons banked in the code: a magic `1.24` cluster
+>   multiplier over-estimated width by ~7% (derive it from the same padding/gap `<Family>` lays out
+>   with), and **`Math.round` on a size derived from a MAXIMUM can exceed that maximum** — it cost
+>   exactly the separation gap, 1.4917% against a required 1.5%.
+> • ⚠️ **The question space is now bounded by what fits a 640-wide frame**: group 10 → at most 4
+>   families, group 5 → 6, group 2 → 8. The separation assertion enforces it, so an unfittable pair
+>   fails the gate instead of silently smearing the little ones.
+>
+> ## ⑥a THEN THE FOUNDER PLAYED IT AND FOUND A DEAD END IN ONE GO — two faults, one of them a rule I had quoted earlier the same session
+> He collected **12 when Milo needed 8**, and *"even now i click ready button, nothing is happening"*.
+> • ⚠️ **SPEAKING IS NOT FEEDBACK.** `ready()` at the wrong count called `speak("that's too many")`
+>   and changed **nothing on screen**. Chrome ships no usable local voice on most installs — which
+>   this file has said for months — so it was a dead button. The craft doc's own line is *"a tap that
+>   does nothing at all is the worst outcome there is"*, and I quoted it earlier in this very session
+>   before shipping it. **The general rule is now sharper: a response that exists only as speech is
+>   silence. Read the handler and ask what it does with the sound off.** Everything spoken is now
+>   also written.
+> • ⚠️ **AND THERE WAS NO WAY BACK, so the round was UNWINNABLE.** Take every spare and nothing is
+>   left to tap and the count cannot come down. HomeTime settled this years ago — *"the miscount
+>   repair is a journey too"* — and I did not carry it. Tapping the gathered crowd now sends the last
+>   family **walking home** (`Arrive`, legs running) while Milo hops back, facing the way he goes.
+>   `fetchNext` became one `go(next)` used in both directions, so forward and back are the same
+>   journey by construction.
+> • **The undo affordance is constant, and the stack is deliberate**: only the most recent family can
+>   leave, and it is tappable at every count — one that appears only when the set is wrong would be a
+>   verdict handed over before the commit.
+> • Driven end-to-end afterwards on the founder's exact round: `0→2→4→6→8→10→12`, Ready →
+>   **"That's too many — Milo only needs 8. Tap the ones behind him to send a group back."** on
+>   screen, two taps → `12→10→8` with families walking back onto the meadow, Ready → commits and
+>   advances. Both rules are in the craft doc.
+>
+> ## ⑥b THEN: *"once selected correct let them pass completely from the frame"* — chapter 2's lesson, unlearned
+> The walk-off used a flat `translateX(46vw)`, which clears whoever is furthest RIGHT and strands the
+> rest — **the exact fault chapter 2 shipped and fixed** ("let them pass by fully": its march walked
+> the mother off screen while the last two still stood in frame). Measured on a live round of ten:
+> the tail of the line sat at **19.1%**, so 46vw left it at **65% — the middle of the screen.**
+> • **The distance is now measured from the TAIL** (`L.exitPct`, exported so the gate drives the same
+>   function): 86.7vw on that round, putting the tail at **105.9%**. Everyone clears by construction.
+> • **And the walk-off is a journey, so its duration comes from their own gait** (`inFlowJourney`,
+>   with `cycleScale` passed through) rather than a constant 2200ms — otherwise they skate at
+>   whatever speed the arithmetic happened to produce, and the distance now changes with the count.
+>   **Milo HOPS out**, because that is his gait. The round ends on `exitMs`, not a guessed 1700ms.
+> • Gated, and mutation-tested by restoring the flat offset. **9/9 planted regressions now fail.**
+>
+> ## ⑥c THEN: *"the butterflies are looking like on the ground… object which fly should be at the level of the head of Milo"*
+> ⚠️ **The `flier` flag existed on bee · butterfly · firefly · dragonfly and the renderer NEVER READ
+> IT.** Declared, commented, and dead — so every flier was laid out exactly like a walker, planted in
+> the lawn beside a walking Milo. The four flags agree with `world1.tsx`'s existing `LOCO` table
+> (which also files LADYBUG and ANT as CRAWLERS, so those correctly stay on the grass).
+> • Fliers now hover at `miloPx × 0.52`, derived from Milo's own height so they sit at his head at
+>   every size. Measured live: ground 397, his feet 397, his head 254, the swarm at **288–307**.
+> • Their group mark changed too — **a swarm has nothing to tread**, so the warm patch of trodden
+>   ground with a shadow cast beneath it became a pale haze of light with no shadow.
+> • ⚠️ **AND LIFTING THEM THEN HID THEM, which is the countability rule one layer along.** Head
+>   height is 41% of the frame, and `garden.png` paints its flower bed and fence exactly there — the
+>   butterflies became invisible. Measured pixel variation across the hovering band:
+>   **garden_meadow 22 · garden_park 46 · garden 71**. So **the fix was the CAST, not the lift**:
+>   every flier now lives in the meadow, the only one of the three with open sky at that height, and
+>   the other two settings take ground creatures who stand on the grass below the busy band. New
+>   `airOk` field, measured, with a gate asserting no flier is ever cast against a scene it would
+>   vanish into. Rule in the craft doc beside the "check the pixel where the feet land" one.
+> • **13/13 planted regressions now fail the gate** (20 tests), including a flier cast into the
+>   flower patch and the flag going unread.
+>
+> ## ⑥d THEN: *"the movement of objects behind Milo is just slide, not their movement animation"*
+> ⚠️ **The crowd slid with its feet parked — the engine's cardinal fault, in the one place on screen
+> where a dozen creatures do it at once.** Their `moving` flag was gated on `committed`, so the cycle
+> ran for the final walk-off and NOT while they followed him after every hop. A bare
+> `transition: left` moved them; nothing told the legs.
+> • **And a second one hiding in the same lines: a joining family POPPED into the crowd.** Its
+>   members were simply rendered at their crowd spots when `taken` incremented — the materialising
+>   fault the whole band was rebuilt to delete, sitting inside the chapter that replaced it.
+> • Both fixed by routing the crowd through **`Arrive`**, which exists to run the cycle for exactly
+>   the interval the body is covering ground. Two journeys arrive there: **just joined** (travels
+>   from its family's patch out on the meadow) and **already his** (closes up the distance he just
+>   covered, staggered so the crowd ripples rather than sliding as one board). Applied in the demo
+>   too — it is the first thing a child watches.
+> • Measured live, and this is the shape to look for: `pp → pppp (placed, one pair still out at
+>   +218px) → pprr (the new pair launches, legs RUNNING) → rrrr (all four travelling) → rrpp → pppp`.
+>   **Legs running exactly while covering ground, paused at both ends.**
+> • ⚠️ **The lesson is that `Arrive` existed the whole time and I hand-rolled a `transition: left`
+>   beside it.** The engine's rule is in its own docstring — *"the child is a FUNCTION of whether the
+>   thing is currently moving"* — and reaching past it is how the flag ends up gated on the wrong
+>   thing. Use the shared travel component for anything that travels, including a follow.
+>
+> ## ⑥e THEN: *"in the explanation it uses Milo slide, not the Milo hop"*
+> ⚠️ **The DEMO moved him with `transition: left` and `moving={false}`** — so in the one beat that
+> TEACHES the chapter he slid across the meadow with his feet parked, while the played round three
+> seconds later hopped him properly. **The demo is the first thing a child watches and the only part
+> they might rewatch; it cannot be the part that skates.** He now hops there too.
+> • **And chasing it found a live bug in the PLAYED round: his sign was a SIBLING of the `Hop`**, so
+>   it stayed behind while he flew and snapped to him on landing. That is the shadow-outran-the-feet
+>   rule exactly — two things that must move as one have to BE one element. `Hop` now takes
+>   `children` rendered inside its travelling element (the same slot `Arrive` has for the same
+>   reason), and the sign rides in it. Verified `signInsideHop: true` throughout every flight.
+> • ⚠️ **And a one-frame flash the trace caught**: the demo set its flight in an EFFECT, so React
+>   painted him at the DESTINATION for one frame before the hop pulled him back to where he set off.
+>   Effects run after paint — derived during render instead, which is the note `Arrive` already
+>   carries. Re-measured: **0 destination-flash frames.**
+> • Trace after: `translateX(0px) paused → 290.64px RUNNING → paused` at **806–807ms** per hop
+>   against the sheet's own 792ms cycle, across evenly-spaced families.
+>
+> ## ⑦ THE INSTRUMENT LIED THREE TIMES, ALL KNOWN FAULTS
+> A frozen CSS transition (Milo painted at his old position while the tab is hidden), a **stale
+> console** reporting `CRITTER_CSS is not defined` from the harness-removal window — the chapter ran
+> fine, and a fresh tab showed **zero errors** — and a screenshot omitting a backdrop the DOM
+> reported at `opacity: 1` and fully loaded. Suspect the instrument first; all three are in the doc.
+>
+> ## ▶ OPEN
+> 1. ✅ **COMMITTED — `c8600e0` (the chapter) + this handoff + the sw bump v69 → v70.** ⚠️ **NOT
+>    PUSHED.** `main` is 5 ahead of `origin/main`, so one `git push` deploys BOTH this and the A2
+>    batch (`7f45814`) that had been sitting unpushed since the previous session. Post-deploy, poll
+>    prod's `sw.js` for v70 and smoke the story routes.
+> 2. **The three settings are a THIRD overlap** with MarketDay's Garden and StoryTime's Flower Beds
+>    (founder's call). The library's painted low-horizon scenes are essentially spent — the next
+>    chapter that needs grass has nothing left to take.
+> 3. ⚠️ **THE FLAT-VECTOR BACKDROPS ARE STILL LIVE IN THREE CHAPTERS** — `BlockYard`, `NestTree` and
+>    `MeasureIt` use `pond` / `lake` / `pond_top` / `sky` / `fishing_bg`. HopAlong is off them now.
+> 4. **`hop()` has a second consumer waiting**: SeesawPark's dropped frog, whose sheet is measured
+>    and registered with its `groundShare`. It needs a re-cut to start on a grounded frame first.
+> 5. **509.7 credits still expire ~2026-07-30 (two days)** — 15 spent, no other named consumer.
+> 6. **The `fps` cadences are still unverified by eye**, and Milo's hop at 24fps is one more.
+> 7. **Nobody has watched a child play it**, and the fault that mattered most this session was found
+>    by the founder asking a question, not by any gate.
+>
+> _(the 🦢 block below is the previous session — the A2 catches this builds on.)_
+
+> 🦢 **2026-07-28 — FOUR FOUNDER CATCHES ON THE A2 CHAPTERS, AND EACH ONE IS THE SAME COMPLAINT A LAYER FURTHER IN: THE THINGS MOVE, BUT THEY STILL DO NOT BELONG. ✅ COMMITTED `7f45814` — NOT pushed, NOT deployed; prod is `main`@`ba8c57e` / sw v69.** `tsc` 0 · **155/155 vitest** (was 142) · `next build` · 0 console errors · driven live at 1024×620.
 >
 > **The asks:** *"the objects which are on left let them come completely from that side not just random
 > apearly and little movement"* → *"the ducks are still floating put them properly on ground"* →
@@ -2749,7 +2970,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-28 (LATEST — see the top 🦢 block. **Four founder catches on the A2 chapters, each the same complaint a layer further in: the things move, but they still do not belong. ✅ COMMITTED `7f45814` — NOT pushed, NOT deployed; prod is `main`@`ba8c57e` / sw v69.** (0) **This file was stale** — the block below claimed nothing was committed and prod was v68; the A2 batch had in fact shipped. *Check a status line before building on it.* (1) **A token step is not an arrival.** The previous session deliberately gave the standing group 1.8 body-heights to dodge the `TRAVEL_MAX` clamp, and the founder read exactly that as "random appearing and little movement" — **a move too short to leave the picture is not an arrival**. It now travels the joiners' own full off-frame distance, clamp and all, because the joiners have always done that and nobody has complained about them. (2) **The ducks were floating by 21px and it was the SHADOW** — in flow, so the bottom-anchored group sat on the shadow's bottom rather than the feet (ground 384.4px, feet 363.5px, now 2px). The general rule was already in the craft doc from MeasureIt and shipped again anyway, so it now carries the recurrence: **measure the SPRITE's own bottom against the ground line, never the container's.** (3) **The pond backdrop was the wrong ART STYLE** — `pond`/`lake`/`pond_top` are flat VECTOR cartoons under painted sprites, which no placement can fix. StoryTime's fliers moved to MarketDay's painted garden (founder's call); SeesawPark kept a pond but a painted one, because its cast is frog·fish·turtle and **a fish on a lawn is a worse answer than a mismatched style**. (4) **A creature was shown twice per run and a third of the art was idle** — the plan was shorter than the run and read modulo, AND the demo/guided picked by hand onto the same entries. Each chapter now builds ONE ordered run indexed straight; casts grown; **all 18 drawn cycles now in use, up from 12**; SeesawPark's frog DROPPED because a hop cycle slides while crouched. ⚠️ **The new gate caught a hole in itself**: reading the plan ARRAY let a restored `PLAN[round % …]` walk straight through, so it now goes through the same exported accessor the component calls — **a gate that reads a chapter's DATA cannot see how the chapter INDEXES it**. 5/5 mutations fail it. `tsc` 0 · 155/155 vitest · `next build` · 0 console errors; live run fish → duck → dragonfly → crab → rabbit → butterfly → shark → squirrel → bee, zero duplicates. ▶ Open: not pushed (needs sw v69 → v70); **the same flat-vector backdrops are still live in BlockYard, NestTree, MeasureIt and HopAlong**; `fps` cadences still unverified by eye with six more movers on screen; 524.7 Higgsfield credits expire ~2026-07-30 with no consumer left. _(prior footer follows.)_)_
+_Last updated: 2026-07-28 (LATEST — see the top 🦘 block. **A3 HopAlong rebuilt, after the founder stopped the work and asked what the chapter actually teaches. ✅ COMMITTED `c8600e0` + sw v69 → v70 — NOT pushed; `main` is 5 ahead of origin and one push ships this AND the A2 batch.** The answer was uncomfortable: every question it could generate was a bare arithmetic sequence with a hole, and **deleting every animal from the screen left all thirty of them still solvable** — so it measured sequence completion, not skip counting, whose entire content (unitising: five becomes ONE FIVE) it never asked for once. My own first redesign did not fix that; it made cheating harder at a task that was measuring the wrong thing. Then the art turned out not to exist either: **`milo_hop.png` was a WALK cycle** (lift 0 in all 12 frames) under a hop filename, registered with a comment calling it a hop and named as A3's foundation in two docs, with a registry key pointing at a file not on disk. A real hop was generated for 15 of the expiring credits — **19 cells, not 12, because a hop's character is its uneven timing and down-sampling averages the holds away**; keeping the source's own period reproduces the anticipation and hang time with no hand-authored chart. `hop(from,to)` now lives in critters.tsx and does three things `Critter` cannot — holds the horizontal through the crouch, runs the cycle across the whole move, and supplies only X because **the arc is drawn into the frames**. The chapter is now COUNT THE FAST WAY: families, not a countable row; spares, so stopping is a decision; the demo is a joke about losing count that replaces the modal teaching card. **Then the founder played it and found five more, each a rule already written down that the new code stepped around** — a Ready button that only SPOKE its refusal (silence on any device without a voice), no way back from an overshoot so the round could become unwinnable, a flat walk-off offset that stranded the tail, a `flier` flag declared and never read so butterflies stood in the lawn, and a crowd that slid with its feet parked. All fixed, each with the general rule banked. The gate caught a 0.33% overlap and families drawn touching at 640×320; the screen caught Milo rendering half off the frame; **13 planted mutations fail it**. `tsc` 0 · 175/175 · `next build` · 0 console errors. ▶ Open: **committed but NOT pushed** — `main` is 5 ahead of origin, so one push ships this AND the A2 batch; the three settings are a third overlap and the painted-grass library is spent; flat-vector backdrops still live in BlockYard, NestTree and MeasureIt; 509.7 credits expire in two days. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-28 (the 🦢 block. **Four founder catches on the A2 chapters, each the same complaint a layer further in: the things move, but they still do not belong. ✅ COMMITTED `7f45814` — NOT pushed, NOT deployed; prod is `main`@`ba8c57e` / sw v69.** (0) **This file was stale** — the block below claimed nothing was committed and prod was v68; the A2 batch had in fact shipped. *Check a status line before building on it.* (1) **A token step is not an arrival.** The previous session deliberately gave the standing group 1.8 body-heights to dodge the `TRAVEL_MAX` clamp, and the founder read exactly that as "random appearing and little movement" — **a move too short to leave the picture is not an arrival**. It now travels the joiners' own full off-frame distance, clamp and all, because the joiners have always done that and nobody has complained about them. (2) **The ducks were floating by 21px and it was the SHADOW** — in flow, so the bottom-anchored group sat on the shadow's bottom rather than the feet (ground 384.4px, feet 363.5px, now 2px). The general rule was already in the craft doc from MeasureIt and shipped again anyway, so it now carries the recurrence: **measure the SPRITE's own bottom against the ground line, never the container's.** (3) **The pond backdrop was the wrong ART STYLE** — `pond`/`lake`/`pond_top` are flat VECTOR cartoons under painted sprites, which no placement can fix. StoryTime's fliers moved to MarketDay's painted garden (founder's call); SeesawPark kept a pond but a painted one, because its cast is frog·fish·turtle and **a fish on a lawn is a worse answer than a mismatched style**. (4) **A creature was shown twice per run and a third of the art was idle** — the plan was shorter than the run and read modulo, AND the demo/guided picked by hand onto the same entries. Each chapter now builds ONE ordered run indexed straight; casts grown; **all 18 drawn cycles now in use, up from 12**; SeesawPark's frog DROPPED because a hop cycle slides while crouched. ⚠️ **The new gate caught a hole in itself**: reading the plan ARRAY let a restored `PLAN[round % …]` walk straight through, so it now goes through the same exported accessor the component calls — **a gate that reads a chapter's DATA cannot see how the chapter INDEXES it**. 5/5 mutations fail it. `tsc` 0 · 155/155 vitest · `next build` · 0 console errors; live run fish → duck → dragonfly → crab → rabbit → butterfly → shark → squirrel → bee, zero duplicates. ▶ Open: not pushed (needs sw v69 → v70); **the same flat-vector backdrops are still live in BlockYard, NestTree, MeasureIt and HopAlong**; `fps` cadences still unverified by eye with six more movers on screen; 524.7 Higgsfield credits expire ~2026-07-30 with no consumer left. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-27 (the 🦆 block. **The A2 chapters stopped looking pasted on. ✅ Since shipped as `fc93fc2` + `ba8c57e` (sw v69).** Three founder asks that are one complaint arriving in three passes, each a layer deeper: the arithmetic MOVES but the things doing it do not BELONG. (1) **Nothing materialises any more, including the things already there** — the previous session gave the EVENT a journey and left the rest popping, and MarketDay's creatures never moved at all: the only thing that travelled was the TRAY, lowered onto the counter with them riding inside it. **A creature that arrives as cargo has not arrived.** (2) **The placement was the real fault** — the group was anchored by its CENTRE at 40% of the height, which on every one of these backdrops is above the painted ground, which is why StoryTime drew a *wooden plank* across the frame to give its creatures a surface. **When you find yourself drawing a floor, the group is in the wrong place.** Horizons measured, both chapters anchored by the FEET, plank deleted, answer furniture shrunk to give the band back. (3) **The ducks needed a different backdrop, not a different number** — a walking cast on a flat plane of open sea cannot be rescued by a ground line. ⚠️ And `town_park` was tried and pulled: it looks like grass in a thumbnail but its grass starts BELOW the ground line, so **sample the pixel where the feet actually land** — `(207,242,217)` haze against `(196,223,135)` real grass. The moon base is gone at the founder's request → 🪷 Lily Pond with dragonfly · butterfly, a deliberately FLYING cast so hovering is correct and no contact shadow is drawn; that re-orphans the astronaut and alien cycles. Two bugs fixed in the shared `Arrive`: a transition live during a placement, and a phase reset in an effect that painted one frame lurching toward the exit. One real break found: compare could not fit 640×320 and now lays side by side. `tsc` 0 · 142/142 vitest · `next build` · 0 console errors, verified with a `MutationObserver` because the pane freezes CSS transitions. ▶ Open: still nothing committed (deploy needs sw v68 → v69); next is A3 HopAlong, whose "Farmyard" world clashes with MarketDay's Farm; the `fps` cadences are still unverified by eye; StoryTime's compare rows still put 🦊/🧒 emoji in the painted world. _(prior footer follows.)_)_
 
