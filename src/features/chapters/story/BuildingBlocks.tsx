@@ -1,480 +1,818 @@
 'use client'
 /**
- * Chapter (6–8) — PLACE VALUE (tens & ones, skill `placeValue`) as STORY MODE.
+ * Chapter (6–8) — PLACE VALUE (`placeValue`) → **MAKE IT**. The Clearing.
  *
- * The concept is carried by the WORLD'S OWN OBJECTS, not abstract rods: a "ten" is a STACK of
- * 10 of that world's item, a "one" is a loose single item. So 34 in the Candy Factory = 3 stacks
- * of 10 candies + 4 loose candies. Milo asks an in-world place-value question ("how many stacks of
- * ten?", "how many loose ones?", "how many altogether?"); the child taps the answer from three
- * choices. Warm wrong-answers (gentle retry, no red X). The child PICKS one of three worlds; the
- * scene rotates across the 10 adaptive rounds (one continuous SkillBeat — harder on a streak,
- * gentler when struggling, re-teach after 3 wrong):
- *   🧱 Block City    — stacks of building blocks   (street · park · garden)
- *   🧸 Toy Workshop  — boxes of toy ducks           (blocks · ducks · buttons)
- *   🍭 Candy Factory — rolls of candies             (shop · counter · tray)
+ * ══ WHAT WAS WRONG WITH THE OLD CHAPTER ══════════════════════════════════════════════
+ * ① Two of its three question types printed the numeral beside the blocks (`showNumeral: true`)
+ *    while asking "how many stacks of ten?" — so **delete every block and the question is still
+ *    answerable off the digit.** The same fault BlockYard shipped, on the same manipulative.
+ * ② **The bundling arrived already done.** Three stacks and four loose were drawn for you. Bundling
+ *    IS place value, and it was being handed over finished.
+ * ③ Band-wide: a world picker, no rotate gate, no journey, and Milo as a 🦊 emoji fallback standing
+ *    in a painted scene.
  *
- * The demo + 3-wrong re-teach BUILD the number by filling stacks of ten then adding loose ones,
- * narrated via speakSteps (voice + visual synced when audio plays, timer-paced when blocked).
- * Difficulty widens the range via pickN: 11–29 → 20–69 → 30–99. Reuses committed sprites only.
- * Wrapped by game/PlaceValueChapter.tsx.
+ * ══ WHAT THE CHILD IS ACTUALLY LEARNING ══════════════════════════════════════════════
+ * The curriculum's own words for this skill are *"Build a number from tens + ones (34 = 3 tens,
+ * 4 ones)"* — **BUILD**. And [skill-graph.md](../../../../docs/skill-graph.md) names `p.placeValue2`
+ * one of the five most load-bearing nodes in the whole 3–18 graph. What stands on it decides what
+ * this chapter owes:
+ *   `p.compare100`  →  43 > 34 *because 4 tens beat 3 tens* — i.e. **a digit's value comes from its
+ *                      place**. This is the payload.
+ *   `p.addTo100`    →  trading ten ones for a ten. This is the mechanism.
+ *   `i.bigNumbers`  →  the same rule one place along.
+ *
+ * ⚠️ **A CHAPTER THAT ONLY COUNTS RODS AND ONES DOES NOT TEACH THE PAYLOAD.** Reading a built yard
+ * into a two-window pad is transcription: the pad itself tells you which digit goes where, and a
+ * child who does not know the 3 means thirty passes anyway. The test that exposes it is **34 vs 43**
+ * — if both are equally easy, the chapter is not teaching place value. So the main verb is the
+ * other direction:
+ *
+ *   MAKE   the sign shows **34**. A tens patch on the left, a ones patch on the right. The child
+ *          calls for rods and cubes and builds it. Put them the wrong way round and you have made
+ *          43 — and the chapter says so, by name, at the moment it bites.
+ *   PACK   loose ones arrive; **the ones patch can never hold ten**, so they must be traded up; then
+ *          the built number is read. This is where the trading is taught outright.
+ *
+ * ⚠️ **THE TENS PATCH IS ON THE LEFT AND THAT IS LOAD-BEARING, NOT DECORATION.** A number is
+ * written tens-then-ones, so the child's eye sweeps left→right and reads it straight off the ground.
+ * BlockYard has its ones on the left, which is backwards — and nobody noticed, because nothing there
+ * is ever read as a numeral; the answer goes on a pad. Here the reading IS the skill.
+ *
+ * ══ HOW IT DIFFERS FROM BlockYard, WHICH SHARES THE MANIPULATIVE ═════════════════════
+ * The blocks themselves are deliberately IDENTICAL — same cube, same ten-segment rod, drawn from
+ * [yard.tsx](./yard.tsx). Two rejected ideas for making them look different: a tray of ten loose
+ * cubes (ten separable bodies — the recount that unitising is the absence of) and a sealed box with
+ * ten pips (one object, honest, but it throws away `rod === 10 × cube`, which is the whole reason a
+ * base-ten set is worth using). **Correctness over novelty.** What differs instead:
+ *
+ *   | | BlockYard | here |
+ *   |---|---|---|
+ *   | place | farm · garden · town | **forest · shore · fairground** — no scene shared |
+ *   | layout | ones left · rods right | **tens LEFT · ones right**, as a number is written |
+ *   | delivery | walks in from off-frame LEFT | arrives from off-frame **RIGHT** |
+ *   | verb | regroup, as a step inside a sum | **MAKE a number, then read it** |
+ *
+ * ⚠️ **AND THE PALETTE IS NOT ONE OF THE DIFFERENCES — see MATERIALS.** Both chapters stand blocks
+ * on green ground, which forces both into the same cool band. Colour cannot carry this; the layout
+ * and the verb do.
+ *
+ * Art: **zero.** Every block is code-drawn; every backdrop already shipped.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
-import { numberToWords, CSS as KIT_CSS, BigCount } from '../lessons/_kit'
-import WorldSelect from './WorldSelect'
-import { TintedSprite } from './TintedSprite'
-import FitBox from './FitBox'
+import { numberToWords } from '../lessons/_kit'
+import { RotateGate, useNeedsRotate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
+import { SheetCell, inFlowJourney, CRITTER_CSS, aspectOf, seeded, Arrive } from './critters'
+import {
+  Cube, Rod, Shadow, Travelling, Banner, AnswerPad, unitFor, blockSet, shadesOf,
+  ROD_SEGMENTS, PAD_BAND, YARD_CSS, type Material, type Shades,
+} from './yard'
 
-// ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
-type Scene =
-  | 'orchard' | 'meadow' | 'produce'      // Fruit Orchard
-  | 'toyducks' | 'toyblocks' | 'craftbtn' // Toy Workshop
-  | 'shop' | 'counter' | 'tray'           // Candy Factory
+const BG = (n: string) => `/assets/backgrounds/${n}`
+const MILO = '/assets/characters/milo_side.png'
 
-interface SceneCfg {
-  bg: { grad: string; img: string }
-}
-const SCENE: Record<Scene, SceneCfg> = {
-  orchard: { bg: { grad: 'linear-gradient(#dff0c8 0%, #eaf7d6 55%, #cfe9a8 100%)', img: '/assets/backgrounds/farm_orchard.png' } },
-  meadow:  { bg: { grad: 'linear-gradient(#dcecd6 0%, #e6eccf 60%, #d0e2b8 100%)', img: '/assets/backgrounds/town_garden.jpeg' } },
-  produce: { bg: { grad: 'linear-gradient(#e6f0d6 0%, #eef2dc 60%, #d8e6bc 100%)', img: '/assets/backgrounds/grocery_produce.jpeg' } },
-  toyducks: { bg: { grad: 'linear-gradient(#d8ecf2 0%, #e0eae0 60%, #cfe0d2 100%)', img: '/assets/backgrounds/toy_ducks.png' } },
-  toyblocks:{ bg: { grad: 'linear-gradient(#f4e6cf 0%, #f0e4d6 60%, #e6d4b4 100%)', img: '/assets/backgrounds/toy_blocks.png' } },
-  craftbtn: { bg: { grad: 'linear-gradient(#f0e4dc 0%, #eee0d6 60%, #e4d2c4 100%)', img: '/assets/backgrounds/craft_buttons.png' } },
-  shop:    { bg: { grad: 'linear-gradient(#f6dced 0%, #f4e0e6 60%, #eecdd8 100%)', img: '/assets/backgrounds/candy_shop.png' } },
-  counter: { bg: { grad: 'linear-gradient(#f2e0ec 0%, #f4e4e2 60%, #ecd2d4 100%)', img: '/assets/backgrounds/candy_counter.png' } },
-  tray:    { bg: { grad: 'linear-gradient(#f6e4dc 0%, #f4e6ea 60%, #eed6e0 100%)', img: '/assets/backgrounds/candy_tray.png' } },
-}
-
-// Each item is one of the world's OWN objects; the ten is a stack of 10, the one a loose single.
-interface Item { src: string; emoji: string; one: string; many: string; tint?: string }
-const IT = {
-  apple:   { src: '/assets/objects/apple.png',          emoji: '🍎', one: 'apple',    many: 'apples' },
-  pear:    { src: '/assets/objects/pear.png',           emoji: '🍐', one: 'pear',     many: 'pears' },
-  cherry:  { src: '/assets/objects/cherry.png',         emoji: '🍒', one: 'cherry',   many: 'cherries' },
-  // pat_* toys are GRAYSCALE by design → tint them to bright toy colors (see TintedSprite).
-  duck:    { src: '/assets/objects/pat_duck.png',       emoji: '🦆', one: 'duck',     many: 'ducks',   tint: '#f2c230' },
-  car:     { src: '/assets/objects/pat_car.png',        emoji: '🚗', one: 'car',      many: 'cars',    tint: '#e0483f' },
-  block:   { src: '/assets/objects/pat_block.png',      emoji: '🧱', one: 'block',    many: 'blocks',  tint: '#4a86d8' },
-  button:  { src: '/assets/objects/pat_button.png',     emoji: '🔘', one: 'button',   many: 'buttons', tint: '#4aae6b' },
-  candy:   { src: '/assets/objects/candy_candy.png',    emoji: '🍬', one: 'candy',    many: 'candies' },
-  cupcake: { src: '/assets/objects/candy_cupcake.png',  emoji: '🧁', one: 'cupcake',  many: 'cupcakes' },
-  lolly:   { src: '/assets/objects/candy_lollipop.png', emoji: '🍭', one: 'lollipop', many: 'lollipops' },
-} satisfies Record<string, Item>
-
-interface PvWorld {
-  id: string; label: string; emoji: string
-  scenes: Scene[]
-  items: Item[]                       // the world's objects — shuffled across rounds so it's not one repeated thing
-  milo: { src: string; emoji: string; accessory: string }
-  intro: string
-}
-const WORLDS: PvWorld[] = [
-  { id: 'orchard', label: 'Fruit Orchard', emoji: '🍎', scenes: ['orchard', 'meadow', 'produce'],
-    items: [IT.apple, IT.pear, IT.cherry],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🧺' },
-    intro: 'Welcome to the orchard! Fruit is packed in STACKS of ten, plus a few loose ones. Count the stacks and the loose fruit, then tap the right answer. First, watch Milo count!' },
-  { id: 'toy', label: 'Toy Workshop', emoji: '🧸', scenes: ['toyducks', 'toyblocks', 'craftbtn'],
-    items: [IT.duck, IT.car, IT.block, IT.button],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🔧' },
-    intro: 'In the Toy Workshop, toys are packed in STACKS of ten, plus a few loose ones. Count the stacks and the loose toys, then tap the right answer. First, watch Milo count!' },
-  { id: 'candy', label: 'Candy Factory', emoji: '🍭', scenes: ['shop', 'counter', 'tray'],
-    items: [IT.candy, IT.cupcake, IT.lolly],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🍬' },
-    intro: 'At the Candy Factory, candy comes in STACKS of ten and loose ones! Count the stacks and the loose candies, then tap the right answer. First, watch Milo count!' },
+// ─── Material ─────────────────────────────────────────────────────────────────────────
+/**
+ * ⚠️ **THE COOL HUES ARE FORCED, NOT CHOSEN.** Measured across the band the blocks stand in, this
+ * run's scenes carry strong hues at 25° (trunks and sand) through 95° (leaf and grass). The pairing
+ * rule is that a set of blocks must sit at least 45° away from every hue the scene really holds —
+ * otherwise it is scenery, which is what made BlockYard's first blocks read as hay bales. That
+ * leaves `[140°, 340°]` and nothing else.
+ *
+ * ⚠️ **AND THIS IS WHERE COLOUR STOPS BEING A DIFFERENTIATOR, WHICH IS STATED RATHER THAN HIDDEN.**
+ * BlockYard already occupies 178 · 214 · 250 · 292 inside that same band, so the widest gaps left
+ * are about 20° — the two chapters' blocks WILL look related. What separates them is the layout
+ * (tens on the left, the way a number is written) and the verb (MAKE, not regroup), not the palette.
+ *
+ * ⚠️ **AND THE PAIRING GATE HERE IS STRICTER THAN BlockYard's.** That gate takes a saturation-
+ * weighted MEAN of the scene's band — which, on a scene carrying two strong hues, returns a hue that
+ * is in neither of them. A forest floor is leaf-green AND trunk-brown; its mean is a colour that is
+ * nowhere in the picture. The gate here tests every hue bucket carrying more than 6% of the band.
+ */
+export const MATERIALS: Material[] = [
+  { name: 'jade', hue: 145, grain: false },
+  { name: 'teal', hue: 183, grain: true },
+  { name: 'sky', hue: 221, grain: false },
+  { name: 'indigo', hue: 259, grain: true },
+  { name: 'violet', hue: 297, grain: false },
+  { name: 'magenta', hue: 335, grain: true },
 ]
-const worldById = (id: string) => WORLDS.find(w => w.id === id)
-const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: SCENE[w.scenes[0]].bg.img, itemImage: w.items[0].src, itemTint: w.items[0].tint }))
+/** The band a material may sit in, given this run's scenes. Exported so the gate checks the RULE
+ *  rather than the six numbers above. */
+export const HUE_BAND: [number, number] = [140, 340]
 
-// Live viewport size — so a short/landscape frame can shrink the tens/ones card + answer
-// buttons and reposition them so the banner, card and buttons never overlap.
+// ─── The run ──────────────────────────────────────────────────────────────────────────
+/**
+ * One flat list covering demo (2) → guided (1) → 10 scored rounds, indexed STRAIGHT and never
+ * modulo, so a setting can never wrap back onto the one the chapter opened with.
+ *
+ * ⚠️ **THESE ARE OPEN-GROUND SCENES, AND GETTING HERE TOOK TWO WRONG ANSWERS.**
+ * ① Built indoors first — a "packing bench" — with scenes chosen on hue and quietness, which are
+ *    PALETTE checks. Nobody measured where the painted SURFACE actually is. `craft_gems` is a glass
+ *    display case topping out at 0.60, so at a flat bench line of 0.70 the blocks and Milo floated
+ *    INSIDE the cabinet over the necklaces; the rest were counters and shelves — real surfaces, but
+ *    furniture, a pony standing on a bakery worktop.
+ * ② Moved outdoors to the FORESTS, which passed the walkable-ground gate — and everything still
+ *    floated, in a wall of shrubbery. That gate only asks *is this pixel blue*, and a bush is green.
+ *    **The craft doc already records that it cannot tell canopy from grass, and it was pointed at
+ *    the one scene family it is documented as unable to judge.**
+ *
+ * ⚠️ **SO THE CHECK THAT MATTERS IS HORIZONTAL ROUGHNESS, NOT COLOUR.** Open ground is SMOOTH —
+ * mean neighbour-to-neighbour difference along a row. Measured in the band where the feet land:
+ * `garden_meadow` **1.9**, the four forests **15–21**. Not "the ground is low in the forests"; there
+ * is no open ground in them at any height. The gate asserts it now.
+ *
+ * These four `open_*` scenes were generated for this chapter against exactly that number (0.4–1.9,
+ * 100% walkable) because the library's nine open-ground backdrops are **all already BlockYard's** —
+ * that is why there were only nine to begin with. `beach_sand` and `fair_sky` were the two free ones
+ * that measured open, and they carry the run's variety.
+ */
+const [JADE, TEAL, SKY, INDIGO, VIOLET, MAGENTA] = [0, 1, 2, 3, 4, 5]
+interface Slot { scene: string; mat: number }
+const RUN: Slot[] = [
+  { scene: 'open_clearing.png', mat: MAGENTA }, { scene: 'open_orchard.png', mat: INDIGO },
+  { scene: 'open_river.png', mat: TEAL }, { scene: 'open_hills.png', mat: VIOLET },
+  { scene: 'beach_sand.png', mat: SKY }, { scene: 'open_clearing.png', mat: JADE },
+  { scene: 'open_river.png', mat: INDIGO }, { scene: 'open_orchard.png', mat: MAGENTA },
+  { scene: 'open_hills.png', mat: SKY }, { scene: 'beach_sand.png', mat: VIOLET },
+  { scene: 'open_clearing.png', mat: TEAL }, { scene: 'open_river.png', mat: JADE },
+  { scene: 'open_orchard.png', mat: MAGENTA },
+]
+/** The single accessor every scored round goes through. A gate that reads the RUN array cannot see
+ *  how the chapter INDEXES it — drive the gate through this, never through the array. */
+export const slotAt = (i: number): Slot => RUN[Math.min(i, RUN.length - 1)]
+export const DEMO_SLOTS = 2
+export const GUIDED_SLOT = DEMO_SLOTS
+export const scoredSlot = (round: number) => slotAt(GUIDED_SLOT + 1 + round)
+export const matOf = (slot: Slot) => shadesOf(MATERIALS[slot.mat % MATERIALS.length])
 
-type QType = 'tens' | 'ones' | 'whole'
-interface PvRound { scene: Scene; item: Item; n: number; qType: QType; question: string; say: string; answer: number; choices: number[]; showNumeral: boolean }
+// ─── The question ─────────────────────────────────────────────────────────────────────
+/**
+ * `make` is the main verb and cannot be faked — the answer is where the blocks are put.
+ * The other four are read off a yard the child had to BUILD by trading, and **not one of them shows
+ * a numeral before the commit**, which is the whole of what was wrong before.
+ */
+export type QKind = 'make' | 'whole' | 'tens' | 'ones' | 'value'
+export interface PvRound { slot: number; n: number; kind: QKind; answer: number; digits: 1 | 2 }
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-function shuffle<T>(a: T[]): T[] {
-  const arr = a.slice()
-  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[arr[i], arr[j]] = [arr[j], arr[i]] }
-  return arr
+
+/** Range widens with difficulty, and so does the number of trades a PACK round demands. */
+const RANGE: Record<1 | 2 | 3, [number, number]> = { 1: [11, 29], 2: [20, 69], 3: [30, 99] }
+/**
+ * ⚠️ The pools grow the SKILL, not only the magnitude. `make` stays the majority at every tier
+ * because it is the only type that forces the positional decision; `value` — "what are the blocks on
+ * the tens shelf worth?" — is the most direct probe of the payload and appears from L2.
+ */
+export const POOL: Record<1 | 2 | 3, QKind[]> = {
+  1: ['make', 'make', 'make', 'whole'],
+  2: ['make', 'make', 'make', 'whole', 'tens', 'ones', 'value'],
+  3: ['make', 'make', 'make', 'make', 'value', 'value', 'whole', 'tens', 'ones'],
 }
-// Range widens with difficulty: 1 → 11–29, 2 → 20–69, 3 → 30–99.
-function pickN(d: 1 | 2 | 3): number {
-  return d === 1 ? rint(11, 29) : d === 2 ? rint(20, 69) : rint(30, 99)
-}
-function nearDigits(answer: number): number[] {
-  const opts = new Set<number>([answer]); let delta = 1
-  while (opts.size < 3) {
-    if (answer - delta >= 0) opts.add(answer - delta)
-    if (opts.size < 3 && answer + delta <= 9) opts.add(answer + delta)
-    delta++
+
+export const answerFor = (kind: QKind, n: number) =>
+  kind === 'tens' ? Math.floor(n / 10) : kind === 'ones' ? n % 10
+  : kind === 'value' ? Math.floor(n / 10) * 10 : n
+
+export function makeRound(d: 1 | 2 | 3, round = 0): PvRound {
+  const [lo, hi] = RANGE[d]
+  const kind = POOL[d][rint(0, POOL[d].length - 1)]
+  let n = 0
+  for (let i = 0; i < 200; i++) {
+    const c = rint(lo, hi)
+    // Both places must hold something, or "which shelf does it go on" is not a question at all —
+    // and at MAKE the two digits must differ, so putting them the wrong way round is visibly wrong.
+    if (c % 10 < 1) continue
+    if (kind === 'make' && Math.floor(c / 10) === c % 10) continue
+    n = c; break
   }
-  return shuffle([...opts])
-}
-function nearNumbers(n: number): number[] {
-  const opts = new Set<number>([n]); const t = Math.floor(n / 10), o = n % 10
-  const cands = [o * 10 + t, n + 1, n - 1, n + 10, n - 10]
-  for (const c of shuffle(cands)) { if (opts.size >= 3) break; if (c >= 1 && c <= 99 && c !== n) opts.add(c) }
-  while (opts.size < 3) { const r = rint(10, 99); if (r !== n) opts.add(r) }
-  return shuffle([...opts])
-}
-function makeRound(world: PvWorld, d: 1 | 2 | 3, round: number): PvRound {
-  const scene = world.scenes[round % world.scenes.length]
-  const item = world.items[round % world.items.length]     // shuffle the world's objects across rounds
-  const n = pickN(d)
-  const pool: QType[] = d === 1 ? ['tens', 'ones', 'whole']
-    : d === 2 ? ['tens', 'ones', 'whole', 'whole']
-    : ['tens', 'ones', 'whole', 'whole', 'whole']
-  const qType = pool[rint(0, pool.length - 1)]
-  if (qType === 'tens')
-    return { scene, item, n, qType, question: 'How many stacks of ten?', say: `How many stacks of ten ${item.many}? Count the tall stacks.`, answer: Math.floor(n / 10), choices: nearDigits(Math.floor(n / 10)), showNumeral: true }
-  if (qType === 'ones')
-    return { scene, item, n, qType, question: `How many loose ${item.many}?`, say: `How many loose ${item.many} are there? Count the single ones.`, answer: n % 10, choices: nearDigits(n % 10), showNumeral: true }
-  return { scene, item, n, qType, question: `How many ${item.many} altogether?`, say: `How many ${item.many} altogether? Count the stacks of ten, then the loose ones.`, answer: n, choices: nearNumbers(n), showNumeral: false }
+  if (!n) n = d === 1 ? 23 : d === 2 ? 46 : 74      // unreachable; never a crash
+  return { slot: GUIDED_SLOT + 1 + round, n, kind, answer: answerFor(kind, n), digits: kind === 'tens' || kind === 'ones' ? 1 : 2 }
 }
 
-// ─── Background (crossfades between the world's scenes) ──────────────────────────────
-function Background({ scene, scenes }: { scene: Scene; scenes: Scene[] }) {
-  return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#f3ead8' }}>
-      {scenes.map(s => (
-        <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
-          <div style={{ position: 'absolute', inset: 0, background: SCENE[s].bg.grad }} />
-          <img src={SCENE[s].bg.img} alt="" draggable={false} decoding="async"
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-      ))}
-    </div>
-  )
+/**
+ * How a delivery of `n` loose ones gets packed. Exported so the gate drives the same machine the
+ * scene does. The shelf holds ten, so the number of trades is fixed by `n` alone — which is the
+ * point: **you cannot leave ten in the ones place.**
+ */
+export function bundlePlan(n: number) {
+  const trades = Math.floor(n / 10)
+  const rest = n % 10
+  return { trades, rest, firstWave: Math.min(10, n), waiting: Math.max(0, n - 10) }
 }
 
-function MiloHost({ left, milo }: { left: number; milo: PvWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(26vh, 220px)', height: 'min(26vh, 220px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'bb_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 80, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 34 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
-    </div>
-  )
-}
+// ─── The ground ────────────────────────────────────────────────────────────────────────
+/**
+ * ⚠️ Every piece of the room is `position: fixed`, NOT `absolute`. The layout is shares of the
+ * VIEWPORT, and in a scored round an `absolute` element resolves against `SkillBeat`'s own
+ * content-sized `relative` wrapper instead — which squashed BlockYard's whole yard into a strip
+ * across the top of the frame, invisibly, because the demo and the guided round render outside it.
+ */
+export const GROUND = 0.74         // the clearing floor, as a share of the height — ROOMY frame
+/** On a short frame the ground comes UP to clear the controls, which may not shrink: their buttons
+ *  are tap targets. The WORLD yields to the thing a finger has to hit. */
+export const groundOf = (vh: number) => Math.min(GROUND, (vh - PAD_BAND(vh) - 14) / vh)
 
-// ─── One of the world's items (sprite, with emoji fallback) ─────────────────────────
-function ItemImg({ item, size }: { item: Item; size: string }) {
-  const [missing, setMissing] = useState(false)
-  if (item.tint) return <TintedSprite src={item.src} size={size} hex={item.tint} emoji={item.emoji} />
-  if (missing) return <span style={{ fontSize: size, lineHeight: 1 }}>{item.emoji}</span>
-  return <img src={item.src} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
-}
-
-// A "ten" = a 2×5 TEN-FRAME of the world's items with a "10" tag under it (compact, clearly ten).
-// `px` is the per-item size (adaptive: bigger when there are few tens).
-function Stack({ item, bright, px }: { item: Item; bright: boolean; px: string }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-      opacity: bright ? 1 : 0.15, transform: bright ? 'scale(1)' : 'scale(.82)', transition: 'all .3s cubic-bezier(.34,1.56,.64,1)' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', gap: 'clamp(2px,0.5vmin,4px)', padding: 'clamp(4px,1vmin,7px)',
-        border: '3px solid var(--sky-blue-deep)', borderRadius: 12, background: 'rgba(255,255,255,.5)' }}>
-        {Array.from({ length: 10 }).map((_, i) => <ItemImg key={i} item={item} size={px} />)}
-      </div>
-      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(13px,2.4vmin,18px)', color: 'var(--sky-blue-deep)', lineHeight: 1 }}>10</div>
-    </div>
-  )
-}
-
-// The number drawn as `revealTens` ten-frames + `revealOnes` loose items (of n). Item size
-// ADAPTS to how many there are, so small numbers look big and clear while big numbers still fit.
-// `compact` (short/landscape) drops the MIN-floors so the whole card shrinks and stops colliding
-// with the banner + answer buttons.
-function ObjectTens({ item, n, revealTens, revealOnes, compact }: { item: Item; n: number; revealTens: number; revealOnes: number; compact?: boolean }) {
-  const t = Math.floor(n / 10), o = n % 10
-  const stackPx = compact
-    ? (t <= 3 ? 'clamp(14px,3.2vmin,26px)' : t <= 5 ? 'clamp(12px,2.6vmin,22px)' : t <= 7 ? 'clamp(10px,2.1vmin,17px)' : 'clamp(8px,1.8vmin,14px)')
-    : (t <= 3 ? 'clamp(30px,6vmin,48px)' : t <= 5 ? 'clamp(24px,4.7vmin,37px)' : t <= 7 ? 'clamp(18px,3.5vmin,28px)' : 'clamp(14px,2.8vmin,22px)')
-  const onePx = compact
-    ? (o <= 4 ? 'clamp(26px,5.4vmin,44px)' : o <= 6 ? 'clamp(22px,4.4vmin,36px)' : 'clamp(18px,3.6vmin,28px)')
-    : (o <= 4 ? 'clamp(50px,10vmin,78px)' : o <= 6 ? 'clamp(42px,8vmin,62px)' : 'clamp(34px,6.2vmin,50px)')
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,2.2vw,24px)', flexWrap: 'wrap' }}>
-      {t > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(5px,1.2vw,11px)' }}>
-          {Array.from({ length: t }).map((_, i) => <Stack key={i} item={item} bright={i < revealTens} px={stackPx} />)}
-        </div>
-      )}
-      {t > 0 && o > 0 && <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(26px,5vmin,40px)', color: 'var(--milo-orange)' }}>+</div>}
-      {o > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'clamp(5px,1.2vw,10px)', maxWidth: 'clamp(120px,24vw,210px)', alignContent: 'center', justifyContent: 'center' }}>
-          {Array.from({ length: o }).map((_, j) => (
-            <div key={j} style={{ opacity: j < revealOnes ? 1 : 0.15, transform: j < revealOnes ? 'scale(1)' : 'scale(.55)', transition: 'all .3s cubic-bezier(.34,1.56,.64,1)', filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.2))' }}>
-              <ItemImg item={item} size={onePx} />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// The objects on a slate, with an optional big numeral above.
-function BlocksCard({ item, n, showNumeral, compact }: { item: Item; n: number; showNumeral: boolean; compact?: boolean }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: compact ? 4 : 8,
-      background: 'rgba(255,255,255,.8)', border: '4px solid var(--outline)', borderRadius: 24,
-      padding: compact ? '8px 14px 10px' : '14px 20px 16px', boxShadow: '0 6px 0 rgba(61,37,22,.12)' }}>
-      {showNumeral && (
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: compact ? 'clamp(24px,4.6vmin,38px)' : 'clamp(32px,6vmin,50px)', lineHeight: 1, color: 'var(--milo-orange)', textShadow: '0 4px 0 rgba(61,37,22,.12)' }}>{n}</div>
-      )}
-      <ObjectTens item={item} n={n} revealTens={Math.floor(n / 10)} revealOnes={n % 10} compact={compact} />
-    </div>
-  )
-}
-
-// ─── Interactive play surface (guided / practice) ───────────────────────────────────
-type Mode = 'guided' | 'practice'
-const BlocksPlay: React.FC<{ world: PvWorld; data: PvRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
-  const { item, n, question, say, answer, choices, showNumeral } = data
-  const [picked, setPicked] = useState<number | null>(null)
-  const [wrongPick, setWrongPick] = useState<number | null>(null)
-  const erred = useRef(false), done = useRef(false)
-  const { w: vw, h: vh } = useViewport()
-  const short = vh < 470
-  // Responsive answer buttons — shrink on a narrow OR short screen so 3 fit and leave room for
-  // the card above. On tall frames keep the original size.
-  const btn = short ? Math.max(56, Math.min(96, Math.round(Math.min(vw / 8.8, vh / 5.2)))) : null
-  const btnStyle: React.CSSProperties = btn != null
-    ? { width: btn, height: btn, borderRadius: Math.round(btn * 0.24), fontSize: Math.round(btn * 0.44) }
-    : { width: 'clamp(76px,15vmin,104px)', height: 'clamp(76px,15vmin,104px)', borderRadius: 24, fontSize: 'clamp(30px,6vmin,44px)' }
-  // The card lives in its own band (between the banner and the bottom answer buttons) and is scaled
-  // by FitBox to fill it — so it's big & clear on any viewport, not capped by the clamp() max.
-  const btnH = btn ?? 104
-  const topReserve = short ? 84 : 116
-  const botReserve = short ? btnH + 24 : btnH + 56
-  const availW = vw * 0.92
-  const availH = Math.max(120, vh - topReserve - botReserve)
-  const choiceGap = short ? 'clamp(8px,2.5vw,18px)' : 'clamp(12px,3vw,28px)'
-
-  useEffect(() => {
-    if (mode === 'guided') speak(say)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  function choose(c: number) {
-    if (done.current || picked !== null) return
-    if (c === answer) {
-      setPicked(c); done.current = true
-      if (mode === 'guided') speak(`Yes! ${numberToWords(answer)}!`)
-      window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1200)
-    } else {
-      erred.current = true; setWrongPick(c)
-      speak(`Not quite. Let's look again — ${question.toLowerCase()}`)
-      window.setTimeout(() => setWrongPick(null), 1100)
-    }
+/** THE TENS SHELF — on the LEFT, because that is where the tens digit is written. */
+export const RACK_X0 = 14, RACK_COL = 3.3
+export const rackSpot = (i: number) => ({ x: RACK_X0 + i * RACK_COL })
+export const MILO_X = 52
+/** THE ONES SHELF — on the RIGHT. It can hold ten, and only for as long as it takes to trade them. */
+export const BAY_X0 = 62, BAY_COL = 3.2
+export const baySpot = (i: number) => ({
+  x: BAY_X0 + i * BAY_COL,
+  tilt: (seeded(i, 8.233) - 0.5) * 3.4,          // stacked by hand, not by a machine
+  lift: seeded(i, 12.9898) * 0.6,                // and never downward: the ground is a floor
+})
+/**
+ * ⚠️ THE WAITING ONES MUST READ AS SOMEWHERE ELSE, NOT AS MORE OF THE SHELF. Ten placed and four
+ * waiting, at one size on one baseline, read as ONE row of fourteen — and the argument the chapter
+ * turns on (*ten fit, the eleventh does not*) goes with it. So they wait in the chute ABOVE the
+ * shelf: higher, smaller, and heaped rather than stacked.
+ */
+export const QUEUE_PER_ROW = 4, QUEUE_SCALE = 0.8
+/**
+ * ⚠️ **HOW MANY WAITING ONES THE CHUTE MAY SHOW AT ONCE — CAUGHT ON SCREEN.** A delivery of 29 put
+ * NINETEEN cubes in the chute: they sprawled across the ones shelf and off the right edge, and the
+ * "somewhere else" reading that the whole regrouping argument depends on went with them. The child
+ * never counts the pile — they read the answer off the SHELVES — so the chute only has to say
+ * *there is more coming*. Two rows is enough to say it.
+ */
+export const CHUTE_MAX = QUEUE_PER_ROW * 2
+/** How many the chute actually draws. ⚠️ A FUNCTION, not a `Math.min` at the call site: the first
+ *  gate re-implemented the cap instead of driving it, so removing the cap from the scene passed. */
+export const chuteShown = (waiting: number) => Math.min(waiting, CHUTE_MAX)
+export const queueOf = (j: number) => {
+  const col = j % QUEUE_PER_ROW, row = Math.floor(j / QUEUE_PER_ROW)
+  return {
+    x: 88 - col * 2.8 + row * 1.2,
+    tilt: (seeded(j, 5.71) - 0.5) * 7,
+    lift: 4.2 + row * 3.6 + seeded(j, 2.13) * 0.8,
+    scale: QUEUE_SCALE,
   }
+}
+/** Deliveries come from off-frame RIGHT; rods called up for a MAKE come from off-frame LEFT, each
+ *  from the side of the room its shelf is on. Both are the mirror of BlockYard's single lane. */
+export const ENTER_RIGHT = 112, ENTER_LEFT = -12
+
+const CHROME_PX = 46
+/** The vertical room a standing rod has. ⚠️ On a short frame the banner moves aside rather than
+ *  shrinking — over the ONES shelf, where everything is one cube tall — so the tens shelf keeps the
+ *  full drop and the unit does not have to collapse. Buy height from the chrome, never the prose. */
+export const rodBudget = (vh: number) => groundOf(vh) * vh - (vh < 470 ? CHROME_PX : 84) - 8
+/** A cube is capped narrower than the column it stands in, so a shelf of ten never touches. */
+export const roomUnit = (vw: number, vh: number) => unitFor(vw, vh, rodBudget(vh), 2.6)
+
+// ─── The scene ────────────────────────────────────────────────────────────────────────
+interface Room {
+  rods: number
+  bay: number                // loose cubes on the ones shelf
+  settled: number            // how many of `bay` were already there — the rest travel in
+  waiting: number
+  from: 'right' | 'left' | 'none'
+  fusing: boolean
+  carry: 0 | 1 | 2           // Milo: idle · walking the rod to the shelf · walking back
+  carried: boolean
+  key: string
+}
+const EMPTY: Room = { rods: 0, bay: 0, settled: 0, waiting: 0, from: 'none', fusing: false, carry: 0, carried: false, key: 'a' }
+
+/** A rod travelling to the tens shelf under its own steam (a MAKE placement), rather than settling
+ *  in. The child asked for it, so it arrives. */
+function TravellingRod({ w, h, m, x, ground, dist, ms, resetKey, z }: {
+  w: number; h: number; m: Shades; x: number; ground: number
+  dist: number; ms: number; resetKey: string; z: number
+}) {
+  return (
+    <div style={{ position: 'fixed', left: `${x}%`, top: `${ground * 100}%`,
+      transform: 'translate(-50%,-100%)', zIndex: z, pointerEvents: 'none' }}>
+      <Arrive dist={dist} ms={ms} resetKey={resetKey}>
+        {() => <Rod w={w} h={h} m={m} />}
+      </Arrive>
+    </div>
+  )
+}
+
+function Scene({ r, m, cube, rodW, rodH, miloH, vw, vh, onBay, onRod, hint }: {
+  r: Room; m: Shades; cube: number; rodW: number; rodH: number; miloH: number; vw: number; vh: number
+  onBay?: () => void; onRod?: (i: number) => void; hint?: boolean
+}) {
+  const ground = groundOf(vh)
+  const miloW = Math.round(miloH * aspectOf(MILO))
+  // He carries LEFTWARD, from the ones shelf to the tens shelf — the direction a ten travels when
+  // it is made. In BlockYard he walks the other way, which is the same job in a mirrored room.
+  const carryDist = ((RACK_X0 - 1 - MILO_X) / 100) * vw
+  const carryJ = inFlowJourney(MILO, miloH, carryDist)
+  const leg = (fromX: number, toX: number) => {
+    const dist = ((fromX - toX) / 100) * vw
+    // A block has no gait, so `inFlowJourney` falls back to CARRY_SPEED — travel and cycle are
+    // separate concerns, and an object simply has no legs to run while it moves.
+    return { dist, ms: inFlowJourney('', cube, dist).ms }
+  }
+  // While they fuse the shelf closes up into a touching line — you watch ten become one length.
+  const cubePct = (cube / Math.max(1, vw)) * 100
+  const bayX = (i: number) => (r.fusing ? BAY_X0 + i * cubePct : baySpot(i).x)
 
   return (
     <>
-      <div style={{ position: 'fixed', left: 0, right: 0, top: topReserve, height: availH, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3vw', pointerEvents: 'none' }}>
-        <div style={{ pointerEvents: 'auto' }}>
-          <FitBox availW={availW} availH={availH} max={2.6}>
-            <BlocksCard item={item} n={n} showNumeral={showNumeral} compact={short} />
-          </FitBox>
-        </div>
+      {/* THE TENS SHELF — left, and the only thing that persists across the whole round */}
+      {Array.from({ length: r.rods }).map((_, i) => {
+        const s = rackSpot(i)
+        const tappable = !!onRod
+        const j = leg(ENTER_LEFT, s.x)
+        return r.from === 'left' && i === r.rods - 1 ? (
+          <TravellingRod key={`nr${i}-${r.key}`} w={rodW} h={rodH} m={m} x={s.x} ground={ground}
+            dist={j.dist} ms={j.ms} resetKey={`${r.key}-r${i}`} z={12} />
+        ) : (
+          <button key={`rod${i}`} onClick={tappable ? () => onRod!(i) : undefined} disabled={!tappable}
+            aria-label="a ten on the tens side" style={{
+              position: 'fixed', left: `${s.x}%`, top: `${ground * 100}%`,
+              transform: 'translate(-50%,-100%)', zIndex: 12,
+              border: 'none', background: 'none', padding: 0, cursor: tappable ? 'pointer' : 'default',
+            }}>
+            <Rod w={rodW} h={rodH} m={m} delayMs={i * 80} />
+          </button>
+        )
+      })}
+
+      {/* THE ONES SHELF — right */}
+      {Array.from({ length: r.bay }).map((_, i) => {
+        const s = baySpot(i)
+        const fromX = r.from === 'right' ? ENTER_RIGHT : s.x
+        const j = leg(fromX, s.x)
+        return <Travelling key={`c${i}-${r.key}`} s={cube} m={m} x={bayX(i)} lift={s.lift}
+          tilt={r.fusing ? 0 : s.tilt} ground={ground}
+          dist={j.dist} ms={i < r.settled ? 0 : j.ms}
+          delayMs={Math.max(0, i - r.settled) * 110} resetKey={`${r.key}-${i}`}
+          z={20 + i} fusing={r.fusing} />
+      })}
+
+      {/* those that could not be placed — visibly waiting, which is the whole argument */}
+      {Array.from({ length: chuteShown(r.waiting) }).map((_, i) => {
+        const s = queueOf(i)
+        const j = leg(ENTER_RIGHT, s.x)
+        return <Travelling key={`w${i}-${r.key}`} s={Math.round(cube * s.scale)} m={m} x={s.x}
+          lift={s.lift} tilt={s.tilt} ground={ground}
+          dist={j.dist} ms={j.ms} delayMs={i * 110} resetKey={`${r.key}-w${i}`} z={16 - i} />
+      })}
+
+      {/* MILO — he carries every finished ten across to its shelf. The rod rides INSIDE his
+          travelling element, because two things that must move as one have to BE one element. */}
+      <div style={{ position: 'fixed', left: `${MILO_X}%`, top: `${ground * 100}%`,
+        transform: 'translate(-50%,-100%)', zIndex: 30, pointerEvents: 'none' }}>
+        <span style={{ display: 'block', position: 'relative',
+          transform: `translateX(${r.carry === 1 ? Math.round(carryDist) : 0}px)`,
+          transition: r.carry ? `transform ${carryJ.ms}ms linear` : 'none' }}>
+          {r.carried && (
+            <span style={{ position: 'absolute', left: Math.round(rodW * 1.2), bottom: 0, zIndex: 2 }}>
+              <Rod w={rodW} h={rodH} m={m} />
+            </span>
+          )}
+          <span style={{ display: 'block', position: 'relative', width: miloW, height: miloH }}>
+            <Shadow w={Math.round(miloW * 0.66)} h={Math.round(miloH * 0.1)} />
+            <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
+              <SheetCell src={MILO} h={miloH} moving={r.carry !== 0} facesLeft={r.carry === 1}
+                breathe cycleScale={carryJ.cycleScale} />
+            </span>
+          </span>
+        </span>
       </div>
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btnH * 0.16)) : '3.5%', zIndex: 33, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: choiceGap, flexWrap: 'wrap', maxWidth: '96vw', margin: '0 auto', padding: '0 12px' }}>
-        {choices.map(c => {
-          const isSel = picked === c
-          const isWrong = wrongPick === c
-          const ring = isSel ? 'var(--garden-green)' : isWrong ? 'var(--milo-orange)' : 'var(--outline)'
-          const glow = isSel ? '0 6px 0 var(--garden-green-deep)' : '0 6px 0 #c8ac79'
-          // bb_pop enter (fill:both) is on the OUTER button; the state scale/lift is on the INNER
-          // span so the animation's final keyframe transform can't clobber the selected lift.
-          return (
-            <button key={c} onClick={() => choose(c)} disabled={picked !== null}
-              style={{
-                ...btnStyle,
-                background: isSel ? 'var(--garden-green-soft)' : 'var(--paper)',
-                border: `4px solid ${ring}`, boxShadow: glow,
-                fontFamily: 'var(--font-display)', fontWeight: 900, color: 'var(--ink)',
-                padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: picked !== null ? 'default' : 'pointer',
-                opacity: picked !== null && !isSel ? 0.5 : 1,
-                animation: 'bb_pop .35s ease both',
-              }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%',
-                transform: isSel ? 'scale(1.1) translateY(-4px)' : 'scale(1)',
-                transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1)' }}>{c}</span>
-            </button>
-          )
-        })}
+
+      {/* the full shelf of ten is the tap target */}
+      {onBay && (
+        <button onClick={onBay} aria-label="trade ten ones for one ten" style={{
+          position: 'fixed', left: `${BAY_X0 - 2.4}%`, width: `${9 * BAY_COL + 5}%`,
+          top: `${ground * 100 + 2}%`, transform: 'translateY(-100%)',
+          height: Math.round(cube * 1.9), zIndex: 34,
+          border: 'none', background: 'none', cursor: 'pointer',
+          animation: hint ? 'by_nudge 1.5s ease-in-out infinite' : undefined,
+        }} />
+      )}
+    </>
+  )
+}
+
+/** The two ground patches. ⚠️ Posts and a tint that fades at its own edges — NOT a filled rectangle
+ *  with a stroke, which is the slab that got rejected three times: a painted scene contains no
+ *  filled rectangles, so one reads as UI furniture however well its palette is matched. */
+function GroundPatch({ x0, w, label, ground, cube, vh }: {
+  x0: number; w: number; label: string; ground: number; cube: number; vh: number
+}) {
+  return (
+    <div aria-hidden style={{ position: 'fixed', left: `${x0}%`, width: `${w}%`,
+      top: `${ground * 100}%`, transform: 'translateY(-100%)', zIndex: 4, pointerEvents: 'none' }}>
+      <div style={{ height: Math.round(cube * 0.5),
+        background: 'linear-gradient(90deg, rgba(78,58,38,0) 0%, rgba(78,58,38,.17) 12%, rgba(78,58,38,.17) 88%, rgba(78,58,38,0) 100%)',
+        borderRadius: 99 }} />
+      <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', paddingTop: 4,
+        textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 900,
+        fontSize: `clamp(10px, ${Math.round(vh * 0.024)}px, 15px)`, letterSpacing: 1.2,
+        color: 'rgba(72,52,34,.62)' }}>{label}</div>
+    </div>
+  )
+}
+
+// ─── The round ────────────────────────────────────────────────────────────────────────
+type Mode = 'demo' | 'guided' | 'practice'
+
+const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete: (c: boolean) => void }> =
+({ slot, data, mode, onComplete }) => {
+  const { n, kind, answer, digits: windows } = data
+  const { w: vw, h: vh } = useViewport()
+  const { cube, rodW, rodH, miloH } = roomUnit(vw, vh)
+  const m = useMemo(() => matOf(slot), [slot])
+  const plan = useMemo(() => bundlePlan(n), [n])
+  const isMake = kind === 'make'
+
+  const [r, setR] = useState<Room>(EMPTY)
+  const [digits, setDigits] = useState<number[]>([])
+  const [live, setLive] = useState(false)
+  const [note, setNote] = useState('')
+  const [ok, setOk] = useState(false)
+  const erred = useRef(false), done = useRef(false)
+  const timers = useRef<number[]>([])
+  const after = useCallback((ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
+  useEffect(() => () => { timers.current.forEach(clearTimeout); timers.current = [] }, [])
+  const say = useCallback((s: string) => { setNote(s); speak(s) }, [])
+
+  // ⚠️ Derived from the count rather than announced by the tap that caused it — the tap handler
+  // cannot see the new value, and a batched pair of taps would announce the wrong one.
+  useEffect(() => {
+    if (isMake && r.bay === 10 && !ok) say('Ten ones on the ground — you cannot leave ten there. Trade them up.')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r.bay])
+
+  const carryMs = useMemo(() => inFlowJourney(MILO, miloH, ((RACK_X0 - 1 - MILO_X) / 100) * vw).ms, [miloH, vw])
+  const inMs = useMemo(() => inFlowJourney('', cube, ((ENTER_RIGHT - BAY_X0) / 100) * vw).ms + 9 * 110, [cube, vw])
+
+  useEffect(() => {
+    setR(EMPTY); setDigits([]); setNote(''); setOk(false); setLive(false)
+    if (isMake) {
+      after(400, () => { setLive(true); say(`Make ${numberToWords(n)}. Tens on the left, ones on the right.`) })
+      return
+    }
+    after(400, () => {
+      setR(s => ({ ...s, bay: plan.firstWave, settled: 0, waiting: plan.waiting, from: 'right', key: 'b' }))
+      after(inMs, () => {
+        if (plan.firstWave === 10) { say('Ten ones on the ground — that is one ten. Tap them.') }
+        else { setLive(true); say(ASK[kind]) }
+      })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [n, kind])
+
+  /** TRADE UP — the ten slide together, become one rod, and Milo walks it across to the tens shelf. */
+  function trade() {
+    if (r.bay < 10 || r.fusing) return
+    setR(s => ({ ...s, fusing: true }))
+    after(520, () => setR(s => ({ ...s, fusing: false, bay: 0, settled: 0, carried: true, carry: 1 })))
+    after(520 + carryMs, () => setR(s => {
+      const wave = Math.min(10, s.waiting)
+      return { ...s, carried: false, rods: s.rods + 1, carry: 2,
+        bay: wave, settled: 0, waiting: s.waiting - wave, from: wave ? 'right' : 'none', key: `t${s.rods}` }
+    }))
+    after(520 + carryMs * 2, () => setR(s => {
+      const more = s.bay === 10
+      if (!more && !isMake) { setLive(true); say(ASK[kind]) }
+      else if (more) say('Ten again — trade them up.')
+      else say('Ten ones make ONE ten. It goes on the left shelf.')
+      return { ...s, carry: 0 }
+    }))
+  }
+
+  // ── MAKE: call for a block, or send one back ──
+  /**
+   * ⚠️ **EVERY ONE OF THESE READS THE ROOM INSIDE THE UPDATER, NEVER FROM THE RENDER'S CLOSURE.**
+   * The first version kept a separate stack of what had been placed and popped it on undo — and
+   * three "back" taps inside one React batch all read the SAME stale stack, so all three removed a
+   * one and the tens were left behind: the stack and the room silently desynced. A child who
+   * double-taps hits exactly that. So there is no second copy of the state to fall out of step —
+   * the undo is DERIVED from what is on the shelves, which is also the only thing the child can see.
+   * Ones come off first, then tens, so it is predictable without remembering an order.
+   */
+  function callRod() {
+    if (!live || ok) return
+    setR(s => ({ ...s, rods: s.rods + 1, from: 'left', key: `r${s.rods}` }))
+  }
+  function callOne() {
+    if (!live || ok) return
+    setR(s => (s.bay >= 10 ? s : { ...s, bay: s.bay + 1, settled: s.bay, from: 'right', key: s.key }))
+  }
+  /** Available at EVERY count — one that appears only when the set is wrong is a verdict handed
+   *  over before the commit. */
+  function sendBack() {
+    if (!live || ok) return
+    setR(s => s.bay > 0 ? { ...s, bay: s.bay - 1, settled: s.bay - 1, from: 'none' }
+      : s.rods > 0 ? { ...s, rods: s.rods - 1, from: 'none' } : s)
+  }
+
+  function finish(correct: boolean) {
+    done.current = true; setOk(true); setLive(false)
+    after(1800, () => onComplete(mode === 'practice' ? !erred.current && correct : true))
+  }
+
+  function commitMake() {
+    if (done.current || !live) return
+    const built = r.rods * 10 + r.bay
+    if (built === n) {
+      setNote(`${Math.floor(n / 10)} tens and ${n % 10} ones make ${n}`)
+      speak(`Yes! ${numberToWords(Math.floor(n / 10))} tens and ${numberToWords(n % 10)} ones make ${numberToWords(n)}.`)
+      finish(true)
+      return
+    }
+    erred.current = true
+    // ⚠️ THE LESSON, DELIVERED WHERE IT BITES. Same two digits, wrong shelves — so name the number
+    // they actually made. This is the one moment the chapter can say what place value IS.
+    if (r.rods === n % 10 && r.bay === Math.floor(n / 10)) {
+      say(`That is ${numberToWords(built)}, not ${numberToWords(n)}. The tens side is on the left — look which one holds ${numberToWords(Math.floor(n / 10))}.`)
+    } else {
+      say(`Not yet — that is ${numberToWords(built)}. Count the tens, then the ones.`)
+    }
+  }
+
+  function commitPad() {
+    if (done.current || digits.length < windows) return
+    const v = digits.reduce((p, c) => p * 10 + c, 0)
+    if (v === answer) {
+      setNote(SOLVED[kind](n))
+      speak(`Yes! ${SOLVED[kind](n)}`)
+      finish(true)
+    } else {
+      erred.current = true
+      say(RETRY[kind])
+      after(1200, () => setDigits([]))
+    }
+  }
+
+  const band = PAD_BAND(vh)
+  const ground = groundOf(vh)
+  return (
+    <>
+      {/* the target rides INSIDE the question pill — see `lead` in yard.tsx */}
+      <Banner text={note || (isMake ? 'Make the number on the order' : ASK[kind])} vh={vh} ok={ok}
+        side="right" lead={isMake && !ok ? n : undefined} />
+      <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
+      <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
+      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh}
+        hint={r.bay === 10} onBay={r.bay === 10 && !ok ? trade : undefined} />
+
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
+        display: 'flex', justifyContent: 'center' }}>
+        {isMake
+          ? <MakeControls m={m} cube={cube} band={band} vw={vw} live={live && !ok} canUndo={r.rods + r.bay > 0}
+              onRod={callRod} onOne={callOne} onBack={sendBack} onDone={commitMake} />
+          : <AnswerPad digits={digits} band={band} live={live && !ok} windows={windows}
+              onDigit={d => setDigits(x => (x.length >= windows ? x : [...x, d]))}
+              onClear={() => setDigits(x => x.slice(0, -1))} onDone={commitPad} />}
       </div>
     </>
   )
 }
 
-// ─── Teaching demo (opening preview + 3-wrong re-teach): build the number with the world's items ─
-// speakSteps drives BOTH the voice AND each reveal — a stack of ten fills in as Milo counts
-// "ten, twenty…", then loose ones "twenty-one…"; synced to the voice, timer-paced when blocked.
-const BlocksExplain: React.FC<{ world: PvWorld; data: PvRound; onDone: () => void }> = ({ data, onDone }) => {
-  const { n, item: it } = data
-  const { w: vw, h: vh } = useViewport()
-  const short = vh < 470
-  const availW = vw * 0.92
-  const availH = Math.max(120, vh - (short ? 140 : 220))
-  const t = Math.floor(n / 10), o = n % 10
-  const [rt, setRt] = useState(0)
-  const [ro, setRo] = useState(0)
-  const [big, setBig] = useState<number | null>(null)
-  const [showNum, setShowNum] = useState(false)
-  const doneRef = useRef(onDone); doneRef.current = onDone
-  useEffect(() => {
-    const lines: string[] = []
-    const steps: Array<() => void> = []
-    lines.push(`Watch me count the ${it.many}!`); steps.push(() => {})
-    for (let k = 1; k <= t; k++) { const v = k; lines.push(numberToWords(v * 10)); steps.push(() => { setRt(v); setBig(v * 10) }) }
-    for (let j = 1; j <= o; j++) { const v = j; lines.push(numberToWords(t * 10 + v)); steps.push(() => { setRo(v); setBig(t * 10 + v) }) }
-    const tPart = t > 0 ? `${numberToWords(t)} ${t === 1 ? 'stack' : 'stacks'} of ten` : ''
-    const oPart = o > 0 ? `${numberToWords(o)} loose` : ''
-    lines.push(`${[tPart, oPart].filter(Boolean).join(' and ')} make ${numberToWords(n)} ${it.many}!`)
-    steps.push(() => { setShowNum(true); setBig(n) })
-    const cancel = speakSteps(lines, {
-      onStep: (i) => { steps[i]?.() },
-      onDone: () => { window.setTimeout(() => doneRef.current(), 1000) },
-      fallbackStepMs: 1050,
-    })
-    return cancel
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+/**
+ * The unit the supply trays are drawn to. ⚠️ **BOTH TRAYS SHARE IT, AND THAT IS THE WHOLE POINT.**
+ * A ten and a one sitting side by side is the most direct comparison the chapter ever offers, so if
+ * they are not drawn to one unit the tray is lying — which is exactly what the first version did,
+ * showing a "ten" 2.4 cubes long beside a one-cube. Laid flat, ten units fit a control band.
+ */
+export const trayUnit = (band: number, cube: number, vw: number) =>
+  blockSet(Math.max(8, Math.round(Math.min(cube, band / 4.6, vw * 0.017))))
+
+/** MAKE's answering surface: call for a ten, call for a one, send the last one back, commit. */
+function MakeControls({ m, cube, band, vw, live, canUndo, onRod, onOne, onBack, onDone }: {
+  m: Shades; cube: number; band: number; vw: number; live: boolean; canUndo: boolean
+  onRod: () => void; onOne: () => void; onBack: () => void; onDone: () => void
+}) {
+  const w = Math.max(30, Math.min(58, Math.floor((band - 10) / 1.9)))
+  // ⚠️ Both trays are drawn from ONE derived set — there is no multiplier here to get wrong.
+  const t = trayUnit(band, cube, vw)
+  const tray = (label: string, onClick: () => void, child: React.ReactNode): React.ReactNode => (
+    <button onClick={onClick} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
+      gap: 3, height: w * 1.5, padding: '4px 12px 6px',
+      borderRadius: w * 0.24, border: '3px solid var(--outline)', background: 'var(--paper)',
+      cursor: 'pointer',
+    }}>
+      <span style={{ display: 'flex', alignItems: 'flex-end', height: w * 0.85 }}>{child}</span>
+      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.26,
+        letterSpacing: 0.8, color: 'var(--ink-muted)' }}>{label}</span>
+    </button>
+  )
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2vh 4vw' }}>
-      <FitBox availW={availW} availH={availH} max={2.2}>
-        <div style={{ background: 'var(--paper)', border: '4px solid var(--outline)', borderRadius: 24, padding: '18px 16px 22px', width: 460, boxShadow: '0 8px 0 rgba(61,37,22,.2)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          <style>{KIT_CSS}</style>
-          <div style={{ height: 60, display: 'flex', alignItems: 'center' }}>{big != null && <BigCount key={big} n={big} />}</div>
-          <ObjectTens item={it} n={n} revealTens={rt} revealOnes={ro} />
-          <div style={{ height: 40, display: 'flex', alignItems: 'center' }}>
-            {showNum && (
-              <div style={{ background: 'var(--milo-orange)', color: '#fff', borderRadius: 50, padding: '7px 20px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 17, animation: 'k_flipIn 0.5s ease' }}>
-                {t > 0 ? `${t} ${t === 1 ? 'stack' : 'stacks'}` : ''}{t > 0 && o > 0 ? ' + ' : ''}{o > 0 ? `${o} loose` : ''} = {n}
-              </div>
-            )}
-          </div>
-        </div>
-      </FitBox>
+    <div style={{ display: 'flex', alignItems: 'center', gap: w * 0.3,
+      pointerEvents: live ? 'auto' : 'none', opacity: live ? 1 : .3, transition: 'opacity .3s ease' }}>
+      {tray('A TEN', onRod, <Rod axis="h" w={t.rodW} h={t.rodH} m={m} />)}
+      {tray('A ONE', onOne, <Cube s={t.cube} m={m} />)}
+      <button onClick={onBack} disabled={!canUndo} style={{
+        height: w * 0.95, padding: `0 ${w * 0.42}px`, borderRadius: w * 0.48,
+        border: '3px solid var(--outline)', background: 'var(--paper)', color: 'var(--ink)',
+        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: w * 0.3,
+        opacity: canUndo ? 1 : .45, cursor: canUndo ? 'pointer' : 'default',
+      }}>↩ back</button>
+      {/* Identical at every count — nothing may say the set is right before the commit. */}
+      <button onClick={onDone} style={{
+        height: w * 1.15, padding: `0 ${w * 0.66}px`, borderRadius: w * 0.58, border: 'none',
+        background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff',
+        fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.36,
+        boxShadow: '0 4px 0 rgba(180,70,20,.45)', cursor: 'pointer',
+      }}>Done ✓</button>
     </div>
   )
 }
 
-// ─── Value generation ──────────────────────────────────────────────────────────────
-function makeBeat(world: PvWorld): Beat<PvRound> {
-  return {
-    skillId: 'placeValue', rounds: 10, reteachAfter: 3, walkEvery: 3,
-    make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
-    prompt: d => d.question,
-    say: d => d.say,
-    Play: ({ data, onSubmit }) => <BlocksPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
-    Reteach: ({ data, onDone }) => <BlocksExplain world={world} data={data} onDone={onDone} />,
-  }
+// Everything spoken is also written — Chrome often has no voice, and a response that exists only as
+// speech is silence.
+const ASK: Record<QKind, string> = {
+  make: 'Make the number on the order',
+  whole: 'How many altogether?',
+  tens: 'How many on the TENS side?',
+  ones: 'How many on the ONES side?',
+  value: 'The TENS side — how much is it worth?',
+}
+const SOLVED: Record<QKind, (n: number) => string> = {
+  make: n => `${n}`,
+  whole: n => `${Math.floor(n / 10)} tens and ${n % 10} ones make ${n}`,
+  tens: n => `${Math.floor(n / 10)} tens — worth ${Math.floor(n / 10) * 10}`,
+  ones: n => `${n % 10} ones`,
+  value: n => `${Math.floor(n / 10)} tens are worth ${Math.floor(n / 10) * 10}`,
+}
+const RETRY: Record<QKind, string> = {
+  make: 'Not yet. Count the tens, then the ones.',
+  whole: 'Not that one. Count the tens side, then the ones side.',
+  tens: 'Not that one. Count the tens on the left.',
+  ones: 'Not that one. Count the loose ones on the right.',
+  value: 'Not that one. Each one of those is worth ten — count them in tens.',
 }
 
-// ─── Orchestrator ──────────────────────────────────────────────────────────────────
-const BB_CSS = `
-@keyframes bb_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-@keyframes bb_pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.1);opacity:1} 100%{transform:scale(1);opacity:1} }
-`
+// ─── Demo / re-teach ──────────────────────────────────────────────────────────────────
+/**
+ * ⚠️ **THE SWAP IS THE WHOLE LESSON AND IT LIVES HERE, WHERE IT COSTS NOTHING.** Milo makes 34, then
+ * makes 43 — the SAME two digits — and the tens shelf is visibly fuller the second time. That is the
+ * one picture that says a digit's value comes from its place, and no amount of counting rods says it.
+ */
+const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = ({ slot, data, onDone }) => {
+  const { w: vw, h: vh } = useViewport()
+  const { cube, rodW, rodH, miloH } = roomUnit(vw, vh)
+  const m = useMemo(() => matOf(slot), [slot])
+  const [r, setR] = useState<Room>(EMPTY)
+  const [line, setLine] = useState('')
+  const [order, setOrder] = useState<number | null>(null)
+  const doneRef = useRef(onDone); doneRef.current = onDone
+  const a = data.n, b = (a % 10) * 10 + Math.floor(a / 10)      // the same digits, the other way round
+
+  useEffect(() => {
+    const set = (p: Partial<Room>) => setR(s => ({ ...s, ...p }))
+    const late: number[] = []
+    const soon = (ms: number, fn: () => void) => late.push(window.setTimeout(fn, ms))
+    const [aT, aO, bT, bO] = [Math.floor(a / 10), a % 10, Math.floor(b / 10), b % 10]
+    const lines = [
+      `The order says ${numberToWords(a)}. Milo builds it.`,
+      `${numberToWords(aT)} tens go on the LEFT.`,
+      `${numberToWords(aO)} ones go on the RIGHT. That is ${numberToWords(a)}.`,
+      `Now the order says ${numberToWords(b)} — the same two digits, the other way round.`,
+      `${numberToWords(bT)} tens, and ${numberToWords(bO)} ones. Look how much bigger the tens side is.`,
+      `Same digits, different sides, a different number. That is what the places mean.`,
+    ]
+    const steps: Array<() => void> = [
+      () => { setOrder(a); set({ ...EMPTY }) },
+      () => set({ rods: aT, from: 'left', key: 'a1' }),
+      () => set({ bay: aO, settled: 0, from: 'right', key: 'a2' }),
+      () => { setOrder(b); set({ ...EMPTY, key: 'b0' }) },
+      () => { set({ rods: bT, from: 'left', key: 'b1' }); soon(700, () => set({ bay: bO, settled: 0, from: 'right', key: 'b2' })) },
+      () => {},
+    ]
+    const cancel = speakSteps(lines, {
+      onStep: i => { steps[i]?.(); setLine(lines[i] ?? '') },
+      onDone: () => soon(1500, () => doneRef.current()),
+      rate: 0.85, gapMs: 700, fallbackStepMs: 2800,
+    })
+    return () => { cancel?.(); late.forEach(clearTimeout) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [a])
+
+  const ground = groundOf(vh)
+  return (
+    <>
+      <Banner text={line || 'Watch Milo fill the order…'} vh={vh} side="right" lead={order ?? undefined} />
+      <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
+      <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
+      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} />
+    </>
+  )
+}
+
+// ─── Beat ─────────────────────────────────────────────────────────────────────────────
+const BEAT: Beat<PvRound> = {
+  skillId: 'placeValue', rounds: 10, reteachAfter: 3, walkEvery: 3,
+  make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
+  sig: d => `${d.n}${d.kind}`,
+  // SkillBeat renders nothing for an empty prompt — this chapter's own banner owns the pill, and it
+  // must never restate the question as a number.
+  prompt: () => '',
+  Play: ({ data, onSubmit }) => <PvRoundView slot={slotAt(data.slot)} data={data} mode="practice" onComplete={onSubmit} />,
+  Reteach: ({ data, onDone }) => <PvExplain slot={slotAt(data.slot)} data={data} onDone={onDone} />,
+}
+
+// ─── Orchestrator ─────────────────────────────────────────────────────────────────────
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
-export default function BuildingBlocks({ world: forcedWorldId, onFinish, onExit }: {
+
+export default function BuildingBlocks({ onFinish, onExit }: {
+  /** kept so old `?world=` links do not 404 — there is no picker any more */
   world?: string
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
   const router = useRouter()
-  const { h: vh } = useViewport()
-  const short = vh < 470
-  const [world, setWorld] = useState<PvWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
+  const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
-  const [scene, setScene] = useState<Scene>('orchard')
   const [demoIdx, setDemoIdx] = useState(0)
+  const [slotIdx, setSlotIdx] = useState(0)
+  const [shipped, setShipped] = useState(0)
+  const { h: vh } = useViewport()
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
   const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
   const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
     if (finished.current) return; finished.current = true
     stopSpeech()
     if (onFinish) onFinish(c, w, mastered); else exit()
   }, [onFinish, exit])
-
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
-  const beat = useMemo(() => (world ? makeBeat(world) : null), [world])
 
-  if (!world || !beat) {
-    return (
-      <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-        <WorldSelect title="Where shall we count tens and ones?" worlds={PICK_WORLDS}
-          onPick={(id) => { const w = worldById(id); if (w) { setScene(w.scenes[0]); setWorld(w) } }} onExit={exit} />
-      </div>
-    )
-  }
+  // Both teaching examples are a digit-swap pair — see PvExplain.
+  const DEMO: PvRound[] = useMemo(() => [
+    { slot: 0, n: 34, kind: 'make', answer: 34, digits: 2 },
+    { slot: 1, n: 52, kind: 'make', answer: 52, digits: 2 },
+  ], [])
+  const GUIDED: PvRound = useMemo(() => ({ slot: GUIDED_SLOT, n: 23, kind: 'make', answer: 23, digits: 2 }), [])
 
-  const DEMO_ROUNDS: PvRound[] = [
-    { scene: world.scenes[0], item: world.items[0], n: 23, qType: 'whole', question: '', say: '', answer: 23, choices: [], showNumeral: false },
-    { scene: world.scenes[1] ?? world.scenes[0], item: world.items[1] ?? world.items[0], n: 34, qType: 'whole', question: '', say: '', answer: 34, choices: [], showNumeral: false },
-  ]
-  const guidedItem = world.items[2 % world.items.length]
-  const guided: PvRound = { scene: world.scenes[2] ?? world.scenes[0], item: guidedItem, n: 26, qType: 'tens', question: 'How many stacks of ten?', say: `How many stacks of ten ${guidedItem.many}? Count the tall stacks.`, answer: 2, choices: nearDigits(2), showNumeral: true }
-  const bgScene: Scene = phase === 'practice' ? scene : phase === 'guided' ? guided.scene : phase === 'demo' ? DEMO_ROUNDS[demoIdx].scene : world.scenes[0]
+  // Every hook is above this line — an early return that changes the hook count tears the chapter
+  // into the error boundary the moment the phone is turned.
+  if (needsRotate) return <RotateGate line="Turn your phone sideways to help Milo fill the orders!" />
 
-  const Banner = (text: string) => (
-    <div style={{ position: 'absolute', top: short ? 44 : 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
-      <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: short ? '5px 16px' : '10px 24px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: short ? 14 : 19, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
-    </div>
-  )
+  const active = phase === 'practice' ? slotIdx : phase === 'guided' ? GUIDED_SLOT : DEMO[Math.min(demoIdx, DEMO.length - 1)].slot
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-      <style>{BB_CSS}</style>
-      <Background scene={bgScene} scenes={world.scenes} />
-      <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
+    <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#dfe7d4' }}>
+      <style>{CRITTER_CSS}{YARD_CSS}</style>
+
+      {RUN.map((s, i) => (
+        <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === active ? 1 : 0, transition: 'opacity .6s ease' }}>
+          <img src={BG(s.scene)} alt="" draggable={false} decoding="async"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      ))}
+
+      <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 50 }}>
         <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        {/* The cumulative arc, OUTSIDE SkillBeat — anything drawn inside a round resets every round. */}
+        {shipped > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,252,244,.86)', border: '2px solid var(--outline)', borderRadius: 999, padding: '4px 12px' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 12, color: 'var(--ink-muted)' }}>numbers made</span>
+            {Array.from({ length: Math.min(shipped, 10) }).map((_, i) => (
+              // each tally mark keeps the colour of the round it came from, so the strip reads back
+              // as the run the child actually walked rather than a row of identical ticks
+              <span key={i} style={{ width: 7, height: 16, borderRadius: 2,
+                background: matOf(scoredSlot(i)).face,
+                boxShadow: `inset 0 2px 0 ${matOf(scoredSlot(i)).top}, inset 0 -2px 0 rgba(60,44,28,.25)` }} />
+            ))}
+          </div>
+        )}
       </div>
 
       {phase === 'intro' && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-          <div style={{ maxWidth: '76%', background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 19, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)' }}>
-            {world.intro}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
+          <div style={{ maxWidth: '74%', background: 'rgba(255,252,244,.94)', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: `clamp(14px, ${Math.round(vh * 0.034)}px, 20px)`, color: 'var(--ink)', textAlign: 'center' }}>
+            Milo stacks what he gathers. TENS go on the LEFT, ONES on the RIGHT — just the way a
+            number is written. Watch him fill two orders first!
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('demo') }}
-            style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>Let's go! ▶</button>
+            style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>
+            Let&apos;s go! ▶
+          </button>
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo count the ${DEMO_ROUNDS[demoIdx].item.many}  (${demoIdx + 1}/${DEMO_ROUNDS.length})`)}
-        <BlocksExplain key={`demo${demoIdx}`} world={world} data={DEMO_ROUNDS[demoIdx]}
-          onDone={() => { if (demoIdx + 1 < DEMO_ROUNDS.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
+      {phase === 'demo' && (
+        <PvExplain key={`demo${demoIdx}`} slot={slotAt(active)} data={DEMO[demoIdx]}
+          onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} />
+      )}
 
-      {phase === 'guided' && (<>{Banner('Now you! Count the stacks of ten')}
-        <BlocksPlay key="guided" world={world} data={guided} mode="guided" onComplete={() => setPhase('practice')} /></>)}
+      {phase === 'guided' && (
+        <PvRoundView key="guided" slot={slotAt(active)} data={GUIDED} mode="guided"
+          onComplete={() => { setSlotIdx(GUIDED_SLOT + 1); setPhase('practice') }} />
+      )}
 
       {phase === 'practice' && (
-        <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
-          <SkillBeat beat={beat} onInterlude={interlude}
-            onRound={(data) => { if (data?.scene) setScene(data.scene as Scene) }}
+        <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
+          <SkillBeat beat={BEAT} onInterlude={interlude}
+            onRound={(data) => { if (typeof data?.slot === 'number') { setSlotIdx(data.slot); setShipped(s => s + 1) } }}
             onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
         </div>
       )}
-
-      <MiloHost left={10} milo={world.milo} />
     </div>
   )
 }
