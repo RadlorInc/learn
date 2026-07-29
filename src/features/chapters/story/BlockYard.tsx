@@ -67,7 +67,19 @@ import { numberToWords } from '../lessons/_kit'
 import { applyOp, type Op } from '../lessons/ArithmeticLesson'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
-import { Arrive, SheetCell, inFlowJourney, CRITTER_CSS, aspectOf, seeded } from './critters'
+import { SheetCell, inFlowJourney, CRITTER_CSS, aspectOf, seeded } from './critters'
+// The base-ten set itself lives in `yard.tsx` — extracted when this chapter got its second
+// consumer (BuildingBlocks / placeValue). What stayed here is this chapter's own WORLD: its ground
+// line, where things stand, which way they travel, and the question.
+import {
+  Cube, Rod, Shadow, Travelling, Banner, AnswerPad, unitFor, shadesOf,
+  ROD_SEGMENTS, MAT_SAT, MAT_VAL, PAD_BAND, bannerBottom, YARD_CSS,
+  type Material, type Shades,
+} from './yard'
+// Re-exported unchanged so the 56-test gate keeps importing them from here — which is what makes
+// that suite the proof the extraction changed nothing.
+export { ROD_SEGMENTS, MAT_SAT, MAT_VAL, PAD_BAND, bannerBottom }
+export type { Material }
 
 // ─── The run ──────────────────────────────────────────────────────────────────────────
 // One flat list covering demo (2) → guided (1) → 10 scored rounds, indexed STRAIGHT and never
@@ -188,7 +200,6 @@ export function loadPlan(op: Op, a: number, b: number) {
  * and the guided round render OUTSIDE `SkillBeat` and look perfectly correct — the fault only
  * appears once the first scored round loads. `Critter` is `fixed` for exactly this reason.
  */
-export const PAD_BAND = (vh: number) => Math.round(Math.max(92, Math.min(vh * 0.21, 150)))
 export const GROUND = 0.74          // the yard floor, as a share of the height — on a ROOMY frame
 /**
  * ⚠️ On a short frame the ground must come UP to clear the answer pad. At 640×320 a flat 0.74 put
@@ -241,18 +252,7 @@ export const queueOf = (j: number) => {
 export const MILO_X = 60
 export const RODS_X0 = 68, RODS_COL = 3.3
 export const rodSpot = (i: number) => ({ x: RODS_X0 + i * RODS_COL })
-/**
- * ⚠️ **A ROD IS EXACTLY TEN CUBES TALL, AND THAT IS NOT NEGOTIABLE.**
- *
- * The first attempt drew it at 0.55 of unit scale, so it would clear the prompt on a short frame —
- * which means it stood five and a half cubes high beside the cubes it is made of. **A child can lay
- * a rod against the ones and read the wrong number off it.** That is a lie inside the manipulative,
- * which is worse than any look problem: the whole reason to use base-ten blocks is that the
- * relationship is there to be measured rather than asserted.
- *
- * So the ROD is fixed at ten units and the UNIT is derived from the room available — see `yardUnit`.
- */
-export const ROD_SEGMENTS = 10
+/** `ROD_SEGMENTS` and the rod-is-exactly-ten-cubes rule now live in [yard.tsx](./yard.tsx). */
 /**
  * The vertical room a standing rod has, in px. ⚠️ On a short frame the prompt banner is what eats
  * it, and the craft doc's rule is to buy height from the CHROME, never from the prose — so instead
@@ -286,8 +286,6 @@ export const ENTER_X = -12          // off-frame left, where every delivery star
  * green) except `town_street` at 32°** — so the gate asserts every material is at least 45° of hue
  * away from the scene it is paired with, which makes the hay-bale fault impossible to reintroduce.
  */
-export const MAT_SAT = 0.46, MAT_VAL = 0.80
-export interface Material { name: string; hue: number; grain: boolean }
 export const MATERIALS: Material[] = [
   { name: 'clay', hue: 14, grain: false },
   { name: 'slate', hue: 214, grain: true },
@@ -296,158 +294,12 @@ export const MATERIALS: Material[] = [
   { name: 'rose', hue: 352, grain: false },
   { name: 'indigo', hue: 250, grain: true },
 ]
-/** Standard HSV→RGB. The shades are DERIVED rather than typed out, so eighteen hand-written hex
- *  values cannot drift out of the band one at a time. */
-function hsv(h: number, s: number, v: number): string {
-  const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c
-  const [r, g, b] = [[c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x]][Math.floor(h / 60) % 6]
-  return `rgb(${Math.round((r + m) * 255)},${Math.round((g + m) * 255)},${Math.round((b + m) * 255)})`
-}
-export const shadesOf = (m: Material) => ({
-  top: hsv(m.hue, MAT_SAT - 0.1, MAT_VAL + 0.09),        // the lit face — highlights desaturate
-  face: hsv(m.hue, MAT_SAT, MAT_VAL),
-  deep: hsv(m.hue, MAT_SAT + 0.08, MAT_VAL - 0.13),
-  seam: hsv(m.hue, MAT_SAT + 0.3, MAT_VAL - 0.42),
-  rim: 'rgba(255,250,244,.5)',
-  grain: m.grain,
-})
 export const matOf = (slot: Slot) => shadesOf(MATERIALS[slot.mat % MATERIALS.length])
-type Shades = ReturnType<typeof shadesOf>
-/** Soft, cool and close. A hard drop-shadow is the loudest "pasted on" tell there is. */
-const SHADOW = 'radial-gradient(ellipse at center, rgba(46,38,24,.32) 0%, rgba(46,38,24,.13) 56%, rgba(46,38,24,0) 78%)'
 
-/**
- * The unit cube's side — and every other size in the yard falls out of it, because a base-ten set
- * only means anything if all of it is drawn to ONE unit.
- *
- * Three terms bind it, and the third is the one that matters: the width of the column it stands in
- * (a cube wider than its column buries its neighbour, and a run the child cannot count is a wrong
- * answer the chapter caused), a share of the height, and **the room a TEN-cube rod needs to stand
- * up in**. The last is why the unit shrinks on a short frame rather than the rod lying about its
- * length.
- */
-export function yardUnit(vw: number, vh: number) {
-  const cube = Math.max(12, Math.min(40, Math.floor(Math.min(
-    vh * 0.055,
-    vw * 0.026,
-    rodBudget(vh) / (ROD_SEGMENTS + 0.24),      // + the rod's own lit top face
-  ))))
-  return {
-    cube,
-    rodW: Math.round(cube * 0.92),
-    rodH: cube * ROD_SEGMENTS,                  // exactly ten. See ROD_SEGMENTS.
-    // Measured against a standing rod on screen: at 3.4 units he was a third of its height and read
-    // as a toy beside it. He has to look like someone who could pick one up.
-    miloH: Math.round(cube * 4.6),
-  }
-}
-
-// ─── Pieces ───────────────────────────────────────────────────────────────────────────
-/**
- * A REAL elliptical contact shadow. ⚠️ Pass 2 had not one — only the generic `drop-shadow` filter
- * `SheetCell` carries, which is a lighting cue and not a contact cue, so nothing on screen touched
- * the ground. It renders INSIDE whatever is travelling; outside, it lags, which is a bug this repo
- * has already shipped once.
- */
-function Shadow({ w, h }: { w: number; h: number }) {
-  return <span aria-hidden style={{
-    position: 'absolute', left: '50%', bottom: -Math.round(h * 0.35), transform: 'translateX(-50%)',
-    width: w, height: h, borderRadius: '50%', background: SHADOW, pointerEvents: 'none', zIndex: 0,
-  }} />
-}
-
-/**
- * The surface mark some materials carry. ⚠️ **IT IS VERTICAL, AND THAT IS NOT A STYLE CHOICE.**
- * A rod's ten units are marked by HORIZONTAL seams, so any decorative horizontal line on a block is
- * an eleventh unit as far as a child counting it is concerned. Grain runs the other way, where it
- * cannot be mistaken for a division.
- */
-function Grain({ w, h, colour }: { w: number; h: number; colour: string }) {
-  return <>{[0.34, 0.66].map(f => (
-    <span key={f} aria-hidden style={{ position: 'absolute', left: `${f * 100}%`, top: '18%', bottom: '14%',
-      width: Math.max(1, Math.round(w * 0.045)), background: colour, opacity: 0.35, borderRadius: 99 }} />
-  ))}</>
-}
-
-/** ONE. A cube with a lit top face, a shaded front and its own contact shadow — VOLUME is what
- *  stops a rectangle reading as a UI panel. */
-function Cube({ s, m }: { s: number; m: Shades }) {
-  const top = Math.round(s * 0.24)
-  return (
-    <span style={{ display: 'block', position: 'relative', width: s, height: s + top }}>
-      <Shadow w={Math.round(s * 1.1)} h={Math.round(s * 0.34)} />
-      <span style={{ position: 'relative', zIndex: 1, display: 'block', width: s, height: s + top }}>
-        <span style={{ position: 'absolute', left: 0, right: 0, top: 0, height: top + 1,
-          background: m.top, borderRadius: `${s * 0.2}px ${s * 0.2}px 0 0`,
-          boxShadow: `inset 0 1px 0 ${m.rim}` }} />
-        <span style={{ position: 'absolute', left: 0, right: 0, top, bottom: 0, overflow: 'hidden',
-          background: `linear-gradient(180deg, ${m.face} 0%, ${m.deep} 100%)`,
-          borderRadius: `0 0 ${s * 0.18}px ${s * 0.18}px`,
-          boxShadow: `inset -${Math.max(1, s * 0.07)}px 0 0 rgba(60,44,28,.16)` }}>
-          {m.grain && <Grain w={s} h={s} colour={m.seam} />}
-        </span>
-      </span>
-    </span>
-  )
-}
-
-/**
- * TEN. One rod, standing — and it still shows its ten segments, so nothing is asserted.
- *
- * ⚠️ Pass 2 drew five creature heads above each bundle's rim so it "still read as a load". That is
- * the opposite of the lesson: a bundled ten is ONE thing, and separable bodies inside it invite
- * exactly the recount that unitising is the absence of. Segments are not bodies — they are the
- * marks on one object, which is the whole difference between a rod and ten cubes.
- */
-function Rod({ w, h, m, delayMs = 0, nudge }: { w: number; h: number; m: Shades; delayMs?: number; nudge?: boolean }) {
-  const top = Math.round(w * 0.24)
-  return (
-    // One transform per wrapper: the nudge and the settle are separate elements. Stack two on one
-    // and the later silently wins — the bug that cost this codebase a day across three chapters.
-    <span style={{ display: 'block', animation: nudge ? 'by_nudge 1.5s ease-in-out infinite' : undefined }}>
-      <span style={{ display: 'block', position: 'relative', width: w, height: h + top,
-        animation: `by_settle .45s ease ${delayMs}ms both` }}>
-        <Shadow w={Math.round(w * 1.9)} h={Math.round(w * 0.6)} />
-        <span style={{ position: 'relative', zIndex: 1, display: 'block', width: w, height: h + top }}>
-          <span style={{ position: 'absolute', left: 0, right: 0, top: 0, height: top + 1,
-            background: m.top, borderRadius: `${w * 0.2}px ${w * 0.2}px 0 0`,
-            boxShadow: `inset 0 1px 0 ${m.rim}` }} />
-          <span style={{ position: 'absolute', left: 0, right: 0, top, bottom: 0, overflow: 'hidden',
-            background: `linear-gradient(90deg, ${m.face} 0%, ${m.deep} 100%)`,
-            borderRadius: `0 0 ${w * 0.18}px ${w * 0.18}px` }}>
-            {Array.from({ length: ROD_SEGMENTS }).map((_, i) => (
-              <span key={i} data-seg style={{ position: 'absolute', left: 0, right: 0,
-                top: `${(i / ROD_SEGMENTS) * 100}%`, height: `${100 / ROD_SEGMENTS}%`,
-                borderTop: i ? `1px solid ${m.seam}` : 'none' }} />
-            ))}
-          </span>
-        </span>
-      </span>
-    </span>
-  )
-}
-
-/** A cube standing at (or travelling to) a place on the ground, anchored by its base. */
-function Travelling({ s, m, x, lift, tilt, ground, dist, ms, delayMs, resetKey, z, leave, fusing }: {
-  s: number; m: Shades; x: number; lift: number; tilt: number; ground: number
-  dist: number; ms: number; delayMs: number; resetKey: string; z: number
-  leave?: boolean; fusing?: boolean
-}) {
-  return (
-    <div style={{ position: 'fixed', left: `${x}%`, top: `${ground * 100 - lift}%`,
-      transform: 'translate(-50%, -100%)', zIndex: z, pointerEvents: 'none' }}>
-      <Arrive dist={dist} ms={ms} delayMs={delayMs} leave={leave} resetKey={resetKey}>
-        {() => (
-          // the hand-stacked wobble is its own element, so it can never fight the travel transform
-          <span style={{ display: 'block', transform: `rotate(${tilt}deg)`, transformOrigin: '50% 100%',
-            animation: fusing ? 'by_shut .4s ease forwards' : undefined }}>
-            <Cube s={s} m={m} />
-          </span>
-        )}
-      </Arrive>
-    </div>
-  )
-}
+/** A cube is capped narrower than the column it stands in (2.6% against `ONES_COL`'s 3.2), so a
+ *  run of ten never touches. `unitFor` takes the rod's vertical budget because the two chapters
+ *  stand their rods on different surfaces — this one on the yard's ground line. */
+export const yardUnit = (vw: number, vh: number) => unitFor(vw, vh, rodBudget(vh), 2.6)
 
 // ─── The scene ────────────────────────────────────────────────────────────────────────
 type Step = 'settle' | 'incoming' | 'stuck' | 'bundling' | 'answer'
@@ -471,13 +323,6 @@ const initYard = (p: ReturnType<typeof loadPlan>): Yard => ({
   rods: p.start.carts, ones: p.start.onPlatform, wave: p.start.onPlatform, waiting: 0, leaving: 0,
   from: 'lane', step: 'settle', carry: 0, carried: false, fusing: false, key: 'a',
 })
-
-const YARD_CSS = `
-@keyframes by_nudge { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-@keyframes by_settle { 0%{opacity:0;transform:translateY(-7px) scale(.9)} 60%{opacity:1} 100%{opacity:1;transform:none} }
-@keyframes by_shut { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(.8)} }
-@keyframes by_pop { 0%{transform:scale(.3);opacity:0} 70%{transform:scale(1.06);opacity:1} 100%{transform:scale(1);opacity:1} }
-`
 
 function Scene({ y, m, ch, rodW, rodH, miloH, vw, vh, onRun, onRod, hint }: {
   y: Yard; m: Shades; ch: number; rodW: number; rodH: number; miloH: number; vw: number; vh: number
@@ -521,7 +366,7 @@ function Scene({ y, m, ch, rodW, rodH, miloH, vw, vh, onRun, onRod, hint }: {
         const s = spotOf(i)
         const j = leg(fromXFor(i), s.x)
         return <Travelling key={`c${i}-${y.key}`} s={ch} m={m} x={runX(i)} lift={s.lift} tilt={y.fusing ? 0 : s.tilt}
-          ground={ground} dist={j.dist} ms={y.step === 'settle' ? 0 : j.ms}
+          ground={ground}dist={j.dist} ms={y.step === 'settle' ? 0 : j.ms}
           delayMs={i * 110 + (i >= y.wave ? 380 : 0)} resetKey={`${y.key}-${i}`}
           z={20 + i} fusing={y.fusing} />
       })}
@@ -531,7 +376,7 @@ function Scene({ y, m, ch, rodW, rodH, miloH, vw, vh, onRun, onRod, hint }: {
         const s = queueOf(i)
         const j = leg(ENTER_X, s.x)
         return <Travelling key={`w${i}-${y.key}`} s={Math.round(ch * s.scale)} m={m} x={s.x} lift={s.lift} tilt={s.tilt}
-          ground={ground} dist={j.dist} ms={y.step === 'settle' ? 0 : j.ms}
+          ground={ground}dist={j.dist} ms={y.step === 'settle' ? 0 : j.ms}
           delayMs={i * 110} resetKey={`${y.key}-w${i}`} z={16 - i} />
       })}
 
@@ -540,7 +385,7 @@ function Scene({ y, m, ch, rodW, rodH, miloH, vw, vh, onRun, onRod, hint }: {
         const s = spotOf(y.ones + i)
         const j = leg(s.x, ENTER_X)
         return <Travelling key={`x${i}-${y.key}`} s={ch} m={m} x={s.x} lift={s.lift} tilt={s.tilt}
-          ground={ground} leave dist={j.dist} ms={j.ms} delayMs={i * 130}
+          ground={ground}leave dist={j.dist} ms={j.ms} delayMs={i * 130}
           resetKey={`${y.key}-x${i}`} z={19 - i} />
       })}
 
@@ -581,84 +426,8 @@ function Scene({ y, m, ch, rodW, rodH, miloH, vw, vh, onRun, onRod, hint }: {
   )
 }
 
-// ─── Answer pad ───────────────────────────────────────────────────────────────────────
-function AnswerPad({ digits, onDigit, onClear, onDone, band, live }: {
-  digits: number[]; onDigit: (n: number) => void; onClear: () => void; onDone: () => void
-  band: number; live: boolean
-}) {
-  /** Sized off ITS OWN band, never off the block unit: deriving it from the scene gave 28×28
-   *  buttons on a short frame while the pad's own band had room. The thing that is TAPPED wins. */
-  const w = Math.max(26, Math.min(54, Math.floor((band - 6) / 2.27)))
-  const win = (i: number) => (
-    <span key={i} style={{
-      width: w * 1.05, height: w * 1.15, borderRadius: w * 0.2, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--paper)', border: `3px solid ${digits.length > i ? 'var(--milo-orange)' : 'var(--outline)'}`,
-      fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.78, color: 'var(--ink)',
-    }}>{digits[i] ?? ''}</span>
-  )
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: w * 0.12,
-      pointerEvents: live ? 'auto' : 'none', opacity: live ? 1 : .3, transition: 'opacity .3s ease' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: w * 0.24 }}>
-        {win(0)}{win(1)}
-        <button onClick={onClear} style={{ marginLeft: w * 0.1, height: w * 0.9, padding: `0 ${w * 0.4}px`, borderRadius: w * 0.45, border: '3px solid var(--outline)', background: 'var(--paper)', color: 'var(--ink)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: w * 0.4, cursor: 'pointer' }}>⌫</button>
-        {/* Identical at every state — nothing may say the answer is right before the commit. */}
-        <button onClick={onDone} disabled={digits.length < 2} style={{
-          height: w * 1.1, padding: `0 ${w * 0.62}px`, borderRadius: w * 0.55, border: 'none',
-          background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff',
-          fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.46,
-          opacity: digits.length < 2 ? .4 : 1, cursor: digits.length < 2 ? 'default' : 'pointer',
-          boxShadow: '0 4px 0 rgba(180,70,20,.45)',
-        }}>Done ✓</button>
-      </div>
-      <div style={{ display: 'flex', gap: w * 0.14 }}>
-        {Array.from({ length: 10 }).map((_, n) => (
-          <button key={n} onClick={() => onDigit(n)} style={{
-            width: w, height: w, borderRadius: w * 0.22, border: '3px solid var(--outline)',
-            background: 'var(--paper)', fontFamily: 'var(--font-display)', fontWeight: 900,
-            fontSize: w * 0.5, color: 'var(--ink)', cursor: 'pointer',
-          }}>{n}</button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 // ─── The round ────────────────────────────────────────────────────────────────────────
 type Mode = 'demo' | 'guided' | 'practice'
-/** ⚠️ On a short frame a share of the height puts the banner ON the chapter chrome: measured at
- *  640×320 it ran under the "← Menu" button and through the tally pill. The chrome sits at a FIXED
- *  12px and is ~28 tall, so below a short height the banner clears it by a fixed amount rather than
- *  by a percentage — the same reason the ground line stops being a percentage there. */
-export const BANNER_TOP = (vh: number) => (vh < 470 ? 46 : Math.round(vh * 0.035))
-/**
- * ⚠️ On a short frame the banner MOVES ASIDE rather than shrinking. Two things were in its way and
- * one of them may not give: measured at 640×320 a centred banner ran under the "← Menu" button and
- * through the tally pill, AND it capped the standing rods at ten 10px units. The craft doc's rule is
- * to buy height from the CHROME, never from the prose — so the prose keeps its size and sits over
- * the LEFT of the yard, where the ones are and they are one cube tall. That leaves the rod column
- * the full drop from the chapter chrome, which is a 15px unit instead of a 10px one.
- */
-export const BANNER_SHORT = { left: 96, width: 'min(46vw, 660px)' }
-/** The banner's bottom edge in px, measured on screen — exported so the gate can assert nothing
- *  standing in the yard reaches up into it. */
-export const bannerBottom = (vh: number) => BANNER_TOP(vh) + (vh < 470 ? 78 : 62)
-
-function Banner({ text, vh, ok }: { text: string; vh: number; ok?: boolean }) {
-  const short = vh < 470
-  return (
-    <div style={{ position: 'fixed', top: BANNER_TOP(vh), left: 0, right: 0, zIndex: 40, display: 'flex',
-      justifyContent: short ? 'flex-start' : 'center',
-      paddingLeft: short ? BANNER_SHORT.left : 12, paddingRight: 12, pointerEvents: 'none' }}>
-      <div style={{
-        maxWidth: short ? BANNER_SHORT.width : 'min(88vw, 660px)', background: 'rgba(255,252,244,.94)',
-        border: `3px solid ${ok ? 'var(--garden-green)' : 'var(--milo-orange)'}`, borderRadius: 16, padding: '7px 18px',
-        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: `clamp(13px, ${Math.round(vh * 0.032)}px, 20px)`,
-        color: ok ? 'var(--garden-green-deep)' : 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(242,107,44,.22)',
-      }}>{text}</div>
-    </div>
-  )
-}
 
 const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onComplete: (c: boolean) => void }> =
 ({ slot, op, data, mode, onComplete }) => {
