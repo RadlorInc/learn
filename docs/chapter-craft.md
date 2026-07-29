@@ -23,6 +23,7 @@ Reference implementations, in order of how closely to copy them:
 | 5 · Comparing quantities | [BigOrSmall.tsx](../src/features/chapters/story/BigOrSmall.tsx) | two countable groups, group separation, concrete → symbolic tiers |
 | 9 & 10 · Addition / subtraction | [PlayTime.tsx](../src/features/chapters/story/PlayTime.tsx) | one component for two mirrored operations, a countable set, an exported layout chain |
 | 11 · Measurement | [MeasureIt.tsx](../src/features/chapters/story/MeasureIt.tsx) | an answer the child BUILDS, drawing a sprite by its own ink box, reserving a lane before it fills |
+| 6–8 · Add/subtract to 100 | [BlockYard.tsx](../src/features/chapters/story/BlockYard.tsx) | a question stated ONLY as quantities, the skill as the single gesture, difficulty that grows the skill, and a bundle the child can WATCH become one thing |
 
 The shared engine all of these run on is [critters.tsx](../src/features/chapters/story/critters.tsx) —
 cast, habitats, `Critter`, the travel timing and the huddle invariants. **Put a fix there, not in a
@@ -78,6 +79,37 @@ painted on the outside, and it is the fault a founder will name as "it doesn't f
 | colours | a **property** you apply | **COLOUR IT IN** | a spoken name (auditory) |
 | patterns | a **rhythm** over a sequence | **CONTINUE** | the sequence itself (temporal) |
 | measurement | a **magnitude**, which has no number until you choose a unit | **MEASURE IT** — lay one unit end to end and count | the thing itself, beside an empty lane (visual) |
+
+⚠️ **AND WHEN THE DELETE-THE-ART TEST FAILS, CHECK WHICH HALF IS AT FAULT BEFORE THROWING THE ART
+AWAY.** BlockYard's base-ten blocks failed it and were replaced — twice, at the cost of two rebuilds
+— and the blocks were never the problem: **the question was.** `27 + 15 = ?` printed on a banner
+beside a perfectly good manipulative makes the manipulative scenery. Base-ten blocks are the right
+tool for regrouping; they came back once the question stopped being answerable from digits. **Ask
+whether the art is wrong or the QUESTION is wrong. They fail the same test and they are not the same
+fault.**
+
+⚠️ **A PRINTED QUESTION MAKES THE PICTURE BESIDE IT DECORATION.** The delete-the-art test has a
+second, commoner failure mode than HopAlong's: the chapter draws a perfectly good manipulative AND
+prints the question as a bare sum next to it. BlockYard drew base-ten blocks, printed the numeral
+on each row, put `27 + 15 = ?` on the banner, and took the answer as one of three chips — so every
+question was answerable with every block deleted, and the blocks were scenery. **If the question
+can be read as symbols, the symbols are the question.** The fix is not a better picture: it is to
+state the quantities ONLY as objects and let the equation appear afterwards, as the summary of work
+already done. Concrete → abstract, in that order.
+
+⚠️ **THE TAUGHT METHOD MUST COVER EVERY CASE THE GENERATOR CAN PRODUCE — AND THE WORKED EXAMPLES
+MUST INCLUDE THE HARDEST ONE, NOT AVOID IT.** BlockYard's demo narrated *"add the tens, then the
+ones"*, which has no step for a carry; measured over 20k draws per tier, **39–50% of its rounds
+needed one**, and in subtraction the same line told the child to work out `2 − 7`. All four
+hand-picked demo examples (23+14, 34+25, 38−14, 46−23) quietly avoided regrouping, so the case the
+chapter existed for was never once shown. Hand-picked examples drift toward the easy case because
+they are chosen to *read* well. **Pick them from the hard end and check the generator's actual
+distribution against the method you are narrating.**
+
+⚠️ **AND DIFFICULTY MUST GROW THE SKILL, NOT ONLY THE MAGNITUDE.** The same chapter's tiers grew
+only how big the numbers were; whether a round exercised the skill was left to chance and never
+named. Make the thing being taught an explicit term in the generator (`REGROUP_ODDS` per tier,
+L3 always) so a gate can assert it climbs.
 
 **Beware the skill that is a near neighbour of one already built.** Measurement spent a year as
 *tap the taller one*, which is chapter 5 (*tap the bigger bunch*) with a different adjective — and
@@ -203,6 +235,33 @@ surfaces — not to relax the standard. Generalised: **an attribute question mus
 object.** The same test kills "which is taller, the pond or the song".
 
 ## 1. Animation
+
+### Is it alive? — four things to check before showing anyone
+
+Every chapter in this band that works has all four. **Count them; it is not a matter of taste.**
+
+1. **Something arrives on its own legs** — a journey, not an appearance.
+2. **The child's tap SENDS someone somewhere**, and that journey is the reward.
+3. **Milo has a job on screen** — a character with something to do.
+4. **The scene changes across the ten rounds.**
+
+BlockYard's first rebuild scored **zero of four** and was still, technically, a correct manipulative:
+a brown slab with objects popping into slots. The founder said it "doesn't look right", and that is
+what he was seeing. Run this check on your own build before asking anyone to look at it.
+
+⚠️ **BUT PASSING IT IS NOT ENOUGH — ALIVENESS AND BLEND ARE TWO DIFFERENT AXES.** BlockYard's SECOND
+rebuild scores 4/4 here, holds every timing rule below, and was rejected too: *"sahi se blend naii…
+satisfaction naii mil rha hai"*. A thing can travel on its own legs, at its own gait, with its cycle
+in step, and still sit ON the picture rather than IN it. Everything under **Images and art** is the
+other axis, and it is the one this doc had far less to say about until now: sizes that agree with
+each other, contact with the ground, a group that is a huddle rather than a row of stickers, and a
+palette that belongs to the scene. **Check both before showing anyone.**
+
+⚠️ **AND CHECK THE CODE, NOT THE COMMENT.** That same file's header said *"a crate of more arrives
+and travels in"* while the implementation just called `setState`; the travel component written for
+it was never wired to anything. **A comment asserting a rule is followed is the most expensive kind
+of lie**, because it is exactly what stops the next reader from checking. When a header claims a
+journey, grep for the component that would perform it.
 
 ### The three rules everything else follows from
 
@@ -336,6 +395,15 @@ check them with a script:
   had just finished proving. **Jitter away from a limit, never toward it**, or the fit means nothing.
 - **check the real spots, not the band they came from.** A sweep that reads `waitY1` instead of the
   positions `waitSpot` actually returns cannot see any of the jitter, and passes clean.
+- ⚠️ **A SCENE LAID OUT IN SCREEN PERCENTAGES MUST BE `position: fixed`, NEVER `absolute`.** An
+  absolute element resolves its percentages against the nearest POSITIONED ancestor, and in a scored
+  round that ancestor is `SkillBeat`'s own `position: relative` wrapper — which is content-sized. So
+  `top: 74%` of a strip a few dozen pixels tall put BlockYard's entire yard, Milo, the pen row and
+  the answer pad squashed across the top of the frame at 1280×720. **Pass 2 shipped this and it went
+  unseen through a whole verification pass**, because the demo and the guided round render OUTSIDE
+  `SkillBeat` and look perfectly correct — the fault appears only once the first SCORED round loads.
+  `Critter` has been `position: fixed` for exactly this reason. Generalise: **verify a chapter in its
+  scored rounds, not only in its demo** — they do not share a containing block.
 - **A LANE THAT WILL FILL MUST BE RESERVED FROM EMPTY.** Anything that grows — a run of blocks, a
   gathered group, a strand — is zero-sized before the first item lands, so its neighbours sit in the
   wrong place until then and jump a whole item when it arrives. In the measurement chapter the thing
@@ -348,6 +416,18 @@ check them with a script:
   had shipped. The fix is to derive the readout's offset from the same numbers the buttons are laid
   out with. Same family as the ScribblePad rule *(when two elements must not overlap, make one take
   the other's space in layout — do not compute a matching reserve)*.
+- **ON A SHORT FRAME THE WORLD YIELDS TO THE TAP TARGETS, NOT THE OTHER WAY ROUND.** BlockYard's
+  ground line was a flat 74% of the height, which at 640×320 put the creatures' feet at 237px and
+  the answer pad's top at 230 — the cast standing in the digit strip. The pad's buttons are the
+  thing a finger has to hit and may not shrink, so the GROUND is derived from the band left over
+  (`groundOf(vh)`), and a roomy frame still gets the designed line. Measure the band you must clear
+  rather than picking a percentage and hoping.
+- **AN ANSWERING CONTROL SIZES OFF ITS OWN BAND, NOT OFF THE CONTENT'S UNIT.** BlockYard derived
+  its digit pad from the same unit that sizes the bench, so on a 640×320 frame — where the bench is
+  squeezed — the digit buttons came out **28×28**, well under the 44px tap floor, while the pad's
+  own band had room to spare. Give a control the band it occupies and let it fill it (37×37 after,
+  which is this repo's stated ceiling at that size). **The thing that is TAPPED wins the pixels
+  over the thing that is merely read.**
 - **A TRAVEL DISTANCE INSIDE A SCALED CONTAINER MUST BE RELATIVE, NOT PX.** `FitBox` scales its
   child by up to 2.6×, so a 54px "lift the tray and set it down" became a ~140px launch that started
   a tray **off the top of the screen** at 640×320. `translateY(-38%)` is a share of the thing's own
@@ -537,6 +617,20 @@ second thing to look at. It appears with the demo, when it starts to matter.
   farm 50–62% · garden 45–60% · forest **88%** · reef 36–62% · beach 44–76% · space 54–84%.
   Note `object-fit: cover` — at 1024×620 these 16:9 backdrops crop at the SIDES, so image-% is
   screen-%; a 3:2 one crops top and bottom and needs converting first.
+- ⚠️ **AND SAMPLE IT ACROSS THE WHOLE WIDTH, AT EVERY GROUND LINE THE LAYOUT CAN PRODUCE.** One
+  sample under one creature is not enough once a chapter fills the frame. BlockYard's yard spans
+  x 4–97% — a fence, ten creatures, Milo and a row of pens — and it opened its subtraction run on
+  `farm_pond.png`, so **the whole thing stood on open water**. Measured across the band the yard
+  occupies: 27–35% walkable there, against 100% on a barnyard. The check is ten lines and belongs in
+  the gate: step across x at each ground line the layout can return and count the pixels that are
+  not blue-dominant (water and sky are; grass, dirt and paths never are).
+  ⚠️ **It will not tell canopy from grass** — both are green — so the horizon numbers above still
+  govern the forest scenes. Know what your instrument cannot see.
+- ⚠️ **AND THIS CAN COST YOU THE WHOLE SCENE POOL, WHICH IS THE RIGHT PRICE.** Only nine backdrops in
+  the library hold walkable ground right across that band, against thirteen slots in a run — so a
+  scene has to recur late in the run. **A fence on a pond is a far worse fault than a backdrop seen
+  twice**, and the craft rule is that CONSECUTIVE rounds differ, not that every one is unique. A gate
+  demanding all-distinct scenes is what forced the pond in; it was relaxed to consecutive-differ.
 - ⚠️ **THE TEST IS THE PIXEL UNDER THE FEET, NOT "does the picture have grass in it".** A scene whose
   ground starts BELOW the ground line is not ground — the creatures stand on the pale haze just under
   its horizon and read as hovering exactly as if there were nothing there. `town_park` failed this
@@ -562,12 +656,64 @@ second thing to look at. It appears with the demo, when it starts to matter.
   which is what depth is in a painted scene — with an organic sideways nudge, both as a share of the
   sprite's own height so the cluster holds its shape at every size. Keep it small where the group is
   the thing being counted: a scatter a child cannot count is a wrong answer the chapter caused.
+- ⚠️ **MARKING OUT PLACES ON THE GROUND IS NOT A FILLED SHAPE, AND THIS ONE HAS COST THREE PASSES.**
+  BlockYard needed to mark out ten standing places. Pass 1 drew a brown slab and was stopped; pass 2
+  drew ten discs, which is the grid the founder then named; pass 3's first attempt drew a
+  palette-matched beige rounded rectangle 37% of the screen wide — measured at 1280×720, and it is
+  the SAME fault as pass 1. **A solid block laid over a painted scene reads as UI furniture no matter
+  how carefully its colour is matched**, because painted scenes contain no filled rectangles.
+  What works is the thing the world would actually have: **posts, rails, and a soft tint on the
+  ground that fades out at its own edges** — trodden ground has no border. The posts then fall
+  between the standing places and mark out the ten without a single disc. Same family as the
+  empty-outline rule above, arrived at from the opposite direction: an outline with no fill is a
+  wireframe, and a fill with no structure is a slab.
+- ⚠️ **A MANIPULATIVE IS A TOOL, NOT SCENERY — IT IS MEANT TO STAND OUT, AND THE PALETTE RULE ONLY
+  BINDS TWO OF ITS THREE AXES.** BlockYard's base-ten blocks were first drawn in the same warm sand
+  as the yard: measured dead centre of the backdrop's band, and on a farm they read as **hay bales
+  and fence posts**. The rule `cart.png` broke is the SATURATION and BRIGHTNESS band; the HUE is
+  free. These scenes are green, sky and cream, so the blocks are clay (sat .45 / val .80 — inside
+  the painted sprites' own .42–.66) and read instantly as a thing to count. **Match the band, pick a
+  hue the backdrop does not already own.**
+- ⚠️ **AND BECAUSE THE HUE IS THE FREE AXIS, IT IS THE ONE THAT SHOULD VARY PER ROUND.** "The scene
+  changes across the run" had only ever meant the BACKDROP; the manipulative itself was identical in
+  round 10 and round 1. BlockYard now carries a material per slot — clay · slate · teal · plum · rose
+  · indigo — all sharing ONE saturation and ONE brightness and differing only in hue, so every set
+  sits in the band by construction and no single colour can drift out of it. Derive the light and
+  dark faces from the base rather than typing eighteen hex values that rot one at a time.
+  **Gate it against the SCENE**: measure each backdrop's dominant hue across the band the objects
+  occupy (saturation-weighted, so grey paths do not drag the mean) and assert a minimum separation —
+  45° here. That makes the camouflage fault above impossible to reintroduce, and it caught a planted
+  clay-on-`town_street` pairing at 17.9°.
+- ⚠️ **A DECORATIVE LINE MUST NOT RUN THE SAME WAY AS A COUNTING MARK.** A base-ten rod's ten units
+  are HORIZONTAL seams, so a horizontal grain line on a block is an eleventh unit as far as a child
+  counting it is concerned. The grain runs vertically. Generalise: before adding surface texture to
+  anything countable, ask which axis already carries meaning.
+- ⚠️ **A SET THAT IS "NOT PLACED YET" NEEDS A DEPTH CUE, OR IT IS JUST MORE OF THE ROW.** Ten blocks
+  placed and four waiting, at one size on one baseline, measured on screen as ONE row of fourteen —
+  and the argument the whole chapter turns on (*ten fit, the eleventh does not*) went with it. The
+  waiting pile stands further back: higher, smaller, and less tidily stacked. Same cue a painted
+  scene uses for anything that is somewhere else.
+- ⚠️ **AND A MANIPULATIVE MAY NOT LIE ABOUT ITS OWN PROPORTIONS.** A base-ten rod that clears the
+  prompt by being drawn at 0.55 of unit scale stands five and a half cubes high beside the cubes it
+  is made of — so a child laying one against the ones reads the wrong number off it. That is worse
+  than any look problem: the whole reason to use blocks is that the relationship is there to be
+  MEASURED rather than asserted. **Fix it by deriving the UNIT from the room available, never by
+  scaling one part of the set against another.** The gate asserts `rod === 10 × cube` at every frame.
+- ⚠️ **WHEN A LAYOUT AND SOME PROSE FIGHT OVER THE SAME HEIGHT, MOVE THE PROSE SIDEWAYS.** The doc's
+  standing rule is to buy height from the chrome and the visual, never from the prose — but there is
+  a third option it did not name: on a short frame BlockYard's banner sits over the LEFT of the yard,
+  where the things are one unit tall, instead of over the column that needs the full drop. Measured
+  at 640×320 that is the difference between a 10px unit and a 15px one, at no cost to the words.
 - **A GROUPING DEVICE MUST BE PART OF THE WORLD.** A rounded rectangle with a stroke and a pale fill
   is a UI card, and laid over a painted forest that is exactly what it looks like — a pane of glass
   with birds behind it. The same job is done by a translucent warm-dark patch with light on its rim
   and a contact shadow under it: still unmistakably one group, but a pen rather than a panel. ⚠️ And
   the fill has to be SEEN — dropped too low it leaves only the rim, which is the empty-outline
-  wireframe fault in a new costume.
+  wireframe fault in a new costume. ⚠️ **This recurred in BlockYard at .34 alpha**: the packing
+  bench was present in the DOM and absent on the screen, and the pieces on it had nothing to read
+  against over a busy backdrop. **A WORKING SURFACE — one the child manipulates things on — wants
+  an opaque-ish gradient (.9+), not a wash.** The scene is already established by the backdrop; the
+  patch's job is to hold the objects, not to hint at itself.
   `farm_barnyard.png` (grass from 52%), `garden.png` (55%) and `garden_meadow.png` are the safe ones.
 - **Fliers are exempt** — being off the ground is correct for a butterfly, which is why a sky band
   that would be wrong for a rabbit is right for them. Check a creature's locomotion in
@@ -582,6 +728,27 @@ second thing to look at. It appears with the demo, when it starts to matter.
   `garden_park` **46** · `garden` **71** (a butterfly disappears). **Cast fliers where the sky is**;
   the lift is not the thing to tune. Ground creatures are unaffected — they stand on the grass below
   the busy band.
+- ⚠️ **STYLE AND PALETTE ARE TWO SEPARATE CHECKS, AND PASSING ONE PROVES NOTHING ABOUT THE OTHER.**
+  `cart.png` has brushwork and no ink outlines, so it passes the style check above — and it is the
+  most saturated and the darkest thing on a pale pastel farm, which reads as pasted on just as
+  loudly. Measure mean saturation and brightness over the OPAQUE pixels and compare to the
+  backdrop's band, not to your impression of the brushwork:
+
+  | | saturation | brightness | dark outline |
+  |---|---|---|---|
+  | painted backdrops | 0.33–0.42 | 0.71–0.85 | ~0% |
+  | sprites that blend | 0.42–0.66 | 0.70–0.90 | 1.6–4% |
+  | `cart.png` (rejected) | **0.676** | **0.615** | 4.6% |
+  | `train_car.png` (flat vector) | 0.702 | 0.623 | 19.4% |
+
+  A prop that lands outside the sprite band is either re-coloured, drawn in code where you own the
+  palette, or replaced.
+- ⚠️ **SIZE THE CAST SO THE CREATURES AGREE WITH EACH OTHER AND WITH MILO.** `Kind.scale` in
+  critters.tsx exists for this and says so — *"a ladybug drawn the same height as a rabbit is its own
+  kind of doesn't-belong"* — and BlockYard's second pass drew every creature at one height, so an ANT
+  came out the size of a LAMB beside a pony. Where a chapter needs its cast COUNTABLE, the cleaner
+  answer than a scale table is to cast only creatures that live in ONE size band: a countable ant
+  cannot be honestly sized next to Milo, so it is simply not in that chapter.
 - **The background must match its objects** — orchard↔apples, pond↔fish, kitchen↔cookies. Where a
   world's backdrops are object-specific, pair the backdrop TO the item so a scene never shows the
   wrong object.
@@ -647,6 +814,17 @@ Gotchas that have each cost real credits:
   "server isn't responding but it submitted anyway" duplicate.
 - **The safety filter false-positives.** Rephrasing in the same register as a known-good prompt
   clears it; the first Milo prompt returned `status: "nsfw"` for nothing.
+- ⚠️ **A CREATURE WITHOUT A REGISTERED SHEET SILENTLY BECOMES A STILL — AND A STILL THAT TRAVELS IS
+  A STICKER BEING DRAGGED.** `SheetCell` falls back to a plain `<img>` when `SHEETS` has no entry for
+  the src, which is the correct fallback and also completely invisible: the creature is drawn, it is
+  the right creature, and it slides. **Assert `hasSheet()` for every creature a chapter casts** —
+  it is one line in the gate and it is the only thing standing between you and the cardinal fault.
+- ⚠️ **A PROP'S ART STYLE MATTERS AS MUCH AS A BACKDROP'S, AND THE LIBRARY MIXES BOTH.**
+  `train_car.png` and `train_engine.png` are flat-VECTOR cartoons — thick uniform outlines, flat
+  fills, a face on the engine — and a painted chick sitting in one is the same mismatch the founder
+  rejected in the pond backdrops. `cart.png` next to them is genuinely painted. **Open the file
+  before designing a chapter around it**; the check that saved BlockYard is the same one the
+  `milo_hop` lesson asks for, applied to a prop instead of a sheet.
 - ⚠️ **A SHEET'S NAME IS A CLAIM, NOT A FACT — MEASURE IT BEFORE YOU DESIGN ON IT.**
   `milo_hop.png` shipped, was registered with a comment reading *"Milo's HOP, for a chapter where he
   jumps between places"*, and was named as the foundation of A3 in both the handoff and the rethink
@@ -691,6 +869,12 @@ verify it FLOODS  (threshold → dilate 2px → connected components; see the sc
 - **An area's colour must differ from whatever it sits inside.** A blue cloud on a blue sky gave a
   correct tap no feedback at all.
 - Greyscale `pat_*` sprites are greyscale **by design** — code-tint them, never bake colour in.
+- ⚠️ **AND A SPRITE'S COLOUR IS A CLAIM LIKE ITS NAME — MEASURE IT BEFORE CASTING IT.** The
+  greyscale set is not confined to the `pat_*` prefix: `candy_cupcake`, `candy_lollipop` and
+  `candy_candy` all measure **saturation 0.0** and render as grey ghosts if drawn raw. Mean
+  `max(RGB) − min(RGB)` over the opaque pixels separates them instantly — under ~18 is greyscale,
+  a real sprite runs 90–190. Thirty seconds with PIL, and it is worth putting in the chapter's gate
+  rather than an allow-list, so a future swap is covered too.
 
 ---
 
@@ -804,6 +988,11 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   re-implements its sizing chain inside the test, so the check can agree with its own copy of the
   constants while the screen it protects falls apart. Chapters 9–10 export `playLayout` and the test
   imports it; do that instead.
+- ⚠️ **A MUTATION THAT "PASSES" IS GUILTY UNTIL YOU HAVE PROVEN THE MUTATION LANDED.** A planted
+  regression reported the gate as blind; the `sed` that planted it had silently matched nothing, so
+  the gate was never actually tested. Re-planted with a tool that reports its own substitution count,
+  it failed the gate immediately. **Assert on the edit before you conclude anything about the check**
+  — same family as "a sweep that flags everything is a broken sweep, not a discovery".
 - **Mutation-test the gate, and tell an inert mutation from a missed regression.** Of seven planted
   against the chapters 9–10 sweep, five were caught and two passed — and both survivors turned out
   to change no behaviour at all (one constant was shadowed by a tighter one, one cap was covered by
