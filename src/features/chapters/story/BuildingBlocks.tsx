@@ -68,7 +68,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { SheetCell, inFlowJourney, CRITTER_CSS, aspectOf, seeded, Arrive } from './critters'
 import {
   Cube, Rod, Shadow, Travelling, Banner, AnswerPad, unitFor, blockSet, shadesOf,
-  ROD_SEGMENTS, PAD_BAND, YARD_CSS, type Material, type Shades,
+  ROD_SEGMENTS, PAD_BAND, YARD_CSS, GROUND, groundOf, type Material, type Shades,
 } from './yard'
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
@@ -205,16 +205,10 @@ export function bundlePlan(n: number) {
 }
 
 // ─── The ground ────────────────────────────────────────────────────────────────────────
-/**
- * ⚠️ Every piece of the room is `position: fixed`, NOT `absolute`. The layout is shares of the
- * VIEWPORT, and in a scored round an `absolute` element resolves against `SkillBeat`'s own
- * content-sized `relative` wrapper instead — which squashed BlockYard's whole yard into a strip
- * across the top of the frame, invisibly, because the demo and the guided round render outside it.
- */
-export const GROUND = 0.74         // the clearing floor, as a share of the height — ROOMY frame
-/** On a short frame the ground comes UP to clear the controls, which may not shrink: their buttons
- *  are tap targets. The WORLD yields to the thing a finger has to hit. */
-export const groundOf = (vh: number) => Math.min(GROUND, (vh - PAD_BAND(vh) - 14) / vh)
+/** Moved to [yard.tsx](./yard.tsx) once CoinShop needed the same floor, and RE-EXPORTED here so
+ *  [placeValueBundle.test.ts](../../../__tests__/placeValueBundle.test.ts) is untouched — which is
+ *  what makes its unchanged run the proof that the move changed nothing. */
+export { GROUND, groundOf }
 
 /** THE TENS SHELF — on the LEFT, because that is where the tens digit is written. */
 export const RACK_X0 = 14, RACK_COL = 3.3

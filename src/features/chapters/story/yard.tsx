@@ -332,6 +332,20 @@ export function Banner({ text, vh, ok, side, lead }: {
 // ─── Answer pad ───────────────────────────────────────────────────────────────────────
 export const PAD_BAND = (vh: number) => Math.round(Math.max(92, Math.min(vh * 0.21, 150)))
 
+// ─── The ground ───────────────────────────────────────────────────────────────────────
+/**
+ * ⚠️ Every piece of a scene laid out in shares of the VIEWPORT must be `position: fixed`, NOT
+ * `absolute` — an absolute element resolves against `SkillBeat`'s own content-sized `relative`
+ * wrapper in a scored round, which squashed BlockYard's whole yard into a strip across the top,
+ * invisibly, because the demo and the guided round render outside it.
+ *
+ * Shared by BuildingBlocks and CoinShop, which both stand things on a measured floor.
+ */
+export const GROUND = 0.74         // the floor, as a share of the height — ROOMY frame
+/** On a short frame the ground comes UP to clear the controls, which may not shrink: their buttons
+ *  are tap targets. The WORLD yields to the thing a finger has to hit. */
+export const groundOf = (vh: number) => Math.min(GROUND, (vh - PAD_BAND(vh) - 14) / vh)
+
 export function AnswerPad({ digits, onDigit, onClear, onDone, band, live, windows = 2 }: {
   digits: number[]; onDigit: (n: number) => void; onClear: () => void; onDone: () => void
   band: number; live: boolean
