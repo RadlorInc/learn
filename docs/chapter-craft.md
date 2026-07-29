@@ -637,6 +637,19 @@ second thing to look at. It appears with the demo, when it starts to matter.
   and looked fine in a thumbnail: sampled at the ground line it is `(207,242,217)`, washed-out mist,
   against `(196,223,135)` for a scene that really is grass there. Sample the colour at the ground
   line before choosing a backdrop.
+- ⚠️ **THE WALKABLE-GROUND RULE IS NOT AN OUTDOOR RULE. IT IS THE RULE — AND RENAMING THE SURFACE
+  DOES NOT EXEMPT IT.** A chapter was built indoors on a "packing bench", with its scenes chosen for
+  hue and quietness — both PALETTE checks — and a flat bench line at 0.70 that nobody measured
+  against the picture. `craft_gems` is a glass display case topping out at 0.60, so the blocks and
+  Milo **floated inside the cabinet, over the necklaces.** The other indoor scenes were counters and
+  shelves: real surfaces, but furniture — a pony standing on a bakery worktop, which is the same
+  doesn't-belong fault one step along. If a chapter stands things on something, that something has
+  to be IN the painting, measured across the whole width, at every line the layout can return.
+- ⚠️ **AND σ CANNOT MAKE THIS CHECK FOR YOU.** Measured in the band where the feet land, a glass
+  display case and a wooden table top both came out at **17.9** — the jewellery inside the case is
+  blurred, so the number cannot see it. **The surface check is by EYE, like the style check**, with
+  the walkable-ground measurement as the gate behind it. Open the file and look at what the thing
+  is standing on.
 - **A WALKING cast cannot be rescued by a ground line — it needs a scene with ground.** StoryTime's
   ducks stood on a flat plane of open sea; no placement fixes that, because there is nothing painted
   to stand on. The fix was the backdrop, not the number. Conversely a FLYING cast wants water or
@@ -979,9 +992,45 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   gets it right — so anything the re-teach applies has ALREADY been applied. Bead Shop threaded a
   second copy of the same bead and broke its own repeating pattern; caught by reading the strand back
   as `RBRBBB|RBBBRBR`. A demo must place; a re-teach must only demonstrate.
+- ⚠️ **STATE KEPT IN TWO PLACES DESYNCS THE MOMENT TAPS ARE BATCHED — AND CHILDREN DO BATCH THEM.**
+  A MAKE round kept a stack of what had been placed alongside the room itself; three "back" taps
+  inside one React batch all read the SAME stale stack, so all three removed a one and the tens were
+  left standing. The fix is not a lock: **derive the undo from what is on screen**, which is also
+  the only thing the child can reason about. Ones come off before tens — predictable without
+  remembering an order. Generalise: if two pieces of state must always agree, keep one.
+  (And read the new value in an effect, not in the handler that caused it — a tap handler cannot see
+  what its own tap produced, so a batched pair announces the wrong count.)
+- ⚠️ **A SHORT FRAME MAY HAVE ONLY ONE QUESTION REGION.** The target for a build-it round first sat
+  in its own card above the bench; measured at 640×320 it landed at y 234–274 against controls
+  starting at 250 — **on the tap targets.** Every other slot was already taken (chrome, the shelf,
+  Milo). There was no second place to put it, so it moved INSIDE the prompt pill. When a short frame
+  has nowhere to put a second element, that is the answer: there is only one, and both things belong
+  in it. It reads better too — one thing to look at instead of two.
 - **Two taps in the same tick are a TEST artefact, not a user.** React commits state between events,
   so a `ref` mirrored during render is still stale if the script picks a colour and taps the page in
   one synchronous statement. Cost half an hour of chasing a fill that was never broken.
+- ⚠️ **A GATE THAT RE-IMPLEMENTS A RULE CANNOT SEE THE RULE BEING REMOVED.** This is the same fault
+  as "a gate that reads a chapter's DATA cannot see how it INDEXES it", one level down, and it bit
+  twice in one session. A check written as `expect(Math.min(waiting, CAP)).toBeLessThanOrEqual(CAP)`
+  is a tautology — it tests the test. Delete the cap from the *scene* and it still passes. Put the
+  rule behind an exported function the scene actually calls (`chuteShown(n)`) and drive that.
+  Anything the gate computes for itself is a second copy that can agree with nothing.
+- ⚠️ **A RELATIONSHIP THAT MAY NOT VARY SHOULD NOT BE EXPRESSIBLE TWICE.** A supply tray drew a
+  "ten" at 2.4 units beside a one-cube — the 0.55 lie again, in a component the gate was not looking
+  at — because the multiplier was free to write at the call site. `blockSet(cube)` is now the only
+  place in the app that derives a rod from a cube, so no caller *can* get it wrong. Prefer making a
+  fault unwritable over adding a check for it.
+- ⚠️ **ASSERT ON A RATIO, NOT ON A SAMPLE OF IT.** A gate drew 600 rounds and checked the observed
+  share of a question type against 0.4, when the true ratio was 3/7 = 0.4286 — 1.4 SD out, so it
+  **failed about one run in thirteen.** A flaky gate is worse than no gate, because people learn to
+  re-run it instead of reading it. If the claim is about a fixed pool, export the pool and assert on
+  it; sample only what is genuinely a property of the draw, and leave a margin noise cannot reach.
+- ⚠️ **A HUE CHECK ON A BIMODAL SCENE MUST TEST EVERY STRONG HUE, NOT THE MEAN.** BlockYard's
+  camouflage gate takes a saturation-weighted mean of the band — which on a cream-and-mint counter
+  returns ~45°, **a hue that is nowhere in the picture**, and would happily allow a 160° set to sit
+  invisibly on 16% of it. Histogram the band and require clearance from every bucket carrying more
+  than a few percent. (Re-measured under that rule, `town_park + teal` in BlockYard comes out at
+  43° against a 45° threshold — marginal, not fixed, and recorded here rather than silently patched.)
 - Sweep the size matrix with a script, not by hand: widths × heights × question counts × every
   creature. Chapter 2's layout is 330 combinations and the script is what made the last pass clean.
 - **The sweep must call the SAME layout function the scene renders from.** Chapter 4's sweep
