@@ -12,7 +12,118 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🧱 **2026-07-29 (LATEST) — THE BLOCKS ARE BACK, BY FOUNDER'S CALL, WITH EVERYTHING PASSES 1–3 LEARNED. 🚀 SHIPPED — `main`@`304e5f7`, fast-forwarded and pushed, prod serving sw v71, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **232/232 vitest** (was 175 before this workstream) · `next build` · 0 console errors · driven at 1280×720 and 640×320 through demo → guided → a scored round, across three materials.
+> 🧮 **2026-07-29 (LATEST) — placeValue REBUILT AS *MAKE IT*, AND THE GROUND WAS WRONG TWICE BEFORE IT WAS RIGHT. ⚠️ COMMITTED on `feat/story-6-8-place-value-make-it` (4 commits, sw v71 → v72), NOT PUSHED, NOT DEPLOYED — prod is still `main`@`304e5f7` / sw v71.** `tsc` 0 · **274/274 vitest** (was 232) · `next build` · 0 console errors · **15/15 planted regressions fail the gate** · driven live at 1280×720, 1024×620 and 640×320 through intro → demo → guided → a scored MAKE round → a scored PACK round.
+>
+> **The ask:** *"abhi kaunse chapter ko fully animate kare?"* → the plan → *"yeh chapter mein baccha kya sikh raha hai?"* → *"joh ekdum different bana de woh karo"* → **"woh ground and all mein sahi tha… isme float hota hua dikh raha hai"** → *"forest wale…farm wale background use karo"*.
+>
+> ## ⓪ ⚠️ THE FOUNDER'S QUESTION INVALIDATED MY OWN PLAN, AND THAT IS THE MOST IMPORTANT PART
+> The plan was BUNDLE IT: a delivery of loose ones arrives, the child trades at ten, then reads the
+> number off the shelves. Asked what the child was actually LEARNING, the honest answer was
+> uncomfortable: **counting rods and ones into a two-window pad is TRANSCRIPTION.** The pad itself
+> says which digit goes where, so a child who does not know the 3 means thirty passes anyway — and
+> the trading half is what BlockYard already teaches.
+> • **The test that exposes it is 34 vs 43.** If both are equally easy, the chapter is not teaching
+>   place value. Mine could not tell the two children apart.
+> • The curriculum's own words are **"Build a number from tens + ones"** — BUILD — and
+>   [skill-graph.md](docs/skill-graph.md) names `p.placeValue2` one of the **five most load-bearing
+>   nodes in the whole 3–18 graph**. What stands on it decides what it owes: `p.compare100` needs
+>   *43 > 34 because 4 tens beat 3 tens*, i.e. **a digit's value comes from its place**. That is the
+>   payload, and my plan delivered it in one of four question types.
+> **Same §0a fault as HopAlong, one layer in: I had settled HOW IT MOVES before WHAT IS THE CHILD
+> DOING.** Ask what the skill is FOR before designing the gesture.
+>
+> ## ① THE CHAPTER — MAKE IT (main) + PACK (second)
+> **MAKE** — the target rides in the question pill; a TENS side on the left, a ONES side on the
+> right; the child calls for rods and cubes and builds it. Put the digits the wrong way round and
+> **the chapter names the number you actually made**: *"That is thirty-two, not twenty-three. The
+> tens side is on the left — look which one holds two."* Verified live; it is the one moment the
+> chapter can say what place value IS.
+> **PACK** — loose ones arrive; **the ones side can never hold ten**, so they must be traded up
+> before the number can be read. Four read-types (`whole` · `tens` · `ones` · **`value`**), and not
+> one shows a numeral before the commit.
+> • ⚠️ **THE TENS SIDE IS ON THE LEFT AND THAT IS LOAD-BEARING.** A number is written tens-then-ones,
+>   so the eye sweeps left→right and reads it off the ground. **BlockYard has its ones on the left,
+>   which is backwards** — and nobody noticed, because nothing there is ever read as a numeral.
+> • **The swap lives in the DEMO, where it costs nothing**: Milo makes 34, then 43 — the same two
+>   digits — and the tens side is visibly fuller. No amount of counting rods says that.
+>
+> ## ② ⚠️ THE GROUND WAS WRONG TWICE, AND THE SECOND TIME MY GATE PASSED IT
+> **① Built INDOORS first** — a "packing bench" — with scenes chosen on hue and quietness, which are
+> both PALETTE checks, and a flat surface line at 0.70 that **nobody measured against the picture**.
+> `craft_gems` is a glass display case topping out at 0.60, so the blocks and Milo floated INSIDE the
+> cabinet over the necklaces. The other three were counters and shelves — real surfaces, but
+> furniture: a pony standing on a bakery worktop.
+> **② Moved to the FORESTS, which PASSED the walkable-ground gate**, and everything still floated in
+> a wall of shrubbery. **Founder caught it on a full-size screenshot; no check of mine would have.**
+> • ⚠️ **THE GATE ONLY ASKS WHETHER A PIXEL IS BLUE, AND A BUSH IS GREEN.** The craft doc already
+>   records that it *"cannot tell canopy from grass"* — **I pointed it at the one scene family it is
+>   documented as unable to judge.**
+> • **The check that matters is horizontal ROUGHNESS, not colour.** Open ground is SMOOTH: mean
+>   neighbour-to-neighbour brightness change along a row. Measured where the feet land —
+>   **`garden_meadow` 1.9, `beach_sand` 0.5–2.0, the four forests 15–21.** Not "the forest ground is
+>   low"; there is no open ground in them at any height. **This is now in the gate.**
+> • ⚠️ **AND σ CANNOT DO IT EITHER**: a glass display case and a wooden table top both measure
+>   **17.9**. The surface check is by EYE, like the style check, with roughness as the gate behind it.
+>
+> ## ③ FOUR NEW BACKDROPS — ~6 OF THE CREDITS THAT EXPIRE TOMORROW
+> The library's **nine** open-ground backdrops are **all already BlockYard's** — that is why there
+> were only nine. So `open_clearing` · `open_orchard` · `open_river` · `open_hills` were generated
+> against the roughness number itself (**0.4–1.9**, 100% walkable, 1376×768, 156–223 KB), plus
+> `beach_sand`, the one free scene that measured open. Referenced `garden_meadow` via its deployed
+> URL with the `media_id` confirmed first, per the craft doc.
+> • **`fair_sky` was a candidate and the NEW GATE REJECTED IT at 4.05 against a threshold of 4** — a
+>   fairground carries bunting and stalls right through the band. **The threshold was not loosened to
+>   keep it**; `garden_meadow` is 1.9 and the forests 15–21, so 4 is the honest line.
+> • Spend ~6 credits (509.7 → ~503.7). They expire ~2026-07-30 and had no other consumer.
+>
+> ## ④ THE EXTRACTION — [yard.tsx](src/features/chapters/story/yard.tsx), AND ITS OWN SAFETY NET
+> Two consumers now, so *"one consumer is not an abstraction"* flips. Moved verbatim: cube · rod ·
+> contact shadow · grain · the material system · the unit derivation · the answer pad · the banner.
+> **BlockYard re-exports everything it exported before, so [blockYardRegroup.test.ts](src/__tests__/blockYardRegroup.test.ts) is UNCHANGED — which is what makes its 57 tests the proof the extraction changed nothing.**
+> • ⚠️ **`blockSet(cube)` is now the ONLY place in the app that derives a rod from a cube.** Not
+>   tidiness: the supply tray drew a "ten" at **2.4 units** beside a one-cube — the 0.55 lie again, in
+>   a component the gate was not looking at. **Prefer making a fault unwritable over checking for it.**
+>   (The tray rod lies FLAT, so ten units fit a control band honestly.)
+>
+> ## ⑤ FOUR BUGS THE SCREEN CAUGHT, NOT THE GATE
+> ① the tray rod at 2.4 units (§④) · ② the target card overlapping the controls at 640×320 (y 234–274
+> against trays at 250) — **a short frame has only ONE question region, so the target moved INSIDE the
+> prompt pill** · ③ **batched-undo desync**: three "back" taps in one React batch all read the same
+> stale stack, so all three removed a one and the tens were left standing — fixed by **deleting the
+> stack** and deriving the undo from what is on screen · ④ the chute uncapped, 19 cubes sprawling.
+>
+> ## ⑥ THREE HOLES IN MY OWN GATE, FOUND BY MUTATION-TESTING IT
+> ① the bench assertion allowed the world to sit FLUSH on the controls (removing the yield entirely
+> still passed) · ② the chute assertion was a **tautology** — `min(waiting,CAP) <= CAP` — it tested
+> itself · ③ one assertion **sampled a fixed ratio** (600 draws against 3/7 = 0.4286 vs a 0.4
+> threshold) and **failed about 1 run in 13**. All three are craft-doc rules now: **a gate that
+> re-implements a rule cannot see the rule being removed**, and **assert on a ratio, not a sample.**
+>
+> ## ⑦ ⚠️ A MARGINAL PAIRING FOUND IN BLOCKYARD, RECORDED NOT FIXED
+> Re-measured under the stricter multi-modal hue test, **`town_park + teal` comes out at 43°** against
+> a 45° threshold. BlockYard's own gate takes a saturation-weighted MEAN, which on a bimodal scene
+> returns a hue that is nowhere in the picture, so it cannot see this. It is 2° short — marginal, not
+> invisible-hay-bale — and **deliberately left alone**: it is a shipped chapter and this was an
+> extraction commit. One line to swap when wanted.
+>
+> ## ▶ OPEN
+> 1. **NOT PUSHED, NOT DEPLOYED.** 4 commits on `feat/story-6-8-place-value-make-it`; sw already
+>    bumped v71 → v72 in the branch. Prod is still `main`@`304e5f7` / sw v71.
+>    `scripts/.voice-*.json` correctly still untracked.
+> 2. ⚠️ **THE `value` QUESTION WAS NEVER DRIVEN LIVE** — only `whole`. It is the chapter's PAYLOAD
+>    question (*"the tens side — how much is it worth?"*), it shares the same pad path and it is
+>    covered by the gate, but it has not been seen on screen. **L2 and L3 were not driven either.**
+> 3. **`open_hills` is the plainest of the four** (roughness 0.4, nearly a flat gradient) — usable,
+>    but it has little identity of its own. ~1.5 credits to regenerate while they last.
+> 4. ⚠️ **The screenshot instrument lied FOUR times this session** — a beat stale, a backdrop the DOM
+>    reported at opacity 1, and twice a capture scaled to ~0.3. Every geometry claim above is from
+>    `getBoundingClientRect`, not pixels.
+> 5. **Nobody has watched a child play it**, and the fault that mattered most — the floating ground —
+>    was found by the founder looking at a full-size screenshot, twice.
+>
+> _(the 🧱 block below is the same day's earlier work — BlockYard, which shares the manipulative.)_
+
+> 🧱 **2026-07-29 — THE BLOCKS ARE BACK, BY FOUNDER'S CALL, WITH EVERYTHING PASSES 1–3 LEARNED. 🚀 SHIPPED — `main`@`304e5f7`, fast-forwarded and pushed, prod serving sw v71, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **232/232 vitest** (was 175 before this workstream) · `next build` · 0 console errors · driven at 1280×720 and 640×320 through demo → guided → a scored round, across three materials.
 >
 > | commit | what |
 > |---|---|
@@ -3304,7 +3415,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-29 (LATEST — see the top 🧱 block. **The founder asked for the base-ten BLOCK version back, animated — so it is back, with everything passes 1–3 learned. ⚠️ NOT COMMITTED (needs sw v70 → v71).** ⚠️ **And the thing worth carrying is that the blocks were never the fault.** The original chapter failed the delete-the-art test and the art was replaced TWICE, at the cost of two rebuilds; reading it again to bring blocks back, the manipulative was fine — `27 + 15 = ?` printed on a banner beside it is what made it scenery. **Ask whether the ART is wrong or the QUESTION is wrong; they fail the same test and they are not the same fault.** A ONE is a clay cube that travels in; a TEN is a ROD, one object with ten visible segments; at ten they slide together into one and Milo walks it up the row, and subtraction runs it backwards. Two catches while building it. **The rod was lying about its own length** — first cut drew it at 0.55 of unit scale so it would clear the prompt, i.e. five and a half cubes high beside the cubes it is made of, so a child laying one against the ones reads the wrong number off it. That is a lie inside the manipulative, worse than any look problem, and it is fixed by deriving the UNIT from the room available rather than scaling one part of the set against another (gated: `rod === 10 × cube` at every frame). **And the blocks were invisible** — drawn in pass 3's warm sand, measured dead centre of the backdrops' band, they read as hay bales and fence posts. A manipulative is a TOOL, not scenery: the rule `cart.png` broke is the saturation/brightness band, the HUE is free, so the blocks are clay. Also a third option the craft doc had not named: when a layout and some prose fight over the same height, **move the prose sideways** — on a short frame the banner sits over the left of the yard, buying a 15px unit instead of a 10px one at no cost to the words. ⚠️ **The honest cost, in the file header: a block has no legs**, so "something arrives on its own legs" now rests entirely on Milo — the gate asserts he still has a drawn cycle. **Then: a different SET OF BLOCKS every round** (founder: *"can we design different blocks for each question?"*) — six materials, clay · slate · teal · plum · rose · indigo, one per slot. It works because of the hue finding above: they share ONE saturation and ONE brightness and differ only in hue, so every set is in the band by construction and the shades are derived rather than typed. ⚠️ **The gate measures the PAIRING, not the palette** — each backdrop's dominant hue across the band the blocks occupy, saturation-weighted, and every material must be ≥45° away; mutation-tested, a planted clay-on-`town_street` fails at 17.9°. Three materials carry a grain and ⚠️ **it runs VERTICALLY** — the rod's ten units are horizontal seams, so a horizontal decorative line is an eleventh unit to a child counting it. And one more caught on screen: **the waiting pile read as more of the row** (ten placed + four waiting at one size on one baseline = one row of fourteen, and the *ten fit, the eleventh does not* argument goes with it), so it now stands further back, higher and smaller. Gate 56 tests. `tsc` 0 · 232/232 · `next build` · 0 console errors · driven live at 1280×720 and 640×320 through demo → guided → a scored round, across three materials. ▶ **🚀 SHIPPED — `main`@`304e5f7`, prod serving sw v71**, fast-forwarded and pushed; smoke green on `/` `/menu` `/api/health` `/diagnostic` + `?ch=add100` · `?ch=sub100`, and the addition demo driven on prod with 0 console errors. ⚠️ The prod drive covers the DEMO; the scored-round layout (where the `position: fixed` bug lived, invisible in the demo) was verified on a dev build of identical code. Open: nobody has watched a child play it. _(prior footer follows.)_)_
+_Last updated: 2026-07-29 (LATEST — see the top 🧮 block. **placeValue rebuilt as MAKE IT. ⚠️ COMMITTED on a branch (4 commits, sw v71 → v72), NOT PUSHED — prod is still `main`@`304e5f7` / sw v71.** ⚠️ **The founder's question invalidated my own plan and that is the part to carry:** the plan had the child count rods into a two-window pad, and asked what they were LEARNING the honest answer was *transcription* — the pad says which digit goes where, so a child who does not know the 3 means thirty passes anyway. **The test that exposes it is 34 vs 43**, and the curriculum's own word is BUILD. So MAKE is the verb, the TENS side is on the LEFT the way a number is written, and a swapped answer is named out loud. ⚠️ **Then the GROUND was wrong twice.** Built indoors first on a "packing bench" whose scenes were picked on hue and quietness — both PALETTE checks — with a surface line nobody measured against the picture, so the blocks floated inside a glass display case. Moved to the FORESTS, **which passed the walkable-ground gate**, and everything still floated in shrubbery: that gate only asks whether a pixel is blue, and a bush is green — **the craft doc already records that it cannot tell canopy from grass, and I pointed it at the one family it cannot judge.** The check that matters is horizontal ROUGHNESS: `garden_meadow` 1.9, the forests 15–21. It is in the gate now, and it **rejected `fair_sky` at 4.05 against a threshold of 4 — the threshold was not loosened to keep the scene.** Four `open_*` backdrops generated against that number (~6 of the credits that expire 2026-07-30), because the library's nine open-ground scenes are all already BlockYard's. Also: `yard.tsx` extracted with BlockYard re-exporting everything so its 57 tests prove the extraction changed nothing; `blockSet()` is now the only place deriving a rod from a cube, after the supply tray drew a "ten" at 2.4 units. **Three holes in my own gate found by mutation-testing it** — a flush-contact assertion, a tautology, and one that sampled a fixed ratio and failed 1 run in 13. `tsc` 0 · 274/274 · `next build` · 15/15 planted regressions caught · driven live at three sizes through demo → guided → scored MAKE → scored PACK. ▶ Open: not pushed; **the `value` payload question and L2/L3 were never driven live**; nobody has watched a child play it. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-29 (the 🐑 pen version. **BlockYard pass 3 is BUILT: the look is rebuilt against all five blend faults the founder named — cart gone for a code-drawn pen inside the backdrops' palette band, bundled tens small quiet and EMPTY, cast cut to one size band, real contact shadows inside the travelling element, a huddle instead of a 5×2 grid, and two clusters instead of four with Milo carrying the pen-full up the row between them. ⚠️ NOT COMMITTED (needs sw v70 → v71).** Chasing the look turned up two things nobody had seen. **The slab came back**: the first attempt drew the open pen as a palette-matched beige rounded rectangle 37% of the screen wide, which is pass 1's brown slab wearing the right colour — a solid block over a painted scene reads as UI furniture however well its palette matches, because painted scenes contain no filled rectangles. What works is posts, rails and a ground tint that fades out at its own edges. **And the whole yard was standing on a pond**: `farm_pond.png` opened the subtraction run and, now that the yard spans x 4–97%, the fence, ten creatures, Milo and the pen row all stood on open water — measured 27–35% walkable against 100% on a barnyard. ⚠️ **The old gate is what put it there**, demanding ten distinct scenes when only nine backdrops in the library hold ground across that band; relaxed to consecutive-differ, because a fence on a pond is far worse than a backdrop seen twice. **Then a bug pass 2 had shipped**: the scene positions itself in shares of the viewport with `position: absolute`, which in a scored round resolves against `SkillBeat`'s content-sized `relative` wrapper — the entire yard and the answer pad squashed into a strip across the top at 1280×720. It survived a full verification pass because the demo and the guided round render OUTSIDE SkillBeat and look right; only the first SCORED round shows it. Everything is `fixed` now, which is why `Critter` always was. The instrument lied four more times (a "racing" demo that measures 2.8–3.0s/step, a screenshot a whole round stale, creatures frozen mid-journey) — and once expensively: **a planted regression "passed" because the `sed` that planted it had silently matched nothing.** Gate now 54 tests. `tsc` 0 · 229/229 · `next build` · 0 console errors · driven live at 1280×720 and 640×320 through demo, guided AND a scored round. ▶ Open: not committed; nobody has watched a child play it; and a shut pen that ARRIVES still settles in rather than travelling — stated in the file header as a compromise, not hidden. _(prior footer follows.)_)_
 
