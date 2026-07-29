@@ -12,7 +12,149 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🧮 **2026-07-29 (LATEST) — placeValue REBUILT AS *MAKE IT*, AND THE GROUND WAS WRONG TWICE BEFORE IT WAS RIGHT. 🚀 SHIPPED — `main`@`456c7a8`, fast-forwarded and pushed, prod serving sw v72, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **274/274 vitest** (was 232) · `next build` · 0 console errors · **15/15 planted regressions fail the gate** · driven live at 1280×720, 1024×620 and 640×320 through intro → demo → guided → a scored MAKE round → a scored PACK round.
+> 🏪 **2026-07-29 (LATEST) — COINSHOP: THE ART FOR A WHOLE NEW DIRECTION IS BUILT AND IN THE REPO; THE CHAPTER THAT USES IT IS NOT. ⚠️ NOTHING COMMITTED.** `tsc` 0 · **298/298 vitest** (was 274) · `next build` · 0 console errors. **Read §③ before writing any code — the chapter as it currently stands in the tree was REJECTED and is not the thing to finish.**
+>
+> **The asks, in order:** *"abhi kaunse chapter ko update kare?"* → *"toh CoinShop ko proper animate kaise karege?"* → **"satisfaction naii ho raha hai yeh chapter ke visuals ko dekh ke"** → **"kuch aur style se money ka concept teach karte hai"** → *"10 alag alag male cartoon characters with different stalls with different background animated video generate kar ke unko frame per second break karo… aur Milo ek ek ke paas jaa ke unke stall se purchase karega aur pay karega"* → *"stall aur market ke background ke saath characters ko generate karo"*.
+>
+> ## ⓪ WHERE IT ACTUALLY STANDS — read this first
+> | | state |
+> |---|---|
+> | placeValue's last open item (`value` + L2/L3 driven live) | ✅ **CLOSED** — see §① |
+> | the money chapter's VERB (**PAY IT**, build the amount) | ✅ settled, and it survives the redesign |
+> | the question generator, `fewest`, the 24-test gate | ✅ built, mutation-tested 9/10 |
+> | **the LOOK** | ❌ **rejected twice.** The tree carries the rejected version |
+> | the new direction's ART (10 shopkeepers + stalls + cycles) | ✅ **BUILT, measured, in `public/assets/`** |
+> | **the chapter that uses that art** | ❌ **NOT STARTED** |
+>
+> ## ① placeValue — the last open item is closed
+> Driven live at 1280×720 on a dev build of the shipped code, with a temporary `?k=<kind>&d=<tier>`
+> override in `makeRound`, **reverted afterwards**. `value` at L3 (8 rods + 2 cubes → answered 80 →
+> *"8 tens are worth 80"*), `tens` at L2 on a ONE-slot pad, `make` at L3 with the swap line firing on
+> a scored round, and three "back" taps in one React batch removing three ones. Full detail is in the
+> 🧮 block below, item 2. ⚠️ **Three "bugs" I banked were the instrument** — `get_page_text` AND the
+> screenshot both lag this chapter by a beat, and a disabled Done means *nothing typed yet*, not
+> *round dead*. Both rules are now in [chapter-craft.md](docs/chapter-craft.md) §4.
+>
+> ## ② COINSHOP REBUILT AS **PAY IT** — the verb is right and it stays
+> The old chapter printed **each coin's value as a numeral on the coin** and asked for the sum off
+> three chips. **Swap every coin for a bare numeral and all thirty questions still work: it was
+> `5 + 1 + 1` wearing coins** — BlockYard's fault exactly. So: the tag names a price, the purse always
+> holds more than needed, nothing says *that's enough*, and the child BUILDS the amount.
+> • **L3 asks for the FEWEST coins** — the payload: one 25 is ONE object worth TWENTY-FIVE units.
+> • `read` survives as the L1 rung. `p.money` is a graph LEAF, so this is a life skill, not a spine
+>   node — which lowers the stakes and does not excuse addition in disguise.
+> • Gate [coinShopPay.test.ts](src/__tests__/coinShopPay.test.ts), 24 tests, **8/10 planted
+>   regressions caught first pass**. It found **a dead end I had not**: five L3 coins reach 125, so a
+>   price of **105** was reachable and no two-digit pad can enter it. One survivor was a real hole
+>   (my rotate-gate check grepped for the NAME, so `if (false) return <RotateGate…>` walked through);
+>   the other (price below 2) was verified **inert** — min reachable sum is 2/3/3 by tier.
+>
+> ## ③ ⚠️ THEN THE FOUNDER REJECTED THE LOOK TWICE, AND THE SECOND DIAGNOSIS IS THE ONE THAT MATTERS
+> **Pass 1** — coins on a code-drawn counter. *"satisfaction naii ho raha hai."* I found two causes,
+> both mine: **I let a gate number art-direct the backdrops** (prompted *"almost featureless like a
+> soft gradient"* to satisfy a roughness threshold, and got scenes with nothing in them — measured,
+> `open_clearing` **1.97** vs my `market_green` **1.47**, so the gate said mine was BETTER and the eye
+> said the opposite), and **the counter was the slab a fourth time**.
+> **Pass 2** — a full stall: awning, cloth, crates, Milo behind the counter, a customer creature.
+> Genuinely better, still rejected: *"coins ek table pe aur Milo wahan khada… kuch bhi sahi naii."*
+> ⚠️ **AND THE REAL FAULT IS ONE I SHOULD HAVE SEEN BEFORE BUILDING ANY OF IT: three chapters in a
+> row have the same gesture.** BlockYard = call an object, put it on the ground. placeValue = call an
+> object, put it on two shelves. CoinShop = call a coin, put it on a counter. I changed the cloth,
+> the awning and the customer and **left the verb identical to the previous two chapters**, which is
+> §0a's rule broken from the other side. *A new scene on an old gesture reads as the old chapter.*
+> • Also missed: **this band has 18 drawn creature cycles and the chapter used none of them.**
+>   BlockYard's own header records *"a block has no legs, nothing walks but Milo"* — I rebuilt that
+>   exact weakness.
+>
+> ## ④ THE DIRECTION THE FOUNDER CHOSE — a market you WALK, ten stallholders
+> Ten shopkeepers, each with his own stall and market background, each an animated cycle. **Milo
+> walks from stall to stall**, buys one thing from each, and pays for it on the counter. That gives
+> the chapter a journey, a different character every round, and a reason for the scene to change.
+> **The PAY IT verb, the question generator, `fewest` and the gate all survive** — what changes is
+> the scene and the travel.
+>
+> ## ⑤ THE ART — BUILT, MEASURED, IN THE REPO (~130 credits)
+> **Pipeline, and it is NOT the usual one.** The founder asked for character+stall+background in ONE
+> frame, so there is no chroma cutout: `generate_image` (whole scene) → `generate_video` (only the
+> keeper moves) → **crop just the moving region** → strip.
+> ```
+> public/assets/backgrounds/market_<n>.png   the still scene           10 files
+> public/assets/objects/keeper_<n>.png       13-cell keeper strip      10 files   1.6 MB total
+> ```
+> `n` ∈ bread(bear) · fruit(fox) · fish(otter) · cheese(badger) · sweets(raccoon) · toys(beaver) ·
+> flowers(hedgehog) · hats(mole) · pots(goat) · honey(walrus).
+>
+> **The numbers the next session needs:**
+> | | grass line | cell px | aspect | | grass line | cell px | aspect |
+> |---|---|---|---|---|---|---|---|
+> | sweets | 0.65 | 265 | 1.091 | fruit | 0.75 | 275 | 1.222 |
+> | cheese | 0.71 | 221 | 1.221 | pots | 0.75 | 297 | 0.914 |
+> | flowers | 0.71 | 269 | 1.240 | hats | 0.76 | 271 | 1.030 |
+> | bread | 0.73 | 277 | 1.104 | fish | 0.76 | 261 | 1.286 |
+> | toys | 0.75 | 291 | 1.448 | **honey** | **0.80** | 311 | 1.407 |
+>
+> ⚠️ **THE GROUND LINE IS PER SCENE AND MUST BE READ FROM THAT TABLE, NOT FROM A CONSTANT.** This is
+> the craft doc's own rule (*"the ground line is PER BACKDROP, never a shared constant"*) and I broke
+> it: I measured these scenes at placeValue's band (0.66–0.78) and got **7.97–13.36, all FAIL** —
+> because that band cuts through the COUNTER, not the ground. At each scene's own line they measure
+> **0.80–0.95, 100% walkable.** The picture was right; the band was wrong.
+> ⚠️ At 720px the controls cap the ground line at **0.772**, so **honey (0.80) is the one scene where
+> Milo lands on the counter edge**. Nine are fine. Drop honey, or shrink the pad band for it.
+>
+> ## ⑥ FOUR CRAFT FINDINGS, ALL MEASURED — the first is the expensive one
+> ⚠️ **① A COIN SET CANNOT CHANGE ITS HUE, AND NEITHER CAN MILO.** copper **18°**, gold **40°**,
+> silver hueless **sat .09** — the whole warm-earth band plus grey, which is what open ground is made
+> of. **Milo is hue 30° / sat .53, inside it too.** Six backdrops were generated for pass 1 and
+> **five collided** (a golden common **2° from gold**, a terracotta square **1° from copper**).
+> ⚠️ **My first correction made it worse**: told the ground looked washed out, I regenerated it richly
+> tinted and moved the collision from silver onto gold. **Saturating a ground does not separate it.**
+> The rule — separation in hue OR saturation, never neither, against every sprite INCLUDING the
+> character — is now in [chapter-craft.md](docs/chapter-craft.md).
+> **②** The roughness gate samples 12% of the frame height; it says nothing about the other 88%, and
+> letting it drive the whole picture is what emptied pass 1's backdrops.
+> **③** A `sed`-style motion detector picked up codec noise and returned **1283px-wide "characters"**.
+> Fixed by taking the motion ENERGY profile per column/row and keeping the tightest 92% window.
+> **④** Only one of ten clips warped (`honey`, stall drift 7.2/255 against 2.5–3.4 for the rest) —
+> and the warp is **outside the crop**, so it does not matter. Measure each clip; one clip being
+> clean is not evidence about the others.
+>
+> ## ⑦ WHAT IS IN THE TREE RIGHT NOW — nothing committed
+> ```
+> M docs/chapter-craft.md          3 new rules (§1 palette, §4 two instrument traps)
+> M handoff.md
+> M src/features/chapters/story/yard.tsx           GROUND/groundOf moved here
+> M src/features/chapters/story/BuildingBlocks.tsx re-exports them (its 57-test gate UNCHANGED,
+>                                                  which is what proves the move changed nothing)
+> M src/features/chapters/story/CoinShop.tsx       ⚠️ THE REJECTED PASS-2 STALL. The generator,
+>                                                  `fewest`, `digitsFor` and the purse are KEEPERS;
+>                                                  Awning/Counter/Crate/Customer/Stall are not.
+> ?? src/__tests__/coinShopPay.test.ts             24 tests — keep, extend
+> ?? public/assets/backgrounds/market_*.png        14 files: the 10 stalls + 4 open-ground scenes
+>                                                  from pass 1 (green/fair/town/courtyard — now
+>                                                  UNUSED but valid, measured, free to reuse)
+> ?? public/assets/objects/keeper_*.png            10 keeper strips
+> ```
+> `scripts/.voice-*.json` stay untracked as always.
+>
+> ## ▶ OPEN — pick up here
+> 1. **BUILD THE MARKET WALK.** Register the 10 keeper strips in
+>    [sheets.ts](src/features/chapters/story/canvas/sheets.ts) (13 cells each, aspects in §⑤), read
+>    each scene's ground line from that table, and rebuild `CoinShop` so Milo walks stall→stall with
+>    `milo_walk`. Keep `makeRound`/`fewestFor`/`digitsFor`/`POOL`/`KINDS`/`Purse`/`Coin`; delete
+>    `Awning`/`Counter`/`Crate`/`Customer`/`Stall` and the `RUN` of open-ground scenes.
+> 2. **The gate needs the new geometry** — it currently asserts pass-2's counter constants
+>    (`COUNTER_X0`, `counterSpot`, `miloHalfPct`). The generator half (16 tests) is unaffected.
+> 3. ⚠️ **`fewest` and a scored `read` have NEVER been seen on screen** — only the generator is
+>    covered, exhaustively. Drive both.
+> 4. ⚠️ **Short landscape (640×320) has not been checked at all** on this chapter.
+> 5. **Credits are gone after tonight** (~373 left, expiring 2026-07-30). Anything else needing art
+>    had to happen today. `honey` is the one scene worth replacing if art were still possible.
+> 6. **Nobody has watched a child play any of it**, and both look rejections came from the founder
+>    looking at a screenshot. No gate would have caught either.
+>
+> _(the 🧮 block below is the same day's earlier work — placeValue, which SHIPPED.)_
+
+> 🧮 **2026-07-29 — placeValue REBUILT AS *MAKE IT*, AND THE GROUND WAS WRONG TWICE BEFORE IT WAS RIGHT. 🚀 SHIPPED — `main`@`456c7a8`, fast-forwarded and pushed, prod serving sw v72, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **274/274 vitest** (was 232) · `next build` · 0 console errors · **15/15 planted regressions fail the gate** · driven live at 1280×720, 1024×620 and 640×320 through intro → demo → guided → a scored MAKE round → a scored PACK round.
 >
 > **The ask:** *"abhi kaunse chapter ko fully animate kare?"* → the plan → *"yeh chapter mein baccha kya sikh raha hai?"* → *"joh ekdum different bana de woh karo"* → **"woh ground and all mein sahi tha… isme float hota hua dikh raha hai"** → *"forest wale…farm wale background use karo"*.
 >
@@ -124,9 +266,26 @@
 >    up a full-screen BACKDROP and reports the character's feet at the bottom of the viewport. It
 >    works on localhost and lies on prod. Match `/characters/`, not the character's name.
 >    `scripts/.voice-*.json` correctly still untracked. **Nothing is outstanding in the tree.**
-> 2. ⚠️ **THE `value` QUESTION WAS NEVER DRIVEN LIVE** — only `whole`. It is the chapter's PAYLOAD
->    question (*"the tens side — how much is it worth?"*), it shares the same pad path and it is
->    covered by the gate, but it has not been seen on screen. **L2 and L3 were not driven either.**
+> 2. ✅ **THE `value` QUESTION AND L2/L3 ARE NOW DRIVEN LIVE (2026-07-29, dev build of shipped code,
+>    1280×720).** Driven with a temporary dev-only `?k=<kind>&d=<tier>` override in `makeRound`,
+>    **reverted afterwards — `git diff` is empty**; `tsc` 0 · 274/274 · 0 console errors.
+>    • **`value` at L3** — a PACK round on `open_hills`: eight trades taken one at a time, then
+>      *"The TENS side — how much is it worth?"* on a two-slot pad over 8 rods + 2 cubes (n = 82).
+>      Answered **80** → **"8 tens are worth 80"**, graded correct, advanced to a round with a
+>      different material and backdrop. **The equation appears only after the commit**, as designed.
+>    • **`tens` at L2** — *"How many on the TENS side?"* on a **ONE-slot** pad (`digits: 1`) over
+>      4 rods. Answered **4** → **"4 tens — worth 40"** ✓ — note the reveal restates the VALUE even
+>      though the answer was the digit, which is the payload being reinforced for free.
+>    • **`make` at L3** — 71 built on 7 rods + 1 cube; a deliberate 72 gave *"Not yet — that is
+>      seventy-two"*, and a deliberate **14 for 41** gave the payload line on a SCORED round:
+>      *"That is fourteen, not forty-one. The tens side is on the left — look which one holds four."*
+>      Then **three "back" taps fired in ONE React batch removed three ONES and left the rod
+>      standing** — the batched-undo fix holds under the case that broke it.
+>    ⚠️ **Three "bugs" I found were all the instrument, and the pattern is worth keeping**: on this
+>    chapter `get_page_text` and the screenshot both lag the DOM by a whole beat, so a mid-trade read
+>    looks like a wedged round with a stale prompt. I nearly banked *"the PACK round dead-ends"* twice.
+>    Read `getBoundingClientRect`/the button list, and **do not treat a disabled Done as "not live"** —
+>    it is disabled simply because no digit has been typed yet.
 > 3. **`open_hills` is the plainest of the four** (roughness 0.4, nearly a flat gradient) — usable,
 >    but it has little identity of its own. ~1.5 credits to regenerate while they last.
 > 4. ⚠️ **The screenshot instrument lied FOUR times this session** — a beat stale, a backdrop the DOM
@@ -3429,7 +3588,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-29 (LATEST — see the top 🧮 block. **placeValue rebuilt as MAKE IT. 🚀 SHIPPED — `main`@`456c7a8`, prod serving sw v72, smoke green and driven live on prod.** ⚠️ **The founder's question invalidated my own plan and that is the part to carry:** the plan had the child count rods into a two-window pad, and asked what they were LEARNING the honest answer was *transcription* — the pad says which digit goes where, so a child who does not know the 3 means thirty passes anyway. **The test that exposes it is 34 vs 43**, and the curriculum's own word is BUILD. So MAKE is the verb, the TENS side is on the LEFT the way a number is written, and a swapped answer is named out loud. ⚠️ **Then the GROUND was wrong twice.** Built indoors first on a "packing bench" whose scenes were picked on hue and quietness — both PALETTE checks — with a surface line nobody measured against the picture, so the blocks floated inside a glass display case. Moved to the FORESTS, **which passed the walkable-ground gate**, and everything still floated in shrubbery: that gate only asks whether a pixel is blue, and a bush is green — **the craft doc already records that it cannot tell canopy from grass, and I pointed it at the one family it cannot judge.** The check that matters is horizontal ROUGHNESS: `garden_meadow` 1.9, the forests 15–21. It is in the gate now, and it **rejected `fair_sky` at 4.05 against a threshold of 4 — the threshold was not loosened to keep the scene.** Four `open_*` backdrops generated against that number (~6 of the credits that expire 2026-07-30), because the library's nine open-ground scenes are all already BlockYard's. Also: `yard.tsx` extracted with BlockYard re-exporting everything so its 57 tests prove the extraction changed nothing; `blockSet()` is now the only place deriving a rod from a cube, after the supply tray drew a "ten" at 2.4 units. **Three holes in my own gate found by mutation-testing it** — a flush-contact assertion, a tautology, and one that sampled a fixed ratio and failed 1 run in 13. `tsc` 0 · 274/274 · `next build` · 15/15 planted regressions caught · driven live at three sizes through demo → guided → scored MAKE → scored PACK. ▶ **🚀 SHIPPED — `main`@`456c7a8`, prod sw v72**; driven on prod with everything measured on the ground line (459 = 0.74 × 620) and 0 console errors. ⚠️ The prod drive covers the DEMO; the scored-round layout was verified on a dev build of identical code. Open: **the `value` payload question and L2/L3 were never driven live**; nobody has watched a child play it. _(prior footer follows.)_)_
+_Last updated: 2026-07-29 (LATEST — see the top 🏪 block. **CoinShop: the ART for a whole new direction is built and in the repo; the CHAPTER that uses it is not. ⚠️ NOTHING COMMITTED, and the CoinShop.tsx currently in the tree is a REJECTED pass — do not finish it, read §③ first.** placeValue's last open item is closed (`value` + L2/L3 driven live, temp override reverted). The money chapter's verb — **PAY IT**, build the amount from a purse that always holds more than you need, with L3 asking for the FEWEST coins — is settled and survives; so do its generator, `fewest`, and a 24-test gate that caught a dead end I had not (five L3 coins reach 125, so a price of **105** was reachable and unenterable on a two-digit pad). ⚠️ **But the LOOK was rejected twice, and the second diagnosis is the one to carry: three chapters in a row have the SAME GESTURE** — BlockYard puts objects on the ground, placeValue on two shelves, CoinShop on a counter. I changed the cloth, the awning and the customer and left the verb identical to the previous two, which is §0a broken from the other side: *a new scene on an old gesture reads as the old chapter*. Also missed: this band has 18 drawn creature cycles and the chapter used none of them — BlockYard's own header records that weakness and I rebuilt it. **The founder's direction: ten shopkeepers, each with his own stall and market background, and Milo WALKS from stall to stall buying and paying.** That art is done — 10 scenes + 10 thirteen-cell keeper strips, ~130 credits, all measured and in `public/assets/`. ⚠️ **The ground line is PER SCENE (0.65–0.80, table in §⑤) and must be read from there** — I measured these at placeValue's band and got 7.97–13.36 FAIL, because that band cuts through the COUNTER; at each scene's own line they are 0.80–0.95 and 100% walkable. Four craft findings banked, the expensive one being that **a coin set cannot change its hue and neither can Milo** (copper 18°, gold 40°, silver hueless, Milo 30°/.53 — five of six pass-1 backdrops collided, and my first correction moved the collision from silver onto gold). `tsc` 0 · 298/298 · `next build` · 0 console errors. ▶ Next: register the strips in `sheets.ts` and build the market walk; `fewest` and a scored `read` have never been seen on screen; short landscape unchecked; **credits gone after tonight**. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-29 (**placeValue rebuilt as MAKE IT. 🚀 SHIPPED — `main`@`456c7a8`, prod serving sw v72, smoke green and driven live on prod.** ⚠️ **The founder's question invalidated my own plan and that is the part to carry:** the plan had the child count rods into a two-window pad, and asked what they were LEARNING the honest answer was *transcription* — the pad says which digit goes where, so a child who does not know the 3 means thirty passes anyway. **The test that exposes it is 34 vs 43**, and the curriculum's own word is BUILD. So MAKE is the verb, the TENS side is on the LEFT the way a number is written, and a swapped answer is named out loud. ⚠️ **Then the GROUND was wrong twice.** Built indoors first on a "packing bench" whose scenes were picked on hue and quietness — both PALETTE checks — with a surface line nobody measured against the picture, so the blocks floated inside a glass display case. Moved to the FORESTS, **which passed the walkable-ground gate**, and everything still floated in shrubbery: that gate only asks whether a pixel is blue, and a bush is green — **the craft doc already records that it cannot tell canopy from grass, and I pointed it at the one family it cannot judge.** The check that matters is horizontal ROUGHNESS: `garden_meadow` 1.9, the forests 15–21. It is in the gate now, and it **rejected `fair_sky` at 4.05 against a threshold of 4 — the threshold was not loosened to keep the scene.** Four `open_*` backdrops generated against that number (~6 of the credits that expire 2026-07-30), because the library's nine open-ground scenes are all already BlockYard's. Also: `yard.tsx` extracted with BlockYard re-exporting everything so its 57 tests prove the extraction changed nothing; `blockSet()` is now the only place deriving a rod from a cube, after the supply tray drew a "ten" at 2.4 units. **Three holes in my own gate found by mutation-testing it** — a flush-contact assertion, a tautology, and one that sampled a fixed ratio and failed 1 run in 13. `tsc` 0 · 274/274 · `next build` · 15/15 planted regressions caught · driven live at three sizes through demo → guided → scored MAKE → scored PACK. ▶ **🚀 SHIPPED — `main`@`456c7a8`, prod sw v72**; driven on prod with everything measured on the ground line (459 = 0.74 × 620) and 0 console errors. ⚠️ The prod drive covers the DEMO; the scored-round layout was verified on a dev build of identical code. Open: **the `value` payload question and L2/L3 were never driven live**; nobody has watched a child play it. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-29 (the 🐑 pen version. **BlockYard pass 3 is BUILT: the look is rebuilt against all five blend faults the founder named — cart gone for a code-drawn pen inside the backdrops' palette band, bundled tens small quiet and EMPTY, cast cut to one size band, real contact shadows inside the travelling element, a huddle instead of a 5×2 grid, and two clusters instead of four with Milo carrying the pen-full up the row between them. ⚠️ NOT COMMITTED (needs sw v70 → v71).** Chasing the look turned up two things nobody had seen. **The slab came back**: the first attempt drew the open pen as a palette-matched beige rounded rectangle 37% of the screen wide, which is pass 1's brown slab wearing the right colour — a solid block over a painted scene reads as UI furniture however well its palette matches, because painted scenes contain no filled rectangles. What works is posts, rails and a ground tint that fades out at its own edges. **And the whole yard was standing on a pond**: `farm_pond.png` opened the subtraction run and, now that the yard spans x 4–97%, the fence, ten creatures, Milo and the pen row all stood on open water — measured 27–35% walkable against 100% on a barnyard. ⚠️ **The old gate is what put it there**, demanding ten distinct scenes when only nine backdrops in the library hold ground across that band; relaxed to consecutive-differ, because a fence on a pond is far worse than a backdrop seen twice. **Then a bug pass 2 had shipped**: the scene positions itself in shares of the viewport with `position: absolute`, which in a scored round resolves against `SkillBeat`'s content-sized `relative` wrapper — the entire yard and the answer pad squashed into a strip across the top at 1280×720. It survived a full verification pass because the demo and the guided round render OUTSIDE SkillBeat and look right; only the first SCORED round shows it. Everything is `fixed` now, which is why `Critter` always was. The instrument lied four more times (a "racing" demo that measures 2.8–3.0s/step, a screenshot a whole round stale, creatures frozen mid-journey) — and once expensively: **a planted regression "passed" because the `sed` that planted it had silently matched nothing.** Gate now 54 tests. `tsc` 0 · 229/229 · `next build` · 0 console errors · driven live at 1280×720 and 640×320 through demo, guided AND a scored round. ▶ Open: not committed; nobody has watched a child play it; and a shut pen that ARRIVES still settles in rather than travelling — stated in the file header as a compromise, not hidden. _(prior footer follows.)_)_
 

@@ -687,6 +687,23 @@ second thing to look at. It appears with the demo, when it starts to matter.
   free. These scenes are green, sky and cream, so the blocks are clay (sat .45 / val .80 — inside
   the painted sprites' own .42–.66) and read instantly as a thing to count. **Match the band, pick a
   hue the backdrop does not already own.**
+- ⚠️ **WHEN THE MANIPULATIVE'S HUE IS FIXED BY WHAT IT IS, THE GROUND IS WHAT HAS TO MOVE — AND
+  MILO COUNTS AS A MANIPULATIVE FOR THIS CHECK.** BlockYard could pick any hue for a block. A COIN
+  cannot: measured, `coin_copper` is **18°**, `coin_gold` **40°**, `coin_silver` a hueless
+  **sat 0.09** — so a coin set owns the whole warm-earth band *plus* neutral grey. That is exactly
+  what open ground is made of, so **an open-ground market scene and a coin set are natural
+  camouflage for each other.** Six candidate backdrops were generated for CoinShop and **five sat
+  inside the coins' band**: a golden common measured **2° from gold**, a terracotta square **1° from
+  copper**, and the two pale ones were sat .07–.08 against silver's .09.
+  ⚠️ **The first correction made it worse.** Told "the ground is too washed out", I regenerated with
+  richly-tinted warm ground — which moved the collision from silver to gold and copper. **Saturating
+  a ground does not separate it; only moving it out of the object's hue family does.**
+  ⚠️ **And the check that settled it was MILO, not the coins.** He measures **hue 30° / sat 0.53** —
+  inside the same band — so those warm grounds camouflaged the CHARACTER too, which is worse than
+  losing a coin. Green ground (72–90°) clears him and every coin at once, which is why the shipped
+  scenes are green. **The one warm exception, `beach_sand`, works by a SATURATION gap** (0.27 against
+  Milo's 0.53), not a hue one. So the rule is: **separation in hue OR in saturation — never neither
+  — measured against every sprite that stands on it, the character included.**
 - ⚠️ **AND BECAUSE THE HUE IS THE FREE AXIS, IT IS THE ONE THAT SHOULD VARY PER ROUND.** "The scene
   changes across the run" had only ever meant the BACKDROP; the manipulative itself was identical in
   round 10 and round 1. BlockYard now carries a material per slot — clay · slate · teal · plum · rose
@@ -954,9 +971,20 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
 - **Measure, don't eyeball.** Assert on `getBoundingClientRect()` / `naturalWidth` — real travel
   distance, real size change, real gaps. "The screen moved" is not evidence.
 - **Assert the resulting STATE, never that the UI advanced.** A wrong answer advances too.
-- **The preview screenshot lags the DOM.** A frame showing the wrong backdrop with creatures missing
-  entirely was pure staleness; a DOM query at the same moment was correct. Re-shoot before believing
-  anything alarming.
+- **The preview screenshot lags the DOM — and so does TEXT EXTRACTION.** A frame showing the wrong
+  backdrop with creatures missing entirely was pure staleness; a DOM query at the same moment was
+  correct. ⚠️ **The same is true of `get_page_text`**, which is easy to trust because it looks like a
+  DOM read and is not: on placeValue it returned the previous beat's prompt for seconds after the
+  state had moved on, so a mid-trade sample read as *a round wedged on a stale instruction*. **I
+  nearly banked "the PACK round dead-ends" twice from it.** Query the live DOM
+  (`document.body.innerText`, the button list, `getBoundingClientRect`) inside the page, and re-shoot
+  before believing anything alarming.
+- ⚠️ **A DISABLED COMMIT BUTTON IS NOT A LIVENESS SIGNAL.** Every chapter here disables its commit
+  until the child has actually given an answer, so "Done is disabled" means *nothing has been typed
+  yet* far more often than it means *the round never opened*. Polling it as a proxy for "is the
+  question live" reports a perfectly healthy round as dead — which is exactly what happened on
+  placeValue, where the question had been on screen for some time. **Read the thing you actually
+  care about**: the prompt text, or whatever flag the scene gates input on.
 - **AN ELEMENT WITH AN ENTRANCE ANIMATION IS A LIE FOR ITS FIRST FEW HUNDRED MS — and a backgrounded
   tab freezes it there indefinitely.** `getBoundingClientRect` includes transforms, so a block
   scaling in from 0.5 measures half its real size, and a screenshot catches it translated and
