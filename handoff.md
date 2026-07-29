@@ -12,7 +12,324 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🦘 **2026-07-28 (LATEST) — A3 HOPALONG REBUILT, AFTER THE FOUNDER ASKED WHAT THE CHAPTER ACTUALLY TEACHES AND THE ANSWER TURNED OUT TO BE "NOT SKIP COUNTING". 🚀 SHIPPED — `main`@`8635f11` (`c8600e0` + this handoff + `sw` v69 → v70), pushed, prod serving sw v70.** `tsc` 0 · **175/175 vitest** (was 155) · `next build` · 0 console errors in a fresh tab · driven live at 1024×620 and 640×320.
+> 🧱 **2026-07-29 (LATEST) — THE BLOCKS ARE BACK, BY FOUNDER'S CALL, WITH EVERYTHING PASSES 1–3 LEARNED. ✅ COMMITTED on `feat/story-6-8-block-yard-regroup` — ⚠️ NOT pushed, NOT deployed; prod is still `main`@`5d67acd` / sw v70.** `tsc` 0 · **232/232 vitest** (was 175 before this workstream) · `next build` · 0 console errors · driven live at 1280×720 and 640×320 through demo → guided → a scored round, across three materials.
+>
+> | commit | what |
+> |---|---|
+> | `0bc7e1b` | the chapter rebuilt on base-ten blocks + the 56-test gate |
+> | `c689af7` | the nine general rules into [chapter-craft.md](docs/chapter-craft.md) |
+> | `ea52db9` | `public/sw.js` v70 → v71 for the deploy |
+> | *(this block)* | the handoff |
+>
+> **To ship it:** fast-forward `feat/story-6-8-block-yard-regroup` into `main`, push, then the usual
+> post-deploy smoke — prod `sw.js` reporting **v71**, and `/` `/menu` `/api/health` plus
+> `?ch=add100` · `?ch=sub100` all 200. Left untracked on purpose: `scripts/.voice-*.json`
+> (regenerable). **Nothing else is outstanding in the tree.**
+>
+> **The ask:** *"convert it back to that block one but with animation with the blocks and all."*
+>
+> ## ⓪ ⚠️ THE THING WORTH CARRYING: THE BLOCKS WERE NEVER THE FAULT
+> The original chapter failed the delete-the-art test and **the art was replaced twice, at the cost
+> of two rebuilds** — creatures in a goods yard, then creatures in pens. Reading it again to bring
+> the blocks back: the manipulative was fine. `27 + 15 = ?` printed on a banner beside it is what
+> made it scenery. **Ask whether the ART is wrong or the QUESTION is wrong; they fail the same test
+> and they are not the same fault.** So the blocks return and the honest question stays — quantities
+> are only ever blocks, the equation appears after the commit.
+>
+> ## ① WHAT THE YARD IS NOW
+> A ONE is a clay unit cube that TRAVELS in. A TEN is a ROD — one object, ten visible segments, so it
+> is honestly ten without being ten things you re-count. At ten on the ground, tap: they slide
+> together, become one rod, and Milo walks it up the row. Subtraction runs it backwards — he fetches
+> a rod and it breaks open into ten. Everything pass 3 earned is kept: the palette discipline, real
+> contact shadows inside the travelling element, two clusters with Milo between, the measured
+> backdrops, the `position: fixed` fix, `sig` dedupe, regrouping-driven difficulty.
+>
+> ## ② ⚠️ THE ROD WAS LYING ABOUT ITS OWN LENGTH — the most important catch
+> First cut drew it at **0.55 of unit scale** so it would clear the prompt on a short frame. That
+> makes a rod stand **five and a half cubes high beside the cubes it is made of**, so a child laying
+> one against the ones reads the wrong number off it. **That is a lie inside the manipulative, which
+> is worse than any look problem** — the entire reason to use base-ten blocks is that the
+> relationship is there to be MEASURED rather than asserted. Fixed by deriving the UNIT from the room
+> available (`rodBudget`), never by scaling one part of the set against another. Gated:
+> `rod === 10 × cube` at every frame.
+>
+> ## ③ ⚠️ THE BLOCKS WERE INVISIBLE, AND IT WAS THE HUE
+> Drawn in the same warm sand as pass 3's pens — measured dead centre of the backdrops' band — and on
+> a farm they read as **hay bales and fence posts**. **A manipulative is a TOOL, not scenery: it is
+> meant to stand out.** The rule `cart.png` broke is the saturation/brightness band; the HUE is free.
+> These scenes are green, sky and cream, so the blocks are clay (sat .45 / val .80, inside the
+> painted sprites' own .42–.66).
+>
+> ## ④ A THIRD OPTION THE CRAFT DOC DID NOT NAME
+> The banner and the rod column wanted the same height, and the standing rule is *buy height from the
+> chrome and the visual, never from the prose*. Neither applied. **On a short frame the banner moves
+> SIDEWAYS** — over the left of the yard, where the ones are and they are one cube tall — leaving the
+> rod column the full drop. Measured at 640×320: a 15px unit instead of a 10px one, at no cost to the
+> words. It also fixed the "← Menu" collision by construction.
+>
+> ## ⑤ THE HONEST COST, STATED IN THE FILE HEADER
+> **A block has no legs.** "Something arrives on its own legs" now rests entirely on Milo — he is the
+> only living thing in the yard. The blocks travel, which is correct for an object with no gait
+> (`CARRY_SPEED` exists for exactly this), but nothing here walks except him. That is what the
+> creatures bought and what this pass trades away. The gate asserts Milo still has a drawn cycle,
+> because he is now load-bearing for the whole aliveness check.
+>
+> ## ⑥ A DIFFERENT SET OF BLOCKS EVERY ROUND (founder: *"can we design different blocks for each
+> question?"*) — and it works BECAUSE of §③
+> "The scene changes across the run" had only ever meant the BACKDROP; the manipulative was identical
+> in round 10 and round 1. Six materials now — **clay · slate · teal · plum · rose · indigo** — one
+> per slot, consecutive rounds always differing, all six used.
+> • **They share ONE saturation and ONE brightness and differ only in HUE**, so every set sits in the
+>   painted sprites' band by construction; the light and dark faces are DERIVED from the base, so
+>   eighteen hand-typed hex values cannot rot one at a time.
+> • ⚠️ **The gate measures the pairing, not the palette.** Each backdrop's dominant hue across the
+>   band the blocks occupy is measured (saturation-weighted, so grey paths do not drag the mean) and
+>   every material must be ≥ 45° away from its scene. Measured, this run's scenes are **68–95°**
+>   except `town_street` at **32°**. Mutation-tested: a planted clay-on-`town_street` pairing fails at
+>   **17.9°**. That makes the hay-bale fault impossible to reintroduce.
+> • Three materials carry a grain. ⚠️ **It runs VERTICALLY, and that is not a style choice** — the
+>   rod's ten units are horizontal seams, so a horizontal decorative line is an eleventh unit to a
+>   child counting it. Before adding texture to anything countable, ask which axis already means
+>   something.
+> • The tally pill keeps each round's own colour, so the strip reads back as the run actually walked.
+>
+> ## ⑦ ⚠️ AND THE WAITING PILE READ AS MORE OF THE ROW
+> Caught on screen: ten blocks placed and four waiting, at one size on one baseline, read as **ONE
+> row of fourteen** — and the argument the whole chapter turns on (*ten fit, the eleventh does not*)
+> went with it. The pile now stands further BACK: higher, smaller (0.8), and heaped rather than
+> stacked. Gated on all three cues agreeing.
+>
+> ## ⑧ THE GATE — 56 tests
+> Creature-specific assertions are gone with the creatures (size band, flier, greyscale, per-item
+> sheet). Added: a rod is exactly ten cubes · a rod fits its budget at every frame · nothing standing
+> reaches into the banner · a cube never overflows its column and never drops below 12px · Milo still
+> has a cycle · consecutive rounds get different blocks · the material band · **no set camouflages
+> into its scene** · the waiting pile reads as set back. Kept: everything about the question, the
+> plan, the straight index, and the **measured walkable-ground check** (which caught the pond).
+>
+> _(the 🐑 block below is the pen version this replaced — its five blend fixes all carried over.)_
+
+> 🐑 **2026-07-29 — BLOCKYARD PASS 3 BUILT: THE LOOK IS REBUILT AGAINST ALL FIVE BLEND FAULTS, AND CHASING IT FOUND A LAYOUT BUG PASS 2 HAD SHIPPED AND A BACKDROP THE WHOLE YARD WAS STANDING ON WATER. ⚠️ SUPERSEDED — the founder asked for the blocks back; see the 🧱 block above. Everything below still applies, with pens read as rods.** `tsc` 0 · **229/229 vitest** · `next build` · 0 console errors · driven live at 1280×720 and 640×320 in both operations, through the demo, the guided round AND a scored round.
+>
+> ## ⓪ WHAT CHANGED, AGAINST §⑥ OF THE PREVIOUS BLOCK
+> | founder's call | done |
+> |---|---|
+> | cart out → a code-drawn painted pen | ✅ `cart.png` is gone; pens are drawn in code at sat .34 / val .81, inside the backdrops' own band by construction |
+> | a bundled ten is small and quiet, **no sprites inside** | ✅ `ShutPen` is deliberately empty — heads in it invite the recount that unitising is the absence of |
+> | ant + ladybug out; ONE size band | ✅ cast is chick · duckling · lamb · rabbit · squirrel · duck, gated by a named band |
+> | real contact shadows INSIDE the travelling element | ✅ `Shadow` renders inside `Arrive`'s child, for creatures, Milo and every pen |
+> | a huddle, not a grid | ✅ neighbours alternate depth, each with seeded x-nudge and ±4.5% size; gated (no two the same size, no two on one baseline) |
+> | two clusters, Milo between | ✅ open ground (pen + those waiting at its gate) on the left, the pen row on the right, Milo between — was four |
+>
+> **Milo now has a real job again**: the gate shuts on the ten, he walks the pen-full up the row and
+> comes back; in subtraction he fetches one back and it opens. The pen rides INSIDE his travelling
+> element, so it cannot drift from his feet.
+>
+> ## ① ⚠️ THE SLAB CAME BACK, AND IT IS A THREE-PASS FAULT NOW
+> The first pass-3 attempt drew the open pen as a **palette-matched beige rounded rectangle 37% of
+> the screen wide**. Measured on screen at 1280×720, and it is pass 1's brown slab wearing the right
+> colour: **a solid block over a painted scene reads as UI furniture however well its palette is
+> matched**, because painted scenes contain no filled rectangles. Pass 2's answer — ten discs — was
+> the grid. What works is what the world would actually have: **posts, rails, and a ground tint that
+> fades out at its own edges**, since trodden ground has no border. The posts fall between the
+> standing places, so the ten are marked out without a single disc. Rule in the craft doc beside the
+> empty-outline one, which is the same fault from the other side.
+>
+> ## ② ⚠️ THE WHOLE YARD WAS STANDING ON A POND — and the old gate is what put it there
+> `farm_pond.png` opened the subtraction run. Now that the yard spans x 4–97% — a fence, ten
+> creatures, Milo and a row of pens — **the entire thing stood on open water**. Measured across the
+> band it occupies: **27–35% walkable**, against 100% on a barnyard.
+> • The gate is now a measurement: step across x at 0.66 · 0.70 · 0.74 of the height and count the
+>   pixels that are not blue-dominant. **Mutation-tested — restoring `farm_pond` fails it.**
+> • ⚠️ **AND THE OLD GATE CAUSED THIS.** It demanded ten DISTINCT scenes for ten scored rounds, and
+>   only NINE backdrops in the whole library hold ground across that band — so the run reached for a
+>   pond and two indoor shop counters to make the count. Relaxed to *consecutive rounds differ*,
+>   which is the actual craft rule. **A fence on a pond is a far worse fault than a backdrop seen
+>   twice.**
+> • The instrument's limit is stated rather than hidden: it separates water and sky reliably and
+>   **cannot tell canopy from grass** — both green — so the forests stay out on the horizon numbers.
+>
+> ## ③ ⚠️ THE BUG PASS 2 SHIPPED, INVISIBLE UNTIL THE FIRST SCORED ROUND
+> The scene lays itself out in shares of the VIEWPORT (`top: 74%` is the ground line) using
+> `position: absolute` — which resolves against the nearest positioned ancestor, and in a scored
+> round that is **`SkillBeat`'s own `position: relative` wrapper, which is content-sized**. Measured
+> at 1280×720: the whole yard, Milo, the pen row and the answer pad squashed into a strip across the
+> top of the frame. It survived a full verification pass because **the demo and the guided round
+> render OUTSIDE `SkillBeat` and look perfectly correct** — the fault appears only when the first
+> scored round loads. Every piece of the yard is `position: fixed` now, which is why `Critter` has
+> always been. **Verify a chapter in its SCORED rounds; they do not share a containing block with
+> the demo.**
+>
+> ## ④ FOUR TIMES THE INSTRUMENT LIED, AGAIN, AND ONE OF THEM NEARLY BANKED A FALSE FINDING
+> • A "racing" demo — measured properly with a `MutationObserver` on the banner it is **2.8–3.0s per
+>   step, ~14s per example**. The fast reading came from a screenshot fronting the tab and flushing
+>   queued timers at once.
+> • A screenshot showing lambs while the DOM reported eleven squirrels: stale by a whole round.
+> • Creatures "missing" from the pen: frozen mid-journey off-frame, because a hidden tab freezes CSS
+>   transitions.
+> • ⚠️ **A planted regression that "passed" — and the gate was never tested.** The `sed` that planted
+>   it had silently matched nothing. Re-planted with a tool that reports its own substitution count,
+>   it failed immediately. **Assert the edit landed before you conclude anything about the check**;
+>   same family as "a sweep that flags everything is a broken sweep".
+>
+> ## ⑤ THE GATE — 54 tests (was 49)
+> Kept everything that was testing the question and the geometry contract; added: the huddle is a
+> huddle (two depths, alternating, no two the same size, no two on one baseline, the nudge only ever
+> lifts) · the cast is one named size band · **every backdrop holds walkable ground right across the
+> yard**. Relaxed: distinct scenes → consecutive-differ, for the reason in §②.
+>
+> ## ⑥ THE HONEST WEAK SPOT, STATED IN THE FILE HEADER RATHER THAN HIDDEN
+> When a round OPENS with tens, or `b` carries tens, those shut pens **settle in rather than
+> travelling**. They are containers, which the craft doc permits fading — but a pen-full is
+> conceptually ten creatures, so it is a compromise. Mitigated by keeping them small, quiet, further
+> along the yard and staggered, and by the fact that everything the child actually counts arrives on
+> legs. It is written in the header as a compromise, not as a claim that they travel.
+>
+> _(the 🚚 block below is the previous session — passes 1 and 2, and the five blend faults §⑥ answers.)_
+
+> 🚚 **2026-07-28/29 — BLOCKYARD REBUILT TWICE, AND THE FOUNDER STOPPED IT BOTH TIMES. THE CONCEPT AND THE MECHANIC ARE SETTLED AND VERIFIED; THE LOOK IS NOT. ⚠️ SUPERSEDED — pass 3 is now BUILT, see the 🐑 block above.** `tsc` 0 · **224/224 vitest** (was 175, +49) · `next build` · 0 console errors · driven live at 1280×720 and 640×320 in both operations. **Read this before touching the file: two passes have already been rejected, and the reasons were different each time.**
+>
+> **The asks, in order:** *"aabhi kaunse chapter ko rethink kare?"* → *"jo concept sikha rahe hai… animation jisse concept aur acche se teach ho, woh karo"* → **"honestly bolu toh yeh sahi nahi lagg raha hai… pehle sochte hai ki kaise kare, phir implement karte hai"** → *"meko proper animation waala interaction chahiye joh humne objects generate kiye hai usse"* → **"naiii… sahi se blend naii… satisfaction naii mil rha hai"**.
+>
+> ## ⓪ WHERE IT ACTUALLY STANDS — read this first
+> | | state |
+> |---|---|
+> | the chapter it should teach (**regrouping**) | ✅ settled, and the old chapter's fault was real and measured |
+> | the mechanic (platform of ten → bundle → one unit) | ✅ settled, verified end to end both ways |
+> | the gate (49 tests, 8/8 mutations) | ✅ done, and it caught a real bug on its first run |
+> | **the look** | ❌ **rejected twice.** Pass 1 was not alive; pass 2 is alive and does not BLEND |
+> | pass 3 | designed with the founder (§⑥), **not built** |
+>
+> The working tree carries **pass 2**. It runs, it is correct, and it is not what ships.
+>
+> ## ① THE CHAPTER WAS PICKED BY MEASUREMENT, AND THAT PART HELD UP
+> BlockYard was next in plan B anyway, but the case is stronger than "next":
+> • **It failed the same test HopAlong did.** `prompt: d => \`${d.a} + ${d.b} = ?\`` printed the sum,
+>   and `BlockRow` printed the numeral beside its blocks. **Delete every block from the screen and
+>   all thirty questions still work.** The base-ten blocks were scenery.
+> • ⚠️ **AND THE METHOD IT TAUGHT BROKE ON ~40% OF THE QUESTIONS IT GENERATED — live in production.**
+>   Measured, 20k draws per tier: `+ 50.1 / 44.2 / 38.7%` and `− 49.8 / 40.8 / 41.5%` of rounds need
+>   a regroup. The demo narrated *"add the tens, then the ones"*, which has **no step for a carry**;
+>   in subtraction the same line tells a child to work out `2 − 7`. All four hand-picked demo
+>   examples (23+14 · 34+25 · 38−14 · 46−23) quietly avoid regrouping, so the case the chapter exists
+>   for was **never once shown**.
+>
+> ## ② PASS 1 — RIGHT CONCEPT, DEAD SCREEN
+> A brown slab with cookies popping into slots. **The four things every working chapter in this band
+> has — something arrives on its own legs · the tap sends someone somewhere · Milo has a job · the
+> scene changes across the run — were ALL FOUR ABSENT.** Worse, the file header I wrote claimed
+> *"a crate of more arrives and travels in"* while the code just called `setState`; the `Fly`
+> component written for it was never wired to anything. **A comment asserting the rule is followed is
+> the most expensive kind of lie**, because it stops the next reader checking.
+>
+> ## ③ PASS 2 — ALIVE, AND STILL REJECTED
+> Creatures with drawn cycles walk in from off-frame and fill a ten-spot platform; the eleventh has
+> nowhere to stand and waits; tap and the ten board a cart that rolls off to the siding. Subtraction
+> runs it backwards. Milo pulls the cart. **It scores 4/4 on the check above and the invariant is
+> measured**:
+> ```
+> 0.14s  18 sprites [pppp…] translateX(0px)             ← placed
+> 4.14s  18 sprites [pppp…] −409.6 / −481.3 / −553px    ← off-frame, still PAUSED
+> 5.14s  18 sprites [ppppp rrrrrrr p] → 0px             ← legs RUNNING while covering ground
+> 12.14s                    translateX(307px)           ← the loaded cart rolling off
+> 13.14s all paused, 0px                                ← landed
+> ```
+> Verified both ways: `+` 27+15 → platform full, 2 queued → bundle → **42**; `−` 52−17 → ones run out
+> → a cart comes back → **35**; ~19s per demo, every line written as well as spoken.
+> • ⚠️ **THE PLATFORM → CART TRANSITION IS THE LESSON.** On the platform they are ten countable
+>   creatures; aboard, they are ONE CART and are never recounted. **That is unitising** — what place
+>   value and skip counting are actually about — on screen instead of asserted. **Keep this.**
+>
+> ## ④ ⚠️ AND THIS IS THE FINDING WORTH CARRYING: 4/4 ON "IS IT ALIVE" IS NOT ENOUGH
+> Pass 2 passes every animation rule in the craft doc and the founder still said
+> *"sahi se blend naii… satisfaction naii mil rha hai"*. **ALIVENESS AND BLEND ARE TWO DIFFERENT
+> AXES**, and this repo has only ever written down the first. A thing can travel on its own legs, at
+> its own gait, with its cycle in step — and still sit ON the picture rather than IN it.
+>
+> ## ⑤ THE FIVE BLEND FAULTS, NAMED — four of them are craft-doc rules I broke
+> The founder listed four and added a fifth in his own words (**"size bhi sabke sahi nai lagg rahe
+> hai"**):
+> • **SIZES ARE WRONG.** Every creature is drawn at one height, so **an ant is the size of a lamb**.
+>   `critters.tsx`'s `Kind.scale` exists for exactly this and its own comment says so — *"a ladybug
+>   drawn the same height as a rabbit is its own kind of doesn't-belong"* — and I never read it.
+> • **NOTHING TOUCHES THE GROUND.** Not one true contact shadow; a generic `drop-shadow` filter is
+>   not a contact cue. The doc's first blend line is that these are not optional.
+> • **THE CREATURES ARE STICKERS.** A rigid 5×2 grid, one size, one baseline — the doc says verbatim:
+>   *"Evenly spaced, one baseline, one size = a row of identical stickers."* I built precisely that.
+> • **THE SCENE IS CLUTTERED.** Up to **28 separate things in four clusters** (platform · queue ·
+>   siding · Milo + cart). The chapters that work show 5–7.
+> • **THE CART IS A PALETTE OUTLIER, AND I MIS-MEASURED IT.** Measured over opaque pixels:
+>
+>   | | saturation | brightness | dark outline |
+>   |---|---|---|---|
+>   | backdrops (farm · meadow · orchard) | 0.33–0.42 | 0.71–0.85 | ~0% |
+>   | creatures (these blend fine) | 0.42–0.66 | 0.70–0.90 | 1.6–4% |
+>   | **`cart.png`** | **0.676** | **0.615** | 4.6% |
+>   | `train_car.png` (rejected earlier) | 0.702 | 0.623 | 19.4% |
+>
+>   ⚠️ **I checked the cart's STYLE and called it painted — brushwork, no vector outlines — and never
+>   checked its PALETTE.** It is the most saturated and the darkest thing on screen, on a pale pastel
+>   farm, at the largest size, up to nine times over. **A NEW RULE, and it belongs beside the
+>   "check for ink outlines first" one: style and palette are two separate checks. Measure mean
+>   saturation and brightness over the opaque pixels and compare them to the BACKDROP's band, not to
+>   your impression of the brushwork.**
+>
+> ## ⑥ PASS 3 — AGREED WITH THE FOUNDER, NOT BUILT
+> Founder's calls: **remove the cart entirely** (a code-drawn painted pen instead, MarketDay's patch
+> idiom, whose palette we control), and fix all five above.
+> 1. **Cart → a code-drawn painted PEN**, coloured into the backdrop's band (sat ~0.35, val ~0.8).
+> 2. **A bundled ten is SMALL AND QUIET — no creature sprites inside it.** This is the declutter AND
+>    it is better pedagogy: a bundled ten is ONE thing, not ten things you keep re-counting. Sprite
+>    count on a full yard drops from ~45 to ~9.
+> 3. **Ant and ladybug OUT of the cast.** A countable ant cannot be honestly sized next to a pony —
+>    so cast only creatures in ONE size band: chick · duckling · lamb · rabbit · squirrel · duck.
+>    (Simpler and truer than a per-creature scale table.)
+> 4. **Real elliptical contact shadows**, rendered INSIDE the travelling element — outside it they
+>    lag, which this repo has already shipped once.
+> 5. **A huddle, not a grid**: depth jitter and size variation, per the doc's own idiom.
+> 6. **Two clusters instead of four**: pens one side, the open ground the other, Milo between.
+>
+> ## ⑦ THE GATE — [blockYardRegroup.test.ts](src/__tests__/blockYardRegroup.test.ts), 49 tests
+> Drives the same exported functions the scene renders from (`makeRound`, `loadPlan`, `scoredSlot`,
+> `spotOf`, `groundOf`). **It survives pass 3** — it tests the question and the geometry contract,
+> not the dressing.
+> • **Caught a real bug on its first run**: at L1 both tens and ones can draw 0, so `b` could be 0 —
+>   *"27 + 0"* is not a question.
+> • **8/8 planted regressions fail it** (L3 not always regrouping · a flat rate across tiers · a
+>   vector backdrop · `scoredSlot` wrapping modulo · a sub answer below ten · the bundle skipped · a
+>   greyscale sprite · a typo'd filename).
+> • **Assertions worth keeping whatever the dressing becomes**: every creature must have a
+>   **REGISTERED drawn cycle** (without one `SheetCell` silently falls back to a still, and a still
+>   that travels is a sticker being dragged — invisible in a screenshot); no flier or swimmer; every
+>   spot on screen; the siding on painted ground; the platform never inside the answer pad.
+>
+> ## ⑧ THREE THINGS THE SCREEN CAUGHT IN PASS 2, AND FOUR TIMES THE INSTRUMENT LIED
+> Screen: carts hanging in the sky (a flat `SIDING_Y = 0.30` is open air on `farm_barnyard` — third
+> recurrence of that fault) · the fourth queued creature sliced by the left edge at x = −3.6% · the
+> platform standing inside the answer pad at 640×320 (feet 237px, pad top 230 — **the pad's buttons
+> are tap targets and may not shrink, so the GROUND yields**).
+> Instrument: a "racing" demo that was running fine at 19s/example · an answer pad reading
+> `opacity: 0.35` while `pointerEvents` said `auto` (frozen transition, hidden tab) · a screenshot
+> showing an empty cart while the DOM had the right counts (entrance animations frozen at 0) · a
+> `disabled` read in the same tick as the click that set it. **Every one was the instrument.**
+>
+> ## ▶ OPEN
+> 1. ✅ **PASS 3 IS BUILT**, and then superseded by the block rebuild — see the 🧱 block at the top.
+> 2. ✅ **COMMITTED** on `feat/story-6-8-block-yard-regroup`, with the sw v70 → v71 bump. Not pushed.
+> 3. **`cart.png` should not be reused elsewhere without the palette check in §⑤.**
+> 4. **A non-regrouping round is still "watch them walk in, then read the yard"** — the addition is
+>    in the arrival rather than in a gesture. Correct at the concrete stage, and it is why L3 always
+>    regroups, but it is the honest weak spot.
+> 5. **BuildingBlocks (`placeValue`) is the same engine's second consumer** and is still on the old
+>    pattern. **Deliberately NOT extracted** — one consumer is not an abstraction.
+> 6. **509.7 credits expire ~2026-07-30 — i.e. tomorrow — with no consumer.** The founder chose a
+>    code-drawn pen over generating a painted cart, so pass 3 does not spend them either.
+> 7. **Nobody has watched a child play any version**, and both rejections came from the founder
+>    looking at the screen. No gate would have caught either.
+>
+> _(the 🦘 block below is the previous session — A3 HopAlong.)_
+
+> 🦘 **2026-07-28 — A3 HOPALONG REBUILT, AFTER THE FOUNDER ASKED WHAT THE CHAPTER ACTUALLY TEACHES AND THE ANSWER TURNED OUT TO BE "NOT SKIP COUNTING". 🚀 SHIPPED — `main`@`8635f11` (`c8600e0` + this handoff + `sw` v69 → v70), pushed, prod serving sw v70.** `tsc` 0 · **175/175 vitest** (was 155) · `next build` · 0 console errors in a fresh tab · driven live at 1024×620 and 640×320.
 >
 > ✅ **THE 5-COMMIT BACKLOG IS GONE — `main` AND `origin/main` ARE IN SYNC AT `8635f11`.** The v70 bump
 > covered BOTH batches, so that one push shipped the A2 work (`7f45814` + `76b793a`) and this chapter
@@ -2977,7 +3294,13 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-28 (LATEST — see the top 🦘 block. **A3 HopAlong rebuilt, after the founder stopped the work and asked what the chapter actually teaches. 🚀 SHIPPED — `main`@`8635f11` (`c8600e0` + sw v69 → v70), pushed, prod serving v70; that one push carried this AND the A2 batch.** The answer was uncomfortable: every question it could generate was a bare arithmetic sequence with a hole, and **deleting every animal from the screen left all thirty of them still solvable** — so it measured sequence completion, not skip counting, whose entire content (unitising: five becomes ONE FIVE) it never asked for once. My own first redesign did not fix that; it made cheating harder at a task that was measuring the wrong thing. Then the art turned out not to exist either: **`milo_hop.png` was a WALK cycle** (lift 0 in all 12 frames) under a hop filename, registered with a comment calling it a hop and named as A3's foundation in two docs, with a registry key pointing at a file not on disk. A real hop was generated for 15 of the expiring credits — **19 cells, not 12, because a hop's character is its uneven timing and down-sampling averages the holds away**; keeping the source's own period reproduces the anticipation and hang time with no hand-authored chart. `hop(from,to)` now lives in critters.tsx and does three things `Critter` cannot — holds the horizontal through the crouch, runs the cycle across the whole move, and supplies only X because **the arc is drawn into the frames**. The chapter is now COUNT THE FAST WAY: families, not a countable row; spares, so stopping is a decision; the demo is a joke about losing count that replaces the modal teaching card. **Then the founder played it and found five more, each a rule already written down that the new code stepped around** — a Ready button that only SPOKE its refusal (silence on any device without a voice), no way back from an overshoot so the round could become unwinnable, a flat walk-off offset that stranded the tail, a `flier` flag declared and never read so butterflies stood in the lawn, and a crowd that slid with its feet parked. All fixed, each with the general rule banked. The gate caught a 0.33% overlap and families drawn touching at 640×320; the screen caught Milo rendering half off the frame; **13 planted mutations fail it**. `tsc` 0 · 175/175 · `next build` · 0 console errors. ▶ Open: ~~not pushed~~ **shipped and smoked** (prod v70, story routes 200) — and the "5 ahead of origin" line this footer used to carry was stale, the third such in three days; the three settings are a third overlap and the painted-grass library is spent; flat-vector backdrops still live in BlockYard, NestTree and MeasureIt; 509.7 credits expire in two days. _(prior footer follows.)_)_
+_Last updated: 2026-07-29 (LATEST — see the top 🧱 block. **The founder asked for the base-ten BLOCK version back, animated — so it is back, with everything passes 1–3 learned. ⚠️ NOT COMMITTED (needs sw v70 → v71).** ⚠️ **And the thing worth carrying is that the blocks were never the fault.** The original chapter failed the delete-the-art test and the art was replaced TWICE, at the cost of two rebuilds; reading it again to bring blocks back, the manipulative was fine — `27 + 15 = ?` printed on a banner beside it is what made it scenery. **Ask whether the ART is wrong or the QUESTION is wrong; they fail the same test and they are not the same fault.** A ONE is a clay cube that travels in; a TEN is a ROD, one object with ten visible segments; at ten they slide together into one and Milo walks it up the row, and subtraction runs it backwards. Two catches while building it. **The rod was lying about its own length** — first cut drew it at 0.55 of unit scale so it would clear the prompt, i.e. five and a half cubes high beside the cubes it is made of, so a child laying one against the ones reads the wrong number off it. That is a lie inside the manipulative, worse than any look problem, and it is fixed by deriving the UNIT from the room available rather than scaling one part of the set against another (gated: `rod === 10 × cube` at every frame). **And the blocks were invisible** — drawn in pass 3's warm sand, measured dead centre of the backdrops' band, they read as hay bales and fence posts. A manipulative is a TOOL, not scenery: the rule `cart.png` broke is the saturation/brightness band, the HUE is free, so the blocks are clay. Also a third option the craft doc had not named: when a layout and some prose fight over the same height, **move the prose sideways** — on a short frame the banner sits over the left of the yard, buying a 15px unit instead of a 10px one at no cost to the words. ⚠️ **The honest cost, in the file header: a block has no legs**, so "something arrives on its own legs" now rests entirely on Milo — the gate asserts he still has a drawn cycle. **Then: a different SET OF BLOCKS every round** (founder: *"can we design different blocks for each question?"*) — six materials, clay · slate · teal · plum · rose · indigo, one per slot. It works because of the hue finding above: they share ONE saturation and ONE brightness and differ only in hue, so every set is in the band by construction and the shades are derived rather than typed. ⚠️ **The gate measures the PAIRING, not the palette** — each backdrop's dominant hue across the band the blocks occupy, saturation-weighted, and every material must be ≥45° away; mutation-tested, a planted clay-on-`town_street` fails at 17.9°. Three materials carry a grain and ⚠️ **it runs VERTICALLY** — the rod's ten units are horizontal seams, so a horizontal decorative line is an eleventh unit to a child counting it. And one more caught on screen: **the waiting pile read as more of the row** (ten placed + four waiting at one size on one baseline = one row of fourteen, and the *ten fit, the eleventh does not* argument goes with it), so it now stands further back, higher and smaller. Gate 56 tests. `tsc` 0 · 232/232 · `next build` · 0 console errors · driven live at 1280×720 and 640×320 through demo → guided → a scored round, across three materials. ▶ Open: **committed on `feat/story-6-8-block-yard-regroup` (`0bc7e1b` chapter+gate · `c689af7` craft rules · `ea52db9` sw v70 → v71), NOT pushed and NOT deployed — prod is still `main`@`5d67acd` / sw v70**; and nobody has watched a child play it. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-29 (the 🐑 pen version. **BlockYard pass 3 is BUILT: the look is rebuilt against all five blend faults the founder named — cart gone for a code-drawn pen inside the backdrops' palette band, bundled tens small quiet and EMPTY, cast cut to one size band, real contact shadows inside the travelling element, a huddle instead of a 5×2 grid, and two clusters instead of four with Milo carrying the pen-full up the row between them. ⚠️ NOT COMMITTED (needs sw v70 → v71).** Chasing the look turned up two things nobody had seen. **The slab came back**: the first attempt drew the open pen as a palette-matched beige rounded rectangle 37% of the screen wide, which is pass 1's brown slab wearing the right colour — a solid block over a painted scene reads as UI furniture however well its palette matches, because painted scenes contain no filled rectangles. What works is posts, rails and a ground tint that fades out at its own edges. **And the whole yard was standing on a pond**: `farm_pond.png` opened the subtraction run and, now that the yard spans x 4–97%, the fence, ten creatures, Milo and the pen row all stood on open water — measured 27–35% walkable against 100% on a barnyard. ⚠️ **The old gate is what put it there**, demanding ten distinct scenes when only nine backdrops in the library hold ground across that band; relaxed to consecutive-differ, because a fence on a pond is far worse than a backdrop seen twice. **Then a bug pass 2 had shipped**: the scene positions itself in shares of the viewport with `position: absolute`, which in a scored round resolves against `SkillBeat`'s content-sized `relative` wrapper — the entire yard and the answer pad squashed into a strip across the top at 1280×720. It survived a full verification pass because the demo and the guided round render OUTSIDE SkillBeat and look right; only the first SCORED round shows it. Everything is `fixed` now, which is why `Critter` always was. The instrument lied four more times (a "racing" demo that measures 2.8–3.0s/step, a screenshot a whole round stale, creatures frozen mid-journey) — and once expensively: **a planted regression "passed" because the `sed` that planted it had silently matched nothing.** Gate now 54 tests. `tsc` 0 · 229/229 · `next build` · 0 console errors · driven live at 1280×720 and 640×320 through demo, guided AND a scored round. ▶ Open: not committed; nobody has watched a child play it; and a shut pen that ARRIVES still settles in rather than travelling — stated in the file header as a compromise, not hidden. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-29 (the 🚚 block. **BlockYard rebuilt TWICE and stopped by the founder BOTH times. The concept and the mechanic are settled and verified; the LOOK is not. ⚠️ NOT COMMITTED, pass 3 designed but not built.** The old chapter printed `27 + 15 = ?` beside its base-ten blocks, so **deleting every block still left all thirty questions solvable**, and measured over 20k draws per tier **39–50% of rounds need a regroup** while the demo narrated *"add the tens, then the ones"* — no step for a carry, and in subtraction it told a child to work out `2 − 7`; all four hand-picked demo examples avoided regrouping. That diagnosis held. **Pass 1** fixed it and was a brown slab with cookies popping into slots — the four things every working chapter in this band has were **all four absent**, and the header comment I wrote claimed a crate "arrives and travels in" while the code just called `setState`. **Pass 2** is genuinely alive: creatures with drawn cycles walk in on their own legs, the eleventh has nowhere to stand, the ten board a cart, Milo pulls it; measured `paused off-frame → legs RUNNING while covering ground → paused on arrival`, and both operations verified end to end (27+15 → 42, 52−17 → 35). **It scores 4/4 on every animation rule in the craft doc and the founder still rejected it** — *"sahi se blend naii… satisfaction naii mil rha hai"*. ⚠️ **That is the finding worth carrying: ALIVENESS AND BLEND ARE TWO DIFFERENT AXES, and this repo had only ever written down the first.** Five named faults, four of them craft-doc rules I broke: every creature drawn at one height so **an ant is the size of a lamb** (`Kind.scale` exists for exactly this and I never read it) · **not one true contact shadow** · a rigid 5×2 grid, i.e. the doc's own *"row of identical stickers"* verbatim · **28 things in four clusters** where the chapters that work show 5–7 · and the cart is a **palette outlier** (sat 0.676 / brightness 0.615 against backdrops at 0.33–0.42 / 0.71–0.85) — **I checked its STYLE, called it painted, and never checked its PALETTE; those are two separate checks.** Pass 3 agreed with the founder: cart out entirely → a code-drawn painted pen we control the colour of; a bundled ten small and quiet with **no sprites inside it** (declutter AND better pedagogy — a bundled ten is ONE thing); ant and ladybug out so the cast is one size band; real contact shadows inside the travelling element; a huddle not a grid; two clusters not four. The 49-test gate **survives pass 3** — it tests the question and the geometry contract, not the dressing; it caught `b` = 0 at L1 on its first run and 8/8 planted regressions fail it. `tsc` 0 · 224/224 · `next build` · 0 console errors. ▶ Open: **pass 3 is the next job — do not restart from the concept, the work is the LOOK**; not committed (needs sw v70 → v71); 509.7 credits expire tomorrow and pass 3 does not spend them either. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-28 (the 🦘 block. **A3 HopAlong rebuilt, after the founder stopped the work and asked what the chapter actually teaches. 🚀 SHIPPED — `main`@`8635f11` (`c8600e0` + sw v69 → v70), pushed, prod serving v70; that one push carried this AND the A2 batch.** The answer was uncomfortable: every question it could generate was a bare arithmetic sequence with a hole, and **deleting every animal from the screen left all thirty of them still solvable** — so it measured sequence completion, not skip counting, whose entire content (unitising: five becomes ONE FIVE) it never asked for once. My own first redesign did not fix that; it made cheating harder at a task that was measuring the wrong thing. Then the art turned out not to exist either: **`milo_hop.png` was a WALK cycle** (lift 0 in all 12 frames) under a hop filename, registered with a comment calling it a hop and named as A3's foundation in two docs, with a registry key pointing at a file not on disk. A real hop was generated for 15 of the expiring credits — **19 cells, not 12, because a hop's character is its uneven timing and down-sampling averages the holds away**; keeping the source's own period reproduces the anticipation and hang time with no hand-authored chart. `hop(from,to)` now lives in critters.tsx and does three things `Critter` cannot — holds the horizontal through the crouch, runs the cycle across the whole move, and supplies only X because **the arc is drawn into the frames**. The chapter is now COUNT THE FAST WAY: families, not a countable row; spares, so stopping is a decision; the demo is a joke about losing count that replaces the modal teaching card. **Then the founder played it and found five more, each a rule already written down that the new code stepped around** — a Ready button that only SPOKE its refusal (silence on any device without a voice), no way back from an overshoot so the round could become unwinnable, a flat walk-off offset that stranded the tail, a `flier` flag declared and never read so butterflies stood in the lawn, and a crowd that slid with its feet parked. All fixed, each with the general rule banked. The gate caught a 0.33% overlap and families drawn touching at 640×320; the screen caught Milo rendering half off the frame; **13 planted mutations fail it**. `tsc` 0 · 175/175 · `next build` · 0 console errors. ▶ Open: ~~not pushed~~ **shipped and smoked** (prod v70, story routes 200) — and the "5 ahead of origin" line this footer used to carry was stale, the third such in three days; the three settings are a third overlap and the painted-grass library is spent; flat-vector backdrops still live in BlockYard, NestTree and MeasureIt; 509.7 credits expire in two days. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-28 (the 🦢 block. **Four founder catches on the A2 chapters, each the same complaint a layer further in: the things move, but they still do not belong. ✅ COMMITTED `7f45814` — 🚀 since shipped inside the 🦘 push; prod is `main`@`8635f11` / sw v70.** (0) **This file was stale** — the block below claimed nothing was committed and prod was v68; the A2 batch had in fact shipped. *Check a status line before building on it.* (1) **A token step is not an arrival.** The previous session deliberately gave the standing group 1.8 body-heights to dodge the `TRAVEL_MAX` clamp, and the founder read exactly that as "random appearing and little movement" — **a move too short to leave the picture is not an arrival**. It now travels the joiners' own full off-frame distance, clamp and all, because the joiners have always done that and nobody has complained about them. (2) **The ducks were floating by 21px and it was the SHADOW** — in flow, so the bottom-anchored group sat on the shadow's bottom rather than the feet (ground 384.4px, feet 363.5px, now 2px). The general rule was already in the craft doc from MeasureIt and shipped again anyway, so it now carries the recurrence: **measure the SPRITE's own bottom against the ground line, never the container's.** (3) **The pond backdrop was the wrong ART STYLE** — `pond`/`lake`/`pond_top` are flat VECTOR cartoons under painted sprites, which no placement can fix. StoryTime's fliers moved to MarketDay's painted garden (founder's call); SeesawPark kept a pond but a painted one, because its cast is frog·fish·turtle and **a fish on a lawn is a worse answer than a mismatched style**. (4) **A creature was shown twice per run and a third of the art was idle** — the plan was shorter than the run and read modulo, AND the demo/guided picked by hand onto the same entries. Each chapter now builds ONE ordered run indexed straight; casts grown; **all 18 drawn cycles now in use, up from 12**; SeesawPark's frog DROPPED because a hop cycle slides while crouched. ⚠️ **The new gate caught a hole in itself**: reading the plan ARRAY let a restored `PLAN[round % …]` walk straight through, so it now goes through the same exported accessor the component calls — **a gate that reads a chapter's DATA cannot see how the chapter INDEXES it**. 5/5 mutations fail it. `tsc` 0 · 155/155 vitest · `next build` · 0 console errors; live run fish → duck → dragonfly → crab → rabbit → butterfly → shark → squirrel → bee, zero duplicates. ▶ Open: ~~not pushed~~ shipped with the 🦘 batch at sw v70; **the same flat-vector backdrops are still live in BlockYard, NestTree, MeasureIt and HopAlong**; `fps` cadences still unverified by eye with six more movers on screen; 524.7 Higgsfield credits expire ~2026-07-30 with no consumer left. _(prior footer follows.)_)_
 
