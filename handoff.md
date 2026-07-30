@@ -243,6 +243,41 @@
 >    | `7b1d691` + `ba35c43` | CoinShop's intro naming two deleted props (§⑤d) | **v77**, 4th poll |
 >    | `9b32283` + `d00613d` + `b9988a0` + `a41208b` + `fe2432c` | **the three open items closed — see 4/5/6 below** | **v78**, 6th poll |
 >
+>    ## ✅ TWO FULL TEN-ROUND RUNS PLAYED ON PROD (v78) — and they found nothing, which is the report
+>    Both ended by the chapter finishing its own run; **0 console errors** throughout.
+>
+>    **Run B — mostly correct, so the tier CLIMBS.** Prices reached the L3 pool and the purse opened to
+>    1/5/10/25. Directions alternated perfectly for the whole run:
+>    | | numeral | pile |
+>    |---|---|---|
+>    | | 7 · 42 · 35 · 20 | 10+5+5+5 = **25** · 10+5+5+5+1 = **26** (paid 25+1) · 25+1+1 = **27** |
+>
+>    …and then **the round the read direction exists for turned up on its own**: a pile of
+>    **25 · 10 · 5 · 5 · 1 = 46** on a `fewest` round. Paying it by COPYING the pile is refused with the
+>    payload line — *"That is forty-six, but with five coins. Try bigger coins — can you do it in
+>    four?"* — and 25+10+10+1 is accepted. That is read-then-unitise in one gesture, and copying is
+>    impossible by construction, exactly as the L3 half of the ladder claims.
+>
+>    **Run A — one error per round, so the tier stays low and the whole day gets walked.** Ten rounds,
+>    same alternation (11 · 3 · 2 · 6 · 7 numeral against 5+1 · 5+5+5 · 5+5 · 5+5+1 · 5+1+1 pile), and
+>    the two miss lines behaved differently in exactly the right way — a numeral round names its target
+>    (*"That makes twelve. I asked for eleven."*) and **a pile round never does** (*"That makes seven.
+>    Count my coins again."*, confirmed at 6, 15 and 10 with the pile still on screen beside it).
+>    • **The re-teach fired, on a PILE round**, and the new `CoinExplain` branch is right: traced beat
+>      by beat, the keeper holds out **5 · 5** in his bubble while Milo counts *five → ten* into the
+>      tray, and the demo DOES name the total (*"A bun — that is ten."*) because teaching may.
+>    • ⚠️ **NO `Let's look together!` PILL ANYWHERE, across every reported-wrong round in both runs** —
+>      polled for it directly, `false` every time. `ownsFeedback` holds on the live build.
+>    • The purse follows the PRICE rather than the tier (`poolFor`), so a 20 offers 1/5/10 and a 46
+>      offers 1/5/10/25. Intended, and worth knowing before reading a screenshot as a tier signal.
+>
+>    ⚠️ **AND ONE LESSON ABOUT THE DRIVER, WHICH COST MOST OF THE TIME.** A script that lays coins and
+>    clicks Pay in the SAME tick reads `total` from the pre-commit render and reports *"That makes
+>    zero"* — the craft doc's own *two taps in one tick are a TEST artefact, not a user*, met head on.
+>    The run only became readable once laying and committing were split into separate tool calls. The
+>    long `await`-heavy driver also hung the 30s eval cap, and background-tab throttling stretched every
+>    sleep. **Drive one gesture per call; never await inside the page.**
+>
 >    **v78 DRIVEN on prod, not status-coded:** the pile demo (Bear holding out six 5s while Milo pays
 >    **25 + 5** — so the `poolFor` regression is genuinely fixed on the live build), guided **5+1+1 = 7**,
 >    scored round 0 (numeral, 3, graded with the tick), and **scored round 1 as a PILE round** — 5 + 1
