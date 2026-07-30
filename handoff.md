@@ -12,7 +12,185 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🔧 **2026-07-30 (LATEST) — THREE OPEN ITEMS CLOSED, AND THEN PLAYING THE CHAPTERS FOUND TWO MORE FAULTS THE GATES HAD PASSED. 🚀 SHIPPED — `main`@`2acbdc8`, prod serving **sw v79** (two deploys, each confirmed by polling prod).** `tsc` 0 · **369/369 vitest** (was 361, **+8**) · `next build` · **0 console errors on prod** · **11/11 planted regressions caught** · two full ten-round CoinShop runs and a TickTock run from the lesson to a scored round, all on the live origin.
+> 🍕 **2026-07-30 (LATEST) — SLICESHOP (6–8 FRACTIONS) REBUILT AS A SHARING STORY, AND THE FOUNDER STOPPED IT **SEVEN** TIMES ON THE WAY — EVERY ONE BY EYE, NOT ONE BY A GATE. 🚀 SHIPPED — see the commit table in ▶ OPEN.** `tsc` 0 · **416/416 vitest** (was 369, **+47**) · `next build` · **18/18 planted regressions caught** · driven live at 1280×720, 1600×950 and 640×320, two full runs played to their own finish.
+>
+> **The ask:** *"abhi yeh band mein factor chapter baaki hai"* — which turned out to mean **fractions**
+> (SliceShop), the next chapter in [story-6-8-rethink.md](docs/story-6-8-rethink.md)'s build order.
+> Then, twice: *"aise naii chahiye… ek story lagna chahiye"* and *"movement story jaise ho… visuals
+> sahi naii hai"*.
+>
+> ## ⓪ ⚠️ READ THIS FIRST: I GOT §0a's VERB RIGHT AND STILL BUILT AN INSTRUMENT WITH WALLPAPER
+> The old chapter's diagnosis was easy and correct: the whole arrived **already cut into equal parts**
+> with one shaded, `shaded` was pinned at 1 so the answer was literally `den`, and the three choice
+> chips were `[2,3,4]` **unshuffled**. Delete the shading and every question still worked — it was
+> counting parts. Aliveness **1 of 4**. So I picked the verb (FIT IT), built the lesson, the coverage
+> gate, a mutation-tested grader, and the founder said **"kuch sense hi naii bann raha hai."**
+> He was right. What was on screen was a **pie chart floating on a photograph of a shop**: nobody in
+> it, nobody wanting anything, nothing happening as a consequence. The verb answered *what does the
+> child DO*. Nothing had answered **WHO WANTS THIS AND WHY** — and for fractions that answer is
+> sitting in the mathematics: **a fraction exists because something has to be SHARED.**
+> **⇒ The general rule is now the first thing in [chapter-craft.md](docs/chapter-craft.md) §0a after
+> the verb table: getting the verb right is only half of it. Ask who arrives, what they want, and
+> what happens to them when the child is right. "Nothing, the shape turns green" means an instrument.**
+>
+> ## ① THE CHAPTER: friends walk in, and everybody must get the same
+> Milo is the shopkeeper. Every round, **friends arrive on their own legs**, wait at the counter, and
+> **leave carrying a piece each**. One gesture, both directions, one grader:
+> • **FIT** — the piece is given; **one more friend walks in for every piece laid**, so "how many of
+>   these fit" and "how many friends get one" assemble into the same answer in front of the child.
+> • **TAKE** — the friends are already there, so **the row of them IS the denominator**; the child
+>   picks the piece that gives everyone a fair share.
+> • **PILE** (L2+, take-only) — *"Four friends, eight pears"* → deal equal handfuls. "How many handfuls
+>   fit in the pile" is division wearing a fraction's clothes; the curriculum's question is *one third
+>   of twelve*, which is the take direction.
+> **The payload stopped being a rule.** Lesson beat 3 used to say *"the bigger the number underneath,
+> the smaller the piece"*; it now says **two more friends arrive, the same pizza has to stretch
+> further, and everyone's piece gets smaller** — which a six-year-old has lived. The miss line does the
+> same at the moment it costs: *"Those pieces are too BIG — only two would fit and three friends are
+> waiting."*
+> ⚠️ **All three surfaces tell ONE story** — lesson, re-teach and scored round — and the gate pins it.
+> A chapter that teaches "how many fit" and asks "how many friends" has handed the child two framings
+> and left them to bridge it.
+>
+> ## ② ⚠️ THE VISUALS WERE A DIAGRAM, AND "THE MATH MUST BE EXACT" IS A FALSE CHOICE
+> Second founder stop: *"visuals sahi naii hai."* The board was flat SVG wedges, a **dashed hairline
+> outline** for the empty whole, and a dark smudge — i.e. the wireframe fault the shapes chapter
+> shipped and the slab fault BlockYard shipped, together. The old chapter's excuse for geometry was
+> that any denominator must divide cleanly, and that is real — but **clip the real sprite BY the exact
+> wedge** and you get both: arithmetic division, painted food. Empty boards are now a **plate** and a
+> **tray**, never an outline. Rule + the "fill the frame, plain surface" corollaries are in the craft doc.
+> **6 new sprites, ~10 credits** — chocolate · flapjack · mint slice · nougat (bar) + cheese wheel ·
+> party cake (round) — so **all ten orders are real art**, 6 round + 4 bar. No cutouts needed: a clip
+> only ever samples inside the shape.
+>
+> ## ③ CAMOUFLAGE, MEASURED — AND THE ANSWER WAS THE THIRD AXIS
+> Every scene here is a food shop and every treat is a food, so **five of ten sat inside their own
+> scene's hue with no saturation gap either** (loaf Δhue 10° Δsat 0.01, orange Δhue 3°, cheese Δhue
+> 10°, wafer Δsat 0.07, cake Δsat 0.08). Neither side can move without lying. Separation went on
+> **brightness**: a soft dark pool under the whole, value 0.15 against treats at 0.66–0.97, **fading
+> to nothing at its own edges**. ⚠️ First cut sized it from the board's MAXIMUM and drew a big dark
+> stain under an empty tray — it is sized by a negative `inset` on a shrink-to-fit wrapper now.
+>
+> ## ④ ⚠️ FOUR FAULTS FOUND BY PLAYING IT, NOT ONE BY A GATE
+> ① **`lay()` read the piece it also set.** Switch piece then tap fast on a fresh round and every
+>    batched tap saw the stale `pieceDen`, took the switch branch again and reset `laid` to 1 — the
+>    child stuck on *"not full yet"* however fast they tap. **Fourth time this repo has met this
+>    shape** (TickTock's lesson dial, placeValue's undo, CoinShop's `lay`). A mirror ref fixes it;
+>    the round also resets during RENDER now, not in an effect.
+> ② **The pile board stood in front of the friends** — sized `vw * 0.74` while the friends' band was
+>    measured off Milo. Two independent percentages of the width, again.
+> ③ **The pile tray was `.5` opaque** and the candy-shop shelves showed straight through it; the pears
+>    were unreadable. BlockYard's own recorded lesson — **a working surface wants .9+, not a wash** —
+>    ignored and re-learned.
+> ④ **The intro named "a loaf"**, which the order table has not held since it was rebuilt. Exactly
+>    CoinShop's fault. The gate now reads the ORDER TABLE rather than a list retyped in the test.
+> Plus a grader hole **mutation testing** found that no run would have: with the piece check dropped,
+> the cases I had written all still failed for the unrelated reason that the counts did not match, so
+> the gate reported a hole it could not see. A child asked for HALVES who lays two QUARTERS is
+> half-full with a count that matches.
+>
+> ## ⑤ THE GATE — 42 tests, 13/13 mutations
+> Drives [slice.ts](src/features/chapters/story/slice.ts) plus the real `makeFrRound`. Reads TickTock's
+> real `DAY` to prove no scene is shared, measures every sprite's chroma with `sharp` (the greyscale
+> trap: the old chapter had `candy_cupcake`, measured 0.0, on the party table), and pins the story in
+> all three surfaces. ⚠️ **It tripped its own prose once** — a `not.toContain('speakSteps')` matched
+> the long comment explaining why the file does not use it. Anchored on a call and an import now.
+>
+> ## ⑥ TWO FULL RUNS PLAYED — BOTH ENDED BY THE CHAPTER FINISHING ITSELF
+> • **Run A, all correct → rounds 1–6, mastery exit.** Dens **4 · 2 · 2 · 3 · 3 · 4(pile)**. Coverage
+>   works live: **round 4 spent the single scarce L2 round on thirds**, the one L1 never shows.
+> • **Run B, one error → rounds 1–7.** Both miss branches on screen: *"Not yet — **Duck** has nothing!"*
+>   (names who went without) and *"That is one too many — there are only four friends."* Undo verified.
+> ⚠️ **A perfect run ends at round 6 by design**, so neither run reached the last three orders.
+>
+> ## ⑦ ⚠️ THEN THE FOUNDER LOOKED AT IT AGAIN AND FOUND FIVE MORE, ALL BY EYE, NONE BY A GATE
+> Four separate messages, each a layer further in, and **not one of them was findable by the 42 tests
+> that were already green**. Every fix is now gated (5 new assertions, all mutation-tested).
+> • ⚠️ **"characters chhote chhote hai" — A FLAT PIXEL CAP.** `miloH = min(vh * 0.26, 200)`, so above
+>   770px tall Milo stopped growing and every friend stopped with him at 0.62 of him: a 1600×950
+>   window drew a **200px shopkeeper and a 124px rabbit** in a shop sized for the window. He is the
+>   same character CoinShop draws at `MILO_SHARE` (0.40) with no cap — so that number is now IMPORTED
+>   rather than retyped, and the bound is the room under his own bubble. **200 → 380px, friends
+>   124 → 236px.** Short landscape is untouched (0.30 was already the share there).
+> • ⚠️ **"blend nahi ho raha" — NOBODY HAD A CONTACT SHADOW.** CoinShop has them, this shipped without.
+>   Added inside the travelling element for Milo and each friend. Chasing it found a second one: Milo
+>   stood at `bottom: 0`, and `Shadow` sits 35% of its own height BELOW the feet — so the one cue that
+>   puts him on the floor was **drawn under the viewport and clipped away.** In the DOM, invisible on
+>   screen, which is the worst kind of fixed.
+> • ⚠️ **THE BACKDROP WAS BRIGHTER THAN THE CAST, AND `grocery_sweets` WAS FLAT VECTOR.** Measured:
+>   sprites 0.70–0.92 value, every shipped backdrop 0.70–0.86, `grocery_sweets` **0.892** — **0.927**
+>   across the band the board and the friends occupy. A backdrop brighter than what stands on it turns
+>   the cast into cut-outs on a blank page. Swapped for `candy_tray` (painted, 0.858, free, in theme).
+>   ⚠️ **AND BOTH OF MY INSTRUMENTS LIED, IN OPPOSITE DIRECTIONS.** A dark-pixel ratio called
+>   `grocery_sweets` clean at **0.0%** because its outlines are light GREY rather than ink, and called
+>   `party_lanterns` dirty at **16.8%** because it is an evening scene full of tree trunks. A flatness
+>   metric then rated painted `garden_meadow` (0.842) *less* painted than vector `pond` (0.626).
+>   **The style check is an EYE check** — opening the files settled it in one look, and the value
+>   measurement is the gate behind that choice, not the chooser.
+> • ⚠️ **"piece ko haath mein pakdao" — IT HOVERED ABOVE THE HEAD** at `bottom: h * 0.92`, which reads
+>   as a piece floating over somebody rather than one they are carrying away, and carrying it away is
+>   the point. First correction put it at the front at chest height and it landed **squarely on the
+>   muzzle** — on a quadruped the front of the body IS the head. Down at the front paws, drawn in
+>   front, it reads as carried from a chick to a lamb. Placed as a share of the sprite's own box, and
+>   the front follows TRAVEL rather than the art (`!leaving`), so it swaps sides when they leave.
+> • ⚠️ **"characters question ke according nahi aa rahe" — THE WORDS NAMED SOMEBODY WHO WAS NOT THERE.**
+>   Two faults under one complaint. `count` was simply `laid`, so a FIT round **opened with an empty
+>   counter** while the board asked *"how many friends can he give one to?"* — a question about people
+>   who did not exist. And `missFor` named `friendName(got.laid)`, the NEXT unserved friend, who on a
+>   fit round has not walked in: the founder's screenshot says *"Duck has nothing!"* with no duck in
+>   the shop. Now `friendsShown()` keeps **one customer waiting from the first frame** (she is why
+>   Milo cut a piece at all; there is always exactly one more waiting than served, so nothing leaks
+>   and nobody is left empty-handed), and the miss line only names a friend on a TAKE round — where
+>   the whole row IS the denominator and naming who went without is the strength of it.
+> • **Founder's call on the third option**: the arrival now carries a `delayMs` beat, so a friend
+>   walking in reads as a CONSEQUENCE of the piece just laid rather than part of the same movement.
+>   Traced live: `paused` → **`running` at 1139ms** → 2000ms of travel → `paused`.
+> • ⚠️ **DELIBERATELY NOT DONE, and the reason is a documented rule:** showing all `den` friends from
+>   the start of a FIT round would make the answer countable off the queue, so a child who cannot
+>   judge the piece size at all would still be right — and the two directions would collapse into one.
+>   Raised with the founder, who chose the arrival beat instead.
+>
+> ## ▶ OPEN
+> 1. ✅ **SHIPPED — `main`@`__SHA__`, prod serving sw v80.**
+>    | commit | what |
+>    |---|---|
+>    | `a9799b4` | the chapter — `slice.ts` (new) · `chrome.ts` (new, extracted from clock.ts which re-exports it) · `SliceShop.tsx` (rewritten) · `sliceShopFit.test.ts` (new) · `story/page.tsx` · `chapter-craft.md` · **6 new PNGs** |
+>    | `__DOCS__` | this handoff |
+>    | `__SW__` | `public/sw.js` v79 → v80 for the deploy |
+>
+>    `scripts/.voice-*.json` correctly still untracked. **Nothing is outstanding in the tree.**
+> 2. ⚠️ **ROUNDS 8–10 HAVE NEVER BEEN ON SCREEN.** Both runs exited early on mastery. The last three
+>    orders — nougat @ `party_lanterns`, party cake @ `party_banner`, watermelon @ `party_balloons` —
+>    are gated (assets on disk, orders distinct) and **not played**. Walking the whole day needs an
+>    err-EVERY-round run; that was started and interrupted. ⚠️ Note for that driver: **a FIT round has
+>    no wrong PIECE** (only one is offered), so the only available mistake is the COUNT.
+> 3. **640×320 is measured, not driven** — bands are clean (friends 72px slots, 60px tall, board
+>    148px, no overlap) but that is arithmetic, not a screenshot.
+> 4. **The re-teach has never fired** (needs three wrong in a row); its new framing is gate-only.
+> 5. **The lesson's dwell against a REAL voice is still unheard** — the pane is mute, which is exactly
+>    what hid TickTock's hang for a session. `dwellFor`'s `× 72` is the one number to raise.
+> 6. ⚠️ **TWO PARTY BACKDROPS ARE STILL EMPTY, AND THEY ARE NAMED IN THE GATE RATHER THAN EXEMPTED.**
+>    `party_banner` (value **0.921**) and `party_balloons` (**0.972**) are near-empty pale rooms — a
+>    cream gradient with a table and two balloon clusters — which is the "featureless soft gradient"
+>    backdrop fault this file already records once. They belong to orders 9 and 10, i.e. the rounds
+>    nobody has reached, so they have never been on screen. **The founder chose to GENERATE two new
+>    painted scenes (~3 credits of 373), referencing `candy_tray`/`pizzeria` for style — not started.**
+>    The library was checked first: of 48 in-band backdrops, every free one is either an emptied
+>    open-ground field or a CoinShop stall with a shopkeeper already painted into it.
+>    `KNOWN_TOO_BRIGHT` in the gate lists both, so the debt is visible and an eleventh scene still
+>    fails the moment it drifts.
+> 7. **The dark pool under the board reads as a big smudge on a busy backdrop** — it spreads onto the
+>    shop wall rather than sitting on a surface. Raised with the founder, who had no preference, so it
+>    is untouched: it is a MEASURED need (five of ten treats sit inside their own scene's hue with no
+>    saturation gap, so brightness is the only axis left) and softening it blind would undo that.
+> 8. **Nobody has watched a child play it**, and **every founder stop was about something no gate could
+>    see** — that it did not feel like a story, that the picture was a diagram, that the cast was tiny
+>    and pasted on, that the piece hovered, and that the words named an animal who was not there.
+>    **Seven separate catches, all by eye. The gates were green for every one of them.**
+>
+> _(the 🔧 block below is the same day's earlier work — the three TickTock/CoinShop items.)_
+
+> 🔧 **2026-07-30 — THREE OPEN ITEMS CLOSED, AND THEN PLAYING THE CHAPTERS FOUND TWO MORE FAULTS THE GATES HAD PASSED. 🚀 SHIPPED — `main`@`2acbdc8`, prod serving **sw v79** (two deploys, each confirmed by polling prod).** `tsc` 0 · **369/369 vitest** (was 361, **+8**) · `next build` · **0 console errors on prod** · **11/11 planted regressions caught** · two full ten-round CoinShop runs and a TickTock run from the lesson to a scored round, all on the live origin.
 >
 > **The ask:** the three items sitting open at the bottom of the 🕐 block — *"yeh teeno ko fix karo…
 > jaise behtar lage"* — then *"poora ten-round run khel ke dekho"*, then *"TickTock ka bhi run"*.
@@ -4252,7 +4430,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-30 (LATEST — see the top 🔧 block. **Three open items closed, and then PLAYING the chapters found two more faults the gates had passed. 🚀 SHIPPED — `main`@`2acbdc8`, prod serving sw v79 across two deploys, both confirmed by polling prod.** The three: SkillBeat gained an opt-in **`Beat.ownsFeedback`** so a chapter that says its own miss line is not overlaid by the shared centred pill — which in TickTock landed on the clock face while saying *"Let's look together"*, and, because both chapters only report a round once it has been SOLVED, arrived on top of their own *"That's right"* and contradicted it; **`TimeLesson.tsx` was DELETED** after a grep found zero importers, so the "still used by a separately-routed lesson" line in this file was simply wrong; and **reading a laid-out pile is back in CoinShop on the SAME control** — the keeper spreads his coins in his own bubble where the price numeral would be, a presentation flag rather than a third question type, alternating with the numeral direction, copyable at L1–L2 by design and impossible at L3. ⚠️ **Then two faults turned up that no gate could:** a screenshot caught `CoinExplain` deriving its coin pool from `shown.includes(25)` — a PROXY for the price — so changing a demo pile silently dropped the 25 and *"thirty in only TWO coins"* became three tens **while every spoken line stayed true**; and the first TickTock run found the lesson's hands-on dial moving **one stop for six taps** (state read inside the handler that sets it), which on a beat with no auto-advance is a **HANG**, on the same beat family the founder was already stuck on. ⚠️ **And an instrument trap that undermines this file's own deploy proof: a controlled service worker serves the OLD shell even when prod's `sw.js` already reports the new version** — polling it proves the EDGE has the deploy, not that the tab you are driving is running it. `tsc` 0 · **369/369 vitest** (+8) · `next build` · 0 console errors on prod · 11/11 planted regressions caught · **two full ten-round CoinShop runs and a TickTock run from the lesson to a scored round, all on the live origin**. ▶ Open: whether the self-paced dwell reads well against a REAL voice is still the top item and still needs an ear; **640×320 was not checked at all**; no chapter but these two was driven; nobody has watched a child play any of it. _(prior footer follows.)_)_
+_Last updated: 2026-07-30 (LATEST — see the top 🍕 block. **SliceShop (6–8 fractions) rebuilt as a SHARING STORY. 🚀 SHIPPED — sw v80.** The old chapter handed the child a whole ALREADY cut into equal parts with one shaded and the numerator pinned at 1, so the answer was literally the number of parts and deleting the shading left every question working. ⚠️ **The finding worth carrying is that I fixed the VERB and the founder still stopped it: "kuch sense hi naii bann raha hai."** What was on screen was an instrument with wallpaper. The verb answers *what does the child do*; nothing had answered **WHO WANTS THIS AND WHY** — and for fractions that answer is in the mathematics: **a fraction exists because something has to be SHARED.** So friends walk in, wait, and leave carrying a piece each, and the denominator becomes **how many people are waiting**. ⚠️ **THEN HE STOPPED IT FIVE MORE TIMES, ALL BY EYE, AND THE 42 GREEN TESTS COULD NOT SEE ONE OF THEM** — flat SVG wedges instead of painted food (fixed by clipping the real sprite BY the exact wedge: arithmetic division AND real art, not a choice); a **flat 200px cap** that froze Milo and every friend at a fifth of a tall window; **no contact shadow under anybody**, plus his own drawn below the viewport and clipped away; a backdrop **brighter than the cast** (0.892 against sprites at 0.70–0.92) that was also flat-vector art; the shared piece **hovering above their heads**; and a FIT round that **opened with an empty counter** while asking how many friends could be given one — with the miss line naming a duck who was not in the shop. ⚠️ **Both of my style instruments lied, in opposite directions** (an ink ratio called a vector scene clean at 0.0% and a painted evening scene dirty at 16.8%; a flatness metric rated painted `garden_meadow` less painted than vector `pond`) — **the style check is an EYE check**, with the value measurement as the gate behind it. `tsc` 0 · **416/416 vitest** (+47) · `next build` · **18/18 planted regressions caught**. ▶ Open: **rounds 8–10 have never been on screen** (a perfect run exits at 6 by design); **two party backdrops are still empty** and the founder chose to generate replacements (~3 credits, not started, named in the gate rather than exempted); the re-teach has never fired; the lesson's dwell against a real voice is still unheard; **nobody has watched a child play it — seven founder catches, zero gate catches.** _(prior footer follows.)_)_
+
+_Prior update: 2026-07-30 (the 🔧 block. **Three open items closed, and then PLAYING the chapters found two more faults the gates had passed. 🚀 SHIPPED — `main`@`2acbdc8`, prod serving sw v79 across two deploys, both confirmed by polling prod.** The three: SkillBeat gained an opt-in **`Beat.ownsFeedback`** so a chapter that says its own miss line is not overlaid by the shared centred pill — which in TickTock landed on the clock face while saying *"Let's look together"*, and, because both chapters only report a round once it has been SOLVED, arrived on top of their own *"That's right"* and contradicted it; **`TimeLesson.tsx` was DELETED** after a grep found zero importers, so the "still used by a separately-routed lesson" line in this file was simply wrong; and **reading a laid-out pile is back in CoinShop on the SAME control** — the keeper spreads his coins in his own bubble where the price numeral would be, a presentation flag rather than a third question type, alternating with the numeral direction, copyable at L1–L2 by design and impossible at L3. ⚠️ **Then two faults turned up that no gate could:** a screenshot caught `CoinExplain` deriving its coin pool from `shown.includes(25)` — a PROXY for the price — so changing a demo pile silently dropped the 25 and *"thirty in only TWO coins"* became three tens **while every spoken line stayed true**; and the first TickTock run found the lesson's hands-on dial moving **one stop for six taps** (state read inside the handler that sets it), which on a beat with no auto-advance is a **HANG**, on the same beat family the founder was already stuck on. ⚠️ **And an instrument trap that undermines this file's own deploy proof: a controlled service worker serves the OLD shell even when prod's `sw.js` already reports the new version** — polling it proves the EDGE has the deploy, not that the tab you are driving is running it. `tsc` 0 · **369/369 vitest** (+8) · `next build` · 0 console errors on prod · 11/11 planted regressions caught · **two full ten-round CoinShop runs and a TickTock run from the lesson to a scored round, all on the live origin**. ▶ Open: whether the self-paced dwell reads well against a REAL voice is still the top item and still needs an ear; **640×320 was not checked at all**; no chapter but these two was driven; nobody has watched a child play any of it. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-30 (the 🕐 block. **TICKTOCK (6–8 time) rebuilt, and then the founder's three messages turned it into a band-wide fix. 🚀 SHIPPED — `main`@`5b29665`, prod serving sw v77 across four deploys, each confirmed by polling prod rather than remembered.** The chapter: an explicit four-beat LESSON that teaches the one fact nobody teaches — a clock face carries TWO scales on one set of numbers, the 6 is also 30 — then the same skill answered from BOTH ends on one control shape (SET the hands when Milo names a time, READ the clock when he asks), over Milo's ten-scenario day with the sun crossing the sky. The ask matched the band's own spec (`story-6-8-rethink.md` §8 already said SET IT: four pills are winnable by elimination); the old chapter scored **1 of 4** on the aliveness check. The ladder changed on a pedagogy argument — "to" times invert the hour you SAY against the hour you PLACE, so past comes before to — and the minute ring is a scaffold that **fades at L3**. `tsc` 0 · **361/361 vitest** (+56) · `next build` · 0 console errors in a fresh tab and on prod.
 
