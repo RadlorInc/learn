@@ -243,6 +243,30 @@
 >    | `7b1d691` + `ba35c43` | CoinShop's intro naming two deleted props (§⑤d) | **v77**, 4th poll |
 >    | `9b32283` + `d00613d` + `b9988a0` + `a41208b` + `fe2432c` | **the three open items closed — see 4/5/6 below** | **v78**, 6th poll |
 >
+>    ## ⚠️ THEN TICKTOCK WAS PLAYED TOO, AND PLAYING IT FOUND A REAL FAULT THE GATES COULD NOT
+>    The three fixes were shipped with CoinShop driven end to end and **TickTock only gate-verified** —
+>    which this file then said out loud, and the very next run justified it. Six taps on the lesson's
+>    hands-on dial moved the hand **ONE stop** (measured: 0 → 5, not 0 → 30). `stepTry` read its minute
+>    from a `useState` value it also set, so every tap inside one React batch saw the same stale number.
+>    • The value is **never rendered** — the clock draws from `view` — so it was not render state at
+>      all, and a **ref** deletes the class rather than papering over it. Six batched taps now walk six
+>      stops; verified on screen, the lesson accepted `half past 3` and moved on to the handover.
+>    • ⚠️ **This is the third time this repo has met the same shape** (placeValue's undo, CoinShop's
+>      `lay`, now here). Distinct human taps are usually separate ticks — but placeValue's was found by
+>      a real user on a janky device, which is why the rule is *never read state you also set inside a
+>      handler*, not *humans cannot tap that fast*. Gated on the ref.
+>    • **And the same run confirmed the practice dial is fine**: four batched taps took the hour 12 → 8
+>      in one go, so the functional-update fix holds where it already was.
+>
+>    **The rest of the TickTock run was clean, on prod:** all four lesson beats auto-advanced — the
+>    minute ring fading in, *"So the long hand does not say six. It says thirty."* (the exact line the
+>    founder was stuck on, moving), the "to" inversion drawn with the hour hand on 3 under the label
+>    *quarter to 4* — then the dial appearing **with** its instruction, the handover screen, both
+>    guided rounds, and a scored READ round where a deliberate `12 o'clock` gave the SHORT-HAND hint
+>    (*not* the "to" advice, since 7 o'clock has no "to" — §⑤b's fix holding), corrected to 7, and
+>    round 2 arriving as a SET round. ⚠️ **A 150ms sampler across that round boundary saw the
+>    `Let's look together!` pill exactly zero times**, which is the case it used to appear in.
+>
 >    ## ✅ TWO FULL TEN-ROUND RUNS PLAYED ON PROD (v78) — and they found nothing, which is the report
 >    Both ended by the chapter finishing its own run; **0 console errors** throughout.
 >
