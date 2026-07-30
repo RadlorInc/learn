@@ -44,7 +44,8 @@ import {
   RING, DAY, TINT, MILO, MILO_ASPECT,
   wordsFor, minutePhrase, spokenHourFor, minsFor, ringMinuteFor, numeralForMinute,
   hourAngle, minuteAngle, askKindFor, askTextFor, hintFor, skyFor, layoutFor, menuBtn, CHROME_PAD,
-  type Ask, type Slot,
+  pickMinute, kindOf, READINGS,
+  type Ask, type Slot, type Reading,
 } from './clock'
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
@@ -72,9 +73,11 @@ export interface TimeRound {
 
 /** The SCENARIO fixes the hour and the TIER picks the minutes, so the story and the difficulty are
  *  independent — the park at three o'clock on L1 and at twenty-five past three on L3, same picture. */
-export function makeTimeRound(d: 1 | 2 | 3, round: number): TimeRound {
+export function makeTimeRound(d: 1 | 2 | 3, round: number, asked: readonly Reading[] = []): TimeRound {
   const slot = Math.min(round, DAY.length - 1)
-  return { slot, h: DAY[slot].hour, m: pick(minsFor(d)), ask: askKindFor(round), d }
+  // The minutes come from `pickMinute`, not a uniform draw — see the long note there. A strong child
+  // is only asked two questions at the top tier, so those two are spent on readings they have not met.
+  return { slot, h: DAY[slot].hour, m: pickMinute(d, asked), ask: askKindFor(round), d }
 }
 
 const sceneOf = (r: TimeRound): Slot => DAY[r.slot]
@@ -668,7 +671,10 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
 export function makeTimeBeat(): Beat<TimeRound> {
   return {
     skillId: 'time', rounds: 10, reteachAfter: 3, walkEvery: 3,
-    make: (d, round = 0) => makeTimeRound((d || 1) as 1 | 2 | 3, round),
+    make: (d, round = 0, asked) => makeTimeRound((d || 1) as 1 | 2 | 3, round, asked as readonly Reading[] | undefined),
+    // ⚠️ THE CLOSED SET. Mastery must not end the run before the child has been asked all four
+    // readings — measured, a third of strong runs were finishing having never met a "to" time.
+    coverage: { of: r => kindOf(r.m), all: READINGS },
     // Dedupe on the MATH and the DIRECTION — the same clock read and then set is two questions.
     sig: r => `${r.ask}:${r.h}:${r.m}`,
     // Empty on purpose: SkillBeat then renders no pill of its own, and Milo's bubble is the single

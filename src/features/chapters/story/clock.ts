@@ -106,6 +106,60 @@ export function minsFor(d: 1 | 2 | 3): number[] {
 export type Ask = 'set' | 'read'
 export const askKindFor = (round: number): Ask => (round % 2 === 0 ? 'read' : 'set')
 
+// ─── the closed set this chapter teaches ──────────────────────────────────────────────
+/**
+ * The four readings a child has to come away with. Quarter past and quarter to are instances of
+ * `past` and `to`, which is how the curriculum frames it too ("o'clock, half past, quarter past,
+ * quarter to, then five-minute") — the five-minute values are more instances, not a fifth idea.
+ */
+export type Reading = 'oclock' | 'past' | 'half' | 'to'
+export const READINGS: Reading[] = ['oclock', 'past', 'half', 'to']
+
+export function kindOf(m: number): Reading {
+  if (m === 0) return 'oclock'
+  if (m === 30) return 'half'
+  return m < 30 ? 'past' : 'to'
+}
+
+/**
+ * ⚠️ WHY THIS IS NOT A UNIFORM DRAW, and it is the most important arithmetic in this file.
+ *
+ * The shared engine promotes on 3 correct in a row and ends the run at the top tier on a streak of 6
+ * (`core/adaptive.ts`), so a child who answers well gets **rounds 1–3 at L1, exactly ONE round at L2,
+ * and exactly TWO at L3** before the chapter finishes. Drawing `m` uniformly from twelve values then
+ * means the whole "to" side — the hardest thing here, and the reason the lesson has a fourth beat —
+ * is asked twice at best, and `(7/12)² ≈ 34%` of strong children were finishing having never met it
+ * at all. Measured, not guessed: two full ten-round runs and neither produced a "to" time naturally.
+ *
+ * So when a round has to count, it is spent on a reading the child has not been asked yet. The KIND is
+ * chosen deliberately; the VALUE inside that kind is still random, which keeps the variety and — more
+ * importantly — stops `makeDistinct` starving on a generator that can only produce one round.
+ */
+export function pickMinute(d: 1 | 2 | 3, asked: readonly Reading[] = [], rnd = Math.random): number {
+  const pool = minsFor(d)
+  const kinds = [...new Set(pool.map(kindOf))]
+  const fresh = kinds.filter(k => !asked.includes(k))
+
+  // ⚠️ DELIBERATE ONLY WHILE THERE IS A GAP; RANDOM ONCE THERE IS NOT. Hardest-first for ever locks
+  // the generator onto "to" the moment every reading has been met, so a child who plays a long run
+  // would get nothing but "to" times after round six — variety destroyed by the fix for coverage.
+  if (!fresh.length) return pool[Math.floor(rnd() * pool.length)]
+
+  // Hardest-first among the unmet: `to` before `half` before `past`. That ordering is what the round
+  // budget forces — a strong child gets about three rounds at L1, ONE at L2 and TWO at L3, so the L2
+  // round goes on half past (the reading the lesson gives a whole beat to) and the two L3 rounds go on
+  // the "to" side and then whatever is still unmet.
+  //
+  // ⚠️ THE ORDER IS TASTE, NOT CORRECTNESS, and deliberately not gated. Mutation-tested: reversing it
+  // to easiest-first still covers all four readings by the same round — it only changes whether the
+  // single L2 round is spent on half past or on quarter past. Pinning a preference with a test would
+  // be a gate defending an opinion, so this comment is the record instead.
+  const order: Reading[] = ['to', 'half', 'past', 'oclock']
+  const kind = order.find(k => fresh.includes(k)) ?? fresh[0]
+  const vals = pool.filter(m => kindOf(m) === kind)
+  return vals[Math.floor(rnd() * vals.length)]
+}
+
 // ─── Milo's day ───────────────────────────────────────────────────────────────────────
 /**
  * Ten scenarios, morning to night. The SCENARIO fixes the hour and the TIER picks the minutes, so

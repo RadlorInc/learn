@@ -10,15 +10,16 @@
  *   · a READ round's question never contains its own answer.
  */
 import { describe, it, expect } from 'vitest'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   RING, DAY, TINT, MILO, MILO_ASPECT,
   wordsFor, phraseFor, minutePhrase, spokenHourFor, minsFor,
   ringMinuteFor, numeralForMinute, hourAngle, minuteAngle,
   askKindFor, askTextFor, hintFor, daySlot, skyFor, layoutFor, chromeTop, menuBtn, CHROME_PAD,
+  pickMinute, kindOf, READINGS,
 } from '@/features/chapters/story/clock'
-import { makeTimeRound } from '@/features/chapters/story/TickTock'
+import { makeTimeRound, makeTimeBeat } from '@/features/chapters/story/TickTock'
 import { SHEETS } from '@/features/chapters/story/canvas/sheets'
 
 const HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
@@ -212,12 +213,136 @@ describe('the round', () => {
     }
   })
 
-  it('can actually reach every minute the tier allows', () => {
+  it('⚠️ is DELIBERATE while a reading is unmet and RANDOM once none is', () => {
+    // Two regimes on purpose. While something has not been asked, the round is spent on it — that is
+    // the whole coverage fix. Once everything has been met the generator must go back to sampling the
+    // whole pool, or hardest-first locks it onto "to" for the rest of a long run and the variety the
+    // chapter needs is destroyed by the fix for coverage.
     for (const d of [1, 2, 3] as const) {
+      // nothing met yet → the hardest reading the tier offers, every time
+      const deliberate = new Set<string>()
+      for (let i = 0; i < 300; i++) deliberate.add(kindOf(makeTimeRound(d, 0).m))
+      expect(deliberate.size, `d${d} should be deliberate`).toBe(1)
+
+      // everything met → the full pool is reachable again
       const seen = new Set<number>()
-      for (let i = 0; i < 3000; i++) seen.add(makeTimeRound(d, 0).m)
-      expect([...seen].sort((a, b) => a - b)).toEqual(minsFor(d))
+      for (let i = 0; i < 3000; i++) seen.add(makeTimeRound(d, 0, READINGS).m)
+      expect([...seen].sort((a, b) => a - b), `d${d} pool`).toEqual(minsFor(d))
     }
+  })
+})
+
+// ─── the closed set, and covering it ──────────────────────────────────────────────────
+/**
+ * The shared engine's real rules, replicated here ONLY to simulate a run
+ * (`core/adaptive.ts`: promote on 3 correct in a row at ≥80%, master at the top tier on a streak of 6).
+ * Everything the chapter itself decides — which minute, which reading — comes from the real functions.
+ */
+function simulate(answers: (round: number) => boolean, coverageOn = true) {
+  let d: 1 | 2 | 3 = 1, streak = 0, wrongStreak = 0, correct = 0, total = 0
+  const asked: string[] = []
+  const log: { round: number; d: number; m: number; kind: string }[] = []
+  for (let r = 0; r < 10; r++) {
+    const m = pickMinute(d, (coverageOn ? asked : []) as never)
+    const kind = kindOf(m)
+    if (!asked.includes(kind)) asked.push(kind)
+    log.push({ round: r + 1, d, m, kind })
+    const ok = answers(r); total++
+    if (ok) { correct++; streak++; wrongStreak = 0 } else { streak = 0; wrongStreak++ }
+    const acc = correct / total
+    if (streak >= 3 && acc >= 0.8 && d < 3) d = (d + 1) as 1 | 2 | 3
+    else if ((wrongStreak >= 2 || (total >= 4 && acc < 0.4)) && d > 1) d = (d - 1) as 1 | 2 | 3
+    const covered = !coverageOn || READINGS.every(k => asked.includes(k))
+    if (d === 3 && streak >= 6 && covered) return { log, endedAt: r + 1, by: 'mastery', asked }
+  }
+  return { log, endedAt: 10, by: 'rounds', asked }
+}
+
+describe('the four readings, and covering them', () => {
+  it('names every minute on the ring as one of the four', () => {
+    for (const m of RING) expect(READINGS, `m=${m}`).toContain(kindOf(m))
+    expect(kindOf(0)).toBe('oclock')
+    expect(kindOf(15)).toBe('past')
+    expect(kindOf(30)).toBe('half')
+    expect(kindOf(45)).toBe('to')
+  })
+
+  it('declares exactly the set the top tier can produce — no member that never appears', () => {
+    expect(new Set(minsFor(3).map(kindOf))).toEqual(new Set(READINGS))
+  })
+
+  it('only ever picks a minute the tier allows', () => {
+    for (const d of [1, 2, 3] as const)
+      for (let i = 0; i < 400; i++) expect(minsFor(d)).toContain(pickMinute(d, []))
+  })
+
+  it('prefers a reading the child has NOT been asked yet', () => {
+    // at L3 with o'clock, past and half already met, the only unmet reading is "to"
+    for (let i = 0; i < 200; i++) {
+      expect(kindOf(pickMinute(3, ['oclock', 'past', 'half']))).toBe('to')
+      expect(kindOf(pickMinute(3, ['oclock', 'to', 'half']))).toBe('past')
+    }
+  })
+
+  it('still varies the VALUE inside a reading, so makeDistinct cannot starve', () => {
+    const seen = new Set<number>()
+    for (let i = 0; i < 600; i++) seen.add(pickMinute(3, ['oclock', 'past', 'half']))
+    expect(seen.size).toBeGreaterThan(1)          // several "to" values, not one
+    expect([...seen].every(m => kindOf(m) === 'to')).toBe(true)
+  })
+
+  it('⚠️ a strong run is asked ALL FOUR readings before mastery ends it', () => {
+    // The whole point. Measured before this: a perfect run ended on round 6 having met three of the
+    // four, and with a uniform draw it missed the "to" side about a third of the time.
+    const run = simulate(() => true, true)
+    expect(run.by).toBe('mastery')
+    for (const k of READINGS) expect(run.asked, `never asked ${k} — ended round ${run.endedAt}`).toContain(k)
+  })
+
+  it('⚠️ and the coverage gate is what does it — without it a reading is missed', () => {
+    // Guards against someone concluding the generator alone is enough and dropping `coverage`.
+    const bare = simulate(() => true, false)
+    expect(READINGS.every(k => bare.asked.includes(k))).toBe(false)
+  })
+
+  it('costs a strong child no extra rounds', () => {
+    // The gate withholds the exit, but the generator uses the same bookkeeping to fill the gap first,
+    // so the set is covered by the time mastery fires rather than after it.
+    expect(simulate(() => true, true).endedAt).toBe(simulate(() => true, false).endedAt)
+  })
+
+  it('⚠️ is actually DECLARED by the chapter, not just simulated here', () => {
+    // `simulate` above re-implements the engine, so on its own it cannot see the real wiring go away —
+    // the craft doc's "a gate that re-implements a rule cannot see the rule being removed". These two
+    // checks close that: the chapter must declare the set, and SkillBeat must guard the exit with it.
+    const beat = makeTimeBeat()
+    expect(beat.coverage, 'the chapter no longer declares a closed set').toBeTruthy()
+    expect([...beat.coverage!.all].sort()).toEqual([...READINGS].sort())
+    for (const m of RING) {
+      expect(beat.coverage!.of({ slot: 0, h: 3, m, ask: 'read', d: 3 })).toBe(kindOf(m))
+    }
+  })
+
+  it('⚠️ and SkillBeat still guards the exit AND feeds the asked list back', () => {
+    // Anchored on EXPRESSIONS only real code has, never on the prose explaining them — a source check
+    // that matches its own comment is a gate reporting the file it was written for.
+    const src = readFileSync(join(process.cwd(), 'src/features/chapters/story/StoryWorld.tsx'), 'utf8')
+    expect(src, 'the mastery exit is no longer coverage-guarded').toContain('if (res.mastered && covered)')
+    expect(src).toContain('beat.coverage.all.every')
+    // ⚠️ AND THIS ONE IS THE SUBTLE HALF. Drop the third argument and `asked` defaults to empty on
+    // every round, so the generator picks the hardest-from-nothing every time: at L3 that is "to"
+    // twice, `past` is never asked, the coverage gate then withholds the exit for ever and the child
+    // plays all ten rounds STILL never meeting it. The original bug, relocated and made worse.
+    expect(src, 'the asked list is no longer fed into make()')
+      .toContain('beat.make(adaRef.current.difficulty, roundIdx, asked.current)')
+  })
+
+  it('leaves a struggling child completely alone', () => {
+    // They never reach the top tier, so they could never have finished early anyway.
+    const weak = simulate(r => r % 3 === 0, true)
+    expect(weak.by).toBe('rounds')
+    expect(weak.endedAt).toBe(10)
+    expect(weak.log.every(x => x.d === 1)).toBe(true)
   })
 })
 

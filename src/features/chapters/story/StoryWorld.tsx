@@ -40,9 +40,33 @@ export interface Beat<T> {
                                          // these rounds (e.g. when the scene/biome
                                          // changes), so a change always reads as
                                          // "Milo travelled there". Overrides walkEvery.
-  make: (d: Difficulty, round?: number) => T   // `round` lets one practice vary by
-                                               // round (e.g. rotate the biome) while
-                                               // staying ONE adaptive sequence
+  make: (d: Difficulty, round?: number, asked?: readonly string[]) => T
+                                         // `round` lets one practice vary by round (e.g. rotate the
+                                         // biome) while staying ONE adaptive sequence. `asked` is the
+                                         // list of `coverage.of` values already served this run — only
+                                         // populated when the beat declares `coverage`, and it exists
+                                         // so a generator can spend a scarce round on something the
+                                         // child has NOT met yet instead of drawing at random.
+  /**
+   * A CLOSED SET this chapter must cover before the mastery early-exit is allowed to end the run.
+   *
+   * ⚠️ WHY THIS EXISTS. Mastery fires at the top tier on a streak of 6, and promotion takes 3 correct
+   * per tier — so a child who answers well is asked roughly three questions at L1, ONE at L2 and TWO
+   * at L3, and then the chapter ends. For a chapter whose hardest idea only unlocks at L3 that means
+   * the idea is asked twice at best and, measured on TickTock, missed entirely about a third of the
+   * time. Which is the craft doc's own rule: *if a chapter teaches a closed set, every member must
+   * appear before mastery can fire.*
+   *
+   * OPT-IN: a beat that does not declare `coverage` behaves exactly as before, so no other chapter in
+   * the band changes. And the cost is bounded — withholding the early exit only ever means playing the
+   * full `rounds`, never a hang, because the run still ends at `rounds` regardless.
+   */
+  coverage?: {
+    /** Which member of the set this round is an instance of. */
+    of: (data: T) => string
+    /** Every member that must have been asked before an early finish is honoured. */
+    all: readonly string[]
+  }
   sig?: (data: T) => string              // dedupe key for makeDistinct — return a
                                          // signature of the MATH only (not the scene,
                                          // sprite, or shuffled choice order), so the
@@ -76,16 +100,25 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   const [wrongRun, setWrongRun] = useState(0)
   const tally = useRef({ correct: 0, wrong: 0 })   // reported to onComplete → drives XP
   const seen = useRef<Set<string>>(new Set())      // question signatures already asked this session
+  // Which members of `beat.coverage.all` have been ASKED. Fed back into `make` so a generator can
+  // spend a scarce round on something unmet, and used to withhold the early exit until the set is done.
+  const asked = useRef<string[]>([])
 
   // ONE data object per round. Must be stable across re-renders (it holds the
   // random target), or the Play UI and the answer-check would disagree and the
   // round could never complete. Difficulty is read at round start; `roundIdx` lets
   // the beat rotate the scene (biome) while staying one continuous practice.
   // makeDistinct re-rolls to avoid repeating a question already asked this session.
-  const data = useMemo(() => makeDistinct(() => beat.make(adaRef.current.difficulty, roundIdx), seen.current, beat.sig), [roundIdx, beat])
+  const data = useMemo(() => makeDistinct(() => beat.make(adaRef.current.difficulty, roundIdx, asked.current), seen.current, beat.sig), [roundIdx, beat])
 
   // Announce each new round, and let the host react to it (e.g. follow the biome).
   useEffect(() => {
+    // Record what this round covers BEFORE it is played, because "asked" is the claim being made —
+    // a member the child got wrong has still been met, and re-asking it is what the retry is for.
+    if (beat.coverage) {
+      const k = beat.coverage.of(data)
+      if (k && !asked.current.includes(k)) asked.current = [...asked.current, k]
+    }
     onRound?.(data, roundIdx)
     speak((beat.say ?? beat.prompt)(data))
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -107,7 +140,12 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       if (!correct && newRun >= (beat.reteachAfter ?? 2)) { setPhase('reteach'); return }
       // Demonstrated mastery (top tier + a long correct streak) → finish early
       // with full stars, skipping the repetitive tail.
-      if (res.mastered) { onComplete(tally.current.correct, tally.current.wrong, true); return }
+      // ⚠️ UNLESS the beat declares a closed set that has not been covered yet: finishing early on a
+      // streak is a reward for being good at the questions ASKED, and it must not be a way to leave
+      // without ever being asked the hardest thing the chapter teaches. Bounded — the run still ends
+      // at `beat.rounds` either way, so the worst case is playing the full set.
+      const covered = !beat.coverage || beat.coverage.all.every(k => asked.current.includes(k))
+      if (res.mastered && covered) { onComplete(tally.current.correct, tally.current.wrong, true); return }
       const next = roundIdx + 1
       if (next >= beat.rounds) { onComplete(tally.current.correct, tally.current.wrong); return }
       // Storyline interlude: Milo walks a few steps before certain rounds (a scene/
