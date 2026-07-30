@@ -59,6 +59,27 @@ intro (one card, one button)  →  demo (Milo/an adult does it)  →  guided (ch
   that set must appear before mastery can fire**, or the strong child finishes never having been
   asked the one they were shakiest on, skipped as a reward for doing well. The colouring chapter had
   purple living on a single late target and hit exactly this.
+  ⚠️ **THE ROUND BUDGET IS MUCH TIGHTER THAN IT LOOKS, AND IT IS WORTH KNOWING THE ARITHMETIC.**
+  `core/adaptive.ts` promotes on **3 correct in a row at ≥80%** and masters at the top tier on a
+  **streak of 6**, one tier at a time. So a child who answers well is asked roughly **three questions
+  at L1, exactly ONE at L2 and TWO at L3**, and then the chapter ends. Anything that only unlocks at
+  the top tier therefore gets **two rounds** — and if the generator draws uniformly from a wide pool,
+  the hardest idea is simply missed a lot of the time. Measured on TickTock: the whole "to" side was
+  missed by about **a third** of strong runs, and two full ten-round drives produced none at all.
+  **So a tier is not a difficulty knob, it is a round budget. Count it before deciding what lives at
+  the top.**
+  ⚠️ **THE MACHINERY FOR THIS IS NOW SHARED, AND IT IS OPT-IN:** a `Beat` may declare
+  `coverage: { of, all }`, and `SkillBeat` withholds the mastery exit until every member has been
+  asked. It also feeds the asked-list back into `make(d, round, asked)` so the generator can **spend a
+  scarce round on something unmet instead of rolling dice**. Those two halves belong together — the
+  bookkeeping the gate needs is exactly the input the generator needs, and with both, TickTock covers
+  all four readings in the *same* six rounds it used to take to cover three. A beat that declares no
+  coverage behaves exactly as before.
+  ⚠️ **Two traps if you use it.** Be deliberate only while a gap exists and **random once it closes** —
+  hardest-first for ever locks the generator onto one kind and destroys the variety the chapter needs.
+  And a check that re-implements the engine to simulate a run **cannot see the real wiring go away**:
+  gate the declaration (drive the beat) and the two call sites (a source pattern anchored on real
+  code), or dropping the third argument to `make` silently relocates the bug and makes it permanent.
 - **The memoized `Beat` must not depend on anything that changes DURING a round.** `SkillBeat`
   memoizes the round on `[roundIdx, beat]`, so a beat rebuilt when the child picks up a paint pot
   regenerates the question under them and reshuffles the answers mid-answer. Keep per-round UI state
