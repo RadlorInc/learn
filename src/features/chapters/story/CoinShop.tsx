@@ -18,9 +18,10 @@
  * chapter used none of, which is precisely the weakness BlockYard's own header admits to.
  *
  * **So the chapter is a WALK now.** Seven market stalls, each a painted scene with its own animated
- * stallholder; Milo walks in from off-frame at every stall, buys one thing, counts his coins onto
- * his cloth and hands them over, then walks off with it. The scene, the keeper and the goods change
- * every round, and the reward for a right answer is the journey rather than a number turning green.
+ * stallholder; Milo walks in from off-frame at every stall, buys one thing, counts the coins out of
+ * the purse card and carries them up to the keeper, then walks off with it. The scene, the keeper and
+ * the goods change every round, and the reward for a right answer is the journey rather than a number
+ * turning green.
  *
  * **EVERY practice round is the same shape, by the founder's call: the keeper names the price of his
  * own goods and the child pays it out of the purse.** The price is derived from a multiset of coins
@@ -151,8 +152,8 @@ export function fewestFor(price: number, pool: readonly CoinValue[]): CoinValue[
 
 /**
  * ⚠️ The price is derived from a MULTISET OF COINS, never drawn as a bare number. That guarantees it
- * is payable from the tier's pool inside the cloth's capacity — a price a child cannot build is not
- * a hard question, it is a broken one.
+ * is payable from the tier's pool within `PURSE_MAX` — a price a child cannot build is not a hard
+ * question, it is a broken one.
  */
 export function makeRound(d: 1 | 2 | 3, round = 0): MoneyRound {
   const pool = POOL[d]
@@ -290,7 +291,7 @@ export const legMs = (leg: Leg, miloH: number, vw: number) =>
 
 // ─── The stall's state ────────────────────────────────────────────────────────────────
 interface Till {
-  laid: CoinValue[]         // what is on the cloth, in the order it was laid
+  laid: CoinValue[]         // the coins counted out of the purse, in the order they were picked
   settled: number           // how many were already there — the rest travel in
   swept: boolean
   key: string
@@ -701,8 +702,17 @@ export default function CoinShop({ onFinish, onExit }: {
       {phase === 'intro' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
           <div style={{ maxWidth: '74%', background: 'rgba(255,252,244,.94)', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: `clamp(14px, ${Math.round(vh * 0.034)}px, 20px)`, color: 'var(--ink)', textAlign: 'center' }}>
-            Milo is walking round the market. Every stall has a board saying what a thing costs —
-            count that much out of your purse onto his cloth. Watch him pay for two things first!
+            {/*
+              ⚠️ This card named TWO pieces of furniture the chapter had already deleted — a board on
+              every stall and a cloth for the coins (§④a moved the price into the keeper's bubble and
+              the coins into the purse card). Worse than stale: it pointed the child at a board for the
+              price when the price now comes out of the stallholder's mouth, so the first thing they
+              were told to do was look in the wrong place. The in-round words are HIS ("Count that out
+              for me"), so the intro is written to hand over to him rather than to describe scenery.
+            */}
+            Milo is walking round the market. At each stall the keeper will tell you what his goods
+            cost — tap the coins in your purse to count out exactly that much, then pay. Watch Milo
+            buy two things first!
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('demo') }}
             style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>
