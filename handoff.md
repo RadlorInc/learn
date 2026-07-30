@@ -151,12 +151,12 @@
 >   Raised with the founder, who chose the arrival beat instead.
 >
 > ## ▶ OPEN
-> 1. ✅ **SHIPPED — `main`@`__SHA__`, prod serving sw v80.**
+> 1. ✅ **SHIPPED — `main`@`1b8ea25`, prod serving sw v80.**
 >    | commit | what |
 >    |---|---|
 >    | `a9799b4` | the chapter — `slice.ts` (new) · `chrome.ts` (new, extracted from clock.ts which re-exports it) · `SliceShop.tsx` (rewritten) · `sliceShopFit.test.ts` (new) · `story/page.tsx` · `chapter-craft.md` · **6 new PNGs** |
->    | `__DOCS__` | this handoff |
->    | `__SW__` | `public/sw.js` v79 → v80 for the deploy |
+>    | `ff12a45` | this handoff |
+>    | `1b8ea25` | `public/sw.js` v79 → v80 for the deploy |
 >
 >    `scripts/.voice-*.json` correctly still untracked. **Nothing is outstanding in the tree.**
 > 2. ⚠️ **ROUNDS 8–10 HAVE NEVER BEEN ON SCREEN.** Both runs exited early on mastery. The last three
