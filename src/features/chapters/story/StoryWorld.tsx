@@ -67,6 +67,24 @@ export interface Beat<T> {
     /** Every member that must have been asked before an early finish is honoured. */
     all: readonly string[]
   }
+  /**
+   * This beat gives its OWN wrong-answer feedback, so SkillBeat draws no generic pill and speaks no
+   * generic encouragement on a miss.
+   *
+   * ⚠️ WHY THIS EXISTS. The shared cue is a solid pill pinned dead centre of the viewport, which is
+   * fine in a chapter whose play surface is being replaced anyway — and wrong in one that retries
+   * IN PLACE over the thing being read. TickTock lands it on the clock face while saying *"Let's look
+   * together"*, i.e. it covers the one thing it is asking the child to look at. Worse, that chapter
+   * handles its own retry loop and only ever reports a round once it has been solved, so the pill and
+   * the spoken encouragement arrive on top of its own *"That's right — half past six!"* and
+   * contradict it.
+   *
+   * OPT-IN, so the other chapters in the band are untouched — they write no feedback of their own and
+   * the centred pill is the only thing that says anything. A beat that sets this owes the child a
+   * WRITTEN miss line of its own (`hintFor` in TickTock's case); speech alone is silence on the many
+   * devices with no usable voice. The re-teach after `reteachAfter` misses still fires either way.
+   */
+  ownsFeedback?: boolean
   sig?: (data: T) => string              // dedupe key for makeDistinct — return a
                                          // signature of the MATH only (not the scene,
                                          // sprite, or shuffled choice order), so the
@@ -133,8 +151,9 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     const newRun = correct ? 0 : wrongRun + 1
     setWrongRun(newRun)
     // No spoken compliment on a correct answer — a tick is enough (kids don't need praise every
-    // question). Only gently encourage on a wrong one.
-    if (!correct) speak(ada.encouragement)
+    // question). Only gently encourage on a wrong one — and not at all where the beat has already
+    // said something specific, or the generic line lands on top of it and cancels it.
+    if (!correct && !beat.ownsFeedback) speak(ada.encouragement)
     window.setTimeout(() => {
       setFeedback(null)
       if (!correct && newRun >= (beat.reteachAfter ?? 2)) { setPhase('reteach'); return }
@@ -208,7 +227,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 58, fontWeight: 900, lineHeight: 1,
           border: '5px solid var(--outline)', boxShadow: '0 8px 0 rgba(61,37,22,.2)', animation: 'k_bounceIn .4s cubic-bezier(.34,1.56,.64,1) both' }}>✓</div>
       )}
-      {feedback === 'wrong' && (
+      {feedback === 'wrong' && !beat.ownsFeedback && (
         <div style={{ position: 'fixed', top: '40%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 60,
           background: 'var(--milo-orange)', color: '#fff',
           fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, padding: '14px 36px', borderRadius: 24,

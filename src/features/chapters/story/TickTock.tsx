@@ -675,6 +675,12 @@ export function makeTimeBeat(): Beat<TimeRound> {
     // ⚠️ THE CLOSED SET. Mastery must not end the run before the child has been asked all four
     // readings — measured, a third of strong runs were finishing having never met a "to" time.
     coverage: { of: r => kindOf(r.m), all: READINGS },
+    // ⚠️ THIS CHAPTER SAYS ITS OWN MISS LINES. `hintFor` names which hand is wrong, written in Milo's
+    // bubble AND spoken, and the round retries in place — so SkillBeat's centred pill would land on
+    // the clock face while saying "Let's look together", covering the one thing being read. And
+    // because a round is only reported once it has been SOLVED, that pill plus the generic
+    // encouragement arrived over "That's right — half past six!" and contradicted it.
+    ownsFeedback: true,
     // Dedupe on the MATH and the DIRECTION — the same clock read and then set is two questions.
     sig: r => `${r.ask}:${r.h}:${r.m}`,
     // Empty on purpose: SkillBeat then renders no pill of its own, and Milo's bubble is the single

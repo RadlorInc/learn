@@ -337,6 +337,31 @@ describe('the four readings, and covering them', () => {
       .toContain('beat.make(adaRef.current.difficulty, roundIdx, asked.current)')
   })
 
+  /**
+   * ⚠️ THIS CHAPTER OWNS ITS OWN MISS FEEDBACK, AND SAYING SO IS LOAD-BEARING. SkillBeat's shared cue
+   * is a solid pill pinned dead centre of the viewport — which in every other 3–11 chapter lands on a
+   * play surface that is being replaced anyway, and here lands **on the clock face** while reading
+   * *"Let's look together"*: it covers the one thing it is telling the child to look at. Worse, this
+   * chapter retries in place and only reports a round once it has been SOLVED, so the pill and the
+   * spoken encouragement arrive over its own *"That's right — half past six!"* and contradict it.
+   *
+   * `hintFor` is what replaces them, and it is strictly better: it names WHICH hand is wrong.
+   */
+  it('⚠️ opts out of the shared centred cue, and still writes its own miss line', () => {
+    expect(makeTimeBeat().ownsFeedback, 'the generic pill is back over the clock face').toBe(true)
+    const src = readFileSync(join(process.cwd(), 'src/features/chapters/story/StoryWorld.tsx'), 'utf8')
+    // Both halves have to be gated, or the words are suppressed and the pill still covers the clock
+    // (or the reverse — a silent pill). Anchored on expressions, never on the prose above them.
+    expect(src, 'the centred wrong pill is no longer opt-out-able')
+      .toContain("feedback === 'wrong' && !beat.ownsFeedback")
+    expect(src, 'the generic spoken encouragement is no longer opt-out-able')
+      .toContain('if (!correct && !beat.ownsFeedback)')
+    // And the chapter still SAYS something on a miss — silence is a tap that appears to do nothing,
+    // and speech alone is silence on the many devices with no usable voice, so it is written too.
+    const tt = readFileSync(join(process.cwd(), 'src/features/chapters/story/TickTock.tsx'), 'utf8')
+    expect(tt, 'nothing writes the hint any more').toMatch(/setHint\(t\);\s*speak\(t\)/)
+  })
+
   it('leaves a struggling child completely alone', () => {
     // They never reach the top tier, so they could never have finished early anyway.
     const weak = simulate(r => r % 3 === 0, true)
