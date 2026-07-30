@@ -251,10 +251,24 @@
 >    • The value is **never rendered** — the clock draws from `view` — so it was not render state at
 >      all, and a **ref** deletes the class rather than papering over it. Six batched taps now walk six
 >      stops; verified on screen, the lesson accepted `half past 3` and moved on to the handover.
+> ⚠️ **AND IT WAS A HANG, NOT A STICKY DIAL — which is what makes it worth the deploy.** The last
+>      lesson beat deliberately has **no auto-advance** (`if (!last)` — it waits for the child, because
+>      that one go is the point), so a burst of taps that moved one stop left the child sitting on the
+>      dial with nowhere to go. Same beat family the founder was already stuck on once.
 >    • ⚠️ **This is the third time this repo has met the same shape** (placeValue's undo, CoinShop's
 >      `lay`, now here). Distinct human taps are usually separate ticks — but placeValue's was found by
 >      a real user on a janky device, which is why the rule is *never read state you also set inside a
 >      handler*, not *humans cannot tap that fast*. Gated on the ref.
+>    • ⚠️ **A CONTROLLED SERVICE WORKER SERVES THE OLD SHELL EVEN WHEN PROD'S `sw.js` ALREADY REPORTS
+>      THE NEW VERSION, AND THIS FILE'S DEPLOY PROOF IS EXACTLY THAT POLL.** Driving v79 the first time
+>      reproduced the OLD behaviour — hand stuck at 5 — while `caches.keys()` read `milo-shell-v79`:
+>      the new SW had installed and pre-cached, and the one still CONTROLLING the page was v78, serving
+>      its chunks `cacheFirst`. Unregistering, clearing `caches` and reloading gave the fix immediately.
+>      It made a clean before/after by accident, and it means **a browser that has visited before is
+>      testing the previous build until its SW is released.** Polling `sw.js` proves the EDGE has the
+>      deploy; it does not prove the tab you are driving is running it.
+>      *(Mid-run I concluded from this that my dev evidence had been wrong. It had not — the dev run was
+>      correct and the prod tab was stale.)*
 >    • **And the same run confirmed the practice dial is fine**: four batched taps took the hour 12 → 8
 >      in one go, so the functional-update fix holds where it already was.
 >
