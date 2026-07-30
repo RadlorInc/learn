@@ -24,6 +24,7 @@ Reference implementations, in order of how closely to copy them:
 | 9 & 10 · Addition / subtraction | [PlayTime.tsx](../src/features/chapters/story/PlayTime.tsx) | one component for two mirrored operations, a countable set, an exported layout chain |
 | 11 · Measurement | [MeasureIt.tsx](../src/features/chapters/story/MeasureIt.tsx) | an answer the child BUILDS, drawing a sprite by its own ink box, reserving a lane before it fills |
 | 6–8 · Add/subtract to 100 | [BlockYard.tsx](../src/features/chapters/story/BlockYard.tsx) | a question stated ONLY as quantities, the skill as the single gesture, difficulty that grows the skill, and a bundle the child can WATCH become one thing |
+| 6–8 · Time | [TickTock.tsx](../src/features/chapters/story/TickTock.tsx) + [clock.ts](../src/features/chapters/story/clock.ts) | an explicit LESSON before anything is scored, one skill answered from BOTH ends with one control shape, a scaffold that fades by tier, and a day whose arc IS the changing scene |
 
 The shared engine all of these run on is [critters.tsx](../src/features/chapters/story/critters.tsx) —
 cast, habitats, `Critter`, the travel timing and the huddle invariants. **Put a fix there, not in a
@@ -79,6 +80,20 @@ painted on the outside, and it is the fault a founder will name as "it doesn't f
 | colours | a **property** you apply | **COLOUR IT IN** | a spoken name (auditory) |
 | patterns | a **rhythm** over a sequence | **CONTINUE** | the sequence itself (temporal) |
 | measurement | a **magnitude**, which has no number until you choose a unit | **MEASURE IT** — lay one unit end to end and count | the thing itself, beside an empty lane (visual) |
+| time | a **reading**, off a face carrying two scales on one set of numbers | **SET IT** (and READ IT) — move the hands / say what they say | Milo needing to be somewhere (auditory + visual) |
+
+⚠️ **WHERE A SKILL HAS TWO HONEST DIRECTIONS, BUILD BOTH ON ONE CONTROL SHAPE.** Reading a clock and
+setting one are the same knowledge from opposite ends, and TickTock answers both with the same pair of
+steppers — on a SET round their labels are captions ("Hour", "Minutes") because the readout is the
+clock face, and on a READ round the labels are the values being built because the readout is the
+phrase. One thing to learn, used two ways, and the child cannot eliminate their way through either.
+Compare CoinShop, which deleted its read rung because the material had nowhere to be drawn: keep the
+second direction when the thing being read is already on screen, drop it when it is not.
+
+⚠️ **AND A SCAFFOLD FOR THE PAYLOAD FADES BY TIER.** The minute ring — the second scale, printed —
+is what makes the idea learnable, and leaving it up for ever means it is never in the child's head.
+It shows at L1–L2 and is gone at L3. Same shape as the teen band's per-question hint retiring at the
+top tier.
 
 ⚠️ **AND WHEN THE DELETE-THE-ART TEST FAILS, CHECK WHICH HALF IS AT FAULT BEFORE THROWING THE ART
 AWAY.** BlockYard's base-ten blocks failed it and were replaced — twice, at the cost of two rebuilds
@@ -223,6 +238,21 @@ help and the spoken word is the only thing that can — a child who gets it righ
 Generalise: **if the scene can answer the question, you are teaching, not measuring.** Ask of any
 scored round: could a child who does not have this skill still get it right from world knowledge?
 
+⚠️ **A LESSON MUST NOT CARRY A "NEXT" BUTTON ON A FIRST RUN — that is a skip button wearing a
+different label.** The beats have to roll on by themselves, because the whole reason `lessonSeen`
+exists is that a six-year-old presses whatever big button is offered and then meets a test nothing
+prepared them for. TickTock shipped a Next on every beat for exactly the time it took to notice.
+The forward path is the teaching finishing, plus the one hands-on go at the end.
+⚠️ **But then it OWES a hard cap per beat**, because the only way forward is now a timer: a beat whose
+narration never reports done is a chapter that hangs on its own teaching, which this repo has shipped
+once already (the 3–5 counting intro froze on slide one when a voice fetch wedged, precisely because
+its say beats had no timer of their own). `speakSteps` has a fallback; put a backstop behind it.
+
+⚠️ **AND A CONTROL APPEARS WHEN THE CHILD IS ASKED FOR IT, NOT WHEN ITS PHASE BEGINS.** Gated on the
+beat index, TickTock's dial showed up while Milo was still three sentences earlier explaining the
+minute ring — because the narration line lags a new beat until its first step fires and the render
+does not. Set a flag IN the step that does the asking.
+
 The two halves must also be visibly different, or the child cannot tell that the help has stopped.
 In the lesson the correct paint pot bounces and the tray keeps a fixed order; in the test the cue is
 gone and the pots shuffle. A handover screen says so out loud, because the picture, the tray and the
@@ -301,9 +331,17 @@ sliding and moonwalking bug this project has shipped is one of these:
 | shadow arrived before the feet | shadow was a SIBLING with its own `transition` | make it a **child** — two things that must move as one should be one element |
 | legs ran forwards while the body went backwards | layout let a creature sit right of its destination | layout must **guarantee** travel direction |
 | a group appeared instead of arriving | only the *movers* were given a journey; the standing group scale-popped and the container was what moved | **everything on the stage travels** — see below |
+| the character never appeared at all | `leave` passed as a CONSTANT with `ms={0}` — `Arrive` starts at its DONE phase, and done-while-leaving means *already gone* | `leave={leaving}`, so the flag and the duration agree |
 | a crowd FOLLOWING a character slid with its feet parked | a hand-rolled `transition: left` beside `Arrive`, with `moving` gated on the wrong phase | **use `Arrive` for anything that travels, including a follow** |
 
-⚠️ **THAT LAST ONE IS THE COMMONEST WAY THE RULE GETS BROKEN NOW, because the position change does not
+⚠️ **THAT SECOND-TO-LAST ONE IS THE NASTIEST TO FIND, because the character is INVISIBLE rather than
+misplaced.** `leave` and `ms` are two halves of one statement — "go, and take this long" — and setting
+`leave` unconditionally while gating only the duration makes the resting state mean *gone*. Nothing
+errors, nothing is off by a few pixels; the chapter simply renders without its character, and no gate
+can see an element that is correctly positioned a screen-width away. If a sprite is missing, check
+its travel flags before anything else.
+
+⚠️ **THE LAST ONE IS THE COMMONEST WAY THE RULE GETS BROKEN NOW, because the position change does not
 look like a journey.** A set that follows someone, closes up a gap, or shuffles along is travelling,
 and if you move it with a raw CSS transition there is nothing connecting the legs to it — the flag
 ends up gated on whatever phase you happened to be thinking about. `Arrive` takes its child as a
@@ -418,6 +456,11 @@ check them with a script:
   wrong place until then and jump a whole item when it arrives. In the measurement chapter the thing
   that jumped was *the thing being measured*, which is the one element the child is reading. Give
   the container the full width or height it will end at; empty and unstyled, it gives nothing away.
+- ⚠️ **AND THE CHROME'S OWN HEIGHT IS ONE OF THOSE GAPS.** "The top strip is 38px" is a guess about a
+  button, and TickTock's Menu button measured **12 + 41 = 53px** from a 38px budget, so the bubble
+  below it opened **13px inside the button**. Derive the strip from the control's own metrics — font,
+  padding, border — and export those metrics so the button and the band cannot drift apart. On a
+  short frame shrink the BUTTON, since height comes out of the chrome before it comes out of the world.
 - **WHEN TWO THINGS MUST NOT OVERLAP, MEASURE ONE OFF THE OTHER — never pick a percentage of the
   height.** `top: 73%` for an answer readout and `bottom: 3.5%` for the answer buttons are two
   independent guesses about the same gap, and at 1024×620 they put the readout **29px inside the
@@ -770,6 +813,16 @@ second thing to look at. It appears with the demo, when it starts to matter.
   self-labelling (you can see WHO is asking), and it uses the empty half of the frame for something
   that belongs there. Carry a `lead` inside it so the price stays put while the text changes: a wrong
   answer must not take the question away with it.
+  ⚠️ **AND THE SPEAKER MUST BE ON SCREEN WHENEVER THE BUBBLE IS.** A bubble has a TAIL, and a tail
+  pointing at an empty corner is worse than no tail at all: it says the words belong to somebody who
+  is not there, which is a stranger effect than a plain banner. TickTock rendered Milo for the intro
+  and the play beats and not for the four lesson beats — the one stretch that is nothing but him
+  talking. If a phase shows the bubble, it shows the character.
+  ⚠️ **A BAND, NOT A FLOATING PANEL.** Anchored freely at the mouth, TickTock's bubble ran straight
+  across the clock at 640 wide — the two things a child has to read at once, stacked on each other.
+  Laid out as a band (chrome · bubble · world · controls) an overlap is not expressible, and the tail
+  still does the anchoring. **And cap its width on a roomy frame**: full-bleed it reads as a banner
+  pinned to the top rather than as something anybody said.
   ⚠️ Two consequences. **The words become that character's** — an instruction written for a narrator
   reads wrong the moment a shopkeeper says it, and one naming furniture you have since deleted
   ("count it onto the cloth") is the header-comment fault in miniature. And **CLAMP the bubble below
@@ -1008,6 +1061,23 @@ verify it FLOODS  (threshold → dilate 2px → connected components; see the sc
   timer for the visuals plus separate `speak()` calls — they drift on Safari and cut each other off
   on Chrome. When audio is blocked, `speakSteps` still paces the steps on a timer, so the demo works
   silently.
+- ⚠️ **AND `speakSteps` REVEALS EACH VISUAL FROM THE UTTERANCE'S `onstart`, WHICH MEANS THE TEACHING
+  ONLY HAPPENS IF SPEECH KEEPS DELIVERING EVENTS.** Chrome and Safari both start the first line and
+  then silently drop the rest — no `onstart`, no `onend`, no `onerror` — and when they do, the sequence
+  marches to its end on its per-line watchdogs while `onStep` never fires again. Every visual, every
+  line of text and any "your turn" flag set inside a step is then **frozen at the last line that
+  happened to speak, for ever.** TickTock shipped exactly this: the founder sat on the third lesson
+  beat's last sentence with no control on screen and no way forward, on a machine that has a voice.
+  **A multi-beat lesson or re-teach must be self-paced** — dwell per line derived from its own length,
+  `speak()` fired alongside — so the words can fail, half-fail or succeed without the teaching stopping.
+  MeasureIt made this call first for the mirror-image failure (racing past in 4s); it is the same fix.
+- ⚠️ **AND DO NOT PUT A FIXED TOTAL CAP BEHIND `speakSteps` AS A "BACKSTOP" — that is worse than the
+  bug.** TickTock's first fix was `lines × 2900 + 4000` ≈ 15.6s for four lines; with a real voice those
+  lines take about twenty seconds, so the cap fired MID-SENTENCE and cancelled a live utterance.
+  **A backstop timed against the silent fallback is not timed against the thing it is backing up** —
+  and the preview pane has no voice, so every run I drove took the fallback path and finished inside
+  the cap, which is why I could not see any of it. If you must have a watchdog, make it reset on
+  progress (an idle timer), never a total budget.
 - **EXCEPT when the steps are single WORDS — those are self-paced on a deterministic timer.**
   `speakSteps` advances on each utterance's `end`, and a device with no usable voice ends a
   one-word utterance in milliseconds, so a counting demo ("one… two… three") races past instead of
@@ -1086,7 +1156,18 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   then wait, then measure.
 - **The console buffer survives navigation.** After a rename you will see a wall of
   `Module not found` from the stale buffer. Open a fresh tab before believing it. This repo has lost
-  three sessions to that.
+  three sessions to that. ⚠️ **It recurs verbatim for a constant used one edit before it is imported**
+  — TickTock produced a `CHROME_PAD is not defined` crash inside the error boundary while `tsc` was
+  clean, and a fresh tab read **zero**. `tsc` clean + console angry = suspect the buffer first.
+- ⚠️ **TO SETTLE WHETHER AN ARTEFACT IS THE SPRITE OR THE SCENE, HIDE THE SCENE.** A brown streak
+  beside Milo read unmistakably as sprite bleed from the next cell of his strip. Three theories were
+  wrong in a row — the cell maths, the `overflow` clip, the drop-shadow — and each was disproved by a
+  measurement that then suggested the next one. `visibility:hidden` on the backdrops settled it in one
+  shot: he was clean, and the streak was a tree root painted into `door_houses.jpeg` that he happened
+  to stand in front of. **Your EYE grouped them; the DOM never did.** Isolate one layer at a time
+  before theorising about either.
+  *(For the record, the honest way to check a strip is still the craft rule above — draw it into a
+  canvas and print each cell's alpha bbox. That took thirty seconds and said the sprite was fine.)*
 - **`elementFromPoint` cannot see `pointerEvents:none` elements** — it looks straight through
   sprites. Overlap and draw-order checks have to be visual or geometric. Where a tap is the mechanic,
   it is also the only honest way to prove a control is reachable: use it to check that the thing
