@@ -201,7 +201,12 @@ export function hintFor(r: { ask: Ask; m: number }, got: { h: number; m: number 
     return 'Look at the short hand — that one shows the hour.'
   }
   if (got.m !== r.m) return 'Look at the long hand again. Which number is it pointing at?'
-  return 'Careful — after half past we count to the NEXT hour.'
+  // ⚠️ THE "TO" ADVICE ONLY APPLIES TO A "TO" TIME. Given for any wrong read hour it fired on
+  // "7 o'clock" as well — telling a child to count to the next hour when there is no next hour in the
+  // answer, which is worse than saying nothing: it teaches a rule that does not apply here and says
+  // nothing about what they actually got wrong. Caught by playing a full ten-round run.
+  if (r.m > 30) return 'Careful — after half past we count to the NEXT hour.'
+  return 'Look at the short hand — which hour has it just gone past?'
 }
 
 // ─── layout ───────────────────────────────────────────────────────────────────────────

@@ -226,8 +226,12 @@ function StoryClock({ px, view }: { px: number; view: ClockView }) {
  * is a CAPTION ("Hour") because the readout is the clock face, and on a read round its label is the
  * VALUE being built because the readout is the phrase. Same gesture, opposite direction.
  */
-function Dial({ label, onStep, disabled, short, minW }: {
+function Dial({ label, onStep, disabled, short, minW, dark }: {
   label: string; onStep: (dir: -1 | 1) => void; disabled?: boolean; short: boolean; minW: number
+  /** ⚠️ A night round washes the scene deep blue and the label sits DIRECTLY on it — measured
+   *  `rgb(61,37,22)` on the moon round, i.e. dark ink on a dark picture. The arrows carry their own
+   *  paper background so they were fine; only the bare label needed the variant the bubble already had. */
+  dark?: boolean
 }) {
   const side = short ? 40 : 46
   const arrow: React.CSSProperties = {
@@ -241,7 +245,8 @@ function Dial({ label, onStep, disabled, short, minW }: {
       <button onClick={() => onStep(-1)} disabled={disabled} aria-label="back" style={arrow}>◀</button>
       <span style={{
         minWidth: minW, textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 900,
-        fontSize: short ? 14 : 17, color: 'var(--ink)', lineHeight: 1.1,
+        fontSize: short ? 14 : 17, color: dark ? '#fff' : 'var(--ink)', lineHeight: 1.1,
+        textShadow: dark ? '0 1px 3px rgba(0,0,0,.55)' : 'none',
       }}>{label}</span>
       <button onClick={() => onStep(1)} disabled={disabled} aria-label="forward" style={arrow}>▶</button>
     </div>
@@ -414,14 +419,14 @@ const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: bo
       <Bar L={l}>
         {ask === 'set' ? (
           <>
-            <Dial short={l.short} label="Hour" minW={l.short ? 46 : 58} onStep={stepHour} disabled={done} />
-            <Dial short={l.short} label="Minutes" minW={l.short ? 62 : 76} onStep={stepMin} disabled={done} />
+            <Dial short={l.short} dark={dark} label="Hour" minW={l.short ? 46 : 58} onStep={stepHour} disabled={done} />
+            <Dial short={l.short} dark={dark} label="Minutes" minW={l.short ? 62 : 76} onStep={stepMin} disabled={done} />
             <Commit short={l.short} text="Set it ✓" onClick={commit} disabled={done} />
           </>
         ) : (
           <>
-            <Dial short={l.short} label={phrasePart} minW={l.short ? 96 : 124} onStep={stepMin} disabled={done} />
-            <Dial short={l.short} label={String(rh)} minW={l.short ? 28 : 34} onStep={stepHour} disabled={done} />
+            <Dial short={l.short} dark={dark} label={phrasePart} minW={l.short ? 96 : 124} onStep={stepMin} disabled={done} />
+            <Dial short={l.short} dark={dark} label={String(rh)} minW={l.short ? 28 : 34} onStep={stepHour} disabled={done} />
             <Commit short={l.short} text="Say it ✓" onClick={commit} disabled={done} />
           </>
         )}

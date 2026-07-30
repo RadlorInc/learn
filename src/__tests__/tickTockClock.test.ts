@@ -171,6 +171,19 @@ describe('reading and setting', () => {
     expect(hintFor(read, { h: 7, m: 45 })).toMatch(/NEXT hour/)
   })
 
+  it('⚠️ only gives the "to" advice on a "to" time', () => {
+    // Given for any wrong read hour it fired on "7 o'clock" too — telling a child to count to the next
+    // hour when there is no next hour in the answer. Worse than silence: it teaches a rule that does
+    // not apply and says nothing about what they got wrong. Found by playing a full ten-round run.
+    for (const m of RING) {
+      const h = hintFor({ ask: 'read', m }, { h: 4, m })   // right minutes, wrong hour
+      if (m > 30) expect(h, `m=${m}`).toMatch(/NEXT hour/)
+      else expect(h, `m=${m}`).not.toMatch(/NEXT hour/)
+      expect(h.length).toBeGreaterThan(12)
+    }
+    expect(hintFor({ ask: 'read', m: 0 }, { h: 4, m: 0 })).toMatch(/short hand/)
+  })
+
   it('writes every hint — a response that exists only as speech is silence', () => {
     for (const ask of ['set', 'read'] as const)
       for (const got of [{ h: 1, m: 0 }, { h: 9, m: 30 }])
