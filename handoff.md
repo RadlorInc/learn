@@ -12,7 +12,176 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🚶 **2026-07-30 (LATEST) — THE MARKET WALK IS BUILT: COINSHOP IS SIX PAINTED STALLS, A KEEPER WHO SPEAKS FROM HIS OWN MOUTH, DRAWN SHOPPERS, AND A PURSE CARD. 🚀 SHIPPED — `main`@`8cff19d`, fast-forwarded and pushed, prod serving **sw v73**, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **308/308 vitest** (was 298) · `next build` · **0 console errors in a FRESH tab** · driven live at 1280×720 and 640×320 through intro → both demos → a guided round → a scored `read` round, plus a forced `fewest` end to end.
+> 🕐 **2026-07-30 (LATEST) — TICKTOCK REBUILT: A CLOCK LESSON THAT TEACHES THE THING NOBODY TEACHES, THEN THE SAME SKILL ANSWERED FROM BOTH ENDS. 🚀 SHIPPED — `main`@`fa48746`, fast-forwarded and pushed, prod serving **sw v74**, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **349/349 vitest** (was 305, +44) · `next build` · **0 console errors in a FRESH tab** · driven live at 1280×720 and 640×320 through intro → all four lesson beats → guided read → guided set → two scored rounds, including a deliberate wrong answer in each direction.
+>
+> **The ask:** *"time walla chapter karte hai… 10 different scenario… milo puchega 'i want to go show by 7:30' so whats the time? … starting mein baccho ko properly explain karna hoga ki kaise time dekhte hai, phir practice."*
+>
+> ## ⓪ THE ASK MATCHED THE BAND'S OWN SPEC, WHICH IS WHY NOTHING WAS INVENTED
+> [story-6-8-rethink.md](docs/story-6-8-rethink.md) §8 already carried the verb — **SET IT** — and the
+> same reasoning the founder gave: *"Four labels is winnable by elimination… reading and setting are
+> the same skill from both ends, and setting cannot be eliminated into."* What the ask ADDED and the
+> spec did not have is the **ten scenarios** (which turned out to be the missing cumulative arc) and
+> the **explicit lesson**. Read the spec before designing; it had already been paid for.
+>
+> **The old chapter scored 1 of 4 on the craft doc's aliveness check** — nothing arrived on its own
+> legs, a tap sent nobody anywhere, Milo floated in the corner with no job, only the backdrop rotated —
+> and its four answer pills gave a child who cannot read a clock a third of them for free.
+>
+> ## ① THE PAYLOAD, NAMED: ONE SET OF NUMBERS CARRIES TWO SCALES
+> The 6 means six hours **and** thirty minutes. That is the actual reason a six-year-old cannot read a
+> clock, and no amount of practice discovers it. So there is a **four-beat LESSON before anything is
+> scored** (colouring-chapter pattern, `lessonSeen` skip from the second run only): two hands and they
+> are different → the hour hand names the hour → **the minute ring fades in and the 6 lights up as 30**
+> → name half past / quarter past / quarter **to**, then one hands-on go. A **handover screen** says the
+> pointing is stopping, because the ring, the cue and the help all end at once.
+> • **The ring is a SCAFFOLD and fades by tier** — shown at L1–L2, gone at L3. Left up for ever the
+>   second scale is never in the child's head.
+>
+> ## ② ⚠️ THE SECOND HARD FACT IS "TO", AND IT IS WHY THE LADDER CHANGED
+> At *quarter to eight* the words say EIGHT and the little hand is still on SEVEN. `wordsFor` and the
+> hour the child must PLACE disagree on purpose, and the gate pins them together. My first ladder put
+> all four quarters at L2, which hands a child quarter-past and the entire "to" inversion **in one
+> step**; it is now **L1 o'clock → L2 + quarter/half past → L3 + every five minutes AND the "to" side**,
+> so past comes before to. The curriculum's own line (*"o'clock, half past, then 5-min"*) is now met.
+>
+> ## ③ ONE CONTROL SHAPE, BOTH DIRECTIONS
+> Two steppers and a commit, either way round. **SET**: Milo names the time, the dials are BARE
+> (`Hour ◀▶`, not `7 ◀▶`) so the only readout is the face — a dial printing the answer while you turn
+> it is the teen month-dial fault. **READ**: the clock is the question and the dial labels ARE the
+> phrase being built (`◀ ten to ▶` `◀ 8 ▶`). Alternating per round, so consecutive rounds differ in
+> gesture as well as scene. ⚠️ **The wrong-answer hints teach the two specific confusions** rather than
+> saying "not quite" — driven live, a wrong read hour gave *"Careful — after half past we count to the
+> NEXT hour"* and a wrong set hour gave *"Look at the short hand — that one shows the hour."* Both are
+> WRITTEN as well as spoken.
+>
+> ## ④ TEN SCENARIOS = MILO'S DAY, AND IT FIXED THE MISSING ARC
+> Wake · breakfast · bus · school · play · lunch · painting · park · dinner · moon. **The scenario fixes
+> the hour and the tier picks the minutes**, so story and difficulty are independent. The sun crosses
+> the sky and a moon hangs at the end, so *"the scene changes across the run"* comes free and means
+> something. **The three-world picker is GONE** — morning/afternoon/night are the arc, not a menu.
+> • **The night tint is a wash over existing backdrops, no new art, 0 credits.** Warm at the ends of
+>   the day, cool at night, capped so the picture stays legible (gated).
+> • ⚠️ **The gate caught a real collision the eye never would:** breakfast and bedtime were both on
+>   **8** and both on a SET round — and because the hour is fixed by the slot, `sig` cannot rescue it
+>   (a regenerate returns the identical round), so at L1 round 10 *was* round 2. Dinner moved to 5 and
+>   the moon to 6. **A day table that reuses hours can make two rounds the same question.**
+>
+> ## ⑤ THE GATE — 44 tests, and **9 of 9 planted regressions fail it**
+> Drives only [clock.ts](src/features/chapters/story/clock.ts) plus the real `makeTimeRound`, so it
+> cannot agree with a second copy of the constants. Caught in mutation testing: dropping the "to"
+> inversion · moving "to" into L2 · **a read question leaking its own answer** · a broken ladder · the
+> bar placed by percentage instead of measured off Milo · a reused scene · the minute phrase carved out
+> of the whole string again · a clock allowed below readable · alternation removed. ⚠️ **One mutation
+> silently failed to land** (shell quoting ate a template literal) and was re-planted with a script
+> that asserts its own substitution count — *assert the edit landed before concluding anything.*
+>
+> ## ⑤a ⚠️ THE FOUNDER THEN FOUND IT **PERMANENTLY STUCK** ON THE THIRD LESSON BEAT — AND IT IS THE MOST IMPORTANT FINDING HERE
+> He sat on *"So the long hand does not say six. It says thirty."* with no control on screen and no way
+> forward. **This is the item I flagged in this very block and did not chase** (*"the lesson's
+> auto-advance is only partly proven… watch it once on a real tab"*). Two causes, stacked:
+> • ⚠️ **`speakSteps` REVEALS EACH VISUAL FROM THE UTTERANCE'S `onstart`, so the teaching only happens
+>   if speech keeps delivering events.** Chrome and Safari both start the first line and then silently
+>   drop the rest — no `onstart`, no `onend`, no `onerror` — and the sequence then marches to its end on
+>   its per-line watchdogs while `onStep` never fires again. The line, the clock AND the flag that
+>   offers the child the dial are all set inside those steps, so all three froze at the last line that
+>   happened to speak. **Permanently.**
+> • ⚠️ **AND MY FIRST FIX MADE IT WORSE:** a fixed cap of `lines × 2900 + 4000` ≈ 15.6s behind it. Four
+>   lines at a real voice take ~20s, so the cap fired **mid-sentence** and cancelled a live utterance.
+>   **A backstop timed against the silent fallback is not timed against the thing it is backing up.**
+> **The fix deletes machinery rather than adding it:** the lesson and the re-teach are now **self-paced**
+> — dwell per line derived from its own length (`dwellFor`), `speak()` riding alongside — so speech can
+> succeed, fail or half-fail without the teaching stopping. No `speakSteps`, no cap, no watchdog. This
+> is the call MeasureIt already made for the mirror-image failure (racing past in 4s), and it is why the
+> colour and shape showcases are self-paced. **Cost stated: a slow voice can have its tail cut by the
+> next line** — far cheaper than a lesson that freezes.
+> • ⚠️ **WHY I NEVER SAW IT: the preview pane has NO VOICE**, so every run I drove took the silent
+>   fallback path, which works. **The bug lives only on a device that HAS a voice** — i.e. every real
+>   one. A chapter whose teaching is driven by speech cannot be verified in a mute instrument.
+> • **Now driven end to end and traced**: all 13 lines across 4 beats fired at 0.9 · 4.9 · 9.9 · 14.9 ·
+>   19.9 · 25.9 · **29.9 · 34.9 · 39.9 · 45.9** (the payload beat) · 49.9 · 52.9 · 54.9 · **60.9s, where
+>   the dial appears with its instruction and not before** → hands-on → the handover screen. ~61s of
+>   teaching, once, with the skip from run two.
+>
+> ## ⑥ FIVE FAULTS THE SCREEN CAUGHT THAT NO GATE DID
+> ① ⚠️ **Milo never appeared at all** — `leave` passed as a CONSTANT to `Arrive` with `ms={0}`, which
+> starts at the DONE phase, and done-while-leaving means *already gone*, so he was translated a full
+> screen right before the chapter began. **Invisible rather than misplaced, which is why nothing saw
+> it.** ② **He was absent for the whole lesson**, so the bubble's tail pointed at an empty corner —
+> the speaker must be on screen whenever the bubble is. ③ **The dial appeared three sentences early**,
+> gated on the beat index while the narration line lags a new beat. ④ **A "Next" button on every lesson
+> beat is a skip button on the first run**, which is the exact thing `lessonSeen` exists to prevent —
+> removed, with a hard per-beat cap behind the narration so it cannot hang instead. ⑤ **The Menu button
+> measured 12+41=53px against a 38px chrome budget**, so the bubble opened 13px inside it; the strip is
+> derived from the button's own metrics now and gated.
+>
+> ## ⑦ ⚠️ THE INSTRUMENT LIED FOUR TIMES, AND ONCE IT WAS MY EYE
+> • **Frozen transitions in a hidden pane** made the hands look mid-sweep and a crossfade look stuck —
+>   read the inline state instead: hour **105°** (= 3:30's creep), minute **180°**, ring "30" and
+>   numeral "6" both orange, visible backdrop `kitchen_fruit` at opacity 1. All correct.
+> • **`setTimeout` is throttled to nothing while the pane is hidden**, so the lesson cannot be timed
+>   through headlessly; a screenshot fronts the tab for ~40ms and that is what advances it.
+> • **`CHROME_PAD is not defined`** in the console with `tsc` clean — the stale HMR buffer, **zero in a
+>   fresh tab**. Third time this file records that shape.
+> • ⚠️ **AND A BROWN STREAK BESIDE MILO READ UNMISTAKABLY AS SPRITE BLEED.** Three theories wrong in a
+>   row — the cell maths, the `overflow` clip, the drop-shadow — each disproved by a measurement that
+>   suggested the next. The canvas said the strip was clean (1800×256, cell 150, aspect 0.586 exact,
+>   ink inside its cell). **Hiding the BACKDROPS settled it in one shot: he is spotless and the streak
+>   is a tree root painted into `door_houses.jpeg` that he stands in front of.** My eye grouped them;
+>   the DOM never did. **Isolate one layer before theorising about either.**
+>
+> ## ⑧ DRIVEN LIVE — what was actually verified
+> **1280×720:** intro → all four lesson beats (ring appears, 6 → 30 lights, auto-advance with no Next)
+> → guided READ on the kitchen (built "8 o'clock" from four batched taps, **all four landed** — the
+> functional-update fix holds) → graded correct → guided SET ("catch the bus at 9 o'clock", hands 270°/0°)
+> → scored round 1 at L3 on **7:50**, ring correctly ABSENT, a deliberate "ten to **7**" → the "to" hint
+> → corrected to "ten to 8" → *"That's right"* → **Milo's walk measured `0px/paused → 1260px/running →
+> 1260px/paused`**, i.e. legs running exactly while covering ground and clearing the frame → round 2
+> a SET round on **twenty to 9** (words say 9, face needs 8), wrong hour → short-hand hint, then correct.
+> **640×320:** Menu↔bubble **+2px**, clock 150px with 157px clear of Milo, 6px above the bar, 4px below
+> the bubble, Milo 8px clear of the bar, arrows **40×40**, **0 horizontal overflow**.
+> Temp `?p=`/`?d=` drive override **reverted and grepped**.
+>
+> ## ▶ OPEN
+> 1. ✅ **SHIPPED — `main`@`fa48746`, prod serving sw v74.**
+>    | commit | what |
+>    |---|---|
+>    | `60f84dc` | TickTock as SET IT — `clock.ts` (new) · `TickTock.tsx` (rewritten) · `tickTockClock.test.ts` (new) · `chapter-craft.md` |
+>    | `fa48746` | `public/sw.js` v73 → v74 for the deploy |
+>
+>    `origin/main` was at `1b4c807`, identical to local, so the merge was a **clean fast-forward with
+>    no merge commit**; local and remote both read `fa48746`, **0 ahead / 0 behind**. Prod `sw.js`
+>    reported **v74 on the fifth poll (~60s)**. **Verified rather than remembered.**
+>    Smoke: `/` `/menu` `/api/health` `/diagnostic` and `?ch=time` · `?ch=money` · `?ch=place` ·
+>    `?ch=add100` all **200**; **all ten of the day's backdrops** and `milo_side`/`milo_walk` **200**.
+>    **Then DRIVEN ON PROD rather than trusting status codes:** intro → **all four lesson beats, traced
+>    at 1.1 · 5.1 · 9.1 · 14.1 · 19.1 · 25.1 · 29.1 · 34.1 · 39.1 · 45.1 · 49.1 · 52.1 · 54.1 → 60.1s
+>    where the dial appears with its instruction** (the payload beat screenshotted live: ring showing,
+>    the 6 haloed, the ring's 30 orange) → hands-on to 3:30 (hands measured 105°/180°) → the handover
+>    screen → guided READ on the kitchen, built `o'clock` + `8` → **"That's right — 8 o'clock!"** →
+>    **0 console errors on prod.** So the §⑤a freeze is confirmed fixed on production, not just locally.
+>    ⚠️ **What the prod drive does NOT cover**, stated because this file's recurring fault is a status
+>    line outrunning its evidence: the guided SET round, any scored round, both wrong-answer hints,
+>    Milo's walk trace and 640×320 were driven on a **dev build of identical code**, not on prod.
+>    `scripts/.voice-*.json` correctly still untracked. **Nothing is outstanding in the tree.**
+> 2. **A full ten-round run has never been played through**, and neither has the mastery early-exit.
+>    Rounds 1–2 were driven; the day's later scenes (painting, park, dinner, **the night tint**) have
+>    only been seen as still backdrops, never with the evening/night wash live in a played round.
+> 3. ✅ **The lesson's auto-advance is now proven end to end** — see §⑤a. It was broken, the founder
+>    found it, and it is fixed by self-pacing. ⚠️ **Still unverified: whether the self-paced dwell reads
+>    well against a REAL voice** (the pane is mute). If a line's tail gets clipped, `dwellFor`'s `× 72`
+>    is the one number to raise.
+> 4. ⚠️ **`timeLabel` / `makeTimeChoices` in [TimeLesson.tsx](src/features/chapters/lessons/TimeLesson.tsx)
+>    are now a SECOND implementation of the same words**, still used by that (separately-routed) lesson.
+>    `timeLabel` has no 5-minute case — it falls through to `"7:25"` digits. Not wrong today; it is the
+>    kind of duplicate that rots. Point it at `clock.ts` when convenient.
+> 5. **Reading a laid-out pile of coins is still missing from CoinShop** (its own §④c) — unrelated, but
+>    the same "keep the second direction only where the material has a home" rule now has two datapoints.
+> 6. **Nobody has watched a child play it**, and every one of the five faults in §⑥ was found by looking
+>    at the screen, not by a gate.
+>
+> _(the 🚶 block below is the previous session — the CoinShop market walk, which SHIPPED.)_
+
+> 🚶 **2026-07-30 — THE MARKET WALK IS BUILT: COINSHOP IS SIX PAINTED STALLS, A KEEPER WHO SPEAKS FROM HIS OWN MOUTH, DRAWN SHOPPERS, AND A PURSE CARD. 🚀 SHIPPED — `main`@`8cff19d`, fast-forwarded and pushed, prod serving **sw v73**, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **308/308 vitest** (was 298) · `next build` · **0 console errors in a FRESH tab** · driven live at 1280×720 and 640×320 through intro → both demos → a guided round → a scored `read` round, plus a forced `fewest` end to end.
 >
 > **The ask:** *"haan, market walk build karo."* The verb (PAY IT), the generator, `fewest` and the
 > 24-test question gate all survive from the rejected pass; what changed is the whole scene. The
@@ -3845,7 +4014,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-30 (LATEST — see the top 🚶 block. **CoinShop is a MARKET WALK now: six painted stalls, a keeper who names his own price from a bubble at his mouth, drawn shoppers, and a purse card. 🚀 SHIPPED — `main`@`8cff19d`, fast-forwarded and pushed, prod serving sw v73, smoke green and driven live on prod.** The verb, the generator, `fewest` and the question gate survive the rejected pass; the scene and the gesture are new, and the gesture is the point — the previous three chapters were all *call an object, put it on a surface*. ⚠️ **The keeper animation was built, driven and then REMOVED on the founder's call, and the reason is the finding:** a character generated INSIDE its scene can only wiggle in place; one generated on flat chroma can walk. Measured, the patch was 4.4–10.5% of the frame, so **93–96% of the picture never moved** — splitting a video into frames does not make an animation, being drawn on its own does. The shoppers do the animating instead, for zero credits. ⚠️ **A roughness scan cannot FIND a ground line, only reject one** — every row of an open field is smooth, so it certified a stall at 0.60 and Milo floated; lines are picked by EYE against each stall's own foot, and the sweep was also reading the wrong half of the frame (through the counter, 3.7–7.5, against 0.7–1.9 on Milo's side). ⚠️ **`fitFor` now places the picture so its own ground line IS the ground line** — the world already yielded to the tap targets and the backdrop had to yield with it. Then three founder redraws landed as one complaint — *stop scattering things across the empty grass*: the question moved into a bubble at the speaker's mouth, the coins into a card, and the `read` rung was deleted because it asked *"how much money is that?"* over an empty screen the moment the coins moved. Faults the screen caught that no gate did: a chroma-0.0 lollipop, *"Fox has a apple"*, a board standing in the coins' flight path, and **a duck and a squirrel walking backwards** — where my eye AND my script both gave the same wrong answer. `tsc` 0 · **305/305 vitest** · `next build` · 0 console errors in a fresh tab · driven at 1280×720 and 640×320. ▶ Open: the prod drive covers demo → guided → round 1, so the `fewest` payload and a full ten-round run rest on a dev build of identical code; a scored L3 `fewest` has never come up naturally; nobody has watched a child play it. _(prior footer follows.)_)_
+_Last updated: 2026-07-30 (LATEST — see the top 🕐 block. **TICKTOCK (6–8 time) rebuilt: an explicit four-beat LESSON that teaches the one fact nobody teaches — a clock face carries TWO scales on one set of numbers, the 6 is also 30 — and then the same skill answered from BOTH ends on one control shape: SET the hands when Milo names a time, READ the clock when he asks. 🚀 SHIPPED — `main`@`fa48746`, prod serving sw v74, smoke green and driven live on prod.** The founder's ask matched the band's own spec (`story-6-8-rethink.md` §8 already said SET IT, for the same reason: four pills are winnable by elimination); what it added was the ten scenarios — which turned out to be the missing cumulative arc, so **Milo's day replaces the three-world picker** and the sun crosses the sky — and the lesson itself. The old chapter scored **1 of 4** on the aliveness check. ⚠️ **The ladder changed on a pedagogy argument**: "to" times invert the hour you say against the hour you place, so past now comes before to (L1 o'clock → L2 + quarter/half past → L3 + every 5 min AND "to"), which also finally meets the curriculum's own "then 5-min". The ring is a SCAFFOLD and **fades at L3**. `tsc` 0 · **349/349 vitest** (+44) · `next build` · 0 console errors in a fresh tab · driven at 1280×720 and 640×320, with a deliberate wrong answer in each direction so the two teaching hints were seen to fire. **Gate: 44 tests, 9/9 planted regressions caught** — including a read question leaking its own answer, and one mutation that silently failed to land until re-planted with a script that asserts its own substitution count. ⚠️ **Five faults the screen caught and no gate could:** Milo never appeared at all (`leave` passed as a constant to `Arrive` with `ms=0` starts at the DONE phase, and done-while-leaving means *already gone* — **invisible rather than misplaced**); he was absent for the whole lesson so the bubble's tail pointed at nobody; the dial appeared three sentences early; a "Next" on every lesson beat is a skip button on the first run; and the Menu button measured 53px against a 38px chrome budget, opening the bubble 13px inside it. ⚠️ **AND THEN THE FOUNDER FOUND THE LESSON PERMANENTLY STUCK ON BEAT 3 — the one item this block had flagged and I had not chased.** `speakSteps` reveals every visual from the utterance's `onstart`, so on a device that starts the first line and then silently drops the rest (Chrome and Safari both do) the sequence marches to its end while `onStep` never fires again — the line, the clock and the flag that offers the child the dial all freeze for ever. **My first fix made it worse:** a fixed 15.6s cap behind narration that really takes ~20s, so it fired mid-sentence and cancelled a live utterance — *a backstop timed against the silent fallback is not timed against the thing it is backing up.* The lesson and the re-teach are now **self-paced with `speak()` alongside** (MeasureIt's call, for the mirror-image failure), which deletes machinery instead of adding it. **The whole reason I never saw it: the preview pane is MUTE, so the bug lives only on devices that have a voice — i.e. every real one.** Traced end to end after the fix — **and re-traced ON PROD**: all 13 lines fired across the four beats, the dial appears with its instruction at 60.1s and not before, handover reached, guided read graded correct, 0 console errors. ⚠️ **And the instrument lied four times, once as my own eye:** frozen transitions made the hands look mid-sweep, throttled timers stall the lesson headlessly, a `CHROME_PAD is not defined` crash was the stale HMR buffer (zero in a fresh tab), and **a brown streak beside Milo read unmistakably as sprite bleed through three wrong theories — hiding the BACKDROPS settled it: he is spotless and the streak is a tree root painted into the scene he stands in front of.** ▶ Open: **shipped (`main`@`fa48746`, prod sw v74)**, but the prod drive covers intro → the lesson → the handover → one guided read, so the set round, the scored rounds, both hints, Milo's walk trace and 640×320 rest on a dev build of identical code; a full ten-round run and the night-tint rounds have never been played; whether the self-paced dwell reads well against a REAL voice is unverified (the pane is mute — `dwellFor`'s `× 72` is the one number to raise); `timeLabel` in TimeLesson is now a second, 5-min-less implementation of the same words; nobody has watched a child play it. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-30 (the 🚶 block. **CoinShop is a MARKET WALK now: six painted stalls, a keeper who names his own price from a bubble at his mouth, drawn shoppers, and a purse card. 🚀 SHIPPED — `main`@`8cff19d`, fast-forwarded and pushed, prod serving sw v73, smoke green and driven live on prod.** The verb, the generator, `fewest` and the question gate survive the rejected pass; the scene and the gesture are new, and the gesture is the point — the previous three chapters were all *call an object, put it on a surface*. ⚠️ **The keeper animation was built, driven and then REMOVED on the founder's call, and the reason is the finding:** a character generated INSIDE its scene can only wiggle in place; one generated on flat chroma can walk. Measured, the patch was 4.4–10.5% of the frame, so **93–96% of the picture never moved** — splitting a video into frames does not make an animation, being drawn on its own does. The shoppers do the animating instead, for zero credits. ⚠️ **A roughness scan cannot FIND a ground line, only reject one** — every row of an open field is smooth, so it certified a stall at 0.60 and Milo floated; lines are picked by EYE against each stall's own foot, and the sweep was also reading the wrong half of the frame (through the counter, 3.7–7.5, against 0.7–1.9 on Milo's side). ⚠️ **`fitFor` now places the picture so its own ground line IS the ground line** — the world already yielded to the tap targets and the backdrop had to yield with it. Then three founder redraws landed as one complaint — *stop scattering things across the empty grass*: the question moved into a bubble at the speaker's mouth, the coins into a card, and the `read` rung was deleted because it asked *"how much money is that?"* over an empty screen the moment the coins moved. Faults the screen caught that no gate did: a chroma-0.0 lollipop, *"Fox has a apple"*, a board standing in the coins' flight path, and **a duck and a squirrel walking backwards** — where my eye AND my script both gave the same wrong answer. `tsc` 0 · **305/305 vitest** · `next build` · 0 console errors in a fresh tab · driven at 1280×720 and 640×320. ▶ Open: the prod drive covers demo → guided → round 1, so the `fewest` payload and a full ten-round run rest on a dev build of identical code; a scored L3 `fewest` has never come up naturally; nobody has watched a child play it. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-29 (**placeValue rebuilt as MAKE IT. 🚀 SHIPPED — `main`@`456c7a8`, prod serving sw v72, smoke green and driven live on prod.** ⚠️ **The founder's question invalidated my own plan and that is the part to carry:** the plan had the child count rods into a two-window pad, and asked what they were LEARNING the honest answer was *transcription* — the pad says which digit goes where, so a child who does not know the 3 means thirty passes anyway. **The test that exposes it is 34 vs 43**, and the curriculum's own word is BUILD. So MAKE is the verb, the TENS side is on the LEFT the way a number is written, and a swapped answer is named out loud. ⚠️ **Then the GROUND was wrong twice.** Built indoors first on a "packing bench" whose scenes were picked on hue and quietness — both PALETTE checks — with a surface line nobody measured against the picture, so the blocks floated inside a glass display case. Moved to the FORESTS, **which passed the walkable-ground gate**, and everything still floated in shrubbery: that gate only asks whether a pixel is blue, and a bush is green — **the craft doc already records that it cannot tell canopy from grass, and I pointed it at the one family it cannot judge.** The check that matters is horizontal ROUGHNESS: `garden_meadow` 1.9, the forests 15–21. It is in the gate now, and it **rejected `fair_sky` at 4.05 against a threshold of 4 — the threshold was not loosened to keep the scene.** Four `open_*` backdrops generated against that number (~6 of the credits that expire 2026-07-30), because the library's nine open-ground scenes are all already BlockYard's. Also: `yard.tsx` extracted with BlockYard re-exporting everything so its 57 tests prove the extraction changed nothing; `blockSet()` is now the only place deriving a rod from a cube, after the supply tray drew a "ten" at 2.4 units. **Three holes in my own gate found by mutation-testing it** — a flush-contact assertion, a tautology, and one that sampled a fixed ratio and failed 1 run in 13. `tsc` 0 · 274/274 · `next build` · 15/15 planted regressions caught · driven live at three sizes through demo → guided → scored MAKE → scored PACK. ▶ **🚀 SHIPPED — `main`@`456c7a8`, prod sw v72**; driven on prod with everything measured on the ground line (459 = 0.74 × 620) and 0 console errors. ⚠️ The prod drive covers the DEMO; the scored-round layout was verified on a dev build of identical code. Open: **the `value` payload question and L2/L3 were never driven live**; nobody has watched a child play it. _(prior footer follows.)_)_
 
