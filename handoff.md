@@ -12,7 +12,149 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🕐 **2026-07-30 (LATEST) — TICKTOCK REBUILT: A CLOCK LESSON THAT TEACHES THE THING NOBODY TEACHES, THEN THE SAME SKILL ANSWERED FROM BOTH ENDS — AND THEN THE FOUNDER'S THREE MESSAGES TURNED IT INTO A BAND-WIDE FIX. 🚀 SHIPPED — `main`@`5b29665`, prod serving **sw v77** (four deploys, each verified on prod rather than remembered).** `tsc` 0 · **361/361 vitest** (was 305, **+56**) · `next build` · **0 console errors in a FRESH tab and on prod** · driven live at 1280×720 and 640×320, and a **full ten-round run played twice, from both ends**.
+> 🔧 **2026-07-30 (LATEST) — THREE OPEN ITEMS CLOSED, AND THEN PLAYING THE CHAPTERS FOUND TWO MORE FAULTS THE GATES HAD PASSED. 🚀 SHIPPED — `main`@`2acbdc8`, prod serving **sw v79** (two deploys, each confirmed by polling prod).** `tsc` 0 · **369/369 vitest** (was 361, **+8**) · `next build` · **0 console errors on prod** · **11/11 planted regressions caught** · two full ten-round CoinShop runs and a TickTock run from the lesson to a scored round, all on the live origin.
+>
+> **The ask:** the three items sitting open at the bottom of the 🕐 block — *"yeh teeno ko fix karo…
+> jaise behtar lage"* — then *"poora ten-round run khel ke dekho"*, then *"TickTock ka bhi run"*.
+>
+> ## ⓪ THE SHAPE OF THE SESSION, BECAUSE IT IS THE POINT
+> The three fixes were straightforward and all three gates were green. **Both faults that actually
+> mattered turned up afterwards, from PLAYING the chapters** — one on a screenshot mid-run, one on the
+> very first TickTock run after this file had said out loud that TickTock was gate-verified only.
+> That is the seventh session running where the same sentence is the honest summary.
+>
+> ## ① THE SHARED CUE — `Beat.ownsFeedback`, opt-in
+> SkillBeat's *"Let's look together!"* pill is pinned dead centre of the viewport, which is fine in a
+> chapter whose play surface is being replaced anyway and **wrong in one that retries IN PLACE over
+> the thing being read** — TickTock landed it on the clock face while telling the child to look at it.
+> ⚠️ **And it was worse than an overlap.** TickTock and CoinShop both handle their own retry loop and
+> **only report a round once it has been SOLVED**, so the pill *and* the generic spoken encouragement
+> arrived on top of the chapter's own *"That's right — half past six!"* / *"The pot is yours!"* and
+> contradicted it. `ownsFeedback` suppresses both; `hintFor`/`missFor` replace them and are strictly
+> better, naming WHICH hand or WHICH total is wrong, written as well as spoken.
+> **Opt-in on purpose:** 37 files use SkillBeat and exactly two set the flag, so the other 35 are
+> unchanged by construction. The re-teach still fires either way.
+>
+> ## ② `TimeLesson.tsx` DELETED — the duplicate was DEAD, which nobody had checked
+> This file recorded it as *"still used by that separately-routed lesson"*. **Grep found zero importers
+> anywhere** — `?ch=time` resolves to TickTock. So pointing it at `clock.ts` would have kept a second
+> copy of the clock's words alive to be maintained; deleting it removes the class. **A "still used by"
+> line in this file is a claim like any other, and one grep settles it.**
+>
+> ## ③ READING A LAID-OUT PILE IS BACK IN COINSHOP — same control, no second surface
+> It was deleted for a real reason: as a `read` rung with its own number pad it had **nowhere to draw
+> its coins** once they moved into the card, so it asked *"how much money is that?"* over an empty
+> screen. The direction was never the fault — **the pile having no home was.** It has one now:
+> `MoneyRound.asPile` makes the keeper spread his coins out in **his own speech bubble**, where the
+> price numeral would be, and say *"count my coins, then pay me the same."*
+> • A **presentation flag, not a third question type** — the gesture, the grading and the card are
+>   identical either way, so a `read` kind would have been a second code path for one changed sentence.
+>   This is TickTock's own call: *one control shape, both directions.*
+> • **Directions ALTERNATE** (round 0 numeral, round 1 pile), so consecutive rounds differ in what is
+>   READ as well as in scene.
+> • ⚠️ **Copying the pile coin-for-coin is DELIBERATELY allowed at L1–L2 and impossible at L3.**
+>   Matching one-to-one is the honest entry strategy for a six-year-old — the same call BigOrSmall
+>   makes for comparing by eye — and it still needs reading each coin and knowing when to stop. At L3
+>   the pile lands on a `fewest` round whose shown set is always strictly worse than the answer.
+> • **A pile round never says its amount** — not in the opener and not in the miss line, which is where
+>   a target most easily leaks back out. `openerFor` and `missFor` are one renderer each so a gate can
+>   reach them at all.
+>
+> ## ④ ⚠️ THEN A SCREENSHOT CAUGHT A REGRESSION I HAD JUST MADE, AND IT IS THE BEST RULE HERE
+> `CoinExplain` derived its coin pool from **`shown.includes(25)`** — a PROXY for the price, not the
+> price. The moment the second demo's pile became six 5s it silently fell to a pool with no 25 in it,
+> so *"the same thirty in only TWO coins"* became **THREE TENS**: the 25, the entire payload of
+> `fewest`, gone from the teaching **while every spoken line stayed true.** One `poolFor(price)` now
+> serves the demo, the card and the grader.
+> **⇒ A PROXY FOR A VALUE IS A SECOND PLACE DECIDING IT.** Same family as every "two copies of one
+> rule" fault in this file, but the copy was disguised as a test rather than as a constant.
+>
+> ## ⑤ ⚠️ AND THE TICKTOCK RUN FOUND A HANG — ON THE LESSON'S ONE HANDS-ON GO
+> Six taps on the *"put the long hand on the six"* dial moved the hand **ONE stop** (0 → 5, not 0 → 30).
+> `stepTry` read its minute from a `useState` value it also set, so every tap inside one React batch
+> saw the same stale number. The value is **never rendered** (the clock draws from `view`), so it was
+> not render state at all — a **ref** deletes the class and is less code than what it replaced.
+> • ⚠️ **It was a HANG, not a sticky dial.** The last lesson beat deliberately has **no auto-advance**
+>   (`if (!last)` — it waits for the child, because that one go is the point), so a burst of taps left
+>   the child sitting on the dial with nowhere to go. **The same beat family the founder was already
+>   stuck on once.**
+> • ⚠️ **Third time this repo has met this shape** — placeValue's undo (three batched "back" taps
+>   removing one cube, **found by a real user on a janky device**) and CoinShop's `lay`, which reads
+>   inside the updater for exactly this reason. Distinct human taps are usually separate ticks; that is
+>   not a guarantee, which is why the rule is **never read state you also set inside a handler**, not
+>   *humans cannot tap that fast*. Gated.
+> • The same run confirmed the **practice** dial is fine: four batched taps took the hour 12 → 8.
+>
+> ## ⑥ WHAT WAS ACTUALLY PLAYED, ON PROD
+> **CoinShop — two full ten-round runs, both ending by the chapter finishing its own run.**
+> • **Run B (mostly correct → the tier CLIMBS)** reached the L3 pool, and **the round the read
+>   direction exists for turned up on its own**: a pile of **25 · 10 · 5 · 5 · 1 = 46** on a `fewest`
+>   round. Copying it is refused with the payload line — *"That is forty-six, but with five coins. Try
+>   bigger coins — can you do it in four?"* — and 25+10+10+1 is accepted. Read-then-unitise in one
+>   gesture, with copying impossible by construction.
+> • **Run A (one error per round → the tier stays low and the whole day gets walked)** — ten rounds,
+>   the same alternation, and the two miss lines behaving differently in exactly the right way: a
+>   numeral round names its target, **a pile round never does** (confirmed at 6, 15 and 10 with the
+>   pile still on screen beside it). **The re-teach fired on a PILE round** and the new `CoinExplain`
+>   branch is right — traced beat by beat, the keeper holds out **5 · 5** while Milo counts *five →
+>   ten*, and the demo DOES name the total because teaching may.
+> • ⚠️ **No `Let's look together!` pill anywhere in either run** — polled directly, `false` every time.
+> • The purse follows the **PRICE**, not the tier (`poolFor`), so a 20 offers 1/5/10 and a 46 offers
+>   1/5/10/25. Intended, and worth knowing before reading a screenshot as a tier signal.
+>
+> **TickTock — lesson to a scored round.** All four lesson beats auto-advanced (the minute ring fading
+> in, *"So the long hand does not say six. It says thirty."* — the exact line the founder was stuck on,
+> moving — and the "to" inversion drawn with the hour hand on 3 under the label *quarter to 4*), then
+> the dial appearing **with** its instruction, the handover, both guided rounds, and a scored READ
+> round where a deliberate `12 o'clock` gave the **short-hand** hint (*not* the "to" advice, since 7
+> o'clock has no "to"), corrected to 7, round 2 arriving as a SET round. **A 150ms sampler across that
+> round boundary saw the pill exactly zero times.**
+>
+> ## ⑦ ⚠️ TWO INSTRUMENT TRAPS, AND ONE OF THEM UNDERMINES THIS FILE'S OWN DEPLOY PROOF
+> • **A CONTROLLED SERVICE WORKER SERVES THE OLD SHELL EVEN WHEN PROD'S `sw.js` ALREADY REPORTS THE NEW
+>   VERSION.** Driving v79 the first time reproduced the OLD behaviour — hand stuck at 5 — while
+>   `caches.keys()` read `milo-shell-v79`: the new SW had installed and pre-cached, and the one still
+>   CONTROLLING the page was v78, serving its chunks `cacheFirst`. Unregister + clear `caches` + reload
+>   gave the fix at once. **Polling `sw.js` proves the EDGE has the deploy; it does not prove the tab
+>   you are driving is running it** — and polling `sw.js` is exactly how every block in this file
+>   claims a deploy landed. *(Mid-run I concluded from this that my dev evidence had been wrong. It had
+>   not — the dev run was correct and the prod tab was stale.)*
+> • **A driver that lays coins and clicks Pay in the SAME tick** reads `total` from the pre-commit
+>   render and reports *"That makes zero"* — the craft doc's own *two taps in one tick are a TEST
+>   artefact, not a user*, met head on. The runs only became readable once laying and committing were
+>   split into separate tool calls. A long `await`-heavy driver also hung the 30s eval cap, and
+>   background-tab throttling stretched every sleep. **Drive one gesture per call; never await inside
+>   the page.**
+>
+> ## ▶ OPEN
+> 1. ✅ **SHIPPED — `main`@`2acbdc8`, prod serving sw v79.** Two deploys, both clean fast-forwards with
+>    no merge commit, both confirmed by polling prod's own `sw.js`.
+>    | commit | what | prod |
+>    |---|---|---|
+>    | `9b32283` `d00613d` `b9988a0` + `a41208b` `fe2432c` | the three fixes — `ownsFeedback` · TimeLesson deleted · the coin pile | **v78**, 6th poll |
+>    | `eb11278` + `558c17c` `9bd3e77` `2acbdc8` | the lesson dial dropping batched taps | **v79**, 5th poll |
+>
+>    Smoke green both times (`/` `/menu` `/api/health` `/diagnostic` and `?ch=time` · `money` · `place` ·
+>    `add100` · `rainbow` all **200**; all market scenes, shopper cycles, coins and Milo's cycle **200**).
+>    ⚠️ **What the prod drives do NOT cover**, stated because a status line outrunning its evidence is
+>    this file's oldest fault: **640×320 was not checked at all this session**, and no chapter other
+>    than CoinShop and TickTock was driven — the other 35 are safe *by construction* (opt-in flag,
+>    369 tests green) and that is an argument, not a screenshot.
+>    `scripts/.voice-*.json` correctly still untracked. **Nothing is outstanding in the tree.**
+> 2. ⚠️ **STILL THE TOP ITEM, UNCHANGED: whether the self-paced dwell reads well against a REAL voice.**
+>    The pane is mute, which is exactly what hid the lesson hang for a whole session. `dwellFor`'s
+>    `× 72` is the one number to raise. **It needs an ear, not a gate.**
+> 3. **SkillBeat's re-teach cue is still shared and still centred for the other 35 chapters.** Nobody
+>    has complained, and none of them retries in place — but if a second chapter ever does, it wants
+>    `ownsFeedback` rather than a fresh diagnosis.
+> 4. **640×320 is unchecked on both changed chapters.** The coin bubble now draws a row of up to five
+>    coins in it; `cardMetrics` and the bubble's `maxWidth` were not re-measured at that size.
+> 5. **Nobody has watched a child play any of it.** Of this session's faults, **one was found on a
+>    screenshot and one by playing — none by a gate**, and both gates were written afterwards.
+>
+> _(the 🕐 block below is the same day's earlier work — the TickTock rebuild these items came out of.)_
+
+> 🕐 **2026-07-30 — TICKTOCK REBUILT: A CLOCK LESSON THAT TEACHES THE THING NOBODY TEACHES, THEN THE SAME SKILL ANSWERED FROM BOTH ENDS — AND THEN THE FOUNDER'S THREE MESSAGES TURNED IT INTO A BAND-WIDE FIX. 🚀 SHIPPED — `main`@`5b29665`, prod serving **sw v77** (four deploys, each verified on prod rather than remembered).** `tsc` 0 · **361/361 vitest** (was 305, **+56**) · `next build` · **0 console errors in a FRESH tab and on prod** · driven live at 1280×720 and 640×320, and a **full ten-round run played twice, from both ends**.
 >
 > **Read §⑤a–⑤d before anything else: everything that actually mattered was found by the founder playing it, and each of his three messages exposed a deeper fault than the one before** — a lesson that hung, hard content that was barely being asked, and copy that pointed a child at furniture the chapter had deleted.
 >
@@ -241,89 +383,10 @@
 >    | `6fd8551` + `1bc48af` | the "to" hint firing on times with no "to", and the night dial contrast (§⑤b) | **v75**, 9th poll |
 >    | `52374d8` + `c04436b` + `cfd99ce` | the closed-set coverage gate — shared, opt-in (§⑤c) | **v76**, 6th poll |
 >    | `7b1d691` + `ba35c43` | CoinShop's intro naming two deleted props (§⑤d) | **v77**, 4th poll |
->    | `9b32283` + `d00613d` + `b9988a0` + `a41208b` + `fe2432c` | **the three open items closed — see 4/5/6 below** | **v78**, 6th poll |
+>    | `9b32283` + `d00613d` + `b9988a0` + `a41208b` + `fe2432c` | the three open items 4/5/6 closed | **v78**, 6th poll |
+>    | `eb11278` + `558c17c` + `9bd3e77` + `2acbdc8` | TickTock's lesson dial dropping batched taps | **v79**, 5th poll |
 >
->    ## ⚠️ THEN TICKTOCK WAS PLAYED TOO, AND PLAYING IT FOUND A REAL FAULT THE GATES COULD NOT
->    The three fixes were shipped with CoinShop driven end to end and **TickTock only gate-verified** —
->    which this file then said out loud, and the very next run justified it. Six taps on the lesson's
->    hands-on dial moved the hand **ONE stop** (measured: 0 → 5, not 0 → 30). `stepTry` read its minute
->    from a `useState` value it also set, so every tap inside one React batch saw the same stale number.
->    • The value is **never rendered** — the clock draws from `view` — so it was not render state at
->      all, and a **ref** deletes the class rather than papering over it. Six batched taps now walk six
->      stops; verified on screen, the lesson accepted `half past 3` and moved on to the handover.
-> ⚠️ **AND IT WAS A HANG, NOT A STICKY DIAL — which is what makes it worth the deploy.** The last
->      lesson beat deliberately has **no auto-advance** (`if (!last)` — it waits for the child, because
->      that one go is the point), so a burst of taps that moved one stop left the child sitting on the
->      dial with nowhere to go. Same beat family the founder was already stuck on once.
->    • ⚠️ **This is the third time this repo has met the same shape** (placeValue's undo, CoinShop's
->      `lay`, now here). Distinct human taps are usually separate ticks — but placeValue's was found by
->      a real user on a janky device, which is why the rule is *never read state you also set inside a
->      handler*, not *humans cannot tap that fast*. Gated on the ref.
->    • ⚠️ **A CONTROLLED SERVICE WORKER SERVES THE OLD SHELL EVEN WHEN PROD'S `sw.js` ALREADY REPORTS
->      THE NEW VERSION, AND THIS FILE'S DEPLOY PROOF IS EXACTLY THAT POLL.** Driving v79 the first time
->      reproduced the OLD behaviour — hand stuck at 5 — while `caches.keys()` read `milo-shell-v79`:
->      the new SW had installed and pre-cached, and the one still CONTROLLING the page was v78, serving
->      its chunks `cacheFirst`. Unregistering, clearing `caches` and reloading gave the fix immediately.
->      It made a clean before/after by accident, and it means **a browser that has visited before is
->      testing the previous build until its SW is released.** Polling `sw.js` proves the EDGE has the
->      deploy; it does not prove the tab you are driving is running it.
->      *(Mid-run I concluded from this that my dev evidence had been wrong. It had not — the dev run was
->      correct and the prod tab was stale.)*
->    • **And the same run confirmed the practice dial is fine**: four batched taps took the hour 12 → 8
->      in one go, so the functional-update fix holds where it already was.
->
->    **The rest of the TickTock run was clean, on prod:** all four lesson beats auto-advanced — the
->    minute ring fading in, *"So the long hand does not say six. It says thirty."* (the exact line the
->    founder was stuck on, moving), the "to" inversion drawn with the hour hand on 3 under the label
->    *quarter to 4* — then the dial appearing **with** its instruction, the handover screen, both
->    guided rounds, and a scored READ round where a deliberate `12 o'clock` gave the SHORT-HAND hint
->    (*not* the "to" advice, since 7 o'clock has no "to" — §⑤b's fix holding), corrected to 7, and
->    round 2 arriving as a SET round. ⚠️ **A 150ms sampler across that round boundary saw the
->    `Let's look together!` pill exactly zero times**, which is the case it used to appear in.
->
->    ## ✅ TWO FULL TEN-ROUND RUNS PLAYED ON PROD (v78) — and they found nothing, which is the report
->    Both ended by the chapter finishing its own run; **0 console errors** throughout.
->
->    **Run B — mostly correct, so the tier CLIMBS.** Prices reached the L3 pool and the purse opened to
->    1/5/10/25. Directions alternated perfectly for the whole run:
->    | | numeral | pile |
->    |---|---|---|
->    | | 7 · 42 · 35 · 20 | 10+5+5+5 = **25** · 10+5+5+5+1 = **26** (paid 25+1) · 25+1+1 = **27** |
->
->    …and then **the round the read direction exists for turned up on its own**: a pile of
->    **25 · 10 · 5 · 5 · 1 = 46** on a `fewest` round. Paying it by COPYING the pile is refused with the
->    payload line — *"That is forty-six, but with five coins. Try bigger coins — can you do it in
->    four?"* — and 25+10+10+1 is accepted. That is read-then-unitise in one gesture, and copying is
->    impossible by construction, exactly as the L3 half of the ladder claims.
->
->    **Run A — one error per round, so the tier stays low and the whole day gets walked.** Ten rounds,
->    same alternation (11 · 3 · 2 · 6 · 7 numeral against 5+1 · 5+5+5 · 5+5 · 5+5+1 · 5+1+1 pile), and
->    the two miss lines behaved differently in exactly the right way — a numeral round names its target
->    (*"That makes twelve. I asked for eleven."*) and **a pile round never does** (*"That makes seven.
->    Count my coins again."*, confirmed at 6, 15 and 10 with the pile still on screen beside it).
->    • **The re-teach fired, on a PILE round**, and the new `CoinExplain` branch is right: traced beat
->      by beat, the keeper holds out **5 · 5** in his bubble while Milo counts *five → ten* into the
->      tray, and the demo DOES name the total (*"A bun — that is ten."*) because teaching may.
->    • ⚠️ **NO `Let's look together!` PILL ANYWHERE, across every reported-wrong round in both runs** —
->      polled for it directly, `false` every time. `ownsFeedback` holds on the live build.
->    • The purse follows the PRICE rather than the tier (`poolFor`), so a 20 offers 1/5/10 and a 46
->      offers 1/5/10/25. Intended, and worth knowing before reading a screenshot as a tier signal.
->
->    ⚠️ **AND ONE LESSON ABOUT THE DRIVER, WHICH COST MOST OF THE TIME.** A script that lays coins and
->    clicks Pay in the SAME tick reads `total` from the pre-commit render and reports *"That makes
->    zero"* — the craft doc's own *two taps in one tick are a TEST artefact, not a user*, met head on.
->    The run only became readable once laying and committing were split into separate tool calls. The
->    long `await`-heavy driver also hung the 30s eval cap, and background-tab throttling stretched every
->    sleep. **Drive one gesture per call; never await inside the page.**
->
->    **v78 DRIVEN on prod, not status-coded:** the pile demo (Bear holding out six 5s while Milo pays
->    **25 + 5** — so the `poolFor` regression is genuinely fixed on the live build), guided **5+1+1 = 7**,
->    scored round 0 (numeral, 3, graded with the tick), and **scored round 1 as a PILE round** — 5 + 1
->    held out with no number anywhere, paid, *"That is six. The pot is yours!"*. All assets **200**,
->    **0 console errors** across `?ch=money` and `?ch=time`. ⚠️ Not covered on prod, stated because a
->    status line outrunning its evidence is this file's oldest fault: the pile MISS line, an L3 `fewest`
->    pile, and the suppressed cue's absence over the clock were driven on a **dev build of identical
->    code** (the cue is proven by gates instead — absence is what a screenshot cannot show).
+>    **↑ Those last two rows are the 🔧 block at the top of this file — read that, not this.**
 >
 >    Smoke green each time (`/` `/menu` `/api/health` `/diagnostic` and `?ch=time` · `money` · `place` ·
 >    `add100` · `rainbow` all **200**; all ten of the day's backdrops and Milo's cycle **200**).
@@ -338,47 +401,18 @@
 >    problem it exposed is fixed and driven (§⑤c).** The night and evening washes, the re-teach, the
 >    tier climbing to L3 with the ring retiring, mastery early-exit, and now **all four readings
 >    including a "to" time and a five-minute time in a NATURAL run** are confirmed on screen.
-> 3. ✅ **The lesson's auto-advance is now proven end to end** — see §⑤a. It was broken, the founder
->    found it, and it is fixed by self-pacing. ⚠️ **Still unverified: whether the self-paced dwell reads
->    well against a REAL voice** (the pane is mute). If a line's tail gets clipped, `dwellFor`'s `× 72`
->    is the one number to raise.
-> 4. ✅ **`TimeLesson.tsx` IS DELETED (2026-07-30).** It was not "still used by a separately-routed
->    lesson" — that line was wrong: `grep` found **zero importers anywhere**, so the second copy of
->    `timeLabel`/`makeTimeChoices`/`ClockFace` was simply dead. Deleting it beats pointing it at
->    `clock.ts`, which would have kept a duplicate alive to be maintained. *A "still used by" claim in
->    this file is a claim like any other; one grep settles it.*
-> 5. ✅ **READING A LAID-OUT PILE IS BACK IN COINSHOP, ON THE SAME CONTROL (2026-07-30).** Not as a
->    `read` kind with a number pad — that is what was deleted, and rightly, because the pile had **no
->    home**. It has one now: `MoneyRound.asPile` makes the keeper **spread his coins out in his own
->    speech bubble**, where the price numeral would be, and say *"count my coins, then pay me the
->    same."* One control shape, both directions — TickTock's call, not a second answering surface.
->    Directions **ALTERNATE** (round 0 numeral, round 1 pile), so consecutive rounds differ in what is
->    read as well as in scene. ⚠️ **Copying the pile coin-for-coin is deliberately allowed at L1–L2 and
->    impossible at L3**, where the pile lands on a `fewest` round whose shown set is always strictly
->    worse than the answer — the same allow-the-entry-strategy-then-defeat-it ladder BigOrSmall uses.
->    **Driven live at 1280×720:** the pile demo, a scored pile round (r1, pots stall, 5+1 held out with
->    no number anywhere), a wrong payment giving *"That makes five. Count my coins again."* — **the
->    target unsaid** — then *"That is six. The pot is yours!"* only after the commit, and r0/r1/r2
->    alternating numeral → pile → numeral on screen.
->    ⚠️ **AND CHASING IT FOUND A REAL REGRESSION ON A SCREENSHOT, WHICH IS THE FINDING WORTH KEEPING.**
->    `CoinExplain` derived its coin pool from `shown.includes(25)` — a PROXY for the price, not the
->    price — so the moment the second demo's pile became six 5s it silently fell to a pool with no 25 in
->    it and *"the same thirty in only TWO coins"* became **three tens**: the 25, the entire payload of
->    `fewest`, gone from the teaching while every spoken line stayed true. Now one `poolFor(price)`
->    serves the demo, the card and the grader, and the gate forbids the old derivation. *Two places
->    deciding the same thing differently is the fault, and a proxy for a value is one of those places.*
-> 6. ✅ **THE `Let's look together!` CUE NO LONGER LANDS ON THE CLOCK (2026-07-30)** — and it turned out
->    to be worse than an overlap. `Beat.ownsFeedback` (opt-in, so the other 35 chapters are untouched)
->    suppresses SkillBeat's centred pill AND its generic spoken encouragement for a beat that says its
->    own miss line. **TickTock and CoinShop both set it, because both retry IN PLACE and only report a
->    round once it has been SOLVED** — so the shared cue arrived on top of their own *"That's right —
->    half past six!"* / *"The pot is yours!"* and contradicted it, over the very thing being read.
->    `hintFor` / `missFor` replace it and are strictly better: they name WHICH hand or WHICH total is
->    wrong, written as well as spoken. **11/11 planted regressions caught** across the three fixes.
-> 6a. ⚠️ **STILL OPEN, AND STILL THE TOP ITEM: whether the self-paced dwell reads well against a REAL
+> 3. ✅ **The lesson's auto-advance is proven end to end** — see §⑤a — and has since been watched
+>    beat by beat on prod (🔧 block). It was broken, the founder found it, self-pacing fixed it.
+> 4. ✅ **CLOSED — `TimeLesson.tsx` deleted, CoinShop reads a pile again, and the shared cue no longer
+>    lands on the clock. All three, plus the dial fault the TickTock run then turned up, are written up
+>    in the 🔧 block at the top of this file.**
+> 5. ⚠️ **STILL OPEN, AND STILL THE TOP ITEM: whether the self-paced dwell reads well against a REAL
 >    voice.** The browser pane has no voice, which is exactly what hid §⑤a for a whole session. If a
 >    line's tail gets clipped, `dwellFor`'s `× 72` is the one number to raise — and it needs an ear,
 >    not a gate.
+> 6. **Reading a laid-out pile of coins is no longer missing from CoinShop** (it was this block's own
+>    open item 5) — see the 🔧 block. The rule it was a datapoint for still stands: keep the second
+>    direction only where the material has a home.
 > 7. **Nobody has watched a child play it.** Of the nine faults this session, **five were found by
 >    looking at the screen and three by the founder playing it — not one by a gate.** Two of the three
 >    he found were deeper than anything I had thought to check: a lesson that hung on every device that
@@ -4218,7 +4252,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-30 (LATEST — see the top 🕐 block. **TICKTOCK (6–8 time) rebuilt, and then the founder's three messages turned it into a band-wide fix. 🚀 SHIPPED — `main`@`5b29665`, prod serving sw v77 across four deploys, each confirmed by polling prod rather than remembered.** The chapter: an explicit four-beat LESSON that teaches the one fact nobody teaches — a clock face carries TWO scales on one set of numbers, the 6 is also 30 — then the same skill answered from BOTH ends on one control shape (SET the hands when Milo names a time, READ the clock when he asks), over Milo's ten-scenario day with the sun crossing the sky. The ask matched the band's own spec (`story-6-8-rethink.md` §8 already said SET IT: four pills are winnable by elimination); the old chapter scored **1 of 4** on the aliveness check. The ladder changed on a pedagogy argument — "to" times invert the hour you SAY against the hour you PLACE, so past comes before to — and the minute ring is a scaffold that **fades at L3**. `tsc` 0 · **361/361 vitest** (+56) · `next build` · 0 console errors in a fresh tab and on prod.
+_Last updated: 2026-07-30 (LATEST — see the top 🔧 block. **Three open items closed, and then PLAYING the chapters found two more faults the gates had passed. 🚀 SHIPPED — `main`@`2acbdc8`, prod serving sw v79 across two deploys, both confirmed by polling prod.** The three: SkillBeat gained an opt-in **`Beat.ownsFeedback`** so a chapter that says its own miss line is not overlaid by the shared centred pill — which in TickTock landed on the clock face while saying *"Let's look together"*, and, because both chapters only report a round once it has been SOLVED, arrived on top of their own *"That's right"* and contradicted it; **`TimeLesson.tsx` was DELETED** after a grep found zero importers, so the "still used by a separately-routed lesson" line in this file was simply wrong; and **reading a laid-out pile is back in CoinShop on the SAME control** — the keeper spreads his coins in his own bubble where the price numeral would be, a presentation flag rather than a third question type, alternating with the numeral direction, copyable at L1–L2 by design and impossible at L3. ⚠️ **Then two faults turned up that no gate could:** a screenshot caught `CoinExplain` deriving its coin pool from `shown.includes(25)` — a PROXY for the price — so changing a demo pile silently dropped the 25 and *"thirty in only TWO coins"* became three tens **while every spoken line stayed true**; and the first TickTock run found the lesson's hands-on dial moving **one stop for six taps** (state read inside the handler that sets it), which on a beat with no auto-advance is a **HANG**, on the same beat family the founder was already stuck on. ⚠️ **And an instrument trap that undermines this file's own deploy proof: a controlled service worker serves the OLD shell even when prod's `sw.js` already reports the new version** — polling it proves the EDGE has the deploy, not that the tab you are driving is running it. `tsc` 0 · **369/369 vitest** (+8) · `next build` · 0 console errors on prod · 11/11 planted regressions caught · **two full ten-round CoinShop runs and a TickTock run from the lesson to a scored round, all on the live origin**. ▶ Open: whether the self-paced dwell reads well against a REAL voice is still the top item and still needs an ear; **640×320 was not checked at all**; no chapter but these two was driven; nobody has watched a child play any of it. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-30 (the 🕐 block. **TICKTOCK (6–8 time) rebuilt, and then the founder's three messages turned it into a band-wide fix. 🚀 SHIPPED — `main`@`5b29665`, prod serving sw v77 across four deploys, each confirmed by polling prod rather than remembered.** The chapter: an explicit four-beat LESSON that teaches the one fact nobody teaches — a clock face carries TWO scales on one set of numbers, the 6 is also 30 — then the same skill answered from BOTH ends on one control shape (SET the hands when Milo names a time, READ the clock when he asks), over Milo's ten-scenario day with the sun crossing the sky. The ask matched the band's own spec (`story-6-8-rethink.md` §8 already said SET IT: four pills are winnable by elimination); the old chapter scored **1 of 4** on the aliveness check. The ladder changed on a pedagogy argument — "to" times invert the hour you SAY against the hour you PLACE, so past comes before to — and the minute ring is a scaffold that **fades at L3**. `tsc` 0 · **361/361 vitest** (+56) · `next build` · 0 console errors in a fresh tab and on prod.
 
 ⚠️ **THE THREE THINGS THE FOUNDER FOUND WERE EACH DEEPER THAN THE LAST, AND NONE WAS FINDABLE BY A GATE.** ① **The lesson hung** on beat 3: `speakSteps` reveals every visual from the utterance's `onstart`, so on a device that starts the first line and silently drops the rest (Chrome and Safari both do) the sequence marches on while `onStep` never fires again — the line, the clock AND the flag offering the child the dial all freeze for ever. My first fix made it worse: a fixed 15.6s cap behind narration that really takes ~20s, firing mid-sentence and cancelling a live utterance. *A backstop timed against the silent fallback is not timed against the thing it is backing up.* Now **self-paced with `speak()` alongside** — which deletes machinery instead of adding it. **I could never have seen it: the preview pane is MUTE, so the bug lives only on devices that have a voice, i.e. every real one.** ② **The hard content was barely being ASKED.** `core/adaptive.ts` promotes on 3-in-a-row and masters at the top tier on a streak of 6, so a strong child gets ~3 rounds at L1, exactly ONE at L2 and TWO at L3 — and with the minutes drawn uniformly the whole "to" side was missed by about **a third** of runs. **A tier is a ROUND BUDGET, not a difficulty knob.** Fixed in two halves that need each other: `SkillBeat` gains an **opt-in** `coverage` withholding the mastery exit until the declared closed set has been asked (deliberately NOT `MASTERY_STREAK`, shared by 35 other chapters and one the founder likes), and `make` gains an `asked` argument so the generator spends a scarce round on an unmet reading — deliberate while a gap exists, random once it closes. Driven live: **all four readings in the same six rounds it used to take to cover three.** ③ **CoinShop's intro named two props its own chapter had deleted** (a board for the price, a cloth for the coins), so the first thing a child read pointed them at the wrong place — fixed with three comments doing the same.
 
