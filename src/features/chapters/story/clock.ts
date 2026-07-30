@@ -273,23 +273,13 @@ export const MILO = '/assets/characters/milo_side.png'
  * it is not.
  */
 export const MILO_ASPECT = SHEETS[MILO]?.cellAspect ?? 0.586
-/** How far the Menu button and the round banner sit from the top edge. */
-export const CHROME_PAD = 12
 /**
- * The Menu button's own metrics, exported so the band below it is DERIVED from them.
- * ⚠️ It was a picked number (38 on a short frame) and the button measured 41px tall from a 12px
- * offset, so Milo's bubble started 13px INSIDE the button — measured on screen at 640×320. Two
- * independent guesses about one gap is the same fault as StoryTime's answer box landing on its own
- * button row. On a short frame the button also shrinks, because height comes out of the CHROME first.
+ * The top strip moved to [chrome.ts](./chrome.ts) when SliceShop became a second consumer — a
+ * chapter must not carry its own copy of how tall the chrome is. Re-exported here so every existing
+ * TickTock import is unchanged, which is what makes its gate the proof that the move changed nothing.
  */
-export const menuBtn = (short: boolean) => ({ font: short ? 11 : 13, padY: short ? 5 : 7, padX: short ? 11 : 14 })
-/** The tallest thing in the top strip: the round banner, which is a size up from the button. */
-const bannerH = (short: boolean) => Math.ceil((short ? 12 : 17) * 1.25) + (short ? 4 : 8) * 2 + 6
-export const chromeTop = (short: boolean) => {
-  const b = menuBtn(short)
-  const btnH = Math.ceil(b.font * 1.25) + b.padY * 2 + 6   // 3px border, top and bottom
-  return CHROME_PAD + Math.max(btnH, bannerH(short)) + 4    // +4 so nothing merely touches
-}
+export { CHROME_PAD, menuBtn, chromeTop } from './chrome'
+import { chromeTop } from './chrome'
 
 /**
  * Every band on screen, in one place, derived rather than picked — because every founder-visible

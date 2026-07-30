@@ -147,6 +147,27 @@ only how big the numbers were; whether a round exercised the skill was left to c
 named. Make the thing being taught an explicit term in the generator (`REGROUP_ODDS` per tier,
 L3 always) so a gate can assert it climbs.
 
+⚠️ **A VERB IS NOT A STORY, AND GETTING THE VERB RIGHT IS ONLY HALF OF §0a.** The fractions chapter
+was rebuilt with the correct verb — FIT IT, an honest gesture that could not be eliminated into,
+with a lesson, a coverage gate and a mutation-tested grader — and the founder's verdict was *"kuch
+sense hi naii bann raha hai… ek story lagna chahiye"*. He was right and the diagnosis is worth the
+space: **what was on screen was an instrument with wallpaper.** A geometric shape floated on a
+photograph of a shop; nobody was in it, nobody wanted anything, and nothing happened as a
+consequence of getting it right. The verb answered *what does the child DO*; nothing had answered
+**WHO WANTS THIS, AND WHY.**
+- Every chapter in this band that works has an answer to that. CoinShop: a keeper who names his own
+  price from his own mouth and hands over the goods. HomeTime: Milo needs exactly N little ones and
+  leads them home. TickTock: Milo has to be somewhere.
+- For fractions the answer was sitting in the mathematics and went unclaimed for a whole rebuild:
+  **a fraction exists because something has to be SHARED.** So friends walk in, wait, and leave
+  carrying a piece each — and the denominator stops being a number and becomes *how many people are
+  waiting*. The payload comes free and stops being a rule: **more friends sharing one thing means a
+  smaller piece each**, which is a six-year-old's own experience rather than "the bigger the number
+  underneath, the smaller the piece".
+- **Ask it as a separate question, after the verb and before any code:** who arrives, what do they
+  want, what happens to them when the child gets it right? If the answer is "nothing, the shape
+  turns green", it is an instrument.
+
 **Beware the skill that is a near neighbour of one already built.** Measurement spent a year as
 *tap the taller one*, which is chapter 5 (*tap the bigger bunch*) with a different adjective — and
 its height view faked the attribute anyway, uniformly scaling one sprite so "taller" was really
@@ -796,6 +817,16 @@ second thing to look at. It appears with the demo, when it starts to matter.
   scenes are green. **The one warm exception, `beach_sand`, works by a SATURATION gap** (0.27 against
   Milo's 0.53), not a hue one. So the rule is: **separation in hue OR in saturation — never neither
   — measured against every sprite that stands on it, the character included.**
+- ⚠️ **WHEN NEITHER SIDE CAN MOVE, SEPARATE ON BRIGHTNESS.** The palette rule says hue OR saturation,
+  and there is a case it does not cover: a chapter where every scene is a food shop (warm) and every
+  object is a food (warm). Measured over the band the whole occupies, **five of SliceShop's ten
+  treats sat inside their own scene's hue with no saturation gap either** — loaf Δhue 10° Δsat 0.01,
+  orange Δhue 3°, cheese Δhue 10°, wafer Δsat 0.07, cake Δsat 0.08. A bakery is warm and a loaf is
+  tan; recolouring either is a lie. So the separation went on the third axis — a **soft dark pool
+  under the whole**, value 0.15 against treats at 0.66–0.97, which clears all ten at once.
+  ⚠️ **And it fades to NOTHING at its own edges**, per BlockYard, or it is the fifth slab this repo
+  has painted over a scene. ⚠️ **Size it by a negative `inset` on a shrink-to-fit wrapper, not by
+  numbers** — given the board's maximum it drew a large dark stain under a tray that starts empty.
 - ⚠️ **AND BECAUSE THE HUE IS THE FREE AXIS, IT IS THE ONE THAT SHOULD VARY PER ROUND.** "The scene
   changes across the run" had only ever meant the BACKDROP; the manipulative itself was identical in
   round 10 and round 1. BlockYard now carries a material per slot — clay · slate · teal · plum · rose
@@ -1034,6 +1065,21 @@ Gotchas that have each cost real credits:
   cover` and the patch by anything else, a percentage of the viewport stops being a percentage of
   the image and they come apart at every aspect but the one you tested.
 - Judge a sheet on its `motion` / `loopgap` numbers and at real display size, not on the strip.
+- ⚠️ **"THE MATH MUST BE EXACT" IS NOT A REASON TO DRAW GEOMETRY — CLIP REAL ART BY THE EXACT
+  GEOMETRY INSTEAD.** SliceShop drew its fractions as flat SVG wedges and segments for years, on the
+  honest-sounding argument that any denominator has to divide cleanly. It reads as a **pie chart laid
+  over a painted shop** — the same family as the brown slab and the hairline ghost house, and the
+  founder rejected it on sight. The two are not a choice: put the sprite inside an SVG `clipPath` cut
+  by the wedge and the division stays arithmetic while what a child sees is an actual pizza. Nudge
+  each piece out along its own middle so the parts read as separate PIECES rather than one
+  undisturbed picture with lines on it.
+  • **A food drawn for this must FILL its frame** — a circle touching all four edges, or a slab edge
+    to edge — because the clip samples inside the shape and any margin shows as background. Crop the
+    generated art to its own content bbox; the "draw from the ink box, not the file box" rule again.
+  • **And its surface must be PLAIN.** A moulded chocolate grid, a waffle pattern or piped icing lines
+    are repeating marks across the thing being divided, which is the vertical-grain rule: before
+    adding texture to anything countable, ask which axis already means something. Every prompt says
+    *no scored lines, no grid, no squares, no repeating pattern* for exactly this.
 
 **Line-art pipeline** (the colouring chapter, and anything else that must be filled with colour):
 

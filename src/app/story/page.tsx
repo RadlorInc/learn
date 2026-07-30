@@ -112,8 +112,8 @@ export default function StoryPage() {
   if (ch === 'story') return <StoryTime world={orderWorld} />
   // ?world=bakery|garden|craft jumps into a multiplication world.
   if (ch === 'multiply') return <MarketDay world={orderWorld} />
-  // ?world=pizza|party|choc jumps into a fractions world.
-  if (ch === 'fractions') return <SliceShop world={orderWorld} />
+  // Fractions has no worlds any more — the shop opening through to the party is one run.
+  if (ch === 'fractions') return <SliceShop />
   // ?world=grocery|train|beach jumps into a money world.
   if (ch === 'money') return <CoinShop world={orderWorld} />
   // ?world=morning|afternoon|night jumps into a time world.

@@ -1,250 +1,504 @@
 'use client'
 /**
- * Chapter (6–8) — FRACTIONS (halves · thirds · quarters, skill `fractions`) as STORY MODE.
+ * Chapter (6–8) — FRACTIONS (skill `fractions`) as STORY MODE. The verb is **FIT IT**, per
+ * docs/story-6-8-rethink.md §6.
  *
- * A "whole" is cut into EQUAL PARTS, carried by the world's own treats. Two question types:
- *   NAME  — a whole cut into `den` equal parts, ONE shaded → tap the fraction (1/2 · 1/3 · 1/4)
- *   GROUP — a fraction OF a group → a number ("one half of 6 cupcakes = 3"): the group splits
- *           into `den` equal little groups, one is lit, the child taps how many are in it.
- * Each world has a LIST of 3+ treats that SHUFFLE across rounds + THREE rotating backgrounds, so a
- * narrative never feels like one repeated object (and the Fractions "Pizzeria" is kept visually
- * SEPARATE from the 3–5 Grocery "Pizza Parlor": different backgrounds + a bakery treat list).
- *   🍕 Pizzeria       — pizza · cookie · pie          (round wedges;  kitchen/bakery scenes)
- *   🎂 Party          — cake · watermelon · orange      (round wedges;  party scenes)
- *   🍫 Chocolate Shop — chocolate bar · wafer · cookie  (rectangular bars; sweet-shop scenes)
+ * ⚠️ WHAT THIS REPLACED, AND WHY IT LOOKED FINE: the whole arrived already cut into equal parts with
+ * one shaded, and the answer was one of three chips. *Equal* is the entire idea and it was the thing
+ * being supplied; and because the numerator was pinned at 1 the answer was literally the number of
+ * parts, so **deleting the shading left every question still answerable**. On the craft doc's "is it
+ * alive" check it scored **1 of 4**: nothing arrived on its own legs, a tap sent nobody anywhere,
+ * Milo floated in a corner with no job, and only the backdrop rotated.
  *
- * Wholes are code-drawn (SVG wedges / bar segments) so any denominator divides cleanly, tinted to
- * the CHOSEN treat's colors; group items are real sprites. Demo + 3-wrong re-teach narrate via ONE
- * speakSteps. Responsive (short/landscape aware). Wrapped by game/FractionsChapter.tsx.
+ * So: Milo holds out a piece and the child LAYS COPIES OF IT into the whole. Equality is not given,
+ * it is discovered — copies of one piece are equal by construction, and a piece that does not fit a
+ * whole number of times is not a fraction of the whole at all.
+ *
+ *   · **FIT rounds**  — the piece is given, the child finds the number.  "How many of these fit?"
+ *   · **TAKE rounds** — the number is given, the child finds the piece.  "Which makes thirds?"
+ *
+ * ⚠️ THE PAYLOAD IS THAT A SMALLER PIECE FITS MORE TIMES — the reason 1/4 < 1/2 even though 4 > 2 —
+ * and it is taught by an explicit LESSON before anything is scored, because it is counter-intuitive
+ * and no amount of practice discovers it. The mechanic then embodies it: on a take round the wrong
+ * piece is a real, reachable answer and `missFor` names the size relation at the moment it costs.
+ *
+ * ⚠️ NO NUMBER BEFORE COMMIT. The board never prints how many pieces are down and never names the
+ * fraction while the child is laying — a readout that confirms the answer before the commit is the
+ * teen band's month-dial fault. The notation appears in the reveal, as the summary of work done.
+ *
+ * The wholes are code-drawn SVG so any denominator divides exactly — the same "the math must be
+ * exact" call the clock makes. All arithmetic, the order table and every layout band live in
+ * [slice.ts](./slice.ts), which is what the gate drives. There is NO world picker: the shop opening
+ * through to the party is the ARC across the ten rounds. Wrapped by game/FractionsChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
 import { SkillBeat, type Beat } from './StoryWorld'
-import { numberToWords } from '../lessons/_kit'
-import WorldSelect from './WorldSelect'
-import FitBox from './FitBox'
+import { Arrive, SheetCell, inFlowJourney, hasSheet, aspectOf, CRITTER_CSS } from './critters'
+/** ⚠️ A CONTACT SHADOW IS NOT DECORATION — it is the one cue that says a thing is standing IN the
+ *  picture rather than lying ON it, and this chapter shipped without one under anybody. The founder
+ *  read the result exactly as it was: "characters aur background blend nahi ho rahe". It rides
+ *  INSIDE the travelling element, so it can never outrun the feet. */
+import { Shadow } from './yard'
+import { useNeedsRotate, RotateGate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
+import {
+  ORDERS, DENS, MILO, CHROME_PAD, menuBtn,
+  makeFrRound, orderOf, piecesFor, perShare, isSolved, friendAt, friendsShown,
+  askTextFor, revealFor, missFor, denWord, numWord, layoutFor, wholeSize,
+  type Den, type FrRound, type Order, type Shape,
+} from './slice'
 
-// ─── Treats & Worlds ─────────────────────────────────────────────────────────────────
-interface Item { img: string; emoji: string; one: string; many: string }
-interface Colors { base: string; shaded: string; edge: string; dot: string }
-interface Treat { name: string; colors: Colors; group: Item; topping?: string }   // a divisible food + its group sprite; topping = real decoration laid on a shaded part
-interface FrWorld {
-  id: string; label: string; emoji: string
-  shape: 'round' | 'bar'
-  treats: Treat[]                     // shuffle across rounds → 3+ objects per narrative
-  bgs: { grad: string; img: string }[]
-  milo: { src: string; emoji: string; accessory: string }
-  intro: string
-}
-const IT = (img: string, emoji: string, one: string, many: string): Item => ({ img: `/assets/objects/${img}.png`, emoji, one, many })
-const WORLDS: FrWorld[] = [
-  { id: 'pizza', label: 'Pizzeria', emoji: '🍕', shape: 'round',
-    treats: [
-      { name: 'pizza', colors: { base: '#f4c84e', shaded: '#f0b93e', edge: '#c98a3a', dot: '#a52f26' }, topping: '/assets/objects/topping_pizza.png', group: IT('pizza_base', '🍕', 'pizza', 'pizzas') },
-      { name: 'cookie', colors: { base: '#d99a52', shaded: '#cf8c44', edge: '#a06a30', dot: '#3a2410' }, topping: '/assets/objects/topping_cookie.png', group: IT('cookie', '🍪', 'cookie', 'cookies') },
-      { name: 'pie', colors: { base: '#f0c268', shaded: '#ecb955', edge: '#c07a3a', dot: '#a8321f' }, topping: '/assets/objects/topping_pie.png', group: IT('cherry', '🍒', 'cherry pie', 'cherry pies') },
-    ],
-    bgs: [
-      { grad: 'linear-gradient(#f6e7cf 0%, #f2e0cf 60%, #e8d0b0 100%)', img: '/assets/backgrounds/kitchen_oven.jpeg' },
-      { grad: 'linear-gradient(#f4e6d2 0%, #efe0cc 60%, #e4d0ac 100%)', img: '/assets/backgrounds/kitchen_bakery.jpeg' },
-      { grad: 'linear-gradient(#f6e8d0 0%, #f0e2cc 60%, #e6d2ac 100%)', img: '/assets/backgrounds/grocery_bakery.jpeg' },
-    ],
-    milo: { src: '/assets/characters/milo_chef.png', emoji: '🦊', accessory: '🍕' },
-    intro: 'Welcome to the Pizzeria! Milo cuts pizzas, cookies and pies into EQUAL parts. Count the equal parts, and how many are covered — then tap the answer. First, watch Milo!' },
-  { id: 'party', label: 'Party', emoji: '🎂', shape: 'round',
-    treats: [
-      { name: 'cake', colors: { base: '#f7e2b0', shaded: '#f6d3c2', edge: '#d8a86a', dot: '#c85f88' }, topping: '/assets/objects/topping_cake.png', group: IT('candy_cupcake', '🧁', 'cupcake', 'cupcakes') },
-      { name: 'watermelon', colors: { base: '#3aa843', shaded: '#f4776e', edge: '#2c7a34', dot: '#2a1f1a' }, topping: '/assets/objects/topping_watermelon.png', group: IT('watermelon', '🍉', 'watermelon', 'watermelons') },
-      { name: 'orange', colors: { base: '#f0932b', shaded: '#ffc46a', edge: '#c9701a', dot: '#c9701a' }, topping: '/assets/objects/topping_orange.png', group: IT('kitchen_orange', '🍊', 'orange', 'oranges') },
-    ],
-    bgs: [
-      { grad: 'linear-gradient(#f6e0ef 0%, #f2e4f4 60%, #e8d0ea 100%)', img: '/assets/backgrounds/party_banner.png' },
-      { grad: 'linear-gradient(#e6eeff 0%, #eee4f6 60%, #f6e0ee 100%)', img: '/assets/backgrounds/party_balloons.png' },
-      { grad: 'linear-gradient(#fdeede 0%, #f6e6f2 60%, #eee0f6 100%)', img: '/assets/backgrounds/party_lanterns.png' },
-    ],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🎈' },
-    intro: "It's a party! Milo shares cake, watermelon and oranges in EQUAL parts. See how many equal parts, and how many are colored — then tap the answer. First, watch Milo!" },
-  { id: 'choc', label: 'Chocolate Shop', emoji: '🍫', shape: 'bar',
-    treats: [
-      { name: 'chocolate bar', colors: { base: '#a9713c', shaded: '#8a5a2c', edge: '#4a2b14', dot: '#3a2010' }, topping: '/assets/objects/topping_choc.png', group: IT('cookie', '🍪', 'chocolate', 'chocolates') },
-      { name: 'wafer', colors: { base: '#e6c99a', shaded: '#d8b478', edge: '#a06a30', dot: '#7a4a20' }, topping: '/assets/objects/topping_wafer.png', group: IT('candy_candy', '🍬', 'wafer', 'wafers') },
-      { name: 'cookie', colors: { base: '#d9a860', shaded: '#c2934a', edge: '#7a4a20', dot: '#5a3418' }, topping: '/assets/objects/topping_biscuit.png', group: IT('grocery_candy', '🍬', 'cookie', 'cookies') },
-    ],
-    bgs: [
-      { grad: 'linear-gradient(#efe0cf 0%, #ecd8c2 60%, #e0c8a8 100%)', img: '/assets/backgrounds/grocery_sweets.jpeg' },
-      { grad: 'linear-gradient(#eee2d2 0%, #e8dac6 60%, #dcc8aa 100%)', img: '/assets/backgrounds/kitchen_pantry.jpeg' },
-      { grad: 'linear-gradient(#eee0d0 0%, #e8d8c2 60%, #dcc6a8 100%)', img: '/assets/backgrounds/grocery_deli.jpeg' },
-    ],
-    milo: { src: '/assets/characters/milo_chef.png', emoji: '🦊', accessory: '🍫' },
-    intro: 'Welcome to the Chocolate Shop! Milo snaps chocolate bars, wafers and cookies into EQUAL pieces. Count the equal pieces, and how many are wrapped — then tap the answer. First, watch Milo!' },
-]
-const worldById = (id: string) => WORLDS.find(w => w.id === id)
-const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: w.bgs[0].img, itemImage: w.treats[0].group.img }))
+/**
+ * How long a narrated line stays on screen. Derived from the sentence's own length so the pacing
+ * roughly tracks a real voice without DEPENDING on one — the whole reason the lesson and the
+ * re-teach are self-paced (see the long note in `Lesson`). One function, so the two cannot drift.
+ */
+const dwellFor = (s: string) => Math.max(2400, Math.round(s.length * 72))
+/** A number word can open a narrated line, and `numWord` is lower case for mid-sentence use. */
+const sentenceCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
-const DENS = [2, 3, 4]
-const fracWord = (d: number) => d === 2 ? 'half' : d === 3 ? 'third' : d === 4 ? 'quarter' : `one-${d}th`
-
-type FType = 'name' | 'group'
-interface FrRound { bg: number; treat: Treat; type: FType; den: number; total: number; answer: number; choices: number[] }
-
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-const pick = <T,>(a: T[]) => a[rint(0, a.length - 1)]
-function shuffle<T>(a: T[]): T[] {
-  const arr = a.slice()
-  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[arr[i], arr[j]] = [arr[j], arr[i]] }
-  return arr
-}
-function numChoices(answer: number): number[] {
-  const set = new Set<number>([answer])
-  let d = 1
-  while (set.size < 3) { if (answer - d >= 1) set.add(answer - d); if (set.size < 3) set.add(answer + d); d++ }
-  return shuffle([...set])
-}
-function makeFractionRound(world: FrWorld, d: 1 | 2 | 3, round: number): FrRound {
-  const bg = round % world.bgs.length
-  const treat = world.treats[round % world.treats.length]   // shuffle the world's treats
-  const type: FType = d === 1 ? 'name' : pick<FType>(d === 2 ? ['name', 'group'] : ['name', 'group', 'group'])
-  if (type === 'name') {
-    const den = d === 1 ? pick([2, 4]) : pick(DENS)
-    return { bg, treat, type, den, total: 0, answer: den, choices: DENS.slice() }
-  }
-  const den = d === 2 ? 2 : pick(DENS)
-  const per = d === 2 ? rint(2, 4) : rint(2, 5)
-  const total = per * den
-  return { bg, treat, type, den, total, answer: per, choices: numChoices(per) }
-}
-
-// ─── Live viewport (short/landscape aware) ────────────────────────────────────────────
-
-// ─── Background (crossfades across the world's bg list) ───────────────────────────────
-function Background({ bg, world }: { bg: number; world: FrWorld }) {
+// ─── scene ────────────────────────────────────────────────────────────────────────────
+function Scene({ slot }: { slot: number }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#f3ead8' }}>
-      {world.bgs.map((b, i) => (
-        <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
-          <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
-          <img src={b.img} alt="" draggable={false} decoding="async"
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
+      {ORDERS.map((o, i) => (
+        <img key={o.scene} src={`/assets/backgrounds/${o.scene}`} alt="" draggable={false} decoding="async"
+          onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+            opacity: i === Math.min(slot, ORDERS.length - 1) ? 1 : 0, transition: 'opacity .7s ease',
+          }} />
       ))}
+      {/* A soft wash, so a white bubble and a code-drawn whole read against any of the ten scenes. */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,248,232,.30), rgba(255,244,224,.10) 55%, rgba(90,64,40,.16))', pointerEvents: 'none' }} />
     </div>
   )
 }
 
-function MiloHost({ left, milo }: { left: number; milo: FrWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(26vh, 220px)', height: 'min(26vh, 220px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'sl_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 80, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 34 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
-    </div>
-  )
-}
+// ─── the whole ────────────────────────────────────────────────────────────────────────
+const R2 = Math.PI / 180
 
-// ─── The WHOLE, cut into `den` equal parts with `shaded` parts filled ─────────────────
+/** One wedge of a round whole, `den` to a turn. */
 function wedgePath(i: number, den: number, r = 46, cx = 50, cy = 50): string {
-  const a0 = (i / den) * 2 * Math.PI - Math.PI / 2
-  const a1 = ((i + 1) / den) * 2 * Math.PI - Math.PI / 2
-  const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0)
-  const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1)
-  const large = (a1 - a0) > Math.PI ? 1 : 0
-  return `M ${cx} ${cy} L ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z`
+  const a0 = (i / den) * 360 - 90, a1 = ((i + 1) / den) * 360 - 90
+  const x0 = cx + r * Math.cos(a0 * R2), y0 = cy + r * Math.sin(a0 * R2)
+  const x1 = cx + r * Math.cos(a1 * R2), y1 = cy + r * Math.sin(a1 * R2)
+  return `M ${cx} ${cy} L ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z`
 }
-function wedgeMid(i: number, den: number, rr: number, cx = 50, cy = 50) {
-  const a = ((i + 0.5) / den) * 2 * Math.PI - Math.PI / 2
-  return { x: cx + rr * Math.cos(a), y: cy + rr * Math.sin(a) }
+const wedgeMid = (i: number, den: number, rr: number) => {
+  const a = ((i + 0.5) / den) * 360 - 90
+  return { x: 50 + rr * Math.cos(a * R2), y: 50 + rr * Math.sin(a * R2) }
 }
-function Whole({ shape, colors: c, den, shaded, px, glow, topping }: { shape: 'round' | 'bar'; colors: Colors; den: number; shaded: number; px: string; glow?: boolean; topping?: string }) {
-  const filter = glow ? 'drop-shadow(0 0 14px var(--sun-yellow))' : 'drop-shadow(0 6px 10px rgba(0,0,0,.3))'
+
+/**
+ * The whole, with `laid` copies of a 1/`pieceDen` piece placed in it.
+ *
+ * ⚠️ IT STARTS EMPTY — an outline, uncut. That is the difference between this chapter and the one it
+ * replaces: the partition is CONSTRUCTED by repeating one piece, so the parts are equal because they
+ * are copies, not because the picture was drawn that way.
+ *
+ * ⚠️ AND AN OVERFLOWING PIECE IS DRAWN OUTSIDE, TILTED. "It does not fit" has to be visible, because
+ * that is the proof the whole mechanic rests on — a piece that fits a whole number of times is a
+ * fraction of the whole and one that does not is nothing.
+ */
+function Whole({ shape, colors, art, pieceDen, laid, w, h, lit, topping }: {
+  shape: Shape; colors: Order['colors']; art: string; pieceDen: Den; laid: number
+  w: number; h: number
+  /** After the commit, ONE piece lights up — the one Milo takes. Never before. */
+  lit?: boolean
+  topping?: string
+}) {
+  const uid = React.useId()
+  const inside = Math.min(laid, pieceDen)
+  const over = Math.max(0, laid - pieceDen)
+  const glow = lit ? 'drop-shadow(0 0 16px var(--sun-yellow))' : 'drop-shadow(0 6px 10px rgba(0,0,0,.3))'
+
   if (shape === 'bar') {
-    const W = den * 26, H = 60
-    const tp = 20   // topping size within a segment
+    const W = 100, H = 34, seg = W / pieceDen
+    const gapX = inside > 1 ? 1.1 : 0
     return (
-      <svg viewBox={`-3 -3 ${W + 6} ${H + 6}`} style={{ width: `calc(${px} * ${Math.min(1.9, den * 0.55)})`, height: px, filter, display: 'block' }}>
-        <rect x={-2} y={-2} width={W + 4} height={H + 4} rx={9} fill={c.edge} />
-        {Array.from({ length: den }).map((_, i) => (
-          <g key={i}>
-            <rect x={i * 26 + 1.5} y={1.5} width={23} height={H - 3} rx={4} fill={i < shaded ? c.shaded : c.base} stroke={c.edge} strokeWidth={2} />
-            {i < shaded && (topping
-              ? <image href={topping} x={i * 26 + 13 - tp / 2} y={30 - tp / 2} width={tp} height={tp} preserveAspectRatio="xMidYMid meet" />
-              : <>
-                  <circle cx={i * 26 + 8} cy={18} r={2.2} fill={c.dot} /><circle cx={i * 26 + 17} cy={30} r={2.2} fill={c.dot} /><circle cx={i * 26 + 9} cy={44} r={2.2} fill={c.dot} />
-                </>)}
+      <svg viewBox="-8 -10 116 56" style={{ width: w, height: h, filter: glow, display: 'block', overflow: 'visible' }}>
+        <defs>
+          {Array.from({ length: Math.max(inside, 1) }).map((_, i) => (
+            <clipPath key={i} id={`${uid}-s${i}`}>
+              <rect x={i * seg} y={0} width={seg} height={H} rx={2} />
+            </clipPath>
+          ))}
+        </defs>
+        {/* the empty board — a real surface waiting, never a dashed wireframe */}
+        {!inside && (
+          <g>
+            <rect x={-3} y={-3} width={W + 6} height={H + 6} rx={6} fill="rgba(255,255,255,.58)" stroke="rgba(61,37,22,.30)" strokeWidth={2} />
+            <rect x={2} y={2} width={W - 4} height={H - 4} rx={4} fill="rgba(255,255,255,.30)" stroke="rgba(61,37,22,.14)" strokeWidth={1.2} />
+          </g>
+        )}
+        {Array.from({ length: inside }).map((_, i) => {
+          const on = lit && i === 0
+          const dx = (i - (pieceDen - 1) / 2) * gapX
+          return (
+            <g key={i} transform={`translate(${dx.toFixed(2)} 0)`} style={{ animation: 'sl_land .32s cubic-bezier(.34,1.56,.64,1) both' }}>
+              <g clipPath={`url(#${uid}-s${i})`}>
+                <image href={art} x={0} y={0} width={W} height={H} preserveAspectRatio="xMidYMid slice" />
+                {on && <rect x={i * seg} y={0} width={seg} height={H} fill="var(--sun-yellow)" opacity={0.28} />}
+              </g>
+              <rect x={i * seg + 0.6} y={0.6} width={seg - 1.2} height={H - 1.2} rx={2} fill="none" stroke={colors.edge} strokeWidth={1.4} opacity={0.55} />
+            </g>
+          )
+        })}
+        {Array.from({ length: over }).map((_, i) => (
+          <g key={`o${i}`} transform={`translate(${W + 4 + i * 8} ${-4}) rotate(14)`} opacity={0.92}>
+            <g clipPath={`url(#${uid}-s0)`}><image href={art} x={0} y={0} width={W} height={H} preserveAspectRatio="xMidYMid slice" /></g>
+            <rect x={0.6} y={0.6} width={seg - 1.2} height={H - 1.2} rx={2} fill="none" stroke="var(--milo-orange-deep)" strokeWidth={2.6} strokeDasharray="5 4" />
           </g>
         ))}
       </svg>
     )
   }
-  const tp = den <= 2 ? 40 : den === 3 ? 34 : 28   // topping size scales down as slices get thinner
+
+  /**
+   * ⚠️ A REAL PIECE OF REAL FOOD, CUT EXACTLY — not a pie chart.
+   *
+   * The version this replaces drew flat SVG wedges in a flat colour, which is a DIAGRAM laid over a
+   * painted scene: the same fault as BlockYard's brown slab and the shapes chapter's hairline ghost
+   * house, and the founder rejected it on sight for the same reason. The old chapter's excuse for
+   * geometry was that the maths has to be exact — and it does — but exact and painted are not a
+   * choice: the sprite is clipped BY the wedge, so the division is still arithmetic while what a
+   * child sees is the actual pizza.
+   *
+   * Each piece is also nudged outwards along its own middle, so the parts read as separate PIECES
+   * rather than as one undisturbed picture with lines drawn on it.
+   */
+  const gap = inside > 1 ? 1.6 : 0
   return (
-    <svg viewBox="-4 -4 108 108" style={{ width: px, height: px, filter, display: 'block' }}>
-      <circle cx={50} cy={50} r={49} fill={c.edge} />
-      {Array.from({ length: den }).map((_, i) => {
-        const on = i < shaded
-        const m = wedgeMid(i, den, 25)
+    <svg viewBox="-12 -10 124 120" style={{ width: w, height: h, filter: glow, display: 'block', overflow: 'visible' }}>
+      <defs>
+        {Array.from({ length: Math.max(inside, 1) }).map((_, i) => (
+          <clipPath key={i} id={`${uid}-w${i}`}><path d={wedgePath(i, pieceDen)} /></clipPath>
+        ))}
+      </defs>
+      {/* the empty plate — a real surface waiting, never a dashed wireframe */}
+      {!inside && (
+        <g>
+          <ellipse cx={50} cy={53} rx={49} ry={48} fill="rgba(255,255,255,.62)" stroke="rgba(61,37,22,.30)" strokeWidth={2} />
+          <ellipse cx={50} cy={51} rx={41} ry={40} fill="rgba(255,255,255,.34)" stroke="rgba(61,37,22,.16)" strokeWidth={1.4} />
+        </g>
+      )}
+      {Array.from({ length: inside }).map((_, i) => {
+        const m = wedgeMid(i, pieceDen, gap)
+        const on = lit && i === 0
         return (
-          <g key={i}>
-            <path d={wedgePath(i, den)} fill={on ? c.shaded : c.base} stroke={c.edge} strokeWidth={2.2} strokeLinejoin="round" />
-            {on && (topping
-              ? <image href={topping} x={m.x - tp / 2} y={m.y - tp / 2} width={tp} height={tp} preserveAspectRatio="xMidYMid meet" />
-              : <>
-                  <circle cx={m.x - 6} cy={m.y - 4} r={2.6} fill={c.dot} /><circle cx={m.x + 6} cy={m.y + 3} r={2.6} fill={c.dot} /><circle cx={m.x + 1} cy={m.y - 7} r={2.6} fill={c.dot} />
-                </>)}
+          <g key={i} transform={`translate(${(m.x - 50).toFixed(2)} ${(m.y - 50).toFixed(2)})`}
+            style={{ animation: 'sl_land .32s cubic-bezier(.34,1.56,.64,1) both' }}>
+            <g clipPath={`url(#${uid}-w${i})`}>
+              <image href={art} x={2} y={2} width={96} height={96} preserveAspectRatio="xMidYMid slice" />
+              {on && <path d={wedgePath(i, pieceDen)} fill="var(--sun-yellow)" opacity={0.28} />}
+            </g>
+            <path d={wedgePath(i, pieceDen)} fill="none" stroke={colors.edge} strokeWidth={1.6} strokeLinejoin="round" opacity={0.55} />
           </g>
         )
       })}
+      {/* a piece that does not fit is set down BESIDE the plate, tilted — "it does not fit" has to be
+          visible, because that is the proof the whole mechanic rests on */}
+      {Array.from({ length: over }).map((_, i) => (
+        <g key={`o${i}`} transform={`translate(${88 + i * 10} ${16}) rotate(18) scale(0.46)`} opacity={0.92}>
+          <g clipPath={`url(#${uid}-w0)`}><image href={art} x={2} y={2} width={96} height={96} preserveAspectRatio="xMidYMid slice" /></g>
+          <path d={wedgePath(0, pieceDen)} fill="none" stroke="var(--milo-orange-deep)" strokeWidth={4} strokeDasharray="7 5" />
+        </g>
+      ))}
     </svg>
   )
 }
 
-// ─── A fraction pill (n over d) ───────────────────────────────────────────────────────
-function Frac({ n, d, size, color }: { n: number; d: number; size: number; color: string }) {
+/**
+ * A pile, split into `laid` equal handfuls of `n / pieceDen` things.
+ *
+ * The same board as a shape — an outline that starts empty and fills with copies of ONE share — so
+ * the child brings one gesture to both representations rather than learning two chapters.
+ */
+function Pile({ item, n, pieceDen, laid, w, h, lit }: {
+  item: string; n: number; pieceDen: Den; laid: number; w: number; h: number; lit?: boolean
+}) {
+  const per = Math.max(1, Math.round(n / pieceDen))
+  const inside = Math.min(laid, pieceDen)
+  const over = Math.max(0, laid - pieceDen)
+  const cols = per <= 2 ? per : per <= 4 ? 2 : 3
+  const cell = Math.max(16, Math.floor(Math.min(w / (pieceDen * (cols + 0.9)), h / (Math.ceil(per / cols) + 0.9))))
+  const share = (key: React.Key, on: boolean, spare = false) => (
+    <div key={key} style={{
+      display: 'grid', gridTemplateColumns: `repeat(${cols}, ${cell}px)`, gap: Math.max(2, cell * 0.09),
+      padding: Math.max(4, cell * 0.18), borderRadius: 12,
+      border: `3px ${spare ? 'dashed' : 'solid'} ${spare ? 'var(--milo-orange-deep)' : on ? 'var(--sun-yellow-deep)' : 'rgba(61,37,22,.35)'}`,
+      background: on ? 'rgba(255,214,102,.8)' : 'rgba(255,255,255,.82)',
+      transform: spare ? 'rotate(6deg)' : 'none',
+      animation: 'sl_land .32s cubic-bezier(.34,1.56,.64,1) both',
+    }}>
+      {Array.from({ length: per }).map((_, i) => (
+        <img key={i} src={`/assets/objects/${item}.png`} alt="" draggable={false} decoding="async" loading="lazy"
+          style={{ width: cell, height: cell, objectFit: 'contain', display: 'block' }} />
+      ))}
+    </div>
+  )
   return (
-    <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1, fontFamily: 'var(--font-display)', fontWeight: 900, color, fontSize: size }}>
-      <span>{n}</span>
-      <span style={{ width: '1.05em', height: Math.max(2, Math.round(size / 14)), background: color, margin: '3px 0', borderRadius: 2 }} />
-      <span>{d}</span>
-    </span>
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: Math.max(5, cell * 0.28),
+      maxWidth: w, minHeight: h, padding: Math.max(7, cell * 0.26), borderRadius: 18,
+      // ⚠️ A TRAY, NOT A DASHED BOX. It was a hairline dashed outline with the word "empty" written
+      // in it — the wireframe fault the shapes chapter already shipped, a blueprint laid over a
+      // painted shop. A real surface with light on its rim reads as a thing on the counter.
+      // ⚠️ NEARLY OPAQUE, NOT A WASH. At .5 the candy-shop shelves showed straight through it and the
+      // pears were unreadable against a wall of jars — BlockYard's own recorded lesson, which this
+      // ignored: a WORKING SURFACE, one the child manipulates things on, wants .9+. The scene is
+      // already established by the backdrop; the tray's job is to hold what is being counted.
+      border: '3px solid rgba(255,255,255,.9)',
+      background: 'linear-gradient(180deg, rgba(255,252,246,.95), rgba(246,236,220,.93))',
+      boxShadow: 'inset 0 2px 0 rgba(255,255,255,.85), 0 5px 12px rgba(40,26,14,.3)',
+    }}>
+      {inside === 0
+        ? <span style={{ display: 'block', width: Math.max(60, cell * 2), height: Math.max(30, cell) }} />
+        : Array.from({ length: inside }).map((_, g) => share(g, !!lit && g === 0))}
+      {Array.from({ length: over }).map((_, i) => share(`o${i}`, false, true))}
+    </div>
   )
 }
 
-function ItemImg({ item, size }: { item: Item; size: string }) {
-  const [missing, setMissing] = useState(false)
-  if (missing) return <span style={{ fontSize: size, lineHeight: 1 }}>{item.emoji}</span>
-  return <img src={item.img} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
+// ─── the tray: a piece is a BUTTON, and tapping it lays one ───────────────────────────
+/**
+ * ⚠️ TAPPING A PIECE LAYS ONE. There is no select-then-place — that is two steps for a six-year-old
+ * and the extra step teaches nothing. Tapping a DIFFERENT piece clears the board and starts again
+ * with that one, so changing your mind is free and cannot leave a half-built mixture behind, which
+ * the grader would then have to have an opinion about.
+ *
+ * The pieces are drawn at their true relative size, because that IS the payload: a third is visibly
+ * smaller than a half, and choosing between them is the question on a take round.
+ */
+function PieceBtn({ shape, colors, den, side, onLay, disabled, active }: {
+  shape: Shape; colors: Order['colors']; den: Den; side: number
+  onLay: () => void; disabled?: boolean; active?: boolean
+}) {
+  const s = side
+  return (
+    <button onClick={onLay} disabled={disabled} aria-label={`one ${denWord(den)}`} style={{
+      width: s, height: s, padding: 0, borderRadius: 12, cursor: disabled ? 'default' : 'pointer',
+      background: active ? 'var(--sun-yellow-soft, #fff3cf)' : 'var(--paper)',
+      border: `3px solid ${active ? 'var(--sun-yellow-deep)' : 'var(--outline)'}`,
+      boxShadow: '0 4px 0 #c8ac79', opacity: disabled ? 0.45 : 1,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {/*
+        ⚠️ THE PIECES ARE DRAWN AT THEIR TRUE RELATIVE SIZE — a third is visibly smaller than a half —
+        because on a take round choosing between them IS the question, and the size relation is the
+        payload. So the box is the SAME for all three and only the piece inside it shrinks.
+
+        The wedge is rotated to sit symmetric about vertical first. Drawn from its raw start angle it
+        hangs in the top-right corner of a square box, which wastes most of the button and rendered
+        as an unreadable sliver at 52px — caught on screen, not by the gate.
+      */}
+      <svg viewBox="2 2 96 52" style={{ width: s * 0.8, height: s * 0.8, display: 'block' }}>
+        {shape === 'round'
+          ? <g transform={`rotate(${-180 / den} 50 50)`}>
+              <path d={wedgePath(0, den)} fill={colors.base} stroke={colors.edge} strokeWidth={3} strokeLinejoin="round" />
+            </g>
+          : <rect x={50 - 48 / den} y={14} width={96 / den} height={26} rx={4} fill={colors.base} stroke={colors.edge} strokeWidth={3} />}
+      </svg>
+    </button>
+  )
 }
 
-// ─── The GROUP view — `total` items split into `den` framed groups; `lit` groups glow ─
-function GroupView({ item, total, den, lit, itemPx }: { item: Item; total: number; den: number; lit: number; itemPx: string }) {
-  const per = total / den
+/** A handful of `n / den` things, for a pile round. Same button, different contents. */
+function HandBtn({ item, n, den, side, onLay, disabled, active }: {
+  item: string; n: number; den: Den; side: number
+  onLay: () => void; disabled?: boolean; active?: boolean
+}) {
+  const per = Math.max(1, Math.round(n / den))
   const cols = per <= 2 ? per : per <= 4 ? 2 : 3
+  const cell = Math.floor((side * 0.72) / cols)
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'clamp(8px,2.2vw,24px)', justifyContent: 'center', alignItems: 'center', maxWidth: '94vw' }}>
-      {Array.from({ length: den }).map((_, g) => {
-        const on = g < lit
-        // Outer wrapper holds the entrance animation; inner holds the lit-state transform. If both
-        // sat on one element, sl_pop's `both` fill (ending at scale(1)) would clobber the lit scale.
+    <button onClick={onLay} disabled={disabled} aria-label={`${per} ${item}`} style={{
+      width: side, height: side, padding: 0, borderRadius: 12, cursor: disabled ? 'default' : 'pointer',
+      background: active ? 'var(--sun-yellow-soft, #fff3cf)' : 'var(--paper)',
+      border: `3px solid ${active ? 'var(--sun-yellow-deep)' : 'var(--outline)'}`,
+      boxShadow: '0 4px 0 #c8ac79', opacity: disabled ? 0.45 : 1,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, ${cell}px)`, gap: 1 }}>
+        {Array.from({ length: per }).map((_, i) => (
+          <img key={i} src={`/assets/objects/${item}.png`} alt="" draggable={false} decoding="async"
+            style={{ width: cell, height: cell, objectFit: 'contain', display: 'block' }} />
+        ))}
+      </div>
+    </button>
+  )
+}
+
+// ─── shared chrome ────────────────────────────────────────────────────────────────────
+type L = ReturnType<typeof layoutFor>
+
+function Bar({ L: l, children }: { L: L; children: React.ReactNode }) {
+  return (
+    <div style={{
+      position: 'fixed', left: l.barLeft, width: l.barW, bottom: l.barBottom, height: l.barH, zIndex: 40,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: l.short ? 7 : 12, flexWrap: 'nowrap',
+    }}>{children}</div>
+  )
+}
+
+/**
+ * The question lives in a bubble at Milo's mouth — he is the one with an order to fill, so he is the
+ * one who should be asking. Laid out as a BAND rather than floated at his head: anchored freely it
+ * runs across the board on a narrow frame, putting the two things a child must read at once on top
+ * of each other.
+ */
+function Bubble({ L: l, text }: { L: L; text: string }) {
+  return (
+    <div style={{
+      position: 'fixed', left: l.bubbleLeft, width: l.bubbleW, top: l.bubbleTop, minHeight: l.bubbleH, zIndex: 42,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(255,255,255,.94)', border: '3px solid var(--outline)', borderRadius: 18,
+      padding: l.short ? '5px 12px' : '8px 18px', boxShadow: '0 4px 0 rgba(61,37,22,.16)',
+      fontFamily: 'var(--font-display)', fontWeight: 700, lineHeight: 1.15, textAlign: 'center',
+      fontSize: l.short ? 13 : 17, color: 'var(--ink)',
+    }}>
+      {text}
+      {/* the tail — what keeps the words visibly HIS rather than a banner pinned to the frame */}
+      <span aria-hidden style={{
+        position: 'absolute', bottom: -11, left: `${l.tailPct}%`, width: 0, height: 0,
+        borderLeft: '10px solid transparent', borderRight: '10px solid transparent',
+        borderTop: '11px solid var(--outline)',
+      }} />
+    </div>
+  )
+}
+
+/**
+ * How far off the frame's bottom edge Milo stands.
+ *
+ * ⚠️ NOT A MARGIN — it is the room his CONTACT SHADOW needs. `Shadow` sits 35% of its own height
+ * below the feet it belongs to, so at `bottom: 0` the one cue that puts him on the floor rather than
+ * on top of the picture is drawn under the viewport and clipped away: present in the DOM, invisible
+ * on screen, which is the worst kind of fixed.
+ */
+const miloFloor = (miloH: number) => Math.round(miloH * 0.04)
+
+/** Milo, and on a correct answer he WALKS OFF to deliver the order — the journey is the reward. */
+function Milo({ L: l, leaving, resetKey, vw }: { L: L; leaving: boolean; resetKey: string | number; vw: number }) {
+  const distPx = Math.round(vw - l.miloLeft + l.miloW * 0.4)
+  const j = useMemo(() => inFlowJourney(MILO, l.miloH, distPx), [l.miloH, distPx])
+  return (
+    <div style={{ position: 'fixed', left: l.miloLeft, bottom: miloFloor(l.miloH), width: l.miloW, height: l.miloH, zIndex: 26, pointerEvents: 'none' }}>
+      {/* ⚠️ `leave` must be conditional, not constant — with a constant `leave` and `ms={0}` Arrive
+          starts at its DONE phase, and done-while-leaving means "already gone", so Milo is
+          translated a whole screen right and simply never appears. Invisible, not misplaced. */}
+      <Arrive dist={distPx} ms={leaving ? j.ms : 0} leave={leaving} resetKey={`${resetKey}|${leaving}`}>
+        {moving => (
+          <span style={{ display: 'block', position: 'relative', width: l.miloW, height: l.miloH }}>
+            <Shadow w={Math.round(l.miloW * 0.72)} h={Math.round(l.miloH * 0.1)} />
+            <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
+              <SheetCell src={MILO} h={l.miloH} moving={moving} cycleScale={j.cycleScale}
+                /* `milo_side.png` faces RIGHT, and right is the way he leaves — so never flipped. */
+                facesLeft={false} breathe={!leaving} />
+            </span>
+          </span>
+        )}
+      </Arrive>
+    </div>
+  )
+}
+
+/** The pause before a friend sets off, so their arrival reads as caused by the piece just laid. */
+const ARRIVE_BEAT = 320
+
+/**
+ * The friends waiting for a share — the reason a fraction exists at all in this chapter.
+ *
+ * ⚠️ THEY ARRIVE ON THEIR OWN LEGS AND LEAVE CARRYING A PIECE, which is what makes a round a story
+ * rather than a board. On a TAKE round all of them are already waiting, so the count of friends IS
+ * the denominator the child has to match. On a FIT round one MORE friend walks in for every piece
+ * laid — so the child watches the answer assemble itself out of people, and "how many fit" and "how
+ * many friends" turn out to be the same question.
+ *
+ * Their table is market.ts's, imported: the facing was paid for once already when a duck and a
+ * squirrel shipped walking backwards.
+ */
+function Friends({ L: l, count, den, order, share, leaving, resetKey }: {
+  L: L; count: number; den: Den; order: Order
+  /** They are holding their piece. Split from `leaving` because the LESSON wants them standing
+   *  there holding it while Milo talks about it — in a round the two happen together. */
+  share: boolean
+  leaving: boolean
+  resetKey: string | number
+}) {
+  const n = Math.min(count, den)
+  if (n <= 0) return null
+  const slotW = l.friendsW / Math.max(den, 1)
+  return (
+    <div aria-hidden style={{
+      position: 'fixed', left: l.friendsLeft, width: l.friendsW, bottom: l.friendsBottom,
+      height: l.friendH * 1.5, zIndex: 27, pointerEvents: 'none',
+    }}>
+      {Array.from({ length: n }).map((_, i) => {
+        const f = friendAt(i)
+        const h = Math.round(l.friendH * f.scale)
+        // in from off-frame right, and out the same way once they have their piece
+        const dist = Math.round(l.friendsW - i * slotW + 80)
+        const j = inFlowJourney(f.src, h, dist)
         return (
-          <div key={g} style={{ animation: 'sl_pop .3s ease both' }}>
-            <div style={{
-              display: 'grid', gridTemplateColumns: `repeat(${cols}, auto)`, gap: 'clamp(2px,0.7vmin,5px)', padding: 'clamp(5px,1.2vmin,9px)', borderRadius: 14,
-              border: `3px solid ${on ? 'var(--sun-yellow-deep)' : 'var(--sky-blue-deep)'}`,
-              background: on ? 'rgba(255,214,102,.5)' : 'rgba(255,255,255,.55)',
-              transform: `scale(${on ? 1.05 : 1})`, filter: on ? 'drop-shadow(0 0 12px var(--sun-yellow))' : 'drop-shadow(0 2px 4px rgba(0,0,0,.2))',
-              transition: 'all .3s cubic-bezier(.34,1.56,.64,1)',
-            }}>
-              {Array.from({ length: per }).map((_, i) => <ItemImg key={i} item={item} size={itemPx} />)}
+          <div key={i} style={{ position: 'absolute', left: i * slotW, bottom: 0, width: slotW, height: l.friendH * 1.5 }}>
+            <div style={{ position: 'absolute', left: 0, bottom: 0, width: slotW, height: h }}>
+              {/* In from off-frame RIGHT, so they walk leftward toward the counter and face it while
+                  they wait; out to the right once they have their share. `facesLeft` is a FLIP, not a
+                  fact about the art, so it is the sprite's own facing inverted while walking in. */}
+              {/* ⚠️ A BEAT BEFORE THEY SET OFF, so a new friend arriving reads as a CONSEQUENCE of
+                  the piece the child just laid rather than as part of the same movement. Without it
+                  the walk-in starts in the same tick as the piece landing, the two motions merge,
+                  and it reads as characters that were simply missing — which is what the founder
+                  saw. Leaving is not delayed: by then the round is over and the wait is dead time. */}
+              <Arrive dist={dist} ms={j.ms} delayMs={leaving ? 0 : ARRIVE_BEAT}
+                leave={leaving} resetKey={`${resetKey}|${i}|${leaving}`}>
+                {moving => (
+                  <span style={{ display: 'block', position: 'relative', width: Math.round(h * aspectOf(f.src)), height: h }}>
+                    <Shadow w={Math.round(h * aspectOf(f.src) * 0.7)} h={Math.round(h * 0.11)} />
+                    {/* ⚠️ THE SHARE RIDES INSIDE THE TRAVELLING ELEMENT. Drawn as a sibling it stayed
+                        on the counter while its owner walked off with nothing — the sibling-shadow
+                        fault this repo has already shipped once: two things that must move as one
+                        have to BE one element.
+
+                        ⚠️ AND IT IS **HELD**, NOT HOVERED. It first sat at `bottom: h * 0.92` —
+                        centred, above the head — which reads as a piece floating over somebody
+                        rather than one they are carrying away, and carrying it away is the whole
+                        point of the round. It now sits low and at the FRONT, overlapping the body
+                        it belongs to and drawn in front of it.
+
+                        Placed as a share of the sprite's own box rather than from a per-creature
+                        anchor: the cast runs from a chick to a lamb, a measured mouth point per
+                        sprite is what CoinShop needed for its keepers, and at half the creature's
+                        height the piece is big enough that overlapping the front reads as carried
+                        whatever the proportions. Front follows TRAVEL, not the art — they walk in
+                        leftward and leave rightward, so `!leaving` is the facing.
+
+                        ⚠️ LOW, AT THE FRONT FEET — NOT AT THE FRONT MIDDLE. On a quadruped the front
+                        of the body IS the head, so a piece placed there at chest height lands
+                        squarely on the muzzle and reads as stuck to the face rather than carried.
+                        Down at the paws it reads as being carried off by every one of them, from a
+                        chick to a lamb. */}
+                    <span style={{
+                      position: 'absolute', left: leaving ? '88%' : '12%', bottom: h * 0.03,
+                      transform: 'translateX(-50%)', zIndex: 2,
+                      opacity: share ? 1 : 0, transition: 'opacity .3s ease .2s', pointerEvents: 'none',
+                    }}>
+                      <Whole shape={order.shape} colors={order.colors} art={`/assets/objects/${order.art}.png`}
+                        pieceDen={den} laid={1} w={Math.round(h * 0.46)} h={Math.round(h * 0.46)} />
+                    </span>
+                    <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
+                      <SheetCell src={f.src} h={h} moving={moving} cycleScale={j.cycleScale}
+                        facesLeft={leaving ? f.facesLeft : !f.facesLeft} breathe={!moving} />
+                    </span>
+                  </span>
+                )}
+              </Arrive>
             </div>
           </div>
         )
@@ -253,250 +507,616 @@ function GroupView({ item, total, den, lit, itemPx }: { item: Item; total: numbe
   )
 }
 
-// ─── Stage (shared by play + demo) ────────────────────────────────────────────────────
-interface StageState { shaded: number; lit: number; glow: boolean }
-function Stage({ world, data, s, short }: { world: FrWorld; data: FrRound; s: StageState; short?: boolean }) {
-  const { type, den, total, treat } = data
-  const wholePx = short
-    ? (den <= 2 ? 'clamp(84px,26vh,150px)' : 'clamp(74px,22vh,130px)')
-    : (den <= 2 ? 'clamp(150px,30vmin,260px)' : 'clamp(130px,26vmin,220px)')
-  const itemPx = short
-    ? (total <= 8 ? 'clamp(26px,7vh,44px)' : 'clamp(20px,5vh,34px)')
-    : (total <= 8 ? 'clamp(38px,7vmin,60px)' : 'clamp(28px,5vmin,46px)')
-  const { w: vw, h: vh } = useViewport()
-  const availW = vw * 0.92
-  const availH = short ? vh * 0.32 : vh * 0.48
+function Commit({ text, onClick, disabled, short }: { text: string; onClick: () => void; disabled?: boolean; short: boolean }) {
   return (
-    <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '46%' : '42%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw' }}>
-      <FitBox availW={availW} availH={availH} max={2.6}>
-        {type === 'name'
-          ? <Whole shape={world.shape} colors={treat.colors} den={den} shaded={s.shaded} px={wholePx} glow={s.glow} topping={treat.topping} />
-          : <GroupView item={treat.group} total={total} den={den} lit={s.lit} itemPx={itemPx} />}
-      </FitBox>
+    <button onClick={onClick} disabled={disabled} style={{
+      padding: short ? '10px 14px' : '13px 20px', borderRadius: 14, border: 'none',
+      cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1,
+      background: 'linear-gradient(135deg,var(--garden-green),var(--garden-green-deep))', color: '#fff',
+      fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 13 : 16,
+      boxShadow: '0 5px 0 rgba(40,110,60,.35)', whiteSpace: 'nowrap',
+    }}>{text}</button>
+  )
+}
+
+/**
+ * ⚠️ THE TAKE-BACK IS CONSTANT AT EVERY COUNT, and that is deliberate rather than tidy. An undo that
+ * appears only once the board is wrong is a verdict handed over before the commit. It is also a
+ * STACK — only the piece just laid comes off — so reaching for it is predictable.
+ */
+function Undo({ onClick, disabled, short }: { onClick: () => void; disabled?: boolean; short: boolean }) {
+  return (
+    <button onClick={onClick} disabled={disabled} aria-label="take one back" style={{
+      width: short ? 40 : 46, height: short ? 40 : 46, flex: '0 0 auto', padding: 0, borderRadius: 12,
+      cursor: disabled ? 'default' : 'pointer', background: 'var(--paper)', border: '3px solid var(--outline)',
+      boxShadow: '0 4px 0 #c8ac79', opacity: disabled ? 0.4 : 1,
+      fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 15 : 18, color: 'var(--ink)',
+    }}>↩</button>
+  )
+}
+
+// ─── the board: the whole, plus whatever has been laid in it ──────────────────────────
+function Board({ L: l, order, on, n, pieceDen, laid, lit, vw }: {
+  L: L; order: Order; on: 'shape' | 'group'; n: number; pieceDen: Den; laid: number; lit?: boolean; vw: number
+}) {
+  const size = wholeSize(order.shape, l.wholePx, l.boardRoom)
+  // ⚠️ A PILE GETS THE SAME ROOM A WHOLE DOES — measured off Milo and the friends, not off the
+  // viewport. Given `vw * 0.74` it reached into the friends' band and stood in front of them, which
+  // is the "two independent percentages of the width" fault this repo keeps paying for.
+  const w = on === 'group' ? Math.min(l.boardRoom, 640) : size.w
+  const h = on === 'group' ? Math.min(l.boardBand, 220) : size.h
+  return (
+    <div style={{
+      position: 'fixed', left: 0, width: l.boardCentre * 2, top: l.boardTop, height: l.boardBand, zIndex: 30,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
+    }}>
+      <Pool>
+        {on === 'group'
+          ? <Pile item={order.item} n={n} pieceDen={pieceDen} laid={laid} w={w} h={h} lit={lit} />
+          : <Whole shape={order.shape} colors={order.colors} art={`/assets/objects/${order.art}.png`} pieceDen={pieceDen} laid={laid} w={size.w} h={size.h} lit={lit} topping={order.topping} />}
+      </Pool>
     </div>
   )
 }
 
-// ─── Interactive play surface (guided / practice) ─────────────────────────────────────
+/**
+ * Shared by the play board AND the lesson, so the picture a child is taught on is the picture they
+ * then play on — a lesson that looks different from the round is teaching a second thing by accident.
+ */
+function Pool({ children }: { children: React.ReactNode }) {
+  return (
+      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/*
+          ⚠️ THE COUNTER POOL, AND IT IS NOT DECORATION — IT IS THE CAMOUFLAGE FIX, MEASURED.
+          Every scene in this chapter is a food shop, so every backdrop is warm brown or orange; and
+          every treat is a food, so every treat is warm brown or orange too. Measured over the band the
+          whole occupies, FIVE of the ten orders sat inside their own scene's hue with no saturation
+          gap either — loaf Δhue 10° Δsat 0.01, orange Δhue 3°, cheese Δhue 10°, wafer Δsat 0.07, cake
+          Δsat 0.08. That is CoinShop's coin problem exactly: the palette rule says separation in hue
+          OR saturation and there was neither.
+          Neither side can move — a bakery scene is warm and a loaf is tan, and recolouring either is a
+          lie. So the separation is in BRIGHTNESS instead, laid under the whole: every treat here is
+          value ≥ 0.66 and this pool is 0.15, which clears all ten at once.
+          ⚠️ AND IT FADES TO NOTHING AT ITS OWN EDGES, per BlockYard — a solid shape over a painted
+          scene reads as UI furniture however well its colour is matched, and this repo has drawn that
+          slab four times. Trodden ground has no border and neither does this.
+        */}
+        {/*
+          ⚠️ SIZED BY `inset`, NOT BY NUMBERS. Given the board's width and height it was drawn at the
+          MAXIMUM the board may take rather than at what is actually in it, so on a pile round — where
+          the tray is wide and starts empty — it rendered as a large dark stain with nothing on it.
+          A shrink-to-fit wrapper plus a negative inset makes the pool track its own content for free,
+          and keeps working for anything drawn here later.
+        */}
+        <div aria-hidden style={{
+          position: 'absolute', inset: '-17%', borderRadius: '50%', pointerEvents: 'none',
+          background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(34,22,12,.52), rgba(34,22,12,.34) 52%, rgba(34,22,12,0) 78%)',
+        }} />
+        {children}
+      </div>
+  )
+}
+
+// ─── play ─────────────────────────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
-const sayFor = (world: FrWorld, d: FrRound) => d.type === 'name'
-  ? `This ${d.treat.name} is cut into ${numberToWords(d.den)} equal parts. One part is ${world.shape === 'bar' ? 'wrapped' : 'covered'}. What fraction is that?`
-  : `Share ${numberToWords(d.total)} ${d.treat.group.many} into ${numberToWords(d.den)} equal groups. How many are in one ${fracWord(d.den)}?`
-const promptFor = (world: FrWorld, d: FrRound) => d.type === 'name'
-  ? `What fraction is ${world.shape === 'bar' ? 'covered' : 'shaded'}?`
-  : `One ${fracWord(d.den)} of ${d.total} ${d.treat.group.many}?`
 
-const FrPlay: React.FC<{ world: FrWorld; data: FrRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
-  const { type, den, answer, choices } = data
+const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
+  /** ⚠️ ONLY THE GUIDED ROUNDS SPEAK FOR THEMSELVES. In practice `SkillBeat` already speaks
+   *  `beat.say` on every round load, and both firing means two utterances where the second cancels
+   *  the first — whichever order they happen to run in. */
+  const speakOnMount = mode === 'guided'
   const { w: vw, h: vh } = useViewport()
-  const short = vh < 470
-  const [s, setS] = useState<StageState>({ shaded: type === 'name' ? 1 : 0, lit: 0, glow: false })
-  const [asking, setAsking] = useState(false)
-  const [picked, setPicked] = useState<number | null>(null)
-  const erred = useRef(false), done = useRef(false)
-  const set = (patch: Partial<StageState>) => setS(prev => ({ ...prev, ...patch }))
-  const btn = Math.max(56, Math.min(short ? 92 : 108, Math.round(Math.min(vw / 8.8, vh / (short ? 4.6 : 6)))))
+  const l = layoutFor(vw, vh)
+  const order = orderOf(data.slot)
+  const pieces = useMemo(() => piecesFor(data), [data])
 
+  const [pieceDen, setPieceDen] = useState<Den>(pieces[0])
+  /**
+   * ⚠️ A MIRROR REF, BECAUSE `lay` READS THE PIECE IT ALSO SETS — and this repo has now shipped that
+   * exact shape three times (TickTock's lesson dial moved ONE stop for six taps; placeValue's undo
+   * removed one cube for three batched taps, found by a real user on a janky device; CoinShop's `lay`
+   * reads inside the updater for the same reason).
+   *
+   * `pieceDen` is genuinely render state — the tray highlights it and the board draws with it — so it
+   * cannot simply become a ref. But the handler's `den !== pieceDen` test comes from the render's
+   * CLOSURE, so a burst of taps that starts by SWITCHING piece has every later tap still see the old
+   * piece, take the switch branch again, and reset `laid` to 1. Caught by playing it: four quick taps
+   * on a fresh round left one piece down and the child stuck on "not full yet" however fast they tap.
+   */
+  const denRef = useRef<Den>(pieces[0])
+  const [laid, setLaid] = useState(0)
+  const [done, setDone] = useState(false)
+  const [miss, setMiss] = useState<string | null>(null)
+  const erred = useRef(false)
+  const settled = useRef(false)
+
+  /**
+   * ⚠️ RESET DURING RENDER WHEN THE ROUND CHANGES, NOT IN AN EFFECT — and not left to chance at all.
+   * React reconciles this element across rounds (same component, same position), so state can survive
+   * into the next round: a new round would open with the previous round's pieces already laid and its
+   * commit already spent. That reuse is the fault SeesawPark shipped, where a walk-in played on round
+   * one and was dead for rounds two to ten — invisible the one time anybody checks. An effect would
+   * run after paint and show one frame of the old board.
+   */
+  const roundKey = `${data.slot}|${data.ask}|${data.on}|${data.den}|${data.n}`
+  const seenRound = useRef(roundKey)
+  if (seenRound.current !== roundKey) {
+    seenRound.current = roundKey
+    denRef.current = pieces[0]
+    settled.current = false; erred.current = false
+    setPieceDen(pieces[0]); setLaid(0); setDone(false); setMiss(null)
+  }
+
+  const askText = askTextFor(data)
   useEffect(() => {
-    const T: number[] = []
-    if (mode === 'guided') speak(sayFor(world, data))
-    if (type === 'group') T.push(window.setTimeout(() => set({ lit: 1 }), 500))
-    T.push(window.setTimeout(() => setAsking(true), 650))
-    return () => T.forEach(id => window.clearTimeout(id))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (speakOnMount) speak(askText)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function choose(n: number) {
-    if (done.current || picked !== null || !asking) return
-    setPicked(n)
-    if (n === answer) {
-      done.current = true
-      set({ glow: true })
-      if (mode === 'guided') speak(type === 'name' ? `Yes! One ${fracWord(den)}!` : `Yes! ${numberToWords(answer)}!`)
-      window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1400)
+  /** ⚠️ CAPPED AT den+2. A child who keeps tapping must see "these do not fit", not a sprawl that
+   *  outgrows the board — the overflow is the proof, so it has to stay legible. */
+  const lay = (den: Den) => {
+    if (settled.current) return
+    setMiss(null)
+    // Switching piece clears the board: a mixture of two sizes is not something the grader — or the
+    // child — should have to have an opinion about, and starting again is free.
+    if (den !== denRef.current) { denRef.current = den; setPieceDen(den); setLaid(1); return }
+    setLaid(v => Math.min(v + 1, den + 2))
+  }
+  const undo = () => { if (!settled.current) { setMiss(null); setLaid(v => Math.max(0, v - 1)) } }
+
+  function commit() {
+    if (settled.current || laid === 0) return
+    if (isSolved(data, { den: pieceDen, laid })) {
+      settled.current = true
+      setDone(true); setMiss(null)
+      speak(revealFor(data))
+      // He leaves on his own legs, and the round ends when he is actually gone.
+      const j = inFlowJourney(MILO, l.miloH, Math.round(vw - l.miloLeft + l.miloW * 0.4))
+      window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), j.ms + 700)
     } else {
       erred.current = true
-      speak(type === 'name' ? `Not quite — count the equal parts.` : `Not quite — count one group.`)
-      window.setTimeout(() => setPicked(null), 1100)
+      const t = missFor(data, { den: pieceDen, laid })
+      // Everything spoken is also WRITTEN — a response that exists only as speech is silence on the
+      // many devices with no usable voice, which reads as a tap that did nothing at all.
+      setMiss(t); speak(t)
     }
   }
 
-  const isFrac = type === 'name'
+  const side = l.short ? 44 : 52
   return (
     <>
-      <Stage world={world} data={data} s={s} short={short} />
-      <div style={{ position: 'fixed', top: short ? 78 : 82, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-        <div style={{ maxWidth: 'min(90vw, 560px)', background: 'rgba(255,255,255,.92)', border: '3px solid var(--outline)', borderRadius: 18, padding: short ? '5px 14px' : '10px 18px',
-          fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 'clamp(12px,3.4vh,15px)' : 'clamp(15px,2.2vh,19px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.14)' }}>
-          {promptFor(world, data)}
-        </div>
-      </div>
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '4%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.22) : 'clamp(14px,4vw,30px)', flexWrap: 'wrap', padding: '0 12px',
-        opacity: asking ? 1 : 0, transform: asking ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity .4s ease, transform .4s ease', pointerEvents: asking ? 'auto' : 'none' }}>
-        {choices.map(n => {
-          const isPick = picked === n, isOk = n === answer
-          return (
-            <button key={n} onClick={() => choose(n)} disabled={picked !== null} style={{
-              width: btn, height: btn, borderRadius: Math.round(btn * 0.23),
-              background: (isPick && isOk) ? 'var(--garden-green-soft)' : 'var(--paper)',
-              border: `4px solid ${(isPick && isOk) ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`,
-              boxShadow: `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`,
-              fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.44), color: 'var(--ink)',
-              cursor: picked !== null ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transform: (isPick && isOk) ? 'scale(1.08) translateY(-3px)' : 'scale(1)',
-              transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease',
-            }}>{isFrac ? <Frac n={1} d={n} size={Math.round(btn * 0.34)} color="var(--milo-orange)" /> : n}</button>
-          )
-        })}
-      </div>
+      <Bubble L={l} text={miss ?? (done ? revealFor(data) : askText)} />
+      <Board L={l} order={order} on={data.on} n={data.n} pieceDen={pieceDen} laid={laid} lit={done} vw={vw} />
+      {/*
+        ⚠️ WHO IS WAITING IS THE QUESTION. On a TAKE round every friend is already there, so the row
+        of them IS the denominator the child has to match with a piece. On a FIT round one more walks
+        in for each piece laid, so "how many of these fit" and "how many friends get one" assemble
+        into the same answer in front of the child instead of being asserted afterwards.
+      */}
+      <Friends L={l} order={order} den={data.den} share={done} leaving={done}
+        count={friendsShown(data.ask, data.den, laid)}
+        resetKey={`${data.slot}-${data.ask}-${data.den}`} />
+      <Bar L={l}>
+        {pieces.map(den => (
+          data.on === 'group'
+            ? <HandBtn key={den} item={order.item} n={data.n} den={den} side={side}
+                onLay={() => lay(den)} disabled={done} active={den === pieceDen && laid > 0} />
+            : <PieceBtn key={den} shape={order.shape} colors={order.colors} den={den} side={side}
+                onLay={() => lay(den)} disabled={done} active={den === pieceDen && laid > 0} />
+        ))}
+        <Undo onClick={undo} disabled={done || laid === 0} short={l.short} />
+        <Commit short={l.short} text={data.on === 'group' ? 'Share ✓' : 'Fit ✓'} onClick={commit} disabled={done || laid === 0} />
+      </Bar>
+      <Milo L={l} vw={vw} leaving={done} resetKey={`${data.slot}-${data.ask}-${data.on}`} />
     </>
   )
 }
 
-// ─── Teaching demo (opening preview + 3-wrong re-teach) via ONE speakSteps ────────────
-const FrExplain: React.FC<{ world: FrWorld; data: FrRound; onDone: () => void }> = ({ world, data, onDone }) => {
-  const { type, den, total, answer, treat } = data
-  const { h: vh } = useViewport()
-  const short = vh < 470
-  const [s, setS] = useState<StageState>({ shaded: 0, lit: 0, glow: false })
-  const [tag, setTag] = useState<React.ReactNode>(null)
-  const set = (patch: Partial<StageState>) => setS(prev => ({ ...prev, ...patch }))
+// ─── the re-teach, after three wrong ──────────────────────────────────────────────────
+const Reteach: React.FC<{ data: FrRound; onDone: () => void }> = ({ data, onDone }) => {
+  const { w: vw, h: vh } = useViewport()
+  const l = layoutFor(vw, vh)
+  const order = orderOf(data.slot)
+  const [laid, setLaid] = useState(0)
+  const [share, setShare] = useState(false)
+  const [line, setLine] = useState('')
   const doneRef = useRef(onDone); doneRef.current = onDone
+
   useEffect(() => {
-    const lines: string[] = []
-    const steps: Array<() => void> = []
-    if (type === 'name') {
-      lines.push(`Here's a whole ${treat.name}.`); steps.push(() => set({ shaded: 0 }))
-      lines.push(`Cut it into ${numberToWords(den)} equal parts.`); steps.push(() => set({ shaded: 0 }))
-      lines.push(`Color in one part.`); steps.push(() => set({ shaded: 1, glow: true }))
-      lines.push(`One part out of ${numberToWords(den)} — that's one ${fracWord(den)}!`)
-      steps.push(() => setTag(<Frac n={1} d={den} size={30} color="#fff" />))
-    } else {
-      lines.push(`Here are ${numberToWords(total)} ${treat.group.many}.`); steps.push(() => set({ lit: 0 }))
-      lines.push(`Share them into ${numberToWords(den)} equal groups.`); steps.push(() => set({ lit: 0 }))
-      lines.push(`Take one ${fracWord(den)} — one group.`); steps.push(() => set({ lit: 1 }))
-      lines.push(`One group has ${numberToWords(answer)}. One ${fracWord(den)} of ${numberToWords(total)} is ${numberToWords(answer)}!`)
-      steps.push(() => setTag(<span>{`1/${den} of ${total} = ${answer}`}</span>))
-    }
-    const cancel = speakSteps(lines, {
-      onStep: (i) => { steps[i]?.() },
-      onDone: () => { window.setTimeout(() => doneRef.current(), 1100) },
-      fallbackStepMs: 1050,
+    const thing = data.on === 'group' ? `${numWord(data.n)} ${order.items}` : `the ${order.treat}`
+    const lines = [
+      `Look — ${numWord(data.den)} friends are waiting, and they must ALL get the same.`,
+      `So I share ${thing} out, one piece at a time…`,
+      `…until everybody has one. ${sentenceCase(numWord(data.den))} equal ${data.on === 'group' ? 'piles' : 'pieces'}.`,
+      data.on === 'group'
+        ? `Each friend gets ${numWord(perShare(data))}. One ${denWord(data.den)} of ${numWord(data.n)} is ${numWord(perShare(data))}.`
+        : `Each friend gets one piece out of ${numWord(data.den)} — one ${denWord(data.den)}.`,
+    ]
+    const steps = [() => setLaid(0), () => setLaid(1), () => setLaid(data.den), () => setShare(true)]
+    // Self-paced for the same reason the lesson is — see the long note in `Lesson`. A re-teach whose
+    // visuals hang off speech events freezes on any device that stops delivering them, and a frozen
+    // re-teach is a dead end reached by a child who has already got three wrong.
+    const timers: number[] = []
+    let t = 0
+    lines.forEach((ln, i) => {
+      timers.push(window.setTimeout(() => { steps[i]?.(); setLine(ln); speak(ln) }, t))
+      t += dwellFor(ln)
     })
-    return cancel
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    timers.push(window.setTimeout(() => doneRef.current(), t + 1200))
+    return () => { timers.forEach(window.clearTimeout); stopSpeech() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
   return (
     <>
-      <Stage world={world} data={data} s={s} short={short} />
-      <div style={{ position: 'fixed', top: short ? '74%' : '72%', left: 0, right: 0, zIndex: 33, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none', minHeight: 44 }}>
-        {tag && <div style={{ background: 'var(--milo-orange)', color: '#fff', borderRadius: 50, padding: '8px 22px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 15 : 18, display: 'flex', alignItems: 'center', gap: 8, animation: 'sl_pop .4s ease both' }}>{tag}</div>}
+      <Bubble L={l} text={line || 'Let me show you again…'} />
+      <Board L={l} order={order} on={data.on} n={data.n} pieceDen={data.den} laid={laid} lit={laid >= data.den} vw={vw} />
+      {/* The re-teach shows the SAME story a round does — a child who has got three wrong is the last
+          person who should be handed a second framing to bridge. */}
+      <Friends L={l} order={order} den={data.den} count={data.den} share={share} leaving={false}
+        resetKey={`re${data.slot}`} />
+      <Milo L={l} vw={vw} leaving={false} resetKey={`re${data.slot}`} />
+    </>
+  )
+}
+
+// ─── the lesson: four beats, unscored, before anything is graded ───────────────────────
+/**
+ * ⚠️ THIS IS THE PART THE OLD CHAPTER DID NOT HAVE, and it is why this one exists in this shape.
+ * One idea per beat, in a fixed order, nothing scored — the pattern the colouring chapter settled —
+ * and the third beat is the payload: a SMALLER piece fits MORE times, which is the whole reason
+ * 1/4 < 1/2 and the fact everything downstream needs.
+ *
+ * Beat one is the misconception, and the mechanic itself refutes it: two pieces that are not the
+ * same do not fit twice, so they were never halves. **The fit test IS the equal test.**
+ *
+ * The skip appears only from the SECOND run (`lessonSeen`). Offered on the first it is just a big
+ * button a six-year-old presses to leave the teaching, and then meets a test nothing prepared them
+ * for.
+ */
+const BEATS = 4
+const DEMO = ORDERS[0]   // the pizza — round, and the one thing every child has seen cut
+
+/** The lesson's own board: a whole that can also be drawn WRONGLY cut, which no scored round ever is. */
+function LessonWhole({ w, h, mode, den, laid }: { w: number; h: number; mode: 'uneven' | 'even'; den: Den; laid: number }) {
+  const c = DEMO.colors
+  if (mode === 'uneven') {
+    // Two pieces, and they are not the same — the thing a child will happily call "a half".
+    return (
+      <svg viewBox="-10 -8 120 116" style={{ width: w, height: h, filter: 'drop-shadow(0 6px 10px rgba(0,0,0,.3))', display: 'block' }}>
+        <circle cx={50} cy={50} r={47} fill="none" stroke={c.edge} strokeWidth={2.6} />
+        <path d={wedgePath(0, 3)} fill={c.shaded} stroke={c.edge} strokeWidth={2} />
+        <path d={`M 50 50 L ${50 + 47 * Math.cos(30 * R2)} ${50 + 47 * Math.sin(30 * R2)} A 47 47 0 1 1 50 3 Z`}
+          fill={c.base} stroke={c.edge} strokeWidth={2} />
+      </svg>
+    )
+  }
+  return <Whole shape="round" colors={c} art={`/assets/objects/${DEMO.art}.png`} pieceDen={den} laid={laid} w={w} h={h} topping={DEMO.topping} />
+}
+
+const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, onDone }) => {
+  const { w: vw, h: vh } = useViewport()
+  const l = layoutFor(vw, vh)
+  const [beat, setBeat] = useState(0)
+  const [line, setLine] = useState('')
+  const [view, setView] = useState<{ mode: 'uneven' | 'even'; laid: number; den: Den; friends: number; share: boolean }>({ mode: 'even', laid: 0, den: 2, friends: 2, share: false })
+  /**
+   * The child's one hands-on go, on the last beat.
+   *
+   * ⚠️ A REF, NOT STATE, AND THAT IS THE FIX FOR A REAL FAULT THIS REPO HAS SHIPPED TWICE. It is read
+   * back inside the tap handler that also sets it, so as `useState` that read comes from the render's
+   * CLOSURE and every tap inside one React batch sees the same stale count — TickTock's lesson dial
+   * moved ONE stop for six taps (measured on prod), and placeValue's undo removed one cube for three
+   * batched taps on a real user's janky device. Distinct human taps are usually separate ticks; that
+   * is not a guarantee, which is why the rule is *never read state you also set inside a handler*.
+   */
+  const tryN = useRef(0)
+  const [tryOk, setTryOk] = useState(false)
+  /** ⚠️ The piece appears when the child is ASKED for it, not when the last beat starts — gated on
+   *  the beat index it shows up while Milo is still sentences earlier, because `line` lags a new beat
+   *  until its first narration step fires and the render does not. */
+  const [askTry, setAskTry] = useState(false)
+
+  useEffect(() => {
+    const script: Array<{ lines: string[]; steps: Array<() => void> }> = [
+      { // ① two friends, one pizza, and a cut that is not fair
+        lines: [
+          'Bunny and Duck both want some pizza. Just two friends, and one pizza.',
+          'Milo cut it into two pieces — but look. Bunny got a BIG piece and Duck got a little one.',
+          'That is not fair, and it is not a half. A half means both pieces are the SAME.',
+        ],
+        steps: [
+          () => setView({ mode: 'even', laid: 0, den: 2, friends: 2, share: false }),
+          () => setView({ mode: 'uneven', laid: 0, den: 2, friends: 2, share: false }),
+          () => setView({ mode: 'uneven', laid: 0, den: 2, friends: 2, share: false }),
+        ],
+      },
+      { // ② equal pieces, one each
+        lines: [
+          'So Milo cuts again. One piece for Bunny…',
+          'and one for Duck, exactly the same size. Two friends, two equal pieces.',
+          'They each get ONE HALF. Nobody got more than anybody else.',
+        ],
+        steps: [
+          () => setView({ mode: 'even', laid: 1, den: 2, friends: 2, share: false }),
+          () => setView({ mode: 'even', laid: 2, den: 2, friends: 2, share: false }),
+          () => setView({ mode: 'even', laid: 2, den: 2, friends: 2, share: true }),
+        ],
+      },
+      { // ③ THE PAYLOAD — more friends sharing the same thing means a smaller piece each
+        lines: [
+          'Now watch. TWO more friends come along — that is four friends now.',
+          'Same pizza. But Milo has to cut it into four pieces so everyone gets one.',
+          'Four friends, four equal pieces. Each one gets a QUARTER.',
+          'More friends means a SMALLER piece each. That is why a quarter is smaller than a half.',
+        ],
+        steps: [
+          () => setView({ mode: 'even', laid: 2, den: 2, friends: 4, share: false }),
+          () => setView({ mode: 'even', laid: 4, den: 4, friends: 4, share: false }),
+          () => setView({ mode: 'even', laid: 4, den: 4, friends: 4, share: true }),
+          () => setView({ mode: 'even', laid: 4, den: 4, friends: 4, share: true }),
+        ],
+      },
+      { // ④ name them, then one go
+        lines: [
+          'Two friends share into halves. Three into thirds. Four into quarters.',
+          'Your turn. THREE friends are waiting — fill the pizza so everybody gets one.',
+        ],
+        steps: [
+          () => setView({ mode: 'even', laid: 2, den: 2, friends: 2, share: true }),
+          // Emptied HERE rather than at the start of the beat, so the child sees it clear at the
+          // moment they are asked — and the piece appears with the instruction.
+          () => { setView({ mode: 'even', laid: 0, den: 3, friends: 3, share: false }); tryN.current = 0; setAskTry(true) },
+        ],
+      },
+    ]
+    const b = script[beat]
+    if (!b) return
+    const last = beat >= BEATS - 1
+
+    /**
+     * ⚠️ THE LESSON IS SELF-PACED ON A TIMER, WITH `speak()` ALONGSIDE — NOT DRIVEN BY `speakSteps`.
+     *
+     * `speakSteps` reveals each visual from the utterance's `onstart`, so THE TEACHING ONLY HAPPENS
+     * IF SPEECH KEEPS DELIVERING EVENTS. When a device starts the first line and then silently drops
+     * the rest — which Chrome and Safari both do — the sequence marches to its end on per-line
+     * watchdogs while `onStep` never fires again: the line, the board AND the flag that offers the
+     * child the piece all freeze at the last line that happened to speak, permanently. TickTock
+     * shipped exactly that and the founder sat stuck on a lesson beat with no control on screen.
+     *
+     * ⚠️ And a fixed total cap behind it is WORSE, not a safety net: timed against the silent
+     * fallback it fires mid-sentence on a device with a real voice and cancels a live utterance. The
+     * preview pane is mute, so that failure is invisible in every run driven here.
+     *
+     * The honest cost is that a slow voice can have its tail cut by the next line, which is far
+     * cheaper than a lesson that freezes — and `speak()` cancels cleanly rather than overlapping.
+     */
+    const timers: number[] = []
+    let t = 0
+    b.lines.forEach((ln, i) => {
+      timers.push(window.setTimeout(() => { b.steps[i]?.(); setLine(ln); speak(ln) }, t))
+      t += dwellFor(ln)
+    })
+    // The last beat waits for the child; the others roll on.
+    if (!last) timers.push(window.setTimeout(() => setBeat(x => x + 1), t + 600))
+    return () => { timers.forEach(window.clearTimeout); stopSpeech() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [beat])
+
+  const layTry = () => {
+    if (tryOk) return
+    // Capped at three, which is also the answer — the lesson is a rehearsal of the gesture, not a
+    // test, so there is deliberately no way to overshoot into a state needing an undo that this
+    // screen does not offer.
+    const n = Math.min(tryN.current + 1, 3)
+    tryN.current = n
+    setView({ mode: 'even', laid: n, den: 3, friends: 3, share: n === 3 })
+    if (n === 3) {
+      setTryOk(true)
+      speak('That is it — three equal pieces. Thirds! Now you can find a fraction.')
+      window.setTimeout(onDone, 2400)
+    }
+  }
+
+  const size = wholeSize('round', l.wholePx, l.boardRoom)
+  return (
+    <>
+      <Bubble L={l} text={line || 'Let us cut something up together.'} />
+      <div style={{ position: 'fixed', left: 0, right: 0, top: l.boardTop, height: l.boardBand, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <Pool>
+          <LessonWhole w={size.w} h={size.h} mode={view.mode} den={view.den} laid={view.laid} />
+        </Pool>
+      </div>
+      {/* ⚠️ THE FRIENDS ARE IN THE LESSON TOO. A lesson that teaches "how many of these fit" and a
+          round that asks "how many friends get one" are two different chapters, and the child would
+          have to bridge them alone. Here the payload IS the friends: two more arrive, the same pizza
+          has to stretch further, and everyone's piece gets smaller in front of them. */}
+      <Friends L={l} order={DEMO} den={Math.max(view.den, view.friends) as Den}
+        count={view.friends} share={view.share} leaving={false} resetKey={`lesson${beat}`} />
+      <Bar L={l}>
+        {/* ⚠️ THERE IS DELIBERATELY NO "NEXT". The beats roll on by themselves, and a Next button on
+            every beat is a skip button on the very first run — the exact thing `lessonSeen` exists to
+            prevent. The only way forward is the one hands-on go on the last beat. */}
+        {askTry && (
+          <PieceBtn shape="round" colors={DEMO.colors} den={3} side={l.short ? 44 : 52}
+            onLay={layTry} disabled={tryOk} active={tryN.current > 0} />
+        )}
+        {canSkip && (
+          <button onClick={onDone} style={{
+            padding: l.short ? '7px 12px' : '9px 16px', borderRadius: 12, cursor: 'pointer',
+            background: 'transparent', border: '2px solid rgba(61,37,22,.28)',
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: l.short ? 11 : 13, color: 'var(--ink-muted)',
+          }}>Skip the lesson</button>
+        )}
+      </Bar>
+      {/* dots, so a grown-up can see how much teaching is left */}
+      <div style={{ position: 'fixed', left: 0, right: 0, top: l.top - 22, display: 'flex', justifyContent: 'center', gap: 6, zIndex: 44 }}>
+        {Array.from({ length: BEATS }).map((_, i) => (
+          <span key={i} style={{ width: 8, height: 8, borderRadius: 99, background: i <= beat ? 'var(--milo-orange)' : 'rgba(61,37,22,.22)' }} />
+        ))}
       </div>
     </>
   )
 }
 
-// ─── Value generation ──────────────────────────────────────────────────────────────
-function makeFrBeat(world: FrWorld): Beat<FrRound> {
+// ─── beat ─────────────────────────────────────────────────────────────────────────────
+export function makeFrBeat(): Beat<FrRound> {
   return {
     skillId: 'fractions', rounds: 10, reteachAfter: 3, walkEvery: 3,
-    make: (d, round = 0) => makeFractionRound(world, (d || 1) as 1 | 2 | 3, round),
-    sig: d => `${d.type}|${d.den}|${d.total}`,   // dedupe on the MATH (not the rotating treat/scene)
-    prompt: d => promptFor(world, d),
-    say: d => sayFor(world, d),
-    Play: ({ data, onSubmit }) => <FrPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
-    Reteach: ({ data, onDone }) => <FrExplain world={world} data={data} onDone={onDone} />,
+    make: (d, round = 0, asked) => makeFrRound((d || 1) as 1 | 2 | 3, round, asked),
+    // ⚠️ THE CLOSED SET. Mastery must not end the run before all three denominators have been asked
+    // — a strong child gets about three rounds at L1 (halves and quarters only), ONE at L2 and TWO at
+    // L3, so thirds are the reading a uniform draw loses.
+    coverage: { of: r => String(r.den), all: DENS.map(String) },
+    // ⚠️ THIS CHAPTER SAYS ITS OWN MISS LINES. `missFor` names WHICH mistake it was — and on a wrong
+    // piece it states the size relation, which is the payload. The round retries in place over the
+    // board, so SkillBeat's centred pill would land on the very thing being read, and because a round
+    // is only reported once SOLVED that pill would also arrive on top of the reveal and contradict it.
+    ownsFeedback: true,
+    // Dedupe on the MATH and the DIRECTION — the same fraction found and then made is two questions.
+    // The treat's SHAPE is in here on purpose: a half of a round pizza and a half of a chocolate bar
+    // are two representations the curriculum asks for by name, not two dressings of one question.
+    sig: r => `${r.ask}:${r.on}:${r.den}:${r.n}:${orderOf(r.slot).shape}`,
+    // Empty on purpose: SkillBeat then renders no pill of its own, and Milo's bubble is the single
+    // question region. Two pills saying the same thing land on top of each other at 640×320.
+    prompt: () => '',
+    // The VOICE comes from the same renderer the bubble writes, so what Milo says and what the bubble
+    // shows cannot drift.
+    say: r => askTextFor(r),
+    Play: ({ data, onSubmit }) => <FrPlay data={data} mode="practice" onComplete={onSubmit} />,
+    Reteach: ({ data, onDone }) => <Reteach data={data} onDone={onDone} />,
   }
 }
 
-// ─── Orchestrator ──────────────────────────────────────────────────────────────────
+// ─── orchestrator ─────────────────────────────────────────────────────────────────────
 const SL_CSS = `
-@keyframes sl_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-@keyframes sl_pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.1);opacity:1} 100%{transform:scale(1);opacity:1} }
+@keyframes sl_land { from{transform:scale(.6);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes sl_fade { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
 `
-type Phase = 'intro' | 'demo' | 'guided' | 'practice'
-export default function SliceShop({ world: forcedWorldId, onFinish, onExit }: {
-  world?: string
+
+type Phase = 'intro' | 'lesson' | 'bridge' | 'guided' | 'practice'
+
+/** The two rehearsals: one of each direction, because BOTH are graded and a graded gesture that was
+ *  never walked through is a child marked wrong for a mechanic nobody showed them. */
+const GUIDED: FrRound[] = [
+  { slot: 1, den: 2, on: 'shape', n: 0, ask: 'fit', d: 1 },
+  { slot: 2, den: 4, on: 'shape', n: 0, ask: 'take', d: 1 },
+]
+
+export default function SliceShop({ onFinish, onExit }: {
+  world?: string    // accepted and ignored — this chapter is one day at the shop, not three worlds
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
   const router = useRouter()
-  const [world, setWorld] = useState<FrWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
+  const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
-  const [bg, setBg] = useState(0)
-  const [demoIdx, setDemoIdx] = useState(0)
-  const { h: vh } = useViewport()
-  const short = vh < 470
+  const [gIdx, setGIdx] = useState(0)
+  const [slot, setSlot] = useState(0)
+  const { w: vw, h: vh } = useViewport()
+  const l = layoutFor(vw, vh)
+  const learnerId = useMemo(() => getActiveLearner()?.id, [])
+  const [canSkip] = useState(() => lessonSeen(getActiveLearner()?.id, 'fractions'))
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
 
+  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
   const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
     if (finished.current) return; finished.current = true
     stopSpeech()
     if (onFinish) onFinish(c, w, mastered); else exit()
   }, [onFinish, exit])
-
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
-  const beat = useMemo(() => (world ? makeFrBeat(world) : null), [world])
+  const beat = useMemo(() => makeFrBeat(), [])
 
-  if (!world || !beat) {
-    return (
-      <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-        <WorldSelect title="Where shall we share equal parts?" worlds={PICK_WORLDS}
-          onPick={(id) => { const w = worldById(id); if (w) { setBg(0); setWorld(w) } }} onExit={exit} />
-      </div>
-    )
-  }
-
-  // Demo shows one NAME then one GROUP (different treats); guided is a gentle name (half).
-  const DEMO: FrRound[] = [
-    { bg: 0, treat: world.treats[0], type: 'name', den: 4, total: 0, answer: 4, choices: DENS.slice() },
-    { bg: (1 % world.bgs.length), treat: world.treats[1] ?? world.treats[0], type: 'group', den: 2, total: 6, answer: 3, choices: numChoices(3) },
-  ]
-  const GUIDED: FrRound = { bg: 0, treat: world.treats[2 % world.treats.length], type: 'name', den: 2, total: 0, answer: 2, choices: DENS.slice() }
-  const bgIdx = phase === 'practice' ? bg : phase === 'guided' ? GUIDED.bg : DEMO[Math.min(demoIdx, DEMO.length - 1)].bg
+  const shownSlot = phase === 'practice' ? slot : phase === 'guided' ? GUIDED[gIdx].slot : 0
 
   const Banner = (text: string) => (
-    <div style={{ position: 'absolute', top: short ? 44 : 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
-      <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: short ? '5px 16px' : '10px 24px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: short ? 14 : 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
+    <div style={{ position: 'absolute', top: CHROME_PAD, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
+      <div style={{
+        background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999,
+        padding: l.short ? '4px 14px' : '8px 20px', fontFamily: 'var(--font-display)', fontWeight: 800,
+        fontSize: l.short ? 12 : 17, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center',
+      }}>{text}</div>
     </div>
   )
 
+  const Card = (body: React.ReactNode, cta: string, go: () => void) => (
+    <div style={{ position: 'absolute', inset: 0, zIndex: 46, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18, padding: '0 6vw', animation: 'sl_fade .4s ease both' }}>
+      <div style={{
+        maxWidth: 560, background: '#fff', border: '3px solid var(--outline)', borderRadius: 18,
+        padding: l.short ? '10px 16px' : '16px 22px', fontFamily: 'var(--font-display)', fontWeight: 700,
+        fontSize: l.short ? 14 : 19, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)',
+      }}>{body}</div>
+      <button onClick={go} style={{
+        padding: l.short ? '11px 28px' : '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer',
+        background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff',
+        fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: l.short ? 17 : 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)',
+      }}>{cta}</button>
+    </div>
+  )
+
+  // ⚠️ THIS EARLY RETURN SITS BELOW EVERY HOOK. Put one above a `useMemo` and turning the phone
+  // changes the hook count, and React tears the chapter into the error boundary — which is exactly
+  // what happened the first time this gate was wired into chapter 2.
+  if (needsRotate) return <RotateGate line="Milo needs a wide counter to cut things on! 🍕" />
+
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-      <style>{SL_CSS}</style>
-      <Background bg={bgIdx} world={world} />
-      <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+      <style>{SL_CSS}{CRITTER_CSS}</style>
+      <Scene slot={shownSlot} />
+      <div style={{ position: 'absolute', top: CHROME_PAD, left: 14, zIndex: 50 }}>
+        {/* Sized from the same metrics `chromeTop` budgets for, so the band below cannot be wrong. */}
+        <button onClick={exit} style={{
+          padding: `${menuBtn(l.short).padY}px ${menuBtn(l.short).padX}px`, borderRadius: 50,
+          background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)',
+          fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: menuBtn(l.short).font, cursor: 'pointer',
+        }}>← Menu</button>
       </div>
 
-      {phase === 'intro' && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-          <div style={{ maxWidth: '76%', background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 15 : 19, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)' }}>
-            {world.intro}
-          </div>
-          <button onClick={() => { unlockSpeech(); setPhase('demo') }}
-            style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>Let&apos;s slice! ▶</button>
-        </div>
-      )}
+      {/* ⚠️ THE INTRO NAMES REAL ORDERS. It said "a loaf", which this chapter has not sold since the
+          order table was rebuilt — the same fault CoinShop shipped when its intro pointed a child at
+          a price board and a cloth that had both been deleted. The gate reads the table. */}
+      {phase === 'intro' && Card(
+        <>Milo&apos;s shop is open, and friends keep coming in — and everything has to be shared out
+          FAIRLY. A pizza, a chocolate bar, a party cake. First, let us learn how to share equally.</>,
+        'Show me ▶', () => { unlockSpeech(); setPhase('lesson') })}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo  (${demoIdx + 1}/${DEMO.length})`)}
-        <FrExplain key={`demo${demoIdx}`} world={world} data={DEMO[demoIdx]}
-          onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
+      {phase === 'lesson' && (<>{Banner('Equal parts')}
+        <Lesson canSkip={canSkip} onDone={() => { markLessonSeen(learnerId, 'fractions'); setPhase('bridge') }} /></>)}
 
-      {phase === 'guided' && (<>{Banner('Now you! Tap the fraction')}
-        <FrPlay key="guided" world={world} data={GUIDED} mode="guided" onComplete={() => setPhase('practice')} /></>)}
+      {/* The teaching and the pointing stop at once. A child not told that has simply had the game
+          taken away — so it is said out loud, once, on its own screen. */}
+      {phase === 'bridge' && Card(
+        <>Now the orders start coming in. Sometimes Milo hands you a piece and you find how many fit —
+          and sometimes he asks for a half or a third and you find the right piece. I will not point any
+          more. You can do this!</>,
+        'Open the shop ▶', () => setPhase('guided'))}
+
+      {phase === 'guided' && (<>{Banner(gIdx === 0 ? 'Lay the pieces in' : 'Now pick the right piece')}
+        <FrPlay key={`g${gIdx}`} data={GUIDED[gIdx]} mode="guided"
+          onComplete={() => { if (gIdx + 1 < GUIDED.length) setGIdx(gIdx + 1); else setPhase('practice') }} /></>)}
 
       {phase === 'practice' && (
-        <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
+        <div style={{ position: 'absolute', top: l.top - 8, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
-            onRound={(data) => { if (typeof data?.bg === 'number') setBg(data.bg) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onRound={(data) => { if (typeof data?.slot === 'number') setSlot(data.slot) }}
+            onComplete={(c, w, mastered) => {
+              result.current.correct += c; result.current.wrong += w
+              finishChapter(result.current.correct, result.current.wrong, mastered)
+            }} />
         </div>
       )}
 
-      <MiloHost left={10} milo={world.milo} />
+      {/* Milo stands here for every phase that does not own him itself (FrPlay and Reteach do, because
+          they need him to walk off). He must be on screen whenever the bubble is: the bubble has a
+          TAIL, and a tail pointing at an empty corner says the words belong to somebody who is not
+          there. The gate asserts he has a registered drawn cycle, since he is the only thing here
+          that moves. */}
+      {(phase === 'intro' || phase === 'lesson' || phase === 'bridge') && hasSheet(MILO) && (
+        <Milo L={l} vw={vw} leaving={false} resetKey={phase} />
+      )}
     </div>
   )
 }
