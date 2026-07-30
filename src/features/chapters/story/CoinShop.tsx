@@ -1,37 +1,45 @@
 'use client'
 /**
- * Chapter (6–8) — MONEY (skill `money`) as **PAY IT**.
+ * Chapter (6–8) — MONEY (skill `money`) as **PAY IT**, walked through a market.
  *
- * ⚠️ **WHAT WAS WRONG BEFORE WAS THE QUESTION, NOT THE ANIMATION.** The old chapter laid out a
- * handful of coins somebody else had chosen and asked the child to tap the total off three number
- * chips — and **every coin carried its own value as a code-drawn numeral**. Replace each coin
- * sprite with a bare numeral and all thirty questions still work: it was `5 + 1 + 1` wearing coins.
- * That is BlockYard's fault exactly (a printed question makes the picture beside it decoration),
- * and no amount of motion fixes it. So the verb changed first and the motion followed.
+ * ⚠️ **WHAT WAS WRONG FIRST WAS THE QUESTION, AND WHAT WAS WRONG SECOND WAS THE GESTURE.**
+ * The chapter this replaces laid out coins somebody else had chosen and asked for the total off
+ * three chips, with **every coin carrying its value as a numeral** — replace each coin with a bare
+ * numeral and all thirty questions still worked. It was `5 + 1 + 1` wearing coins. So the verb
+ * changed: the tag names a price, the purse always holds more than it needs, nothing says *that's
+ * enough*, and the child BUILDS the amount.
  *
- * **Reading a pile is not the money skill — MAKING an amount is.** The tag names a price; the purse
- * always holds more coins than the price needs and nothing says *that's enough*; the child builds
- * the amount and commits. Delete the coins and there is no question left, which is the test the old
- * form failed.
- *   • the answer is one the child MADE, and more than one build is right (40 = 25+10+5 = 10×4)
- *   • **L3 asks for the FEWEST coins**, which is the actual payload: one 25 is ONE object worth
- *     TWENTY-FIVE units — the same unitising that `p.skipCount` and `p.placeValue2` feed into.
- *   • `read` survives as the L1 rung, because reading and making are the same skill from two ends.
+ * Then that version was rejected twice on the LOOK, and the second diagnosis is the one that
+ * matters: **three chapters in a row had the same gesture.** BlockYard calls an object and puts it
+ * on the ground; placeValue calls an object and puts it on two shelves; CoinShop called a coin and
+ * put it on a counter. Changing the awning, the cloth and the customer while leaving the verb
+ * identical is [§0a](../../../../docs/chapter-craft.md) broken from the other side — *a new scene on
+ * an old gesture reads as the old chapter.* And the band has eighteen drawn creature cycles that the
+ * chapter used none of, which is precisely the weakness BlockYard's own header admits to.
+ *
+ * **So the chapter is a WALK now.** Seven market stalls, each a painted scene with its own animated
+ * stallholder; Milo walks in from off-frame at every stall, buys one thing, counts his coins onto
+ * his cloth and hands them over, then walks off with it. The scene, the keeper and the goods change
+ * every round, and the reward for a right answer is the journey rather than a number turning green.
+ *
+ * **EVERY practice round is the same shape, by the founder's call: the keeper names the price of his
+ * own goods and the child pays it out of the purse.** The price is derived from a multiset of coins
+ * so it is always payable, and **L3 asks for the FEWEST coins** — the payload, because one 25 is ONE
+ * object worth TWENTY-FIVE units, the same unitising `p.skipCount` and `p.placeValue2` feed into.
+ *
+ * ⚠️ **A `read` RUNG (coins already laid, type the total on a number pad) WAS HERE AND IS GONE.** It
+ * was kept on the argument that reading a pile and making an amount are one skill from two ends —
+ * but it is not the gesture this chapter is about, and the moment the coins moved into the card it
+ * had **nowhere to draw its pile**: it asked *"how much money is that?"* over an empty screen, live,
+ * because the card only renders on a paying round. Removing the type removed the bug with it. If it
+ * ever comes back it needs its own place to show the coins.
  *
  * Honest note: `p.money` is a LEAF in [skill-graph.md](../../../../docs/skill-graph.md) — nothing
  * stands on it. It is a life skill, not a spine node. That lowers the stakes; it does not excuse
  * addition in disguise.
  *
- * ⚠️ **THE COINS NEVER TOUCH THE GROUND, AND THAT IS A PALETTE DECISION.** Measured, the set owns
- * the whole warm-earth band plus neutral grey — copper **18°**, gold **40°**, silver a hueless
- * **sat .09** — and open ground is made of exactly those. Milo is **hue 30° / sat .53**, inside it
- * too. Six candidate backdrops were generated and five collided (a golden common came out 2° from
- * gold, a terracotta square 1° from copper). So the four scenes are GREEN — clear of every coin and
- * of Milo — plus one warm sand that separates on SATURATION instead (.22 against his .53, the same
- * basis as shipped `beach_sand`). The coins then sit on a code-drawn COUNTER whose colour this file
- * owns outright, so contrast is guaranteed by construction rather than fought for in the backdrop.
- *
- * Art: **four new backdrops** (see RUN). Coins, Milo and every other piece already shipped.
+ * The stalls, the keeper rectangles, the per-scene ground lines and why three of the ten generated
+ * scenes are not used all live in [market.ts](./market.ts). Read that before touching the geometry.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -40,8 +48,20 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
-import { SheetCell, inFlowJourney, CRITTER_CSS, aspectOf, Arrive } from './critters'
-import { Shadow, Banner, AnswerPad, PAD_BAND, YARD_CSS, groundOf } from './yard'
+import { SheetCell, inFlowJourney, CRITTER_CSS, Arrive, aspectOf } from './critters'
+import { Shadow, YARD_CSS, bannerBottom } from './yard'
+import {
+  STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot, type Stall,
+  SCENE_W, SCENE_H, fitFor, groundPxFor, miloHFor, miloHalfPct, PURSE_MAX, CARD_BAND, cardMetrics,
+  aOrAn, OFF_X, MILO_X, PAY_X, MILO_ASPECT,
+  SHOPPERS, shopperAt, SHOPPER_X, SHOPPER_LIFT, SHOPPER_SCALE,
+} from './market'
+
+export {
+  STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot,
+  fitFor, groundPxFor, miloHFor, miloHalfPct, PURSE_MAX, CARD_BAND, cardMetrics,
+  MILO_X, PAY_X,
+}
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
 const MILO = '/assets/characters/milo_side.png'
@@ -51,11 +71,8 @@ const MILO = '/assets/characters/milo_side.png'
  * ⚠️ **THE NUMERAL STAYS, AND IT IS NOT THE FAULT.** These are generic coins with no country, so a
  * six-year-old has no way to know a silver disc is worth five — the numeral is the affordance, the
  * way a ten-rod's segments are. What was wrong was letting the child answer by ADDING those numerals
- * with three chips. Here the numeral tells you what a coin is worth and the child still has to
- * choose which coins to spend, which is the part that is money.
- *
- * `rel` — a bigger coin is worth more, as in life. It is decoration, never the answer: 25 and 10
- * differ by their FACE, not by a size a child would have to measure.
+ * off three chips. Here it tells you what a coin is worth and the child still has to choose which
+ * coins to spend, which is the part that is money.
  */
 export const VALUES = [1, 5, 10, 25] as const
 export type CoinValue = (typeof VALUES)[number]
@@ -67,10 +84,16 @@ const COIN: Record<number, { src: string; rel: number }> = {
 }
 const FALLBACK: Record<number, string> = { 1: '#c67a44', 5: '#c9cdd4', 10: '#e8b64a', 25: '#e8b64a' }
 
-/** One coin, with a real elliptical contact shadow so it sits ON the counter rather than over it. */
-export function Coin({ value, px }: { value: CoinValue; px: number }) {
+/**
+ * One coin. ⚠️ `flat` draws every value at the SAME size, and it is not a shortcut — in the purse a
+ * bigger disc means worth more, which is true of money and worth showing while you CHOOSE. In the
+ * tray you are counting what you already laid, and there `rel` only shrinks the 1-coin: measured, a
+ * 29px tray with `rel` 0.76 printed its numeral at **9px**, which is the affordance gone. Same disc,
+ * same legible digit, and the size cue stays where it earns its place.
+ */
+export function Coin({ value, px, flat }: { value: CoinValue; px: number; flat?: boolean }) {
   const m = COIN[value]
-  const s = Math.round(px * m.rel)
+  const s = Math.round(px * (flat ? 1 : m.rel))
   const [missing, setMissing] = useState(false)
   return (
     <span style={{ display: 'block', position: 'relative', width: s, height: s }}>
@@ -90,63 +113,11 @@ export function Coin({ value, px }: { value: CoinValue; px: number }) {
   )
 }
 
-// ─── The run ──────────────────────────────────────────────────────────────────────────
-/**
- * One flat list covering demo (2) → guided (1) → 10 scored rounds, indexed STRAIGHT and never
- * modulo, so a scene can never wrap back onto the one the chapter opened with.
- *
- * ⚠️ Every fair and market backdrop already in the library FAILS the open-ground gate — bunting,
- * stalls and prize shelves run straight through the band where the feet land (`fair_sweets` measures
- * **16.7**, `balloon_fair` **23.2**, against a threshold of 4). So four were generated for this
- * chapter, measured after palette compression (which itself added up to 0.4 of roughness):
- * `market_green` 1.47 · `market_fair` 1.42 · `market_town` 1.11 · `market_courtyard` 1.00, all
- * 100% walkable.
- */
-/** ⚠️ `hue` is the STALL CLOTH, and it is the chapter's per-round variety. It must clear copper
- *  18°, gold 40° and Milo 30° — which is exactly why the cloth exists rather than a bare board. */
-interface Slot { scene: string; hue: number }
-const RUN: Slot[] = [
-  { scene: 'market_green.png', hue: 188 }, { scene: 'market_fair.png', hue: 258 },
-  { scene: 'market_town.png', hue: 318 }, { scene: 'market_courtyard.png', hue: 152 },
-  { scene: 'market_green.png', hue: 205 }, { scene: 'market_fair.png', hue: 282 },
-  { scene: 'market_courtyard.png', hue: 338 }, { scene: 'market_town.png', hue: 168 },
-  { scene: 'market_fair.png', hue: 232 }, { scene: 'market_green.png', hue: 300 },
-  { scene: 'market_courtyard.png', hue: 146 }, { scene: 'market_town.png', hue: 196 },
-  { scene: 'market_green.png', hue: 270 },
-]
-/** The single accessor every scored round goes through. ⚠️ A gate that reads the RUN array cannot
- *  see how the chapter INDEXES it — drive the gate through this, never through the array. */
-export const slotAt = (i: number): Slot => RUN[Math.min(i, RUN.length - 1)]
-export const DEMO_SLOTS = 2
-export const GUIDED_SLOT = DEMO_SLOTS
-export const scoredSlot = (round: number) => slotAt(GUIDED_SLOT + 1 + round)
-export const RUN_LENGTH = RUN.length
-export const hueOf = (slot: Slot) => slot.hue
-
-// ─── The goods ────────────────────────────────────────────────────────────────────────
-/** What is being bought. Reused sprites only — the goods are the reason to pay, not the question. */
-export interface Good { img: string; one: string }
-const G = (img: string, one: string): Good => ({ img: `/assets/objects/${img}.png`, one })
-export const GOODS: Good[] = [
-  G('apple', 'apple'), G('cookie', 'cookie'), G('pear', 'pear'),
-  G('watermelon', 'watermelon'), G('kitchen_orange', 'orange'), G('grocery_bun', 'bun'),
-  G('candy_lollipop', 'lollipop'), G('bucket', 'bucket'), G('kitchen_strawberry', 'strawberry'),
-]
-export const goodAt = (i: number) => GOODS[i % GOODS.length]
-
 // ─── The question ─────────────────────────────────────────────────────────────────────
-export type QKind = 'pay' | 'fewest' | 'read'
+export type QKind = 'pay' | 'fewest'
 export interface MoneyRound {
-  slot: number; good: number; kind: QKind; price: number; shown: CoinValue[]
-  /**
-   * ⚠️ **HOW MANY DIGITS THE PAD OFFERS — CAUGHT ON SCREEN, AND IT WAS A DEAD END.** A `read` round
-   * of three 1-coins asks for **3**, and a pad hard-wired to two windows can never accept a
-   * one-digit answer: `Done` stays disabled for ever and the round cannot be finished. The pad has
-   * to be told what shape the answer is.
-   */
-  digits: 1 | 2
+  slot: number; kind: QKind; price: number; shown: CoinValue[]
 }
-export const digitsFor = (price: number): 1 | 2 => (price >= 10 ? 2 : 1)
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
@@ -154,14 +125,15 @@ const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 /** The coins a tier may spend. 1 is always present, so every price is payable. */
 export const POOL: Record<1 | 2 | 3, CoinValue[]> = { 1: [1, 5], 2: [1, 5, 10], 3: [1, 5, 10, 25] }
 /**
- * ⚠️ The pools grow the SKILL, not only the magnitude. `pay` is the majority at every tier because
- * it is the only type where the child chooses; `fewest` — the payload — appears at L3, where a 25
- * exists and choosing it over five 5s is a real decision.
+ * ⚠️ The pools grow the SKILL, not only the magnitude. Both types are the same gesture — the keeper
+ * names a price and the child pays it — and `fewest` adds the constraint that makes the payload
+ * visible. It appears at L3 only, because that is where a 25 exists and choosing it over five 5s is
+ * a real decision; at L1 the pool is 1 and 5 and "fewest" would barely be a choice.
  */
 export const KINDS: Record<1 | 2 | 3, QKind[]> = {
-  1: ['pay', 'pay', 'pay', 'read'],
-  2: ['pay', 'pay', 'pay', 'pay', 'read'],
-  3: ['pay', 'pay', 'pay', 'fewest', 'fewest', 'read'],
+  1: ['pay'],
+  2: ['pay'],
+  3: ['pay', 'pay', 'fewest'],
 }
 const COUNT: Record<1 | 2 | 3, [number, number]> = { 1: [2, 3], 2: [3, 4], 3: [3, 5] }
 
@@ -179,8 +151,8 @@ export function fewestFor(price: number, pool: readonly CoinValue[]): CoinValue[
 
 /**
  * ⚠️ The price is derived from a MULTISET OF COINS, never drawn as a bare number. That guarantees it
- * is payable from the tier's pool inside the counter's capacity — a price a child cannot build is
- * not a hard question, it is a broken one.
+ * is payable from the tier's pool inside the cloth's capacity — a price a child cannot build is not
+ * a hard question, it is a broken one.
  */
 export function makeRound(d: 1 | 2 | 3, round = 0): MoneyRound {
   const pool = POOL[d]
@@ -192,215 +164,117 @@ export function makeRound(d: 1 | 2 | 3, round = 0): MoneyRound {
     const n = rint(lo, hi)
     const set = Array.from({ length: n }, () => pick(pool)).sort((a, b) => b - a)
     const p = set.reduce((s, v) => s + v, 0)
-    // A price of 1 is not a question, and one the counter cannot hold is not one either.
+    // A price of 1 is not a question, and one the card's tray cannot hold is not one either.
     if (p < 2) continue
     // ⚠️ **AND THE PAD TOPS OUT AT TWO DIGITS.** Five coins from the L3 pool reach 125, so a price
     // of 105 was reachable — and a three-digit answer is unenterable, which is a dead round. Caught
     // by the gate, one step further out than the one-digit case caught on screen.
     if (p > 99) continue
-    if (fewestFor(p, pool).length > COUNTER_MAX) continue
+    if (fewestFor(p, pool).length > PURSE_MAX) continue
     // A `fewest` round whose greedy answer is what a child would lay down anyway teaches nothing.
     if (kind === 'fewest' && fewestFor(p, pool).length >= set.length) continue
     shown = set; price = p; break
   }
   if (!price) { shown = [5, 1]; price = 6 }
-  return { slot: GUIDED_SLOT + 1 + round, good: round, kind, price, shown, digits: digitsFor(price) }
+  return { slot: scoredSlot(round), kind, price, shown }
 }
 
-// ─── The stall ────────────────────────────────────────────────────────────────────────
-/** How many coins the counter may hold. The child is never asked to count past this, and a price
- *  is rejected at generation if its fewest form will not fit. */
-export const COUNTER_MAX = 8
+// ─── The market ───────────────────────────────────────────────────────────────────────
 /**
- * ⚠️ **THE COUNTER IS A SURFACE AT HIP HEIGHT, NOT A BAR ON THE FLOOR — AND THAT IS WHY THE FIRST
- * VERSION READ AS A BALANCE BEAM.** A plank lying on the ground line with a character standing
- * beside it is "coins on a table and Milo over there", which is exactly what a founder saw. A market
- * stall has a serving surface the stallholder stands BEHIND, so the counter sits `COUNTER_LIFT`
- * above the ground line, Milo's feet stay on the ground, and the cloth hangs down over his legs —
- * you see him from the hips up, which is what reads as *behind the counter*.
+ * ⚠️ **THERE IS NO KEEPER COMPONENT, AND THERE USED TO BE.** The stallholders are part of the
+ * painting; the thirteen-frame strips that ship beside these scenes are deliberately unused. Why is
+ * in [market.ts](./market.ts), and it is the one thing to read before adding an animated patch
+ * back: a character generated inside its scene can only ever wiggle inside its own rectangle, which
+ * measured out as **93–96% of the picture holding still**. Milo is the only thing that moves here.
  */
-export const COUNTER_LIFT = 0.10          // share of the viewport height above the ground line
-export const counterY = (vh: number) => groundOf(vh) - COUNTER_LIFT
-export const STALL_X0 = 8, STALL_W = 60   // the whole stall: posts, awning, counter
-export const CUSTOMER_X = 80              // where a customer stops, clear of the stall
 /**
- * ⚠️ **EVERY PIECE GETS ITS OWN LANE ACROSS THE BOARDS.** The first stall laid the coin row across
- * the whole counter, so coins sat over Milo's face and over the price tag — measured on screen, a
- * coin clipped the "30". A market stall has stock at one end, the till in the middle and the goods
- * where the customer can reach them, and saying so in three constants is what stops them colliding.
- */
-export const CRATE_X = 12                 // stock, left end
-export const COUNTER_X0 = 17, COUNTER_COL = 4.4   // the till: eight coins, 17 → 48%
-export const GOODS_X = 64                 // what is being bought, at the customer's end
-/**
- * ⚠️ **NO LIFT, AND THAT IS THE DIFFERENCE BETWEEN GROUND AND A PLANK.** BlockYard's shelves give
- * each piece a seeded upward nudge so a row reads as stacked by hand rather than by a machine — on
- * open EARTH that reads as uneven ground. Copied here it measured a coin **3.3px above the plank**,
- * and on a manufactured flat surface any gap at all is simply a coin that is not touching. The
- * organic-nudge idiom belongs on ground; a counter is flat.
- */
-export const counterSpot = (i: number) => ({ x: COUNTER_X0 + i * COUNTER_COL })
-/** Milo's post — BEHIND his own counter and at the customer's end of it, because that is where a
- *  stallholder stands to serve. Clear of the coin lane by construction.
- *  ⚠️ `MILO_SCALE`/`miloHalfPct` are exported so the gate DERIVES the clearance from his real width
- *  rather than checking a guessed gap — the first version asserted a flat 8% and the row reached to
- *  within 5.8% of him, which is a marginal overlap at eight coins. */
-export const MILO_X = 57
-/** Coins are called up from the purse, which is a CONTROL — so they come from off-frame below-left,
- *  the side the purse trays sit on. */
-export const ENTER_LEFT = -10
-export const MILO_SCALE = 4.4                              // Milo's height, in coins
-export const miloHalfPct = (coinPx: number, vw: number) =>
-  ((coinPx * MILO_SCALE * 0.586) / 2 / vw) * 100           // 0.586 is milo_side's measured cellAspect
-
-const CHROME_PX = 46
-/** The room a standing coin has. Buy height from the chrome, never from the prose. */
-export const coinBudget = (vh: number) => groundOf(vh) * vh - (vh < 470 ? CHROME_PX : 84) - 8
-/** ⚠️ The floor is 22, not 18: a coin carries its VALUE as a numeral at 42% of its size, so a 19px
- *  coin prints an 8px digit — unreadable, and the digit is the whole affordance. On a short frame
- *  the coin takes more of the height rather than less. */
-export const coinPxFor = (vw: number, vh: number) =>
-  Math.max(22, Math.min(44, Math.floor(Math.min(vh * 0.062, vw * (COUNTER_COL - 0.6) / 100, coinBudget(vh) / 3.4))))
-
-/**
- * THE STALL. ⚠️ **FOUR ATTEMPTS, AND THE FIRST THREE WERE ALL THE SAME MISTAKE.** A palette-matched
- * slab; then a thin rail; then a rail with a lit top face and legs — which I convinced myself was
- * fixed because it now had volume. On screen it still read as a **balance beam in a field**, and the
- * founder's words were exact: *"coins on a table and Milo standing there."*
+ * THE KEEPER'S SPEECH BUBBLE — and it is now the chapter's ONLY question region.
  *
- * The fault was never the plank's shading. It was that **a counter alone is not a market.** A market
- * is an awning overhead, a cloth over the boards, crates of goods behind, a stallholder BEHIND the
- * counter rather than beside it — and customers. All of that is code-drawn here, so the whole thing
- * costs no art and every colour is one this file owns.
+ * ⚠️ **THE QUESTION USED TO BE SPREAD ACROSS THREE PLACES AND NONE OF THEM WAS THE SPEAKER.** A
+ * banner pinned to the top of the frame said what to do, an A-board standing on the grass carried
+ * the goods and the price, and a cloth held the coins — so the stallholder, the one character with
+ * something to say, said nothing, and the empty right-hand grass filled up with loose furniture.
+ * The founder's call was exact: **a dialogue cloud in front of the character's mouth**, and nothing
+ * scattered about.
  *
- * ⚠️ And the cloth is what solves the palette problem the backdrop could not: the coins need a
- * surface that is nowhere near copper 18°, gold 40° or hueless silver, and a market stall having a
- * coloured cloth is simply true. It changes per round, which also gives the run its variety.
+ * So this carries all of it — what is for sale, what it costs, the instruction, and every line of
+ * feedback — anchored to the mouth it comes out of. `lead` keeps the price on screen while the text
+ * changes, because a wrong answer must not take the question away with it.
+ *
+ * ⚠️ The vertical position is CLAMPED below the chrome. On a short frame the scene is scaled up to
+ * bring its ground line down (see `fitFor`) and the keeper rides high — measured, three of the six
+ * mouths land at or above y = 0 at 640×320. A bubble pinned to a mouth that is off-screen is worse
+ * than one sitting a little low with its tail still pointing the right way.
  */
-function Awning({ cy, coinPx, hue }: { cy: number; coinPx: number; hue: number }) {
-  const h = Math.round(coinPx * 0.95)
-  const scallop = Math.round(coinPx * 0.3)
-  const light = `hsl(${hue} 42% 74%)`, dark = `hsl(${hue} 40% 58%)`
-  return (
-    <div aria-hidden style={{ position: 'fixed', left: `${STALL_X0}%`, width: `${STALL_W}%`,
-      top: `${cy * 100}%`, marginTop: -Math.round(coinPx * 4.6), zIndex: 6, pointerEvents: 'none' }}>
-      <div style={{ position: 'relative', height: h, borderRadius: `${coinPx * 0.4}px ${coinPx * 0.4}px 0 0`,
-        background: `repeating-linear-gradient(90deg, ${light} 0 ${coinPx * 0.9}px, ${dark} ${coinPx * 0.9}px ${coinPx * 1.8}px)`,
-        boxShadow: `inset 0 ${Math.round(h * 0.3)}px ${Math.round(h * 0.5)}px rgba(255,255,255,.28), 0 3px 0 rgba(40,32,24,.16)` }} />
-      {/* the scalloped valance — the one shape that says "stall" before anything else does */}
-      <div style={{ position: 'relative', height: scallop,
-        background: `repeating-linear-gradient(90deg, ${light} 0 ${coinPx * 0.9}px, ${dark} ${coinPx * 0.9}px ${coinPx * 1.8}px)`,
-        WebkitMaskImage: `radial-gradient(circle ${scallop}px at ${scallop}px 0, #000 99%, transparent 100%)`,
-        WebkitMaskSize: `${scallop * 2}px 100%`, WebkitMaskRepeat: 'repeat-x',
-        maskImage: `radial-gradient(circle ${scallop}px at ${scallop}px 0, #000 99%, transparent 100%)`,
-        maskSize: `${scallop * 2}px 100%`, maskRepeat: 'repeat-x' }} />
-    </div>
-  )
-}
-
-/** A crate of goods behind the counter — a market has STOCK, and it fills the space between the
- *  awning and the boards that was reading as empty field. */
-function Crate({ x, cy, coinPx, good, z }: { x: number; cy: number; coinPx: number; good: Good; z: number }) {
-  const w = Math.round(coinPx * 1.5), h = Math.round(coinPx * 0.8)
-  return (
-    <div aria-hidden style={{ position: 'fixed', left: `${x}%`, top: `${cy * 100}%`,
-      transform: 'translate(-50%,-100%)', zIndex: z, pointerEvents: 'none' }}>
-      <span style={{ display: 'block', position: 'relative', width: w, height: h + Math.round(coinPx * 0.5) }}>
-        {/* the goods heaped above the rim */}
-        <span style={{ position: 'absolute', left: '50%', bottom: h - 2, transform: 'translateX(-50%)',
-          display: 'flex', gap: 1 }}>
-          {[0, 1, 2].map(i => (
-            <img key={i} src={good.img} alt="" draggable={false} decoding="async"
-              onError={e => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden' }}
-              style={{ width: Math.round(coinPx * 0.52), height: Math.round(coinPx * 0.52),
-                objectFit: 'contain', display: 'block', transform: `translateY(${i === 1 ? -3 : 0}px)` }} />
-          ))}
-        </span>
-        <span style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: h, borderRadius: 3,
-          background: 'linear-gradient(180deg, #c39a67 0%, #a67f50 100%)',
-          boxShadow: 'inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 rgba(90,64,38,.3)' }}>
-          {[0.34, 0.66].map(f => (
-            <span key={f} style={{ position: 'absolute', left: 0, right: 0, top: `${f * 100}%`, height: 2,
-              background: 'rgba(120,86,52,.5)' }} />
-          ))}
-        </span>
-      </span>
-    </div>
-  )
-}
-
-/** The boards, the cloth over them, and the two posts holding the awning up. */
-function Counter({ ground, cy, coinPx, vh, hue }: {
-  ground: number; cy: number; coinPx: number; vh: number; hue: number
+function Bubble({ st, text, price, ok, vw, vh, band }: {
+  st: Stall; text: string; price?: number; ok?: boolean; vw: number; vh: number; band: number
 }) {
-  const top = Math.max(4, Math.round(coinPx * 0.17))
-  // ⚠️ Measured against the REAL viewport. The first version multiplied by a hardcoded 900, so the
-  // cloth was the wrong length at every height except the one it happened to be written on.
-  const drop = Math.max(10, Math.round((ground - cy) * vh))
-  const postW = Math.max(5, Math.round(coinPx * 0.18))
+  const { s, ox, oy } = fitFor(st, vw, vh, band)
+  const mx = ox + st.say.x * s
+  const my = Math.max(vh < 470 ? 44 : 58, oy + st.say.y * s)
+  const tail = Math.round(Math.max(10, Math.min(vh * 0.022, 16)))
   return (
-    <div aria-hidden style={{ position: 'fixed', left: `${STALL_X0}%`, width: `${STALL_W}%`,
-      top: `${cy * 100}%`, zIndex: 24, pointerEvents: 'none' }}>
-      {/* posts run from the awning down past the boards to the ground */}
-      {[0, 1].map(i => (
-        <span key={i} style={{ position: 'absolute', left: i ? undefined : 0, right: i ? 0 : undefined,
-          top: -Math.round(coinPx * 4.6), height: Math.round(coinPx * 4.6) + drop, width: postW, borderRadius: 2,
-          background: 'linear-gradient(90deg, #c9a274 0%, #8d6a45 100%)' }} />
-      ))}
-      {/* THE CLOTH — hangs from the boards to the ground, and it is what Milo stands behind */}
-      {/* ⚠️ FOLDS, not a filled rectangle — but the folds are all it takes. A first version masked a
-          scalloped hem onto the cloth and **the whole cloth disappeared**, leaving a bare rail: the
-          empty-outline fault this repo has already shipped once, arrived at by being clever with a
-          mask. The fill has to be SEEN. A cloth pinned to boards hangs fairly straight anyway. */}
-      <div style={{ position: 'absolute', left: postW, right: postW, top, height: drop, overflow: 'hidden',
-        background: `linear-gradient(180deg, hsl(${hue} 34% 62%) 0%, hsl(${hue} 36% 47%) 100%)`,
-        boxShadow: 'inset 0 3px 0 rgba(255,255,255,.2), 0 3px 5px rgba(40,32,24,.18)' }}>
-        {[0.2, 0.44, 0.68, 0.9].map(f => (
-          <span key={f} aria-hidden style={{ position: 'absolute', top: 0, bottom: 0, left: `${f * 100}%`,
-            width: Math.max(3, Math.round(coinPx * 0.18)),
-            background: 'linear-gradient(90deg, rgba(255,255,255,.18), rgba(0,0,0,.14))' }} />
-        ))}
+    <div style={{ position: 'fixed', left: mx + tail, top: my, zIndex: 34, pointerEvents: 'none',
+      transform: 'translateY(-58%)', maxWidth: `${Math.max(38, 96 - (mx / vw) * 100)}vw` }}>
+      {/* the tail, pointing back at the mouth */}
+      <span aria-hidden style={{ position: 'absolute', left: -tail + 2, top: '54%',
+        width: 0, height: 0, borderTop: `${tail * 0.62}px solid transparent`,
+        borderBottom: `${tail * 0.62}px solid transparent`,
+        borderRight: `${tail}px solid ${ok ? 'var(--garden-green)' : 'var(--milo-orange)'}` }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10,
+        background: 'rgba(255,252,244,.96)', borderRadius: 18,
+        border: `3px solid ${ok ? 'var(--garden-green)' : 'var(--milo-orange)'}`,
+        padding: '7px 15px', boxShadow: '0 4px 0 rgba(61,37,22,.18)',
+        fontFamily: 'var(--font-display)', fontWeight: 800,
+        fontSize: `clamp(13px, ${Math.round(vh * 0.031)}px, 20px)`,
+        color: ok ? 'var(--garden-green-deep)' : 'var(--ink)' }}>
+        {price != null && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <img src={`/assets/objects/${st.good}`} alt="" draggable={false} decoding="async"
+              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+              style={{ width: `clamp(20px, ${Math.round(vh * 0.05)}px, 34px)`,
+                height: `clamp(20px, ${Math.round(vh * 0.05)}px, 34px)`, objectFit: 'contain', display: 'block' }} />
+            <span style={{ fontWeight: 900, lineHeight: 1, color: 'var(--ink)',
+              fontSize: `clamp(22px, ${Math.round(vh * 0.062)}px, 40px)` }}>{price}</span>
+          </span>
+        )}
+        <span>{text}</span>
       </div>
-      {/* the boards the coins rest on — a lit top face, because volume is what makes it an object */}
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: top,
-        background: 'linear-gradient(180deg, #e0c49b 0%, #c19a6b 100%)', borderRadius: 3,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.6), 0 2px 0 rgba(90,64,38,.28)' }} />
     </div>
   )
 }
 
 /**
- * A CUSTOMER. ⚠️ **THE THING THAT WAS MISSING, AND IT IS THE BAND'S OWN CAST.** BlockYard's honest
- * weakness — recorded in its own header — is that *a block has no legs, so nothing walks but Milo*.
- * This chapter repeated it exactly: a counter, some coins, and one pony. A market is PEOPLE. There
- * are eighteen drawn cycles in this band and the chapter was using none of them, so each round now
- * brings someone who wants what is on the counter, walks up on their own legs, and leaves with it.
- *
- * One size band only (the craft doc's rule) — a ladybug cannot queue honestly beside a pony.
+ * MILO'S WALK — three legs, and each one is a separate journey rather than a position that happens
+ * to change. ⚠️ A hand-rolled `transition: left` beside `Arrive` is how a dozen creatures ended up
+ * sliding with their feet parked in HopAlong; `Arrive` hands its child the moving flag so the cycle
+ * and the travel cannot be given different numbers.
  */
-export const SHOPPERS = [
-  '/assets/objects/rabbit_side.png', '/assets/objects/duck_side.png', '/assets/objects/lamb_side.png',
-  '/assets/objects/squirrel_side.png', '/assets/objects/duckling_side.png', '/assets/objects/chick_side.png',
-] as const
-export const shopperAt = (i: number) => SHOPPERS[i % SHOPPERS.length]
+export type Leg = 0 | 1 | 2
+const LEGS: { x: number; from: number; leave: boolean; facesLeft: boolean }[] = [
+  { x: MILO_X, from: OFF_X, leave: false, facesLeft: true },   // in from off-frame right
+  { x: PAY_X, from: MILO_X, leave: false, facesLeft: true },   // up to the stall to pay
+  { x: PAY_X, from: OFF_X, leave: true, facesLeft: false },    // away with the goods
+]
+export const legDistPct = (leg: Leg) => Math.abs(LEGS[leg].from - LEGS[leg].x)
 
-function Customer({ src, ground, coinPx, vw, leaving, resetKey }: {
-  src: string; ground: number; coinPx: number; vw: number; leaving: boolean; resetKey: string
+function Milo({ leg, groundPx, miloH, vw, resetKey }: {
+  leg: Leg; groundPx: number; miloH: number; vw: number; resetKey: string
 }) {
-  const h = Math.round(coinPx * 2.5)
-  const w = Math.round(h * aspectOf(src))
-  const dist = ((112 - CUSTOMER_X) / 100) * vw
-  const j = inFlowJourney(src, h, dist)
+  const L = LEGS[leg]
+  const dist = (legDistPct(leg) / 100) * vw
+  const j = inFlowJourney(MILO, miloH, dist)
+  const w = Math.round(miloH * MILO_ASPECT)
   return (
-    <div style={{ position: 'fixed', left: `${CUSTOMER_X}%`, top: `${ground * 100}%`,
-      transform: 'translate(-50%,-100%)', zIndex: 28, pointerEvents: 'none' }}>
-      <Arrive dist={dist} ms={j.ms} leave={leaving} resetKey={resetKey}>
-        {(moving) => (
-          <span style={{ display: 'block', position: 'relative', width: w, height: h }}>
-            <Shadow w={Math.round(w * 0.72)} h={Math.round(h * 0.12)} />
+    <div style={{ position: 'fixed', left: `${L.x}%`, top: groundPx,
+      transform: 'translate(-50%,-100%)', zIndex: 30, pointerEvents: 'none' }}>
+      <Arrive dist={dist} ms={j.ms} leave={L.leave} resetKey={`${resetKey}-${leg}`}>
+        {moving => (
+          <span style={{ display: 'block', position: 'relative', width: w, height: miloH }}>
+            <Shadow w={Math.round(w * 0.72)} h={Math.round(miloH * 0.1)} />
             <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
-              {/* he arrives from the RIGHT, so he faces LEFT walking in and RIGHT walking away */}
-              <SheetCell src={src} h={h} moving={moving} facesLeft={!leaving} breathe cycleScale={j.cycleScale} />
+              <SheetCell src={MILO} h={miloH} moving={moving} facesLeft={L.facesLeft}
+                breathe cycleScale={j.cycleScale} />
             </span>
           </span>
         )}
@@ -409,104 +283,73 @@ function Customer({ src, ground, coinPx, vw, leaving, resetKey }: {
   )
 }
 
-/** The price tag on the goods — the question, stated as a thing in the world. */
-function PriceTag({ good, price, cy, coinPx, paid }: {
-  good: Good; price: number; cy: number; coinPx: number; paid: boolean
+/** How long one of Milo's legs takes, so the choreography is timed off the SAME numbers the sprite
+ *  is animated with rather than a duration guessed beside them. */
+export const legMs = (leg: Leg, miloH: number, vw: number) =>
+  inFlowJourney(MILO, miloH, (legDistPct(leg) / 100) * vw).ms
+
+// ─── The stall's state ────────────────────────────────────────────────────────────────
+interface Till {
+  laid: CoinValue[]         // what is on the cloth, in the order it was laid
+  settled: number           // how many were already there — the rest travel in
+  swept: boolean
+  key: string
+}
+const EMPTY: Till = { laid: [], settled: 0, swept: false, key: 'a' }
+
+/**
+ * A SHOPPER — the market's own life, and the only thing on screen that is genuinely animated.
+ *
+ * They come in from off-frame right on their own legs, stand browsing beside Milo while the child
+ * counts, and leave when he does. ⚠️ **Further back means HIGHER and SMALLER and drawn BEHIND**, all
+ * three, because a child reading depth off size and a child reading it off height must get the same
+ * answer. And it travels through `Arrive` like everything else here: a hand-rolled `transition:
+ * left` is how a dozen creatures ended up sliding with their feet parked in HopAlong.
+ */
+function Shopper({ slot, groundPx, miloH, vw, vh, leaving, resetKey }: {
+  slot: number; groundPx: number; miloH: number; vw: number; vh: number
+  leaving: boolean; resetKey: string
 }) {
-  const s = Math.round(coinPx * 1.5)
+  const k = shopperAt(slot)
+  const h = Math.round(miloH * SHOPPER_SCALE * k.scale)
+  const w = Math.round(h * aspectOf(k.src))
+  const dist = ((OFF_X - SHOPPER_X) / 100) * vw
+  const j = inFlowJourney(k.src, h, dist)
   return (
-    // ⚠️ ON the boards at the customer's end, not floating on the grass beside the stall — the
-    // first version left it hanging in open field with its shadow landing on its own price label.
-    <div style={{ position: 'fixed', left: `${GOODS_X}%`, top: `${cy * 100}%`,
-      transform: 'translate(-50%,-100%)', zIndex: 27, pointerEvents: 'none',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-      <span style={{ display: 'block', position: 'relative', width: s, height: s }}>
-        <Shadow w={Math.round(s * 0.7)} h={Math.round(s * 0.16)} />
-        <img src={good.img} alt="" draggable={false} decoding="async"
-          onError={e => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden' }}
-          style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', objectFit: 'contain', display: 'block',
-            filter: 'drop-shadow(0 2px 3px rgba(30,42,60,.22))' }} />
-      </span>
-      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900,
-        fontSize: Math.round(coinPx * 0.56), lineHeight: 1, padding: '3px 10px', borderRadius: 8,
-        background: paid ? 'var(--garden-green)' : 'rgba(255,252,244,.94)',
-        color: paid ? '#fff' : 'var(--ink)',
-        border: `3px solid ${paid ? 'var(--garden-green-deep)' : 'var(--outline)'}`,
-        boxShadow: '0 3px 0 rgba(61,37,22,.2)', transition: 'background .3s ease, color .3s ease' }}>{price}</span>
+    <div style={{ position: 'fixed', left: `${SHOPPER_X}%`, top: groundPx - Math.round(vh * SHOPPER_LIFT),
+      transform: 'translate(-50%,-100%)', zIndex: 26, pointerEvents: 'none' }}>
+      {/* a beat behind Milo, so the two arrivals read as two people rather than one movement */}
+      <Arrive dist={dist} ms={j.ms} delayMs={leaving ? 260 : 700} leave={leaving} resetKey={`${resetKey}-shop`}>
+        {moving => (
+          <span style={{ display: 'block', position: 'relative', width: w, height: h }}>
+            <Shadow w={Math.round(w * 0.7)} h={Math.round(h * 0.11)} />
+            <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
+              {/* ⚠️ `facesLeft` on SheetCell means FLIP, and a sprite's own facing is per sprite —
+                  `rabbit` faces left in its PNG and the other five face right. Shipping one blanket
+                  answer put a duck and a squirrel on screen walking backwards. */}
+              <SheetCell src={k.src} h={h} moving={moving} facesLeft={!leaving !== k.facesLeft}
+                breathe cycleScale={j.cycleScale} />
+            </span>
+          </span>
+        )}
+      </Arrive>
     </div>
   )
 }
 
-// ─── The counter's state ──────────────────────────────────────────────────────────────
-interface Till {
-  laid: CoinValue[]         // what is on the counter, in the order it was laid
-  settled: number           // how many were already there — the rest travel in
-  walk: 0 | 1 | 2           // Milo: at his post · walking to the coins · walking back with the goods
-  swept: boolean
-  key: string
-}
-const EMPTY: Till = { laid: [], settled: 0, walk: 0, swept: false, key: 'a' }
-
-function Stall({ t, coinPx, vw, vh, showGoods, good, price, paid, hue, shopper, shopperGone }: {
-  t: Till; coinPx: number; vw: number; vh: number
-  showGoods: boolean; good: Good; price: number; paid: boolean
-  hue: number; shopper: string; shopperGone: boolean
+function Scene({ st, slot, leg, vw, vh, band, resetKey }: {
+  st: Stall; slot: number; leg: Leg; vw: number; vh: number; band: number; resetKey: string
 }) {
-  const ground = groundOf(vh)
-  const cy = counterY(vh)
-  const miloH = Math.round(coinPx * MILO_SCALE)
-  const miloW = Math.round(miloH * aspectOf(MILO))
-  const leg = (fromX: number, toX: number) => {
-    const dist = ((fromX - toX) / 100) * vw
-    // A coin has no gait, so `inFlowJourney` falls back to CARRY_SPEED — an object has no legs to
-    // run while it travels, and giving it a cycle would be the skating fault.
-    return { dist, ms: inFlowJourney('', coinPx, dist).ms }
-  }
+  const groundPx = groundPxFor(st, vw, vh, band)
+  const miloH = miloHFor(vh, groundPx, bannerBottom(vh))
+  // ⚠️ Only people stand here. The stallholders are painted into their stalls, the goods and the
+  // price live in the bubble, and the coins live in the card — so the open grass carries nothing but
+  // the two who are actually shopping, which is what the founder was pointing at.
   return (
     <>
-      <Awning cy={cy} coinPx={coinPx} hue={hue} />
-      {/* stock behind the boards, at both ends so the stall reads as stocked rather than bare */}
-      <Crate x={CRATE_X} cy={cy} coinPx={coinPx} good={good} z={20} />
-
-      {/* MILO — the stallholder, BEHIND his own counter. His feet are on the ground line and the
-          cloth (zIndex 24) hangs in front of his legs, so you see him from the hips up. That single
-          relationship is what turns "a pony beside a plank" into "a shopkeeper at a stall". */}
-      <div style={{ position: 'fixed', left: `${MILO_X}%`, top: `${ground * 100}%`,
-        transform: 'translate(-50%,-100%)', zIndex: 22, pointerEvents: 'none' }}>
-        <span style={{ display: 'block', position: 'relative', width: miloW, height: miloH }}>
-          <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
-            {/* he faces his customer, and serving is a breath, not a walk — a looping walk cycle on
-                someone standing still is skating on the spot */}
-            <SheetCell src={MILO} h={miloH} moving={false} facesLeft={false} breathe />
-          </span>
-        </span>
-      </div>
-
-      <Counter ground={ground} cy={cy} coinPx={coinPx} vh={vh} hue={hue} />
-
-      {/* THE COINS — on the boards, not on the floor */}
-      {t.laid.map((v, i) => {
-        const sp = counterSpot(i)
-        const j = leg(ENTER_LEFT, sp.x)
-        return (
-          <div key={`c${i}-${t.key}`} style={{ position: 'fixed', left: `${sp.x}%`,
-            top: `${cy * 100}%`, transform: 'translate(-50%,-100%)',
-            zIndex: 26 + i, pointerEvents: 'none',
-            animation: t.swept ? `cs_sweep .5s ease ${i * 45}ms forwards` : undefined }}>
-            <Arrive dist={j.dist} ms={i < t.settled ? 0 : j.ms}
-              delayMs={Math.max(0, i - t.settled) * 90} resetKey={`${t.key}-${i}`}>
-              {() => <Coin value={v} px={coinPx} />}
-            </Arrive>
-          </div>
-        )
-      })}
-
-      {showGoods && <PriceTag good={good} price={price} cy={cy} coinPx={coinPx} paid={paid} />}
-
-      {/* THE CUSTOMER — arrives on their own legs wanting what is on the counter, and leaves with
-          it. The one thing the first pass had none of. */}
-      <Customer src={shopper} ground={ground} coinPx={coinPx} vw={vw}
-        leaving={shopperGone} resetKey={`${t.key}-shopper`} />
+      <Shopper slot={slot} groundPx={groundPx} miloH={miloH} vw={vw} vh={vh}
+        leaving={leg === 2} resetKey={resetKey} />
+      <Milo leg={leg} groundPx={groundPx} miloH={miloH} vw={vw} resetKey={resetKey} />
     </>
   )
 }
@@ -514,27 +357,30 @@ function Stall({ t, coinPx, vw, vh, showGoods, good, price, paid, hue, shopper, 
 // ─── What is said, and written ────────────────────────────────────────────────────────
 // Everything spoken is ALSO written — Chrome often ships no usable voice, and a response that
 // exists only as speech is silence.
+// ⚠️ These are the KEEPER'S words now, not a narrator's, because they come out of his mouth. The
+// cloth they used to name does not exist any more either — a line that describes furniture the
+// chapter has deleted is the header-comment fault in its smallest form.
 export const ASK: Record<QKind, string> = {
-  pay: 'Put the price on the counter',
-  fewest: 'Pay it again — with as FEW coins as you can',
-  read: 'How much is on the counter?',
+  pay: 'Count that out for me',
+  fewest: 'Try again — with as FEW coins as you can',
 }
 
 // ─── The round ────────────────────────────────────────────────────────────────────────
 type Mode = 'demo' | 'guided' | 'practice'
 
-const CoinRound: React.FC<{ slot: Slot; data: MoneyRound; mode: Mode; onComplete: (c: boolean) => void }> =
-({ slot, data, mode, onComplete }) => {
-  const { kind, price, shown, good: goodIdx, digits: windows } = data
+const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete: (c: boolean) => void }> =
+({ st, data, mode, onComplete }) => {
+  const { kind, price } = data
   const { w: vw, h: vh } = useViewport()
-  const coinPx = coinPxFor(vw, vh)
-  const good = goodAt(goodIdx)
-  const isRead = kind === 'read'
+  // ⚠️ The band is the one the card actually needs — see CARD_BAND. Every round is a paying round.
+  const band = CARD_BAND(vh)
+  const groundPx = groundPxFor(st, vw, vh, band)
+  const miloH = miloHFor(vh, groundPx, bannerBottom(vh))
   const pool = useMemo(() => (price >= 25 ? POOL[3] : price >= 10 ? POOL[2] : POOL[1]), [price])
   const best = useMemo(() => fewestFor(price, pool).length, [price, pool])
 
   const [t, setT] = useState<Till>(EMPTY)
-  const [digits, setDigits] = useState<number[]>([])
+  const [leg, setLeg] = useState<Leg>(0)
   const [live, setLive] = useState(false)
   const [note, setNote] = useState('')
   const [ok, setOk] = useState(false)
@@ -547,34 +393,29 @@ const CoinRound: React.FC<{ slot: Slot; data: MoneyRound; mode: Mode; onComplete
   const total = t.laid.reduce((s, v) => s + v, 0)
 
   useEffect(() => {
-    setT(EMPTY); setDigits([]); setNote(''); setOk(false); setLive(false)
-    if (isRead) {
-      // a READ round arrives already laid out — the coins someone else chose
-      after(400, () => setT({ laid: [...shown], settled: 0, walk: 0, swept: false, key: 'b' }))
-      after(400 + shown.length * 240 + 500, () => { setLive(true); speak(ASK.read) })
-    } else {
-      after(400, () => { setLive(true); speak(`${good.one}, ${numberToWords(price)}. ${ASK[kind]}.`) })
-    }
+    setT(EMPTY); setNote(''); setOk(false); setLive(false); setLeg(0)
+    // The question opens when Milo has actually ARRIVED, timed off the same journey he walks.
+    const walkIn = legMs(0, miloH, vw)
+    after(walkIn, () => { setLive(true); speak(`${st.who} has ${aOrAn(st.one)} ${st.one}, ${numberToWords(price)}. ${ASK[kind]}.`) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [price, kind])
+  }, [price, kind, st.key])
 
+  /** The reward IS the journey: he carries the coins up to the stall, then walks off with what he
+   *  bought. Nothing turns green until after the commit. */
   function finish(correct: boolean) {
     done.current = true; setOk(true); setLive(false)
-    // Milo fetches the coins, then walks the goods across. The reward IS the journey.
-    if (!isRead) {
-      after(300, () => setT(s => ({ ...s, walk: 1 })))
-      after(1500, () => setT(s => ({ ...s, swept: true })))
-      after(2100, () => setT(s => ({ ...s, walk: 2 })))
-    }
-    after(isRead ? 1500 : 3000, () => onComplete(mode === 'practice' ? !erred.current && correct : true))
+    after(300, () => { setT(s => ({ ...s, swept: true })); setLeg(1) })
+    const toStall = 300 + legMs(1, miloH, vw)
+    after(toStall + 500, () => setLeg(2))
+    after(toStall + 500 + legMs(2, miloH, vw), () => onComplete(mode === 'practice' ? !erred.current && correct : true))
   }
 
-  /** ⚠️ Reads the counter INSIDE the updater, never from the render's closure — three taps inside
-   *  one React batch all see the same stale array otherwise, which is the desync that cost
-   *  placeValue its undo. There is no second copy of the state to fall out of step with. */
+  /** ⚠️ Reads the tray INSIDE the updater, never from the render's closure — three taps inside one
+   *  React batch all see the same stale array otherwise, which is the desync that cost placeValue
+   *  its undo. There is no second copy of the state to fall out of step with. */
   function lay(v: CoinValue) {
     if (!live || ok) return
-    setT(s => (s.laid.length >= COUNTER_MAX ? s : { ...s, laid: [...s.laid, v], settled: s.laid.length, key: s.key }))
+    setT(s => (s.laid.length >= PURSE_MAX ? s : { ...s, laid: [...s.laid, v], settled: s.laid.length, key: s.key }))
   }
   /** Available at EVERY count — an undo that appears only when the set is wrong is a verdict handed
    *  over before the commit. A stack, so it is predictable without remembering an order. */
@@ -588,14 +429,14 @@ const CoinRound: React.FC<{ slot: Slot; data: MoneyRound; mode: Mode; onComplete
     if (total === price && (kind !== 'fewest' || t.laid.length === best)) {
       const line = kind === 'fewest'
         ? `${numberToWords(price)} in just ${numberToWords(best)} coins!`
-        : `That is ${numberToWords(price)}. The ${good.one} is yours!`
+        : `That is ${numberToWords(price)}. The ${st.one} is yours!`
       setNote(line); speak(`Yes! ${line}`)
       finish(true)
       return
     }
     erred.current = true
     if (total !== price) {
-      say(`That makes ${numberToWords(total)}. The tag says ${numberToWords(price)}.`)
+      say(`That makes ${numberToWords(total)}. I asked for ${numberToWords(price)}.`)
     } else {
       // ⚠️ The payload line. The sum is right and the CHOICE is not — which is the whole of what
       // "fewest" teaches: a big coin is one object worth many units.
@@ -603,80 +444,97 @@ const CoinRound: React.FC<{ slot: Slot; data: MoneyRound; mode: Mode; onComplete
     }
   }
 
-  function commitPad() {
-    if (done.current || digits.length < windows) return
-    const v = digits.reduce((p, c) => p * 10 + c, 0)
-    if (v === price) {
-      setNote(`${price} on the counter`); speak(`Yes! ${numberToWords(price)}.`)
-      finish(true)
-    } else {
-      erred.current = true
-      say('Not that one. Count the biggest coins first.')
-      after(1200, () => setDigits([]))
-    }
-  }
-
-  const band = PAD_BAND(vh)
   return (
     <>
-      <Banner text={note || ASK[kind]} vh={vh} ok={ok} side="right"
-        lead={!isRead && !ok ? price : undefined} />
-      <Stall t={t} coinPx={coinPx} vw={vw} vh={vh} showGoods={!isRead} good={good} price={price} paid={ok}
-        hue={slot.hue} shopper={shopperAt(goodIdx)} shopperGone={t.walk === 2} />
+      <Bubble st={st} vw={vw} vh={vh} band={band} ok={ok}
+        text={note || ASK[kind]} price={ok ? undefined : price} />
+      <Scene st={st} slot={data.slot} leg={leg} vw={vw} vh={vh} band={band}
+        resetKey={`${st.key}-${price}-${kind}`} />
 
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
-        display: 'flex', justifyContent: 'center' }}>
-        {isRead
-          ? <AnswerPad digits={digits} band={band} live={live && !ok} windows={windows}
-              onDigit={d => setDigits(x => (x.length >= windows ? x : [...x, d]))}
-              onClear={() => setDigits(x => x.slice(0, -1))} onDone={commitPad} />
-          : <Purse pool={pool} band={band} live={live && !ok} canUndo={t.laid.length > 0}
-              full={t.laid.length >= COUNTER_MAX} onLay={lay} onBack={takeBack} onPay={pay} />}
+        display: 'flex', justifyContent: 'center', padding: '0 8px' }}>
+        <CoinCard pool={pool} laid={t.laid} band={band} vw={vw} live={live && !ok}
+              full={t.laid.length >= PURSE_MAX} swept={t.swept}
+              onLay={lay} onBack={takeBack} onPay={pay} />
       </div>
     </>
   )
 }
 
 /**
- * THE PURSE — the answering surface. ⚠️ **IT ALWAYS HOLDS MORE THAN THE PRICE NEEDS, AND NOTHING
- * ON IT SAYS *THAT'S ENOUGH*.** Deciding when to stop is the skill (HomeTime's rule), so there is
- * no running total anywhere on screen and the Pay button is byte-identical at every count — a
- * total that updates as coins go down turns the chapter into hot/cold, which is chapter 4's green
- * Ready button exactly. The total appears only after the commit, where it confirms.
+ * THE COIN CARD — the answering surface, and the only place a coin is ever drawn.
+ *
+ * ⚠️ **THE COINS USED TO LIVE IN THE WORLD, AND THAT WAS REJECTED TWICE.** First on a code-drawn
+ * counter, then on a cloth laid on the grass; both read as furniture dropped into a painting, and
+ * the second one had to be a coloured slab in the first place only because **the ground itself is
+ * 22–37° off gold** and coins on grass are camouflage. The founder's call closes it: a card holds
+ * all the coins and the child picks from it. One contained place, nothing loose on the ground, and
+ * the contrast problem disappears because a card is paper and paper is not earth.
+ *
+ * ⚠️ **ONE ROW, AND THAT IS LOAD-BEARING RATHER THAN TIDY.** A two-row card needs ~150px, which on a
+ * 640×320 frame pushes the ground up, which pushes the scene's scale up, which **crops the
+ * stallholder's head off** — and he is the one asking the question now. `CARD_BAND` states the real
+ * height so `fitFor` never has to.
+ *
+ * The purse still **always holds more than the price needs and nothing on it says *that's
+ * enough***: the supply is unlimited, there is no running total anywhere, and `Pay ✓` is
+ * byte-identical at every count. Deciding when to stop is the skill (HomeTime's rule); a total that
+ * ticked up as coins went down would be chapter 4's green Ready button all over again.
  */
-function Purse({ pool, band, live, canUndo, full, onLay, onBack, onPay }: {
-  pool: CoinValue[]; band: number; live: boolean; canUndo: boolean; full: boolean
+function CoinCard({ pool, laid, band, vw, live, full, swept, onLay, onBack, onPay }: {
+  pool: CoinValue[]; laid: CoinValue[]; band: number; vw: number; live: boolean; full: boolean; swept: boolean
   onLay: (v: CoinValue) => void; onBack: () => void; onPay: () => void
 }) {
-  const w = Math.max(30, Math.min(56, Math.floor((band - 10) / 1.9)))
-  /** ⚠️ The purse coin is the thing a child has to READ before choosing it, so it is sized off its
-   *  own band and not shrunk to fit a tidy tray — the first pass drew it at ~22px on a laptop and
-   *  the 25 and the 5 were the same silver disc at a glance. */
-  const px = Math.max(26, Math.round(w * 0.92))
+  /** ⚠️ One shared measurement — see `cardMetrics`. The purse coin is the thing a child has to READ
+   *  before choosing it, so it is sized off the card's own band rather than shrunk to fit a tidy
+   *  tray; an early pass drew it at ~22px on a laptop and the 25 and the 5 were the same silver disc
+   *  at a glance. */
+  const { w, px, tray } = cardMetrics(vw, band)
+  const rule = { width: 2, alignSelf: 'stretch', background: 'rgba(61,37,22,.14)', borderRadius: 2 } as const
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: w * 0.24,
-      pointerEvents: live ? 'auto' : 'none', opacity: live ? 1 : .3, transition: 'opacity .3s ease' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: w * 0.3,
+      background: 'rgba(255,252,244,.95)', border: '3px solid var(--outline)', borderRadius: w * 0.42,
+      padding: `${Math.round(w * 0.18)}px ${Math.round(w * 0.34)}px`,
+      boxShadow: '0 5px 0 rgba(61,37,22,.18)',
+      pointerEvents: live ? 'auto' : 'none', opacity: live ? 1 : .45,
+      transition: 'opacity .3s ease', animation: 'cs_card .34s ease both' }}>
+
+      {/* what has been put down — it fills as the child counts, and never states a total */}
+      <div aria-label="coins you have put down" style={{ display: 'flex', alignItems: 'center',
+        gap: Math.round(tray * 0.1), minWidth: PURSE_MAX * (tray + Math.round(tray * 0.1)),
+        minHeight: tray }}>
+        {laid.map((v, i) => (
+          <span key={`${i}-${v}`} style={{ display: 'block',
+            animation: swept ? `cs_sweep .5s ease ${i * 45}ms forwards` : `by_pop .26s ease both` }}>
+            <Coin value={v} px={tray} flat />
+          </span>
+        ))}
+      </div>
+
+      <span aria-hidden style={rule} />
+
       {pool.map(v => (
         <button key={v} onClick={() => onLay(v)} disabled={full} aria-label={`a ${v} coin`} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          height: w * 1.3, padding: `0 ${w * 0.24}px`, borderRadius: w * 0.24,
+          height: w * 1.22, padding: `0 ${w * 0.2}px`, borderRadius: w * 0.24,
           border: '3px solid var(--outline)', background: 'var(--paper)',
           opacity: full ? .45 : 1, cursor: full ? 'default' : 'pointer',
         }}>
           <Coin value={v} px={px} />
         </button>
       ))}
-      <button onClick={onBack} disabled={!canUndo} style={{
-        height: w * 0.95, padding: `0 ${w * 0.42}px`, borderRadius: w * 0.48,
+
+      <button onClick={onBack} disabled={!laid.length} style={{
+        height: w * 0.92, padding: `0 ${w * 0.36}px`, borderRadius: w * 0.46,
         border: '3px solid var(--outline)', background: 'var(--paper)', color: 'var(--ink)',
         fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: w * 0.3,
-        opacity: canUndo ? 1 : .45, cursor: canUndo ? 'pointer' : 'default',
-      }}>↩ back</button>
+        opacity: laid.length ? 1 : .45, cursor: laid.length ? 'pointer' : 'default',
+      }}>↩</button>
       {/* Identical at every count — nothing may say the set is right before the commit. */}
       <button onClick={onPay} style={{
-        height: w * 1.15, padding: `0 ${w * 0.66}px`, borderRadius: w * 0.58, border: 'none',
+        height: w * 1.1, padding: `0 ${w * 0.56}px`, borderRadius: w * 0.55, border: 'none',
         background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff',
-        fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.36,
+        fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.34,
         boxShadow: '0 4px 0 rgba(180,70,20,.45)', cursor: 'pointer',
       }}>Pay ✓</button>
     </div>
@@ -689,30 +547,36 @@ function Purse({ pool, band, live, canUndo, full, onLay, onBack, onPay }: {
  * SAME price twice — 30 as six 5s, then as one 25 and one 5 — so the child sees that the amount did
  * not change and the handful did. No amount of counting coins says that.
  */
-const CoinExplain: React.FC<{ slot: Slot; data: MoneyRound; onDone: () => void }> = ({ slot, data, onDone }) => {
+const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }> = ({ st, data, onDone }) => {
   const { w: vw, h: vh } = useViewport()
-  const coinPx = coinPxFor(vw, vh)
-  const good = goodAt(data.good)
+  const band = CARD_BAND(vh)
   const [t, setT] = useState<Till>(EMPTY)
+  const [leg, setLeg] = useState<Leg>(0)
   const [note, setNote] = useState('')
   const doneRef = useRef(onDone); doneRef.current = onDone
 
   useEffect(() => {
     const plan = fewestFor(data.price, data.shown.includes(25) ? POOL[3] : POOL[2])
     const set = data.kind === 'fewest' ? plan : data.shown
-    const lines: string[] = [`The ${good.one} costs ${numberToWords(data.price)}. Milo pays for it.`]
-    const steps: Array<() => void> = [() => setT({ ...EMPTY, key: 'd' })]
+    // He is talking to Milo, so he says what it costs — he does not narrate himself in the third
+    // person, which is what a bubble makes obvious and a top banner hid.
+    const lines: string[] = [`${aOrAn(st.one)[0].toUpperCase()}${aOrAn(st.one).slice(1)} ${st.one} — that is ${numberToWords(data.price)}.`]
+    const steps: Array<() => void> = [() => { setT({ ...EMPTY, key: 'd' }); setLeg(0) }]
+    // ⚠️ Each step says the RUNNING TOTAL, not the coin's own value. Naming the coin gave a bubble
+    // reading "30 · five" six times over, which is how you say what you are holding and not how you
+    // count money out — you say five, ten, fifteen. The demo should model the counting.
     let run: CoinValue[] = []
+    let sum = 0
     for (const v of set) {
-      run = [...run, v]
+      run = [...run, v]; sum += v
       const snap = run
-      lines.push(numberToWords(v))
+      lines.push(numberToWords(sum))
       steps.push(() => setT(s => ({ ...s, laid: snap, settled: snap.length - 1 })))
     }
     lines.push(data.kind === 'fewest'
       ? `The same ${numberToWords(data.price)} — in only ${numberToWords(set.length)} coins.`
       : `That is ${numberToWords(data.price)}. Just right.`)
-    steps.push(() => setT(s => ({ ...s, walk: 1 })))
+    steps.push(() => { setT(s => ({ ...s, swept: true })); setLeg(1) })
     const cancel = speakSteps(lines, {
       onStep: i => { steps[i]?.(); setNote(lines[i]) },
       onDone: () => window.setTimeout(() => doneRef.current(), 1200),
@@ -722,11 +586,20 @@ const CoinExplain: React.FC<{ slot: Slot; data: MoneyRound; onDone: () => void }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const pool = data.price >= 25 ? POOL[3] : data.price >= 10 ? POOL[2] : POOL[1]
   return (
     <>
-      <Banner text={note || 'Watch Milo pay'} vh={vh} side="right" lead={data.price} />
-      <Stall t={t} coinPx={coinPx} vw={vw} vh={vh} showGoods good={good} price={data.price} paid={t.walk !== 0}
-        hue={slot.hue} shopper={shopperAt(data.good)} shopperGone={t.walk === 2} />
+      <Bubble st={st} vw={vw} vh={vh} band={band} ok={leg !== 0}
+        text={note || `${st.who}'s stall`} price={data.price} />
+      <Scene st={st} slot={data.slot} leg={leg} vw={vw} vh={vh} band={band}
+        resetKey={`demo-${st.key}-${data.price}`} />
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
+        display: 'flex', justifyContent: 'center', padding: '0 8px' }}>
+        {/* the same card the child will use, driven rather than tapped — so what they watch and what
+            they then touch are one object, not a demonstration of a different thing */}
+        <CoinCard pool={pool} laid={t.laid} band={band} vw={vw} live={false} full swept={t.swept}
+          onLay={() => {}} onBack={() => {}} onPay={() => {}} />
+      </div>
     </>
   )
 }
@@ -739,12 +612,13 @@ const BEAT: Beat<MoneyRound> = {
   // SkillBeat renders nothing for an empty prompt — this chapter's own banner owns the pill, and it
   // must never restate the question as a second number.
   prompt: () => '',
-  Play: ({ data, onSubmit }) => <CoinRound slot={slotAt(data.slot)} data={data} mode="practice" onComplete={onSubmit} />,
-  Reteach: ({ data, onDone }) => <CoinExplain slot={slotAt(data.slot)} data={data} onDone={onDone} />,
+  Play: ({ data, onSubmit }) => <CoinRound st={stallAt(data.slot)} data={data} mode="practice" onComplete={onSubmit} />,
+  Reteach: ({ data, onDone }) => <CoinExplain st={stallAt(data.slot)} data={data} onDone={onDone} />,
 }
 
 const CS_CSS = `
-@keyframes cs_sweep { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-14px) scale(.7)} }
+@keyframes cs_sweep { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-18px) scale(.7)} }
+@keyframes cs_card { 0%{opacity:0;transform:translateY(14px) scale(.96)} 100%{opacity:1;transform:none} }
 `
 
 // ─── Orchestrator ─────────────────────────────────────────────────────────────────────
@@ -761,8 +635,8 @@ export default function CoinShop({ onFinish, onExit }: {
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const [slotIdx, setSlotIdx] = useState(0)
-  const [bought, setBought] = useState(0)
-  const { h: vh } = useViewport()
+  const [bought, setBought] = useState<number[]>([])
+  const { w: vw, h: vh } = useViewport()
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
   const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
@@ -775,15 +649,15 @@ export default function CoinShop({ onFinish, onExit }: {
 
   // Both teaching examples pay the SAME price — see CoinExplain.
   const DEMO: MoneyRound[] = useMemo(() => [
-    { slot: 0, good: 0, kind: 'pay', price: 30, shown: [5, 5, 5, 5, 5, 5], digits: 2 },
-    { slot: 1, good: 1, kind: 'fewest', price: 30, shown: [25, 5], digits: 2 },
+    { slot: 0, kind: 'pay', price: 30, shown: [5, 5, 5, 5, 5, 5] },
+    { slot: 1, kind: 'fewest', price: 30, shown: [25, 5] },
   ], [])
   const GUIDED: MoneyRound = useMemo(() =>
-    ({ slot: GUIDED_SLOT, good: 2, kind: 'pay', price: 7, shown: [5, 1, 1], digits: 1 }), [])
+    ({ slot: GUIDED_SLOT, kind: 'pay', price: 7, shown: [5, 1, 1] }), [])
 
   // Every hook is above this line — an early return that changes the hook count tears the chapter
   // into the error boundary the moment the phone is turned.
-  if (needsRotate) return <RotateGate line="Turn your phone sideways to help Milo mind the stall!" />
+  if (needsRotate) return <RotateGate line="Turn your phone sideways to walk Milo round the market!" />
 
   const active = phase === 'practice' ? slotIdx : phase === 'guided' ? GUIDED_SLOT : DEMO[Math.min(demoIdx, DEMO.length - 1)].slot
 
@@ -791,23 +665,32 @@ export default function CoinShop({ onFinish, onExit }: {
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#dfe7d4' }}>
       <style>{CRITTER_CSS}{YARD_CSS}{CS_CSS}</style>
 
-      {RUN.map((s, i) => (
-        <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === active ? 1 : 0, transition: 'opacity .6s ease' }}>
-          <img src={BG(s.scene)} alt="" draggable={false} decoding="async"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-      ))}
+      {/* Every scene stays mounted so a stall Milo has already visited cross-fades back rather than
+          flashing in — and so the keeper strip is decoded before its round opens.
+          ⚠️ Laid out by `fitFor`, NOT `object-fit: cover`: the keeper patch and the ground line are
+          both placed through that transform, so the moment the backdrop uses a different one they
+          come apart. One geometry for the picture and everything pinned to it. */}
+      {STALLS.map(s => {
+        const f = fitFor(s, vw, vh, CARD_BAND(vh))
+        return (
+          <div key={s.key} style={{ position: 'absolute', inset: 0, overflow: 'hidden',
+            opacity: s.key === stallAt(active).key ? 1 : 0, transition: 'opacity .6s ease' }}>
+            <img src={BG(s.scene)} alt="" draggable={false} decoding="async"
+              style={{ position: 'absolute', left: f.ox, top: f.oy,
+                width: SCENE_W * f.s, height: SCENE_H * f.s, maxWidth: 'none' }} />
+          </div>
+        )
+      })}
 
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 50 }}>
         <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
-        {/* The cumulative arc, OUTSIDE SkillBeat — anything drawn inside a round resets every round. */}
-        {bought > 0 && (
+        {/* The cumulative arc, OUTSIDE SkillBeat — anything drawn inside a round resets every round.
+            Each mark is what he bought at THAT stall, so the basket reads back as the walk he made. */}
+        {bought.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,252,244,.86)', border: '2px solid var(--outline)', borderRadius: 999, padding: '4px 10px' }}>
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 12, color: 'var(--ink-muted)' }}>basket</span>
-            {Array.from({ length: Math.min(bought, 10) }).map((_, i) => (
-              // each mark is the GOODS of the round it came from, so the basket reads back as the
-              // shopping the child actually did rather than a row of identical ticks
-              <img key={i} src={goodAt(i).img} alt="" draggable={false} decoding="async"
+            {bought.slice(-10).map((slot, i) => (
+              <img key={i} src={`/assets/objects/${stallAt(slot).good}`} alt="" draggable={false} decoding="async"
                 onError={e => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden' }}
                 style={{ width: 16, height: 16, objectFit: 'contain', display: 'block' }} />
             ))}
@@ -818,8 +701,8 @@ export default function CoinShop({ onFinish, onExit }: {
       {phase === 'intro' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
           <div style={{ maxWidth: '74%', background: 'rgba(255,252,244,.94)', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: `clamp(14px, ${Math.round(vh * 0.034)}px, 20px)`, color: 'var(--ink)', textAlign: 'center' }}>
-            Milo minds the stall. The tag says what a thing costs — put that much on the counter
-            from your purse. Watch him pay for two things first!
+            Milo is walking round the market. Every stall has a board saying what a thing costs —
+            count that much out of your purse onto his cloth. Watch him pay for two things first!
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('demo') }}
             style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>
@@ -829,19 +712,19 @@ export default function CoinShop({ onFinish, onExit }: {
       )}
 
       {phase === 'demo' && (
-        <CoinExplain key={`demo${demoIdx}`} slot={slotAt(active)} data={DEMO[demoIdx]}
+        <CoinExplain key={`demo${demoIdx}`} st={stallAt(active)} data={DEMO[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} />
       )}
 
       {phase === 'guided' && (
-        <CoinRound key="guided" slot={slotAt(active)} data={GUIDED} mode="guided"
+        <CoinRound key="guided" st={stallAt(active)} data={GUIDED} mode="guided"
           onComplete={() => { setSlotIdx(GUIDED_SLOT + 1); setPhase('practice') }} />
       )}
 
       {phase === 'practice' && (
         <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={BEAT} onInterlude={interlude}
-            onRound={(data) => { if (typeof data?.slot === 'number') { setSlotIdx(data.slot); setBought(s => s + 1) } }}
+            onRound={(data) => { if (typeof data?.slot === 'number') { setSlotIdx(data.slot); setBought(s => [...s, data.slot]) } }}
             onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
         </div>
       )}

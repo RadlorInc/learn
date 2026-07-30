@@ -153,6 +153,15 @@ smallest area on the colouring page renders 32×28 CSS px at 640×320, under the
 this band is three-year-olds; a tap just outside the shape they were plainly aiming at snaps to it.
 It can never turn a wrong answer right, only a wrong finger.
 
+⚠️ **A QUESTION TYPE MUST HAVE SOMEWHERE TO SHOW ITS OWN MATERIAL — AND MOVING THAT MATERIAL CAN
+TAKE THE PLACE AWAY WITHOUT TOUCHING THE QUESTION.** CoinShop's `read` rung asked *"how much money
+is that?"* about a pile the child was supposed to count. When the coins moved from the world into
+the answering card, that pile lost its only home: the card renders on a PAYING round, and a read
+round shows a number pad instead. So the question shipped, live, over an empty screen — the state
+was set correctly and drawn nowhere. Neither the type-checker nor the gate could see it, because
+both halves were individually fine. **When you relocate the thing a question is ABOUT, walk every
+question type that refers to it.**
+
 **AND A TAP THAT DOES NOTHING AT ALL IS THE WORST OUTCOME THERE IS.** Worse than a wrong answer: a
 wrong answer at least tells the child the game is listening.
 
@@ -612,6 +621,25 @@ second thing to look at. It appears with the demo, when it starts to matter.
   middle of the frame purely so its creatures had a surface — over a reef, over the sea, over the
   moon. When you find yourself drawing a floor, the group is in the wrong place: the painted scene
   already has one.
+- ⚠️ **BUT A ROUGHNESS SCAN CANNOT FIND A GROUND LINE — IT CAN ONLY REJECT ONE.** Every row of an
+  open field is smooth, so the scan is happy at 0.60 and at 0.85 alike; pointed at CoinShop's sweets
+  stall it certified 0.60 and Milo stood a stall's height above the grass. **The line is picked by
+  EYE against the thing standing in the scene** — a customer's feet sit at or just under the stall's
+  own base — and the roughness number is the gate BEHIND that choice, not the chooser. Same shape as
+  "σ cannot tell a display case from a table top": these instruments veto, they do not select.
+- ⚠️ **AND MEASURE IT ONLY WHERE THE CHARACTER STANDS.** The shared 0.66–0.78 sweep across x 4–97%
+  is right for a scene that is all field and wrong for one that is half building by design: on the
+  market stalls it walks through the COUNTER and reports 3.7–7.5 for pictures whose ground is
+  glassy. Restricted to the open half Milo actually uses (x 56–95%) the same scenes measure
+  **0.7–1.9**. A check that includes the thing that is supposed to be there is not measuring the
+  ground.
+- ⚠️ **PLACE THE PICTURE SO ITS OWN GROUND LINE IS THE GROUND LINE.** `object-fit: cover` is right on
+  a roomy frame and wrong on a short one: at 640×320 the controls cap the usable ground at 214px
+  while the painted grass lands at 256, so the world yields (correctly) and **the backdrop does
+  not** — and a character standing on the yielded line floats forty pixels above the lawn. Scale the
+  scene up until its ground meets the usable line and crop the surplus off the TOP, which is the
+  correct end to lose: the top of a scene is sky and awning, the bottom is where everything stands.
+  On a 16:9 frame the term is inert. (`fitFor` in [market.ts](../src/features/chapters/story/market.ts).)
 - **MEASURE THE HORIZON, DO NOT EYE IT.** Mean row colour down the image, largest jump in the middle
   band, is enough and takes a minute:
   farm 50–62% · garden 45–60% · forest **88%** · reef 36–62% · beach 44–76% · space 54–84%.
@@ -734,6 +762,25 @@ second thing to look at. It appears with the demo, when it starts to matter.
   a third option it did not name: on a short frame BlockYard's banner sits over the LEFT of the yard,
   where the things are one unit tall, instead of over the column that needs the full drop. Measured
   at 640×320 that is the difference between a 10px unit and a 15px one, at no cost to the words.
+- ⚠️ **THE SPEAKER SHOULD BE THE ONE SPEAKING: PUT THE QUESTION IN A BUBBLE AT ITS MOUTH.** CoinShop
+  spread one question across three places and none of them was the character — a banner pinned to the
+  top of the frame, an A-board standing on the grass with the goods and the price, and a cloth for the
+  coins — so the stallholder, the only one with anything to say, said nothing, and the empty ground
+  filled up with loose furniture. A bubble anchored to the mouth is one question region, it is
+  self-labelling (you can see WHO is asking), and it uses the empty half of the frame for something
+  that belongs there. Carry a `lead` inside it so the price stays put while the text changes: a wrong
+  answer must not take the question away with it.
+  ⚠️ Two consequences. **The words become that character's** — an instruction written for a narrator
+  reads wrong the moment a shopkeeper says it, and one naming furniture you have since deleted
+  ("count it onto the cloth") is the header-comment fault in miniature. And **CLAMP the bubble below
+  the chrome**: on a short frame the scene is scaled up to bring its ground down, so the speaker
+  rides high — measured, three of six mouths land at or above y = 0 at 640×320, and a bubble pinned
+  to a cropped-away mouth is worse than one sitting a little low with its tail pointing the right way.
+- ⚠️ **AND THE BAND THE CONTROLS RESERVE IS PER ROUND TYPE, NOT PER CHAPTER.** A one-row card wants
+  far less height than a two-row number pad. Handing the scene the larger band on every round pushed
+  the ground line up, which pushed the scale up, which **cropped the stallholder's head off a 640×320
+  frame** — the frame is only ever short of the height it is actually asked for, so ask for the real
+  number.
 - **A GROUPING DEVICE MUST BE PART OF THE WORLD.** A rounded rectangle with a stroke and a pale fill
   is a UI card, and laid over a painted forest that is exactly what it looks like — a pane of glass
   with birds behind it. The same job is done by a translucent warm-dark patch with light on its rim
@@ -773,6 +820,12 @@ second thing to look at. It appears with the demo, when it starts to matter.
 
   A prop that lands outside the sprite band is either re-coloured, drawn in code where you own the
   palette, or replaced.
+- ⚠️ **THE ONE-SIZE-BAND RULE IS FOR A SET A CHILD HAS TO COUNT; BACKGROUND LIFE WANTS THE SCALE
+  TABLE INSTEAD.** BlockYard cast only creatures in one band because its cast was the thing being
+  counted, and a countable ant cannot be honestly sized beside a pony. CoinShop's shoppers are not
+  counted — they are the market being a market — so rabbit · duck · squirrel · lamb · duckling ·
+  chick are drawn at 0.65–1.15 of a shared base, which is what `Kind.scale` is for. Ask which of the
+  two a set is before picking the tool.
 - ⚠️ **SIZE THE CAST SO THE CREATURES AGREE WITH EACH OTHER AND WITH MILO.** `Kind.scale` in
   critters.tsx exists for this and says so — *"a ladybug drawn the same height as a rabbit is its own
   kind of doesn't-belong"* — and BlockYard's second pass drew every creature at one height, so an ANT
@@ -855,6 +908,14 @@ Gotchas that have each cost real credits:
   rejected in the pond backdrops. `cart.png` next to them is genuinely painted. **Open the file
   before designing a chapter around it**; the check that saved BlockYard is the same one the
   `milo_hop` lesson asks for, applied to a prop instead of a sheet.
+- ⚠️ **AND SO IS WHICH WAY IT FACES — CHECK IT LARGE, BY EYE, PER SPRITE.** CoinShop's six shoppers
+  were rendered as thumbnails, called "all left-facing" in one line, and a **duck and a squirrel
+  shipped walking backwards** — caught by the founder on a screenshot. The retry was worse: a script
+  scoring ink mass in the top third *also* said the squirrel faced left, because **its bushy tail
+  fills the top-left and outweighs its head.** Two instruments, same wrong answer. Render each one
+  BIG and look, then cross-check the app's own registry — `CAST` in critters.tsx already carried
+  `facesLeft` for two of the six, and pinning the two sources together is a gate a heuristic cannot
+  be. A blanket answer for a set of sprites is the fault; facing is per sprite.
 - ⚠️ **A SHEET'S NAME IS A CLAIM, NOT A FACT — MEASURE IT BEFORE YOU DESIGN ON IT.**
   `milo_hop.png` shipped, was registered with a comment reading *"Milo's HOP, for a chapter where he
   jumps between places"*, and was named as the foundation of A3 in both the handoff and the rethink
@@ -867,6 +928,37 @@ Gotchas that have each cost real credits:
   caught because no caller had ever used it.)
 - **Never `--pingpong` a walk** — reversed legs moonwalk. Ping-pong is only for motion that
   oscillates with no clean cycle (a chirping beak, paddling flippers).
+  ⚠️ **And decide it by MEASUREMENT, not by what the motion is called.** Divide the last-to-first
+  cell difference by the mean cell-to-cell step: on CoinShop's ten keeper strips that ratio is
+  **1.3–2.7**, i.e. the period the cutter "found" is not a loop and the cycle hitches once a round.
+  A wave, a nod, a wing-flap — anything that returns the way it came — has no clean cycle to find,
+  and `animation-direction: alternate` is one CSS property.
+- ⚠️ **A CHARACTER GENERATED INSIDE ITS SCENE CAN ONLY EVER WIGGLE IN PLACE; ONE GENERATED ON FLAT
+  CHROMA CAN WALK — AND THAT IS DECIDED BEFORE ANY CODE RUNS.** Splitting a video into frames is the
+  same pipeline either way, so it is easy to believe you have made an animation when you have not.
+  A cutout crosses the screen, leaves, and turns up on another backdrop. A whole-scene generation has
+  no alpha and nothing to key, so the strip is an opaque crop and the only thing it can do is twitch
+  inside its own rectangle — measured on CoinShop's stalls, that rectangle is **4.4–10.5% of the
+  frame**, i.e. **93–96% of the picture never moved.** The founder's question was the right one:
+  *we already do frame-by-frame properly, why is this one like this?* **Decide whether the character
+  needs to travel BEFORE generating it**, and if it does, generate it alone on a flat field.
+  (CoinShop's keepers were built, wired, driven and then removed for exactly this. The strips are
+  still on disk and deliberately unused.)
+- ⚠️ **A SCENE AND ITS CHARACTER GENERATED IN ONE FRAME GIVE AN OPAQUE STRIP, NOT A CUTOUT — AND IT
+  ONLY MAKES SENSE LAID BACK OVER ITS OWN PIXELS.** This pipeline (generate the whole picture →
+  animate it → crop the rectangle the motion happened in) is cheaper and better-blended than a
+  chroma cutout, because the character is painted INTO its stall rather than pasted onto it. The
+  price is that the crop rectangle is load-bearing and nothing records it. Recover it by
+  **template-matching cell 0 back into its own backdrop** (mean abs error 5–8 of 255 is codec plus
+  palette noise, and the minimum is unambiguous), then composite a MID-CYCLE cell back and look.
+  ⚠️ **Cell 0 matching invisibly does not mean the strip does**: the moving cells carry a percent or
+  two of drift, so a faint rectangle appears the moment it plays. Fade ~3% of each edge — the border
+  pixels ARE the background, so it costs nothing — with two crossed gradients intersected, never a
+  radial one, which would dim the middle.
+- ⚠️ **AND EVERYTHING PINNED TO THAT PICTURE MUST SHARE ITS TRANSFORM.** The backdrop, the patch and
+  the ground line go through ONE function. The moment the backdrop is laid out by `object-fit:
+  cover` and the patch by anything else, a percentage of the viewport stops being a percentage of
+  the image and they come apart at every aspect but the one you tested.
 - Judge a sheet on its `motion` / `loopgap` numbers and at real display size, not on the strip.
 
 **Line-art pipeline** (the colouring chapter, and anything else that must be filled with colour):
@@ -1053,6 +1145,18 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   **failed about one run in thirteen.** A flaky gate is worse than no gate, because people learn to
   re-run it instead of reading it. If the claim is about a fixed pool, export the pool and assert on
   it; sample only what is genuinely a property of the draw, and leave a margin noise cannot reach.
+- ⚠️ **AND THE SPRITE SIDE OF THAT IS THE SAME FAULT: A MULTI-COLOUR CHARACTER IS NOT ONE HUE.**
+  The camouflage gate modelled Milo as the saturation-weighted mean of his opaque pixels, 30°.
+  Histogrammed, he is trimodal — **52% orange 15–30°, 17% olive 45–60°, 16% teal 180–195°** — so the
+  mean lands on a colour barely present and, worse, is dragged toward the olive, which is itself the
+  part that camouflages. Check against the DOMINANT cluster. ⚠️ **And when you fix an instrument,
+  re-derive the threshold rather than carrying the old number across**: the old 40° was calibrated
+  against a different reference AND a different sample region, so keeping it would have been the
+  arbitrary choice. State both populations under the new instrument and put the line between them.
+- ⚠️ **A GATE'S OWN PROSE CAN TRIP ITS OWN REGEX.** A source check forbidding `transition: left`
+  matched the comment explaining why it forbids it, and reported the file it was written for.
+  Anchor a source pattern on something only real code has — here, the quote that must follow the
+  colon in a style object.
 - ⚠️ **A HUE CHECK ON A BIMODAL SCENE MUST TEST EVERY STRONG HUE, NOT THE MEAN.** BlockYard's
   camouflage gate takes a saturation-weighted mean of the band — which on a cream-and-mint counter
   returns ~45°, **a hue that is nowhere in the picture**, and would happily allow a 160° set to sit
