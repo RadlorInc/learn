@@ -28,12 +28,20 @@
  * so it is always payable, and **L3 asks for the FEWEST coins** — the payload, because one 25 is ONE
  * object worth TWENTY-FIVE units, the same unitising `p.skipCount` and `p.placeValue2` feed into.
  *
- * ⚠️ **A `read` RUNG (coins already laid, type the total on a number pad) WAS HERE AND IS GONE.** It
- * was kept on the argument that reading a pile and making an amount are one skill from two ends —
- * but it is not the gesture this chapter is about, and the moment the coins moved into the card it
- * had **nowhere to draw its pile**: it asked *"how much money is that?"* over an empty screen, live,
- * because the card only renders on a paying round. Removing the type removed the bug with it. If it
- * ever comes back it needs its own place to show the coins.
+ * ⚠️ **READING A LAID-OUT PILE IS BACK, ON THE SAME CONTROL — see `asPile`.** It first existed as a
+ * `read` rung with its own number pad, and that was deleted for a real reason: the moment the coins
+ * moved into the card it had **nowhere to draw its pile**, so it asked *"how much money is that?"*
+ * over an empty screen, live. The answer was never to delete the direction, though — it was that the
+ * pile had no home. It has one now: **the keeper spreads his coins out in his own speech bubble**,
+ * where the price numeral used to sit, and says *"count my coins, then pay me the same."* Reading and
+ * making are one skill from two ends, and this is TickTock's call — *one control shape, both
+ * directions* — rather than a second answering surface with a second set of faults.
+ *
+ * ⚠️ And copying the pile coin-for-coin is DELIBERATELY allowed at the low tiers and impossible at
+ * the top. Matching one-to-one is the honest entry strategy for a six-year-old (the same call
+ * BigOrSmall makes for comparing by eye), and it still needs them to read each coin and know when to
+ * stop. At L3 the pile lands on a `fewest` round, where the shown set is always strictly worse than
+ * the answer, so the only way through is to total it and re-make it.
  *
  * Honest note: `p.money` is a LEAF in [skill-graph.md](../../../../docs/skill-graph.md) — nothing
  * stands on it. It is a life skill, not a spine node. That lowers the stakes; it does not excuse
@@ -118,7 +126,24 @@ export function Coin({ value, px, flat }: { value: CoinValue; px: number; flat?:
 export type QKind = 'pay' | 'fewest'
 export interface MoneyRound {
   slot: number; kind: QKind; price: number; shown: CoinValue[]
+  /**
+   * How the keeper STATES his price: as a numeral, or as the pile of coins in `shown`.
+   *
+   * ⚠️ This is the read direction, and it is a presentation flag rather than a third question type on
+   * purpose — the gesture, the grading and the card are identical either way, so a `read` kind would
+   * have been a second code path for one changed sentence. What differs is only where the amount comes
+   * from: a number Milo is told, or a handful he has to count.
+   */
+  asPile: boolean
 }
+
+/**
+ * ⚠️ ALTERNATING, not random — so consecutive rounds differ in DIRECTION as well as in scene, and
+ * both are practised the whole way down the run instead of in two blocks. Same reason TickTock
+ * alternates read and set. Round 0 is a numeral, so the pile's first appearance is round 1: by then
+ * the child has done the paying gesture twice in the demo, once in the guided round and once scored.
+ */
+export const pileFor = (round: number) => round % 2 === 1
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
@@ -137,6 +162,19 @@ export const KINDS: Record<1 | 2 | 3, QKind[]> = {
   3: ['pay', 'pay', 'fewest'],
 }
 const COUNT: Record<1 | 2 | 3, [number, number]> = { 1: [2, 3], 2: [3, 4], 3: [3, 5] }
+
+/**
+ * WHICH COINS THE PURSE OFFERS FOR A PRICE — ONE renderer, and it earned that the hard way.
+ *
+ * ⚠️ The demo used to derive it from whether `shown` happened to contain a 25, which is a proxy for
+ * the price and not the price. The moment the second demo's pile changed to six 5s it silently fell to
+ * a pool with no 25 in it, so *"the same thirty in only TWO coins"* became three tens — **the 25, the
+ * entire payload of `fewest`, disappeared from the teaching** while every line still read as true.
+ * Caught on a screenshot, not by a gate. Two places deciding the same thing differently is the fault;
+ * the purse a child is shown and the answer they are graded against must come from one function.
+ */
+export const poolFor = (price: number): CoinValue[] =>
+  price >= 25 ? POOL[3] : price >= 10 ? POOL[2] : POOL[1]
 
 /**
  * The fewest coins that make `price` from `pool`. Greedy is optimal for 1/5/10/25 (each value
@@ -177,7 +215,7 @@ export function makeRound(d: 1 | 2 | 3, round = 0): MoneyRound {
     shown = set; price = p; break
   }
   if (!price) { shown = [5, 1]; price = 6 }
-  return { slot: scoredSlot(round), kind, price, shown }
+  return { slot: scoredSlot(round), kind, price, shown, asPile: pileFor(round) }
 }
 
 // ─── The market ───────────────────────────────────────────────────────────────────────
@@ -207,8 +245,9 @@ export function makeRound(d: 1 | 2 | 3, round = 0): MoneyRound {
  * mouths land at or above y = 0 at 640×320. A bubble pinned to a mouth that is off-screen is worse
  * than one sitting a little low with its tail still pointing the right way.
  */
-function Bubble({ st, text, price, ok, vw, vh, band }: {
-  st: Stall; text: string; price?: number; ok?: boolean; vw: number; vh: number; band: number
+function Bubble({ st, text, price, coins, ok, vw, vh, band }: {
+  st: Stall; text: string; price?: number; coins?: CoinValue[]
+  ok?: boolean; vw: number; vh: number; band: number
 }) {
   const { s, ox, oy } = fitFor(st, vw, vh, band)
   const mx = ox + st.say.x * s
@@ -229,14 +268,27 @@ function Bubble({ st, text, price, ok, vw, vh, band }: {
         fontFamily: 'var(--font-display)', fontWeight: 800,
         fontSize: `clamp(13px, ${Math.round(vh * 0.031)}px, 20px)`,
         color: ok ? 'var(--garden-green-deep)' : 'var(--ink)' }}>
-        {price != null && (
+        {(price != null || coins) && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <img src={`/assets/objects/${st.good}`} alt="" draggable={false} decoding="async"
               onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
               style={{ width: `clamp(20px, ${Math.round(vh * 0.05)}px, 34px)`,
                 height: `clamp(20px, ${Math.round(vh * 0.05)}px, 34px)`, objectFit: 'contain', display: 'block' }} />
-            <span style={{ fontWeight: 900, lineHeight: 1, color: 'var(--ink)',
-              fontSize: `clamp(22px, ${Math.round(vh * 0.062)}px, 40px)` }}>{price}</span>
+            {/* ⚠️ THE PILE, WHERE THE NUMERAL WOULD HAVE BEEN — this is the read direction's only home,
+                and it has to be in HIS bubble rather than out on the grass (nothing loose on the open
+                ground) or in the card (that tray is the CHILD's coins, and the two must not be
+                confused). Drawn FLAT so the discs are one size and every numeral stays legible; the
+                floor is 22px because a coin prints its value at 42% of its size and 19px gives an
+                unreadable 8px digit. */}
+            {coins
+              ? <span style={{ display: 'flex', alignItems: 'center', gap: Math.max(2, Math.round(vh * 0.008)) }}>
+                  {coins.map((v, i) => (
+                    <Coin key={`${i}-${v}`} value={v} flat
+                      px={Math.max(22, Math.min(34, Math.round(vh * 0.055)))} />
+                  ))}
+                </span>
+              : <span style={{ fontWeight: 900, lineHeight: 1, color: 'var(--ink)',
+                  fontSize: `clamp(22px, ${Math.round(vh * 0.062)}px, 40px)` }}>{price}</span>}
           </span>
         )}
         <span>{text}</span>
@@ -361,10 +413,55 @@ function Scene({ st, slot, leg, vw, vh, band, resetKey }: {
 // ⚠️ These are the KEEPER'S words now, not a narrator's, because they come out of his mouth. The
 // cloth they used to name does not exist any more either — a line that describes furniture the
 // chapter has deleted is the header-comment fault in its smallest form.
+/**
+ * What the keeper says as Milo arrives — ONE renderer, because it is both spoken and (via `askFor`)
+ * written in the bubble, and those two drifting apart is how a chapter narrates one thing while the
+ * screen says another.
+ *
+ * ⚠️ **A PILE ROUND MUST NOT SAY THE NUMBER.** The whole question is reading the coins; naming the
+ * total out loud is the answer handed over before the child has looked, which is this band's oldest
+ * fault (chapter 4's green Ready button) in a spoken costume. The gate asserts it.
+ */
+export function openerFor(st: Stall, r: MoneyRound): string {
+  const goods = `${st.who} has ${aOrAn(st.one)} ${st.one}`
+  return r.asPile
+    ? `${goods}. This is what it costs. ${askFor(r)}.`
+    : `${goods}, ${numberToWords(r.price)}. ${askFor(r)}.`
+}
+
+/**
+ * What the keeper says when the payment is wrong — the same ONE renderer as the opener, and for the
+ * same reason: a miss line written inline in the component is a line no gate can reach, and the pile
+ * branch is exactly where a careless edit re-reveals the answer.
+ *
+ * ⚠️ Naming the child's OWN total is always fair — that is their tray and they can count it. Naming
+ * the TARGET is only fair when the target was already given as a numeral. The `fewest` branch may
+ * name the price because by then the sum is already right, so the read has been demonstrated and
+ * "in how many coins?" needs the number to mean anything.
+ */
+export function missFor(r: MoneyRound, laid: CoinValue[], best: number): string {
+  const total = laid.reduce((s, v) => s + v, 0)
+  if (total !== r.price) {
+    return r.asPile
+      ? `That makes ${numberToWords(total)}. Count my coins again.`
+      : `That makes ${numberToWords(total)}. I asked for ${numberToWords(r.price)}.`
+  }
+  // ⚠️ The payload line. The sum is right and the CHOICE is not — which is the whole of what
+  // "fewest" teaches: a big coin is one object worth many units.
+  return `That is ${numberToWords(r.price)}, but with ${numberToWords(laid.length)} coins.`
+    + ` Try bigger coins — can you do it in ${numberToWords(best)}?`
+}
+
 export const ASK: Record<QKind, string> = {
   pay: 'Count that out for me',
   fewest: 'Try again — with as FEW coins as you can',
 }
+/** The same two asks when the price is a PILE rather than a numeral — the read direction. */
+export const ASK_PILE: Record<QKind, string> = {
+  pay: 'Count my coins, then pay me the same',
+  fewest: 'Count my coins — now pay me the same with as FEW as you can',
+}
+export const askFor = (r: MoneyRound) => (r.asPile ? ASK_PILE : ASK)[r.kind]
 
 // ─── The round ────────────────────────────────────────────────────────────────────────
 type Mode = 'demo' | 'guided' | 'practice'
@@ -377,7 +474,7 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
   const band = CARD_BAND(vh)
   const groundPx = groundPxFor(st, vw, vh, band)
   const miloH = miloHFor(vh, groundPx, bannerBottom(vh))
-  const pool = useMemo(() => (price >= 25 ? POOL[3] : price >= 10 ? POOL[2] : POOL[1]), [price])
+  const pool = useMemo(() => poolFor(price), [price])
   const best = useMemo(() => fewestFor(price, pool).length, [price, pool])
 
   const [t, setT] = useState<Till>(EMPTY)
@@ -397,9 +494,9 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
     setT(EMPTY); setNote(''); setOk(false); setLive(false); setLeg(0)
     // The question opens when Milo has actually ARRIVED, timed off the same journey he walks.
     const walkIn = legMs(0, miloH, vw)
-    after(walkIn, () => { setLive(true); speak(`${st.who} has ${aOrAn(st.one)} ${st.one}, ${numberToWords(price)}. ${ASK[kind]}.`) })
+    after(walkIn, () => { setLive(true); speak(openerFor(st, data)) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [price, kind, st.key])
+  }, [price, kind, data.asPile, st.key])
 
   /** The reward IS the journey: he carries the coins up to the stall, then walks off with what he
    *  bought. Nothing turns green until after the commit. */
@@ -436,19 +533,16 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
       return
     }
     erred.current = true
-    if (total !== price) {
-      say(`That makes ${numberToWords(total)}. I asked for ${numberToWords(price)}.`)
-    } else {
-      // ⚠️ The payload line. The sum is right and the CHOICE is not — which is the whole of what
-      // "fewest" teaches: a big coin is one object worth many units.
-      say(`That is ${numberToWords(price)}, but with ${numberToWords(t.laid.length)} coins. Try bigger coins — can you do it in ${numberToWords(best)}?`)
-    }
+    // ⚠️ ONE renderer — see `missFor`. Written inline, the branch that must not name the target on a
+    // pile round is a line no gate can reach, and that is exactly where a careless edit re-reveals it.
+    say(missFor(data, t.laid, best))
   }
 
   return (
     <>
-      <Bubble st={st} vw={vw} vh={vh} band={band} ok={ok}
-        text={note || ASK[kind]} price={ok ? undefined : price} />
+      <Bubble st={st} vw={vw} vh={vh} band={band} ok={ok} text={note || askFor(data)}
+        price={ok || data.asPile ? undefined : price}
+        coins={ok || !data.asPile ? undefined : data.shown} />
       <Scene st={st} slot={data.slot} leg={leg} vw={vw} vh={vh} band={band}
         resetKey={`${st.key}-${price}-${kind}`} />
 
@@ -557,7 +651,7 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
   const doneRef = useRef(onDone); doneRef.current = onDone
 
   useEffect(() => {
-    const plan = fewestFor(data.price, data.shown.includes(25) ? POOL[3] : POOL[2])
+    const plan = fewestFor(data.price, poolFor(data.price))
     const set = data.kind === 'fewest' ? plan : data.shown
     // He is talking to Milo, so he says what it costs — he does not narrate himself in the third
     // person, which is what a bubble makes obvious and a top banner hid.
@@ -587,11 +681,14 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const pool = data.price >= 25 ? POOL[3] : data.price >= 10 ? POOL[2] : POOL[1]
+  const pool = poolFor(data.price)
   return (
     <>
+      {/* A demo names the total out loud, which a scored pile round must never do — here it is the
+          teaching, so the pile AND the number are both given. */}
       <Bubble st={st} vw={vw} vh={vh} band={band} ok={leg !== 0}
-        text={note || `${st.who}'s stall`} price={data.price} />
+        text={note || `${st.who}'s stall`}
+        price={data.asPile ? undefined : data.price} coins={data.asPile ? data.shown : undefined} />
       <Scene st={st} slot={data.slot} leg={leg} vw={vw} vh={vh} band={band}
         resetKey={`demo-${st.key}-${data.price}`} />
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
@@ -609,7 +706,15 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
 const BEAT: Beat<MoneyRound> = {
   skillId: 'money', rounds: 10, reteachAfter: 3, walkEvery: 3,
   make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
-  sig: d => `${d.price}${d.kind}`,
+  // The DIRECTION is part of the question: the same price named as a number and held out as a pile
+  // are two things to answer, not one question asked twice.
+  sig: d => `${d.price}${d.kind}${d.asPile ? 'pile' : 'num'}`,
+  // ⚠️ THE KEEPER SAYS EVERYTHING HIMSELF, so SkillBeat's centred pill and its generic spoken
+  // encouragement are both suppressed. This chapter retries in place with a written+spoken miss line
+  // in his bubble ("That makes five. Count my coins again.") and only reports a round once it has been
+  // SOLVED — so the shared cue arrived over his own "That is six. The pot is yours!" and contradicted
+  // it, in the middle of the market. Same shape as TickTock; see `ownsFeedback` in StoryWorld.
+  ownsFeedback: true,
   // SkillBeat renders nothing for an empty prompt — this chapter's own banner owns the pill, and it
   // must never restate the question as a second number.
   prompt: () => '',
@@ -648,13 +753,22 @@ export default function CoinShop({ onFinish, onExit }: {
   }, [onFinish, exit])
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
 
-  // Both teaching examples pay the SAME price — see CoinExplain.
+  /**
+   * Both teaching examples pay the SAME price — see CoinExplain.
+   *
+   * ⚠️ **THE SECOND ONE ALSO SHOWS THE PILE, so both directions are demonstrated before either is
+   * scored.** It costs nothing: the keeper holds out thirty as six 5s while Milo pays it as one 25 and
+   * one 5, which is word-for-word the lesson that example already narrates — the amount did not
+   * change and the handful did. The cost, stated: the pile direction gets a DEMO but not a hands-on
+   * guided round, because the one guided round is spent on the simpler numeral gesture. Its first
+   * scored appearance is round 1, by which point the child has laid coins three times.
+   */
   const DEMO: MoneyRound[] = useMemo(() => [
-    { slot: 0, kind: 'pay', price: 30, shown: [5, 5, 5, 5, 5, 5] },
-    { slot: 1, kind: 'fewest', price: 30, shown: [25, 5] },
+    { slot: 0, kind: 'pay', price: 30, shown: [5, 5, 5, 5, 5, 5], asPile: false },
+    { slot: 1, kind: 'fewest', price: 30, shown: [5, 5, 5, 5, 5, 5], asPile: true },
   ], [])
   const GUIDED: MoneyRound = useMemo(() =>
-    ({ slot: GUIDED_SLOT, kind: 'pay', price: 7, shown: [5, 1, 1] }), [])
+    ({ slot: GUIDED_SLOT, kind: 'pay', price: 7, shown: [5, 1, 1], asPile: false }), [])
 
   // Every hook is above this line — an early return that changes the hook count tears the chapter
   // into the error boundary the moment the phone is turned.

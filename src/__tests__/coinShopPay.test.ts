@@ -19,8 +19,10 @@ import { describe, it, expect } from 'vitest'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  makeRound, fewestFor, POOL, KINDS, VALUES, type QKind, type CoinValue,
+  makeRound, fewestFor, POOL, KINDS, VALUES, pileFor, poolFor, openerFor, missFor, askFor, ASK, ASK_PILE,
+  type QKind, type CoinValue,
 } from '@/features/chapters/story/CoinShop'
+import { numberToWords } from '@/features/chapters/lessons/_kit'
 import {
   STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot,
   SCENE_W, SCENE_H, coverFit, fitFor, groundPxFor, miloHFor, miloHalfPct,
@@ -51,11 +53,11 @@ function trueFewest(price: number, pool: readonly CoinValue[]): number {
 
 describe('the question is BUILD an amount, not add the numerals', () => {
   /**
-   * ⚠️ **EVERY ROUND IS A PAYING ROUND, BY THE FOUNDER'S CALL.** A `read` rung (coins already laid,
-   * type the total on a pad) used to sit at every tier; it is not the gesture this chapter is about,
-   * and once the coins moved into the card it had nowhere to draw its pile — it asked *"how much
-   * money is that?"* over an empty screen. The type is gone, and this is what stops it drifting back
-   * in as one quiet entry in the table.
+   * ⚠️ **EVERY ROUND IS ANSWERED BY BUILDING AN AMOUNT ON THE CARD.** A `read` rung that typed its
+   * total on a number pad used to sit at every tier, and once the coins moved into the card it had
+   * nowhere to draw its pile — it asked *"how much money is that?"* over an empty screen. Reading a
+   * pile is back (`asPile`), but as a way of STATING the price, not as a second answering surface: the
+   * gesture is still lay-coins-and-pay. This is what stops a pad drifting back in as one quiet entry.
    */
   it('every round at every tier asks the child to BUILD an amount with coins', () => {
     for (const d of TIERS) {
@@ -92,6 +94,96 @@ describe('the question is BUILD an amount, not add the numerals', () => {
       expect(fewestFor(r.price, POOL[3]).length, `price ${r.price}`).toBeLessThan(r.shown.length)
     }
     expect(seen, 'no fewest rounds were drawn at all').toBeGreaterThan(20)
+  })
+
+  /**
+   * ⚠️ THE READ DIRECTION. The keeper states his price either as a numeral or as the pile in `shown`,
+   * and the pile is the chapter's only way of asking *how much is this?* — the direction it lost when
+   * the number pad went. Four things have to hold or the pile is not a question:
+   */
+  it('the pile a keeper holds out really IS the price', () => {
+    // Otherwise the coins on screen and the amount being graded are two different numbers, and the
+    // round is unwinnable for a child who reads it correctly.
+    for (const d of TIERS) for (let i = 0; i < DRAWS; i++) {
+      const r = makeRound(d, i % 10)
+      expect(r.shown.length, `tier ${d}`).toBeGreaterThan(0)
+      expect(r.shown.reduce((s, v) => s + v, 0), `tier ${d} price ${r.price}`).toBe(r.price)
+    }
+  })
+
+  it('a PILE round never says its amount — not even in the miss line', () => {
+    // The opener is only half of it: the line after a wrong payment is where the target most easily
+    // leaks back out, and on a pile round that ends the question the child was asked.
+    //
+    // ⚠️ Asserted as INDEPENDENCE, not by searching the sentence for the number's name. A substring
+    // check reports "seventeen" as leaking "seven" — the same trap as a regex matching `weigh` inside
+    // `weight`, which this repo has already been burned by. A line that does not change when the
+    // price changes cannot be naming the price, and that is exact.
+    const laid: CoinValue[] = [1]                    // one penny: never the right total
+    for (const d of TIERS) for (let i = 0; i < DRAWS; i++) {
+      const r = makeRound(d, i % 10)
+      const cheap = missFor({ ...r, price: 7 }, laid, 1)
+      const dear = missFor({ ...r, price: 98 }, laid, 1)
+      if (r.asPile) expect(cheap, 'the pile miss line varies with the target it must not name').toBe(dear)
+      // ...and the numeral rounds MUST name it, which is what makes them the easier direction.
+      else expect(cheap, 'the numeral miss line stopped naming the price').not.toBe(dear)
+    }
+  })
+
+  it('a PILE round never says its amount — spoken or written', () => {
+    // Naming the total is the answer handed over before the child has looked: chapter 4's green Ready
+    // button in a spoken costume. The numeral rounds MUST say it, which is what makes them the easier
+    // direction — so both halves are asserted here.
+    for (const d of TIERS) for (let i = 0; i < DRAWS; i++) {
+      const r = makeRound(d, i % 10)
+      const line = openerFor(stallAt(r.slot), r)
+      const words = numberToWords(r.price)
+      if (r.asPile) {
+        expect(line, `pile, price ${r.price}`).not.toContain(String(r.price))
+        expect(line.toLowerCase(), `pile, price ${r.price}`).not.toContain(words.toLowerCase())
+        expect(askFor(r), `pile ask, ${r.kind}`).toBe(ASK_PILE[r.kind])
+      } else {
+        expect(line, `numeral, price ${r.price}`).toContain(words)
+        expect(askFor(r), `numeral ask, ${r.kind}`).toBe(ASK[r.kind])
+      }
+    }
+  })
+
+  it('the demo, the card and the grader agree about what is in the purse', () => {
+    // ⚠️ The demo used to derive its pool from `shown.includes(25)` — a proxy for the price, not the
+    // price. Changing the second demo's pile to six 5s silently dropped it to a pool with no 25, so
+    // "the same thirty in only TWO coins" became three tens and **the 25, the entire payload of
+    // `fewest`, vanished from the teaching** while every spoken line stayed true. Found on a
+    // screenshot. One function decides it now, and nothing may reintroduce a second.
+    expect(src(), 'the pool is derived from the pile again, not the price').not.toContain('includes(25)')
+    expect(poolFor(30), 'the 30-in-two-coins demo cannot reach a 25').toContain(25)
+    expect(fewestFor(30, poolFor(30)).length, 'the fewest demo no longer pays 30 in two').toBe(2)
+    // and the purse always holds enough kinds to express the answer the round grades against
+    for (const d of TIERS) for (let i = 0; i < DRAWS; i++) {
+      const r = makeRound(d, i % 10)
+      for (const v of fewestFor(r.price, poolFor(r.price)))
+        expect(poolFor(r.price), `price ${r.price} needs a ${v} the purse does not offer`).toContain(v)
+    }
+  })
+
+  it('the keeper owns the miss line, so no generic pill lands on his market', () => {
+    // The chapter retries in place and only reports a round once it has been SOLVED, so SkillBeat's
+    // centred cue arrived over the keeper's own "That is six. The pot is yours!" and contradicted it.
+    // The gating in SkillBeat itself is asserted by tickTockClock.test.ts.
+    expect(src(), 'the shared centred cue is back over the market').toMatch(/ownsFeedback: true/)
+    // ...and it only opts out because it says something BETTER — written as well as spoken, since
+    // speech alone is silence on the many devices with no usable voice.
+    expect(src(), 'nothing writes the miss line any more').toContain('setNote(s); speak(s)')
+  })
+
+  it('the two directions ALTERNATE, so consecutive rounds differ in what is read', () => {
+    // Random would clump, and a run that opens on the harder direction meets it before the guided
+    // round's gesture has been done once. Round 0 is a numeral on purpose.
+    expect(pileFor(0)).toBe(false)
+    const dirs = Array.from({ length: 10 }, (_, i) => makeRound(2, i).asPile)
+    expect(new Set(dirs).size, 'a whole run drew only one direction').toBe(2)
+    for (let i = 1; i < dirs.length; i++)
+      expect(dirs[i], `rounds ${i - 1} and ${i} read the same way`).not.toBe(dirs[i - 1])
   })
 
   it('`fewestFor` really is the fewest — checked against exhaustive DP', () => {

@@ -199,12 +199,12 @@ export const PAY_X = 62         // where he hands the coins over
 export const PURSE_MAX = 8
 
 /**
- * ⚠️ **THE BAND THE CONTROLS NEED IS PER ROUND TYPE, AND SAYING SO IS WHAT KEEPS THE KEEPER ON
- * SCREEN.** The coin card is ONE row — tray, purse, back, Pay — so it wants far less height than the
- * two-row `AnswerPad` a `read` round uses. Handing `fitFor` the pad's band on every round pushed the
- * ground up, which pushed the scale up, which **cropped the stallholder's head off a 640×320 frame**
- * — and he is now the one asking the question. State the real band and the problem disappears on
- * every `pay` round; the `read` rounds keep the pad's.
+ * ⚠️ **SAYING WHAT THE CONTROLS REALLY NEED IS WHAT KEEPS THE KEEPER ON SCREEN.** The coin card is
+ * ONE row — tray, purse, back, Pay — and it once got the band a two-row `AnswerPad` needed, back when
+ * a `read` rung typed its total on a pad. That pushed the ground up, which pushed the scene's scale
+ * up, which **cropped the stallholder's head off a 640×320 frame** — and he is the one asking the
+ * question. The pad is gone (reading a pile is answered on the card now, see `asPile` in CoinShop),
+ * so every round is one row and this is the only band there is. Ask for the real height.
  */
 export const CARD_BAND = (vh: number) => Math.round(Math.max(66, Math.min(vh * 0.15, 108)))
 
