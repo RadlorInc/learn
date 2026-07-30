@@ -259,19 +259,43 @@
 >    found it, and it is fixed by self-pacing. ⚠️ **Still unverified: whether the self-paced dwell reads
 >    well against a REAL voice** (the pane is mute). If a line's tail gets clipped, `dwellFor`'s `× 72`
 >    is the one number to raise.
-> 4. ⚠️ **`timeLabel` / `makeTimeChoices` in [TimeLesson.tsx](src/features/chapters/lessons/TimeLesson.tsx)
->    are now a SECOND implementation of the same words**, still used by that (separately-routed) lesson.
->    `timeLabel` has no 5-minute case — it falls through to `"7:25"` digits. Not wrong today; it is the
->    kind of duplicate that rots. Point it at `clock.ts` when convenient.
-> 5. **Reading a laid-out pile of coins is still missing from CoinShop** (its own §④c) — unrelated, but
->    the same "keep the second direction only where the material has a home" rule now has two datapoints.
-> 6. ⚠️ **Two things a mute instrument cannot check, and one of them is now the top item.**
->    · **Whether the self-paced dwell reads well against a REAL voice.** The browser pane has no voice,
->      which is exactly what hid §⑤a for a whole session. If a line's tail gets clipped, `dwellFor`'s
->      `× 72` is the one number to raise — and it needs an ear, not a gate.
->    · **The `Let's look together!` re-teach cue overlays the clock face.** It is SkillBeat's own shared
->      cue and it lands on the one thing this chapter asks the child to read. Noticed on the ten-round
->      run, deliberately not touched: it is shared by every 3–11 chapter, so it wants its own decision.
+> 4. ✅ **`TimeLesson.tsx` IS DELETED (2026-07-30).** It was not "still used by a separately-routed
+>    lesson" — that line was wrong: `grep` found **zero importers anywhere**, so the second copy of
+>    `timeLabel`/`makeTimeChoices`/`ClockFace` was simply dead. Deleting it beats pointing it at
+>    `clock.ts`, which would have kept a duplicate alive to be maintained. *A "still used by" claim in
+>    this file is a claim like any other; one grep settles it.*
+> 5. ✅ **READING A LAID-OUT PILE IS BACK IN COINSHOP, ON THE SAME CONTROL (2026-07-30).** Not as a
+>    `read` kind with a number pad — that is what was deleted, and rightly, because the pile had **no
+>    home**. It has one now: `MoneyRound.asPile` makes the keeper **spread his coins out in his own
+>    speech bubble**, where the price numeral would be, and say *"count my coins, then pay me the
+>    same."* One control shape, both directions — TickTock's call, not a second answering surface.
+>    Directions **ALTERNATE** (round 0 numeral, round 1 pile), so consecutive rounds differ in what is
+>    read as well as in scene. ⚠️ **Copying the pile coin-for-coin is deliberately allowed at L1–L2 and
+>    impossible at L3**, where the pile lands on a `fewest` round whose shown set is always strictly
+>    worse than the answer — the same allow-the-entry-strategy-then-defeat-it ladder BigOrSmall uses.
+>    **Driven live at 1280×720:** the pile demo, a scored pile round (r1, pots stall, 5+1 held out with
+>    no number anywhere), a wrong payment giving *"That makes five. Count my coins again."* — **the
+>    target unsaid** — then *"That is six. The pot is yours!"* only after the commit, and r0/r1/r2
+>    alternating numeral → pile → numeral on screen.
+>    ⚠️ **AND CHASING IT FOUND A REAL REGRESSION ON A SCREENSHOT, WHICH IS THE FINDING WORTH KEEPING.**
+>    `CoinExplain` derived its coin pool from `shown.includes(25)` — a PROXY for the price, not the
+>    price — so the moment the second demo's pile became six 5s it silently fell to a pool with no 25 in
+>    it and *"the same thirty in only TWO coins"* became **three tens**: the 25, the entire payload of
+>    `fewest`, gone from the teaching while every spoken line stayed true. Now one `poolFor(price)`
+>    serves the demo, the card and the grader, and the gate forbids the old derivation. *Two places
+>    deciding the same thing differently is the fault, and a proxy for a value is one of those places.*
+> 6. ✅ **THE `Let's look together!` CUE NO LONGER LANDS ON THE CLOCK (2026-07-30)** — and it turned out
+>    to be worse than an overlap. `Beat.ownsFeedback` (opt-in, so the other 35 chapters are untouched)
+>    suppresses SkillBeat's centred pill AND its generic spoken encouragement for a beat that says its
+>    own miss line. **TickTock and CoinShop both set it, because both retry IN PLACE and only report a
+>    round once it has been SOLVED** — so the shared cue arrived on top of their own *"That's right —
+>    half past six!"* / *"The pot is yours!"* and contradicted it, over the very thing being read.
+>    `hintFor` / `missFor` replace it and are strictly better: they name WHICH hand or WHICH total is
+>    wrong, written as well as spoken. **11/11 planted regressions caught** across the three fixes.
+> 6a. ⚠️ **STILL OPEN, AND STILL THE TOP ITEM: whether the self-paced dwell reads well against a REAL
+>    voice.** The browser pane has no voice, which is exactly what hid §⑤a for a whole session. If a
+>    line's tail gets clipped, `dwellFor`'s `× 72` is the one number to raise — and it needs an ear,
+>    not a gate.
 > 7. **Nobody has watched a child play it.** Of the nine faults this session, **five were found by
 >    looking at the screen and three by the founder playing it — not one by a gate.** Two of the three
 >    he found were deeper than anything I had thought to check: a lesson that hung on every device that
