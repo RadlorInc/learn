@@ -241,6 +241,16 @@
 >    | `6fd8551` + `1bc48af` | the "to" hint firing on times with no "to", and the night dial contrast (§⑤b) | **v75**, 9th poll |
 >    | `52374d8` + `c04436b` + `cfd99ce` | the closed-set coverage gate — shared, opt-in (§⑤c) | **v76**, 6th poll |
 >    | `7b1d691` + `ba35c43` | CoinShop's intro naming two deleted props (§⑤d) | **v77**, 4th poll |
+>    | `9b32283` + `d00613d` + `b9988a0` + `a41208b` + `fe2432c` | **the three open items closed — see 4/5/6 below** | **v78**, 6th poll |
+>
+>    **v78 DRIVEN on prod, not status-coded:** the pile demo (Bear holding out six 5s while Milo pays
+>    **25 + 5** — so the `poolFor` regression is genuinely fixed on the live build), guided **5+1+1 = 7**,
+>    scored round 0 (numeral, 3, graded with the tick), and **scored round 1 as a PILE round** — 5 + 1
+>    held out with no number anywhere, paid, *"That is six. The pot is yours!"*. All assets **200**,
+>    **0 console errors** across `?ch=money` and `?ch=time`. ⚠️ Not covered on prod, stated because a
+>    status line outrunning its evidence is this file's oldest fault: the pile MISS line, an L3 `fewest`
+>    pile, and the suppressed cue's absence over the clock were driven on a **dev build of identical
+>    code** (the cue is proven by gates instead — absence is what a screenshot cannot show).
 >
 >    Smoke green each time (`/` `/menu` `/api/health` `/diagnostic` and `?ch=time` · `money` · `place` ·
 >    `add100` · `rainbow` all **200**; all ten of the day's backdrops and Milo's cycle **200**).
