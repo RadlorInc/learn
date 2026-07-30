@@ -508,8 +508,19 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
   const [beat, setBeat] = useState(0)
   const [view, setView] = useState<ClockView>({ h: 3, m: 0 })
   const [line, setLine] = useState('')
-  // Beat 4 ends with the child doing one themselves, so the SET gesture is rehearsed before it counts.
-  const [tryM, setTryM] = useState(0)
+  /**
+   * Beat 4 ends with the child doing one themselves, so the SET gesture is rehearsed before it counts.
+   *
+   * ⚠️ A REF, NOT STATE, AND THAT IS THE FIX FOR A REAL FAULT — the clock is drawn from `view`, so
+   * this value is never rendered and was only ever read back inside the step handler. As `useState`
+   * that read came from the render's CLOSURE, so every tap in one React batch saw the same stale
+   * minute and **six taps advanced the hand by one** (measured on prod: 0 → 5, not 0 → 30). Distinct
+   * human taps are usually separate ticks, but this repo has already shipped the same shape for real —
+   * placeValue's undo, where three batched "back" taps all removed the same cube on a janky device,
+   * which is why CoinShop's `lay` reads inside the updater. Here there is no second copy to keep in
+   * step at all: a ref updates synchronously, so a burst of taps walks the ring one stop each.
+   */
+  const tryM = useRef(0)
   const [tryOk, setTryOk] = useState(false)
   /**
    * ⚠️ The dial appears when the child is ASKED for it, not when the last beat starts. Gated on the
@@ -571,7 +582,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
           () => setView({ h: 3, m: 30, ring: true, ringLit: [30], label: 'half past 3' }),
           () => setView({ h: 3, m: 15, ring: true, ringLit: [15], label: 'quarter past 3' }),
           () => setView({ h: 3, m: 45, ring: true, ringLit: [45], label: 'quarter to 4' }),
-          () => { setView({ h: 3, m: 0, ring: true }); setTryM(0); setAskTry(true) },
+          () => { setView({ h: 3, m: 0, ring: true }); tryM.current = 0; setAskTry(true) },
         ],
       },
     ]
@@ -622,8 +633,8 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
   // the child's one go, on the last beat
   const stepTry = (dir: -1 | 1) => {
     if (tryOk) return
-    const nx = RING[wrap(RING.indexOf(tryM) + dir, RING.length)]
-    setTryM(nx)
+    const nx = RING[wrap(RING.indexOf(tryM.current) + dir, RING.length)]
+    tryM.current = nx
     setView({ h: 3, m: nx, ring: true, ringLit: [nx], label: nx === 30 ? 'half past 3' : null, glow: nx === 30 })
     if (nx === 30) {
       setTryOk(true)

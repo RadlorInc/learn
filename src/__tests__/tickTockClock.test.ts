@@ -347,6 +347,24 @@ describe('the four readings, and covering them', () => {
    *
    * `hintFor` is what replaces them, and it is strictly better: it names WHICH hand is wrong.
    */
+  /**
+   * ⚠️ FOUND BY PLAYING THE LESSON ON PROD, not by any check: six taps on the hands-on dial moved the
+   * hand ONE stop (0 → 5, not 0 → 30). `stepTry` read its minute from a `useState` value it also set,
+   * so every tap in one React batch saw the same stale number. The value is never rendered — the clock
+   * draws from `view` — so it was not render state at all, and a ref removes the whole class rather
+   * than papering over it. Distinct human taps are usually separate ticks, but this repo has shipped
+   * the identical shape for real (placeValue's undo, three batched "back" taps removing one cube),
+   * which is why CoinShop's `lay` reads inside the updater.
+   */
+  it('⚠️ the lesson dial keeps no second copy of its minute, so batched taps cannot stale-read', () => {
+    const tt = readFileSync(join(process.cwd(), 'src/features/chapters/story/TickTock.tsx'), 'utf8')
+    expect(tt, 'the hands-on dial went back to render state it also reads')
+      .not.toMatch(/const \[tryM, setTryM\] = useState/)
+    expect(tt, 'the hands-on minute is no longer a ref').toMatch(/const tryM = useRef\(0\)/)
+    expect(tt, 'the step handler reads something other than the ref')
+      .toMatch(/RING\.indexOf\(tryM\.current\)/)
+  })
+
   it('⚠️ opts out of the shared centred cue, and still writes its own miss line', () => {
     expect(makeTimeBeat().ownsFeedback, 'the generic pill is back over the clock face').toBe(true)
     const src = readFileSync(join(process.cwd(), 'src/features/chapters/story/StoryWorld.tsx'), 'utf8')
