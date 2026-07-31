@@ -982,6 +982,20 @@ Gotchas that have each cost real credits:
   turtle's own flippers. (Now derived automatically; see above.)
 - **Kling fades the background in** rather than starting flat; always use the settled tail
   (`--start 0.5`), or generate 10s so the settled part holds real motion.
+- ⚠️ **AND THE MOTION HAS ITS OWN SETTLE — CUT FROM THE ACTIVE WINDOW, NOT THE FRONT OF THE CLIP.**
+  The model holds the start frame for a beat before it begins moving, and a strip cut from there is
+  a character standing still. Measured on the 9–11 foreman bear: **frames 0–17 of 121 have an
+  IDENTICAL feet-span**, so a cut at `--start 0` gave a 12-cell strip that was **9 cells STATIC**
+  and read as a shuffle rather than a walk. ⚠️ **A stronger prompt does not fix this and the retry
+  is wasted money** — a second take demanding "BIG deliberate strides" bought **1%** more stride
+  (29% → 30% of frame height); re-cutting the SAME clip from its middle bought all of it.
+  **Find the window before paying for another generation:** measure a per-frame motion signal (the
+  ink span in the bottom fifth of the frame is enough), take the first frame that deviates from the
+  held start value, and cut one autocorrelation period from there.
+- **A walk's feet-span signal has HALF the walk's period**, because it cannot tell left-leg-forward
+  from right-leg-forward. Autocorrelate the whole frame to get the cycle; use the span only to find
+  where the motion starts and how big the stride is (26% of body height reads as a heavy plod, 18–20%
+  as a light one).
 - ⚠️ **THE SUBJECT SETTLES TOO, AND THAT IS THE BIGGER EFFECT.** On an image-to-video run the
   magenta field was solid from frame 0 — but the model spent the **first 20 of 121 frames
   re-rendering the subject**, shrinking it from 610px to 360px wide and drifting it 89px right,
