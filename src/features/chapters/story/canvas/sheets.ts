@@ -135,4 +135,29 @@ export const SHEETS: Record<string, Sheet> = {
    * height. `hop()` therefore animates ONLY the horizontal; adding a CSS arc makes him rise twice.
    */
   '/assets/characters/milo_hop_side.png': { url: '/assets/characters/milo_hop.png', cellAspect: 0.621, frames: 19, fps: 24, groundShare: 8 / 19 },
+
+  // ── The 9–11 WORKING CAST (generated 2026-07-31) ──────────────────────────────────────────────
+  // The band's whole problem was never the engine, it was the CAST: all 24 cycles above are cozy
+  // animals, and a ten-year-old's goods yard with a duckling in it is the "reads too young" fault
+  // arriving by another door (docs/story-9-11-rethink.md, "The art, honestly"). These three are the
+  // same painted style — the register comes from the JOB and the work clothes, not from a palette.
+  // They are band-wide, not one chapter's: any 9–11 world that needs someone to arrive, want
+  // something and leave with it can cast them.
+  //
+  // ⚠️ CUT FROM THE ACTIVE WINDOW, NOT THE FRONT OF THE CLIP. Kling holds the start frame for a
+  // beat before it begins moving — measured on the bear, frames 0–17 of 121 have an IDENTICAL
+  // feet-span, so a cut at `--start 0` yields a strip that is 9/12 STATIC and reads as a shuffle.
+  // Cut from the settled middle instead (bear: --start 0.5124 --end 0.7521, one 29-frame period).
+  // A second take with a much stronger "big strides" prompt bought only 1% more stride — the window
+  // was the fault, not the wording, so do not pay for a retry before re-cutting.
+  //
+  // ⚠️ Keyed on MAGENTA: the hi-vis hat is yellow and a green key nibbles yellow edges.
+  // fps is tuned by ear and also sets ground speed. The bear is the heaviest thing in the band, so
+  // he sits just under Milo's 10 — a foreman plods.
+  '/assets/objects/foreman_bear_side.png': { url: '/assets/objects/foreman_bear_walk.png', cellAspect: 0.578, frames: 12, fps: 9 },
+  '/assets/objects/driver_badger_side.png': { url: '/assets/objects/driver_badger_walk.png', cellAspect: 0.727, frames: 12, fps: 11 },
+  // ⚠️ A THIRD cycle — `merchant_fox` — was generated alongside these two and CUT by the founder.
+  // Its PNGs are still in public/assets/objects/ and it is deliberately NOT registered here: an
+  // unregistered sheet is invisible to the idle-art gate, which is the honest state for art with no
+  // home. Re-add this one line to cast it again (cellAspect 0.809, 12 frames, fps 12 measured).
 }
