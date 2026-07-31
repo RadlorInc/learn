@@ -12,7 +12,198 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🍕 **2026-07-30 (LATEST) — SLICESHOP (6–8 FRACTIONS) REBUILT AS A SHARING STORY, AND THE FOUNDER STOPPED IT **SEVEN** TIMES ON THE WAY — EVERY ONE BY EYE, NOT ONE BY A GATE. 🚀 SHIPPED — see the commit table in ▶ OPEN.** `tsc` 0 · **416/416 vitest** (was 369, **+47**) · `next build` · **18/18 planted regressions caught** · driven live at 1280×720, 1600×950 and 640×320, two full runs played to their own finish.
+> 🏗️ **2026-07-31 (LATEST) — THE 9–11 BAND GETS A CAST, AND ITS SECOND CHAPTER: NUMBERVAULT → **THE ORDER DESK**. 🚀 SHIPPED — both chapters, see the commit table in ▶ OPEN.** `tsc` 0 · **416/416 vitest** · `next build` · **two full runs played to their own finish** — one perfect, one erring every round.
+>
+> **The asks, in order:** *"hum chapter number 1 age 9-11 ko poora animation mein kaise convert kare"* → *"usko proper story animation waala feel kaise dege?"* → **"fully animated lagna chahiye"** → *"tum generate jo cheeze chahiye… mujhe accha aur interesting animation chahiye"* → *"make size bigger of everything and remove fox"* → *"words ke saath number figures bhi aana chahiye"* → *"poora run khel ke dekho"*.
+>
+> ## ⓪ THE BLOCKER WAS NEVER THE ENGINE — IT WAS THE CAST
+> [story-9-11-rethink.md](docs/story-9-11-rethink.md) §"The art, honestly" called this and it held up.
+> `Arrive`, `SheetCell`, `journeyOf`, `CARRY_SPEED`, `FitBox`, `RotateGate`, `yard.tsx`'s base-ten
+> set all adopt at **zero art cost**. What does not carry over is the cast: **all 24 registered
+> cycles are cozy animals**, and a ten-year-old's goods yard with a duckling in it is the *"reads too
+> young"* problem the HUD was built to avoid, arriving by another door.
+> **~40.5 credits** (1186.5 → 1146 — ⚠️ **the handoff said ~373 and was wrong again**, so check it
+> live) bought a **bear depot foreman** and a **badger lorry driver** on flat chroma, plus three
+> painted yard backdrops. Band-wide, not one chapter's: any 9–11 world that needs someone to arrive,
+> want something and leave with it can cast them.
+>
+> ## ① ⚠️ TWO ART LESSONS, AND THE SECOND ONE IS THE EXPENSIVE KIND
+> • **The first bear came back in heavy black cartoon outline** — the flat-vector style already
+>   rejected once in this repo. The reference that fixes it is **`duck_side.png`**, an actual in-app
+>   creature still: a thin, soft, WARM-BROWN line, never a uniform black stroke. (`bear.png` is an old
+>   flat-vector asset and is the wrong thing to reference.)
+> • ⚠️ **CUT FROM THE ACTIVE WINDOW, NOT THE FRONT OF THE CLIP — and a stronger prompt does not fix
+>   it.** Kling holds the start frame for a beat before it moves: measured, **frames 0–17 of 121 have
+>   an IDENTICAL feet-span**, so `--start 0` gave a 12-cell strip that was **9 cells STATIC** and read
+>   as a shuffle. A second take demanding *"BIG deliberate strides"* bought **1%** more stride
+>   (29% → 30%); **re-cutting the SAME clip from its middle bought all of it.** Find the window before
+>   paying for another generation. Rule + the half-period gotcha are now in the craft doc.
+>
+> ## ② THE ORDER DESK — LOAD THE ORDER
+> Milo is the clerk at a goods yard. A customer **walks in from off-frame**, waits, and **leaves with
+> the goods**; four bays run **thousands → ones, left to right the way a number is written**. Nobody
+> counts 3,482 things one at a time — you load the biggest unit that fits and work down, which IS
+> place value. Three questions, one verb: **build** (the whole order), **place** (just one column),
+> **value** (*"four hundred units — how many hundred-pallets?"*, the digit-value question asked from
+> the end that can be BUILT rather than picked off three chips).
+> • ⚠️ **THE OLD CHAPTER'S BLOCKS LIED ABOUT THEIR OWN PROPORTIONS.** `Block` drew a hundred at
+>   `u * 4.4` square — **19 units of area, not 100** — and a thousand at the SAME size as a hundred.
+>   That is the 0.55 fault BlockYard paid for, shipped. Every piece here is derived from ONE unit and
+>   **shows its own ten**; measured live, a rod is **150px at u=15, exactly ten**.
+> • **The bundle is the payload and it is watchable**: a bay cannot hold ten, so the tenth piece fuses
+>   the ten into ONE of the next size which travels one bay LEFT. `build` therefore grades on the
+>   TOTAL — an over-load self-corrects exactly the way regrouping does. Verified: 10 ones → 1 ten-box.
+>
+> ## ③ TWO NARROWINGS, BOTH MEASURED AND BOTH IN THE FILE HEADER
+> • **Digits are 0..5, not 0..9.** Nine HONEST pieces per bay (a hundred is 10×10 units, a thousand is
+>   ten of those) forces the unit to **~9px**, at which the ones bay is not countable — and a
+>   manipulative a child cannot count is a wrong answer the chapter caused. Real base-ten kits do not
+>   ship nine thousand-cubes either. **Zero IS in range** for the inner places: an empty bay is the
+>   placeholder, and 3,042 is the number that teaches it.
+> • **Milo does not walk.** He walked to each bay in the first cut and measured **l590–r690 standing
+>   on the hundreds bay's own label at l605–r675** — and there is no lane to give him, because a
+>   3-row pallet bay already takes 417 of the 440px band. **The journeys belong to the customer and to
+>   every piece that flies to its bay**; Milo dispatches from the desk.
+>
+> ## ④ ⚠️ SEVEN FAULTS, EVERY ONE FOUND BY LOOKING — NONE BY A GATE
+> ① **The pieces rendered as FLAT PURPLE SLABS.** `shadesOf` returns `rgb(...)` strings, so the
+> hex-alpha trick `${m.seam}88` is **invalid CSS** and every 10×10 subdivision silently did not paint
+> — i.e. a piece **asserting** its value instead of showing it, which is the exact fault the chapter
+> exists to fix, reintroduced by a string bug. ② **The bubble ran 143px off the right edge**
+> (l963 → r1423 on a 1280 frame): the question, cut off. ③ **The customer stood on the "ones" bay** at
+> 640×320 — a flat `vw * 0.11` reserve; it is derived from the sprite's own width now. ④ **`u` had a
+> `max(7, …)` floor that exceeded the budget it came from** — the craft doc's own *"a size derived
+> from a MAXIMUM can exceed that maximum"*. ⑤ **The supply "singles" button was 25px** — the smallest
+> piece gave the smallest button, which is backwards. ⑥ **The bays were invisible**: a `.16` tint on
+> pale gravel, so four labels floated in open ground. Now a stronger trodden patch **with a post at
+> each end** — still not a filled panel, which three passes of BlockYard paid for. ⑦ ⚠️ **THE BUBBLE
+> APPEARED BEFORE THE CUSTOMER DID** (founder caught it), sitting at the DESTINATION with its tail on
+> empty ground for the whole walk. Chasing it found the deeper one: the customer travelled `-vw*0.42`,
+> i.e. **from the middle of the frame** — the craft doc's *token step is not an arrival*. They now come
+> from genuinely off-frame, and **facing follows travel**: in from the right facing left (the bays are
+> to their left), out to the right facing right.
+>
+> ## ⑤ SIZE, AND WHERE THE ROOM ACTUALLY CAME FROM
+> Founder: *"make size bigger of everything."* Unit **12 → 15px**, people **165 → 216px**, Send
+> **129×45 → 167×59**, bubble **17 → 22px**, docket **16 → 21px**, smallest supply button **25 → 48px**.
+> ⚠️ The lever was not the cap — it was the **packing**. Five honest 10×10 pallets in a 3-wide grid is
+> **32 units across**, and the two big bays alone ate **78%** of the row. **Fanned the way goods really
+> stack** they span 20 units and ONE row, which buys back the width and the height at once. The flat
+> pixel cap on the characters went too — that is the shape that produced *"characters chhote chhote
+> hai"* in SliceShop.
+>
+> ## ⑥ WORDS **AND** FIGURES (founder's call)
+> The order now reads *"three hundred and twelve — **that is 312**"*, in the ask, the docket and the
+> demo narration. It does not hand the answer over — the answer is a **quantity**, not a digit, and
+> reading 312 as three hundreds, one ten and two ones IS the skill. What it adds is the numeral↔words
+> mapping the curriculum asks for at this level.
+>
+> ## ⑦ TWO FULL RUNS PLAYED, AND THE SECOND FOUND A CONTENT FAULT
+> • **Run A, all correct.** The tier climbed and **all three question types appeared, `value` for the
+>   first time ever on screen**. The reveal states the payload — *"3 hundred-pallets = 300"*. The
+>   chapter **finished itself** on the mastery exit, which **`coverage` correctly withheld until
+>   `value` had been asked**.
+> • **Run B, erring every round.** **All ten rounds walked**, the **re-teach fired twice**, and the
+>   miss lines are written and specific on both round shapes: *"Not the ones I need — that is 0, and I
+>   asked for 5."* / *"That is not my order yet — that is 0, and I asked for 523."* The manifest arc
+>   accumulated all ten orders outside `SkillBeat`.
+> • ⚠️ **The fault it found:** a `value` round could land on the ONES — *"I need two — that is 2 —
+>   units of stock. How many singles?"*, where the answer is the number in the question. A place worth
+>   1 has nothing to convert. Fixed.
+> • **Stated rather than hidden:** at L1 `value` cannot be drawn, so a child stuck at L1 never
+>   completes `coverage` and never gets the early exit. Harmless — mastery needs the top tier anyway
+>   and the run still ends at ten rounds — and it is the bounded cost the craft doc already records.
+>
+> ## ▶ OPEN
+> 1. ✅ **SHIPPED — both 9–11 chapters.**
+>    | commit | what |
+>    |---|---|
+>    | `docs(9-11)` | the band audit — [story-9-11-rethink.md](docs/story-9-11-rethink.md) |
+>    | `feat(9-11)` | the working cast — bear + badger cycles, 6 PNGs, `sheets.ts` |
+>    | `feat(9-11)` | DataDeck → **The Loading Bay** + 3 depot backdrops |
+>    | `feat(9-11)` | NumberVault → **The Order Desk** + 3 store backdrops + wiring + the cast gate |
+>    | `docs(craft)` | the cut-from-the-active-window rule |
+>    | `chore(sw)` | v80 → v81 for the deploy |
+>
+>    `scripts/.voice-*.json` correctly still untracked.
+> 2. ⚠️ **NEITHER CHAPTER HAS A GATE OF ITS OWN.** `chapterCastDistinct` sees the cast and nothing
+>    else — no test drives `makeRound`, `orderLayout` or the graders. Both graders have holes worth
+>    pinning: OrderDesk's single-bay check that all OTHER bays are empty, and LoadingBay's stated weak
+>    spot (tapping all four stacks reaches the right `total` without adding).
+> 3. **640×320 has been MEASURED on OrderDesk, not played.** Layout is clean at that size (customer
+>    131px clear of the "ones" bay, all supply buttons ≥48px, no overflow) — but that is arithmetic
+>    plus one screenshot, not a run. LoadingBay has not been checked there at all.
+> 4. **`NumberVault.tsx` and `DataDeck.tsx` are still on disk, now unreferenced.** Dead code; deleting
+>    them is a one-line call nobody has made.
+> 5. **The fox is cut but paid for.** `merchant_fox_{side,walk}.png` are committed and deliberately
+>    NOT registered in `sheets.ts` — an unregistered sheet is invisible to the idle-art gate, which is
+>    the honest state for art with no home. One line re-casts it (values are in the comment).
+> 6. **10 chapters remain in the band**, in the doc's build order: FactorLab + AngleScope next,
+>    because their coin-flip defect and their rebuild are the same commit.
+> 7. **Nobody has watched a child play either of them**, and — as every session before this — **every
+>    fault that mattered was found by looking at the screen, and two by the founder.**
+>
+> _(the 📦 block below is this workstream's first half — the audit and The Loading Bay.)_
+
+> 📦 **2026-07-31 — THE 9–11 BAND RE-THOUGHT AS STORY WORLDS, AND THE FIRST CHAPTER BUILT: DATADECK → **THE LOADING BAY**. 🚀 SINCE SHIPPED with The Order Desk — see the 🏗️ block above; this block's "NOT COMMITTED" is stale.** `tsc` 0 · **416/416 vitest** (unchanged — no test written yet) · driven live at 1280×720 through intro → both demos → guided, both the wrong-answer and right-answer paths.
+>
+> **The ask:** *"9–11 age group ke chapters ko proper animation karna hai, storytelling game jaise convert kar ke."* Then, when offered a chapter to start with: *"i hope tum samjhe mujhe kaise chahiye… pura ek story lagna chahiye usme kids interaction kar rahe hai… full animation."*
+>
+> ## ⓪ THE AUDIT — AND IT IS STARKER THAN 6–8 WAS
+> [story-6-8-rethink.md](docs/story-6-8-rethink.md) closed with *"whether 9–11 wants the same treatment — not decided."* It is decided now. Four greps carry the whole diagnosis, and all twelve chapters answer identically:
+>
+> | | 3–5 / 6–8 (rebuilt) | 9–11 (as shipped) |
+> |---|---|---|
+> | drawn cycles | 24 registered, used across both bands | **0** |
+> | journeys (`Arrive` / `journeyOf`) | every rebuilt chapter | **0** |
+> | keyframes in the chapter | derived motion + a nudge | **0** — only the kit's `pt_float`/`pt_pop` |
+> | images/sprites in the whole band | painted throughout | **0** — 100% code-drawn |
+> | answering gesture | a verb per skill | **`choices` chips, all 12** |
+> | Milo's job | walks, carries, keeps a shop | `<PtMilo left={9} />` × 12 — bobbing, no job |
+> | scene across ten rounds | backdrop + cast rotate | **one** `<LabBackdrop>` × 12, never changes |
+>
+> **Aliveness 0 of 4 in all twelve**, and **delete-the-art fails band-wide** — FactorLab prints *"Is 7 even or odd?"* over chips `Even`/`Odd`; delete the entire analyzer and all thirty questions still work.
+>
+> ## ① TWO REAL DEFECTS, BOTH LIVE, NEITHER A STYLE MATTER
+> • ⚠️ **DATADECK PRINTED THE ANSWER BEFORE THE CHILD ANSWERED.** `BarChart` drew every bar's value at `opacity: revealed ? 1 : 0.5` — i.e. **visible** — so *"How many Cats?"* had its answer sitting above the bar. The chart was decoration and the numerals were both the question and the answer. Same family as SeesawPark's pre-commit tilt.
+> • ⚠️ **A THIRD OF THE BAND'S QUESTIONS ARE COIN FLIPS.** FactorLab `evenOdd` and `prime` are 2-way (**50%**), AngleScope `angleType` is 3-way (**33%**) — and FactorLab's easiest tier is `['evenOdd','evenOdd','multiple']`, so **two of three L1 rounds are a toss.** `adaptive.ts` promotes on 3-in-a-row, so a guesser climbs a tier about one run in eight. Not a wording fix: each needs a gesture that settles it.
+>
+> ## ② FOUNDER DECISIONS TAKEN
+> • **Register: GROWN-UP STORY WORLDS.** Not the 3–8 storybook (the reason the HUD was built — *"reads too young for 10–11yos"*), and not the neon HUD with motion bolted on (that is SliceShop's rejected first rebuild: an instrument with wallpaper). A **working world** — depot, quay, siding — with real journeys and a job to do.
+> • **Art: GENERATE 3 painted depot scenes (~4.5 credits).** Taken because the library genuinely has nothing: ⚠️ **`order_yard`/`order_depot` are FLAT VECTOR** (the style the founder rejected in the 🦢 session), and `market_courtyard`/`market_town`/`market_green` are **near-empty pale fields** — the featureless-gradient fault this file already records twice. Checked by EYE, per the craft doc.
+>
+> ## ③ THE SPEC DOC — [docs/story-9-11-rethink.md](docs/story-9-11-rethink.md)
+> The 9–11 twin of the 6–8 doc, which paid for itself: a verb per chapter (LOAD THE ORDER · ESTIMATE THE RUN · LAY IT OUT · DEAL IT OUT · ARRANGE IT · MATCH IT · DIAL IT IN · DOES IT FIT? · FLOOR IT/FENCE IT · SET THE ANGLE/FOLD IT · RUN THE TALLY · act the story out), each with *who wants it and why*; the build order; the band-wide items; and an honest art section. **The engine is free** — `critters.tsx`, `Arrive`, `SheetCell`, `journeyOf`, `FitBox`, `RotateGate`, `yard.tsx` all adopt wholesale at zero art cost. **The cast is not**: all 24 drawn cycles are cozy animals, which is the "too young" problem arriving by another door.
+>
+> ## ④ THE ART — 3 PAINTED BACKDROPS, MEASURED NOT EYEBALLED
+> `depot_yard` · `depot_quay` · `depot_siding`, 1376×768, referenced against `market_fruit` + `open_clearing` (both **verified 200 on prod first** — a 404 makes `media_import_url` fail silently and the model then generates from text alone).
+> • **Value: 0.693 / 0.522 / 0.554** against sprites at 0.62–0.81 — no backdrop is brighter than its cast, which is the fault the founder caught on `grocery_sweets` (0.892).
+> • ⚠️ **THE CARGO CAST WAS PICKED BY MEASUREMENT AND IT KILLED THE OBVIOUS CHOICE.** `crate` — the natural depot cargo — **FAILS** on the siding (Δhue 11°, Δsat 0.19: a brown box on brown ground), as do `pear`, `grocery_egg` and `flour_sack`. Cast is apple · melon · bucket · basket · pumpkin · cherry · cookie · candy, all clearing hue-or-saturation against all three scenes.
+>
+> ## ⑤ THE CHAPTER — [LoadingBay.tsx](src/features/chapters/story/LoadingBay.tsx)
+> Milo is the yard clerk. Each round a delivery lands and the goods walk themselves into four stacks. **THE STACKS ARE THE CHART** — a pictograph of countable cargo (the curriculum's own word), with **no numeral until after the commit**. The foreman needs an answer to act on, and the correct answer **sends the cart**. Delete the goods and there is no question left.
+> **One control, two readings** (TickTock's call): whole-stack questions (`most`, `total`) tap a STACK; single-unit questions (`howMany`, `diff`) load individual goods, so the count is BUILT and cannot be guessed. `coverage` over all four types so mastery cannot exit before `total` is ever asked; `ownsFeedback` with a WRITTEN miss line; `sig` math-only; `RotateGate` below every hook; the manifest arc outside `SkillBeat`.
+>
+> ## ⑥ ⚠️ SEVEN FAULTS, EVERY ONE FOUND BY DRIVING IT — NONE BY A TYPE-CHECK
+> ① **The base plate drew ABOVE the stack**, hanging over the goods — `column-reverse` lays children bottom-to-top and it was rendered last. ② **The sprites' ink boxes differ wildly** (melon 95% of its file, apple 57%, basket 40%), so one column read as a solid bar and another as scattered dots — **fatal in a chapter about comparing heights.** Fixed with a measured per-good `ink` scale; slot height untouched, so the bars stay honest. ③ **An arbitrary `vw / 26` unit cap** made the whole chart tiny — four stacks in 228px of a 1280px frame while the real (vertical) constraint allowed 57px units. ④ **The cart sat inside Milo's speech bubble** (cart y 490–605 vs bubble 484–534) — two independent guesses at one gap; the cart moved to a foreground line instead, which is what depth is for. ⑤ **Then its count badge did the same thing** (badge y 505–564), because it rises from the cart — now anchored beside it. ⑥ **My manifest collided with SkillBeat's round counter** in the top-right, overlapping 34 of 40px and reading as one garbled number — the shared engine owns that corner. ⑦ ⚠️ **LOADED GOODS VANISHED INSTEAD OF TRAVELLING**, while the demo said *"each one rides over to the cart"* — the materialising fault running backwards, in the one gesture the chapter is built on. Now a `Flyer` carries each item at `CARRY_SPEED`.
+> **Plus a grader hole closed before it shipped:** grading `diff`/`howMany` on the cart's TOTAL alone accepts items lifted off the WRONG stack. That is SliceShop's hole, which only mutation testing found there. Verified live — a pumpkin loaded on a "load every sweet" round was refused.
+>
+> ## ⑦ WHAT WAS ACTUALLY VERIFIED ON SCREEN
+> Intro → demo 1 (`most`) → demo 2 (`howMany`) → guided → scored round 1. **The scored round renders correctly**, which is the check that matters — the `position: fixed` trap is invisible in a demo because demos render outside `SkillBeat`. The written miss line appears at Milo's mouth. **Four taps inside ONE React batch all registered** (cart read 4) — the bug class that has bitten this repo four times. Arrivals land: each good resolves to exactly one x. Cart/bubble/badge overlaps all re-measured to `false`.
+> ⚠️ **And two instruments lied, both documented:** `setInterval` is throttled to ~1Hz in the backgrounded pane (2 samples in 1400ms), and **`requestAnimationFrame` is frozen outright** — an rAF-based probe hung the 30s tool cap. Screenshots also lag the DOM by a whole beat; one read reported a missing melon that was simply a demo transition.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOTHING IS COMMITTED, AND THERE IS NO GATE.** Working tree: `LoadingBay.tsx` (new) · `docs/story-9-11-rethink.md` (new) · 3 new backdrop PNGs · `registry.tsx` + `story/page.tsx` (one line each). **`next build` has NOT been run.** `DataDeck.tsx` is still on disk, now unreferenced. Deploying needs the usual `public/sw.js` v80 → v81 bump.
+> 2. ⚠️ **ONLY ROUND 1 HAS BEEN PLAYED.** `diff` and `total` have **never been on screen**, the re-teach has never fired, and no ten-round run exists. The `total` gesture in particular is unproven and carries a stated weak spot (see the file header: tapping all four stacks reaches the right sum without adding).
+> 3. **640×320 has not been checked at all** — not measured, let alone driven. This repo has shipped short-landscape collisions before, and this chapter has four stacks, a cart, Milo and a bubble competing for one row; at 1280 there was already barely room.
+> 4. **The flyer's full flight was never observed** — it was caught at its start position and confirmed to spawn and clear, but the throttled timers and frozen rAF meant no mid-flight trace. Worth one look with the tab fronted.
+> 5. **Undo does not travel.** "Put back" returns goods to their stack instantly; HomeTime's rule is that the miscount repair is a journey too.
+> 6. **11 chapters remain**, in the doc's build order: FactorLab + AngleScope (the coin-flip defect, which is also their rebuild) → NumberVault + DecimalGrid (one engine) → the other seven.
+> 7. **Nobody has watched a child play it**, and — as every session before this one — **every fault that mattered was found by looking at the screen, not by a gate.**
+>
+> _(the 🍕 block below is the previous session — SliceShop, which SHIPPED.)_
+
+> 🍕 **2026-07-30 — SLICESHOP (6–8 FRACTIONS) REBUILT AS A SHARING STORY, AND THE FOUNDER STOPPED IT **SEVEN** TIMES ON THE WAY — EVERY ONE BY EYE, NOT ONE BY A GATE. 🚀 SHIPPED — see the commit table in ▶ OPEN.** `tsc` 0 · **416/416 vitest** (was 369, **+47**) · `next build` · **18/18 planted regressions caught** · driven live at 1280×720, 1600×950 and 640×320, two full runs played to their own finish.
 >
 > **The ask:** *"abhi yeh band mein factor chapter baaki hai"* — which turned out to mean **fractions**
 > (SliceShop), the next chapter in [story-6-8-rethink.md](docs/story-6-8-rethink.md)'s build order.
@@ -4430,7 +4621,11 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-30 (LATEST — see the top 🍕 block. **SliceShop (6–8 fractions) rebuilt as a SHARING STORY. 🚀 SHIPPED — sw v80.** The old chapter handed the child a whole ALREADY cut into equal parts with one shaded and the numerator pinned at 1, so the answer was literally the number of parts and deleting the shading left every question working. ⚠️ **The finding worth carrying is that I fixed the VERB and the founder still stopped it: "kuch sense hi naii bann raha hai."** What was on screen was an instrument with wallpaper. The verb answers *what does the child do*; nothing had answered **WHO WANTS THIS AND WHY** — and for fractions that answer is in the mathematics: **a fraction exists because something has to be SHARED.** So friends walk in, wait, and leave carrying a piece each, and the denominator becomes **how many people are waiting**. ⚠️ **THEN HE STOPPED IT FIVE MORE TIMES, ALL BY EYE, AND THE 42 GREEN TESTS COULD NOT SEE ONE OF THEM** — flat SVG wedges instead of painted food (fixed by clipping the real sprite BY the exact wedge: arithmetic division AND real art, not a choice); a **flat 200px cap** that froze Milo and every friend at a fifth of a tall window; **no contact shadow under anybody**, plus his own drawn below the viewport and clipped away; a backdrop **brighter than the cast** (0.892 against sprites at 0.70–0.92) that was also flat-vector art; the shared piece **hovering above their heads**; and a FIT round that **opened with an empty counter** while asking how many friends could be given one — with the miss line naming a duck who was not in the shop. ⚠️ **Both of my style instruments lied, in opposite directions** (an ink ratio called a vector scene clean at 0.0% and a painted evening scene dirty at 16.8%; a flatness metric rated painted `garden_meadow` less painted than vector `pond`) — **the style check is an EYE check**, with the value measurement as the gate behind it. `tsc` 0 · **416/416 vitest** (+47) · `next build` · **18/18 planted regressions caught**. ▶ Open: **rounds 8–10 have never been on screen** (a perfect run exits at 6 by design); **two party backdrops are still empty** and the founder chose to generate replacements (~3 credits, not started, named in the gate rather than exempted); the re-teach has never fired; the lesson's dwell against a real voice is still unheard; **nobody has watched a child play it — seven founder catches, zero gate catches.** _(prior footer follows.)_)_
+_Last updated: 2026-07-31 (LATEST — see the top 🏗️ block. **The 9–11 band gets a CAST, and its second chapter: NumberVault → THE ORDER DESK. 🚀 SHIPPED — both chapters.** The blocker was never the engine (`Arrive`, `SheetCell`, `journeyOf`, `yard.tsx` all adopt free) — it was that **all 24 drawn cycles are cozy animals**, which is the "reads too young" problem arriving by another door. ~40.5 credits bought a **bear depot foreman** and a **badger lorry driver** plus three yard backdrops; ⚠️ the handoff's credit line was wrong AGAIN (said ~373, actually 1186.5). ⚠️ **Two art lessons:** the first bear came back in heavy black cartoon outline — the flat-vector style already rejected once, and `duck_side.png` is the right reference (thin warm-brown line, not `bear.png` which is itself old vector); and **cut a cycle from the ACTIVE window, not the front of the clip** — frames 0–17 of 121 have an identical feet-span, so `--start 0` gave a strip **9 of 12 cells STATIC**, and a stronger "BIG strides" prompt bought **1%** where re-cutting the same clip bought all of it. **The Order Desk:** a customer walks in from off-frame, waits, and leaves with the goods; four bays run thousands→ones the way a number is written; you load the biggest unit that fits and work down, which IS place value. ⚠️ **The old chapter's blocks lied about their own proportions** (a hundred at `u*4.4` square = 19 units of area, a thousand the SAME size as a hundred) — every piece here is derived from one unit and measured **150px at u=15, exactly ten**. The **bundle** is watchable: ten in a bay fuse into one of the next size and travel one bay LEFT. **Two narrowings, both measured and both in the header:** digits 0..5 (nine honest pieces forces the unit to ~9px and an uncountable manipulative is a wrong answer the chapter caused), and **Milo does not walk** (he stood on the hundreds bay's own label; the journeys belong to the customer and the flying pieces). ⚠️ **Seven faults, every one found by looking:** pieces rendered as FLAT SLABS because `shadesOf` returns `rgb(...)` and hex-alpha on it is invalid CSS, so every subdivision silently did not paint — a piece *asserting* its value, the exact fault the chapter exists to fix; the bubble ran **143px off the right edge**; the customer stood on the "ones" bay at 640×320; `u` had a floor that exceeded its own budget; the smallest piece gave the smallest tap target (25px); the bays were invisible at `.16` alpha; and ⚠️ **the bubble appeared before the customer did** (founder's catch), which exposed that they travelled from the MIDDLE of the frame — the craft doc's *token step is not an arrival*. **Size:** unit 12→15px, people 165→216px, and the lever was the **packing**, not the cap — fanned pallets span 20 units instead of 32. **Words AND figures** now (founder's call): *"three hundred and twelve — that is 312"*. ✅ **Two full runs played:** all correct → all three types incl. **`value` for the first time ever on screen**, and the mastery exit **correctly withheld by `coverage`** until it was asked; erring every round → **all ten rounds and the re-teach twice**. That second run found a real content fault — a `value` round could land on the ONES, where the answer is the number in the question. ▶ Open: **neither chapter has a gate of its own**; 640×320 is measured on OrderDesk but not played, and unchecked on LoadingBay; `NumberVault.tsx` and `DataDeck.tsx` are dead files still on disk; the cut fox is committed but deliberately unregistered; **10 chapters remain**; nobody has watched a child play either. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-31 (the 📦 block — this workstream's first half. **The 9–11 band re-thought as story worlds, and the first chapter built: DataDeck → THE LOADING BAY. 🚀 SINCE SHIPPED with The Order Desk; the "NOT COMMITTED" this footer used to carry is stale.** The audit is starker than 6–8's was: across all twelve chapters, **zero drawn cycles, zero journeys, zero images, zero keyframes** — every one answers by tapping a `choices` chip, Milo is `<PtMilo left={9} />` bobbing in the corner with no job, and one `<LabBackdrop>` serves all ten rounds. **Aliveness 0 of 4, twelve times**, and delete-the-art fails band-wide. **Two live defects, neither a style matter:** DataDeck printed every bar's value at `opacity: 0.5` **before the child answered**, so the chart was decoration and the numerals were the question AND the answer; and a third of the band's questions are **coin flips** (FactorLab's easiest tier is two-thirds 50/50, and `adaptive.ts` promotes a guesser about one run in eight). **Founder decisions:** grown-up story worlds — not the 3–8 storybook (too young), not the neon HUD with motion bolted on (that is SliceShop's rejected first rebuild) — and **generate 3 painted depot scenes**, taken because ⚠️ `order_yard`/`order_depot` are **flat vector** (the style already rejected once) and the free `market_*` fields are **near-empty pale gradients**. The three new backdrops measure **0.693 / 0.522 / 0.554**, all below their cast. ⚠️ **The cargo cast was picked by measurement and it killed the obvious choice** — `crate` FAILS camouflage on the siding (Δhue 11°, Δsat 0.19), as do pear, egg and flour sack. The chapter makes **the stacks themselves the chart** — countable cargo, no numeral until commit — with the foreman needing an answer and the correct one **sending the cart**. ⚠️ **Seven faults, every one found by driving it and none by a type-check**: the base plate drew above the stack; the sprites' ink boxes differ so wildly that one column read as a bar and another as scattered dots (fatal when the question is *which is biggest*); an arbitrary `vw/26` cap shrank the chart to 228px of a 1280px frame; the cart sat inside Milo's speech bubble, and then **its badge did the same thing**; my manifest collided with SkillBeat's own counter; and **loaded goods vanished instead of travelling** while the demo said *"each one rides over to the cart"*. Plus a **grader hole closed before shipping** — SliceShop's exact hole, where a matching count off the wrong stack passes. Verified live: the SCORED round renders (the `position: fixed` trap a demo cannot show), the written miss line fires, and **four taps in one React batch all registered** — the bug class that has bitten this repo four times. ▶ Open: **not committed, no gate, `next build` not run**; **only round 1 has been played** — `diff` and `total` have never been on screen and the re-teach has never fired; **640×320 unchecked entirely**; the flyer's mid-flight was never traced (throttled timers, frozen rAF); undo does not travel; **11 chapters remain**; nobody has watched a child play it. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-30 (the 🍕 block. **SliceShop (6–8 fractions) rebuilt as a SHARING STORY. 🚀 SHIPPED — sw v80.** The old chapter handed the child a whole ALREADY cut into equal parts with one shaded and the numerator pinned at 1, so the answer was literally the number of parts and deleting the shading left every question working. ⚠️ **The finding worth carrying is that I fixed the VERB and the founder still stopped it: "kuch sense hi naii bann raha hai."** What was on screen was an instrument with wallpaper. The verb answers *what does the child do*; nothing had answered **WHO WANTS THIS AND WHY** — and for fractions that answer is in the mathematics: **a fraction exists because something has to be SHARED.** So friends walk in, wait, and leave carrying a piece each, and the denominator becomes **how many people are waiting**. ⚠️ **THEN HE STOPPED IT FIVE MORE TIMES, ALL BY EYE, AND THE 42 GREEN TESTS COULD NOT SEE ONE OF THEM** — flat SVG wedges instead of painted food (fixed by clipping the real sprite BY the exact wedge: arithmetic division AND real art, not a choice); a **flat 200px cap** that froze Milo and every friend at a fifth of a tall window; **no contact shadow under anybody**, plus his own drawn below the viewport and clipped away; a backdrop **brighter than the cast** (0.892 against sprites at 0.70–0.92) that was also flat-vector art; the shared piece **hovering above their heads**; and a FIT round that **opened with an empty counter** while asking how many friends could be given one — with the miss line naming a duck who was not in the shop. ⚠️ **Both of my style instruments lied, in opposite directions** (an ink ratio called a vector scene clean at 0.0% and a painted evening scene dirty at 16.8%; a flatness metric rated painted `garden_meadow` less painted than vector `pond`) — **the style check is an EYE check**, with the value measurement as the gate behind it. `tsc` 0 · **416/416 vitest** (+47) · `next build` · **18/18 planted regressions caught**. ▶ Open: **rounds 8–10 have never been on screen** (a perfect run exits at 6 by design); **two party backdrops are still empty** and the founder chose to generate replacements (~3 credits, not started, named in the gate rather than exempted); the re-teach has never fired; the lesson's dwell against a real voice is still unheard; **nobody has watched a child play it — seven founder catches, zero gate catches.** _(prior footer follows.)_)_
 
 _Prior update: 2026-07-30 (the 🔧 block. **Three open items closed, and then PLAYING the chapters found two more faults the gates had passed. 🚀 SHIPPED — `main`@`2acbdc8`, prod serving sw v79 across two deploys, both confirmed by polling prod.** The three: SkillBeat gained an opt-in **`Beat.ownsFeedback`** so a chapter that says its own miss line is not overlaid by the shared centred pill — which in TickTock landed on the clock face while saying *"Let's look together"*, and, because both chapters only report a round once it has been SOLVED, arrived on top of their own *"That's right"* and contradicted it; **`TimeLesson.tsx` was DELETED** after a grep found zero importers, so the "still used by a separately-routed lesson" line in this file was simply wrong; and **reading a laid-out pile is back in CoinShop on the SAME control** — the keeper spreads his coins in his own bubble where the price numeral would be, a presentation flag rather than a third question type, alternating with the numeral direction, copyable at L1–L2 by design and impossible at L3. ⚠️ **Then two faults turned up that no gate could:** a screenshot caught `CoinExplain` deriving its coin pool from `shown.includes(25)` — a PROXY for the price — so changing a demo pile silently dropped the 25 and *"thirty in only TWO coins"* became three tens **while every spoken line stayed true**; and the first TickTock run found the lesson's hands-on dial moving **one stop for six taps** (state read inside the handler that sets it), which on a beat with no auto-advance is a **HANG**, on the same beat family the founder was already stuck on. ⚠️ **And an instrument trap that undermines this file's own deploy proof: a controlled service worker serves the OLD shell even when prod's `sw.js` already reports the new version** — polling it proves the EDGE has the deploy, not that the tab you are driving is running it. `tsc` 0 · **369/369 vitest** (+8) · `next build` · 0 console errors on prod · 11/11 planted regressions caught · **two full ten-round CoinShop runs and a TickTock run from the lesson to a scored round, all on the live origin**. ▶ Open: whether the self-paced dwell reads well against a REAL voice is still the top item and still needs an ear; **640×320 was not checked at all**; no chapter but these two was driven; nobody has watched a child play any of it. _(prior footer follows.)_)_
 
