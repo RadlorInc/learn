@@ -50,7 +50,7 @@ const CoinShop = lazyStory(() => import('@/features/chapters/story/CoinShop'))
 const TickTock = lazyStory(() => import('@/features/chapters/story/TickTock'))
 const BlockYard = lazyStory<{ op: '+' | '-'; world?: string }>(() => import('@/features/chapters/story/BlockYard'))
 const ShapeStudio = lazyStory(() => import('@/features/chapters/story/ShapeStudio'))
-const NumberVault = lazyStory(() => import('@/features/chapters/story/NumberVault'))
+const OrderDesk = lazyStory(() => import('@/features/chapters/story/OrderDesk'))
 const RoundingTrail = lazyStory(() => import('@/features/chapters/story/RoundingTrail'))
 const TimesGrid = lazyStory(() => import('@/features/chapters/story/TimesGrid'))
 const DivisionShare = lazyStory(() => import('@/features/chapters/story/DivisionShare'))
@@ -60,7 +60,7 @@ const DecimalGrid = lazyStory(() => import('@/features/chapters/story/DecimalGri
 const UnitConverter = lazyStory(() => import('@/features/chapters/story/UnitConverter'))
 const GridPlotter = lazyStory(() => import('@/features/chapters/story/GridPlotter'))
 const AngleScope = lazyStory(() => import('@/features/chapters/story/AngleScope'))
-const DataDeck = lazyStory(() => import('@/features/chapters/story/DataDeck'))
+const LoadingBay = lazyStory(() => import('@/features/chapters/story/LoadingBay'))
 const MissionBrief = lazyStory(() => import('@/features/chapters/story/MissionBrief'))
 
 export default function StoryPage() {
@@ -125,7 +125,7 @@ export default function StoryPage() {
   // ?world=studio|build|playroom jumps into a shapes 2D/3D world.
   if (ch === 'solids') return <ShapeStudio world={orderWorld} />
   // ── 9–11 — pre-teen "Number Lab" (Mission-HUD) look — single lab, no world picker ──
-  if (ch === 'bignum') return <NumberVault />
+  if (ch === 'bignum') return <OrderDesk />
   if (ch === 'round') return <RoundingTrail />
   if (ch === 'times') return <TimesGrid />
   if (ch === 'divide') return <DivisionShare />
@@ -135,7 +135,7 @@ export default function StoryPage() {
   if (ch === 'units') return <UnitConverter />
   if (ch === 'area') return <GridPlotter />
   if (ch === 'angles') return <AngleScope />
-  if (ch === 'data') return <DataDeck />
+  if (ch === 'data') return <LoadingBay />
   if (ch === 'word') return <MissionBrief />
   // Counting: play the forced/chosen world, else show the picker.
   if (chapter) return <ForestWalk chapter={chapter} />
