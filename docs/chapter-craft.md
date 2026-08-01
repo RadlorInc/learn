@@ -25,6 +25,7 @@ Reference implementations, in order of how closely to copy them:
 | 11 · Measurement | [MeasureIt.tsx](../src/features/chapters/story/MeasureIt.tsx) | an answer the child BUILDS, drawing a sprite by its own ink box, reserving a lane before it fills |
 | 6–8 · Add/subtract to 100 | [BlockYard.tsx](../src/features/chapters/story/BlockYard.tsx) | a question stated ONLY as quantities, the skill as the single gesture, difficulty that grows the skill, and a bundle the child can WATCH become one thing |
 | 6–8 · Time | [TickTock.tsx](../src/features/chapters/story/TickTock.tsx) + [clock.ts](../src/features/chapters/story/clock.ts) | an explicit LESSON before anything is scored, one skill answered from BOTH ends with one control shape, a scaffold that fades by tier, and a day whose arc IS the changing scene |
+| 9–11 · Rounding | [RailLine.tsx](../src/features/chapters/story/RailLine.tsx) + [railLineRounding.test.ts](../src/__tests__/railLineRounding.test.ts) | a world where the rounded number is the only one you can ACT on, an answer surface wide enough that it is not a coin flip, three question types sharing one control and one grader, and a layout whose numbers are derived from each other rather than guessed |
 
 The shared engine all of these run on is [critters.tsx](../src/features/chapters/story/critters.tsx) —
 cast, habitats, `Critter`, the travel timing and the huddle invariants. **Put a fix there, not in a
@@ -205,6 +206,15 @@ left is the skill itself. Two consequences follow, and both are part of the rule
   glow; only the wrong *paint* is scored. Anything else scores motor precision and object vocabulary
   under a colour-recognition heading.
 
+⚠️ **A TWO-OPTION ANSWER SURFACE IS A COIN FLIP, AND WIDENING IT USUALLY ASSESSES A SECOND HALF OF
+THE SKILL YOU WERE GIVING AWAY.** [story-9-11-rethink.md](story-9-11-rethink.md) measures a third of
+that band's questions as guessable — even/odd and prime at 50%, angle type at 33% — and the fix is
+never more distractors bolted on. Rounding is the clean example: drawing the two bracketing stops and
+asking which is nearer hands over *which ten the number is in*, which IS place value, and leaves a
+toss-up. Show six stops and the child has to find the bracket first and then choose, so the guess
+rate goes 50% → 17% **and the half of the skill that was being given away is now the work**. Ask what
+your answer surface is telling the child for free before you ask how many options it has.
+
 Related: where the skill is a small on-screen area, **a near miss on a shown target counts**. The
 smallest area on the colouring page renders 32×28 CSS px at 640×320, under the 44px tap floor, and
 this band is three-year-olds; a tap just outside the shape they were plainly aiming at snaps to it.
@@ -221,6 +231,16 @@ question type that refers to it.**
 
 **AND A TAP THAT DOES NOTHING AT ALL IS THE WORST OUTCOME THERE IS.** Worse than a wrong answer: a
 wrong answer at least tells the child the game is listening.
+
+⚠️ **THE ONE CASE A CHILD CANNOT READ OFF THE PICTURE IS THE ONE THAT MUST BE STATED OUT LOUD.**
+Every honest manipulative has a boundary case where looking is not enough, and it is exactly the
+case a chapter forgets to teach because the picture usually does the teaching. In RailLine it is a
+number sitting **exactly on the halfway post** — the marker lands dead on the mark, so "which is
+nearer" has no visual answer at all and the round is decided by a convention (round half UP). It is
+not rare either: 10% of draws. Two consequences, and both were missing until a run turned one up:
+the demo and re-teach must SAY the rule when that case appears, and the miss line needs its own
+wording, because the generic one is simply false ("15 is PAST 15"). Find your boundary case, check
+what the words do there, and make sure it is taught somewhere rather than only graded.
 
 ⚠️ **THE COMMONEST WAY TO SHIP THIS IS TO ANSWER ONLY IN SPEECH.** A handler that calls `speak()`
 and changes nothing on screen looks complete in the source and is a dead button on every device
@@ -360,6 +380,14 @@ journey, grep for the component that would perform it.
    child can win it without counting once. Same reason the teen band rejected a balance beam that
    tilts live while you dial x: *a verdict is not required for something to be hot/cold.*
    Celebration goes **after** the commit, where it confirms an answer already given.
+   ⚠️ **AND THE CUMULATIVE ARC IS THE SNEAKIEST WAY TO BREAK THIS, BECAUSE IT LOOKS LIKE HISTORY.**
+   `SkillBeat` fires `onRound` when a round **LOADS**, not when it is answered — so a strip, tray or
+   manifest that appends "this round's answer" on that callback is printing the answer to the
+   question still on screen. RailLine shipped it for exactly as long as it took to measure: on round
+   2 the run strip already read `20 30`, and 30 was the answer the child had not given yet. **Hold
+   the pending value back one round**; the arc is the run SO FAR, which is what it claims to be, and
+   the final round's value simply never joins it. Nothing in a type-check or a green gate can see
+   this — the strip and the callback are each individually correct.
 
 ### Cycles and travel — the rule broken most often
 
@@ -493,6 +521,16 @@ check them with a script:
   `SkillBeat` and look perfectly correct — the fault appears only once the first SCORED round loads.
   `Critter` has been `position: fixed` for exactly this reason. Generalise: **verify a chapter in its
   scored rounds, not only in its demo** — they do not share a containing block.
+- ⚠️ **A PROP THAT IS ABOUT TO MOVE HAS TO BE ON SCREEN WHILE THE CHILD IS DECIDING.** A thing
+  parked just off-frame "ready to go" does not exist yet — the round opens on an empty stage, and
+  the object the whole gesture is about only appears as a consequence of the answer, which is the
+  materialising fault with the order reversed. RailLine parked its train one gap left of the first
+  station, which computed to **x = −50 on a 1280 frame**, so the train AND the passenger riding it
+  were both invisible for the entire time the question was open. Park it against the frame edge
+  instead, and accept that it stands in front of some scenery — check whether the overlap is even
+  real before designing around it, because things at different heights never collide: the train sat
+  at y 453–565 and the name boards at 362–421, so a locomotive in front of a post is just what a
+  station looks like.
 - **A LANE THAT WILL FILL MUST BE RESERVED FROM EMPTY.** Anything that grows — a run of blocks, a
   gathered group, a strand — is zero-sized before the first item lands, so its neighbours sit in the
   wrong place until then and jump a whole item when it arrives. In the measurement chapter the thing
@@ -718,6 +756,20 @@ second thing to look at. It appears with the demo, when it starts to matter.
   glassy. Restricted to the open half Milo actually uses (x 56–95%) the same scenes measure
   **0.7–1.9**. A check that includes the thing that is supposed to be there is not measuring the
   ground.
+- ⚠️ **A GROUND LINE READ OFF THE PAINTING IS A SHARE OF THE *IMAGE*, AND USING IT AS A SHARE OF THE
+  *VIEWPORT* FLOATS EVERYTHING — ON EVERY ASPECT BUT THE ONE YOU TESTED.** `object-fit: cover` scales
+  the backdrop to fill and CROPS the surplus, so the painted ground moves the moment the frame's
+  aspect stops matching the art's. RailLine measured its rail at 0.785 of the image and drew the
+  train at `0.785 × vh`: identical at 1280×720 (aspect 1.78 against the art's 1.79) and **44px of
+  clear air on a 2000×970 window** (aspect 2.06), where cover renders the scene 1116px tall and crops
+  73px off each end. The founder saw it instantly — *"train properly naii dikh rahi ki rail pe chal
+  rahi hai"* — and every measurement I had taken said it was fine, because I had only ever taken them
+  at the one aspect that agrees. **Map the line through the transform the backdrop is actually drawn
+  with**, and put the wide aspects in the sweep:
+  `fit = max(vw/IMG_W, vh/IMG_H)` · `drawnH = IMG_H * fit` · `y = (vh − drawnH)/2 + share * drawnH`.
+  ⚠️ And when you gate it, assert the value **exactly**: a `<=` "or clamped upward" assertion reads as
+  reasonable and lets the original bug straight through — mutation testing this one caught my own
+  check being useless before it was ever trusted.
 - ⚠️ **PLACE THE PICTURE SO ITS OWN GROUND LINE IS THE GROUND LINE.** `object-fit: cover` is right on
   a roomy frame and wrong on a short one: at 640×320 the controls cap the usable ground at 214px
   while the painted grass lands at 256, so the world yields (correctly) and **the backdrop does
@@ -931,6 +983,15 @@ second thing to look at. It appears with the demo, when it starts to matter.
   counted — they are the market being a market — so rabbit · duck · squirrel · lamb · duckling ·
   chick are drawn at 0.65–1.15 of a shared base, which is what `Kind.scale` is for. Ask which of the
   two a set is before picking the tool.
+- ⚠️ **AND THE SAME RANKING APPLIES BETWEEN A CHARACTER AND A VEHICLE OR MACHINE — GET IT BACKWARDS
+  AND THE BIG THING READS AS A TOY.** RailLine drew Milo at 0.30 of the height and the locomotive at
+  0.155, so a tank engine stood half the height of a pony; the founder's first word about it was that
+  the train needed to be bigger. They are at much the same depth (he stands beside the track, not in
+  the far foreground), so there is no perspective to justify the inversion — the ranks were simply
+  swapped. **Whatever is physically bigger is drawn bigger, and a sweep can assert it** (`trainH >
+  miloH`) rather than leaving it to whoever picks the next constant. Then check what the new size
+  now covers: a taller engine reached up into both the name boards and the halfway post, which is
+  the one hint a wrong answer gives, so the posts had to out-reach it.
 - ⚠️ **SIZE THE CAST SO THE CREATURES AGREE WITH EACH OTHER AND WITH MILO.** `Kind.scale` in
   critters.tsx exists for this and says so — *"a ladybug drawn the same height as a rabbit is its own
   kind of doesn't-belong"* — and BlockYard's second pass drew every creature at one height, so an ANT
@@ -1291,6 +1352,18 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
 - **Two taps in the same tick are a TEST artefact, not a user.** React commits state between events,
   so a `ref` mirrored during render is still stale if the script picks a colour and taps the page in
   one synchronous statement. Cost half an hour of chasing a fill that was never broken.
+  ⚠️ **And the same tick cannot READ what it just did either.** A commit button whose `disabled`
+  comes from state is still disabled in the DOM at the moment of a same-tick click, so the click is
+  swallowed and the driver reports "the commit does nothing". Reading `btn.disabled` immediately
+  after a tap reports the PREVIOUS render for the same reason. Both are the instrument; drive one
+  gesture per call and read in the next.
+- ⚠️ **`getComputedStyle` DURING A TRANSITION RETURNS THE INTERPOLATED VALUE, NOT THE TARGET.** A
+  `MutationObserver` on `style` is the right way to catch a journey in a throttled pane — but if the
+  handler reads the computed value it fires at the instant the transition STARTS and reports the
+  start position, so a working journey looks like a no-op. Read `el.style.left` (the inline value)
+  for what the code asked for, and the computed value only to prove it has not already jumped there.
+  RailLine's train logged `inline 788.28px / computed 185px` in one sample, which is exactly the pair
+  that proves it travels rather than teleports.
 - ⚠️ **A GATE THAT RE-IMPLEMENTS A RULE CANNOT SEE THE RULE BEING REMOVED.** This is the same fault
   as "a gate that reads a chapter's DATA cannot see how it INDEXES it", one level down, and it bit
   twice in one session. A check written as `expect(Math.min(waiting, CAP)).toBeLessThanOrEqual(CAP)`

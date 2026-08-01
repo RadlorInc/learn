@@ -51,7 +51,7 @@ const TickTock = lazyStory(() => import('@/features/chapters/story/TickTock'))
 const BlockYard = lazyStory<{ op: '+' | '-'; world?: string }>(() => import('@/features/chapters/story/BlockYard'))
 const ShapeStudio = lazyStory(() => import('@/features/chapters/story/ShapeStudio'))
 const OrderDesk = lazyStory(() => import('@/features/chapters/story/OrderDesk'))
-const RoundingTrail = lazyStory(() => import('@/features/chapters/story/RoundingTrail'))
+const RailLine = lazyStory(() => import('@/features/chapters/story/RailLine'))
 const TimesGrid = lazyStory(() => import('@/features/chapters/story/TimesGrid'))
 const DivisionShare = lazyStory(() => import('@/features/chapters/story/DivisionShare'))
 const FactorLab = lazyStory(() => import('@/features/chapters/story/FactorLab'))
@@ -126,7 +126,7 @@ export default function StoryPage() {
   if (ch === 'solids') return <ShapeStudio world={orderWorld} />
   // ── 9–11 — pre-teen "Number Lab" (Mission-HUD) look — single lab, no world picker ──
   if (ch === 'bignum') return <OrderDesk />
-  if (ch === 'round') return <RoundingTrail />
+  if (ch === 'round') return <RailLine />
   if (ch === 'times') return <TimesGrid />
   if (ch === 'divide') return <DivisionShare />
   if (ch === 'factors') return <FactorLab />
