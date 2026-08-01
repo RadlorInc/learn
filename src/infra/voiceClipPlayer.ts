@@ -33,8 +33,24 @@ let cancelClip: (() => void) | null = null
 // browser TTS. Playing this element (silently) in the intro tap unlocks it for the whole
 // session; all clip playback then goes through it. See unlockVoiceClips().
 let _el: HTMLAudioElement | null = null
+// How fast a clip plays back. A RECORDED clip ignores the `rate` passed to speak()
+// — that only ever reached the browser-TTS fallback — so without this the "speech
+// speed" control is a dead button for every learner who has clips, which is the
+// whole 12–18 band. `preservesPitch` keeps Milo sounding like Milo when slowed.
+let _rate = 1
+export function setClipRate(r: number): void {
+  _rate = r
+  if (_el) applyRate(_el)
+}
+function applyRate(a: HTMLAudioElement): void {
+  try {
+    a.playbackRate = _rate
+    // Non-standard on older WebKit; harmless where absent.
+    ;(a as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true
+  } catch {}
+}
 function audioEl(): HTMLAudioElement {
-  if (!_el) _el = new Audio()
+  if (!_el) { _el = new Audio(); applyRate(_el) }
   return _el
 }
 // A valid 0-sample WAV — decodes everywhere, ends instantly; enough to unlock the element.
@@ -136,6 +152,7 @@ function playSequence(urls: string[], onStart?: () => void): { done: Promise<voi
       a.onended = next
       a.onerror = () => reject(new Error('fragment missing'))
       a.src = urls[i++]
+      applyRate(a)   // re-assert per clip: a src change can reset playbackRate
       a.play().then(() => { if (i === 1) onStart?.() }).catch(reject)
     }
     next()

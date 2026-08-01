@@ -29,7 +29,8 @@ import type { ChapterType } from '@/state/store'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import MiloMark from '@/features/chapters/teen/MiloMark'
 import FitBox from '@/features/chapters/story/FitBox'
-import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, AnswerPad, headerChip, bigBtn, type HandKind } from './gameKit'
+import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, AnswerPad, Says, headerChip, bigBtn, type HandKind } from './gameKit'
+import { getSpeechRate, setSpeechRate, nextSpeechRate, speechRateLabel } from '@/infra/storage/speechRate'
 import ScribblePad from './ScribblePad'
 import { setClipOnly } from '@/infra/voiceClipPlayer'
 
@@ -648,6 +649,11 @@ function TutorialPlayer<V, T extends BaseTask>({
 }) {
   const P = config.palette
   const [i, setI] = useState(0)
+  // Mirror of `i` for the transport handlers: a tap must act on the step that is on
+  // screen NOW, and reading state inside a handler that also sets it is the stale-read
+  // bug this repo has shipped four times.
+  const iRef = useRef(0)
+  const at = useCallback((n: number) => { iRef.current = n; setI(n) }, [])
   const [ended, setEnded] = useState(false)
   const cancelRef = useRef<() => void>(() => {})
 
@@ -674,24 +680,65 @@ function TutorialPlayer<V, T extends BaseTask>({
     return out
   }, [script])
 
-  const run = useCallback(() => {
+  // Speed lives in a REF as well as state: the narration effect must not restart
+  // every time the chip re-renders, so `goTo` reads the ref and only the chip's own
+  // handler re-runs the timeline.
+  const [rate, setRate] = useState(1)
+  const rateRef = useRef(1)
+  useEffect(() => { const r = getSpeechRate(); rateRef.current = r; setRate(r) }, [])
+
+  // PAUSED = the child has taken the wheel. The walkthrough auto-runs until they touch
+  // the transport; from then on a step plays ONCE and stays put, so "I missed that bit"
+  // is answered by hearing that bit — not by the run carrying on over the top of them.
+  // Handing control back is one tap (▶ Play on).
+  const [paused, setPausedState] = useState(false)
+  const pausedRef = useRef(false)
+  const setPaused = useCallback((v: boolean) => { pausedRef.current = v; setPausedState(v) }, [])
+
+  /** Shared narration start. `only` plays a single step and stops there; otherwise it
+   *  runs from `n` to the end. Narration is just a slice of the timeline either way. */
+  const play = useCallback((n: number, only: boolean) => {
     cancelRef.current()
-    setEnded(false); setI(0)
+    stopSpeech()
+    const start = Math.max(0, Math.min(n, frames.length - 1))
+    setPaused(only)
+    setEnded(false); at(start)
     unlockSpeech()
     // Deliberately SLOW: a walkthrough is teaching, not narration. Slower voice
     // (rate), a ~1.1s breathing pause after each spoken step (gapMs) so the kid can
     // watch the instrument move before the next sentence, and a slow silent-mode
-    // fallback (fallbackStepMs) so a blocked-audio run is just as watchable.
-    cancelRef.current = speakSteps(frames.map((f) => f.say), {
-      rate: 0.8,
-      gapMs: 1100,
-      fallbackStepMs: 3200,
-      onStep: (idx) => setI(idx),
-      onDone: () => setEnded(true),
+    // fallback (fallbackStepMs) so a blocked-audio run is just as watchable. The
+    // child's own speed multiplier scales all three — and the silent fallback is
+    // DIVIDED by it, since "slower" there means a longer dwell per step.
+    const m = rateRef.current
+    const lines = only ? [frames[start]!.say] : frames.slice(start).map((f) => f.say)
+    cancelRef.current = speakSteps(lines, {
+      rate: 0.8 * m,
+      gapMs: Math.round(1100 / m),
+      fallbackStepMs: Math.round(3200 / m),
+      onStep: (idx) => at(start + idx),
+      // A single replayed step only ENDS the walkthrough if it is the last one —
+      // otherwise re-hearing step 3 would offer "Let's try →" from the middle.
+      onDone: () => { if (!only || start === frames.length - 1) setEnded(true) },
     })
-  }, [frames])
+  }, [frames, at, setPaused])
+
+  /** Jump to a step and hear just that one — the transport's whole job. */
+  const step = useCallback((n: number) => play(n, true), [play])
+  /** Run on from here, hands off. */
+  const goTo = useCallback((n: number) => play(n, false), [play])
+
+  const run = useCallback(() => goTo(0), [goTo])
 
   useEffect(() => { run(); return () => cancelRef.current() }, [run])
+
+  const cycleRate = useCallback(() => {
+    const next = nextSpeechRate(rateRef.current)
+    rateRef.current = next; setRate(next); setSpeechRate(next)
+    // Re-speak at the new speed in whichever mode they were in — changing the pace
+    // must not also hand control back, or the run races off mid-review.
+    play(iRef.current, pausedRef.current)
+  }, [play])
 
   // A child who's got it can jump straight to practice — cancel the narration
   // timeline + any in-flight speech, then advance. (Autonomy + respects the fast
@@ -705,20 +752,99 @@ function TutorialPlayer<V, T extends BaseTask>({
   // (cognitive-load theory) and overflows the pinned slot. Keep only the most
   // recent lines and re-base the "currently writing" index into the window so the
   // chalk animation still lands on the newest line. (ux-design.md §6.3)
-  const boardWindow = roomy || short ? BOARD_WINDOW : BOARD_WINDOW_STACKED
+  // A SHORT frame now also carries the spoken caption, and the height has to come
+  // from somewhere. It comes from the board's HISTORY — the older math lines — never
+  // from the words: the illustration measured 0px tall and the skip button sat 31px
+  // below a 320px viewport before this. The current line and the sentence explaining
+  // it both survive; only how far back the board remembers shrinks.
+  const boardWindow = roomy && !short ? BOARD_WINDOW : BOARD_WINDOW_STACKED
   const boardStart = Math.max(0, cur.board.length - boardWindow)
   const windowBoard = cur.board.slice(boardStart)
   const windowWriting = cur.writingIndex < 0 ? -1 : cur.writingIndex - boardStart
 
-  const controls = ended ? (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-      <button type="button" onClick={run} style={headerChip(P)}>↺ Watch again</button>
-      <button type="button" onClick={onDone} style={bigBtn(P)}>Let&apos;s try →</button>
+  // WHAT MILO IS SAYING, WRITTEN OUT. The chalkboard carries the terse MATH of each
+  // step ('x + 3 = 8'); the explanation around it — why the pan is too light, what to
+  // try next — was audio-only, so a kid who processes verbal information slowly (or
+  // whose browser ships no voice at all) had nothing to read. Tester's words: "there's
+  // no words that you can read to follow along with what the audio is saying".
+  // Reuses the existing `Says` bubble, so it costs no new component and no new style.
+  const caption = <Says P={P} text={cur.say} />
+
+  // A dot per step, current one lit — tap ANY of them to hear that step. Walking
+  // backwards one tap at a time is no use to a kid who lost the thread four steps ago,
+  // and the strip doubles as the "how far through am I" the walkthrough never had.
+  // The dot is small but its BUTTON is padded out to a real tap target.
+  const stepStrip = (
+    <div style={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', maxWidth: '100%' }}>
+      {frames.map((_, n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => step(n)}
+          aria-label={`Step ${n + 1} of ${frames.length}${n === i ? ' (playing)' : ''}`}
+          aria-current={n === i ? 'step' : undefined}
+          // Padded out to the 24px operable floor — the dot is small, its target is not.
+          style={{ background: 'none', border: 'none', padding: 8, minWidth: 24, minHeight: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', lineHeight: 0, WebkitTapHighlightColor: 'transparent' }}
+        >
+          <span style={{
+            display: 'block', width: n === i ? 11 : 8, height: n === i ? 11 : 8, borderRadius: 999,
+            background: n === i ? P.gold : n < i ? P.creamSoft : 'transparent',
+            border: `1.5px solid ${n <= i ? 'transparent' : P.glassBorder}`,
+            opacity: n === i ? 1 : n < i ? 0.55 : 0.9, transition: 'width 140ms, height 140ms, background 140ms',
+          }} />
+        </button>
+      ))}
     </div>
-  ) : (
-    // Mid-walkthrough opt-out — quiet, so it never pulls focus from the lesson,
-    // but always there for the kid who doesn't need the rest.
-    <button type="button" onClick={skip} style={{ ...headerChip(P), opacity: 0.72, fontSize: 'clamp(11px, 1.05vw, 15px)' }}>I&apos;ve got it →</button>
+  )
+
+  // Transport — step back, re-hear this one, step on, hand control back, change pace.
+  // Every one of them is `play(n, only)`; the only difference is where and how far.
+  const transport = (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+      <button
+        type="button"
+        onClick={() => step(iRef.current - 1)}
+        disabled={i === 0}
+        aria-label="Previous step"
+        style={{ ...headerChip(P), opacity: i === 0 ? 0.35 : 0.9, cursor: i === 0 ? 'default' : 'pointer' }}
+      >◀</button>
+      <button type="button" onClick={() => step(iRef.current)} aria-label="Say this step again" style={{ ...headerChip(P), opacity: 0.9 }}>↺ Again</button>
+      <button
+        type="button"
+        onClick={() => step(iRef.current + 1)}
+        disabled={i >= frames.length - 1}
+        aria-label="Next step"
+        style={{ ...headerChip(P), opacity: i >= frames.length - 1 ? 0.35 : 0.9, cursor: i >= frames.length - 1 ? 'default' : 'pointer' }}
+      >▶</button>
+      {paused && !ended && (
+        <button type="button" onClick={() => goTo(iRef.current + 1)} aria-label="Play the rest" style={{ ...headerChip(P), opacity: 0.9 }}>▶▶ Play on</button>
+      )}
+      <button type="button" onClick={cycleRate} aria-label={`Speech speed: ${speechRateLabel(rate)} — tap to change`} style={{ ...headerChip(P), opacity: 0.9 }}>🐢 {speechRateLabel(rate)}</button>
+    </div>
+  )
+
+  const controls = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vh, 12px)', alignItems: 'center', width: '100%' }}>
+      {/* On a SHORT frame the caption moves into the left column instead — see below.
+          Stacked under the illustration as well, nothing fits and the scene collapses. */}
+      {!short && caption}
+      {/* The jump-to-any-step strip is the convenience layer. On a short landscape
+          phone a 14–18 dot strip wraps to two rows and squeezes the scene to nothing,
+          and ◀ ↺ ▶ already answer "I missed that bit" — so it earns its place only
+          where there is room for it. */}
+      {!short && stepStrip}
+      {transport}
+      {ended ? (
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button type="button" onClick={run} style={headerChip(P)}>↺ Watch again</button>
+          <button type="button" onClick={onDone} style={bigBtn(P)}>Let&apos;s try →</button>
+        </div>
+      ) : (
+        // Mid-walkthrough opt-out — quiet, so it never pulls focus from the lesson,
+        // but always there for the kid who doesn't need the rest.
+        <button type="button" onClick={skip} style={{ ...headerChip(P), opacity: 0.72, fontSize: 'clamp(11px, 1.05vw, 15px)' }}>I&apos;ve got it →</button>
+      )}
+    </div>
   )
 
   // The baby-step chalkboard — its own board, distinct from the explanation.
@@ -738,7 +864,14 @@ function TutorialPlayer<V, T extends BaseTask>({
         portrait={portrait}
         P={P}
         collapsible
-        explanation={config.overview ? <ExplanationPanel P={P} overview={config.overview} read={false} onDone={() => {}} /> : undefined}
+        // A short landscape frame has one column's worth of height, not two. THE PLAN
+        // there is static text Milo already read aloud in the intro — and it was being
+        // clipped mid-sentence anyway — so the side column carries the LIVE words
+        // instead. Nothing is lost that the child has not already been given, and the
+        // right column gets its illustration back (it measured 0px tall otherwise).
+        explanation={short
+          ? caption
+          : (config.overview ? <ExplanationPanel P={P} overview={config.overview} read={false} onDone={() => {}} /> : undefined)}
         board={babyBoard}
         illustration={<config.TutorialScene palette={P} task={cur.task} value={cur.value} stepIndex={Math.min(i, frames.length - 1)} frameCount={frames.length} ended={ended} />}
         controls={controls}
@@ -1129,7 +1262,12 @@ function TeachFrame({ roomy, portrait, explanation, board, illustration, control
   if (roomy && explanation) {
     return (
       <div style={{ flex: 1, minHeight: 0, width: '100%', maxWidth: 'min(94vw, 1260px)', margin: '0 auto', display: 'flex', gap: 'clamp(16px, 2.2vw, 36px)', alignItems: 'stretch', overflow: 'hidden' }}>
-        <div style={{ width: 'clamp(200px, 30vw, 400px)', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: 0, overflow: 'hidden' }}>{explanation}</div>
+        {/* overflowY:auto, not hidden: this column carries the live caption on a short
+            frame and THE PLAN on a wide one, and both are words the child is meant to
+            READ. Hidden clipped THE PLAN mid-sentence at 640×320 (measured, pre-existing);
+            the longest line in the band leaves only ~22px of slack, so anything longer
+            must stay reachable by scrolling rather than vanish. */}
+        <div style={{ width: 'clamp(200px, 30vw, 400px)', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>{explanation}</div>
         {rightCol}
       </div>
     )
