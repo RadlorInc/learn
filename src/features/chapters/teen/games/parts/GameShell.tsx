@@ -22,7 +22,7 @@
  */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useAdaptive } from '@/core/adaptive'
-import { speak, speakAfterCurrent, speakSeq, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import type { ChapterType } from '@/state/store'
@@ -232,6 +232,11 @@ export function Game<V, T extends BaseTask>({
   // chapter shows the mistake by gliding; a pad chapter has to show it on the pad).
   const [picked, setPicked] = useState<number | null>(null)
   const [wrongRun, setWrongRun] = useState(0)
+  // Which re-teach line Milo is on, so the 3-wrong re-explanation is WRITTEN as well
+  // as spoken. -1 = not re-teaching. Same reason as the walkthrough caption: a child
+  // who has just missed three in a row is the last one who should be given the
+  // explanation in audio only, and most Chrome installs have no voice at all.
+  const [reteachAt, setReteachAt] = useState(-1)
   const [correct, setCorrect] = useState(0)
   const [wrong, setWrong] = useState(0)
 
@@ -339,8 +344,34 @@ export function Game<V, T extends BaseTask>({
     if (value != null) config.glide(task, value, setValue, later)
 
     if (run >= RETEACH_AFTER) {
-      later(() => { setSub('reteach'); speakSeq(task.work, {}) }, 1800)
-      later(() => { setWrongRun(0); loadTask(idx + 1, correct, w, false) }, 6400)
+      later(() => {
+        setSub('reteach'); setReteachAt(0)
+        // speakSteps, not speakSeq: it reports which line is being spoken (so the
+        // board can write it) and it still paces itself when speech is blocked or
+        // absent. The child's own speed multiplier applies here too.
+        const m = getSpeechRate()
+        let done = false
+        const advance = () => {
+          if (done) return
+          done = true
+          setReteachAt(-1); setWrongRun(0); loadTask(idx + 1, correct, w, false)
+        }
+        speakSteps(task.work, {
+          rate: 0.8 * m,
+          gapMs: Math.round(900 / m),
+          fallbackStepMs: Math.round(2600 / m),
+          onStep: setReteachAt,
+          // Advance when the re-explanation actually FINISHES, never on a flat timer.
+          // The old fixed 6400ms was tuned against the silent fallback, so a real
+          // voice — or a child who has chosen "Slower" — had the last line or two cut
+          // off. That is the craft doc's own backstop-timed-against-the-wrong-thing
+          // fault, and it bites hardest here, where the words are the whole point.
+          onDone: advance,
+        })
+        // Backstop, guarded so it can never double-advance: if onDone somehow never
+        // fires, the round must not strand the child on the re-teach for ever.
+        later(advance, 4000 + task.work.length * Math.round(3200 / m))
+      }, 1800)
     } else {
       later(() => loadTask(idx + 1, correct, w, false), 2300)
     }
@@ -548,6 +579,19 @@ export function Game<V, T extends BaseTask>({
               )}
               {/* The INSTRUMENT column takes the whole leftover band (flex:1) so FitSlot
                   can scale it to fit; the PAD is auto-height and stays centred as-is. */}
+              {/* THE 3-WRONG RE-EXPLANATION, WRITTEN. Reuses the walkthrough's own
+                  chalkboard — the re-teach IS a step-by-step working, so it wants the
+                  same surface, and this costs no new component. Windowed like the
+                  walkthrough's so a long `work` cannot push the instrument off a short
+                  frame. */}
+              {sub === 'reteach' && reteachAt >= 0 && task.work.length > 0 && (
+                <Blackboard
+                  P={P}
+                  lines={task.work.slice(Math.max(0, reteachAt + 1 - (short ? 2 : BOARD_WINDOW)), reteachAt + 1)}
+                  writingIndex={Math.min(reteachAt, (short ? 2 : BOARD_WINDOW) - 1)}
+                  slideKey={Math.max(0, reteachAt + 1 - (short ? 2 : BOARD_WINDOW))}
+                />
+              )}
               <div key={stage === 'guided' ? 'g' : idx} style={{ width: '100%', flex: padChoices.length ? undefined : 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 1vw, 16px)' }}>
                 {padChoices.length ? (
                   // PER-TASK: a question that supplies pad choices is answered by
