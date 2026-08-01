@@ -219,38 +219,6 @@ export function matchTarget(difficulty: Difficulty): number {
   return Math.floor(Math.random() * 5) + 6                          // 6–10
 }
 
-export function addPair(difficulty: Difficulty): [number, number] {
-  if (difficulty === 1) {
-    const a = Math.floor(Math.random() * 3) + 1  // 1–3
-    const b = Math.floor(Math.random() * 3) + 1  // 1–3 → sum ≤ 6
-    return [a, b]
-  }
-  if (difficulty === 2) {
-    const a = Math.floor(Math.random() * 4) + 2  // 2–5
-    const b = Math.floor(Math.random() * 4) + 2  // 2–5 → sum ≤ 10
-    return [a, b]
-  }
-  const a = Math.floor(Math.random() * 5) + 4   // 4–8
-  const b = Math.floor(Math.random() * 5) + 2   // 2–6 → sum ≤ 14
-  return [a, b]
-}
-
-export function subPair(difficulty: Difficulty): [number, number] {
-  if (difficulty === 1) {
-    const total = Math.floor(Math.random() * 3) + 3   // 3–5
-    const take  = Math.floor(Math.random() * 2) + 1   // 1–2
-    return [total, take]
-  }
-  if (difficulty === 2) {
-    const total = Math.floor(Math.random() * 4) + 5   // 5–8
-    const take  = Math.floor(Math.random() * 3) + 2   // 2–4
-    return [total, take]
-  }
-  const total = Math.floor(Math.random() * 4) + 7     // 7–10
-  const take  = Math.floor(Math.random() * 4) + 3     // 3–6
-  return [total, take]
-}
-
 export function seqLength(difficulty: Difficulty): number {
   if (difficulty === 1) return 3   // show 3 items
   if (difficulty === 2) return 4   // show 4 items

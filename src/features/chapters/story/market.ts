@@ -245,8 +245,3 @@ export const groundPxFor = (st: Stall, vw: number, vh: number, padBand: number) 
 export const miloHFor = (vh: number, groundPx: number, bannerPx: number) =>
   Math.max(74, Math.round(Math.min(MILO_SHARE * vh, groundPx - bannerPx - 8)))
 export const miloHalfPct = (miloH: number, vw: number) => ((miloH * MILO_ASPECT) / 2 / vw) * 100
-
-/** ⚠️ The floor is 22, not 18: a coin carries its value as a numeral at 42% of its size, so a 19px
- *  coin prints an 8px digit — unreadable, and the digit is the whole affordance. */
-export const coinPxFor = (vw: number, vh: number) =>
-  Math.max(22, Math.min(44, Math.floor(Math.min(vw * 0.034, vh * 0.062))))

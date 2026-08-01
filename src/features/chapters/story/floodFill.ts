@@ -187,16 +187,3 @@ export function paintRegion(ctx: CanvasRenderingContext2D, p: PageBitmap, r: Reg
   }
   ctx.putImageData(img, 0, 0)
 }
-
-/**
- * Screen point → image point, for a page drawn with `object-fit: cover`. The scale is uniform and
- * the overflow is split evenly, so this is the same arithmetic the browser used to lay the page out
- * — which is why a tap lands where the child thinks it did.
- */
-export function toImagePoint(p: PageBitmap, box: DOMRect, clientX: number, clientY: number) {
-  const s = Math.max(box.width / p.w, box.height / p.h)
-  return {
-    x: (clientX - box.left - (box.width - p.w * s) / 2) / s,
-    y: (clientY - box.top - (box.height - p.h * s) / 2) / s,
-  }
-}

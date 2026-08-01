@@ -3,8 +3,6 @@
 
 export type AgeBand = '12-14' | '15-16' | '17-18'
 
-export const TEEN_BANDS: AgeBand[] = ['12-14', '15-16', '17-18']
-
 /** Answer feedback state — math-without-fear: 'wrong' renders neutral + amber, NEVER red. */
 export type AnswerStatus = 'idle' | 'correct' | 'wrong'
 

@@ -80,9 +80,6 @@ if (typeof window !== 'undefined') {
   window.addEventListener('milo-voice-change', () => { _keys = null; _loading = null; _loadedFor = null })
 }
 
-/** Warm the manifest early so the first line of a chapter isn't a guaranteed miss. */
-export function preloadVoiceClips(): void { void loadManifest(getVoicePref()) }
-
 // ── Fragment stitching ────────────────────────────────────────────────────────
 // A question prompt carries its numbers ("negative 5 times 3…"), so it can't be one
 // clip. We pre-render the literal RUNS between the numbers and a small value

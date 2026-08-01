@@ -20,7 +20,6 @@
  * multi-frame sheet or a skeletal rig (Rive/Spine) — see `swapTexture` note in Creature.
  */
 import { AnimatedSprite, Application, Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js'
-import { RIGS, type Rig, type RigLeg } from './rigs'
 import { SHEETS } from './sheets'
 
 // ── tiny spring integrator ────────────────────────────────────────────────────────────
@@ -41,15 +40,8 @@ class Spring {
 
 export type Gait = 'walk' | 'fly' | 'swim' | 'crawl'
 
-/** How fast a rigged creature's limbs swing, matching each gait's own cadence below. */
+/** Cycle rate per gait, for a creature with no drawn sheet — see `cyclesPerSec` below. */
 const SWING_RATE: Record<Gait, number> = { walk: 7.5, crawl: 15, swim: 2.1, fly: 2.6 }
-
-/**
- * Fraction of the cycle a foot spends PLANTED. Above 0.5 the leg sweeps back slowly under load and
- * flicks forward quickly — the asymmetry is most of what separates a walk from a pendulum, which is
- * exactly how this rig read when both halves took the same time.
- */
-const STANCE = 0.62
 
 /**
  * How far a creature travels in ONE walk cycle, as a fraction of its own height. This is the number
@@ -76,9 +68,7 @@ interface CreatureOpts {
   exitX: number
   y: number
   grounded: boolean
-  /** Present → the sprite is cut into body + swinging legs instead of drawn as one frame. */
-  rig?: Rig
-  /** Present → a drawn walk cycle plays instead. Wins over `rig`: real frames beat a puppet. */
+  /** Present → a drawn walk cycle plays instead of the procedural gait below. */
   frames?: Texture[]
   fps?: number
 }
@@ -89,8 +79,6 @@ class Creature {
   private body = new Container()   // gait transforms live here so they never fight travel
   private sprite: Sprite
   private shadow?: Graphics
-  /** Cut-out leg pieces, swung from their joints. Empty for un-rigged creatures. */
-  private legs: Array<{ s: Sprite; L: RigLeg; len: number }> = []
   /**
    * Ground speed, px/sec, derived from the walk cadence — see STRIDE. Travel is NOT a spring: a
    * spring eases the creature in at a speed unrelated to its legs, so it reads as a sticker being
@@ -139,13 +127,8 @@ class Creature {
       this.root.addChild(this.shadow)
     }
 
-    // A rigged creature replaces that single sprite with the same art cut into pieces. The pieces
-    // are laid out in SOURCE pixel coordinates inside one container, which then carries the scale,
-    // the facing flip and the same anchor the plain sprite would have had — so a rigged creature
-    // sits and travels identically to an un-rigged one.
-    const rigged = !!o.rig && !o.frames?.length      // drawn frames beat a cut-out puppet
-    const tap = rigged ? this.buildRig(o.rig!, o.texture, scale) : this.sprite
-    if (!rigged) this.body.addChild(this.sprite)
+    const tap = this.sprite
+    this.body.addChild(this.sprite)
     this.root.addChild(this.body)
 
     // One cycle carries the creature one stride, so ground speed and leg speed agree by
@@ -166,57 +149,15 @@ class Creature {
     // MEASURE THE THING ACTUALLY DRAWN. A sheeted creature's sprite is one CELL (e.g. 351×256), not
     // the 1024×1024 source — using the source here makes the hit box 3–4× too big in local space,
     // and it then swallows the neighbouring creature so taps land on the wrong one.
-    tap.hitArea = rigged
-      ? new Rectangle(0, 0, o.texture.width, o.texture.height)
-      : { contains: (x: number, y: number) => {
-          const w = art.width, h = art.height
-          const top = o.grounded ? -h * 1.2 : -h * 0.7
-          const bot = o.grounded ? h * 0.25 : h * 0.7
-          // Generous for small fingers, but under half the gap between the two rest positions so
-          // two creatures on stage can never have overlapping hit boxes.
-          return x > -w * 0.7 && x < w * 0.7 && y > top && y < bot
-        } }
+    tap.hitArea = { contains: (x: number, y: number) => {
+      const w = art.width, h = art.height
+      const top = o.grounded ? -h * 1.2 : -h * 0.7
+      const bot = o.grounded ? h * 0.25 : h * 0.7
+      // Generous for small fingers, but under half the gap between the two rest positions so
+      // two creatures on stage can never have overlapping hit boxes.
+      return x > -w * 0.7 && x < w * 0.7 && y > top && y < bot
+    } }
     tap.on('pointertap', () => { if (!this.leaving && !this.dead) this.onTap?.() })
-  }
-
-  /**
-   * Assemble body + legs from sub-rectangles of one texture. No second asset: the body is the slab
-   * above the cut plus the gap strips between the legs below it, so nothing of the art is lost and
-   * the legs are free to swing out from under it.
-   */
-  private buildRig(rig: Rig, src: Texture, scale: number): Container {
-    const W = src.width, H = src.height
-    const box = new Container()
-    box.scale.set(scale * this.o.faceDir * (this.o.artFacesLeft ? -1 : 1), scale)
-    box.pivot.set(W / 2, this.o.grounded ? H : H / 2)
-
-    const piece = (x: number, y: number, w: number, h: number) => {
-      const s = new Sprite(new Texture({ source: src.source, frame: new Rectangle(x, y, w, h) }))
-      s.position.set(x, y)
-      return s
-    }
-    const leg = (L: RigLeg) => {
-      const s = piece(L.x0, rig.legTop, L.x1 - L.x0, rig.bottom - rig.legTop)
-      // Rotate about the joint rather than the piece's corner.
-      s.pivot.set(L.pivotX - L.x0, L.pivotY - rig.legTop)
-      s.position.set(L.pivotX, L.pivotY)
-      this.legs.push({ s, L, len: rig.bottom - L.pivotY })
-      return s
-    }
-
-    for (const L of rig.legs) if (!L.near) box.addChild(leg(L))
-    box.addChild(piece(0, 0, W, rig.cutY))                      // everything above the cut
-    // …plus the strips between and outside the legs below it, so the ground line stays intact.
-    let x = 0
-    for (const L of [...rig.legs].sort((a, b) => a.x0 - b.x0)) {
-      if (L.x0 > x) box.addChild(piece(x, rig.cutY, L.x0 - x, H - rig.cutY))
-      x = Math.max(x, L.x1)
-    }
-    if (x < W) box.addChild(piece(x, rig.cutY, W - x, H - rig.cutY))
-    for (const L of rig.legs) if (L.near) box.addChild(leg(L))
-
-    this.body.addChild(box)
-    return box
   }
 
   count() {
@@ -294,9 +235,6 @@ class Creature {
       }
     }
 
-    // Rigged creatures walk with their actual legs, swung from the joints in diagonal pairs at the
-    // same cadence as the gait above. The canned hop is dialled back once they do: a bouncing body
-    // AND striding legs together read as panic, not as walking.
     // A drawn cycle already contains its own bob, squash and weight — layering the procedural gait
     // on top double-counts it and the creature visibly wobbles. Keep only a whisper of it.
     if (this.o.frames?.length) {
@@ -311,42 +249,6 @@ class Creature {
       }
     }
 
-    if (this.legs.length) {
-      // Cadence matched to each gait above, or a scuttling crab plods and a paddling turtle thrashes.
-      const cyc = (p * SWING_RATE[this.o.gait]) / (Math.PI * 2)
-      const steps = this.o.gait === 'walk' || this.o.gait === 'crawl'
-
-      for (const { s, L, len } of this.legs) {
-        const u = (((cyc + L.phase) % 1) + 1) % 1     // this leg's place in the cycle, 0..1
-        if (!steps) {
-          // Flippers and wings sweep evenly — there is no ground to push against.
-          s.rotation = Math.sin(u * Math.PI * 2) * L.amp
-          continue
-        }
-        if (u < STANCE) {
-          // PLANTED: sweep back at a constant rate, so the foot reads as fixed on the ground while
-          // the body passes over it. Constant speed here is what stops the skate.
-          s.rotation = L.amp * (1 - 2 * (u / STANCE))
-          s.y = L.pivotY
-          s.scale.y = 1
-        } else {
-          // SWING: return forward in the SHORTER remaining time — so it flicks, not drifts — and
-          // lift + fold the leg so the foot clears the ground instead of dragging through it.
-          const k = (u - STANCE) / (1 - STANCE)
-          const ease = k * k * (3 - 2 * k)
-          const lift = Math.sin(k * Math.PI)
-          s.rotation = -L.amp + 2 * L.amp * ease
-          s.y = L.pivotY - lift * len * 0.16       // foot clears the ground
-          s.scale.y = 1 - lift * 0.12              // fakes a knee bend on a one-piece leg
-        }
-      }
-
-      if (steps) {
-        // Weight: body drops onto each footfall and rises through mid-stance. Two beats per cycle,
-        // so it lands with the legs rather than floating free of them.
-        bob = bob * 0.3 - (0.5 - 0.5 * Math.cos(cyc * 4 * Math.PI)) * this.o.size * 0.035
-      }
-    }
 
     // "counted" pop — squash down hard, then overshoot up, then settle. This is the single most
     // important piece of juice in the scene: it's the child's feedback that the tap registered.
@@ -488,7 +390,6 @@ export class ParadeStage {
       exitX: cfg.slot === 0 ? this.w + cfg.size * 1.5 : -cfg.size * 1.5,
       y: this.h * (cfg.lanePct / 100),
       grounded: cfg.grounded,
-      rig: RIGS[cfg.src],
       frames,
       fps: sheet?.fps,
     })
