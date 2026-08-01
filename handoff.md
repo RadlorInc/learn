@@ -12,7 +12,268 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🏗️ **2026-07-31 (LATEST) — THE 9–11 BAND GETS A CAST, AND ITS SECOND CHAPTER: NUMBERVAULT → **THE ORDER DESK**. 🚀 SHIPPED — both chapters, see the commit table in ▶ OPEN.** `tsc` 0 · **416/416 vitest** · `next build` · **two full runs played to their own finish** — one perfect, one erring every round.
+> 🗣️ **2026-08-01 (LATEST) — A KID'S REVIEW ANSWERED: THE WALKTHROUGH NOW WRITES OUT WHAT MILO SAYS, AND ANY STEP CAN BE REPLAYED. 🚀 SHIPPED — `main`@`e706ab7`, sw v81 → v82.** `tsc` 0 · **452/452 vitest** (was 447, **+5**) · `next build` · 0 console errors · driven at 1280×820, 640×320 and 390×844 on the band's **measured worst-case chapters**, not on a convenient one.
+>
+> **The ask:** a real 12–14 tester's message about the Equations & Inequalities unit — *"there's no words that you can read to follow along with what the audio is saying… what I personally struggle with is retaining verbal information, and a lot of my friends also do as well particularly in math class."* Then, on the first cut: *"agar unka koi step miss ho gaya toh woh usko repeat kar sakhta hai… abhi joh aapne kiye hai woh allow naii kar raha hai."*
+>
+> ## ⓪ THE KID WAS RIGHT, AND THE CODE SAID SO MORE PRECISELY THAN THEY COULD
+> They also asked whether they had missed a feature, so that was checked first rather than assumed.
+> **The walkthrough DOES write things out — but only the terse MATH.** `Blackboard` carries
+> `x + 3 = 8` while the narration carries *"the left pan holds the mystery case plus a three-kilo
+> weight"*. Measured in the chapter they actually played: **11 spoken steps against 10 board lines,
+> and step 1 has no written trace at all.** So the explanation was audio-only on every device, and
+> on the many Chrome installs with no voice it was nothing at all.
+> **Partly they had missed something:** `↺ Watch again` existed — but only after the whole
+> walkthrough ENDED. No rewind, no speed. That half of the report was exactly right.
+>
+> ## ① WHAT SHIPPED — one `play(n, only)` serves the whole transport
+> • **Caption** — every narrated sentence written under the illustration, reusing the existing
+>   exported-but-unused `Says` bubble. No new component, no new style.
+> • **A dot per step, tap any of them.** ⚠️ **The first cut had `◀ Back` / `↺ Again` and the founder
+>   correctly rejected it: both restarted the run FROM that point, so the narration carried on over
+>   the top of a child who wanted to re-hear one thing.** A step now plays **ONCE and STAYS**;
+>   `▶▶ Play on` hands control back. Walking backwards one tap at a time is also no use to a kid who
+>   lost the thread four steps ago — hence the strip.
+> • **Speech speed** (Normal / Slower / Faster), **persisted per device**, because a kid who needs it
+>   slower needs it slower in every chapter, not once per unit.
+> • **`onDone` only ends the walkthrough if the replayed step is the LAST one** — otherwise
+>   re-hearing step 3 offers "Let's try →" from the middle.
+>
+> ## ② ⚠️ THE SPEED CONTROL WOULD HAVE BEEN A DEAD BUTTON FOR EXACTLY THE KIDS IT IS FOR
+> `rate` is passed to `speak()` — and `speakLine` plays a **pre-rendered clip** when one exists,
+> handing `rate` only to the browser-TTS **fallback**. The 12–18 bands have **605 rendered clips**,
+> so on the primary path the chip would have changed nothing audible while looking like it worked.
+> That is the craft doc's own *a response that exists only as speech is silence* fault, one layer
+> along: **a control that only works on the fallback path is a dead control.** Now `playbackRate` on
+> the shared clip element, `preservesPitch` so Milo does not chipmunk. Gated, and **mutation-tested —
+> deleting the `setClipRate` call fails the test.**
+>
+> ## ③ ⚠️ RESPONSIVENESS: BROKEN TWICE, BOTH TIMES CAUGHT BY MEASURING RATHER THAN LOOKING
+> ① The caption alone drove the illustration to **0px** with the skip button **31px below** a 320px
+> viewport. ② Adding the dot strip did it again — **0px illo, skip 55px below**. Screenshots looked
+> merely "cramped" both times; `getBoundingClientRect` said broken.
+> **The height was paid for honestly, never out of the words** (the founder has rejected hidden prose
+> twice before): out of the board's **HISTORY** (fewer remembered lines), out of **THE PLAN on short
+> frames only** — static text Milo already read aloud in the intro — and by **dropping the dot strip
+> on short frames**, where 26 dots wrap to two rows and `◀ ↺ ▶` already answer the ask.
+> ⚠️ **And chasing it turned up a PRE-EXISTING bug:** the side column was `overflow: hidden`, so
+> THE PLAN was being **clipped mid-sentence** at 640×320 (visible on screenshot: *"…ramp must reach"*
+> then nothing). Now `overflowY: auto` — the repo's own gate distinguishes *clipped* from
+> *scrollable*, and this had been on the wrong side of it.
+>
+> ## ④ THE WORST CASE WAS FOUND BY MEASURING ALL 37 CHAPTERS, NOT BY PICKING ONE
+> The chapter the tester named is **not** the hardest case, and testing only it would have proved
+> little. A static sweep of every teen chapter gave the real extremes — **longest caption 209 chars
+> (SkateRamp)** against the 160 first tested, and **most steps 26 (BestPlan)** against 18. Both driven.
+> A **229-char injection** — longer than anything in the band — still fits at 640×320 (caption 259px,
+> bottom **298 of 320**), which is also how the ~22px of slack behind the `overflowY` guard is known.
+> ⚠️ **A first pass at this metric was WRONG and would have sent me chasing a phantom:** it reported a
+> 565-char line, which turned out to be `overview.say` — **the intro read-along, which is not
+> captioned at all.** Exclude the `overview` block before measuring what the captions carry.
+>
+> ## ⑤ WHAT WAS ACTUALLY VERIFIED
+> Jump-to-step **holds** (step 7 still on step 7 nine seconds later — the whole point of the founder's
+> correction), `▶` steps and holds, **`Play on` resumes the auto-run** (9 → 10 unattended), speed
+> persisted to IndexedDB at `0.75` and survived a reload. All 37 chapters confirmed to have a
+> `TutorialScene`, so the legacy one-column branch is dead code and not a risk surface.
+> **The repo's own `short-landscape` gate was run** rather than asserted — 200 cases, every chapter ×
+> 4 short sizes, checking clipping / overlap / overflow / sub-24px controls. It is slow (~40s/case)
+> and was **left running at 8/200 with 0 hard failures**; its only output is "tight tap target" NOTES,
+> and the new controls (`↺ Again` 74×31, `▶` 36×31) sit **between two already-shipped ones**
+> (`I've got it →` 87×28, `‹ Menu` 66×31). ⚠️ **Finish that run and read it** — see ▶ OPEN 1.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **THE 200-CASE SHORT-LANDSCAPE SWEEP WAS NOT SEEN THROUGH TO ITS SUMMARY LINE** (`npx playwright
+>    test e2e/short-landscape.spec.ts`, ~2.2h, log at `/tmp/sl.log`). 0 failures through the cases it
+>    reached, and the manual evidence above is the primary basis for shipping — but a status line that
+>    outruns its evidence is this file's oldest recurring fault, so it is written down as unfinished
+>    rather than rounded up to green.
+> 2. **A HUMAN HAS NOT HEARD THE SPEED CONTROL.** The preview pane has no voice, so every drive took
+>    the silent fallback — which is exactly what hid TickTock's lesson hang for a whole session. The
+>    `playbackRate` path is the one that matters for real users and it has been proven by *test*, not
+>    by *ear*. Play one 12–14 chapter with sound and tap 🐢.
+> 3. **The 3-wrong re-teach is still uncaptioned** (`speakSeq(task.work)`) — the same ~5-line fix, at
+>    the one moment a struggling child most needs the words.
+> 4. **Scope is GameShell, i.e. 12–18 only.** The 3–11 story band narrates its own demos and is
+>    untouched; if the same complaint arrives there it is a separate job.
+> 5. **640×320 now draws the illustration at 85–119px.** That is the honest cost of putting the words
+>    on that frame, stated rather than hidden — the lever, if it ever matters, is the board.
+> 6. ⚠️ **THE RAIL LINE (the 🚂 block below) IS STILL UNCOMMITTED, DELIBERATELY.** This session
+>    committed only its own four files (verified with `git show --stat`, per this file's own git
+>    trap). `RailLine.tsx`, its gate, the four rail PNGs, the `RoundingTrail.tsx` deletion,
+>    `chapter-craft.md`'s 8 new rules, `story/page.tsx` and `registry.tsx` are all still in the tree
+>    exactly as that session left them — **so prod does NOT have the rounding chapter**, and its own
+>    open items (no full ten-round run, the re-teach never fired naturally) are unchanged. Shipping it
+>    needs its own sw bump, now **v82 → v83**.
+> 7. **Nobody has watched a child use these controls**, and the review that started this arrived from
+>    a real kid rather than from any gate — which is the same shape as every other entry in this file.
+>
+> _(the 🚂 block below is the previous session — The Rail Line, still uncommitted.)_
+
+> 🚂 **2026-07-31/08-01 — ROUNDINGTRAIL → **THE RAIL LINE**, the 9–11 band's THIRD chapter. ⚠️ NOT COMMITTED.** `tsc` 0 · **447/447 vitest** (was 416, **+31 — and it is this band's FIRST chapter gate**) · `next build` · driven live at **1280×720, 640×320 and 1800×870 (aspect 2.07)** through intro → both demos → guided → scored rounds, including a forced `estimate` round end to end.
+>
+> **The ask:** *"abhi rounding chapter ko animate karna hai."*
+>
+> ## ⓪ THE WORLD THE RETHINK DOC PROPOSED WAS ALREADY TAKEN, AND THE FREE BACKDROPS FAILED ON MEASUREMENT
+> [story-9-11-rethink.md](docs/story-9-11-rethink.md) §2 frames rounding as *"the truck holds 100,
+> the crates weigh 47, 62 and 38 — round each and add"*. **That is The Loading Bay's world**, shipped
+> hours earlier, and a third depot in one band is the repeat the craft doc forbids. So the world had
+> to be re-picked; founder chose **the rail line** from three options.
+> ⚠️ **And the free grown-up backdrops are not usable, by measurement rather than taste:**
+> `train_station` **0.832** value in the band things stand in, `bus_depot` 0.811, `locker_room` 0.812
+> — all **brighter than the cast** (sprites 0.62–0.81), which is the `grocery_sweets` fault the founder
+> caught, and all sitting on **Milo's own hue** (28–40° against his 30°). The scenes that pass are
+> LoadingBay's and OrderDesk's. **~6 credits** bought three painted rail scenes + a train (1146 → 1140;
+> the handoff's credit line was RIGHT this time).
+>
+> ## ① THE CHAPTER — **the track IS the number line, and it is painted into the backdrop**
+> Milo is the signalman. A train runs in with a passenger who needs kilometre 47; there is no platform
+> at 47, so Milo sets the signal for a STATION and the passenger walks the rest. **The rounded number
+> stops being a convention and becomes the only place you can actually get to.**
+> • **All three scenes were generated with one straight track running the full width of the lower
+>   third**, so the axis a rounding chapter needs is part of the picture. Only the posts, the marker
+>   and the halfway post are code-drawn — no neon rule laid over a painting, which is the slab fault
+>   BlockYard paid for three times.
+> • ⚠️ **THE OLD CHAPTER WAS A COIN FLIP AND THAT IS THE REAL DEFECT.** It drew the two bracketing
+>   stops and asked which was nearer — 50%, with the two extra chips sitting *outside* the bracket, so
+>   a child who knew only "it's in the forties" still had a toss-up. **The line now carries SIX
+>   stations**: find the bracket first (place value), then choose. 50% → 17%, and the half of the
+>   skill that was being given away is now the work. Rule in the craft doc; the rethink doc measures
+>   the same defect live in FactorLab and AngleScope.
+> • **One control, three questions, one grader.** Every round is a list of LEGS rounded to the same
+>   place: `round10` (one leg), `round100` (one leg, main stations only — the express), `estimate`
+>   (TWO legs, and the board adds the two roundings as they are picked). `answer` is the sum of the
+>   rounded legs, so a one-leg round is just the rounding and all three share one code path.
+> • **The marker fades by tier** — at L1 the true position is pegged on the line before the commit
+>   (concrete), from L2 it is hidden until after, so the answer comes from the digits and the line
+>   confirms. TickTock's minute-ring call. **A wrong answer reveals the HALFWAY post, never the
+>   marker** — the rule, not the answer.
+> • **An estimate is confirmed after the commit**: *"The run measured 93 km — your 100 was close."*
+>
+> ## ② ⚠️ FIVE FAULTS, EVERY ONE FOUND BY DRIVING IT OR BY THE GATE — NONE BY A TYPE-CHECK
+> ① ⚠️ **THE RUN STRIP WAS A CHEAT SHEET.** `SkillBeat` fires `onRound` when a round **LOADS**, so
+> appending that round's answer printed the answer to the question still on screen — measured, round 2
+> already read `20 30` with 30 unanswered. The pending value is held back one round. **Nothing could
+> see this: the strip and the callback are each individually correct.**
+> ② **The waiting train was parked at x = −50**, so the train AND its passenger were off-frame for the
+> whole time the child was deciding — the round opened on an empty stage. Chasing it found that the
+> supposed conflict was not real: the boards live ABOVE the track and the train below them, so they
+> never overlap, and a locomotive standing in front of a post is just what a station looks like.
+> *(§⑥ later made the engine much bigger and that clearance had to be derived rather than observed.)*
+> ③ ⚠️ **AT 640×320 MILO'S BUBBLE COVERED TWO OF THE SIX ANSWER TARGETS** — measured, bubble 355–624
+> across the boards for 70 (371–418) and 80 (463–510). Two independent guesses at one gap, third
+> recurrence. The post height is now derived from the bubble's own band rather than a `vh * 0.20`
+> guess. **Mutation-tested: restoring that cap fails the gate.**
+> ④ **The gate caught an estimate leg landing ON a station** — the no-multiples guard was on the
+> single-leg branch only, so "round 20 to the nearest 10" was reachable, answerable by matching the
+> board.
+> ⑤ ⚠️ **THE EXACT-HALFWAY CASE WAS NEITHER WORDED NOR TAUGHT.** Three guided rounds in a row drew
+> 15, 75 and 65 — I assumed a biased generator and **measured it instead: 10.18%, exactly uniform.**
+> Genuinely unlucky, and the bad luck earned a real fix: the miss line had been claiming *"15 is PAST
+> 15"*, and nothing anywhere said what happens on a dead heat. It is the one case a child cannot read
+> off the picture, so it is now stated in the demo, the re-teach and the miss line. **General rule in
+> the craft doc: find your boundary case and check what the words do there.**
+>
+> ## ③ AND ONE THE FORCED-ESTIMATE DRIVE FOUND — the re-teach taught half the skill
+> `RailExplain` is the demo AND the 3-wrong re-teach, and it read `legs[0]` only. So a child who had
+> just got three estimates wrong was taught the first rounding and **never told to add the two** —
+> the entire payload of the type, missing at the one moment it was needed. Now five beats, traced live:
+> `— + —` → `80 + —` → marker moves to the second leg → **`80 + 40 = 120`**.
+>
+> ## ④ THE GATE — 31 tests, and it is the 9–11 band's first
+> [railLineRounding.test.ts](src/__tests__/railLineRounding.test.ts) drives the same exported
+> `makeRound` · `stationsFor` · `gradePicks` · `missFor` · `railLayout` the scene renders and grades
+> from. **`gradePicks` was extracted specifically so the gate cannot agree with its own copy of the
+> rule.** It pins: no question sits on a station · the answer is always among the six · both brackets
+> shown · the answer's index MOVES · **two wrong roundings that sum to the right total are refused**
+> (SliceShop's hole, planted on purpose) · the miss line never names the stop · **the rail lands
+> exactly where the PAINTING puts it** · the train never hides a board or the halfway post · the
+> engine outsizes Milo · boards clear the bubble, clear both frame edges and never touch each other —
+> at **10 sizes × 3 scenes**, and the three widest exist because of §⑥.
+>
+> ## ⑤ WHAT WAS ACTUALLY VERIFIED ON SCREEN
+> Both demos (round10 and round100, incl. the halfway wording), the guided round wrong-then-right, and
+> scored rounds. **The train's journey proven the honest way**: one `MutationObserver` sample logged
+> `inline 788.28px / computed 185px` — the code asked for the station's exact x while the body was
+> still at the start, i.e. it travels rather than jumps. The passenger steps off and **walks away on
+> its own legs**. At 640×320: six boards, min gap 35px, nothing offscreen, no h-overflow, marker
+> 302/320. ⚠️ **Two instrument traps banked** — `getComputedStyle` during a transition returns the
+> interpolated value (read the inline style for the target), and a state-driven `disabled` swallows a
+> same-tick click, which reads exactly like a dead commit button.
+>
+> ## ⑥ ⚠️ THEN THE FOUNDER LOOKED AT IT ON A WIDE WINDOW: *"train properly naii dikh rahi ki rail pe chal rahi hai"* — AND EVERY MEASUREMENT I HAD TAKEN SAID IT WAS FINE
+> Two faults under one complaint, and the first is the one worth carrying.
+> • ⚠️ **A GROUND LINE READ OFF A PAINTING IS A SHARE OF THE *IMAGE*, NOT OF THE VIEWPORT.** The
+>   backdrop is `object-fit: cover`, so the painted rail MOVES the moment the frame's aspect stops
+>   matching the art's 1.79. I measured the rail at 0.785 of the image and drew the train at
+>   `0.785 × vh` — identical at 1280×720 (aspect 1.78) and **44px of clear air on his 2000×970 window**
+>   (aspect 2.06), where cover renders the scene 1116px tall and crops 73px off each end. **Every
+>   check I ran was at the one aspect that agrees.** It is CoinShop's `fitFor` lesson, which this
+>   chapter did not apply. Now mapped through the real transform; measured live at aspect 2.07,
+>   **float 0px**. The sweep gained 2000×970, 2560×1080 and 1920×800.
+> • ⚠️ **AND THE RANK OF THE SIZES WAS INVERTED.** Milo 0.30, the locomotive 0.155 — a tank engine
+>   half the height of a pony, at the same depth, which reads as a toy on a shelf. Now Milo 0.24 and
+>   the train 0.28 (**+81% taller**, 732×244 on his frame), with `trainH > miloH` gated.
+> • **Then the bigger engine covered what it stood among.** It reached into the name boards AND the
+>   halfway post — which is the ONLY help a wrong answer gives; on the founder's screenshot
+>   "halfway 550" was readable as *"fw…y 50"* behind the locomotive. The post heights are now a
+>   derived stack — train roof → halfway label → boards → chrome, each clearing the last.
+> • ⚠️ **AND MUTATION TESTING CAUGHT MY OWN GATE BEING USELESS.** The first cover-fit assertion said
+>   `trackPx <= painted` "or clamped upward", which reads as reasonable and **let the original bug
+>   straight through** — the planted `vh * trackY` passed it. Asserted exactly, it fails. *A `<=` where
+>   the truth is an equality is not a check.*
+>
+> ## ⑦ ⚠️⚠️ AND THE SAME COVER-FIT BUG IS LIVE IN BOTH SHIPPED 9–11 CHAPTERS — FOUND, NOT FIXED
+> The moment §⑥ was understood it was worth grepping for the pattern, and it is there twice, in prod:
+> **`LoadingBay.tsx:232` and `OrderDesk.tsx:365` both compute `groundPx = Math.round(vh * groundY)`
+> while drawing their backdrops `objectFit: 'cover'`** — exactly what RailLine did. Their art is the
+> same 1376×768, so the arithmetic is identical:
+>
+> | window | aspect | LoadingBay yard (0.80) | quay / siding (0.84) |
+> |---|---|---|---|
+> | 1280×720 | 1.78 | 0 | 0 |
+> | 1800×870 | 2.07 | **+40px** | **+46px** |
+> | 2000×970 | 2.06 | **+44px** | **+50px** |
+> | 2560×1080 | 2.37 | **+105px** | **+119px** |
+>
+> So on any wide window the cargo stacks, the cart, the customer and Milo all stand that far above the
+> painted ground — the floating fault this repo has now shipped four times. **It is invisible at
+> 1280×720, which is the only size either chapter was ever driven at.** OrderDesk's ground shares are
+> higher still (0.86–0.88), so it is worse there.
+> **The fix is the ~4 lines RailLine now carries** (`IMG_W`/`IMG_H` + the cover map), plus adding the
+> wide sizes to whatever sweep those chapters eventually get. Deliberately NOT done here: they are
+> shipped chapters and this session's commit is a new one, which is the same call the 🧮 session made
+> about `town_park + teal`. **Do it before the next 9–11 deploy.**
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED.** Working tree: `RailLine.tsx` (new) · `railLineRounding.test.ts` (new) ·
+>    3 rail backdrops + `rail_train.png` (new) · `story/page.tsx` + `registry.tsx` (one line each) ·
+>    `chapter-craft.md` (**8 new rules, +73 lines** — the cover-fit mapping · the `onRound` cheat
+>    sheet · the boundary case that must be stated · the two-option answer surface · a prop that must
+>    be on screen while the child decides · the character-vs-vehicle size rank · and two measurement
+>    traps, `getComputedStyle` during a transition and the same-tick `disabled` read) ·
+>    **`RoundingTrail.tsx` DELETED**. Deploying needs `public/sw.js` v81 → v82.
+>    `scripts/.voice-*.json` correctly untracked, as always.
+> 2. ⚠️ **A FULL TEN-ROUND RUN HAS NOT BEEN PLAYED.** Rounds beyond the third have never been on
+>    screen, the **re-teach has never fired naturally** (its estimate path was verified by forcing the
+>    type, not by getting three wrong), and no mastery exit has been observed.
+> 3. **`estimate` was reached only by a temp `?k=` override**, since it needs L3. The override was
+>    removed and grepped. A scored estimate has never come up on its own.
+> 4. ⚠️ **THE COVER-FIT FIX IS OWED TO LOADINGBAY AND ORDERDESK — see §⑦.** It is live in prod on
+>    both, worth 40–119px of float on a wide window, and it is ~4 lines each.
+> 5. **The two older 9–11 chapters still have no gate** — that open item is now one third closed.
+>    `gradePicks` is the pattern to copy for their graders, and the layout sweep here is the pattern
+>    for their geometry (**with the wide sizes in it**, which is the whole lesson of §⑥).
+> 6. **9 chapters remain in the band**; the doc's build order says FactorLab + AngleScope next, whose
+>    coin-flip defect the §① rule now has a worked answer for.
+> 7. **Nobody has watched a child play it**, and — as every session before this — **every fault that
+>    mattered was found by looking at the screen, by the founder, or by writing the gate; not one by
+>    the type-checker.** Two of this session's were the founder's, and the second of those
+>    (§⑥) was invisible to every measurement I had taken, because I had taken them all at one aspect.
+>
+> _(the 🏗️ block below is the same day's earlier work — the 9–11 cast and The Order Desk.)_
+
+> 🏗️ **2026-07-31 — THE 9–11 BAND GETS A CAST, AND ITS SECOND CHAPTER: NUMBERVAULT → **THE ORDER DESK**. 🚀 SHIPPED — both chapters, see the commit table in ▶ OPEN.** `tsc` 0 · **416/416 vitest** · `next build` · **two full runs played to their own finish** — one perfect, one erring every round.
 >
 > **The asks, in order:** *"hum chapter number 1 age 9-11 ko poora animation mein kaise convert kare"* → *"usko proper story animation waala feel kaise dege?"* → **"fully animated lagna chahiye"** → *"tum generate jo cheeze chahiye… mujhe accha aur interesting animation chahiye"* → *"make size bigger of everything and remove fox"* → *"words ke saath number figures bhi aana chahiye"* → *"poora run khel ke dekho"*.
 >
@@ -4621,7 +4882,11 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-07-31 (LATEST — see the top 🏗️ block. **The 9–11 band gets a CAST, and its second chapter: NumberVault → THE ORDER DESK. 🚀 SHIPPED — both chapters.** The blocker was never the engine (`Arrive`, `SheetCell`, `journeyOf`, `yard.tsx` all adopt free) — it was that **all 24 drawn cycles are cozy animals**, which is the "reads too young" problem arriving by another door. ~40.5 credits bought a **bear depot foreman** and a **badger lorry driver** plus three yard backdrops; ⚠️ the handoff's credit line was wrong AGAIN (said ~373, actually 1186.5). ⚠️ **Two art lessons:** the first bear came back in heavy black cartoon outline — the flat-vector style already rejected once, and `duck_side.png` is the right reference (thin warm-brown line, not `bear.png` which is itself old vector); and **cut a cycle from the ACTIVE window, not the front of the clip** — frames 0–17 of 121 have an identical feet-span, so `--start 0` gave a strip **9 of 12 cells STATIC**, and a stronger "BIG strides" prompt bought **1%** where re-cutting the same clip bought all of it. **The Order Desk:** a customer walks in from off-frame, waits, and leaves with the goods; four bays run thousands→ones the way a number is written; you load the biggest unit that fits and work down, which IS place value. ⚠️ **The old chapter's blocks lied about their own proportions** (a hundred at `u*4.4` square = 19 units of area, a thousand the SAME size as a hundred) — every piece here is derived from one unit and measured **150px at u=15, exactly ten**. The **bundle** is watchable: ten in a bay fuse into one of the next size and travel one bay LEFT. **Two narrowings, both measured and both in the header:** digits 0..5 (nine honest pieces forces the unit to ~9px and an uncountable manipulative is a wrong answer the chapter caused), and **Milo does not walk** (he stood on the hundreds bay's own label; the journeys belong to the customer and the flying pieces). ⚠️ **Seven faults, every one found by looking:** pieces rendered as FLAT SLABS because `shadesOf` returns `rgb(...)` and hex-alpha on it is invalid CSS, so every subdivision silently did not paint — a piece *asserting* its value, the exact fault the chapter exists to fix; the bubble ran **143px off the right edge**; the customer stood on the "ones" bay at 640×320; `u` had a floor that exceeded its own budget; the smallest piece gave the smallest tap target (25px); the bays were invisible at `.16` alpha; and ⚠️ **the bubble appeared before the customer did** (founder's catch), which exposed that they travelled from the MIDDLE of the frame — the craft doc's *token step is not an arrival*. **Size:** unit 12→15px, people 165→216px, and the lever was the **packing**, not the cap — fanned pallets span 20 units instead of 32. **Words AND figures** now (founder's call): *"three hundred and twelve — that is 312"*. ✅ **Two full runs played:** all correct → all three types incl. **`value` for the first time ever on screen**, and the mastery exit **correctly withheld by `coverage`** until it was asked; erring every round → **all ten rounds and the re-teach twice**. That second run found a real content fault — a `value` round could land on the ONES, where the answer is the number in the question. ▶ Open: **neither chapter has a gate of its own**; 640×320 is measured on OrderDesk but not played, and unchecked on LoadingBay; `NumberVault.tsx` and `DataDeck.tsx` are dead files still on disk; the cut fox is committed but deliberately unregistered; **10 chapters remain**; nobody has watched a child play either. _(prior footer follows.)_)_
+_Last updated: 2026-08-01 (LATEST — see the top 🗣️ block. **A real 12–14 tester's review answered: the walkthrough now WRITES OUT what Milo says, and any step can be replayed. 🚀 SHIPPED — `main`@`e706ab7`, sw v81 → v82.** `tsc` 0 · **452/452 vitest (+5)** · `next build` · 0 console errors. ⓪ The kid asked whether they had missed a feature, so that was checked rather than assumed: the walkthrough DOES write things out, but **only the terse MATH** — measured, **11 spoken steps against 10 board lines, step 1 with no written trace at all**. `↺ Watch again` existed but only AFTER the whole run ended, so the rewind half of the report was exactly right. ① Caption (reusing the exported-but-unused `Says`), a **dot per step**, back/again/next, and speech speed persisted per device. ⚠️ **The first cut was rejected by the founder and correctly so** — `Back`/`Again` restarted the run FROM that point, so narration carried on over a child who wanted one thing repeated; a step now plays **ONCE and STAYS**, with `▶▶ Play on` handing control back. ② ⚠️ **The speed chip would have been a DEAD BUTTON for exactly the kids it is for** — `rate` only ever reached the browser-TTS fallback, and 12–18 plays **605 pre-rendered clips** that ignored it; now `playbackRate` on the shared clip element, `preservesPitch` on, gated and **mutation-tested**. ③ ⚠️ **Responsiveness broke TWICE and both were caught by measuring, not looking** — illustration **0px** with the skip button 31px then 55px below a 320px viewport, while screenshots read merely 'cramped'. Height came from the board's HISTORY, from THE PLAN **on short frames only**, and by dropping the dot strip there — **never from the words**. Chasing it found a **pre-existing** bug: the side column was `overflow: hidden` and had been clipping THE PLAN mid-sentence at 640×320; now `overflowY: auto`. ④ **The worst case was found by measuring all 37 chapters rather than testing the convenient one** — longest caption 209 chars (SkateRamp) vs the 160 first tried, most steps 26 (BestPlan) vs 18; a **229-char injection** still fits (298 of 320). ⚠️ A first pass at that metric was WRONG — its 565-char 'worst line' was `overview.say`, the intro read-along, which is **not captioned**. ⑤ Verified: jump-to-step **holds** (step 7 still there 9s later), `Play on` resumes unattended, speed persisted to IndexedDB and survived a reload; all 37 chapters have a `TutorialScene`, so the legacy branch is dead code. ▶ Open: ⚠️ **the 200-case short-landscape sweep was left at 8/200 (0 failures) and never read to its summary** — written down as unfinished rather than rounded up; **no human has HEARD the speed control** (the pane is mute — the same blindness that hid TickTock's hang); the 3-wrong re-teach is still uncaptioned; scope is **12–18 only**; and ⚠️ **The Rail Line is still UNCOMMITTED on purpose** — only this session's four files were committed (verified with `git show --stat`), so prod does NOT have the rounding chapter and shipping it now needs **sw v82 → v83**. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-01 (LATEST — see the top 🚂 block. **RoundingTrail → THE RAIL LINE, the 9–11 band's third chapter. ⚠️ NOT COMMITTED.** `tsc` 0 · **447/447 vitest (+31 — the band's FIRST chapter gate)** · `next build` · driven at 1280×720, 640×320 and 1800×870 (aspect 2.07). ⓪ The rethink doc's proposed world (*"the truck holds 100, round each crate and add"*) **is The Loading Bay's**, shipped hours earlier, so it had to be re-picked — founder chose the rail line. And the free grown-up backdrops fail on MEASUREMENT, not taste: `train_station` 0.832 value where things stand, `bus_depot` 0.811, all **brighter than the cast** and on **Milo's own hue**. ~6 credits bought three painted rail scenes + a train. ① **The track IS the number line and it is painted into the backdrop** — all three scenes generated with one straight track across the lower third, so only the posts and markers are code-drawn. Milo is the signalman; a passenger wants km 47, there is no platform at 47, so **the rounded number is the only place you can actually get to.** ⚠️ **The old chapter was a COIN FLIP** — it drew the two bracketing stops, which hands over *which ten the number is in*, i.e. place value. Six stations now: find the bracket, then choose. 50% → 17%. One control, three question types (`round10` · `round100` · `estimate`, two legs), one grader. The position marker **fades by tier**; a wrong answer reveals the HALFWAY post, never the marker. ② ⚠️ **Five faults, none findable by a type-check:** the run strip was a **cheat sheet** (`onRound` fires on round LOAD, so it printed the current answer — measured, round 2 read `20 30` with 30 unanswered); the waiting train parked at **x = −50**, off-frame with its passenger for the whole decision; at **640×320 Milo's bubble covered two of the six answer targets** (355–624 across boards at 463–510) — post height is now derived from the bubble's own band, mutation-tested; the gate caught an estimate leg landing ON a station; and ⚠️ **the exact-halfway case was neither worded nor taught** — three guided rounds drew 15, 75, 65 so I suspected a biased generator and **measured it: 10.18%, exactly uniform**, i.e. genuine bad luck that earned a real fix, since the miss line had been claiming *"15 is PAST 15"*. ③ The forced-estimate drive found the **re-teach teaching half the skill** — it read `legs[0]` only, so a child who had just failed three estimates was never told to ADD the two. ④ **Gate: 31 tests at 10 sizes**, driving the same exported functions the scene uses (`gradePicks` extracted for exactly that), including **two wrong roundings that sum to the right total are refused** — SliceShop's hole, planted. ⑤ The train's journey proven by one observer sample: `inline 788.28px / computed 185px`, i.e. it travels rather than jumps; the passenger walks off on its own legs. ⑥ ⚠️ **THEN THE FOUNDER LOOKED AT IT ON A WIDE WINDOW** — *"train properly naii dikh rahi ki rail pe chal rahi hai"* — **and every measurement I had taken said it was fine.** A ground line read off a painting is a share of the **IMAGE**, not of the viewport: the backdrop is `object-fit: cover`, so on his 2000×970 window (aspect 2.06 against the art's 1.79) the scene renders 1116px tall, crops 73px off each end, and the painted rail moves — **the train floated 44px**. At 1280×720 the aspects match, which is why every check I ran passed. It is CoinShop's `fitFor` lesson, unapplied. Now mapped through the real transform; **measured live at aspect 2.07, float 0px**, and the sweep gained three wide sizes. Same complaint carried a second fault: **the size ranks were inverted** — Milo 0.30 against a locomotive at 0.155, i.e. a tank engine half the height of a pony at the same depth. Now 0.24 / 0.28 (**+81% taller**), with `trainH > miloH` gated — and the bigger engine then covered the boards AND the halfway post (the only help a wrong answer gives), so the post heights are a derived stack now. ⚠️ **And mutation testing caught my own gate being useless**: the first cover-fit assertion said `trackPx <= painted` "or clamped upward", which let the original bug straight through. Asserted exactly, it fails. ⑦ ⚠️⚠️ **AND GREPPING FOR THAT PATTERN FOUND IT LIVE IN BOTH SHIPPED 9–11 CHAPTERS** — `LoadingBay.tsx:232` and `OrderDesk.tsx:365` both do `groundPx = vh * groundY` over `objectFit: cover` backdrops of the same 1376×768. Measured: **+40px of float at 1800×870, +44/+50 at 2000×970, +105/+119 at 2560×1080** (OrderDesk is worse — its ground shares are 0.86–0.88). Invisible at 1280×720, which is the only size either was ever driven at. FOUND, NOT FIXED — they are shipped chapters and this is a new commit; **~4 lines each, do it before the next 9–11 deploy.** ▶ Open: **not committed** (needs sw v81 → v82); **no full ten-round run**; the re-teach has never fired naturally; `estimate` was reached only via a temp `?k=` override (removed and grepped); the two older 9–11 chapters still have no gate; **9 chapters remain**; nobody has watched a child play it. _(prior footer follows.)_)_
+
+_Prior update: 2026-07-31 (the 🏗️ block. **The 9–11 band gets a CAST, and its second chapter: NumberVault → THE ORDER DESK. 🚀 SHIPPED — both chapters.** The blocker was never the engine (`Arrive`, `SheetCell`, `journeyOf`, `yard.tsx` all adopt free) — it was that **all 24 drawn cycles are cozy animals**, which is the "reads too young" problem arriving by another door. ~40.5 credits bought a **bear depot foreman** and a **badger lorry driver** plus three yard backdrops; ⚠️ the handoff's credit line was wrong AGAIN (said ~373, actually 1186.5). ⚠️ **Two art lessons:** the first bear came back in heavy black cartoon outline — the flat-vector style already rejected once, and `duck_side.png` is the right reference (thin warm-brown line, not `bear.png` which is itself old vector); and **cut a cycle from the ACTIVE window, not the front of the clip** — frames 0–17 of 121 have an identical feet-span, so `--start 0` gave a strip **9 of 12 cells STATIC**, and a stronger "BIG strides" prompt bought **1%** where re-cutting the same clip bought all of it. **The Order Desk:** a customer walks in from off-frame, waits, and leaves with the goods; four bays run thousands→ones the way a number is written; you load the biggest unit that fits and work down, which IS place value. ⚠️ **The old chapter's blocks lied about their own proportions** (a hundred at `u*4.4` square = 19 units of area, a thousand the SAME size as a hundred) — every piece here is derived from one unit and measured **150px at u=15, exactly ten**. The **bundle** is watchable: ten in a bay fuse into one of the next size and travel one bay LEFT. **Two narrowings, both measured and both in the header:** digits 0..5 (nine honest pieces forces the unit to ~9px and an uncountable manipulative is a wrong answer the chapter caused), and **Milo does not walk** (he stood on the hundreds bay's own label; the journeys belong to the customer and the flying pieces). ⚠️ **Seven faults, every one found by looking:** pieces rendered as FLAT SLABS because `shadesOf` returns `rgb(...)` and hex-alpha on it is invalid CSS, so every subdivision silently did not paint — a piece *asserting* its value, the exact fault the chapter exists to fix; the bubble ran **143px off the right edge**; the customer stood on the "ones" bay at 640×320; `u` had a floor that exceeded its own budget; the smallest piece gave the smallest tap target (25px); the bays were invisible at `.16` alpha; and ⚠️ **the bubble appeared before the customer did** (founder's catch), which exposed that they travelled from the MIDDLE of the frame — the craft doc's *token step is not an arrival*. **Size:** unit 12→15px, people 165→216px, and the lever was the **packing**, not the cap — fanned pallets span 20 units instead of 32. **Words AND figures** now (founder's call): *"three hundred and twelve — that is 312"*. ✅ **Two full runs played:** all correct → all three types incl. **`value` for the first time ever on screen**, and the mastery exit **correctly withheld by `coverage`** until it was asked; erring every round → **all ten rounds and the re-teach twice**. That second run found a real content fault — a `value` round could land on the ONES, where the answer is the number in the question. ▶ Open: **neither chapter has a gate of its own**; 640×320 is measured on OrderDesk but not played, and unchecked on LoadingBay; `NumberVault.tsx` and `DataDeck.tsx` are dead files still on disk; the cut fox is committed but deliberately unregistered; **10 chapters remain**; nobody has watched a child play either. _(prior footer follows.)_)_
 
 _Prior update: 2026-07-31 (the 📦 block — this workstream's first half. **The 9–11 band re-thought as story worlds, and the first chapter built: DataDeck → THE LOADING BAY. 🚀 SINCE SHIPPED with The Order Desk; the "NOT COMMITTED" this footer used to carry is stale.** The audit is starker than 6–8's was: across all twelve chapters, **zero drawn cycles, zero journeys, zero images, zero keyframes** — every one answers by tapping a `choices` chip, Milo is `<PtMilo left={9} />` bobbing in the corner with no job, and one `<LabBackdrop>` serves all ten rounds. **Aliveness 0 of 4, twelve times**, and delete-the-art fails band-wide. **Two live defects, neither a style matter:** DataDeck printed every bar's value at `opacity: 0.5` **before the child answered**, so the chart was decoration and the numerals were the question AND the answer; and a third of the band's questions are **coin flips** (FactorLab's easiest tier is two-thirds 50/50, and `adaptive.ts` promotes a guesser about one run in eight). **Founder decisions:** grown-up story worlds — not the 3–8 storybook (too young), not the neon HUD with motion bolted on (that is SliceShop's rejected first rebuild) — and **generate 3 painted depot scenes**, taken because ⚠️ `order_yard`/`order_depot` are **flat vector** (the style already rejected once) and the free `market_*` fields are **near-empty pale gradients**. The three new backdrops measure **0.693 / 0.522 / 0.554**, all below their cast. ⚠️ **The cargo cast was picked by measurement and it killed the obvious choice** — `crate` FAILS camouflage on the siding (Δhue 11°, Δsat 0.19), as do pear, egg and flour sack. The chapter makes **the stacks themselves the chart** — countable cargo, no numeral until commit — with the foreman needing an answer and the correct one **sending the cart**. ⚠️ **Seven faults, every one found by driving it and none by a type-check**: the base plate drew above the stack; the sprites' ink boxes differ so wildly that one column read as a bar and another as scattered dots (fatal when the question is *which is biggest*); an arbitrary `vw/26` cap shrank the chart to 228px of a 1280px frame; the cart sat inside Milo's speech bubble, and then **its badge did the same thing**; my manifest collided with SkillBeat's own counter; and **loaded goods vanished instead of travelling** while the demo said *"each one rides over to the cart"*. Plus a **grader hole closed before shipping** — SliceShop's exact hole, where a matching count off the wrong stack passes. Verified live: the SCORED round renders (the `position: fixed` trap a demo cannot show), the written miss line fires, and **four taps in one React batch all registered** — the bug class that has bitten this repo four times. ▶ Open: **not committed, no gate, `next build` not run**; **only round 1 has been played** — `diff` and `total` have never been on screen and the re-teach has never fired; **640×320 unchecked entirely**; the flyer's mid-flight was never traced (throttled timers, frozen rAF); undo does not travel; **11 chapters remain**; nobody has watched a child play it. _(prior footer follows.)_)_
 
