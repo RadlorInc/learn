@@ -51,12 +51,6 @@ export default function InsightsPage() {
             <Stat label="Avg accuracy" value={m.accuracy != null ? `${m.accuracy}%` : '—'} sub="practice rounds" />
           </div>
 
-          <h2 style={S.h2}>Milo&apos;s Daily (the retention loop)</h2>
-          <div style={S.cardsRow}>
-            <Stat label="Daily opened" value={m.dailyOpens} />
-            <Stat label="Daily finished" value={m.dailyCompletes} sub={`${pct(m.dailyCompletes, m.dailyOpens)} completion`} />
-          </div>
-
           <h2 style={S.h2}>Per learner</h2>
           <div style={{ overflowX: 'auto' }}>
             <table style={S.table}>

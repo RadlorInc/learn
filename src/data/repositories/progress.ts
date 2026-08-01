@@ -78,8 +78,9 @@ export async function getParentDashboard(): Promise<DashboardEntry[] | null> {
 export interface InsightsRollup {
   per_learner: { learner_id: string; first_ms: number | null; last_ms: number | null; sessions: number; active_days: number }[]
   accuracy:    { correct: number; wrong: number; practice_sessions: number }
-  event_counts:{ chapter_open: number; practice_complete: number; lesson_skip: number; daily_open: number; daily_complete: number }
-  daily_days:  { learner_id: string; created_at: string }[]
+  // The RPC also returns daily_open/daily_complete counts and daily_days rows. Milo's Daily was
+  // deleted, so nothing reads them; extra keys in the JSON are simply ignored here.
+  event_counts:{ chapter_open: number; practice_complete: number; lesson_skip: number }
 }
 
 /**

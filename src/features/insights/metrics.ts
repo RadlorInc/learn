@@ -56,8 +56,6 @@ export function computeMetrics(learners: Learner[], sessions: Sess[], events: Ev
   const opens = events.filter(e => e.event === 'chapter_open').length
   const completes = events.filter(e => e.event === 'practice_complete').length
   const skips = events.filter(e => e.event === 'lesson_skip').length
-  const dailyOpens = events.filter(e => e.event === 'daily_open').length
-  const dailyCompletes = events.filter(e => e.event === 'daily_complete').length
   const practice = sessions.filter(s => s.phase === 'practice')
   const totC = practice.reduce((a, s) => a + s.correct_count, 0)
   const totW = practice.reduce((a, s) => a + s.wrong_count, 0)
@@ -68,7 +66,6 @@ export function computeMetrics(learners: Learner[], sessions: Sess[], events: Ev
     active7, active30, returning,
     d1: retention(1), d7: retention(7), d30: retention(30),
     opens, completes: completes || practice.length, skips, accuracy,
-    dailyOpens, dailyCompletes,
     rows: per.sort((a, b) => (b.lastMs ?? 0) - (a.lastMs ?? 0)),
   }
 }
@@ -118,7 +115,6 @@ export function computeMetricsFromRollup(learners: Learner[], r: InsightsRollup)
     completes: ec.practice_complete || r.accuracy.practice_sessions,
     skips: ec.lesson_skip,
     accuracy: totC + totW > 0 ? Math.round((totC / (totC + totW)) * 100) : null,
-    dailyOpens: ec.daily_open, dailyCompletes: ec.daily_complete,
     rows: per.sort((a, b) => (b.lastMs ?? 0) - (a.lastMs ?? 0)),
   }
 }
