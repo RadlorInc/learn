@@ -12,7 +12,103 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🚆 **2026-08-01 (LATEST) — THE RE-TEACH IS CAPTIONED TOO, AND THE RAIL LINE IS OUT OF THE TREE AND ON PROD. 🚀 SHIPPED — `main`@`013d772`, prod serving **sw v83**, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **452/452 vitest** · `next build` · 0 console errors on prod.
+> ✂️ **2026-08-01 (LATEST) — A REPO-WIDE OVER-ENGINEERING AUDIT, THEN THE FOUR DELETE-TAGGED FINDINGS TAKEN: −1,502 LINES, AND THE DEAD RIG IS FINALLY GONE. 🚀 SHIPPED — `main`@`7723493`, prod serving **sw v84**, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **452/452 vitest** · `next build` · 0 console errors on prod.
+>
+> **The ask:** `/ponytail-audit` over the whole tree, then *"delete the things which you caught to delete"*, then the two insights tiles that fell out of it, then merge + push.
+>
+> | commit | what |
+> |---|---|
+> | `12a3505` | the puppet rig · `/daily` · 2 orphan chapters · 6 dead exports |
+> | `4ebfdb3` | the Milo's Daily insights tiles + their whole metric chain |
+> | `7723493` | `public/sw.js` v83 → v84 |
+>
+> **Deploy verified rather than remembered:** `origin/main` was at `4dba4a2`, identical to local, so the
+> merge was a **clean fast-forward with no merge commit**; local and remote both read `7723493`,
+> **0 ahead / 0 behind**. Prod `sw.js` reported **v84 on the sixth poll** (~70s). Smoke — `/` `/menu`
+> `/api/health` `/insights` `/parent` `/story` · `?ch=round` · `/teen-preview?c=integers` `/diagnostic`
+> — **9 of 9 = 200**, and all six formerly-rigged creatures' sheets 200. **`/daily` is a real 404**,
+> checked as a status code AND rendered, because this file already records that Next's not-found string
+> ships in every route's HTML shell so only the status distinguishes them.
+>
+> ## ⓪ THE AUDIT'S HEADLINE IS THAT THE REPO IS ALREADY LEAN
+> A real import graph (not grep — see §⑤) found **exactly two orphan modules in 68k lines.** The July
+> sweep did its job; what was left is the handful of things it deliberately parked as *"decisions, not
+> oversights"*. So this session took the four `delete:`-tagged findings and left the four
+> `yagni:`/`stdlib:` ones, which are **rewrites, not deletions** — see ▶ OPEN.
+>
+> ## ① THE PUPPET RIG WAS DEAD BY CONSTRUCTION, AND THAT IS WHY IT SURVIVED THE MECHANICAL SWEEP
+> `ParadeStage` picks `rigged = !!o.rig && !o.frames?.length`, and **all six `RIGS` keys** (rabbit ·
+> squirrel · ant · ladybug · crab · turtle) **have a `SHEETS` entry** — so drawn frames always won and
+> `this.legs` was never populated. The 🧹 block correctly refused to cut it: `rigs.ts` IS imported by
+> `ParadeStage`, so it is not dead **by the import graph**, only by the *value* of a condition. That is
+> the general shape worth keeping: **an import-graph sweep cannot see code that is unreachable by
+> arithmetic.** Gone: `rigs.ts` · `buildRig` · the leg-swing gait branch · `STANCE` ·
+> `scripts/creature-{legs,preview}.py`. `ParadeStage.ts` **601 → 502**.
+>
+> ## ② TWO CORRECTIONS TO MY OWN AUDIT, BOTH CAUGHT BEFORE CUTTING
+> ⚠️ **`SWING_RATE` is NOT rig-only** — it is live at `cyclesPerSec` for any creature with no drawn
+> sheet, and cutting it with the rig would have broken the Farm/Space casts silently. Only `STANCE`
+> went. ⚠️ **And `GET` in `api/health/route.ts` is a Next route handler, not a dead export** — my
+> dead-export scan matched on "no other file references it", which is true of every route handler in
+> the app. **A scan that does not know the framework's entry points reports the framework as dead.**
+>
+> ## ③ THE INSIGHTS TILES — CUT THE CHAIN, NOT THE TILES
+> Deleting `/daily` left *"Daily opened / Daily finished"* on `/insights` reporting a feature that no
+> longer exists. Cutting only the two `<Stat>`s would have left `dailyOpens`/`dailyCompletes` dead in
+> **both** metric paths, so the whole chain went: the tiles, the fields in `computeMetrics` AND
+> `computeMetricsFromRollup`, and the keys on `InsightsRollup`. **`daily_days` went with them** —
+> nothing read it; it was the streak's source and the streak was dropped from the DB in July.
+> • **The RPC is deliberately untouched.** `get_insights_rollup` still returns those keys and the extra
+>   JSON is ignored, so this needed **no migration and no DB deploy** — with a comment on
+>   `InsightsRollup` saying so, or the next reader thinks the type has drifted from the RPC.
+>
+> ## ④ WHAT WAS ACTUALLY VERIFIED, AND WHAT THE PROD DRIVE DOES NOT COVER
+> The rig cut touched **live animation code**, so it was driven rather than trusted. On a dev build:
+> forced a **rabbit** (one of the six formerly-rigged creatures) via `?obj=` — it parades in on its
+> drawn cycle and **tapping it registers** (counted ring + collect tray), which is the check that
+> matters, because the riskiest edit was collapsing the `hitArea` ternary. Then on **prod**: the Pixi
+> parade renders, a fish swims in on its own cycle, the tap registers, a second creature follows.
+> **0 console errors** both times.
+> ⚠️ **Stated because a status line outrunning its evidence is this file's oldest fault:** the creature
+> driven ON PROD was a **fish**, which never had a rig — `?obj=` is dev-only and stripped in production,
+> so reaching a rabbit there needs playing several real rounds. The rabbit drive was on a **dev build of
+> identical code**. And ⚠️ **`/insights` was never opened signed-in** (it is auth-gated), so the two
+> deleted tiles are `tsc` + `next build` only — **`computeMetrics` has no unit test**, so the 452 green
+> specs do not touch that change. What holds it is the type system: `Metrics = ReturnType<typeof
+> computeMetrics>` and `computeMetricsFromRollup(): Metrics` force both paths to the same shape.
+>
+> ## ⑤ ⚠️ MY FIRST ORPHAN DETECTOR REPORTED 190 OF 200 FILES AS DEAD
+> A shell loop grepping each basename flagged `GameShell`, `critters`, `world1` — the load-bearing files
+> — as unreferenced. **A sweep that flags everything is a broken sweep**, which this file already
+> records, met again. The fix was a 20-line node script that resolves `@/` and relative specifiers into
+> real paths and excludes framework entry points; it returned **2**. Same family as the `tsc`-fails-on-
+> deleted-routes trap, which also recurred: removing `/daily` left stale `.next/{dev,}types` validators
+> failing a clean build until cleared (no dev server was running).
+>
+> ## ▶ OPEN
+> 1. ⚠️ **THE AUDIT'S OTHER FOUR FINDINGS ARE UN-TAKEN, and they are rewrites rather than deletions** —
+>    ranked by size, with the risk stated: **(a)** the Pixi parade engine has exactly ONE caller
+>    (`world1.tsx:596`) while `critters.tsx` serves 5 chapters and 4 test suites — porting it frees
+>    **~839 lines + the `pixi.js` dep**, but it is a rewrite of chapter 1's parade and wants its own
+>    session; **(b)** `/story/page.tsx` keeps a SECOND chapter dispatch table (33 lazy imports + an
+>    87-line switch) that `registry.tsx` already covers, **~120 lines**; **(c)** `rint` is written out
+>    identically **55 times**, `shuffle` 29, the minus-glyph formatter 32 — one `core/rand.ts` +
+>    `core/fmt.ts` is **~120 lines**, and **9 of those shuffles are the biased `sort(() => Math.random()
+>    − 0.5)`**, which is a correctness matter riding along; **(d)** `sharp` sits in `dependencies` but is
+>    imported only by two test files — it belongs in `devDependencies`.
+> 2. ⚠️ **THE COVER-FIT FIX IS STILL OWED TO LOADINGBAY AND ORDERDESK** — unchanged by this session and
+>    now three deploys old. `LoadingBay.tsx:232` and `OrderDesk.tsx:365` still compute
+>    `groundPx = vh * groundY` over `objectFit: cover` backdrops: **+40px of float at 1800×870,
+>    +105/+119px at 2560×1080**. ~4 lines each, and The Rail Line carries the worked pattern.
+> 3. **No `/daily → /menu` redirect**, deliberately — the same call the ✂️ session made for `/play`:
+>    ~10 lines of permanent config for a hypothetical bookmark is the speculative flexibility the audit
+>    was cutting. Unlike `/play`, `/daily` was never linked from a shipped menu.
+> 4. **A human still has not HEARD any of the speech work**, and nobody has watched a child use any of
+>    it — both carried unchanged from the 🚆 block below.
+>
+> _(the 🚆 block below is the same day's earlier work — the re-teach caption and The Rail Line.)_
+
+> 🚆 **2026-08-01 — THE RE-TEACH IS CAPTIONED TOO, AND THE RAIL LINE IS OUT OF THE TREE AND ON PROD. 🚀 SHIPPED — `main`@`013d772`, prod serving **sw v83**, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **452/452 vitest** · `next build` · 0 console errors on prod.
 >
 > **The ask:** the two items left open at the bottom of the 🗣️ block — *"yeh dono kar do."*
 >
@@ -2917,22 +3013,25 @@
 >
 > ## ⑥ THE AUDIT FOUND MORE THAN WAS TAKEN — this is the actionable residue
 > Ranked, biggest first. The two taken above, then:
-> 1. **Two walk-cycle sprite engines.** `ParadeStage` (Pixi, 601 + 97 lines) serves **exactly one
->    caller** — `world1.tsx:596` — while `critters.tsx` (DOM, 388 lines) serves five chapters and four
->    test suites. Porting the parade onto `critters` cuts **~839 lines and frees `pixi.js`**. It is a
->    rewrite of chapter 1's parade, not a deletion, so it carries real risk.
-> 2. **The cut-out puppet rig is dead by construction** and this is now *proven*, not suspected:
->    `rigged = !!o.rig && !o.frames?.length`, and **all 6 `RIGS` keys (ant, crab, ladybug, rabbit,
->    squirrel, turtle) have a `SHEETS` entry**, so drawn frames always win. `rigs.ts` (141) + the rig
->    branches in `ParadeStage` (~130) + `scripts/creature-legs.py` + `creature-preview.py` = **~485
->    lines**. This closes the long-standing "DELETE THE DEAD RIG" item with evidence. *(Subset of #1 —
->    do not count both.)*
-> 3. **`/daily` is unlinked** — no reference from any page, and the streak it existed for was dropped
->    from the DB in July. **256 lines.**
+> 1. **Two walk-cycle sprite engines. STILL OPEN** — the rig (#2) was a subset and is now taken, but the
+>    engine itself is untouched. `ParadeStage` (Pixi) serves **exactly one caller** — `world1.tsx:596` —
+>    while `critters.tsx` (DOM) serves five chapters and four test suites. Porting the parade onto
+>    `critters` frees **~600 lines and the `pixi.js` dep**. It is a rewrite of chapter 1's parade, not a
+>    deletion, so it carries real risk and wants its own session. *(Figures re-measured 2026-08-01:
+>    `ParadeStage` 601 → **502** after the rig cut, `ParadeCanvas` 97, `critters.tsx` 388 → **686**.)*
+> 2. ✅ **The cut-out puppet rig — TAKEN 2026-08-01** (`12a3505`, sw v84). The proof stated here held up:
+>    `rigged = !!o.rig && !o.frames?.length` with all 6 `RIGS` keys carrying a `SHEETS` entry. ⚠️ The
+>    −485 estimate was close but the shape was slightly off — **`SWING_RATE` had to STAY** (live at
+>    `cyclesPerSec` for a creature with no sheet); only `STANCE` went with it.
+> 3. ✅ **`/daily` — TAKEN 2026-08-01**, route + `daily.ts` + the two now-meaningless `/insights` tiles
+>    and their whole metric chain. The RPC still returns the `daily_*` keys, so no migration was needed.
 > 4. **`shuffle`/`pick`/`rint`/`rnd` are redefined 99 times.** One `src/core/rand.ts` saves **~90
 >    lines**; **15 of the copies are the biased `sort(() => Math.random() - 0.5)`**, which is a
->    correctness matter for a normal review pass rather than this one.
-> 5. `src/data/repositories/index.ts` is bypassed by 9 of 26 callers — pick one or the other.
+>    correctness matter for a normal review pass rather than this one. ⚠️ **Re-measured 2026-08-01 and
+>    it is worse than recorded:** `rint` alone is written out identically **55 times**, `shuffle` 29,
+>    and there is a fourth clone this list missed — the minus-glyph formatter, **32 times**. Still open.
+> 5. `src/data/repositories/index.ts` is bypassed by 9 of 26 callers — pick one or the other. ⚠️
+>    Re-measured 2026-08-01: **17 of 35**. Still open.
 >
 > **Checked and found clean** (worth recording so it is not re-audited): no hand-rolled stdlib
 > anywhere, no orphan modules beyond the above, no dead `GameConfig` fields, and all 8 remaining
@@ -4582,7 +4681,12 @@
 >
 > ## ▶ OPEN — this chapter
 > 1. ~~**Nothing is committed.**~~ ✅ **SHIPPED** — `6f6e5de`, merged to `main` and live on prod (sw v42). See the 🧹 block above.
-> 2. **DELETE THE DEAD RIG — STILL OPEN.** `rigs.ts`, `buildRig` + `SWING_RATE`/`STANCE`/leg code in ParadeStage, `scripts/creature-legs.py`, `scripts/creature-preview.py`. Unused on every Nature creature; keeping two systems is pure debt. *(The dead-code sweep did NOT do this — `rigs.ts` is still imported by ParadeStage, so it isn't dead by the import graph; removing it means editing live animation code, which belongs with parade work, not a mechanical sweep.)*
+> 2. ✅ **DELETE THE DEAD RIG — DONE 2026-08-01**, shipped in `12a3505` / sw v84; see the ✂️ block at the
+>    top. `rigs.ts` + `buildRig` + `STANCE` + the leg code + both python scripts are gone and
+>    `ParadeStage.ts` is 601 → 502. ⚠️ **`SWING_RATE` STAYED** — it is live at `cyclesPerSec` for any
+>    creature with no drawn sheet, so cutting it with the rig would have broken the Farm/Space casts.
+>    The note below was right that this isn't dead by the import graph: it was dead by the VALUE of
+>    `rigged = !!o.rig && !o.frames?.length`, since all 6 `RIGS` keys have a `SHEETS` entry.
 > 3. **Farm + Space storytellings — 9 creatures, ~70 credits** (lamb, chick, duckling, bee, frog, duck, dragonfly, astronaut, alien). Frog needs the magenta key.
 > 4. **Cadence tuning is one number each in sheets.ts.** Founder already flagged eagle (0.67→1.33s) and ladybug (0.55→1.00s) as too fast. **`ant` is now the fastest at 0.46s** and may be next. Also unjudged: whether 2.4× exit and the instant refill feel right (briefly 3 creatures on screen).
 > 5. **Not checked: Safari, real device, short-landscape.** All of this was headless Chromium at 1024×600.
@@ -4986,7 +5090,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-01 (LATEST — see the top 🚆 block. **The 3-wrong re-teach is captioned too, and The Rail Line is out of the tree and on prod. 🚀 SHIPPED — `main`@`013d772`, prod serving sw v83, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **452/452 vitest** · `next build` · 0 console errors on prod. ① The walkthrough was captioned last session but the **re-teach was still audio-only** — the worst place to leave it, since a child who has just missed three in a row is the last one who should get the explanation as sound alone. `task.work` now writes onto the walkthrough's **own `Blackboard`**. ⚠️ Fixing it exposed a timing bug: the advance was a **flat 6400ms** against lines spoken by `speakSeq` — a backstop timed against the SILENT fallback, so a real voice (or the child's own 'Slower') had **the last line or two cut off mid-explanation**. Now it advances on the sequence's own `onDone` with a guarded backstop. Driven live **on a dev build** (reaching a re-teach on prod needs three wrong answers inside a real run): three deliberate wrong answers → the board writes → the run continues. ② **The Rail Line shipped** — its 31-test gate re-run green before staging, then driven on prod (six stations, km marker, halfway post, Milo the signalman), and ⚠️ **the founder's *'train rail pe chal rahi hai'* fix re-verified at the aspect that caused it (1800×870, 2.07) — wheels on the rail, no float**. Prod deploy verified rather than remembered — clean fast-forward, v83 on the sixth poll, **9/9 routes and rail assets 200**, 0 console errors; but only the chapter's OPENING beat was driven there (no scored round, no commit, no re-teach). ③ ⚠️ **Shipping it changed none of its open items, which are now live in prod**: no full ten-round run has ever been played, the re-teach has never fired naturally in it, and a scored `estimate` has never come up on its own. ▶ Open: ⚠️ **the cover-fit fix is still OWED to `LoadingBay.tsx:232` and `OrderDesk.tsx:365`** (same bug, +40px float at 1800×870, +105/119px at 2560×1080; that block says fix it before the next 9–11 deploy and this WAS it — ~4 lines each, pattern already written next door); **no human has HEARD any of the speech work** (the pane is mute — and the truncation just fixed only happens on a device that HAS a voice); the re-teach caption has not been swept at 640×320; nobody has watched a child use any of it. _(prior footer follows.)_)_
+_Last updated: 2026-08-01 (LATEST — see the top ✂️ block. **A repo-wide over-engineering audit, then the four DELETE-tagged findings taken: −1,502 lines, and the dead rig is finally gone. 🚀 SHIPPED — `main`@`7723493`, prod serving sw v84, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **452/452 vitest** · `next build` · 0 console errors on prod. ⓪ **The audit's headline is that the repo is already lean** — a real import graph found **exactly two orphan modules in 68k lines**, so this took the four `delete:`-tagged findings and left the four `yagni:`/`stdlib:` ones, which are **rewrites, not deletions**. ① **The puppet rig was dead BY CONSTRUCTION, which is why the July sweep correctly refused it**: `rigs.ts` IS imported by `ParadeStage`, so it was never dead by the import graph — only by the VALUE of `rigged = !!o.rig && !o.frames?.length`, since all 6 `RIGS` keys have a `SHEETS` entry. **An import-graph sweep cannot see code unreachable by arithmetic.** `ParadeStage.ts` 601 → 502. ② ⚠️ **Two corrections to my own audit, both caught before cutting:** `SWING_RATE` is NOT rig-only (it is live at `cyclesPerSec` for any creature with no sheet — cutting it would have broken the Farm/Space casts silently), and **`GET` in `api/health/route.ts` is a Next route handler, not a dead export** — a scan that does not know the framework's entry points reports the framework as dead. ③ **The insights tiles: cut the CHAIN, not the tiles** — deleting `/daily` left "Daily opened/finished" reporting a dead feature, so the two `<Stat>`s, the fields in BOTH metric paths and the `InsightsRollup` keys all went; `daily_days` with them. The RPC is deliberately untouched, so **no migration and no DB deploy**. ④ **Driven, because the rig cut touched live animation code:** on a dev build a **rabbit** (one of the six formerly-rigged creatures) parades in on its drawn cycle and **tapping it registers** — the check that matters, since the riskiest edit was collapsing the `hitArea` ternary; on prod the parade renders, a fish swims in and the tap registers. 0 console errors both. ⑤ ⚠️ **My first orphan detector reported 190 of 200 files as dead**, flagging `GameShell` and `critters` — *a sweep that flags everything is a broken sweep*, met again; a 20-line import-graph script returned 2. ▶ Open: ⚠️ **the audit's other four findings are un-taken and are rewrites** — the Pixi parade port (~600 lines + the `pixi.js` dep, one caller), `/story`'s duplicate dispatch table (~120), the **55** identical `rint` clones + 29 `shuffle` + 32 minus-formatters (~120, and 9 of those shuffles are the biased sort-random), and `sharp` sitting in `dependencies` while only tests import it; ⚠️ **the cover-fit fix is STILL owed to `LoadingBay.tsx:232` and `OrderDesk.tsx:365`**, now three deploys old; **what the prod drive does NOT cover** — the creature driven on prod was a **fish**, never rigged (`?obj=` is dev-only and stripped in production), and **`/insights` was never opened signed-in**, so the two deleted tiles are tsc + build only and `computeMetrics` has no unit test; no `/daily → /menu` redirect, deliberately, same call as `/play`; **no human has heard the speech work and nobody has watched a child use any of it.** _(prior footer follows.)_)_
+
+_Prior update: 2026-08-01 (see the 🚆 block. **The 3-wrong re-teach is captioned too, and The Rail Line is out of the tree and on prod. 🚀 SHIPPED — `main`@`013d772`, prod serving sw v83, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **452/452 vitest** · `next build` · 0 console errors on prod. ① The walkthrough was captioned last session but the **re-teach was still audio-only** — the worst place to leave it, since a child who has just missed three in a row is the last one who should get the explanation as sound alone. `task.work` now writes onto the walkthrough's **own `Blackboard`**. ⚠️ Fixing it exposed a timing bug: the advance was a **flat 6400ms** against lines spoken by `speakSeq` — a backstop timed against the SILENT fallback, so a real voice (or the child's own 'Slower') had **the last line or two cut off mid-explanation**. Now it advances on the sequence's own `onDone` with a guarded backstop. Driven live **on a dev build** (reaching a re-teach on prod needs three wrong answers inside a real run): three deliberate wrong answers → the board writes → the run continues. ② **The Rail Line shipped** — its 31-test gate re-run green before staging, then driven on prod (six stations, km marker, halfway post, Milo the signalman), and ⚠️ **the founder's *'train rail pe chal rahi hai'* fix re-verified at the aspect that caused it (1800×870, 2.07) — wheels on the rail, no float**. Prod deploy verified rather than remembered — clean fast-forward, v83 on the sixth poll, **9/9 routes and rail assets 200**, 0 console errors; but only the chapter's OPENING beat was driven there (no scored round, no commit, no re-teach). ③ ⚠️ **Shipping it changed none of its open items, which are now live in prod**: no full ten-round run has ever been played, the re-teach has never fired naturally in it, and a scored `estimate` has never come up on its own. ▶ Open: ⚠️ **the cover-fit fix is still OWED to `LoadingBay.tsx:232` and `OrderDesk.tsx:365`** (same bug, +40px float at 1800×870, +105/119px at 2560×1080; that block says fix it before the next 9–11 deploy and this WAS it — ~4 lines each, pattern already written next door); **no human has HEARD any of the speech work** (the pane is mute — and the truncation just fixed only happens on a device that HAS a voice); the re-teach caption has not been swept at 640×320; nobody has watched a child use any of it. _(prior footer follows.)_)_
 
 _Prior update: 2026-08-01 (LATEST — see the top 🗣️ block. **A real 12–14 tester's review answered: the walkthrough now WRITES OUT what Milo says, and any step can be replayed. 🚀 SHIPPED — `main`@`0f7de76`, clean fast-forward, prod serving **sw v82**, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **452/452 vitest (+5)** · `next build` · **e2e short-landscape 152/48 skipped/0 failed** · 0 console errors. On prod: caption written out, the 18-dot strip, and **jumped to step 9 → still on step 9 fourteen seconds later** with `Play on` showing, i.e. the founder's correction confirmed on the live origin. ⓪ The kid asked whether they had missed a feature, so that was checked rather than assumed: the walkthrough DOES write things out, but **only the terse MATH** — measured, **11 spoken steps against 10 board lines, step 1 with no written trace at all**. `↺ Watch again` existed but only AFTER the whole run ended, so the rewind half of the report was exactly right. ① Caption (reusing the exported-but-unused `Says`), a **dot per step**, back/again/next, and speech speed persisted per device. ⚠️ **The first cut was rejected by the founder and correctly so** — `Back`/`Again` restarted the run FROM that point, so narration carried on over a child who wanted one thing repeated; a step now plays **ONCE and STAYS**, with `▶▶ Play on` handing control back. ② ⚠️ **The speed chip would have been a DEAD BUTTON for exactly the kids it is for** — `rate` only ever reached the browser-TTS fallback, and 12–18 plays **605 pre-rendered clips** that ignored it; now `playbackRate` on the shared clip element, `preservesPitch` on, gated and **mutation-tested**. ③ ⚠️ **Responsiveness broke TWICE and both were caught by measuring, not looking** — illustration **0px** with the skip button 31px then 55px below a 320px viewport, while screenshots read merely 'cramped'. Height came from the board's HISTORY, from THE PLAN **on short frames only**, and by dropping the dot strip there — **never from the words**. Chasing it found a **pre-existing** bug: the side column was `overflow: hidden` and had been clipping THE PLAN mid-sentence at 640×320; now `overflowY: auto`. ④ **The worst case was found by measuring all 37 chapters rather than testing the convenient one** — longest caption 209 chars (SkateRamp) vs the 160 first tried, most steps 26 (BestPlan) vs 18; a **229-char injection** still fits (298 of 320). ⚠️ A first pass at that metric was WRONG — its 565-char 'worst line' was `overview.say`, the intro read-along, which is **not captioned**. ⑤ Verified: jump-to-step **holds** (step 7 still there 9s later), `Play on` resumes unattended, speed persisted to IndexedDB and survived a reload; all 37 chapters have a `TutorialScene`, so the legacy branch is dead code. ▶ Open: ✅ the 200-case short-landscape sweep is **green — 152 passed / 48 skipped / 0 failed in 57.2m**, 0 hard failures anywhere (the 48 skips are the documented 12–14 no-explore-sim baseline), though it landed AFTER the push and so confirms rather than gated it; **no human has HEARD the speed control** (the pane is mute — the same blindness that hid TickTock's hang); the 3-wrong re-teach is still uncaptioned; scope is **12–18 only**; and ⚠️ **The Rail Line is still UNCOMMITTED on purpose** — only this session's four files were committed (verified with `git show --stat`), so prod does NOT have the rounding chapter and shipping it now needs **sw v82 → v83**. _(prior footer follows.)_)_
 
