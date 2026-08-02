@@ -12,7 +12,274 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🧰 **2026-08-02 (LATEST) — THE AUDIT'S OTHER FOUR FINDINGS TAKEN — THE ONES THAT WERE REWRITES RATHER THAN DELETIONS. −859 LINES, pixi.js GONE, AND A REAL CORRECTNESS BUG IN THE ANSWER CHIPS. 🚀 SHIPPED — `main`@`6d2d1eb`, prod serving **sw v85**, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **457/457 vitest** (was 452, **+5**) · `next build` · 0 console errors on prod.
+> 🔧 **2026-08-02 (LATEST) — THE FITTING CREW MADE TO LOOK RIGHT, GIVEN REAL OBJECTS, AND THEN PLAYED END TO END — WHICH IS WHAT FOUND A CHAPTER-KILLING DEAD END. ⚠️ STILL NOT COMMITTED.** `tsc` 0 · **491/491 vitest** (was 487, **+4**) · `next build` · 0 console errors in a fresh tab · **two full ten-round runs played to their own finish**.
+>
+> **The asks, in order:** *"time table chapter … panels and all ki position size aur visuals kuch bhi thik naii hai"* → *"generate the objects also… don't use the blocks"* → *"poora run khel ke dekho."*
+>
+> ## ⓪ ⚠️ THE HEADLINE IS NOT THE LOOK — PLAYING IT FOUND THAT **ONE WRONG ANSWER KILLED THE ROUND FOR EVER**
+> `finish(false)` cleared the board and **never reset `settled`**. Everything the child can touch is gated on
+> that one flag — `onTapRail={usesPad || settled ? undefined : tapRail}`, `disabled={settled ||
+> railsLaid === 0}`, `live={!settled && !done.current}` — so after a single miss the rails lost their
+> `onTap`, the commit button stayed disabled and the pad went dead, **on every question type, with the
+> question still on screen and nothing responding.** Measured with the tab fronted: all seven rails
+> `cursor: default`, Send `disabled`. The chapter owns its own retry loop (`ownsFeedback`), so nothing
+> upstream re-opens it. It is the craft doc's *a tap that does nothing at all is the worst outcome
+> there is*, and HopAlong's unwinnable round, from a third direction.
+> ⚠️ **Why every gate was green: the suite drives `makeRound`/`grade`/`missFor`/`fitLayout`, which are
+> PURE — this was component state.** And the 🔩 block below says it outright: *"a wrong answer on an
+> `order` round was never driven."* **Nobody had ever got one wrong.** One line fixes it.
+> ⚠️ **AND MY FIRST GATE FOR IT PASSED THE MUTATION.** `toContain('setSettled(false)')` matched **the
+> comment explaining the line** — this file's own recorded fault (a `not.toContain('speakSteps')` that
+> matched the prose saying the file avoids it), arrived at from the opposite side. Comments are
+> stripped and the check is anchored on the statement now; the mutation fails.
+>
+> ## ① THE LOOK — THE FRAME WAS 2.8% OF THE SCREEN, AND IT WAS THREE COMPOUNDING FAULTS IN ONE FUNCTION
+> Measured at 1280×720 before touching anything: **212 × 135px**, parked at x 735 (right of centre)
+> while Milo stood 600px away on the left.
+> • **The height band was the binding constraint.** `topY` confined the frame between the painted
+>   surface's start and the ground — on `open_hills` (0.53 → 0.80) that is **194px of a 720px screen**,
+>   so `byHeight` came out at 53 against a `byWidth` of 187 and the frame was sized to the SHORT
+>   dimension: it used **212 of the 749px of width it had been given**. `topY` is a *preference* now —
+>   stay on the surface when you fit, borrow above when the job needs the room. The chrome clamp is
+>   what actually stops the sky case, and it is still hard.
+> • **The pitch cap was a fixed 76 and never reached.** Derived from Milo now (`pitchMax(vh)` = a unit
+>   at 60% of his height — the craft doc's character-vs-object rank). A fixed number of any value is
+>   wrong on some window: 110 left a four-wide job at **11% of the screen at 1800×870**.
+> • **`frameLeft` centred in the LEFTOVER band** right of a 467px bubble reserve. Centred in the whole
+>   viewport, clamped right of `leftLimit`: a narrow job centres, a wide one still lands on the reserve.
+> **After: 15–49% of the screen across desktop sizes**, units 41–143px. 640×320 is **bit-identical** —
+> that squeeze is the pre-existing chrome (137px of a 320px frame) plus pad yield, not a regression.
+>
+> ## ② ⚠️ AND FREEING THE BAND SHIPPED THE OPPOSITE FAULT FOR ONE PASS
+> A seven-rail `fit` round then grew to **y = 160 against a horizon of 381 — four of seven rails drawn
+> over open sky**, which is exactly what `topY` was written to prevent. The borrow is **bounded** now
+> (`topCeiling`: at most 60% of the surface's own depth above it, expressed in the surface's terms
+> rather than as a viewport share). It never binds on the sign shop, whose wall runs 0.14 → 0.88;
+> it binds hard on a shallow strip of field, which is the case it is for. **Mutation-tested** — remove
+> the ceiling from the `max()` and the gate fails.
+>
+> ## ③ THE UNITS ARE REAL PAINTED OBJECTS NOW, NOT GRADIENT BLOCKS (founder's call)
+> ☀️ solar panel · 🛰️ station module · 💡 sign lamp · 🌱 sapling tray — **~6 credits, zero retries**
+> (1132.5 → 1126.5). Referenced `apple.png` + `cookie.png`, **verified 200 on prod first** because
+> `media_import_url` silently 404s and the model then generates from text alone.
+> • ⚠️ **Keyed by FLOOD FILL FROM THE CORNERS, not a global colour key** — the station module's violet
+>   inset sits close enough to the magenta field that a global key eats it, which is *never key green
+>   on a green creature* one hue along. The fill only reaches pixels connected to the border.
+> • **Cropped to each sprite's INK box** so it fills its slot instead of sitting small inside a padded
+>   file (MeasureIt's rule), then 256px + quantised: **43–56KB each**, against 300KB for the raw
+>   cutouts — the repo squeezed assets 244MB → 22.8MB and that should not be undone by four sprites.
+> • ⚠️ **THE SEPARATION WAS RE-MEASURED, because a generated sprite brings its own colours and the old
+>   hue table described pixels that no longer exist.** Sprite against its own scene over the band the
+>   frame occupies: solar **ΔHue 137°** · station **70°** · planting **56°** · **sign ΔHue 6° but ΔSat
+>   0.46** — i.e. the sign shop clears on SATURATION, which is the property that site always relied on.
+> • ⚠️ **The sprites exposed a float the blocks had hidden:** units hung `0.12 × pitch` — a measured
+>   13px — above the rail they rest on. Invisible under a gradient block with a drop-shadow; the
+>   four-times-shipped floating fault under a painted object. The foot derives from the bar's own
+>   offset now; measured **unit bottom 303, bar top 303**.
+> • The block survives as the **404 fallback**, and a gate pins that every site has a sprite, that the
+>   file is on disk, and that no two sites share one — a missing sprite is otherwise silent.
+>
+> ## ④ TWO FULL TEN-ROUND RUNS, AND THEY CLOSED THREE OF THIS CHAPTER'S OPEN ITEMS
+> Both reached round 10 and the chapter finished itself. Sites never repeated consecutively and all
+> four were used: station · orchard · hills · station · sign · orchard · sign · station · hills · station.
+> • ✅ **A scored `split` was PLAYED** — round 3 of run one, 3 × 12 = 36, *"The run is full."*
+> • ✅ **A wrong answer on an `order` round was DRIVEN, and the gaps are real** — ordered **05** for
+>   2 × 3 = 6 and the delivery laid five lamps with **the sixth position visibly empty**. That is the
+>   design line *"the delivery lays what was ORDERED"*, on screen for the first time.
+> • ✅ **The re-teach fired NATURALLY** at three wrong in a row (`reteachAfter: 3`), and **it teaches** —
+>   two trays per bed, bed by bed, with the count climbing, not a restatement.
+> • The miss line is written and specific: *"Not all of them are out yet — there are still lamps on the
+>   truck."* — and never names the answer (gated). **Four taps in one React batch → 20 panels.**
+>
+> ## ⑤ ⚠️ THE INSTRUMENT LIED THREE MORE TIMES, AND ONE OF THEM WAS A REAL BUG WEARING ITS COSTUME
+> "Only one lamp per rail" was the entrance stagger frozen in a backgrounded tab — the DOM said **10
+> units, all decoded, all opacity 1, 5 per rail**. Fifth time this file records that shape. The pane
+> also reported **`innerWidth: 0`** again, which makes every rect read lie, and a rail detector built
+> on geometry therefore found nothing — **selecting structurally (the `zIndex: 30` frame's own
+> children) is what worked while backgrounded.** ⚠️ **But the third one was NOT the instrument:** the
+> same "taps do nothing" reading was, that time, the genuine dead end in §⓪. *`cursor: default` on a
+> rail means `onTap` is undefined — check the flag before blaming the tab.*
+> ⚠️ A wall of parse errors in the console was the **stale HMR buffer** from an intermediate broken
+> edit (its line numbers pointed at the pre-fix file); a fresh tab read **zero**.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **STILL NOT COMMITTED**, and the tree has grown: `FitOut.tsx` · `fitOutTimesTables.test.ts`
+>    (**34 tests** now) · `fit_station.jpeg` + `fit_sign.jpeg` · **4 new `fit_*.png` unit sprites** ·
+>    `storyChapters.tsx` · **`TimesGrid.tsx` DELETED**. Deploying needs `public/sw.js` v85 → v86.
+>    ⚠️ **`python script/` appeared untracked in the tree and is NOT mine** — look before any `git add`.
+> 2. **No mastery early-exit observed** — both runs deliberately erred every round to walk all ten, so
+>    the tier never climbed. A perfect run is a separate drive.
+> 3. **640×320 was measured, not PLAYED.** Layout is clean and unchanged there, but no run.
+> 4. ⚠️ **The fourth world is still a substitution needing the founder's call** (badge/print run
+>    dropped after two style failures; planting field replaced it — one row in `SITES`).
+> 5. ⚠️ **THE COVER-FIT FIX IS STILL OWED TO LOADINGBAY AND ORDERDESK** — untouched, now five deploys
+>    old. `LoadingBay.tsx:232` and `OrderDesk.tsx:365`, +40px at 1800×870, +105/+119px at 2560×1080.
+> 6. **8 chapters remain in the band**, and FactorLab still needs a different material — this chapter
+>    has taken the array-on-a-frame gesture.
+> 7. **Nobody has watched a child play it** — and this session is the cleanest case yet of why that
+>    matters: the look faults came from the founder LOOKING, and the bug that made the chapter
+>    unplayable came from PLAYING it. The 30 green tests could see neither.
+>
+> _(the 🔩 block below is the same chapter's build session — its "no full ten-round run / no scored
+> `split` / no wrong-answer drive" open items are now CLOSED by §④ above.)_
+
+> 🔩 **2026-08-02 — TIMESGRID → **THE FITTING CREW**, THE 9–11 BAND'S FOURTH CHAPTER — AND THE REBUILD STARTED FROM A LIVE CORRECTNESS BUG, NOT A LOOK PROBLEM: THE OLD CHAPTER PRINTED ITS OWN ANSWER ON SCREEN. ⚠️ NOT COMMITTED.** `tsc` 0 · **487/487 vitest** (was 457, **+30 — the band's SECOND chapter gate**) · `next build` · 0 console errors · driven live at 1280×720 and 640×320.
+>
+> **The ask:** *"abhi humko time table chapter ko rethink karna hai"* → *"koi aur duniya socho"* → *"yeh chaaro duniya ko bana do aur questions ko yeh worlds ke bich randomly shuffle karo."*
+>
+> ## ⓪ ⚠️ THE CHAPTER PRINTED ITS OWN ANSWER, AT FULL OPACITY, WHILE THE QUESTION WAS OPEN — AND IT WAS LIVE ON PROD
+> Found by reading the file, **confirmed on screen before a line was changed**, which is the order this
+> file keeps asking for. `MultChips base={b} count={a}` rendered `b, 2b, … a·b` under every `fact`
+> round, so `5 × 5 = ?` sat above a strip reading **`5 · 10 · 15 · 20 · 25`** — measured
+> `rgb(255,122,82)` on `rgba(255,122,82,.16)`, **opacity 1**, 18px mono, i.e. not dimmed at all. **The
+> last chip IS the answer.** Verified in the guided round AND in scored round 1. Two-digit rounds
+> leaked the same way one step along: `Chip` rendered `10 × 4 = 40` and `2 × 4 = 8` at opacity 0.25 —
+> visible — so both halves of the answer were on screen before the commit.
+> **⇒ "Read the last chip, tap that number" beat the whole chapter without knowing one times table**,
+> and L1 is entirely facts with L2 two-thirds. Same family as the DataDeck defect
+> [story-9-11-rethink.md](docs/story-9-11-rethink.md) calls *the one defect that is not a style
+> matter* — only worse, because DataDeck's was dimmed to 0.5 and this was not.
+> **The rule the new file keeps, in its header:** *a running total may only ever be the child's OWN
+> WORK APPEARING AS THEY DO IT.* On an `order` round there is now **no count on screen at all** until
+> after the commit; on a `fit` round it climbs one rail at a time as the child lays it.
+>
+> ## ① THE OTHER FOUR FAULTS, ALL BAND-WIDE
+> Delete-the-art **failed** (`prompt: '5 × 5 = ?'` over three chips — remove the array, all thirty
+> questions still work) · **aliveness 0 of 4** · the demo **did not teach** (step 1 set
+> `boxValue = answer` while narrating *"count up in 4s with me"*, so the counting it promised never
+> happened) · and L3 drew `n = rint(11,99)`, i.e. a **90 × 9 block = 810 nodes at 12px** — a
+> manipulative nobody counts, which is exactly why the printed partial products were carrying the
+> question. Narrowed to `per ≤ 19`, `rows ≤ 5` (max 95, one two-window pad serves the chapter), same
+> call OrderDesk made for the same reason.
+>
+> ## ② THE CHAPTER — one frame, two directions, one grader; the verb is LAY IT OUT
+> Milo runs a fitting crew. A job arrives, the units are on the truck, the frame is empty — **you
+> cannot count what has not been fitted yet**, which is what multiplication is for.
+> • **`order` (a × b)** — the job states the rails and how many go on each; the child works out the
+>   TOTAL on a number pad (no chips to read off), then the delivery lays itself and **fills the frame
+>   or leaves gaps**.
+> • **`fit` (missing factor)** — the total is on the truck and the rail size is given; the child taps
+>   rails to lay them and stops when it is right. **The answer is what they built**, so it cannot be
+>   guessed. There are always spare rails and nothing says "that's enough" (HomeTime's rule); tapping
+>   a laid rail sends it back.
+> • **`split` (L3, 2-digit × 1-digit)** — the rail is longer than ten, so the frame carries a
+>   **walkway after the tenth position**. The tens/ones split is a thing in the picture rather than a
+>   diagram over it, and the demo lays all the tens first and then all the remainders — the area
+>   model, performed. `coverage` over all three so mastery cannot exit before `split` is asked.
+>
+> ## ③ FOUR WORLDS, SHUFFLED — and ⚠️ ONE OF THE FOUR IS NOT THE ONE THAT WAS PICKED
+> ☀️ solar field (`open_hills`) · 🛰️ station apron (`fit_station`, new) · 💡 sign shop (`fit_sign`,
+> new) · 🌱 planting field (`open_orchard`).
+> ⚠️ **The BADGE / PRINT RUN was dropped and needs a founder call.** Two generations, two style
+> failures — the first came back in **ink outlines** (the flat-vector family the founder rejected on
+> the pond backdrops), the second with the outlines gone but as **flat featureless bands**, i.e. the
+> near-empty-gradient fault this file already records twice. Rather than keep spending, the fourth
+> world came from the library. `locker_room` was checked first and **fails on measurement** — 0.812
+> value in the band things stand in, brighter than the cast, which is the `grocery_sweets` fault and
+> the same reason RailLine rejected it. **~6 credits spent of 1138.5.**
+> • ⚠️ **`space_launchpad` FAILED THE EYE CHECK** and the rethink doc had listed it as usable — it
+>   carries ink outlines and is very bright. **That doc's backdrop list is names, not an eye check.**
+> • **"Randomly shuffle" and "consecutive rounds must differ" are two different requests**, and a
+>   plain shuffle only satisfies the first. `runOrder` deals randomly AND rejects an adjacent repeat:
+>   **0 adjacent repeats over 4000 runs, every site used inside the first four slots.**
+> • Measured hues so the units clear their own scene: solar 70° · station 180–200° · sign 20–30° ·
+>   planting 60–80°. The sign shop sits on Milo's own hue, so that one separates on **saturation**
+>   (wall 0.12 against the lamps' 0.55) — the craft rule as written: hue OR saturation, never neither.
+>
+> ## ④ ⚠️ THE FAULTS THE SCREEN CAUGHT — five, and none was findable by a type-check
+> ① **The units were `display: inline`**, so width and height simply did not apply — measured **0 × 0**
+> with the right NUMBER of them in the DOM. Nothing errored; the frame just stayed empty.
+> ② **The frame stood in the SKY.** Centred in the free band it straddled the horizon — measured rails
+> y 97–615 against a painted ground line of 576. Anchored by its FOOT now.
+> ③ **Then it climbed into the sky from the other end**: with the foot pinned, a seven-rail job grew
+> upward past the horizon and put the top truss at **y = 3** on a 720px frame. Each site now carries a
+> `topY` — where its surface BEGINS — and the frame is confined to it.
+> ④ **Two prompt pills on top of each other** (the phase chip and the question banner), the fault the
+> craft doc names.
+> ⑤ **The guided round and scored round 1 came up on the SAME site.** `reshuffleRun()` was in a mount
+> effect, and effects run after render — so the memoised demo and guided rounds read the OLD order and
+> the scored rounds read the new one, silently breaking the one thing the run order exists to
+> guarantee.
+> ⑥ At 640×320 **Milo's bubble reached across the frame's left edge** — and on a `fit` round those
+> rails ARE the tap targets. RailLine's exact fault (its bubble covered two of six answer boards);
+> the limit is derived from the bubble's own width now, not from the sprite.
+>
+> ## ⑤ ⚠️ AND THE ONE THE GATE CAUGHT THAT NO AMOUNT OF PLAYING WOULD HAVE
+> `railsShown = min(rows + 1..2, 8)` left **no spare rail at rows 7–9**, and at rows 9 it drew **FEWER
+> rails than the correct answer needs** — i.e. the round could not be completed at all. Measured:
+> **3,357 unwinnable rounds in 60,000 draws, every one at L2.** Reaching L2 takes several correct
+> answers and then a rows-8 draw, so it is invisible to a drive. `fit` rounds now cap rows at 6;
+> `order`/`split` keep the full range because they draw exactly `rows` rails and have no spares to lose.
+> **Plus a robustness fault the frozen-tab instrument exposed:** the unit's opacity came ONLY from its
+> entrance animation (`fill: both`), so anywhere the animation does not complete the piece holds the
+> FROM state — measured in a hidden tab, **36 units in the DOM, every one at opacity 0**. The element
+> carries its own opacity now and the animation only borrows the run-up.
+>
+> ## ⑥ THE GATE — 30 tests, 6/6 planted regressions caught
+> [fitOutTimesTables.test.ts](src/__tests__/fitOutTimesTables.test.ts) drives the same exported
+> `makeRound` · `grade` · `missFor` · `runOrder` · `fitLayout` · `slotX` the scene renders from.
+> ⚠️ **It was mutation-tested and the FIRST version let the most important one through** — the
+> frame-floats-in-the-sky mutation, which is the bug that had actually been on screen. Two reasons,
+> both worth keeping: the assertion said `foot <= groundPx` where **the truth is an equality** (RailLine
+> learned this exact lesson), and it tested only five rails, where the frame fills the band so centred
+> and bottom-anchored coincide — **the mutation is only visible when the frame is SHORT relative to
+> the room.** Asserted exactly, across rail counts 2–8, it fails.
+> ⚠️ **And chasing a residual off-by-one found a real one:** `Math.max(80, foot - top)` on the band is
+> the craft doc's own *a size derived from a MAXIMUM can exceed that maximum* — when the painted
+> surface is shorter than the floor, the floor hands out room that is not there and the frame climbs
+> back over the horizon. The floor is gone; `MIN_BAND` states the one case where the frame may borrow
+> height above the surface rather than shrink the units below countable.
+>
+> ## ⑦ WHAT WAS ACTUALLY VERIFIED, AND WHAT WAS NOT
+> **Driven at 1280×720 and 640×320:** intro → both demos → the guided `fit` round → scored round 1.
+> The demo now teaches (a rail lands, the count climbs with it). **Four taps inside ONE React batch
+> all registered** — 20 units, tally `20 lamps` — which is the batched-tap class this repo has met
+> five times. The `split` demo measured **36/36 units with the walkway in the right place** (index 9 →
+> 684, index 10 → 810 against a normal pitch of 76). Sites rotate per round. 0 console errors.
+> ⚠️ **NOT covered:** **no full ten-round run** — no re-teach, no mastery exit; **a scored `split`
+> round was never PLAYED** (its rendering is verified in the demo and the pad and delivery separately,
+> but not together); **a wrong answer on an `order` round was never driven**, so the gaps and the miss
+> line are gate-only; and nothing is committed, no `sw.js` bump, prod untouched.
+> ⚠️ **The instrument lied three times and all three read as real bugs** — every one was the entrance
+> animation caught mid-flight or frozen in a backgrounded tab ("only one unit per rail", "the units
+> float above the bar" — measured, the gap is 7px). The DOM settled each. Fourth time this file
+> records that shape.
+> ⚠️ **A temp `?`-free drive override** forcing `split` to the surface was used and **reverted and
+> grepped** (`TEMPDRIVE`, 0 hits).
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED.** Working tree: `FitOut.tsx` (new) · `fitOutTimesTables.test.ts` (new) ·
+>    `fit_station.jpeg` + `fit_sign.jpeg` (new, 47–63KB) · `storyChapters.tsx` (one row) ·
+>    **`TimesGrid.tsx` DELETED**. Deploying needs `public/sw.js` v85 → v86.
+>    `scripts/.voice-*.json` correctly still untracked.
+>    ⚠️ **The counts here are STALE — the 🔧 block at the top is the current tree** (34 tests, and four
+>    `fit_*.png` unit sprites the units are now drawn from).
+> 2. ⚠️ **THE FOURTH WORLD IS A SUBSTITUTION AND IT IS THE FOUNDER'S CALL** — the badge/print run was
+>    asked for and dropped after two style failures; the planting field replaced it. One row in `SITES`
+>    to swap back if new art can be made to land.
+> 3. ✅ **ALL THREE CLOSED 2026-08-02 — see the 🔧 block at the top.** Two full ten-round runs played
+>    to their own finish, a scored `split` played (3 × 12 = 36), the re-teach fired naturally at three
+>    wrong in a row and teaches, and a wrong `order` answer was driven — the gaps are real. ⚠️ **And
+>    playing it is what found the fault this block could not see: one wrong answer left the board DEAD
+>    for ever** (`settled` never reset), on every question type, because no gate reaches component
+>    state and nobody had ever answered wrong. Still open from this item: **no mastery early-exit**
+>    (both runs erred every round on purpose) and 640×320 measured but not played.
+> 4. ⚠️ **THE COVER-FIT FIX IS STILL OWED TO LOADINGBAY AND ORDERDESK** — untouched again, now five
+>    deploys old. `LoadingBay.tsx:232` and `OrderDesk.tsx:365` still compute `groundPx = vh * groundY`
+>    over `objectFit: cover` backdrops: **+40px of float at 1800×870, +105/+119px at 2560×1080.**
+>    ~4 lines each; The Rail Line carries the worked pattern and this chapter now carries a second copy.
+> 5. **8 chapters remain in the 9–11 band.** The rethink doc's build order wants FactorLab + AngleScope
+>    next (the coin-flip defect). ⚠️ **Note a collision it does not resolve:** that doc offers
+>    *"crates in a yard, seats in a hall, panels on a wall"* to FactorLab, and this chapter has now
+>    taken the array-on-a-frame gesture — so FactorLab needs *does it come out flush* in a different
+>    material (dealing or stacking, not laying on a grid).
+> 6. **Nobody has watched a child play it**, and — as every session before this — **the faults that
+>    mattered were found by reading the code, then by looking at the screen, then by the gate; not one
+>    by the type-checker.**
+>
+> _(the 🧰 block below is the previous session — the audit's four rewrite findings.)_
+
+> 🧰 **2026-08-02 — THE AUDIT'S OTHER FOUR FINDINGS TAKEN — THE ONES THAT WERE REWRITES RATHER THAN DELETIONS. −859 LINES, pixi.js GONE, AND A REAL CORRECTNESS BUG IN THE ANSWER CHIPS. 🚀 SHIPPED — `main`@`6d2d1eb`, prod serving **sw v85**, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **457/457 vitest** (was 452, **+5**) · `next build` · 0 console errors on prod.
 >
 > **The ask:** the four `yagni:`/`stdlib:` findings the ✂️ block below left open — *"karo yeh 4 chize joh audit mein mile the"* — then *"agar important naii hai toh hata do"* about the stray `.next` dir.
 >
@@ -5244,7 +5511,11 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-02 (LATEST — see the top 🧰 block. **The audit's other four findings taken — the ones that were rewrites rather than deletions. −859 lines, `pixi.js` gone, and a real correctness bug in the answer chips. 🚀 SHIPPED — `main`@`6d2d1eb`, prod serving sw v85, smoke green (13/13) and DRIVEN LIVE ON PROD.** `tsc` 0 · **457/457 vitest** (+5) · `next build` · 0 console errors on prod. ⓪ **The headline is a correctness bug the audit had filed as tidying.** Every biased `sort(() => Math.random() − 0.5)` site is an answer-choice builder that inserts the CORRECT answer into a Set **first** and then shuffles — so measured over 200k draws on a three-chip board the answer sat in the last slot **25.1%** of the time instead of 33.3%, and in the first two 75%. **"Never tap the last chip" beat guessing**, in a band whose whole design rule is that a question must not be winnable without the skill. 7 sites, all fixed; the uniformity test is **mutation-tested**. ① ⚠️ **Three corrections to the audit's own numbers:** the minus-glyph formatter is **4** copies, not 32 — the other ~28 are bespoke expression builders that each assemble a different equation, deliberately left because rewriting them changes rendered math with no gate behind it; `rint` 52 not 55, `shuffle` 26 not 29, biased 7 not 9; the Pixi port frees **599** lines, not ~839. And **a line count was the wrong measure for `rint`** — 52 definitions become 52 imports, so the saving is ~zero; the value is one definition, worth having only because `shuffle` was actually broken. ② **The Pixi port was small, because most of it already existed** — `ParadeStage` had one caller (the counting chapter's SCORED round) while its demo and guided rounds already ran the DOM `Parader`, and `CountItem` already played the drawn sheets. Two things got better: the cycle now **stops while the creature holds mid-scene** (it looped in place before — skating on the spot, this file's oldest rule, live the whole time), and refill-on-tap is preserved. ⚠️ **Two faults I introduced and caught only by driving it**: I ended `moving` on a timer matched to the travel, but **a backgrounded tab freezes rAF while still firing timeouts**, so a creature sat off-frame with parked legs — now ended by the transition's own `transitionend`; and `tap` read the state it also set, the batched-tap class this repo has now met **five** times. **Lost:** particles, camera shake, motes — decoration, already off under reduced motion; the squash pop stays. ③ **The `/story` dedupe is its own module, NOT part of `registry.tsx`, and that is load-bearing** — registry drags in `ChapterPortal` → the Supabase client, and `/story` is a public preview route. Bonus: `PatternsChapter` was a **byte-for-byte copy of `makeStoryChapter`** and `ArithmeticChapter` the same plus an `op` prop (87 lines → two rows). ④ **`sharp` was never a runtime dependency of this app** — it is an optionalDependency of `next` itself. ▶ Open: **640×320 unchecked anywhere and no full ten-round run** (two rounds on prod, so no re-teach, no mastery exit); `pick`/`pickOne` (~37 sites) deliberately left — not in the ask, no correctness angle; ⚠️ **the cover-fit fix is STILL owed to `LoadingBay.tsx:232` and `OrderDesk.tsx:365`**, now four deploys old; **the parade's lost decoration has not been looked at by a founder**; **no human has heard the speech work and nobody has watched a child use any of it.** _(prior footer follows.)_)_
+_Last updated: 2026-08-02 (LATEST — see the top 🔧 block. **The Fitting Crew made to look right, given real objects, and then PLAYED end to end — which is what found a chapter-killing dead end. ⚠️ STILL NOT COMMITTED.** `tsc` 0 · **491/491 vitest** (+4) · `next build` · 0 console errors in a fresh tab · **two full ten-round runs played to their own finish**. ⓪ ⚠️ **The headline is not the look: ONE WRONG ANSWER KILLED THE ROUND FOR EVER.** `finish(false)` cleared the board and never reset `settled` — and the rails' `onTap`, the commit button's `disabled` and the pad's `live` are all gated on that one flag, so after a single miss nothing on screen responded, on every question type, with the question still up. Measured fronted: seven rails `cursor: default`, Send `disabled`. **Every gate was green because the suite drives PURE functions and this was component state** — and the 🔩 block said it outright: *a wrong answer had never been driven*. ⚠️ **My first gate for it passed the mutation**, because `toContain('setSettled(false)')` matched the COMMENT explaining the line — this file's own recorded fault, inverted; anchored on the statement now. ① **The look was three compounding faults in one function**: the frame measured **212 × 135px, 2.8% of a 1280×720 screen**, parked right of centre with Milo 600px away. `topY` confined it to the painted surface — on `open_hills` that is **194px of 720**, so it was sized to the SHORT dimension and used **212 of 749px of width**; the pitch cap was a fixed 76, never reached; and `frameLeft` centred in the LEFTOVER band right of a 467px bubble reserve. Now **15–49% of the screen**, cap derived from Milo, centred in the whole viewport. 640×320 bit-identical — that squeeze is pre-existing chrome + pad. ② ⚠️ **And freeing the band shipped the opposite fault for one pass** — a seven-rail job reached **y = 160 against a horizon of 381, four of seven rails over open sky**. The borrow is bounded now (`topCeiling`, 60% of the surface's own depth), **mutation-tested**. ③ **The units are real painted objects, not gradient blocks** (founder's call): panel · module · lamp · tray, **~6 credits, zero retries**, referenced against the originals verified 200 on prod first. ⚠️ Keyed by **flood fill from the corners** — a global key eats the module's violet inset — cropped to each **ink box**, 43–56KB each. ⚠️ **Separation re-measured** because a generated sprite brings its own colours: solar ΔHue 137° · station 70° · planting 56° · **sign ΔHue 6° but ΔSat 0.46**. ⚠️ **They exposed a float the blocks hid** — units hung 13px above their rail; foot derives from the bar now, measured 303/303. ④ **Two full ten-round runs closed three open items**: a scored `split` PLAYED (3 × 12 = 36), a wrong `order` answer DRIVEN (ordered 05 for 2 × 3 — five lamps laid, **the sixth slot visibly empty**), and the **re-teach fired naturally** at three wrong in a row and *teaches*. Sites never repeat consecutively, all four used; four batched taps → 20 panels. ⑤ ⚠️ **The instrument lied three more times** — 'one lamp per rail' was the entrance stagger frozen in a backgrounded tab (DOM: 10 units, all opacity 1), `innerWidth: 0` returned so a geometry-based selector found nothing (structural selection worked), **but the third 'taps do nothing' was the real dead end** — `cursor: default` means `onTap` is undefined, so check the flag before blaming the tab. ▶ Open: **still not committed** (sw v85 → v86, and ⚠️ an untracked `python script/` in the tree is NOT mine); **no mastery early-exit** (both runs erred every round on purpose); 640×320 measured but not played; the fourth world is still a founder call; ⚠️ **the cover-fit fix is STILL owed to `LoadingBay.tsx:232` and `OrderDesk.tsx:365`**, five deploys old; **8 chapters remain**; **nobody has watched a child play it** — and this session is the cleanest case yet for why that matters: the look faults came from the founder looking, and the unplayable-round bug came from playing. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-02 (the 🔩 block — the chapter's build session. **TimesGrid → THE FITTING CREW, the 9–11 band's fourth chapter — and the rebuild started from a LIVE CORRECTNESS BUG, not a look problem. ⚠️ NOT COMMITTED.** `tsc` 0 · **487/487 vitest** (+30, the band's second chapter gate) · `next build` · 0 console errors · driven at 1280×720 and 640×320. ⓪ **The old chapter printed its own answer on screen while the question was open, at full opacity, and it was live on prod.** `MultChips` rendered `b, 2b, … a·b` under every fact round, so `5 × 5 = ?` sat above `5 · 10 · 15 · 20 · 25` — measured opacity 1, and the last chip IS the answer; two-digit rounds showed both partial products. **"Read the last chip, tap that number" beat the whole chapter without knowing one times table**, and L1 is entirely facts. Found by reading, **confirmed on screen before a line was changed**. Same family as DataDeck's, only worse — that one was dimmed. ① Plus delete-the-art failing, aliveness 0/4, a demo that set the answer in step 1 while narrating *"count up in 4s with me"*, and an L3 that drew **810 nodes at 12px**. ② **The verb is LAY IT OUT** — one frame, two directions, one grader: `order` (work out the total on a pad, then the delivery fills the frame or leaves gaps), `fit` (lay rails and stop when it is right — the answer is what you BUILT), `split` (the rail is longer than ten so the frame carries a **walkway**, and the tens/ones split is a thing in the picture). The new rule in the header: **a running total may only ever be the child's own work appearing as they do it.** ③ **Four worlds, shuffled** — ⚠️ **and one is NOT the one that was picked**: the badge/print run was dropped after two style failures (ink outlines, then featureless bands) and the planting field replaced it — **a founder call, one row to swap back**. `locker_room` and `space_launchpad` both **failed on measurement/eye**, and the rethink doc's backdrop list turns out to be names rather than an eye check. "Randomly shuffle" and "consecutive rounds must differ" are two different requests; `runOrder` does both — **0 adjacent repeats over 4000 runs**. ~6 credits of 1138.5. ④ ⚠️ **Six faults the screen caught**: units at `display: inline` (measured **0 × 0**, right count in the DOM, nothing on screen); the frame standing in the **SKY** (rails y 97–615 against a ground line of 576); then climbing into the sky from the other end once the foot was pinned (top truss at **y = 3**); two prompt pills stacked; the guided round and round 1 on the **same site** because `reshuffleRun()` sat in a mount effect and effects run after render; and at 640×320 Milo's bubble across the frame's left edge, which on a `fit` round is where the tap targets are. ⑤ ⚠️ **And the one the GATE caught that no playing would have**: `railsShown` left no spare rail at rows 7–9 and at rows 9 drew **fewer rails than the answer needs** — **3,357 unwinnable rounds in 60,000 draws**, all at L2. ⑥ **30 tests, 6/6 planted regressions caught** — ⚠️ the first version **let the most important one through** (`foot <= groundPx` where the truth is an equality, and only five rails tested, where centred and bottom-anchored coincide). ▶ Open: **not committed** (needs sw v85 → v86); **the fourth world is a substitution needing sign-off**; ✅ **the ten-round run, the scored `split` and the wrong-answer drive are all DONE — see the 🔧 block, and note that playing it is what exposed a dead end this session could not see**; ⚠️ **the cover-fit fix is STILL owed to `LoadingBay.tsx:232` and `OrderDesk.tsx:365`**, now five deploys old; **8 chapters remain in the band**, and FactorLab now needs a different material because this chapter has taken the array gesture; **nobody has watched a child play it.** _(prior footer follows.)_)_
+
+_Prior update: 2026-08-02 (the 🧰 block. **The audit's other four findings taken — the ones that were rewrites rather than deletions. −859 lines, `pixi.js` gone, and a real correctness bug in the answer chips. 🚀 SHIPPED — `main`@`6d2d1eb`, prod serving sw v85, smoke green (13/13) and DRIVEN LIVE ON PROD.** `tsc` 0 · **457/457 vitest** (+5) · `next build` · 0 console errors on prod. ⓪ **The headline is a correctness bug the audit had filed as tidying.** Every biased `sort(() => Math.random() − 0.5)` site is an answer-choice builder that inserts the CORRECT answer into a Set **first** and then shuffles — so measured over 200k draws on a three-chip board the answer sat in the last slot **25.1%** of the time instead of 33.3%, and in the first two 75%. **"Never tap the last chip" beat guessing**, in a band whose whole design rule is that a question must not be winnable without the skill. 7 sites, all fixed; the uniformity test is **mutation-tested**. ① ⚠️ **Three corrections to the audit's own numbers:** the minus-glyph formatter is **4** copies, not 32 — the other ~28 are bespoke expression builders that each assemble a different equation, deliberately left because rewriting them changes rendered math with no gate behind it; `rint` 52 not 55, `shuffle` 26 not 29, biased 7 not 9; the Pixi port frees **599** lines, not ~839. And **a line count was the wrong measure for `rint`** — 52 definitions become 52 imports, so the saving is ~zero; the value is one definition, worth having only because `shuffle` was actually broken. ② **The Pixi port was small, because most of it already existed** — `ParadeStage` had one caller (the counting chapter's SCORED round) while its demo and guided rounds already ran the DOM `Parader`, and `CountItem` already played the drawn sheets. Two things got better: the cycle now **stops while the creature holds mid-scene** (it looped in place before — skating on the spot, this file's oldest rule, live the whole time), and refill-on-tap is preserved. ⚠️ **Two faults I introduced and caught only by driving it**: I ended `moving` on a timer matched to the travel, but **a backgrounded tab freezes rAF while still firing timeouts**, so a creature sat off-frame with parked legs — now ended by the transition's own `transitionend`; and `tap` read the state it also set, the batched-tap class this repo has now met **five** times. **Lost:** particles, camera shake, motes — decoration, already off under reduced motion; the squash pop stays. ③ **The `/story` dedupe is its own module, NOT part of `registry.tsx`, and that is load-bearing** — registry drags in `ChapterPortal` → the Supabase client, and `/story` is a public preview route. Bonus: `PatternsChapter` was a **byte-for-byte copy of `makeStoryChapter`** and `ArithmeticChapter` the same plus an `op` prop (87 lines → two rows). ④ **`sharp` was never a runtime dependency of this app** — it is an optionalDependency of `next` itself. ▶ Open: **640×320 unchecked anywhere and no full ten-round run** (two rounds on prod, so no re-teach, no mastery exit); `pick`/`pickOne` (~37 sites) deliberately left — not in the ask, no correctness angle; ⚠️ **the cover-fit fix is STILL owed to `LoadingBay.tsx:232` and `OrderDesk.tsx:365`**, now four deploys old; **the parade's lost decoration has not been looked at by a founder**; **no human has heard the speech work and nobody has watched a child use any of it.** _(prior footer follows.)_)_
 
 _Prior update: 2026-08-01 (see the top ✂️ block. **A repo-wide over-engineering audit, then the four DELETE-tagged findings taken: −1,502 lines, and the dead rig is finally gone. 🚀 SHIPPED — `main`@`7723493`, prod serving sw v84, smoke green and DRIVEN LIVE ON PROD.** `tsc` 0 · **452/452 vitest** · `next build` · 0 console errors on prod. ⓪ **The audit's headline is that the repo is already lean** — a real import graph found **exactly two orphan modules in 68k lines**, so this took the four `delete:`-tagged findings and left the four `yagni:`/`stdlib:` ones, which are **rewrites, not deletions**. ① **The puppet rig was dead BY CONSTRUCTION, which is why the July sweep correctly refused it**: `rigs.ts` IS imported by `ParadeStage`, so it was never dead by the import graph — only by the VALUE of `rigged = !!o.rig && !o.frames?.length`, since all 6 `RIGS` keys have a `SHEETS` entry. **An import-graph sweep cannot see code unreachable by arithmetic.** `ParadeStage.ts` 601 → 502. ② ⚠️ **Two corrections to my own audit, both caught before cutting:** `SWING_RATE` is NOT rig-only (it is live at `cyclesPerSec` for any creature with no sheet — cutting it would have broken the Farm/Space casts silently), and **`GET` in `api/health/route.ts` is a Next route handler, not a dead export** — a scan that does not know the framework's entry points reports the framework as dead. ③ **The insights tiles: cut the CHAIN, not the tiles** — deleting `/daily` left "Daily opened/finished" reporting a dead feature, so the two `<Stat>`s, the fields in BOTH metric paths and the `InsightsRollup` keys all went; `daily_days` with them. The RPC is deliberately untouched, so **no migration and no DB deploy**. ④ **Driven, because the rig cut touched live animation code:** on a dev build a **rabbit** (one of the six formerly-rigged creatures) parades in on its drawn cycle and **tapping it registers** — the check that matters, since the riskiest edit was collapsing the `hitArea` ternary; on prod the parade renders, a fish swims in and the tap registers. 0 console errors both. ⑤ ⚠️ **My first orphan detector reported 190 of 200 files as dead**, flagging `GameShell` and `critters` — *a sweep that flags everything is a broken sweep*, met again; a 20-line import-graph script returned 2. ▶ Open: ✅ **the audit's other four findings — ALL FOUR TAKEN 2026-08-02, see the 🧰 block; several of the numbers below turned out to be wrong** — the Pixi parade port (~600 lines + the `pixi.js` dep, one caller), `/story`'s duplicate dispatch table (~120), the **55** identical `rint` clones + 29 `shuffle` + 32 minus-formatters (~120, and 9 of those shuffles are the biased sort-random), and `sharp` sitting in `dependencies` while only tests import it; ⚠️ **the cover-fit fix is STILL owed to `LoadingBay.tsx:232` and `OrderDesk.tsx:365`**, now three deploys old; **what the prod drive does NOT cover** — the creature driven on prod was a **fish**, never rigged (`?obj=` is dev-only and stripped in production), and **`/insights` was never opened signed-in**, so the two deleted tiles are tsc + build only and `computeMetrics` has no unit test; no `/daily → /menu` redirect, deliberately, same call as `/play`; **no human has heard the speech work and nobody has watched a child use any of it.** _(prior footer follows.)_)_
 
