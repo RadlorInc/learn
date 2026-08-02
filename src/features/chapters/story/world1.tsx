@@ -9,20 +9,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { speak, speakSeq, speakAfterCurrent, useIsSpeaking } from '@/infra/useMiloSpeaker'
 import { type Difficulty } from '@/core/adaptive'
 import type { World, Beat } from './StoryWorld'
-import { CountItem, CountStage, type CountKind, COUNT_LABEL, COUNT_PLURAL, COUNT_SRC, COUNT_SIDE, DoorArt, Apple, Berry, Stone, Basket } from './art'
-import { ParadeCanvas } from './canvas/ParadeCanvas'
+import { CountItem, CountStage, type CountKind, COUNT_LABEL, COUNT_PLURAL, DoorArt, Apple, Berry, Stone, Basket } from './art'
 import { BIOMES, type Band, type Biome, type BiomeId, type Storytelling } from './biomes'
 import { useViewport } from '@/shared/hooks/useViewport'
+import { rint, shuffle } from '@/core/rand'
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 // Fisher-Yates — an unbiased shuffle. (The old `sort(() => Math.random() - 0.5)` left
 // small arrays mostly in place, so the practice nearly always opened on the pool's first
 // creature — e.g. always a lamb on the farm.)
-const shuffle = <T,>(a: T[]): T[] => {
-  const r = a.slice()
-  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] }
-  return r
-}
 const bare: React.CSSProperties = { background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }
 
 // Creatures are sized in px against a ~1000px-wide stage. On a tiny window they'd be
@@ -524,12 +518,24 @@ const Parader: React.FC<{ obj: CountKind; band: Band; slot: 0 | 1; size: number;
   const artDir = BASE_FACES_LEFT.has(obj) ? -1 : 1   // which way the source sprite is drawn facing
   const face   = (slot === 0 ? 1 : -1) * artDir      // display it facing its travel direction
   const [x, setX] = useState(enterX)
+  // A drawn walk cycle must run EXACTLY while the body is covering ground, and stop dead while the
+  // creature holds mid-scene waiting to be counted — a cycle looping in place is skating on the
+  // spot, which is this parade's oldest rule.
+  //
+  // Ended by the `left` transition's OWN `transitionend`, never by a matching timer: the travel is
+  // started from a requestAnimationFrame, and a backgrounded tab freezes rAF while still firing
+  // timeouts — so a timer parks the legs of a creature that has not begun walking yet. Reading the
+  // transition itself means the two cannot disagree, whatever the tab is doing.
+  const [moving, setMoving] = useState(true)
   // Mount off-screen, then next frame glide to the resting spot (the CSS `left` transition = the walk-in).
   useEffect(() => { const r = requestAnimationFrame(() => setX(restX)); return () => cancelAnimationFrame(r) }, [restX])
   // On tap, continue off the far side, then despawn after the exit finishes (scaled to the travel speed).
-  useEffect(() => { if (!leaving) return; setX(exitX); const t = window.setTimeout(onGone, Math.round(travelSecs * 950)); return () => window.clearTimeout(t) }, [leaving, exitX, onGone, travelSecs])
+  useEffect(() => { if (!leaving) return; setMoving(true); setX(exitX); const t = window.setTimeout(onGone, Math.round(travelSecs * 950)); return () => window.clearTimeout(t) }, [leaving, exitX, onGone, travelSecs])
   return (
     <button onClick={onTap} disabled={disabled} aria-label={obj}
+      // Only the OUTER `left` transition means "covering ground" — the sprite inside runs its own
+      // transform/filter transitions, and those bubble up here too.
+      onTransitionEnd={e => { if (e.propertyName === 'left' && e.target === e.currentTarget) setMoving(false) }}
       style={{ ...bare, position: 'fixed', left: `${x}%`, top: `${lane}%`, transform: 'translate(-50%,-50%)', transition: `left ${travelSecs}s linear`, zIndex: 35 + slot }}>
       {/* The count number, floating ABOVE the creature (used by the explanation demo — each one is
           labelled with its number as it's counted). Direct child of the button so the gait/facing
@@ -553,7 +559,7 @@ const Parader: React.FC<{ obj: CountKind; band: Band; slot: 0 | 1; size: number;
       <span style={{ position: 'relative', display: 'block', animation: leaving ? 'fw_count .4s ease both' : 'none' }}>
         <span style={{ display: 'block', transform: `scaleX(${face})` }}>
           <span style={{ display: 'block', animation: `${gait.name} ${gait.dur}s ease-in-out infinite` }}>
-            <CountItem kind={obj} on={false} size={size} side blend />
+            <CountItem kind={obj} on={false} size={size} side blend moving={moving} />
           </span>
         </span>
       </span>
@@ -563,56 +569,79 @@ const Parader: React.FC<{ obj: CountKind; band: Band; slot: 0 | 1; size: number;
 
 interface Slot { key: number; slot: 0 | 1; leaving: boolean; num?: number }
 
-// Off-screen but focusable — the keyboard/screen-reader path to a canvas-only interaction.
-const srOnly: React.CSSProperties = {
-  position: 'fixed', width: 1, height: 1, padding: 0, margin: -1,
-  overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
-}
 const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => void }> = ({ data, onSubmit }) => {
   // The creatures parade through ~2 at a time, moving naturally. The child taps each to count it —
   // it pops, then walks/flies/swims off and the next one comes in. Once all N have been counted, the
   // number choices appear and the child taps how many they counted (kept as the assessment).
+  //
+  // ONE list rather than two fixed slots, because a counted creature keeps walking off while its
+  // REPLACEMENT is already entering the same slot: waiting out the exit first meant the child
+  // answered and then sat watching dead time. Within a slot both travel the SAME direction (in one
+  // side, out the other), so the outgoing and the incoming never cross. Marking `leaving` in place —
+  // rather than moving the entry to another array — keeps React's element identity, so the exit
+  // animation runs off the existing element instead of a remount that would re-play the walk-in.
+  const [crowd, setCrowd] = useState<Slot[]>([])
   const [counted, setCounted] = useState(0)
   const [picked, setPicked] = useState<number | null>(null)
   const speaking = useIsSpeaking()
   const { w: vw, h: vh } = useViewport()
   const scale = useScale()
   const asked = useRef(false)
+  const spawnedRef = useRef(0)
+  const keyRef = useRef(0)
+  const didInit = useRef(false)
 
   const size = Math.max(48, Math.min(Math.round(vh * 0.3), Math.round(88 * (SIZE_BOOST[data.obj] ?? 1) * scale)))
   const btn = Math.max(52, Math.min(94, Math.round(Math.min(vw / 8.8, vh / 5.2))))
   const allCounted = counted >= data.n
   const paradeBand = data.band ?? BIOMES.forest.band
+  const locked = picked != null || speaking
 
-  // The canvas owns spawning, gaits and exits; all React needs back is "one more was counted".
-  const countOne = () => setCounted(c => Math.min(data.n, c + 1))
-  function choose(v: number) { if (picked != null || speaking) return; setPicked(v); window.setTimeout(() => onSubmit(v === data.n), 450) }
+  // Fill the opening one/two slots (didInit guards React strict-mode double effects).
+  useEffect(() => {
+    if (didInit.current) return
+    didInit.current = true
+    setCrowd(() => {
+      const next: Slot[] = []
+      for (let s = 0 as 0 | 1; s < 2; s++) {
+        if (spawnedRef.current < data.n) { next.push({ key: keyRef.current++, slot: s, leaving: false }); spawnedRef.current++ }
+      }
+      return next
+    })
+  }, [data.n])
+
+  // The already-counted guard is a REF, never the `crowd` state this handler also sets: two taps
+  // inside one React batch both read the same render's `crowd`, so a state-based guard sees neither
+  // as counted yet and lets the same creature through twice. Refs update synchronously.
+  const countedKeys = useRef<Set<number>>(new Set())
+  function tap(key: number, slot: 0 | 1) {
+    if (locked || countedKeys.current.has(key)) return
+    countedKeys.current.add(key)
+    // Send the next one in the MOMENT this is tapped, not once it has finished walking off —
+    // otherwise the child answers and then sits watching dead time. Claimed here rather than inside
+    // the updater below, so the updater stays a pure function of the previous state.
+    let replacement: Slot | null = null
+    if (spawnedRef.current < data.n) { replacement = { key: keyRef.current++, slot, leaving: false }; spawnedRef.current++ }
+    setCrowd(prev => {
+      const next = prev.map(c => (c.key === key ? { ...c, leaving: true } : c))
+      if (replacement) next.push(replacement)
+      return next
+    })
+    setCounted(c => Math.min(data.n, c + 1))
+  }
+  const gone = (key: number) => setCrowd(prev => prev.filter(c => c.key !== key))
+  function choose(v: number) { if (locked) return; setPicked(v); window.setTimeout(() => onSubmit(v === data.n), 450) }
   useEffect(() => {
     if (allCounted && !asked.current) { asked.current = true; speakAfterCurrent('So how many did you count? Tap the number!') }
   }, [allCounted])
 
   return (
     <>
-      <ParadeCanvas
-        key={`${data.obj}-${data.n}`}
-        src={COUNT_SIDE[data.obj] ?? COUNT_SRC[data.obj]?.[0] ?? ''}
-        gait={gaitFor(data.obj)}
-        n={data.n}
-        size={size}
-        lane0={laneFor(locoOf(data.obj), paradeBand, 0)}
-        lane1={laneFor(locoOf(data.obj), paradeBand, 1)}
-        artFacesLeft={BASE_FACES_LEFT.has(data.obj)}
-        grounded={locoOf(data.obj) !== 'air'}
-        interactive={picked == null && !speaking}
-        onCount={countOne}
-      />
-      {/* The parade lives on a canvas, so it is invisible to keyboard and screen readers. This is
-          the equivalent affordance: one press counts the next creature, same as one tap. */}
-      {!allCounted && (
-        <button onClick={countOne} disabled={picked != null || speaking} style={srOnly}>
-          Count one {COUNT_LABEL[data.obj] ?? 'thing'}
-        </button>
-      )}
+      {/* Real <button>s, so the keyboard and screen-reader path is the same affordance as the tap. */}
+      {crowd.map(c => (
+        <Parader key={c.key} obj={data.obj} band={paradeBand} slot={c.slot} size={size} leaving={c.leaving}
+          travelSecs={1.8} disabled={locked || c.leaving} onTap={() => tap(c.key, c.slot)} onGone={() => gone(c.key)} />
+      ))}
 
       {/* Bottom stack: the answer choices sit ABOVE the collected-objects tray. Both live in one
           column so they can never overlap each other, and neither can sit on top of the parade —

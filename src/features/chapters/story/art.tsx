@@ -226,7 +226,16 @@ export const COUNT_PLURAL: Record<CountKind, string> = {
 //   • blend=true — soft natural shadow only, so it tucks INTO the forest foliage
 //     and the child has to HUNT for it (the forest-walk find-and-count beats).
 // Missing art (placeholders) falls back to a big emoji.
-export function CountItem({ kind, on, size = 56, variant = 0, blend = false, side = false }: { kind: CountKind; on: boolean; size?: number; variant?: number; blend?: boolean; side?: boolean }) {
+export function CountItem({ kind, on, size = 56, variant = 0, blend = false, side = false, moving = true }: {
+  kind: CountKind; on: boolean; size?: number; variant?: number; blend?: boolean; side?: boolean
+  /**
+   * Is the creature actually covering ground right now? A drawn walk cycle looping on a stationary
+   * creature is skating on the spot, which is the parade's oldest rule. Defaults true so every
+   * existing caller (the tray, the stage, the showcases) renders exactly as before — only the
+   * parade, whose creatures stop mid-scene to be counted, passes it.
+   */
+  moving?: boolean
+}) {
   const [missing, setMissing] = useState(false)
   const [sideFailed, setSideFailed] = useState(false)
   const [sheetFailed, setSheetFailed] = useState(false)
@@ -259,7 +268,13 @@ export function CountItem({ kind, on, size = 56, variant = 0, blend = false, sid
           style={{
             position: 'absolute', left: 0, top: 0, height: size, width: cellW * sheet.frames,
             maxWidth: 'none', imageRendering: 'auto',
-            animation: `ci-walk ${(sheet.frames / sheet.fps).toFixed(3)}s steps(${sheet.frames}) infinite`,
+            // LONGHAND beside animationPlayState, deliberately: rewriting the `animation` shorthand
+            // resets the play state, so a paused creature silently starts walking again.
+            animationName: 'ci-walk',
+            animationDuration: `${(sheet.frames / sheet.fps).toFixed(3)}s`,
+            animationTimingFunction: `steps(${sheet.frames})`,
+            animationIterationCount: 'infinite',
+            animationPlayState: moving ? 'running' : 'paused',
           }} />
       </span>
     )

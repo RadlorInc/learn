@@ -31,9 +31,8 @@ export interface Sheet {
   /** Frames per second to play at. Roughly one cycle per 0.5s reads as a walk at parade size. */
   fps: number
   /**
-   * One cell's width ÷ height. Pixi reads this off the texture, but the DOM parade (the demo and
-   * guided rounds, which are plain elements rather than canvas) has to crop the strip itself and
-   * cannot know a cell's width until the image has loaded.
+   * One cell's width ÷ height. The parade crops the strip with `overflow: hidden` on a plain
+   * element, so it has to be told a cell's width — it cannot know one until the image has loaded.
    */
   cellAspect: number
   /**
@@ -52,10 +51,10 @@ export interface Sheet {
 }
 
 /**
- * Keyed by the sprite URL passed to `ParadeStage.spawn`. Covers storytelling 1 (Nature Walk) —
- * forest, underwater and garden. `fps` is that creature's own cadence: an ant scuttles, a shark
- * glides. For a grounded creature it ALSO sets ground speed (ParadeStage derives travel from
- * fps/frames so the feet don't skate), so raising it makes the creature walk faster too.
+ * Keyed by the creature's side-facing sprite URL (`COUNT_SIDE` / `CAST`). Covers storytelling 1
+ * (Nature Walk) — forest, underwater and garden. `fps` is that creature's own cadence: an ant
+ * scuttles, a shark glides. For a grounded creature it ALSO sets ground speed wherever travel is
+ * derived from fps/frames (`groundSpeed` in critters.tsx), so raising it makes it walk faster too.
  */
 export const SHEETS: Record<string, Sheet> = {
   // ── forest ──
