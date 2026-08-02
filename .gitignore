@@ -14,7 +14,9 @@
 /coverage
 
 # next.js
-/.next/
+# Unrooted: a stray `next build` with the wrong cwd drops a .next/ inside src/, which a
+# rooted `/.next/` does not catch — one such dir was sitting in features/chapters/teen/games.
+.next/
 /out/
 
 # production
