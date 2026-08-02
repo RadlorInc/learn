@@ -2,24 +2,33 @@
 /**
  * The chapter registry — every chapter that runs on the shared portal, as data.
  *
- * These 55 chapters used to be 55 near-identical wrapper files whose only real
+ * These chapters used to be 55 near-identical wrapper files whose only real
  * content was the four values below (skill id, backdrop / band, which experience
  * to mount, and the mastery copy). The plumbing lives in ChapterPortal; this file
  * is the table. Adding a chapter is one row.
  *
  * Each row keeps its own dynamic import, so chapters stay code-split exactly as
  * they were — the portal is built inside the loader, after the chunk resolves.
+ *
+ * The 3–11 half of the table lives in `storyChapters.tsx`, because `/story` renders
+ * those same experiences bare and must not pull this module's teen chain in with them.
  */
 import nextDynamic from 'next/dynamic'
-import { makeStoryChapter, makeTeenChapter, type ChapterProps, type TeenChapterCfg, type StoryInner, type TeenGame, type Sim } from '@/features/chapters/ChapterPortal'
+import { makeStoryChapter, makeTeenChapter, type ChapterProps, type TeenChapterCfg, type TeenGame, type Sim } from '@/features/chapters/ChapterPortal'
+import { STORY_CHAPTERS, type StorySkill } from '@/features/chapters/storyChapters'
 import type { ChapterType } from '@/state/store'
 
 type Loaded = { default: React.ComponentType<ChapterProps> }
 const lazy = (load: () => Promise<Loaded>) => nextDynamic(load, { ssr: false })
 
-/** A 3–11 story chapter: its own experience over a per-chapter backdrop. */
-const story = (skill: ChapterType, bg: string, load: () => Promise<{ default: StoryInner }>) =>
-  lazy(() => load().then(m => ({ default: makeStoryChapter(skill, bg, m.default) })))
+/** Each story experience, wrapped in the portal. Cast so `CHAPTER_COMPONENTS`'s
+ *  `Record<ChapterType, …>` still fails to compile when a chapter is missing —
+ *  `Object.fromEntries` alone would widen to an index signature and lose that. */
+const STORY_PORTALS = Object.fromEntries(
+  Object.entries(STORY_CHAPTERS).map(([skill, { bg, load }]) =>
+    [skill, lazy(() => load().then(m => ({ default: makeStoryChapter(skill as ChapterType, bg, m.default) })))],
+  ),
+) as Record<StorySkill, React.ComponentType<ChapterProps>>
 
 /** A 12–18 teen chapter, optionally preceded by an Explore sim. */
 const teen = (
@@ -30,39 +39,7 @@ const teen = (
   Promise.all([load(), loadSim?.()]).then(([g, s]) => ({ default: makeTeenChapter(cfg, g.default, s?.default) })),
 )
 
-const PORTAL_CHAPTERS = {
-  addition: story("addition", "#dff0c8", () => import("@/features/chapters/story/PlayTime")),
-  anglesSymmetry: story("anglesSymmetry", "#0a1026", () => import("@/features/chapters/story/AngleScope")),
-  areaPerimeter: story("areaPerimeter", "#0a1026", () => import("@/features/chapters/story/GridPlotter")),
-  bigNumbers: story("bigNumbers", "#a99a86", () => import("@/features/chapters/story/OrderDesk")),
-  colors: story("colors", "#e6f0f7", () => import("@/features/chapters/story/RainbowTown")),
-  compareNumbers: story("compareNumbers", "#cfe6f7", () => import("@/features/chapters/story/SeesawPark")),
-  dataGraphs: story("dataGraphs", "#b9a894", () => import("@/features/chapters/story/LoadingBay")),
-  decimals: story("decimals", "#0a1026", () => import("@/features/chapters/story/DecimalGrid")),
-  division: story("division", "#0a1026", () => import("@/features/chapters/story/DivisionShare")),
-  factorsMultiples: story("factorsMultiples", "#0a1026", () => import("@/features/chapters/story/FactorLab")),
-  fractions: story("fractions", "#f3ead8", () => import("@/features/chapters/story/SliceShop")),
-  fractionsCompare: story("fractionsCompare", "#0a1026", () => import("@/features/chapters/story/FractionForge")),
-  matchingQuantities: story("matchingQuantities", "#241c39", () => import("@/features/chapters/story/HomeTime")),
-  measurementUnits: story("measurementUnits", "#0a1026", () => import("@/features/chapters/story/UnitConverter")),
-  measurement: story("measurement", "#cfe9f7", () => import("@/features/chapters/story/MeasureIt")),
-  money: story("money", "#f3ead8", () => import("@/features/chapters/story/CoinShop")),
-  multiplication: story("multiplication", "#f3ead8", () => import("@/features/chapters/story/MarketDay")),
-  numberComparison: story("numberComparison", "#dff0c8", () => import("@/features/chapters/story/BigOrSmall")),
-  numberRecognition: story("numberRecognition", "#241c39", () => import("@/features/chapters/story/NestTree")),
-  numberOrdering: story("numberOrdering", "#bfe6f7", () => import("@/features/chapters/story/FollowTheLeader")),
-  numbersTo100: story("numbersTo100", "#cfe6f7", () => import("@/features/chapters/story/NumberTown")),
-  placeValue: story("placeValue", "#cfe6f7", () => import("@/features/chapters/story/BuildingBlocks")),
-  rounding: story("rounding", "#9fae9a", () => import("@/features/chapters/story/RailLine")),
-  shapes: story("shapes", "#dff0e4", () => import("@/features/chapters/story/ShapeTown")),
-  shapes2d3d: story("shapes2d3d", "#efe6d8", () => import("@/features/chapters/story/ShapeStudio")),
-  skipCounting: story("skipCounting", "#dcecdb", () => import("@/features/chapters/story/HopAlong")),
-  storyProblems: story("storyProblems", "#f3ead8", () => import("@/features/chapters/story/StoryTime")),
-  subtraction: story("subtraction", "#bfe7ff", () => import("@/features/chapters/story/PlayTimeSub")),
-  time: story("time", "#f3ead8", () => import("@/features/chapters/story/TickTock")),
-  timesTables: story("timesTables", "#0a1026", () => import("@/features/chapters/story/TimesGrid")),
-  wordProblems: story("wordProblems", "#0a1026", () => import("@/features/chapters/story/MissionBrief")),
-
+const TEEN_CHAPTERS = {
   algebraicExpressions: teen(
     { skill: "algebraicExpressions", band: "12-14", conceptsConfirmed: ["Evaluating expressions", "Solving for the input", "Combining like terms", "Reading a rule"], nextPointer: "Next: equations & inequalities." },
     () => import("@/features/chapters/teen/games/FunctionFactory"),
@@ -214,16 +191,15 @@ const PORTAL_CHAPTERS = {
 }
 
 /** Chapters that still have a bespoke wrapper — their own phases, sims or copy
- *  don't fit the portal table yet. */
+ *  don't fit the portal table. Counting owns a world picker that "play again"
+ *  returns to, which is a different run shape, not a different backdrop. */
 const BESPOKE_CHAPTERS = {
-  counting:           lazy(() => import('@/features/chapters/game/CountingStoryChapter')),
-  patterns:           lazy(() => import('@/features/chapters/game/PatternsChapter')),
-  additionTo100:      lazy(() => import('@/features/chapters/game/ArithmeticChapter').then(m => ({ default: m.AdditionTo100Chapter }))),
-  subtractionTo100:   lazy(() => import('@/features/chapters/game/ArithmeticChapter').then(m => ({ default: m.SubtractionTo100Chapter }))),
+  counting: lazy(() => import('@/features/chapters/game/CountingStoryChapter')),
 }
 
 /** id → component for every chapter in the app. Record<> enforces completeness. */
 export const CHAPTER_COMPONENTS: Record<ChapterType, React.ComponentType<ChapterProps>> = {
-  ...PORTAL_CHAPTERS,
+  ...STORY_PORTALS,
+  ...TEEN_CHAPTERS,
   ...BESPOKE_CHAPTERS,
 }

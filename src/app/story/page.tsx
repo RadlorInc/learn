@@ -1,67 +1,57 @@
 'use client'
 /**
  * /story — standalone preview of the story-mode chapters (the same experiences also
- * run inside the game via their chapter wrappers). Pick which one with `?ch=`:
- *   /story            → Counting    (forest walk)        [default]
- *   /story?ch=order   → Number Order (river crossing)
- *   /story?ch=kitchen → Comparison   (kitchen)
- *   /story?ch=race    → Recognition  (number race)
- *   /story?ch=grocery → Matching qty (little grocery)
- *   /story?ch=shapes  → Shapes       (shape town walk)
- *   /story?ch=rainbow → Colors       (rainbow town walk)
- *   /story?ch=beads   → Patterns     (bead shop)
+ * run inside the game via the chapter registry). Pick which one with `?ch=`, per the
+ * PREVIEW table below; `?world=` jumps straight into a world where a chapter has them.
  *
  * Counting opens a WORLD PICKER (Nature / Farm / Space). Skip it + jump straight into
  * one with `?story=`:  /story?story=farm  ·  /story?story=space  ·  /story?story=nature
+ *
+ * This route renders each experience BARE — no portal, no progress sync, no celebration.
+ * WHERE each experience lives is not repeated here: it comes from the one shared table in
+ * `storyChapters.tsx`, which the registry builds its portal-wrapped chapters from too.
  */
 import { useEffect, useState } from 'react'
 import nextDynamic from 'next/dynamic'
 import { type Chapter } from '@/features/chapters/story/ForestWalk'
 import WorldSelect from '@/features/chapters/story/WorldSelect'
 import { makeCountingChapter } from '@/features/chapters/story/chapters'
-import { STORYTELLINGS, BIOMES, storytellingById } from '@/features/chapters/story/biomes'
+import { COUNTING_WORLDS, storytellingById } from '@/features/chapters/story/biomes'
+import { STORY_CHAPTERS, type StorySkill } from '@/features/chapters/storyChapters'
 import TasteBanner from '@/features/chapters/story/TasteBanner'
 
-// Lazy-load each heavy chapter view so only the selected chapter's JS ships,
-// mirroring src/app/game/page.tsx. (WorldSelect / chapters / biomes / TasteBanner
-// and the `type Chapter` type stay static — they're not heavy chapter views.)
-const lazyStory = <P,>(loader: () => Promise<{ default: React.ComponentType<P> }>) =>
-  nextDynamic(loader, { ssr: false })
+/**
+ * `?ch=` → the chapter whose experience it previews. Several keys are historical and are
+ * kept working because they are linked from elsewhere (`grocery` predates `home`; `race`
+ * and `doors` predate `nest`).
+ */
+const PREVIEW: Record<string, StorySkill> = {
+  // ── 3–5 ──
+  order: 'numberOrdering', kitchen: 'numberComparison',
+  nest: 'numberRecognition', race: 'numberRecognition', doors: 'numberRecognition',
+  home: 'matchingQuantities', grocery: 'matchingQuantities',
+  shapes: 'shapes', rainbow: 'colors', beads: 'patterns',
+  add: 'addition', sub: 'subtraction', measure: 'measurement',
+  // ── 6–8 ──
+  numbers: 'numbersTo100', place: 'placeValue', skip: 'skipCounting', compare: 'compareNumbers',
+  story: 'storyProblems', multiply: 'multiplication', fractions: 'fractions',
+  money: 'money', time: 'time', add100: 'additionTo100', sub100: 'subtractionTo100',
+  solids: 'shapes2d3d',
+  // ── 9–11 — pre-teen "Number Lab" (Mission-HUD) look — single lab, no world picker ──
+  bignum: 'bigNumbers', round: 'rounding', times: 'timesTables', divide: 'division',
+  factors: 'factorsMultiples', fcompare: 'fractionsCompare', decimals: 'decimals',
+  units: 'measurementUnits', area: 'areaPerimeter', angles: 'anglesSymmetry',
+  data: 'dataGraphs', word: 'wordProblems',
+}
 
-const ForestWalk = lazyStory(() => import('@/features/chapters/story/ForestWalk'))
-const FollowTheLeader = lazyStory(() => import("@/features/chapters/story/FollowTheLeader"))
-const BigOrSmall = lazyStory(() => import('@/features/chapters/story/BigOrSmall'))
-const NestTree = lazyStory(() => import('@/features/chapters/story/NestTree'))
-const HomeTime = lazyStory(() => import('@/features/chapters/story/HomeTime'))
-const ShapeTown = lazyStory(() => import('@/features/chapters/story/ShapeTown'))
-const RainbowTown = lazyStory(() => import('@/features/chapters/story/RainbowTown'))
-const BeadShop = lazyStory(() => import('@/features/chapters/story/BeadShop'))
-const PlayTime = lazyStory(() => import('@/features/chapters/story/PlayTime'))
-const PlayTimeSub = lazyStory(() => import('@/features/chapters/story/PlayTimeSub'))
-const MeasureIt = lazyStory(() => import('@/features/chapters/story/MeasureIt'))
-const NumberTown = lazyStory(() => import('@/features/chapters/story/NumberTown'))
-const BuildingBlocks = lazyStory(() => import('@/features/chapters/story/BuildingBlocks'))
-const HopAlong = lazyStory(() => import('@/features/chapters/story/HopAlong'))
-const SeesawPark = lazyStory(() => import('@/features/chapters/story/SeesawPark'))
-const StoryTime = lazyStory(() => import('@/features/chapters/story/StoryTime'))
-const MarketDay = lazyStory(() => import('@/features/chapters/story/MarketDay'))
-const SliceShop = lazyStory(() => import('@/features/chapters/story/SliceShop'))
-const CoinShop = lazyStory(() => import('@/features/chapters/story/CoinShop'))
-const TickTock = lazyStory(() => import('@/features/chapters/story/TickTock'))
-const BlockYard = lazyStory<{ op: '+' | '-'; world?: string }>(() => import('@/features/chapters/story/BlockYard'))
-const ShapeStudio = lazyStory(() => import('@/features/chapters/story/ShapeStudio'))
-const OrderDesk = lazyStory(() => import('@/features/chapters/story/OrderDesk'))
-const RailLine = lazyStory(() => import('@/features/chapters/story/RailLine'))
-const TimesGrid = lazyStory(() => import('@/features/chapters/story/TimesGrid'))
-const DivisionShare = lazyStory(() => import('@/features/chapters/story/DivisionShare'))
-const FactorLab = lazyStory(() => import('@/features/chapters/story/FactorLab'))
-const FractionForge = lazyStory(() => import('@/features/chapters/story/FractionForge'))
-const DecimalGrid = lazyStory(() => import('@/features/chapters/story/DecimalGrid'))
-const UnitConverter = lazyStory(() => import('@/features/chapters/story/UnitConverter'))
-const GridPlotter = lazyStory(() => import('@/features/chapters/story/GridPlotter'))
-const AngleScope = lazyStory(() => import('@/features/chapters/story/AngleScope'))
-const LoadingBay = lazyStory(() => import('@/features/chapters/story/LoadingBay'))
-const MissionBrief = lazyStory(() => import('@/features/chapters/story/MissionBrief'))
+// Lazy-load each heavy chapter view so only the selected chapter's JS ships, mirroring the
+// registry. Built ONCE at module scope: `next/dynamic` called during render returns a new
+// component identity every time, which remounts the chapter on every state change.
+const VIEWS = Object.fromEntries(
+  Object.entries(STORY_CHAPTERS).map(([skill, { load }]) => [skill, nextDynamic(load, { ssr: false })]),
+) as Record<StorySkill, React.ComponentType<{ world?: string }>>
+
+const ForestWalk = nextDynamic(() => import('@/features/chapters/story/ForestWalk'), { ssr: false })
 
 export default function StoryPage() {
   const [ch, setCh] = useState('counting')
@@ -72,7 +62,7 @@ export default function StoryPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     setCh(params.get('ch') || 'counting')
-    setOrderWorld(params.get('world') || undefined)   // ?world=river|train|sky jumps into an ordering world
+    setOrderWorld(params.get('world') || undefined)   // ?world=… jumps into a world where the chapter has them
     setTaste(params.get('taste') === '1')
     // ?story= jumps straight into a journey; otherwise the world picker shows.
     const forced = storytellingById(params.get('story'))
@@ -83,64 +73,12 @@ export default function StoryPage() {
   return <>{renderChapter()}{taste && <TasteBanner />}</>
 
   function renderChapter() {
-  if (ch === 'order') return <FollowTheLeader world={orderWorld} />
-  // ?world=kitchen|grocery|bakery jumps into a comparison world.
-  if (ch === 'kitchen') return <BigOrSmall />
-  // ?world=meadow|splash|sky jumps into a race world.
-  if (ch === 'nest' || ch === 'race' || ch === 'doors') return <NestTree world={orderWorld} />
-  // ?ch=home is the current key; ?ch=grocery is the old Little Grocery link, kept working.
-  if (ch === 'home' || ch === 'grocery') return <HomeTime world={orderWorld} />
-  // One build site — the BUILD changes (house, then boat), so there is no world to pick.
-  if (ch === 'shapes') return <ShapeTown />
-  // A colouring book — one book, the PAGE turns, so there is no world to pick.
-  if (ch === 'rainbow') return <RainbowTown />
-  // ?world=beads|party|train jumps into a pattern world.
-  if (ch === 'beads') return <BeadShop world={orderWorld} />
-  // ?world=orchard|reef|space jumps into an addition world.
-  if (ch === 'add') return <PlayTime />
-  // ?world=pond|party|night jumps into a subtraction world.
-  if (ch === 'sub') return <PlayTimeSub />
-  // ?world=forest|trail jumps into a measurement world.
-  if (ch === 'measure') return <MeasureIt world={orderWorld} />
-  // ── 6–8 ──
-  // ?world=town|train|space jumps into a numbers-to-100 world.
-  if (ch === 'numbers') return <NumberTown world={orderWorld} />
-  if (ch === 'place') return <BuildingBlocks world={orderWorld} />
-  if (ch === 'skip') return <HopAlong world={orderWorld} />
-  if (ch === 'compare') return <SeesawPark world={orderWorld} />
-  // ?world=picnic|reef|fair jumps into a story-problems world.
-  if (ch === 'story') return <StoryTime world={orderWorld} />
-  // ?world=bakery|garden|craft jumps into a multiplication world.
-  if (ch === 'multiply') return <MarketDay world={orderWorld} />
-  // Fractions has no worlds any more — the shop opening through to the party is one run.
-  if (ch === 'fractions') return <SliceShop />
-  // ?world=grocery|train|beach jumps into a money world.
-  if (ch === 'money') return <CoinShop world={orderWorld} />
-  // ?world=morning|afternoon|night jumps into a time world.
-  if (ch === 'time') return <TickTock world={orderWorld} />
-  // ?world=orchard|eggranch|cookiejar jumps into an add-to-100 world.
-  if (ch === 'add100') return <BlockYard op="+" world={orderWorld} />
-  // ?world=starlab|meadow|fishdock jumps into a subtract-to-100 world.
-  if (ch === 'sub100') return <BlockYard op="-" world={orderWorld} />
-  // ?world=studio|build|playroom jumps into a shapes 2D/3D world.
-  if (ch === 'solids') return <ShapeStudio world={orderWorld} />
-  // ── 9–11 — pre-teen "Number Lab" (Mission-HUD) look — single lab, no world picker ──
-  if (ch === 'bignum') return <OrderDesk />
-  if (ch === 'round') return <RailLine />
-  if (ch === 'times') return <TimesGrid />
-  if (ch === 'divide') return <DivisionShare />
-  if (ch === 'factors') return <FactorLab />
-  if (ch === 'fcompare') return <FractionForge />
-  if (ch === 'decimals') return <DecimalGrid />
-  if (ch === 'units') return <UnitConverter />
-  if (ch === 'area') return <GridPlotter />
-  if (ch === 'angles') return <AngleScope />
-  if (ch === 'data') return <LoadingBay />
-  if (ch === 'word') return <MissionBrief />
-  // Counting: play the forced/chosen world, else show the picker.
-  if (chapter) return <ForestWalk chapter={chapter} />
-  if (!ready) return null
-  const worlds = STORYTELLINGS.map(s => ({ id: s.id, label: s.label, emoji: s.emoji, bgImage: BIOMES[s.biomes[0]].bgImage }))
-  return <WorldSelect title="Where shall we count today?" worlds={worlds} onPick={(id) => { const s = storytellingById(id); if (s) setChapter(makeCountingChapter(s)) }} />
+    const skill = PREVIEW[ch]
+    if (skill) { const View = VIEWS[skill]; return <View world={orderWorld} /> }
+    // Counting: play the forced/chosen world, else show the picker.
+    if (chapter) return <ForestWalk chapter={chapter} />
+    if (!ready) return null
+    return <WorldSelect title="Where shall we count today?" worlds={COUNTING_WORLDS}
+      onPick={(id) => { const s = storytellingById(id); if (s) setChapter(makeCountingChapter(s)) }} />
   }
 }

@@ -15,12 +15,9 @@ import { useRouter } from 'next/navigation'
 import ForestWalk from '@/features/chapters/story/ForestWalk'
 import WorldSelect from '@/features/chapters/story/WorldSelect'
 import { makeCountingChapter } from '@/features/chapters/story/chapters'
-import { STORYTELLINGS, BIOMES, storytellingById, type Storytelling } from '@/features/chapters/story/biomes'
+import { COUNTING_WORLDS, storytellingById, type Storytelling } from '@/features/chapters/story/biomes'
 import { useChapterSync } from '@/data/supabase/useChapterSync'
 import CelebrationModal from '@/shared/ui/CelebrationModal'
-
-// The counting worlds for the picker — each card previews its first biome's background.
-const COUNTING_WORLDS = STORYTELLINGS.map(s => ({ id: s.id, label: s.label, emoji: s.emoji, bgImage: BIOMES[s.biomes[0]].bgImage }))
 
 export default function CountingStoryChapter(_props: { onComplete: (correct: number, wrong: number) => void; childName: string }) {
   const router = useRouter()

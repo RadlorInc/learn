@@ -57,8 +57,10 @@ function usePortalRun(skill: ChapterType, quiet: boolean) {
 // ─── Story chapters (3–11) ──────────────────────────────────────────────────
 
 /** Story experiences declare these props optional (they can run standalone in
- *  /story), so the portal's contract is the subset it actually passes. */
-export type StoryInner = React.ComponentType<{ onFinish?: Finish; onExit?: () => void }>
+ *  /story), so the portal's contract is the subset it actually passes. `world`
+ *  is only ever passed by /story's `?world=` preview link; the portal never sets it. */
+export type StoryProps = { onFinish?: Finish; onExit?: () => void; world?: string }
+export type StoryInner = React.ComponentType<StoryProps>
 
 export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInner) {
   return function StoryChapter(_props: ChapterProps) {

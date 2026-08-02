@@ -163,6 +163,11 @@ export function storytellingById(id: string | null | undefined): Storytelling | 
   return STORYTELLINGS.find(s => s.id === id)
 }
 
+/** The counting world picker's cards — each previews its first biome's background. Lives
+ *  here rather than in the two screens that show it (the chapter and /story), which each
+ *  used to derive it and could drift apart. */
+export const COUNTING_WORLDS = STORYTELLINGS.map(s => ({ id: s.id, label: s.label, emoji: s.emoji, bgImage: BIOMES[s.biomes[0]].bgImage }))
+
 // Nature Walk's biomes — kept as the default rotation/background order for any caller
 // that doesn't yet thread a storytelling through (back-compat).
 export const BIOME_ORDER: BiomeId[] = ['forest', 'underwater', 'garden']
