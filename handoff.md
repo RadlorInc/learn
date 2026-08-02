@@ -12,9 +12,16 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🏷️ **2026-08-02 (LATEST) — THE FITTING CREW'S THREE OPEN ITEMS CLOSED BY PLAYING IT, AND PLAYING IT FOUND TWO MORE LIVE DEFECTS THE 491 GREEN TESTS COULD NOT SEE. 🚀 SHIPPED — `main`@`2951dd6`, prod serving **sw v87**.** `tsc` 0 · **494/494 vitest** (was 491, **+3**) · `next build` · 0 console errors · a clean run and a 640×320 run both played to their own finish.
+> 🏷️ **2026-08-02 (LATEST) — THE FITTING CREW'S THREE OPEN ITEMS CLOSED BY PLAYING IT, AND PLAYING IT FOUND TWO MORE LIVE DEFECTS THE 491 GREEN TESTS COULD NOT SEE. 🚀 SHIPPED — `main`@`6b7c449`, prod serving **sw v87**.** `tsc` 0 · **494/494 vitest** (was 491, **+3**) · `next build` · 0 console errors · a clean run and a 640×320 run both played to their own finish.
 >
 > **The ask:** the three items left open at the top of the 🔧 block — *"1. no scored split / no mastery exit on prod · 2. 640×320 measured, never played · 3. the fourth world is a substitution needing your call"* — then, on the two defects that fell out: *"dono fix karo aur deploy kar do."*
+>
+> | commit | what |
+> |---|---|
+> | `672a8ae` | the two fixes + the print shop — `FitOut.tsx` · the gate (**37 tests**, +3) · `fit_print.jpeg` + `fit_print.png` |
+> | `2a19795` | `chapter-craft.md` — three rules, incl. **the doc's own reference list being the bug** |
+> | `bd72daf` | this handoff |
+> | `6b7c449` | `public/sw.js` v86 → v87 |
 >
 > ## ① ✅ THE CLEAN RUN — SCORED `split` ×2 AND THE MASTERY EXIT, BOTH ON THE LIVE ORIGIN FOR THE FIRST TIME
 > All three previous prod runs erred every round on purpose (to walk all ten and exercise the dead-end
