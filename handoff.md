@@ -12,7 +12,7 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🏷️ **2026-08-02 (LATEST) — THE FITTING CREW'S THREE OPEN ITEMS CLOSED BY PLAYING IT, AND PLAYING IT FOUND TWO MORE LIVE DEFECTS THE 491 GREEN TESTS COULD NOT SEE. 🚀 SHIPPED — `main`@`SW_SHA`, prod serving **sw v87**.** `tsc` 0 · **494/494 vitest** (was 491, **+3**) · `next build` · 0 console errors · a clean run and a 640×320 run both played to their own finish.
+> 🏷️ **2026-08-02 (LATEST) — THE FITTING CREW'S THREE OPEN ITEMS CLOSED BY PLAYING IT, AND PLAYING IT FOUND TWO MORE LIVE DEFECTS THE 491 GREEN TESTS COULD NOT SEE. 🚀 SHIPPED — `main`@`2951dd6`, prod serving **sw v87**.** `tsc` 0 · **494/494 vitest** (was 491, **+3**) · `next build` · 0 console errors · a clean run and a 640×320 run both played to their own finish.
 >
 > **The ask:** the three items left open at the top of the 🔧 block — *"1. no scored split / no mastery exit on prod · 2. 640×320 measured, never played · 3. the fourth world is a substitution needing your call"* — then, on the two defects that fell out: *"dono fix karo aur deploy kar do."*
 >
