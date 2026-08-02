@@ -46,6 +46,7 @@ import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, PartsBuilder, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#132a1f', nightBot: '#0b1a13',
@@ -56,7 +57,6 @@ const P: Palette = {
   glass: 'rgba(15,34,24,0.6)', glassBorder: 'rgba(233,247,238,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 /** Display integer with a real minus glyph (reads right, speaks as nothing). */
 const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 /** Spoken integer — the ear's version of `fmt`. */

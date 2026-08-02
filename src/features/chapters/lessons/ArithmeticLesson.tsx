@@ -12,6 +12,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { speak, speakSeq } from '@/infra/useMiloSpeaker'
 import { LessonScaffold, Confetti, numberToWords, type LessonStep } from './_kit'
 import { TensOnes } from './Numbers100Lesson'
+import { shuffle } from '@/core/rand'
 
 export type Op = '+' | '-'
 export const applyOp = (op: Op, a: number, b: number) => (op === '+' ? a + b : a - b)
@@ -25,7 +26,10 @@ export function buildArithChoices(answer: number, op: Op, a: number, b: number):
   const opts = new Set<number>([answer])
   for (const v of [trap, answer + 1, answer - 1, answer + 10, answer - 10]) { if (opts.size < 3 && v >= 0 && v !== answer) opts.add(v) }
   while (opts.size < 3) { const v = answer + (Math.floor(Math.random() * 5) - 2); if (v >= 0 && v !== answer) opts.add(v) }
-  return [...opts].sort(() => Math.random() - 0.5)
+  // shuffle(), not sort(() => Math.random() - 0.5): `answer` goes into the Set FIRST, and a
+  // random comparator barely moves the leading elements, so the correct chip sat in position 0
+  // far more often than a third of the time.
+  return shuffle([...opts])
 }
 
 // Base-ten block view of "a op b = answer" (tens rods + ones dots) so two-digit

@@ -40,6 +40,7 @@ import { useEffect, useState, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, useMotionValueEvent, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, CommitBtn, Nudge, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#132a3b', nightBot: '#0a1622',
@@ -50,7 +51,6 @@ const P: Palette = {
   glass: 'rgba(18,40,58,0.6)', glassBorder: 'rgba(234,244,251,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: T[]): T => a[rint(0, a.length - 1)]
 const fmtInt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 /** Coefficient prefix on x: "2x", "−x", "x". */

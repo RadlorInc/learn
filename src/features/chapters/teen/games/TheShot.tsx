@@ -44,6 +44,7 @@ import { useEffect, useMemo } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, PartsBuilder, SpecPicker, numChoices, type SpecChoice } from './parts/gameKit'
+import { rint, shuffle } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#2a1c3d', nightBot: '#160f24',
@@ -54,9 +55,7 @@ const P: Palette = {
   glass: 'rgba(40,26,64,0.6)', glassBorder: 'rgba(243,237,255,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
-const shuffle = <T,>(a: T[]): T[] => [...a].sort(() => Math.random() - 0.5)
 const minus = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 /** "x − 3" / "x + 2" — one factor, written the way it appears on the board. */
 const factorOf = (r: number) => `(x ${r < 0 ? '+' : '−'} ${Math.abs(r)})`

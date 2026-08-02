@@ -32,6 +32,7 @@ import { numberToWords } from '../lessons/_kit'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney, aspectOf } from './critters'
+import { rint } from '@/core/rand'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -192,7 +193,6 @@ export const scoredSlot = (round: number): { w: SpWorld; item: Item; bg: number 
 type Op = 'add' | 'sub' | 'compare'
 interface SpRound { w: SpWorld; bg: number; item: Item; op: Op; a: number; b: number; answer: number }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: T[]) => a[rint(0, a.length - 1)]
 const qty = (n: number, it: Item) => `${n} ${n === 1 ? it.one : it.many}`
 

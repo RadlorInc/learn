@@ -17,12 +17,11 @@ import type { LessonStep } from '@/features/chapters/lessons/_kit'
 import type { AgeBand, Choice } from '@/features/chapters/teen/types'
 import TeenLessonShell from '@/features/chapters/teen/TeenLessonShell'
 import ChoiceGrid from '@/features/chapters/teen/ChoiceGrid'
+import { rint, shuffle } from '@/core/rand'
 
 const BAND: AgeBand = '12-14'
 
 // ── shared helpers ──────────────────────────────────────────────────────────
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-const shuffle = <T,>(a: T[]): T[] => [...a].sort(() => Math.random() - 0.5)
 const PERFECT = [1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144]
 const SUP: Record<string, string> = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻' }
 /** Pretty power "3^4" as "3⁴". */

@@ -25,6 +25,7 @@ import { numberToWords, CSS as KIT_CSS, BigCount, nounFor } from '../lessons/_ki
 import { TensOnes } from '../lessons/Numbers100Lesson'
 import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
+import { rint, shuffle } from '@/core/rand'
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
@@ -81,12 +82,6 @@ const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji,
 
 interface NumRound { scene: Scene; target: number; choices: number[] }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-function shuffle<T>(a: T[]): T[] {
-  const arr = a.slice()
-  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[arr[i], arr[j]] = [arr[j], arr[i]] }
-  return arr
-}
 // Range widens with difficulty: 1 → 10–20, 2 → 20–60, 3 → 50–100.
 function pickTarget(d: 1 | 2 | 3): number {
   if (d === 1) return rint(10, 20)

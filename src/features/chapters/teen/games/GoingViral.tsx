@@ -34,6 +34,7 @@ import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { motion, useMotionValue, useMotionValueEvent, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, SpecPicker, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#1a1230', nightBot: '#0d0820',
@@ -44,7 +45,6 @@ const P: Palette = {
   glass: 'rgba(30,20,54,0.6)', glassBorder: 'rgba(242,236,255,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 

@@ -16,6 +16,7 @@ import { useEffect, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, LineSetter, numChoices, type Line, pick } from './parts/gameKit'
+import { shuffle } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#0d2230', nightBot: '#123444',
@@ -60,7 +61,6 @@ const eqStr = (m: number, b: number): string => {
   const mp = m === 1 ? 'x' : m === -1 ? '−x' : `${m < 0 ? '−' : ''}${Math.abs(m)}x`
   return b === 0 ? `y = ${mp}` : `y = ${mp} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`
 }
-const shuffleArr = <T,>(a: T[]): T[] => [...a].sort(() => Math.random() - 0.5)
 
 const L1: Spec[] = [ // is-it-a-function (concept) + pure rate (y = mx) — the foundation
   { kind: 'isFn', rows: [[0, 2], [1, 4], [2, 6], [3, 8]], fn: true },
@@ -108,8 +108,8 @@ function makeFrom(s: Spec): Task {
     if (b !== 0) { set.add(eqStr(m, 0)); set.add(eqStr(m, -b)) } // dropped / wrong-sign intercept
     else { set.add(eqStr(m, 1)); set.add(eqStr(m, -1)) }    // spurious intercept on a y=mx line
     set.add(eqStr(m + (m > 0 ? 1 : -1), b))                 // slightly steeper
-    const distract = shuffleArr([...set].filter((x) => x !== correct)).slice(0, 3)
-    const choices = shuffleArr([correct, ...distract])
+    const distract = shuffle([...set].filter((x) => x !== correct)).slice(0, 3)
+    const choices = shuffle([correct, ...distract])
     const prompt = "The sensor drew the tank's fill as this line. Which rule matches it?"
     return {
       kind: 'readGraph', title: 'Read the line', badge: 'which rule fits the line?', tone: (m < 0 ? 'b' : 'a'), showEquals: false,

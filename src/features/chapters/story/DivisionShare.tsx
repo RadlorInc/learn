@@ -21,12 +21,11 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { PT, ACCENTS, PT_CSS, LabBackdrop, BackChip, Brackets, PromptCard, ChoiceButton, PtMilo, IntroCard, PtSlider, PtReadout, ExploreScaffold, type ChoiceState } from './preteen/kit'
 import { useViewport } from '@/shared/hooks/useViewport'
 import FitBox from './FitBox'
+import { rint, shuffle } from '@/core/rand'
 
 const ACCENT = ACCENTS.orchid
 
 // ─── Math (identical logic to the story version — sharing/remainder, choices, ramp) ────
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-function shuffle<T>(a: T[]): T[] { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
 // Minimal, self-contained number-to-words (no external kit dependency).
 const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
 const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']

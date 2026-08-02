@@ -33,6 +33,7 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, CurveMatch, type Wave, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#2a1e2c', nightBot: '#0f0810',
@@ -43,7 +44,6 @@ const P: Palette = {
   glass: 'rgba(42,30,44,0.62)', glassBorder: 'rgba(253,238,228,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 

@@ -34,6 +34,7 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, PartsBuilder, MatrixPad, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#22261c', nightBot: '#0b0d08',
@@ -44,7 +45,6 @@ const P: Palette = {
   glass: 'rgba(34,38,28,0.62)', glassBorder: 'rgba(246,244,230,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const nz = (lo: number, hi: number) => { let v = 0; while (v === 0) v = rint(lo, hi); return v }
 const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]

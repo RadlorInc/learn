@@ -43,6 +43,7 @@ import {
   LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, STRIP_PX,
   groundSpeed, TRAVEL_MIN, seeded, maxSizeForRows, spreadBand, BAND_JITTER,
 } from './critters'
+import { rint } from '@/core/rand'
 
 // Same reasoning as chapters 4 and 9: long enough to swallow a double-tap, and deliberately NOT
 // tied to Milo's voice, which stays "speaking" for over 3.2s after a single word.
@@ -388,7 +389,6 @@ function MapStrip({ done, total }: { done: number; total: number }) {
 }
 
 // ─── Value generation ────────────────────────────────────────────────────────────────
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 /**
  * Difficulty grows the SIZE of the numbers, the CLOSENESS of the two bunches, and finally drops the

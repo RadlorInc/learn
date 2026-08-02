@@ -40,10 +40,11 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { SHEETS } from './canvas/sheets'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import {
-  type Habitat, type Spot, HABITATS, CAST, kindAt, homeOf, aspectOf, shuffle,
+  type Habitat, type Spot, HABITATS, CAST, kindAt, homeOf, aspectOf,
   Background, Critter, CRITTER_CSS, huddleGeom, huddleRows, waitSpot, leadX, fitBands,
   groundSpeed, journeyOf, TRAVEL_MIN, type Journey,
 } from './critters'
+import { rint, shuffle } from '@/core/rand'
 
 // Just long enough to swallow a double-tap. It is deliberately NOT tied to Milo's voice: measured
 // live in Chrome, `speechSynthesis.speaking` stays true for over 3.2 SECONDS after a single spoken
@@ -53,7 +54,6 @@ import {
 // utterance in flight, so a quick run of taps simply speaks the newest number.
 const TAP_LOCK_MS = 260
 const MARCH_MS = 2800          // the whole family walking off together, fully out of frame
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 // ─── The cast and where each of them lives ───────────────────────────────────────────
 /**

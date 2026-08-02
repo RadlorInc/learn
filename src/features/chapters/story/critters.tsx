@@ -17,6 +17,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react'
 import { SHEETS } from './canvas/sheets'
+import { shuffle } from '@/core/rand'
 
 export const STRIDE = 0.85                      // how far one cycle carries a body, in body heights
 // 3600, not the old 2400. The ceiling is what decides how hard a creature has to hurry: the cycle
@@ -28,11 +29,6 @@ export const TRAVEL_MIN = 1100, TRAVEL_MAX = 3600   // bounds on one creature's 
 
 const frac = (x: number) => x - Math.floor(x)
 export const seeded = (i: number, s: number) => frac(Math.sin((i + 1) * s) * 43758.5453)
-export const shuffle = <T,>(a: T[]): T[] => {
-  const r = a.slice()
-  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] }
-  return r
-}
 
 // ─── Habitats: where the picture will actually hold a creature ───────────────────────
 /**

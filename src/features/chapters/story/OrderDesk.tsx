@@ -61,6 +61,7 @@ import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney, CARRY_SPEED } from './cr
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { blockSet, shadesOf, Shadow, Cube, Rod, YARD_CSS, type Material, type Shades } from './yard'
+import { rint } from '@/core/rand'
 
 // ─── Numbers in words ───────────────────────────────────────────────────────────────────
 const ONES_W = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
@@ -208,7 +209,6 @@ export const RUN: Yard[] = Array.from({ length: 13 }, (_, i) => ({
 export const yardAt = (slot: number) => RUN[Math.min(slot, RUN.length - 1)]
 
 // ─── The order ──────────────────────────────────────────────────────────────────────────
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 
 export type QType = 'build' | 'place' | 'value'

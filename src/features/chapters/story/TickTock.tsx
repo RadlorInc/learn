@@ -47,8 +47,8 @@ import {
   pickMinute, kindOf, READINGS,
   type Ask, type Slot, type Reading,
 } from './clock'
+import { rint } from '@/core/rand'
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 const wrap = (i: number, n: number) => ((i % n) + n) % n
 

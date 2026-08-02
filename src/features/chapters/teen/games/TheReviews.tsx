@@ -33,6 +33,7 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, CommitBtn, Nudge, numChoices } from './parts/gameKit'
+import { rint, shuffle } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#2a2312', nightBot: '#0f0c05',
@@ -43,9 +44,7 @@ const P: Palette = {
   glass: 'rgba(42,35,18,0.62)', glassBorder: 'rgba(253,244,227,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
-const shuffle = <T,>(a: T[]): T[] => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
 const sum = (a: number[]) => a.reduce((s, v) => s + v, 0)
 const round1 = (n: number) => Math.round(n * 10) / 10
 const meanOf = (a: number[]) => round1(sum(a) / a.length)

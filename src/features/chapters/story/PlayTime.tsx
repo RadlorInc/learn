@@ -44,8 +44,9 @@ import {
   type Habitat, type Spot, HABITATS, CAST, kindAt, homeOf, aspectOf,
   Background, Critter, CRITTER_CSS, huddleRows, leadX, fitBands,
   LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, STRIP_PX,
-  groundSpeed, journeyOf, TRAVEL_MIN, type Journey, seeded, shuffle, maxSizeForRows, spreadBand, BAND_JITTER,
+  groundSpeed, journeyOf, TRAVEL_MIN, type Journey, seeded, maxSizeForRows, spreadBand, BAND_JITTER,
 } from './critters'
+import { rint, shuffle } from '@/core/rand'
 
 export type Op = '+' | '-'
 
@@ -438,7 +439,6 @@ function MapStrip({ done, total }: { done: number; total: number }) {
 }
 
 // ─── Value generation ────────────────────────────────────────────────────────────────
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 /**
  * Distractors are honest MISCOUNTS, not random numbers: one off in each direction is what a child

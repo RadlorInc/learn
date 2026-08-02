@@ -34,6 +34,7 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, PartsBuilder, CircleTap, CommitBtn, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#1a2438', nightBot: '#080d18',
@@ -44,7 +45,6 @@ const P: Palette = {
   glass: 'rgba(26,36,56,0.62)', glassBorder: 'rgba(238,243,252,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 
 /** Exact (cos, sin) at every special angle — the old lesson's table, verbatim. */

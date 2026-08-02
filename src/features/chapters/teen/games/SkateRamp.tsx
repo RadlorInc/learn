@@ -37,6 +37,7 @@ import { useEffect, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, StepPicker, numChoices, type SpecChoice } from './parts/gameKit'
+import { rint, shuffle } from '@/core/rand'
 
 // Steep concrete-ramp palette (dark first, safety-cone accents).
 const P: Palette = {
@@ -48,8 +49,6 @@ const P: Palette = {
   glass: 'rgba(24,38,54,0.6)', glassBorder: 'rgba(238,243,248,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-const shuffle = <T,>(a: T[]): T[] => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
 const D2R = Math.PI / 180
 const r2 = (n: number) => Math.round(n * 100) / 100
 

@@ -42,6 +42,7 @@ import FitBox from './FitBox'
 import { patternUnitLen, type Difficulty } from '@/core/adaptive'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
+import { shuffle } from '@/core/rand'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()`: a wrong tap speaks a line and
@@ -52,11 +53,6 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 const TAP_LOCK_MS = 260
 const SHORT_H = 470
 
-const shuffle = <T,>(a: T[]): T[] => {
-  const r = a.slice()
-  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] }
-  return r
-}
 
 // ─── Colours (the pattern variable) ──────────────────────────────────────────────────
 type BeadColor = 'red' | 'blue' | 'yellow' | 'green' | 'orange' | 'purple' | 'pink'

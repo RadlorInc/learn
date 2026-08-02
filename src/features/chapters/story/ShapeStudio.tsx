@@ -22,6 +22,7 @@ import { ShapeView, SHAPES_2D, SHAPES_3D, sidesOf, is3D, buildNameChoices } from
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
 import { useViewport } from '@/shared/hooks/useViewport'
+import { rint, shuffle } from '@/core/rand'
 
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
@@ -49,7 +50,6 @@ const EMOJI_3D: Record<string, string> = { cube: '🧊', sphere: '⚽', cone: '�
 type Mode2 = 'name' | 'sides'
 interface ShRound { bg: number; mode: Mode2; target: string; options?: string[]; answer?: number; choices?: number[] }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: T[]) => a[rint(0, a.length - 1)]
 const POOL1 = ['circle', 'triangle', 'square', 'rectangle']
 const POOL2 = [...POOL1, 'pentagon', 'hexagon', 'cube', 'sphere']
@@ -60,7 +60,10 @@ function sideChoices(ans: number): number[] {
   const set = new Set<number>([ans])
   for (const c of [ans - 1, ans + 1, ans + 2, ans - 2]) { if (set.size >= 3) break; if (c >= 3) set.add(c) }
   while (set.size < 3) set.add(ans + set.size)
-  return [...set].sort(() => Math.random() - 0.5)
+  // shuffle(), not sort(() => Math.random() - 0.5): `ans` goes into the Set FIRST, and a random
+  // comparator barely moves the leading elements, so the correct chip sat in position 0 far more
+  // often than a third of the time.
+  return shuffle([...set])
 }
 function makeShapeRound(d: 1 | 2 | 3, round: number, bgCount: number): ShRound {
   const bg = round % bgCount

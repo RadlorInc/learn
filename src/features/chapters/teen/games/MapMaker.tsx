@@ -51,6 +51,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, CommitBtn, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#12233b', nightBot: '#0a1420',
@@ -61,7 +62,6 @@ const P: Palette = {
   glass: 'rgba(18,35,59,0.6)', glassBorder: 'rgba(234,243,255,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: T[]): T => a[rint(0, a.length - 1)]
 /** Display integer with a real minus glyph. */
 const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))

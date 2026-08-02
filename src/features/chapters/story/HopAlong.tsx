@@ -36,6 +36,7 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { Hop, SheetCell, Arrive, CRITTER_CSS, hopOf, inFlowJourney } from './critters'
+import { rint } from '@/core/rand'
 
 const MILO = '/assets/characters/milo_hop_side.png'
 
@@ -169,7 +170,6 @@ export interface FetchRound {
   target: number     // group × need, the number Milo asks for
   families: number   // how many are out there (always more than he needs)
 }
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 export function makeFetch(slot: Slot, d: 1 | 2 | 3): FetchRound {
   const pool = PAIRS[d]

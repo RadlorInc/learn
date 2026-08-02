@@ -16,6 +16,8 @@ import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, VThermo, pick, signed, glideNumber } from './parts/gameKit'
+import { shuffle } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#0d2a1e', nightBot: '#123d2c',
@@ -33,8 +35,6 @@ interface Task extends BaseTask { answer: number; start: number; choices?: numbe
 const MIN = -20, MAX = 20
 // Visible-math formatter: a proper minus glyph, e.g. −5 (NOT signed()'s spoken
 // "negative 5", which is only for the say/work lines Milo reads aloud).
-const disp = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
-const shuffle = <T,>(a: T[]): T[] => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
 // Build 4 tap-choices: the answer + up to 3 plausible distractors (in range, distinct).
 function numChoices(ans: number, ...extra: number[]): number[] {
   const out: number[] = [ans]

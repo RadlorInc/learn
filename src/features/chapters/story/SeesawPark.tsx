@@ -35,6 +35,7 @@ import FitBox from './FitBox'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { SheetSprite, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
+import { rint } from '@/core/rand'
 
 // Live viewport — so the scale, signs and banner never collide on short/landscape frames.
 
@@ -134,7 +135,6 @@ export const scoredSlot = (round: number): { w: CmpWorld; item: Item; bg: number
 
 interface CmpRound { w: CmpWorld; bg: number; item: Item; a: number; b: number; answer: string }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 function signWord(sign: string): string { return sign === '>' ? 'greater than' : sign === '<' ? 'less than' : 'equal to' }
 
 // Range widens with difficulty: 1 → to 10 (objects), 2 → to 50, 3 → to 100 (numerals).

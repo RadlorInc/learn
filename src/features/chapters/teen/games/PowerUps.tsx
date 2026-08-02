@@ -47,6 +47,7 @@ import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, CrankGear, SlideValue, numChoices } from './parts/gameKit'
 import { pow } from '@/features/chapters/lessons/ExponentsRootsTeenLesson'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#241238', nightBot: '#140a24',
@@ -57,7 +58,6 @@ const P: Palette = {
   glass: 'rgba(40,22,66,0.6)', glassBorder: 'rgba(242,236,251,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 const sup = (n: number) => pow('', n)   // superscript-only string, e.g. "²"
 

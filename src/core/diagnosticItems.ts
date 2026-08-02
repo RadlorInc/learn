@@ -45,6 +45,9 @@ function hashStr(s: string): number { let h = 2166136261; for (let i = 0; i < s.
 /** Deterministic theme for a child when they don't have one set — varies the flavor per child. */
 export function pickThemeFor(seed: string): ItemTheme { return ITEM_THEMES[hashStr(seed) % ITEM_THEMES.length] }
 
+// ⚠️ SEEDED, and deliberately NOT `@/core/rand`. These run off `_rand` (mulberry32 keyed to the
+// child + skill + attempt), which is what makes a probe reproducible for one child and different
+// on a re-take. Swapping them for the shared unseeded helpers would silently destroy that.
 const R = (lo: number, hi: number) => lo + Math.floor(_rand() * (hi - lo + 1))
 const pick = <T,>(a: T[]) => a[R(0, a.length - 1)]
 function shuffle<T>(a: T[]): T[] { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(_rand() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }

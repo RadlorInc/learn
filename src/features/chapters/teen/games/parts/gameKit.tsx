@@ -11,6 +11,7 @@
  * task answer (see GameShell).
  */
 import { useRef, useState } from 'react'
+import { shuffle } from '@/core/rand'
 
 // ── palette (each world supplies its own; shape matches ShopRush's P) ─────────
 export interface Palette {
@@ -693,7 +694,6 @@ export function Blackboard({ P, lines, writingIndex, slideKey }: { P: Palette; l
 //    operation order, forgotten sign, halved instead of doubled); the generic ±step
 //    neighbours only fill the remaining slots. Distractors inherit the answer's
 //    decimal places, so a 0.35 answer never sits next to a 1.35.
-const shuffleArr = <T,>(a: T[]): T[] => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
 export function numChoices(ans: number, near: number[] = [], opts: { min?: number; max?: number; count?: number } = {}): number[] {
   const { min = -Infinity, max = Infinity, count = 4 } = opts
   const decimals = (String(ans).split('.')[1] ?? '').length
@@ -705,7 +705,7 @@ export function numChoices(ans: number, near: number[] = [], opts: { min?: numbe
     if (n >= min && n <= max && !out.includes(n)) out.push(n)
     if (out.length >= count) break
   }
-  return shuffleArr(out)
+  return shuffle(out)
 }
 
 // ── AnswerPad — a plain, familiar way to give a numeric answer: tap one of the

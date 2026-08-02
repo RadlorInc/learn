@@ -33,6 +33,8 @@ import { useEffect, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion, useMotionValueEvent } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, LineSetter, SlideValue, numChoices, type Line } from './parts/gameKit'
+import { rint } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 // Growth palette — a bright analytics/social-green vibe over a dark night.
 const P: Palette = {
@@ -45,7 +47,6 @@ const P: Palette = {
 }
 
 const RANGE = 5 // LineSetter grid: slope clamps ±5, start clamps ±RANGE
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const rnz = (lo: number, hi: number) => { let n = rint(lo, hi); while (n === 0) n = rint(lo, hi); return n }
 /** A follower count is never negative. Start counts are ≥ 0, and a LOSING slope is
  *  capped so the line still sits at or above zero at every week the task names. */
@@ -55,7 +56,6 @@ const slopeFor = (b: number, lastWeek: number, lo: number, hi: number) =>
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 /** Display integer with a real minus glyph. Never used inside `say`/`work` — U+2212
  *  speaks as nothing, so spoken strings keep the ASCII hyphen (docs/lessons.md). */
-const disp = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
 const pick = <T,>(xs: T[]): T => xs[rint(0, xs.length - 1)]
 
 /** y = mx + b as a tidy string (m integer). */

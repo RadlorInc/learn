@@ -42,6 +42,7 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
+import { rint, shuffle } from '@/core/rand'
 
 // ─── The day: ten deliveries ────────────────────────────────────────────────────────────
 /**
@@ -105,13 +106,7 @@ export const DAY: Bay[] = [
 export const bayAt = (round: number) => DAY[Math.min(round, DAY.length - 1)]
 
 // ─── The question ───────────────────────────────────────────────────────────────────────
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
-function shuffle<T>(a: T[]): T[] {
-  const r = a.slice()
-  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] }
-  return r
-}
 
 export type QType = 'most' | 'howMany' | 'diff' | 'total'
 export const Q_ALL: readonly QType[] = ['most', 'howMany', 'diff', 'total'] as const

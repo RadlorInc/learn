@@ -65,6 +65,7 @@ import {
   aOrAn, OFF_X, MILO_X, PAY_X, MILO_ASPECT,
   SHOPPERS, shopperAt, SHOPPER_X, SHOPPER_LIFT, SHOPPER_SCALE,
 } from './market'
+import { rint } from '@/core/rand'
 
 export {
   STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot,
@@ -145,7 +146,6 @@ export interface MoneyRound {
  */
 export const pileFor = (round: number) => round % 2 === 1
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 
 /** The coins a tier may spend. 1 is always present, so every price is payable. */

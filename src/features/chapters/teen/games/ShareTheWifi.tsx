@@ -33,6 +33,7 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, CommitBtn, Nudge, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#122036', nightBot: '#070d18',
@@ -43,7 +44,6 @@ const P: Palette = {
   glass: 'rgba(18,36,60,0.62)', glassBorder: 'rgba(233,241,251,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 
 // A break point (tapped), a settling level (dialled, or "never"), or a marked fault.

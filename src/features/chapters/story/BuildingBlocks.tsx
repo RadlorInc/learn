@@ -70,6 +70,7 @@ import {
   Cube, Rod, Shadow, Travelling, Banner, AnswerPad, unitFor, blockSet, shadesOf,
   ROD_SEGMENTS, PAD_BAND, YARD_CSS, GROUND, groundOf, type Material, type Shades,
 } from './yard'
+import { rint } from '@/core/rand'
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
 const MILO = '/assets/characters/milo_side.png'
@@ -158,7 +159,6 @@ export const matOf = (slot: Slot) => shadesOf(MATERIALS[slot.mat % MATERIALS.len
 export type QKind = 'make' | 'whole' | 'tens' | 'ones' | 'value'
 export interface PvRound { slot: number; n: number; kind: QKind; answer: number; digits: 1 | 2 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 /** Range widens with difficulty, and so does the number of trades a PACK round demands. */
 const RANGE: Record<1 | 2 | 3, [number, number]> = { 1: [11, 29], 2: [20, 69], 3: [30, 99] }

@@ -11,6 +11,7 @@ import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, PlotGrid, type XY, pick } from './parts/gameKit'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#0d1626', nightBot: '#121f33',
@@ -25,7 +26,6 @@ interface Task extends BaseTask { answer: XY }
 
 // The tutorial board hard-codes a proper minus (U+2212). Every badge the child
 // reads goes through this so the visible math matches what they were taught.
-const disp = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
 const pt = (p: XY) => `(${disp(p.x)}, ${disp(p.y)})`
 
 function plot(level: 1 | 2): Task {

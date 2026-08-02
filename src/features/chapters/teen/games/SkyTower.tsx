@@ -27,6 +27,7 @@
 import { useRef, type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, CommitBtn, Nudge, pick, signed, glideNumber, numChoices } from './parts/gameKit'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#241f3a', nightBot: '#15122a',
@@ -53,7 +54,6 @@ const money = (n: number) => (n < 0 ? `−$${Math.abs(n)}` : `$${n}`)
 // Visible-math formatter: a proper minus glyph, e.g. −5. Every badge uses it so the
 // board, the context line and the answer pad all show the SAME minus character.
 // (Spoken lines — say/work — use signed() instead; TTS drops a bare "−".)
-const disp = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
 const worthWord = (n: number) => (n < 0 ? `$${-n} in debt` : `$${n}`)          // "$3 in debt" / "$4"
 
 // Question-clarity spec: each task fills three board zones — a short `context`

@@ -35,6 +35,7 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { ShapeSVG, SHAPES, SHAPE_ORDER, type ShapeName } from '../lessons/ShapesLesson'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
+import { shuffle } from '@/core/rand'
 
 /**
  * The ONLY thing a tap waits for. Deliberately not `useIsSpeaking()`: a wrong tap speaks a line,
@@ -55,11 +56,6 @@ const SHORT_H = 470
  */
 const PROMPT_BAND = 112
 
-const shuffle = <T,>(a: T[]): T[] => {
-  const r = a.slice()
-  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] }
-  return r
-}
 
 // The classic look-alike pair — seeded as a distractor at the hardest tier so the child must
 // recognize the form rather than eliminate the odd one out.

@@ -32,6 +32,7 @@ import FitBox from './FitBox'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { SheetSprite, CRITTER_CSS, aspectOf, inFlowJourney } from './critters'
+import { rint, shuffle } from '@/core/rand'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -133,13 +134,7 @@ export const scoredSlot = (round: number): { w: MultWorld; item: Item; bg: numbe
 type View = 'groups' | 'array'
 interface MultRound { w: MultWorld; bg: number; item: Item; view: View; g: number; per: number; answer: number }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const coin = () => Math.random() < 0.5
-function shuffle<T>(a: T[]): T[] {
-  const arr = a.slice()
-  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[arr[i], arr[j]] = [arr[j], arr[i]] }
-  return arr
-}
 function multChoices(answer: number, g: number, per: number): number[] {
   const set = new Set<number>([answer])
   const cands = [g * (per + 1), g * (per - 1), (g + 1) * per, (g - 1) * per, answer + g, answer - g, answer + per, answer - per, answer + 1, answer - 1]

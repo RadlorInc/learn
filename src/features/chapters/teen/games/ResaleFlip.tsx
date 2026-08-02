@@ -34,6 +34,7 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, CommitBtn, Nudge, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#2b2118', nightBot: '#130d08',
@@ -44,7 +45,6 @@ const P: Palette = {
   glass: 'rgba(46,34,24,0.62)', glassBorder: 'rgba(248,240,230,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 const disc = (a: number, b: number, c: number) => b * b - 4 * a * c

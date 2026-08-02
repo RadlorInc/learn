@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { speak, speakSeq } from '@/infra/useMiloSpeaker'
 import { LessonScaffold, Confetti, type LessonStep } from './_kit'
+import { shuffle } from '@/core/rand'
 
 interface Props { childName: string; onLessonComplete: () => void }
 
@@ -41,8 +42,11 @@ export function ShapeView({ name, size = 120 }: { name: string; size?: number })
 
 export function buildNameChoices(answer: string, pool: string[]): string[] {
   const opts = new Set<string>([answer])
-  for (const v of pool.slice().sort(() => Math.random() - 0.5)) { if (opts.size >= 3) break; if (v !== answer) opts.add(v) }
-  return [...opts].sort(() => Math.random() - 0.5)
+  for (const v of shuffle(pool)) { if (opts.size >= 3) break; if (v !== answer) opts.add(v) }
+  // shuffle(), not sort(() => Math.random() - 0.5): `answer` goes into the Set FIRST, and a
+  // random comparator barely moves the leading elements, so the correct chip sat in position 0
+  // far more often than a third of the time.
+  return shuffle([...opts])
 }
 
 function describe(name: string): string {

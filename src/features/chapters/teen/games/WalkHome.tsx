@@ -44,6 +44,7 @@ import { useRef, type ReactElement } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, CommitBtn, Nudge, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#1b1b3a', nightBot: '#0b0b1c',
@@ -54,7 +55,6 @@ const P: Palette = {
   glass: 'rgba(30,30,64,0.6)', glassBorder: 'rgba(240,238,248,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 /** Pretty integer with a real minus sign. */
 const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))

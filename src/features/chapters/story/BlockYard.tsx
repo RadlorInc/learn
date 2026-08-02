@@ -76,6 +76,7 @@ import {
   ROD_SEGMENTS, MAT_SAT, MAT_VAL, PAD_BAND, bannerBottom, YARD_CSS,
   type Material, type Shades,
 } from './yard'
+import { rint } from '@/core/rand'
 // Re-exported unchanged so the 56-test gate keeps importing them from here — which is what makes
 // that suite the proof the extraction changed nothing.
 export { ROD_SEGMENTS, MAT_SAT, MAT_VAL, PAD_BAND, bannerBottom }
@@ -130,7 +131,6 @@ export const scoredSlot = (op: Op, round: number) => slotAt(op, GUIDED_SLOT + 1 
 
 // ─── The question ─────────────────────────────────────────────────────────────────────
 export interface ASRound { slot: number; a: number; b: number; answer: number; regroup: boolean }
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 /** Does this pair need a ten made or broken? THE thing the chapter teaches, so it is named. */
 export const needsRegroup = (op: Op, a: number, b: number) =>

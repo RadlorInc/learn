@@ -41,6 +41,7 @@ import { useEffect, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, ElevatorShaft, SpecPicker, CommitBtn, Nudge, numChoices } from './parts/gameKit'
+import { rint } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#16233d', nightBot: '#0a1120',
@@ -51,7 +52,6 @@ const P: Palette = {
   glass: 'rgba(20,36,64,0.6)', glassBorder: 'rgba(238,243,251,0.2)',
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const rnz = (lo: number, hi: number) => { let n = rint(lo, hi); while (n === 0) n = rint(lo, hi); return n }
 /** Pretty integer with a real minus sign. */
 const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))

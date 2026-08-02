@@ -33,14 +33,9 @@ import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { SHEETS } from './canvas/sheets'
 import { useNeedsRotate, RotateGate } from './RotateGate'
+import { rint, shuffle } from '@/core/rand'
 
 const SPEAK_LOCK_MS = 600
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-const shuffle = <T,>(a: T[]): T[] => {
-  const r = a.slice()
-  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] }
-  return r
-}
 const LOOKALIKE: Record<number, number> = { 6: 9, 9: 6, 7: 1, 1: 7, 3: 8, 8: 3, 5: 6, 2: 7 }
 
 /** Bespoke art for this chapter — both are on screen every round, so both are drawn cycles

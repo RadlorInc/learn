@@ -49,6 +49,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
 import { loadPage, floodRegion, floodNearest, inRegion, paintRegion, type PageBitmap, type Region } from './floodFill'
+import { shuffle } from '@/core/rand'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()` — a wrong tap speaks a line and
@@ -57,11 +58,6 @@ import { loadPage, floodRegion, floodNearest, inRegion, paintRegion, type PageBi
 const TAP_LOCK_MS = 220
 const SHORT_H = 470
 
-const shuffle = <T,>(a: T[]): T[] => {
-  const r = a.slice()
-  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] }
-  return r
-}
 
 // ─── The paints ──────────────────────────────────────────────────────────────────────
 type ColorName = 'red' | 'yellow' | 'blue' | 'green' | 'orange' | 'purple'

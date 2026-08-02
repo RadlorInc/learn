@@ -60,6 +60,7 @@ import { SkillBeat, type Beat } from './StoryWorld'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
+import { rint } from '@/core/rand'
 
 // ─── The line: ten runs ─────────────────────────────────────────────────────────────────
 /**
@@ -106,7 +107,6 @@ export const LINE: Stop[] = [
 export const stopAt = (round: number) => LINE[Math.min(round, LINE.length - 1)]
 
 // ─── The question ───────────────────────────────────────────────────────────────────────
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 const fmt = (n: number) => n.toLocaleString('en-US')
 
