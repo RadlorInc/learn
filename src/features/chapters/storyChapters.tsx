@@ -54,7 +54,7 @@ export const STORY_CHAPTERS = {
   subtraction: { bg: "#bfe7ff", load: () => import("@/features/chapters/story/PlayTimeSub") },
   subtractionTo100: { bg: "#dbe8ef", load: withProps(() => import("@/features/chapters/story/BlockYard"), { op: "-" as const }) },
   time: { bg: "#f3ead8", load: () => import("@/features/chapters/story/TickTock") },
-  timesTables: { bg: "#0a1026", load: () => import("@/features/chapters/story/TimesGrid") },
+  timesTables: { bg: "#cfe0ee", load: () => import("@/features/chapters/story/FitOut") },
   wordProblems: { bg: "#0a1026", load: () => import("@/features/chapters/story/MissionBrief") },
 } satisfies Record<string, { bg: string; load: StoryLoad }>
 
