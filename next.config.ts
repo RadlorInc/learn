@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
 
-  // Image optimization. `sharp` is already a dependency, so next/image transcodes the
+  // Image optimization. `sharp` ships as next's own optionalDependency, so next/image transcodes the
   // heavy PNG/JPEG art to AVIF/WebP at the requested display size on demand and caches
   // it for a year. This is the single biggest bandwidth/LCP win for the story art
   // (originals are 2–3 MB each) — as <img> tags migrate to next/image they inherit it.
