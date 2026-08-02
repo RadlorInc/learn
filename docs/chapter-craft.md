@@ -232,6 +232,17 @@ question type that refers to it.**
 **AND A TAP THAT DOES NOTHING AT ALL IS THE WORST OUTCOME THERE IS.** Worse than a wrong answer: a
 wrong answer at least tells the child the game is listening.
 
+⚠️ **THE COMMONEST WAY TO BUILD ONE IS A COMMIT GATED ON A FIXED LENGTH.** FitOut's number pad is
+`windows={2}` with `if (digits.length < 2) return` and `disabled={digits.length < windows}` — three
+independent gates all assuming a two-digit answer. But `answer = rows × per` with both from
+`rint(2, 5)`, so **6 of the 16 L1 combinations are single-digit** — about 37% of L1 `order` rounds,
+and roughly one run in five meets one on scored round 1. A child who works out **8**, taps `8`, and
+taps Done gets *nothing*: the button is `opacity: .4`, `cursor: default`, disabled. The only way
+through is `08`, which nothing on screen teaches and which is a strange thing to ask of the band that
+has just learned place value. **Measured live on production.** The rule: **derive the expected input
+length from the answer, never from the widest case** — and if a control can ever be disabled while
+the child believes they have answered, that is a dead button whatever the reason.
+
 ⚠️ **THE ONE CASE A CHILD CANNOT READ OFF THE PICTURE IS THE ONE THAT MUST BE STATED OUT LOUD.**
 Every honest manipulative has a boundary case where looking is not enough, and it is exactly the
 case a chapter forgets to teach because the picture usually does the teaching. In RailLine it is a
@@ -1009,10 +1020,30 @@ second thing to look at. It appears with the demo, when it starts to matter.
 Only generate when the library genuinely lacks something or fits poorly — but when it does,
 generate rather than settling for an emoji or a CSS shape.
 
-**Style reference: always reference the ORIGINAL / earliest art** (`apple.png`, `cookie.png`,
-`duck.png`, `pond.jpeg`, `forest_*.jpeg`). Later AI batches drift, and referencing them compounds
-the drift. References must be **deployed URLs** — `media_import_url` silently fails on a 404 and the
-model then generates from text alone.
+**Style reference: reference the ORIGINAL / earliest art** for SPRITES — `apple.png`, `cookie.png`,
+`duck.png`. Later AI batches drift, and referencing them compounds the drift. References must be
+**deployed URLs** — `media_import_url` silently fails on a 404 and the model then generates from
+text alone.
+
+⚠️ **BUT THIS RULE USED TO NAME `pond.jpeg` AND `forest_*.jpeg` AS BACKDROP REFERENCES, AND THOSE
+TWO FILES ARE THEMSELVES FLAT VECTOR — ink outlines, flat fills, no brushwork.** So it told you to
+attach a picture of the exact style the style rule above forbids, and **the picture wins over the
+prose every time.** That is what produced FitOut's first badge-world failure: a prompt demanding
+painted, with a cartoon stapled to it, returning a cartoon. The second attempt then dropped the
+reference and produced a featureless gradient — the two recorded failure modes are the two halves of
+one bad reference list. **The correct backdrop reference is a scene THIS CHAPTER has already
+accepted** (`fit_station.jpeg` + `fit_sign.jpeg` for FitOut); referencing those landed the same
+world in one pass, zero retries. Generalise: **reference the nearest ACCEPTED artefact, not the
+oldest one** — and open every reference and look at it before attaching it, because a reference that
+returns 200 is more dangerous than one that 404s, not less.
+
+⚠️ **AND "A SCENE WITH REAL CONTENT" IS THE WRONG CORRECTION FOR AN EMPTY-GRADIENT FAILURE.** The
+accepted scenes in a chapter whose frame fills the middle are *deliberately* near-empty — a wall, a
+floor, and two painted objects pinned to the far left and right edges. What separates them from the
+rejected "flat featureless bands" is not content density but **(a) visible brush texture instead of
+a smooth ramp, (b) one hard readable wall/floor or horizon line, and (c) two to four real painted
+objects at the frame's EDGES giving the place an identity.** Ask for those three things by name;
+asking for "more stuff" gets you a scene the layout has to fight.
 
 **Walk-cycle pipeline** (this is how every drawn cycle in the app was made):
 
@@ -1400,6 +1431,15 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   43° against a 45° threshold — marginal, not fixed, and recorded here rather than silently patched.)
 - Sweep the size matrix with a script, not by hand: widths × heights × question counts × every
   creature. Chapter 2's layout is 330 combinations and the script is what made the last pass clean.
+- ⚠️ **A COLLISION SWEEP MUST ENUMERATE PAIRS, NOT CHECK THE ONE ELEMENT YOU HAD IN MIND AGAINST THE
+  NEIGHBOURS YOU HAPPENED TO REMEMBER.** FitOut's short-landscape sweep checked frame↔bubble,
+  frame↔pad, frame↔chrome and frame↔edges — every pair containing the frame, because the frame was
+  what I was thinking about. It never checked **bubble↔pad**, and at 640×320 the answer pad's two
+  digit windows are drawn **108 × 33 px on top of Milo's speech bubble**, both windows fully inside
+  the bubble's span, obscuring the words behind the number the child is entering. Measured live; it
+  had shipped. Take the list of fixed layers a chapter draws (here: chrome · banner · tally · frame ·
+  bubble · pad) and cross it with itself — it is a dozen comparisons and it does not depend on
+  remembering which collision to look for.
 - **The sweep must call the SAME layout function the scene renders from.** Chapter 4's sweep
   re-implements its sizing chain inside the test, so the check can agree with its own copy of the
   constants while the screen it protects falls apart. Chapters 9–10 export `playLayout` and the test
