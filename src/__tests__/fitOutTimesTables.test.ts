@@ -13,7 +13,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import {
-  SITES, runOrder, makeRound, grade, missFor, fitLayout, slotX,
+  SITES, runOrder, makeRound, grade, missFor, fitLayout, slotX, padWindowsFor,
   tensOf, onesOf, Q_ALL, IMG_W, IMG_H, bandWanted, topCeiling, type FoRound,
 } from '@/features/chapters/story/FitOut'
 import { bannerBottom } from '@/features/chapters/story/yard'
@@ -307,10 +307,66 @@ describe('layout', () => {
   })
 })
 
+describe('the answer pad accepts the answer', () => {
+  /**
+   * ⚠️ THIS WAS A DEAD BUTTON ON PRODUCTION, and it is the craft doc's own worst outcome — a tap
+   * that does nothing. `windows` was a fixed 2, so a single-digit answer could not be committed:
+   * the child typed the correct number, `Done ✓` stayed disabled at opacity .4, and the question
+   * sat there. Only `08` got through. Driven live at 640×320 on scored round 1.
+   */
+  it('opens exactly as many windows as the answer has digits, for every reachable round', () => {
+    const seen = new Set<number>()
+    draw(4000, q => { seen.add(q.answer); expect(padWindowsFor(q.answer), `answer ${q.answer}`).toBe(String(q.answer).length) })
+    // the single-digit case must actually OCCUR, or this test is vacuous
+    expect([...seen].some(a => a < 10), 'no single-digit answer was ever drawn').toBe(true)
+    expect([...seen].every(a => a < 100), 'the pad only has two windows').toBe(true)
+  })
+
+  it('never hardcodes the window count again — the three gates must read the derived value', () => {
+    // comments are stripped first: this file's own recorded fault is a source check that matched
+    // the prose explaining the rule rather than the code obeying it.
+    const src = readFileSync(join(process.cwd(), 'src/features/chapters/story/FitOut.tsx'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+    expect(src).toContain('windows={padWindows}')
+    expect(src).toContain('d.length < padWindows')
+    expect(src).toContain('digits.length < padWindows')
+    expect(src).not.toContain('windows={2}')
+  })
+})
+
+describe('the fixed layers never sit on each other', () => {
+  /**
+   * ⚠️ Measured live at 640×320: the pad's two digit WINDOWS were drawn 108 × 33px on top of Milo's
+   * bubble, both fully inside its span. Every prior overlap check paired something WITH THE FRAME,
+   * because the frame was what anyone was thinking about — so bubble↔pad was never looked at.
+   */
+  const SIZES: Array<[number, number]> = [
+    [1280, 720], [1024, 620], [1440, 900], [1800, 870], [2560, 1080],
+    [640, 320], [667, 375], [740, 360], [812, 375], [1024, 400],
+  ]
+  it("keeps Milo's bubble clear of the bottom control band, at every size and both round shapes", () => {
+    for (const [vw, vh] of SIZES) for (const s of SITES) for (const pad of [true, false]) {
+      const L = fitLayout(vw, vh, s, pad ? 12 : 5, 5, pad)
+      // the control band sits 8px off the floor and is `padBand` tall; the bubble's bottom edge
+      // must stay above its top edge.
+      expect(L.bubbleBottom, `${vw}x${vh} ${s.id} pad=${pad}`).toBeGreaterThanOrEqual(L.padBand + 8)
+      // and it must still fit under the chrome, or it opens inside the back chip
+      expect(L.bubbleBottom).toBeLessThanOrEqual(vh - 46 - 88)
+    }
+  })
+})
+
 describe('the cast and the palette', () => {
   it('gives every site a backdrop and a full set of words', () => {
     for (const s of SITES) {
       expect(s.scene).toMatch(/^\/assets\/backgrounds\/.+\.(png|jpeg)$/)
+      /**
+       * ⚠️ The sprite's existence was pinned and the SCENE's was not — an asymmetry, and a real
+       * hole: a typo'd backdrop path does not fall back to anything, it renders the world as empty
+       * blue. Unlike a missing sprite (which degrades to the gradient block) nothing would show it
+       * except looking at that one site, and the site rotates.
+       */
+      expect(existsSync(join(PUBLIC, s.scene)), s.scene).toBe(true)
       for (const k of ['unit', 'units', 'rail', 'rails', 'job', 'label'] as const) {
         expect(s[k].length).toBeGreaterThan(2)
       }

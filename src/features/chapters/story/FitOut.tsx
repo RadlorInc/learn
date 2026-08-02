@@ -29,7 +29,7 @@
  * for. Get it right and the run fills exactly; get it wrong and there are gaps left in it.
  *
  * FOUR SITES, and the site changes every round (the band-wide "a world per round" item):
- *   ☀️ the solar field · 🛰️ the station apron · 💡 the sign shop · 🌱 the planting field
+ *   ☀️ the solar field · 🛰️ the station apron · 💡 the sign shop · 🏷️ the print shop
  * `runOrder` interleaves them so CONSECUTIVE ROUNDS ALWAYS DIFFER and all four are used, and the run
  * is indexed STRAIGHT and never modulo — a plan read `PLAN[round % len]` is how three chapters in
  * this repo quietly re-showed the scene they opened with.
@@ -71,7 +71,7 @@
  * ⚠️ AND THE SEPARATION IS RE-MEASURED, because a generated sprite brings its own colours and the
  * old hue table described pixels that no longer exist. Sprite against its own scene, over the band
  * the frame occupies:
- *     solar ΔHue 137° · station ΔHue 70° · planting ΔHue 56° · sign ΔHue 6° but ΔSat 0.46
+ *     solar ΔHue 137° · print ΔHue 177° (ΔSat 0.49) · station ΔHue 70° · sign ΔHue 6° but ΔSat 0.46
  * i.e. the sign shop clears on SATURATION rather than hue — the same property that site always
  * relied on, and the craft doc's rule as written: hue OR saturation, never neither. `shades` stays
  * because the tapped-rail ring and the fallback block are still drawn from it.
@@ -165,13 +165,38 @@ export const SITES: Site[] = [
     sprite: '/assets/objects/fit_sign.png',
     job: 'The sign goes up on the shop front in the morning.',
   },
+  /**
+   * ⚠️ THIS SLOT WAS A SUBSTITUTION AND IS NOW THE WORLD THAT WAS ACTUALLY WANTED. The badge/print
+   * run was asked for, generated twice and dropped — attempt 1 came back in INK OUTLINES (the
+   * flat-vector family this repo rejected on the pond backdrops), attempt 2 with the outlines gone
+   * but as FLAT FEATURELESS BANDS (the near-empty-gradient fault). A planting field from the library
+   * stood in for it.
+   *
+   * ⚠️ BOTH FAILURES HAD ONE CAUSE AND IT WAS THE REFERENCE LIST. The craft doc says to reference
+   * "the ORIGINAL earliest art — `pond.jpeg`, `forest_*.jpeg`" — and those two files are themselves
+   * FLAT VECTOR, ink outlines and all. So the prompt asked for painted and attached a picture of the
+   * thing it was trying to avoid, and the picture wins. Referencing this chapter's OWN accepted
+   * scenes (`fit_station` + `fit_sign`, both verified 200 on prod first) landed it in one pass.
+   *
+   * It is also the better site on all three measured axes, which is why it replaced the substitution
+   * rather than joining it:
+   *   • value 0.552 over the band the frame occupies, against `open_orchard`'s 0.728 — and Milo is
+   *     0.705, so the planting field was very slightly BRIGHTER THAN ITS OWN CAST, which is the
+   *     `grocery_sweets` fault in miniature. A backdrop must sit under what stands on it.
+   *   • `topY` 0.14 against 0.54 — the header above records 0.53 as the family that produced a
+   *     212 × 135px frame. A tall usable wall is where a seven-rail job has room.
+   *   • the floor is cool blue-grey, a hue no other site owns, so the run stops being two green
+   *     fields out of four.
+   * `open_orchard.png` and `fit_planting.png` both stay on disk (the orchard is BuildingBlocks'),
+   * so this is a one-row revert if the founder prefers the field.
+   */
   {
-    id: 'planting', label: 'the planting field', emoji: '🌱',
-    scene: '/assets/backgrounds/open_orchard.png', groundY: 0.82, topY: 0.54,
-    hue: 330, sat: 0.42,
-    unit: 'tray', units: 'trays', rail: 'bed', rails: 'beds',
-    sprite: '/assets/objects/fit_planting.png',
-    job: 'The saplings are on the truck and they cannot wait another day.',
+    id: 'print', label: 'the print shop', emoji: '🏷️',
+    scene: '/assets/backgrounds/fit_print.jpeg', groundY: 0.88, topY: 0.14,
+    hue: 355, sat: 0.55,
+    unit: 'badge', units: 'badges', rail: 'card', rails: 'cards',
+    sprite: '/assets/objects/fit_print.png',
+    job: 'The badges go out with the morning post, so the run has to be full.',
   },
 ]
 
@@ -300,6 +325,14 @@ export function grade(data: FoRound, committed: number): boolean {
 }
 
 /**
+ * How many windows the number pad opens for this answer. Exported so the gate drives the SAME
+ * function the pad renders from — a test that re-derives `answer < 10 ? 1 : 2` for itself cannot
+ * see the rule being taken back out. See the long note at `padWindows` in FitPlay for the dead
+ * button this replaced.
+ */
+export const padWindowsFor = (answer: number) => (answer < 10 ? 1 : 2)
+
+/**
  * The written miss line. ⚠️ It never states the answer, and on a `fit` round it never states the
  * rail count either — that IS the answer. It names what is wrong with what they built, which is the
  * only thing that helps and the only thing that is safe to say.
@@ -373,6 +406,8 @@ export interface FitLayout {
   railPitch: number
   railW: number
   miloH: number
+  /** CSS `bottom` of Milo's bubble — derived so its bottom edge clears the pad's top edge. */
+  bubbleBottom: number
   miloX: number
   padBand: number
   font: number
@@ -455,10 +490,30 @@ export function fitLayout(vw: number, vh: number, site: Site, per: number, rails
    */
   const frameLeft = Math.round(Math.max(leftLimit, (vw - railW) / 2))
 
+  /**
+   * ⚠️ THE BUBBLE CLEARS THE PAD, AND IT DID NOT — measured live at 640×320, the pad's two digit
+   * WINDOWS were drawn 108 × 33px ON TOP of Milo's speech bubble, both of them fully inside its
+   * span, so the number the child was typing sat over the words telling them what to do.
+   *
+   * The frame has cleared the bubble horizontally since day one (`leftLimit` above) and the frame
+   * clears the pad vertically (`foot`), but nothing related the BUBBLE to the PAD — the sweep
+   * checked every pair containing the frame, because the frame was what anyone was thinking about.
+   * The general rule now in the craft doc: cross the list of fixed layers with ITSELF rather than
+   * checking the one element you had in mind against the neighbours you happened to remember.
+   *
+   * So it is derived here, next to the number it must clear, instead of being computed inline in
+   * `Foreman` where it could drift: the bottom control band is `padBand` sitting 8px off the floor,
+   * and the bubble's own bottom edge stays 8px above that. The `max` only ever lifts, so it is inert
+   * wherever Milo's head was already high enough; the chrome cap still wins at the top.
+   */
+  const bubbleBottom = Math.min(
+    Math.max(Math.round(miloH * 0.84), padBand + 16),
+    vh - CHROME_PX - 88,
+  )
   return {
     groundPx, frameLeft, frameTop, frameW, pitch, unitPx,
     walkway: per > 10 ? Math.round(pitch * 0.66) : 0,
-    railPitch, railW, miloH, miloX: Math.round(miloX), padBand,
+    railPitch, railW, miloH, miloX: Math.round(miloX), padBand, bubbleBottom,
     font: Math.round(Math.max(12, Math.min(vw * 0.016, 20))),
   }
 }
@@ -634,11 +689,12 @@ function Foreman({ L, line, vw, vh }: { L: FitLayout; line: string; vw: number; 
           <SheetCell src="/assets/characters/milo_side.png" h={L.miloH} moving={false} breathe />
         </div>
       </div>
-      {/* Anchored at his mouth and CLAMPED below the chrome: on a short frame the scene rides high
-          and an unclamped bubble opens inside the back chip. */}
+      {/* Anchored at his mouth, CLAMPED below the chrome (on a short frame the scene rides high and
+          an unclamped bubble opens inside the back chip) and LIFTED clear of the bottom control
+          band — see `bubbleBottom` in fitLayout for why the last one is not optional. */}
       <div style={{
         position: 'fixed', left: Math.max(8, L.miloX - L.miloH * 0.2),
-        bottom: Math.min(Math.round(L.miloH * 0.84), vh - CHROME_PX - 88),
+        bottom: L.bubbleBottom,
         zIndex: 42, maxWidth: Math.min(Math.round(vw * 0.4), 380), pointerEvents: 'none',
       }}>
         <div style={{
@@ -677,6 +733,25 @@ type Mode = 'guided' | 'practice'
 const FitPlay: React.FC<{ data: FoRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { w: vw, h: vh } = useViewport()
   const usesPad = data.qType !== 'fit'
+  /**
+   * ⚠️ THE WINDOW COUNT IS DERIVED FROM THE ANSWER, AND A FIXED 2 WAS A DEAD BUTTON ON PROD.
+   * `answer = rows × per` with both `rint(2, 5)` at L1, so 6 of those 16 combinations are
+   * single-digit — 2×2, 2×3, 3×2, 2×4, 4×2, 3×3. About 37% of L1 `order` rounds, and since L1's
+   * pool is [order, fit], roughly one run in five met one on SCORED ROUND 1. A fixed `windows={2}`
+   * made all three gates (this prop, `onDigit`'s cap, `commitPad`'s guard, and `AnswerPad`'s own
+   * `disabled`) demand two digits, so a child who worked out 8, tapped `8` and tapped Done got
+   * NOTHING: the button sat at opacity .4 with `cursor: default` and the question stayed up. The
+   * only way through was `08` — a leading zero nothing on screen teaches, asked of the band that has
+   * just learned place value. Measured live on the production build before this line existed.
+   * The craft doc's rule, stated the general way: derive the expected input length from the ANSWER,
+   * never from the widest case; and a control that can be disabled while the child believes they
+   * have answered is a dead button whatever the reason.
+   * (`split` is always ≥ 22, so this only ever binds on `order`. The one-window pad does tell the
+   * child the answer is a single digit — that is a real and accepted cost, it is what placeValue's
+   * `digits: 1` already does for the same reason, and it is strictly better than a button that
+   * refuses a correct answer.)
+   */
+  const padWindows = padWindowsFor(data.answer)
   const L = fitLayout(vw, vh, data.site, data.per, data.railsShown, usesPad)
 
   const [digits, setDigits] = useState<number[]>([])
@@ -744,7 +819,7 @@ const FitPlay: React.FC<{ data: FoRound; mode: Mode; onComplete: (correct: boole
   }
 
   function commitPad() {
-    if (done.current || digits.length < 2) return
+    if (done.current || digits.length < padWindows) return
     const n = Number(digits.join(''))
     setSettled(true)
     deliver(n)
@@ -772,8 +847,8 @@ const FitPlay: React.FC<{ data: FoRound; mode: Mode; onComplete: (correct: boole
       <Foreman L={L} vw={vw} vh={vh} line={said ?? data.site.job} />
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: 8, zIndex: 44, display: 'flex', justifyContent: 'center' }}>
         {usesPad ? (
-          <AnswerPad digits={digits} live={!settled && !done.current} band={L.padBand} windows={2}
-            onDigit={(n) => setDigits(d => (d.length < 2 ? [...d, n] : d))}
+          <AnswerPad digits={digits} live={!settled && !done.current} band={L.padBand} windows={padWindows}
+            onDigit={(n) => setDigits(d => (d.length < padWindows ? [...d, n] : d))}
             onClear={() => setDigits(d => d.slice(0, -1))} onDone={commitPad} />
         ) : (
           /* Identical at every count — nothing may say the set is right before the commit. */
