@@ -100,10 +100,18 @@ function makeRound(d: 1 | 2 | 3): FrRound {
 }
 
 // ─── Fraction-bar instrument ───────────────────────────────────────────────────────────
+// The WHOLE is the constant and the PARTS get thinner as the denominator grows — that is the only
+// thing that makes two fractions comparable by eye. Fixing the part width instead (which this did)
+// draws 1/3 and 1/4 as identical blocks while the readout says one is bigger, i.e. the picture
+// contradicts the answer on the one skill the chapter exists to teach.
+export const BAR_WHOLE = 268
+const BAR_GAP = 3
+export const partPx = (den: number) => (BAR_WHOLE - (den - 1) * BAR_GAP) / den
+
 function Bar({ den, shaded }: { den: number; shaded: number }) {
-  const w = den > 6 ? 40 : den > 4 ? 50 : 62
+  const w = partPx(den)
   return (
-    <div style={{ display: 'flex', gap: 3, padding: 4, borderRadius: 12, background: PT.panelSoft, border: `1px solid ${PT.lineStrong}` }}>
+    <div style={{ display: 'flex', gap: BAR_GAP, padding: 4, borderRadius: 12, background: PT.panelSoft, border: `1px solid ${PT.lineStrong}`, width: BAR_WHOLE + 8, boxSizing: 'border-box' }}>
       {Array.from({ length: den }).map((_, i) => {
         const on = i < shaded
         return <div key={i} style={{ width: w, height: 46, borderRadius: 7, flexShrink: 0,

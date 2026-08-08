@@ -102,13 +102,18 @@ function makeRound(d: 1 | 2 | 3): DgRound {
 }
 
 // ─── Instrument: 10×10 hundredths grid ──────────────────────────────────────────────────
+// The hundredths grid IS the chapter — it must be the biggest thing on screen, not the smallest.
+// A hardcoded 15px cell drew it at 27% of its own panel on a laptop while the readouts below it ran
+// full width. The vh term keeps a short landscape frame on the old 15px floor, byte-identical.
+const CELL = 'clamp(15px, min(2.6vw, 4.4vh), 30px)'
+
 function Grid100({ shaded }: { shaded: number }) {
   const s = Math.max(0, Math.min(100, shaded))
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 15px)', gridTemplateRows: 'repeat(10, 15px)', gap: 2, padding: 6, borderRadius: 8, background: PT.panelSoft, border: `1px solid ${PT.lineStrong}` }}>
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(10, ${CELL})`, gridTemplateRows: `repeat(10, ${CELL})`, gap: 2, padding: 6, borderRadius: 8, background: PT.panelSoft, border: `1px solid ${PT.lineStrong}` }}>
       {Array.from({ length: 100 }).map((_, i) => {
         const on = i < s
-        return <div key={i} style={{ width: 15, height: 15, borderRadius: 2, flexShrink: 0,
+        return <div key={i} style={{ width: '100%', height: '100%', borderRadius: 2, flexShrink: 0,
           background: on ? ACCENT.base : PT.panelSolid, border: `1px solid ${on ? ACCENT.deep : PT.line}`,
           boxShadow: on ? `0 0 5px ${ACCENT.base}77` : 'none', transition: 'all .18s ease' }} />
       })}

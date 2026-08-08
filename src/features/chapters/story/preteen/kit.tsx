@@ -35,6 +35,17 @@ export const ACCENTS: Record<string, Accent> = {
   orchid: { base: '#cf5cff', deep: '#ac3bef', soft: 'rgba(207,92,255,0.16)' },
 }
 
+/**
+ * Panel widths. A hard px cap (`min(94vw, 520px)`) is a PHONE size that never grows, so on a laptop
+ * the chapter renders at ~21% of the screen with 380px of dead navy either side and Milo/Continue
+ * stranded in opposite corners. The teen band fixed this in July with a vw term; the fix never
+ * reached this kit. `min(<vw guard>, clamp(<old cap>, <vw>, <max>))` keeps small frames BYTE-IDENTICAL
+ * (the old cap is the clamp floor) and only lets a roomy frame use the room it has.
+ */
+export const PANEL_W = 'min(94vw, clamp(520px, 52vw, 860px))'
+export const CARD_W = 'min(92vw, clamp(460px, 42vw, 700px))'
+export const PROMPT_W = 'min(92vw, clamp(660px, 54vw, 1000px))'
+
 export const PT_CSS = `@keyframes pt_float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes pt_pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
 @keyframes pt_blink{0%,100%{opacity:1}50%{opacity:.35}}
@@ -76,7 +87,7 @@ export function PromptCard({ tag = 'Task', text, accent, short, big }: { tag?: s
     : (short ? 'clamp(14px,3.6vh,17px)' : 'clamp(16px,2.3vh,20px)')
   return (
     <div style={{ position: 'fixed', top: short ? 46 : 66, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-      <div style={{ maxWidth: big ? 'min(94vw,720px)' : 'min(92vw,660px)', display: 'flex', flexDirection: big ? 'column' : 'row', alignItems: big ? 'flex-start' : 'center', gap: big ? 8 : 12, background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 15, border: `1px solid ${accent.base}66`, padding: big ? (short ? '12px 16px' : '16px 22px') : (short ? '7px 8px 7px 14px' : '10px 12px 10px 18px'), boxShadow: `0 0 20px ${accent.base}33, 0 8px 22px rgba(0,0,0,0.4)` }}>
+      <div style={{ maxWidth: big ? 'min(94vw,720px)' : PROMPT_W, display: 'flex', flexDirection: big ? 'column' : 'row', alignItems: big ? 'flex-start' : 'center', gap: big ? 8 : 12, background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 15, border: `1px solid ${accent.base}66`, padding: big ? (short ? '12px 16px' : '16px 22px') : (short ? '7px 8px 7px 14px' : '10px 12px 10px 18px'), boxShadow: `0 0 20px ${accent.base}33, 0 8px 22px rgba(0,0,0,0.4)` }}>
         <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: big ? 11.5 : 10.5, color: accent.base, background: accent.soft, borderRadius: 6, padding: '3px 8px', letterSpacing: 1, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{tag}</span>
         <span style={{ fontFamily: PT.sans, fontWeight: big ? 700 : 600, fontSize: textSize, lineHeight: big ? 1.32 : 1.2, color: PT.ink }}>{text}</span>
       </div>
@@ -158,7 +169,7 @@ export function ExploreScaffold({ title, intro, accent, short, onContinue, conti
         </div>
       </div>
       <div style={{ position: 'absolute', left: 0, right: 0, top: short ? 62 : 90, bottom: short ? 58 : 92, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4vw', overflowY: 'auto' }}>
-        <div style={{ position: 'relative', width: 'min(94vw,520px)', background: PT.panel, backdropFilter: 'blur(10px)', border: `1px solid ${accent.base}55`, borderRadius: 18, boxShadow: `0 0 30px ${accent.base}22, 0 18px 40px rgba(0,0,0,0.5)`, padding: short ? '16px 16px' : '22px 24px' }}>
+        <div style={{ position: 'relative', width: PANEL_W, background: PT.panel, backdropFilter: 'blur(10px)', border: `1px solid ${accent.base}55`, borderRadius: 18, boxShadow: `0 0 30px ${accent.base}22, 0 18px 40px rgba(0,0,0,0.5)`, padding: short ? '16px 16px' : '22px 24px' }}>
           <Brackets color={accent.base} />
           {intro && <p style={{ margin: '0 0 14px', fontFamily: PT.sans, fontSize: short ? 13 : 14.5, lineHeight: 1.5, color: PT.inkSoft, textAlign: 'center' }}>{intro}</p>}
           {children}
@@ -175,7 +186,7 @@ export function ExploreScaffold({ title, intro, accent, short, onContinue, conti
 export function IntroCard({ title, body, accent, cta = 'Start', onStart, short }: { title: string; body: string; accent: Accent; cta?: string; onStart: () => void; short?: boolean }) {
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, padding: '0 6vw' }}>
-      <div style={{ position: 'relative', maxWidth: 460, background: PT.panel, backdropFilter: 'blur(8px)', border: `1px solid ${accent.base}55`, borderRadius: 18, padding: '20px 24px 24px', boxShadow: `0 0 30px ${accent.base}22, 0 16px 40px rgba(0,0,0,0.5)`, textAlign: 'center' }}>
+      <div style={{ position: 'relative', width: CARD_W, background: PT.panel, backdropFilter: 'blur(8px)', border: `1px solid ${accent.base}55`, borderRadius: 18, padding: '20px 24px 24px', boxShadow: `0 0 30px ${accent.base}22, 0 16px 40px rgba(0,0,0,0.5)`, textAlign: 'center' }}>
         <Brackets color={accent.base} />
         <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2, color: accent.base, textTransform: 'uppercase', marginBottom: 8 }}>Briefing</div>
         <h2 style={{ margin: '0 0 8px', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 19 : 23, color: PT.ink }}>{title}</h2>
