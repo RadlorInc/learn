@@ -12,7 +12,999 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🏷️ **2026-08-02 (LATEST) — THE FITTING CREW'S THREE OPEN ITEMS CLOSED BY PLAYING IT, AND PLAYING IT FOUND TWO MORE LIVE DEFECTS THE 491 GREEN TESTS COULD NOT SEE. 🚀 SHIPPED — `main`@`6b7c449`, prod serving **sw v87**.** `tsc` 0 · **494/494 vitest** (was 491, **+3**) · `next build` · 0 console errors · a clean run and a 640×320 run both played to their own finish.
+> 📏 **2026-08-09 (LATEST) — THE FOUNDER SAID THE 9–11 VISUALS WERE "FAALTU… NAA SAHI SIZE KE NAA SAHI POSITION PAR", AND HE WAS RIGHT: 20 MINUTES OF MEASURING THE SCREEN FOUND 3 FAULTS IN 2 CHAPTERS, ONE OF THEM THE PICTURE CONTRADICTING ITS OWN ANSWER. ✅ COMMITTED on `fix/9-11-visual-truth-and-sizing`, NOT pushed.** `tsc` 0 · **660/660 vitest** · `next build` 0 · 0 console errors · measured at 1280×800 and 640×320.
+>
+> **The asks, in order:** *"find karo kya chiz tumhe rok rahi hai acche visuals aur concepts bana ne ke liye"* → *"kuch samjh naii aa raha hai… bhot faaltu visuals dikhte hai"* → *"meko yeh animation waale ekdum story play games waale chahiye… RPGs"* → *"pehle design likho, phir code"* → *"ab code likho"* → *"meko khelna hai"* → **"delete karo yeh story Play"**.
+>
+> ## ⓪ ⚠️ THE FIRST ANSWER WAS AN AUDIT AND IT WAS THE WRONG DELIVERABLE
+> Asked what was blocking good 9–11 visuals, I produced a code audit — duplication counts, missing
+> gates, asset drift. All true, none of it what he was looking at. His reply (*"kuch samajh nahi aa
+> raha"*) is the correction worth keeping: **when the complaint is about the SCREEN, open the screen
+> and measure it.** Doing that took 20 minutes and found more than the audit did.
+>
+> ## ① ⚠️ THE FRACTION CHAPTER'S PICTURE CONTRADICTED ITS OWN ANSWER — the real bug
+> `FractionForge` sized the **PART** and let the **WHOLE** grow with the denominator
+> (`const w = den > 6 ? 40 : den > 4 ? 50 : 62`). Measured on screen: **1/4 and 1/3 both drew a 62px
+> shaded block** while the readout underneath said `1/4 < 1/3`. Comparing fractions requires the whole
+> to be CONSTANT and the parts to get thinner; this had it exactly backwards, so the one visual the
+> chapter exists for was telling the child the opposite of the answer. Fixed: whole pinned (276 = 276),
+> 1/3 now 87px against 1/4's 65px. **Not a taste problem — the maths was drawn wrong.**
+>
+> ## ② THE WHOLE BAND WAS PHONE-SIZED ON A LAPTOP, AND THE FIX ALREADY EXISTED NEXT DOOR
+> Every panel in `preteen/kit.tsx` was capped with a hard px (`min(94vw, 520px)`), which never grows.
+> Measured at 1280×800: **panel 520×406 = 21% of the screen**, 380px of dead navy either side, Milo
+> stranded 345px from it and Continue 210px the other way. ⚠️ **The teen band fixed this exact fault in
+> July** ("laptop view looks very empty") **and the fix never reached this kit.**
+> `min(<vw guard>, clamp(<old cap>, <vw>, <max>))` — the old cap becomes the clamp FLOOR, so small
+> frames are byte-identical and only a roomy frame changes. Verified: 640×320 panel 520px before and
+> after, no h-overflow.
+>
+> ## ③ THE THING BEING READ WAS THE SMALLEST THING ON SCREEN
+> `DecimalGrid` hardcoded a **15px cell**, so the hundredths grid — the entire point of the chapter —
+> was **182px = 27% of its own panel** while the readouts and slider below it ran full width.
+> ⚠️ **And fixing the grid track exposed a second hardcode inside it**: each cell also carried
+> `width: 15, height: 15`, so the track grew to 30 and the cells stayed 15 — a grid of dots floating
+> in their own boxes. Both fixed; the vh term (`clamp(15px, min(2.6vw, 4.4vh), 30px)`) holds a short
+> landscape frame on the old 15px floor exactly.
+>
+> ## ④ ⚠️ WHY GREEN GATES DID NOT SEE ANY OF THIS, STATED PLAINLY
+> All three shipped with a green suite, and the suite was RIGHT. Gates here check the maths: is the
+> answer correct, does the generator hold, does the grader hold. **Nothing anywhere asks "is the thing
+> being taught the biggest thing on screen" or "does the picture agree with the answer".** A chapter
+> can pass 660 tests and look exactly like the founder described.
+>
+> ## ⑤ THE RPG ("STORY PLAY") WAS DESIGNED, BUILT AS A SLICE, PLAYED, AND **DELETED AT THE FOUNDER'S CALL** — ⚠️ read this before rebuilding it
+> He asked for a story-play/RPG shape — *play a character, build stats, make choices that change the
+> story*. It was designed (`docs/slate-yard-rpg.md`), built as a slice (`features/yard/` — a pure
+> state module + 20 tests + a yard screen + `/yard`), driven end to end, and then **deleted entirely at
+> his request**, doc included. Nothing of it remains. Three findings survive it and are worth having:
+> • ⚠️ **The RPG ledger already exists and is wired to emoji hats.** `total_xp`, `current_level`,
+>   `total_coins` are persisted per learner and synced — and the only thing they buy is
+>   `hat-red 🎩 20 · hat-wizard 🧙 60` in [shop/page.tsx](src/app/shop/page.tsx). Every piece of RPG
+>   plumbing is built and none of it touches the story or the maths.
+> • ⚠️ **The stat system also already exists, invisibly.** `chapterLevel` stores an EARNED per-learner
+>   per-chapter tier, so "Angles ★★☆" needs no new storage — it is measured competence, already saved.
+> • ⚠️ **A rating gate walls a struggling child, and only the gate caught it.** Start with one tool, do
+>   the first job ROUGH (so no tool is granted), and the only trade you can work now wants two stars you
+>   have not earned → **board empty, stuck.** The child it traps is exactly the one who is finding it
+>   hard. The fix that worked was the world's own: **work recurs** — when nothing fresh is takeable,
+>   offer work already done. *If any future design gates content behind measured skill, it needs an
+>   always-one-takeable rule and a test that sweeps a never-improving child.*
+> • ⚠️ **And mutation-testing found my own assertion was weaker than the rule I had written.** "Pay is
+>   never zero" passed with `rough: 0`, because a `Math.max(1, …)` floor still returned 1 coin out of a
+>   possible 22 — nominally paying, effectively nothing. Assert the SHARE, not the floor.
+>
+> ## ▶ OPEN
+> 1. ✅ **The three fixes are COMMITTED** on `fix/9-11-visual-truth-and-sizing`, **not pushed, not
+>    merged**. Deploying needs the usual `public/sw.js` bump. ⚠️ **The huge pre-existing uncommitted
+>    batch is untouched** — AngleShop, The Empty Plot, SupplyRun and the three staged deletions are all
+>    exactly as they were; the commit was staged file-by-file and verified with `git show --stat`.
+> 2. ⚠️ **ONLY 2 OF 12 CHAPTERS WERE MEASURED.** Three faults came out of two chapters in twenty
+>    minutes, so the other ten are very likely carrying the same classes. The sweep worth running:
+>    **every instrument measured against its own panel**, and **"does the picture agree with the
+>    answer" checked on every question type a generator can draw.**
+> 3. **No gate protects either rule.** A check that the taught instrument is the largest element in its
+>    panel would have caught ③ mechanically; nothing like it exists.
+> 4. **5 chapters remain neon** — FactorLab · FractionForge · DecimalGrid · UnitConverter ·
+>    MissionBrief — and ⚠️ **all five render ZERO images and ZERO svg** (measured): pure divs over
+>    `LabBackdrop`. No art pipeline reaches them at all.
+> 5. ⚠️ **The cover-fit bug is STILL live in LoadingBay + OrderDesk**, ten deploys old.
+>    [LoadingBay.tsx:227](src/features/chapters/story/LoadingBay.tsx:227) still reads
+>    `const groundPx = Math.round(vh * groundY)` over an `objectFit: cover` backdrop.
+> 6. ⚠️ **Asset budget has drifted 22.8MB → 65MB** (`public/assets`), unmeasured by anything.
+> 7. **Nobody has watched a child play any of it**, and every fault this session came from putting a
+>    ruler on the screen — not one from the type-checker or the suite.
+>
+> _(the 📐 block below is the previous session — The Angle Shop.)_
+
+> 📐 **2026-08-08 — ANGLESCOPE → **THE ANGLE SHOP**, AND THE BAND FINALLY HAS A CHARACTER, ART THAT CARRIES THE MATHS, AND ITS FIRST DRAWN CYCLES. ⚠️ NOT COMMITTED.** `tsc` 0 · **660/660 vitest** (was 624, **+36 — the chapter's own gate, 10/10 planted mutations caught**) · `next build` 0 · 0 console errors · driven at 1280×760 **and** 640×320 through intro → both demos → guided → a **scored** round, graded and advanced. **31.5 Higgsfield credits spent, 1042.5 left.**
+>
+> **The asks, in order:** *"tum ek koi bhi chapter choose karo joh abhi bhi neon hai… phir uska ek proper storyboard banao 2d animation ke liye"* → *"9-11 age band ke according ek cartoon character bana na hai… phir practice questions bhi woh storyboard ke ek part rahe"* → *"teeno sites generate kar do"* → *"cycles bhi generate kar do"* → *"ab angleShop.ts aur uska gate bana do"* → *"ab AngleShop.tsx bana do"*.
+>
+> ## ⓪ WHY THIS CHAPTER, OF THE SIX STILL NEON — AND IT IS A PIPELINE ARGUMENT, NOT A PREFERENCE
+> Still on the pre-teen HUD: `FactorLab` · `FractionForge` · `DecimalGrid` · `UnitConverter` ·
+> `AngleScope` · `MissionBrief`. Angles win a *generate-the-art* pilot for one reason none of the
+> other five has: **both of its skills are EXACT TRANSFORMS.** `rotate(62deg)` on a painted rafter
+> IS 62°; `scaleX(-1)` about an axis IS a fold. A fraction needs exact division and a decimal needs
+> a 100-grid — in both, generated art can only ever be wallpaper behind a code-drawn instrument.
+> Here it is the instrument. Plus it is a **live 33% coin flip on both question types** (the rethink
+> doc's own headline defect), and it is the unblocked one — FactorLab is stuck because FitOut took
+> the array-on-a-frame gesture. **Storyboard: [docs/storyboards/angle-shop.md](docs/storyboards/angle-shop.md).**
+>
+> ## ① 🐐 SLATE — THE 9–11 BAND HAS NO PROTAGONIST, AND THAT *IS* THE "READS TOO YOUNG" PROBLEM
+> Milo is drawn in the 3–8 register (chibi proportions, big head, flat-vector fills), so a
+> ten-year-old's building site with him in it looks like a toddler's toy. The adults that DO work —
+> the foreman bear, the badger driver — are painted and grown-up, but a child needs somebody to BE.
+> **Slate is a young mountain goat, first week as an apprentice**, and the trait is the mathematics:
+> she can stand on any slope, so she trusts her feet over her eyes and thinks she does not need to
+> measure. **That is the running joke AND the exact misconception the chapter exists to break** —
+> "feels about right" is not good enough when rain has to run off. A character whose flaw is the
+> payload gives every miss line somewhere to come from.
+> ⚠️ **B WAS PICKED ON THE NUMBERS, NOT BY EYE.** Two variants generated; measured saturation-weighted
+> hue mix, **A came out 92% warm (30° 51% · 15° 41%)** — the same band as the bear (77%) and Milo
+> (70%). Three warm characters on a warm timber site is the camouflage fault, and it would have
+> shipped looking perfectly fine in a thumbnail. B carries 3× the cool content at the lowest value
+> (0.539). ⚠️ **Stated honestly: B is still 77% warm overall — the FUR is not doing the separating,
+> the teal kit is**, exactly as the foreman's hi-vis vest does. So the kit is load-bearing and may
+> not be recoloured casually. ⚠️ **One collision recorded rather than discovered later:**
+> `fit_station.jpeg` measures **98% cyan**, so a teal hat against a big cyan sky would camouflage —
+> the three new backdrops are spec'd ground-dominant for that reason, and the fix if a roof shot ever
+> puts her against open sky is to move the kit to ~330° rose, which is measurably absent from every
+> asset in the app.
+>
+> ## ② THE PRACTICE ROUNDS *ARE* THE STORY — AND THE DIFFICULTY LADDER IS THE STORY ARC
+> Founder's ask, and it is the structural change. Ten scored rounds = **Slate's first week**, one job
+> a day (Mon: Mrs Pell's shed roof → Fri: the market awning). The scenario fixes the CONTEXT and the
+> tier picks the DIFFICULTY, so story and difficulty stay independent — TickTock's structure.
+> **And the two halves are the same line, which costs nothing because both already exist:**
+> L1 the foreman stands over her with the square · L2 he watches from the ladder · **L3 he has gone
+> to another job and she is on her own, guide gone.** A ten-year-old does not want praise, they want
+> to be **trusted**, and the scaffold retiring IS being trusted; the mastery early-exit becomes
+> *"signed off early — you're on the crew"*. Three wrong in a row is the foreman walking back in, not
+> a punishment screen.
+>
+> ## ③ THE ART — 3 SITES, AND ⚠️ TWO OF THREE FAILED THE FIRST PASS BECAUSE OF WHAT I ATTACHED
+> `ang_roof` · `ang_bridge` · `ang_shelter`, all **1376×768**, all **100% walkable** at every
+> candidate ground line, 135–191 KB each. Each has **a hole where the child's answer goes** — the
+> gable is open, the deck has no handrail, the posts have nothing on top — which fixes the
+> empty-centre requirement with a REASON rather than a rule.
+> ⚠️ **I attached the foreman's sprite as a second reference alongside the backdrop, and the model
+> read it as a SUBJECT TO INCLUDE**: two came back as `depot_yard` regurgitated **with the bear
+> standing in it**, one with invented signage I had explicitly forbidden. **Never attach a character
+> reference to a backdrop prompt.** ⚠️ **And a style reference too close to the target gets COPIED,
+> not styled** — `depot_yard` is "a wall with a yard" and I asked for "a wall with a yard". The one
+> that worked first time was the bridge, whose subject the reference simply could not supply.
+> ⚠️ **ALL THREE MEASURED TOO BRIGHT** — raw 0.754 / 0.573 / 0.642 against a cast at Slate 0.539 ·
+> foreman 0.597, i.e. the `grocery_sweets` fault. **Graded, not re-rolled**: a highlight-weighted
+> gamma pulls the SKY down hardest and barely moves the midtone ground the cast stands on, so the
+> approved composition survives and it costs nothing. All three now under 0.539.
+> ⚠️ **One variant rejected for the right reason** — a beautifully painted cottage came back with the
+> gable COMPLETE, so there was nothing to fit.
+>
+> ## ④ THE BAND'S FIRST DRAWN CYCLES — `slate_walk` (12 cells) + `slate_work` (12 cells)
+> Until now the whole 9–11 band measured **`0`** on `grep -c "Arrive|journeyOf|SheetCell"`; that was
+> the audit's headline gap and it is closed. Image-to-video off her approved sheet, cut with
+> `creature-frames.py`.
+> ⚠️ **The walk's first 11 source frames are a HELD START FRAME** — the foreman-bear lesson,
+> reproduced exactly; cutting from f0 gives a strip that shuffles. ⚠️ **And the work clip spends its
+> first ~45 frames materialising a crank bar out of nothing** (raw drift 262px); from f45 it settles
+> to 18px and gives the STRONGER cycle of the two (period 35, corr **+0.878** against the walk's 26 /
+> +0.661). Both `--start` values came from that measurement, never a guess.
+> ⚠️ **Magenta was DERIVED, not recalled** — clearance 200 against green's 185, because her teal kit
+> is exactly what pulls green closer. **The key was dry-run against her sprite BEFORE the clips came
+> back**: 99.5% of background clears, 98.6% of subject stays opaque, zero magenta fringe on either
+> sheet. ⚠️ Walk wrap mismatch **1.30** — the bottom edge of the craft doc's "hitches once a cycle"
+> band; swept across five start offsets it improves 1.66 → 1.30 then plateaus with the period holding
+> at 26, so the cycle is real and that is the best this clip offers. **NOT pingponged** — reversed
+> legs moonwalk. ⚠️ `fps: 11` is tuned by ear and **unverified on screen**; for a grounded creature it
+> also sets ground speed.
+>
+> ## ⑤ THE PURE MODULE + GATE — `angles.ts` · 36 tests · **10/10 planted regressions caught**
+> Everything the gate needs lives outside React so it drives the same functions the scene renders
+> from. ⚠️ **The obvious fold-candidate set is WRONG and quietly so**: the shape's own vertices and
+> edge midpoints are, for a regular polygon, ALL lines of symmetry — zero distractors, so a child who
+> marks everything wins. Interleaving a near-miss BETWEEN each neighbouring true axis fixes it, and
+> hands the rectangle its **diagonals** as distractors, which is the classic misconception arriving
+> for free. Not a leak that half of them hold: the answer is graded as a **SET**, so knowing the count
+> still leaves you picking which.
+> ⚠️ **NINE mutations were caught immediately and the TENTH was the useful one.** Removing the
+> tap-floor clamp PASSED — and it was not an inert clamp: it only *binds* below ~282px of height and
+> the shortest size in the sweep was 320, so the backstop was being trusted, never exercised. A
+> 667×375 landscape phone minus iOS Safari's chrome (~95px) genuinely lands there. `667×290` and
+> `640×270` are in the sweep now and it fails. **Same shape as MeasureIt's missing narrow-but-tall
+> sizes.**
+>
+> ## ⑥ ⚠️ FOUR FAULTS THE SCENE FOUND THAT 36 GREEN TESTS COULD NOT
+> ① **`AngleShop.tsx` and `angleShop.ts` ARE THE SAME FILE on macOS**, so the registry's import
+> resolved to the pure module and `next build` failed on a missing default export. **The craft doc
+> records this exact trap and I walked into it.** The module is `angles.ts` now, matching `clock.ts` /
+> `market.ts` / `slice.ts`.
+> ② **The story and the requirement contradicted each other, on screen**: *"Make the approach ramp
+> SHARPER than a square corner — a barrow has to get up it loaded"*, which is backwards. `because` was
+> fixed by the job while `want` was drawn from the tier pool, so they disagreed on some seeds —
+> **Leaderboard's "two moves partly cancel" fault exactly.** The story fixes the KIND now and the tier
+> picks only how near 90 it sits, and it is gated.
+> ③ **The arm ran off the top of the screen** — measured `beamRect.y = −9` at 100° on the roof. Every
+> band was correct; the arm's REACH depends on the ANGLE, which `shopLayout` cannot see. Bounded in
+> the module now against every reachable angle × site × size.
+> ④ **At 640×320 the bubble sat on the arm and the arm collapsed to a 21px band.** The bubble is
+> `position: fixed` with no height bound, so longer text crossed `frameTop`; and the arm was derived
+> FROM a vertex the site preferred, so a short frame's missing headroom and the roof's high vertex
+> fought and the arm lost. **The arm is sized first and the vertex pushed down to fit**, and a short
+> frame gets MORE word-reserve, not less. Now 72px with 35px of bubble clearance.
+> ⚠️ **④ is why the gate now asserts the arm as a SHARE of its band (≥0.35), not just ≥48px** — 46px
+> passed the absolute floor and was unreadable on a 320-tall frame. **A floor in absolute pixels is
+> not a floor.**
+>
+> ## ⑦ WHAT WAS ACTUALLY VERIFIED, IN A SCORED ROUND
+> The scored round is the one that matters — the demo renders outside `SkillBeat` and cannot show the
+> `position: fixed` class of bug. Driven: turned 105° → 60° with **`hasDegText: false` the whole way**
+> (the no-readout rule, live), committed, **graded correct, advanced to a fold round**;
+> **week strip EMPTY with round 1 already finished**, so it cannot print the answer to the open
+> question; the rain plays on the consequence beat; buttons 100×131–172 at 1280 and no h-overflow at
+> either size; 0 console errors. The idle-art gate also caught the newly-registered sheets as unused
+> until the chapter declared a `CAST` — doing exactly its job.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED.** New: `story/angles.ts` · `story/AngleShop.tsx` ·
+>    `__tests__/angleShopGeometry.test.ts` · `docs/storyboards/angle-shop.md` · **3 `ang_*.jpeg`
+>    backdrops** · **3 `slate_*.png`** · 3 `docs/art/slate-*.jpg`. Changed: `canvas/sheets.ts` ·
+>    `storyChapters.tsx` · `chapterCastDistinct.test.ts` · `chapter-craft.md` (**5 new rules**).
+>    **DELETED: `story/AngleScope.tsx`.** Deploying needs `public/sw.js` v87 → v88.
+> 2. ⚠️ **NO FULL TEN-ROUND RUN, NO RE-TEACH SEEN FIRE, NO MASTERY EXIT — AND NO SCORED *FOLD* ROUND
+>    PLAYED THROUGH TO ITS VERDICT.** The fold animation is verified in the demo and the grader is
+>    gated, but not together in a scored round, **which is precisely the gap that hid FitOut's dead
+>    board**. This is the single most useful next drive.
+> 3. **The roof's beam still reads as crossing the cottage face rather than sitting at the ridge.**
+>    The bridge composes correctly, so this is one site's `vx`/`vyUp` wanting an eye, not a structural
+>    fault. `SITE_GEO` in `angles.ts` is one line per site.
+> 4. **The painted props are not generated** — `ang_beam` / `ang_square` / `ang_sheet` / `ang_bolt` /
+>    `ang_gutter` (~7 cr). The beam is code-drawn with the swap marked as one line; it must be **flat
+>    side-on**, because a beam drawn in perspective stops being a beam the moment you rotate it.
+> 5. **`fps: 11` and `fps: 10` are unverified by eye**, and for a grounded creature fps also sets
+>    ground speed.
+> 6. ⚠️ **The Empty Plot (the 🌲 block below) is STILL UNCOMMITTED and untouched by this**, as is the
+>    whole SupplyRun batch. **The cover-fit fix is still owed to LoadingBay and OrderDesk**, now nine
+>    deploys old and still with no gate.
+> 7. **5 chapters remain neon in the 9–11 band** — FactorLab · FractionForge · DecimalGrid ·
+>    UnitConverter · MissionBrief. FactorLab still needs a different material.
+> 8. **Nobody has watched a child play it**, and every fault that mattered this session was found by
+>    driving it or by measuring — **not one by the type-checker, and four of them after 36 green
+>    tests.**
+>
+> _(the 🌲 block below is the previous session — The Empty Plot's fourth pass, still uncommitted.)_
+
+> 🌲 **2026-08-08 — THE EMPTY PLOT, FOURTH REJECTION: THE SUN ANGLE WAS ALREADY FIXED AND THE YARD STILL READ AS SHAPES, BECAUSE THE THING KEEPING IT FLAT WAS AN ASSERTION IN THE GATE. ⚠️ NOT COMMITTED.** `tsc` 0 · **624/624 vitest** (the chapter's gate 76 → **78**, and **3/3 planted mutations caught**) · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320 through intro → demo → guided → two scored rounds, both pegged and graded, **and the settled review camera finally watched**.
+>
+> **The ask:** *"area and peremeter chapter ka 3d bhot burah hai... sirf alag alag shapes dikh rahe hai. kuch smoothness naii hai"* — i.e. the 🌄 block below, which fixed the sun by arithmetic, did not land either.
+>
+> ## ⓪ EVERY SOFT ELEMENT WAS TUNED JUST UNDER VISIBILITY, AND THE ONE THING THAT WAS NOT SUBTLE WAS A BLACK BAND
+> This is the pattern across all four passes and it is worth naming as the chapter's failure mode rather
+> than as four separate bugs. **The sun glow was already in the code. The clouds were already in the code.
+> The ground washes were already in the code. The ground relief was already in the code.** Not one of them
+> was visible on screen. Meanwhile the road — 24% of the opening frame, measured — rendered near-black.
+> So the frame a founder saw was: flat grey sky, flat green field, four unrelated objects, black band.
+> **Composite the numbers before calling a soft change done.** The sun glow was `hsla(40,62%,88%,.62)`
+> over a haze of ~`rgb(213,218,224)`, which comes out at `rgb(230,225,213)` — a +17/+7/−11 nudge.
+> Arithmetically present, and not a sun.
+>
+> ## ① ⚠️ THE HEADLINE: "DEAD FLAT WHERE THE CHILD CAN STAND" WAS SCOPED TO THE **WALKABLE BOX**, WHICH IS THE WHOLE VISIBLE GROUND
+> The 🌄 pass added real ground geometry and recorded it as the biggest single gap closed against the
+> target frame. It was correct and it changed nothing on screen, because the flat region it eased in
+> beyond is `±(frontage/2 + 5)` laterally by 17 m deep — **essentially every ground pixel in frame.**
+> Every facet in it therefore shared one normal, took one lighting value, and the largest surface in the
+> shot rendered as a single sheet of green. The relief only ever began out in the fog.
+> **And the gate was holding it there**: `expect(Math.abs(y)).toBeLessThan(1e-6)` across that same box.
+> The invariants that actually matter are narrower than "y is zero" — **tiles must sit flush, and nothing
+> may be a slope a child can pace against or that clips a fixed eye height** — and neither needs the
+> walkable yard flat. The flat region now shrinks to the **PLOT**; the rest of the yard gets relief.
+> ⚠️ **A JITTER, NOT A WAVE.** Per-vertex random height, not another octave: there is no wavelength, so
+> there is nothing to alias against the 3.75 m lattice and no period anyone could pace — strictly a
+> stronger anti-grid argument than the "far off a metre" one the macro octaves rest on.
+> ⚠️ **AND IT HANGS DOWNWARD, `[−0.30, 0]`, NOT `±0.15`.** Identical spread, so identical facet contrast —
+> but a jitter that can rise above y = 0 pokes the grass up THROUGH everything laid flat on it. Switched
+> on symmetrically, the road plane speckled green across its entire width within one reload, and the
+> chalk edge lines at y = 0.04 would have gone the same way. Hanging it below zero makes that
+> unexpressible, and the small mean drop reads as the plot sitting on a levelled pad, which is what a
+> building plot is.
+>
+> ## ② ⚠️ THE BLACK BAND WAS A SHADOW BUG, NOT A DARK COLOUR — AND drei's `SoftShadows` IS WHY
+> The road is `planeGeometry(80, 4)` and the shadow frustum is ±22. three.js's own `getShadow` guards
+> out-of-frustum samples; **`SoftShadows` replaces that shader with PCSS and the guard does not survive
+> the swap**, so the far reaches of the road sampled the clamped edge texel and came back shadowed —
+> a hard dark wedge with no caster anywhere near it. Proven by removing `receiveShadow`: the wedge
+> vanished and the band went uniform. Narrowed to 44 m (still well off both frame edges), so the real
+> post shadows — a genuine contact cue, and in the target frame — come back without the artefact.
+> ⚠️ **AND THE COLOUR WAS A FIX THAT HAD BEEN WRITTEN DOWN AND THEN LOST.** The comment above `road`
+> reads *"0.62 still reads as tarmac against a saturated green and stops the frame opening on a void"* —
+> and the code said **`l: 0.40`**. Reasoned out, documented, reverted in a later pass, with the note left
+> in place claiming the fix. Held at 0.58 and **gated** (`the road is never a dark band`) so a third
+> slide fails a test instead of shipping.
+> ⚠️ **`size 16 / samples 8` THEN DITHERED VISIBLY ALONG EVERY PENUMBRA.** PCSS widens the blur with
+> blocker distance, and the road is a big flat surface at a 64° grazing angle to a 25.5° sun, so the
+> rail's penumbra there is very wide — eight taps across it read as speckled black noise, i.e. as a
+> rendering fault rather than as sunlight. `size 9 / samples 17` is the same softness sampled properly.
+>
+> ## ③ A WORLD READS AS POPULATED BECAUSE THINGS CLUSTER, NOT BECAUSE IT HAS MORE KINDS OF THING
+> Five props are drawn from an eight-entry catalogue of which two are trees, so **a typical round has
+> about one tree in it** — and the yard rendered as four unrelated objects standing apart on a field,
+> which is exactly *"sirf alag alag shapes dikh rahe hai"*. The target frame does not read as a place
+> because it is busier; it reads that way because the trees **frame the shot down both flanks** and the
+> eye groups them into scenery instead of counting them as items. New `site.trees`: six, alternating
+> flanks, 7.5–19.5 m outside the plot's own edges — beyond the walkable box AND beyond the furthest a
+> left prop can reach (−10.2) — heights 4.6–8.2 m against a 1 m unit, all pairwise different.
+> ⚠️ **IT GOES THROUGH THE SAME COLLINEAR-AND-EQUALLY-SPACED ENFORCEMENT THE PROPS DO, and that is not
+> ceremony: a treeline is the most ruler-shaped thing anyone could add to this world.** "Unlikely to line
+> up" is precisely the luck the 🌄 block records being burned by one pass earlier. The gate's no-unit-
+> width, off-grid and collinear checks were all widened to cover it.
+> ⚠️ **SIX, NOT TEN, AND THAT IS A DRAW BUDGET.** Each tree is three meshes, so this is **+18 draws by
+> construction** against the 81–83/frame the 🌄 block measured. If more are ever wanted, instance them —
+> do not raise the number.
+>
+> ## ④ TWO SMALLER ONES THE SCREEN CAUGHT
+> • **The foreman still had no legs.** Vest, arms and a hard hat on a single tapered cylinder running
+>   from the ground to the shoulders is a skittle whatever you paint on it — the craft doc's own rule is
+>   that the SILHOUETTE does the reading, and the outline was one unbroken cone. Split into two legs and
+>   a torso; ⚠️ they take a darker SHADE of his own body colour, never a new one, because his orange
+>   already sits beside the clay unit's hue and the vest is what buys that separation back.
+> • **Every tree trunk rendered as a black stick.** `dl −0.17` against a conifer green whose band starts
+>   at `l 0.28` lands on **0.11**, and the near face of anything on the flanks takes only fill (~0.5×).
+>   Invisible when there was one distant cone; very visible with a treeline. Shortened `h*0.26 → h*0.17`
+>   and lightened to `−0.05` — still a shade of its own tone, just one that is a colour.
+>
+> ## ⑤ WHAT WAS ACTUALLY VERIFIED — INCLUDING THE SHOT THIS FILE HAS TWICE RECORDED AS NEVER WATCHED
+> Driven at 1280×720 and 640×320. Guided round and two scored rounds pegged and graded correct
+> (`3 × 3 = 9`, `2 × (2 + 3) = 10`, `3 × 4 = 12`). **3/3 planted mutations caught** — the road back at
+> 0.40 · micro relief switched off · micro no longer stopping at the plot.
+> ✅ **AND THE SETTLED REVIEW CAMERA WAS SEEN, which is the one check that mattered for the ground
+> change.** Using the 🏙️ block's own instrument (stub `matchMedia` so `prefers-reduced-motion` snaps the
+> lerp in one frame): 12 tiles in a countable 3 × 4, **sitting flush on the plot**, the `3` and `4` on
+> the sides and the equation in the corner. The plot's flatness is what tiles rest on, and it is gated.
+> ⚠️ **DRAW CALLS WERE NOT PROPERLY RE-MEASURED.** rAF is frozen in a backgrounded tab, so the instrument
+> only accumulated **9 frames** (48.6/frame) — too small a sample to state against the 81–83 the 🌄 block
+> measured over 700–1000. The treeline's cost is arithmetic (+18) rather than a mystery, but the total
+> is unverified. ⚠️ **And a testing note: these buttons fire on `onPointerUp`, so `.click()` does
+> nothing** — dispatch a real `pointerdown`/`pointerup` pair, and remember `__miloPace` needs a frame to
+> apply (set → front the tab → act).
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED** — and neither is anything else in this chapter. Changed this pass:
+>    `FloorPlot.tsx` · `plotSite.ts` · `floorPlotArea.test.ts`. Needs `public/sw.js` v87 → v88 to deploy.
+> 2. ⚠️ **THE CRAFT-DOC RULES ARE OWED — [chapter-craft.md](docs/chapter-craft.md) WAS NOT UPDATED THIS
+>    PASS**, which breaks this repo's own standing habit. Lift these straight in, they are the general
+>    forms of §⓪–④: **composite a soft change's numbers before calling it done — this chapter has now
+>    shipped four elements that were arithmetically present and visually absent**; **a "flat where the
+>    child stands" rule must be scoped to what actually needs to be flat, not to the whole walkable
+>    box**; **displacement under anything laid at y = 0 hangs downward, never symmetrically**;
+>    **drei's `SoftShadows` drops three's out-of-frustum shadow guard, so a receiver wider than the
+>    frustum renders spuriously shadowed**; **PCSS undersampling reads as a rendering bug, not as soft
+>    light**; **a comment documenting a fix is not the fix — check the constant against its own note**;
+>    and **a world reads as populated because things cluster and frame, not because it has more kinds
+>    of thing in it**.
+> 3. **Instancing is still not done and the treeline just added +18 draws.** A 9×9 round already
+>    extrapolated to ~330; this makes it worse, and it is still unmeasured on a real tablet. Instance
+>    the tiles and the treeline before adding anything else expensive.
+> 4. **No full ten-round run and no mastery exit**, so six of the ten sites have still never been on
+>    screen — and this pass changed the ground of all of them.
+> 5. **Two things left alone deliberately**: the floodlight mast's head is one wide bar, so it reads a
+>    little like a crucifix at distance (the target gives it four lamps and a splayed base); and
+>    `GROUND_AMP` 1.5 makes the mid-distance relief fairly pyramidal at close range — both are the 🌄
+>    pass's numbers, neither is what the founder named, and re-tuning them risks re-flattening.
+> 6. **Nobody has watched a child play it.** Every fault this session came from the founder looking, or
+>    from putting the render beside the target frame and reading off the differences — not one from a
+>    type-check, and the 76 green tests were green before and after.
+>
+> _(the 🌄 block below is the previous pass — its sun-angle arithmetic stands, and §① above is why the
+> ground work in it never reached the screen.)_
+
+> 🌄 **2026-08-08 — THE EMPTY PLOT REBUILT AGAINST A GENERATED TARGET FRAME, AFTER THE FOUNDER REJECTED IT A THIRD TIME. THE THING THAT WAS WRONG WAS THE SUN ANGLE, AND IT IS ARITHMETIC. ⚠️ NOT COMMITTED.** `tsc` 0 · **622/622 vitest** (the chapter's gate 70 → **76**, +6, and **3/3 planted mutations caught**) · `next build` 0 · 0 console errors · **81–83 draw calls/frame measured over 700–1000 real frames** · chunk 882 → 889 KB · driven at 1280×720 and 640×320 through intro → demo → guided → three scored rounds including a wrong peg.
+>
+> **The ask:** *"yeh kya shapes dekh raha hai.... 3d visuals aise hote hai kya?? kya baat tumhe ristrict kar rahi hai accha visuals banane ke liye"* — then, on the target frame, *"haan yeh sahi hai, isi jaisa banao"*.
+>
+> ## ⓪ THE ANSWER TO "WHAT IS RESTRICTING YOU" WAS: MOSTLY OUR OWN GATE, AND ONE THING THAT WAS NOT
+> Asked directly what was blocking good visuals, the honest audit found **eight restrictions, seven of
+> them collateral**: the gate banned `.glb`/`.gltf`/`useLoader`/`TextureLoader`/`/assets/` **anywhere**
+> (an asset-BUDGET decision, never pedagogy); banned every `for (` in the scene file; forced every
+> `planeGeometry` over 3 m; and — the expensive one — **capped the whole world at ≤0.30 saturation**,
+> because the vivid units had to clear it by 0.30 on that axis. Plus `drei` and any post-processing were
+> simply never installed. **The real rule is far narrower than what was enforced: a texture on a
+> building 40 m away cannot be paced.** Founder approved lifting all of it, and changing the palette
+> mechanism. What could NOT move — nothing countable at ~1 m near the plot, no grid on the floor, the
+> plot bare until the peg — is untouched and now guarded by more checks than before.
+>
+> ## ① ⚠️ THE HEADLINE: THE SUN WAS AT 57° AND POINTING AWAY FROM THE PLAYER, AND THAT IS THE ARITHMETIC DEFINITION OF "THESE ARE SHAPES"
+> Two previous passes tuned brightness, palette and silhouette and were both rejected. A 14-agent panel
+> found the reason by working the numbers rather than looking: the key at `[16,30,11]` is **57.1°
+> elevation — midday, the flattest light there is** — and the child spawns at yaw π looking down +Z, so
+> every prop face they can see is the −Z face, where `N·L = −0.308`: **no key at all**. Adding up what
+> was left, the face TOWARD the player and the LEFT face both landed on exactly **0.580** while the roof
+> landed on **1.546**. **Two of the three faces a child sees on every box in the yard rendered at
+> literally the same value, and the brightest thing in the frame was a roof they were looking down on.**
+> A cube lit like that IS a rectangle, and no amount of colour or shape work survives it.
+> Fixed by DIRECTION, not intensity: key to 25.5° and 62° off the forward axis, the flat fill replaced
+> by two **shadowless** directionals. Five distinct face values at 4.6:1. ⚠️ **PCSS soft shadows shipped
+> in the SAME change** — a 25° sun trebles shadow length, and long+hard is why an earlier pass raised
+> the sun in the first place, i.e. *removed the light to hide the shadow and paid with all the form*.
+>
+> ## ② ⚠️ AND A LIVE BUG NOBODY HAD SEEN: THE CANVAS TEXTURES NEVER SET `colorSpace`
+> Both `numTex` and `groundTex` built sRGB colours into a 2D canvas and handed them over as
+> `NoColorSpace`, so the renderer skipped the decode and every one arrived darker and flatter than
+> painted. Silent. **The damage is not the look — it is that every palette number in `plotSite.ts` had
+> been hand-tuned by eye against a wrongly-decoded ground**, so three passes were re-tuning on top of a
+> defect. All three judges ranked it first for exactly that reason: land it before any palette work.
+>
+> ## ③ THE PALETTE RULE INVERTED — `gs` IS A FLOOR NOW, NOT A CEILING
+> The old rule bought separation with SATURATION, and since both units are vivid that capped every
+> ground, sky, road and prop at 0.34. **That one number is why the yard was grey**, and it is why the
+> silhouette pass could not rescue it: the props had the right shapes and the wrong colours. Now each
+> unit carries a dark **contour** (`UNIT_OUTLINE`), which reads against anything of a different value —
+> so the body only has to clear on hue OR value and the world is free. Props take the colour the THING
+> IS (`ROLE`): off-white van, rust skip, conifer green, timber hoarding, galvanised mast, pale cabin.
+> ⚠️ **Every role tone was checked against both units BEFORE being written** — several clear on value
+> with 0.02 to spare, so those lightness bands are load-bearing, not styling.
+> ⚠️ **AND I SHIPPED THE SAME CLASS OF BUG INTO THE FIX**: `readsAgainst` minimised hue and value
+> INDEPENDENTLY across the world, which asks *"does EVERY tone clear on hue, or EVERY tone on value"* —
+> a much stronger claim. It reported `hue 6° value 0.06` from two unrelated props on a palette a
+> per-tone sweep found clean. Sound but useless: it re-imposes the narrow palette the rewrite exists to
+> escape. Judged per tone now, reporting the closest-to-failing one.
+>
+> ## ④ THE GROUND IS REAL GEOMETRY — the biggest single gap against the target frame
+> A flat quad takes ONE lighting value across the lower half of the screen, so it reads as a backdrop
+> the props stand in front of. Now a 32×32 irregular sheet with seeded relief and `flatShading`.
+> ⚠️ **The high octave is what makes it read, not the amplitude** — broad swells move the whole sheet
+> together so adjacent facets share a normal and it still looks flat. ⚠️ **Dead flat everywhere the
+> child can stand** (a fixed eye height clips a slope, and relief in the yard is a landmark to pace
+> against). ⚠️ **Built in the pure module and bound as arrays**, so the scene still needs no loop — which
+> is what keeps its anti-grid source rules meaningful — and so the gate can assert the real vertices.
+>
+> ## ⑤ ⚠️ AND ADDING ONE RNG DRAW EXPOSED A GUARANTEE THAT WAS NEVER REAL
+> Giving each prop a Y-rotation (free, and the judges' highest impact-per-line: an axis-aligned world is
+> the loudest "generated" signal there is) consumed one extra `r()` per prop, which shifted every
+> downstream position — and the collinear check failed instantly at 0.069 m against a 0.35 m floor.
+> **The gate had always asserted it; nothing had ever enforced it.** It held for the seeds the suite
+> swept and no further. Now constructed: offending triples are nudged deterministically off the same
+> stream. **Any invariant a random generator satisfies by luck breaks the first time anyone changes how
+> many numbers get drawn** — a change nobody thinks of as risky. (Rotation also *strengthens* the
+> pedagogy: an axis-aligned world is the only one where two props can line up as a marked interval.)
+>
+> ## ⑥ ⚠️ GENERATED 3D MODELS ARE A DEAD END HERE — PROVEN FOR ~31 CREDITS, NOT ASSUMED
+> The founder approved models. One test settled it: the source IMAGE was perfect (clean facets, warm
+> muted colour — kept as `docs/art/empty-plot-prop-style.jpg`), but `image_to_3d` returned **28,357
+> triangles and a 3.1 MB embedded JPEG in a 4.6 MB GLB**, and in the real scene it was a melted lump —
+> wheels gone, roof rack smeared into the body — visibly **worse** than the 60-triangle hand-built prop
+> beside it. Eight would be ~227k triangles and ~37 MB against a 22.8 MB whole-repo asset budget.
+> **Reconstruction produces photogrammetry topology; it cannot produce facets.** All three judges reached
+> the same verdict independently. **The budget's real use is the TARGET FRAME** — `docs/art/empty-plot-target-{a,b}.jpg`,
+> ~3 credits, founder-approved before any building, and worth more than any written brief.
+>
+> ## ⑦ WHAT THE PANEL SAID TO SKIP, AND WHY THAT SAVED THE BUNDLE
+> `@react-three/postprocessing` was installed, and then **removed unused**: two of three judges dropped
+> the whole composer (+130–180 KB gz and 2–4 ms on the target tablet) in favour of things costing ~8 KB
+> combined. Also flagged and avoided: **Bloom** hardcodes `BlendFunction.ADD`, whose output alpha is
+> `max(dst.a, src.a)` — over this chapter's deliberately alpha canvas that lifts alpha into the sky;
+> **DepthOfField** blurs the far edge of the plot, i.e. the exact distance the child is judging;
+> **SSAO** needs a full second geometry pass; **GTAO** does not exist in 3.0.4; and **`<Environment preset>`,
+> `<Cloud>`, `useKTX2`, `useNormalTexture` and the Draco decoder all fetch from a githack CDN at runtime**.
+> ⚠️ Recorded for later: `postprocessing` pins `three >= 0.168 < 0.186` — an UPPER bound that will break a
+> future three bump. drei is imported deep (`@react-three/drei/core/softShadows`) to keep the barrel out
+> of the chunk: total cost **+7 KB**.
+>
+> ## ⑧ WHAT WAS VERIFIED
+> Driven at 1280×720 and 640×320: intro → demo → guided → three scored rounds. **The miss beat now works
+> end to end and was watched**: pegged at 7 against an answer of 3, the camera swung round to 9 countable
+> clay tiles with the bare strip plainly visible and the miss line naming it. Perf **measured, not
+> estimated** — `drawElements` patched and divided by rAF frames: **81/frame empty, 83/frame at the review
+> camera**, over 700–1000 frames. **3/3 planted mutations caught** (clean ground lattice · relief inside the
+> plot · a prop colour colliding with the clay unit — the last named the offender as `skip vs area`).
+> ⚠️ **An instrument lesson worth keeping**: two heredocs writing a smoke-test file were silently blocked,
+> and `tsc` then returned exit 0 on a file that did not exist — I read that as "the new library compiles".
+> One `ls` settled it. *If a green result would be equally green had your change not landed, check it landed.*
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED** — and neither is anything else in this chapter. Changed: `FloorPlot.tsx` ·
+>    `plotSite.ts` · `floorPlotArea.test.ts` · `chapter-craft.md` (10 new rules) · `package.json`
+>    (+drei) · **new `docs/art/` target frames**. Needs `public/sw.js` v87 → v88 to deploy.
+> 2. **Instancing the laid tiles is the known perf lever and was NOT done.** The contour shell doubles
+>    the tile mesh count, so a 9×9 round extrapolates to ~330 draws (from a measured 83). Fine on paper,
+>    unmeasured on a real tablet. All three judges ranked instancing high because it is the only change
+>    that makes the budget *bigger*; do it before adding anything else expensive.
+> 3. **No full ten-round run and no mastery exit**, so six of the ten sites have still never been on
+>    screen — and this pass changed every tone, every prop colour and the ground of all of them.
+> 4. **Nobody has watched a child play it.** Every fault this session came from the founder looking, from
+>    the panel doing arithmetic nobody had done, or from driving it — not one from a type-check.
+>
+> _(the 🏙️ block below is the previous pass — its silhouette work stands; what it could not fix was the
+> light, because the sun angle was wrong and it was tuning intensity.)_
+
+> 🏙️ **2026-08-07 — THE EMPTY PLOT MADE TO LOOK LIKE A GAME, AND THE THING THAT DID IT WAS SILHOUETTES — PLUS ONE REAL BUG THAT HAD BEEN HIDING IN THE ONE SHOT NOBODY HAD EVER WATCHED. ⚠️ NOT COMMITTED.** `tsc` 0 · **616/616 vitest** (70/70 on the chapter's own gate, unchanged — see §⑤) · `next build` 0 · 0 console errors · **draw calls MEASURED for the first time: 66/frame empty, 80/frame with tiles down** · driven at 1280×720 and 640×320 through intro → both demos → guided → two scored rounds, both readings.
+>
+> **The ask:** *"joh area and perimeter ka chapter hai, uska joh 3d game hai, uska visual bhot accha karo ekdum real game jaise"* — i.e. the previous pass (the 🎨 block below) was not enough.
+>
+> ## ⓪ THE PREVIOUS PASS FIXED THE LIGHT AND THE PALETTE AND LEFT THE SHAPES, WHICH IS WHY IT DID NOT LAND
+> That block's finding — *"a 3D scene that reads as untextured primitives is short of light, contact and
+> palette, not geometry"* — was **half right, and the missing half is the bigger one.** Looking at the
+> screen: a box for a van, a purple cone for a tree, eight near-identical grey slabs on the horizon.
+> **Those ARE untextured primitives, and no lighting fixes a cone that is supposed to be a tree.**
+> **What is read in a low-poly scene is the SILHOUETTE.** Each catalogue entry now names its `role` and
+> the scene gives it two or three parts: trunk + two canopies, body + cab + four wheels, walls + a
+> pitched roof, a hoarding on legs, a mast with a base plate and a cross-arm, a parapet on each distant
+> block. ⚠️ **Every sub-part takes a SHADE of the prop's own tone, never a colour of its own** — the
+> separation check is computed on the generator's tone, so a brown trunk invented in the scene would
+> clear a check that never saw it. Lightness is free, hue is not, and the silhouette does the reading.
+> ⚠️ **The catalogue already said `// a van` in a comment while handing the renderer a bare `w/h/d`.**
+> Promoting that comment to a field is the whole change; inferring the thing from its proportions was
+> considered and rejected as the clever answer that breaks when the catalogue moves.
+>
+> ## ① ⚠️ THE RENDERER'S TONE-MAPPING DEFAULT WAS EATING THE PALETTE, AND IT IS ONE WORD
+> r3f sets **`ACESFilmicToneMapping`** on every `<Canvas>` unless told otherwise — a film curve that
+> rolls off highlights and desaturates as it goes. On a deliberately low-saturation stylised scene it
+> eats the little colour there is, and *that* is most of what "milky grey" was. `flat` selects
+> `NoToneMapping`. ⚠️ **Not free:** with no roll-off the intensities become a HARD ceiling, so the key
+> came down **2.5 → 1.15** and the fills with it, or lit faces clip to white — which is exactly what the
+> tone mapping had been hiding.
+>
+> ## ② ⚠️ THE HAZE WAS THE THING, NOT THE BUILDINGS — I DARKENED THEM TWICE BEFORE DOING THE ARITHMETIC
+> The distant band read as white cardboard. A building is multiplied by the key (~×1.7 on a lit face)
+> and **then** blended ~55% toward the fog colour at z 34–46, so against a haze at **0.93 lightness**
+> it arrives near 0.71 whatever tone the generator gave it. **Fix the fog, not the object in it.**
+> Two more that were the same class of mistake: the sky gradient reached haze only at 100% of the
+> VIEWPORT while the horizon sits near 42%, so the fogged ground met a sky two stops darker and drew a
+> hard seam across the frame (⚠️ and it has to reach haze *early*, 34%, **because the horizon MOVES** —
+> a stop tuned to the walking camera reopens the seam under the review camera); and the ground wash was
+> sized for the 120 m plane when only about a QUARTER of the sheet is ever on screen, so 200 px blobs
+> filled the visible window with one tone and the yard stayed flat however strong they were made.
+>
+> ## ③ ⚠️ AND THE PALETTE WAS *AGAIN* SITTING UNDER ITS OWN LEGAL CEILING
+> The block below records raising saturation off the floor; measured now, the settings were still at
+> **0.09–0.28 against a cap of 0.34**, the sky at 0.16–0.28, and the prop lightness floor at 0.46 — which
+> that block itself flagged as "reads quite dark navy, 0.52 lifts them off black" and left for the
+> founder's eye. All three moved to the top of what the check permits (ground 0.19–0.29, sky 0.22–0.30,
+> props l 0.54–0.74). **A separation gate gives you a ceiling; sitting halfway to it is a choice nobody
+> made.** The road also stopped being a darker shade of grass (`s × 0.7` of the ground) and became
+> near-neutral tarmac — it is the nearest 25% of the frame and the child spawns looking at it.
+>
+> ## ④ ⚠️ THE REVIEW CAMERA HAD BEEN RENDERING FROM EYE HEIGHT ALL ALONG — A REAL BUG, IN THE ONE SHOT THIS FILE HAS TWICE RECORDED AS NEVER WATCHED
+> **The way in was `prefers-reduced-motion`.** That camera lerps at `k = dt × 2.4`, so it needs ~20
+> frames and a screenshot fronts the tab for ~40 ms — which is why every previous look at it was
+> mid-flight and why the handoff kept saying "needs a human". But the chapter already honours reduced
+> motion with a `k = 1` snap path: **stub `window.matchMedia` so the next mount reads `matches: true`
+> and the shot settles in one frame.** A test instrument, not a code change.
+> Settled, it was wrong — and not by taste. **`pos.current.y = EYE` sat AFTER the branch that positions
+> the scripted camera and silently overwrote it**, so the raised side shot rendered from **1.55 m instead
+> of 3.4 m**. Its own comment says why that is fatal: at eye height it looks across a flat floor at a
+> grazing angle and the laid tiles merge into stripes. On screen the plot sat in the **top quarter of the
+> frame with the lower 60% bare foreground** — on the single beat the whole chapter turns on, the one that
+> shows the child the floor they pegged out. One line (`if (!demoCam)`) fixes it, and it fixes the demo's
+> teaching beat with it. **Now verified settled on both readings**: a 4 × 5 = 20 floor countable from
+> above, and a 10-metre fence going right round with every panel readable.
+> ⚠️ Worth keeping: my arithmetic said the plot should be centred and the pixels said it was not, twice.
+> **The pixels were right**, which is this file's oldest instrument rule arriving from a new direction.
+>
+> ## ⑤ ⚠️ 70/70 GREEN BEFORE AND AFTER, AND THAT IS STILL CORRECT
+> Every change here is inside the scene component or is a palette that the separation check
+> **legitimately passes** — the block below already states why (`plotSiteSeparation` proves the unit is
+> distinguishable from the world; it is not the claim "this world looks like anything"). The gate did do
+> real work: the `role` field, the new tone ranges and the taller skyline all had to clear it, and the
+> forbidden-`for (`/`Array.from({length` rules are why the extra ground washes are a hand-written list
+> rather than a loop. **The perf note it carried was stale twice over** — it claimed "~140 draw calls with
+> no shadows" when shadows had since been added and nobody had ever counted. Counted now, by patching
+> `drawElements` and dividing by rAF frames: **66/frame empty, 80/frame with 15 tiles down, both
+> including the shadow pass**; the 9×9 worst case extrapolates to ~230. Comfortable. Chunk 856 → 882 KB.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED** — and neither is anything else in this chapter. Changed this pass:
+>    `FloorPlot.tsx` · `plotSite.ts` · `chapter-craft.md` (7 new rules). Still needs `public/sw.js`
+>    v87 → v88 to deploy.
+> 2. **No full ten-round run and no mastery exit**, so six of the ten sites have still never been on
+>    screen — and this pass changed the tone ranges for all of them. Two settings looked at
+>    (builders' yard, rooftop); dockside and the field behind the barn were reasoned about only.
+> 3. **The review camera's x is a fixed −4.4 at every frontage**, so a 2-metre plot sits smaller in the
+>    frame than a 9-metre one. Readable at both, deliberately not tuned per frontage — the demo's copy of
+>    that shot is pinned to a literal by the gate and one framing for both is the stated intent.
+> 4. **Nobody has watched a child play it**, and every fault this session was found by looking at the
+>    screen — the silhouettes by the founder, the eye-height camera by finally getting the shot to settle.
+>
+> _(the 🎨 block below is the SAME DAY's earlier visual pass — its §⓪ "not one of the faults was
+> geometry" is the half-right finding §⓪ above corrects.)_
+
+> 🎨 **2026-08-07 — THE EMPTY PLOT MADE TO LOOK RIGHT, AND NOT ONE OF THE FAULTS WAS GEOMETRY. ⚠️ NOT COMMITTED.** `tsc` 0 · **616/616 vitest** (unchanged — this pass added no tests, and the chapter's 70-test gate caught none of it because it *could* not; see §⑥) · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320 through intro → both demos → the guided round.
+>
+> **The asks:** *"abhi humne joh 3d chapter banae hai 'area and perimeter' uska visuals acche naii hai… kya kare acche bana ne ke liye??"* → then, after the first pass, *"sky gradient bhi add kar do and still the ground is looking empty."*
+>
+> ## ⓪ EVERY FAULT WAS A CONSTANT OR A MISSING FLAG — NOTHING NEEDED NEW GEOMETRY, AND THAT IS THE FINDING
+> Read the file, then **looked at it**, which is the order that matters: the code predicted the
+> diagnosis and the screen confirmed it in one shot. The whole scene was one purple-grey hue, nothing
+> cast a shadow, and the near road was a near-black slab across the bottom third. Two files, ~20
+> numbers and six flags. **A code-drawn 3D scene that looks like untextured primitives is almost never
+> short of geometry — it is short of light, contact and palette.**
+>
+> ## ① SHADOWS — THE CRAFT DOC'S OLDEST BLEND RULE, NEVER APPLIED HERE
+> `shadows` on the Canvas plus `castShadow`/`receiveShadow` on props, posts, rails, pegs, tiles, Milo,
+> ground and road. **This is the single biggest change and it is four words of JSX.** The rule (*contact
+> cues are not optional*) has been in the doc since chapter 2 and this chapter simply never applied it,
+> ⚠️ **because in 3D the geometry IS grounded and it is very easy to believe that settles it.** It does
+> not: with no shadow a van, a mast and the foreman all read as cut-outs standing on a plane.
+>
+> ## ② THE FILL WAS DROWNING THE SUN
+> hemi 1.5 + ambient 0.4 against a directional 1.5 — so **every face of every box arrived at nearly the
+> same brightness** and a cube rendered as a flat rectangle. Now 0.6 / 0.16 / 2.4: the directional has
+> to WIN, and the fill is a floor that keeps shadowed sides readable rather than a second sun.
+> Also `antialias: false` → `true` (~140 hard-edged boxes, every silhouette a diagonal, no texture
+> detail anywhere to hide it — exactly the wrong economy) and fog (26,74) → (18,58), because at the old
+> width the ground plane's far edge was only ~half faded and ground met sky on a hard line.
+>
+> ## ③ ⚠️ THE PALETTE WAS MONOCHROME **BY CONSTRUCTION**, AND IT PASSED EVERY CHECK
+> Three separate faults, and the second is the one worth carrying:
+> • **Props took `ground.h`** — a van, a site cabin and a tree were all the colour of the dirt they
+>   stood on. They get the *other* legal arc now, so a world always carries two hue families.
+> • ⚠️ **Two of the four settings had ground AND sky in the same blue band.** With only two arcs that
+>   clear both unit hues (`[71,131]` ⟷ `[221,341]`) and three layers to separate, those worlds were
+>   **flat before a single line ran**, and no amount of saturation could have rescued them. Ground is
+>   now always the green arc and sky always the blue one; props share with the sky and separate on
+>   lightness instead, because *a small object against a large field* is survivable and *a large field
+>   against a large field* is what actually reads as nothing.
+> • ⚠️ **The saturation was hugging the FLOOR of its legal range** (0.06–0.25 against a ceiling of 0.34
+>   set by the unit-separation check). **A palette that sits at the bottom of what the gate permits is a
+>   legal palette that reads as no palette.**
+>
+> ## ④ THE MARKERS WERE THE BLACK THINGS
+> Road ×0.62 and posts ×0.74 of the ground's lightness — i.e. **darker than the ground** — so the road
+> owned the bottom third as one flat dark bar and the corner posts and side rails read as harsh black
+> lines converging. They are the things that say *where the plot is*; they are the light elements now.
+> The road also ended 0.2 m short of the chalk line, drawing two parallel edges 15 px apart; it ends
+> **on** it, so the chalk is the kerb, which is what it is.
+>
+> ## ⑤ THE SKY IS A CSS GRADIENT BEHIND A TRANSPARENT CANVAS — 3 LINES, NO SPHERE, NO SHADER
+> `gl: { alpha: true }`, drop `scene.background`, put a `linear-gradient` on the wrapper. **The chapter's
+> own intro card already did exactly this**, which is the rung that should have been checked first.
+> ⚠️ **The fog then has to fade to the HAZE tone, not the sky's midpoint** — fade to the middle colour
+> and the ground's far edge dissolves into a tone the gradient does not have down there, which draws a
+> seam straight across the horizon.
+>
+> ## ⑥ ⚠️ "THE GROUND LOOKS EMPTY" WAS **TWO DIFFERENT FAULTS**, AND ONLY ONE OF THEM WAS TEXTURE
+> • **Flat colour** → ONE non-tiled `CanvasTexture` (the file's own `numTex` idiom), 512 px stretched
+>   over 120 m: ~0.23 m per texel, smallest wash ~35 m across. ⚠️ **It had to be non-tiled**, and the
+>   gate is why: `.repeat.set`, `RepeatWrapping`, `gridHelper` and **any `for (` in the file** are all
+>   forbidden, because a tiled texture is precisely how the printed answer arrived in the cut that got
+>   rejected. The washes are placed by hand for the same reason.
+> • ⚠️ **Genuinely empty** → the generator only ever produced things at **z ≤ 13 while the skyline
+>   starts at z ≥ 34**, so a child walking into the yard faced a bare twenty-metre band with nothing in
+>   it at all. **That was the actual complaint, and no texture would have touched it.** Three
+>   "ahead and far" cells now sit *past* `MAX_DEPTH` (so they can never stand on the working surface —
+>   the gate's inside-the-plot check holds that), plus two more catalogue shapes, props 3 → 5 drawn
+>   from 7 cells of which only 4 flank, so at least one is always out in front.
+> **Generalise: before adding detail to a surface, measure the GAP between the near set and the far
+> scenery. Emptiness is usually a distance band with no content, not a material without a map.**
+>
+> ## ⑦ ⚠️ TWO FAULTS THAT ONLY LOOKING COULD FIND, AND ONE I INTRODUCED
+> ① **A prop could stand in the review camera's corridor.** Left props ran x ∈ [−6.3, −1.9] and the
+> review camera sits at x = −4.4, so on the one beat the whole chapter turns on — the swing round to
+> show what was built — **a site cabin could stand square in front of the floor.** Caught on a
+> screenshot; left props now sit beyond the camera. *Anything between a review camera and its subject
+> will block the shot, and a generator that does not know where the camera is will eventually put
+> something there.*
+> ② **My own new fill light rendered the new props as black silhouettes.** Their lightness floor was
+> 0.34, which was fine under the old wash and is not under a directional-dominant one. **A dark object
+> needs more ambient than a pale one and there is only one ambient**, so the floor moved to 0.46.
+> ③ Milo was body + head + two ears — **a bowling pin**, and he is the only character on screen in every
+> beat. A hi-vis vest and two arms fix it, and the vest does palette work too: he is `#c96f3f`
+> (hue ≈22°), which sits **right on the area unit's clay (26°)**, so on a floor round the foreman and
+> the tiles were the same colour family. Lime (≈75°) is inside the allowed arc and clears both units.
+>
+> ## ⑧ ⚠️ WHAT THE GATE COULD NOT SEE, STATED PLAINLY
+> **70/70 was green before this pass and 70/70 is green after it, and that is correct.** Every fault
+> here was either inside the scene component (lighting, shadows, materials, camera) or was a palette
+> that the separation check **legitimately passed** — `plotSiteSeparation` proves the unit is
+> distinguishable from the world, which is a real and necessary claim and is *not* the claim "this
+> scene has any colour in it". **A separation gate cannot tell you a world is grey.** The checks it did
+> earn: the prop-hue change, the saturation raise and the new cells all had to clear it, and the arcs
+> and the 0.34 ceiling are exactly why the fix took the shape it did rather than whatever looked nice.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED** — and neither is anything else in this chapter. Changed: `FloorPlot.tsx` ·
+>    `plotSite.ts`. Still needs `public/sw.js` v87 → v88 to deploy.
+> 2. ⚠️ **PERFORMANCE WAS NOT MEASURED ANYWHERE.** This pass added a 1024² shadow map, `castShadow` on
+>    ~15 objects, MSAA and an alpha canvas, on a chapter whose chunk is already **856 KB**. It is ~110
+>    draw calls with no post-processing so it should be fine, but *should be fine* is not a number and
+>    the target is a mid-range tablet. **Measure before shipping.**
+> 3. **The review camera's settled framing is STILL unseen** — unchanged from the block below. It lerps
+>    at ~0.12/frame and a screenshot only fronts the tab ~40 ms, so every shot of it is mid-flight.
+>    This is the one that needs a human to watch a commit.
+> 4. **No full ten-round run, no mastery exit** — so six of the ten sites have never been on screen at
+>    all, and the palette rework touched every one of them. The four settings were each reasoned about
+>    and only two were looked at.
+> 5. **Two knobs deliberately left for the founder's eye rather than guessed:** the props read quite
+>    dark navy (lightness floor `0.46` in `plotSite.ts`; `0.52` lifts them off black), and the ground
+>    wash is deliberately subtle (`±0.075`).
+> 6. **Nobody has watched a child play it**, and every fault in this session was found by the founder
+>    looking at the screen or by me looking at the screen — not one by a gate.
+>
+> _(the 🏗️ block below is the session that BUILT this chapter — read its §① and §② before proposing
+> any change to the mechanic or the world generator.)_
+
+> 🏗️ **2026-08-07 — THE 3D CHAPTER IS BACK, BUILT TO THE BRIEF: `areaPerimeter` → **THE EMPTY PLOT**, first-person, world generated in code. ⚠️ NOT COMMITTED.** `tsc` 0 · **616/616 vitest** (was 546, **+70 — the chapter's own gate, which cut ③ never had**) · `next build` 0 · **12/12 planted mutations caught** · 0 console errors · driven at 1280×720 and 640×320.
+>
+> **The ask:** *"area3d brief.md file pe work karo"* — i.e. execute [docs/area3d-brief.md](docs/area3d-brief.md), the prompt written after cut ③ was deleted.
+>
+> ## ⓪ THE PLAN WAS POSTED FIRST AND THE MECHANIC WAS THE FOUNDER'S CALL, WHICH IS THE PROCESS CHANGE THAT MATTERS
+> Three sessions burned by building before the mechanic was agreed. This one wrote the plan, checked it
+> line-by-line against the brief's §2 pedagogy contract, and **asked before writing code**. Founder
+> picked *"Build it — PEG IT OUT"* over §10 (*not this skill*) and over a 2D version.
+>
+> ## ① WHY CUT ③'s MECHANIC WAS KEPT, AFTER THE FOUNDER CUT IT ONCE
+> **It is the only one of four that passes delete-the-art, and that is not close.** The answer is a
+> POSITION, and a position cannot be offered as a chip:
+> | mechanic | the answer is | delete the 3D → |
+> |---|---|---|
+> | ① lay tiles | a covered floor | "is it full?" — the PLOT answers |
+> | ② fetch a barrow | a pile | `6 × 4 = 24` — works as a sentence |
+> | **③ peg it out** | **a PLACE** | **nowhere to peg. No question left.** |
+> | order-at-a-hut *(considered, rejected)* | a number on a docket | a number pad with a 3D preamble |
+> I looked for a fifth and there isn't one: **any mechanic whose answer is a NUMBER is a number pad with
+> a world painted behind it.** It also meets the founder's own retry criterion (*"a skill where the
+> walking IS the answer"*) — the yard is empty, so where you stop IS the answer to `24 ÷ 4`.
+>
+> ## ② THE THREE THINGS CUT ③ WAS MISSING, ALL NOW BUILT
+> • **Difficulty grew the magnitude only** — one widening range for both sides. The taught thing is a
+>   DIVISION and what makes one hard is the DIVISOR, so the divisor is now an explicit tier term
+>   (`TIERS`): L1 frontage 2–4 (inside a nine-year-old's tables), L3 4–9. Gated.
+> • **One bare yard for all ten rounds.** New pure `plotSite.ts` — a seeded procedural site (builders'
+>   yard · rooftop · dockside · field behind a barn), seed = the round index so consecutive rounds
+>   always differ and a re-teach replays identically. **Verified on screen: three different worlds
+>   across guided + two scored rounds.**
+> • **No gate at all.** Now 70 tests driving the pure modules.
+>
+> ## ③ ⚠️ FIVE REAL FAULTS, AND THE ORDER THEY WERE FOUND IN IS THE WHOLE LESSON
+> **The gate caught two the eye could not:**
+> ① a 0.9 m water butt — 0.1 m off reading as a one-metre unit, i.e. exactly the countable-prop risk;
+> ② right-hand props standing **inside the foreman while he talked**, because `offGrid` (which forces a
+> position off the integer metre) **is not monotonic and can pull a value DOWN by up to 0.78 m** — so a
+> range written as a minimum is not one after it runs. *A clamp must budget for anything applied after it*,
+> one module along. Both fixed; `OFF_GRID_SLACK` is exported so a caller can budget for it.
+>
+> **Then PLAYING it caught three the gate could not, and two were serious:**
+> ③ ⚠️ **THE WHOLE WORLD RENDERED FLAT WHITE.** `css()` emitted `hsl(100.0 50.0% 40.0%)` — valid CSS
+> Color 4 — and **`THREE.Color.setStyle` runs its own regex, returning rgb(255,255,255) with no throw
+> and no warning.** Geometry all present, HUD all correct; it read as a lighting bug. **The gate passed
+> because it asserted the string's SHAPE rather than the consumer's reading of it.** It now parses the
+> string with `THREE.Color` (pure maths, no WebGL) and asserts it is not white, at every tone of every
+> seed. **General rule now in the craft doc: a value handed to a renderer must be checked BY that
+> renderer.**
+> ④ ⚠️ **THE CONSEQUENCE WAS INVISIBLE ON EVERY ROUND, RIGHT AND WRONG.** The child pegs facing AWAY
+> from the road, so everything the delivery lays is **behind them**: a wrong peg read *"Too far back —
+> part of it would be bare"* over an empty green field. The one thing that makes a miss a consequence
+> rather than a verdict was off-camera. The camera now swings to the built plot on commit, and **a miss
+> holds LONGER than a hit** (4.6 s vs 3.0 s) — 2.6 s was not enough to read it.
+> ⑤ **A tinted light overrode the palette.** Separation is computed on MATERIAL colours and the screen
+> shows material × light, so passing the full sky colour to the `hemisphereLight` turned a
+> low-saturation ground into a flat purple void.
+>
+> ⚠️ **AND THE FOREMAN'S PLACEMENT WAS GOT WRONG THREE TIMES** — 59° off-axis (off screen), then 41° but
+> looming at the frame edge, then **46° at a 9-metre frontage** because his LATERAL offset grows with the
+> plot while a fixed forward distance does not. The trap: **`fov` is VERTICAL**, so the number to check
+> against at 16:9 is ~47°, not ~31°. The gate sweeps every frontage the generator can draw, which is how
+> the third one was caught after two had been "fixed".
+>
+> ## ④ THE GATE — 70 tests, 12/12 mutations, and one hole it found in itself
+> ⚠️ **The anti-grid check was blind and mutation testing found it.** It forbade `.repeat.set`,
+> `gridHelper` and `RepeatWrapping` — but **a grid does not have to arrive as a texture**, and a nested
+> loop of 1-metre planes was invisible to all three. Now: no list is built from the plot's own
+> dimensions, no flat surface is under 3 m across, and `slotsFor` (gated on the peg) is the only producer
+> of per-unit positions. All three honest shapes of that regression now fail.
+> ⚠️ **One "survivor" was my own inert mutation** — it planted `repeat.set` inside a JSX comment, which
+> the gate strips, so it was never code. Re-planted as real code: caught. *A mutation that "passes" is
+> guilty until you have proven it landed.*
+>
+> ## ⑤ WHAT WAS ACTUALLY PLAYED, AND WHAT WAS NOT
+> **`useFrame` is not drivable headlessly** (measured again this session: `document.hidden` true), so a
+> **dev-only `window.__miloPace(n)`** — 3 lines, gated on `NODE_ENV !== 'production'`, **verified 0 hits
+> in the emitted production JS** — makes the loop drivable. Order matters: set → front the tab → act.
+> **PLAYED at 1280×720:** intro → demo 1 (area, `12 ÷ 4 = 3` stated, yard empty) → demo 2 (perimeter,
+> teaching the **two-step**, not a division) → guided **wrong then right** (miss line, retry, stance
+> reset to the road) → **scored round 1 correct** (`2 × (4 + 2) = 12` post-commit only, fence visibly
+> right round, peg button gone = one commit) → scored round 2 (**area — so `coverage` asked both readings
+> in the first two rounds**) → **three wrong in a row → the re-teach fired** and walked the working to the
+> right answer.
+> **MEASURED at 640×320:** reloaded AT the size; all fixed layers **crossed with each other** rather than
+> against the one I had in mind — **0 overlaps, 0 h-overflow, 0 v-overflow**, peg 200×46, steppers 46×46,
+> all ≥44 px. 0 console errors at either size.
+> ⚠️ **NOT covered, stated because a status line outrunning its evidence is this file's oldest fault:**
+> **no full ten-round run and no mastery exit**; the **review camera's SETTLED framing was never seen** —
+> it lerps at ~0.12/frame, so ~20 frames, i.e. ~20 screenshots (its existence and target are gated, its
+> final composition is not); **the walking controls were never driven by an actual drag or keypress** (the
+> stick, look-drag and WASD are code-and-gate only — every drive used `__miloPace` or the ◀▶ buttons); and
+> **nothing is committed.**
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED.** New: `FloorPlot.tsx` · `plotMaths.ts` · `plotSite.ts` · `floorPlotArea.test.ts`.
+>    Changed: `storyChapters.tsx` (one row) · `chapters.ts` (the hint said *"Count squares and add the
+>    sides!"*, describing the grid this deletes) · `core/rand.ts` (+`mulberry32`, the repo's own doc
+>    admitted it was already duplicated twice) · `diagnosticItems.ts` (imports it) · `chapter-craft.md`
+>    (6 new rules). **DELETED: `GridPlotter.tsx`** (it had no tests of its own). Deploying needs
+>    `public/sw.js` v87 → v88. **`/story?ch=area` needed no change** — `PREVIEW` maps key → skillId, not
+>    key → component, so swapping the registry row was enough.
+> 2. ⚠️ **`three` + `@react-three/fiber` + `@types/three` are reinstalled.** The chapter's chunk is
+>    **856 KB** and **three appears in exactly ONE chunk** — it does not leak into the shared bundle,
+>    because `storyChapters` loads it lazily. Worth a founder call on whether 856 KB is acceptable for
+>    one chapter on a mid-range tablet.
+> 3. **A FULL TEN-ROUND RUN AND THE MASTERY EXIT ARE UNPLAYED**, and so is the settled review shot. That
+>    is the single most useful next drive.
+> 4. **Nobody has watched a child play it** — and three of this session's five faults came from playing,
+>    after the gate was green.
+> 5. ⚠️ **The whole SupplyRun batch (the 📦 block below) is STILL UNCOMMITTED** and untouched by this.
+> 6. ⚠️ **The cover-fit fix is still owed to LoadingBay and OrderDesk**, now eight deploys old, both
+>    still with no gate. **6 chapters remain in the 9–11 band** (this was one of the seven).
+>
+> _(the 🗑️ block below is the session that deleted the previous 3D attempt — read §① and §② of it before
+> proposing any change to this chapter's mechanic or its world generator.)_
+
+> 🗑️ **2026-08-06 — THE 9–11 3D FIRST-PERSON PILOT WAS BUILT, CORRECTED TWICE BY THE FOUNDER, REBUILT ON A THIRD MECHANIC, AND THEN **DELETED AT HIS CALL**. NOTHING OF IT REMAINS IN THE TREE. The `areaPerimeter` chapter is back to the neon `GridPlotter`, untouched.** ⚠️ **SUPERSEDED 2026-08-07 — it is now THE EMPTY PLOT; see the 🏗️ block above.** `tsc` 0 · **546/546 vitest** (was 571 — the −25 is exactly the deleted chapter's own gate, so nothing else moved) · `next build` 0 · `three` + `@react-three/fiber` + `@types/three` uninstalled, **0 importers left**.
+>
+> **The asks, in order:** *"9-11 age group ke chapters ko ek 3d game … convert karte hai"* → *"koi ek choose karke acche se banao"* → **"kuch samajh naii aa raha ki bacchaa kya seekh raha hai"** → **"isse toh bacche ko malum ho raha kitne place karna hai tiles, woh khud se kuch calculation naii karega"** → **"but isse bhi samjh raha hai kitne fill karna hai"** → **"yeh tiles waale naii sahi lagg raha hai, kuch aur try karte hai"** → *(peg-it-out built)* → **"delete this 3d game file of this chapter."**
+>
+> ## ⓪ ⚠️ READ THIS BEFORE ANYONE PROPOSES A 3D AREA CHAPTER AGAIN — THREE MECHANICS FAILED, ALL FOR ONE REASON
+> The founder rejected the same chapter three times in a row and each rejection was the SAME sentence
+> in different words: *the child never has to calculate.* The tuning was never the problem; the
+> material was. **A TILE IS THE UNIT OF AREA, so any mechanic where the child handles tiles hands
+> them a countable pile and something other than their head does the arithmetic.**
+> | cut | what the child did | who actually did the maths |
+> |---|---|---|
+> | ① lay it | lay tiles until no bare square is left | **the PLOT** — it decides when it is full |
+> | ② pace · fetch · tip | pace the sides, load a barrow at a store, tip it out | **the BARROW** — tap "a row" three times and the tally counts 4, 8, 12 |
+> | ③ peg it out | foreman gives the number + frontage; walk back and peg the far edge | *nobody — this one was honest, and it was cut anyway* |
+> Cut ③ genuinely worked (`24 tiles, 4 metres along the road` → the yard is EMPTY, so `24 ÷ 4` is the
+> only way to know where to stop) and was driven on screen through both demos and into the guided
+> round. **It was deleted with the rest at the founder's call** — the direction is off, not the file.
+>
+> ## ① ⚠️ THE TWO GENERAL RULES THIS COST, BOTH NOW IN [chapter-craft.md](docs/chapter-craft.md)
+> • **A GRID ON THE WORKING SURFACE IS THE PRINTED ANSWER, DRAWN.** One line — `t.repeat.set(d.w,
+>   d.h)` — chalked the plot floor into exactly `w × h` countable squares, so a child stood in a 6×4
+>   plot, counted 24 boxes, and never paced a side; on a fence round it handed over both side lengths
+>   at a glance. **The file's own comment said *"the floor is still empty, so it cannot be counted"*
+>   while the floor was ruled.** A grid reads as helpful scaffolding rather than as a number, which is
+>   exactly why nobody looks at it. *Mark the boundary; leave the inside bare.*
+> • **ANY REPEATABLE COMMIT THAT GRADES IS A YES/NO ORACLE.** Removing the grid stopped the plot being
+>   countable and did NOT stop it deciding: load, tip, read *"not enough"*, load more, tip again — a
+>   dozen tiles falls out of about four guesses with nothing worked out. Softening the wording or
+>   clearing the floor between tries does not help; only **one commit per scored round** does, with
+>   the repair moved to BEFORE the commit. This is the craft doc's *"nothing says that's enough"* rule
+>   failing from a direction it did not cover.
+>
+> ## ② ⚠️ THE INSTRUMENT FINDING WORTH KEEPING, BECAUSE IT WILL BITE ANY FUTURE 3D CHAPTER
+> **react-three-fiber will not create its renderer until it has MEASURED a non-zero container, and it
+> measures with a ResizeObserver — whose callbacks ride the RENDERING STEPS, which a browser does not
+> run in a hidden tab.** A container that mounts at its final size gets exactly one RO callback, and
+> in a backgrounded tab that callback never arrives: canvas stuck at the intrinsic **300×150**,
+> `onCreated` never fires, and the screen is nothing but the clear colour — which reads exactly like a
+> broken scene. Fix is three lines: a synthetic `window.resize` on a timer after mount, because the
+> measure hook also listens for that and a synthetic event is delivered by the EVENT loop rather than
+> the frame loop.
+> ⚠️ **And even with that, a WALKING loop is not reliably drivable headlessly in this pane.** Measured
+> both ways in one session: `document.hidden` **false with 62 rAF frames/s** at one moment and
+> **true with 0 frames** twenty minutes later, with no navigation between. Movement lives in
+> `useFrame`, so it advances only while the tab happens to be fronted — a screenshot fronts it for
+> ~40ms, and `dt` is capped at 0.05s, so ~0.45m of travel per screenshot. **The store loop and the
+> peg loop were each reached exactly once, opportunistically, and never played end to end.** Anything
+> in a 3D chapter that depends on walking has to be behind an exported pure function or it cannot be
+> gated at all.
+> ⚠️ Two smaller ones banked: **light intensities are physical units in three r155+**, so values that
+> used to read as "bright" render a dusk scene; and **sprite scale is in WORLD units**, so a numeral
+> sized for a 9-metre plot swamps a 3-metre one. Plus a plain trap: on a case-insensitive filesystem
+> `FloorPlot.tsx` and `floorPlot.ts` are the same file.
+>
+> ## ③ WHAT WAS ACTUALLY DELETED, AND WHAT WAS LEFT ALONE
+> **Gone:** `src/features/chapters/story/FloorPlot.tsx` · `plotMaths.ts` ·
+> `src/__tests__/floorPlotArea.test.ts` · the `?ch=area3d` dynamic import + dispatch line in
+> [story/page.tsx](src/app/story/page.tsx) · `three` + `@react-three/fiber` + `@types/three` from
+> `package.json` (verified **0 importers** before uninstalling).
+> **Untouched, on purpose:** `storyChapters.tsx` never carried the 3D chapter, so `/game` and
+> `?ch=area` have served the flat neon `GridPlotter` throughout and still do — **the 9–11
+> `areaPerimeter` chapter is exactly as it was before this session.** ⚠️ **And the whole SupplyRun
+> batch (the 📦 block below) is STILL UNCOMMITTED and was never touched by any of this.**
+>
+> ## ▶ OPEN
+> 1. ✅ **CLOSED 2026-08-07 — rebuilt as THE EMPTY PLOT (🏗️ block above), and `GridPlotter.tsx` is deleted.** _(kept as the record of what was owed.)_ ⚠️ **THE 9–11 `areaPerimeter` CHAPTER IS STILL THE OLD NEON `GridPlotter`, with every fault the
+>    rethink doc records** — it prints the whole question in words over three answer chips, so it
+>    fails delete-the-art and hands a third of its answers to a guesser. **Nothing about that was
+>    fixed this session.** It is still on the rebuild list.
+> 2. ⚠️ **IF 3D IS TRIED AGAIN, IT SHOULD NOT BE THIS SKILL FIRST.** _(It was tried again, on the founder's call, and shipped into the tree — see the 🏗️ block. The note below is still the best statement of the risk, and the answer to it is that PEG IT OUT makes the stopping place the answer rather than the measuring.)_ Area/perimeter looked like the
+>    natural pilot because walking IS the measuring — and the measuring was never the hard part; the
+>    ARITHMETIC was, and walking does nothing for it. A skill where the walking IS the answer (units
+>    on a weighbridge, angles on a survey line) is a better test of whether the world is worth it.
+> 3. **THE WHOLE-BAND "THE YARD" PLAN IS STILL AGREED AND STILL NOT BUILT** — one world, twelve
+>    activities, the five rebuilt 9–11 chapters already set in the same place (dispatch hall · loading
+>    bay · order desk · rail line · fitting shop). Nothing this session invalidates it; what it does
+>    say is that a zone needs a verb before it needs a 3D world.
+> 4. ⚠️ **The cover-fit fix is STILL owed to LoadingBay and OrderDesk**, unchanged by this session and
+>    now eight deploys old, and **both still have no gate at all**.
+> 5. **7 chapters remain in the 9–11 band**, and FactorLab still needs a different material.
+> 6. **Nobody has watched a child play any of it** — and every one of the three rejections this
+>    session came from the founder looking at the screen, after the gate was green.
+>
+> _(the 📦 block below is the previous session — The Supply Run.)_
+
+> 📦 **2026-08-04 — DIVISIONSHARE → **THE SUPPLY RUN**, the 9–11 band's FIFTH chapter. THE OLD ONE DEALT THE NODES *FOR* THE CHILD AND THEN ASKED THEM TO TAP A CHIP. ⚠️ NOT COMMITTED.** `tsc` 0 · **546/546 vitest** (was 494, **+52 — the band's THIRD chapter gate**) · `next build` · 0 console errors · driven at 1280×720 and 640×320 through intro → both demos → guided (played, wrong answer AND right) → two scored rounds.
+>
+> **The ask:** *"abhi division chapter ko properly animated video jaise wala animation karte hai."*
+>
+> ## ⓪ THE OLD CHAPTER'S FAULT WAS NOT THE LOOK — THE DEALING WAS DONE *TO* THE CHILD
+> Aliveness **0 of 4** and delete-the-art failed (`'Share 20 nodes among 4 bays'` over three chips —
+> remove every node and all thirty questions still work). But the one worth naming is deeper: `deal()`
+> ran a timer that walked the nodes into the bays **after the answer had already been committed**, so
+> the single physical act division consists of — hand one to each, and again, until you cannot go
+> round — was an animation the child WATCHED. [story-9-11-rethink.md](docs/story-9-11-rethink.md) §4
+> says it exactly: *deal the crates yourself and stop when you cannot complete another full round;
+> the remainder is what is physically left in your hands.*
+>
+> ## ① THE CHAPTER — one button, two readings, one grader, and the answer is BUILT
+> Milo is the quartermaster. A crate comes in and has to go out evenly; what will not go round stays
+> in the crate, and that is a consequence (somebody is short). **The unification is the mathematics
+> rather than a tidiness win:** `share` (partitive — receivers given, a step hands one to EACH) and
+> `group` (quotitive — load given, a step fills ONE) both take the same number out of the crate, so
+> `stepCost` is one number, `answer = ⌊total / stepCost⌋` either way, and **the answer is how many
+> steps you got** — division as repeated subtraction, performed. No chips anywhere.
+> • ⚠️ **A step the crate cannot cover is ALLOWED, and that is the design.** It hands out what is
+>   there, so a share round visibly leaves somebody short and a group round leaves the last one
+>   part-filled. Blocking it would make the button stop being available at exactly the moment the
+>   answer is reached — the chapter doing the division, when deciding when to stop IS the skill.
+>   `↩ Take it back` undoes it (HomeTime's rule). The Deal button only dies on an EMPTY crate, and
+>   **the gate pins that its `disabled` never mentions the step cost.**
+> • **No numeral until after the commit** — no tally, no crate count, no per-slot count. The pile and
+>   the receivers are the question and counting them is the skill.
+>
+> ## ② FOUR NEW PAINTED SITES, ~13 CREDITS, ZERO RETRIES
+> 🚚 dispatch hall · 🔋 charge bay · 🍱 mess line · 🧰 parts bench + 4 unit sprites (parcel · cell ·
+> tin · cog). ⚠️ **The library genuinely had nothing** — measured, EVERY free painted backdrop is
+> **0.71–0.96 in value against Milo's 0.705**, i.e. brighter than its own cast (the `grocery_sweets`
+> fault); only the two cartoon space scenes pass. Referenced FitOut's own accepted scenes per the
+> lesson that block learned, and all four landed first time: **value 0.36–0.53**, four distinct hue
+> families, units clearing their own scene by **120–165°**. Cut by **corner-seeded flood fill** —
+> ⚠️ a hardcoded magenta test matched nothing because the painted style renders the field muted
+> (189,78,144), so the cut silently no-ops and the ink box comes back as the whole file.
+>
+> ## ③ ⚠️ THE GATE CAUGHT TWO REAL BUGS AND THREE OF MY OWN WRONG CLAIMS
+> **52 tests, 10/10 planted regressions caught.** The two real ones:
+> • **At `answer = 7` a group round's spare slot vanished** — the bench ended exactly full, so the
+>   count of filled slots (which IS the answer) was handed over, and `slotCounts` had nowhere to put
+>   the remainder: 22 units dealt drew 21. FitOut's unwinnable-round class, mirrored.
+> • Three assertions of MINE were wrong and worth recording: `slotsShown ≥ answer` is **not a claim
+>   about a share round** (the answer is a depth, not a count of receivers); and a **unit-vs-unit hue
+>   check measures the wrong thing** — two units are never on screen together, so what matters is
+>   unit-against-ITS-OWN-SCENE, and the scene-vs-scene version was dropped rather than have its
+>   threshold loosened to pass.
+>
+> ## ④ ⚠️ AND THEN PLAYING IT FOUND THREE MORE THAT NO GATE COULD
+> ① **THE DEMO TAUGHT THE OPPOSITE OF THE CHAPTER'S OWN RULE.** The trace read
+> `[crate 0, 3, 3, 3, 3, 2, 0] «Only 2 left — that will not fill a van, so it stays behind»` — the
+> remainder had gone INTO a van while Milo said it stayed behind. The last beat dealt the WHOLE
+> crate. **The words were right and only the numbers disagreed**, which is why nothing saw it; the
+> beat list is an exported `explainBeats` now, gated and mutation-tested.
+> ② **The empty receivers were invisible** — two empty kits at `pitch × 0.42` read as faint scratches
+> on a wooden bench, so there was no telling where the cogs were going. ⚠️ **And fixing that found a
+> LEAK**: the ground tint spanned the box's full height, and a receiver's box is `capacity` tall,
+> which on a share round is `answer + 1` — **an empty slot glowed taller on a round with a bigger
+> answer.** Everything drawn is anchored to the base and sized from the pitch now.
+> ③ **The parts bench drew 30px cogs with half the wall above it empty** — `byWidth` 36 against
+> `byHeight` 107, i.e. FitOut's doormat fault with the axes swapped, caused by a hardcoded
+> two-column receiver. The column shape is SEARCHED now (8 candidates, take the biggest pitch):
+> units went **30 → 38–62px** at 1280×720. Gated by asking whether the bench USES its room, because
+> a unit-size floor cannot see it — 30px passes.
+> ⚠️ **Plus a cap that was backwards:** `min(vw*0.4, 380)` for the bubble binds only on BIG screens,
+> so the smallest frame gave the widest proportional reserve to the words — 11px units at 640×320.
+> Now `0.34` from ONE exported function (it was written twice).
+>
+> ## ⑤ WHAT WAS ACTUALLY VERIFIED
+> **1280×720:** both demos traced beat by beat (`12 → 9|[1,1,1] → 6|[2,2,2] → 3|[3,3,3] → 0|[4,4,4]`
+> for share; group stopping at `crate 2 | [3,3,3,3,0,0]`), guided played with **five taps inside ONE
+> React batch all registering** (the class this repo has met five times — the ref guard holds), undo,
+> a WRONG answer giving the written line *"There is still enough in the crate to go round again."*
+> and **re-opening the board**, then the right answer → *"10 shared between 2 is 5 each."* (the
+> equation only after the commit) → two scored rounds at rotating sites.
+> **640×320:** reloaded AT the size, played to a scored round. All fixed layers **crossed with each
+> other** rather than against the one element I had in mind — 0 real overlaps, 0 h-overflow, smallest
+> tap target **111 × 37px**, units 26px. ⚠️ The one reported overlap was the full-width control
+> CONTAINER, not its buttons (Milo x 34–75, first button x 110).
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED.** Tree: `SupplyRun.tsx` (new) · `supplyRunDivision.test.ts` (new, 52 tests) ·
+>    **4 `run_*.jpeg` backdrops + 4 `run_*.png` sprites** (new) · `storyChapters.tsx` (one row) ·
+>    `chapter-craft.md` (5 new rules) · **`DivisionShare.tsx` DELETED**. Deploying needs
+>    `public/sw.js` v87 → v88. `scripts/.voice-*.json` and `python script/` correctly left out.
+> 2. ⚠️ **NO FULL TEN-ROUND RUN, NO RE-TEACH, NO MASTERY EXIT, AND NO SCORED `group` ROUND PLAYED.**
+>    Two scored rounds only, both `share` at L1. `group` first exists at L2, so reaching one takes
+>    several correct answers — its rendering is verified in demo 2 and by the gate, not together in a
+>    scored round. **This is the single most useful next drive**, and it is exactly the gap that hid
+>    FitOut's dead board.
+> 3. **Nothing is on prod** — the whole chapter is local.
+> 4. ⚠️ **THE COVER-FIT FIX IS STILL OWED TO LOADINGBAY AND ORDERDESK**, now seven deploys old, and
+>    **both still have NO GATE AT ALL**. Unchanged by this session.
+> 5. **7 chapters remain in the 9–11 band**, and FactorLab still needs a different material.
+> 6. **Nobody has watched a child play it** — and three of this session's five faults came from
+>    playing or from reading a live trace, after 52 green tests.
+>
+> _(the 🏷️ block below is the previous session — The Fitting Crew.)_
+
+> 🏷️ **2026-08-02 — THE FITTING CREW'S THREE OPEN ITEMS CLOSED BY PLAYING IT, AND PLAYING IT FOUND TWO MORE LIVE DEFECTS THE 491 GREEN TESTS COULD NOT SEE. 🚀 SHIPPED — `main`@`6b7c449`, prod serving **sw v87**.** `tsc` 0 · **494/494 vitest** (was 491, **+3**) · `next build` · 0 console errors · a clean run and a 640×320 run both played to their own finish.
 >
 > **The ask:** the three items left open at the top of the 🔧 block — *"1. no scored split / no mastery exit on prod · 2. 640×320 measured, never played · 3. the fourth world is a substitution needing your call"* — then, on the two defects that fell out: *"dono fix karo aur deploy kar do."*
 >
@@ -5678,7 +6670,25 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-02 (LATEST — see the top 🏷️ block. **The Fitting Crew's three open items closed by PLAYING it, and playing it found two more live defects the 491 green tests could not see. 🚀 SHIPPED — prod serving sw v87.** `tsc` 0 · **494/494 vitest** (+3) · `next build` · 0 console errors. ① **The clean run put a scored `split` AND the mastery exit on the live origin for the first time** — all three earlier prod runs erred every round on purpose, which holds the tier down. Tiers `1·1·1·2·3·3`, splits at rounds 5 and 6 (5 × 15 = 75, 4 × 13 = 52), chapter ended itself at round 6. A 20,000-run simulation driving the REAL `useAdaptive` predicted it exactly (split at round 5, p = 1.0000 — rounds 1–2 always cover `{order, fit}`, so the first L3 round arrives with `unmet = ['split','split']`). ⚠️ **A perfect run therefore never plays rounds 7–10.** ② **640×320 played, and "measured" had been hiding two faults.** ⚠️ **The pad refused a correct SINGLE-DIGIT answer and scored round 1 was one** — `2 × 4 = 8`, typed `8`, **`Done ✓` disabled at opacity .4, the tap did nothing, the question stayed up**; only `08` worked. Three gates hardcoded `windows = 2`, and 6 of L1's 16 combinations are single-digit → **~37% of L1 `order` rounds, ~1 run in 5 hits it on round 1.** The craft doc's own *a tap that does nothing is the worst outcome there is*, live on prod. ⚠️ **And the pad's digit windows were drawn ON TOP of Milo's bubble** — 108 × 33px, both inside its span, the number sitting over the words. ③ **The fourth world is now the one that was actually wanted — 🏷️ the print shop.** ⚠️ **Both earlier failures had ONE cause and it was the craft doc**: it named `pond.jpeg`/`forest_*.jpeg` as "the ORIGINAL art" to reference while also saying to reject ink outlines — **and those two files ARE flat vector**, so the prompt asked for painted and attached a cartoon. Referencing the chapter's **own accepted scenes** landed it in one pass, zero retries, **~6 credits**. Better on every axis: value **0.552** vs `open_orchard`'s 0.728 (**which is brighter than Milo at 0.705**), `topY` **0.14** vs 0.54 (the doormat family), unit-vs-scene **ΔHue 177°** vs 56°; ground line measured at **0.762, within 0.003 of `fit_sign`'s 0.759**, so it ships that geometry by calibration. Both planting assets stay on disk — **one-row revert**. ④ **All three new gates mutation-tested** (revert the pad → fails · drop the bubble clearance → fails · typo a backdrop → fails), and that last one closed a real hole: the suite pinned every site's **sprite** on disk and never its **scene**, and a missing backdrop falls back to nothing. Verified on screen: one window, `Done ✓` live, single digit graded correct; bubble↔pad **+33 → −16**. ▶ Open: **the print shop is a keep-or-revert founder call**; ⚠️ **a `fit` round's rails are 16–19px tall at 640×320 whenever `railsShown ≥ 5`** and the always-played guided round is `rs7` — under the 24px floor on the only tap-to-answer surface, not fixed, not a one-liner; ⚠️ **the cover-fit fix is STILL owed to LoadingBay and OrderDesk, now six deploys old, and both still have no gate**; a one-window pad does tell the child the answer is single-digit, an accepted cost written down rather than discovered later; **nobody has watched a child play it** — both defects came from playing, after 491 green tests and three prod runs. _(prior footer follows.)_)_
+_Last updated: 2026-08-09 (LATEST — see the top 📏 block. **The founder called the 9–11 visuals "faaltu… naa sahi size ke naa sahi position par", and measuring the screen for 20 minutes found 3 faults in 2 chapters. ✅ COMMITTED on `fix/9-11-visual-truth-and-sizing`, NOT pushed.** `tsc` 0 · 660/660 · `next build` 0. ⚠️ **The headline is that the fraction chapter's PICTURE CONTRADICTED ITS OWN ANSWER** — a fixed PART width let the WHOLE grow with the denominator, so 1/4 and 1/3 both drew a 62px block under a readout saying `1/4 < 1/3`. Also: the whole band was phone-sized on a laptop (panel 21% of the screen, 380px dead either side — the teen band's July fix never reached this kit), and the decimals grid, the entire point of its chapter, was 27% of its own panel with a second hardcoded size inside the first. ⚠️ **All three shipped under a green suite, and the suite was right** — gates check the maths, and nothing asks whether the picture agrees with the answer or whether the taught thing is the biggest thing on screen. ⚠️ **The RPG/"story play" slice was designed, built, played and then DELETED at the founder's call** — see §⑤ for the three findings worth keeping, above all that the RPG ledger already exists and buys emoji hats, and that a rating gate walls a struggling child in a way only the gate caught. ▶ Open: **only 2 of 12 chapters were measured**; no gate protects either rule; the cover-fit bug is still live in LoadingBay + OrderDesk, ten deploys old; assets have drifted 22.8MB → 65MB. _(prior footer follows.)_)_
+
+_Prior update:
+
+_Prior update: 2026-08-08 (see the top 🌲 block. **The Empty Plot, fourth rejection: the sun angle was already fixed and the yard still read as shapes, because the thing keeping it flat was an ASSERTION IN THE GATE. ⚠️ NOT COMMITTED.** `tsc` 0 · **624/624 vitest** (chapter gate 76 → **78**, **3/3 planted mutations caught**) · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320. ⚠️ **The chapter’s failure mode, named at last: every soft element was tuned just under visibility while the one thing that was not subtle was a black band.** The sun glow, the clouds, the ground washes and the ground relief were all already in the code and none of them was on screen; the road, 24% of the opening frame, rendered near-black. **Composite the numbers before calling a soft change done.** ⚠️ **THE HEADLINE: "dead flat where the child can stand" was scoped to the WALKABLE BOX — ±(frontage/2 + 5) by 17 m, i.e. every ground pixel in frame — so the 🌄 pass’s new ground geometry only ever began out in the fog, and the gate’s own `|y| < 1e-6` was holding it there.** The flat region now shrinks to the PLOT (what tiles rest on) and the yard gets a per-vertex **jitter, not a wave** — no wavelength, so no period to alias or pace — hanging **downward only**, because a jitter that rises above y = 0 pokes the grass up through the road. ⚠️ **The black band was a shadow BUG**: drei’s `SoftShadows` replaces three’s `getShadow` and the out-of-frustum guard does not survive the swap. ⚠️ **And its colour was a fix written down and then lost** — the comment said 0.62, the code said 0.40; now 0.58 and gated. ⚠️ **A world reads as populated because things CLUSTER and frame** — a new six-tree flanking treeline, put through the same collinear enforcement as the props. Plus the foreman finally got legs and the tree trunks stopped rendering black. ✅ **The settled review camera was watched**: 12 tiles in a countable 3 × 4, flush on the plot. ▶ Open: **not committed** (needs sw v87 → v88); ⚠️ **the craft-doc rules are OWED — chapter-craft.md was not updated that pass**; **draw calls not properly re-measured**; **no ten-round run**; nobody has watched a child play it. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-08 (see the top 🌄 block. **The Empty Plot rebuilt against a generated, founder-approved TARGET FRAME after a third rejection — and the thing that was wrong was the SUN ANGLE, which is arithmetic. ⚠️ NOT COMMITTED.** `tsc` 0 · **622/622 vitest** (chapter gate 70 → **76**, **3/3 planted mutations caught**) · `next build` 0 · **81–83 draw calls/frame measured over 700–1000 real frames** · chunk 882 → 889 KB. Asked what was blocking good visuals, the honest answer was **our own gate**: it banned models, textures and every loop ANYWHERE (an asset-budget call, never pedagogy) and capped the whole world at ≤0.30 saturation — **that one number is why the yard was grey**. ⚠️ **THE HEADLINE: the key sat at 57° (midday) pointing away from the player, so the face TOWARD the child and the LEFT face of every box both computed to exactly 0.580 while the roof computed to 1.546** — two of the three visible faces identical, which is the arithmetic definition of "yeh kya shapes dekh raha hai". Fixed by DIRECTION not intensity (25.5°, 62° off axis, two shadowless fills, five distinct values at 4.6:1), with **PCSS shipped in the same change** because a low sun trebles shadow length and long+hard is why an earlier pass raised the sun at all. ⚠️ **A live bug nobody had seen**: the CanvasTextures never set `colorSpace`, so every palette number had been hand-tuned against a wrongly-decoded ground. ⚠️ **The palette rule inverted** — units now carry a dark contour, so saturation is a FLOOR and props take the colour the thing IS. ⚠️ **And I shipped the same class of bug into the fix**: `readsAgainst` minimised hue and value independently, asking a much stronger question than intended. **The ground is real geometry now** — flat quads take one lighting value across half the frame; the high octave is what makes facets read, and it is dead flat wherever the child can stand. ⚠️ **Adding one RNG draw exposed a guarantee that was never real** — the no-collinear-props rule held only for the seeds swept, and is now constructed. ⚠️ **Generated 3D models proven a dead end for ~31 credits**: 28,357 triangles and 4.6 MB per prop, and a melted lump next to the 60-triangle hand-built one — the art budget's real use is the target frame. `postprocessing` installed then **removed unused** (judges: +130–180 KB for what PCSS already buys; Bloom breaks an alpha canvas, DoF blurs the distance being judged, several drei helpers fetch from a CDN). ▶ Open: **not committed** (needs sw v87 → v88); **instancing the tiles is the known perf lever and was not done** (~330 draws at 9×9, unmeasured on a real tablet); **no ten-round run**, so six of ten sites remain unseen after a pass that changed every tone; nobody has watched a child play it. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-07 (LATEST — see the top 🏙️ block. **The Empty Plot made to look like a game — and the thing that did it was SILHOUETTES, plus one real bug hiding in the one shot nobody had ever watched. ⚠️ NOT COMMITTED.** `tsc` 0 · **616/616 vitest** (70/70 on the chapter gate, unchanged) · `next build` 0 · 0 console errors · **draw calls measured for the first time: 66/frame empty, 80/frame with tiles down**. The previous pass fixed light, contact and palette and left the SHAPES — a box for a van, a purple cone for a tree, eight grey slabs on the horizon — and no lighting fixes a cone that is meant to be a tree. Each catalogue entry now names its `role` and gets two or three parts; ⚠️ **every sub-part takes a SHADE of the prop's own tone**, because a separation check reads the generator's tone and never sees a colour invented in the scene. ⚠️ **r3f defaults every Canvas to ACES film tone mapping**, which was quietly eating the palette — `flat` is one word, and costs a 2.5 → 1.15 drop in the key or lit faces clip. ⚠️ **The haze was the thing, not the buildings** — I darkened them twice before doing the arithmetic (key ×1.7, then 55% fog blend, so a 0.93 haze returns white cardboard whatever tone you send it); same class of mistake put the sky's haze stop below the horizon (a seam, and it has to be EARLY because the horizon moves with the camera) and sized the ground wash for a 120 m plane when a quarter of it is ever on screen. ⚠️ **And the palette was AGAIN under its own legal ceiling** — 0.09–0.28 against a cap of 0.34, with the prop lightness floor still at the value the last block flagged and left. ⚠️ **THE HEADLINE FIND: the review camera had been rendering from EYE HEIGHT all along** — `pos.y = EYE` sat after the branch that positions the scripted camera and overwrote it, so the raised side shot that exists to make the laid tiles countable was never raised, and the plot sat in the top quarter of the frame with 60% bare foreground. **The way in was stubbing `matchMedia` so `prefers-reduced-motion` snaps the lerp in one frame** — a test instrument, not a code change, and it is how a framing recorded twice as "never seen settled" finally got looked at. ▶ Open: **not committed** (needs sw v87 → v88); **no ten-round run**, so six of ten sites remain unseen and this pass moved every setting's tones; the review camera's x is fixed at every frontage, deliberately; nobody has watched a child play it. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-07 (LATEST — see the top 🎨 block. **THE EMPTY PLOT made to look right, and not one of the faults was geometry. ⚠️ NOT COMMITTED.** `tsc` 0 · **616/616 vitest** (unchanged — this pass added no tests) · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320. Founder: *"uska visuals acche naii hai"*, then *"sky gradient bhi add kar do and still the ground is looking empty."* Two files, ~20 numbers and six flags. **Shadows were the single biggest change and they are four words of JSX** — the craft doc's oldest blend rule, never applied here because in 3D the geometry IS grounded and it is easy to think that settles it. The fill was drowning the sun (hemi 1.5 + ambient 0.4 vs a directional 1.5, so every face of every box arrived at the same brightness). ⚠️ **The palette was monochrome BY CONSTRUCTION and passed every check**: props took `ground.h`, two of the four settings had ground AND sky in one arc, and the saturation was hugging the FLOOR of its legal range — **a palette that sits at the bottom of what the gate permits is a legal palette that reads as no palette**. ⚠️ **The markers were the black things** (road and posts drawn DARKER than the ground). The sky is now a CSS gradient behind an alpha canvas — 3 lines, no sphere, no shader, and the chapter's own intro card already did it — with the fog fading to the HAZE tone or the horizon shows a seam. ⚠️ **"The ground looks empty" was TWO faults and only one was texture**: a non-tiled `CanvasTexture` for the flat colour (it *had* to be non-tiled — `.repeat.set`, `RepeatWrapping` and any `for (` are gate-forbidden, because a tiled texture is how the printed answer arrived in the cut that got rejected), and, the real one, **the generator only ever produced things at z ≤ 13 while the skyline starts at z ≥ 34** — a bare twenty-metre band no material would have touched. ⚠️ **Looking also caught a prop standing in the review camera's corridor** on the one beat the chapter turns on. ⚠️ **70/70 was green before and after, and that is correct** — every fault was inside the scene component or was a palette the separation check legitimately passed: **a separation gate proves the unit is distinguishable from the world, not that the world has any colour in it.** ▶ Open: **not committed** (needs sw v87 → v88); ⚠️ **performance was NOT measured** — a 1024² shadow map, MSAA and an alpha canvas were added to a chapter whose chunk is already 856 KB, and the target is a mid-range tablet; **the review camera's settled framing is still unseen**; **no ten-round run**, so six of the ten sites have never been on screen and the palette rework touched all of them; two tuning knobs (prop lightness floor, wash amplitude) deliberately left for the founder's eye. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-07 (see the 🏗️ block — the session that BUILT the chapter. **The 3D chapter is back and built to the brief: `areaPerimeter` → THE EMPTY PLOT, first-person, world generated in code, zero image assets. ⚠️ NOT COMMITTED.** `tsc` 0 · **616/616 vitest** (+70, the chapter's own gate — cut ③ had none) · `next build` 0 · **12/12 planted mutations caught** · 0 console errors · driven at 1280×720 and 640×320. **The process change is the point: the plan was posted and the mechanic agreed BEFORE any code**, after three sessions burned the other way round. PEG IT OUT was kept because it is the only one of four mechanics that passes delete-the-art — the answer is a PLACE, and a place cannot be offered as a chip; any mechanic whose answer is a NUMBER is a number pad with a world behind it. Cut ③'s three real gaps are closed: difficulty now grows the DIVISOR (an explicit tier term) not just the magnitude, a seeded `plotSite.ts` gives ten different places instead of one bare yard, and there is a gate. ⚠️ **The gate caught two faults no eye would** — a 0.9 m prop reading as a one-metre unit, and props standing INSIDE the foreman because `offGrid` is not monotonic and silently lowers a "minimum" by up to 0.78 m. ⚠️ **Then playing it caught three the gate could not, and two were serious: the ENTIRE WORLD RENDERED FLAT WHITE** (three.js parses `hsl()` with its own regex and returns white for the space-separated CSS Color 4 form, with no throw — and the gate passed because it asserted the string's SHAPE rather than the consumer's reading of it), and **the CONSEQUENCE was invisible on every round** (the child pegs facing away from the road, so every tile, bare strip and leftover was behind them — a miss read "part of it would be bare" over an empty field). The camera now swings to the built plot on commit and holds a miss longer than a hit. ⚠️ **The foreman's placement was wrong three times**, the last because `fov` is VERTICAL and his lateral offset grows with the plot. ▶ Open: **not committed** (needs sw v87 → v88); **three.js is reinstalled — 856 KB in exactly ONE lazily-loaded chunk, no leak into the shared bundle**, but worth a founder call; **no ten-round run, no mastery exit, and the review camera's settled framing was never seen** (it needs ~20 frames, i.e. ~20 screenshots); **the walking controls were never driven by a real drag or keypress** — every drive used the dev-only `__miloPace` hook, which is verified 0 hits in production JS. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-06 (see the 🗑️ block. **The 9–11 3D first-person pilot was built, corrected twice by the founder, rebuilt on a third mechanic, and then DELETED at his call. Nothing of it remains in the tree; `areaPerimeter` is back to the neon `GridPlotter`, untouched.** `tsc` 0 · **546/546 vitest** (was 571 — the −25 is exactly the deleted chapter's own gate, so nothing else moved) · `next build` 0 · `three` + `@react-three/fiber` + `@types/three` uninstalled with 0 importers left. ⚠️ **Three mechanics failed for ONE reason, and it is the thing to carry: a TILE IS THE UNIT OF AREA, so any mechanic where the child handles tiles hands them a countable pile and something other than their head does the arithmetic** — laying let the PLOT decide when it was full, and fetching a barrow let the BARROW do the adding (tap "a row" three times and the tally counts 4, 8, 12). Two general rules were paid for and are now in [chapter-craft.md](docs/chapter-craft.md): **a grid on the working surface is the printed answer, drawn** (one line chalked the floor into exactly `w × h` countable squares while the file's own comment claimed it could not be counted), and **any repeatable commit that grades is a yes/no oracle** (peg, read "too near", step back, peg again — the answer falls out in four tries). A third mechanic, PEG IT OUT, was honest and driven on screen, and was cut with the rest. ⚠️ Instrument findings kept for any future 3D: **r3f will not boot in a hidden tab** (it sizes its canvas from a ResizeObserver, whose callbacks ride the rendering steps), and **a walking loop is not reliably drivable headlessly** — measured `hidden:false` with 62 rAF frames/s at one moment and `hidden:true` with 0 twenty minutes later, no navigation between. ▶ Open: **the 9–11 `areaPerimeter` chapter still has every fault the rethink doc records**; if 3D is tried again it should not be this skill (the measuring was never the hard part — the arithmetic was); the SupplyRun batch is STILL uncommitted and was never touched; the cover-fit fix is still owed to LoadingBay and OrderDesk, now eight deploys old. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-04 (see the 📦 block. **DivisionShare → THE SUPPLY RUN, the 9–11 band's fifth chapter. ⚠️ NOT COMMITTED.** `tsc` 0 · **546/546 vitest** (+52) · `next build` · 0 console errors. The old chapter dealt the nodes FOR the child after the answer was committed, then asked them to tap a chip — aliveness 0/4 and delete-the-art failed. Now: one Deal button serving BOTH readings of division because a step costs the same either way, the answer is how many steps you got, and the remainder stays physically in the crate. A step the crate cannot cover is ALLOWED and visibly wrong — blocking it would be the chapter doing the division. 4 new painted sites, ~13 credits, zero retries (every free backdrop in the library measures brighter than Milo). ⚠️ The gate caught a spare slot vanishing at answer 7, and PLAYING caught three more: the demo taught the OPPOSITE of the rule (the remainder went into a van while Milo said it stayed behind), empty receivers were invisible AND their box height leaked the answer, and the parts bench drew 30px units with half the wall empty. ▶ Open: not committed; no ten-round run, no re-teach, no mastery exit and NO SCORED `group` ROUND PLAYED; the cover-fit fix still owed to LoadingBay + OrderDesk. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-02 (LATEST — see the top 🏷️ block. **The Fitting Crew's three open items closed by PLAYING it, and playing it found two more live defects the 491 green tests could not see. 🚀 SHIPPED — prod serving sw v87.** `tsc` 0 · **494/494 vitest** (+3) · `next build` · 0 console errors. ① **The clean run put a scored `split` AND the mastery exit on the live origin for the first time** — all three earlier prod runs erred every round on purpose, which holds the tier down. Tiers `1·1·1·2·3·3`, splits at rounds 5 and 6 (5 × 15 = 75, 4 × 13 = 52), chapter ended itself at round 6. A 20,000-run simulation driving the REAL `useAdaptive` predicted it exactly (split at round 5, p = 1.0000 — rounds 1–2 always cover `{order, fit}`, so the first L3 round arrives with `unmet = ['split','split']`). ⚠️ **A perfect run therefore never plays rounds 7–10.** ② **640×320 played, and "measured" had been hiding two faults.** ⚠️ **The pad refused a correct SINGLE-DIGIT answer and scored round 1 was one** — `2 × 4 = 8`, typed `8`, **`Done ✓` disabled at opacity .4, the tap did nothing, the question stayed up**; only `08` worked. Three gates hardcoded `windows = 2`, and 6 of L1's 16 combinations are single-digit → **~37% of L1 `order` rounds, ~1 run in 5 hits it on round 1.** The craft doc's own *a tap that does nothing is the worst outcome there is*, live on prod. ⚠️ **And the pad's digit windows were drawn ON TOP of Milo's bubble** — 108 × 33px, both inside its span, the number sitting over the words. ③ **The fourth world is now the one that was actually wanted — 🏷️ the print shop.** ⚠️ **Both earlier failures had ONE cause and it was the craft doc**: it named `pond.jpeg`/`forest_*.jpeg` as "the ORIGINAL art" to reference while also saying to reject ink outlines — **and those two files ARE flat vector**, so the prompt asked for painted and attached a cartoon. Referencing the chapter's **own accepted scenes** landed it in one pass, zero retries, **~6 credits**. Better on every axis: value **0.552** vs `open_orchard`'s 0.728 (**which is brighter than Milo at 0.705**), `topY` **0.14** vs 0.54 (the doormat family), unit-vs-scene **ΔHue 177°** vs 56°; ground line measured at **0.762, within 0.003 of `fit_sign`'s 0.759**, so it ships that geometry by calibration. Both planting assets stay on disk — **one-row revert**. ④ **All three new gates mutation-tested** (revert the pad → fails · drop the bubble clearance → fails · typo a backdrop → fails), and that last one closed a real hole: the suite pinned every site's **sprite** on disk and never its **scene**, and a missing backdrop falls back to nothing. Verified on screen: one window, `Done ✓` live, single digit graded correct; bubble↔pad **+33 → −16**. ▶ Open: **the print shop is a keep-or-revert founder call**; ⚠️ **a `fit` round's rails are 16–19px tall at 640×320 whenever `railsShown ≥ 5`** and the always-played guided round is `rs7` — under the 24px floor on the only tap-to-answer surface, not fixed, not a one-liner; ⚠️ **the cover-fit fix is STILL owed to LoadingBay and OrderDesk, now six deploys old, and both still have no gate**; a one-window pad does tell the child the answer is single-digit, an accepted cost written down rather than discovered later; **nobody has watched a child play it** — both defects came from playing, after 491 green tests and three prod runs. _(prior footer follows.)_)_
 
 _Prior update: 2026-08-02 (the 🔧 block. **The Fitting Crew made to look right, given real objects, and then PLAYED end to end — which is what found a chapter-killing dead end. 🚀 SHIPPED — `main`@`16508d6`, prod serving sw v86, smoke 15/15 and A FULL TEN-ROUND RUN PLAYED ON PROD.** `tsc` 0 · **491/491 vitest** (+4) · `next build` · 0 console errors on prod · **three full ten-round runs, one on the live origin**. ⓪ ⚠️ **The headline is not the look: ONE WRONG ANSWER KILLED THE ROUND FOR EVER.** `finish(false)` cleared the board and never reset `settled` — and the rails' `onTap`, the commit button's `disabled` and the pad's `live` are all gated on that one flag, so after a single miss nothing on screen responded, on every question type, with the question still up. Measured fronted: seven rails `cursor: default`, Send `disabled`. **Every gate was green because the suite drives PURE functions and this was component state** — and the 🔩 block said it outright: *a wrong answer had never been driven*. ⚠️ **My first gate for it passed the mutation**, because `toContain('setSettled(false)')` matched the COMMENT explaining the line — this file's own recorded fault, inverted; anchored on the statement now. ① **The look was three compounding faults in one function**: the frame measured **212 × 135px, 2.8% of a 1280×720 screen**, parked right of centre with Milo 600px away. `topY` confined it to the painted surface — on `open_hills` that is **194px of 720**, so it was sized to the SHORT dimension and used **212 of 749px of width**; the pitch cap was a fixed 76, never reached; and `frameLeft` centred in the LEFTOVER band right of a 467px bubble reserve. Now **15–49% of the screen**, cap derived from Milo, centred in the whole viewport. 640×320 bit-identical — that squeeze is pre-existing chrome + pad. ② ⚠️ **And freeing the band shipped the opposite fault for one pass** — a seven-rail job reached **y = 160 against a horizon of 381, four of seven rails over open sky**. The borrow is bounded now (`topCeiling`, 60% of the surface's own depth), **mutation-tested**. ③ **The units are real painted objects, not gradient blocks** (founder's call): panel · module · lamp · tray, **~6 credits, zero retries**, referenced against the originals verified 200 on prod first. ⚠️ Keyed by **flood fill from the corners** — a global key eats the module's violet inset — cropped to each **ink box**, 43–56KB each. ⚠️ **Separation re-measured** because a generated sprite brings its own colours: solar ΔHue 137° · station 70° · planting 56° · **sign ΔHue 6° but ΔSat 0.46**. ⚠️ **They exposed a float the blocks hid** — units hung 13px above their rail; foot derives from the bar now, measured 303/303. ④ **Two full ten-round runs closed three open items**: a scored `split` PLAYED (3 × 12 = 36), a wrong `order` answer DRIVEN (ordered 05 for 2 × 3 — five lamps laid, **the sixth slot visibly empty**), and the **re-teach fired naturally** at three wrong in a row and *teaches*. Sites never repeat consecutively, all four used; four batched taps → 20 panels. ⑤ ⚠️ **The instrument lied three more times** — 'one lamp per rail' was the entrance stagger frozen in a backgrounded tab (DOM: 10 units, all opacity 1), `innerWidth: 0` returned so a geometry-based selector found nothing (structural selection worked), **but the third 'taps do nothing' was the real dead end** — `cursor: default` means `onTap` is undefined, so check the flag before blaming the tab. ⑥ **Shipped as a clean fast-forward, no merge commit**, v86 on the fifth poll, smoke 15/15, and `MultChips` returns **0 hits in the `/story` shell** — the chapter that printed its own answer is off prod. ⚠️ **Staged file-by-file with each commit's list checked by `git show --stat`**, because this repo's directory-pathspec trap ignores the index. **Then a full ten-round run ON PROD**: **11 wrong answers and `everFailedToReopen: false`** — the board re-opened after every one, on both the rail and the pad path, so §⓪'s dead end is dead on the live origin eleven times over; the **re-teach fired at rounds 3, 6 and 9** and teaches; both demos played including the full `split` area model; sites never repeated consecutively; 0 console errors. ▶ Open: ⚠️ **no scored `split` and no mastery exit on prod, and they are the same cause** — erring every round holds the tier down, so **a clean run gets both and is the next drive**; 640×320 measured but never played; the fourth world is still a founder call; ⚠️ **the cover-fit fix is STILL owed to `LoadingBay.tsx:232` and `OrderDesk.tsx:365`**, five deploys old — and ⚠️ **those two chapters still have NO gate at all**, so fix and gate them in one pass; **8 chapters remain**; **nobody has watched a child play it** — and this session is the cleanest case yet for why that matters: the look faults came from the founder looking, and the unplayable-round bug came from playing. _(prior footer follows.)_)_
 
