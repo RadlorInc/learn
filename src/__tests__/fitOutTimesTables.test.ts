@@ -15,6 +15,7 @@ import { describe, it, expect } from 'vitest'
 import {
   SITES, runOrder, makeRound, grade, missFor, fitLayout, slotX, padWindowsFor,
   tensOf, onesOf, Q_ALL, IMG_W, IMG_H, bandWanted, topCeiling, type FoRound,
+  A2_MAX_DIGIT, digitFrom, handNudge, placeLabel, placeAsk, handHint,
 } from '@/features/chapters/story/FitOut'
 import { bannerBottom } from '@/features/chapters/story/yard'
 import { existsSync, readFileSync } from 'node:fs'
@@ -390,5 +391,86 @@ describe('the cast and the palette', () => {
       const d = Math.abs(SITES[i].hue - SITES[j].hue)
       expect(Math.min(d, 360 - d)).toBeGreaterThanOrEqual(45)
     }
+  })
+})
+
+// ─── A2 · the two-place hand entry ──────────────────────────────────────────────────────
+/**
+ * ⚠️ THE LOAD-BEARING INVARIANT IS THAT EVERY ANSWER IS EXPRESSIBLE. A round whose answer the
+ * child's surface cannot state is unanswerable, which is worse than a wrong one — and this is
+ * exactly where the plan's own A2 died: "leftmost hand = tens, rightmost = ones" caps at 55,
+ * because a hand has FIVE fingers, and reached only 26 of the 55 answers this generator draws.
+ */
+describe('the two-place hand entry', () => {
+  const everyAnswer = () => {
+    const out = new Set<number>()
+    for (const d of TIERS) for (let i = 0; i < 4000; i++) out.add(makeRound(d).answer)
+    return [...out].sort((a, b) => a - b)
+  }
+
+  it('can state EVERY answer the generator draws — both hands per digit, one place at a time', () => {
+    for (const a of everyAnswer()) {
+      const windows = padWindowsFor(a)
+      const digits = String(a).padStart(windows, '0').split('').map(Number)
+      expect(digits.length, `answer ${a} needs ${digits.length} places but the pad opens ${windows}`).toBe(windows)
+      for (const [slot, d] of digits.entries()) {
+        // each place must be reachable by a reading two hands can actually make
+        expect(digitFrom(d), `answer ${a}, place ${slot} (${d}) is not a reading`).toBe(d)
+        expect(d).toBeLessThanOrEqual(A2_MAX_DIGIT)
+      }
+      expect(Number(digits.join(''))).toBe(a)
+    }
+  })
+
+  it('⚠️ and the PLAN\'s encoding could not — this is why it was not built', () => {
+    // one hand per place: tens 0..5, ones 0..5
+    const oneHandPerPlace = (n: number) => Math.floor(n / 10) <= 5 && n % 10 <= 5
+    const all = everyAnswer()
+    const reach = all.filter(oneHandPerPlace)
+    expect(reach.length, 'if this ever passes, the arithmetic changed and the plan can be revisited')
+      .toBeLessThan(all.length)
+    // and specifically: a plain 6 is not statable on one hand
+    expect(oneHandPerPlace(6)).toBe(false)
+    expect(digitFrom(6)).toBe(6)
+  })
+
+  it('refuses ten fingers — that is not a place', () => {
+    for (let n = 0; n <= A2_MAX_DIGIT; n++) expect(digitFrom(n)).toBe(n)
+    expect(digitFrom(10)).toBeNull()
+    expect(digitFrom(-1)).toBeNull()
+    expect(handNudge(10, 0, 2)).toMatch(/nine/)
+    expect(handNudge(3, 0, 2)).toBeNull()
+    expect(handNudge(3, 2, 2)).toMatch(/full/)
+  })
+
+  it('names the place it is asking for, and never a gesture the child\'s surface does not have', () => {
+    expect(placeLabel(0, 2)).toBe('tens')
+    expect(placeLabel(1, 2)).toBe('ones')
+    expect(placeLabel(0, 1)).toBe('number')
+    for (const windows of [1, 2]) for (const slot of [0, 1]) {
+      if (slot >= windows) continue
+      const hand = placeAsk(slot, windows, true), tap = placeAsk(slot, windows, false)
+      expect(hand, `${slot}/${windows}`).not.toMatch(/\bTap\b/)
+      expect(tap, `${slot}/${windows}`).not.toMatch(/hold up/i)
+      expect(hand).not.toBe(tap)
+    }
+  })
+
+  it('SAYS how to repeat a digit — 22, 33, 44 and 55 are all real answers here', () => {
+    /**
+     * ⚠️ A repeated digit is a hand that has not moved, which the held-over guard correctly refuses,
+     * so it has to be said or the child is holding three fingers at a dead surface. The alternative
+     * (slot in the dwell key, so the same pose re-arms) was built and DRIVEN, and it answered 12
+     * as **11** — the ones landed 1.2s after the tens off a hand that never moved.
+     */
+    const doubles = everyAnswer().filter(a => a >= 10 && Math.floor(a / 10) === a % 10)
+    expect(doubles.length, 'if none are reachable this test is not defending anything').toBeGreaterThan(0)
+    for (const a of doubles) {
+      const [t, o] = String(a).split('').map(Number)
+      expect(handHint(1, 2, o, t), `answer ${a}`).toMatch(/lower your hand/i)
+    }
+    // and a DIFFERENT digit is just asked for plainly
+    expect(handHint(1, 2, 6, 3)).toBe(placeAsk(1, 2, true))
+    expect(handHint(0, 2, 3, undefined)).toBe(placeAsk(0, 2, true))
   })
 })

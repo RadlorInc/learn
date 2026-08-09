@@ -346,11 +346,18 @@ export const GROUND = 0.74         // the floor, as a share of the height — RO
  *  are tap targets. The WORLD yields to the thing a finger has to hit. */
 export const groundOf = (vh: number) => Math.min(GROUND, (vh - PAD_BAND(vh) - 14) / vh)
 
-export function AnswerPad({ digits, onDigit, onClear, onDone, band, live, windows = 2 }: {
+export function AnswerPad({ digits, onDigit, onClear, onDone, band, live, windows = 2, keys }: {
   digits: number[]; onDigit: (n: number) => void; onClear: () => void; onDone: () => void
   band: number; live: boolean
   /** how many digits the answer has. A "how many rods?" question is one; a whole number is two. */
   windows?: 1 | 2
+  /**
+   * What FILLS the windows, when it is not the ten digit buttons — the hand, on an AR chapter.
+   * ⚠️ The windows, ⌫ and Done ✓ are deliberately OUTSIDE this: the hand owns the VALUE and taps own
+   * the ACTIONS, so both inputs read the same windows and commit through the same button. Swapping
+   * the whole pad per input would be two answer surfaces that could drift.
+   */
+  keys?: React.ReactNode
 }) {
   /** Sized off ITS OWN band, never off the block unit: deriving it from the scene gave 28×28
    *  buttons on a short frame while the pad's own band had room. The thing that is TAPPED wins. */
@@ -377,15 +384,17 @@ export function AnswerPad({ digits, onDigit, onClear, onDone, band, live, window
           boxShadow: '0 4px 0 rgba(180,70,20,.45)',
         }}>Done ✓</button>
       </div>
-      <div style={{ display: 'flex', gap: w * 0.14 }}>
-        {Array.from({ length: 10 }).map((_, n) => (
-          <button key={n} onClick={() => onDigit(n)} style={{
-            width: w, height: w, borderRadius: w * 0.22, border: '3px solid var(--outline)',
-            background: 'var(--paper)', fontFamily: 'var(--font-display)', fontWeight: 900,
-            fontSize: w * 0.5, color: 'var(--ink)', cursor: 'pointer',
-          }}>{n}</button>
-        ))}
-      </div>
+      {keys ?? (
+        <div style={{ display: 'flex', gap: w * 0.14 }}>
+          {Array.from({ length: 10 }).map((_, n) => (
+            <button key={n} onClick={() => onDigit(n)} style={{
+              width: w, height: w, borderRadius: w * 0.22, border: '3px solid var(--outline)',
+              background: 'var(--paper)', fontFamily: 'var(--font-display)', fontWeight: 900,
+              fontSize: w * 0.5, color: 'var(--ink)', cursor: 'pointer',
+            }}>{n}</button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

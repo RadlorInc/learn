@@ -85,6 +85,18 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { AnswerPad, PAD_BAND, Banner, BANNER_TOP, bannerBottom } from './yard'
 import { rint, shuffle } from '@/core/rand'
+import {
+  useHandInput, useHand, HandProvider, useDwell, CamView, CamGate, DwellRing, type HandSkin,
+} from '@/infra/ar/HandInput'
+
+/** The painted band's colours for the shared camera surface — see AngleShop for why alpha is a field. */
+const SKIN: HandSkin = {
+  accent: 'var(--milo-orange)', accentSoft: 'rgba(242,107,44,.55)',
+  ink: 'var(--ink)', muted: '#7a6a55', panel: 'rgba(255,252,244,.96)', line: 'rgba(61,37,22,.25)',
+  onAccent: '#fff', font: 'var(--font-display)', mono: 'ui-monospace,Menlo,monospace',
+}
+/** The self-view's own box. Small on a short frame — the frame is what is being read, not the child. */
+const CAM_W = (short: boolean) => (short ? 76 : 190)
 
 // ─── The four sites ─────────────────────────────────────────────────────────────────────
 /** Every backdrop is generated at this size; the cover-fit maths below depends on it. */
@@ -331,6 +343,67 @@ export function grade(data: FoRound, committed: number): boolean {
  * button this replaced.
  */
 export const padWindowsFor = (answer: number) => (answer < 10 ? 1 : 2)
+
+// ─── A2 · the two-place hand entry ──────────────────────────────────────────────────────
+/**
+ * ⚠️ THE PLAN'S A2 IS ARITHMETICALLY IMPOSSIBLE AND THIS IS THE CORRECTION.
+ * [story-9-11-ar-plan.md](../../../../docs/story-9-11-ar-plan.md) §2 reads *"leftmost hand = tens,
+ * rightmost = ones → 0–99"*. **A hand has FIVE fingers**, so one hand per place tops out at 55 —
+ * and, worse than a coverage gap, it cannot express a plain `6`. Measured against every answer this
+ * generator can draw: **26 of 55 reachable**, i.e. under half, and only 39% of `split`, which is the
+ * chapter's whole payload. A round with no expressible answer is unanswerable, which the craft doc
+ * calls worse than a wrong one.
+ *
+ * So the two places are the two WINDOWS, not the two hands: BOTH hands make one digit (0..9, which
+ * is Factor Lab's reading), and the child enters the tens and then the ones. **100% of answers
+ * reachable**, no generator change, and it is the better teaching anyway — "show me the tens, now
+ * show me the ones" is place value performed, in the chapter whose payload is splitting 12 into
+ * 10 and 2.
+ *
+ * ⚠️ AND THE HAND OWNS ONLY THE VALUE. ⌫ and Done ✓ stay taps, because they are ACTIONS — which also
+ * means there is no runaway: a stray dwell enters one digit, undoable, and never sends an answer.
+ */
+export const A2_MAX_DIGIT = 9
+
+/** The digit a reading means, or null if it is not one. Two hands reach TEN, which is not a place. */
+export function digitFrom(count: number): number | null {
+  return Number.isInteger(count) && count >= 0 && count <= A2_MAX_DIGIT ? count : null
+}
+
+/** A reading that is not an attempt REDIRECTS instead of scoring — the colouring chapter's call. */
+export function handNudge(count: number, filled: number, windows: number): string | null {
+  if (filled >= windows) return 'Both places are full — send it, or take one back.'
+  if (digitFrom(count) === null) return `That is ten fingers. One place only goes up to nine.`
+  return null
+}
+
+/** Which place is being filled. A one-window answer has no places to name. */
+export function placeLabel(slot: number, windows: number): 'tens' | 'ones' | 'number' {
+  if (windows === 1) return 'number'
+  return slot === 0 ? 'tens' : 'ones'
+}
+
+/** What the child is asked to do RIGHT NOW, per input. The one place the two paths differ. */
+export function placeAsk(slot: number, windows: number, hand: boolean): string {
+  const p = placeLabel(slot, windows)
+  if (p === 'number') return hand ? 'Hold up how many.' : 'Tap how many.'
+  return hand ? `Hold up the ${p}.` : `Tap the ${p}.`
+}
+
+/**
+ * ⚠️ A DIGIT REPEATED IS A HAND THAT HAS NOT MOVED, AND THE GUARD CORRECTLY REFUSES IT — so it has
+ * to be SAID, or a child answering 33 holds up three fingers and nothing happens for ever, which is
+ * the dead-button fault this chapter has already shipped once.
+ *
+ * The alternative — putting the slot in the dwell's key so the same pose arms again — was built and
+ * driven, and it is worse: the tens landed and the ones landed 1.2s later off the SAME hand, so
+ * answering 12 gave **11** before the child could move. Measured on screen. A reading that has not
+ * changed is the held-over pose; the way to repeat it is to lower the hand and raise it again.
+ */
+export function handHint(slot: number, windows: number, count: number, last?: number): string {
+  if (last !== undefined && count === last) return `Lower your hand, then show the ${placeLabel(slot, windows)}.`
+  return placeAsk(slot, windows, true)
+}
 
 /**
  * The written miss line. ⚠️ It never states the answer, and on a `fit` round it never states the
@@ -732,6 +805,12 @@ type Mode = 'guided' | 'practice'
 
 const FitPlay: React.FC<{ data: FoRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { w: vw, h: vh } = useViewport()
+  const { read, input } = useHand()
+  /**
+   * ⚠️ A `fit` ROUND KEEPS THE RAILS, AND THAT IS THE POINT RATHER THAN A COMPROMISE. Its answer is
+   * the number of rails the child LAID — the answer is what they built, which is what makes it
+   * unguessable. Replacing that with "hold up 4" deletes the building and leaves a number.
+   */
   const usesPad = data.qType !== 'fit'
   /**
    * ⚠️ THE WINDOW COUNT IS DERIVED FROM THE ANSWER, AND A FIXED 2 WAS A DEAD BUTTON ON PROD.
@@ -825,6 +904,29 @@ const FitPlay: React.FC<{ data: FoRound; mode: Mode; onComplete: (correct: boole
     deliver(n)
   }
 
+  /**
+   * ⚠️ The hand fills the SAME `digits` the buttons fill, so `commitPad` and `grade` never learn
+   * which input moved it — one value, two inputs, one grader, and the chapter's existing sweep
+   * covers both at once.
+   *
+   * ⚠️ THE SLOT IS DELIBERATELY *NOT* IN THE DWELL'S KEY. It was, for exactly as long as it took to
+   * drive: advancing the slot re-armed the SAME pose, so a child answering 12 held up one finger and
+   * got **11** — the tens landed and then the ones landed 1.2s later off a hand that had not moved.
+   * Keyed on the reading alone, entering a digit does not restart the timer (the key is unchanged),
+   * so one gesture is one digit. Repeating a digit means lowering the hand — see `handHint`.
+   */
+  const handFills = input === 'hand' && usesPad && !settled && !done.current
+  const digit = digitFrom(read.count)
+  const handProgress = useDwell(
+    { value: digit ?? 0, key: `${read.count}/${read.hands}`, ready: read.hands > 0 && digit !== null },
+    (n) => {
+      const nudge = handNudge(read.count, digits.length, padWindows)
+      if (nudge) { setSaid(nudge); speak(nudge); return }
+      setDigits(d => (d.length < padWindows ? [...d, n] : d))
+    },
+    handFills && digits.length < padWindows,
+  )
+
   function tapRail(i: number) {
     if (done.current || settled) return
     const next = laidRef.current.slice()
@@ -849,9 +951,37 @@ const FitPlay: React.FC<{ data: FoRound; mode: Mode; onComplete: (correct: boole
         {usesPad ? (
           <AnswerPad digits={digits} live={!settled && !done.current} band={L.padBand} windows={padWindows}
             onDigit={(n) => setDigits(d => (d.length < padWindows ? [...d, n] : d))}
-            onClear={() => setDigits(d => d.slice(0, -1))} onDone={commitPad} />
+            onClear={() => setDigits(d => d.slice(0, -1))} onDone={commitPad}
+            keys={input === 'hand' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <DwellRing progress={handProgress} size={Math.max(40, Math.round(L.padBand * 0.44))} skin={SKIN}>
+                  {read.hands === 0 ? '–' : read.count > A2_MAX_DIGIT ? '✋' : read.count}
+                </DwellRing>
+                <span style={{
+                  fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: Math.max(12, Math.round(L.padBand * 0.17)),
+                  color: 'var(--ink)', background: 'rgba(255,252,244,.92)', border: '2px solid var(--outline)',
+                  borderRadius: 999, padding: '4px 12px',
+                }}>
+                  {digits.length >= padWindows
+                    ? 'Send it →'
+                    : handHint(digits.length, padWindows, read.count, digits[digits.length - 1])}
+                </span>
+              </div>
+            ) : undefined} />
         ) : (
           /* Identical at every count — nothing may say the set is right before the commit. */
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* ⚠️ CAMERA ON, BUT THIS ROUND IS BUILT WITH TAPS — SAY SO. A child holding up fingers at a
+              surface that is not reading them gets silence, which is the dead-button fault this
+              chapter has already shipped once. The rails stay taps because the answer is what the
+              child BUILT; naming that is cheaper than explaining it. */}
+          {input === 'hand' && !settled && (
+            <span style={{
+              fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: Math.max(12, Math.round(L.padBand * 0.17)),
+              color: 'var(--ink)', background: 'rgba(255,252,244,.92)', border: '2px solid var(--outline)',
+              borderRadius: 999, padding: '4px 12px',
+            }}>Lay this one out by tapping the {data.site.rails}</span>
+          )}
           <button onClick={() => { if (!done.current && !settled) { setSettled(true); later(() => finish(grade(data, railsLaid)), 260) } }}
             disabled={settled || railsLaid === 0}
             style={{
@@ -861,6 +991,7 @@ const FitPlay: React.FC<{ data: FoRound; mode: Mode; onComplete: (correct: boole
               opacity: railsLaid === 0 ? .4 : 1, cursor: railsLaid === 0 ? 'default' : 'pointer',
               boxShadow: '0 4px 0 rgba(180,70,20,.45)',
             }}>Send it ✓</button>
+          </div>
         )}
       </div>
     </>
@@ -978,11 +1109,21 @@ export default function FitOut({ onFinish, onExit }: {
   const [demoIdx, setDemoIdx] = useState(0)
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
+  const short = vh < 470
+
+  const marker = useMemo(() => ({ fill: '#F26B2C', ink: '#3D2516' }), [])
+  const {
+    hand, onCam, ready, camReady, status, error, start, stop, useTaps, useCamera, videoRef, canvasRef,
+  } = useHandInput({ reads: 'count', marker })
+  /** ⚠️ The rotate gate is an early return, so turning the tablet unmounts the <video> and would
+   *  leave the camera light on with nothing able to reach the stream. See AngleShop. */
+  useEffect(() => { if (needsRotate) stop() }, [needsRotate, stop])
+
+  const exit = useCallback(() => { stopSpeech(); stop(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit, stop])
   const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true; stopSpeech()
+    if (finished.current) return; finished.current = true; stopSpeech(); stop()
     if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  }, [onFinish, exit, stop])
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
   const beat = useMemo(() => makeBeat(), [])
   /**
@@ -1029,12 +1170,15 @@ export default function FitOut({ onFinish, onExit }: {
       <div style={{
         background: 'rgba(255,252,244,.94)', border: '3px solid var(--milo-orange)', borderRadius: 999,
         padding: '5px 18px', fontFamily: 'var(--font-display)', fontWeight: 800,
-        fontSize: vh < 470 ? 13 : 16, color: 'var(--ink)',
+        fontSize: short ? 13 : 16, color: 'var(--ink)',
       }}>{text}</div>
     </div>
   )
 
+  const inSite = phase !== 'intro'
+
   return (
+    <HandProvider value={hand}>
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#cfe0ee' }}>
       {chip}
       {phase === 'intro' && (
@@ -1050,16 +1194,37 @@ export default function FitOut({ onFinish, onExit }: {
               <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16, lineHeight: 1.45, color: 'var(--ink)', margin: '0 0 18px' }}>
                 Milo runs a fitting crew. Every job is rows of the same thing — panels, modules, lamps, trays —
                 and they are all still on the truck, so you cannot count them. Work out how many, and the run fills exactly.
+                {onCam ? ' Hold up the tens, then the ones — your hands write the number.' : ''}
               </p>
-              <button onClick={() => { unlockSpeech(); setPhase('demo') }} style={{
+              {/* ⚠️ BOTH DOORS, EVERY TIME — the device's last pick decides which is the BIG button,
+                  never which is the only one. */}
+              <button onClick={() => { unlockSpeech(); setPhase('demo'); if (onCam) start() }} style={{
                 border: 'none', borderRadius: 999, padding: '12px 26px', cursor: 'pointer',
                 background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff',
                 fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 18, boxShadow: '0 5px 0 rgba(180,70,20,.45)',
-              }}>Start the round →</button>
+              }}>{onCam ? 'Turn on the camera →' : 'Start the round →'}</button>
+              <div>
+                <button onClick={() => { unlockSpeech(); if (onCam) useTaps(); else useCamera(); setPhase('demo') }} style={{
+                  marginTop: 12, border: 'none', background: 'transparent', cursor: 'pointer',
+                  fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: '#7a6a55',
+                  textDecoration: 'underline',
+                }}>{onCam ? 'Use the number pad instead' : 'Use the camera instead'}</button>
+              </div>
             </div>
           </div>
         </>
       )}
+
+      {inSite && onCam && (
+        <CamView videoRef={videoRef} canvasRef={canvasRef} w={CAM_W(short)} bottom={short ? 8 : 14}
+          skin={SKIN} hidden={!camReady} />
+      )}
+      {inSite && onCam && !camReady && (
+        <CamGate status={status} error={error} skin={SKIN} onRetry={start} onTaps={useTaps} onExit={exit}
+          denied="Milo can read the number off your hands, or you can tap it in — both work." />
+      )}
+
+      {inSite && ready && (<>
 
       {phase === 'demo' && (<>
         {banner(`Watch Milo · ${demoIdx + 1}/${DEMO.length}`)}
@@ -1079,6 +1244,9 @@ export default function FitOut({ onFinish, onExit }: {
             finishChapter(result.current.correct, result.current.wrong, mastered)
           }} />
       )}
+
+      </>)}
     </div>
+    </HandProvider>
   )
 }
