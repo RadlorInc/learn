@@ -1,12 +1,17 @@
 'use client'
 /**
- * Chapter (9–11) — FACTORS & MULTIPLES (skill `factorsMultiples`), answered with the CAMERA.
+ * Chapter (9–11) — FACTORS & MULTIPLES (skill `factorsMultiples`), answered with the CAMERA or by TAP.
  *
  * THE VERB IS "SPLIT IT", AND THE CHILD'S FINGERS ARE THE DIVISOR. Milo puts n units on the
  * bench; the child holds up a number of rows to a laptop webcam or a tablet's front camera; the
  * bench deals them and either fills flush or leaves a gap. All four readings of the skill are
  * that one physical act — see story/factors.ts for the maths, the ladder and the grader, which
  * live outside React because a webcam cannot be driven by a gate.
+ *
+ * ⚠️ ONE INSTRUMENT, TWO INPUTS, ONE GRADER. The camera does not answer the question — it sets the
+ * same number a tap sets, and both land in `commit(fingers)`, which is the only grading sink. So the
+ * two paths cannot drift into grading differently, and the pure module's sweep covers both at once:
+ * `padChoices()` is derived from `MAX_FINGERS`, so the pad offers exactly what two hands can hold.
  *
  * ⚠️ WHY THIS CHAPTER AND NOT ANOTHER. It is the one the band had left with no material —
  * FitOut took the array-on-a-frame gesture — and its old form was the band's worst offender on
@@ -24,8 +29,18 @@
  * child lowering their hand. `useFingerCounter` reports hand PRESENCE alongside the count and
  * nothing commits while `hands === 0`.
  *
- * ⚠️ CAMERA-ONLY, BY FOUNDER DECISION. There is no tap fallback. A device with no camera, or a
- * declined permission, gets an honest dead end (`CamGate`) rather than a blank screen.
+ * ⚠️ THE TAP PATH IS NOT A DEGRADED MODE, AND IT COMMITS DIFFERENTLY ON PURPOSE. A tap is CONSUMED;
+ * a hand is still up when the next question opens. So the camera needs two guards a tap does not —
+ * hold still for DWELL_MS, and ignore the reading held over from the last round — and pushing a tap
+ * through them would silently swallow it, since a tap matching the held-over reading reads as
+ * held-over. A tap therefore calls `commit` directly. `useDwell` is still called unconditionally,
+ * merely not live: branching above a hook changes the hook count and tears the chapter into the
+ * error boundary, which this repo has shipped once already.
+ *
+ * ⚠️ AND THE TAP PATH NEVER STARTS THE CAMERA. `start()` is not called, so there is no permission
+ * prompt and MediaPipe's ~6 MB of WASM + model is never fetched — this app is local-first, and a
+ * child who is not using the camera should not pay for it. The pick is remembered per DEVICE
+ * (`infra/storage/handInput`), because "no camera" is a household answer, not a per-learner one.
  *
  * ⚠️ VERIFICATION. Everything above the pure module is EYEBALL-ONLY — no gate can feed a webcam.
  * The dev-only `window.__miloFingers(n, hands)` (stripped from production, like FloorPlot's
@@ -41,9 +56,10 @@ import {
 import { useViewport } from '@/shared/hooks/useViewport'
 import FitBox from './FitBox'
 import { useFingerCounter } from '@/infra/ar/useFingerCounter'
+import { getHandInput, setHandInput, type HandInput } from '@/infra/storage/handInput'
 import {
-  makeRound, graded, missFor, nudgeFor, explainBeats, deal, DEMO, GUIDED,
-  type FlRound, type Tier,
+  makeRound, graded, missFor, nudgeFor, explainBeats, deal, padChoices, instructionFor, sayFor,
+  DEMO, GUIDED, type FlRound, type Tier,
 } from './factors'
 
 const ACCENT = ACCENTS.indigo
@@ -54,8 +70,12 @@ const DWELL_MS = 1200
 // The camera is opened ONCE for the whole chapter — re-opening it per round would re-prompt and
 // re-initialise MediaPipe — so the reading is lifted to the top and read through context. That
 // also lets SkillBeat construct `Play` itself without any of this being drilled through it.
-interface Hand { fingers: number; hands: number }
-const HandCtx = createContext<Hand>({ fingers: 0, hands: 0 })
+// ⚠️ `input` rides in the SAME context rather than being an argument to `makeBeat()`. The beat is
+// memoised and SkillBeat rebuilds its round whenever the beat's identity changes, so threading the
+// input through it would regenerate the question under a child who was mid-answer. It cannot change
+// during play anyway — it is picked on the intro card or at the camera gate, both before the lab.
+interface Hand { fingers: number; hands: number; input: HandInput }
+const HandCtx = createContext<Hand>({ fingers: 0, hands: 0, input: 'hand' })
 const useHand = () => useContext(HandCtx)
 
 /**
@@ -190,17 +210,20 @@ const CAM_BOTTOM = (short: boolean) => (short ? 8 : 14)
  * corner. Reserving only for the readout let a wide bench run under the camera panel, which is
  * opaque and drawn above it. Take whichever is taller.
  */
-const BOT_BAND = (short: boolean) => Math.max(
-  short ? 112 : 152,                                          // note lane + dwell ring
-  CAM_W(short) * 0.75 + CAM_BOTTOM(short) + (short ? 6 : 10),  // the self-view
-)
+// On the TAP path there is no self-view at all, so only the first term applies — a pad row is
+// shorter than the dwell ring it replaces, so the base covers it with room to spare.
+const BOT_BAND = (short: boolean, cam: boolean) => {
+  const base = short ? 112 : 152                                        // note lane + ring or pad
+  if (!cam) return base
+  return Math.max(base, CAM_W(short) * 0.75 + CAM_BOTTOM(short) + (short ? 6 : 10)) // the self-view
+}
 
-function Stage({ children, short = false, bottomExtra = 0, promptBottom = 0 }: { children: React.ReactNode; short?: boolean; bottomExtra?: number; promptBottom?: number }) {
+function Stage({ children, short = false, cam = true, bottomExtra = 0, promptBottom = 0 }: { children: React.ReactNode; short?: boolean; cam?: boolean; bottomExtra?: number; promptBottom?: number }) {
   const { w: vw, h: vh } = useViewport()
   // The constant is only a floor for the first paint; once the card has reported its real bottom
   // edge that wins, because the card's height depends on how the question wrapped.
   const top = Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12))
-  const bot = BOT_BAND(short) + bottomExtra
+  const bot = BOT_BAND(short, cam) + bottomExtra
   const band = Math.max(90, vh - top - bot)
   return (
     <div style={{ position: 'fixed', left: 0, right: 0, top: top + band / 2, transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw' }}>
@@ -209,34 +232,82 @@ function Stage({ children, short = false, bottomExtra = 0, promptBottom = 0 }: {
   )
 }
 
+/**
+ * ⚠️ Milo stands bottom-left (`PtMilo left={9}`) and the bottom band is where the answer surface now
+ * lives, so on a short frame he sat squarely over the ✊ — which is the PRIME answer, i.e. the one
+ * button a child has to be able to find. The tap still landed (he is `pointerEvents: none`), so no
+ * gate and no click-through check could see it; only measuring his box against the pad's did.
+ * He gets a lane, and the pad centres in what is left.
+ */
+const MILO_LANE = (short: boolean) => (short ? 104 : 12)
+
 // ─── the hand readout ──────────────────────────────────────────────────────────────────
 /**
  * Says only how many fingers were READ, and how far the commit has armed. It must never say
  * whether that number is right — that is the hot/cold rule, and here it would also hand over
  * the whole answer, since the child could just sweep counts until the readout went green.
  */
-function HandHud({ progress, note, short, action }: { progress: number; note: string | null; short?: boolean; action?: React.ReactNode }) {
-  const { fingers, hands } = useHand()
+/**
+ * The TAP path's answer surface — the same span two hands can hold, `0` drawn as the fist it means.
+ *
+ * ⚠️ A TAP COMMITS ON THE SPOT, with no dwell and no arming guard. A tap is CONSUMED where a hand is
+ * still up when the next question opens, so the two guards the camera needs (hold still; ignore the
+ * reading held over from the last round) have nothing to protect against here — and routing a tap
+ * through them would silently swallow it, because a tap whose value matched the held-over reading
+ * would be read as held-over.
+ *
+ * ⚠️ AND NOTHING HERE MAY CHANGE COLOUR BEFORE THE COMMIT. Marking a choice as picked, or lighting it
+ * on hover, is the hot/cold rule broken — the child could sweep the pad watching for a reaction. The
+ * bench answers, once, after.
+ */
+function TapPad({ onPick, short, disabled }: { onPick: (n: number) => void; short?: boolean; disabled?: boolean }) {
+  // 44px is the tap floor and does not move; the GAP is what gives, so that eleven buttons still
+  // make one row inside the width Milo leaves (see MILO_LANE). A second row would grow up into the
+  // bench, and the bottom band is a reserved constant rather than a measured one.
+  const size = short ? 44 : 52
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: short ? 4 : 7, pointerEvents: disabled ? 'none' : 'auto', opacity: disabled ? 0.45 : 1, maxWidth: 'min(96vw, 680px)' }}>
+      {padChoices().map(n => (
+        <button key={n} onClick={() => onPick(n)} aria-label={n === 0 ? 'Nothing fits' : `${n} rows`}
+          style={{ width: size, height: size, borderRadius: 12, cursor: 'pointer', fontFamily: PT.mono, fontWeight: 800,
+            fontSize: short ? 17 : 20, color: PT.ink, background: PT.panel, border: `1px solid ${ACCENT.base}66` }}>
+          {n === 0 ? '✊' : n}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function HandHud({ progress, note, short, action, onPick, disabled }: { progress: number; note: string | null; short?: boolean; action?: React.ReactNode; onPick?: (n: number) => void; disabled?: boolean }) {
+  const { fingers, hands, input } = useHand()
   const size = short ? 60 : 78
   const r = size / 2 - 5
   const c = 2 * Math.PI * r
   return (
-    <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? 8 : '3%', zIndex: 34, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none', padding: '0 12px' }}>
+    <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? 8 : '3%', zIndex: 34, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none', paddingLeft: MILO_LANE(!!short), paddingRight: 12 }}>
       {note && (
         <div style={{ fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 13 : 15, color: PT.ink, background: PT.panel, border: `1px solid ${ACCENT.base}66`, borderRadius: 999, padding: short ? '5px 14px' : '7px 18px', textAlign: 'center', maxWidth: 'min(92vw, 640px)' }}>{note}</div>
       )}
+      {/* ⚠️ The action sits on its OWN line, above the answer surface, and never beside it. Sharing a
+          flex row with the pad ate enough width at 640×320 to wrap 11 buttons onto two rows, which
+          landed 8px off the bottom edge and only cleared the bench by luck — the bottom band is a
+          reserved constant, so the pad's height has to be predictable rather than merely lucky. */}
+      {action && <div style={{ display: 'flex', justifyContent: 'center' }}>{action}</div>}
       <div style={{ display: 'flex', alignItems: 'center', gap: short ? 12 : 18 }}>
-      <div style={{ position: 'relative', width: size, height: size }}>
-        <svg width={size} height={size} style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={PT.lineStrong} strokeWidth={4} />
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={ACCENT.base} strokeWidth={4}
-            strokeDasharray={c} strokeDashoffset={c * (1 - progress)} strokeLinecap="round" />
-        </svg>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: PT.mono, fontWeight: 800, fontSize: short ? 24 : 30, color: hands ? PT.ink : PT.inkMute }}>
-          {hands === 0 ? '–' : fingers === 0 ? '✊' : fingers}
-        </div>
-      </div>
-      {action}
+      {input === 'tap' && onPick
+        ? <TapPad onPick={onPick} short={short} disabled={disabled} />
+        : (
+          <div style={{ position: 'relative', width: size, height: size }}>
+            <svg width={size} height={size} style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+              <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={PT.lineStrong} strokeWidth={4} />
+              <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={ACCENT.base} strokeWidth={4}
+                strokeDasharray={c} strokeDashoffset={c * (1 - progress)} strokeLinecap="round" />
+            </svg>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: PT.mono, fontWeight: 800, fontSize: short ? 24 : 30, color: hands ? PT.ink : PT.inkMute }}>
+              {hands === 0 ? '–' : fingers === 0 ? '✊' : fingers}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -261,19 +332,20 @@ interface Reveal { rows: number; verdict: string; ok: boolean }
 const FlPlay: React.FC<{ data: FlRound; mode: 'guided' | 'practice'; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { h: vh } = useViewport()
   const short = vh < 470
+  const { input } = useHand()
   const [reveal, setReveal] = useState<Reveal | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [promptBottom, setPromptBottom] = useState(0)
   const erred = useRef(false), done = useRef(false)
 
-  useEffect(() => { speak(data.say) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { speak(sayFor(data, input)) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
 
   const commit = useCallback((fingers: number) => {
     if (done.current || reveal) return
 
     // A count that is not a real attempt redirects instead of scoring — the same call the
     // colouring chapter makes for a tap that lands on the ink.
-    const nudge = nudgeFor(data, fingers)
+    const nudge = nudgeFor(data, fingers, input)
     if (nudge) { setNote(nudge); speak(nudge); return }
 
     const ok = graded(data, fingers)
@@ -298,19 +370,24 @@ const FlPlay: React.FC<{ data: FlRound; mode: 'guided' | 'practice'; onComplete:
       // Clear the bench so the next attempt is a fresh commit, not an edit of the last one.
       window.setTimeout(() => { setReveal(null) }, 1900)
     }
-  }, [data, mode, onComplete, reveal])
+  }, [data, mode, onComplete, reveal, input])
 
-  const progress = useDwell(commit, !reveal && !done.current)
+  // ⚠️ Called UNCONDITIONALLY — branching above it would change the hook count between input modes
+  // and tear the chapter into the error boundary, which this repo has shipped once already. On the
+  // tap path it is simply never live, so it costs a dead timer and nothing else.
+  const progress = useDwell(commit, input === 'hand' && !reveal && !done.current)
 
   return (
     <>
-      <Stage short={short} promptBottom={promptBottom}>
+      <Stage short={short} cam={input === 'hand'} promptBottom={promptBottom}>
         <Bench n={data.n} rows={reveal?.rows ?? 0} word={data.qType === 'evenOdd' ? 'pair' : 'row'}
           verdict={reveal?.verdict ?? null} verdictOk={reveal?.ok} />
       </Stage>
-      <PromptCard tag={data.tag} text={data.prompt} instruction={reveal ? undefined : data.instruction} accent={ACCENT} short={short} onMeasure={setPromptBottom} />
-      <HandHud progress={reveal ? 0 : progress} short={short}
-        note={note ?? (mode === 'guided' && !reveal ? 'Hold your hand still to lock it in.' : null)} />
+      <PromptCard tag={data.tag} text={data.prompt} instruction={reveal ? undefined : instructionFor(data, input)} accent={ACCENT} short={short} onMeasure={setPromptBottom} />
+      <HandHud progress={reveal ? 0 : progress} short={short} onPick={commit} disabled={!!reveal || done.current}
+        note={note ?? (mode === 'guided' && !reveal
+          ? (input === 'tap' ? 'Tap how many rows fit.' : 'Hold your hand still to lock it in.')
+          : null)} />
     </>
   )
 }
@@ -319,6 +396,7 @@ const FlPlay: React.FC<{ data: FlRound; mode: 'guided' | 'practice'; onComplete:
 const FlExplain: React.FC<{ data: FlRound; onDone: () => void }> = ({ data, onDone }) => {
   const { h: vh } = useViewport()
   const short = vh < 470
+  const { input } = useHand()
   const beats = useMemo(() => explainBeats(data), [data])
   const [i, setI] = useState(0)
   const [promptBottom, setPromptBottom] = useState(0)
@@ -337,7 +415,7 @@ const FlExplain: React.FC<{ data: FlRound; onDone: () => void }> = ({ data, onDo
   const { stranded } = deal(data.n, b.rows)
   return (
     <>
-      <Stage short={short} promptBottom={promptBottom}>
+      <Stage short={short} cam={input === 'hand'} promptBottom={promptBottom}>
         <Bench n={data.n} rows={b.rows} word={data.qType === 'evenOdd' ? 'pair' : 'row'}
           verdict={i === beats.length - 1 ? (b.leftover || stranded > 0 ? 'gap' : 'no gaps') : null}
           verdictOk={!b.leftover && stranded === 0} />
@@ -349,21 +427,27 @@ const FlExplain: React.FC<{ data: FlRound; onDone: () => void }> = ({ data, onDo
 
 // ─── explore: the bench reflows LIVE, because nothing is being asked ───────────────────
 function ExploreBench({ onContinue, short }: { onContinue: () => void; short?: boolean }) {
-  const { fingers, hands } = useHand()
+  const { fingers, hands, input } = useHand()
   const [n] = useState(12)
+  const [tapRows, setTapRows] = useState(0)
   const [promptBottom, setPromptBottom] = useState(0)
-  const { stranded } = deal(n, fingers)
+  // Nothing is being ASKED here, so the bench may follow the input live on either path — that is the
+  // teaching-versus-measuring line, and it is why the pad sets a row count instead of committing.
+  const rows = input === 'tap' ? tapRows : (hands ? fingers : 0)
+  const { stranded } = deal(n, rows)
   return (
     <>
-      <Stage short={short} promptBottom={promptBottom}>
-        <Bench n={n} rows={hands ? fingers : 0}
-          verdict={hands && fingers >= 2 ? (stranded === 0 ? 'no gaps' : `${stranded} left over`) : null}
+      <Stage short={short} cam={input === 'hand'} promptBottom={promptBottom}>
+        <Bench n={n} rows={rows}
+          verdict={rows >= 2 ? (stranded === 0 ? 'no gaps' : `${stranded} left over`) : null}
           verdictOk={stranded === 0} />
       </Stage>
       <PromptCard tag="Try it" accent={ACCENT} short={short}
-        text={`Hold up some fingers. The bench splits ${n} into that many rows — watch which counts fill up with no gaps.`}
+        text={input === 'tap'
+          ? `Tap a number. The bench splits ${n} into that many rows — watch which counts fill up with no gaps.`
+          : `Hold up some fingers. The bench splits ${n} into that many rows — watch which counts fill up with no gaps.`}
         onMeasure={setPromptBottom} />
-      <HandHud progress={0} note={null} short={short} action={
+      <HandHud progress={0} note={null} short={short} onPick={setTapRows} action={
         <button onClick={onContinue} style={{ pointerEvents: 'auto', fontFamily: PT.sans, fontWeight: 800, fontSize: short ? 14 : 16, padding: short ? '9px 20px' : '12px 28px', borderRadius: 999, border: `1px solid ${ACCENT.base}`, background: ACCENT.soft, color: ACCENT.base, cursor: 'pointer' }}>
           I&apos;ve got it →
         </button>} />
@@ -372,8 +456,15 @@ function ExploreBench({ onContinue, short }: { onContinue: () => void; short?: b
 }
 
 // ─── the camera gate ───────────────────────────────────────────────────────────────────
-/** Camera-only chapter: a refusal or a missing camera is an honest dead end, not a blank screen. */
-function CamGate({ status, error, onRetry, onExit }: { status: string; error: string; onRetry: () => void; onExit: () => void }) {
+/**
+ * The camera did not start — and this is no longer a dead end.
+ *
+ * ⚠️ It used to be one: the chapter shipped camera-only, so a declined permission or a device without
+ * a camera ended the lesson. `onTaps` is the way through, and it is offered FIRST because at this
+ * point the child has already tried the camera and it did not work; asking them to try again before
+ * offering the door that works is the wrong order.
+ */
+function CamGate({ status, error, onRetry, onTaps, onExit }: { status: string; error: string; onRetry: () => void; onTaps: () => void; onExit: () => void }) {
   const denied = /NotAllowed|Permission/i.test(error)
   const missing = /NotFound|Overconstrained|NotReadable/i.test(error)
   return (
@@ -385,13 +476,14 @@ function CamGate({ status, error, onRetry, onExit }: { status: string; error: st
         </div>
         <div style={{ fontFamily: PT.sans, fontSize: 15, color: PT.inkMute, lineHeight: 1.5 }}>
           {status === 'loading' ? 'One moment.'
-            : denied ? 'This lab is answered with your fingers, so it needs the camera. Allow it in your browser and try again.'
-              : missing ? 'This lab is answered by holding up your fingers, so it needs a camera. Try it on a device that has one.'
-                : 'Something got in the way. Have another go.'}
+            : denied ? 'Milo can split the numbers with your fingers, or you can tap them instead — both work.'
+              : missing ? 'No camera on this device — no problem. You can tap the numbers instead.'
+                : 'Something got in the way. Have another go, or tap the numbers instead.'}
         </div>
         {status !== 'loading' && (
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 18 }}>
-            <button onClick={onRetry} style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: 15, padding: '10px 22px', borderRadius: 999, border: `1px solid ${ACCENT.base}`, background: ACCENT.base, color: '#06121f', cursor: 'pointer' }}>Try again</button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 18 }}>
+            <button onClick={onTaps} style={{ fontFamily: PT.sans, fontWeight: 800, fontSize: 15, padding: '10px 22px', borderRadius: 999, border: `1px solid ${ACCENT.base}`, background: ACCENT.base, color: '#06121f', cursor: 'pointer' }}>Tap instead →</button>
+            <button onClick={onRetry} style={{ fontFamily: PT.sans, fontWeight: 700, fontSize: 15, padding: '10px 20px', borderRadius: 999, border: `1px solid ${PT.lineStrong}`, background: 'transparent', color: PT.inkMute, cursor: 'pointer' }}>Try the camera again</button>
             <button onClick={onExit} style={{ fontFamily: PT.sans, fontWeight: 700, fontSize: 15, padding: '10px 20px', borderRadius: 999, border: `1px solid ${PT.lineStrong}`, background: 'transparent', color: PT.inkMute, cursor: 'pointer' }}>Back</button>
           </div>
         )}
@@ -401,7 +493,12 @@ function CamGate({ status, error, onRetry, onExit }: { status: string; error: st
 }
 
 // ─── beat ──────────────────────────────────────────────────────────────────────────────
-function makeBeat(): Beat<FlRound> {
+/**
+ * ⚠️ The input arrives as a REF, not a value. `SkillBeat` rebuilds its round whenever the beat's
+ * identity changes, so a beat memoised on the input would regenerate the question the moment a child
+ * switched surfaces. A ref is stable, and `say` is only read at speak time, so it is always current.
+ */
+function makeBeat(inputRef: React.RefObject<HandInput>): Beat<FlRound> {
   return {
     skillId: 'factorsMultiples', rounds: 10, reteachAfter: 3, walkEvery: 99,
     ownsFeedback: true,
@@ -411,7 +508,7 @@ function makeBeat(): Beat<FlRound> {
     // L2+ and mastery can end the run in ~6 rounds. See Beat.coverage.
     coverage: { of: d => d.qType, all: ['evenOdd', 'multiple', 'factor', 'prime'] },
     prompt: () => '',   // the chapter draws its own richer prompt card
-    say: d => d.say,
+    say: d => sayFor(d, inputRef.current),
     Play: ({ data, onSubmit }) => <FlPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <FlExplain data={data} onDone={onDone} />,
   }
@@ -424,7 +521,11 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
   const router = useRouter()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
-  const [hand, setHand] = useState<Hand>({ fingers: 0, hands: 0 })
+  const [reading, setReading] = useState({ fingers: 0, hands: 0 })
+  // The device's remembered pick, or 'hand' until it has one — the intro offers both either way, so
+  // an un-asked device is never quietly put in front of a camera.
+  const [input, setInput] = useState<HandInput>('hand')
+  useEffect(() => { const saved = getHandInput(); if (saved) setInput(saved) }, [])
   const { h: vh } = useViewport()
   const short = vh < 470
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -432,9 +533,14 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
 
-  const onCount = useCallback((fingers: number, hands: number) => setHand({ fingers, hands }), [])
+  const onCount = useCallback((fingers: number, hands: number) => setReading({ fingers, hands }), [])
   const marker = useMemo(() => ({ fill: ACCENT.base, ink: '#06121f' }), [])
   const { status, error, start, stop } = useFingerCounter(videoRef, canvasRef, { onCount, marker })
+  const hand = useMemo<Hand>(() => ({ ...reading, input }), [reading, input])
+
+  /** Switch to taps: remember it, and make sure the camera is not left running. */
+  const useTaps = useCallback(() => { setHandInput('tap'); setInput('tap'); stop() }, [stop])
+  const useCamera = useCallback(() => { setHandInput('hand'); setInput('hand'); start() }, [start])
 
   const exit = useCallback(() => { stopSpeech(); stop(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit, stop])
   const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
@@ -442,7 +548,8 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
     if (onFinish) onFinish(c, w, mastered); else exit()
   }, [onFinish, exit, stop])
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
-  const beat = useMemo(() => makeBeat(), [])
+  const inputRef = useRef<HandInput>(input); inputRef.current = input
+  const beat = useMemo(() => makeBeat(inputRef), [])
 
   // Dev-only drive hook — a webcam cannot be fed headlessly, so without this nothing past the
   // intro is verifiable at all. Stripped from production exactly like FloorPlot's __miloPace.
@@ -451,11 +558,14 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') return
     ;(window as unknown as Record<string, unknown>).__miloFingers =
-      (fingers: number, hands = 1) => { setFakeCam(true); setHand({ fingers, hands }) }
+      (fingers: number, hands = 1) => { setFakeCam(true); setReading({ fingers, hands }) }
     return () => { delete (window as unknown as Record<string, unknown>).__miloFingers }
   }, [])
 
   const camReady = status === 'running' || (process.env.NODE_ENV !== 'production' && fakeCam)
+  const onCam = input === 'hand'
+  /** The lab opens when its answer surface is usable — which on the tap path is immediately. */
+  const ready = onCam ? camReady : true
   const inLab = phase !== 'intro'
 
   return (
@@ -465,10 +575,19 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
         <LabBackdrop accent={ACCENT} />
         <BackChip onExit={exit} />
 
+        {/* Both doors are offered every time, and the device's last pick decides which is the big
+            button — never which is the ONLY one. A parent who says no to the camera on Monday must
+            not have to say it again, and a child who wants it back must not have to hunt. */}
         {phase === 'intro' && (
-          <IntroCard title="Number Lab" accent={ACCENT} cta="Turn on the camera" short={short}
-            body="Milo splits numbers on the bench — and YOUR HAND is the splitter. Hold up a number of rows and the bench deals them out. If they fill up with no gaps, you found a factor. Make a fist if nothing fits at all."
-            onStart={() => { unlockSpeech(); setPhase('explore'); start() }} />
+          <IntroCard title="Number Lab" accent={ACCENT} short={short}
+            cta={onCam ? 'Turn on the camera' : 'Start tapping'}
+            body={onCam
+              ? 'Milo splits numbers on the bench — and YOUR HAND is the splitter. Hold up a number of rows and the bench deals them out. If they fill up with no gaps, you found a factor. Make a fist if nothing fits at all.'
+              : 'Milo splits numbers on the bench — and YOU choose how many rows. Tap a number and the bench deals them out. If they fill up with no gaps, you found a factor. Tap the fist if nothing fits at all.'}
+            onStart={() => { unlockSpeech(); setPhase('explore'); if (onCam) start() }}
+            alt={onCam
+              ? { label: 'Use taps instead', onPick: () => { unlockSpeech(); useTaps(); setPhase('explore') } }
+              : { label: 'Use the camera instead', onPick: () => { unlockSpeech(); useCamera(); setPhase('explore') } }} />
         )}
 
         {/* ⚠️ MOUNTED AS SOON AS WE ENTER THE LAB, NOT WHEN THE CAMERA SUCCEEDS. `openCamera` needs
@@ -476,12 +595,12 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
             a null element, so the child saw "the camera did not start" while Chrome said "Using
             now". It is merely INVISIBLE until running — it must keep its layout box, because the
             detect loop reads video.clientWidth/clientHeight. */}
-        {inLab && <CamPanel videoRef={videoRef} canvasRef={canvasRef} short={short} hidden={!camReady} />}
-        {inLab && !camReady && (
-          <CamGate status={status} error={error} onRetry={start} onExit={exit} />
+        {inLab && onCam && <CamPanel videoRef={videoRef} canvasRef={canvasRef} short={short} hidden={!camReady} />}
+        {inLab && onCam && !camReady && (
+          <CamGate status={status} error={error} onRetry={start} onTaps={useTaps} onExit={exit} />
         )}
 
-        {inLab && camReady && (<>
+        {inLab && ready && (<>
           {phase === 'explore' && <ExploreBench short={short} onContinue={() => setPhase('demo')} />}
 
           {phase === 'demo' && (<>
@@ -491,7 +610,7 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
           </>)}
 
           {phase === 'guided' && (<>
-            {Banner('Your turn · hold up the rows', short)}
+            {Banner(onCam ? 'Your turn · hold up the rows' : 'Your turn · tap the rows', short)}
             <FlPlay key="guided" data={GUIDED} mode="guided" onComplete={() => setPhase('practice')} />
           </>)}
 

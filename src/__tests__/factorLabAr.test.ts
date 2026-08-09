@@ -12,11 +12,16 @@
 import { describe, it, expect } from 'vitest'
 import {
   MAX_FINGERS, makeRound, mkEvenOdd, mkMultiple, mkSplit, graded, missFor, nudgeFor,
-  explainBeats, deal, showableRows, isPrime, factorsOf, DEMO, GUIDED, COMPOSITES, PRIMES,
+  explainBeats, deal, padChoices, instructionFor, sayFor, showableRows, isPrime, factorsOf,
+  DEMO, GUIDED, COMPOSITES, PRIMES,
   type FlRound, type Tier,
 } from '@/features/chapters/story/factors'
 
 const TIERS: Tier[] = [1, 2, 3]
+/** Both answer surfaces. Every wording rule has to hold on each — a chip that names a gesture the
+ *  child's surface does not have is the 12–14 audit's headline fault, and it is invisible to a
+ *  single-mode check. */
+const INPUTS = ['hand', 'tap'] as const
 /** Enough draws that every branch of every tier's pool is hit many times over. */
 const sweep = (fn: (r: FlRound, d: Tier) => void) => {
   for (const d of TIERS) for (let i = 0; i < 800; i++) fn(makeRound(d), d)
@@ -49,6 +54,42 @@ describe('the ten-finger ceiling', () => {
       expect(r.accepts.length).toBeGreaterThan(0)
       for (const a of r.accepts) expect(a).toBeLessThanOrEqual(MAX_FINGERS)
     }
+  })
+})
+
+/**
+ * The chapter answers with the CAMERA or by TAP, and the two must be the same question. The camera's
+ * span is the ceiling above; this pins the pad to exactly that span, so a round can never be
+ * answerable by one child and unanswerable by the other — a defect only half the users would meet,
+ * which is the kind that survives a drive.
+ */
+describe('the tap path offers the same answers as the hand', () => {
+  it('the pad is exactly 0..MAX_FINGERS, with 0 for the fist', () => {
+    expect(padChoices()).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    expect(padChoices()[0]).toBe(0)
+    expect(padChoices().at(-1)).toBe(MAX_FINGERS)
+  })
+  it('every round the generator can draw is answerable ON THE PAD', () => {
+    const pad = padChoices()
+    sweep(r => {
+      expect(r.accepts.some(a => pad.includes(a))).toBe(true)
+    })
+  })
+  it('and so are the demo and guided rounds', () => {
+    const pad = padChoices()
+    for (const r of [...DEMO, GUIDED]) expect(r.accepts.some(a => pad.includes(a))).toBe(true)
+  })
+  it('the pad grades through the SAME grader — no second copy of the rule', () => {
+    sweep(r => {
+      for (const n of padChoices()) expect(graded(r, n)).toBe(r.accepts.includes(n))
+    })
+  })
+  it('a pad tap that is a redirect rather than an answer still redirects', () => {
+    // The camera path leans on nudgeFor because a hand DRIFTS through 1 on its way up. A tap does
+    // not drift — but a child can still tap 1 deliberately, and if the nudge stopped firing there it
+    // would become a scored miss on the tap path and a redirect on the other.
+    const split = mkSplit(12)
+    expect(nudgeFor(split, 1)).not.toBeNull()
   })
 })
 
@@ -104,7 +145,7 @@ describe('the round type must not leak the answer', () => {
     expect(prime.qType).toBe('prime')
     // Same shape, differing only in the number being split.
     expect(composite.prompt.replace('12', 'N')).toBe(prime.prompt.replace('13', 'N'))
-    expect(composite.say.replace(/12/g, 'N')).toBe(prime.say.replace(/13/g, 'N'))
+    for (const i of INPUTS) expect(sayFor(composite, i).replace(/12/g, 'N')).toBe(sayFor(prime, i).replace(/13/g, 'N'))
   })
   it('and their miss lines are identical, so a retry cannot reveal the type either', () => {
     expect(missFor(mkSplit(12))).toBe(missFor(mkSplit(13)))
@@ -308,7 +349,7 @@ describe('question clarity — the three zones', () => {
   it('every round has both a context line and an action chip', () => {
     for (const r of ALL()) {
       expect(r.prompt.length).toBeGreaterThan(20)
-      expect(r.instruction.length).toBeGreaterThan(10)
+      for (const i of INPUTS) expect(instructionFor(r, i).length).toBeGreaterThan(10)
     }
   })
 
@@ -322,21 +363,49 @@ describe('question clarity — the three zones', () => {
 
   it('the action chip is one verb-led sentence, not a paragraph', () => {
     for (const r of ALL()) {
-      expect(r.instruction).toMatch(/^(Work out|Hold up|Count|Split|Make)\b/)
-      expect(r.instruction.length).toBeLessThan(110)
+      for (const i of INPUTS) {
+        expect(instructionFor(r, i)).toMatch(/^(Work out|Hold up|Count|Split|Make|Tap)\b/)
+        expect(instructionFor(r, i).length).toBeLessThan(130)
+      }
     }
+  })
+
+  it('the chip names the surface the child actually has, and never the other one', () => {
+    // ⚠️ THE FAULT THIS EXISTS FOR: the chapter shipped camera-only, so every chip said "hold up
+    // that many fingers". Adding a tap path without re-wording them tells half the children to
+    // perform a gesture their surface cannot do — the 12–14 audit's headline defect, where nine
+    // chapters said "crank the gear" with no crank on screen. Both zone-3 renderers are swept
+    // because a single-mode check cannot see it: the wording is valid, just for somebody else.
+    for (const r of ALL()) {
+      const hand = instructionFor(r, 'hand'), tap = instructionFor(r, 'tap')
+      expect(hand).toMatch(/hold up/i)
+      expect(hand).not.toMatch(/\btap\b/i)
+      expect(tap).toMatch(/\btap\b/i)
+      expect(tap).not.toMatch(/hold up|fingers|your hand/i)
+      // and what Milo SAYS has to agree with what the chip shows, or the two channels contradict
+      expect(sayFor(r, 'tap')).not.toMatch(/hold up|fingers/i)
+      expect(sayFor(r, 'hand')).not.toMatch(/\btap\b/i)
+    }
+  })
+
+  it('a nudge names the surface too — it is the one line a child reads mid-attempt', () => {
+    const mult = mkMultiple(3, 4)
+    expect(nudgeFor(mult, 0, 'hand')).toMatch(/hold up/i)
+    expect(nudgeFor(mult, 0, 'tap')).not.toMatch(/hold up|fingers/i)
   })
 
   it('a factor round and a prime round give byte-identical instructions', () => {
     // The chip is the likeliest place for the type to leak — it is where the fist gets mentioned.
-    expect(mkSplit(12).instruction).toBe(mkSplit(13).instruction)
+    for (const i of INPUTS) expect(instructionFor(mkSplit(12), i)).toBe(instructionFor(mkSplit(13), i))
     expect(mkSplit(12).prompt.replace(/12/g, 'N')).toBe(mkSplit(13).prompt.replace(/13/g, 'N'))
   })
 
   it('what Milo SAYS carries both zones — the spoken line is the only one on a silent device', () => {
     for (const r of ALL()) {
-      expect(r.say).toContain(r.instruction)
-      expect(r.say.length).toBeGreaterThan(r.instruction.length)
+      for (const i of INPUTS) {
+        expect(sayFor(r, i)).toContain(instructionFor(r, i))
+        expect(sayFor(r, i).length).toBeGreaterThan(instructionFor(r, i).length)
+      }
     }
   })
 })

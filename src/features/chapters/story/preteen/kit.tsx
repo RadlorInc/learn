@@ -214,7 +214,12 @@ export function ExploreScaffold({ title, intro, accent, short, onContinue, conti
 }
 
 // ─── Intro splash ──────────────────────────────────────────────────────────────────────
-export function IntroCard({ title, body, accent, cta = 'Start', onStart, short }: { title: string; body: string; accent: Accent; cta?: string; onStart: () => void; short?: boolean }) {
+/**
+ * `alt` is an OPTIONAL second way in, offered beside the main one — an AR chapter uses it to offer
+ * taps instead of the camera. Deliberately quiet (no fill, muted ink) so it reads as the other door
+ * rather than as a way to skip the chapter, and a caller that passes none renders exactly as before.
+ */
+export function IntroCard({ title, body, accent, cta = 'Start', onStart, short, alt }: { title: string; body: string; accent: Accent; cta?: string; onStart: () => void; short?: boolean; alt?: { label: string; onPick: () => void } }) {
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, padding: '0 6vw' }}>
       <div style={{ position: 'relative', width: CARD_W, background: PT.panel, backdropFilter: 'blur(8px)', border: `1px solid ${accent.base}55`, borderRadius: 18, padding: '20px 24px 24px', boxShadow: `0 0 30px ${accent.base}22, 0 16px 40px rgba(0,0,0,0.5)`, textAlign: 'center' }}>
@@ -223,7 +228,12 @@ export function IntroCard({ title, body, accent, cta = 'Start', onStart, short }
         <h2 style={{ margin: '0 0 8px', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 19 : 23, color: PT.ink }}>{title}</h2>
         <p style={{ margin: 0, fontFamily: PT.sans, fontWeight: 400, fontSize: short ? 14 : 16, lineHeight: 1.5, color: PT.inkSoft }}>{body}</p>
       </div>
-      <button onClick={onStart} style={{ padding: '13px 40px', borderRadius: 14, border: `1px solid ${accent.base}`, cursor: 'pointer', background: accent.base, color: '#06121f', fontFamily: PT.sans, fontWeight: 700, fontSize: 19, boxShadow: `0 0 26px ${accent.base}88`, letterSpacing: .3 }}>{cta} →</button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <button onClick={onStart} style={{ padding: '13px 40px', borderRadius: 14, border: `1px solid ${accent.base}`, cursor: 'pointer', background: accent.base, color: '#06121f', fontFamily: PT.sans, fontWeight: 700, fontSize: 19, boxShadow: `0 0 26px ${accent.base}88`, letterSpacing: .3 }}>{cta} →</button>
+        {alt && (
+          <button onClick={alt.onPick} style={{ padding: '10px 26px', borderRadius: 999, border: `1px solid ${PT.lineStrong}`, cursor: 'pointer', background: 'transparent', color: PT.inkMute, fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 14 : 15 }}>{alt.label}</button>
+        )}
+      </div>
     </div>
   )
 }

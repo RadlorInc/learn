@@ -34,10 +34,20 @@
  * winnable without looking at the number. It is a NUDGE, not a miss (`nudgeFor`) — the same
  * call the colouring chapter makes for a tap that lands on ink.
  */
-import { rint, shuffle } from '@/core/rand'
+import { rint } from '@/core/rand'
 
 /** The answer surface is two hands. Nothing may require more than this. */
 export const MAX_FINGERS = 10
+
+/**
+ * Every answer the TAP path offers — the same span two hands can hold, `0` being the fist.
+ *
+ * ⚠️ It is derived rather than typed out because the two input paths must offer the SAME answers:
+ * a pad narrower than the hand would make rounds unanswerable by tap that are answerable by camera,
+ * which is a defect only one of the two children would ever meet. The gate sweeps every round the
+ * generator can draw against this list.
+ */
+export const padChoices = (): number[] => Array.from({ length: MAX_FINGERS + 1 }, (_, i) => i)
 
 // ─── maths (moved here from the deleted FactorsLesson, its only consumer) ───────────────
 export function isPrime(n: number): boolean {
@@ -76,11 +86,39 @@ export interface FlRound {
    * fist if nothing fits.") and that run-on is precisely what a struggling child cannot parse.
    */
   prompt: string
-  instruction: string
-  say: string
+  /**
+   * ⚠️ ZONE 3 IS THE ONLY ZONE THAT KNOWS HOW THE CHILD ANSWERS, so the round stores the stem and
+   * the gesture is appended per input by `instructionFor` / `sayFor`. Baking "hold up that many
+   * fingers" into the round told a tap-path child to do something they cannot — the same fault the
+   * 12–14 audit found in nine chapters at once ("crank the gear" with no crank on screen).
+   * The stems end mid-sentence on purpose ("…, then"); nothing else in the round names a gesture.
+   */
+  work: string
+  spoken: string
+  /** Whether this round's answer can be "none fit" — i.e. whether the fist clause applies. */
+  fist: boolean
   /** EVERY finger count graded correct. A fist is 0. */
   accepts: number[]
 }
+
+/** How an answer is given, per input. The ONE place either gesture is named. */
+export type Answering = 'hand' | 'tap'
+const HOW: Record<Answering, string> = {
+  hand: 'hold up that many fingers',
+  tap: 'tap that many',
+}
+const NONE_FIT: Record<Answering, string> = {
+  hand: 'Make a fist if none fit.',
+  tap: 'Tap the fist if none fit.',
+}
+
+/** Zone 3 — the one verb-led action, in the wording of the surface actually on screen. */
+export const instructionFor = (r: FlRound, input: Answering): string =>
+  `${r.work} ${HOW[input]}.${r.fist ? ` ${NONE_FIT[input]}` : ''}`
+
+/** What Milo says — the same action clause, behind this round's spoken context. */
+export const sayFor = (r: FlRound, input: Answering): string =>
+  `${r.spoken} ${HOW[input]}.${r.fist ? ` ${NONE_FIT[input]}` : ''}`
 
 /**
  * The split wording, shared by `factor` and `prime` so the type cannot leak the answer.
@@ -89,15 +127,16 @@ export interface FlRound {
  */
 const splitContext = (n: number) =>
   `You have ${n} parts. They go out in equal rows — every row the same length, nothing left over. Some numbers will not split at all.`
-const SPLIT_DO = 'Work out how many rows fit, then hold up that many fingers. Make a fist if none fit.'
+const SPLIT_WORK = 'Work out how many rows fit, then'
 
 /** n ≤ 2·MAX_FINGERS + 1, so the pair count is always showable on two hands. */
 export function mkEvenOdd(n: number): FlRound {
   return {
     qType: 'evenOdd', n, base: 2, tag: 'Pair test',
     prompt: `You have ${n} parts. They leave the bench in pairs — two parts together.`,
-    instruction: 'Work out how many pairs you can make, then hold up that many fingers.',
-    say: `You have ${n} parts, and they leave in pairs. Work out how many pairs you can make, then hold up that many fingers.`,
+    work: 'Work out how many pairs you can make, then',
+    spoken: `You have ${n} parts, and they leave in pairs. Work out how many pairs you can make, then`,
+    fist: false,
     accepts: [Math.floor(n / 2)],
   }
 }
@@ -105,8 +144,9 @@ export function mkMultiple(base: number, k: number): FlRound {
   return {
     qType: 'multiple', n: base * k, base, tag: `Counting in ${base}s`,
     prompt: `You have ${base * k} parts. A crate holds ${base}, and every crate is filled right to the top.`,
-    instruction: 'Work out how many crates it takes, then hold up that many fingers.',
-    say: `You have ${base * k} parts and a crate holds ${base}. Work out how many crates it takes, then hold up that many fingers.`,
+    work: 'Work out how many crates it takes, then',
+    spoken: `You have ${base * k} parts and a crate holds ${base}. Work out how many crates it takes, then`,
+    fist: false,
     accepts: [k],
   }
 }
@@ -116,8 +156,9 @@ export function mkSplit(n: number): FlRound {
     qType: rows.length ? 'factor' : 'prime', n, base: 0,
     tag: `Splitting ${n}`,
     prompt: splitContext(n),
-    instruction: SPLIT_DO,
-    say: `${splitContext(n)} ${SPLIT_DO}`,
+    work: SPLIT_WORK,
+    spoken: `${splitContext(n)} ${SPLIT_WORK}`,
+    fist: true,
     accepts: rows.length ? rows : [0],
   }
 }
@@ -173,12 +214,12 @@ export const graded = (r: FlRound, fingers: number) => r.accepts.includes(finger
  * A count that is neither right nor a real attempt — redirect instead of scoring it.
  * Returns null when `fingers` is a genuine answer (right or wrong) and must be graded.
  */
-export function nudgeFor(r: FlRound, fingers: number): string | null {
+export function nudgeFor(r: FlRound, fingers: number, input: Answering = 'hand'): string | null {
   if (graded(r, fingers)) return null
   if ((r.qType === 'factor' || r.qType === 'prime') && fingers === 1) {
     return 'One row is the whole thing — that is not a split. Try more rows.'
   }
-  if (r.qType === 'multiple' && fingers === 0) return `Count up in ${r.base}s and hold up how many you need.`
+  if (r.qType === 'multiple' && fingers === 0) return `Count up in ${r.base}s and ${HOW[input]} to say how many you need.`
   return null
 }
 
@@ -248,5 +289,3 @@ export function deal(n: number, rows: number): { perRow: number; placed: number;
   const placed = perRow * rows
   return { perRow, placed, stranded: n - placed }
 }
-
-export { shuffle }
