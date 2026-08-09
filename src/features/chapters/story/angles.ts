@@ -37,6 +37,32 @@ export function reachable(): number[] {
 
 export const clampDeg = (d: number) => Math.max(MIN_DEG, Math.min(MAX_DEG, d))
 
+/**
+ * How far past the current step, as a share of STEP, a reading must travel before the step changes.
+ *
+ * ⚠️ HYSTERESIS IS NOT POLISH HERE. Quantizing a continuous reading to 5° puts a boundary every
+ * 2.5°, and a still hand's landmark noise is the same order — so without this a hand held ON a
+ * boundary dithers between two steps for ever, the "hold still" commit never arms, and the camera
+ * is a dead button, which the craft doc calls the worst outcome there is.
+ *
+ * ⚠️ AND THE NUMBER IS DERIVED, NOT TASTE. A hand settled on step C sees raw values up to
+ * `STEP/2 + noise` away from C, so suppressing noise of ±2.5° needs a hold band of at least 5° —
+ * i.e. a FULL step. So the reading changes exactly when the hand reaches the next step's own
+ * centre, which is also the easiest rule to explain: tilt to where you want it and it goes there.
+ * A weaker band (0.62 was the first guess) flips back and forth on a boundary and was caught by
+ * mutation-testing the gate, not by looking.
+ */
+export const SNAP_HOLD = 1
+
+/** The reachable angle a raw hand reading means, holding its current step until clearly past it. */
+export function snapDeg(raw: number, current: number | null): number {
+  const want = clampDeg(Math.round(raw / STEP) * STEP)
+  if (current === null) return want
+  const cur = clampDeg(current)
+  return Math.abs(raw - cur) < STEP * SNAP_HOLD ? cur : want
+}
+
+
 // ─── the fold ────────────────────────────────────────────────────────────────────────
 export type Shape = 'square' | 'rectangle' | 'equilateral' | 'isosceles' | 'pentagon' | 'hexagon'
 
@@ -91,6 +117,15 @@ export function candidateAxes(shape: Shape): number[] {
 
 export const isTrueAxis = (shape: Shape, axis: number) =>
   trueAxes(shape).some(a => Math.abs(norm(axis) - a) < 0.01)
+
+/**
+ * The candidate fold axis nearest a raw hand reading. Measured as an AXIS — 175° and 5° are 10°
+ * apart, not 170° — because a fold line has no head or tail and neither does a hand held along it.
+ */
+export function nearestAxis(cands: number[], raw: number): number {
+  const away = (a: number) => { const d = Math.abs(norm(a) - norm(raw)); return Math.min(d, 180 - d) }
+  return cands.reduce((best, a) => (away(a) < away(best) ? a : best), cands[0])
+}
 
 // ─── the cast ────────────────────────────────────────────────────────────────────────
 /**
@@ -171,6 +206,23 @@ export interface FoldRound {
   ask: string
 }
 export type Round = AngleRound | FoldRound
+
+/**
+ * ⚠️ THE HAND OWNS THE CONTINUOUS VALUE; TAPS OWN THE DISCRETE ACTIONS. That is the whole rule for
+ * mixing the two inputs, and it exists because they cannot share one: a live hand writes `deg` every
+ * frame, so a ◀ turn pressed beside it is overwritten before the child's finger leaves the button.
+ * With the camera on, whichever control writes the value the hand is writing is HIDDEN — the turn
+ * steppers on an angle round, the sweep steppers on a fold round — while Mark ✓ and Fold ✓ stay,
+ * because they are ACTIONS rather than values.
+ *
+ * ⚠️ AND THE HAND DOES NOT DRIVE AN EXACT-DEGREES ROUND. `job: 'degrees'` asks for exactly 85°, at
+ * tier 3, where the set-square guide has already retired — so there is nothing on screen to aim at
+ * and no readout to aim by (rule 1 forbids one while turning). A tilt held inside ±2.5° of an
+ * unmarked target for over a second is luck, not knowledge. Those rounds keep the steppers, which
+ * ARE the exact instrument: each tap is a countable 5°. The tilt answers the KIND question, which is
+ * what the chapter's anchor is about — too steep to push a bike up, too shallow to get any speed.
+ */
+export const handDrivesAngle = (r: Round) => r.type === 'angle' && r.job === 'kind'
 
 /** The set-square guide is a scaffold and it RETIRES at the top tier — TickTock's minute ring. */
 export const guideShown = (d: Tier) => d < 3

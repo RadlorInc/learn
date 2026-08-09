@@ -15,7 +15,17 @@
  *   3. the week strip holds its value back ONE round        (`onRound` fires on LOAD)
  *   4. a miss holds LONGER than a hit                       (2.6s was measured as too short)
  *
- * See docs/storyboards/angle-shop.md for the shot list.
+ * ⚠️ AND IT CAN NOW BE ANSWERED WITH THE HAND. Tilt your hand and the beam holds the angle you are
+ * holding — your forearm IS the ramp. This is the band's strongest gesture precisely because the
+ * answer is not described, it is HELD: a child who cannot yet say "obtuse" can still show you a
+ * slope too shallow to get any speed on.
+ *
+ * ⚠️ ONE VALUE, TWO INPUTS, ONE GRADER. The hand does not answer the question — it writes the same
+ * `deg` the ◀ turn ▶ steppers write, and `grade()` never learns which moved it. So the two paths
+ * cannot drift apart and angles.ts's existing sweep covers both at once. WHICH control is live is
+ * decided by `handDrivesAngle()` in the pure module, next to the reason it is not every round.
+ *
+ * See docs/storyboards/angle-shop.md for the shot list and docs/story-9-11-ar-plan.md §3.10.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -25,10 +35,27 @@ import { RotateGate, useNeedsRotate } from './RotateGate'
 import { SheetCell, Arrive } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import {
+  useHandInput, useHand, HandProvider, useDwell, CamView, CamGate, DwellRing, type HandSkin,
+} from '@/infra/ar/HandInput'
+import {
   STEP, clampDeg, trueAxes, candidateAxes, isTrueAxis, SHAPE_LINES,
   CAST, SITE_GEO, armFor, WEEK, makeRound, grade, heldCount, missFor, verdictFor, sigFor, guideShown, shopLayout,
+  handDrivesAngle, snapDeg, nearestAxis,
   type Round, type AngleRound, type FoldRound, type Site, type QType, type Tier, type Layout,
 } from './angles'
+
+/**
+ * The painted band's colours for the shared camera surface. ⚠️ `accentSoft` is its own field rather
+ * than `${accent}66`, because this chapter colours itself from CSS variables and you cannot
+ * concatenate an alpha onto `var(--milo-orange)`.
+ */
+const SKIN: HandSkin = {
+  accent: 'var(--milo-orange)', accentSoft: 'rgba(242,107,44,.55)',
+  ink: 'var(--ink)', muted: '#7a6a55', panel: 'rgba(255,252,244,.96)', line: 'rgba(61,37,22,.25)',
+  onAccent: '#fff', font: 'var(--font-display)', mono: 'ui-monospace,Menlo,monospace',
+}
+/** The self-view's own box. Small on a short frame — the beam is what is being read, not the child. */
+const CAM_W = (short: boolean) => (short ? 76 : 190)
 
 // ─── the three sites ────────────────────────────────────────────────────────────────────
 /** Every backdrop is 1376×768, matching the rest of the library exactly. */
@@ -321,6 +348,12 @@ function WeekStrip({ done, short }: { done: Done[]; short: boolean }) {
 
 // ─── play ───────────────────────────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
+/** The instruction chip — ONE verb-led action, and it is the one place the two inputs differ. */
+const hint: React.CSSProperties = {
+  fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)',
+  background: 'rgba(255,252,244,.92)', border: '2px solid var(--outline)',
+  borderRadius: 999, padding: '5px 14px', maxWidth: '46vw',
+}
 const HIT_MS = 3000, MISS_MS = 4600   // ⚠️ RULE 4 — a miss holds LONGER; 2.6s was measured as too short
 
 const AngleShopPlay: React.FC<{
@@ -339,9 +372,49 @@ const AngleShopPlay: React.FC<{
   const done = useRef(false)
   const tapLock = useRef(0)
 
-  const cands = data.type === 'fold' ? candidateAxes(data.shape) : []
+  // memoised, or the effects below would fire on every render off a fresh array identity
+  const cands = useMemo(() => (data.type === 'fold' ? candidateAxes(data.shape) : []), [data])
 
   useEffect(() => { if (mode === 'guided') speak(data.ask) }, [mode, data.ask])
+
+  // ─── the hand ─────────────────────────────────────────────────────────────────────────
+  const { read, input } = useHand()
+  const onCam = input === 'hand'
+  /**
+   * WHO OWNS THE VALUE decides which control is drawn, and it must NOT depend on `settled` — the
+   * whole row is already dimmed and dead once the answer is in, and flipping the ring back into
+   * three buttons at the exact moment of the verdict is a reshuffle under the child's eyes.
+   * Whether the hand is LIVE is the separate, narrower question the effects below ask.
+   */
+  const handOwnsArm = onCam && handDrivesAngle(data)
+  const handOwnsBar = onCam && data.type === 'fold'
+  const armLive = handOwnsArm && !settled
+  const barLive = handOwnsBar && !settled
+
+  // ⚠️ The hand writes the SAME `deg` the steppers write. It is not a second value with a second
+  // grader; below this line nothing knows which input moved it. `snapDeg` carries the hysteresis
+  // that stops a still hand dithering across a 5° boundary and never arming the commit.
+  const tilt = read.tilt
+  /**
+   * ⚠️ THE HELD-OVER-POSE GUARD NEEDS ONE MORE TURN HERE THAN IT DOES IN FACTOR LAB, and the reason
+   * is worth knowing: there the dwell watches the RAW reading, which is already current the instant
+   * the round opens; here it watches `deg`, which is an ECHO of the hand and lags it by a render. So
+   * the guard would capture `data.start` — a value the hand has nothing to do with — the hand's own
+   * angle would land a render later and read as a CHANGE, and a round would commit a pose the child
+   * struck for the last question. Caught on the first drive, exactly as Factor Lab's was.
+   * Not arming until the hand has written once puts the guard back on the hand's own value.
+   */
+  const [handSet, setHandSet] = useState(false)
+  useEffect(() => {
+    if (!armLive || tilt === null) return
+    setDeg(cur => snapDeg(tilt, cur))
+    setHandSet(true)
+  }, [armLive, tilt])
+
+  useEffect(() => {
+    if (!barLive || tilt === null || !cands.length) return
+    setBar(nearestAxis(cands, tilt))
+  }, [barLive, tilt, cands])
 
   /** ⚠️ A short lock, NOT a gate on `useIsSpeaking()` — Chrome reports `speaking` for 3.2s after one
    *  spoken digit, which in a chapter wanting many taps is half a minute of dead screen. */
@@ -376,6 +449,19 @@ const AngleShopPlay: React.FC<{
       window.setTimeout(() => onComplete(ok), ok ? HIT_MS : MISS_MS)
     }
   }, [data, deg, marked, settled, onComplete])
+
+  /**
+   * ⚠️ Called UNCONDITIONALLY, and merely not live on the pointer path — branching above a hook
+   * changes the hook count and tears the chapter into the error boundary, which this repo has
+   * shipped once already. On an angle round the hand's commit is HOLDING STILL, exactly as it is in
+   * Factor Lab: there is no "Fix it ✓" to press, because pressing one with the other hand is the
+   * fiddliest thing you can ask of a child who is holding a pose.
+   */
+  const progress = useDwell(
+    { value: deg, key: `${deg}`, ready: tilt !== null },
+    () => commit(),
+    armLive && handSet,
+  )
 
   const sheds = data.type === 'angle' && grade(data, deg)
   const btnStyle = (primary?: boolean): React.CSSProperties => ({
@@ -413,17 +499,26 @@ const AngleShopPlay: React.FC<{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: g.short ? 8 : 14,
         opacity: settled ? 0.35 : 1, pointerEvents: settled ? 'none' : 'auto', transition: 'opacity .3s ease',
       }}>
-        {data.type === 'angle' ? (<>
+        {data.type === 'angle' ? (handOwnsArm ? (<>
+          {/* ⚠️ The ring says only HOW FAR THE COMMIT HAS ARMED — never the degrees, and never
+              whether they are right. Printing the figure here would be rule 1 broken by the back
+              door: the child would tilt until the screen agreed. The beam IS the readout. */}
+          <DwellRing progress={progress} size={g.btn + 12} skin={SKIN}>{tilt === null ? '–' : '✋'}</DwellRing>
+          <span style={hint}>{tilt === null ? 'Show Milo your hand' : 'Tilt your hand — then hold it still'}</span>
+        </>) : (<>
           <button style={btnStyle()} onClick={() => turn(-STEP)} aria-label="Turn down">◀ turn</button>
           {/* ⚠️ RULE 2 — identical at every angle. A commit that lights up when the answer is right
               is chapter 4's green Ready button: the child wins by watching the colour. */}
           <button style={btnStyle(true)} onClick={commit}>Fix it ✓</button>
           <button style={btnStyle()} onClick={() => turn(STEP)} aria-label="Turn up">turn ▶</button>
-        </>) : (<>
-          <button style={btnStyle()} onClick={() => sweep(-1)} aria-label="Sweep back">◀ turn</button>
+          {/* Camera on, but this round wants an exact figure — say so, or the hand looks broken. */}
+          {onCam && <span style={hint}>This one is exact — use the turns</span>}
+        </>)) : (<>
+          {!handOwnsBar && <button style={btnStyle()} onClick={() => sweep(-1)} aria-label="Sweep back">◀ turn</button>}
           <button style={btnStyle()} onClick={mark}>{marked.includes(bar) ? 'Unmark' : 'Mark ✓'}</button>
           <button style={btnStyle(true)} onClick={commit}>Fold it ✓</button>
-          <button style={btnStyle()} onClick={() => sweep(1)} aria-label="Sweep on">turn ▶</button>
+          {!handOwnsBar && <button style={btnStyle()} onClick={() => sweep(1)} aria-label="Sweep on">turn ▶</button>}
+          {handOwnsBar && <span style={hint}>Lay your hand along the fold, then Mark it</span>}
         </>)}
       </div>
     </>
@@ -564,11 +659,23 @@ export default function AngleShop({ onFinish, onExit }: {
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
 
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
+  const marker = useMemo(() => ({ fill: '#F26B2C', ink: '#3D2516' }), [])
+  const {
+    hand, onCam, ready, camReady, status, error, start, stop, useTaps, useCamera, videoRef, canvasRef,
+  } = useHandInput({ reads: 'tilt', marker })
+
+  /**
+   * ⚠️ The rotate gate is an EARLY RETURN, so turning the tablet unmounts the <video> — and a
+   * MediaStream whose element has gone is a camera light left on with nothing able to reach it.
+   * Stop it here; the gate's "Try the camera again" is waiting when they turn back.
+   */
+  useEffect(() => { if (needsRotate) stop() }, [needsRotate, stop])
+
+  const exit = useCallback(() => { stopSpeech(); stop(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit, stop])
   const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true; stopSpeech()
+    if (finished.current) return; finished.current = true; stopSpeech(); stop()
     if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  }, [onFinish, exit, stop])
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
 
   const recordDone = useCallback((d: Round, ok: boolean) => {
@@ -604,7 +711,10 @@ export default function AngleShop({ onFinish, onExit }: {
     </div>
   )
 
+  const inShop = phase !== 'intro'
+
   return (
+    <HandProvider value={hand}>
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#2a2620' }}>
       <style>{AS_CSS}</style>
       {chip}
@@ -621,15 +731,39 @@ export default function AngleShop({ onFinish, onExit }: {
             <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16, lineHeight: 1.45, color: 'var(--ink)', margin: '0 0 18px' }}>
               It is Slate&apos;s first week on the crew. Every job is either turned to an angle or folded
               so both halves match — and the foreman is watching, until he isn&apos;t.
+              {onCam
+                ? ' Tilt your hand at the camera and the beam holds the same slope you are holding.'
+                : ' Use the turns to set each one.'}
             </p>
-            <button onClick={() => { unlockSpeech(); setPhase('demo') }} style={{
+            {/* ⚠️ BOTH DOORS, EVERY TIME. The device's last pick decides which is the BIG button —
+                never which is the only one. A parent who says no to the camera on Monday must not
+                have to say it again, and a child who wants it back must not have to hunt. */}
+            <button onClick={() => { unlockSpeech(); setPhase('demo'); if (onCam) start() }} style={{
               border: 'none', borderRadius: 999, padding: '12px 26px', cursor: 'pointer',
               background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff',
               fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 18, boxShadow: '0 5px 0 rgba(180,70,20,.45)',
-            }}>Start the week →</button>
+            }}>{onCam ? 'Turn on the camera →' : 'Start the week →'}</button>
+            <div>
+              <button onClick={() => { unlockSpeech(); if (onCam) useTaps(); else useCamera(); setPhase('demo') }} style={{
+                marginTop: 12, border: 'none', background: 'transparent', cursor: 'pointer',
+                fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: '#7a6a55',
+                textDecoration: 'underline',
+              }}>{onCam ? 'Use the turns instead' : 'Use the camera instead'}</button>
+            </div>
           </div>
         </div>
       </>)}
+
+      {inShop && onCam && (
+        <CamView videoRef={videoRef} canvasRef={canvasRef} w={CAM_W(short)} bottom={short ? 8 : 14}
+          skin={SKIN} hidden={!camReady} />
+      )}
+      {inShop && onCam && !camReady && (
+        <CamGate status={status} error={error} skin={SKIN} onRetry={start} onTaps={useTaps} onExit={exit}
+          denied="Slate can set the angle from your hand, or you can use the turns instead — both work." />
+      )}
+
+      {inShop && ready && (<>
 
       {phase === 'demo' && (<>
         {banner(`Watch Slate · ${demoIdx + 1}/${DEMO.length}`)}
@@ -650,7 +784,10 @@ export default function AngleShop({ onFinish, onExit }: {
             finishChapter(result.current.correct, result.current.wrong, mastered)
           }} />
       </>)}
+
+      </>)}
     </div>
+    </HandProvider>
   )
 }
 

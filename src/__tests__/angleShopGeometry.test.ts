@@ -11,8 +11,10 @@ import {
   kindOf, reachable, trueAxes, candidateAxes, isTrueAxis, SHAPE_LINES, SHAPE_LABEL,
   WEEK, makeRound, startFor, grade, heldCount, missFor, verdictFor, sigFor,
   guideShown, shopLayout, armFor, SITE_GEO, ARM_MARGIN,
+  handDrivesAngle, snapDeg, nearestAxis,
   type Shape, type Tier, type QType, type Round, type AngleRound, type FoldRound, type Site,
 } from '@/features/chapters/story/angles'
+import { palmTilt } from '@/infra/ar/fingerCount'
 
 const SHAPES = Object.keys(SHAPE_LINES) as Shape[]
 const TIERS: Tier[] = [1, 2, 3]
@@ -412,5 +414,133 @@ describe('layout', () => {
     expect(short.controlH).toBeLessThanOrEqual(tall.controlH)
     expect(short.groundY).toBeLessThan(tall.groundY)
     expect(short.controlTop + short.controlH).toBe(360)
+  })
+})
+
+// ─── the hand ────────────────────────────────────────────────────────────────────────
+/**
+ * The camera path cannot be driven by a gate at all — no test can hold a hand up. So the pure
+ * maths under it carries the weight: what a palm reading MEANS, what a jittering reading is allowed
+ * to do to the committed value, and which rounds the hand is permitted to answer.
+ */
+describe('the tilt', () => {
+  /** 21 landmarks; only the wrist (0) and the middle knuckle (9) carry the palm axis. */
+  const hand = (dx: number, dy: number) => {
+    const lm = Array.from({ length: 21 }, () => ({ x: 0.5, y: 0.5, z: 0 }))
+    lm[9] = { x: 0.5 + dx, y: 0.5 + dy, z: 0 }
+    return lm
+  }
+
+  it('reads a flat hand as 0° and a raised one as 90°, in MIRRORED screen space', () => {
+    // the self-view is scaleX(-1), so a knuckle LEFT of the wrist in the frame points RIGHT on screen
+    expect(palmTilt(hand(-0.2, 0))).toBeCloseTo(0, 6)
+    expect(palmTilt(hand(0, -0.2))).toBeCloseTo(90, 6)
+    expect(palmTilt(hand(-0.2, -0.2))).toBeCloseTo(45, 6)
+    expect(palmTilt(hand(0.2, -0.2))).toBeCloseTo(135, 6)
+  })
+
+  it('is an AXIS — a hand reversed end for end reads the same, which is what lets one reading serve a beam AND a fold line', () => {
+    for (let a = 0; a < 180; a += 7) {
+      const r = (a * Math.PI) / 180
+      const fwd = palmTilt(hand(-0.2 * Math.cos(r), -0.2 * Math.sin(r)))!
+      const back = palmTilt(hand(0.2 * Math.cos(r), 0.2 * Math.sin(r)))!
+      expect(fwd).toBeCloseTo(a, 5)
+      expect(back).toBeCloseTo(a, 5)
+    }
+  })
+
+  it('has no reading at all without a hand', () => {
+    expect(palmTilt([])).toBeNull()
+    expect(palmTilt(hand(0, 0))).toBeNull()   // wrist and knuckle on one point is no axis
+  })
+})
+
+describe('snapping a continuous reading', () => {
+  it('only ever produces an angle the steppers could also reach — one value, two inputs', () => {
+    for (let raw = -30; raw <= 220; raw += 0.5) {
+      expect(reachable(), `raw ${raw}`).toContain(snapDeg(raw, null))
+      for (const cur of reachable()) expect(reachable()).toContain(snapDeg(raw, cur))
+    }
+  })
+
+  it('HOLDS ITS STEP through the jitter of a still hand — without this the commit never arms', () => {
+    // ⚠️ THE CASE THAT MATTERS IS A HAND SITTING ON A STEP BOUNDARY, not on a step. Jitter around a
+    // centre never crosses anything and passes with the hysteresis deleted — that version of this
+    // test was written first and proved nothing. A boundary is where a still hand really does flip
+    // between two answers, the dwell resets on every flip, and the camera becomes a dead button.
+    const NOISE = 2.5   // the landmark noise the hold band is sized against — see SNAP_HOLD
+    for (let raw0 = MIN_DEG; raw0 <= MAX_DEG - STEP; raw0 += 0.5) {
+      let cur = snapDeg(raw0, null)
+      const first = cur
+      for (let i = 0; i < 120; i++) {
+        cur = snapDeg(raw0 + Math.sin(i * 1.7) * NOISE, cur)
+        expect(cur, `a still hand at ${raw0}° changed its answer`).toBe(first)
+      }
+    }
+  })
+
+  it('but still MOVES when the hand really does — the hysteresis is a hold, not a lock', () => {
+    let cur = snapDeg(90, null)
+    expect(cur).toBe(90)
+    cur = snapDeg(105, cur); expect(cur).toBe(105)
+    cur = snapDeg(60, cur); expect(cur).toBe(60)
+    // and every step of the lattice is still reachable by travelling to it
+    for (const d of reachable()) expect(snapDeg(d, 90)).toBe(d)
+  })
+
+  it('clamps to the shop\'s own range at both ends', () => {
+    expect(snapDeg(-40, null)).toBe(MIN_DEG)
+    expect(snapDeg(400, null)).toBe(MAX_DEG)
+    expect(snapDeg(2, MIN_DEG)).toBe(MIN_DEG)
+    expect(snapDeg(178, MAX_DEG)).toBe(MAX_DEG)
+  })
+})
+
+describe('aiming the fold bar by hand', () => {
+  it('always lands on a real candidate, for every shape', () => {
+    for (const shape of SHAPES) {
+      const c = candidateAxes(shape)
+      for (let raw = 0; raw < 180; raw += 0.5) expect(c).toContain(nearestAxis(c, raw))
+    }
+  })
+
+  it('measures the gap as an AXIS, so 175° is nearer 0° than it is to 90°', () => {
+    expect(nearestAxis([0, 90], 175)).toBe(0)
+    expect(nearestAxis([0, 90], 5)).toBe(0)
+    expect(nearestAxis([0, 90], 100)).toBe(90)
+  })
+
+  it('picks the nearest one, which is what makes laying your hand along the fold work', () => {
+    for (const shape of SHAPES) {
+      const c = candidateAxes(shape)
+      for (const a of c) {
+        expect(nearestAxis(c, a), `${shape} @${a}`).toBe(a)
+        // and a hand a couple of degrees off still snaps home
+        expect(nearestAxis(c, a + 2)).toBe(a)
+        expect(nearestAxis(c, a - 2)).toBe(a)
+      }
+    }
+  })
+})
+
+describe('which rounds the hand may answer', () => {
+  it('drives a KIND round and never an exact-degrees one — there is nothing to aim at at tier 3', () => {
+    for (const d of TIERS) {
+      for (let i = 0; i < 200; i++) {
+        for (let round = 0; round < WEEK.length; round++) {
+          const r = makeRound(d, round, [])
+          if (r.type === 'fold') { expect(handDrivesAngle(r)).toBe(false); continue }
+          expect(handDrivesAngle(r)).toBe(r.job === 'kind')
+        }
+      }
+    }
+  })
+
+  it('leaves the hand a real job at every tier — a camera that answers nothing is a dead camera', () => {
+    for (const d of TIERS) {
+      const drawn = Array.from({ length: WEEK.length }, (_, i) => makeRound(d, i, []))
+      // either the beam follows the tilt, or the fold bar does; no tier is all pointer
+      expect(drawn.some(r => handDrivesAngle(r) || r.type === 'fold'), `tier ${d}`).toBe(true)
+    }
   })
 })
