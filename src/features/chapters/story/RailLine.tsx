@@ -762,11 +762,29 @@ const RailExplain: React.FC<{ data: RlRound; onDone: () => void }> = ({ data, on
    * unsaid at the one moment it is needed. Found by forcing an estimate round on screen; no gate
    * would have shown it, because both halves are individually correct.
    */
+  /**
+   * ⚠️ THE SCOREBOARD ANCHOR LIVES IN LINE 0'S ONE-LEG BRANCH, AND IT IS ANSWER-FREE. It stays a
+   * SIMILE whose halves are both true — the CHILD rounds a score in their head, and Milo rounds the
+   * kilometre — and it names no station, because the reveal is step 2's job.
+   *
+   * ⚠️ WHERE IT ACTUALLY REACHES, counted rather than assumed: both DEMO rounds are single-leg, so
+   * it plays TWICE straight after the briefing. But `estimate` rounds are always two-leg and take
+   * the other branch, which carries no anchor — and this component is the RE-TEACH too, so a child
+   * struggling on estimates never meets it again. That is a real gap, not a claim of coverage.
+   *
+   * ⚠️ DO NOT ADD, SPLIT, MERGE OR REORDER A LINE. The effect below hardcodes step indices
+   * (i === 2 rolls the train, i === 3 places it back for the second leg, i === 4 rolls it again) and
+   * `legShown` flips at step >= 3, so a fourth line on a one-leg round would read `data.legs[1]`.
+   * ⚠️ AND KEEP EACH LINE UNDER ~105 CHARACTERS. Milo's bubble reserves a HARD three lines
+   * (`railLayout`'s `bubbleH`), which at 640×320 is about 105 characters, and no gate can see an
+   * overrun. The longest string already shipped is the dead-heat line below at 106 (reachable at
+   * n = 950), with the round100 `ask` next at 100 — so the reserve is already at its edge.
+   */
   const lines = useMemo(() => {
     const base = [
       data.legs.length > 1
         ? `Two legs to work out — ${fmt(n)} km, then ${fmt(data.legs[1])} km. Take them one at a time.`
-        : `A passenger for kilometre ${fmt(n)}. But a train can only stop where there is a platform.`,
+        : `A passenger for kilometre ${fmt(n)}, and no platform there. You round a score; I round this.`,
       `${fmt(n)} sits between the ${fmt(low)} ${place} and the ${fmt(high)} one. The halfway post is at ${fmt(mid)}.`,
       n === mid
         ? `${fmt(n)} is exactly ON the halfway post — a dead heat. When that happens we always go UP. So that leg is ${fmt(answer)}.`
@@ -959,9 +977,19 @@ export default function RailLine({ onFinish, onExit }: {
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(22px,3.4vw,34px)', color: 'var(--ink, #3d2516)' }}>
               The Rail Line 🚂
             </div>
+            {/* ⚠️ THE DAILY ANCHOR LIVES HERE, IN THE BRIEFING — and it may NEVER move into a
+                per-round string. Every played round says "kilometre", "halt", "platform", because
+                that is what is on screen; a round that said "points" over a picture of a rail line
+                would be naming something that is not there, which is this repo's oldest copy fault.
+                ⚠️ AND THE SCOREBOARD IS A WAY IN, NOT AN EQUIVALENCE — "Milo has it harder", never
+                "the job is the same". The header's §① is that rounding here is not a convention but
+                a physical necessity: a train cannot stop between stations. A scoreboard still reads
+                47; only the player's head rounds. Flattening the two throws away the exact
+                distinction the rebuild exists to create. */}
             <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 'clamp(14px,1.7vw,19px)', color: 'var(--ink, #3d2516)', lineHeight: 1.45 }}>
-              Milo is the signalman. Passengers ask for a kilometre — but a train can only stop where
-              there is a platform. Work out which station is nearest, set the signal, and the train
+              You are 47 points behind. Nobody works out 47 mid-game — you think about 50, and you
+              know what you need. Milo has it harder: a passenger wants kilometre 47, and there is no
+              platform there at all. Work out which station is nearest, set the signal, and the train
               pulls in.
             </p>
             <button onClick={() => { unlockSpeech(); setPhase('demo') }}

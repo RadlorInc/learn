@@ -606,9 +606,23 @@ const BayExplain: React.FC<{ data: LbRound; onDone: () => void }> = ({ data, onD
 
   const lines = useMemo(() => {
     const g = data.bay.goods
+    // ⚠️ THREE LINES EACH, ALWAYS. The runner indexes them — `i === 1` fires the visual act and
+    // `step >= 1` drives the dim — so adding or dropping one silently moves the act onto the wrong
+    // sentence. Reword in place; do not grow the array.
+    //
+    // ⚠️ AND 86 CHARACTERS IS THE CEILING, because `dwellFor` is `max(2200, min(6200, len * 72))`.
+    // Past that the beat asks for more time than the cap will give, the NEXT beat's `speak()`
+    // cancels the utterance in flight, and what gets cut is this line's tail — on a device with a
+    // real voice only, which the mute preview pane can never show. The anchor's first draft put
+    // this line at 98 and was the only string in the chapter the clamp bound on.
+    //
+    // The daily anchor appears here as a SIMILE ("like … goals"), never as a rename: the stacks on
+    // screen are cargo and every line that names a thing names the cargo. Saying a stack is LIKE a
+    // friend's goal tally is a comparison; saying it IS one would be the words contradicting the
+    // picture, which is the fault this framing exists to avoid.
     if (data.qType === 'most') return [
-      'A delivery just landed. Four stacks.',
-      'The biggest stack is the one that reaches highest — count up if you are not sure.',
+      'A delivery just landed. Four stacks — like counting the goals four friends scored.',
+      'The biggest one reaches highest — you can SEE it without counting.',
       `${g[data.answer].plural.replace(/^./, c => c.toUpperCase())} it is. The cart goes there.`,
     ]
     if (data.qType === 'howMany') return [
@@ -617,9 +631,9 @@ const BayExplain: React.FC<{ data: LbRound; onDone: () => void }> = ({ data, onD
       `${data.answer} of them. That is what the stack was holding.`,
     ]
     if (data.qType === 'diff') return [
-      `We have more ${g[data.focus].plural} than ${g[data.other].plural}.`,
-      'Match them up, and load only the ones left over.',
-      `${data.answer} spare — that is how many MORE we got.`,
+      `We have more ${g[data.focus].plural} than ${g[data.other].plural} — like one friend outscoring another.`,
+      'Match them up one for one, and load only the ones left over.',
+      `${data.answer} spare — that is how many MORE. You cannot see that one; you subtract it.`,
     ]
     return [
       'The whole delivery goes out today.',
@@ -766,15 +780,24 @@ export default function LoadingBay({ onFinish, onExit }: {
       {phase === 'intro' && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'center',
           justifyContent: 'center', background: 'rgba(20,14,8,.55)', padding: 20 }}>
-          <div style={{ maxWidth: 520, background: 'var(--paper, #fdf6e8)', borderRadius: 22,
+          <div style={{ maxWidth: 520,
+            background: 'var(--paper, #fdf6e8)', borderRadius: 22,
             border: '4px solid var(--outline, #3d2516)', padding: '22px 24px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26,
               color: 'var(--ink, #3d2516)', marginBottom: 8 }}>The Loading Bay</div>
+            {/* THE DAILY ANCHOR LIVES HERE, and only here plus the demo framing. This card is the one
+                surface with no cargo drawn behind it (the stacks mount in `demo`), so it can name
+                friends and goals without contradicting a picture. Every per-round line names the
+                goods that are actually on screen — see `makeRound`.
+                ⚠️ AND THE TALLY IS KEPT INSIDE WHAT THE CHAPTER CAN DRAW. `MAX_UNITS` is 7 and the
+                tier the child opens on caps a stack at 5, so an anchor reading "Sam 8" would state a
+                number no stack can ever reach — the teaching contradicting every round that follows
+                it. Same rule the sibling Order Desk obeyed when $3,482 turned out ungeneratable. */}
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16,
               color: 'var(--ink, #3d2516)', lineHeight: 1.45, marginBottom: 18 }}>
-              Milo runs the yard at a goods depot. All day the deliveries land and stack up — and the
-              foreman needs to know what came in before the cart goes out. Count the stacks, load the
-              cart, send it off.
+              Goals this season: Sam 5, Alex 2, Jordan 4, Riley 3. Who scored most is something you
+              SEE — how many more Sam got than Alex, you subtract. Milo&apos;s yard is the same:
+              count the stacks, load the cart, send it off.
             </div>
             <button onClick={() => { unlockSpeech(); setPhase('demo') }}
               style={{ padding: '14px 34px', borderRadius: 999, border: '4px solid var(--outline, #3d2516)',

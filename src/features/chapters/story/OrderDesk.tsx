@@ -1002,14 +1002,41 @@ export default function OrderDesk({ onFinish, onExit }: {
       {phase === 'intro' && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'center',
           justifyContent: 'center', background: 'rgba(20,14,8,.55)', padding: 20 }}>
-          <div style={{ maxWidth: 520, background: 'var(--paper, #fdf6e8)', borderRadius: 22,
+          {/* ⚠️ NO maxHeight/overflow HERE, AND THAT IS MEASURED RATHER THAN AN OVERSIGHT. A guard
+              was added with the anchor and then removed: A/B'd in the live DOM, the uncapped card
+              fits unaided down to a 268px-tall frame, while capping it moved the first clip EARLIER
+              (vh < ~290) and moved it off the decorative top corner and onto the Start button —
+              i.e. onto the only forward control, behind an undiscoverable scroll. A guard that
+              causes the failure it was written to prevent is worse than no guard. */}
+          <div style={{ maxWidth: 520,
+            background: 'var(--paper, #fdf6e8)', borderRadius: 22,
             border: '4px solid var(--outline, #3d2516)', padding: '22px 24px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26,
               color: 'var(--ink, #3d2516)', marginBottom: 8 }}>The Order Desk</div>
+            {/**
+              * ⚠️ THE DAILY ANCHOR LIVES HERE AND ONLY HERE. The intro is the one narration surface
+              * in this chapter — everything else is the customer speaking about the order that is
+              * actually on screen, and a fundraiser word over a picture of crates is the words
+              * naming something that is not there (chapter-craft.md). So the anchor says "this is
+              * like that" once, up front, and every played round stays true to the yard.
+              *
+              * ⚠️ 3,241 IS GENERATABLE AND $3,482 IS NOT. Every digit is capped at MAX_DIGIT (5),
+              * so "8 tens" cannot occur and a worked example using one would contradict every round
+              * the child then plays. 3-2-4-1 is a number `buildNumber` really draws.
+              *
+              * ⚠️ NO CURRENCY SYMBOL, AND NO "DOLLARS" EITHER. `fmt` is a bare toLocaleString with
+              * ~10 call sites, so a "$" here and bare numerals on the docket would be two formats
+              * for one chapter. And "dollars" is the one unit this chapter never uses — every other
+              * string says units of stock, thousand-crates, hundred-pallets, ten-boxes, singles. The
+              * anchor states the NUMBER, then pivots back into the yard's own words, which is what
+              * its three sibling chapters do too.
+              */}
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16,
               color: 'var(--ink, #3d2516)', lineHeight: 1.45, marginBottom: 18 }}>
-              Milo is the clerk at a goods yard. Customers come in with orders — and nobody counts out
-              three thousand things one at a time. You load the biggest unit that fits and work down.
+              Think of your school&rsquo;s fundraiser board: 3,241 is 3 thousands, 2 hundreds, 4 tens
+              and 1 one, and where a digit sits is what it is worth. Milo&rsquo;s yard is the same —
+              nobody counts out three thousand things one at a time, so you load the biggest unit
+              that fits and work down.
             </div>
             <button onClick={() => { unlockSpeech(); setPhase('demo') }}
               style={{ padding: '14px 34px', borderRadius: 999, border: '4px solid var(--outline, #3d2516)',

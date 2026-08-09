@@ -20,6 +20,21 @@
  * run. A crate comes in and it has to go out **evenly**: nobody may get more than anybody else. What
  * will not go round stays in the crate, and that has a consequence — it is short, it goes back.
  *
+ * ⚠️ THE DAILY ANCHOR IS A BAG OF CANDY, AND IT LIVES ONLY IN THE EXPLANATION. The briefing card and
+ * the opening beat of every `share` explanation say the job is the same as sharing candy between
+ * friends — one each, round again, and what will not go round is left over. ⚠️ That beat list is the
+ * RE-TEACH as well as the demo, so the anchor also fires mid-run after three wrong answers, which is
+ * the right moment for it. ⚠️ And the card deliberately does NOT enumerate rounds ("one each, again,
+ * again" reads as three, and 22 ÷ 4 is five) — in this chapter the number of rounds IS the answer,
+ * so a worked count that stops early teaches under-dealing, which is exactly what the grader
+ * refuses. It is written as a SIMILE and goes no further: every PER-ROUND string names what is drawn
+ * (parcels · cells · tins · cogs), because "candy" over a picture of parcels is this repo's oldest
+ * recorded fault — the words naming something that is not on screen. `ask`, `done`, `missFor`, the
+ * site `job` lines and the button labels stay site-true; do not spread the anchor into them.
+ * ⚠️ AND NOT INTO THE `group` BEATS EITHER. The anchor is the SHARE reading — go round, and what
+ * will not go round is left in your hand. Filling a receiver to a fixed size is a different act, and
+ * a candy line stretched over it would be teaching the analogy rather than the division.
+ *
  * FOUR SITES, and the site changes every round (the band-wide "a world per round" item):
  *   🚚 the dispatch hall · 🔋 the charge bay · 🍱 the mess line · 🧰 the parts bench
  * `runOrder` deals them randomly AND rejects an adjacent repeat, and the run is indexed STRAIGHT and
@@ -863,7 +878,16 @@ export function explainBeats(data: DvRound): Array<{ say: string; handed: number
   const full = data.answer * cost
   const out: Array<{ say: string; handed: number }> = []
   if (data.qType === 'share') {
-    out.push({ say: `${data.total} ${s.units} in the crate, and ${data.groups} ${s.slots} waiting. They all get the same.`, handed: 0 })
+    /** ⚠️ THE ANCHOR, AS A SIMILE, AND ONLY HERE. It names the daily thing and then names what is
+     *  actually on the bench in the same breath — "candy" alone over a crate of parcels would be the
+     *  words describing a picture that is not there. `handed: 0` is untouched: the gate pins that the
+     *  first beat deals nothing and that no beat ever hands out the remainder.
+     *  ⚠️ AND IT IS SHORT BECAUSE `dwellFor` IS `max(2100, min(6200, len * 70))` — 88 characters is
+     *  the ceiling. The first draft ran to 94 and, swept across every site, cost, answer and
+     *  remainder, put ALL 572 share openers on the cap where none had been before; the next beat's
+     *  `speak()` then cancels the utterance in flight and the tail is what goes. The tail here is
+     *  "They all get the same" — the fairness rule this whole chapter is about. */
+    out.push({ say: `Like sharing candy: ${data.total} ${s.units}, ${data.groups} ${s.slots}. They all get the same.`, handed: 0 })
     out.push({ say: `So I go round: one each. That is one round.`, handed: cost })
     for (let k = 2; k <= data.answer; k++) {
       out.push({ say: k === data.answer ? `And round ${k}.` : `Round ${k}.`, handed: k * cost })
@@ -1035,10 +1059,16 @@ export default function SupplyRun({ onFinish, onExit }: {
             }}>
               <div style={{ fontSize: 34, marginBottom: 6 }}>{SITES.map(s => s.emoji).join(' ')}</div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 28, color: 'var(--ink)', margin: '0 0 10px' }}>The Supply Run</h1>
+              {/* ⚠️ ~200 CHARACTERS IS THE CEILING HERE, and it is measured: at 640×320 this card is
+                  307px tall inside a 320px frame, so the anchor's first draft at 248 chars pushed it
+                  to 330 and clipped both ends. There is no maxHeight and there should not be one —
+                  a sibling chapter tried exactly that guard and it moved the clip off the decorative
+                  top corner and onto its own Start button, i.e. onto the only forward control. Keep
+                  the copy short instead. */}
               <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16, lineHeight: 1.45, color: 'var(--ink)', margin: '0 0 18px' }}>
-                Milo is the quartermaster. A crate comes in and it has to go out evenly — nobody gets more
-                than anybody else. Deal it round by round, and stop when you cannot go round again.
-                Whatever will not split stays in the crate.
+                Milo the quartermaster shares out a crate — the same job as a bag of candy between
+                friends. One each, and round again: you stop when you cannot go round any more. What
+                is left over stays in the crate.
               </p>
               <button onClick={() => { unlockSpeech(); setPhase('demo') }} style={{
                 border: 'none', borderRadius: 999, padding: '12px 26px', cursor: 'pointer',
