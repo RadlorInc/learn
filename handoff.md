@@ -12,7 +12,155 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 📷 **2026-08-09 (LATEST) — THE 9–11 BAND'S FIRST AR CHAPTER: FACTORLAB IS ANSWERED WITH THE WEBCAM. YOUR FINGERS ARE THE DIVISOR. ✅ COMMITTED — `4066dc4` on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **706/706 vitest** (was 660, **+46 — all of it this chapter's own gate; 11/11 planted regressions caught, 1 more proven inert**) · `next build` 0 · 0 console errors in a fresh tab · driven end to end at 1280×800 **and** 640×320 through intro → camera gate → explore → both demos → guided → scored rounds, incl. a **prime round answered with a fist**.
+> 🖐️ **2026-08-09 (LATEST) — THE BROKEN TREE IS COMMITTED AND BUILDS AGAIN; THE 9–11 BAND HAS ITS TWELVE DAILY ANCHORS; AND THE CAMERA STOPS BEING A WALL — FACTORLAB NOW ANSWERS BY TAP TOO. ✅ FIVE COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **713/713 vitest** (was 706, **+7**) · `next build` 0 · 0 console errors in a fresh tab · driven at 1280×720, 640×320 and 667×375 on BOTH input paths · every intro card in the band measured at 640×320.
+>
+> **The asks, in order:** *"joh bhi commit karna baaki hai woh commit kardo"* → *"9-11 band ke chapters ko daily real world examples se relate karo… pehle list banao"* → the twelve anchors picked one by one → **"tap fallback rehna chahiye"** + **"AR limit mat karo sirf counting ke liye"** → *"abhi start kardo chapters ko convert karne ka"* → *"baaki chapters bhi convert karo"*.
+>
+> | commit | what |
+> |---|---|
+> | `fdfcc9d` | **the three-chapter batch** — AngleShop · FloorPlot · SupplyRun, 31 files, +6,800 |
+> | `40d4fe2` | their craft rules, briefs, storyboard and art refs |
+> | `4008483` | **FactorLab's tap path** — 5 files |
+> | `3eae927` | [docs/story-9-11-ar-plan.md](docs/story-9-11-ar-plan.md) + chapter-craft §5's new rules |
+> | `6aed346` | **four built chapters get their daily anchors** |
+>
+> ## ⓪ ✅ THE BRANCH BUILDS AGAIN, AND THAT WAS THE BIGGEST THING OWED
+> The previous block's open item 2 is closed. `AngleScope`, `GridPlotter` and `DivisionShare` had been
+> deleted-and-committed by earlier sessions while their replacements sat untracked, so **`tsc` had
+> failed on three missing modules since before the FactorLab session.** Committing the batch fixes it.
+> ⚠️ **It went in as ONE commit deliberately** — `storyChapters.tsx` rewires all three rows at once, so
+> any split leaves an intermediate that does not typecheck. Staged file-by-file and each commit's list
+> checked with `git show --stat`, per this repo's directory-pathspec trap.
+>
+> ## ① THE TWELVE DAILY ANCHORS, PICKED ONE BY ONE — and the filter is the useful part
+> ⚠️ **"Has the child DONE this, or only watched an adult do it?"** A grocery bill, a budget, a recipe
+> and a warehouse are all watched. That is the same correction the 17–18 band already took
+> (*"can be more daily life examples"*), applied to a band that predates it.
+> fundraiser total · points to catch up · **a Lego brick's studs** · sharing candy · desks in equal
+> rows · a shared pizza · **$12.50 vs $12.05** · height on the doorframe · your own bedroom floor ·
+> how steep the ramp is · goals each friend scored · and a rotating pool for word problems.
+> ⚠️ **Three of them turned out BETTER than expected, and each is a structural fit rather than a
+> flavour:** dollar denominations ARE base ten, so the Order Desk's bays stop being pallets and become
+> the money that made the total; **100 cents ARE the hundredths grid**, so the decimal chapter's 10×10
+> stops being a diagram and becomes a dollar; and carpet-vs-baseboard means you buy two different
+> things, so inside-vs-outside needs no explaining.
+> ⚠️ **The examples are US-relatable and priced in dollars.** The repo records the users as American
+> and carries a completed US-English sweep; an earlier draft of the plan used ₹ and "toffee".
+> ⚠️ **AND WORD PROBLEMS NEEDS A GUARD THE OTHERS DO NOT** — its rotating pool must not eat the other
+> eleven chapters' worlds, which the craft doc forbids inside one band. The off-limits list and a
+> ten-strong replacement pool are in the plan.
+>
+> ## ② ⚠️ HALF THE BAND CANNOT BE ANSWERED BY COUNTING FINGERS, AND THAT IS THE FINDING THE PLAN TURNS ON
+> Audited against what the twelve generators actually draw: FactorLab, SupplyRun, OrderDesk,
+> LoadingBay and FitOut's `fit` are inside 0..10 — **FitOut's `split` reaches 95**, and rounding,
+> decimals, fractions, units, word problems and angles are all outside it. So the answer was never
+> "count harder": **two hands are two places** (leftmost = tens, rightmost = ones, 0–99 in one commit,
+> and place value performed on every single answer), and the hand can also **tilt · pinch · point ·
+> sweep · trace · mirror**. ⚠️ **All of it is ONE change to ONE hook** — `useFingerCounter` already
+> computes the landmarks every frame and throws all but the count away.
+> ⚠️ **Split two hands by SCREEN POSITION, not by MediaPipe handedness** — the self-view is mirrored,
+> so handedness is exactly the thing a child gets confused by.
+>
+> ## ③ THE FOUNDER REVERSED CAMERA-ONLY, AND IT MADE THE ARCHITECTURE BETTER, NOT WORSE
+> **"Tap fallback rehna chahiye."** The instinct is that a fallback doubles the work; it is the
+> opposite, because **7 of the 12 chapters were built tap-first and already own a working pointer
+> instrument.** ⚠️ **ONE INSTRUMENT, TWO INPUTS, ONE GRADER**: the AR layer does not answer the
+> question, it *sets the same value a tap sets*, and both land in `commit(fingers)`. So the paths
+> cannot drift into grading differently, the existing sweep covers both at once, **MediaPipe's ~6 MB
+> loads only on opt-in** (the app stays local-first, closing an open item by construction), and the
+> legal surface shrinks from *mandatory* to *offered*. The pick is remembered per DEVICE
+> (`infra/storage/handInput`, the `voicePref` pattern) — "no camera" is a household answer — with
+> **both doors offered every time**; the remembered pick decides which is the big button, never which
+> is the only one. `CamGate` now leads with **"Tap instead →"** rather than a retry, because by then
+> the camera has already failed them.
+> ⚠️ **THE TWO PATHS MUST COMMIT DIFFERENTLY.** A tap is CONSUMED; a hand is still up when the next
+> question opens. So the camera's two guards — hold still, and ignore the reading held over from the
+> last round — have nothing to protect against on a tap, and pushing a tap through them **silently
+> swallows it** whenever its value matches the held-over reading. A tap calls `commit` directly;
+> `useDwell` stays called unconditionally and merely not live (branching above a hook changes the hook
+> count). **5/5 planted regressions caught**, including a pad narrower than the hand.
+>
+> ## ④ ⚠️ TWO FAULTS THE FACTORLAB DRIVE FOUND THAT THE GATE COULD NOT
+> ① **Every chip and spoken line still said "hold up that many fingers."** On the tap path the wording
+> was not wrong — **it addressed the wrong child** — so nothing failed. That is the 12–14 audit's
+> headline defect (nine chapters saying *"crank the gear"* with no crank on screen) arriving through a
+> new door. Zone 3 now renders from ONE input-aware function and the gate sweeps **both** modes with
+> positive assertions in each direction; without that last pair, a renderer that ignores its input
+> passes every other check.
+> ② **Milo sat on the ✊ at 640×320** — the PRIME answer, i.e. the one button a child must find. The
+> tap still landed (he is `pointerEvents: none`), so no probe, console or gate could see it; only
+> crossing his box with the pad's did. The same measurement caught eleven buttons wrapping to two rows
+> and clearing the bench **by luck rather than by reserve**.
+>
+> ## ⑤ THE FOUR BUILT CHAPTERS GOT THEIR ANCHORS — AND AN ADVERSARIAL PASS FAILED THREE OF FOUR
+> ⚠️ **The anchor lives in the EXPLANATION and nowhere else**: the briefing card and the demo framing
+> say *"this is just like <the daily thing>"*, and every per-round string still names what is actually
+> drawn. Writing "candy" over a picture of parcels is this repo's oldest copy fault. The painted worlds
+> stay, which is why nothing had to be re-themed. **Proved copy-only mechanically** — strip comments,
+> string literals, JSX text nodes and emptied comment containers, and all four token streams are
+> identical to HEAD.
+> ⚠️ **Then a per-chapter refuter found four things, all in the first cut:**
+> ① **A NUMBER IN THE TEACHING THAT THE CHAPTER CANNOT DRAW.** LoadingBay's anchor read *"Sam 8"* while
+> `MAX_UNITS` is 7 and the tier a child opens on caps a stack at **5** — the teaching contradicting
+> every round that follows it. OrderDesk hit the same rule from the other side: **`$3,482` is
+> ungeneratable** under `MAX_DIGIT` 5, so "8 tens" cannot occur. **Check the worked example against
+> the real generator before writing it.**
+> ② ⚠️ **A GUARD THAT CAUSED THE FAILURE IT WAS WRITTEN TO PREVENT.** A `maxHeight` + scroll was added
+> to two intro cards; A/B'd in the live DOM, OrderDesk's card **fits unaided to a 268px frame**, and
+> capping it moved the first clip EARLIER *and* off the decorative top corner **onto the Start button**,
+> behind an undiscoverable scroll. Both reverted; the copy was shortened instead, which is the honest
+> lever. All four cards measured at 640×320 after: **218 / 291 / 268 / 307px**, headroom 51/14/26/6,
+> every Start button visible, nothing scrolling. SupplyRun's own draft overflowed by 10px and was
+> caught the same way.
+> ③ ⚠️ **THE SELF-PACED DWELL IS A COPY BUDGET, AND BOTH CHAPTERS BLEW IT.** `dwellFor` caps at 6200ms,
+> so SupplyRun's share opener at 94 chars put **ALL 572 generatable share openers on the clamp** where
+> none had been; the next beat's `speak()` then cancels the utterance and the tail is what goes — and
+> the tail was *"They all get the same"*, the fairness rule the chapter is about. Swept after the fix:
+> **36,365 share beats, 0 clamped**, longest 84 against an 88-char ceiling. LoadingBay's was 98 vs 86.
+> ④ ⚠️ **AN ANCHOR THAT FLATTENED ITS OWN CHAPTER'S THESIS.** RailLine's card said the scoreboard and
+> the rail line were *"the same job"* — but §① of that file is that rounding here is **not a convention,
+> it is physical**: a train cannot stop between stations, while a scoreboard still reads 47 and only
+> the player's head rounds. Now *"Milo has it harder"*. The demo simile inverted the same way.
+> ⚠️ **Several newly-added comments also asserted things measurement contradicted** (a character
+> ceiling, how often an anchor plays, what a height guard fixed) — the craft doc's *"a comment
+> claiming a rule is followed is the most expensive kind of lie"*, met three times in one pass.
+>
+> ## ▶ OPEN
+> 1. **The build order is 2 of 6.** ✅ FactorLab's tap path · ✅ the four built chapters' anchors.
+>    **NEXT is the one that unblocks everything else: widen `useFingerCounter` to one
+>    `onRead({count, hands, perHand, tips, pinch, tilt, span})` and extract a shared `<HandInput>`**
+>    (camera toggle, lazy MediaPipe, gate, mirrored self-view, dwell ring) out of FactorLab. Without it
+>    the Angle Shop's tilt — the band's strongest gesture — cannot be written at all. Then Fitting Crew
+>    (Lego + two-hand array), then the four neon rebuilds.
+> 2. ⚠️ **THREE CONSTRAINTS THE ANCHORS TURNED UP, each needing an answer before that chapter's copy:**
+>    **Measurement is METRIC in code and a US doorframe is feet and inches** (I took US customary as
+>    the working answer — it is a table of items, not a rebuild); **there is no 5 × 19 Lego brick**,
+>    which is what FitOut's `split` draws (L1/L2 real bricks, L3 a baseplate); and **FactorLab's range
+>    reaches 100**, which is a hall rather than a classroom — one word at the top tier.
+> 3. ⚠️ **The Empty Plot vs AR is still your call.** First-person 3D where the answer is a *place*;
+>    hands cannot drive a walk. Options (a)–(d) are in the plan; **(d) — keep the walk, and make the
+>    ANSWER a trace round the outside / a sweep across the inside — is the recommendation**, because
+>    those two gestures ARE the distinction the chapter teaches.
+> 4. ⚠️ **Two-hand span (G) may not survive a real child** — hand separation in pixels scales with
+>    distance from the camera. The handoff already records this as why UnitConverter was not the first
+>    AR chapter. Build it last, behind the drag ruler, and be willing to drop it.
+> 5. ⚠️ **NOBODY HAS HELD A REAL HAND UP TO ANY OF IT.** Every drive fed synthetic readings through the
+>    dev hook, and the pane blocks capture. **The tap path is now fully drivable end to end, which is a
+>    verification win the fallback bought for free** — but the whole detection layer is still
+>    eyeball-only, and two-place entry multiplies that dependence.
+> 6. ⚠️ **The camera grant is still a founder/legal item even as an option** — no privacy policy, ToS
+>    or COPPA content exists anywhere in the repo. Opt-in lowers the stakes; it does not remove them.
+> 7. **Nothing is pushed and `public/sw.js` is still v87** (→ v88 when this deploys). `LoadingBay` and
+>    `OrderDesk` still have **no gate at all**, which is what made this pass conservative; the
+>    cover-fit fix is still owed to both, now ten deploys old.
+> 8. **4 chapters remain neon** — FractionForge · DecimalGrid · UnitConverter · MissionBrief.
+> 9. **Nobody has watched a child play any of it**, and every fault that mattered this session came
+>    from measuring the screen or from a refuter — **not one from the type-checker, and four of them
+>    after the gates were green.**
+>
+> _(the 📷 block below is the previous session — the AR FactorLab build.)_
+
+> 📷 **2026-08-09 — THE 9–11 BAND'S FIRST AR CHAPTER: FACTORLAB IS ANSWERED WITH THE WEBCAM. YOUR FINGERS ARE THE DIVISOR. ✅ COMMITTED — `4066dc4` on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **706/706 vitest** (was 660, **+46 — all of it this chapter's own gate; 11/11 planted regressions caught, 1 more proven inert**) · `next build` 0 · 0 console errors in a fresh tab · driven end to end at 1280×800 **and** 640×320 through intro → camera gate → explore → both demos → guided → scored rounds, incl. a **prime round answered with a fist**.
 >
 > **The ask:** *"yeh chapters mein se koi ek chapter hum AR banate hai… laptop ke webcam yaa tablet ka front cam… format same — pehle explanation, phir question solve karne ka tariqa, phir question with our adaptive system."* Founder then picked **FactorLab** and **camera-only (no tap fallback)**.
 >
@@ -142,14 +290,15 @@
 >    deps in, and committing package.json without a matching lock would have been a broken commit.
 >    Verified with `git show --stat` (13 files, nothing swept) and by grepping the committed tree
 >    for `three`/`@react-three` imports (**none** — so the commit's own dep list is honest).
-> 2. ⚠️ **THE TRACKED TREE DOES NOT TYPECHECK, AND IT HAS NOT SINCE BEFORE THIS SESSION.** Checked
->    out clean, `4066dc4` fails `tsc` on three missing modules — `AngleScope`, `GridPlotter`,
->    `DivisionShare` — and **its PARENT `4dd50f0` fails identically**, so this is not something this
->    session introduced. Those three were deleted-and-committed by earlier sessions while their
->    replacements (`AngleShop` · `FloorPlot` · `SupplyRun`) and the `storyChapters.tsx` rewire that
->    points at them are **still uncommitted**. The working tree is green only because the untracked
->    files are on disk. **Nothing on this branch can deploy until that batch is committed too** —
->    it is now the single biggest thing owed.
+> 2. ✅ **CLOSED 2026-08-09 by `fdfcc9d` — the branch typechecks again.** _(Kept as the record of what
+>    was owed, and of the shape of the fault.)_ ⚠️ **THE TRACKED TREE DID NOT TYPECHECK, AND HAD NOT
+>    SINCE BEFORE THAT SESSION.** Checked out clean, `4066dc4` failed `tsc` on three missing modules —
+>    `AngleScope`, `GridPlotter`, `DivisionShare` — and **its PARENT `4dd50f0` failed identically**, so
+>    it was not something that session introduced. Those three were deleted-and-committed by earlier
+>    sessions while their replacements (`AngleShop` · `FloorPlot` · `SupplyRun`) and the
+>    `storyChapters.tsx` rewire that points at them stayed uncommitted; the working tree was green only
+>    because the untracked files were on disk. **The general lesson: a green working tree says nothing
+>    about the branch. Check out the commit clean, or a deletion can ship without its replacement.**
 > 3. ⚠️ **THE CAMERA GRANT IS A FOUNDER/LEGAL ITEM, NOT A TECHNICAL ONE.** `Permissions-Policy` now
 >    ships `camera=(self)`, reversing the July audit's deliberate revocation. Hand landmarks are
 >    computed **on-device and no frame leaves the browser** — but there is still **no privacy policy,
@@ -6590,7 +6739,7 @@
 >
 > **⚠️ LEARNED (carry forward):** **subagents cannot reliably load MCP tools via ToolSearch** — devops-release hit this trying to reach the Supabase MCP (no CLI/token either) and correctly reported the blocker instead of faking it. **Supabase-MCP work (migrations, SQL, advisors) must run from the MAIN session.** Also: a Supabase **dev branch bills ~$0.01344/hr** — this project is free-tier, so migrations go direct-to-prod with founder authorization (branch-first isn't available).
 
-> 🔢 **2026-07-18 (LATEST — SHIPPED TO PROD: integers practice = tap-a-number-choice + clearer questions, sw v24→v25).** Partner feedback on the 12–14 **integers (WeatherStation, "BANK ACCOUNT")** chapter: practice questions were confusing (even for an adult) and dragging the meter to answer felt un-normal. Changes, all live (commit `7a52bf1`): **(1)** New shared **`AnswerPad`** ([gameKit.tsx](src/features/chapters/teen/games/parts/gameKit.tsx)) — the child answers by **tapping one of a few number choices** (correct + distractors, per-task `choices`, memoized in GameShell so they don't reshuffle per render). Gated by a new **`config.answerPad?: (t) => number[]`** ([GameShell.tsx](src/features/chapters/teen/games/parts/GameShell.tsx)); when set, the instrument is **never rendered in the practice loop** (no meter, no glide, no flash on solve). **(2)** Clearer questions — literal math badges (`6 + 7`, not the cryptic `6 ↓`), a `disp()` proper-minus formatter (was rendering `signed()`'s spoken "negative 5"), and a `BaseTask.showEquals` flag to drop the nonsensical `= ?` on compare/place tasks. Dropped the trivial "set the balance to −5" task (pointless when you can tap the answer). **(3)** Turned **`showSolve` OFF** for integers (nothing to "solve on the illustration" once the meter is gone) — flow is now walkthrough (I do) → guided tap-a-choice (we do) → scored tap-a-choice (you do). **Bank theme + the animated bank-vault walkthrough scene are KEPT** (partner: "keep bank theme everywhere"). The keypad was built then removed at partner request (tap-choices only). Verified live: tap grades correct, wrong answers reveal via the QuestionBoard, no meter anywhere in practice/guided, 0 console errors. `tsc` · **26/26 tests** · `next build` green. Prod smoke: home + `/auth` + `/teen-preview?c=integers` all 200. **NEXT:** `answerPad` is generic (any numeric-answer chapter can add it) — fan out to the other 12–14 chapters if the integers pilot lands well; also `showSolve` is now integers-off but still on for none (was integers-only) — decide per chapter.
+> 🔢 **2026-07-18 (SHIPPED TO PROD: integers practice = tap-a-number-choice + clearer questions, sw v24→v25).** Partner feedback on the 12–14 **integers (WeatherStation, "BANK ACCOUNT")** chapter: practice questions were confusing (even for an adult) and dragging the meter to answer felt un-normal. Changes, all live (commit `7a52bf1`): **(1)** New shared **`AnswerPad`** ([gameKit.tsx](src/features/chapters/teen/games/parts/gameKit.tsx)) — the child answers by **tapping one of a few number choices** (correct + distractors, per-task `choices`, memoized in GameShell so they don't reshuffle per render). Gated by a new **`config.answerPad?: (t) => number[]`** ([GameShell.tsx](src/features/chapters/teen/games/parts/GameShell.tsx)); when set, the instrument is **never rendered in the practice loop** (no meter, no glide, no flash on solve). **(2)** Clearer questions — literal math badges (`6 + 7`, not the cryptic `6 ↓`), a `disp()` proper-minus formatter (was rendering `signed()`'s spoken "negative 5"), and a `BaseTask.showEquals` flag to drop the nonsensical `= ?` on compare/place tasks. Dropped the trivial "set the balance to −5" task (pointless when you can tap the answer). **(3)** Turned **`showSolve` OFF** for integers (nothing to "solve on the illustration" once the meter is gone) — flow is now walkthrough (I do) → guided tap-a-choice (we do) → scored tap-a-choice (you do). **Bank theme + the animated bank-vault walkthrough scene are KEPT** (partner: "keep bank theme everywhere"). The keypad was built then removed at partner request (tap-choices only). Verified live: tap grades correct, wrong answers reveal via the QuestionBoard, no meter anywhere in practice/guided, 0 console errors. `tsc` · **26/26 tests** · `next build` green. Prod smoke: home + `/auth` + `/teen-preview?c=integers` all 200. **NEXT:** `answerPad` is generic (any numeric-answer chapter can add it) — fan out to the other 12–14 chapters if the integers pilot lands well; also `showSolve` is now integers-off but still on for none (was integers-only) — decide per chapter.
 >
 > ⏱️ **2026-07-16 (SHIPPED TO PROD: "show me how" reveal-speed fix, sw v23→v24).** The show-me-how solve board was revealing words too fast in practice. Root cause: with **no voice on Chrome**, `speakWithHighlight` falls to a timed word sweep tuned to match *real speech duration* — with nothing to pace against, words flick by. Fix ([useMiloSpeaker.ts:453](src/infra/useMiloSpeaker.ts)): slow the sweep **2.1× only in the fully-silent case** (`autoFinish: true`); the Safari voice-plays-no-boundaries path keeps real-speech pacing (`slow = 1`) so the highlight stays synced. Verified live in practice — reveal now ~850ms/word (was ~406ms), first word at the ~1708ms grace-timer silent-sweep, 0 console errors. `tsc` clean · **26/26 tests** · `next build` green. **Commit `3064d9a` → `main` (FF) → Vercel prod serving v24; smoke home + `/auth` + `/teen-preview?c=integers` all 200.**
 >
@@ -6833,7 +6982,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-09 (LATEST — see the top 📷 block. **The 9–11 band's FIRST AR CHAPTER: FactorLab is answered with the WEBCAM — your fingers are the divisor. ✅ COMMITTED `4066dc4` + `8bffd01` on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **706/706 vitest** (+46, all of it the chapter's own gate) · `next build` 0 · 11/11 planted regressions caught · driven end to end at 1280×800 and 640×320. Milo puts n units on the bench, the child holds up a number of rows, the bench deals them and either fills flush or leaves a gap — **one physical act, four readings**, and the answer space goes from 2 options to 11. `factor` and `prime` share ONE prompt on purpose, so the child has to find out whether a split exists, which is what primeness IS. ⚠️ **The bench does not deal until the child COMMITS** (holding still ~1.2s) — a live reflow would let a child sweep 2,3,4,5 until it went flush, the repeatable-commit oracle arriving through a continuous input. ⚠️ **Four faults the drive found that 32 green tests could not**, incl. a FIST and a LOWERED HAND being the same pixels, and a gesture surface not resetting between rounds the way a tap does (the guided round opened already reading its own answer). ⚠️ **Then the founder played it and found two more no gate could:** tier 1 was two-thirds pair test with the real content locked behind promotion, and every question was a run-on fusing story + math + gesture — now rewritten to the 12–14 clarity spec's three zones, which promptly **broke the layout twice, because a good question is TALLER than a bad one** (265px against 36px). ⚠️ **A REAL BUG I SHIPPED AND MY OWN DRIVE COULD NOT SEE:** `<video>` was gated on "the camera started" while `openCamera` needs it to exist, so Chrome granted the camera and threw on null — my dev hook bypassed the camera path entirely, a green result that would have been equally green had the code been broken. ▶ Open, biggest first: ⚠️ **the tracked tree has not typechecked since BEFORE this session** (AngleScope/GridPlotter/DivisionShare deleted-and-committed while their replacements stay untracked — the parent commit fails identically), so **nothing can deploy until that batch lands**; the camera grant is a founder/legal item (no privacy policy or COPPA content exists); MediaPipe fetches ~6 MB from a CDN, unconsidered by the CSP or the service worker; **nobody has held a real hand up to the detection layer**. _(prior footer follows.)_)_
+_Last updated: 2026-08-09 (LATEST — see the top 🖐️ block. **The broken tree is committed and builds again; the 9–11 band has its twelve daily anchors; and the camera stops being a wall — FactorLab now answers by TAP too. ✅ Five commits on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **713/713 vitest** · `next build` 0 · driven at 1280×720, 640×320 and 667×375 on both input paths. ✅ **`fdfcc9d` closes the biggest thing owed** — AngleScope/GridPlotter/DivisionShare had been deleted-and-committed while their replacements sat untracked, so the branch had failed `tsc` since before the previous session. **The twelve anchors were picked one by one against one filter: has the child DONE this, or only watched an adult do it?** — fundraiser total · points to catch up · a Lego brick's studs · sharing candy · desks in equal rows · a shared pizza · $12.50 vs $12.05 · doorframe height · your own bedroom floor · how steep the ramp is · goals each friend scored · a rotating pool for word problems. ⚠️ **Half the band cannot be answered by counting fingers** (FitOut's `split` reaches 95), so the plan's unlock is **two hands = two places** plus tilt/pinch/point/sweep/trace/mirror — all one change to one hook. ⚠️ **The founder reversed camera-only and it made the architecture BETTER: one instrument, two inputs, ONE grader** — the AR layer sets the same value a tap sets, so the paths cannot grade differently, MediaPipe loads only on opt-in, and the camera stops being a wall. ⚠️ **Two faults the drive found that the gate could not:** every chip still said *"hold up that many fingers"* on the tap path (wording not wrong — addressing the wrong child), and **Milo sat on the ✊**, the prime answer, where no probe could see it. ⚠️ **Then an adversarial pass failed three of the four anchor chapters:** a number in the teaching the chapter can never draw (*"Sam 8"* against a cap of 5; `$3,482` against `MAX_DIGIT` 5), **a height guard that caused the clip it was written to prevent** — moving it onto the Start button, **the self-paced dwell blown** so all 572 share openers clamped and the cut tail was the chapter's own fairness rule, and **an anchor that flattened its chapter's thesis** (rail rounding is physical, scoreboard rounding is a convention). ▶ Open: **build order is 2 of 6 — next is widening `useFingerCounter` and extracting a shared `<HandInput>`, without which the Angle Shop's tilt cannot be written**; three anchor constraints need answers (metric vs US customary, no 5×19 Lego brick, 100 desks is a hall); Empty Plot vs AR is still your call; **nobody has held a real hand up to any of it**; nothing pushed, `sw.js` still v87. _(prior footer follows.)_)_
 
 _Prior update:
 
