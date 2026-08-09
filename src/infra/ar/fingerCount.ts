@@ -36,3 +36,27 @@ export function extendedFingerTips(lm: Landmark[], handedness: string): FingerTi
 
   return tips
 }
+
+/**
+ * The angle of the PALM, as an AXIS in [0,180). 0° is flat to the right, 90° is straight up.
+ *
+ * Measured in MIRRORED screen space, because that is the frame the child is looking at — the
+ * self-view is `scaleX(-1)` and handedness is exactly the thing a nine-year-old gets confused by.
+ *
+ * ⚠️ Wrist (0) → middle-finger KNUCKLE (9), never a fingertip: both of those sit on the rigid palm,
+ * so the reading does not swing when the fingers curl. A tilt that moved when you closed your hand
+ * would be unusable in a chapter that also wants a fist.
+ *
+ * ⚠️ FOLDED TO [0,180) BECAUSE AN AXIS HAS NO HEAD OR TAIL, and that is what lets ONE reading serve
+ * both instruments this band needs: a beam at 200° IS a beam at 20°, and a fold line at 200° IS the
+ * fold line at 20°.
+ */
+export function palmTilt(lm: Landmark[]): number | null {
+  if (!lm || lm.length < 10) return null
+  const dx = -(lm[9].x - lm[0].x)   // mirrored
+  const dy = -(lm[9].y - lm[0].y)   // y grows DOWN in the frame; flip it for maths orientation
+  if (!dx && !dy) return null
+  return norm180((Math.atan2(dy, dx) * 180) / Math.PI)
+}
+
+export const norm180 = (a: number) => ((a % 180) + 180) % 180

@@ -1,33 +1,57 @@
 'use client'
 /**
- * useFingerCounter — webcam finger detection for AR activities.
+ * useFingerCounter — the webcam hand reading for the AR activities.
  *
- * Simple model: each frame we detect the extended fingers and number them
- * left-to-right (1..N) over the hand — no per-finger identity, no raise-order
- * locking. Show whatever fingers however you like; it just counts them. When the
- * hand leaves, there are no fingers, so it resets to 0 on its own.
+ * ONE callback, `onRead({ count, hands, tilt })`, fired when the reading CHANGES. Everything a
+ * chapter needs comes off the same 21 landmarks per hand that were already being computed every
+ * frame and thrown away.
  *
- * Game logic stays in the page via one callback, onCount(n), which fires when
- * the number of raised fingers changes. The reported count is lightly stabilized
- * (must hold a few frames) so a one-frame detection blip can't fool the game.
+ *   • count — extended fingers, numbered left-to-right, lightly stabilized so a one-frame blip
+ *     cannot fool the game. Show whatever fingers however you like; it just counts them.
+ *   • hands — ⚠️ NOT DECORATION. A FIST and AN EMPTY FRAME both extend zero fingers, and a chapter
+ *     where the fist is a real answer (Factor Lab: "nothing fits, so it is prime") would otherwise
+ *     commit that answer the moment a child lowers their hand. Only trust a 0 when hands > 0.
+ *   • tilt — the palm's angle as an axis in [0,180), or null when there is no hand. This is the
+ *     Angle Shop's whole instrument: the child's forearm IS the ramp.
  *
- * Reusable across future AR activities. On-device only.
+ * ⚠️ `reads` SAYS WHAT THE CHAPTER IS ACTUALLY READING, AND IT IS NOT DECORATION EITHER. A tilt is
+ * continuous, so including it in the change test fires `onRead` at frame rate — which is right for
+ * a chapter whose beam follows the hand and wrong for one that only wants a count, where it would
+ * re-render the whole tree ~30×/s for a number that has not moved. It also picks the overlay drawn
+ * on the self-view: numbering the fingers over an angle chapter is noise.
+ *
+ * Reusable across future AR activities. On-device only — no frame ever leaves the browser.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { extendedFingerTips } from '@/infra/ar/fingerCount'
+import { extendedFingerTips, palmTilt, norm180 } from '@/infra/ar/fingerCount'
 import { createHandLandmarker, openCamera } from '@/infra/ar/handLandmarker'
 import { disposeLandmarker } from '@/infra/ar/dispose'
 
 const STABLE_FRAMES = 3 // a changed count must hold this many frames before we report it
+/**
+ * ⚠️ THE CALIBRATION KNOB, and a continuous reading does not work without one. MediaPipe's landmark
+ * noise on the palm axis is a couple of degrees, which is comparable to the Angle Shop's own 5°
+ * step — so an unsmoothed tilt dithers across a step boundary and a commit that waits for stillness
+ * NEVER FIRES, i.e. a dead button, which the craft doc calls the worst outcome there is. Raise it
+ * for a snappier hand, lower it if a real child cannot hold the reading still.
+ */
+const TILT_EMA = 0.3
 
 export type FingerStatus = 'idle' | 'loading' | 'running' | 'error'
-/**
- * ⚠️ `hands` is not decoration. A FIST and AN EMPTY FRAME both extend zero fingers, and a chapter
- * where the fist is a real answer (Factor Lab: "nothing fits, so it is prime") would otherwise
- * commit that answer the moment a child lowers their hand. Only trust a 0 when hands > 0.
- */
+
+export interface HandRead {
+  /** extended fingers across every hand in frame, 0..10 */
+  count: number
+  /** how many hands are in frame — the thing that tells a fist from an empty room */
+  hands: number
+  /** the palm's angle as an axis in [0,180), or null when no hand is in frame */
+  tilt: number | null
+}
+
 interface Opts {
-  onCount?: (n: number, hands: number) => void
+  onRead?: (r: HandRead) => void
+  /** What this chapter reads — decides both the change test and the self-view overlay. */
+  reads?: 'count' | 'tilt'
   /** Marker colours, so a chapter can draw in its own palette. Defaults to the 3–5 band's orange. */
   marker?: { fill: string; ink: string }
 }
@@ -41,20 +65,24 @@ export function useFingerCounter(
   const [error, setError] = useState('')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const landmarkerRef = useRef<any>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const rafRef = useRef<number>(0)
   const stableRef = useRef({ count: 0, hands: 0, cand: '', streak: 0 })
+  /** the smoothed tilt, held as a DOUBLED-angle unit vector — see below */
+  const tiltVecRef = useRef<{ x: number; y: number } | null>(null)
+  const lastKey = useRef('')
   const optsRef = useRef(opts)
   optsRef.current = opts
 
   const stop = useCallback(() => {
     cancelAnimationFrame(rafRef.current)
-    disposeLandmarker(videoRef, landmarkerRef)
+    disposeLandmarker(videoRef, landmarkerRef, streamRef)
     setStatus('idle')
   }, [videoRef])
 
   useEffect(() => () => {
     cancelAnimationFrame(rafRef.current)
-    disposeLandmarker(videoRef, landmarkerRef)
+    disposeLandmarker(videoRef, landmarkerRef, streamRef)
   }, [videoRef])
 
   const loop = useCallback(() => {
@@ -65,47 +93,58 @@ export function useFingerCounter(
     if (canvas.height !== H) canvas.height = H
     const ctx = canvas.getContext('2d')!
     ctx.clearRect(0, 0, W, H)
+    const fill = optsRef.current.marker?.fill ?? '#F26B2C'
+    const ink = optsRef.current.marker?.ink ?? '#3D2516'
+    const reads = optsRef.current.reads ?? 'count'
 
     if (video.readyState >= 2) {
       const res = lm.detectForVideo(video, performance.now())
+      const all = (res.landmarks ?? []) as { x: number; y: number; z: number }[][]
+      const hands = all.length
 
       // All extended fingertips this frame → screen positions, left-to-right.
       const pts: { sx: number; sy: number }[] = []
-      const hands = (res.landmarks ?? []).length
-      ;(res.landmarks ?? []).forEach((hand: { x: number; y: number; z: number }[], i: number) => {
+      all.forEach((hand, i) => {
         const handed = res.handednesses?.[i]?.[0]?.categoryName ?? `H${i}`
         extendedFingerTips(hand, handed).forEach(t => pts.push({ sx: (1 - t.x) * W, sy: t.y * H }))
       })
       pts.sort((a, b) => a.sx - b.sx)
 
-      // Number them 1..N over the fingers (height-staggered so they don't overlap).
-      const R = 18, TOP = 46, STAGGER = 34
-      pts.forEach((p, i) => {
-        const bx = Math.min(Math.max(p.sx, R + 2), W - R - 2)
-        const by = Math.max(p.sy - TOP - (i % 2 ? STAGGER : 0), R + 2)
-        ctx.beginPath(); ctx.moveTo(bx, by + R); ctx.lineTo(p.sx, p.sy)
-        ctx.strokeStyle = optsRef.current.marker?.fill ?? '#F26B2C'; ctx.lineWidth = 3; ctx.stroke()
-        ctx.beginPath(); ctx.arc(bx, by, R, 0, Math.PI * 2)
-        ctx.fillStyle = optsRef.current.marker?.fill ?? '#F26B2C'; ctx.fill()
-        ctx.lineWidth = 4; ctx.strokeStyle = optsRef.current.marker?.ink ?? '#3D2516'; ctx.stroke()
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 26px system-ui, sans-serif'
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-        ctx.fillText(String(i + 1), bx, by + 1)
-      })
+      // ⚠️ SMOOTHED ON THE DOUBLED ANGLE'S UNIT VECTOR, not on the degrees. A hand held flat wobbles
+      // either side of horizontal, i.e. across the 0/180 seam — and a plain average of 179° and 1°
+      // is 90°, which is the WRONG ANSWER at exactly the pose a child is most likely to hold.
+      const raw = hands ? palmTilt(all[0]) : null
+      let tilt: number | null = null
+      if (raw === null) tiltVecRef.current = null
+      else {
+        const a = (raw * Math.PI) / 90            // 2θ, in radians
+        const v = tiltVecRef.current
+        const x = v ? v.x + (Math.cos(a) - v.x) * TILT_EMA : Math.cos(a)
+        const y = v ? v.y + (Math.sin(a) - v.y) * TILT_EMA : Math.sin(a)
+        tiltVecRef.current = { x, y }
+        tilt = Math.round(norm180((Math.atan2(y, x) * 90) / Math.PI))
+      }
 
-      // Report the count, lightly stabilized so a 1-frame blip doesn't register. The key carries
-      // BOTH figures, so a hand closing into a fist (0 fingers, 1 hand) is a change the chapter
-      // hears, while a hand leaving frame (0 fingers, 0 hands) is a different one.
+      if (reads === 'tilt') drawTilt(ctx, all[0], W, H, fill, ink)
+      else drawCount(ctx, pts, W, fill, ink)
+
+      // The count is stabilized; the tilt is not (it is already smoothed, and a continuous value
+      // that had to hold N frames would simply lag). The key carries BOTH count and hands, so a
+      // hand closing into a fist (0 fingers, 1 hand) is a change the chapter hears, while a hand
+      // leaving frame (0 fingers, 0 hands) is a different one.
       const n = pts.length
       const s = stableRef.current
-      const key = `${n}/${hands}`
-      if (key !== `${s.count}/${s.hands}`) {
-        if (key === s.cand) s.streak++; else { s.cand = key; s.streak = 1 }
-        if (s.streak >= STABLE_FRAMES) {
-          s.count = n; s.hands = hands; s.cand = ''; s.streak = 0
-          optsRef.current.onCount?.(n, hands)
-        }
+      const stableKey = `${n}/${hands}`
+      if (stableKey !== `${s.count}/${s.hands}`) {
+        if (stableKey === s.cand) s.streak++; else { s.cand = stableKey; s.streak = 1 }
+        if (s.streak >= STABLE_FRAMES) { s.count = n; s.hands = hands; s.cand = ''; s.streak = 0 }
       } else { s.cand = ''; s.streak = 0 }
+
+      const key = reads === 'tilt' ? `${s.count}/${s.hands}/${tilt}` : `${s.count}/${s.hands}`
+      if (key !== lastKey.current) {
+        lastKey.current = key
+        optsRef.current.onRead?.({ count: s.count, hands: s.hands, tilt })
+      }
     }
     rafRef.current = requestAnimationFrame(loop)
   }, [videoRef, canvasRef])
@@ -114,13 +153,14 @@ export function useFingerCounter(
     try {
       setStatus('loading'); setError('')
       stableRef.current = { count: 0, hands: 0, cand: '', streak: 0 }
+      tiltVecRef.current = null; lastKey.current = ''
       // Counting needs both hands; keep MediaPipe's default 0.5 presence/tracking
       // (the other AR surfaces loosen these to 0.3) — pass them explicitly so the
       // shared helper reproduces this site's exact prior behavior.
       landmarkerRef.current = await createHandLandmarker({
         numHands: 2, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
       })
-      await openCamera(videoRef.current!)
+      streamRef.current = await openCamera(videoRef.current!)
       setStatus('running')
       loop()
     } catch (e) {
@@ -130,4 +170,45 @@ export function useFingerCounter(
   }, [videoRef, loop])
 
   return { status, error, start, stop }
+}
+
+/** Number the extended fingers 1..N over the hand, height-staggered so the discs do not overlap. */
+function drawCount(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }[], W: number, fill: string, ink: string) {
+  const R = 18, TOP = 46, STAGGER = 34
+  pts.forEach((p, i) => {
+    const bx = Math.min(Math.max(p.sx, R + 2), W - R - 2)
+    const by = Math.max(p.sy - TOP - (i % 2 ? STAGGER : 0), R + 2)
+    ctx.beginPath(); ctx.moveTo(bx, by + R); ctx.lineTo(p.sx, p.sy)
+    ctx.strokeStyle = fill; ctx.lineWidth = 3; ctx.stroke()
+    ctx.beginPath(); ctx.arc(bx, by, R, 0, Math.PI * 2)
+    ctx.fillStyle = fill; ctx.fill()
+    ctx.lineWidth = 4; ctx.strokeStyle = ink; ctx.stroke()
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 26px system-ui, sans-serif'
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText(String(i + 1), bx, by + 1)
+  })
+}
+
+/**
+ * A single line along the palm axis. ⚠️ It says WHICH HAND is being read and nothing else — a
+ * degree figure drawn here would be the readout the Angle Shop's rule 1 forbids while turning, and
+ * the beam on the stage is already showing the reading anyway.
+ */
+function drawTilt(ctx: CanvasRenderingContext2D, hand: { x: number; y: number }[] | undefined, W: number, H: number, fill: string, ink: string) {
+  if (!hand || hand.length < 10) return
+  const p = (i: number) => ({ x: (1 - hand[i].x) * W, y: hand[i].y * H })
+  const a = p(0), b = p(9)
+  const dx = b.x - a.x, dy = b.y - a.y
+  const len = Math.hypot(dx, dy) || 1
+  const ext = Math.max(W, H) * 0.42
+  const ux = dx / len, uy = dy / len
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
+  ctx.beginPath()
+  ctx.moveTo(mx - ux * ext, my - uy * ext)
+  ctx.lineTo(mx + ux * ext, my + uy * ext)
+  ctx.strokeStyle = ink; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke()
+  ctx.strokeStyle = fill; ctx.lineWidth = 4; ctx.stroke()
+  ctx.beginPath(); ctx.arc(a.x, a.y, 7, 0, Math.PI * 2)
+  ctx.fillStyle = fill; ctx.fill()
+  ctx.lineWidth = 3; ctx.strokeStyle = ink; ctx.stroke()
 }

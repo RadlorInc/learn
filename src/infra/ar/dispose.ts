@@ -17,9 +17,16 @@ export function disposeLandmarker(
   videoRef: RefObject<HTMLVideoElement | null>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   landmarkerRef: RefObject<any>,
+  streamRef?: RefObject<MediaStream | null>,
 ) {
   const v = videoRef.current
   ;(v?.srcObject as MediaStream | null)?.getTracks().forEach(t => t.stop())
+  // ⚠️ AND the stream we were handed, which is not the same thing. If the <video> unmounts FIRST —
+  // a rotate gate, a phase switch, a chapter exit that tears the tree down in the wrong order —
+  // `videoRef.current` is already null, so the tracks above are unreachable and the camera light
+  // stays on with the browser still reporting the site as using it.
+  streamRef?.current?.getTracks().forEach(t => t.stop())
+  if (streamRef) streamRef.current = null
   if (v) v.srcObject = null
   // Free the GPU/WASM inference context. Guarded so a double-stop (stop() then
   // unmount cleanup) can't throw on an already-closed task.
