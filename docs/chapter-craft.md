@@ -1910,6 +1910,45 @@ Use rAF only for the progress ring, which is allowed to pause.
 must get a written explanation with a retry, not a blank screen — and *"Milo needs to see your hands"*
 is the whole of it. Note the cost out loud when choosing camera-only: that child cannot play at all.
 
+⚠️ **BETTER STILL: ONE INSTRUMENT, TWO INPUTS, ONE GRADER — and the fallback costs less than it looks.**
+FactorLab shipped camera-only and the founder later reversed it, which sounded like doubling the work
+and was the opposite: the AR layer does not *answer* the question, it **sets the same value a tap
+sets**, and both land in one `commit(value)`. So there is one grader, the existing sweep covers both
+paths at once, and four things fall out for free — the camera stops being a wall (no device, no
+permission, a parent who says no), the MediaPipe download happens only on opt-in so the app stays
+local-first, and the legal surface shrinks from *mandatory* to *offered*. Remember the pick per
+DEVICE (`infra/storage/handInput`, the `voicePref` pattern): "no camera" is a household answer, not a
+per-learner one, and both doors are offered every time — the remembered pick decides which is the big
+button, never which is the only one.
+⚠️ **The two paths must commit DIFFERENTLY, though.** A tap is CONSUMED; a hand is still up when the
+next question opens. So the camera's two guards — hold still, and ignore the reading held over from
+the last round — have nothing to protect against on a tap, and pushing a tap through them **silently
+swallows it** whenever its value matches the held-over reading. A tap calls `commit` directly. Keep
+the dwell hook called unconditionally and merely not live: branching above a hook changes the hook
+count and tears the chapter into the error boundary.
+
+⚠️ **ADDING AN INPUT MEANS RE-WORDING EVERY LINE THAT NAMES A GESTURE — AND A SINGLE-MODE GATE CANNOT
+SEE THE MISS.** Every chip, spoken line and nudge in FactorLab said *"hold up that many fingers"*.
+With a tap path added they still read perfectly — **for somebody else's surface**, which is the 12–14
+audit's headline defect (nine chapters saying "crank the gear" with no crank on screen) arriving
+through a new door. The wording is not wrong, so nothing fails; it just addresses the wrong child.
+Render zone 3 from ONE input-aware function rather than baking a gesture into the round, sweep the
+rule over **both** modes (`for (const i of INPUTS)`), and assert positively in each direction — the
+tap chip must NOT match `/hold up|fingers/` and the hand chip must NOT match `/tap/`. Without that
+last pair a renderer that ignores its input passes every other check. **Zones 1 and 2 never change**:
+the story and the maths do not know how the child answers.
+
+⚠️ **AND THE CHARACTER IN THE CORNER IS A LAYER — CROSS IT WITH THE ANSWER SURFACE.** Moving the answer
+into the bottom band put Milo (`PtMilo left={9}`) squarely over the **✊**, which is the prime answer,
+i.e. the one button a child must be able to find. The tap still landed, because he is
+`pointerEvents: none` — so no click-through probe, no console error and no gate could see it; only
+measuring his box against the pad's did. Give him a lane and centre the surface in what is left.
+⚠️ **The same measurement caught a wrap that was clearing the bench by luck**: eleven buttons sharing
+a flex row with a "continue" control ran onto two rows at 640×320 and stopped 8px off the bottom edge,
+inside a reserved constant that happened to be big enough. **A control that shares a row with the
+answer surface steals width from it** — give the surface its own row, keep the tap floor at 44px and
+let the GAP give, so its height stays predictable rather than merely lucky.
+
 ⚠️ **THE PERMISSION IS A PRODUCT DECISION BEFORE IT IS A TECHNICAL ONE.** `Permissions-Policy` ships
 `camera=()` by default here and the grant was deliberately revoked once already when the `/play` AR
 track was deleted. Turning it back on for a children's product is the founder's call, needs the
