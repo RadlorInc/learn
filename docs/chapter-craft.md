@@ -25,7 +25,9 @@ Reference implementations, in order of how closely to copy them:
 | 11 · Measurement | [MeasureIt.tsx](../src/features/chapters/story/MeasureIt.tsx) | an answer the child BUILDS, drawing a sprite by its own ink box, reserving a lane before it fills |
 | 6–8 · Add/subtract to 100 | [BlockYard.tsx](../src/features/chapters/story/BlockYard.tsx) | a question stated ONLY as quantities, the skill as the single gesture, difficulty that grows the skill, and a bundle the child can WATCH become one thing |
 | 6–8 · Time | [TickTock.tsx](../src/features/chapters/story/TickTock.tsx) + [clock.ts](../src/features/chapters/story/clock.ts) | an explicit LESSON before anything is scored, one skill answered from BOTH ends with one control shape, a scaffold that fades by tier, and a day whose arc IS the changing scene |
+| 9–11 · Division | [SupplyRun.tsx](../src/features/chapters/story/SupplyRun.tsx) + [supplyRunDivision.test.ts](../src/__tests__/supplyRunDivision.test.ts) | one gesture serving two readings of one operation because they cost the same step, an answer that is the number of steps you got, a wrong action that is ALLOWED and visible rather than blocked, a remainder with somewhere physical to be, and a layout whose column shape is searched rather than picked |
 | 9–11 · Rounding | [RailLine.tsx](../src/features/chapters/story/RailLine.tsx) + [railLineRounding.test.ts](../src/__tests__/railLineRounding.test.ts) | a world where the rounded number is the only one you can ACT on, an answer surface wide enough that it is not a coin flip, three question types sharing one control and one grader, and a layout whose numbers are derived from each other rather than guessed |
+| 9–11 · Area & perimeter | [FloorPlot.tsx](../src/features/chapters/story/FloorPlot.tsx) + [plotMaths.ts](../src/features/chapters/story/plotMaths.ts) + [plotSite.ts](../src/features/chapters/story/plotSite.ts) | **the band's only 3D chapter** — an answer that is a PLACE rather than a number (so it cannot be offered as a chip), ONE commit per scored round, a seeded procedural world that is provably free of anything countable, and everything the gate needs pulled out of the scene because `useFrame` cannot be driven headlessly |
 
 The shared engine all of these run on is [critters.tsx](../src/features/chapters/story/critters.tsx) —
 cast, habitats, `Critter`, the travel timing and the huddle invariants. **Put a fix there, not in a
@@ -169,6 +171,76 @@ consequence of getting it right. The verb answered *what does the child DO*; not
   want, what happens to them when the child gets it right? If the answer is "nothing, the shape
   turns green", it is an instrument.
 
+⚠️ **AND THE THIRD QUESTION, WHICH IS THE ONE A GOOD VERB HIDES: WHO DECIDES WHEN IT IS FINISHED?**
+The area chapter's first 3D cut had an honest verb (lay the floor), a real world and a consequence,
+and it taught nothing — because **the PLOT decided.** You lay tiles until no bare square is left, hand
+it over, and you are right, having covered a rectangle without once working out `6 × 4`. The fence is
+worse: it visibly closes. The number was a **by-product of a covering task**, and the founder's words
+for it were *"kuch samajh nahi aa raha ki baccha kya seekh raha hai."*
+- **A manipulative that can be filled until it LOOKS finished has taken the deciding away** — silently,
+  with no line of code doing anything wrong. This is the *"nothing says that's enough"* rule failing
+  from a direction it does not cover: nothing SAYS it, the picture just shows it.
+- **The fix is usually the ORDER, not the mechanic.** Make the child commit to a number BEFORE the
+  thing exists to be counted: pace the sides, then fetch that many from a store while the plot is
+  still bare, then tip them out. Now the two lengths are the only thing left to reason from, and the
+  building becomes the CHECK rather than the answer — covered exactly, a bare patch, or units still in
+  your hands. Same shape as HomeTime (fetch exactly N) and LoadingBay (the right answer sends the
+  cart), which is why those work.
+- **The test: could the child ignore the numbers entirely and still finish by feel?** If yes, you have
+  built a covering task with arithmetic painted on it.
+
+⚠️ **AND THE WORKING SURFACE MUST NOT BE RULED INTO THE UNITS THAT WILL GO ON IT — A GRID IS THE
+PRINTED ANSWER, DRAWN INSTEAD OF WRITTEN.** An area chapter (since deleted) drew its plot floor with
+a faint metre grid tiled `w × h`. One line — `repeat.set(w, h)` — chalked exactly as many countable
+squares onto the ground as the answer, so a child stood in the plot, counted the boxes, and never
+measured a side or worked anything out; on a fence round it handed over both side lengths at a
+glance. The file's own comment said *"the floor is still empty, so it cannot be counted"* while the
+floor was ruled. **This is the printed-answer rule in the last place anyone looks, because a grid
+reads as helpful scaffolding rather than as a number.** Mark the boundary — an outline, corner posts
+— and leave the inside bare. Same family as the vertical-grain rule: before drawing a repeating mark
+on anything, ask whether a child could count it.
+
+⚠️ **AND ANY COMMIT THE CHILD CAN REPEAT IS A YES/NO ORACLE.** The same chapter, with the grid gone,
+was still beatable: commit, read *"not enough"*, adjust, commit again — the answer falls out of about
+four tries with nothing worked out. **Softening the wording or clearing the surface between tries
+does not help; the feedback itself is the leak.** Where a chapter grades a quantity the child chose,
+a scored round settles on the FIRST commit, and the repair lives BEFORE it (adjusting freely at the
+store, walking back and forth before pegging) — which is where deciding belongs anyway. An unscored
+guided round may still retry; that is teaching, not measuring.
+
+⚠️ **AND WHERE THE UNIT IS THE ANSWER, DO NOT LET THE CHILD HANDLE THE UNITS AT ALL.** A tile IS the
+unit of area, so every mechanic built around moving tiles — lay them until it looks full, fetch a
+barrow of them, deal them out — hands the child a pile whose size is the answer and lets the tally do
+the adding: tap "a row" three times and the screen counts 4, 8, 12 without them ever stating a
+number. **Three mechanics were built and rejected on exactly this before anyone named it.** Ask what
+the unit of the skill IS; if the child ends up holding a countable set of them, the machine is doing
+the arithmetic. (The way out is to make the child commit to a number *before* anything countable
+exists — see "who decides when it is finished" above.)
+
+⚠️ **AND WHERE THE ANSWER IS A PLACE, THE CAMERA MUST GO BACK AND LOOK AT WHAT WAS BUILT.** This is
+the first-person version of *the consequence must be visible*, and it fails in a way a flat chapter
+cannot. In The Empty Plot the child stands at the far edge FACING AWAY from the road, so everything
+the delivery then lays is **behind them**: driven on screen, a wrong peg read *"Too far back — there
+are not enough tiles to reach the peg. Part of it would be bare"* over an empty green field. The
+tiles, the bare strip and the leftovers were all off-camera, on every round, right and wrong — so the
+one thing that makes a miss a consequence rather than a verdict was invisible, and nothing in a gate
+or a type-check could see it because every piece was individually correct. **On the commit, drive the
+camera to the thing that was made**, and hold it long enough to be read: a miss needs LONGER on that
+shot than a hit, not less. 2.6 s was not enough.
+⚠️ **The corollary for the beat BEFORE the commit: a first-person view can leave the child with no
+reference at all.** Walking into a deliberately bare working area means the frontage, the posts and
+the character are all behind them, and the forward view is empty ground — which reads as a broken
+scene rather than as an empty yard. Mark the boundary **for the full walkable depth** (one unbroken
+line, stopping at the walkable bound on every round so it says how WIDE and never how deep) and leave
+the inside bare. It must never gain posts, ticks or segments at intervals: that is a ruler, i.e. the
+printed answer drawn on the ground.
+
+⚠️ **AND IF THE UNITS COME FROM A STORE, THE STORE MUST BE DUMB.** A bundle labelled *"a row of 6"*
+hands over the side length the child was supposed to walk for — the printed-answer leak wearing a
+shopkeeper's apron. Label them "a row", "a long side", "a short side"; the count appears only on what
+they are carrying, as their own work, as they load it. Cheap gate: **no bundle label may contain a
+digit.**
+
 **Beware the skill that is a near neighbour of one already built.** Measurement spent a year as
 *tap the taller one*, which is chapter 5 (*tap the bigger bunch*) with a different adjective — and
 its height view faked the attribute anyway, uniformly scaling one sprite so "taller" was really
@@ -299,6 +371,26 @@ point — its dead centre, the single easiest tap on the page — so the mechani
 where it could not fail. **Exercise an interaction at the EDGES of its target, and on the boundary
 itself.** Same family as reading a band instead of the spots the layout really returns. The founder
 found this in one try by using their finger.
+
+⚠️ **THE TEACHING CAN CONTAIN THE EXACT FAULT THE CHAPTER EXISTS TO FIX, AND THE WORDS WILL BE
+RIGHT WHILE ONLY THE NUMBERS DISAGREE.** The Supply Run is built so that what will not divide stays
+physically in the crate — that is the whole reason it exists. Its demo's last beat dealt
+`answer × cost + rem`, i.e. the WHOLE crate, so the trace read
+`[crate 0, 3, 3, 3, 3, 2, 0] «Only 2 left — that will not fill a van, so it stays behind»`: the
+remainder had gone INTO a van while Milo said it stayed behind. A child watching that is taught the
+opposite of the rule, by the one beat written to teach it. Nothing could see it — the sentence was
+correct, the grader was correct, the beats were component-local, and the only disagreement was
+between the words and the counts. **Read the demo's numbers against its own sentences, and put the
+beat list behind an exported function so a gate can drive the same list the demo plays.**
+
+⚠️ **AND A CONTAINER'S OWN HEIGHT CAN BE THE ANSWER, PRINTED AS A LENGTH.** A receiving slot's box
+is sized by its capacity, and on a sharing round the capacity is derived from the answer — so
+anything drawn to the box's full height *is* the answer, before the child has done anything. The
+Supply Run's ground tint was written `top: −pitch*0.15 … bottom: −pitch*0.34`, which spans the whole
+box, so an empty slot glowed visibly taller on a round with a bigger answer. **Every drawn part of a
+container is anchored to its BASE and sized from the pitch alone**; the box is a layout device and
+must never be visible. Same family as the printed-answer rule, arrived at through CSS rather than
+through a string.
 
 **TEACH WHERE THE WORLD BACKS THE ANSWER UP; TEST WHERE IT CANNOT HELP.** The colouring chapter runs
 the garden first and the toy room second, and the split is what makes the score mean anything. A
@@ -547,6 +639,25 @@ check them with a script:
   wrong place until then and jump a whole item when it arrives. In the measurement chapter the thing
   that jumped was *the thing being measured*, which is the one element the child is reading. Give
   the container the full width or height it will end at; empty and unstyled, it gives nothing away.
+- ⚠️ **THE ROW-AND-COLUMN SHAPE OF A LAYOUT IS SEARCHED, NOT PICKED — the doormat fault has TWO
+  axes and a fixed shape loses on one of them.** FitOut's frame was sized to the short dimension by
+  a `topY` cap and came out at 2.8% of the screen; The Supply Run hit the mirror image with a
+  hardcoded two-column receiver — at the parts bench (a low bench, six receivers) that gave
+  `byWidth` 36 against `byHeight` 107, so it drew 30px units with half the wall above it standing
+  empty. Neither a unit-size floor nor an eye that has not seen the alternative catches this: 30px
+  *passes*. **Enumerate the few candidate shapes, compute the pitch each would give, and take the
+  biggest** — eight arrangements is a handful of arithmetic and it holds on every site at once.
+  Break the circularity (the band decides the pitch, the pitch decides the shape) by granting the
+  band the tallest arrangement any candidate could ask for. And **gate it by asking whether the
+  layout USES the room it was given**, not merely whether the unit clears a floor.
+- ⚠️ **A CAP THAT ONLY BINDS ON LARGE SCREENS HANDS THE SMALLEST SCREEN THE BIGGEST PROPORTIONAL
+  RESERVE.** `min(vw * 0.4, 380)` for a speech bubble reads as a sensible clamp and is the opposite
+  of one: at 1280 wide the 380 binds and the bubble takes 30% of the frame, while at 640 nothing
+  binds and it takes the full 40% — so the frame with the least room to spare gave the most of it to
+  the words and the least to the thing being counted. Measured, that was 11px units on a short
+  landscape frame. Pick the SHARE so the cap still binds where you want it to (0.34 here), and read
+  the number from ONE exported function — this one was written twice, in the layout and in the
+  bubble, which is *two places deciding one thing* waiting to drift.
 - ⚠️ **AND THE CHROME'S OWN HEIGHT IS ONE OF THOSE GAPS.** "The top strip is 38px" is a guess about a
   button, and TickTock's Menu button measured **12 + 41 = 53px** from a 38px budget, so the bubble
   below it opened **13px inside the button**. Derive the strip from the control's own metrics — font,
@@ -949,6 +1060,12 @@ second thing to look at. It appears with the demo, when it starts to matter.
   the ground line up, which pushed the scale up, which **cropped the stallholder's head off a 640×320
   frame** — the frame is only ever short of the height it is actually asked for, so ask for the real
   number.
+- ⚠️ **A RECEIVER MUST READ AT ITS CLEAREST WHEN IT IS EMPTY, BECAUSE THAT IS WHEN IT CARRIES THE
+  WHOLE QUESTION.** The instinct is to fade the thing with nothing in it — The Supply Run passed a
+  `dim` flag on an empty slot — and it is backwards: an empty receiver is *where the units are going*,
+  and on screen two empty kits at `pitch × 0.42` were faint scratches on a wooden bench, so there was
+  no telling what the dealing was FOR. Posts tall enough to read as an open-topped bin, a base with a
+  light rim, and no fade at all. (The full-to-empty contrast then comes free from the units.)
 - **A GROUPING DEVICE MUST BE PART OF THE WORLD.** A rounded rectangle with a stroke and a pale fill
   is a UI card, and laid over a painted forest that is exactly what it looks like — a pane of glass
   with birds behind it. The same job is done by a translucent warm-dark patch with light on its rim
@@ -1015,7 +1132,195 @@ second thing to look at. It appears with the demo, when it starts to matter.
 - **No storytelling repeats within an age group.** Two chapters may reuse an object, but then their
   worlds must differ (different backdrops AND a different object list).
 
+### A code-drawn 3D scene
+
+All of these were paid for on The Empty Plot, whose founder verdict was *"visuals acche naii hai"*.
+**Not one of the faults was geometry.** A 3D scene that reads as untextured primitives is almost never
+short of shapes — it is short of light, contact and palette, and every fix below is a constant or a flag.
+
+- **CONTACT SHADOWS ARE NOT OPTIONAL IN 3D EITHER, and this is the one everybody skips** — because the
+  geometry genuinely *is* grounded, and it is very easy to believe that settles it. It does not: with
+  no shadow a van, a mast and a character all read as cut-outs standing on a plane, exactly as a
+  sprite with no contact ellipse does. `shadows` on the canvas plus `castShadow`/`receiveShadow` is
+  four words of JSX and it is the single biggest change you can make to one of these scenes.
+- **THE FILL MUST NOT DROWN THE KEY.** Hemisphere 1.5 + ambient 0.4 against a directional 1.5 means
+  every face of every box arrives at nearly the same brightness, so a cube renders as a flat
+  rectangle. The directional has to WIN; the fill is a floor that keeps shadowed sides readable, not
+  a second sun. ⚠️ **Then check your darkest object**: a dark tone that was fine under a bright wash
+  goes to a black silhouette under a directional-dominant one, and *a dark object needs more ambient
+  than a pale one while there is only one ambient* — so the floor moves on the OBJECT, not the light.
+- **A LARGE FLAT AREA OF ONE COLOUR READS AS A VOID**, and there are usually two of them: the sky and
+  the ground. Neither needs a shader. The sky is a **CSS gradient behind a transparent canvas**
+  (`gl: { alpha: true }`, no `scene.background`) — ⚠️ and the fog must then fade to the gradient's
+  **horizon** tone, not its midpoint, or the ground's far edge dissolves into a colour that is not
+  there and draws a seam across the horizon. The ground is **one non-tiled `CanvasTexture`** stretched
+  across the whole plane.
+  ⚠️ **NON-TILED IS NOT A DETAIL — IT IS THE WHOLE SAFETY ARGUMENT.** A tiled texture is precisely how
+  the printed answer arrives (see the grid rule in §0a); stretched once, 512 px over 120 m is ~0.23 m
+  a texel and the smallest wash is tens of metres across, so there is no scale at which it could
+  become a ruler.
+- **THE MARKERS ARE THE LIGHT ELEMENTS.** Drawing a road and the boundary posts *darker* than the
+  ground made the road own the bottom third of the frame as one flat dark bar and turned the posts and
+  rails — the things that say where the plot IS — into harsh black lines. Whatever marks the working
+  area is the pale thing on it.
+- ⚠️ **TWO LARGE FIELDS MUST NOT SHARE A HUE ARC.** When a palette check leaves you only two legal arcs
+  and you have three layers to separate (sky · ground · props), two of the three must share one —
+  **make it the small objects that share with a field, never field-with-field.** Two of this chapter's
+  four settings had ground AND sky in the same band, so those worlds were flat *before a single line
+  ran* and no amount of saturation could have rescued them.
+- ⚠️ **AND A PALETTE HUGGING THE FLOOR OF ITS LEGAL RANGE IS A LEGAL PALETTE THAT READS AS NO PALETTE.**
+  The separation check gave a ceiling of 0.34 saturation and the generator was running at 0.06–0.25.
+  Sit near the ceiling the check gives you, not at the bottom of it.
+- ⚠️ **EMPTINESS IS USUALLY A DISTANCE BAND WITH NO CONTENT, NOT A MATERIAL WITHOUT A MAP.** Told the
+  ground looked empty, the texture was the obvious answer and it was only half of it: everything the
+  generator produced sat at **z ≤ 13 while the skyline started at z ≥ 34**, so the forward view was a
+  bare twenty-metre band. **Measure the gap between your near set and your far scenery before adding
+  detail to a surface.**
+- ⚠️ **ANYTHING IN THE CORRIDOR BETWEEN A REVIEW CAMERA AND ITS SUBJECT WILL EVENTUALLY BLOCK THE SHOT.**
+  A scatter generator does not know where the camera goes, so on the one beat that shows the child what
+  they built, a randomly-placed prop stood square in front of it. Either place the scatter outside the
+  corridor or place the camera outside the scatter — but state it, because nothing will fail.
+- **A character made of four primitives is a bowling pin**, and in a first-person chapter they are on
+  screen in every beat. Two arms and one band of colour is the difference between a skittle and a
+  person, and the band can do palette work at the same time (a hi-vis vest pulled the foreman off the
+  clay hue his own tiles use). **And give them the thing their job implies** — a foreman on a building
+  site with no hard hat is a costume with a piece missing, and a brim is also the strongest silhouette
+  cue available on a round head above a round body.
+- ⚠️ **AND EVERY OTHER PROP IS THE SAME RULE: A NAKED PRIMITIVE READS AS A PLACEHOLDER, AND NO AMOUNT
+  OF LIGHTING FIXES IT.** This is the one that produced *"visuals bhot acche naii hai"* on a scene that
+  had already had a full lighting and palette pass. A box is not a van and a cone is not a tree,
+  however well lit; the yard read as grey slabs on the horizon and a purple cone in a field. **What is
+  read in a low-poly scene is the SILHOUETTE** — a trunk under a canopy, wheels under a body, a pitched
+  roof over walls, legs under a hoarding, a parapet on a distant block. Two or three parts each, and it
+  costs no assets.
+  • **Promote the comment to a field.** The catalogue already said `// a van` and `// a tree` in prose
+    while handing the renderer a bare `w/h/d`; a `role` on each entry is the same information where the
+    scene can act on it, and it beats inferring the thing from its proportions (clever, and it breaks
+    the moment the catalogue changes).
+  • ⚠️ **EVERY SUB-PART TAKES A SHADE OF THE PROP'S OWN TONE, NEVER A COLOUR OF ITS OWN.** A separation
+    check is computed on the tone the GENERATOR produced, so a brown trunk or a green canopy invented
+    down in the scene clears a check that never saw it — the doc's own *"a gate that reads the DATA
+    cannot see how the scene draws it"*. Lightness is free; hue is not, and the silhouette is doing the
+    reading anyway.
+  • **`flatShading` is the other half and it is free.** A 10-segment cone smooth-shaded is a soft grey
+    blob; faceted, it is a deliberate low-poly tree. Boxes are unaffected.
+- ⚠️⚠️ **THE SUN'S *ANGLE* IS WHAT MAKES A BOX READ AS A BOX, AND A HIGH SUN POINTING AWAY FROM THE
+  PLAYER IS THE ARITHMETIC DEFINITION OF "THESE ARE SHAPES".** This is the one that survived two
+  visual passes because everyone kept tuning brightness. Work it out on the actual rig before touching
+  anything else: a key at `[16,30,11]` is `L = [0.448, 0.840, 0.308]`, i.e. **57° elevation — midday,
+  the flattest light there is.** The child spawns looking down +Z, so every prop face they can see is
+  the −Z face, where `N·L = −0.308` — *no key at all*. Add up what is left and the face TOWARD the
+  player and the LEFT face both land on exactly **0.580** (hemisphere + ambient and nothing else),
+  while the roof lands on **1.546**. **Two of the three faces a child sees on every box render at
+  literally the same value, and the brightest thing in the frame is a roof they are looking down on.**
+  No palette, silhouette, texture or shadow work can survive that — a cube lit like that *is* a
+  rectangle. The fix is direction, not intensity: a low key (~25°) placed ~60° off the player's
+  forward axis, and the flat fill replaced by two SHADOWLESS directionals that fill with direction
+  rather than with a wash. Five distinct face values at 4.6:1 instead of two identical ones.
+  **Compute `N·L` for the faces the camera can actually see before you touch a single colour.**
+- ⚠️ **AND THE SOFT SHADOW SHIPS IN THE SAME CHANGE AS THE LOWERED SUN, NEVER AFTER IT.** Dropping a
+  key from 57° to 25° takes the shadow-length multiplier from 0.65 to 2.10 — a 2.6 m cabin casts 5.5 m
+  instead of 1.7 m. Long **hard-edged** shadows read as black smears, which is exactly why an earlier
+  pass raised the sun in the first place: *it removed the light to hide the shadow, and paid with all
+  the form.* Ship them together or you will draw the wrong conclusion and revert the thing that was
+  working. ⚠️ Refit the bias with the angle too — and expect the derivation to be optimistic, because
+  a big horizontal receiver sits at a *grazing* angle to a low sun: a derived `normalBias` of 0.04
+  still speckled the whole near band, and 0.09 was what actually cleared it.
+- ⚠️ **A `CanvasTexture` DEFAULTS TO `NoColorSpace`, SO EVERY COLOUR YOU PAINT INTO IT ARRIVES WRONG.**
+  The renderer treats it as linear data and skips the sRGB decode, so the texture renders darker and
+  flatter than the colour authored into it. Silent, no warning. Worse than the look: **every palette
+  number in the generator had been hand-tuned by eye against a wrongly-decoded ground**, so the whole
+  palette was being judged on a false baseline and each successive pass was re-tuning on top of a bug.
+  `tex.colorSpace = THREE.SRGBColorSpace` on anything carrying colour, and land it BEFORE any palette
+  work, not after.
+- ⚠️ **A PERFECTLY FLAT PLANE CANNOT LOOK LIKE GROUND, HOWEVER WELL IT IS LIT.** One quad takes one
+  lighting value across the whole lower half of the frame, so the ground reads as a coloured backdrop
+  the props are standing in front of. Gentle relief plus `flatShading` gives every facet its own value
+  and the surface acquires form — this is the single biggest difference between a code-drawn scene and
+  a shipped low-poly game, and it is invisible until you put the two side by side.
+  • ⚠️ **THE HIGH OCTAVE IS WHAT MAKES IT READ, NOT THE AMPLITUDE.** Broad 30–60 m swells move the
+    whole sheet together, so adjacent facets end up with nearly the same normal and it still looks
+    flat however tall the hills are. What the eye reads is *neighbouring faces catching the key
+    differently*, which needs a term whose wavelength is a small multiple of the cell.
+  • ⚠️ **AND IT MUST BE DEAD FLAT WHEREVER THE CHILD CAN STAND** — a fixed eye height clips through a
+    slope, and relief inside the working area is a landmark to pace against instead of dividing.
+  • ⚠️ **BUILD IT IN THE PURE MODULE AND BIND THE ARRAYS.** The scene's anti-grid source rules forbid
+    loops precisely because a nested loop is how a grid arrives; generating the vertices next door and
+    handing over a `Float32Array` keeps those rules meaningful AND lets the gate assert the real
+    geometry — cell size, jitter, and zero displacement inside the plot.
+- ⚠️ **AN AXIS-ALIGNED WORLD IS THE LOUDEST "THIS WAS GENERATED" SIGNAL IN A FRAME, AND IT IS FREE TO
+  REMOVE.** Every box square to the world presents the same two faces at the same two angles. A
+  founder cannot name it and reads it instantly as placeholder geometry. One seeded Y-rotation per
+  prop. **And it strengthens the pedagogy rather than costing anything**: an axis-aligned world is the
+  only one in which two props could line up parallel to the pacing direction and read as a marked
+  interval. The rare change that is both better-looking and harder to cheat.
+- ⚠️ **THE RENDERER'S TONE-MAPPING DEFAULT IS A COLOUR DECISION NOBODY MADE.** r3f sets
+  `ACESFilmicToneMapping` on every `<Canvas>` — a film-response curve that rolls off highlights and
+  desaturates as it goes. On a photoreal scene that is what you want; on a deliberately low-saturation
+  stylised one it eats the little colour there is and everything arrives milky grey. `flat` on the
+  Canvas selects `NoToneMapping`, so the palette that was so carefully computed is the palette that
+  reaches the screen. ⚠️ **It is not free:** with no roll-off the light intensities become a HARD
+  ceiling rather than a soft one, so every intensity has to come down with it (2.5 → 1.15 here) or lit
+  faces clip to white — which is what the tone mapping was hiding.
+- ⚠️ **A NEARLY-WHITE FOG COLOUR MAKES EVERY DISTANT THING WHITE, AND DARKENING THE OBJECT CANNOT FIX
+  IT.** The distant band was darkened twice before anyone did the arithmetic: a building is multiplied
+  by the key light (~×1.7 on a lit face) and *then* blended toward the fog colour by its depth, so a
+  haze at 0.93 lightness returns everything past the mid-ground as white cardboard whatever tone the
+  generator gave it. **Fix the haze, not the thing in it** — and keep most of the sky's saturation in
+  it, or distance reads as fade-out rather than as distance.
+- ⚠️ **A GRADIENT SKY'S HAZE STOP MUST LAND *ABOVE* THE HIGHEST HORIZON ANY CAMERA PRODUCES.** Fog
+  fades the ground plane's far edge to the haze tone; if the gradient only reaches that tone at 100% of
+  the viewport, the fogged ground meets a sky two stops darker and the join draws a hard line straight
+  across the frame. And a stop tuned to one camera reopens the seam at another — a review shot pitching
+  down 30° puts the horizon somewhere quite different from a walking one. Reach haze early and hold it
+  all the way down: everything below the horizon is covered by ground, so it costs nothing.
+- ⚠️ **A GROUND WASH SIZED FOR THE PLANE IS SIZED FOR THE WRONG THING — SIZE IT FOR WHAT IS ON SCREEN.**
+  A 120 m texture sounds generous until you notice the camera is at eye height looking along the ground,
+  so everything past the fog is gone and the band actually visible is roughly a QUARTER of the sheet.
+  Washes 200 px across therefore fill that window edge to edge with one tone and the yard reads as a
+  flat field however strong they are. Mix in blobs small enough that any quarter of the sheet carries
+  variation.
+
+### ⚠️ A separation rule judged on two axes must be judged PER TONE
+
+If a check says *"clears on hue OR on value"*, it must ask that of **each** tone. Minimising the two
+axes independently across the whole world — `min(hue) >= 45 || min(value) >= 0.18` — is a different
+and much stronger claim: *every* tone clears on hue, or *every* tone clears on value. The winning hue
+then comes from one prop and the winning value from another, and the check reports a failure
+(`hue 6° value 0.06`) describing two unrelated objects on a palette where a per-tone sweep finds
+nothing wrong at all. It is *sound* — strictly stricter, so it can never pass something unreadable —
+and it is useless, because it silently re-imposes exactly the narrow palette the rule was rewritten to
+escape. Find the tone closest to failing and report ITS pair, so the numbers in the message describe
+one real object.
+
+### ⚠️ A guarantee that only holds for the seeds you swept is luck, not construction
+
+The gate had always asserted *no three props collinear and equally spaced* — a real rule, because
+three objects in a line at an even pitch is a ruler. Nothing in the generator **enforced** it; it
+merely happened to hold for the 400 seeds the suite drives. Adding one extra `r()` call per prop (for
+a rotation) shifted every downstream position, and a triple came out at 0.069 m of spacing difference
+against a 0.35 m floor immediately. **The check caught it, and the property had never been real.**
+Any invariant a random generator satisfies by luck will break the first time anyone changes how many
+numbers get drawn — which is a change nobody thinks of as risky. Enforce it in the generator (reject
+and nudge, deterministically off the same seeded stream) and keep the gate asserting the outcome.
+
 ### Generating new art
+
+⚠️ **IMAGE→3D IS NOT LOW-POLY, AND ONE TEST SETTLES IT FOR ABOUT 30 CREDITS.** Generated *images* of
+stylised props are excellent — clean facets, warm muted colour, exactly the target look. The 3D
+conversion is a different thing entirely: measured on one van, `image_to_3d` returned **28,357
+triangles and a 3.1 MB embedded JPEG in a 4.6 MB GLB**, and dropped into the real scene it was a
+melted lump — wheels gone, roof rack smeared into the body — that looked visibly *worse* than the
+60-triangle hand-built prop beside it. Eight of those is ~227k triangles and ~37 MB against a
+whole-repo asset budget of 22.8 MB. **Reconstruction produces photogrammetry topology; it cannot
+produce facets.** Generate ONE and put it in the scene before committing to a set.
+
+⚠️ **SO SPEND THE ART BUDGET ON A TARGET FRAME INSTEAD — it is worth more than any brief.** A single
+generated image of *the whole scene as it should look* turns "the visuals aren't good" into a list you
+can work through: which colours, which silhouettes, where the near-field furniture goes, how faint the
+horizon is, where the sun sits. Two 1k images cost ~3 credits, land in `docs/art/`, and become the
+standing reference the next session builds against — the same role the accepted backdrops already
+play for 2D chapters. **Get it approved before building to it.**
 
 Only generate when the library genuinely lacks something or fits poorly — but when it does,
 generate rather than settling for an emoji or a CSS shape.
@@ -1155,6 +1460,33 @@ Gotchas that have each cost real credits:
   needs to travel BEFORE generating it**, and if it does, generate it alone on a flat field.
   (CoinShop's keepers were built, wired, driven and then removed for exactly this. The strips are
   still on disk and deliberately unused.)
+- ⚠️ **NEVER ATTACH A CHARACTER REFERENCE TO A BACKDROP PROMPT — YOU GET THE CHARACTER COMPOSITED
+  INTO THE SCENE.** Generating The Angle Shop's three sites, I passed both an accepted backdrop AND
+  the foreman's sprite as references, on the theory that two references lock the style harder. The
+  model read the sprite as *a subject to include*: **two of the three came back as the reference
+  backdrop with the bear standing in it**, one of them with invented signage I had explicitly
+  forbidden. A backdrop with a character baked in is unusable — it is the welded-in-keeper fault
+  above, arrived at by accident. **One reference, and it is a scene.**
+- ⚠️ **AND A STYLE REFERENCE THAT IS COMPOSITIONALLY CLOSE TO WHAT YOU ASKED FOR GETS COPIED INSTEAD
+  OF STYLED.** `depot_yard` is *a wall with a yard in front of it* and I asked for *a wall with a yard
+  in front of it*, so the model returned `depot_yard`. The one site that came out right was the one
+  whose subject the reference could not supply (a stone embankment over a stream) — it had to build
+  that. **Reference for BRUSHWORK from something the prompt cannot be mistaken for**, or describe a
+  subject the reference plainly does not contain, and add the reference's own motifs as negatives
+  (`no brick archways, no green garage doors`).
+- ⚠️ **GIVE A BACKDROP A HOLE WHERE THE ANSWER GOES.** The retry that worked asked for *a cottage with
+  its roof removed, the gable open to the sky* and *a shelter whose posts have nothing on top* — so
+  the scene is visibly waiting for the thing the child makes. It fixes the composition problem at the
+  same time: the centre is empty because something is missing from it, which is a reason rather than
+  a rule. A variant that came back with the gable **complete** was rejected on exactly this, however
+  well painted it was.
+- ⚠️ **A BACKDROP THAT FAILS ON VALUE IS GRADED, NOT RE-ROLLED.** Two of these measured **0.754 and
+  0.642 against a cast at 0.539–0.597** — the `grocery_sweets` fault, which turns the cast into
+  cut-outs on a blank page. Re-rolling costs credits AND the composition you just approved. A
+  **highlight-weighted curve** (bisect a gamma on the RGB until the mean value hits target) pulls the
+  SKY down hardest and barely moves the midtone ground the cast stands on, which is exactly the
+  correction wanted; add back ~12% saturation, since gamma desaturates. Three lines, deterministic,
+  and the painting survives.
 - ⚠️ **A SCENE AND ITS CHARACTER GENERATED IN ONE FRAME GIVE AN OPAQUE STRIP, NOT A CUTOUT — AND IT
   ONLY MAKES SENSE LAID BACK OVER ITS OWN PIXELS.** This pipeline (generate the whole picture →
   animate it → crop the rectangle the motion happened in) is cheaper and better-blended than a
@@ -1395,6 +1727,13 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   for what the code asked for, and the computed value only to prove it has not already jumped there.
   RailLine's train logged `inline 788.28px / computed 185px` in one sample, which is exactly the pair
   that proves it travels rather than teleports.
+- ⚠️ **A SEPARATION GATE PROVES TWO THINGS ARE DISTINGUISHABLE — NOT THAT A SCENE HAS ANY COLOUR IN
+  IT.** The Empty Plot's 70 tests were green before a look-and-feel pass and green after it, and that
+  is correct: every fault was either inside the scene component (lighting, shadows, materials, camera)
+  or was a palette the check *legitimately* passed. `plotSiteSeparation` asserts the unit clears the
+  world, which is a real and necessary claim and is a different claim from "this world is not grey".
+  **Know which one your gate makes**, and do not read a green palette check as evidence about how a
+  scene looks. That part still needs an eye.
 - ⚠️ **A GATE THAT RE-IMPLEMENTS A RULE CANNOT SEE THE RULE BEING REMOVED.** This is the same fault
   as "a gate that reads a chapter's DATA cannot see how it INDEXES it", one level down, and it bit
   twice in one session. A check written as `expect(Math.min(waiting, CAP)).toBeLessThanOrEqual(CAP)`
@@ -1444,6 +1783,11 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   re-implements its sizing chain inside the test, so the check can agree with its own copy of the
   constants while the screen it protects falls apart. Chapters 9–10 export `playLayout` and the test
   imports it; do that instead.
+- ⚠️ **AND THE SAME IS TRUE OF THE EDIT ITSELF — `tsc` CLEAN ON A FILE THAT WAS NEVER WRITTEN PROVES
+  NOTHING.** A heredoc writing a smoke-test file was silently refused twice; `npx tsc --noEmit` then
+  returned exit 0 and I read it as "the new library's API compiles". It compiled *nothing*. One `ls`
+  on the file settled it. Whenever a green result would be the same green if your change had not
+  landed, check the change landed first — this is the mutation rule applied to ordinary work.
 - ⚠️ **A MUTATION THAT "PASSES" IS GUILTY UNTIL YOU HAVE PROVEN THE MUTATION LANDED.** A planted
   regression reported the gate as blind; the `sed` that planted it had silently matched nothing, so
   the gate was never actually tested. Re-planted with a tool that reports its own substitution count,
@@ -1453,11 +1797,76 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   against the chapters 9–10 sweep, five were caught and two passed — and both survivors turned out
   to change no behaviour at all (one constant was shadowed by a tighter one, one cap was covered by
   a second mechanism). "It passed" is only good news once you have checked which of the two it is.
+- ⚠️ **A WEBGL / react-three-fiber SCENE CANNOT BOOT AT ALL IN A HIDDEN TAB, AND IT LOOKS EXACTLY
+  LIKE A BROKEN SCENE.** r3f refuses to create its renderer until it has MEASURED a non-zero
+  container, and it measures with a **ResizeObserver** — whose callbacks are delivered with the
+  browser's *rendering steps*, which a backgrounded tab does not run. A container that mounts at its
+  final size and never changes gets exactly one RO callback, and in a hidden tab that callback never
+  arrives: the canvas sits at its intrinsic **300×150**, `onCreated` never fires, and the screen shows
+  nothing but the clear colour. Measured: `document.hidden` true and **0 rAF frames in 1.5s**, in the
+  preview pane AND in a background Chrome tab — i.e. every automated drive. The fix is three lines and
+  belongs in any 3D chapter: dispatch a synthetic `window.resize` on a `setTimeout` after mount, since
+  the measure hook listens for that too and a synthetic event rides the EVENT loop rather than the
+  frame loop. Without it, no 3D chapter is verifiable headlessly at all.
+  ⚠️ **And even once it boots, movement still needs rAF** — anything driven from `useFrame` advances
+  only during the ~40ms a screenshot fronts the tab. So a scene can be verified by eye, and a walking
+  loop cannot; put that logic behind exported pure functions and gate it there.
+- ⚠️ **Two three.js version traps worth knowing before blaming your scene:** light intensities are
+  **physical units since r155**, so the values that used to read as "bright" render a dusk scene
+  (`ambientLight 0.85` → near-black; a `hemisphereLight` at ~2 is the outdoor default); and **sprite
+  scale is in WORLD units**, so a label sized against a 9-metre object swamps a 3-metre one.
 - **`requestAnimationFrame` is frozen while the preview is backgrounded**, so rAF-throttled hooks —
   `useViewport` among them — never see a live `resize`. Resizing the preview and re-measuring
   reports a layout still computed for the OLD size, which looks exactly like a responsive bug.
   Reload at the target size instead of resizing into it. (This burned three separate measurements in
   one session; each time the instrument was wrong and the code was fine.)
+- ⚠️ **A VALUE HANDED TO A RENDERER MUST BE CHECKED BY THAT RENDERER, NOT BY A STRING COMPARISON.**
+  The single most expensive half-hour of the 3D chapter: a colour helper emitted
+  `hsl(100.0 50.0% 40.0%)` — valid CSS Color 4, which every browser reads correctly — and
+  **`THREE.Color.setStyle` runs its own regex rather than the CSS engine, returning rgb(255,255,255)
+  with no throw and no warning.** The entire world rendered flat white (sky, ground, road, props,
+  units) with the geometry plainly there and every HUD element correct, so it read as a lighting bug.
+  The gate PASSED, because it asserted `css(...) === 'hsl(100.0 50.0% 40.0%)'` — the string's shape
+  instead of the consumer's reading of it. `THREE.Color` is pure maths with no WebGL, so a test can
+  import it and parse the real string. Generalise past three.js: **any value crossing into a library
+  that parses it — a colour, a duration, a path, a transform — is checked by handing it to that
+  library**, and "it is valid according to the spec" is not evidence that your consumer implements the
+  spec.
+- ⚠️ **A TINTED LIGHT OVERRIDES THE PALETTE YOU GENERATED.** All the hue/saturation separation work in
+  the world is computed on MATERIAL colours, and the screen shows material × light — so passing a
+  scene's full sky colour to a `hemisphereLight` lit every surface with it and turned a carefully
+  low-saturation blue-grey ground into a flat purple void. Keep the light near-neutral, or the check
+  upstream means nothing. Same family as the greyscale-sprite rule: the thing you measured is not
+  always the thing that gets drawn.
+- ⚠️ **A DEV-ONLY DRIVE HOOK IS THE CHEAPEST WAY TO GATE WHAT rAF WILL NOT LET YOU PLAY.** `useFrame`
+  advances only while the tab is FRONTED, and a screenshot fronts it for ~40 ms with `dt` capped —
+  about 0.45 m of travel per screenshot, which is why cut ③'s peg loop was reached once and never
+  played. Three lines exposing the one value the loop owns (`window.__miloPace(n)`), gated on
+  `NODE_ENV !== 'production'` exactly like the teen band's `data-test-answer` (proven to
+  dead-code-eliminate — 0 hits in `.next/server` and `.next/static`), made the guided round, a wrong
+  peg, a right peg, the re-teach and the round advance all drivable. Prefer that to fighting the frame
+  loop for an hour. ⚠️ **It still needs a frame to APPLY**, so the order is: set → front the tab
+  (screenshot) → then act. Clicking in the same tick reads the pre-frame value and does nothing.
+- ⚠️ **A CAMERA THAT LERPS CANNOT BE VERIFIED BY SCREENSHOT — BUT `prefers-reduced-motion` CAN MAKE IT
+  SNAP, AND THAT IS THE WAY IN.** At `k = dt × 2.4` with `dt` capped at 0.05 a swing needs ~20 frames,
+  i.e. ~20 screenshots, and every shot you get is mid-flight. Any chapter that honours reduced motion
+  already has a `k = 1` path: stub `window.matchMedia` so the next mount reads `matches: true`, and the
+  shot settles in one frame. **That is a test instrument, not a code change**, and it is how a framing
+  this repo had recorded twice as "never seen settled" finally got looked at.
+- ⚠️ **AND WHEN YOU DO LOOK AT IT, EXPECT A BUG RATHER THAN A TASTE PROBLEM.** The shot that had never
+  been watched was rendering from **eye height instead of the 3.4 m its own comment specified**, because
+  a `pos.y = EYE` line sat AFTER the branch that positions the scripted camera and quietly overwrote it.
+  Nothing failed: the raised side view had simply never been raised, the tiles it exists to make
+  countable were grazing stripes, and the plot sat in the top quarter of the frame with 60% bare
+  foreground. **A value forced every frame after a branch overrides whatever that branch just set** —
+  and a camera nobody has watched settle is exactly where that hides. Arithmetic said the plot should be
+  centred and the pixels said it was not; the pixels were right, as this file keeps recording.
+- ⚠️ **`fov` IS VERTICAL. The number to check a character's placement against is the HORIZONTAL
+  half-FOV** — at 16:9 that is ~47° for `fov: 62`, not ~31°. And a character standing beside the thing
+  being measured has a LATERAL offset that grows with it while a fixed forward distance does not, so
+  the angle gets worse exactly where the plot is widest: a placement fine at 2 m sat at 46° (hard
+  against the frame edge) at 9 m. Sweep every value the generator can draw rather than the one you had
+  in mind — that is how the third wrong placement was caught after two had already been "fixed".
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---
