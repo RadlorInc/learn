@@ -38,7 +38,11 @@ const nextConfig: NextConfig = {
           // games under /play/* — those are deleted and nothing calls getUserMedia now, so the app
           // was advertising a capability it cannot use. (Milo's voice is speechSynthesis, which is
           // output-only and needs no Permissions-Policy grant.)
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
+          // ⚠️ `camera=(self)` is granted for ONE feature: the 9–11 Factor Lab, which is answered by
+          // holding fingers up to a webcam (story/FactorLab.tsx). Hand landmarks are computed
+          // ON-DEVICE and no frame ever leaves the browser. It was deliberately revoked in the July
+          // audit when the /play AR track was deleted — if this chapter ever goes, revoke it again.
+          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), interest-cohort=()' },
           // V3/V4 — CSP. The app is fully STATIC-rendered, so a nonce-based strict CSP is not viable
           // (Next requires dynamic rendering on every page for nonces — killing static/CDN caching and
           // risking the AR + OAuth flows). So we split it:

@@ -1462,6 +1462,107 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
 
 ---
 
+## 5. Answering with the camera
+
+Everything below was paid for building the 9–11 Factor Lab, the band's first chapter answered with a
+webcam. Reference: [FactorLab.tsx](../src/features/chapters/story/FactorLab.tsx) +
+[factors.ts](../src/features/chapters/story/factors.ts), gated by
+[factorLabAr.test.ts](../src/__tests__/factorLabAr.test.ts).
+
+**The camera earns its place only where the gesture IS the skill.** A pinch used as a cursor is a
+mouse with extra steps and a permission prompt. Fingers work for factors because *a number of raised
+fingers is a divisor* — the child holds up 3, the bench deals 12 into 3 rows, and it fills or it
+does not. Before reaching for a camera, finish §0a: if the verb does not need a body, do not use one.
+
+⚠️ **A CONTINUOUS INPUT MAKES A LIVE MANIPULATIVE INTO A YES/NO ORACLE.** This is the repeatable-commit
+fault (§0a) at 60fps. A bench that reflowed as the fingers changed would let a child sweep 2, 3, 4, 5
+and stop when it went flush, having worked nothing out. **The surface does not deal until the child
+commits**, the commit is holding still for ~1.2s, and it happens once per scored round. In an EXPLORE
+beat, where nothing is asked, live reflow is right — that is the teaching-vs-measuring line again.
+Corollary: the live readout may say **what was read** ("3") and must never say whether it is right.
+
+⚠️ **AN INTENTIONAL ZERO AND AN ABSENT HAND ARE THE SAME PIXELS, AND ONLY ONE OF THEM IS AN ANSWER.**
+A fist means *nothing divides this, it is prime* — and a child lowering their hand also extends zero
+fingers. Without hand PRESENCE reported alongside the count, putting your hand down commits "prime".
+`useFingerCounter` reports both; nothing commits while `hands === 0`.
+
+⚠️ **A GESTURE SURFACE DOES NOT RESET BETWEEN ROUNDS THE WAY A TAP SURFACE DOES.** A tap is consumed;
+a hand is still up when the next question opens. Caught on the first drive: the guided round appeared
+already reading 5, which was its answer, so it was about to score a round the child never played.
+**The reading held over from the previous round is not an answer** — require a fresh change (a
+different count, or the hand leaving and returning) before the commit can arm.
+
+⚠️ **COMMIT ON A TIMER; ANIMATE ON rAF.** `requestAnimationFrame` is frozen outright in a backgrounded
+tab, so a dwell driven by it never fires — untestable headlessly, and on a real device it stalls the
+moment the child switches away and back. `setTimeout` fires either way (throttled, which is fine).
+Use rAF only for the progress ring, which is allowed to pause.
+
+⚠️ **A CAMERA-ONLY CHAPTER OWES AN HONEST DEAD END.** A declined permission or a device with no camera
+must get a written explanation with a retry, not a blank screen — and *"Milo needs to see your hands"*
+is the whole of it. Note the cost out loud when choosing camera-only: that child cannot play at all.
+
+⚠️ **THE PERMISSION IS A PRODUCT DECISION BEFORE IT IS A TECHNICAL ONE.** `Permissions-Policy` ships
+`camera=()` by default here and the grant was deliberately revoked once already when the `/play` AR
+track was deleted. Turning it back on for a children's product is the founder's call, needs the
+open COPPA/privacy conversation, and the comment above the header must name the ONE feature that
+justifies it so the next audit can revoke it again when that feature goes.
+
+⚠️ **A WEBCAM CANNOT BE DRIVEN BY A GATE, SO THE PURE MODULE CARRIES MORE THAN USUAL — AND A DEV DRIVE
+HOOK IS NOT OPTIONAL.** Put the ladder, the grader, the demo beats and the layout maths outside React
+and sweep them; then add a dev-only `window.__miloFingers(n, hands)` (FloorPlot's `__miloPace` pattern,
+gated on `NODE_ENV !== 'production'` and verified absent from the emitted JS) that stands in for the
+camera AS WELL AS the hand — otherwise the permission gate blocks every headless drive and nothing
+past the intro is ever verified.
+
+⚠️ **THE ANSWER SPACE IS 0..10 AND THAT IS AN INVARIANT, NOT A HOPE.** A round with no accepted answer
+within reach is unanswerable, which is worse than a wrong one. Sweep every tier for it. Here it costs
+nothing — every composite ≤ 100 has a factor ≤ 10, since the smallest factor is ≤ √n — so it RAISED
+the chapter's number range rather than narrowing it. Check the arithmetic before assuming a ceiling
+is a compromise.
+
+⚠️ **AND CHANGING THE VERB DOES NOT AUTOMATICALLY FIX A COIN FLIP — CHECK THE NEW ANSWER SPACE.** The
+first cut of the pair test asked *"how many are left over?"*, which is 0 or 1: a gesture instead of a
+chip, and still 50%, i.e. the exact defect the rebuild existed to remove. Asking for the pair COUNT
+makes the child halve the number and lets even-or-odd fall out of the stranded unit on the reveal —
+a consequence they watch rather than a label they recall. **Count the options your new surface really
+offers.**
+
+⚠️ **AND A GENERATOR'S SOURCE POOLS NEED THEIR OWN ASSERTION.** Mutation testing found that slipping a
+composite into the PRIMES pool produces a perfectly valid factor round — so every round-level check
+passes, while that tier's prime slot never fires and `coverage` can never see a prime. Export the
+pools and assert they are what they claim; a round-level sweep structurally cannot see this.
+
+### The question is three zones, in every band
+
+The 12–14 band paid for this and it generalises: **a single prose line that fuses story + math +
+"what to do with your hands" is what a struggling child cannot parse.** Measured, it was systemic
+across 11 of 12 chapters ([teen-12-14-math-audit.md](teen-12-14-math-audit.md) §1) and it was the
+founder's word for it: *confusing*. Three zones instead:
+
+| zone | what it is | rules |
+|---|---|---|
+| **context** | what the numbers ARE, plus the rule that applies | plain language · **no UI verbs** · omit entirely on bare math |
+| **the math** | the hero — usually the instrument itself, not text | |
+| **instruction** | the ONE action | starts with a verb · its own chip, so it never blends into the story |
+
+The house phrasing, from the shipped chapters: context = *"You have 15 parts. They go out in equal
+rows — every row the same length, nothing left over."* · instruction = *"**Work out** how many rows
+fit, **then** hold up that many fingers."* Compare the run-on it replaced — *"Split 15 into equal
+rows. How many rows? Make a fist if nothing fits."*
+⚠️ **The chip is where a question type leaks**, because it is where the affordance gets named — gate
+that two round types sharing a prompt also share a byte-identical chip. ⚠️ And **what the character
+SAYS must carry both zones**: on a device with no voice the written zones are all there is, and on a
+device with one the spoken line is.
+
+⚠️ **AND WRITING THEM CLEARLY WILL BREAK YOUR LAYOUT, BECAUSE A GOOD QUESTION IS TALLER THAN A BAD
+ONE.** A card holding three lines of context plus a two-line chip measured **265px** against the
+36px of the one-liner it replaced, and landed on top of the instrument. This is the reserved-lane
+rule with teeth: **a constant reserved for a text block is a guess at a variable gap and will be sat
+on.** Measure the card's real bottom edge (`useLayoutEffect` on a ref — NOT a `ResizeObserver`,
+whose callbacks ride the rendering steps and are frozen in a backgrounded tab) and derive the band
+from it, keeping the constant only as a first-paint floor. ⚠️ **And a bottom band is often TWO
+stacks** — the readout in the centre and a self-view in the corner — so reserve the taller.
+
 ## Feeding this file
 
 When a founder correction lands, ask what the GENERAL rule is and put it here — not just the fix.

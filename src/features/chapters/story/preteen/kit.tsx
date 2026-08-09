@@ -81,15 +81,46 @@ export function Brackets({ color, gap = -6 }: { color: string; gap?: number }) {
 // ─── HUD task banner ────────────────────────────────────────────────────────────────────
 // `big` opts into a larger, more prominent prompt (used by the checkup/diagnostic, where the question
 // is the focus). Regular chapters leave it off and keep the compact HUD pill.
-export function PromptCard({ tag = 'Task', text, accent, short, big }: { tag?: string; text: string; accent: Accent; short?: boolean; big?: boolean }) {
+/**
+ * The question card. Pass `text` alone for the original one-line form, or add `instruction` to get
+ * the QUESTION-CLARITY three zones the 12–14 band settled on (docs/teen-12-14-math-audit.md §1):
+ *
+ *   1. CONTEXT     what the numbers ARE, plus the rule that applies. Plain language, no UI verbs.
+ *   2. THE MATH    the hero — usually the instrument itself, not text.
+ *   3. INSTRUCTION one verb-led action, in its own chip so it never blends into the story.
+ *
+ * ⚠️ WHY: a single prose line that fuses story + math + "what to do with your hands" is the exact
+ * thing a struggling child cannot parse — it was the partner's "confusing" complaint, measured as
+ * systemic across 11 of 12 chapters in that band. Optional and backward-compatible: a caller that
+ * passes no `instruction` renders exactly as before.
+ */
+export function PromptCard({ tag = 'Task', text, instruction, accent, short, big, onMeasure }: { tag?: string; text: string; instruction?: string; accent: Accent; short?: boolean; big?: boolean; onMeasure?: (bottomPx: number) => void }) {
+  /**
+   * ⚠️ REPORT THE REAL BOTTOM EDGE. This card is TEXT and it WRAPS, so its height depends on the
+   * question in front of you — measured, 36px on a one-line pair test and 265px on a three-line
+   * split context with an action chip. Anything below it that reserves a CONSTANT is guessing at a
+   * variable gap and will eventually be sat on: that happened twice here before this existed.
+   * useLayoutEffect, not a ResizeObserver — RO callbacks ride the rendering steps and are frozen
+   * in a backgrounded tab, so the reserve would silently be stale exactly where nobody is looking.
+   */
+  const cardRef = React.useRef<HTMLDivElement | null>(null)
+  const cb = React.useRef(onMeasure); cb.current = onMeasure
+  React.useLayoutEffect(() => {
+    if (cardRef.current) cb.current?.(Math.round(cardRef.current.getBoundingClientRect().bottom))
+  })
   const textSize = big
     ? (short ? 'clamp(18px,4.8vh,24px)' : 'clamp(22px,3.4vh,32px)')
     : (short ? 'clamp(14px,3.6vh,17px)' : 'clamp(16px,2.3vh,20px)')
   return (
     <div style={{ position: 'fixed', top: short ? 46 : 66, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-      <div style={{ maxWidth: big ? 'min(94vw,720px)' : PROMPT_W, display: 'flex', flexDirection: big ? 'column' : 'row', alignItems: big ? 'flex-start' : 'center', gap: big ? 8 : 12, background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 15, border: `1px solid ${accent.base}66`, padding: big ? (short ? '12px 16px' : '16px 22px') : (short ? '7px 8px 7px 14px' : '10px 12px 10px 18px'), boxShadow: `0 0 20px ${accent.base}33, 0 8px 22px rgba(0,0,0,0.4)` }}>
+      <div ref={cardRef} style={{ maxWidth: big ? 'min(94vw,720px)' : PROMPT_W, display: 'flex', flexDirection: big ? 'column' : 'row', alignItems: big ? 'flex-start' : 'center', gap: big ? 8 : 12, background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 15, border: `1px solid ${accent.base}66`, padding: big ? (short ? '12px 16px' : '16px 22px') : (short ? '7px 8px 7px 14px' : '10px 12px 10px 18px'), boxShadow: `0 0 20px ${accent.base}33, 0 8px 22px rgba(0,0,0,0.4)` }}>
         <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: big ? 11.5 : 10.5, color: accent.base, background: accent.soft, borderRadius: 6, padding: '3px 8px', letterSpacing: 1, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{tag}</span>
-        <span style={{ fontFamily: PT.sans, fontWeight: big ? 700 : 600, fontSize: textSize, lineHeight: big ? 1.32 : 1.2, color: PT.ink }}>{text}</span>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: short ? 4 : 6, minWidth: 0 }}>
+          <span style={{ fontFamily: PT.sans, fontWeight: big ? 700 : 600, fontSize: textSize, lineHeight: big ? 1.32 : 1.25, color: PT.ink }}>{text}</span>
+          {instruction && (
+            <span style={{ alignSelf: 'flex-start', fontFamily: PT.sans, fontWeight: 800, fontSize: short ? 'clamp(13px,3.2vh,15px)' : 'clamp(14px,2.1vh,18px)', lineHeight: 1.25, color: accent.base, background: accent.soft, border: `1px solid ${accent.base}55`, borderRadius: 999, padding: short ? '3px 11px' : '5px 14px' }}>{instruction}</span>
+          )}
+        </span>
       </div>
     </div>
   )
