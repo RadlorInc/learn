@@ -12,7 +12,7 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 📷 **2026-08-09 (LATEST) — THE 9–11 BAND'S FIRST AR CHAPTER: FACTORLAB IS ANSWERED WITH THE WEBCAM. YOUR FINGERS ARE THE DIVISOR. ✅ COMMITTED — `4066dc4` on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **692/692 vitest** (was 660, **+32 — the chapter's own gate, 7/7 planted regressions caught**) · `next build` 0 · 0 console errors in a fresh tab · driven end to end at 1280×800 **and** 640×320 through intro → camera gate → explore → both demos → guided → scored rounds, incl. a **prime round answered with a fist**.
+> 📷 **2026-08-09 (LATEST) — THE 9–11 BAND'S FIRST AR CHAPTER: FACTORLAB IS ANSWERED WITH THE WEBCAM. YOUR FINGERS ARE THE DIVISOR. ✅ COMMITTED — `4066dc4` on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **706/706 vitest** (was 660, **+46 — all of it this chapter's own gate; 11/11 planted regressions caught, 1 more proven inert**) · `next build` 0 · 0 console errors in a fresh tab · driven end to end at 1280×800 **and** 640×320 through intro → camera gate → explore → both demos → guided → scored rounds, incl. a **prime round answered with a fist**.
 >
 > **The ask:** *"yeh chapters mein se koi ek chapter hum AR banate hai… laptop ke webcam yaa tablet ka front cam… format same — pehle explanation, phir question solve karne ka tariqa, phir question with our adaptive system."* Founder then picked **FactorLab** and **camera-only (no tap fallback)**.
 >
@@ -68,7 +68,7 @@
 > (moved into the HUD row beside the ring). **0 clashes at 1280×800 and 640×320** after, both measured
 > by crossing every fixed layer with every other — not by checking the one I had in mind.
 >
-> ## ④ THE GATE — 32 tests, and mutation testing found TWO holes in it
+> ## ④ THE GATE — 46 tests, and mutation testing found TWO holes in it
 > [factors.ts](src/features/chapters/story/factors.ts) holds the ladder, the grader, the demo beats and
 > the deal maths outside React, because **a webcam cannot be driven by a gate** — so the pure module
 > carries more than usual. It passed first run, so it was mutation-tested, and **two planted regressions
@@ -76,8 +76,9 @@
 > asserting all dealing beats in one example share a row count), and ⚠️ **a composite hidden in the
 > PRIMES pool, which produces a perfectly valid FACTOR round so every round-level check passes while
 > that tier's prime slot never fires and `coverage` can never see a prime.** The pools are exported and
-> asserted now. **7/7 caught** after; one survivor was proven **inert** (tier 3 draws no pair test) and
-> its dead branch deleted.
+> asserted now. **7/7 caught** after on the maths and the ladder, plus **4/4 on the clarity rules**
+> in §⑥ = **11/11**; one survivor was proven **inert** (tier 3 draws no pair test) and its dead
+> branch deleted rather than left to look like coverage.
 > ⚠️ **The ten-finger ceiling is swept as an invariant** — a round with no accepted answer in 0..10 is
 > unanswerable. It costs nothing: every composite ≤ 100 has a factor ≤ 10, so this **RAISED** the
 > chapter's range from 40 to 100.
@@ -126,8 +127,8 @@
 > Swept across 9 sizes, all clear.
 >
 > ## ▶ OPEN
-> 1. ✅ **COMMITTED as `4066dc4` on `feat/9-11-factor-lab-ar` — 13 files, +1,421 / −552. NOT pushed,
->    no `sw.js` bump yet (v87 → v88 when it deploys).** New: `story/factors.ts` ·
+> 1. ✅ **COMMITTED — `4066dc4` (the chapter, 13 files, +1,421 / −552) + `8bffd01` (this handoff), on
+>    `feat/9-11-factor-lab-ar`. NOT pushed, no `sw.js` bump yet (v87 → v88 when it deploys).** New: `story/factors.ts` ·
 >    `__tests__/factorLabAr.test.ts` · `infra/ar/` (4 files recovered from `10d814d^`). Changed:
 >    `story/FactorLab.tsx` (rewritten) · `story/preteen/kit.tsx` (PromptCard: optional instruction
 >    chip + `onMeasure`) · `next.config.ts` (**`camera=(self)`**) · `package.json`
@@ -6832,7 +6833,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-09 (LATEST — see the top 📏 block. **The founder called the 9–11 visuals "faaltu… naa sahi size ke naa sahi position par", and measuring the screen for 20 minutes found 3 faults in 2 chapters. ✅ COMMITTED on `fix/9-11-visual-truth-and-sizing`, NOT pushed.** `tsc` 0 · 660/660 · `next build` 0. ⚠️ **The headline is that the fraction chapter's PICTURE CONTRADICTED ITS OWN ANSWER** — a fixed PART width let the WHOLE grow with the denominator, so 1/4 and 1/3 both drew a 62px block under a readout saying `1/4 < 1/3`. Also: the whole band was phone-sized on a laptop (panel 21% of the screen, 380px dead either side — the teen band's July fix never reached this kit), and the decimals grid, the entire point of its chapter, was 27% of its own panel with a second hardcoded size inside the first. ⚠️ **All three shipped under a green suite, and the suite was right** — gates check the maths, and nothing asks whether the picture agrees with the answer or whether the taught thing is the biggest thing on screen. ⚠️ **The RPG/"story play" slice was designed, built, played and then DELETED at the founder's call** — see §⑤ for the three findings worth keeping, above all that the RPG ledger already exists and buys emoji hats, and that a rating gate walls a struggling child in a way only the gate caught. ▶ Open: **only 2 of 12 chapters were measured**; no gate protects either rule; the cover-fit bug is still live in LoadingBay + OrderDesk, ten deploys old; assets have drifted 22.8MB → 65MB. _(prior footer follows.)_)_
+_Last updated: 2026-08-09 (LATEST — see the top 📷 block. **The 9–11 band's FIRST AR CHAPTER: FactorLab is answered with the WEBCAM — your fingers are the divisor. ✅ COMMITTED `4066dc4` + `8bffd01` on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **706/706 vitest** (+46, all of it the chapter's own gate) · `next build` 0 · 11/11 planted regressions caught · driven end to end at 1280×800 and 640×320. Milo puts n units on the bench, the child holds up a number of rows, the bench deals them and either fills flush or leaves a gap — **one physical act, four readings**, and the answer space goes from 2 options to 11. `factor` and `prime` share ONE prompt on purpose, so the child has to find out whether a split exists, which is what primeness IS. ⚠️ **The bench does not deal until the child COMMITS** (holding still ~1.2s) — a live reflow would let a child sweep 2,3,4,5 until it went flush, the repeatable-commit oracle arriving through a continuous input. ⚠️ **Four faults the drive found that 32 green tests could not**, incl. a FIST and a LOWERED HAND being the same pixels, and a gesture surface not resetting between rounds the way a tap does (the guided round opened already reading its own answer). ⚠️ **Then the founder played it and found two more no gate could:** tier 1 was two-thirds pair test with the real content locked behind promotion, and every question was a run-on fusing story + math + gesture — now rewritten to the 12–14 clarity spec's three zones, which promptly **broke the layout twice, because a good question is TALLER than a bad one** (265px against 36px). ⚠️ **A REAL BUG I SHIPPED AND MY OWN DRIVE COULD NOT SEE:** `<video>` was gated on "the camera started" while `openCamera` needs it to exist, so Chrome granted the camera and threw on null — my dev hook bypassed the camera path entirely, a green result that would have been equally green had the code been broken. ▶ Open, biggest first: ⚠️ **the tracked tree has not typechecked since BEFORE this session** (AngleScope/GridPlotter/DivisionShare deleted-and-committed while their replacements stay untracked — the parent commit fails identically), so **nothing can deploy until that batch lands**; the camera grant is a founder/legal item (no privacy policy or COPPA content exists); MediaPipe fetches ~6 MB from a CDN, unconsidered by the CSP or the service worker; **nobody has held a real hand up to the detection layer**. _(prior footer follows.)_)_
 
 _Prior update:
 
