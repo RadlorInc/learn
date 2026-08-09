@@ -12,7 +12,169 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 📏 **2026-08-09 (LATEST) — THE FOUNDER SAID THE 9–11 VISUALS WERE "FAALTU… NAA SAHI SIZE KE NAA SAHI POSITION PAR", AND HE WAS RIGHT: 20 MINUTES OF MEASURING THE SCREEN FOUND 3 FAULTS IN 2 CHAPTERS, ONE OF THEM THE PICTURE CONTRADICTING ITS OWN ANSWER. ✅ COMMITTED on `fix/9-11-visual-truth-and-sizing`, NOT pushed.** `tsc` 0 · **660/660 vitest** · `next build` 0 · 0 console errors · measured at 1280×800 and 640×320.
+> 📷 **2026-08-09 (LATEST) — THE 9–11 BAND'S FIRST AR CHAPTER: FACTORLAB IS ANSWERED WITH THE WEBCAM. YOUR FINGERS ARE THE DIVISOR. ✅ COMMITTED — `4066dc4` on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **692/692 vitest** (was 660, **+32 — the chapter's own gate, 7/7 planted regressions caught**) · `next build` 0 · 0 console errors in a fresh tab · driven end to end at 1280×800 **and** 640×320 through intro → camera gate → explore → both demos → guided → scored rounds, incl. a **prime round answered with a fist**.
+>
+> **The ask:** *"yeh chapters mein se koi ek chapter hum AR banate hai… laptop ke webcam yaa tablet ka front cam… format same — pehle explanation, phir question solve karne ka tariqa, phir question with our adaptive system."* Founder then picked **FactorLab** and **camera-only (no tap fallback)**.
+>
+> ## ⓪ WHY FACTORLAB, AND IT IS AN ARGUMENT NOT A PREFERENCE
+> Of the five chapters still neon (FactorLab · FractionForge · DecimalGrid · UnitConverter ·
+> MissionBrief), only two have a skill a hand can honestly perform, and FactorLab wins on three counts
+> beyond the gesture fitting: it is **the one the handoff records as BLOCKED** (FitOut took the
+> array-on-a-frame material, so it had none left); it was **the band's worst offender on guessing** —
+> even/odd and prime were two chips each, i.e. 50%; and **finger count is MediaPipe's most reliable
+> signal**, with `extendedFingerTips` already written. DecimalGrid was the runner-up (ten fingers = one
+> whole) and breaks on hundredths. UnitConverter needs calibration against a reference object, i.e.
+> real CV. MissionBrief has no gesture at all.
+>
+> ## ① THE GESTURE — one physical act, four readings, and the answer space goes 2 → 11
+> Milo puts n units on the bench; the child holds up a number of rows; the bench deals them and either
+> fills flush or leaves a gap.
+> | type | question | answer |
+> |---|---|---|
+> | evenOdd | "How many pairs can you make from 15?" | 7, and one is stranded |
+> | multiple | "How many 5s make 35?" | 7 |
+> | factor | "Split 12 into equal rows — how many rows?" | **ANY** of 2·3·4·6 |
+> | prime | *the same prompt*, and nothing fits | a **FIST** |
+> ⚠️ **`factor` and `prime` share ONE prompt deliberately** — a prime round that announced itself would
+> make the fist free, so the child has to find out whether a split exists, which is what primeness IS.
+> `qType` still distinguishes them so `coverage` can guarantee a prime is asked before mastery exits.
+> ⚠️ **CHANGING THE VERB DID NOT AUTOMATICALLY FIX THE COIN FLIP, AND I SHIPPED THAT MISTAKE INTO MY OWN
+> FIRST CUT.** The pair test started as *"how many are left over?"* — 0 or 1, a gesture instead of a
+> chip and **still 50%**, i.e. the exact defect the rebuild exists to remove. Asking for the pair COUNT
+> makes the child halve the number and lets even-or-odd fall out of the stranded unit on the reveal.
+> Floor across every type is now **1-in-11**. *Count the options your new surface really offers.*
+>
+> ## ② ⚠️ THE BENCH DOES NOT DEAL UNTIL THE CHILD COMMITS — a live reflow is a yes/no oracle at 60fps
+> A bench that reflowed as the fingers moved would let a child sweep 2, 3, 4, 5 and stop when it went
+> flush, having worked nothing out — the repeatable-commit fault that got an earlier area chapter
+> deleted, arriving through a continuous input. Commit = **holding still ~1.2s**, once per scored round;
+> changing your mind is free until it fires. The live readout says only WHAT WAS READ, never whether it
+> is right. In the EXPLORE beat, where nothing is asked, the bench DOES reflow live — teaching, not
+> measuring, and it doubles as where the camera permission is requested.
+>
+> ## ③ ⚠️ FOUR FAULTS THE DRIVE FOUND THAT THE 32 GREEN TESTS COULD NOT
+> ① **A FIST AND A LOWERED HAND ARE THE SAME PIXELS.** Both extend zero fingers, and a fist means
+> *prime* — so putting your hand down would commit "prime". `useFingerCounter` now reports hand
+> PRESENCE alongside the count and nothing commits while `hands === 0`. Verified both ways on screen.
+> ② **A GESTURE SURFACE DOES NOT RESET BETWEEN ROUNDS THE WAY A TAP SURFACE DOES.** A tap is consumed;
+> a hand is still up when the next question opens. Caught on the first drive: **the guided round
+> appeared already reading 5, which was its answer** — it was about to score a round the child never
+> played. A held-over reading is not an answer; the commit arms only after a fresh change.
+> ③ **A COMMIT DRIVEN BY rAF NEVER FIRES IN A BACKGROUNDED TAB.** Untestable headlessly, and on a real
+> device it stalls the moment the child switches away and back. Commit on a `setTimeout`, ring on rAF.
+> ④ **A RESERVED BAND TUNED TO THE PROMPT IN FRONT OF YOU BREAKS ON A PROMPT THAT WRAPS** — measured,
+> the same card is 36px on a one-line pair test and 66px on the two-line split prompt, so the bench
+> landed 14px inside it. Reserve the WORST case. Same pass: the explore button floated over the bench
+> (moved into the HUD row beside the ring). **0 clashes at 1280×800 and 640×320** after, both measured
+> by crossing every fixed layer with every other — not by checking the one I had in mind.
+>
+> ## ④ THE GATE — 32 tests, and mutation testing found TWO holes in it
+> [factors.ts](src/features/chapters/story/factors.ts) holds the ladder, the grader, the demo beats and
+> the deal maths outside React, because **a webcam cannot be driven by a gate** — so the pure module
+> carries more than usual. It passed first run, so it was mutation-tested, and **two planted regressions
+> walked through**: a demo beat drifting off the arrangement it narrates (SupplyRun's fault — fixed by
+> asserting all dealing beats in one example share a row count), and ⚠️ **a composite hidden in the
+> PRIMES pool, which produces a perfectly valid FACTOR round so every round-level check passes while
+> that tier's prime slot never fires and `coverage` can never see a prime.** The pools are exported and
+> asserted now. **7/7 caught** after; one survivor was proven **inert** (tier 3 draws no pair test) and
+> its dead branch deleted.
+> ⚠️ **The ten-finger ceiling is swept as an invariant** — a round with no accepted answer in 0..10 is
+> unanswerable. It costs nothing: every composite ≤ 100 has a factor ≤ 10, so this **RAISED** the
+> chapter's range from 40 to 100.
+>
+> ## ⑤ WHAT WAS ACTUALLY VERIFIED, AND WHAT CANNOT BE
+> Driven at both sizes: the **camera gate is real** (the preview pane blocks camera, and it renders
+> *"Milo needs to see your hands"* + Try again / Back, not a blank screen) · explore reflowing live
+> (5 rows of 2 from 12 → two stranded in red under a dashed line, "2 left over") · both demos beat by
+> beat · guided committed and advanced · a scored round **wrong then right** (the miss line never names
+> the answer, the bench clears for a fresh commit) · a **prime round answered with a fist and graded
+> correct** · a lowered hand committing nothing after 6s · a full run reaching its own finish.
+> ⚠️ **`window.__miloFingers(n, hands)` is what makes any of that possible** — dev-only, stands in for
+> the camera as well as the hand, **verified 0 hits in the emitted production JS** (only a dev source
+> map mentions it).
+> ⚠️ **NOBODY HAS HELD A REAL HAND UP TO IT.** Every drive above fed synthetic readings. The whole
+> detection layer — whether `extendedFingerTips` reads a nine-year-old's hand, whether 1.2s is the
+> right dwell, whether two hands read reliably for 6–10, whether the mirrored self-view is placed
+> usefully — is **eyeball-only and untested by anything**.
+>
+> ## ⑥ ⚠️ THEN THE FOUNDER PLAYED IT, AND FOUND TWO THINGS NO GATE COULD
+> ① **"Sirf 2 ke pair hi find karne hai?"** — and he was right, it was a ladder fault not bad luck.
+> Tier 1 was **two-thirds pair test**, and the split/prime rounds (i.e. the chapter) only unlocked at
+> tier 2, which needs 3 correct in a row. **So the opening was the most repetitive AND the weakest
+> reading, and the real content was a reward for climbing.** The split now starts at tier 1 on easy
+> composites. ⚠️ **The FIST was also never TAUGHT** — only mentioned in the prompt — so a third demo
+> works a prime, and the guided round is now a split with TWO right answers (3 or 5 of 15) so the
+> child's first go also shows that *any* factor counts. ⚠️ **And `coverage` was declared but its
+> `asked` feedback was never wired into `make`** — the craft doc's own named trap: the exit is
+> withheld until all four readings appear, so a strong child was simply denied the early finish.
+> ⚠️ **Fixing it I shipped the mirror fault** — L3 became half primes, and since a prime's only
+> answer is the fist, "always fist" becomes a 50% strategy, i.e. **the coin flip back through the
+> door**. Capped at 25%, and the gate now checks the ANSWER's frequency, not the reading's.
+> ② **"Question proper se samajh nahi aa raha"** — the clarity spec
+> ([teen-12-14-math-audit.md](docs/teen-12-14-math-audit.md) §1) applied. Every prompt was a run-on
+> fusing story + math + gesture (*"Split 13 into equal rows. How many rows? Make a fist if nothing
+> fits."*). Now three zones: a **context** naming what the numbers are and the rule that applies (no
+> UI verbs), the **bench** as the math hero, and one verb-led **instruction chip**. `PromptCard`
+> gained an optional `instruction` — backward-compatible, so the other 9–11 chapters are untouched.
+> **4/4 planted clarity regressions caught**, including a prime chip that leaks its type.
+> ⚠️ **AND WRITING THEM CLEARLY BROKE THE LAYOUT TWICE, WHICH IS THE GENERAL LESSON**: a good
+> question is TALLER than a bad one (**265px** against 36px), so the reserved band sat on the bench —
+> the same constant-guessing-a-variable-gap fault I had already "fixed" once this session. The card
+> now **reports its measured bottom** (`useLayoutEffect`, not a `ResizeObserver` — those are frozen
+> in a backgrounded tab) and the constant is only a first-paint floor. That then exposed a THIRD
+> clash: the bottom is **two stacks**, the readout and the self-view, and only one was reserved.
+> Swept across 9 sizes, all clear.
+>
+> ## ▶ OPEN
+> 1. ✅ **COMMITTED as `4066dc4` on `feat/9-11-factor-lab-ar` — 13 files, +1,421 / −552. NOT pushed,
+>    no `sw.js` bump yet (v87 → v88 when it deploys).** New: `story/factors.ts` ·
+>    `__tests__/factorLabAr.test.ts` · `infra/ar/` (4 files recovered from `10d814d^`). Changed:
+>    `story/FactorLab.tsx` (rewritten) · `story/preteen/kit.tsx` (PromptCard: optional instruction
+>    chip + `onMeasure`) · `next.config.ts` (**`camera=(self)`**) · `package.json`
+>    (+`@mediapipe/tasks-vision`) · `chapter-craft.md`. **DELETED: `lessons/FactorsLesson.tsx`.**
+>    ⚠️ **Staged surgically, because the tree carries three other sessions' uncommitted work.**
+>    `chapter-craft.md` had **510 added lines of which only 101 are this session's** — the rest are
+>    the Empty-Plot passes' rules — so the index got HEAD + my block and the remainder stays in the
+>    tree. `package.json` carried `@react-three/*` + `three` from the FloorPlot session, so the
+>    lock was **regenerated with `npm install --package-lock-only`** against a package.json holding
+>    only `@mediapipe/tasks-vision`; committing the lock wholesale would have swept four unrelated
+>    deps in, and committing package.json without a matching lock would have been a broken commit.
+>    Verified with `git show --stat` (13 files, nothing swept) and by grepping the committed tree
+>    for `three`/`@react-three` imports (**none** — so the commit's own dep list is honest).
+> 2. ⚠️ **THE TRACKED TREE DOES NOT TYPECHECK, AND IT HAS NOT SINCE BEFORE THIS SESSION.** Checked
+>    out clean, `4066dc4` fails `tsc` on three missing modules — `AngleScope`, `GridPlotter`,
+>    `DivisionShare` — and **its PARENT `4dd50f0` fails identically**, so this is not something this
+>    session introduced. Those three were deleted-and-committed by earlier sessions while their
+>    replacements (`AngleShop` · `FloorPlot` · `SupplyRun`) and the `storyChapters.tsx` rewire that
+>    points at them are **still uncommitted**. The working tree is green only because the untracked
+>    files are on disk. **Nothing on this branch can deploy until that batch is committed too** —
+>    it is now the single biggest thing owed.
+> 3. ⚠️ **THE CAMERA GRANT IS A FOUNDER/LEGAL ITEM, NOT A TECHNICAL ONE.** `Permissions-Policy` now
+>    ships `camera=(self)`, reversing the July audit's deliberate revocation. Hand landmarks are
+>    computed **on-device and no frame leaves the browser** — but there is still **no privacy policy,
+>    ToS or COPPA content anywhere in the repo**, and a camera pointed at a child is the most sensitive
+>    thing this app has ever asked for. This belongs in the attorney conversation that has been open
+>    since the launch plan.
+> 4. ⚠️ **MEDIAPIPE FETCHES ITS WASM + MODEL FROM A CDN AT RUNTIME** (~6 MB, jsdelivr + googleapis).
+>    Neither the CSP nor the offline-first service worker has been considered for it, and this app is
+>    local-first by design. Decide before deploying.
+> 5. **CAMERA-ONLY WAS THE FOUNDER'S CALL AND THE COST IS REAL** — a device with no camera, or a
+>    declined permission, cannot play this chapter at all. The dead end is honest; it is still a dead
+>    end. A `answerPad`-style tap path is the one-flag fix if it should change.
+> 6. **At 640×320 the bench is 33% of the height and 14% of the width** — 4 rows of 3 in a 104px band,
+>    units ~15px. No clash, but tight, and it is the same short-landscape ceiling FitOut records for
+>    its 16–19px rails. More height is the only lever.
+> 7. **No full ten-round run was WATCHED** (one completed unattended via an auto-player), the re-teach
+>    has never fired, and no mastery exit was observed — though `coverage` makes a prime reachable
+>    before one can happen.
+> 8. **4 chapters remain neon** — FractionForge · DecimalGrid · UnitConverter · MissionBrief.
+> 9. ⚠️ **Everything the previous session left open is untouched**: the three 9–11 visual fixes are
+>    still committed-not-pushed on `fix/9-11-visual-truth-and-sizing`; only 2 of 12 chapters were ever
+>    measured; the cover-fit bug is still live in LoadingBay + OrderDesk; assets are at 65MB.
+>
+> _(the 📏 block below is the previous session — the screen-measuring pass.)_
+
+> 📏 **2026-08-09 — THE FOUNDER SAID THE 9–11 VISUALS WERE "FAALTU… NAA SAHI SIZE KE NAA SAHI POSITION PAR", AND HE WAS RIGHT: 20 MINUTES OF MEASURING THE SCREEN FOUND 3 FAULTS IN 2 CHAPTERS, ONE OF THEM THE PICTURE CONTRADICTING ITS OWN ANSWER. ✅ COMMITTED on `fix/9-11-visual-truth-and-sizing`, NOT pushed.** `tsc` 0 · **660/660 vitest** · `next build` 0 · 0 console errors · measured at 1280×800 and 640×320.
 >
 > **The asks, in order:** *"find karo kya chiz tumhe rok rahi hai acche visuals aur concepts bana ne ke liye"* → *"kuch samjh naii aa raha hai… bhot faaltu visuals dikhte hai"* → *"meko yeh animation waale ekdum story play games waale chahiye… RPGs"* → *"pehle design likho, phir code"* → *"ab code likho"* → *"meko khelna hai"* → **"delete karo yeh story Play"**.
 >
