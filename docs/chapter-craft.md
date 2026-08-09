@@ -1962,6 +1962,71 @@ gated on `NODE_ENV !== 'production'` and verified absent from the emitted JS) th
 camera AS WELL AS the hand — otherwise the permission gate blocks every headless drive and nothing
 past the intro is ever verified.
 
+⚠️ **COUNT THE FINGERS BEFORE DESIGNING A READING AROUND THEM — A HAND HAS FIVE.** The 9–11 plan
+specified "leftmost hand = tens, rightmost = ones → **0–99**", which reads as obviously right and
+tops out at **55**. Measured against every answer The Fitting Crew's generator draws it reaches
+**26 of 55**, only 39% of the chapter's hardest type — and it cannot state a plain **6**, because a
+place would cap at one hand. **A round whose answer the surface cannot express is unanswerable**,
+which is worse than a wrong one. The encoding that works is the two places as two WINDOWS: BOTH
+hands make one digit (0..9) and the child enters the tens and then the ones. 100% reachable, no
+generator change, and it is the better teaching anyway — *show me the tens, now show me the ones* is
+place value performed. **Sweep every answer the generator can draw against the surface before
+building it**, exactly as the ten-finger ceiling was swept.
+
+⚠️ **A DWELL THAT RE-ARMS ON THE SAME POSE ENTERS IT TWICE.** Filling a second slot makes it tempting
+to put the slot in the dwell's key so a repeated digit is enterable — and then advancing the slot
+re-arms the hand that has not moved: driven on screen, answering **12** gave **11**, the ones landing
+1.2 s after the tens off one held-up finger. Key on the READING alone, so entering a digit does not
+restart the timer and one gesture is one digit. **A repeat then needs the hand to leave and come
+back — which the guard already allows and nothing on screen says, so SAY IT** at the moment it
+applies (`handHint`), or a child answering 33 holds three fingers at a dead surface.
+
+⚠️ **A CONTINUOUS READING BEHIND A HOLD-STILL COMMIT NEEDS HYSTERESIS, AND ITS SIZE IS DERIVED FROM
+THE NOISE RATHER THAN CHOSEN.** Quantizing a hand's tilt to the Angle Shop's 5° step puts a boundary
+every 2.5°, which is the same order as MediaPipe's landmark noise on the palm — so a hand held ON a
+boundary dithers between two answers for ever, the dwell resets on every flip, and the camera is a
+dead button. A hand settled on step C sees raw values up to `STEP/2 + noise` away from C, so
+suppressing ±2.5° needs a hold band of a **full step**: the reading changes exactly when the hand
+reaches the next step's own centre. **0.62 of a step was the first guess and it flips.**
+⚠️ **AND A TEST FOR IT MUST JITTER AROUND A BOUNDARY, NOT AROUND A CENTRE.** Jitter about a bucket
+centre never crosses anything and passes with the hysteresis deleted — that version was written
+first, proved nothing, and was caught only by mutation-testing the gate. Sweep the raw start across
+the whole range at half-degree steps and assert the reported step never changes.
+
+⚠️ **SMOOTH A CIRCULAR READING ON ITS DOUBLED ANGLE'S UNIT VECTOR, NEVER ON THE DEGREES.** A hand
+held flat wobbles either side of horizontal, i.e. across the 0/180 seam, and a plain average of 179°
+and 1° is **90°** — the wrong answer at exactly the pose a child is most likely to hold. EMA
+`(cos 2θ, sin 2θ)` and halve the result back.
+
+⚠️ **FOLD AN ANGLE READING TO [0,180): AN AXIS HAS NO HEAD OR TAIL.** It costs nothing and it is what
+lets ONE reading serve two instruments — a beam at 200° IS a beam at 20°, and a fold line at 200° IS
+the fold line at 20°. It also means "nearest" must be measured as an axis: 175° is 10° from 0°, not
+170°.
+
+⚠️ **THE HAND OWNS THE CONTINUOUS VALUE; TAPS OWN THE DISCRETE ACTIONS. THEY CANNOT SHARE ONE.** A
+live hand writes the value every frame, so a stepper pressed beside it is overwritten before the
+child's finger leaves the button. With the camera on, hide whichever control writes the value the
+hand is writing — and keep the ones that are ACTIONS (mark, commit, undo), because those are not the
+value. In the Angle Shop the tilt drives the beam and the fold bar; Mark ✓ and Fold ✓ stay taps.
+⚠️ **AND WHICH CONTROL IS DRAWN MUST DEPEND ON WHO OWNS THE VALUE, NOT ON WHETHER THE INPUT IS
+LIVE.** Liveness includes "not yet answered", so a row keyed on it flips the dwell ring back into
+three buttons at the exact moment of the verdict — a reshuffle under the child's eyes, on the beat
+they are reading. The row is already dimmed and dead by then; leave its shape alone.
+
+⚠️ **A GESTURE DOES NOT SHIP ON A ROUND THAT GIVES IT NOTHING TO AIM AT.** The Angle Shop's tier-3
+`degrees` rounds ask for exactly 85° with the set-square guide already retired and no readout
+permitted while turning — a tilt held inside ±2.5° of an unmarked target for over a second is luck,
+not knowledge. Those rounds keep the steppers, which ARE the exact instrument (each tap is a
+countable 5°), and the hand answers the KIND question instead, which is what the chapter's anchor is
+about. **Say so on screen when it happens**, or the hand looks broken on that round.
+
+⚠️ **AND WHERE THE HAND WRITES A DERIVED VALUE, THE HELD-OVER-POSE GUARD NEEDS ONE MORE TURN THAN IT
+DOES ON A RAW ONE.** Factor Lab's dwell watches the raw finger count, which is already current the
+instant a round opens. The Angle Shop's watches `deg`, which is an ECHO of the hand and lags it by a
+render — so the guard captured the round's `start` angle, the hand's own angle landed a render later
+and read as a CHANGE, and the round committed a pose the child struck for the last question. Do not
+arm until the hand has written once; then the guard sits on the hand's own value.
+
 ⚠️ **THE ANSWER SPACE IS 0..10 AND THAT IS AN INVARIANT, NOT A HOPE.** A round with no accepted answer
 within reach is unanswerable, which is worse than a wrong one. Sweep every tier for it. Here it costs
 nothing — every composite ≤ 100 has a factor ≤ 10, since the smallest factor is ≤ √n — so it RAISED

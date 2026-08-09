@@ -95,7 +95,7 @@ nothing here needs a model we do not already load.
 | | reading | what it answers | pointer equivalent | status |
 |---|---|---|---|---|
 | **A** | **count** 0..10 + hand presence | a small whole number | tap pad / chips | **shipped** |
-| **A2** | **two-place count** — leftmost hand = tens, rightmost = ones | **0–99** | two-window pad | hook change |
+| **A2** | ⚠️ **CORRECTED — see below.** two places entered ONE AT A TIME, both hands per digit | **0–99** | two-window pad | ✅ shipped |
 | **B** | **point** — index tip over a target | one of ≤ 4 choices | tap it | hook change |
 | **C** | **pinch span** — thumb-tip ↔ index-tip | a size / a length | drag handle | hook change |
 | **D** | **tilt** — wrist → knuckle angle | **an angle, directly** | drag dial | hook change |
@@ -105,6 +105,18 @@ nothing here needs a model we do not already load.
 | **H** | **sweep** — hand travels across | **one round of dealing** | a "Deal" button | hook change |
 | **I** | **mirror** — both hands mirrored about a line | **symmetry** | tap the axis | hook change |
 | **J** | **trace** — index tip draws a path | round the outside vs across the inside | drag path | hook change |
+
+⚠️ **A2 AS FIRST WRITTEN IS ARITHMETICALLY IMPOSSIBLE, AND THIS IS THE CORRECTION.** "Leftmost hand =
+tens, rightmost = ones → 0–99" reads as obviously right; **a hand has five fingers**, so one hand per
+place tops out at **55**. Swept against every answer The Fitting Crew's generator can draw: it reaches
+**26 of 55**, only **39%** of `split` — which is that chapter's entire payload — and it cannot state a
+plain **6**. A round whose answer the surface cannot express is unanswerable, which is worse than a
+wrong one. **The two places are the two WINDOWS, not the two hands:** both hands make one digit
+(0..9, i.e. reading **A**), and the child enters the tens and then the ones. 100% of answers
+reachable, no generator change, no new primitive — and it is the better teaching, because *show me
+the tens, now show me the ones* is place value performed in the chapter whose payload is splitting
+12 into 10 and 2. Everything below that assumed a 0–99 simultaneous read should be re-checked the
+same way: **sweep the generator's real answers against the surface before building it.**
 
 ⚠️ **A–J are ONE change to ONE hook.** `useFingerCounter` already computes the landmarks every frame
 and throws all but the count away. Widen its callback to
@@ -351,8 +363,8 @@ This is the same fix the 17–18 band took for the same complaint.
 | # | thing | size |
 |---|---|---|
 | 1 | ✅ **DONE — FactorLab's tap path.** See §8 | shipped |
-| 2 | **Widen `useFingerCounter` to one `onRead(...)`** carrying per-hand counts, tips, pinch, tilt, span | one hook — unlocks A2 and B–J at once |
-| 3 | **A shared `<HandInput>`** — camera toggle, lazy MediaPipe load, gate, mirrored self-view, readout, dwell ring, and a `value`/`onCommit` matching the pointer's | extract from FactorLab |
+| 2 | ✅ **DONE — `useFingerCounter` reports one `onRead({count, hands, tilt})`.** ⚠️ Only the readings with a CONSUMER were built: `count` (A) and `tilt` (D). The callback is an object, so `perHand`/`tips`/`pinch`/`span` are each a field and a few lines when their chapter arrives — building them blind would be six unused readings and a `reads` change test nobody could tune. | shipped |
+| 3 | ✅ **DONE — `infra/ar/HandInput.tsx`**: the device pick, camera lifecycle, lazy MediaPipe, `useDwell`, `CamView`, `CamGate`, `DwellRing` and the dev drive hooks, skinned per band. FactorLab re-pointed at it; The Angle Shop is its second consumer. | shipped |
 | 4 | **THE PLAN + baby-step walkthrough** in the story shell | one shared component, then per-chapter copy |
 | 5 | Per chapter: the anchor's copy, the AR reading, the instruction chip per input mode | 12 × small |
 | 6 | **4 full rebuilds** — FractionForge · DecimalGrid · UnitConverter · MissionBrief | 4 × large |
@@ -364,9 +376,15 @@ This is the same fix the 17–18 band took for the same complaint.
    becomes shared and the camera becomes optional.
 3. **The four copy-only chapters** — Order Desk (fundraiser), Supply Run (candy), Loading Bay (goals),
    Rail Line (scoreboard). Fastest proof the band reads differently.
-4. **The Angle Shop with tilt (D)** — the strongest gesture in the band, and the one most worth
-   putting in front of a real child early.
-5. **The Fitting Crew** (Lego + two-hand array + A2) — the two-place primitive's first real test at 95.
+4. ✅ **DONE — The Angle Shop answers by tilt (D).** ⚠️ Not on every round, and the exception is
+   principled rather than a shortcut: `job: 'degrees'` at tier 3 asks for exactly 85° with the
+   set-square guide already retired and no readout permitted while turning, so a tilt held inside
+   ±2.5° of an unmarked target is luck. Those keep the steppers. Fold rounds get the tilt for AIMING
+   the bar (Mark/Fold stay taps) — the hand owns the continuous value, taps own the actions.
+5. ⚠️ **A2 DONE — The Fitting Crew enters its answers by hand, one place at a time.** The two-place
+   primitive's first real test is what found that the plan's own encoding could not reach half the
+   chapter (§2). Still owed on this chapter: the **Lego anchor copy** and the **two-hand array build**
+   for the explore beat, plus constraint §7.2 (there is no 5 × 19 brick).
 6. **The four neon rebuilds**: Fractions → Decimals → Word Problems → Measurement.
 7. **The Empty Plot**, last, once §7.4 is decided.
 

@@ -12,7 +12,197 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🖐️ **2026-08-09 (LATEST) — THE BROKEN TREE IS COMMITTED AND BUILDS AGAIN; THE 9–11 BAND HAS ITS TWELVE DAILY ANCHORS; AND THE CAMERA STOPS BEING A WALL — FACTORLAB NOW ANSWERS BY TAP TOO. ✅ FIVE COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **713/713 vitest** (was 706, **+7**) · `next build` 0 · 0 console errors in a fresh tab · driven at 1280×720, 640×320 and 667×375 on BOTH input paths · every intro card in the band measured at 640×320.
+> 🔢 **2026-08-09 (LATEST) — THE FITTING CREW ANSWERS BY HAND, ONE PLACE AT A TIME — AND BUILDING IT FOUND THAT THE PLAN'S OWN A2 IS ARITHMETICALLY IMPOSSIBLE. ✅ FOUR COMMITS on `feat/9-11-factor-lab-ar` (with the ✋ block below), NOT pushed.** `tsc` 0 · **730/730 vitest** (was 725, **+5**) · `next build` 0 · 0 console errors in a fresh tab · driven end to end at 1280×720 through intro → both demos → guided → five scored rounds including a **`split`** · dev hooks **0 hits in the emitted production JS**.
+>
+> **The ask:** *"fitting crew ka A2 banao"* — build order item 5, the two-place read.
+>
+> ## ⓪ ⚠️ THE HEADLINE: "LEFTMOST HAND = TENS, RIGHTMOST = ONES → 0–99" CANNOT WORK, BECAUSE A HAND HAS FIVE FINGERS
+> [story-9-11-ar-plan.md](docs/story-9-11-ar-plan.md) §2 specifies it and the previous session's
+> handoff repeats it. **One hand per place tops out at 55.** Swept against every answer this
+> generator can actually draw:
+>
+> | encoding | reaches |
+> |---|---|
+> | the plan's — one hand per place | **26 of 55** answers · only **39% of `split`**, the chapter's whole payload |
+> | both hands per digit, one place at a time | **55 of 55** |
+>
+> ⚠️ **And it is worse than a coverage gap: it cannot state a plain `6`**, because a place would cap
+> at five. **A round whose answer the surface cannot express is unanswerable**, which the craft doc
+> calls worse than a wrong one — this is the ten-finger-ceiling sweep, run against a different
+> surface and failing. **So the two places are the two WINDOWS, not the two hands**: both hands make
+> one digit (0..9, i.e. Factor Lab's existing reading), and the child enters the tens and then the
+> ones. No hook change was needed at all — `count` already did it — and it is the better teaching
+> anyway: *show me the tens, now show me the ones* is place value performed, in the chapter whose
+> payload is splitting 12 into 10 and 2. The plan's row is corrected in place.
+>
+> ## ① THE WIRING — the hand fills the SAME windows the buttons fill
+> `AnswerPad` gained one optional `keys` prop that replaces the ten digit buttons. ⚠️ **The windows,
+> ⌫ and Done ✓ are deliberately OUTSIDE it**: the hand owns the VALUE and taps own the ACTIONS, so
+> both inputs read one set of windows and commit through one button — swapping the whole pad per
+> input would be two answer surfaces that could drift. `commitPad` and `grade` never learn which
+> input moved it, so the chapter's existing sweep covers both at once.
+> ⚠️ **A `fit` ROUND KEEPS THE RAILS, and that is the point rather than a compromise** — its answer is
+> the number of rails the child BUILT, which is what makes it unguessable; "hold up 4" deletes the
+> building and leaves a number.
+>
+> ## ② ⚠️ TWO FAULTS THE DRIVE FOUND, AND THE FIRST WAS MINE FROM AN HOUR EARLIER
+> ① **PUTTING THE SLOT IN THE DWELL'S KEY ENTERS THE SAME POSE TWICE.** I did it deliberately, so a
+> repeated digit (22, 33, 44, 55 are all reachable) would be enterable — and driving it, **answering
+> 12 gave `11`**: the tens landed and the ones landed 1.2 s later off one held-up finger, before a
+> child could move. Keyed on the READING alone, entering a digit does not restart the timer, so one
+> gesture is one digit. **The repeat then needs the hand to leave and come back — which the guard
+> already allows and nothing on screen said**, so `handHint` now says it *at the moment it applies*
+> ("Lower your hand, then show the ones."), which is a live redirect rather than a dead surface.
+> ② **A `fit` ROUND WITH THE CAMERA ON SAID NOTHING.** Two scored rounds in a row wanted taps while
+> the child's chosen surface was the hand, with no line explaining it — the dead-button rule, and
+> this chapter has shipped that fault once already. Now "Lay this one out by tapping the racks".
+>
+> ## ③ WHAT WAS ACTUALLY VERIFIED
+> Driven at 1280×720: both doors on the intro · the camera gate with this chapter's own copy · a
+> one-window round answered **6** (the case the plan could not express) · a held-over reading NOT
+> committing into an empty window · the same pose held 5 s NOT double-entering · the "lower your
+> hand" hint firing exactly when the reading equals the digit just entered · and a **`split` round,
+> `5 × 15`, answered `7` then `5` = 75 entirely by hand and graded correct.** The widest keys row is
+> ~397px of 640 at the short-frame font, so it fits every size in the sweep. **5/5 planted
+> regressions caught** (ten fingers accepted · a place capped at one hand, i.e. the plan's encoding ·
+> places named the wrong way round · the chip naming a gesture the camera child does not have · no
+> redirect on a full pad).
+>
+> ## ▶ OPEN
+> 1. **The Lego anchor copy is still unwritten** — §3.10's *"a 2×4 brick has 8 studs"* — and so is the
+>    **two-hand array build** for the explore beat (left hand rows, right hand studs). This session
+>    did the answering gesture, not the teaching.
+> 2. ⚠️ **Constraint §7.2 is untouched and now matters more: there is no 5 × 19 Lego brick.** `split`
+>    draws `rows 2–5 × per 11–19`. The plan recommends real brick sizes at L1/L2 and a baseplate at
+>    L3; nobody has decided.
+> 3. **640×320 was computed, not driven.** The keys row fits by arithmetic off the shipped font and
+>    the measured 1280 row; no short-frame run was played, because each run costs ~5 minutes of demo.
+> 4. ⚠️ **NOBODY HAS HELD A REAL HAND UP TO ANY OF THE THREE AR CHAPTERS.** Three is now enough
+>    surface that this is the next thing worth doing before a fourth.
+> 5. **Nothing is pushed and `public/sw.js` is still v87** (→ v88 when this deploys). The rest of the
+>    previous block's open list stands unchanged.
+>
+> ## ✅ COMMITTED — four commits, and the branch was checked out CLEAN to prove it
+> | commit | what |
+> |---|---|
+> | `aaa3a0a` | **the shared `<HandInput>`** — `infra/ar/*` + FactorLab re-pointed, 5 files |
+> | `a84895a` | **the Angle Shop's tilt** — `angles.ts` · `AngleShop.tsx` · its gate |
+> | `01c005f` | **the Fitting Crew's A2** — `FitOut.tsx` · `yard.tsx` · its gate |
+> | _this one_ | the craft rules, the plan's corrected A2 row, this handoff |
+>
+> ⚠️ **SPLIT FOUR WAYS AND EACH INTERMEDIATE PROVEN GREEN, because this branch has already shipped a
+> tree that failed `tsc` for two sessions.** The AR layer had to be ONE commit — FactorLab does not
+> compile without `HandInput`, and the `onCount` → `onRead` change breaks it — so before staging
+> anything the other three commits' files were stashed and the remainder typechecked on its own
+> (`tsc` 0, 713/713). Staged file-by-file and each commit's list checked with `git show --stat`, per
+> this repo's directory-pathspec trap. **Then the branch was checked out CLEAN in a scratch worktree:
+> `tsc` 0 · 730/730** — a green working tree says nothing about the branch, which is exactly how the
+> deleted-without-its-replacement fault hid here before.
+> Deliberately left untracked, as every prior session has: `docs/recovered/`, `python script/`
+> (not ours — a local venv and a photo), `scripts/.voice-*.json` (regenerable).
+>
+> _(the ✋ block below is the same day's earlier work — `<HandInput>` and the Angle Shop's tilt.)_
+
+> ✋ **2026-08-09 — `<HandInput>` IS EXTRACTED AND THE ANGLE SHOP IS ANSWERED BY TILT: YOUR FOREARM IS THE RAMP. ✅ COMMITTED as `aaa3a0a` + `a84895a`, NOT pushed.** `tsc` 0 · **725/725 vitest** (was 713, **+12**) · `next build` 0 · 0 console errors in a fresh tab · driven at 1280×720 and 640×320 on BOTH chapters, with every fixed layer crossed against every other · dev hooks verified **0 hits in the emitted production JS**.
+>
+> **The ask:** *"haan ab HandInput extract karo aur Angle Shop ka tilt banao"* — items 2, 3 and build-order 4 of [docs/story-9-11-ar-plan.md](docs/story-9-11-ar-plan.md), i.e. the thing the previous block named as unblocking everything else.
+>
+> ## ⓪ THE HOOK WAS WIDENED TO ONE `onRead`, AND DELIBERATELY NOT TO ALL TEN READINGS
+> `useFingerCounter` now reports `onRead({ count, hands, tilt })`. The plan lists A–J (per-hand
+> counts, tips, pinch, span, sweep, trace…) as "one change to one hook" — **built the two with a
+> consumer and no more.** The callback is an OBJECT, so each of the others is a field and a few lines
+> when its chapter arrives; building six unused readings now means six untunable numbers and a change
+> test nobody can calibrate. ⚠️ **`reads: 'count' | 'tilt'` is not decoration** — a tilt is continuous,
+> so including it in the change test fires `onRead` at frame rate, which is right for a chapter whose
+> beam follows the hand and would re-render Factor Lab's whole tree ~30×/s for a number that has not
+> moved. It also picks the self-view overlay: numbering fingers over an angle chapter is noise.
+>
+> ## ① `infra/ar/HandInput.tsx` — the extraction, and it is a MOVE not an addition
+> Device pick · camera lifecycle · lazy MediaPipe · `useDwell` · `CamView` · `CamGate` · `DwellRing` ·
+> the dev drive hooks, all lifted out of FactorLab verbatim and skinned per band through a `HandSkin`.
+> ⚠️ **`accentSoft` is its own field rather than `${accent}66`**, because the painted band colours
+> itself from CSS variables and you cannot concatenate an alpha onto `var(--milo-orange)`.
+> ⚠️ **And `disposeLandmarker` now also stops a stream held in a REF.** If the `<video>` unmounts first
+> — a rotate gate, a phase switch — `videoRef.current` is already null and the tracks were unreachable:
+> a camera light left on with the browser still reporting the site as using it. Latent in FactorLab too.
+>
+> ## ② THE TILT — one value, two inputs, one grader, and the fold bar came free
+> `palmTilt` reads wrist(0) → middle KNUCKLE(9), never a fingertip, so the reading does not swing when
+> the fingers curl. The hand writes the same `deg` the ◀ turn ▶ steppers write; `grade()` never learns
+> which moved it, so angles.ts's existing sweep covers both at once.
+> ⚠️ **FOLDING TO [0,180) IS WHAT MADE THE FOLD ROUNDS FREE** — an axis has no head or tail, so one
+> reading serves a beam (200° IS 20°) and a fold line. Laying your hand along the fold aims the bar.
+> ⚠️ **THE HAND OWNS THE CONTINUOUS VALUE; TAPS OWN THE DISCRETE ACTIONS, and they cannot share one** —
+> a live hand overwrites a stepper before the finger leaves the button. So the turn/sweep steppers hide
+> when the hand is driving, and Mark ✓ / Fold it ✓ stay.
+> ⚠️ **AND THE GESTURE DOES NOT SHIP ON A ROUND WITH NOTHING TO AIM AT.** `job: 'degrees'` at tier 3
+> wants exactly 85° with the set-square guide already retired and no readout permitted while turning —
+> a tilt held inside ±2.5° of an unmarked target for a second is luck, not knowledge. Those keep the
+> steppers, which ARE the exact instrument (each tap a countable 5°), and say so on screen.
+>
+> ## ③ ⚠️ WITHOUT HYSTERESIS THE CAMERA IS A DEAD BUTTON, AND MUTATION TESTING IS WHAT PROVED IT
+> Quantizing to 5° puts a boundary every 2.5°, the same order as the landmark noise — so a hand held ON
+> a boundary flips between two answers for ever and the hold-still commit never arms. **`SNAP_HOLD` is
+> DERIVED, not chosen**: a hand settled on step C sees raw values up to `STEP/2 + noise` away, so ±2.5°
+> needs a **full step** of hold band. ⚠️ **0.62 was my first guess and it flips.**
+> ⚠️ **AND MY FIRST TEST FOR IT WAS USELESS — the mutation SURVIVED.** It jittered ±2° around a bucket
+> CENTRE, which never crosses anything and passes with the hysteresis deleted. **The case that matters
+> is a hand sitting ON a boundary.** Rewritten to sweep the raw start across the whole range at half a
+> degree: **7/7 planted regressions now caught** (hysteresis removed · band at 0.62 · band at 0.9 ·
+> mirroring dropped · axis wrap dropped · off-lattice snap · hand driving every angle round).
+> ⚠️ Also: **EMA a circular reading on the DOUBLED angle's unit vector.** A hand held flat wobbles across
+> the 0/180 seam and a plain average of 179° and 1° is **90°** — the wrong answer at the pose a child is
+> most likely to hold.
+>
+> ## ④ ⚠️ TWO FAULTS THE DRIVE FOUND THAT THE GATE COULD NOT
+> ① **A HELD-OVER POSE COMMITTED ITSELF, through a guard written to prevent exactly that.** FactorLab's
+> dwell watches the RAW count, current the instant a round opens; the Angle Shop's watches `deg`, which
+> is an **echo of the hand and lags it by a render** — so the guard captured the round's `start` angle,
+> the hand's own angle landed a render later and read as a CHANGE, and the round committed a pose struck
+> for the previous question. Not arming until the hand has written once puts the guard back on the hand's
+> own value. **Verified live: the beam sat at the held-over 60° for 4s+ with the question still open.**
+> ② **The control row RESHUFFLED at the verdict** — the render keyed on liveness, which includes "not yet
+> answered", so the dwell ring flipped back into three buttons on the beat the child is reading. Keyed on
+> who OWNS the value instead; the row is dimmed and dead by then anyway.
+>
+> ## ⑤ WHAT WAS ACTUALLY VERIFIED
+> **The Angle Shop at 1280×720:** camera gate real (its own copy, "Tap instead →" first) · beam follows
+> the tilt · a held-over pose does NOT commit · a fresh gesture commits and grades · the fold bar snaps
+> as an AXIS (**tilt 174° → bar 0°**) · all four folds of a square marked BY HAND → *"Square — 4 lines
+> of symmetry. You found 4."*
+> **At 640×320:** the whole run again; **hysteresis live — the beam held 130° across raw 131.8 → 128.4 →
+> 132.4**, a wander spanning the 132.5 boundary; committed on the hand and the `130°` figure appeared
+> **only after** (rule 1 held); rain played. Every fixed layer crossed with every other: **ring / hint /
+> self-view overlap nothing**, 8px and 80px of clearance, no h- or v-overflow.
+> **FactorLab re-driven end to end** through the shared module — explore reflowing live, the stale-pose
+> guard (a held-over 3 left `BENCH · 15` undealt), a fresh 5 committing and advancing to scored round 1.
+> ⚠️ **The two reported box overlaps are `bubble` vs the chrome, 2–3px at rounded corners** — from
+> `shopLayout`'s untouched `bubbleTop`, pre-existing, not visible, not mine.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOBODY HAS HELD A REAL HAND UP TO IT — and this chapter depends on that far more than the last
+>    one did.** Every drive fed synthetic readings through `__miloTilt`. **`TILT_EMA` (0.3) and
+>    `SNAP_HOLD` (a full step) are the two calibration knobs**, and both were derived against an ASSUMED
+>    ±2.5° of landmark noise. If a real child cannot hold a reading still, those are the numbers; if it
+>    feels sluggish, `TILT_EMA` is. The whole detection layer is still eyeball-only.
+> 2. **The demo does not teach the gesture.** The intro card and the in-round chip both name it, but
+>    `demoSteps` is input-blind — the plan's §4 wants the walkthrough's hand cue to perform the AR
+>    reading when the camera is on. That is copy work and belongs with item 3.
+> 3. **The chapter's daily ANCHOR is not written** — §3.10's *"too steep and you can't push your bike up
+>    it"*. This session did the gesture, not the copy; the Angle Shop was not one of the four chapters
+>    that got their anchors last session.
+> 4. ⚠️ **Rotating to portrait STOPS the camera** (the rotate gate is an early return, so the `<video>`
+>    unmounts). Turning back shows the gate's "Try the camera again" rather than resuming. Honest, two
+>    lines, and a founder may want it to resume itself.
+> 5. ✅ **Committed** (see the 🔢 block's table). Nothing is pushed and `public/sw.js` is still v87.
+>    The rest of the previous block's open list is untouched: the three anchor constraints, the Empty Plot call, two-hand span, the camera/legal item,
+>    LoadingBay + OrderDesk's missing gates and cover-fit fix, 4 chapters still neon.
+> 6. **Nobody has watched a child play any of it**, and of this session's two real faults **one came from
+>    driving it and one from mutation-testing my own gate — neither from the type-checker.**
+>
+> _(the 🖐️ block below is the previous session — the tap path and the twelve daily anchors.)_
+
+> 🖐️ **2026-08-09 — THE BROKEN TREE IS COMMITTED AND BUILDS AGAIN; THE 9–11 BAND HAS ITS TWELVE DAILY ANCHORS; AND THE CAMERA STOPS BEING A WALL — FACTORLAB NOW ANSWERS BY TAP TOO. ✅ FIVE COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **713/713 vitest** (was 706, **+7**) · `next build` 0 · 0 console errors in a fresh tab · driven at 1280×720, 640×320 and 667×375 on BOTH input paths · every intro card in the band measured at 640×320.
 >
 > **The asks, in order:** *"joh bhi commit karna baaki hai woh commit kardo"* → *"9-11 band ke chapters ko daily real world examples se relate karo… pehle list banao"* → the twelve anchors picked one by one → **"tap fallback rehna chahiye"** + **"AR limit mat karo sirf counting ke liye"** → *"abhi start kardo chapters ko convert karne ka"* → *"baaki chapters bhi convert karo"*.
 >
@@ -6982,7 +7172,11 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-09 (LATEST — see the top 🖐️ block. **The broken tree is committed and builds again; the 9–11 band has its twelve daily anchors; and the camera stops being a wall — FactorLab now answers by TAP too. ✅ Five commits on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **713/713 vitest** · `next build` 0 · driven at 1280×720, 640×320 and 667×375 on both input paths. ✅ **`fdfcc9d` closes the biggest thing owed** — AngleScope/GridPlotter/DivisionShare had been deleted-and-committed while their replacements sat untracked, so the branch had failed `tsc` since before the previous session. **The twelve anchors were picked one by one against one filter: has the child DONE this, or only watched an adult do it?** — fundraiser total · points to catch up · a Lego brick's studs · sharing candy · desks in equal rows · a shared pizza · $12.50 vs $12.05 · doorframe height · your own bedroom floor · how steep the ramp is · goals each friend scored · a rotating pool for word problems. ⚠️ **Half the band cannot be answered by counting fingers** (FitOut's `split` reaches 95), so the plan's unlock is **two hands = two places** plus tilt/pinch/point/sweep/trace/mirror — all one change to one hook. ⚠️ **The founder reversed camera-only and it made the architecture BETTER: one instrument, two inputs, ONE grader** — the AR layer sets the same value a tap sets, so the paths cannot grade differently, MediaPipe loads only on opt-in, and the camera stops being a wall. ⚠️ **Two faults the drive found that the gate could not:** every chip still said *"hold up that many fingers"* on the tap path (wording not wrong — addressing the wrong child), and **Milo sat on the ✊**, the prime answer, where no probe could see it. ⚠️ **Then an adversarial pass failed three of the four anchor chapters:** a number in the teaching the chapter can never draw (*"Sam 8"* against a cap of 5; `$3,482` against `MAX_DIGIT` 5), **a height guard that caused the clip it was written to prevent** — moving it onto the Start button, **the self-paced dwell blown** so all 572 share openers clamped and the cut tail was the chapter's own fairness rule, and **an anchor that flattened its chapter's thesis** (rail rounding is physical, scoreboard rounding is a convention). ▶ Open: **build order is 2 of 6 — next is widening `useFingerCounter` and extracting a shared `<HandInput>`, without which the Angle Shop's tilt cannot be written**; three anchor constraints need answers (metric vs US customary, no 5×19 Lego brick, 100 desks is a hall); Empty Plot vs AR is still your call; **nobody has held a real hand up to any of it**; nothing pushed, `sw.js` still v87. _(prior footer follows.)_)_
+_Last updated: 2026-08-09 (LATEST — see the top 🔢 block. **The Fitting Crew answers by hand, one place at a time — and building it found that the plan's own A2 is ARITHMETICALLY IMPOSSIBLE. ✅ FOUR COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed; the branch was checked out CLEAN to prove it (`tsc` 0 · 730/730).** `tsc` 0 · **730/730 vitest** (+5) · `next build` 0 · 0 console errors · driven end to end at 1280×720 through five scored rounds including a `split`. ⚠️ **"leftmost hand = tens, rightmost = ones → 0–99" cannot work, because a hand has FIVE fingers** — one hand per place tops out at 55, reaches **26 of 55** of this generator's answers and only 39% of `split`, and cannot state a plain **6**. A round whose answer the surface cannot express is unanswerable. **So the two places are the two WINDOWS, not the two hands**: both hands make one digit, the child enters the tens then the ones, 100% reachable, and NO hook change was needed — `count` already did it. ⚠️ **Two faults the drive found, the first mine:** putting the slot in the dwell key re-armed the same pose, so **answering 12 gave 11**; and a `fit` round with the camera on said nothing about needing taps. **5/5 planted regressions caught.** ▶ Open: the Lego anchor copy and the two-hand array build are still unwritten; §7.2 (no 5×19 brick) undecided; 640×320 computed not driven; **nobody has held a real hand up to any of the three AR chapters** — three is enough surface that this is the next thing worth doing. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-09 (the ✋ block. **`<HandInput>` is extracted and THE ANGLE SHOP IS ANSWERED BY TILT — your forearm IS the ramp. ⚠️ NOT COMMITTED.** `tsc` 0 · **725/725 vitest** (+12) · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320 on both chapters. The hook now reports one `onRead({count, hands, tilt})` — **only the two readings with a consumer were built**, because the callback is an object and the other eight are a field each when their chapter arrives. `infra/ar/HandInput.tsx` holds the device pick, camera lifecycle, `useDwell`, self-view, gate, ring and dev hooks, skinned per band; FactorLab is re-pointed at it and re-driven end to end. ⚠️ **Folding the reading to [0,180) made the fold rounds free** — an axis has no head or tail, so one reading serves a beam and a fold line. ⚠️ **The hand owns the continuous value and taps own the discrete actions**, because a live hand overwrites a stepper before the finger leaves it. ⚠️ **Without hysteresis the camera is a DEAD BUTTON** — and `SNAP_HOLD` is derived (a full step) rather than chosen; 0.62 was my first guess and it flips. ⚠️ **My first test for it was useless and the mutation SURVIVED** — it jittered around a bucket CENTRE, which crosses nothing; the case that matters is a hand sitting ON a boundary. 7/7 planted regressions caught after. ⚠️ **Two faults only the drive found:** a held-over pose committed itself through the guard written to prevent it (the Angle Shop's dwell watches `deg`, an ECHO of the hand that lags a render), and the control row reshuffled at the verdict. ▶ Open: **nobody has held a real hand up to it** and `TILT_EMA`/`SNAP_HOLD` are calibrated against ASSUMED noise; the demo does not teach the gesture; the chapter's daily anchor copy is still unwritten; rotating to portrait stops the camera; nothing pushed, sw still v87. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-09 (the 🖐️ block. **The broken tree is committed and builds again; the 9–11 band has its twelve daily anchors; and the camera stops being a wall — FactorLab now answers by TAP too. ✅ Five commits on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **713/713 vitest** · `next build` 0 · driven at 1280×720, 640×320 and 667×375 on both input paths. ✅ **`fdfcc9d` closes the biggest thing owed** — AngleScope/GridPlotter/DivisionShare had been deleted-and-committed while their replacements sat untracked, so the branch had failed `tsc` since before the previous session. **The twelve anchors were picked one by one against one filter: has the child DONE this, or only watched an adult do it?** — fundraiser total · points to catch up · a Lego brick's studs · sharing candy · desks in equal rows · a shared pizza · $12.50 vs $12.05 · doorframe height · your own bedroom floor · how steep the ramp is · goals each friend scored · a rotating pool for word problems. ⚠️ **Half the band cannot be answered by counting fingers** (FitOut's `split` reaches 95), so the plan's unlock is **two hands = two places** plus tilt/pinch/point/sweep/trace/mirror — all one change to one hook. ⚠️ **The founder reversed camera-only and it made the architecture BETTER: one instrument, two inputs, ONE grader** — the AR layer sets the same value a tap sets, so the paths cannot grade differently, MediaPipe loads only on opt-in, and the camera stops being a wall. ⚠️ **Two faults the drive found that the gate could not:** every chip still said *"hold up that many fingers"* on the tap path (wording not wrong — addressing the wrong child), and **Milo sat on the ✊**, the prime answer, where no probe could see it. ⚠️ **Then an adversarial pass failed three of the four anchor chapters:** a number in the teaching the chapter can never draw (*"Sam 8"* against a cap of 5; `$3,482` against `MAX_DIGIT` 5), **a height guard that caused the clip it was written to prevent** — moving it onto the Start button, **the self-paced dwell blown** so all 572 share openers clamped and the cut tail was the chapter's own fairness rule, and **an anchor that flattened its chapter's thesis** (rail rounding is physical, scoreboard rounding is a convention). ▶ Open: **build order is 2 of 6 — next is widening `useFingerCounter` and extracting a shared `<HandInput>`, without which the Angle Shop's tilt cannot be written**; three anchor constraints need answers (metric vs US customary, no 5×19 Lego brick, 100 desks is a hall); Empty Plot vs AR is still your call; **nobody has held a real hand up to any of it**; nothing pushed, `sw.js` still v87. _(prior footer follows.)_)_
 
 _Prior update:
 
