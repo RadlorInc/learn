@@ -29,6 +29,8 @@ export type DiagVisual =
   | { t: 'rtri'; a: number; b: number; labels: [string, string, string] }  // right triangle [base, height, hyp]
   | { t: 'numline'; lo: number; hi: number; mark: number }        // a value between two landmarks
 
+import { mulberry32 } from './rand'
+
 // ── Phase 4 — per-child generated items ──────────────────────────────────────────────────
 // A given child gets a STABLE, reproducible probe seeded from (learner, skill, attempt): re-takes
 // vary by `nonce`, and the same child re-hydrates the same items. Prompts are flavored with the
@@ -40,7 +42,6 @@ const THEME_GLYPH: Record<ItemTheme, string> = { stars: '★', space: '🚀', an
 
 let _rand: () => number = Math.random
 let _ctx: DiagContext | null = null
-function mulberry32(a: number): () => number { return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
 function hashStr(s: string): number { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) } return h >>> 0 }
 /** Deterministic theme for a child when they don't have one set — varies the flavor per child. */
 export function pickThemeFor(seed: string): ItemTheme { return ITEM_THEMES[hashStr(seed) % ITEM_THEMES.length] }

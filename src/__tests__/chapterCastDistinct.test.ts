@@ -21,6 +21,7 @@ import { SHEETS } from '@/features/chapters/story/canvas/sheets'
 import * as StoryTime from '@/features/chapters/story/StoryTime'
 import * as MarketDay from '@/features/chapters/story/MarketDay'
 import * as SeesawPark from '@/features/chapters/story/SeesawPark'
+import * as AngleShop from '@/features/chapters/story/angles'
 import * as OrderDesk from '@/features/chapters/story/OrderDesk'
 
 const CHAPTERS = [
@@ -92,6 +93,9 @@ it('every drawn walk cycle in sheets.ts is actually used by a chapter', () => {
   // The 9–11 band casts people rather than countable creatures, so its RUN carries a `customer`
   // instead of an `item`. They are drawn cycles all the same and must not read as idle art.
   for (const y of OrderDesk.RUN) used.add(y.customer)
+  // The Angle Shop's cast is fixed rather than per-round (one apprentice, one foreman), so it
+  // declares what it consumes as a CAST record instead of a RUN.
+  for (const src of Object.values(AngleShop.CAST)) used.add(src)
   const idle = Object.keys(SHEETS).filter(k => !used.has(k) && !UNUSED_ON_PURPOSE.has(k))
   expect(idle).toEqual([])
 })

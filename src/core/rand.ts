@@ -17,6 +17,23 @@
 /** A random integer in [lo, hi], both ends inclusive. */
 export const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
+/**
+ * A SEEDED stream, for the reproducible cases the note above sends elsewhere: the diagnostic's
+ * per-child probe items, and a chapter whose world must be identical on a replay, in a gate and in
+ * a screenshot. Same seed in, same sequence out, for ever — so never take the seed from a clock.
+ *
+ * mulberry32. It was written out identically in two places before this one; this is the third and
+ * last home for it.
+ */
+export function mulberry32(a: number): () => number {
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
 /** A uniformly shuffled COPY — the input is never mutated. */
 export function shuffle<T>(a: readonly T[]): T[] {
   const r = a.slice()

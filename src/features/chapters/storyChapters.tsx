@@ -24,14 +24,16 @@ const withProps = <P,>(load: () => Promise<{ default: React.ComponentType<StoryP
 export const STORY_CHAPTERS = {
   addition: { bg: "#dff0c8", load: () => import("@/features/chapters/story/PlayTime") },
   additionTo100: { bg: "#dbe8ef", load: withProps(() => import("@/features/chapters/story/BlockYard"), { op: "+" as const }) },
-  anglesSymmetry: { bg: "#0a1026", load: () => import("@/features/chapters/story/AngleScope") },
-  areaPerimeter: { bg: "#0a1026", load: () => import("@/features/chapters/story/GridPlotter") },
+  // 📐 THE ANGLE SHOP — the neon HUD replaced by a painted working world (2026-08-08).
+  // Slate's first week; the ten scored rounds ARE the week. bg is the shop's own overcast ground.
+  anglesSymmetry: { bg: "#2a2620", load: () => import("@/features/chapters/story/AngleShop") },
+  areaPerimeter: { bg: "#8f9a86", load: () => import("@/features/chapters/story/FloorPlot") },
   bigNumbers: { bg: "#a99a86", load: () => import("@/features/chapters/story/OrderDesk") },
   colors: { bg: "#e6f0f7", load: () => import("@/features/chapters/story/RainbowTown") },
   compareNumbers: { bg: "#cfe6f7", load: () => import("@/features/chapters/story/SeesawPark") },
   dataGraphs: { bg: "#b9a894", load: () => import("@/features/chapters/story/LoadingBay") },
   decimals: { bg: "#0a1026", load: () => import("@/features/chapters/story/DecimalGrid") },
-  division: { bg: "#0a1026", load: () => import("@/features/chapters/story/DivisionShare") },
+  division: { bg: "#3a3630", load: () => import("@/features/chapters/story/SupplyRun") },
   factorsMultiples: { bg: "#0a1026", load: () => import("@/features/chapters/story/FactorLab") },
   fractions: { bg: "#f3ead8", load: () => import("@/features/chapters/story/SliceShop") },
   fractionsCompare: { bg: "#0a1026", load: () => import("@/features/chapters/story/FractionForge") },
