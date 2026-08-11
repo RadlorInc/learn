@@ -16,7 +16,8 @@
  * (parseExpr / collapseAt / correctNextIndex / ExprChips) lives in gameKit.
  */
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CommitBtn, headerChip, pick, numChoices, ExprChips, parseExpr, collapseAt, correctNextIndex, evaluable, type ETok } from './parts/gameKit'
+import { Palette, CommitBtn, headerChip, numChoices, ExprChips, parseExpr, collapseAt, correctNextIndex, evaluable, type ETok } from './parts/gameKit'
+import { pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#1c1327', nightBot: '#2a1838',

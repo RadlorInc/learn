@@ -34,7 +34,8 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, PartsBuilder, CircleTap, CommitBtn, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#1a2438', nightBot: '#080d18',
@@ -45,7 +46,6 @@ const P: Palette = {
   glass: 'rgba(26,36,56,0.62)', glassBorder: 'rgba(238,243,252,0.2)',
 }
 
-const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 
 /** Exact (cos, sin) at every special angle — the old lesson's table, verbatim. */
 const COORD: Record<number, string> = {
@@ -90,7 +90,7 @@ interface Task extends BaseTask {
 
 // ── L1 · the same trip, counted two ways ──────────────────────────────────────
 function radTask(): Task {
-  const deg = pickOne([45, 90, 180, 270, 360])
+  const deg = pick([45, 90, 180, 270, 360])
   const [a, b] = RAD_PARTS[deg]
   return {
     kind: 'rad', title: 'Round in π', tone: 'a',
@@ -109,7 +109,7 @@ function radTask(): Task {
 
 /** sine or cosine at a quarter-turn, where the value is exactly 0, 1 or −1. */
 function axisTask(): Task {
-  const deg = pickOne([0, 90, 180, 270])
+  const deg = pick([0, 90, 180, 270])
   const useSin = Math.random() < 0.5
   const [cx, cy] = ({ 0: [1, 0], 90: [0, 1], 180: [-1, 0], 270: [0, -1] } as Record<number, [number, number]>)[deg]
   const n = useSin ? cy : cx
@@ -122,7 +122,7 @@ function axisTask(): Task {
     say: `What is ${useSin ? 'sine' : 'cosine'} of ${deg} degrees?`,
     work: [
       `At ${deg}° the pod is at ${COORD[deg]} — across first, up second.`,
-      `${useSin ? 'Sine' : 'Cosine'} is the ${useSin ? 'second' : 'first'} of those, so it is ${n < 0 ? `−${Math.abs(n)}` : n}.`,
+      `${useSin ? 'Sine' : 'Cosine'} is the ${useSin ? 'second' : 'first'} of those, so it is ${disp(n)}.`,
     ],
     n, pad: [-n, useSin ? cx : cy, n === 0 ? 1 : 0],
   }
@@ -130,7 +130,7 @@ function axisTask(): Task {
 
 // ── L2 · where the pod is, and how far from level ─────────────────────────────
 function refTask(): Task {
-  const deg = pickOne([120, 135, 150, 210, 225, 240, 300, 315, 330])
+  const deg = pick([120, 135, 150, 210, 225, 240, 300, 315, 330])
   const n = refAngle(deg)
   return {
     kind: 'ref', title: 'From level', tone: 'a',
@@ -149,7 +149,7 @@ function refTask(): Task {
 
 /** The chapter's own gesture: given where the pod IS, ride the wheel to it. */
 function spotTask(): Task {
-  const deg = pickOne([30, 45, 60, 120, 135, 150, 210, 225, 240, 300, 315, 330])
+  const deg = pick([30, 45, 60, 120, 135, 150, 210, 225, 240, 300, 315, 330])
   return {
     kind: 'spot', title: 'Find the pod', tone: 'b',
     badge: COORD[deg], showEquals: false,
@@ -190,7 +190,7 @@ function signsTask(): Task {
 /** ⚠️ The chapter's ONE picker. (√3/2, 1/2) is neither a number to tap nor two
  *  integers to build, which is exactly the rung-3 case in plan §3. */
 function coordTask(): Task {
-  const deg = pickOne([120, 135, 150, 210, 225, 240, 300, 315, 330])
+  const deg = pick([120, 135, 150, 210, 225, 240, 300, 315, 330])
   const ref = refAngle(deg)
   const alts = [COORD[ref], COORD[(deg + 180) % 360], COORD[(deg + 30) % 360] ?? COORD[30]]
     .filter((c, i, arr) => c && c !== COORD[deg] && arr.indexOf(c) === i)

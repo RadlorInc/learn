@@ -28,9 +28,8 @@
  * See docs/storyboards/angle-shop.md for the shot list and docs/story-9-11-ar-plan.md §3.10.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { SheetCell, Arrive } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -612,8 +611,6 @@ function makeBeat(onDone: (d: Round, ok: boolean) => void): Beat<Round> {
   return {
     skillId: 'anglesSymmetry',
     rounds: WEEK.length,
-    reteachAfter: 3,
-    walkEvery: 99,
     /** ⚠️ Mastery must not exit before BOTH verbs have been asked. A strong child gets ~3 rounds at
      *  L1, ONE at L2 and TWO at L3 — measured on TickTock, a third of good runs missed the hard
      *  half outright without this. */
@@ -643,7 +640,6 @@ export default function AngleShop({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const { h: vh } = useViewport()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
@@ -656,13 +652,12 @@ export default function AngleShop({ onFinish, onExit }: {
    * (`log.slice(0, -1)`) rather than a second piece of state, so the two cannot drift.
    */
   const [log, setLog] = useState<Done[]>([])
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
 
   const marker = useMemo(() => ({ fill: '#F26B2C', ink: '#3D2516' }), [])
   const {
     hand, onCam, ready, camReady, status, error, start, stop, useTaps, useCamera, videoRef, canvasRef,
   } = useHandInput({ reads: 'tilt', marker })
+  const { exit, tally } = useChapterShell(onFinish, onExit, stop)
 
   /**
    * ⚠️ The rotate gate is an EARLY RETURN, so turning the tablet unmounts the <video> — and a
@@ -671,12 +666,6 @@ export default function AngleShop({ onFinish, onExit }: {
    */
   useEffect(() => { if (needsRotate) stop() }, [needsRotate, stop])
 
-  const exit = useCallback(() => { stopSpeech(); stop(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit, stop])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true; stopSpeech(); stop()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit, stop])
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
 
   const recordDone = useCallback((d: Round, ok: boolean) => {
     setLog(list => [...list, {
@@ -778,11 +767,8 @@ export default function AngleShop({ onFinish, onExit }: {
 
       {phase === 'practice' && (<>
         <WeekStrip done={log.slice(0, -1)} short={short} />
-        <SkillBeat beat={beat} onInterlude={interlude}
-          onComplete={(c, w, mastered) => {
-            result.current.correct += c; result.current.wrong += w
-            finishChapter(result.current.correct, result.current.wrong, mastered)
-          }} />
+        <SkillBeat beat={beat}
+          onComplete={tally} />
       </>)}
 
       </>)}

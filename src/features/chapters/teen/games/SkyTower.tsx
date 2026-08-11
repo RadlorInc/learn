@@ -26,8 +26,9 @@
  */
 import { useRef, type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CommitBtn, Nudge, pick, signed, glideNumber, numChoices } from './parts/gameKit'
+import { Palette, CommitBtn, Nudge, signed, glideNumber, numChoices } from './parts/gameKit'
 import { disp } from '@/core/fmt'
+import { pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#241f3a', nightBot: '#15122a',

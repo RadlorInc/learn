@@ -15,8 +15,8 @@
 import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, VThermo, pick, signed, glideNumber } from './parts/gameKit'
-import { shuffle } from '@/core/rand'
+import { Palette, VThermo, signed, glideNumber } from './parts/gameKit'
+import { shuffle, pick } from '@/core/rand'
 import { disp } from '@/core/fmt'
 
 const P: Palette = {

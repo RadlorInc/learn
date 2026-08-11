@@ -34,7 +34,7 @@
  * winnable without looking at the number. It is a NUDGE, not a miss (`nudgeFor`) — the same
  * call the colouring chapter makes for a tap that lands on ink.
  */
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 
 /** The answer surface is two hands. Nothing may require more than this. */
 export const MAX_FINGERS = 10
@@ -65,7 +65,6 @@ export function showableRows(n: number): number[] {
   return factorsOf(n).filter(f => f >= 2 && f <= MAX_FINGERS && f < n)
 }
 
-const pick = <T,>(a: T[]) => a[rint(0, a.length - 1)]
 
 // ─── rounds ────────────────────────────────────────────────────────────────────────────
 export type QType = 'evenOdd' | 'multiple' | 'factor' | 'prime'

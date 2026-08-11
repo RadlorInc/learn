@@ -33,7 +33,7 @@ import { useEffect, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion, useMotionValueEvent } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, LineSetter, SlideValue, numChoices, type Line } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 import { disp } from '@/core/fmt'
 
 // Growth palette — a bright analytics/social-green vibe over a dark night.
@@ -54,9 +54,6 @@ const startB = (hi = RANGE) => rint(0, hi)
 const slopeFor = (b: number, lastWeek: number, lo: number, hi: number) =>
   rnz(Math.max(lo, -Math.floor(b / Math.max(1, lastWeek))), hi)
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
-/** Display integer with a real minus glyph. Never used inside `say`/`work` — U+2212
- *  speaks as nothing, so spoken strings keep the ASCII hyphen (docs/lessons.md). */
-const pick = <T,>(xs: T[]): T => xs[rint(0, xs.length - 1)]
 
 /** y = mx + b as a tidy string (m integer). */
 function eqStr(m: number, b: number): string {

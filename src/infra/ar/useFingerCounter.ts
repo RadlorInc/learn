@@ -277,9 +277,7 @@ export function useFingerCounter(
        * is a finger COUNT (Factor Lab's 0..10, The Fitting Crew's two places).
        */
       const oneHand = ['sweep', 'slide', 'pinch'].includes(optsRef.current.reads ?? 'count')
-      landmarkerRef.current = await createHandLandmarker({
-        numHands: oneHand ? 1 : 2, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
-      })
+      landmarkerRef.current = await createHandLandmarker(oneHand ? 1 : 2)
       streamRef.current = await openCamera(videoRef.current!)
       setStatus('running')
       loop()

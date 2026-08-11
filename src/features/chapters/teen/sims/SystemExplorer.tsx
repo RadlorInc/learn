@@ -16,7 +16,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
 export interface SystemExplorerProps {
   band: AgeBand
@@ -26,8 +27,6 @@ export interface SystemExplorerProps {
 
 const RANGE = 8 // grid spans -8..8
 
-/** Pretty signed number with a real minus sign. */
-const sg = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 
 function eq(label: string, m: number, b: number): string {
   const mPart = m === 1 ? 'x' : m === -1 ? '−x' : `${m < 0 ? '−' : ''}${Math.abs(m)}x`
@@ -39,29 +38,6 @@ function eq(label: string, m: number, b: number): string {
 const r2 = (n: number) => {
   const v = Math.round(n * 100) / 100
   return v === 0 ? 0 : v
-}
-
-function Slider({ label, value, min, max, onChange }: {
-  label: string; value: number; min: number; max: number; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 92, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {sg(value)}
-      </span>
-    </label>
-  )
 }
 
 export default function SystemExplorer({ band, onReady }: SystemExplorerProps) {
@@ -119,9 +95,9 @@ export default function SystemExplorer({ band, onReady }: SystemExplorerProps) {
 
       {/* Sliders */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%' }}>
-        <Slider label="A: slope" value={mA} min={-4} max={4} onChange={setMA} />
-        <Slider label="A: intercept" value={bA} min={-6} max={6} onChange={setBA} />
-        <Slider label="B: slope" value={mB} min={-4} max={4} onChange={setMB} />
+        <Slider labelW={92} label="A: slope" value={mA} min={-4} max={4} onChange={setMA} />
+        <Slider labelW={92} label="A: intercept" value={bA} min={-6} max={6} onChange={setBA} />
+        <Slider labelW={92} label="B: slope" value={mB} min={-4} max={4} onChange={setMB} />
       </div>
 
       {/* Plain-language live read-out of the solution. */}

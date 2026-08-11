@@ -10,8 +10,9 @@
 import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, PlotGrid, type XY, pick } from './parts/gameKit'
+import { Palette, PlotGrid, type XY } from './parts/gameKit'
 import { disp } from '@/core/fmt'
+import { pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#0d1626', nightBot: '#121f33',

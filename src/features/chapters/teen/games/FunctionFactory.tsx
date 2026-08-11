@@ -15,7 +15,8 @@
  * engine underneath (branches by task.mode). The expression engine lives in gameKit.
  */
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CommitBtn, Nudge, headerChip, pick, glideNumber, numChoices, ExprChips, parseExpr, evaluable, collapseAt, correctNextIndex, type ETok } from './parts/gameKit'
+import { Palette, CommitBtn, Nudge, headerChip, glideNumber, numChoices, ExprChips, parseExpr, evaluable, collapseAt, correctNextIndex, type ETok } from './parts/gameKit'
+import { pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#1c1a10', nightBot: '#282412',

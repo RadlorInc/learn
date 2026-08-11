@@ -33,7 +33,7 @@
  * is always a whole number of metres — never a division that does not come out. A perimeter target is
  * `2 × (f + d)`, always even, so `target ÷ 2 − f` is whole too.
  */
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 
 export type QType = 'area' | 'perimeter'
 
@@ -81,7 +81,6 @@ export const TIERS = {
  */
 export const stepsFor = (q: QType): 1 | 2 => (q === 'area' ? 1 : 2)
 
-const pick = <T,>(a: readonly T[]): T => a[rint(0, a.length - 1)]
 
 /**
  * ⚠️ `asked` is spent DELIBERATELY while a reading is unmet and RANDOMLY once both have been served.

@@ -24,9 +24,8 @@
  * game/MultiplicationChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import FitBox from './FitBox'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -518,7 +517,7 @@ const MultExplain: React.FC<{ data: MultRound; onDone: () => void }> = ({ data, 
 // ─── Value generation ──────────────────────────────────────────────────────────────
 function makeMultBeat(): Beat<MultRound> {
   return {
-    skillId: 'multiplication', rounds: SCORED_N, reteachAfter: 3, walkEvery: 3,
+    skillId: 'multiplication', rounds: SCORED_N, walkEvery: 3,
     make: (d, round = 0) => makeMultRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.g}x${d.per}|${d.view}`,   // dedupe on the MATH (factors + view), not the rotating scene/item
     // Deliberately EMPTY, so SkillBeat draws no pill of its own: the play surface renders the same
@@ -542,22 +541,13 @@ export default function MarketDay({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<MultWorld>(SETTINGS[0])
   const [phase, setPhase] = useState<Phase>('intro')
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeMultBeat(), [])
@@ -613,7 +603,7 @@ export default function MarketDay({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (data?.w) { setScene(data.w); setBg(data.bg) } }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
 

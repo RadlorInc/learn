@@ -30,6 +30,7 @@ export type DiagVisual =
   | { t: 'numline'; lo: number; hi: number; mark: number }        // a value between two landmarks
 
 import { mulberry32 } from './rand'
+import { pick } from '@/core/rand'
 
 // ── Phase 4 — per-child generated items ──────────────────────────────────────────────────
 // A given child gets a STABLE, reproducible probe seeded from (learner, skill, attempt): re-takes
@@ -50,7 +51,6 @@ export function pickThemeFor(seed: string): ItemTheme { return ITEM_THEMES[hashS
 // child + skill + attempt), which is what makes a probe reproducible for one child and different
 // on a re-take. Swapping them for the shared unseeded helpers would silently destroy that.
 const R = (lo: number, hi: number) => lo + Math.floor(_rand() * (hi - lo + 1))
-const pick = <T,>(a: T[]) => a[R(0, a.length - 1)]
 function shuffle<T>(a: T[]): T[] { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(_rand() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
 const glyph = () => (_ctx?.theme && THEME_GLYPH[_ctx.theme]) || '★'
 const kidName = () => _ctx?.name?.trim() || 'your child'

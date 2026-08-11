@@ -788,7 +788,7 @@ export function makePracticeCountBeat(story: Storytelling): Beat<HowManyData> {
   const fallbackObj = practicePool(story)[0]?.obj ?? fallbackBiome.objects[0]
   let plan: PlanCell[] = []
   return {
-    skillId: 'counting', rounds: practicePool(story).length, reteachAfter: 3,
+    skillId: 'counting', rounds: practicePool(story).length,
     walkEvery: 3,
     make: (d, round = 0) => {
       if (round === 0) plan = buildPlan(story)

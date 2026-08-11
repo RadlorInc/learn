@@ -35,7 +35,8 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, PartsBuilder, CommitBtn, Nudge, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#241d12', nightBot: '#0d0a05',
@@ -46,8 +47,6 @@ const P: Palette = {
   glass: 'rgba(36,29,18,0.62)', glassBorder: 'rgba(251,242,223,0.2)',
 }
 
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
-const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 
 type Conic = 'circle' | 'ellipse' | 'parabola' | 'hyperbola'
 
@@ -94,8 +93,8 @@ function centreTask(): Task {
     say: 'Where is the centre of this circle?',
     work: [
       'A squared part is zero only when the thing inside it is zero.',
-      `The x part vanishes at ${fmt(h)} and the y part vanishes at ${fmt(k)}.`,
-      `So the centre is (${fmt(h)}, ${fmt(k)}) — the number inside comes out with its sign flipped.`,
+      `The x part vanishes at ${disp(h)} and the y part vanishes at ${disp(k)}.`,
+      `So the centre is (${disp(h)}, ${disp(k)}) — the number inside comes out with its sign flipped.`,
     ],
     pa: h, pb: k, labels: ['across', 'up'],
   }
@@ -139,7 +138,7 @@ const WHY: Record<Conic, string> = {
 }
 
 function typeTask(): Task {
-  const f = pickOne(FORMS)
+  const f = pick(FORMS)
   return {
     kind: 'type', title: 'Tilt it', tone: 'a',
     badge: f.eqn, showEquals: false,
@@ -164,7 +163,7 @@ function typeTask(): Task {
 function aimTask(): Task {
   const a = (Math.random() < 0.5 ? 1 : -1) * rint(1, 3)
   const h = rint(-3, 3), k = rint(-3, 3)
-  const aStr = a === 1 ? '' : a === -1 ? '−' : fmt(a)
+  const aStr = a === 1 ? '' : a === -1 ? '−' : disp(a)
   const eqn = `y = ${aStr}(x ${h >= 0 ? '−' : '+'} ${Math.abs(h)})² ${k >= 0 ? '+' : '−'} ${Math.abs(k)}`
   return {
     kind: 'aim', title: 'Which way', tone: 'b',
@@ -174,7 +173,7 @@ function aimTask(): Task {
     instruction: 'Aim the torch, then lock it in.',
     say: 'Which way does this parabola open?',
     work: [
-      `The number in front of the bracket is ${fmt(a)}.`,
+      `The number in front of the bracket is ${disp(a)}.`,
       a > 0
         ? 'It is positive, so the values climb away from the vertex and it opens upward.'
         : 'It is negative, so the values fall away from the vertex and it opens downward.',
@@ -200,9 +199,9 @@ function vertexTask(): Task {
     instruction: 'Build the tip, then lock it in.',
     say: 'What is the vertex of this parabola?',
     work: [
-      `The bracket empties at x = ${fmt(h)} — the number inside, with its sign flipped.`,
-      `At that point nothing is added, so the height is just the ${fmt(k)} outside.`,
-      `The tip is (${fmt(h)}, ${fmt(k)}).`,
+      `The bracket empties at x = ${disp(h)} — the number inside, with its sign flipped.`,
+      `At that point nothing is added, so the height is just the ${disp(k)} outside.`,
+      `The tip is (${disp(h)}, ${disp(k)}).`,
     ],
     pa: h, pb: k, labels: ['across', 'up'],
   }
@@ -308,7 +307,7 @@ function AimPad({ task, value, setValue, disabled, reveal, onCommit }: {
   return (
     <PartsBuilder P={P} value={{ a, b }} setValue={(p) => setValue({ k: 'pair', a: p.a, b: p.b })}
       min={-9} max={9} labels={task.labels ?? ['across', 'up']}
-      template={(x, y) => `(${fmt(x)}, ${fmt(y)})`}
+      template={(x, y) => `(${disp(x)}, ${disp(y)})`}
       disabled={disabled} reveal={reveal} onCommit={(p) => onCommit({ k: 'pair', a: p.a, b: p.b })}
       commitLabel="AIM IT ✓" />
   )
@@ -365,10 +364,10 @@ const CONFIG: GameConfig<V, Task> = {
         : t.kind === 'type' ? v.k === 'num' && conicAt(v.n) === t.conic
           : v.k === 'num' && v.n === t.n,
   revealText: (t) =>
-    t.kind === 'centre' || t.kind === 'vertex' ? `(${fmt(t.pa ?? 0)}, ${fmt(t.pb ?? 0)})`
+    t.kind === 'centre' || t.kind === 'vertex' ? `(${disp(t.pa ?? 0)}, ${disp(t.pb ?? 0)})`
       : t.kind === 'aim' ? (t.choices?.find((c) => c.id === t.correctId)?.label ?? '')
         : t.kind === 'type' ? (t.conic ?? '')
-          : fmt(t.n ?? 0),
+          : disp(t.n ?? 0),
   glide: (t, _f, setValue, later) => later(() => setValue(
     t.kind === 'centre' || t.kind === 'vertex' ? { k: 'pair', a: t.pa ?? 0, b: t.pb ?? 0 }
       : t.kind === 'aim' ? { k: 'pick', id: t.correctId ?? '' }

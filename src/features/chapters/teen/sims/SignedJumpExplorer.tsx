@@ -13,7 +13,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import NumberLine from '@/features/chapters/teen/NumberLine'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
 export interface SignedJumpExplorerProps {
   band: AgeBand
@@ -31,37 +32,10 @@ const A_MAX = 4
 const B_MIN = -5
 const B_MAX = 5
 
-/** Signed number → display string with a real minus glyph. */
-function sgn(n: number): string {
-  return n < 0 ? `−${Math.abs(n)}` : `${n}`
-}
 
 /** "a + b" or "a − |b|" so the expression reads like a sum. */
 function expr(a: number, b: number): string {
-  return `${sgn(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`
-}
-
-function Slider({ label, value, min, max, onChange }: {
-  label: string; value: number; min: number; max: number; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 96, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {sgn(value)}
-      </span>
-    </label>
-  )
+  return `${disp(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`
 }
 
 /**
@@ -133,19 +107,19 @@ export default function SignedJumpExplorer({ band, onReady }: SignedJumpExplorer
         fontFamily: 'var(--font-numeric)', fontSize: 26, fontWeight: 600, color: 'var(--accent)',
         letterSpacing: '0.01em', minHeight: 34,
       }}>
-        {expr(a, b)} = {sgn(sum)}
+        {expr(a, b)} = {disp(sum)}
       </div>
 
       {/* Sliders */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%' }}>
-        <Slider label="start (a)" value={a} min={A_MIN} max={A_MAX} onChange={setA} />
-        <Slider label="jump (b)" value={b} min={B_MIN} max={B_MAX} onChange={setB} />
+        <Slider labelW={96} label="start (a)" value={a} min={A_MIN} max={A_MAX} onChange={setA} />
+        <Slider labelW={96} label="jump (b)" value={b} min={B_MIN} max={B_MAX} onChange={setB} />
       </div>
 
       {/* Plain-language read-out of what changed */}
       <p style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
-        Start at <strong style={{ color: 'var(--ink)' }}>{sgn(a)}</strong>, then {dir}.<br />
-        You land on <strong style={{ color: 'var(--ink)' }}>{sgn(sum)}</strong>.
+        Start at <strong style={{ color: 'var(--ink)' }}>{disp(a)}</strong>, then {dir}.<br />
+        You land on <strong style={{ color: 'var(--ink)' }}>{disp(sum)}</strong>.
       </p>
     </SimLayout>
   )

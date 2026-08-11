@@ -15,14 +15,13 @@
  * game/Shapes2D3DChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { ShapeView, SHAPES_2D, SHAPES_3D, sidesOf, is3D, buildNameChoices } from '../lessons/Shapes2D3DLesson'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
 import { useViewport } from '@/shared/hooks/useViewport'
-import { rint, shuffle } from '@/core/rand'
+import { rint, shuffle, pick } from '@/core/rand'
 
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
@@ -50,7 +49,6 @@ const EMOJI_3D: Record<string, string> = { cube: '🧊', sphere: '⚽', cone: '�
 type Mode2 = 'name' | 'sides'
 interface ShRound { bg: number; mode: Mode2; target: string; options?: string[]; answer?: number; choices?: number[] }
 
-const pick = <T,>(a: T[]) => a[rint(0, a.length - 1)]
 const POOL1 = ['circle', 'triangle', 'square', 'rectangle']
 const POOL2 = [...POOL1, 'pentagon', 'hexagon', 'cube', 'sphere']
 const POOL3 = [...SHAPES_2D, ...SHAPES_3D]
@@ -233,7 +231,7 @@ const ShapeExplain: React.FC<{ world: ShWorld; data: ShRound; onDone: () => void
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
 function makeShapeBeat(world: ShWorld): Beat<ShRound> {
   return {
-    skillId: 'shapes2d3d', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'shapes2d3d', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeShapeRound((d || 1) as 1 | 2 | 3, round, world.bgs.length),
     sig: d => `${d.mode}:${d.target}`,
     prompt: d => d.mode === 'sides' ? 'How many sides?' : `Tap the ${d.target}`,
@@ -251,22 +249,13 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const [world, setWorld] = useState<ShWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
   const [phase, setPhase] = useState<Phase>('intro')
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()
   const short = vh < 470
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => (world ? makeShapeBeat(world) : null), [world])
@@ -322,7 +311,7 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
         <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (typeof data?.bg === 'number') setBg(data.bg) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
 

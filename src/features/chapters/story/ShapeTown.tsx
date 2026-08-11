@@ -29,9 +29,8 @@
  * Landscape-first, wrapped by the registry / `?ch=shapes`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { ShapeSVG, SHAPES, SHAPE_ORDER, type ShapeName } from '../lessons/ShapesLesson'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -447,7 +446,7 @@ const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 // ─── The scored practice ─────────────────────────────────────────────────────────────
 function makeShapeBeat(fit: Fit): Beat<ShapeRound> {
   return {
-    skillId: 'shapes', rounds: SCORED_ROUNDS, reteachAfter: 3,
+    skillId: 'shapes', rounds: SCORED_ROUNDS,
     // One walk, on the round the second build starts — so the change of place reads as Milo
     // travelling there rather than the backdrop simply swapping under him.
     walkBeforeRound: r => r === BUILD_CHANGE_ROUND,
@@ -481,7 +480,6 @@ export default function ShapeTown({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   // The build lives HERE, not inside SkillBeat, which rebuilds its contents every round — anything
@@ -494,14 +492,7 @@ export default function ShapeTown({ onFinish, onExit }: {
   const timers = useRef<number[]>([])
   useEffect(() => () => { timers.current.forEach(clearTimeout) }, [])
 
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   /**
    * The flight. Both ends are MEASURED — the socket because only the build knows where it drew that
@@ -580,7 +571,7 @@ export default function ShapeTown({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (typeof data?.seq === 'number') setStepIdx(data.seq) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
 

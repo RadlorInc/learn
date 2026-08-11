@@ -32,6 +32,7 @@ import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, CommitBtn, Nudge, numChoices } from './parts/gameKit'
 import { rint } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#152a2a', nightBot: '#081414',
@@ -42,13 +43,12 @@ const P: Palette = {
   glass: 'rgba(20,48,46,0.6)', glassBorder: 'rgba(238,247,244,0.2)',
 }
 
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 const SUB = '₀₁₂₃₄₅₆₇₈₉'
 
 const arithTerms = (a1: number, d: number, n: number) => Array.from({ length: n }, (_, i) => a1 + i * d)
 const geoTerms = (a1: number, r: number, n: number) => Array.from({ length: n }, (_, i) => a1 * r ** i)
-const seqText = (t: number[]) => t.map(fmt).join(', ')
+const seqText = (t: number[]) => t.map(disp).join(', ')
 
 // The answer is a NUMBER (tapped) or the RULE itself (built on the plan dial).
 type V = { k: 'num'; n: number } | { k: 'rule'; op: '+' | '×'; d: number }
@@ -80,8 +80,8 @@ function nextTask(): Task {
     padInstruction: 'Tap next week\'s number of reps.',
     say: `The block goes ${terms.map(spoken).join(', ')}. What comes next?`,
     work: [
-      geo ? `Each week multiplies by ${fmt(step)}.` : `Each week changes by ${fmt(step)}.`,
-      geo ? `So ${fmt(terms[3])} × ${fmt(step)} = ${fmt(n)}.` : `So ${fmt(terms[3])} + ${fmt(step)} = ${fmt(n)}.`,
+      geo ? `Each week multiplies by ${disp(step)}.` : `Each week changes by ${disp(step)}.`,
+      geo ? `So ${disp(terms[3])} × ${disp(step)} = ${disp(n)}.` : `So ${disp(terms[3])} + ${disp(step)} = ${disp(n)}.`,
     ],
     n, pad: geo ? [n + terms[3], n - terms[3], terms[3] * (step + 1)] : [n + step, n - step, n + 1],
     terms,
@@ -106,8 +106,8 @@ function ruleTask(): Task {
     work: [
       'Compare two weeks that sit next to each other. Does the gap between them stay the same, or does the number keep multiplying?',
       geo
-        ? `${fmt(terms[1])} ÷ ${fmt(terms[0])} = ${fmt(step)}, and that holds all the way along — so the move is × ${fmt(step)}.`
-        : `${fmt(terms[1])} − ${fmt(terms[0])} = ${fmt(step)}, and that holds all the way along — so the move is + ${fmt(step)}.`,
+        ? `${disp(terms[1])} ÷ ${disp(terms[0])} = ${disp(step)}, and that holds all the way along — so the move is × ${disp(step)}.`
+        : `${disp(terms[1])} − ${disp(terms[0])} = ${disp(step)}, and that holds all the way along — so the move is + ${disp(step)}.`,
     ],
     op: geo ? '×' : '+', d: step, terms,
   }
@@ -123,14 +123,14 @@ function nthTask(): Task {
     const n = a1 + (week - 1) * d
     return {
       kind: 'nth', title: `Week ${week}`, tone: 'a',
-      badge: `a₁ = ${fmt(a1)},  d = ${fmt(d)}`, answerLabel: `a${SUB[week]} =`,
+      badge: `a₁ = ${disp(a1)},  d = ${disp(d)}`, answerLabel: `a${SUB[week]} =`,
       prompt: `What does week ${week} ask for?`,
-      context: `The block starts at ${fmt(a1)} reps and changes by ${fmt(d)} every week. You want week ${week} without writing out all the weeks in between.`,
+      context: `The block starts at ${disp(a1)} reps and changes by ${disp(d)} every week. You want week ${week} without writing out all the weeks in between.`,
       padInstruction: `Tap the reps for week ${week}.`,
       say: `The block starts at ${spoken(a1)} and changes by ${spoken(d)} each week. What is week ${week}?`,
       work: [
         'Jumping to week n takes aₙ = a₁ + (n − 1)d — you make n − 1 moves, not n.',
-        `${fmt(a1)} + (${week} − 1) × ${fmt(d)} = ${fmt(a1)} + ${fmt((week - 1) * d)} = ${fmt(n)}.`,
+        `${disp(a1)} + (${week} − 1) × ${disp(d)} = ${disp(a1)} + ${disp((week - 1) * d)} = ${disp(n)}.`,
       ],
       // The off-by-one (a₁ + n·d, one move too many) is the misconception this
       // question exists to catch, so it must be on the pad.
@@ -143,14 +143,14 @@ function nthTask(): Task {
   const n = a1 * r ** (week - 1)
   return {
     kind: 'nth', title: `Week ${week}`, tone: 'a',
-    badge: `a₁ = ${fmt(a1)},  r = ${fmt(r)}`, answerLabel: `a${SUB[week]} =`,
+    badge: `a₁ = ${disp(a1)},  r = ${disp(r)}`, answerLabel: `a${SUB[week]} =`,
     prompt: `What does week ${week} ask for?`,
-    context: `This block starts at ${fmt(a1)} reps and DOUBLES every week. You want week ${week} without writing out all the weeks in between.`,
+    context: `This block starts at ${disp(a1)} reps and DOUBLES every week. You want week ${week} without writing out all the weeks in between.`,
     padInstruction: `Tap the reps for week ${week}.`,
     say: `The block starts at ${spoken(a1)} and doubles each week. What is week ${week}?`,
     work: [
       'Jumping to week n takes aₙ = a₁ · r^(n − 1) — you multiply n − 1 times, not n.',
-      `${fmt(a1)} × ${fmt(r)}^${week - 1} = ${fmt(a1)} × ${fmt(r ** (week - 1))} = ${fmt(n)}.`,
+      `${disp(a1)} × ${disp(r)}^${week - 1} = ${disp(a1)} × ${disp(r ** (week - 1))} = ${disp(n)}.`,
     ],
     n, pad: [a1 * r ** week, n * r, n / r], terms: geoTerms(a1, r, 3),
   }
@@ -169,12 +169,12 @@ function sumTask(): Task {
       badge: `${seqText(arithTerms(a1, d, 3))}, …   (${weeks} weeks)`,
       prompt: 'How many reps in the whole block?',
       // d is drawn from 2..4 here, so "climbs" IS true for every seed of this task.
-      context: `A ${weeks}-week block that starts at ${fmt(a1)} reps and climbs by ${fmt(d)} every week. Add up every week — how many reps is that in total?`,
+      context: `A ${weeks}-week block that starts at ${disp(a1)} reps and climbs by ${disp(d)} every week. Add up every week — how many reps is that in total?`,
       padInstruction: 'Tap the total for the block.',
       say: `A ${weeks} week block starts at ${spoken(a1)} and climbs by ${spoken(d)} each week. What is the total?`,
       work: [
         'Pair the first week with the last and they add to the same thing as the second with the second-to-last — so Sₙ = n/2 × (a₁ + aₙ).',
-        `Week ${weeks} is ${fmt(an)}, so the total is ${weeks}/2 × (${fmt(a1)} + ${fmt(an)}) = ${fmt(n)}.`,
+        `Week ${weeks} is ${disp(an)}, so the total is ${weeks}/2 × (${disp(a1)} + ${disp(an)}) = ${disp(n)}.`,
       ],
       n, pad: [n + d, n - a1, an * weeks], terms: arithTerms(a1, d, 3),
     }
@@ -188,12 +188,12 @@ function sumTask(): Task {
     kind: 'sum', title: 'Whole block', tone: 'b',
     badge: `${seqText(geoTerms(a1, r, 3))}, …   (${weeks} weeks)`,
     prompt: 'How many reps in the whole block?',
-    context: `A ${weeks}-week block that starts at ${fmt(a1)} reps and doubles every week. Add up every week — how many reps is that in total?`,
+    context: `A ${weeks}-week block that starts at ${disp(a1)} reps and doubles every week. Add up every week — how many reps is that in total?`,
     padInstruction: 'Tap the total for the block.',
     say: `A ${weeks} week block starts at ${spoken(a1)} and doubles each week. What is the total?`,
     work: [
       'A doubling block is short enough to add straight out.',
-      `${terms.map(fmt).join(' + ')} = ${fmt(n)}.`,
+      `${terms.map(disp).join(' + ')} = ${disp(n)}.`,
     ],
     n, pad: [n + terms[weeks - 1], n - a1, n + 1], terms: geoTerms(a1, r, Math.min(weeks, 4)),
   }
@@ -225,14 +225,14 @@ function PlanDial({ task, value, setValue, disabled, reveal, onCommit }: {
         {(task.terms ?? []).map((t, i) => (
           <div key={i} style={{ minWidth: 'clamp(38px,4.4vw,60px)', padding: 'clamp(5px,0.7vw,9px) clamp(6px,0.8vw,12px)', borderRadius: 10, background: P.glass, border: `1px solid ${P.glassBorder}`, textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,0.85vw,11px)', color: P.mutedOnPaper, letterSpacing: '0.08em' }}>WK {i + 1}</div>
-            <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(16px,1.9vw,26px)', color: P.cream }}>{fmt(t)}</div>
+            <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(16px,1.9vw,26px)', color: P.cream }}>{disp(t)}</div>
           </div>
         ))}
       </div>
 
       {/* the rule the child is building */}
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(24px,3.2vw,42px)', fontWeight: 800, color: col, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55` }}>
-        {op} {fmt(d)} <span style={{ fontSize: '0.5em', color: P.mutedOnPaper, fontWeight: 600 }}>each week</span>
+        {op} {disp(d)} <span style={{ fontSize: '0.5em', color: P.mutedOnPaper, fontWeight: 600 }}>each week</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px,1vw,16px)', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -246,12 +246,12 @@ function PlanDial({ task, value, setValue, disabled, reveal, onCommit }: {
             }}>{o === '+' ? '＋' : '×'}</button>
         ))}
         <Nudge P={P} label="−" disabled={disabled} onClick={() => setValue({ k: 'rule', op, d: Math.max(-5, d - 1) })} />
-        <span style={{ minWidth: 'clamp(34px,3.4vw,50px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(20px,2.2vw,30px)', color: P.cream }}>{fmt(d)}</span>
+        <span style={{ minWidth: 'clamp(34px,3.4vw,50px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(20px,2.2vw,30px)', color: P.cream }}>{disp(d)}</span>
         <Nudge P={P} label="+" disabled={disabled} onClick={() => setValue({ k: 'rule', op, d: Math.min(5, d + 1) })} />
       </div>
 
       <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(11px,1.1vw,15px)', color: P.mutedOnPaper }}>
-        week 1 is {fmt(first)} → your rule gives {fmt(preview)}
+        week 1 is {disp(first)} → your rule gives {disp(preview)}
       </div>
 
       <CommitBtn P={P} label="THAT'S THE PLAN ✓" disabled={disabled} onClick={() => onCommit({ k: 'rule', op, d })} />
@@ -292,7 +292,7 @@ const CONFIG: GameConfig<V, Task> = {
   grade: (t, v) => (t.kind === 'rule'
     ? v.k === 'rule' && v.op === t.op && v.d === t.d
     : v.k === 'num' && v.n === t.n),
-  revealText: (t) => (t.kind === 'rule' ? `${t.op} ${fmt(t.d ?? 0)}` : fmt(t.n ?? 0)),
+  revealText: (t) => (t.kind === 'rule' ? `${t.op} ${disp(t.d ?? 0)}` : disp(t.n ?? 0)),
   glide: (t, _f, setValue, later) => later(() => setValue(
     t.kind === 'rule' ? { k: 'rule', op: t.op ?? '+', d: t.d ?? 0 } : { k: 'num', n: t.n ?? 0 }), 320),
   Instrument: ({ task, value, setValue, disabled, reveal, onCommit }): ReactElement =>

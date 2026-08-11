@@ -32,11 +32,10 @@
  * through to the party is the ARC across the ten rounds. Wrapped by game/FractionsChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, inFlowJourney, hasSheet, aspectOf, CRITTER_CSS } from './critters'
 /** ⚠️ A CONTACT SHADOW IS NOT DECORATION — it is the one cue that says a thing is standing IN the
  *  picture rather than lying ON it, and this chapter shipped without one under anybody. The founder
@@ -963,7 +962,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
 // ─── beat ─────────────────────────────────────────────────────────────────────────────
 export function makeFrBeat(): Beat<FrRound> {
   return {
-    skillId: 'fractions', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'fractions', rounds: 10, walkEvery: 3,
     make: (d, round = 0, asked) => makeFrRound((d || 1) as 1 | 2 | 3, round, asked),
     // ⚠️ THE CLOSED SET. Mastery must not end the run before all three denominators have been asked
     // — a strong child gets about three rounds at L1 (halves and quarters only), ONE at L2 and TWO at
@@ -1009,7 +1008,6 @@ export default function SliceShop({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   const [gIdx, setGIdx] = useState(0)
@@ -1018,15 +1016,7 @@ export default function SliceShop({ onFinish, onExit }: {
   const l = layoutFor(vw, vh)
   const learnerId = useMemo(() => getActiveLearner()?.id, [])
   const [canSkip] = useState(() => lessonSeen(getActiveLearner()?.id, 'fractions'))
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeFrBeat(), [])
 
@@ -1102,10 +1092,7 @@ export default function SliceShop({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: l.top - 8, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (typeof data?.slot === 'number') setSlot(data.slot) }}
-            onComplete={(c, w, mastered) => {
-              result.current.correct += c; result.current.wrong += w
-              finishChapter(result.current.correct, result.current.wrong, mastered)
-            }} />
+            onComplete={tally} />
         </div>
       )}
 

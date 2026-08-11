@@ -21,7 +21,7 @@
  * two different curves on one court, sharing only their roots. Now the ball flies
  * along the task's OWN parabola, so the picture and the equation are the same object.
  * Where the algebra wants a monic quadratic, the shot's height is written
- * −(x² + bx + c): the leading minus flips the arc the right way up and does not move
+ * −(x² + bx + c): the leading disp flips the arc the right way up and does not move
  * a single root, so the factoring skill is untouched and the drawing stops lying.
  *
  * ── HOW YOU ANSWER, gated PER QUESTION (never per chapter) ────────────────────
@@ -44,7 +44,8 @@ import { useEffect, useMemo } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, PartsBuilder, SpecPicker, numChoices, type SpecChoice } from './parts/gameKit'
-import { rint, shuffle } from '@/core/rand'
+import { rint, shuffle, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#2a1c3d', nightBot: '#160f24',
@@ -55,23 +56,21 @@ const P: Palette = {
   glass: 'rgba(40,26,64,0.6)', glassBorder: 'rgba(243,237,255,0.2)',
 }
 
-const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
-const minus = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 /** "x − 3" / "x + 2" — one factor, written the way it appears on the board. */
 const factorOf = (r: number) => `(x ${r < 0 ? '+' : '−'} ${Math.abs(r)})`
 
 // ── SPOKEN forms ─────────────────────────────────────────────────────────────
 // What is shown and what is said are different artifacts. `work` is read ALOUD on
-// a reteach, and a U+2212 minus speaks as nothing ("4 − 7" → "four seven"), a
+// a reteach, and a U+2212 disp speaks as nothing ("4 − 7" → "four seven"), a
 // superscript speaks as "x two", and "√36" speaks as "36". Display keeps the
 // glyphs; anything Milo says is built from words.
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 const spQuad = (a: number, b: number, c: number) => [
   `${a < 0 ? 'negative ' : ''}${Math.abs(a) === 1 ? '' : `${Math.abs(a)} `}x squared`,
-  b === 0 ? '' : `${b < 0 ? 'minus' : 'plus'} ${Math.abs(b) === 1 ? '' : `${Math.abs(b)} `}x`,
-  c === 0 ? '' : `${c < 0 ? 'minus' : 'plus'} ${Math.abs(c)}`,
+  b === 0 ? '' : `${b < 0 ? 'disp' : 'plus'} ${Math.abs(b) === 1 ? '' : `${Math.abs(b)} `}x`,
+  c === 0 ? '' : `${c < 0 ? 'disp' : 'plus'} ${Math.abs(c)}`,
 ].filter(Boolean).join(', ')
-const spFactor = (r: number) => `x ${r < 0 ? 'plus' : 'minus'} ${Math.abs(r)}`
+const spFactor = (r: number) => `x ${r < 0 ? 'plus' : 'disp'} ${Math.abs(r)}`
 
 // ── value + task types ──────────────────────────────────────────────────────
 // roots  → the two touch-down x's (order-independent)
@@ -162,7 +161,7 @@ const PEAK_PAIRS = VERTEX_PAIRS.filter(([r1, r2]) => {
 // ── L1: read the roots OR the vertex straight off the arc ───────────────────
 function readTask(): Task {
   const wantVertex = Math.random() < 0.5
-  const [ra, rb] = pickOne(wantVertex ? VERTEX_PAIRS : READ_PAIRS)
+  const [ra, rb] = pick(wantVertex ? VERTEX_PAIRS : READ_PAIRS)
   const q = shotThrough(ra, rb)
   const badge = `y = ${quad(q.pa, q.pb, q.pc)}`
   if (!wantVertex) {
@@ -185,7 +184,7 @@ function readTask(): Task {
 
 // ── L2: solve for the touch-downs ───────────────────────────────────────────
 function factorTask(): Task {
-  const [ra, rb] = pickOne(FACTOR_PAIRS)
+  const [ra, rb] = pick(FACTOR_PAIRS)
   const q = shotThrough(ra, rb)
   // the monic quadratic the child actually factors: (x − r1)(x − r2) = x² + mb x + mc
   const mb = -(q.r1 + q.r2), mc = q.r1 * q.r2
@@ -194,7 +193,7 @@ function factorTask(): Task {
     prompt: 'Factor it, then build the two x values where the ball touches the floor.',
     say: `Solve this shot by factoring. Find the two x values where it touches the floor and build them.`,
     work: [
-      `The minus out front flips the arc over, but it never moves a touch-down. So solve ${spQuad(1, mb, mc)} equals zero.`,
+      `The disp out front flips the arc over, but it never moves a touch-down. So solve ${spQuad(1, mb, mc)} equals zero.`,
       `Two numbers that multiply to ${spoken(mc)} and add to ${spoken(mb)} are ${spoken(-q.r1)} and ${spoken(-q.r2)}. So it factors into ${spFactor(q.r1)}, times ${spFactor(q.r2)}.`,
       `Now flip each sign to read the root: x equals ${spoken(q.r1)}, and x equals ${spoken(q.r2)}.`,
     ],
@@ -224,7 +223,7 @@ function squareRootTask(): Task {
  *     rNear → gave the near touch-down instead of the landing
  *    −rNear → flipped the wrong one. */
 function landTask(): Task {
-  const [ra, rb] = pickOne(LAND_PAIRS)
+  const [ra, rb] = pick(LAND_PAIRS)
   const q = shotThrough(ra, rb)
   const far = q.r2, near = q.r1
   return {
@@ -246,7 +245,7 @@ function landTask(): Task {
  *     pc  → gave the height over half-court (x = 0) instead of at the peak
  *    −kk  → lost the sign flipping a = −1 back. */
 function peakTask(): Task {
-  const [ra, rb] = pickOne(PEAK_PAIRS)
+  const [ra, rb] = pick(PEAK_PAIRS)
   const q = shotThrough(ra, rb)
   return {
     kind: 'peak', title: 'How high', badge: `h = ${quad(q.pa, q.pb, q.pc)}`, tone: 'b', showEquals: false,
@@ -270,20 +269,20 @@ function formulaTask(): Task {
   // answer, so the picker showed a duplicate and two options graded correct.
   do { b = rint(-6, 6); c = rint(-5, 5); disc = b * b - 4 * c; g++ }
   while ((b === 0 || disc <= 0 || Number.isInteger(Math.sqrt(disc))) && g < 200)
-  const ans = `x = (${minus(-b)} ± √${disc}) / 2`
+  const ans = `x = (${disp(-b)} ± √${disc}) / 2`
   const opts = shuffle([
     { id: ans, label: ans },
-    { id: `x = (${minus(b)} ± √${disc}) / 2`, label: `x = (${minus(b)} ± √${disc}) / 2` },
-    { id: `x = (${minus(-b)} ± √${disc + 4}) / 2`, label: `x = (${minus(-b)} ± √${disc + 4}) / 2` },
-    { id: `x = (${minus(-b)} ± √${Math.abs(disc - 4)}) / 2`, label: `x = (${minus(-b)} ± √${Math.abs(disc - 4)}) / 2` },
+    { id: `x = (${disp(b)} ± √${disc}) / 2`, label: `x = (${disp(b)} ± √${disc}) / 2` },
+    { id: `x = (${disp(-b)} ± √${disc + 4}) / 2`, label: `x = (${disp(-b)} ± √${disc + 4}) / 2` },
+    { id: `x = (${disp(-b)} ± √${Math.abs(disc - 4)}) / 2`, label: `x = (${disp(-b)} ± √${Math.abs(disc - 4)}) / 2` },
   ])
   return {
     kind: 'formula', title: 'Long-range shot', badge: `−(${quad(1, b, c)}) = 0`, tone: 'b', showEquals: false,
     prompt: 'The touch-downs are irrational — pick the radical form.',
     say: `This shot touches down at points you cannot count off — they are irrational. Use the quadratic formula and pick the radical form.`,
     work: [
-      `The minus out front does not move a touch-down, so solve ${spQuad(1, b, c)} equals zero, with a equals 1, b equals ${spoken(b)}, and c equals ${spoken(c)}.`,
-      `The discriminant, b squared minus 4 a c, is ${disc}. So x equals ${spoken(-b)}, plus or minus the square root of ${disc}, all divided by 2.`,
+      `The disp out front does not move a touch-down, so solve ${spQuad(1, b, c)} equals zero, with a equals 1, b equals ${spoken(b)}, and c equals ${spoken(c)}.`,
+      `The discriminant, b squared disp 4 a c, is ${disc}. So x equals ${spoken(-b)}, plus or disp the square root of ${disc}, all divided by 2.`,
     ],
     pa: -1, pb: -b, pc: -c, choices: opts, answerId: ans,
   }
@@ -310,7 +309,7 @@ const DEMO_READ: Task = {
 // `b` is a beat flag the scene reads to reveal markers as they are spoken:
 //   b=0 idle · b=1 launched, rising · b=2 at the peak · b=3 down · b=4 solved
 const DEMO_READ_STEPS: DemoStep<V>[] = [
-  { say: "Here's a shot. The ball's flight traces a curve called a parabola, and this one is y equals negative x squared, plus six x, minus five.", value: { k: 'roots', a: 0, b: 0 }, board: 'y = −x² + 6x − 5' },
+  { say: "Here's a shot. The ball's flight traces a curve called a parabola, and this one is y equals negative x squared, plus six x, disp five.", value: { k: 'roots', a: 0, b: 0 }, board: 'y = −x² + 6x − 5' },
   { say: 'The gold line marked zero is half-court. To the right of it is the far half, where the basket is. To the left is your own half.', value: { k: 'roots', a: 0, b: 0 }, board: '0 = half-court' },
   { say: 'Watch it go. The ball leaves the floor and starts to arc down the court.', value: { k: 'roots', a: 12, b: 1 }, board: 'it leaves the floor' },
   { say: 'Up to the top of the arc — the turning point, four metres high, three metres past half-court.', value: { k: 'roots', a: 50, b: 2 }, board: 'peak (3, 4)' },
@@ -332,13 +331,13 @@ const DEMO_SOLVE: Task = {
   pa: -1, pb: 2, pc: 8, r1: -2, r2: 4, h: 1, kk: 9,
 }
 const DEMO_SOLVE_STEPS: DemoStep<V>[] = [
-  { say: "Now one you can't just read off the floor — you have to solve it. Negative, bracket, x squared minus two x minus eight, equals zero.", value: { k: 'roots', a: 0, b: 0 }, board: '−(x² − 2x − 8) = 0' },
-  { say: 'That minus out front flips the whole arc over so it opens downward, like a real shot. But flipping an arc never moves where it touches the floor, so we can set it aside and solve the inside.', value: { k: 'roots', a: 0, b: 0 }, board: 'x² − 2x − 8 = 0' },
+  { say: "Now one you can't just read off the floor — you have to solve it. Negative, bracket, x squared disp two x disp eight, equals zero.", value: { k: 'roots', a: 0, b: 0 }, board: '−(x² − 2x − 8) = 0' },
+  { say: 'That disp out front flips the whole arc over so it opens downward, like a real shot. But flipping an arc never moves where it touches the floor, so we can set it aside and solve the inside.', value: { k: 'roots', a: 0, b: 0 }, board: 'x² − 2x − 8 = 0' },
   { say: 'Factor it. We need two numbers that multiply to negative eight and add to negative two.', value: { k: 'roots', a: 0, b: 0 }, board: '× = −8   + = −2' },
   { say: 'Two and negative four. Two times negative four is negative eight, and two plus negative four is negative two.', value: { k: 'roots', a: 0, b: 0 }, board: '2 and −4' },
-  { say: 'So it factors into x plus two, times x minus four.', value: { k: 'roots', a: 0, b: 0 }, board: '(x + 2)(x − 4) = 0' },
+  { say: 'So it factors into x plus two, times x disp four.', value: { k: 'roots', a: 0, b: 0 }, board: '(x + 2)(x − 4) = 0' },
   { say: 'Now read the touch-downs, and flip each sign as you go. X plus two is zero when x is negative two — not plus two.', value: { k: 'roots', a: 0, b: 0 }, board: 'x + 2 = 0 → x = −2' },
-  { say: 'And x minus four is zero when x is four.', value: { k: 'roots', a: 0, b: 0 }, board: 'x − 4 = 0 → x = 4' },
+  { say: 'And x disp four is zero when x is four.', value: { k: 'roots', a: 0, b: 0 }, board: 'x − 4 = 0 → x = 4' },
   { say: 'Check it on the court. The ball leaves the ground at negative two — two metres inside your own half — arcs over half-court, and comes down four metres the other side.', value: { k: 'roots', a: 100, b: 3 }, board: 'over half-court' },
   { say: 'So the touch-downs are negative two and four. Build those two numbers.', value: { k: 'roots', a: 100, b: 4 }, board: 'x = −2, 4' },
 ]
@@ -500,7 +499,7 @@ function ArcScene({ palette, task, value, walk, ended }: {
           <line key={`t${n}`} x1={sx(n)} y1={floorY - (n % 2 === 0 ? 5 : 3)} x2={sx(n)} y2={floorY} stroke={p.creamSoft} strokeWidth={0.9} opacity={n % 2 === 0 ? 0.75 : 0.4} />
         ))}
         {[-8, -6, -4, -2, 2, 4, 6, 8].map((n) => (
-          <text key={`xl${n}`} x={sx(n)} y={floorY + 15} textAnchor="middle" fill={p.mutedOnPaper} fontSize={9} fontFamily="var(--font-numeric)">{minus(n)}</text>
+          <text key={`xl${n}`} x={sx(n)} y={floorY + 15} textAnchor="middle" fill={p.mutedOnPaper} fontSize={9} fontFamily="var(--font-numeric)">{disp(n)}</text>
         ))}
 
         {/* the shot's own curve */}
@@ -561,7 +560,7 @@ function ArcScene({ palette, task, value, walk, ended }: {
         {hasRoots && [task.r1!, task.r2!].map((rx, i) => inBox(rx, 0) && (
           <motion.g key={`r${i}`} initial={false} animate={{ opacity: showRoots ? 1 : 0, scale: showRoots ? 1 : 0.5 }} transition={reduce ? { duration: 0 } : { ...spring, delay: showRoots ? i * 0.08 : 0 }} style={{ transformBox: 'fill-box', transformOrigin: 'center' }}>
             <circle cx={sx(rx)} cy={floorY} r={5.5} fill={done ? p.mint : p.coralDeep} stroke={p.cream} strokeWidth={1.5} />
-            <text x={sx(rx)} y={floorY + 27} textAnchor="middle" fill={done ? p.mint : p.creamSoft} fontSize={13} fontFamily="var(--font-numeric)" fontWeight={700}>{minus(rx)}</text>
+            <text x={sx(rx)} y={floorY + 27} textAnchor="middle" fill={done ? p.mint : p.creamSoft} fontSize={13} fontFamily="var(--font-numeric)" fontWeight={700}>{disp(rx)}</text>
           </motion.g>
         ))}
 
@@ -569,7 +568,7 @@ function ArcScene({ palette, task, value, walk, ended }: {
         {hasVertex && inBox(task.h!, task.kk!) && (
           <motion.g initial={false} animate={{ opacity: showVertex && !acting ? 1 : 0, scale: showVertex ? 1 : 0.5 }} transition={reduce ? { duration: 0 } : spring} style={{ transformBox: 'fill-box', transformOrigin: 'center' }}>
             <circle cx={sx(task.h!)} cy={sy(task.kk!)} r={6.5} fill={p.gold} stroke={p.cream} strokeWidth={1.5} />
-            <text x={sx(task.h!) + 8} y={sy(task.kk!) - 8} fill={p.gold} fontSize={13} fontFamily="var(--font-numeric)" fontWeight={700}>({minus(task.h!)}, {minus(task.kk!)})</text>
+            <text x={sx(task.h!) + 8} y={sy(task.kk!) - 8} fill={p.gold} fontSize={13} fontFamily="var(--font-numeric)" fontWeight={700}>({disp(task.h!)}, {disp(task.kk!)})</text>
           </motion.g>
         )}
       </svg>
@@ -616,7 +615,7 @@ const CONFIG: GameConfig<V, Task> = {
   revealText: (t) =>
     t.pad ? spoken(t.n ?? 0)
       // stored as pa=−1, pb=−b, pc=−c, so −b is pb and the discriminant is pb² + 4·pc
-      : t.kind === 'formula' ? `${spoken(t.pb)}, plus or minus the square root of ${t.pb * t.pb + 4 * t.pc}, all over 2`
+      : t.kind === 'formula' ? `${spoken(t.pb)}, plus or disp the square root of ${t.pb * t.pb + 4 * t.pc}, all over 2`
         : t.kind === 'vertex' ? `the peak at ${spoken(t.h ?? 0)}, ${spoken(t.kk ?? 0)}`
           : `x equals ${spoken(t.r1 ?? 0)}, and x equals ${spoken(t.r2 ?? 0)}`,
   glide: (t, _from, setValue, later) => later(() => {
@@ -678,7 +677,7 @@ const CONFIG: GameConfig<V, Task> = {
     points: [
       <>Zero is <strong>half-court</strong> — your half is negative, the far half positive.</>,
       <>It <strong>touches down</strong> where the arc meets the floor (y = 0).</>,
-      <>A minus out front <strong>flips the arc</strong> but never moves a touch-down.</>,
+      <>A disp out front <strong>flips the arc</strong> but never moves a touch-down.</>,
       <>The <strong>peak</strong> sits halfway between the two touch-downs.</>,
     ],
   },

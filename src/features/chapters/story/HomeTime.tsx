@@ -30,9 +30,8 @@
  * spares, so the higher tiers have more little ones on screen than the answer needs.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { matchTarget } from '@/core/adaptive'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -430,7 +429,7 @@ function makeRound(d: 1 | 2 | 3, round: number): HomeRound {
 
 function makeHomeBeat(): Beat<HomeRound> {
   return {
-    skillId: 'matchingQuantities', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'matchingQuantities', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.target}`,   // dedupe on the quantity asked for, not the rotating cast or scene
     prompt: d => `Send Milo exactly ${d.target} ${d.target === 1 ? kindAt(d.castIdx).little : kindAt(d.castIdx).plural}.`,
@@ -453,20 +452,11 @@ export default function HomeTime({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [homeStage, setHomeStage] = useState(0)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeHomeBeat(), [])
@@ -519,7 +509,7 @@ export default function HomeTime({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data, round) => { if (data?.scene) setScene(data.scene as string); setHomeStage(round) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
         <MapStrip done={homeStage} total={TOTAL_ROUNDS} />
       </>)}

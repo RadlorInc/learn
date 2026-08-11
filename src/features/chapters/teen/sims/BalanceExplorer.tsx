@@ -12,7 +12,8 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
 export interface BalanceExplorerProps {
   band: AgeBand
@@ -29,31 +30,6 @@ const SOLUTION = (C - B) / A // 4
 const X_MIN = 0
 const X_MAX = 8
 
-/** Pretty signed integer with a real minus sign. */
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
-
-function Slider({ label, value, min, max, onChange }: {
-  label: string; value: number; min: number; max: number; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 64, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {fmt(value)}
-      </span>
-    </label>
-  )
-}
 
 export default function BalanceExplorer({ band, onReady }: BalanceExplorerProps) {
   void band // theme comes from the ancestor data-band scope
@@ -145,7 +121,7 @@ export default function BalanceExplorer({ band, onReady }: BalanceExplorerProps)
       }}>
         <span>{A}x + {B} = {C}</span>
         <span style={{ color: 'var(--ink-muted)' }}>→</span>
-        <span>x = {fmt(x)}</span>
+        <span>x = {disp(x)}</span>
       </div>
 
       {/* The slider */}
@@ -155,13 +131,13 @@ export default function BalanceExplorer({ band, onReady }: BalanceExplorerProps)
 
       {/* Plain-language read-out */}
       <p style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
-        With <strong style={{ color: 'var(--ink)' }}>x = {fmt(x)}</strong>, the left side is{' '}
-        <strong style={{ fontFamily: 'var(--font-numeric)', color: 'var(--ink)' }}>{A}·{fmt(x)} + {B} = {fmt(left)}</strong>.
+        With <strong style={{ color: 'var(--ink)' }}>x = {disp(x)}</strong>, the left side is{' '}
+        <strong style={{ fontFamily: 'var(--font-numeric)', color: 'var(--ink)' }}>{A}·{disp(x)} + {B} = {disp(left)}</strong>.
         {' '}
         {balanced ? (
           <>It matches the right side, so the scale is <strong style={{ color: 'var(--garden-green)' }}>balanced</strong> — that&rsquo;s the solution.</>
         ) : (
-          <>That&rsquo;s {fmt(left)} versus {fmt(right)}, so the{' '}
+          <>That&rsquo;s {disp(left)} versus {disp(right)}, so the{' '}
             <strong style={{ color: 'var(--ink)' }}>{diff > 0 ? 'left' : 'right'}</strong> side is heavier. Keep adjusting x.</>
         )}
       </p>
@@ -174,7 +150,7 @@ export default function BalanceExplorer({ band, onReady }: BalanceExplorerProps)
             color: 'var(--garden-green)', border: '1px solid var(--garden-green)', borderRadius: 999,
             padding: '3px 12px', textTransform: 'uppercase',
           }}>
-            Balanced · x = {fmt(SOLUTION)}
+            Balanced · x = {disp(SOLUTION)}
           </span>
         )}
       </div>

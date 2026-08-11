@@ -52,11 +52,10 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 // Deep import on purpose: drei ships `sideEffects: false` with no `exports` map, so a deep path is
 // resolvable AND keeps the barrel (and everything it re-exports) out of an already-882 KB chunk.
 import { SoftShadows } from '@react-three/drei/core/softShadows'
-import { useRouter } from 'next/navigation'
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
 import {
@@ -1317,8 +1316,6 @@ export function makeBeat(): Beat<PlotRound> {
   return {
     skillId: 'areaPerimeter',
     rounds: 10,
-    reteachAfter: 3,
-    walkEvery: 99,
     ownsFeedback: true,          // the chapter retries IN PLACE and writes its own miss line
     make: (d, round, asked) => makeRound((d || 1) as 1 | 2 | 3, round, asked),
     sig: d => `${d.qType}|${d.frontage}x${d.depth}`,
@@ -1333,23 +1330,12 @@ export function makeBeat(): Beat<PlotRound> {
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
 
 export default function FloorPlot({ onFinish, onExit }: { onFinish?: (correct: number, wrong: number, mastered?: boolean) => void; onExit?: () => void }) {
-  const router = useRouter()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()
   const short = vh < 470
   const needsRotate = useNeedsRotate()
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return
-    finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 600)), [])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   const beat = useMemo(() => makeBeat(), [])
 
   // The early return sits BELOW every hook, or turning the tablet changes the hook count.
@@ -1386,11 +1372,8 @@ export default function FloorPlot({ onFinish, onExit }: { onFinish?: (correct: n
       )}
 
       {phase === 'practice' && (
-        <SkillBeat beat={beat} onInterlude={interlude}
-          onComplete={(c, w, mastered) => {
-            result.current.correct += c; result.current.wrong += w
-            finishChapter(result.current.correct, result.current.wrong, mastered)
-          }} />
+        <SkillBeat beat={beat}
+          onComplete={tally} />
       )}
     </div>
   )

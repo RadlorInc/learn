@@ -22,7 +22,8 @@
  */
 import { useRef } from 'react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, CommitBtn, Nudge, pick, glideNumber, numChoices } from './parts/gameKit'
+import { Palette, CommitBtn, Nudge, glideNumber, numChoices } from './parts/gameKit'
+import { pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#241a12', nightBot: '#33251a',

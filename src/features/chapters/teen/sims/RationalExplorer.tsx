@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
 import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
 export default function RationalExplorer({ band }: { band: AgeBand }) {
   const [a, setA] = useState(2)
@@ -39,7 +40,7 @@ export default function RationalExplorer({ band }: { band: AgeBand }) {
     </>}>
 
       <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 18, fontWeight: 600, color: 'var(--accent)', textAlign: 'center', lineHeight: 1.4 }}>
-        f(x) = 1 / (x {a >= 0 ? `− ${a}` : `+ ${Math.abs(a)}`}) &nbsp;·&nbsp; asymptote at x = {a < 0 ? `−${Math.abs(a)}` : a}
+        f(x) = 1 / (x {a >= 0 ? `− ${a}` : `+ ${Math.abs(a)}`}) &nbsp;·&nbsp; asymptote at x = {disp(a)}
       </div>
 
       <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
@@ -51,7 +52,7 @@ export default function RationalExplorer({ band }: { band: AgeBand }) {
           aria-label="shift a"
         />
         <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-          {a < 0 ? `−${Math.abs(a)}` : a}
+          {disp(a)}
         </span>
       </label>
 

@@ -59,9 +59,8 @@
  * Art: **zero.** Every block is code-drawn; every backdrop already shipped.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -700,7 +699,7 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
 const BEAT: Beat<PvRound> = {
-  skillId: 'placeValue', rounds: 10, reteachAfter: 3, walkEvery: 3,
+  skillId: 'placeValue', rounds: 10, walkEvery: 3,
   make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
   sig: d => `${d.n}${d.kind}`,
   // SkillBeat renders nothing for an empty prompt — this chapter's own banner owns the pill, and it
@@ -719,21 +718,13 @@ export default function BuildingBlocks({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const [slotIdx, setSlotIdx] = useState(0)
   const [shipped, setShipped] = useState(0)
   const { h: vh } = useViewport()
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
 
   // Both teaching examples are a digit-swap pair — see PvExplain.
@@ -804,7 +795,7 @@ export default function BuildingBlocks({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={BEAT} onInterlude={interlude}
             onRound={(data) => { if (typeof data?.slot === 'number') { setSlotIdx(data.slot); setShipped(s => s + 1) } }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
     </div>

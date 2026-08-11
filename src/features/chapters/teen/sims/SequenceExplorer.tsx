@@ -13,6 +13,7 @@ import { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
 import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
 export default function SequenceExplorer({ band }: { band: AgeBand }) {
   const [mode, setMode] = useState<'arith' | 'geo'>('arith')
@@ -77,7 +78,7 @@ export default function SequenceExplorer({ band }: { band: AgeBand }) {
       </div>
 
       <p style={{ margin: 0, fontFamily: 'var(--font-numeric)', fontSize: 14, color: 'var(--ink)', textAlign: 'center' }}>
-        {terms.map((t) => (t < 0 ? `−${Math.abs(t)}` : t)).join(',  ')}, …
+        {terms.map((t) => disp(t)).join(',  ')}, …
       </p>
     </SimLayout>
   )

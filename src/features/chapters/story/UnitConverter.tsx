@@ -13,18 +13,15 @@
  * Code-drawn (no photographic scene → no background reuse). Wrapped by game/MeasureUnitsChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { PT, ACCENTS, PT_CSS, LabBackdrop, BackChip, Brackets, PromptCard, ChoiceButton, PtMilo, IntroCard, PtSlider, PtReadout, ExploreScaffold, type ChoiceState } from './preteen/kit'
 import { useViewport } from '@/shared/hooks/useViewport'
 import FitBox from './FitBox'
-import { rint, shuffle } from '@/core/rand'
+import { rint, shuffle, pick } from '@/core/rand'
 
 const ACCENT = ACCENTS.amber
 
-// ─── Math ───────────────────────────────────────────────────────────────────────────
-const pick = <T,>(a: T[]) => a[rint(0, a.length - 1)]
 // tidy number → string (drop trailing .0)
 const fmt = (n: number) => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed(3))))
 
@@ -311,7 +308,7 @@ function ConverterScope() {
 // ─── Beat + orchestrator ───────────────────────────────────────────────────────────────
 function makeBeat(): Beat<UcRound> {
   return {
-    skillId: 'measurementUnits', rounds: 10, reteachAfter: 3, walkEvery: 99,
+    skillId: 'measurementUnits', rounds: 10,
     make: (d) => makeRound((d || 1) as 1 | 2 | 3),
     sig: d => d.qType === 'convert' ? `convert|${d.from}|${d.to}|${fmt(d.value)}` : `unit|${d.item}`,
     prompt: d => d.prompt, say: d => d.say,
@@ -322,19 +319,11 @@ function makeBeat(): Beat<UcRound> {
 
 type Phase = 'intro' | 'explore' | 'demo' | 'guided' | 'practice'
 export default function UnitConverter({ onFinish, onExit }: { onFinish?: (correct: number, wrong: number, mastered?: boolean) => void; onExit?: () => void }) {
-  const router = useRouter()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()
   const short = vh < 470
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true; stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   const beat = useMemo(() => makeBeat(), [])
 
   const DEMO: UcRound[] = [mkConvert(PAIRS[1], 'down', 3), mkUnit(UNIT_ITEMS[0])]
@@ -375,8 +364,8 @@ export default function UnitConverter({ onFinish, onExit }: { onFinish?: (correc
 
       {phase === 'practice' && (
         <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
-          <SkillBeat beat={beat} onInterlude={interlude}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+          <SkillBeat beat={beat}
+            onComplete={tally} />
         </div>
       )}
 

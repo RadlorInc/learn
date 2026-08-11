@@ -30,7 +30,7 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, CommitBtn, Nudge, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#1c1830', nightBot: '#0a0814',
@@ -41,7 +41,6 @@ const P: Palette = {
   glass: 'rgba(28,24,48,0.62)', glassBorder: 'rgba(240,236,251,0.2)',
 }
 
-const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 const SUP: Record<number, string> = { 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶' }
 const SUB: Record<number, string> = { 2: '₂', 3: '₃', 5: '₅', 10: '₁₀' }
 const sup = (n: number) => SUP[n] ?? `^${n}`
@@ -63,7 +62,7 @@ interface Task extends BaseTask {
 
 // ── L1 · what the balance multiplies to ───────────────────────────────────────
 function powTask(): Task {
-  const base = pickOne([2, 3, 5, 10])
+  const base = pick([2, 3, 5, 10])
   const exp = base === 10 ? 3 : base === 5 ? 2 : rint(2, 4)
   const ans = base ** exp
   return {
@@ -93,7 +92,7 @@ const RATE_BASES: { label: string; say: string; pct: number; mult: number }[] = 
   { label: '(1/4)', say: 'one quarter', pct: -75, mult: 0.25 },
 ]
 function rateTask(): Task {
-  const b = pickOne(RATE_BASES)
+  const b = pick(RATE_BASES)
   return {
     kind: 'rate', title: 'Up or down', tone: 'b',
     badge: `y = ${b.label}ˣ`, showEquals: false,
@@ -113,7 +112,7 @@ function rateTask(): Task {
 
 // ── L2 · the two ways of writing the same fact ────────────────────────────────
 function formTask(): Task {
-  const p = pickOne([{ b: 2, e: 3, v: 8 }, { b: 2, e: 4, v: 16 }, { b: 3, e: 2, v: 9 }, { b: 5, e: 2, v: 25 }, { b: 10, e: 2, v: 100 }])
+  const p = pick([{ b: 2, e: 3, v: 8 }, { b: 2, e: 4, v: 16 }, { b: 3, e: 2, v: 9 }, { b: 5, e: 2, v: 25 }, { b: 10, e: 2, v: 100 }])
   return {
     kind: 'form', title: 'Same fact, twice', tone: 'a',
     badge: `${p.b}${sup(p.e)} = ${p.v}`, showEquals: false,
@@ -137,7 +136,7 @@ function formTask(): Task {
 
 // ── L2 · a log is a number of months ──────────────────────────────────────────
 function logTask(): Task {
-  const l = pickOne([{ b: 2, v: 8, a: 3 }, { b: 10, v: 1000, a: 3 }, { b: 3, v: 9, a: 2 }, { b: 2, v: 16, a: 4 }, { b: 10, v: 100, a: 2 }])
+  const l = pick([{ b: 2, v: 8, a: 3 }, { b: 10, v: 1000, a: 3 }, { b: 3, v: 9, a: 2 }, { b: 2, v: 16, a: 4 }, { b: 10, v: 100, a: 2 }])
   return {
     kind: 'log', title: 'How long?', tone: 'b',
     badge: `log${sub(l.b)}${l.v}`, answerLabel: 'months =',
@@ -155,8 +154,8 @@ function logTask(): Task {
 
 // ── L3 · read WHEN off the curve ──────────────────────────────────────────────
 function whenTask(): Task {
-  const base = pickOne([2, 3])
-  const start = pickOne([25, 50, 100])
+  const base = pick([2, 3])
+  const start = pick([25, 50, 100])
   const m = base === 2 ? rint(2, 4) : rint(2, 3)
   const target = start * base ** m
   return {

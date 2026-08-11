@@ -7,7 +7,7 @@
  *
  * Extracted verbatim (behaviour unchanged) from the old ComplexNumbersChapter
  * wrapper when that chapter moved onto GameShell. It was defined inline there, so
- * it would have been deleted with the wrapper. `fmtInt` came from the lesson file
+ * it would have been deleted with the wrapper. `disp` came from the lesson file
  * that went with it and is now local.
  *
  * Slider-driven, not free-drag: touch-friendly, accessible and deterministic.
@@ -16,27 +16,9 @@
 import { useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
-/** Pretty integer: a real minus sign for negatives. */
-const fmtInt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
-
-function Slider({ text, value, onChange }: { text: string; value: number; onChange: (n: number) => void }) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 92, fontSize: 14, color: 'var(--ink-soft)' }}>{text}</span>
-      <input
-        type="range" min={-6} max={6} step={1} value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={text}
-      />
-      <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {fmtInt(value)}
-      </span>
-    </label>
-  )
-}
 
 export default function ComplexPlaneExplorer({ band }: { band: AgeBand }) {
   const [a, setA] = useState(3)
@@ -45,10 +27,10 @@ export default function ComplexPlaneExplorer({ band }: { band: AgeBand }) {
   const clean = Number.isInteger(mod)
   const range = Math.max(Math.abs(a), Math.abs(b), 2) + 2
   const label = b === 0
-    ? fmtInt(a)
+    ? disp(a)
     : a === 0
-      ? `${b === 1 ? '' : b === -1 ? '−' : fmtInt(b)}i`
-      : `${fmtInt(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b) === 1 ? 'i' : `${Math.abs(b)}i`}`
+      ? `${b === 1 ? '' : b === -1 ? '−' : disp(b)}i`
+      : `${disp(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b) === 1 ? 'i' : `${Math.abs(b)}i`}`
 
   return (
     <SimLayout maxWidth={420} gap={16} align="center" visual={<>
@@ -58,12 +40,12 @@ export default function ComplexPlaneExplorer({ band }: { band: AgeBand }) {
     </>}>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
-        <Slider text="real (a)" value={a} onChange={setA} />
-        <Slider text="imaginary (b)" value={b} onChange={setB} />
+        <Slider labelW={92} label="real (a)" value={a} min={-6} max={6} onChange={setA} />
+        <Slider labelW={92} label="imaginary (b)" value={b} min={-6} max={6} onChange={setB} />
       </div>
 
       <p style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.6, color: 'var(--ink-soft)' }}>
-        The point <strong style={{ color: 'var(--ink)', fontFamily: 'var(--font-numeric)' }}>{label}</strong> sits at <strong style={{ color: 'var(--ink)', fontFamily: 'var(--font-numeric)' }}>({fmtInt(a)}, {fmtInt(b)})</strong> on the plane.<br />
+        The point <strong style={{ color: 'var(--ink)', fontFamily: 'var(--font-numeric)' }}>{label}</strong> sits at <strong style={{ color: 'var(--ink)', fontFamily: 'var(--font-numeric)' }}>({disp(a)}, {disp(b)})</strong> on the plane.<br />
         Its <strong style={{ color: 'var(--ink)' }}>modulus</strong> is <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-numeric)' }}>√({a * a} + {b * b}) = {clean ? mod : `√${a * a + b * b} ≈ ${mod}`}</strong> — its distance from the origin.
       </p>
     </SimLayout>

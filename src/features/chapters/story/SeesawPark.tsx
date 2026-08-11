@@ -26,16 +26,18 @@
  * committed sprites only (no new assets). Wrapped by game/CompareChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
-import { SIGNS, compareSign } from '../lessons/CompareLesson'
 import FitBox from './FitBox'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { SheetSprite, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { rint } from '@/core/rand'
+
+/** The three signs, in the order they are drawn. The answer is a SIGN, not a side. */
+export const SIGNS = ['>', '<', '=']
+export const compareSign = (a: number, b: number): string => (a > b ? '>' : a < b ? '<' : '=')
 
 // Live viewport — so the scale, signs and banner never collide on short/landscape frames.
 
@@ -391,7 +393,7 @@ const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data
 // ─── Beat ───────────────────────────────────────────────────────────────────────────
 function makeCompareBeat(): Beat<CmpRound> {
   return {
-    skillId: 'compareNumbers', rounds: SCORED_N, reteachAfter: 3, walkEvery: 3,
+    skillId: 'compareNumbers', rounds: SCORED_N, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.a}:${d.b}`,   // dedupe on the MATH (the pair), not the rotating scene/animal
     prompt: () => 'Which sign is right?',
@@ -412,7 +414,6 @@ export default function SeesawPark({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<CmpWorld>(SETTINGS[0])
   const [phase, setPhase] = useState<Phase>('intro')
@@ -421,15 +422,7 @@ export default function SeesawPark({ onFinish, onExit }: {
   const { h: vh } = useViewport()
   const short = vh < 470
   const needsRotate = useNeedsRotate()
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeCompareBeat(), [])
@@ -488,7 +481,7 @@ export default function SeesawPark({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (data?.w) { setScene(data.w); setBg(data.bg) } }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
 

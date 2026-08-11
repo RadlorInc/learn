@@ -18,10 +18,9 @@ import {
   makeRound, needsRegroup, loadPlan, slotAt, scoredSlot, GUIDED_SLOT, DEMO_SLOTS,
   spotOf, queueOf, rodSpot, QUEUE_PER_ROW, MILO_X, RODS_X0, ONES_X0, ONES_COL,
   ROD_SEGMENTS, GROUND, groundOf, PAD_BAND, bannerBottom, yardUnit, rodBudget,
-  MATERIALS, MAT_SAT, MAT_VAL,
+  MATERIALS, MAT_SAT, MAT_VAL, type Op,
 } from '@/features/chapters/story/BlockYard'
 import { hasSheet } from '@/features/chapters/story/critters'
-import type { Op } from '@/features/chapters/lessons/ArithmeticLesson'
 
 const ASSETS = join(process.cwd(), 'public', 'assets')
 const OPS: Op[] = ['+', '-']

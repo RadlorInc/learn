@@ -38,6 +38,7 @@ import { useState, type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, CommitBtn, Nudge, numChoices } from './parts/gameKit'
 import { rint } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#2a1a33', nightBot: '#140a1a',
@@ -48,11 +49,10 @@ const P: Palette = {
   glass: 'rgba(44,26,54,0.6)', glassBorder: 'rgba(245,238,247,0.2)',
 }
 
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 const SUP: Record<string, string> = { '2': '²', '3': '³', '4': '⁴' }
 const sup = (n: number) => SUP[String(n)] ?? `^${n}`
 /** Render c·x^p the way the board and the builder both show it. */
-const deriv = (c: number, p: number) => (p === 0 ? fmt(c) : p === 1 ? `${c === 1 ? '' : fmt(c)}x` : `${c === 1 ? '' : fmt(c)}x${sup(p)}`)
+const deriv = (c: number, p: number) => (p === 0 ? disp(c) : p === 1 ? `${c === 1 ? '' : disp(c)}x` : `${c === 1 ? '' : disp(c)}x${sup(p)}`)
 
 // The answer is a NUMBER (tapped, or dialled on the window trace) or an EXPRESSION
 // built as a coefficient and an exponent.
@@ -333,7 +333,7 @@ const CONFIG: GameConfig<V, Task> = {
   grade: (t, v) => (t.kind === 'deriv'
     ? v.k === 'deriv' && v.c === t.c && v.p === t.p
     : v.k === 'num' && v.n === t.n),
-  revealText: (t) => (t.kind === 'deriv' ? deriv(t.c ?? 1, t.p ?? 1) : fmt(t.n ?? 0)),
+  revealText: (t) => (t.kind === 'deriv' ? deriv(t.c ?? 1, t.p ?? 1) : disp(t.n ?? 0)),
   glide: (t, _f, setValue, later) => later(() => setValue(
     t.kind === 'deriv' ? { k: 'deriv', c: t.c ?? 1, p: t.p ?? 1 } : { k: 'num', n: t.n ?? 0 }), 320),
   Instrument: ({ task, value, setValue, disabled, reveal, onCommit }): ReactElement => {

@@ -54,13 +54,12 @@
  * TickTock records.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 
 // ─── The line: ten runs ─────────────────────────────────────────────────────────────────
 /**
@@ -106,8 +105,6 @@ export const LINE: Stop[] = [
 ]
 export const stopAt = (round: number) => LINE[Math.min(round, LINE.length - 1)]
 
-// ─── The question ───────────────────────────────────────────────────────────────────────
-const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 const fmt = (n: number) => n.toLocaleString('en-US')
 
 export function roundTo(n: number, m: number): number { return Math.floor(n / m + 0.5) * m }
@@ -872,7 +869,7 @@ const RailExplain: React.FC<{ data: RlRound; onDone: () => void }> = ({ data, on
 // ─── Beat ───────────────────────────────────────────────────────────────────────────────
 export function makeBeat(): Beat<RlRound> {
   return {
-    skillId: 'rounding', rounds: 10, reteachAfter: 3, walkEvery: 99,
+    skillId: 'rounding', rounds: 10,
     make: (d, round, asked) => makeRound((d || 1) as 1 | 2 | 3, round ?? 0, asked ?? []),
     // The MATH only. Include the scene and the same question comes back the moment the dressing
     // changes, which is exactly what the rotating backdrop would otherwise buy.
@@ -898,13 +895,11 @@ export default function RailLine({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const [served, setServed] = useState<number[]>([])     // the cumulative arc — OUTSIDE SkillBeat
   const needsRotate = useNeedsRotate()
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   /**
    * ⚠️ THE RUN STRIP WAS A CHEAT SHEET, AND IT TOOK A MEASUREMENT TO SEE IT. `SkillBeat` fires
    * `onRound` when a round LOADS, not when it is answered — so pushing that round's answer straight
@@ -915,13 +910,6 @@ export default function RailLine({ onFinish, onExit }: {
    */
   const pendingStop = useRef<number | null>(null)
 
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return
-    finished.current = true; stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
   const beat = useMemo(() => makeBeat(), [])
 
   // Deterministic, and the two demos come out as DIFFERENT types by construction: `asked` drives the
@@ -1013,15 +1001,12 @@ export default function RailLine({ onFinish, onExit }: {
       )}
 
       {phase === 'practice' && (
-        <SkillBeat beat={beat} onInterlude={interlude}
+        <SkillBeat beat={beat}
           onRound={(data) => {
             if (pendingStop.current != null) { const v = pendingStop.current; setServed(s => [...s, v]) }
             pendingStop.current = (data as RlRound).answer
           }}
-          onComplete={(c, w, mastered) => {
-            result.current.correct += c; result.current.wrong += w
-            finishChapter(result.current.correct, result.current.wrong, mastered)
-          }} />
+          onComplete={tally} />
       )}
     </div>
   )

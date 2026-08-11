@@ -12,7 +12,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
 
 export interface TrigTriangleExplorerProps {
   band: AgeBand
@@ -30,29 +30,6 @@ const OY = 192         // baseline y (both bottom vertices share this y)
 // past ~42°). The leg pixel lengths are then HYP·cos and HYP·sin — purely the
 // drawn figure; the live ratios are computed from the true angle, not these.
 const HYP = 168        // hypotenuse length in px (apex stays inside the viewBox)
-
-function Slider({ label, value, min, max, suffix, onChange }: {
-  label: string; value: number; min: number; max: number; suffix?: string; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 70, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 48, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {value}{suffix ?? ''}
-      </span>
-    </label>
-  )
-}
 
 function Ratio({ name, formula, value }: { name: string; formula: string; value: string }) {
   return (
@@ -143,7 +120,7 @@ export default function TrigTriangleExplorer({ band, onReady }: TrigTriangleExpl
 
       {/* Slider */}
       <div style={{ width: '100%' }}>
-        <Slider label="angle θ" value={deg} min={10} max={80} suffix="°" onChange={setDeg} />
+        <Slider labelW={70} valueW={48} label="angle θ" value={deg} min={10} max={80} suffix="°" onChange={setDeg} />
       </div>
 
       {/* Plain-language read-out of what changed */}

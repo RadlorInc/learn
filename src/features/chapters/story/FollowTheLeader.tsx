@@ -32,9 +32,8 @@
  * the count sequence.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { seqLength } from '@/core/adaptive'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { SHEETS } from './canvas/sheets'
@@ -378,7 +377,7 @@ function makeRound(d: 1 | 2 | 3, round: number): LineRound {
 
 function makeLineBeat(): Beat<LineRound> {
   return {
-    skillId: 'numberOrdering', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'numberOrdering', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
     sig: d => [...d.nums].sort((a, b) => a - b).join(','),   // dedupe on the SET, not its shuffle or the rotating scene
     prompt: () => `Line them up — smallest first!`,
@@ -397,20 +396,11 @@ export default function FollowTheLeader({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [homeStage, setHomeStage] = useState(0)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeLineBeat(), [])
@@ -462,7 +452,7 @@ export default function FollowTheLeader({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data, round) => { if (data?.scene) setScene(data.scene as string); setHomeStage(round) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
         <MapStrip done={homeStage} total={TOTAL_ROUNDS} journey={JOURNEY} />
       </>)}

@@ -14,7 +14,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AgeBand, Pt } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
 export interface TransformExplorerProps {
   band: AgeBand
@@ -43,7 +44,6 @@ const BASE: Pt[] = [
   { x: 1, y: 4 },
 ]
 
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 
 function applyTransform(p: Pt, dx: number, dy: number, axis: Axis, scale: number): Pt {
   let { x, y } = p
@@ -65,29 +65,6 @@ function ruleText(dx: number, dy: number, axis: Axis, scale: number): string {
   if (dx !== 0 || dy !== 0) parts.push(`translate (x ${dx >= 0 ? '+' : '−'} ${Math.abs(dx)}, y ${dy >= 0 ? '+' : '−'} ${Math.abs(dy)})`)
   if (parts.length === 0) return 'no change — image sits on the pre-image'
   return parts.join(', then ')
-}
-
-function Slider({ label, value, min, max, onChange }: {
-  label: string; value: number; min: number; max: number; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 80, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {fmt(value)}
-      </span>
-    </label>
-  )
 }
 
 export default function TransformExplorer({ band, onReady }: TransformExplorerProps) {
@@ -152,9 +129,9 @@ export default function TransformExplorer({ band, onReady }: TransformExplorerPr
 
       {/* Controls */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
-        <Slider label="translate dx" value={dx} min={-5} max={5} onChange={setDx} />
-        <Slider label="translate dy" value={dy} min={-5} max={5} onChange={setDy} />
-        <Slider label="scale" value={scale} min={1} max={3} onChange={setScale} />
+        <Slider labelW={80} label="translate dx" value={dx} min={-5} max={5} onChange={setDx} />
+        <Slider labelW={80} label="translate dy" value={dy} min={-5} max={5} onChange={setDy} />
+        <Slider labelW={80} label="scale" value={scale} min={1} max={3} onChange={setScale} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', fontFamily: 'var(--font-body)' }}>
           <span style={{ width: 80, fontSize: 14, color: 'var(--ink-soft)' }}>reflect</span>
           <div style={{ display: 'flex', gap: 8, flex: 1 }}>

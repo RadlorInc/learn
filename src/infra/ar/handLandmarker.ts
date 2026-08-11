@@ -7,31 +7,22 @@ export const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_l
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type HandLandmarkerInstance = any
 
-export interface CreateHandLandmarkerOptions {
-  numHands?: number
-  minHandDetectionConfidence?: number
-  minHandPresenceConfidence?: number
-  minTrackingConfidence?: number
-}
-
-export async function createHandLandmarker(
-  opts: CreateHandLandmarkerOptions = {},
-): Promise<HandLandmarkerInstance> {
-  const {
-    numHands = 1,
-    minHandDetectionConfidence = 0.5,
-    minHandPresenceConfidence = 0.3,
-    minTrackingConfidence = 0.3,
-  } = opts
+/**
+ * How many hands to track is the only thing a caller has ever varied.
+ *
+ * ⚠️ The three confidences stay at MediaPipe's own 0.5 DELIBERATELY. Loosening detection is
+ * backwards for a single-hand reading: every marginal claim — a sibling, a face, a cushion —
+ * EVICTS the tracked hand from the only slot, and each eviction is exactly the discontinuity
+ * an event detector is least able to tell from a real gesture.
+ */
+export async function createHandLandmarker(numHands: 1 | 2 = 1): Promise<HandLandmarkerInstance> {
   const { FilesetResolver, HandLandmarker } = await import('@mediapipe/tasks-vision')
   const fileset = await FilesetResolver.forVisionTasks(WASM_URL)
   return HandLandmarker.createFromOptions(fileset, {
     baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
     runningMode: 'VIDEO',
     numHands,
-    ...(minHandDetectionConfidence !== undefined ? { minHandDetectionConfidence } : {}),
-    ...(minHandPresenceConfidence !== undefined ? { minHandPresenceConfidence } : {}),
-    ...(minTrackingConfidence !== undefined ? { minTrackingConfidence } : {}),
+    minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
   })
 }
 

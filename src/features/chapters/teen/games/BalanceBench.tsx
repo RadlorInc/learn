@@ -15,7 +15,8 @@
 import { useEffect, type ReactNode } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, BalanceBeam, Nudge, CommitBtn, numChoices, pick, glideNumber } from './parts/gameKit'
+import { Palette, BalanceBeam, Nudge, CommitBtn, numChoices, glideNumber } from './parts/gameKit'
+import { pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#101d24', nightBot: '#152a33',

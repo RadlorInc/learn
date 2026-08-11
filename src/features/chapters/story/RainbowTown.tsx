@@ -41,9 +41,8 @@
  * Landscape-first, wrapped by the registry / `?ch=rainbow`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -355,7 +354,6 @@ export default function RainbowTown({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('start')
   // The skip is offered only to a child who has already sat through the lesson once. Read at mount,
@@ -396,14 +394,7 @@ export default function RainbowTown({ onFinish, onExit }: {
   const timers = useRef<number[]>([])
   useEffect(() => () => { timers.current.forEach(clearTimeout) }, [])
 
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   // Decode the open drawing and work out where its lines are. Re-runs if the page changes, which it
   // only does on the intro — `ready` gates the start button so nobody enters a half-decoded page.
@@ -590,7 +581,7 @@ export default function RainbowTown({ onFinish, onExit }: {
   // regenerate the question or reshuffle the box under the child. The page is fixed before the test
   // starts, so listing it here costs nothing.
   const beat = useMemo<Beat<ColorRound>>(() => ({
-    skillId: 'colors', rounds: SCORED_ROUNDS, reteachAfter: 3,
+    skillId: 'colors', rounds: SCORED_ROUNDS,
     make: (d, round = 0) => makeColorRound(page, (d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.seq}`,   // one question per named area; the shuffled pot order is not variety
     prompt: d => promptFor(page, d),
@@ -704,7 +695,7 @@ export default function RainbowTown({ onFinish, onExit }: {
         <div className="rt-passthru" style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data: ColorRound) => { setStepIdx(data.seq); setPots(data.pots); setLoaded(null) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
 

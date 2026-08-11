@@ -18,9 +18,8 @@
  * 50–100. Reuses committed art (no new assets). Wrapped by game/Numbers100Chapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords, CSS as KIT_CSS, BigCount, nounFor } from '../lessons/_kit'
 import { TensOnes } from '../lessons/Numbers100Lesson'
 import WorldSelect from './WorldSelect'
@@ -290,7 +289,7 @@ function makeRound(world: NumWorld, d: 1 | 2 | 3, round: number): NumRound {
 
 function makeNumBeat(world: NumWorld): Beat<NumRound> {
   return {
-    skillId: 'numbersTo100', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'numbersTo100', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.target}`,   // dedupe on the target number (not the rotating scene)
     prompt: d => `Find ${numberToWords(d.target)}!`,
@@ -311,22 +310,13 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const { h: vh } = useViewport()
   const short = vh < 470
   const [world, setWorld] = useState<NumWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
   const [phase, setPhase] = useState<Phase>('intro')
   const [scene, setScene] = useState<Scene>('house')
   const [demoIdx, setDemoIdx] = useState(0)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => (world ? makeNumBeat(world) : null), [world])
@@ -382,7 +372,7 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (data?.scene) setScene(data.scene as Scene) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
 

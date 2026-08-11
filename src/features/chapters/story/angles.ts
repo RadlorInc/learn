@@ -16,6 +16,7 @@
  * every number here is obeying.
  */
 import { snapIndex } from '@/infra/ar/slide'
+import { pick } from '@/core/rand'
 
 // ─── the turn ────────────────────────────────────────────────────────────────────────
 /** 5° a tap, so 90 is reachable and a right angle is expressible at all. */
@@ -248,7 +249,6 @@ const SHAPES: Record<Tier, Shape[]> = {
 }
 
 const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
-const pick = <T,>(a: T[]): T => a[rint(0, a.length - 1)]
 
 /** A start angle that is NEVER already the answer — otherwise a round is won by doing nothing. */
 export const START_GAP = 25

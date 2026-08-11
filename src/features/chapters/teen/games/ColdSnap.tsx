@@ -43,7 +43,8 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, CommitBtn, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#101d2e', nightBot: '#060b14',
@@ -54,8 +55,6 @@ const P: Palette = {
   glass: 'rgba(16,29,46,0.62)', glassBorder: 'rgba(234,243,251,0.2)',
 }
 
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
-const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 
 /** The week, in days. Every crossing this chapter draws lands inside it. */
 const DAY_MIN = 0
@@ -167,7 +166,7 @@ function signsTask(): Task {
   const a = rint(1, 3)
   const b = rint(a + 2, 6)
   // one root may be doubled, which is what stops the signs simply alternating
-  const dbl = Math.random() < 0.4 ? pickOne([a, b]) : null
+  const dbl = Math.random() < 0.4 ? pick([a, b]) : null
   const poly: Poly = { s, rs: [{ r: a, m: dbl === a ? 2 : 1 }, { r: b, m: dbl === b ? 2 : 1 }] }
   const cuts = [a, b]
   const mids = [(DAY_MIN + a) / 2, (a + b) / 2, (b + DAY_MAX) / 2]
@@ -484,7 +483,7 @@ const CONFIG: GameConfig<V, Task> = {
     t.kind === 'ends' ? `${t.el === 'up' ? 'climbs' : 'plunges'} / ${t.er === 'up' ? 'climbs' : 'plunges'}`
       : t.kind === 'zeros' ? `day ${(t.roots ?? []).join(' and day ')}`
         : t.kind === 'signs' ? (t.sgn ?? []).map((s) => (s > 0 ? 'above' : 'below')).join(', ')
-          : fmt(t.n ?? 0),
+          : disp(t.n ?? 0),
   glide: (t, _f, setValue, later) => later(() => setValue(
     t.kind === 'ends' ? { k: 'ends', l: t.el ?? 'up', r: t.er ?? 'up' }
       : t.kind === 'zeros' ? { k: 'zeros', xs: t.roots ?? [] }

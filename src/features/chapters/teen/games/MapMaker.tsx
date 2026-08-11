@@ -51,7 +51,8 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, CommitBtn, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#12233b', nightBot: '#0a1420',
@@ -62,9 +63,6 @@ const P: Palette = {
   glass: 'rgba(18,35,59,0.6)', glassBorder: 'rgba(234,243,255,0.2)',
 }
 
-const pick = <T,>(a: T[]): T => a[rint(0, a.length - 1)]
-/** Display integer with a real minus glyph. */
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 /** Signed vector component, always with its sign: "+3" / "−2". */
 const sgn = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `+${n}`)
 /** SPOKEN integer — a minus glyph reads as nothing, so speech gets words. */
@@ -230,12 +228,12 @@ function moveTask(mv: Move): Task {
     const ax = rint(-3, 3), ay = rint(-3, 3)
     return {
       ...base, mv, title: 'Slide it', ax, ay, dx, dy, x: ax + dx, y: ay + dy,
-      badge: `slide (${fmt(ax)}, ${fmt(ay)})  by  (${sgn(dx)}, ${sgn(dy)})`,
+      badge: `slide (${disp(ax)}, ${disp(ay)})  by  (${sgn(dx)}, ${sgn(dy)})`,
       context: 'The prop needs sliding to a new spot on the level.',
       prompt: `Drag the prop ${Math.abs(dx)} ${dx < 0 ? 'left' : 'right'} and ${Math.abs(dy)} ${dy < 0 ? 'down' : 'up'}.`,
       instruction: 'Drag the prop to where it lands.',
       say: `Slide the prop at ${spoken(ax)}, ${spoken(ay)} by ${spoken(dx)} across and ${spoken(dy)} up. Drag it to where it lands.`,
-      work: [`Sliding adds to each coordinate: x goes ${fmt(ax)} ${sgn(dx)} = ${fmt(ax + dx)}, y goes ${fmt(ay)} ${sgn(dy)} = ${fmt(ay + dy)}. It lands on (${fmt(ax + dx)}, ${fmt(ay + dy)}).`],
+      work: [`Sliding adds to each coordinate: x goes ${disp(ax)} ${sgn(dx)} = ${disp(ax + dx)}, y goes ${disp(ay)} ${sgn(dy)} = ${disp(ay + dy)}. It lands on (${disp(ax + dx)}, ${disp(ay + dy)}).`],
     }
   }
 
@@ -247,14 +245,14 @@ function moveTask(mv: Move): Task {
     const y = axis === 'x' ? -ay : ay
     return {
       ...base, mv, title: 'Mirror it', ax, ay, axis, x, y,
-      badge: `mirror (${fmt(ax)}, ${fmt(ay)})  in the ${axis}-axis`,
+      badge: `mirror (${disp(ax)}, ${disp(ay)})  in the ${axis}-axis`,
       context: `The ${axis}-axis is a mirror line across the level.`,
       prompt: `Drag the prop to its mirror image across the ${axis}-axis.`,
       instruction: 'Drag the prop to its mirror spot.',
       say: `Mirror the prop at ${spoken(ax)}, ${spoken(ay)} across the ${axis} axis. Drag it to where the reflection sits.`,
       work: [axis === 'x'
-        ? `The x-axis is the mirror, so x stays ${fmt(ax)} and y flips to the other side: ${fmt(ay)} becomes ${fmt(y)}. It lands on (${fmt(x)}, ${fmt(y)}).`
-        : `The y-axis is the mirror, so y stays ${fmt(ay)} and x flips to the other side: ${fmt(ax)} becomes ${fmt(x)}. It lands on (${fmt(x)}, ${fmt(y)}).`],
+        ? `The x-axis is the mirror, so x stays ${disp(ax)} and y flips to the other side: ${disp(ay)} becomes ${disp(y)}. It lands on (${disp(x)}, ${disp(y)}).`
+        : `The y-axis is the mirror, so y stays ${disp(ay)} and x flips to the other side: ${disp(ax)} becomes ${disp(x)}. It lands on (${disp(x)}, ${disp(y)}).`],
     }
   }
 
@@ -263,12 +261,12 @@ function moveTask(mv: Move): Task {
     while (ax === 0 && ay === 0) { ax = rint(-5, 5); ay = rint(-5, 5) }
     return {
       ...base, mv, title: 'Spin it', tone: 'b', ax, ay, x: -ax, y: -ay,
-      badge: `turn (${fmt(ax)}, ${fmt(ay)})  half a turn about O`,
+      badge: `turn (${disp(ax)}, ${disp(ay)})  half a turn about O`,
       context: 'The prop pivots around the centre of the level.',
       prompt: 'Drag the prop to where a half turn about the origin puts it.',
       instruction: 'Drag the prop through the centre.',
       say: `Spin the prop at ${spoken(ax)}, ${spoken(ay)} half a turn about the origin. Drag it to where it comes to rest.`,
-      work: [`A half turn carries a point straight through the origin to the same distance the other side, so both coordinates flip: (${fmt(-ax)}, ${fmt(-ay)}).`],
+      work: [`A half turn carries a point straight through the origin to the same distance the other side, so both coordinates flip: (${disp(-ax)}, ${disp(-ay)}).`],
     }
   }
 
@@ -278,12 +276,12 @@ function moveTask(mv: Move): Task {
     while (ax === 0 && ay === 0) { ax = rint(-5, 5); ay = rint(-5, 5) }
     return {
       ...base, mv, title: 'Quarter turn', tone: 'b', ax, ay, x: -ay, y: ax,
-      badge: `turn (${fmt(ax)}, ${fmt(ay)})  a quarter turn ↺ about O`,
+      badge: `turn (${disp(ax)}, ${disp(ay)})  a quarter turn ↺ about O`,
       context: 'The prop swings a quarter turn anticlockwise around the centre.',
       prompt: 'Drag the prop to where a quarter turn anticlockwise puts it.',
       instruction: 'Drag the prop a quarter turn round.',
       say: `Turn the prop at ${spoken(ax)}, ${spoken(ay)} a quarter turn anticlockwise about the origin. Drag it to where it stops.`,
-      work: [`A quarter turn anticlockwise swaps the coordinates and flips the sign of the new x: (${fmt(ax)}, ${fmt(ay)}) goes to (${fmt(-ay)}, ${fmt(ax)}).`],
+      work: [`A quarter turn anticlockwise swaps the coordinates and flips the sign of the new x: (${disp(ax)}, ${disp(ay)}) goes to (${disp(-ay)}, ${disp(ax)}).`],
     }
   }
 
@@ -294,12 +292,12 @@ function moveTask(mv: Move): Task {
     while (ax === 0 && ay === 0) { ax = rint(-lim, lim); ay = rint(-lim, lim) }
     return {
       ...base, mv, title: 'Scale it up', tone: 'b', ax, ay, scale, x: ax * scale, y: ay * scale,
-      badge: `scale (${fmt(ax)}, ${fmt(ay)})  by ×${scale}  from O`,
+      badge: `scale (${disp(ax)}, ${disp(ay)})  by ×${scale}  from O`,
       context: 'The prop is being blown up from the centre of the level.',
       prompt: `Drag the prop ${scale} times as far from the origin, straight out along the same line.`,
       instruction: 'Drag the prop out along the same line.',
       say: `Scale the prop at ${spoken(ax)}, ${spoken(ay)} by ${scale}, out from the origin. Drag it to where it lands.`,
-      work: [`Scaling from the origin multiplies BOTH coordinates: (${fmt(ax)} × ${scale}, ${fmt(ay)} × ${scale}) = (${fmt(ax * scale)}, ${fmt(ay * scale)}).`],
+      work: [`Scaling from the origin multiplies BOTH coordinates: (${disp(ax)} × ${scale}, ${disp(ay)} × ${scale}) = (${disp(ax * scale)}, ${disp(ay * scale)}).`],
     }
   }
 
@@ -314,12 +312,12 @@ function moveTask(mv: Move): Task {
   return {
     ...base, mv: 'midpoint', title: 'Halfway checkpoint', tone: 'b',
     ax, ay, bx, by, x: (ax + bx) / 2, y: (ay + by) / 2,
-    badge: `midpoint of (${fmt(ax)}, ${fmt(ay)}) — (${fmt(bx)}, ${fmt(by)})`,
+    badge: `midpoint of (${disp(ax)}, ${disp(ay)}) — (${disp(bx)}, ${disp(by)})`,
     context: 'A checkpoint goes halfway along the patrol route.',
     prompt: 'Drag the checkpoint to the middle of the route.',
     instruction: 'Drag the checkpoint to the middle.',
     say: `Drop a checkpoint halfway between ${spoken(ax)}, ${spoken(ay)} and ${spoken(bx)}, ${spoken(by)}. Drag it to the middle.`,
-    work: [`The middle is the average of the ends: ((${fmt(ax)} + ${fmt(bx)}) ÷ 2, (${fmt(ay)} + ${fmt(by)}) ÷ 2) = (${fmt((ax + bx) / 2)}, ${fmt((ay + by) / 2)}).`],
+    work: [`The middle is the average of the ends: ((${disp(ax)} + ${disp(bx)}) ÷ 2, (${disp(ay)} + ${disp(by)}) ÷ 2) = (${disp((ax + bx) / 2)}, ${disp((ay + by) / 2)}).`],
   }
 }
 
@@ -468,7 +466,7 @@ function MoveGrid({ P: p, task, value, setValue, disabled, reveal, onCommit }: {
 
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(20px,2.2vw,28px)', fontWeight: 800, color: col }}>
-          ({fmt(px)}, {fmt(py)})
+          ({disp(px)}, {disp(py)})
         </div>
         <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1.05vw,13px)', letterSpacing: '0.06em', color: p.creamSoft, minHeight: '1.3em' }}>
           {readout}
@@ -644,7 +642,7 @@ const CONFIG: GameConfig<V, Task> = {
   grade: (t, v) => t.kind === 'measure'
     ? v.k === 'num' && v.n === t.n
     : v.k === 'pt' && v.a === t.x && v.b === t.y,
-  revealText: (t) => (t.kind === 'measure' ? `${t.n}${t.suffix ?? ''}` : `(${fmt(t.x ?? 0)}, ${fmt(t.y ?? 0)})`),
+  revealText: (t) => (t.kind === 'measure' ? `${t.n}${t.suffix ?? ''}` : `(${disp(t.x ?? 0)}, ${disp(t.y ?? 0)})`),
   glide: (t, _from, setValue, later) => later(() => setValue(t.kind === 'measure'
     ? { k: 'num', n: t.n ?? 0 }
     : { k: 'pt', a: t.x ?? 0, b: t.y ?? 0 }), 320),

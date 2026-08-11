@@ -26,9 +26,8 @@
  * choices 2 → 3 → 4, and look-alike distractors (6/9, 7/1, 3/8) at the hardest tier.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, speakSteps, useIsSpeaking, stopSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { SHEETS } from './canvas/sheets'
@@ -356,7 +355,7 @@ function makeRound(world: NestWorld, d: 1 | 2 | 3, round: number): NestRound {
 
 function makeNestBeat(world: NestWorld): Beat<NestRound> {
   return {
-    skillId: 'numberRecognition', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'numberRecognition', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.nums[d.answerIdx]}`,   // dedupe on the TARGET number, not the rotating scene
     prompt: () => promptFor(world),
@@ -381,21 +380,12 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [world, setWorld] = useState<NestWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
   const [phase, setPhase] = useState<Phase>('intro')
   const [scene, setScene] = useState<string>(WORLDS[0].scenes[0])
   const [demoIdx, setDemoIdx] = useState(0)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => (world ? makeNestBeat(world) : null), [world])
@@ -454,7 +444,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (data?.scene) setScene(data.scene as string) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
 

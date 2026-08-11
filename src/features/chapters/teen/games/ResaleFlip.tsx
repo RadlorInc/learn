@@ -35,6 +35,7 @@ import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, CommitBtn, Nudge, numChoices } from './parts/gameKit'
 import { rint } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#2b2118', nightBot: '#130d08',
@@ -45,7 +46,6 @@ const P: Palette = {
   glass: 'rgba(46,34,24,0.62)', glassBorder: 'rgba(248,240,230,0.2)',
 }
 
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 const disc = (a: number, b: number, c: number) => b * b - 4 * a * c
 
@@ -86,7 +86,7 @@ function l1Task(): Task {
       say: 'In this vertex form parabola, what is the vertex?',
       work: [
         'In vertex form the number inside the bracket is the price, and it comes out with the OPPOSITE sign.',
-        `So the price is ${fmt(h)}, and the profit outside the bracket stays as it is: ${fmt(k)}.`,
+        `So the price is ${disp(h)}, and the profit outside the bracket stays as it is: ${disp(k)}.`,
       ],
       pa: h, pb: k, labels: ['price', 'profit'],
     }
@@ -99,7 +99,7 @@ function l1Task(): Task {
       context: 'The curve is a mirror image of itself either side of one price, and that price is where it turns. It is the number in the bracket — with its sign flipped.',
       padInstruction: 'Tap the price it turns at.',
       say: 'What is the axis of symmetry?',
-      work: ['The axis runs straight through the turning point.', `Inside the bracket flips sign, so the price is ${fmt(h)}.`],
+      work: ['The axis runs straight through the turning point.', `Inside the bracket flips sign, so the price is ${disp(h)}.`],
       n: h, pad: [-h, k, 0],
     }
   }
@@ -111,7 +111,7 @@ function l1Task(): Task {
     context: 'The sign in front of the squared bracket decides which way the curve turns. One way gives a price where profit peaks; the other gives a price where it bottoms out.',
     instruction: 'Choose which way it turns, then lock it in.',
     say: 'Does this parabola open up or down?',
-    work: [`The number in front is ${fmt(a)}, so the curve ${a > 0 ? 'opens upward, and the turning point is its LOWEST value' : 'opens downward, and the turning point is its HIGHEST value'}.`],
+    work: [`The number in front is ${disp(a)}, so the curve ${a > 0 ? 'opens upward, and the turning point is its LOWEST value' : 'opens downward, and the turning point is its HIGHEST value'}.`],
     correctId: a > 0 ? 'up' : 'down',
     choices: [
       { id: 'up', label: 'Opens up — a worst price' },
@@ -128,13 +128,13 @@ function countTask(): Task {
   const eqn = `y = ${a === 1 ? '' : a}x² ${b < 0 ? '−' : '+'} ${Math.abs(b)}x ${c < 0 ? '−' : '+'} ${Math.abs(c)}`
   return {
     kind: 'count', title: 'Break even?', tone: 'a',
-    badge: `${eqn}     b² − 4ac = ${fmt(D)}`, answerLabel: 'break-even prices:',
+    badge: `${eqn}     b² − 4ac = ${disp(D)}`, answerLabel: 'break-even prices:',
     prompt: 'How many break-even prices?',
-    context: `Breaking even means profit is exactly zero — the curve touching the line. The discriminant has already been worked out for you at ${fmt(D)}; its SIGN is what tells you how many times that happens.`,
+    context: `Breaking even means profit is exactly zero — the curve touching the line. The discriminant has already been worked out for you at ${disp(D)}; its SIGN is what tells you how many times that happens.`,
     padInstruction: 'Tap how many break-even prices there are.',
     say: `The discriminant is ${spoken(D)}. How many real roots?`,
     work: [
-      `b² − 4ac = ${fmt(D)}.`,
+      `b² − 4ac = ${disp(D)}.`,
       D > 0 ? 'Positive, so the curve crosses zero twice — two break-even prices.'
         : D === 0 ? 'Exactly zero, so the curve just touches — one break-even price.'
           : 'Negative, so the curve never reaches zero — it never breaks even.',
@@ -180,8 +180,8 @@ function stdVertexTask(): Task {
     instruction: 'Build the turning point, then lock it in.',
     say: 'Use x equals negative b over 2 a to find the vertex.',
     work: [
-      `Price first: x = −b ÷ 2a = ${fmt(-b)} ÷ ${fmt(2 * a)} = ${fmt(vx)}.`,
-      `Then put ${fmt(vx)} back into the equation to get the profit: ${fmt(vy)}.`,
+      `Price first: x = −b ÷ 2a = ${disp(-b)} ÷ ${disp(2 * a)} = ${disp(vx)}.`,
+      `Then put ${disp(vx)} back into the equation to get the profit: ${disp(vy)}.`,
     ],
     pa: vx, pb: vy, labels: ['price', 'profit'],
   }
@@ -197,14 +197,14 @@ function complexTask(): Task {
   const D = disc(a, b, c)
   return {
     kind: 'complex', title: 'Never breaks even', tone: 'b',
-    badge: `${a === 1 ? '' : a}x² ${b < 0 ? '−' : '+'} ${Math.abs(b)}x + ${c} = 0     b² − 4ac = ${fmt(D)}`,
+    badge: `${a === 1 ? '' : a}x² ${b < 0 ? '−' : '+'} ${Math.abs(b)}x + ${c} = 0     b² − 4ac = ${disp(D)}`,
     showEquals: false,
     prompt: 'So what are its roots?',
-    context: `The discriminant came out at ${fmt(D)}, which is below zero — so this flip never breaks even at any real price. That does not mean the equation has no solutions, though; it means the solutions are not real numbers.`,
+    context: `The discriminant came out at ${disp(D)}, which is below zero — so this flip never breaks even at any real price. That does not mean the equation has no solutions, though; it means the solutions are not real numbers.`,
     instruction: 'Choose what that means, then lock it in.',
     say: 'The discriminant is negative. What are the roots?',
     work: [
-      `b² − 4ac = ${fmt(D)}, and a negative sits under the square root in the formula.`,
+      `b² − 4ac = ${disp(D)}, and a negative sits under the square root in the formula.`,
       'A negative under the root gives imaginary parts, so there are two complex roots and no real ones.',
     ],
     correctId: 'complex',
@@ -238,14 +238,14 @@ function PriceBoard({ task, value, setValue, disabled, reveal, onCommit }: {
     <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px,0.9vw,12px)' }}>
       <span style={{ width: 'clamp(56px,6vw,84px)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1vw,13px)', letterSpacing: '0.07em', color: P.mutedOnPaper, textTransform: 'uppercase' }}>{label}</span>
       <Nudge P={P} label="−" disabled={disabled} onClick={() => on(Math.max(-12, val - 1))} />
-      <span style={{ minWidth: 'clamp(32px,3.2vw,46px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{fmt(val)}</span>
+      <span style={{ minWidth: 'clamp(32px,3.2vw,46px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{disp(val)}</span>
       <Nudge P={P} label="+" disabled={disabled} onClick={() => on(Math.min(12, val + 1))} />
     </div>
   )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.3vw,18px)', width: '100%' }}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(24px,3.2vw,44px)', fontWeight: 800, color: col, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55` }}>
-        {task.kind === 'roots' ? `${fmt(a)} and ${fmt(b)}` : `(${fmt(a)}, ${fmt(b)})`}
+        {task.kind === 'roots' ? `${disp(a)} and ${disp(b)}` : `(${disp(a)}, ${disp(b)})`}
       </div>
       <Part label={la} val={a} on={(n) => setValue({ k: 'pair', a: n, b })} />
       <Part label={lb} val={b} on={(n) => setValue({ k: 'pair', a, b: n })} />
@@ -289,10 +289,10 @@ const CONFIG: GameConfig<V, Task> = {
       : t.kind === 'turn' || t.kind === 'complex' ? v.k === 'pick' && v.id === t.correctId
         : v.k === 'num' && v.n === t.n,
   revealText: (t) =>
-    t.kind === 'vertex' ? `(${fmt(t.pa ?? 0)}, ${fmt(t.pb ?? 0)})`
-      : t.kind === 'roots' ? `${fmt(t.pa ?? 0)} and ${fmt(t.pb ?? 0)}`
+    t.kind === 'vertex' ? `(${disp(t.pa ?? 0)}, ${disp(t.pb ?? 0)})`
+      : t.kind === 'roots' ? `${disp(t.pa ?? 0)} and ${disp(t.pb ?? 0)}`
         : t.kind === 'turn' || t.kind === 'complex' ? (t.choices?.find((c) => c.id === t.correctId)?.label ?? '')
-          : fmt(t.n ?? 0),
+          : disp(t.n ?? 0),
   glide: (t, _f, setValue, later) => later(() => setValue(
     t.kind === 'vertex' || t.kind === 'roots' ? { k: 'pair', a: t.pa ?? 0, b: t.pb ?? 0 }
       : t.kind === 'turn' || t.kind === 'complex' ? { k: 'pick', id: t.correctId ?? '' }

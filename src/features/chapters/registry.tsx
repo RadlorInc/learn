@@ -190,16 +190,11 @@ const TEEN_CHAPTERS = {
   ),
 }
 
-/** Chapters that still have a bespoke wrapper — their own phases, sims or copy
- *  don't fit the portal table. Counting owns a world picker that "play again"
- *  returns to, which is a different run shape, not a different backdrop. */
-const BESPOKE_CHAPTERS = {
-  counting: lazy(() => import('@/features/chapters/game/CountingStoryChapter')),
-}
-
 /** id → component for every chapter in the app. Record<> enforces completeness. */
 export const CHAPTER_COMPONENTS: Record<ChapterType, React.ComponentType<ChapterProps>> = {
   ...STORY_PORTALS,
   ...TEEN_CHAPTERS,
-  ...BESPOKE_CHAPTERS,
+  // The one chapter that still has a bespoke wrapper: counting owns a world picker that
+  // "play again" returns to, which is a different run SHAPE, not a different backdrop.
+  counting: lazy(() => import('@/features/chapters/game/CountingStoryChapter')),
 }

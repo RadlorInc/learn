@@ -31,7 +31,8 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, CommitBtn, Nudge, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#221f2e', nightBot: '#0e0d15',
@@ -42,8 +43,6 @@ const P: Palette = {
   glass: 'rgba(36,32,50,0.62)', glassBorder: 'rgba(242,240,247,0.2)',
 }
 
-const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 
 type V =
@@ -71,19 +70,19 @@ const RULES = [
  *  real photo slider runs both ways from zero. (A "pixel of value −3" would not be
  *  true for the seeds this generator draws.) */
 function evalTask(): Task {
-  const rule = pickOne(RULES)
+  const rule = pick(RULES)
   const a = rint(-3, 5)
   const n = rule.fn(a)
   return {
     kind: 'eval', title: 'Through the filter', tone: 'a',
-    badge: `${rule.text}    f(${fmt(a)})`,
+    badge: `${rule.text}    f(${disp(a)})`,
     prompt: 'What comes out?',
-    context: `A filter is a machine: a setting goes in, one adjustment comes out. This one's rule is on the card, and the slider is at ${fmt(a)}.`,
+    context: `A filter is a machine: a setting goes in, one adjustment comes out. This one's rule is on the card, and the slider is at ${disp(a)}.`,
     padInstruction: 'Tap what the filter puts out.',
     say: `Given ${rule.say}. What is f of ${spoken(a)}?`,
     work: [
-      `Put ${fmt(a)} everywhere the rule has an x, brackets and all.`,
-      `That gives ${fmt(n)}.`,
+      `Put ${disp(a)} everywhere the rule has an x, brackets and all.`,
+      `That gives ${disp(n)}.`,
     ],
     n, pad: [n + 2, n - 2, a + n],
   }
@@ -99,7 +98,7 @@ const SHIFTS = [
 ]
 
 function shiftTask(): Task {
-  const s = pickOne(SHIFTS)
+  const s = pick(SHIFTS)
   return {
     kind: 'shift', title: 'Move the curve', tone: 'b',
     badge: s.g, showEquals: false,
@@ -130,7 +129,7 @@ function rangeTask(): Task {
       flip
         ? 'A minus in front turns the curve over, so it has a highest point and nothing above it.'
         : 'x² is never negative, so the curve has a lowest point and nothing below it.',
-      `The turning point is at ${fmt(shift)}, so the outputs are y ${flip ? '≤' : '≥'} ${fmt(shift)}.`,
+      `The turning point is at ${disp(shift)}, so the outputs are y ${flip ? '≤' : '≥'} ${disp(shift)}.`,
     ],
     dir: flip ? '≤' : '≥', at: shift,
   }
@@ -161,14 +160,14 @@ function chainTask(): Task {
   const y = m * x + b
   return {
     kind: 'chain', title: 'Undo it', tone: 'b',
-    badge: `f(x) = ${m}x ${b >= 0 ? `+ ${b}` : `− ${Math.abs(b)}`}    f⁻¹(${fmt(y)})`,
+    badge: `f(x) = ${m}x ${b >= 0 ? `+ ${b}` : `− ${Math.abs(b)}`}    f⁻¹(${disp(y)})`,
     prompt: 'What setting produced that?',
-    context: `The inverse is the undo button: instead of asking what the filter puts out, it asks what setting must have gone IN to get ${fmt(y)} out.`,
+    context: `The inverse is the undo button: instead of asking what the filter puts out, it asks what setting must have gone IN to get ${disp(y)} out.`,
     padInstruction: 'Tap the setting that produced it.',
     say: `f of x equals ${m} x ${b >= 0 ? `plus ${b}` : `minus ${Math.abs(b)}`}. What is f inverse of ${spoken(y)}?`,
     work: [
       'Run the rule backwards: undo the adding first, then undo the multiplying.',
-      `${fmt(y)} ${b >= 0 ? `− ${b}` : `+ ${Math.abs(b)}`} = ${fmt(y - b)}, then ÷ ${m} = ${x}.`,
+      `${disp(y)} ${b >= 0 ? `− ${b}` : `+ ${Math.abs(b)}`} = ${disp(y - b)}, then ÷ ${m} = ${x}.`,
     ],
     // y itself is the "it must be the number in the bracket" slip.
     n: x, pad: [y, x + 1, x - 1],
@@ -207,7 +206,7 @@ function FilterRack({ value, setValue, disabled, reveal, onCommit }: {
     <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(5px,0.8vw,10px)' }}>
       <span style={{ width: 'clamp(66px,7vw,96px)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,0.95vw,12px)', letterSpacing: '0.07em', color: P.mutedOnPaper, textTransform: 'uppercase' }}>{label}</span>
       <Nudge P={P} label="−" disabled={disabled} onClick={() => on(Math.max(-5, val - 1))} />
-      <span style={{ minWidth: 'clamp(28px,2.8vw,40px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(16px,1.8vw,25px)', color: P.cream }}>{fmt(val)}</span>
+      <span style={{ minWidth: 'clamp(28px,2.8vw,40px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(16px,1.8vw,25px)', color: P.cream }}>{disp(val)}</span>
       <Nudge P={P} label="+" disabled={disabled} onClick={() => on(Math.min(5, val + 1))} />
     </div>
   )
@@ -253,7 +252,7 @@ function RangeLimit({ value, setValue, disabled, reveal, onCommit }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.3vw,18px)', width: '100%' }}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(26px,3.4vw,46px)', fontWeight: 800, color: col, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55` }}>
-        y {dir} {fmt(at)}
+        y {dir} {disp(at)}
       </div>
       <div style={{ display: 'flex', gap: 'clamp(8px,1vw,14px)' }}>
         {(['≥', '≤'] as const).map((dd) => (
@@ -268,7 +267,7 @@ function RangeLimit({ value, setValue, disabled, reveal, onCommit }: {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px,1vw,14px)' }}>
         <Nudge P={P} label="−" disabled={disabled} onClick={() => setValue({ k: 'ray', dir, at: Math.max(-6, at - 1) })} />
-        <span style={{ minWidth: 'clamp(30px,3vw,44px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{fmt(at)}</span>
+        <span style={{ minWidth: 'clamp(30px,3vw,44px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{disp(at)}</span>
         <Nudge P={P} label="+" disabled={disabled} onClick={() => setValue({ k: 'ray', dir, at: Math.min(6, at + 1) })} />
       </div>
       <CommitBtn P={P} label="LOCK IN ✓" disabled={disabled} onClick={() => onCommit({ k: 'ray', dir, at })} />
@@ -311,9 +310,9 @@ const CONFIG: GameConfig<V, Task> = {
       : t.kind === 'range' ? v.k === 'ray' && v.dir === t.dir && v.at === t.at
         : v.k === 'num' && v.n === t.n,
   revealText: (t) =>
-    t.kind === 'shift' ? `${t.flip ? 'invert' : `across ${fmt(t.dx ?? 0)}, up ${fmt(t.dy ?? 0)}`}`
-      : t.kind === 'range' ? `y ${t.dir} ${fmt(t.at ?? 0)}`
-        : fmt(t.n ?? 0),
+    t.kind === 'shift' ? `${t.flip ? 'invert' : `across ${disp(t.dx ?? 0)}, up ${disp(t.dy ?? 0)}`}`
+      : t.kind === 'range' ? `y ${t.dir} ${disp(t.at ?? 0)}`
+        : disp(t.n ?? 0),
   glide: (t, _f, setValue, later) => later(() => setValue(
     t.kind === 'shift' ? { k: 'set', dx: t.dx ?? 0, dy: t.dy ?? 0, flip: !!t.flip }
       : t.kind === 'range' ? { k: 'ray', dir: t.dir ?? '≥', at: t.at ?? 0 }

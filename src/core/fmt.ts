@@ -8,3 +8,9 @@
  * Keep this for what is DISPLAYED; spoken strings want the word (see `signed`).
  */
 export const disp = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
+
+const SUP: Record<string, string> = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻' }
+/** A power as real superscript digits — `pow(3, 4)` → `3⁴`. Same reason as `disp`: the
+ *  glyph matters, and `3^4` reads as a caret to a child. */
+export const pow = (base: number | string, exp: number) =>
+  `${base}${String(exp).split('').map(c => SUP[c] ?? c).join('')}`

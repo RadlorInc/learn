@@ -47,6 +47,7 @@ import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, PartsBuilder, numChoices } from './parts/gameKit'
 import { rint } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#132a1f', nightBot: '#0b1a13',
@@ -57,9 +58,7 @@ const P: Palette = {
   glass: 'rgba(15,34,24,0.6)', glassBorder: 'rgba(233,247,238,0.2)',
 }
 
-/** Display integer with a real minus glyph (reads right, speaks as nothing). */
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
-/** Spoken integer — the ear's version of `fmt`. */
+/** Spoken integer — the ear's version of `disp`. */
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 /** Format a side "(x + n)" / "(x − n)". */
 const fac = (n: number) => (n < 0 ? `(x − ${Math.abs(n)})` : `(x + ${n})`)
@@ -121,7 +120,7 @@ function sidesTask(p: number, q: number, d: 1 | 2 | 3): Task {
     prompt: `Build the two sides of a plot with area ${area}.`,
     say: `Build the two sides of the plot. Its area is ${sayExpr(b, c)}.`,
     work: [
-      `The two side numbers must multiply to ${fmt(c)} and add to ${fmt(b)}. ${fmt(p)} and ${fmt(q)} do both, so the sides are ${fac(p)}${fac(q)}.`,
+      `The two side numbers must multiply to ${disp(c)} and add to ${disp(b)}. ${disp(p)} and ${disp(q)} do both, so the sides are ${fac(p)}${fac(q)}.`,
     ],
     p, q,
   }
@@ -143,7 +142,7 @@ function missingTask(p: number, q: number, d: 1 | 2 | 3): Task {
     prompt: `The area is ${area} and one side is ${fac(p)}. What number is in the other side?`,
     say: `The plot's area is ${sayExpr(b, c)}, and one side is x ${p < 0 ? 'minus' : 'plus'} ${Math.abs(p)}. Which number belongs in the empty box?`,
     work: [
-      `The two side numbers multiply to ${fmt(c)}. With ${fmt(p)} on one side, the other must be ${fmt(q)}, because ${fmt(p)} times ${fmt(q)} is ${fmt(c)} — and ${fmt(p)} plus ${fmt(q)} is ${fmt(b)}, the middle number. So the box holds ${fmt(q)}.`,
+      `The two side numbers multiply to ${disp(c)}. With ${disp(p)} on one side, the other must be ${disp(q)}, because ${disp(p)} times ${disp(q)} is ${disp(c)} — and ${disp(p)} plus ${disp(q)} is ${disp(b)}, the middle number. So the box holds ${disp(q)}.`,
     ],
     p, q, n: q,
     //  −q  : kept the size of the cut, lost its sign
@@ -312,7 +311,7 @@ function PlotScene({ palette, p: pp, q: qq, areaTxt, phase, compact }: {
   const survivors = (pLaid ? cols : -cols) + (qLaid ? rows : -rows)
   const cap = done ? 'two sides built ✓'
     : phase >= PH_SIDES ? 'reading the sides'
-      : struck && pairs > 0 ? `${pairs} laid + ${pairs} cut cancel → ${fmt(survivors)}x left`
+      : struck && pairs > 0 ? `${pairs} laid + ${pairs} cut cancel → ${disp(survivors)}x left`
         : emphStrips ? 'the strips are the middle number'
           : emphCorner ? 'the corner is the last number'
             : split ? (mixed ? 'laid strips · cut strips' : 'splitting the area')
@@ -376,12 +375,12 @@ function PlotScene({ palette, p: pp, q: qq, areaTxt, phase, compact }: {
         {split && cols > 0 && (
           <motion.text initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={trans}
             x={cornerX + cols * U / 2} y={OY + XL / 2 + 5} textAnchor="middle" fill={pLaid ? pal.gold : pal.coral}
-            fontFamily="var(--font-numeric)" fontWeight={800} fontSize={14}>{fmt(pLaid ? cols : -cols)}x</motion.text>
+            fontFamily="var(--font-numeric)" fontWeight={800} fontSize={14}>{disp(pLaid ? cols : -cols)}x</motion.text>
         )}
         {split && rows > 0 && (
           <motion.text initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={trans}
             x={OX + XL / 2} y={cornerY + rows * U / 2 + 5} textAnchor="middle" fill={qLaid ? pal.gold : pal.coral}
-            fontFamily="var(--font-numeric)" fontWeight={800} fontSize={14}>{fmt(qLaid ? rows : -rows)}x</motion.text>
+            fontFamily="var(--font-numeric)" fontWeight={800} fontSize={14}>{disp(qLaid ? rows : -rows)}x</motion.text>
         )}
 
         {/* corner tiles — laid or CUT, never an unsigned pile */}
@@ -488,7 +487,7 @@ const CONFIG: GameConfig<V, Task> = {
   grade: (t, v) => t.kind === 'missing'
     ? v.k === 'num' && v.n === t.q
     : v.k === 'sides' && ((v.a === t.p && v.b === t.q) || (v.a === t.q && v.b === t.p)),
-  revealText: (t) => (t.kind === 'missing' ? fmt(t.q) : `${fac(t.p)}${fac(t.q)}`),
+  revealText: (t) => (t.kind === 'missing' ? disp(t.q) : `${fac(t.p)}${fac(t.q)}`),
   glide: (t, _from, setValue, later) => later(() => setValue(
     t.kind === 'missing' ? { k: 'num', n: t.q } : { k: 'sides', a: t.p, b: t.q }), 320),
   Instrument: ({ task, value, setValue, disabled, reveal, palette, onCommit }) => {

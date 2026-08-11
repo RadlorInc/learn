@@ -15,8 +15,8 @@
 import { useEffect, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, LineSetter, numChoices, type Line, pick } from './parts/gameKit'
-import { shuffle } from '@/core/rand'
+import { Palette, LineSetter, numChoices, type Line } from './parts/gameKit'
+import { shuffle, pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#0d2230', nightBot: '#123444',

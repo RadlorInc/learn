@@ -25,14 +25,13 @@
  * Wrapped by game/StoryProblemsChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney, aspectOf } from './critters'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -193,7 +192,6 @@ export const scoredSlot = (round: number): { w: SpWorld; item: Item; bg: number 
 type Op = 'add' | 'sub' | 'compare'
 interface SpRound { w: SpWorld; bg: number; item: Item; op: Op; a: number; b: number; answer: number }
 
-const pick = <T,>(a: T[]) => a[rint(0, a.length - 1)]
 const qty = (n: number, it: Item) => `${n} ${n === 1 ? it.one : it.many}`
 
 function buildChoices(answer: number): number[] {
@@ -727,7 +725,7 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
 // ─── Value generation ──────────────────────────────────────────────────────────────
 function makeStoryBeat(): Beat<SpRound> {
   return {
-    skillId: 'storyProblems', rounds: SCORED_N, reteachAfter: 3, walkEvery: 3,
+    skillId: 'storyProblems', rounds: SCORED_N, walkEvery: 3,
     make: (d, round = 0) => makeStoryRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.op}|${d.a}|${d.b}`,   // dedupe on the MATH (op + operands), not the rotating scene/item
     // Deliberately EMPTY, so SkillBeat draws no pill of its own: the play surface already renders
@@ -752,22 +750,13 @@ export default function StoryTime({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<SpRound['w']>(SETTINGS[0])
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeStoryBeat(), [])
@@ -828,7 +817,7 @@ export default function StoryTime({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (data?.w) { setScene(data.w); setBg(data.bg) } }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
 

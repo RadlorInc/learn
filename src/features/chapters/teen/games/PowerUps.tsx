@@ -46,8 +46,8 @@ import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, CrankGear, SlideValue, numChoices } from './parts/gameKit'
-import { pow } from '@/features/chapters/lessons/ExponentsRootsTeenLesson'
-import { rint } from '@/core/rand'
+import { pow } from '@/core/fmt'
+import { rint, pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#241238', nightBot: '#140a24',
@@ -58,7 +58,6 @@ const P: Palette = {
   glass: 'rgba(40,22,66,0.6)', glassBorder: 'rgba(242,236,251,0.2)',
 }
 
-const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 const sup = (n: number) => pow('', n)   // superscript-only string, e.g. "²"
 
 /** Which level a stat value sits on: how many ×base steps from the level-0 value.

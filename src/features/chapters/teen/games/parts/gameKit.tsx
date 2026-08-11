@@ -11,7 +11,8 @@
  * task answer (see GameShell).
  */
 import { useRef, useState } from 'react'
-import { shuffle } from '@/core/rand'
+import { shuffle, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 // ── palette (each world supplies its own; shape matches ShopRush's P) ─────────
 export interface Palette {
@@ -26,7 +27,6 @@ export interface Palette {
 // ── number helpers ────────────────────────────────────────────────────────────
 export const tidy = (n: number) => Math.round(n * 1000) / 1000
 export const money = (n: number) => `$${tidy(n).toFixed(tidy(n) % 1 === 0 ? 0 : 2)}`
-export const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 export const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b))
 export function reduce(n: number, d: number): string { const g = gcd(n, d) || 1; return `${n / g}/${d / g}` }
 export const signed = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
@@ -708,10 +708,6 @@ export function numChoices(ans: number, near: number[] = [], opts: { min?: numbe
   return shuffle(out)
 }
 
-// ── AnswerPad — a plain, familiar way to give a numeric answer: tap one of the
-//    number choices. `choices` are pre-built (correct + distractors, pre-shuffled);
-//    tapping one calls onSubmit(n) and GameShell grades it. ──
-const dispN = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`)
 export function AnswerPad({ P, choices, onSubmit, disabled, reveal, correct, picked, compact, big }: {
   P: Palette; choices: number[]; onSubmit: (n: number) => void; disabled?: boolean
   /** On a wrong answer the pad STAYS on screen (an instrument chapter glides its
@@ -756,7 +752,7 @@ export function AnswerPad({ P, choices, onSubmit, disabled, reveal, correct, pic
             background: isRight ? `${P.mint}22` : P.glass, color: isRight ? P.mint : isWrong ? P.coral : P.cream,
             opacity: reveal && !isRight && !isWrong ? 0.45 : 1,
             cursor: disabled ? 'default' : 'pointer', boxShadow: '0 3px 12px rgba(0,0,0,0.3)',
-          }}>{dispN(c)}</button>
+          }}>{disp(c)}</button>
         )
       })}
     </div>
@@ -931,7 +927,7 @@ export function MatrixPad({
             <div key={`${r}-${c}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
               <Nudge P={P} label="▲" disabled={disabled} onClick={() => set(r, c, +1)} />
               <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(17px,2vw,28px)', color: P.cream, minWidth: '2.1em', textAlign: 'center' }}>
-                {v < 0 ? `−${Math.abs(v)}` : v}
+                {disp(v)}
               </div>
               <Nudge P={P} label="▼" disabled={disabled} onClick={() => set(r, c, -1)} />
             </div>

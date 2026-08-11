@@ -54,15 +54,14 @@
  * 30°, which is clay's hue AND Milo's; the gate asserts ≥45° of separation.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney, CARRY_SPEED } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { blockSet, shadesOf, Shadow, Cube, Rod, YARD_CSS, type Material, type Shades } from './yard'
 import { useHandInput, HandProvider, useHand, CamView, CamGate, type HandSkin } from '@/infra/ar/HandInput'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 
 // ─── Numbers in words ───────────────────────────────────────────────────────────────────
 const ONES_W = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
@@ -248,8 +247,6 @@ export const RUN: Yard[] = Array.from({ length: 13 }, (_, i) => ({
 }))
 export const yardAt = (slot: number) => RUN[Math.min(slot, RUN.length - 1)]
 
-// ─── The order ──────────────────────────────────────────────────────────────────────────
-const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 
 export type QType = 'build' | 'place' | 'value'
 export const Q_ALL: readonly QType[] = ['build', 'place', 'value']
@@ -1314,7 +1311,7 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void }> = ({ 
 // ─── Beat ───────────────────────────────────────────────────────────────────────────────
 export function makeBeat(): Beat<OdRound> {
   return {
-    skillId: 'bigNumbers', rounds: 10, reteachAfter: 3, walkEvery: 99,
+    skillId: 'bigNumbers', rounds: 10,
     make: (d, round, asked) => makeRound((d || 1) as 1 | 2 | 3, (round ?? 0) + 3, asked ?? []),
     // MATH ONLY. Include the yard and the same question comes back the moment the scene rotates.
     sig: d => `${d.qType}|${d.n}|${d.focus}`,
@@ -1346,23 +1343,13 @@ export default function OrderDesk({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const [shipped, setShipped] = useState<number[]>([])
   const pending = useRef<number | null>(null)      // the cumulative arc — OUTSIDE SkillBeat
   const needsRotate = useNeedsRotate()
   const { w: vw } = useViewport()
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return
-    finished.current = true; stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   const beat = useMemo(() => makeBeat(), [])
 
   // ⚠️ FORCED, not nudged. The demo must OPEN on the whole-order build — that is the gesture the
@@ -1485,7 +1472,7 @@ export default function OrderDesk({ onFinish, onExit }: {
       )}
 
       {phase === 'practice' && (
-        <SkillBeat beat={beat} onInterlude={interlude}
+        <SkillBeat beat={beat}
           /**
            * ⚠️ HELD BACK ONE ROUND. `SkillBeat` fires `onRound` when a round LOADS, so appending here
            * prints the answer to the question still on screen — measured live: the strip read
@@ -1499,10 +1486,7 @@ export default function OrderDesk({ onFinish, onExit }: {
             pending.current = d.focus >= 0 ? d.target[d.focus] * PLACES[d.focus] : d.n
             return v === null ? s : [...s, v]
           })}
-          onComplete={(c, w, mastered) => {
-            result.current.correct += c; result.current.wrong += w
-            finishChapter(result.current.correct, result.current.wrong, mastered)
-          }} />
+          onComplete={tally} />
       )}
     </div>
     </HandProvider>

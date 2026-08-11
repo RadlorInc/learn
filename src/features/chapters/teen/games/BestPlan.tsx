@@ -44,6 +44,7 @@ import { useEffect, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, PartsBuilder, SpecPicker, SlideValue, numChoices } from './parts/gameKit'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#1a1633', nightBot: '#0e0b1e',
@@ -55,9 +56,8 @@ const P: Palette = {
 }
 
 const rpick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
-const fmtInt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
-const ptStr = (x: number, y: number) => `(${fmtInt(x)}, ${fmtInt(y)})`
+const ptStr = (x: number, y: number) => `(${disp(x)}, ${disp(y)})`
 
 /** Format y = mx + b with real minus signs (a plan's cost line). */
 function lineEq(m: number, b: number): string {
@@ -504,11 +504,11 @@ function PlanChart({ palette, task, value, stepIndex, frameCount, ended }: { pal
               initial={{ opacity: 0 }} animate={{ opacity: showY ? 0.85 : 0.35 }} transition={{ duration: reduce ? 0 : 0.3 }} />
             {showX && (
               <motion.text x={sx(X.x)} y={FLOOR_Y + 14} textAnchor="middle" fill={p.mint} fontSize={11} fontWeight={800} style={{ fontFamily: 'var(--font-numeric)' }}
-                initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={spring}>{fmtInt(X.x)} GB</motion.text>
+                initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={spring}>{disp(X.x)} GB</motion.text>
             )}
             {showY && (
               <motion.text x={CPAD - 6} y={sy(X.y) - 4} textAnchor="end" fill={p.mint} fontSize={11} fontWeight={800} style={{ fontFamily: 'var(--font-numeric)' }}
-                initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={spring}>${fmtInt(X.y)}</motion.text>
+                initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={spring}>${disp(X.y)}</motion.text>
             )}
           </g>
         )}

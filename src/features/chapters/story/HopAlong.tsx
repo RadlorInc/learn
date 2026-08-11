@@ -30,9 +30,8 @@
  * Design doc: docs/hopalong-design.md. Craft rules: docs/chapter-craft.md.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, useChapterShell, type Beat } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { Hop, SheetCell, Arrive, CRITTER_CSS, hopOf, inFlowJourney } from './critters'
@@ -780,7 +779,7 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
 // ─── Beat ────────────────────────────────────────────────────────────────────────────
 function makeBeat(): Beat<FetchRound> {
   return {
-    skillId: 'skipCounting', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'skipCounting', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeFetch(scoredSlot(round) ?? RUN[RUN.length - 1], (d || 1) as 1 | 2 | 3),
     // The MATH only — not the rotating setting or the creature, so a question is not re-asked just
     // because the dressing changed.
@@ -813,19 +812,11 @@ export default function HopAlong({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const [scene, setScene] = useState<Setting>(RUN[0].w)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finish = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech(); if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeBeat(), [])
 
@@ -889,10 +880,7 @@ export default function HopAlong({ onFinish, onExit }: {
           justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (data?.w) setScene(data.w as Setting) }}
-            onComplete={(c, w, mastered) => {
-              result.current.correct += c; result.current.wrong += w
-              finish(result.current.correct, result.current.wrong, mastered)
-            }} />
+            onComplete={tally} />
         </div>
       )}
     </div>

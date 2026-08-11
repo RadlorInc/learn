@@ -77,14 +77,13 @@
  * because the tapped-rail ring and the fallback block are still drawn from it.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { SheetCell, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { AnswerPad, PAD_BAND, Banner, BANNER_TOP, bannerBottom } from './yard'
-import { rint, shuffle } from '@/core/rand'
+import { rint, shuffle, pick } from '@/core/rand'
 import {
   useHandInput, useHand, HandProvider, useDwell, CamView, CamGate, DwellRing, type HandSkin,
 } from '@/infra/ar/HandInput'
@@ -238,8 +237,6 @@ export function runOrder(len: number, pickIdx: (n: number) => number = (n) => ri
   return out
 }
 
-// ─── The question ───────────────────────────────────────────────────────────────────────
-const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 
 export type QType = 'order' | 'fit' | 'split'
 export const Q_ALL: readonly QType[] = ['order', 'fit', 'split'] as const
@@ -1070,7 +1067,7 @@ const FitExplain: React.FC<{ data: FoRound; onDone: () => void }> = ({ data, onD
 // ─── Beat + orchestrator ────────────────────────────────────────────────────────────────
 export function makeBeat(): Beat<FoRound> {
   return {
-    skillId: 'timesTables', rounds: 10, reteachAfter: 3, walkEvery: 99,
+    skillId: 'timesTables', rounds: 10,
     make: (d, round = 0, asked = []) => makeRound((d || 1) as 1 | 2 | 3, round + 3, asked),
     /**
      * MATH ONLY. The site rotates every round, so a signature that included it would read the
@@ -1102,29 +1099,21 @@ export default function FitOut({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const { w: vw, h: vh } = useViewport()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
   const short = vh < 470
 
   const marker = useMemo(() => ({ fill: '#F26B2C', ink: '#3D2516' }), [])
   const {
     hand, onCam, ready, camReady, status, error, start, stop, useTaps, useCamera, videoRef, canvasRef,
   } = useHandInput({ reads: 'count', marker })
+  const { exit, tally } = useChapterShell(onFinish, onExit, stop)
   /** ⚠️ The rotate gate is an early return, so turning the tablet unmounts the <video> and would
    *  leave the camera light on with nothing able to reach the stream. See AngleShop. */
   useEffect(() => { if (needsRotate) stop() }, [needsRotate, stop])
 
-  const exit = useCallback(() => { stopSpeech(); stop(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit, stop])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true; stopSpeech(); stop()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit, stop])
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
   const beat = useMemo(() => makeBeat(), [])
   /**
    * A fresh site order per run, so the places are not in the same sequence twice.
@@ -1238,11 +1227,8 @@ export default function FitOut({ onFinish, onExit }: {
       </>)}
 
       {phase === 'practice' && (
-        <SkillBeat beat={beat} onInterlude={interlude}
-          onComplete={(c, w, mastered) => {
-            result.current.correct += c; result.current.wrong += w
-            finishChapter(result.current.correct, result.current.wrong, mastered)
-          }} />
+        <SkillBeat beat={beat}
+          onComplete={tally} />
       )}
 
       </>)}

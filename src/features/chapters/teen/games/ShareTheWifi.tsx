@@ -34,6 +34,7 @@ import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, CommitBtn, Nudge, numChoices } from './parts/gameKit'
 import { rint } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#122036', nightBot: '#070d18',
@@ -44,7 +45,6 @@ const P: Palette = {
   glass: 'rgba(18,36,60,0.62)', glassBorder: 'rgba(233,241,251,0.2)',
 }
 
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 
 // A break point (tapped), a settling level (dialled, or "never"), or a marked fault.
 type V =
@@ -199,12 +199,12 @@ function LevelDial({ value, setValue, disabled, reveal, onCommit }: {
       </svg>
 
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(20px,2.6vw,34px)', fontWeight: 800, color: col }}>
-        {never ? 'never settles' : `settles at ${fmt(n)}`}
+        {never ? 'never settles' : `settles at ${disp(n)}`}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px,1vw,14px)', flexWrap: 'wrap', justifyContent: 'center' }}>
         <Nudge P={P} label="−" disabled={disabled || never} onClick={() => setValue({ k: 'level', n: Math.max(0, n - 1), never })} />
-        <span style={{ minWidth: 'clamp(30px,3vw,44px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: never ? P.mutedOnPaper : P.cream }}>{fmt(n)}</span>
+        <span style={{ minWidth: 'clamp(30px,3vw,44px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: never ? P.mutedOnPaper : P.cream }}>{disp(n)}</span>
         <Nudge P={P} label="+" disabled={disabled || never} onClick={() => setValue({ k: 'level', n: Math.min(8, n + 1), never })} />
         <button type="button" disabled={disabled} onClick={() => setValue({ k: 'level', n, never: !never })}
           style={{
@@ -230,11 +230,11 @@ function FaultMarker({ value, setValue, disabled, reveal, onCommit }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.3vw,18px)', width: '100%' }}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(20px,2.6vw,34px)', fontWeight: 800, color: col }}>
-        {fault === 'wall' ? 'wall' : 'gap'} at x = {fmt(x)}
+        {fault === 'wall' ? 'wall' : 'gap'} at x = {disp(x)}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px,1vw,14px)' }}>
         <Nudge P={P} label="−" disabled={disabled} onClick={() => setValue({ k: 'mark', x: Math.max(0, x - 1), fault })} />
-        <span style={{ minWidth: 'clamp(30px,3vw,44px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{fmt(x)}</span>
+        <span style={{ minWidth: 'clamp(30px,3vw,44px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{disp(x)}</span>
         <Nudge P={P} label="+" disabled={disabled} onClick={() => setValue({ k: 'mark', x: Math.min(8, x + 1), fault })} />
       </div>
       <div style={{ display: 'flex', gap: 'clamp(8px,1vw,14px)' }}>
@@ -300,9 +300,9 @@ const CONFIG: GameConfig<V, Task> = {
       : t.kind === 'level' ? v.k === 'level' && v.never === t.never && (t.never || v.n === t.lvl)
         : v.k === 'mark' && v.x === t.x && v.fault === t.fault,
   revealText: (t) =>
-    t.kind === 'break' ? `x = ${fmt(t.n ?? 0)}`
-      : t.kind === 'level' ? (t.never ? 'never settles' : `y = ${fmt(t.lvl ?? 0)}`)
-        : `${t.fault} at x = ${fmt(t.x ?? 0)}`,
+    t.kind === 'break' ? `x = ${disp(t.n ?? 0)}`
+      : t.kind === 'level' ? (t.never ? 'never settles' : `y = ${disp(t.lvl ?? 0)}`)
+        : `${t.fault} at x = ${disp(t.x ?? 0)}`,
   glide: (t, _f, setValue, later) => later(() => setValue(
     t.kind === 'break' ? { k: 'num', n: t.n ?? 0 }
       : t.kind === 'level' ? { k: 'level', n: t.lvl ?? 0, never: !!t.never }

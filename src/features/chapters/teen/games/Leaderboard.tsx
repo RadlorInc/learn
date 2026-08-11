@@ -42,6 +42,7 @@ import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, ElevatorShaft, SpecPicker, CommitBtn, Nudge, numChoices } from './parts/gameKit'
 import { rint } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#16233d', nightBot: '#0a1120',
@@ -53,12 +54,10 @@ const P: Palette = {
 }
 
 const rnz = (lo: number, hi: number) => { let n = rint(lo, hi); while (n === 0) n = rint(lo, hi); return n }
-/** Pretty integer with a real minus sign. */
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 /** Spoken integer: "negative four". */
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 /** "a + b" / "a − |b|" — a signed expression read cleanly. */
-const sumExpr = (a: number, b: number) => `${fmt(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`
+const sumExpr = (a: number, b: number) => `${disp(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`
 
 // The answer is a signed NUMBER (score meter), a signed CARD COUNT (the ruling
 // bench — see CardBoard), or a classification (sort bin).
@@ -93,10 +92,10 @@ function addTask(): Task {
     prompt: `Set the score for ${sumExpr(a, b)}.`,
     // Must hold for EVERY seed: a and b are each independently signed, so this
     // cannot claim the two moves oppose each other (they often do not).
-    context: `Your score changed by ${fmt(a)}, then by ${fmt(b)}. A change below zero drags the score down and one above zero lifts it, so the two moves may build on each other or partly cancel.`,
+    context: `Your score changed by ${disp(a)}, then by ${disp(b)}. A change below zero drags the score down and one above zero lifts it, so the two moves may build on each other or partly cancel.`,
     padInstruction: 'Tap the new score.',
     say: `Your score changed by ${spoken(a)}, then by ${spoken(b)}. Which is the new score?`,
-    work: [`Start at ${fmt(a)} and move ${Math.abs(b)} to the ${b < 0 ? 'left' : 'right'}: you land on ${fmt(n)}.`],
+    work: [`Start at ${disp(a)} and move ${Math.abs(b)} to the ${b < 0 ? 'left' : 'right'}: you land on ${disp(n)}.`],
     n, pad: [Math.abs(a) + Math.abs(b), a - b, -n],
   }
 }
@@ -133,19 +132,19 @@ function mulTask(): Task {
     const n = a * b
     const kind = b < 0 ? 'penalty' : 'bonus'
     return {
-      kind: 'cards', title: 'Rule on the cards', badge: `(${fmt(a)}) × (${fmt(b)})`, tone: 'a',
-      prompt: `${a < 0 ? 'Revoke' : 'Apply'} ${Math.abs(a)} ${kind} ${Math.abs(a) === 1 ? 'card' : 'cards'} worth ${fmt(b)} each.`,
+      kind: 'cards', title: 'Rule on the cards', badge: `(${disp(a)}) × (${disp(b)})`, tone: 'a',
+      prompt: `${a < 0 ? 'Revoke' : 'Apply'} ${Math.abs(a)} ${kind} ${Math.abs(a) === 1 ? 'card' : 'cards'} worth ${disp(b)} each.`,
       say: `${spoken(a)} times ${spoken(b)}. Lay out ${Math.abs(a)} ${kind} cards worth ${spoken(b)} each, then ${a < 0 ? 'revoke' : 'apply'} them.`,
-      work: [`${Math.abs(a)} cards worth ${fmt(b)} each, ${a < 0 ? 'REVOKED — taking away' : 'APPLIED — adding'} ${a < 0 ? 'a' : 'a'} ${b < 0 ? 'penalty' : 'bonus'} moves the score ${n < 0 ? 'DOWN' : 'UP'}. The swing is ${fmt(n)}.`],
+      work: [`${Math.abs(a)} cards worth ${disp(b)} each, ${a < 0 ? 'REVOKED — taking away' : 'APPLIED — adding'} ${a < 0 ? 'a' : 'a'} ${b < 0 ? 'penalty' : 'bonus'} moves the score ${n < 0 ? 'DOWN' : 'UP'}. The swing is ${disp(n)}.`],
       cardVal: b, signedCount: a, slots: Math.abs(a), n,
     }
   }
   const b = rnz(-6, 6), q = rnz(-6, 6), a = b * q  // clean division
   return {
-    kind: 'cards', title: 'Reach the swing', badge: `(${fmt(a)}) ÷ (${fmt(b)})`, tone: 'a',
-    prompt: `The score moved ${fmt(a)}. How many ${fmt(b)} cards did that — applied or revoked?`,
+    kind: 'cards', title: 'Reach the swing', badge: `(${disp(a)}) ÷ (${disp(b)})`, tone: 'a',
+    prompt: `The score moved ${disp(a)}. How many ${disp(b)} cards did that — applied or revoked?`,
     say: `The score swung by ${spoken(a)}, and every card is worth ${spoken(b)}. Find how many cards, and whether they were applied or revoked.`,
-    work: [`Each card is worth ${fmt(b)}, and the swing is ${fmt(a)}. ${Math.abs(q)} of them ${q < 0 ? 'REVOKED' : 'APPLIED'} gets there, so the answer is ${fmt(q)}.`],
+    work: [`Each card is worth ${disp(b)}, and the swing is ${disp(a)}. ${Math.abs(q)} of them ${q < 0 ? 'REVOKED' : 'APPLIED'} gets there, so the answer is ${disp(q)}.`],
     cardVal: b, signedCount: q, slots: Math.abs(q), target: a, n: q,
   }
 }
@@ -158,14 +157,14 @@ function twoStepTask(): Task {
   const a = rint(-6, 6), b = rnz(-5, 5), c = rnz(-4, 4)
   const n = a + b * c
   return {
-    kind: 'score', title: 'Two-step swing', badge: `${fmt(a)} + (${fmt(b)}) × (${fmt(c)})`, tone: 'b',
-    prompt: `Set the score for ${fmt(a)} + (${fmt(b)}) × (${fmt(c)}).`,
+    kind: 'score', title: 'Two-step swing', badge: `${disp(a)} + (${disp(b)}) × (${disp(c)})`, tone: 'b',
+    prompt: `Set the score for ${disp(a)} + (${disp(b)}) × (${disp(c)}).`,
     // `c` is signed, so this must not say the card "lands c times" — a negative count
     // of landings is not a thing. Naming it a swing keeps the sentence true either way.
-    context: `You start on ${fmt(a)}, and a second swing is built from ${fmt(b)} and ${fmt(c)} together. That swing is worked out on its own first, before it joins the starting score.`,
+    context: `You start on ${disp(a)}, and a second swing is built from ${disp(b)} and ${disp(c)} together. That swing is worked out on its own first, before it joins the starting score.`,
     padInstruction: 'Tap the total score.',
     say: `Base score ${spoken(a)}, plus a bonus of ${spoken(b)} times ${spoken(c)}. Which total is right?`,
-    work: [`Multiply first: ${fmt(b)} × ${fmt(c)} = ${fmt(b * c)}. Then ${fmt(a)} + ${fmt(b * c)} = ${fmt(n)}.`],
+    work: [`Multiply first: ${disp(b)} × ${disp(c)} = ${disp(b * c)}. Then ${disp(a)} + ${disp(b * c)} = ${disp(n)}.`],
     n, pad: [(a + b) * c, a - b * c, a + b + c],   // left-to-right · sign slip · all-added
   }
 }
@@ -182,25 +181,25 @@ function powerTask(): Task {
     const c = rint(3, 5), a = rint(-8, 8)
     const n = a - c * c
     return {
-      kind: 'score', title: 'Penalty squared', badge: `${fmt(a)} − ${c}²`, tone: 'b',
-      prompt: `Set the score for ${fmt(a)} − ${c}².`,
-      context: `Your score is ${fmt(a)} when a penalty of ${c} squared lands. Squared means ${c} multiplied by itself, not ${c} doubled, and the penalty is worked out before it comes off the score.`,
+      kind: 'score', title: 'Penalty squared', badge: `${disp(a)} − ${c}²`, tone: 'b',
+      prompt: `Set the score for ${disp(a)} − ${c}².`,
+      context: `Your score is ${disp(a)} when a penalty of ${c} squared lands. Squared means ${c} multiplied by itself, not ${c} doubled, and the penalty is worked out before it comes off the score.`,
       padInstruction: 'Tap the score after the penalty.',
       say: `Score ${spoken(a)}, then a penalty of ${c} squared. Which score is right?`,
-      work: [`Exponent first: ${c}² = ${c * c}. Then ${fmt(a)} − ${c * c} = ${fmt(n)}.`],
+      work: [`Exponent first: ${c}² = ${c * c}. Then ${disp(a)} − ${c * c} = ${disp(n)}.`],
       n, pad: [a - 2 * c, a + c * c, c * c - a],  // squared→×2 · sign slip · reversed order
     }
   }
   const b = rint(3, 5), k = rnz(-4, 4)   // b ≥ 3 for the same reason as above
   const n = k * (b * b)
   return {
-    kind: 'score', title: 'Bonus squared', badge: `(${fmt(k)}) × ${b}²`, tone: 'b',
-    prompt: `Set the score for (${fmt(k)}) × ${b}².`,
+    kind: 'score', title: 'Bonus squared', badge: `(${disp(k)}) × ${b}²`, tone: 'b',
+    prompt: `Set the score for (${disp(k)}) × ${b}².`,
     // `k` is signed — calling it a bonus would be false when the swing goes down.
-    context: `A multiplier of ${fmt(k)} is applied to ${b} squared. Squared means ${b} multiplied by itself, and that is worked out before the multiplier goes on.`,
+    context: `A multiplier of ${disp(k)} is applied to ${b} squared. Squared means ${b} multiplied by itself, and that is worked out before the multiplier goes on.`,
     padInstruction: 'Tap the score the bonus gives.',
     say: `A multiplier of ${spoken(k)}, times ${b} squared. Which score is right?`,
-    work: [`Exponent first: ${b}² = ${b * b}. Then ${fmt(k)} × ${b * b} = ${fmt(n)}.`],
+    work: [`Exponent first: ${b}² = ${b * b}. Then ${disp(k)} × ${b * b} = ${disp(n)}.`],
     n, pad: [k * 2 * b, -n, k + b * b],                  // squared→×2 · sign slip · added not multiplied
   }
 }
@@ -259,7 +258,7 @@ function CardBoard({ P, task, count, dir, reveal }: {
       opacity: real && dir === -1 ? 0.5 : 1,                       // revoked cards fade out
       textDecoration: real && dir === -1 ? 'line-through' : 'none',
       transition: 'opacity 200ms',
-    }}>{real ? `${isPenalty ? 'PEN' : 'BON'}\n${fmt(b)}` : ''}</div>
+    }}>{real ? `${isPenalty ? 'PEN' : 'BON'}\n${disp(b)}` : ''}</div>
   )
   // × lays out every frame up front (the count is the thing being chosen); ÷ grows
   // the row as the child hunts for the count that reaches the target.
@@ -273,15 +272,15 @@ function CardBoard({ P, task, count, dir, reveal }: {
           {isDiv ? `how many cards${hit ? ' — swing matched ✓' : ''}` : 'score swing'}
         </div>
         <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(32px,5.8vw,50px)', lineHeight: 1, color: chosen ? (reveal ? P.mint : tint) : P.gold, textShadow: '0 0 18px rgba(0,0,0,0.5)' }}>
-          {chosen ? fmt(isDiv ? dir * count : swing) : '?'}
+          {chosen ? disp(isDiv ? dir * count : swing) : '?'}
         </div>
-        {isDiv && <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1.15vw,13px)', color: P.creamSoft }}>target swing {fmt(task.target ?? 0)} · now {fmt(swing)}</div>}
+        {isDiv && <div style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1.15vw,13px)', color: P.creamSoft }}>target swing {disp(task.target ?? 0)} · now {disp(swing)}</div>}
       </div>
 
       <div style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', alignItems: 'stretch', justifyContent: 'center', gap: 'clamp(10px,1.6vw,18px)' }}>
         {meter}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(4px,0.9vh,9px)' }}>
-          <div style={{ fontSize: 'clamp(10px,1.1vw,13px)', color: P.creamSoft }}>each card: {isPenalty ? `${fmt(b)} penalty` : `+${b} bonus`}</div>
+          <div style={{ fontSize: 'clamp(10px,1.1vw,13px)', color: P.creamSoft }}>each card: {isPenalty ? `${disp(b)} penalty` : `+${b} bonus`}</div>
           <div style={{ display: 'flex', gap: 'clamp(4px,0.7vw,8px)', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '100%' }}>{cards}</div>
         </div>
       </div>
@@ -522,7 +521,7 @@ function ScoreScene({ palette, value, stepIndex, frameCount, ended }: {
                 {row.you && <rect x={22} y={ry - 18} width={146} height={34} rx={8} fill={below ? 'rgba(255,138,112,0.12)' : 'rgba(92,214,172,0.12)'} stroke={markerCol} strokeWidth={1.2} style={{ transition: 'stroke 300ms, fill 300ms' }} />}
                 <text x={34} y={ry + 4} textAnchor="middle" fill={row.you ? p.gold : p.mutedOnPaper} fontSize={row.you ? 15 : 13} fontFamily="var(--font-numeric)" fontWeight={800}>{row.rank}</text>
                 <text x={52} y={ry + 4} fill={row.you ? p.cream : p.creamSoft} fontSize={13} fontFamily="var(--font-numeric)" fontWeight={row.you ? 800 : 600}>{row.name}</text>
-                <text x={160} y={ry + 4} textAnchor="end" fill={scoreCol} fontSize={15} fontFamily="var(--font-numeric)" fontWeight={800} style={{ fontVariantNumeric: 'tabular-nums', transition: 'fill 300ms' }}>{row.you ? fmt(v) : row.base}</text>
+                <text x={160} y={ry + 4} textAnchor="end" fill={scoreCol} fontSize={15} fontFamily="var(--font-numeric)" fontWeight={800} style={{ fontVariantNumeric: 'tabular-nums', transition: 'fill 300ms' }}>{row.you ? disp(v) : row.base}</text>
               </motion.g>
             )
           })}
@@ -554,7 +553,7 @@ function ScoreScene({ palette, value, stepIndex, frameCount, ended }: {
         })}
         {/* integer tick labels down the right side */}
         {SC_NOTCHES.filter((f) => f % 2 === 0 && f !== 0).map((f) => (
-          <text key={`l${f}`} x={TRACK_X + TRACK_W + 7} y={syScore(f) + 3.5} fill={p.mutedOnPaper} fontSize={9} fontFamily="var(--font-numeric)">{fmt(f)}</text>
+          <text key={`l${f}`} x={TRACK_X + TRACK_W + 7} y={syScore(f) + 3.5} fill={p.mutedOnPaper} fontSize={9} fontFamily="var(--font-numeric)">{disp(f)}</text>
         ))}
 
         {/* the GOLD zero line — draws in on establish */}
@@ -593,7 +592,7 @@ function ScoreScene({ palette, value, stepIndex, frameCount, ended }: {
           <motion.rect x={CX - 25} y={-12} width={50} height={24} rx={7}
             initial={false} animate={{ fill: markerCol }} transition={{ duration: reduce ? 0 : 0.3 }}
             stroke={p.cream} strokeWidth={1.2} style={{ filter: `drop-shadow(0 0 8px ${markerCol})` }} />
-          <text x={CX} y={5} textAnchor="middle" fill={p.nightBot} fontSize={17} fontFamily="var(--font-numeric)" fontWeight={800} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(v)}</text>
+          <text x={CX} y={5} textAnchor="middle" fill={p.nightBot} fontSize={17} fontFamily="var(--font-numeric)" fontWeight={800} style={{ fontVariantNumeric: 'tabular-nums' }}>{disp(v)}</text>
         </motion.g>
       </svg>
 
@@ -635,7 +634,7 @@ const CONFIG: GameConfig<V, Task> = {
   grade: (t, v) => t.kind === 'score' ? v.k === 'num' && v.n === t.n
     : t.kind === 'cards' ? v.k === 'cards' && v.dir !== 0 && v.dir * v.count === t.signedCount
       : v.k === 'pick' && v.id === t.correctId,
-  revealText: (t) => (t.kind === 'sort' ? (t.choices?.find((c) => c.id === t.correctId)?.label ?? '') : fmt(t.n ?? 0)),
+  revealText: (t) => (t.kind === 'sort' ? (t.choices?.find((c) => c.id === t.correctId)?.label ?? '') : disp(t.n ?? 0)),
   glide: (t, _from, setValue, later) => later(() => setValue(
     t.kind === 'score' ? { k: 'num', n: t.n ?? 0 }
       : t.kind === 'cards' ? { k: 'cards', count: Math.abs(t.signedCount ?? 0), dir: (t.signedCount ?? 1) < 0 ? -1 : 1 }

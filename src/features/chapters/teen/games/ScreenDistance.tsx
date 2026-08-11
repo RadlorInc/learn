@@ -51,7 +51,7 @@ import { useEffect, useState, type ReactElement } from 'react'
 import { motion, useMotionValue, animate, useReducedMotion, useMotionValueEvent } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, CommitBtn, Nudge, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#101c33', nightBot: '#0a1322',
@@ -63,7 +63,6 @@ const P: Palette = {
 }
 
 const RAD = '√'
-const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 /** Pretty radical: "6√2", "√5", "6". */
 const radStr = (a: number, b: number): string => (b === 1 ? String(a) : a === 1 ? `${RAD}${b}` : `${a}${RAD}${b}`)
 /** Spoken radical: "six root two" — superscripts and √ speak as nothing. */

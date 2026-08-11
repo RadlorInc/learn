@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
 
 export interface GrowthExplorerProps {
   band: AgeBand
@@ -30,29 +30,6 @@ function crossover(a: number, b: number): number | null {
     if (Math.pow(b, x) >= a * x) return x
   }
   return null
-}
-
-function Slider({ label, value, min, max, step, suffix, onChange }: {
-  label: string; value: number; min: number; max: number; step: number; suffix?: string; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 96, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 48, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {value}{suffix ?? ''}
-      </span>
-    </label>
-  )
 }
 
 export default function GrowthExplorer({ band, onReady }: GrowthExplorerProps) {
@@ -94,8 +71,8 @@ export default function GrowthExplorer({ band, onReady }: GrowthExplorerProps) {
 
       {/* Sliders */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%' }}>
-        <Slider label="linear rate a" value={a} min={1} max={6} step={1} onChange={setA} />
-        <Slider label="exp. base b" value={b} min={2} max={4} step={1} onChange={setB} />
+        <Slider labelW={96} valueW={48} label="linear rate a" value={a} min={1} max={6} step={1} onChange={setA} />
+        <Slider labelW={96} valueW={48} label="exp. base b" value={b} min={2} max={4} step={1} onChange={setB} />
       </div>
 
       {/* Plain-language read-out of the crossover */}

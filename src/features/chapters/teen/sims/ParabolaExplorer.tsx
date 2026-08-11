@@ -11,7 +11,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AgeBand, Pt } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
 export interface ParabolaExplorerProps {
   band: AgeBand
@@ -21,8 +22,6 @@ export interface ParabolaExplorerProps {
 
 const RANGE = 10 // grid spans -10..10
 
-/** real minus sign for negatives in prose/labels */
-const minus = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 
 /** y = ax² + bx + c as a tidy string. */
 function eq(a: number, b: number, c: number): string {
@@ -40,33 +39,6 @@ function eq(a: number, b: number, c: number): string {
 const r2 = (n: number) => {
   const v = Math.round(n * 100) / 100
   return v === 0 ? 0 : v
-}
-
-function Slider({ label, value, min, max, onChange, skipZero }: {
-  label: string; value: number; min: number; max: number; onChange: (n: number) => void; skipZero?: boolean
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 88, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => {
-          let n = Number(e.target.value)
-          if (skipZero && n === 0) n = value > 0 ? -1 : 1 // a may never be 0
-          onChange(n)
-        }}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {minus(value)}
-      </span>
-    </label>
-  )
 }
 
 function Readout({ label, value }: { label: string; value: string }) {
@@ -117,8 +89,8 @@ export default function ParabolaExplorer({ band, onReady }: ParabolaExplorerProp
     rootCount === 0
       ? 'none (no real roots)'
       : rootCount === 1
-        ? `1 (x = ${minus(r2(roots[0]))})`
-        : `2 (x = ${minus(r2(roots[0]))}, ${minus(r2(roots[1]))})`
+        ? `1 (x = ${disp(r2(roots[0]))})`
+        : `2 (x = ${disp(r2(roots[0]))}, ${disp(r2(roots[1]))})`
 
   // Show the vertex as a context point and roots as context points on the grid.
   const contextPoints: Pt[] = useMemo(
@@ -151,9 +123,12 @@ export default function ParabolaExplorer({ band, onReady }: ParabolaExplorerProp
 
       {/* Sliders */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
-        <Slider label="a (opens / width)" value={a} min={-4} max={4} onChange={setA} skipZero />
-        <Slider label="b (shift)" value={b} min={-8} max={8} onChange={setB} />
-        <Slider label="c (y-intercept)" value={c} min={-8} max={8} onChange={setC} />
+        {/* a may never be 0 — at 0 it stops being a parabola. Step past it in the
+            direction of travel rather than letting the slider rest there. */}
+        <Slider labelW={88} label="a (opens / width)" value={a} min={-4} max={4}
+                onChange={n => setA(n === 0 ? (a > 0 ? -1 : 1) : n)} />
+        <Slider labelW={88} label="b (shift)" value={b} min={-8} max={8} onChange={setB} />
+        <Slider labelW={88} label="c (y-intercept)" value={c} min={-8} max={8} onChange={setC} />
       </div>
 
       {/* Instrument readout panel: vertex · roots · discriminant */}
@@ -163,7 +138,7 @@ export default function ParabolaExplorer({ band, onReady }: ParabolaExplorerProp
       }}>
         <Readout label="Opens" value={safeA > 0 ? 'upward (∪)' : 'downward (∩)'} />
         <Readout label="Vertex" value={`(${r2(vertex.x)}, ${r2(vertex.y)})`} />
-        <Readout label="Discriminant b²−4ac" value={`${minus(r2(disc))}`} />
+        <Readout label="Discriminant b²−4ac" value={`${disp(r2(disc))}`} />
         <Readout label="Real roots" value={rootsText} />
       </div>
 

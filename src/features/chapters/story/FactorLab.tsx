@@ -47,9 +47,8 @@
  * `__miloPace`) exists so the whole chapter can still be driven end to end headlessly.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import {
   PT, ACCENTS, PT_CSS, LabBackdrop, BackChip, Brackets, PromptCard, PtMilo, IntroCard,
 } from './preteen/kit'
@@ -394,7 +393,7 @@ function ExploreBench({ onContinue, short }: { onContinue: () => void; short?: b
  */
 function makeBeat(inputRef: React.RefObject<HandInputKind>): Beat<FlRound> {
   return {
-    skillId: 'factorsMultiples', rounds: 10, reteachAfter: 3, walkEvery: 99,
+    skillId: 'factorsMultiples', rounds: 10,
     ownsFeedback: true,
     make: (d, _round, asked) => makeRound((d || 1) as Tier, asked ?? []),
     sig: d => `${d.qType}|${d.n}|${d.base}`,
@@ -412,26 +411,18 @@ function makeBeat(inputRef: React.RefObject<HandInputKind>): Beat<FlRound> {
 type Phase = 'intro' | 'explore' | 'demo' | 'guided' | 'practice'
 
 export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: number, wrong: number, mastered?: boolean) => void; onExit?: () => void }) {
-  const router = useRouter()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()
   const short = vh < 470
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
 
   const marker = useMemo(() => ({ fill: ACCENT.base, ink: '#06121f' }), [])
   const {
     input, hand, onCam, ready, camReady, status, error, start, stop, useTaps, useCamera,
     videoRef, canvasRef,
   } = useHandInput({ reads: 'count', marker })
+  const { exit, tally } = useChapterShell(onFinish, onExit, stop)
 
-  const exit = useCallback(() => { stopSpeech(); stop(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit, stop])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true; stopSpeech(); stop()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit, stop])
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
   const inputRef = useRef<HandInputKind>(input); inputRef.current = input
   const beat = useMemo(() => makeBeat(inputRef), [])
 
@@ -484,8 +475,8 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
 
           {phase === 'practice' && (
             <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
-              <SkillBeat beat={beat} onInterlude={interlude}
-                onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+              <SkillBeat beat={beat}
+                onComplete={tally} />
             </div>
           )}
         </>)}

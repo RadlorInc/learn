@@ -28,12 +28,14 @@ const STORY_CSS = `
 @keyframes s_twinkle { 0%,100%{opacity:.55;transform:scale(.9)} 50%{opacity:1;transform:scale(1.12)} }
 `
 
+/** Wrong-in-a-row before Milo re-explains. It was an optional field with a default of 2, and
+ *  all 34 chapters passed 3 — so it was never a knob, only a number written 34 times. */
+export const RETEACH_AFTER = 3
+
 // ─── A skill round: data + how to play it + how Milo re-teaches it ──
 export interface Beat<T> {
   skillId: ChapterType
   rounds: number
-  reteachAfter?: number                  // wrong-in-a-row streak that triggers Milo's
-                                         // re-explanation (defaults to 2)
   walkEvery?: number                     // play a short walk interlude every N rounds,
                                          // so a long practice feels like a journey
   walkBeforeRound?: (round: number) => boolean   // play a walk interlude right BEFORE
@@ -82,7 +84,7 @@ export interface Beat<T> {
    * OPT-IN, so the other chapters in the band are untouched — they write no feedback of their own and
    * the centred pill is the only thing that says anything. A beat that sets this owes the child a
    * WRITTEN miss line of its own (`hintFor` in TickTock's case); speech alone is silence on the many
-   * devices with no usable voice. The re-teach after `reteachAfter` misses still fires either way.
+   * devices with no usable voice. The re-teach after RETEACH_AFTER misses still fires either way.
    */
   ownsFeedback?: boolean
   sig?: (data: T) => string              // dedupe key for makeDistinct — return a
@@ -105,6 +107,48 @@ export type Scene =
   | { kind: 'payoff'; bg: string; backdrop: BackdropKind; bubble: string }
 
 export interface World { id: string; title: string; scenes: Scene[] }
+
+/**
+ * The bookkeeping every story chapter needs and none of them differ on: where "back"
+ * goes, the running tally, and the guard that stops a chapter finishing twice. It was
+ * written out identically in all 34, which meant a fix to any of it (the double-finish
+ * guard, the stopSpeech on the way out) had to be applied 34 times or not at all.
+ *
+ * `onLeave` is the one real variation — an AR chapter has a camera to shut down, and it
+ * must be shut down on BOTH exits, which is exactly the pair a copy is liable to get
+ * half-right.
+ *
+ * The tally stays INSIDE: every chapter accumulated it with the identical expression and
+ * then handed its own running totals straight back, so `tally` IS a SkillBeat `onComplete`.
+ * (Keeping the ref in here is also what lets a chapter stop reaching into a hook's ref
+ * during render, which the newer react-hooks rules correctly refuse.)
+ */
+export function useChapterShell(
+  onFinish?: (correct: number, wrong: number, mastered?: boolean) => void,
+  onExit?: () => void,
+  onLeave?: () => void,
+) {
+  const router = useRouter()
+  const result = useRef({ correct: 0, wrong: 0 })
+  const finished = useRef(false)
+  const exit = useCallback(() => {
+    stopSpeech(); onLeave?.()
+    ;(onExit ?? (() => router.push('/menu')))()
+  }, [router, onExit, onLeave])
+  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
+    if (finished.current) return
+    finished.current = true
+    stopSpeech(); onLeave?.()
+    if (onFinish) onFinish(c, w, mastered); else exit()
+  }, [onFinish, exit, onLeave])
+  /** A SkillBeat `onComplete`: add this beat's score to the run's, then finish the chapter. */
+  const tally = useCallback((c: number, w: number, mastered?: boolean) => {
+    result.current.correct += c
+    result.current.wrong += w
+    finishChapter(result.current.correct, result.current.wrong, mastered)
+  }, [finishChapter])
+  return { exit, finishChapter, tally }
+}
 
 // ─── SkillBeat: the unbreakable pedagogy core ──────────────────
 // Runs `rounds` adaptive rounds. Warm wrong-answers (no red X). On a 2-wrong
@@ -156,7 +200,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     if (!correct && !beat.ownsFeedback) speak(ada.encouragement)
     window.setTimeout(() => {
       setFeedback(null)
-      if (!correct && newRun >= (beat.reteachAfter ?? 2)) { setPhase('reteach'); return }
+      if (!correct && newRun >= RETEACH_AFTER) { setPhase('reteach'); return }
       // Demonstrated mastery (top tier + a long correct streak) → finish early
       // with full stars, skipping the repetitive tail.
       // ⚠️ UNLESS the beat declares a closed set that has not been covered yet: finishing early on a

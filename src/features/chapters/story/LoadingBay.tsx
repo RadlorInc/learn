@@ -36,13 +36,12 @@
  * the fix is to hide the running counter until commit, which is one flag.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
-import { rint, shuffle } from '@/core/rand'
+import { rint, shuffle, pick } from '@/core/rand'
 
 // ─── The day: ten deliveries ────────────────────────────────────────────────────────────
 /**
@@ -105,8 +104,6 @@ export const DAY: Bay[] = [
 ]
 export const bayAt = (round: number) => DAY[Math.min(round, DAY.length - 1)]
 
-// ─── The question ───────────────────────────────────────────────────────────────────────
-const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 
 export type QType = 'most' | 'howMany' | 'diff' | 'total'
 export const Q_ALL: readonly QType[] = ['most', 'howMany', 'diff', 'total'] as const
@@ -698,7 +695,7 @@ const BayExplain: React.FC<{ data: LbRound; onDone: () => void }> = ({ data, onD
 // ─── Beat ───────────────────────────────────────────────────────────────────────────────
 export function makeBeat(): Beat<LbRound> {
   return {
-    skillId: 'dataGraphs', rounds: 10, reteachAfter: 3, walkEvery: 99,
+    skillId: 'dataGraphs', rounds: 10,
     make: (d, round, asked) => makeRound((d || 1) as 1 | 2 | 3, round ?? 0, asked ?? []),
     // The MATH only. Include the scene and the same question comes back the moment the dressing
     // changes, which is what the rotating backdrop would otherwise buy.
@@ -724,21 +721,11 @@ export default function LoadingBay({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const [logged, setLogged] = useState<number[]>([])     // the cumulative arc — OUTSIDE SkillBeat
   const needsRotate = useNeedsRotate()
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return
-    finished.current = true; stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   const beat = useMemo(() => makeBeat(), [])
 
   // Deterministic, and they come out as two DIFFERENT types by construction: `asked` drives the
@@ -819,12 +806,9 @@ export default function LoadingBay({ onFinish, onExit }: {
       )}
 
       {phase === 'practice' && (
-        <SkillBeat beat={beat} onInterlude={interlude}
+        <SkillBeat beat={beat}
           onRound={(d: LbRound) => setLogged(l => [...l, d.counts.reduce((s, c) => s + c, 0)])}
-          onComplete={(c, w, mastered) => {
-            result.current.correct += c; result.current.wrong += w
-            finishChapter(result.current.correct, result.current.wrong, mastered)
-          }} />
+          onComplete={tally} />
       )}
     </div>
   )

@@ -81,14 +81,13 @@
  * cartoon. All four landed in one pass, zero retries.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { SheetCell, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { Banner, BANNER_TOP, bannerBottom } from './yard'
-import { rint, shuffle } from '@/core/rand'
+import { rint, shuffle, pick } from '@/core/rand'
 import {
   useHandInput, useHand, HandProvider, CamView, CamGate, type HandSkin,
 } from '@/infra/ar/HandInput'
@@ -234,8 +233,6 @@ export function runOrder(len: number, pickIdx: (n: number) => number = (n) => ri
   return out
 }
 
-// ─── The question ───────────────────────────────────────────────────────────────────────
-const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 
 export type QType = 'share' | 'group'
 export const Q_ALL: readonly QType[] = ['share', 'group'] as const
@@ -1021,7 +1018,7 @@ function dwellFor(line: string) { return Math.max(2100, Math.min(6200, line.leng
  * ⚠️ THE GESTURE IS TAUGHT WHERE THE MATHS IS, BECAUSE THE RE-TEACH IS THIS SAME LIST. A sweep is
  * not self-evident the way "hold up three fingers" or "tilt your hand" are — it carries four hidden
  * rules (left→right only, it must start from the left, the return stroke does nothing, and dropping
- * your hand resets it), and `reteachAfter: 3` means a child who is failing because they cannot make
+ * your hand resets it), and `` means a child who is failing because they cannot make
  * the gesture read gets three wrong answers and then a lesson about DIVISION. That is a motor
  * failure diagnosed and re-taught as a mathematical one.
  *
@@ -1132,7 +1129,7 @@ const RunExplain: React.FC<{ data: DvRound; onDone: () => void }> = ({ data, onD
 // ─── Beat + orchestrator ────────────────────────────────────────────────────────────────
 export function makeBeat(): Beat<DvRound> {
   return {
-    skillId: 'division', rounds: 10, reteachAfter: 3, walkEvery: 99,
+    skillId: 'division', rounds: 10,
     make: (d, round = 0, asked = []) => makeRound((d || 1) as 1 | 2 | 3, round + 3, asked),
     /** MATH ONLY. The site rotates every round, so a signature including it would read the changed
      *  scene as variety and let the same question straight back through. */
@@ -1161,30 +1158,22 @@ export default function SupplyRun({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const { h: vh } = useViewport()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
   const short = vh < 470
 
   const marker = useMemo(() => ({ fill: '#F26B2C', ink: '#3D2516' }), [])
   const {
     hand, onCam, ready, camReady, status, error, start, stop, useTaps, useCamera, videoRef, canvasRef,
   } = useHandInput({ reads: 'sweep', marker })
+  const { exit, tally } = useChapterShell(onFinish, onExit, stop)
   /** ⚠️ The rotate gate is an early return, so turning the tablet unmounts the <video> and the
    *  stream becomes unreachable — a camera light left on with the browser still reporting the site
    *  as using it. Stop it BEFORE that happens. */
   useEffect(() => { if (needsRotate) stop() }, [needsRotate, stop])
 
-  const exit = useCallback(() => { stopSpeech(); stop(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit, stop])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true; stopSpeech(); stop()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit, stop])
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
   const beat = useMemo(() => makeBeat(), [])
   /**
    * A fresh site order per run, so the places are not in the same sequence twice.
@@ -1322,11 +1311,8 @@ export default function SupplyRun({ onFinish, onExit }: {
       </>)}
 
       {phase === 'practice' && (
-        <SkillBeat beat={beat} onInterlude={interlude}
-          onComplete={(c, w, mastered) => {
-            result.current.correct += c; result.current.wrong += w
-            finishChapter(result.current.correct, result.current.wrong, mastered)
-          }} />
+        <SkillBeat beat={beat}
+          onComplete={tally} />
       )}
 
       </>)}

@@ -44,7 +44,8 @@ import { useRef, type ReactElement } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, CommitBtn, Nudge, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#1b1b3a', nightBot: '#0b0b1c',
@@ -55,18 +56,15 @@ const P: Palette = {
   glass: 'rgba(30,30,64,0.6)', glassBorder: 'rgba(240,238,248,0.2)',
 }
 
-const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
-/** Pretty integer with a real minus sign. */
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 /** Spoken integer: "negative four". */
 const spoken = (n: number) => (n < 0 ? `negative ${Math.abs(n)}` : `${n}`)
 
 /** Format a complex number a + bi with true minus glyphs. e.g. "3 − 5i", "−2i", "4". */
 function fmtComplex(a: number, b: number): string {
-  if (b === 0) return fmt(a)
-  const iPart = b === 1 ? 'i' : b === -1 ? '−i' : `${fmt(b)}i`
+  if (b === 0) return disp(a)
+  const iPart = b === 1 ? 'i' : b === -1 ? '−i' : `${disp(b)}i`
   if (a === 0) return iPart
-  return `${fmt(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b) === 1 ? 'i' : `${Math.abs(b)}i`}`
+  return `${disp(a)} ${b < 0 ? '−' : '+'} ${Math.abs(b) === 1 ? 'i' : `${Math.abs(b)}i`}`
 }
 
 /** Spoken complex number. */
@@ -125,7 +123,7 @@ function combineTask(): Task {
     say: `${spokenComplex(a1, b1)}, ${sub ? 'minus' : 'plus'}, ${spokenComplex(a2, b2)}. Where do you finish?`,
     work: [
       'Keep the two directions apart — east never mixes with north.',
-      `East: ${fmt(a1)} ${op} ${fmt(a2)} = ${fmt(ra)}. North: ${fmt(b1)} ${op} ${fmt(b2)} = ${fmt(rb)}.`,
+      `East: ${disp(a1)} ${op} ${disp(a2)} = ${disp(ra)}. North: ${disp(b1)} ${op} ${disp(b2)} = ${disp(rb)}.`,
       `So you finish at ${fmtComplex(ra, rb)}.`,
     ],
     ra, rb, lo: -12, hi: 12, map: true,
@@ -160,8 +158,8 @@ function multTask(hard: boolean): Task {
     say: `${spokenComplex(a1, b1)}, times, ${spokenComplex(a2, b2)}.`,
     work: [
       'Expand all four products, the same as any pair of brackets.',
-      `The two i terms multiply to ${fmt(b1 * b2)}i², and i² is −1, so that turns into ${fmt(-b1 * b2)}.`,
-      `Real part ${fmt(a1)}·${fmt(a2)} − ${fmt(b1)}·${fmt(b2)} = ${fmt(ra)}; imaginary part ${fmt(a1)}·${fmt(b2)} + ${fmt(a2)}·${fmt(b1)} = ${fmt(rb)}. So ${fmtComplex(ra, rb)}.`,
+      `The two i terms multiply to ${disp(b1 * b2)}i², and i² is −1, so that turns into ${disp(-b1 * b2)}.`,
+      `Real part ${disp(a1)}·${disp(a2)} − ${disp(b1)}·${disp(b2)} = ${disp(ra)}; imaginary part ${disp(a1)}·${disp(b2)} + ${disp(a2)}·${disp(b1)} = ${disp(rb)}. So ${fmtComplex(ra, rb)}.`,
     ],
     ra, rb, lo: -20, hi: 20, map: false,
   }
@@ -174,7 +172,7 @@ function multTask(hard: boolean): Task {
  *  is 24 distinct questions, all with whole-number answers. */
 const MOD_PAIRS: [number, number][] = [[3, 4], [4, 3], [6, 8], [8, 6], [5, 12], [12, 5]]
 function modTask(): Task {
-  const [pa, pb] = pickOne(MOD_PAIRS)
+  const [pa, pb] = pick(MOD_PAIRS)
   const a = Math.random() < 0.5 ? pa : -pa
   const b = Math.random() < 0.5 ? pb : -pb
   const n = Math.round(Math.sqrt(a * a + b * b))
@@ -331,7 +329,7 @@ function WalkPad({ task, value, setValue, disabled, reveal, onCommit }: {
         style={{ flex: 1, minWidth: 60, accentColor: reveal ? P.mint : P.gold, cursor: disabled ? 'default' : 'pointer' }}
       />
       <Nudge P={P} label="+" disabled={disabled} onClick={() => onSet(val + 1)} />
-      <span style={{ width: 'clamp(30px,3vw,44px)', textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(16px,1.8vw,24px)', color: reveal ? P.mint : P.cream }}>{fmt(val)}</span>
+      <span style={{ width: 'clamp(30px,3vw,44px)', textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(16px,1.8vw,24px)', color: reveal ? P.mint : P.cream }}>{disp(val)}</span>
     </div>
   )
 

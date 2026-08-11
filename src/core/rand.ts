@@ -40,3 +40,6 @@ export function shuffle<T>(a: readonly T[]): T[] {
   for (let i = r.length - 1; i > 0; i--) { const j = rint(0, i); [r[i], r[j]] = [r[j], r[i]] }
   return r
 }
+
+/** One element, uniformly. Was written out 34 times under two names and four spellings. */
+export const pick = <T,>(a: readonly T[]): T => a[rint(0, a.length - 1)]

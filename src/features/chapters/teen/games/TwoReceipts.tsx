@@ -34,7 +34,8 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, PartsBuilder, MatrixPad, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#22261c', nightBot: '#0b0d08',
@@ -46,8 +47,6 @@ const P: Palette = {
 }
 
 const nz = (lo: number, hi: number) => { let v = 0; while (v === 0) v = rint(lo, hi); return v }
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
-const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 const M = (m: number[][]) => `[[${m[0].join(', ')}], [${m[1].join(', ')}]]`
 
 type V =
@@ -175,8 +174,8 @@ function detTask(): Task {
     padInstruction: 'Tap the determinant.',
     say: 'Find the determinant of this two by two table.',
     work: [
-      `ad − bc, so (${fmt(a)})(${fmt(d)}) − (${fmt(b)})(${fmt(c)}).`,
-      `That is ${fmt(a * d)} − ${fmt(b * c)} = ${fmt(n)}.`,
+      `ad − bc, so (${disp(a)})(${disp(d)}) − (${disp(b)})(${disp(c)}).`,
+      `That is ${disp(a * d)} − ${disp(b * c)} = ${disp(n)}.`,
     ],
     // ad + bc is the "forgot the minus" slip; bc − ad is the reversed order.
     n, pad: [a * d + b * c, b * c - a * d, a * d],
@@ -272,7 +271,7 @@ const CONFIG: GameConfig<V, Task> = {
     t.kind === 'add' || t.kind === 'scalar' ? M(t.mat ?? ZERO2())
       : t.kind === 'solve' ? `A = £${t.pa}, B = £${t.pb}`
         : t.kind === 'count' ? (t.choices?.find((c) => c.id === t.correctId)?.label ?? '')
-          : fmt(t.n ?? 0),
+          : disp(t.n ?? 0),
   glide: (t, _f, setValue, later) => later(() => setValue(
     t.kind === 'add' || t.kind === 'scalar' ? { k: 'mat', m: t.mat ?? ZERO2() }
       : t.kind === 'solve' ? { k: 'parts', a: t.pa ?? 0, b: t.pb ?? 0 }

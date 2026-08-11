@@ -12,7 +12,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
 export interface ExpressionEvaluatorProps {
   band: AgeBand
@@ -29,33 +30,8 @@ const RANGE = 8 // grid spans -8..8
 const X_MIN = -2
 const X_MAX = 2
 
-/** Pretty signed integer with a real minus sign. */
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 /** Parenthesised value for the substitution step: 3·(−4). */
 const paren = (n: number) => (n < 0 ? `(−${Math.abs(n)})` : String(n))
-
-function Slider({ label, value, min, max, onChange }: {
-  label: string; value: number; min: number; max: number; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 64, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {fmt(value)}
-      </span>
-    </label>
-  )
-}
 
 export default function ExpressionEvaluator({ band, onReady }: ExpressionEvaluatorProps) {
   const [x, setX] = useState(1)
@@ -94,7 +70,7 @@ export default function ExpressionEvaluator({ band, onReady }: ExpressionEvaluat
         fontSize: 24, fontWeight: 600, color: 'var(--accent)',
         letterSpacing: '0.01em', minHeight: 34, textAlign: 'center', lineHeight: 1.4,
       }}>
-        {A}·{paren(x)} {B < 0 ? '−' : '+'} {Math.abs(B)} = {fmt(value)}
+        {A}·{paren(x)} {B < 0 ? '−' : '+'} {Math.abs(B)} = {disp(value)}
       </div>
 
       {/* The slider */}
@@ -104,9 +80,9 @@ export default function ExpressionEvaluator({ band, onReady }: ExpressionEvaluat
 
       {/* Plain-language read-out of what's happening */}
       <p style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
-        Set <strong style={{ color: 'var(--ink)' }}>x = {fmt(x)}</strong>, and the
-        expression is worth <strong style={{ color: 'var(--ink)' }}>{fmt(value)}</strong>.
-        That pair <span style={{ fontFamily: 'var(--font-numeric)' }}>({fmt(x)}, {fmt(value)})</span> is
+        Set <strong style={{ color: 'var(--ink)' }}>x = {disp(x)}</strong>, and the
+        expression is worth <strong style={{ color: 'var(--ink)' }}>{disp(value)}</strong>.
+        That pair <span style={{ fontFamily: 'var(--font-numeric)' }}>({disp(x)}, {disp(value)})</span> is
         the point on the line.
       </p>
     </SimLayout>

@@ -11,7 +11,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
 
 export interface PythagorasExplorerProps {
   band: AgeBand
@@ -26,29 +26,6 @@ const PERFECT = new Set([0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169,
 function fmtC(c2: number): string {
   if (PERFECT.has(c2)) return String(Math.round(Math.sqrt(c2)))
   return Math.sqrt(c2).toFixed(2)
-}
-
-function Slider({ label, value, min, max, onChange }: {
-  label: string; value: number; min: number; max: number; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 64, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 36, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {value}
-      </span>
-    </label>
-  )
 }
 
 export default function PythagorasExplorer({ band, onReady }: PythagorasExplorerProps) {
@@ -120,8 +97,8 @@ export default function PythagorasExplorer({ band, onReady }: PythagorasExplorer
 
       {/* Sliders */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%' }}>
-        <Slider label="leg a" value={a} min={1} max={10} onChange={setA} />
-        <Slider label="leg b" value={b} min={1} max={10} onChange={setB} />
+        <Slider valueW={36} label="leg a" value={a} min={1} max={10} onChange={setA} />
+        <Slider valueW={36} label="leg b" value={b} min={1} max={10} onChange={setB} />
       </div>
 
       {/* Plain-language read-out */}

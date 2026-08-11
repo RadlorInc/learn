@@ -34,9 +34,8 @@
  * Landscape-first, wrapped by the registry / `?ch=beads`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
 import { patternUnitLen, type Difficulty } from '@/core/adaptive'
@@ -440,7 +439,6 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const { w: vw, h: vh } = useViewport()
   const short = vh < SHORT_H
@@ -464,14 +462,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
   const timers = useRef<number[]>([])
   useEffect(() => () => { timers.current.forEach(clearTimeout) }, [])
 
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   /** A new pattern begins: Milo's opening items go on the string and the joint moves behind them. */
   // The new run starts where the string currently ends, read off the ref rather than from inside the
@@ -508,7 +499,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
   // a beat that changes on resize regenerates the question under the child mid-round. The tray
   // measures itself instead.
   const beat = useMemo<Beat<PatternRound> | null>(() => make && ({
-    skillId: 'patterns', rounds: 10, reteachAfter: 3, walkEvery: 4,
+    skillId: 'patterns', rounds: 10, walkEvery: 4,
     make: (d, round = 0) => makePatternRound(sRef.current, (d || 1) as Difficulty, round),
     // `at` is the strand length, so every round has a distinct signature and makeDistinct — which
     // would otherwise re-roll a generator that reads state and returns the same thing — never spins.
@@ -602,7 +593,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
             // A round that opens a NEW pattern brings Milo's starter items with it; they go onto
             // the same string, and the joint moves in behind them.
             onRound={(data: PatternRound) => { if (data.seed.length) openRun(data.unit, data.seed) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
 

@@ -12,36 +12,13 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
-import { pow } from '@/features/chapters/lessons/ExponentsRootsTeenLesson'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import { pow } from '@/core/fmt'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
 
 export interface PowerExplorerProps {
   band: AgeBand
   /** Called once on mount so a host (lesson/explore step) can unlock "Continue". */
   onReady?: () => void
-}
-
-function Slider({ label, value, min, max, onChange }: {
-  label: string; value: number; min: number; max: number; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 96, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 32, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {value}
-      </span>
-    </label>
-  )
 }
 
 /** A base × base square of unit cells — the visual meaning of "squared". */
@@ -119,8 +96,8 @@ export default function PowerExplorer({ band, onReady }: PowerExplorerProps) {
 
       {/* Sliders */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%' }}>
-        <Slider label="base" value={base} min={1} max={6} onChange={setBase} />
-        <Slider label="exponent" value={exp} min={0} max={5} onChange={setExp} />
+        <Slider labelW={96} valueW={32} label="base" value={base} min={1} max={6} onChange={setBase} />
+        <Slider labelW={96} valueW={32} label="exponent" value={exp} min={0} max={5} onChange={setExp} />
       </div>
 
       {/* Plain-language read-out of what changed */}

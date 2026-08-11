@@ -33,11 +33,10 @@
  * game/TimeChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, inFlowJourney, hasSheet, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import {
@@ -47,9 +46,8 @@ import {
   pickMinute, kindOf, READINGS,
   type Ask, type Slot, type Reading,
 } from './clock'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 
-const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 const wrap = (i: number, n: number) => ((i % n) + n) % n
 
 /** The ring is a SCAFFOLD, so it fades once the child is working unaided — the tier-linked
@@ -681,7 +679,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
 // ─── beat ─────────────────────────────────────────────────────────────────────────────
 export function makeTimeBeat(): Beat<TimeRound> {
   return {
-    skillId: 'time', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'time', rounds: 10, walkEvery: 3,
     make: (d, round = 0, asked) => makeTimeRound((d || 1) as 1 | 2 | 3, round, asked as readonly Reading[] | undefined),
     // ⚠️ THE CLOSED SET. Mastery must not end the run before the child has been asked all four
     // readings — measured, a third of strong runs were finishing having never met a "to" time.
@@ -724,7 +722,6 @@ export default function TickTock({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const [phase, setPhase] = useState<Phase>('intro')
   const [gIdx, setGIdx] = useState(0)
   const [slot, setSlot] = useState(0)
@@ -732,15 +729,7 @@ export default function TickTock({ onFinish, onExit }: {
   const l = layoutFor(vw, vh)
   const learnerId = useMemo(() => getActiveLearner()?.id, [])
   const [canSkip] = useState(() => lessonSeen(getActiveLearner()?.id, 'time'))
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeTimeBeat(), [])
 
@@ -819,10 +808,7 @@ export default function TickTock({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: l.top - 8, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data) => { if (typeof data?.slot === 'number') setSlot(data.slot) }}
-            onComplete={(c, w, mastered) => {
-              result.current.correct += c; result.current.wrong += w
-              finishChapter(result.current.correct, result.current.wrong, mastered)
-            }} />
+            onComplete={tally} />
         </div>
       )}
 

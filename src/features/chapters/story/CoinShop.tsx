@@ -51,9 +51,8 @@
  * scenes are not used all live in [market.ts](./market.ts). Read that before touching the geometry.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -65,7 +64,7 @@ import {
   aOrAn, OFF_X, MILO_X, PAY_X, MILO_ASPECT,
   SHOPPERS, shopperAt, SHOPPER_X, SHOPPER_LIFT, SHOPPER_SCALE,
 } from './market'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
 
 export {
   STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot,
@@ -146,7 +145,6 @@ export interface MoneyRound {
  */
 export const pileFor = (round: number) => round % 2 === 1
 
-const pick = <T,>(a: readonly T[]) => a[rint(0, a.length - 1)]
 
 /** The coins a tier may spend. 1 is always present, so every price is payable. */
 export const POOL: Record<1 | 2 | 3, CoinValue[]> = { 1: [1, 5], 2: [1, 5, 10], 3: [1, 5, 10, 25] }
@@ -704,7 +702,7 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
 const BEAT: Beat<MoneyRound> = {
-  skillId: 'money', rounds: 10, reteachAfter: 3, walkEvery: 3,
+  skillId: 'money', rounds: 10, walkEvery: 3,
   make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
   // The DIRECTION is part of the question: the same price named as a number and held out as a pile
   // are two things to answer, not one question asked twice.
@@ -736,21 +734,13 @@ export default function CoinShop({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const [slotIdx, setSlotIdx] = useState(0)
   const [bought, setBought] = useState<number[]>([])
   const { w: vw, h: vh } = useViewport()
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
 
   /**
@@ -849,7 +839,7 @@ export default function CoinShop({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={BEAT} onInterlude={interlude}
             onRound={(data) => { if (typeof data?.slot === 'number') { setSlotIdx(data.slot); setBought(s => [...s, data.slot]) } }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
       )}
     </div>

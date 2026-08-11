@@ -31,9 +31,8 @@
  * equal pair needs a third answer the tap-a-bunch mechanic has nowhere to put. Worth revisiting.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import type { Difficulty } from '@/core/adaptive'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -468,7 +467,7 @@ export function makeRound(d: Difficulty, round: number): CmpRound {
 
 function makeCmpBeat(): Beat<CmpRound> {
   return {
-    skillId: 'numberComparison', rounds: 10, reteachAfter: 3, walkEvery: 3,
+    skillId: 'numberComparison', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as Difficulty, round),
     // Dedupe on the COMPARISON itself, not the rotating cast or scene.
     sig: d => `${d.numerals ? 'n' : 'c'}${(d.numerals ?? d.counts).join('/')}${d.mode}`,
@@ -495,20 +494,11 @@ export default function BigOrSmall({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const router = useRouter()
   const needsRotate = useNeedsRotate()
   const [phase, setPhase] = useState<Phase>('intro')
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [stage, setStage] = useState(0)
-  const result = useRef({ correct: 0, wrong: 0 })
-  const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
-
-  const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true
-    stopSpeech()
-    if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  const { exit, tally } = useChapterShell(onFinish, onExit)
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeCmpBeat(), [])
@@ -560,7 +550,7 @@ export default function BigOrSmall({ onFinish, onExit }: {
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
             onRound={(data, round) => { if (data?.scene) setScene(data.scene as string); setStage(round) }}
-            onComplete={(c, w, mastered) => { result.current.correct += c; result.current.wrong += w; finishChapter(result.current.correct, result.current.wrong, mastered) }} />
+            onComplete={tally} />
         </div>
         <MapStrip done={stage} total={TOTAL_ROUNDS} />
       </>)}

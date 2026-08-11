@@ -40,7 +40,8 @@ import { useEffect, useState, type ReactElement } from 'react'
 import { motion, useMotionValue, useTransform, useMotionValueEvent, animate, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, CommitBtn, Nudge, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#132a3b', nightBot: '#0a1622',
@@ -51,10 +52,8 @@ const P: Palette = {
   glass: 'rgba(18,40,58,0.6)', glassBorder: 'rgba(234,244,251,0.2)',
 }
 
-const pick = <T,>(a: T[]): T => a[rint(0, a.length - 1)]
-const fmtInt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 /** Coefficient prefix on x: "2x", "−x", "x". */
-const coef = (n: number) => (n === 1 ? 'x' : n === -1 ? '−x' : `${fmtInt(n)}x`)
+const coef = (n: number) => (n === 1 ? 'x' : n === -1 ? '−x' : `${disp(n)}x`)
 /** A signed term joined into an expression: " + 3" / " − 3" (leading space). */
 const term = (n: number) => (n < 0 ? ` − ${Math.abs(n)}` : ` + ${n}`)
 /** "ax + b" as a whole expression. */
@@ -106,7 +105,7 @@ function equationTask(d: 1 | 2 | 3): Task {
   const owe = b < 0
   return {
     kind: 'equation',
-    title: 'Weeks to goal', badge: `${expr} = ${fmtInt(c)}`, tone: d === 3 ? 'b' : 'a',
+    title: 'Weeks to goal', badge: `${expr} = ${disp(c)}`, tone: d === 3 ? 'b' : 'a',
     context: owe
       ? `You save $${a} a week, but you owe $${Math.abs(b)} first. The goal costs $${c}.`
       : `You save $${a} a week and already have $${b}. The goal costs $${c}.`,
@@ -117,8 +116,8 @@ function equationTask(d: 1 | 2 | 3): Task {
       ? `You save ${a} dollars a week, but you owe ${Math.abs(b)} dollars first. The goal costs ${c} dollars. How many weeks until you can buy it?`
       : `You save ${a} dollars a week, and you already have ${b} dollars. The goal costs ${c} dollars. How many weeks until you can buy it?`,
     work: [
-      `After x weeks you have ${expr} dollars, and the goal is ${fmtInt(c)}.`,
-      `Undo the ${owe ? 'debt' : 'head start'} FIRST — ${owe ? 'add' : 'subtract'} ${Math.abs(b)} on both sides: ${coef(a)} = ${fmtInt(c - b)}.`,
+      `After x weeks you have ${expr} dollars, and the goal is ${disp(c)}.`,
+      `Undo the ${owe ? 'debt' : 'head start'} FIRST — ${owe ? 'add' : 'subtract'} ${Math.abs(b)} on both sides: ${coef(a)} = ${disp(c - b)}.`,
       `Now divide both sides by ${a}: x = ${x}. That is ${x} weeks.`,
     ],
     a, b, c, x,
@@ -142,7 +141,7 @@ function reachTask(d: 2 | 3): Task {
   const expr = base === 0 ? coef(rate) : `${coef(rate)}${term(base)}`
   return {
     kind: 'inequality', mode: 'save',
-    title: 'Weeks to afford', badge: `${expr} ≥ ${fmtInt(goal)}`, tone: d === 3 ? 'b' : 'a',
+    title: 'Weeks to afford', badge: `${expr} ≥ ${disp(goal)}`, tone: d === 3 ? 'b' : 'a',
     context: base === 0
       ? `You save $${rate} a week from nothing. The goal is $${goal}.`
       : `You already have $${base} and save $${rate} more each week. The goal is $${goal}.`,
@@ -151,10 +150,10 @@ function reachTask(d: 2 | 3): Task {
     prompt: `Which weeks get you to $${goal}?`,
     say: `You save ${rate} dollars a week${base ? `, on top of ${base} you already have` : ''}, and the goal is ${goal} dollars. Find the boundary week, then shade the weeks that work.`,
     work: [
-      `After x weeks you have ${expr} dollars, and you need at least ${fmtInt(goal)}.`,
+      `After x weeks you have ${expr} dollars, and you need at least ${disp(goal)}.`,
       base === 0
         ? `Divide both sides by ${rate}: x is at least ${n}.`
-        : `Take the ${base} you already have off both sides: ${coef(rate)} is at least ${fmtInt(goal - base)}. Divide by ${rate}: x is at least ${n}.`,
+        : `Take the ${base} you already have off both sides: ${coef(rate)} is at least ${disp(goal - base)}. Divide by ${rate}: x is at least ${n}.`,
       `Dividing by a POSITIVE keeps the direction, so week ${n} and every week after it works.`,
     ],
     rate, base, limit: goal, top: goal, n, dir: 1, hi: n + 5,
@@ -177,16 +176,16 @@ function limitTask(): Task {
   const base = rate * n + limit
   return {
     kind: 'inequality', mode: 'spend',
-    title: 'Spending limit', badge: `${fmtInt(base)} − ${coef(rate)} ≥ ${fmtInt(limit)}`, tone: 'b',
+    title: 'Spending limit', badge: `${disp(base)} − ${coef(rate)} ≥ ${disp(limit)}`, tone: 'b',
     context: `You have $${base} and spend $${rate} a week — but $${limit} must stay in the jar for the bus.`,
     instruction: 'Set the boundary week, then shade the weeks that keep the bus money safe.',
     showEquals: false,
     prompt: `Which weeks leave at least $${limit} in the jar?`,
     say: `You have ${base} dollars and spend ${rate} dollars a week, but ${limit} dollars must stay in the jar for the bus. Find the boundary week, then shade the weeks that work.`,
     work: [
-      `The bus money is not yours to spend, so take it off first: ${fmtInt(base)} minus ${fmtInt(limit)} leaves ${fmtInt(base - limit)} to spend.`,
-      `In symbols: ${fmtInt(base)} − ${coef(rate)} is at least ${fmtInt(limit)}, so −${coef(rate)} is at least ${fmtInt(limit - base)}.`,
-      `Dividing by NEGATIVE ${rate} flips the direction — "at least" becomes "at most": x is at most ${n}. Week ${n} leaves exactly ${fmtInt(limit)}, and every week after that dips below it.`,
+      `The bus money is not yours to spend, so take it off first: ${disp(base)} minus ${disp(limit)} leaves ${disp(base - limit)} to spend.`,
+      `In symbols: ${disp(base)} − ${coef(rate)} is at least ${disp(limit)}, so −${coef(rate)} is at least ${disp(limit - base)}.`,
+      `Dividing by NEGATIVE ${rate} flips the direction — "at least" becomes "at most": x is at most ${n}. Week ${n} leaves exactly ${disp(limit)}, and every week after that dips below it.`,
     ],
     rate, base, limit, top: base, n, dir: -1, hi: n + 5,
   }

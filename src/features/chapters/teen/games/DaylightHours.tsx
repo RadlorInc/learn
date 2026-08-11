@@ -33,7 +33,8 @@
 import { type ReactElement } from 'react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SpecPicker, CurveMatch, type Wave, numChoices } from './parts/gameKit'
-import { rint } from '@/core/rand'
+import { rint, pick } from '@/core/rand'
+import { disp } from '@/core/fmt'
 
 const P: Palette = {
   nightTop: '#2a1e2c', nightBot: '#0f0810',
@@ -44,8 +45,6 @@ const P: Palette = {
   glass: 'rgba(42,30,44,0.62)', glassBorder: 'rgba(253,238,228,0.2)',
 }
 
-const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
-const fmt = (n: number) => (n < 0 ? `−${Math.abs(n)}` : String(n))
 
 type V = { k: 'wave'; w: Wave } | { k: 'num'; n: number } | { k: 'pick'; id: string }
 
@@ -66,7 +65,7 @@ const placeFor = (a: number) =>
  *  cycles and stops reading as a year at all, which would make the world false. */
 function matchTask(d: 1 | 2): Task {
   const a = rint(2, 5)
-  const b = d === 1 ? 1 : pickOne([1, 2])
+  const b = d === 1 ? 1 : pick([1, 2])
   const k = d === 1 ? 12 : rint(10, 14)
   const dials: ('a' | 'b' | 'k')[] = d === 1 ? ['a', 'k'] : ['a', 'b', 'k']
   return {
@@ -109,7 +108,7 @@ function extremeTask(d: 1 | 2): Task {
     say: `A year of daylight is ${a} sine of x plus ${k}. How long is the ${askMax ? 'longest' : 'shortest'} day?`,
     work: [
       `The middle of the swing is ${k} hours.`,
-      `Sine tops out at ${askMax ? '1' : '−1'}, so the furthest it gets is ${a} × ${askMax ? '1' : '−1'} = ${fmt(askMax ? a : -a)}.`,
+      `Sine tops out at ${askMax ? '1' : '−1'}, so the furthest it gets is ${a} × ${askMax ? '1' : '−1'} = ${disp(askMax ? a : -a)}.`,
       `${k} ${askMax ? '+' : '−'} ${a} = ${n} hours.`,
     ],
     // k alone is the "forgot the swing" slip; k∓a is the wrong end of the year.
@@ -126,7 +125,7 @@ function pythTask(): Task {
     { sin: '5/13', cos: '12/13' }, { sin: '12/13', cos: '5/13' },
     { sin: '8/17', cos: '15/17' },
   ]
-  const c = pickOne(cases)
+  const c = pick(cases)
   const alts = cases.filter((x) => x.cos !== c.cos).map((x) => x.cos).slice(0, 3)
   return {
     kind: 'pyth', title: 'Tidy it first', tone: 'a',
@@ -147,7 +146,7 @@ function pythTask(): Task {
 
 /** ⚠️ Picker #2, same seam. */
 function simpTask(): Task {
-  const e = pickOne([
+  const e = pick([
     { badge: '1 − sin²θ', ans: 'cos²θ', alts: ['sin²θ', '1', 'tan²θ'], why: 'Rearranging sin²θ + cos²θ = 1 gives 1 − sin²θ = cos²θ.' },
     { badge: '1 − cos²θ', ans: 'sin²θ', alts: ['cos²θ', '1', 'tan²θ'], why: 'Rearranging sin²θ + cos²θ = 1 gives 1 − cos²θ = sin²θ.' },
     { badge: 'sin²θ + cos²θ', ans: '1', alts: ['0', '2', 'sinθ·cosθ'], why: 'That IS the identity — it comes to 1, for every angle there is.' },

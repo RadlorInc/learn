@@ -19,7 +19,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
-import { Palette, PaintGrid, Nudge, CommitBtn, numChoices, pick, reduce, tidy, money } from './parts/gameKit'
+import { Palette, PaintGrid, Nudge, CommitBtn, numChoices, reduce, tidy, money } from './parts/gameKit'
+import { pick } from '@/core/rand'
 
 const P: Palette = {
   nightTop: '#10212e', nightBot: '#183245',

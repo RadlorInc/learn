@@ -11,7 +11,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import CoordGrid from '@/features/chapters/teen/CoordGrid'
-import SimLayout from '@/features/chapters/teen/sims/SimLayout'
+import SimLayout, { Slider } from '@/features/chapters/teen/sims/SimLayout'
+import { disp } from '@/core/fmt'
 
 export interface LineExplorerProps {
   band: AgeBand
@@ -27,29 +28,6 @@ function eq(m: number, b: number): string {
   const mPart = m === 1 ? 'x' : m === -1 ? '−x' : `${m < 0 ? '−' : ''}${Math.abs(m)}x`
   if (b === 0) return `y = ${mPart}`
   return `y = ${mPart} ${b < 0 ? '−' : '+'} ${Math.abs(b)}`
-}
-
-function Slider({ label, value, min, max, onChange }: {
-  label: string; value: number; min: number; max: number; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
-      <span style={{ width: 64, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
-        aria-label={label}
-      />
-      <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
-        {value < 0 ? `−${Math.abs(value)}` : value}
-      </span>
-    </label>
-  )
 }
 
 export default function LineExplorer({ band, onReady }: LineExplorerProps) {
@@ -93,8 +71,8 @@ export default function LineExplorer({ band, onReady }: LineExplorerProps) {
 
       {/* Plain-language read-out of what changed */}
       <p style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
-        <strong style={{ color: 'var(--ink)' }}>Slope {m < 0 ? `−${Math.abs(m)}` : m}:</strong> {riseText}.<br />
-        <strong style={{ color: 'var(--ink)' }}>Intercept {b < 0 ? `−${Math.abs(b)}` : b}:</strong> the line crosses the y-axis there.
+        <strong style={{ color: 'var(--ink)' }}>Slope {disp(m)}:</strong> {riseText}.<br />
+        <strong style={{ color: 'var(--ink)' }}>Intercept {disp(b)}:</strong> the line crosses the y-axis there.
       </p>
     </SimLayout>
   )

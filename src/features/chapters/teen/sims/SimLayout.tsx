@@ -23,6 +23,7 @@
  * genuinely cannot fit, its section scrolls — it does not go quiet.
  */
 import type { ReactNode } from 'react'
+import { disp } from '@/core/fmt'
 
 const SIM_CSS = `
 .mb-sim-controls { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -68,5 +69,40 @@ export default function SimLayout({ visual, children, maxWidth = 420, gap = 16, 
           of the sim's real column width. */}
       <div className="mb-sim-controls" style={{ width: '100%', alignItems: align, gap }}>{children}</div>
     </div>
+  )
+}
+
+/**
+ * The one slider every Explore sim drives its parameter with. It was written out
+ * thirteen times, differing only in the two column widths and the step — and in how
+ * each copy rendered a negative, which is exactly the drift `disp` exists to stop
+ * (two of the copies carried their own private re-implementation of it).
+ *
+ * `labelW`/`valueW` are real per-sim layout numbers, not config: the label column has
+ * to fit that sim's longest label ("start value" is wider than "b"). Anything a caller
+ * needs to DO to the value — clamping, skipping zero — belongs in its own `onChange`,
+ * not in a prop here.
+ */
+export function Slider({ label, value, min, max, onChange, step = 1, labelW = 64, valueW = 40, suffix = '' }: {
+  label: string; value: number; min: number; max: number; onChange: (n: number) => void
+  step?: number; labelW?: number; valueW?: number; suffix?: string
+}) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: 'var(--font-body)' }}>
+      <span style={{ width: labelW, fontSize: 14, color: 'var(--ink-soft)' }}>{label}</span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ flex: 1, accentColor: 'var(--accent)', cursor: 'pointer' }}
+        aria-label={label}
+      />
+      <span style={{ width: valueW, textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 16, fontWeight: 600, color: 'var(--accent)' }}>
+        {disp(value)}{suffix}
+      </span>
+    </label>
   )
 }
