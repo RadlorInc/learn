@@ -12,6 +12,173 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
+> 🧹 **2026-08-11 (LATEST) — THE SUPPLY RUN IS ANSWERED BY SWEEPING YOUR HAND ACROSS: ONE CROSSING DEALS ONE ROUND, AND THE NUMBER OF SWEEPS IS THE ANSWER. ✅ COMMITTED as `1ff0efb` (the chapter) + the docs commit on top of it on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **787/787 vitest** (was 730, **+57**) · `next build` 0 · **0 console errors in a FRESH tab, on both input paths** · dev hooks **0 hits in the emitted production JS** (verified against a control string that IS present) · driven at 1280×720 and 640×320 through intro → camera gate → both demos → guided → **five scored rounds including a `group` round reached naturally at L2**, a wrong answer and its retry, and an over-deal undone.
+>
+> **The ask:** *"supply run ka AR banao"* — build-order item 6's first chapter, and the one the previous session's analysis picked as the strongest remaining gesture.
+>
+> ## ⓪ WHY THIS CHAPTER, AND IT IS AN ARGUMENT NOT A PREFERENCE
+> Of the five built chapters with no AR, only this one has a gesture that IS the maths rather than a
+> hand-shaped mouse: **division as repeated subtraction, performed with the body**, which is exactly
+> what the chapter was rebuilt to be (*"the answer is how many steps you got"*). It also maps 1:1
+> onto an existing control — one sweep fires the existing `deal()` — so it is the purest instance of
+> *one instrument, two inputs, one grader* the band has. And a sweep is **discrete**, so unlike the
+> Angle Shop's tilt it needs no hysteresis, no EMA and no constant tuned against assumed noise.
+> Loading Bay was rejected on the same test: its main proposed gesture is point-at-the-tallest, which
+> the craft doc calls a mouse with extra steps.
+>
+> ## ① THE DETECTOR — `infra/ar/sweep.ts`, PURE, 37 tests, **15/16 planted regressions caught**
+> A Schmitt trigger on the palm's mirrored screen x: reach ≤ 0.40 to arm, cross ≥ 0.60 to fire, then
+> disarmed until you come back. Hysteresis, a physical re-arm and noise immunity all fall out.
+> ⚠️ **THE RETURN STROKE MUST FIRE NOTHING** — coming back is a physical necessity of sweeping again,
+> so making it "undo" means every second deal cancels the one before it. ⚠️ **And the direction is
+> load-bearing**: the crate is drawn LEFT of the receivers at every size and round (measured,
+> 1800/1800 draws, smallest gap 22px) and the units already fly that way, so the hand travels the way
+> the goods travel. Reversed, it would be a hand-shaped button.
+>
+> ## ② ⚠️ FOUR THINGS I BUILT WRONG FIRST, AND THE MEASUREMENT THAT KILLED EACH
+> ① **A per-frame jump reject CANNOT separate a teleport from a fast hand** — a re-acquisition from
+> 0.2 to 0.9 is a step of 0.70 and a brisk one-frame crossing from 0.15 to 0.85 is 0.70 too. I shipped
+> `MAX_STEP` 0.25 sitting **UNDER** the 0.30 band, so a hand crossing between the two thresholds in a
+> single frame was refused outright: a dead button on the only gesture. **Three tests caught it.** The
+> real separator is whether the hand was **SEEN INSIDE the band** — a crossing lands a sample there at
+> any usable frame rate, a teleport lands none — and it needs no constant at all.
+> ② ⚠️ **BAND WIDTH REJECTS NOISE AND NOTHING ELSE, and my comment claimed otherwise.** A hand
+> crossing the desk to the mouse, or out to a drink, is a perfectly good traversal of far more than
+> the band. A **posture gate** (`SWEEP_MAX_Y` — the palm must be above the bottom fifth) is one
+> comparison and it is what actually stops a spurious deal.
+> ③ **Disarming on one lost frame punishes the child who sweeps best.** Detection loss is CORRELATED
+> with the gesture — a fast hand under indoor light is motion-blurred and the landmarker falls back to
+> re-detection — so `LOST_GRACE` rides out a blur without covering a hand that has gone.
+> ④ **The band went 0.30 → 0.20 on ERGONOMICS, not noise.** `answer ∈ 2..7` over ten rounds is
+> **20–70 sweeps plus a return stroke each — up to ~140 arm traversals in one sitting**, by far the
+> most repetitive gesture in the band. 0.20 is still ten times the landmark jitter, and it is 11–16 cm
+> of palm travel rather than 17–24.
+>
+> ## ③ ⚠️ THE BLOCKER THAT WOULD HAVE SHIPPED: A ROUND CAN BECOME UNSUBMITTABLE
+> The band's pattern is to REPLACE the pointer control with the hand readout (FitOut's digit pad
+> becomes a dwell ring). Do that to this chapter's only commit-feeding control and a **working camera
+> that cannot read a particular child's gesture** leaves them with nothing to press, an undo disabled
+> at zero, a commit disabled at zero, no wrong answer, no re-teach, **no round timeout in SkillBeat**,
+> and **no `CamGate`, because that renders only when the camera failed to START.** The only control
+> left is ‹ Menu. **The lane IS the button** — one element, two ways to fire it, no dead end, and
+> `deal()` stays a single greppable call site.
+> ⚠️ **AND THE LABEL COULD NOT GO INPUT-BLIND.** That button was the ONLY thing on screen naming which
+> reading was being asked — *Deal one round* vs *Fill a van* — so one "sweep to deal" would have said
+> *deal* over a bench where a step FILLS one. Now `dealAsk(round, input, state)`, gated share ≠ group
+> **in both modes**, plus a state each for *bring your hand back* and *the crate is empty — tap Send
+> it out ✓*.
+>
+> ## ④ ⚠️ THE CAMERA COVERED THE THING BEING COUNTED, IN 41% OF DRAWS
+> The self-view is opaque and drawn above the bench, and this bench is the band's widest answer
+> surface: measured, **584 of 1440 draws** put it over the rightmost receivers — worst case a
+> **173×70px** block at 740×480, in the chapter whose whole question is how many each got. Fixed by a
+> bottom band that RESERVES the panel (`bottomBand(vh, cam)`), Factor Lab's `BOT_BAND` from the same
+> direction. ⚠️ **I also shrank the panel to 132px and that bought NOTHING** — a mutation putting 190
+> back stayed green, and measuring showed the unit is 27px against 28px, i.e. very slightly worse.
+> Reverted to the band's shared number; the reserve does all the work.
+>
+> ## ⑤ ⚠️ AND ADDING THE SECOND DOOR CLIPPED THE INTRO CARD — A REGRESSION I CAUSED
+> Offering both inputs every time is right and costs **~33px**. Measured live at 640×320: the shipped
+> 200-character body went from 307px to **340px inside a 320px frame**, clipped by 20. Both bodies are
+> now ~175 chars and the short-frame padding is tighter: **301px, 19px of headroom, on both paths** —
+> better than the 307/6 that shipped.
+>
+> ## ⑥ WHAT WAS ACTUALLY DRIVEN
+> At 1280×720: the intro's two doors · the camera gate with this chapter's own copy · **one sweep
+> deals exactly one round** (crate 10 → 8, one cell into each of two rovers) · five sweeps complete a
+> share and the lane goes dead saying *"The crate is empty — tap Send it out ✓"* · **three sweeps at
+> an empty crate are swallowed AND do not carry into the next round** · a wrong answer (3 of 5 steps)
+> → miss line → **twelve sweeps performed during the 2400 ms miss window are DISCARDED, not queued**,
+> so the board re-opens with the crate full at 20 and every tray empty → a fresh sweep deals again, so
+> the retry is alive (FitOut shipped a board that stayed dead for ever here).
+>
+> ✅ **AND A SCORED `group` ROUND WAS PLAYED, REACHED NATURALLY.** A clean run — guided plus three
+> correct at L1 — promoted to L2, and `coverage` spent the scarce round on the unmet reading exactly
+> as designed: **scored round 4 came up `13 tins in, 3 to a tray`**, which carries a remainder and is
+> therefore the payload case. Verified on it: the armed label reads **"Sweep across to fill a tray ▸"**
+> — the GROUP wording naming the site's own receiver, which is the blocker fix (a round-type-blind
+> "sweep to deal" would have said *deal* over a bench where a step FILLS one); four sweeps drew **four
+> trays of three with ONE tin still in the crate** and a spare empty tray beside them; a fifth sweep
+> was ALLOWED and emptied the crate into a visibly part-filled tray; `↩ Take it back` returned it; and
+> the round graded correct and advanced. **The demo's closing beat on the camera path was also caught
+> live — *"Your turn: sweep your hand across to send one round out."*** — on the `group` demo.
+>
+> ✅ **THE BACKWARDS CLAMP WAS EXERCISED LIVE, by accident and then on purpose.** `__miloHand` spreads
+> `NO_HAND`, so calling it mid-round drops the sweep counter 3 → 0 — precisely what `useTaps` and a
+> camera restart do. **Nothing was dealt** (bench stayed 13/0,0,0,0,0) and the next sweeps still
+> worked. Without the clamp the baseline is stranded above the counter and the gesture is dead for the
+> rest of the run.
+>
+> At 640×320: **every fixed layer crossed with every other — 0 overlaps, 0 offscreen, no h- or
+> v-overflow**, smallest tap target 33px (this band's stated short-frame ceiling).
+> On the TAP path: **no `<video>` element exists at all**, so MediaPipe never loads and the camera is
+> never requested — the local-first property, by construction rather than by promise.
+>
+> ## ⑦ THE GATES — +57 tests, **32/33 planted regressions caught**, ONE proven inert
+> `sweepReader.test.ts` (37) drives the pure detector with synthetic x-tracks — the only way this
+> gesture can be checked at all, since a webcam cannot be driven headlessly. **15/16 mutations**:
+> direction dropped · hand-loss never/instantly disarming · the seen-crossing guard dropped · the
+> band collapsed or narrowed to the noise floor · the posture gate dropped or made unreachable · a
+> fingertip instead of the palm · the bar un-quantized.
+> `supplyRunDivision.test.ts` gained 21 — the label in both modes and all three states, the
+> answer-space sweep, the direction invariant, the camera layer crossings, the control row fitting,
+> the demo's gesture cue, and source checks on the effect's three properties. **17/17 mutations.**
+>
+> ⚠️ **AND RE-RUNNING BOTH SUITES AGAINST THE FINAL CODE FOUND TWO REAL HOLES THE INTERMEDIATE RUNS
+> HAD NOT — which is the argument for re-running mutations at the END rather than as you go.**
+> ① **Dropping `armed` from `sweepKey` survived, and it is a genuine defect, not a twin of the inert
+> one.** The chapter's instruction branches on `armed`, and it only ever hears a reading when the key
+> changes — so a hand travelling from the right side into the arming zone changes neither the counter
+> nor the quantized bar, the chapter never learns the child has done the thing it just asked for, and
+> the lane keeps saying *"bring your hand back"* to a hand that is already back, for the whole arming
+> phase of every sweep.
+> ② ⚠️ **THE ROW-FIT CHECK CARRIED ITS OWN COPY OF `vw * 0.34`, so widening the real control back to
+> the 0.46 that overflowed left the gate green.** This repo's own recorded fault — *a gate that
+> re-implements a rule cannot see the rule being removed* — committed again, and worse: I had
+> earlier "proved" that check by mutating the TEST, which proves nothing at all. `laneMinW` is
+> exported now and the gate drives it. **Mutate the SOURCE, never the assertion.**
+>
+> ⚠️ **The one remaining survivor is INERT and it is written down in the module**: dropping `sweeps`
+> from `sweepKey` was a real dead button when the key was `sweeps/arm`, and adding `armed` closed it
+> by accident. It stays in the key because the redundancy is the wrong way round to rely on.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOBODY HAS HELD A REAL HAND UP TO IT — and this is now FOUR AR chapters deep on a detection
+>    layer that is entirely eyeball-free.** Every drive above fed synthetic readings through
+>    `__miloSweep`. **`SWEEP_ARM` (0.40) is the knob a real child tunes first and its failure mode is
+>    total silence**: a right hand at rest sits around x 0.63–0.67, so arming is a deliberate move
+>    leftward and a child sitting off-centre may never reach it. `SWEEP_MAX_Y` (0.8) is second. The
+>    escape hatch if 0.40 is unreachable is an anchor+span detector, which is position-independent —
+>    do NOT build it speculatively.
+> 2. ✅ **CLOSED — a scored `group` round was played end to end on the sweep path** (see §⑥). What is
+>    still unplayed on it: a WRONG group answer, whose miss line differs from share's.
+> 3. **No full ten-round run, no re-teach seen fire, no mastery exit.** The re-teach now names the
+>    sweep on the camera path — that beat was watched in the DEMO, which is the same list, but not
+>    after three wrong answers.
+> 4. **The residual detector hole, stated:** a hand-identity swap that lands INSIDE the band can arm
+>    and then fire. `numHands: 1` and the confidences left at 0.5 make it rare, and it costs one
+>    spurious deal, undoable with a tap. A velocity reject would close it and needs `dt` plumbed
+>    through plus two constants.
+> 5. ✅ **Committed 2026-08-11 — `1ff0efb` (the chapter, 6 files, +1,255/−39) + the docs commit above it (the craft
+>    rules, the plan, this handoff), on `feat/9-11-factor-lab-ar`. NOT pushed; `public/sw.js` is still
+>    v87** (→ v88 when this deploys). ⚠️ **Split so the code is ONE commit** — `SupplyRun.tsx` does not
+>    compile without `sweep.ts`, so any finer split leaves an intermediate that fails `tsc`, which this
+>    branch has already shipped once. Staged file-by-file and each commit's list checked with
+>    `git show --stat` (this repo's directory-pathspec trap commits the working tree under a directory
+>    and ignores the index). **Then the branch was checked out CLEAN in a scratch worktree: `tsc` 0 ·
+>    787/787** — a green working tree says nothing about the branch. Dev hooks re-verified against the
+>    fresh build: **0 hits in the emitted `.js`**, hits only in `.js.map`, control string present.
+>    Deliberately left untracked, as every prior session: `docs/recovered/`, `python script/`,
+>    `scripts/.voice-*.json`.
+>    The rest of the previous block's open list stands: the Lego anchor copy, the Angle Shop's anchor,
+>    §7.2's brick constraint, LoadingBay + OrderDesk's missing gates and cover-fit fix, 4 chapters
+>    still neon.
+> 6. **Nobody has watched a child play it**, and of this session's faults **five were found by
+>    measuring, three by adversarial review, two by mutation-testing the gate at the very end, and
+>    not one by the type-checker.**
+>
+> _(the 🔢 block below is the previous session — the Fitting Crew's two-place hand entry.)_
+
 > 🔢 **2026-08-09 (LATEST) — THE FITTING CREW ANSWERS BY HAND, ONE PLACE AT A TIME — AND BUILDING IT FOUND THAT THE PLAN'S OWN A2 IS ARITHMETICALLY IMPOSSIBLE. ✅ FOUR COMMITS on `feat/9-11-factor-lab-ar` (with the ✋ block below), NOT pushed.** `tsc` 0 · **730/730 vitest** (was 725, **+5**) · `next build` 0 · 0 console errors in a fresh tab · driven end to end at 1280×720 through intro → both demos → guided → five scored rounds including a **`split`** · dev hooks **0 hits in the emitted production JS**.
 >
 > **The ask:** *"fitting crew ka A2 banao"* — build order item 5, the two-place read.
@@ -7172,7 +7339,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-09 (LATEST — see the top 🔢 block. **The Fitting Crew answers by hand, one place at a time — and building it found that the plan's own A2 is ARITHMETICALLY IMPOSSIBLE. ✅ FOUR COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed; the branch was checked out CLEAN to prove it (`tsc` 0 · 730/730).** `tsc` 0 · **730/730 vitest** (+5) · `next build` 0 · 0 console errors · driven end to end at 1280×720 through five scored rounds including a `split`. ⚠️ **"leftmost hand = tens, rightmost = ones → 0–99" cannot work, because a hand has FIVE fingers** — one hand per place tops out at 55, reaches **26 of 55** of this generator's answers and only 39% of `split`, and cannot state a plain **6**. A round whose answer the surface cannot express is unanswerable. **So the two places are the two WINDOWS, not the two hands**: both hands make one digit, the child enters the tens then the ones, 100% reachable, and NO hook change was needed — `count` already did it. ⚠️ **Two faults the drive found, the first mine:** putting the slot in the dwell key re-armed the same pose, so **answering 12 gave 11**; and a `fit` round with the camera on said nothing about needing taps. **5/5 planted regressions caught.** ▶ Open: the Lego anchor copy and the two-hand array build are still unwritten; §7.2 (no 5×19 brick) undecided; 640×320 computed not driven; **nobody has held a real hand up to any of the three AR chapters** — three is enough surface that this is the next thing worth doing. _(prior footer follows.)_)_
+_Last updated: 2026-08-11 (LATEST — see the top 🧹 block. **THE SUPPLY RUN IS ANSWERED BY SWEEPING YOUR HAND ACROSS: one crossing deals one round, and the number of sweeps IS the answer. ⚠️ NOT COMMITTED.** `tsc` 0 · **787/787 vitest** (was 730, **+57**) · `next build` 0 · **0 console errors in a FRESH tab on BOTH input paths** · dev hooks **0 hits in the emitted production JS** (checked against a control string that IS present) · driven at 1280×720 and 640×320. Division as repeated subtraction, performed — and a sweep is DISCRETE, so unlike the Angle Shop's tilt it needs no hysteresis, no EMA and no constant tuned against assumed noise. ⚠️ **Four things I built wrong first, each killed by a measurement:** a per-frame jump reject CANNOT separate a teleport from a fast hand (both are ~0.70) and my `MAX_STEP` 0.25 sat UNDER the 0.30 band, refusing a legitimate one-frame crossing — a dead button, caught by three tests; **band width rejects NOISE and nothing else** while my comment claimed it stopped a reach for a mug (a posture gate is what does that); disarming on one lost frame punishes the child who sweeps best, because detection loss is CORRELATED with the gesture; and the band went 0.30 → 0.20 on **ERGONOMICS** — `answer ∈ 2..7` over ten rounds is up to **~140 arm traversals a run**. ⚠️ **The blocker that would have shipped: replacing the Deal button makes a round UNSUBMITTABLE** — a working camera that cannot read a child's gesture leaves no deal, no undo, no commit, no re-teach, no SkillBeat timeout and no CamGate (that fires only when the camera did not START). The lane IS the button. ⚠️ **And the label could not go input-blind** — that button was the only thing naming which reading was asked, so `dealAsk(round, input, state)`, gated share ≠ group in BOTH modes. ⚠️ **The self-view covered the receivers in 584 of 1440 draws**; fixed by reserving its height, and shrinking the panel was measured to buy NOTHING (a mutation putting it back stayed green). ⚠️ **Adding the second door clipped the intro card** — 340px in a 320px frame; both bodies shortened, now 301px/19px headroom, better than the 307/6 that shipped. ✅ **A scored `group` round was played, reached naturally** (three correct at L1 → L2 → coverage spent the scarce round on it): `13 tins in, 3 to a tray` — armed label reads the GROUP wording, four sweeps drew four trays of three with ONE tin left in the crate, a fifth was allowed and part-filled a tray, undo returned it, graded correct. The backwards clamp was exercised live too. **32/33 planted regressions caught, 1 proven inert** — and ⚠️ re-running the mutations against the FINAL code found two real holes the intermediate runs could not, one of them because I had "proved" a check by mutating the TEST rather than the source. ▶ Open: **nobody has held a real hand up to any of the four AR chapters** and `SWEEP_ARM` (0.40) is the knob whose failure mode is silence; a WRONG group answer, a full ten-round run, the re-teach firing and the mastery exit are all unplayed; nothing pushed, sw still v87. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-09 (LATEST — see the top 🔢 block. **The Fitting Crew answers by hand, one place at a time — and building it found that the plan's own A2 is ARITHMETICALLY IMPOSSIBLE. ✅ FOUR COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed; the branch was checked out CLEAN to prove it (`tsc` 0 · 730/730).** `tsc` 0 · **730/730 vitest** (+5) · `next build` 0 · 0 console errors · driven end to end at 1280×720 through five scored rounds including a `split`. ⚠️ **"leftmost hand = tens, rightmost = ones → 0–99" cannot work, because a hand has FIVE fingers** — one hand per place tops out at 55, reaches **26 of 55** of this generator's answers and only 39% of `split`, and cannot state a plain **6**. A round whose answer the surface cannot express is unanswerable. **So the two places are the two WINDOWS, not the two hands**: both hands make one digit, the child enters the tens then the ones, 100% reachable, and NO hook change was needed — `count` already did it. ⚠️ **Two faults the drive found, the first mine:** putting the slot in the dwell key re-armed the same pose, so **answering 12 gave 11**; and a `fit` round with the camera on said nothing about needing taps. **5/5 planted regressions caught.** ▶ Open: the Lego anchor copy and the two-hand array build are still unwritten; §7.2 (no 5×19 brick) undecided; 640×320 computed not driven; **nobody has held a real hand up to any of the three AR chapters** — three is enough surface that this is the next thing worth doing. _(prior footer follows.)_)_
 
 _Prior update: 2026-08-09 (the ✋ block. **`<HandInput>` is extracted and THE ANGLE SHOP IS ANSWERED BY TILT — your forearm IS the ramp. ⚠️ NOT COMMITTED.** `tsc` 0 · **725/725 vitest** (+12) · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320 on both chapters. The hook now reports one `onRead({count, hands, tilt})` — **only the two readings with a consumer were built**, because the callback is an object and the other eight are a field each when their chapter arrives. `infra/ar/HandInput.tsx` holds the device pick, camera lifecycle, `useDwell`, self-view, gate, ring and dev hooks, skinned per band; FactorLab is re-pointed at it and re-driven end to end. ⚠️ **Folding the reading to [0,180) made the fold rounds free** — an axis has no head or tail, so one reading serves a beam and a fold line. ⚠️ **The hand owns the continuous value and taps own the discrete actions**, because a live hand overwrites a stepper before the finger leaves it. ⚠️ **Without hysteresis the camera is a DEAD BUTTON** — and `SNAP_HOLD` is derived (a full step) rather than chosen; 0.62 was my first guess and it flips. ⚠️ **My first test for it was useless and the mutation SURVIVED** — it jittered around a bucket CENTRE, which crosses nothing; the case that matters is a hand sitting ON a boundary. 7/7 planted regressions caught after. ⚠️ **Two faults only the drive found:** a held-over pose committed itself through the guard written to prevent it (the Angle Shop's dwell watches `deg`, an ECHO of the hand that lags a render), and the control row reshuffled at the verdict. ▶ Open: **nobody has held a real hand up to it** and `TILT_EMA`/`SNAP_HOLD` are calibrated against ASSUMED noise; the demo does not teach the gesture; the chapter's daily anchor copy is still unwritten; rotating to portrait stops the camera; nothing pushed, sw still v87. _(prior footer follows.)_)_
 

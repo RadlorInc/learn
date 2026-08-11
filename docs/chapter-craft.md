@@ -1793,6 +1793,17 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   the gate was never actually tested. Re-planted with a tool that reports its own substitution count,
   it failed the gate immediately. **Assert on the edit before you conclude anything about the check**
   — same family as "a sweep that flags everything is a broken sweep, not a discovery".
+- ⚠️ **MUTATE THE SOURCE, NEVER THE ASSERTION.** Changing a constant inside the TEST to watch it fail
+  proves only that the test can fail — it says nothing about whether the check is wired to the thing
+  it guards. I did exactly that to "prove" a control-row-fit check, and the real defect walked through
+  it: the check carried its own copy of `vw * 0.34`, so widening the real control back to the value
+  that overflowed left the gate perfectly green. Same family as *a gate that re-implements a rule
+  cannot see the rule being removed*, and mutating the source is how you catch it.
+- ⚠️ **RE-RUN THE MUTATIONS AGAINST THE FINAL CODE, NOT ONLY AS YOU GO.** A suite run mid-build tests
+  a shape that no longer exists by the end. The final pass on the sweep detector found two holes the
+  intermediate runs could not have — one of them a genuine dead button — because each was created by
+  a LATER change (a field joining a key; a constant being inlined). A mutation score only means
+  anything about the code you actually ship.
 - **Mutation-test the gate, and tell an inert mutation from a missed regression.** Of seven planted
   against the chapters 9–10 sweep, five were caught and two passed — and both survivors turned out
   to change no behaviour at all (one constant was shadowed by a tighter one, one cap was covered by
@@ -2044,6 +2055,104 @@ offers.**
 composite into the PRIMES pool produces a perfectly valid factor round — so every round-level check
 passes, while that tier's prime slot never fires and `coverage` can never see a prime. Export the
 pools and assert they are what they claim; a round-level sweep structurally cannot see this.
+
+### An EVENT gesture is a different animal from a held pose
+
+Everything above assumes a reading you HOLD — a finger count, a tilt — which is why `useDwell` and
+its held-over guard exist. The Supply Run's sweep (a hand crossing the frame, one crossing = one
+deal) is an EVENT, and the differences are worth having in advance.
+
+⚠️ **IT NEEDS NO DWELL, NO SMOOTHING AND NO HYSTERESIS BAND TUNED AGAINST ASSUMED NOISE.** A
+traversal cannot be "still held": it happened or it did not. That deletes the whole class of
+calibration the Angle Shop's tilt had to derive before its camera stopped being a dead button.
+
+⚠️ **BUT IT STILL NEEDS A HELD-OVER GUARD, AND ITS SHAPE IS A COUNTER DIFFED AGAINST A MOUNT
+BASELINE** — `useRef(read.sweeps)`, so a gesture completed while the previous verdict was on screen
+is recorded as already-seen. Three further properties, each a bug if missing and none reachable by
+playing:
+- **Loop the GAP, do not act once per observed change.** `setRead` fires from a rAF callback and
+  React may coalesce two into one render, so a counter that advances by two deals once and silently
+  loses a gesture the child performed.
+- **Advance the baseline OUTSIDE the loop and unconditionally**, which is what DISCARDS a swallowed
+  event rather than queueing it. The commit no-ops while a verdict is up, and a wrong answer holds
+  that for 2.4 s — so a baseline that only moved when the action landed replays three abandoned
+  gestures onto a freshly reset board the instant it re-opens, as an answer nobody built.
+- **Clamp BACKWARDS.** A counter is monotone within a DETECTOR session, never across a chapter:
+  `useTaps` resets the whole reading and `start()` resets the detector, so one "Use taps instead" or
+  one "Try the camera again" drops it to zero and a stranded baseline kills the gesture for the rest
+  of the run.
+
+⚠️ **A PER-FRAME DISTANCE CEILING CANNOT TELL A TELEPORT FROM A FAST HAND, AND BUILDING ONE FIRST IS
+HOW YOU FIND OUT.** MediaPipe drops a detection and re-acquires the same hand elsewhere with no null
+frame between, which reads as a traversal. The obvious guard is a step limit — and a teleport from
+0.2 to 0.9 is 0.70 while a brisk one-frame crossing from 0.15 to 0.85 is 0.70 as well. Any ceiling
+low enough to reject the artefact rejects a fast child on a throttled loop, i.e. a dead button on the
+only gesture they have; the first cut here shipped a ceiling sitting UNDER the band it guarded, so a
+hand crossing between the two thresholds in one frame was refused outright. **What separates them is
+whether the hand was SEEN INSIDE the band** — a real crossing lands a sample there at any usable
+frame rate, a teleport lands none — and that needs no constant at all.
+
+⚠️ **BAND WIDTH REJECTS NOISE AND NOTHING ELSE, so a second guard has to cover intent.** Ten times
+the landmark jitter means a still hand can never fake a crossing. It does nothing whatever against a
+real arm movement that is not an answer: a hand crossing the desk to the mouse, or out to a drink and
+back, is a perfectly good traversal. A **posture gate** — the palm must be above the bottom fifth of
+frame — is one comparison and it is what actually stops a spurious commit. ⚠️ And the first draft's
+comment claimed the width did that job, which is the "comment asserting a rule is followed" fault.
+
+⚠️ **DETECTION LOSS IS CORRELATED WITH THE GESTURE, so disarming on one lost frame punishes the child
+who does it best.** A hand moving fast under indoor light is motion-blurred, the landmarker's
+confidence collapses and it falls back to full re-detection — so a dropped frame is most likely
+precisely DURING the motion being detected. Grace it a few frames.
+
+⚠️ **AND ONE HAND, WITH THE CONFIDENCES LEFT ALONE.** Two hands in frame let `all[0]` swap between
+them and an event detector reads the swap as a gesture. But *loosening* the detection thresholds is
+backwards for a single-hand reading: every marginal claim — a sibling, a face, a cushion — EVICTS the
+tracked hand from the only slot, and each eviction is exactly the discontinuity the detector is least
+able to tell from the real thing.
+
+⚠️ **COUNT THE REPETITIONS ACROSS A WHOLE RUN BEFORE SIZING THE MOVEMENT.** An answer of 2..7 over
+ten rounds is 20–70 gestures plus a return stroke each — up to ~140 arm traversals in one sitting,
+against two dwells a round elsewhere in the band. That is an ergonomic ceiling on the distance, and
+it is a stronger constraint than the noise floor: a tired sweep is a short sweep, which is a missed
+sweep, which costs another sweep.
+
+### Do not replace a control with a readout — a round can become unsubmittable
+
+⚠️ **THE STRONGEST FINDING OF THE SUPPLY RUN'S AR PASS, AND IT IS ABOUT EVERY AR CHAPTER.** The
+pattern so far has been to swap the pointer control for the hand readout (FitOut's digit pad becomes
+a dwell ring). Do that to a chapter's ONLY commit-feeding control and a working camera that cannot
+read a particular child's gesture leaves them with: nothing to press, an undo disabled at zero, a
+commit disabled at zero, no wrong answer, no re-teach, **no round timeout in `SkillBeat`**, and **no
+`CamGate`, because that renders only when the camera failed to START**. The single remaining control
+is ‹ Menu. **Keep the control a real button and let the gesture fire the same handler** — one
+element, two ways to trigger it, no dead end, and the source-grep gates keep working.
+
+⚠️ **AND THE CONTROL THAT NAMES *WHICH* QUESTION IS BEING ASKED MUST NOT GO INPUT-BLIND.** This
+chapter's button was the only thing on screen distinguishing its two readings of division — *Deal one
+round* against *Fill a van* — so a single "sweep to deal" label would have said *deal* over a bench
+where a step FILLS one. That is the re-word-every-gesture-line rule arriving from the other side: the
+wording is not wrong, it addresses the wrong reading, and no single-mode check can see it. Put the
+label behind one exported function of `(round, input, state)` and gate that the two types differ **in
+both input modes**.
+
+⚠️ **THE STATES A GESTURE CAN BE IN ALL NEED WORDS.** *Ready* is not the only one: after firing, the
+hand is on the far side and pushing further does nothing, so "bring your hand back" has to be said at
+the moment it applies (FitOut's `handHint`); and where the tap path shows a dimmed button for "there
+is nothing left to do", the gesture path shows nothing at all unless the label carries it — including
+naming the tap that still commits.
+
+⚠️ **ADDING A SECOND DOOR TO AN INTRO CARD COSTS ABOUT 33px.** Offering both inputs every time is
+right, and on a card already at its measured ceiling it clips: this chapter's shipped 200-character
+body went from 307px to **340px inside a 320px frame**. Both bodies had to shrink and the short-frame
+padding had to tighten. **Re-measure the intro card when you add the second door**, on both paths.
+
+⚠️ **THE SELF-VIEW IS A LAYER — CROSS IT WITH THE BENCH *AND* WITH THE CONTROL ROW.** It is opaque
+and drawn above the world, and this chapter's bench is the widest answer surface in the band: it
+covered the receivers in **584 of 1440 sampled draws**, worst case a 173×70px block over the rightmost
+ones. The fix is a bottom band that RESERVES the panel's height (Factor Lab's `BOT_BAND`), not a
+smaller panel — measured, shrinking the panel bought nothing at all and a mutation putting the
+original size back stayed green, which is how that was discovered. The control row needs the same
+treatment as padding, or the commit button sits under the panel.
 
 ### The question is three zones, in every band
 

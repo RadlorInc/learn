@@ -102,7 +102,7 @@ nothing here needs a model we do not already load.
 | **E** | **pinch-to-grab** — tips together = hold, apart = drop | **drag and place** | drag | hook change |
 | **F** | **hand position** — x or y over a scale | a value on a line / a bar | slider | hook change |
 | **G** | **two-hand span** — gap between the hands | **a length shown with the arms** | drag ruler | ⚠️ see §7 |
-| **H** | **sweep** — hand travels across | **one round of dealing** | a "Deal" button | hook change |
+| **H** | **sweep** — hand travels across | **one round of dealing** | a "Deal" button | ✅ shipped |
 | **I** | **mirror** — both hands mirrored about a line | **symmetry** | tap the axis | hook change |
 | **J** | **trace** — index tip draws a path | round the outside vs across the inside | drag path | hook change |
 
@@ -180,11 +180,17 @@ the AR gesture, and the pointer that answers the same question.
 - **THE PLAN:** *"22 pieces, 4 friends. One each, again, again — you stop when you can't go round, and
   what's left in your hand is the remainder."*
 - **Worked example:** 22 ÷ 4 = 5 each, 2 left over.
-- **AR:** ⚠️ **sweep your hand across to deal one round to everybody (H); the number of sweeps IS the
-  answer.** Division as repeated subtraction, performed — which is precisely what this chapter was
-  rebuilt to be. A sweep the bag cannot cover still fires and visibly leaves somebody short, exactly
-  as the button does today.
-- **Pointer:** the existing **Deal** button + ↩ Take it back. Unchanged.
+- **AR:** ✅ **SHIPPED — sweep your hand across to deal one round to everybody (H); the number of
+  sweeps IS the answer.** Division as repeated subtraction, performed. A sweep the bag cannot cover
+  still fires and visibly leaves somebody short, exactly as the button does today.
+- **Pointer:** the existing **Deal** button + ↩ Take it back. ⚠️ **NOT replaced on the camera path —
+  the lane IS that button.** Replacing it makes a round unsubmittable the moment a working camera
+  fails to read a child's gesture (commit and undo are both disabled at zero, `SkillBeat` has no
+  round timeout, and `CamGate` only shows when the camera did not START). See chapter-craft §5.
+- ⚠️ **Corrections this build made to the rows above:** a per-frame jump reject cannot separate a
+  re-acquired hand from a fast one and was replaced by "was it seen crossing"; band width rejects
+  NOISE only, so a posture gate is what stops a reach across the desk; and the band is 0.20 rather
+  than 0.30 on ERGONOMICS — `answer ∈ 2..7` over ten rounds is up to ~140 arm traversals a run.
 - ✅ Answers are already 2..8 with `stepCost × answer ≤ 24` — a bag of candy is the right size by
   construction, no reframe needed.
 
@@ -363,7 +369,7 @@ This is the same fix the 17–18 band took for the same complaint.
 | # | thing | size |
 |---|---|---|
 | 1 | ✅ **DONE — FactorLab's tap path.** See §8 | shipped |
-| 2 | ✅ **DONE — `useFingerCounter` reports one `onRead({count, hands, tilt})`.** ⚠️ Only the readings with a CONSUMER were built: `count` (A) and `tilt` (D). The callback is an object, so `perHand`/`tips`/`pinch`/`span` are each a field and a few lines when their chapter arrives — building them blind would be six unused readings and a `reads` change test nobody could tune. | shipped |
+| 2 | ✅ **DONE — `useFingerCounter` reports one `onRead({count, hands, tilt, sweeps, sweepArm, sweepArmed})`.** ⚠️ Only the readings with a CONSUMER were built: `count` (A) and `tilt` (D). The callback is an object, so `perHand`/`tips`/`pinch`/`span` are each a field and a few lines when their chapter arrives — building them blind would be six unused readings and a `reads` change test nobody could tune. | shipped |
 | 3 | ✅ **DONE — `infra/ar/HandInput.tsx`**: the device pick, camera lifecycle, lazy MediaPipe, `useDwell`, `CamView`, `CamGate`, `DwellRing` and the dev drive hooks, skinned per band. FactorLab re-pointed at it; The Angle Shop is its second consumer. | shipped |
 | 4 | **THE PLAN + baby-step walkthrough** in the story shell | one shared component, then per-chapter copy |
 | 5 | Per chapter: the anchor's copy, the AR reading, the instruction chip per input mode | 12 × small |
