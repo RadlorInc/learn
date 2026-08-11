@@ -26,8 +26,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { extendedFingerTips, palmTilt, norm180 } from '@/infra/ar/fingerCount'
 import {
   palmRead, stepSweep, sweepKey, quantArm, SWEEP_START, SWEEP_ARM, SWEEP_FIRE, SWEEP_MAX_Y,
-  type SweepState,
+  type SweepState, type Palm,
 } from '@/infra/ar/sweep'
+import { slideKey } from '@/infra/ar/slide'
+import { pinchRatio, stepPinch, pinchKey, PINCH_START, type PinchState } from '@/infra/ar/pinch'
 import { createHandLandmarker, openCamera } from '@/infra/ar/handLandmarker'
 import { disposeLandmarker } from '@/infra/ar/dispose'
 
@@ -49,7 +51,7 @@ export type FingerStatus = 'idle' | 'loading' | 'running' | 'error'
  * therefore meant editing two literal unions in two files, and a chapter passing the new one failed
  * to typecheck at the WRAPPER rather than at the detector.
  */
-export type Reads = 'count' | 'tilt' | 'sweep'
+export type Reads = 'count' | 'tilt' | 'sweep' | 'slide' | 'pinch'
 
 export interface HandRead {
   /** extended fingers across every hand in frame, 0..10 */
@@ -69,6 +71,29 @@ export interface HandRead {
   sweepArm: number
   /** whether a crossing would currently count — the thing the chapter's instruction branches on */
   sweepArmed: boolean
+  /**
+   * The palm's position in the mirrored frame, 0..1 on each axis, or null when no hand is in frame —
+   * reading **F**, a position on a scale.
+   *
+   * ⚠️ RAW AND UNSNAPPED ON PURPOSE. The chapter owns the lattice: six stations along a line, eight
+   * bars, ten tenths. Snapping here would mean telling the hook how many steps a chapter has, which
+   * is the coupling `onRead` was widened to avoid — so the consumer maps it with `slideIndex` and
+   * holds it with `snapIndex`. It is only ever populated under `reads: 'slide'`; the change test is
+   * quantized (`slideKey`) so a held hand does not re-render the chapter at frame rate.
+   *
+   * ⚠️ ALSO POPULATED UNDER `reads: 'pinch'`, because a grab without a position is not an answer —
+   * The Order Desk's whole claim is that the DROP chooses the column, so the chapter needs to know
+   * where the hand is as well as whether it is holding.
+   */
+  palm: Palm | null
+  /** whether thumb and index are currently closed on something — reading **E** */
+  grabbing: boolean
+  /**
+   * How many times a grab has CLOSED since the camera started. MONOTONE within a detector session and
+   * NOT across a chapter, exactly like `sweeps` — a consumer diffs it against a baseline and must
+   * clamp a backwards jump, or one "Try the camera again" wedges the gesture for the rest of the run.
+   */
+  grabs: number
 }
 
 interface Opts {
@@ -95,6 +120,7 @@ export function useFingerCounter(
   /** the smoothed tilt, held as a DOUBLED-angle unit vector — see below */
   const tiltVecRef = useRef<{ x: number; y: number } | null>(null)
   const sweepRef = useRef<SweepState>(SWEEP_START)
+  const pinchRef = useRef<PinchState>(PINCH_START)
   const lastKey = useRef('')
   const optsRef = useRef(opts)
   optsRef.current = opts
@@ -160,8 +186,28 @@ export function useFingerCounter(
       if (reads === 'sweep') sweepRef.current = stepSweep(sweepRef.current, palmRead(all[0]))
       const sw = sweepRef.current
 
+      /**
+       * ⚠️ THE SLIDE IS ALSO READ OFF THE RAW HAND, and for the sweep's reason rather than a copied
+       * one: `s.count`/`s.hands` need STABLE_FRAMES to follow, so a marker driven off them would lag
+       * a moving hand by three frames and read as sticky. It is unsmoothed here too — the hysteresis
+       * that makes it usable belongs to the consumer's own lattice (`snapIndex`), because a hold band
+       * measured in frame-fractions means nothing until you know how many steps the scale has.
+       */
+      const palm = reads === 'slide' || reads === 'pinch' ? palmRead(all[0]) : null
+
+      /**
+       * ⚠️ ALSO STEPPED ON THE RAW HAND rather than the stabilized count, for the sweep's reason: a
+       * grab must release the frame the fingers open, and `s.count` needs STABLE_FRAMES to follow.
+       * `pinchRatio` guards its own landmark length, so a missing hand is a null rather than a throw
+       * — and a throw here is unrecoverable, because this loop has no try/catch and never reschedules.
+       */
+      if (reads === 'pinch') pinchRef.current = stepPinch(pinchRef.current, pinchRatio(all[0]))
+      const pn = pinchRef.current
+
       if (reads === 'sweep') drawSweep(ctx, all[0], sw, W, H, fill, ink)
       else if (reads === 'tilt') drawTilt(ctx, all[0], W, H, fill, ink)
+      else if (reads === 'slide') drawSlide(ctx, palm, W, H, fill, ink)
+      else if (reads === 'pinch') drawPinch(ctx, palm, pn, W, H, fill, ink)
       else drawCount(ctx, pts, W, fill, ink)
 
       // The count is stabilized; the tilt is not (it is already smoothed, and a continuous value
@@ -185,11 +231,14 @@ export function useFingerCounter(
        */
       const key = reads === 'sweep' ? `${s.hands}/${sweepKey(sw)}`
         : reads === 'tilt' ? `${s.count}/${s.hands}/${tilt}`
-          : `${s.count}/${s.hands}`
+          : reads === 'slide' ? `${s.hands}/${slideKey(palm)}`
+            : reads === 'pinch' ? `${s.hands}/${pinchKey(pn)}/${slideKey(palm)}`
+              : `${s.count}/${s.hands}`
       if (key !== lastKey.current) {
         lastKey.current = key
         optsRef.current.onRead?.({
-          count: s.count, hands: s.hands, tilt,
+          count: s.count, hands: s.hands, tilt, palm,
+          grabbing: pn.held, grabs: pn.grabs,
           sweeps: sw.sweeps, sweepArm: quantArm(sw.arm), sweepArmed: sw.armed,
         })
       }
@@ -201,7 +250,7 @@ export function useFingerCounter(
     try {
       setStatus('loading'); setError('')
       stableRef.current = { count: 0, hands: 0, cand: '', streak: 0 }
-      tiltVecRef.current = null; sweepRef.current = SWEEP_START; lastKey.current = ''
+      tiltVecRef.current = null; sweepRef.current = SWEEP_START; pinchRef.current = PINCH_START; lastKey.current = ''
       /**
        * Counting needs both hands; keep MediaPipe's default 0.5 presence/tracking
        * (the other AR surfaces loosen these to 0.3) — pass them explicitly so the
@@ -220,9 +269,16 @@ export function useFingerCounter(
        * from the only slot. Each eviction is a discontinuous jump in x, which is the one input class
        * this detector is least able to tell from a real sweep.
        */
-      const sweeping = (optsRef.current.reads ?? 'count') === 'sweep'
+      /**
+       * ⚠️ THE SLIDE ASKS FOR ONE HAND FOR THE SWEEP'S REASON, not by analogy. With two hands in
+       * frame `all[0]` can swap between them frame to frame, and for a POSITION reading that swap is
+       * a marker teleporting half the line — visibly a bug, and on a scale of six stations it can
+       * change the answer. The two readings that genuinely want both hands are the ones whose answer
+       * is a finger COUNT (Factor Lab's 0..10, The Fitting Crew's two places).
+       */
+      const oneHand = ['sweep', 'slide', 'pinch'].includes(optsRef.current.reads ?? 'count')
       landmarkerRef.current = await createHandLandmarker({
-        numHands: sweeping ? 1 : 2, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+        numHands: oneHand ? 1 : 2, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
       })
       streamRef.current = await openCamera(videoRef.current!)
       setStatus('running')
@@ -307,6 +363,63 @@ function drawSweep(
     ctx.beginPath(); ctx.moveTo(px - 5, y - 5); ctx.lineTo(px + 5, y + 5)
     ctx.moveTo(px + 5, y - 5); ctx.lineTo(px - 5, y + 5)
     ctx.strokeStyle = ink; ctx.lineWidth = 2.5; ctx.stroke()
+  }
+}
+
+/**
+ * The palm as a crosshair on the self-view — reading **F**'s overlay.
+ *
+ * ⚠️ IT DRAWS THE HAND, NEVER THE SCALE, and that is the whole design. The chapter owns the lattice,
+ * so a station lattice drawn here would be a SECOND copy of it — one that cannot know the round's
+ * own six stations and would sit a few pixels off the real ones, which reads as the gesture being
+ * mis-calibrated rather than as two drawings disagreeing.
+ *
+ * ⚠️ And it shows position, never a verdict — the hot/cold rule. Where the hand is is what was READ;
+ * whether the nearer halt is the right one is nowhere on this canvas, and the marker on the stage
+ * only confirms after the commit.
+ */
+function drawSlide(
+  ctx: CanvasRenderingContext2D,
+  p: Palm | null, W: number, H: number, fill: string, ink: string,
+) {
+  if (!p) return
+  const px = Math.min(Math.max(p.x * W, 10), W - 10)
+  const py = Math.min(Math.max(p.y * H, 10), H - 10)
+  // faint guides, so the child can see they are driving BOTH axes even when one is the answer
+  ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 1
+  ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke()
+  ctx.beginPath(); ctx.arc(px, py, 10, 0, Math.PI * 2)
+  ctx.fillStyle = fill; ctx.fill()
+  ctx.lineWidth = 3; ctx.strokeStyle = ink; ctx.stroke()
+}
+
+/**
+ * The grabbing hand — reading **E**'s overlay: where the hand is, and whether it is holding.
+ *
+ * ⚠️ IT DRAWS THE HAND, NEVER THE BAYS. A bay lighting up as a grab passes over it would be a yes/no
+ * oracle at frame rate — chapter-craft's rule that the live readout says only WHAT WAS READ, never
+ * whether it is right — and on this chapter it would hand over the place-value decision that IS the
+ * question. The drop chooses the column; nothing may preview whether that column is correct.
+ */
+function drawPinch(
+  ctx: CanvasRenderingContext2D,
+  p: Palm | null, pn: { held: boolean }, W: number, H: number, fill: string, ink: string,
+) {
+  if (!p) return
+  const px = Math.min(Math.max(p.x * W, 14), W - 14)
+  const py = Math.min(Math.max(p.y * H, 14), H - 14)
+  ctx.lineWidth = 3; ctx.strokeStyle = ink
+  if (pn.held) {
+    // holding: a filled, closed mark
+    ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI * 2)
+    ctx.fillStyle = fill; ctx.fill(); ctx.stroke()
+  } else {
+    // open: the same mark, open — two arcs with a gap, so the two states are told apart by SHAPE
+    // and not only by colour (a child colour-blind to the accent still sees which one they are in)
+    ctx.beginPath(); ctx.arc(px, py, 13, 0.5, Math.PI - 0.5)
+    ctx.stroke()
+    ctx.beginPath(); ctx.arc(px, py, 13, Math.PI + 0.5, Math.PI * 2 - 0.5)
+    ctx.stroke()
   }
 }
 

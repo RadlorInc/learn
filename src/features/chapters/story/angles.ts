@@ -15,6 +15,7 @@
  * See docs/storyboards/angle-shop.md for the shot list and docs/chapter-craft.md for the rules
  * every number here is obeying.
  */
+import { snapIndex } from '@/infra/ar/slide'
 
 // ─── the turn ────────────────────────────────────────────────────────────────────────
 /** 5° a tap, so 90 is reachable and a right angle is expressible at all. */
@@ -40,26 +41,30 @@ export const clampDeg = (d: number) => Math.max(MIN_DEG, Math.min(MAX_DEG, d))
 /**
  * How far past the current step, as a share of STEP, a reading must travel before the step changes.
  *
- * ⚠️ HYSTERESIS IS NOT POLISH HERE. Quantizing a continuous reading to 5° puts a boundary every
- * 2.5°, and a still hand's landmark noise is the same order — so without this a hand held ON a
- * boundary dithers between two steps for ever, the "hold still" commit never arms, and the camera
- * is a dead button, which the craft doc calls the worst outcome there is.
- *
- * ⚠️ AND THE NUMBER IS DERIVED, NOT TASTE. A hand settled on step C sees raw values up to
- * `STEP/2 + noise` away from C, so suppressing noise of ±2.5° needs a hold band of at least 5° —
- * i.e. a FULL step. So the reading changes exactly when the hand reaches the next step's own
- * centre, which is also the easiest rule to explain: tilt to where you want it and it goes there.
- * A weaker band (0.62 was the first guess) flips back and forth on a boundary and was caught by
- * mutation-testing the gate, not by looking.
+ * ⚠️ THE RULE NOW LIVES IN `infra/ar/slide.ts` AND THIS IS A RE-EXPORT, because a second copy of one
+ * rule is this repo's most-repeated recorded fault: reading **F** (a hand's position on a scale)
+ * needs the identical hysteresis, and two chapters deciding it separately is one edit away from
+ * disagreeing. The derivation is unchanged and is documented there — a hand settled on a step sees
+ * raw values up to half a step plus noise away from it, so suppressing ±2.5° of landmark jitter on a
+ * 5° lattice needs a FULL step of hold band. A weaker band (0.62 was the first guess) flips back and
+ * forth on a boundary and was caught by mutation-testing the gate, not by looking.
  */
-export const SNAP_HOLD = 1
+export { SNAP_HOLD } from '@/infra/ar/slide'
 
-/** The reachable angle a raw hand reading means, holding its current step until clearly past it. */
+/**
+ * The reachable angle a raw hand reading means, holding its current step until clearly past it.
+ *
+ * Degrees in, degrees out; the hysteresis itself is done in STEP UNITS by the shared `snapIndex`, so
+ * this function owns only the lattice (where 15° sits, how wide a step is) and never the rule.
+ */
 export function snapDeg(raw: number, current: number | null): number {
-  const want = clampDeg(Math.round(raw / STEP) * STEP)
-  if (current === null) return want
-  const cur = clampDeg(current)
-  return Math.abs(raw - cur) < STEP * SNAP_HOLD ? cur : want
+  const steps = (MAX_DEG - MIN_DEG) / STEP + 1
+  const idx = snapIndex(
+    (raw - MIN_DEG) / STEP,
+    current === null ? null : (clampDeg(current) - MIN_DEG) / STEP,
+    steps,
+  )
+  return MIN_DEG + idx * STEP
 }
 
 

@@ -34,7 +34,7 @@ export type { InputKind }
 
 /** How long a hand must hold still before it counts as an answer. */
 export const DWELL_MS = 1200
-export const NO_HAND: HandRead = { count: 0, hands: 0, tilt: null, sweeps: 0, sweepArm: 0, sweepArmed: false }
+export const NO_HAND: HandRead = { count: 0, hands: 0, tilt: null, palm: null, sweeps: 0, sweepArm: 0, sweepArmed: false, grabbing: false, grabs: 0 }
 
 /**
  * The chapter's palette, so this can live in a dark neon lab AND on a painted building site.
@@ -119,7 +119,25 @@ export function useHandInput(opts: { reads?: Reads; marker?: { fill: string; ink
      * never gets past the intro.
      */
     w.__miloSweep = () => { setFake(true); setRead(r => ({ ...r, hands: 1, sweeps: r.sweeps + 1, sweepArm: 0, sweepArmed: false })) }
-    return () => { delete w.__miloHand; delete w.__miloFingers; delete w.__miloTilt; delete w.__miloSweep }
+    /**
+     * ⚠️ BOTH AXES ARE REQUIRED RATHER THAN DEFAULTED, because a slide chapter that reads x still
+     * cares about y: Rail Line applies `SWEEP_MAX_Y` as its posture gate, so a hook defaulting y to 0
+     * would drive a raised hand on every call and the posture gate would never once be exercised in a
+     * drive. Passing it makes "a hand resting on the desk does nothing" a thing the gate can assert.
+     */
+    w.__miloSlide = (x: number, y: number) => { setFake(true); setRead({ ...NO_HAND, hands: 1, palm: { x, y } }) }
+    /**
+     * ⚠️ IT MUST INCREMENT `grabs` ON A FALSE→TRUE EDGE, or the drive lies about the one thing the
+     * chapter counts. A hook that only set the pose would leave `grabs` at 0 for ever, so a chapter
+     * keyed on "a NEW grab started" would place the first piece and silently ignore every one after
+     * — the exact shape `__miloSweep` was made functional to avoid. A hook that lies makes the whole
+     * drive worthless, and a webcam cannot be driven headlessly, so this is the only check there is.
+     */
+    w.__miloPinch = (held: boolean, x: number, y: number) => {
+      setFake(true)
+      setRead(r => ({ ...NO_HAND, hands: 1, palm: { x, y }, grabbing: held, grabs: r.grabs + (held && !r.grabbing ? 1 : 0) }))
+    }
+    return () => { delete w.__miloHand; delete w.__miloFingers; delete w.__miloTilt; delete w.__miloSweep; delete w.__miloSlide; delete w.__miloPinch }
   }, [])
 
   const camReady = status === 'running' || (DEV && fake)
