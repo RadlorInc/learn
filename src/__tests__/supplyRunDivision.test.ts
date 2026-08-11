@@ -17,7 +17,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   SITES, runOrder, makeRound, grade, missFor, slotCounts, stepCost, capacityOf,
-  runLayout, pileSpot, bubbleW, explainBeats, Q_ALL, MAX_LOAD, MAX_SLOTS, MILO_VAL, IMG_W, IMG_H, CTRL_BAND, topCeiling, type DvRound,
+  runLayout, pileSpot, bubbleW, explainBeats, Q_ALL, MAX_LOAD, MAX_SLOTS, MILO_VAL, IMG_W, IMG_H, CTRL_BAND, topCeiling,
+  dealAsk, CAM_W, CAM_BOTTOM, bottomBand, laneMinW, type DvRound, type LaneState,
 } from '@/features/chapters/story/SupplyRun'
 import { bannerBottom } from '@/features/chapters/story/yard'
 import { existsSync, readFileSync } from 'node:fs'
@@ -196,6 +197,32 @@ describe('the teaching', () => {
       expect(bs[0].handed).toBe(0)
       for (const b of bs) expect(b.handed % stepCost(q)).toBe(0)
       expect(Math.max(...bs.map(b => b.handed))).toBe(q.answer * stepCost(q))
+    })
+  })
+
+  /**
+   * ⚠️ THE RE-TEACH IS THIS SAME LIST, AND `reteachAfter: 3` MEANS A CHILD WHO CANNOT MAKE THE
+   * GESTURE READ GETS THREE WRONG ANSWERS AND THEN A LESSON ABOUT DIVISION — a motor failure
+   * diagnosed and re-taught as a mathematical one. On the camera path the teaching names the sweep;
+   * on the tap path it must not, or it addresses the wrong child.
+   */
+  it('teaches the SWEEP on the camera path and never mentions it on the tap path', () => {
+    draw(400, q => {
+      const tap = explainBeats(q).map(b => b.say).join(' ')
+      const cam = explainBeats(q, true).map(b => b.say).join(' ')
+      expect(tap).not.toMatch(/sweep/i)
+      expect(cam).toMatch(/sweep/i)
+    })
+  })
+
+  it('teaches the gesture without disturbing what the demo deals', () => {
+    draw(400, q => {
+      const tap = explainBeats(q), cam = explainBeats(q, true)
+      const full = q.answer * stepCost(q)
+      for (const b of cam) expect(b.handed).toBeLessThanOrEqual(full)
+      expect(cam[cam.length - 1].handed).toBe(tap[tap.length - 1].handed)
+      // every line still fits the self-paced dwell's own ceiling
+      for (const b of cam) expect(b.say.length).toBeLessThanOrEqual(88)
     })
   })
 
@@ -386,6 +413,13 @@ describe('layout', () => {
       fn(runLayout(vw, vh, q), q, vw, vh)
     }
   }
+  /** …and the same sweep with the camera on, where the bench has one more layer to clear. */
+  const eachCam = (fn: (L: ReturnType<typeof runLayout>, q: DvRound, vw: number, vh: number) => void) => {
+    for (const [vw, vh] of SIZES) for (const base of SHAPES) for (const site of SITES) {
+      const q = { ...base, site }
+      fn(runLayout(vw, vh, q, true), q, vw, vh)
+    }
+  }
 
   /**
    * ⚠️ A SHARE OF THE IMAGE IS NOT A SHARE OF THE VIEWPORT. RailLine drew `vh * groundY` over an
@@ -509,5 +543,252 @@ describe('layout', () => {
       if (rows < 2) return
       expect(pileSpot(0, L.crateCols, rows, L).y).toBeGreaterThan(pileSpot(L.crateCols, L.crateCols, rows, L).y)
     })
+  })
+})
+
+
+// ─────────────────────────────────────────────────────────────────────────────────────────
+// THE SWEEP — the camera path. See `src/__tests__/sweepReader.test.ts` for the detector itself;
+// everything here is about the CHAPTER: that the hand and the button are one instrument, that the
+// one control still names which division is being done, and that the camera's own panel does not
+// land on the thing the child is counting.
+// ─────────────────────────────────────────────────────────────────────────────────────────
+
+describe('the sweep, as an answer surface', () => {
+  const TYPES: DvRound['qType'][] = ['share', 'group']
+  const STATES: LaneState[] = ['ready', 'return', 'empty']
+  const round = (qType: DvRound['qType'], site = SITES[0]) => ({ ...SHAPES[0], qType, site } as DvRound)
+
+  /**
+   * ⚠️ THE ONE CONTROL IS THE ONLY PLACE ON SCREEN THAT NAMES WHICH READING IS BEING ASKED — the
+   * bubble carries the site's motto, not the question. A round-type-blind label on the camera path
+   * would say "deal" over a bench where a step FILLS ONE receiver, which is the craft doc's
+   * *adding an input means re-wording every line that names a gesture*, arriving through the other
+   * door: the wording is not wrong, it addresses the wrong reading.
+   */
+  it('names a DIFFERENT act for the two readings, on BOTH input paths', () => {
+    for (const site of SITES) {
+      expect(dealAsk(round('share', site), false)).not.toBe(dealAsk(round('group', site), false))
+      expect(dealAsk(round('share', site), true)).not.toBe(dealAsk(round('group', site), true))
+    }
+  })
+
+  it('names what the site actually calls its receivers, so the words match the picture', () => {
+    for (const site of SITES) {
+      expect(dealAsk(round('group', site), false)).toContain(site.slot)
+      expect(dealAsk(round('group', site), true)).toContain(site.slot)
+      expect(dealAsk(round('share', site), true)).toContain(site.slot)
+    }
+  })
+
+  /**
+   * ⚠️ ASSERTED IN BOTH DIRECTIONS, because a renderer that ignores its input passes every
+   * one-directional check. Factor Lab shipped every chip saying "hold up that many fingers" on a
+   * path answered by tapping, and nothing failed — the wording was not wrong, it addressed the
+   * wrong child.
+   */
+  it('never asks a tapping child to sweep, and never asks a sweeping child to tap the deal', () => {
+    for (const qType of TYPES) for (const site of SITES) {
+      expect(dealAsk(round(qType, site), false)).not.toMatch(/sweep|hand/i)
+      expect(dealAsk(round(qType, site), true, 'ready')).not.toMatch(/\btap\b/i)
+      expect(dealAsk(round(qType, site), true, 'ready')).toMatch(/sweep/i)
+    }
+  })
+
+  /**
+   * ⚠️ THE STATE A CHILD IS MOST LIKELY TO BE IN ON THEIR FIRST TRY. A right hand at rest sits
+   * around x 0.63–0.67, i.e. already past the fire line, so pushing further right crosses nothing
+   * and the surface does nothing. FitOut paid for exactly this with `handHint` — a guard that is
+   * correct and silent is a dead button.
+   */
+  it('tells the child to bring the hand back when a crossing cannot fire', () => {
+    for (const qType of TYPES) {
+      const back = dealAsk(round(qType), true, 'return')
+      expect(back).toMatch(/back|left/i)
+      expect(back).not.toBe(dealAsk(round(qType), true, 'ready'))
+    }
+  })
+
+  /**
+   * ⚠️ AN EMPTY CRATE IS VISIBLE ON THE TAP PATH — the button dims and the empty crate on screen
+   * says why. On the camera path a swallowed sweep is silent, so the label has to carry it, AND it
+   * has to name the tap that finishes the round, because Send stays a tap.
+   */
+  it('says what to do when the crate is empty, and names the tap that commits', () => {
+    for (const qType of TYPES) {
+      const empty = dealAsk(round(qType), true, 'empty')
+      expect(empty).toMatch(/empty/i)
+      expect(empty).toMatch(/send it out/i)
+    }
+  })
+
+  it('gives every state its own words — three states reading alike is one state', () => {
+    for (const qType of TYPES) {
+      const said = STATES.map(st => dealAsk(round(qType), true, st))
+      expect(new Set(said).size).toBe(STATES.length)
+    }
+  })
+
+  /**
+   * ⚠️ THE ANSWER-SPACE SWEEP, the same check the ten-finger ceiling makes: a round whose answer
+   * the surface cannot express is unanswerable, which is worse than a wrong one. Unlike a finger
+   * count, a repetition count has no ceiling — but assert it rather than assume it, and assert the
+   * ERGONOMIC bound too, because this is the most repeated gesture in the band.
+   */
+  it('can express every answer the generator draws, in a humane number of sweeps', () => {
+    let most = 0
+    draw(4000, q => {
+      const needed = q.answer                       // one sweep per completed step
+      expect(needed).toBeGreaterThanOrEqual(2)
+      expect(needed).toBeLessThanOrEqual(MAX_SLOTS)
+      most = Math.max(most, needed)
+    })
+    expect(most).toBeLessThanOrEqual(8)
+  })
+
+  /**
+   * ⚠️ THE DIRECTION IS THE MATHS. A left→right sweep is only honest because the crate is drawn
+   * LEFT of the receivers and the units already fly that way; reversed, the gesture would be a
+   * hand-shaped button. True by construction (`slotX0 = crateX + crateW + gap`) and pinned anyway,
+   * so a future layout rewrite fails loudly instead of silently inverting the teaching.
+   */
+  it('always draws the crate LEFT of the receivers, so a sweep travels the way the goods do', () => {
+    for (const cam of [false, true]) {
+      for (const [vw, vh] of SIZES) for (const base of SHAPES) for (const site of SITES) {
+        const q = { ...base, site } as DvRound
+        const L = runLayout(vw, vh, q, cam)
+        expect(L.crateX + L.crateW, `${site.id} ${vw}x${vh} cam=${cam}`).toBeLessThan(L.slotX0)
+      }
+    }
+  })
+})
+
+describe('the self-view is a layer, and it is crossed with every other', () => {
+  const camBox = (vw: number, vh: number) => {
+    const short = vh < 470
+    const w = CAM_W(short), h = w * 0.75, b = CAM_BOTTOM(short)
+    return { left: vw - 10 - w, right: vw - 10, top: vh - b - h, bottom: vh - b }
+  }
+
+  /**
+   * ⚠️ MEASURED, NOT FEARED: at the 190px self-view the other AR chapters use, this bench ran under
+   * the camera panel in **584 of 1440 sampled draws** — worst case a 173×70px opaque block over the
+   * rightmost receivers at 740×480, in the chapter whose whole question is how many each got. The
+   * panel is `zIndex: 36` and the bench `zIndex: 30`, so it wins. Two changes fixed it and both are
+   * needed: a smaller panel, and a bottom reserve that knows about it.
+   */
+  it('never lets the camera panel cover the crate or a receiver', () => {
+    for (const [vw, vh] of SIZES) for (const base of SHAPES) for (const site of SITES) {
+      const q = { ...base, site } as DvRound
+      const L = runLayout(vw, vh, q, true)
+      const c = camBox(vw, vh)
+      const benchRight = L.slotX0 + (q.slotsShown - 1) * L.slotStep + L.slotW
+      const benchTop = L.foot - Math.max(L.crateH, L.slotH)
+      const overX = Math.min(benchRight, c.right) - Math.max(L.crateX, c.left)
+      const overY = Math.min(L.foot, c.bottom) - Math.max(benchTop, c.top)
+      expect(overX > 0 && overY > 0, `${site.id} ${q.qType} ${vw}x${vh} → ${Math.round(overX)}x${Math.round(overY)}px`).toBe(false)
+    }
+  })
+
+  it('reserves the panel out of the bottom band rather than hoping the bench misses it', () => {
+    for (const [, vh] of SIZES) {
+      expect(bottomBand(vh, true)).toBeGreaterThanOrEqual(bottomBand(vh, false))
+      expect(bottomBand(vh, true)).toBeGreaterThanOrEqual(CAM_W(vh < 470) * 0.75 + CAM_BOTTOM(vh < 470))
+    }
+  })
+
+  /** ⚠️ The tap path must be BYTE-IDENTICAL to what shipped — the camera costs nothing to a child
+   *  who is not using it. */
+  it('changes nothing at all for a child answering with taps', () => {
+    for (const [, vh] of SIZES) expect(bottomBand(vh, false)).toBe(CTRL_BAND(vh) + 10)
+    for (const [vw, vh] of SIZES) for (const base of SHAPES) for (const site of SITES) {
+      const q = { ...base, site } as DvRound
+      expect(runLayout(vw, vh, q, false)).toEqual(runLayout(vw, vh, q))
+    }
+  })
+
+  /**
+   * ⚠️ THE ROW DOES NOT WRAP, SO IT HAS TO FIT — and it nearly did not. The camera path widens the
+   * deal into a lane AND gives the self-view its corner back, and at 640×320 the first draft came to
+   * 641px of a 640px frame: an overflow on the chapter's only answer surface, at the smallest size,
+   * which no unit-size or overlap check would have seen.
+   */
+  it('fits the whole control row inside the frame, with the camera corner reserved', () => {
+    for (const [vw, vh] of SIZES) {
+      const btnH = Math.round(CTRL_BAND(vh) * 0.5)
+      const gap = Math.round(btnH * 0.28)
+      const deal = laneMinW(vw, btnH)          // ⚠️ the SAME function the control is sized by
+      // the two taps, measured generously from their own font and padding
+      const tap = (chars: number) => chars * Math.round(btnH * 0.3) * 0.62 + Math.round(btnH * 0.5) * 2
+      const row = tap('↩ Take it back'.length) + deal + tap('Send it out ✓'.length) + gap * 2
+      const pad = 10 + CAM_W(vh < 470) + 18
+      expect(row + pad, `${vw}x${vh}`).toBeLessThanOrEqual(vw)
+    }
+  })
+
+  /** The camera may cost a pixel of unit size; it may not cost countability. */
+  it('keeps a unit countable on the camera path too', () => {
+    for (const [vw, vh] of SIZES) for (const base of SHAPES) for (const site of SITES) {
+      const q = { ...base, site } as DvRound
+      const L = runLayout(vw, vh, q, true)
+      expect(L.unitPx, `${site.id} ${vw}x${vh}`).toBeGreaterThanOrEqual(vh >= 600 ? 24 : 12)
+    }
+  })
+})
+
+describe('the sweep is wired to the SAME deal the button fires', () => {
+  it('reads a sweep, not a count or a tilt — the wrong one is a silent dead button', () => {
+    expect(code).toMatch(/reads:\s*'sweep'/)
+  })
+
+  /**
+   * ⚠️ THREE PROPERTIES OF THE EFFECT, ALL OF THEM A BUG IF MISSING, AND NONE REACHABLE BY PLAYING:
+   *  • it loops the GAP, or two sweeps coalesced into one render deal once and one is lost;
+   *  • it advances the baseline OUTSIDE the loop, or sweeps swallowed during the 2400ms miss window
+   *    replay as a backlog onto a freshly reset crate;
+   *  • it clamps BACKWARDS, because `useTaps` and a camera restart both reset the counter to 0 and
+   *    a stranded baseline kills the gesture for the rest of the run.
+   */
+  it('loops the gap, advances the baseline unconditionally, and clamps a backwards counter', () => {
+    const i = code.indexOf('seenSweeps')
+    expect(i).toBeGreaterThan(-1)
+    const block = code.slice(i, i + 700)
+    expect(block).toMatch(/read\.sweeps\s*<\s*seenSweeps\.current/)          // the clamp
+    expect(block).toMatch(/for\s*\(let i = seenSweeps\.current; i < read\.sweeps; i\+\+\) deal\(\)/)
+    // the assignment is NOT inside the loop body
+    expect(block).toMatch(/\}\s*\n\s*seenSweeps\.current = read\.sweeps/)
+  })
+
+  /** ⚠️ Reaching down to a tap and back is a rightward move, i.e. a fire, landing at the exact
+   *  moment the child is committing. Both tap handlers arm the lock. */
+  it('locks the sweep briefly around the two controls that stay taps', () => {
+    for (const fn of ['function undo()', 'function send()']) {
+      const b = code.slice(code.indexOf(fn), code.indexOf(fn) + 260)
+      expect(b, fn).toMatch(/lockUntil\.current = Date\.now\(\)/)
+    }
+    expect(code).toMatch(/Date\.now\(\) >= lockUntil\.current/)
+  })
+
+  /**
+   * ⚠️ THE DEAL STAYS ONE TAPPABLE CONTROL ON BOTH PATHS. Replacing it with a display-only lane
+   * makes a round UNSUBMITTABLE the moment a working camera fails to read a gesture: send() and
+   * undo() are both disabled at `handed === 0`, SkillBeat has no round timeout, and CamGate renders
+   * only when the camera did not START. The only control left would be ‹ Menu.
+   */
+  it('keeps the deal a real button the child can still tap when the gesture will not read', () => {
+    const i = code.indexOf('onClick={deal}')
+    expect(i).toBeGreaterThan(-1)
+    // it is a real <button>, not a display-only lane…
+    expect(code.slice(i - 40, i)).toMatch(/<button/)
+    // …it goes dead ONLY on an empty crate…
+    expect(code.slice(i, i + 200)).toContain('disabled={handed >= data.total}')
+    // …and it says the right thing for the round type AND the input.
+    expect(code.slice(i, i + 1400)).toMatch(/dealAsk\(data, onCam, laneState\)/)
+  })
+
+  /** The arming bar is detector state. Nothing that could preview the answer may read it. */
+  it('lets nothing but the lane fill react to how far through a sweep the hand is', () => {
+    // ⚠️ `\\b` matters — `sweepArmed` (the lane's own state) contains `sweepArm` as a substring.
+    expect(code.match(/read\.sweepArm\b/g) ?? []).toHaveLength(1)
   })
 })

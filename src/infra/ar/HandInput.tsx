@@ -26,15 +26,15 @@
  * decides which is the big button, never which is the only one.
  */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { useFingerCounter, type HandRead } from '@/infra/ar/useFingerCounter'
+import { useFingerCounter, type HandRead, type Reads } from '@/infra/ar/useFingerCounter'
 import { getHandInput, setHandInput, type HandInput as InputKind } from '@/infra/storage/handInput'
 
-export type { HandRead }
+export type { HandRead, Reads }
 export type { InputKind }
 
 /** How long a hand must hold still before it counts as an answer. */
 export const DWELL_MS = 1200
-export const NO_HAND: HandRead = { count: 0, hands: 0, tilt: null }
+export const NO_HAND: HandRead = { count: 0, hands: 0, tilt: null, sweeps: 0, sweepArm: 0, sweepArmed: false }
 
 /**
  * The chapter's palette, so this can live in a dark neon lab AND on a painted building site.
@@ -78,7 +78,7 @@ const DEV = process.env.NODE_ENV !== 'production'
  * self-view draws — see useFingerCounter. A chapter that only wants a count must not say 'tilt', or
  * it re-renders at frame rate for a number that has not moved.
  */
-export function useHandInput(opts: { reads?: 'count' | 'tilt'; marker?: { fill: string; ink: string } } = {}) {
+export function useHandInput(opts: { reads?: Reads; marker?: { fill: string; ink: string } } = {}) {
   const [input, setInput] = useState<InputKind>('hand')
   // The device's remembered pick, or 'hand' until it has one — the chapter offers both either way,
   // so an un-asked device is never quietly put in front of a camera.
@@ -104,9 +104,22 @@ export function useHandInput(opts: { reads?: 'count' | 'tilt'; marker?: { fill: 
     if (!DEV) return
     const w = window as unknown as Record<string, unknown>
     w.__miloHand = (r: Partial<HandRead>) => { setFake(true); setRead({ ...NO_HAND, hands: 1, ...r }) }
-    w.__miloFingers = (count: number, hands = 1) => { setFake(true); setRead({ count, hands, tilt: null }) }
-    w.__miloTilt = (tilt: number) => { setFake(true); setRead({ count: 0, hands: 1, tilt }) }
-    return () => { delete w.__miloHand; delete w.__miloFingers; delete w.__miloTilt }
+    // ⚠️ SPREAD `NO_HAND` RATHER THAN LISTING THE FIELDS, so the next reading added to `HandRead`
+    // costs one edit here instead of one per hook.
+    w.__miloFingers = (count: number, hands = 1) => { setFake(true); setRead({ ...NO_HAND, count, hands }) }
+    w.__miloTilt = (tilt: number) => { setFake(true); setRead({ ...NO_HAND, hands: 1, tilt }) }
+    /**
+     * ⚠️ FUNCTIONAL, NOT ABSOLUTE, AND ITS THREE SIBLINGS ARE THE TRAP. They all set a whole
+     * reading, which is right for a pose and wrong for a counter: `setRead({ …, sweeps: 1 })` deals
+     * the first round and every later call is a no-op, so the second sweep of every round silently
+     * does nothing and reads as "the effect is broken". Since a webcam cannot be driven headlessly
+     * this hook is the ONLY way the chapter is verified at all, so one that lies makes the whole
+     * drive worthless.
+     * ⚠️ And it sets `fake`, or `camReady` stays false, `CamGate` covers the screen, and the drive
+     * never gets past the intro.
+     */
+    w.__miloSweep = () => { setFake(true); setRead(r => ({ ...r, hands: 1, sweeps: r.sweeps + 1, sweepArm: 0, sweepArmed: false })) }
+    return () => { delete w.__miloHand; delete w.__miloFingers; delete w.__miloTilt; delete w.__miloSweep }
   }, [])
 
   const camReady = status === 'running' || (DEV && fake)

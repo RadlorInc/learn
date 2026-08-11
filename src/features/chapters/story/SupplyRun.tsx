@@ -89,6 +89,35 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { Banner, BANNER_TOP, bannerBottom } from './yard'
 import { rint, shuffle } from '@/core/rand'
+import {
+  useHandInput, useHand, HandProvider, CamView, CamGate, type HandSkin,
+} from '@/infra/ar/HandInput'
+
+/** The painted band's colours for the shared camera surface — see AngleShop for why alpha is a field. */
+const SKIN: HandSkin = {
+  accent: 'var(--milo-orange)', accentSoft: 'rgba(242,107,44,.55)',
+  ink: 'var(--ink)', muted: '#7a6a55', panel: 'rgba(255,252,244,.96)', line: 'rgba(61,37,22,.25)',
+  onAccent: '#fff', font: 'var(--font-display)', mono: 'ui-monospace,Menlo,monospace',
+}
+/**
+ * The self-view's own box — the same 190/76 the other two painted AR chapters use.
+ *
+ * ⚠️ IT WAS SHRUNK TO 132/64 FIRST, AND MEASURING SHOWED THAT BOUGHT NOTHING. The panel is opaque
+ * and drawn above the bench (`zIndex` 36 against 30), and this is the widest answer surface in the
+ * band — a crate plus up to seven receivers — so at first it covered the rightmost receivers in
+ * **584 of 1440 sampled draws**, worst case a 173×70px block at 740×480, in the chapter whose whole
+ * question is how many each got. The obvious reading was "the panel is too big". It was not: with
+ * `bottomBand` reserving the panel's height, the overlap is 0 at BOTH sizes, and the smaller panel
+ * leaves the unit no bigger (27px against 28px at vh ≥ 600 — very slightly WORSE, because the wider
+ * reserve lets the column search pick a better arrangement). A mutation put 190 back and the gate
+ * stayed green, which is how this was caught.
+ *
+ * ⇒ The fix is the RESERVE, and only the reserve. Divergence from the band's shared number would
+ * have been a constant to explain for ever, justified by a measurement the other change had already
+ * made irrelevant.
+ */
+export const CAM_W = (short: boolean) => (short ? 76 : 190)
+export const CAM_BOTTOM = (short: boolean) => (short ? 8 : 14)
 
 // ─── The four sites ─────────────────────────────────────────────────────────────────────
 /** Every backdrop is generated at this size; the cover-fit maths below depends on it. */
@@ -350,6 +379,49 @@ export function missFor(data: DvRound, handed: number): string {
     : `There is still enough in the crate to fill another ${site.slot}.`
 }
 
+/** What the lane can be saying, in the order the checks run. */
+export type LaneState = 'ready' | 'return' | 'empty'
+
+/**
+ * How wide the deal may be drawn once it carries a sentence instead of two words.
+ *
+ * ⚠️ EXPORTED SO THE GATE DRIVES THE SAME FUNCTION THE CONTROL IS SIZED BY. It was inlined, and the
+ * row-fit check carried its own copy of `vw * 0.34` — so widening the real one back to the 0.46 that
+ * overflowed left the gate perfectly green. That is this repo's own recorded fault (*a gate that
+ * re-implements a rule cannot see the rule being removed*), and it was caught by mutating the
+ * SOURCE after an earlier "proof" that had mutated the TEST instead, which proves nothing.
+ */
+export const laneMinW = (vw: number, btnH: number) => Math.min(vw * 0.34, Math.round(btnH * 12))
+
+/**
+ * THE ONE CONTROL'S LABEL, PER READING AND PER INPUT.
+ *
+ * ⚠️ THIS IS THE ONLY PLACE ON SCREEN THAT NAMES WHICH DIVISION IS BEING DONE, WHICH IS WHY IT
+ * CANNOT BECOME ONE CONSTANT WHEN THE CAMERA COMES ON. The button already said `Deal one round ▸`
+ * on a `share` round and `Fill a van ▸` on a `group` one, and this chapter's whole header insists
+ * those two readings ARE the mathematics rather than a tidiness win. A round-type-blind "sweep to
+ * deal" would say *deal* over a bench where a step FILLS ONE VAN — the craft doc's *adding an input
+ * means re-wording every line that names a gesture*, arriving from the other direction: the wording
+ * would not be wrong, it would address the wrong reading, and no single-mode check can see it.
+ * The gate asserts share ≠ group in BOTH input modes.
+ *
+ * ⚠️ AND THE CAMERA PATH NAMES THE TAP THAT COMMITS. Undo and Send stay taps — the hand does the
+ * thing that IS the maths and taps do the actions — so a child who has swept the right number of
+ * times and is waiting for something to happen must be told what finishes it. FitOut shipped the
+ * mirror image of this (a round built with taps while the camera was on, saying nothing) and it is
+ * the dead-button fault twice over.
+ */
+export function dealAsk(d: Pick<DvRound, 'qType' | 'site'>, hand: boolean, state: LaneState = 'ready'): string {
+  const s = d.site
+  if (!hand) return d.qType === 'share' ? 'Deal one round ▸' : `Fill a ${s.slot} ▸`
+  if (state === 'empty') return `The crate is empty — tap Send it out ✓`
+  // ⚠️ SAID AT THE MOMENT IT APPLIES. After a sweep fires, the hand is sitting on the right and
+  // pushing further right crosses nothing — FitOut's `handHint` lesson, and without it the child
+  // meets silence on the only gesture they have.
+  if (state === 'return') return `Bring your hand back to the left ←`
+  return d.qType === 'share' ? `Sweep across: one to every ${s.slot} ▸` : `Sweep across to fill a ${s.slot} ▸`
+}
+
 // ─── Layout ─────────────────────────────────────────────────────────────────────────────
 export const CHROME_PX = 46
 /** The shortest band the bench may be squeezed into before it is allowed to reach above the painted
@@ -360,6 +432,20 @@ export const MILO_SHARE = 0.22
 /** The bottom control row: Take it back · Deal · Send it out. Tap targets, so it never shrinks
  *  below a finger — the world yields to it, not the other way round. */
 export const CTRL_BAND = (vh: number) => Math.round(Math.max(74, Math.min(vh * 0.16, 108)))
+/**
+ * ⚠️ THE BOTTOM IS TWO STACKS WHEN THE CAMERA IS ON, NOT ONE — the control row in the centre AND
+ * the self-view in the corner, which is opaque and drawn above the bench. Reserving only for the
+ * controls let the receivers run under the camera panel; measured, that happened in 41% of draws.
+ * Take whichever is taller, which is Factor Lab's `BOT_BAND` arrived at from the same direction.
+ * On the tap path there is no self-view at all, so the first term is the whole of it and the bench
+ * is byte-identical to what shipped.
+ */
+export const bottomBand = (vh: number, cam: boolean) => {
+  const ctrl = CTRL_BAND(vh) + 10
+  if (!cam) return ctrl
+  const short = vh < 470
+  return Math.max(ctrl, Math.round(CAM_W(short) * 0.75 + CAM_BOTTOM(short) + 10))
+}
 /**
  * The widest a single unit cell may be drawn — DERIVED FROM MILO, not picked. A unit is 0.84 of the
  * pitch, so at the cap it stands at 52% of his own height, which is the right way round for a
@@ -416,7 +502,7 @@ export interface RunLayout {
 }
 
 /** Everything is derived from the room actually available, never picked. */
-export function runLayout(vw: number, vh: number, data: DvRound): RunLayout {
+export function runLayout(vw: number, vh: number, data: DvRound, cam = false): RunLayout {
   const { site } = data
   const fit = Math.max(vw / IMG_W, vh / IMG_H)
   const drawnH = IMG_H * fit
@@ -449,7 +535,7 @@ export function runLayout(vw: number, vh: number, data: DvRound): RunLayout {
    * climbs back over the horizon.
    */
   const chromeTop = bannerBottom(vh) + 8
-  const foot = Math.round(Math.min(groundPx, vh - ctrlBand - 10))
+  const foot = Math.round(Math.min(groundPx, vh - bottomBand(vh, cam)))
   const top = Math.round(Math.max(
     chromeTop, topCeiling(surfaceTop, groundPx),
     Math.min(surfaceTop, foot - bandWanted(maxRows, vh)),
@@ -730,7 +816,9 @@ type Mode = 'guided' | 'practice'
 
 const RunPlay: React.FC<{ data: DvRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { w: vw, h: vh } = useViewport()
-  const L = runLayout(vw, vh, data)
+  const { read, input } = useHand()
+  const onCam = input === 'hand'
+  const L = runLayout(vw, vh, data, onCam)
   const cost = stepCost(data)
 
   /** How many units have LEFT THE CRATE. The whole board is a function of this one number. */
@@ -788,9 +876,46 @@ const RunPlay: React.FC<{ data: DvRound; mode: Mode; onComplete: (correct: boole
     handedRef.current = next; setHanded(next)
   }
 
+  /**
+   * ⚠️ THE HAND FIRES THE SAME `deal()` THE BUTTON FIRES — one instrument, two inputs, one grader,
+   * so `grade` never learns which moved it and the chapter's existing 52-test sweep covers both.
+   *
+   * ⚠️ A LOOP OVER THE GAP, NOT ONE CALL PER OBSERVED CHANGE. `setRead` is driven from a rAF
+   * callback and React may coalesce two of them into one render, so a counter that advances by two
+   * between renders would deal ONCE and quietly lose a sweep the child performed.
+   *
+   * ⚠️ THE BASELINE ADVANCES OUTSIDE THE LOOP AND UNCONDITIONALLY, WHICH IS WHAT DISCARDS A
+   * SWALLOWED SWEEP RATHER THAN QUEUEING IT. `deal()` no-ops while `settled`, and a wrong answer
+   * holds `settled` for 2400 ms — so if the baseline only moved when a deal actually landed, three
+   * sweeps performed while Milo reads the miss line would all replay the instant the board
+   * re-opened, onto a freshly reset crate, as an answer the child never built.
+   *
+   * ⚠️ AND IT CLAMPS BACKWARDS, because `sweeps` is monotone only within a DETECTOR session, not
+   * across the chapter: `useTaps` resets the whole reading and `start()` resets the detector, so
+   * "Use the number pad instead" or one "Try the camera again" drops the counter to 0. Without the
+   * clamp the baseline is stranded above it and the gesture is dead for the rest of the run.
+   */
+  const seenSweeps = useRef(read.sweeps)
+  /**
+   * ⚠️ REACHING FOR A TAP CROSSES THE SWEEP LANE. Undo and Send are the two controls that stay taps,
+   * and on a touch device the child reaches down to them and back — the return is rightward, which
+   * is a fire. That deal would land at the exact moment they are committing. A short lock after
+   * either tap costs nothing and cannot mask a real sweep, which takes longer than this anyway.
+   */
+  const lockUntil = useRef(0)
+  useEffect(() => {
+    if (read.sweeps < seenSweeps.current) { seenSweeps.current = read.sweeps; return }
+    if (Date.now() >= lockUntil.current) {
+      for (let i = seenSweeps.current; i < read.sweeps; i++) deal()
+    }
+    seenSweeps.current = read.sweeps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [read.sweeps])
+
   /** The repair is a journey too (HomeTime's rule): the last step goes back into the crate. */
   function undo() {
     if (done.current || settled) return
+    lockUntil.current = Date.now() + 700
     const h = handedRef.current
     if (h <= 0) return
     // take back the partial if there is one, otherwise one whole step
@@ -801,9 +926,13 @@ const RunPlay: React.FC<{ data: DvRound; mode: Mode; onComplete: (correct: boole
 
   function send() {
     if (done.current || settled || handedRef.current === 0) return
+    lockUntil.current = Date.now() + 700
     setSettled(true)
     later(() => finish(grade(data, handedRef.current)), 300)
   }
+
+  /** What the one control is saying right now — checked in the order a child would need them. */
+  const laneState: LaneState = handed >= data.total ? 'empty' : read.sweepArmed ? 'ready' : 'return'
 
   const btnH = Math.round(L.ctrlBand * 0.5)
   const idle = { fontFamily: 'var(--font-display)', fontWeight: 900, border: 'none', cursor: 'pointer' } as const
@@ -820,7 +949,11 @@ const RunPlay: React.FC<{ data: DvRound; mode: Mode; onComplete: (correct: boole
 
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 8, zIndex: 44, display: 'flex',
-        justifyContent: 'center', alignItems: 'center', gap: Math.round(btnH * 0.28), padding: '0 10px',
+        justifyContent: 'center', alignItems: 'center', gap: Math.round(btnH * 0.28),
+        /** ⚠️ THE SELF-VIEW IS A LAYER AND IT SITS ON THIS ROW'S RIGHT END. `Send it out ✓` is the
+         *  rightmost control and it is the tap the camera path DEPENDS on, so the row gives the
+         *  panel its corner back rather than letting an opaque box land on it. */
+        padding: onCam ? `0 ${CAM_W(vh < 470) + 18}px 0 10px` : '0 10px',
         opacity: settled ? .35 : 1, pointerEvents: settled ? 'none' : 'auto', transition: 'opacity .3s',
       }}>
         <button onClick={undo} disabled={handed === 0} style={{
@@ -830,13 +963,39 @@ const RunPlay: React.FC<{ data: DvRound; mode: Mode; onComplete: (correct: boole
           cursor: handed === 0 ? 'default' : 'pointer',
         }}>↩ Take it back</button>
         {/* The main gesture. Identical at every count — nothing may say the set is right before the
-            commit, so this button looks exactly the same on the step that completes the deal. */}
+            commit, so this control looks exactly the same on the step that completes the deal.
+
+            ⚠️ ON THE CAMERA PATH IT IS THE SAME BUTTON, WEARING A LANE, AND STAYING TAPPABLE IS THE
+            WHOLE POINT. Replacing it outright — which is what FitOut does with its digit pad, and
+            what the plan asked for — makes a round UNSUBMITTABLE the moment a working camera fails
+            to read a child's gesture: `send()` returns early at `handed === 0` and its button is
+            disabled there, `undo` likewise, `SkillBeat` has no round timeout, and `CamGate` renders
+            only when the camera did not START, so a camera that works and a gesture that does not
+            shows nothing at all. The only control left would be ‹ Menu. One element, two ways to
+            fire it, no dead end — and `deal()` stays a single greppable call site.
+
+            ⚠️ THE FILL IS THE ARMING BAR AND IT IS NOT A VERDICT. It says how far through a crossing
+            the trigger has read the hand — the same claim `DwellRing` makes — never whether the deal
+            so far is right. Nothing else on screen reacts to it. */}
         <button onClick={deal} disabled={handed >= data.total} style={{
-          ...idle, height: Math.round(btnH * 1.22), padding: `0 ${Math.round(btnH * 0.8)}px`, borderRadius: 999,
+          ...idle, position: 'relative', overflow: 'hidden',
+          height: Math.round(btnH * 1.22), padding: `0 ${Math.round(btnH * 0.8)}px`, borderRadius: 999,
+          /** ⚠️ The control row has to FIT: at 640×320 a 46%-wide deal plus the two taps plus the
+           *  self-view's reserved corner came to 641px of a 640px frame, and the row does not wrap —
+           *  an overflow on the chapter's only answer surface. `laneMinW` is exported and gated. */
+          minWidth: onCam ? laneMinW(vw, btnH) : undefined,
           background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff',
-          fontSize: Math.round(btnH * 0.4), boxShadow: '0 5px 0 rgba(180,70,20,.45)',
+          fontSize: Math.round(btnH * (onCam ? 0.3 : 0.4)), boxShadow: '0 5px 0 rgba(180,70,20,.45)',
           opacity: handed >= data.total ? .4 : 1, cursor: handed >= data.total ? 'default' : 'pointer',
-        }}>{data.qType === 'share' ? 'Deal one round ▸' : `Fill a ${data.site.slot} ▸`}</button>
+        }}>
+          {onCam && (
+            <span aria-hidden style={{
+              position: 'absolute', left: 0, top: 0, bottom: 0, width: `${read.sweepArm * 100}%`,
+              background: 'rgba(255,255,255,.30)', transition: 'width .12s linear', pointerEvents: 'none',
+            }} />
+          )}
+          <span style={{ position: 'relative' }}>{dealAsk(data, onCam, laneState)}</span>
+        </button>
         <button onClick={send} disabled={handed === 0} style={{
           ...idle, height: btnH, padding: `0 ${Math.round(btnH * 0.5)}px`, borderRadius: 999,
           background: 'rgba(255,252,244,.94)', border: '3px solid var(--outline)', color: 'var(--ink)',
@@ -859,6 +1018,22 @@ const RunPlay: React.FC<{ data: DvRound; mode: Mode; onComplete: (correct: boole
 function dwellFor(line: string) { return Math.max(2100, Math.min(6200, line.length * 70)) }
 
 /**
+ * ⚠️ THE GESTURE IS TAUGHT WHERE THE MATHS IS, BECAUSE THE RE-TEACH IS THIS SAME LIST. A sweep is
+ * not self-evident the way "hold up three fingers" or "tilt your hand" are — it carries four hidden
+ * rules (left→right only, it must start from the left, the return stroke does nothing, and dropping
+ * your hand resets it), and `reteachAfter: 3` means a child who is failing because they cannot make
+ * the gesture read gets three wrong answers and then a lesson about DIVISION. That is a motor
+ * failure diagnosed and re-taught as a mathematical one.
+ *
+ * ⚠️ IT IS A TRAILING BEAT RATHER THAN A LONGER OPENER, and the reason is arithmetic: `dwellFor`
+ * caps at 6200ms, so the share opener's ceiling is 88 characters — a 94-character draft once put
+ * ALL 572 generatable openers on the clamp and the next beat's `speak()` then cut the tail off. A
+ * separate beat gets its own dwell. It lands at `handed: full`, so the demo still never deals the
+ * remainder.
+ */
+const HAND_CUE = 'Your turn: sweep your hand across to send one round out.'
+
+/**
  * The teaching beats: a line, and what the bench looks like while it is said.
  *
  * ⚠️ EXPORTED SO THE GATE CAN DRIVE THE SAME LIST THE DEMO PLAYS. It was inline, and it shipped the
@@ -871,7 +1046,7 @@ function dwellFor(line: string) { return Math.max(2100, Math.min(6200, line.leng
  * ⇒ THE INVARIANT, now pinned: the demo NEVER hands out more than the completed deal, so the crate
  * always finishes holding exactly the remainder.
  */
-export function explainBeats(data: DvRound): Array<{ say: string; handed: number }> {
+export function explainBeats(data: DvRound, hand = false): Array<{ say: string; handed: number }> {
   const s = data.site
   const cost = stepCost(data)
   /** Every beat stops here. What will not go round is never dealt — it stays in the crate. */
@@ -899,6 +1074,7 @@ export function explainBeats(data: DvRound): Array<{ say: string; handed: number
       handed: full,
     })
     out.push({ say: `Count one ${s.slot}: that is ${data.answer} each.`, handed: full })
+    if (hand) out.push({ say: HAND_CUE, handed: full })
     return out
   }
   out.push({ say: `${data.total} ${s.units} in the crate, and they go ${cost} to a ${s.slot}.`, handed: 0 })
@@ -913,17 +1089,20 @@ export function explainBeats(data: DvRound): Array<{ say: string; handed: number
     handed: full,
   })
   out.push({ say: `Count the full ones: ${data.answer} ${s.slots} go out.`, handed: full })
+  if (hand) out.push({ say: HAND_CUE, handed: full })
   return out
 }
 
 const RunExplain: React.FC<{ data: DvRound; onDone: () => void }> = ({ data, onDone }) => {
   const { w: vw, h: vh } = useViewport()
-  const L = runLayout(vw, vh, data)
+  // the same camera reserve the played bench takes, or the demo teaches on a bench that then moves
+  const { input } = useHand()
+  const L = runLayout(vw, vh, data, input === 'hand')
   const [handed, setHanded] = useState(0)
   const [line, setLine] = useState('')
   const doneRef = useRef(onDone); doneRef.current = onDone
 
-  const beats = useMemo(() => explainBeats(data), [data])
+  const beats = useMemo(() => explainBeats(data, input === 'hand'), [data, input])
 
   useEffect(() => {
     let i = 0, alive = true
@@ -989,11 +1168,22 @@ export default function SupplyRun({ onFinish, onExit }: {
   const [demoIdx, setDemoIdx] = useState(0)
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
+  const short = vh < 470
+
+  const marker = useMemo(() => ({ fill: '#F26B2C', ink: '#3D2516' }), [])
+  const {
+    hand, onCam, ready, camReady, status, error, start, stop, useTaps, useCamera, videoRef, canvasRef,
+  } = useHandInput({ reads: 'sweep', marker })
+  /** ⚠️ The rotate gate is an early return, so turning the tablet unmounts the <video> and the
+   *  stream becomes unreachable — a camera light left on with the browser still reporting the site
+   *  as using it. Stop it BEFORE that happens. */
+  useEffect(() => { if (needsRotate) stop() }, [needsRotate, stop])
+
+  const exit = useCallback(() => { stopSpeech(); stop(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit, stop])
   const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
-    if (finished.current) return; finished.current = true; stopSpeech()
+    if (finished.current) return; finished.current = true; stopSpeech(); stop()
     if (onFinish) onFinish(c, w, mastered); else exit()
-  }, [onFinish, exit])
+  }, [onFinish, exit, stop])
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
   const beat = useMemo(() => makeBeat(), [])
   /**
@@ -1041,12 +1231,15 @@ export default function SupplyRun({ onFinish, onExit }: {
       <div style={{
         background: 'rgba(255,252,244,.94)', border: '3px solid var(--milo-orange)', borderRadius: 999,
         padding: '5px 18px', fontFamily: 'var(--font-display)', fontWeight: 800,
-        fontSize: vh < 470 ? 13 : 16, color: 'var(--ink)',
+        fontSize: short ? 13 : 16, color: 'var(--ink)',
       }}>{text}</div>
     </div>
   )
 
+  const inSite = phase !== 'intro'
+
   return (
+    <HandProvider value={hand}>
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#3a3630' }}>
       {chip}
       {phase === 'intro' && (
@@ -1055,7 +1248,13 @@ export default function SupplyRun({ onFinish, onExit }: {
           <div style={{ position: 'fixed', inset: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <div style={{
               maxWidth: 520, background: 'rgba(255,252,244,.96)', border: '4px solid var(--outline)',
-              borderRadius: 22, padding: '22px 26px', textAlign: 'center', boxShadow: '0 8px 0 rgba(61,37,22,.15)',
+              borderRadius: 22, textAlign: 'center', boxShadow: '0 8px 0 rgba(61,37,22,.15)',
+              /** ⚠️ TIGHTER ON A SHORT FRAME, because this card grew a SECOND BUTTON. Offering both
+               *  doors every time is right, and it costs ~33px — which took the shipped copy from
+               *  307px to 340px inside a 320px frame, i.e. clipped by 20. Measured live. Sixteen
+               *  pixels of vertical padding is the cheapest place to find it and it is invisible;
+               *  the copy shortening below is the other half. 309px, 11px of headroom. */
+              padding: short ? '14px 26px' : '22px 26px',
             }}>
               <div style={{ fontSize: 34, marginBottom: 6 }}>{SITES.map(s => s.emoji).join(' ')}</div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 28, color: 'var(--ink)', margin: '0 0 10px' }}>The Supply Run</h1>
@@ -1065,20 +1264,51 @@ export default function SupplyRun({ onFinish, onExit }: {
                   a sibling chapter tried exactly that guard and it moved the clip off the decorative
                   top corner and onto its own Start button, i.e. onto the only forward control. Keep
                   the copy short instead. */}
+              {/* ⚠️ THE CAMERA LINE REPLACES COPY, IT DOES NOT APPEND — and that is measured, not
+                  cautious. The shipped tap body was EXACTLY 200 characters, i.e. already at the
+                  ceiling the comment above records, and appending a sentence the way FitOut does
+                  takes it to 242 — past the 248 that was measured clipping BOTH ENDS of this card.
+                  FitOut gets away with an append because its card is 291px with 14px of headroom;
+                  this one is the tightest in the band.
+                  ⚠️ AND THE TAP COPY HAD TO SHRINK TOO, WHICH IS A REGRESSION THIS CHANGE CAUSED
+                  RATHER THAN INHERITED. Offering both doors adds a second button worth ~33px, so
+                  the shipped 200-character body measured 340px inside a 320px frame — clipped by
+                  20. Both bodies are now ~175 and the card is 309px with 11px of headroom, measured
+                  live at 640×320 on both paths. */}
               <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16, lineHeight: 1.45, color: 'var(--ink)', margin: '0 0 18px' }}>
-                Milo the quartermaster shares out a crate — the same job as a bag of candy between
-                friends. One each, and round again: you stop when you cannot go round any more. What
-                is left over stays in the crate.
+                {onCam
+                  ? `Milo the quartermaster shares out a crate — like a bag of candy between friends. Sweep your hand across to give everyone one, and again: you stop when you cannot go round.`
+                  : `Milo the quartermaster shares out a crate — like a bag of candy between friends. One each, and round again: you stop when you cannot go round. What is left stays in the crate.`}
               </p>
-              <button onClick={() => { unlockSpeech(); setPhase('demo') }} style={{
+              {/* ⚠️ BOTH DOORS, EVERY TIME — the device's last pick decides which is the BIG button,
+                  never which is the only one. */}
+              <button onClick={() => { unlockSpeech(); setPhase('demo'); if (onCam) start() }} style={{
                 border: 'none', borderRadius: 999, padding: '12px 26px', cursor: 'pointer',
                 background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff',
                 fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 18, boxShadow: '0 5px 0 rgba(180,70,20,.45)',
-              }}>Start the run →</button>
+              }}>{onCam ? 'Turn on the camera →' : 'Start the run →'}</button>
+              <div>
+                <button onClick={() => { unlockSpeech(); if (onCam) useTaps(); else useCamera(); setPhase('demo') }} style={{
+                  marginTop: 12, border: 'none', background: 'transparent', cursor: 'pointer',
+                  fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: '#7a6a55',
+                  textDecoration: 'underline',
+                }}>{onCam ? 'Use the buttons instead' : 'Use the camera instead'}</button>
+              </div>
             </div>
           </div>
         </>
       )}
+
+      {inSite && onCam && (
+        <CamView videoRef={videoRef} canvasRef={canvasRef} w={CAM_W(short)} bottom={CAM_BOTTOM(short)}
+          skin={SKIN} hidden={!camReady} />
+      )}
+      {inSite && onCam && !camReady && (
+        <CamGate status={status} error={error} skin={SKIN} onRetry={start} onTaps={useTaps} onExit={exit}
+          denied="Milo can watch your hand sweep the crate out, or you can tap the button — both deal the same." />
+      )}
+
+      {inSite && ready && (<>
 
       {phase === 'demo' && (<>
         {banner(`Watch Milo · ${demoIdx + 1}/${DEMO.length}`)}
@@ -1098,6 +1328,9 @@ export default function SupplyRun({ onFinish, onExit }: {
             finishChapter(result.current.correct, result.current.wrong, mastered)
           }} />
       )}
+
+      </>)}
     </div>
+    </HandProvider>
   )
 }
