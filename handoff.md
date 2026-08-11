@@ -12,7 +12,169 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🧹 **2026-08-11 (LATEST) — THE SUPPLY RUN IS ANSWERED BY SWEEPING YOUR HAND ACROSS: ONE CROSSING DEALS ONE ROUND, AND THE NUMBER OF SWEEPS IS THE ANSWER. ✅ COMMITTED as `1ff0efb` (the chapter) + the docs commit on top of it on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **787/787 vitest** (was 730, **+57**) · `next build` 0 · **0 console errors in a FRESH tab, on both input paths** · dev hooks **0 hits in the emitted production JS** (verified against a control string that IS present) · driven at 1280×720 and 640×320 through intro → camera gate → both demos → guided → **five scored rounds including a `group` round reached naturally at L2**, a wrong answer and its retry, and an over-deal undone.
+> 💰 **2026-08-11 (LATEST) — THE ORDER DESK IS NOW **THE FUNDRAISER**: THE FOUNDER ASKED WHY BIG NUMBERS WERE STILL BEING TAUGHT WITH A WAREHOUSE, AND MEASURING SAID THE ANCHOR APPEARED IN EXACTLY ONE PLACE IN THE WHOLE CHAPTER. ✅ TWO COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **846/846 vitest** (was 787, **+59**) · `next build` 0 · dev hooks **0 hits in the emitted production JS** (checked against a control string that IS present) · **AR driven live at 1280×720** through the camera gate, a forbidden drop, a build completed across three columns by hand, a commit, and a held-over grab proven inert by count.
+>
+> **The asks, in order:** *"9-11 band ke liye kya karna chahiye"* → *"woh list batao jisme chapters ko real world examples mein convert kiya"* → *"big numbers ko plan ke according change karo… 12-14 wale chalkboard… aur AR add karo, sirf yeh chapter"* → **"abhi bhi woh big numbers ko yeh warehouse wala kyu bata rha hai?"** → *"b karo, fundraiser board bana do"* → *"teaching structure aur AR dono"* → *"AR ko live drive karo"*.
+>
+> ## ⓪ ⚠️ THE ANCHOR WAS ONE SENTENCE THE CHILD TAPPED PAST, AND THE MEASUREMENT IS THE POINT
+> `grep fundraiser` over the whole chapter returned **two hits: one comment and the intro card.** Every
+> spoken line after it said pallets, crates and bays. The plan's §5 (*anchor the EXPLANATION, keep the
+> world*) had been implemented at minimum strength — §5 asks for THE PLAN, the worked example AND each
+> question's `context` to carry it, and only the card did. So a founder looking at the screen saw a
+> warehouse, correctly.
+> ⚠️ **AND THE COPY COULD NOT HAVE FIXED IT ALONE, BECAUSE THE OTHER RULE FORBIDS IT.** chapter-craft's
+> oldest copy fault is *"candy" over a picture of parcels*, so the per-round lines MUST name what is
+> drawn — which means the anchor can only ever live in the explanation, as a simile, once. Loading Bay
+> found the honest version of that (*"four stacks — like counting the goals four friends scored"*) and
+> Order Desk never had it.
+>
+> ## ① WHY THIS CHAPTER GOT THE WORLD CHANGED WHEN THE PLAN SAYS NOT TO
+> §5's blanket call is right for the other three painted chapters and wrong here, for one reason the
+> plan itself wrote down and then did not act on: **dollar denominations ARE base ten**, so the anchor
+> and the manipulative are the SAME OBJECT. Re-theming does not add a bridge, it removes the need for
+> one — the ask, the tally and the spoken working now all say board and bundle and none of them is a
+> simile. The "has the child DONE this" filter agrees: nobody in this band has been in a warehouse, and
+> all of them have stood in front of a fundraiser board.
+>
+> ## ② ⚠️ THE PIECES ARE BUNDLES, NOT NOTES — AND THAT IS THE WHOLE HONESTY OF IT
+> A $100 NOTE DOES NOT SHOW ITS OWN TEN. It is one object with a number printed on it, i.e. a piece
+> **asserting** its value, which is the exact fault this chapter was rebuilt to remove (the old blocks
+> drew a thousand the same size as a hundred). A banded bundle of ten ten-strips does show it, and it
+> is what money looks like in bulk — so `blockSet`'s geometry survives untouched and only the names
+> change. **The re-theme cost no art on the manipulative at all.**
+>
+> ## ③ THE ART — 3 SCENES, ~4.5 CREDITS, MEASURED BEFORE BEING WIRED
+> `fund_hall` · `fund_yard` · `fund_gym`, 1376×768, 509–557 KB (the existing band is 465–601).
+> Value over the band the cast stands in: **0.524 / 0.575 / 0.562** against a cast of 0.62–0.81 and Milo
+> at 0.705, so no scene is brighter than what stands on it. ⚠️ **The gym came back at 0.864 — the
+> `grocery_sweets` fault — and was GRADED down rather than re-rolled**, which keeps an approved
+> composition and costs nothing; it survived a gamma of 4.0 with its painted quality intact.
+> ⚠️ **Every board in all three is BLANK, and that was a prompt constraint rather than luck** — a
+> painted total would be the answer, on the wall, for the whole round.
+> ⚠️ **The materials were RE-MEASURED, not carried over.** The comment said "all three scenes carry a
+> dominant hue of 30°", which was a claim about scenes that no longer exist; the new ones measure
+> **26.9° / 35.4° / 35.1°**, the same warm band, so teal/indigo/plum/slate survive at 150–255° away.
+> ⚠️ **The cast was KEPT** — both customers are drawn 12-cell walk cycles, so re-casting means the whole
+> image→video→frames pipeline plus its chroma, facing and cut-window traps, for a gain the roles deliver
+> free: a bear in overalls with a clipboard is a caretaker at a school fair.
+>
+> ## ④ THE TEACHING, IN THE 12–14 SHAPE — AND THE PLAN SAYS DO NOT ADOPT `GameShell`
+> Its own §4: seven of the twelve are painted worlds and `GameShell` would flatten them, and it
+> hardcodes `BAND='12-14'`. So the teen EXPLANATION pieces came over and `SkillBeat` was left alone.
+> • **THE PLAN** — a read-along board before anything is worked. ⚠️ **Self-paced, deliberately NOT
+> `speakWithHighlight`**: that helper resolves a pre-rendered clip first, the 3–11 band has **zero**
+> clips, so it always takes its blocked-audio branch — and a read-along driven by speech events on a
+> silent device is a chapter that hangs on its own opening screen. TickTock shipped exactly that.
+> • **The walkthrough went from FOUR lines to nine–thirteen baby steps**, each writing one board line
+> and posing the scene. ⚠️ One of those four used to jump the columns from empty to the finished
+> number, so the child watched the ANSWER appear rather than the method.
+> • ⚠️ **The working is written on a paper TALLY SHEET, in the world.** The teen `Blackboard` is a
+> slate rounded-rect, and dropping one onto a painted scene is the **slab fault this repo has shipped
+> three times** (BlockYard passes 1–3). Paper also needs no `--font-chalk`, which is declared only
+> inside `[data-band]` and silently degrades to the body font outside it — wrong with nothing erroring.
+> ⚠️ **The sheet's corner was MEASURED, not chosen**: bottom-left it covered Milo AND the thousands
+> label. Every fixed layer was then crossed with every other — **0 overlaps**.
+>
+> ## ⑤ ANSWERED BY HAND — READING **E**, AND THE PINCH IS A RATIO
+> Pinch to pick a pledge up, open your hand over a column to put it in. **The DROP chooses the column**,
+> which is the only reason a camera is honest here; a pinch that merely pressed the supply button would
+> be chapter-craft's *mouse with extra steps*. The supply row stays live and both inputs call `add()`.
+> ⚠️ **AN ABSOLUTE THRESHOLD DOES NOT WORK AT ALL, AND THE NUMBERS SAY SO.** Landmarks are normalized to
+> frame width, so any raw length scales as 1/d: a 2 cm gap reads 0.043 at 40 cm and 0.025 at 70 cm, and
+> **a 2 cm gap at 40 cm is INDISTINGUISHABLE from a 3.5 cm gap at 70 cm.** The gesture's whole dynamic
+> range is ~5×, so seating distance alone eats ~43% of it — a constant means "grabbing" at arm's length
+> and "open" up close, and a child leaning in to see the screen is permanently holding. Dividing by
+> wrist→middle-knuckle cancels it exactly, and that pair is on the RIGID palm so the reference does not
+> shrink as the child pinches.
+> ⚠️ **The hysteresis is ASYMMETRIC, unlike the sweep's**, because the failures are not equal: a false
+> RELEASE mid-carry drops the piece into whatever column the hand is over — a wrong answer the chapter
+> caused — while a false GRAB costs one more pinch. **And the release must be SUSTAINED**, which a test
+> caught: one outlier frame at 2.0 moved the EMA past the release line and dropped the piece. Slowing
+> the smoothing was the wrong fix (a lagging pick-up reads as the gesture failing).
+>
+> ## ⑥ ⚠️ EIGHT DEFECTS, AND FIVE COULD NOT HAVE BEEN CAUGHT BY ANY GATE
+> ① **The held-over guard was BROKEN on a fresh mount.** Its baseline was `useRef(0)` and the reset
+> block only runs when `SkillBeat` REUSES the component — on a remount it never fires, so a grab
+> already in progress read as `grabs > 0`, i.e. valid, and the previous round's piece dropped into the
+> new one. ⚠️ **And my first "nothing was placed" reading proved nothing** — I sampled a chip that reads
+> the same either way. The decisive test is a COUNT: ask for 3, place 3, and see whether it completes.
+> ② **The chip told a held-over grab to "open your hand to drop it"** — an instruction for an action the
+> guard then silently refuses. A dead button wearing a helpful sentence.
+> ③ **The shipped strip printed the CURRENT round's answer** — measured live at `200 · 552` with the
+> $552 round open and unanswered. RailLine records this exact fault: `onRound` fires when a round
+> LOADS. Held back one round.
+> ④ **CamGate covered THE PLAN and both walkthroughs** — `phase !== 'intro'` put a permission panel over
+> the teaching for a gesture not wanted yet.
+> ⑤ **`add(i)` did not enforce the single-column restriction** — it lived only in the view (`Supply`'s
+> `hidden`/`disabled`), so a hand could load a column the round forbids and produce a state the tap path
+> cannot reach. The gate is on the ACTION now, so both inputs obey it by construction.
+> ⑥ **`send()` was a silent no-op mid-flight** — its only `disabled` was `sent` while the `flights`
+> guard sat inside the handler. A gesture hits that far more often than a tap.
+> ⑦ ⚠️ **The miss line handed the answer over**: *"that is 0, and I asked for 5"*, on the two round types
+> whose whole task is reading that digit off the tally. **Caught by this chapter's FIRST gate, which is
+> also the first thing ever to drive `grade`/`missFor`** — both lived inside `OrderPlay`'s closure until
+> the AR pass pulled them out, which is why the chapter has never had a gate. A `build` round may still
+> state its target: the whole number is printed on the tally all round.
+> ⑧ The reveal read **"1 coins = 1"** — the *"Fox has a apple"* family, plus bare units in a money chapter.
+>
+> ## ⑦ THE GATES
+> `pinchReader.test.ts` (17) **9/9** · `slideReader.test.ts` (22) **6/6** · `orderDeskPlaceValue.test.ts`
+> (20, the chapter's first) **7/7**.
+> ⚠️ **THREE CHECKS WERE WEAKER THAN THE RULES THEY GUARD, AND ALL THREE ARE THE SAME SHAPE: a check
+> written in terms of the constant it guards MOVES WITH the mutation.** `LOST_GRACE - 1` makes the loop
+> run zero times at `LOST_GRACE = 1`; `<= MAX_DIGIT` stays true when MAX_DIGIT is widened to 9 and the
+> ones column becomes uncountable. Concrete numbers now.
+> ⚠️ **And one test was failing on EVERY run, which made a "9/9 caught" score worthless** — a
+> permanently-failing test reports every mutation as caught. Its premise was wrong (you cannot be
+> holding mid-band from a standing start, because mid-band is above `GRAB_ON` and never grabs).
+> ⚠️ **A mutation also survived because reachability is not the property that matters**: compressing
+> `slideIndex` into the middle 60% of the frame leaves every step reachable — the clamp rescues both
+> ends — while killing the outer 40% of a child's reach. Proportionality is the claim.
+>
+> ## ⑧ WHAT WAS ACTUALLY DRIVEN
+> The camera gate real (the pane blocks capture, so it renders its own copy and leads with *"Tap
+> instead →"*) · the chip input-aware AND round-aware (*"Pinch to pick up a hundred-bundle"*) and
+> state-aware across all four states · **a drop on a FORBIDDEN column placing nothing** · a drop on the
+> right column placing one · **$133 built entirely by hand across three different columns** · Send
+> grading and advancing with the reveal reading *"2 hundred-bundles = $200"* · **a held-over grab
+> refused, told to reset, and proven inert by count** · the strip empty on round 1 and showing only the
+> PREVIOUS round after that.
+> ⚠️ **A temp dev-only `?p=` phase override was used and REVERTED and grepped (0 hits)** — the throttled
+> hidden tab runs `setTimeout` at ~1Hz, so sitting through THE PLAN plus two walkthroughs took minutes.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO ANY OF IT — now FIVE readings deep.** Every drive fed
+>    synthetic readings through `__miloPinch`. The pinch's two knobs (`GRAB_ON` 0.42 / `GRAB_OFF` 0.68)
+>    are at least the SAME two numbers for every child and every chair, which is what the ratio bought —
+>    but `PINCH_MIN_PALM` and the release confirmation are untested against a real hand, and the
+>    **orientation residual is written into the module rather than measured**: a hand pointing at the
+>    camera foreshortens both terms, but not equally.
+> 2. ⚠️ **THE BUBBLE COVERS THE COLUMNS.** Measured: bubble x 746–1206, hundreds 525–831, tens 858–959,
+>    all sharing y. Pre-existing (my line is 58 chars against the old 56) and worse on a `build` round
+>    with five bundles. The fix is RailLine's: derive the column top from the bubble's MEASURED bottom.
+> 3. **No full ten-round run, no re-teach seen fire, no mastery exit** — and `value` cannot be drawn at
+>    L1, so a child stuck there never completes `coverage`. Documented and bounded, not a bug.
+> 4. **640×320 was never driven on this chapter this session.** The gate sweeps 11 sizes for the drop
+>    target and the column geometry; the teaching surfaces (THE PLAN card, the tally sheet) were only
+>    measured at 1280×720.
+> 5. **The cover-fit bug is STILL live here and in LoadingBay** — `groundPx = vh * groundY` over an
+>    `objectFit: cover` backdrop, +105/+119px of float at 2560×1080. Untouched by this pass; the gate
+>    reader's note says the fix changes `orderLayout`'s signature and needs RailLine's downward clamp.
+> 6. ✅ **Committed 2026-08-11 — the AR readings (7 files, +898/−26) + The Fundraiser (5 files,
+>    +761/−91), on `feat/9-11-factor-lab-ar`. NOT pushed; `public/sw.js` is still v87.** ⚠️ **Split so
+>    the AR layer is ONE commit** — `useFingerCounter.ts` carries both new readings and cannot be
+>    divided — and the intermediate was **proven green by stashing the chapter (`tsc` 0 · 826/826)**.
+>    ⚠️ That check FAILED the first time for an instructive reason: the chapter's new gate is UNTRACKED,
+>    so it stayed in the tree while its source was stashed and reported four missing exports. Set the
+>    untracked test aside too, or a stash-based intermediate check lies. Staged file-by-file and each
+>    commit's list read back with `git show --stat`.
+> 7. **Nobody has watched a child play it**, and of this session's faults **four came from driving the
+>    AR, three from mutation-testing my own gates, two from measuring the screen, and not one from the
+>    type-checker.**
+>
+> _(the 🧹 block below is the previous session — the Supply Run's sweep.)_
+
+> 🧹 **2026-08-11 — THE SUPPLY RUN IS ANSWERED BY SWEEPING YOUR HAND ACROSS: ONE CROSSING DEALS ONE ROUND, AND THE NUMBER OF SWEEPS IS THE ANSWER. ✅ COMMITTED as `1ff0efb` (the chapter) + the docs commit on top of it on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **787/787 vitest** (was 730, **+57**) · `next build` 0 · **0 console errors in a FRESH tab, on both input paths** · dev hooks **0 hits in the emitted production JS** (verified against a control string that IS present) · driven at 1280×720 and 640×320 through intro → camera gate → both demos → guided → **five scored rounds including a `group` round reached naturally at L2**, a wrong answer and its retry, and an over-deal undone.
 >
 > **The ask:** *"supply run ka AR banao"* — build-order item 6's first chapter, and the one the previous session's analysis picked as the strongest remaining gesture.
 >
@@ -179,7 +341,7 @@
 >
 > _(the 🔢 block below is the previous session — the Fitting Crew's two-place hand entry.)_
 
-> 🔢 **2026-08-09 (LATEST) — THE FITTING CREW ANSWERS BY HAND, ONE PLACE AT A TIME — AND BUILDING IT FOUND THAT THE PLAN'S OWN A2 IS ARITHMETICALLY IMPOSSIBLE. ✅ FOUR COMMITS on `feat/9-11-factor-lab-ar` (with the ✋ block below), NOT pushed.** `tsc` 0 · **730/730 vitest** (was 725, **+5**) · `next build` 0 · 0 console errors in a fresh tab · driven end to end at 1280×720 through intro → both demos → guided → five scored rounds including a **`split`** · dev hooks **0 hits in the emitted production JS**.
+> 🔢 **2026-08-09 — THE FITTING CREW ANSWERS BY HAND, ONE PLACE AT A TIME — AND BUILDING IT FOUND THAT THE PLAN'S OWN A2 IS ARITHMETICALLY IMPOSSIBLE. ✅ FOUR COMMITS on `feat/9-11-factor-lab-ar` (with the ✋ block below), NOT pushed.** `tsc` 0 · **730/730 vitest** (was 725, **+5**) · `next build` 0 · 0 console errors in a fresh tab · driven end to end at 1280×720 through intro → both demos → guided → five scored rounds including a **`split`** · dev hooks **0 hits in the emitted production JS**.
 >
 > **The ask:** *"fitting crew ka A2 banao"* — build order item 5, the two-place read.
 >
@@ -7339,7 +7501,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-11 (LATEST — see the top 🧹 block. **THE SUPPLY RUN IS ANSWERED BY SWEEPING YOUR HAND ACROSS: one crossing deals one round, and the number of sweeps IS the answer. ⚠️ NOT COMMITTED.** `tsc` 0 · **787/787 vitest** (was 730, **+57**) · `next build` 0 · **0 console errors in a FRESH tab on BOTH input paths** · dev hooks **0 hits in the emitted production JS** (checked against a control string that IS present) · driven at 1280×720 and 640×320. Division as repeated subtraction, performed — and a sweep is DISCRETE, so unlike the Angle Shop's tilt it needs no hysteresis, no EMA and no constant tuned against assumed noise. ⚠️ **Four things I built wrong first, each killed by a measurement:** a per-frame jump reject CANNOT separate a teleport from a fast hand (both are ~0.70) and my `MAX_STEP` 0.25 sat UNDER the 0.30 band, refusing a legitimate one-frame crossing — a dead button, caught by three tests; **band width rejects NOISE and nothing else** while my comment claimed it stopped a reach for a mug (a posture gate is what does that); disarming on one lost frame punishes the child who sweeps best, because detection loss is CORRELATED with the gesture; and the band went 0.30 → 0.20 on **ERGONOMICS** — `answer ∈ 2..7` over ten rounds is up to **~140 arm traversals a run**. ⚠️ **The blocker that would have shipped: replacing the Deal button makes a round UNSUBMITTABLE** — a working camera that cannot read a child's gesture leaves no deal, no undo, no commit, no re-teach, no SkillBeat timeout and no CamGate (that fires only when the camera did not START). The lane IS the button. ⚠️ **And the label could not go input-blind** — that button was the only thing naming which reading was asked, so `dealAsk(round, input, state)`, gated share ≠ group in BOTH modes. ⚠️ **The self-view covered the receivers in 584 of 1440 draws**; fixed by reserving its height, and shrinking the panel was measured to buy NOTHING (a mutation putting it back stayed green). ⚠️ **Adding the second door clipped the intro card** — 340px in a 320px frame; both bodies shortened, now 301px/19px headroom, better than the 307/6 that shipped. ✅ **A scored `group` round was played, reached naturally** (three correct at L1 → L2 → coverage spent the scarce round on it): `13 tins in, 3 to a tray` — armed label reads the GROUP wording, four sweeps drew four trays of three with ONE tin left in the crate, a fifth was allowed and part-filled a tray, undo returned it, graded correct. The backwards clamp was exercised live too. **32/33 planted regressions caught, 1 proven inert** — and ⚠️ re-running the mutations against the FINAL code found two real holes the intermediate runs could not, one of them because I had "proved" a check by mutating the TEST rather than the source. ▶ Open: **nobody has held a real hand up to any of the four AR chapters** and `SWEEP_ARM` (0.40) is the knob whose failure mode is silence; a WRONG group answer, a full ten-round run, the re-teach firing and the mastery exit are all unplayed; nothing pushed, sw still v87. _(prior footer follows.)_)_
+_Last updated: 2026-08-11 (LATEST — see the top 💰 block. **THE ORDER DESK IS NOW THE FUNDRAISER, IT TEACHES LIKE 12–14, AND IT IS ANSWERED BY PINCHING. ✅ TWO COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **846/846 vitest** (was 787, **+59**) · `next build` 0 · dev hooks **0 hits in the emitted production JS** (checked against a control string that IS present) · **AR driven live at 1280×720**. The founder asked why big numbers were still being taught with a warehouse, and measuring answered it: **the word "fundraiser" appeared in exactly ONE place in the whole chapter** — the intro card — while every spoken line said pallets and bays. ⚠️ **The copy alone could not have fixed that**, because the oldest rule in the craft doc forbids naming something that is not drawn, so the anchor can only live in the explanation, once. **The world changed instead, and only for this chapter**: dollar denominations ARE base ten, so here the anchor and the manipulative are the SAME OBJECT and re-theming removes the need for a bridge rather than adding one. ⚠️ **The pieces are BUNDLES, not notes** — a $100 note does not show its own ten, which is a piece asserting its value, the exact fault this chapter was rebuilt to remove; a banded bundle does, so `blockSet`'s geometry survives untouched and only the names change. 3 new scenes, ~4.5 credits, **measured before being wired** (value 0.524/0.575/0.562 under a cast of 0.62–0.81; the gym came back at 0.864 and was **graded down rather than re-rolled**; every board BLANK, because a painted total is the answer on the wall). **Teaching in the 12–14 shape without adopting `GameShell`** (the plan forbids it — it would flatten a painted world and hardcodes the band): THE PLAN read-along **self-paced, NOT `speakWithHighlight`** (3–11 has zero clips, so that helper always takes its blocked-audio branch and TickTock once shipped a chapter that hung on its own opening screen), and the walkthrough goes from **four lines to nine–thirteen baby steps** — one of those four used to jump the columns from empty to the finished number, so the child watched the ANSWER appear rather than the method. ⚠️ **The working is written on paper, in the world**, because the teen chalkboard is a slate rounded-rect and that is the slab fault this repo has shipped three times. **AR: reading E, and the pinch is a RATIO — an absolute threshold does not work at all**, since a 2 cm gap at 40 cm reads identically to a 3.5 cm gap at 70 cm and seating distance alone eats ~43% of the gesture's range. ⚠️ **Eight defects, five of which no gate could have caught:** the held-over guard was **broken on a fresh mount** (its baseline was `useRef(0)` and the reset only runs when SkillBeat REUSES the component); the chip told a held-over grab to drop, an action the guard then silently refuses; the shipped strip **printed the current round's answer** (`200 · 552` with the $552 round open — RailLine's recorded fault); CamGate covered THE PLAN and both walkthroughs; `add(i)` did not enforce the single-column rule, which lived only in the view; `send()` was a silent no-op mid-flight; **the miss line handed the answer over** (*"that is 0, and I asked for 5"*), caught by the chapter's FIRST gate — also the first thing ever to drive `grade`/`missFor`, which lived inside a closure until now; and the reveal read "1 coins = 1". Gates: pinch **9/9**, slide **6/6**, the chapter **7/7** — ⚠️ **and three checks had to be rewritten because a check written in terms of the constant it guards MOVES WITH the mutation**, plus **one test that was failing on every run and therefore reported every mutation as caught**. ▶ Open: **still nobody has held a real hand up to any of it, now five readings deep**; **the bubble covers the columns** (measured, pre-existing); no ten-round run, re-teach or mastery exit; 640×320 not driven; the cover-fit bug still live here and in LoadingBay; nothing pushed, sw still v87. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-11 (LATEST — see the top 🧹 block. **THE SUPPLY RUN IS ANSWERED BY SWEEPING YOUR HAND ACROSS: one crossing deals one round, and the number of sweeps IS the answer. ⚠️ NOT COMMITTED.** `tsc` 0 · **787/787 vitest** (was 730, **+57**) · `next build` 0 · **0 console errors in a FRESH tab on BOTH input paths** · dev hooks **0 hits in the emitted production JS** (checked against a control string that IS present) · driven at 1280×720 and 640×320. Division as repeated subtraction, performed — and a sweep is DISCRETE, so unlike the Angle Shop's tilt it needs no hysteresis, no EMA and no constant tuned against assumed noise. ⚠️ **Four things I built wrong first, each killed by a measurement:** a per-frame jump reject CANNOT separate a teleport from a fast hand (both are ~0.70) and my `MAX_STEP` 0.25 sat UNDER the 0.30 band, refusing a legitimate one-frame crossing — a dead button, caught by three tests; **band width rejects NOISE and nothing else** while my comment claimed it stopped a reach for a mug (a posture gate is what does that); disarming on one lost frame punishes the child who sweeps best, because detection loss is CORRELATED with the gesture; and the band went 0.30 → 0.20 on **ERGONOMICS** — `answer ∈ 2..7` over ten rounds is up to **~140 arm traversals a run**. ⚠️ **The blocker that would have shipped: replacing the Deal button makes a round UNSUBMITTABLE** — a working camera that cannot read a child's gesture leaves no deal, no undo, no commit, no re-teach, no SkillBeat timeout and no CamGate (that fires only when the camera did not START). The lane IS the button. ⚠️ **And the label could not go input-blind** — that button was the only thing naming which reading was asked, so `dealAsk(round, input, state)`, gated share ≠ group in BOTH modes. ⚠️ **The self-view covered the receivers in 584 of 1440 draws**; fixed by reserving its height, and shrinking the panel was measured to buy NOTHING (a mutation putting it back stayed green). ⚠️ **Adding the second door clipped the intro card** — 340px in a 320px frame; both bodies shortened, now 301px/19px headroom, better than the 307/6 that shipped. ✅ **A scored `group` round was played, reached naturally** (three correct at L1 → L2 → coverage spent the scarce round on it): `13 tins in, 3 to a tray` — armed label reads the GROUP wording, four sweeps drew four trays of three with ONE tin left in the crate, a fifth was allowed and part-filled a tray, undo returned it, graded correct. The backwards clamp was exercised live too. **32/33 planted regressions caught, 1 proven inert** — and ⚠️ re-running the mutations against the FINAL code found two real holes the intermediate runs could not, one of them because I had "proved" a check by mutating the TEST rather than the source. ▶ Open: **nobody has held a real hand up to any of the four AR chapters** and `SWEEP_ARM` (0.40) is the knob whose failure mode is silence; a WRONG group answer, a full ten-round run, the re-teach firing and the mastery exit are all unplayed; nothing pushed, sw still v87. _(prior footer follows.)_)_
 
 _Prior update: 2026-08-09 (LATEST — see the top 🔢 block. **The Fitting Crew answers by hand, one place at a time — and building it found that the plan's own A2 is ARITHMETICALLY IMPOSSIBLE. ✅ FOUR COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed; the branch was checked out CLEAN to prove it (`tsc` 0 · 730/730).** `tsc` 0 · **730/730 vitest** (+5) · `next build` 0 · 0 console errors · driven end to end at 1280×720 through five scored rounds including a `split`. ⚠️ **"leftmost hand = tens, rightmost = ones → 0–99" cannot work, because a hand has FIVE fingers** — one hand per place tops out at 55, reaches **26 of 55** of this generator's answers and only 39% of `split`, and cannot state a plain **6**. A round whose answer the surface cannot express is unanswerable. **So the two places are the two WINDOWS, not the two hands**: both hands make one digit, the child enters the tens then the ones, 100% reachable, and NO hook change was needed — `count` already did it. ⚠️ **Two faults the drive found, the first mine:** putting the slot in the dwell key re-armed the same pose, so **answering 12 gave 11**; and a `fit` round with the camera on said nothing about needing taps. **5/5 planted regressions caught.** ▶ Open: the Lego anchor copy and the two-hand array build are still unwritten; §7.2 (no 5×19 brick) undecided; 640×320 computed not driven; **nobody has held a real hand up to any of the three AR chapters** — three is enough surface that this is the next thing worth doing. _(prior footer follows.)_)_
 
