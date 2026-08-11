@@ -61,6 +61,7 @@ import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney, CARRY_SPEED } from './cr
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { blockSet, shadesOf, Shadow, Cube, Rod, YARD_CSS, type Material, type Shades } from './yard'
+import { useHandInput, HandProvider, useHand, CamView, CamGate, type HandSkin } from '@/infra/ar/HandInput'
 import { rint } from '@/core/rand'
 
 // ─── Numbers in words ───────────────────────────────────────────────────────────────────
@@ -82,20 +83,37 @@ const fmt = (n: number) => n.toLocaleString('en-US')
 // ─── Places ─────────────────────────────────────────────────────────────────────────────
 export const PLACES = [1000, 100, 10, 1] as const
 export type Place = typeof PLACES[number]
+/**
+ * ⚠️ EVERY PIECE IS A BUNDLE, AND THAT IS WHAT KEEPS THE MANIPULATIVE HONEST AS MONEY. A hundred-
+ * dollar NOTE does not show its own ten — it is one object with a number printed on it, which is a
+ * piece ASSERTING its value, the exact fault this chapter was rebuilt to remove. A banded bundle of
+ * ten ten-strips does show it, and it is what money actually looks like in bulk. So the geometry
+ * `blockSet` already draws survives the re-theme untouched: only the names change.
+ */
 const PLACE_NAME: Record<Place, { one: string; many: string; goods: string }> = {
-  1000: { one: 'thousand-crate', many: 'thousand-crates', goods: 'thousands' },
-  100: { one: 'hundred-pallet', many: 'hundred-pallets', goods: 'hundreds' },
-  10: { one: 'ten-box', many: 'ten-boxes', goods: 'tens' },
-  1: { one: 'single', many: 'singles', goods: 'ones' },
+  1000: { one: 'thousand-bundle', many: 'thousand-bundles', goods: 'thousands' },
+  100: { one: 'hundred-bundle', many: 'hundred-bundles', goods: 'hundreds' },
+  10: { one: 'ten-strip', many: 'ten-strips', goods: 'tens' },
+  1: { one: 'coin', many: 'coins', goods: 'ones' },
 }
+
+/**
+ * ⚠️ ONE MONEY FORMAT FOR THE WHOLE CHAPTER. `fmt` is a bare `toLocaleString` with ~10 call sites,
+ * and a "$" written into some strings and not others would be two formats for one chapter — which is
+ * why the warehouse version banned the symbol outright. Now that the world IS a fundraiser board the
+ * symbol has to be there, so it goes in ONE helper rather than into the strings.
+ */
+const money = (n: number) => `$${fmt(n)}`
 /** digits of `n`, most significant first, for the four places */
 const digitsOf = (n: number): number[] => PLACES.map(p => Math.floor(n / p) % 10)
 const valueOf = (counts: number[]) => counts.reduce((s, c, i) => s + c * PLACES[i], 0)
 
 // ─── Materials ──────────────────────────────────────────────────────────────────────────
 /**
- * ⚠️ NO CLAY. Measured over the band the bays occupy, all three scenes carry a dominant hue of
- * **30°** — which is clay's hue and Milo's own (30°/sat .53). A clay set on these grounds is
+ * ⚠️ NO CLAY. Re-measured over the band the bays occupy after the fundraiser re-theme, the three
+ * scenes carry a dominant hue of **26.9° · 35.4° · 35.1°** — the same warm band the depot scenes
+ * did (34–47°), so these four survive the world change unchanged and are still 150–255° away.
+ * That is clay's hue and Milo's own (30°/sat .53), so a clay set on these grounds is
  * BlockYard's hay-bale fault. These four are 155–255° away, and they share ONE saturation and ONE
  * brightness (yard.tsx's MAT_SAT/MAT_VAL) so every one of them sits in the painted sprites' band by
  * construction and only the hue moves.
@@ -146,14 +164,14 @@ function Flat({ u, m }: { u: number; m: Shades }) {
   )
 }
 
-/** THOUSAND — the same face, with ten pallets' worth of stacked depth behind it. */
+/** THOUSAND — the same face, with ten hundred-bundles' worth of stacked depth behind it. */
 function Crate({ u, m }: { u: number; m: Shades }) {
   const s = u * 10, d = Math.round(u * 1.6)
   return (
     <span style={{ display: 'block', position: 'relative', width: s + d, height: s + d }}>
       <Shadow w={Math.round(s * 1.06)} h={Math.round(u * 1.3)} />
       <span style={{ position: 'relative', zIndex: 1, display: 'block', width: s + d, height: s + d }}>
-        {/* the stack behind — it is ten pallets deep and says so */}
+        {/* the stack behind — it is ten hundred-bundles deep and says so */}
         <span style={{ position: 'absolute', left: d, top: 0, width: s, height: s,
           borderRadius: u * 0.25, opacity: 0.92,
           backgroundImage: `repeating-linear-gradient(0deg, ${fade(m.seam, .4)} 0 1px, transparent 1px ${u}px),`
@@ -182,6 +200,12 @@ function Piece({ place, u, m }: { place: Place; u: number; m: Shades }) {
  * band shipped `PLAN[round % len]` three times and the last rounds wrapped back onto the creature
  * the chapter opened with.
  */
+/**
+ * ⚠️ `Yard` AND `yardAt` ARE HISTORICAL NAMES — this world is a school fundraiser, not a goods yard.
+ * They are internal identifiers a child never sees, and renaming ~30 call sites buys nothing but
+ * churn and a chance to typo something the type system would not catch. Read "yard" as "the place
+ * this round happens in".
+ */
 export interface Yard { scene: string; groundY: number; customer: string; who: string; material: Material }
 /**
  * ⚠️ The fox merchant was generated with these two and CUT (founder's call). Its `_side`/`_walk`
@@ -189,14 +213,30 @@ export interface Yard { scene: string; groundY: number; customer: string; who: s
  * invisible to the idle-art gate, which is the honest state for art that exists and has no home.
  * Same call `market.ts` records for its four unused stalls: recorded, not hidden.
  */
+/**
+ * ⚠️ THE CAST IS KEPT, THE WORLD IS NOT. Both of these are drawn WALK CYCLES (12 cells each, in
+ * canvas/sheets.ts), so re-casting means the whole image→video→frames pipeline plus its chroma key,
+ * facing and cut-window traps — real money and real risk for a gain the roles deliver for free. A
+ * bear in overalls with a clipboard reads as a caretaker at a school fair; a badger reads as a
+ * parent helper. Only `who` changed.
+ */
 const CUSTOMERS = [
-  { src: '/assets/objects/foreman_bear_side.png', who: 'the foreman' },
-  { src: '/assets/objects/driver_badger_side.png', who: 'the driver' },
+  { src: '/assets/objects/foreman_bear_side.png', who: 'the caretaker' },
+  { src: '/assets/objects/driver_badger_side.png', who: 'the parent helper' },
 ]
+/**
+ * ⚠️ MEASURED BEFORE BEING WIRED, because a generated scene brings its own numbers.
+ *   value over the band the cast stands in — hall 0.524 · playground 0.575 · gym 0.562 (graded)
+ *   against a cast of 0.62–0.81 and Milo at 0.705, so no scene is brighter than what stands on it
+ *   (the `grocery_sweets` fault). The gym came back at 0.864 and was GRADED down rather than
+ *   re-rolled, which keeps an approved composition and costs nothing.
+ *   ground-line roughness at the wired groundY: 2.8–3.8, under the open-ground threshold of 4.
+ *   Every board in all three is BLANK — a painted total would be the answer, printed on the wall.
+ */
 const SCENES = [
-  { scene: '/assets/backgrounds/store_warehouse.png', groundY: 0.86 },
-  { scene: '/assets/backgrounds/store_yard.png', groundY: 0.88 },
-  { scene: '/assets/backgrounds/store_arcade.png', groundY: 0.87 },
+  { scene: '/assets/backgrounds/fund_hall.png', groundY: 0.87 },
+  { scene: '/assets/backgrounds/fund_yard.png', groundY: 0.88 },
+  { scene: '/assets/backgrounds/fund_gym.png', groundY: 0.87 },
 ]
 /** 13 slots: 2 demo + 1 guided + 10 scored. Scene and customer advance on DIFFERENT cycles, so the
  *  pairing keeps changing instead of repeating every third round. */
@@ -247,6 +287,46 @@ function singleNumber(d: 1 | 2 | 3): number {
   return rint(1, hi) * 1000 + rint(0, hi) * 100 + rint(1, hi) * 10 + rint(1, hi)
 }
 
+/**
+ * THE GRADER. ⚠️ EXPORTED AND PURE so a gate drives the SAME function the commit button calls — this
+ * lived inside `OrderPlay`'s closure until now, which is why the chapter has never had a gate: a
+ * test could not reach it, and a test that re-implemented it would agree with its own copy of the
+ * rule while the screen it protects rotted.
+ *
+ * ⚠️ A SINGLE-COLUMN ROUND DEMANDS EVERY OTHER COLUMN BE EMPTY, and that clause interacts with the
+ * BUNDLE: load ten coins on a tens round and they correctly fuse into one ten-strip in the tens
+ * column, so the focus count can be right while a stray sits next door. That is refused on purpose —
+ * and `missFor` has to name the stray, or the child sees a number they can tell is right and is told
+ * only "no".
+ */
+export function grade(q: OdRound, counts: number[]): boolean {
+  if (q.focus < 0) return valueOf(counts) === q.n
+  return counts[q.focus] === q.target[q.focus] && counts.every((c, i) => i === q.focus || c === 0)
+}
+
+/** The written miss line. ⚠️ It never states the answer — only what the child HAS, and why it is not it. */
+export function missFor(q: OdRound, counts: number[]): string {
+  const single = q.focus >= 0
+  const stray = single ? PLACES.findIndex((_, i) => i !== q.focus && counts[i] > 0) : -1
+  if (stray >= 0) {
+    return `${q.missPrefix} there is a ${PLACE_NAME[PLACES[stray]].one} in the ${PLACE_NAME[PLACES[stray]].goods} column. Take it back first.`
+  }
+  const have = single ? counts[q.focus] : valueOf(counts)
+  /**
+   * ⚠️ A SINGLE-COLUMN ROUND MUST NOT NAME ITS TARGET, AND THIS USED TO. The line read "that is 0,
+   * and I asked for 5" — where 5 IS the answer, handed over after one wrong attempt, on the two
+   * round types whose whole task is reading a digit out of the tally. Caught by this chapter's first
+   * gate, which is also the first thing ever to drive this function: it lived inside `OrderPlay`'s
+   * closure until the AR pass pulled it out.
+   *
+   * A `build` round is different and may still state its target — the whole number is printed on the
+   * tally for the entire round, so repeating it gives away nothing the child is not already looking
+   * at. What it must never do is state a digit they were asked to extract.
+   */
+  if (single) return `${q.missPrefix} that is ${have}. Read the tally again — ${q.docket}.`
+  return `${q.missPrefix} that is ${fmt(have)}, and I asked for ${fmt(q.n)}.`
+}
+
 export function makeRound(d: 1 | 2 | 3, slot: number, asked: readonly string[], force?: QType): OdRound {
   const yard = yardAt(slot)
   const pool: QType[] = d === 1 ? ['build', 'place'] : ['build', 'place', 'value']
@@ -263,9 +343,9 @@ export function makeRound(d: 1 | 2 | 3, slot: number, asked: readonly string[], 
     const n = buildNumber(d)
     return {
       qType, yard, n, target: digitsOf(n), focus: -1,
-      ask: `My order is ${numWords(n)} — that is ${fmt(n)}. Load it up, please.`,
-      docket: fmt(n),
-      missPrefix: 'That is not my order yet —',
+      ask: `We raised ${numWords(n)} today — that is ${money(n)}. Stack it up so it can go on the board.`,
+      docket: money(n),
+      missPrefix: 'That is not the total yet —',
     }
   }
   const n = singleNumber(d)
@@ -285,14 +365,14 @@ export function makeRound(d: 1 | 2 | 3, slot: number, asked: readonly string[], 
 
   if (qType === 'place') return {
     qType, yard, n, target, focus,
-    ask: `Off my docket — I need just the ${PLACE_NAME[place].goods}. How many ${PLACE_NAME[place].many}?`,
-    docket: fmt(n),
-    missPrefix: `Not the ${PLACE_NAME[place].goods} I need —`,
+    ask: `Off the tally — just the ${PLACE_NAME[place].goods} for now. How many ${PLACE_NAME[place].many}?`,
+    docket: money(n),
+    missPrefix: `Not the ${PLACE_NAME[place].goods} I asked for —`,
   }
   return {
     qType, yard, n, target, focus,
-    ask: `I need ${numWords(digs[focus] * place)} — that is ${fmt(digs[focus] * place)} — units of stock. How many ${PLACE_NAME[place].many} is that?`,
-    docket: `${fmt(digs[focus] * place)} units`,
+    ask: `The tin holds ${numWords(digs[focus] * place)} — that is ${money(digs[focus] * place)}. How many ${PLACE_NAME[place].many} is that?`,
+    docket: money(digs[focus] * place),
     missPrefix: 'That is not the right amount —',
   }
 }
@@ -660,6 +740,26 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
     // shape four times (placeValue's undo, CoinShop's lay, TickTock's lesson dial).
     const countsRef = useRef(counts)
 
+    /**
+     * ⚠️ THE CAMERA IS OPENED ONCE FOR THE WHOLE CHAPTER, at the orchestrator, and read here through
+     * context. Opening it per round would re-prompt and re-initialise MediaPipe every question.
+     */
+    const { read, input } = useHand()
+    /**
+     * Grabs already closed when this round opened — the held-over guard's baseline.
+     *
+     * ⚠️ SEEDED FROM THE CURRENT READING, NOT FROM ZERO, and the difference is the whole guard. The
+     * round-reset block below only runs when `SkillBeat` REUSES this component; on a fresh mount it
+     * never fires, so a `useRef(0)` baseline leaves any grab already in progress reading as
+     * `grabs > 0` — i.e. valid — and the piece the child was holding from the previous round drops
+     * into whatever column they happen to be over. `useRef`'s initial value is evaluated on the mount
+     * render, which is exactly the moment wanted. Caught by driving it: the chip opened on "open your
+     * hand to drop it", which is only reachable when the guard has already let the grab through.
+     */
+    const armed = useRef(read.grabs)
+    const wasGrab = useRef(false)
+    const [over, setOver] = useState(-1)
+
     // the round resets during RENDER, not in an effect — an effect runs after paint and the
     // previous round's load is painted for one frame under the new order
     const sig = `${data.qType}|${data.n}|${data.focus}`
@@ -670,6 +770,15 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
       setFlights([]); setSent(false); setMiss(null); setBundling(-1)
       setActive(single ? data.focus : PLACES.length - 1)
       erred.current = false; done.current = false
+      /**
+       * ⚠️ A HAND STILL PINCHING WHEN THE NEXT ROUND OPENS IS NOT AN ANSWER. A tap is consumed; a
+       * pose is not, so without this a child who has not opened their fingers deposits a piece into
+       * whatever column they happen to be over the instant the question changes. Only a grab that
+       * CLOSED after the round opened counts.
+       */
+      armed.current = read.grabs
+      wasGrab.current = read.grabbing
+      setOver(-1)
     }
 
     // ⚠️ Spoken on ARRIVAL, not on mount — the customer asking before they have walked in is the
@@ -678,8 +787,36 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
     const bayCentre = useCallback((i: number) =>
       ({ x: L.bayLeft(i) + L.bayWidth(i) / 2, y: L.shelfPx - L.u * 1.6 }), [L])
 
+    /**
+     * ⚠️ THE DROP. `grabs` is monotone only WITHIN a detector session — `useTaps()` and a camera
+     * restart both reset the reading — so a backwards jump is clamped, or one "Try the camera again"
+     * strands the baseline above the counter and the gesture is dead for the rest of the run.
+     */
+    useEffect(() => {
+      if (input !== 'hand' || done.current || sent) return
+      if (read.grabs < armed.current) armed.current = read.grabs
+      const col = read.palm ? columnAt(read.palm.x, vw, L) : -1
+      setOver(read.grabbing ? col : -1)
+      const started = read.grabs > armed.current
+      // released, having really picked up during THIS round, over a column
+      if (wasGrab.current && !read.grabbing && started && col >= 0) add(col)
+      wasGrab.current = read.grabbing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [read, input, sent])
+
+    /**
+     * The one entry point for "the child adds one piece of place i" — a tap and the hand both come
+     * through here, so the grader never learns which input moved it.
+     *
+     * ⚠️ THE SINGLE-COLUMN RESTRICTION IS ENFORCED HERE, NOT ONLY IN THE VIEW. It used to live purely
+     * in `Supply`, which computes `hidden` and sets `disabled` — fine while a tap was the only way
+     * in, and wrong the moment a hand can drop a piece anywhere in frame: an AR path could load a
+     * column the round forbids and produce a state the tap path cannot reach. The gate is on the
+     * ACTION now, so both inputs obey it by construction.
+     */
     function add(i: number) {
       if (done.current || sent) return
+      if (single && i !== data.focus) return
       const place = PLACES[i]
       const id = `f${seq.current++}`
       // read the button's REAL position rather than re-deriving the supply row's layout: two
@@ -721,28 +858,26 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
       setMiss(null)
     }
 
-    const right = single
-      ? counts[data.focus] === data.target[data.focus] && counts.every((c, i) => i === data.focus || c === 0)
-      : valueOf(counts) === data.n
+    const right = grade(data, counts)
 
+    /**
+     * ⚠️ THIS USED TO BE A SILENT NO-OP MID-FLIGHT. Its only `disabled` condition was `sent`, while
+     * the `flights.length` guard sat inside the handler — so pressing Send while a piece was still
+     * travelling did nothing, said nothing, and looked like a dead button, which chapter-craft calls
+     * the worst outcome there is. A gesture inherits this far more often than a tap does, because a
+     * hand can commit the instant after it drops. The button is now visibly unavailable for those
+     * ~280 ms instead of silently ignoring the press.
+     */
     function send() {
       if (done.current || sent || flights.length) return
       if (right) {
         done.current = true; setSent(true)
-        speak('That is the order. Thank you!')
+        speak('That is the total. Up it goes!')
         window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 2100)
         return
       }
       erred.current = true
-      // ⚠️ On a single-bay round the BUNDLE can leave a piece in a neighbouring bay — load ten
-      // singles and they correctly become one ten-box, in the tens bay. Saying only "that is 0"
-      // then names a number the child can see is wrong without saying WHY, so the stray is named.
-      const stray = single ? PLACES.findIndex((_, i) => i !== data.focus && counts[i] > 0) : -1
-      const have = single ? counts[data.focus] : valueOf(counts)
-      const want = single ? data.target[data.focus] : data.n
-      const line = stray >= 0
-        ? `${data.missPrefix} there is a ${PLACE_NAME[PLACES[stray]].one} in the ${PLACE_NAME[PLACES[stray]].goods} bay. Take it back first.`
-        : `${data.missPrefix} that is ${single ? have : fmt(have)}, and I asked for ${single ? want : fmt(want)}.`
+      const line = missFor(data, counts)
       setMiss(line)
       speak(line)
     }
@@ -759,7 +894,7 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
           border: '3px solid var(--outline, #3d2516)', borderRadius: 12, padding: '5px 12px',
           fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(13px,1.7vw,21px)',
           color: 'var(--ink, #3d2516)' }}>
-          Docket · {data.docket}
+          Tally · {data.docket}
         </div>
 
         {/* the bays — all four, always. A `place` round leaves three empty, which keeps the
@@ -784,11 +919,23 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
           leaving={sent} resetKey={sig} line={miss ?? data.ask}
           onArrive={() => { if (mode === 'guided') speak(data.ask) }} />
 
+        {/* ⚠️ THE INSTRUCTION NAMES THE GESTURE THE CHILD ACTUALLY HAS, and changes with what the
+            hand is doing. Input-blind it would tell a tap child to pinch; state-blind it would leave
+            a child holding a piece with nothing saying to open their fingers. */}
+        {!sent && (
+          <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)',
+            bottom: L.supply + 8, zIndex: 47, background: 'rgba(253,246,232,.94)',
+            border: '3px solid var(--outline, #3d2516)', borderRadius: 999, padding: '4px 14px',
+            fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(11px,1.4vw,15px)',
+            color: 'var(--ink, #3d2516)', whiteSpace: 'nowrap' }}>
+            {loadAsk(data, input, { carrying: read.grabbing, over, full: right, armed: read.grabs > armed.current })}
+          </div>
+        )}
         <Supply u={L.u} m={m} band={L.supply} live={!sent} only={single ? data.focus : -1} onTap={add} />
 
         {/* ⚠️ IDENTICAL AT EVERY STATE. Nothing may say the order is right before the commit —
             chapter 4's green Ready button turned this whole class of chapter into hot/cold. */}
-        <button onClick={send} disabled={sent}
+        <button onClick={send} disabled={sent || flights.length > 0}
           /* ⚠️ CLEARS THE CUSTOMER'S BAND. At right:16 it sat squarely on the bear who is standing
              at the right-hand desk — measured on the founder's screenshot. The people's reserve is
              already derived, so the commit button simply starts where that ends. */
@@ -810,7 +957,10 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
               fontSize: 'clamp(20px,3.2vw,42px)', animation: 'by_pop .4s ease both',
               boxShadow: '0 5px 0 rgba(20,60,20,.35)' }}>
               {single
-                ? `${counts[data.focus]} ${PLACE_NAME[PLACES[data.focus]].many} = ${fmt(counts[data.focus] * PLACES[data.focus])}`
+                // ⚠️ SINGULAR WHEN IT IS ONE — this read "1 coins = 1", the same family as the
+                // "Fox has a apple" this repo already records. And the value is money now, or the
+                // reveal is the one place in the chapter still counting in bare units.
+                ? `${counts[data.focus]} ${counts[data.focus] === 1 ? PLACE_NAME[PLACES[data.focus]].one : PLACE_NAME[PLACES[data.focus]].many} = ${money(counts[data.focus] * PLACES[data.focus])}`
                 : fmt(data.n)}
             </div>
           </div>
@@ -818,6 +968,222 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
       </>
     )
   }
+
+// ─── Answering with the hand ────────────────────────────────────────────────────────────
+/**
+ * READING **E** — pinch to pick a pledge up, open your hand over a column to put it in.
+ *
+ * ⚠️ THE DROP CHOOSES THE COLUMN, AND THAT IS THE WHOLE JUSTIFICATION FOR USING A CAMERA HERE.
+ * chapter-craft §5: *a pinch used as a cursor is a mouse with extra steps and a permission prompt.*
+ * This passes only because the place-value decision — which column does a hundred go in — is made
+ * with the body rather than by pressing the button that already says "hundreds". If the pinch were
+ * merely how you press a supply button, it would not ship.
+ *
+ * ⚠️ AND IT DOES NOT REPLACE THE SUPPLY ROW. That is The Supply Run's headline finding and the most
+ * expensive thing on this list: a working camera that cannot read a particular child's pinch — small
+ * hands, low light, a hand held end-on, a seat too far back — must not leave them with nothing to
+ * press. `CamGate` renders only when the camera failed to START, so a camera that runs and cannot
+ * read shows nothing at all; with the row gone there would be no add, no undo at zero, no commit at
+ * zero, no wrong answer, no re-teach and no round timeout. Both inputs call `add()`, which stays a
+ * single greppable call site.
+ */
+const SKIN: HandSkin = {
+  accent: '#f26b2c', accentSoft: 'rgba(242,107,44,.4)', ink: '#3d2516', muted: '#8a7461',
+  panel: 'rgba(253,246,232,.96)', line: '#3d2516', onAccent: '#fff',
+  font: 'var(--font-display)', mono: 'var(--font-numeric)',
+}
+
+/**
+ * Which column the hand is over, or -1 when it is over none of them.
+ *
+ * ⚠️ NO NEAREST-COLUMN SNAP, DELIBERATELY. Snapping a drop to whichever column is closest would
+ * quietly correct a child who let go between two of them — and on this chapter the column IS the
+ * answer, so a snap is the grader helping. Over a gap, nothing is placed and the piece stays in
+ * hand, which is also what would happen with a real handful of coins.
+ */
+export function columnAt(px: number, vw: number, L: ReturnType<typeof orderLayout>): number {
+  const x = px * vw
+  for (let i = 0; i < PLACES.length; i++) {
+    if (x >= L.bayLeft(i) && x <= L.bayLeft(i) + L.bayWidth(i)) return i
+  }
+  return -1
+}
+
+/**
+ * The instruction, as a pure function of the round, the input and what the hand is doing.
+ *
+ * ⚠️ IT CANNOT GO INPUT-BLIND, and it cannot go STATE-blind either. The Supply Run's finding: the
+ * control that names which question is being asked must name the gesture the child actually has, and
+ * every state a gesture can be in needs words — not just "ready". A child holding a piece with
+ * nothing telling them to open their hand gets silence, which is The Fitting Crew's `handHint`
+ * lesson.
+ */
+export function loadAsk(q: OdRound, input: 'hand' | 'tap', st: { carrying: boolean; over: number; full: boolean; armed?: boolean }): string {
+  const single = q.focus >= 0
+  const what = single ? PLACE_NAME[PLACES[q.focus]].many : 'bundles'
+  if (st.full) return 'That is everything — tap Send it ✓'
+  if (input === 'tap') return single ? `Tap the ${what} to add one` : 'Tap a bundle to add one'
+  if (!st.carrying) return single ? `Pinch to pick up a ${PLACE_NAME[PLACES[q.focus]].one}` : 'Pinch your fingers to pick one up'
+  /**
+   * ⚠️ A HELD-OVER GRAB MUST NOT BE TOLD TO DROP. Found by driving it: the round changed while the
+   * child was still pinching, and the chip opened on "open your hand to drop it in the hundreds" —
+   * an instruction for an action the guard then silently refuses, which is a dead button wearing a
+   * helpful sentence. The hand has to be opened and closed again before it counts, so SAY that, at
+   * the moment it applies. The Fitting Crew's `handHint` lesson, one gesture along.
+   */
+  if (st.armed === false) return 'Open your hand first, then pinch again'
+  if (st.over < 0) return 'Hold it over a column'
+  return `Open your hand to drop it in the ${PLACE_NAME[PLACES[st.over]].goods}`
+}
+
+// ─── THE PLAN ───────────────────────────────────────────────────────────────────────────
+/**
+ * The 12–14 band's read-along opener, brought over: the chapter states its problem and its rule on
+ * one short board before anything is worked, and Milo reads it while each word lights up.
+ *
+ * ⚠️ SELF-PACED, AND DELIBERATELY NOT `speakWithHighlight`. That helper resolves a pre-rendered clip
+ * first and paces the highlight off the clip's real duration — but the 3–11 band has **zero**
+ * recorded clips, so every use here takes its browser-TTS or blocked-audio branch, and Chrome very
+ * often ships no usable voice at all. A read-along driven by speech events on a silent device is a
+ * chapter that hangs on its own opening screen; that exact hang shipped once already in TickTock and
+ * cost a session to find, precisely because the preview pane is mute and always took the working
+ * path. So the sweep is a deterministic timer with `speak()` riding alongside: the words land
+ * whether the voice works, half-works or never starts, and `onDone` fires either way.
+ */
+const PLAN_PROBLEM = 'The board says $3,241 — so how do you count that out without counting three thousand coins one at a time?'
+const PLAN_POINTS = [
+  'Where a digit sits is what it is worth.',
+  'Start with the biggest bundle that fits, then work down.',
+  'An empty column is a zero — and the zero still counts.',
+]
+
+function ThePlan({ onDone }: { onDone: () => void }) {
+  const { w: vw } = useViewport()
+  const words = useMemo(() => [PLAN_PROBLEM, ...PLAN_POINTS].join(' ').split(' ').filter(Boolean), [])
+  const [lit, setLit] = useState(-1)
+  const doneRef = useRef(onDone); doneRef.current = onDone
+
+  useEffect(() => {
+    let alive = true
+    const timers: number[] = []
+    speak([PLAN_PROBLEM, ...PLAN_POINTS].join(' '))
+    let i = 0
+    const run = () => {
+      if (!alive) return
+      setLit(i)
+      // ⚠️ Per-word dwell from the word's own length, floored and capped — a two-letter word still
+      // needs long enough to be seen, and the total has to land near a spoken line rather than race
+      // it. The same shape as `dwellFor`, one grain finer.
+      const w = words[i] ?? ''
+      const t = window.setTimeout(() => {
+        i++
+        if (i < words.length) run()
+        else window.setTimeout(() => alive && doneRef.current(), 1200)
+      }, Math.max(190, Math.min(520, 70 + w.length * 42)))
+      timers.push(t)
+    }
+    run()
+    return () => { alive = false; timers.forEach(window.clearTimeout) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  let n = -1
+  const render = (text: string, bold: boolean) => (
+    <span>{text.split(' ').filter(Boolean).map((w, k) => {
+      n++
+      const me = n
+      return (
+        <span key={k} style={{
+          background: me === lit ? 'var(--milo-orange, #F26B2C)' : 'transparent',
+          color: me === lit ? '#fff' : undefined,
+          borderRadius: 6, padding: '0 3px', fontWeight: bold ? 800 : 600,
+          opacity: me <= lit ? 1 : 0.3, transition: 'opacity .18s',
+        }}>{w} </span>
+      )
+    })}</span>
+  )
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'grid', placeItems: 'center',
+      background: 'rgba(30,24,18,.55)', padding: 16 }}>
+      <div style={{ width: Math.min(vw * 0.86, 720), background: 'rgba(255,252,244,.98)',
+        border: '4px solid var(--outline, #3d2516)', borderRadius: 18, padding: '18px 22px',
+        fontFamily: 'var(--font-display)', color: 'var(--ink, #3d2516)',
+        boxShadow: '0 10px 26px rgba(30,42,60,.3)' }}>
+        <div style={{ fontSize: 12, letterSpacing: 2, fontWeight: 900, opacity: .55, marginBottom: 8 }}>THE PLAN</div>
+        <div style={{ fontSize: 'clamp(15px,2.1vw,21px)', lineHeight: 1.5, marginBottom: 12 }}>
+          {render(PLAN_PROBLEM, true)}
+        </div>
+        {PLAN_POINTS.map((pt, i) => (
+          <div key={i} style={{ fontSize: 'clamp(13px,1.8vw,18px)', lineHeight: 1.45, marginBottom: 6,
+            display: 'flex', gap: 8 }}>
+            <span style={{ opacity: .5 }}>&bull;</span><span>{render(pt, false)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── The written working ────────────────────────────────────────────────────────────────
+/**
+ * THE TALLY SHEET — where the working gets written, one line at a time, as it is spoken.
+ *
+ * This is the 12–14 band's chalkboard, brought into a painted world rather than adopted from it.
+ * The teen `Blackboard` is a slate-on-dark rounded rectangle, and dropping one of those onto a
+ * painted scene is the SLAB fault this repo has now shipped three times (BlockYard passes 1–3): a
+ * filled rect over a painting reads as UI furniture however carefully its palette is matched,
+ * because paintings contain no filled rectangles.
+ *
+ * ⚠️ SO THE SURFACE IS A THING THE WORLD ALREADY HAS. Paper, on a fundraiser stall, in the same
+ * corner and the same idiom as the tally pill that was already there — the customer is drawn holding
+ * one. It is tilted a little and casts a soft shadow, so it reads as an object lying on something
+ * rather than a panel floating above it.
+ *
+ * ⚠️ AND IT NEEDS NO CHALK FONT, WHICH SIDESTEPS A REAL BLOCKER. `--font-chalk` is declared only
+ * inside `[data-band="12-14"|"15-16"|"17-18"]`, and a 3–11 chapter asking for it silently inherits
+ * the body font — the board stops looking like one, with nothing erroring and no gate able to see it.
+ * Paper wants the story band's own display face, so the variable never comes into it.
+ */
+const SHEET_WINDOW = 4
+/** The Menu button's own bottom edge (12 top + 41 tall), so the sheet clears it by measurement
+ *  rather than by a guess — this chapter's chrome has bitten a bubble here before. */
+const CHROME_BOTTOM = 51
+
+/**
+ * ⚠️ TOP-LEFT AND GROWING DOWN, WHICH IS A MEASURED CHOICE RATHER THAN A CORNER. Sat at the bottom
+ * left it covered Milo AND the thousands label — measured on screen at 1280×720, the sheet's box
+ * crossed both. The chapter's fixed layers are: chrome top-left (Menu 12,10,79×41 and the tally pill
+ * below it), the four columns across the middle (y 279–532), Milo bottom-left and the customer
+ * right. The only region free of all of them is the strip under the chrome, so the working grows
+ * down from where the tally already lives — which is also where a stall's paperwork would be.
+ */
+function TallySheet({ lines, w, top }: { lines: string[]; w: number; top: number }) {
+  // ⚠️ WINDOWED, like the teen board. A 10-step walkthrough accumulates more working than a
+  // nine-year-old can hold, and an unbounded list grows the sheet off the top of the frame.
+  const shown = lines.slice(Math.max(0, lines.length - SHEET_WINDOW))
+  const newest = shown.length - 1
+  return (
+    <div style={{
+      position: 'fixed', left: 12, top, zIndex: 46, width: w,
+      background: 'rgba(255,252,244,.97)', border: '3px solid var(--outline, #3d2516)',
+      borderRadius: 6, padding: '10px 12px', transform: 'rotate(-1.1deg)',
+      boxShadow: '0 6px 14px rgba(30,42,60,.26)',
+      fontFamily: 'var(--font-display)', color: 'var(--ink, #3d2516)',
+    }}>
+      {shown.map((l, i) => (
+        <div key={`${lines.length}-${i}`} style={{
+          fontWeight: i === newest ? 800 : 600,
+          opacity: i === newest ? 1 : 0.45,
+          fontSize: 'clamp(12px,1.5vw,18px)', lineHeight: 1.5, whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          // the newest line writes itself on, left to right — the teen board's own idiom
+          animation: i === newest ? `od_write ${Math.min(900, 40 + l.length * 26)}ms steps(${Math.max(4, l.length)}) both` : undefined,
+        }}>{l}</div>
+      ))}
+    </div>
+  )
+}
 
 // ─── Demo / re-teach ────────────────────────────────────────────────────────────────────
 /**
@@ -835,38 +1201,61 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void }> = ({ 
   const m = shadesOf(data.yard.material)
   const [step, setStep] = useState(0)
   const [counts, setCounts] = useState<number[]>([0, 0, 0, 0])
+  const [board, setBoard] = useState<string[]>([])
   const doneRef = useRef(onDone); doneRef.current = onDone
 
-  const lines = useMemo(() => {
+  /**
+   * ⚠️ BABY STEPS — ONE IDEA, ONE SPOKEN LINE, ONE BOARD LINE, ONE CHANGE ON SCREEN. The 12–14 shape,
+   * and the reason it exists: this walkthrough used to be FOUR lines, of which one silently jumped
+   * the scene from empty to the whole finished number. A child watching that sees the answer appear,
+   * not the method — the craft doc's "the demo must TEACH, not restate".
+   *
+   * ⚠️ EACH STEP CARRIES ITS OWN `counts`, so the scene is a pure function of the step index and the
+   * two can never drift. A demo beat that narrates one arrangement while the scene shows another is
+   * a fault this repo has shipped (The Supply Run's remainder went into a van while Milo said it
+   * stayed behind), and it is invisible because the WORDS are right and only the numbers disagree.
+   */
+  const beats = useMemo(() => {
+    const out: { say: string; board?: string; counts: number[] }[] = []
     if (single) {
       const p = PLACES[data.focus]
-      return [
-        data.ask,
-        `Nobody counts that out one at a time — you load ${PLACE_NAME[p].many}.`,
-        `${data.target[data.focus]} of them. That is the order.`,
-      ]
+      const want = data.target[data.focus]
+      out.push({ say: data.ask, board: data.docket, counts: [0, 0, 0, 0] })
+      out.push({ say: `Nobody counts that out coin by coin — you count it in ${PLACE_NAME[p].many}.`, counts: [0, 0, 0, 0] })
+      // ⚠️ COUNTED IN ONE AT A TIME rather than appearing at the answer. The count is the thing being
+      // taught, so it has to be BUILT on screen — the same reason the played round makes the child
+      // load them one by one instead of typing a digit.
+      for (let k = 1; k <= want; k++) {
+        const c = [0, 0, 0, 0]; c[data.focus] = k
+        out.push({ say: k === 1 ? `One. That is ${money(p)}.` : `${k}. ${money(k * p)}.`, board: `${k} × ${money(p)} = ${money(k * p)}`, counts: c })
+      }
+      out.push({ say: `${want} ${want === 1 ? PLACE_NAME[p].one : PLACE_NAME[p].many}. That goes on the board.`, counts: data.target.slice() })
+      return out
     }
     const d = digitsOf(data.n)
-    // ⚠️ Name only the places that HAVE something — "0 thousand-crates" on a three-digit order is
-    // noise, and a leading zero is not a fact about the number. But an EMPTY INNER place is the
-    // whole point of a placeholder, so it gets said out loud where it happens.
     const first = d.findIndex(v => v > 0)
-    const parts = d.map((v, i) => ({ v, i })).slice(first)
-      .filter(x => x.v > 0)
-      .map(x => `${x.v} ${x.v === 1 ? PLACE_NAME[PLACES[x.i]].one : PLACE_NAME[PLACES[x.i]].many}`)
-    const holes = d.map((v, i) => ({ v, i })).slice(first).filter(x => x.v === 0)
-    const holeLine = holes.length
-      ? ` Nothing in the ${holes.map(h => PLACE_NAME[PLACES[h.i]].goods).join(' or the ')} — that bay stays empty, and that is what the zero means.`
-      : ''
-    return [
-      // words AND figures together, the same as the played ask — the mapping between the two is
-      // part of what "read and write numbers to 10,000" means
-      `The order is ${numWords(data.n)} — that is ${fmt(data.n)}.`,
-      'Start with the biggest unit that fits and work down.',
-      parts.join(', ') + '.' + holeLine,
-      `Which is ${fmt(data.n)}. Send it.`,
-    ]
+    out.push({ say: `The board says ${numWords(data.n)} — that is ${money(data.n)}.`, board: money(data.n), counts: [0, 0, 0, 0] })
+    out.push({ say: 'Start with the biggest bundle that fits and work down.', counts: [0, 0, 0, 0] })
+    const c = [0, 0, 0, 0]
+    let running = 0
+    for (let i = first; i < PLACES.length; i++) {
+      const v = d[i], place = PLACES[i], nm = PLACE_NAME[place]
+      // ⚠️ A LEADING ZERO IS NOT A FACT ABOUT THE NUMBER, but an EMPTY INNER place is the whole point
+      // of a placeholder — so holes are said out loud exactly where they happen and never before.
+      if (v === 0) {
+        out.push({ say: `Nothing in the ${nm.goods} — that column stays empty, and that is what the zero means.`, board: `${nm.goods}: 0`, counts: c.slice() })
+        continue
+      }
+      c[i] = v
+      running += v * place
+      out.push({ say: `${numWords(v * place)} — ${v} ${v === 1 ? nm.one : nm.many}.`, board: `${v} × ${money(place)} = ${money(v * place)}`, counts: c.slice() })
+      if (i > first) out.push({ say: `That is ${money(running)} so far.`, board: `so far  ${money(running)}`, counts: c.slice() })
+    }
+    out.push({ say: `Which is ${money(data.n)}. Put it up.`, board: `= ${money(data.n)}`, counts: digitsOf(data.n) })
+    return out
   }, [data, single])
+
+  const lines = useMemo(() => beats.map(b => b.say), [beats])
 
   const [ready, setReady] = useState(false)
   useEffect(() => {
@@ -878,9 +1267,9 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void }> = ({ 
       if (!alive) return
       setStep(i)
       speak(lines[i])
-      // show the act the line just described
-      if (single && i === 2) setCounts(data.target.slice())
-      if (!single && i === 2) setCounts(digitsOf(data.n))
+      // the scene is a function of the step, never of a separate schedule
+      setCounts(beats[i].counts)
+      setBoard(beats.slice(0, i + 1).map(b => b.board).filter(Boolean) as string[])
       const t = window.setTimeout(() => {
         i++
         if (i < lines.length) run()
@@ -903,12 +1292,18 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void }> = ({ 
       {PLACES.map((p, i) => (
         <div key={p} style={{ position: 'fixed', left: L.bayLeft(i), top: L.shelfPx,
           width: L.bayWidth(i), transform: 'translateY(-100%)', zIndex: 30 }}>
+          {/* ⚠️ `active` IS DERIVED FROM THE SCENE, NOT FROM A STEP INDEX. It read `step >= 2`, the
+              third of FOUR lines under the old script — meaningless now the walkthrough is nine to
+              thirteen steps. A constant tuned to a script that no longer exists. */}
           <Bay place={p} n={counts[i]} u={L.u} m={m}
             w={L.bayWidth(i)} hPx={L.bayHeight(i)} label={PLACE_NAME[p].goods}
-            active={step >= 2 && (!single || i === data.focus)} bundling={false} />
+            active={counts[i] > 0 && (!single || i === data.focus)} bundling={false} />
         </div>
       ))}
-      <MiloClerk h={L.peopleH} x={L.miloX} groundPx={L.groundPx} busy={step === 2} />
+      {board.length > 0 && (
+        <TallySheet lines={board} w={Math.round(Math.min(vw * 0.30, 340))} top={CHROME_BOTTOM + 7} />
+      )}
+      <MiloClerk h={L.peopleH} x={L.miloX} groundPx={L.groundPx} busy={counts.some(c => c > 0)} />
       <Customer src={data.yard.customer} h={L.peopleH} x={L.custX} vw={vw} groundPx={L.groundPx}
         leaving={false} resetKey={key} line={ready ? lines[step] : ''}
         onArrive={() => setReady(true)} />
@@ -937,9 +1332,11 @@ export function makeBeat(): Beat<OdRound> {
 }
 
 // ─── The chapter ────────────────────────────────────────────────────────────────────────
-type Phase = 'intro' | 'demo' | 'guided' | 'practice'
+type Phase = 'intro' | 'plan' | 'demo' | 'guided' | 'practice'
 
 export const OD_CSS = `
+@keyframes od_write { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
+
 @keyframes od_fly { 0%{transform:translate(-50%,-100%)} 100%{transform:translate(calc(-50% + var(--dx)), calc(-100% + var(--dy)))} }
 @keyframes od_fuse { 0%{transform:scale(1);opacity:1} 60%{transform:scale(.82);opacity:.7} 100%{transform:scale(.7);opacity:0} }
 @keyframes od_hand { 0%,100%{transform:translateY(0)} 45%{transform:translateY(-6px)} }
@@ -952,8 +1349,10 @@ export default function OrderDesk({ onFinish, onExit }: {
   const router = useRouter()
   const [phase, setPhase] = useState<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
-  const [shipped, setShipped] = useState<number[]>([])      // the cumulative arc — OUTSIDE SkillBeat
+  const [shipped, setShipped] = useState<number[]>([])
+  const pending = useRef<number | null>(null)      // the cumulative arc — OUTSIDE SkillBeat
   const needsRotate = useNeedsRotate()
+  const { w: vw } = useViewport()
   const result = useRef({ correct: 0, wrong: 0 })
   const finished = useRef(false)
 
@@ -974,11 +1373,35 @@ export default function OrderDesk({ onFinish, onExit }: {
 
   // ⚠️ Below every hook. An early return above one changes the hook count when the phone turns and
   // React tears the chapter into the error boundary.
-  if (needsRotate) return <RotateGate line="Milo's yard needs a wide screen to lay the bays out! 📦" />
+  if (needsRotate) return <RotateGate line="The fundraiser board needs a wide screen to lay the columns out! 💰" />
+
+  const marker = useMemo(() => ({ fill: '#f26b2c', ink: '#3d2516' }), [])
+  const hand = useHandInput({ reads: 'pinch', marker })
+  const onCam = hand.input === 'hand'
+  /**
+   * ⚠️ ONLY WHERE THE CHILD ANSWERS, not merely past the intro. `CamGate` is a full-screen panel, so
+   * gating it on "not intro" puts a camera prompt over THE PLAN and over both walkthroughs — the
+   * teaching covered by a permission dialog for a gesture that is not wanted yet. The Supply Run
+   * gates on being in the lab for the same reason.
+   */
+  const inWorld = phase === 'guided' || phase === 'practice'
 
   return (
+    <HandProvider value={{ read: hand.read, input: hand.input }}>
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#a99a86' }}>
       <style>{CRITTER_CSS + YARD_CSS + OD_CSS}</style>
+
+      {/* ⚠️ MOUNTED FROM THE MOMENT THE CHAPTER STARTS, and merely HIDDEN until the camera is ready —
+          the detect loop reads the video element's own box, and an unmounted one measures 0×0. */}
+      {inWorld && onCam && (
+        <CamView videoRef={hand.videoRef} canvasRef={hand.canvasRef} w={Math.round(Math.min(vw * 0.17, 190))}
+          skin={SKIN} hidden={!hand.camReady} />
+      )}
+      {inWorld && onCam && !hand.camReady && (
+        <CamGate status={hand.status} error={hand.error} skin={SKIN}
+          onTaps={hand.useTaps} onRetry={hand.useCamera} onExit={exit}
+          denied="Milo can watch you pick the money up, or you can tap the buttons — both put it in the same column." />
+      )}
 
       <button onClick={exit}
         style={{ position: 'fixed', left: 12, top: 10, zIndex: 60, padding: '7px 14px', borderRadius: 999,
@@ -1012,41 +1435,45 @@ export default function OrderDesk({ onFinish, onExit }: {
             background: 'var(--paper, #fdf6e8)', borderRadius: 22,
             border: '4px solid var(--outline, #3d2516)', padding: '22px 24px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26,
-              color: 'var(--ink, #3d2516)', marginBottom: 8 }}>The Order Desk</div>
+              color: 'var(--ink, #3d2516)', marginBottom: 8 }}>The Fundraiser</div>
             {/**
-              * ⚠️ THE DAILY ANCHOR LIVES HERE AND ONLY HERE. The intro is the one narration surface
-              * in this chapter — everything else is the customer speaking about the order that is
-              * actually on screen, and a fundraiser word over a picture of crates is the words
-              * naming something that is not there (chapter-craft.md). So the anchor says "this is
-              * like that" once, up front, and every played round stays true to the yard.
+              * ⚠️ THE ANCHOR IS NO LONGER CONFINED TO THIS CARD, AND THAT IS THE WHOLE POINT OF THE
+              * RE-THEME. In the depot version the fundraiser was a simile said once here and then
+              * dropped, because every played round had to stay true to a picture of crates — so a
+              * founder looking at the screen saw a warehouse and asked why big numbers were still
+              * being taught with one. He was right: the anchor was a sentence the child tapped past.
+              * Now the world IS the fundraiser, so the ask, the tally and the spoken explanation can
+              * all say board and bundle without naming anything that is not on screen.
               *
-              * ⚠️ 3,241 IS GENERATABLE AND $3,482 IS NOT. Every digit is capped at MAX_DIGIT (5),
-              * so "8 tens" cannot occur and a worked example using one would contradict every round
-              * the child then plays. 3-2-4-1 is a number `buildNumber` really draws.
+              * ⚠️ 3,241 IS GENERATABLE AND $3,482 IS NOT. Every digit is capped at MAX_DIGIT (5), so
+              * "8 tens" cannot occur and a worked example using one would contradict every round the
+              * child then plays. 3-2-4-1 is a number `buildNumber` really draws. (The plan's own
+              * worked example used 3,482 — check a written example against the real generator.)
               *
-              * ⚠️ NO CURRENCY SYMBOL, AND NO "DOLLARS" EITHER. `fmt` is a bare toLocaleString with
-              * ~10 call sites, so a "$" here and bare numerals on the docket would be two formats
-              * for one chapter. And "dollars" is the one unit this chapter never uses — every other
-              * string says units of stock, thousand-crates, hundred-pallets, ten-boxes, singles. The
-              * anchor states the NUMBER, then pivots back into the yard's own words, which is what
-              * its three sibling chapters do too.
+              * ⚠️ THE "$" LIVES IN `money()`, NOT IN THESE STRINGS. `fmt` has ~10 call sites, so a
+              * symbol written into some of them and not others is two formats for one chapter.
               */}
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16,
               color: 'var(--ink, #3d2516)', lineHeight: 1.45, marginBottom: 18 }}>
-              Think of your school&rsquo;s fundraiser board: 3,241 is 3 thousands, 2 hundreds, 4 tens
-              and 1 one, and where a digit sits is what it is worth. Milo&rsquo;s yard is the same —
-              nobody counts out three thousand things one at a time, so you load the biggest unit
-              that fits and work down.
+              The board shows what the whole school has raised. $3,241 is 3 thousand-bundles,
+              2 hundred-bundles, 4 ten-strips and 1 coin — where a digit sits is what it is worth.
+              Nobody counts three thousand coins one at a time, so you stack the biggest bundle that
+              fits and work down.
             </div>
-            <button onClick={() => { unlockSpeech(); setPhase('demo') }}
+            <button onClick={() => { unlockSpeech(); setPhase('plan') }}
               style={{ padding: '14px 34px', borderRadius: 999, border: '4px solid var(--outline, #3d2516)',
                 background: 'var(--milo-orange, #f26b2c)', color: '#fff', cursor: 'pointer',
                 fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 19 }}>
-              Open the desk ▶
+              Open the stall ▶
             </button>
           </div>
         </div>
       )}
+
+      {/* ⚠️ AUTO-ROLLS, WITH NO "NEXT". A button on a first run is a skip button wearing a different
+          label, and the whole reason a chapter teaches before it scores is that a nine-year-old
+          presses whatever big control is offered and then meets a test nothing prepared them for. */}
+      {phase === 'plan' && <ThePlan onDone={() => setPhase('demo')} />}
 
       {phase === 'demo' && (
         <OrderExplain key={`demo${demoIdx}`} data={DEMO[demoIdx]}
@@ -1059,12 +1486,25 @@ export default function OrderDesk({ onFinish, onExit }: {
 
       {phase === 'practice' && (
         <SkillBeat beat={beat} onInterlude={interlude}
-          onRound={(d: OdRound) => setShipped(s => [...s, d.focus >= 0 ? d.target[d.focus] * PLACES[d.focus] : d.n])}
+          /**
+           * ⚠️ HELD BACK ONE ROUND. `SkillBeat` fires `onRound` when a round LOADS, so appending here
+           * prints the answer to the question still on screen — measured live: the strip read
+           * "200 · 552" while the $552 round was open and unanswered, and on a `place` round it
+           * states the focus value outright. RailLine shipped this exact fault and records it. The
+           * strip is the run SO FAR, which is what it claims to be; the last round simply never
+           * joins it.
+           */
+          onRound={(d: OdRound) => setShipped(s => {
+            const v = pending.current
+            pending.current = d.focus >= 0 ? d.target[d.focus] * PLACES[d.focus] : d.n
+            return v === null ? s : [...s, v]
+          })}
           onComplete={(c, w, mastered) => {
             result.current.correct += c; result.current.wrong += w
             finishChapter(result.current.correct, result.current.wrong, mastered)
           }} />
       )}
     </div>
+    </HandProvider>
   )
 }
