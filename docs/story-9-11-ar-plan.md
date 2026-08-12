@@ -148,10 +148,21 @@ the AR gesture, and the pointer that answers the same question.
   which is the chapter's own verb, LOAD THE ORDER, done with the hand instead of watched.
 - **Pointer:** the existing bay taps + supply buttons. Unchanged.
 
-### 2 · `rounding` — ESTIMATE THE RUN · ✅ built (The Rail Line)
+### 2 · `rounding` — ESTIMATE THE RUN · ✅ built (**The Long Level** — was The Rail Line)
 
-- **Anchor: points needed to catch up.** A scoreboard is the one place a child estimates out loud
-  and at speed, and gets no credit for being exact.
+> ⚠️ **AMENDED 2026-08-12, founder's call: the WORLD is now a game level, not a rail line.** The
+> anchor below (a scoreboard) was a BRIDGE from something daily to a world nobody in this band has
+> been in; making the world itself the daily thing removes the need for the bridge, so the briefing
+> is now one paragraph and names no scoreboard. The physics survives intact — you can only warp to a
+> CHECKPOINT, so "the nearest 10" is still the nearest place you can actually land.
+> ⚠️ **It is warping, NOT respawning.** "You go back to the nearest checkpoint" is false — you go
+> back to the LAST one, which is rounding DOWN, and a world whose own rule contradicts the skill is
+> worse than a dull one. See chapter-craft.md §0a.
+> The line below about the six stations becoming scoreboard marks is therefore **NOT taken** and is
+> superseded: they are checkpoints in a level, and the rounds name what is on screen.
+
+- **Anchor (superseded, kept as the record): points needed to catch up.** A scoreboard is the one
+  place a child estimates out loud and at speed, and gets no credit for being exact.
 - **THE PLAN:** *"You're 47 points behind. Nobody works out 47 in their head mid-game — you think
   'about 50' and you know what you need."*
 - **Worked example:** 47 behind → nearest ten → `50`.

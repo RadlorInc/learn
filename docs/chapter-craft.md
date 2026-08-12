@@ -150,6 +150,25 @@ only how big the numbers were; whether a round exercised the skill was left to c
 named. Make the thing being taught an explicit term in the generator (`REGROUP_ODDS` per tier,
 L3 always) so a gate can assert it climbs.
 
+⚠️⚠️ **WHEN YOU RE-THEME A CHAPTER, CHECK THE NEW WORLD'S OWN RULES AGAINST THE MATHS ON EVERY
+ROUND — a world that contradicts the skill is worse than a world that is merely dull.** The rounding
+chapter moved from a rail line to a game level on the founder's call, and the obvious framing was the
+one he picked out loud: *you die and go back to the nearest checkpoint*. **That sentence is false, and
+every nine-year-old knows it** — you go back to the LAST checkpoint, which is rounding DOWN, so the
+world would have been teaching the opposite of the skill on all ten rounds while the code stayed
+correct. The fix was to find the framing in that world where NEAREST is honestly the answer (you can
+only WARP to a checkpoint, so you take the closest one to where you need to be and run the rest),
+which is the rail line's own sentence transplanted intact. This is §0b's *an attribute question must
+be true of its object* applied one level up — to the WORLD rather than to a question. **Say the
+world's rule out loud as a sentence, then ask whether a child who plays that thing would agree.**
+
+⚠️ **AND WHEN THE WORLD *BECOMES* THE DAILY THING, THE ANCHOR PARAGRAPH GETS SHORTER, NOT LONGER.**
+The anchor exists to BRIDGE from something the child has done to a world they have not (a scoreboard
+→ a branch-line train), and it carries a warning that the two are not equivalent. Make the world
+itself the daily thing and the bridge is simply deleted: one paragraph instead of two, with nothing
+claimed that the screen does not show. If a re-theme makes the briefing longer, the world is probably
+still not the daily thing.
+
 ⚠️ **A VERB IS NOT A STORY, AND GETTING THE VERB RIGHT IS ONLY HALF OF §0a.** The fractions chapter
 was rebuilt with the correct verb — FIT IT, an honest gesture that could not be eliminated into,
 with a lesson, a coverage gate and a mutation-tested grader — and the founder's verdict was *"kuch
@@ -170,6 +189,25 @@ consequence of getting it right. The verb answered *what does the child DO*; not
 - **Ask it as a separate question, after the verb and before any code:** who arrives, what do they
   want, what happens to them when the child gets it right? If the answer is "nothing, the shape
   turns green", it is an instrument.
+
+⚠️⚠️ **A CARRY-AND-DROP MUST NOT CATCH BY NEAREST-TARGET WHEN THE CHOICE *IS* THE ANSWER.** The
+Fundraiser's drop partitions at the halfway line between tiles, so there is nowhere to miss — correct
+there, because which column a digit belongs in is the question and the tile is just cargo. Copy that
+into a ROUNDING chapter and the app does the rounding: the child carries the character to where 47
+falls, lets go, and it snaps to 50. **The gesture then performs the skill on the child's behalf**,
+which is the defect the whole chapter exists to remove. Where the drop position IS the answer the
+catch is BOUNDED (a fraction of the gap, ~0.35), so a release at the midpoint lands on nothing — and
+that refusal is the physical statement of the rule: there is no checkpoint at 47, so you cannot leave
+her at 47.
+
+⚠️ **AND TWO PLACES A CARRY QUIETLY ANSWERS FOR THE CHILD, BOTH FOUND BY DRIVING IT AND BOTH SCORING
+A ROUND NOBODY PLAYED:** the carried thing PARKED INSIDE A CATCH ZONE (she waited at x 54 with the
+first target at 77 ± 64, so picking her up and putting her straight down scored it), and the carry
+CLAMPED TO THE FIRST TARGET (`clamp(lo = firstTarget)` teleported her onto it the instant she was
+grabbed, which does the same thing by a different route). Fixing one leaves the other doing the
+damage alone. **Clamp a carry to where the thing may STAND, and check that its resting place is
+outside every catch zone** — that second one is a one-line gate assertion and it is worth having,
+because the failure looks like the child answering rather than like a bug.
 
 ⚠️ **AND THE THIRD QUESTION, WHICH IS THE ONE A GOOD VERB HIDES: WHO DECIDES WHEN IT IS FINISHED?**
 The area chapter's first 3D cut had an honest verb (lay the floor), a real world and a consequence,
@@ -413,6 +451,39 @@ narration never reports done is a chapter that hangs on its own teaching, which 
 once already (the 3–5 counting intro froze on slide one when a voice fetch wedged, precisely because
 its say beats had no timer of their own). `speakSteps` has a fallback; put a backstop behind it.
 
+⚠️ **THE 12–18 BAND'S CHALKBOARD IS THE TEACHING SURFACE IN 9–11 TOO** — founder's call, and the
+argument for it is that one board is one thing to learn to read: THE PLAN, the worked steps and the
+re-teach all arrive on the same object instead of a card in one phase and a sheet in the next. Three
+things it needs, each of which is why it was kept out of the band before:
+- **A WOODEN FRAME AND A CAST SHADOW, not a bare slate**, or it is the slab fault (a filled rect over
+  a painting reads as UI furniture, because paintings contain no filled rectangles). Framed and
+  shadowed it is a board hanging on a wall, which is a thing a school hall has.
+- **`--font-chalk` MUST BE DECLARED ON `:root`.** It was scoped to `[data-band]`, so a 3–11 chapter
+  reaching for it silently got the body font with nothing erroring — a chalkboard written in the
+  chapter's own display face, which reads as an ordinary panel painted dark.
+- **The board is WINDOWED and its window shrinks on a short frame** — 2 lines rather than 4. A
+  10-step walkthrough accumulates more working than a nine-year-old holds, and the surplus has to go
+  somewhere.
+
+⚠️ **AND THE WORKING GOES IN THE BAND THE CONTROLS OWN DURING PLAY, WHICH IS EMPTY IN A WALKTHROUGH.**
+This is a placement rule with a measured price: pinned top-left, The Fundraiser's working board was
+drawn straight ACROSS the answer boxes at **17 of 18** reachable size × column-count combinations —
+the boxes are centred under the docket and the sheet started at x = 12 — and it had been shipping,
+because translucent paper hid what an opaque board showed in one screenshot. A demo has no digit pad,
+no camera pane and no control row; the characters stand at the SIDES of that band. Anchor the board
+to the BOTTOM and centre it, so the only way it can overflow is back onto the boxes — which is then
+one assertion.
+⚠️ **Export the rect and drive the gate through it, AND source-check that the component uses it.**
+Proven by mutation: a check that recomputes "bottom 10, this tall" stays green the moment somebody
+pins the board somewhere else, because a placement lives in CSS rather than in the function.
+
+⚠️ **A QUIET SKIP IS NOT THE SAME THING AS A "NEXT" BUTTON.** The standing rule — a button on a first
+run is a skip button wearing a different label — is about the FORWARD PATH: the teaching must roll on
+by itself, so a child who presses whatever big control is offered cannot land in a test nothing
+prepared them for. The teen band's *"I've got it →"* survives that rule by being the smallest thing on
+the screen and never the way forward. ⚠️ **And the re-teach gets none**, because a child who has just
+missed three in a row is exactly the one who must not be handed a way past the explanation.
+
 ⚠️ **AND A CONTROL APPEARS WHEN THE CHILD IS ASKED FOR IT, NOT WHEN ITS PHASE BEGINS.** Gated on the
 beat index, TickTock's dial showed up while Milo was still three sentences earlier explaining the
 minute ring — because the narration line lags a new beat until its first step fires and the render
@@ -634,6 +705,20 @@ check them with a script:
   real before designing around it, because things at different heights never collide: the train sat
   at y 453–565 and the name boards at 362–421, so a locomotive in front of a post is just what a
   station looks like.
+- ⚠️⚠️ **A CLAMP THAT PROTECTS A CODE-DRAWN CUE BY MOVING A PAINTED ELEMENT IS ALWAYS THE WRONG
+  LEVER, AND THE ARITHMETIC IS BRUTAL.** The rounding chapter's distance marker hung BELOW the painted
+  walkway and was landing on the commit button (8px at 1280×720, ~70px at 1920×800 — measured, and
+  shipping). The instinct is to pull the path up to make room. Measured across the sweep, that clamp
+  **floated the whole cast up to 64px off the painted walkway on 6 of 10 sizes** — i.e. it traded an
+  8px overlap for the exact fault the chapter is named for, the one the founder reported as *"the
+  train is not on the rail"*. **The painting is the fixed thing; the cue is the free thing.** Move the
+  cue.
+- ⚠️ **AND ON A WIDE FRAME THERE IS NO ROOM BELOW A LOW PAINTED GROUND LINE AT ALL.** Cover-fit on a
+  2.4 aspect drops a 0.76 ground line to y 695 of 800, leaving **4px** before the control row — so no
+  height of cue fits underneath, and shortening it is not a fix either. Hang it ABOVE the line, where
+  the whole band up to the answer boards is empty apart from thin posts. Check it cannot collide with
+  whatever else lives in that band (here the halfway mark, whose stalk is ~190px, so the two share an
+  x on a dead heat and still never meet).
 - **A LANE THAT WILL FILL MUST BE RESERVED FROM EMPTY.** Anything that grows — a run of blocks, a
   gathered group, a strand — is zero-sized before the first item lands, so its neighbours sit in the
   wrong place until then and jump a whole item when it arrives. In the measurement chapter the thing
@@ -1686,6 +1771,17 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   imperative in there — a canvas, a scroll position, a media element — is destroyed with it. In the
   colouring chapter one wrong answer wiped every colour the child had put down. Use
   `el.animate(...)`, which retriggers without touching the DOM.
+- ⚠️ **`getBoundingClientRect` ON A SPRITE-SHEET `<img>` RETURNS THE WHOLE STRIP, NOT THE CREATURE.**
+  A 12-cell sheet measures 12 cells wide and is translated inside an overflow-hidden cell, so its
+  `bottom` is not where the feet are and its `left` is off-frame by design. Measure the **clipping
+  cell** (the sprite's parent), which is one cell wide and lands exactly on the ground line — that is
+  what proved Astro's feet at 549 against a painted walkway at 549. Reading the strip instead reports
+  a float that is not there.
+- ⚠️ **A SCRIPTED RENAME EDITS PROSE AS WELL AS CODE, AND THE PROSE IS WHERE IT SHOWS.** Renaming a
+  world with word-boundary regexes (`LINE`→`RUN`, `stop`→`site`) is safe for identifiers and produces
+  garbage in comments — *"the number RUN"*, *"a train cannot site between checks"*, *"a branch-line
+  runner"*. Assert each rule's substitution count so a silent no-op cannot pass as a rename, then
+  **read the file afterwards**: the counts prove the edit landed, not that it says anything.
 - ⚠️ **AND THE MIRROR IMAGE OF THAT: A PER-ROUND ANIMATION IN A REUSED COMPONENT NEEDS AN EXPLICIT
   RESET, OR IT PLAYS ONCE AND NEVER AGAIN.** React reconciles a sprite across rounds — same
   component, same position, same key — so the element is REUSED and any "have I arrived yet" state
@@ -1712,6 +1808,18 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   Milo). There was no second place to put it, so it moved INSIDE the prompt pill. When a short frame
   has nowhere to put a second element, that is the answer: there is only one, and both things belong
   in it. It reads better too — one thing to look at instead of two.
+- ⚠️ **AND THE MIRROR REF HAS TO COVER *EVERY* PIECE OF STATE THE HANDLER READS, NOT JUST THE
+  OBVIOUS ONE.** The Fundraiser mirrored the entered digits and left the ACTIVE BOX in plain state,
+  so a child typing 8-0-5-4 fast enough to land inside one React batch wrote all four digits into
+  box 0 — `setActive(a => a + 1)` being functional does not save it, because the STATE advances
+  correctly and the closure the next tap runs is still the old one. Sixth time this repo has met the
+  shape. Ask what else that handler reads.
+- ⚠️ **AND REACT DOES NOT FLUSH INSIDE YOUR DRIVING STATEMENT, which makes a working app look
+  broken twice over.** Clicking and then reading the DOM in the same `javascript_exec` call reports
+  the PREVIOUS render — so a correct answer reads as "nothing happened" — and worse, a control whose
+  `disabled` is state-driven is still disabled at the moment your next click lands, so a commit
+  driven in the same statement is silently swallowed. Both read exactly like a dead button. **One
+  gesture per call, and read in the call after.**
 - **Two taps in the same tick are a TEST artefact, not a user.** React commits state between events,
   so a `ref` mirrored during render is still stale if the script picks a colour and taps the page in
   one synchronous statement. Cost half an hour of chasing a fill that was never broken.
@@ -1779,6 +1887,20 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   had shipped. Take the list of fixed layers a chapter draws (here: chrome · banner · tally · frame ·
   bubble · pad) and cross it with itself — it is a dozen comparisons and it does not depend on
   remembering which collision to look for.
+- ⚠️ **MEASURE WITH THE GATE'S OWN HARNESS, NOT A FRESH ONE WRITTEN BESIDE IT.** Tuning `ASPECT_PULL`,
+  a standalone script said 0.25 was the peak and that the 1 collapsed at 0.5; run inside vitest
+  against the gate's own forms and generator, **neither number held** — the real peak was 0.6 and the
+  1 was never in danger. Two harnesses disagreeing means one is lying and nothing tells you which, so
+  a constant tuned against the throwaway is tuned against nothing. Add a temporary `it()` that writes
+  the numbers out (`console.log` is swallowed — append to a file) and delete it after.
+- ⚠️ **A SWEEP OVER A CLAMPED MAPPING'S FULL DOMAIN IS A TAUTOLOGY, AND IT LOOKS LIKE A REAL CHECK.**
+  `handPoint` clamps, so frame x = 0 lands on screen x = 0 whatever the reach is — a test that swept
+  0..1 and asserted "every column is hit by some hand position" passed for **any** value of the
+  constant it existed to guard, including one that makes the outer columns unreachable in practice.
+  It was written first and caught only by mutating `REACH` and watching nothing happen. **Sweep the
+  band the child can actually get to, so a target reachable ONLY via the clamp fails.** Generalise:
+  whenever a function saturates, ask what your sweep proves about the region past the saturation —
+  usually nothing.
 - **The sweep must call the SAME layout function the scene renders from.** Chapter 4's sweep
   re-implements its sizing chain inside the test, so the check can agree with its own copy of the
   constants while the screen it protects falls apart. Chapters 9–10 export `playLayout` and the test
@@ -1917,6 +2039,94 @@ tab, so a dwell driven by it never fires — untestable headlessly, and on a rea
 moment the child switches away and back. `setTimeout` fires either way (throttled, which is fine).
 Use rAF only for the progress ring, which is allowed to pause.
 
+⚠️⚠️ **AND THE FIRST TEST IS WHETHER THE BODY CARRIES THE IDEA OR ONLY THE NOTATION.** Every AR
+chapter here that works passes it: a sweep across the frame IS division as repeated subtraction, a
+tilted forearm IS the ramp, N raised fingers ARE the divisor. The Fundraiser's air-written digit does
+not — a nine-year-old already knows how to write a 4, and writing it in the air is *harder* and means
+nothing more, so the camera is being used as a worse pen. Every misread is then pure friction with no
+learning in it, which is why three sessions of recognizer work could not rescue it and the founder's
+verdict was *"its not recognition bro"*. **Place value is written notation and nothing about it is
+physical** — the honest answer for that chapter is a gesture where the position of the hand IS the
+column and the fingers ARE the digit, so the same pose in two places means two amounts. Ask of any
+proposed reading: **does it make the IDEA more vivid, or only make the input harder?**
+
+⚠️⚠️ **AND THE SECOND TEST IS WHETHER THIS BAND'S HANDS CAN ACTUALLY PERFORM IT — AN HONEST GESTURE
+CAN STILL BE THE WRONG MOTOR SKILL.** The Fundraiser's grab was a thumb-and-index PINCH and the
+founder replaced it: *"pinch sahi naii hai"*. It passes every test above — the hand's position is the
+place, the drop chooses the column — and it asks a nine-year-old to hold two specific fingertips
+within a third of a palm of each other **while moving their whole arm across the screen**, read from
+the two noisiest landmarks MediaPipe produces. That is fine-motor work layered on top of a gross-motor
+one, and the two fight. **Closing the WHOLE HAND is what a child already does to pick something up**,
+it is unmistakable at any camera distance, and it cost nothing to change: the state machine, the
+hysteresis, the sustained release and the lost-frame grace were never about *which* fingers were
+closing — only the ratio they are computed from moved.
+- ⚠️ **AND THE THRESHOLDS DID NOT HAVE TO MOVE WITH IT, WHICH IS ARITHMETIC RATHER THAN LUCK.** The
+  physical range is simply different in the same place: a fist puts every fingertip ~0.3–0.4 of a palm
+  from the middle knuckle, a relaxed hand ~0.55–0.65, an open hand ~0.8–0.9. Work out the new range
+  before assuming a re-tune — a Schmitt pair is about where the poses SIT, not about the pose's name.
+- ⚠️ **A GROSS-MOTOR READING IS ALSO QUIETER, AND THAT IS FREE COVER.** Averaging four fingertips
+  instead of differencing two roughly quarters the residual after the EMA (~±0.02 against ~±0.09 in
+  ratio units here), so the same band went from about two residuals of cover to nine.
+
+⚠️ **THE POINT THE CHAPTER AIMS WITH MUST SIT ON A PART OF THE HAND THAT DOES NOT MOVE WHEN THE
+GESTURE FIRES.** This is the shadow-outran-the-feet rule in the detector: a pick-up and a drop are
+decided at the two instants the hand CHANGES SHAPE, so a carry point taken from the fingers jumps
+exactly when it must not. It was tolerable with a pinch (a few percent of the frame, paid for with a
+bigger tile) and is not with a fist, where every fingertip travels most of a palm length on the way
+in. Read the knuckle — the same rigid-palm argument `palmTilt` and `pinchRatio`'s divisor already
+rest on. The tile can then stop growing to cover for it.
+
+⚠️ **A COMMIT IS A ONE-WAY EVENT, SO IT IS STABILIZED AND EDGE-TRIGGERED — UNLIKE A LEVEL THE CHILD
+WATCHES.** A grab can be reported raw: the tile is either in their hand or it is not, they can see
+which, and a one-frame blip corrects itself on the next. A commit grades the board, so one
+mis-detected frame puts a half-built answer up. Two guards, and they are different things:
+- **SUSTAIN it in the detector** (a few consecutive frames), so the consumer only ever sees a settled
+  answer; and
+- **fire on the RISING EDGE in the chapter**, which is the held-over-pose guard this band has now met
+  on the count, the tilt, the grab and now a pose. A commit gesture left held across a round boundary
+  would otherwise grade the next board the instant its last digit landed.
+⚠️ **And gate it on the round STATE as well** (here: only when the board is full), which is what stops
+the commit and the grab ever being live at the same moment.
+
+⚠️ **TWO POSES THAT SHARE A HAND SHAPE MUST BE SEPARATED ON AN AXIS NEITHER OF THEM USES.** A fist and
+a 👍 are both closed hands, so if the grab reading averaged the THUMB in, striking the commit pose
+would move the grab reading and the two would fight. The thumb closes ACROSS the fingers rather than
+into the palm, so it barely moves between a fist and an open hand — leaving it out of the grab costs
+nothing and buys the whole second gesture. **Ask which part of the hand your reading is not using
+before you add a second pose to it**, and gate the check both ways round: a grabbing fist must not
+read as a commit, and an open hand must not either.
+
+⚠️ **WHERE THE HAND IS A CURSOR OVER THE WHOLE BOARD, MAP THE MIDDLE OF THE FRAME — NEVER ALL OF
+IT.** This is `SWEEP_ARM`'s silence written as a constant. A seated child moves a pinched hand
+comfortably through the middle of the picture and has to lean out of shot to touch either end, so a
+column mapped to frame x ≈ 0 is a column they can never post a digit into — and on a place-value
+board the outer columns are the thousands. Stretch the middle band (`REACH` ≈ 0.72) over the whole
+screen and clamp past it, on BOTH axes: the tray sits at the bottom of the screen, so a child who has
+to drop their hand out of frame to reach it cannot pick anything up either.
+⚠️ **And gate it by sweeping the reachable band only — see §4, the clamp tautology.**
+
+⚠️ **THE HIT-TEST AND THE RENDER MUST BE ONE GEOMETRY.** A row of things a finger taps and a pinched
+hand aims at is a fact two separate pieces of code need, and a hit-test carrying its own copy of the
+row's arithmetic is *the gate that re-implements a rule* with the two halves of one FEATURE instead of
+a test and its source. It drifts the first time the row moves, and the symptom is the worst one a
+camera chapter has: **a child pinching a thing in plain sight and picking up nothing.** Export one
+layout function and drive both from it.
+
+⚠️ **OPENING YOUR FINGERS OVER NOTHING PUTS THE THING BACK — it must never fall into the nearest
+target.** Something landing where the child did not aim is a wrong answer the chapter caused, which is
+the same asymmetry `stepPinch` confirms its release over three frames for. The catch area around a
+target is deliberately LOOSER than it is drawn (a pinch wanders while the fingers open) — but the
+tolerance goes on the axis that is not the choice, and in the axis that IS the choice it may never
+reach past the halfway line to the next target.
+
+⚠️ **AND THREE THINGS PINNED SEPARATELY WILL COLLIDE SOMEWHERE — PUT THEM IN ONE ROW.** The
+cross-every-layer rule above, met again and worth the recurrence: an instruction chip and two action
+buttons, each correctly placed on its own, produced *three* different collisions across two frame
+sizes (the commit drawn on the self-view at 1280×720, the undo on Milo's leg, and at 640×320 the chip
+drawn across both buttons). Every tap still landed, which is exactly why only crossing them finds it.
+One flex row cannot overlap itself, and it also answers *which of these gives on a short frame*: the
+buttons are tap targets and may not shrink, so the WORDS wrap.
+
 ⚠️ **A CAMERA-ONLY CHAPTER OWES AN HONEST DEAD END.** A declined permission or a device with no camera
 must get a written explanation with a retry, not a blank screen — and *"Milo needs to see your hands"*
 is the whole of it. Note the cost out loud when choosing camera-only: that child cannot play at all.
@@ -1937,6 +2147,15 @@ the last round — have nothing to protect against on a tap, and pushing a tap t
 swallows it** whenever its value matches the held-over reading. A tap calls `commit` directly. Keep
 the dwell hook called unconditionally and merely not live: branching above a hook changes the hook
 count and tears the chapter into the error boundary.
+
+⚠️ **AND "BOTH DOORS, EVERY TIME" MEANS THE INTRO CARD, BECAUSE `CamGate` RENDERS ONLY ON THE CAMERA
+PATH.** It fires on `onCam && !camReady`, i.e. it is the *camera's* failure screen — so on the tap
+path there is no gate, and if the intro offers a single button then a device that once tapped
+*"Tap instead"* has that remembered and **nothing anywhere in the chapter ever offers the camera
+back**. Shipped in The Fundraiser; the founder simply never saw the camera again. Every AR chapter's
+intro carries a primary button and a quiet second one, and the remembered pick decides which is the
+BIG button, never which is the only one. ⚠️ **The primary button also has to `start()` the camera** —
+nothing else in the chapter does, so without it the camera path opens on *"the camera did not start"*.
 
 ⚠️ **ADDING AN INPUT MEANS RE-WORDING EVERY LINE THAT NAMES A GESTURE — AND A SINGLE-MODE GATE CANNOT
 SEE THE MISS.** Every chip, spoken line and nudge in FactorLab said *"hold up that many fingers"*.
@@ -1983,6 +2202,33 @@ hands make one digit (0..9) and the child enters the tens and then the ones. 100
 generator change, and it is the better teaching anyway — *show me the tens, now show me the ones* is
 place value performed. **Sweep every answer the generator can draw against the surface before
 building it**, exactly as the ten-finger ceiling was swept.
+
+⚠️⚠️ **AND THE HELD-OVER GUARD IS DEFEATED BY DERIVING ITS KEY IN AN EFFECT — A HAND THAT NEVER MOVED
+THEN READS AS A FRESH GESTURE.** `useDwell` refuses the reading a child was already holding when the
+question opened, and it does that by capturing the key on the round's FIRST render. So anything the
+key is computed from must already be right on that render. The Rail Line derived "which halt is under
+the hand" into `useState` from an effect: each round it began at `null` and was filled a paint later,
+so the dwell saw `none → 3` — a change — from a hand parked motionless on the desk. Driven live, the
+guided round was answered and then **rounds 2 and 3 answered themselves**, one of them wrongly, on a
+chapter whose own gate was green. The guard was working perfectly; it was being handed a lie.
+**Derive it during render** (`const aim = f(read, ref.current); ref.current = aim`), which is the same
+rule this doc already records for a journey's phase and for the same reason: effects run after paint.
+⚠️ And this is invisible to every pure gate — the guard lives in shared component state, so the only
+thing that finds it is parking a hand and watching two rounds go by.
+
+⚠️ **A GESTURE'S INSTRUCTION MAY HAVE NOWHERE TO LIVE, AND THE ANSWER IS THE QUESTION REGION RATHER
+THAN A THIRD PIN.** Every state a gesture can be in needs words (the Supply Run), and the obvious
+shape is a chip near the controls — which on a short frame is a new object competing for a band that
+is already full. Measured at 640×320 on The Rail Line: stacked above the commit button it covered the
+**km marker**, the scaffold the entire concrete tier rests on; moved to the top strip it covered **four
+of the six name boards**, which are the answer surface. That frame had no free band at all (chrome
+0–46, boards 59–92, rail 210, marker to 275, controls 265–309). The character's speech bubble is
+already the one place the chapter puts words, so the hand's state goes there, ordered by priority —
+verdict, then miss, then anything BLOCKING the gesture, then the question.
+⚠️ **And it only speaks for the states where nothing can happen.** "No hand in frame", "hand too low",
+"one leg still to go" are each a child doing something reasonable and seeing nothing move. When the
+hand IS over a target something is already happening — the target rings, the cursor's arc fills — so
+replacing the question with a sentence about the gesture spends the question to say what they can see.
 
 ⚠️ **A DWELL THAT RE-ARMS ON THE SAME POSE ENTERS IT TWICE.** Filling a second slot makes it tempting
 to put the slot in the dwell's key so a repeated digit is enterable — and then advancing the slot
@@ -2055,6 +2301,114 @@ offers.**
 composite into the PRIMES pool produces a perfectly valid factor round — so every round-level check
 passes, while that tier's prime slot never fires and `coverage` can never see a prime. Export the
 pools and assert they are what they claim; a round-level sweep structurally cannot see this.
+
+### Writing a shape in the air — recognition, and the rule it hangs on
+
+The Fundraiser's fourth reading is a digit written with the fingertip
+([airDigit.ts](../src/infra/ar/airDigit.ts)). It passes §5's test for the same reason the pinch did:
+the child is not pointing at an answer somebody else wrote, they are **producing** it.
+
+⚠️ **A SHAPE THAT CANNOT BE READ IS "WRITE IT AGAIN", NEVER A WRONG ANSWER.** A recognizer that
+misreads a correct 4 as a 9 marks a child wrong for knowing the answer, which is the worst outcome
+an arithmetic app has — far worse than asking them to write it again. So the recognizer returns
+`null` when it is not confident, nothing is graded, redrawing is unlimited and unpenalised, and the
+chip says *"I could not read that"* rather than anything that reads as "no". Two consequences:
+- **Show the read digit in the box BEFORE the commit.** That is not hot/cold — it says what was
+  written, never whether it is right — and without it a recognizer error is graded silently.
+- **Refusing is the correct direction to fail in**, so tune for it: measured against digits written
+  with a realistic wobble, this refuses roughly 8 and 7 first under a strong slant and almost never
+  misreads.
+
+⚠️ **ONE DIGIT AT A TIME, NEVER A WHOLE NUMBER.** Segmenting four scrawled digits is a research
+problem; one digit into one labelled column is a 10-way choice with the strokes already separated —
+and the column is the point, because writing 3|4|8|2 is place value performed where one scrawl hides
+it.
+
+⚠️ **DO NOT ROTATION-NORMALIZE.** Every $1/$P-family recognizer rotates a candidate to a canonical
+angle, which is right for gestures and fatal for digits: **6 and 9 differ by a rotation and nothing
+else.** The cost is that a strong slant reads worse; the alternative is a chapter that cannot tell
+6 from 9, which it is entirely about.
+
+⚠️ **AND THE AMBIGUITY GUARD IS A RATIO BETWEEN THE TOP TWO, NOT AN ABSOLUTE DISTANCE — measured,
+not reasoned.** The first cut argued a distance ceiling from the glyph's own size and set it ~10×
+too loose; worse, junk and sloppily-written digits **overlap** on absolute distance (junk 0.035–0.093,
+wobbly digits 0.02–0.058), so no threshold separates the two populations and one pretending to is a
+comment claiming a rule it does not enforce. What rejects a scribble is that its best two matches are
+the same distance away. **Sample the real distances before setting a threshold on them.**
+
+⚠️ **PINCH IS THE PEN, AND THAT IS WHAT MAKES PEN-UP EXPRESSIBLE.** A pointing finger has no "off":
+the child would have to leave frame to end a stroke, so a numeral with a lift in it (a two-stroke 4,
+a crossed 7) could not be written at all. Pinching also reuses `pinch.ts` whole — its ratio
+normalization, hysteresis and release confirmation — rather than inventing a second untuned detector.
+**Re-read the whole accumulated shape on every pen-up** rather than after a settle timer: a lone
+diagonal upgrades into a 4 for free, with no constant to tune and nothing firing mid-numeral.
+
+⚠️ **A LIFTED PEN DOES NOT MERELY STOP THE INK — IT ENDS THE STROKE, SO A DROPPED-FRAME BURST DRAWS A
+DOTTED LINE.** The ink joins consecutive points, so a line can only ever break at a stroke boundary;
+what produced the founder's *"dotted stroke"* was the pinch releasing after `LOST_GRACE` frames with
+no hand. Five frames is ~170–500 ms at the 10–30 fps this loop really runs, and **writing is exactly
+when the hand is motion-blurred** — chapter-craft's own *detection loss is correlated with the
+gesture*. Past the grace the numeral came out as disconnected pieces AND each spurious break fired
+`onStroke`, handing the recognizer a fragment mid-write. **A pen wants a far longer loss grace than a
+carry does**, and it costs nothing: a child who genuinely opens their fingers is caught by
+`RELEASE_FRAMES` on a hand that is still THERE, so the grace never delays a real pen-up.
+
+⚠️⚠️ **AND THE POINTS MUST BE WIPED WHENEVER THE BOARD MOVES ON — THIS IS WHAT "IT CANNOT RECOGNISE
+WHAT I WRITE" ACTUALLY WAS.** The ink lives in a ref (it must — see below), so a committed digit left
+the points in place and the next `onStroke` handed the recognizer the previous numeral AND the new one
+**as one cloud**, which no template matches. Every digit after the first read as *"I could not read
+that"*, for the rest of the run, since the pane is not remounted between rounds. ⚠️ **The wipe was an
+upward `clearInk` ref that NOTHING EVER ASSIGNED** — a declaration, two callers, no setter, silently a
+no-op. **Use a `resetKey` PROP the parent already owns, not a callback handed upward: a prop the
+parent must pass cannot be left unwired.** And no gate reaches this — it is component state, and the
+one drive that ever got to the camera path COMMITTED as its last action, so the state *after* a commit
+was never exercised. **Drive one step past the last thing you think matters.**
+
+⚠️ **THE CHILD WRITES ON THEIR OWN CAMERA PICTURE — NOT ON A BOX BESIDE IT.** The Fundraiser shipped
+the ink on a white pane next to the self-view and the founder's verdict was *"screen pe sahi se
+likhne naii jaa raha"*: with the hand in one place and the mark in another there is nothing to aim
+at, so a numeral comes out wherever and a child correcting a stroke has no reference to correct it
+against. Painting the ink over the mirrored self-view puts the mark on their own fingertips. Three
+things follow and none of them is cosmetic:
+- **The writing slot is 4:3**, because the nib is normalized to the video frame; a box of any other
+  aspect paints the ink where the hand is not, and a square box cropping a 4:3 stream loses 12.5%
+  off each side — the two edges a wide numeral reaches.
+- **The `<video>` cannot move there itself.** It is mounted once for the whole chapter (a remount
+  drops the stream, and the detect loop then measures a 0×0 element) while the writing rect is known
+  only to the round on screen. The round posts its rect; the shell places the camera in it.
+- **Ink drawn over a camera picture is BRIGHT with a shadow**, not the chapter's ink brown. Dark ink
+  on a dark room is ink nobody can see, and you do not know what room the child is in.
+
+⚠️⚠️ **AND A GESTURE NORMALIZED TO THE VIDEO FRAME IS IN 4:3 UNITS — ANY MATCHER COMPARING IT
+AGAINST SQUARE TEMPLATES MUST BE HANDED SQUARE COORDINATES FIRST.** This is the one that was broken
+in front of a child, and it is arithmetic rather than tuning: landmarks come back as fractions of the
+frame, so equal PHYSICAL distances give an x-span only 0.75 of the y-span and every shape reaches the
+recognizer a quarter too narrow. Measured over ten independently-written digit forms:
+
+| coordinates | read correctly |
+|---|---|
+| square | **80 / 80** |
+| the camera frame's own 0..1 (4:3) | **55 / 80** |
+| the same, plus a real hand's shake | **42 / 80** |
+
+⚠️ **It never once MISREAD — it refused**, which is why it looked like "the camera cannot see me"
+rather than like a bug, and why no test caught it: every test in the recognizer's own gate writes its
+forms square. **Convert at the boundary** (store the points in pixels of the 4:3 pane — pixels are
+physically square) and assert the cost in the gate, or somebody simplifies the multiply away again.
+The general form: **whenever a normalized reading crosses into something that assumes an aspect,
+state which aspect it is in.**
+
+⚠️ **AND USE `outline`, NEVER `border`, ON THE ELEMENT THE DETECT LOOP MEASURES.** A border shrinks
+the content box, so the video and the overlay canvas sit 2px inside the element whose `clientWidth`
+the loop maps landmarks with — every marker it draws then lands slightly off the hand, and an ink
+overlay pinned to the outer rect diverges from the nib drawn on the inner one. An outline takes no
+layout space, so what is measured and what is drawn are the same rectangle.
+
+⚠️ **INK IS THE ONE READING WHOSE RESOLUTION IS THE ANSWER, so it is keyed RAW and the consumer owes
+a ref.** Quantizing the nib the way every other continuous reading here is quantized draws a numeral
+as a staircase. The deal is that `onRead` then fires at frame rate while a stroke is being drawn —
+so the chapter pushes points into a ref and paints to a canvas imperatively, and calls `setState`
+only when the pen LIFTS. Ink in React state re-renders the chapter ~30×/s.
 
 ### An EVENT gesture is a different animal from a held pose
 
@@ -2153,6 +2507,28 @@ ones. The fix is a bottom band that RESERVES the panel's height (Factor Lab's `B
 smaller panel — measured, shrinking the panel bought nothing at all and a mutation putting the
 original size back stayed green, which is how that was discovered. The control row needs the same
 treatment as padding, or the commit button sits under the panel.
+
+### The question must never be drawn over the answer
+
+⚠️ **CENTRE THE ANSWER SURFACE AND THE SPEAKER'S BUBBLE WILL EVENTUALLY COVER IT.** Measured on The
+Fundraiser: a four-box answer row centred at 1280×720 ran to x 887 while the customer's bubble began
+at 808 — the question sitting on the last two boxes of the answer, which is the open item its
+previous cut left behind and which centring reproduced on the first drive. The bubble belongs to the
+speaker and cannot move, so **the board takes the band that is left**: chapter-craft's *a boundary
+next to another character is measured off THAT character, never guessed*. Export the bubble's own
+width so the board and the bubble read one number rather than two.
+
+⚠️ **AND WHERE THAT BAND CANNOT HOLD THE ANSWER SURFACE, THE ASK MOVES TO A TOP BANNER.** On a short
+landscape frame a bubble, four boxes and a writing pane genuinely do not fit side by side at the tap
+floor — measured, they want 342 of the 263px available at 640×320. Something has to give, and **a
+question covering the answer is worse than a question that is not in a bubble**: the speaker is still
+on screen and still says it aloud, so what is lost is the tail, not the speaker. Derive the branch
+(`askAtTop`) from the same arithmetic the layout uses, so a gate can assert *no overlap OR the banner*
+rather than pretending the geometry fits.
+
+⚠️ **THE SIDE RESERVE STILL BINDS WHEN THE ASK MOVES UP.** Centring in the whole viewport once the
+bubble stopped being the constraint put the board's left edge at 136 against a 167px cast reserve —
+drawn straight through Milo. One constraint going away does not remove the others.
 
 ### The question is three zones, in every band
 

@@ -12,7 +12,927 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> ✂️ **2026-08-11 (LATEST) — A REPO-WIDE OVER-ENGINEERING AUDIT, THEN ALL NINE FINDINGS APPLIED: −1,835 LINES, 3 FILES GONE, AND THE ONE THING THE AUDIT GOT WRONG WAS FOUND BY READING THE CODE IT NAMED. ✅ COMMITTED on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **846/846 vitest** (unchanged — this is a behaviour-preserving cut) · `next build` 0 · **eslint 247 problems against 255 at HEAD**, i.e. 8 FEWER and none introduced · driven live at 1280×720 on a story chapter and a sim.
+> 🧑‍🏫 **2026-08-12 — NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. ✅ COMMITTED (`50a9994` + the docs commit), PUSHED to `feat/9-11-factor-lab-ar` — ⚠️ NOT DEPLOYED, and `public/sw.js` is still v87.** `tsc` 0 · **900/900 vitest** (was 890, **+10**) · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320 on both inputs · **9/9 planted regressions caught, two of them against my OWN first assertions.**
+>
+> **The asks, in order:** *"line pe 650 bol raha hai aur bubble mein 669… line pe mark naii rehna chahiye"* → *"increase the size of this and bring it to the center"* → *"yeh age band mein bhi woh same 'The plan' and 'step by step' chalkboards use karo… totally same bro"*.
+>
+> ## ⓪ ⚠️ FIRST, A DEV-SERVER TRAP THAT COST THE SESSION'S OPENING AND WILL RECUR
+> The founder's screenshot was `/menu` returning **404** — a route whose `page.tsx` is plainly on disk.
+> Cause: **`next build` and `next dev` had been sharing one `.next`.** A build at 21:41 left a
+> production manifest that the dev server then read at 21:44, so route resolution came off the prod
+> `app-path-routes-manifest` while the file was there all along. `rm -rf .next` + restart fixed it.
+> **Do not run the `next build` gate while the dev server is up** — clear `.next` after a build, or stop
+> the server first. (This session hit it twice more running the gate, and cleaned up each time.)
+> ⚠️ And the ordinary `rm -rf .next` warning still stands: only safe with the server STOPPED.
+>
+> ## ① THE MARKS CAME OFF THE LINE, AND THE MARKER WAS THE WORSE OF THE TWO
+> His screenshot showed **"halfway 650" on the line beside a bubble asking about 669** — two numbers on
+> screen, only one of them the question. Both marks came off a played round, and the one he had not
+> named is the one that mattered: **the distance marker pegs the number's TRUE POSITION on the line,
+> which is the answer, drawn** — a child could read the nearer checkpoint straight off it without
+> rounding anything, and at L1 it showed on every round.
+> ⚠️ **BOTH STAY IN `LevelExplain`, WHICH IS THE DEMO AND THE RE-TEACH**, and that split is
+> chapter-craft's own line: *if the scene can answer the question, you are teaching, not measuring.*
+> Showing 47 sitting past halfway is exactly what a demo is for.
+> ⚠️ **So a miss no longer reveals the halfway post, and the copy had to change with it** — `missFor`
+> said *"Look at the halfway mark at 650"*, i.e. it pointed at something that no longer exists. It
+> STATES the value now (*"Halfway between them is 45 — and 48 is PAST it"*). **Copy that points at a
+> mark is a second consumer of that mark; grep the words when you delete a drawn thing.**
+>
+> ## ② ⚠️⚠️ THE TARGET PILL IS NOT DECORATION — IT IS WHAT MAKES §① SURVIVABLE, AND THE FOUNDER SPOTTED THE NEED BEFORE I DID
+> He offered top-centre as an alternative (*"top center mein bhi chalega"*). It is not an alternative,
+> it is required, and reading `levelAsk` is what showed it: **on the camera path Milo's bubble ranks the
+> hand's state ABOVE the ask by design** — so from the moment a hand enters frame the bubble says
+> *"Close your fist on Astro to pick her up"* and **the number is gone from the screen entirely.** With
+> the marker also gone the round would have been unanswerable. Proven on screen, on his own path:
+> `NEEDS 23 m` in the pill while the bubble read *"Hold your hand up where I can see it."*
+> • It wears **`DistMarker`'s pill**, so one orange symbol means *the metre Astro wants* in both places
+>   — pegged on the line while being taught, in the corner while being measured.
+> • ⚠️ **It sits INSIDE the chrome strip (`top < CHROME_PX`), not below it.** The name boards are
+>   clamped to `CHROME_PX + 6`, so anything hanging under the chrome lands on a board on a short frame.
+> • **Then he asked for bigger and centred**, which is where it stopped being a CSS clamp: a
+>   `clamp(…vw…)` cannot see what is UNDER the pill, so growing one is guesswork that eventually lands
+>   on a board. `pillCeiling` is the gap to whatever is next down the stack — **and that is not always
+>   the boards**: on a two-leg `estimate` round `LegBoard` sits between, and on a short frame those two
+>   are ~50px apart. **640×320 font 12 → 29 (+142%), 1280×720 18 → 38 (+111%)**, dead centre, 32px+
+>   clear at every size.
+>
+> ## ③ THE CHALKBOARDS — EXTRACTED, NOT COPIED, AND THE TWO CHAPTERS HANG THEM DIFFERENTLY
+> `Chalkboard` · `GotIt` · `ThePlan` · `StepBoard` moved out of OrderDesk into
+> **`story/chalkboard.tsx`** — the same call `critters.tsx` and `yard.tsx` were made on: *one consumer
+> is not an abstraction, two is.* A copy would mean the slab fix, the `--font-chalk` fix and the
+> windowing corrected twice or not at all. **The Fundraiser's own 38-test gate is the proof the move
+> changed nothing** — ⚠️ and it *caught the move*, because its source check reads the file the component
+> lives in; repointed at `chalkboard.tsx`, which is the check working rather than failing.
+> ⚠️ **THE BOARD HANGS FROM THE CHROME HERE AND FROM THE FLOOR THERE, AND THAT IS ARITHMETIC.** The band
+> below this chapter's painted path is **66/148/119px** at 640×320 / 1024×620 / 1920×800 against a board
+> **68/152/152px** tall — it does not fit at three of five sizes, and forcing it would cover the path,
+> which in a rounding chapter IS the number line. Its chrome→boards strip is 84px at the worst size.
+> ⚠️ **`LegBoard` LEFT THE DEMO because of it** — its whole job there was showing the two rounded legs
+> adding up, which is now the board's last line, so the two were one thing said twice AND they collide
+> in that strip. It stays in PLAY, where it is the child's own work accumulating.
+> ⚠️ **AND MY FIRST PLAN COPY CLIPPED THE SKIP BUTTON.** 422 characters overflowed the 92dvh
+> `overflow: hidden` board by 15px at 640×320 and cut *"I've got it →"* clean off — **a dead control**,
+> the same fault this repo paid for once by capping an intro card onto its own Start button. A scroll is
+> NOT the fix (it hides the button behind an undiscoverable scrollbar); shorter words are, which is the
+> lever the handoff already records. 299 chars now, and **`PLAN_BUDGET` is gated because nothing can
+> SEE a clip.** The Fundraiser's own plan was checked and is clean — not a pre-existing bug.
+>
+> ## ④ ⚠️ MUTATION TESTING CAUGHT TWO OF MY OWN ASSERTIONS BEING WEAKER THAN THE RULES THEY GUARD
+> Both are this file's oldest recorded shape and I wrote them anyway:
+> ① **the board-placement check drove `stepBoardRect` directly** and never read what the COMPONENT
+> passes, so hanging it from the floor again (the anchor that does not fit) walked straight through;
+> ② **`expect(SRC).toMatch(/<ThePlan/)` is satisfied by a render behind `false &&`** — it proves the
+> component is *mentioned*, not reachable. Both are anchored on real code now. **9/9 caught after**:
+> the marker back in play · the pill removed · the pill dropped onto the boards · the old small pill ·
+> a pill grown without the room-derived backstop · the old "look at the halfway mark" wording · the
+> board bottom-anchored · the plan unreachable · the primary intro door skipping the plan.
+>
+> ## ⑤ WHAT WAS ACTUALLY DRIVEN
+> **1280×720 and 640×320, tap path:** intro → THE PLAN (720×434, 4px wooden frame, **chalk resolving to
+> Gaegu**, three points, quiet skip) → walkthrough with the step board writing `Needs 55 m` →
+> `50 to 60, half 55` → `55 is half: go up` while the bubble carried the narration — **the dead-heat
+> case, live, two different strings rather than one repeated** → guided round with the pill and a bare
+> line → a wrong pick giving the reworded miss line → a right pick grading and advancing.
+> **Every fixed layer crossed with every other at both sizes: 0 overlaps, 0 offscreen, no h-scroll.**
+> ⚠️ **The camera path was reached but its played round sits behind `CamGate`** (the preview pane blocks
+> capture), so the pill/bubble evidence there is a DOM read, not a screenshot — it is the decisive
+> evidence for §② and it is not a picture.
+> ⚠️ Two instrument notes: a layer sweep reported three "overlaps" that were **the step board's own
+> numbered chips** matched as name boards, and the pane still renders the app into a corner after a
+> resize while `innerWidth` reads correctly. Trust `getBoundingClientRect`, and exclude a container's
+> own descendants before crossing it with anything.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **PUSHED BUT NOT DEPLOYED, AND THAT IS THE STATE TO BE CLEAR ABOUT.** The branch
+>    `feat/9-11-factor-lab-ar` is on `origin`; **only `main` auto-deploys.** Shipping needs a merge to
+>    `main` PLUS `public/sw.js` **v87 → v88** in its own commit — neither was asked for or done.
+> 2. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT — twelve readings deep**, and everything above went
+>    through `__miloPinch`, which sets the pose directly and **bypasses `stepPinch`**. `GRAB_ON` (0.50)
+>    is the knob a real child tunes first.
+> 3. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored `estimate` driven** — so
+>    the step board's two extra lines (`62 rounds to 60`, `50 + 60 = 110`) and the pill's `LegBoard`
+>    ceiling are gated and reasoned about but have not been on screen.
+> 4. **The re-teach's chalkboard has never been seen** — reaching it needs three wrong answers in a run.
+>    That it carries no skip is proven by a source check and the optional `onSkip` type, not a screenshot.
+> 5. **Everything in the ✊ block below still stands**, including the unexplained 57-second entry stall.
+> 6. Of this session's faults, **one came from the founder's screenshot, one from reading `levelAsk`
+>    rather than the screen, one from measuring five frame sizes before believing a placement, one from
+>    a clipped button found by measuring `scrollHeight`, and two from mutation-testing my own new gate.
+>    None from the type-checker.**
+>
+> ✊ **2026-08-12 — AND THEN THE SLIDE WENT: THE ANSWER IS NOW **GRAB ASTRO WITH A FIST, CARRY HER, AND OPEN YOUR HAND WHERE SHE SHOULD STAND**. ✅ NOW COMMITTED in `50a9994` (this block's "NOT COMMITTED" is stale — see the 🧑‍🏫 block above).** `tsc` 0 · **890/890 vitest** (+2, the chapter gate 45 → 47) · `next build` 0 · 0 console errors · driven live on BOTH inputs at 1280×720 · **4/4 planted regressions caught**, plus **two real defects the drive found that no gate would have.**
+>
+> **The ask:** *"meko yeh slide ka tariqa sahi naii laga… mein character ko fist se hold karu aur slide karu, phir jahan lage sahi hai wahan fist kholu aur woh character waha reh jaae aur woh mera final answer rahega."*
+>
+> ## ⓪ HE IS RIGHT, AND THE SLIDE WAS A TIMER WEARING A GESTURE'S CLOTHES
+> Hover-and-hold-still is not a thing a child does to something; nothing is carried, the commit is a
+> stopwatch, and it needed **hysteresis on top** because a hand parked on a boundary dithered between
+> two checkpoints and the dwell never fired. Picking her up and putting her down is what a child
+> already does, the release IS the answer with no timer anywhere, and the boundary problem stops
+> existing — you either put her ON a checkpoint or you did not.
+> ⚠️ **AND IT COST NO DETECTOR WORK.** `reads: 'pinch'` already reports position + hold + a monotone
+> close-count, and The Fundraiser had already turned that reading from a thumb-and-index pinch into a
+> **whole-hand fist** on his earlier *"pinch sahi naii hai"* — the exact pose asked for here. The
+> chapter swapped one string.
+>
+> ## ① ⚠️⚠️ THE ONE CONSTANT THAT DECIDES WHETHER THE CHAPTER STILL TEACHES ANYTHING
+> The Fundraiser's drop uses **nearest-target** partitioning, splitting at the halfway line so there is
+> nowhere to miss. **Copying that here would have destroyed the chapter**: the child carries her to
+> where 47 actually falls, lets go, and the APP snaps her to 50 — the rounding performed by the
+> machine, i.e. the answer handed over. So the catch is **BOUNDED** (`CATCH_SHARE` 0.35 of the gap):
+> generous enough for a wobbling hand (~120px wide), and a release at the midpoint lands on **nothing**.
+> That refusal is the rule made physical — there is no checkpoint at 47, so you cannot leave her at 47
+> — and it is spoken, because silence after a gesture is the dead-button fault.
+>
+> ## ② ⚠️ TWO DEFECTS THE DRIVE FOUND, BOTH SCORING A ROUND THE CHILD NEVER PLAYED
+> Both are the same fault by different routes, and **fixing one left the other doing the damage alone**:
+> ① **She waited INSIDE the first checkpoint's catch zone** (home x 54, first post 77 ± 64), so
+> grab-and-put-straight-down scored 20 and graded it. Her waiting place cannot move (her own half-width
+> is already against the frame edge), so **the LINE moved**: the first post is pushed right until its
+> catch clears her. ⚠️ The gate caught the knock-on instantly — the last board crossed into Milo's side
+> — so the line **narrows** rather than shifting, keeping its right edge.
+> ② **The carry clamped to `checkX(0)`**, which teleported her onto the first checkpoint the moment she
+> was grabbed. Clamped to where she may STAND now.
+> Both are pinned: *her resting place is outside every catch zone*, at every size and scene.
+>
+> ## ③ WHAT WAS DRIVEN
+> Idle → *"Close your fist on Astro to pick her up."* · fist on her → *"Got her. Open your hand where
+> you want her to stand."* · **released at the exact midpoint → nothing placed, she walks back, and the
+> refusal names the rule** · released ON a checkpoint → placed, graded, advanced · **grab-and-release
+> without moving → nothing** (after the fix; before it, it scored) · **a fist still shut when the next
+> round opened did NOT pick her up**, and opening + closing again did — the held-over guard that broke
+> the dwell version, now counting `grabs` with a backwards clamp · and a **TAP** on the same round
+> graded and advanced, so both inputs still land in one grader.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **THE RELEASE IS THE COMMIT, SO THERE IS NO UNDO ON THE CAMERA PATH** — his own call
+>    (*"woh mera final answer rahega"*). The protection is `stepPinch`'s sustained release
+>    (RELEASE_FRAMES consecutive open frames), which exists precisely so a slip mid-carry cannot place
+>    her. Worth one look with a real hand: if children drop her by accident, the fix is a confirm beat,
+>    not a longer hold.
+> 2. **Still nobody has held a real hand up to it** — everything above went through `__miloPinch`, which
+>    sets the pose directly and **bypasses `stepPinch`**, so the fist thresholds themselves are proven
+>    headlessly and not on screen. `GRAB_ON` (0.50) is the knob a real child tunes first.
+> 3. **No ten-round run, no re-teach, no mastery exit, no scored `estimate` on the camera path** — the
+>    two-leg round places her twice and commits once, which is gated but has not been on screen.
+> 4. **Everything in the 🎮 block below still stands**, including the unexplained 57-second entry stall
+>    and `public/sw.js` still at v87. Nothing is committed.
+>
+> 🎮 **2026-08-12 — THE RAIL LINE IS NOW **THE LONG LEVEL**: THE FOUNDER ASKED FOR A DAILY REAL-LIFE WORLD FOR THE 9–11 ROUNDING CHAPTER AND PICKED A GAME LEVEL — AND THE OBVIOUS FRAMING OF IT WOULD HAVE TAUGHT THE OPPOSITE OF THE SKILL. ⚠️ NOT COMMITTED (stacks on the 🚂 block below).** `tsc` 0 · **888/888 vitest** (was 885, **+3** — the chapter gate 42 → 45) · `next build` 0 · **0 console errors in a fresh tab** · driven live at 1280×720, 1920×800 and 640×320 · **4/4 planted regressions caught after one survived and was closed.**
+>
+> **The ask:** *"chapter 'rounding' … usko tum daily real life example mein convert karo, woh bacche ke age ke according"* → on the three worlds offered, **"Game level track / checkpoints"**.
+>
+> ## ⓪ ⚠️ THE FRAMING HE PICKED IS FALSE, AND SAYING SO WAS THE MOST IMPORTANT PART
+> The option's own preview read *"you died at 47 — the nearest checkpoint is 40 or 50, which do you
+> drop back to?"* **Every nine-year-old knows you go back to the LAST checkpoint, not the nearest** —
+> that is rounding DOWN, so the world would have contradicted the maths on all ten rounds while every
+> line of code stayed correct. The version where NEAREST is honestly the answer is **warping**: Astro
+> needs block 47, there is no checkpoint at 47, so she warps to the closest one and runs the rest —
+> which is the rail line's own sentence transplanted intact, in a world this band actually lives in.
+> ⚠️ **And the physics is what had to survive the swap**, because it is the whole reason this chapter
+> beat its predecessor: the rounded number is the only one you can ACT on. A scoreboard (the plan's
+> locked anchor) loses that — you can score exactly 47 — which is why the world is a level and not the
+> scoreboard, and why `docs/story-9-11-ar-plan.md` §2 now carries a dated amendment rather than
+> quietly disagreeing with the code.
+>
+> ## ① THE WORLD BECAME THE ANCHOR, SO THE BRIEFING GOT **SHORTER**
+> The rail version had to BRIDGE from something daily (a scoreboard) to something nobody has done (a
+> branch-line train), and carried a careful warning that the two are not equivalent. A game level needs
+> no bridge — the daily thing and the world are the same thing — so the intro card is one paragraph
+> instead of two. **If a re-theme makes the briefing longer, the world is still not the daily thing.**
+>
+> ## ② WHAT CHANGED, AND WHAT DELIBERATELY DID NOT
+> **The geometry did not change at all** — six posts on a horizontal axis, a travelling character, a
+> marker, a halfway mark — so this was a skin + copy swap and the 42-test gate stayed valid throughout.
+> `RailLine.tsx` → **`LevelRun.tsx`** (+ its test), ~30 identifiers renamed by script with **every rule
+> asserting its own substitution count**. Only ONE real importer (`storyChapters.tsx`); every other
+> "RailLine" in the tree is a comment citing a past lesson and was left as the paper trail.
+> • **3 new backdrops, ~4.5 credits** — Green Flats · Deep Caves · Sky Bridge, each generated with one
+>   straight walkway across the lower third so the axis stays PAINTED rather than drawn over a picture.
+>   ⚠️ Measured before wiring: cast-band value **0.502 / 0.261 / 0.616** — the sky one was too close to
+>   the cast and was **GRADED down to 0.501 with a highlight-weighted gamma rather than re-rolled**,
+>   which keeps the approved composition and costs nothing.
+>   ⚠️ **A brightest-jump scan finds the sky, not the walkway** — it put the sky level's path at 0.848.
+>   Counting the COLUMNS carrying a strong vertical gradient found the real edges (0.716/0.767 etc.).
+> • **The traveller costs ZERO credits** — the astronaut walk cycle was already registered and idle.
+>   ⚠️ **A train and a runner are not interchangeable, and two assertions had to change with the
+>   world**: `RUNNER_ASPECT` 3.0 → **0.523** (a person is taller than wide), and the gate's
+>   `runner > Milo` was **replaced rather than kept** — it existed because a locomotive really is
+>   taller than a pony, and asserting it of a person is asserting something untrue of the objects. The
+>   load-bearing one (the posts out-reach her, so she never hides a board or the hint) is unchanged.
+> • **The train + passenger collapse into ONE Astro** — a running character carries herself — which is
+>   less code and one less thing to keep in step.
+> • ⚠️ **SHE WARPS, AND THAT IS THE WORLD'S PHYSICS RATHER THAN AN ANIMATION SHORTCUT.** If she could
+>   RUN to the checkpoint she could run to 47, and the argument for rounding would be a lie the screen
+>   tells every round. The commit is an instant jump between two flashes — which also sidesteps the
+>   cardinal cycle rule for free, since a teleport is not a journey. Her legs run only for the two
+>   moves that ARE journeys.
+>
+> ## ③ ⚠️⚠️ THE LAYOUT FAULT I FOUND, AND THE MUCH WORSE ONE I NEARLY SHIPPED FIXING IT
+> Crossing every fixed layer with every other found the distance marker sitting **ON the commit
+> button** — 8px at 1280×720, and **~70px at 1920×800**. Pre-existing, never measured, and my pathY
+> change had already improved it.
+> ⚠️ **The obvious fix — clamp the path up to make room — floats the cast up to 64px off the painted
+> walkway on 6 of 10 sizes**, i.e. it trades an 8px overlap for **the exact fault this chapter is named
+> for** (the founder's *"train rail pe chal rahi hai"*, which was 44px). Measured before it shipped.
+> **The painting is the fixed thing and the cue is the free thing**, so the MARKER moved: it now grows
+> UPWARD from the path into the empty band below the boards. ⚠️ Below the path there is no room at all
+> on a wide frame — cover-fit drops the walkway to within **4px** of the control row, so no cue height
+> fits. Verified live at 1920×800: marker 631–689, button 699 (**10px clear**), and Astro's feet + every
+> pole land on **689 = the painted walkway**, exact.
+>
+> ## ④ THE GATE — 45 tests, and it took two rounds of mutation testing to be worth anything
+> ⚠️ **My first marker assertion was a TAUTOLOGY**: written as `pathPx + markerHeight(font) <= …` while
+> the clamp ALSO used `markerHeight`, so raising the marker just moved the path and the check moved
+> with it — planting the old height **passed**. Restated as a bare equality (the painted path lands
+> EXACTLY where the painting puts it, no clamp term at all), which is the strongest form available and
+> cannot be moved by anything downstream.
+> ⚠️ **And a second survivor: flipping the marker back BELOW the path passed everything**, because the
+> direction lives in a CSS transform and no geometry assertion can see it — the "a placement lives in
+> CSS, not in the function" fault. Closed with a source check scoped to that component.
+> **4/4 now caught**: the clamp back on the painted path · the marker growing into the boards · the
+> marker hanging below again · a typo'd backdrop path. Also added, per FitOut's lesson: **every scene
+> and Astro are asserted to be ON DISK**, because a missing backdrop falls back to nothing.
+>
+> ## ⑤ WHAT WAS ACTUALLY DRIVEN
+> **1280×720:** intro → both demos (incl. the `round100` gates at 200–700) → the guided round answered
+> → scored round 1, which drew **55 — the exact-halfway case** — where a deliberate 50 gave the dead-heat
+> line (*"55 sits exactly ON the halfway mark… we always go UP"*) and revealed the halfway mark, then 60
+> graded correct and the run strip showed **60 held back one round**. **The cardinal rule measured on the
+> new legged traveller: 27 samples with legs `running` while x moved −426 → −16 at a constant
+> ~16px/130ms, then `paused` at 0.** **640×320:** every fixed layer crossed with every other — 0
+> offscreen, no h-scroll, no sub-24px control; the only overlaps are the documented ones (Astro and the
+> marker in front of thin poles, Milo's own bubble). Rotate gate shows its new copy. **0 console errors
+> in a fresh tab.**
+>
+> ## ▶ OPEN
+> 1. ⚠️ **ONE STALL I COULD NOT REPRODUCE, AND IT IS THE THING TO WATCH.** Driving fast through the
+>    intro once, Astro's entry `Arrive` sat at phase 0 — parked off-frame left — for **57 seconds**,
+>    until the commit swapped it for the run-off journey, which fired in 19ms. A clean run works every
+>    time (caught mid-flight at −190 of −438, landing at 0), and a `MutationObserver` showed **zero**
+>    style mutations while stalled, so it is not a frozen transition. **If a real round can mount in
+>    that state the character is invisible for it** — the "invisible rather than misplaced" fault. Not
+>    explained, not reproduced, stated rather than hidden.
+> 2. **Nobody has held a real hand up to it — eleven readings deep.** Unchanged by this session: the
+>    slide reading, `SLIDE_REACH` and `SNAP_HOLD` are all as the 🚂 block left them.
+> 3. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored `estimate` driven** —
+>    the two-leg round's copy is rewritten and gated but has not been on screen.
+> 4. **The camera path was not re-driven this session.** The drawn axis (`PathBed`) is now a stone
+>    walkway rather than gravel and sleepers, and ⚠️ **on the camera path the marker still crowds the
+>    controls on 6 of 10 sizes** — the drawn path must clear Milo's bubble, and a short frame cannot
+>    hold chrome + bubble + path + marker + controls. The painted path (every tap round) clears both at
+>    every size; both halves are pinned by the gate so neither can be "fixed" into the other.
+> 5. **Everything in the 🚂 and 📷 blocks below still stands** — `public/sw.js` is still v87, nothing is
+>    committed, and the other AR chapters have not been re-driven.
+> 6. Of this session's faults, **one came from reading the founder's own framing against what a child
+>    knows, one from crossing every layer at 640×320, one from measuring a clamp's cost across the
+>    sweep before believing it, and two from mutation-testing my own new gate. None from the
+>    type-checker.**
+>
+> 🚂 **2026-08-12 — THE RAIL LINE IS ANSWERED BY SLIDING YOUR HAND ALONG THE LINE, FULL-SCREEN CAMERA, AND THE DETECTOR FOR IT HAD BEEN SITTING BUILT AND GATED AND UNUSED SINCE THE SLIDE READING WAS WRITTEN. ⚠️ NOT COMMITTED (stacks on the 📷 block below).** `tsc` 0 · **885/885 vitest** (was 864, **+21** — the chapter gate 31 → 42) · `next build` 0 · **0 console errors in a fresh tab** · driven live at 1280×720 and 640×320 on BOTH inputs · **10/10 planted regressions caught**.
+>
+> **The asks, in order:** *"rounding chapter ko AR based bana sakhte hai jaise big numbers ko kiye"* → on the verb options, *"A karte hai lekin full camera pe rahega jaise big number chapter mein hai"* → then *"isme bhi skip button add karo… explanation and baby step waala part mein"*.
+>
+> ## ⓪ THE READING WAS ALREADY BUILT, GATED, AND NAMED FOR THIS CHAPTER
+> [slide.ts](src/infra/ar/slide.ts)'s first line is *"The Rail Line — slide along the track to say where 47 sits, then commit at the nearer halt"*; `reads: 'slide'` is a live branch in the detector with its own overlay; `__miloSlide`'s comment in HandInput names **this chapter's** posture gate. 22 tests, 6/6 mutations. **RailLine.tsx had zero camera code.** So this was wiring, not a new detection layer — and the verb passes §5's first test on its own terms: the hand's POSITION is the number's position, and sliding 47→50 is physically a shorter move than 47→40, so **nearness becomes arm travel** instead of a judgement.
+>
+> ## ① ⚠️ TWO SHARED MODULES DISAGREED ABOUT THE REACH, AND THE OLDER ONE WAS WRONG
+> `slide.ts` argued **THE FULL FRAME IS THE FULL SCALE** ("the ends are reachable from any seating position"); The Fundraiser's `REACH` measured the opposite and says so — a seated child moves a hand through the MIDDLE of the picture and leans out of shot to touch either edge, so a station mapped to x ≈ 0 is one they can never dwell on. **On this chapter the outer stations are half of what stops the question being a coin flip.** Fixed at the source rather than copied: `SLIDE_REACH` + `reachSpan` now live in slide.ts with the old comment corrected, and `slideIndex` is byte-identical so its own gate stays green.
+> ⚠️ **And the gate for it sweeps only the REACHABLE band** — sweeping 0..1 passes for ANY reach because the mapping clamps, which is the tautology this repo caught last session by mutating a constant and watching nothing happen. Concrete positions (0.20 → halt 0, 0.80 → halt 5), so the check does not move with the constant it guards.
+>
+> ## ② ⚠️⚠️ THE HELD-OVER GUARD WAS DEFEATED BY MY OWN DERIVED STATE, AND ONLY PARKING A HAND FOUND IT
+> `useDwell` refuses the reading a child was already holding when a question opened — it captures the key on the round's FIRST render. I derived "which halt is under the hand" into `useState` from an effect, so each round it began at `null` and filled a paint later: the dwell saw `none → 3`, i.e. **a fresh gesture from a hand parked motionless on the desk**. Driven live: the guided round was answered, and then **rounds 2 and 3 answered THEMSELVES**, one of them wrongly. The guard was working perfectly; it was being handed a lie. Derived during render instead — the same rule this repo already records for a journey's phase, for the same reason (effects run after paint). ⚠️ **No pure gate can reach this**: it is shared component state, and the only thing that finds it is parking a hand and watching two rounds go by.
+>
+> ## ③ ⚠️ THE INSTRUCTION CHIP HAD NOWHERE TO LIVE, AND THE ANSWER WAS TO DELETE IT
+> Every state a gesture can be in needs words, and the obvious shape is a chip near the controls. At 640×320 that chip was measured covering the **km marker** (the L1 scaffold the concrete tier rests on); moved to the top strip it covered **four of the six name boards** (the answer surface). **That frame has no free band** — chrome 0–46, boards 59–92, rail 210, marker to 275, controls 265–309. This file already declares that Milo's bubble is the only question region (`prompt: () => ''`), so the hand's state goes THERE, ordered verdict → miss → blocking → question, and an overlap stops being expressible. ⚠️ **And it only speaks for the states where nothing can happen** — no hand, hand too low, one leg still to go. When the hand IS over a halt the post rings and the cursor's arc fills, so a sentence there would spend the question to say what the child can already see.
+>
+> ## ④ ⚠️ RAISING THE RAIL FOR THE CAMERA PUT THE MARKER THROUGH MILO'S BUBBLE
+> With no painting there is no `trackY` to cover-fit, so the drawn rail's position is simply chosen — and chosen freely at 0.70 it put the km marker at 246–275 against a bubble ending at 254. **The painted path clears that by accident** (its cover-fit happens to land the rail at 262), which is luck rather than a rule; both paths state it now (`bubbleBottom`, exported for the sweep). ⚠️ **My gate for it then re-implemented the formula and went red the moment the real rule was added** — a check written in terms of the arithmetic it guards must be edited every time that arithmetic is RIGHT, which trains you to edit it when it is wrong. Asserted as the property instead.
+>
+> ## ⑤ WHAT IS DRAWN ON THE CAMERA PATH, AND WHY IT IS NOT THE SLAB FAULT
+> The painted scene is not rendered (it is opaque and above the self-view), so the axis is **drawn** — ballast, sleepers, two rails. The header's "the track is painted rather than drawn" rule is about a filled shape over a PAINTING, which contains no hard-edged rectangles; the camera path has no painting, and a chapter whose whole question is *where does this number sit on the line* cannot have no line. The two branches are exclusive and neither ever draws a rule over a picture.
+>
+> ## ⑥ THE WALKTHROUGH GOT ITS QUIET WAY OUT — AND THE RE-TEACH DELIBERATELY DID NOT
+> `I've got it →`, the teen band's chip, top-right, 13px — **the smallest thing on the screen and never the forward path.** The teaching still auto-rolls on its own timer; a "next" on every beat is a skip button wearing a different label, and a nine-year-old presses whatever big control is offered and then meets a test nothing prepared them for. It skips the WHOLE walkthrough (both demos) rather than one beat.
+> ⚠️ **`RailExplain` IS THE DEMO AND THE 3-WRONG RE-TEACH, AND ONLY ONE MAY BE SKIPPED.** A child who has just missed three in a row is exactly the one who must not be handed a way past the explanation. `onSkip` is therefore **optional on the component**, so the difference is something the two call sites STATE rather than a flag somebody has to remember — the `demo` phase passes it, `beat.Reteach` does not. **Gated by a source check** (comments stripped first, since this repo has shipped a check that matched the paragraph explaining a rule instead of the code obeying it), plus one asserting the walkthrough still drives itself. **3/3 mutations caught** — the re-teach given a skip · the demo's skip removed · the auto-roll disabled.
+> ⚠️ **Top-right is free HERE AND ONLY HERE**: Milo and his bubble own the bottom right, the menu chip the top left, and SkillBeat's round counter — which owns that corner in a played round — is not drawn in the demo, because the demo renders OUTSIDE SkillBeat. The re-teach IS inside it and has no chip, so the two can never want the corner at once.
+>
+> ## ⑦ WHAT WAS ACTUALLY DRIVEN
+> **1280×720 camera:** the guided round answered by hand (km 22 → the 20 halt), graded, advanced; a wrong dwell giving the written miss line and the halfway post; the aim ring saying WHERE and never whether it is right; the dwell arc filling on the cursor. **The held-over guard proven after the fix: a hand parked on the CORRECT halt for 14 s committed nothing**, and lowering + raising it then did. **The posture gate live** — hand below the line, no halt aimed, cursor dims, Milo says to lift it. **The skip driven** — walkthrough → one tap → straight into the guided round, chip gone. **640×320:** every fixed layer crossed with every other, in the walkthrough AND in a played round — **0 overlaps, 0 offscreen, no scroll**, commit 44px, skip chip at 531–628 clear of everything (the one reported hit in the played round is the full-width rail passing behind Milo's bubble, which is what a rail does). **Tap path: no `<video>` element exists at all**, so MediaPipe never loads — the local-first property by construction — painted scene rendered, no drawn rail, no cursor, and a tap still grades and advances.
+> ⚠️ A temp `?p=` phase override was used and **reverted and grepped (0 hits)**.
+> ⚠️ **And one instrument note, for the third time in this file: a browser tab that has never been resized reports `innerWidth: 0`, so every rect read comes back negative.** The skip chip measured at `[-62, 10, -12, 91]` and read exactly like a chip pinned off the left edge; at a real viewport it is `[1171, 10, 1268, 45]`. Front and size the tab before believing any geometry.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO ANY OF IT — ten readings deep.** Everything above came through `__miloSlide`. **`SLIDE_REACH` (0.72) is the knob a real child tunes first** and its failure mode is silence at the outer halts; `SNAP_HOLD` (a full step) is second — ⚠️ **note it means moving one halt requires travelling all the way to the NEXT halt's centre**, which is the documented rule and has never been felt by a hand.
+> 2. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored `estimate` round driven on the camera path** — the two-leg dwell (set one halt, move, set the other) is gated and reasoned about but has not been on screen.
+> 3. ⚠️ **The demo still shows the PAINTED scene while the played round shows the child's room.** OrderDesk does the same (its walkthroughs keep the painted world) and it is deliberate, but it has not been looked at as a sequence. **The skip makes this reachable in one tap**, so it is now easy to look at.
+> 4. **The re-teach has never been seen on screen** — reaching it needs three wrong answers in a run. That it carries no skip is proven by a source check and by the type signature, not by a screenshot.
+> 5. ⚠️ **The daily anchor is unchanged and still correct** — [story-9-11-ar-plan.md §2](docs/story-9-11-ar-plan.md) gives this chapter *"points needed to catch up"* on a scoreboard, and the intro card carries it as a WAY IN rather than an equivalence (*"Milo has it harder"*). ⚠️ **That plan's line "the six stations become scoreboard marks — copy change only" is deliberately NOT taken**: it would move the anchor out of the explanation and into every round, i.e. name points over a picture of a railway, which is this repo's oldest copy fault. Its other unbuilt line, *"simpler at L1: how many whole tens (A)"*, is also not built — L1 uses the same slide as every tier and the tier difference is the fading marker.
+> 6. **Everything in the 📷 block below still stands** — `public/sw.js` is still v87, the other AR chapters have not been re-driven, and the no-voice branch has never rendered.
+> 7. Of this session's faults, **one came from parking a hand and watching two rounds go by, two from crossing every layer at 640×320, one from mutating my own gate, and one from a tab I had not sized. None from the type-checker.**
+>
+> 📷 **2026-08-12 — THE CAMERA IS FULL SCREEN AND THE WHOLE BOARD IS DRAWN ON IT; NOTHING PRINTS A FIGURE ANY MORE — THE TOTAL ARRIVES IN WORDS; EVERY TARGET IS BIGGER AND THE PINCH ITSELF LOOSER. ⚠️ NOT COMMITTED (stacks on the ✋ block below).** `tsc` 0 · **864/864 vitest** (unchanged in count; the chapter gate's assertions were rewritten rather than added to) · `next build` 0 · 0 console errors · driven live at 1280×720 and 640×320 on the camera path, plus a 12-size × 4-slot arithmetic sweep of the new placement.
+>
+> **The asks, in order:** *"camera full screen ho aur sb chize camera pe ho"* → *"dailogue mein numbers word ke form bolna hai… usse hi bacche ne samjhna chahiye kaunsa figure drag karna hai"* → *"pinching bhot difficult hai… size increase karo sab chizo ki"* → *"GRAB_ON 0.50 kar do"* → *"is se bhi figure hata do… boxes ko center mein rakho, one box waale question ke saath bhi"*.
+>
+> ## ⓪ THE CAMERA IS THE BACKDROP NOW — `CamView` GAINED ONE `full` PROP
+> `inset: 0`, zIndex 5, a soft dark scrim so paper reads against whatever room the child is in; the
+> painted yard is simply not rendered on the camera path (painting it over the camera would hide it).
+> The corner-panel path is byte-identical for the other three AR chapters. **`handPoint` did not
+> change** — it already mapped to the whole viewport, so the carry needed nothing.
+> ⚠️ **THE MARKER CANVAS IS HIDDEN IN FULL MODE, and that is arithmetic rather than taste.** The detect
+> loop maps a landmark with `x * clientWidth`, which assumes the drawn video fills its box exactly —
+> true of a 4:3 stream in a 4:3 panel and false of the same stream cover-cropped into a 16:9 screen, so
+> every marker would drift off the hand vertically. `HandDot` is already the cursor that means
+> anything, and two dots in two places is worse than one.
+> ⚠️ **Stated rather than hidden: Milo and the customer now stand on nothing** — they were placed on
+> the painted yard's ground line. At the bottom of the frame it reads as an overlay and is acceptable;
+> if it ever grates, the fix is a floor strip under them, not moving them.
+>
+> ## ① NOTHING PRINTS A FIGURE — AND THIS REVERSES A DOCUMENTED DECISION, WITH ITS COST
+> The `read` round used to print `$3,482` and ask for a place, so the work was counting places along a
+> numeral, and its ask deliberately named no number at all (*"our total is up on the board"*). Two
+> things killed that: **the camera path has no painted board for the sentence to point AT**, and the
+> founder wants the amount SAID so the child works out which figure to drag from the words. So the ask
+> carries `numWords` and the docket is gone — on `value` too, where printing `$400` beside "four
+> hundred dollars" was the answer's first figure handed over.
+> ⚠️ **AND THEN THE L1 `write` SCAFFOLD WENT WITH IT (his screenshot of `$709` over three columns).**
+> That printed total was the one thing on screen a child can copy left-to-right without knowing what a
+> thousand is — the transcription fault the `placeValue` rebuild was stopped for, at the easiest tier.
+> **The `board` field is DELETED rather than set to null everywhere: a field that is always null is a
+> printing surface waiting to be used again**, and a data check could not see it come back.
+> ⚠️ **THE COST, WRITTEN DOWN: on the hundreds and the thousands the words NAME the digit** ("FOUR
+> hundred" → 4), so those rounds no longer make the child count places; only the tens really decode
+> ("eighty" → 8). **The place-counting payload now lives entirely in `write`** — board blank, four
+> labelled columns, tray scrambled. If that trade is wrong, restricting `read` to the tens and ones is
+> one line. ⚠️ It also makes `read` and `value` nearly the same question; flagged, not resolved.
+> ⚠️ Two things had to move with it: the miss line said *"count the places again, from the right"* with
+> nothing on screen to count along (it says the amount again now), and one demo beat said the same.
+> **One `saidAmount(q)` serves the miss line, the walkthrough's docket and the silent-device fallback**
+> — a second copy would eventually print the whole total beside a question about ONE tin.
+>
+> ## ② ⚠️ PINCHING WAS TOO HARD, AND HALF OF IT WAS NOT SIZE AT ALL
+> Sizes first, on roomy frames only (a short frame's boxes are already at their floor and the tray's
+> height comes straight out of their budget): **tray tile 62 → 100px**, gap 10 → 14, **box 116 → 150px**
+> wide, carried digit with the tile, **`HandDot` 18 → 30px** (44 over a target) — an 18px ring over a
+> lit room is a speck, and a child who cannot see where the app thinks their hand is cannot aim.
+> ⚠️ **THE REAL FAULT WAS THAT THE HIT-TEST ASKED FOR CONTAINMENT, SO THE GAP BETWEEN TWO TILES WAS A
+> DEAD STRIPE** — and closing your fingers MOVES the carry point, so a child lands in one often. Both
+> hit tests are **nearest-target** now (`Math.round` on the pitch), which partitions exactly at the
+> halfway line: the wrong column still cannot win, and there is nowhere left to miss. Proven live —
+> a pinch **in the gap and 10px above the row** picked up the nearest tile, and a release **45px above
+> the box** landed in it; both were misses before.
+>
+> ## ③ `GRAB_ON` 0.42 → 0.50 (founder's call, after the sizes)
+> 0.42 asks for a fully-closed pinch; measured on the real `stepPinch`, ratios 0.45 and 0.48 — a child
+> who has brought thumb and finger to within half a palm and believes they have pinched — did nothing.
+> 0.55 still does not grab, so a resting half-open hand (~0.6–0.8) is safe.
+> ⚠️ **The cost is the Schmitt band, 0.26 → 0.18**, which is affordable only because the DANGEROUS
+> direction is confirmed separately: `RELEASE_FRAMES` still needs three consecutive open frames, so a
+> piece dropped mid-carry into the wrong column is unchanged, and the eager-grab direction is the one
+> he asked to move. ⚠️ **The gate's `band > 0.2` was a PROXY and is now 0.15 with that said out loud** —
+> the property itself is the 400-frame ±0.2 jitter test at the band's centre, which did not move.
+>
+> ## ④ THE BOXES ARE CENTRED — AND A NAIVE CENTRING IS A BUG THIS CHAPTER ALREADY SHIPPED
+> Centred in the viewport at 1280×720 a four-box row ran 339→941 while the bubble starts at 808. So
+> there are two placements and **the one that draws the bigger drop target wins**: **A** centred across
+> the frame in the band ABOVE the bubble (only available now that nothing is printed there — the docket
+> used to own it; the bubble's top is derivable, it hangs at `h × 0.86` over the customer's feet), and
+> **B** the old one, centred in the strip left of the bubble. Measured rather than branched per size, so
+> a short frame keeps B by arithmetic (its band above the bubble is ~47px and would crush the boxes to
+> their 44px floor) and a roomy one gets A.
+> ⚠️ **WITH A TOLERANCE, OR CENTRING LOSES TO A ONE-PIXEL TALLER BOX** — measured at 1024×620 on a
+> one-box round, B came out 183 against A's 182 and the board sat 158px off centre to buy a pixel.
+> ⚠️ **AND THE GATE'S OLD ASSERTION WOULD HAVE FAILED THE SHIPPED LAYOUT.** It said *"the board ends
+> before `bubbleLeft`"*, which was only ever true because the board was always beside the bubble; the
+> real rule is that they do not overlap in BOTH axes. `bubbleTop` is exported so the check reads the
+> same number the placement did, rather than re-deriving it.
+>
+> ## ⑤ WHAT WAS DRIVEN, AND THE GATE
+> **1280×720 camera path:** a one-box round centred and lifted above the bubble, carried and graded,
+> advancing to a scored round; a wrong digit's miss line and the board re-opening with every tile back;
+> a scored **L1 `write` round with three centred labelled columns and NO printed total** — his exact
+> screenshot, fixed. Every fixed layer crossed with every other at both sizes: **0 overlaps, 0
+> offscreen, no scroll**. **A 12-size × 4-slot sweep of the new placement: no bubble collision, no cast
+> collision, nothing reaching the tray, and dead-centre on every roomy frame.**
+> Gate rewrites, each mutation-proven: the board must print nothing AND the ask must carry the word
+> form (both directions planted, both caught); the box partition biased by 0.4 of a pitch → caught.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT — nine readings deep.** Everything above came
+>    through `__miloPen`, which sets `penDown` directly and **bypasses `stepPinch` entirely**, so the
+>    new `GRAB_ON` is proven by driving the real function headlessly and NOT by a screenshot. If it
+>    still does not catch, 0.55; if it grabs by accident, 0.46. `REACH` (0.72) is the other knob.
+> 2. ⚠️ **`read` AND `value` ARE NOW NEARLY THE SAME QUESTION** (both one digit, both from words). Either
+>    re-word `value` to keep it distinct or drop it — it is a founder call, not a cleanup.
+> 3. **No ten-round run, no re-teach seen fire, no mastery exit, and the no-voice branch has still never
+>    rendered** — and it matters more now, because on a silent device a `write` round's total exists
+>    only in that fallback.
+> 4. **Everything in the ✋ and 🧭 blocks below still stands** — the chalkboard is in ONE chapter so the
+>    band is mixed, the other three AR chapters have not been re-driven since `CamView` changed
+>    (⚠️ they use the corner path, which is byte-identical, but "byte-identical" is an argument), and
+>    `public/sw.js` is still v87.
+> 5. Of this session's faults, **one came from the founder looking at a screenshot, one from measuring
+>    the hit-test's dead stripes, one from a one-pixel tie-break, and one from an old gate assertion
+>    that would have rejected the new layout. None from the type-checker.**
+>
+> _(the ✋ block below is the session that BUILT this verb — read it for why the air-writing went.)_
+
+> ✋ **2026-08-12 — THE FOUNDER PICKED THE REPLACEMENT VERB AND IT IS BUILT: THE FUNDRAISER IS NOW **PINCH A DIGIT, CARRY IT, DROP IT IN ITS COLUMN**. THE AIR-WRITING AND ITS RECOGNIZER ARE DELETED. ⚠️ NOT COMMITTED (stacks on the 🧭 block below).** `tsc` 0 · **864/864 vitest** (was 872 — **−13** the deleted recognizer gate, **+5** the chapter gate 32 → **37**) · `next build` 0 · 0 console errors · driven live at 1280×720 **and 640×320** on BOTH inputs.
+>
+> **The ask:** *"1234 screen pe aa rahe hoge aur niche placeholder hoge like hundred, thousand — bacche ko 1 ko pinch karke thousand ke placeholder pe daalna hoga, yeh pura AR se."*
+>
+> ## ⓪ THE VERB IS RIGHT AND IT NEEDED NO NEW DETECTION AT ALL
+> chapter-craft §5's first test is that **the body carries the IDEA, not the NOTATION** — which is
+> exactly what air-writing failed. This passes: **the hand's POSITION is the place**, so the same 4
+> dropped on the hundreds is 400 and on the tens is 40, and the child's own arm performs the
+> misconception the chapter exists to break. `pinchRatio` + `stepPinch` already give hold/release with
+> the hysteresis, the sustained release and the lost-frame grace derived; `nibRead` gives the mirrored
+> carry point. **`reads: 'trace'` did not even change** — the pen's two fields ARE a carry's two
+> fields. `airDigit.ts` (307 lines) and `airDigitReader.test.ts` are gone, and the whole 4:3 writing
+> pane, its beside-the-boxes branch, its minimum and the `CamBox` machinery that moved the camera into
+> it went with them (−80 lines of layout arithmetic; the self-view is back in its corner).
+>
+> ## ① ⚠️ HIS LITERAL SPEC IS COPYING, AND THE FIX IS A SCAFFOLD THAT FADES BY TIER
+> With 1234 printed AND four columns open the child sorts left-to-right and never has to know what a
+> thousand is — the transcription fault the `placeValue` rebuild was stopped for. **Founder's call,
+> taken before any code: L1 shows the total, L2+ speaks it** (the board is blank, `numWords` only, and
+> the no-voice branch still prints the words). That is chapter-craft's own rule — a scaffold for the
+> payload fades by tier, like TickTock's minute ring at L3 — and one tier where the answer is visible
+> is right anyway, because the CARRY is new. **Gated both ways round**: a mutation that never prints it
+> deletes the scaffold, one that always prints it deletes the question, and both fail.
+> ⚠️ **The other half is that the tray is SCRAMBLED.** In board order beside columns in board order it
+> is sorting even with the board blank. Also gated (multiset identical to the number's digits, and in
+> board order well under a fair shuffle's rate).
+>
+> ## ② ONE TRAY, BOTH INPUTS, ONE GRADER
+> The loose digits are the round's OWN digits, so on a one-digit round every wrong tile is another
+> place of the same number — the confusion the question is about, not a digit from nowhere. A finger
+> taps a tile into the lit box; a pinched hand carries the same tile into whichever column it is
+> dropped on. Both land in `put()`. ⚠️ **A tile is CONSUMED when placed** (the tray leaves its slot
+> behind rather than re-centring under the child's hand mid-carry), which needed a `usedTile` array
+> beside `entered` — a tray can hold the same digit twice and "which 4 has been used" is not derivable
+> from the digits. `grade`/`missFor` still take plain digits, so neither they nor the gate driving them
+> changed for a new input.
+>
+> ## ③ ⚠️ FOUR THINGS THE SCREEN AND THE MUTATIONS CAUGHT
+> ① **Three separately-pinned things collide somewhere.** The chip and the two actions were each
+> correctly placed and produced THREE collisions across two sizes: `Put it up ✓` drawn on the
+> self-view at 1280×720 (the button you press covering the picture of your own hand — the same fault
+> the writing pane shipped), `↩ take it back` on Milo's leg, and at 640×320 **the chip drawn across
+> both buttons**. Every tap still landed, which is why only crossing every layer with every other
+> finds it. One flex row now, and it answers *what gives on a short frame*: the buttons are tap
+> targets, so the WORDS wrap.
+> ② ⚠️ **MY REACH TEST WAS A TAUTOLOGY AND MUTATING THE CONSTANT IS WHAT SHOWED IT.** `handPoint`
+> clamps, so sweeping frame 0..1 and asserting "every column is hit" passes for **any** `REACH`,
+> including 1.0 (which makes the outer columns need a hand at the very edge of the picture —
+> `SWEEP_ARM`'s silence, on the thousands). Sweeping only the band a seated child can reach fails it.
+> ③ **The chip trailed off** — *"Open your fingers to drop the 5 in"* — and fixing it was an
+> improvement rather than a patch: it now **names the column under the hand** (*"…into the tens"*),
+> which is not hot/cold (it says WHERE, never whether that is right — same as the box lighting up) and
+> puts the place NAME in front of the child at the moment the decision is made. ⚠️ And the label comes
+> from **one `colName`**, the same function `BoardRow` prints under the boxes with, or the chip would
+> eventually name a different column from the one lighting up.
+> ④ ⚠️ **My own trails-off regex then over-fired** on *"carry it to the column it belongs in"* — a
+> finished sentence. A check that forbids ending on "in" is checking English, not the fault (a clause
+> appended only in the multi-box case).
+>
+> ## ④ THE GATE — 37 tests, **7/7 planted regressions caught**
+> REACH widened to the frame edges · the tray unshuffled · the L1 scaffold removed · the total always
+> printed · the box catch area widened past the halfway line to its neighbour · a drop placed when the
+> hand was over nothing · the tray drawn on the boxes. Plus source checks that the drop goes through
+> the shared `boxHit`/`tileHit` rather than its own arithmetic — **the hit-test and the render must be
+> ONE geometry**, or a child pinches a tile in plain sight and picks up nothing.
+>
+> ## ⑤ WHAT WAS ACTUALLY DRIVEN
+> **1280×720, camera path:** the guided `read` round answered by hand — hover, pinch the 5, carry, the
+> box lights and the chip reads *"Open your fingers to drop the 5 into the tens"*, release, graded,
+> advanced. **A release over empty floor placed nothing and put the tile back.** A wrong drop gave the
+> written miss line at the customer's mouth (*"Not the hundreds — you wrote 1. Count the places again,
+> from the right."* — never names the answer), held 2.4 s, then the board re-opened with **all three
+> tiles back**.
+> ✅ **AND THE PAYLOAD CASE: a forced L2 `write` round, board BLANK, four labelled columns, spoken
+> *"one thousand and seven"*, tray scrambled 7·0·1·0 — 1007 built entirely by hand, both placeholder
+> zeros carried into their own columns, graded correct, reveal only after the commit.** (Temp `GUIDED`
+> override, reverted and grepped — 0 hits.)
+> **Tap path:** **no `<video>` element exists at all**, so MediaPipe never loads — the local-first
+> property by construction. Graded and advanced. ⚠️ **Three tile taps fired inside ONE React batch
+> landed in three separate boxes (4·8·4, duplicate tiles and all)** — the sixth-time batched-tap shape
+> does not recur.
+> **640×320:** every fixed layer crossed with every other — **0 overlaps, 0 offscreen, no h-scroll**,
+> smallest tap target 37px (this band's stated short-frame ceiling); a carry driven end to end there
+> too.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT — eight readings deep now.** Every gesture above
+>    came through `__miloPen`. **`REACH` (0.72) is the knob a real child tunes first** and its failure
+>    mode is a column they cannot reach; `PINCH_MIN_PALM` and the release confirmation are still
+>    untested against a real hand. The carry is a far gentler case than the pen was, though — a drop
+>    tolerates a wobble that a stroke did not.
+> 2. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored `value` round on
+>    screen.** A scored L2+ `write` has only been reached by forcing it.
+> 3. ⚠️ **`LOST_GRACE` is still 12, raised for the PEN.** Its own comment says a carry wants grace too,
+>    so it is not wrong — but 12 frames is ~0.4–1.2 s of holding a digit through a lost hand, and the
+>    number was derived for a harsher case. Worth one look with a real hand.
+> 4. **Everything in the 🧭 and ✋ blocks below still stands** — the no-voice branch has still never
+>    rendered, the chalkboard is in ONE chapter so the band is mixed, the other three AR chapters have
+>    not been re-driven for the `CamView` outline change, and `public/sw.js` is still v87.
+> 5. Of this session's faults, **one came from the founder's spec being copyable, two from crossing
+>    every layer at 640×320, one from mutating a constant and watching nothing happen, and one from my
+>    own regex over-firing. None from the type-checker.**
+>
+> _(the 🧭 block below is the session whose §⑥ proposed this verb — read it for why the air-writing
+> went, and for the four fixes that are input-independent and still stand.)_
+
+> 🧭 **2026-08-12 — THE FOUR THINGS THE FOUNDER REPORTED ON THE FUNDRAISER ALL GOT FIXED, AND THEN HE SAID THE VERB ITSELF IS WRONG: *"its not recognition bro"*. THE AIR-WRITING MAY BE ABOUT TO BE DELETED — READ ▶ FIRST. ⚠️ NOT COMMITTED (stacks on the ✋ block below).** `tsc` 0 · **872/872 vitest** (was 868, **+4**: chapter gate 31 → **32**, recognizer 11 → **13**, pinch 17 → **18**) · `next build` 0 · 0 console errors · driven live at 1280×720.
+>
+> **The asks, in order:** *"i've got it click karta hu toh direct number pad, try camera wala option naii aata"* + *"question direct aise number matt likho, wording mein"* → *"aise dotted stroke kyu aa raha hai… proper line waala stroke kyu naii?"* → *"but woh written number recognised kyu naii kar paa raha?"* → *"ab aspect wala fix bhi kar do"* → **"its not recognition bro… is there anyother way to make AR more interesting"**.
+>
+> ## ⓪ ⚠️ READ THIS FIRST — FOUR FIXES LANDED AND THE FIFTH ASK MAY MAKE THREE OF THEM MOOT
+> §③④⑤ below all serve the AIR-WRITING input, and the founder's last message says that input is the
+> wrong verb for this chapter. **Nothing was built for the replacement** — it was discussed and left
+> as his call (§⑥). If he picks it, `airDigit.ts`, `InkPane` and the `trace` reading go, and with them
+> the dotted-stroke grace, the ink wipe and the aspect correction. §①② are input-independent and stand
+> either way. **Do not start the replacement without his answer; do not delete anything before it.**
+>
+> ## ① THE CAMERA DOOR WAS A ONE-WAY TRIP, AND IT HAD SHIPPED
+> `CamGate` renders **only on the camera path** (`inWorld && onCam && !camReady`). So a device that
+> once tapped *"Tap instead"* had its pick remembered and **nothing anywhere in the chapter ever
+> offered the camera back** — every run went straight to the number pad, which is exactly what the
+> founder hit. The other three AR chapters (FactorLab · AngleShop · FitOut · SupplyRun) all put
+> **both doors on the intro card**; The Fundraiser's had one button. Now it carries the same shape:
+> the remembered pick decides which is the BIG button, never which is the only one. The primary
+> button also calls `useCamera()` now, so the camera path no longer opens on a *"the camera did not
+> start"* panel — nothing had ever called `start()` in this chapter.
+> **Verified live on his exact case:** pick the pad → reload → *"Write it in the air with the camera
+> instead"* is there.
+>
+> ## ② NO FIGURES IN THE QUESTION — AND A `read` ROUND CANNOT SAY IT IN WORDS EITHER
+> Founder: write the number in wording, not as digits. `write` already did. `value` now says *"the
+> hundreds tin holds **four hundred dollars**"*. ⚠️ **But `read` could not simply be translated:**
+> `numWords(3482)` is *"three thousand **four** hundred and eighty-two"*, which **speaks the answer**.
+> The numeral is already on the board — that IS the thing being read — so the ask names no number at
+> all: *"Our total is up on the board. Just the tens — what goes in that column?"* Gate widened from
+> the `write` type to **every** type (`ask` must not match `/\d/`), mutation-proven with the old
+> `$247` wording.
+>
+> ## ③ THE DOTTED STROKE WAS A LIFTED PEN, NOT A DRAWING BUG
+> The ink code joins consecutive points (driven and confirmed solid), so a line can only break at a
+> **stroke boundary** — and `penDown` is the pinch's `held`, which `stepPinch` released after
+> `LOST_GRACE` **5 frames** of no hand. At the 10–30 fps this loop really runs that is ~170–500 ms,
+> and writing is fast, so the hand is motion-blurred for most of a digit — chapter-craft's own
+> *detection loss is CORRELATED with the gesture*. Past the grace the pen LIFTS, which does not just
+> stop the ink: **it ends the stroke**, `InkPane` refuses to join two strokes (correctly — a
+> two-stroke 4 must stay two), and the numeral draws as disconnected pieces. Each spurious break also
+> fired `onStroke`, handing the recognizer a fragment mid-write.
+> **`LOST_GRACE` 5 → 12** (~0.4–1.2 s), safe because `trace` is now this state's only consumer, and a
+> child who genuinely opens their fingers is caught by `RELEASE_FRAMES` on a hand that is still THERE.
+> New test, mutation-proven at 5.
+>
+> ## ④ ⚠️⚠️ THE REAL "CANNOT RECOGNISE" WAS A REF NOTHING EVER ASSIGNED
+> `OrderPlay` held `const clearInk = useRef<() => void>(() => {})`, and `put()` and `⌫` both called
+> `clearInk.current()`. **Grep: three hits — the declaration and the two calls. No setter anywhere.**
+> It was a **no-op**. The pen points live in a ref, so a committed digit left them in place and the
+> next `onStroke` handed the recognizer the previous numeral AND the new one **as one cloud** — which
+> no template matches. So **every digit after the first read as *"I could not read that"*, for the
+> rest of the run**, since `InkPane` is never remounted between rounds. The child also kept seeing the
+> old ink on their own hands.
+> ⚠️ **Why nothing caught it: this is component state — no pure gate reaches it — and the one drive
+> that ever got to the camera path COMMITTED as its last action**, so the state *after* a commit was
+> never exercised. Same shape as this file's other invisible faults.
+> **Fixed with a `resetKey` prop instead of an upward ref, and the reason is the bug itself: a prop
+> the parent must pass cannot be left unwired.** `${sig}|${entered.join(',')}` changes on every
+> commit, every rub-out and every new round. Source-check gate, mutation-proven. **Driven live: `1` →
+> *"reading a 1"* → `✓ that one` → `7` → *"reading a 7"*.** Previously the second one never read.
+>
+> ## ⑤ AND MEASURING THE RECOGNIZER FOUND ITS REAL WEAKNESS — PROPORTION, NOT SLANT
+> The recognizer itself is robust to everything a camera does to it: sparse points (14/digit), a
+> release tail, a stroke cut into five pieces, ±8% shake — all read, with margins 2.1–22× against a
+> 1.35 threshold. What it could not survive was **aspect**: `normalize` scaled uniformly, which is
+> what separates a 1 from a 0, and air-writing has no ruled line, so a numeral written narrow read
+> **5 of 50** while a 20% italic slant still read 50/50. New `ASPECT_PULL = 0.6` pulls each axis
+> part-way toward filling its box. Measured in the gate's own harness (**0 misreads at every value** —
+> this knob moves refusals, not errors):
+>
+> | pull | ×0.6 narrow | ×0.75 | ×1 normal | ×1.4 | ×1.8 wide | 4:3 | main (refused) |
+> |---|---|---|---|---|---|---|---|
+> | 0.00 (was) | **5** | 34 | 50 | 35 | 19 | 55/80 | 360 (0) |
+> | **0.60** | **49** | 49 | **50** | 46 | 41 | 77/80 | 356 (4) |
+> | 0.85 | 49 | 47 | **47** | 49 | 50 | 78/80 | 350 (10) |
+> | 1.00 | 45 | 45 | **45** | 49 | 50 | 74/80 | 343 (17) |
+>
+> 0.6 fully rescues the narrow case while an ordinary digit still reads 50/50; past 0.7 the cost lands
+> on the ORDINARY digit, which is the uniform scale's protection failing from the other end. **Both
+> edges gated and mutation-proven** (0 → 3 failures, 1 → 3 failures).
+> ⚠️ **A free consequence: the recognizer no longer DEPENDS on its caller getting the aspect right** —
+> 4:3 units go 55/80 → 77/80. The previous session's test asserting that 4:3 *costs* a quarter is now
+> false, so it was **inverted rather than deleted** and is a second guard on the constant. The pane
+> stays 4:3-in-pixels for a reason that gate cannot see: the INK must land on the fingertips.
+> ⚠️ **AND MY FIRST NUMBERS FOR ALL OF THIS WERE WRONG.** A standalone harness said 0.25 was the peak
+> and that the 1 collapsed at 0.5; run inside vitest against the gate's own forms, neither held. The
+> comment in `airDigit.ts` carries the vitest table. **Measure with the gate's harness, not a fresh
+> one written beside it** — two harnesses disagreeing is one of them lying and you cannot tell which.
+>
+> ## ⑥ ▶ THEN THE FOUNDER STOPPED IT: *"its not recognition bro"* — AND HE IS RIGHT
+> The three AR chapters that work pass one test: **the body carries the maths idea** (a sweep IS
+> repeated subtraction; a forearm IS the ramp; fingers ARE the divisor). Air-writing fails it — the
+> body carries only the NOTATION. A nine-year-old already knows how to write a 4; doing it in the air
+> is harder and means nothing more, and every misread is friction with no learning in it. **Place
+> value is written notation; nothing about it is physical.** Three sessions went into the recognizer
+> and it was never going to beat a pencil.
+> **PROPOSED, NOT BUILT — "KITNE × KAHAAN" (how many × where):** hold up N fingers **over a column**.
+> Ungliyaan = the digit, hand position = the place. The same 4 held over hundreds is 400 and over tens
+> is 40 — **the child's own hand performs the exact misconception the chapter exists to break**, which
+> a mouse cannot do. On a `write` round the placeholder zero becomes **a fist held over an empty
+> column**, which is what a placeholder IS.
+> ⚠️ **It needs NO new detection** — `count` + `hands` (incl. FactorLab's fist-vs-no-hand guard),
+> `palm.x`, `useDwell` and FitOut's two-hands-one-digit encoding all exist. The tap path is unchanged
+> (*one instrument, two inputs, one grader*).
+> **Risks named in advance:** the column must be committed at DWELL-END, not live, or a drifting hand
+> changes it mid-hold (shown live, decided at commit); columns map to the middle ~70% of the frame,
+> never the full width (SupplyRun's `SWEEP_ARM` lesson — a range a child cannot reach is silence);
+> and the outer columns push the hands into the worst landmark zone. The safe fallback is Milo
+> pointing at the column and the child showing only the digit — cheaper, but it throws away *finding
+> the column*, which is the skill.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **THE FOUNDER'S CALL IS PENDING AND IT GATES EVERYTHING:** build *kitne × kahaan*? And if so,
+>    delete `airDigit.ts` + `InkPane` + the `trace` reading now, or leave them until it works?
+>    **Nothing was written for it. Do not start without the answer.**
+> 2. **Still nobody has held a real hand up to any of it** — every stroke above came through
+>    `__miloPen`. Seven readings deep now. If the verb changes, this restarts from zero anyway.
+> 3. **Everything in the ✋ block below still stands** — no ten-round run, no re-teach seen fire, no
+>    mastery exit, no scored `value` on screen, **the no-voice branch has still never rendered**, the
+>    chalkboard is in ONE chapter so the band is mixed (a founder call), the other three AR chapters
+>    have not been re-driven for the `CamView` outline change, and `public/sw.js` is still v87.
+> 4. **Honest gap:** the §④ bug was proven by the SOURCE (a ref nothing assigns) and by the fix working
+>    live — **not** by a screenshot of it failing. Backing the fix out to reproduce it on screen was
+>    attempted and the drive over-skipped into the wrong round; it was not retried.
+> 5. Of this session's faults, **one came from the founder using it, one from grepping for a setter
+>    that did not exist, one from measuring the recognizer against realistic input, and one from my
+>    own harness disagreeing with the gate's. None from the type-checker.**
+>
+> _(the ✋ block below is the session that BUILT this chapter's camera writing — read its ① and ② if
+> any of it survives §⑥.)_
+
+> ✋ **2026-08-12 — THE CHILD WRITES ON THEIR OWN CAMERA PICTURE, THE TEACHING MOVED ONTO THE 12–18 BAND'S CHALKBOARD, AND CHASING THE FIRST TWO ASKS FOUND **THREE FAULTS THAT WERE ALREADY SHIPPING** — INCLUDING THE REASON A REAL HAND COULD NOT BE READ. ⚠️ NOT COMMITTED (stacks on the ✍️ block below).** `tsc` 0 · **868/868 vitest** (was 864, **+4**: chapter gate 29 → **31**, recognizer 9 → **11**) · `next build` 0 · driven live at 1280×720, 1024×620 and 640×320 · temp `?p=` override used twice and **reverted and grepped each time (0 hits)**.
+>
+> **The three that were already live, none of which any gate could see:** the recognizer fed
+> 4:3-squashed coordinates (**§②** — it never misread, it refused, so it read as "the camera cannot
+> see me"); the shared `CamView`'s **border** shrinking the box the detect loop measures, so every
+> marker in **every AR chapter** landed 2px off the hand (**§③**); and the walkthrough's working board
+> drawn **across the answer boxes at 17 of 18 reachable sizes** (**§⑥**), hidden only because paper is
+> translucent.
+>
+> **The asks, in order:** *"air mein likhne ka uske liye board pe screen pe likhna hai aise mat karo… bacche ko aapne hi samne camera pe hi dikhna chahiye, kyuki screen pe sahi se likhne naii jaa raha"* → then, after the move: *"it can't able to recognise the number which i'm writing in the air clearly"* → then *"explanation and step and the plan ke liye 12-18 band wala chalkboard use karo, and put a skip button."*
+>
+> ## ① THE INK MOVED ONTO THE SELF-VIEW, AND THE WHITE PANE IS GONE
+> The writing pane was a paper box beside a small corner camera, so **the hand was in one place and
+> the mark in another and there was nothing to aim at.** The ink is now a transparent overlay on the
+> mirrored self-view, which has taken over the pane's slot: 269×202 at 1280×720, 420×315 at 1440×900,
+> 149×112 at 640×320. Measured live — video, marker canvas and ink canvas are **the same rectangle to
+> the pixel**, at every size, and the camera follows the layout when the round or the window changes.
+> ⚠️ **The slot had to become 4:3**: the nib is normalized to the video frame, so a square box paints
+> the ink where the hand is not, and cropping a 4:3 stream into it loses the two edges a wide numeral
+> reaches. ⚠️ **And the `<video>` could not simply be rendered there** — it is mounted once for the
+> whole chapter (a remount drops the stream) while the pane rect is known only to the round on screen,
+> so the round posts its rect and the shell places the camera in it.
+>
+> ## ② ⚠️ THEN THE REAL FAULT, AND IT IS ARITHMETIC RATHER THAN TUNING
+> **A landmark comes back as a fraction of the FRAME, and the frame is 4:3 — so equal physical
+> distances give an x-span only 0.75 of the y-span, and every digit reached the recognizer a quarter
+> too narrow against templates drawn in a square box.** Measured over the gate's ten independently-
+> written forms: **80/80 read at square, 55/80 at the camera's own units, 42/80 once a real hand's
+> shake is added.** ⚠️ **It never once MISREAD — it refused**, which is exactly why it presented as
+> *"it cannot recognise what I write"* rather than as a bug, and why nothing caught it: **every test in
+> the recognizer's own gate writes its forms square.** The points are stored in pane PIXELS now
+> (physically square, since the pane is 4:3), which fixes the reading and makes what the child sees
+> the same shape the matcher scores. Gated with the numbers.
+>
+> ## ③ A 2px MISALIGNMENT IN THE SHARED SELF-VIEW, FOUND BY MEASURING RATHER THAN LOOKING
+> `CamView` framed itself with a **border**, which shrinks the content box — so the video and the
+> marker canvas sat 2px inside the element whose `clientWidth` the detect loop maps landmarks with, and
+> every marker it has ever drawn landed slightly off the hand. An `outline` takes no layout space.
+> **This is shared by every AR chapter**, so the fix is band-wide.
+>
+> ## ④ AND ONE REGRESSION THE 4:3 CHANGE CAUSED, CAUGHT BEFORE IT SHIPPED
+> A 4:3 pane wants more WIDTH for the same writing height, and the beside-branch handed it everything
+> left over the boxes' tap floor: at 1024×620 a one-box round gave the camera 305px and drew **the box
+> being READ at 44**. The boxes keep their natural width first now and are only squeezed toward the
+> floor if the pane then has nowhere to go — box 116 / pane 233×175 there.
+>
+> ## ⑤ WHAT WAS DRIVEN
+> A **7**, a round **0** and a **1** written in the air, each read back and shown in the box before the
+> commit; the 1 accepted, committed, graded correct and the round advanced with the camera following.
+> Every fixed layer crossed with every other at 640×320 — 0 real overlaps (the one reported is the
+> documented `✗ rub out` chip on the pane's own corner), nothing offscreen, no scroll. 0 console errors.
+>
+> ## ⑥ THEN THE TEACHING MOVED ONTO THE 12–18 BAND'S CHALKBOARD, AND IT UNCOVERED A THIRD SHIPPING FAULT
+> **The ask:** *"explanation and step and the plan ke liye 12-18 band mein joh chalkboard use karte hai
+> woh hi yeh age group mein karna hai, and put a skip button in explanation."* One framed board now
+> carries **THE PLAN, the worked steps and the re-teach** — one object to learn to read instead of a
+> cream card in one phase and a paper sheet in the next.
+> ⚠️ **The two documented reasons it had been kept out are both answered rather than waived.** The
+> slab fault: the teen board already carries a **wooden frame and a cast shadow**, so it reads as a
+> board hanging in a school hall rather than as a filled rect over a painting. And **`--font-chalk`
+> now lives on `:root`** — it was declared only inside `[data-band]`, so a 3–11 chapter reaching for
+> it silently got the body font with nothing erroring, which is the trap that would have shipped a
+> "chalkboard" written in the chapter's own display face. Gaegu was always loaded globally; only the
+> token was scoped. Verified on screen: the board resolves to **Gaegu**.
+>
+> ⚠️ **AND THE WORKING BOARD HAD BEEN DRAWN ACROSS THE ANSWER BOXES AT 17 OF 18 REACHABLE SIZES.**
+> Pinned top-left where the paper sheet was, against boxes centred under the docket: measured, only
+> 1280×720 with a single box clears. It had been shipping — translucent paper hid it, and an opaque
+> board showed it in one screenshot. It sits in the band the CONTROLS own during play now, which a
+> walkthrough leaves empty (no pad, no camera pane, no control row) with the cast at the sides, and it
+> grows UPWARD from the bottom so the only way to overflow is back onto the boxes. Clearance is
+> **29–264px** at every size; the window drops 4 lines → 2 on a short frame.
+> ⚠️ **The rect is exported and the gate drives it — AND source-checks that the component uses it**,
+> because the first version of that check re-implemented "bottom 10, this tall" and **a mutation
+> pinning the board back at `left: 12, top: 58` walked straight through it.** A placement lives in
+> CSS, not in the function.
+>
+> **The skip is the teen band's `I've got it →`, and it does not become the forward path** — the
+> teaching still auto-rolls, the chip is the smallest thing on screen, and **the re-teach gets none**,
+> because a child who has just missed three in a row is the one who must not be handed a way past the
+> explanation. Driven: it skips THE PLAN into the walkthrough and the walkthrough into the guided round.
+>
+> ## ⑦ WHAT IS IN THE TREE — all uncommitted, on top of the ✍️ batch below
+> | file | what |
+> |---|---|
+> | `story/OrderDesk.tsx` | the ink overlay + `CamBox`/`CamSlotCtx` (the round posts its rect, the shell places the camera) · pixel-space pen points · the 4:3 pane and its box-width fix · `Chalkboard` + `GotIt` + `StepBoard`/`stepBoardRect` (replacing `ThePlan`'s card and `TallySheet`) |
+> | `infra/ar/HandInput.tsx` | `CamView` takes an `at` placement · **border → outline**, which is the band-wide fix |
+> | `app/globals.css` | `--font-chalk` on `:root` |
+> | `__tests__/orderDeskPlaceValue.test.ts` | the pane's 4:3 height · the working board never over the boxes + the source check behind it |
+> | `__tests__/airDigitReader.test.ts` | square vs 4:3 coordinates, with the measured counts |
+> | `docs/chapter-craft.md` | the five rules §① §② §③ §⑥ paid for |
+>
+> ⚠️ **`--font-chalk` and `CamView` are SHARED**, so those two lines reach outside this chapter: the
+> font token is additive (nothing in 3–11 used the variable before), and the outline is strictly a fix
+> — but the other three AR chapters have not been re-driven since.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT** — every stroke above came through `__miloPen`.
+>    The aspect fix is the measured cause of the founder's report; whether it is now *enough* for a real
+>    hand is the thing to check next.
+> 2. **The next lever is smoothing the nib, and it is a TRADE with numbers rather than a free win.**
+>    Measured against per-point shake: an EMA of 0.5 costs ~4 reads per 100 at ±6% shake and gains
+>    ~15 per 100 at ±16%. Deliberately NOT built — nobody knows which regime a real hand is in, and
+>    an EMA of 0.3 is worse everywhere (the lag rounds the corners off). Measure the shake first.
+> 3. **The chalkboard is in ONE chapter.** The other eleven 9–11 chapters keep the pre-teen HUD kit,
+>    so the band is now mixed. That is a founder call to make once, not a thing to fan out quietly —
+>    and the `:root` font token is already in place for whichever way it goes.
+> 4. **Re-drive the other three AR chapters** (Factor Lab · The Angle Shop · The Supply Run) once,
+>    for the `CamView` outline change. Nothing else touches them, and the change can only move a
+>    marker 2px toward the hand — but "can only" is an argument, not a screenshot.
+> 5. **Everything in the ✍️ block below still stands** — no ten-round run, no re-teach seen fire, no
+>    mastery exit, no scored `value` on screen, **the no-voice branch has still never rendered**, and
+>    `public/sw.js` is still v87.
+> 6. Of this session's faults, **three came from measuring rather than looking, two from a founder
+>    using the thing, and two from mutation-testing my own new gates. None from the type-checker.**
+>
+> _(the ✍️ block below is the session that BUILT this chapter's write-it verb — read its ① and ② before
+> touching the recognizer.)_
+
+> ✍️ **2026-08-11/12 — THE FUNDRAISER'S VERB CHANGED ON THE FOUNDER'S CALL: BIG NUMBERS IS NOW **READ IT AND WRITE IT**, AND THE FOURTH ANSWER SURFACE IS A DIGIT WRITTEN IN THE AIR. ⚠️ NOT COMMITTED.** `tsc` 0 · **864/864 vitest** (was 846, **+18**) · `next build` 0 · dev hook **0 hits in the emitted production JS** (checked against a control string that IS present) · driven live at 1280×720 and 640×320 on BOTH inputs · **eslint 251 against 247 at HEAD** (+4, all the documented mirror-ref/reset-during-render idiom).
+>
+> **The ask, in four parts:** *"number display karege aur uss number mein se randomly puchege… how many thousands"* · *"voice… milo number bolega aur bacche ko batana rahega"* · *"isme tum aapne according ek proper explanation daalo"* · *"yeh AR rahega… baccha number air mein draw karega, aur jisne permission naii diya woh type karega"*. Two answers taken before writing anything: **REPLACE the bundle-building gesture** (not alongside), and **Milo speaks / the child writes** (no microphone).
+>
+> ## ⓪ WHAT THE CHAPTER IS NOW, AND WHAT WENT
+> Gone: the bays, the base-ten bundles, the supply row, the pinch-and-drop, `MAX_DIGIT`, `columnAt`,
+> ~600 lines of piece geometry. Kept: the fundraiser world, the three scenes, both walk cycles, the
+> tally sheet, THE PLAN. Three question types on ONE surface — a row of boxes with a place under each:
+> **`read`** (the board shows $3,482 — "just the hundreds", ONE digit) · **`value`** ("the tin holds
+> $400 — how many hundred-dollar notes?") · **`write`** (Milo SAYS a total, the board is blank, write
+> all of it).
+> ⚠️ **THE ANSWER IS WRITTEN, NEVER PICKED, AND THAT IS WHAT KEEPS `read` HONEST.** "How many hundreds
+> in 3,482?" over three chips is the exact fault this chapter was rebuilt to remove two sessions ago.
+> A digit the child WRITES has no options on screen at all.
+> ⚠️ **AND THE DIGITS ARE 0..9 AGAIN.** `MAX_DIGIT = 5` was never a difficulty choice — it was what
+> nine honest base-ten pieces physically fit before the ones column stopped being countable. Nothing
+> is drawn as pieces now, so the chapter can finally ask about $3,482, which its own intro card
+> always used.
+> ⚠️ **A `read` ROUND MUST NOT LABEL ITS BOXES AND A `write` ROUND MUST.** THOUSANDS·HUNDREDS·TENS·ONES
+> printed under a numeral answers the question for the child — counting the places IS the skill. On a
+> write round the same labels scaffold a number arriving by ear and give nothing away. Gated.
+>
+> ## ① THE RECOGNIZER — `infra/ar/airDigit.ts`, $P point-cloud, no model, no network
+> ⚠️ **THE RULE THE WHOLE DESIGN HANGS ON: A SHAPE THAT CANNOT BE READ IS "WRITE IT AGAIN", NEVER A
+> WRONG ANSWER.** A recognizer that misreads a correct 4 as a 9 marks a child wrong for knowing the
+> answer. So it returns `null` when unsure, nothing is graded, redrawing is free — **and the digit it
+> read is shown IN the box before the commit**, so a misread is visible and correctable rather than
+> silently graded. That is not hot/cold: it says what was written, never whether it is right.
+> ⚠️ **ONE DIGIT AT A TIME.** Segmenting four scrawled digits is a research problem; one digit into
+> one column is a 10-way choice with the strokes already separated — and it is the better teaching.
+> ⚠️ **ROTATION IS DELIBERATELY NOT NORMALIZED** — every $1-family recognizer does it and **6 and 9
+> differ by a rotation and nothing else.**
+> ⚠️ **AND THE THRESHOLDS WERE MEASURED, NOT REASONED.** The first cut argued a distance ceiling from
+> the glyph's own size (0.36) and it was **~10× too loose**; worse, junk and sloppy digits **overlap**
+> on absolute distance (junk 0.035–0.093, wobbly digits 0.02–0.058), so **no threshold separates them
+> and one pretending to is a comment claiming a rule it does not enforce.** What rejects a scribble is
+> that its best two matches are the same distance away — a RATIO. Recorded in the file rather than
+> left as a survivor.
+> **Gate: 9 tests on independently-written forms** (not the templates) — 360 draws across jitter,
+> scale and position: **0 misreads**, <5% refusals. **4 mutations planted, 2 caught, 2 measured and
+> recorded as INERT** with the numbers (the loose ceiling is covered by the ratio; the stroke-boundary
+> reset distorts candidate and template symmetrically). ⚠️ **Measured ceiling written down**: a strong
+> italic slant pushes it to REFUSE (8 and 7 first) rather than misread, which is the correct direction.
+>
+> ## ② THE READING — `reads: 'trace'`, and it cost one new detector line
+> Pen point = thumb/index midpoint, pen state = the EXISTING `stepPinch`. ⚠️ **A pointing finger has
+> no "off"**, so a two-stroke 4 could not be written at all; pinching also inherits `pinch.ts`'s ratio
+> normalization and hysteresis instead of a second untuned detector. ⚠️ **The nib is keyed RAW** —
+> quantizing it draws a numeral as a staircase — so `onRead` fires at frame rate while drawing and the
+> **consumer owes a ref plus an imperative canvas**; ink in React state re-renders the chapter ~30×/s.
+> ⚠️ **Re-read on EVERY pen-up rather than after a settle timer**: a lone diagonal upgrades into a 4
+> for free, with no constant to tune and nothing firing mid-numeral.
+>
+> ## ③ ⚠️ SIX DEFECTS, AND THE THREE THAT MATTERED WERE ONLY VISIBLE ON SCREEN
+> ① **THE BUBBLE COVERED THE ANSWER** — a centred four-box row ran to 887 while the customer's bubble
+> began at 808. That is **the open item the previous session left behind**, reproduced on the first
+> drive. The bubble cannot move, so the board takes the band left of it; and where that band cannot
+> hold the board (a short landscape frame wants 342 of 263px) **the ask moves to a top banner** — a
+> question covering the answer is worse than one without a tail. ⚠️ Fixing it then exposed that **the
+> cast's side reserve still binds** once the bubble stops being the constraint: centred in the whole
+> viewport the board's left edge landed at 136 against a 167px reserve, i.e. through Milo.
+> ② **THE WRITING PANE COMPUTED TO ZERO on every short landscape frame** — the camera child got a
+> board, a nib and nowhere to draw. ⚠️ **My own check could not see it: it asserted `paneSize <= 150`,
+> which 0 satisfies.** Assert the FLOOR, not the ceiling.
+> ③ **`Put it up ✓` sat ON the writing pane (49×18) and ON the self-view (103×18)** at 640×320 — the
+> button you press covering the surface you write on. It joins the control row on the camera path now,
+> reserving the self-view's own exported width.
+> ④ ⚠️ **THE BATCHED-TAP BUG, FOR THE SIXTH TIME, AND I WROTE IT AGAIN.** I mirrored the entered
+> digits in a ref and left the ACTIVE BOX in plain state, so 8-0-5-4 tapped inside one React batch
+> wrote all four digits into box 0. `setActive(a => a+1)` being functional does not save it — the
+> state advances and the closure the next tap runs is still the old one. **Ask what ELSE the handler
+> reads.** Verified after: four batched taps land in four separate boxes.
+> ⑤ **The chip ended mid-sentence on a one-box round** — "Tap the digit that goes" — because the
+> destination phrase was appended only when there was more than one box. The gate checked which WORDS
+> it used and could never see that it stopped.
+> ⑥ **The place labels were 11px ink at 0.62 on a painted gym wall** — measured as ghosts, and on a
+> write round those labels ARE the scaffolding.
+>
+> ## ④ THE GATES — 29 chapter tests + 9 recognizer tests, **14 mutations planted, 11 caught**
+> `orderDeskPlaceValue.test.ts` rewritten with the chapter's verb (the old one drove `MAX_DIGIT` and
+> the bay geometry, none of which exists). **The chapter gate: 10 planted, 9 caught** — labels on a
+> read round · the answer printed on a write round · `value` on the ones · no placeholder at L3 · the
+> miss line naming the digit · a pane reserved on the tap path · an input-blind chip · the pane never
+> moving beside the boxes · boxes not shrunk for the pane. **The recognizer gate: 4 planted, 2
+> caught** — the ambiguity guard dropped · scale normalization dropped.
+> ⚠️ **ALL THREE SURVIVORS WERE CHECKED AND RECORDED IN THE SOURCE rather than left looking like
+> coverage**, which is the distinction that matters: the 44px box floor never binds on a reachable
+> landscape frame (the narrowest is ~568 and four boxes beside a pane still come out at 54); the
+> resample stroke-reset distorts candidate and template symmetrically (measured — the mutation makes
+> a two-stroke 4 match *better*, 0.0095 → 0.0070); and the loose distance ceiling is covered by the
+> ratio guard, because junk and sloppy digits genuinely overlap on absolute distance.
+> ⚠️ **Two of my own assertions had to be REWRITTEN after a mutation walked through them** — the pane
+> check asserted a ceiling (`<= 150`) where 0 satisfies it, and the board-clearance check bounded the
+> board by the VIEWPORT when the thing it must clear is the cast's reserve.
+>
+> ## ⑤ WHAT WAS ACTUALLY DRIVEN
+> **1280×720** — intro · THE PLAN reading itself out word by word · the walkthrough counting the
+> places from the RIGHT with the tally sheet writing each one · a `read` round graded and advanced ·
+> a `write` round answered BY EAR (heard "four thousand eight hundred and five", written 4|8|0|5
+> across four labelled columns **including the placeholder zero**, reveal only after the commit) ·
+> a wrong answer's written miss line at the customer's mouth (*"that reads $9,999, and I said nine
+> thousand four hundred and two"* — restates the question, never says which digit goes where) ·
+> **and the whole AR loop: an air-drawn 4 read as "reading a 4", rubbed out, an air-drawn 5 read,
+> accepted into the box, committed, graded correct.**
+> **640×320** — every fixed layer crossed with every other: **tap path 0 overlaps, 0 offscreen, no
+> h-scroll, smallest button 40.5px**; camera path **1 overlap and it is the deliberate one** (the
+> "✗ rub out" chip on the pane's own corner).
+> ⚠️ **A temp `?p=`/`?q=` phase override was used THREE times and reverted and grepped each time (0 hits).**
+>
+> ## ⑥ ⚠️ THE INSTRUMENT LIED THREE TIMES AND TWICE I NEARLY BANKED IT AS A BUG
+> **React does not flush inside the driving statement**, so clicking and reading the DOM in one
+> `javascript_exec` reports the previous render — I concluded "the miss line never renders" and it
+> renders fine. Worse, **a state-driven `disabled` is still disabled when your next click lands in the
+> same statement**, so a commit driven that way is silently swallowed and reads exactly like a dead
+> button. And `requestAnimationFrame` is frozen in the hidden pane, which hung a 30s eval. **One
+> gesture per call; read in the call after.**
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOBODY HAS HELD A REAL HAND UP TO IT — SIX READINGS DEEP NOW.** Every stroke above came
+>    through `__miloPen`. The recognizer's measured ceiling is a strong italic slant (it refuses
+>    rather than misreads, which is right, but a slanted writer meets "write it again" too often); the
+>    lever is a shear normalization off the cloud's principal axis, deliberately NOT built because it
+>    trades against 1-vs-7 and nobody has seen a real hand.
+> 2. **No full ten-round run, no re-teach seen fire, no mastery exit** — and a scored `value` round has
+>    never been on screen (both demos and the guided round are `read`/`write`).
+> 3. ⚠️ **THE NO-VOICE BRANCH IS UNTESTED.** A `write` round shows the total in WORDS when
+>    `speechSynthesis` reports no voices, which is what stops it being unanswerable on the many Chrome
+>    installs with none — and the preview pane reports voices, so that path has never rendered. It is
+>    the one thing standing between a silent device and a blank question.
+> 4. **The cover-fit bug is still live in LoadingBay** and the rest of the previous block's open list
+>    stands. **Not committed, and `public/sw.js` is still v87.**
+> 5. **Nobody has watched a child play it**, and of this session's six faults **three came from
+>    measuring the screen, one from mutation-testing my own gate, one from the linter, and not one
+>    from the type-checker.**
+>
+> _(the ✂️ block below is the previous session — the over-engineering audit.)_
+
+> ✂️ **2026-08-11 — A REPO-WIDE OVER-ENGINEERING AUDIT, THEN ALL NINE FINDINGS APPLIED: −1,835 LINES, 3 FILES GONE, AND THE ONE THING THE AUDIT GOT WRONG WAS FOUND BY READING THE CODE IT NAMED. ✅ COMMITTED on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **846/846 vitest** (unchanged — this is a behaviour-preserving cut) · `next build` 0 · **eslint 247 problems against 255 at HEAD**, i.e. 8 FEWER and none introduced · driven live at 1280×720 on a story chapter and a sim.
 >
 > **The ask:** `/ponytail-audit` over the whole tree, then *"delete: … shrink: … yagni: …"* — apply all nine.
 >
@@ -7608,7 +8528,23 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-11 (LATEST — see the top ✂️ block. **A REPO-WIDE OVER-ENGINEERING AUDIT, THEN ALL NINE FINDINGS APPLIED: −1,835 LINES, 3 FILES GONE. ✅ COMMITTED on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **846/846 vitest** (unchanged — a behaviour-preserving cut) · `next build` 0 · **eslint 247 against 255 at HEAD**, i.e. 8 FEWER and none introduced · driven live at 1280×720 on a story chapter and a sim. **The architecture is fine and the copy-paste is not**: a real import graph found **0 orphan modules in 273 files and 0 removable deps**, so the useful measure was never "what is dead" but "what is written more than once". ⚠️ **The biggest cut was a lessons/ directory nothing renders** — six files imported for one or two data helpers each, carrying a whole pre-story-rebuild lesson behind them, and **the tell was the DEFAULT export: not one of the six is imported by anybody** (`ExponentsRootsTeenLesson` is 326 lines of which only `pow`, line 28, is wanted). 1,368 → 133 lines; three deleted outright with their helpers folded into the single consumer, and `pow` → `core/fmt` where it belonged. **The story-chapter shell was written out 34 times** — so a fix to the double-finish guard had to be applied 34 times or not at all — now `useChapterShell`, 32 of 34 converted; ⚠️ **and the tally had to move in too, because the lint rule was right**: a ref returned from a hook may not be mutated by its caller, and every chapter accumulated it with the identical expression, so that expression IS a `SkillBeat` `onComplete`. **`<Slider>` was defined 13 times in 22 sims** (two of the copies carrying a private re-implementation of `disp`) → one in SimLayout; ⚠️ `skipZero` did NOT become a prop — one call site needed it, so the rule went into that caller's own `onChange`. ⚠️ **`walkEvery: 99` is a sentinel meaning "never" in a ten-round chapter**, and twelve chapters set it AND still wired an interlude unreachable by arithmetic. **`disp` had 34 copies under 12 names** and **`pick` 46** — ⚠️ `gameKit` was RE-EXPORTING `pick` to 12 games, which only surfaced when `tsc` failed. Plus `reteachAfter` (optional, default 2, all 34 chapters passed 3 → a constant), a one-entry `BESPOKE_CHAPTERS`, and 3 no-op conditional spreads in the landmarker. ⚠️ **THE AUDIT SAID `disp` HAD 37 SITES AND THREE WERE NOT `disp` AT ALL** — two build a `"3x"` TERM and merely contain the sub-expression, one renders `+3` for positives; each would have been a silent rendering bug. **Read every site a mechanical scan reports before rewriting it.** ⚠️ And every codemod ran from a FILE — zsh silently ate three inline ones, and a scan returning 0 hits reads exactly like a clean repo. ▶ Open: **not pushed, sw still v87**; **no chapter was played to a scored round**, so `tally` is proven by 846 tests and a type signature rather than by a finish; the previous block's list all stands. _(prior footer follows.)_)_
+_Last updated: 2026-08-12 (LATEST — see the top 🧑‍🏫 block. **NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. ✅ COMMITTED `50a9994` + docs, PUSHED to `feat/9-11-factor-lab-ar` — ⚠️ NOT DEPLOYED (only `main` deploys), `sw.js` still v87.** `tsc` 0 · **900/900 vitest** (+10) · `next build` 0 · 9/9 planted regressions caught. The founder's screenshot showed *"halfway 650"* on the line beside a bubble asking about **669** — and the mark he did NOT name was the worse one: the distance marker pegs the number's true position, i.e. **the answer, drawn**. Both marks are off a played round and both stay in the demo/re-teach, which is the teaching-vs-measuring line. ⚠️ **The target pill is not decoration — it is what makes that survivable**: on the camera path the bubble ranks hand hints above the ask, so from the moment a hand appears the number would have left the screen entirely. Then bigger + centred, **sized from the room above the boards rather than a CSS clamp** (a clamp cannot see what is under it), +142% at 640×320. **The 12–18 chalkboards** (`ThePlan` + `StepBoard`) extracted from OrderDesk into `story/chalkboard.tsx` and used by both — ⚠️ hung from the CHROME here and the FLOOR there, because the band below this chapter's path is 66/148/119px against a 68/152/152px board. ⚠️ My first plan copy **clipped the skip button** (a dead control) and `PLAN_BUDGET` is now gated. ⚠️ **Mutation testing caught two of my own assertions being weaker than their rules.** ▶ Open: pushed but **NOT deployed** (merge to `main` + sw v88); nobody has held a real hand up, twelve readings deep; no ten-round run, no re-teach on screen. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-12 (the ✊ block. **THE SLIDE IS GONE: THE ANSWER IS NOW GRAB ASTRO WITH A FIST, CARRY HER, AND OPEN YOUR HAND WHERE SHE SHOULD STAND** — the founder's call, *"yeh slide ka tariqa sahi naii laga"*. `tsc` 0 · **890/890 vitest** · `next build` 0 · 0 console errors · driven on BOTH inputs · 4/4 planted regressions caught. The slide was a timer wearing a gesture's clothes — nothing was carried, the commit was a stopwatch, and it needed hysteresis because a hand on a boundary dithered and the dwell never fired; a carry has none of that and the release IS the answer. **It cost no detector work** — `reads: 'pinch'` already gives position + hold + a close-count, and The Fundraiser had already made that reading a whole-hand FIST on his earlier *"pinch sahi naii hai"*. ⚠️⚠️ **The one constant that decides whether the chapter still teaches anything: the catch is BOUNDED (0.35 of the gap), NOT nearest-target** — copying The Fundraiser's halfway-line partition would have let the child drop her at 47 and had the APP snap her to 50, i.e. the machine doing the rounding; a release at the midpoint now lands on nothing, and says why. ⚠️ **Two defects the drive found, both scoring a round nobody played, and fixing one left the other doing the damage alone**: she WAITED inside the first checkpoint's catch zone (so grab-and-put-down scored it — the line now narrows so the first post clears her, after the gate caught the last board crossing into Milo's side), and the carry CLAMPED to `checkX(0)` (teleporting her onto it the instant she was grabbed). Driven: the midpoint refusal, a correct placement grading and advancing, a fist still shut across a round boundary correctly NOT picking her up, and a tap on the same round grading too. ▶ Open: **the release is the commit so there is no undo on the camera path** (his call; `stepPinch`'s sustained release is the guard); nobody has held a real hand up to it and `__miloPinch` bypasses `stepPinch`, so the fist thresholds are headless-only; no ten-round run, no re-teach, no scored `estimate` on the camera path; the 🎮 block's unexplained 57-second entry stall still stands; not committed, sw still v87. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-12 (the 🎮 block — the rail line became THE LONG LEVEL, a game level with checkpoints, after the founder asked for a daily real-life world. ⚠️ The framing he named — "you die and go back to the nearest checkpoint" — is FALSE (you go back to the LAST one, which is rounding DOWN), so it became WARPING, where nearest is honestly the answer. The world becoming the daily thing made the briefing shorter. 3 new backdrops (~4.5 credits, one graded down rather than re-rolled), the astronaut cost zero. ⚠️ The marker was sitting ON the commit button (8px at 1280×720, ~70px at 1920×800, pre-existing) and the obvious fix floated the whole cast up to 64px off the painted walkway — the exact fault this chapter is named for — so the marker moved ABOVE the path instead.)_
+
+_Prior update: 2026-08-12 (the 📷 block. **THE CAMERA IS FULL SCREEN AND THE WHOLE BOARD IS DRAWN ON IT; NOTHING PRINTS A FIGURE ANY MORE — THE TOTAL ARRIVES IN WORDS; EVERY TARGET IS BIGGER AND THE PINCH ITSELF LOOSER. ⚠️ NOT COMMITTED.** `tsc` 0 · **864/864 vitest** · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320 plus a 12-size × 4-slot sweep of the new placement. `CamView` gained one `full` prop (inset 0, zIndex 5, a scrim) and the painted yard is not rendered on the camera path; ⚠️ **the marker canvas is hidden there because a 4:3 stream cover-cropped into a 16:9 screen breaks the `x * clientWidth` mapping** — `HandDot` is the cursor that means anything. ⚠️ **The `board` field is DELETED, not set to null**: the read round's `$3,482`, the value round's `$400` and finally the L1 write scaffold all went, because with the amount SAID in words a printed total is the one thing a child can copy left-to-right — and a field that is always null is a printing surface waiting to be used again. ⚠️ **The cost is written down: on the hundreds and thousands the words NAME the digit, so only the tens really decode; place-counting now lives entirely in `write`** — and `read` and `value` are now nearly the same question, flagged not resolved. **Pinching: tiles 62 → 100px, boxes 116 → 150, HandDot 18 → 30 — but half the fault was not size**, it was a hit-test asking for containment, so the gap between two tiles was a dead stripe; both tests are nearest-target now, partitioned exactly at the halfway line. **`GRAB_ON` 0.42 → 0.50** on the founder's call, ⚠️ band 0.26 → 0.18, affordable only because `RELEASE_FRAMES` still confirms the dangerous direction; the gate's `band > 0.2` was a PROXY and is now 0.15, with the 400-frame jitter test as the real check. **The boxes are centred** — two placements, the one drawing the bigger box wins, ⚠️ with a tolerance or centring loses to a ONE-PIXEL taller box, and ⚠️ the gate's old *"board ends before bubbleLeft"* would have rejected the shipped layout (the rule is no overlap in BOTH axes; `bubbleTop` is exported so the check reads the placement's own number). ▶ Open: **still nobody has held a real hand up to it — nine readings deep, and `__miloPen` bypasses `stepPinch`, so the new `GRAB_ON` is proven headlessly rather than on screen**; `read` vs `value` needs a founder call; no ten-round run, no re-teach, no mastery exit, and the no-voice branch has still never rendered; not committed, sw still v87. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-12 (the ✋ block. **THE FOUNDER PICKED THE REPLACEMENT VERB AND IT IS BUILT: THE FUNDRAISER IS NOW PINCH A DIGIT, CARRY IT, DROP IT IN ITS COLUMN. THE AIR-WRITING AND ITS RECOGNIZER ARE DELETED. ⚠️ NOT COMMITTED.** `tsc` 0 · **864/864 vitest** · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320 on BOTH inputs. The hand's POSITION is the place, so the same 4 dropped on the hundreds is 400 and on the tens is 40 — and it needed **no new detection at all**: `pinchRatio`/`stepPinch`/`nibRead` already had it, and `reads: 'trace'` did not even change. ⚠️ **His literal spec is copying** — 1234 printed with four columns open is left-to-right sorting — so the total is **printed at L1 and spoken from L2**, and the tray is scrambled; both halves gated in both directions. ⚠️ **Three separately-pinned things collided in three different places** (the commit on the self-view, the undo on Milo, the chip across both buttons) → one flex row. ⚠️ **And my reach test was a TAUTOLOGY**: `handPoint` clamps, so sweeping the full frame passes for any `REACH`, including one that puts the thousands out of a seated child's arm. **7/7 planted regressions caught.** Driven: a carry graded and advanced, a release over empty floor placing nothing, a wrong drop's miss line and the tiles coming back, **1007 built by hand on a blank board from a scrambled tray with both placeholder zeros**, three batched taps landing in three separate boxes, and 0 overlaps at 640×320. ▶ Open: **nobody has held a real hand up to it, eight readings deep** — `REACH` is the knob a real child tunes first; no ten-round run, no re-teach, no mastery exit; not committed, sw still v87. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-12 (the 🧭 block. **THE FOUR THINGS THE FOUNDER REPORTED ON THE FUNDRAISER ALL GOT FIXED, AND THEN HE SAID THE VERB ITSELF IS WRONG — *"its not recognition bro"*. THE AIR-WRITING MAY BE ABOUT TO BE DELETED; READ THE BLOCK'S ⓪ AND ⑥ BEFORE TOUCHING ANYTHING. ⚠️ NOT COMMITTED.** `tsc` 0 · **872/872 vitest** (+4) · `next build` 0 · 0 console errors · driven live at 1280×720. ① **The camera door was a one-way trip and it had shipped** — `CamGate` renders only on the CAMERA path, so a device that once tapped *"Tap instead"* had that remembered and nothing in the chapter ever offered the camera back; the other three AR chapters all put **both doors on the intro card** and this one had a single button. Verified on his exact case. ② **No figures in the question** — and ⚠️ a `read` round cannot be translated into words either, because `numWords(3482)` speaks the hundreds aloud; the numeral is already on the board, so the ask names no number at all. Gate widened to every round type. ③ **The dotted stroke was a LIFTED PEN**: the ink joins consecutive points, so a line can only break at a stroke boundary, and `LOST_GRACE` released the pinch after 5 frames of no hand — ~170–500 ms at this loop's real frame rate, while writing is exactly when the hand is motion-blurred. A lift does not merely stop the ink, **it ends the stroke**, so the numeral drew as disconnected pieces. 5 → 12. ④ ⚠️⚠️ **The real "cannot recognise" was a ref NOTHING EVER ASSIGNED** — `clearInk` had a declaration, two callers and no setter, so `put()` cleared nothing: after the first committed digit the pen points stayed, and every later `onStroke` handed the recognizer two numerals as ONE cloud → *"I could not read that"* for the rest of the run. **No gate reaches component state, and the only drive that ever got to the camera path COMMITTED as its last action**, so the state after a commit was never exercised. Replaced with a `resetKey` prop — a prop the parent must pass cannot be left unwired, which is the bug's own lesson. Driven: `1` → commit → `7`, both read. ⑤ **Measuring the recognizer found its real weakness is PROPORTION, not slant** — sparse points, a release tail, a stroke cut into five and ±8% shake all read fine, but a numeral written narrow read **5 of 50** under the uniform scale while a 20% slant read 50/50. `ASPECT_PULL = 0.6`, both edges gated and mutation-proven, and ⚠️ **the previous session's test asserting 4:3 units cost a quarter is now FALSE and was inverted rather than deleted** (55/80 → 77/80). ⚠️ **My first numbers for all of it were wrong** — a standalone harness said 0.25 and that the 1 collapsed at 0.5; neither held inside vitest against the gate's own forms. ⑥ ▶ **Then the founder stopped it, and he is right**: the three AR chapters that work all pass *the body carries the maths idea*, and air-writing carries only the NOTATION — place value is written notation and nothing about it is physical. **Proposed and NOT built: "kitne × kahaan"** — N fingers held over a COLUMN, so the same 4 over hundreds is 400 and over tens is 40 and the child's own hand performs the misconception the chapter breaks; a fist over an empty column IS the placeholder zero. It needs **no new detection**. ▶ Open: **his call is pending and it gates everything** (build it? delete `airDigit.ts`/`InkPane` now or later?); **nobody has held a real hand up to any of it**, seven readings deep; everything in the ✋ block still stands; `sw.js` still v87; and the §④ bug is proven by the SOURCE and by the fix working, **not** by a screenshot of it failing. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-12 (the ✋ block. **THE CHILD WRITES ON THEIR OWN CAMERA PICTURE, THE TEACHING MOVED ONTO THE 12–18 BAND'S CHALKBOARD, AND CHASING THE FIRST TWO ASKS FOUND THREE FAULTS THAT WERE ALREADY SHIPPING. ⚠️ NOT COMMITTED.** `tsc` 0 · **868/868 vitest** (+4) · `next build` 0 · driven at 1280×720, 1024×620 and 640×320 · temp `?p=` override reverted and grepped twice. **The ask was the writing pane:** with the ink on a white box beside the camera the hand is in one place and the mark in another, so there is nothing to aim at — it is a transparent overlay on the mirrored self-view now, which has taken the pane's slot (269×202 at 1280×720, 149×112 at 640×320), and video, marker canvas and ink canvas measure **the same rectangle to the pixel** at every size. ⚠️ **The slot had to become 4:3** and **the `<video>` could not simply be rendered there** — it is mounted once for the whole chapter, so the round posts its rect and the shell places the camera in it. ⚠️⚠️ **Then the founder said it could not read what they wrote, and the cause is arithmetic: a landmark is a fraction of the FRAME, and the frame is 4:3, so every digit reached the recognizer a quarter too narrow against square templates.** Measured over ten independently-written forms — **80/80 at square, 55/80 at the camera's own units, 42/80 once a real hand's shake is added** — and ⚠️ **it never once MISREAD, it refused**, which is why it presented as *"the camera cannot see me"* rather than as a bug, and why nothing caught it: **every test in the recognizer's own gate writes its forms square.** ⚠️ **A third live fault fell out of measuring rather than looking:** `CamView` framed itself with a **border**, which shrinks the box the detect loop maps landmarks with, so every marker in **every AR chapter** has been drawn 2px off the hand. ⚠️ **And moving the teaching onto the chalkboard exposed a fourth:** the walkthrough's working board had been drawn **across the answer boxes at 17 of 18 reachable sizes** — translucent paper hid what an opaque board showed in one screenshot. Both documented reasons the teen board had been kept out of this band are answered rather than waived (**a wooden frame and a cast shadow** for the slab fault, and **`--font-chalk` moved to `:root`** — scoped to `[data-band]` it silently gave a 3–11 chapter the body font with nothing erroring). ⚠️ **My first gate for the board's placement re-implemented it and a mutation pinning the board back walked straight through** — a placement lives in CSS, so the rect is exported, driven, AND source-checked. The skip is the teen band's quiet **`I've got it →`**, never the forward path, and **the re-teach gets none**. ▶ Open: **nobody has held a real hand up to it**; nib smoothing is a measured TRADE and deliberately not built; **the chalkboard is in ONE chapter, so the band is now mixed** — a founder call; re-drive the other three AR chapters for the outline change; and everything in the ✍️ block still stands, `sw.js` still v87. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-11/12 (the ✍️ block. **THE FUNDRAISER'S VERB CHANGED ON THE FOUNDER'S CALL: BIG NUMBERS IS NOW READ IT AND WRITE IT, AND THE FOURTH ANSWER SURFACE IS A DIGIT WRITTEN IN THE AIR. ⚠️ NOT COMMITTED.** `tsc` 0 · **864/864 vitest** (+18) · `next build` 0 · dev hook **0 hits in the emitted production JS** · driven at 1280×720 and 640×320 on BOTH inputs. The founder's four-part ask, with two answers taken before any code: **replace** the bundle-building gesture, and **Milo speaks / the child writes** (no microphone). Three question types on ONE surface — read a place off a printed number · convert a value · write a spoken total into four labelled columns — answered by TAPPING a digit or by WRITING it in the air with a pinched fingertip. ⚠️ **The answer is written, never picked, which is what keeps `read` honest**: "how many hundreds in 3,482" over three chips is the exact fault this chapter was rebuilt to remove two sessions ago. ⚠️ **A `read` round must NOT label its boxes and a `write` round must** — printed place captions answer the question for the child, and counting the places IS the skill. ⚠️ **The rule the whole AR design hangs on: a shape that cannot be read is "write it again", NEVER a wrong answer** — the recognizer returns null when unsure, nothing is graded, and the digit it read is shown IN the box before the commit so a misread is visible and correctable. ⚠️ **Rotation is deliberately not normalized** (6 and 9 differ by a rotation and nothing else) and **the thresholds were MEASURED, not reasoned** — the first ceiling was ~10× too loose, and junk and sloppy digits genuinely OVERLAP on absolute distance, so no threshold separates them and the ratio between the top two matches is what actually rejects a scribble. ⚠️ **Three faults were visible only on screen**: the bubble covering the answer boxes (the open item the previous session left behind, reproduced on the first drive), the writing pane computing to ZERO on every short landscape frame (**my own check asserted a ceiling that 0 satisfies**), and the commit button sitting on the writing pane and the self-view. ⚠️ **And the batched-tap bug for the sixth time, written by me again** — the entered digits were mirrored in a ref and the ACTIVE BOX was not, so 8-0-5-4 tapped fast wrote four digits into box 0. **14 mutations planted, 11 caught, all three survivors checked and recorded in the source.** ▶ Open: **nobody has held a real hand up to it — six readings deep**; no ten-round run, no re-teach, no mastery exit, no scored `value` on screen; ⚠️ **the no-voice branch has never rendered**, and it is the one thing stopping a `write` round being a blank question on a silent Chrome; not committed, sw still v87. _(prior footer follows.)_)_
+
+_Prior update: 2026-08-11 (the ✂️ block. **A REPO-WIDE OVER-ENGINEERING AUDIT, THEN ALL NINE FINDINGS APPLIED: −1,835 LINES, 3 FILES GONE. ✅ COMMITTED on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **846/846 vitest** (unchanged — a behaviour-preserving cut) · `next build` 0 · **eslint 247 against 255 at HEAD**, i.e. 8 FEWER and none introduced · driven live at 1280×720 on a story chapter and a sim. **The architecture is fine and the copy-paste is not**: a real import graph found **0 orphan modules in 273 files and 0 removable deps**, so the useful measure was never "what is dead" but "what is written more than once". ⚠️ **The biggest cut was a lessons/ directory nothing renders** — six files imported for one or two data helpers each, carrying a whole pre-story-rebuild lesson behind them, and **the tell was the DEFAULT export: not one of the six is imported by anybody** (`ExponentsRootsTeenLesson` is 326 lines of which only `pow`, line 28, is wanted). 1,368 → 133 lines; three deleted outright with their helpers folded into the single consumer, and `pow` → `core/fmt` where it belonged. **The story-chapter shell was written out 34 times** — so a fix to the double-finish guard had to be applied 34 times or not at all — now `useChapterShell`, 32 of 34 converted; ⚠️ **and the tally had to move in too, because the lint rule was right**: a ref returned from a hook may not be mutated by its caller, and every chapter accumulated it with the identical expression, so that expression IS a `SkillBeat` `onComplete`. **`<Slider>` was defined 13 times in 22 sims** (two of the copies carrying a private re-implementation of `disp`) → one in SimLayout; ⚠️ `skipZero` did NOT become a prop — one call site needed it, so the rule went into that caller's own `onChange`. ⚠️ **`walkEvery: 99` is a sentinel meaning "never" in a ten-round chapter**, and twelve chapters set it AND still wired an interlude unreachable by arithmetic. **`disp` had 34 copies under 12 names** and **`pick` 46** — ⚠️ `gameKit` was RE-EXPORTING `pick` to 12 games, which only surfaced when `tsc` failed. Plus `reteachAfter` (optional, default 2, all 34 chapters passed 3 → a constant), a one-entry `BESPOKE_CHAPTERS`, and 3 no-op conditional spreads in the landmarker. ⚠️ **THE AUDIT SAID `disp` HAD 37 SITES AND THREE WERE NOT `disp` AT ALL** — two build a `"3x"` TERM and merely contain the sub-expression, one renders `+3` for positives; each would have been a silent rendering bug. **Read every site a mechanical scan reports before rewriting it.** ⚠️ And every codemod ran from a FILE — zsh silently ate three inline ones, and a scan returning 0 hits reads exactly like a clean repo. ▶ Open: **not pushed, sw still v87**; **no chapter was played to a scored round**, so `tally` is proven by 846 tests and a type signature rather than by a finish; the previous block's list all stands. _(prior footer follows.)_)_
 
 _Prior update: 2026-08-11 (the 💰 block. **THE ORDER DESK IS NOW THE FUNDRAISER, IT TEACHES LIKE 12–14, AND IT IS ANSWERED BY PINCHING. ✅ TWO COMMITS on `feat/9-11-factor-lab-ar`, NOT pushed.** `tsc` 0 · **846/846 vitest** (was 787, **+59**) · `next build` 0 · dev hooks **0 hits in the emitted production JS** (checked against a control string that IS present) · **AR driven live at 1280×720**. The founder asked why big numbers were still being taught with a warehouse, and measuring answered it: **the word "fundraiser" appeared in exactly ONE place in the whole chapter** — the intro card — while every spoken line said pallets and bays. ⚠️ **The copy alone could not have fixed that**, because the oldest rule in the craft doc forbids naming something that is not drawn, so the anchor can only live in the explanation, once. **The world changed instead, and only for this chapter**: dollar denominations ARE base ten, so here the anchor and the manipulative are the SAME OBJECT and re-theming removes the need for a bridge rather than adding one. ⚠️ **The pieces are BUNDLES, not notes** — a $100 note does not show its own ten, which is a piece asserting its value, the exact fault this chapter was rebuilt to remove; a banded bundle does, so `blockSet`'s geometry survives untouched and only the names change. 3 new scenes, ~4.5 credits, **measured before being wired** (value 0.524/0.575/0.562 under a cast of 0.62–0.81; the gym came back at 0.864 and was **graded down rather than re-rolled**; every board BLANK, because a painted total is the answer on the wall). **Teaching in the 12–14 shape without adopting `GameShell`** (the plan forbids it — it would flatten a painted world and hardcodes the band): THE PLAN read-along **self-paced, NOT `speakWithHighlight`** (3–11 has zero clips, so that helper always takes its blocked-audio branch and TickTock once shipped a chapter that hung on its own opening screen), and the walkthrough goes from **four lines to nine–thirteen baby steps** — one of those four used to jump the columns from empty to the finished number, so the child watched the ANSWER appear rather than the method. ⚠️ **The working is written on paper, in the world**, because the teen chalkboard is a slate rounded-rect and that is the slab fault this repo has shipped three times. **AR: reading E, and the pinch is a RATIO — an absolute threshold does not work at all**, since a 2 cm gap at 40 cm reads identically to a 3.5 cm gap at 70 cm and seating distance alone eats ~43% of the gesture's range. ⚠️ **Eight defects, five of which no gate could have caught:** the held-over guard was **broken on a fresh mount** (its baseline was `useRef(0)` and the reset only runs when SkillBeat REUSES the component); the chip told a held-over grab to drop, an action the guard then silently refuses; the shipped strip **printed the current round's answer** (`200 · 552` with the $552 round open — RailLine's recorded fault); CamGate covered THE PLAN and both walkthroughs; `add(i)` did not enforce the single-column rule, which lived only in the view; `send()` was a silent no-op mid-flight; **the miss line handed the answer over** (*"that is 0, and I asked for 5"*), caught by the chapter's FIRST gate — also the first thing ever to drive `grade`/`missFor`, which lived inside a closure until now; and the reveal read "1 coins = 1". Gates: pinch **9/9**, slide **6/6**, the chapter **7/7** — ⚠️ **and three checks had to be rewritten because a check written in terms of the constant it guards MOVES WITH the mutation**, plus **one test that was failing on every run and therefore reported every mutation as caught**. ▶ Open: **still nobody has held a real hand up to any of it, now five readings deep**; **the bubble covers the columns** (measured, pre-existing); no ten-round run, re-teach or mastery exit; 640×320 not driven; the cover-fit bug still live here and in LoadingBay; nothing pushed, sw still v87. _(prior footer follows.)_)_
 
