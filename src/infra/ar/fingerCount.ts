@@ -38,6 +38,46 @@ export function extendedFingerTips(lm: Landmark[], handedness: string): FingerTi
 }
 
 /**
+ * 👍 — the four fingers curled and the thumb pointing UP. A COMMIT, not a value.
+ *
+ * The Order Desk's board used to be put up by pressing a button, and the founder replaced that with
+ * this: a child who has carried every digit into its column says so with their hand rather than
+ * reaching for a control. It is the right shape for a commit because it is a POSE nobody strikes by
+ * accident, unlike a count or a position, which drift through every value on the way to the one they
+ * mean.
+ *
+ * ⚠️ **IT MUST NOT COLLIDE WITH THE FIST THAT GRABS**, and the separation is the thumb's HEIGHT
+ * rather than its extension. A fist wraps the thumb across the fingers, so its tip sits level with
+ * its own knuckle; a thumbs-up carries it most of a thumb's length clear. `THUMB_UP_LIFT` is set well
+ * under a fully vertical thumb (~0.6 of palm length) so a nine-year-old's approximate one still
+ * reads, and well over a wrapped one. The chapter adds the other half of the guard for free: the
+ * commit is only offered when the board is FULL, i.e. when nothing is left to pick up.
+ *
+ * ⚠️ AND IT IS A POSE, SO IT IS MEASURED AGAINST THE HAND'S OWN SIZE, never in frame units — a lift
+ * threshold in raw normalized units means "commit" at one seating distance and silence at another,
+ * which is the whole argument `pinch.ts` opens with.
+ *
+ * ⚠️ CURL IS TESTED AGAINST EACH FINGER'S OWN KNUCKLE (`tip` at or below `mcp`), which is the exact
+ * inverse of the extension test above rather than a second, differently-tuned idea. It is a `y`
+ * comparison, so it assumes an upright hand — which a thumbs-up is by definition.
+ */
+export const THUMB_UP_LIFT = 0.4
+
+// ⚠️ 2-D, like every reading in `pinch.ts` and for its reason: MediaPipe's `z` is wrist-relative and
+// by far its noisiest channel, so the parameter asks for no more than this actually uses.
+export function thumbsUp(lm: { x: number; y: number }[] | undefined): boolean {
+  if (!lm || lm.length < 21) return false
+  const palm = Math.hypot(lm[9].x - lm[0].x, lm[9].y - lm[0].y)
+  if (palm < 0.06) return false          // too far away to read — same gate as `pinch.ts`
+  // every finger curled: a tip ABOVE its knuckle (y grows down) is extended, which this is not
+  for (const [tip, mcp] of [[8, 5], [12, 9], [16, 13], [20, 17]]) {
+    if (lm[tip].y < lm[mcp].y) return false
+  }
+  // and the thumb clear of its own knuckle, upward
+  return lm[2].y - lm[4].y > palm * THUMB_UP_LIFT
+}
+
+/**
  * The angle of the PALM, as an AXIS in [0,180). 0° is flat to the right, 90° is straight up.
  *
  * Measured in MIRRORED screen space, because that is the frame the child is looking at — the

@@ -34,7 +34,7 @@ export type { InputKind }
 
 /** How long a hand must hold still before it counts as an answer. */
 export const DWELL_MS = 1200
-export const NO_HAND: HandRead = { count: 0, hands: 0, tilt: null, palm: null, sweeps: 0, sweepArm: 0, sweepArmed: false, grabbing: false, grabs: 0 }
+export const NO_HAND: HandRead = { count: 0, hands: 0, tilt: null, palm: null, sweeps: 0, sweepArm: 0, sweepArmed: false, grabbing: false, grabs: 0, pen: null, penDown: false, thumbsUp: false }
 
 /**
  * The chapter's palette, so this can live in a dark neon lab AND on a painted building site.
@@ -137,7 +137,31 @@ export function useHandInput(opts: { reads?: Reads; marker?: { fill: string; ink
       setFake(true)
       setRead(r => ({ ...NO_HAND, hands: 1, palm: { x, y }, grabbing: held, grabs: r.grabs + (held && !r.grabbing ? 1 : 0) }))
     }
-    return () => { delete w.__miloHand; delete w.__miloFingers; delete w.__miloTilt; delete w.__miloSweep; delete w.__miloSlide; delete w.__miloPinch }
+    /**
+     * The nib, for reading **H**. ⚠️ IT SETS `grabs` ON THE PEN-DOWN EDGE for `__miloPinch`'s reason:
+     * the chapter's held-over guard counts grabs, so a hook that only set `penDown` would leave a
+     * drive unable to start a single stroke.
+     */
+    w.__miloPen = (down: boolean, x: number, y: number) => {
+      setFake(true)
+      setRead(r => ({
+        ...NO_HAND, hands: 1, pen: { x, y }, penDown: down, grabbing: down,
+        grabs: r.grabs + (down && !r.penDown ? 1 : 0),
+      }))
+    }
+    /**
+     * 👍 — the commit pose.
+     *
+     * ⚠️ IT IS FUNCTIONAL AND KEEPS `grabs`, unlike the hooks that spread `NO_HAND`. `grabs` is
+     * monotone within a detector session and the chapter's held-over guard diffs against it, so a
+     * hook that reset it to 0 would make the chapter think the camera had restarted — the carry
+     * point would vanish mid-drive and the drive would report a bug the app does not have.
+     */
+    w.__miloThumb = (up: boolean) => {
+      setFake(true)
+      setRead(r => ({ ...r, hands: 1, pen: null, penDown: false, grabbing: false, thumbsUp: up }))
+    }
+    return () => { delete w.__miloHand; delete w.__miloFingers; delete w.__miloTilt; delete w.__miloSweep; delete w.__miloSlide; delete w.__miloPinch; delete w.__miloPen; delete w.__miloThumb }
   }, [])
 
   const camReady = status === 'running' || (DEV && fake)
@@ -234,21 +258,53 @@ export function DwellRing({ progress, size, skin, children }: {
  * now". It is merely INVISIBLE until running — it must keep its layout box, because the detect loop
  * reads video.clientWidth / clientHeight.
  */
-export function CamView({ videoRef, canvasRef, w, bottom = 10, right = 10, skin, hidden }: {
+export function CamView({ videoRef, canvasRef, w, at, bottom = 10, right = 10, skin, hidden, full }: {
   videoRef: React.RefObject<HTMLVideoElement | null>
   canvasRef: React.RefObject<HTMLCanvasElement | null>
+  /**
+   * Where to pin it. Omitted it sits bottom-right, out of the way, because the instrument is the
+   * thing being read. A chapter whose ANSWER is drawn in the air places it where the writing goes
+   * instead — the child cannot write what they cannot see themselves doing.
+   */
+  at?: { left: number; top: number }
+  /**
+   * FULL SCREEN — the camera IS the backdrop and the whole instrument is drawn over it. For a
+   * chapter whose hand is a cursor across the entire board this beats the corner panel: the child
+   * looks at ONE place instead of glancing between their hand over there and the board over here.
+   *
+   * ⚠️ THE MARKER CANVAS IS HIDDEN IN THIS MODE, and that is not a style choice. The loop maps a
+   * landmark with `x * clientWidth`, which assumes the drawn video fills its box exactly — true of a
+   * 4:3 stream in a 4:3 panel and false of the same stream cover-cropped into a 16:9 screen, so the
+   * markers would drift off the hand vertically. The chapter's own screen-space cursor is drawn
+   * through its reach mapping anyway, and two dots in two different places is worse than one.
+   */
+  full?: boolean
   w: number; bottom?: number; right?: number; skin: HandSkin; hidden?: boolean
 }) {
   return (
     <div style={{
-      position: 'fixed', right, bottom, width: w, aspectRatio: '4 / 3', zIndex: 36,
-      opacity: hidden ? 0 : 1, pointerEvents: hidden ? 'none' : 'auto',
-      borderRadius: 14, overflow: 'hidden', border: `2px solid ${skin.accentSoft}`,
-      boxShadow: '0 10px 26px rgba(0,0,0,.45)', background: '#050a14',
+      ...(full
+        ? { position: 'fixed', inset: 0, width: '100vw', height: '100dvh', zIndex: 5 }
+        : {
+          position: 'fixed', ...(at ? { left: at.left, top: at.top } : { right, bottom }),
+          width: w, aspectRatio: '4 / 3', zIndex: 36, borderRadius: 14,
+          // ⚠️ AN OUTLINE, NOT A BORDER. A border shrinks the content box, so the video and the
+          // overlay canvas end up 2px in from the element the loop measures — and the loop maps a
+          // landmark with `x * clientWidth`, i.e. every marker it draws lands slightly off the hand.
+          // An outline takes no layout space, so what is measured and what is drawn are the same
+          // rectangle.
+          outline: `2px solid ${skin.accentSoft}`, outlineOffset: -2,
+          boxShadow: '0 10px 26px rgba(0,0,0,.45)',
+        }),
+      overflow: 'hidden', background: '#050a14',
+      opacity: hidden ? 0 : 1, pointerEvents: hidden || full ? 'none' : 'auto',
     }}>
       {/* Mirrored, so raising your right hand raises the one on the right of the screen. */}
       <video ref={videoRef} playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} />
-      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: full ? 'none' : 'block' }} />
+      {/* the room is whatever the child is sitting in, so the paper the board is drawn on needs a
+          floor to read against */}
+      {full && <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,7,4,.34)' }} />}
     </div>
   )
 }

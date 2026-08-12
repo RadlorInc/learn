@@ -1,67 +1,81 @@
 'use client'
 /**
- * Chapter (9–11) — BIG NUMBERS & PLACE VALUE to 10,000 (skill `bigNumbers`) — THE ORDER DESK.
+ * Chapter (9–11) — BIG NUMBERS & PLACE VALUE (skill `bigNumbers`) — THE FUNDRAISER.
  *
- * Replaces NumberVault, which was the pre-teen "Number Lab" HUD. See docs/story-9-11-rethink.md §1
- * for the band-wide audit; the two faults this file exists to fix were both live:
+ * ⚠️ THE VERB CHANGED, ON THE FOUNDER'S CALL: THIS CHAPTER IS NOW **READ IT AND WRITE IT**, NOT
+ * BUILD IT. The previous cut had the child load base-ten bundles into four bays until the columns
+ * added up, and it taught the concrete side well. What it never asked for is the thing the skill is
+ * actually FOR: looking at 3,482 and knowing which digit is the hundreds, and hearing "three
+ * thousand four hundred and eighty-two" and writing the figures down. So the bundles, the bays, the
+ * supply row and the pinch-and-drop are gone, and the answer surface is a fundraiser board the child
+ * WRITES ON. Everything the bundles carried is now carried by the walkthrough, which builds the
+ * number one place at a time before anything is scored.
  *
- *  ① THE QUESTION WAS PRINTED AND THE ANSWER WAS THREE CHIPS. `prompt` read
- *    "How many hundreds in 3,482?" — the numeral, in words, above `nearDigits()` chips. Delete the
- *    entire block chart and all thirty questions still work, so the chart was scenery. Here the
- *    answer is the goods the child actually loaded — delete them and there is no question left.
- *    ⚠️ The order is given in WORDS **and** figures together (founder's call): "three hundred and
- *    twelve — that is 312". That does not hand the answer over, because the answer is a quantity
- *    rather than a digit, and reading 312 as three hundreds, one ten and two ones IS the skill.
- *    What it adds is the numeral↔words mapping the curriculum asks for at this level.
- *  ② ⚠️ AND THE BLOCKS LIED ABOUT THEIR OWN PROPORTIONS. `Block` drew a hundred at `u * 4.4`
- *    square — 19 units of area, not 100 — and a thousand at the SAME size as a hundred. That is the
- *    0.55 fault BlockYard paid for, shipped: a child laying a hundred against the tens reads the
- *    wrong number off it. Every piece here is honest (see PIECE_U), derived from ONE unit.
+ * THE STORY — §0a's second half, *who wants this and why*. Milo runs the tally table at a school
+ * fundraiser. The caretaker comes over with a figure; the board on the wall is blank, and the board
+ * is what the whole school reads. Somebody has to WRITE the total up, and somebody has to be able to
+ * say how many hundred-dollar notes are in it when the parent helper asks. That is the job.
  *
- * THE STORY — §0a's second half, *who wants this and why*. Milo is the clerk at a goods yard. A
- * customer walks in with an order and waits at the desk. The yard holds four bays — thousands,
- * hundreds, tens, ones, LEFT TO RIGHT the way a number is written — and nobody counts 3,482 things
- * one at a time: you load the biggest unit that fits and work down, which IS place value. When the
- * order is right the customer takes it and walks off with it; when it is short they stay and say
- * what is missing.
+ * THE GESTURE — one surface, three questions, and the surface is a row of boxes with a place under
+ * each of them.
+ *   • `read`  — the board already shows $3,482. "Just the hundreds — what goes in that column?"
+ *      ONE digit. The numeral is printed as a plain figure with NO place labels under it, because a
+ *      labelled 3 | 4 | 8 | 2 answers the question for the child: counting the places IS the skill.
+ *   • `value` — "the tin holds four hundred dollars — how many hundred-dollar notes is that?" The
+ *      digit-value question, asked from the end where the child has to convert rather than read off.
+ *   • `write` — Milo SAYS a total out loud and the board is blank. Write all of it, one place at a
+ *      time, thousands first. The boxes ARE labelled here, because writing a number you have only
+ *      heard is what the labels scaffold, and the child still has to decompose the words themselves.
  *
- * THE GESTURE — one verb, three questions. Tap a unit in the supply row and it travels to its bay;
- * tap a loaded bay to send one back. All four bays are always on screen, so the place-value chart
- * stays intact and a single-place round shows which column is being filled.
- *   • `build` — the order is spoken in WORDS ("three thousand four hundred and eighty-two"); load
- *      every bay. Graded on the TOTAL, which is what makes the bundle below honest.
- *   • `place` — the docket shows a numeral; the customer wants only one place ("just the tens").
- *   • `value` — "four hundred units" → how many hundred-pallets is that? The digit-value question
- *      asked from the end that can be BUILT rather than picked off three chips.
+ * ⚠️ THE ANSWER IS WRITTEN, NEVER PICKED, and that is what keeps `read` honest. "How many hundreds
+ * in 3,482?" over three chips is the exact fault this chapter was rebuilt to remove two sessions
+ * ago — one of the chips is right and a third of children get it free. A digit the child WRITES has
+ * no options on screen at all, so the floor is 1-in-10 and, more to the point, the child has to
+ * produce the answer rather than recognise it.
  *
- * ⚠️ THE BUNDLE IS THE PAYLOAD AND IT IS WATCHABLE. A bay cannot hold ten: load the tenth and the
- * ten pieces slide together into ONE piece of the next size up, which travels one bay LEFT. That is
- * the constraint that makes the next column mean anything, and it is why `build` grades on the total
- * — load 12 ones for a target of 2 and they bundle to 1 ten + 2 ones, which really is 12. A wrong
- * answer stays wrong; an over-load self-corrects exactly the way regrouping does.
+ * ⚠️ AND THE DIGITS ARE 0..9 AGAIN. The old `MAX_DIGIT = 5` was never a difficulty choice — it was
+ * what nine HONEST base-ten pieces physically fit on a 1280px frame before the ones column stopped
+ * being countable. Nothing is drawn as pieces now, so the ceiling has no reason to exist and the
+ * chapter can finally ask about $3,482, which is the number its own intro card always used.
  *
- * ⚠️ DELIBERATE NARROWING, stated rather than hidden: every digit is 0..MAX_DIGIT (5), not 0–9.
- * Nine HONEST pieces per bay (a hundred is 10×10 units, a thousand is ten of those) forces the unit
- * down to ~9px, at which point the ones bay is not countable — and a manipulative a child cannot
- * count is a wrong answer the chapter caused. Real base-ten kits do not ship nine thousand-cubes
- * either. Zero IS in range for the inner places: an empty bay is the placeholder, and 3,042 is the
- * number that teaches it.
+ * ⚠️ ZERO IS DELIBERATELY IN RANGE FOR THE INNER PLACES, and L3 forces one. An empty column is the
+ * placeholder, 3,042 is the number that teaches it, and it is the case a child who has only ever
+ * met full numbers gets wrong.
  *
- * ⚠️ MILO DOES NOT WALK HERE, and that was measured rather than chosen — see MiloClerk. The
- * journeys belong to the customer and to every piece that flies to its bay.
+ * ⚠️ **AND THE HAND PATH IS NOW *KITNE × KAHAAN* — PINCH A DIGIT, CARRY IT, DROP IT IN ITS COLUMN.**
+ * The previous cut had the child WRITE the digit in the air and a $P recognizer read it back, and the
+ * founder stopped it: *"its not recognition bro"*. He was right, and the test it fails is
+ * chapter-craft §5's first one — **the body has to carry the IDEA, not the NOTATION.** A sweep IS
+ * repeated subtraction and a forearm IS the ramp; a nine-year-old already knows how to write a 4, so
+ * doing it in the air is harder and means nothing more, and every misread is friction with no
+ * learning in it. Carrying a digit to a column is the opposite: **the hand's POSITION is the place**,
+ * so the same 4 dropped on the hundreds is 400 and on the tens is 40 — the child's own arm performs
+ * the exact misconception the chapter exists to break, which a mouse cannot do.
  *
- * ⚠️ Materials are teal/indigo/plum/slate, never clay. All three scenes measure a dominant hue of
- * 30°, which is clay's hue AND Milo's; the gate asserts ≥45° of separation.
+ * ⚠️ IT NEEDED ALMOST NO NEW DETECTION. `stepPinch` gives hold/release with the hysteresis, the
+ * sustained release and the lost-frame grace already derived; only the RATIO it steps on changed.
+ * `airDigit.ts` and the ink pane are deleted rather than left to rot.
+ *
+ * ⚠️ **THE GRAB IS A FIST AND THE COMMIT IS A 👍 — BOTH ON THE FOUNDER'S CALL ("pinch sahi naii
+ * hai").** A pinch is fine-motor work asked of a nine-year-old while their whole arm crosses the
+ * screen, read from the two noisiest landmarks there are; closing the whole hand is what a child
+ * already does to pick something up. And the board no longer goes up by reaching back to a button:
+ * a thumbs-up says *that is my answer*. ⚠️ The button is still there — see the commit effect for
+ * why replacing a chapter's only commit-feeding control is how a round becomes unsubmittable.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
-import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney, CARRY_SPEED } from './critters'
+import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
-import { blockSet, shadesOf, Shadow, Cube, Rod, YARD_CSS, type Material, type Shades } from './yard'
+import { Shadow, YARD_CSS } from './yard'
 import { useHandInput, HandProvider, useHand, CamView, CamGate, type HandSkin } from '@/infra/ar/HandInput'
-import { rint, pick } from '@/core/rand'
+import { rint, pick, shuffle } from '@/core/rand'
+import {
+  Chalkboard, GotIt, ThePlan, StepBoard, CHALK_GOLD, CHALK_CSS, chalkText,
+  isShort, stepWindow, stepBoardRect,
+} from './chalkboard'
 
 // ─── Numbers in words ───────────────────────────────────────────────────────────────────
 const ONES_W = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
@@ -83,115 +97,25 @@ const fmt = (n: number) => n.toLocaleString('en-US')
 export const PLACES = [1000, 100, 10, 1] as const
 export type Place = typeof PLACES[number]
 /**
- * ⚠️ EVERY PIECE IS A BUNDLE, AND THAT IS WHAT KEEPS THE MANIPULATIVE HONEST AS MONEY. A hundred-
- * dollar NOTE does not show its own ten — it is one object with a number printed on it, which is a
- * piece ASSERTING its value, the exact fault this chapter was rebuilt to remove. A banded bundle of
- * ten ten-strips does show it, and it is what money actually looks like in bulk. So the geometry
- * `blockSet` already draws survives the re-theme untouched: only the names change.
+ * ⚠️ THE NAMES ARE MONEY NAMES, because the world is a fundraiser and dollar denominations ARE base
+ * ten — the anchor and the material are the same object, which is the whole reason this world was
+ * chosen over a warehouse. A child has stood in front of a fundraiser board; none of them has been
+ * in a goods yard.
  */
 const PLACE_NAME: Record<Place, { one: string; many: string; goods: string }> = {
-  1000: { one: 'thousand-bundle', many: 'thousand-bundles', goods: 'thousands' },
-  100: { one: 'hundred-bundle', many: 'hundred-bundles', goods: 'hundreds' },
-  10: { one: 'ten-strip', many: 'ten-strips', goods: 'tens' },
-  1: { one: 'coin', many: 'coins', goods: 'ones' },
+  1000: { one: 'thousand-dollar note', many: 'thousand-dollar notes', goods: 'thousands' },
+  100: { one: 'hundred-dollar note', many: 'hundred-dollar notes', goods: 'hundreds' },
+  10: { one: 'ten-dollar note', many: 'ten-dollar notes', goods: 'tens' },
+  1: { one: 'dollar coin', many: 'dollar coins', goods: 'ones' },
 }
 
 /**
- * ⚠️ ONE MONEY FORMAT FOR THE WHOLE CHAPTER. `fmt` is a bare `toLocaleString` with ~10 call sites,
- * and a "$" written into some strings and not others would be two formats for one chapter — which is
- * why the warehouse version banned the symbol outright. Now that the world IS a fundraiser board the
- * symbol has to be there, so it goes in ONE helper rather than into the strings.
+ * ⚠️ ONE MONEY FORMAT FOR THE WHOLE CHAPTER. `fmt` has ~10 call sites, and a "$" written into some
+ * strings and not others would be two formats for one chapter.
  */
 const money = (n: number) => `$${fmt(n)}`
 /** digits of `n`, most significant first, for the four places */
 const digitsOf = (n: number): number[] => PLACES.map(p => Math.floor(n / p) % 10)
-const valueOf = (counts: number[]) => counts.reduce((s, c, i) => s + c * PLACES[i], 0)
-
-// ─── Materials ──────────────────────────────────────────────────────────────────────────
-/**
- * ⚠️ NO CLAY. Re-measured over the band the bays occupy after the fundraiser re-theme, the three
- * scenes carry a dominant hue of **26.9° · 35.4° · 35.1°** — the same warm band the depot scenes
- * did (34–47°), so these four survive the world change unchanged and are still 150–255° away.
- * That is clay's hue and Milo's own (30°/sat .53), so a clay set on these grounds is
- * BlockYard's hay-bale fault. These four are 155–255° away, and they share ONE saturation and ONE
- * brightness (yard.tsx's MAT_SAT/MAT_VAL) so every one of them sits in the painted sprites' band by
- * construction and only the hue moves.
- */
-export const MATERIALS: Material[] = [
-  { name: 'teal', hue: 185, grain: true },
-  { name: 'indigo', hue: 240, grain: false },
-  { name: 'plum', hue: 285, grain: true },
-  { name: 'slate', hue: 210, grain: false },
-]
-
-// ─── The pieces ─────────────────────────────────────────────────────────────────────────
-/**
- * ⚠️ **EVERY PIECE IS DERIVED FROM ONE UNIT AND SHOWS ITS OWN TEN.** A rod is ten cubes long with
- * ten seams (yard.tsx owns that, and `blockSet` is the only place in the app that derives it). A
- * pallet is ten rods — a 10×10 face, so it is visibly a hundred AND visibly ten tens. A crate is ten
- * pallets, drawn with the same face plus stacked depth. Nothing here asserts a ratio; each piece
- * carries the marks that prove it.
- */
-export const PIECE_U: Record<Place, number> = { 1000: 10, 100: 10, 10: 1, 1: 1 }   // width, in units
-
-/**
- * ⚠️ `shadesOf` returns `rgb(...)` STRINGS, so the hex-alpha trick (`${m.seam}88`) is INVALID CSS
- * and every gradient using it silently does not paint. That is how the first cut of this file drew
- * a hundred-pallet as a FLAT PURPLE SLAB with none of its subdivisions — i.e. a piece asserting its
- * value instead of showing it, which is the exact fault the chapter exists to fix, reintroduced by a
- * string bug. Alpha goes through here.
- */
-const fade = (rgb: string, a: number) => rgb.replace('rgb(', 'rgba(').replace(')', `,${a})`)
-
-/** HUNDRED — a flat 10×10 face. Ten rods laid side by side, which is what it is. */
-function Flat({ u, m }: { u: number; m: Shades }) {
-  const s = u * 10, top = Math.round(u * 0.22)
-  return (
-    <span style={{ display: 'block', position: 'relative', width: s, height: s + top }}>
-      <Shadow w={Math.round(s * 1.02)} h={Math.round(u * 1.1)} />
-      <span style={{ position: 'relative', zIndex: 1, display: 'block', width: s, height: s + top }}>
-        <span style={{ position: 'absolute', left: 0, right: 0, top: 0, height: top + 1, background: m.top,
-          borderRadius: `${u * 0.3}px ${u * 0.3}px 0 0`, boxShadow: `inset 0 1px 0 ${m.rim}` }} />
-        <span style={{ position: 'absolute', left: 0, right: 0, top, bottom: 0, overflow: 'hidden',
-          borderRadius: `0 0 ${u * 0.25}px ${u * 0.25}px`,
-          // the ten rods, and the ten units along each — the piece PROVES it is a hundred
-          backgroundImage: `repeating-linear-gradient(0deg, ${fade(m.seam, .55)} 0 1px, transparent 1px ${u}px),`
-            + `repeating-linear-gradient(90deg, ${fade(m.seam, .3)} 0 1px, transparent 1px ${u}px),`
-            + `linear-gradient(150deg, ${m.face} 0%, ${m.deep} 100%)` }} />
-      </span>
-    </span>
-  )
-}
-
-/** THOUSAND — the same face, with ten hundred-bundles' worth of stacked depth behind it. */
-function Crate({ u, m }: { u: number; m: Shades }) {
-  const s = u * 10, d = Math.round(u * 1.6)
-  return (
-    <span style={{ display: 'block', position: 'relative', width: s + d, height: s + d }}>
-      <Shadow w={Math.round(s * 1.06)} h={Math.round(u * 1.3)} />
-      <span style={{ position: 'relative', zIndex: 1, display: 'block', width: s + d, height: s + d }}>
-        {/* the stack behind — it is ten hundred-bundles deep and says so */}
-        <span style={{ position: 'absolute', left: d, top: 0, width: s, height: s,
-          borderRadius: u * 0.25, opacity: 0.92,
-          backgroundImage: `repeating-linear-gradient(0deg, ${fade(m.seam, .4)} 0 1px, transparent 1px ${u}px),`
-            + `linear-gradient(180deg, ${m.deep} 0%, ${m.deep} 100%)` }} />
-        <span style={{ position: 'absolute', left: 0, top: d, width: s, height: s, overflow: 'hidden',
-          borderRadius: u * 0.25, boxShadow: `inset 0 1px 0 ${m.rim}`,
-          backgroundImage: `repeating-linear-gradient(0deg, ${fade(m.seam, .55)} 0 1px, transparent 1px ${u}px),`
-            + `repeating-linear-gradient(90deg, ${fade(m.seam, .3)} 0 1px, transparent 1px ${u}px),`
-            + `linear-gradient(150deg, ${m.top} 0%, ${m.face} 55%, ${m.deep} 100%)` }} />
-      </span>
-    </span>
-  )
-}
-
-function Piece({ place, u, m }: { place: Place; u: number; m: Shades }) {
-  const set = blockSet(u)
-  if (place === 1) return <Cube s={u} m={m} />
-  if (place === 10) return <Rod w={set.rodW} h={set.rodH} m={m} />
-  if (place === 100) return <Flat u={u} m={m} />
-  return <Crate u={u} m={m} />
-}
 
 // ─── Worlds ─────────────────────────────────────────────────────────────────────────────
 /**
@@ -199,25 +123,11 @@ function Piece({ place, u, m }: { place: Place; u: number; m: Shades }) {
  * band shipped `PLAN[round % len]` three times and the last rounds wrapped back onto the creature
  * the chapter opened with.
  */
+export interface Yard { scene: string; groundY: number; customer: string; who: string }
 /**
- * ⚠️ `Yard` AND `yardAt` ARE HISTORICAL NAMES — this world is a school fundraiser, not a goods yard.
- * They are internal identifiers a child never sees, and renaming ~30 call sites buys nothing but
- * churn and a chance to typo something the type system would not catch. Read "yard" as "the place
- * this round happens in".
- */
-export interface Yard { scene: string; groundY: number; customer: string; who: string; material: Material }
-/**
- * ⚠️ The fox merchant was generated with these two and CUT (founder's call). Its `_side`/`_walk`
- * PNGs stay on disk and are deliberately NOT registered in sheets.ts — an unregistered sheet is
- * invisible to the idle-art gate, which is the honest state for art that exists and has no home.
- * Same call `market.ts` records for its four unused stalls: recorded, not hidden.
- */
-/**
- * ⚠️ THE CAST IS KEPT, THE WORLD IS NOT. Both of these are drawn WALK CYCLES (12 cells each, in
- * canvas/sheets.ts), so re-casting means the whole image→video→frames pipeline plus its chroma key,
- * facing and cut-window traps — real money and real risk for a gain the roles deliver for free. A
- * bear in overalls with a clipboard reads as a caretaker at a school fair; a badger reads as a
- * parent helper. Only `who` changed.
+ * ⚠️ THE CAST IS KEPT. Both of these are drawn WALK CYCLES (12 cells each, in canvas/sheets.ts), so
+ * re-casting means the whole image→video→frames pipeline plus its chroma key, facing and cut-window
+ * traps — real money and real risk for a gain the roles deliver for free.
  */
 const CUSTOMERS = [
   { src: '/assets/objects/foreman_bear_side.png', who: 'the caretaker' },
@@ -226,11 +136,9 @@ const CUSTOMERS = [
 /**
  * ⚠️ MEASURED BEFORE BEING WIRED, because a generated scene brings its own numbers.
  *   value over the band the cast stands in — hall 0.524 · playground 0.575 · gym 0.562 (graded)
- *   against a cast of 0.62–0.81 and Milo at 0.705, so no scene is brighter than what stands on it
- *   (the `grocery_sweets` fault). The gym came back at 0.864 and was GRADED down rather than
- *   re-rolled, which keeps an approved composition and costs nothing.
- *   ground-line roughness at the wired groundY: 2.8–3.8, under the open-ground threshold of 4.
- *   Every board in all three is BLANK — a painted total would be the answer, printed on the wall.
+ *   against a cast of 0.62–0.81 and Milo at 0.705, so no scene is brighter than what stands on it.
+ *   Every board in all three is BLANK — a painted total would be the answer, printed on the wall,
+ *   and this cut needs that more than the last one did: the child now WRITES on that board.
  */
 const SCENES = [
   { scene: '/assets/backgrounds/fund_hall.png', groundY: 0.87 },
@@ -243,134 +151,192 @@ export const RUN: Yard[] = Array.from({ length: 13 }, (_, i) => ({
   ...SCENES[i % SCENES.length],
   customer: CUSTOMERS[i % CUSTOMERS.length].src,
   who: CUSTOMERS[i % CUSTOMERS.length].who,
-  material: MATERIALS[i % MATERIALS.length],
 }))
 export const yardAt = (slot: number) => RUN[Math.min(slot, RUN.length - 1)]
 
-
-export type QType = 'build' | 'place' | 'value'
-export const Q_ALL: readonly QType[] = ['build', 'place', 'value']
+// ─── The round ──────────────────────────────────────────────────────────────────────────
+export type QType = 'read' | 'value' | 'write'
+export const Q_ALL: readonly QType[] = ['read', 'value', 'write']
 
 export interface OdRound {
   qType: QType
   yard: Yard
-  /** the whole number the docket is about */
+  /** the whole number the round is about */
   n: number
-  /** target count per place, index-aligned to PLACES */
-  target: number[]
-  /** which single place this round is about, or -1 for a full build */
+  /** the digits the child must write, most significant first — ONE of them on read/value */
+  answer: number[]
+  /** which single place a one-digit round is about, or -1 on a write */
   focus: number
   /** spoken ask, at the customer's mouth */
   ask: string
-  /** what the docket shows while the child works — never the answer */
-  docket: string
+  /** whether the boxes carry their place labels — see `write` in the header */
+  labelled: boolean
+  /**
+   * THE LOOSE DIGITS, SCRAMBLED — what the child picks up and carries into a column.
+   *
+   * ⚠️ **THEY ARE THIS NUMBER'S OWN DIGITS, AND ON A ONE-DIGIT ROUND THAT IS WHAT MAKES THE
+   * DISTRACTORS HONEST.** Asked for the hundreds of 3,482 the tray holds 3 · 4 · 8 · 2, so every
+   * wrong tile is another place of the same number — exactly the confusion the question is about —
+   * rather than a digit picked out of the air.
+   *
+   * ⚠️ AND THEY ARE SCRAMBLED, WHICH IS THE HALF THAT KEEPS A `write` ROUND FROM BEING COPYING. Laid
+   * out in order beside four columns in order, the child sorts left-to-right and never has to know
+   * what a thousand is.
+   */
+  tray: number[]
   /** the written miss line; this chapter owns its own feedback */
   missPrefix: string
 }
 
 /**
- * ⚠️ Every digit is 0..MAX_DIGIT and the leading one is never 0 — see MAX_DIGIT: the ceiling is what
- * the honest pieces physically fit, not a difficulty choice. Zero is deliberately IN range for the
- * inner places: an empty bay is the placeholder, and 3,042 is the number that teaches it.
+ * ⚠️ THE LEADING DIGIT IS NEVER 0 and the inner ones may be. `hole` forces an inner zero, which is
+ * the placeholder case — L3 always gets one, because a child who has only ever written full numbers
+ * writes 3,42 for three thousand and forty-two and nothing earlier in the chapter catches it.
  */
-function buildNumber(d: 1 | 2 | 3): number {
-  const hi = MAX_DIGIT
-  if (d === 1) return rint(1, hi) * 100 + rint(0, hi) * 10 + rint(0, hi)
-  return rint(1, hi) * 1000 + rint(0, hi) * 100 + rint(0, hi) * 10 + rint(0, hi)
+function pickNumber(d: 1 | 2 | 3, hole = false): number {
+  if (d === 1) {
+    const digs = [rint(1, 9), rint(0, 9), rint(1, 9)]
+    if (hole) digs[1] = 0
+    return digs[0] * 100 + digs[1] * 10 + digs[2]
+  }
+  const digs = [rint(1, 9), rint(0, 9), rint(0, 9), rint(1, 9)]
+  if (hole) digs[pick([1, 2])] = 0
+  return digs[0] * 1000 + digs[1] * 100 + digs[2] * 10 + digs[3]
 }
-function singleNumber(d: 1 | 2 | 3): number {
-  const hi = MAX_DIGIT
-  if (d === 1) return rint(1, hi) * 100 + rint(0, hi) * 10 + rint(1, hi)
-  return rint(1, hi) * 1000 + rint(0, hi) * 100 + rint(1, hi) * 10 + rint(1, hi)
+
+/** How many boxes a number needs — 3 or 4, never a leading blank. */
+export const slotsFor = (n: number) => (n >= 1000 ? 4 : 3)
+/** The places those boxes stand for, most significant first. */
+export const placesFor = (n: number) => PLACES.slice(PLACES.length - slotsFor(n)) as readonly Place[]
+
+/**
+ * What the column at box `i` is called. ⚠️ ONE FUNCTION, because `BoardRow` prints these labels and
+ * the instruction chip names the one under the hand — two copies of "which place is box 2" would
+ * drift and the chip would name a different column from the one lighting up.
+ *
+ * A one-digit round draws a single box and it stands under the place being ASKED about, not under
+ * the thousands.
+ */
+export function colName(q: OdRound, i: number): string {
+  const places = placesFor(q.n)
+  const p = q.answer.length === 1 ? places[q.focus - (PLACES.length - places.length)] : places[i]
+  return PLACE_NAME[p].goods
 }
 
 /**
- * THE GRADER. ⚠️ EXPORTED AND PURE so a gate drives the SAME function the commit button calls — this
- * lived inside `OrderPlay`'s closure until now, which is why the chapter has never had a gate: a
- * test could not reach it, and a test that re-implemented it would agree with its own copy of the
- * rule while the screen it protects rotted.
- *
- * ⚠️ A SINGLE-COLUMN ROUND DEMANDS EVERY OTHER COLUMN BE EMPTY, and that clause interacts with the
- * BUNDLE: load ten coins on a tens round and they correctly fuse into one ten-strip in the tens
- * column, so the focus count can be right while a stray sits next door. That is refused on purpose —
- * and `missFor` has to name the stray, or the child sees a number they can tell is right and is told
- * only "no".
+ * THE GRADER. ⚠️ EXPORTED AND PURE so a gate drives the SAME function the commit button calls.
+ * `entered` is index-aligned to `q.answer`; an unwritten box is -1, which can never equal a digit.
  */
-export function grade(q: OdRound, counts: number[]): boolean {
-  if (q.focus < 0) return valueOf(counts) === q.n
-  return counts[q.focus] === q.target[q.focus] && counts.every((c, i) => i === q.focus || c === 0)
+export function grade(q: OdRound, entered: number[]): boolean {
+  return q.answer.length === entered.length && q.answer.every((d, i) => entered[i] === d)
 }
 
-/** The written miss line. ⚠️ It never states the answer — only what the child HAS, and why it is not it. */
-export function missFor(q: OdRound, counts: number[]): string {
-  const single = q.focus >= 0
-  const stray = single ? PLACES.findIndex((_, i) => i !== q.focus && counts[i] > 0) : -1
-  if (stray >= 0) {
-    return `${q.missPrefix} there is a ${PLACE_NAME[PLACES[stray]].one} in the ${PLACE_NAME[PLACES[stray]].goods} column. Take it back first.`
-  }
-  const have = single ? counts[q.focus] : valueOf(counts)
+/**
+ * THE AMOUNT THE ROUND'S QUESTION STATES — the whole total on a `read`/`write`, and just that tin on
+ * a `value`.
+ *
+ * ⚠️ ONE FUNCTION, THREE CALLERS (the miss line, the walkthrough's docket, the silent-device
+ * fallback), because nothing is printed any more and all three now have to say the number out of the
+ * round itself. A second copy would eventually print the whole total beside a question about one tin.
+ */
+// ⚠️ ON `qType`, NOT ON `focus` — a `read` round has a focus too, and keying on that would say
+// "eighty" where the question said "three hundred and forty-three".
+export const saidAmount = (q: OdRound) => (q.qType === 'value' ? q.answer[0] * PLACES[q.focus] : q.n)
+
+/**
+ * The written miss line. ⚠️ IT NEVER STATES THE ANSWER — only what the child wrote, and why it is
+ * not it. A one-digit round is the strict case: the answer IS a digit, so naming the target hands
+ * the whole question over after one wrong attempt.
+ */
+export function missFor(q: OdRound, entered: number[]): string {
+  const blank = entered.findIndex(v => v < 0)
+  if (blank >= 0) return `${q.missPrefix} the ${PLACE_NAME[placesFor(q.n)[blank]].goods} box is still empty.`
+  // ⚠️ IT SAYS THE NUMBER AGAIN AND NEVER WHICH DIGIT. "Count the places again, from the right" was
+  // written when the total was PRINTED; with nothing on screen to count along, it instructs
+  // something the child cannot do.
+  if (q.focus >= 0) return `${q.missPrefix} you put up ${entered[0]}. Listen again: ${numWords(saidAmount(q))}.`
   /**
-   * ⚠️ A SINGLE-COLUMN ROUND MUST NOT NAME ITS TARGET, AND THIS USED TO. The line read "that is 0,
-   * and I asked for 5" — where 5 IS the answer, handed over after one wrong attempt, on the two
-   * round types whose whole task is reading a digit out of the tally. Caught by this chapter's first
-   * gate, which is also the first thing ever to drive this function: it lived inside `OrderPlay`'s
-   * closure until the AR pass pulled it out.
-   *
-   * A `build` round is different and may still state its target — the whole number is printed on the
-   * tally for the entire round, so repeating it gives away nothing the child is not already looking
-   * at. What it must never do is state a digit they were asked to extract.
+   * ⚠️ A `write` ROUND MAY RESTATE ITS TOTAL, and only a write round. The child was TOLD the number —
+   * it is the question, not the answer — so repeating it gives away nothing they were not already
+   * asked to hold. What it must never do is say which digit goes where.
    */
-  if (single) return `${q.missPrefix} that is ${have}. Read the tally again — ${q.docket}.`
-  return `${q.missPrefix} that is ${fmt(have)}, and I asked for ${fmt(q.n)}.`
+  return `${q.missPrefix} that reads ${money(Number(entered.join('')))}, and I said ${numWords(q.n)}.`
 }
 
 export function makeRound(d: 1 | 2 | 3, slot: number, asked: readonly string[], force?: QType): OdRound {
   const yard = yardAt(slot)
-  const pool: QType[] = d === 1 ? ['build', 'place'] : ['build', 'place', 'value']
+  const pool: QType[] = d === 1 ? ['read', 'write'] : ['read', 'value', 'write']
   // deliberate while a gap exists, RANDOM once it closes — hardest-first for ever locks the
   // generator onto one kind and destroys the variety coverage was supposed to protect
   const unmet = pool.filter(q => !asked.includes(q))
-  // ⚠️ `force` exists because the DEMO must be deterministic and my first cut only pretended it
-  // was: passing `asked: ['build']` to slot 1 does nothing if slot 0's random pick was `place`,
-  // so both demos could open on the same question type and the child would never be shown the
-  // whole-order build the chapter is built around. A gate can drive a named type with it too.
+  // ⚠️ `force` exists because the DEMO must be deterministic: passing `asked` to slot 1 does nothing
+  // if slot 0's random pick collided, so both demos could open on the same question type.
   const qType = force ?? (unmet.length ? pick(unmet) : pick(pool))
+  const n = pickNumber(d, d === 3)
+  /** the digits the board is made of — the tray is these, scrambled. See `tray`. */
+  const shown = digitsOf(n).slice(PLACES.length - slotsFor(n))
+  const tray = shuffle(shown)
 
-  if (qType === 'build') {
-    const n = buildNumber(d)
-    return {
-      qType, yard, n, target: digitsOf(n), focus: -1,
-      ask: `We raised ${numWords(n)} today — that is ${money(n)}. Stack it up so it can go on the board.`,
-      docket: money(n),
-      missPrefix: 'That is not the total yet —',
-    }
+  if (qType === 'write') return {
+    qType, yard, n, answer: shown, focus: -1,
+    ask: `We counted the buckets — ${numWords(n)}. Put it up on the board for me.`,
+    /**
+     * ⚠️ **NOTHING IS PRINTED ON ANY ROUND ANY MORE — founder's call, and it retires the L1 scaffold
+     * this field existed for.** L1 used to show `$709` over the columns so the first tier could teach
+     * the carry with the answer visible. With the amount now SAID in words on every round type, that
+     * scaffold is the one thing on screen a child can copy left-to-right without knowing what a
+     * thousand is — the transcription fault the `placeValue` rebuild was stopped for, back at the
+     * easiest tier. So the whole `board` field is gone rather than set to null everywhere: a field
+     * that is always null is a printing surface waiting to be used again.
+     */
+    labelled: true, tray,
+    missPrefix: 'That is not what I said —',
   }
-  const n = singleNumber(d)
-  // pick a place this number actually has something in, so the ask is never for zero
+
+  // a one-digit round: pick a place this number actually has something in, so the ask is never for
+  // a zero the child cannot tell from a box they forgot
   const digs = digitsOf(n)
-  const live = digs.map((v, i) => ({ v, i })).filter(x => x.v > 0 && (d > 1 || PLACES[x.i] < 1000))
+  const live = digs.map((v, i) => ({ v, i })).filter(x => x.v > 0 && PLACES[x.i] <= (n >= 1000 ? 1000 : 100))
   /**
-   * ⚠️ **A `value` ROUND MAY NEVER LAND ON THE ONES.** Caught by playing a full run: it produced
-   * *"I need two — that is 2 — units of stock. How many singles?"* — where the answer is the number
-   * in the question, because a single IS one unit. The whole point of the question is converting a
-   * VALUE into a count of a bigger unit, so a place worth 1 has nothing to convert.
+   * ⚠️ **A `value` ROUND MAY NEVER LAND ON THE ONES.** Caught by playing the previous cut: it
+   * produced *"the tin holds two dollars — how many dollar coins is that?"*, where the answer is the
+   * number in the question. The whole point is converting a VALUE into a count of a bigger unit, so
+   * a place worth 1 has nothing to convert.
    */
   const pool2 = qType === 'value' ? live.filter(x => PLACES[x.i] > 1) : live
   const { i: focus } = pick(pool2.length ? pool2 : live)
   const place = PLACES[focus]
-  const target = [0, 0, 0, 0]; target[focus] = digs[focus]
 
-  if (qType === 'place') return {
-    qType, yard, n, target, focus,
-    ask: `Off the tally — just the ${PLACE_NAME[place].goods} for now. How many ${PLACE_NAME[place].many}?`,
-    docket: money(n),
-    missPrefix: `Not the ${PLACE_NAME[place].goods} I asked for —`,
+  if (qType === 'read') return {
+    qType, yard, n, answer: [digs[focus]], focus,
+    /**
+     * ⚠️ **THE TOTAL ARRIVES IN WORDS AND NOTHING IS PRINTED — founder's call, and it replaces an
+     * earlier one.** This round used to print `$3,482` and ask for a place, so the work was counting
+     * the places along a numeral, and the ask deliberately named no number at all ("our total is up
+     * on the board"). Two things pushed it: the camera path has no painted board for that sentence
+     * to point AT, and the founder wants the amount SAID so the child works out which figure to drag
+     * from the words. Turning "eighty-two" into an 8 in the tens is the numeral↔words half of this
+     * chapter's curriculum, and it is what the whole `write` round already rests on.
+     *
+     * ⚠️ **THE COST, STATED RATHER THAN HIDDEN: on the hundreds and the thousands the words name the
+     * digit outright** ("FOUR hundred" → 4), so those rounds no longer make the child count places —
+     * only the tens really decode. The place-counting payload now lives entirely in `write`, where
+     * the board is blank from L2 and the tray is scrambled.
+     *
+     * ⚠️ AND THE ASK IS WRITTEN AS WELL AS SPOKEN (it renders in the customer's bubble), or a silent
+     * device would have no question at all now that nothing is printed.
+     */
+    ask: `We raised ${numWords(n)} dollars. Just the ${PLACE_NAME[place].goods} — what goes in that column?`,
+    labelled: false, tray,
+    missPrefix: `Not the ${PLACE_NAME[place].goods} —`,
   }
   return {
-    qType, yard, n, target, focus,
-    ask: `The tin holds ${numWords(digs[focus] * place)} — that is ${money(digs[focus] * place)}. How many ${PLACE_NAME[place].many} is that?`,
-    docket: money(digs[focus] * place),
-    missPrefix: 'That is not the right amount —',
+    qType, yard, n, answer: [digs[focus]], focus,
+    ask: `The ${PLACE_NAME[place].goods} tin holds ${numWords(digs[focus] * place)} dollars. How many ${PLACE_NAME[place].many} is that?`,
+    // ⚠️ the tin is already named in words; printing `$400` beside it would be the answer's first
+    // figure, handed over
+    labelled: false, tray,
+    missPrefix: 'That is not how many —',
   }
 }
 
@@ -378,207 +344,300 @@ export function makeRound(d: 1 | 2 | 3, slot: number, asked: readonly string[], 
 /**
  * ⚠️ EXPORTED, and the scene renders from THIS — a sweep that re-implements the chain can agree with
  * its own copy of the constants while the screen falls apart (chapter-craft.md).
- *
- * The unit is derived, never picked: it is bound by the width the four bays need side by side, by
- * the height the tallest bay needs, and it is what makes every piece honest at once.
- */
-export const SUPPLY_BAND = (vh: number) => Math.round(Math.max(74, Math.min(vh * 0.17, 120)))
-/**
- * ⚠️ **THE DIGIT CEILING IS A GEOMETRY FACT, NOT A DIFFICULTY CHOICE.** Nine HONEST hundred-pallets
- * is nine hundred units of area on screen, and two such bays plus a thousands bay plus a character
- * do not fit 1280×720 at any unit a child can count — measured, it forces u down to ~9px, at which
- * the ones bay is unreadable. Real base-ten kits do not ship nine thousand-cubes either. Five is
- * what fits while every piece stays truthful, and a manipulative that lies is worse than a number
- * this chapter does not ask for.
- */
-export const MAX_DIGIT = 5
-/**
- * Milo at one end and the customer at the other — the bay row may not have the whole width.
- *
- * ⚠️ **DERIVED FROM THE PERSON'S OWN WIDTH, never a flat share.** A flat `vw * 0.11` put the
- * customer at l575–r619 on a 640×320 frame with the "ones" bay label at l580–r603 — standing
- * squarely on the one bay whose pieces are smallest and hardest to count. Every percent the reserve
- * keeps is a percent the bays lose, so it is measured rather than padded: the widest sprite in the
- * cast is the fox at aspect 0.809.
  */
 /**
- * ⚠️ **NO FLAT PIXEL CAP.** SliceShop shipped `min(vh * 0.26, 200)` and the founder's words were
- * "characters chhote chhote hai" — above a 770px-tall window the cap froze the whole cast while the
- * scene kept growing. The share is what scales; the cap here is far enough out to be a sanity bound
- * rather than a ceiling anyone meets.
+ * ⚠️ **NO FLAT PIXEL CAP ON THE CAST.** SliceShop shipped `min(vh * 0.26, 200)` and the founder's
+ * words were "characters chhote chhote hai" — above a 770px window the cap froze the whole cast
+ * while the scene kept growing. The share is what scales.
  */
 export const PEOPLE_H = (vh: number) => Math.round(Math.max(84, Math.min(vh * 0.30, 340)))
 export const SIDE_RESERVE = (vw: number, vh: number) =>
   Math.round(Math.min(vw * 0.22, Math.max(PEOPLE_H(vh) * 0.82 + 14, vw * 0.10)))
 
+/** Short frames get a different budget, not a scaled one — see `boardLayout`. */
+/** Re-exported: the definition moved to `chalkboard` with the boards that window on it. */
+export { isShort, stepWindow, stepBoardRect }
+
 /**
- * ⚠️ **ONE SCALE FOR EVERY ROUND TYPE, and all four bays always drawn.** The first cut sized a
- * single-bay round off that one bay, which handed it u=22 — a 220px pallet filling the frame — and,
- * worse, meant the unit CHANGED between rounds. A ruler whose marks resize is not a ruler. So the
- * unit is derived from the full four-bay worst case always, and a `place` round simply leaves three
- * bays empty: the place-value chart stays intact and the child can see which column they are filling.
+ * THE REACH — how much of the camera frame the board is spread across.
  *
- * EXPORTED, and the scene renders from THIS — a sweep that re-implements the chain can agree with
- * its own copy of the constants while the screen falls apart (chapter-craft.md).
+ * ⚠️ **THE FRAME'S FULL WIDTH IS NOT REACHABLE, AND MAPPING TO IT IS SILENCE AT THE EDGES.** This is
+ * `SWEEP_ARM`'s lesson stated as a constant: a child sitting at a laptop can move a pinched hand
+ * comfortably through the middle of the picture and has to lean out of shot to touch either end, so
+ * a column mapped to x≈0 is a column they cannot post a digit into — and the outer columns are
+ * exactly where the thousands live. The middle band is stretched over the whole board instead, and
+ * everything past it clamps to the nearest edge rather than going dead.
+ *
+ * ⚠️ AND IT APPLIES TO BOTH AXES. The tray is at the bottom of the screen and the boxes near the
+ * middle; a child who has to drop their hand out of frame to reach the tray cannot pick anything up.
  */
-export function orderLayout(vw: number, vh: number, groundY: number) {
-  const most = MAX_DIGIT
-  // fanned for the big pieces (see Bay), a plain row for rods and cubes
-  const wUnits = (p: Place) =>
-    p >= 100 ? PIECE_U[p] + (most - 1) * 2.6 : most * (PIECE_U[p] + 0.35)
-  // ⚠️ a crate's DEPTH (1.6u, see Crate) is part of its height — leaving it out made the budget 4%
-  // optimistic, which puts the top of the fan into the bubble band rather than under it
-  const hUnits = (p: Place) =>
-    p === 1000 ? PIECE_U[p] + 1.6 + (most - 1) * 0.5
-      : p === 100 ? PIECE_U[p] + 0.3 + (most - 1) * 0.5
-        : p === 10 ? 10.4 : 1.4
+export const REACH = 0.72
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
+/**
+ * The carry point in SCREEN pixels. ⚠️ EXPORTED so the gate drives the same mapping the scene does —
+ * a check carrying its own copy of `REACH` cannot see the reach being narrowed to nothing.
+ *
+ * `nib` is already mirrored (see `nibRead`), so a hand moving right moves the digit right.
+ */
+export function handPoint(nib: { x: number; y: number }, vw: number, vh: number) {
+  const m = (1 - REACH) / 2
+  return { x: clamp01((nib.x - m) / REACH) * vw, y: clamp01((nib.y - m) / REACH) * vh }
+}
 
-  const gapU = 1.8
-  const totalW = PLACES.reduce((s, p) => s + wUnits(p), 0) + (PLACES.length - 1) * gapU
-  const maxH = Math.max(...PLACES.map(hUnits))
+/**
+ * The board and the controls, derived from the room that is left.
+ *
+ * ⚠️ **THE BOXES NEVER SHRINK BELOW A TAP TARGET**, because they are tappable on both paths (that is
+ * how a child goes back to fix the tens after filling the ones) and on the hand path they are the
+ * drop targets — a column too small to drop into is a wrong answer the chapter caused.
+ */
+/**
+ * ⚠️ **THERE IS NO WRITING PANE ANY MORE, AND DELETING IT IS MOST OF WHY THIS LAYOUT GOT SIMPLER.**
+ * The ink needed a 4:3 canvas big enough to form a numeral in, which on a short landscape frame
+ * computed to ZERO and had to be given its own beside-the-boxes branch, its own minimum, and the
+ * camera moved into it. A carried digit needs none of that: the answer surface is the BOXES and the
+ * TRAY, which both inputs already share, so the hand simply points at the same things a finger taps
+ * and the self-view is free to go FULL SCREEN behind the whole board — the child looks at one place
+ * instead of glancing between their hand in a corner and the columns in the middle.
+ */
 
-  const supply = SUPPLY_BAND(vh)
-  const side = SIDE_RESERVE(vw, vh)
+/**
+ * How wide the customer's speech bubble is. ⚠️ EXPORTED AND SHARED WITH `Customer`, because this is
+ * the number the board has to keep out of and two copies of it would drift the first time either
+ * moved. The bubble's right edge is clamped 12px inside the frame, so its left edge is derivable.
+ */
+export const BUBBLE_W = (vw: number) => Math.min(vw * 0.52, 460)
+export const bubbleLeft = (vw: number) => vw - 12 - BUBBLE_W(vw)
+
+export function boardLayout(vw: number, vh: number, groundY: number, slots: number) {
+  const short = isShort(vh)
   const groundPx = Math.round(vh * groundY)
-  // the bays stand on a shelf ABOVE the foreground line the people walk on, so a character can
-  // never cover a piece the child has to count
-  const shelfPx = groundPx - Math.round(vh * 0.13)
-  const availW = vw - side * 2
-  const availH = Math.max(110, shelfPx - 100)                       // 100 = the bubble band above
+  const side = SIDE_RESERVE(vw, vh)
+
+  // the band above the board — on a roomy frame that is headroom over the bubble, and where the ask
+  // has moved to a banner it is the banner's own height plus the docket's gap
+  const bubble = short ? 74 : 104
   /**
-   * ⚠️ **NO FLOOR ON THE UNIT.** A `Math.max(7, …)` here reads as a readability guarantee and is
-   * really an overflow: at 640×320 the two budgets give 5.9, and forcing 7 makes the bay row 579px
-   * wide inside a 488px band — the craft doc's own "a size derived from a MAXIMUM can exceed that
-   * maximum". A small frame gets small pieces, which is honest; a row running off the edge is not.
+   * The loose-digit tray, on BOTH paths.
+   *
+   * ⚠️ **ROOMY FRAMES GOT A MUCH TALLER TRAY BECAUSE A 62px TILE IS TOO FINE A TARGET FOR A HAND.**
+   * A hand in the air is not a mouse: it drifts, so a tile sized for a fingertip is a tile a child
+   * cannot pick up, which reads as the camera being broken. A short frame keeps 62: there the boxes
+   * are already at their floor and the tray's height comes straight out of `availH`, so growing it
+   * here would shrink the drop targets to pay for the pick-up ones.
+   *
+   * ⚠️ ONE CAUSE OF THAT DRIFT IS NOW GONE RATHER THAN PAID FOR — the carry point used to be the
+   * thumb/index midpoint, which MOVED as the fingers closed, i.e. exactly at the instant the tile is
+   * chosen. `gripPoint` reads the knuckle, which does not. The bigger tile stays: the founder asked
+   * for it on top of that, and nearest-target hit-testing is the other half.
    */
-  const u = Math.max(4, Math.min(26, Math.floor(Math.min(availW / totalW, availH / maxH))))
+  const trayH = short ? 62 : 118
+  const chrome = 62                                // Menu button + the run strip
+  const labelH = short ? 16 : 22
 
-  const set = blockSet(u)
-  // bay left edges, laid LEFT→RIGHT thousands→ones: a number is written that way and the eye sweeps
-  // it that way. BlockYard has its ones on the left, which is backwards — nothing there is ever read
-  // as a numeral so it never showed.
-  const widths = PLACES.map(p => wUnits(p) * u)
-  const gap = gapU * u
-  const rowW = widths.reduce((s, w) => s + w, 0) + gap * (widths.length - 1)
-  const x0 = (vw - rowW) / 2
-  const lefts: number[] = []
-  let x = x0
-  for (const w of widths) { lefts.push(x); x += w + gap }
+  /**
+   * ⚠️ **THE BOARD LIVES LEFT OF THE BUBBLE, NOT CENTRED UNDER IT.** Centred, a four-box row at
+   * 1280×720 ran 393→887 while the customer's bubble started at 808 — measured on screen, the
+   * question covering the last two boxes of the answer. This is the open item the previous cut left
+   * behind ("the bubble covers the columns") and centring reproduced it exactly. The bubble belongs
+   * to the speaker and cannot move, so the board takes the band that is left: chapter-craft's *a
+   * boundary next to another character is measured off THAT character, never guessed*.
+   *
+   * ⚠️ AND WHERE THAT BAND CANNOT HOLD THE BOARD, THE ASK MOVES TO A TOP BANNER INSTEAD. On a short
+   * landscape frame the bubble and four boxes at the tap floor genuinely do not fit side by side.
+   * Something has to give, and a question covering the answer is worse than one that is not in a
+   * bubble: the speaker is still on screen and still says it aloud.
+   */
+  const bandRight = bubbleLeft(vw) - 12
+  const availW0 = Math.max(160, vw - side * 2)
 
+  /** the narrowest the board can be drawn: every box at the tap floor */
+  const needW = 44 * slots + (slots - 1) * 10
+  const askAtTop = bandRight - side < needW
+
+  /**
+   * A box, as wide as the row it is given allows — capped so four do not become billboards, floored
+   * at the tap target because the boxes are BOTH tapped and dropped into, and its height capped by
+   * the BAND rather than only derived from the width (the boxes may not grow into the tray).
+   *
+   * ⚠️ THE 44 IS A BACKSTOP THAT NEVER BINDS ON A REACHABLE SCREEN, said out loud because a
+   * mutation proved it: dropping it to 20 leaves the gate green. The narrowest landscape a child
+   * can be in is ~568 (the chapter is landscape-only, `RotateGate` sends portrait away), and four
+   * boxes come out well clear of it there.
+   * ⚠️ the roomy cap went 116 → 150 for the tray's reason: these are the DROP targets, and a hand
+   * that wobbles while the fingers open needs a column it can miss the middle of and still hit.
+   */
+  const fit = (w: number, h: number) => {
+    const bw = Math.max(44, Math.min(Math.floor((Math.max(160, w) - (slots - 1) * 10) / slots), short ? 76 : 150))
+    const bh = Math.min(Math.round(bw * 1.22), Math.max(44, h - labelH))
+    return { bw, bh, rowW: bw * slots + (slots - 1) * 10 }
+  }
+
+  /**
+   * ⚠️ **TWO PLACEMENTS, AND THE ONE THAT DRAWS THE BIGGER DROP TARGET WINS — founder's call was
+   * "boxes ko center mein rakho", and a naive centring is a bug this chapter has already shipped.**
+   *
+   * **B, BESIDE THE BUBBLE** is what it used to always do: centred in the strip LEFT of the customer,
+   * because a row centred in the viewport at 1280×720 ran 393→887 while the bubble started at 808 —
+   * the question drawn over the last two boxes of the answer. The bubble belongs to the speaker and
+   * cannot move.
+   *
+   * **A, CENTRED AND LIFTED ABOVE THE BUBBLE** is what the founder is asking for, and it is only
+   * available now that nothing is printed above the boxes: the docket used to own that band. The
+   * bubble's top is derivable — it hangs at `h * 0.86` over the customer's feet — so the board takes
+   * the strip between the chrome and it, and the full width is free.
+   *
+   * ⚠️ **THE CHOICE IS MEASURED, NOT PICKED PER SIZE.** Take whichever gives the taller box, so a
+   * short landscape frame (where the band above the bubble is ~47px and would crush the boxes to
+   * their 44px floor) keeps B by arithmetic rather than by a hand-written breakpoint, and a roomy
+   * one gets A. Ties go to centred.
+   */
+  const bubbleTopY = groundPx - Math.round(PEOPLE_H(vh) * 0.86) - bubble
+  const A = fit(availW0, Math.max(60, bubbleTopY - chrome - 16))
+  const B = fit(bandRight - side, Math.max(120, groundPx - bubble - chrome - trayH))
+  // ⚠️ WITH A TOLERANCE, or centring loses to a ONE-PIXEL taller box. Measured at 1024×620 on a
+  // one-box round: beside-the-bubble came out 183 against centred's 182 and the board sat 158px off
+  // centre to buy a pixel. Beating the founder's placement has to be worth something.
+  const centred = askAtTop || A.bh * 1.1 >= B.bh
+  const { bw: boxW, bh: boxH, rowW } = askAtTop ? fit(availW0, Math.max(120, groundPx - (short ? 104 : 126) - chrome - trayH)) : centred ? A : B
+
+  const stackH = boxH + labelH
+  // ⚠️ the banner needs its own room ABOVE the board, or the ask lands on the boxes
+  const topBand = askAtTop ? (short ? 104 : 126) : bubble
+  const top = centred && !askAtTop
+    ? Math.max(chrome + 8, Math.round(chrome + 8 + (bubbleTopY - 16 - chrome - stackH) / 2))
+    : Math.max(topBand, Math.round((groundPx - stackH) / 2))
+  /**
+   * ⚠️ THE SIDE RESERVE STILL BINDS WHEN THE BOARD IS CENTRED. Centring in the whole viewport put
+   * the board's left edge at 136 against a 167px reserve at 1024×620, i.e. drawn straight through
+   * Milo — so a centred row is still clamped inside the cast's band, and where it cannot fit there
+   * it was never the placement that won.
+   */
+  const groupLeft = centred
+    ? Math.max(side, Math.round((vw - rowW) / 2))
+    : Math.round(side + (Math.max(160, bandRight - side) - rowW) / 2)
+
+  /**
+   * ⚠️ THE DOCKET NEEDS ITS OWN GAP, MEASURED FROM ITS OWN HEIGHT. Placed at `boardTop - 44` it sat
+   * exactly ON the box's top edge at 1280×720 — the printed total welded onto the empty box, which
+   * reads as the box already containing it. It is the thing being READ; the box is the thing being
+   * written. They must not touch.
+   */
+  const docketH = short ? 30 : 40
   return {
-    u, set, groundPx, shelfPx, supply,
-    bayLeft: (i: number) => lefts[i] ?? x0,
-    bayWidth: (i: number) => widths[i] ?? 0,
-    bayHeight: (i: number) => hUnits(PLACES[i]) * u,
-    rowLeft: x0, rowWidth: rowW,
-    // the people stand on the foreground line, CENTRED in their reserved band so their whole width
-    // stays out of the bay row — not merely their anchor point
+    short, groundPx, side, boxW, boxH, rowW, labelH, trayH, docketH, askAtTop,
+    bandRight,
+    /**
+     * Where the customer's speech bubble starts, vertically. ⚠️ EXPORTED SO THE GATE READS THE SAME
+     * NUMBER THE PLACEMENT DID — the board may now sit ABOVE the bubble and therefore legitimately
+     * cross its x-band, so "the board ends before `bubbleLeft`" stopped being the rule and "they do
+     * not overlap in BOTH axes" became it. A check deriving this for itself is the re-implemented
+     * rule this repo keeps paying for.
+     */
+    bubbleTop: bubbleTopY,
+    docketTop: Math.max(6, Math.round(top) - docketH - 14),
+    boardLeft: groupLeft,
+    boardTop: Math.round(top),
+    /** the lowest pixel anything on the board reaches — the cast's ground line must clear it */
+    boardBottom: Math.round(top + stackH),
     peopleH: PEOPLE_H(vh),
     miloX: Math.round(side / 2),
     custX: Math.round(vw - side / 2),
-    side,
-    supplyY: vh - supply,
+    boxAt: (i: number) => groupLeft + i * (boxW + 10),
   }
 }
 
-// ─── Bay ────────────────────────────────────────────────────────────────────────────────
+// ─── Does this device have a voice? ─────────────────────────────────────────────────────
 /**
- * One place's bay: a label, the pieces that are in it, and the ground tint that marks it out.
- * ⚠️ NOT a filled panel — a solid block over a painted scene reads as UI furniture however well its
- * palette is matched (three passes of BlockYard paid for that). A tint that fades to nothing at its
- * own edges, with posts, is what trodden ground looks like.
+ * ⚠️ **A `write` ROUND IS UNANSWERABLE ON A SILENT DEVICE, AND MOST CHROME INSTALLS ARE SILENT.**
+ * The whole 3–11 band has zero recorded clips (the 605 ElevenLabs ones are teen-only), so this
+ * chapter's spoken total rides on browser TTS — which Safari has and a great many Chrome
+ * installations simply do not. A round whose question exists only as sound is then a blank screen
+ * with no way to answer it, which is the worst state a chapter can be in.
+ *
+ * So a `write` round shows the total IN WORDS when there is no voice. That is not a weaker question:
+ * the skill is decomposing a number NAME into digits, and the name arriving by eye instead of by ear
+ * changes the channel rather than the work. It is only hidden when it can be heard.
+ *
+ * ⚠️ AND THE PROBE HAS TO WAIT, because `getVoices()` is EMPTY on Chrome until `voiceschanged`
+ * fires — checking once at mount reports every Chrome as silent. It assumes a voice, listens, and
+ * gives up after a beat: assuming silence would show the words to everyone and delete the feature.
  */
-function Bay({ place, n, u, m, w, hPx, label, active, bundling, onTake }: {
-  place: Place; n: number; u: number; m: Shades; w: number; hPx: number
-  label: string; active: boolean; bundling: boolean
-  onTake?: () => void
-}) {
-  const fan = place >= 100
-  return (
-    <div style={{ position: 'relative', width: w, display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'flex-end', pointerEvents: onTake ? 'auto' : 'none' }}>
-      {/* the pieces */}
-      <div onClick={onTake} style={{ position: 'relative', width: w, height: hPx,
-        cursor: onTake && n > 0 ? 'pointer' : 'default',
-        animation: bundling ? 'od_fuse .45s ease forwards' : undefined }}>
-        {Array.from({ length: n }).map((_, i) => (
-          /**
-           * ⚠️ THE BIG PIECES ARE FANNED, NOT GRIDDED, AND THAT IS A SIZE DECISION AS MUCH AS A
-           * LOOK ONE. Five honest 10×10 pallets in a 3-wide grid is 32 units across, and the two
-           * big bays alone then eat 78% of the row — which is what forced the unit down to 12px.
-           * Overlapped the way goods really stack they span 20 units and ONE row, which buys back
-           * both the width and the height. Each piece still shows ~7.5 units of its own face, so
-           * five are still five things a child can count.
-           */
-          <span key={i} style={{ position: 'absolute', zIndex: i,
-            left: fan ? i * u * 2.6 : (i % 9) * u * (PIECE_U[place] + 0.35),
-            bottom: fan ? i * u * 0.5 : 0,
-            animation: `by_settle .4s ease ${i * 40}ms both` }}>
-            <Piece place={place} u={u} m={m} />
-          </span>
-        ))}
-      </div>
-      {/* the marked-out ground — fades out at its own edges, never a bordered slab */}
-      {/* ⚠️ AN EMPTY BAY MUST STILL READ AS A PLACE GOODS GO. At .16 alpha on a pale gravel yard
-          the marking was invisible and the four labels floated in open ground. Still NOT a filled
-          panel — three passes of BlockYard paid for that — so it is a trodden patch that fades to
-          nothing at its own edges, with a post at each end marking the bay out. */}
-      <div aria-hidden style={{ position: 'relative', width: '100%', height: Math.round(u * 1.5), marginTop: 2 }}>
-        <div style={{ position: 'absolute', inset: 0,
-          background: `radial-gradient(ellipse 52% 100% at 50% 0%, rgba(52,40,26,${active ? .42 : .26}) 0%, rgba(52,40,26,0) 76%)` }} />
-        {[0, 1].map(k => (
-          <span key={k} aria-hidden style={{ position: 'absolute', bottom: '38%', left: k ? undefined : 0,
-            right: k ? 0 : undefined, width: Math.max(3, Math.round(u * 0.26)), height: Math.round(u * 1.5),
-            borderRadius: 2, background: `linear-gradient(180deg, ${m.top} 0%, ${m.deep} 100%)`,
-            opacity: active ? .95 : .6, boxShadow: '0 1px 2px rgba(40,30,18,.35)' }} />
-        ))}
-      </div>
-      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800,
-        fontSize: Math.max(13, Math.min(24, Math.round(u * 1.35))),
-        color: active ? 'var(--milo-orange, #f26b2c)' : 'rgba(61,37,22,.72)', letterSpacing: .4 }}>{label}</span>
-    </div>
-  )
+function useHasVoice(): boolean {
+  const [has, setHas] = useState(true)
+  useEffect(() => {
+    const s = typeof window !== 'undefined' ? window.speechSynthesis : undefined
+    // ⚠️ NOTHING IS SET SYNCHRONOUSLY HERE. The state starts optimistic, so an immediate check could
+    // only ever re-assert `true` — a cascading render for no information. Every path settles on the
+    // subscription or on the timeout.
+    const check = () => { if ((s?.getVoices() ?? []).length > 0) setHas(true) }
+    s?.addEventListener?.('voiceschanged', check)
+    const t = window.setTimeout(() => setHas(!!s && (s.getVoices() ?? []).length > 0), 1400)
+    return () => { s?.removeEventListener?.('voiceschanged', check); window.clearTimeout(t) }
+  }, [])
+  return has
 }
 
-// ─── Supply row ─────────────────────────────────────────────────────────────────────────
-/** The four sizes, always available. ⚠️ Nothing here says when to stop — deciding that is the skill. */
-function Supply({ u, m, band, live, only, onTap }: {
-  u: number; m: Shades; band: number; live: boolean; only: number
-  onTap: (placeIdx: number) => void
+// ─── The board ──────────────────────────────────────────────────────────────────────────
+/**
+ * The fundraiser board: a row of boxes, one per place, with the place written under it when the
+ * round says so.
+ *
+ * ⚠️ **THE LABELS ARE PER ROUND, NOT PER CHAPTER, AND LEAVING THEM ON WOULD DELETE THE `read`
+ * QUESTION.** "How many hundreds in 3,482?" with THOUSANDS · HUNDREDS · TENS · ONES printed under
+ * the digits is answerable by reading a caption — the child never counts a place. On a `write` round
+ * the same labels are scaffolding for a number arriving by ear and give nothing away, because the
+ * child still has to hear which part is which.
+ */
+/**
+ * ⚠️ `over` IS THE COLUMN THE CARRIED DIGIT WOULD LAND IN, AND IT IS NOT HOT/COLD. It says WHERE,
+ * never whether that is right — the same distinction the craft doc draws for the live readout on a
+ * finger count. Without it a child opening their fingers has no idea which column they were over,
+ * and a drop that lands somewhere they did not aim at is a wrong answer the chapter caused.
+ */
+function BoardRow({ q, L, entered, active, over, onPick }: {
+  q: OdRound; L: ReturnType<typeof boardLayout>
+  entered: number[]; active: number; over: number
+  onPick?: (i: number) => void
 }) {
-  const set = blockSet(u)
-  // ⚠️ The tray shows a TEN lying flat, not shrunk. Ten cubes will not stand up in a control band,
-  // and the first BlockYard tray drew a "ten" at 2.4 units beside a one-cube — the 0.55 lie again.
-  // ⚠️ The tray was drawn at (band-44)/11 → SIX pixels per unit beside a fifteen-pixel bay unit,
-  // and the two big pieces were then scaled to 0.34 of that: specks. The tray's job is to show
-  // WHICH size you are about to send, so it is sized off the band it actually has.
-  const trayU = Math.max(7, Math.min(u, Math.floor((band - 30) / 7)))
-  const trayset = blockSet(trayU)
   return (
-    <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, height: band, zIndex: 44,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(10px,2.4vw,30px)',
-      background: 'linear-gradient(180deg, rgba(253,246,232,0) 0%, rgba(253,246,232,.90) 34%)',
-      pointerEvents: live ? 'auto' : 'none', opacity: live ? 1 : .35, transition: 'opacity .3s ease' }}>
-      {PLACES.map((p, i) => {
-        const hidden = only >= 0 && only !== i
+    <div style={{ position: 'fixed', left: L.boardLeft, top: L.boardTop, zIndex: 40, display: 'flex', gap: 10 }}>
+      {/* ⚠️ the label comes from `colName`, the same function the instruction chip names the column
+          under the hand with — two copies would eventually name different columns */}
+      {q.answer.map((_, i) => {
+        const hot = i === over
+        const on = hot || (over < 0 && i === active)
+        const v = entered[i]
         return (
-          // ⚠️ A FLOOR ON THE TAP TARGET. Sized to its contents the "singles" button measured
-          // 25×47 — a one-cube is one unit wide, so the smallest piece gave the smallest button,
-          // which is backwards. 48px minimum, whatever it holds.
-          <button key={p} onClick={() => onTap(i)} disabled={hidden} data-supply={i}
-            aria-label={`add one ${PLACE_NAME[p].one}`}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-              minWidth: 48, minHeight: 48,
-              background: 'transparent', border: 'none', cursor: hidden ? 'default' : 'pointer',
-              opacity: hidden ? .22 : 1, transition: 'opacity .3s ease', padding: 0 }}>
-            <span style={{ display: 'flex', alignItems: 'flex-end', height: trayU * 10 * 0.52 + 8 }}>
-              {p === 1 ? <Cube s={trayU * 2} m={m} />
-                : p === 10 ? <Rod w={trayset.rodW} h={trayset.rodH} m={m} axis="h" />
-                  : p === 100 ? <span style={{ transform: 'scale(.52)', transformOrigin: 'bottom center' }}><Flat u={trayU} m={m} /></span>
-                    : <span style={{ transform: 'scale(.52)', transformOrigin: 'bottom center' }}><Crate u={trayU} m={m} /></span>}
-            </span>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(12px,1.25vw,17px)',
-              color: 'var(--ink, #3d2516)' }}>{PLACE_NAME[p].goods}</span>
+          <button key={i} onClick={onPick ? () => onPick(i) : undefined} disabled={!onPick}
+            style={{
+              width: L.boxW, height: L.boxH, display: 'grid', placeItems: 'center',
+              background: hot ? 'rgba(255,236,214,.99)' : 'rgba(255,252,244,.97)',
+              cursor: onPick ? 'pointer' : 'default',
+              border: `4px solid ${on ? 'var(--milo-orange, #f26b2c)' : 'var(--outline, #3d2516)'}`,
+              borderRadius: 10,
+              boxShadow: hot ? '0 0 0 9px rgba(242,107,44,.3)'
+                : on ? '0 0 0 5px rgba(242,107,44,.22)' : '0 4px 0 rgba(61,37,22,.18)',
+              padding: 0, position: 'relative',
+            }}>
+            <span style={{
+              fontFamily: 'var(--font-numeric, var(--font-display))', fontWeight: 900,
+              fontSize: Math.round(L.boxH * 0.62), lineHeight: 1, color: 'var(--ink, #3d2516)',
+            }}>{v >= 0 ? v : ''}</span>
+            {/**
+              * ⚠️ THE LABEL SITS ON PAPER, NOT ON THE WALL. Drawn as bare 11px ink at 0.62 opacity it
+              * measured as a ghost over a painted gym — and on a `write` round these labels ARE the
+              * scaffolding for a number arriving by ear, so scaffolding nobody can read is none.
+              */}
+            {q.labelled && (
+              <span style={{ position: 'absolute', top: '100%', left: '50%', marginTop: 5,
+                transform: 'translateX(-50%)', whiteSpace: 'nowrap',
+                background: 'rgba(255,252,244,.94)', border: '2px solid var(--outline, #3d2516)',
+                borderRadius: 999, padding: '1px 7px',
+                fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: .4,
+                fontSize: L.short ? 9 : 11, textTransform: 'uppercase',
+                color: 'var(--ink, #3d2516)' }}>{colName(q, i)}</span>
+            )}
           </button>
         )
       })}
@@ -586,33 +645,228 @@ function Supply({ u, m, band, live, only, onTap }: {
   )
 }
 
+/** The printed total a `read`/`value` round is about — a plain figure, with no places marked out. */
+function Docket({ text, top, vw }: { text: string; top: number; vw: number }) {
+  return (
+    <div style={{ position: 'fixed', left: 0, right: 0, top, zIndex: 39, display: 'grid', placeItems: 'center',
+      pointerEvents: 'none' }}>
+      <div style={{ background: 'rgba(61,37,22,.9)', color: '#fdf6e8', borderRadius: 10,
+        padding: '6px 18px', fontFamily: 'var(--font-numeric, var(--font-display))', fontWeight: 900,
+        fontSize: `clamp(20px, ${Math.round(vw * 0.028)}px, 40px)`, letterSpacing: 1 }}>{text}</div>
+    </div>
+  )
+}
+
+// ─── The loose digits ───────────────────────────────────────────────────────────────────
+/**
+ * THE TRAY'S GEOMETRY. ⚠️ **EXPORTED, AND BOTH THE RENDER AND THE HAND'S HIT-TEST DRIVE THIS ONE
+ * FUNCTION.** The tiles are tapped by a finger and dropped on by a carried digit, so where they are
+ * is a fact two separate pieces of code need — and a hit-test carrying its own copy of the row's
+ * arithmetic is the "gate that re-implements a rule" fault with the two halves of one feature
+ * instead of a test and its source. It would drift the first time the tray moved, and the symptom
+ * would be a child pinching a tile and picking up nothing.
+ */
+export function trayLayout(L: ReturnType<typeof boardLayout>, vw: number, vh: number, count: number) {
+  const tile = Math.max(40, Math.min(L.trayH - 18, L.short ? 62 : 100))
+  const gap = L.short ? 10 : 14
+  const w = count * tile + Math.max(0, count - 1) * gap
+  const left = Math.round((vw - w) / 2)
+  const top = Math.round(vh - 10 - tile)
+  return { tile, gap, w, left, top, at: (k: number) => left + k * (tile + gap) }
+}
+
+/** Which tile is under a point, or -1. Uses `trayLayout`, never its own copy of the row. */
+export function tileHit(
+  L: ReturnType<typeof boardLayout>, vw: number, vh: number, count: number,
+  p: { x: number; y: number } | null,
+): number {
+  if (!p) return -1
+  const T = trayLayout(L, vw, vh, count)
+  // ⚠️ GENEROUS ABOVE THE ROW. The tray sits on the bottom edge with nothing under it and empty
+  // floor over it, so a hand arriving a little high is aiming at a tile and nothing else.
+  if (p.y < T.top - 26 || p.y > T.top + T.tile + 16) return -1
+  /**
+   * ⚠️ **NEAREST TILE, NOT "INSIDE A TILE" — THE GAPS BETWEEN THEM ARE NOT A PLACE TO MISS.** A
+   * containment test with a few pixels of padding leaves a dead stripe between every pair, and a
+   * pinched hand lands in one often enough that picking up reads as broken. Rounding to the nearest
+   * pitch can never take the wrong tile: it partitions exactly at the halfway line, which is the
+   * widest a tolerance may be (chapter-craft). Past the ends of the row `k` falls out of range, so
+   * the rest of the screen is still nothing.
+   */
+  const pitch = T.tile + T.gap
+  const k = Math.round((p.x - (T.left + T.tile / 2)) / pitch)
+  return k >= 0 && k < count ? k : -1
+}
+
+/**
+ * Which box is under a point, or -1.
+ *
+ * ⚠️ THE CATCH AREA IS LOOSER THAN THE BOX IS DRAWN, and vertically much looser. A pinched hand is
+ * not a mouse: the carry point wanders by a few percent of the frame while the fingers open, so a
+ * catch area the exact size of the box means a decisive, correct drop lands in the gap between two
+ * columns and the digit goes home. The column is the thing being chosen, so the tolerance goes on
+ * the axis that is NOT the choice — generous in y, and in x only as far as the halfway line between
+ * neighbours, which is the widest it can be without ever making the wrong column win.
+ */
+export function boxHit(
+  L: ReturnType<typeof boardLayout>, slots: number, p: { x: number; y: number } | null,
+): number {
+  if (!p) return -1
+  if (p.y < L.boardTop - 60 || p.y > L.boardTop + L.boxH + 60) return -1
+  // ⚠️ nearest column rather than "inside a column", for `tileHit`'s reason: the 10px gap between
+  // two boxes was a stripe a decisive, correct drop could land in and go home. Rounding partitions
+  // at the halfway line, so the wrong column still cannot win.
+  const pitch = L.boxW + 10
+  const i = Math.round((p.x - (L.boxAt(0) + L.boxW / 2)) / pitch)
+  return i >= 0 && i < slots ? i : -1
+}
+
+/**
+ * THE TRAY — the round's own digits, scrambled, laid out loose along the bottom.
+ *
+ * ⚠️ IT IS THE ANSWER SURFACE FOR **BOTH** INPUTS, which is chapter-craft §5's *one instrument, two
+ * inputs, one grader*. A finger taps a tile and it goes into the lit box; a pinched hand carries the
+ * same tile into whichever column it is dropped on. Both land in `put()`, so the two can never drift
+ * into grading differently and one sweep covers them at once.
+ *
+ * ⚠️ A TILE IS CONSUMED WHEN IT IS PLACED, and that is the manipulative being honest rather than a
+ * restriction. There are four digits and four columns; a digit that is up on the board is not also
+ * still in the tray, and a child who has placed three can see at a glance that one is left.
+ */
+function Tray({ tray, used, carried, tile, gap, left, top, onTake, disabled }: {
+  tray: number[]; used: number[]; carried: number | null
+  tile: number; gap: number; left: number; top: number
+  onTake: (k: number) => void; disabled: boolean
+}) {
+  return (
+    <div style={{ position: 'fixed', left, top, zIndex: 55, display: 'flex', gap }}>
+      {tray.map((d, k) => {
+        const gone = used.includes(k) || carried === k
+        return (
+          <button key={k} onClick={() => onTake(k)} disabled={disabled || gone}
+            style={{
+              width: tile, height: tile, borderRadius: 12, padding: 0,
+              cursor: disabled || gone ? 'default' : 'pointer',
+              // ⚠️ a placed tile leaves its SLOT behind rather than vanishing — the row would
+              // re-centre under the child's hand mid-carry, and the tile they were aiming at would
+              // move out from under them
+              border: `3px ${gone ? 'dashed' : 'solid'} var(--outline, #3d2516)`,
+              background: gone ? 'rgba(61,37,22,.12)' : 'var(--paper, #fdf6e8)',
+              opacity: disabled && !gone ? .45 : 1,
+              fontFamily: 'var(--font-numeric, var(--font-display))', fontWeight: 900,
+              fontSize: Math.round(tile * 0.52), color: 'var(--ink, #3d2516)',
+            }}>{gone ? '' : d}</button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** The digit riding under the hand, drawn where the carry point is. */
+function Carried({ d, at, tile }: { d: number; at: { x: number; y: number }; tile: number }) {
+  return (
+    <div style={{ position: 'fixed', left: at.x, top: at.y, zIndex: 62, pointerEvents: 'none',
+      transform: 'translate(-50%,-50%)', width: tile, height: tile, borderRadius: 12,
+      border: '3px solid var(--milo-orange, #f26b2c)', background: 'var(--paper, #fdf6e8)',
+      boxShadow: '0 6px 14px rgba(0,0,0,.35)', display: 'grid', placeItems: 'center',
+      fontFamily: 'var(--font-numeric, var(--font-display))', fontWeight: 900,
+      fontSize: Math.round(tile * 0.52), color: 'var(--ink, #3d2516)' }}>{d}</div>
+  )
+}
+
+/**
+ * THE HAND'S OWN POINTER, when it is not carrying anything.
+ *
+ * ⚠️ WITHOUT IT THE CHILD CANNOT AIM, AND THE FULL-SCREEN SELF-VIEW DOES NOT REPLACE IT. Their hand
+ * is drawn where the camera sees it; the carry point is that reading stretched through `REACH`, so
+ * the two are in different places on purpose — this dot is the one that means anything, and a child
+ * reaching for the thousands with no idea where the app thinks their hand is has a gesture that
+ * reads as broken.
+ */
+function HandDot({ at, over }: { at: { x: number; y: number }; over: boolean }) {
+  return (
+    <div style={{ position: 'fixed', left: at.x, top: at.y, zIndex: 61, pointerEvents: 'none',
+      // ⚠️ BIG ENOUGH TO FIND ON A CAMERA PICTURE. An 18px ring over a lit room is a speck, and a
+      // child who cannot see where the app thinks their hand is cannot aim at anything.
+      transform: 'translate(-50%,-50%)', width: over ? 44 : 30, height: over ? 44 : 30,
+      borderRadius: 999, border: '4px solid var(--milo-orange, #f26b2c)',
+      background: over ? 'rgba(242,107,44,.4)' : 'rgba(255,255,255,.35)',
+      boxShadow: '0 2px 8px rgba(0,0,0,.4)', transition: 'width .12s, height .12s' }} />
+  )
+}
+
+/**
+ * The instruction, as a pure function of the round, the input and what the hand is doing.
+ *
+ * ⚠️ IT CANNOT GO INPUT-BLIND, and it cannot go STATE-blind either. The Supply Run's finding: the
+ * control that names which question is being asked must name the gesture the child actually has, and
+ * every state a gesture can be in needs words — not just "ready".
+ */
+export function writeAsk(
+  q: OdRound, input: 'hand' | 'tap',
+  st: { full: boolean; carrying: number | null; over: number },
+): string {
+  /**
+   * ⚠️ THE COMMIT IS NAMED PER INPUT TOO, and it is the state where getting that wrong costs most:
+   * a child who has built the whole board and is told to reach for a button they were never using
+   * has finished the work and cannot hand it in. On the camera path the gesture IS the commit —
+   * `Put it up ✓` stays on screen as the same handler's second door, never as the only one.
+   */
+  if (st.full) {
+    return input === 'tap'
+      ? 'That is all of it — tap Put it up ✓'
+      : 'That is all of it — hold a thumbs up 👍 to put it on the board'
+  }
+  /**
+   * ⚠️ IT HAD TO READ AS A SENTENCE ON *BOTH* BOX COUNTS. Written as `…that goes${where}` with an
+   * empty `where` for a single box, the chip rendered "Tap the digit that goes" — a sentence stopping
+   * mid-phrase, on the round type a child meets first. Caught by driving it, not by the gate: the
+   * chip's assertions checked which WORDS it used and never that it finished.
+   */
+  const many = q.answer.length > 1
+  const where = many ? 'in the lit box' : 'in the box'
+  if (input === 'tap') return `Tap the digit that goes ${where}`
+  /**
+   * ⚠️ EVERY STATE A GESTURE CAN BE IN NEEDS WORDS, not just "ready" — The Fitting Crew's `handHint`
+   * finding. Carrying a digit over nothing is the state a child gets stuck in, because the hand is
+   * doing the right thing and the screen has no reason to react; without a line saying where it has
+   * to go, they open their fingers over the middle of the room and the digit goes home.
+   */
+  if (st.carrying !== null) {
+    /**
+     * ⚠️ **NAMING THE COLUMN UNDER THE HAND IS NOT HOT/COLD — it says WHERE, never whether that is
+     * right**, exactly like the box lighting up. It is worth the words because it puts the place
+     * NAME in front of the child at the one moment the decision is being made, and because a
+     * nine-year-old cannot always map a position to a label: on a `read` round the ask has already
+     * named the place, and on a `write` round the labels are printed under the boxes anyway.
+     */
+    return st.over >= 0
+      ? `Open your hand to drop the ${st.carrying} into the ${colName(q, st.over)}`
+      : many ? 'Carry it over a column, then open your hand'
+             : 'Carry it over the box, then open your hand'
+  }
+  return many
+    ? 'Close your hand on a digit, then carry it to the column it belongs in'
+    : 'Close your hand on the digit that belongs in the box and carry it up'
+}
+
 // ─── The people ─────────────────────────────────────────────────────────────────────────
-/** The customer: walks in on their own legs, waits while the order is filled, walks off with it. */
+/** The customer: walks in on their own legs, waits while the board is written, walks off. */
 function Customer({ src, h, x, vw, groundPx, leaving, resetKey, line, onArrive }: {
   src: string; h: number; x: number; vw: number; groundPx: number
   leaving: boolean; resetKey: string; line: string
-  /** fires once the walk-in has actually finished — the round's question waits for it */
   onArrive?: () => void
 }) {
   /**
-   * ⚠️ **THEY COME FROM OFF-FRAME, AND THEY COME FROM THE RIGHT.** The first cut travelled
-   * `-vw * 0.42`, which for a customer standing at x=1187 starts them at 649 — the MIDDLE of the
-   * yard. That is the craft doc's token step: a move too short to leave the picture is not an
-   * arrival, it is a pop with a twitch. They stand at the right-hand desk, so off-frame is a short
-   * walk in from the right edge — and because the bays are to their LEFT, walking left is also the
-   * direction they should end up facing.
+   * ⚠️ **THEY COME FROM OFF-FRAME, AND THEY COME FROM THE RIGHT.** A move too short to leave the
+   * picture is not an arrival, it is a pop with a twitch.
    */
   const inDist = Math.round(Math.max(140, vw - x + h * 0.9))
   const jIn = inFlowJourney(src, h, inDist)
   const jOut = inFlowJourney(src, h, inDist)
 
-  /**
-   * ⚠️ **THE BUBBLE WAITS FOR THE WALK-IN.** It renders OUTSIDE the travelling element (so it does
-   * not slide in, which would read as a floating banner), which means it sits at the DESTINATION
-   * while the customer is still on their way — a speech bubble with its tail on empty ground, for
-   * the whole journey. The craft doc's rule is that the speaker must be on screen whenever the
-   * bubble is; this is the same rule one step along — they must have ARRIVED.
-   */
+  /** ⚠️ **THE BUBBLE WAITS FOR THE WALK-IN** — it renders outside the travelling element, so without
+   *  this it sits at the destination with its tail on empty ground for the whole journey. */
   const [here, setHere] = useState(false)
   const arrivedRef = useRef(onArrive); arrivedRef.current = onArrive
   useEffect(() => {
@@ -620,20 +874,14 @@ function Customer({ src, h, x, vw, groundPx, leaving, resetKey, line, onArrive }
     const t = window.setTimeout(() => { setHere(true); arrivedRef.current?.() }, jIn.ms)
     return () => window.clearTimeout(t)
   }, [resetKey, jIn.ms])
-  /**
-   * ⚠️ THE BUBBLE IS CLAMPED INTO THE FRAME AND THE TAIL STAYS ON THE MOUTH. Centred on a customer
-   * standing at x=1187 it measured **l963 → r1423 on a 1280px frame** — 143px of the question cut
-   * off the right edge, which is the one thing a chapter may never do. So the box shifts back
-   * inside and the tail is moved the opposite way, which is what keeps it the customer's line
-   * rather than a floating banner.
-   */
+  /** ⚠️ CLAMPED INTO THE FRAME, TAIL STAYS ON THE MOUTH — centred on a customer at x=1187 it
+   *  measured l963 → r1423 on a 1280px frame, i.e. 143px of the question cut off the edge. */
   const bubW = Math.min(vw * 0.52, 460)
   const half = bubW / 2 + 12
   const centre = Math.max(half, Math.min(x, vw - half))
   const shift = centre - x
   return (
     <div style={{ position: 'fixed', left: x, top: groundPx, transform: 'translate(-50%,-100%)', zIndex: 35 }}>
-      {/* the bubble rides OUTSIDE the travelling element — it is anchored to the mouth, not carried */}
       {here && !leaving && line && (
         <div style={{ position: 'absolute', bottom: h * 0.86, left: shift, transform: 'translateX(-50%)',
           width: 'max-content', maxWidth: bubW, zIndex: 3,
@@ -651,10 +899,9 @@ function Customer({ src, h, x, vw, groundPx, leaving, resetKey, line, onArrive }
         {moving => (
           <span style={{ display: 'block', position: 'relative' }}>
             <Shadow w={Math.round(h * 0.62)} h={Math.round(h * 0.14)} />
-            {/* ⚠️ FACING FOLLOWS TRAVEL, NOT THE ART. Every sprite was checked LARGE and faces
-                RIGHT, so walking IN from the right edge means walking left — flipped — and then
-                standing flipped, which is correct because the bays they are watching are to their
-                left. Leaving, they turn round and go back out to the right, unflipped. */}
+            {/* ⚠️ FACING FOLLOWS TRAVEL, NOT THE ART. Every sprite faces RIGHT, so walking in from
+                the right edge means flipped, and standing flipped is correct — the board is to
+                their left. Leaving, they turn round and go back out unflipped. */}
             <SheetCell src={src} h={h} facesLeft={!leaving} moving={moving}
               cycleScale={leaving ? jOut.cycleScale : jIn.cycleScale} />
           </span>
@@ -665,50 +912,21 @@ function Customer({ src, h, x, vw, groundPx, leaving, resetKey, line, onArrive }
 }
 
 /**
- * Milo the clerk, at the desk end of the bay row.
+ * Milo at the tally table.
  *
- * ⚠️ HE DOES NOT WALK ALONG THE BAYS, AND THAT WAS MEASURED RATHER THAN CHosen. The first cut had
- * him walk to whichever bay was being loaded, which put him at l590–r690 standing exactly on the
- * hundreds bay's label at l605–r675 — and there is no vertical room to give him a lane, because a
- * 3-row pallet bay is already 417 of the 440px band. So the JOURNEY in this chapter belongs to the
- * customer (who arrives, waits and leaves with the order) and to every piece that flies to its bay;
- * Milo's job is dispatching them from the desk. A stationary character PAUSES its cycle — a cycle
- * looping on someone standing still is skating on the spot.
+ * ⚠️ HE DOES NOT WALK, and that was measured rather than chosen on the previous cut: walking him to
+ * whichever column was being filled put him standing on that column's own label. The JOURNEY belongs
+ * to the customer. A stationary character PAUSES its cycle — a cycle looping on someone standing
+ * still is skating on the spot.
  */
 function MiloClerk({ h, x, groundPx, busy }: { h: number; x: number; groundPx: number; busy: boolean }) {
-  const src = '/assets/characters/milo_side.png'
   return (
     <div style={{ position: 'fixed', left: x, top: groundPx, transform: 'translate(-50%,-100%)',
       zIndex: 36, pointerEvents: 'none' }} data-milo>
-      <span style={{ display: 'block', position: 'relative',
-        animation: busy ? 'od_hand .42s ease' : undefined }}>
+      <span style={{ display: 'block', position: 'relative', animation: busy ? 'od_hand .42s ease' : undefined }}>
         <Shadow w={Math.round(h * 0.6)} h={Math.round(h * 0.14)} />
-        <SheetCell src={src} h={h} moving={false} facesLeft={false} />
+        <SheetCell src="/assets/characters/milo_side.png" h={h} moving={false} facesLeft={false} />
       </span>
-    </div>
-  )
-}
-
-/** A piece in flight from the supply row to its bay. ⚠️ It TRAVELS — it does not materialise. */
-function Flyer({ place, u, m, from, to, onLand, id }: {
-  place: Place; u: number; m: Shades; from: { x: number; y: number }; to: { x: number; y: number }
-  onLand: () => void; id: string
-}) {
-  const dx = to.x - from.x, dy = to.y - from.y
-  const dist = Math.hypot(dx, dy)
-  const ms = Math.max(280, Math.round((dist / CARRY_SPEED) * 1000))
-  const landed = useRef(false)
-  useEffect(() => {
-    const t = window.setTimeout(() => { if (!landed.current) { landed.current = true; onLand() } }, ms)
-    return () => window.clearTimeout(t)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
-  return (
-    <div style={{ position: 'fixed', left: from.x, top: from.y, transform: 'translate(-50%,-100%)',
-      zIndex: 46, pointerEvents: 'none', animation: `od_fly ${ms}ms cubic-bezier(.32,.72,.5,1) forwards` }}>
-      <div style={{ ['--dx' as string]: `${dx}px`, ['--dy' as string]: `${dy}px` }}>
-        <Piece place={place} u={u} m={m} />
-      </div>
     </div>
   )
 }
@@ -716,251 +934,338 @@ function Flyer({ place, u, m, from, to, onLand, id }: {
 // ─── Play ───────────────────────────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
 
-interface Flight { id: string; place: Place; idx: number; from: { x: number; y: number }; to: { x: number; y: number } }
-
 export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (correct: boolean) => void }> =
   ({ data, mode, onComplete }) => {
     const { w: vw, h: vh } = useViewport()
-    const single = data.focus >= 0
-    const L = orderLayout(vw, vh, data.yard.groundY)
-    const m = shadesOf(data.yard.material)
+    const { read, input } = useHand()
+    const onCam = input === 'hand'
+    const slots = data.answer.length
+    const L = boardLayout(vw, vh, data.yard.groundY, slots)
+    const T = trayLayout(L, vw, vh, data.tray.length)
+    const hasVoice = useHasVoice()
 
-    const [counts, setCounts] = useState<number[]>([0, 0, 0, 0])
-    const [flights, setFlights] = useState<Flight[]>([])
-    const [bundling, setBundling] = useState(-1)
+    const [entered, setEntered] = useState<number[]>(() => data.answer.map(() => -1))
+    /**
+     * WHICH TILE went into which box, or -1. ⚠️ IT IS A SECOND ARRAY RATHER THAN `entered` HOLDING
+     * TILE INDICES, so `grade`/`missFor` keep taking plain digits and neither they nor the gate that
+     * drives them had to change for a new input. It exists at all because a tray can hold the same
+     * digit twice (3,4,4,2) and "which 4 has been used" is not derivable from the digits alone.
+     */
+    const [usedTile, setUsedTile] = useState<number[]>(() => data.answer.map(() => -1))
+    const [active, setActive] = useState(0)
+    /** the tile currently in the child's pinched hand, or null */
+    const [carry, setCarry] = useState<number | null>(null)
     const [sent, setSent] = useState(false)
     const [miss, setMiss] = useState<string | null>(null)
-    const [active, setActive] = useState(single ? data.focus : PLACES.length - 1)
-    const erred = useRef(false), done = useRef(false), seq = useRef(0)
+    const [ready, setReady] = useState(false)
+    const erred = useRef(false), done = useRef(false)
     // ⚠️ A mirror ref, because a handler must never read state it also sets: four taps inside ONE
     // React batch all saw the same stale array and only one registered. This repo has met that
-    // shape four times (placeValue's undo, CoinShop's lay, TickTock's lesson dial).
-    const countsRef = useRef(counts)
-
+    // shape five times (placeValue's undo, CoinShop's lay, TickTock's lesson dial, the parade).
+    const enteredRef = useRef(entered)
+    const usedRef = useRef(usedTile)
     /**
-     * ⚠️ THE CAMERA IS OPENED ONCE FOR THE WHOLE CHAPTER, at the orchestrator, and read here through
-     * context. Opening it per round would re-prompt and re-initialise MediaPipe every question.
+     * ⚠️ AND SO IS THE ACTIVE BOX, FOR THE SAME REASON — this is the sixth time this repo has met the
+     * shape and the first cut of this file shipped it. `put()` closes over `active`, so a child
+     * tapping 8-0-5-4 fast enough to land inside ONE React batch writes all four digits into box 0
+     * and the other three boxes stay empty. `setActive(a => …)` being functional does not save it:
+     * the STATE advances correctly and the closure the next tap runs is still the old one. Distinct
+     * human taps are usually separate ticks; that is not a guarantee, which is why the rule is never
+     * read state you also set inside a handler.
      */
-    const { read, input } = useHand()
-    /**
-     * Grabs already closed when this round opened — the held-over guard's baseline.
-     *
-     * ⚠️ SEEDED FROM THE CURRENT READING, NOT FROM ZERO, and the difference is the whole guard. The
-     * round-reset block below only runs when `SkillBeat` REUSES this component; on a fresh mount it
-     * never fires, so a `useRef(0)` baseline leaves any grab already in progress reading as
-     * `grabs > 0` — i.e. valid — and the piece the child was holding from the previous round drops
-     * into whatever column they happen to be over. `useRef`'s initial value is evaluated on the mount
-     * render, which is exactly the moment wanted. Caught by driving it: the chip opened on "open your
-     * hand to drop it", which is only reachable when the guard has already let the grab through.
-     */
-    const armed = useRef(read.grabs)
-    const wasGrab = useRef(false)
-    const [over, setOver] = useState(-1)
+    const activeRef = useRef(0)
+    /** ⚠️ SAME RULE FOR THE CARRIED TILE — the drop handler both reads and clears it. */
+    const carryRef = useRef<number | null>(null)
 
     // the round resets during RENDER, not in an effect — an effect runs after paint and the
-    // previous round's load is painted for one frame under the new order
+    // previous round's answer is painted for one frame under the new question
     const sig = `${data.qType}|${data.n}|${data.focus}`
     const [seen, setSeen] = useState(sig)
     if (seen !== sig) {
       setSeen(sig)
-      setCounts([0, 0, 0, 0]); countsRef.current = [0, 0, 0, 0]
-      setFlights([]); setSent(false); setMiss(null); setBundling(-1)
-      setActive(single ? data.focus : PLACES.length - 1)
+      const blank = data.answer.map(() => -1)
+      setEntered(blank); enteredRef.current = blank
+      setUsedTile(blank.slice()); usedRef.current = blank.slice()
+      setActive(0); activeRef.current = 0
+      setCarry(null); carryRef.current = null
+      setSent(false); setMiss(null); setReady(false)
       erred.current = false; done.current = false
-      /**
-       * ⚠️ A HAND STILL PINCHING WHEN THE NEXT ROUND OPENS IS NOT AN ANSWER. A tap is consumed; a
-       * pose is not, so without this a child who has not opened their fingers deposits a piece into
-       * whatever column they happen to be over the instant the question changes. Only a grab that
-       * CLOSED after the round opened counts.
-       */
-      armed.current = read.grabs
-      wasGrab.current = read.grabbing
-      setOver(-1)
     }
+
+    /**
+     * Put a digit into a box and consume the tile it came from. ⚠️ BOTH INPUTS LAND HERE — a tap
+     * fills the LIT box, a hand fills the box it was dropped on, and that is the only difference
+     * between them. See `Tray`.
+     */
+    const put = useCallback((tileIdx: number, boxIdx: number) => {
+      if (done.current || sent) return
+      const i = Math.max(0, Math.min(boxIdx, slots - 1))
+      const next = enteredRef.current.slice()
+      const tiles = usedRef.current.slice()
+      // ⚠️ dropping onto a FULL box swaps: the tile already there goes back to the tray rather than
+      // being destroyed, or a child who mis-drops the thousands has lost a digit they still need
+      const evicted = tiles[i]
+      next[i] = data.tray[tileIdx]
+      tiles[i] = tileIdx
+      enteredRef.current = next; usedRef.current = tiles
+      activeRef.current = next.findIndex(v => v < 0) >= 0
+        ? next.findIndex(v => v < 0)
+        : Math.min(i + 1, slots - 1)
+      setEntered(next); setUsedTile(tiles); setActive(activeRef.current)
+      void evicted
+    }, [slots, sent, data.tray])
+
+    /** Take the last-placed digit back off the board. ⚠️ It frees its tile too — see `Tray`. */
+    const back = useCallback(() => {
+      if (done.current || sent) return
+      const next = enteredRef.current.slice()
+      const tiles = usedRef.current.slice()
+      // step back to the last written box and lift it out — ⌫ on an empty box goes to the one before
+      const a = activeRef.current
+      const i = next[a] >= 0 ? a : Math.max(0, a - 1)
+      next[i] = -1
+      tiles[i] = -1
+      enteredRef.current = next; usedRef.current = tiles
+      activeRef.current = i
+      setEntered(next); setUsedTile(tiles); setActive(i)
+    }, [sent])
+
+    /**
+     * ⚠️ THE HELD-OVER GUARD. A pinch already closed when the round opened is not a pick-up: a tap is
+     * consumed but a pose is not, so without the baseline a child still pinching from the last
+     * question grabs a tile the instant the board changes. Seeded from the CURRENT reading on the
+     * mount render — `useRef(0)` never fires the reset block on a fresh mount, which is the bug a
+     * previous cut shipped and had to be driven to find.
+     */
+    const armed = useRef(read.grabs)
+    if (seen !== sig) armed.current = read.grabs
+    const live = onCam && read.grabs > armed.current && !sent
+    const held = live && read.penDown
+    /** the carry point, in SCREEN pixels — see `handPoint` for why it is not the raw frame */
+    const at = onCam && read.pen ? handPoint(read.pen, vw, vh) : null
+    const overBox = live ? boxHit(L, slots, at) : -1
+    const overTile = live ? tileHit(L, vw, vh, data.tray.length, at) : -1
+
+    /**
+     * THE PICK-UP AND THE DROP.
+     *
+     * ⚠️ IN AN EFFECT ON THE *EDGE*, never derived during render. Closing and opening are events —
+     * the pinch state is a level — and a render-time reaction would fire on every one of the ~30
+     * frames a second the carry point moves.
+     *
+     * ⚠️ AND THE POINT IS READ FROM A REF, so the drop uses where the hand WAS when the fingers
+     * opened rather than where the effect's closure was created.
+     */
+    const atRef = useRef(at); atRef.current = at
+    const putRef = useRef(put); putRef.current = put
+    const trayRef = useRef(data.tray); trayRef.current = data.tray
+    useEffect(() => {
+      if (!live) return
+      if (held) {
+        const k = tileHit(L, vw, vh, trayRef.current.length, atRef.current)
+        // ⚠️ a tile already on the board cannot be picked up again — `usedRef` is the same list the
+        // tray greys out, so what the child sees and what the hand can grab cannot disagree
+        if (k >= 0 && !usedRef.current.includes(k)) { setCarry(k); carryRef.current = k }
+        return
+      }
+      const c = carryRef.current
+      if (c === null) return
+      const b = boxHit(L, slots, atRef.current)
+      // ⚠️ OPENING OVER NOTHING PUTS IT BACK, it does not drop it into the nearest column. A digit
+      // landing somewhere the child did not aim at is a wrong answer the chapter caused, which is
+      // the whole reason `stepPinch` confirms its release over three frames.
+      if (b >= 0) putRef.current(c, b)
+      setCarry(null); carryRef.current = null
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [held, live])
+
+    const commit = useCallback(() => {
+      if (done.current || sent) return
+      const cur = enteredRef.current
+      if (cur.some(v => v < 0)) { setMiss(missFor(data, cur)); return }
+      const ok = grade(data, cur)
+      if (!ok) {
+        erred.current = true
+        setMiss(missFor(data, cur))
+        // the board re-opens: a wrong answer clears what was written AND puts every tile back, so
+        // the retry starts from the same tray the round started with
+        const blank = data.answer.map(() => -1)
+        window.setTimeout(() => {
+          setEntered(blank); enteredRef.current = blank
+          setUsedTile(blank.slice()); usedRef.current = blank.slice()
+          setActive(0); activeRef.current = 0; setMiss(null)
+        }, 2400)
+        return
+      }
+      done.current = true
+      setSent(true)
+      setMiss(null)
+      window.setTimeout(() => onComplete(!erred.current), 1500)
+    }, [data, sent, onComplete])
 
     // ⚠️ Spoken on ARRIVAL, not on mount — the customer asking before they have walked in is the
     // same fault as the bubble showing early, in the other channel.
-
-    const bayCentre = useCallback((i: number) =>
-      ({ x: L.bayLeft(i) + L.bayWidth(i) / 2, y: L.shelfPx - L.u * 1.6 }), [L])
-
-    /**
-     * ⚠️ THE DROP. `grabs` is monotone only WITHIN a detector session — `useTaps()` and a camera
-     * restart both reset the reading — so a backwards jump is clamped, or one "Try the camera again"
-     * strands the baseline above the counter and the gesture is dead for the rest of the run.
-     */
     useEffect(() => {
-      if (input !== 'hand' || done.current || sent) return
-      if (read.grabs < armed.current) armed.current = read.grabs
-      const col = read.palm ? columnAt(read.palm.x, vw, L) : -1
-      setOver(read.grabbing ? col : -1)
-      const started = read.grabs > armed.current
-      // released, having really picked up during THIS round, over a column
-      if (wasGrab.current && !read.grabbing && started && col >= 0) add(col)
-      wasGrab.current = read.grabbing
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [read, input, sent])
+      if (!ready) return
+      speak(data.ask)
+      return () => stopSpeech()
+    }, [ready, data.ask])
+
+    const full = entered.every(v => v >= 0)
+    const line = miss ?? (sent ? 'Up it goes — thank you!' : ready ? data.ask : '')
 
     /**
-     * The one entry point for "the child adds one piece of place i" — a tap and the hand both come
-     * through here, so the grader never learns which input moved it.
+     * 👍 PUTS THE BOARD UP — the founder's replacement for reaching back to the button once every
+     * digit is in its column.
      *
-     * ⚠️ THE SINGLE-COLUMN RESTRICTION IS ENFORCED HERE, NOT ONLY IN THE VIEW. It used to live purely
-     * in `Supply`, which computes `hidden` and sets `disabled` — fine while a tap was the only way
-     * in, and wrong the moment a hand can drop a piece anywhere in frame: an AR path could load a
-     * column the round forbids and produce a state the tap path cannot reach. The gate is on the
-     * ACTION now, so both inputs obey it by construction.
+     * ⚠️ **THE BUTTON STAYS, AND THE GESTURE FIRES THE SAME HANDLER.** The Supply Run's finding, and
+     * this chapter is the exact case it warns about: replace the only commit-feeding control with a
+     * readout and a working camera that cannot read one particular child's pose leaves them with a
+     * finished board, nothing to press, no wrong answer, no re-teach and no `CamGate` (that renders
+     * only when the camera failed to START). One element, two ways to fire it, no dead end.
+     *
+     * ⚠️ ON THE RISING EDGE, which is also the held-over-pose guard for free. `thumbsUp` is a LEVEL,
+     * so a thumb still up from the previous round would commit the next board the instant its last
+     * digit landed — a round graded by a hand the child had not moved. The ref outlives the round
+     * reset on purpose: they have to lower it and raise it again.
+     *
+     * ⚠️ AND IT IS GATED ON `full`, which is the other half of the separation from the fist that
+     * GRABS. Nothing is left to pick up once the board is complete, so the two poses can never both
+     * be live at once.
      */
-    function add(i: number) {
-      if (done.current || sent) return
-      if (single && i !== data.focus) return
-      const place = PLACES[i]
-      const id = `f${seq.current++}`
-      // read the button's REAL position rather than re-deriving the supply row's layout: two
-      // independent guesses at one gap is how the cart ended up inside Milo's bubble in LoadingBay
-      const btn = document.querySelector<HTMLElement>(`[data-supply="${i}"]`)
-      const r = btn?.getBoundingClientRect()
-      const from = r ? { x: r.left + r.width / 2, y: r.top + r.height * 0.6 }
-        : { x: vw / 2, y: L.supplyY + 30 }
-      setFlights(f => [...f, { id, place, idx: i, from, to: bayCentre(i) }])
-      setActive(i)
-      setMiss(null)
-    }
-
-    function land(fl: Flight) {
-      setFlights(f => f.filter(x => x.id !== fl.id))
-      const next = countsRef.current.slice()
-      next[fl.idx] += 1
-      // ⚠️ THE BUNDLE. A bay cannot hold ten: the ten fuse into ONE of the next size up and it
-      // travels one bay LEFT. That is the whole reason the next column exists.
-      if (next[fl.idx] >= 10 && fl.idx > 0) {
-        next[fl.idx] -= 10
-        next[fl.idx - 1] += 1
-        setBundling(fl.idx)
-        window.setTimeout(() => setBundling(-1), 460)
-        speak(`Ten ${PLACE_NAME[PLACES[fl.idx]].many} make one ${PLACE_NAME[PLACES[fl.idx - 1]].one}.`)
-      }
-      countsRef.current = next
-      setCounts(next)
-    }
-
-    function take(i: number) {
-      if (done.current || sent) return
-      if (countsRef.current[i] === 0) return
-      const next = countsRef.current.slice()
-      next[i] -= 1
-      countsRef.current = next
-      setCounts(next)
-      setActive(i)
-      setMiss(null)
-    }
-
-    const right = grade(data, counts)
-
-    /**
-     * ⚠️ THIS USED TO BE A SILENT NO-OP MID-FLIGHT. Its only `disabled` condition was `sent`, while
-     * the `flights.length` guard sat inside the handler — so pressing Send while a piece was still
-     * travelling did nothing, said nothing, and looked like a dead button, which chapter-craft calls
-     * the worst outcome there is. A gesture inherits this far more often than a tap does, because a
-     * hand can commit the instant after it drops. The button is now visibly unavailable for those
-     * ~280 ms instead of silently ignoring the press.
-     */
-    function send() {
-      if (done.current || sent || flights.length) return
-      if (right) {
-        done.current = true; setSent(true)
-        speak('That is the total. Up it goes!')
-        window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 2100)
-        return
-      }
-      erred.current = true
-      const line = missFor(data, counts)
-      setMiss(line)
-      speak(line)
-    }
+    const commitRef = useRef(commit); commitRef.current = commit
+    const thumbWas = useRef(false)
+    useEffect(() => {
+      const up = onCam && read.thumbsUp
+      const was = thumbWas.current
+      thumbWas.current = up
+      if (up && !was && full && ready && !sent) commitRef.current()
+    }, [read.thumbsUp, onCam, full, ready, sent])
 
     return (
       <>
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10, overflow: 'hidden' }}>
-          <img src={data.yard.scene} alt="" draggable={false} decoding="async"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-
-        {/* the docket — what the customer is holding. It never shows the answer. */}
-        <div style={{ position: 'fixed', left: 12, top: 52, zIndex: 45, background: 'rgba(255,252,244,.94)',
-          border: '3px solid var(--outline, #3d2516)', borderRadius: 12, padding: '5px 12px',
-          fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(13px,1.7vw,21px)',
-          color: 'var(--ink, #3d2516)' }}>
-          Tally · {data.docket}
-        </div>
-
-        {/* the bays — all four, always. A `place` round leaves three empty, which keeps the
-            place-value chart intact and shows the child which column they are filling. */}
-        {PLACES.map((p, i) => (
-          <div key={p} style={{ position: 'fixed', left: L.bayLeft(i), top: L.shelfPx,
-            width: L.bayWidth(i), transform: 'translateY(-100%)', zIndex: 30 }}>
-            <Bay place={p} n={counts[i]} u={L.u} m={m}
-              w={L.bayWidth(i)} hPx={L.bayHeight(i)} label={PLACE_NAME[p].goods}
-              active={active === i} bundling={bundling === i}
-              onTake={sent ? undefined : () => take(i)} />
-          </div>
-        ))}
-
-        {flights.map(fl => (
-          <Flyer key={fl.id} id={fl.id} place={fl.place} u={L.u} m={m} from={fl.from} to={fl.to}
-            onLand={() => land(fl)} />
-        ))}
-
-        <MiloClerk h={L.peopleH} x={L.miloX} groundPx={L.groundPx} busy={flights.length > 0} />
-        <Customer src={data.yard.customer} h={L.peopleH} x={L.custX} vw={vw} groundPx={L.groundPx}
-          leaving={sent} resetKey={sig} line={miss ?? data.ask}
-          onArrive={() => { if (mode === 'guided') speak(data.ask) }} />
-
-        {/* ⚠️ THE INSTRUCTION NAMES THE GESTURE THE CHILD ACTUALLY HAS, and changes with what the
-            hand is doing. Input-blind it would tell a tap child to pinch; state-blind it would leave
-            a child holding a piece with nothing saying to open their fingers. */}
-        {!sent && (
-          <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)',
-            bottom: L.supply + 8, zIndex: 47, background: 'rgba(253,246,232,.94)',
-            border: '3px solid var(--outline, #3d2516)', borderRadius: 999, padding: '4px 14px',
-            fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(11px,1.4vw,15px)',
-            color: 'var(--ink, #3d2516)', whiteSpace: 'nowrap' }}>
-            {loadAsk(data, input, { carrying: read.grabbing, over, full: right, armed: read.grabs > armed.current })}
+        {/* ⚠️ ON THE CAMERA PATH THE CHILD'S OWN ROOM IS THE BACKDROP — the full-screen self-view is
+            mounted behind this by the shell, and painting the yard over it would simply hide it. */}
+        {!onCam && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 10, overflow: 'hidden' }}>
+            <img src={data.yard.scene} alt="" draggable={false} decoding="async"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         )}
-        <Supply u={L.u} m={m} band={L.supply} live={!sent} only={single ? data.focus : -1} onTap={add} />
 
-        {/* ⚠️ IDENTICAL AT EVERY STATE. Nothing may say the order is right before the commit —
-            chapter 4's green Ready button turned this whole class of chapter into hot/cold. */}
-        <button onClick={send} disabled={sent || flights.length > 0}
-          /* ⚠️ CLEARS THE CUSTOMER'S BAND. At right:16 it sat squarely on the bear who is standing
-             at the right-hand desk — measured on the founder's screenshot. The people's reserve is
-             already derived, so the commit button simply starts where that ends. */
-          style={{ position: 'fixed', right: L.side + 12, bottom: L.supply + 10, zIndex: 47,
-            padding: '14px 30px', borderRadius: 999, border: 'none',
-            background: 'linear-gradient(135deg,var(--milo-orange,#f26b2c),var(--milo-orange-deep,#d9541c))',
-            color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900,
-            fontSize: 'clamp(15px,2vw,25px)', cursor: sent ? 'default' : 'pointer',
-            opacity: sent ? .5 : 1, boxShadow: '0 4px 0 rgba(180,70,20,.45)' }}>
-          Send it ✓
-        </button>
+        {/* the figure a read/value round is about, or — on a silent device — the words a write
+            round would otherwise only speak */}
+        {/**
+          * ⚠️ THE ASK MOVES OUT OF THE BUBBLE WHERE IT WOULD COVER THE ANSWER. See `boardLayout`:
+          * on a short landscape frame the bubble and the boxes do not fit beside one another at the
+          * tap floor, and a question drawn over the boxes is worse than one drawn in a banner. The
+          * customer is still on screen and still says it aloud — what is lost is the tail, not the
+          * speaker.
+          */}
+        {L.askAtTop && ready && !sent && (
+          <div style={{ position: 'fixed', left: 0, right: 0, top: 8, zIndex: 41, display: 'grid',
+            placeItems: 'center', padding: '0 96px', pointerEvents: 'none' }}>
+            <span style={{ background: 'rgba(255,252,244,.96)', border: '3px solid var(--outline, #3d2516)',
+              borderRadius: 14, padding: '6px 14px', maxWidth: '100%', textAlign: 'center',
+              fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: L.short ? 13 : 16,
+              lineHeight: 1.3, color: 'var(--ink, #3d2516)' }}>{line}</span>
+          </div>
+        )}
+        {/* ⚠️ NOTHING IS PRINTED WHILE THE CHILD WORKS — see `saidAmount`. The one exception is a
+            silent device on a `write` round, where the total is otherwise ONLY spoken and the round
+            would be unanswerable; a one-digit round needs no fallback, because its ask is written in
+            the bubble either way. */}
+        {data.qType === 'write' && !hasVoice && ready && <Docket text={numWords(data.n)} top={L.docketTop} vw={vw} />}
 
-        {/* the numeral appears only AFTER the commit — it is the summary of work already done */}
+        <BoardRow q={data} L={L} entered={entered} active={active}
+          over={carry !== null ? overBox : -1}
+          onPick={sent ? undefined : (i => { activeRef.current = i; setActive(i) })} />
+
+        {!sent && (
+          <Tray tray={data.tray} used={usedTile} carried={carry}
+            tile={T.tile} gap={T.gap} left={T.left} top={T.top}
+            disabled={!ready}
+            /** the tap path: a tile goes into the LIT box, which `BoardRow` lets the child move */
+            onTake={k => put(k, activeRef.current)} />
+        )}
+
+        {/* the hand itself — where the app thinks it is, and what it is holding */}
+        {live && at && carry === null && <HandDot at={at} over={overTile >= 0} />}
+        {live && at && carry !== null && <Carried d={data.tray[carry]} at={at} tile={T.tile} />}
+
+        {/* ⚠️ THE HAND OWNS THE VALUE; TAPS OWN THE ACTIONS. Taking a digit back off the board and
+            putting the board up are discrete, so they stay buttons on both paths. */}
+        {/**
+          * ⚠️ **ONE ROW — THE TWO ACTIONS AND THE INSTRUCTION TOGETHER, INSET PAST THE CAST.** All
+          * three were pinned separately first and every pair of them collided somewhere: `Put it up
+          * ✓` in the frame's corner was drawn straight ON the self-view panel at 1280×720 (the
+          * button you press covering the picture of your own hand — the same fault a previous cut
+          * shipped with the writing pane), `↩ take it back` sat on Milo's leg, and at 640×320 the
+          * chip was drawn across BOTH buttons. The taps still landed in every case, which is exactly
+          * why only crossing every layer with every other finds them. (The self-view is full-screen
+          * now and behind everything, so it is no longer one of the layers to keep out of.)
+          *
+          * ⚠️ AND THE CHIP IS THE ONE THAT GIVES. The buttons are tap targets and may not shrink;
+          * the words can wrap to a second line, which on a 320px-tall frame is the only thing here
+          * that has any room left to give.
+          */}
+        {!sent && (
+          <div style={{ position: 'fixed', left: L.side + 10, right: L.side + 10,
+            bottom: L.trayH + 12, zIndex: 56, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={back} disabled={!entered.some(v => v >= 0)}
+              style={{ flex: '0 0 auto',
+                padding: L.short ? '8px 12px' : '9px 16px', borderRadius: 999,
+                border: '3px solid var(--outline, #3d2516)',
+                background: 'var(--paper, #fdf6e8)', opacity: entered.some(v => v >= 0) ? 1 : .45,
+                cursor: entered.some(v => v >= 0) ? 'pointer' : 'default',
+                fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: L.short ? 13 : 15,
+                color: 'var(--ink, #3d2516)' }}>↩ take it back</button>
+            {/* the instruction — input-aware AND state-aware */}
+            <span style={{ flex: '1 1 auto', textAlign: 'center', pointerEvents: 'none' }}>
+              {ready && (
+                <span style={{ background: 'rgba(61,37,22,.88)', color: '#fdf6e8', borderRadius: 14,
+                  padding: '5px 12px', display: 'inline-block',
+                  fontFamily: 'var(--font-display)', fontWeight: 800, lineHeight: 1.25,
+                  fontSize: L.short ? 12 : 14 }}>
+                  {writeAsk(data, onCam ? 'hand' : 'tap',
+                    { full, carrying: carry === null ? null : data.tray[carry], over: overBox })}
+                </span>
+              )}
+            </span>
+            <button onClick={commit} disabled={!full || !ready}
+              style={{ flex: '0 0 auto',
+                padding: L.short ? '9px 14px' : '11px 20px', borderRadius: 999,
+                border: '4px solid var(--outline, #3d2516)',
+                background: full ? 'var(--milo-orange, #f26b2c)' : 'var(--paper, #fdf6e8)',
+                color: full ? '#fff' : 'var(--ink, #3d2516)', opacity: full && ready ? 1 : .5,
+                cursor: full && ready ? 'pointer' : 'default',
+                fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: L.short ? 14 : 16,
+              }}>Put it up ✓</button>
+          </div>
+        )}
+
+        {/* the reveal, after the commit and never before */}
         {sent && (
-          <div style={{ position: 'fixed', left: 0, right: 0, top: '13%', zIndex: 48, display: 'flex',
-            justifyContent: 'center', pointerEvents: 'none' }}>
-            <div style={{ background: 'var(--garden-green, #4f9d4f)', color: '#fff', borderRadius: 16,
-              padding: '9px 22px', fontFamily: 'var(--font-display)', fontWeight: 900,
-              fontSize: 'clamp(20px,3.2vw,42px)', animation: 'by_pop .4s ease both',
-              boxShadow: '0 5px 0 rgba(20,60,20,.35)' }}>
-              {single
-                // ⚠️ SINGULAR WHEN IT IS ONE — this read "1 coins = 1", the same family as the
-                // "Fox has a apple" this repo already records. And the value is money now, or the
-                // reveal is the one place in the chapter still counting in bare units.
-                ? `${counts[data.focus]} ${counts[data.focus] === 1 ? PLACE_NAME[PLACES[data.focus]].one : PLACE_NAME[PLACES[data.focus]].many} = ${money(counts[data.focus] * PLACES[data.focus])}`
-                : fmt(data.n)}
+          <div style={{ position: 'fixed', left: 0, right: 0, top: L.boardBottom + 10,
+            zIndex: 58, display: 'grid', placeItems: 'center', pointerEvents: 'none' }}>
+            <div style={{ background: 'rgba(255,252,244,.97)', border: '4px solid var(--outline, #3d2516)',
+              borderRadius: 14, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900,
+              fontSize: L.short ? 15 : 19, color: 'var(--ink, #3d2516)' }}>
+              {data.focus >= 0
+                ? `${data.answer[0]} ${data.answer[0] === 1 ? PLACE_NAME[PLACES[data.focus]].one : PLACE_NAME[PLACES[data.focus]].many} = ${money(data.answer[0] * PLACES[data.focus])}`
+                : `${numWords(data.n)} = ${money(data.n)}`}
             </div>
           </div>
+        )}
+
+        <MiloClerk h={L.peopleH} x={L.miloX} groundPx={L.groundPx} busy={entered.some(v => v >= 0)} />
+        <Customer src={data.yard.customer} h={L.peopleH} x={L.custX} vw={vw} groundPx={L.groundPx}
+          leaving={sent} resetKey={sig} line={L.askAtTop ? '' : line} onArrive={() => setReady(true)} />
+        {mode === 'guided' && !sent && ready && (
+          <div style={{ position: 'fixed', left: 12, top: CHROME_BOTTOM + 7, zIndex: 60, background: 'rgba(253,246,232,.9)',
+            border: '3px solid var(--outline, #3d2516)', borderRadius: 999, padding: '4px 12px',
+            fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 12,
+            color: 'var(--ink, #3d2516)' }}>Your turn — I will help</div>
         )}
       </>
     )
@@ -968,21 +1273,19 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
 
 // ─── Answering with the hand ────────────────────────────────────────────────────────────
 /**
- * READING **E** — pinch to pick a pledge up, open your hand over a column to put it in.
+ * READING **E** — pinch to pick a digit up, carry it, open your fingers to put it in a column.
  *
- * ⚠️ THE DROP CHOOSES THE COLUMN, AND THAT IS THE WHOLE JUSTIFICATION FOR USING A CAMERA HERE.
+ * ⚠️ **THE DROP CHOOSES THE COLUMN, WHICH IS THE ONLY REASON A CAMERA IS HONEST HERE.**
  * chapter-craft §5: *a pinch used as a cursor is a mouse with extra steps and a permission prompt.*
- * This passes only because the place-value decision — which column does a hundred go in — is made
- * with the body rather than by pressing the button that already says "hundreds". If the pinch were
- * merely how you press a supply button, it would not ship.
+ * This passes because WHERE the hand lets go is the answer — the same 4 released over the hundreds
+ * is 400 and over the tens is 40, so the child's arm performs the exact misconception the chapter
+ * exists to break. If the pinch merely pressed a digit button it would not ship.
  *
- * ⚠️ AND IT DOES NOT REPLACE THE SUPPLY ROW. That is The Supply Run's headline finding and the most
- * expensive thing on this list: a working camera that cannot read a particular child's pinch — small
- * hands, low light, a hand held end-on, a seat too far back — must not leave them with nothing to
- * press. `CamGate` renders only when the camera failed to START, so a camera that runs and cannot
- * read shows nothing at all; with the row gone there would be no add, no undo at zero, no commit at
- * zero, no wrong answer, no re-teach and no round timeout. Both inputs call `add()`, which stays a
- * single greppable call site.
+ * ⚠️ AND IT DOES NOT REPLACE THE TRAY. The Supply Run's headline finding, and the most expensive
+ * thing on this list: a working camera that cannot read a particular child's hand — small hands, low
+ * light, a dim room — must not leave them with nothing to press. `CamGate` renders only when the
+ * camera failed to START, so a camera that runs and reads badly shows nothing at all. The tray is
+ * drawn on BOTH paths and both call `put()`, which stays a single greppable call site.
  */
 const SKIN: HandSkin = {
   accent: '#f26b2c', accentSoft: 'rgba(242,107,44,.4)', ink: '#3d2516', muted: '#8a7461',
@@ -990,267 +1293,104 @@ const SKIN: HandSkin = {
   font: 'var(--font-display)', mono: 'var(--font-numeric)',
 }
 
+// ─── The chalkboard ─────────────────────────────────────────────────────────────────────
 /**
- * Which column the hand is over, or -1 when it is over none of them.
- *
- * ⚠️ NO NEAREST-COLUMN SNAP, DELIBERATELY. Snapping a drop to whichever column is closest would
- * quietly correct a child who let go between two of them — and on this chapter the column IS the
- * answer, so a snap is the grader helping. Over a gap, nothing is placed and the piece stays in
- * hand, which is also what would happen with a real handful of coins.
+ * THE 12–18 BAND’S CHALKBOARD — `Chalkboard`, `GotIt`, `ThePlan` and `StepBoard` now live in
+ * `./chalkboard`, shared with The Long Level, which became the second consumer. The reasoning that
+ * was written here (the framed board vs the slab fault, `--font-chalk` on `:root`, the windowing, and
+ * why this board hangs from the FLOOR while the rounding chapter hangs it from the chrome) moved with
+ * it. THE PLAN’s words stay here, because the board is shared and the words are not.
  */
-export function columnAt(px: number, vw: number, L: ReturnType<typeof orderLayout>): number {
-  const x = px * vw
-  for (let i = 0; i < PLACES.length; i++) {
-    if (x >= L.bayLeft(i) && x <= L.bayLeft(i) + L.bayWidth(i)) return i
-  }
-  return -1
-}
-
-/**
- * The instruction, as a pure function of the round, the input and what the hand is doing.
- *
- * ⚠️ IT CANNOT GO INPUT-BLIND, and it cannot go STATE-blind either. The Supply Run's finding: the
- * control that names which question is being asked must name the gesture the child actually has, and
- * every state a gesture can be in needs words — not just "ready". A child holding a piece with
- * nothing telling them to open their hand gets silence, which is The Fitting Crew's `handHint`
- * lesson.
- */
-export function loadAsk(q: OdRound, input: 'hand' | 'tap', st: { carrying: boolean; over: number; full: boolean; armed?: boolean }): string {
-  const single = q.focus >= 0
-  const what = single ? PLACE_NAME[PLACES[q.focus]].many : 'bundles'
-  if (st.full) return 'That is everything — tap Send it ✓'
-  if (input === 'tap') return single ? `Tap the ${what} to add one` : 'Tap a bundle to add one'
-  if (!st.carrying) return single ? `Pinch to pick up a ${PLACE_NAME[PLACES[q.focus]].one}` : 'Pinch your fingers to pick one up'
-  /**
-   * ⚠️ A HELD-OVER GRAB MUST NOT BE TOLD TO DROP. Found by driving it: the round changed while the
-   * child was still pinching, and the chip opened on "open your hand to drop it in the hundreds" —
-   * an instruction for an action the guard then silently refuses, which is a dead button wearing a
-   * helpful sentence. The hand has to be opened and closed again before it counts, so SAY that, at
-   * the moment it applies. The Fitting Crew's `handHint` lesson, one gesture along.
-   */
-  if (st.armed === false) return 'Open your hand first, then pinch again'
-  if (st.over < 0) return 'Hold it over a column'
-  return `Open your hand to drop it in the ${PLACE_NAME[PLACES[st.over]].goods}`
-}
-
-// ─── THE PLAN ───────────────────────────────────────────────────────────────────────────
-/**
- * The 12–14 band's read-along opener, brought over: the chapter states its problem and its rule on
- * one short board before anything is worked, and Milo reads it while each word lights up.
- *
- * ⚠️ SELF-PACED, AND DELIBERATELY NOT `speakWithHighlight`. That helper resolves a pre-rendered clip
- * first and paces the highlight off the clip's real duration — but the 3–11 band has **zero**
- * recorded clips, so every use here takes its browser-TTS or blocked-audio branch, and Chrome very
- * often ships no usable voice at all. A read-along driven by speech events on a silent device is a
- * chapter that hangs on its own opening screen; that exact hang shipped once already in TickTock and
- * cost a session to find, precisely because the preview pane is mute and always took the working
- * path. So the sweep is a deterministic timer with `speak()` riding alongside: the words land
- * whether the voice works, half-works or never starts, and `onDone` fires either way.
- */
-const PLAN_PROBLEM = 'The board says $3,241 — so how do you count that out without counting three thousand coins one at a time?'
+const PLAN_PROBLEM = 'The board says $3,482 — so which of those digits is the hundreds, and where would each one go if I only said the total out loud?'
 const PLAN_POINTS = [
-  'Where a digit sits is what it is worth.',
-  'Start with the biggest bundle that fits, then work down.',
-  'An empty column is a zero — and the zero still counts.',
+  'Where a digit SITS is what it is worth — the same 4 is 400 in one column and 40 in the next.',
+  'Count the places from the RIGHT: ones, tens, hundreds, thousands.',
+  'An empty column is a zero — and the zero still has to be written.',
 ]
-
-function ThePlan({ onDone }: { onDone: () => void }) {
-  const { w: vw } = useViewport()
-  const words = useMemo(() => [PLAN_PROBLEM, ...PLAN_POINTS].join(' ').split(' ').filter(Boolean), [])
-  const [lit, setLit] = useState(-1)
-  const doneRef = useRef(onDone); doneRef.current = onDone
-
-  useEffect(() => {
-    let alive = true
-    const timers: number[] = []
-    speak([PLAN_PROBLEM, ...PLAN_POINTS].join(' '))
-    let i = 0
-    const run = () => {
-      if (!alive) return
-      setLit(i)
-      // ⚠️ Per-word dwell from the word's own length, floored and capped — a two-letter word still
-      // needs long enough to be seen, and the total has to land near a spoken line rather than race
-      // it. The same shape as `dwellFor`, one grain finer.
-      const w = words[i] ?? ''
-      const t = window.setTimeout(() => {
-        i++
-        if (i < words.length) run()
-        else window.setTimeout(() => alive && doneRef.current(), 1200)
-      }, Math.max(190, Math.min(520, 70 + w.length * 42)))
-      timers.push(t)
-    }
-    run()
-    return () => { alive = false; timers.forEach(window.clearTimeout) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  let n = -1
-  const render = (text: string, bold: boolean) => (
-    <span>{text.split(' ').filter(Boolean).map((w, k) => {
-      n++
-      const me = n
-      return (
-        <span key={k} style={{
-          background: me === lit ? 'var(--milo-orange, #F26B2C)' : 'transparent',
-          color: me === lit ? '#fff' : undefined,
-          borderRadius: 6, padding: '0 3px', fontWeight: bold ? 800 : 600,
-          opacity: me <= lit ? 1 : 0.3, transition: 'opacity .18s',
-        }}>{w} </span>
-      )
-    })}</span>
-  )
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'grid', placeItems: 'center',
-      background: 'rgba(30,24,18,.55)', padding: 16 }}>
-      <div style={{ width: Math.min(vw * 0.86, 720), background: 'rgba(255,252,244,.98)',
-        border: '4px solid var(--outline, #3d2516)', borderRadius: 18, padding: '18px 22px',
-        fontFamily: 'var(--font-display)', color: 'var(--ink, #3d2516)',
-        boxShadow: '0 10px 26px rgba(30,42,60,.3)' }}>
-        <div style={{ fontSize: 12, letterSpacing: 2, fontWeight: 900, opacity: .55, marginBottom: 8 }}>THE PLAN</div>
-        <div style={{ fontSize: 'clamp(15px,2.1vw,21px)', lineHeight: 1.5, marginBottom: 12 }}>
-          {render(PLAN_PROBLEM, true)}
-        </div>
-        {PLAN_POINTS.map((pt, i) => (
-          <div key={i} style={{ fontSize: 'clamp(13px,1.8vw,18px)', lineHeight: 1.45, marginBottom: 6,
-            display: 'flex', gap: 8 }}>
-            <span style={{ opacity: .5 }}>&bull;</span><span>{render(pt, false)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── The written working ────────────────────────────────────────────────────────────────
-/**
- * THE TALLY SHEET — where the working gets written, one line at a time, as it is spoken.
- *
- * This is the 12–14 band's chalkboard, brought into a painted world rather than adopted from it.
- * The teen `Blackboard` is a slate-on-dark rounded rectangle, and dropping one of those onto a
- * painted scene is the SLAB fault this repo has now shipped three times (BlockYard passes 1–3): a
- * filled rect over a painting reads as UI furniture however carefully its palette is matched,
- * because paintings contain no filled rectangles.
- *
- * ⚠️ SO THE SURFACE IS A THING THE WORLD ALREADY HAS. Paper, on a fundraiser stall, in the same
- * corner and the same idiom as the tally pill that was already there — the customer is drawn holding
- * one. It is tilted a little and casts a soft shadow, so it reads as an object lying on something
- * rather than a panel floating above it.
- *
- * ⚠️ AND IT NEEDS NO CHALK FONT, WHICH SIDESTEPS A REAL BLOCKER. `--font-chalk` is declared only
- * inside `[data-band="12-14"|"15-16"|"17-18"]`, and a 3–11 chapter asking for it silently inherits
- * the body font — the board stops looking like one, with nothing erroring and no gate able to see it.
- * Paper wants the story band's own display face, so the variable never comes into it.
- */
-const SHEET_WINDOW = 4
 /** The Menu button's own bottom edge (12 top + 41 tall), so the sheet clears it by measurement
  *  rather than by a guess — this chapter's chrome has bitten a bubble here before. */
 const CHROME_BOTTOM = 51
 
-/**
- * ⚠️ TOP-LEFT AND GROWING DOWN, WHICH IS A MEASURED CHOICE RATHER THAN A CORNER. Sat at the bottom
- * left it covered Milo AND the thousands label — measured on screen at 1280×720, the sheet's box
- * crossed both. The chapter's fixed layers are: chrome top-left (Menu 12,10,79×41 and the tally pill
- * below it), the four columns across the middle (y 279–532), Milo bottom-left and the customer
- * right. The only region free of all of them is the strip under the chrome, so the working grows
- * down from where the tally already lives — which is also where a stall's paperwork would be.
- */
-function TallySheet({ lines, w, top }: { lines: string[]; w: number; top: number }) {
-  // ⚠️ WINDOWED, like the teen board. A 10-step walkthrough accumulates more working than a
-  // nine-year-old can hold, and an unbounded list grows the sheet off the top of the frame.
-  const shown = lines.slice(Math.max(0, lines.length - SHEET_WINDOW))
-  const newest = shown.length - 1
-  return (
-    <div style={{
-      position: 'fixed', left: 12, top, zIndex: 46, width: w,
-      background: 'rgba(255,252,244,.97)', border: '3px solid var(--outline, #3d2516)',
-      borderRadius: 6, padding: '10px 12px', transform: 'rotate(-1.1deg)',
-      boxShadow: '0 6px 14px rgba(30,42,60,.26)',
-      fontFamily: 'var(--font-display)', color: 'var(--ink, #3d2516)',
-    }}>
-      {shown.map((l, i) => (
-        <div key={`${lines.length}-${i}`} style={{
-          fontWeight: i === newest ? 800 : 600,
-          opacity: i === newest ? 1 : 0.45,
-          fontSize: 'clamp(12px,1.5vw,18px)', lineHeight: 1.5, whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          // the newest line writes itself on, left to right — the teen board's own idiom
-          animation: i === newest ? `od_write ${Math.min(900, 40 + l.length * 26)}ms steps(${Math.max(4, l.length)}) both` : undefined,
-        }}>{l}</div>
-      ))}
-    </div>
-  )
-}
 
 // ─── Demo / re-teach ────────────────────────────────────────────────────────────────────
 /**
  * ⚠️ SELF-PACED, with `speak()` alongside — never `speakSteps`. It reveals each visual from the
  * utterance's `onstart`, and Chrome and Safari both start the first line then silently drop the
- * rest, freezing the teaching for ever on a device that HAS a voice. The preview pane is mute,
- * which is exactly what hid that in TickTock for a whole session.
+ * rest, freezing the teaching for ever on a device that HAS a voice.
  */
 function dwellFor(line: string) { return Math.max(2300, Math.min(6400, line.length * 72)) }
 
-export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void }> = ({ data, onDone }) => {
+export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void; onSkip?: () => void }> = ({ data, onDone, onSkip }) => {
   const { w: vw, h: vh } = useViewport()
-  const single = data.focus >= 0
-  const L = orderLayout(vw, vh, data.yard.groundY)
-  const m = shadesOf(data.yard.material)
+  const slots = data.answer.length
+  const L = boardLayout(vw, vh, data.yard.groundY, slots)
   const [step, setStep] = useState(0)
-  const [counts, setCounts] = useState<number[]>([0, 0, 0, 0])
+  const [entered, setEntered] = useState<number[]>(() => data.answer.map(() => -1))
   const [board, setBoard] = useState<string[]>([])
   const doneRef = useRef(onDone); doneRef.current = onDone
 
   /**
-   * ⚠️ BABY STEPS — ONE IDEA, ONE SPOKEN LINE, ONE BOARD LINE, ONE CHANGE ON SCREEN. The 12–14 shape,
-   * and the reason it exists: this walkthrough used to be FOUR lines, of which one silently jumped
-   * the scene from empty to the whole finished number. A child watching that sees the answer appear,
-   * not the method — the craft doc's "the demo must TEACH, not restate".
+   * ⚠️ BABY STEPS — ONE IDEA, ONE SPOKEN LINE, ONE BOARD LINE, ONE CHANGE ON SCREEN.
    *
-   * ⚠️ EACH STEP CARRIES ITS OWN `counts`, so the scene is a pure function of the step index and the
-   * two can never drift. A demo beat that narrates one arrangement while the scene shows another is
-   * a fault this repo has shipped (The Supply Run's remainder went into a van while Milo said it
+   * ⚠️ EACH STEP CARRIES ITS OWN `entered`, so the scene is a pure function of the step index and
+   * the two can never drift. A demo beat that narrates one arrangement while the scene shows another
+   * is a fault this repo has shipped (The Supply Run's remainder went into a van while Milo said it
    * stayed behind), and it is invisible because the WORDS are right and only the numbers disagree.
+   *
+   * ⚠️ AND THE COLUMNS ARE COUNTED OUT LOUD, FROM THE RIGHT, ONE AT A TIME. That is the method the
+   * chapter now tests and the previous cut never taught: it loaded bundles, which shows what a place
+   * is WORTH and never shows how you find WHICH place a digit is in.
    */
   const beats = useMemo(() => {
-    const out: { say: string; board?: string; counts: number[] }[] = []
-    if (single) {
+    const out: { say: string; board?: string; entered: number[] }[] = []
+    const places = placesFor(data.n)
+    const digs = data.answer
+
+    if (data.focus >= 0) {
       const p = PLACES[data.focus]
-      const want = data.target[data.focus]
-      out.push({ say: data.ask, board: data.docket, counts: [0, 0, 0, 0] })
-      out.push({ say: `Nobody counts that out coin by coin — you count it in ${PLACE_NAME[p].many}.`, counts: [0, 0, 0, 0] })
-      // ⚠️ COUNTED IN ONE AT A TIME rather than appearing at the answer. The count is the thing being
-      // taught, so it has to be BUILT on screen — the same reason the played round makes the child
-      // load them one by one instead of typing a digit.
-      for (let k = 1; k <= want; k++) {
-        const c = [0, 0, 0, 0]; c[data.focus] = k
-        out.push({ say: k === 1 ? `One. That is ${money(p)}.` : `${k}. ${money(k * p)}.`, board: `${k} × ${money(p)} = ${money(k * p)}`, counts: c })
+      const all = digitsOf(data.n).slice(PLACES.length - places.length)
+      out.push({ say: data.ask, entered: [-1] })
+      // ⚠️ "you count them from the RIGHT" was written against a printed numeral to run a finger
+      // along. Nothing is printed now — the total arrives in words — so the same order is taught on
+      // the thing that IS on screen: take the words apart from the END.
+      out.push({ say: 'Every place has a name, and they run from the RIGHT — so take the words apart from the end.', entered: [-1] })
+      // walk right→left, naming each place until the asked-for one is reached
+      const idx = places.indexOf(p)
+      for (let k = places.length - 1; k >= idx; k--) {
+        const nm = PLACE_NAME[places[k]].goods
+        out.push({
+          say: k === places.length - 1 ? `The last one is the ones — that is the ${all[k]}.` : `Next along is the ${nm} — that is the ${all[k]}.`,
+          board: `${nm}: ${all[k]}`, entered: [-1],
+        })
       }
-      out.push({ say: `${want} ${want === 1 ? PLACE_NAME[p].one : PLACE_NAME[p].many}. That goes on the board.`, counts: data.target.slice() })
+      out.push({ say: `So the ${PLACE_NAME[p].goods} is ${digs[0]}. That is what goes in the box.`, board: `${PLACE_NAME[p].goods} = ${digs[0]}`, entered: [digs[0]] })
+      out.push({ say: `${digs[0]} ${digs[0] === 1 ? PLACE_NAME[p].one : PLACE_NAME[p].many} — ${money(digs[0] * p)}.`, entered: [digs[0]] })
       return out
     }
-    const d = digitsOf(data.n)
-    const first = d.findIndex(v => v > 0)
-    out.push({ say: `The board says ${numWords(data.n)} — that is ${money(data.n)}.`, board: money(data.n), counts: [0, 0, 0, 0] })
-    out.push({ say: 'Start with the biggest bundle that fits and work down.', counts: [0, 0, 0, 0] })
-    const c = [0, 0, 0, 0]
-    let running = 0
-    for (let i = first; i < PLACES.length; i++) {
-      const v = d[i], place = PLACES[i], nm = PLACE_NAME[place]
-      // ⚠️ A LEADING ZERO IS NOT A FACT ABOUT THE NUMBER, but an EMPTY INNER place is the whole point
-      // of a placeholder — so holes are said out loud exactly where they happen and never before.
-      if (v === 0) {
-        out.push({ say: `Nothing in the ${nm.goods} — that column stays empty, and that is what the zero means.`, board: `${nm.goods}: 0`, counts: c.slice() })
-        continue
-      }
-      c[i] = v
-      running += v * place
-      out.push({ say: `${numWords(v * place)} — ${v} ${v === 1 ? nm.one : nm.many}.`, board: `${v} × ${money(place)} = ${money(v * place)}`, counts: c.slice() })
-      if (i > first) out.push({ say: `That is ${money(running)} so far.`, board: `so far  ${money(running)}`, counts: c.slice() })
+
+    out.push({ say: data.ask, entered: digs.map(() => -1) })
+    out.push({ say: 'Nothing is written up yet, so we take the words apart, biggest part first.', entered: digs.map(() => -1) })
+    const cur = digs.map(() => -1)
+    for (let i = 0; i < places.length; i++) {
+      const p = places[i], v = digs[i]
+      cur[i] = v
+      /**
+       * ⚠️ A ZERO IS SAID OUT LOUD AT THE PLACE IT HAPPENS. An empty column is the whole point of a
+       * placeholder, and a child who has only met full numbers writes 3,42 for three thousand and
+       * forty-two. The words for that number never mention the hundreds, so the silence is exactly
+       * where the mistake comes from and it has to be named.
+       */
+      out.push({
+        say: v === 0
+          ? `I never said any hundreds — so the ${PLACE_NAME[p].goods} column is a zero, and the zero still gets written.`
+          : `${numWords(v * p)} — so ${v} goes in the ${PLACE_NAME[p].goods}.`,
+        board: `${PLACE_NAME[p].goods}: ${v}`,
+        entered: cur.slice(),
+      })
     }
-    out.push({ say: `Which is ${money(data.n)}. Put it up.`, board: `= ${money(data.n)}`, counts: digitsOf(data.n) })
+    out.push({ say: `Read it back: ${money(data.n)}. That is the board done.`, board: `= ${money(data.n)}`, entered: digs.slice() })
     return out
-  }, [data, single])
+  }, [data])
 
   const lines = useMemo(() => beats.map(b => b.say), [beats])
 
@@ -1265,7 +1405,7 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void }> = ({ 
       setStep(i)
       speak(lines[i])
       // the scene is a function of the step, never of a separate schedule
-      setCounts(beats[i].counts)
+      setEntered(beats[i].entered)
       setBoard(beats.slice(0, i + 1).map(b => b.board).filter(Boolean) as string[])
       const t = window.setTimeout(() => {
         i++
@@ -1275,7 +1415,7 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void }> = ({ 
       timers.push(t)
     }
     run()
-    return () => { alive = false; timers.forEach(window.clearTimeout) }
+    return () => { alive = false; timers.forEach(window.clearTimeout); stopSpeech() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready])
 
@@ -1286,21 +1426,14 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void }> = ({ 
         <img src={data.yard.scene} alt="" draggable={false} decoding="async"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
-      {PLACES.map((p, i) => (
-        <div key={p} style={{ position: 'fixed', left: L.bayLeft(i), top: L.shelfPx,
-          width: L.bayWidth(i), transform: 'translateY(-100%)', zIndex: 30 }}>
-          {/* ⚠️ `active` IS DERIVED FROM THE SCENE, NOT FROM A STEP INDEX. It read `step >= 2`, the
-              third of FOUR lines under the old script — meaningless now the walkthrough is nine to
-              thirteen steps. A constant tuned to a script that no longer exists. */}
-          <Bay place={p} n={counts[i]} u={L.u} m={m}
-            w={L.bayWidth(i)} hPx={L.bayHeight(i)} label={PLACE_NAME[p].goods}
-            active={counts[i] > 0 && (!single || i === data.focus)} bundling={false} />
-        </div>
-      ))}
-      {board.length > 0 && (
-        <TallySheet lines={board} w={Math.round(Math.min(vw * 0.30, 340))} top={CHROME_BOTTOM + 7} />
-      )}
-      <MiloClerk h={L.peopleH} x={L.miloX} groundPx={L.groundPx} busy={counts.some(c => c > 0)} />
+      {/* the walkthrough always SHOWS what it is working from — it is teaching, not measuring */}
+      <Docket text={numWords(saidAmount(data))} top={L.docketTop} vw={vw} />
+      <BoardRow q={data} L={L} entered={entered} active={-1} over={-1} />
+      {board.length > 0 && <StepBoard lines={board} vw={vw} vh={vh} />}
+      {/* ⚠️ ONLY WHERE A SKIP IS OFFERED — the re-teach passes none, because a child who has just
+          missed three in a row is exactly the one who must not be given a way past the explanation. */}
+      {onSkip && ready && <GotIt onSkip={onSkip} style={{ position: 'fixed', right: 14, bottom: 12, zIndex: 60 }} />}
+      <MiloClerk h={L.peopleH} x={L.miloX} groundPx={L.groundPx} busy={entered.some(v => v >= 0)} />
       <Customer src={data.yard.customer} h={L.peopleH} x={L.custX} vw={vw} groundPx={L.groundPx}
         leaving={false} resetKey={key} line={ready ? lines[step] : ''}
         onArrive={() => setReady(true)} />
@@ -1319,7 +1452,7 @@ export function makeBeat(): Beat<OdRound> {
     // asked ~3 at L1, ONE at L2 and TWO at L3, so `value` would simply never come up.
     coverage: { of: d => d.qType, all: Q_ALL },
     // The customer says what is wrong, at their own mouth. The shared centred pill would land on
-    // the bays and contradict it.
+    // the board and contradict it.
     ownsFeedback: true,
     prompt: () => '',
     say: d => d.ask,
@@ -1332,10 +1465,6 @@ export function makeBeat(): Beat<OdRound> {
 type Phase = 'intro' | 'plan' | 'demo' | 'guided' | 'practice'
 
 export const OD_CSS = `
-@keyframes od_write { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
-
-@keyframes od_fly { 0%{transform:translate(-50%,-100%)} 100%{transform:translate(calc(-50% + var(--dx)), calc(-100% + var(--dy)))} }
-@keyframes od_fuse { 0%{transform:scale(1);opacity:1} 60%{transform:scale(.82);opacity:.7} 100%{transform:scale(.7);opacity:0} }
 @keyframes od_hand { 0%,100%{transform:translateY(0)} 45%{transform:translateY(-6px)} }
 `
 
@@ -1352,42 +1481,45 @@ export default function OrderDesk({ onFinish, onExit }: {
   const { exit, tally } = useChapterShell(onFinish, onExit)
   const beat = useMemo(() => makeBeat(), [])
 
-  // ⚠️ FORCED, not nudged. The demo must OPEN on the whole-order build — that is the gesture the
-  // chapter is about — and then show the single-place variant. Leaving it to `asked` meant both
+  // ⚠️ FORCED, not nudged. The demo must OPEN on the read — counting the places from the right is
+  // the method everything else rests on — and then show the write. Leaving it to `asked` meant both
   // demos could come out as the same type.
-  const DEMO = useMemo(() => [makeRound(1, 0, [], 'build'), makeRound(1, 1, [], 'place')], [])
-  const GUIDED = useMemo(() => makeRound(1, 2, [], 'place'), [])
+  const DEMO = useMemo(() => [makeRound(1, 0, [], 'read'), makeRound(1, 1, [], 'write')], [])
+  const GUIDED = useMemo(() => makeRound(1, 2, [], 'read'), [])
+
+  // ⚠️ a WHITE nib over a camera picture, not the chapter's ink brown — the mark has to read against
+  // whatever room the child is sitting in
+  const marker = useMemo(() => ({ fill: '#f26b2c', ink: '#ffffff' }), [])
+  const hand = useHandInput({ reads: 'trace', marker })
 
   // ⚠️ Below every hook. An early return above one changes the hook count when the phone turns and
   // React tears the chapter into the error boundary.
   if (needsRotate) return <RotateGate line="The fundraiser board needs a wide screen to lay the columns out! 💰" />
 
-  const marker = useMemo(() => ({ fill: '#f26b2c', ink: '#3d2516' }), [])
-  const hand = useHandInput({ reads: 'pinch', marker })
   const onCam = hand.input === 'hand'
   /**
    * ⚠️ ONLY WHERE THE CHILD ANSWERS, not merely past the intro. `CamGate` is a full-screen panel, so
    * gating it on "not intro" puts a camera prompt over THE PLAN and over both walkthroughs — the
-   * teaching covered by a permission dialog for a gesture that is not wanted yet. The Supply Run
-   * gates on being in the lab for the same reason.
+   * teaching covered by a permission dialog for a gesture that is not wanted yet.
    */
   const inWorld = phase === 'guided' || phase === 'practice'
 
   return (
     <HandProvider value={{ read: hand.read, input: hand.input }}>
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#a99a86' }}>
-      <style>{CRITTER_CSS + YARD_CSS + OD_CSS}</style>
+      <style>{CRITTER_CSS + YARD_CSS + CHALK_CSS + OD_CSS}</style>
 
-      {/* ⚠️ MOUNTED FROM THE MOMENT THE CHAPTER STARTS, and merely HIDDEN until the camera is ready —
+      {/* ⚠️ MOUNTED FROM THE MOMENT THE CHILD ANSWERS, and merely HIDDEN until the camera is ready —
           the detect loop reads the video element's own box, and an unmounted one measures 0×0. */}
       {inWorld && onCam && (
-        <CamView videoRef={hand.videoRef} canvasRef={hand.canvasRef} w={Math.round(Math.min(vw * 0.17, 190))}
+        <CamView videoRef={hand.videoRef} canvasRef={hand.canvasRef}
+          w={vw} full
           skin={SKIN} hidden={!hand.camReady} />
       )}
       {inWorld && onCam && !hand.camReady && (
         <CamGate status={hand.status} error={hand.error} skin={SKIN}
           onTaps={hand.useTaps} onRetry={hand.useCamera} onExit={exit}
-          denied="Milo can watch you pick the money up, or you can tap the buttons — both put it in the same column." />
+          denied="Milo can watch you carry each digit to its column, or you can tap them across — both put the same number on the board." />
       )}
 
       <button onClick={exit}
@@ -1399,9 +1531,9 @@ export default function OrderDesk({ onFinish, onExit }: {
       {/* ⚠️ LEFT, never the right corner — SkillBeat draws its own round counter at right:16/top:14
           and LoadingBay's manifest overlapped it by 34 of 40px, reading as one garbled number. */}
       {phase === 'practice' && shipped.length > 0 && (
-        <div style={{ position: 'fixed', left: 12, bottom: 8, zIndex: 60, display: 'flex', gap: 6,
+        <div style={{ position: 'fixed', left: 12, top: CHROME_BOTTOM + 7, zIndex: 60, display: 'flex', gap: 6,
           background: 'rgba(253,246,232,.86)', border: '3px solid var(--outline, #3d2516)',
-          borderRadius: 999, padding: '5px 12px', maxWidth: '40vw', flexWrap: 'wrap' }}>
+          borderRadius: 999, padding: '5px 12px', maxWidth: '34vw', flexWrap: 'wrap' }}>
           {shipped.map((n, i) => (
             <span key={i} style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15,
               color: 'var(--ink, #3d2516)' }}>{fmt(n)}</span>
@@ -1413,58 +1545,53 @@ export default function OrderDesk({ onFinish, onExit }: {
         <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'center',
           justifyContent: 'center', background: 'rgba(20,14,8,.55)', padding: 20 }}>
           {/* ⚠️ NO maxHeight/overflow HERE, AND THAT IS MEASURED RATHER THAN AN OVERSIGHT. A guard
-              was added with the anchor and then removed: A/B'd in the live DOM, the uncapped card
-              fits unaided down to a 268px-tall frame, while capping it moved the first clip EARLIER
-              (vh < ~290) and moved it off the decorative top corner and onto the Start button —
-              i.e. onto the only forward control, behind an undiscoverable scroll. A guard that
-              causes the failure it was written to prevent is worse than no guard. */}
+              was added and then removed: A/B'd in the live DOM, the uncapped card fits unaided down
+              to a 268px-tall frame, while capping it moved the first clip off the decorative top
+              corner and ONTO the Start button, behind an undiscoverable scroll. */}
           <div style={{ maxWidth: 520,
             background: 'var(--paper, #fdf6e8)', borderRadius: 22,
             border: '4px solid var(--outline, #3d2516)', padding: '22px 24px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26,
               color: 'var(--ink, #3d2516)', marginBottom: 8 }}>The Fundraiser</div>
-            {/**
-              * ⚠️ THE ANCHOR IS NO LONGER CONFINED TO THIS CARD, AND THAT IS THE WHOLE POINT OF THE
-              * RE-THEME. In the depot version the fundraiser was a simile said once here and then
-              * dropped, because every played round had to stay true to a picture of crates — so a
-              * founder looking at the screen saw a warehouse and asked why big numbers were still
-              * being taught with one. He was right: the anchor was a sentence the child tapped past.
-              * Now the world IS the fundraiser, so the ask, the tally and the spoken explanation can
-              * all say board and bundle without naming anything that is not on screen.
-              *
-              * ⚠️ 3,241 IS GENERATABLE AND $3,482 IS NOT. Every digit is capped at MAX_DIGIT (5), so
-              * "8 tens" cannot occur and a worked example using one would contradict every round the
-              * child then plays. 3-2-4-1 is a number `buildNumber` really draws. (The plan's own
-              * worked example used 3,482 — check a written example against the real generator.)
-              *
-              * ⚠️ THE "$" LIVES IN `money()`, NOT IN THESE STRINGS. `fmt` has ~10 call sites, so a
-              * symbol written into some of them and not others is two formats for one chapter.
-              */}
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16,
               color: 'var(--ink, #3d2516)', lineHeight: 1.45, marginBottom: 18 }}>
-              The board shows what the whole school has raised. $3,241 is 3 thousand-bundles,
-              2 hundred-bundles, 4 ten-strips and 1 coin — where a digit sits is what it is worth.
-              Nobody counts three thousand coins one at a time, so you stack the biggest bundle that
-              fits and work down.
+              The board shows what the whole school has raised, and you are the one writing it up.
+              In $3,482 the 4 is the hundreds — where a digit sits is what it is worth. Count the
+              places from the right, and when Milo calls a total across the hall, put it up.
+              {onCam ? ' Close your hand on a digit to pick it up, carry it to the column it belongs in, then open your hand. Thumbs up 👍 when the board is done.' : ''}
             </div>
-            <button onClick={() => { unlockSpeech(); setPhase('plan') }}
+            {/* ⚠️ BOTH DOORS, EVERY TIME — the device's last pick decides which is the BIG button,
+                never which is the only one. Without the second one a child who once tapped "Tap
+                instead" is on the number pad for ever: `CamGate` only renders on the CAMERA path,
+                so nothing else in the chapter ever offers the camera back. */}
+            <button onClick={() => { unlockSpeech(); if (onCam) hand.useCamera(); setPhase('plan') }}
               style={{ padding: '14px 34px', borderRadius: 999, border: '4px solid var(--outline, #3d2516)',
                 background: 'var(--milo-orange, #f26b2c)', color: '#fff', cursor: 'pointer',
                 fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 19 }}>
-              Open the stall ▶
+              {onCam ? 'Turn on the camera ▶' : 'Open the stall ▶'}
             </button>
+            <div>
+              <button onClick={() => { unlockSpeech(); if (onCam) hand.useTaps(); else hand.useCamera(); setPhase('plan') }}
+                style={{ marginTop: 12, border: 'none', background: 'transparent', cursor: 'pointer',
+                  fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: '#7a6a55',
+                  textDecoration: 'underline' }}>
+                {onCam ? 'Tap the digits instead' : 'Move the digits with your hand and the camera'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ⚠️ AUTO-ROLLS, WITH NO "NEXT". A button on a first run is a skip button wearing a different
-          label, and the whole reason a chapter teaches before it scores is that a nine-year-old
-          presses whatever big control is offered and then meets a test nothing prepared them for. */}
-      {phase === 'plan' && <ThePlan onDone={() => setPhase('demo')} />}
+      {/* ⚠️ IT STILL AUTO-ROLLS — the teaching is never waiting on a tap, because a nine-year-old
+          presses whatever big control is offered and then meets a test nothing prepared them for.
+          What the founder asked for is the teen band's QUIET way out for a child who is already
+          there, so `GotIt` is the smallest thing on the screen rather than the forward path. */}
+      {phase === 'plan' && <ThePlan problem={PLAN_PROBLEM} points={PLAN_POINTS} onDone={() => setPhase('demo')} onSkip={() => setPhase('demo')} />}
 
       {phase === 'demo' && (
         <OrderExplain key={`demo${demoIdx}`} data={DEMO[demoIdx]}
-          onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} />
+          onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }}
+          onSkip={() => setPhase('guided')} />
       )}
 
       {phase === 'guided' && (
@@ -1475,15 +1602,14 @@ export default function OrderDesk({ onFinish, onExit }: {
         <SkillBeat beat={beat}
           /**
            * ⚠️ HELD BACK ONE ROUND. `SkillBeat` fires `onRound` when a round LOADS, so appending here
-           * prints the answer to the question still on screen — measured live: the strip read
-           * "200 · 552" while the $552 round was open and unanswered, and on a `place` round it
-           * states the focus value outright. RailLine shipped this exact fault and records it. The
-           * strip is the run SO FAR, which is what it claims to be; the last round simply never
-           * joins it.
+           * prints the answer to the question still on screen — measured live on the previous cut:
+           * the strip read "200 · 552" while the $552 round was open and unanswered. RailLine shipped
+           * this exact fault and records it. The strip is the run SO FAR, which is what it claims to
+           * be; the last round simply never joins it.
            */
           onRound={(d: OdRound) => setShipped(s => {
             const v = pending.current
-            pending.current = d.focus >= 0 ? d.target[d.focus] * PLACES[d.focus] : d.n
+            pending.current = d.n
             return v === null ? s : [...s, v]
           })}
           onComplete={tally} />

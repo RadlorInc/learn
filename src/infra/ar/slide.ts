@@ -70,12 +70,31 @@ export function snapIndex(raw: number, current: number | null, steps: number): n
 }
 
 /**
- * Map the palm's position on one axis to a continuous index over `steps` positions.
+ * How much of the frame's width a scale is spread across, before `slideIndex` maps it.
  *
- * ⚠️ THE FULL FRAME IS THE FULL SCALE, which is what makes the gesture honest: the child's whole
- * reach spans the whole line, so the ends are reachable from any seating position. Mapping only the
- * middle of the frame onto the scale would put the outer stations past where a seated arm goes —
- * `SWEEP_ARM`'s failure mode (silence at one end) arriving on a different reading.
+ * ⚠️ THE FULL FRAME IS NOT REACHABLE, AND MAPPING A SCALE TO IT IS SILENCE AT THE ENDS — which is the
+ * opposite of what this file said until the Rail Line was actually wired. The old comment argued that
+ * the full frame is "the full reach, so the ends are reachable from any seating position"; measured on
+ * The Fundraiser (its `REACH`, same 0.72), a seated child moves a hand comfortably through the MIDDLE
+ * of the picture and has to lean out of shot to touch either edge. So a station mapped to x ≈ 0 is a
+ * station they can never dwell on, and on this chapter the outer stations are half of what stops the
+ * question being a coin flip. `SWEEP_ARM`'s failure mode, arriving on a third reading.
+ *
+ * ⚠️ IT IS A SEPARATE FUNCTION RATHER THAN FOLDED INTO `slideIndex`, so the lattice mapping the gate
+ * already pins stays byte-identical — and so a chapter whose scale genuinely IS the whole frame can
+ * skip it. Everything past the band clamps to the nearest end rather than going dead.
+ */
+export const SLIDE_REACH = 0.72
+export const reachSpan = (v: number) => {
+  const m = (1 - SLIDE_REACH) / 2
+  return Math.max(0, Math.min(1, (v - m) / SLIDE_REACH))
+}
+
+/**
+ * Map a 0..1 position on one axis to a continuous index over `steps` positions.
+ *
+ * ⚠️ FEED IT `reachSpan(palm.x)`, NOT THE RAW PALM — see above. Raw in, and the two end steps sit
+ * where a seated arm does not go.
  */
 export const slideIndex = (v: number, steps: number) => Math.max(0, Math.min(steps - 1, v * (steps - 1)))
 

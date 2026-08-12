@@ -23,13 +23,13 @@
  * Reusable across future AR activities. On-device only — no frame ever leaves the browser.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { extendedFingerTips, palmTilt, norm180 } from '@/infra/ar/fingerCount'
+import { extendedFingerTips, palmTilt, norm180, thumbsUp } from '@/infra/ar/fingerCount'
 import {
   palmRead, stepSweep, sweepKey, quantArm, SWEEP_START, SWEEP_ARM, SWEEP_FIRE, SWEEP_MAX_Y,
   type SweepState, type Palm,
 } from '@/infra/ar/sweep'
 import { slideKey } from '@/infra/ar/slide'
-import { pinchRatio, stepPinch, pinchKey, PINCH_START, type PinchState } from '@/infra/ar/pinch'
+import { fistRatio, gripPoint, stepPinch, pinchKey, PINCH_START, type PinchState } from '@/infra/ar/pinch'
 import { createHandLandmarker, openCamera } from '@/infra/ar/handLandmarker'
 import { disposeLandmarker } from '@/infra/ar/dispose'
 
@@ -42,6 +42,13 @@ const STABLE_FRAMES = 3 // a changed count must hold this many frames before we 
  * for a snappier hand, lower it if a real child cannot hold the reading still.
  */
 const TILT_EMA = 0.3
+/**
+ * How many CONSECUTIVE frames a 👍 must hold before it counts — ~130–400 ms at the 10–30 fps this
+ * loop really runs. ⚠️ A COMMIT IS A ONE-WAY EVENT, so unlike the grab it cannot be left raw: one
+ * mis-detected frame would put a board up and grade it. Far below anything a child would call a
+ * deliberate gesture, far above a single bad detection.
+ */
+const THUMB_FRAMES = 4
 
 export type FingerStatus = 'idle' | 'loading' | 'running' | 'error'
 
@@ -51,7 +58,7 @@ export type FingerStatus = 'idle' | 'loading' | 'running' | 'error'
  * therefore meant editing two literal unions in two files, and a chapter passing the new one failed
  * to typecheck at the WRAPPER rather than at the detector.
  */
-export type Reads = 'count' | 'tilt' | 'sweep' | 'slide' | 'pinch'
+export type Reads = 'count' | 'tilt' | 'sweep' | 'slide' | 'pinch' | 'trace'
 
 export interface HandRead {
   /** extended fingers across every hand in frame, 0..10 */
@@ -94,6 +101,41 @@ export interface HandRead {
    * clamp a backwards jump, or one "Try the camera again" wedges the gesture for the rest of the run.
    */
   grabs: number
+  /**
+   * Where the nib is — the midpoint of thumb tip and index tip in the mirrored frame, 0..1 on each
+   * axis, or null when no hand is in frame. Reading **H**, a fingertip writing.
+   *
+   * ⚠️ THE NIB IS THE PINCH POINT, NOT THE INDEX TIP, and that is what makes pen-up unambiguous. A
+   * finger pointing has no "off": the child would have to leave frame to end a stroke, and a numeral
+   * with a pen-lift in it (a two-stroke 4, a crossed 7) then cannot be written at all. Pinching to
+   * hold a pen is also what a hand already does, and it reuses `pinch.ts` whole — its ratio
+   * normalization, its asymmetric hysteresis and its release confirmation — rather than inventing a
+   * second, untuned pen-state detector.
+   *
+   * ⚠️ RAW AND UNQUANTIZED, like `palm`, because a carry point's resolution IS the aim. `slideKey`'s
+   * 24 steps are ~53px at 1280 wide — a hand that moves in visible jumps, over targets narrower than
+   * one step.
+   *
+   * ⚠️ AND `onRead` THEREFORE FIRES AT FRAME RATE WHILE THE HAND MOVES, which is the cost this hook's
+   * own docs warn about for the tilt. It is deliberate here, and the consumer pays it back by drawing
+   * only a single absolutely-positioned dot from it.
+   */
+  pen: Palm | null
+  /** whether the hand is currently closed on something — the same level as `grabbing`. */
+  penDown: boolean
+  /**
+   * 👍 held for a few consecutive frames — reading **I**, a POSE used as a COMMIT.
+   *
+   * ⚠️ STABILIZED HERE RATHER THAN IN THE CHAPTER, unlike the grab. A grab is a level the child holds
+   * and watches (the tile is either in their hand or it is not, and a one-frame blip corrects itself
+   * on the next), but a commit is a one-way EVENT: a single mis-detected frame would put a half-built
+   * board up and grade it. So it must be SUSTAINED, and the consumer sees only the settled answer.
+   *
+   * ⚠️ AND THE CONSUMER STILL OWES A RISING-EDGE CHECK. This is a level, so a thumb left up across a
+   * round boundary would commit the next board the instant it filled — the held-over-pose fault this
+   * band has now met on the count, the tilt and the grab.
+   */
+  thumbsUp: boolean
 }
 
 interface Opts {
@@ -121,6 +163,8 @@ export function useFingerCounter(
   const tiltVecRef = useRef<{ x: number; y: number } | null>(null)
   const sweepRef = useRef<SweepState>(SWEEP_START)
   const pinchRef = useRef<PinchState>(PINCH_START)
+  /** consecutive frames the 👍 has been held — see THUMB_FRAMES */
+  const thumbRef = useRef(0)
   const lastKey = useRef('')
   const optsRef = useRef(opts)
   optsRef.current = opts
@@ -201,13 +245,29 @@ export function useFingerCounter(
        * `pinchRatio` guards its own landmark length, so a missing hand is a null rather than a throw
        * — and a throw here is unrecoverable, because this loop has no try/catch and never reschedules.
        */
-      if (reads === 'pinch') pinchRef.current = stepPinch(pinchRef.current, pinchRatio(all[0]))
+      if (reads === 'pinch' || reads === 'trace') pinchRef.current = stepPinch(pinchRef.current, fistRatio(all[0]))
       const pn = pinchRef.current
+
+      /**
+       * The grip point: the middle knuckle, mirrored to match the self-view the child sees. ⚠️ It is
+       * on the RIGID palm, so it does not move when the hand closes — see `gripPoint`.
+       */
+      const grip = reads === 'trace' ? gripPoint(all[0]) : null
+
+      /**
+       * 👍 — the commit. ⚠️ Counted here rather than reported raw, because a commit is one-way: see
+       * `THUMB_FRAMES`. Any frame that is not a thumbs-up resets the count, so the pose has to be
+       * held rather than merely passed through on the way to something else.
+       */
+      const thumb = (reads === 'trace' || reads === 'pinch') && thumbsUp(all[0])
+      thumbRef.current = thumb ? thumbRef.current + 1 : 0
+      const thumbHeld = thumbRef.current >= THUMB_FRAMES
 
       if (reads === 'sweep') drawSweep(ctx, all[0], sw, W, H, fill, ink)
       else if (reads === 'tilt') drawTilt(ctx, all[0], W, H, fill, ink)
       else if (reads === 'slide') drawSlide(ctx, palm, W, H, fill, ink)
       else if (reads === 'pinch') drawPinch(ctx, palm, pn, W, H, fill, ink)
+      else if (reads === 'trace') drawPinch(ctx, grip, pn, W, H, fill, ink)
       else drawCount(ctx, pts, W, fill, ink)
 
       // The count is stabilized; the tilt is not (it is already smoothed, and a continuous value
@@ -233,12 +293,22 @@ export function useFingerCounter(
         : reads === 'tilt' ? `${s.count}/${s.hands}/${tilt}`
           : reads === 'slide' ? `${s.hands}/${slideKey(palm)}`
             : reads === 'pinch' ? `${s.hands}/${pinchKey(pn)}/${slideKey(palm)}`
+              /**
+               * ⚠️ THE GRIP POINT IS KEYED RAW, WHICH IS THE ONE PLACE THIS FILE DELIBERATELY SPENDS
+               * RE-RENDERS. Quantizing it — the thing every other continuous reading here does —
+               * moves the hand in ~53px jumps over targets narrower than one step. See `pen`.
+               *
+               * ⚠️ AND THE 👍 IS IN THE KEY. Left out, a child who has filled the board and holds a
+               * perfectly still thumbs-up changes nothing the change test can see, and the commit
+               * never arrives — the "three arms, not two" dead button above, one variant along.
+               */
+              : reads === 'trace' ? `${s.hands}/${pn.held ? 1 : 0}/${thumbHeld ? 1 : 0}/${grip ? `${grip.x.toFixed(4)},${grip.y.toFixed(4)}` : '-'}`
               : `${s.count}/${s.hands}`
       if (key !== lastKey.current) {
         lastKey.current = key
         optsRef.current.onRead?.({
           count: s.count, hands: s.hands, tilt, palm,
-          grabbing: pn.held, grabs: pn.grabs,
+          grabbing: pn.held, grabs: pn.grabs, pen: grip, penDown: pn.held, thumbsUp: thumbHeld,
           sweeps: sw.sweeps, sweepArm: quantArm(sw.arm), sweepArmed: sw.armed,
         })
       }
@@ -250,7 +320,8 @@ export function useFingerCounter(
     try {
       setStatus('loading'); setError('')
       stableRef.current = { count: 0, hands: 0, cand: '', streak: 0 }
-      tiltVecRef.current = null; sweepRef.current = SWEEP_START; pinchRef.current = PINCH_START; lastKey.current = ''
+      tiltVecRef.current = null; sweepRef.current = SWEEP_START; pinchRef.current = PINCH_START
+      thumbRef.current = 0; lastKey.current = ''
       /**
        * Counting needs both hands; keep MediaPipe's default 0.5 presence/tracking
        * (the other AR surfaces loosen these to 0.3) — pass them explicitly so the
@@ -276,7 +347,7 @@ export function useFingerCounter(
        * change the answer. The two readings that genuinely want both hands are the ones whose answer
        * is a finger COUNT (Factor Lab's 0..10, The Fitting Crew's two places).
        */
-      const oneHand = ['sweep', 'slide', 'pinch'].includes(optsRef.current.reads ?? 'count')
+      const oneHand = ['sweep', 'slide', 'pinch', 'trace'].includes(optsRef.current.reads ?? 'count')
       landmarkerRef.current = await createHandLandmarker(oneHand ? 1 : 2)
       streamRef.current = await openCamera(videoRef.current!)
       setStatus('running')
