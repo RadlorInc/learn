@@ -12,7 +12,7 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
-> 🧑‍🏫 **2026-08-12 — NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. ✅ COMMITTED (`50a9994` + the docs commit), PUSHED to `feat/9-11-factor-lab-ar` — ⚠️ NOT DEPLOYED, and `public/sw.js` is still v87.** `tsc` 0 · **900/900 vitest** (was 890, **+10**) · `next build` 0 · 0 console errors · driven at 1280×720 and 640×320 on both inputs · **9/9 planted regressions caught, two of them against my OWN first assertions.**
+> 🧑‍🏫 **2026-08-12 — NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. 🚀 SHIPPED — `main`@`88553e4`, prod serving **sw v89**, smoke 13/13 and DRIVEN LIVE ON PROD AT BOTH SIZES. ⚠️ AND THE 640×320 PROD PASS THE FOUNDER ASKED FOR FOUND A REAL BUG IN WHAT HAD JUST DEPLOYED — see §⑥.** `tsc` 0 · **901/901 vitest** (was 890, **+11**) · `next build` 0 · 0 console errors on prod · **11/11 planted regressions caught, FOUR of them against my OWN assertions.**
 >
 > **The asks, in order:** *"line pe 650 bol raha hai aur bubble mein 669… line pe mark naii rehna chahiye"* → *"increase the size of this and bring it to the center"* → *"yeh age band mein bhi woh same 'The plan' and 'step by step' chalkboards use karo… totally same bro"*.
 >
@@ -103,22 +103,73 @@
 > resize while `innerWidth` reads correctly. Trust `getBoundingClientRect`, and exclude a container's
 > own descendants before crossing it with anything.
 >
+> ## ⑥ ⚠️⚠️ THEN THE FOUNDER ASKED FOR A 640×320 PASS **ON PROD**, AND THE STEP BOARD WAS DRAWN ACROSS THREE NAME BOARDS — WITH THE GATE GREEN
+> Checkpoints 60, 70 and 80 were behind the working board, in the commit that had just deployed.
+> ⚠️ **`postH` IS THE STALK, NOT THE POST.** `CheckPost` is a column of LABEL-then-stalk anchored at the
+> path, so the name boards actually begin another `boardH` higher — **28px at 640×320**. Both my gate
+> and the comment I wrote asserted against `pathPx - postH`, which is the top of the *stalk*: a line
+> nothing draws, 28px too low. **`levelLayout`'s own clamp already said so** (`pathPx - CHROME_PX -
+> boardH - 6`) and I read it wrong.
+> ⚠️ **WITH THE CORRECT ARITHMETIC THE BOARD DID NOT FIT AT 5 OF 7 SIZES.** The real chrome→boards band
+> is **51px at 640×320**, not the 84px §③ claimed, and the band below the path is 62/124/105px — so
+> neither anchor works. It hangs from **`PILL_TOP`** now, inside the chrome strip, where it clears at
+> every size (**23px at the worst**) and passes horizontally BETWEEN ‹ Menu and the skip chip.
+> ⚠️ **That is a 2D crossing, which is exactly why a vertical-only check cannot see it** — and it is
+> safe only because the pill is `LevelPlay`-only and the board is `LevelExplain`-only, so the two can
+> never want that strip at once.
+> ⚠️⚠️ **AND FIXING THE GATE TOOK TWO STEPS, THE SECOND OF WHICH IS THE LESSON.** Correcting `boardsTop`
+> made the clearance check catch the shipped bug — but **loosening the definition BACK to the stalk top
+> was NOT caught**, because every check is written in terms of `boardsTop`, so a looser definition makes
+> `bottom <= boardsTop` *easier* to satisfy. That is this file's own recorded fault (*a check written in
+> terms of the constant it guards moves with the mutation*) arriving through a shared helper. **The fix
+> is to pin the definition to a number measured on the SCREEN** — 102, read off production with
+> `getBoundingClientRect` — because a measurement is the one thing a re-derivation cannot move. 2/2 now.
+> ⚠️ **AND WHY MY OWN 640×320 PASS MISSED IT, STATED RATHER THAN HIDDEN: I never crossed the WALKTHROUGH
+> at that size.** I checked THE PLAN and a played round there and did the layer sweep at 1280×720 only —
+> where the band is 196px and everything fits. **Cross every layer at every size in every PHASE**; a
+> phase is a screen like any other.
+>
+> ## ⑦ 🚀 SHIPPED — four commits, clean fast-forward, verified rather than remembered
+> | commit | what |
+> |---|---|
+> | `50a9994` | the code — 18 files, +4,750/−2,520 (AR layer · RailLine → LevelRun · the shared chalkboard · OrderDesk · 3 backdrops · 3 gates) |
+> | `e7149dc` | docs — the craft rules, the plan's amendment, this block |
+> | `1748e09` | `public/sw.js` v87 → v88 |
+> | `88553e4` | **the §⑥ fix** + `boardsTop` + sw v88 → v89 |
+>
+> `origin/main` was an ancestor, so **a clean fast-forward with no merge commit**; local and remote both
+> read `88553e4`, 0 ahead / 0 behind. **The branch was checked out CLEAN in a scratch worktree first**
+> (`tsc` 0 · 900/900) — a green working tree says nothing about the branch, which is how this branch
+> once shipped a tree that failed `tsc` for two sessions. Staged file-by-file and each commit's list
+> read back with `git show --stat`, per the directory-pathspec trap. Prod `sw.js` reported **v88 and
+> then v89 on the fifth poll** each time. Smoke **13/13 = 200**, including all three `lvl_*` backdrops.
+> Deliberately left untracked as every prior session: `docs/recovered/`, `python script/`,
+> `scripts/.voice-*.json`.
+> **Driven on prod at BOTH sizes after the fix:** THE PLAN (not clipped, skip button whole at 99×37,
+> chalk = Gaegu) · the step board at 6→74 against boards at 102, **7 layers crossed, 0 overlaps** · a
+> played round with the pill **dead centre (320/320)** and a bare line · a wrong answer giving the
+> reworded miss line · 0 console errors.
+> ⚠️ **The SW was unregistered and all caches cleared before that check**, because a controlled worker
+> serves the OLD shell even when prod's `sw.js` already reports the new version — this repo lost half a
+> session to that once and it would have hidden the fix.
+>
 > ## ▶ OPEN
-> 1. ⚠️ **PUSHED BUT NOT DEPLOYED, AND THAT IS THE STATE TO BE CLEAR ABOUT.** The branch
->    `feat/9-11-factor-lab-ar` is on `origin`; **only `main` auto-deploys.** Shipping needs a merge to
->    `main` PLUS `public/sw.js` **v87 → v88** in its own commit — neither was asked for or done.
-> 2. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT — twelve readings deep**, and everything above went
+> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT — twelve readings deep**, and everything above went
 >    through `__miloPinch`, which sets the pose directly and **bypasses `stepPinch`**. `GRAB_ON` (0.50)
 >    is the knob a real child tunes first.
-> 3. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored `estimate` driven** — so
+> 2. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored `estimate` driven** — so
 >    the step board's two extra lines (`62 rounds to 60`, `50 + 60 = 110`) and the pill's `LegBoard`
 >    ceiling are gated and reasoned about but have not been on screen.
-> 4. **The re-teach's chalkboard has never been seen** — reaching it needs three wrong answers in a run.
+> 3. **The re-teach's chalkboard has never been seen** — reaching it needs three wrong answers in a run.
 >    That it carries no skip is proven by a source check and the optional `onSkip` type, not a screenshot.
+> 4. ⚠️ **THE 12–18 CHALKBOARDS ARE NOW IN TWO 9–11 CHAPTERS, SO THE BAND IS MIXED** — the other ten
+>    keep the pre-teen HUD kit. That was already a founder call left open by The Fundraiser; it is now
+>    twice as visible, and `story/chalkboard.tsx` is in place for whichever way it goes.
 > 5. **Everything in the ✊ block below still stands**, including the unexplained 57-second entry stall.
 > 6. Of this session's faults, **one came from the founder's screenshot, one from reading `levelAsk`
 >    rather than the screen, one from measuring five frame sizes before believing a placement, one from
->    a clipped button found by measuring `scrollHeight`, and two from mutation-testing my own new gate.
+>    a clipped button found by measuring `scrollHeight`, ONE FROM THE FOUNDER ASKING FOR A SIZE ON PROD
+>    THAT I HAD ONLY CHECKED IN TWO OF ITS THREE PHASES, and four from mutation-testing my own gate.
 >    None from the type-checker.**
 >
 > ✊ **2026-08-12 — AND THEN THE SLIDE WENT: THE ANSWER IS NOW **GRAB ASTRO WITH A FIST, CARRY HER, AND OPEN YOUR HAND WHERE SHE SHOULD STAND**. ✅ NOW COMMITTED in `50a9994` (this block's "NOT COMMITTED" is stale — see the 🧑‍🏫 block above).** `tsc` 0 · **890/890 vitest** (+2, the chapter gate 45 → 47) · `next build` 0 · 0 console errors · driven live on BOTH inputs at 1280×720 · **4/4 planted regressions caught**, plus **two real defects the drive found that no gate would have.**
@@ -8528,7 +8579,7 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-12 (LATEST — see the top 🧑‍🏫 block. **NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. ✅ COMMITTED `50a9994` + docs, PUSHED to `feat/9-11-factor-lab-ar` — ⚠️ NOT DEPLOYED (only `main` deploys), `sw.js` still v87.** `tsc` 0 · **900/900 vitest** (+10) · `next build` 0 · 9/9 planted regressions caught. The founder's screenshot showed *"halfway 650"* on the line beside a bubble asking about **669** — and the mark he did NOT name was the worse one: the distance marker pegs the number's true position, i.e. **the answer, drawn**. Both marks are off a played round and both stay in the demo/re-teach, which is the teaching-vs-measuring line. ⚠️ **The target pill is not decoration — it is what makes that survivable**: on the camera path the bubble ranks hand hints above the ask, so from the moment a hand appears the number would have left the screen entirely. Then bigger + centred, **sized from the room above the boards rather than a CSS clamp** (a clamp cannot see what is under it), +142% at 640×320. **The 12–18 chalkboards** (`ThePlan` + `StepBoard`) extracted from OrderDesk into `story/chalkboard.tsx` and used by both — ⚠️ hung from the CHROME here and the FLOOR there, because the band below this chapter's path is 66/148/119px against a 68/152/152px board. ⚠️ My first plan copy **clipped the skip button** (a dead control) and `PLAN_BUDGET` is now gated. ⚠️ **Mutation testing caught two of my own assertions being weaker than their rules.** ▶ Open: pushed but **NOT deployed** (merge to `main` + sw v88); nobody has held a real hand up, twelve readings deep; no ten-round run, no re-teach on screen. _(prior footer follows.)_)_
+_Last updated: 2026-08-12 (LATEST — see the top 🧑‍🏫 block. **NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. 🚀 SHIPPED — `main`@`88553e4`, prod serving sw v89, smoke 13/13, driven live at BOTH sizes.** `tsc` 0 · **901/901 vitest** (+11) · `next build` 0 · 11/11 planted regressions caught, four against my own assertions. The founder's screenshot showed *"halfway 650"* beside a bubble asking about **669** — and the mark he did NOT name was the worse one: the distance marker pegs the number's true position, i.e. **the answer, drawn**. Both marks are off a played round and both stay in the demo/re-teach. ⚠️ **The target pill is not decoration** — the camera path's bubble ranks hand hints above the ask, so from the moment a hand appears the number would leave the screen entirely; confirmed on prod (`NEEDS 52 m` while the bubble read *"Hold your hand up where I can see it."*). Then bigger + centred, **sized from the room above the boards rather than a CSS clamp**. **The 12–18 chalkboards** extracted into `story/chalkboard.tsx` and used by both 9–11 chapters. ⚠️⚠️ **THEN THE FOUNDER ASKED FOR A 640×320 PASS ON PROD AND IT FOUND A REAL BUG IN WHAT HAD JUST DEPLOYED**: the step board was drawn across three name boards, gate green, because **`postH` is the STALK and the label sits another `boardH` (28px) above it** — the layout's own clamp said so and I read it wrong. Correct arithmetic: it did not fit at **5 of 7 sizes**; it hangs from `PILL_TOP` now, clearing everywhere and passing BETWEEN two chrome chips (a 2D crossing a vertical check cannot see). ⚠️ **And fixing the gate took two steps** — correcting `boardsTop` caught the shipped bug, but loosening the definition BACK was not caught, because every check is written in terms of it; **pinned to a number measured on the screen** (102, off production). ⚠️ **Why my own 640×320 pass missed it: I never crossed the WALKTHROUGH at that size.** ▶ Open: nobody has held a real hand up, twelve readings deep; no ten-round run, no re-teach on screen; the band is now mixed (two chapters on the teen chalkboard, ten on the HUD kit). _(prior footer follows.)_)_
 
 _Prior update: 2026-08-12 (the ✊ block. **THE SLIDE IS GONE: THE ANSWER IS NOW GRAB ASTRO WITH A FIST, CARRY HER, AND OPEN YOUR HAND WHERE SHE SHOULD STAND** — the founder's call, *"yeh slide ka tariqa sahi naii laga"*. `tsc` 0 · **890/890 vitest** · `next build` 0 · 0 console errors · driven on BOTH inputs · 4/4 planted regressions caught. The slide was a timer wearing a gesture's clothes — nothing was carried, the commit was a stopwatch, and it needed hysteresis because a hand on a boundary dithered and the dwell never fired; a carry has none of that and the release IS the answer. **It cost no detector work** — `reads: 'pinch'` already gives position + hold + a close-count, and The Fundraiser had already made that reading a whole-hand FIST on his earlier *"pinch sahi naii hai"*. ⚠️⚠️ **The one constant that decides whether the chapter still teaches anything: the catch is BOUNDED (0.35 of the gap), NOT nearest-target** — copying The Fundraiser's halfway-line partition would have let the child drop her at 47 and had the APP snap her to 50, i.e. the machine doing the rounding; a release at the midpoint now lands on nothing, and says why. ⚠️ **Two defects the drive found, both scoring a round nobody played, and fixing one left the other doing the damage alone**: she WAITED inside the first checkpoint's catch zone (so grab-and-put-down scored it — the line now narrows so the first post clears her, after the gate caught the last board crossing into Milo's side), and the carry CLAMPED to `checkX(0)` (teleporting her onto it the instant she was grabbed). Driven: the midpoint refusal, a correct placement grading and advancing, a fist still shut across a round boundary correctly NOT picking her up, and a tap on the same round grading too. ▶ Open: **the release is the commit so there is no undo on the camera path** (his call; `stepPinch`'s sustained release is the guard); nobody has held a real hand up to it and `__miloPinch` bypasses `stepPinch`, so the fist thresholds are headless-only; no ten-round run, no re-teach, no scored `estimate` on the camera path; the 🎮 block's unexplained 57-second entry stall still stands; not committed, sw still v87. _(prior footer follows.)_)_
 

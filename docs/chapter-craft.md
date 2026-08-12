@@ -2000,6 +2000,28 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   the angle gets worse exactly where the plot is widest: a placement fine at 2 m sat at 46° (hard
   against the frame edge) at 9 m. Sweep every value the generator can draw rather than the one you had
   in mind — that is how the third wrong placement was caught after two had already been "fixed".
+- ⚠️ **A LAYOUT NUMBER NAMES ONE PART; THE COMPONENT USUALLY RENDERS SEVERAL.** `postH` is a
+  checkpoint's STALK, and `CheckPost` draws a column of LABEL-then-stalk anchored at the path — so the
+  answer surface begins another `boardH` (28px at 640×320) above `pathPx - postH`. A gate asserting
+  clearance against that expression is clearing **a line nothing draws**, and The Long Level's working
+  board shipped to production drawn across three name boards with the check green. `levelLayout`'s own
+  clamp (`pathPx - CHROME_PX - boardH - 6`) already said so. **Before writing "above X", read what X's
+  component actually renders, and give the real edge ONE exported name** (`boardsTop`) that the scene
+  and the gate both call.
+- ⚠️⚠️ **A CHECK WRITTEN IN TERMS OF A SHARED DEFINITION MOVES WITH IT, SO PIN THE DEFINITION TO A
+  MEASUREMENT.** This is the "a check written in terms of the constant it guards" fault arriving
+  through a helper, and it is worse there because the helper looks like the fix. Correcting
+  `boardsTop` made the clearance assertion catch the real regression — and **loosening `boardsTop`
+  back was NOT caught**, because a lower value makes `bottom <= boardsTop` *easier* to satisfy. Every
+  consumer moved with it. The only thing a re-derivation cannot move is a number read off the screen:
+  assert the definition itself against a measured value (`boardsTop` at 640×320 is 102, from a
+  `getBoundingClientRect` on production), and the mutation fails.
+- ⚠️ **CROSS EVERY LAYER AT EVERY SIZE IN EVERY PHASE — a phase is a screen like any other.** The
+  layer sweep above is usually run per SIZE and quietly once per phase. That chapter's 640×320 pass
+  checked THE PLAN and a played round and did the crossing at 1280×720 only, where the same band is
+  196px instead of 51 and everything fits; the walkthrough at 640×320 was never crossed, which is
+  exactly where the collision was. And the collision was **2D** — the board passes horizontally
+  BETWEEN two chrome chips it overlaps vertically — so a vertical-only check cannot see it either.
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---
