@@ -14,7 +14,7 @@ import {
   CHECKPOINTS, Q_ALL, RUN, levelAt, RUNNER_ASPECT, CHROME_PX, IMG_H, IMG_W, ASTRO,
   markerHeight, controlBand,
   dropIndex, onAstro, CATCH_SHARE, levelAsk, levelPoint, CAM_PATH_Y,
-  PILL_TOP, pillFont, pillH, pillCeiling, PLAN_PROBLEM, PLAN_POINTS, PLAN_BUDGET,
+  PILL_TOP, pillFont, pillH, pillCeiling, PLAN_PROBLEM, PLAN_POINTS, PLAN_BUDGET, boardsTop,
   type LvRound, type QType,
 } from '@/features/chapters/story/LevelRun'
 import { stepBoardRect } from '@/features/chapters/story/chalkboard'
@@ -308,13 +308,35 @@ describe('the layout', () => {
    * fit at three of five sizes — and forcing it would cover the path, which in a rounding chapter IS
    * the number line. Driven through `stepBoardRect`, the same function the board lays itself out with.
    */
+  /**
+   * ⚠️ `boardsTop` IS PINNED TO A NUMBER MEASURED ON THE SCREEN, because every check that uses it is
+   * written in terms of it and therefore MOVES WITH IT — loosening the definition back to the stalk
+   * top (the bug) makes `bottom <= boardsTop` easier to satisfy, so the clearance check alone cannot
+   * see the regression. Proven by mutation. 102 was read off production at 640×320 with a
+   * `getBoundingClientRect` on a name board; the worst site computes 97.
+   */
+  it('knows where the name boards really start, to the pixel', () => {
+    const tops = RUN.map(s => boardsTop(levelLayout(640, 320, s.pathY)))
+    expect(Math.min(...tops)).toBeGreaterThan(90)
+    expect(Math.max(...tops)).toBeLessThan(112)
+    // and it is strictly ABOVE the stalk top, which is what the wrong version returned
+    const L = levelLayout(640, 320, RUN[0].pathY)
+    expect(boardsTop(L)).toBeLessThan(L.pathPx - L.postH)
+  })
+
   it('keeps the working board clear of the name boards and off the path', () => {
-    for (const [vw, vh] of SIZES) for (const s of RUN) {
-      const L = levelLayout(vw, vh, s.pathY)
-      const R = stepBoardRect(vw, vh, CHROME_PX + 6)
-      expect(R.top).toBeGreaterThanOrEqual(CHROME_PX)
-      // above the answer surface…
-      expect(R.top + R.h, `${vw}x${vh}: working over the name boards`).toBeLessThanOrEqual(L.pathPx - L.postH)
+    for (const [vw, vh] of SIZES) for (const s of RUN) for (const cam of [false, true]) {
+      const L = levelLayout(vw, vh, s.pathY, cam)
+      const R = stepBoardRect(vw, vh, PILL_TOP)
+      /**
+       * ⚠️ AGAINST `boardsTop`, NOT `pathPx - postH`. The first version of this asserted the latter —
+       * the top of the STALK — and the label sits another `boardH` (28px at 640×320) above it, so the
+       * board shipped to PRODUCTION drawn across three name boards with this check green. The founder
+       * asked for a 640×320 pass on prod and that is what found it. `boardsTop` is now the one
+       * definition, used by the scene and by this.
+       */
+      expect(R.top + R.h, `${vw}x${vh} cam=${cam}: working over the name boards`)
+        .toBeLessThanOrEqual(boardsTop(L))
       // …and therefore nowhere near the path itself, which is the thing being read
       expect(R.top + R.h).toBeLessThan(L.pathPx)
       // and inside the frame
@@ -325,7 +347,7 @@ describe('the layout', () => {
     // recorded fault — the check keeps its own copy of the rule and stays green while the board hangs
     // somewhere else. Mutation-proven: `anchorTop={undefined}` (The Fundraiser's floor anchor, which
     // does not fit this chapter at three of five sizes) passed every assertion above.
-    expect(SRC).toMatch(/<StepBoard[\s\S]{0,160}anchorTop=\{CHROME_PX \+ 6\}/)
+    expect(SRC).toMatch(/<StepBoard[\s\S]{0,160}anchorTop=\{PILL_TOP\}/)
   })
 
   /**

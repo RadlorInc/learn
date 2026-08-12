@@ -619,9 +619,18 @@ export const pillFont = (vw: number, maxH: number) =>
   Math.max(15, Math.min(Math.round(vw * 0.045), Math.round(maxH * 0.5), 38))
 /** The pill's drawn height, from its own font. Padding 4 + border 3, each side, at `lineHeight: 1`. */
 export const pillH = (font: number) => font + 14
+/**
+ * ⚠️ WHERE THE NAME BOARDS ACTUALLY START, and it is NOT `pathPx - postH`. `postH` is the STALK; the
+ * label sits another `boardH` ABOVE it, because `CheckPost` is a column of label-then-stalk anchored
+ * at the path. `levelLayout`'s own clamp says so (`pathPx - CHROME_PX - boardH - 6`) and I read it
+ * wrong — the working board was drawn ACROSS three name boards on production at 640×320 while the
+ * gate stayed green, because the gate asserted against the stalk top, 28px too low. ONE definition,
+ * used by everything that has to clear the answer surface.
+ */
+export const boardsTop = (L: LevelLayout) => Math.round(L.pathPx - L.postH - L.boardH)
 /** The room it has: down to whatever is next in the stack, less a 6px gap. */
 export const pillCeiling = (L: LevelLayout, legs: number) => Math.max(20, Math.round(
-  (legs > 1 ? L.pathPx - L.postH - L.boardFont * 2.6 : L.pathPx - L.postH) - 6 - PILL_TOP,
+  (legs > 1 ? boardsTop(L) - L.boardFont * 2.6 : boardsTop(L)) - 6 - PILL_TOP,
 ))
 
 function TargetPill({ vw, value, maxH }: { vw: number; value: number; maxH: number }) {
@@ -1465,13 +1474,16 @@ const LevelExplain: React.FC<{ data: LvRound; onDone: () => void; onSkip?: () =>
           line, so the two were two surfaces saying one thing, and in this band they collide: the leg
           board hangs just above the name boards at `PATH_MID` and the step board fills the same strip.
           It stays in PLAY, where it is the child's OWN work accumulating rather than a restatement.
-          ⚠️ AND IT HANGS FROM THE CHROME, NOT THE FLOOR — measured, the band below this chapter's
-          painted path is 66/148/119px at 640×320 / 1024×620 / 1920×800 against a board 68/152/152px
-          tall, so the Fundraiser's bottom anchor does not fit at three of five sizes and forcing it
-          would cover the path, which here IS the number line. The chrome→boards strip is 84px at the
-          worst size. */}
+          ⚠️ AND IT HANGS FROM THE VERY TOP, IN THE CHROME STRIP — not from the floor and not from
+          under the chrome. The band below this chapter's painted path is 62/124/105px at 640×320 /
+          1024×620 / 1920×800 against a board 68/152/152px tall, so the Fundraiser's bottom anchor
+          does not fit anywhere and forcing it would cover the path, which here IS the number line.
+          ⚠️ And `CHROME_PX + 6` does not fit either: the real band down to `boardsTop` is only 51px at
+          640×320, which is how this shipped drawn ACROSS three name boards. From `PILL_TOP` it clears
+          by 23px at the worst size. It shares the strip with ‹ Menu and the skip chip and is centred,
+          so it passes BETWEEN them — a 2D crossing, which is why a vertical-only check misses it. */}
       <StepBoard lines={boards.slice(0, step + 1).filter(Boolean)} vw={vw} vh={vh}
-        anchorTop={CHROME_PX + 6} />
+        anchorTop={PILL_TOP} />
       <div style={{
         position: 'fixed', left: runnerX, top: L.pathPx,
         transform: 'translate(-50%,-100%)', zIndex: 34, pointerEvents: 'none',
