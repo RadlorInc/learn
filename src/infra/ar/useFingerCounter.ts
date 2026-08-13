@@ -188,6 +188,7 @@ export function useFingerCounter(
     if (canvas.height !== H) canvas.height = H
     const ctx = canvas.getContext('2d')!
     ctx.clearRect(0, 0, W, H)
+    const v = coverView(video, W, H)
     const fill = optsRef.current.marker?.fill ?? '#F26B2C'
     const ink = optsRef.current.marker?.ink ?? '#3D2516'
     const reads = optsRef.current.reads ?? 'count'
@@ -201,7 +202,7 @@ export function useFingerCounter(
       const pts: { sx: number; sy: number }[] = []
       all.forEach((hand, i) => {
         const handed = res.handednesses?.[i]?.[0]?.categoryName ?? `H${i}`
-        extendedFingerTips(hand, handed).forEach(t => pts.push({ sx: (1 - t.x) * W, sy: t.y * H }))
+        extendedFingerTips(hand, handed).forEach(t => pts.push(sxy(v, 1 - t.x, t.y)))
       })
       pts.sort((a, b) => a.sx - b.sx)
 
@@ -263,12 +264,12 @@ export function useFingerCounter(
       thumbRef.current = thumb ? thumbRef.current + 1 : 0
       const thumbHeld = thumbRef.current >= THUMB_FRAMES
 
-      if (reads === 'sweep') drawSweep(ctx, all[0], sw, W, H, fill, ink)
-      else if (reads === 'tilt') drawTilt(ctx, all[0], W, H, fill, ink)
-      else if (reads === 'slide') drawSlide(ctx, palm, W, H, fill, ink)
-      else if (reads === 'pinch') drawPinch(ctx, palm, pn, W, H, fill, ink)
-      else if (reads === 'trace') drawPinch(ctx, grip, pn, W, H, fill, ink)
-      else drawCount(ctx, pts, W, fill, ink)
+      if (reads === 'sweep') drawSweep(ctx, all[0], sw, v, fill, ink)
+      else if (reads === 'tilt') drawTilt(ctx, all[0], v, fill, ink)
+      else if (reads === 'slide') drawSlide(ctx, palm, v, fill, ink)
+      else if (reads === 'pinch') drawPinch(ctx, palm, pn, v, fill, ink)
+      else if (reads === 'trace') drawPinch(ctx, grip, pn, v, fill, ink)
+      else drawCount(ctx, pts, v, fill, ink)
 
       // The count is stabilized; the tilt is not (it is already smoothed, and a continuous value
       // that had to hold N frames would simply lag). The key carries BOTH count and hands, so a
@@ -361,8 +362,40 @@ export function useFingerCounter(
   return { status, error, start, stop }
 }
 
+/**
+ * Where the video is actually DRAWN inside the canvas — the overlay's whole coordinate system.
+ *
+ * ⚠️ A LANDMARK IS A FRACTION OF THE *FRAME*, NOT OF THE BOX, and `objectFit: cover` is what makes
+ * those two different things. A 4:3 stream in a 4:3 panel fills exactly, so `x * clientWidth` is
+ * right and the distinction never shows up; the same stream cover-cropped into a full-screen 16:9
+ * box is scaled to the WIDTH and cropped top and bottom, so a landmark at y = 0.2 belongs 72px down
+ * a 1280×720 screen and the naive map draws it at 144. Up to ~120px of drift, and only vertically,
+ * which reads as the camera being mis-calibrated rather than as two rectangles disagreeing.
+ *
+ * This is the same correction a chapter makes for a painted ground line under `objectFit: cover` —
+ * map through the transform the picture is actually drawn with.
+ *
+ * ⚠️ IT IS THE IDENTITY IN A 4:3 CORNER PANEL **SHOWING A 4:3 STREAM**, and that second clause is
+ * not pedantry: `openCamera` asks for 640×480 with `ideal`, not `exact`, so a laptop that hands
+ * back 1280×720 was already drawing every corner overlay in the wrong place — the sweep's own
+ * arming zone included, since `SWEEP_ARM * W` was frame-space measured against box-space. So this
+ * is a FIX for the other AR chapters on such a camera, not a no-op that leaves them alone.
+ */
+export interface View { W: number; H: number; ox: number; oy: number; dw: number; dh: number }
+
+export function coverView(video: { videoWidth: number; videoHeight: number }, W: number, H: number): View {
+  const vw = video.videoWidth || 4, vh = video.videoHeight || 3
+  const scale = Math.max(W / vw, H / vh)
+  const dw = vw * scale, dh = vh * scale
+  return { W, H, ox: (W - dw) / 2, oy: (H - dh) / 2, dw, dh }
+}
+
+/** A frame-space point (already mirrored by the caller) → canvas pixels. */
+export const sxy = (v: View, x: number, y: number) => ({ sx: v.ox + x * v.dw, sy: v.oy + y * v.dh })
+
 /** Number the extended fingers 1..N over the hand, height-staggered so the discs do not overlap. */
-function drawCount(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }[], W: number, fill: string, ink: string) {
+function drawCount(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }[], v: View, fill: string, ink: string) {
+  const { W } = v
   const R = 18, TOP = 46, STAGGER = 34
   pts.forEach((p, i) => {
     const bx = Math.min(Math.max(p.sx, R + 2), W - R - 2)
@@ -396,10 +429,12 @@ function drawCount(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number 
 function drawSweep(
   ctx: CanvasRenderingContext2D,
   hand: { x: number; y: number }[] | undefined,
-  sw: SweepState, W: number, H: number, fill: string, ink: string,
+  sw: SweepState, v: View, fill: string, ink: string,
 ) {
-  const y = H * 0.5, h = Math.max(8, H * 0.09)
-  const x0 = SWEEP_ARM * W, x1 = SWEEP_FIRE * W
+  const { W } = v
+  // the lane marks where the HAND must be, so it lives in the video's drawn box like the hand does
+  const y = v.oy + v.dh * 0.5, h = Math.max(8, v.dh * 0.09)
+  const x0 = v.ox + SWEEP_ARM * v.dw, x1 = v.ox + SWEEP_FIRE * v.dw
 
   // the lane, and the two zones that matter
   ctx.fillStyle = 'rgba(10,16,26,.45)'
@@ -423,7 +458,7 @@ function drawSweep(
   const p = palmRead(hand)
   if (!p) return
   const low = p.y > SWEEP_MAX_Y
-  const px = Math.min(Math.max(p.x * W, 9), W - 9)
+  const px = Math.min(Math.max(sxy(v, p.x, p.y).sx, 9), W - 9)
   ctx.beginPath(); ctx.arc(px, y, 9, 0, Math.PI * 2)
   ctx.fillStyle = low ? 'rgba(255,255,255,.30)' : fill
   ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = ink; ctx.stroke()
@@ -449,11 +484,13 @@ function drawSweep(
  */
 function drawSlide(
   ctx: CanvasRenderingContext2D,
-  p: Palm | null, W: number, H: number, fill: string, ink: string,
+  p: Palm | null, v: View, fill: string, ink: string,
 ) {
   if (!p) return
-  const px = Math.min(Math.max(p.x * W, 10), W - 10)
-  const py = Math.min(Math.max(p.y * H, 10), H - 10)
+  const { W, H } = v
+  const { sx, sy } = sxy(v, p.x, p.y)
+  const px = Math.min(Math.max(sx, 10), W - 10)
+  const py = Math.min(Math.max(sy, 10), H - 10)
   // faint guides, so the child can see they are driving BOTH axes even when one is the answer
   ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 1
   ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke()
@@ -472,11 +509,13 @@ function drawSlide(
  */
 function drawPinch(
   ctx: CanvasRenderingContext2D,
-  p: Palm | null, pn: { held: boolean }, W: number, H: number, fill: string, ink: string,
+  p: Palm | null, pn: { held: boolean }, v: View, fill: string, ink: string,
 ) {
   if (!p) return
-  const px = Math.min(Math.max(p.x * W, 14), W - 14)
-  const py = Math.min(Math.max(p.y * H, 14), H - 14)
+  const { W, H } = v
+  const { sx, sy } = sxy(v, p.x, p.y)
+  const px = Math.min(Math.max(sx, 14), W - 14)
+  const py = Math.min(Math.max(sy, 14), H - 14)
   ctx.lineWidth = 3; ctx.strokeStyle = ink
   if (pn.held) {
     // holding: a filled, closed mark
@@ -497,9 +536,10 @@ function drawPinch(
  * degree figure drawn here would be the readout the Angle Shop's rule 1 forbids while turning, and
  * the beam on the stage is already showing the reading anyway.
  */
-function drawTilt(ctx: CanvasRenderingContext2D, hand: { x: number; y: number }[] | undefined, W: number, H: number, fill: string, ink: string) {
+function drawTilt(ctx: CanvasRenderingContext2D, hand: { x: number; y: number }[] | undefined, v: View, fill: string, ink: string) {
   if (!hand || hand.length < 10) return
-  const p = (i: number) => ({ x: (1 - hand[i].x) * W, y: hand[i].y * H })
+  const { W, H } = v
+  const p = (i: number) => { const { sx, sy } = sxy(v, 1 - hand[i].x, hand[i].y); return { x: sx, y: sy } }
   const a = p(0), b = p(9)
   const dx = b.x - a.x, dy = b.y - a.y
   const len = Math.hypot(dx, dy) || 1

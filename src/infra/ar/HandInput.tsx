@@ -258,7 +258,7 @@ export function DwellRing({ progress, size, skin, children }: {
  * now". It is merely INVISIBLE until running — it must keep its layout box, because the detect loop
  * reads video.clientWidth / clientHeight.
  */
-export function CamView({ videoRef, canvasRef, w, at, bottom = 10, right = 10, skin, hidden, full }: {
+export function CamView({ videoRef, canvasRef, w, at, bottom = 10, right = 10, skin, hidden, full, markers }: {
   videoRef: React.RefObject<HTMLVideoElement | null>
   canvasRef: React.RefObject<HTMLCanvasElement | null>
   /**
@@ -272,13 +272,33 @@ export function CamView({ videoRef, canvasRef, w, at, bottom = 10, right = 10, s
    * chapter whose hand is a cursor across the entire board this beats the corner panel: the child
    * looks at ONE place instead of glancing between their hand over there and the board over here.
    *
-   * ⚠️ THE MARKER CANVAS IS HIDDEN IN THIS MODE, and that is not a style choice. The loop maps a
-   * landmark with `x * clientWidth`, which assumes the drawn video fills its box exactly — true of a
-   * 4:3 stream in a 4:3 panel and false of the same stream cover-cropped into a 16:9 screen, so the
-   * markers would drift off the hand vertically. The chapter's own screen-space cursor is drawn
-   * through its reach mapping anyway, and two dots in two different places is worse than one.
+   * ⚠️ THE MARKER CANVAS IS HIDDEN IN THIS MODE BY DEFAULT — see `markers`.
    */
   full?: boolean
+  /**
+   * Draw the reading's overlay on top of the full-screen picture. Off by default, and the default
+   * is a JUDGEMENT rather than a limitation:
+   *
+   * ⚠️ IT USED TO BE A LIMITATION. The loop mapped a landmark with `y * clientHeight`, which assumes
+   * the drawn video fills its box exactly — true of a 4:3 stream in a 4:3 panel and false of the
+   * same stream cover-cropped into a 16:9 screen, so the markers drifted off the hand vertically by
+   * up to ~120px. That is fixed at the source now (`useFingerCounter` maps through the cover
+   * transform, exactly as a chapter maps a painted ground line), so the overlay is CORRECT in full
+   * mode and the only question left is whether a chapter wants it.
+   *
+   * ⚠️ WHICH DEPENDS ENTIRELY ON WHETHER THE CHAPTER ALREADY DRAWS THE HAND. The Fundraiser has its
+   * own screen-space cursor through its reach mapping, and two dots in two places is worse than
+   * one — so it stays off there. Factor Lab has NO cursor and no position to build one from (its
+   * answer is a scalar), so the numbered chips over the fingertips are its ONLY per-finger
+   * feedback: the thing that says not just how many were counted but WHICH, i.e. why a held-up 5
+   * read as 4. Hidden, that chapter's camera can be wrong and never say where.
+   */
+  markers?: boolean
+  /**
+   * Corner-mode width. Ignored in full mode — but still REQUIRED, because a corner caller that
+   * omits it renders a 0-wide panel and the detect loop measures `clientWidth === 0`, which puts
+   * every marker at the origin with nothing erroring. A full-screen caller passes 0 and says so.
+   */
   w: number; bottom?: number; right?: number; skin: HandSkin; hidden?: boolean
 }) {
   return (
@@ -301,10 +321,15 @@ export function CamView({ videoRef, canvasRef, w, at, bottom = 10, right = 10, s
     }}>
       {/* Mirrored, so raising your right hand raises the one on the right of the screen. */}
       <video ref={videoRef} playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} />
-      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: full ? 'none' : 'block' }} />
       {/* the room is whatever the child is sitting in, so the paper the board is drawn on needs a
-          floor to read against */}
+          floor to read against.
+          ⚠️ IT SITS BETWEEN THE VIDEO AND THE OVERLAY, and the order is the whole point. These are
+          siblings in one stacking context with no z-index, so the LAST one paints on top — drawn
+          after the canvas it dimmed the markers by 34%, i.e. it dimmed the one thing a chapter
+          turns them on for. The scrim exists so the BOARD reads against the room, not so the
+          reading does. */}
       {full && <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,7,4,.34)' }} />}
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: full && !markers ? 'none' : 'block' }} />
     </div>
   )
 }
