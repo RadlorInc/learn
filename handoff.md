@@ -14,7 +14,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 🪙 **2026-08-13 — DECIMALGRID → THE COIN TRAY, ON THE FOUNDER'S CALL TO CONVERT THE 9–11 DECIMAL CHAPTER TO A DAILY REAL-WORLD EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT TWO OF ITS THREE QUESTION TYPES WERE COIN FLIPS AND THE THIRD DREW AN EMPTY INSTRUMENT. ⚠️ NOT COMMITTED.** `tsc` 0 · **902/902 vitest** (was 871, **+31**) · `next build` 0 · **eslint: the same four rule classes as PizzaCounter, i.e. zero new classes** · 0 console errors · driven at 1280×720, 640×320 and 466×676 · **TWO FULL RUNS PLAYED** — one perfect to the mastery exit, one erring through all ten rounds · **23/23 planted regressions caught.**
+> 🪙 **2026-08-13 — DECIMALGRID → THE COIN TRAY, ON THE FOUNDER'S CALL TO CONVERT THE 9–11 DECIMAL CHAPTER TO A DAILY REAL-WORLD EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT TWO OF ITS THREE QUESTION TYPES WERE COIN FLIPS AND THE THIRD DREW AN EMPTY INSTRUMENT. 🚀 SHIPPED — `main`@`0c9418b`, prod serving **sw v92**, smoke 11/11 and both new chapters rendered on the live origin.** `tsc` 0 · **902/902 vitest** (was 871, **+31**) · `next build` 0 · **eslint: the same four rule classes as PizzaCounter, i.e. zero new classes** · 0 console errors · driven at 1280×720, 640×320 and 466×676 · **TWO FULL RUNS PLAYED** — one perfect to the mastery exit, one erring through all ten rounds · **23/23 planted regressions caught.**
 >
 > **The asks, in order:** *"9-11 band… decimal chapter ko lete hai, aur uska daily real world example mein convert karte hai"* → on the three questions put to him: **money (structurally separated from The Fundraiser)** · **MAKE THE AMOUNT — build it in coins** · **AR in the same pass**.
 >
@@ -162,11 +162,19 @@
 > substitution count.
 >
 > ## ▶ OPEN
-> 1. ⚠️ **NOT COMMITTED**, and it stacks on the Pizza Counter and Factor Lab batches below. New:
->    `story/cents.ts` · `story/CoinTray.tsx` · `__tests__/coinTrayDecimals.test.ts`. Changed:
->    `storyChapters.tsx` (one row) · `core/chapters.ts` (the tile: 🔟/"number line" → 🏷️/"dimes are
->    tenths") · `chapter-craft.md` (6 rules) · `story-9-11-ar-plan.md` (§7's dated amendment).
->    **DELETED: `story/DecimalGrid.tsx`.** Deploying needs `public/sw.js` v91 → v92.
+> 1. ✅ **SHIPPED 2026-08-13 — `main`@`0c9418b`, prod serving sw v92.** Three commits, clean
+>    fast-forward, 0 ahead / 0 behind: `bb3850d` (the docs split), `dee2f2e` (both chapters — ONE
+>    commit, because they rewire `storyChapters.tsx` and `core/chapters.ts` on adjacent lines and any
+>    split leaves a registry importing a component that does not exist yet), `0c9418b` (sw v91 → v92).
+>    Gates re-run before staging rather than trusted from this file: `tsc` 0 · **902/902** ·
+>    `next build` 0. **DELETED: `story/DecimalGrid.tsx` + `story/FractionForge.tsx`.**
+>    Post-deploy: prod `sw.js` **v92 on the fifth poll**, 9 routes + `pizza_base.png` all 200,
+>    **0 hits for `FractionForge`/`DecimalGrid` in the `/story` shell**, and both chapters driven on
+>    the live origin — briefing, both doors, 0 console errors.
+>    ⚠️ **What the prod drive does NOT cover: only the BRIEFING screen was reached.** No demo, no
+>    guided round and no scored round has been played on production; everything below still stands,
+>    and the fresh pane cached `milo-shell-v92` so the stale-worker trap was avoided by construction
+>    rather than by clearing it.
 > 2. ✅ **CLOSED by §⑧ — scored `op` and `place` both played, all ten rounds walked, the re-teach
 >    fired three times and the mastery exit fired.** ⚠️ What the two runs do NOT cover: **no scored
 >    round has ever been on screen at L3**, so the trap amounts (`0.6` against `0.06`) and the
@@ -193,7 +201,7 @@
 >    from a demo beat's own words. None from the type-checker, and none from the gate — which went
 >    green first time and had to be mutation-tested to be worth anything.**
 >
-> 🍕 **2026-08-13 — FRACTIONFORGE → THE PIZZA COUNTER, ON THE FOUNDER'S CALL TO RE-THINK THE 9–11 FRACTION CHAPTER AROUND A DAILY EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT IT PRINTED ITS OWN ANSWER AND THAT ITS COMPARISON ROUNDS NEVER COMPARED TWO FRACTIONS. ⚠️ NOT COMMITTED.** `tsc` 0 · **871/871 vitest** (was 808, **+63**) · `next build` 0 · **eslint: byte-for-byte the same rule profile as FactorLab minus one, i.e. zero new classes** · 0 console errors in a fresh tab · driven at 1280×720 and 640×320 on BOTH inputs · **17/18 planted regressions caught, the 18th proven INERT with its guard separately gated.**
+> 🍕 **2026-08-13 — FRACTIONFORGE → THE PIZZA COUNTER, ON THE FOUNDER'S CALL TO RE-THINK THE 9–11 FRACTION CHAPTER AROUND A DAILY EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT IT PRINTED ITS OWN ANSWER AND THAT ITS COMPARISON ROUNDS NEVER COMPARED TWO FRACTIONS. 🚀 SHIPPED with The Coin Tray — `main`@`0c9418b` / sw v92; this block's "NOT COMMITTED" is stale.** `tsc` 0 · **871/871 vitest** (was 808, **+63**) · `next build` 0 · **eslint: byte-for-byte the same rule profile as FactorLab minus one, i.e. zero new classes** · 0 console errors in a fresh tab · driven at 1280×720 and 640×320 on BOTH inputs · **17/18 planted regressions caught, the 18th proven INERT with its guard separately gated.**
 >
 > **The asks:** *"band 9-11 mein fraction chapter ko daily real world example se rethink karte hai"* → on the world, **"pizza shared with friends"** → *"toh isme AR kaise daale?"* → on the verb, **"fingers = slices"**.
 >
@@ -272,10 +280,11 @@
 > found the real six.
 >
 > ## ▶ OPEN
-> 1. ⚠️ **NOT COMMITTED**, and it stacks on the Factor Lab batch below. New: `story/pizza.ts` ·
->    `story/PizzaCounter.tsx` · `__tests__/pizzaCounterFractions.test.ts`. Changed: `storyChapters.tsx`
->    (one row) · `core/chapters.ts` (the menu tile: 🍰/apple → 🍕/pizza) · `chapter-craft.md` (5 rules).
->    **DELETED: `story/FractionForge.tsx`.** Deploying needs `public/sw.js` v91 → v92.
+> 1. ✅ **SHIPPED 2026-08-13 inside `dee2f2e` with The Coin Tray — `main`@`0c9418b`, prod sw v92.**
+>    The two went in as ONE commit on purpose (see the 🪙 block's item 1). **DELETED:
+>    `story/FractionForge.tsx`.** Driven on the live origin: the briefing renders with both doors and
+>    0 console errors, and `pizza_base.png` — the new menu tile's asset — returns 200.
+>    ⚠️ Only the BRIEFING was reached on prod; item 2 below is unchanged by the deploy.
 > 2. ⚠️ **NO SCORED `more` OR `op` ROUND HAS BEEN ON SCREEN** — both exist only at L2+, which needs
 >    three correct in a row, and both were driven only in the DEMO (same `Board` component, so the
 >    rendering is covered; the SkillBeat wrapper is not). **No ten-round run, no re-teach, no mastery
@@ -295,7 +304,7 @@
 >    the gate before it first ran green, two from driving it at 640×320, one from looking at a
 >    screenshot, and one from a lint warning on an unused loop variable. None from the type-checker.**
 >
-> ✋ **2026-08-13 — FACTOR LAB HAS ITS DAILY ANCHOR AND ITS CAMERA IS FULL SCREEN — AND VERIFYING IT FOUND THREE BUGS THAT WERE ALREADY SHIPPING, ONE OF WHICH MARKED A CORRECT-LOOKING ANSWER WRONG OVER A PICTURE WITH NO GAP IN IT. ⚠️ NOT COMMITTED.** `tsc` 0 · **808/808 vitest** (was 787, **+21**) · `next build` 0 · **eslint 15 problems against 15 at HEAD**, i.e. none introduced · 0 console errors · 0 server errors · driven at 1280×720 and 640×320 on BOTH inputs · **22/22 planted regressions caught, six of them against my OWN new assertions.**
+> ✋ **2026-08-13 — FACTOR LAB HAS ITS DAILY ANCHOR AND ITS CAMERA IS FULL SCREEN — AND VERIFYING IT FOUND THREE BUGS THAT WERE ALREADY SHIPPING, ONE OF WHICH MARKED A CORRECT-LOOKING ANSWER WRONG OVER A PICTURE WITH NO GAP IN IT. 🚀 SINCE SHIPPED — `main`@`31067ac`; this block's "NOT COMMITTED" is stale.** `tsc` 0 · **808/808 vitest** (was 787, **+21**) · `next build` 0 · **eslint 15 problems against 15 at HEAD**, i.e. none introduced · 0 console errors · 0 server errors · driven at 1280×720 and 640×320 on BOTH inputs · **22/22 planted regressions caught, six of them against my OWN new assertions.**
 >
 > **The asks:** *"in band 9-11 ka factor and prime chapter ko kaunse daily real world example se sikha rahe hai… AR-plan md waali file dekho"* → **"ok toh usme convert karo aur full screen camera jaise humne bigg number chapter mein kiye hai, taaki baccha acche se AR ka experience le"**.
 >
