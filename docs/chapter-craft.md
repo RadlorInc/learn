@@ -8,6 +8,14 @@ Every rule here was paid for. Most were learned in chapter 1 (the counting parad
 re-learned the hard way in a later chapter after a founder spotted it on a screenshot. Where a rule
 has a specific origin it is named, because the story is what makes it stick.
 
+**Two halves of this file live next door, because they are job-specific and this one is auto-loaded
+into every session.** Read the matching file when the job calls for it — the rules in them were paid
+for exactly like the ones here:
+- [chapter-craft-ar.md](chapter-craft-ar.md) — **answering with the camera.** Before building or
+  changing any AR chapter.
+- [chapter-craft-art.md](chapter-craft-art.md) — **art production and 3D scenes.** Before generating
+  any new sprite, walk cycle, backdrop or line art, or touching the code-drawn 3D scene.
+
 Related, not duplicated here:
 - [lessons.md](lessons.md) — defect classes that reached `main`, and the gate that catches each
 - [teen-game-pattern.md](teen-game-pattern.md) — the 12–18 band, which is a different design language
@@ -27,6 +35,7 @@ Reference implementations, in order of how closely to copy them:
 | 6–8 · Time | [TickTock.tsx](../src/features/chapters/story/TickTock.tsx) + [clock.ts](../src/features/chapters/story/clock.ts) | an explicit LESSON before anything is scored, one skill answered from BOTH ends with one control shape, a scaffold that fades by tier, and a day whose arc IS the changing scene |
 | 9–11 · Division | [SupplyRun.tsx](../src/features/chapters/story/SupplyRun.tsx) + [supplyRunDivision.test.ts](../src/__tests__/supplyRunDivision.test.ts) | one gesture serving two readings of one operation because they cost the same step, an answer that is the number of steps you got, a wrong action that is ALLOWED and visible rather than blocked, a remainder with somewhere physical to be, and a layout whose column shape is searched rather than picked |
 | 9–11 · Rounding | [RailLine.tsx](../src/features/chapters/story/RailLine.tsx) + [railLineRounding.test.ts](../src/__tests__/railLineRounding.test.ts) | a world where the rounded number is the only one you can ACT on, an answer surface wide enough that it is not a coin flip, three question types sharing one control and one grader, and a layout whose numbers are derived from each other rather than guessed |
+| 9–11 · Decimals | [CoinTray.tsx](../src/features/chapters/story/CoinTray.tsx) + [cents.ts](../src/features/chapters/story/cents.ts) + [coinTrayDecimals.test.ts](../src/__tests__/coinTrayDecimals.test.ts) | an answer entered as TWO places on one instrument, a piece that shows its own ten so the comparison is looked at rather than asked, an anchor whose own notation had to be kept out of the question, and a short-frame board that needed REFLOW rather than a smaller scale |
 | 9–11 · Area & perimeter | [FloorPlot.tsx](../src/features/chapters/story/FloorPlot.tsx) + [plotMaths.ts](../src/features/chapters/story/plotMaths.ts) + [plotSite.ts](../src/features/chapters/story/plotSite.ts) | **the band's only 3D chapter** — an answer that is a PLACE rather than a number (so it cannot be offered as a chip), ONE commit per scored round, a seeded procedural world that is provably free of anything countable, and everything the gate needs pulled out of the scene because `useFrame` cannot be driven headlessly |
 
 The shared engine all of these run on is [critters.tsx](../src/features/chapters/story/critters.tsx) —
@@ -136,6 +145,18 @@ can be read as symbols, the symbols are the question.** The fix is not a better 
 state the quantities ONLY as objects and let the equation appear afterwards, as the summary of work
 already done. Concrete → abstract, in that order.
 
+⚠️⚠️ **A BOARD SHARED BY SEVERAL ROUND TYPES WILL PRINT THE ANSWER ON THE TYPES WHERE THE AMOUNT IS
+NOT THE QUESTION — and it looks completely reasonable in the source.** The Coin Tray's board rendered
+the round's amount as its headline, which is exactly right on the type whose question IS *read this
+amount* and fatal on the other two: an `op` round asks *"it read 0.55, it went UP by 0.05"* and
+printed **0.6** above it, so the arithmetic never had to happen; a `place` round asks *"seven
+hundredths"* in WORDS and printed **0.07**, doing the words-to-digits step that is half of what the
+round tests. One expression, correct for one of three types. **Ask of every round type separately
+whether the board's own figures are the question or the answer** — an `op` shows its SUM, a
+words-asked round shows nothing until the commit — and put the choice in the pure module
+(`headline(round, revealed)`) so a gate can sweep it. ⚠️ Sweep it on TOKENS, not substrings: `0.1 +
+0.6` contains `0.6` while meaning nothing of the kind.
+
 ⚠️ **THE TAUGHT METHOD MUST COVER EVERY CASE THE GENERATOR CAN PRODUCE — AND THE WORKED EXAMPLES
 MUST INCLUDE THE HARDEST ONE, NOT AVOID IT.** BlockYard's demo narrated *"add the tens, then the
 ones"*, which has no step for a carry; measured over 20k draws per tier, **39–50% of its rounds
@@ -161,6 +182,17 @@ only WARP to a checkpoint, so you take the closest one to where you need to be a
 which is the rail line's own sentence transplanted intact. This is §0b's *an attribute question must
 be true of its object* applied one level up — to the WORLD rather than to a question. **Say the
 world's rule out loud as a sentence, then ask whether a child who plays that thing would agree.**
+
+⚠️⚠️ **AN ANCHOR CAN CARRY A NOTATION THAT ERASES THE VERY THING THE CHAPTER TEACHES — CHECK ITS
+CONVENTIONS, NOT JUST ITS OBJECTS.** Money is the right anchor for decimals for the strongest possible
+reason (100 cents ARE the hundredths grid, so the anchor and the manipulative are one object) and it
+brings one convention that is fatal if you let it into the question: **money always pads to two
+decimal places.** `$0.60` beside `$0.55` is obviously bigger, so written that way the misconception
+the chapter exists for **cannot occur at all**; `0.6` beside `0.55` is the trap. So every ASK states
+the maths form and the anchor's own form appears only in the REVEAL, as the bridge — *"$0.60, and
+that is 0.6 of a dollar"*. ⚠️ The same applies to what is SPOKEN: "sixty cents" hands over six dimes
+without a decimal being read at all, so the spoken line says the digits ("zero point six of a
+dollar"). **Write down the anchor's notation and ask which distinction it hides.**
 
 ⚠️ **AND WHEN THE WORLD *BECOMES* THE DAILY THING, THE ANCHOR PARAGRAPH GETS SHORTER, NOT LONGER.**
 The anchor exists to BRIDGE from something the child has done to a world they have not (a scoreboard
@@ -278,6 +310,23 @@ hands over the side length the child was supposed to walk for — the printed-an
 shopkeeper's apron. Label them "a row", "a long side", "a short side"; the count appears only on what
 they are carrying, as their own work, as they load it. Cheap gate: **no bundle label may contain a
 digit.**
+
+⚠️ **WHEN A LATER BAND REUSES AN EARLIER BAND'S WORLD, THE VERB HAS TO CARRY THE WHOLE DIFFERENCE —
+AND THE CLEANEST SEPARATION IS STRUCTURAL RATHER THAN VERBAL.** 6–8's SliceShop is pizza and owns
+FIT IT: **one** whole, one piece size, lay copies until it is full. 9–11 was handed the same world by
+the founder, so "MATCH IT" had to be more than a different sentence about the same picture — and the
+thing that makes it one is that equivalence needs **two wholes, cut differently**, which SliceShop
+structurally cannot show. One whole vs two is a difference a gate can assert and a reader can see;
+"a different verb" on its own is a claim. **State the separation as a property of the SCREEN.**
+
+⚠️ **AND A COMPARISON IS OFTEN BEST TAUGHT AS A CONSEQUENCE RATHER THAN AS A QUESTION.** "Which is
+greater?" over two options is a coin flip (§0b) and a finger count cannot express it at all — so the
+chapter asks *how many of mine make the same amount*, and the fact that it takes TWO of my eighths to
+make one of your quarters is what the child watches happen. The comparison is the reveal, not the
+prompt. Where the comparison must still be scored, ask it as a NUMBER on a pair where no exact answer
+exists ("the fewest of mine that beats yours") — ⚠️ and check that the pair really has none, because
+a plausible-looking non-multiple can still land exactly (2/4 IS 3/6) and the round's own prompt would
+then be telling the child something false.
 
 **Beware the skill that is a near neighbour of one already built.** Measurement spent a year as
 *tap the taller one*, which is chapter 5 (*tap the bigger bunch*) with a different adjective — and
@@ -766,6 +815,49 @@ check them with a script:
   Break the circularity (the band decides the pitch, the pitch decides the shape) by granting the
   band the tallest arrangement any candidate could ask for. And **gate it by asking whether the
   layout USES the room it was given**, not merely whether the unit clears a floor.
+- ⚠️⚠️ **A "SHORT FRAME" FLAG IS NOT A "NARROW FRAME" FLAG, AND RESERVING A CHARACTER'S LANE BY IT
+  PUTS HIM BACK ON THE ANSWER BUTTONS.** `short` is `vh < 470`, so a NARROW BUT TALL frame takes the
+  roomy branch: measured live at **466×676**, Milo's lane collapsed to 12px and he covered the pad's
+  **`0` and `1` keys** — and in that chapter `0` is the answer on most rounds. He is
+  `pointerEvents: none`, so every tap still lands and no probe, console or gate can see it; only
+  crossing his box with the pad's does. **What decides whether the pad reaches him is WIDTH.**
+  ⚠️ And a fixed lane is still a guess: 104 left 4px of him over the `0`, because his right edge there
+  is 109.5. Derive it — `PtMilo` is `left: 9%` with `translateX(-50%)` and `width: min(20vh, 160px)`,
+  so `miloRight = vw*0.09 + min(vh*0.20, 160)/2` — which is this doc's own *measure a boundary off
+  THAT character* rule, applied to the one character every 9–11 chapter draws.
+  ⚠️ **Where the lane is only a margin because CENTRING clears him, assert that** — otherwise it is
+  true by luck, which is the thing the sweep exists to stop.
+- ⚠️⚠️ **A TALL BOARD IN A SHORT WIDE BAND NEEDS REFLOW, NOT A SMALLER SCALE — the teen band's rule,
+  and it recurs in 9–11 the moment a board is a vertical stack.** Measured on The Coin Tray at
+  640×320: the board rendered **201×90 inside a 550×98 band**, i.e. height binding hard with **~330px
+  of width going spare**, and `FitBox` obediently shrank the coins to a **2.2px pip** — the one thing
+  the child has to count, made uncountable. Putting the price tag BESIDE the wells instead of above
+  them took the same board to 485×90 and the pip to 6.6px, in the same band. **Before blaming the
+  band, check whether the board is using the width it already has.**
+- ⚠️ **AND THE SHAPE OF A COUNTABLE PIECE IS A LAYOUT DECISION, BECAUSE ASPECT IS WHAT `FitBox`
+  PRICES.** A "ten" drawn as a 1×10 strip is ten pips TALL, which in a short band is exactly the wrong
+  axis; the same ten as a 2×5 **ten-frame** is half the height, still obviously ten, and is the
+  arrangement the band below already met. Draw a piece in the aspect the band has room for.
+- ⚠️ **A FIXED RESERVE FOR SOMETHING THAT WRAPS IS WORSE THAN NO RESERVE.** A verdict pill given a
+  24px box wrapped to two lines at that width and spilled straight over the price tag above it — a
+  collision *created* by the reserve meant to prevent one. Either size the row to its content and
+  accept the rescale, or guarantee the pill is one line. (Collapsing an EMPTY reserve is still right:
+  22px of blank band on a 98px board is a fifth of the coins' size, spent on a pill that is not there.)
+- ⚠️⚠️ **AN ACTION ROW ADDED TO THE BOTTOM BAND CAN PUSH THE BOARD'S TOP CLAMP ABOVE THE QUESTION
+  CARD.** The clamp exists to slide a board UP under *text the child has already read* — but its input
+  is the BOTTOM band, so a 47px "I've got it" row on its own line moved the top from 105 to **65 on a
+  320px frame and drew the board 32px into the card, over the price tag**, which is the question
+  rather than text already read. The way out on a short frame is the band's quiet **top-right chip**
+  (13px, the smallest thing on screen, never the forward path) — free there, because SkillBeat's round
+  counter owns that corner only in a played round and an explore beat renders outside it.
+- ⚠️ **ON A SHORT FRAME A PANEL DROPS EVERYTHING THAT IS SAID SOMEWHERE ELSE, AND THE THING IT BUYS
+  IS THE MANIPULATIVE'S SIZE.** Measured on The Pizza Counter at 640×320: the question card wrapped
+  to 96px of a 320px frame and the answer row reserves 112, so the board got its 90px floor and
+  `FitBox` scaled two pizzas down to **35px each** — the one thing the child has to COMPARE, made
+  unreadable, while the panel around them spent ~70px on a header strip repeating the card's own tag
+  and a big readout repeating the denominator the card already states. Neither carried anything the
+  child could not read two inches higher. **Audit a panel's chrome for duplication before blaming the
+  band**, and shorten the question's own prose (the honest lever) before either. 35 → 51px for free.
 - ⚠️ **A CAP THAT ONLY BINDS ON LARGE SCREENS HANDS THE SMALLEST SCREEN THE BIGGEST PROPORTIONAL
   RESERVE.** `min(vw * 0.4, 380)` for a speech bubble reads as a sensible clamp and is the opposite
   of one: at 1280 wide the 380 binds and the bubble takes 30% of the frame, while at 640 nothing
@@ -1242,6 +1334,15 @@ second thing to look at. It appears with the demo, when it starts to matter.
   came out the size of a LAMB beside a pony. Where a chapter needs its cast COUNTABLE, the cleaner
   answer than a scale table is to cast only creatures that live in ONE size band: a countable ant
   cannot be honestly sized next to Milo, so it is simply not in that chapter.
+- ⚠️ **A "GONE" REGION MUST READ AS AN ABSENCE, NEVER AS A FILL — this is the pie-chart fault arriving
+  through the *state* rather than through the geometry.** The Pizza Counter clips a real pizza sprite
+  by the exact wedge, which is the rule above obeyed; it then painted the TAKEN slices with a
+  translucent accent, and on screen that reads as a shaded sector — i.e. exactly the pie chart the
+  clipping exists to escape, and worse it is **ambiguous**: a child cannot tell whether the coloured
+  part or the food part is "the amount". Draw NOTHING over what is gone and let the surface underneath
+  (a plate, a board, the ground) show through, because that is what a missing piece actually looks
+  like; if the amount needs marking, mark its EDGE with a line and never its area. And make that
+  surface visible against the panel behind it — an absence you cannot see is one you cannot compare.
 - **The background must match its objects** — orchard↔apples, pond↔fish, kitchen↔cookies. Where a
   world's backdrops are object-specific, pair the backdrop TO the item so a scene never shows the
   wrong object.
@@ -1250,152 +1351,7 @@ second thing to look at. It appears with the demo, when it starts to matter.
 
 ### A code-drawn 3D scene
 
-All of these were paid for on The Empty Plot, whose founder verdict was *"visuals acche naii hai"*.
-**Not one of the faults was geometry.** A 3D scene that reads as untextured primitives is almost never
-short of shapes — it is short of light, contact and palette, and every fix below is a constant or a flag.
-
-- **CONTACT SHADOWS ARE NOT OPTIONAL IN 3D EITHER, and this is the one everybody skips** — because the
-  geometry genuinely *is* grounded, and it is very easy to believe that settles it. It does not: with
-  no shadow a van, a mast and a character all read as cut-outs standing on a plane, exactly as a
-  sprite with no contact ellipse does. `shadows` on the canvas plus `castShadow`/`receiveShadow` is
-  four words of JSX and it is the single biggest change you can make to one of these scenes.
-- **THE FILL MUST NOT DROWN THE KEY.** Hemisphere 1.5 + ambient 0.4 against a directional 1.5 means
-  every face of every box arrives at nearly the same brightness, so a cube renders as a flat
-  rectangle. The directional has to WIN; the fill is a floor that keeps shadowed sides readable, not
-  a second sun. ⚠️ **Then check your darkest object**: a dark tone that was fine under a bright wash
-  goes to a black silhouette under a directional-dominant one, and *a dark object needs more ambient
-  than a pale one while there is only one ambient* — so the floor moves on the OBJECT, not the light.
-- **A LARGE FLAT AREA OF ONE COLOUR READS AS A VOID**, and there are usually two of them: the sky and
-  the ground. Neither needs a shader. The sky is a **CSS gradient behind a transparent canvas**
-  (`gl: { alpha: true }`, no `scene.background`) — ⚠️ and the fog must then fade to the gradient's
-  **horizon** tone, not its midpoint, or the ground's far edge dissolves into a colour that is not
-  there and draws a seam across the horizon. The ground is **one non-tiled `CanvasTexture`** stretched
-  across the whole plane.
-  ⚠️ **NON-TILED IS NOT A DETAIL — IT IS THE WHOLE SAFETY ARGUMENT.** A tiled texture is precisely how
-  the printed answer arrives (see the grid rule in §0a); stretched once, 512 px over 120 m is ~0.23 m
-  a texel and the smallest wash is tens of metres across, so there is no scale at which it could
-  become a ruler.
-- **THE MARKERS ARE THE LIGHT ELEMENTS.** Drawing a road and the boundary posts *darker* than the
-  ground made the road own the bottom third of the frame as one flat dark bar and turned the posts and
-  rails — the things that say where the plot IS — into harsh black lines. Whatever marks the working
-  area is the pale thing on it.
-- ⚠️ **TWO LARGE FIELDS MUST NOT SHARE A HUE ARC.** When a palette check leaves you only two legal arcs
-  and you have three layers to separate (sky · ground · props), two of the three must share one —
-  **make it the small objects that share with a field, never field-with-field.** Two of this chapter's
-  four settings had ground AND sky in the same band, so those worlds were flat *before a single line
-  ran* and no amount of saturation could have rescued them.
-- ⚠️ **AND A PALETTE HUGGING THE FLOOR OF ITS LEGAL RANGE IS A LEGAL PALETTE THAT READS AS NO PALETTE.**
-  The separation check gave a ceiling of 0.34 saturation and the generator was running at 0.06–0.25.
-  Sit near the ceiling the check gives you, not at the bottom of it.
-- ⚠️ **EMPTINESS IS USUALLY A DISTANCE BAND WITH NO CONTENT, NOT A MATERIAL WITHOUT A MAP.** Told the
-  ground looked empty, the texture was the obvious answer and it was only half of it: everything the
-  generator produced sat at **z ≤ 13 while the skyline started at z ≥ 34**, so the forward view was a
-  bare twenty-metre band. **Measure the gap between your near set and your far scenery before adding
-  detail to a surface.**
-- ⚠️ **ANYTHING IN THE CORRIDOR BETWEEN A REVIEW CAMERA AND ITS SUBJECT WILL EVENTUALLY BLOCK THE SHOT.**
-  A scatter generator does not know where the camera goes, so on the one beat that shows the child what
-  they built, a randomly-placed prop stood square in front of it. Either place the scatter outside the
-  corridor or place the camera outside the scatter — but state it, because nothing will fail.
-- **A character made of four primitives is a bowling pin**, and in a first-person chapter they are on
-  screen in every beat. Two arms and one band of colour is the difference between a skittle and a
-  person, and the band can do palette work at the same time (a hi-vis vest pulled the foreman off the
-  clay hue his own tiles use). **And give them the thing their job implies** — a foreman on a building
-  site with no hard hat is a costume with a piece missing, and a brim is also the strongest silhouette
-  cue available on a round head above a round body.
-- ⚠️ **AND EVERY OTHER PROP IS THE SAME RULE: A NAKED PRIMITIVE READS AS A PLACEHOLDER, AND NO AMOUNT
-  OF LIGHTING FIXES IT.** This is the one that produced *"visuals bhot acche naii hai"* on a scene that
-  had already had a full lighting and palette pass. A box is not a van and a cone is not a tree,
-  however well lit; the yard read as grey slabs on the horizon and a purple cone in a field. **What is
-  read in a low-poly scene is the SILHOUETTE** — a trunk under a canopy, wheels under a body, a pitched
-  roof over walls, legs under a hoarding, a parapet on a distant block. Two or three parts each, and it
-  costs no assets.
-  • **Promote the comment to a field.** The catalogue already said `// a van` and `// a tree` in prose
-    while handing the renderer a bare `w/h/d`; a `role` on each entry is the same information where the
-    scene can act on it, and it beats inferring the thing from its proportions (clever, and it breaks
-    the moment the catalogue changes).
-  • ⚠️ **EVERY SUB-PART TAKES A SHADE OF THE PROP'S OWN TONE, NEVER A COLOUR OF ITS OWN.** A separation
-    check is computed on the tone the GENERATOR produced, so a brown trunk or a green canopy invented
-    down in the scene clears a check that never saw it — the doc's own *"a gate that reads the DATA
-    cannot see how the scene draws it"*. Lightness is free; hue is not, and the silhouette is doing the
-    reading anyway.
-  • **`flatShading` is the other half and it is free.** A 10-segment cone smooth-shaded is a soft grey
-    blob; faceted, it is a deliberate low-poly tree. Boxes are unaffected.
-- ⚠️⚠️ **THE SUN'S *ANGLE* IS WHAT MAKES A BOX READ AS A BOX, AND A HIGH SUN POINTING AWAY FROM THE
-  PLAYER IS THE ARITHMETIC DEFINITION OF "THESE ARE SHAPES".** This is the one that survived two
-  visual passes because everyone kept tuning brightness. Work it out on the actual rig before touching
-  anything else: a key at `[16,30,11]` is `L = [0.448, 0.840, 0.308]`, i.e. **57° elevation — midday,
-  the flattest light there is.** The child spawns looking down +Z, so every prop face they can see is
-  the −Z face, where `N·L = −0.308` — *no key at all*. Add up what is left and the face TOWARD the
-  player and the LEFT face both land on exactly **0.580** (hemisphere + ambient and nothing else),
-  while the roof lands on **1.546**. **Two of the three faces a child sees on every box render at
-  literally the same value, and the brightest thing in the frame is a roof they are looking down on.**
-  No palette, silhouette, texture or shadow work can survive that — a cube lit like that *is* a
-  rectangle. The fix is direction, not intensity: a low key (~25°) placed ~60° off the player's
-  forward axis, and the flat fill replaced by two SHADOWLESS directionals that fill with direction
-  rather than with a wash. Five distinct face values at 4.6:1 instead of two identical ones.
-  **Compute `N·L` for the faces the camera can actually see before you touch a single colour.**
-- ⚠️ **AND THE SOFT SHADOW SHIPS IN THE SAME CHANGE AS THE LOWERED SUN, NEVER AFTER IT.** Dropping a
-  key from 57° to 25° takes the shadow-length multiplier from 0.65 to 2.10 — a 2.6 m cabin casts 5.5 m
-  instead of 1.7 m. Long **hard-edged** shadows read as black smears, which is exactly why an earlier
-  pass raised the sun in the first place: *it removed the light to hide the shadow, and paid with all
-  the form.* Ship them together or you will draw the wrong conclusion and revert the thing that was
-  working. ⚠️ Refit the bias with the angle too — and expect the derivation to be optimistic, because
-  a big horizontal receiver sits at a *grazing* angle to a low sun: a derived `normalBias` of 0.04
-  still speckled the whole near band, and 0.09 was what actually cleared it.
-- ⚠️ **A `CanvasTexture` DEFAULTS TO `NoColorSpace`, SO EVERY COLOUR YOU PAINT INTO IT ARRIVES WRONG.**
-  The renderer treats it as linear data and skips the sRGB decode, so the texture renders darker and
-  flatter than the colour authored into it. Silent, no warning. Worse than the look: **every palette
-  number in the generator had been hand-tuned by eye against a wrongly-decoded ground**, so the whole
-  palette was being judged on a false baseline and each successive pass was re-tuning on top of a bug.
-  `tex.colorSpace = THREE.SRGBColorSpace` on anything carrying colour, and land it BEFORE any palette
-  work, not after.
-- ⚠️ **A PERFECTLY FLAT PLANE CANNOT LOOK LIKE GROUND, HOWEVER WELL IT IS LIT.** One quad takes one
-  lighting value across the whole lower half of the frame, so the ground reads as a coloured backdrop
-  the props are standing in front of. Gentle relief plus `flatShading` gives every facet its own value
-  and the surface acquires form — this is the single biggest difference between a code-drawn scene and
-  a shipped low-poly game, and it is invisible until you put the two side by side.
-  • ⚠️ **THE HIGH OCTAVE IS WHAT MAKES IT READ, NOT THE AMPLITUDE.** Broad 30–60 m swells move the
-    whole sheet together, so adjacent facets end up with nearly the same normal and it still looks
-    flat however tall the hills are. What the eye reads is *neighbouring faces catching the key
-    differently*, which needs a term whose wavelength is a small multiple of the cell.
-  • ⚠️ **AND IT MUST BE DEAD FLAT WHEREVER THE CHILD CAN STAND** — a fixed eye height clips through a
-    slope, and relief inside the working area is a landmark to pace against instead of dividing.
-  • ⚠️ **BUILD IT IN THE PURE MODULE AND BIND THE ARRAYS.** The scene's anti-grid source rules forbid
-    loops precisely because a nested loop is how a grid arrives; generating the vertices next door and
-    handing over a `Float32Array` keeps those rules meaningful AND lets the gate assert the real
-    geometry — cell size, jitter, and zero displacement inside the plot.
-- ⚠️ **AN AXIS-ALIGNED WORLD IS THE LOUDEST "THIS WAS GENERATED" SIGNAL IN A FRAME, AND IT IS FREE TO
-  REMOVE.** Every box square to the world presents the same two faces at the same two angles. A
-  founder cannot name it and reads it instantly as placeholder geometry. One seeded Y-rotation per
-  prop. **And it strengthens the pedagogy rather than costing anything**: an axis-aligned world is the
-  only one in which two props could line up parallel to the pacing direction and read as a marked
-  interval. The rare change that is both better-looking and harder to cheat.
-- ⚠️ **THE RENDERER'S TONE-MAPPING DEFAULT IS A COLOUR DECISION NOBODY MADE.** r3f sets
-  `ACESFilmicToneMapping` on every `<Canvas>` — a film-response curve that rolls off highlights and
-  desaturates as it goes. On a photoreal scene that is what you want; on a deliberately low-saturation
-  stylised one it eats the little colour there is and everything arrives milky grey. `flat` on the
-  Canvas selects `NoToneMapping`, so the palette that was so carefully computed is the palette that
-  reaches the screen. ⚠️ **It is not free:** with no roll-off the light intensities become a HARD
-  ceiling rather than a soft one, so every intensity has to come down with it (2.5 → 1.15 here) or lit
-  faces clip to white — which is what the tone mapping was hiding.
-- ⚠️ **A NEARLY-WHITE FOG COLOUR MAKES EVERY DISTANT THING WHITE, AND DARKENING THE OBJECT CANNOT FIX
-  IT.** The distant band was darkened twice before anyone did the arithmetic: a building is multiplied
-  by the key light (~×1.7 on a lit face) and *then* blended toward the fog colour by its depth, so a
-  haze at 0.93 lightness returns everything past the mid-ground as white cardboard whatever tone the
-  generator gave it. **Fix the haze, not the thing in it** — and keep most of the sky's saturation in
-  it, or distance reads as fade-out rather than as distance.
-- ⚠️ **A GRADIENT SKY'S HAZE STOP MUST LAND *ABOVE* THE HIGHEST HORIZON ANY CAMERA PRODUCES.** Fog
-  fades the ground plane's far edge to the haze tone; if the gradient only reaches that tone at 100% of
-  the viewport, the fogged ground meets a sky two stops darker and the join draws a hard line straight
-  across the frame. And a stop tuned to one camera reopens the seam at another — a review shot pitching
-  down 30° puts the horizon somewhere quite different from a walking one. Reach haze early and hold it
-  all the way down: everything below the horizon is covered by ground, so it costs nothing.
-- ⚠️ **A GROUND WASH SIZED FOR THE PLANE IS SIZED FOR THE WRONG THING — SIZE IT FOR WHAT IS ON SCREEN.**
-  A 120 m texture sounds generous until you notice the camera is at eye height looking along the ground,
-  so everything past the fog is gone and the band actually visible is roughly a QUARTER of the sheet.
-  Washes 200 px across therefore fill that window edge to edge with one tone and the yard reads as a
-  flat field however strong they are. Mix in blobs small enough that any quarter of the sheet carries
-  variation.
+**Moved → [chapter-craft-art.md](chapter-craft-art.md).** Lighting, shadows, ground geometry, palette and tone-mapping for the one 3D chapter. Read it before touching that scene.
 
 ### ⚠️ A separation rule judged on two axes must be judged PER TONE
 
@@ -1422,255 +1378,7 @@ and nudge, deterministically off the same seeded stream) and keep the gate asser
 
 ### Generating new art
 
-⚠️ **IMAGE→3D IS NOT LOW-POLY, AND ONE TEST SETTLES IT FOR ABOUT 30 CREDITS.** Generated *images* of
-stylised props are excellent — clean facets, warm muted colour, exactly the target look. The 3D
-conversion is a different thing entirely: measured on one van, `image_to_3d` returned **28,357
-triangles and a 3.1 MB embedded JPEG in a 4.6 MB GLB**, and dropped into the real scene it was a
-melted lump — wheels gone, roof rack smeared into the body — that looked visibly *worse* than the
-60-triangle hand-built prop beside it. Eight of those is ~227k triangles and ~37 MB against a
-whole-repo asset budget of 22.8 MB. **Reconstruction produces photogrammetry topology; it cannot
-produce facets.** Generate ONE and put it in the scene before committing to a set.
-
-⚠️ **SO SPEND THE ART BUDGET ON A TARGET FRAME INSTEAD — it is worth more than any brief.** A single
-generated image of *the whole scene as it should look* turns "the visuals aren't good" into a list you
-can work through: which colours, which silhouettes, where the near-field furniture goes, how faint the
-horizon is, where the sun sits. Two 1k images cost ~3 credits, land in `docs/art/`, and become the
-standing reference the next session builds against — the same role the accepted backdrops already
-play for 2D chapters. **Get it approved before building to it.**
-
-Only generate when the library genuinely lacks something or fits poorly — but when it does,
-generate rather than settling for an emoji or a CSS shape.
-
-**Style reference: reference the ORIGINAL / earliest art** for SPRITES — `apple.png`, `cookie.png`,
-`duck.png`. Later AI batches drift, and referencing them compounds the drift. References must be
-**deployed URLs** — `media_import_url` silently fails on a 404 and the model then generates from
-text alone.
-
-⚠️ **BUT THIS RULE USED TO NAME `pond.jpeg` AND `forest_*.jpeg` AS BACKDROP REFERENCES, AND THOSE
-TWO FILES ARE THEMSELVES FLAT VECTOR — ink outlines, flat fills, no brushwork.** So it told you to
-attach a picture of the exact style the style rule above forbids, and **the picture wins over the
-prose every time.** That is what produced FitOut's first badge-world failure: a prompt demanding
-painted, with a cartoon stapled to it, returning a cartoon. The second attempt then dropped the
-reference and produced a featureless gradient — the two recorded failure modes are the two halves of
-one bad reference list. **The correct backdrop reference is a scene THIS CHAPTER has already
-accepted** (`fit_station.jpeg` + `fit_sign.jpeg` for FitOut); referencing those landed the same
-world in one pass, zero retries. Generalise: **reference the nearest ACCEPTED artefact, not the
-oldest one** — and open every reference and look at it before attaching it, because a reference that
-returns 200 is more dangerous than one that 404s, not less.
-
-⚠️ **AND "A SCENE WITH REAL CONTENT" IS THE WRONG CORRECTION FOR AN EMPTY-GRADIENT FAILURE.** The
-accepted scenes in a chapter whose frame fills the middle are *deliberately* near-empty — a wall, a
-floor, and two painted objects pinned to the far left and right edges. What separates them from the
-rejected "flat featureless bands" is not content density but **(a) visible brush texture instead of
-a smooth ramp, (b) one hard readable wall/floor or horizon line, and (c) two to four real painted
-objects at the frame's EDGES giving the place an identity.** Ask for those three things by name;
-asking for "more stuff" gets you a scene the layout has to fight.
-
-**Walk-cycle pipeline** (this is how every drawn cycle in the app was made):
-
-```
-generate_image  (subject on a FLAT chroma background)
-      ↓
-generate_video  kling3_0_turbo, 5s, "walks in place, camera locked, background stays flat"
-      ↓
-python3 scripts/creature-frames.py <clip>.mp4 <name> --frames 12 --start 0.5 [--key magenta]
-      ↓
-register in canvas/sheets.ts  { url, frames, fps, cellAspect }
-```
-
-**When a side-facing still already exists, this is IMAGE-TO-VIDEO and the `generate_image` step is
-skipped entirely.** Composite the transparent cutout onto a flat chroma field (Kling needs an opaque
-start frame), pass it as `start_image`, and the still itself locks the style — cheaper and far more
-reliable than generating a fresh still. `scratchpad/chroma.py` does the compositing.
-
-**DERIVE the chroma field, don't remember it.** Measure the distance from green and from magenta to
-the subject's *nearest actual pixel* and take whichever is further. Run blind on the existing cast
-this independently reproduced every case the sessions below learned by burning credits — frog
-(green clearance 156 vs magenta 206), alien (173), and Milo, whose green backpack gives green a
-clearance of 172 against magenta's 209. It also flags the marginal ones: the dragonfly is 169 green
-/ 153 magenta, i.e. neither field is comfortable and it is the one to expect a retry on.
-
-Gotchas that have each cost real credits:
-- **Key on MAGENTA whenever the subject contains green** — a green key eats a green backpack or a
-  turtle's own flippers. (Now derived automatically; see above.)
-- **Kling fades the background in** rather than starting flat; always use the settled tail
-  (`--start 0.5`), or generate 10s so the settled part holds real motion.
-- ⚠️ **AND THE MOTION HAS ITS OWN SETTLE — CUT FROM THE ACTIVE WINDOW, NOT THE FRONT OF THE CLIP.**
-  The model holds the start frame for a beat before it begins moving, and a strip cut from there is
-  a character standing still. Measured on the 9–11 foreman bear: **frames 0–17 of 121 have an
-  IDENTICAL feet-span**, so a cut at `--start 0` gave a 12-cell strip that was **9 cells STATIC**
-  and read as a shuffle rather than a walk. ⚠️ **A stronger prompt does not fix this and the retry
-  is wasted money** — a second take demanding "BIG deliberate strides" bought **1%** more stride
-  (29% → 30% of frame height); re-cutting the SAME clip from its middle bought all of it.
-  **Find the window before paying for another generation:** measure a per-frame motion signal (the
-  ink span in the bottom fifth of the frame is enough), take the first frame that deviates from the
-  held start value, and cut one autocorrelation period from there.
-- **A walk's feet-span signal has HALF the walk's period**, because it cannot tell left-leg-forward
-  from right-leg-forward. Autocorrelate the whole frame to get the cycle; use the span only to find
-  where the motion starts and how big the stride is (26% of body height reads as a heavy plod, 18–20%
-  as a light one).
-- ⚠️ **THE SUBJECT SETTLES TOO, AND THAT IS THE BIGGER EFFECT.** On an image-to-video run the
-  magenta field was solid from frame 0 — but the model spent the **first 20 of 121 frames
-  re-rendering the subject**, shrinking it from 610px to 360px wide and drifting it 89px right,
-  before locking in. From frame 20 on it was stable to 6%. So `--start` is not only about the
-  background; discard the front regardless. Measure per-frame bbox width and centre to find where it
-  locks, rather than guessing.
-- **Say "at a CONSTANT size, must not drift, grow or shrink."** The prompts that settle fastest all
-  carry that clause; the one that omitted it produced the 20-frame settle above.
-- **The reported output geometry is not the delivered geometry.** A job whose params said
-  `1280×720` delivered a **960×960 square** file. Check the actual frames before concluding a square
-  subject got cropped.
-- **The preset matcher intercepts on keywords and it is a pre-submission notice, not a charge.**
-  "wings **beating**" matched a music preset; other prompts matched a lighting one. Pass the
-  suggested id back as `declined_preset_id` to generate literally — but it suppresses only **that
-  one id**, so a retry can match a different preset and need a second decline. Three interceptions
-  across a 10-video batch cost nothing: the balance came out at exactly 10 × 7.5.
-- **Verify the spend against the balance after a batch**, which is how you catch the
-  "server isn't responding but it submitted anyway" duplicate.
-- **The safety filter false-positives.** Rephrasing in the same register as a known-good prompt
-  clears it; the first Milo prompt returned `status: "nsfw"` for nothing.
-- ⚠️ **A CREATURE WITHOUT A REGISTERED SHEET SILENTLY BECOMES A STILL — AND A STILL THAT TRAVELS IS
-  A STICKER BEING DRAGGED.** `SheetCell` falls back to a plain `<img>` when `SHEETS` has no entry for
-  the src, which is the correct fallback and also completely invisible: the creature is drawn, it is
-  the right creature, and it slides. **Assert `hasSheet()` for every creature a chapter casts** —
-  it is one line in the gate and it is the only thing standing between you and the cardinal fault.
-- ⚠️ **A PROP'S ART STYLE MATTERS AS MUCH AS A BACKDROP'S, AND THE LIBRARY MIXES BOTH.**
-  `train_car.png` and `train_engine.png` are flat-VECTOR cartoons — thick uniform outlines, flat
-  fills, a face on the engine — and a painted chick sitting in one is the same mismatch the founder
-  rejected in the pond backdrops. `cart.png` next to them is genuinely painted. **Open the file
-  before designing a chapter around it**; the check that saved BlockYard is the same one the
-  `milo_hop` lesson asks for, applied to a prop instead of a sheet.
-- ⚠️ **AND SO IS WHICH WAY IT FACES — CHECK IT LARGE, BY EYE, PER SPRITE.** CoinShop's six shoppers
-  were rendered as thumbnails, called "all left-facing" in one line, and a **duck and a squirrel
-  shipped walking backwards** — caught by the founder on a screenshot. The retry was worse: a script
-  scoring ink mass in the top third *also* said the squirrel faced left, because **its bushy tail
-  fills the top-left and outweighs its head.** Two instruments, same wrong answer. Render each one
-  BIG and look, then cross-check the app's own registry — `CAST` in critters.tsx already carried
-  `facesLeft` for two of the six, and pinning the two sources together is a gate a heuristic cannot
-  be. A blanket answer for a set of sprites is the fault; facing is per sprite.
-- ⚠️ **A SHEET'S NAME IS A CLAIM, NOT A FACT — MEASURE IT BEFORE YOU DESIGN ON IT.**
-  `milo_hop.png` shipped, was registered with a comment reading *"Milo's HOP, for a chapter where he
-  jumps between places"*, and was named as the foundation of A3 in both the handoff and the rethink
-  doc. **It is a walk cycle** — a second take of `milo_walk.png`, measured lift `0` in all 12 frames
-  and height varying by under 2%. A whole chapter was designed on it before anyone opened it. The
-  check is thirty seconds: split the strip and print each cell's alpha bbox — **lift ≠ 0 somewhere
-  means it leaves the ground, and a flat 0 down the column means it does not.** Then render a
-  contact sheet and look. Do this the moment a sheet becomes load-bearing, not after.
-  (Its registry key `milo_hop_side.png` also pointed at a file that did not exist, which nothing
-  caught because no caller had ever used it.)
-- **Never `--pingpong` a walk** — reversed legs moonwalk. Ping-pong is only for motion that
-  oscillates with no clean cycle (a chirping beak, paddling flippers).
-  ⚠️ **And decide it by MEASUREMENT, not by what the motion is called.** Divide the last-to-first
-  cell difference by the mean cell-to-cell step: on CoinShop's ten keeper strips that ratio is
-  **1.3–2.7**, i.e. the period the cutter "found" is not a loop and the cycle hitches once a round.
-  A wave, a nod, a wing-flap — anything that returns the way it came — has no clean cycle to find,
-  and `animation-direction: alternate` is one CSS property.
-- ⚠️ **A CHARACTER GENERATED INSIDE ITS SCENE CAN ONLY EVER WIGGLE IN PLACE; ONE GENERATED ON FLAT
-  CHROMA CAN WALK — AND THAT IS DECIDED BEFORE ANY CODE RUNS.** Splitting a video into frames is the
-  same pipeline either way, so it is easy to believe you have made an animation when you have not.
-  A cutout crosses the screen, leaves, and turns up on another backdrop. A whole-scene generation has
-  no alpha and nothing to key, so the strip is an opaque crop and the only thing it can do is twitch
-  inside its own rectangle — measured on CoinShop's stalls, that rectangle is **4.4–10.5% of the
-  frame**, i.e. **93–96% of the picture never moved.** The founder's question was the right one:
-  *we already do frame-by-frame properly, why is this one like this?* **Decide whether the character
-  needs to travel BEFORE generating it**, and if it does, generate it alone on a flat field.
-  (CoinShop's keepers were built, wired, driven and then removed for exactly this. The strips are
-  still on disk and deliberately unused.)
-- ⚠️ **NEVER ATTACH A CHARACTER REFERENCE TO A BACKDROP PROMPT — YOU GET THE CHARACTER COMPOSITED
-  INTO THE SCENE.** Generating The Angle Shop's three sites, I passed both an accepted backdrop AND
-  the foreman's sprite as references, on the theory that two references lock the style harder. The
-  model read the sprite as *a subject to include*: **two of the three came back as the reference
-  backdrop with the bear standing in it**, one of them with invented signage I had explicitly
-  forbidden. A backdrop with a character baked in is unusable — it is the welded-in-keeper fault
-  above, arrived at by accident. **One reference, and it is a scene.**
-- ⚠️ **AND A STYLE REFERENCE THAT IS COMPOSITIONALLY CLOSE TO WHAT YOU ASKED FOR GETS COPIED INSTEAD
-  OF STYLED.** `depot_yard` is *a wall with a yard in front of it* and I asked for *a wall with a yard
-  in front of it*, so the model returned `depot_yard`. The one site that came out right was the one
-  whose subject the reference could not supply (a stone embankment over a stream) — it had to build
-  that. **Reference for BRUSHWORK from something the prompt cannot be mistaken for**, or describe a
-  subject the reference plainly does not contain, and add the reference's own motifs as negatives
-  (`no brick archways, no green garage doors`).
-- ⚠️ **GIVE A BACKDROP A HOLE WHERE THE ANSWER GOES.** The retry that worked asked for *a cottage with
-  its roof removed, the gable open to the sky* and *a shelter whose posts have nothing on top* — so
-  the scene is visibly waiting for the thing the child makes. It fixes the composition problem at the
-  same time: the centre is empty because something is missing from it, which is a reason rather than
-  a rule. A variant that came back with the gable **complete** was rejected on exactly this, however
-  well painted it was.
-- ⚠️ **A BACKDROP THAT FAILS ON VALUE IS GRADED, NOT RE-ROLLED.** Two of these measured **0.754 and
-  0.642 against a cast at 0.539–0.597** — the `grocery_sweets` fault, which turns the cast into
-  cut-outs on a blank page. Re-rolling costs credits AND the composition you just approved. A
-  **highlight-weighted curve** (bisect a gamma on the RGB until the mean value hits target) pulls the
-  SKY down hardest and barely moves the midtone ground the cast stands on, which is exactly the
-  correction wanted; add back ~12% saturation, since gamma desaturates. Three lines, deterministic,
-  and the painting survives.
-- ⚠️ **A SCENE AND ITS CHARACTER GENERATED IN ONE FRAME GIVE AN OPAQUE STRIP, NOT A CUTOUT — AND IT
-  ONLY MAKES SENSE LAID BACK OVER ITS OWN PIXELS.** This pipeline (generate the whole picture →
-  animate it → crop the rectangle the motion happened in) is cheaper and better-blended than a
-  chroma cutout, because the character is painted INTO its stall rather than pasted onto it. The
-  price is that the crop rectangle is load-bearing and nothing records it. Recover it by
-  **template-matching cell 0 back into its own backdrop** (mean abs error 5–8 of 255 is codec plus
-  palette noise, and the minimum is unambiguous), then composite a MID-CYCLE cell back and look.
-  ⚠️ **Cell 0 matching invisibly does not mean the strip does**: the moving cells carry a percent or
-  two of drift, so a faint rectangle appears the moment it plays. Fade ~3% of each edge — the border
-  pixels ARE the background, so it costs nothing — with two crossed gradients intersected, never a
-  radial one, which would dim the middle.
-- ⚠️ **AND EVERYTHING PINNED TO THAT PICTURE MUST SHARE ITS TRANSFORM.** The backdrop, the patch and
-  the ground line go through ONE function. The moment the backdrop is laid out by `object-fit:
-  cover` and the patch by anything else, a percentage of the viewport stops being a percentage of
-  the image and they come apart at every aspect but the one you tested.
-- Judge a sheet on its `motion` / `loopgap` numbers and at real display size, not on the strip.
-- ⚠️ **"THE MATH MUST BE EXACT" IS NOT A REASON TO DRAW GEOMETRY — CLIP REAL ART BY THE EXACT
-  GEOMETRY INSTEAD.** SliceShop drew its fractions as flat SVG wedges and segments for years, on the
-  honest-sounding argument that any denominator has to divide cleanly. It reads as a **pie chart laid
-  over a painted shop** — the same family as the brown slab and the hairline ghost house, and the
-  founder rejected it on sight. The two are not a choice: put the sprite inside an SVG `clipPath` cut
-  by the wedge and the division stays arithmetic while what a child sees is an actual pizza. Nudge
-  each piece out along its own middle so the parts read as separate PIECES rather than one
-  undisturbed picture with lines on it.
-  • **A food drawn for this must FILL its frame** — a circle touching all four edges, or a slab edge
-    to edge — because the clip samples inside the shape and any margin shows as background. Crop the
-    generated art to its own content bbox; the "draw from the ink box, not the file box" rule again.
-  • **And its surface must be PLAIN.** A moulded chocolate grid, a waffle pattern or piped icing lines
-    are repeating marks across the thing being divided, which is the vertical-grain rule: before
-    adding texture to anything countable, ask which axis already means something. Every prompt says
-    *no scored lines, no grid, no squares, no repeating pattern* for exactly this.
-
-**Line-art pipeline** (the colouring chapter, and anything else that must be filled with colour):
-
-```
-generate_image  "children's colouring book … THICK uniform outlines, EVERY shape fully closed,
-                 flat white fill, no shading/hatching/dots"   ← on flat MAGENTA for a cutout,
-                                                                on WHITE for a full page
-      ↓
-python3 <chroma key>   min(R,B) − G, soft ramp + despill      ← only when a cutout is needed
-      ↓
-verify it FLOODS  (threshold → dilate 2px → connected components; see the scratch `regions.py`)
-```
-
-- **Do not use `remove_background` on line art.** It is an AI matte, and these subjects are pure
-  white inside a black outline — a matte that decides "white is background" eats the interior, which
-  is exactly the region the paint has to fill. A flat magenta backdrop keyed by hand is more
-  reliable AND free.
-- **A full PAGE needs no cutout at all**: `mix-blend-mode: multiply` drops its white straight out
-  onto the paper.
-- **Colouring is a two-layer composite, and it is exact**: a solid fill shaped by the drawing's
-  silhouette, with the drawing multiplied on top. White fill × colour is the colour; black ink ×
-  colour is still black ink, so the lines never muddy at any hue. This is also why painted sprites
-  fought it — greyscaling and brightening them to fake line art was three filters of guesswork that
-  line art makes unnecessary.
-- **PROVE the artwork floods before wiring it.** One hairline gap where two strokes nearly meet lets
-  the fill escape and swallow the page. Dilate the ink ~2px to close near-misses, then count the
-  regions: a good page returns ~100 with the largest around 20% (the sky). One giant region means
-  the line work is open and the art is unusable — regenerate rather than patch.
-- **An area's colour must differ from whatever it sits inside.** A blue cloud on a blue sky gave a
-  correct tap no feedback at all.
-- Greyscale `pat_*` sprites are greyscale **by design** — code-tint them, never bake colour in.
-- ⚠️ **AND A SPRITE'S COLOUR IS A CLAIM LIKE ITS NAME — MEASURE IT BEFORE CASTING IT.** The
-  greyscale set is not confined to the `pat_*` prefix: `candy_cupcake`, `candy_lollipop` and
-  `candy_candy` all measure **saturation 0.0** and render as grey ghosts if drawn raw. Mean
-  `max(RGB) − min(RGB)` over the opaque pixels separates them instantly — under ~18 is greyscale,
-  a real sprite runs 90–190. Thirty seconds with PIL, and it is worth putting in the chapter's gate
-  rather than an allow-list, so a future swap is covered too.
+**Moved → [chapter-craft-art.md](chapter-craft-art.md).** The walk-cycle pipeline (generate → video → chroma key → sheet), the line-art pipeline, reference-image rules, and every gotcha each has cost. Read it before generating anything.
 
 ---
 
@@ -1897,6 +1605,18 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   re-derive the threshold rather than carrying the old number across**: the old 40° was calibrated
   against a different reference AND a different sample region, so keeping it would have been the
   arbitrary choice. State both populations under the new instrument and put the line between them.
+- ⚠️ **A CHECK THAT COMPARES A VALUE WITH ITSELF IS THE TAUTOLOGY'S QUIETEST FORM, AND IT LOOKS LIKE
+  DILIGENCE.** *"A miss line does not narrow with the guess"* was written as `for (const n of
+  padChoices()) expect(missFor(r)).toBe(first)` — and `missFor` does not TAKE the guess, so it swept
+  ten values and compared one string with itself ten times. The lint's unused-variable warning is what
+  found it. **If a loop variable is unused inside the assertion, the loop is decoration.** The real
+  property was one level up: two different rounds of the same TYPE must say the same words, which is
+  what stops the wording drifting toward this round's own figures.
+- ⚠️ **A BOUND NAMED IN A REDIRECT BECOMES THE ANSWER ON THE ROUNDS WHERE THE BOUND *IS* THE ANSWER.**
+  *"That pizza only has 6 slices, try a smaller number"* is a helpful nudge until an `op` round ends
+  with the whole pizza gone — then it hands the answer to the child who has just overshot, i.e. the
+  one least able to ignore it. Sweep a redirect's text against the accepted answer exactly as you
+  sweep the miss line; state the direction, not the figure.
 - ⚠️ **A `toMatch` OVER SOMETHING THAT APPEARS TWICE PROVES ONLY THAT IT APPEARS ONCE — COUNT IT.**
   An intro card has two bodies, one per input, and a check that the anchor is on the card matched the
   tap body while the camera body had lost it. Caught by mutation, not by reading. Wherever a rule has
@@ -2068,621 +1788,9 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
 
 ## 5. Answering with the camera
 
-Everything below was paid for building the 9–11 Factor Lab, the band's first chapter answered with a
-webcam. Reference: [FactorLab.tsx](../src/features/chapters/story/FactorLab.tsx) +
-[factors.ts](../src/features/chapters/story/factors.ts), gated by
-[factorLabAr.test.ts](../src/__tests__/factorLabAr.test.ts).
+**Moved → [chapter-craft-ar.md](chapter-craft-ar.md).** Whether the camera earns its place, the readings (count · tilt · pinch · sweep · trace), held-over-pose guards, reach and jitter arithmetic, and the one-instrument-two-inputs rule. Read it before building or changing an AR chapter.
 
-**The camera earns its place only where the gesture IS the skill.** A pinch used as a cursor is a
-mouse with extra steps and a permission prompt. Fingers work for factors because *a number of raised
-fingers is a divisor* — the child holds up 3, the bench deals 12 into 3 rows, and it fills or it
-does not. Before reaching for a camera, finish §0a: if the verb does not need a body, do not use one.
-
-⚠️ **A CONTINUOUS INPUT MAKES A LIVE MANIPULATIVE INTO A YES/NO ORACLE.** This is the repeatable-commit
-fault (§0a) at 60fps. A bench that reflowed as the fingers changed would let a child sweep 2, 3, 4, 5
-and stop when it went flush, having worked nothing out. **The surface does not deal until the child
-commits**, the commit is holding still for ~1.2s, and it happens once per scored round. In an EXPLORE
-beat, where nothing is asked, live reflow is right — that is the teaching-vs-measuring line again.
-Corollary: the live readout may say **what was read** ("3") and must never say whether it is right.
-
-⚠️ **AN INTENTIONAL ZERO AND AN ABSENT HAND ARE THE SAME PIXELS, AND ONLY ONE OF THEM IS AN ANSWER.**
-A fist means *nothing divides this, it is prime* — and a child lowering their hand also extends zero
-fingers. Without hand PRESENCE reported alongside the count, putting your hand down commits "prime".
-`useFingerCounter` reports both; nothing commits while `hands === 0`.
-
-⚠️ **A GESTURE SURFACE DOES NOT RESET BETWEEN ROUNDS THE WAY A TAP SURFACE DOES.** A tap is consumed;
-a hand is still up when the next question opens. Caught on the first drive: the guided round appeared
-already reading 5, which was its answer, so it was about to score a round the child never played.
-**The reading held over from the previous round is not an answer** — require a fresh change (a
-different count, or the hand leaving and returning) before the commit can arm.
-
-⚠️ **COMMIT ON A TIMER; ANIMATE ON rAF.** `requestAnimationFrame` is frozen outright in a backgrounded
-tab, so a dwell driven by it never fires — untestable headlessly, and on a real device it stalls the
-moment the child switches away and back. `setTimeout` fires either way (throttled, which is fine).
-Use rAF only for the progress ring, which is allowed to pause.
-
-⚠️⚠️ **AND THE FIRST TEST IS WHETHER THE BODY CARRIES THE IDEA OR ONLY THE NOTATION.** Every AR
-chapter here that works passes it: a sweep across the frame IS division as repeated subtraction, a
-tilted forearm IS the ramp, N raised fingers ARE the divisor. The Fundraiser's air-written digit does
-not — a nine-year-old already knows how to write a 4, and writing it in the air is *harder* and means
-nothing more, so the camera is being used as a worse pen. Every misread is then pure friction with no
-learning in it, which is why three sessions of recognizer work could not rescue it and the founder's
-verdict was *"its not recognition bro"*. **Place value is written notation and nothing about it is
-physical** — the honest answer for that chapter is a gesture where the position of the hand IS the
-column and the fingers ARE the digit, so the same pose in two places means two amounts. Ask of any
-proposed reading: **does it make the IDEA more vivid, or only make the input harder?**
-
-⚠️⚠️ **AND THE SECOND TEST IS WHETHER THIS BAND'S HANDS CAN ACTUALLY PERFORM IT — AN HONEST GESTURE
-CAN STILL BE THE WRONG MOTOR SKILL.** The Fundraiser's grab was a thumb-and-index PINCH and the
-founder replaced it: *"pinch sahi naii hai"*. It passes every test above — the hand's position is the
-place, the drop chooses the column — and it asks a nine-year-old to hold two specific fingertips
-within a third of a palm of each other **while moving their whole arm across the screen**, read from
-the two noisiest landmarks MediaPipe produces. That is fine-motor work layered on top of a gross-motor
-one, and the two fight. **Closing the WHOLE HAND is what a child already does to pick something up**,
-it is unmistakable at any camera distance, and it cost nothing to change: the state machine, the
-hysteresis, the sustained release and the lost-frame grace were never about *which* fingers were
-closing — only the ratio they are computed from moved.
-- ⚠️ **AND THE THRESHOLDS DID NOT HAVE TO MOVE WITH IT, WHICH IS ARITHMETIC RATHER THAN LUCK.** The
-  physical range is simply different in the same place: a fist puts every fingertip ~0.3–0.4 of a palm
-  from the middle knuckle, a relaxed hand ~0.55–0.65, an open hand ~0.8–0.9. Work out the new range
-  before assuming a re-tune — a Schmitt pair is about where the poses SIT, not about the pose's name.
-- ⚠️ **A GROSS-MOTOR READING IS ALSO QUIETER, AND THAT IS FREE COVER.** Averaging four fingertips
-  instead of differencing two roughly quarters the residual after the EMA (~±0.02 against ~±0.09 in
-  ratio units here), so the same band went from about two residuals of cover to nine.
-
-⚠️ **THE POINT THE CHAPTER AIMS WITH MUST SIT ON A PART OF THE HAND THAT DOES NOT MOVE WHEN THE
-GESTURE FIRES.** This is the shadow-outran-the-feet rule in the detector: a pick-up and a drop are
-decided at the two instants the hand CHANGES SHAPE, so a carry point taken from the fingers jumps
-exactly when it must not. It was tolerable with a pinch (a few percent of the frame, paid for with a
-bigger tile) and is not with a fist, where every fingertip travels most of a palm length on the way
-in. Read the knuckle — the same rigid-palm argument `palmTilt` and `pinchRatio`'s divisor already
-rest on. The tile can then stop growing to cover for it.
-
-⚠️ **A COMMIT IS A ONE-WAY EVENT, SO IT IS STABILIZED AND EDGE-TRIGGERED — UNLIKE A LEVEL THE CHILD
-WATCHES.** A grab can be reported raw: the tile is either in their hand or it is not, they can see
-which, and a one-frame blip corrects itself on the next. A commit grades the board, so one
-mis-detected frame puts a half-built answer up. Two guards, and they are different things:
-- **SUSTAIN it in the detector** (a few consecutive frames), so the consumer only ever sees a settled
-  answer; and
-- **fire on the RISING EDGE in the chapter**, which is the held-over-pose guard this band has now met
-  on the count, the tilt, the grab and now a pose. A commit gesture left held across a round boundary
-  would otherwise grade the next board the instant its last digit landed.
-⚠️ **And gate it on the round STATE as well** (here: only when the board is full), which is what stops
-the commit and the grab ever being live at the same moment.
-
-⚠️ **TWO POSES THAT SHARE A HAND SHAPE MUST BE SEPARATED ON AN AXIS NEITHER OF THEM USES.** A fist and
-a 👍 are both closed hands, so if the grab reading averaged the THUMB in, striking the commit pose
-would move the grab reading and the two would fight. The thumb closes ACROSS the fingers rather than
-into the palm, so it barely moves between a fist and an open hand — leaving it out of the grab costs
-nothing and buys the whole second gesture. **Ask which part of the hand your reading is not using
-before you add a second pose to it**, and gate the check both ways round: a grabbing fist must not
-read as a commit, and an open hand must not either.
-
-⚠️ **WHERE THE HAND IS A CURSOR OVER THE WHOLE BOARD, MAP THE MIDDLE OF THE FRAME — NEVER ALL OF
-IT.** This is `SWEEP_ARM`'s silence written as a constant. A seated child moves a pinched hand
-comfortably through the middle of the picture and has to lean out of shot to touch either end, so a
-column mapped to frame x ≈ 0 is a column they can never post a digit into — and on a place-value
-board the outer columns are the thousands. Stretch the middle band (`REACH` ≈ 0.72) over the whole
-screen and clamp past it, on BOTH axes: the tray sits at the bottom of the screen, so a child who has
-to drop their hand out of frame to reach it cannot pick anything up either.
-⚠️ **And gate it by sweeping the reachable band only — see §4, the clamp tautology.**
-
-⚠️⚠️ **A DROP TARGET MUST BE BIGGER THAN THE HAND'S OWN JITTER, AND THE JITTER GROWS WITH THE
-SCREEN — SO "AIM AT ONE OF THESE" ONLY WORKS WHEN THE TARGETS SPAN THE FULL WIDTH.** This killed a
-whole gesture design and it is three lines of arithmetic to check first. MediaPipe's palm wanders
-~±0.02 of frame width; `reachSpan` stretches the reachable 0.72 band onto the whole viewport, so it
-arrives as **±0.028 · vw — ±18px at 640 and ±36px at 1280.** Measured against The Supply Run's bench,
-whose receivers sit 26–224px apart depending on size and how many the round draws, **34 of 36 size ×
-reading × count combinations came out unhittable, worst 0.48×** — and it does NOT improve on a big
-screen, because the jitter scales too. The Long Level's checkpoints work only because there are six
-of them across the FULL width (±45px catch at 1280). **Compute `catch ÷ jitter` before designing an
-aim; want ≥ ~1.5×.**
-- **The tension is structural, so do not expect to tune out of it.** A bench that has to hold two
-  dozen countable units AND up to seven receivers produces narrow receivers by construction, and
-  buying target width by widening the gaps costs unit size — which is the worse fault (*a pile a
-  child cannot count is a wrong answer the chapter caused*).
-- **The way out is to PASS THROUGH a target instead of hitting one.** Jitter perpendicular to the
-  travel does not matter and along it you are moving hundreds of pixels, so precision stops being a
-  requirement at all. The Supply Run's crossing deals as it passes each receiver: same arm movement,
-  but the hand's POSITION now means something, a half crossing visibly leaves some receivers short,
-  and no target has to be aimed at.
-
-⚠️ **AND A DEV DRIVE HOOK THAT UNDER-COVERS A CHANGED GESTURE IS THE SAME FAULT AS ONE THAT LIES,
-ONE STEP QUIETER.** `__miloSweep` jumps straight to the fire, which WAS the whole of a sweep while a
-crossing dealt instantly at the far side; once the crossing itself started dealing, everything
-between arming and firing became unreachable and a drive would have verified only the last frame of
-the thing that changed. **When you change what a gesture does, check the hook still reaches all of
-it** — and if the real reader emits a SEQUENCE the hook collapses into one read (here: arm, then
-fire, two frames), say so where the hook is defined, because the drive will otherwise reproduce a
-"bug" the product does not have.
-
-⚠️ **THE HIT-TEST AND THE RENDER MUST BE ONE GEOMETRY.** A row of things a finger taps and a pinched
-hand aims at is a fact two separate pieces of code need, and a hit-test carrying its own copy of the
-row's arithmetic is *the gate that re-implements a rule* with the two halves of one FEATURE instead of
-a test and its source. It drifts the first time the row moves, and the symptom is the worst one a
-camera chapter has: **a child pinching a thing in plain sight and picking up nothing.** Export one
-layout function and drive both from it.
-
-⚠️ **OPENING YOUR FINGERS OVER NOTHING PUTS THE THING BACK — it must never fall into the nearest
-target.** Something landing where the child did not aim is a wrong answer the chapter caused, which is
-the same asymmetry `stepPinch` confirms its release over three frames for. The catch area around a
-target is deliberately LOOSER than it is drawn (a pinch wanders while the fingers open) — but the
-tolerance goes on the axis that is not the choice, and in the axis that IS the choice it may never
-reach past the halfway line to the next target.
-
-⚠️ **AND THREE THINGS PINNED SEPARATELY WILL COLLIDE SOMEWHERE — PUT THEM IN ONE ROW.** The
-cross-every-layer rule above, met again and worth the recurrence: an instruction chip and two action
-buttons, each correctly placed on its own, produced *three* different collisions across two frame
-sizes (the commit drawn on the self-view at 1280×720, the undo on Milo's leg, and at 640×320 the chip
-drawn across both buttons). Every tap still landed, which is exactly why only crossing them finds it.
-One flex row cannot overlap itself, and it also answers *which of these gives on a short frame*: the
-buttons are tap targets and may not shrink, so the WORDS wrap.
-
-⚠️ **A CAMERA-ONLY CHAPTER OWES AN HONEST DEAD END.** A declined permission or a device with no camera
-must get a written explanation with a retry, not a blank screen — and *"Milo needs to see your hands"*
-is the whole of it. Note the cost out loud when choosing camera-only: that child cannot play at all.
-
-⚠️ **BETTER STILL: ONE INSTRUMENT, TWO INPUTS, ONE GRADER — and the fallback costs less than it looks.**
-FactorLab shipped camera-only and the founder later reversed it, which sounded like doubling the work
-and was the opposite: the AR layer does not *answer* the question, it **sets the same value a tap
-sets**, and both land in one `commit(value)`. So there is one grader, the existing sweep covers both
-paths at once, and four things fall out for free — the camera stops being a wall (no device, no
-permission, a parent who says no), the MediaPipe download happens only on opt-in so the app stays
-local-first, and the legal surface shrinks from *mandatory* to *offered*. Remember the pick per
-DEVICE (`infra/storage/handInput`, the `voicePref` pattern): "no camera" is a household answer, not a
-per-learner one, and both doors are offered every time — the remembered pick decides which is the big
-button, never which is the only one.
-⚠️ **The two paths must commit DIFFERENTLY, though.** A tap is CONSUMED; a hand is still up when the
-next question opens. So the camera's two guards — hold still, and ignore the reading held over from
-the last round — have nothing to protect against on a tap, and pushing a tap through them **silently
-swallows it** whenever its value matches the held-over reading. A tap calls `commit` directly. Keep
-the dwell hook called unconditionally and merely not live: branching above a hook changes the hook
-count and tears the chapter into the error boundary.
-
-⚠️ **AND "BOTH DOORS, EVERY TIME" MEANS THE INTRO CARD, BECAUSE `CamGate` RENDERS ONLY ON THE CAMERA
-PATH.** It fires on `onCam && !camReady`, i.e. it is the *camera's* failure screen — so on the tap
-path there is no gate, and if the intro offers a single button then a device that once tapped
-*"Tap instead"* has that remembered and **nothing anywhere in the chapter ever offers the camera
-back**. Shipped in The Fundraiser; the founder simply never saw the camera again. Every AR chapter's
-intro carries a primary button and a quiet second one, and the remembered pick decides which is the
-BIG button, never which is the only one. ⚠️ **The primary button also has to `start()` the camera** —
-nothing else in the chapter does, so without it the camera path opens on *"the camera did not start"*.
-
-⚠️ **ADDING AN INPUT MEANS RE-WORDING EVERY LINE THAT NAMES A GESTURE — AND A SINGLE-MODE GATE CANNOT
-SEE THE MISS.** Every chip, spoken line and nudge in FactorLab said *"hold up that many fingers"*.
-With a tap path added they still read perfectly — **for somebody else's surface**, which is the 12–14
-audit's headline defect (nine chapters saying "crank the gear" with no crank on screen) arriving
-through a new door. The wording is not wrong, so nothing fails; it just addresses the wrong child.
-Render zone 3 from ONE input-aware function rather than baking a gesture into the round, sweep the
-rule over **both** modes (`for (const i of INPUTS)`), and assert positively in each direction — the
-tap chip must NOT match `/hold up|fingers/` and the hand chip must NOT match `/tap/`. Without that
-last pair a renderer that ignores its input passes every other check. **Zones 1 and 2 never change**:
-the story and the maths do not know how the child answers.
-
-⚠️ **AND THE CHARACTER IN THE CORNER IS A LAYER — CROSS IT WITH THE ANSWER SURFACE.** Moving the answer
-into the bottom band put Milo (`PtMilo left={9}`) squarely over the **✊**, which is the prime answer,
-i.e. the one button a child must be able to find. The tap still landed, because he is
-`pointerEvents: none` — so no click-through probe, no console error and no gate could see it; only
-measuring his box against the pad's did. Give him a lane and centre the surface in what is left.
-⚠️ **The same measurement caught a wrap that was clearing the bench by luck**: eleven buttons sharing
-a flex row with a "continue" control ran onto two rows at 640×320 and stopped 8px off the bottom edge,
-inside a reserved constant that happened to be big enough. **A control that shares a row with the
-answer surface steals width from it** — give the surface its own row, keep the tap floor at 44px and
-let the GAP give, so its height stays predictable rather than merely lucky.
-
-⚠️ **FULL SCREEN IS NOT AUTOMATICALLY BETTER — ASK WHAT IT BUYS, AND BE HONEST IF THE ANSWER IS
-DIAGNOSTIC RATHER THAN PEDAGOGICAL.** The Fundraiser goes full screen because its hand is a CURSOR
-and a corner panel makes the child glance between their hand over there and the board over here.
-Factor Lab's answer is a SCALAR — the hand's position means nothing at all — so that argument does
-not apply and the chapter's own source argued the opposite (*"the ring carries the reading; the
-self-view only has to answer can-the-camera-see-me, which a thumbnail does"*). It is still worth
-doing, for a different reason: **full screen is where a MISREAD becomes readable.** A hand half out
-of frame or backlit is why a held-up 5 counts as 4, and no thumbnail shows that.
-⚠️ **AND THE THUMBNAIL WAS ALREADY TOO SMALL TO DO ITS ONE JOB, WHICH IS THE MEASUREMENT THAT
-SETTLES IT.** The overlay draws numbered chips at R = 18 with a 46px offset; the short-frame panel is
-**76px wide**, so the chips were geometrically larger than the panel that had to contain them and
-were clipped away entirely. A panel smaller than the thing it exists to show is not a small panel, it
-is an absent one. **Measure the overlay against the panel before defending the panel.**
-
-⚠️⚠️ **AND THE OVERLAY'S COORDINATES BREAK UNDER `objectFit: cover` EXACTLY AS A PAINTED GROUND LINE
-DOES.** A landmark is a fraction of the CAMERA FRAME; the overlay is drawn in pixels of the BOX. In a
-4:3 panel showing a 4:3 stream those coincide, which is why `y * clientHeight` survived as long as
-there were only corner panels — and a full-screen 16:9 box scales the same stream to the WIDTH and
-crops top and bottom, so every marker drifts vertically by up to ~120px at 1280×720. The repo's own
-rule, one layer along: **map through the transform the picture is actually drawn with.**
-```
-scale = max(W/vw, H/vh) · dw = vw·scale · dh = vh·scale · ox = (W−dw)/2 · oy = (H−dh)/2
-sx = ox + x·dw          sy = oy + y·dh
-```
-It is the identity in a matched panel, so nothing that already ships moves. **Do this rather than
-hiding the overlay** — hiding is right only for a chapter that already draws its own cursor, where
-two dots in two places is worse than one.
-
-⚠️ **AND A RESERVE FOR THE CORNER PANEL MUST GO WHEN THE PANEL GOES.** `max(base, CAM_W·0.75 + …)`
-reserved 184.5px on a roomy frame for a thing that is now `inset: 0` — 32px of the bench's height
-spent on nothing. Grep every band, floor and clamp that mentions the self-view.
-
-⚠️ **THE PERMISSION IS A PRODUCT DECISION BEFORE IT IS A TECHNICAL ONE.** `Permissions-Policy` ships
-`camera=()` by default here and the grant was deliberately revoked once already when the `/play` AR
-track was deleted. Turning it back on for a children's product is the founder's call, needs the
-open COPPA/privacy conversation, and the comment above the header must name the ONE feature that
-justifies it so the next audit can revoke it again when that feature goes.
-
-⚠️ **A WEBCAM CANNOT BE DRIVEN BY A GATE, SO THE PURE MODULE CARRIES MORE THAN USUAL — AND A DEV DRIVE
-HOOK IS NOT OPTIONAL.** Put the ladder, the grader, the demo beats and the layout maths outside React
-and sweep them; then add a dev-only `window.__miloFingers(n, hands)` (FloorPlot's `__miloPace` pattern,
-gated on `NODE_ENV !== 'production'` and verified absent from the emitted JS) that stands in for the
-camera AS WELL AS the hand — otherwise the permission gate blocks every headless drive and nothing
-past the intro is ever verified.
-
-⚠️ **COUNT THE FINGERS BEFORE DESIGNING A READING AROUND THEM — A HAND HAS FIVE.** The 9–11 plan
-specified "leftmost hand = tens, rightmost = ones → **0–99**", which reads as obviously right and
-tops out at **55**. Measured against every answer The Fitting Crew's generator draws it reaches
-**26 of 55**, only 39% of the chapter's hardest type — and it cannot state a plain **6**, because a
-place would cap at one hand. **A round whose answer the surface cannot express is unanswerable**,
-which is worse than a wrong one. The encoding that works is the two places as two WINDOWS: BOTH
-hands make one digit (0..9) and the child enters the tens and then the ones. 100% reachable, no
-generator change, and it is the better teaching anyway — *show me the tens, now show me the ones* is
-place value performed. **Sweep every answer the generator can draw against the surface before
-building it**, exactly as the ten-finger ceiling was swept.
-
-⚠️⚠️ **AND THE HELD-OVER GUARD IS DEFEATED BY DERIVING ITS KEY IN AN EFFECT — A HAND THAT NEVER MOVED
-THEN READS AS A FRESH GESTURE.** `useDwell` refuses the reading a child was already holding when the
-question opened, and it does that by capturing the key on the round's FIRST render. So anything the
-key is computed from must already be right on that render. The Rail Line derived "which halt is under
-the hand" into `useState` from an effect: each round it began at `null` and was filled a paint later,
-so the dwell saw `none → 3` — a change — from a hand parked motionless on the desk. Driven live, the
-guided round was answered and then **rounds 2 and 3 answered themselves**, one of them wrongly, on a
-chapter whose own gate was green. The guard was working perfectly; it was being handed a lie.
-**Derive it during render** (`const aim = f(read, ref.current); ref.current = aim`), which is the same
-rule this doc already records for a journey's phase and for the same reason: effects run after paint.
-⚠️ And this is invisible to every pure gate — the guard lives in shared component state, so the only
-thing that finds it is parking a hand and watching two rounds go by.
-
-⚠️ **A GESTURE'S INSTRUCTION MAY HAVE NOWHERE TO LIVE, AND THE ANSWER IS THE QUESTION REGION RATHER
-THAN A THIRD PIN.** Every state a gesture can be in needs words (the Supply Run), and the obvious
-shape is a chip near the controls — which on a short frame is a new object competing for a band that
-is already full. Measured at 640×320 on The Rail Line: stacked above the commit button it covered the
-**km marker**, the scaffold the entire concrete tier rests on; moved to the top strip it covered **four
-of the six name boards**, which are the answer surface. That frame had no free band at all (chrome
-0–46, boards 59–92, rail 210, marker to 275, controls 265–309). The character's speech bubble is
-already the one place the chapter puts words, so the hand's state goes there, ordered by priority —
-verdict, then miss, then anything BLOCKING the gesture, then the question.
-⚠️ **And it only speaks for the states where nothing can happen.** "No hand in frame", "hand too low",
-"one leg still to go" are each a child doing something reasonable and seeing nothing move. When the
-hand IS over a target something is already happening — the target rings, the cursor's arc fills — so
-replacing the question with a sentence about the gesture spends the question to say what they can see.
-
-⚠️ **A DWELL THAT RE-ARMS ON THE SAME POSE ENTERS IT TWICE.** Filling a second slot makes it tempting
-to put the slot in the dwell's key so a repeated digit is enterable — and then advancing the slot
-re-arms the hand that has not moved: driven on screen, answering **12** gave **11**, the ones landing
-1.2 s after the tens off one held-up finger. Key on the READING alone, so entering a digit does not
-restart the timer and one gesture is one digit. **A repeat then needs the hand to leave and come
-back — which the guard already allows and nothing on screen says, so SAY IT** at the moment it
-applies (`handHint`), or a child answering 33 holds three fingers at a dead surface.
-
-⚠️ **A CONTINUOUS READING BEHIND A HOLD-STILL COMMIT NEEDS HYSTERESIS, AND ITS SIZE IS DERIVED FROM
-THE NOISE RATHER THAN CHOSEN.** Quantizing a hand's tilt to the Angle Shop's 5° step puts a boundary
-every 2.5°, which is the same order as MediaPipe's landmark noise on the palm — so a hand held ON a
-boundary dithers between two answers for ever, the dwell resets on every flip, and the camera is a
-dead button. A hand settled on step C sees raw values up to `STEP/2 + noise` away from C, so
-suppressing ±2.5° needs a hold band of a **full step**: the reading changes exactly when the hand
-reaches the next step's own centre. **0.62 of a step was the first guess and it flips.**
-⚠️ **AND A TEST FOR IT MUST JITTER AROUND A BOUNDARY, NOT AROUND A CENTRE.** Jitter about a bucket
-centre never crosses anything and passes with the hysteresis deleted — that version was written
-first, proved nothing, and was caught only by mutation-testing the gate. Sweep the raw start across
-the whole range at half-degree steps and assert the reported step never changes.
-
-⚠️ **SMOOTH A CIRCULAR READING ON ITS DOUBLED ANGLE'S UNIT VECTOR, NEVER ON THE DEGREES.** A hand
-held flat wobbles either side of horizontal, i.e. across the 0/180 seam, and a plain average of 179°
-and 1° is **90°** — the wrong answer at exactly the pose a child is most likely to hold. EMA
-`(cos 2θ, sin 2θ)` and halve the result back.
-
-⚠️ **FOLD AN ANGLE READING TO [0,180): AN AXIS HAS NO HEAD OR TAIL.** It costs nothing and it is what
-lets ONE reading serve two instruments — a beam at 200° IS a beam at 20°, and a fold line at 200° IS
-the fold line at 20°. It also means "nearest" must be measured as an axis: 175° is 10° from 0°, not
-170°.
-
-⚠️ **THE HAND OWNS THE CONTINUOUS VALUE; TAPS OWN THE DISCRETE ACTIONS. THEY CANNOT SHARE ONE.** A
-live hand writes the value every frame, so a stepper pressed beside it is overwritten before the
-child's finger leaves the button. With the camera on, hide whichever control writes the value the
-hand is writing — and keep the ones that are ACTIONS (mark, commit, undo), because those are not the
-value. In the Angle Shop the tilt drives the beam and the fold bar; Mark ✓ and Fold ✓ stay taps.
-⚠️ **AND WHICH CONTROL IS DRAWN MUST DEPEND ON WHO OWNS THE VALUE, NOT ON WHETHER THE INPUT IS
-LIVE.** Liveness includes "not yet answered", so a row keyed on it flips the dwell ring back into
-three buttons at the exact moment of the verdict — a reshuffle under the child's eyes, on the beat
-they are reading. The row is already dimmed and dead by then; leave its shape alone.
-
-⚠️ **A GESTURE DOES NOT SHIP ON A ROUND THAT GIVES IT NOTHING TO AIM AT.** The Angle Shop's tier-3
-`degrees` rounds ask for exactly 85° with the set-square guide already retired and no readout
-permitted while turning — a tilt held inside ±2.5° of an unmarked target for over a second is luck,
-not knowledge. Those rounds keep the steppers, which ARE the exact instrument (each tap is a
-countable 5°), and the hand answers the KIND question instead, which is what the chapter's anchor is
-about. **Say so on screen when it happens**, or the hand looks broken on that round.
-
-⚠️ **AND WHERE THE HAND WRITES A DERIVED VALUE, THE HELD-OVER-POSE GUARD NEEDS ONE MORE TURN THAN IT
-DOES ON A RAW ONE.** Factor Lab's dwell watches the raw finger count, which is already current the
-instant a round opens. The Angle Shop's watches `deg`, which is an ECHO of the hand and lags it by a
-render — so the guard captured the round's `start` angle, the hand's own angle landed a render later
-and read as a CHANGE, and the round committed a pose the child struck for the last question. Do not
-arm until the hand has written once; then the guard sits on the hand's own value.
-
-⚠️ **THE ANSWER SPACE IS 0..10 AND THAT IS AN INVARIANT, NOT A HOPE.** A round with no accepted answer
-within reach is unanswerable, which is worse than a wrong one. Sweep every tier for it. Here it costs
-nothing — every composite ≤ 100 has a factor ≤ 10, since the smallest factor is ≤ √n — so it RAISED
-the chapter's number range rather than narrowing it. Check the arithmetic before assuming a ceiling
-is a compromise.
-
-⚠️ **AND CHANGING THE VERB DOES NOT AUTOMATICALLY FIX A COIN FLIP — CHECK THE NEW ANSWER SPACE.** The
-first cut of the pair test asked *"how many are left over?"*, which is 0 or 1: a gesture instead of a
-chip, and still 50%, i.e. the exact defect the rebuild existed to remove. Asking for the pair COUNT
-makes the child halve the number and lets even-or-odd fall out of the stranded unit on the reveal —
-a consequence they watch rather than a label they recall. **Count the options your new surface really
-offers.**
-
-⚠️ **AND A GENERATOR'S SOURCE POOLS NEED THEIR OWN ASSERTION.** Mutation testing found that slipping a
-composite into the PRIMES pool produces a perfectly valid factor round — so every round-level check
-passes, while that tier's prime slot never fires and `coverage` can never see a prime. Export the
-pools and assert they are what they claim; a round-level sweep structurally cannot see this.
-
-### Writing a shape in the air — recognition, and the rule it hangs on
-
-The Fundraiser's fourth reading is a digit written with the fingertip
-([airDigit.ts](../src/infra/ar/airDigit.ts)). It passes §5's test for the same reason the pinch did:
-the child is not pointing at an answer somebody else wrote, they are **producing** it.
-
-⚠️ **A SHAPE THAT CANNOT BE READ IS "WRITE IT AGAIN", NEVER A WRONG ANSWER.** A recognizer that
-misreads a correct 4 as a 9 marks a child wrong for knowing the answer, which is the worst outcome
-an arithmetic app has — far worse than asking them to write it again. So the recognizer returns
-`null` when it is not confident, nothing is graded, redrawing is unlimited and unpenalised, and the
-chip says *"I could not read that"* rather than anything that reads as "no". Two consequences:
-- **Show the read digit in the box BEFORE the commit.** That is not hot/cold — it says what was
-  written, never whether it is right — and without it a recognizer error is graded silently.
-- **Refusing is the correct direction to fail in**, so tune for it: measured against digits written
-  with a realistic wobble, this refuses roughly 8 and 7 first under a strong slant and almost never
-  misreads.
-
-⚠️ **ONE DIGIT AT A TIME, NEVER A WHOLE NUMBER.** Segmenting four scrawled digits is a research
-problem; one digit into one labelled column is a 10-way choice with the strokes already separated —
-and the column is the point, because writing 3|4|8|2 is place value performed where one scrawl hides
-it.
-
-⚠️ **DO NOT ROTATION-NORMALIZE.** Every $1/$P-family recognizer rotates a candidate to a canonical
-angle, which is right for gestures and fatal for digits: **6 and 9 differ by a rotation and nothing
-else.** The cost is that a strong slant reads worse; the alternative is a chapter that cannot tell
-6 from 9, which it is entirely about.
-
-⚠️ **AND THE AMBIGUITY GUARD IS A RATIO BETWEEN THE TOP TWO, NOT AN ABSOLUTE DISTANCE — measured,
-not reasoned.** The first cut argued a distance ceiling from the glyph's own size and set it ~10×
-too loose; worse, junk and sloppily-written digits **overlap** on absolute distance (junk 0.035–0.093,
-wobbly digits 0.02–0.058), so no threshold separates the two populations and one pretending to is a
-comment claiming a rule it does not enforce. What rejects a scribble is that its best two matches are
-the same distance away. **Sample the real distances before setting a threshold on them.**
-
-⚠️ **PINCH IS THE PEN, AND THAT IS WHAT MAKES PEN-UP EXPRESSIBLE.** A pointing finger has no "off":
-the child would have to leave frame to end a stroke, so a numeral with a lift in it (a two-stroke 4,
-a crossed 7) could not be written at all. Pinching also reuses `pinch.ts` whole — its ratio
-normalization, hysteresis and release confirmation — rather than inventing a second untuned detector.
-**Re-read the whole accumulated shape on every pen-up** rather than after a settle timer: a lone
-diagonal upgrades into a 4 for free, with no constant to tune and nothing firing mid-numeral.
-
-⚠️ **A LIFTED PEN DOES NOT MERELY STOP THE INK — IT ENDS THE STROKE, SO A DROPPED-FRAME BURST DRAWS A
-DOTTED LINE.** The ink joins consecutive points, so a line can only ever break at a stroke boundary;
-what produced the founder's *"dotted stroke"* was the pinch releasing after `LOST_GRACE` frames with
-no hand. Five frames is ~170–500 ms at the 10–30 fps this loop really runs, and **writing is exactly
-when the hand is motion-blurred** — chapter-craft's own *detection loss is correlated with the
-gesture*. Past the grace the numeral came out as disconnected pieces AND each spurious break fired
-`onStroke`, handing the recognizer a fragment mid-write. **A pen wants a far longer loss grace than a
-carry does**, and it costs nothing: a child who genuinely opens their fingers is caught by
-`RELEASE_FRAMES` on a hand that is still THERE, so the grace never delays a real pen-up.
-
-⚠️⚠️ **AND THE POINTS MUST BE WIPED WHENEVER THE BOARD MOVES ON — THIS IS WHAT "IT CANNOT RECOGNISE
-WHAT I WRITE" ACTUALLY WAS.** The ink lives in a ref (it must — see below), so a committed digit left
-the points in place and the next `onStroke` handed the recognizer the previous numeral AND the new one
-**as one cloud**, which no template matches. Every digit after the first read as *"I could not read
-that"*, for the rest of the run, since the pane is not remounted between rounds. ⚠️ **The wipe was an
-upward `clearInk` ref that NOTHING EVER ASSIGNED** — a declaration, two callers, no setter, silently a
-no-op. **Use a `resetKey` PROP the parent already owns, not a callback handed upward: a prop the
-parent must pass cannot be left unwired.** And no gate reaches this — it is component state, and the
-one drive that ever got to the camera path COMMITTED as its last action, so the state *after* a commit
-was never exercised. **Drive one step past the last thing you think matters.**
-
-⚠️ **THE CHILD WRITES ON THEIR OWN CAMERA PICTURE — NOT ON A BOX BESIDE IT.** The Fundraiser shipped
-the ink on a white pane next to the self-view and the founder's verdict was *"screen pe sahi se
-likhne naii jaa raha"*: with the hand in one place and the mark in another there is nothing to aim
-at, so a numeral comes out wherever and a child correcting a stroke has no reference to correct it
-against. Painting the ink over the mirrored self-view puts the mark on their own fingertips. Three
-things follow and none of them is cosmetic:
-- **The writing slot is 4:3**, because the nib is normalized to the video frame; a box of any other
-  aspect paints the ink where the hand is not, and a square box cropping a 4:3 stream loses 12.5%
-  off each side — the two edges a wide numeral reaches.
-- **The `<video>` cannot move there itself.** It is mounted once for the whole chapter (a remount
-  drops the stream, and the detect loop then measures a 0×0 element) while the writing rect is known
-  only to the round on screen. The round posts its rect; the shell places the camera in it.
-- **Ink drawn over a camera picture is BRIGHT with a shadow**, not the chapter's ink brown. Dark ink
-  on a dark room is ink nobody can see, and you do not know what room the child is in.
-
-⚠️⚠️ **AND A GESTURE NORMALIZED TO THE VIDEO FRAME IS IN 4:3 UNITS — ANY MATCHER COMPARING IT
-AGAINST SQUARE TEMPLATES MUST BE HANDED SQUARE COORDINATES FIRST.** This is the one that was broken
-in front of a child, and it is arithmetic rather than tuning: landmarks come back as fractions of the
-frame, so equal PHYSICAL distances give an x-span only 0.75 of the y-span and every shape reaches the
-recognizer a quarter too narrow. Measured over ten independently-written digit forms:
-
-| coordinates | read correctly |
-|---|---|
-| square | **80 / 80** |
-| the camera frame's own 0..1 (4:3) | **55 / 80** |
-| the same, plus a real hand's shake | **42 / 80** |
-
-⚠️ **It never once MISREAD — it refused**, which is why it looked like "the camera cannot see me"
-rather than like a bug, and why no test caught it: every test in the recognizer's own gate writes its
-forms square. **Convert at the boundary** (store the points in pixels of the 4:3 pane — pixels are
-physically square) and assert the cost in the gate, or somebody simplifies the multiply away again.
-The general form: **whenever a normalized reading crosses into something that assumes an aspect,
-state which aspect it is in.**
-
-⚠️ **AND USE `outline`, NEVER `border`, ON THE ELEMENT THE DETECT LOOP MEASURES.** A border shrinks
-the content box, so the video and the overlay canvas sit 2px inside the element whose `clientWidth`
-the loop maps landmarks with — every marker it draws then lands slightly off the hand, and an ink
-overlay pinned to the outer rect diverges from the nib drawn on the inner one. An outline takes no
-layout space, so what is measured and what is drawn are the same rectangle.
-
-⚠️ **INK IS THE ONE READING WHOSE RESOLUTION IS THE ANSWER, so it is keyed RAW and the consumer owes
-a ref.** Quantizing the nib the way every other continuous reading here is quantized draws a numeral
-as a staircase. The deal is that `onRead` then fires at frame rate while a stroke is being drawn —
-so the chapter pushes points into a ref and paints to a canvas imperatively, and calls `setState`
-only when the pen LIFTS. Ink in React state re-renders the chapter ~30×/s.
-
-### An EVENT gesture is a different animal from a held pose
-
-Everything above assumes a reading you HOLD — a finger count, a tilt — which is why `useDwell` and
-its held-over guard exist. The Supply Run's sweep (a hand crossing the frame, one crossing = one
-deal) is an EVENT, and the differences are worth having in advance.
-
-⚠️ **IT NEEDS NO DWELL, NO SMOOTHING AND NO HYSTERESIS BAND TUNED AGAINST ASSUMED NOISE.** A
-traversal cannot be "still held": it happened or it did not. That deletes the whole class of
-calibration the Angle Shop's tilt had to derive before its camera stopped being a dead button.
-
-⚠️ **BUT IT STILL NEEDS A HELD-OVER GUARD, AND ITS SHAPE IS A COUNTER DIFFED AGAINST A MOUNT
-BASELINE** — `useRef(read.sweeps)`, so a gesture completed while the previous verdict was on screen
-is recorded as already-seen. Three further properties, each a bug if missing and none reachable by
-playing:
-- **Loop the GAP, do not act once per observed change.** `setRead` fires from a rAF callback and
-  React may coalesce two into one render, so a counter that advances by two deals once and silently
-  loses a gesture the child performed.
-- **Advance the baseline OUTSIDE the loop and unconditionally**, which is what DISCARDS a swallowed
-  event rather than queueing it. The commit no-ops while a verdict is up, and a wrong answer holds
-  that for 2.4 s — so a baseline that only moved when the action landed replays three abandoned
-  gestures onto a freshly reset board the instant it re-opens, as an answer nobody built.
-- **Clamp BACKWARDS.** A counter is monotone within a DETECTOR session, never across a chapter:
-  `useTaps` resets the whole reading and `start()` resets the detector, so one "Use taps instead" or
-  one "Try the camera again" drops it to zero and a stranded baseline kills the gesture for the rest
-  of the run.
-
-⚠️ **A PER-FRAME DISTANCE CEILING CANNOT TELL A TELEPORT FROM A FAST HAND, AND BUILDING ONE FIRST IS
-HOW YOU FIND OUT.** MediaPipe drops a detection and re-acquires the same hand elsewhere with no null
-frame between, which reads as a traversal. The obvious guard is a step limit — and a teleport from
-0.2 to 0.9 is 0.70 while a brisk one-frame crossing from 0.15 to 0.85 is 0.70 as well. Any ceiling
-low enough to reject the artefact rejects a fast child on a throttled loop, i.e. a dead button on the
-only gesture they have; the first cut here shipped a ceiling sitting UNDER the band it guarded, so a
-hand crossing between the two thresholds in one frame was refused outright. **What separates them is
-whether the hand was SEEN INSIDE the band** — a real crossing lands a sample there at any usable
-frame rate, a teleport lands none — and that needs no constant at all.
-
-⚠️ **BAND WIDTH REJECTS NOISE AND NOTHING ELSE, so a second guard has to cover intent.** Ten times
-the landmark jitter means a still hand can never fake a crossing. It does nothing whatever against a
-real arm movement that is not an answer: a hand crossing the desk to the mouse, or out to a drink and
-back, is a perfectly good traversal. A **posture gate** — the palm must be above the bottom fifth of
-frame — is one comparison and it is what actually stops a spurious commit. ⚠️ And the first draft's
-comment claimed the width did that job, which is the "comment asserting a rule is followed" fault.
-
-⚠️ **DETECTION LOSS IS CORRELATED WITH THE GESTURE, so disarming on one lost frame punishes the child
-who does it best.** A hand moving fast under indoor light is motion-blurred, the landmarker's
-confidence collapses and it falls back to full re-detection — so a dropped frame is most likely
-precisely DURING the motion being detected. Grace it a few frames.
-
-⚠️ **AND ONE HAND, WITH THE CONFIDENCES LEFT ALONE.** Two hands in frame let `all[0]` swap between
-them and an event detector reads the swap as a gesture. But *loosening* the detection thresholds is
-backwards for a single-hand reading: every marginal claim — a sibling, a face, a cushion — EVICTS the
-tracked hand from the only slot, and each eviction is exactly the discontinuity the detector is least
-able to tell from the real thing.
-
-⚠️ **COUNT THE REPETITIONS ACROSS A WHOLE RUN BEFORE SIZING THE MOVEMENT.** An answer of 2..7 over
-ten rounds is 20–70 gestures plus a return stroke each — up to ~140 arm traversals in one sitting,
-against two dwells a round elsewhere in the band. That is an ergonomic ceiling on the distance, and
-it is a stronger constraint than the noise floor: a tired sweep is a short sweep, which is a missed
-sweep, which costs another sweep.
-
-### Do not replace a control with a readout — a round can become unsubmittable
-
-⚠️ **THE STRONGEST FINDING OF THE SUPPLY RUN'S AR PASS, AND IT IS ABOUT EVERY AR CHAPTER.** The
-pattern so far has been to swap the pointer control for the hand readout (FitOut's digit pad becomes
-a dwell ring). Do that to a chapter's ONLY commit-feeding control and a working camera that cannot
-read a particular child's gesture leaves them with: nothing to press, an undo disabled at zero, a
-commit disabled at zero, no wrong answer, no re-teach, **no round timeout in `SkillBeat`**, and **no
-`CamGate`, because that renders only when the camera failed to START**. The single remaining control
-is ‹ Menu. **Keep the control a real button and let the gesture fire the same handler** — one
-element, two ways to trigger it, no dead end, and the source-grep gates keep working.
-
-⚠️ **AND THE CONTROL THAT NAMES *WHICH* QUESTION IS BEING ASKED MUST NOT GO INPUT-BLIND.** This
-chapter's button was the only thing on screen distinguishing its two readings of division — *Deal one
-round* against *Fill a van* — so a single "sweep to deal" label would have said *deal* over a bench
-where a step FILLS one. That is the re-word-every-gesture-line rule arriving from the other side: the
-wording is not wrong, it addresses the wrong reading, and no single-mode check can see it. Put the
-label behind one exported function of `(round, input, state)` and gate that the two types differ **in
-both input modes**.
-
-⚠️ **THE STATES A GESTURE CAN BE IN ALL NEED WORDS.** *Ready* is not the only one: after firing, the
-hand is on the far side and pushing further does nothing, so "bring your hand back" has to be said at
-the moment it applies (FitOut's `handHint`); and where the tap path shows a dimmed button for "there
-is nothing left to do", the gesture path shows nothing at all unless the label carries it — including
-naming the tap that still commits.
-
-⚠️ **ADDING A SECOND DOOR TO AN INTRO CARD COSTS ABOUT 33px.** Offering both inputs every time is
-right, and on a card already at its measured ceiling it clips: this chapter's shipped 200-character
-body went from 307px to **340px inside a 320px frame**. Both bodies had to shrink and the short-frame
-padding had to tighten. **Re-measure the intro card when you add the second door**, on both paths.
-
-⚠️ **THE SELF-VIEW IS A LAYER — CROSS IT WITH THE BENCH *AND* WITH THE CONTROL ROW.** It is opaque
-and drawn above the world, and this chapter's bench is the widest answer surface in the band: it
-covered the receivers in **584 of 1440 sampled draws**, worst case a 173×70px block over the rightmost
-ones. The fix is a bottom band that RESERVES the panel's height (Factor Lab's `BOT_BAND`), not a
-smaller panel — measured, shrinking the panel bought nothing at all and a mutation putting the
-original size back stayed green, which is how that was discovered. The control row needs the same
-treatment as padding, or the commit button sits under the panel.
-
-### The question must never be drawn over the answer
-
-⚠️ **CENTRE THE ANSWER SURFACE AND THE SPEAKER'S BUBBLE WILL EVENTUALLY COVER IT.** Measured on The
-Fundraiser: a four-box answer row centred at 1280×720 ran to x 887 while the customer's bubble began
-at 808 — the question sitting on the last two boxes of the answer, which is the open item its
-previous cut left behind and which centring reproduced on the first drive. The bubble belongs to the
-speaker and cannot move, so **the board takes the band that is left**: chapter-craft's *a boundary
-next to another character is measured off THAT character, never guessed*. Export the bubble's own
-width so the board and the bubble read one number rather than two.
-
-⚠️ **AND WHERE THAT BAND CANNOT HOLD THE ANSWER SURFACE, THE ASK MOVES TO A TOP BANNER.** On a short
-landscape frame a bubble, four boxes and a writing pane genuinely do not fit side by side at the tap
-floor — measured, they want 342 of the 263px available at 640×320. Something has to give, and **a
-question covering the answer is worse than a question that is not in a bubble**: the speaker is still
-on screen and still says it aloud, so what is lost is the tail, not the speaker. Derive the branch
-(`askAtTop`) from the same arithmetic the layout uses, so a gate can assert *no overlap OR the banner*
-rather than pretending the geometry fits.
-
-⚠️ **THE SIDE RESERVE STILL BINDS WHEN THE ASK MOVES UP.** Centring in the whole viewport once the
-bubble stopped being the constraint put the board's left edge at 136 against a 167px cast reserve —
-drawn straight through Milo. One constraint going away does not remove the others.
-
-### The question is three zones, in every band
-
-The 12–14 band paid for this and it generalises: **a single prose line that fuses story + math +
-"what to do with your hands" is what a struggling child cannot parse.** Measured, it was systemic
-across 11 of 12 chapters ([teen-12-14-math-audit.md](teen-12-14-math-audit.md) §1) and it was the
-founder's word for it: *confusing*. Three zones instead:
-
-| zone | what it is | rules |
-|---|---|---|
-| **context** | what the numbers ARE, plus the rule that applies | plain language · **no UI verbs** · omit entirely on bare math |
-| **the math** | the hero — usually the instrument itself, not text | |
-| **instruction** | the ONE action | starts with a verb · its own chip, so it never blends into the story |
-
-The house phrasing, from the shipped chapters: context = *"You have 15 parts. They go out in equal
-rows — every row the same length, nothing left over."* · instruction = *"**Work out** how many rows
-fit, **then** hold up that many fingers."* Compare the run-on it replaced — *"Split 15 into equal
-rows. How many rows? Make a fist if nothing fits."*
-⚠️ **The chip is where a question type leaks**, because it is where the affordance gets named — gate
-that two round types sharing a prompt also share a byte-identical chip. ⚠️ And **what the character
-SAYS must carry both zones**: on a device with no voice the written zones are all there is, and on a
-device with one the spoken line is.
-
-⚠️ **AND WRITING THEM CLEARLY WILL BREAK YOUR LAYOUT, BECAUSE A GOOD QUESTION IS TALLER THAN A BAD
-ONE.** A card holding three lines of context plus a two-line chip measured **265px** against the
-36px of the one-liner it replaced, and landed on top of the instrument. This is the reserved-lane
-rule with teeth: **a constant reserved for a text block is a guess at a variable gap and will be sat
-on.** Measure the card's real bottom edge (`useLayoutEffect` on a ref — NOT a `ResizeObserver`,
-whose callbacks ride the rendering steps and are frozen in a backgrounded tab) and derive the band
-from it, keeping the constant only as a first-paint floor. ⚠️ **And a bottom band is often TWO
-stacks** — the readout in the centre and a self-view in the corner — so reserve the taller.
+---
 
 ## Feeding this file
 
