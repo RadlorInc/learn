@@ -94,7 +94,13 @@ export function Brackets({ color, gap = -6 }: { color: string; gap?: number }) {
  * systemic across 11 of 12 chapters in that band. Optional and backward-compatible: a caller that
  * passes no `instruction` renders exactly as before.
  */
-export function PromptCard({ tag = 'Task', text, instruction, accent, short, big, onMeasure }: { tag?: string; text: string; instruction?: string; accent: Accent; short?: boolean; big?: boolean; onMeasure?: (bottomPx: number) => void }) {
+/**
+ * ⚠️ `solid` IS FOR A CHAPTER DRAWN OVER A LIVE CAMERA PICTURE. `PT.panel` is 72% opaque and the
+ * full-screen scrim passes about two thirds of whatever room the child is sitting in, so against a
+ * window the question — the one thing that must be readable — is lifted off its own background.
+ * `backdropFilter` does not help: blur preserves mean luminance.
+ */
+export function PromptCard({ tag = 'Task', text, instruction, accent, short, big, solid, onMeasure }: { tag?: string; text: string; instruction?: string; accent: Accent; short?: boolean; big?: boolean; solid?: boolean; onMeasure?: (bottomPx: number) => void }) {
   /**
    * ⚠️ REPORT THE REAL BOTTOM EDGE. This card is TEXT and it WRAPS, so its height depends on the
    * question in front of you — measured, 36px on a one-line pair test and 265px on a three-line
@@ -113,7 +119,7 @@ export function PromptCard({ tag = 'Task', text, instruction, accent, short, big
     : (short ? 'clamp(14px,3.6vh,17px)' : 'clamp(16px,2.3vh,20px)')
   return (
     <div style={{ position: 'fixed', top: short ? 46 : 66, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-      <div ref={cardRef} style={{ maxWidth: big ? 'min(94vw,720px)' : PROMPT_W, display: 'flex', flexDirection: big ? 'column' : 'row', alignItems: big ? 'flex-start' : 'center', gap: big ? 8 : 12, background: PT.panel, backdropFilter: 'blur(8px)', borderRadius: 15, border: `1px solid ${accent.base}66`, padding: big ? (short ? '12px 16px' : '16px 22px') : (short ? '7px 8px 7px 14px' : '10px 12px 10px 18px'), boxShadow: `0 0 20px ${accent.base}33, 0 8px 22px rgba(0,0,0,0.4)` }}>
+      <div ref={cardRef} style={{ maxWidth: big ? 'min(94vw,720px)' : PROMPT_W, display: 'flex', flexDirection: big ? 'column' : 'row', alignItems: big ? 'flex-start' : 'center', gap: big ? 8 : 12, background: solid ? PT.panelSolid : PT.panel, backdropFilter: 'blur(8px)', borderRadius: 15, border: `1px solid ${accent.base}66`, padding: big ? (short ? '12px 16px' : '16px 22px') : (short ? '7px 8px 7px 14px' : '10px 12px 10px 18px'), boxShadow: `0 0 20px ${accent.base}33, 0 8px 22px rgba(0,0,0,0.4)` }}>
         <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: big ? 11.5 : 10.5, color: accent.base, background: accent.soft, borderRadius: 6, padding: '3px 8px', letterSpacing: 1, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{tag}</span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: short ? 4 : 6, minWidth: 0 }}>
           <span style={{ fontFamily: PT.sans, fontWeight: big ? 700 : 600, fontSize: textSize, lineHeight: big ? 1.32 : 1.25, color: PT.ink }}>{text}</span>

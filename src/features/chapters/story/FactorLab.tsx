@@ -37,6 +37,26 @@
  * merely not live: branching above a hook changes the hook count and tears the chapter into the
  * error boundary, which this repo has shipped once already.
  *
+ * ⚠️ THE CAMERA IS THE BACKDROP, NOT A THUMBNAIL, and the honest reason is diagnostic rather than
+ * pedagogical — worth writing down, because the usual argument for full screen does not apply here.
+ * The Fundraiser goes full screen because its hand is a CURSOR and the child would otherwise glance
+ * between their hand over there and the board over here; this chapter's answer is a scalar and the
+ * hand's position means nothing at all. What full screen buys is one thing only: the numbered chips
+ * over the child's own fingertips become BIG ENOUGH TO READ, so "why did my 5 count as 4" has an
+ * answer on screen — the chips say WHICH fingers were counted. `drawCount` draws them at R = 18
+ * with a 46px offset into a short-frame panel **76px wide**, which is cramped past reading; they
+ * are clamped into the canvas rather than clipped away, but nobody could use them.
+ * ⚠️ AND THE OTHER HALF OF THAT ARGUMENT IS FALSE, so it is written down rather than repeated:
+ * full screen shows LESS of the camera frame, not more. `openCamera` asks for 4:3 and cover-cropping
+ * it into a 16:9 viewport hides 12.5% of the frame at each end (16.7% at 640×320), where the 4:3
+ * corner panel showed all of it. So for "is my hand fully in frame" the corner panel was better,
+ * and a finger detected in the cropped band is still COUNTED while its chip is off screen.
+ *
+ * ⚠️ AND THE DAILY ANCHOR IS SETTING OUT A HALL FOR AN EXAM (see `ANCHOR` in factors.ts). It rides
+ * the briefing card and the explore beat and NOTHING ELSE — the world stays a bench of parts,
+ * because a desk is a skin over a unit rather than the same object, and three things break if it is
+ * more than a simile. The reasoning is in factors.ts next to the string.
+ *
  * ⚠️ AND THE TAP PATH NEVER STARTS THE CAMERA. `start()` is not called, so there is no permission
  * prompt and MediaPipe's ~6 MB of WASM + model is never fetched — this app is local-first, and a
  * child who is not using the camera should not pay for it. The pick is remembered per DEVICE
@@ -59,8 +79,8 @@ import {
   type HandSkin, type InputKind as HandInputKind,
 } from '@/infra/ar/HandInput'
 import {
-  makeRound, graded, missFor, nudgeFor, explainBeats, deal, padChoices, instructionFor, sayFor,
-  DEMO, GUIDED, type FlRound, type Tier,
+  makeRound, missFor, nudgeFor, explainBeats, deal, padChoices, instructionFor, sayFor,
+  verdictFor, benchBand, benchLabel, ACTION_ROW, ANCHOR, DEMO, GUIDED, type FlRound, type Tier,
 } from './factors'
 
 const ACCENT = ACCENTS.indigo
@@ -86,16 +106,25 @@ function Unit({ size, stranded }: { size: number; stranded?: boolean }) {
  * n units, dealt into `rows` equal rows. Anything that will not fit sits apart, marked — the gap
  * IS the argument that this row count is not a factor, so it is never quietly dropped.
  */
-function Bench({ n, rows, verdict, verdictOk, word = 'row' }: { n: number; rows: number; verdict?: string | null; verdictOk?: boolean; word?: string }) {
+function Bench({ n, rows, verdict, verdictOk, word = 'row', per = 0, solid }: { n: number; rows: number; verdict?: string | null; verdictOk?: boolean; word?: string; per?: number; solid?: boolean }) {
   const { perRow, stranded } = deal(n, rows)
   const size = n > 40 ? 18 : n > 24 ? 22 : n > 14 ? 28 : 34
   const gap = Math.round(size * 0.26)
+  // ⚠️ A PAIR IS TWO AND A CRATE HOLDS `per`. The header echoes what the CHILD asked for, so on a
+  // pair test it said "4 pairs" over four rows of THREE, and on a counting round it would say
+  // "5 crates" over rows of seven — the readout naming an arrangement the bench is not showing.
+  // The reading's own noun is used only when the deal really produced it; otherwise they are rows.
+  const label = per && perRow !== per ? 'row' : word
   return (
-    <div style={{ position: 'relative', background: PT.panel, backdropFilter: 'blur(10px)', border: `1px solid ${ACCENT.base}55`, borderRadius: 18, minWidth: 300, boxShadow: `0 0 30px ${ACCENT.base}26, 0 18px 40px rgba(0,0,0,0.5)`, overflow: 'hidden' }}>
+    /* ⚠️ OPAQUE OVER THE CAMERA, translucent over the backdrop. The scrim leaves ~⅔ of whatever
+       room the child is sitting in, and this panel passes ~28% of that through — so against a
+       window the unit-vs-panel contrast falls from ~4.9:1 to ~2.3:1 on the one surface the child
+       has to COUNT. `backdropFilter` does not help: blur preserves mean luminance. */
+    <div style={{ position: 'relative', background: solid ? PT.panelSolid : PT.panel, backdropFilter: 'blur(10px)', border: `1px solid ${ACCENT.base}55`, borderRadius: 18, minWidth: 300, boxShadow: `0 0 30px ${ACCENT.base}26, 0 18px 40px rgba(0,0,0,0.5)`, overflow: 'hidden' }}>
       <Brackets color={ACCENT.base} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', background: PT.panelSoft, borderBottom: `1px solid ${PT.line}` }}>
         <span style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 1.5, color: PT.inkMute, textTransform: 'uppercase' }}>
-          {rows > 0 ? `${rows} ${word}${rows === 1 ? '' : 's'}` : `bench · ${n}`}
+          {rows > 0 ? `${rows} ${label}${rows === 1 ? '' : 's'}` : `bench · ${n}`}
         </span>
         <span style={{ width: 9, height: 9, borderRadius: '50%', background: verdict ? (verdictOk ? PT.ok : PT.warn) : ACCENT.base, boxShadow: `0 0 8px ${verdict ? (verdictOk ? PT.ok : PT.warn) : ACCENT.base}` }} />
       </div>
@@ -133,46 +162,13 @@ function Bench({ n, rows, verdict, verdictOk, word = 'row' }: { n: number; rows:
 
 /**
  * The bench sits in the band LEFT OVER by the things it must clear, rather than centred on a
- * share of the height. Measured at 640×320 the percentage version put its top 5px inside the
- * prompt card — a percentage is a guess at a gap, and this is the gap measured.
- *
- * TOP    chrome (the Menu chip) + the prompt card
- * BOTTOM the hand readout: the dwell ring, plus the note lane, which is RESERVED whether or not
- *        a note is showing — otherwise the bench jumps the moment a child gets one wrong.
+ * share of the height — a percentage is a guess at a gap, and measured at 640×320 the percentage
+ * version put its top 5px inside the prompt card. The arithmetic lives in `factors.ts` so a sweep
+ * can drive the same numbers this layout does; see `benchBand`.
  */
-// ⚠️ These reserve the WORST case, not the case in front of you. The prompt card is text and it
-// WRAPS — measured, the same card is 36px tall on a one-line pair test and 66px on the two-line
-// split prompt — so a band tuned to whichever question happened to be on screen puts the bench
-// inside the card on the other one. A reserved lane, per the rule that a lane which will fill
-// must be reserved from empty.
-const TOP_BAND = (short: boolean) => (short ? 104 : 146)
-/** The self-view's own box, so the bench's reserve can clear it. 4:3, pinned bottom-right. */
-// ⚠️ Small on a short frame, and that is a considered trade. At 320 tall the chrome, a wrapped
-// three-line question and the hand readout already claim ~260px, so a 104px self-view pushed the
-// bench underneath it. The RING carries the actual reading ("3", "✊"); the self-view only has to
-// answer "can the camera see me", which a thumbnail does.
-const CAM_W = (short: boolean) => (short ? 76 : 214)
-const CAM_BOTTOM = (short: boolean) => (short ? 8 : 14)
-/**
- * ⚠️ The bottom is TWO stacks, not one — the hand readout in the centre AND the self-view in the
- * corner. Reserving only for the readout let a wide bench run under the camera panel, which is
- * opaque and drawn above it. Take whichever is taller.
- */
-// On the TAP path there is no self-view at all, so only the first term applies — a pad row is
-// shorter than the dwell ring it replaces, so the base covers it with room to spare.
-const BOT_BAND = (short: boolean, cam: boolean) => {
-  const base = short ? 112 : 152                                        // note lane + ring or pad
-  if (!cam) return base
-  return Math.max(base, CAM_W(short) * 0.75 + CAM_BOTTOM(short) + (short ? 6 : 10)) // the self-view
-}
-
-function Stage({ children, short = false, cam = true, bottomExtra = 0, promptBottom = 0 }: { children: React.ReactNode; short?: boolean; cam?: boolean; bottomExtra?: number; promptBottom?: number }) {
+function Stage({ children, short = false, promptBottom = 0, extraBot = 0 }: { children: React.ReactNode; short?: boolean; promptBottom?: number; extraBot?: number }) {
   const { w: vw, h: vh } = useViewport()
-  // The constant is only a floor for the first paint; once the card has reported its real bottom
-  // edge that wins, because the card's height depends on how the question wrapped.
-  const top = Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12))
-  const bot = BOT_BAND(short, cam) + bottomExtra
-  const band = Math.max(90, vh - top - bot)
+  const { top, band } = benchBand(vh, short, promptBottom, extraBot)
   return (
     <div style={{ position: 'fixed', left: 0, right: 0, top: top + band / 2, transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw' }}>
       <FitBox availW={vw * 0.86} availH={band} max={2.2} min={0.3}>{children}</FitBox>
@@ -232,21 +228,24 @@ function HandHud({ progress, note, short, action, onPick, disabled }: { progress
   return (
     <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? 8 : '3%', zIndex: 34, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none', paddingLeft: MILO_LANE(!!short), paddingRight: 12 }}>
       {note && (
-        <div style={{ fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 13 : 15, color: PT.ink, background: PT.panel, border: `1px solid ${ACCENT.base}66`, borderRadius: 999, padding: short ? '5px 14px' : '7px 18px', textAlign: 'center', maxWidth: 'min(92vw, 640px)' }}>{note}</div>
+        <div style={{ fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 13 : 15, color: PT.ink, background: input === 'hand' ? PT.panelSolid : PT.panel, border: `1px solid ${ACCENT.base}66`, borderRadius: 999, padding: short ? '5px 14px' : '7px 18px', textAlign: 'center', maxWidth: 'min(92vw, 640px)' }}>{note}</div>
       )}
       {/* ⚠️ The action sits on its OWN line, above the answer surface, and never beside it. Sharing a
           flex row with the pad ate enough width at 640×320 to wrap 11 buttons onto two rows, which
           landed 8px off the bottom edge and only cleared the bench by luck — the bottom band is a
           reserved constant, so the pad's height has to be predictable rather than merely lucky. */}
-      {action && <div style={{ display: 'flex', justifyContent: 'center' }}>{action}</div>}
+      {/* ⚠️ …EXCEPT beside the dwell ring, which is one 60px circle with a screen's worth of room
+          next to it. Only the PAD needs the whole width, and only the pad pays for a second row. */}
+      {action && input === 'tap' && <div style={{ display: 'flex', justifyContent: 'center' }}>{action}</div>}
       <div style={{ display: 'flex', alignItems: 'center', gap: short ? 12 : 18 }}>
       {input === 'tap' && onPick
         ? <TapPad onPick={onPick} short={short} disabled={disabled} />
-        : (
+        : (<>
           <DwellRing progress={progress} size={size} skin={read.hands ? SKIN : { ...SKIN, ink: PT.inkMute }}>
             {read.hands === 0 ? '–' : read.count === 0 ? '✊' : read.count}
           </DwellRing>
-        )}
+          {action}
+        </>)}
       </div>
     </div>
   )
@@ -274,15 +273,14 @@ const FlPlay: React.FC<{ data: FlRound; mode: 'guided' | 'practice'; onComplete:
     const nudge = nudgeFor(data, fingers, input)
     if (nudge) { setNote(nudge); speak(nudge); return }
 
-    const ok = graded(data, fingers)
-    const { stranded } = deal(data.n, fingers)
-    const verdict = fingers === 0
-      ? (ok ? `${data.n} is PRIME` : 'Something does fit')
-      : ok
-        ? (data.qType === 'evenOdd'
-          ? `${fingers} pairs — ${data.n} is ${data.n % 2 ? 'ODD' : 'EVEN'}`
-          : `${data.n} = ${fingers} × ${data.n / fingers}`)
-        : `${stranded} left over`
+    // ⚠️ The verdict string lives in the pure module, so the gate can drive the same words the
+    // bench prints. It used to be built here, where nothing could see it saying "0 left over"
+    // over an arrangement with no gap in it.
+    const { text: verdict, ok } = verdictFor(data, fingers)
+    // ⚠️ A redirect belongs to the attempt that earned it. Left up, a nudge from the previous try
+    // sat under a green verdict telling the child their answer was not a split — the words
+    // contradicting the picture, on the beat they are reading.
+    setNote(null)
     setReveal({ rows: fingers, verdict, ok })
 
     if (ok) {
@@ -309,11 +307,11 @@ const FlPlay: React.FC<{ data: FlRound; mode: 'guided' | 'practice'; onComplete:
 
   return (
     <>
-      <Stage short={short} cam={input === 'hand'} promptBottom={promptBottom}>
-        <Bench n={data.n} rows={reveal?.rows ?? 0} word={data.qType === 'evenOdd' ? 'pair' : 'row'}
-          verdict={reveal?.verdict ?? null} verdictOk={reveal?.ok} />
+      <Stage short={short} promptBottom={promptBottom}>
+        <Bench n={data.n} rows={reveal?.rows ?? 0} {...benchLabel(data)}
+          solid={input === 'hand'} verdict={reveal?.verdict ?? null} verdictOk={reveal?.ok} />
       </Stage>
-      <PromptCard tag={data.tag} text={data.prompt} instruction={reveal ? undefined : instructionFor(data, input)} accent={ACCENT} short={short} onMeasure={setPromptBottom} />
+      <PromptCard tag={data.tag} text={data.prompt} instruction={reveal ? undefined : instructionFor(data, input)} accent={ACCENT} short={short} solid={input === 'hand'} onMeasure={setPromptBottom} />
       <HandHud progress={reveal ? 0 : progress} short={short} onPick={commit} disabled={!!reveal || done.current}
         note={note ?? (mode === 'guided' && !reveal
           ? (input === 'tap' ? 'Tap how many rows fit.' : 'Hold your hand still to lock it in.')
@@ -345,12 +343,12 @@ const FlExplain: React.FC<{ data: FlRound; onDone: () => void }> = ({ data, onDo
   const { stranded } = deal(data.n, b.rows)
   return (
     <>
-      <Stage short={short} cam={input === 'hand'} promptBottom={promptBottom}>
-        <Bench n={data.n} rows={b.rows} word={data.qType === 'evenOdd' ? 'pair' : 'row'}
+      <Stage short={short} promptBottom={promptBottom}>
+        <Bench n={data.n} rows={b.rows} {...benchLabel(data)} solid={input === 'hand'}
           verdict={i === beats.length - 1 ? (b.leftover || stranded > 0 ? 'gap' : 'no gaps') : null}
           verdictOk={!b.leftover && stranded === 0} />
       </Stage>
-      <PromptCard tag="Watch" text={b.say} accent={ACCENT} short={short} onMeasure={setPromptBottom} />
+      <PromptCard tag="Watch" text={b.say} accent={ACCENT} short={short} solid={input === 'hand'} onMeasure={setPromptBottom} />
     </>
   )
 }
@@ -367,15 +365,22 @@ function ExploreBench({ onContinue, short }: { onContinue: () => void; short?: b
   const { stranded } = deal(n, rows)
   return (
     <>
-      <Stage short={short} cam={input === 'hand'} promptBottom={promptBottom}>
-        <Bench n={n} rows={rows}
+      {/* ⚠️ This beat is the only one with a button stacked above the readout — see ACTION_ROW. */}
+      <Stage short={short} promptBottom={promptBottom} extraBot={input === 'tap' ? ACTION_ROW(!!short) : 0}>
+        <Bench n={n} rows={rows} solid={input === 'hand'}
           verdict={rows >= 2 ? (stranded === 0 ? 'no gaps' : `${stranded} left over`) : null}
           verdictOk={stranded === 0} />
       </Stage>
-      <PromptCard tag="Try it" accent={ACCENT} short={short}
+      {/* ⚠️ The anchor rides here as a SIMILE and only here — this beat teaches, nothing is scored,
+          and the desks stay in the "just like" clause while the bench keeps its own parts. A scored
+          round naming desks over a picture of neon units is this repo's oldest copy fault. */}
+      <PromptCard tag="Try it" accent={ACCENT} short={short} solid={input === 'hand'}
+        /* ⚠️ ONE CLAUSE. The first draft spent a whole sentence on the hall, which pushed this card
+           from two lines to three at 640×320 and drove the bench 15px into the button below it —
+           the anchor is already stated in full on the briefing card, so here it is a reminder. */
         text={input === 'tap'
-          ? `Tap a number. The bench splits ${n} into that many rows — watch which counts fill up with no gaps.`
-          : `Hold up some fingers. The bench splits ${n} into that many rows — watch which counts fill up with no gaps.`}
+          ? `Rows, like desks in a hall. Tap a number and the bench splits ${n} — watch which counts fill up with no gaps.`
+          : `Rows, like desks in a hall. Hold up some fingers and the bench splits ${n} — watch which counts fill up with no gaps.`}
         onMeasure={setPromptBottom} />
       <HandHud progress={0} note={null} short={short} onPick={setTapRows} action={
         <button onClick={onContinue} style={{ pointerEvents: 'auto', fontFamily: PT.sans, fontWeight: 800, fontSize: short ? 14 : 16, padding: short ? '9px 20px' : '12px 28px', borderRadius: 999, border: `1px solid ${ACCENT.base}`, background: ACCENT.soft, color: ACCENT.base, cursor: 'pointer' }}>
@@ -427,12 +432,24 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
   const beat = useMemo(() => makeBeat(inputRef), [])
 
   const inLab = phase !== 'intro'
+  /** The camera is the BACKDROP once the child is in the lab — see `CamView full`. */
+  const fullCam = inLab && onCam
 
   return (
     <HandProvider value={hand}>
-      <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
+      {/* ⚠️ THE ROOT CARRIES A COLOUR OF ITS OWN, and that is not decoration. `fullCam` does not
+          consult `camReady` — it cannot, because the <video> must be mounted before `openCamera`
+          can use it — so between entering the lab and the camera running there is a window with the
+          backdrop already dropped and the video still at `opacity: 0`. Without this the whole
+          chapter rendered on the app's cream page background, with the neon HUD and the "Milo needs
+          to see your hands" card floating on it. That window is not an edge case: it is EVERY
+          camera-path entry, plus every denial and every failure. */}
+      <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: PT.bg0 }}>
         <style>{PT_CSS}</style>
-        <LabBackdrop accent={ACCENT} />
+        {/* ⚠️ NOT PAINTED UNDER A FULL-SCREEN CAMERA. It would be invisible behind an opaque video
+            and still animate fifteen twinkling stars plus an 86vw element under `blur(90px)`,
+            forever, on a tablet already running MediaPipe. The intro still gets it. */}
+        {!fullCam && <LabBackdrop accent={ACCENT} />}
         <BackChip onExit={exit} />
 
         {/* Both doors are offered every time, and the device's last pick decides which is the big
@@ -441,17 +458,30 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
         {phase === 'intro' && (
           <IntroCard title="Number Lab" accent={ACCENT} short={short}
             cta={onCam ? 'Turn on the camera' : 'Start tapping'}
+            /* ⚠️ MEASURED, because the first draft's comment claimed these were SHORTER than the
+               bodies they replace and they were 25 characters LONGER — the comment being the one
+               thing that would have stopped the next reader checking. They are 206 / 191 against
+               the old 208 / 196. `IntroCard` has no maxHeight and no scroll, the column centres,
+               and a 200-character body already reaches 307px inside a 320px frame — so anything
+               longer goes into the Start button, which this repo has shipped once. Re-count when
+               you touch either string. */
             body={onCam
-              ? 'Milo splits numbers on the bench — and YOUR HAND is the splitter. Hold up a number of rows and the bench deals them out. If they fill up with no gaps, you found a factor. Make a fist if nothing fits at all.'
-              : 'Milo splits numbers on the bench — and YOU choose how many rows. Tap a number and the bench deals them out. If they fill up with no gaps, you found a factor. Tap the fist if nothing fits at all.'}
+              ? `${ANCHOR} Milo splits numbers the same way — YOUR HAND is the splitter. Hold up a number of rows; no gaps means a factor, a fist means none fit.`
+              : `${ANCHOR} Milo splits numbers the same way, and YOU pick the rows. Tap a number; no gaps means a factor, the fist means none fit.`}
             onStart={() => { unlockSpeech(); setPhase('explore'); if (onCam) start() }}
             alt={onCam
               ? { label: 'Use taps instead', onPick: () => { unlockSpeech(); useTaps(); setPhase('explore') } }
               : { label: 'Use the camera instead', onPick: () => { unlockSpeech(); useCamera(); setPhase('explore') } }} />
         )}
 
-        {inLab && onCam && (
-          <CamView videoRef={videoRef} canvasRef={canvasRef} w={CAM_W(short)} bottom={CAM_BOTTOM(short)}
+        {/* ⚠️ FULL SCREEN, WITH THE MARKERS ON. The corner thumbnail was 76px on a short frame —
+            smaller than the numbered chips `drawCount` draws, so they were clipped away and the
+            chapter's only per-finger feedback was already dead there. This chapter has no cursor
+            to compete with (its answer is a scalar, and `reads: 'count'` never populates a
+            position), so the chips over the child's own fingertips are the whole of it: they say
+            not just how many were counted but WHICH, i.e. why a held-up 5 read as 4. */}
+        {fullCam && (
+          <CamView videoRef={videoRef} canvasRef={canvasRef} full markers w={0}
             skin={SKIN} hidden={!camReady} />
         )}
         {inLab && onCam && !camReady && (
@@ -463,13 +493,13 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
           {phase === 'explore' && <ExploreBench short={short} onContinue={() => setPhase('demo')} />}
 
           {phase === 'demo' && (<>
-            {Banner(`Watch Milo · ${demoIdx + 1}/${DEMO.length}`, short)}
+            {Banner(`Watch Milo · ${demoIdx + 1}/${DEMO.length}`, short, fullCam)}
             <FlExplain key={`demo${demoIdx}`} data={DEMO[demoIdx]}
               onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} />
           </>)}
 
           {phase === 'guided' && (<>
-            {Banner(onCam ? 'Your turn · hold up the rows' : 'Your turn · tap the rows', short)}
+            {Banner(onCam ? 'Your turn · hold up the rows' : 'Your turn · tap the rows', short, fullCam)}
             <FlPlay key="guided" data={GUIDED} mode="guided" onComplete={() => setPhase('practice')} />
           </>)}
 
@@ -487,10 +517,10 @@ export default function FactorLab({ onFinish, onExit }: { onFinish?: (correct: n
   )
 }
 
-function Banner(text: string, short: boolean) {
+function Banner(text: string, short: boolean, solid = false) {
   return (
     <div style={{ position: 'absolute', top: 12, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-      <div style={{ background: PT.panel, backdropFilter: 'blur(6px)', border: `1px solid ${ACCENT.base}66`, borderRadius: 999, padding: short ? '5px 16px' : '8px 20px', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 13 : 16, color: ACCENT.base, boxShadow: `0 0 16px ${ACCENT.base}33` }}>{text}</div>
+      <div style={{ background: solid ? PT.panelSolid : PT.panel, backdropFilter: 'blur(6px)', border: `1px solid ${ACCENT.base}66`, borderRadius: 999, padding: short ? '5px 16px' : '8px 20px', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 13 : 16, color: ACCENT.base, boxShadow: `0 0 16px ${ACCENT.base}33` }}>{text}</div>
     </div>
   )
 }

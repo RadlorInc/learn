@@ -40,6 +40,25 @@ import { rint, pick } from '@/core/rand'
 export const MAX_FINGERS = 10
 
 /**
+ * THE DAILY ANCHOR (docs/story-9-11-ar-plan.md §5) — arranging desks in equal rows for an exam.
+ * Every child in this band has been moved into rows for one, and has watched the last few desks
+ * not fit.
+ *
+ * ⚠️ IT LIVES IN THE EXPLANATION AND NOWHERE ELSE, which is the band-wide rule and not a hedge.
+ * Every per-round string names what is actually DRAWN — parts on a bench — because writing "desks"
+ * over a picture of neon units is this repo's oldest copy fault. The gate pins both halves.
+ *
+ * ⚠️ AND THE WORLD ITSELF IS NOT RE-THEMED, deliberately. The plan's own §5 says *anchor the
+ * explanation, keep the world*; The Fundraiser is the one recorded exception and it earned it
+ * because dollar denominations ARE base ten — the anchor and the manipulative were the same
+ * object. A desk is a skin over a unit, and three things break if it is more than a simile: the
+ * pair test has no desk story, `multiple`'s crate would collapse into `factor`'s row (35 desks,
+ * "5" right on one and wrong on the other, and `coverage` guarantees the child meets both), and a
+ * split round reaching 63 with `multiple` reaching 100 makes any named room a lie on some rounds.
+ */
+export const ANCHOR = 'A hall set out for an exam: the desks go in equal rows, none left over.'
+
+/**
  * Every answer the TAP path offers — the same span two hands can hold, `0` being the fist.
  *
  * ⚠️ It is derived rather than typed out because the two input paths must offer the SAME answers:
@@ -218,6 +237,17 @@ export function nudgeFor(r: FlRound, fingers: number, input: Answering = 'hand')
   if ((r.qType === 'factor' || r.qType === 'prime') && fingers === 1) {
     return 'One row is the whole thing — that is not a split. Try more rows.'
   }
+  /**
+   * ⚠️ THE MIRROR OF THE RULE ABOVE, AND IT WAS MISSING — this shipped. `showableRows` refuses
+   * `f === n` in the GENERATOR (n rows of one is every part on its own, not a split), and nothing
+   * refused it at the ANSWER. So a child holding up 6 on a round about 6 was graded wrong while
+   * the bench drew six clean rows with NO GAP and the miss line said "that leaves a gap" — the
+   * picture contradicting the words, which is worse than a wrong answer. Four of the five tier-1
+   * split values are ≤ MAX_FINGERS, so it is met in the first minutes of the chapter.
+   */
+  if ((r.qType === 'factor' || r.qType === 'prime') && fingers === r.n) {
+    return 'One in each row is every part on its own — that is not a split either. Try fewer rows.'
+  }
   if (r.qType === 'multiple' && fingers === 0) return `Count up in ${r.base}s and ${HOW[input]} to say how many you need.`
   return null
 }
@@ -227,6 +257,41 @@ export function missFor(r: FlRound): string {
   if (r.qType === 'evenOdd') return 'Not the right number of pairs. Take them two at a time and count the pairs.'
   if (r.qType === 'multiple') return `Not yet — keep counting up in ${r.base}s.`
   return 'That leaves a gap. Try a different number of rows, or a fist if nothing fits.'
+}
+
+/**
+ * What the bench prints once the child has committed — HERE rather than in the scene, so the gate
+ * can drive the same string the screen shows. Nothing else in this chapter could see it.
+ *
+ * ⚠️ IT MUST NEVER ASSERT SOMETHING THE BENCH CONTRADICTS. Every wrong answer used to print
+ * `${stranded} left over`, and a deal into as many rows as there are parts strands NOTHING — so
+ * the child read "0 left over" over an arrangement with no gap in it. The split case is caught by
+ * `nudgeFor` above and never reaches here; the other two readings can still land on an equal
+ * arrangement that is simply not the one asked for, and that is what this last branch says.
+ *
+ * ⚠️ AND IT MAY NOT NAME WHAT THE ROWS DO HOLD. On a `multiple` round "each row holds 7" IS the
+ * answer, handed over — so it names only the thing that is wrong.
+ */
+export function verdictFor(r: FlRound, fingers: number): { text: string; ok: boolean } {
+  const ok = graded(r, fingers)
+  if (fingers === 0) return { text: ok ? `${r.n} is PRIME` : 'Something does fit', ok }
+  if (ok) {
+    return {
+      text: r.qType === 'evenOdd'
+        ? `${fingers} pairs — ${r.n} is ${r.n % 2 ? 'ODD' : 'EVEN'}`
+        : `${r.n} = ${fingers} × ${r.n / fingers}`,
+      ok,
+    }
+  }
+  const { stranded } = deal(r.n, fingers)
+  if (stranded === 0) return { text: 'No gaps — but not what I asked for', ok }
+  /**
+   * ⚠️ AND THE LEFTOVER COUNT CAN BE THE ANSWER BY COINCIDENCE. Eight rows out of a pair test of
+   * 15 strands SEVEN, and seven pairs is what was asked for — so the count of what did not fit
+   * prints the answer. The same rule the miss line already holds to; it just reaches the verdict
+   * through arithmetic instead of through wording.
+   */
+  return { text: r.accepts.includes(stranded) ? 'Some are left over' : `${stranded} left over`, ok }
 }
 
 // ─── demo / re-teach ───────────────────────────────────────────────────────────────────
@@ -252,8 +317,11 @@ export function explainBeats(r: FlRound): Beat[] {
     const k = r.accepts[0]
     return [
       { say: `We are counting in ${r.base}s.`, rows: 0, leftover: false },
-      { say: `${r.base}, and again, and again — each row holds ${r.base}.`, rows: k, leftover: false },
-      { say: `It took ${k} rows to reach ${r.n}. So ${k} ${r.base}s make ${r.n}.`, rows: k, leftover: false },
+      // ⚠️ CRATES, NOT ROWS. The prompt for this reading says crates and the demo said rows, so the
+      // teaching and the round named two different things — and once `factor` is also about rows,
+      // the two readings sound like one question with two different graders.
+      { say: `${r.base}, and again, and again — each crate holds ${r.base}.`, rows: k, leftover: false },
+      { say: `It took ${k} crates to reach ${r.n}. So ${k} ${r.base}s make ${r.n}.`, rows: k, leftover: false },
     ]
   }
   const rows = r.accepts[0]
@@ -287,4 +355,67 @@ export function deal(n: number, rows: number): { perRow: number; placed: number;
   const perRow = Math.floor(n / rows)
   const placed = perRow * rows
   return { perRow, placed, stranded: n - placed }
+}
+
+/**
+ * The band the bench gets, in pixels — HERE rather than in the scene so a sweep can drive the same
+ * arithmetic the layout uses. A placement lives in CSS and a gate cannot see it; a band is a number
+ * and it can.
+ *
+ * TOP    the chrome (the Menu chip) + the prompt card
+ * BOTTOM the hand readout: the dwell ring or the tap pad, plus the note lane, which is RESERVED
+ *        whether or not a note is showing — otherwise the bench jumps the moment a child gets one
+ *        wrong.
+ *
+ * ⚠️ THE CONSTANTS RESERVE THE WORST CASE, not the case in front of you. The prompt card is text
+ * and it WRAPS — measured, the same card is 36px tall on a one-line pair test and 66px on the
+ * two-line split prompt — so a band tuned to whichever question happened to be on screen puts the
+ * bench inside the card on the other one. `promptBottom` is the card's own MEASURED edge and wins
+ * once it has reported; the constant is only a first-paint floor.
+ *
+ * ⚠️ AND NOTHING IS RESERVED FOR A SELF-VIEW ANY MORE. The camera path is full screen, so there is
+ * no corner panel to clear — the old `max(base, CAM_W · 0.75 + …)` reserved 184.5px on a roomy
+ * frame for a thing that is now `inset: 0`, i.e. it cost the bench 32px of height for nothing.
+ */
+/**
+ * What the bench calls one of its groups, per reading — the ONE place the noun is chosen, so the
+ * header, the prompt and the worked example cannot name three different things.
+ *
+ * ⚠️ THE MULTIPLE ROUND IS CRATES EVERYWHERE OR NOWHERE. Its prompt has always said crates; the
+ * demo said rows until this pass, and fixing only the demo left the re-teach narrating "it took 7
+ * crates" over a header reading **7 rows**. Two channels agreeing and a third one not is the same
+ * fault as before, moved.
+ */
+export const benchLabel = (r: FlRound): { word: string; per: number } =>
+  r.qType === 'evenOdd' ? { word: 'pair', per: 2 }
+    : r.qType === 'multiple' ? { word: 'crate', per: r.base }
+      : { word: 'row', per: 0 }
+
+export const TOP_BAND = (short: boolean) => (short ? 104 : 146)
+export const BOT_BAND = (short: boolean) => (short ? 112 : 152)
+/**
+ * ⚠️ THE EXPLORE BEAT STACKS ONE MORE ROW INTO THE BOTTOM — its "I've got it" button sits on its
+ * own line above the readout, and the base band does not know about it. Measured at 640×320 the
+ * bench ran 15px INTO that button. The band has to be told, which is why this is a parameter the
+ * explore beat passes rather than a constant nobody reads.
+ */
+export const ACTION_ROW = (short: boolean) => (short ? 47 : 56)
+
+/**
+ * ⚠️ THE FLOOR USED TO BREAK THE RESERVE IT WAS WRITTEN INSIDE, and only measuring the running app
+ * found it. On the guided round at 640×320 the question card wraps to `promptBottom = 142`, which
+ * leaves 58px between the two bands — so `Math.max(90, …)` handed back 90 and the bench was drawn
+ * **32px INTO the controls**, overlapping the note pill (which is drawn above it) across the bottom
+ * row of units, i.e. across the things being counted. `Stage` could not know: the floor floated the
+ * band downward and the returned `bot` still claimed the reserve was intact.
+ *
+ * So the CLAMP GOES ON `top` INSTEAD. The bench slides up UNDER the question card, which is text
+ * the child has already read, rather than down onto the controls, which are targets they have to
+ * hit — the same call this band makes everywhere else: the world yields to the tap targets.
+ */
+export function benchBand(vh: number, short: boolean, promptBottom = 0, extraBot = 0) {
+  const bot = BOT_BAND(short) + extraBot
+  const want = Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12))
+  const top = Math.min(want, Math.max(0, vh - bot - 90))
+  return { top, bot, band: Math.max(90, vh - top - bot) }
 }

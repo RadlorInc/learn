@@ -9,13 +9,24 @@
  * The load-bearing invariant is the TEN-FINGER CEILING — a round with no accepted answer in
  * 0..10 is unanswerable, and unlike a wrong answer it strands the child with nothing to do.
  */
+import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
 import {
   MAX_FINGERS, makeRound, mkEvenOdd, mkMultiple, mkSplit, graded, missFor, nudgeFor,
   explainBeats, deal, padChoices, instructionFor, sayFor, showableRows, isPrime, factorsOf,
-  DEMO, GUIDED, COMPOSITES, PRIMES,
+  verdictFor, benchBand, benchLabel, ACTION_ROW, ANCHOR, DEMO, GUIDED, COMPOSITES, PRIMES,
   type FlRound, type Tier,
 } from '@/features/chapters/story/factors'
+
+/** The scene, comments stripped — a source check that matches the paragraph explaining a rule
+ *  instead of the code obeying it is a check this repo has already shipped once. */
+const strip = (f: string) => readFileSync(f, 'utf8')
+  .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+const SCENE = strip('src/features/chapters/story/FactorLab.tsx')
+/** ⚠️ The shared camera surface. Nothing read this file, so three of the change's own properties
+ *  — the markers being ON, the scrim being UNDER them, and `w` staying required — were guarded by
+ *  nothing at all and every mutation of them walked through. */
+const HAND = strip('src/infra/ar/HandInput.tsx')
 
 const TIERS: Tier[] = [1, 2, 3]
 /** Both answer surfaces. Every wording rule has to hold on each — a chip that names a gesture the
@@ -163,6 +174,16 @@ describe('nudges redirect rather than score', () => {
     expect(nudgeFor(mkSplit(12), 1)).toBeTruthy()
     expect(nudgeFor(mkSplit(13), 1)).toBeTruthy()
   })
+  it('as many rows as there are parts is a nudge too — the mirror of the rule above', () => {
+    // ⚠️ `showableRows` refuses `f === n` in the generator (one in each row is every part on its
+    // own) and nothing refused it at the ANSWER, so the child was graded wrong over a bench
+    // showing no gap at all. Four of the five tier-1 composites are within reach of two hands.
+    for (const n of COMPOSITES[1].filter(n => n <= MAX_FINGERS)) {
+      expect(n).toBeLessThanOrEqual(MAX_FINGERS)
+      expect(nudgeFor(mkSplit(n), n)).toBeTruthy()
+    }
+    expect(nudgeFor(mkSplit(7), 7)).toBeTruthy()          // a prime the child can reach, too
+  })
   it('a correct answer is never nudged', () => {
     sweep(r => { for (const a of r.accepts) expect(nudgeFor(r, a)).toBeNull() })
   })
@@ -191,6 +212,51 @@ describe('the bench agrees with the grader', () => {
   })
   it('nothing is dealt before the child commits', () => {
     expect(deal(12, 0)).toEqual({ perRow: 0, placed: 0, stranded: 12 })
+  })
+
+  /**
+   * ⚠️ THE FAULT THIS EXISTS FOR, AND IT SHIPPED. The verdict was built inside the component, where
+   * nothing could see it, and every wrong answer printed `${stranded} left over` — while a deal into
+   * as many rows as there are parts strands NOTHING. So a child holding up 6 on a round about 6 read
+   * "0 left over" in red over six clean rows with no gap in them, with the miss line saying "that
+   * leaves a gap". Four of the five tier-1 split values are ≤ MAX_FINGERS, so it is met in the first
+   * minutes. The generator refused `f === n` all along (`showableRows`); nothing refused it at the
+   * ANSWER.
+   */
+  it('the verdict never claims a gap the bench is not showing', () => {
+    sweep(r => {
+      for (let g = 0; g <= MAX_FINGERS; g++) {
+        if (nudgeFor(r, g)) continue                    // a redirect never reaches the verdict
+        const v = verdictFor(r, g)
+        expect(v.ok).toBe(graded(r, g))                 // one grader, no second copy
+        // ⚠️ BOTH DIRECTIONS. Guarded only one way, collapsing the fallback to the no-gap string
+        // survived — the verdict then says "No gaps" over a bench drawing a visible one, which is
+        // the mirror of the bug this test exists for.
+        if (deal(r.n, g).stranded === 0) expect(v.text).not.toMatch(/left over/)
+        else {
+          expect(v.text).not.toMatch(/no gaps/i)                       // …and not the other way either
+          if (!v.ok && g > 0) expect(v.text).toMatch(/left over/)      // g = 0 is the fist, own line
+        }
+      }
+    })
+  })
+
+  it('a wrong verdict never names what the rows DO hold — that is the answer', () => {
+    // On a multiple round, "each row holds 7" for a child who tried 5 hands over the answer.
+    sweep(r => {
+      for (let g = 1; g <= MAX_FINGERS; g++) {
+        if (graded(r, g) || nudgeFor(r, g)) continue
+        for (const a of r.accepts) expect(verdictFor(r, g).text).not.toMatch(new RegExp(`\\b${a}\\b`))
+      }
+    })
+  })
+
+  it('the scene prints the shared verdict rather than building its own', () => {
+    // ⚠️ `toMatch(/verdictFor\(/)` proves it is MENTIONED. Keeping the call and overriding the
+    // wrong branch at the setReveal restored the shipped bug and stayed green — this repo's own
+    // recorded shape (a render behind `false &&` satisfies a name check). Anchor on the statements.
+    expect(SCENE).toMatch(/const \{ text: verdict, ok \} = verdictFor\(data, fingers\)/)
+    expect(SCENE).toMatch(/setReveal\(\{ rows: fingers, verdict, ok \}\)/)
   })
 })
 
@@ -336,6 +402,145 @@ describe('the worked examples teach every affordance the child is asked for', ()
   })
   it('and the guided round rehearses the core split gesture', () => {
     expect(['factor', 'prime']).toContain(GUIDED.qType)
+  })
+})
+
+/**
+ * The daily anchor (docs/story-9-11-ar-plan.md §5) is *arranging desks in equal rows for an exam*.
+ * The band's rule is that it lives in the EXPLANATION and nowhere else — the briefing says "this is
+ * just like <the daily thing>" and every per-round string still names what is actually drawn, which
+ * is parts on a bench. Both halves are pinned, because each fails in a different direction: absent,
+ * the chapter has no anchor at all (`grep -i desk` returned nothing before this); leaked, it writes
+ * "desks" over a picture of neon units, which is this repo's oldest copy fault.
+ */
+describe('the daily anchor', () => {
+  it('names the daily thing', () => {
+    expect(ANCHOR.toLowerCase()).toMatch(/desk/)
+  })
+  it('the briefing card carries it — on BOTH doors', () => {
+    // ⚠️ A single `toMatch` here SURVIVED its own mutation: the card has two bodies, one per input,
+    // so dropping the anchor from the camera one still matched the tap one. Count them.
+    // ⚠️ COUNTING IS NOT ENOUGH EITHER — two in the camera body and none in the tap body still
+    // totals two. Assert it PER BODY. (The card holds exactly two backtick literals; `cta` and
+    // `alt` are single-quoted.)
+    const card = SCENE.match(/<IntroCard[\s\S]*?\/>/)?.[0] ?? ''
+    expect(card).toMatch(/onStart=/)          // the slice really is the whole element
+    const bodies = card.match(/`[^`]*`/g) ?? []
+    expect(bodies).toHaveLength(2)
+    for (const b of bodies) expect(b).toMatch(/\$\{ANCHOR\}/)
+  })
+  it('and no round string ever does — a scored round names what is drawn', () => {
+    const rounds = [...DEMO, GUIDED, ...TIERS.flatMap(d => Array.from({ length: 300 }, () => makeRound(d)))]
+    for (const r of rounds) {
+      for (const s of [r.prompt, r.work, r.spoken, missFor(r), ...INPUTS.map(i => sayFor(r, i))]) {
+        expect(s.toLowerCase()).not.toMatch(/desk|hall|exam|classroom/)
+      }
+      for (const b of explainBeats(r)) expect(b.say.toLowerCase()).not.toMatch(/desk|hall|exam|classroom/)
+    }
+  })
+  it('the bench header never names an arrangement the bench is not showing', () => {
+    // ⚠️ The header echoes what the CHILD asked for. On a pair test it read "4 pairs" over four
+    // rows of THREE; giving `multiple` its own noun would have said "5 crates" over rows of seven.
+    // So the reading's noun carries the size it implies, and the bench falls back to "rows".
+    sweep(r => {
+      const { word, per } = benchLabel(r)
+      if (r.qType === 'evenOdd') { expect(word).toBe('pair'); expect(per).toBe(2) }
+      if (r.qType === 'multiple') { expect(word).toBe('crate'); expect(per).toBe(r.base) }
+      if (r.qType === 'factor' || r.qType === 'prime') { expect(word).toBe('row'); expect(per).toBe(0) }
+      // whatever the noun claims, the CORRECT answer really produces it
+      if (per) expect(deal(r.n, r.accepts[0]).perRow).toBe(per)
+    })
+    expect(SCENE).toMatch(/const label = per && perRow !== per \? 'row' : word/)
+  })
+
+  it('a multiple round and a split round stay two different questions', () => {
+    // ⚠️ 35 parts either way: `mkMultiple(5,7)` accepts only 7, `mkSplit(35)` accepts 5 AND 7 — and
+    // `coverage` guarantees the child meets both in one run. If the re-theme ever turns the crate
+    // into a row they become the same sentence with two different graders.
+    const m = mkMultiple(5, 7), s = mkSplit(35)
+    expect(m.n).toBe(s.n)
+    expect(m.prompt).not.toBe(s.prompt)
+    expect(m.prompt.toLowerCase()).toMatch(/crate/)
+    expect(m.prompt.toLowerCase()).not.toMatch(/\brows?\b/)
+    // and the worked example must call it a crate too, or the demo and the round disagree
+    for (const b of explainBeats(m)) expect(b.say.toLowerCase()).not.toMatch(/\brows?\b/)
+  })
+})
+
+/**
+ * The camera is FULL SCREEN on this chapter, so the bench's band must not still be reserving a
+ * corner self-view. This is the one piece of the layout a gate can reach — it is arithmetic rather
+ * than CSS — and it is what the old `Stage` had none of.
+ */
+describe('the bench band', () => {
+  const SIZES = [320, 360, 400, 620, 720, 800, 860, 1080]
+
+  it('never collapses, at any size or question height', () => {
+    for (const vh of SIZES) for (const short of [true, false]) for (const pb of [0, 40, 90, 160]) {
+      const { top, bot, band } = benchBand(vh, short, pb)
+      expect(band).toBeGreaterThanOrEqual(90)
+      // ⚠️ UNCONDITIONAL. Guarded by `if (vh - top - bot >= 90)` this excluded exactly the case
+      // that fails — the 90px floor used to push the bench 32px INTO the controls at 640×320 with
+      // a wrapped card, over the note pill, across the units being counted.
+      expect(top + band).toBeLessThanOrEqual(vh - bot)
+      // ⚠️ AND THE GAP UNDER THE CARD IS A LITERAL. `top >= pb` was the assertion, and `top` is
+      // `max(_, pb + 8)` — so it held for any gap including ZERO, and planting one survived. The
+      // bench either clears the card by that gap, or it is hard against the reserve on a frame too
+      // short for both; there is no third state.
+      const gap = short ? 8 : 12
+      expect(top >= pb + gap || top === Math.max(0, vh - bot - 90)).toBe(true)
+    }
+  })
+
+  it('the explore beat\'s button never costs the bench a row on the camera path', () => {
+    // ⚠️ Measured at 640×320: the bench ran 15px INTO "I've got it →". Only the TAP path has to
+    // pay for it — the pad wants the whole width, so its button takes a second line — while the
+    // dwell ring is one 60px circle with a screen's worth of room beside it. So the reserve is
+    // conditional, and the camera path spends nothing.
+    for (const vh of SIZES) for (const short of [true, false]) {
+      expect(benchBand(vh, short, 0, ACTION_ROW(short)).bot - benchBand(vh, short).bot)
+        .toBe(ACTION_ROW(short))
+      expect(ACTION_ROW(short)).toBeGreaterThanOrEqual(39)   // the button's own measured height
+    }
+    expect(SCENE).toMatch(/extraBot=\{input === 'tap' \? ACTION_ROW\(/)
+    // and the action really does sit beside the ring rather than above it
+    expect(SCENE).toMatch(/<\/DwellRing>\s*\n\s*\{action\}/)
+  })
+
+  it('reserves nothing for a corner self-view — the camera is the backdrop now', () => {
+    // ⚠️ The old reserve was max(base, CAM_W·0.75 + …) = 184.5 on a roomy frame, for a panel that
+    // is now `inset: 0`. It cost the bench 32px of height for a thing that is not there.
+    expect(benchBand(720, false).bot).toBe(152)
+    expect(benchBand(320, true).bot).toBe(112)
+  })
+
+  it('the scene draws the camera full screen, with the markers on', () => {
+    expect(SCENE).toMatch(/<CamView[^>]*\bfull\b[^>]*\bmarkers\b/)
+    // and the code-drawn backdrop is not painted underneath an opaque video
+    expect(SCENE).toMatch(/!fullCam && <LabBackdrop/)
+  })
+
+  it('the chapter always has a background of its own', () => {
+    // ⚠️ `fullCam` cannot consult `camReady` — the <video> must be mounted before the camera can
+    // start — so between entering the lab and the picture arriving the backdrop is already gone and
+    // the video is still transparent. Without a colour on the root the whole chapter rendered on
+    // the app's cream page, gate card and all, on EVERY camera-path entry and every denial.
+    expect(SCENE).toMatch(/height: '100dvh', overflow: 'hidden', background: PT\.bg0/)
+  })
+
+  it('the shared camera surface really turns the markers on, under the scrim', () => {
+    // ⚠️ Nothing read HandInput.tsx, so reverting the canvas to `display: full ? 'none'` — which
+    // deletes the entire point of the full-screen change — stayed green.
+    expect(HAND).toMatch(/display: full && !markers \?/)
+    // ⚠️ And these are siblings with no z-index, so DOM ORDER IS PAINT ORDER: drawn after the
+    // canvas the scrim dimmed the very chips it was turned on to show, by 34%.
+    const scrim = HAND.indexOf("rgba(10,7,4,.34)")
+    const canvas = HAND.indexOf('<canvas ref={canvasRef}')
+    expect(scrim).toBeGreaterThan(0)
+    expect(canvas).toBeGreaterThan(scrim)
+    // ⚠️ …and `w` stays REQUIRED, or a corner caller that omits it renders a 0-wide panel and puts
+    // every marker at the origin with nothing erroring.
+    expect(HAND).toMatch(/\n  w: number;/)
   })
 })
 
