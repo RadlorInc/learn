@@ -339,6 +339,37 @@ was set correctly and drawn nowhere. Neither the type-checker nor the gate could
 both halves were individually fine. **When you relocate the thing a question is ABOUT, walk every
 question type that refers to it.**
 
+⚠️⚠️ **EVERY REFUSAL THE GENERATOR MAKES NEEDS A MATCHING REFUSAL AT THE ANSWER, OR THE CHILD IS
+MARKED WRONG OVER A PICTURE THAT SAYS THEY ARE RIGHT.** This is the sharpest form of *the picture
+must agree with the answer*, and it hides because the two halves are written months apart and each
+is individually correct. Factor Lab's generator excluded `f === n` from the answers it will accept
+(n rows of one is every part on its own, not a split) and its NUDGE list excluded only `f === 1`.
+So a child holding up 6 on a round about 6 got a red verdict reading **"0 left over"** over six
+clean rows with no gap in them, and a miss line saying *"that leaves a gap"* — three statements, two
+of them false, all shipped. Measured, four of the five tier-1 values were within reach of two hands,
+so it was met in the first minutes. **Enumerate the whole answer space against the generator's own
+filters**; anything the generator refuses for a REASON needs that reason said out loud at the moment
+a child does it, as a redirect rather than a score.
+
+⚠️ **AND THE VERDICT STRING BELONGS IN THE PURE MODULE, NOT THE COMPONENT.** That whole fault was
+invisible because the sentence was built inside the scene, where no gate can reach it — the chapter
+had 40 green tests and not one of them could see a word the child reads. Export it, drive it from the
+gate, and source-check that the scene prints it rather than assembling its own.
+
+⚠️ **A NUMBER IN A VERDICT CAN BE THE ANSWER BY COINCIDENCE.** *"No miss line ever names an accepted
+answer"* is already the rule; arithmetic reaches it by a side door. Eight rows out of a pair test of
+15 strand SEVEN, and seven pairs is what was asked — so a count of what did NOT fit prints the
+answer. Check the numbers a template can produce, not just the words in it.
+
+⚠️ **A READOUT THAT ECHOES THE CHILD'S INPUT MUST NOT NAME AN ARRANGEMENT THE PICTURE IS NOT
+SHOWING.** The same bench header said *"4 pairs"* over four rows of THREE, because the word came
+from the question type and the rows came from the deal. Derive the noun from what was actually
+drawn.
+
+⚠️ **AND A REDIRECT BELONGS TO THE ATTEMPT THAT EARNED IT.** A nudge left on screen sits under the
+NEXT answer's green verdict, telling a child who has just got it right that they have not — the
+words contradicting the picture on the beat they are reading. Clear it when a real answer commits.
+
 **AND A TAP THAT DOES NOTHING AT ALL IS THE WORST OUTCOME THERE IS.** Worse than a wrong answer: a
 wrong answer at least tells the child the game is listening.
 
@@ -1866,6 +1897,15 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   re-derive the threshold rather than carrying the old number across**: the old 40° was calibrated
   against a different reference AND a different sample region, so keeping it would have been the
   arbitrary choice. State both populations under the new instrument and put the line between them.
+- ⚠️ **A `toMatch` OVER SOMETHING THAT APPEARS TWICE PROVES ONLY THAT IT APPEARS ONCE — COUNT IT.**
+  An intro card has two bodies, one per input, and a check that the anchor is on the card matched the
+  tap body while the camera body had lost it. Caught by mutation, not by reading. Wherever a rule has
+  to hold in N places, assert N.
+- ⚠️ **AND THE COST OF THE ANCHOR IS PAID IN LAYOUT.** A simile spent as a whole sentence took the
+  explore card from two lines to three at 640×320 and pushed the bench 15px into the button below it
+  — the anchor breaking the very rule (*a good question is TALLER than a bad one*) that the reserved
+  bands exist for. The briefing card states it in full; everywhere else it is a clause, and you
+  re-measure the card afterwards.
 - ⚠️ **A GATE'S OWN PROSE CAN TRIP ITS OWN REGEX.** A source check forbidding `transition: left`
   matched the comment explaining why it forbids it, and reported the file it was written for.
   Anchor a source pattern on something only real code has — here, the quote that must follow the
@@ -2229,6 +2269,38 @@ a flex row with a "continue" control ran onto two rows at 640×320 and stopped 8
 inside a reserved constant that happened to be big enough. **A control that shares a row with the
 answer surface steals width from it** — give the surface its own row, keep the tap floor at 44px and
 let the GAP give, so its height stays predictable rather than merely lucky.
+
+⚠️ **FULL SCREEN IS NOT AUTOMATICALLY BETTER — ASK WHAT IT BUYS, AND BE HONEST IF THE ANSWER IS
+DIAGNOSTIC RATHER THAN PEDAGOGICAL.** The Fundraiser goes full screen because its hand is a CURSOR
+and a corner panel makes the child glance between their hand over there and the board over here.
+Factor Lab's answer is a SCALAR — the hand's position means nothing at all — so that argument does
+not apply and the chapter's own source argued the opposite (*"the ring carries the reading; the
+self-view only has to answer can-the-camera-see-me, which a thumbnail does"*). It is still worth
+doing, for a different reason: **full screen is where a MISREAD becomes readable.** A hand half out
+of frame or backlit is why a held-up 5 counts as 4, and no thumbnail shows that.
+⚠️ **AND THE THUMBNAIL WAS ALREADY TOO SMALL TO DO ITS ONE JOB, WHICH IS THE MEASUREMENT THAT
+SETTLES IT.** The overlay draws numbered chips at R = 18 with a 46px offset; the short-frame panel is
+**76px wide**, so the chips were geometrically larger than the panel that had to contain them and
+were clipped away entirely. A panel smaller than the thing it exists to show is not a small panel, it
+is an absent one. **Measure the overlay against the panel before defending the panel.**
+
+⚠️⚠️ **AND THE OVERLAY'S COORDINATES BREAK UNDER `objectFit: cover` EXACTLY AS A PAINTED GROUND LINE
+DOES.** A landmark is a fraction of the CAMERA FRAME; the overlay is drawn in pixels of the BOX. In a
+4:3 panel showing a 4:3 stream those coincide, which is why `y * clientHeight` survived as long as
+there were only corner panels — and a full-screen 16:9 box scales the same stream to the WIDTH and
+crops top and bottom, so every marker drifts vertically by up to ~120px at 1280×720. The repo's own
+rule, one layer along: **map through the transform the picture is actually drawn with.**
+```
+scale = max(W/vw, H/vh) · dw = vw·scale · dh = vh·scale · ox = (W−dw)/2 · oy = (H−dh)/2
+sx = ox + x·dw          sy = oy + y·dh
+```
+It is the identity in a matched panel, so nothing that already ships moves. **Do this rather than
+hiding the overlay** — hiding is right only for a chapter that already draws its own cursor, where
+two dots in two places is worse than one.
+
+⚠️ **AND A RESERVE FOR THE CORNER PANEL MUST GO WHEN THE PANEL GOES.** `max(base, CAM_W·0.75 + …)`
+reserved 184.5px on a roomy frame for a thing that is now `inset: 0` — 32px of the bench's height
+spent on nothing. Grep every band, floor and clamp that mentions the self-view.
 
 ⚠️ **THE PERMISSION IS A PRODUCT DECISION BEFORE IT IS A TECHNICAL ONE.** `Permissions-Policy` ships
 `camera=()` by default here and the grant was deliberately revoked once already when the `/play` AR

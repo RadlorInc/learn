@@ -246,14 +246,32 @@ the AR gesture, and the pointer that answers the same question.
 ### 5 · `factorsMultiples` — ARRANGE IT · ✅ **built, with AR**
 
 - **Anchor: arranging desks in equal rows.** Every child has been moved into rows for an exam or an
-  assembly, and has watched the last few desks not fit.
-- **THE PLAN:** *"36 desks. 6 rows of 6, or 4 rows of 9 — they all work. 37 won't go into equal rows
-  at all, however you push them."*
-- **Worked example:** 12 desks → 2, 3, 4 or 6 rows · 13 desks → a fist, nothing fits.
-- **AR:** fingers = rows · **a fist = nothing fits, so it is prime.** Shipped.
-- **Pointer:** ⚠️ **does not exist — this chapter shipped camera-only and the fallback decision makes
-  that a live defect.** A row-count pad plus a "nothing fits" chip. Item #1 in the build order.
-- ⚠️ **Constraint, see §7.3:** `n` reaches 100, which is a hall rather than a classroom.
+  assembly, and has watched the last few desks not fit. ✅ **WRITTEN 2026-08-13** — it is
+  `ANCHOR` in `factors.ts`, and it rides the briefing card and the explore beat and nothing else.
+- ⚠️ **AND THE PLAN'S ORIGINAL WORDING WAS FALSE, WHICH IS WHY THE WORLD WAS NOT RE-THEMED.** It read
+  *"37 won't go into equal rows at all, however you push them"* — and 37 desks go in one row of 37,
+  or 37 rows of one. A child does not push back on a neon bench; a desk they can picture. The
+  chapter's honest claim is narrower and now says BOTH halves at the moment each applies: one row is
+  the whole thing, and one in each row is every part on its own.
+- **Worked example:** 12 → 2, 3, 4 or 6 rows · 13 → a fist, nothing fits.
+- **AR:** fingers = rows · **a fist = nothing fits, so it is prime.** Shipped, and the camera is
+  **FULL SCREEN** with the finger-numbering overlay on since 2026-08-13.
+- **Pointer:** ✅ shipped — a 0..10 pad with `0` drawn as the fist, through the same grader.
+- ⚠️ **§7.3 IS NOT WHAT IT SAYS, AND THE TABLE IS THE THING TO TRUST.** Measured off the generator:
+  the SPLIT rounds top out at **63** (a large classroom), and only `multiple` reaches 100 — at **L2
+  as well as L3**, so a tier-gated word would miss half of them. Nothing was capped, because the
+  anchor is a simile in the explanation and no per-round string names a room. `PRIMES[1]` is also
+  dead data: `POOL[1]` never draws a prime.
+- ⚠️ **WHY THE WORLD ITSELF WAS NOT RE-THEMED, despite the founder asking to "convert" it.** §5's own
+  rule is *anchor the EXPLANATION, keep the world*, and The Fundraiser is the one exception because
+  dollar denominations ARE base ten — the anchor and the manipulative were the same object. A desk is
+  a skin over a unit, and three things break if it is more than a simile: the **pair test has no desk
+  story** (nobody pairs desks; the bench header would read "7 pairs" under a classroom anchor);
+  `multiple`'s CRATE would collapse into `factor`'s ROW, giving 35 parts two near-identical sentences
+  with different graders (5 is right on one and wrong on the other, and `coverage` guarantees the
+  child meets both in one run); and a desk SPRITE is the wrong art at the 18px the top of the range
+  draws, cannot carry the stranded-unit recolour that is the chapter's whole visual argument, and
+  puts painted art over a code-drawn neon HUD.
 
 ### 6 · `fractionsCompare` — MATCH IT · ❌ neon
 

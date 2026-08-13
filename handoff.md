@@ -12,6 +12,162 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
+> ✋ **2026-08-13 — FACTOR LAB HAS ITS DAILY ANCHOR AND ITS CAMERA IS FULL SCREEN — AND VERIFYING IT FOUND THREE BUGS THAT WERE ALREADY SHIPPING, ONE OF WHICH MARKED A CORRECT-LOOKING ANSWER WRONG OVER A PICTURE WITH NO GAP IN IT. ⚠️ NOT COMMITTED.** `tsc` 0 · **808/808 vitest** (was 787, **+21**) · `next build` 0 · **eslint 15 problems against 15 at HEAD**, i.e. none introduced · 0 console errors · 0 server errors · driven at 1280×720 and 640×320 on BOTH inputs · **22/22 planted regressions caught, six of them against my OWN new assertions.**
+>
+> **The asks:** *"in band 9-11 ka factor and prime chapter ko kaunse daily real world example se sikha rahe hai… AR-plan md waali file dekho"* → **"ok toh usme convert karo aur full screen camera jaise humne bigg number chapter mein kiye hai, taaki baccha acche se AR ka experience le"**.
+>
+> ## ⓪ ⚠️ THE ANCHOR EXISTED ONLY IN A PLAN DOC, AND THE PLAN'S OWN VERSION OF IT WAS FALSE
+> `docs/story-9-11-ar-plan.md` §5 gives this chapter *arranging desks in equal rows for an exam* —
+> and `grep -i desk` over `factors.ts` + `FactorLab.tsx` returned **zero**. The briefing said
+> *"Milo splits numbers on the bench"*, i.e. no anchor at all, which is exactly what the Fundraiser
+> audit measured last year. So the founder's question was correct on the facts.
+> ⚠️ **AND THE PLAN'S THE-PLAN LINE CANNOT BE SHIPPED AS WRITTEN:** *"37 won't go into equal rows at
+> all, however you push them"* — 37 desks go in one row of 37, or 37 rows of one. A child does not
+> push back on a neon bench; a desk they can picture. The chapter's honest claim is narrower and it
+> now says BOTH halves at the moment each applies (see §②).
+>
+> ## ① THE ANCHOR IS A SIMILE IN THE EXPLANATION, NOT A RE-THEME — AND THAT WAS MEASURED, NOT PREFERRED
+> `ANCHOR` in factors.ts rides the **briefing card** (both doors) and the **explore beat**, and
+> nothing else; every per-round string still names what is drawn, which is parts on a bench.
+> ⚠️ **The plan's own §5 says *anchor the EXPLANATION, keep the world*, and The Fundraiser is the one
+> recorded exception because dollar denominations ARE base ten** — the anchor and the manipulative
+> were the same object, so re-theming REMOVED a bridge instead of adding one. A desk is a skin over a
+> unit, and three things break if it is more than a simile:
+> • **the pair test has no desk story** — nobody pairs desks, and the bench header would read
+>   *"7 pairs"* under a classroom anchor;
+> • ⚠️ **`multiple`'s CRATE would collapse into `factor`'s ROW.** `mkMultiple(5,7)` and `mkSplit(35)`
+>   are the same 35 parts; the first accepts only 7 and the second accepts 5 AND 7, and `coverage`
+>   guarantees the child meets both in one run. Two near-identical sentences, two graders.
+> • **a desk SPRITE is the wrong art** — 18px at the top of the range, 100 `<img>` per round, and it
+>   cannot carry the stranded-unit recolour that is the chapter's whole visual argument.
+> ⚠️ **AND §7.3's CONSTRAINT IS NOT WHAT IT SAYS.** Measured off the generator: the SPLIT rounds top
+> out at **63**, and only `multiple` reaches 100 — at **L2 as well as L3**, so the prescribed
+> "one word at the top tier" would miss half of them. Nothing was capped; no per-round string names a
+> room. (`PRIMES[1]` is also dead data — `POOL[1]` never draws a prime.) The plan doc carries all of
+> this as a dated amendment rather than quietly disagreeing with the code.
+>
+> ## ② ⚠️⚠️ THREE THINGS THAT WERE ALREADY SHIPPING, AND THE FIRST IS THE ONE THAT MATTERS
+> ① **A CORRECT-LOOKING ANSWER WAS MARKED WRONG OVER A BENCH WITH NO GAP IN IT.** `showableRows`
+> refuses `f === n` in the GENERATOR (n rows of one is every part on its own, not a split) and
+> **nothing refused it at the ANSWER**. So a child holding up 6 on a round about 6 got a red verdict
+> reading **"0 left over"** over six clean rows, with the miss line saying *"that leaves a gap"* —
+> three statements, two of them false. **Four of the five tier-1 split values are within reach of two
+> hands**, so it is met in the first minutes. It is a nudge now, the mirror of the existing 1-row one.
+> ② **THE VERDICT STRING LIVED IN THE COMPONENT**, where no gate could see a word the child reads —
+> the chapter had 40 green tests and none of them could reach it. It is `verdictFor` in the pure
+> module now, driven by the gate, with a source check that the scene prints it rather than building
+> its own.
+> ③ ⚠️ **AND A LEFTOVER COUNT CAN BE THE ANSWER BY COINCIDENCE.** Eight rows out of a pair test of 15
+> strand SEVEN, and seven pairs is what was asked — the count of what did not fit printing the
+> answer. The miss-line rule reaching the verdict through arithmetic instead of wording.
+> Plus two smaller ones: the demo called a `multiple`'s container a ROW while its prompt said CRATE,
+> and the bench header said *"4 pairs"* over four rows of THREE.
+>
+> ## ③ THE CAMERA IS FULL SCREEN — AND THE HONEST REASON IS DIAGNOSTIC, NOT PEDAGOGICAL
+> ⚠️ **The usual argument does not apply here and it is worth writing down.** The Fundraiser goes
+> full screen because its hand is a CURSOR; this chapter's answer is a **scalar** and the hand's
+> position means nothing, so the glancing problem full screen solves does not exist. What it buys is
+> that **a MISREAD becomes readable**: the numbered chips over the child's own fingertips say not
+> just how many fingers were counted but WHICH.
+> ⚠️ **AND THE CORNER PANEL WAS ALREADY TOO SMALL TO DO THAT ONE JOB** — `drawCount` draws chips at
+> R = 18 with a 46px offset into a **76px** short-frame panel, i.e. cramped past reading.
+> ⚠️⚠️ **BUT THE MARKERS WERE HIDDEN IN FULL MODE, AND THE REASON WAS A REAL BUG RATHER THAN A
+> CHOICE.** The loop mapped a landmark with `y * clientHeight`, which assumes the drawn video fills
+> its box — true of a 4:3 stream in a 4:3 panel, false of the same stream cover-cropped into 16:9, so
+> markers drifted **up to ~120px at 1280×720**. Fixed at the source (`coverView`/`sxy`, the same
+> correction a chapter makes for a painted ground line), so `markers` is now a per-chapter CHOICE:
+> on here, off in The Fundraiser, which has its own cursor.
+> ⚠️ **It is a FIX for the other AR chapters too, not a no-op** — `openCamera` asks 640×480 with
+> `ideal`, not `exact`, so a laptop handing back 16:9 was already drawing every corner overlay in the
+> wrong place, the sweep's arming zone included.
+> ⚠️ **AND THE OTHER HALF OF THE FULL-SCREEN ARGUMENT IS FALSE, so it is recorded rather than
+> repeated:** cover-cropping HIDES 12.5% of the camera frame at each end (16.7% at 640×320), where
+> the 4:3 panel showed all of it. For *is my hand fully in frame* the corner panel was better.
+> Also: the corner reserve is gone (it cost the bench 32px for a panel that is now `inset: 0`), the
+> code-drawn backdrop is not painted under an opaque video, and the bench, the note pill, the banner
+> and the question card go **opaque** over a camera — measured, the scrim plus a 0.72 panel passes
+> ~18.5% of the room, which takes unit-vs-panel contrast from ~4.9:1 to ~2.3:1 on the surface the
+> child has to COUNT.
+>
+> ## ④ ⚠️ THEN AN ADVERSARIAL PASS FOUND SIX MORE, AND TWO OF THEM WERE MINE FROM AN HOUR EARLIER
+> ① ⚠️ **THE CAMERA-NOT-READY WINDOW HAD NO BACKGROUND AT ALL.** `fullCam` cannot consult `camReady`
+> — the `<video>` must be mounted before `openCamera` can use it — so between entering the lab and
+> the picture arriving the backdrop was already dropped and the video was still `opacity: 0`, and the
+> whole chapter rendered on the app's **cream page background**, HUD chrome, Milo and the *"Milo
+> needs to see your hands"* card floating on it. **Not an edge case: every camera-path entry, every
+> denial, every failure.** One property on the root, which is what OrderDesk already has.
+> ② ⚠️ **THE SCRIM PAINTED ON TOP OF THE MARKERS I HAD JUST TURNED ON** — siblings in one stacking
+> context with no z-index, so DOM order is paint order, and it dimmed by 34% the exact thing the
+> change exists to show. Ordered video → scrim → canvas.
+> ③ ⚠️ **MY INTRO-CARD COMMENT INVERTED ITS OWN MEASUREMENT.** It claimed both bodies came out
+> SHORTER than the ones they replace (215/200 against 232/217); measured, they were **233/218 against
+> 206/194 — twenty-five characters LONGER**, and none of the four numbers in the comment corresponded
+> to any string in either version. That is *a comment claiming a rule the code does not follow* at its
+> most expensive, because it is the one sentence that stops the next reader checking — and by its own
+> cited datum (200 chars ≈ 307px in a 320px frame) the copy would have overflowed into the Start
+> button, which this repo has shipped once. Now **206/191**, with the count in the comment.
+> ④ ⚠️ **AND MY EXPLORE SIMILE WAS A WHOLE SENTENCE**, which took that card from two lines to three at
+> 640×320 and drove the bench **15px into the button below it** — the anchor breaking the reserved-band
+> rule it was written under. One clause now.
+> ⑤ **`benchBand`'s 90px floor broke the reserve it lives inside.** On the guided round at 640×320 the
+> question card wraps to `promptBottom = 142`, leaving 58px between the bands — so the floor handed
+> back 90 and the bench was drawn **32px INTO the controls**, over the note pill, across the bottom row
+> of units. Pre-existing arithmetic, moved verbatim out of `Stage`, and live at the band's own stated
+> short-frame size. **The clamp goes on `top` instead**: the bench slides up under the question card —
+> text the child has already read — rather than down onto targets they have to hit.
+> ⑥ **`w` had become optional on the shared `CamView`**, so a corner caller omitting it would render a
+> 0-wide panel and put every marker at the origin, silently. Required again; full mode passes 0.
+>
+> ## ⑤ THE GATE — +21 tests, and **22/22 planted regressions caught**
+> ⚠️ **Six of the twenty-two were caught only after mutation-testing my OWN new assertions**, every
+> one this file's recorded shapes: a verdict rule guarded in ONE direction (collapsing it the other
+> way survived); `toMatch(/verdictFor\(/)` proving the function is MENTIONED rather than reached (the
+> shipped bug restored behind it stayed green); `expect(top).toBeGreaterThanOrEqual(pb)` where
+> `top = max(_, pb + 8)` — a tautology, and planting a zero gap survived; `top + band + bot === vh`
+> guarded by `if (…>= 90)`, which excludes precisely the case that fails; **counting `${ANCHOR}` twice
+> across a card with two bodies**, which two in one body and none in the other satisfies; and
+> **nothing anywhere read `HandInput.tsx`**, so hiding the markers again, putting the scrim back on
+> top and re-optionalising `w` all walked through.
+> New: [camCoverMap.test.ts](src/__tests__/camCoverMap.test.ts) drives the real `coverView`/`sxy` —
+> ⚠️ its first version wrote its OWN copy of the mapper and passed with the real one reverted.
+>
+> ## ⑥ WHAT WAS ACTUALLY DRIVEN
+> **1280×720 and 640×320, camera path AND tap path:** the briefing carrying the anchor · the
+> full-screen surface with **`labGrid: 0, labBlur90: 0`** (the backdrop genuinely not painted) ·
+> the bench measured **opaque `rgb(20,29,62)`** · the marker canvas `display: block` and **last in
+> paint order, after the scrim** · the explore beat · the guided round on a forced `mkSplit(6)`
+> where **six fingers produced the new nudge and scored nothing, with the bench left undealt** ·
+> three fingers grading `6 = 3 × 2` · the camera-denied gate on the chapter's own navy · every
+> fixed layer crossed with every other at 640×320 on both inputs, **0 overlaps, 0 offscreen, no
+> h-scroll**. A temp `GUIDED`/phase override was used and **reverted and grepped (0 hits)**.
+> ⚠️ Two instrument notes: the held-over dwell guard means `__miloFingers` set BEFORE the round
+> mounts is correctly refused — lower the hand and raise it again; and a layer sweep whose selector
+> matched the full-screen container reported five phantom overlaps.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT — fourteen readings deep**, and this change is the
+>    first that would actually be VISIBLE to one: the numbered chips over the fingertips have never
+>    been seen on a real camera, because `__miloFingers` bypasses the detect loop entirely and the
+>    preview blocks capture. **The cover-map fix is proven by arithmetic and by a unit test, not by a
+>    hand.** It is the single most useful next check.
+> 2. ⚠️ **AND THE COST IS STATED RATHER THAN HIDDEN: full screen shows LESS of the camera frame.** If
+>    a real child's hand keeps being cut off, that is this change, and the fix is a wider capture
+>    request (`ideal: 1280×720`) rather than going back to the corner.
+> 3. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored round driven at all** —
+>    the guided round was reached only through a temp override, because the three demos take ~30s of
+>    wall time in a throttled tab.
+> 4. **`multiple` and `factor` are still two questions about the same number** (35 parts: crates of 5
+>    accepts 7, splitting 35 accepts 5 and 7). Gated as distinct sentences, and it is worth one look
+>    with a child.
+> 5. **The re-theme is NOT done and that was deliberate** — §① is the argument. If the founder wants
+>    the world itself to become a hall, it needs a desk manipulative that can carry the stranded-unit
+>    recolour, and `multiple` needs a container that is not a row.
+> 6. **Everything in the 🗑️ block below still stands**, including that the rebuild shape for the two
+>    deleted chapters is an unanswered founder call. `public/sw.js` is still v90.
+> 7. Of this session's faults, **three came from reading the shipped code before touching it, two from
+>    driving it at 640×320, one from measuring the intro card's own characters, and six from
+>    mutation-testing my own gate. None from the type-checker.**
+>
 > 🗑️ **2026-08-13 — TIMES TABLES AND DIVISION ARE DELETED, ON THE FOUNDER'S CALL, AFTER HE ASKED WHAT THE CHILD IS ACTUALLY LEARNING. The AR verb that was built first is gone with them. 🚀 SHIPPED.** `tsc` 0 · **787/787 vitest** (was 901, **−114** — exactly the two deleted gates) · `next build` 0 · 0 console errors · server logs clean.
 >
 > **The asks, in order:** *"Division chapter ke liye kaunsa daily real world example?"* → *"AR ka kya interaction daalne waale hai?"* → *"kuch aur AR ka idea dhundo naa… zyada interactive"* → A′ built and driven → **"but baccha isme sikh kya raha hai… sirf haath hila raha hai"** → **"yeh chapter aur time table chapter delete kardo… isko baad mein sochte hai kaise karna h"**.
