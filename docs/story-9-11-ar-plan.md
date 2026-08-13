@@ -14,6 +14,44 @@
 
 ---
 
+> ## ⚠️ AMENDMENT — 2026-08-13 · TIMES TABLES AND DIVISION ARE DELETED
+>
+> Both chapters (`FitOut` / The Fitting Crew, and `SupplyRun` / The Supply Run) were **removed at
+> the founder's call**, pending a rethink of *what the child is actually learning*. Everything below
+> that describes them as built — §5's "A2 DONE", the Lego anchor, the sweep as A6's gesture — is a
+> record of what existed, not of what ships today. It is left rather than rewritten because the
+> reasoning is still worth having when they are rebuilt.
+>
+> **The question that killed them, in the founder's words: *"baccha isme sikh kya raha hai… sirf haath
+> hila raha hai."*** Traced honestly on The Supply Run, he is right: the child is TOLD 22 and 4, and
+> still never has to divide. The only decision in the round is *"is there still enough in the crate to
+> go round again"* — which is answered by LOOKING, not by arithmetic — and the app counts the sweeps
+> while the answer is read off the receivers. That is the Empty Plot fault (*the PLOT decided when it
+> was full*) with a crate instead of a floor. The modelling was real; the child's own BOOKKEEPING was
+> missing, and no gesture fixes that.
+>
+> **The shape a rebuild should start from** — the one that worked for The Empty Plot: *state what you
+> cannot see, then let the physical act CHECK it.* Three options were put to the founder and none is
+> yet picked: **(a)** tier-linked — deal freely at L1, predict-then-deal at L2/L3 (cheapest, and the
+> hollowness only bites where the numbers are big); **(b)** predict-then-check every round, FitOut's
+> shape; **(c)** change the QUESTION to one that needs the quotient — *"how many will be left over?"*
+> — so the dealing becomes its check and the gesture stays the answer.
+>
+> ⚠️ **THE SKILLS SURVIVE AND THE SKILL GRAPH SAYS SO.** `i.multFacts`, `i.multMultiDigit` and
+> `i.division` are still probed; only their `chapter` is now `''`. They could not be removed:
+> `learner_progress.chapter` and `sessions.chapter` are FK'd to `chapters(id)`, so the DB rows must
+> stay, and `i.multFacts` is one of the most load-bearing nodes in the whole 3–18 graph. **The cost,
+> stated:** `diagnose()` skips a chapter-less skill, so a child whose ROOT gap is multiplication facts
+> now gets a plan starting at its 6–8 prerequisites and never at the gap itself. That is the right
+> failure while no chapter exists, and it is a real hole until one does.
+>
+> Also parked by this: `infra/ar/sweep.ts` and its 37-test gate now have **no chapter consumer**
+> (`LevelRun` imports only `SWEEP_MAX_Y`). Kept deliberately — `SWEEP_ARM`, the band-width ergonomics,
+> the posture gate and the seen-crossing teleport guard are all measured constants that would have to
+> be re-derived.
+
+---
+
 ## 0 · The decisions this plan is built on
 
 1. **Tap fallback is REQUIRED, band-wide.** This reverses FactorLab's camera-only call. It is the
@@ -400,8 +438,9 @@ This is the same fix the 17–18 band took for the same complaint.
    the bar (Mark/Fold stay taps) — the hand owns the continuous value, taps own the actions.
 5. ⚠️ **A2 DONE — The Fitting Crew enters its answers by hand, one place at a time.** The two-place
    primitive's first real test is what found that the plan's own encoding could not reach half the
-   chapter (§2). Still owed on this chapter: the **Lego anchor copy** and the **two-hand array build**
-   for the explore beat, plus constraint §7.2 (there is no 5 × 19 brick).
+   chapter (§2). ✅ **The Lego anchor copy is WRITTEN (2026-08-12)** — the intro card leads with it and
+   `ANCHOR` rides the FIRST demo beat only, gated 3/3 on mutations; §7.2 is decided (see below). Still
+   owed: the **two-hand array build** for the explore beat.
 6. **The four neon rebuilds**: Fractions → Decimals → Word Problems → Measurement.
 7. **The Empty Plot**, last, once §7.4 is decided.
 
@@ -419,10 +458,15 @@ answer before that chapter's copy is written.
    bottle instead of the doorframe; **(c)** teach both, which is what US schools actually do and is
    also the most work. **Recommend (a)** — the audience is American and the anchor was chosen for
    being lived.
-2. ⚠️ **There is no 5 × 19 Lego brick.** `FitOut`'s `split` draws `rows 2–5 × per 11–19`, so L3's
-   arrays are far bigger than any brick. **(a)** L1/L2 use real brick sizes (2×4, 2×6, 4×6, 4×8) and
-   L3 moves to a **baseplate**, which genuinely is 16 or 32 studs across; **(b)** narrow `per` to ≤ 8
-   and lose the 2-digit × 1-digit rung, which is the chapter's hardest content. **Recommend (a).**
+2. ✅ **DECIDED 2026-08-12 — there is no 5 × 19 Lego brick, so L3 says nothing about the anchor.**
+   `FitOut`'s `split` draws `rows 2–5 × per 11–19`, i.e. arrays far bigger than any brick. Founder
+   picked neither (a) a baseplate at L3 nor (b) narrowing `per` — both cost something for a rule
+   chapter-craft already gives free: **the anchor lives in the explanation, as a simile, once.** So
+   `ANCHOR` is passed to demo 1 (`order`, 3×4) alone; demo 2 (`split`) and every re-teach get
+   `undefined` and name only what is drawn. The 2-digit × 1-digit rung is untouched, and no anchor
+   line can ever be spliced into a generated beat. Gated + mutation-proven in
+   `fitOutTimesTables.test.ts` (anchor on every demo · anchor on the re-teach · anchor past the
+   86-char spoken-line budget — 3/3 caught).
 3. ⚠️ **100 desks is a hall, not a classroom.** `FactorLab`'s range was deliberately raised to 100 in
    the AR session (every composite ≤ 100 has a factor ≤ 10, which is what made the ten-finger ceiling
    free). Say **"the hall"** at the top tier rather than narrowing the range — one word, and the range

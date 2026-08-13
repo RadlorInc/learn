@@ -12,6 +12,89 @@
 > _(Everything below is the running session history — newest first. The craft rules live in that
 > file, not here.)_
 
+> 🗑️ **2026-08-13 — TIMES TABLES AND DIVISION ARE DELETED, ON THE FOUNDER'S CALL, AFTER HE ASKED WHAT THE CHILD IS ACTUALLY LEARNING. The AR verb that was built first is gone with them. 🚀 SHIPPED.** `tsc` 0 · **787/787 vitest** (was 901, **−114** — exactly the two deleted gates) · `next build` 0 · 0 console errors · server logs clean.
+>
+> **The asks, in order:** *"Division chapter ke liye kaunsa daily real world example?"* → *"AR ka kya interaction daalne waale hai?"* → *"kuch aur AR ka idea dhundo naa… zyada interactive"* → A′ built and driven → **"but baccha isme sikh kya raha hai… sirf haath hila raha hai"** → **"yeh chapter aur time table chapter delete kardo… isko baad mein sochte hai kaise karna h"**.
+>
+> ## ⓪ ⚠️ THE FOUNDER IS RIGHT, AND TRACING THE ROUND IS WHAT SETTLES IT RATHER THAN AN OPINION
+> One Supply Run round, honestly: Milo says *"22 tins in, 4 trays out"* — **both numbers are STATED** —
+> and the child's loop is *sweep · look at the crate · is there still enough to go round again? · Send.*
+> **Step 3 is the only decision and it is not arithmetic, it is looking.** Four objects left is a
+> glance for a nine-year-old. The app counts the sweeps; the answer is READ OFF the receivers.
+> ⇒ **The child is told 22 and 4 and still never has to divide.** That is the Empty Plot fault (*the
+> PLOT decided when it was full*) with a crate instead of a floor, and it survived because the file's
+> own header claims the opposite — *"nothing on screen says that's enough, deciding when to stop IS
+> the skill"* — which is true of the WORDS and false of the picture, because the crate shows you.
+> ⚠️ **The steelman, stated so the rebuild does not throw it away: the MODELLING was real.** Dealing 22
+> into 4 groups and finding 5 with 2 over is a legitimate concrete-stage act. What is missing is the
+> child's own **BOOKKEEPING** — they never hold a number, never predict one, never state one. **No
+> gesture fixes that**, which is why A′ (below) improved the feel and changed nothing that matters.
+>
+> ## ① WHAT WAS BUILT AND THROWN AWAY THE SAME DAY — and one measurement from it is worth keeping
+> Asked for a more interactive AR verb, the founder picked **"ek-ek karke baanto"** — grab a unit from
+> the crate, carry it, open your hand over the next receiver. **It was measured before building and it
+> cannot work**, which is the reusable part: a drop target must beat the hand's own jitter, MediaPipe's
+> palm wanders ~±0.02 of frame width, and `reachSpan` stretches its 0.72 band onto the whole viewport
+> — so that lands as **±0.028·vw, i.e. ±18px at 640 and ±36px at 1280**. Against the bench's receivers
+> (±9 to ±78px apart) **34 of 36 size × reading × slot-count combinations came out UNHITTABLE, worst
+> 0.48×**, and it does NOT improve on a big screen because the jitter scales with the width too.
+> ⇒ **A dense row cannot be aimed at.** The Long Level's six checkpoints work only because they span
+> the FULL width. The way out is to **pass THROUGH a target instead of hitting one** — that became A′
+> ("deal as you pass": units land as the hand crosses each receiver), which was built, gated and driven
+> live before the chapter was deleted under it. **Both rules are now in chapter-craft §5** and they are
+> the only thing that survives the deletion.
+> ⚠️ Two of my own claims were wrong and mutation testing caught both: `ARM_STEPS` 6 → 12 was justified
+> by a measurement that does not hold (6 already lands one unit at a time; 12 buys only even spacing),
+> and `dealtBy`'s clamp is INERT (`stepSweep` caps `arm` below 1). Both recorded rather than left
+> looking like cover.
+>
+> ## ② WHAT WAS DELETED, AND THE ONE THING THAT COULD NOT BE
+> Gone: `SupplyRun.tsx` · `FitOut.tsx` · both gates · **16 bespoke assets** · both registry rows · both
+> ids from `ChapterType`, `CHAPTER_META` and both route maps. **−3,848 lines.**
+> ⚠️⚠️ **THE SKILLS STAY, AND THAT IS NOT TIDINESS.** `i.multFacts`, `i.multMultiDigit` and `i.division`
+> keep their nodes with `chapter: ''`. They cannot be removed: **`learner_progress.chapter` and
+> `sessions.chapter` are FK'd to `chapters(id)`**, so deleting the DB rows would cascade a child's
+> history, and **`i.multFacts` is one of the most load-bearing nodes in the whole 3–18 graph** (factors,
+> dataGraphs, wordProblems and 12–14's ratioProportion all stand on it). `diagnose()` already builds
+> `planChapters` with `if (ch && …)`, so a chapter-less skill is simply skipped — nothing crashes.
+> ⚠️ **THE COST, STATED RATHER THAN HIDDEN: a child whose ROOT gap is multiplication facts now gets a
+> plan that starts at its 6–8 prerequisites and never at the gap itself.** That is the right failure
+> while no chapter exists and it is a real hole until one does. A test pins that state (`deeperChapter('factorsMultiples')` → null), so the day a chapter returns it goes red and somebody notices.
+>
+> ## ③ AN UNKNOWN `?ch=` NOW SAYS SO — the deletion made a silent fallback dangerous
+> `/story` fell through to the counting picker for any unrecognised key, which reads as *"that chapter
+> is fine"*. For a REMOVED chapter that is the worst available answer. It now names the key and lists
+> the ones that work — **derived from `PREVIEW`, never typed out**, so it cannot rot as chapters come
+> and go. `/game` needs no such guard: its lookup is type-complete.
+>
+> ## ④ ⚠️ AND I BROKE THE DEV SERVER MYSELF, EXACTLY THE WAY THIS FILE WARNS ABOUT
+> The founder hit **Internal Server Error on `/game`**. Not the deletion: I ran `next build` and then
+> `rm -rf .next` **with the dev server still up**, so it was reading `build-manifest.json` out of a
+> directory I had removed underneath it — 30+ identical `ENOENT`s. Stop the server, clear `.next`,
+> restart. Verified after: `/game` bounces a signed-out visitor to `/auth`, `?ch=factors` and
+> `?ch=money` render, `/story?story=farm` still jumps straight in, **0 server errors**.
+>
+> ## ▶ OPEN — the rebuild question, unanswered on purpose
+> 1. ⚠️ **THE SHAPE A REBUILD SHOULD START FROM IS THE EMPTY PLOT'S: state what you cannot see, then
+>    let the physical act CHECK it.** Three options were put to the founder and **none is picked**:
+>    **(a)** tier-linked — deal freely at L1, predict-then-deal at L2/L3 (cheapest, and the hollowness
+>    only bites where the numbers are big); **(b)** predict-then-check every round, FitOut's shape;
+>    **(c)** change the QUESTION to one that needs the quotient (*"how many will be left over?"*) so the
+>    dealing becomes its check and the gesture stays the answer. **Recommended: (a), with (c) inside it
+>    at L3.** Do not start without the answer.
+> 2. **`infra/ar/sweep.ts` + its 37-test gate now have NO chapter consumer** (`LevelRun` imports only
+>    `SWEEP_MAX_Y`), i.e. dead by the value of a condition. **Kept deliberately** — `SWEEP_ARM`, the
+>    band-width ergonomics, the posture gate and the seen-crossing teleport guard are measured
+>    constants that a rebuild would otherwise re-derive. Delete it if the rebuild picks another verb.
+> 3. **The 9–11 band is now 10 chapters, not 12**, and the plan doc carries a dated amendment saying so
+>    rather than quietly disagreeing with the code.
+> 4. **Everything in the 🧑‍🏫 block below still stands** except what these two chapters owned — including
+>    that **nobody has held a real hand up to any of the AR**, thirteen readings deep.
+> 5. Of this session's faults, **one came from the founder asking what the child was learning, two from
+>    mutation-testing my own new gate, one from measuring a drop target before building it, one from a
+>    drive hook that under-covered the gesture it was verifying, and one from `rm -rf .next` with the
+>    server running. None from the type-checker.**
+>
 > 🧑‍🏫 **2026-08-12 — NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. 🚀 SHIPPED — `main`@`88553e4`, prod serving **sw v89**, smoke 13/13 and DRIVEN LIVE ON PROD AT BOTH SIZES. ⚠️ AND THE 640×320 PROD PASS THE FOUNDER ASKED FOR FOUND A REAL BUG IN WHAT HAD JUST DEPLOYED — see §⑥.** `tsc` 0 · **901/901 vitest** (was 890, **+11**) · `next build` 0 · 0 console errors on prod · **11/11 planted regressions caught, FOUR of them against my OWN assertions.**
 >
 > **The asks, in order:** *"line pe 650 bol raha hai aur bubble mein 669… line pe mark naii rehna chahiye"* → *"increase the size of this and bring it to the center"* → *"yeh age band mein bhi woh same 'The plan' and 'step by step' chalkboards use karo… totally same bro"*.
@@ -8579,7 +8662,9 @@
 > - **Migrations status:** ✅ **streak pair APPLIED to prod (2026-07-05)** — `sync_session_drop_streak` (ledger `20260705161254`: `sync_session` no longer reads/writes streak) then `drop_streak_columns` (ledger `20260705161328`: `current_streak`/`longest_streak` dropped from `learner_stats`). Verified: 0 streak cols remain, `sync_session` intact, no new security-advisor warnings. ✅ **`profile_role_teacher` also APPLIED (2026-07-05)** — `user_role` now `{parent,learner,teacher}`, `profiles.role` nullable + no default (new signups get NULL → one-time Teacher/Parent picker; existing users grandfathered as parent). ✅ **`diagnostic_leads` APPLIED (2026-07-05, after explicit founder sign-off)** — the cold-funnel lead table. Verified: RLS on, **INSERT-only** policy, `anon`+`authenticated` granted **INSERT only** (no SELECT/UPDATE/DELETE → leads can't be read/enumerated via the API, service-role/dashboard only). Security advisor: no new warning. Residual risk = spam inserts only (mitigate later with a captcha; Supabase Auth rate limits help). **→ ALL FOUR pending migrations are now applied. Nothing left in the migration backlog.** NB: MCP-applied migrations get their own ledger timestamps, so the DB ledger versions differ from the repo file names (established pattern here; the deploy pipeline is inert, so no `db push` conflict).
 > - **Still needs a human on prod:** signed-in tap-through (auth-gated flows can't be verified headlessly); confirm `public/sw.js` `VERSION` bumps each deploy.
 
-_Last updated: 2026-08-12 (LATEST — see the top 🧑‍🏫 block. **NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. 🚀 SHIPPED — `main`@`88553e4`, prod serving sw v89, smoke 13/13, driven live at BOTH sizes.** `tsc` 0 · **901/901 vitest** (+11) · `next build` 0 · 11/11 planted regressions caught, four against my own assertions. The founder's screenshot showed *"halfway 650"* beside a bubble asking about **669** — and the mark he did NOT name was the worse one: the distance marker pegs the number's true position, i.e. **the answer, drawn**. Both marks are off a played round and both stay in the demo/re-teach. ⚠️ **The target pill is not decoration** — the camera path's bubble ranks hand hints above the ask, so from the moment a hand appears the number would leave the screen entirely; confirmed on prod (`NEEDS 52 m` while the bubble read *"Hold your hand up where I can see it."*). Then bigger + centred, **sized from the room above the boards rather than a CSS clamp**. **The 12–18 chalkboards** extracted into `story/chalkboard.tsx` and used by both 9–11 chapters. ⚠️⚠️ **THEN THE FOUNDER ASKED FOR A 640×320 PASS ON PROD AND IT FOUND A REAL BUG IN WHAT HAD JUST DEPLOYED**: the step board was drawn across three name boards, gate green, because **`postH` is the STALK and the label sits another `boardH` (28px) above it** — the layout's own clamp said so and I read it wrong. Correct arithmetic: it did not fit at **5 of 7 sizes**; it hangs from `PILL_TOP` now, clearing everywhere and passing BETWEEN two chrome chips (a 2D crossing a vertical check cannot see). ⚠️ **And fixing the gate took two steps** — correcting `boardsTop` caught the shipped bug, but loosening the definition BACK was not caught, because every check is written in terms of it; **pinned to a number measured on the screen** (102, off production). ⚠️ **Why my own 640×320 pass missed it: I never crossed the WALKTHROUGH at that size.** ▶ Open: nobody has held a real hand up, twelve readings deep; no ten-round run, no re-teach on screen; the band is now mixed (two chapters on the teen chalkboard, ten on the HUD kit). _(prior footer follows.)_)_
+_Last updated: 2026-08-13 (LATEST — see the top 🗑️ block. **TIMES TABLES AND DIVISION ARE DELETED, on the founder's call, after he asked what the child is actually learning: "baccha isme sikh kya raha hai… sirf haath hila raha hai."** Traced on one Supply Run round he is right — the child is TOLD 22 and 4 and still never has to divide, because the only decision is *is there still enough in the crate to go round again*, which is answered by LOOKING. `tsc` 0 · **787/787** (−114, exactly the two deleted gates) · `next build` 0. **−3,848 lines.** ⚠️ **The SKILLS stay in the graph with `chapter: ''`** — the DB rows are FK'd by every session and `i.multFacts` is one of the most load-bearing nodes in the 3–18 graph; the stated cost is that a child rooting there now gets a plan starting at its 6–8 prerequisites. ⚠️ **An AR verb (A′, deal-as-you-pass) was built, gated and driven live before being deleted under itself** — its one durable output is in chapter-craft §5: **a drop target must beat the hand's own jitter (±0.028·vw), so a dense row cannot be aimed at — 34 of 36 measured combinations were unhittable.** ▶ **The rebuild shape is an OPEN founder call** (predict-then-check, tier-linked or every round). _(prior footer follows.)_)_
+
+_Prior update: 2026-08-12 (the 🧑‍🏫 block. **NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. 🚀 SHIPPED — `main`@`88553e4`, prod serving sw v89, smoke 13/13, driven live at BOTH sizes.** `tsc` 0 · **901/901 vitest** (+11) · `next build` 0 · 11/11 planted regressions caught, four against my own assertions. The founder's screenshot showed *"halfway 650"* beside a bubble asking about **669** — and the mark he did NOT name was the worse one: the distance marker pegs the number's true position, i.e. **the answer, drawn**. Both marks are off a played round and both stay in the demo/re-teach. ⚠️ **The target pill is not decoration** — the camera path's bubble ranks hand hints above the ask, so from the moment a hand appears the number would leave the screen entirely; confirmed on prod (`NEEDS 52 m` while the bubble read *"Hold your hand up where I can see it."*). Then bigger + centred, **sized from the room above the boards rather than a CSS clamp**. **The 12–18 chalkboards** extracted into `story/chalkboard.tsx` and used by both 9–11 chapters. ⚠️⚠️ **THEN THE FOUNDER ASKED FOR A 640×320 PASS ON PROD AND IT FOUND A REAL BUG IN WHAT HAD JUST DEPLOYED**: the step board was drawn across three name boards, gate green, because **`postH` is the STALK and the label sits another `boardH` (28px) above it** — the layout's own clamp said so and I read it wrong. Correct arithmetic: it did not fit at **5 of 7 sizes**; it hangs from `PILL_TOP` now, clearing everywhere and passing BETWEEN two chrome chips (a 2D crossing a vertical check cannot see). ⚠️ **And fixing the gate took two steps** — correcting `boardsTop` caught the shipped bug, but loosening the definition BACK was not caught, because every check is written in terms of it; **pinned to a number measured on the screen** (102, off production). ⚠️ **Why my own 640×320 pass missed it: I never crossed the WALKTHROUGH at that size.** ▶ Open: nobody has held a real hand up, twelve readings deep; no ten-round run, no re-teach on screen; the band is now mixed (two chapters on the teen chalkboard, ten on the HUD kit). _(prior footer follows.)_)_
 
 _Prior update: 2026-08-12 (the ✊ block. **THE SLIDE IS GONE: THE ANSWER IS NOW GRAB ASTRO WITH A FIST, CARRY HER, AND OPEN YOUR HAND WHERE SHE SHOULD STAND** — the founder's call, *"yeh slide ka tariqa sahi naii laga"*. `tsc` 0 · **890/890 vitest** · `next build` 0 · 0 console errors · driven on BOTH inputs · 4/4 planted regressions caught. The slide was a timer wearing a gesture's clothes — nothing was carried, the commit was a stopwatch, and it needed hysteresis because a hand on a boundary dithered and the dwell never fired; a carry has none of that and the release IS the answer. **It cost no detector work** — `reads: 'pinch'` already gives position + hold + a close-count, and The Fundraiser had already made that reading a whole-hand FIST on his earlier *"pinch sahi naii hai"*. ⚠️⚠️ **The one constant that decides whether the chapter still teaches anything: the catch is BOUNDED (0.35 of the gap), NOT nearest-target** — copying The Fundraiser's halfway-line partition would have let the child drop her at 47 and had the APP snap her to 50, i.e. the machine doing the rounding; a release at the midpoint now lands on nothing, and says why. ⚠️ **Two defects the drive found, both scoring a round nobody played, and fixing one left the other doing the damage alone**: she WAITED inside the first checkpoint's catch zone (so grab-and-put-down scored it — the line now narrows so the first post clears her, after the gate caught the last board crossing into Milo's side), and the carry CLAMPED to `checkX(0)` (teleporting her onto it the instant she was grabbed). Driven: the midpoint refusal, a correct placement grading and advancing, a fist still shut across a round boundary correctly NOT picking her up, and a tap on the same round grading too. ▶ Open: **the release is the commit so there is no undo on the camera path** (his call; `stepPinch`'s sustained release is the guard); nobody has held a real hand up to it and `__miloPinch` bypasses `stepPinch`, so the fist thresholds are headless-only; no ten-round run, no re-teach, no scored `estimate` on the camera path; the 🎮 block's unexplained 57-second entry stall still stands; not committed, sw still v87. _(prior footer follows.)_)_
 

@@ -2127,6 +2127,35 @@ screen and clamp past it, on BOTH axes: the tray sits at the bottom of the scree
 to drop their hand out of frame to reach it cannot pick anything up either.
 ⚠️ **And gate it by sweeping the reachable band only — see §4, the clamp tautology.**
 
+⚠️⚠️ **A DROP TARGET MUST BE BIGGER THAN THE HAND'S OWN JITTER, AND THE JITTER GROWS WITH THE
+SCREEN — SO "AIM AT ONE OF THESE" ONLY WORKS WHEN THE TARGETS SPAN THE FULL WIDTH.** This killed a
+whole gesture design and it is three lines of arithmetic to check first. MediaPipe's palm wanders
+~±0.02 of frame width; `reachSpan` stretches the reachable 0.72 band onto the whole viewport, so it
+arrives as **±0.028 · vw — ±18px at 640 and ±36px at 1280.** Measured against The Supply Run's bench,
+whose receivers sit 26–224px apart depending on size and how many the round draws, **34 of 36 size ×
+reading × count combinations came out unhittable, worst 0.48×** — and it does NOT improve on a big
+screen, because the jitter scales too. The Long Level's checkpoints work only because there are six
+of them across the FULL width (±45px catch at 1280). **Compute `catch ÷ jitter` before designing an
+aim; want ≥ ~1.5×.**
+- **The tension is structural, so do not expect to tune out of it.** A bench that has to hold two
+  dozen countable units AND up to seven receivers produces narrow receivers by construction, and
+  buying target width by widening the gaps costs unit size — which is the worse fault (*a pile a
+  child cannot count is a wrong answer the chapter caused*).
+- **The way out is to PASS THROUGH a target instead of hitting one.** Jitter perpendicular to the
+  travel does not matter and along it you are moving hundreds of pixels, so precision stops being a
+  requirement at all. The Supply Run's crossing deals as it passes each receiver: same arm movement,
+  but the hand's POSITION now means something, a half crossing visibly leaves some receivers short,
+  and no target has to be aimed at.
+
+⚠️ **AND A DEV DRIVE HOOK THAT UNDER-COVERS A CHANGED GESTURE IS THE SAME FAULT AS ONE THAT LIES,
+ONE STEP QUIETER.** `__miloSweep` jumps straight to the fire, which WAS the whole of a sweep while a
+crossing dealt instantly at the far side; once the crossing itself started dealing, everything
+between arming and firing became unreachable and a drive would have verified only the last frame of
+the thing that changed. **When you change what a gesture does, check the hook still reaches all of
+it** — and if the real reader emits a SEQUENCE the hook collapses into one read (here: arm, then
+fire, two frames), say so where the hook is defined, because the drive will otherwise reproduce a
+"bug" the product does not have.
+
 ⚠️ **THE HIT-TEST AND THE RENDER MUST BE ONE GEOMETRY.** A row of things a finger taps and a pinched
 hand aims at is a fact two separate pieces of code need, and a hit-test carrying its own copy of the
 row's arithmetic is *the gate that re-implements a rule* with the two halves of one FEATURE instead of
