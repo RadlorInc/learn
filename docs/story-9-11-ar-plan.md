@@ -288,7 +288,7 @@ the AR gesture, and the pointer that answers the same question.
 - ⚠️ Per chapter-craft: the pizza is a **real sprite clipped by the exact wedge** — arithmetic
   division AND real food, not a choice. Flat SVG wedges are the pie chart this chapter is escaping.
 
-### 7 · `decimals` — DIAL IT IN · ❌ neon
+### 7 · `decimals` — DIAL IT IN · ✅ BUILT 2026-08-13 as **THE COIN TRAY**
 
 - **Anchor: money — $12.50 vs $12.05.** Their own money, at a register, where being wrong costs them.
 - **THE PLAN:** *"$12.50 and $12.05 aren't the same money. The first place after the point is worth
@@ -297,10 +297,33 @@ the AR gesture, and the pointer that answers the same question.
 - ⚠️ **Why this anchor is better than it looks: 100 cents ARE the hundredths grid.** The chapter's
   10×10 grid stops being a diagram of a decimal and becomes a dollar, so tenths are dimes and
   hundredths are pennies. The manipulative and the anchor are the same object.
-- **AR:** ⚠️ **A2 reads the two places directly** — left hand tenths (dimes), right hand hundredths
-  (pennies) — so `0.55` is five and five while `0.6` is six and a closed fist. **The misconception
-  `0.6 < 0.55` dies in the hands.** Placing a value on a 0–1 line uses **F**; shading the grid uses **E**.
+- **AR:** ~~A2 reads the two places directly — left hand tenths (dimes), right hand hundredths
+  (pennies) — so `0.55` is five and five while `0.6` is six and a closed fist.~~
 - **Pointer:** the existing two-window pad + the grid. Unchanged.
+
+> **⚠️ AMENDED 2026-08-13, ON BUILDING IT. The AR line above is arithmetically impossible, and it is
+> the SAME fault §2's A2 row already had to be corrected for: a hand has five fingers.**
+> One hand per place caps each place at 5, so it reaches only the amounts whose digits are both ≤ 5
+> — **36 of 99** — and **the line's own example disproves it**: `0.6` is *six* dimes, which no single
+> hand can show. As built, both hands make ONE place at a time, left to right (`reads: 'count'` +
+> two windows, FitOut's proven encoding): *show me the dimes… now show me the pennies*, which reaches
+> 0–9 in each place, is place value performed, and keeps "six, then a fist" true. A fist is a real
+> answer here, so the guard is FactorLab's `hands > 0` and not The Pizza Counter's `count > 0`.
+>
+> **Two further departures, both argued in `story/cents.ts` beside the strings:**
+> · **The 10×10 grid is gone from play.** A dime is drawn as a TEN-FRAME of ten pips and a penny as
+> one pip the same size, so the grid's job — showing that ten hundredths are one tenth — is done by
+> the coins themselves, and six dimes visibly beat five dimes and five pennies with no comparison
+> asked. The grid's other job (100 pennies fill a dollar) lives in the explore beat, where the tenth
+> penny fuses into a dime.
+> · **Every ASK states the DECIMAL, never the money form**, because money notation pads to two places
+> — `$0.60` vs `$0.55` is obviously bigger and the misconception cannot occur. `money()` appears only
+> in the reveal, as the bridge.
+>
+> ⚠️ **And the cost of the anchor, taken with the founder rather than assumed: this is the band's
+> SECOND money world (The Fundraiser) and the app's THIRD (6–8's CoinShop).** The separation is the
+> decimal point itself — The Fundraiser is whole dollars LEFT of it, this is dimes and pennies RIGHT
+> of it, and nothing here is ever added up. See the header of `cents.ts`.
 
 ### 8 · `measurementUnits` — DOES IT FIT? · ❌ neon
 

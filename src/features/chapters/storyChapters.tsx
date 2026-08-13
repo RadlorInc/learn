@@ -32,10 +32,13 @@ export const STORY_CHAPTERS = {
   colors: { bg: "#e6f0f7", load: () => import("@/features/chapters/story/RainbowTown") },
   compareNumbers: { bg: "#cfe6f7", load: () => import("@/features/chapters/story/SeesawPark") },
   dataGraphs: { bg: "#b9a894", load: () => import("@/features/chapters/story/LoadingBay") },
-  decimals: { bg: "#0a1026", load: () => import("@/features/chapters/story/DecimalGrid") },
+  decimals: { bg: "#0a1026", load: () => import("@/features/chapters/story/CoinTray") },
   factorsMultiples: { bg: "#0a1026", load: () => import("@/features/chapters/story/FactorLab") },
   fractions: { bg: "#f3ead8", load: () => import("@/features/chapters/story/SliceShop") },
-  fractionsCompare: { bg: "#0a1026", load: () => import("@/features/chapters/story/FractionForge") },
+  // 🍕 THE PIZZA COUNTER — the neon fraction bar replaced by two pizzas cut differently (2026-08-13).
+  // 6–8's SliceShop owns pizza AND owns FIT IT (one whole, one piece size); this owns MATCH IT, which
+  // needs the thing SliceShop structurally cannot show — two wholes. bg is the pre-teen HUD's navy.
+  fractionsCompare: { bg: "#0a1026", load: () => import("@/features/chapters/story/PizzaCounter") },
   matchingQuantities: { bg: "#241c39", load: () => import("@/features/chapters/story/HomeTime") },
   measurementUnits: { bg: "#0a1026", load: () => import("@/features/chapters/story/UnitConverter") },
   measurement: { bg: "#cfe9f7", load: () => import("@/features/chapters/story/MeasureIt") },
