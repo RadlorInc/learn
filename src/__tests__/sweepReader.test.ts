@@ -242,6 +242,10 @@ describe('the arming bar', () => {
        * hovering ON the arming line dips below it (arm resets to 0) and back inside it (arm ticks
        * to one quantum), so it alternates between two. TWO keys over three hundred frames is the
        * property that matters — the fault being guarded against is thirty a second.
+       *
+       * ⚠️ THIS IS ALSO WHAT PRICES A FINER BAR. Raising `ARM_STEPS` to 12 pushes it to three, i.e.
+       * a hand held still costs the chapter half again as many renders — recorded because the raise
+       * was tried, for a rhythm gain the measurement did not support, and put back.
        */
       expect(keys.size, `held at ${c}`).toBeLessThanOrEqual(2)
       expect(s.sweeps, `held at ${c}`).toBe(0)
@@ -257,7 +261,9 @@ describe('the arming bar', () => {
    * never fires, and the deal never reaches the chapter. A dead button, on the only gesture.
    */
   it('changes the key on the fire even when the bar never left its first quantum', () => {
-    let s = stepSweep(stepSweep(SWEEP_START, at(0.2)), at(SWEEP_ARM + 0.01))
+    // ⚠️ The offset is DERIVED so it stays inside the first quantum whatever `ARM_STEPS` is — the
+    //    property under test is that `sweeps` is in the key, not how coarse the bar happens to be.
+    let s = stepSweep(stepSweep(SWEEP_START, at(0.2)), at(SWEEP_ARM + SWEEP_SPAN / (ARM_STEPS * 4)))
     expect(quantArm(s.arm)).toBe(0)                // the bar has not visibly moved
     const before = sweepKey(s)
     s = stepSweep(s, at(0.95))

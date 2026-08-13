@@ -33,7 +33,6 @@ export const STORY_CHAPTERS = {
   compareNumbers: { bg: "#cfe6f7", load: () => import("@/features/chapters/story/SeesawPark") },
   dataGraphs: { bg: "#b9a894", load: () => import("@/features/chapters/story/LoadingBay") },
   decimals: { bg: "#0a1026", load: () => import("@/features/chapters/story/DecimalGrid") },
-  division: { bg: "#3a3630", load: () => import("@/features/chapters/story/SupplyRun") },
   factorsMultiples: { bg: "#0a1026", load: () => import("@/features/chapters/story/FactorLab") },
   fractions: { bg: "#f3ead8", load: () => import("@/features/chapters/story/SliceShop") },
   fractionsCompare: { bg: "#0a1026", load: () => import("@/features/chapters/story/FractionForge") },
@@ -56,7 +55,6 @@ export const STORY_CHAPTERS = {
   subtraction: { bg: "#bfe7ff", load: () => import("@/features/chapters/story/PlayTimeSub") },
   subtractionTo100: { bg: "#dbe8ef", load: withProps(() => import("@/features/chapters/story/BlockYard"), { op: "-" as const }) },
   time: { bg: "#f3ead8", load: () => import("@/features/chapters/story/TickTock") },
-  timesTables: { bg: "#cfe0ee", load: () => import("@/features/chapters/story/FitOut") },
   wordProblems: { bg: "#0a1026", load: () => import("@/features/chapters/story/MissionBrief") },
 } satisfies Record<string, { bg: string; load: StoryLoad }>
 

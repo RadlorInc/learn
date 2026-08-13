@@ -92,6 +92,13 @@ export const LOST_GRACE = 4
  * The arming bar is quantized before it reaches the hook's change test, or a hand hovering
  * mid-band re-renders the chapter's whole tree at frame rate for a gesture that is not progressing
  * — the exact cost `useFingerCounter` documents for the continuous tilt.
+ *
+ * ⚠️ IF A CROSSING IS EVER MADE TO DEAL AS IT PASSES rather than firing once at the far side, this
+ * also becomes the resolution units land at, and the measurement is recorded so it is not re-derived:
+ * at 6 steps a step cost of 2..6 still lands strictly ONE AT A TIME. Raising it to 12 buys only EVEN
+ * SPACING on cost 4 (0.25·0.25·0.25·0.25 instead of 0.333·0.167·0.333·0.167) and a touch on cost 5,
+ * and it costs a hand held still one extra key change — see `sweepReader.test.ts`. Not worth it
+ * until a real child reads the stutter as the gesture stalling.
  */
 export const ARM_STEPS = 6
 export const quantArm = (a: number) => Math.round(a * ARM_STEPS) / ARM_STEPS

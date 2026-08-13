@@ -26,7 +26,7 @@ export type ChapterType =
   | 'numbersTo100' | 'placeValue' | 'skipCounting' | 'storyProblems' | 'multiplication' | 'fractions' | 'money' | 'time'
   | 'compareNumbers' | 'additionTo100' | 'subtractionTo100' | 'shapes2d3d'
   // 9–11
-  | 'bigNumbers' | 'rounding' | 'timesTables' | 'division' | 'factorsMultiples' | 'fractionsCompare' | 'decimals' | 'measurementUnits' | 'areaPerimeter' | 'anglesSymmetry' | 'dataGraphs' | 'wordProblems'
+  | 'bigNumbers' | 'rounding' | 'factorsMultiples' | 'fractionsCompare' | 'decimals' | 'measurementUnits' | 'areaPerimeter' | 'anglesSymmetry' | 'dataGraphs' | 'wordProblems'
   // 12–14 (teen "Field Lab")
   | 'integers' | 'signedRationalOps' | 'rationalOps' | 'ratioProportion' | 'percentages' | 'exponentsRoots'
   | 'orderOfOperations' | 'algebraicExpressions' | 'equationsInequalities' | 'coordinatePlane' | 'linearRelationships' | 'geometryMeasurement'
@@ -81,8 +81,6 @@ export const CHAPTERS: ChapterMeta[] = [
   // ── 9–11 ──
   { id: 'bigNumbers',         name: 'Big Numbers',        parentLabel: 'Big Numbers',       emoji: '🔢', asset: '/assets/objects/star.png',           hint: 'Place value to thousands!', ageGroups: ['9-11'] },
   { id: 'rounding',           name: 'Rounding',           parentLabel: 'Rounding',          emoji: '🎯', asset: '/assets/objects/star.png',           hint: 'Round to the nearest 10 or 100!', ageGroups: ['9-11'] },
-  { id: 'timesTables',        name: 'Times Tables',       parentLabel: 'Times Tables',      emoji: '✖️', asset: '/assets/objects/star.png',           hint: 'Times tables & 2-digit × 1-digit!', ageGroups: ['9-11'] },
-  { id: 'division',           name: 'Division',           parentLabel: 'Division',          emoji: '➗', asset: '/assets/objects/star.png',           hint: 'Share equally — with remainders!', ageGroups: ['9-11'] },
   { id: 'factorsMultiples',   name: 'Factors & Primes',   parentLabel: 'Factors & Primes',  emoji: '🧩', asset: '/assets/objects/star.png',           hint: 'Even/odd, multiples, factors & primes!', ageGroups: ['9-11'] },
   { id: 'fractionsCompare',   name: 'Fractions',          parentLabel: 'Fractions',         emoji: '🍰', asset: '/assets/objects/apple.png',          hint: 'Equivalent, compare, add & subtract!', ageGroups: ['9-11'] },
   { id: 'decimals',           name: 'Decimals',           parentLabel: 'Decimals',          emoji: '🔟', asset: '/assets/objects/star.png',           hint: 'Tenths, hundredths & the number line!', ageGroups: ['9-11'] },

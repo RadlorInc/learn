@@ -48,10 +48,15 @@ describe('activePlan', () => {
 
   describe('deeperChapter (graph side)', () => {
     it('returns a prerequisite chapter for a mid-graph root, null at the floor', () => {
-      // NB chapters.ts ids, not /story?ch= route keys ('timesTables', not 'times')
-      expect(deeperChapter('timesTables')).toBe('skipCounting')
+      // NB chapters.ts ids, not /story?ch= route keys ('bigNumbers', not 'bignum')
+      expect(deeperChapter('bigNumbers')).toBe('placeValue')
       expect(deeperChapter('counting')).toBeNull()      // graph floor — nothing deeper exists
       expect(deeperChapter('not-a-chapter')).toBeNull() // unknown id → no revision, never a guess
+      /** ⚠️ A SKILL WITH NO CHAPTER YIELDS NO REVISION, which is the state Times Tables and
+       *  Division are in since 2026-08-13 — `i.factors`' only prerequisites are both chapter-less,
+       *  so there is nothing deeper to prepend. Pinned so the day a chapter comes back, this
+       *  starts returning one and somebody notices. */
+      expect(deeperChapter('factorsMultiples')).toBeNull()
     })
   })
 })

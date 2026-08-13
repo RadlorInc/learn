@@ -61,7 +61,7 @@ const STORY_KEY: Record<string, string> = {
   numbersTo100: 'numbers', placeValue: 'place', skipCounting: 'skip', compareNumbers: 'compare',
   storyProblems: 'story', multiplication: 'multiply', fractions: 'fractions', money: 'money',
   time: 'time', additionTo100: 'add100', subtractionTo100: 'sub100', shapes2d3d: 'solids',
-  bigNumbers: 'bignum', rounding: 'round', timesTables: 'times', division: 'divide',
+  bigNumbers: 'bignum', rounding: 'round',
   factorsMultiples: 'factors', fractionsCompare: 'fcompare', decimals: 'decimals',
   measurementUnits: 'units', areaPerimeter: 'area', anglesSymmetry: 'angles',
   dataGraphs: 'data', wordProblems: 'word',

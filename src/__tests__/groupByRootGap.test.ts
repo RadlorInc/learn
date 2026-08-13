@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { groupByRootGap, type TriageLearner } from '@/features/triage/groupByRootGap'
 
 // Real skill ids from the graph so labels/chapters resolve.
-const GAP_A = 'i.multFacts'   // Multiplication facts fluency → timesTables
-const GAP_B = 'i.division'    // Division w/ remainders → division
+const GAP_A = 'i.bigNumbers'  // Place value to 10,000 → bigNumbers
+const GAP_B = 'i.rounding'    // Rounding → rounding
 
 const L = (name: string, rootGap: string | null, checked: boolean): TriageLearner =>
   ({ learnerId: name, name, band: '9-11', rootGap, checked })
@@ -17,7 +17,7 @@ describe('class triage — groupByRootGap', () => {
     expect(b.learners.map(l => l.name)).toEqual(['Cy'])
     expect(a.kind).toBe('gap')
     expect(a.label.length).toBeGreaterThan(0)   // resolved from the skill/chapter
-    expect(a.chapter).toBe('timesTables')
+    expect(a.chapter).toBe('bigNumbers')
   })
 
   it('orders gap groups biggest-first', () => {

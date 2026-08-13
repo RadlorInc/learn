@@ -19,7 +19,24 @@ export interface SkillNode {
   id: string
   band: Band
   label: string
-  chapter: string      // chapters.ts id — the remediation unit for this skill
+  /**
+   * chapters.ts id — the remediation unit for this skill, or `''` when the skill is real and
+   * currently has no chapter to send a child to.
+   *
+   * ⚠️ `''` IS A DELIBERATE STATE, NOT A GAP IN THE DATA — three nodes carry it today
+   * (`i.multFacts`, `i.multMultiDigit`, `i.division`), because Times Tables and Division were
+   * deleted 2026-08-13 pending a rethink of what the child is actually learning. The SKILLS stay:
+   * they are in the DB (`learner_progress.chapter` and `sessions.chapter` are FK'd to
+   * `chapters(id)`, so the rows cannot be removed), `i.multFacts` is one of the most load-bearing
+   * nodes in the whole 3–18 graph, and they are all still probed.
+   *
+   * ⚠️ THE COST, STATED RATHER THAN HIDDEN: `diagnose()` builds `planChapters` with
+   * `if (ch && …)`, so a skill with no chapter is simply skipped — which means a child whose ROOT
+   * gap is multiplication facts gets a plan that starts at its prerequisites (6–8 skip-counting and
+   * multiplication concept) and never at the gap itself. That is the right failure while a chapter
+   * is missing, and it is a real hole until one exists.
+   */
+  chapter: string
   prereqs: string[]     // direct prerequisite skill ids (may cross bands)
 }
 
@@ -54,9 +71,9 @@ export const SKILL_NODES: SkillNode[] = [
   // ── Band 9–11 · Intermediate (remediation core) ────────────────────────────
   { id: 'i.bigNumbers',    band: '9-11', label: 'Place value to 10,000+',    chapter: 'bigNumbers',         prereqs: ['p.placeValue2'] },
   { id: 'i.rounding',      band: '9-11', label: 'Rounding',                  chapter: 'rounding',           prereqs: ['i.bigNumbers'] },
-  { id: 'i.multFacts',     band: '9-11', label: 'Multiplication facts fluency', chapter: 'timesTables',     prereqs: ['p.skipCount', 'p.multConcept'] },
-  { id: 'i.multMultiDigit',band: '9-11', label: 'Multi-digit multiplication', chapter: 'timesTables',       prereqs: ['i.multFacts', 'p.placeValue2'] },
-  { id: 'i.division',      band: '9-11', label: 'Division w/ remainders',    chapter: 'division',           prereqs: ['i.multFacts', 'p.subTo100'] },
+  { id: 'i.multFacts',     band: '9-11', label: 'Multiplication facts fluency', chapter: '',                prereqs: ['p.skipCount', 'p.multConcept'] },
+  { id: 'i.multMultiDigit',band: '9-11', label: 'Multi-digit multiplication', chapter: '',                prereqs: ['i.multFacts', 'p.placeValue2'] },
+  { id: 'i.division',      band: '9-11', label: 'Division w/ remainders',    chapter: '',                prereqs: ['i.multFacts', 'p.subTo100'] },
   { id: 'i.factors',       band: '9-11', label: 'Factors, multiples, primes', chapter: 'factorsMultiples',  prereqs: ['i.multFacts', 'i.division'] },
   { id: 'i.fractionEquiv', band: '9-11', label: 'Equivalent fractions & compare', chapter: 'fractionsCompare', prereqs: ['p.fractionsIntro', 'i.multFacts'] },
   { id: 'i.fractionOps',   band: '9-11', label: 'Add/subtract fractions',    chapter: 'fractionsCompare',   prereqs: ['i.fractionEquiv'] },
