@@ -180,9 +180,26 @@
 > reads repetitive. **Left as the founder's call rather than fixed unasked.**
 >
 > ## ▶ OPEN
-> 1. ⚠️ **NOT COMMITTED, NOT DEPLOYED** — the founder has not been asked, and this repo does not push
->    unasked. **DELETED: `story/UnitConverter.tsx`.** `public/sw.js` is still **v92** and must be
->    bumped in the same commit as any deploy.
+> 1. ✅ **SHIPPED 2026-08-14 — `main`@`88e8f41`, prod serving sw v93.** Five commits, clean
+>    fast-forward (`origin/main` was an ancestor), 0 ahead / 0 behind:
+>    `57c9eda` (the span reading, infra) · `51fe0e2` (the band extraction) · `a980d55` (the chapter +
+>    gate + registry + the DELETE of `UnitConverter.tsx`, ONE commit because a registry importing a
+>    component that does not exist yet is a broken intermediate) · `2e002ac` (docs) · `88e8f41`
+>    (sw v92 → v93). Gates re-run before staging rather than trusted from this file: `tsc` 0 ·
+>    **972/972** · `next build` 0. **The branch was checked out CLEAN in a scratch worktree first**
+>    (`tsc` 0 · 972/972) — a green working tree says nothing about the branch.
+>    Post-deploy: prod `sw.js` **v93 on the fourth poll**, 9 routes 200 (⚠️ `/manifest.webmanifest`
+>    404s because the path is `/manifest.json` — my smoke list was wrong, not a regression), and
+>    **0 hits for `UnitConverter` in the `/story` shell**.
+>    ⚠️ **The SW was unregistered and `milo-shell-v93` cleared before driving**, because a controlled
+>    worker serves the OLD shell even when prod already reports the new version.
+>    **Driven on the live origin at 1280×720:** the briefing with both doors · the explore beat
+>    converting live (**12 in → = 1 ft**, i.e. the `ftIn` fix) · all three demos, the first showing
+>    `sign: 44 in` (the `OFFSET_LIMITS` fix live) · **the guided round and TWO SCORED ROUNDS graded**
+>    — *"4 ft is 48 inches — the sign says 44, so you are on"* · **0 console errors**.
+>    ⚠️ **What the prod drive does NOT cover: only 3 of the 10 scored rounds were played there**, so
+>    the tier climb, the L3 traps and the chapter's own ending are proven on localhost (§⑨) and not on
+>    production. Deliberately left rather than run for another half hour.
 > 2. ✅ **CLOSED by §⑨ — all ten rounds played, the tier climbed, `coverage` fired and the chapter
 >    ended itself.** ⚠️ What the run does NOT cover: **the RE-TEACH never fired** (it needs two wrong
 >    in a row and the plan called for exactly one miss) and **the MASTERY early-exit never fired** (it
