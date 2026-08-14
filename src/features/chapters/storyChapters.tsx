@@ -40,7 +40,7 @@ export const STORY_CHAPTERS = {
   // needs the thing SliceShop structurally cannot show — two wholes. bg is the pre-teen HUD's navy.
   fractionsCompare: { bg: "#0a1026", load: () => import("@/features/chapters/story/PizzaCounter") },
   matchingQuantities: { bg: "#241c39", load: () => import("@/features/chapters/story/HomeTime") },
-  measurementUnits: { bg: "#0a1026", load: () => import("@/features/chapters/story/UnitConverter") },
+  measurementUnits: { bg: "#0a1026", load: () => import("@/features/chapters/story/HeightBar") },
   measurement: { bg: "#cfe9f7", load: () => import("@/features/chapters/story/MeasureIt") },
   money: { bg: "#f3ead8", load: () => import("@/features/chapters/story/CoinShop") },
   multiplication: { bg: "#f3ead8", load: () => import("@/features/chapters/story/MarketDay") },
