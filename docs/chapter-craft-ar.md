@@ -358,6 +358,37 @@ nothing — every composite ≤ 100 has a factor ≤ 10, since the smallest fact
 the chapter's number range rather than narrowing it. Check the arithmetic before assuming a ceiling
 is a compromise.
 
+⚠️⚠️ **A CONTINUOUS READING'S NOISE FLOOR DECIDES WHAT IT MAY BE ASKED FOR — COMPUTE IT BEFORE YOU
+DESIGN THE ROUND, NOT AFTER.** This is `catch ÷ jitter` for a SCALAR rather than for an aim, and it
+killed the plan's own verb for the measurement chapter. §8 asks for "hold your hands apart to SHOW a
+length", which is a lovely gesture and cannot carry an exact number here:
+- MediaPipe's palm wanders ~±0.02 of frame width, so a distance between TWO palms carries ~±0.028 —
+  and stretched onto an answer scale through `reachSpan`'s 0.72 band that is ±3.9% of the range, i.e.
+  **±2.3 inches on a 0–60 in scale.** Answers one inch apart are inside the noise, so a child who
+  knows the answer cannot enter it: a dead button, which this doc calls the worst outcome there is.
+- **And both hands have to be IN FRAME.** At a normal seating distance a webcam sees roughly nine hand
+  widths across, so anything past about 22 inches cannot be shown at all — a whole region of the
+  answer space that simply does not exist.
+⇒ The gesture ships where it IS honest — an ESTIMATE, where no precision is wanted ("show me about how
+long a foot is"), in the beat where nothing is scored — and the scored rounds keep the two-place
+finger count. That is The Angle Shop's `job: 'degrees'` precedent, verbatim: *a gesture does not ship
+on a round that gives it nothing to aim at*, and the hand answers the question it CAN answer.
+⚠️ **Say the split out loud in the pure module and gate it**, or the next edit quietly wires the
+continuous reading into play — `expect(playBlock).not.toMatch(/\.span/)` is one line.
+
+⚠️ **AND A SPAN IN FRAME FRACTIONS IS NOT A LENGTH — NORMALISE IT BY SOMETHING IN THE SAME FRAME.**
+Lean back and every measurement shrinks together, so "show me a foot" would mean a different gesture
+at every seating distance and would need a calibration step a child can get wrong. The child's own
+HAND WIDTH is in the same frame and scales identically, so `span ÷ handWidth` is invariant to distance
+and one nominal hand size turns it into inches. Measure the ruler **across the knuckles** (index MCP to
+pinky MCP), for `palmTilt`'s reason: both landmarks are on the rigid palm, so the ruler does not change
+length when the child opens or closes their fingers — and they will, because a hand held up to show a
+width is not held in any particular pose.
+⚠️ **Put the division behind an exported function the detector calls** (`spanRatio`), not inline in the
+detect loop. Mutation-tested: with it inline, the only way to check it was for the gate to do the
+division itself — a gate re-implementing the rule, which cannot see the rule being REMOVED. Dropping
+`/ hw` left the invariance test perfectly green.
+
 ⚠️ **AND CHANGING THE VERB DOES NOT AUTOMATICALLY FIX A COIN FLIP — CHECK THE NEW ANSWER SPACE.** The
 first cut of the pair test asked *"how many are left over?"*, which is 0 or 1: a gesture instead of a
 chip, and still 50%, i.e. the exact defect the rebuild existed to remove. Asking for the pair COUNT

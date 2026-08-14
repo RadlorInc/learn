@@ -36,6 +36,7 @@ Reference implementations, in order of how closely to copy them:
 | 9–11 · Division | [SupplyRun.tsx](../src/features/chapters/story/SupplyRun.tsx) + [supplyRunDivision.test.ts](../src/__tests__/supplyRunDivision.test.ts) | one gesture serving two readings of one operation because they cost the same step, an answer that is the number of steps you got, a wrong action that is ALLOWED and visible rather than blocked, a remainder with somewhere physical to be, and a layout whose column shape is searched rather than picked |
 | 9–11 · Rounding | [RailLine.tsx](../src/features/chapters/story/RailLine.tsx) + [railLineRounding.test.ts](../src/__tests__/railLineRounding.test.ts) | a world where the rounded number is the only one you can ACT on, an answer surface wide enough that it is not a coin flip, three question types sharing one control and one grader, and a layout whose numbers are derived from each other rather than guessed |
 | 9–11 · Decimals | [CoinTray.tsx](../src/features/chapters/story/CoinTray.tsx) + [cents.ts](../src/features/chapters/story/cents.ts) + [coinTrayDecimals.test.ts](../src/__tests__/coinTrayDecimals.test.ts) | an answer entered as TWO places on one instrument, a piece that shows its own ten so the comparison is looked at rather than asked, an anchor whose own notation had to be kept out of the question, and a short-frame board that needed REFLOW rather than a smaller scale |
+| 9–11 · Units & conversion | [HeightBar.tsx](../src/features/chapters/story/HeightBar.tsx) + [inches.ts](../src/features/chapters/story/inches.ts) + [heightBarUnits.test.ts](../src/__tests__/heightBarUnits.test.ts) | a conversion that exists because two measurements have to be COMPARED, a consequence (the gate opens) that is deliberately not the scored question, a gesture that ships only where its own noise floor allows, and a short frame that drops the rule because the demo says it twice |
 | 9–11 · Area & perimeter | [FloorPlot.tsx](../src/features/chapters/story/FloorPlot.tsx) + [plotMaths.ts](../src/features/chapters/story/plotMaths.ts) + [plotSite.ts](../src/features/chapters/story/plotSite.ts) | **the band's only 3D chapter** — an answer that is a PLACE rather than a number (so it cannot be offered as a chip), ONE commit per scored round, a seeded procedural world that is provably free of anything countable, and everything the gate needs pulled out of the scene because `useFrame` cannot be driven headlessly |
 
 The shared engine all of these run on is [critters.tsx](../src/features/chapters/story/critters.tsx) —
@@ -404,6 +405,19 @@ a child does it, as a redirect rather than a score.
 invisible because the sentence was built inside the scene, where no gate can reach it — the chapter
 had 40 green tests and not one of them could see a word the child reads. Export it, drive it from the
 gate, and source-check that the scene prints it rather than assembling its own.
+
+⚠️⚠️ **AND THE CHILD'S OWN INTERMEDIATE WORKING CAN LAND ON A NUMBER ALREADY PRINTED ON SCREEN AS
+SOMETHING ELSE — WHICH IS WORSE THAN PRINTING THE ANSWER, BECAUSE IT MANUFACTURES A WRONG ONE.** The
+Height Bar asks *"the sign says 48 in, your door frame says 4 ft 3"*; the first step of the conversion
+is `4 × 12`, which is **48** — the number printed on the sign an inch away. Nothing prints the answer
+(51), nothing is wrong, and a child who stops at the figure they can see is marked wrong for a
+confusion the CHAPTER created rather than one they hold. The demo said it out loud — *"4 feet is 4
+lots of twelve, which is 48 inches"* — directly under `sign: 48 in`. Two of the six posted limits were
+multiples of twelve, so it hit about a third of the middle tier. **Work the round through as a child
+would and check every intermediate value against everything else on screen**, not just the final
+answer; then draw the generator so the collision cannot occur (here: no limit that is a multiple of
+the conversion factor). ⚠️ The tier where the intermediate IS the answer is the exception and must
+stay one — at L1 the answer is `ft × 12`, so there it is the LIMIT that has to differ from it.
 
 ⚠️ **A NUMBER IN A VERDICT CAN BE THE ANSWER BY COINCIDENCE.** *"No miss line ever names an accepted
 answer"* is already the rule; arithmetic reaches it by a side door. Eight rows out of a pair test of
@@ -843,6 +857,20 @@ check them with a script:
   collision *created* by the reserve meant to prevent one. Either size the row to its content and
   accept the rescale, or guarantee the pill is one line. (Collapsing an EMPTY reserve is still right:
   22px of blank band on a 98px board is a fifth of the coins' size, spent on a pill that is not there.)
+- ⚠️⚠️ **"TEXT ALREADY READ" DOES NOT INCLUDE ZONE 3'S INSTRUCTION CHIP — AND THAT IS THE HALF OF THE
+  TOP-CLAMP RULE NOBODY HAD WRITTEN DOWN.** The clamp is justified by sliding a board UP under prose
+  the child has finished with. The chip is the LAST thing in the card, so it is the FIRST thing the
+  board reaches — and it is the one action, not something read and done with. Measured on The Height
+  Bar at 640×320: the full prompt wraps the card to 97px, the wanted top (151) is past the 112 the
+  clamp allows, and the chip landed **29 × 16 px across the headline** — the door-frame mark, which
+  IS the question. **Check what the clamp actually covers, in pixels, on the longest card the chapter
+  can produce.**
+  ⚠️ **And the lever is the PROSE, in this order:** drop what is said somewhere else (the rule
+  sentence is stated in the demo AND the re-teach, so a short frame gets the two facts alone), then
+  shorten what is left. Do not buy the pixels from the band, and do not buy them from the chip.
+  ⚠️ **Pin the result as a CHARACTER BUDGET on the words, because nothing can see a wrap** — the
+  chalkboard's `PLAN_BUDGET` shape. Measured here: 118 characters wraps to two lines and collides,
+  70 is one line and clears by 12px. A gate can hold a budget; it cannot hold a rendered height.
 - ⚠️⚠️ **AN ACTION ROW ADDED TO THE BOTTOM BAND CAN PUSH THE BOARD'S TOP CLAMP ABOVE THE QUESTION
   CARD.** The clamp exists to slide a board UP under *text the child has already read* — but its input
   is the BOTTOM band, so a 47px "I've got it" row on its own line moved the top from 105 to **65 on a
@@ -991,6 +1019,20 @@ cycles in `sheets.ts` had no chapter using them at all.
 - **Growing the cast is the fix, not shrinking the run** — there are 18 drawn cycles and each
   setting can usually take one or two more that genuinely belong in it. Check what is idle before
   reaching for new art.
+
+⚠️ **A LABEL PRINTED BY BOTH THE BOARD AND THE QUESTION CARD IS THE SAME DUPLICATE ONE LAYER IN.**
+Copied from The Coin Tray, The Height Bar's board drew `data.tag` in its chrome strip while the prompt
+card's own chip drew the same words — so "TALL ENOUGH?" appeared twice on one screen, an inch apart.
+The tag belongs to the QUESTION (zone 3's chip); a board's strip is the instrument's status light and
+should say nothing the card already says. It only shows on a roomy frame, because a short frame drops
+the strip — which is exactly why it survives a short-frame pass.
+
+⚠️ **AND ENGLISH ASSEMBLED BY CONCATENATION BREAKS THE SAME WAY A PLURAL DOES.** `${verb} it.` over
+`{ hand: 'hold up', tap: 'tap' }` gives *"tap it"* and **"hold up it"** — shipped to the guided round's
+own instruction chip, caught by reading the screen. One verb cannot serve two sentences: the spoken
+line wants a bare verb ("…hold up the tens digit"), the chip has no object after it and wants the whole
+phrase ("hold up that many fingers"). Same family as *"0 pennyies"*, and the same fix: write the
+variants out rather than gluing parts together.
 
 **TWO PILLS SAYING THE SAME THING IS A DUPLICATE, NOT A FALLBACK.** `SkillBeat` draws a prompt pill
 from `beat.prompt`, so a chapter whose own play surface also states the question ends up with two —

@@ -2,6 +2,166 @@
 
 Older session blocks, newest first. **Not auto-loaded.** `grep` it when you need the history of a chapter or a decision; the live state is in [handoff.md](../handoff.md).
 
+> 🧑‍🏫 **2026-08-12 — NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. 🚀 SHIPPED — `main`@`88553e4`, prod serving **sw v89**, smoke 13/13 and DRIVEN LIVE ON PROD AT BOTH SIZES. ⚠️ AND THE 640×320 PROD PASS THE FOUNDER ASKED FOR FOUND A REAL BUG IN WHAT HAD JUST DEPLOYED — see §⑥.** `tsc` 0 · **901/901 vitest** (was 890, **+11**) · `next build` 0 · 0 console errors on prod · **11/11 planted regressions caught, FOUR of them against my OWN assertions.**
+>
+> **The asks, in order:** *"line pe 650 bol raha hai aur bubble mein 669… line pe mark naii rehna chahiye"* → *"increase the size of this and bring it to the center"* → *"yeh age band mein bhi woh same 'The plan' and 'step by step' chalkboards use karo… totally same bro"*.
+>
+> ## ⓪ ⚠️ FIRST, A DEV-SERVER TRAP THAT COST THE SESSION'S OPENING AND WILL RECUR
+> The founder's screenshot was `/menu` returning **404** — a route whose `page.tsx` is plainly on disk.
+> Cause: **`next build` and `next dev` had been sharing one `.next`.** A build at 21:41 left a
+> production manifest that the dev server then read at 21:44, so route resolution came off the prod
+> `app-path-routes-manifest` while the file was there all along. `rm -rf .next` + restart fixed it.
+> **Do not run the `next build` gate while the dev server is up** — clear `.next` after a build, or stop
+> the server first. (This session hit it twice more running the gate, and cleaned up each time.)
+> ⚠️ And the ordinary `rm -rf .next` warning still stands: only safe with the server STOPPED.
+>
+> ## ① THE MARKS CAME OFF THE LINE, AND THE MARKER WAS THE WORSE OF THE TWO
+> His screenshot showed **"halfway 650" on the line beside a bubble asking about 669** — two numbers on
+> screen, only one of them the question. Both marks came off a played round, and the one he had not
+> named is the one that mattered: **the distance marker pegs the number's TRUE POSITION on the line,
+> which is the answer, drawn** — a child could read the nearer checkpoint straight off it without
+> rounding anything, and at L1 it showed on every round.
+> ⚠️ **BOTH STAY IN `LevelExplain`, WHICH IS THE DEMO AND THE RE-TEACH**, and that split is
+> chapter-craft's own line: *if the scene can answer the question, you are teaching, not measuring.*
+> Showing 47 sitting past halfway is exactly what a demo is for.
+> ⚠️ **So a miss no longer reveals the halfway post, and the copy had to change with it** — `missFor`
+> said *"Look at the halfway mark at 650"*, i.e. it pointed at something that no longer exists. It
+> STATES the value now (*"Halfway between them is 45 — and 48 is PAST it"*). **Copy that points at a
+> mark is a second consumer of that mark; grep the words when you delete a drawn thing.**
+>
+> ## ② ⚠️⚠️ THE TARGET PILL IS NOT DECORATION — IT IS WHAT MAKES §① SURVIVABLE, AND THE FOUNDER SPOTTED THE NEED BEFORE I DID
+> He offered top-centre as an alternative (*"top center mein bhi chalega"*). It is not an alternative,
+> it is required, and reading `levelAsk` is what showed it: **on the camera path Milo's bubble ranks the
+> hand's state ABOVE the ask by design** — so from the moment a hand enters frame the bubble says
+> *"Close your fist on Astro to pick her up"* and **the number is gone from the screen entirely.** With
+> the marker also gone the round would have been unanswerable. Proven on screen, on his own path:
+> `NEEDS 23 m` in the pill while the bubble read *"Hold your hand up where I can see it."*
+> • It wears **`DistMarker`'s pill**, so one orange symbol means *the metre Astro wants* in both places
+>   — pegged on the line while being taught, in the corner while being measured.
+> • ⚠️ **It sits INSIDE the chrome strip (`top < CHROME_PX`), not below it.** The name boards are
+>   clamped to `CHROME_PX + 6`, so anything hanging under the chrome lands on a board on a short frame.
+> • **Then he asked for bigger and centred**, which is where it stopped being a CSS clamp: a
+>   `clamp(…vw…)` cannot see what is UNDER the pill, so growing one is guesswork that eventually lands
+>   on a board. `pillCeiling` is the gap to whatever is next down the stack — **and that is not always
+>   the boards**: on a two-leg `estimate` round `LegBoard` sits between, and on a short frame those two
+>   are ~50px apart. **640×320 font 12 → 29 (+142%), 1280×720 18 → 38 (+111%)**, dead centre, 32px+
+>   clear at every size.
+>
+> ## ③ THE CHALKBOARDS — EXTRACTED, NOT COPIED, AND THE TWO CHAPTERS HANG THEM DIFFERENTLY
+> `Chalkboard` · `GotIt` · `ThePlan` · `StepBoard` moved out of OrderDesk into
+> **`story/chalkboard.tsx`** — the same call `critters.tsx` and `yard.tsx` were made on: *one consumer
+> is not an abstraction, two is.* A copy would mean the slab fix, the `--font-chalk` fix and the
+> windowing corrected twice or not at all. **The Fundraiser's own 38-test gate is the proof the move
+> changed nothing** — ⚠️ and it *caught the move*, because its source check reads the file the component
+> lives in; repointed at `chalkboard.tsx`, which is the check working rather than failing.
+> ⚠️ **THE BOARD HANGS FROM THE CHROME HERE AND FROM THE FLOOR THERE, AND THAT IS ARITHMETIC.** The band
+> below this chapter's painted path is **66/148/119px** at 640×320 / 1024×620 / 1920×800 against a board
+> **68/152/152px** tall — it does not fit at three of five sizes, and forcing it would cover the path,
+> which in a rounding chapter IS the number line. Its chrome→boards strip is 84px at the worst size.
+> ⚠️ **`LegBoard` LEFT THE DEMO because of it** — its whole job there was showing the two rounded legs
+> adding up, which is now the board's last line, so the two were one thing said twice AND they collide
+> in that strip. It stays in PLAY, where it is the child's own work accumulating.
+> ⚠️ **AND MY FIRST PLAN COPY CLIPPED THE SKIP BUTTON.** 422 characters overflowed the 92dvh
+> `overflow: hidden` board by 15px at 640×320 and cut *"I've got it →"* clean off — **a dead control**,
+> the same fault this repo paid for once by capping an intro card onto its own Start button. A scroll is
+> NOT the fix (it hides the button behind an undiscoverable scrollbar); shorter words are, which is the
+> lever the handoff already records. 299 chars now, and **`PLAN_BUDGET` is gated because nothing can
+> SEE a clip.** The Fundraiser's own plan was checked and is clean — not a pre-existing bug.
+>
+> ## ④ ⚠️ MUTATION TESTING CAUGHT TWO OF MY OWN ASSERTIONS BEING WEAKER THAN THE RULES THEY GUARD
+> Both are this file's oldest recorded shape and I wrote them anyway:
+> ① **the board-placement check drove `stepBoardRect` directly** and never read what the COMPONENT
+> passes, so hanging it from the floor again (the anchor that does not fit) walked straight through;
+> ② **`expect(SRC).toMatch(/<ThePlan/)` is satisfied by a render behind `false &&`** — it proves the
+> component is *mentioned*, not reachable. Both are anchored on real code now. **9/9 caught after**:
+> the marker back in play · the pill removed · the pill dropped onto the boards · the old small pill ·
+> a pill grown without the room-derived backstop · the old "look at the halfway mark" wording · the
+> board bottom-anchored · the plan unreachable · the primary intro door skipping the plan.
+>
+> ## ⑤ WHAT WAS ACTUALLY DRIVEN
+> **1280×720 and 640×320, tap path:** intro → THE PLAN (720×434, 4px wooden frame, **chalk resolving to
+> Gaegu**, three points, quiet skip) → walkthrough with the step board writing `Needs 55 m` →
+> `50 to 60, half 55` → `55 is half: go up` while the bubble carried the narration — **the dead-heat
+> case, live, two different strings rather than one repeated** → guided round with the pill and a bare
+> line → a wrong pick giving the reworded miss line → a right pick grading and advancing.
+> **Every fixed layer crossed with every other at both sizes: 0 overlaps, 0 offscreen, no h-scroll.**
+> ⚠️ **The camera path was reached but its played round sits behind `CamGate`** (the preview pane blocks
+> capture), so the pill/bubble evidence there is a DOM read, not a screenshot — it is the decisive
+> evidence for §② and it is not a picture.
+> ⚠️ Two instrument notes: a layer sweep reported three "overlaps" that were **the step board's own
+> numbered chips** matched as name boards, and the pane still renders the app into a corner after a
+> resize while `innerWidth` reads correctly. Trust `getBoundingClientRect`, and exclude a container's
+> own descendants before crossing it with anything.
+>
+> ## ⑥ ⚠️⚠️ THEN THE FOUNDER ASKED FOR A 640×320 PASS **ON PROD**, AND THE STEP BOARD WAS DRAWN ACROSS THREE NAME BOARDS — WITH THE GATE GREEN
+> Checkpoints 60, 70 and 80 were behind the working board, in the commit that had just deployed.
+> ⚠️ **`postH` IS THE STALK, NOT THE POST.** `CheckPost` is a column of LABEL-then-stalk anchored at the
+> path, so the name boards actually begin another `boardH` higher — **28px at 640×320**. Both my gate
+> and the comment I wrote asserted against `pathPx - postH`, which is the top of the *stalk*: a line
+> nothing draws, 28px too low. **`levelLayout`'s own clamp already said so** (`pathPx - CHROME_PX -
+> boardH - 6`) and I read it wrong.
+> ⚠️ **WITH THE CORRECT ARITHMETIC THE BOARD DID NOT FIT AT 5 OF 7 SIZES.** The real chrome→boards band
+> is **51px at 640×320**, not the 84px §③ claimed, and the band below the path is 62/124/105px — so
+> neither anchor works. It hangs from **`PILL_TOP`** now, inside the chrome strip, where it clears at
+> every size (**23px at the worst**) and passes horizontally BETWEEN ‹ Menu and the skip chip.
+> ⚠️ **That is a 2D crossing, which is exactly why a vertical-only check cannot see it** — and it is
+> safe only because the pill is `LevelPlay`-only and the board is `LevelExplain`-only, so the two can
+> never want that strip at once.
+> ⚠️⚠️ **AND FIXING THE GATE TOOK TWO STEPS, THE SECOND OF WHICH IS THE LESSON.** Correcting `boardsTop`
+> made the clearance check catch the shipped bug — but **loosening the definition BACK to the stalk top
+> was NOT caught**, because every check is written in terms of `boardsTop`, so a looser definition makes
+> `bottom <= boardsTop` *easier* to satisfy. That is this file's own recorded fault (*a check written in
+> terms of the constant it guards moves with the mutation*) arriving through a shared helper. **The fix
+> is to pin the definition to a number measured on the SCREEN** — 102, read off production with
+> `getBoundingClientRect` — because a measurement is the one thing a re-derivation cannot move. 2/2 now.
+> ⚠️ **AND WHY MY OWN 640×320 PASS MISSED IT, STATED RATHER THAN HIDDEN: I never crossed the WALKTHROUGH
+> at that size.** I checked THE PLAN and a played round there and did the layer sweep at 1280×720 only —
+> where the band is 196px and everything fits. **Cross every layer at every size in every PHASE**; a
+> phase is a screen like any other.
+>
+> ## ⑦ 🚀 SHIPPED — four commits, clean fast-forward, verified rather than remembered
+> | commit | what |
+> |---|---|
+> | `50a9994` | the code — 18 files, +4,750/−2,520 (AR layer · RailLine → LevelRun · the shared chalkboard · OrderDesk · 3 backdrops · 3 gates) |
+> | `e7149dc` | docs — the craft rules, the plan's amendment, this block |
+> | `1748e09` | `public/sw.js` v87 → v88 |
+> | `88553e4` | **the §⑥ fix** + `boardsTop` + sw v88 → v89 |
+>
+> `origin/main` was an ancestor, so **a clean fast-forward with no merge commit**; local and remote both
+> read `88553e4`, 0 ahead / 0 behind. **The branch was checked out CLEAN in a scratch worktree first**
+> (`tsc` 0 · 900/900) — a green working tree says nothing about the branch, which is how this branch
+> once shipped a tree that failed `tsc` for two sessions. Staged file-by-file and each commit's list
+> read back with `git show --stat`, per the directory-pathspec trap. Prod `sw.js` reported **v88 and
+> then v89 on the fifth poll** each time. Smoke **13/13 = 200**, including all three `lvl_*` backdrops.
+> Deliberately left untracked as every prior session: `docs/recovered/`, `python script/`,
+> `scripts/.voice-*.json`.
+> **Driven on prod at BOTH sizes after the fix:** THE PLAN (not clipped, skip button whole at 99×37,
+> chalk = Gaegu) · the step board at 6→74 against boards at 102, **7 layers crossed, 0 overlaps** · a
+> played round with the pill **dead centre (320/320)** and a bare line · a wrong answer giving the
+> reworded miss line · 0 console errors.
+> ⚠️ **The SW was unregistered and all caches cleared before that check**, because a controlled worker
+> serves the OLD shell even when prod's `sw.js` already reports the new version — this repo lost half a
+> session to that once and it would have hidden the fix.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT — twelve readings deep**, and everything above went
+>    through `__miloPinch`, which sets the pose directly and **bypasses `stepPinch`**. `GRAB_ON` (0.50)
+>    is the knob a real child tunes first.
+> 2. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored `estimate` driven** — so
+>    the step board's two extra lines (`62 rounds to 60`, `50 + 60 = 110`) and the pill's `LegBoard`
+>    ceiling are gated and reasoned about but have not been on screen.
+> 3. **The re-teach's chalkboard has never been seen** — reaching it needs three wrong answers in a run.
+>    That it carries no skip is proven by a source check and the optional `onSkip` type, not a screenshot.
+> 4. ⚠️ **THE 12–18 CHALKBOARDS ARE NOW IN TWO 9–11 CHAPTERS, SO THE BAND IS MIXED** — the other ten
+>    keep the pre-teen HUD kit. That was already a founder call left open by The Fundraiser; it is now
+>    twice as visible, and `story/chalkboard.tsx` is in place for whichever way it goes.
+> 5. **Everything in the ✊ block below still stands**, including the unexplained 57-second entry stall.
+> 6. Of this session's faults, **one came from the founder's screenshot, one from reading `levelAsk`
+>    rather than the screen, one from measuring five frame sizes before believing a placement, one from
+>    a clipped button found by measuring `scrollHeight`, ONE FROM THE FOUNDER ASKING FOR A SIZE ON PROD
+>    THAT I HAD ONLY CHECKED IN TWO OF ITS THREE PHASES, and four from mutation-testing my own gate.
+>    None from the type-checker.**
+
 > ✊ **2026-08-12 — AND THEN THE SLIDE WENT: THE ANSWER IS NOW **GRAB ASTRO WITH A FIST, CARRY HER, AND OPEN YOUR HAND WHERE SHE SHOULD STAND**. ✅ NOW COMMITTED in `50a9994` (this block's "NOT COMMITTED" is stale — see the 🧑‍🏫 block above).** `tsc` 0 · **890/890 vitest** (+2, the chapter gate 45 → 47) · `next build` 0 · 0 console errors · driven live on BOTH inputs at 1280×720 · **4/4 planted regressions caught**, plus **two real defects the drive found that no gate would have.**
 >
 > **The ask:** *"meko yeh slide ka tariqa sahi naii laga… mein character ko fist se hold karu aur slide karu, phir jahan lage sahi hai wahan fist kholu aur woh character waha reh jaae aur woh mera final answer rahega."*

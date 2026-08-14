@@ -492,7 +492,24 @@ This is the same fix the 17–18 band took for the same complaint.
 These came out of checking each anchor against what its generator actually draws. All three need an
 answer before that chapter's copy is written.
 
-1. ⚠️ **Measurement is METRIC in code and the doorframe is FEET AND INCHES.** `UnitConverter`'s items
+1. ✅ **DECIDED 2026-08-14 — US CUSTOMARY, option (a), and the chapter is BUILT: The Height Bar.**
+   The founder took (a) on the argument below. `UnitConverter` is deleted; `inches.ts` +
+   `HeightBar.tsx` + `heightBarUnits.test.ts` replace it, and the world is a ride's height bar rather
+   than a doorframe — the same lived measurement with a CONSEQUENCE attached, which the doorframe
+   alone has not got. ⚠️ **The cost, recorded rather than hidden: the factors become 12, 16 and 4,
+   i.e. multiplication facts, whose chapter was deleted on 2026-08-13 and which `i.measureUnits`
+   lists as a prereq.** Two things make it survivable and neither is luck: the `fit` rounds only ever
+   need 12 × 1..6, which is the table a RULER is printed with, and L1 is whole feet only.
+   ⚠️ **AND §8's AR LINE COULD NOT SHIP AS THE ANSWER, for the arithmetic in `inches.ts`:** two palms
+   carry ~±0.028 of frame width between them, which lands as **±2.3 in** on this chapter's answer
+   scale — so a child who KNEW the answer could not enter it, which is a dead button. It ships where
+   it is honest (the explore beat, "show me about how long a foot is", nothing scored) and the scored
+   rounds use the two-place finger count. That is The Angle Shop's `job: 'degrees'` precedent applied
+   verbatim. The founder picked the gesture knowing this was flagged.
+   ⚠️ The reading is normalised by the child's own hand width, measured in the same frame, so it is
+   distance-invariant and needs no calibration step (`spanRatio` in `infra/ar/fingerCount.ts`).
+
+1b. ⚠️ **THE ORIGINAL TEXT, KEPT:** Measurement is METRIC in code and the doorframe is FEET AND INCHES.** `UnitConverter`'s items
    are cm / m / km / g / kg / mL / L throughout, and a US child's height on a doorframe is 4 ft 6.
    **(a)** switch the chapter to US customary (feet · inches · pounds · cups · gallons), which matches
    the anchor and the audience but rewrites every item; **(b)** keep metric and anchor on the water

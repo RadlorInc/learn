@@ -14,6 +14,199 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 📏 **2026-08-14 — UNITCONVERTER → THE HEIGHT BAR, ON THE FOUNDER'S CALL TO CONNECT THE 9–11 MEASUREMENT CHAPTER TO A DAILY REAL-WORLD EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT ITS CONVERTER PRINTED THE METHOD ON EVERY ROUND AND THAT ELEVEN OF ITS TWELVE UNIT QUESTIONS WERE COIN FLIPS. ⚠️ NOT COMMITTED — the founder has not been asked.** `tsc` 0 · **972/972 vitest** (was 902, **+70**) · `next build` 0 · **eslint: byte-for-byte CoinTray's rule profile, i.e. zero new classes** · 0 console errors in a fresh tab · driven at 1280×720, 640×320 and **334×676** on BOTH inputs · **47/47 planted regressions caught, re-run against the final code.**
+>
+> **The ask:** *"in band 9-11 … joh measurement chapter hai usko bhi daily real world example se connect karna hai"* → on the four questions put to him: **the height bar at a ride** · **US customary** · **build the converted number** · **hands apart to show a length**.
+>
+> ## ⓪ ⚠️ THREE DEFECTS WERE ALREADY SHIPPING, AND THE FIRST ONE IS THE CHAPTER
+> ① ⚠️⚠️ **THE CONVERTER PANEL PRINTED THE METHOD.** `UnitConverter.tsx:173` rendered
+> `<Gear op={data.op} factor={data.factor} />`, whose `on` prop changed only the GLOW — the text
+> `× 1000` / `÷ 100` was on screen for the whole duration of every question. Which unit is bigger, by
+> how much, and whether to multiply or divide **is the skill**, so every `convert` round reduced to
+> *"multiply 3 by 1000"*. ② **ELEVEN OF THE TWELVE sensible-unit items were 50/50 coin flips wearing
+> four chips** — `door → m` offers `m/mm/km/cm`, `bathtub → L` offers `L/mL/g/km`, i.e. two of the four
+> are always from the wrong ATTRIBUTE and eliminated for free. ③ the demo's second beat is a UNIT
+> question under a card hardcoded `tag="Convert"` — the `tag="Read"` fault, verbatim. Plus **no anchor
+> of any kind**: the intro card said *"Milo runs the metric converter"*.
+>
+> ## ① THE VERB WAS ALREADY DECIDED AND IT NEEDED ONE CORRECTION
+> [story-9-11-rethink.md §8](docs/story-9-11-rethink.md) fixed **DOES IT FIT?** — conversion exists
+> because two measurements in different units have to be COMPARED, and the comparison has a
+> consequence. Right, and its *"fitting is the answer"* had to be inverted before any code:
+> ⚠️ **yes/no is the 50% coin flip this band is being rebuilt to remove.** The converted NUMBER is
+> scored; the gate opening is what the child then watches. Same call pizza.ts and cents.ts already made.
+>
+> ## ② ⚠️ THE UNITS DECISION HAD BEEN PARKED SINCE 2026-08-12 AND IT BLOCKS EVERY LINE OF COPY
+> [story-9-11-ar-plan.md §7.1](docs/story-9-11-ar-plan.md) records it; the founder took **(a) US
+> customary**. The anchor is the one measurement a child checks on themselves and a US nine-year-old
+> knows it as *"four foot three"*, never as 130 cm — metric would have meant an anchor nobody has
+> lived. ⚠️ **THE COST, RAISED BEFORE BUILDING: the factors stop being ×10/×100/×1000 and become 12,
+> 16 and 4 — multiplication facts, whose chapter was DELETED on 2026-08-13 and which `i.measureUnits`
+> lists as a prereq.** Survivable for two reasons that are construction rather than luck: the `fit`
+> rounds only ever need **12 × 1..6**, which is the table a RULER is printed with, and **L1 is whole
+> feet only**, so the first rounds are that table before any inches are added.
+>
+> ## ③ ⚠️⚠️ THE FOUNDER'S AR PICK CANNOT CARRY A SCORED ANSWER, AND THE ARITHMETIC SAYS SO BEFORE ANY CODE
+> §8 asks for *"hold your hands apart to SHOW a length"*. Measured first, as the AR doc demands:
+> **two palms carry ~±0.028 of frame width between them, which stretched onto the answer scale is
+> ±2.3 INCHES** — so answers one inch apart (51 against 50) sit inside the noise and **a child who KNEW
+> the answer could not enter it**, which is a dead button. And both hands must be in frame: a webcam
+> sees ~nine hand widths across, so anything past ~22 in cannot be shown at all.
+> ⇒ Built as **The Angle Shop's `job: 'degrees'` precedent, verbatim**: the gesture ships where it IS
+> honest — the EXPLORE beat, *"show me about how long a foot is"*, nothing scored, where no precision
+> is wanted — and the scored rounds keep the two-place finger count. **I flagged this when he picked
+> it and he picked it anyway; it is in the chapter and it works.**
+> ⚠️ **AND IT IS CALIBRATION-FREE, WHICH IS THE PART WORTH KEEPING.** A span in frame fractions is not
+> a length (lean back and everything shrinks together). The child's own HAND WIDTH is in the same frame
+> and scales identically, so `span ÷ handWidth` is distance-invariant — measured **across the knuckles**
+> so curling the fingers cannot move the ruler. New: `spanRatio`/`palmSpan`/`meanHandWidth` in
+> `fingerCount.ts`, `reads: 'span'`, `__miloSpan`. ⚠️ **ONE detector mode carries BOTH readings** (the
+> count for scored rounds, the span for explore), because `reads` is fixed when the camera opens and
+> two modes would mean re-initialising MediaPipe mid-chapter.
+>
+> ## ④ ⚠️ FOUR FAULTS THE DRIVE FOUND, AND THREE WERE ONLY VISIBLE AT 640×320
+> ① ⚠️⚠️ **THE INSTRUCTION CHIP WAS DRAWN 29 × 16 px ACROSS THE HEADLINE** — the door-frame mark, which
+> IS the question. `boardBand`'s top clamp is justified by sliding a board under *text already read*,
+> and **zone 3's chip is the LAST thing in the card, so it is the FIRST thing the board reaches — and
+> it is the one action, not something read and finished with.** That half of the rule had never been
+> written down. Fixed by the prose, in the documented order: a short frame now gets the two FACTS
+> without the rule sentence (`context`), because the rule is stated in the demo AND again in the
+> re-teach. Card 97 → 79px, chip clears the headline by 2px. ② The same collision on the EXPLORE beat
+> (5px over the chip) — its body is now shorter on short, pinned as **`EXPLORE_BUDGET` 84 chars**,
+> because *nothing can see a wrap* (the chalkboard's `PLAN_BUDGET` shape: 118 chars wraps to two lines
+> and collides, 70 is one line and clears by 12). ③ **"hold up it"** on the guided round's own chip —
+> `${verb} it.` over `{hand:'hold up'}`. The *"0 pennyies"* family: one verb cannot serve two
+> sentences, so the chip gets its own phrasing. ④ **The tag printed TWICE**, an inch apart — the board's
+> chrome strip and the prompt card both drew `data.tag`. Copied from CoinTray, and it only shows on a
+> roomy frame because a short frame drops the strip.
+>
+> ## ⑤ ⚠️ AND THE GATE FOUND ONE THE DRIVE COULD NOT: THE CHILD'S OWN WORKING LANDS ON A NUMBER PRINTED AS SOMETHING ELSE
+> A `fit` round asking `4 ft 3 in` against a **48 in** sign makes the first step of the conversion —
+> four lots of twelve — **equal to the number on the sign**. Nothing prints the answer (51) and nothing
+> is wrong; a child who stops at the figure they can see is marked wrong **for a confusion the CHAPTER
+> created**. The demo said it out loud, *"4 feet is 4 lots of twelve, which is 48 inches"*, directly
+> under `sign: 48 in`. Two of six limits are multiples of twelve → ~⅓ of L2. Fixed by construction
+> (`OFFSET_LIMITS`), ⚠️ with L1 the deliberate exception, because there `ft × 12` IS the answer.
+> ⚠️ Two more of the same family the gate caught before any drive: a `need` shortfall that equals the
+> height's own **inches** part (`48 − 42 = 6`, written `3 ft 6 in`) and then, only after fixing that
+> one, the same thing against the **feet** part (`44 − 41 = 3`, written `3 ft 5 in`) — **a rule stated
+> for one component of a written form has to be checked against every component of it.**
+>
+> ## ⑥ WHAT WAS ACTUALLY DRIVEN
+> **1280×720, both inputs:** both doors, and the remembered pick proven live (after one "Use taps" the
+> tap door becomes the BIG button and the camera the quiet one) · the explore beat stacking to
+> **12 in / = 1 ft** · all three demos beat by beat, including the boundary one printing *"48 inches
+> against a sign that says 48 — they are the same, and the same is tall enough"* · a guided round
+> answered WRONG (44, the plausible read-the-sign-back error) giving the miss line with the entry
+> cleared and **no mark on the bar** · then RIGHT, printing **"4 ft is 48 inches — the sign says 44,
+> so you are on"** · 6 layers crossed, 0 real overlaps, **0 pad keys covered** (pad at 349 against
+> Milo's right edge 187).
+> **CAMERA PATH:** the denied gate on the chapter's own navy with *"Tap instead"* offered first · the
+> span live (**4.1 hand-widths → 12 in**, 2.0 → *"About 6 inches — that is around a sheet of paper"*) ·
+> a guided round entered as **4 then 8 → 48** through the dwell. ⚠️ **The held-over guard proven the
+> decisive way: four fingers parked for 9.2 s ACROSS the slot boundary committed nothing**, and the one
+> line that makes that visible was on screen — *"Lower your hand, then show the ones digit."*
+> **640×320:** the intro card with the second door **16px clear of the bottom edge** · a played round
+> with the miss note up, **21 leaf TEXT boxes crossed with each other → 0 overlaps**, 0 offscreen, no
+> scroll.
+> **334×676 — the narrow-but-TALL frame that produced the FactorLab/CoinTray fault** (`short` is
+> `vh < 470`, so it takes the roomy branch): Milo's right edge measured **98** against the derived
+> 97.7, the pad wraps to FOUR rows with its last row beside him, and **0 keys covered**.
+> ⚠️ Instrument notes, both documented and both met again: the preview pane renders the app into a
+> corner after a resize while `innerWidth` reads correctly (trust `getBoundingClientRect`), and **the
+> console buffer survives navigation — twice it showed parse errors from intermediate HMR states while
+> `tsc` was clean and a fresh tab read ZERO.**
+>
+> ## ⑦ THE GATE — +70 tests, **47/47 planted regressions caught, RE-RUN AGAINST THE FINAL CODE**
+> [heightBarUnits.test.ts](src/__tests__/heightBarUnits.test.ts) drives the pure module and
+> source-checks the scene and the detector. ⚠️ **It passed 62/62 on its FIRST run, which by this file
+> is not evidence** — every mutation was planted in the SOURCE by a script that asserts its own
+> substitution count, and **three survivors were my own gate being weaker than the rule it guards**:
+> ① `expect(height).toBeGreaterThanOrEqual(MIN_HEIGHT)` **moves with the mutation** — dropping the
+> constant to 12 stayed green while the chapter told a nine-year-old they were 2 ft 1. Pinned to the
+> literal 36, which is the `boardsTop` fix one more time. ② `toMatch(/alt=\{/)` **also matches
+> `x_alt={`**, so deleting the second door walked straight through. ③ **the invariance test did its own
+> division**, so dropping `/ hw` from the detect loop left it green — *a gate that re-implements a rule
+> cannot see the rule being removed*, fixed by extracting `spanRatio` and driving THAT.
+>
+> ## ⑧ ✅ THE `ponytail:` DEBT IS PAID — `boardBand` WAS ABOUT TO BE A FOURTH COPY
+> `cents.ts` carried a comment saying to extract it once pizza/factors were committed. They are
+> (`0c9418b`), so the clamp now lives once in **`story/preteen/band.ts`** (`fitBand`, `miloRight`,
+> `MILO_LANE`). ⚠️ **Only the ARITHMETIC is shared — the constants are NOT**, because the three
+> chapters do not agree on their bottom band (112/152 against 118/158) and hoisting the numbers would
+> silently re-tune two shipped chapters. **Proven inert by their own gates: 162/162 across CoinTray,
+> FactorLab and PizzaCounter, `tsc` 0.**
+>
+> ## ⑨ ✅ A FULL TEN-ROUND RUN WAS PLAYED — AND IT CLOSES TWO OF THIS BLOCK'S OWN OPEN ITEMS
+> Founder's ask: *"ek full 10 round run karke dekho"*. Planned off `calcDifficulty` rather than by
+> feel — promotion is 3-in-a-row at ≥80%, mastery is a streak of 6 at the top tier, **so a perfect run
+> exits at round 6 and cannot show all ten.** One deliberate miss at round 6 keeps the tier (a demote
+> needs TWO wrong in a row) and walks the whole set.
+> **✅ ALL TEN ROUNDS PLAYED, confirmed by SkillBeat's OWN counter reading `[1,2,3,4,5,6,7,8,9,10]`**
+> — not by the driver's count, which over-counts a re-opened round. The chapter then **ended itself**
+> and exited. 0 console errors.
+>
+> | # | type | question | answer | what the screen said |
+> |---|---|---|---|---|
+> | 1 | fit | 3 ft vs sign 52 | 36 | *"…the sign says 52, so **not this time**"* |
+> | 2 | fit | 4 ft vs sign 54 | 48 | *"…so **not this time**"* |
+> | 3 | fit | 5 ft vs sign 54 | 60 | *"…so you are on"* |
+> | 4 | swap | 32 yd × 3 | 96 | *"32 yards is 96 feet — the same amount"* |
+> | 5 | need | 3 ft 11 in vs 52 | 5 | *"…is 5 inches under the sign"* |
+> | 6 | swap | 6 lb × 16 | 96 | **MISS 97 → *"That reads 97 ounces"***, then retried right |
+> | 7 | swap | 24 qt × 4 | 96 | *"24 quarts is 96 cups — the same amount"* |
+> | 8 | fit | 5 ft vs sign 52 | 60 | *"…so you are on"* |
+> | 9 | need | 3 ft 6 in vs 42 | **0** | *"3 ft 6 in is **exactly** 42 inches — you are on"* |
+> | 10 | fit | 4 ft 7 in vs 42 | 55 | *"…is 55 inches — the sign says 42, so you are on"* |
+>
+> ✅ **COVERAGE FIRED LIVE** — `fit` (1,2,3,8,10) · `swap` (4,6,7) · `need` (5,9), all three readings
+> asked. ✅ **L3 WAS REACHED**: the ×16 factor (round 6) and the exact boundary (round 9) exist at L3
+> and nowhere else, so both are now proven on screen rather than only in the gate. ✅ **The boundary was
+> SCORED** — answered `00` and **graded rather than nudged**, which is the `hands > 0` / pad-starts-at-0
+> pair working end to end. ✅ **The miss named what was BUILT** (97) and never the answer (96).
+> ✅ **Both consequences appeared at L1** — rounds 1 and 2 came out *"not this time"*, so the world's
+> answer genuinely varies rather than always being yes.
+> ⚠️ **THE DRIVER SOLVED EACH ROUND FROM THE SCREEN ALONE** (headline, sign, and the factor sentence) —
+> so this is also evidence that the card carries everything the question needs. Its first version
+> counted a DEMO beat as a round and threw on the missing pad; fixed by requiring the ten-key pad.
+>
+> ## ⑩ ⚠️ AND THE RUN TURNED UP ONE THING WORTH A FOUNDER'S CALL: THREE OF THE TEN ANSWERS WERE 96
+> Rounds 4, 6 and 7 were `32 yd × 3`, `6 lb × 16` and `24 qt × 4` — three genuinely different
+> questions, three different factors, **one answer typed three times**. Measured over 4,000 simulated
+> runs: **21.2% of runs repeat some answer three or more times**, and the swap answers pile onto
+> highly-composite numbers (96 · 48 · 32 · 64 · 80 are the commonest, because ×3, ×4 and ×16 all land
+> there). ⚠️ **`sig` dedupe structurally cannot see this** — it dedupes the QUESTION, and these three
+> questions are distinct. Not a correctness fault (the child did three different conversions) and it
+> reads repetitive. **Left as the founder's call rather than fixed unasked.**
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED, NOT DEPLOYED** — the founder has not been asked, and this repo does not push
+>    unasked. **DELETED: `story/UnitConverter.tsx`.** `public/sw.js` is still **v92** and must be
+>    bumped in the same commit as any deploy.
+> 2. ✅ **CLOSED by §⑨ — all ten rounds played, the tier climbed, `coverage` fired and the chapter
+>    ended itself.** ⚠️ What the run does NOT cover: **the RE-TEACH never fired** (it needs two wrong
+>    in a row and the plan called for exactly one miss) and **the MASTERY early-exit never fired** (it
+>    was deliberately broken to reach all ten). Those two need a second run each, and they are
+>    mutually exclusive with this one — an erring run and a perfect run are different evidence.
+> 3. ✅ **CLOSED by §⑨ — L3 was reached and both trap cases were on screen**: the ×16 factor (round 6)
+>    and the exact boundary answered 0 (round 9). A height below the sign also appeared, at L1
+>    (rounds 1 and 2).
+> 4. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO ANY OF THE AR — seventeen readings deep**, and this
+>    chapter adds the FIRST genuinely new detector since the sweep. `HAND_IN = 2.9` is the one assumed
+>    number in the span and the knob a real child tunes first; `SPAN_EMA = 0.22` is the second. Neither
+>    has met a hand. The distance-invariance is proven by arithmetic and a unit test, not by leaning back.
+> 4b. ⚠️ **THE ANSWER SPREAD, from §⑩: 21.2% of runs repeat an answer three or more times**, because
+>    the swap factors (3, 4, 16) all land on the same highly-composite numbers. Founder's call.
+> 5. **The `swap` rounds are the only place mass and capacity appear**, and they are one-step
+>    conversions with the factor GIVEN on the card. That is deliberate (the factor is not a fact a
+>    nine-year-old holds) and worth one look with a founder's eye.
+> 6. **Everything in the 🪙, 🍕, ✋ and 🗑️ blocks below still stands**, including that the rebuild shape
+>    for the two deleted chapters is an unanswered founder call.
+> 7. Of this session's faults, **three came from reading the shipped code before touching it, one from
+>    reading the plan's AR line against arithmetic, three from the gate before it ever ran green, four
+>    from driving it (three only at 640×320), one from a fresh tab happening to open at 334×676, and
+>    three from mutation-testing my own gate. None from the type-checker.**
+
 > 🪙 **2026-08-13 — DECIMALGRID → THE COIN TRAY, ON THE FOUNDER'S CALL TO CONVERT THE 9–11 DECIMAL CHAPTER TO A DAILY REAL-WORLD EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT TWO OF ITS THREE QUESTION TYPES WERE COIN FLIPS AND THE THIRD DREW AN EMPTY INSTRUMENT. 🚀 SHIPPED — `main`@`0c9418b`, prod serving **sw v92**, smoke 11/11 and both new chapters rendered on the live origin.** `tsc` 0 · **902/902 vitest** (was 871, **+31**) · `next build` 0 · **eslint: the same four rule classes as PizzaCounter, i.e. zero new classes** · 0 console errors · driven at 1280×720, 640×320 and 466×676 · **TWO FULL RUNS PLAYED** — one perfect to the mastery exit, one erring through all ten rounds · **23/23 planted regressions caught.**
 >
 > **The asks, in order:** *"9-11 band… decimal chapter ko lete hai, aur uska daily real world example mein convert karte hai"* → on the three questions put to him: **money (structurally separated from The Fundraiser)** · **MAKE THE AMOUNT — build it in coins** · **AR in the same pass**.
@@ -543,166 +736,6 @@
 >    drive hook that under-covered the gesture it was verifying, and one from `rm -rf .next` with the
 >    server running. None from the type-checker.**
 >
-> 🧑‍🏫 **2026-08-12 — NOTHING IS DRAWN ON THE LINE ANY MORE, THE NUMBER GOT A HOME OF ITS OWN, AND THE 12–18 CHALKBOARDS CAME DOWN TO THIS BAND. 🚀 SHIPPED — `main`@`88553e4`, prod serving **sw v89**, smoke 13/13 and DRIVEN LIVE ON PROD AT BOTH SIZES. ⚠️ AND THE 640×320 PROD PASS THE FOUNDER ASKED FOR FOUND A REAL BUG IN WHAT HAD JUST DEPLOYED — see §⑥.** `tsc` 0 · **901/901 vitest** (was 890, **+11**) · `next build` 0 · 0 console errors on prod · **11/11 planted regressions caught, FOUR of them against my OWN assertions.**
->
-> **The asks, in order:** *"line pe 650 bol raha hai aur bubble mein 669… line pe mark naii rehna chahiye"* → *"increase the size of this and bring it to the center"* → *"yeh age band mein bhi woh same 'The plan' and 'step by step' chalkboards use karo… totally same bro"*.
->
-> ## ⓪ ⚠️ FIRST, A DEV-SERVER TRAP THAT COST THE SESSION'S OPENING AND WILL RECUR
-> The founder's screenshot was `/menu` returning **404** — a route whose `page.tsx` is plainly on disk.
-> Cause: **`next build` and `next dev` had been sharing one `.next`.** A build at 21:41 left a
-> production manifest that the dev server then read at 21:44, so route resolution came off the prod
-> `app-path-routes-manifest` while the file was there all along. `rm -rf .next` + restart fixed it.
-> **Do not run the `next build` gate while the dev server is up** — clear `.next` after a build, or stop
-> the server first. (This session hit it twice more running the gate, and cleaned up each time.)
-> ⚠️ And the ordinary `rm -rf .next` warning still stands: only safe with the server STOPPED.
->
-> ## ① THE MARKS CAME OFF THE LINE, AND THE MARKER WAS THE WORSE OF THE TWO
-> His screenshot showed **"halfway 650" on the line beside a bubble asking about 669** — two numbers on
-> screen, only one of them the question. Both marks came off a played round, and the one he had not
-> named is the one that mattered: **the distance marker pegs the number's TRUE POSITION on the line,
-> which is the answer, drawn** — a child could read the nearer checkpoint straight off it without
-> rounding anything, and at L1 it showed on every round.
-> ⚠️ **BOTH STAY IN `LevelExplain`, WHICH IS THE DEMO AND THE RE-TEACH**, and that split is
-> chapter-craft's own line: *if the scene can answer the question, you are teaching, not measuring.*
-> Showing 47 sitting past halfway is exactly what a demo is for.
-> ⚠️ **So a miss no longer reveals the halfway post, and the copy had to change with it** — `missFor`
-> said *"Look at the halfway mark at 650"*, i.e. it pointed at something that no longer exists. It
-> STATES the value now (*"Halfway between them is 45 — and 48 is PAST it"*). **Copy that points at a
-> mark is a second consumer of that mark; grep the words when you delete a drawn thing.**
->
-> ## ② ⚠️⚠️ THE TARGET PILL IS NOT DECORATION — IT IS WHAT MAKES §① SURVIVABLE, AND THE FOUNDER SPOTTED THE NEED BEFORE I DID
-> He offered top-centre as an alternative (*"top center mein bhi chalega"*). It is not an alternative,
-> it is required, and reading `levelAsk` is what showed it: **on the camera path Milo's bubble ranks the
-> hand's state ABOVE the ask by design** — so from the moment a hand enters frame the bubble says
-> *"Close your fist on Astro to pick her up"* and **the number is gone from the screen entirely.** With
-> the marker also gone the round would have been unanswerable. Proven on screen, on his own path:
-> `NEEDS 23 m` in the pill while the bubble read *"Hold your hand up where I can see it."*
-> • It wears **`DistMarker`'s pill**, so one orange symbol means *the metre Astro wants* in both places
->   — pegged on the line while being taught, in the corner while being measured.
-> • ⚠️ **It sits INSIDE the chrome strip (`top < CHROME_PX`), not below it.** The name boards are
->   clamped to `CHROME_PX + 6`, so anything hanging under the chrome lands on a board on a short frame.
-> • **Then he asked for bigger and centred**, which is where it stopped being a CSS clamp: a
->   `clamp(…vw…)` cannot see what is UNDER the pill, so growing one is guesswork that eventually lands
->   on a board. `pillCeiling` is the gap to whatever is next down the stack — **and that is not always
->   the boards**: on a two-leg `estimate` round `LegBoard` sits between, and on a short frame those two
->   are ~50px apart. **640×320 font 12 → 29 (+142%), 1280×720 18 → 38 (+111%)**, dead centre, 32px+
->   clear at every size.
->
-> ## ③ THE CHALKBOARDS — EXTRACTED, NOT COPIED, AND THE TWO CHAPTERS HANG THEM DIFFERENTLY
-> `Chalkboard` · `GotIt` · `ThePlan` · `StepBoard` moved out of OrderDesk into
-> **`story/chalkboard.tsx`** — the same call `critters.tsx` and `yard.tsx` were made on: *one consumer
-> is not an abstraction, two is.* A copy would mean the slab fix, the `--font-chalk` fix and the
-> windowing corrected twice or not at all. **The Fundraiser's own 38-test gate is the proof the move
-> changed nothing** — ⚠️ and it *caught the move*, because its source check reads the file the component
-> lives in; repointed at `chalkboard.tsx`, which is the check working rather than failing.
-> ⚠️ **THE BOARD HANGS FROM THE CHROME HERE AND FROM THE FLOOR THERE, AND THAT IS ARITHMETIC.** The band
-> below this chapter's painted path is **66/148/119px** at 640×320 / 1024×620 / 1920×800 against a board
-> **68/152/152px** tall — it does not fit at three of five sizes, and forcing it would cover the path,
-> which in a rounding chapter IS the number line. Its chrome→boards strip is 84px at the worst size.
-> ⚠️ **`LegBoard` LEFT THE DEMO because of it** — its whole job there was showing the two rounded legs
-> adding up, which is now the board's last line, so the two were one thing said twice AND they collide
-> in that strip. It stays in PLAY, where it is the child's own work accumulating.
-> ⚠️ **AND MY FIRST PLAN COPY CLIPPED THE SKIP BUTTON.** 422 characters overflowed the 92dvh
-> `overflow: hidden` board by 15px at 640×320 and cut *"I've got it →"* clean off — **a dead control**,
-> the same fault this repo paid for once by capping an intro card onto its own Start button. A scroll is
-> NOT the fix (it hides the button behind an undiscoverable scrollbar); shorter words are, which is the
-> lever the handoff already records. 299 chars now, and **`PLAN_BUDGET` is gated because nothing can
-> SEE a clip.** The Fundraiser's own plan was checked and is clean — not a pre-existing bug.
->
-> ## ④ ⚠️ MUTATION TESTING CAUGHT TWO OF MY OWN ASSERTIONS BEING WEAKER THAN THE RULES THEY GUARD
-> Both are this file's oldest recorded shape and I wrote them anyway:
-> ① **the board-placement check drove `stepBoardRect` directly** and never read what the COMPONENT
-> passes, so hanging it from the floor again (the anchor that does not fit) walked straight through;
-> ② **`expect(SRC).toMatch(/<ThePlan/)` is satisfied by a render behind `false &&`** — it proves the
-> component is *mentioned*, not reachable. Both are anchored on real code now. **9/9 caught after**:
-> the marker back in play · the pill removed · the pill dropped onto the boards · the old small pill ·
-> a pill grown without the room-derived backstop · the old "look at the halfway mark" wording · the
-> board bottom-anchored · the plan unreachable · the primary intro door skipping the plan.
->
-> ## ⑤ WHAT WAS ACTUALLY DRIVEN
-> **1280×720 and 640×320, tap path:** intro → THE PLAN (720×434, 4px wooden frame, **chalk resolving to
-> Gaegu**, three points, quiet skip) → walkthrough with the step board writing `Needs 55 m` →
-> `50 to 60, half 55` → `55 is half: go up` while the bubble carried the narration — **the dead-heat
-> case, live, two different strings rather than one repeated** → guided round with the pill and a bare
-> line → a wrong pick giving the reworded miss line → a right pick grading and advancing.
-> **Every fixed layer crossed with every other at both sizes: 0 overlaps, 0 offscreen, no h-scroll.**
-> ⚠️ **The camera path was reached but its played round sits behind `CamGate`** (the preview pane blocks
-> capture), so the pill/bubble evidence there is a DOM read, not a screenshot — it is the decisive
-> evidence for §② and it is not a picture.
-> ⚠️ Two instrument notes: a layer sweep reported three "overlaps" that were **the step board's own
-> numbered chips** matched as name boards, and the pane still renders the app into a corner after a
-> resize while `innerWidth` reads correctly. Trust `getBoundingClientRect`, and exclude a container's
-> own descendants before crossing it with anything.
->
-> ## ⑥ ⚠️⚠️ THEN THE FOUNDER ASKED FOR A 640×320 PASS **ON PROD**, AND THE STEP BOARD WAS DRAWN ACROSS THREE NAME BOARDS — WITH THE GATE GREEN
-> Checkpoints 60, 70 and 80 were behind the working board, in the commit that had just deployed.
-> ⚠️ **`postH` IS THE STALK, NOT THE POST.** `CheckPost` is a column of LABEL-then-stalk anchored at the
-> path, so the name boards actually begin another `boardH` higher — **28px at 640×320**. Both my gate
-> and the comment I wrote asserted against `pathPx - postH`, which is the top of the *stalk*: a line
-> nothing draws, 28px too low. **`levelLayout`'s own clamp already said so** (`pathPx - CHROME_PX -
-> boardH - 6`) and I read it wrong.
-> ⚠️ **WITH THE CORRECT ARITHMETIC THE BOARD DID NOT FIT AT 5 OF 7 SIZES.** The real chrome→boards band
-> is **51px at 640×320**, not the 84px §③ claimed, and the band below the path is 62/124/105px — so
-> neither anchor works. It hangs from **`PILL_TOP`** now, inside the chrome strip, where it clears at
-> every size (**23px at the worst**) and passes horizontally BETWEEN ‹ Menu and the skip chip.
-> ⚠️ **That is a 2D crossing, which is exactly why a vertical-only check cannot see it** — and it is
-> safe only because the pill is `LevelPlay`-only and the board is `LevelExplain`-only, so the two can
-> never want that strip at once.
-> ⚠️⚠️ **AND FIXING THE GATE TOOK TWO STEPS, THE SECOND OF WHICH IS THE LESSON.** Correcting `boardsTop`
-> made the clearance check catch the shipped bug — but **loosening the definition BACK to the stalk top
-> was NOT caught**, because every check is written in terms of `boardsTop`, so a looser definition makes
-> `bottom <= boardsTop` *easier* to satisfy. That is this file's own recorded fault (*a check written in
-> terms of the constant it guards moves with the mutation*) arriving through a shared helper. **The fix
-> is to pin the definition to a number measured on the SCREEN** — 102, read off production with
-> `getBoundingClientRect` — because a measurement is the one thing a re-derivation cannot move. 2/2 now.
-> ⚠️ **AND WHY MY OWN 640×320 PASS MISSED IT, STATED RATHER THAN HIDDEN: I never crossed the WALKTHROUGH
-> at that size.** I checked THE PLAN and a played round there and did the layer sweep at 1280×720 only —
-> where the band is 196px and everything fits. **Cross every layer at every size in every PHASE**; a
-> phase is a screen like any other.
->
-> ## ⑦ 🚀 SHIPPED — four commits, clean fast-forward, verified rather than remembered
-> | commit | what |
-> |---|---|
-> | `50a9994` | the code — 18 files, +4,750/−2,520 (AR layer · RailLine → LevelRun · the shared chalkboard · OrderDesk · 3 backdrops · 3 gates) |
-> | `e7149dc` | docs — the craft rules, the plan's amendment, this block |
-> | `1748e09` | `public/sw.js` v87 → v88 |
-> | `88553e4` | **the §⑥ fix** + `boardsTop` + sw v88 → v89 |
->
-> `origin/main` was an ancestor, so **a clean fast-forward with no merge commit**; local and remote both
-> read `88553e4`, 0 ahead / 0 behind. **The branch was checked out CLEAN in a scratch worktree first**
-> (`tsc` 0 · 900/900) — a green working tree says nothing about the branch, which is how this branch
-> once shipped a tree that failed `tsc` for two sessions. Staged file-by-file and each commit's list
-> read back with `git show --stat`, per the directory-pathspec trap. Prod `sw.js` reported **v88 and
-> then v89 on the fifth poll** each time. Smoke **13/13 = 200**, including all three `lvl_*` backdrops.
-> Deliberately left untracked as every prior session: `docs/recovered/`, `python script/`,
-> `scripts/.voice-*.json`.
-> **Driven on prod at BOTH sizes after the fix:** THE PLAN (not clipped, skip button whole at 99×37,
-> chalk = Gaegu) · the step board at 6→74 against boards at 102, **7 layers crossed, 0 overlaps** · a
-> played round with the pill **dead centre (320/320)** and a bare line · a wrong answer giving the
-> reworded miss line · 0 console errors.
-> ⚠️ **The SW was unregistered and all caches cleared before that check**, because a controlled worker
-> serves the OLD shell even when prod's `sw.js` already reports the new version — this repo lost half a
-> session to that once and it would have hidden the fix.
->
-> ## ▶ OPEN
-> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT — twelve readings deep**, and everything above went
->    through `__miloPinch`, which sets the pose directly and **bypasses `stepPinch`**. `GRAB_ON` (0.50)
->    is the knob a real child tunes first.
-> 2. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored `estimate` driven** — so
->    the step board's two extra lines (`62 rounds to 60`, `50 + 60 = 110`) and the pill's `LegBoard`
->    ceiling are gated and reasoned about but have not been on screen.
-> 3. **The re-teach's chalkboard has never been seen** — reaching it needs three wrong answers in a run.
->    That it carries no skip is proven by a source check and the optional `onSkip` type, not a screenshot.
-> 4. ⚠️ **THE 12–18 CHALKBOARDS ARE NOW IN TWO 9–11 CHAPTERS, SO THE BAND IS MIXED** — the other ten
->    keep the pre-teen HUD kit. That was already a founder call left open by The Fundraiser; it is now
->    twice as visible, and `story/chalkboard.tsx` is in place for whichever way it goes.
-> 5. **Everything in the ✊ block below still stands**, including the unexplained 57-second entry stall.
-> 6. Of this session's faults, **one came from the founder's screenshot, one from reading `levelAsk`
->    rather than the screen, one from measuring five frame sizes before believing a placement, one from
->    a clipped button found by measuring `scrollHeight`, ONE FROM THE FOUNDER ASKING FOR A SIZE ON PROD
->    THAT I HAD ONLY CHECKED IN TWO OF ITS THREE PHASES, and four from mutation-testing my own gate.
->    None from the type-checker.**
-
 ---
 
 _Older sessions (2026-06-15 → 2026-08-12) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision._
