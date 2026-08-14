@@ -61,6 +61,7 @@
  * explore beat is where ten pennies visibly fuse into one dime.
  */
 import { rint, pick } from '@/core/rand'
+import { fitBand } from './preteen/band'
 
 /** A well holds at most nine: ten dimes is a whole dollar, ten pennies is a dime. */
 export const MAX_PER_WELL = 9
@@ -389,33 +390,10 @@ export const GUIDED: CtRound = mkMake(30)
  * over the note pill and the answer row. Clamping `top` slides the tray UP under the question card,
  * which is text the child has already read, rather than DOWN onto targets they have to hit.
  *
- * ponytail: the third copy of this arithmetic (factors.ts `benchBand`, pizza.ts `boardBand`). Extract
- * to story/preteen/band.ts when those two are committed — doing it now means re-running two gates on
- * uncommitted chapters for eight lines.
+ * ✅ The `ponytail:` debt this carried is PAID: the arithmetic and the clamp now live once, in
+ * story/preteen/band.ts, and the constants stay here because the three chapters do not agree on them.
  */
-/**
- * Milo's right edge, in pixels — his OWN geometry, not a guess about it.
- * `PtMilo` is `left: 9%` with `translateX(-50%)` and `width: min(20vh, 160px)`, so:
- */
-export const miloRight = (vw: number, vh: number) => vw * 0.09 + Math.min(vh * 0.20, 160) / 2
-
-/**
- * The lane Milo gets on the left, so the answer pad centres in what is left.
- *
- * ⚠️⚠️ IT IS MEASURED OFF MILO, AND KEYING IT ON `short` IS THE FACTORLAB FAULT VERBATIM.
- * `short` is `vh < 470`, so a NARROW BUT TALL frame took the 12px lane: measured live at 466×676,
- * Milo's box covered the pad's **`0` and `1` keys** — and `0` is the answer on most rounds in this
- * chapter (`0.6` is six dimes and then ZERO pennies; every tenths-only round ends that way). He is
- * `pointerEvents: none`, so the tap still lands and no probe, console or gate can see it — only
- * crossing his box with the pad's. What decides whether the pad reaches him is WIDTH, which `short`
- * does not measure.
- * ⚠️ AND A FIXED 104 IS STILL A GUESS: at 466×676 his right edge is 109.5, so 104 left 4px of him
- * over the `0`. This repo's own rule is that a boundary beside another character is measured off
- * THAT character. Above 900px wide the pad centres well clear of him on its own, so the lane there
- * is only a margin — asserted rather than assumed in the gate.
- */
-export const MILO_LANE = (vw: number, vh: number) =>
-  vw >= 900 ? 12 : Math.ceil(miloRight(vw, vh)) + 8
+export { miloRight, MILO_LANE } from './preteen/band'
 
 export const TOP_BAND = (short: boolean) => (short ? 104 : 146)
 export const BOT_BAND = (short: boolean) => (short ? 118 : 158)
@@ -423,8 +401,5 @@ export const BOT_BAND = (short: boolean) => (short ? 118 : 158)
 export const ACTION_ROW = (short: boolean) => (short ? 47 : 56)
 
 export function boardBand(vh: number, short: boolean, promptBottom = 0, extraBot = 0) {
-  const bot = BOT_BAND(short) + extraBot
-  const want = Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12))
-  const top = Math.min(want, Math.max(0, vh - bot - 90))
-  return { top, bot, band: Math.max(90, vh - top - bot) }
+  return fitBand(vh, Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12)), BOT_BAND(short) + extraBot)
 }

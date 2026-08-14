@@ -35,6 +35,7 @@
  * call the colouring chapter makes for a tap that lands on ink.
  */
 import { rint, pick } from '@/core/rand'
+import { fitBand } from './preteen/band'
 
 /** The answer surface is two hands. Nothing may require more than this. */
 export const MAX_FINGERS = 10
@@ -414,8 +415,5 @@ export const ACTION_ROW = (short: boolean) => (short ? 47 : 56)
  * hit — the same call this band makes everywhere else: the world yields to the tap targets.
  */
 export function benchBand(vh: number, short: boolean, promptBottom = 0, extraBot = 0) {
-  const bot = BOT_BAND(short) + extraBot
-  const want = Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12))
-  const top = Math.min(want, Math.max(0, vh - bot - 90))
-  return { top, bot, band: Math.max(90, vh - top - bot) }
+  return fitBand(vh, Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12)), BOT_BAND(short) + extraBot)
 }
