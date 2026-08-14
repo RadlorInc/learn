@@ -34,7 +34,7 @@ export type { InputKind }
 
 /** How long a hand must hold still before it counts as an answer. */
 export const DWELL_MS = 1200
-export const NO_HAND: HandRead = { count: 0, hands: 0, tilt: null, palm: null, sweeps: 0, sweepArm: 0, sweepArmed: false, grabbing: false, grabs: 0, pen: null, penDown: false, thumbsUp: false }
+export const NO_HAND: HandRead = { count: 0, hands: 0, tilt: null, palm: null, sweeps: 0, sweepArm: 0, sweepArmed: false, grabbing: false, grabs: 0, pen: null, penDown: false, thumbsUp: false, span: null }
 
 /**
  * The chapter's palette, so this can live in a dark neon lab AND on a painted building site.
@@ -109,6 +109,17 @@ export function useHandInput(opts: { reads?: Reads; marker?: { fill: string; ink
     w.__miloFingers = (count: number, hands = 1) => { setFake(true); setRead({ ...NO_HAND, count, hands }) }
     w.__miloTilt = (tilt: number) => { setFake(true); setRead({ ...NO_HAND, hands: 1, tilt }) }
     /**
+     * The hands-apart span, in hand widths — reading **G**.
+     *
+     * ⚠️ IT SETS `hands: 2`, AND THAT IS NOT DECORATION. A span needs two hands by definition, so a
+     * hook that left `hands` at 1 would drive a state the detector can never produce and a chapter
+     * gating its explore beat on "both hands in frame" would be verified against a lie.
+     * ⚠️ AND IT TAKES THE COUNT TOO, because this reading's mode carries both: the scored rounds are
+     * answered by a finger count off the very same frames, so a drive that could only set one of the
+     * two could never walk the chapter end to end.
+     */
+    w.__miloSpan = (span: number | null, count = 0) => { setFake(true); setRead({ ...NO_HAND, hands: span === null ? 0 : 2, count, span }) }
+    /**
      * ⚠️ FUNCTIONAL, NOT ABSOLUTE, AND ITS THREE SIBLINGS ARE THE TRAP. They all set a whole
      * reading, which is right for a pose and wrong for a counter: `setRead({ …, sweeps: 1 })` deals
      * the first round and every later call is a no-op, so the second sweep of every round silently
@@ -161,7 +172,7 @@ export function useHandInput(opts: { reads?: Reads; marker?: { fill: string; ink
       setFake(true)
       setRead(r => ({ ...r, hands: 1, pen: null, penDown: false, grabbing: false, thumbsUp: up }))
     }
-    return () => { delete w.__miloHand; delete w.__miloFingers; delete w.__miloTilt; delete w.__miloSweep; delete w.__miloSlide; delete w.__miloPinch; delete w.__miloPen; delete w.__miloThumb }
+    return () => { delete w.__miloHand; delete w.__miloFingers; delete w.__miloTilt; delete w.__miloSpan; delete w.__miloSweep; delete w.__miloSlide; delete w.__miloPinch; delete w.__miloPen; delete w.__miloThumb }
   }, [])
 
   const camReady = status === 'running' || (DEV && fake)

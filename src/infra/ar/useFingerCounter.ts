@@ -23,7 +23,7 @@
  * Reusable across future AR activities. On-device only — no frame ever leaves the browser.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { extendedFingerTips, palmTilt, norm180, thumbsUp } from '@/infra/ar/fingerCount'
+import { extendedFingerTips, palmTilt, norm180, thumbsUp, spanRatio, quantSpan } from '@/infra/ar/fingerCount'
 import {
   palmRead, stepSweep, sweepKey, quantArm, SWEEP_START, SWEEP_ARM, SWEEP_FIRE, SWEEP_MAX_Y,
   type SweepState, type Palm,
@@ -49,6 +49,14 @@ const TILT_EMA = 0.3
  * deliberate gesture, far above a single bad detection.
  */
 const THUMB_FRAMES = 4
+/**
+ * ⚠️ THE SPAN'S CALIBRATION KNOB, and a continuous reading does not work without one — the same role
+ * `TILT_EMA` plays for the palm angle. A span carries the landmark noise of TWO palms (~±0.028 of
+ * frame width between them, against ~±0.02 for one), so it is the noisiest reading here and wants
+ * more smoothing than the tilt, not less. Raise it for a snappier hand; lower it if the readout will
+ * not sit still for a real child.
+ */
+const SPAN_EMA = 0.22
 
 export type FingerStatus = 'idle' | 'loading' | 'running' | 'error'
 
@@ -58,7 +66,7 @@ export type FingerStatus = 'idle' | 'loading' | 'running' | 'error'
  * therefore meant editing two literal unions in two files, and a chapter passing the new one failed
  * to typecheck at the WRAPPER rather than at the detector.
  */
-export type Reads = 'count' | 'tilt' | 'sweep' | 'slide' | 'pinch' | 'trace'
+export type Reads = 'count' | 'tilt' | 'sweep' | 'slide' | 'pinch' | 'trace' | 'span'
 
 export interface HandRead {
   /** extended fingers across every hand in frame, 0..10 */
@@ -136,6 +144,21 @@ export interface HandRead {
    * band has now met on the count, the tilt and the grab.
    */
   thumbsUp: boolean
+  /**
+   * The gap between the two hands, measured IN THE CHILD'S OWN HAND WIDTHS — reading **G**, a length
+   * shown with the arms. `null` when fewer than two hands are in frame.
+   *
+   * ⚠️ IN HAND WIDTHS RATHER THAN FRAME FRACTIONS, AND THAT IS THE WHOLE READING. A frame fraction is
+   * not a length — lean back and everything shrinks together, so "show me a foot" would mean a
+   * different gesture at every seating distance. The hand is measured in the same frame and scales
+   * identically, so this ratio is invariant to distance and one nominal hand size turns it into
+   * inches. There is no calibration step and nothing for a child to get wrong.
+   *
+   * ⚠️ IT IS SMOOTHED HERE (an EMA) BECAUSE IT IS CONTINUOUS, exactly as the tilt is: the raw ratio
+   * carries both palms' landmark noise, ~±0.028 of frame width between them, which on a live readout
+   * is a number that will not sit still.
+   */
+  span: number | null
 }
 
 interface Opts {
@@ -165,6 +188,8 @@ export function useFingerCounter(
   const pinchRef = useRef<PinchState>(PINCH_START)
   /** consecutive frames the 👍 has been held — see THUMB_FRAMES */
   const thumbRef = useRef(0)
+  /** the smoothed hands-apart span, in hand widths — see `span` on HandRead */
+  const spanRef = useRef<number | null>(null)
   const lastKey = useRef('')
   const optsRef = useRef(opts)
   optsRef.current = opts
@@ -264,7 +289,20 @@ export function useFingerCounter(
       thumbRef.current = thumb ? thumbRef.current + 1 : 0
       const thumbHeld = thumbRef.current >= THUMB_FRAMES
 
-      if (reads === 'sweep') drawSweep(ctx, all[0], sw, v, fill, ink)
+      /**
+       * ⚠️ THE SPAN IS SMOOTHED AND THE COUNT IS NOT SHARED WITH IT — both readings ride this one
+       * mode, on purpose. The chapter that wants a span (The Height Bar) also answers its scored
+       * rounds with a finger COUNT, and `reads` is fixed when the camera opens: giving it two modes
+       * would mean stopping and restarting the detector between phases, which re-initialises
+       * MediaPipe mid-chapter. One mode, both readings, and the key below carries both.
+       */
+      const rawSpan = reads === 'span' ? spanRatio(all) : null
+      if (rawSpan === null) spanRef.current = null
+      else spanRef.current = spanRef.current === null ? rawSpan : spanRef.current + (rawSpan - spanRef.current) * SPAN_EMA
+      const span = spanRef.current
+
+      if (reads === 'span') drawSpan(ctx, all, pts, v, fill, ink)
+      else if (reads === 'sweep') drawSweep(ctx, all[0], sw, v, fill, ink)
       else if (reads === 'tilt') drawTilt(ctx, all[0], v, fill, ink)
       else if (reads === 'slide') drawSlide(ctx, palm, v, fill, ink)
       else if (reads === 'pinch') drawPinch(ctx, palm, pn, v, fill, ink)
@@ -304,11 +342,17 @@ export function useFingerCounter(
                * never arrives — the "three arms, not two" dead button above, one variant along.
                */
               : reads === 'trace' ? `${s.hands}/${pn.held ? 1 : 0}/${thumbHeld ? 1 : 0}/${grip ? `${grip.x.toFixed(4)},${grip.y.toFixed(4)}` : '-'}`
+              /**
+               * ⚠️ BOTH READINGS ARE IN THE KEY, and leaving either out is a silent dead button. The
+               * count alone means a child moving their hands apart changes nothing the explore beat
+               * can see; the span alone means a held-up 4 on a scored round reports nothing.
+               */
+              : reads === 'span' ? `${s.count}/${s.hands}/${quantSpan(span)}`
               : `${s.count}/${s.hands}`
       if (key !== lastKey.current) {
         lastKey.current = key
         optsRef.current.onRead?.({
-          count: s.count, hands: s.hands, tilt, palm,
+          count: s.count, hands: s.hands, tilt, palm, span,
           grabbing: pn.held, grabs: pn.grabs, pen: grip, penDown: pn.held, thumbsUp: thumbHeld,
           sweeps: sw.sweeps, sweepArm: quantArm(sw.arm), sweepArmed: sw.armed,
         })
@@ -322,7 +366,7 @@ export function useFingerCounter(
       setStatus('loading'); setError('')
       stableRef.current = { count: 0, hands: 0, cand: '', streak: 0 }
       tiltVecRef.current = null; sweepRef.current = SWEEP_START; pinchRef.current = PINCH_START
-      thumbRef.current = 0; lastKey.current = ''
+      thumbRef.current = 0; lastKey.current = ''; spanRef.current = null
       /**
        * Counting needs both hands; keep MediaPipe's default 0.5 presence/tracking
        * (the other AR surfaces loosen these to 0.3) — pass them explicitly so the
@@ -528,6 +572,36 @@ function drawPinch(
     ctx.stroke()
     ctx.beginPath(); ctx.arc(px, py, 13, Math.PI + 0.5, Math.PI * 2 - 0.5)
     ctx.stroke()
+  }
+}
+
+/**
+ * The two-hand span: the numbered finger chips AND a bar drawn between the palms.
+ *
+ * ⚠️ BOTH, BECAUSE THIS MODE CARRIES BOTH READINGS. The chapter's scored rounds are answered by a
+ * finger count, and the chips over the fingertips are what say not just how many were counted but
+ * WHICH — i.e. why a held-up 5 read as 4. Dropping them here to keep the overlay tidy would take that
+ * diagnosis away from the only rounds that are graded.
+ *
+ * ⚠️ AND IT DRAWS THE GAP, NEVER A TARGET. A mark on the canvas showing where "one foot" would be is
+ * the answer, handed over — the child would match the picture and estimate nothing. The bar says the
+ * width that was read; whether it is about a foot is the child's own to judge.
+ */
+function drawSpan(
+  ctx: CanvasRenderingContext2D,
+  all: { x: number; y: number }[][], pts: { sx: number; sy: number }[],
+  v: View, fill: string, ink: string,
+) {
+  drawCount(ctx, pts, v, fill, ink)
+  if (all.length < 2 || !all[0]?.[9] || !all[1]?.[9]) return
+  const a = sxy(v, 1 - all[0][9].x, all[0][9].y)
+  const b = sxy(v, 1 - all[1][9].x, all[1][9].y)
+  ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy)
+  ctx.strokeStyle = ink; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.stroke()
+  ctx.strokeStyle = fill; ctx.lineWidth = 5; ctx.stroke()
+  for (const p of [a, b]) {
+    ctx.beginPath(); ctx.arc(p.sx, p.sy, 9, 0, Math.PI * 2)
+    ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = ink; ctx.stroke()
   }
 }
 

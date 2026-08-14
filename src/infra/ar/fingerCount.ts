@@ -100,3 +100,64 @@ export function palmTilt(lm: Landmark[]): number | null {
 }
 
 export const norm180 = (a: number) => ((a % 180) + 180) % 180
+
+// ─── the two-hand span — reading G, "a length shown with the arms" ─────────────────────
+/**
+ * How wide the palm is, across the knuckles — index MCP (5) to pinky MCP (17), in frame fractions.
+ *
+ * ⚠️ THIS IS THE RULER, AND IT IS WHAT MAKES A SPAN MEAN ANYTHING AT ALL. A distance in frame
+ * fractions is not a length: lean back and every measurement shrinks together. The hand is measured
+ * in the SAME frame and scales with distance identically, so `span ÷ handWidth` is invariant to how
+ * far the child is sitting from the camera and needs no calibration step.
+ *
+ * ⚠️ ACROSS THE KNUCKLES RATHER THAN ALONG A FINGER, for `palmTilt`'s reason: both landmarks sit on
+ * the RIGID palm, so the ruler does not change length when the child opens or closes their fingers —
+ * and they will, because a hand held up to show a width is not held in any particular pose.
+ */
+export function handWidth(lm: { x: number; y: number }[] | undefined): number | null {
+  if (!lm || lm.length < 18) return null
+  const w = Math.hypot(lm[5].x - lm[17].x, lm[5].y - lm[17].y)
+  return w > 0 ? w : null
+}
+
+/**
+ * The gap between two hands, in frame fractions — palm centre to palm centre.
+ *
+ * ⚠️ MEASURED KNUCKLE TO KNUCKLE (9 ↔ 9), NOT FINGERTIP TO FINGERTIP. The tips are the two noisiest
+ * landmarks MediaPipe produces and they move with the pose; the middle knuckle is on the rigid palm.
+ * The constant offset that leaves (roughly one palm thickness at each end) is the same on every
+ * reading, which is what a nominal hand size absorbs.
+ */
+export function palmSpan(all: { x: number; y: number }[][] | undefined): number | null {
+  if (!all || all.length < 2 || !all[0]?.[9] || !all[1]?.[9]) return null
+  return Math.hypot(all[0][9].x - all[1][9].x, all[0][9].y - all[1][9].y)
+}
+
+/** The mean width of the hands in frame — the ruler, averaged so one bad hand does not set it. */
+export function meanHandWidth(all: { x: number; y: number }[][] | undefined): number | null {
+  const ws = (all ?? []).map(handWidth).filter((w): w is number => w !== null)
+  return ws.length ? ws.reduce((a, b) => a + b, 0) / ws.length : null
+}
+
+/**
+ * The whole reading, in one place: the gap between the hands measured in the child's own hand widths.
+ *
+ * ⚠️ IT IS A FUNCTION RATHER THAN TWO LINES IN THE DETECT LOOP, AND THAT IS WHAT MAKES IT GATEABLE.
+ * Written inline, the only way to check the division was for a test to do the division itself — i.e.
+ * a gate re-implementing the rule, which cannot see the rule being REMOVED. Mutation-tested: dropping
+ * `/ hw` in the loop left the invariance test perfectly green, because the test was proving its own
+ * arithmetic rather than the detector's.
+ */
+export function spanRatio(all: { x: number; y: number }[][] | undefined): number | null {
+  const d = palmSpan(all), hw = meanHandWidth(all)
+  return d !== null && hw ? d / hw : null
+}
+
+/**
+ * ⚠️ THE SPAN IS QUANTIZED FOR THE CHANGE TEST AND RAW FOR THE CONSUMER. It is continuous, so an
+ * unquantized key fires `onRead` at frame rate and re-renders the chapter ~30×/s for a hand that has
+ * not really moved. 40 steps over the reachable range is finer than the noise and coarse enough that
+ * a still hand is still.
+ */
+export const SPAN_STEPS = 40
+export const quantSpan = (v: number | null) => (v === null ? '-' : String(Math.round(v * SPAN_STEPS)))
