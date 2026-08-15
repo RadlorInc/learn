@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
-import { installErrorCapture, recordError } from '@/infra/storage/lastError'
-import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { installErrorCapture } from '@/infra/storage/lastError'
+import { reportCrash } from '@/infra/reportCrash'
 
 interface State {
   hasError:  boolean
@@ -32,29 +32,10 @@ export class MiloErrorBoundary extends React.Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo })
     console.error('[Milo Error]', error, errorInfo)
-    // Keep a local breadcrumb even if the network report below never lands — this is what
-    // travels to support in the diagnostic block when the parent reports the problem.
-    recordError(error, 'react')
-    // Report to the monitoring sink (forwards to Sentry/Logtail when configured; else Vercel logs).
-    // Best-effort + guarded — a failed report must never mask the original error.
-    try {
-      void fetch('/api/report-error', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        keepalive: true,
-        body: JSON.stringify({
-          message: error?.message,
-          stack: error?.stack,
-          componentStack: errorInfo?.componentStack,
-          url: typeof window !== 'undefined' ? window.location.href : undefined,
-          // WHO it happened to. Without this a log is a pile of stack traces that cannot be
-          // matched to the parent who wrote in. Read synchronously from sessionStorage — an
-          // async session lookup would race the navigation a crash usually triggers, and
-          // learner → owning account is one join away in the DB anyway.
-          learnerId: getActiveLearner()?.id,
-        }),
-      }).catch(() => {})
-    } catch { /* ignore */ }
+    // ⚠️ ONE report path, shared with `app/error.tsx` and `app/global-error.tsx` — see
+    // `infra/reportCrash.ts`. It keeps the local breadcrumb (what travels to support in the
+    // parent's diagnostic block) AND posts to the monitoring sink, and it can never throw.
+    reportCrash(error, 'react', { componentStack: errorInfo?.componentStack ?? undefined })
   }
 
   render() {
@@ -80,7 +61,7 @@ export class MiloErrorBoundary extends React.Component<
             fontSize: 16, color: '#888',
             maxWidth: 320, margin: 0, lineHeight: 1.5,
           }}>
-            Milo bumped into a problem. Don't worry — your progress is saved!
+            Milo bumped into a problem. Don&apos;t worry — your progress is saved!
           </p>
           <button
             onClick={() => {
