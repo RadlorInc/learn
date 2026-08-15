@@ -133,30 +133,32 @@ export function nearestAxis(cands: number[], raw: number): number {
   return cands.reduce((best, a) => (away(a) < away(best) ? a : best), cands[0])
 }
 
-// ─── the cast ────────────────────────────────────────────────────────────────────────
+// ─── the anchor ──────────────────────────────────────────────────────────────────────
 /**
- * The drawn cycles this chapter consumes. Declared HERE so the scene and the idle-art gate read one
- * source — art registered in sheets.ts and consumed by nobody is art that was paid for and never
- * reached a child, and that gate can only see a chapter that says what it uses.
+ * The daily thing this chapter is a name for.
+ *
+ * ⚠️ IT IS A CLAUSE, NEVER A SENTENCE, EVERYWHERE EXCEPT THE BRIEFING. Spent as a whole sentence in
+ * Factor Lab it took a card from two lines to three at 640×320 and drove the bench 15px into the
+ * button below it — the anchor breaking the reserved-band rule it was written under.
  */
-export const CAST = {
-  /** Slate, standing / walking. The 9–11 band's first protagonist cycle. */
-  slate: '/assets/characters/slate_side.png',
-  /** Slate winding the handle — the pose the child's ◀ ▶ is driving. */
-  slateWork: '/assets/characters/slate_work.png',
-  /** The foreman, who brings the job and then stops watching. Already generated for this band. */
-  foreman: '/assets/objects/foreman_bear_side.png',
-} as const
+export const ANCHOR = 'how steep the ramp at the park is'
 
-// ─── the week ────────────────────────────────────────────────────────────────────────
-export type Site = 'roof' | 'bridge' | 'shelter'
+// ─── the day ─────────────────────────────────────────────────────────────────────────
+export type Site = 'ramp' | 'play' | 'table'
 export type QType = 'angle' | 'fold'
 
-export interface Job {
-  day: string
+/**
+ * ⚠️ A DISCRIMINATED UNION RATHER THAN OPTIONAL FIELDS, AND THAT IS THE POINT. `wants?: AngleKind`
+ * with a `?? 'acute'` behind it is one refactor away from asking a child to make the paper plane
+ * "SHARPER than a square corner — because the picture has to line up when it shuts". A fold job
+ * genuinely has no wanted kind, so it may not carry a slot for one.
+ */
+export interface AngleJob {
+  /** the place, as the question card's chip — a tag, never a second copy of the question */
+  where: string
   site: Site
-  type: QType
-  /** what is being made */
+  type: 'angle'
+  /** what is being set */
   piece: string
   /** who wants it and why — §0a's second half, never decoration */
   because: string
@@ -164,29 +166,66 @@ export interface Job {
    * ⚠️ THE STORY FIXES THE KIND; THE TIER PICKS THE DEGREE. Drawn independently they contradict
    * each other and the chapter states something false — driven on screen, a ramp asked to be
    * "SHARPER than a square corner" *because a barrow has to get up it loaded*, which is backwards.
-   * A generated sentence must hold for EVERY seed the generator can draw (Leaderboard shipped the
-   * same fault: "two moves partly cancel" on a both-positive seed). Angle jobs only.
+   * A generated sentence must hold for EVERY seed the generator can draw.
+   *
+   * ⚠️⚠️ AND THE KIND IS CHOSEN AGAINST THE OBJECT, NOT SPRINKLED FOR VARIETY. **Obtuse means the
+   * beam swung PAST vertical, and no slope is ever obtuse** — the shipped week asked for an obtuse
+   * *approach ramp* "because a barrow has to get up it loaded", which drew a plank leaning backwards
+   * over the bank at 75° above the horizontal while the words said "shallower". Real ramps live
+   * between about 5° and 40°, i.e. always acute. So the slopes here (ramp, slide) are acute, the
+   * things that OPEN past square (gate, barrier) are obtuse, and the one upright is right.
    */
-  wants?: AngleKind
+  wants: AngleKind
 }
+/** A fold job carries only a place: the PAPER decides the piece, because the shape decides the paper. */
+export interface FoldJob { where: string; site: 'table'; type: 'fold' }
+export type Job = AngleJob | FoldJob
 
 /**
- * Slate's first week. The scenario fixes the CONTEXT and the tier picks the DIFFICULTY, so story
- * and difficulty stay independent — TickTock's structure, which is what stopped its day-table
- * making two rounds the same question.
+ * A Saturday: the park in the morning, the kitchen table for the fair's paper.
+ *
+ * The scenario fixes the CONTEXT and the tier picks the DIFFICULTY, so story and difficulty stay
+ * independent — TickTock's structure, which is what stopped its day-table making two rounds the
+ * same question. ⚠️ It ALTERNATES, and `makeRound`'s coverage nudge leans on that.
  */
 export const WEEK: Job[] = [
-  { day: 'Mon am', site: 'roof',    type: 'angle', piece: 'the shed roof',        because: "Mrs Pell's tools are getting wet", wants: 'acute'},
-  { day: 'Mon pm', site: 'roof',    type: 'fold',  piece: 'the gable vent',        because: 'it has to sit square in the hole' },
-  { day: 'Tue am', site: 'bridge',  type: 'angle', piece: 'the approach ramp',     because: 'a barrow has to get up it loaded', wants: 'obtuse'},
-  { day: 'Tue pm', site: 'bridge',  type: 'fold',  piece: 'the deck panel',        because: 'it goes in either way round' },
-  { day: 'Wed am', site: 'shelter', type: 'angle', piece: 'the canopy',            because: 'the queue stands under it in the rain', wants: 'acute'},
-  { day: 'Wed pm', site: 'shelter', type: 'fold',  piece: 'the side panel',        because: 'it mirrors the one opposite' },
-  { day: 'Thu am', site: 'roof',    type: 'angle', piece: 'the bike rack roof',    because: 'bikes underneath, low clearance', wants: 'obtuse'},
-  { day: 'Thu pm', site: 'shelter', type: 'fold',  piece: 'the school sign',       because: 'it reads the same from both approaches' },
-  { day: 'Fri am', site: 'bridge',  type: 'angle', piece: 'the market awning',     because: 'it has to sit square to the shopfront', wants: 'right'},
-  { day: 'Fri pm', site: 'roof',    type: 'fold',  piece: 'the market banner',     because: 'it hangs centred or not at all' },
+  /**
+   * ⚠️ THE REASON HAS TO ARGUE FOR THE KIND, NOT FOR A MAGNITUDE — and every tier can draw a very
+   * different magnitude. Driven on screen: *"Make the slide SHARPER than a square corner — any
+   * steeper and it is a drop, not a slide"*, which says both things at once. Its sibling was *"push
+   * your bike up it, loaded"*, true at the L1 pool's 30° and plainly false at L3's 85°, which is
+   * still acute. A reason about how STEEP begs the question the round is asking; a reason about
+   * which SIDE of square holds at every angle the tier can draw.
+   */
+  { where: 'Ramp',     site: 'ramp',  type: 'angle', piece: 'the bike ramp',   because: 'past square it is a wall, not a ramp', wants: 'acute'  },
+  { where: 'Table',    site: 'table', type: 'fold' },
+  { where: 'Slide',    site: 'play', type: 'angle', piece: 'the slide',     because: 'a slide leans forwards, never back', wants: 'acute'  },
+  { where: 'Table',    site: 'table', type: 'fold' },
+  { where: 'Gate',     site: 'play',  type: 'angle', piece: 'the park gate',   because: 'so two bikes fit through at once',  wants: 'obtuse' },
+  { where: 'Table',    site: 'table', type: 'fold' },
+  { where: 'Barrier',  site: 'ramp',  type: 'angle', piece: 'the barrier arm', because: 'or you clip your head going under', wants: 'obtuse' },
+  { where: 'Table',    site: 'table', type: 'fold' },
+  { where: 'Hoop',     site: 'play',  type: 'angle', piece: 'the hoop post',   because: 'or every shot goes wide', wants: 'right'  },
+  { where: 'Table',    site: 'table', type: 'fold' },
 ]
+
+/**
+ * What is being folded, keyed by the SHAPE that is drawn.
+ *
+ * ⚠️ THE PIECE COMES FROM THE SHAPE, NOT FROM THE JOB, BECAUSE THE TIER PICKS THE SHAPE. Named on
+ * the job instead, "the paper plane" would be drawn as a regular pentagon a third of the time — the
+ * readout-names-an-arrangement-the-picture-is-not-showing fault, on the one object the round is
+ * about. A plane really does have exactly one line of symmetry and a snowflake really has six, so
+ * this table has to agree with `SHAPE_LINES` and the gate checks that it does.
+ */
+export const PAPER: Record<Shape, { piece: string; because: string }> = {
+  square:      { piece: 'the napkin',          because: 'it folds flat whichever way you pick it up' },
+  rectangle:   { piece: 'the birthday card',   because: 'the picture lines up when it shuts' },
+  equilateral: { piece: 'the bunting flag',    because: 'every flag on the string is cut the same' },
+  isosceles:   { piece: 'the paper plane',     because: 'it veers off unless both wings match' },
+  pentagon:    { piece: 'the paper rosette',   because: 'the folds fall the same way all round' },
+  hexagon:     { piece: 'the paper snowflake', because: 'cut folded, so every side matches' },
+}
 
 // ─── rounds ──────────────────────────────────────────────────────────────────────────
 export type Tier = 1 | 2 | 3
@@ -201,7 +240,8 @@ export interface AngleRound {
   want: AngleKind          // the kind the job asks for (also the kind of `target`)
   target?: number          // set only when job === 'degrees'
   start: number            // where the arm begins — never already correct
-  job_: Job
+  /** ⚠️ AN ANGLE ROUND CAN ONLY COME FROM AN ANGLE JOB, and the type says so rather than a comment. */
+  job_: AngleJob
   ask: string
 }
 export interface FoldRound {
@@ -230,8 +270,19 @@ export type Round = AngleRound | FoldRound
  */
 export const handDrivesAngle = (r: Round) => r.type === 'angle' && r.job === 'kind'
 
-/** The set-square guide is a scaffold and it RETIRES at the top tier — TickTock's minute ring. */
-export const guideShown = (d: Tier) => d < 3
+/**
+ * The set-square guide is a scaffold and it RETIRES at the top tier — TickTock's minute ring.
+ *
+ * ⚠️⚠️ EXCEPT ON AN EXACT-DEGREES ROUND, WHERE IT IS NOT THE ANSWER — IT IS THE ONLY REFERENCE THERE
+ * IS, AND WITHOUT IT THAT ROUND CANNOT BE ANSWERED BY KNOWING ANYTHING. `useDegrees` fires at tier 3
+ * and this retired at tier 3, so **every** exact round asked for a figure with no readout (rule 1
+ * forbids one while turning), no scale, and nothing at 90° to judge against — then graded it on
+ * `deg === target`. A strong child gets ~2 rounds at L3 and half the rounds are angle rounds, so the
+ * chapter ended on a lottery. FitOut's dead-button shape: the child works it out, acts, and the app
+ * refuses. **On a KIND round the guide gives the ANSWER away and must go; on a DEGREES round it gives
+ * a REFERENCE away, which is the entire job of a set square.**
+ */
+export const guideShown = (r: Round) => r.tier < 3 || (r.type === 'angle' && r.job === 'degrees')
 
 /**
  * Difficulty is HOW NEAR 90 the angle sits — never which side of it, because the story owns that.
@@ -248,7 +299,6 @@ const SHAPES: Record<Tier, Shape[]> = {
   3: ['equilateral', 'isosceles', 'pentagon', 'hexagon'],
 }
 
-const rint = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1))
 
 /** A start angle that is NEVER already the answer — otherwise a round is won by doing nothing. */
 export const START_GAP = 25
@@ -262,19 +312,43 @@ export function startFor(want: AngleKind, target?: number): number {
   return pick(far.length ? far : wrong)
 }
 
+/** What is being made, and why anybody wants it. ONE source for the ask, the demo and the verdict. */
+export function pieceOf(r: Round): { piece: string; because: string } {
+  return r.type === 'fold' ? PAPER[r.shape] : { piece: r.job_.piece, because: r.job_.because }
+}
+
+/**
+ * ⚠️ A CHARACTER BUDGET ON THE ASK, BECAUSE NOTHING CAN SEE A WRAP. The bubble's reserve is a share
+ * of the height and its content is prose, so the two can only be held together by counting. Measured
+ * at 640x320: the bubble renders ~17.5px a line inside 14px of padding against a 67px reserve, so
+ * TWO lines fit and three do not — and three overran onto the turning arm, which is the one thing
+ * the child has to read. 90 characters is two lines at that width. The chalkboard's `PLAN_BUDGET`,
+ * one chapter along.
+ */
+export const ASK_BUDGET = 90
+
 export function makeRound(d: Tier, roundIdx: number, asked: QType[] = []): Round {
   const job = WEEK[roundIdx % WEEK.length]
-  // coverage: if one type has never been asked and the week would repeat the other, force it
-  const unmet = (['angle', 'fold'] as QType[]).filter(t => !asked.includes(t))
-  const type: QType = unmet.length === 1 && !unmet.includes(job.type) ? unmet[0] : job.type
+  /**
+   * Coverage nudge: spend a scarce round on the type that has not been asked.
+   * ⚠️ ONE DIRECTION ONLY. A fold round needs nothing but a shape, so any job can be asked as one —
+   * but an angle round needs a piece, a reason and a wanted kind, and a fold job has none of them.
+   * Inventing them is how a chapter states something false. The week alternates, so with `coverage`
+   * declared this is belt-and-braces rather than the mechanism.
+   */
+  const type: QType =
+    job.type === 'angle' && asked.includes('angle') && !asked.includes('fold') ? 'fold' : job.type
 
-  if (type === 'fold') {
+  // the second half of the `||` is what narrows `job` to an AngleJob below, and it is not redundant
+  // belt: `type === 'angle'` already implies it, and only the compiler needs telling.
+  if (type === 'fold' || job.type === 'fold') {
     const shape = pick(SHAPES[d])
+    const p = PAPER[shape]
     return { type: 'fold', tier: d, shape, job_: job,
-      ask: `${cap(job.piece)} has to be symmetric or it won't sit square. Mark every fold that matches.` }
+      ask: `${cap(p.piece)} — ${p.because}. Mark every fold that matches.` }
   }
   const useDegrees = d === 3
-  const want: AngleKind = job.wants ?? 'acute'
+  const want: AngleKind = job.wants
   const deg = pick(KIND_POOL[d][want])
   return useDegrees
     ? { type: 'angle', tier: d, job: 'degrees', want, target: deg, start: startFor(want, deg), job_: job,
@@ -285,7 +359,7 @@ export function makeRound(d: Tier, roundIdx: number, asked: QType[] = []): Round
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
-function askForKind(want: AngleKind, job: Job): string {
+function askForKind(want: AngleKind, job: AngleJob): string {
   const how = want === 'acute' ? 'SHARPER than a square corner'
     : want === 'obtuse' ? 'SHALLOWER than a square corner'
     : 'exactly SQUARE'
@@ -354,79 +428,15 @@ export function sigFor(r: Round): string {
 
 // ─── layout ──────────────────────────────────────────────────────────────────────────
 /**
- * ⚠️ The world yields to the tap targets, never the other way round — the ground line is derived
- * from the band left over, not picked as a percentage.
+ * ⚠️ THERE IS NONE ANY MORE, AND THAT IS THE POINT OF THE PORT. This module used to carry
+ * `shopLayout`, `armFor`, `TOP_BAND`/`BOT_BAND`, `ARM_MARGIN`, `TAP_MIN` and the Menu chip's own
+ * metrics — every one of them a copy of arithmetic three other chapters also carried, and every one
+ * of them a thing that had to be swept at ten viewport sizes. GameShell owns the bands now and
+ * `FitSlot` scales the instrument into whatever is left, so all of it went with the bespoke scene
+ * (2026-08-14) rather than being kept alive for a gate to test.
+ *
+ * What did NOT go is everything above this line: the week, the paper table, the axis sets, the
+ * grader and the words. That split — maths and words here, layout in the shell — is the whole
+ * reason ten chapters can share one engine.
  */
-export const TAP_MIN = 44
-
-/**
- * Where each site's piece is actually fitted, and how far the ground line sits down the painting.
- * ⚠️ THIS IS LAYOUT DATA, SO IT LIVES HERE RATHER THAN IN THE SCENE — the arm's reach depends on it
- * and the gate has to be able to sweep it. One shared formula put the roof's rafter across the
- * cottage's FACE like a pole leaning on a house, and then a near-vertical arm ran off the top of
- * the screen; neither was visible to a check that only knew the bands.
- */
-export const SITE_GEO: Record<Site, { ground: number; vx: number; vyUp: number }> = {
-  roof:    { ground: 0.86, vx: 0.40, vyUp: 0.60 },   // the open gable
-  bridge:  { ground: 0.84, vx: 0.30, vyUp: 0.06 },   // the bank, where the ramp starts
-  shelter: { ground: 0.86, vx: 0.34, vyUp: 0.52 },   // the bare post tops
-}
-
-export const ARM_MARGIN = 16
-
-export interface Arm { vx: number; vy: number; len: number }
-
-/**
- * The turning arm, bounded so it CANNOT leave the frame band at any angle the steppers can reach.
- * ⚠️ Measured on screen before this existed: at 100° on the roof the arm's box topped out at y = −9,
- * i.e. off the screen. The worst case is straight up (90°), which reaches `len` above the vertex,
- * and sideways at the extremes, which reaches `len` either way — so all three are bounded here
- * rather than hoped for.
- */
-export function armFor(site: Site, vw: number, vh: number, L: Layout, groundPx: number): Arm {
-  const g = SITE_GEO[site]
-  const vx = Math.round(vw * g.vx)
-  // ⚠️ SIZE THE ARM FIRST, THEN PLACE THE VERTEX. Deriving the length from a vertex the site
-  // preferred collapsed it to 21px on a 640×320 frame — the site wants a HIGH vertex and a short
-  // frame has no headroom above it, so the two fought and the arm lost. Now the vertex is pushed
-  // DOWN as far as it must be for the arm to fit, and only then honours the site's preference.
-  const len = Math.round(Math.min(
-    vw * 0.30,
-    (L.frameH - ARM_MARGIN) * 0.62,
-    vw - ARM_MARGIN - vx,                // reaching right must stay on screen
-    vx - ARM_MARGIN,                     // reaching left must stay on screen
-  ))
-  const prefer = groundPx - Math.round(L.frameH * g.vyUp)
-  const vy = Math.min(groundPx, Math.max(prefer, L.frameTop + len + ARM_MARGIN))
-  return { vx, vy, len }
-}
-
-export interface Layout {
-  short: boolean
-  chromeH: number      // the back chip strip
-  bubbleTop: number
-  bubbleH: number
-  frameTop: number     // the band the turning arm / panel lives in
-  frameH: number
-  groundY: number      // where the cast's feet land
-  controlTop: number
-  controlH: number
-  btn: number          // tap target edge
-}
-
-export function shopLayout(vw: number, vh: number): Layout {
-  const short = vh < 470
-  const chromeH = Math.round(Math.max(38, Math.min(54, vh * 0.075)))
-  // the control band is sized from the BUTTON, which may not shrink below the tap floor
-  const btn = Math.max(TAP_MIN, Math.round(Math.min(vw / 8.5, vh / (short ? 6.4 : 7.6))))
-  const controlH = Math.round(btn + (short ? 14 : 26))
-  const controlTop = vh - controlH
-  // ⚠️ MORE reserve on a short frame, not less: the text wraps to more lines exactly where
-  // there is least room, and a bubble that overruns its reserve lands on the arm.
-  const bubbleH = Math.round(short ? vh * 0.21 : vh * 0.13)
-  const bubbleTop = chromeH + (short ? 2 : 8)
-  const frameTop = bubbleTop + bubbleH + (short ? 4 : 12)
-  const groundY = controlTop - (short ? 8 : 18)
-  const frameH = Math.max(60, groundY - frameTop)
-  return { short, chromeH, bubbleTop, bubbleH, frameTop, frameH, groundY, controlTop, controlH, btn }
-}
+export {}

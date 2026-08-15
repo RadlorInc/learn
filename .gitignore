@@ -60,3 +60,13 @@ next-env.d.ts
 
 # local MCP config — contains API keys
 .mcp.json
+
+# generated-art working files: source clips, composed keyframes and cut strips.
+# The SHIPPED strips live in public/assets/explain; these are the raw material.
+scratch/
+
+# personal scratch that lives in the working tree, not in the product
+docs/recovered/
+python script/
+scripts/.voice-corpus.json
+scripts/.voice-fragments.json

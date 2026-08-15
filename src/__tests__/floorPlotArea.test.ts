@@ -1,40 +1,41 @@
 /**
- * The gate for THE EMPTY PLOT (9–11 `areaPerimeter`) — the band's first-person 3D chapter.
+ * The gate for THE EMPTY PLOT (9–11 · `areaPerimeter`) — the band's area & perimeter chapter, now a
+ * plan view on GameShell.
  *
- * It drives the SAME exported functions the scene renders and grades from — `makeRound`, `gradePeg`,
- * `missFor`, `settleAfterPeg`, `slotsFor`, `equationFor`, `explainBeats`, `makeSite`,
- * `plotSiteSeparation` — rather than re-implementing them, because a check carrying its own copy of a
- * rule cannot see the rule being removed. That is this repo's own recorded fault, met twice.
+ * It drives the SAME exported functions the chapter renders and grades from — `makeRound`,
+ * `gradePeg`, `missFor`, `slotsFor`, `slotBox`, `equationFor`, `explainBeats`, `spanMetres`,
+ * `snapMetres` — rather than re-implementing them, because a check carrying its own copy of a rule
+ * cannot see the rule being removed. That is this repo's own recorded fault, met twice.
  *
- * ⚠️ THIS FILE MATTERS MORE THAN A NORMAL CHAPTER GATE, and the reason is measured, not stylistic:
- * `useFrame` is not reliably drivable in a backgrounded tab (`document.hidden` true with 0 rAF frames
- * per second was measured in this pane), so **a walking loop cannot be played headlessly**. Cut ③ of
- * this chapter reached its peg loop exactly once, opportunistically, and was never played end to end.
- * Everything below is therefore the only mechanical evidence the chapter has, and anything left inside
- * the scene component has none.
+ * ⚠️ WHAT CHANGED, AND WHAT DID NOT. The chapter was 1,380 lines of react-three-fiber over a 628-line
+ * procedural site; the founder removed the 3D and it came onto the shared shell like the other six
+ * 9–11 chapters. **The verb did not move**, so most of this file did not either — the arithmetic, the
+ * tier ladder, the anti-oracle sweep, the miss lines and the demo beats are the checks they always
+ * were. What went with the 3D: the whole procedural-world half (nothing in the site is countable, the
+ * palette separations, the collinear-props trap) and every check about a camera. `plotSite.ts` is
+ * deleted, so those rules have nothing left to guard.
  *
- * ⚠️ THE CHECKS THIS FILE EXISTS FOR, because none is reachable by playing:
- *   • **the commit is not repeatable in a scored round.** Three mechanics were rejected before this
- *     one, and a repeatable graded commit was why two of them failed: peg, read "too near", step back,
- *     peg again, and a dozen tiles falls out of about four guesses with nothing worked out.
- *   • **nothing states the answer before the commit** — swept over the whole generator range, on every
- *     string a child can see while deciding.
- *   • **the world contains no countable set.** Procedural scatter is exactly the thing that
- *     accidentally produces a ruler, and a metre grid on the plot floor is what got an earlier cut
- *     rejected: the answer chalked onto the ground as squares to count.
+ * ⚠️ AND ONE CLASS OF CHECK GOT CHEAPER, WHICH IS WORTH RECORDING. `useFrame` is not drivable in a
+ * backgrounded tab, so the old chapter's play loop could not be exercised headlessly AT ALL and this
+ * file was its only mechanical evidence. A DOM instrument can be driven, so what is asserted here is
+ * now the floor rather than the ceiling.
  */
 import { describe, it, expect } from 'vitest'
 import {
-  TIERS, stepsFor, makeRound, gradePeg, missFor, settleAfterPeg, slotsFor, slotPos,
-  equationFor, explainBeats, miloSpot, MILO_CLEAR, DEMO, GUIDED, MAX_DEPTH, SPAWN_Z, type PlotRound, type QType,
+  TIERS, stepsFor, makeRound, gradePeg, missFor, slotsFor, slotBox, badgeFor, contextFor,
+  equationFor, explainBeats, instructionFor, spanMetres, snapMetres, workFrames, visibleDepth, metreOf,
+  roadBand, markers, planXY, ROAD_TEXT_TOP, ROAD_TEXT_H,
+  M_PER_HAND, SPAN_MIN_HANDS, SPAN_MAX_HANDS, HAND_MAX_M, HOLD_M,
+  DEMO, GUIDED, MAX_DEPTH, type PlotRound, type QType,
 } from '@/features/chapters/story/plotMaths'
-import { makeSite, groundMesh, GROUND_MICRO, plotSiteSeparation, readsAgainst, hueGap, UNIT, UNIT_OUTLINE, REVEAL, css } from '@/features/chapters/story/plotSite'
+import { EMPTY_PLOT_CONFIG, readMetres, START, filmFor, PLAN_BOX, PLAN_BOX_LAND, type PlotV } from '@/features/chapters/teen/games/EmptyPlotGame'
+import { NO_HAND, type HandRead } from '@/infra/ar/HandInput'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const TIER_LIST = [1, 2, 3] as const
 const draws = (d: 1 | 2 | 3, n = 500, asked: readonly string[] = ['area', 'perimeter']) =>
-  Array.from({ length: n }, (_, i) => makeRound(d, i, asked))
+  Array.from({ length: n }, () => makeRound(d, asked))
 /** Every round the generator can produce, exhaustively — the honest sweep for a space this small. */
 const ALL: PlotRound[] = TIER_LIST.flatMap(d =>
   (['area', 'perimeter'] as QType[]).flatMap(q => {
@@ -45,20 +46,21 @@ const ALL: PlotRound[] = TIER_LIST.flatMap(d =>
         out.push({
           qType: q, frontage: f, depth: dep,
           target: q === 'area' ? f * dep : 2 * (f + dep),
-          unitWord: q === 'area' ? 'tiles' : 'metres of fence', tag: '', prompt: '', say: '', seed: f * 31 + dep,
+          unitWord: q === 'area' ? 'tiles' : 'metres of fence', tag: '', prompt: '', say: '',
         })
       }
     }
     return out
   }))
 
-const SCENE = readFileSync(join(process.cwd(), 'src/features/chapters/story/FloorPlot.tsx'), 'utf8')
-/** Eye height, read from the scene rather than retyped, so the two cannot drift. */
-const EYE_M = Number(SCENE.match(/^const EYE = ([\d.]+)$/m)![1])
+const SRC = readFileSync(join(process.cwd(), 'src/features/chapters/teen/games/EmptyPlotGame.tsx'), 'utf8')
 /** Comments stripped: this repo has twice had a source check match the prose EXPLAINING a rule. */
-const CODE = SCENE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+const CODE = SRC.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+const SHELL = readFileSync(join(process.cwd(), 'src/features/chapters/teen/games/parts/GameShell.tsx'), 'utf8')
 
-// ────────────────────────────────────────────────────────────────────────────────────────
+/** a hand reading, built the way the detector reports one */
+const hand = (span: number | null, hands = 2): HandRead => ({ ...NO_HAND, hands: span === null ? 0 : hands, span })
+
 describe('the question always comes out to a whole metre', () => {
   it('never asks for a depth that is not a whole number of metres', () => {
     for (const d of draws(1).concat(draws(2), draws(3))) {
@@ -76,7 +78,7 @@ describe('the question always comes out to a whole metre', () => {
 
   it('every answer is reachable — inside the walkable bound', () => {
     for (const d of ALL) expect(d.depth).toBeLessThanOrEqual(MAX_DEPTH)
-    // and the bound is one metre past the deepest legal peg, so the peg is never on the fence
+    // and the bound is past the deepest legal peg, so a child can always overshoot as well as stop
     const deepest = Math.max(...ALL.map(d => d.depth))
     expect(MAX_DEPTH).toBeGreaterThan(deepest)
   })
@@ -85,24 +87,55 @@ describe('the question always comes out to a whole metre', () => {
     for (const d of ALL) expect(slotsFor(d)).toHaveLength(d.target)
   })
 
-  it('every unit lands inside the plot the child pegged', () => {
+  it('every unit lands inside the plot the child pegged, and no two share a place', () => {
     for (const d of ALL) {
+      const seen = new Set<string>()
       for (const s of slotsFor(d)) {
-        const [x, , z] = slotPos(d, s)
-        expect(x).toBeGreaterThanOrEqual(0)
-        expect(x).toBeLessThanOrEqual(d.frontage)
-        expect(z).toBeGreaterThanOrEqual(0)
-        expect(z).toBeLessThanOrEqual(d.depth)
+        const b = slotBox(d, s)
+        expect(b.x).toBeGreaterThanOrEqual(0)
+        expect(b.x + b.w).toBeLessThanOrEqual(d.frontage)
+        expect(b.y).toBeGreaterThanOrEqual(0)
+        expect(b.y + b.h).toBeLessThanOrEqual(d.depth)
+        // ⚠️ two units drawn in one place is a delivery that LOOKS short of the target it is not
+        const k = `${b.x}:${b.y}:${b.w}:${b.h}`
+        expect(seen.has(k), `${s} drawn twice`).toBe(false)
+        seen.add(k)
       }
     }
+  })
+
+  it('a fence panel lies ON an edge and a tile fills a square — never the other way round', () => {
+    for (const d of ALL) {
+      for (const s of slotsFor(d)) {
+        const b = slotBox(d, s)
+        if (d.qType === 'area') { expect(b.w).toBe(1); expect(b.h).toBe(1); continue }
+        // an edge has exactly one zero dimension, and that dimension sits on a boundary of the plot
+        expect(b.w * b.h).toBe(0)
+        expect(b.w + b.h).toBe(1)
+        if (b.w === 0) expect([0, d.frontage]).toContain(b.x)
+        else expect([0, d.depth]).toContain(b.y)
+      }
+    }
+  })
+
+  it('the reveal lays units into the plot the CHILD pegged, never the right one', () => {
+    // ⚠️ this is what makes a miss a consequence rather than a verdict: peg short and units are left
+    // on the lorry, peg deep and the floor is bare past where they stopped
+    const d = ALL.find(r => r.qType === 'area' && r.frontage === 4 && r.depth === 4)!
+    const short = slotsFor({ ...d, depth: 2 }).slice(0, d.target)
+    expect(short).toHaveLength(8)                    // 8 laid, 8 still on the lorry
+    const deep = slotsFor({ ...d, depth: 6 }).slice(0, d.target)
+    expect(deep).toHaveLength(d.target)              // every tile used…
+    expect(slotsFor({ ...d, depth: 6 })).toHaveLength(24)  // …into a plot that needs 24: bare
+    expect(CODE).toMatch(/slotsFor\(\{ \.\.\.r, depth: pegAt \}\)\.slice\(0, r\.target\)/)
   })
 })
 
 // ────────────────────────────────────────────────────────────────────────────────────────
 describe('difficulty grows the SKILL, not only the magnitude', () => {
   /**
-   * ⚠️ This is the one line of the pedagogy contract cut ③ FAILED: it drew both sides from one
-   * widening range, so a harder tier meant bigger numbers and nothing else. The taught thing is a
+   * ⚠️ This is the one line of the pedagogy contract an earlier cut FAILED: it drew both sides from
+   * one widening range, so a harder tier meant bigger numbers and nothing else. The taught thing is a
    * DIVISION and what makes a division hard is the DIVISOR, so the divisor is an explicit tier term.
    */
   it('the DIVISOR climbs — the explicit taught term', () => {
@@ -135,29 +168,24 @@ describe('difficulty grows the SKILL, not only the magnitude', () => {
 
 // ────────────────────────────────────────────────────────────────────────────────────────
 describe('ONE PEG per scored round — a repeatable commit is a yes/no oracle', () => {
-  const d = ALL.find(r => r.qType === 'area' && r.depth === 4)!
-
-  it('a scored round is over after the first peg, right', () => {
-    const s = settleAfterPeg('practice', d.depth, d)
-    expect(s).toEqual({ right: true, over: true })
+  /**
+   * ⚠️ THE RULE MOVED HOUSE AND IS STRONGER FOR IT. The bespoke chapter owned its own feedback and
+   * had to refuse the second peg itself (`settleAfterPeg`, now deleted rather than left as dead code
+   * that reads like a guarantee). On the shell a commit grades and moves to the reveal, and the
+   * instrument is handed `disabled` for the whole of it — so a scored round cannot be re-pegged at
+   * all. Asserted where it now lives.
+   */
+  it('the shell leaves `active` on the commit and does not come back', () => {
+    expect(SHELL).toMatch(/if \(!task \|\| sub !== 'active'\) return/)
+    expect(SHELL).toMatch(/setSub\('reveal'\)/)
+    expect(SHELL).toMatch(/const busy = sub !== 'active'/)
+    expect(SHELL).toMatch(/disabled=\{busy\}/)
   })
 
-  it('a scored round is over after the first peg, WRONG — this is the whole design', () => {
-    for (const wrong of [1, 2, 3, 5, 9, 12]) {
-      if (wrong === d.depth) continue
-      const s = settleAfterPeg('practice', wrong, d)
-      expect(s.right).toBe(false)
-      expect(s.over).toBe(true)
-    }
-  })
-
-  it('the guided round keeps its retry — it is unscored teaching', () => {
-    const s = settleAfterPeg('guided', d.depth + 2, d)
-    expect(s).toEqual({ right: false, over: false })
-  })
-
-  it('a guided round still ends when it is right', () => {
-    expect(settleAfterPeg('guided', d.depth, d).over).toBe(true)
+  it('and the instrument refuses a second peg on its own account too', () => {
+    // belt and braces, because the walk buttons are the chapter's own and a glide is running
+    expect(CODE).toMatch(/if \(disabled \|\| reveal \|\| cur\.back < 1\) return/)
+    expect(CODE).toMatch(/if \(disabled \|\| reveal\) return/)
   })
 
   it('the grader accepts exactly one place, at every round the generator can draw', () => {
@@ -167,12 +195,17 @@ describe('ONE PEG per scored round — a repeatable commit is a yes/no oracle', 
     }
   })
 
-  it('the scene commits through settleAfterPeg, not its own copy of the rule', () => {
-    expect(CODE).toMatch(/settleAfterPeg\(\s*mode\s*,/)
-    // and a settled round takes the peg control off screen, so a dead live-looking button is
-    // not expressible (FitOut's dead board)
-    expect(CODE).toMatch(/const live = !over && pegged === null/)
-    expect(CODE).toMatch(/\{live && \(/)
+  it('the chapter grades the PEG, and the peg is where the child stopped', () => {
+    const t = EMPTY_PLOT_CONFIG.makeTask(1, ['area', 'perimeter'])
+    expect(EMPTY_PLOT_CONFIG.grade(t, { ...START, back: t.r.depth })).toBe(true)
+    expect(EMPTY_PLOT_CONFIG.grade(t, { ...START, back: t.r.depth + 1 })).toBe(false)
+  })
+
+  it('⚠️ the commit control looks the same at every depth', () => {
+    // a Peg button that lights up on the right answer is chapter 4's green Ready button: the child
+    // wins by watching the colour instead of working it out
+    const btnRow = CODE.slice(CODE.indexOf("btn('◀ nearer'"), CODE.indexOf("btn('back ▶'"))
+    for (const leak of ['gradePeg', 'depth', 'correct']) expect(btnRow).not.toContain(leak)
   })
 })
 
@@ -180,11 +213,13 @@ describe('ONE PEG per scored round — a repeatable commit is a yes/no oracle', 
 describe('nothing states the answer before the commit', () => {
   /**
    * The child is asked to produce the DEPTH. Every string on screen before the peg — the prompt, the
-   * spoken line, and the two givens — is swept for it, over the whole generator range.
+   * spoken line, the board's badge and its context line — is swept for it, over the whole range.
+   * ⚠️ The badge and the context live in the PURE MODULE for exactly this reason: a sentence built
+   * inside a component is one no gate can read.
    */
   it('no pre-commit string contains the depth', () => {
     for (const d of draws(1, 300).concat(draws(2, 300), draws(3, 300))) {
-      const shown = `${d.prompt} ${d.say}`
+      const shown = `${d.prompt} ${d.say} ${badgeFor(d)} ${contextFor(d)}`
       // the two givens may appear; the depth may not
       const nums = shown.match(/\d+/g)?.map(Number) ?? []
       for (const n of nums) expect([d.frontage, d.target]).toContain(n)
@@ -194,60 +229,231 @@ describe('nothing states the answer before the commit', () => {
 
   it('the equation is never in a pre-commit string', () => {
     for (const d of draws(1, 200).concat(draws(2, 200), draws(3, 200))) {
-      expect(d.prompt).not.toContain('×')
-      expect(d.prompt).not.toContain('=')
-      expect(d.say).not.toContain('×')
-      expect(d.say).not.toContain('=')
+      for (const s of [d.prompt, d.say, badgeFor(d), contextFor(d)]) {
+        expect(s).not.toContain('×')
+        expect(s).not.toContain('=')
+      }
     }
   })
 
-  it('the equation is rendered only when the peg is right', () => {
-    // one place, gated on `revealed` — never beside the manipulative
-    expect(CODE).toMatch(/equation=\{revealed \? equationFor\(data\) : null\}/)
-    expect(CODE.match(/equationFor\(data\)/g)?.length).toBeLessThanOrEqual(3)
+  it('the board draws the LOAD, and never an "= ?" under it', () => {
+    const t = EMPTY_PLOT_CONFIG.makeTask(3, ['area', 'perimeter'])
+    expect(t.badge).toBe(badgeFor(t.r))
+    expect(t.badge).toContain(String(t.r.target))
+    // the peg is the answer, so an "= ?" there reads as a broken equation
+    expect(t.showEquals).toBe(false)
+  })
+
+  it('the equation is rendered only once the units are laid', () => {
+    expect(CODE).toMatch(/\{shown && \(/)
+    expect(CODE.match(/equationFor\(r\)/g) ?? []).toHaveLength(1)
+    const eq = CODE.indexOf('equationFor(r)')
+    expect(CODE.slice(0, eq)).toContain('const shown =')
+  })
+
+  it('⚠️ but a RIGHT answer lays the units too — the shell only reveals a WRONG one', () => {
+    /**
+     * Found by driving the camera path: `reveal` is true on a wrong answer and the re-teach and
+     * never on a right one, so the delivery — *"and it comes out to the metre"*, the payoff the
+     * chapter exists for — was shown only to children who got it wrong.
+     * ⚠️ And it is gated on the PEG, so nothing is laid while the child is still deciding.
+     */
+    expect(CODE).toMatch(/const shown = reveal \|\| v\.laid \|\| \(v\.pegged && gradePeg\(r, v\.back\)\)/)
+    expect(CODE).toMatch(/const pegAt = v\.pegged \? v\.back : null/)
   })
 
   it('the readout is the child’s own pacing and is labelled as such', () => {
     expect(CODE).toMatch(/'metre back' : 'metres back'/)
-    // it is fed `depth` — metres walked — and never the target or a product
-    expect(CODE).toMatch(/<Tape n=\{depth\}/)
-    expect(CODE).not.toMatch(/<Tape n=\{[^}]*target/)
+    // it is fed `v.back` — metres walked — and never the target or a product
+    expect(CODE).toMatch(/\{v\.back\} <span/)
+    expect(CODE).not.toMatch(/\{[^}]*r\.target[^}]*\} <span style=\{\{ fontSize: 12/)
   })
 
-  it('the plot floor is never subdivided — no grid on the working surface', () => {
-    // The fault that got an earlier cut rejected: `repeat.set(w, h)` chalked the answer onto the
-    // ground as exactly as many countable squares as the answer.
-    expect(CODE).not.toMatch(/\.repeat\.set/)
-    expect(CODE).not.toMatch(/RepeatWrapping/)
-    expect(CODE).not.toMatch(/gridHelper/i)
-  })
-
-  it('and no grid can be DRAWN either — nothing is rendered per-metre before the peg', () => {
+  it('⚠️ the plot floor is never subdivided — no grid on the working surface', () => {
+    const YARD = CODE.slice(CODE.indexOf('function Yard('), CODE.indexOf('function Plot('))
     /**
-     * ⚠️ Mutation testing found this hole and it is the one that matters most, because a grid does not
-     * have to arrive as a texture. A nested loop of 1-metre planes is the same printed answer, and the
-     * three idioms above cannot see it. Two checks that can:
-     *   • the scene builds NO list sized from the plot's own dimensions. `slotsFor` is the only
-     *     producer of per-unit positions, it is pure, and it is gated on the peg.
-     *   • no flat surface in the scene is anywhere near a metre across. The yard is 120, the road 80;
-     *     a chalked grid cell would be about 1.
+     * The fault that got an earlier cut rejected: one line ruled the ground into exactly as many
+     * countable squares as the answer, so a child could count the boxes and never measure a side.
+     * A grid does not have to arrive as a texture — a loop of 1-metre cells is the same printed
+     * answer — so what is asserted is that NOTHING is rendered per-metre before the peg. `slotsFor`
+     * is the only producer of per-unit positions, it is pure, and it is gated on the peg.
      */
-    expect(CODE).not.toMatch(/Array\.from\(\s*\{\s*length/)
-    expect(CODE).not.toMatch(/\[\s*\.\.\.\s*Array\(/)
-    expect(CODE).not.toMatch(/for\s*\(/)
-    for (const m of CODE.matchAll(/<planeGeometry args=\{\[([\d.]+),\s*([\d.]+)\]\}/g)) {
-      expect(Number(m[1])).toBeGreaterThan(3)
-      expect(Number(m[2])).toBeGreaterThan(3)
-    }
+    // ⚠️ SCOPED TO WHAT IS DRAWN, not to the whole file — `glide` loops to walk the peg back on a
+    // miss, which builds timers rather than ground. A ban wide enough to catch that is a ban that
+    // gets loosened, and a loosened check is worse than none.
+    expect(YARD).not.toMatch(/Array\.from\(\s*\{\s*length/)
+    expect(YARD).not.toMatch(/\[\s*\.\.\.\s*Array\(/)
+    expect(YARD).not.toMatch(/for\s*\(/)
+    // a REPEATING background is a grid however it arrives, and nothing may tile, ever
+    expect(CODE).not.toMatch(/repeating-linear-gradient/)
+    expect(CODE).not.toMatch(/backgroundRepeat: 'repeat/)
+    // ⚠️ `backgroundSize` is how the FILM indexes one cell of a horizontal strip, so the ban on it
+    // belongs where the plot is DRAWN rather than file-wide — a ban that has to be loosened later is
+    // worse than no ban, so it is scoped now rather than deleted.
+    expect(YARD).not.toMatch(/backgroundSize/)
+    expect(YARD).not.toMatch(/backgroundImage/)
+    // exactly three lists are drawn: the two corner pegs, the two side lines, and the laid units.
+    // Anything else iterating in here is a grid until proven otherwise.
+    expect(YARD.match(/\.map\(/g) ?? [], 'a fourth list in the yard').toHaveLength(3)
+    expect(YARD, 'the two corner posts').toMatch(/\[0, ACROSS\]\.map/)
+    expect(YARD, 'the two side edges').toMatch(/\(\[0, 1\] as const\)\.map/)
+    expect(YARD, 'the laid units').toMatch(/laid\.map/)
   })
 
   it('the units exist only AFTER the peg — the yard is bare while the child decides', () => {
-    // `laid` is the scene's only unit list, and it is empty until the child commits
-    expect(CODE).toMatch(/if \(pegged === null\) return new Set<string>\(\)/)
-    // the demo's own copy is gated the same way, on its beat's `laid` flag
-    expect(CODE).toMatch(/cur\.laid \? new Set\(slotsFor\(data\)\) : new Set<string>\(\)/)
-    // and slotsFor is the only producer of per-unit positions
-    expect(CODE.match(/slotsFor\(/g)?.length).toBeLessThanOrEqual(2)
+    expect(CODE).toMatch(/const laid = pegAt === null \? \[\] : slotsFor/)
+    expect(CODE).toMatch(/const pegAt = v\.pegged \? v\.back : null/)
+    // and slotsFor is the only producer of per-unit positions in the whole chapter
+    expect(CODE.match(/slotsFor\(/g) ?? []).toHaveLength(1)
+  })
+
+  it('⚠️ THE BOX IS THE SAME HEIGHT ON EVERY ROUND UNTIL THE PEG IS IN', () => {
+    /**
+     * The plan closes up on the commit so the plot fills the panel — but if it closed up any EARLIER
+     * the box's own height would be the answer, drawn on screen instead of written. Swept over every
+     * round the generator can draw: pre-commit, two rounds of the same frontage and different depths
+     * are pixel-identical.
+     */
+    for (const d of ALL) expect(visibleDepth(null, d.depth), `${d.frontage}x${d.depth}`).toBe(MAX_DEPTH)
+    const byFrontage = new Map<number, Set<number>>()
+    for (const d of ALL) {
+      const u = metreOf(d.frontage, visibleDepth(null, d.depth), PLAN_BOX.w, PLAN_BOX.h)
+      byFrontage.set(d.frontage, (byFrontage.get(d.frontage) ?? new Set()).add(u))
+    }
+    for (const [f, us] of byFrontage) expect(us.size, `frontage ${f} draws one metre size`).toBe(1)
+    // and once the peg IS in, the plan closes up on what was built — the answer is already committed
+    expect(visibleDepth(3, 3)).toBe(4)
+    expect(visibleDepth(9, 3), 'a peg far past the answer still frames what they built').toBe(10)
+  })
+
+  it('⚠️ and the plot is never drawn tiny — the founder’s "too small" as an invariant', () => {
+    /**
+     * A metre was a typed constant (22px) and a 5 × 2 plot came out at 14% of a box reserved for
+     * twelve metres. Derived from the box, every round gets a readable plot — and the REVEAL, which
+     * is the beat the whole chapter builds to, gets a big one. Measured on the shipped box.
+     */
+    /**
+     * ⚠️ SWEPT IN BOTH ORIENTATIONS. The plan turns with the screen — depth down the page on a phone,
+     * across it on a laptop — and a check that only knew one of them would have let the other be
+     * drawn at a sixth of the room, which is the fault this test exists for.
+     */
+    const boxes = [
+      { name: 'portrait', across: PLAN_BOX.w, deep: PLAN_BOX.h },
+      { name: 'landscape', across: PLAN_BOX_LAND.h, deep: PLAN_BOX_LAND.w },
+    ]
+    for (const d of ALL) {
+      for (const b of boxes) {
+        const live = metreOf(d.frontage, visibleDepth(null, d.depth), b.across, b.deep)
+        expect(live, `${b.name} ${d.frontage}x${d.depth} live`).toBeGreaterThanOrEqual(20)
+        const laid = metreOf(d.frontage, visibleDepth(d.depth, d.depth), b.across, b.deep)
+        expect(laid, `${b.name} ${d.frontage}x${d.depth} laid`).toBeGreaterThanOrEqual(live)
+        // the laid plot uses most of the box on at least one axis, or it is floating in space again
+        expect(Math.max(laid * d.frontage / b.across, laid * d.depth / b.deep), `${b.name} ${d.frontage}x${d.depth} fills`)
+          .toBeGreaterThan(0.55)
+      }
+    }
+    // ⚠️ AND THE SCENE MUST USE IT. Mutation-tested: with the gate carrying its own 340s, putting a
+    // typed `const U = 22` back in the component left every size check green — the recorded
+    // "a gate that re-implements a rule cannot see the rule being removed", met again.
+    expect(CODE).toMatch(/const U = land\s*\? metreOf\(r\.frontage, shownDepth, box\.h, box\.w\)\s*: metreOf\(r\.frontage, shownDepth, box\.w, box\.h\)/)
+    expect(CODE).toMatch(/const shownDepth = visibleDepth\(pegAt, r\.depth\)/)
+    // and the landscape box really is wider than it is tall, or the plan turned for nothing
+    expect(PLAN_BOX_LAND.w).toBeGreaterThan(PLAN_BOX_LAND.h)
+  })
+
+  it('⚠️ THE PLAN TURNS WITH THE SCREEN — the long axis follows the frame’s long axis', () => {
+    /**
+     * Founder: *"laptop screen pe yeh ek proper horizontal rectangle mein dikhe … abhi woh vertical
+     * mein hai, joh phone ke liye sahi."* The walk is the long axis, so on a landscape frame it has to
+     * be the horizontal one — reflow, not a smaller scale.
+     * ⚠️ DRIVEN, NOT GREPPED. Mutation-testing found that a tile grid which had stopped turning with
+     * the plan passed every box-and-metre check in this file, because those were all still correct.
+     */
+    const u = 20
+    expect(planXY(false, 3, 7, u), 'portrait: depth runs DOWN').toEqual({ left: 60, top: 140 })
+    expect(planXY(true, 3, 7, u), 'landscape: depth runs ACROSS').toEqual({ left: 140, top: 60 })
+    // the two are transposes of each other, at every point of the plan
+    for (const d of ALL) {
+      for (const s of slotsFor(d)) {
+        const b = slotBox(d, s)
+        const p = planXY(false, b.x, b.y, u), l = planXY(true, b.x, b.y, u)
+        expect({ left: l.top, top: l.left }).toEqual(p)
+      }
+    }
+    // and the scene really turns: the box, the metre's axes and the units all read `land`
+    expect(CODE).toMatch(/const box = land \? PLAN_BOX_LAND : PLAN_BOX/)
+    expect(CODE).toMatch(/planXY\(land, b\.x, b\.y, U\)/)
+    expect(CODE).toMatch(/planXY\(land, across, deep, U\)/)
+    // the landscape box is wider than tall, or the plan turned for nothing
+    expect(PLAN_BOX_LAND.w).toBeGreaterThan(PLAN_BOX_LAND.h)
+    expect(PLAN_BOX.h).toBeGreaterThanOrEqual(PLAN_BOX.w)
+  })
+
+  it('⚠️ every marker GROWS with the metre — the character is not a constant', () => {
+    /**
+     * The founder's complaint was the character, and the fault was that the metre had become derived
+     * while the walker, the peg and the posts stayed typed pixel sizes. A check that only asks "do
+     * the boxes overlap" cannot see that: a marker frozen SMALL overlaps nothing at all. So assert
+     * the relationship, not the absence of a collision.
+     */
+    const small = markers(20), big = markers(80)
+    for (const k of ['walker', 'peg', 'post', 'num'] as const) {
+      expect(big[k], `${k} grows with the metre`).toBeGreaterThan(small[k])
+    }
+    // and at a big metre the walker really is about a metre — a marker a child can see, not a dot
+    expect(markers(80).walker).toBeGreaterThanOrEqual(80 * 0.8)
+    expect(markers(80).peg).toBeGreaterThanOrEqual(80 * 0.5)
+    // …with a floor that keeps it legible on the widest plot, where the metre is smallest
+    const tightest = Math.min(...ALL.map(d => metreOf(d.frontage, visibleDepth(null, d.depth), PLAN_BOX.w, PLAN_BOX.h)))
+    expect(markers(tightest).walker, 'legible at the smallest metre').toBeGreaterThanOrEqual(30)
+  })
+
+  it('⚠️ nothing in the road band is drawn over anything else, at any metre the generator makes', () => {
+    /**
+     * That strip has collided TWICE — the frontage numeral across the word ROAD, then the walker's
+     * head across the numeral once he started scaling with the metre. Both times every element was
+     * individually centred and individually correct, which is why only crossing their boxes finds it.
+     * So the band is derived, and this sweeps every size the chapter can draw rather than the one
+     * somebody looked at.
+     */
+    for (const d of ALL) {
+      for (const pegged of [null, d.depth]) {
+        const u = metreOf(d.frontage, visibleDepth(pegged, d.depth), PLAN_BOX.w, PLAN_BOX.h)
+        const { num: numPx, walker } = markers(u)
+        const b = roadBand(numPx, walker)
+        const roadText = { top: ROAD_TEXT_TOP, bot: ROAD_TEXT_TOP + ROAD_TEXT_H }
+        // the numeral and the walker's head are measured from the frontage line, which is at `height`
+        const num = { top: b.height + b.numTop, bot: b.height + b.numTop + numPx }
+        const head = { top: b.height - b.head, bot: b.height }
+        /**
+         * ⚠️ A REAL CLEARANCE, NOT `>= 0`. Mutation-tested: with the gap at zero these boxes merely
+         * TOUCH, which a `>=` check calls a pass — and on screen they overlapped by 2px, because an
+         * emoji's line box carries leading its font size does not describe and `FitSlot` then scales
+         * the lot down. Measured: 8px authored arrives as a 2px gap on the DOM.
+         */
+        const CLEAR = 6
+        expect(num.top - roadText.bot, `${d.frontage}x${d.depth}: numeral clears ROAD`).toBeGreaterThanOrEqual(CLEAR)
+        expect(head.top - num.bot, `${d.frontage}x${d.depth}: walker clears the numeral`).toBeGreaterThanOrEqual(CLEAR)
+        expect(num.top, 'and everything stays inside the band').toBeGreaterThanOrEqual(0)
+      }
+    }
+    // and the scene really uses BOTH, rather than carrying its own copies again
+    expect(CODE).toMatch(/const band = roadBand\(numPx, walker, ROAD\)/)
+    expect(CODE).toMatch(/top: band\.numTop/)
+    expect(CODE).toMatch(/const \{ walker, peg: pegPx, post, num: numPx \} = markers\(U\)/)
+    // ⚠️ no marker may go back to a typed size — that is how the character shrank to 16px
+    expect(CODE).not.toMatch(/fontSize: \d+ \}\}>🚶/)
+    expect(CODE).not.toMatch(/fontSize: \d+, lineHeight: 1 \}\}>📍/)
+  })
+
+  it('the frontage is ONE unbroken line — it says how WIDE, never how deep', () => {
+    // ticks along the given side would be a ruler, i.e. the answer drawn instead of written
+    expect(CODE).toMatch(/edge\(0, P\.gold\)/)
+    expect(CODE).toMatch(/\{r\.frontage\} m/)
+    // ⚠️ SCOPED TO WHAT IS DRAWN. `${r.depth}` also appears in the film's lookup key, which is a
+    // Record index and reaches no screen — the `{ANCHOR}` / `${ANCHOR}` trap this repo has met twice.
+    const YARD2 = CODE.slice(CODE.indexOf('function Yard('), CODE.indexOf('function Plot('))
+    expect(YARD2).not.toMatch(/\{r\.depth\}/)   // the depth is never drawn as a numeral, ever
   })
 })
 
@@ -261,27 +467,24 @@ describe('two honest readings, and coverage forces both', () => {
   it('an unmet reading is spent DELIBERATELY while a gap exists', () => {
     // mastery fires after ~3 rounds at L1, ONE at L2 and TWO at L3, so a coin flip misses one
     // reading about a third of the time
-    for (let i = 0; i < 40; i++) expect(makeRound(1, i, ['area']).qType).toBe('perimeter')
-    for (let i = 0; i < 40; i++) expect(makeRound(1, i, ['perimeter']).qType).toBe('area')
+    for (let i = 0; i < 40; i++) expect(makeRound(1, ['area']).qType).toBe('perimeter')
+    for (let i = 0; i < 40; i++) expect(makeRound(1, ['perimeter']).qType).toBe('area')
   })
 
   it('and RANDOMLY once the gap closes — hardest-first for ever would destroy the variety', () => {
-    const kinds = new Set(Array.from({ length: 200 }, (_, i) => makeRound(3, i, ['area', 'perimeter']).qType))
+    const kinds = new Set(Array.from({ length: 200 }, () => makeRound(3, ['area', 'perimeter']).qType))
     expect(kinds.size).toBe(2)
   })
 
-  it('the beat DECLARES coverage over both readings', () => {
-    expect(CODE).toMatch(/coverage:\s*\{\s*of:\s*d\s*=>\s*d\.qType,\s*all:\s*\['area',\s*'perimeter'\]\s*\}/)
+  it('the chapter DECLARES coverage over both readings, and the shell honours it', () => {
+    expect(EMPTY_PLOT_CONFIG.coverage?.all).toEqual(['area', 'perimeter'])
+    const t = EMPTY_PLOT_CONFIG.makeTask(1, ['area'])
+    expect(EMPTY_PLOT_CONFIG.coverage?.of(t)).toBe('perimeter')
   })
 
-  it('and BOTH call sites are wired — a check that re-implements the engine cannot see the wiring go', () => {
-    // `asked` must reach the generator, or the declaration withholds the exit for ever and the
-    // generator picks from empty (TickTock's planted regression). `round` must reach it too, or every
-    // round is seeded the same and the world stops changing.
-    const makeLine = CODE.split('\n').find(l => l.includes('make:'))!
-    expect(makeLine).toContain('makeRound(')
-    expect(makeLine).toMatch(/\bround\b/)
-    expect(makeLine).toMatch(/\basked\b/)
+  it('and `asked` really reaches the generator — a declaration that is not wired withholds the exit for ever', () => {
+    // driven rather than grepped: the config is asked for a task with one reading met
+    for (let i = 0; i < 20; i++) expect(EMPTY_PLOT_CONFIG.makeTask(3, ['perimeter']).r.qType).toBe('area')
   })
 
   it('the two readings ask genuinely different arithmetic off one gesture', () => {
@@ -291,6 +494,11 @@ describe('two honest readings, and coverage forces both', () => {
     expect(p.target).toBe(14)
     // same frontage, same depth, different given — so neither can be eliminated into
     expect(a.target).not.toBe(p.target)
+  })
+
+  it('a re-drawn plot of the same shape is not a new question', () => {
+    const a = EMPTY_PLOT_CONFIG.sig!(EMPTY_PLOT_CONFIG.makeTask(1, ['area', 'perimeter']))
+    expect(a).toMatch(/^(area|perimeter)\|\d+x\d+$/)
   })
 })
 
@@ -319,14 +527,14 @@ describe('the miss line names the WORK, never the number', () => {
     expect(missFor(a, 2)).not.toBe(missFor(p, 2))
   })
 
-  it('the chapter owns its feedback, so the shared pill does not land on the thing being read', () => {
-    expect(CODE).toMatch(/ownsFeedback:\s*true/)
-  })
-
-  it('everything spoken on a miss is also written', () => {
-    // `setLine(miss)` beside `speak(miss)` — a tap that produces only sound is silence
-    expect(CODE).toMatch(/setLine\(miss\)/)
-    expect(CODE).toMatch(/speak\(miss\)/)
+  it('⚠️ and it is WRITTEN, beside the plot they actually pegged', () => {
+    /**
+     * The shell says "It was 3 m back" and glides; the chapter's own sentence — the one that names
+     * what is wrong with the WORK — has to be rendered by the instrument or it is lost in the port.
+     * Everything spoken is also written, because most Chrome installs have no voice at all.
+     */
+    expect(CODE).toMatch(/\{reveal && !gradePeg\(r, v\.back\) && \(/)
+    expect(CODE).toMatch(/\{missFor\(r, v\.back\)\}/)
   })
 })
 
@@ -335,7 +543,7 @@ describe('the demo teaches the working, and its numbers agree with its own sente
   /**
    * ⚠️ The Supply Run shipped a beat that SAID the remainder stayed behind while the picture put it in
    * a van — every line individually true, and nothing could see it because the beats were
-   * component-local. These are exported, so the gate drives the list the demo plays.
+   * component-local. These are exported, so the gate drives the list the walkthrough plays.
    */
   const cases = [...DEMO, GUIDED, ...ALL.slice(0, 60)]
 
@@ -379,45 +587,167 @@ describe('the demo teaches the working, and its numbers agree with its own sente
     expect(work).not.toContain('divided by')
   })
 
-  it('the side view is off the LEFT, or the foreman sits in the lens', () => {
-    for (const d of cases) {
-      for (const b of explainBeats(d).filter(x => x.view === 'side')) expect(b.pegged).toBe(d.depth)
-    }
-    // off the LEFT (negative x) and RAISED above eye height, so the laid floor can be counted;
-    // asserted as properties rather than as literal coordinates, which is a test that breaks on tuning
-    const side = CODE.match(/cur\.view === 'side' \? \[(-?[\d.]+),\s*([\d.]+),/)!
-    expect(Number(side[1])).toBeLessThan(0)
-    expect(Number(side[2])).toBeGreaterThan(EYE_M)
-  })
-
-  it('THE CAMERA SHOWS WHAT WAS BUILT ON THE COMMIT — or the consequence is invisible', () => {
+  it('⚠️ EVERY BEAT THAT NARRATES A MOVE CARRIES THE VALUE THAT MAKES IT', () => {
     /**
-     * ⚠️ Found by driving it, and it is the chapter's central claim failing silently. The child pegs
-     * FACING AWAY from the road, so everything the delivery lays is behind them: a wrong peg read
-     * *"Too far back … part of it would be bare"* over an empty green field. The tiles, the bare strip
-     * and the leftovers were all off-screen, on every round, right and wrong.
+     * The Angle Shop's walkthrough said "So I turn it" and then "There, that is the one" over an arm
+     * that had not moved a degree — the teaching describing something the screen never did. The
+     * walkthrough steps are built from the beats, so the value and the sentence cannot drift.
      */
-    expect(CODE).toMatch(/const reviewCam = useMemo/)
-    expect(CODE).toMatch(/pegged === null \? null :/)
-    // and it is wired into the scene, not merely computed
-    expect(CODE).toMatch(/demoCam=\{reviewCam\}/)
-    // releasing it must restore the child's stance, or a guided retry resumes outside the yard
-    expect(CODE).toMatch(/demoCam === null/)
+    const steps = (Array.isArray(EMPTY_PLOT_CONFIG.tutorial) ? EMPTY_PLOT_CONFIG.tutorial : [])
+    expect(steps).toHaveLength(DEMO.length)
+    steps.forEach((s, i) => {
+      const beats = explainBeats(DEMO[i])
+      expect(s.steps).toHaveLength(beats.length)
+      s.steps.forEach((st, j) => {
+        expect(st.say).toBe(beats[j].say)
+        expect(st.value!.back).toBe(beats[j].depth)
+        expect(st.value!.pegged).toBe(beats[j].pegged !== null)
+        expect(st.value!.laid).toBe(beats[j].laid)
+      })
+      // the walk beat really walks, the peg beat really pegs, the last beat really lays
+      expect(s.steps[3].value!.back).toBe(DEMO[i].depth)
+      expect(s.steps[4].value!.pegged).toBe(true)
+      expect(s.steps[5].value!.laid).toBe(true)
+      // and the board writes the equation exactly once, on the beat that lays the units
+      expect(s.steps.filter(st => st.board).length).toBe(1)
+      expect(s.steps[5].board).toBe(equationFor(DEMO[i]))
+    })
   })
 
-  it('the demo opens on the road, looking down the empty yard', () => {
+  it('⚠️ THE ARITHMETIC BEAT PERFORMS THE ARITHMETIC — it used to be a sentence over a static yard', () => {
+    /**
+     * Founder, on a screenshot of that beat: *animate the explanation, and run the frames off the
+     * narration.* It was the whole teaching happening in audio — and most Chrome installs have no
+     * voice, so that beat taught nothing at all. The frames are data so the gate can check the
+     * picture against the beat's own words, which is the Supply Run rule.
+     */
     for (const d of cases) {
-      expect(explainBeats(d)[0].view).toBe('road')
-      expect(explainBeats(d)[0].camZ).toBe(SPAWN_Z)
-      expect(explainBeats(d)[0].depth).toBe(0)
+      const beat = explainBeats(d).find(b => b.step === 'work')!
+      const f = workFrames(d)
+      expect(f.length, 'a beat that is one frame long is a still').toBeGreaterThan(1)
+      // it opens on the whole load, untouched, and the load is the GIVEN — never the answer
+      expect(f[0].groups).toHaveLength(0)
+      expect(f[0].note).toContain(String(d.target))
+      // and it ENDS on what the sentence ends on
+      const last = f[f.length - 1]
+      expect(last.note, `${d.qType} lands on the answer`).toContain(String(d.depth))
+      expect(beat.say).toContain(String(d.depth))
+      // the two readings cut the load up differently — that is what stops either being guessed
+      expect(f.length).toBe(d.qType === 'area' ? d.depth + 1 : 5)
+
+      /**
+       * ⚠️ AND THE PIECES ARE MEASURED, NOT JUST THE CAPTION. Caught by mutation: shrinking the
+       * perimeter's two final pieces to one unit each left the note still reading "2 each" and the
+       * whole check green — the picture drawing one thing while its own words said another, which is
+       * the Supply Run fault this file exists to prevent. Assert the DRAWING.
+       */
+      const sizes = last.groups.map(g => g.to - g.from)
+      if (d.qType === 'area') {
+        expect(sizes, `${d.depth} rows of ${d.frontage}`).toEqual(Array(d.depth).fill(d.frontage))
+      } else {
+        // two sides of the frontage, then the remainder split into two equal DEPTHS
+        expect(sizes.filter((_, i) => i < 2)).toEqual([d.frontage, d.frontage])
+        expect(last.groups.filter(g => g.tone === 'each').map(g => g.to - g.from))
+          .toEqual([d.depth, d.depth])
+      }
     }
-    expect(SPAWN_Z).toBeLessThan(0)   // behind the frontage line, on the road
   })
 
-  it('the demo is self-paced, not driven off utterance events', () => {
-    // a device with no voice would otherwise freeze the teaching mid-beat (TickTock's lesson hang)
-    expect(CODE).toMatch(/fallbackStepMs:/)
-    expect(CODE).toMatch(/speakSteps\(/)
+  it('the working never marks more than the load, and never marks a unit twice', () => {
+    for (const d of cases) {
+      for (const f of workFrames(d)) {
+        const seen = new Set<number>()
+        for (const g of f.groups) {
+          expect(g.from).toBeGreaterThanOrEqual(0)
+          expect(g.to).toBeLessThanOrEqual(d.target)
+          expect(g.to).toBeGreaterThan(g.from)
+          for (let i = g.from; i < g.to; i++) {
+            expect(seen.has(i), `unit ${i} marked twice`).toBe(false)
+            seen.add(i)
+          }
+        }
+      }
+      // the last frame of an area round has accounted for the WHOLE load — that is what "it comes
+      // out to the metre" means, one beat early
+      const last = workFrames(d)[workFrames(d).length - 1]
+      expect(last.groups.reduce((n, g) => n + (g.to - g.from), 0)).toBe(d.target)
+    }
+  })
+
+  it('⚠️ and the countable bar can NEVER reach a scored round', () => {
+    /**
+     * The bar is `target` segments long and a child could count it. That is safe only because it
+     * renders behind `step`, which the walkthrough beats set and nothing in play does — so this is
+     * the assertion the whole thing rests on, driven rather than grepped.
+     */
+    const t = EMPTY_PLOT_CONFIG.makeTask(3, ['area', 'perimeter'])
+    expect(EMPTY_PLOT_CONFIG.initialValue(t).step, 'a fresh round').toBeUndefined()
+    expect(EMPTY_PLOT_CONFIG.hand!.enter!(t, START, 4).step, 'the hand').toBeUndefined()
+    const glided: PlotV[] = []
+    EMPTY_PLOT_CONFIG.glide(t, { ...START, back: 1, pegged: true }, v => glided.push(v), fn => fn())
+    expect(glided.length, 'the glide really ran').toBeGreaterThan(0)
+    for (const v of glided) expect(v.step, 'the miss glide').toBeUndefined()
+    // and the bar is drawn only while nothing has been laid, so it never sits beside a verdict
+    expect(CODE).toMatch(/\{work && !shown && <WorkBar/)
+  })
+
+  it('the walk beat counts its metres out one at a time', () => {
+    // "counting my metres. 1, 2, 3" over a walker who slid the whole way in 180ms was the same fault
+    // one beat along
+    for (const d of cases) {
+      const walk = explainBeats(d).find(b => b.step === 'walk')!
+      expect(walk.depth).toBe(d.depth)
+      expect(walk.say).toContain(Array.from({ length: d.depth }, (_, i) => i + 1).join(', '))
+    }
+    expect(CODE).toMatch(/v\.step === 'walk' \? v\.back \+ 1 :/)
+    expect(CODE).toMatch(/back: Math\.min\(fi, v\.back\)/)
+  })
+
+  it('⚠️ THE FILM COVERS THE TWO FIXED DEMOS AND NOTHING ELSE', () => {
+    /**
+     * Founder's call: the code-drawn bar was *"kuch khaas naii"*, so the walkthrough examples got a
+     * generated film. A film says ONE set of numbers for ever — so it may only ever play on the two
+     * hard-coded demos, and every other round (including the re-teach, which re-narrates the child's
+     * own round) has to fall back to the bar. Swept over the whole generator.
+     */
+    for (const d of DEMO) expect(filmFor(d), `${d.qType} demo`).toBeTruthy()
+    expect(filmFor(GUIDED), 'the guided round is played, not watched').toBeNull()
+    for (const d of ALL) {
+      if (DEMO.some(x => x.qType === d.qType && x.frontage === d.frontage && x.depth === d.depth)) continue
+      expect(filmFor(d), `${d.qType} ${d.frontage}x${d.depth}`).toBeNull()
+    }
+  })
+
+  it('⚠️ and the strip on disk really has the cells the code indexes into', () => {
+    /**
+     * The film is a horizontal strip stepped by `backgroundPosition`, so the cell count is shared
+     * between a PNG and a number in the source. Re-cut the strip at a different `--frames` and every
+     * cell silently lands on the wrong picture — nothing errors, the animation just stops matching
+     * the words. Pin the geometry: the cutter writes cells of 440×248.
+     */
+    for (const d of DEMO) {
+      const film = filmFor(d)!
+      const buf = readFileSync(join(process.cwd(), 'public', film.src.replace(/^\//, '')))
+      // PNG IHDR: width and height are big-endian uint32 at bytes 16 and 20
+      const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20)
+      expect(h, `${film.src} cell height`).toBe(248)
+      expect(w, `${film.src} is ${film.cells} cells wide`).toBe(film.cells * 440)
+    }
+  })
+
+  it('the film plays only on the arithmetic beat, and the caption stays the ARITHMETIC', () => {
+    // the picture may be the model's; what the child READS is derived from the numbers either way
+    expect(CODE).toMatch(/const film = v\.step === 'work' \? filmFor\(r\) : null/)
+    expect(CODE).toMatch(/frames\[Math\.round\(\(fi \/ Math\.max\(1, nFrames - 1\)\) \* \(frames\.length - 1\)\)\]\?\.note/)
+  })
+
+  it('⚠️ the frames run at the NARRATION’s speed, not at a constant of their own', () => {
+    // a beat's real duration is not knowable in advance, but the child's speech-rate pick is the same
+    // multiplier both sides — `speakSteps` uses `2600 / m`, so a frame is `620 / m`
+    expect(CODE).toMatch(/620 \/ \(getSpeechRate\(\) \|\| 1\)/)
+    // and on a timer, never rAF: rAF is frozen outright in a backgrounded tab
+    expect(CODE).toMatch(/setInterval/)
+    expect(CODE).not.toMatch(/requestAnimationFrame/)
   })
 
   it('the two demos teach one reading each, before anything is scored', () => {
@@ -427,395 +757,165 @@ describe('the demo teaches the working, and its numbers agree with its own sente
       expect(derived).toBe(d.depth)   // the fixed rounds are honest too
     }
   })
-})
 
-// ────────────────────────────────────────────────────────────────────────────────────────
-describe('the world is generated in code, and NOTHING in it is countable', () => {
-  const SEEDS = Array.from({ length: 400 }, (_, i) => i + 1)
-  const FRONTAGES = [2, 4, 6, 9]
-
-  it('is deterministic for a seed', () => {
-    for (const s of [1, 7, 23, 400]) {
-      expect(JSON.stringify(makeSite(s, 4))).toBe(JSON.stringify(makeSite(s, 4)))
-    }
-  })
-
-  it('never calls Math.random at render time', () => {
-    const site = readFileSync(join(process.cwd(), 'src/features/chapters/story/plotSite.ts'), 'utf8')
-    expect(site.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/Math\.random/)
-    expect(CODE).not.toMatch(/Math\.random/)
-  })
-
-  it('consecutive rounds are a different place — the scene changes across the run', () => {
-    for (let r = 1; r < 12; r++) expect(makeSite(r, 4).name).not.toBe(makeSite(r + 1, 4).name)
-  })
-
-  it('and the whole run uses more than one setting', () => {
-    expect(new Set(SEEDS.slice(0, 10).map(s => makeSite(s, 4).name)).size).toBeGreaterThan(2)
-  })
-
-  it('NO PROP SIZE IS REPEATED — a repeated unit-sized object is not expressible', () => {
-    for (const s of SEEDS) for (const f of FRONTAGES) {
-      const fp = makeSite(s, f).props.map(p => `${p.w}x${p.d}`)
-      expect(new Set(fp).size).toBe(fp.length)
-    }
-  })
-
-  /**
-   * ⚠️ THE ROAD IS A QUARTER OF EVERY OPENING FRAME AND IT HAS GONE DARK TWICE. The child spawns ON it
-   * at SPAWN_Z = −3.4, so it necessarily fills the bottom of the shot; at a 25.5° sun a low lightness
-   * renders it near-black, and a black band across the bottom quarter reads as a hole in the world
-   * rather than as tarmac. It was reasoned up to 0.62 once, the note was written, and the code then
-   * came back at 0.40 in a later pass with the comment still claiming the fix. Pinned here so the
-   * third time fails a test instead of shipping.
-   */
-  it('the road is never a dark band — it is a quarter of the opening frame', () => {
-    for (const s of SEEDS) for (const f of FRONTAGES) {
-      expect(makeSite(s, f).road.l).toBeGreaterThan(0.5)
-    }
-  })
-
-  it('no prop is anywhere near one metre — nothing reads as a unit', () => {
-    for (const s of SEEDS) for (const f of FRONTAGES) {
-      const site = makeSite(s, f)
-      for (const p of [...site.props, ...site.trees, ...site.skyline]) {
-        expect(Math.abs(p.w - 1)).toBeGreaterThan(0.35)
-      }
-    }
-  })
-
-  it('nothing sits on an integer metre — a prop can never coincide with a pace mark', () => {
-    for (const s of SEEDS) for (const f of FRONTAGES) {
-      const site = makeSite(s, f)
-      for (const p of [...site.props, ...site.trees, ...site.skyline]) {
-        for (const v of [p.x, p.z]) {
-          const frac = v - Math.floor(v)
-          expect(frac).toBeGreaterThan(0.15)
-          expect(frac).toBeLessThan(0.85)
-        }
-      }
-    }
-  })
-
-  it('NO THREE PROPS COLLINEAR AND EQUALLY SPACED — procedural scatter’s own trap', () => {
-    for (const s of SEEDS) for (const f of FRONTAGES) {
-      const site = makeSite(s, f)
-      const ps = [...site.props, ...site.trees]
-      for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) for (let k = j + 1; k < ps.length; k++) {
-        const [a, b, c] = [ps[i], ps[j], ps[k]]
-        const cross = (b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x)
-        const collinear = Math.abs(cross) < 0.5
-        if (!collinear) continue
-        const g1 = Math.hypot(b.x - a.x, b.z - a.z)
-        const g2 = Math.hypot(c.x - b.x, c.z - b.z)
-        expect(Math.abs(g1 - g2)).toBeGreaterThan(0.35)
-      }
-    }
-  })
-
-  /**
-   * ⚠️ THE GROUND IS REAL GEOMETRY NOW, AND THAT IS NEW PEDAGOGY SURFACE. It used to be a single flat
-   * quad, which could not be a ruler however it was lit. A tessellated, displaced sheet CAN be: a
-   * regular lattice at a whole-metre pitch is a grid chalked onto the working surface by another
-   * route, and relief inside the plot would give the child a landmark to pace against instead of
-   * dividing. Both are the exact fault that got an earlier cut rejected, arriving through a door the
-   * old checks did not cover — so the guarantees are asserted on the ACTUAL vertex data.
-   */
-  it('the ground lattice has no metre-scale period — it cannot be paced', () => {
-    const gm = groundMesh(4, 7, 4 + 5, SPAWN_Z - 4, MAX_DEPTH + 1 - 4)
-    // the cell is nowhere near a pace, in either direction
-    expect(gm.cell).toBeGreaterThan(3)
-    expect(Math.abs(gm.cell - Math.round(gm.cell))).toBeGreaterThan(0.15)   // and not a whole number
-  })
-
-  it('no two interior ground vertices sit on a shared lattice — there is no grid to read', () => {
-    const gm = groundMesh(4, 7, 4 + 5, SPAWN_Z - 4, MAX_DEPTH + 1 - 4)
-    // every interior vertex is jittered, so the x values must NOT collapse to a small set of columns
-    const xs = new Set<number>()
-    for (let i = 0; i < gm.pos.length; i += 3) xs.add(Math.round(gm.pos[i] * 100) / 100)
-    // a clean lattice would give ~33 distinct x values; a jittered one gives hundreds
-    expect(xs.size).toBeGreaterThan(300)
-  })
-
-  /**
-   * ⚠️ THIS USED TO DEMAND |y| < 1e-6 ACROSS THE WHOLE WALKABLE BOX, AND THAT WAS THE ASSERTION KEEPING
-   * THE YARD LOOKING LIKE A SHEET OF PAPER. The walkable box is ±(frontage/2 + 5) by 17 m — essentially
-   * every ground pixel on screen — so pinning it to exactly zero gave every facet in frame the same
-   * normal and the same lighting value, which is the thing three separate visual passes were trying to
-   * fix from the other end.
-   *
-   * The invariants that actually matter are narrower than "y is zero", and both are still pinned:
-   *   • the PLOT is dead flat, because tiles are laid flush on it, and
-   *   • nothing anywhere is a slope a child could pace against or that could clip a fixed eye height.
-   * Relief in the walkable yard OUTSIDE the plot serves neither of those and is what makes ground read
-   * as ground. Bounded hard at GROUND_MICRO/2 so it can never grow back into terrain.
-   */
-  it('the PLOT is dead flat — tiles are laid flush on it', () => {
-    for (const f of [2, 4, 6, 9]) for (const seed of [1, 5, 23, 99]) {
-      const gm = groundMesh(f, seed, f / 2 + 5, SPAWN_Z - 4, MAX_DEPTH + 1 - 4)
-      for (let i = 0; i < gm.pos.length; i += 3) {
-        const x = gm.pos[i], y = gm.pos[i + 1], z = gm.pos[i + 2]
-        // the plot in this mesh's local frame: x 0..frontage centred, z 0..MAX_DEPTH offset by 4
-        const inPlot = Math.abs(x) <= f / 2 && z >= -4 && z <= MAX_DEPTH - 4
-        if (inPlot) expect(Math.abs(y)).toBeLessThan(1e-6)
-      }
-    }
-  })
-
-  it('the walkable yard is faceted but never a slope — no landmark to pace against', () => {
-    for (const f of [2, 4, 6, 9]) for (const seed of [1, 5, 23, 99]) {
-      const gm = groundMesh(f, seed, f / 2 + 5, SPAWN_Z - 4, MAX_DEPTH + 1 - 4)
-      let varied = 0
-      for (let i = 0; i < gm.pos.length; i += 3) {
-        const x = gm.pos[i], y = gm.pos[i + 1], z = gm.pos[i + 2]
-        const inWalkable = Math.abs(x) <= f / 2 + 5 && z >= SPAWN_Z - 4 && z <= MAX_DEPTH + 1 - 4
-        if (!inWalkable) continue
-        // never deep enough to clip a 1.55 m eye height, or to read as terrain rather than as texture
-        expect(Math.abs(y)).toBeLessThanOrEqual(GROUND_MICRO)
-        if (Math.abs(y) > 1e-6) varied++
-      }
-      // …and it is genuinely there: a flat sheet is what this test exists to stop coming back
-      expect(varied).toBeGreaterThan(8)
-    }
-  })
-
-  it('the scene binds the ground arrays rather than looping — the anti-grid source rules still bite', () => {
-    // the displacement lives in the pure module precisely so this file needs no loop of its own; if it
-    // ever moves back in here, the `for (`/`Array.from` bans below stop meaning anything
-    expect(CODE).toMatch(/groundMesh\(/)
-    expect(CODE).toMatch(/attach="attributes-position"/)
-  })
-
-  it('nothing is generated inside the plot — the working surface stays bare', () => {
-    for (const s of SEEDS) for (const f of FRONTAGES) {
-      for (const p of makeSite(s, f).props) {
-        const insideX = p.x > -0.6 && p.x < f + 0.6
-        const insideZ = p.z > -0.6 && p.z < MAX_DEPTH + 0.6
-        expect(insideX && insideZ).toBe(false)
-      }
-      // and the skyline is well past the deepest legal peg
-      for (const p of makeSite(s, f).skyline) expect(p.z).toBeGreaterThan(MAX_DEPTH + 8)
-    }
-  })
-
-  it('no prop stands where the foreman does, or he is inside a van while talking', () => {
-    // drives the same `miloSpot` the scene places him with, so the two cannot drift apart
-    for (const s of SEEDS) for (const f of FRONTAGES) {
-      const [mx, mz] = miloSpot(f)
-      for (const p of makeSite(s, f).props) {
-        expect(Math.hypot(p.x - mx, p.z - mz)).toBeGreaterThanOrEqual(MILO_CLEAR)
-      }
-    }
-  })
-
-  it('the foreman is on screen from the spawn stance — checked against the HORIZONTAL half-FOV', () => {
-    /**
-     * ⚠️ The craft rule is that the speaker is on screen whenever their bubble is, and `fov` in the
-     * camera prop is VERTICAL — so the number to check against at 16:9 is ~47°, not ~31°. An earlier
-     * placement sat ~59° off-axis, i.e. entirely off screen while talking.
-     */
-    const fovV = Number(CODE.match(/fov:\s*(\d+)/)![1])
-    const halfH = Math.atan(Math.tan((fovV / 2) * Math.PI / 180) * (16 / 9)) * 180 / Math.PI
-    for (const f of [2, 3, 4, 5, 6, 7, 8, 9]) {
-      const [mx, mz] = miloSpot(f)
-      // camera spawns at x = f/2, z = SPAWN_Z, facing +Z
-      const off = Math.abs(Math.atan2(mx - f / 2, mz - SPAWN_Z) * 180 / Math.PI)
-      expect(off).toBeLessThan(halfH - 8)   // and with margin, not hard against the frame edge
-      expect(Math.hypot(mx - f / 2, mz - SPAWN_Z)).toBeGreaterThan(4)   // not looming in the lens
-    }
+  it('the re-teach narrates the same working the walkthrough played', () => {
+    const t = EMPTY_PLOT_CONFIG.makeTask(2, ['area', 'perimeter'])
+    expect(t.work).toEqual(explainBeats(t.r).map(b => b.say))
   })
 })
 
 // ────────────────────────────────────────────────────────────────────────────────────────
-describe('palette is a check, not a vibe', () => {
-  const SEEDS = Array.from({ length: 400 }, (_, i) => i + 1)
-
-  it('the unit the child commits to READS against the world — body on hue or value, contour always', () => {
-    /**
-     * ⚠️ THIS USED TO DEMAND 0.30 OF SATURATION FROM THE WORLD, AND THAT ONE NUMBER IS WHY THE YARD
-     * WAS GREY. Both units are vivid (0.64 / 0.72), so the gap capped every ground, sky, road and prop
-     * at 0.34 — a legal palette that reads as no palette, which is exactly what a founder saw twice.
-     * The check was doing its job and enforcing the wrong claim.
-     *
-     * Separation now rests on the two axes that actually carry it, and BOTH bite:
-     *   • the unit BODY clears on hue OR on value — either is enough, and
-     *   • its CONTOUR clears the large fields on value, always. That second one is what makes the
-     *     body's either/or safe, and it is why the world is now free in saturation rather than merely
-     *     permitted to be.
-     */
-    for (const s of SEEDS) for (const f of [2, 5, 9]) {
-      const site = makeSite(s, f)
-      for (const q of ['area', 'perimeter'] as QType[]) {
-        const sep = plotSiteSeparation(site, q)
-        expect(sep.hue >= 45 || sep.body >= 0.18,
-          `${q} body: hue ${sep.hue.toFixed(0)}° value ${sep.body.toFixed(2)}`).toBe(true)
-        expect(sep.outline).toBeGreaterThanOrEqual(0.22)
-        expect(sep.ok).toBe(true)     // the module's own verdict, so a loosened rule is caught here too
-      }
-    }
-  })
-
-  it('the two units clear each OTHER, so a tile can never read as a fence panel', () => {
-    expect(hueGap(UNIT.area.h, UNIT.perimeter.h)).toBeGreaterThanOrEqual(45)
-  })
-
-  it('the world carries REAL COLOUR, and its value band is what the contour rule rests on', () => {
-    /**
-     * ⚠️ A SATURATION FLOOR, NOT A CEILING — the inversion is the whole change. And the lightness band
-     * stops being cosmetic: the contour sits at `UNIT_OUTLINE.l`, so a ground allowed to go dark would
-     * swallow it and the check above would have nothing left to stand on.
-     */
-    for (const s of SEEDS.slice(0, 80)) {
-      const g = makeSite(s, 4).ground
-      expect(g.s).toBeGreaterThan(0.22)          // it is a place, not a grey void
-      expect(g.l).toBeGreaterThan(0.35)
-      expect(g.l).toBeLessThan(0.65)
-      expect(Math.abs(g.l - UNIT_OUTLINE.l)).toBeGreaterThanOrEqual(0.22)
-    }
-    for (const q of ['area', 'perimeter'] as QType[]) expect(UNIT[q].s).toBeGreaterThan(0.55)
-  })
-
-  it('every prop is the colour the THING is, and still clears both units', () => {
-    // the props carry the scene's colour now, so they are swept individually rather than only via the
-    // worst-case min — a single lilac skip would pass the aggregate and still look wrong
-    for (const s of SEEDS.slice(0, 120)) for (const f of [2, 5, 9]) {
-      for (const p of makeSite(s, f).props) {
-        for (const q of ['area', 'perimeter'] as QType[]) {
-          const u = UNIT[q]
-          expect(hueGap(p.tone.h, u.h) >= 45 || Math.abs(p.tone.l - u.l) >= 0.18,
-            `${p.role} vs ${q}: hue ${hueGap(p.tone.h, u.h).toFixed(0)}° value ${Math.abs(p.tone.l - u.l).toFixed(2)}`).toBe(true)
-        }
-      }
-    }
-  })
-
-  it('the post-commit reveal earns its legibility by the SAME rule as the units', () => {
-    // it is a colour laid over the answer, so it gets no exemption — and with the world now free to be
-    // a saturated green, a green reveal no longer clears anything on hue and must earn it on value
-    for (const s of SEEDS.slice(0, 120)) {
-      const r = readsAgainst(makeSite(s, 4), REVEAL)
-      expect(r.hue >= 45 || r.body >= 0.18,
-        `reveal: hue ${r.hue.toFixed(0)}° value ${r.body.toFixed(2)}`).toBe(true)
-      expect(r.outline).toBeGreaterThanOrEqual(0.22)
-    }
-  })
-
-  it('the contour is RENDERED, not merely declared', () => {
-    /**
-     * ⚠️ The craft doc's own "a gate that reads the DATA cannot see how the scene draws it". Every
-     * separation number above is a promise about pixels and is worth nothing if the unit ships as a
-     * flat lambert box — which is precisely how the previous palette rework passed 70 green tests
-     * while the screen was grey.
-     */
-    expect(CODE).toMatch(/UNIT_OUTLINE/)
-    const i = CODE.indexOf('{[...laid].map(')
-    expect(i).toBeGreaterThan(-1)
-    expect(CODE.slice(i, i + 1400)).toMatch(/UNIT_OUTLINE/)
-  })
-
+describe('THE HAND — hands apart to show how far back it goes', () => {
   /**
-   * ⚠️ THIS DRIVES `THREE.Color` RATHER THAN COMPARING A STRING, AND THAT IS THE WHOLE POINT.
-   *
-   * The first version of this check asserted `css(...) === 'hsl(100.0 50.0% 40.0%)'` — a valid CSS
-   * Color 4 string every browser reads correctly — and it PASSED while the entire world rendered flat
-   * white on screen. `THREE.Color.setStyle` runs its own regex, not the CSS engine, and on r180 it
-   * returns rgb(255,255,255) for the space-separated form with no throw and no warning.
-   *
-   * `THREE.Color` is pure maths with no WebGL, so the gate can import it. **A value handed to a
-   * renderer must be checked by that renderer.**
+   * ⚠️ THE FIRST SCORED SPAN IN THE BAND, AND THE ARITHMETIC IS THE JUSTIFICATION. The Height Bar
+   * wanted this gesture and could not have it: two palms carry ~±0.028 of frame width between them,
+   * which on a 0–60 INCH scale is ±2.3 in — answers one inch apart sit inside the noise and a child
+   * who KNEW the answer could not enter it. Whole metres are ~12× coarser, so the same noise is
+   * ±0.37 m against a 1 m step. Everything below is that claim, checked.
    */
-  it('emits a colour three.js actually parses — not merely one that is valid CSS', async () => {
-    const THREE = await import('three')
-    const parse = (s: string) => { const c = new THREE.Color(); c.setStyle(s); return [c.r, c.g, c.b] }
+  /** ±0.028 of frame width between two palms ÷ ~0.111 of frame per hand width = ±0.25 hand widths */
+  const NOISE_M = 0.25 * M_PER_HAND
 
-    // the shape three cannot read, kept here so the regression is named rather than remembered
-    expect(parse('hsl(100.0 50.0% 40.0%)')).toEqual([1, 1, 1])   // silent white
-
-    const mid = parse(css({ h: 100, s: 0.5, l: 0.4 }))
-    expect(mid).not.toEqual([1, 1, 1])
-    expect(Math.max(...mid)).toBeLessThan(0.9)
+  it('a hand settled on a step cannot be flipped by its own noise', () => {
+    // ⚠️ A hand settled on step C sees raw values up to STEP/2 + noise away from C, so the hold band
+    // has to exceed that or the reading dithers, the dwell resets on every flip and the camera is a
+    // dead button. 0.62 of a step was the Angle Shop's first guess and it flips.
+    expect(HOLD_M).toBeGreaterThan(0.5 + NOISE_M)
   })
 
-  it('every tone in every generated site parses to something that is not white', async () => {
-    const THREE = await import('three')
-    const parse = (s: string) => { const c = new THREE.Color(); c.setStyle(s); return [c.r, c.g, c.b] }
-    for (const s of [1, 2, 3, 4, 17, 99, 400]) {
-      const site = makeSite(s, 5)
-      const tones = [site.sky, site.ground, site.road, site.post, ...site.props.map(p => p.tone), ...site.skyline.map(p => p.tone)]
-      for (const t of tones) {
-        const rgb = parse(css(t))
-        expect(rgb).not.toEqual([1, 1, 1])
+  it('⚠️ and the sweep JITTERS ACROSS A BOUNDARY, not around a centre', () => {
+    // jitter about a bucket centre never crosses anything and passes with the hysteresis deleted —
+    // that version was written first elsewhere in this repo and proved nothing
+    for (let step = 1; step < HAND_MAX_M; step++) {
+      for (let raw = step + 0.5 - NOISE_M; raw <= step + 0.5 + NOISE_M; raw += 0.01) {
+        expect(snapMetres(raw, step), `settled on ${step}, raw ${raw.toFixed(2)}`).toBe(step)
       }
+      // and it DOES move when the hand really reaches the next metre's own centre
+      expect(snapMetres(step + 1, step)).toBe(step + 1)
+      expect(snapMetres(step - 1, step)).toBe(Math.max(1, step - 1))
     }
-    // and the units and the reveal, which are the things that must READ against all of that
-    for (const t of [UNIT.area, UNIT.perimeter, REVEAL]) expect(parse(css(t))).not.toEqual([1, 1, 1])
+  })
+
+  it('every depth the generator can draw is reachable with two hands', () => {
+    // ⚠️ A round whose answer the surface cannot express is unanswerable, which is worse than a wrong
+    // one. Swept over the whole generator rather than the case I had in mind.
+    for (const d of ALL) {
+      const spanInHands = d.depth / M_PER_HAND
+      expect(spanInHands, `${d.depth} m is not a span`).toBeGreaterThanOrEqual(SPAN_MIN_HANDS)
+      expect(spanInHands, `${d.depth} m is off the frame`).toBeLessThanOrEqual(SPAN_MAX_HANDS)
+      expect(snapMetres(spanMetres(spanInHands), null)).toBe(d.depth)
+      expect(d.depth).toBeLessThanOrEqual(HAND_MAX_M)
+    }
+  })
+
+  it('⚠️ the two inputs reach EXACTLY the same depths — neither can answer what the other cannot', () => {
+    // the walk bound and the span's ceiling are one number: at 12 the tap path could peg 11 and 12
+    // while a hand could not express them, which is the one-instrument-two-inputs rule quietly broken
+    expect(MAX_DEPTH).toBe(HAND_MAX_M)
+    expect(snapMetres(spanMetres(SPAN_MAX_HANDS), null), 'the widest span is the walk bound').toBe(MAX_DEPTH)
+  })
+
+  it('hands together is not a length, and one hand is not a span', () => {
+    expect(spanMetres(SPAN_MIN_HANDS - 0.01)).toBeNull()
+    expect(spanMetres(null)).toBeNull()
+    const ready = EMPTY_PLOT_CONFIG.hand!.ready!
+    expect(ready(hand(3))).toBe(true)
+    expect(ready(hand(3, 1)), 'one hand in frame').toBe(false)
+    expect(ready(hand(null)), 'no hands').toBe(false)
+    expect(ready(hand(0.2)), 'palms together').toBe(false)
+  })
+
+  it('the reading self-clears when the hands leave, so the next round starts fresh', () => {
+    expect(readMetres(hand(4 / M_PER_HAND))).toBe(4)
+    expect(readMetres(hand(null))).toBeNull()
+    // …and does not carry the old step back in on a NEW gesture
+    expect(readMetres(hand(7 / M_PER_HAND))).toBe(7)
+  })
+
+  it('and it is idempotent, because the ring and the ghost both call it', () => {
+    const r = hand(5 / M_PER_HAND)
+    expect(readMetres(r)).toBe(readMetres(r))
+  })
+
+  it('the peg goes where the hands say, and one gesture is one peg', () => {
+    const t = EMPTY_PLOT_CONFIG.makeTask(1, ['area', 'perimeter'])
+    const v = EMPTY_PLOT_CONFIG.hand!.enter!(t, START, 5)
+    expect(v).toEqual({ back: 5, pegged: true, laid: false })
+    expect(EMPTY_PLOT_CONFIG.hand!.commits!(t, v)).toBe(true)
+  })
+
+  it('⚠️ the hand owns the continuous value, so the walk buttons go with the camera on', () => {
+    // a step pressed beside a live reading is overwritten before the finger leaves the button
+    expect(CODE).toMatch(/\{!reveal && !onCam && \(/)
+    expect(CODE).toMatch(/const onCam = input === 'hand'/)
+  })
+
+  it('⚠️ the ghost says only what was READ — never whether it is right', () => {
+    const ghost = CODE.slice(CODE.indexOf('{ghost !== null'), CODE.indexOf('{shown && laid.map'))
+    for (const leak of ['gradePeg', 'r.depth', 'correct', 'mint']) expect(ghost).not.toContain(leak)
+    // and it is gone the moment the peg is in, so it never sits beside the verdict
+    expect(ghost).toContain('!v.pegged')
+    expect(ghost).toContain('!shown')
+  })
+
+  it('⚠️ every line naming a gesture is worded for the input in front of the child', () => {
+    // "walk back and peg it" reads perfectly and addresses somebody else's surface once the child is
+    // answering with their arms. Asserted POSITIVELY in both directions, or a renderer that ignores
+    // its input passes every other check.
+    expect(instructionFor('tap')).not.toMatch(/hands|hold/i)
+    expect(instructionFor('hand')).not.toMatch(/\bwalk\b|\bpeg\b|button/i)
+    expect(instructionFor('tap')).not.toBe(instructionFor('hand'))
+    expect(CODE).toMatch(/instructionFor\(onCam \? 'hand' : 'tap'\)/)
+    // the hand's own states are named too — a child seeing nothing move needs to know why
+    const hint = EMPTY_PLOT_CONFIG.hand!.hint!
+    expect(hint(hand(null))).toMatch(/both hands/i)
+    expect(hint(hand(3))).toMatch(/still/i)
+    expect(EMPTY_PLOT_CONFIG.hand!.denied).toMatch(/buttons/)
+  })
+
+  it('reads the SPAN and nothing else — a chapter that wants one reading must not ask for two', () => {
+    expect(EMPTY_PLOT_CONFIG.hand!.reads).toBe('span')
   })
 })
 
 // ────────────────────────────────────────────────────────────────────────────────────────
-describe('the chapter is wired, comfortable and reachable', () => {
-  it('mounts the rotate gate, with the early return BELOW every hook', () => {
-    expect(CODE).toMatch(/useNeedsRotate\(\)/)
-    const gate = CODE.indexOf('if (needsRotate) return')
-    expect(gate).toBeGreaterThan(0)
-    // no hook may be called after it, or turning the tablet changes the hook count
-    expect(CODE.slice(gate)).not.toMatch(/\buse[A-Z]\w*\(/)
+describe('the chapter is wired', () => {
+  it('is a 9–11 chapter on the shell: ten rounds, no resume, its own band', () => {
+    expect(EMPTY_PLOT_CONFIG.band).toBe('9-11')
+    expect(EMPTY_PLOT_CONFIG.chapterId).toBe('areaPerimeter')
   })
 
-  it('has no head-bob, no look acceleration and a modest FOV', () => {
-    expect(CODE).not.toMatch(/bob|headBob/i)
-    const fov = CODE.match(/fov:\s*(\d+)/)
-    expect(Number(fov?.[1])).toBeGreaterThanOrEqual(55)
-    expect(Number(fov?.[1])).toBeLessThanOrEqual(70)
-    // look is a plain multiply by a constant — nothing squared, nothing eased
-    expect(CODE).toMatch(/look\.dx \* LOOK/)
+  it('the registry points at the new chapter and the 3D one is GONE', () => {
+    const reg = readFileSync(join(process.cwd(), 'src/features/chapters/registry.tsx'), 'utf8')
+    expect(reg).toMatch(/areaPerimeter: teen\(/)
+    expect(reg).toMatch(/games\/EmptyPlotGame/)
+    const story = readFileSync(join(process.cwd(), 'src/features/chapters/storyChapters.tsx'), 'utf8')
+    expect(story).not.toMatch(/areaPerimeter/)
+    expect(story).not.toMatch(/FloorPlot/)
+    const page = readFileSync(join(process.cwd(), 'src/app/story/page.tsx'), 'utf8')
+    expect(page).not.toMatch(/area: 'areaPerimeter'/)
   })
 
-  it('respects prefers-reduced-motion by stepping rather than gliding', () => {
-    expect(CODE).toMatch(/prefers-reduced-motion/)
-    expect(CODE).toMatch(/reduced \? 1 :/)
-  })
-
-  it('every interaction has a low-precision path — no gesture is required', () => {
-    // ◀▶ walk a whole metre per tap, and the peg is a big fixed target
-    expect(CODE).toMatch(/testId="back"/)
-    expect(CODE).toMatch(/testId="fwd"/)
-    expect(CODE).toMatch(/inp\.step/)
-    expect(CODE).toMatch(/keydown/)      // and it plays from a keyboard
-  })
-
-  it('nudges r3f awake, or the scene never boots in a hidden tab', () => {
-    // r3f measures with a ResizeObserver, whose callbacks ride the rendering steps
-    expect(CODE).toMatch(/dispatchEvent\(new Event\('resize'\)\)/)
-  })
-
-  it('the walkable bound cannot trap the camera and always reaches the answer', () => {
-    expect(CODE).toMatch(/Math\.min\(MAX_DEPTH \+ 1, pos\.current\.z\)/)
-    expect(CODE).toMatch(/Math\.max\(SPAWN_Z, /)
-  })
-
-  it('the dev drive hook is stripped from production', () => {
-    expect(CODE).toMatch(/process\.env\.NODE_ENV === 'production'\) return/)
-    expect(CODE).toMatch(/__miloPace/)
-  })
-
-  it('adds no image, model or texture asset', () => {
-    for (const bad of [/\.glb/, /\.gltf/, /useLoader/, /TextureLoader/, /\/assets\//]) {
-      expect(CODE).not.toMatch(bad)
+  it('nothing anywhere still imports the deleted 3D chapter or its site generator', () => {
+    for (const f of ['src/features/chapters/storyChapters.tsx', 'src/features/chapters/registry.tsx']) {
+      const s = readFileSync(join(process.cwd(), f), 'utf8')
+      expect(s).not.toMatch(/plotSite/)
     }
-    // numerals are drawn into a canvas at runtime
-    expect(CODE).toMatch(/CanvasTexture/)
-  })
-
-  it('the registry points at this chapter and nothing imports the old one', () => {
-    const reg = readFileSync(join(process.cwd(), 'src/features/chapters/storyChapters.tsx'), 'utf8')
-    expect(reg).toMatch(/areaPerimeter:.*story\/FloorPlot/)
-    expect(reg).not.toMatch(/GridPlotter/)
   })
 
   it('the chapter hint no longer describes the grid this deletes', () => {
     const ch = readFileSync(join(process.cwd(), 'src/core/chapters.ts'), 'utf8')
     const row = ch.split('\n').find(l => l.includes("id: 'areaPerimeter'"))!
     expect(row).not.toMatch(/Count squares/)
+  })
+
+  it('adds no 3D of any kind, and exactly TWO image assets — the two demo films', () => {
+    for (const bad of [/\.glb/, /\.gltf/, /three/, /useFrame/, /Canvas/, /useLoader/, /TextureLoader/]) {
+      expect(CODE).not.toMatch(bad)
+    }
+    // ⚠️ the asset list is pinned, not merely bounded: a chapter that quietly grows a third strip has
+    // grown a third fixed example, and a film only ever says one set of numbers
+    const assets = [...CODE.matchAll(/'(\/assets\/[^']+)'/g)].map(m => m[1]).sort()
+    expect(assets).toEqual(['/assets/explain/plot_area.png', '/assets/explain/plot_perimeter.png'])
   })
 })

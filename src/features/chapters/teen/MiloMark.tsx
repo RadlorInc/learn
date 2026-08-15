@@ -48,7 +48,8 @@ export default function MiloMark({ band, mood = 'idle', size = 40 }: MiloMarkPro
         : 'Milo'
 
   // ---- 12-14: rounded-square "M" tile -------------------------------------
-  if (band === '12-14') {
+  // 9–11 takes the MOST embodied mark. Milo ages DOWN into a face, never up into a monogram.
+  if (band === '12-14' || band === '9-11') {
     return (
       <span style={wrapStyle} role="img" aria-label={label}>
         <svg

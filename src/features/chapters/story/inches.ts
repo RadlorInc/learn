@@ -59,9 +59,6 @@
  * nine-year-old reads `4 ft 3 in`.
  */
 import { rint, pick } from '@/core/rand'
-import { fitBand, MILO_LANE, miloRight } from './preteen/band'
-
-export { MILO_LANE, miloRight }
 
 /** The answer is built two places at a time, so each place holds a single digit. */
 export const MAX_PER_PLACE = 9
@@ -565,13 +562,15 @@ export const exploreText = (input: Answering, short: boolean): string =>
       ? 'Move your hands apart. The gap in inches is on the left; every twelve is a foot.'
       : 'Hold both hands up, palms facing, and move them apart. That gap in inches is on the left — and every twelve of them is one foot.')
 
-// ─── board layout ──────────────────────────────────────────────────────────────────────
-export const TOP_BAND = (short: boolean) => (short ? 104 : 146)
-export const BOT_BAND = (short: boolean) => (short ? 118 : 158)
-/** The explore beat stacks its "I've got it" button on its own line above the readout. */
-export const ACTION_ROW = (short: boolean) => (short ? 47 : 56)
-
-/** See story/preteen/band.ts — the clamp goes on `top`, never as a floor on the band. */
-export function boardBand(vh: number, short: boolean, promptBottom = 0, extraBot = 0) {
-  return fitBand(vh, Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12)), BOT_BAND(short) + extraBot)
-}
+// ─── layout ──────────────────────────────────────────────────────────────────────────
+/**
+ * ⚠️ THERE IS NONE ANY MORE, AND THAT IS THE PAYOFF OF THE PORT. This module used to carry its own
+ * `TOP_BAND`/`BOT_BAND`/`ACTION_ROW` and a `boardBand` clamp — arithmetic that existed BYTE-IDENTICAL
+ * in four chapters, was extracted to `preteen/band.ts` on the fourth copy, and then had to be swept
+ * at ten viewport sizes in four separate gates. GameShell owns the bands now and `FitSlot` scales the
+ * instrument into whatever is left, so all of it went with the bespoke scene (2026-08-14).
+ *
+ * What did NOT go is everything above: the ladder, the grader and the words. That split — maths and
+ * words in the module, layout in the shell — is the whole reason ten chapters can share one engine.
+ */
+export {}

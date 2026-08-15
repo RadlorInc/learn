@@ -337,6 +337,8 @@ function btnStyle(primary: boolean): React.CSSProperties {
 
 function playAgainLabelFor(band: AgeBand): string {
   switch (band) {
+    case '9-11':
+      return 'Play it again'
     case '12-14':
       return 'Try again'
     case '15-16':
@@ -348,6 +350,8 @@ function playAgainLabelFor(band: AgeBand): string {
 
 function exitLabelFor(band: AgeBand): string {
   switch (band) {
+    case '9-11':
+      return 'Done'
     case '12-14':
       return 'Done'
     case '15-16':
@@ -359,6 +363,8 @@ function exitLabelFor(band: AgeBand): string {
 
 function headlineSpeechFor(band: AgeBand, conceptsConfirmed?: string[]): string {
   switch (band) {
+    case '9-11':
+      return 'All done. Nice work.'
     case '12-14':
       return 'Solved. Nice work.'
     case '15-16':

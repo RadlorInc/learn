@@ -27,6 +27,10 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import type { ChapterType } from '@/state/store'
 import type { AgeBand } from '@/features/chapters/teen/types'
+import {
+  useHandInput, useDwell, CamView, CamGate, DwellRing, HandProvider,
+  type HandSkin, type HandRead, type Reads,
+} from '@/infra/ar/HandInput'
 import MiloMark from '@/features/chapters/teen/MiloMark'
 import FitBox from '@/features/chapters/story/FitBox'
 import { Palette, Ticket, TicketHead, Row, HandCue, Blackboard, QuestionBoard, AnswerPad, Says, headerChip, bigBtn, type HandKind } from './gameKit'
@@ -34,7 +38,21 @@ import { getSpeechRate, setSpeechRate, nextSpeechRate, speechRateLabel } from '@
 import ScribblePad from './ScribblePad'
 import { setClipOnly } from '@/infra/voiceClipPlayer'
 
-const BAND: AgeBand = '12-14'
+/**
+ * ⚠️ THE BAND IS A CONFIG FIELD NOW, NOT A MODULE CONSTANT — this shell runs 9–11 as well as
+ * 12–18 (founder's call 2026-08-14). Only three things actually differ, and they are named here
+ * rather than scattered:
+ *   • ROUNDS — 9–11 plays TEN, the length its own `SkillBeat` chapters have always been.
+ *   • RESUME — 9–11 always opens at difficulty 1. `chapter-craft.md`: "3–11 story chapters call
+ *     useAdaptive with no start tier … resume-at-difficulty is teen-only. If a chapter looks too
+ *     hard on question 1, the tier is not the suspect; the generator is."
+ *   • THE HAND — the band's speciality; see `GameConfig.hand`.
+ * Everything else (the loop, the board, the pad, the re-teach, the mastery exit) is shared, which
+ * is the entire point of putting the band on this shell.
+ */
+export const DEFAULT_BAND: AgeBand = '12-14'
+export const roundsFor = (b: AgeBand) => (b === '9-11' ? 10 : 8)
+export const resumesTier = (b: AgeBand) => b !== '9-11'
 const RETEACH_AFTER = 3
 // How many of the most-recent walkthrough board lines to keep on the chalkboard.
 // The longest examples write ~14 lines; capping the visible window keeps working
@@ -131,7 +149,9 @@ export interface GameConfig<V, T extends BaseTask> {
   title: string             // header title, e.g. MILO'S WEATHER STATION
   ticketLabel: string       // ticket footer label, e.g. "station log"
   palette: Palette
-  makeTask: (d: 1 | 2 | 3) => T
+  /** `asked` is the readings already served this run — see `coverage`. Ignore it and nothing
+   *  changes; a chapter that declares coverage should spend a scarce round on what is unmet. */
+  makeTask: (d: 1 | 2 | 3, asked?: readonly string[]) => T
   initialValue: (t: T) => V
   grade: (t: T, v: V) => boolean
   revealText: (t: T) => string
@@ -187,6 +207,62 @@ export interface GameConfig<V, T extends BaseTask> {
    *  advances and so the flow looks fine. Defaults to the identity cast, which is
    *  correct for the `V = number` chapters and only those. */
   padValue?: (n: number) => V
+  /**
+   * Which band's chrome, loop and doors. Omit for the teen default.
+   */
+  band?: AgeBand
+  /**
+   * ⚠️ THE 9–11 BAND'S SPECIALITY: ANSWERING WITH YOUR HAND, declared rather than rebuilt.
+   *
+   * Seven chapters each wired their own camera lifecycle, dwell commit, denial gate and
+   * remembered device pick — the same ~80 lines, seven times, drifting. A chapter now says what it
+   * READS and the shell owns all of it: both doors on the start card, the self-view, the gate when
+   * permission is refused, the arming ring, and the held-over-pose guard.
+   *
+   * The hand produces a NUMBER and hands it to whoever owns the answer — the AnswerPad if the pad
+   * is up for this question, otherwise `enter()` folds it into the instrument's value. That is what
+   * lets one field serve both a tap-a-number round and a build-it-in-two-places instrument.
+   */
+  hand?: HandSpec<V, T>
+  /**
+   * ⚠️ WITHHOLD THE MASTERY EXIT UNTIL EVERY READING HAS BEEN ASKED — `SkillBeat` has carried this
+   * for the 3–11 band and this shell did not, so porting a chapter across would have silently lost
+   * it. The arithmetic is why it matters: `core/adaptive` promotes on 3-in-a-row at ≥80% and masters
+   * on a streak of 6 at the top tier, so a strong child is asked roughly THREE questions at L1, ONE
+   * at L2 and TWO at L3 — and then the chapter ends. Anything living late in the pool is asked only
+   * of a child who is struggling, i.e. skipped as a REWARD for doing well. Measured on TickTock: a
+   * third of good runs missed a whole reading.
+   *
+   * The two halves belong together, which is why they are one field: the bookkeeping the exit needs
+   * is exactly the input `makeTask` needs to spend a scarce round on something unmet.
+   * ⚠️ Be deliberate only while a gap exists and RANDOM once it closes — hardest-first for ever
+   * locks the generator onto one kind and destroys the variety the chapter needs.
+   */
+  coverage?: { of: (t: T) => string; all: readonly string[] }
+}
+
+/** See `GameConfig.hand`. */
+export interface HandSpec<V, T extends BaseTask> {
+  /** what the detector should watch. A chapter that only wants a count must not say 'tilt'. */
+  reads: Reads
+  /** the number this reading means. Defaults to the finger count.
+   *  ⚠️ IT TAKES THE TASK, because a reading can mean different things on different ROUND TYPES —
+   *  The Angle Shop's tilt is a DEGREE when the child is setting an angle and a FOLD AXIS when they
+   *  are marking symmetry, and one chapter cannot express that without knowing which it is asking. */
+  value?: (r: HandRead, t: T) => number | null
+  /** is there anything worth committing? Defaults to "a hand is in frame" — NOT "count > 0",
+   *  because a fist is a real answer in a chapter where zero is (CoinTray's `0.6`). */
+  ready?: (r: HandRead) => boolean
+  /** only some questions can be answered honestly by hand; default is all of them. */
+  when?: (t: T) => boolean
+  /** fold the read number into the instrument's value. Omit on a pad-answered chapter. */
+  enter?: (t: T, v: V, n: number) => V
+  /** after `enter`, is the answer complete? Omit and every entry commits. */
+  commits?: (t: T, v: V) => boolean
+  /** what the ring says it is reading. Never whether it is right — that is the hot/cold rule. */
+  hint?: (r: HandRead) => string
+  /** shown when the camera is refused, beside the offer of taps. */
+  denied?: string
 }
 
 type Sub = 'active' | 'reveal' | 'reteach' | 'sold'
@@ -201,11 +277,15 @@ export function Game<V, T extends BaseTask>({
   onExit: () => void
 }) {
   const P = config.palette
-  const TOTAL = 8
+  const BAND = config.band ?? DEFAULT_BAND
+  const TOTAL = roundsFor(BAND)
   // Resume at the difficulty this child last left off on (see chapterLevel). No
   // learner (logged-out preview) → starts at easy, unchanged. Computed once.
+  // ⚠️ 9–11 NEVER RESUMES — it always opens at difficulty 1, per chapter-craft. A nine-year-old
+  // coming back a week later meeting their old top tier on question 1 is the fault that rule exists
+  // for, and it also switches the warm-up offer off, since there is nothing to warm up FROM.
   const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
-  const [startDiff] = useState<1 | 2 | 3>(() => getChapterLevel(learnerId, config.chapterId))
+  const [startDiff] = useState<1 | 2 | 3>(() => (resumesTier(BAND) ? getChapterLevel(learnerId, config.chapterId) : 1))
   const ada = useAdaptive(config.chapterId, startDiff)
   // Opt-in warm-up (only offered when resuming above easy). Prepends WARMUP_COUNT
   // gentler questions (one tier down) before the set climbs back to their level.
@@ -231,6 +311,22 @@ export function Game<V, T extends BaseTask>({
   // The choice the child actually tapped, so the reveal can mark it (an instrument
   // chapter shows the mistake by gliding; a pad chapter has to show it on the pad).
   const [picked, setPicked] = useState<number | null>(null)
+
+  /**
+   * ─── THE HAND ─────────────────────────────────────────────────────────────────────────────
+   * ⚠️ CALLED UNCONDITIONALLY AND MERELY INERT WITHOUT `config.hand` — branching above a hook
+   * changes the hook count and tears the chapter into the error boundary, which this repo has
+   * shipped once. `useHandInput` opens nothing until `start()` is called, so a teen chapter pays
+   * only the hook.
+   */
+  const HAND = config.hand
+  const handSkin = useMemo<HandSkin>(() => ({
+    accent: P.gold, accentSoft: `${P.gold}28`, ink: P.cream, muted: P.creamSoft,
+    panel: P.glass, line: P.glassBorder, onAccent: P.inkOnPaper,
+    font: 'var(--font-display)', mono: 'var(--font-numeric)',
+  }), [P])
+  const cam = useHandInput({ reads: HAND?.reads ?? 'count', marker: useMemo(() => ({ fill: P.gold, ink: P.inkOnPaper }), [P]) })
+  const onCam = !!HAND && cam.onCam
   const [wrongRun, setWrongRun] = useState(0)
   // Which re-teach line Milo is on, so the 3-wrong re-explanation is WRITTEN as well
   // as spoken. -1 = not re-teaching. Same reason as the walkthrough caption: a child
@@ -244,6 +340,11 @@ export function Game<V, T extends BaseTask>({
   // a brief popup the moment control passes to the child ('turn') and when they
   // succeed ('solved'), on top of a persistent "your turn" label by the instrument.
   const [cue, setCue] = useState<null | 'turn' | 'solved'>(null)
+
+  /** what the hand currently reads as a number, or null when there is nothing to commit */
+  const handNum = HAND && HAND.value && task ? HAND.value(cam.read, task) : cam.read.count
+  /** ⚠️ "a hand is in frame", NOT "count > 0" — a FIST is a real answer wherever zero is one. */
+  const handReady = !!HAND && (HAND.ready ? HAND.ready(cam.read) : cam.read.hands > 0)
 
   const seen = useRef<Set<string>>(new Set())
   const timers = useRef<number[]>([])
@@ -261,12 +362,21 @@ export function Game<V, T extends BaseTask>({
     later(() => setCue((c) => (c === k ? null : c)), k === 'turn' ? 1600 : 1500)
   }, [later])
 
+  /** every reading asked so far, for `config.coverage`. A ref: the generator reads it during a
+   *  render that must not depend on it, and nothing renders from it. */
+  const asked = useRef<string[]>([])
+  const covered = useCallback(
+    () => !config.coverage || config.coverage.all.every(k => asked.current.includes(k)),
+    [config.coverage],
+  )
+
   const nextTask = useCallback((d: 1 | 2 | 3): T => {
-    let t = config.makeTask(d)
+    let t = config.makeTask(d, asked.current)
     if (config.sig) {
-      for (let i = 0; i < 10 && seen.current.has(config.sig(t)); i++) t = config.makeTask(d)
+      for (let i = 0; i < 10 && seen.current.has(config.sig(t)); i++) t = config.makeTask(d, asked.current)
       seen.current.add(config.sig(t))
     }
+    if (config.coverage) asked.current = [...asked.current, config.coverage.of(t)]
     return t
   }, [config])
 
@@ -334,7 +444,8 @@ export function Game<V, T extends BaseTask>({
       // ("Good job / Nice / unstoppable") on every right answer — mirrors the
       // 3–11 story chapters (StoryWorld: a tick is enough).
       flashCue('solved')
-      later(() => loadTask(idx + 1, c, wrong, res.mastered), 1650)
+      // ⚠️ THE EXIT IS WITHHELD UNTIL EVERY DECLARED READING HAS BEEN ASKED. See `coverage`.
+      later(() => loadTask(idx + 1, c, wrong, res.mastered && covered()), 1650)
       return
     }
     const w = wrong + 1
@@ -399,6 +510,38 @@ export function Game<V, T extends BaseTask>({
   }
 
   const busy = sub !== 'active'
+  /**
+   * ⚠️ THE HAND HANDS ITS NUMBER TO WHOEVER OWNS THE ANSWER, which is what lets ONE field serve a
+   * tap-a-number round and a build-it-in-two-places instrument. Pad up → the number IS the answer.
+   * Otherwise `enter()` folds it into the instrument's value and `commits()` decides whether that
+   * completed the answer or merely advanced it.
+   */
+  const handLive =
+    !!HAND && onCam && (stage === 'play' || stage === 'guided') && sub === 'active' && !busy &&
+    (HAND.when && task ? HAND.when(task) : true)
+
+  const commitHand = useCallback((n: number) => {
+    if (!HAND || !task) return
+    const send = stage === 'guided' ? submitGuided : submit
+    if (padChoices.length || !HAND.enter) { setPicked(n); send(toV(n)); return }
+    const next = HAND.enter(task, value as V, n)
+    setValue(next)
+    if (!HAND.commits || HAND.commits(task, next)) send(next)
+  }, [HAND, task, stage, padChoices.length, toV, value])
+
+  /**
+   * ⚠️ THE READING THE CHILD WAS ALREADY HOLDING IS NOT AN ANSWER — `useDwell` carries that guard,
+   * and the KEY is what "held still" means. It is the READING alone and never the slot: putting the
+   * slot in the key re-arms the timer the instant the slot advances, so a hand still showing 5
+   * enters 5 twice and a two-place answer fills itself in. FitOut shipped `12` as `11` for exactly
+   * that, and The Coin Tray had to be gated against it.
+   */
+  const dwell = useDwell(
+    { value: handNum ?? 0, key: `${handNum}`, ready: handReady && handNum != null },
+    commitHand,
+    handLive,
+  )
+
   const inOrder = stage === 'play' || stage === 'guided'
   const { roomy, short, tall, portrait } = useFrame()
   // Scratch paper — kids work on iPads and laptops and had nowhere to do the sums.
@@ -436,6 +579,9 @@ export function Game<V, T extends BaseTask>({
       : undefined
 
   return (
+    /* The reading rides in context so an Instrument that wants the RAW hand (a tilt, a span) can
+       read it without the shell drilling it through every chapter's props. */
+    <HandProvider value={cam.hand}>
     <div className="milo-lesson milo-game" style={{ position: 'relative', height: '100dvh', maxHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, color: P.cream, fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
       {/* Sweet & simple backdrop: the palette gradient (on the root) + ONE big, very
           faint themed motif — so nothing in the background competes with the
@@ -492,7 +638,22 @@ export function Game<V, T extends BaseTask>({
                   </div>
                 </div>
               ) : (
-                <button type="button" onClick={() => { unlockSpeech(); setStage(config.overview ? 'intro' : 'demo') }} style={bigBtn(P)}>{config.start.startLabel}</button>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <button type="button" onClick={() => { unlockSpeech(); if (HAND && cam.onCam) cam.start(); setStage(config.overview ? 'intro' : 'demo') }} style={bigBtn(P)}>
+                    {HAND && cam.onCam ? 'Turn on the camera' : config.start.startLabel}
+                  </button>
+                  {/* ⚠️ BOTH DOORS, EVERY TIME. The device's last pick decides which is the BIG
+                      button — never which is the ONLY one. A parent who says no to the camera on
+                      Monday must not have to say it again, and a child who wants it back must not
+                      have to hunt. Deliberately quiet, so it reads as the other door rather than as
+                      a way to skip the chapter. */}
+                  {HAND && (
+                    <button type="button" style={headerChip(P)}
+                      onClick={() => { unlockSpeech(); if (cam.onCam) cam.useTaps(); else cam.useCamera(); setStage(config.overview ? 'intro' : 'demo') }}>
+                      {cam.onCam ? 'Use taps instead' : '✋ Use the camera instead'}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </CenterFill>
@@ -620,6 +781,21 @@ export function Game<V, T extends BaseTask>({
                     {stage === 'guided' && sub === 'active' && guidedList.length > 0 && !short && <HandCue P={P} kind={guidedList[guidedIdx.current].hand} />}
                   </FitSlot>
                 )}
+                {/* ⚠️ THE RING SAYS ONLY WHAT WAS READ AND HOW FAR THE COMMIT HAS ARMED — never
+                    whether the reading is right. A surface that reacted to a hand sweeping through
+                    values would be a yes/no oracle at 60fps, which is the hot/cold rule broken by
+                    the back door. */}
+                {handLive && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <DwellRing progress={dwell} size={short ? 58 : 74}
+                      skin={handReady ? handSkin : { ...handSkin, ink: handSkin.muted }}>
+                      {handReady ? String(handNum ?? '–') : '–'}
+                    </DwellRing>
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 13 : 15, color: P.creamSoft }}>
+                      {HAND?.hint ? HAND.hint(cam.read) : handReady ? 'Hold it still' : 'Show Milo your hand'}
+                    </span>
+                  </div>
+                )}
                 {/* The chapter's hand cue describes its INSTRUMENT gesture ('drag',
                     'crank'…). On a padded question there is no instrument to drag, so
                     the cue must show the gesture the child can actually make. */}
@@ -629,6 +805,18 @@ export function Game<V, T extends BaseTask>({
           </PlayFrame>
         )}
       </main>
+
+      {/* The self-view and the gate, owned by the shell for the whole run — the camera is opened
+          ONCE per chapter, because re-opening it per round re-prompts and re-initialises MediaPipe. */}
+      {HAND && onCam && stage !== 'start' && (
+        <CamView videoRef={cam.videoRef} canvasRef={cam.canvasRef} w={short ? 76 : 170} bottom={short ? 8 : 14}
+          skin={handSkin} hidden={!cam.camReady} />
+      )}
+      {HAND && onCam && stage !== 'start' && !cam.camReady && (
+        <CamGate status={cam.status} error={cam.error} skin={handSkin} onRetry={cam.start}
+          onTaps={cam.useTaps} onExit={onExit}
+          denied={HAND.denied ?? 'You can answer with your hand, or by tapping — both work.'} />
+      )}
 
       {/* Scratch paper — only where there is a question to work out. Sits AFTER main
           in the same flex column, so opening it shrinks the play area instead of
@@ -673,6 +861,7 @@ export function Game<V, T extends BaseTask>({
         @media (prefers-reduced-motion: reduce) { .gk-ticket,.gk-stamp,.gk-cue { animation: none } }
       `}</style>
     </div>
+    </HandProvider>
   )
 }
 

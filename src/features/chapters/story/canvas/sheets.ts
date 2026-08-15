@@ -163,11 +163,8 @@ export const SHEETS: Record<string, Sheet> = {
   // never from frame 0, or the strip shuffles instead of walking.
   // fps is tuned by ear and UNVERIFIED on screen; for a grounded creature it also sets ground speed,
   // so it is the first number to check if her walk reads wrong. She is younger and lighter than the
-  // foreman (9), so she steps a little quicker.
-  '/assets/characters/slate_side.png': { url: '/assets/characters/slate_walk.png', cellAspect: 0.359, frames: 12, fps: 11 },
   // Her working cycle — winding the handle, the pose the child's ◀ ▶ is driving. Self-keyed: the
   // sheet is its own still, since there is no separate standing frame for this pose.
-  '/assets/characters/slate_work.png': { url: '/assets/characters/slate_work.png', cellAspect: 0.547, frames: 12, fps: 10 },
   // ⚠️ A THIRD cycle — `merchant_fox` — was generated alongside these two and CUT by the founder.
   // Its PNGs are still in public/assets/objects/ and it is deliberately NOT registered here: an
   // unregistered sheet is invisible to the idle-art gate, which is the honest state for art with no

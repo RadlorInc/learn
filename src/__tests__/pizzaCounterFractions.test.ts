@@ -12,20 +12,21 @@
  *   · MY PIZZA IS WHOLE UNTIL THE COMMIT — two gaps side by side can be compared BY EYE, so a board
  *     that showed the child's gap while the question was open would answer it for them.
  */
-import { readFileSync, existsSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
+import { readFileSync, existsSync } from 'node:fs'
+import { PIZZA_COUNTER_CONFIG } from '@/features/chapters/teen/games/PizzaCounterGame'
+import { NO_HAND } from '@/infra/ar/HandInput'
 import {
-  MAX_FINGERS, makeRound, mkMatch, graded, missFor, nudgeFor, verdictFor,
-  explainBeats, padChoices, instructionFor, sayFor, openingTake, exactly, fewestBeating,
-  numeratorsFor, boardBand, TOP_BAND, BOT_BAND, ACTION_ROW, ANCHOR, DEMO, GUIDED,
-  MATCH_PAIRS, MORE_PAIRS, type PzRound, type Tier,
+  MAX_FINGERS, makeRound, mkMatch, graded, missFor, nudgeFor, verdictFor, explainBeats,
+  padChoices, instructionFor, sayFor, openingTake, exactly, fewestBeating, numeratorsFor,
+  ANCHOR, DEMO, GUIDED, MATCH_PAIRS, MORE_PAIRS, type PzRound, type Tier,
 } from '@/features/chapters/story/pizza'
 
 /** The scene, comments stripped — a source check that matches the paragraph explaining a rule
  *  instead of the code obeying it is a check this repo has already shipped once. */
 const strip = (f: string) => readFileSync(f, 'utf8')
   .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
-const SCENE = strip('src/features/chapters/story/PizzaCounter.tsx')
+const SCENE = strip('src/features/chapters/teen/games/PizzaCounterGame.tsx')
 
 const TIERS: Tier[] = [1, 2, 3]
 /** Both answer surfaces. Every wording rule has to hold on each — a chip naming a gesture the
@@ -178,11 +179,23 @@ describe('the board must not answer for the child', () => {
   it('the scene draws the board from `openingTake` until a reveal exists', () => {
     // Anchored on the real expression, not on the identifier appearing somewhere in the file: a
     // check that only proves a function is MENTIONED passes with the bug restored behind it.
-    expect(SCENE).toMatch(/taken=\{reveal\?\.take \?\? openingTake\(data\)\}/)
+    // ⚠️ MY PIZZA STAYS WHOLE UNTIL THE COMMIT — the anti-oracle. Two gaps side by side can be
+    // compared BY EYE, so a board that took slices live would let a child sweep 1,2,3… and stop
+    // when the gaps matched, having judged nothing.
+    expect(SCENE).toMatch(/openingTake\(r\)/)
   })
-  it('the EXPLORE beat is the one place the board follows the input live', () => {
-    expect(SCENE).toMatch(/taken=\{take\}/)          // ExploreBoard, driven straight off the reading
-    expect(SCENE).toMatch(/function ExploreBoard/)
+  it('⚠️ NOTHING follows the input live before the commit — there is no explore beat any more', () => {
+    // The bespoke chapter had an `ExploreBoard` where the pizzas reflowed as you dragged, which was
+    // safe because nothing was scored there. The shell has no explore phase wired for this chapter
+    // yet (`TeenChapterCfg.explore` + a Sim would give it one), so the anti-oracle rule now has to
+    // hold everywhere: the board may never move before the commit.
+    expect(SCENE, 'no live-follow surface').not.toMatch(/function ExploreBoard/)
+    // ⚠️ AND THE BOARD MAY ONLY MOVE ON THE REVEAL. Grepping for `openingTake` is not enough — a
+    // board written `value ?? openingTake(r)` still calls it and still follows the child live, which
+    // is the eye-oracle: two gaps side by side can be compared BY EYE, so a child could sweep
+    // 1,2,3… and stop when they matched, having judged nothing. Assert the GUARD, not the call.
+    expect(SCENE).toMatch(/reveal && value != null \? value : openingTake\(r\)/)
+    expect(SCENE, 'never the bare value').not.toMatch(/taken = value \?\? openingTake/)
   })
 })
 
@@ -303,7 +316,8 @@ describe('the ladder and coverage', () => {
   })
   it('the beat declares coverage over all three, and feeds `asked` back to the generator', () => {
     expect(SCENE).toMatch(/coverage:\s*\{\s*of:[\s\S]*?all:\s*\['match',\s*'more',\s*'op'\]/)
-    expect(SCENE).toMatch(/make:\s*\(d,\s*_round,\s*asked\)\s*=>\s*makeRound\(.*asked\s*\?\?\s*\[\]\)/)
+    expect(SCENE, 'the generator is fed the asked list').toMatch(/makeTask: \(d, asked\)/)
+    expect(PIZZA_COUNTER_CONFIG.coverage!.all).toEqual(['match', 'more', 'op'])
   })
   it('L3 grows the cuts past the doubling reflex', () => {
     expect(MATCH_PAIRS[3].some(([, d]) => d === 12)).toBe(true)
@@ -338,76 +352,13 @@ describe('the worked example teaches the round it is narrating', () => {
   })
 })
 
-describe('layout', () => {
-  const SIZES = [[640, 320], [740, 360], [812, 375], [1024, 620], [1280, 720], [1440, 900], [1920, 800], [2560, 1080]]
-  it('⚠️ the board never reaches into the controls, at any size or prompt height', () => {
-    for (const [, vh] of SIZES) for (const short of [true, false]) for (const pb of [0, 60, 100, 142, 200, 265]) {
-      for (const extra of [0, ACTION_ROW(short)]) {
-        const { top, band, bot } = boardBand(vh, short, pb, extra)
-        expect(top).toBeGreaterThanOrEqual(0)
-        // An exact equality, because the clamp is on `top`: a floor on the BAND would let it
-        // overflow downward while `bot` still claimed the reserve was intact, which is how the
-        // sibling chapter drew its bench 32px into the note pill.
-        expect(top + band).toBe(vh - bot)
-      }
-    }
-  })
-  it('the clamp is on `top`, so the board slides UP under the question card', () => {
-    // A huge promptBottom must not push the board down; it must push it up under the card.
-    const a = boardBand(320, true, 0)
-    const b = boardBand(320, true, 265)
-    expect(b.top).toBeLessThanOrEqual(Math.max(a.top, TOP_BAND(true)) + 265)
-    expect(b.top + b.band).toBe(320 - BOT_BAND(true))
-  })
-  it('the explore beat is told about its extra button row', () => {
-    const plain = boardBand(720, false, 0, 0)
-    const withBtn = boardBand(720, false, 0, ACTION_ROW(false))
-    expect(withBtn.band).toBe(plain.band - ACTION_ROW(false))
-  })
-})
-
-describe('the chapter is wired to the shared AR layer, both doors, one grader', () => {
-  it('reads a finger COUNT', () => {
-    expect(SCENE).toMatch(/useHandInput\(\{\s*reads:\s*'count'/)
-  })
-  it('the camera is the backdrop, with the fingertip markers on', () => {
-    expect(SCENE).toMatch(/<CamView[^>]*\bfull\b[^>]*\bmarkers\b/)
-  })
-  it('both doors are on the intro card, every time', () => {
-    expect(SCENE).toMatch(/alt=\{onCam/)
-    expect(SCENE).toMatch(/useTaps\(\)/)
-    expect(SCENE).toMatch(/useCamera\(\)/)
-  })
-  it('⚠️ the tap path never starts the camera — no permission prompt, no 6 MB of WASM', () => {
-    expect(SCENE).toMatch(/if \(onCam\) start\(\)/)
-  })
-  it('`useDwell` is called unconditionally, so the hook count cannot change with the input', () => {
-    // Branching above a hook tears the chapter into the error boundary; this repo shipped that once.
-    expect(SCENE).toMatch(/const progress = useDwell\(/)
-    expect(SCENE).not.toMatch(/if \([^)]*input[^)]*\)\s*(\{[^}]*)?return[\s\S]{0,400}useDwell/)
-  })
-  it('the dwell will not arm on a fist, because no round accepts one', () => {
-    expect(SCENE).toMatch(/ready:\s*read\.hands > 0 && read\.count > 0/)
-  })
-  it('BOTH inputs land in the one grading sink', () => {
-    expect(SCENE).toMatch(/onPick=\{commit\}/)        // tap
-    expect(SCENE).toMatch(/useDwell\([\s\S]{0,200}?commit,/) // hand
-  })
-  it('the verdict comes from the pure module, not a string built in the scene', () => {
-    expect(SCENE).toMatch(/const \{ text: verdict, ok \} = verdictFor\(data, fingers\)/)
-  })
-  it('the chapter suppresses SkillBeat\'s own prompt pill and draws its richer card', () => {
-    expect(SCENE).toMatch(/prompt:\s*\(\)\s*=>\s*''/)
-    expect(SCENE).toMatch(/<PromptCard[^>]*instruction=/)
-  })
-})
-
 describe('the world, and the verb 6–8 already owns', () => {
   it('⚠️ a comparison round draws TWO pizzas — the thing SliceShop structurally cannot show', () => {
     // 6–8 owns pizza AND owns FIT IT (one whole, one piece size). Same world plus same verb is the
     // same chapter a band later; two wholes is the whole separation.
     expect(SCENE).toMatch(/label="theirs"/)
-    expect(SCENE).toMatch(/const two = data\.qType !== 'op'/)
+    expect(SCENE, 'a comparison round draws THEIRS as well as MINE').toMatch(/const two = r\.qType !== 'op'/)
+    expect(SCENE).toMatch(/two && <Card label="theirs"/)
   })
   it('the chapter does not reach into 6–8\'s fraction module', () => {
     expect(SCENE).not.toMatch(/from '\.\/slice'/)
@@ -421,9 +372,43 @@ describe('the world, and the verb 6–8 already owns', () => {
   })
   it('the daily anchor rides BOTH bodies of the briefing card', () => {
     expect(ANCHOR).toMatch(/pizza/i)
-    // ⚠️ COUNTED, not matched. The card has two bodies — one per input — and `toMatch` is satisfied
-    // by two occurrences in one body and none in the other, which is a card that drops the anchor
-    // for whichever child picked the other door.
-    expect(SCENE.split('${ANCHOR}').length - 1).toBe(2)
+    // ⚠️ ONE body now, not two: the shell's IntroCard shows a single blurb and offers the other
+    // door beside it, so the anchor cannot be dropped for whichever child picked the other input —
+    // the fault the two-body count was written to catch is no longer expressible.
+    expect(String(PIZZA_COUNTER_CONFIG.start.blurb)).toContain(ANCHOR)
   })
 })
+
+/**
+ * ⚠️ THE SCENE-SOURCE BLOCKS THAT USED TO LIVE HERE ARE GONE, AND NOT BECAUSE THEY WERE FAILING.
+ * They guarded rules a bespoke component owned — both doors, the dwell key, the one-grader path, the
+ * band arithmetic, the lane. GameShell owns every one of those now, so they are gated ONCE for all
+ * ten 9–11 chapters in `bandOnGameShell.test.ts` instead of once per chapter, which is the entire
+ * point of the port. What is left below is what is still THIS chapter's to get wrong, and it is
+ * driven from the CONFIG rather than grepped out of JSX.
+ */
+describe('the chapter on the shell', () => {
+  it('declares the band', () => { expect(PIZZA_COUNTER_CONFIG.band).toBe('9-11') })
+
+  it('⚠️ NO answer is ever 0 here, so a fist means nothing — the mirror of The Coin Tray', () => {
+    const ready = PIZZA_COUNTER_CONFIG.hand!.ready!
+    expect(ready({ ...NO_HAND, hands: 1, count: 0 }), 'a fist is NOT an answer here').toBe(false)
+    expect(ready({ ...NO_HAND, hands: 1, count: 3 })).toBe(true)
+  })
+
+  it('withholds mastery until all three readings have been asked', () => {
+    expect(PIZZA_COUNTER_CONFIG.coverage!.all).toEqual(['match', 'more', 'op'])
+  })
+
+  it('carries the anchor into the briefing', () => {
+    expect(String(PIZZA_COUNTER_CONFIG.start.blurb)).toContain(ANCHOR)
+  })
+})
+
+/**
+ * ⚠️ THE BAND SUITE IS GONE, DELIBERATELY, AND NOT BECAUSE IT WAS FAILING. `boardBand`/`benchBand`,
+ * the band constants and the lane all tested arithmetic this chapter no longer owns: GameShell owns
+ * the bands and `FitSlot` scales the instrument into whatever is left. Keeping them would have been
+ * a gate driving dead code, which is worse than no gate because it reads as coverage. The rules that
+ * still matter live ONCE in `bandOnGameShell.test.ts`, for all ten chapters.
+ */

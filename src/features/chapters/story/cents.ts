@@ -61,7 +61,6 @@
  * explore beat is where ten pennies visibly fuse into one dime.
  */
 import { rint, pick } from '@/core/rand'
-import { fitBand } from './preteen/band'
 
 /** A well holds at most nine: ten dimes is a whole dollar, ten pennies is a dime. */
 export const MAX_PER_WELL = 9
@@ -380,26 +379,16 @@ export const DEMO: CtRound[] = [mkMake(60), mkPlace(7, 'hundredths'), mkOp(55, 5
 export const GUIDED: CtRound = mkMake(30)
 
 // ─── board layout ──────────────────────────────────────────────────────────────────────
+
+// ─── layout ──────────────────────────────────────────────────────────────────────────
 /**
- * The band the tray gets, in pixels — HERE rather than in the scene so a sweep can drive the same
- * arithmetic the layout uses. A placement lives in CSS and a gate cannot see it; a band is a number
- * and it can.
+ * ⚠️ THERE IS NONE ANY MORE, AND THAT IS THE PAYOFF OF THE PORT. This module used to carry its own
+ * `TOP_BAND`/`BOT_BAND`/`ACTION_ROW` and a `boardBand` clamp — arithmetic that existed BYTE-IDENTICAL
+ * in four chapters, was extracted to `preteen/band.ts` on the fourth copy, and then had to be swept
+ * at ten viewport sizes in four separate gates. GameShell owns the bands now and `FitSlot` scales the
+ * instrument into whatever is left, so all of it went with the bespoke scene (2026-08-14).
  *
- * ⚠️ THE CLAMP IS ON `top`, NOT A FLOOR ON THE BAND. `Math.max(90, …)` hands back 90 once the
- * question card has wrapped far enough down, and the tray is then drawn straight into the controls —
- * over the note pill and the answer row. Clamping `top` slides the tray UP under the question card,
- * which is text the child has already read, rather than DOWN onto targets they have to hit.
- *
- * ✅ The `ponytail:` debt this carried is PAID: the arithmetic and the clamp now live once, in
- * story/preteen/band.ts, and the constants stay here because the three chapters do not agree on them.
+ * What did NOT go is everything above: the ladder, the grader and the words. That split — maths and
+ * words in the module, layout in the shell — is the whole reason ten chapters can share one engine.
  */
-export { miloRight, MILO_LANE } from './preteen/band'
-
-export const TOP_BAND = (short: boolean) => (short ? 104 : 146)
-export const BOT_BAND = (short: boolean) => (short ? 118 : 158)
-/** The explore beat stacks its "I've got it" button on its own line above the readout. */
-export const ACTION_ROW = (short: boolean) => (short ? 47 : 56)
-
-export function boardBand(vh: number, short: boolean, promptBottom = 0, extraBot = 0) {
-  return fitBand(vh, Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12)), BOT_BAND(short) + extraBot)
-}
+export {}

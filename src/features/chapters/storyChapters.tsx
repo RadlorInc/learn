@@ -24,23 +24,12 @@ const withProps = <P,>(load: () => Promise<{ default: React.ComponentType<StoryP
 export const STORY_CHAPTERS = {
   addition: { bg: "#dff0c8", load: () => import("@/features/chapters/story/PlayTime") },
   additionTo100: { bg: "#dbe8ef", load: withProps(() => import("@/features/chapters/story/BlockYard"), { op: "+" as const }) },
-  // 📐 THE ANGLE SHOP — the neon HUD replaced by a painted working world (2026-08-08).
-  // Slate's first week; the ten scored rounds ARE the week. bg is the shop's own overcast ground.
-  anglesSymmetry: { bg: "#2a2620", load: () => import("@/features/chapters/story/AngleShop") },
-  areaPerimeter: { bg: "#8f9a86", load: () => import("@/features/chapters/story/FloorPlot") },
   bigNumbers: { bg: "#a99a86", load: () => import("@/features/chapters/story/OrderDesk") },
   colors: { bg: "#e6f0f7", load: () => import("@/features/chapters/story/RainbowTown") },
   compareNumbers: { bg: "#cfe6f7", load: () => import("@/features/chapters/story/SeesawPark") },
   dataGraphs: { bg: "#b9a894", load: () => import("@/features/chapters/story/LoadingBay") },
-  decimals: { bg: "#0a1026", load: () => import("@/features/chapters/story/CoinTray") },
-  factorsMultiples: { bg: "#0a1026", load: () => import("@/features/chapters/story/FactorLab") },
   fractions: { bg: "#f3ead8", load: () => import("@/features/chapters/story/SliceShop") },
-  // 🍕 THE PIZZA COUNTER — the neon fraction bar replaced by two pizzas cut differently (2026-08-13).
-  // 6–8's SliceShop owns pizza AND owns FIT IT (one whole, one piece size); this owns MATCH IT, which
-  // needs the thing SliceShop structurally cannot show — two wholes. bg is the pre-teen HUD's navy.
-  fractionsCompare: { bg: "#0a1026", load: () => import("@/features/chapters/story/PizzaCounter") },
   matchingQuantities: { bg: "#241c39", load: () => import("@/features/chapters/story/HomeTime") },
-  measurementUnits: { bg: "#0a1026", load: () => import("@/features/chapters/story/HeightBar") },
   measurement: { bg: "#cfe9f7", load: () => import("@/features/chapters/story/MeasureIt") },
   money: { bg: "#f3ead8", load: () => import("@/features/chapters/story/CoinShop") },
   multiplication: { bg: "#f3ead8", load: () => import("@/features/chapters/story/MarketDay") },
@@ -58,7 +47,6 @@ export const STORY_CHAPTERS = {
   subtraction: { bg: "#bfe7ff", load: () => import("@/features/chapters/story/PlayTimeSub") },
   subtractionTo100: { bg: "#dbe8ef", load: withProps(() => import("@/features/chapters/story/BlockYard"), { op: "-" as const }) },
   time: { bg: "#f3ead8", load: () => import("@/features/chapters/story/TickTock") },
-  wordProblems: { bg: "#0a1026", load: () => import("@/features/chapters/story/MissionBrief") },
 } satisfies Record<string, { bg: string; load: StoryLoad }>
 
 export type StorySkill = keyof typeof STORY_CHAPTERS

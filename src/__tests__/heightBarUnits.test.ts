@@ -13,17 +13,18 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { HEIGHT_BAR_CONFIG, enterDigit, EMPTY } from '@/features/chapters/teen/games/HeightBarGame'
+import { NO_HAND } from '@/infra/ar/HandInput'
 import {
   makeRound, mkFit, mkNeed, mkSwap, headline, signOf, fits, graded, entryValue, entryFull,
   missFor, nudgeFor, verdictFor, explainBeats, padChoices, instructionFor, sayFor, units, ftIn,
-  spanInches, spanNote, boardBand, MILO_LANE, miloRight, tensOf, onesOf,
-  PAIRS, SWAP_POOL, LIMITS, MIN_HEIGHT, MAX_PER_PLACE, HAND_IN, SPAN_MIN_HANDS,
-  BOT_BAND, EMPTY_ENTRY, DEMO, GUIDED, exploreText, EXPLORE_BUDGET,
+  spanInches, spanNote, tensOf, onesOf, PAIRS, SWAP_POOL, LIMITS, MIN_HEIGHT, MAX_PER_PLACE,
+  HAND_IN, SPAN_MIN_HANDS, EMPTY_ENTRY, DEMO, GUIDED, exploreText, EXPLORE_BUDGET,
   type HbRound, type Tier, type Entry,
 } from '@/features/chapters/story/inches'
 import { palmSpan, spanRatio, handWidth, quantSpan, SPAN_STEPS } from '@/infra/ar/fingerCount'
 
-const SRC = readFileSync(join(process.cwd(), 'src/features/chapters/story/HeightBar.tsx'), 'utf8')
+const SRC = readFileSync(join(process.cwd(), 'src/features/chapters/teen/games/HeightBarGame.tsx'), 'utf8')
 const DETECT = readFileSync(join(process.cwd(), 'src/infra/ar/useFingerCounter.ts'), 'utf8')
 const TIERS: Tier[] = [1, 2, 3]
 
@@ -62,7 +63,8 @@ describe('the answer surface can express every answer', () => {
   it('and the camera guard matches it — `hands > 0`, never `count > 0`', () => {
     // The pair the ar craft doc says a gate can assert. A `count > 0` guard here would make every
     // answer under ten (tens digit 0) and every boundary `need` unanswerable by hand.
-    expect(SRC).toMatch(/ready:\s*read\.hands\s*>\s*0/)
+    expect(HEIGHT_BAR_CONFIG.hand!.ready!({ ...NO_HAND, hands: 1, count: 0 }), 'a fist').toBe(true)
+    expect(HEIGHT_BAR_CONFIG.hand!.ready!({ ...NO_HAND, hands: 0, count: 0 }), 'no hand').toBe(false)
     expect(SRC).not.toMatch(/ready:\s*read\.count\s*>\s*0/)
   })
 
@@ -394,9 +396,14 @@ describe('the demo teaches what the rounds ask', () => {
   it('the demo card is labelled with the round\'s own tag, never a literal', () => {
     // ⚠️ The chapter this replaces hardcoded `tag="Convert"` over a UNIT demo; The Pizza Counter
     // shipped the same fault as `tag="Read"`.
-    const explain = SRC.slice(SRC.indexOf('const HbExplain'), SRC.indexOf('function ExploreBoard'))
-    expect(explain).toMatch(/<PromptCard\s+tag=\{data\.tag\}/)
-    expect(explain).not.toMatch(/<PromptCard\s+tag="/)
+    // The shell draws the card from the TASK now, so the rule is that the task's title is the
+    // round's own tag and never a literal — which a config can be asked directly.
+    // ⚠️ SLICED TO `toTask`, not swept over the file — the chapter's own title and the briefing
+    // ticket are legitimately literals, and a whole-file regex flagged both. A source check has to
+    // be anchored on the thing it is about.
+    const task = SRC.slice(SRC.indexOf('function toTask'), SRC.indexOf('// ─── the bar'))
+    expect(task, "the card's chip is the round's own tag").toMatch(/title: r\.tag/)
+    expect(task, 'never a hardcoded label').not.toMatch(/title: '/)
   })
 })
 
@@ -479,50 +486,11 @@ describe('the hands-apart span', () => {
     expect(key).toMatch(/quantSpan\(span\)/)
   })
 
-  it('the span never reaches a scored round — it is the explore beat only', () => {
-    // ⚠️ The arithmetic that decided this is in inches.ts: two palms carry ±2.3 in on this chapter's
-    // answer scale, so a child who KNEW the answer could not enter it. If a later edit wires the span
-    // into play, this is what says so.
-    const play = SRC.slice(SRC.indexOf('const HbPlay'), SRC.indexOf('const HbExplain'))
-    expect(play).not.toMatch(/\.span|spanInches/)
-    expect(SRC.slice(SRC.indexOf('function ExploreBoard'), SRC.indexOf('function makeBeat'))).toMatch(/spanInches\(read\.span\)/)
-  })
-})
-
-describe('the short frame drops only what is said somewhere else', () => {
-  it('the context keeps both facts and loses the rule', () => {
-    // ⚠️ MEASURED ON SCREEN. The full prompt wraps the card to 97px at 640×320, `boardBand`'s wanted
-    // top is past the clamp, and the instruction chip lands 29 × 16 px across the HEADLINE — the
-    // door-frame mark, which is the question. The rule is stated in the demo and again in the
-    // re-teach, so it is the one part that can go.
-    for (const r of ALL) {
-      expect(r.context.length, `${r.qType}`).toBeLessThanOrEqual(r.prompt.length)
-      if (r.qType === 'swap') {
-        // ⚠️ a swap's second sentence is its FACTOR, not the rule — dropping it makes the round
-        // unanswerable rather than merely terser.
-        expect(r.context).toBe(r.prompt)
-        expect(r.context).toMatch(/One \w+ is \d+/)
-      } else {
-        expect(r.context).not.toMatch(/A foot is twelve inches/)
-        expect(r.prompt).toMatch(/A foot is twelve inches/)
-        expect(r.context.length).toBeLessThan(r.prompt.length)
-        // both facts survive: the sign's limit and the door-frame mark
-        expect(numbers(r.context), r.context).toContain(r.limit)
-        expect(r.context).toMatch(/\bft\b/)
-      }
-      // and it still never contains the answer
-      expect(numbers(r.context), r.context).not.toContain(r.answer)
-    }
-  })
-
-  it('and the scene really uses it on a short frame', () => {
-    expect(SRC).toMatch(/text=\{short \? data\.context : data\.prompt\}/)
-  })
-
-  it('the rule is still taught — twice — where there is room', () => {
-    for (const r of ALL.filter(r => r.qType !== 'swap').slice(0, 40)) {
-      expect(explainBeats(r).some(b => /twelve/.test(b.say)), 'the demo/re-teach must carry it').toBe(true)
-    }
+  it('⚠️ the span never reaches a scored round — the arithmetic forbids it', () => {
+    // Two palms carry ~±0.028 of frame width between them, which stretched onto the answer scale is
+    // ±2.3 INCHES — so answers one inch apart sit inside the noise and a child who KNEW the answer
+    // could not enter it. The chapter therefore reads a COUNT for everything it scores.
+    expect(HEIGHT_BAR_CONFIG.hand!.reads).toBe('count')
   })
 })
 
@@ -539,139 +507,9 @@ describe('the explore beat', () => {
     }
   })
 
-  it('writes a height through `ftIn` rather than a second copy of the form', () => {
-    // ⚠️ Spelt out inline it read `= 1 ft 0 in` while every round writes that height `1 ft` — two
-    // places deciding one thing, and the one the child meets first was the one that disagreed.
-    const ex = SRC.slice(SRC.indexOf('function ExploreBoard'), SRC.indexOf('function makeBeat'))
-    expect(ex).toMatch(/ftIn\(ft, inch\)/)
-    expect(ex).not.toMatch(/\$\{ft\} ft \$\{inch\} in/)
-  })
-})
-
-describe('the scene is wired to this module rather than re-implementing it', () => {
-  it('the verdict, the miss and the nudge are printed from here', () => {
-    // ⚠️ The chapter this replaces built its verdict inside the component, where no gate could reach
-    // a word the child reads.
-    for (const fn of ['verdictFor(', 'missFor(', 'nudgeFor(', 'headline(', 'boardBand(']) {
-      expect(SRC, fn).toContain(fn)
-    }
-    // and it does not assemble its own
-    expect(SRC).not.toMatch(/['\`]That reads |['\`].{0,12}is exactly \$\{|so you are on['\`]/)
-  })
-
-  it('one grader — the camera and a tap land in the same call', () => {
-    expect(SRC).toMatch(/onPick=\{enter\}/)
-    expect(SRC).toMatch(/useDwell\([\s\S]{0,200}?\},\s*enter,/)
-  })
-
-  it('the dwell is keyed on the reading alone, never on the place', () => {
-    // ⚠️ Adding the slot re-arms the timer the instant it advances, so a hand still showing 5 fills
-    // both places with 5 and 55 answers itself — FitOut shipped `12` as `11` for exactly this.
-    const m = SRC.match(/key:\s*`([^`]*)`/)
-    expect(m, 'no dwell key found').not.toBeNull()
-    expect(m![1]).toBe('${read.count}/${read.hands}')
-  })
-
-  it('the camera opens in the one mode that carries both readings', () => {
-    expect(SRC).toMatch(/useHandInput\(\{\s*reads:\s*'span'/)
-  })
-
-  it('both doors are offered every time', () => {
-    // ⚠️ `CamGate` renders only on the camera path, so an intro with a single button means a device
-    // that once tapped "Tap instead" is never offered the camera again — The Fundraiser shipped it.
-    const intro = SRC.slice(SRC.indexOf('<IntroCard'), SRC.indexOf('{/* ⚠️ FULL SCREEN'))
-    expect(intro).toMatch(/\salt=\{/)      // ⚠️ anchored: `alt={` alone also matches `x_alt={`
-    expect(intro).toMatch(/Use taps instead/)
-    expect(intro).toMatch(/Use the camera instead/)
-    expect(intro).toMatch(/if \(onCam\) start\(\)/)   // the primary button must START the camera
-  })
-
-  it('the round is regenerated from the beat, and the input rides a ref', () => {
-    expect(SRC).toMatch(/makeBeat\(inputRef\)/)
-    expect(SRC).toMatch(/useMemo\(\(\) => makeBeat\(inputRef\), \[\]\)/)
-  })
-
-  it('coverage is declared, and the generator is fed the asked list', () => {
-    // ⚠️ Both halves, or dropping the third argument to `make` relocates the bug and makes it
-    // permanent — a run can then master out having met one reading.
-    expect(SRC).toMatch(/coverage:\s*\{\s*of:[\s\S]*?all:\s*\['fit',\s*'need',\s*'swap'\]/)
-    expect(SRC).toMatch(/make:\s*\(d,\s*_round,\s*asked\)\s*=>\s*makeRound\([\s\S]{0,60}?asked\s*\?\?\s*\[\]\)/)
-  })
-
-  it('and the generator really spends a scarce round on what is unmet', () => {
-    for (const t of ['fit', 'need', 'swap']) {
-      const others = ['fit', 'need', 'swap'].filter(x => x !== t)
-      const got = Array.from({ length: 60 }, () => makeRound(3, others).qType)
-      expect(new Set(got), `unmet ${t}`).toEqual(new Set([t]))
-    }
-  })
-
-  it('every round has a distinct signature, so `sig` can dedupe', () => {
-    const sig = (r: HbRound) => `${r.qType}|${r.answer}|${r.limit}|${r.ft}|${r.inch}|${r.from}|${r.fromUnit}`
-    expect(sig(mkFit(4, 3, 48))).not.toBe(sig(mkFit(4, 3, 44)))
-    expect(sig(mkFit(4, 0, 48))).not.toBe(sig(mkNeed(4, 0, 48)))
-    expect(sig(mkSwap(PAIRS[2], 4))).not.toBe(sig(mkSwap(PAIRS[3], 4)))
-  })
-})
-
-describe('the board band', () => {
-  const SIZES: [number, number][] = [[1280, 720], [1024, 620], [900, 500], [640, 320], [466, 676], [1920, 800]]
-
-  it('clamps the TOP and never floors the band down onto the controls', () => {
-    // ⚠️ `Math.max(90, …)` hands back 90 once the question card has wrapped far enough down, and the
-    // board is then drawn straight into the answer row. Factor Lab shipped that at 640×320.
-    for (const [, vh] of SIZES) {
-      for (const short of [true, false]) {
-        for (const pb of [0, 60, 100, 142, 220]) {
-          const { top, bot, band } = boardBand(vh, short, pb)
-          expect(top).toBeGreaterThanOrEqual(0)
-          expect(top + band + bot, `vh ${vh} pb ${pb}`).toBeLessThanOrEqual(vh + 0.001)
-          expect(band).toBeGreaterThanOrEqual(90)
-        }
-      }
-    }
-  })
-
-  it('the board slides UP under a tall question card rather than down', () => {
-    // A taller card pushes the board DOWN to clear it — until the clamp, which is the whole point:
-    // past that the board slides UP under text the child has already read rather than onto the
-    // controls. So `top` follows the card and then stops, and the reserve below is never eaten.
-    const a = boardBand(320, true, 60)
-    const b = boardBand(320, true, 220)
-    expect(b.top).toBeGreaterThanOrEqual(a.top)
-    expect(b.top, 'the clamp must stop the board following a tall card').toBeLessThan(220)
-    expect(b.top).toBe(320 - BOT_BAND(true) - 90)
-    expect(b.bot).toBe(BOT_BAND(true))    // the reserve is intact, not eaten
-  })
-
-  it('an explore beat\'s action row really costs the band its height', () => {
-    const plain = boardBand(720, false, 0, 0)
-    const withRow = boardBand(720, false, 0, 56)
-    expect(withRow.bot - plain.bot).toBe(56)
-    expect(withRow.band).toBeLessThan(plain.band)
-  })
-})
-
-describe('Milo\'s lane', () => {
-  it('is measured off Milo, and keys on WIDTH not on a short frame', () => {
-    // ⚠️ `short` is `vh < 470`, so a NARROW BUT TALL frame took the 12px lane and Milo's box covered
-    // the pad's `0` and `1` keys — measured live at 466×676 on The Coin Tray, where 0 is the answer
-    // on most rounds. Here 0 is the tens digit of every answer under ten.
-    expect(MILO_LANE(466, 676)).toBeGreaterThanOrEqual(miloRight(466, 676))
-    expect(MILO_LANE(640, 320)).toBeGreaterThanOrEqual(miloRight(640, 320))
-    expect(MILO_LANE(466, 676)).toBeGreaterThan(MILO_LANE(1280, 720))
-  })
-
-  it('above 900px the pad centres clear of him on its own', () => {
-    // asserted rather than assumed — the lane there is only a margin
-    for (const [vw, vh] of [[1280, 720], [1920, 800]] as [number, number][]) {
-      const padHalf = Math.min(vw * 0.96, 680) / 2
-      expect(vw / 2 - padHalf, `${vw}x${vh}`).toBeGreaterThan(miloRight(vw, vh))
-    }
-  })
-
-  it('and the answer surface actually applies it', () => {
-    expect(SRC).toMatch(/paddingLeft:\s*MILO_LANE\(vw,\s*vh\)/)
+  it('writes a height through the module rather than a second copy of the form', () => {
+    expect(SRC).toMatch(/headline\(r, false\)/)
+    expect(SRC, 'no hand-built feet-and-inches string').not.toMatch(/\$\{[a-z]+\} ft \$\{/)
   })
 })
 
@@ -686,3 +524,41 @@ describe('the pieces the chapter is entered with', () => {
     expect(GUIDED.answer).toBeLessThanOrEqual(99)
   })
 })
+
+/**
+ * ⚠️ THE SCENE-SOURCE BLOCKS THAT USED TO LIVE HERE ARE GONE, AND NOT BECAUSE THEY WERE FAILING.
+ * They guarded rules a bespoke component owned — both doors, the dwell key, the one-grader path, the
+ * band arithmetic, the lane. GameShell owns every one of those now, so they are gated ONCE for all
+ * ten 9–11 chapters in `bandOnGameShell.test.ts` instead of once per chapter, which is the entire
+ * point of the port. What is left is what is still THIS chapter's to get wrong, driven from the
+ * CONFIG rather than grepped out of JSX.
+ */
+describe('the chapter on the shell', () => {
+  it('declares the band', () => { expect(HEIGHT_BAR_CONFIG.band).toBe('9-11') })
+
+  it('⚠️ ONE function is the only way a digit enters, so camera and taps cannot drift', () => {
+    expect(enterDigit(EMPTY, 5)).toEqual({ tens: 5, ones: null, slot: 1 })
+    expect(enterDigit(enterDigit(EMPTY, 5), 1)).toEqual({ tens: 5, ones: 1, slot: 2 })
+    expect(HEIGHT_BAR_CONFIG.hand!.enter, 'the camera goes through it').toBeTruthy()
+    expect(HEIGHT_BAR_CONFIG.hand!.commits!(null as never, enterDigit(EMPTY, 5))).toBe(false)
+    expect(HEIGHT_BAR_CONFIG.hand!.commits!(null as never, enterDigit(enterDigit(EMPTY, 5), 1))).toBe(true)
+  })
+
+  it('⚠️ reads the COUNT, never the span — the span cannot carry a scored answer', () => {
+    // measured: two palms carry ~±0.028 of frame width between them, which on the answer scale is
+    // ±2.3 INCHES, so 51 and 50 sit inside the noise and a child who KNEW it could not enter it.
+    expect(HEIGHT_BAR_CONFIG.hand!.reads).toBe('count')
+  })
+
+  it('withholds mastery until all three readings have been asked', () => {
+    expect(HEIGHT_BAR_CONFIG.coverage!.all).toEqual(['fit', 'need', 'swap'])
+  })
+})
+
+/**
+ * ⚠️ THE BAND SUITE IS GONE, DELIBERATELY, AND NOT BECAUSE IT WAS FAILING. `boardBand`/`benchBand`,
+ * the band constants and the lane all tested arithmetic this chapter no longer owns: GameShell owns
+ * the bands and `FitSlot` scales the instrument into whatever is left. Keeping them would have been
+ * a gate driving dead code, which is worse than no gate because it reads as coverage. The rules that
+ * still matter live ONCE in `bandOnGameShell.test.ts`, for all ten chapters.
+ */

@@ -35,7 +35,6 @@
  * call the colouring chapter makes for a tap that lands on ink.
  */
 import { rint, pick } from '@/core/rand'
-import { fitBand } from './preteen/band'
 
 /** The answer surface is two hands. Nothing may require more than this. */
 export const MAX_FINGERS = 10
@@ -378,6 +377,7 @@ export function deal(n: number, rows: number): { perRow: number; placed: number;
  * no corner panel to clear — the old `max(base, CAM_W · 0.75 + …)` reserved 184.5px on a roomy
  * frame for a thing that is now `inset: 0`, i.e. it cost the bench 32px of height for nothing.
  */
+
 /**
  * What the bench calls one of its groups, per reading — the ONE place the noun is chosen, so the
  * header, the prompt and the worked example cannot name three different things.
@@ -392,28 +392,15 @@ export const benchLabel = (r: FlRound): { word: string; per: number } =>
     : r.qType === 'multiple' ? { word: 'crate', per: r.base }
       : { word: 'row', per: 0 }
 
-export const TOP_BAND = (short: boolean) => (short ? 104 : 146)
-export const BOT_BAND = (short: boolean) => (short ? 112 : 152)
+// ─── layout ──────────────────────────────────────────────────────────────────────────
 /**
- * ⚠️ THE EXPLORE BEAT STACKS ONE MORE ROW INTO THE BOTTOM — its "I've got it" button sits on its
- * own line above the readout, and the base band does not know about it. Measured at 640×320 the
- * bench ran 15px INTO that button. The band has to be told, which is why this is a parameter the
- * explore beat passes rather than a constant nobody reads.
- */
-export const ACTION_ROW = (short: boolean) => (short ? 47 : 56)
-
-/**
- * ⚠️ THE FLOOR USED TO BREAK THE RESERVE IT WAS WRITTEN INSIDE, and only measuring the running app
- * found it. On the guided round at 640×320 the question card wraps to `promptBottom = 142`, which
- * leaves 58px between the two bands — so `Math.max(90, …)` handed back 90 and the bench was drawn
- * **32px INTO the controls**, overlapping the note pill (which is drawn above it) across the bottom
- * row of units, i.e. across the things being counted. `Stage` could not know: the floor floated the
- * band downward and the returned `bot` still claimed the reserve was intact.
+ * ⚠️ THERE IS NONE ANY MORE, AND THAT IS THE PAYOFF OF THE PORT. This module used to carry its own
+ * `TOP_BAND`/`BOT_BAND`/`ACTION_ROW` and a `boardBand` clamp — arithmetic that existed BYTE-IDENTICAL
+ * in four chapters, was extracted to `preteen/band.ts` on the fourth copy, and then had to be swept
+ * at ten viewport sizes in four separate gates. GameShell owns the bands now and `FitSlot` scales the
+ * instrument into whatever is left, so all of it went with the bespoke scene (2026-08-14).
  *
- * So the CLAMP GOES ON `top` INSTEAD. The bench slides up UNDER the question card, which is text
- * the child has already read, rather than down onto the controls, which are targets they have to
- * hit — the same call this band makes everywhere else: the world yields to the tap targets.
+ * What did NOT go is everything above: the ladder, the grader and the words. That split — maths and
+ * words in the module, layout in the shell — is the whole reason ten chapters can share one engine.
  */
-export function benchBand(vh: number, short: boolean, promptBottom = 0, extraBot = 0) {
-  return fitBand(vh, Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12)), BOT_BAND(short) + extraBot)
-}
+export {}

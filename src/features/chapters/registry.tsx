@@ -136,6 +136,49 @@ const TEEN_CHAPTERS = {
     { skill: "geometryTransformations", band: "15-16", conceptsConfirmed: ["Circumference, area, arc & sector", "Surface area & volume of solids", "Translate, reflect & dilate on the grid", "Identify the rule & find the midpoint"], nextPointer: "Next: triangles, proof & right-triangle trig.", explore: { title: "Move, flip, and scale a shape", intro: "Slide the translate and scale controls and pick a reflect axis — watch the image triangle and its rule update together. Have a play, or skip straight to the game.", continueLabel: "Skip to the game" } },
     () => import("@/features/chapters/teen/games/MapMaker"), () => import("@/features/chapters/teen/sims/TransformExplorer"),
   ),
+  /**
+   * ⚠️ THE FIRST 9–11 CHAPTER ON THIS SHELL (pilot, 2026-08-14). It sits in the TEEN table because
+   * the table is about which ENGINE a chapter runs on, not how old the child is — `band: '9-11'`
+   * is what makes it a ten-round, never-resuming, hand-answerable run. It left `storyChapters.tsx`
+   * with the old bespoke component, so `/story?ch=decimals` now correctly reports an unknown key;
+   * the preview is `/teen-preview?c=decimals`.
+   */
+  decimals: teen(
+    { skill: "decimals", band: "9-11", conceptsConfirmed: ["Tenths and hundredths", "Reading a decimal", "Naming a place", "Adding and taking away across a ten"], nextPointer: "Next: measurement & converting units." },
+    () => import("@/features/chapters/teen/games/CoinTrayGame"),
+  ),
+  /** ⚠️ THE 9–11 BAND, ON THE SAME ENGINE AS 12–18 (founder's call, 2026-08-14). These rows sit in
+   *  the TEEN table because the table is about which ENGINE a chapter runs on, not how old the child
+   *  is — `band: '9-11'` is what makes each a ten-round, never-resuming, hand-answerable run. They
+   *  left `storyChapters.tsx`, so `/story?ch=…` now reports an unknown key for them by design; the
+   *  preview is `/teen-preview?c=<id>`. */
+  factorsMultiples: teen(
+    { skill: "factorsMultiples", band: "9-11", conceptsConfirmed: ["Even and odd", "Counting in multiples", "Factors as equal rows", "Primes"], nextPointer: "Next: comparing fractions." },
+    () => import("@/features/chapters/teen/games/FactorLabGame"),
+  ),
+  fractionsCompare: teen(
+    { skill: "fractionsCompare", band: "9-11", conceptsConfirmed: ["Equivalent fractions", "Comparing two fractions", "Adding and taking away slices", "Why more parts means smaller ones"], nextPointer: "Next: decimals." },
+    () => import("@/features/chapters/teen/games/PizzaCounterGame"),
+  ),
+  measurementUnits: teen(
+    { skill: "measurementUnits", band: "9-11", conceptsConfirmed: ["Feet and inches", "Converting to compare", "How much more is needed", "Mass and capacity swaps"], nextPointer: "Next: area & perimeter." },
+    () => import("@/features/chapters/teen/games/HeightBarGame"),
+  ),
+  anglesSymmetry: teen(
+    { skill: "anglesSymmetry", band: "9-11", conceptsConfirmed: ["Acute, right and obtuse", "Judging against a square corner", "Setting an exact angle", "Lines of symmetry"], nextPointer: "Next: data & graphs." },
+    () => import("@/features/chapters/teen/games/AngleShopGame"),
+  ),
+  wordProblems: teen(
+    { skill: "wordProblems", band: "9-11", conceptsConfirmed: ["Choosing the operation", "One-step problems", "Two-step problems", "Reading a story for its maths"], nextPointer: "That is the whole set." },
+    () => import("@/features/chapters/teen/games/MissionBriefGame"),
+  ),
+  /** ⚠️ THE ONE THAT WAS 3D. `story/FloorPlot.tsx` (react-three-fiber, first person) and its
+   *  628-line procedural site generator are DELETED — founder's call, "totally remove that 3d
+   *  concept". Same verb, drawn from above. */
+  areaPerimeter: teen(
+    { skill: "areaPerimeter", band: "9-11", conceptsConfirmed: ["Area as rows of tiles", "Perimeter as the way round", "Working a side back from the total", "Which one a job needs"], nextPointer: "Next: data & graphs." },
+    () => import("@/features/chapters/teen/games/EmptyPlotGame"),
+  ),
   integers: teen(
     { skill: "integers", band: "12-14", conceptsConfirmed: ["Negatives below zero", "Comparing integers", "Opposites", "Distance from zero (absolute value)"], nextPointer: "Next: operations with signed numbers." },
     () => import("@/features/chapters/teen/games/WeatherStation"),

@@ -51,7 +51,6 @@
  * pizzas make their fractions incomparable, which would make every round of this chapter a lie.
  */
 import { rint, pick } from '@/core/rand'
-import { fitBand } from './preteen/band'
 
 /** The answer surface is two hands. Nothing may require more than this. */
 export const MAX_FINGERS = 10
@@ -399,22 +398,16 @@ export const DEMO: PzRound[] = [mkMatch(4, 1, 8), mkMore(2, 1, 3), mkOp(8, 3, 2,
 export const GUIDED: PzRound = mkMatch(2, 1, 4)
 
 // ─── board layout ──────────────────────────────────────────────────────────────────────
-/**
- * The band the board gets, in pixels — HERE rather than in the scene so a sweep can drive the same
- * arithmetic the layout uses. A placement lives in CSS and a gate cannot see it; a band is a number
- * and it can. Mirrors `benchBand` in factors.ts, including the reason its clamp is on `top`:
- *
- * ⚠️ A FLOOR ON THE BAND BREAKS THE RESERVE IT LIVES INSIDE. `Math.max(90, …)` hands back 90 when
- * the question card has wrapped far enough down, and the board is then drawn straight into the
- * controls — over the note pill and the answer row. Clamping `top` instead slides the board UP under
- * the question card, which is text the child has already read, rather than DOWN onto targets they
- * have to hit.
- */
-export const TOP_BAND = (short: boolean) => (short ? 104 : 146)
-export const BOT_BAND = (short: boolean) => (short ? 112 : 152)
-/** The explore beat stacks its "I've got it" button on its own line above the readout. */
-export const ACTION_ROW = (short: boolean) => (short ? 47 : 56)
 
-export function boardBand(vh: number, short: boolean, promptBottom = 0, extraBot = 0) {
-  return fitBand(vh, Math.max(TOP_BAND(short), promptBottom + (short ? 8 : 12)), BOT_BAND(short) + extraBot)
-}
+// ─── layout ──────────────────────────────────────────────────────────────────────────
+/**
+ * ⚠️ THERE IS NONE ANY MORE, AND THAT IS THE PAYOFF OF THE PORT. This module used to carry its own
+ * `TOP_BAND`/`BOT_BAND`/`ACTION_ROW` and a `boardBand` clamp — arithmetic that existed BYTE-IDENTICAL
+ * in four chapters, was extracted to `preteen/band.ts` on the fourth copy, and then had to be swept
+ * at ten viewport sizes in four separate gates. GameShell owns the bands now and `FitSlot` scales the
+ * instrument into whatever is left, so all of it went with the bespoke scene (2026-08-14).
+ *
+ * What did NOT go is everything above: the ladder, the grader and the words. That split — maths and
+ * words in the module, layout in the shell — is the whole reason ten chapters can share one engine.
+ */
+export {}

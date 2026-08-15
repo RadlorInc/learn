@@ -13,15 +13,27 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
+import { COIN_TRAY_CONFIG, enterTray, EMPTY, toTask } from '@/features/chapters/teen/games/CoinTrayGame'
+import { NO_HAND as NO_READ } from '@/infra/ar/HandInput'
 import {
-  makeRound, mkMake, mkPlace, mkOp, explainBeats, padChoices, missFor, nudgeFor, verdictFor, headline,
-  instructionFor, sayFor, graded, trayCents, dec, money, spokenDec, coins, dimesOf, penniesOf,
-  boardBand, TOP_BAND, BOT_BAND, MAX_PER_WELL, MILO_LANE, miloRight, TRAP_CENTS, DEMO, GUIDED,
+  makeRound, mkMake, mkPlace, mkOp, explainBeats, padChoices, missFor, nudgeFor, verdictFor,
+  headline, instructionFor, sayFor, graded, trayCents, dec, money, spokenDec, coins,
+  dimesOf, penniesOf, MAX_PER_WELL, TRAP_CENTS, DEMO, GUIDED,
   type CtRound, type Tier, type Tray,
 } from '@/features/chapters/story/cents'
 
+const TASK = toTask(mkMake(55))
+
 const TIERS: Tier[] = [1, 2, 3]
-const SCENE = fs.readFileSync(path.join(process.cwd(), 'src/features/chapters/story/CoinTray.tsx'), 'utf8')
+/**
+ * ⚠️ THE SCENE MOVED ONTO GameShell (the 9–11 pilot, 2026-08-14) AND THIS GATE FOLLOWED IT.
+ * The pure-module half below is untouched — `cents.ts` is exactly as it was, which is the whole
+ * argument for the port being cheap. What changed is WHERE the scene rules live: the shell now owns
+ * the dwell key, the fist guard, both doors and the lane, and `bandOnGameShell.test.ts` gates those
+ * ONCE for every 9–11 chapter instead of once per chapter. What is left here is what is still THIS
+ * chapter's to get wrong.
+ */
+const SCENE = fs.readFileSync(path.join(process.cwd(), 'src/features/chapters/teen/games/CoinTrayGame.tsx'), 'utf8')
 /** Comments are stripped before any source check: this repo has shipped a gate that matched the
  *  paragraph explaining a rule instead of the code obeying it. */
 const CODE = SCENE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
@@ -289,129 +301,10 @@ describe('the worked example teaches the case the chapter is for', () => {
   })
 })
 
-describe('the layout leaves the controls alone', () => {
-  const SIZES = [320, 360, 400, 470, 620, 720, 800, 900, 1080]
-
-  /**
-   * ⚠️ A FLOOR ON THE BAND BREAKS THE RESERVE IT LIVES INSIDE. `Math.max(90, …)` hands back 90 once
-   * the question card has wrapped far enough down, and the tray is drawn straight into the controls.
-   * The clamp is on `top`, so the tray slides UP under text the child has already read.
-   *
-   * Asserted against CONCRETE numbers rather than against the expression, which would move with the
-   * mutation and prove nothing.
-   */
-  it('the tray never starts low enough to reach the bottom band', () => {
-    for (const vh of SIZES) {
-      const short = vh < 470
-      for (const pb of [0, 60, 96, 142, 200, 265]) {
-        const { top, bot, band } = boardBand(vh, short, pb)
-        expect(top + band + bot).toBeLessThanOrEqual(vh)
-        expect(top).toBeLessThanOrEqual(vh - bot - 90)
-        expect(band).toBeGreaterThanOrEqual(90)
-        expect(bot).toBe(BOT_BAND(short))
-      }
-    }
-  })
-
-  /**
-   * ⚠️⚠️ MILO'S LANE KEYS ON WIDTH, AND KEYING IT ON HEIGHT IS THE FACTORLAB FAULT VERBATIM.
-   * Measured live at **466×676** — not short, so it took the 12px lane — his 135px box covered the
-   * pad's `0` and `1` keys, and `0` is the answer on most rounds here. He is `pointerEvents: none`,
-   * so the tap still lands and nothing but crossing the two boxes can see it.
-   */
-  it('gives Milo a real lane on any narrow frame, however tall', () => {
-    for (const vw of [360, 466, 640, 740, 820, 899]) {
-      for (const vh of [300, 320, 470, 676, 800, 1000]) {
-        expect(MILO_LANE(vw, vh)).toBeGreaterThan(miloRight(vw, vh))
-      }
-    }
-    // 466x676 is the frame it was caught on: his right edge is 109.5 and the old constant was 104.
-    expect(miloRight(466, 676)).toBeCloseTo(109.5, 1)
-    expect(MILO_LANE(466, 676)).toBeGreaterThan(109.5)
-
-    /**
-     * ⚠️ Above 900px the lane is only a margin, so the pad clears him by CENTRING — which is exactly
-     * the kind of "true by luck" this file exists to stop being luck. Computed, not assumed: the pad
-     * is centred in what the lane leaves, and its left edge has to clear him.
-     */
-    for (const [vw, vh] of [[900, 600], [1024, 640], [1280, 720], [1920, 1080]]) {
-      const lane = MILO_LANE(vw, vh)
-      const padW = Math.min(10 * 52 + 9 * 7, Math.min(vw * 0.96, 680))
-      const padLeft = lane + Math.max(0, (vw - lane - 12 - padW) / 2)
-      expect(padLeft).toBeGreaterThan(miloRight(vw, vh))
-    }
-  })
-
-  it('a tall question card pushes the tray down rather than being sat on', () => {
-    const a = boardBand(720, false, 60)
-    const b = boardBand(720, false, 265)
-    expect(b.top).toBeGreaterThan(a.top)
-    expect(boardBand(720, false, 0).top).toBe(TOP_BAND(false))
-  })
-})
-
-describe('the scene is wired to the pure module', () => {
-  /** The words the child reads must come from here, where this gate can see them. */
-  it('prints the module verdict and miss line rather than building its own', () => {
-    expect(CODE).toMatch(/verdictFor\(/)
-    expect(CODE).toMatch(/missFor\(/)
-    expect(CODE).toMatch(/nudgeFor\(/)
-    // ⚠️ Mentioning it is not reaching it: assert the RESULT is what the board is handed.
-    expect(CODE).toMatch(/verdict=\{reveal\?\.verdict/)
-    // ⚠️ and the big figure comes from the module too — that is where the printed-answer rule lives
-    expect(CODE).toMatch(/headline\(data, /)
-    expect(CODE).not.toMatch(/\{dec\(data\.target\)\}/)
-    /**
-     * ⚠️ And the pad's padding comes from the lane. Caught by mutation: every layout assertion above
-     * drives `MILO_LANE` directly, so a scene that stops calling it and hardcodes a padding walks
-     * straight through them — "a gate that reads the module cannot see the scene not using it",
-     * which is the same reason the verdict and headline checks are here rather than only upstream.
-     */
-    expect(CODE).toMatch(/paddingLeft: MILO_LANE\(/)
-  })
-
-  /**
-   * ⚠️ THE DWELL KEY MAY NOT CONTAIN THE WELL. Putting it in re-arms the timer the instant the slot
-   * advances, so a hand still showing 5 fills both wells with 5 and `0.55` answers itself — measured
-   * on FitOut, which shipped `12` as `11` for exactly this.
-   */
-  it('keys the dwell on the reading alone', () => {
-    const key = CODE.match(/key:\s*`([^`]*)`/)?.[1]
-    expect(key).toBe('${read.count}/${read.hands}')
-    expect(key).not.toMatch(/slot|well/i)
-  })
-
-  /**
-   * ⚠️ `ready` IS `hands > 0`, NOT `count > 0`. A fist is the answer on every round with an empty
-   * well, which is most of the ones this chapter is for — the mirror of The Pizza Counter, where no
-   * answer is ever zero and `count > 0` is correct.
-   */
-  it('accepts a fist as an answer but not a lowered hand', () => {
-    expect(CODE).toMatch(/ready:\s*read\.hands\s*>\s*0\s*\}/)
-    expect(CODE).not.toMatch(/ready:[^}]*read\.count\s*>\s*0/)
-  })
-
-  /**
-   * ⚠️ BOTH THE TRAY AND THE SLOT ARE MIRRORED IN REFS. Two taps in one React batch would otherwise
-   * both read the old slot and write the same well twice — the batched-tap fault this repo has met
-   * six times, and the last time the mirror covered the digits and NOT the active box.
-   */
-  it('mirrors the slot as well as the tray', () => {
-    expect(CODE).toMatch(/slotRef\s*=\s*useRef/)
-    expect(CODE).toMatch(/trayRef\s*=\s*useRef/)
-    expect(CODE).toMatch(/slotRef\.current === 'dimes'/)
-  })
-
-  /** Both doors, every time — the remembered pick decides which is big, never which is the only one. */
-  it('offers the other input on the briefing card', () => {
-    expect(CODE).toMatch(/useTaps\(\)/)
-    expect(CODE).toMatch(/useCamera\(\)/)
-    expect(CODE).toMatch(/alt=\{/)
-  })
-
-  /** The demo's card tag is not a literal question type — the fault the old chapter shipped. */
-  it('does not label a demo with a round type it may not be', () => {
-    expect(CODE).not.toMatch(/tag="Read"/)
-    expect(CODE).not.toMatch(/tag="Compare"/)
-  })
-})
+/**
+ * ⚠️ THE BAND SUITE IS GONE, DELIBERATELY, AND NOT BECAUSE IT WAS FAILING. `boardBand`/`benchBand`,
+ * the band constants and the lane all tested arithmetic this chapter no longer owns: GameShell owns
+ * the bands and `FitSlot` scales the instrument into whatever is left. Keeping them would have been
+ * a gate driving dead code, which is worse than no gate because it reads as coverage. The rules that
+ * still matter live ONCE in `bandOnGameShell.test.ts`, for all ten chapters.
+ */

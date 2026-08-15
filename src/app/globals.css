@@ -141,7 +141,7 @@
    Shared: IBM Plex fonts, mono for math, teal accent, amber "note"
    (never red), kept --garden-green for the quiet correct-reveal.
    ================================================================= */
-[data-band="12-14"], [data-band="15-16"], [data-band="17-18"] {
+[data-band="9-11"], [data-band="12-14"], [data-band="15-16"], [data-band="17-18"] {
   --font-display: 'IBM Plex Sans', system-ui, sans-serif;
   --font-body:    'IBM Plex Sans', system-ui, sans-serif;
   --font-numeric: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -159,6 +159,25 @@
   /* --garden-green kept from :root as the quiet correct-reveal (per lock) */
   --r-blob:            18px;       /* retire the organic blob radius for teen */
   --ease-bounce:       var(--ease-smooth);  /* no bounce in teen scope */
+}
+
+/* 9–11 — the pre-teen mission HUD: deep-space navy, neon accents, mono numerals.
+   ⚠️ These are the values `story/preteen/kit.tsx` already ships (PT.bg0/bg1/panel/ink…), lifted
+   into tokens so a 9–11 chapter on GameShell reads the SAME palette as the six chapters already
+   wearing that kit. The band is scoped by `data-band` on the chapter portal, so the storybook
+   3–11 chapters on :root are untouched — same guarantee the teen bands have. */
+[data-band="9-11"] {
+  --bg-page: #0A1026;  --bg-1: #111A3C;  --bg-2: #151F40;
+  --paper:   #141D3E;  --paper-soft: #1A2450;  --cream: #151F40;
+  --ink: #EAF1FF;  --ink-soft: #A9B8D6;  --ink-muted: #6F80A6;  --outline: #2B3A6B;
+  --fg-on-color: #06121F;
+  /* the kit's violet, which no teen band uses — 9–11 is visibly its own band */
+  --milo-orange: #A06BFF;  --milo-orange-deep: #7F47EF;  --milo-orange-soft: #241A44;
+  --sh-soft:  0 1px 2px rgba(0,0,0,.40);
+  --sh-card:  0 2px 12px rgba(0,0,0,.45);
+  --sh-press: 0 1px 2px rgba(0,0,0,.50);
+  --sh-pop:   0 4px 18px rgba(160,107,255,.30);
+  --sh-stack: 0 3px 0 var(--milo-orange-deep);
 }
 
 /* 12–14 — field journal / maker-lab: light graph-paper, ink-teal accent */

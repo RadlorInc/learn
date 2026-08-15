@@ -24,6 +24,26 @@ export interface CalmAdvanceProps {
 // reframe:       shown on a wrong pick — warm + neutral, never "wrong/fail".
 // mastery:       shown at chapter/module completion.
 const MICROCOPY: Record<AgeBand, { encouragement: string[]; reframe: string[]; mastery: string[] }> = {
+  // 9–11: warmer and plainer than 12–14, and still never a cheer — the tick is the praise
+  // (StoryWorld's rule, and the 3–11 doctrine it comes from).
+  '9-11': {
+    encouragement: [
+      'That works.',
+      'That one lands.',
+      'Yep — that fits.',
+      'Good. That is the one.',
+    ],
+    reframe: [
+      'Not this time — have another look.',
+      'Close. Try that step again.',
+      'Nearly. Let us walk it through once more.',
+    ],
+    mastery: [
+      'Job done.',
+      'You worked the whole set.',
+      'All finished — nice work.',
+    ],
+  },
   '12-14': {
     encouragement: [
       'That holds up.',
