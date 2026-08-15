@@ -39,12 +39,12 @@ const PREVIEW: Record<string, StorySkill> = {
   solids: 'shapes2d3d',
   // ── 9–11 — pre-teen "Number Lab" (Mission-HUD) look — single lab, no world picker ──
   bignum: 'bigNumbers', round: 'rounding',
-  // ⚠️ SIX OF THE TEN 9–11 CHAPTERS ARE NOT HERE ANY MORE. The Coin Tray, The Factor Lab, The Pizza
-  // Counter, The Height Bar, The Angle Shop and The Mission Brief moved onto GameShell (2026-08-14),
-  // so they are no longer bare story experiences — their preview is `/teen-preview?c=<id>`. The
-  // unknown-key branch below names the keys that DO work rather than silently falling through, which
-  // is the whole reason it exists.
-  data: 'dataGraphs',
+  // ⚠️ EIGHT OF THE TEN 9–11 CHAPTERS ARE NOT HERE ANY MORE. The Coin Tray, The Factor Lab, The
+  // Pizza Counter, The Height Bar, The Angle Shop and The Mission Brief moved onto GameShell
+  // (2026-08-14), The Empty Plot followed (2026-08-15) and The Loading Bay with it — so they are no
+  // longer bare story experiences and their preview is `/teen-preview?c=<id>`. The unknown-key
+  // branch below names the keys that DO work rather than silently falling through, which is the
+  // whole reason it exists.
 }
 
 // Lazy-load each heavy chapter view so only the selected chapter's JS ships, mirroring the

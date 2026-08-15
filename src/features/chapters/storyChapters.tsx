@@ -27,7 +27,6 @@ export const STORY_CHAPTERS = {
   bigNumbers: { bg: "#a99a86", load: () => import("@/features/chapters/story/OrderDesk") },
   colors: { bg: "#e6f0f7", load: () => import("@/features/chapters/story/RainbowTown") },
   compareNumbers: { bg: "#cfe6f7", load: () => import("@/features/chapters/story/SeesawPark") },
-  dataGraphs: { bg: "#b9a894", load: () => import("@/features/chapters/story/LoadingBay") },
   fractions: { bg: "#f3ead8", load: () => import("@/features/chapters/story/SliceShop") },
   matchingQuantities: { bg: "#241c39", load: () => import("@/features/chapters/story/HomeTime") },
   measurement: { bg: "#cfe9f7", load: () => import("@/features/chapters/story/MeasureIt") },

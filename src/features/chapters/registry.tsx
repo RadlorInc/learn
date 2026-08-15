@@ -179,6 +179,13 @@ const TEEN_CHAPTERS = {
     { skill: "areaPerimeter", band: "9-11", conceptsConfirmed: ["Area as rows of tiles", "Perimeter as the way round", "Working a side back from the total", "Which one a job needs"], nextPointer: "Next: data & graphs." },
     () => import("@/features/chapters/teen/games/EmptyPlotGame"),
   ),
+  /** ⚠️ FIRST OF THE THREE STORYBOOK ONES TO COME ACROSS. `story/LoadingBay.tsx` (815 lines — three
+   *  painted depot backdrops, a foreman sprite, a speech bubble and its own layout chain) is DELETED;
+   *  the maths lives in `story/cargo.ts` and the chapter is a data file. */
+  dataGraphs: teen(
+    { skill: "dataGraphs", band: "9-11", conceptsConfirmed: ["Reading a pictograph", "Counting one bar", "How many more", "Adding every bar"], nextPointer: "Next: word problems." },
+    () => import("@/features/chapters/teen/games/LoadingBayGame"),
+  ),
   integers: teen(
     { skill: "integers", band: "12-14", conceptsConfirmed: ["Negatives below zero", "Comparing integers", "Opposites", "Distance from zero (absolute value)"], nextPointer: "Next: operations with signed numbers." },
     () => import("@/features/chapters/teen/games/WeatherStation"),
