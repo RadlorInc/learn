@@ -80,7 +80,7 @@ Three more reasons, in order:
 
 | | |
 |---|---|
-| **It is a live defect, not a style matter** | [story-9-11-rethink.md](story-9-11-rethink.md) measures `angleType` as a **33% guess** and names it one of the band's three coin flips. `symmetry` is 3 numeric chips — another 33%. |
+| **It is a live defect, not a style matter** | [story-9-11-rethink.md](../story-9-11-rethink.md) measures `angleType` as a **33% guess** and names it one of the band's three coin flips. `symmetry` is 3 numeric chips — another 33%. |
 | **It is next in the build order** | The rethink doc's order is FactorLab + AngleScope. FactorLab is blocked (FitOut took the array-on-a-frame gesture and factors needs a different material). AngleScope is unblocked. |
 | **Lowest asset count in the band** | One shop, three sites, the adult cast already generated. **~28 credits left of the ~31 budgeted**, of 1074. |
 
