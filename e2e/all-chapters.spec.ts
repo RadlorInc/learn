@@ -17,9 +17,16 @@ import { IGNORED_ERRORS } from './personas'
  * and the two component tables, so adding a chapter automatically adds a test and MOVING one
  * between shells automatically follows it.
  *
- * Run it: `npx playwright test e2e/all-chapters.spec.ts` against the dev server on :3017.
- * It is a pre-deploy gate, not a per-commit one — 70 chapters x 3 frames is a few hundred loads.
- * Narrow it while iterating with `E2E_ONLY=decimals,rounding` or `E2E_FRAMES=laptop`.
+ * Run it: `npm run test:chapters` against the dev server on :3017, or against production with
+ * `E2E_BASE_URL=https://milo-story-mode.vercel.app`. It is a pre-deploy gate, not a per-commit one
+ * — 70 chapters x 3 frames is a few hundred loads. Narrow it while iterating with
+ * `E2E_ONLY=decimals,rounding` or `E2E_FRAMES=laptop`.
+ *
+ * ⚠️ DO NOT RUN IT AGAINST PROD WHILE A DEPLOY IS STILL PROPAGATING. The first prod run reported
+ * two chapters failing on a resource 404; both passed minutes later, untouched. A deploy briefly
+ * serves pages whose chunk URLs are still rolling out, so a run started too early reports a
+ * transient as a defect — and, worse, would teach you to ignore a real one. Wait for the new
+ * `sw.js` VERSION to be live, then run.
  */
 
 const ROOT = process.cwd()
@@ -119,9 +126,42 @@ test.describe('every chapter opens', () => {
           const body = await page.locator('body').innerText()
           for (const bad of FAILURE_TEXT) expect(body, `${ch.id}: "${bad}" on screen`).not.toContain(bad)
 
-          // 2. There is something to press. A chapter that renders scenery and no control is a
-          //    dead end — the child cannot start, and nothing else here would notice.
-          await expect(page.locator('button:visible').first(), `${ch.id}: no visible control`).toBeVisible()
+          /**
+           * 2. It is OPERABLE, or it explicitly asks to be turned — never a dead screen.
+           *
+           * ⚠️ THE ROTATE GATE IS A LEGITIMATE ANSWER AND THE FIRST VERSION OF THIS CHECK DID NOT
+           * KNOW THAT. The 3–11 story chapters are landscape-first (`useNeedsRotate` is
+           * `innerHeight > innerWidth && innerWidth < 820`), so on a 390×844 phone they correctly
+           * render "Turn your phone sideways", which has no button. Demanding a control there
+           * failed 21 chapters that were behaving exactly as designed.
+           *
+           * ⚠️ AND IT PASSED ON LOCALHOST WHILE FAILING ON PROD, which is the part worth keeping:
+           * `useNeedsRotate` runs in an EFFECT and starts `false`, so the chapter paints first and
+           * the gate replaces it a frame later. The dev run caught the pre-effect frame and the
+           * prod run caught the settled one. A check that races a `useEffect` will pass or fail on
+           * timing, not on truth — assert the END STATE that is acceptable, which is either.
+           */
+          /**
+           * ⚠️ WAIT FOR *EITHER*, RATHER THAN ASKING WHICH ONE FIRST. Branching on an instantaneous
+           * `isVisible()` re-introduced the same race one level up: read before the effect runs and
+           * the gate is not there yet, so the check falls into the button branch and then waits 20s
+           * for a control that is never coming. It failed `shapes` while `shapes` was behaving
+           * perfectly. `.or()` resolves as soon as either appears, so there is no instant to be
+           * wrong at.
+           */
+          const control = page.locator('button:visible').first()
+          const rotateGate = page.getByText('Turn your phone sideways')
+          await expect(
+            control.or(rotateGate).first(),
+            `${ch.id}: neither a usable control nor a rotate gate`,
+          ).toBeVisible()
+
+          // If it asked to be turned, it must also say WHY — an empty gate is not a polite refusal.
+          if (await rotateGate.isVisible().catch(() => false)) {
+            const gateText = (await page.locator('body').innerText()).replace(/\s+/g, ' ').trim()
+            expect(gateText.length, `${ch.id}: rotate gate with no explanation`)
+              .toBeGreaterThan('🔄 Turn your phone sideways'.length + 8)
+          }
 
           // 3. It fits. A horizontal scrollbar on a child's tablet means part of the answer
           //    surface is off the side of the screen.
