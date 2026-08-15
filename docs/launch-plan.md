@@ -40,15 +40,15 @@ Checked 2026-08-16 against prod and the live database.
 | # | finding | evidence | why it hurts |
 |---|---|---|---|
 | **1** | **No privacy policy, no terms, no COPPA notice.** No `/privacy`, `/terms`, or `/legal` route exists at all. | `find src/app` | Marketing a children's product in the US without these is the one failure that is not just embarrassing but *legal*. Long lead time — an attorney takes weeks. |
-| **2** | **4 high-severity advisories in production dependencies** — `next`, `nanoid`, `postcss`, `sharp`. | `npm audit --omit=dev` | Shipping known-vulnerable code on a kids' product. `next` needs a `--force`-class bump, so it needs a full re-verify. |
+| ~~2~~ ✅ | ~~**4 high-severity advisories in production dependencies**~~ **FIXED** — `next`, `nanoid`, `postcss`, `sharp`. | `npm audit --omit=dev` | Shipping known-vulnerable code on a kids' product. `next` needs a `--force`-class bump, so it needs a full re-verify. |
 | **3** | **No external error monitoring.** `MONITORING_INGEST_URL` is unset, so errors only reach Vercel logs — nobody is paged. | `src/instrumentation.ts` | On day one you find out something is broken *from a parent's email*, hours late. |
 | **4** | **No uptime monitor.** `/api/health` exists and nothing watches it. | `find src/app/api` | The site can be down all night and you won't know. |
 | **5** | **No product analytics at all.** Zero analytics deps installed. | `package.json` | You cannot answer "did anyone finish a chapter?" — so you cannot tell a successful launch from a silent one. |
 | **6** | **No email sending.** No SMTP/Resend integration anywhere. | grep across `src/` | Password reset + invites ride Supabase's built-in mailer (already warned for bounces); the week-6 re-check nudge cannot work at all. |
 | **7** | **Leaked-password protection disabled.** | Supabase security advisor | Parents reuse breached passwords on a child's account. One dashboard toggle. |
-| **8** | **4 dead 3D dependencies still shipping** — `three`, `@react-three/fiber`, `@react-three/drei`, `@types/three`. Nothing in `src/` imports them. | `grep "from 'three'" src/` → 0 | Dead weight in the bundle and extra audit surface, on the band children actually use. |
+| ~~8~~ ✅ | ~~**4 dead 3D dependencies still shipping**~~ **REMOVED** — `three`, `@react-three/fiber`, `@react-three/drei`, `@types/three`. Nothing in `src/` imports them. | `grep "from 'three'" src/` → 0 | Dead weight in the bundle and extra audit surface, on the band children actually use. |
 | **9** | **`diagnostic_leads` accepts anonymous INSERT** with no app-level rate limit. | `20260704140000_diagnostic_leads.sql` | Your public funnel's lead table can be spammed on day one. Needs the Vercel WAF. |
-| **10** | **No `error.tsx` / `global-error.tsx`.** The client boundary does not cover a server render error or a crash in the root layout. | `find src/app` | The rare bad case shows Next's raw error screen to a child instead of a Milo screen. |
+| ~~10~~ ✅ | ~~**No `error.tsx` / `global-error.tsx`.**~~ **FIXED** The client boundary does not cover a server render error or a crash in the root layout. | `find src/app` | The rare bad case shows Next's raw error screen to a child instead of a Milo screen. |
 | **11** | **No staging environment.** Every change is verified against prod. | `docs/devops.md` | Launch week is exactly when you need somewhere to test that is not the thing parents are using. |
 | **12** | **No PITR / restore drill.** | Supabase plan | If data is lost or corrupted there is no rehearsed way back. |
 | **13** | Supabase **performance** advisors: `auth_rls_initplan` on 5 diagnostic tables, 3 unindexed FKs. | performance advisors | **Not launch-blocking at MVP scale** — real at thousands of users. Listed so it is a known deferral, not a surprise. |
@@ -64,7 +64,7 @@ Ordered by lead time, longest first. **Start #1 today**; it is the only item tha
 | B1 | Engage an attorney; get **Privacy Policy + ToS + COPPA parental-notice** signed off | **[F]** | Legal exposure marketing to under-13s. Weeks of lead time. |
 | B2 | Publish those documents as real pages + link them from signup and the diagnostic lead capture | **[C]** builds, **[F]** supplies the final text | A policy that exists in a Google Doc protects nobody. |
 | B3 | Decide **free vs paid at launch** | **[F]** | Everything in GTM depends on it. *Recommendation: free.* There is no efficacy number yet to justify charging, and it deletes the whole Stripe long-pole. |
-| B4 | Fix the 4 high-severity production advisories + drop the 4 dead 3D deps, re-run the full gate | **[C]** | Known-vulnerable code on a children's product. |
+| ~~B4~~ ✅ | ~~Fix the 4 high-severity production advisories + drop the 4 dead 3D deps~~ **DONE** (`05446b5`) — `npm audit` 4 high → **0**, prod deps 10 → 7. | **[C]** | — |
 | B5 | Wire error monitoring (Sentry or any HTTP sink) and an uptime monitor on `/api/health` | **[F]** creates the account, **[C]** wires it | Without these, launch day is blind. |
 | B6 | Custom SMTP (Resend/Postmark/SES) | **[F]** account + DNS, **[C]** integrates | Password reset and invites must actually arrive. |
 | B7 | Turn on leaked-password protection + Auth rate limits | **[F]** dashboard | Two toggles; one is in the advisor report right now. |
@@ -83,13 +83,13 @@ Nothing here needs an account, a card, or a signature. Give me the go and I work
 
 | # | task | size | notes |
 |---|---|---|---|
-| C1 | **Dependency security pass** — resolve the 4 high advisories, remove the 4 dead 3D deps, full gate + a prod drive after | M | The `next` bump is `--force`-class, so it needs real re-verification, not just a green build. |
-| C2 | **`error.tsx` + `global-error.tsx` + a styled `not-found.tsx`** in Milo's voice | S | Closes finding #10; a child never sees a raw stack trace. |
+| ✅ C1 | **Dependency security pass** — DONE 2026-08-16 (`05446b5`). `npm audit`: **4 high → 0**, production and dev. `next` 16.2.6 → 16.3.1 (the advisory is a Turbopack middleware bypass, which is this build), `sharp` → 0.35.3, plus the 4 dead 3D deps removed — production dependencies **10 → 7**. | M | — |
+| ✅ C2 | **Crash + 404 screens** — DONE 2026-08-16 (`611b061`). `app/error.tsx`, `app/global-error.tsx`, `app/not-found.tsx`, all in Milo's voice with two ways out, verified in a **production** build. Closes finding #10. | S | — |
 | C3 | **Wire monitoring** once you give me a DSN/ingest URL | S | The seam already exists — it is one env var plus verification. |
 | C4 | **Wire analytics** and instrument the funnel: signup → diagnostic complete → first chapter finished → week-6 re-check | M | Pick the tool (I suggest one that is COPPA-safe and cookieless); I will make sure it records **no child PII**. |
 | C5 | **Legal pages** — build `/privacy`, `/terms`, and a parent-facing "your data" page, wired into signup + lead capture | M | I build the pages and the consent UI; the *words* must come from B1. |
 | C6 | **Data export + deletion, parent-facing** — deletion exists; I will add "download my child's data" and make the deletion path explicit and findable | M | COPPA gives parents both rights. |
-| C7 | **Full-app smoke across the real device matrix** — every one of the 70 chapters loads, plays a round, and records progress, at phone/tablet/laptop sizes | L | This is the single best defence against "day one kuch chale na". I can automate it as a repeatable check. |
+| ✅ C7 | **Full-app smoke** — DONE 2026-08-16 (`e1190aa`). `npm run test:chapters` drives **all 70 chapters × 3 frames = 211 checks: 211 passed.** Per chapter: no failure screen, a visible control, no horizontal overflow, no offscreen control, zero console errors. The chapter list is DERIVED from source, so it cannot rot. | L | Re-run before every deploy. ~2 min. |
 | C8 | **Launch-day runbook** — what to watch, what "broken" looks like, the exact rollback command, and a one-page triage script for the first parent email | S | So launch day has a procedure, not adrenaline. |
 | C9 | **Support content** — FAQ, "how it works" for parents, a privacy FAQ, and what to do when progress looks lost | M | Cuts your day-one support load. |
 
@@ -144,7 +144,7 @@ Week 4+  open the doors only when: 0 P0/P1 defects from real use,
 
 ## 6. Launch-day runbook (skeleton — C8 fills it in)
 
-- **Before the announcement:** full gate green · `sw.js` VERSION bumped · smoke the 9 routes · confirm monitoring is receiving events (send a test error) · confirm the rollback works *by doing it once on a preview*.
+- **Before the announcement:** full gate green (`npm test` · `npm run test:chapters` — 211 checks) · `sw.js` VERSION bumped · smoke the 9 routes · confirm monitoring is receiving events (send a test error) · confirm the rollback works *by doing it once on a preview*.
 - **Watch:** error sink, uptime monitor, Supabase logs for `42501` spikes (RLS denials = someone probing), lead-table insert rate (spam).
 - **Rollback:** Vercel → promote the previous deployment. Rehearse it before you need it (`docs/runbooks/rollback.md`).
 - **The stale-shell gotcha:** a returning user's service worker can serve the old shell until a reload. If a parent reports something weird right after a deploy, "fully close and reopen the app" is the first question, not the last.
