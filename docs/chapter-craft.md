@@ -352,6 +352,15 @@ your own consequence: does it fire on the RIGHT answer?** The instrument knows �
 committed value and can grade it — so lay it on `reveal || (committed && correct)` and gate that.
 Found by driving the camera path, not by reading it.
 
+⚠️ **AND `disabled` IS NOT "THE ROUND IS OVER" — THE SHELL RENDERS THE WHOLE WALKTHROUGH DISABLED.**
+The obvious way to write that reveal is `reveal || disabled`, since `disabled` covers the miss, the
+re-teach and a solved round. It also covers every beat of the tutorial, so The Loading Bay printed
+all four bar values over the demo beat whose own line is *"the biggest one reaches highest — you can
+see it without counting a thing"*: the teaching contradicted by the numbers written above it, on the
+one beat that exists to make that point. **Key it on the VALUE instead** — `reveal || (disabled &&
+answered(v))` — which opens exactly when the demo announces its answer and, in play, on the commit.
+Nothing in a type-check or a gate can see it; it is one screenshot of the second demo beat.
+
 ⚠️ **AND IF THE UNITS COME FROM A STORE, THE STORE MUST BE DUMB.** A bundle labelled *"a row of 6"*
 hands over the side length the child was supposed to walk for — the printed-answer leak wearing a
 shopkeeper's apron. Label them "a row", "a long side", "a short side"; the count appears only on what
@@ -1884,6 +1893,20 @@ count the matches.
   band the child can actually get to, so a target reachable ONLY via the clamp fails.** Generalise:
   whenever a function saturates, ask what your sweep proves about the region past the saturation —
   usually nothing.
+- ⚠️⚠️ **A SWEEP OVER A COVERAGE-DRIVEN GENERATOR MUST VARY `asked`, OR IT DRAWS ONE QUESTION TYPE
+  PER TIER AND EVERY CHECK BEHIND IT IS WORTHLESS.** The whole point of `coverage` is that the
+  generator spends a scarce round on an UNMET reading, so `makeRound(d)` with the default `[]` is
+  *deterministic by type* — unmet-first returns the same one every call. The Loading Bay's sweep
+  therefore drew 400 `howMany` rounds per tier and swept a quarter of the chapter while reporting
+  full coverage. **It looks exactly like a thorough sweep**, and what caught it was a check asserting
+  the generator can produce all four types, which it failed honestly. Cycle `asked` through the
+  prefixes of the coverage set; and if that check does not exist, nothing else in the file will tell
+  you.
+- ⚠️ **AND A FIXTURE CAN QUIETLY DO THE WORK THE ASSERTION CLAIMS TO.** "The hand loads the FOCUS
+  stack, never some other one" was written against a round whose focus WAS stack 0, so hard-wiring
+  the hand to stack 0 passed it. Same family as the clamp tautology: **choose fixture values where
+  the wrong implementation gives a different answer**, which usually means not index 0, not the
+  first element, and not a value that coincides with the default.
 - **The sweep must call the SAME layout function the scene renders from.** Chapter 4's sweep
   re-implements its sizing chain inside the test, so the check can agree with its own copy of the
   constants while the screen it protects falls apart. Chapters 9–10 export `playLayout` and the test
@@ -1936,6 +1959,15 @@ count the matches.
   reports a layout still computed for the OLD size, which looks exactly like a responsive bug.
   Reload at the target size instead of resizing into it. (This burned three separate measurements in
   one session; each time the instrument was wrong and the code was fine.)
+- ⚠️⚠️ **AND `FitSlot` DOES NOT SHRINK UNTIL THE TAB HAS BEEN FRONTED, SO A PERFECTLY-FITTING
+  INSTRUMENT MEASURES AS CATASTROPHICALLY BROKEN.** It sizes itself from a **ResizeObserver**, whose
+  callbacks ride the browser's rendering steps and are frozen in a backgrounded tab — exactly the
+  reason a WebGL chapter cannot boot headlessly. Measured on The Loading Bay at 640×320 before
+  fronting: the chart's top **112px off the frame**, the commit button at y 325–379 of a 320px
+  viewport, the instruction below that — i.e. a cut-off chart and an unreachable commit, none of it
+  real. One screenshot later the same DOM read scale-applied, nothing off-screen and the commit 18px
+  clear. **Front the tab, THEN measure**, and treat any short-frame reading taken before the first
+  screenshot as unscaled.
 - ⚠️ **A VALUE HANDED TO A RENDERER MUST BE CHECKED BY THAT RENDERER, NOT BY A STRING COMPARISON.**
   The single most expensive half-hour of the 3D chapter: a colour helper emitted
   `hsl(100.0 50.0% 40.0%)` — valid CSS Color 4, which every browser reads correctly — and

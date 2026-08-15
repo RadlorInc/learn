@@ -614,6 +614,17 @@ wording is not wrong, it addresses the wrong reading, and no single-mode check c
 label behind one exported function of `(round, input, state)` and gate that the two types differ **in
 both input modes**.
 
+⚠️⚠️ **A REDIRECT KEYED ON A READING MUST NOT FIRE ON THAT READING'S *ABSENT* STATE — AN EMPTY FRAME
+IS A COUNT OF ZERO.** The Loading Bay's `most` rounds accept 1–4 fingers (a stack number), so the
+out-of-range nudge was written `n < 1 || n > STACKS` — which is arithmetically right and reads at a
+child with **no hand in frame at all**, because that is also 0. Opening the camera door printed
+*"There are only 4 stacks — hold up 1, 2, 3 or 4"* over a chapter nobody had held anything up to, and
+worse it **displaced the instruction chip**, which is the one thing that would have told them what to
+do. A redirect describing something the child did not do is worse than silence. **Bound it only where
+the child has actually overshot**; an empty frame and a fist belong to `hand.ready` and to the ring's
+own *"Show Milo your hand"*. Found by opening the camera door, not by reading — the gate swept 5, 6, 7
+and 10 and never once swept 0.
+
 ⚠️ **THE STATES A GESTURE CAN BE IN ALL NEED WORDS.** *Ready* is not the only one: after firing, the
 hand is on the far side and pushing further does nothing, so "bring your hand back" has to be said at
 the moment it applies (FitOut's `handHint`); and where the tap path shows a dimmed button for "there
