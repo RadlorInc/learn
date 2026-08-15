@@ -1,6 +1,6 @@
 # Milo Labs — Vision & Strategy
 
-_Status: strategy locked with founder 2026-07-04 (Fable planning pass). Implementation of the demo: see [`labs-demo-brief.md`](labs-demo-brief.md)._
+_Status: strategy locked with founder 2026-07-04 (Fable planning pass). The demo is BUILT — see [`../labs-demo/DEMO-RUNBOOK.md`](../labs-demo/DEMO-RUNBOOK.md) to run it._
 
 ## 1. The vision
 
@@ -54,7 +54,7 @@ Category validation: Prisms raised on **efficacy data** and leases kits — outc
 
 ## 7. The demo → pilot → raise loop
 
-1. **90-second demo** (spec + build instructions: [`labs-demo-brief.md`](labs-demo-brief.md)): a dissectable heart + math blocks on a marker, 2+ devices in sync, teacher conducting — served from a URL, nothing installed.
+1. **90-second demo** (built — how to run it: [`../labs-demo/DEMO-RUNBOOK.md`](../labs-demo/DEMO-RUNBOOK.md)): a dissectable heart + math blocks on a marker, 2+ devices in sync, teacher conducting — served from a URL, nothing installed.
 2. **One pilot classroom**: free 6-week engagement, one science unit + one math unit; measure pre/post per lab (mirror the math app's week-6 gap-closed discipline).
 3. **Raise** on: shipped production math platform + working colocated demo + pilot data + 2–3 LOIs. Seed story: *"We shipped adaptive K-12 math; now the lab floats on the classroom table."*
 

@@ -34,7 +34,7 @@ Division (pairs with multiplication), Even & Odd, Measurement with units,
 Number patterns / number line, Simple graphs.
 
 ## Implementation note
-This depends on the structural work in `scaling-roadmap.md` Tier 1 (age-group
-dimension + single chapter registry). Without an age-group concept, every learner
-sees every chapter — so that foundation lands before the new chapters. See
-scaling-roadmap.md for the locked structural decisions.
+This depended on an age-group dimension plus a single chapter registry — without an
+age-group concept, every learner sees every chapter. **Both shipped**: the bands are
+the `AgeBand` union (`src/features/chapters/teen/types.ts`) and the registry is
+`src/features/chapters/registry.tsx`. The code is the record now.
