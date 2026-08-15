@@ -364,6 +364,29 @@ the AR gesture, and the pointer that answers the same question.
 - **Pointer:** the existing drag dial + tap axes. Unchanged.
 - ✅ The shop already builds ramps (its bridge site's "approach ramp"), so this is close to a copy pass.
 
+> **⚠️ AMENDED 2026-08-14 — the anchor above had never reached the code, and shipping it needed one
+> correction to this section.** `grep -i anchor` over `angles.ts` + `AngleShop.tsx` returned nothing;
+> the briefing said *"It is Slate's first week on the crew"*, i.e. no anchor at all. On the founder's
+> call the world itself became the daily thing — **the park in the morning, the kitchen table for the
+> fair's paper** — split by verb, since a slope is felt in the legs and a fold is done with the hands.
+> ⚠️ **And then the painted world went entirely, on the founder's second call: the chapter now runs on
+> the pre-teen lab kit like The Coin Tray and The Pizza Counter — arm and fold sheet code-drawn in
+> neon, no backdrop and no cast at all.** The anchor stayed, because it lives in the words and in what
+> the instrument IS, which is exactly how money works in The Coin Tray.
+>
+> ⚠️ **THE PLAN'S OWN SENTENCE CANNOT BE SHIPPED AS WRITTEN, and the arithmetic says so before any
+> code:** *"Too steep and you can't push your bike up it. Too shallow and you don't get any speed"*
+> argues about MAGNITUDE, while the chapter grades a KIND. Obtuse is the arm past vertical and **real
+> ramps live between about 5° and 40°, so every slope is acute** — the shipped week's obtuse *approach
+> ramp* drew a plank leaning backwards over the bank with the words reading "shallower". Obtuse now
+> belongs to the park's things that OPEN past square (the gate, the barrier arm); the slopes carry
+> acute; one upright carries right. The general rule is in chapter-craft §0a.
+>
+> ⚠️ **And the worked example above — "set the ramp to 60°" — was the one round that could not be
+> answered**: exact figures are asked only at L3, where the set-square guide had retired, so the child
+> was graded on `deg === target` with no readout (rule 1 forbids one while turning), no scale and
+> nothing at 90° to judge against. The guide now stays on any exact round whatever the tier.
+
 ### 11 · `dataGraphs` — RUN THE TALLY · ✅ built (The Loading Bay)
 
 - **Anchor: goals each friend scored.** Named friends, a real season, and an argument the child

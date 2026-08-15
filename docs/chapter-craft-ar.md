@@ -376,6 +376,32 @@ on a round that gives it nothing to aim at*, and the hand answers the question i
 ⚠️ **Say the split out loud in the pure module and gate it**, or the next edit quietly wires the
 continuous reading into play — `expect(playBlock).not.toMatch(/\.span/)` is one line.
 
+⚠️⚠️ **BUT THAT VERDICT BELONGS TO THAT ANSWER SCALE, NOT TO THE GESTURE — RE-COMPUTE THE RATIO
+BEFORE INHERITING IT.** The span above was refused for The Height Bar and is **scored** in The Empty
+Plot, and the difference is arithmetic rather than nerve. The noise is the same either way: ~±0.028 of
+frame width between two palms, over a hand width of ~0.111 of the frame (a webcam sees about nine
+across), i.e. **±0.25 hand widths**. What changes is what a hand width is asked to BUY:
+
+| chapter | scale | one step | noise | step ÷ noise |
+|---|---|---|---|---|
+| The Height Bar | 0–60 **inches** | 1 in | ±2.3 in | **0.4 — a dead button** |
+| The Empty Plot | 1–10 **metres** of yard, at 1.5 m per hand width | 1 m | ±0.37 m | **2.7 — live, and better than the Angle Shop's tilt** |
+
+So the question is never *"is a span precise enough?"* but *"how many of my answers fit inside the
+noise?"* — and a coarse answer space can carry a gesture a fine one cannot. Three things come with it,
+each already paid for elsewhere in this file: hysteresis of a **full step** (`snapMetres`), a sweep of
+the whole answer space against the reachable band (`SPAN_MIN_HANDS`..`SPAN_MAX_HANDS`, or a round is
+unanswerable), and the reading normalised by the child's own hand so no calibration step exists.
+
+⚠️ **AND A SPAN NEEDS SOMETHING ON SCREEN THAT MOVES WITH THE HANDS, OR IT IS A NUMBER TYPED WITH THE
+ARMS.** The dwell ring reports the reading, which is enough for a finger COUNT — five fingers already
+look like five. A length does not: hands 40 cm apart mean nothing until the thing being measured sits
+between them. The Empty Plot draws a dashed GHOST of the far edge at the live reading, so the plot
+grows as the child opens their arms and the gesture is a length shown as a length. ⚠️ It says only
+what was READ — never whether it is right — and it is gone the instant the peg is in, so it never sits
+beside a verdict. Without it the body carries the notation and not the idea, which is the first test
+in this file.
+
 ⚠️ **AND A SPAN IN FRAME FRACTIONS IS NOT A LENGTH — NORMALISE IT BY SOMETHING IN THE SAME FRAME.**
 Lean back and every measurement shrinks together, so "show me a foot" would mean a different gesture
 at every seating distance and would need a calibration step a child can get wrong. The child's own

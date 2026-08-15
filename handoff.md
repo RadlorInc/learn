@@ -9,12 +9,730 @@
 > file exists so the next session starts from them instead of rediscovering them.
 > When a new correction lands, put the GENERAL rule there, not just the fix.
 >
+> ---
+>
+> ## 📍 WHERE THE 9–11 BAND IS — read this before touching it
+>
+> **The band is mid-port onto GameShell** (founder's call, 2026-08-14: treat 9–11 like 12–18, same
+> engine, same format, **AR as the thing that makes it its own band**). SEVEN chapters are across,
+> three are not, and the two halves work completely differently — so check which kind you are in
+> first. The three that are left are all storybook `SkillBeat` — there is no 3D excuse any more.
+>
+> | | chapter | file | answers with |
+> |---|---|---|---|
+> | ✅ | `decimals` | `teen/games/CoinTrayGame.tsx` | two wells · hand or taps |
+> | ✅ | `factorsMultiples` | `teen/games/FactorLabGame.tsx` | a count · hand or taps |
+> | ✅ | `fractionsCompare` | `teen/games/PizzaCounterGame.tsx` | a count (never 0) |
+> | ✅ | `measurementUnits` | `teen/games/HeightBarGame.tsx` | two places · tens then ones |
+> | ✅ | `anglesSymmetry` | `teen/games/AngleShopGame.tsx` | a degree OR a set of axes · tilt |
+> | ✅ | `wordProblems` | `teen/games/MissionBriefGame.tsx` | the shell's AnswerPad |
+> | ✅ | `areaPerimeter` | `teen/games/EmptyPlotGame.tsx` | a PLACE on a plan · **hands apart** |
+> | ⬜ | `bigNumbers` | `story/OrderDesk.tsx` | storybook · SkillBeat |
+> | ⬜ | `rounding` | `story/LevelRun.tsx` | storybook · SkillBeat |
+> | ⬜ | `dataGraphs` | `story/LoadingBay.tsx` | storybook · SkillBeat |
+>
+> **⚠️ THE 3D IS GONE.** `story/FloorPlot.tsx` (1,380 lines of react-three-fiber) and `story/plotSite.ts`
+> (628 lines of procedural site) are DELETED — founder's call, 2026-08-15: *"totally remove that 3d
+> concept"*. **Nothing in `src/` imports three.js any more**, so `three` / `@react-three/fiber` /
+> `@react-three/drei` / `@types/three` are dead dependencies awaiting one `npm uninstall`.
+>
+> **To add or change a ported chapter:** it is a data file — palette, `makeTask` L1/L2/L3, a
+> self-running tutorial, a `GameConfig`. Mirror `CoinTrayGame.tsx`. Shared parts are
+> `teen/games/parts/kidKit.tsx` (palette · `KeyRow` · `Cue` · `PIP`/`PAD` · `useLatest`) and the
+> engine is `teen/games/parts/GameShell.tsx`.
+> - `band: '9-11'` is what buys the ten-round loop and **no resume-at-difficulty**.
+> - `hand: {…}` is the whole AR wiring — the shell owns the camera, both doors, the dwell and the
+>   gate. Readings in use: a finger COUNT (four chapters), a TILT (The Angle Shop) and a two-hand
+>   SPAN (The Empty Plot, and the first one ever scored — see 🏗️ for the noise arithmetic).
+> - `coverage: {…}` withholds the mastery exit until every reading has been asked.
+> - ⚠️ **The maths still lives in `story/<module>.ts`** (`cents` · `factors` · `pizza` · `inches` ·
+>   `angles` · `words` · `plotMaths`), untouched by the port and still carrying every gate. **Put a rule there, not
+>   in the data file** — that split is the only reason ten chapters can share one engine.
+> - ⚠️ **Author an instrument BIG.** `FitSlot` runs at `max={1}` on landscape: it only ever shrinks.
+> - Previews are **`/teen-preview?c=<id>`**. `/story?ch=` now rejects all SEVEN keys by design; only
+>   `bignum`, `round` and `data` still resolve there.
+>
+> **The band-level gate is `src/__tests__/bandOnGameShell.test.ts`** — it holds the rules that used to
+> be repeated per chapter (rounds, resume, the fist guard, the dwell key, both doors, coverage).
+>
+> ⚠️ **Biggest outstanding gaps, in order:** ✅ the camera path HAS now been driven on the shell (The
+> Empty Plot, span → dwell → graded) · **the shell's own scratch-pad button covers the answer surface
+> at 640×320 in at least two chapters, one of them shipped** (see 🏗️ below) · the EXPLORE beats were
+> dropped and not replaced · no short-frame pass on the other six · nothing is committed and
+> `public/sw.js` is still v93.
+>
+> ---
+>
 > _(Everything below is the running session history — newest first, most recent ~5 sessions only.
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🏗️ **2026-08-15 — THE BAND'S LAST NEON CHAPTER COMES ACROSS, AND THE 3D GOES WITH IT ON THE FOUNDER'S CALL. THE EMPTY PLOT IS ~2,000 LINES OF react-three-fiber REPLACED BY ~330 OF INSTRUMENT — AND IT IS THE FIRST TIME A HAND HAS BEEN DRIVEN ON THIS SHELL, AND THE FIRST SCORED SPAN ANYWHERE IN THE BAND. ⚠️ NOT COMMITTED.** `tsc` 0 · **987/987 vitest** · `next build` 0 · **eslint 0 problems on all three files** (the other ported chapters' gates carry 7) · **28/28 planted regressions caught across four live mutation suites, ALL re-run against the final code** · driven at 1280×720 on BOTH inputs, at 640×320 and at 390×844.
+>
+> **The asks:** *"in band 9-11… area and perimeter chapter ko bhi 12-18 waale jaise structure mein laalo"* → on the two questions put to him: **"totally remove that 3d concept"** and **"something more interesting AR interaction"**.
+>
+> ## ⓪ THE ONE CHAPTER THE HANDOFF SAID COULD NOT BE PORTED — AND THE ARGUMENT WAS HALF RIGHT
+> It had been raised three times as *"react-three-fiber — cannot become a data file over a 2D shell"*.
+> The reason was real (*the answer is a PLACE, and a place cannot be offered as a chip*) and it does
+> not imply 3D: **drawn from ABOVE, the place is still a place.** The verb did not move — the foreman
+> gives a load and the road frontage, the yard is empty, the child works out how far back the far edge
+> goes and pegs it — so `plotMaths.ts` survives almost whole (ladder, grader, miss lines, demo beats),
+> which is the whole reason the port is cheap. **DELETED: `story/FloorPlot.tsx` (1,380) and
+> `story/plotSite.ts` (628).**
+>
+> ## ① ⚠️ AND REMOVING THE DIMENSION DELETED A WHOLE CLASS OF FAULT, WHICH IS THE POINT WORTH KEEPING
+> First person put the child at the far edge **facing away from the road**, so everything the delivery
+> laid was behind them — a wrong peg read *"part of it would be bare"* over an empty green field, on
+> every round. That cost this chapter a camera swing, a hold time, a raised side view, the
+> `fov`-is-vertical trap, and a play loop `useFrame` will not run in a backgrounded tab. **A plan view
+> has the whole plot on screen at every instant and there is nothing to swing round to.** Driven: a
+> fence pegged at 6 m when the answer was 3 drew the fence running out **partway down the sides with
+> the far end open**, under its own sentence *"the fence runs out before it gets all the way round"*.
+>
+> ## ② ⚠️⚠️ AND THE SHELL REVEALS ONLY A *WRONG* ANSWER — SO THE CHAPTER'S PAYOFF SHIPPED TO NOBODY WHO GOT IT RIGHT
+> `GameShell` hands the instrument `reveal` on a miss and on the re-teach; a correct answer goes
+> straight to "You solved it ✓". Entirely reasonable, and it meant the delivery — the tiles coming out
+> **exactly**, *"and it comes out to the metre"*, the beat the chapter exists for — was shown only to
+> children who got it wrong. Nothing failed, every piece was individually correct, the gate was green.
+> **Caught by driving the camera path and reading `units: 0` on a correct commit.** Now
+> `reveal || v.laid || (v.pegged && gradePeg(...))`, re-driven: `units: 9` with `3 × 3 = 9`.
+>
+> ## ③ ⚠️ THE AR IS A SPAN, AND THE HEIGHT BAR'S REFUSAL DID NOT TRANSFER — THE ARITHMETIC SAYS SO
+> *"Hold your hands apart to show how far back it goes."* The Height Bar measured this gesture at
+> **±2.3 in on a 0–60 in scale** and shipped it unscored, which reads as a verdict on the gesture and
+> is a verdict on the SCALE. Same noise (±0.25 hand widths), different question: at 1.5 m per hand
+> width that is **±0.37 m against a 1 m step — 2.7:1, better than the Angle Shop's tilt, which is
+> live.** Holding up fingers was the alternative and was rejected on the chapter's own terms: N
+> fingers STATES the depth, i.e. the answer becomes a number, which is what three rejected mechanics
+> were rejected to protect.
+> ⚠️ **AND A SPAN NEEDS A REFERENT OR IT IS A NUMBER TYPED WITH THE ARMS** — five fingers already look
+> like five; hands 40 cm apart mean nothing until the thing measured sits between them. A dashed
+> GHOST of the far edge follows the live reading, says only what was read, and is gone the instant the
+> peg is in.
+>
+> ## ④ ✅ WHAT WAS DRIVEN — AND THE BAND'S OLDEST OPEN ITEM IS CLOSED
+> **1280×720, taps:** both doors · both walkthroughs beat by beat (the walk beat walks, the peg beat
+> pegs, the last beat lays the units and writes `2 × (5 + 2) = 14`) · the guided round answered by
+> **three `back ▶` taps inside ONE React batch → `3 metres back`**, i.e. the batched-tap guard working
+> (this repo's eighth encounter) · **`1 / 10`** · two scored rounds missed on purpose, each showing
+> the plot the CHILD pegged plus its own miss line, then the glide walking the peg home.
+> **CAMERA — ⚠️ THE FIRST HAND EVER DRIVEN ON GameShell, closing the 🧱 block's #1 open item:** the
+> camera door · the walk buttons correctly GONE · `–` / *"Show Milo both hands"* · **`__miloSpan(2.0)`
+> → the ring reads `3` → held 1.85 s → the dwell fired, the peg went in at 3 m and graded correct.**
+> The denial gate reads *"Milo can watch your hands, or you can walk it with the buttons"*.
+>
+> ## ⑤ ⚠️ AND THE SHORT FRAME FOUND SOMETHING THAT IS NOT THIS CHAPTER'S — IT IS THE BAND'S, AND IT SHIPPED
+> At **640×320** `ScribblePad`'s closed button (`fixed; right 12; bottom 12`, ~121 × 44, unscaled) is
+> drawn over this chapter's `back ▶` (526–583 against the pad's 507–628) — **and over THE COIN TRAY's
+> keys 5, 6 and 7**, which is live in production and has been driven twice. A 9–11 instrument is
+> *scaled down* by `FitSlot` and centred near x 446 rather than 320, so the two meet. Every tap still
+> lands somewhere, which is why only crossing the boxes finds it. **One line in the shared component
+> fixes six chapters; not touched tonight because it is 36 chapters' worth of blast radius and nobody
+> asked.**
+>
+> ## ⑥ THE GATE — **16/16 planted regressions caught**, re-run against the final code
+> [floorPlotArea.test.ts](src/__tests__/floorPlotArea.test.ts), 80 → 60 tests: the whole procedural-world
+> half (nothing countable in the site, the palette separations, the collinear-props trap) went with
+> `plotSite.ts`, and **a gate guarding deleted code is worse than none, because it reads as coverage.**
+> What is new: the span's reachability swept over every depth the generator draws, the hysteresis
+> **jittered ACROSS a boundary rather than around a centre**, the right-answer reveal, the reveal
+> laying the CHILD's plot, and the no-grid check **scoped to what is DRAWN** — a file-wide ban on
+> `for (` would have caught the miss-glide loop, and a ban that gets loosened is worse than no ban.
+> ⚠️ Tree checked clean after the mutation run, per the recorded fault of a killed run leaving it
+> dirty — and the whole set re-run AFTER the last edit, because a mutation score only means anything
+> about the code actually shipped.
+> ⚠️ **The last edit came from the LINTER, and it is where the port's one piece of dead data
+> surfaced:** `makeRound(d, round, asked)` took a `round` only to seed the procedural site, so with
+> `plotSite.ts` deleted the parameter was unused — a signature still asking for something nothing uses
+> is the next reader's wrong turn. Removed, with its three call sites in the gate.
+>
+> ## 🎬 THE EXPLANATION NOW MOVES — founder, on a screenshot of the arithmetic beat
+> *"joh explanation daale ho … uske according animation generate karo … narration ke according frame
+> per second … aur narration ke according run karo."* He was looking at **the one beat with a static
+> screen**, and it was the worst possible one: *"12 tiles, in rows of 4. 12 divided by 4 is 3. So it
+> goes 3 metres back"* played over an empty yard and a walker who had not moved — i.e. **the entire
+> teaching in audio, on a band whose devices mostly have no voice.** Three of the six beats shared one
+> value, and the one in the middle was the division.
+>
+> **On the question put to him he took in-engine over generated video**, and the reason is the same
+> arithmetic that decides everything else here: the narration is BUILT from each round's numbers, so a
+> pre-rendered film can only ever say one set of them — the two fixed demos would animate and the
+> re-teach, which re-narrates the child's own round, would stay still. Drawn from the data, every
+> round animates. It also cost no credits and stayed neon, which the painted route would not have.
+>
+> **THE LOAD IS A BAR AND THE WORKING CUTS IT UP** (`workFrames`, in the pure module so the gate can
+> read the picture against the beat's own words). An area round cuts it into rows of the frontage, one
+> row per frame — *12 tiles → one row of 4 → 2 rows of 4 → **3 rows of 4*** — so the row count IS the
+> answer, being counted, and it lands on the same number the sentence lands on. A perimeter round takes
+> two lots of the frontage off the top and splits what is left in two: *14 m → one side: 5 → two sides:
+> 10 → 4 left for the other two → **2 each***. One widget, because both readings are partitions of the
+> same given number, and the two cuts are visibly different sums.
+> **And the walk beat now WALKS** — 0 → 1 → 2 → 3, one metre a frame, under *"counting my metres. 1, 2,
+> 3."* It used to slide the whole way in 180 ms.
+>
+> ⚠️ **THE CADENCE COMES FROM THE NARRATION'S OWN SPEED, because a beat's duration cannot be known** —
+> it ends when an utterance ends, or on `speakSteps`' fallback timer on a silent device. What IS shared
+> is the child's speech-rate pick: narration is `2600 / m` a step, a frame is `620 / m`, so 🐢 Slower
+> slows the picture exactly as much as the words. `setInterval`, never rAF (frozen in a backgrounded
+> tab, i.e. in every drive).
+> ⚠️ **THE BAR IS COUNTABLE, AND THAT IS ONLY SAFE BECAUSE IT CANNOT REACH A SCORED ROUND** — it hangs
+> off `PlotV.step`, which the walkthrough beats set and nothing in play does. One test, driven through
+> `initialValue`, `hand.enter` and the glide rather than grepped.
+> ⚠️ **AND THE RESET IS DERIVED DURING RENDER, NOT IN AN EFFECT** — an effect runs after paint, so the
+> walk beat opened with the walker already at 3. The React lint named it; the rule was already in
+> chapter-craft for a journey's phase.
+>
+> **Driven, frame by frame off the live DOM:** work `– → one row of 4 → 2 rows of 4 → 3 rows of 4 →
+> holds`; walk `0 → 1 → 2 → 3 → holds`.
+> **Gate +5 tests (60 → 65) and a second mutation run, 13/13** — and ⚠️ **the first pass left ONE
+> survivor, which is the Supply Run fault wearing the animation's clothes:** shrinking a perimeter
+> round's two final pieces to a single unit each left the note still reading *"2 each"* and the whole
+> check green. **The caption was asserted and the drawing was not.** Now the piece SIZES are.
+>
+> ## 🎥 AND THEN THE ANIMATION WAS GENERATED FOR REAL — founder: *"kuch khaas naii hai .. higgsfield se generate karo .. accha proper"*
+> The code-drawn bar taught the sum and looked like a progress bar. So the two WALKTHROUGH examples now
+> play a **generated film** (Kling, 2 × 7.5 credits of 1024), cut to a 12-cell strip and stepped by the
+> same beat clock: `12 tiles along the kerb → they fly down → 3 rows of 4`, and
+> `14 panels → the fence runs round → the loop closes`.
+>
+> ## ⚠️⚠️ A VIDEO MODEL CANNOT COUNT, AND THAT IS THE WHOLE PROBLEM WITH FILM IN A MATHS CHAPTER
+> Ask Kling for twelve tiles in rows of four and it returns eleven, beautifully lit. A picture that
+> disagrees with the number is the worst defect this app can ship, so a better prompt is not the answer.
+> **`kling3_0` takes a `start_image` AND an `end_image`** — so both ends are COMPOSED here
+> (`scripts/plot-keyframes.py`, in the chapter's own hex values: exactly 12 along the kerb, exactly
+> 3 × 4 in the plot) and the model supplies only the motion between them. Arithmetic at both ends,
+> atmosphere in the middle. ⚠️ **And the caption stays code-drawn from `workFrames`** — the picture may
+> be the model's, the words may not be.
+>
+> ## ⚠️ THE FILM COVERS TWO EXAMPLES AND CAN NEVER COVER MORE, WHICH IS WHY THE BAR SURVIVES
+> A film says one set of numbers for ever; the re-teach re-narrates the CHILD's round. So `filmFor`
+> returns a strip for the two fixed demos and `null` for everything else, which falls back to the
+> data-drawn bar — swept over the whole generator, and the film is gated to `step === 'work'` so it
+> cannot reach a scored round. **The fallback was built first; the film is the polish on top.**
+>
+> ## ⚠️ AND THE CUT'S END IS FOUND BY CONVERGENCE, NOT BY MOTION — a re-cut paid for this
+> The front of a clip is a held start frame (this repo's recorded 9-of-12-static fault, met again: 3 of
+> the first 12 cells were identical). The BACK is subtler: an interpolated clip *converges* on its end
+> frame, so per-frame difference decays to noise while the picture is still assembling. Measured on the
+> fence clip, motion was down to **7% of peak 60 frames before the loop actually closed**, and the
+> first strip ended with the fence half-built. **Distance to the FINAL frame is the honest signal**,
+> because with a composed `end_image` that frame is the answer. `scripts/explain-frames.py` does both.
+>
+> **Driven:** the area film stepped all 12 cells `0% → 100%` with the caption tracking
+> `one row of 4 → 2 rows of 4 → 3 rows of 4`, landing on 3 exactly as the sentence does; the perimeter
+> film plays in demo 2 under *"Two sides of 5 is 10…"*. **Gate 65 → 68 and a third mutation run, 6/6**,
+> including one that **re-cuts the shipped PNG a cell shorter** — the strip's cell count lives in a file
+> AND in the source, so a re-cut silently lands every cell on the wrong picture with nothing erroring.
+> ⚠️ Three existing checks went red on the film and all three were RIGHT (a `backgroundSize`, a
+> `${r.depth}` inside the film's lookup key, and `/assets/` in a chapter that had none). **Each was
+> tightened rather than loosened** — scoped to what the Yard DRAWS, and the asset list pinned to
+> exactly the two strips, so a third smuggled-in example fails.
+>
+> ## 📏 AND THE PLOT WAS DRAWN AT A SIXTH OF THE ROOM — founder: *"the size is too small bro"*
+> The culprit was a rule this file already carries: **a lane that will fill must be reserved from
+> empty.** The plan reserved all twelve metres of walkable depth so it could not jump under a child
+> pacing it — and at a typed 22px a metre, a 5 × 2 plot then filled **14% of that box**, which
+> `FitSlot` shrank again to fit the slot. The reserve was right and its price had never been costed.
+> Three moves, and the order matters:
+> ① **the BOX is fixed and the METRE is derived** (`metreOf = min(W/frontage, H/visible)`), so a narrow
+> plot gets a big metre, the instrument is always the same size in the layout, and nothing jumps;
+> ② ⚠️ **the plan closes up ONLY after the peg** — closing it on the round's own depth while the
+> question is live would make the box's HEIGHT the answer, drawn instead of written, so before the
+> commit it is identical on every round and after it the plan zooms to what was built (*go back and
+> look at what was made*, done with scale instead of a camera);
+> ③ **the walk bound went 12 → 10**, which buys ~20% more metre AND closes a hole: at 12 the tap path
+> could peg depths a two-hand span **cannot express**, i.e. one-instrument-two-inputs quietly broken.
+> `MAX_DEPTH === HAND_MAX_M` is now asserted.
+> **Measured, 1280×720:** the pegged plot went from **44 × 110 → 110 × 278** with 10 countable tiles;
+> the demo's fence plot 345 × 141.
+>
+> ⚠️ **AND A BIGGER INSTRUMENT REACHES FURTHER, SO THE LAYERS HAD TO BE RE-CROSSED.** Widening it ran
+> the plot's top-left **65 × 62 px under the shell's pinned chalkboard** (board 20–404, plot 339–764) —
+> the question drawn over the answer. The cause was the readout column sitting BESIDE the plan and
+> shoving it ~110px left of centre; stacked underneath, the plan sits on the column's centre line and
+> it now clears the board by **64px**.
+>
+> ⚠️ **AND THE FIRST MUTATION PASS ON THIS LEFT TWO SURVIVORS, BOTH THE SAME RECORDED FAULT:** the new
+> size checks carried **their own copy of the box constants**, so putting a typed `const U = 22` back
+> in the component — or shrinking the box to 120 — left every one of them green. *A gate that
+> re-implements a rule cannot see the rule being removed.* `PLAN_BOX` is exported and the gate drives
+> the shipped value; 4/4 after.
+>
+> ## 🚶 AND THEN THE CHARACTER — founder: *"tum dekh sakhte ho... kitna chota dekh raha hai .. yeh character"*
+> The same fault as 📏, one layer in, and it was CREATED by fixing that one. **The metre stopped being
+> a constant and every marker around it stayed typed:** walker 16px, peg 15px, posts 10px, numeral
+> 17px — so at a 56px metre the child's own character rendered a third of a metre tall and disappeared.
+> All four are derived from the metre now (`markers(u)`, with floors that bind on the widest plot where
+> the metre is smallest). **Measured at 1280×720: the walker went 16 → 34px** and scales from here.
+>
+> ⚠️ **AND GROWING HIM COLLIDED WITH THE THING ABOVE HIM — the road band, for the SECOND time.** First
+> the frontage numeral was drawn across the word ROAD; now the walker's head was drawn across the
+> numeral. Both times all three elements were individually centred and individually correct. So the
+> band is `roadBand()` in the pure module — its height derived from everything that has to fit in it —
+> and the gate sweeps **every metre the generator can produce** rather than the one size somebody looked at.
+> ⚠️ **AND AN EMOJI'S BOX IS NOT ITS INK:** modelled with a 3px gap the arithmetic said it cleared and
+> the DOM said it overlapped by 2px, because a glyph's line box carries leading the font size does not
+> describe — and `FitSlot` then scales the gap down again. 8px authored, measured clear on the DOM.
+>
+> ⚠️ **THE MUTATION RUN ON THIS LEFT THREE SURVIVORS AND ALL THREE WERE THE SAME BLIND SPOT:** a check
+> that only asks *do these boxes overlap* **cannot see a marker frozen SMALL**, because a tiny thing
+> collides with nothing — freezing the walker at 30px, freezing the peg at 15px and setting the
+> clearance to zero all passed. The gate now asserts the RELATIONSHIP (a bigger metre gives a bigger
+> marker) and a real clearance rather than `>= 0`; 6/6 after.
+>
+> ## 🔄 AND THE PLAN NOW TURNS WITH THE SCREEN — founder: *"laptop screen pe yeh ek proper horizontal rectangle mein dikhe … abhi woh vertical mein hai, joh phone ke liye sahi"*
+> The last size fix made the plot fill its box; it did not ask whether the BOX was the right shape. The
+> long axis here is the WALK, so with the depth running down the page the plan is a tall sliver in a
+> laptop's wide slot — correct on a phone, wrong on a desk. **The plan's orientation now follows the
+> frame's**: road along the top with the depth running down on a portrait frame, road down the LEFT
+> with the depth running across on a landscape one.
+> **Measured at 1280×720: the plan went 110 × 340 → 658 × 168, and the walker 34 → 59px.** Nothing was
+> resized — the same derived metre simply had room. Re-measured at 390×844 the plan flips back and the
+> road band restacks (ROAD 286–298, numeral 308–324, walker 329 — 10px and 5px of clearance).
+> ⚠️ **ONE MAPPER, NOT TWO RENDERERS.** Everything is placed in the world's own units (`across` along
+> the road, `deep` into the yard) and `planXY(land, …)` turns that into pixels. Two copies of the
+> drawing would drift the first time a marker moved.
+> ⚠️ **AND THE MUTATION RUN IS WHY IT IS AN EXPORTED FUNCTION AT ALL:** with the mapping inline, a tile
+> grid that had **stopped turning with the plan** passed every box-size and metre check in the file —
+> all of which were still perfectly correct. The gate drives `planXY` and asserts the two orientations
+> are transposes of each other at every slot the generator can produce; 5/5 after.
+> ⚠️ Two of the four mutation suites went stale as the code moved under them (`SKIP (0x)` reads exactly
+> like a mutation that does not apply, not one whose target has been edited). Repaired and re-run: **13/13,
+> 4/4, 6/6, 5/5, with the tree checked clean afterwards.**
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED**, and `public/sw.js` is still v93. ⚠️ **`public/assets/explain/` (256 KB, two
+>    strips) is new and untracked** — it must go in the same commit as the chapter or the walkthrough
+>    404s in production. `scratch/` (the mp4s and composed keyframes, 3.8 MB) is now git-ignored.
+> 2. ⚠️ **THE SCRATCH-PAD COLLISION (⑤) IS THE MOST VALUABLE THING HERE** — it is live, it is in a
+>    shipped chapter, and it is one line. Founder's call on hiding that button below `vh < 470`.
+> 3. **Four dead dependencies**: nothing in `src/` imports three.js now.
+>    `npm uninstall three @react-three/fiber @react-three/drei @types/three` — left undone because a
+>    lockfile churn at the end of a big change is not a thing to do unasked.
+> 4. **No ten-round run, no re-teach seen fire, no mastery exit** on this chapter (the band's standing gap).
+> 4b. ⚠️ **THE RE-TEACH DOES NOT ANIMATE, AND IT IS THE SAME EXPLANATION** (and it is the bar, not the
+>    film, since its numbers vary).** `GameShell` narrates
+>    `task.work` after 3 wrong but never drives the instrument through those lines — it holds the
+>    reveal. The walkthrough animates; the re-teach still says the words over a still picture. Fixing
+>    it means passing the shell's `reteachAt` to the instrument, which is a change to 36 chapters, so
+>    it is a founder's call rather than something to do unasked.
+> 5. **No EXPLORE beat** — the shell supports one and this chapter would take a good one (*"show me
+>    about how long three metres is"*, unscored, which is the span's other honest home).
+> 6. **Three chapters left**: OrderDesk, LevelRun, LoadingBay — all storybook, ~4,159 lines, and none
+>    of them has the 3D excuse any more.
+> 7. Of this session's faults, **one came from driving the camera path (②, the biggest), one from the
+>    FOUNDER reading a screenshot (the static arithmetic beat — see 🎬, and no check of any kind can
+>    see "this beat shows nothing"), one from measuring two centred labels against each other (the
+>    frontage numeral drawn across the word ROAD), one from a disabled commit saying nothing (now
+>    "Walk back into the yard"), one from crossing a SHELL layer with the answer surface at 640×320,
+>    and two from the linter (a parameter the deleted 3D was the only user of, and a setState in an
+>    effect that would have opened the walk beat at its end). None from the type-checker, and none
+>    from the gate — which went green first time both times and had to be mutation-tested to be worth
+>    anything.**
+> 8. **Where the rules went**, so the next session does not re-learn them from this block:
+>    `chapter-craft.md` gained *removing a dimension can delete a whole class of fault*, *a shell that
+>    reveals only a WRONG answer leaves the chapter owing its payoff*, *a fixed corner affordance the
+>    SHELL owns is a layer too*, and — from 🎬 — *the beat that does the arithmetic is the one most
+>    likely to be a still, find them by comparing consecutive beat values, animate at the narration's
+>    own rate, and assert the piece SIZES rather than the caption*; **`chapter-craft-art.md` gained the
+>    whole EXPLAINER-FILM pipeline from 🎥** — compose both keyframes because the model cannot count,
+>    keep the caption code-drawn, a film may only play on hard-coded examples, cut the end by
+>    convergence rather than by motion, and pin the strip's cell count in the gate; `chapter-craft-ar.md` gained *a continuous reading's verdict
+>    belongs to the answer SCALE, not to the gesture* (with the two chapters' noise table) and *a span
+>    needs a referent or it is a number typed with the arms*.
+
+> 🧱 **2026-08-14 — ALL SIX NEON 9–11 CHAPTERS ARE ON GameShell. ~3,270 BESPOKE LINES BECAME ~1,270 OF DATA, FOUR COPIES OF `boardBand` AND SEVEN COPIES OF THE CAMERA WIRING ARE GONE, AND THE ONE CHAPTER THAT HAD NEVER HAD A GATE HAS ONE. ⚠️ NOT COMMITTED.** `tsc` 0 · **990/990 vitest** · `next build` 0 · **13/13 planted regressions caught** · eslint clean on all seven new files · every chapter driven.
+>
+> **The ask:** *"ab baaki 5 neon chapters bhi convert kardo"* — after the pilot.
+>
+> ## ⓪ WHAT WENT, AND WHAT REPLACED IT
+> | chapter | was | now | answer |
+> |---|---|---|---|
+> | decimals · The Coin Tray | 588 | **252** | two wells, `enter`/`commits` |
+> | factorsMultiples · The Factor Lab | 526 | **156** | one count, commits on the tap |
+> | fractionsCompare · The Pizza Counter | 537 | **182** | one count, 1–10 (never 0) |
+> | measurementUnits · The Height Bar | 611 | **208** | two places, tens then ones |
+> | anglesSymmetry · The Angle Shop | 687 | **284** | a degree OR a set of axes |
+> | wordProblems · The Mission Brief | 320 | **119** | the shell's AnswerPad |
+> **Six components DELETED**, plus `preteen/band.ts` and every chapter's layout half.
+>
+> ## ① ⚠️ THE PAYOFF IS THE DELETIONS, NOT THE NEW FILES
+> `boardBand`/`benchBand`, `TOP_BAND`/`BOT_BAND`, `ACTION_ROW` and `MILO_LANE` existed **byte-identical
+> in four modules** — extracted to `preteen/band.ts` on the fourth copy only weeks ago, and swept at
+> ten viewport sizes in four separate gates. **All of it is gone**: GameShell owns the bands and
+> `FitSlot` scales the instrument into what is left. The same for the AR wiring, which was ~80 lines
+> in each of seven chapters and is now `hand: {…}` on a config.
+> ⚠️ **AND THE GATES HAD TO GO WITH IT.** Four suites were driving that dead arithmetic — a gate
+> testing code nothing calls is worse than no gate, because it reads as coverage. What replaced them
+> is `bandOnGameShell.test.ts`, holding the same rules ONCE for all ten chapters.
+>
+> ## ② ⚠️ AND THE SHARED PART WAS EXTRACTED ON THE SECOND USE, NOT THE FIFTH
+> `parts/kidKit.tsx` — the palette, the key row, the action cue, `PIP`/`PAD`, and `useLatest`. Written
+> once for The Coin Tray, it was about to be pasted into five more chapters, which is exactly how this
+> repo got four `boardBand`s. **The key row's width is derived from its own keys** (`n*PAD +
+> (n-1)*GAP`), which is why Factor Lab's ELEVEN-key row fits one line on a 1280 frame with nobody
+> having thought about it.
+>
+> ## ③ ⚠️ THE SAME BUG, TWICE, AND THE LINTER NAMED IT BOTH TIMES
+> The two-place chapters mirror their value in a ref, or **two taps inside one React batch both
+> resolve to "the first place" and the second overwrites the first** — seven times now for this
+> repo. My first fix wrote the ref DURING RENDER, which `react-hooks/refs` correctly forbids. The
+> honest version is `useLatest(task, value)` in the kit: the ref is keyed on the TASK, so a new round
+> makes the stored value stale and `read()` falls back to the rendered one without anything having to
+> reset it — and nothing is ever written while rendering.
+> ⚠️ **Factor Lab does NOT get one and the comment says why**: its answer is one tap that commits
+> immediately, so there is no second tap in the batch to be stale for.
+>
+> ## ④ ⚠️ TWO CHAPTERS NARRATED SOMETHING THE SCREEN NEVER DID — BOTH CAUGHT BY DRIVING THEM
+> The Mission Brief's walkthrough said *"which comes to 69"* while its readout still showed `?`: the
+> shell renders a tutorial instrument with `reveal={false}` (correctly — nothing is being answered),
+> so the equation never opened. **Info that exists only in audio is info most Chrome installs do not
+> have.** The Angle Shop was worse: it said *"So I turn it"* and then *"There. That is the one."* over
+> an arm that had **not moved a degree**, because I wrote its tutorial steps without values. That is
+> the SupplyRun fault — a demo teaching the opposite of its own words — and no gate could see either,
+> because every piece was individually correct.
+>
+> ## ⑤ THE GATE — **13/13 planted regressions caught**, and FOUR of them were holes I had just written
+> ① Pizza's anti-oracle: grepping for `openingTake` passes on `value ?? openingTake(r)`, which still
+> follows the child live — **assert the GUARD, not the call**. ② A fold round committing on the first
+> axis the hand aimed at (a round answered by waving). ③ The tilt driving an exact-degrees round,
+> where ±2.5° of an unmarked target is luck. ④ The Mission Brief's distractors, ungated because that
+> chapter had no test file at all.
+> ⚠️ **AND ITS OWN PROSE TRIPPED ITS OWN REGEX** — a "shuffles nothing" check matched the sentence
+> explaining that it shuffles nothing. Comments are stripped before any source check now, which is a
+> rule already written in chapter-craft.
+> ⚠️ **A KILLED MUTATION RUN LEAVES THE SOURCE DIRTY.** The first pass hit the 2-minute tool timeout
+> mid-mutation and left `AngleShopGame.tsx` mutated; the next run then reported that mutation as "NO
+> MATCH" — which reads exactly like a mutation that does not apply, rather than one already applied.
+> `tsc` caught it. **Check the tree before believing a mutation report.**
+>
+> ## ⑥ WHAT WAS DRIVEN — all six, at 1280×720
+> **The Factor Lab**: briefing with both doors · walkthrough dealing 12 into rows with the anchor on
+> the card · **eleven keys on ONE row** · guided round answered `3` (15 = 3 × 5) → graded → **`1 / 10`**
+> and round 1 came up a *pair* test where the walkthrough was a *factor* one, i.e. **coverage steering
+> live**. **The Pizza Counter**: THEIRS and MINE drawn, key row **starting at 1** (no answer is ever
+> zero) against the tray's starting at 0. **The Height Bar**: `4 ft 3 in` on the board, `SIGN · 44 in`
+> — **44 is not a multiple of twelve, so `OFFSET_LIMITS` survived the port** — TENS `5` ONES `1`
+> filling to 51, and the line *"51 inches against 44 inches on the sign — that is tall enough."*
+> **The Angle Shop**: the arm live at −150°, turn/Fix controls, the guide. **The Mission Brief**: the
+> brief panel, the story, READOUT. **The Coin Tray**: driven end to end earlier, `2 / 10` reached.
+> ⚠️ **THE PREVIEW PANE RENDERED INTO A CORNER FOR ALL OF IT** — through resizes, reloads and fresh
+> tabs — so every claim above is measured off the DOM, not read off a screenshot.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NO CAMERA PATH HAS BEEN DRIVEN ON THE SHELL, on any chapter.** Everything went through taps.
+>    The `hand` field is proven by the gate and by arithmetic; the ring, the dwell commit and the
+>    denial gate have never been on screen in GameShell. **Still the most useful next drive**, and
+>    `__miloFingers` exists to do it headlessly.
+> 2. ⚠️ **THE EXPLORE BEATS ARE GONE AND NOTHING REPLACED THEM.** Four of these chapters had one (the
+>    Coin Tray's 7+5 pennies fusing into a dime, the Height Bar's hands-apart span, Factor Lab's
+>    bench, the Pizza Counter's reflow). The shell supports it — `TeenChapterCfg.explore` plus a Sim —
+>    but I did not port them, so **the Height Bar's span reading now ships in no beat at all**. That is
+>    a real loss and it is the largest single thing outstanding.
+> 3. ⚠️ **No short-frame pass on any of the six.** 640×320 is where this repo's layout faults live and
+>    the pane would not render for it.
+> 4. **No ten-round run, no re-teach seen fire, no mastery exit** on any of them.
+> 5. **`/story?ch=` now rejects six keys by design** — factors, fcompare, decimals, units, angles,
+>    word. Previews are `/teen-preview?c=<id>`. `area` and `data` still work.
+> 6. **Four chapters left**: OrderDesk, LevelRun, LoadingBay (storybook, 4,159 lines) and **FloorPlot,
+>    which is react-three-fiber and cannot become a data file over a 2D shell** — raised three times
+>    now and still unanswered.
+> 7. Of this session's faults, **two came from driving the chapters, four from mutation-testing my own
+>    gates, two from the linter, one from a gate's prose matching itself, and one from a killed
+>    mutation run leaving the tree dirty. None from the type-checker — though it named every site the
+>    new band had to exist in, which is what made the port safe.**
+
+> 🎛️ **2026-08-14 — THE 9–11 BAND MOVES ONTO THE 12–18 ENGINE, ON THE FOUNDER'S CALL — AND AR BECOMES A FIELD ON THE CONFIG INSTEAD OF SEVEN COPIES. THE SHELL IS DONE AND GATED; THE PILOT CHAPTER IS NOT. ⚠️ NOT COMMITTED.** `tsc` 0 · **1007/1007 vitest** (was 994, **+13**) · `next build` 0 · **13/13 planted regressions caught** · the 12–14 band re-driven in the browser and unchanged.
+>
+> **The ask:** *"yeh band joh hai … 9-11 wala … isko bhi 12-18 waale jaise treat karo … aur isko bhi
+> wohi format mein lao. bas yeh band ki speciality hai AR"* → on the four questions put to him, all
+> four recommendations taken: **extend GameShell with a band prop** · **AR as a first-class `hand`
+> field** · **shell first, then ONE pilot, then fan out** · **instruments stay the default for 9–11**.
+>
+> ## ⓪ WHY THIS IS WORTH DOING, MEASURED RATHER THAN ASSERTED
+> The 12–18 format is ONE engine — `GameShell` (1,341 lines) + `gameKit` (1,171) — over which a
+> chapter is a **thin data file** (~300 lines: palette, `makeTask` L1/L2/L3, a self-running demo, a
+> `GameConfig`). The 9–11 band today is ten bespoke chapters, **~9,800 lines**, each carrying its own
+> layout, phases, words and gate — six in the neon Mission HUD, four still storybook.
+> **So the prize is not the look (six are already neon): it is ~9,800 lines of duplicated shell
+> becoming ~3,000 lines of data, and a fix landing once instead of ten times.**
+>
+> | chapter | file | lines | look | AR |
+> |---|---|---|---|---|
+> | bigNumbers | OrderDesk | 1620 | storybook | ✋ |
+> | rounding | LevelRun | 1724 | storybook | ✋ |
+> | areaPerimeter | FloorPlot | 1380 | storybook · **3D** | — |
+> | dataGraphs | LoadingBay | 815 | storybook | — |
+> | anglesSymmetry | AngleShop | 687 | neon | ✋ |
+> | measurementUnits | HeightBar | 611 | neon | ✋ |
+> | decimals | CoinTray | 588 | neon | ✋ |
+> | fractionsCompare | PizzaCounter | 537 | neon | ✋ |
+> | factorsMultiples | FactorLab | 526 | neon | ✋ |
+> | wordProblems | MissionBrief | 320 | neon | — |
+>
+> ## ① THE BAND NOW EXISTS IN THE FIELD LAB SYSTEM — AND THE TYPE-CHECKER NAMED EVERY SITE
+> `AgeBand` gains `'9-11'`, which turned every `Record<AgeBand, …>` into a compile error until it was
+> filled: `BAND_FRAMING` (9–11 is a **Job**, not an Investigation — the band's worlds are a coin tray
+> and a height bar), `CalmAdvance`'s microcopy bank (warmer and plainer, and still never a cheer), and
+> three `switch (band)` label functions in `MasteryState`. **That is the honest cost of a new band and
+> it is small.** `MiloMark` takes 9–11 down the 12–14 branch: **Milo ages DOWN into a face, never up
+> into a monogram.** `globals.css` gains a scoped `[data-band="9-11"]` block carrying the pre-teen
+> kit's own values (navy `#0A1026`, ink `#EAF1FF`, and the kit's **violet**, which no teen band uses,
+> so the band is visibly its own) — and 9–11 is added to the SHARED selector too, or it would get a
+> palette and no fonts. ⚠️ The kids' `:root` theme is untouched, exactly as for the teen bands: the
+> scope only applies inside a portal that sets `data-band`.
+>
+> ## ② ⚠️ ONLY THREE THINGS ACTUALLY DIFFER, AND THEY ARE NAMED IN ONE PLACE
+> `roundsFor` · `resumesTier` · `hand`. **Ten rounds, not eight** (the length the band's own chapters
+> have always been), and ⚠️ **9–11 NEVER RESUMES AT A DIFFICULTY** — chapter-craft: *"3–11 story
+> chapters call useAdaptive with no start tier … if a chapter looks too hard on question 1, the tier
+> is not the suspect; the generator is."* A nine-year-old coming back a week later and meeting their
+> old top tier on question 1 is the fault that rule exists for, and pinning `startDiff` to 1 switches
+> the warm-up offer off with it. Everything else — the loop, the board, the pad, the re-teach, the
+> mastery exit — is shared, which is the entire point.
+>
+> ## ③ ⚠️ THE HAND IS NOW ONE FIELD, AND IT HANDS ITS NUMBER TO WHOEVER OWNS THE ANSWER
+> Seven chapters each wired their own camera lifecycle, dwell commit, denial gate and remembered
+> device pick — **the same ~80 lines, seven times, drifting.** A chapter now declares `hand: { reads,
+> value?, ready?, when?, enter?, commits?, hint?, denied? }` and the shell owns both doors, the
+> self-view, the gate, the arming ring and the held-over-pose guard.
+> **The contract that makes ONE field serve two very different chapters:** the hand produces a NUMBER;
+> if the AnswerPad is up for this question the number IS the answer, otherwise `enter()` folds it into
+> the instrument's value and `commits()` decides whether that completed the answer or merely advanced
+> it. That is what lets a tap-a-number round and a build-it-in-two-places tray share one field.
+> Three rules came across with it, each already paid for elsewhere: ⚠️ **readiness is a hand IN FRAME,
+> never `count > 0`** (a FIST is a real answer wherever zero is — CoinTray's `0.6` is six dimes and a
+> fist); ⚠️ **the dwell key is the READING ALONE, never the slot** (slot in the key re-arms the timer
+> the instant the slot advances, and a hand still showing 5 enters 5 twice — FitOut shipped `12` as
+> `11` for exactly that); ⚠️ **the ring says only what was READ**, never whether it is right.
+>
+> ## ④ ⚠️ AND THE PORT WOULD HAVE SILENTLY DROPPED A BAND RULE — `coverage` WAS MISSING FROM THE SHELL
+> `SkillBeat` has carried `coverage` for the 3–11 band for months and `GameShell` had no equivalent,
+> so moving a chapter across would have lost it **without a single test going red.** The arithmetic is
+> why it matters: `core/adaptive` promotes on 3-in-a-row and masters on a streak of 6 at the top tier,
+> so a strong child is asked roughly **three questions at L1, ONE at L2 and TWO at L3** — anything
+> late in the pool is asked only of a child who is struggling, i.e. **skipped as a reward for doing
+> well** (measured on TickTock: a third of good runs missed a whole reading). Added as ONE field,
+> because the bookkeeping the exit needs is exactly the input `makeTask` needs to spend a scarce round
+> on something unmet. A chapter that declares none behaves byte-identically.
+>
+> ## ⑤ THE GATE — +13 tests, **13/13 planted regressions caught**
+> [bandOnGameShell.test.ts](src/__tests__/bandOnGameShell.test.ts) drives the shell's own exported
+> band predicates rather than re-implementing them, and source-checks the JSX half. Caught: the band
+> losing its ten-round loop · 9–11 resuming a tier · the teen DEFAULT changing band · **a teen chapter
+> growing a camera door** · a fist ceasing to be an answer · the dwell key taking the round index ·
+> the mastery exit ceasing to wait for coverage · the second door ceasing to switch input · the band
+> getting a palette but no kit tokens.
+> ⚠️ **The one survivor was my own check being weaker than its rule:** `toMatch` on
+> `config.makeTask(d, asked.current)` passes with ONE of its **two** call sites reverted — the
+> sig-dedupe retry would then re-roll blind. Counted now, not matched. *Wherever a rule has to hold in
+> N places, assert N.*
+>
+> ## ⑥ WHAT WAS DRIVEN
+> **The 12–14 band, re-driven at 1280×720 after the change** — this shell runs 36 live chapters, so
+> not regressing them is the whole risk. The Bank Account (integers) start card renders with **no
+> second door** (`config.hand` is undefined there, which is the intended default), and the walkthrough
+> runs: THE PLAN chalkboard, the account meter, narration, step controls. `next build` green.
+>
+> ## ⑦ ✅ THE PILOT IS BUILT AND DRIVEN — THE COIN TRAY (`decimals`) IS THE FIRST 9–11 CHAPTER ON GameShell
+> **588 bespoke lines → a data file** (274 at the time, **252** once `kidKit` took the shared
+> parts), and `story/CoinTray.tsx` is DELETED. `tsc` 0 ·
+> **1010/1010** · `next build` 0 · **8/8 planted regressions caught** · 0 console errors.
+> Everything that can be WRONG stayed in `story/cents.ts`, untouched — the ladder, the trap amounts,
+> the grader, the miss lines and the anti-oracle `headline` rule, with its 31-test gate still driving
+> them. **That is the whole argument for the port being cheap: this file re-shapes, it re-implements
+> nothing.** What is genuinely new is the tray Instrument (~110 lines lifted from the old scene).
+>
+> **The contract that made one `hand` field serve this chapter:** `enterTray(v, n)` is the ONLY way a
+> number gets into the tray, and BOTH the camera (`hand.enter`) and the tap pad call it, so the two
+> paths cannot drift and `grade` never learns which moved it. `commits: v => v.slot >= 2` is what
+> tells the shell an amount is finished rather than merely started.
+> ⚠️ **The pad is part of the INSTRUMENT rather than `GameConfig.answerPad`**, deliberately: the
+> shell's pad HIDES the instrument, and here the child has to watch the tray fill as they enter.
+>
+> ## ⑧ ⚠️ AND WRITING THE GATE CAUGHT A REGRESSION I HAD JUST INTRODUCED
+> The new Tray read the RENDERED `value` in its tap handler, so **two taps inside one React batch
+> both resolve `slot === 0` and the second overwrites the dimes instead of filling the pennies** —
+> the batched-tap fault this repo has now met seven times, and the old chapter carried refs for
+> exactly it. `setValue` being functional would not have saved it: the state advances correctly and
+> the closure the next tap runs is still the old one. Mirrored in a ref, and gated.
+>
+> ## ⑨ WHAT WAS DRIVEN — the whole chapter, at 1280×720
+> The briefing with **both doors** (`✋ Use the camera instead` is the quiet one) · the walkthrough
+> with the chalkboard writing `0.6` while the tray fills to six dime ten-frames and an EMPTY pennies
+> well — the fist case, on screen · the guided round answered **3 dimes then 0 pennies** through the
+> tap pad, graded and advanced · **`1 / 10` in the corner, which is the band's ten-round loop proven
+> rather than asserted** · scored round 1 (`0.6`) answered correctly and advanced to **2 / 10**.
+> 0 console errors. The 12–14 band re-driven separately and unchanged.
+>
+> ## ⑩ ⚠️ AND THE FOUNDER CAUGHT THE PILOT'S ONE REAL LAYOUT FAULT ON A SCREENSHOT — THE TRAY WAS TINY
+> **`FitSlot` runs at `max={1}` on a landscape frame: it only ever SHRINKS an instrument, never grows
+> one.** The old bespoke chapter scaled its board UP to **2.2×** into the band it was given, and the
+> port dropped that — so a tray authored at the old 8px pip rendered at 8px for ever and floated in a
+> third of the frame with dark space all round it. **The rule for this shell: author an instrument at
+> the size it should be READ at and let the shell take it down**, because the coins are the one thing
+> here that has to be countable and so the last thing that should pay for the layout. `PIP` 8 → 15,
+> and the wells, the point, the counts and the keys with it.
+> ⚠️ **Which then wrapped the key row onto two lines** — ten keys at 58px plus nine gaps is 634px
+> against a hand-typed `maxWidth: 620`. Measured on the DOM, not eyeballed. The cap is derived from
+> the keys now (`10 * PAD + 9 * PAD_GAP`), so it cannot be 14px short again.
+> ⚠️ **The preview pane rendered the app into a corner for the whole of this check** — the documented
+> instrument fault — **through a resize, a reload AND a fresh tab.** Everything above is measured off
+> `getBoundingClientRect` at a true 1280×720: **pad on ONE row, 10 keys, no h-scroll, and the only
+> "overlaps" a layer sweep reports are the full-bleed motif and MiloMark, both by design.**
+>
+> ## ▶ OPEN
+> ⚠️ **THIS LIST IS SUPERSEDED BY THE 🧱 BLOCK ABOVE — read that one.** Written when only the pilot
+> existed, it said "nine chapters left" and "no chapter declares `band: '9-11'` yet"; six now do.
+> The items that survived it verbatim are still open there: **the camera path has never been driven
+> on the shell**, no ten-round run / re-teach / mastery exit, and **`FloorPlot` is react-three-fiber
+> and cannot become a data file over a 2D shell**.
+>
+> The one thing recorded ONLY here, and still true: **`chapterLevel` is written for 9–11 on every
+> submit and never read back** (the read is gated by `resumesTier`, the write is not). Harmless, one
+> branch fewer, but the stored level for a 9–11 chapter is dead data.
+
+> ⚠️ **THE THREE BLOCKS BELOW ARE THE SAME DAY AND THE LAST ONE IS PARTLY SUPERSEDED BY THE TWO
+> ABOVE IT.** `story/AngleShop.tsx` no longer exists — the chapter is
+> `teen/games/AngleShopGame.tsx` on GameShell — and `angles.ts` has lost its whole layout half. What
+> the 📐 block records that IS still true and still enforced: the daily anchor, the week, the paper
+> table, the no-obtuse-slope rule, the reason-argues-for-the-KIND rule, and the set-square staying on
+> an exact-degrees round. Read it for WHY those exist, not for where the code is.
+>
+> 📐 **2026-08-14 — THE ANGLE SHOP GETS ITS DAILY ANCHOR AND THEN LOSES ITS PAINTED WORLD, ON TWO FOUNDER CALLS — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT ITS TOP TIER COULD NOT BE ANSWERED BY KNOWING ANYTHING, AND THAT THE TWO MARKS THAT STATE THE ANGLE WERE BOTH DRAWN OFF IT. ⚠️ NOT COMMITTED — the founder has not been asked.** `tsc` 0 · **994/994 vitest** (was 972, **+22**) · `next build` 0 · **eslint 5 problems against 12 at HEAD, i.e. seven FEWER and zero new** · 0 console errors in a fresh tab · driven at 1280×720 and 640×320 · **19/20 planted regressions caught, the 20th proven INERT by measurement.**
+>
+> **The asks, in order:** *"in band 9-11 … joh angles and symmetry chapter hai usko bhi daily real
+> world example se connect karna hai"* → on the two questions put to him: **split the world by verb —
+> ramp for angles, paper for folds** · **keep the square-corner guide on exact rounds** → then, on a
+> third question I had to raise mid-build: **one park, several things, each job naming its own** →
+> and finally **"remove the background and that characters.. make it just like the neon one which we
+> have in decimal, fraction chapters."**
+>
+> ## ⓪ ⚠️⚠️ THE TOP TIER WAS A LOTTERY, AND IT WAS ALREADY SHIPPING
+> `useDegrees = d === 3` and `guideShown = d < 3`, so **every** exact-degrees round was asked with the
+> set-square retired. The child got an arm at a start angle they cannot read (`showDeg={settled}` —
+> correct, rule 1), ◀ ▶ at 5° a tap, **no readout, no scale, and nothing at 90° to judge against**,
+> then `grade` demanding `deg === 85`. Half the rounds are angle rounds and a strong child gets ~2
+> rounds at L3, so the chapter **ended** on a question that cannot be answered by knowing anything.
+> FitOut's dead-button shape: the scaffold that retired was the only reference the exact question had.
+> ⇒ The guide now stays whenever the job is `degrees`, whatever the tier. **On a KIND round it gives
+> the ANSWER away and must go; on a DEGREES round it gives a REFERENCE away, which is what a set
+> square is for.**
+>
+> ## ① ⚠️ AND THE ANCHOR THE PLAN RECORDED HAD NEVER REACHED THE CODE
+> `grep -i anchor` over `angles.ts` + `AngleShop.tsx` returned nothing but a local variable; the
+> briefing read *"It is Slate's first week on the crew"* — a job, not a thing a nine-year-old has
+> done. [story-9-11-ar-plan.md §10](docs/story-9-11-ar-plan.md) has carried *"how steep the ramp or
+> the slide is"* since it was written. **Factor Lab's desks, verbatim, one chapter along.**
+>
+> ## ② ⚠️⚠️ THE FOUNDER'S OWN ANCHOR CANNOT EXPRESS A THIRD OF THE CHAPTER, AND THE ARITHMETIC SAYS SO BEFORE ANY CODE
+> **Obtuse is the beam swung PAST vertical, and real ramps live between about 5° and 40° — every
+> slope is acute.** So *"make the ramp obtuse"* asks a child to build a thing that does not exist, and
+> the shipped week did exactly that: `wants: 'obtuse'` on *"the approach ramp — a barrow has to get up
+> it loaded"*, drawing a plank leaning backwards over the bank at 75° above the horizontal while the
+> words said *"shallower"*. **I raised it before building rather than shipping it**; the founder took
+> *one park, several things* — the ramp and the slide carry acute, the two things that genuinely OPEN
+> past square (the park gate, the barrier arm) carry obtuse, and one upright (the hoop post) carries
+> right. Each job names its own object, which is the structure the chapter already had.
+>
+> ## ③ ⚠️ AND THE SAME FAULT ONE LEVEL DOWN — DRIVEN ON SCREEN, IN ONE SENTENCE
+> *"Make the slide SHARPER than a square corner — any steeper and it is a drop, not a slide."* The
+> requirement says sharper and the reason says do not be steeper. Its sibling, *"push your bike up it,
+> loaded"*, is true of the 30° L1 draws and plainly false of the 85° L3 draws — **and both are acute,
+> so the round is correct and the world is lying.** ⇒ **A reason must argue for the KIND, never for a
+> magnitude the tier is free to change.** Both acute reasons rewritten; gated by sweeping the reason's
+> own words against the kind it belongs to.
+>
+> ## ④ ⚠️⚠️ THEN THE FOUNDER SAW IT AND KILLED THE PAINTED WORLD — AND HE WAS RIGHT
+> I had generated three backdrops (a BMX spot with the ramp plank missing, a playground with the slide
+> chute missing, a kitchen table), value-graded them against the cast, and wired a storybook scene
+> with Slate and Milo in it. *"Remove the background and that characters.. make it just like the neon
+> one which we have in decimal, fraction chapters."* The chapter now runs on **`preteen/kit.tsx`,
+> accent `violet`**, exactly as The Coin Tray and The Pizza Counter do.
+> ⚠️ **THE ANCHOR DID NOT GO WITH IT, AND THAT IS THE POINT WORTH KEEPING: it lives in the WORDS and
+> in what the instrument IS.** The arm you turn is the ramp at the park; the sheet you fold is the
+> fair's paper. That is exactly how money works in The Coin Tray, which is a neon lab and still the
+> most daily-anchored chapter in the band.
+> ⚠️ **And a whole class of fault went with the painting, which is worth more than the pixels:** no
+> painted ground line means no `coverFit`, no site geometry, and **no share-of-an-IMAGE used as a
+> share-of-the-VIEWPORT** — which had already cost this chapter one **3.6× blow-up** (see ⑥).
+> **DELETED: 3 old backdrops · 3 backdrops generated and never shipped · Slate's 3 sheets** (she was
+> cast by this chapter alone; the foreman bear survives in The Order Desk, so nothing went idle).
+>
+> ## ⑤ ⚠️⚠️ TWO MARKS WERE DRAWN OFF THE THING THEY MEASURE, AND BOTH HAD SHIPPED
+> Caught by eye on a screenshot, as this repo's layout faults always are. The arc hangs off the
+> vertex on a **zero-height** container, so `bottom: -20` resolves 20px below its TOP — and the path
+> put the centre at svg-local `(20+arcR, 20+arcR)`, landing at **`(vx + arcR, vy − arcR)`**: the mark
+> that STATES the angle, drawn a whole radius up and right of the angle. The set-square had the
+> matching fault — its upright was right and its horizontal arm ran along the svg's top edge, **a full
+> `size` above the fixed arm it is meant to lie on.** Invisible to every band, layer and type check:
+> both elements are present, correctly sized, and in roughly the right region of the screen.
+>
+> ## ⑥ ⚠️ AND A GROUND LINE BELOW WHERE THE CONTROLS ALLOW ONE DOES NOT FLOAT THE CAST — IT EJECTS THE PICTURE
+> The scale-to-close-the-gap term is `(vh − groundPx) / ((1 − share) · SCENE_H)`, so as `share` → 1
+> the denominator → 0. Measured at 0.95 against a usable ground of 0.807: the backdrop rendered
+> **4981px wide at x = −1850, with the working surface 1142px ABOVE the frame.** The gate that caught
+> it then found the real ceiling is **`groundY/vh`, tightest on the SHORTEST frame** — 0.807 at
+> 1280×720 but **0.756 at 640×270**. Recorded in chapter-craft even though the painting is now gone,
+> because the next chapter to lay a scene over a ground line will meet it.
+>
+> ## ⑦ WHAT WAS ACTUALLY DRIVEN
+> **1280×720:** the neon briefing with both doors · both demos beat by beat, including **the puck
+> running the full length and off on the correct-answer shot** · the guided round answered with the
+> steppers and **committed WRONG on purpose** → `125°` printed post-commit in mono, the miss line
+> *"That's past the square corner — bring it in."*, and **the puck stopped dead at the vertex with the
+> bump mark** — the `through=false` branch · 0 console errors in a fresh tab.
+> **640×320:** the fold demo with all four axes on the square · **every fixed layer crossed with every
+> other → 1 reported overlap, MEASURED and dismissed**: it is the full-width control CONTAINER, not
+> its buttons — Milo's box is **26–90** and the nearest button starts at **233**, i.e. **143px clear**.
+> ⚠️ That is centring doing the work rather than the reserve, so the reserve is now gated instead of
+> assumed. No h- or v-scroll.
+> ⚠️ A temp `?jump=` phase override was used to reach the guided round without sitting through 45s of
+> demo each time, and **reverted and grepped (0 hits)**.
+>
+> ## ⑧ THE GATE — +22 tests, **19/20 planted regressions caught, RE-RUN AGAINST THE FINAL CODE**
+> [angleShopGeometry.test.ts](src/__tests__/angleShopGeometry.test.ts). ⚠️ **The first mutation pass
+> left FOUR survivors and every one was my own gate being weaker than its rule**, three of them this
+> file's recorded shapes: ① `expect(ask.length).toBeLessThanOrEqual(ASK_BUDGET)` **moves with the
+> constant** — loosening it to 400 stayed green while the question grew back onto the arm (pinned to
+> the measured literal now); ② `toContain('{ANCHOR}')` **also matches `${ANCHOR}`** in the demo's
+> template string, so deleting it from the briefing walked through (the `alt={` / `x_alt={` shape);
+> ③ nothing source-checked that the SCENE calls `guideShown`, so `const guide = false` restored the
+> dead L3 round with every module test green; ④ nothing asserted the chrome cleared the Menu button.
+> **The second pass left four more**, and the same rule caught them: `toContain('LabBackdrop')`
+> **passes on a local `const LabBackdrop = () => null`** — a name check cannot tell the kit's
+> component from a shadow of it — and one check had been **deleted with the block around it** when the
+> painted world went, which is its own lesson about moving tests.
+> ⚠️ **The one survivor is INERT and is recorded as such rather than "fixed":** the arm's
+> clear-Milo bound never binds, because `vw × 0.30` binds first at every swept size (192 against 233
+> at 640×320, 540 against 806 at 1800×870). Left in deliberately, with the measurement in the comment.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED, and `public/sw.js` is still v93.** The founder has not been asked.
+> 2. ⚠️ **NO SCORED ROUND HAS BEEN PLAYED PAST ROUND 1, AND NO L3 ROUND AT ALL** — so the exact-degrees
+>    round this session exists to fix has been driven only through the gate and the demo, never as a
+>    scored round with the guide on screen. **That is the single most useful next drive**, and it needs
+>    a run that is right just often enough to reach L3.
+> 3. ⚠️ **No ten-round run, no re-teach seen fire, no mastery exit.** Same shape as The Pizza Counter's
+>    open item; two runs are needed (a perfect one exits early, only an erring one walks all ten).
+> 4. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO ANY OF THE AR — eighteen readings deep.** The tilt
+>    path is unchanged by this session and everything above came through the steppers.
+> 5. **Six backdrops and three character sheets were deleted**; the three park scenes were generated
+>    (~7 credits) and never shipped. If the founder ever wants a painted 9–11 chapter again, that art
+>    is recoverable from this session's history, and the value-grading numbers are in ⑥ and the
+>    storyboard.
+> 6. **Everything in the 📏, 🪙, 🍕 and ✋ blocks below still stands**, and the 🗑️ block (the two
+>    deleted chapters, and the unanswered founder call on their rebuild shape) has moved to
+>    [docs/handoff-archive.md](docs/handoff-archive.md).
+> 7. Of this session's faults, **two came from reading the shipped code before touching it, one from
+>    reading the founder's own anchor against arithmetic, three from driving it (one of them a
+>    sentence contradicting itself on screen), two from measuring a backdrop against the cast, and
+>    EIGHT from mutation-testing my own gate. None from the type-checker.**
+
 > 📏 **2026-08-14 — UNITCONVERTER → THE HEIGHT BAR, ON THE FOUNDER'S CALL TO CONNECT THE 9–11 MEASUREMENT CHAPTER TO A DAILY REAL-WORLD EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT ITS CONVERTER PRINTED THE METHOD ON EVERY ROUND AND THAT ELEVEN OF ITS TWELVE UNIT QUESTIONS WERE COIN FLIPS. ⚠️ NOT COMMITTED — the founder has not been asked.** `tsc` 0 · **972/972 vitest** (was 902, **+70**) · `next build` 0 · **eslint: byte-for-byte CoinTray's rule profile, i.e. zero new classes** · 0 console errors in a fresh tab · driven at 1280×720, 640×320 and **334×676** on BOTH inputs · **47/47 planted regressions caught, re-run against the final code.**
+>
+> ⚠️ **PORTED 2026-08-14 (see 🧱): `story/HeightBar.tsx` is DELETED and the chapter is now `teen/games/HeightBarGame.tsx` on GameShell.** `inches.ts` survives untouched apart from its layout half, so every pedagogical rule below is still live and still gated — only the shell around it changed.
 >
 > **The ask:** *"in band 9-11 … joh measurement chapter hai usko bhi daily real world example se connect karna hai"* → on the four questions put to him: **the height bar at a ride** · **US customary** · **build the converted number** · **hands apart to show a length**.
 >
@@ -223,536 +941,5 @@
 >    reading the plan's AR line against arithmetic, three from the gate before it ever ran green, four
 >    from driving it (three only at 640×320), one from a fresh tab happening to open at 334×676, and
 >    three from mutation-testing my own gate. None from the type-checker.**
-
-> 🪙 **2026-08-13 — DECIMALGRID → THE COIN TRAY, ON THE FOUNDER'S CALL TO CONVERT THE 9–11 DECIMAL CHAPTER TO A DAILY REAL-WORLD EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT TWO OF ITS THREE QUESTION TYPES WERE COIN FLIPS AND THE THIRD DREW AN EMPTY INSTRUMENT. 🚀 SHIPPED — `main`@`0c9418b`, prod serving **sw v92**, smoke 11/11 and both new chapters rendered on the live origin.** `tsc` 0 · **902/902 vitest** (was 871, **+31**) · `next build` 0 · **eslint: the same four rule classes as PizzaCounter, i.e. zero new classes** · 0 console errors · driven at 1280×720, 640×320 and 466×676 · **TWO FULL RUNS PLAYED** — one perfect to the mastery exit, one erring through all ten rounds · **23/23 planted regressions caught.**
->
-> **The asks, in order:** *"9-11 band… decimal chapter ko lete hai, aur uska daily real world example mein convert karte hai"* → on the three questions put to him: **money (structurally separated from The Fundraiser)** · **MAKE THE AMOUNT — build it in coins** · **AR in the same pass**.
->
-> ## ⓪ ⚠️ THREE DEFECTS WERE ALREADY SHIPPING, AND TWO OF THEM ARE THE BAND'S HEADLINE FAULT
-> ① **`compare` OFFERED EXACTLY TWO CHIPS** — `choices: shuffle([aS, bS])`, in every tier's pool. So
-> the 0.3-vs-0.25 misconception, **the one thing the chapter exists for**, was asked at 50%. ② `digit`
-> was nominally three chips and **two of the three were the two digits already printed on screen**, so
-> it was a coin flip as well. ③ ⚠️ **A `digit` ROUND DREW THE 100-CELL GRID WITH `shaded: 0` FOR ITS
-> WHOLE DURATION** — the manipulative present, and meaning nothing, for a third of the rounds. Plus the
-> demo's card was hardcoded `tag="Read"`, so the COMPARE demo was labelled Read.
->
-> ## ① ⚠️ THE ANCHOR IS THE PLAN'S OWN AND IT IS THE GOOD KIND — BUT IT IS THE BAND'S SECOND MONEY WORLD, AND I FLAGGED THAT BEFORE ANY CODE
-> §7's argument is structural rather than flavour: **100 cents ARE the hundredths grid**, so tenths are
-> dimes and hundredths are pennies and the anchor and the manipulative are the same object — the
-> recorded exception, exactly as dollar denominations ARE base ten in The Fundraiser. Every alternative
-> fails on the band's own filters (a race time inverts *more is better*; a doorframe height IS the
-> `measurementUnits` chapter; a fuel price is a parent's world). ⚠️ **The cost: The Fundraiser (9–11)
-> is money and CoinShop (6–8) is money**, so this is the third. Raised, and the founder took it — so
-> the separation is STRUCTURAL rather than verbal, and it is **the decimal point itself**: The
-> Fundraiser is whole dollars LEFT of it, CoinShop is *count the cloth and pay*, and this is dimes and
-> pennies RIGHT of it, where **nothing is ever added up** — the wells are places, and putting a coin in
-> the wrong well is the entire misconception.
->
-> ## ② ⚠️⚠️ THE PLAN'S OWN AR LINE IS ARITHMETICALLY IMPOSSIBLE, AND ITS OWN EXAMPLE DISPROVES IT
-> §7 says *left hand tenths, right hand hundredths — so `0.55` is five and five while `0.6` is six and
-> a closed fist.* **A hand has five fingers, so `0.6` — six dimes — cannot be shown.** One hand per
-> place reaches only the amounts whose digits are both ≤ 5, i.e. **36 of 99**. This is the SAME fault
-> §2's A2 row had to be corrected for last week, in a different chapter, in the same document. Built as
-> FitOut's proven encoding instead: **both hands make ONE place at a time, left to right** — *show me
-> the dimes… now show me the pennies* — which reaches 0–9 in each place, is place value performed, and
-> keeps "six, then a fist" true. Zero new detector; `reads: 'count'`.
-> ⚠️ **AND ZERO IS A REAL ANSWER HERE, WHICH INVERTS THE PIZZA COUNTER'S GUARD.** `0.6` is six dimes
-> and a FIST; "seven hundredths" is a fist and seven pennies. So it is FactorLab's `hands > 0` (count
-> may be 0) and NOT `count > 0` — and **the tap pad starts at 0**, the mirror of the pizza pad which
-> starts at 1. Both are gated.
->
-> ## ③ ⚠️ THE VERB IS "MAKE THE AMOUNT", AND THE COMPARISON IS DELIBERATELY NOT A ROUND TYPE
-> The tag reads `0.55`; the child fills the dimes well, then the pennies well. Three readings of that
-> one act — **`make`** (from a decimal) · **`place`** ("show me seven hundredths") · **`op`** ("it went
-> up by 0.05") — one grader, `coverage` over all three. "Which is greater?" is the coin flip being
-> removed, and **a build of the greater one is still a 50/50 DECISION however it is entered**, so it is
-> what the tray REVEALS instead: **a dime is drawn as a TEN-FRAME of ten pips and a penny as one pip
-> the same size**, so six dimes beside five dimes and five pennies is a comparison the child looks at.
-> A disc marked "10¢" would be a piece ASSERTING its value — the 0.55-of-a-rod fault.
-> ⚠️ **The tiers grow the MISCONCEPTION, not the numbers**: L1 tenths only (pennies always a fist), L2
-> both wells, L3 the trap amounts (0.6 against 0.06) and the `op` rounds that cross a ten. And the
-> `op` operands are **drawn to guarantee the case rather than clamped into it** — an empty `rint` range
-> behind a `Math.max(1, …)` silently produces the case the tier was meant to exclude, which is how a
-> tier stops meaning anything while every round still looks fine.
->
-> ## ④ ⚠️ AND THE ANCHOR'S OWN NOTATION WOULD HAVE ERASED THE CHAPTER
-> **Money always pads to two decimal places.** `$0.60` beside `$0.55` is obviously bigger, so written
-> that way **the misconception cannot occur at all**. So every ASK states the decimal (`0.6`) and
-> `money()` appears only in the REVEAL, as the bridge — *"$0.60 — that is 0.6 of a dollar"*, verified
-> on screen. Same for what is SPOKEN: "sixty cents" hands over six dimes without a decimal being read,
-> so Milo says the digits. Both gated.
->
-> ## ⑤ ⚠️ FIVE FAULTS THE DRIVE FOUND, AND FOUR WERE ONLY VISIBLE AT 640×320
-> ① **The explore beat showed a price tag reading `0.01` over an empty tray** — a question card on the
-> one beat that asks nothing, and a number that was simply untrue. ② ⚠️ **"0 pennyies"**, on the FIRST
-> demo beat, from a plural built by appending a suffix — the *"Fox has a apple"* family. ③ ⚠️⚠️ **THE
-> COINS RENDERED AT A 2.2px PIP**: the board measured **201×90 inside a 550×98 band**, i.e. height
-> binding hard with **~330px of width going spare**, and FitBox obediently shrank the one thing the
-> child has to count. **That is scale-where-reflow-was-needed** — the teen band's rule, recurring here
-> — plus a piece drawn in the wrong aspect (a 1×10 strip is ten pips TALL; a 2×5 ten-frame is half the
-> height for the same ten). Tag beside the wells, ten-frame coins: **485×90 and a 6.6px pip**, same
-> band. ④ ⚠️ **THE BOARD WAS DRAWN 32px INTO THE QUESTION CARD, OVER THE PRICE TAG** — `boardBand`'s
-> top clamp takes the BOTTOM band as its input, so the explore beat's 47px action row pushed the top
-> from 105 to 65. The clamp is meant to slide a board under *text already read*, and the tag is the
-> question. Fixed with the band's quiet **top-right chip** on short. ⑤ ⚠️ **A FIXED 24px RESERVE MADE
-> A COLLISION IT EXISTED TO PREVENT** — the verdict pill wraps to two lines at that width and spilled
-> over the tag. Sized to content now.
->
-> ## ⑥ WHAT WAS ACTUALLY DRIVEN
-> **1280×720:** both doors · the explore beat with **7 + 5 pennies fusing into 1 dime + 2 pennies**
-> (the bridge, live, where nothing is scored) · the guided round answered **3 dimes then 0 pennies** —
-> the fist case — grading and advancing · scored round 1 (`0.5`) answered **with the misconception**
-> (0 dimes, 5 pennies) → miss line, tray emptied, slot back to dimes, round still open · a second wrong
-> tray printing **"That tray is 0.12 of a dollar"** (true of what they laid, never the answer) · then
-> the correct build printing **"$0.50 — that is 0.5 of a dollar"** · 23 layers crossed, **0 overlaps,
-> 0 offscreen, no scroll**.
-> **640×320:** the briefing with the second door **17px clear of the bottom edge** · explore · all
-> three demos including **`0.6` as six countable ten-frames with the pennies well empty** and `0.07`
-> as seven pennies with the dimes well empty — the trap taught both ways round · the guided round
-> graded, **0 text overlaps with the verdict pill up**, no scroll. **0 console errors.**
-> ⚠️ Two instrument notes, both documented and both met again: the pane renders the app into a corner
-> after a resize while `innerWidth` reads correctly (trust `getBoundingClientRect`), and the two
-> "overlaps" a layer sweep reports here are the full-width HUD **containers**, not their pills.
->
-> ## ⑦ ⚠️ THEN THE FOUNDER ASKED FOR A FULL TEN-ROUND RUN, AND GETTING READY FOR IT FOUND THE WORST DEFECT OF THE SESSION — ONE I HAD WRITTEN AN HOUR EARLIER
-> ⚠️⚠️ **THE BOARD PRINTED ITS OWN ANSWER ON TWO OF THE THREE ROUND TYPES.** `Board` rendered
-> `dec(data.target)` as its headline — exactly right on `make`, whose question IS *read this amount*,
-> and fatal on the other two: an `op` round asks *"the tag read 0.55, it went UP by 0.05"* and printed
-> **0.6** above it, so **the arithmetic never had to happen at all**; a `place` round asks *"seven
-> hundredths"* in WORDS and printed **0.07**, doing the words-to-digits step that is half of what the
-> round tests. One expression, correct for one of three types, and it reads as obviously fine.
-> Now `headline(round, revealed)` in the pure module: `make` shows the tag, `op` shows its **SUM**
-> (the question, as The Pizza Counter's board does), `place` shows **`?`** until the commit. ⚠️ The
-> sweep is on TOKENS rather than substrings — `0.1 + 0.6` contains `0.6` while meaning nothing of the
-> kind. **5/5 mutations caught**, including the scene bypassing the module.
->
-> ## ⑧ ✅ TWO FULL RUNS PLAYED — AND THEY CLOSE THREE OF THIS BLOCK'S OWN OPEN ITEMS
-> They had to be two, because they are different evidence (FitOut's precedent): a perfect run exits
-> early, and only an erring run walks all ten.
-> • **RUN A — every answer correct.** The tier climbed and **both types that had never been on screen
-> came up scored**: round 4 an **`op`** (`0.16`) at L2, round 5 a **`place`** (`0.5`). L1 was
-> tenths-only throughout (0.7 · 0.9 · 0.1 — every pennies well a fist), L2 opened both wells (0.76).
-> ✅ **Coverage worked live** — all three readings were asked, and only then did the **mastery
-> early-exit** fire at round 6 and the chapter end itself. 0 console errors.
-> • **RUN B — one wrong answer per round.** ✅ **All ten rounds walked** and the chapter finished
-> itself. Every miss showed the written line, emptied the tray and re-opened the round at the dimes
-> well; every verdict pill named **what was laid** (`That tray is 0.81 of a dollar`) and never the
-> answer. ✅ **The re-teach fired three times — at rounds 3, 6 and 9, i.e. every third erred round,
-> exactly `reteachAfter: 3` — and it TEACHES**, replaying the working beat by beat with the tray
-> filling ("$0.50 on the tray, and 0.5 on the tag — the same amount, written two ways"). 0 console
-> errors.
-> ⚠️ **Stated rather than hidden: an erring run holds the tier at L1, so every one of Run B's ten
-> rounds was `make` at tenths.** The two runs together cover the three types; neither does alone.
->
-> ## ⑨ ⚠️ AND THE RUN CAUGHT A LAYOUT FAULT THAT ONLY EXISTS ON A FRAME NOBODY HAD TESTED
-> The preview pane resized itself to **466×676** mid-run — narrow but TALL — and Milo was sitting on
-> the answer pad's **`0` and `1` keys**. `MILO_LANE` was `short ? 104 : 12` and `short` is `vh < 470`,
-> so a tall narrow frame took the 12px lane. **`0` is the answer on most rounds in this chapter**
-> (`0.6` is six dimes and then zero pennies), and he is `pointerEvents: none`, so every tap still
-> landed and nothing but crossing the two boxes could see it — **FactorLab's fault verbatim, in the
-> chapter where zero matters most.**
-> ⚠️ **And the obvious fix was still a guess**: 104 left 4px of him over the `0`, because his right
-> edge there is 109.5. It is derived now — `PtMilo` is `left: 9%` with `translateX(-50%)` and
-> `width: min(20vh,160px)`, so `miloRight = vw*0.09 + min(vh*0.20,160)/2` — which is this repo's own
-> *measure a boundary off THAT character* rule. Verified on screen: 0 keys covered, pad at 142 against
-> his 109.5. **4/4 mutations**, and ⚠️ **the fourth only after a survivor showed the gate could not see
-> the SCENE dropping the lane** — every assertion drove `MILO_LANE` directly, so a hardcoded padding
-> walked through. Closed with a source check.
->
-> ## ⑩ THE GATE — +31 tests, **23/23 planted regressions caught**
-> [coinTrayDecimals.test.ts](src/__tests__/coinTrayDecimals.test.ts) drives the pure module and
-> source-checks the scene. Caught: L1 drawing hundredths · L3 `op` no longer forcing a crossing · a
-> `place` round filling both wells · the miss line naming the amount · the money form leaking into an
-> ask · the spoken line saying cents · the pad dropping zero · the band given a floor instead of a top
-> clamp · the verdict printing money on a miss · the first demo made the tidy case · **the dwell key
-> carrying the slot** (FitOut's `12`-as-`11` bug) · **a fist no longer counting as an answer** · the
-> slot no longer mirrored in a ref · the demo card labelled with a literal round type.
-> ⚠️ It passed 28/28 on its FIRST run, which by this file's own rule is not evidence — every mutation
-> above was planted in the SOURCE, never in an assertion, by a script that asserts its own
-> substitution count.
->
-> ## ▶ OPEN
-> 1. ✅ **SHIPPED 2026-08-13 — `main`@`0c9418b`, prod serving sw v92.** Three commits, clean
->    fast-forward, 0 ahead / 0 behind: `bb3850d` (the docs split), `dee2f2e` (both chapters — ONE
->    commit, because they rewire `storyChapters.tsx` and `core/chapters.ts` on adjacent lines and any
->    split leaves a registry importing a component that does not exist yet), `0c9418b` (sw v91 → v92).
->    Gates re-run before staging rather than trusted from this file: `tsc` 0 · **902/902** ·
->    `next build` 0. **DELETED: `story/DecimalGrid.tsx` + `story/FractionForge.tsx`.**
->    Post-deploy: prod `sw.js` **v92 on the fifth poll**, 9 routes + `pizza_base.png` all 200,
->    **0 hits for `FractionForge`/`DecimalGrid` in the `/story` shell**, and both chapters driven on
->    the live origin — briefing, both doors, 0 console errors.
->    ⚠️ **What the prod drive does NOT cover: only the BRIEFING screen was reached.** No demo, no
->    guided round and no scored round has been played on production; everything below still stands,
->    and the fresh pane cached `milo-shell-v92` so the stale-worker trap was avoided by construction
->    rather than by clearing it.
-> 2. ✅ **CLOSED by §⑧ — scored `op` and `place` both played, all ten rounds walked, the re-teach
->    fired three times and the mastery exit fired.** ⚠️ What the two runs do NOT cover: **no scored
->    round has ever been on screen at L3**, so the trap amounts (`0.6` against `0.06`) and the
->    carry/borrow `op` rounds are gate-only — a perfect run masters out at round 6, before L3, and an
->    erring run never leaves L1. Reaching L3 needs a run that is right just often enough, and it is
->    the one drive still owed.
-> 2b. ⚠️ **L1'S QUESTION SPACE IS NINE AMOUNTS AND A RUN IS TEN ROUNDS**, so a child who errs every
->    round must meet a repeat — seen in Run B (0.7, 0.2, 0.4 and 0.5 each twice). `sig` dedupe cannot
->    help, and widening L1 past tenths would destroy the tier's whole purpose. Noted, not fixed.
-> 3. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO ANY OF THE AR — sixteen readings deep.** Everything
->    above came through the tap path or `__miloFingers`, which bypasses the detector. This chapter is
->    the FIRST where **a fist is a valid answer on most rounds**, so `hands > 0` on a real camera —
->    telling a closed hand from a hand that has left the frame — is the thing to check, and nothing
->    headless can.
-> 4. **The 2×5 ten-frame was chosen for its ASPECT, not by eye.** It is countable at 640×320 by
->    measurement (6.6px pips) and worth one look with a founder's eye at the coins' actual size.
-> 5. **`boardBand` is now the THIRD copy of that arithmetic** (`factors.ts`, `pizza.ts`). Marked with a
->    `ponytail:` comment rather than extracted, because doing it now means re-running two gates on two
->    uncommitted chapters for eight lines.
-> 6. **Everything in the 🍕, ✋ and 🗑️ blocks below still stands**, including that the rebuild shape for
->    the two deleted chapters is an unanswered founder call. `public/sw.js` is still v91.
-> 7. Of this session's faults, **three came from reading the shipped code before touching it, one from
->    reading the plan against arithmetic, five from driving it (four of those only at 640×320), and one
->    from a demo beat's own words. None from the type-checker, and none from the gate — which went
->    green first time and had to be mutation-tested to be worth anything.**
->
-> 🍕 **2026-08-13 — FRACTIONFORGE → THE PIZZA COUNTER, ON THE FOUNDER'S CALL TO RE-THINK THE 9–11 FRACTION CHAPTER AROUND A DAILY EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT IT PRINTED ITS OWN ANSWER AND THAT ITS COMPARISON ROUNDS NEVER COMPARED TWO FRACTIONS. 🚀 SHIPPED with The Coin Tray — `main`@`0c9418b` / sw v92; this block's "NOT COMMITTED" is stale.** `tsc` 0 · **871/871 vitest** (was 808, **+63**) · `next build` 0 · **eslint: byte-for-byte the same rule profile as FactorLab minus one, i.e. zero new classes** · 0 console errors in a fresh tab · driven at 1280×720 and 640×320 on BOTH inputs · **17/18 planted regressions caught, the 18th proven INERT with its guard separately gated.**
->
-> **The asks:** *"band 9-11 mein fraction chapter ko daily real world example se rethink karte hai"* → on the world, **"pizza shared with friends"** → *"toh isme AR kaise daale?"* → on the verb, **"fingers = slices"**.
->
-> ## ⓪ ⚠️ TWO DEFECTS WERE ALREADY SHIPPING, AND THE SECOND IS THE ONE THE CHAPTER IS NAMED FOR
-> ① **A `name` ROUND PRINTED ITS OWN ANSWER.** `FrPlay` initialised its stage with `revealState(data)`
-> so the bar would open pre-shaded — correct — and `revealState` also carries `verdict`, which `Forge`
-> renders as a full-size green pill. So *"What fraction is shaded?"* was asked with **3/4 on screen**.
-> ② ⚠️ **EVERY COMPARE ROUND WAS SAME-DENOMINATOR.** `mkCompare(den)` drew ONE `den` and two
-> numerators, so *"which is greater, 4/5 or 2/5"* is comparing **4 with 2** — integer comparison
-> wearing a slash. **The chapter named for comparing fractions never once asked a child to compare two
-> different-sized parts**; only the explore sim did. Delete every bar and all thirty questions still
-> answer.
->
-> ## ① ⚠️ THE FOUNDER PICKED PIZZA AND I FLAGGED THE COST FIRST — 6–8 ALREADY OWNS IT
-> [story-9-11-ar-plan.md §6](docs/story-9-11-ar-plan.md) names *"a pizza shared with friends"*, and
-> **SliceShop (6–8) IS pizza** — a world this child has likely already played, on the same skill.
-> Raised, and the founder chose pizza anyway; taken as his decision. **So the WORLD repeats and the
-> VERB may not**, and the separation is structural rather than verbal: SliceShop owns **FIT IT** —
-> ONE whole, one piece size, lay copies until full — and equivalence needs the thing it cannot show,
-> **TWO wholes cut differently**. One whole vs two is a property a gate asserts and a reader sees.
-> ⚠️ **AND COMPARISON STOPPED BEING ITS OWN ROUND TYPE**, because two chips is the 50% coin flip this
-> band is full of and a finger count cannot express it anyway. It is what every `match` round REVEALS
-> (two of my eighths make one of your quarters, so an eighth is smaller); `more` then asks it as a
-> NUMBER on pairs where **no exact answer exists**. ⚠️ Which has to be CHECKED, not assumed — 2/4 IS
-> exactly 3/6, so a plausible non-multiple pair would have had the prompt tell the child a lie.
->
-> ## ② THE AR — `reads: 'count'`, AND THE PLAN'S OWN VERB WAS WRONG
-> §6 says *CHOP the pizza — place cuts, which have to come out EQUAL*. It fails two of chapter-craft
-> §5's tests and I said so before building: **a wobbly hand becomes a wrong answer** (the air-writing
-> fault — a shape that cannot be read is "try again", never a mark), and **equal parts is 6–8's
-> payload**, so chopping teaches the band below with a fancier input. Founder picked **fingers =
-> slices**: zero new detector, zero new art, and the whole AR cost is wiring in the shared
-> `useHandInput`/`useDwell`/`CamView` layer exactly as FactorLab does.
-> ⚠️ **NO ANSWER IS EVER 0**, so a fist means nothing, `hands === 0 && count > 0` is the only guard the
-> commit needs, and the pad starts at 1 — one trap fewer than FactorLab, which has to tell a fist from
-> a lowered hand.
-> ⚠️ **AND THE ANTI-ORACLE RULE IS SHARPER HERE THAN ANYWHERE ELSE IN THE BAND: two gaps side by side
-> can be compared BY EYE.** A board that took slices live would let a child sweep 1,2,3… and stop when
-> the gaps matched, having judged nothing — the oracle that got an area chapter and then a division
-> chapter deleted. My pizza stays WHOLE, cuts visible, until the commit. `openingTake` lives in the
-> pure module so the gate DRIVES that rule instead of grepping for it.
->
-> ## ③ ⚠️ THE GATE FOUND TWO PRODUCT FAULTS BEFORE IT EVER WENT GREEN
-> ① **A `more` round could answer "ALL OF IT"** — beating 3/4 with halves takes 2 of 2, which on
-> screen is an empty plate rather than a comparison, and offers only two counts besides. The roof is
-> one slice lower for `more` alone (`match` cannot reach it; an `op` genuinely may end with the whole
-> pizza gone). ② **A NUDGE NAMED THE ANSWER** — *"that pizza only has 6 slices"* hands 6 to a child who
-> overshot on the `op` rounds where 6 IS the answer. It states the direction now, not the figure.
->
-> ## ④ ⚠️ AND DRIVING IT AT 640×320 FOUND THE FAULT THAT MATTERED MOST
-> The question card wrapped to **96px of a 320px frame**, the answer row reserves 112, so `boardBand`
-> handed the board its 90px floor and FitBox scaled **two pizzas to 35px each** — the one thing the
-> child has to COMPARE, unreadable. The panel was spending ~70px on a header repeating the card's own
-> tag and a big readout repeating the denominator the card already states. Dropped both on short,
-> dropped the per-pizza caption, shortened the context to one line: **35 → 51px**, and the card 96 →
-> 78. ⚠️ **Also caught by eye and fixed before that: the TAKEN slices were painted with a translucent
-> accent, which reads as a SHADED sector — the pie chart the wedge-clipping exists to escape, and
-> ambiguous besides (is the coloured half the amount, or the pizza half?).** Nothing is drawn over a
-> gone slice now; the plate shows through.
->
-> ## ⑤ WHAT WAS ACTUALLY DRIVEN
-> **1280×720, both inputs:** the briefing with both doors · explore reflowing live to **1/2 vs 3/6
-> lining up with "the same"** · all three demos beat by beat · the guided round WRONG (board showed
-> **3/4 gone**, verdict *"3/4 is MORE than 1/2"*, never naming 2) then RIGHT (**"2/4 = 1/2"**) ·
-> a scored round. ⚠️ **The held-over guard proven the decisive way: a hand parked on the CORRECT
-> answer for 17.7 s across a round boundary committed NOTHING, and lowering + raising it committed at
-> once** — and the dwell fired at **1312ms** against `DWELL_MS` 1200. **Both doors proven live**: the
-> remembered pick made taps the BIG button and left the camera as the quiet one.
-> **640×320:** every fixed layer crossed with every other on a scored round, with the miss note up —
-> **0 real overlaps, 0 offscreen, no h- or v-scroll**, Milo clearing the note pill (90 vs 104,
-> `MILO_LANE` working). ⚠️ **Two reported overlaps were checked rather than believed**: one is the
-> full-width HUD container (the documented phantom), the other is the board's top **6px** under the
-> question card — the clamp's designed behaviour, and on a short frame the header it hides is dropped.
-> ⚠️ **And a first crossing reported "0 overlaps" over only FOUR layers because two selectors matched
-> nothing** — the instrument lying exactly as this file warns; enumerating `position: fixed` instead
-> found the real six.
->
-> ## ▶ OPEN
-> 1. ✅ **SHIPPED 2026-08-13 inside `dee2f2e` with The Coin Tray — `main`@`0c9418b`, prod sw v92.**
->    The two went in as ONE commit on purpose (see the 🪙 block's item 1). **DELETED:
->    `story/FractionForge.tsx`.** Driven on the live origin: the briefing renders with both doors and
->    0 console errors, and `pizza_base.png` — the new menu tile's asset — returns 200.
->    ⚠️ Only the BRIEFING was reached on prod; item 2 below is unchanged by the deploy.
-> 2. ⚠️ **NO SCORED `more` OR `op` ROUND HAS BEEN ON SCREEN** — both exist only at L2+, which needs
->    three correct in a row, and both were driven only in the DEMO (same `Board` component, so the
->    rendering is covered; the SkillBeat wrapper is not). **No ten-round run, no re-teach, no mastery
->    exit.** This is the single most useful next drive.
-> 3. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO ANY OF THE AR — fifteen readings deep.** Everything
->    above came through `__miloFingers`, which sets the reading directly and **bypasses the detector
->    entirely**, so `STABLE_FRAMES` and whether a nine-year-old's 6–10 fingers read reliably across two
->    hands are unproven. This chapter needs two hands more often than FactorLab does (answers reach 10).
-> 4. **The board's top 6px sits under the question card at 640×320.** Documented, deliberate (the clamp
->    protects the tap targets), and worth one look with a founder's eye.
-> 5. **`more` and `match` share one picture and differ by one word** ("the same as" vs "beats"). Gated
->    as distinct types with distinct graders, and worth watching a child on — it is the one place this
->    chapter could read as two names for one question.
-> 6. **Everything in the 🗑️ and ✋ blocks below still stands**, including that the rebuild shape for the
->    two deleted chapters is an unanswered founder call. `public/sw.js` is still v91.
-> 7. Of this session's faults, **two came from reading the shipped code before touching it, two from
->    the gate before it first ran green, two from driving it at 640×320, one from looking at a
->    screenshot, and one from a lint warning on an unused loop variable. None from the type-checker.**
->
-> ✋ **2026-08-13 — FACTOR LAB HAS ITS DAILY ANCHOR AND ITS CAMERA IS FULL SCREEN — AND VERIFYING IT FOUND THREE BUGS THAT WERE ALREADY SHIPPING, ONE OF WHICH MARKED A CORRECT-LOOKING ANSWER WRONG OVER A PICTURE WITH NO GAP IN IT. 🚀 SINCE SHIPPED — `main`@`31067ac`; this block's "NOT COMMITTED" is stale.** `tsc` 0 · **808/808 vitest** (was 787, **+21**) · `next build` 0 · **eslint 15 problems against 15 at HEAD**, i.e. none introduced · 0 console errors · 0 server errors · driven at 1280×720 and 640×320 on BOTH inputs · **22/22 planted regressions caught, six of them against my OWN new assertions.**
->
-> **The asks:** *"in band 9-11 ka factor and prime chapter ko kaunse daily real world example se sikha rahe hai… AR-plan md waali file dekho"* → **"ok toh usme convert karo aur full screen camera jaise humne bigg number chapter mein kiye hai, taaki baccha acche se AR ka experience le"**.
->
-> ## ⓪ ⚠️ THE ANCHOR EXISTED ONLY IN A PLAN DOC, AND THE PLAN'S OWN VERSION OF IT WAS FALSE
-> `docs/story-9-11-ar-plan.md` §5 gives this chapter *arranging desks in equal rows for an exam* —
-> and `grep -i desk` over `factors.ts` + `FactorLab.tsx` returned **zero**. The briefing said
-> *"Milo splits numbers on the bench"*, i.e. no anchor at all, which is exactly what the Fundraiser
-> audit measured last year. So the founder's question was correct on the facts.
-> ⚠️ **AND THE PLAN'S THE-PLAN LINE CANNOT BE SHIPPED AS WRITTEN:** *"37 won't go into equal rows at
-> all, however you push them"* — 37 desks go in one row of 37, or 37 rows of one. A child does not
-> push back on a neon bench; a desk they can picture. The chapter's honest claim is narrower and it
-> now says BOTH halves at the moment each applies (see §②).
->
-> ## ① THE ANCHOR IS A SIMILE IN THE EXPLANATION, NOT A RE-THEME — AND THAT WAS MEASURED, NOT PREFERRED
-> `ANCHOR` in factors.ts rides the **briefing card** (both doors) and the **explore beat**, and
-> nothing else; every per-round string still names what is drawn, which is parts on a bench.
-> ⚠️ **The plan's own §5 says *anchor the EXPLANATION, keep the world*, and The Fundraiser is the one
-> recorded exception because dollar denominations ARE base ten** — the anchor and the manipulative
-> were the same object, so re-theming REMOVED a bridge instead of adding one. A desk is a skin over a
-> unit, and three things break if it is more than a simile:
-> • **the pair test has no desk story** — nobody pairs desks, and the bench header would read
->   *"7 pairs"* under a classroom anchor;
-> • ⚠️ **`multiple`'s CRATE would collapse into `factor`'s ROW.** `mkMultiple(5,7)` and `mkSplit(35)`
->   are the same 35 parts; the first accepts only 7 and the second accepts 5 AND 7, and `coverage`
->   guarantees the child meets both in one run. Two near-identical sentences, two graders.
-> • **a desk SPRITE is the wrong art** — 18px at the top of the range, 100 `<img>` per round, and it
->   cannot carry the stranded-unit recolour that is the chapter's whole visual argument.
-> ⚠️ **AND §7.3's CONSTRAINT IS NOT WHAT IT SAYS.** Measured off the generator: the SPLIT rounds top
-> out at **63**, and only `multiple` reaches 100 — at **L2 as well as L3**, so the prescribed
-> "one word at the top tier" would miss half of them. Nothing was capped; no per-round string names a
-> room. (`PRIMES[1]` is also dead data — `POOL[1]` never draws a prime.) The plan doc carries all of
-> this as a dated amendment rather than quietly disagreeing with the code.
->
-> ## ② ⚠️⚠️ THREE THINGS THAT WERE ALREADY SHIPPING, AND THE FIRST IS THE ONE THAT MATTERS
-> ① **A CORRECT-LOOKING ANSWER WAS MARKED WRONG OVER A BENCH WITH NO GAP IN IT.** `showableRows`
-> refuses `f === n` in the GENERATOR (n rows of one is every part on its own, not a split) and
-> **nothing refused it at the ANSWER**. So a child holding up 6 on a round about 6 got a red verdict
-> reading **"0 left over"** over six clean rows, with the miss line saying *"that leaves a gap"* —
-> three statements, two of them false. **Four of the five tier-1 split values are within reach of two
-> hands**, so it is met in the first minutes. It is a nudge now, the mirror of the existing 1-row one.
-> ② **THE VERDICT STRING LIVED IN THE COMPONENT**, where no gate could see a word the child reads —
-> the chapter had 40 green tests and none of them could reach it. It is `verdictFor` in the pure
-> module now, driven by the gate, with a source check that the scene prints it rather than building
-> its own.
-> ③ ⚠️ **AND A LEFTOVER COUNT CAN BE THE ANSWER BY COINCIDENCE.** Eight rows out of a pair test of 15
-> strand SEVEN, and seven pairs is what was asked — the count of what did not fit printing the
-> answer. The miss-line rule reaching the verdict through arithmetic instead of wording.
-> Plus two smaller ones: the demo called a `multiple`'s container a ROW while its prompt said CRATE,
-> and the bench header said *"4 pairs"* over four rows of THREE.
->
-> ## ③ THE CAMERA IS FULL SCREEN — AND THE HONEST REASON IS DIAGNOSTIC, NOT PEDAGOGICAL
-> ⚠️ **The usual argument does not apply here and it is worth writing down.** The Fundraiser goes
-> full screen because its hand is a CURSOR; this chapter's answer is a **scalar** and the hand's
-> position means nothing, so the glancing problem full screen solves does not exist. What it buys is
-> that **a MISREAD becomes readable**: the numbered chips over the child's own fingertips say not
-> just how many fingers were counted but WHICH.
-> ⚠️ **AND THE CORNER PANEL WAS ALREADY TOO SMALL TO DO THAT ONE JOB** — `drawCount` draws chips at
-> R = 18 with a 46px offset into a **76px** short-frame panel, i.e. cramped past reading.
-> ⚠️⚠️ **BUT THE MARKERS WERE HIDDEN IN FULL MODE, AND THE REASON WAS A REAL BUG RATHER THAN A
-> CHOICE.** The loop mapped a landmark with `y * clientHeight`, which assumes the drawn video fills
-> its box — true of a 4:3 stream in a 4:3 panel, false of the same stream cover-cropped into 16:9, so
-> markers drifted **up to ~120px at 1280×720**. Fixed at the source (`coverView`/`sxy`, the same
-> correction a chapter makes for a painted ground line), so `markers` is now a per-chapter CHOICE:
-> on here, off in The Fundraiser, which has its own cursor.
-> ⚠️ **It is a FIX for the other AR chapters too, not a no-op** — `openCamera` asks 640×480 with
-> `ideal`, not `exact`, so a laptop handing back 16:9 was already drawing every corner overlay in the
-> wrong place, the sweep's arming zone included.
-> ⚠️ **AND THE OTHER HALF OF THE FULL-SCREEN ARGUMENT IS FALSE, so it is recorded rather than
-> repeated:** cover-cropping HIDES 12.5% of the camera frame at each end (16.7% at 640×320), where
-> the 4:3 panel showed all of it. For *is my hand fully in frame* the corner panel was better.
-> Also: the corner reserve is gone (it cost the bench 32px for a panel that is now `inset: 0`), the
-> code-drawn backdrop is not painted under an opaque video, and the bench, the note pill, the banner
-> and the question card go **opaque** over a camera — measured, the scrim plus a 0.72 panel passes
-> ~18.5% of the room, which takes unit-vs-panel contrast from ~4.9:1 to ~2.3:1 on the surface the
-> child has to COUNT.
->
-> ## ④ ⚠️ THEN AN ADVERSARIAL PASS FOUND SIX MORE, AND TWO OF THEM WERE MINE FROM AN HOUR EARLIER
-> ① ⚠️ **THE CAMERA-NOT-READY WINDOW HAD NO BACKGROUND AT ALL.** `fullCam` cannot consult `camReady`
-> — the `<video>` must be mounted before `openCamera` can use it — so between entering the lab and
-> the picture arriving the backdrop was already dropped and the video was still `opacity: 0`, and the
-> whole chapter rendered on the app's **cream page background**, HUD chrome, Milo and the *"Milo
-> needs to see your hands"* card floating on it. **Not an edge case: every camera-path entry, every
-> denial, every failure.** One property on the root, which is what OrderDesk already has.
-> ② ⚠️ **THE SCRIM PAINTED ON TOP OF THE MARKERS I HAD JUST TURNED ON** — siblings in one stacking
-> context with no z-index, so DOM order is paint order, and it dimmed by 34% the exact thing the
-> change exists to show. Ordered video → scrim → canvas.
-> ③ ⚠️ **MY INTRO-CARD COMMENT INVERTED ITS OWN MEASUREMENT.** It claimed both bodies came out
-> SHORTER than the ones they replace (215/200 against 232/217); measured, they were **233/218 against
-> 206/194 — twenty-five characters LONGER**, and none of the four numbers in the comment corresponded
-> to any string in either version. That is *a comment claiming a rule the code does not follow* at its
-> most expensive, because it is the one sentence that stops the next reader checking — and by its own
-> cited datum (200 chars ≈ 307px in a 320px frame) the copy would have overflowed into the Start
-> button, which this repo has shipped once. Now **206/191**, with the count in the comment.
-> ④ ⚠️ **AND MY EXPLORE SIMILE WAS A WHOLE SENTENCE**, which took that card from two lines to three at
-> 640×320 and drove the bench **15px into the button below it** — the anchor breaking the reserved-band
-> rule it was written under. One clause now.
-> ⑤ **`benchBand`'s 90px floor broke the reserve it lives inside.** On the guided round at 640×320 the
-> question card wraps to `promptBottom = 142`, leaving 58px between the bands — so the floor handed
-> back 90 and the bench was drawn **32px INTO the controls**, over the note pill, across the bottom row
-> of units. Pre-existing arithmetic, moved verbatim out of `Stage`, and live at the band's own stated
-> short-frame size. **The clamp goes on `top` instead**: the bench slides up under the question card —
-> text the child has already read — rather than down onto targets they have to hit.
-> ⑥ **`w` had become optional on the shared `CamView`**, so a corner caller omitting it would render a
-> 0-wide panel and put every marker at the origin, silently. Required again; full mode passes 0.
->
-> ## ⑤ THE GATE — +21 tests, and **22/22 planted regressions caught**
-> ⚠️ **Six of the twenty-two were caught only after mutation-testing my OWN new assertions**, every
-> one this file's recorded shapes: a verdict rule guarded in ONE direction (collapsing it the other
-> way survived); `toMatch(/verdictFor\(/)` proving the function is MENTIONED rather than reached (the
-> shipped bug restored behind it stayed green); `expect(top).toBeGreaterThanOrEqual(pb)` where
-> `top = max(_, pb + 8)` — a tautology, and planting a zero gap survived; `top + band + bot === vh`
-> guarded by `if (…>= 90)`, which excludes precisely the case that fails; **counting `${ANCHOR}` twice
-> across a card with two bodies**, which two in one body and none in the other satisfies; and
-> **nothing anywhere read `HandInput.tsx`**, so hiding the markers again, putting the scrim back on
-> top and re-optionalising `w` all walked through.
-> New: [camCoverMap.test.ts](src/__tests__/camCoverMap.test.ts) drives the real `coverView`/`sxy` —
-> ⚠️ its first version wrote its OWN copy of the mapper and passed with the real one reverted.
->
-> ## ⑥ WHAT WAS ACTUALLY DRIVEN
-> **1280×720 and 640×320, camera path AND tap path:** the briefing carrying the anchor · the
-> full-screen surface with **`labGrid: 0, labBlur90: 0`** (the backdrop genuinely not painted) ·
-> the bench measured **opaque `rgb(20,29,62)`** · the marker canvas `display: block` and **last in
-> paint order, after the scrim** · the explore beat · the guided round on a forced `mkSplit(6)`
-> where **six fingers produced the new nudge and scored nothing, with the bench left undealt** ·
-> three fingers grading `6 = 3 × 2` · the camera-denied gate on the chapter's own navy · every
-> fixed layer crossed with every other at 640×320 on both inputs, **0 overlaps, 0 offscreen, no
-> h-scroll**. A temp `GUIDED`/phase override was used and **reverted and grepped (0 hits)**.
-> ⚠️ Two instrument notes: the held-over dwell guard means `__miloFingers` set BEFORE the round
-> mounts is correctly refused — lower the hand and raise it again; and a layer sweep whose selector
-> matched the full-screen container reported five phantom overlaps.
->
-> ## ▶ OPEN
-> 1. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO IT — fourteen readings deep**, and this change is the
->    first that would actually be VISIBLE to one: the numbered chips over the fingertips have never
->    been seen on a real camera, because `__miloFingers` bypasses the detect loop entirely and the
->    preview blocks capture. **The cover-map fix is proven by arithmetic and by a unit test, not by a
->    hand.** It is the single most useful next check.
-> 2. ⚠️ **AND THE COST IS STATED RATHER THAN HIDDEN: full screen shows LESS of the camera frame.** If
->    a real child's hand keeps being cut off, that is this change, and the fix is a wider capture
->    request (`ideal: 1280×720`) rather than going back to the corner.
-> 3. **No ten-round run, no re-teach seen fire, no mastery exit, and no scored round driven at all** —
->    the guided round was reached only through a temp override, because the three demos take ~30s of
->    wall time in a throttled tab.
-> 4. **`multiple` and `factor` are still two questions about the same number** (35 parts: crates of 5
->    accepts 7, splitting 35 accepts 5 and 7). Gated as distinct sentences, and it is worth one look
->    with a child.
-> 5. **The re-theme is NOT done and that was deliberate** — §① is the argument. If the founder wants
->    the world itself to become a hall, it needs a desk manipulative that can carry the stranded-unit
->    recolour, and `multiple` needs a container that is not a row.
-> 6. **Everything in the 🗑️ block below still stands**, including that the rebuild shape for the two
->    deleted chapters is an unanswered founder call. `public/sw.js` is still v90.
-> 7. Of this session's faults, **three came from reading the shipped code before touching it, two from
->    driving it at 640×320, one from measuring the intro card's own characters, and six from
->    mutation-testing my own gate. None from the type-checker.**
->
-> 🗑️ **2026-08-13 — TIMES TABLES AND DIVISION ARE DELETED, ON THE FOUNDER'S CALL, AFTER HE ASKED WHAT THE CHILD IS ACTUALLY LEARNING. The AR verb that was built first is gone with them. 🚀 SHIPPED.** `tsc` 0 · **787/787 vitest** (was 901, **−114** — exactly the two deleted gates) · `next build` 0 · 0 console errors · server logs clean.
->
-> **The asks, in order:** *"Division chapter ke liye kaunsa daily real world example?"* → *"AR ka kya interaction daalne waale hai?"* → *"kuch aur AR ka idea dhundo naa… zyada interactive"* → A′ built and driven → **"but baccha isme sikh kya raha hai… sirf haath hila raha hai"** → **"yeh chapter aur time table chapter delete kardo… isko baad mein sochte hai kaise karna h"**.
->
-> ## ⓪ ⚠️ THE FOUNDER IS RIGHT, AND TRACING THE ROUND IS WHAT SETTLES IT RATHER THAN AN OPINION
-> One Supply Run round, honestly: Milo says *"22 tins in, 4 trays out"* — **both numbers are STATED** —
-> and the child's loop is *sweep · look at the crate · is there still enough to go round again? · Send.*
-> **Step 3 is the only decision and it is not arithmetic, it is looking.** Four objects left is a
-> glance for a nine-year-old. The app counts the sweeps; the answer is READ OFF the receivers.
-> ⇒ **The child is told 22 and 4 and still never has to divide.** That is the Empty Plot fault (*the
-> PLOT decided when it was full*) with a crate instead of a floor, and it survived because the file's
-> own header claims the opposite — *"nothing on screen says that's enough, deciding when to stop IS
-> the skill"* — which is true of the WORDS and false of the picture, because the crate shows you.
-> ⚠️ **The steelman, stated so the rebuild does not throw it away: the MODELLING was real.** Dealing 22
-> into 4 groups and finding 5 with 2 over is a legitimate concrete-stage act. What is missing is the
-> child's own **BOOKKEEPING** — they never hold a number, never predict one, never state one. **No
-> gesture fixes that**, which is why A′ (below) improved the feel and changed nothing that matters.
->
-> ## ① WHAT WAS BUILT AND THROWN AWAY THE SAME DAY — and one measurement from it is worth keeping
-> Asked for a more interactive AR verb, the founder picked **"ek-ek karke baanto"** — grab a unit from
-> the crate, carry it, open your hand over the next receiver. **It was measured before building and it
-> cannot work**, which is the reusable part: a drop target must beat the hand's own jitter, MediaPipe's
-> palm wanders ~±0.02 of frame width, and `reachSpan` stretches its 0.72 band onto the whole viewport
-> — so that lands as **±0.028·vw, i.e. ±18px at 640 and ±36px at 1280**. Against the bench's receivers
-> (±9 to ±78px apart) **34 of 36 size × reading × slot-count combinations came out UNHITTABLE, worst
-> 0.48×**, and it does NOT improve on a big screen because the jitter scales with the width too.
-> ⇒ **A dense row cannot be aimed at.** The Long Level's six checkpoints work only because they span
-> the FULL width. The way out is to **pass THROUGH a target instead of hitting one** — that became A′
-> ("deal as you pass": units land as the hand crosses each receiver), which was built, gated and driven
-> live before the chapter was deleted under it. **Both rules are now in chapter-craft §5** and they are
-> the only thing that survives the deletion.
-> ⚠️ Two of my own claims were wrong and mutation testing caught both: `ARM_STEPS` 6 → 12 was justified
-> by a measurement that does not hold (6 already lands one unit at a time; 12 buys only even spacing),
-> and `dealtBy`'s clamp is INERT (`stepSweep` caps `arm` below 1). Both recorded rather than left
-> looking like cover.
->
-> ## ② WHAT WAS DELETED, AND THE ONE THING THAT COULD NOT BE
-> Gone: `SupplyRun.tsx` · `FitOut.tsx` · both gates · **16 bespoke assets** · both registry rows · both
-> ids from `ChapterType`, `CHAPTER_META` and both route maps. **−3,848 lines.**
-> ⚠️⚠️ **THE SKILLS STAY, AND THAT IS NOT TIDINESS.** `i.multFacts`, `i.multMultiDigit` and `i.division`
-> keep their nodes with `chapter: ''`. They cannot be removed: **`learner_progress.chapter` and
-> `sessions.chapter` are FK'd to `chapters(id)`**, so deleting the DB rows would cascade a child's
-> history, and **`i.multFacts` is one of the most load-bearing nodes in the whole 3–18 graph** (factors,
-> dataGraphs, wordProblems and 12–14's ratioProportion all stand on it). `diagnose()` already builds
-> `planChapters` with `if (ch && …)`, so a chapter-less skill is simply skipped — nothing crashes.
-> ⚠️ **THE COST, STATED RATHER THAN HIDDEN: a child whose ROOT gap is multiplication facts now gets a
-> plan that starts at its 6–8 prerequisites and never at the gap itself.** That is the right failure
-> while no chapter exists and it is a real hole until one does. A test pins that state (`deeperChapter('factorsMultiples')` → null), so the day a chapter returns it goes red and somebody notices.
->
-> ## ③ AN UNKNOWN `?ch=` NOW SAYS SO — the deletion made a silent fallback dangerous
-> `/story` fell through to the counting picker for any unrecognised key, which reads as *"that chapter
-> is fine"*. For a REMOVED chapter that is the worst available answer. It now names the key and lists
-> the ones that work — **derived from `PREVIEW`, never typed out**, so it cannot rot as chapters come
-> and go. `/game` needs no such guard: its lookup is type-complete.
->
-> ## ④ ⚠️ AND I BROKE THE DEV SERVER MYSELF, EXACTLY THE WAY THIS FILE WARNS ABOUT
-> The founder hit **Internal Server Error on `/game`**. Not the deletion: I ran `next build` and then
-> `rm -rf .next` **with the dev server still up**, so it was reading `build-manifest.json` out of a
-> directory I had removed underneath it — 30+ identical `ENOENT`s. Stop the server, clear `.next`,
-> restart. Verified after: `/game` bounces a signed-out visitor to `/auth`, `?ch=factors` and
-> `?ch=money` render, `/story?story=farm` still jumps straight in, **0 server errors**.
->
-> ## ▶ OPEN — the rebuild question, unanswered on purpose
-> 1. ⚠️ **THE SHAPE A REBUILD SHOULD START FROM IS THE EMPTY PLOT'S: state what you cannot see, then
->    let the physical act CHECK it.** Three options were put to the founder and **none is picked**:
->    **(a)** tier-linked — deal freely at L1, predict-then-deal at L2/L3 (cheapest, and the hollowness
->    only bites where the numbers are big); **(b)** predict-then-check every round, FitOut's shape;
->    **(c)** change the QUESTION to one that needs the quotient (*"how many will be left over?"*) so the
->    dealing becomes its check and the gesture stays the answer. **Recommended: (a), with (c) inside it
->    at L3.** Do not start without the answer.
-> 2. **`infra/ar/sweep.ts` + its 37-test gate now have NO chapter consumer** (`LevelRun` imports only
->    `SWEEP_MAX_Y`), i.e. dead by the value of a condition. **Kept deliberately** — `SWEEP_ARM`, the
->    band-width ergonomics, the posture gate and the seen-crossing teleport guard are measured
->    constants that a rebuild would otherwise re-derive. Delete it if the rebuild picks another verb.
-> 3. **The 9–11 band is now 10 chapters, not 12**, and the plan doc carries a dated amendment saying so
->    rather than quietly disagreeing with the code.
-> 4. **Everything in the 🧑‍🏫 block below still stands** except what these two chapters owned — including
->    that **nobody has held a real hand up to any of the AR**, thirteen readings deep.
-> 5. Of this session's faults, **one came from the founder asking what the child was learning, two from
->    mutation-testing my own new gate, one from measuring a drop target before building it, one from a
->    drive hook that under-covered the gesture it was verifying, and one from `rm -rf .next` with the
->    server running. None from the type-checker.**
->
----
 
 _Older sessions (2026-06-15 → 2026-08-12) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision._

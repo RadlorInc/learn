@@ -184,6 +184,29 @@ which is the rail line's own sentence transplanted intact. This is §0b's *an at
 be true of its object* applied one level up — to the WORLD rather than to a question. **Say the
 world's rule out loud as a sentence, then ask whether a child who plays that thing would agree.**
 
+⚠️⚠️ **A WORLD CAN ONLY HONESTLY ASK FOR THE VALUES ITS OBJECTS ACTUALLY TAKE — CHECK THE RANGE, NOT
+JUST THE SUBJECT.** The angles chapter's anchor is *how steep the ramp at the park is*, which is the
+right anchor and is the founder's own; it also cannot express a third of the chapter, and the
+arithmetic says so before any code. **Obtuse means the arm swung PAST vertical, and real ramps live
+between about 5° and 40° — every slope in the world is acute.** So "make the ramp obtuse" asks a child
+to build a thing that does not exist, and the shipped week did exactly that: an obtuse *approach ramp*
+"because a barrow has to get up it loaded", which drew a plank leaning backwards over the bank while
+the words said *"shallower"*. The way out is not a different anchor but a wider world: the slopes
+(ramp, slide) take the acute jobs, the things that genuinely OPEN past square (a gate swinging back, a
+barrier arm lifting) take the obtuse ones, and one upright takes the right angle — each job naming its
+own object, which is the structure the chapter already had. **Write down the range your skill sweeps,
+then ask which of your world's objects can honestly sit at each end of it.**
+
+⚠️ **AND THE REASON A JOB GIVES MUST ARGUE FOR THE *KIND*, NEVER FOR A MAGNITUDE THE TIER IS FREE TO
+CHANGE.** This is the same fault one level down and it is easy to ship, because the sentence reads
+perfectly until you put it beside the generator. Driven on screen: *"Make the slide SHARPER than a
+square corner — any steeper and it is a drop, not a slide"*, i.e. the requirement and the reason
+contradicting each other in one sentence. Its sibling, *"push your bike up it, loaded"*, is true of the
+30° that L1 draws and plainly false of the 85° that L3 draws — **and both are acute, so the round is
+correct and the world is lying.** A reason about how STEEP begs the question the round is asking; a
+reason about which SIDE of square holds at every angle the tier can reach. Cheap gate: sweep the
+reason's own words against the kind it belongs to.
+
 ⚠️⚠️ **AN ANCHOR CAN CARRY A NOTATION THAT ERASES THE VERY THING THE CHAPTER TEACHES — CHECK ITS
 CONVENTIONS, NOT JUST ITS OBJECTS.** Money is the right anchor for decimals for the strongest possible
 reason (100 cents ARE the hundredths grid, so the anchor and the manipulative are one object) and it
@@ -305,6 +328,29 @@ scene rather than as an empty yard. Mark the boundary **for the full walkable de
 line, stopping at the walkable bound on every round so it says how WIDE and never how deep) and leave
 the inside bare. It must never gain posts, ticks or segments at intervals: that is a ruler, i.e. the
 printed answer drawn on the ground.
+
+⚠️⚠️ **AND BEFORE BUILDING A CAMERA TO SOLVE THAT, ASK WHETHER THE DIMENSION IS EARNING ITS KEEP —
+REMOVING ONE CAN DELETE THE WHOLE CLASS OF FAULT.** The Empty Plot was first person because *the
+answer is a PLACE, and a place cannot be offered as a chip* — which is true, and does not require 3D.
+Drawn from ABOVE the place is still a place, the peg is still somewhere on the ground, and everything
+the delivery lays is on screen at every instant, right and wrong, with nothing to swing round to.
+The camera swing, its hold time, the framing of a miss, the raised side view, `fov` being vertical
+while the check that matters is horizontal, a walking loop that `useFrame` will not run in a
+backgrounded tab: **all of it was scaffolding around a viewpoint the chapter never needed.** The
+founder's words (2026-08-15) were *"totally remove that 3d concept"* and the port cost the chapter nothing —
+1,380 lines of scene plus a 628-line procedural site generator became ~330 lines of instrument over
+the shared shell, with the same verb, the same generator and the same grader.
+
+⚠️⚠️ **AND A SHELL THAT REVEALS ONLY A *WRONG* ANSWER LEAVES THE CHAPTER OWING ITS OWN PAYOFF —
+CHECK WHICH STATES YOUR SHELL ACTUALLY RENDERS.** `GameShell` hands the instrument `reveal` on a
+wrong answer and on the re-teach, and a correct one goes straight to "You solved it ✓". Perfectly
+reasonable — the reveal exists to show you what you missed — and it meant this chapter showed the
+delivery **only to the children who got it wrong**: the tiles coming out exactly, *"and it comes out
+to the metre"*, the one beat the whole thing is built for, was never once on screen for a child who
+got it right. Nothing failed, every piece was individually correct, and the gate was green. **Ask of
+your own consequence: does it fire on the RIGHT answer?** The instrument knows — it holds the
+committed value and can grade it — so lay it on `reveal || (committed && correct)` and gate that.
+Found by driving the camera path, not by reading it.
 
 ⚠️ **AND IF THE UNITS COME FROM A STORE, THE STORE MUST BE DUMB.** A bundle labelled *"a row of 6"*
 hands over the side length the child was supposed to walk for — the printed-answer leak wearing a
@@ -514,6 +560,40 @@ opposite of the rule, by the one beat written to teach it. Nothing could see it 
 correct, the grader was correct, the beats were component-local, and the only disagreement was
 between the words and the counts. **Read the demo's numbers against its own sentences, and put the
 beat list behind an exported function so a gate can drive the same list the demo plays.**
+
+⚠️⚠️ **AND THE BEAT THAT DOES THE ARITHMETIC IS THE ONE MOST LIKELY TO HAVE A STATIC SCREEN — WHICH
+IS THE WHOLE TEACHING HAPPENING IN AUDIO, ON A BAND WHOSE DEVICES MOSTLY HAVE NO VOICE.** Every other
+beat has something obvious to show: the load arriving, the walk, the peg, the delivery. The *working*
+does not, because the sum happens in Milo's head — so it is the beat that quietly ships as a sentence
+over an unchanged picture, and it is the one beat that cannot afford to. Founder, on a screenshot of
+exactly that: *animate the explanation, and run the frames off the narration.* Two things follow:
+- **Find the still beats mechanically: any beat whose value equals its predecessor's is a still.**
+  Three of this chapter's six had the same value, and the one in the middle was the division.
+- **Give the working a manipulative of its own and let the frames perform the sum.** The Empty Plot's
+  load becomes a BAR: an area round cuts it into rows of the frontage, one row per frame, until the
+  rows run out — the row count IS the answer, being counted; a perimeter round takes two lots of the
+  frontage off the top and splits what is left in two. One widget, because both readings are
+  partitions of the same given number, and the two cuts are visibly different sums.
+⚠️ **The working's pieces are usually COUNTABLE, and that is only safe if they cannot reach a scored
+round.** Put the animation behind a field the walkthrough beats set and nothing in play does — not the
+initial value, not the hand, not the miss glide — and assert that as a single test, driven rather than
+grepped.
+⚠️ **And assert the SIZES of the pieces, not the caption under them.** Mutation-tested: shrinking a
+perimeter round's two final pieces to one unit each left the note still reading *"2 each"* and the
+gate perfectly green — the picture drawing one thing while its own words said another, which is the
+Supply Run fault arriving through the animation instead of through the beat list.
+
+⚠️ **AND ANIMATE AT THE NARRATION'S OWN RATE, WHICH YOU CANNOT DO BY MEASURING THE BEAT.** A beat ends
+when its utterance ends, and on a silent device when `speakSteps`' fallback timer fires — so its real
+duration is not knowable when the frames start. What IS shared is the child's speech-rate pick: the
+narration uses `2600 / m` per fallback step, so a frame at `620 / m` slows and quickens with the
+words. **Drive it on `setInterval` and hold the last frame** — rAF is frozen outright in a
+backgrounded tab, so an rAF-driven explanation cannot be verified headlessly at all and stalls the
+moment a child switches away.
+⚠️ **And reset the frame index DURING RENDER, never in an effect** — effects run after paint, so the
+first frame of a new beat is painted carrying the previous beat's index and the walk beat opens with
+the walker already at the end. Same rule this file already gives for a journey's phase, and the React
+lint names it too.
 
 ⚠️ **AND A CONTAINER'S OWN HEIGHT CAN BE THE ANSWER, PRINTED AS A LENGTH.** A receiving slot's box
 is sized by its capacity, and on a sharing round the capacity is derived from the answer — so
@@ -780,7 +860,30 @@ check them with a script:
   had just finished proving. **Jitter away from a limit, never toward it**, or the fit means nothing.
 - **check the real spots, not the band they came from.** A sweep that reads `waitY1` instead of the
   positions `waitSpot` actually returns cannot see any of the jitter, and passes clean.
-- ⚠️ **A SCENE LAID OUT IN SCREEN PERCENTAGES MUST BE `position: fixed`, NEVER `absolute`.** An
+- ⚠️⚠️ **A GROUND LINE BELOW WHERE THE CONTROLS ALLOW ONE DOES NOT FLOAT THE CAST — IT BLOWS THE WHOLE
+PICTURE UP, AND THE ARITHMETIC IS VIOLENT.** The cover-fit that pins a painted ground to a viewport
+line scales the scene up to close any gap beneath it, and that term is
+`(vh - groundPx) / ((1 - share) * SCENE_H)` — so as `share` approaches 1 the denominator goes to zero.
+Measured on a kitchen table whose floor sits at 0.95 of the image against a usable ground of 0.807:
+the backdrop rendered **4981px wide at x = −1850 with the working surface 1142px ABOVE the frame.**
+Not a float, not a crop — the scene simply left. **The ceiling is `groundY / vh`, it is TIGHTEST on
+the shortest frame** (0.807 at 1280×720 but 0.756 at 640×270), and it is one assertion swept across
+the size matrix. Nothing in a type-check or a band check can see it, because every band is correct.
+
+⚠️ **AND A SCENE WHOSE WORKING SURFACE IS NOT ITS GROUND NEEDS TWO LINES, BOTH THROUGH THE SAME
+TRANSFORM.** A table is the case: the paper lies on the tabletop and the character stands on the
+floor, and given one line either the sheet floats a foot in the air or the character stands on the
+table. Add the second as a share of the IMAGE and map it with the same `coverFit` the backdrop is
+drawn with — a share of the VIEWPORT is the RailLine fault wearing a different hat, and it only
+disagrees on the aspects you did not test.
+
+⚠️ **AND ANCHOR A THING ON A SURFACE BY ITS OWN BOTTOM EDGE, NOT BY A SHARED CONSTANT.** A contact
+shadow drawn at a flat `1.16r` under shapes whose real bottoms are at `0.78r` (a square), `0.6r` (a
+rectangle) and `r` (a polygon) leaves the object hovering a third of a radius above its own shadow —
+measured as a 52px gap with the sheet up in the window. Read the bottom off the geometry you are about
+to draw. The "draw from the ink box, not the file box" rule, applied to a code-drawn shape.
+
+⚠️ **A SCENE LAID OUT IN SCREEN PERCENTAGES MUST BE `position: fixed`, NEVER `absolute`.** An
   absolute element resolves its percentages against the nearest POSITIONED ancestor, and in a scored
   round that ancestor is `SkillBeat`'s own `position: relative` wrapper — which is content-sized. So
   `top: 74%` of a strip a few dozen pixels tall put BlockYard's entire yard, Milo, the pen row and
@@ -918,6 +1021,67 @@ check them with a script:
   own band had room to spare. Give a control the band it occupies and let it fill it (37×37 after,
   which is this repo's stated ceiling at that size). **The thing that is TAPPED wins the pixels
   over the thing that is merely read.**
+- ⚠️⚠️ **A RESERVE BIG ENOUGH FOR THE WHOLE RANGE MAKES THE THING BEING READ TINY — DERIVE THE UNIT
+  FROM A FIXED BOX, AND CLOSE UP ONCE THE ANSWER IS IN.** *A lane that will fill must be reserved from
+  empty* (above) is right and has a price nobody had costed: The Empty Plot reserved all twelve metres
+  of walkable depth so the plan could not jump under a child pacing it, and at a typed 22px a metre a
+  5 × 2 plot then occupied **14% of the box**, which `FitSlot` shrank again to fit the slot. Founder:
+  *"the size is too small bro."* Three moves, in order:
+  - **Fix the BOX and derive the unit** — `u = min(W / across, H / visible)`. A narrow plot gets a big
+    unit, a wide one a smaller unit, the instrument is always the same size in the layout, and nothing
+    jumps. A typed unit is a guess about the widest case that every other case pays for.
+  - ⚠️ **The visible range may close up ONLY after the commit.** Closing it on the round's own answer
+    while the question is live makes the box's height *be* the answer, drawn instead of written — the
+    printed-answer rule arriving through the layout. Before the peg it is the same on every round; after
+    it, the plan zooms to what was built, which is *go back and look at what was made* done with scale
+    instead of a camera. Measured: the plot went from 44 × 110 to **110 × 278**.
+  - ⚠️ **And check what the bound is really buying.** This one allowed pegs at 11 and 12 that no
+    answer ever needs — and that the two-hand span could not express either, so the tap path could
+    reach depths the camera path could not. Cutting it to 10 bought ~20% more unit AND closed a
+    one-instrument-two-inputs hole. **A range constant is a scale decision as much as a rule.**
+  ⚠️⚠️ **AND THE PLAN'S ORIENTATION IS PART OF THE SCALE — TURN IT WITH THE FRAME.** A shape that is
+  right for a phone is wrong for a laptop: The Empty Plot's long axis is the WALK, so drawn with the
+  depth running down the page it is a tall sliver in a wide slot, and every metre pays for it.
+  Founder: *"laptop screen pe yeh ek proper horizontal rectangle mein dikhe … abhi woh vertical mein
+  hai, joh phone ke liye sahi."* Measured at 1280×720, turning it took the plan from **110 × 340 to
+  658 × 168** and the character from 34px to 59px — nothing was resized, the same metre simply had
+  room. This is *reflow, not a smaller scale* one level up: before shrinking anything, ask whether the
+  long axis is pointing the wrong way.
+  - **Do it with ONE mapper, never two renderers.** Place everything in the world's own units
+    (`across` along the road, `deep` into the yard) and turn that into pixels in one exported
+    function. Two copies of the drawing code drift the first time a marker moves.
+  - ⚠️ **And the mapper must be DRIVEN by the gate, not grepped.** Mutation-tested: a tile grid that
+    had stopped turning with the plan passed every box-size and metre check in the file, because those
+    were all still correct. `planXY(land, …)` and its transpose property is one assertion and it
+    catches the thing that actually breaks.
+  ⚠️ **AND EVERY MARKER ON IT MUST BE DERIVED TOO, OR THE CHARACTER SHRINKS TO A DOT.** The moment the
+  unit stops being a constant, every typed pixel size around it is wrong: the walker, the peg and the
+  corner posts stayed at 15–16px while the metre grew to 56, so the child's own character rendered a
+  third of a metre tall and vanished — founder, on a screenshot: *"kitna chota dekh raha hai .. yeh
+  character."* Derive them all from the unit with a FLOOR (the floor binds on the widest plot, where
+  the unit is smallest), and export the sizing so the gate drives the shipped numbers.
+  ⚠️ **A gate that only asks "do these boxes overlap" cannot see a marker frozen SMALL** — a tiny thing
+  collides with nothing. Assert the RELATIONSHIP (a bigger unit gives a bigger marker) as well as the
+  clearance. Mutation-tested: freezing the walker at 30px passed every collision check in the file.
+  ⚠️ **And an emoji's box is not its ink, so a clearance of `>= 0` is not a clearance.** Modelled at a
+  3px gap the arithmetic said the walker cleared the label and the DOM said he overlapped it by 2px:
+  a glyph's line box carries leading the font size does not describe, and a shell that scales the
+  instrument shrinks the gap again. Require a real margin (6px+ authored here) and check it on the DOM.
+  ⚠️ **Then re-cross the layers, because a bigger instrument reaches further.** Widening this one ran
+  the plot's top-left corner **65 × 62 px under the shell's pinned chalkboard** — and the culprit was a
+  readout column *beside* the plan pushing it that far left of centre. Stacked under it instead, the
+  plan sits on the column's centre line and the collision is not expressible.
+- ⚠️⚠️ **A FIXED CORNER AFFORDANCE THE *SHELL* OWNS IS A LAYER TOO — AND ONE OF THEM IS COVERING
+  THE ANSWER IN CHAPTERS THAT ALREADY SHIPPED.** The rule was written for the character in the corner
+  (*"give him a lane and centre the surface in what is left"*); the same argument applies to any
+  `position: fixed` control the chapter does not draw. `ScribblePad`'s closed button is
+  `fixed; right: 12; bottom: 12`, roughly 121 × 44 px and unscaled — while a 9–11 instrument is
+  *scaled down* inside `FitSlot` and centred in the right-hand column, i.e. centred near x 446 on a
+  640-wide frame, not at 320. Measured at **640×320**: The Empty Plot's `back ▶` (526–583) sits under
+  it, and **The Coin Tray — shipped, and driven twice — has it over keys 5, 6 and 7.** Every tap
+  still lands somewhere, which is why nothing but crossing the boxes finds it. **Cross the shell's
+  own fixed layers with your answer surface, not just your own**, and note the fix is one line in the
+  shared component rather than a workaround per chapter.
 - **A TRAVEL DISTANCE INSIDE A SCALED CONTAINER MUST BE RELATIVE, NOT PX.** `FitBox` scales its
   child by up to 2.6×, so a 54px "lift the tray and set it down" became a ~140px launch that started
   a tray **off the top of the screen** at 640×320. `translateY(-38%)` is a share of the thing's own
@@ -1659,7 +1823,24 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   with the whole pizza gone — then it hands the answer to the child who has just overshot, i.e. the
   one least able to ignore it. Sweep a redirect's text against the accepted answer exactly as you
   sweep the miss line; state the direction, not the figure.
-- ⚠️ **A `toMatch` OVER SOMETHING THAT APPEARS TWICE PROVES ONLY THAT IT APPEARS ONCE — COUNT IT.**
+- ⚠️⚠️ **THE MARK THAT STATES THE ANSWER CAN BE DRAWN OFF THE THING IT STATES, AND AN SVG ANCHORED BY
+`bottom` ON A ZERO-HEIGHT CONTAINER IS HOW.** An angle's arc and its square-corner guide both hung off
+the turning vertex; the container has no height, so `bottom: -20` resolves 20px below its TOP, and the
+arc's centre — written at svg-local `(20 + arcR, 20 + arcR)` — landed at `(vx + arcR, vy − arcR)`, a
+full radius up and right of the angle it measures. The guide had the matching fault: its upright was
+right and its horizontal arm ran along the svg's top edge, a whole `size` above the beam it is meant
+to lie on. **Both had shipped, and both are invisible to every band, layer and type check** — the
+elements are present, sized correctly, and in the right region of the screen. Work the anchor
+arithmetic through to an absolute coordinate and check it equals the vertex; or draw from the corner
+the anchor actually pins.
+
+⚠️ **A `toContain('{ANCHOR}')` ALSO MATCHES `${ANCHOR}`, SO A SOURCE CHECK FOR A JSX EXPRESSION PASSES
+ON A TEMPLATE STRING SOMEWHERE ELSE ENTIRELY.** Deleting the anchor from a briefing card walked
+straight through a green gate because the demo's narration still interpolated it. Same family as
+`alt={` matching `x_alt={`: **anchor a source pattern on something only the real thing has**, and
+count the matches.
+
+⚠️ **A `toMatch` OVER SOMETHING THAT APPEARS TWICE PROVES ONLY THAT IT APPEARS ONCE — COUNT IT.**
   An intro card has two bodies, one per input, and a check that the anchor is on the card matched the
   tap body while the camera body had lost it. Caught by mutation, not by reading. Wherever a rule has
   to hold in N places, assert N.

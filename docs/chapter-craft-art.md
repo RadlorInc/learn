@@ -366,6 +366,49 @@ Gotchas that have each cost real credits:
     adding texture to anything countable, ask which axis already means something. Every prompt says
     *no scored lines, no grid, no squares, no repeating pattern* for exactly this.
 
+**Explainer-film pipeline** (a generated clip that TEACHES, stepped in time with the narration):
+
+```
+python3 scripts/plot-keyframes.py            ← COMPOSE the exact first and last frames
+      ↓
+generate_video  kling3_0, 5s, sound off, medias: start_image + end_image
+      ↓
+python3 scripts/explain-frames.py <clip>.mp4 <name> --frames 12 --out public/assets/explain
+      ↓
+step it by backgroundPosition, one cell per narration frame
+```
+
+⚠️⚠️ **A VIDEO MODEL CANNOT COUNT, AND IN A MATHS CHAPTER THAT IS THE WHOLE BALL GAME.** Ask for
+twelve tiles in rows of four and you will get eleven, in four-and-a-bit rows, beautifully lit. The way
+out is not a better prompt: **`kling3_0` takes a `start_image` AND an `end_image`, so compose both ends
+yourself** — the exact load along the kerb, the exact 3 × 4 in the plot — and leave the model only the
+motion between them, which is the thing it is actually good at. Both ends are then arithmetic and the
+middle is atmosphere.
+- **Compose them in the chapter's OWN palette** (import the same hex values the kit uses). A film
+  generated in "nice video colours" is the pasted-on rule arriving at 24fps.
+- ⚠️ **AND KEEP THE CAPTION CODE-DRAWN.** What the child READS must come from the numbers, never from
+  the film — the picture may be the model's, the words may not be. The two are indexed together so
+  they cannot drift.
+- ⚠️ **A FILM CAN ONLY EVER SAY ONE SET OF NUMBERS**, so it may only play on hard-coded examples. Every
+  generated round — and the re-teach, which re-narrates the child's own question — needs a
+  data-drawn fallback that works for any numbers. Build the fallback FIRST; the film is the polish.
+  Gate it: `filmFor(round)` returns non-null for exactly the fixed demos, swept over the whole
+  generator.
+
+⚠️ **CUT THE STRIP FROM THE WINDOW WHERE THE PICTURE IS ACTUALLY CHANGING, AND FIND THE END BY
+CONVERGENCE, NOT BY MOTION.** The front of a clip is a held start frame (the recorded 9-of-12-cells
+fault). The BACK is subtler and cost a re-cut here: a keyframe-interpolated clip *converges* on its end
+frame, so the per-frame difference decays to noise while the picture is still visibly assembling —
+measured on the fence clip, motion had fallen to 7% of peak 60 frames before the loop actually closed,
+and a window cut on motion alone ended with the fence half-built. **Distance to the FINAL frame is the
+honest signal**, because with a composed `end_image` that frame is the answer.
+
+⚠️ **AND PIN THE STRIP'S GEOMETRY IN THE GATE.** The cell count lives in two places — a PNG on disk and
+a number in the source — so a re-cut at a different `--frames` silently lands every cell on the wrong
+picture: nothing errors, the animation just stops matching the words. Read the PNG's IHDR in the test
+(`width` at byte 16, `height` at 20) and assert `width === cells × cellWidth`. Mutation-tested by
+actually re-cutting the strip a cell shorter.
+
 **Line-art pipeline** (the colouring chapter, and anything else that must be filled with colour):
 
 ```

@@ -9,6 +9,58 @@ rules; it does not restate them.
 
 ---
 
+> ## ⚠️ AMENDED 2026-08-14 — THE WORLD BELOW IS NO LONGER THE WORLD THAT SHIPS
+>
+> On the founder's call to connect this chapter to a daily real-world example, the building site was
+> replaced by **a Saturday: the park in the morning, the kitchen table for the fair's paper.** Read
+> this amendment before anything below it, because the site tables, the backdrop list and the cast
+> notes all describe the old world.
+>
+> **What changed and why:**
+> - **The world is split by VERB, on the founder's pick.** A slope is something a child has felt in
+>   their legs (the bike ramp, the slide) and a fold is something they have done with their hands
+>   (the plane, the card, the snowflake). One world forced to carry both is what produced a crew job
+>   nobody nine years old has stood on. The instruments did not change: the turning arm IS a ramp,
+>   and the fold panel IS a sheet of paper.
+> - ⚠️⚠️ **AND THEN THE PAINTED WORLD WENT ENTIRELY — founder's second call: *"remove the background
+>   and the characters, make it just like the neon one we have in the decimal and fraction
+>   chapters."*** This chapter now runs on the pre-teen lab kit (`preteen/kit.tsx`, accent `violet`)
+>   exactly as The Coin Tray and The Pizza Counter do: `LabBackdrop` · `BackChip` · `PromptCard` ·
+>   `PtMilo` · `IntroCard`, with the arm and the fold sheet code-drawn in neon and nothing else on
+>   the board. **The daily anchor did not go with it** — it lives in the words and in what the
+>   instrument IS, the way money does in The Coin Tray: the arm you turn is the ramp at the park, and
+>   the sheet you fold is the fair's paper.
+> - ⚠️ **EVERY BACKDROP AND SPRITE IN THIS DOCUMENT IS DELETED.** `ang_roof` / `ang_bridge` /
+>   `ang_shelter` are gone, the three park backdrops generated earlier the same day were generated
+>   and then deleted unused, and **Slate's three sheets are gone with them** (she was cast by this
+>   chapter alone; the foreman bear survives in The Order Desk). The asset table below is history.
+> - **A whole class of fault went with the painting**, and that is worth more than the pixels: no
+>   painted ground line means no `coverFit`, no site geometry, and no share-of-an-IMAGE used as a
+>   share-of-the-VIEWPORT — which had already cost this chapter one **3.6× blow-up** (backdrop 4981px
+>   wide at x = −1850, the working surface 1142px above the frame) before it was caught.
+> - **Layout is now the shared `preteen/band.ts`**: `fitBand` clamps the board's TOP under the
+>   question card rather than flooring the band, and `MILO_LANE` reserves the explorer his corner.
+> - ⚠️ **No slope is ever asked to be obtuse.** Obtuse is the beam past vertical, and real ramps live
+>   between about 5° and 40°. The shipped week asked for an obtuse *approach ramp* "because a barrow
+>   has to get up it loaded", which drew a plank leaning backwards over the bank while the words said
+>   "shallower". Obtuse now belongs to the two things that genuinely OPEN past square — the park gate
+>   and the barrier arm — and the one upright (the hoop post) is right.
+> - ⚠️ **The set-square guide STAYS on an exact-degrees round.** It retired at L3 and exact figures
+>   were asked only at L3, so every one of them was graded on `deg === target` with no readout, no
+>   scale and nothing at 90° to judge against. That round could not be answered by knowing anything.
+> - **The consequence shot is a PUCK that gets through or is stopped dead**, not rain. Rain falling
+>   on a BMX ramp is a consequence of nothing, and every angle job in this world is instead about
+>   something getting through: up the ramp, down the slide, past the gate, under the barrier.
+> - ⚠️ **Two marks were being drawn OFF the thing they measure, and both had shipped.** The arc's
+>   centre landed at `(vx + arcR, vy − arcR)` — a whole radius up and right of the angle it states —
+>   and the set-square's horizontal arm ran a full `size` above the fixed arm it is meant to lie on.
+>   Both are invisible to every band, layer and type check: the elements are present, correctly
+>   sized, and in roughly the right region of the screen.
+>
+> Everything about the two verbs, the grading, the axis sets and the AR reading is unchanged.
+
+---
+
 ## 0 · Why this chapter, out of the six still neon
 
 Still on the pre-teen HUD: `FactorLab` · `FractionForge` · `DecimalGrid` · `UnitConverter` ·
