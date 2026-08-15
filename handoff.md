@@ -154,14 +154,49 @@
 > quarter of what it claimed. It looks exactly like a thorough sweep. What caught it was the one
 > check asserting the generator can produce all four types, which failed honestly.
 >
+> ## 🚀 SHIPPED — `main`@`dbeeaa5`, prod serving **sw v95**
+> Three commits, clean fast-forward (`origin/main` was an ancestor), 0 ahead / 0 behind:
+> `92bffca` (the chapter — the data file, the pure module, the gate, the registry rewiring and the
+> DELETE of `story/LoadingBay.tsx`, ONE commit because `registry.tsx`, `storyChapters.tsx` and
+> `story/page.tsx` are each touched by it and splitting risks a registry importing a component that
+> does not exist yet) · `9bf995b` (the craft rules it paid for) · `dbeeaa5` (sw v94 → v95).
+> Gates re-run before staging rather than trusted from this file: `tsc` 0 · **1039/1039** ·
+> `next build` 0.
+> ⚠️ **THE BRANCH WAS BUILT CLEAN IN A SCRATCH WORKTREE FIRST** — `tsc` 0, 1039/1039, `next build` 0
+> from the commits alone, the deleted chapter confirmed absent and **0 hits for `__miloFingers` in
+> the emitted `.js`** (the dev drive hook dead-code-eliminates; it survives only in a `.js.map`).
+> ⚠️ A worktree in `/private/tmp` with a SYMLINKED `node_modules` fails outright —
+> *"Symlink [project]/node_modules is invalid, it points out of the filesystem root"*. Put the
+> worktree on the same filesystem as the repo and `cp -al` the deps. Worktree removed, tree clean.
+>
+> **Post-deploy, on the live origin:** prod `sw.js` **v95 on the fourth poll** · 9 routes 200
+> (⚠️ `/play` 404s because that route was deliberately deleted in `10d814d` — my smoke list was
+> wrong, not a regression) · the SW unregistered and `milo-shell-v95` cleared before driving, per the
+> recorded fault of a controlled worker serving the old shell.
+> **Driven at 1280×720:** the briefing with both doors · the walkthrough · the guided round · then
+> **six scored rounds, all four readings, ending in the MASTERY EXIT** —
+> `1 most · 2 howMany · 3 howMany · 4 most · 5 diff (L2) · 6 total (L3, 7+3+6+4 = 20)`, at which
+> point the chapter ended itself at round 6 of 10. **0 console errors.**
+> ## ✅ AND THAT CLOSES THE BAND'S OLDEST OPEN ITEM — THE MASTERY EXIT HAS NOW BEEN SEEN TO FIRE
+> Every block since 🎛️ has carried *"no mastery exit"* as an open item for this whole band. It fired
+> here, on production, at round 6 — and it fired **only after all four readings had been asked**,
+> which is `coverage` doing precisely the job it was added for: a strong child got the early finish
+> AND met `total`, the reading that lives at L3 alone and would otherwise have been skipped as a
+> reward for doing well.
+> ⚠️ **What the prod drive still does NOT cover:** the camera path (a webcam cannot be driven
+> headlessly and the dev hooks are stripped from production by design), the full ten-round loop, and
+> **the re-teach** — a run that exits at 6 cannot show either of the last two, and an erring run and
+> a perfect run are different evidence. All are proven on localhost; those two are not on prod.
+>
 > ## ▶ OPEN
-> 1. ⚠️ **NOT COMMITTED, and `public/sw.js` is still v94.** The founder has not been asked.
+> 1. ✅ **SHIPPED — see above.** `public/sw.js` is v95.
 > 2. ⚠️ **THE SCRATCH-PAD COLLISION IS STILL THE MOST VALUABLE THING OUTSTANDING** (🏗️ ⑤) — it is
 >    live in a shipped chapter and it is one line. This chapter meets it mildly: at 640×320
 >    `ScribblePad`'s closed button clips **11px of the instruction chip's last line**, and the commit
 >    clears it by 18px. Still a founder's call on hiding that button below `vh < 470`.
-> 3. **No re-teach seen fire and no mastery exit** on this chapter — the band's standing gap. Both
->    need their own run (an erring one and a perfect one are different evidence).
+> 3. ✅ **THE MASTERY EXIT IS CLOSED** (see 🚀 — fired on prod at round 6, after coverage completed).
+>    ⚠️ **The RE-TEACH is still never seen fire**, here or anywhere in the band: it needs three wrong
+>    in a row, which is mutually exclusive with the run that proved the exit.
 > 4. **No EXPLORE beat.** The shell supports one and this chapter has an obvious candidate
 >    (*"build me a stack as tall as that one"*, unscored).
 > 5. ⚠️ **A struggling child never meets `diff` or `total`** — they live at L2/L3 and `coverage`
