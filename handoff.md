@@ -301,8 +301,34 @@
 > like a mutation that does not apply, not one whose target has been edited). Repaired and re-run: **13/13,
 > 4/4, 6/6, 5/5, with the tree checked clean afterwards.**
 >
+> ## 🚀 SHIPPED — `main`@`12cdfa6`, prod serving **sw v94**
+> Three commits, clean fast-forward (`origin/main` was an ancestor), 0 ahead / 0 behind:
+> `d2e4e10` (the whole band port — 54 files, **+4,410 / −6,860**, i.e. net −2,450 lines) ·
+> `3da540d` (the craft rules it paid for) · `12cdfa6` (sw v93 → v94).
+> **ONE code commit rather than three**, deliberately: `registry.tsx`, `storyChapters.tsx` and
+> `story/page.tsx` are each touched by every chapter, so splitting per chapter means hand-cutting
+> hunks and risking a broken intermediate — the recorded *"a registry importing a component that does
+> not exist yet"* fault. Gates re-run before staging rather than trusted from this file: `tsc` 0 ·
+> **987/987** · `next build` 0.
+> ⚠️ **THE BRANCH WAS BUILT CLEAN IN A SCRATCH WORKTREE FIRST** (`tsc` 0 · 987/987 · both strips
+> present), because a green working tree says nothing about the branch — a file left unstaged compiles
+> locally and breaks on the remote. Worktree removed, tree checked clean after.
+> ⚠️ **`docs/recovered/`, `python script/` and the voice caches are now `.gitignore`d** rather than
+> committed; `scratch/` already was.
+>
+> **Post-deploy, on the live origin:** prod `sw.js` **v94 on the fourth poll** · 9 routes 200 ·
+> **both film strips 200 and byte-exact (166,438 and 92,059)** — the asset the previous block warned
+> would 404 if it missed the commit · the SW unregistered and `milo-shell-v94` cleared before driving,
+> per the recorded fault of a controlled worker serving the old shell.
+> **Driven at 1280×720:** the briefing with both doors · the walkthrough · the guided round *"9 tiles,
+> 3 metres along the road"* answered **3** → **SOLVED ✓ with `units: 9` and `3 × 3 = 9`** — i.e. ②'s
+> right-answer reveal live in production · **0 console errors**.
+> ⚠️ **What the prod drive does NOT cover:** the camera path (a webcam cannot be driven headlessly and
+> the dev hooks are stripped from production by design), the ten-round loop, the re-teach and the
+> mastery exit. All are proven on localhost; none on prod.
+>
 > ## ▶ OPEN
-> 1. ⚠️ **NOT COMMITTED**, and `public/sw.js` is still v93. ⚠️ **`public/assets/explain/` (256 KB, two
+> 1. ✅ **SHIPPED — see above.** `public/sw.js` is v94. ⚠️ **`public/assets/explain/` (256 KB, two
 >    strips) is new and untracked** — it must go in the same commit as the chapter or the walkthrough
 >    404s in production. `scratch/` (the mp4s and composed keyframes, 3.8 MB) is now git-ignored.
 > 2. ⚠️ **THE SCRATCH-PAD COLLISION (⑤) IS THE MOST VALUABLE THING HERE** — it is live, it is in a
