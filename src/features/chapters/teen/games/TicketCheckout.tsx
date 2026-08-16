@@ -38,6 +38,52 @@ const P: Palette = {
 
 const rnz = (lo: number, hi: number) => { let n = rint(lo, hi); while (n === 0) n = rint(lo, hi); return n }
 /** Format "ax + b" / "ax − b" (coefficient 1/−1 hide the digit). */
+/** ⚠️ MODULE LEVEL. Inside its parent this is a new component TYPE every render, so React
+ *  remounts it — and both of these are `motion` elements with a spring in flight, so the
+ *  animation restarts from its initial state on every render instead of continuing. */
+function Ticket({ i, cx, cy, rot, showTickets, reduce, spring, p }: {
+  i: number; cx: number; cy: number; rot: number; showTickets: boolean; reduce: boolean | null
+  spring: { type: 'spring'; stiffness: number; damping: number }; p: Palette
+}) {
+  return (
+    <motion.g
+      initial={false}
+      animate={{ opacity: showTickets ? 1 : 0, x: showTickets ? cx : cx - 46, y: cy, rotate: showTickets ? rot : rot - 10 }}
+      transition={reduce ? { duration: 0 } : { ...spring, delay: showTickets ? i * 0.08 : 0 }}
+      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+    >
+      <g transform="translate(-40 -26)">
+        <rect x={0} y={0} width={80} height={52} rx={7} fill="#fff" stroke={p.goldDeep} strokeWidth={1.4} />
+        <rect x={0} y={0} width={80} height={52} rx={7} fill={p.gold} opacity={0.14} />
+        {/* perforation between stub and body */}
+        <line x1={54} y1={4} x2={54} y2={48} stroke={p.goldDeep} strokeWidth={1} strokeDasharray="2 3" opacity={0.7} />
+        <circle cx={54} cy={0} r={2.4} fill={p.cream} stroke={p.goldDeep} strokeWidth={0.8} />
+        <circle cx={54} cy={52} r={2.4} fill={p.cream} stroke={p.goldDeep} strokeWidth={0.8} />
+        <text x={26} y={22} textAnchor="middle" fill={p.mutedOnPaper} fontSize={7} fontFamily="var(--font-numeric)" letterSpacing="0.1em">ADMIT ONE</text>
+        <text x={26} y={40} textAnchor="middle" fill={p.inkOnPaper} fontSize={15} fontWeight={800} fontFamily="var(--font-numeric)">$3</text>
+        <text x={67} y={30} textAnchor="middle" fill={p.goldDeep} fontSize={9} fontWeight={700} fontFamily="var(--font-numeric)">🎟️</text>
+      </g>
+    </motion.g>
+  )
+}
+
+/** ⚠️ MODULE LEVEL. Inside its parent this is a new component TYPE every render, so React
+ *  remounts it — and both of these are `motion` elements with a spring in flight, so the
+ *  animation restarts from its initial state on every render instead of continuing. */
+function RowValue({ y, show, text, mint, rowR, p, springT }: {
+  y: number; show: boolean; text: string; mint?: boolean; rowR: number; p: Palette
+  springT: { duration: number } | { type: 'spring'; stiffness: number; damping: number }
+}) {
+  return (
+    <motion.text
+      x={rowR} y={y} textAnchor="end" fill={mint ? '#1f9e73' : p.inkOnPaper}
+      fontSize={16} fontWeight={800} fontFamily="var(--font-numeric)"
+      initial={false} animate={{ opacity: show ? 1 : 0.28, scale: show ? 1 : 0.7 }} transition={springT}
+      style={{ transformBox: 'fill-box', transformOrigin: 'right center' }}
+    >{show ? text : '—'}</motion.text>
+  )
+}
+
 function lin(a: number, b: number): string {
   const t = a === 1 ? 'x' : a === -1 ? '−x' : a < 0 ? `−${Math.abs(a)}x` : `${a}x`
   if (b === 0) return t
@@ -216,36 +262,8 @@ function TicketScene({ palette, value, stepIndex, ended }: {
   const ticketRowY = 196, feeRowY = 226, totalRowY = 286
 
   // ── a single admission ticket (fans in from the left with a spring) ──
-  const Ticket = ({ i, cx, cy, rot }: { i: number; cx: number; cy: number; rot: number }) => (
-    <motion.g
-      initial={false}
-      animate={{ opacity: showTickets ? 1 : 0, x: showTickets ? cx : cx - 46, y: cy, rotate: showTickets ? rot : rot - 10 }}
-      transition={reduce ? { duration: 0 } : { ...spring, delay: showTickets ? i * 0.08 : 0 }}
-      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-    >
-      <g transform="translate(-40 -26)">
-        <rect x={0} y={0} width={80} height={52} rx={7} fill="#fff" stroke={p.goldDeep} strokeWidth={1.4} />
-        <rect x={0} y={0} width={80} height={52} rx={7} fill={p.gold} opacity={0.14} />
-        {/* perforation between stub and body */}
-        <line x1={54} y1={4} x2={54} y2={48} stroke={p.goldDeep} strokeWidth={1} strokeDasharray="2 3" opacity={0.7} />
-        <circle cx={54} cy={0} r={2.4} fill={p.cream} stroke={p.goldDeep} strokeWidth={0.8} />
-        <circle cx={54} cy={52} r={2.4} fill={p.cream} stroke={p.goldDeep} strokeWidth={0.8} />
-        <text x={26} y={22} textAnchor="middle" fill={p.mutedOnPaper} fontSize={7} fontFamily="var(--font-numeric)" letterSpacing="0.1em">ADMIT ONE</text>
-        <text x={26} y={40} textAnchor="middle" fill={p.inkOnPaper} fontSize={15} fontWeight={800} fontFamily="var(--font-numeric)">$3</text>
-        <text x={67} y={30} textAnchor="middle" fill={p.goldDeep} fontSize={9} fontWeight={700} fontFamily="var(--font-numeric)">🎟️</text>
-      </g>
-    </motion.g>
-  )
 
   // ── a receipt line-item value that springs in when its beat arrives ──
-  const RowValue = ({ y, show, text, mint }: { y: number; show: boolean; text: string; mint?: boolean }) => (
-    <motion.text
-      x={rowR} y={y} textAnchor="end" fill={mint ? '#1f9e73' : p.inkOnPaper}
-      fontSize={16} fontWeight={800} fontFamily="var(--font-numeric)"
-      initial={false} animate={{ opacity: show ? 1 : 0.28, scale: show ? 1 : 0.7 }} transition={springT}
-      style={{ transformBox: 'fill-box', transformOrigin: 'right center' }}
-    >{show ? text : '—'}</motion.text>
-  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px, 1vh, 12px)' }}>
@@ -273,8 +291,8 @@ function TicketScene({ palette, value, stepIndex, ended }: {
         <text x={W / 2} y={28} textAnchor="middle" fill={p.mutedOnPaper} fontSize={11} fontFamily="var(--font-numeric)" letterSpacing="0.22em">🎟️ CHECKOUT</text>
 
         {/* ── the acted-out order: two tickets fan in ── */}
-        <Ticket i={0} cx={150} cy={78} rot={-8} />
-        <Ticket i={1} cx={196} cy={72} rot={7} />
+        <Ticket i={0} cx={150} cy={78} rot={-8} showTickets={showTickets} reduce={reduce} spring={spring} p={p} />
+        <Ticket i={1} cx={196} cy={72} rot={7} showTickets={showTickets} reduce={reduce} spring={spring} p={p} />
 
         {/* ── price-formula strip (load-bearing math skeleton) ── */}
         <motion.line x1={fx - 8} y1={fy + 12} x2={W - 40} y2={fy + 12} stroke={p.mutedOnPaper} strokeWidth={0.8} strokeDasharray="2 4" opacity={0.4}
@@ -298,9 +316,9 @@ function TicketScene({ palette, value, stepIndex, ended }: {
 
         {/* ── receipt line items ── */}
         <text x={rowL} y={ticketRowY} fill={p.mutedOnPaper} fontSize={12} fontFamily="var(--font-numeric)">2 tickets × $3</text>
-        <RowValue y={ticketRowY} show={showTicketSub} text="$6" />
+        <RowValue y={ticketRowY} show={showTicketSub} text="$6" rowR={rowR} p={p} springT={springT} />
         <text x={rowL} y={feeRowY} fill={p.mutedOnPaper} fontSize={12} fontFamily="var(--font-numeric)">booking fee</text>
-        <RowValue y={feeRowY} show={showFee} text="$5" />
+        <RowValue y={feeRowY} show={showFee} text="$5" rowR={rowR} p={p} springT={springT} />
 
         {/* rule above the total */}
         <line x1={rowL} y1={totalRowY - 26} x2={rowR} y2={totalRowY - 26} stroke={p.mutedOnPaper} strokeWidth={1} opacity={0.5} />

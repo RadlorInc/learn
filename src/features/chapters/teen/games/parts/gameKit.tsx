@@ -84,6 +84,21 @@ export function Readout({ P, text, reveal }: { P: Palette; text: string; reveal?
 export function CommitBtn({ P, label, onClick, disabled }: { P: Palette; label: string; onClick: () => void; disabled?: boolean }) {
   return <button type="button" onClick={onClick} disabled={disabled} style={{ ...bigBtn(P), opacity: disabled ? 0.5 : 1 }}>{label}</button>
 }
+/** ⚠️ MODULE LEVEL. Declared inside its parent this is a new component TYPE on every render,
+ *  so React unmounts and remounts the subtree each time — restarting its transitions and
+ *  discarding the elements the child is interacting with. Closed-over values are props. */
+function Tank({ v, label, tint, lock, max, col, P }: { v: number; label: string; tint: string; lock?: boolean; max: number; col: string; P: Palette }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+      <div style={{ position: 'relative', width: 'clamp(46px, 5.4vw, 72px)', height: 'clamp(150px, 22vh, 210px)', borderRadius: 10, background: P.glass, border: `1px solid ${P.glassBorder}`, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${(v / max) * 100}%`, background: tint, transition: 'height 120ms' }} />
+      </div>
+      <span style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(18px, 1.9vw, 27px)', color: lock ? P.creamSoft : col }}>{v}</span>
+      <span style={{ fontSize: 'clamp(12px, 1.1vw, 16px)', color: P.creamSoft }}>{label}{lock ? ' 🔒' : ''}</span>
+    </div>
+  )
+}
+
 function Nudge({ P, label, onClick, disabled }: { P: Palette; label: string; onClick: () => void; disabled?: boolean }) {
   return <button type="button" onClick={onClick} disabled={disabled} style={{ width: 'clamp(44px, 4.4vw, 60px)', height: 'clamp(44px, 4.4vw, 60px)', borderRadius: '50%', border: `1px solid ${P.glassBorder}`, background: P.glass, color: P.cream, fontFamily: 'var(--font-numeric)', fontWeight: 700, fontSize: 'clamp(22px, 2.2vw, 30px)', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1 }}>{label}</button>
 }
@@ -518,20 +533,11 @@ export function TwoTaps({
   fixed?: 'a' | 'b'; disabled?: boolean; reveal?: boolean; onCommit: (m: Mix) => void; commitLabel?: string
 }) {
   const col = reveal ? P.mint : P.gold
-  const Tank = ({ v, label, tint, lock }: { v: number; label: string; tint: string; lock?: boolean }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-      <div style={{ position: 'relative', width: 'clamp(46px, 5.4vw, 72px)', height: 'clamp(150px, 22vh, 210px)', borderRadius: 10, background: P.glass, border: `1px solid ${P.glassBorder}`, overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${(v / max) * 100}%`, background: tint, transition: 'height 120ms' }} />
-      </div>
-      <span style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(18px, 1.9vw, 27px)', color: lock ? P.creamSoft : col }}>{v}</span>
-      <span style={{ fontSize: 'clamp(12px, 1.1vw, 16px)', color: P.creamSoft }}>{label}{lock ? ' 🔒' : ''}</span>
-    </div>
-  )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%' }}>
       <div style={{ display: 'flex', gap: 26 }}>
-        <Tank v={mix.a} label={labelA} tint={P.gold} lock={fixed === 'a'} />
-        <Tank v={mix.b} label={labelB} tint={P.coral} lock={fixed === 'b'} />
+        <Tank v={mix.a} label={labelA} tint={P.gold} lock={fixed === 'a'} max={max} col={col} P={P} />
+        <Tank v={mix.b} label={labelB} tint={P.coral} lock={fixed === 'b'} max={max} col={col} P={P} />
       </div>
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
         {fixed !== 'a' && <SmallStepper P={P} label={labelA} value={mix.a} disabled={disabled} onDown={() => setMix({ ...mix, a: Math.max(0, mix.a - 1) })} onUp={() => setMix({ ...mix, a: Math.min(max, mix.a + 1) })} />}

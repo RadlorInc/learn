@@ -62,6 +62,28 @@ const RAD_PARTS: Record<number, [number, number]> = {
 }
 
 /** The acute angle to the horizontal — how far the pod is from level. */
+/** ⚠️ MODULE LEVEL. Declared inside its parent this is a new component TYPE on every render,
+ *  so React unmounts and remounts the subtree each time — restarting its transitions and
+ *  discarding the elements the child is interacting with. Closed-over values are props. */
+function Row({ label, hint, cur, on, col, disabled }: { label: string; hint: string; cur: number; on: (s: number) => void; col: string; disabled?: boolean }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+      <span style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1vw,13px)', letterSpacing: '0.09em', textTransform: 'uppercase', color: P.mutedOnPaper }}>{label}</span>
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(9px,0.95vw,12px)', color: P.creamSoft }}>{hint}</span>
+      <div style={{ display: 'flex', gap: 6 }}>
+        {[1, -1].map((s) => (
+          <button key={s} type="button" disabled={disabled} onClick={() => on(s)} style={{
+            minWidth: 52, minHeight: 44, borderRadius: 10,
+            border: `2px solid ${cur === s ? col : P.glassBorder}`, background: cur === s ? `${col}22` : P.glass,
+            color: cur === s ? col : P.creamSoft, fontFamily: 'var(--font-numeric)', fontWeight: 800,
+            fontSize: 'clamp(17px,2vw,24px)', cursor: disabled ? 'default' : 'pointer',
+          }}>{s > 0 ? '+' : '−'}</button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function refAngle(deg: number): number {
   const a = ((deg % 360) + 360) % 360
   if (a <= 90) return a
@@ -227,30 +249,14 @@ function SignSwitches({ value, setValue, disabled, reveal, onCommit }: {
   const cos = value.k === 'signs' ? value.cos : 1
   const sin = value.k === 'signs' ? value.sin : 1
   const col = reveal ? P.mint : P.gold
-  const Row = ({ label, hint, cur, on }: { label: string; hint: string; cur: number; on: (s: number) => void }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-      <span style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1vw,13px)', letterSpacing: '0.09em', textTransform: 'uppercase', color: P.mutedOnPaper }}>{label}</span>
-      <span style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(9px,0.95vw,12px)', color: P.creamSoft }}>{hint}</span>
-      <div style={{ display: 'flex', gap: 6 }}>
-        {[1, -1].map((s) => (
-          <button key={s} type="button" disabled={disabled} onClick={() => on(s)} style={{
-            minWidth: 52, minHeight: 44, borderRadius: 10,
-            border: `2px solid ${cur === s ? col : P.glassBorder}`, background: cur === s ? `${col}22` : P.glass,
-            color: cur === s ? col : P.creamSoft, fontFamily: 'var(--font-numeric)', fontWeight: 800,
-            fontSize: 'clamp(17px,2vw,24px)', cursor: disabled ? 'default' : 'pointer',
-          }}>{s > 0 ? '+' : '−'}</button>
-        ))}
-      </div>
-    </div>
-  )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.3vw,18px)', width: '100%' }}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(20px,2.6vw,32px)', fontWeight: 800, color: col }}>
         ({cos > 0 ? '+' : '−'}, {sin > 0 ? '+' : '−'})
       </div>
       <div style={{ display: 'flex', gap: 'clamp(14px,2.4vw,40px)' }}>
-        <Row label="across" hint="cosine" cur={cos} on={(s) => setValue({ k: 'signs', cos: s, sin })} />
-        <Row label="up" hint="sine" cur={sin} on={(s) => setValue({ k: 'signs', cos, sin: s })} />
+        <Row label="across" hint="cosine" cur={cos} on={(s) => setValue({ k: 'signs', cos: s, sin })} col={col} disabled={disabled} />
+        <Row label="up" hint="sine" cur={sin} on={(s) => setValue({ k: 'signs', cos, sin: s })} col={col} disabled={disabled} />
       </div>
       <CommitBtn P={P} label="LOCK IN ✓" disabled={disabled} onClick={() => onCommit({ k: 'signs', cos, sin })} />
     </div>

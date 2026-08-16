@@ -13,7 +13,7 @@
  * the kid balance x + 1 = 4 with Milo coaching (not scored), then the scored loop.
  */
 import { useEffect, type ReactNode } from 'react'
-import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion, type MotionValue } from 'motion/react'
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, BalanceBeam, Nudge, CommitBtn, numChoices, glideNumber } from './parts/gameKit'
 import { pick } from '@/core/rand'
@@ -74,6 +74,53 @@ const L3: Spec[] = [
   { leftExpr: '4x − 1', m: 4, c: -1, right: 11, answer: 3, min: 0, max: 10 },
   { leftExpr: '2x + 5', m: 2, c: 5, right: 17, answer: 6, min: 0, max: 12 },
 ]
+
+/** ⚠️ MODULE LEVEL. Inside its parent each of these is a new component TYPE every render, so
+ *  React remounts the subtree — and here that subtree is a `motion.g` whose spring is mid-flight
+ *  as the beam tips, so the balance animation restarts from scratch on each frame of it. */
+function Suitcase({ x, caseReveal, P }: { x: number; caseReveal: boolean; P: Palette }) {
+    const w = 34, h = 26 + Math.min(x, DEMO_ANS) * 1.4
+    return (
+      <g transform={`translate(${-w / 2} ${-h})`} style={{ transition: 'transform 620ms' }}>
+        <image href={`${ART}/bag_suitcase.png`} x={0} y={0} width={w} height={h} preserveAspectRatio="none"
+          style={{ transition: 'filter 500ms', filter: caseReveal ? `hue-rotate(110deg) saturate(1.2) drop-shadow(0 0 7px ${P.mint})` : undefined }} />
+        {/* code-drawn x / value label centred on the case */}
+        <text x={w / 2} y={h * 0.5 + 5} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800}
+          fontSize={14} fill={P.inkOnPaper} style={{ paintOrder: 'stroke', stroke: P.cream, strokeWidth: 3, strokeLinejoin: 'round' }}>{caseReveal ? x : 'x'}</text>
+      </g>
+    )
+  }
+
+/** ⚠️ MODULE LEVEL. Inside its parent each of these is a new component TYPE every render, so
+ *  React remounts the subtree — and here that subtree is a `motion.g` whose spring is mid-flight
+ *  as the beam tips, so the balance animation restarts from scratch on each frame of it. */
+function KnownWeights({ P }: { P: Palette }) {
+  return (
+    <g transform="translate(26 0)">
+      {[0, 1, 2].map((i) => (
+        <g key={i} transform={`translate(0 ${-15 - i * 13})`}>
+          <image href={`${ART}/bag_weight.png`} x={-10} y={0} width={20} height={13} preserveAspectRatio="none" />
+          <text x={0} y={9.5} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={7} fill={P.inkOnPaper}>1</text>
+        </g>
+      ))}
+    </g>
+  )
+}
+
+/** ⚠️ MODULE LEVEL. Inside its parent each of these is a new component TYPE every render, so
+ *  React remounts the subtree — and here that subtree is a `motion.g` whose spring is mid-flight
+ *  as the beam tips, so the balance animation restarts from scratch on each frame of it. */
+function Pan({ mx, my, children, P }: { mx: MotionValue<number>; my: MotionValue<number>; children: ReactNode; P: Palette }) {
+  return (
+    <motion.g style={{ x: mx, y: my }}>
+      {/* hanging cords */}
+      <line x1={-18} y1={0} x2={0} y2={30} stroke={P.glassBorder} strokeWidth={1.4} />
+      <line x1={18} y1={0} x2={0} y2={30} stroke={P.glassBorder} strokeWidth={1.4} />
+      <path d={`M -26 30 Q 0 44 26 30`} fill={P.glass} stroke={P.glassBorder} strokeWidth={1.4} />
+      <g transform="translate(0 30)">{children}</g>
+    </motion.g>
+  )
+}
 
 function fromSpec(s: Spec): Task {
   const badge = `${s.leftExpr} = ${s.right}`
@@ -209,41 +256,10 @@ function BaggageScaleScene({ palette: P, value: rawValue, stepIndex, frameCount,
   })
 
   // the mystery suitcase (unknown x) — an illustrated case that grows a touch as it fills
-  const Suitcase = () => {
-    const w = 34, h = 26 + Math.min(x, DEMO_ANS) * 1.4
-    return (
-      <g transform={`translate(${-w / 2} ${-h})`} style={{ transition: 'transform 620ms' }}>
-        <image href={`${ART}/bag_suitcase.png`} x={0} y={0} width={w} height={h} preserveAspectRatio="none"
-          style={{ transition: 'filter 500ms', filter: caseReveal ? `hue-rotate(110deg) saturate(1.2) drop-shadow(0 0 7px ${P.mint})` : undefined }} />
-        {/* code-drawn x / value label centred on the case */}
-        <text x={w / 2} y={h * 0.5 + 5} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800}
-          fontSize={14} fill={P.inkOnPaper} style={{ paintOrder: 'stroke', stroke: P.cream, strokeWidth: 3, strokeLinejoin: 'round' }}>{caseReveal ? x : 'x'}</text>
-      </g>
-    )
-  }
 
   // the three known kg weights stacked on the left pan (illustrated gold blocks)
-  const KnownWeights = () => (
-    <g transform="translate(26 0)">
-      {[0, 1, 2].map((i) => (
-        <g key={i} transform={`translate(0 ${-15 - i * 13})`}>
-          <image href={`${ART}/bag_weight.png`} x={-10} y={0} width={20} height={13} preserveAspectRatio="none" />
-          <text x={0} y={9.5} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={7} fill={P.inkOnPaper}>1</text>
-        </g>
-      ))}
-    </g>
-  )
 
   // a single upright pan that rides its arm end (glides via x/y from the beam angle)
-  const Pan = ({ mx, my, children }: { mx: typeof panLX; my: typeof panLY; children: ReactNode }) => (
-    <motion.g style={{ x: mx, y: my }}>
-      {/* hanging cords */}
-      <line x1={-18} y1={0} x2={0} y2={30} stroke={P.glassBorder} strokeWidth={1.4} />
-      <line x1={18} y1={0} x2={0} y2={30} stroke={P.glassBorder} strokeWidth={1.4} />
-      <path d={`M -26 30 Q 0 44 26 30`} fill={P.glass} stroke={P.glassBorder} strokeWidth={1.4} />
-      <g transform="translate(0 30)">{children}</g>
-    </motion.g>
-  )
 
   return (
     <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 372px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: P.nightTop, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -269,8 +285,8 @@ function BaggageScaleScene({ palette: P, value: rawValue, stepIndex, frameCount,
             <circle cx={84} cy={0} r={4} fill={beamCol} />
           </motion.g>
           {/* the pans hang from the swinging arm ends yet stay upright (glide via x/y) */}
-          <Pan mx={panLX} my={panLY}><Suitcase /><KnownWeights /></Pan>
-          <Pan mx={panRX} my={panRY}>
+          <Pan mx={panLX} my={panLY} P={P}><Suitcase x={x} caseReveal={caseReveal} P={P} /><KnownWeights P={P} /></Pan>
+          <Pan mx={panRX} my={panRY} P={P}>
             <g transform="translate(0 -22)">
               <image href={`${ART}/bag_weight.png`} x={-17} y={0} width={34} height={22} preserveAspectRatio="none" />
               <text x={0} y={15} textAnchor="middle" fontFamily="var(--font-numeric)" fontWeight={800} fontSize={13} fill={P.inkOnPaper}>8</text>

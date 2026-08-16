@@ -40,6 +40,30 @@ const MAX = 12
 const PAIRS: [string, string][] = [['Blue', 'Yellow'], ['Red', 'White'], ['Green', 'Orange']]
 const scoops = (n: number) => `${n} ${n === 1 ? 'scoop' : 'scoops'}`
 
+/** ⚠️ MODULE LEVEL. Inside its parent this is a new component TYPE every render, so React
+ *  remounts it — and it holds a `motion.div` bound to a MotionValue, so the pour animation
+ *  restarts mid-pour. It closes over nothing but module constants, so it needs no new props. */
+function Bucket({ hue, label, countText, need, pouring, side }: {
+    hue: string; label: string; countText: MotionValue<string>; need: number; pouring: boolean; side: 'l' | 'r'
+  }) {
+  return (
+    <div style={{ position: 'absolute', top: '4%', [side === 'l' ? 'left' : 'right']: '7%', width: 'clamp(58px,15vw,84px)', textAlign: 'center' }}>
+      {/* the illustrated paint bucket */}
+      <div style={{ position: 'relative', height: 'clamp(60px,12vh,86px)' }}>
+        <img src={BUCKET_IMG[hue]} alt="" style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain',
+          filter: pouring ? `drop-shadow(0 0 16px ${hue}) drop-shadow(0 4px 8px rgba(0,0,0,0.45))` : 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
+          transition: `filter ${GLIDE}`,
+        }} />
+        {/* the count numeral overlaid on the paint (ticks with the spring) */}
+        <motion.div style={{ position: 'absolute', top: '38%', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: 'rgba(0,0,0,0.62)', fontSize: 'clamp(15px,2.6vw,22px)', textShadow: '0 1px 2px rgba(255,255,255,0.35)' }}>{countText}</motion.div>
+      </div>
+      <div style={{ marginTop: 5, fontWeight: 800, color: P.creamSoft, fontSize: 'clamp(9px,1.3vw,12px)', whiteSpace: 'nowrap' }}>{label}</div>
+      <div style={{ marginTop: 1, fontFamily: 'var(--font-numeric)', fontWeight: 800, color: hue, fontSize: 'clamp(10px,1.4vw,13px)' }}>need {need}</div>
+    </div>
+  )
+}
+
 function fillA(hard = false): Task {
   const [labelA, labelB] = pick(PAIRS)
   const [ratioA, ratioB, expA] = pick<[number, number, number]>(
@@ -180,24 +204,6 @@ function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ende
     )
   }
 
-  const Bucket = ({ hue, label, countText, need, pouring, side }: {
-    hue: string; label: string; countText: MotionValue<string>; need: number; pouring: boolean; side: 'l' | 'r'
-  }) => (
-    <div style={{ position: 'absolute', top: '4%', [side === 'l' ? 'left' : 'right']: '7%', width: 'clamp(58px,15vw,84px)', textAlign: 'center' }}>
-      {/* the illustrated paint bucket */}
-      <div style={{ position: 'relative', height: 'clamp(60px,12vh,86px)' }}>
-        <img src={BUCKET_IMG[hue]} alt="" style={{
-          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain',
-          filter: pouring ? `drop-shadow(0 0 16px ${hue}) drop-shadow(0 4px 8px rgba(0,0,0,0.45))` : 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
-          transition: `filter ${GLIDE}`,
-        }} />
-        {/* the count numeral overlaid on the paint (ticks with the spring) */}
-        <motion.div style={{ position: 'absolute', top: '38%', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, color: 'rgba(0,0,0,0.62)', fontSize: 'clamp(15px,2.6vw,22px)', textShadow: '0 1px 2px rgba(255,255,255,0.35)' }}>{countText}</motion.div>
-      </div>
-      <div style={{ marginTop: 5, fontWeight: 800, color: P.creamSoft, fontSize: 'clamp(9px,1.3vw,12px)', whiteSpace: 'nowrap' }}>{label}</div>
-      <div style={{ marginTop: 1, fontFamily: 'var(--font-numeric)', fontWeight: 800, color: hue, fontSize: 'clamp(10px,1.4vw,13px)' }}>need {need}</div>
-    </div>
-  )
 
   // a falling drop: sits at bucket-bottom when idle, glides down to the tray when pouring
   const drop = (hue: string, side: 'l' | 'r', active: boolean) => (

@@ -68,6 +68,22 @@ interface Task extends BaseTask {
 }
 
 /** Five star ratings with a guaranteed repeat, so a mode always exists. */
+/** ⚠️ MODULE LEVEL. Declared inside its parent this is a new component TYPE on every render,
+ *  so React unmounts and remounts the subtree each time — restarting its transitions and
+ *  discarding the elements the child is interacting with. Closed-over values are props. */
+function Bar({ v, live, col }: { v: number; live?: boolean; col: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+      <div style={{
+        width: 'clamp(16px,1.9vw,26px)', height: `${v * 13}px`, borderRadius: '4px 4px 0 0',
+        background: live ? col : P.creamSoft, opacity: live ? 1 : 0.5,
+        border: live ? `2px solid ${col}` : 'none',
+      }} />
+      <span style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,0.95vw,12px)', color: live ? col : P.mutedOnPaper }}>{v}★</span>
+    </div>
+  )
+}
+
 function ratings(): number[] {
   const out = Array.from({ length: 4 }, () => rint(1, 5))
   out.push(out[rint(0, 3)])
@@ -253,16 +269,6 @@ function IncomingReview({ task, value, setValue, disabled, reveal, onCommit }: {
   const n = value.k === 'num' ? value.n : 1
   const base = task.base ?? []
   const col = reveal ? P.mint : P.gold
-  const Bar = ({ v, live }: { v: number; live?: boolean }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-      <div style={{
-        width: 'clamp(16px,1.9vw,26px)', height: `${v * 13}px`, borderRadius: '4px 4px 0 0',
-        background: live ? col : P.creamSoft, opacity: live ? 1 : 0.5,
-        border: live ? `2px solid ${col}` : 'none',
-      }} />
-      <span style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,0.95vw,12px)', color: live ? col : P.mutedOnPaper }}>{v}★</span>
-    </div>
-  )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.3vw,18px)', width: '100%' }}>
       <div style={{
@@ -270,8 +276,8 @@ function IncomingReview({ task, value, setValue, disabled, reveal, onCommit }: {
         minHeight: 82, padding: 'clamp(8px,1vw,14px)', borderRadius: 10,
         background: 'rgba(0,0,0,0.26)', border: `1px solid ${P.glassBorder}`,
       }}>
-        {base.map((v, i) => <Bar key={i} v={v} />)}
-        <Bar v={n} live />
+        {base.map((v, i) => <Bar key={i} v={v} col={col} />)}
+        <Bar v={n} live col={col} />
       </div>
 
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(20px,2.6vw,34px)', fontWeight: 800, color: col }}>

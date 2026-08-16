@@ -97,6 +97,26 @@ const endsOf = (even: boolean, positive: boolean): { l: Dir; r: Dir } =>
 const ENDS_CONTEXT =
   'The forecaster fits a curve to the week and then lets it run on, back before the week began and forward past its end. Only two things decide what it does out there: whether the highest power is even or odd, and whether the number in front of it is positive or negative. It is also why nobody trusts a fitted curve far outside the days it was drawn from.'
 
+const arrow = (d: Dir) => (d === 'up' ? '↗' : '↘')
+
+/** ⚠️ MODULE LEVEL. Declared inside its parent this is a new component TYPE on every render,
+ *  so React unmounts and remounts the subtree each time — restarting its transitions and
+ *  discarding the elements the child is interacting with. Closed-over values are props. */
+function Col({ side, dir, label, col, disabled, l, r, setValue }: { side: 'l' | 'r'; dir: Dir; label: string; col: string; disabled?: boolean; l: Dir; r: Dir; setValue: (v: V) => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px,0.8vw,10px)' }}>
+      <span style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,0.95vw,12px)', letterSpacing: '0.09em', textTransform: 'uppercase', color: P.mutedOnPaper }}>{label}</span>
+      <div style={{ fontSize: 'clamp(28px,3.4vw,46px)', lineHeight: 1, color: col }}>{arrow(dir)}</div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <Toggle on={dir === 'up'} label="climbs" col={col} disabled={disabled}
+          onClick={() => setValue({ k: 'ends', l: side === 'l' ? 'up' : l, r: side === 'r' ? 'up' : r })} />
+        <Toggle on={dir === 'down'} label="plunges" col={col} disabled={disabled}
+          onClick={() => setValue({ k: 'ends', l: side === 'l' ? 'down' : l, r: side === 'r' ? 'down' : r })} />
+      </div>
+    </div>
+  )
+}
+
 function endsTask(d: 1 | 2): Task {
   // L1 is even-degree only (both ends agree, the easier read); L2 draws all four.
   const even = d === 1 ? true : Math.random() < 0.5
@@ -346,24 +366,11 @@ function EndSwitches({ value, setValue, disabled, reveal, onCommit }: {
   const l = value.k === 'ends' ? value.l : 'up'
   const r = value.k === 'ends' ? value.r : 'up'
   const col = reveal ? P.mint : P.gold
-  const arrow = (d: Dir) => (d === 'up' ? '↗' : '↘')
-  const Col = ({ side, dir, label }: { side: 'l' | 'r'; dir: Dir; label: string }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(6px,0.8vw,10px)' }}>
-      <span style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,0.95vw,12px)', letterSpacing: '0.09em', textTransform: 'uppercase', color: P.mutedOnPaper }}>{label}</span>
-      <div style={{ fontSize: 'clamp(28px,3.4vw,46px)', lineHeight: 1, color: col }}>{arrow(dir)}</div>
-      <div style={{ display: 'flex', gap: 6 }}>
-        <Toggle on={dir === 'up'} label="climbs" col={col} disabled={disabled}
-          onClick={() => setValue({ k: 'ends', l: side === 'l' ? 'up' : l, r: side === 'r' ? 'up' : r })} />
-        <Toggle on={dir === 'down'} label="plunges" col={col} disabled={disabled}
-          onClick={() => setValue({ k: 'ends', l: side === 'l' ? 'down' : l, r: side === 'r' ? 'down' : r })} />
-      </div>
-    </div>
-  )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.3vw,18px)', width: '100%' }}>
       <div style={{ display: 'flex', gap: 'clamp(16px,2.6vw,44px)', alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <Col side="l" dir={l} label="before the week" />
-        <Col side="r" dir={r} label="after the week" />
+        <Col side="l" dir={l} label="before the week" col={col} disabled={disabled} l={l} r={r} setValue={setValue} />
+        <Col side="r" dir={r} label="after the week" col={col} disabled={disabled} l={l} r={r} setValue={setValue} />
       </div>
       <CommitBtn P={P} label="LOCK IN ✓" disabled={disabled} onClick={() => onCommit({ k: 'ends', l, r })} />
     </div>
