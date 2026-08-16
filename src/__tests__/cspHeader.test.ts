@@ -47,6 +47,9 @@ describe('Content-Security-Policy', () => {
     expect(p).toMatch(/script-src [^;]*https:\/\/cdn\.jsdelivr\.net/)
     expect(p).toMatch(/connect-src [^;]*https:\/\/storage\.googleapis\.com/)
     expect(p).toMatch(/worker-src [^;]*blob:/)
+    // The mobile-autoplay unlock plays a `data:` WAV inside a user gesture; blocked, every recorded
+    // voice clip in bands 12–18 silently falls back to browser speech. Found on prod, in the console.
+    expect(p).toMatch(/media-src [^;]*data:/)
     expect(p).toContain("frame-ancestors 'none'")
     expect(p).toContain("object-src 'none'")
   })

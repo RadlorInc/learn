@@ -92,6 +92,14 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob:",
               // 'self' only — the fonts are self-hosted now. data: stays for inlined glyphs.
               "font-src 'self' data:",
+              /** ⚠️ WITHOUT THIS THE RECORDED VOICE IS SILENTLY DEAD ON MOBILE, and nothing in the
+               *  app reports it. `media-src` was unset, so `default-src 'self'` was the fallback and
+               *  it blocked the `data:` WAV that `unlockVoiceClips()` plays inside the intro tap —
+               *  the mobile-autoplay unlock. Blocked, the element is never unlocked, so every
+               *  ElevenLabs clip in bands 12–18 falls back to browser speech, which most Chrome
+               *  installs do not have. Caught on PROD, in the console, after the CSP went enforcing;
+               *  the clips themselves are 'self' (/audio/<voice>/*.mp3). */
+              "media-src 'self' data:",
               // Supabase (REST + realtime), and the two origins MediaPipe pulls its model from.
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://storage.googleapis.com",
               // MediaPipe runs its detector in a blob: worker; our own service worker is 'self'.
