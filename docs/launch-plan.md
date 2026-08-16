@@ -51,7 +51,7 @@ Checked 2026-08-16 against prod and the live database.
 | ~~10~~ ✅ | ~~**No `error.tsx` / `global-error.tsx`.**~~ **FIXED** The client boundary does not cover a server render error or a crash in the root layout. | `find src/app` | The rare bad case shows Next's raw error screen to a child instead of a Milo screen. |
 | **11** | **No staging environment.** Every change is verified against prod. | `docs/devops.md` | Launch week is exactly when you need somewhere to test that is not the thing parents are using. |
 | **12** | **No PITR / restore drill.** | Supabase plan | If data is lost or corrupted there is no rehearsed way back. |
-| **14** | **Fonts load from Google at RUNTIME** — three CSS `@import`s to `fonts.googleapis.com` in `globals.css`, not `next/font`. Found by the C7 gate: an intermittent `fonts.gstatic.com` 404 (1 run in 12). | `grep gstatic src/app/globals.css` | Three consequences, and the first is a trap: **enforcing the CSP would break every font in the app** (`font-src 'self' data:` does not allow gstatic), so plan item C11 as written would ship the whole product in fallback system fonts. Also: CSS `@import` is the slowest way to load a font and it is on the critical path for a child on a slow phone; and every child's browser makes a request to Google, which is a third-party data flow the COPPA data-map (1.1) has to account for. **Fix is `next/font/google`**, which self-hosts at build time and removes all three at once. |
+| ~~14~~ ✅ | ~~**Fonts load from Google at RUNTIME**~~ **FIXED** — self-hosted via `next/font` (`396bfe0`). — three CSS `@import`s to `fonts.googleapis.com` in `globals.css`, not `next/font`. Found by the C7 gate: an intermittent `fonts.gstatic.com` 404 (1 run in 12). | `grep gstatic src/app/globals.css` | Three consequences, and the first is a trap: **enforcing the CSP would break every font in the app** (`font-src 'self' data:` does not allow gstatic), so plan item C11 as written would ship the whole product in fallback system fonts. Also: CSS `@import` is the slowest way to load a font and it is on the critical path for a child on a slow phone; and every child's browser makes a request to Google, which is a third-party data flow the COPPA data-map (1.1) has to account for. **Fix is `next/font/google`**, which self-hosts at build time and removes all three at once. |
 | **13** | Supabase **performance** advisors: `auth_rls_initplan` on 5 diagnostic tables, 3 unindexed FKs. | performance advisors | **Not launch-blocking at MVP scale** — real at thousands of users. Listed so it is a known deferral, not a surprise. |
 
 ---
@@ -98,9 +98,9 @@ Nothing here needs an account, a card, or a signature. Give me the go and I work
 
 | # | task |
 |---|---|
-| C10 | **Self-host the fonts** via `next/font/google` — closes finding #14 and unblocks CSP enforcement. Same families, so it should look identical; flagged as **[F]-review** because it touches global type and you hold taste. |
+| ✅ C10 | **Self-host the fonts** — DONE (`396bfe0`). All five families via `next/font/google`, 0 runtime requests to Google. |
 | C10b | Supabase performance advisors: wrap `auth.<fn>()` in `(select …)` on the 5 diagnostic policies, add the 3 missing FK indexes |
-| C11 | CSP: move the report-only policy to enforced once the report shows it is clean |
+| ✅ C11 | **CSP ENFORCED** — DONE (`a968dbb`). One policy, not two. ⚠️ Enforcing it as written would have silently killed every AR chapter (MediaPipe fetches WASM from jsDelivr, its model from storage.googleapis.com, and runs a `blob:` worker); those are now explicit, named allowances. Verified with a negative control and 211/211 chapters against the enforced build. Two `unsafe-inline`s remain, documented — removing them needs nonces and a styling rewrite, not a config change. |
 | C12 | Week-6 nudge automation (blocked on B6) |
 | C13 | Finish the two remaining 9–11 chapters (OrderDesk, LevelRun) — *only if* you want the band uniform at launch |
 | C14 | An automated pre-deploy checklist so the gate + `sw.js` bump can never be skipped |
