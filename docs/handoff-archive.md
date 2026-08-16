@@ -1,5 +1,256 @@
 # Handoff archive — Milo Story Mode
 
+> 🧱 **2026-08-14 — ALL SIX NEON 9–11 CHAPTERS ARE ON GameShell. ~3,270 BESPOKE LINES BECAME ~1,270 OF DATA, FOUR COPIES OF `boardBand` AND SEVEN COPIES OF THE CAMERA WIRING ARE GONE, AND THE ONE CHAPTER THAT HAD NEVER HAD A GATE HAS ONE. ⚠️ NOT COMMITTED.** `tsc` 0 · **990/990 vitest** · `next build` 0 · **13/13 planted regressions caught** · eslint clean on all seven new files · every chapter driven.
+>
+> **The ask:** *"ab baaki 5 neon chapters bhi convert kardo"* — after the pilot.
+>
+> ## ⓪ WHAT WENT, AND WHAT REPLACED IT
+> | chapter | was | now | answer |
+> |---|---|---|---|
+> | decimals · The Coin Tray | 588 | **252** | two wells, `enter`/`commits` |
+> | factorsMultiples · The Factor Lab | 526 | **156** | one count, commits on the tap |
+> | fractionsCompare · The Pizza Counter | 537 | **182** | one count, 1–10 (never 0) |
+> | measurementUnits · The Height Bar | 611 | **208** | two places, tens then ones |
+> | anglesSymmetry · The Angle Shop | 687 | **284** | a degree OR a set of axes |
+> | wordProblems · The Mission Brief | 320 | **119** | the shell's AnswerPad |
+> **Six components DELETED**, plus `preteen/band.ts` and every chapter's layout half.
+>
+> ## ① ⚠️ THE PAYOFF IS THE DELETIONS, NOT THE NEW FILES
+> `boardBand`/`benchBand`, `TOP_BAND`/`BOT_BAND`, `ACTION_ROW` and `MILO_LANE` existed **byte-identical
+> in four modules** — extracted to `preteen/band.ts` on the fourth copy only weeks ago, and swept at
+> ten viewport sizes in four separate gates. **All of it is gone**: GameShell owns the bands and
+> `FitSlot` scales the instrument into what is left. The same for the AR wiring, which was ~80 lines
+> in each of seven chapters and is now `hand: {…}` on a config.
+> ⚠️ **AND THE GATES HAD TO GO WITH IT.** Four suites were driving that dead arithmetic — a gate
+> testing code nothing calls is worse than no gate, because it reads as coverage. What replaced them
+> is `bandOnGameShell.test.ts`, holding the same rules ONCE for all ten chapters.
+>
+> ## ② ⚠️ AND THE SHARED PART WAS EXTRACTED ON THE SECOND USE, NOT THE FIFTH
+> `parts/kidKit.tsx` — the palette, the key row, the action cue, `PIP`/`PAD`, and `useLatest`. Written
+> once for The Coin Tray, it was about to be pasted into five more chapters, which is exactly how this
+> repo got four `boardBand`s. **The key row's width is derived from its own keys** (`n*PAD +
+> (n-1)*GAP`), which is why Factor Lab's ELEVEN-key row fits one line on a 1280 frame with nobody
+> having thought about it.
+>
+> ## ③ ⚠️ THE SAME BUG, TWICE, AND THE LINTER NAMED IT BOTH TIMES
+> The two-place chapters mirror their value in a ref, or **two taps inside one React batch both
+> resolve to "the first place" and the second overwrites the first** — seven times now for this
+> repo. My first fix wrote the ref DURING RENDER, which `react-hooks/refs` correctly forbids. The
+> honest version is `useLatest(task, value)` in the kit: the ref is keyed on the TASK, so a new round
+> makes the stored value stale and `read()` falls back to the rendered one without anything having to
+> reset it — and nothing is ever written while rendering.
+> ⚠️ **Factor Lab does NOT get one and the comment says why**: its answer is one tap that commits
+> immediately, so there is no second tap in the batch to be stale for.
+>
+> ## ④ ⚠️ TWO CHAPTERS NARRATED SOMETHING THE SCREEN NEVER DID — BOTH CAUGHT BY DRIVING THEM
+> The Mission Brief's walkthrough said *"which comes to 69"* while its readout still showed `?`: the
+> shell renders a tutorial instrument with `reveal={false}` (correctly — nothing is being answered),
+> so the equation never opened. **Info that exists only in audio is info most Chrome installs do not
+> have.** The Angle Shop was worse: it said *"So I turn it"* and then *"There. That is the one."* over
+> an arm that had **not moved a degree**, because I wrote its tutorial steps without values. That is
+> the SupplyRun fault — a demo teaching the opposite of its own words — and no gate could see either,
+> because every piece was individually correct.
+>
+> ## ⑤ THE GATE — **13/13 planted regressions caught**, and FOUR of them were holes I had just written
+> ① Pizza's anti-oracle: grepping for `openingTake` passes on `value ?? openingTake(r)`, which still
+> follows the child live — **assert the GUARD, not the call**. ② A fold round committing on the first
+> axis the hand aimed at (a round answered by waving). ③ The tilt driving an exact-degrees round,
+> where ±2.5° of an unmarked target is luck. ④ The Mission Brief's distractors, ungated because that
+> chapter had no test file at all.
+> ⚠️ **AND ITS OWN PROSE TRIPPED ITS OWN REGEX** — a "shuffles nothing" check matched the sentence
+> explaining that it shuffles nothing. Comments are stripped before any source check now, which is a
+> rule already written in chapter-craft.
+> ⚠️ **A KILLED MUTATION RUN LEAVES THE SOURCE DIRTY.** The first pass hit the 2-minute tool timeout
+> mid-mutation and left `AngleShopGame.tsx` mutated; the next run then reported that mutation as "NO
+> MATCH" — which reads exactly like a mutation that does not apply, rather than one already applied.
+> `tsc` caught it. **Check the tree before believing a mutation report.**
+>
+> ## ⑥ WHAT WAS DRIVEN — all six, at 1280×720
+> **The Factor Lab**: briefing with both doors · walkthrough dealing 12 into rows with the anchor on
+> the card · **eleven keys on ONE row** · guided round answered `3` (15 = 3 × 5) → graded → **`1 / 10`**
+> and round 1 came up a *pair* test where the walkthrough was a *factor* one, i.e. **coverage steering
+> live**. **The Pizza Counter**: THEIRS and MINE drawn, key row **starting at 1** (no answer is ever
+> zero) against the tray's starting at 0. **The Height Bar**: `4 ft 3 in` on the board, `SIGN · 44 in`
+> — **44 is not a multiple of twelve, so `OFFSET_LIMITS` survived the port** — TENS `5` ONES `1`
+> filling to 51, and the line *"51 inches against 44 inches on the sign — that is tall enough."*
+> **The Angle Shop**: the arm live at −150°, turn/Fix controls, the guide. **The Mission Brief**: the
+> brief panel, the story, READOUT. **The Coin Tray**: driven end to end earlier, `2 / 10` reached.
+> ⚠️ **THE PREVIEW PANE RENDERED INTO A CORNER FOR ALL OF IT** — through resizes, reloads and fresh
+> tabs — so every claim above is measured off the DOM, not read off a screenshot.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NO CAMERA PATH HAS BEEN DRIVEN ON THE SHELL, on any chapter.** Everything went through taps.
+>    The `hand` field is proven by the gate and by arithmetic; the ring, the dwell commit and the
+>    denial gate have never been on screen in GameShell. **Still the most useful next drive**, and
+>    `__miloFingers` exists to do it headlessly.
+> 2. ⚠️ **THE EXPLORE BEATS ARE GONE AND NOTHING REPLACED THEM.** Four of these chapters had one (the
+>    Coin Tray's 7+5 pennies fusing into a dime, the Height Bar's hands-apart span, Factor Lab's
+>    bench, the Pizza Counter's reflow). The shell supports it — `TeenChapterCfg.explore` plus a Sim —
+>    but I did not port them, so **the Height Bar's span reading now ships in no beat at all**. That is
+>    a real loss and it is the largest single thing outstanding.
+> 3. ⚠️ **No short-frame pass on any of the six.** 640×320 is where this repo's layout faults live and
+>    the pane would not render for it.
+> 4. **No ten-round run, no re-teach seen fire, no mastery exit** on any of them.
+> 5. **`/story?ch=` now rejects six keys by design** — factors, fcompare, decimals, units, angles,
+>    word. Previews are `/teen-preview?c=<id>`. `area` and `data` still work.
+> 6. **Four chapters left**: OrderDesk, LevelRun, LoadingBay (storybook, 4,159 lines) and **FloorPlot,
+>    which is react-three-fiber and cannot become a data file over a 2D shell** — raised three times
+>    now and still unanswered.
+> 7. Of this session's faults, **two came from driving the chapters, four from mutation-testing my own
+>    gates, two from the linter, one from a gate's prose matching itself, and one from a killed
+>    mutation run leaving the tree dirty. None from the type-checker — though it named every site the
+>    new band had to exist in, which is what made the port safe.**
+
+> 🎛️ **2026-08-14 — THE 9–11 BAND MOVES ONTO THE 12–18 ENGINE, ON THE FOUNDER'S CALL — AND AR BECOMES A FIELD ON THE CONFIG INSTEAD OF SEVEN COPIES. THE SHELL IS DONE AND GATED; THE PILOT CHAPTER IS NOT. ⚠️ NOT COMMITTED.** `tsc` 0 · **1007/1007 vitest** (was 994, **+13**) · `next build` 0 · **13/13 planted regressions caught** · the 12–14 band re-driven in the browser and unchanged.
+>
+> **The ask:** *"yeh band joh hai … 9-11 wala … isko bhi 12-18 waale jaise treat karo … aur isko bhi
+> wohi format mein lao. bas yeh band ki speciality hai AR"* → on the four questions put to him, all
+> four recommendations taken: **extend GameShell with a band prop** · **AR as a first-class `hand`
+> field** · **shell first, then ONE pilot, then fan out** · **instruments stay the default for 9–11**.
+>
+> ## ⓪ WHY THIS IS WORTH DOING, MEASURED RATHER THAN ASSERTED
+> The 12–18 format is ONE engine — `GameShell` (1,341 lines) + `gameKit` (1,171) — over which a
+> chapter is a **thin data file** (~300 lines: palette, `makeTask` L1/L2/L3, a self-running demo, a
+> `GameConfig`). The 9–11 band today is ten bespoke chapters, **~9,800 lines**, each carrying its own
+> layout, phases, words and gate — six in the neon Mission HUD, four still storybook.
+> **So the prize is not the look (six are already neon): it is ~9,800 lines of duplicated shell
+> becoming ~3,000 lines of data, and a fix landing once instead of ten times.**
+>
+> | chapter | file | lines | look | AR |
+> |---|---|---|---|---|
+> | bigNumbers | OrderDesk | 1620 | storybook | ✋ |
+> | rounding | LevelRun | 1724 | storybook | ✋ |
+> | areaPerimeter | FloorPlot | 1380 | storybook · **3D** | — |
+> | dataGraphs | LoadingBay | 815 | storybook | — |
+> | anglesSymmetry | AngleShop | 687 | neon | ✋ |
+> | measurementUnits | HeightBar | 611 | neon | ✋ |
+> | decimals | CoinTray | 588 | neon | ✋ |
+> | fractionsCompare | PizzaCounter | 537 | neon | ✋ |
+> | factorsMultiples | FactorLab | 526 | neon | ✋ |
+> | wordProblems | MissionBrief | 320 | neon | — |
+>
+> ## ① THE BAND NOW EXISTS IN THE FIELD LAB SYSTEM — AND THE TYPE-CHECKER NAMED EVERY SITE
+> `AgeBand` gains `'9-11'`, which turned every `Record<AgeBand, …>` into a compile error until it was
+> filled: `BAND_FRAMING` (9–11 is a **Job**, not an Investigation — the band's worlds are a coin tray
+> and a height bar), `CalmAdvance`'s microcopy bank (warmer and plainer, and still never a cheer), and
+> three `switch (band)` label functions in `MasteryState`. **That is the honest cost of a new band and
+> it is small.** `MiloMark` takes 9–11 down the 12–14 branch: **Milo ages DOWN into a face, never up
+> into a monogram.** `globals.css` gains a scoped `[data-band="9-11"]` block carrying the pre-teen
+> kit's own values (navy `#0A1026`, ink `#EAF1FF`, and the kit's **violet**, which no teen band uses,
+> so the band is visibly its own) — and 9–11 is added to the SHARED selector too, or it would get a
+> palette and no fonts. ⚠️ The kids' `:root` theme is untouched, exactly as for the teen bands: the
+> scope only applies inside a portal that sets `data-band`.
+>
+> ## ② ⚠️ ONLY THREE THINGS ACTUALLY DIFFER, AND THEY ARE NAMED IN ONE PLACE
+> `roundsFor` · `resumesTier` · `hand`. **Ten rounds, not eight** (the length the band's own chapters
+> have always been), and ⚠️ **9–11 NEVER RESUMES AT A DIFFICULTY** — chapter-craft: *"3–11 story
+> chapters call useAdaptive with no start tier … if a chapter looks too hard on question 1, the tier
+> is not the suspect; the generator is."* A nine-year-old coming back a week later and meeting their
+> old top tier on question 1 is the fault that rule exists for, and pinning `startDiff` to 1 switches
+> the warm-up offer off with it. Everything else — the loop, the board, the pad, the re-teach, the
+> mastery exit — is shared, which is the entire point.
+>
+> ## ③ ⚠️ THE HAND IS NOW ONE FIELD, AND IT HANDS ITS NUMBER TO WHOEVER OWNS THE ANSWER
+> Seven chapters each wired their own camera lifecycle, dwell commit, denial gate and remembered
+> device pick — **the same ~80 lines, seven times, drifting.** A chapter now declares `hand: { reads,
+> value?, ready?, when?, enter?, commits?, hint?, denied? }` and the shell owns both doors, the
+> self-view, the gate, the arming ring and the held-over-pose guard.
+> **The contract that makes ONE field serve two very different chapters:** the hand produces a NUMBER;
+> if the AnswerPad is up for this question the number IS the answer, otherwise `enter()` folds it into
+> the instrument's value and `commits()` decides whether that completed the answer or merely advanced
+> it. That is what lets a tap-a-number round and a build-it-in-two-places tray share one field.
+> Three rules came across with it, each already paid for elsewhere: ⚠️ **readiness is a hand IN FRAME,
+> never `count > 0`** (a FIST is a real answer wherever zero is — CoinTray's `0.6` is six dimes and a
+> fist); ⚠️ **the dwell key is the READING ALONE, never the slot** (slot in the key re-arms the timer
+> the instant the slot advances, and a hand still showing 5 enters 5 twice — FitOut shipped `12` as
+> `11` for exactly that); ⚠️ **the ring says only what was READ**, never whether it is right.
+>
+> ## ④ ⚠️ AND THE PORT WOULD HAVE SILENTLY DROPPED A BAND RULE — `coverage` WAS MISSING FROM THE SHELL
+> `SkillBeat` has carried `coverage` for the 3–11 band for months and `GameShell` had no equivalent,
+> so moving a chapter across would have lost it **without a single test going red.** The arithmetic is
+> why it matters: `core/adaptive` promotes on 3-in-a-row and masters on a streak of 6 at the top tier,
+> so a strong child is asked roughly **three questions at L1, ONE at L2 and TWO at L3** — anything
+> late in the pool is asked only of a child who is struggling, i.e. **skipped as a reward for doing
+> well** (measured on TickTock: a third of good runs missed a whole reading). Added as ONE field,
+> because the bookkeeping the exit needs is exactly the input `makeTask` needs to spend a scarce round
+> on something unmet. A chapter that declares none behaves byte-identically.
+>
+> ## ⑤ THE GATE — +13 tests, **13/13 planted regressions caught**
+> [bandOnGameShell.test.ts](src/__tests__/bandOnGameShell.test.ts) drives the shell's own exported
+> band predicates rather than re-implementing them, and source-checks the JSX half. Caught: the band
+> losing its ten-round loop · 9–11 resuming a tier · the teen DEFAULT changing band · **a teen chapter
+> growing a camera door** · a fist ceasing to be an answer · the dwell key taking the round index ·
+> the mastery exit ceasing to wait for coverage · the second door ceasing to switch input · the band
+> getting a palette but no kit tokens.
+> ⚠️ **The one survivor was my own check being weaker than its rule:** `toMatch` on
+> `config.makeTask(d, asked.current)` passes with ONE of its **two** call sites reverted — the
+> sig-dedupe retry would then re-roll blind. Counted now, not matched. *Wherever a rule has to hold in
+> N places, assert N.*
+>
+> ## ⑥ WHAT WAS DRIVEN
+> **The 12–14 band, re-driven at 1280×720 after the change** — this shell runs 36 live chapters, so
+> not regressing them is the whole risk. The Bank Account (integers) start card renders with **no
+> second door** (`config.hand` is undefined there, which is the intended default), and the walkthrough
+> runs: THE PLAN chalkboard, the account meter, narration, step controls. `next build` green.
+>
+> ## ⑦ ✅ THE PILOT IS BUILT AND DRIVEN — THE COIN TRAY (`decimals`) IS THE FIRST 9–11 CHAPTER ON GameShell
+> **588 bespoke lines → a data file** (274 at the time, **252** once `kidKit` took the shared
+> parts), and `story/CoinTray.tsx` is DELETED. `tsc` 0 ·
+> **1010/1010** · `next build` 0 · **8/8 planted regressions caught** · 0 console errors.
+> Everything that can be WRONG stayed in `story/cents.ts`, untouched — the ladder, the trap amounts,
+> the grader, the miss lines and the anti-oracle `headline` rule, with its 31-test gate still driving
+> them. **That is the whole argument for the port being cheap: this file re-shapes, it re-implements
+> nothing.** What is genuinely new is the tray Instrument (~110 lines lifted from the old scene).
+>
+> **The contract that made one `hand` field serve this chapter:** `enterTray(v, n)` is the ONLY way a
+> number gets into the tray, and BOTH the camera (`hand.enter`) and the tap pad call it, so the two
+> paths cannot drift and `grade` never learns which moved it. `commits: v => v.slot >= 2` is what
+> tells the shell an amount is finished rather than merely started.
+> ⚠️ **The pad is part of the INSTRUMENT rather than `GameConfig.answerPad`**, deliberately: the
+> shell's pad HIDES the instrument, and here the child has to watch the tray fill as they enter.
+>
+> ## ⑧ ⚠️ AND WRITING THE GATE CAUGHT A REGRESSION I HAD JUST INTRODUCED
+> The new Tray read the RENDERED `value` in its tap handler, so **two taps inside one React batch
+> both resolve `slot === 0` and the second overwrites the dimes instead of filling the pennies** —
+> the batched-tap fault this repo has now met seven times, and the old chapter carried refs for
+> exactly it. `setValue` being functional would not have saved it: the state advances correctly and
+> the closure the next tap runs is still the old one. Mirrored in a ref, and gated.
+>
+> ## ⑨ WHAT WAS DRIVEN — the whole chapter, at 1280×720
+> The briefing with **both doors** (`✋ Use the camera instead` is the quiet one) · the walkthrough
+> with the chalkboard writing `0.6` while the tray fills to six dime ten-frames and an EMPTY pennies
+> well — the fist case, on screen · the guided round answered **3 dimes then 0 pennies** through the
+> tap pad, graded and advanced · **`1 / 10` in the corner, which is the band's ten-round loop proven
+> rather than asserted** · scored round 1 (`0.6`) answered correctly and advanced to **2 / 10**.
+> 0 console errors. The 12–14 band re-driven separately and unchanged.
+>
+> ## ⑩ ⚠️ AND THE FOUNDER CAUGHT THE PILOT'S ONE REAL LAYOUT FAULT ON A SCREENSHOT — THE TRAY WAS TINY
+> **`FitSlot` runs at `max={1}` on a landscape frame: it only ever SHRINKS an instrument, never grows
+> one.** The old bespoke chapter scaled its board UP to **2.2×** into the band it was given, and the
+> port dropped that — so a tray authored at the old 8px pip rendered at 8px for ever and floated in a
+> third of the frame with dark space all round it. **The rule for this shell: author an instrument at
+> the size it should be READ at and let the shell take it down**, because the coins are the one thing
+> here that has to be countable and so the last thing that should pay for the layout. `PIP` 8 → 15,
+> and the wells, the point, the counts and the keys with it.
+> ⚠️ **Which then wrapped the key row onto two lines** — ten keys at 58px plus nine gaps is 634px
+> against a hand-typed `maxWidth: 620`. Measured on the DOM, not eyeballed. The cap is derived from
+> the keys now (`10 * PAD + 9 * PAD_GAP`), so it cannot be 14px short again.
+> ⚠️ **The preview pane rendered the app into a corner for the whole of this check** — the documented
+> instrument fault — **through a resize, a reload AND a fresh tab.** Everything above is measured off
+> `getBoundingClientRect` at a true 1280×720: **pad on ONE row, 10 keys, no h-scroll, and the only
+> "overlaps" a layer sweep reports are the full-bleed motif and MiloMark, both by design.**
+>
+> ## ▶ OPEN
+> ⚠️ **THIS LIST IS SUPERSEDED BY THE 🧱 BLOCK ABOVE — read that one.** Written when only the pilot
+> existed, it said "nine chapters left" and "no chapter declares `band: '9-11'` yet"; six now do.
+> The items that survived it verbatim are still open there: **the camera path has never been driven
+> on the shell**, no ten-round run / re-teach / mastery exit, and **`FloorPlot` is react-three-fiber
+> and cannot become a data file over a 2D shell**.
+>
+> The one thing recorded ONLY here, and still true: **`chapterLevel` is written for 9–11 on every
+> submit and never read back** (the read is gated by `resumesTier`, the write is not). Harmless, one
+> branch fewer, but the stored level for a 9–11 chapter is dead data.
+
 > ⚠️ **THE THREE BLOCKS BELOW ARE THE SAME DAY AND THE LAST ONE IS PARTLY SUPERSEDED BY THE TWO
 > ABOVE IT.** `story/AngleShop.tsx` no longer exists — the chapter is
 > `teen/games/AngleShopGame.tsx` on GameShell — and `angles.ts` has lost its whole layout half. What
