@@ -102,7 +102,7 @@ Nothing here needs an account, a card, or a signature. Give me the go and I work
 | 🟡 C10b | Supabase performance advisors — **migration written, NOT applied** (`d1fa8fe`). ⚠️ Predicates read off `pg_policies` on the live DB after a first draft guessed them wrong (`diagnostic_plan_progress` reaches the parent via `plan_id`, not `learner_id`). **You apply it** — prod DDL is yours. |
 | ✅ C11 | **CSP ENFORCED** — DONE (`a968dbb`). One policy, not two. ⚠️ Enforcing it as written would have silently killed every AR chapter (MediaPipe fetches WASM from jsDelivr, its model from storage.googleapis.com, and runs a `blob:` worker); those are now explicit, named allowances. Verified with a negative control and 211/211 chapters against the enforced build. Two `unsafe-inline`s remain, documented — removing them needs nonces and a styling rewrite, not a config change. |
 | C12 | Week-6 nudge automation (blocked on B6) |
-| C13 | Finish the two remaining 9–11 chapters (OrderDesk, LevelRun) — *only if* you want the band uniform at launch |
+| ❌ C13 | ~~Finish the two remaining 9–11 chapters (OrderDesk, LevelRun)~~ **DROPPED 2026-08-16 — founder's call: they stay storybook, no neon.** Not "later", not "if there is time": the 9–11 band is mixed by design and both chapters pass the C7 gate as they are. Nothing outstanding. |
 | ✅ C14 | **`npm run preflight`** — DONE (`d1fa8fe`). tsc · vitest · build · production `npm audit` · **sw.js bump vs origin/main** · DRAFT-legal warning. It caught the missing bump on the very next commit. |
 
 ---

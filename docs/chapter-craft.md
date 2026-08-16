@@ -1089,8 +1089,17 @@ to draw. The "draw from the ink box, not the file box" rule, applied to a code-d
   640-wide frame, not at 320. Measured at **640×320**: The Empty Plot's `back ▶` (526–583) sits under
   it, and **The Coin Tray — shipped, and driven twice — has it over keys 5, 6 and 7.** Every tap
   still lands somewhere, which is why nothing but crossing the boxes finds it. **Cross the shell's
-  own fixed layers with your answer surface, not just your own**, and note the fix is one line in the
-  shared component rather than a workaround per chapter.
+  own fixed layers with your answer surface, not just your own.**
+  ⚠️ **FIXED 2026-08-16, and the general rule is the one worth keeping: A COMPONENT WITH TWO STATES
+  MUST PUT BOTH IN FLOW — a half-obeyed layout rule is the same bug as not obeying it.** The pad's
+  OPEN drawer was already deliberately in flow, with a comment saying so (*"opening it shrinks the
+  play area instead of covering it"*) and the reason spelled out (a `fixed` panel needs a matching
+  reserve, and measured, the two vh values did not agree). Its CLOSED button was `position: fixed`
+  anyway, so the state that is up 99% of the time broke the promise the other state documents. Both
+  states are now one flow row; the cost is 44px, which is the tap floor and so cannot be bought back.
+  **When you find a component obeying this rule, check every state it renders, not the one the
+  comment is attached to** — measured after: 0 collisions, nothing offscreen, no scroll, at 640×320
+  on both named victims.
 - **A TRAVEL DISTANCE INSIDE A SCALED CONTAINER MUST BE RELATIVE, NOT PX.** `FitBox` scales its
   child by up to 2.6×, so a 54px "lift the tray and set it down" became a ~140px launch that started
   a tray **off the top of the screen** at 640×320. `translateY(-38%)` is a share of the thing's own
@@ -2037,6 +2046,17 @@ count the matches.
   196px instead of 51 and everything fits; the walkthrough at 640×320 was never crossed, which is
   exactly where the collision was. And the collision was **2D** — the board passes horizontally
   BETWEEN two chrome chips it overlaps vertically — so a vertical-only check cannot see it either.
+- ⚠️⚠️ **A GATE THAT WAS LAST RUN AGAINST PRODUCTION CAN BE COMPLETELY BROKEN AGAINST THE SERVER IT
+  IS DOCUMENTED TO DRIVE, AND IT FAILS LOUDLY IN A WAY THAT LOOKS LIKE YOUR CHANGE.** `npm run
+  test:chapters` drives the local dev server by default, and its contract is *zero console errors*.
+  The day the CSP was enforced, `script-src` stopped allowing `'unsafe-eval'` — which **React's
+  DEVELOPMENT build needs** and production does not — so every page logged one error and the gate
+  went **210 of 211 failing**, on code that was fine. It went unnoticed for a day because the run
+  that certified it was pointed at prod with `E2E_BASE_URL`. Two rules: **a security header that
+  differs between dev and prod must be branched on `NODE_ENV` and gated in BOTH directions** (a leak
+  to production is the dangerous half; losing it in dev is the half that eats a day), and **when a
+  gate fails wholesale right after you touch one file, stash the change and re-run before believing
+  it** — six lines of shell, and it is the difference between fixing a bug and inventing one.
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---

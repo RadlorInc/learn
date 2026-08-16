@@ -13,10 +13,13 @@
 >
 > ## 📍 WHERE THE 9–11 BAND IS — read this before touching it
 >
-> **The band is mid-port onto GameShell** (founder's call, 2026-08-14: treat 9–11 like 12–18, same
-> engine, same format, **AR as the thing that makes it its own band**). EIGHT chapters are across,
-> two are not, and the two halves work completely differently — so check which kind you are in
-> first. The two that are left are both storybook `SkillBeat` — there is no 3D excuse any more.
+> **The port is FINISHED at eight** (founder's call, 2026-08-14: treat 9–11 like 12–18, same engine,
+> same format, **AR as the thing that makes it its own band**). EIGHT chapters are across and
+> **the last two are deliberately staying storybook — founder's call, 2026-08-16: *"woh dono chapter
+> waise hi rahenge… bina neon mein"***. So this table is the finished state, not a to-do list.
+> ⚠️ **The two halves work completely differently — check which kind you are in before you touch
+> one.** Do NOT port `OrderDesk` or `LevelRun`; they are storybook `SkillBeat` on purpose, and both
+> pass the C7 gate as they are. The band is mixed by design.
 >
 > | | chapter | file | answers with |
 > |---|---|---|---|
@@ -28,8 +31,8 @@
 > | ✅ | `wordProblems` | `teen/games/MissionBriefGame.tsx` | the shell's AnswerPad |
 > | ✅ | `areaPerimeter` | `teen/games/EmptyPlotGame.tsx` | a PLACE on a plan · **hands apart** |
 > | ✅ | `dataGraphs` | `teen/games/LoadingBayGame.tsx` | a stack OR a count · hand or taps |
-> | ⬜ | `bigNumbers` | `story/OrderDesk.tsx` | storybook · SkillBeat |
-> | ⬜ | `rounding` | `story/LevelRun.tsx` | storybook · SkillBeat |
+> | 🔒 | `bigNumbers` | `story/OrderDesk.tsx` | storybook · SkillBeat — **staying storybook, do not port** |
+> | 🔒 | `rounding` | `story/LevelRun.tsx` | storybook · SkillBeat — **staying storybook, do not port** |
 >
 > **⚠️ THE 3D IS GONE.** `story/FloorPlot.tsx` (1,380 lines of react-three-fiber) and `story/plotSite.ts`
 > (628 lines of procedural site) are DELETED — founder's call, 2026-08-15: *"totally remove that 3d
@@ -164,9 +167,21 @@
 >    rate limits, Vercel WAF, PITR.
 > 3. 🟡 **C10b migration written, NOT applied** — `supabase/migrations/20260816120000_perf_advisors.sql`.
 >    Prod DDL is the founder's.
-> 4. ⚠️ **THE SCRATCH-PAD COLLISION IS STILL OPEN** and is still one line — live in a shipped chapter.
-> 5. **C13 — OrderDesk + LevelRun (~3,344 lines)** deliberately NOT bundled into launch hardening. Not
->    launch-blocking: both pass the C7 gate as storybook chapters. Its own piece of work.
+> 4. ✅ **THE SCRATCH-PAD COLLISION IS FIXED** (2026-08-16) — the closed button was `position: fixed`
+>    while the open drawer was deliberately in flow, i.e. the state that is up 99% of the time broke
+>    the promise the other state's own comment documents. Both states are one flow row now; measured
+>    at 640×320 on The Coin Tray and The Empty Plot: 0 collisions, nothing offscreen, no scroll.
+>    ⚠️ **And chasing it found the C7 gate 210/211 RED and broken since the CSP was enforced** —
+>    `script-src` dropped `'unsafe-eval'`, which React's DEV build needs and production does not, so
+>    every page logged a console error against the very server the gate is documented to drive. It
+>    hid because the run that certified 211/211 was pointed at prod with `E2E_BASE_URL`. Now branched
+>    on `NODE_ENV` and gated in BOTH directions (`cspHeader.test.ts`): the production leak is the
+>    dangerous half, losing it in dev is the half that eats a day. Gate back to **211/211**.
+> 5. ✅ **C13 IS CLOSED — NOT DONE, DECIDED.** Founder, 2026-08-16: *"woh dono chapter waise hi
+>    rahenge… bina neon mein"*. **OrderDesk and LevelRun stay storybook `SkillBeat`; do not port
+>    them.** Both pass the C7 gate as they are. The 9–11 band is mixed by design — eight on
+>    GameShell, two storybook — so the ~3,344 lines are not outstanding work and the port is finished
+>    at eight.
 > 6. **231 pre-existing eslint errors**, almost all `react-hooks/refs` and `set-state-in-effect` —
 >    byte-identical before today's work and deliberately untouched. **A mass hook refactor is the last
 >    thing to do in launch week**, but they are the exact classes this repo has shipped bugs from.
