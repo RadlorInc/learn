@@ -69,7 +69,7 @@ describe('diagnosticEngine', () => {
 
     it('strikes never leak into the diagnosis', () => {
       // End the probe with an outstanding strike by capping items right after a first miss.
-      let s = (() => { const st = runProbe('9-11', () => true, { maxItems: 1, maxFailures: 5 }).state; return st })()
+      const s = (() => { const st = runProbe('9-11', () => true, { maxItems: 1, maxFailures: 5 }).state; return st })()
       expect(s.strikes).toHaveLength(0)   // pass path never strikes
       // Direct check: one miss recorded, probe force-ended → skill is neither passed nor failed.
       const one = runProbe('9-11', () => false, { maxItems: 1, maxFailures: 5 }).state

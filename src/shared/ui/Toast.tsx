@@ -29,7 +29,16 @@ function _add(msg: string, type: ToastItem['type']) {
 
 export function ToastProvider() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
-  _setToasts = setToasts
+  /** ⚠️ PUBLISHED IN AN EFFECT, NOT DURING RENDER. Assigning a module global while rendering is a
+   *  side effect in the render phase: under StrictMode's double render, a Suspense replay or a
+   *  discarded concurrent render, the setter of a tree React then THREW AWAY stays published — and
+   *  every later `toast()` calls into a component that was never committed. The effect only runs
+   *  for the render that actually commits, and clears the global on unmount so a stale setter can
+   *  never outlive its provider. */
+  useEffect(() => {
+    _setToasts = setToasts
+    return () => { if (_setToasts === setToasts) _setToasts = null }
+  }, [])
 
   if (toasts.length === 0) return null
 

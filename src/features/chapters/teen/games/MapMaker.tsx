@@ -303,7 +303,7 @@ function moveTask(mv: Move): Task {
 
   // midpoint — the checkpoint halfway along a segment. Both sums forced even so
   // the answer is a lattice point (no half-squares to place).
-  let ax = rint(-5, 5), ay = rint(-5, 5)
+  const ax = rint(-5, 5), ay = rint(-5, 5)
   let bx = rint(-5, 5), by = rint(-5, 5)
   let guard = 0
   while ((((ax + bx) % 2 !== 0) || ((ay + by) % 2 !== 0) || (ax === bx && ay === by)) && guard++ < 80) {

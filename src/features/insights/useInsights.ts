@@ -45,7 +45,7 @@ export function useInsights() {
     }
   }
 
-  useEffect(() => { load() }, [])                                             // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load() }, [])                                              
   useEffect(() => { if (state === 'no-auth') router.replace('/auth') }, [state, router])
 
   const reload = () => { setState('loading'); load() }

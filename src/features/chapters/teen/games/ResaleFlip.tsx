@@ -144,7 +144,8 @@ function countTask(): Task {
 }
 
 function rootsTask(): Task {
-  let p = rint(1, 6), q = rint(1, 6)
+  const p = rint(1, 6)
+  let q = rint(1, 6)
   let guard = 0
   while (q === p && guard++ < 20) q = rint(1, 6)
   const lo = Math.min(p, q), hi = Math.max(p, q)

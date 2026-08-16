@@ -23,11 +23,19 @@ export interface MiloMarkProps {
   size?: number
 }
 
-// Stable id suffix so multiple marks on a page don't collide on <defs> ids.
-let __miloMarkSeq = 0
+// Stable id suffix so multiple marks on a page don't collide on <defs> ids and, more to the point,
+// on the @keyframes names each mark injects.
+//
+// ⚠️ THIS WAS A MODULE-LEVEL COUNTER INCREMENTED INSIDE useMemo, WHICH IS NOT SSR-SAFE. The server
+// render and the client hydration each start the module fresh and increment in their own order, so
+// a mark could be handed a different suffix on the two passes — the class name in the markup then
+// names an animation whose @keyframes went out under a different name, and it silently does not
+// animate. `useId` is React's own answer and is stable across both passes.
 
 export default function MiloMark({ band, mood = 'idle', size = 40 }: MiloMarkProps) {
-  const uid = React.useMemo(() => `mm${(__miloMarkSeq += 1)}`, [])
+  // Colons are legal in an id but break `.selector` and `url(#…)`, and this suffix is used as
+  // both a class name and an animation name — so strip everything that is not word-safe.
+  const uid = `mm${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`
 
   // Shared inline-block frame so the mark sits on a text baseline cleanly.
   const wrapStyle: React.CSSProperties = {

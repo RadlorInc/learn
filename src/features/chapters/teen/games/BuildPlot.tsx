@@ -154,7 +154,8 @@ function missingTask(p: number, q: number, d: 1 | 2 | 3): Task {
 
 /** A signed pair with |p| ≠ |q| (a difference of squares is its own L2 case). */
 function mixedPair(): { pos: number; neg: number } {
-  let pos = rint(2, CAP), neg = -rint(1, CAP)
+  const pos = rint(2, CAP)
+  let neg = -rint(1, CAP)
   while (pos === -neg) neg = -rint(1, CAP)
   return { pos, neg }
 }

@@ -270,7 +270,7 @@ function ViralScene({ palette, value, stepIndex, ended }: { palette: Palette; va
     const pts: string[] = []
     for (let i = 0; i <= 48; i++) { const x = (i / 48) * xMax; pts.push(`${i ? 'L' : 'M'}${gx(x).toFixed(1)},${gy(curve(x)).toFixed(1)}`) }
     return pts.join(' ')
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])  
 
   // ── continuous day-scan sweep (race) — a motion value eased to the beat's day ──
   const sweep = useMotionValue(0)

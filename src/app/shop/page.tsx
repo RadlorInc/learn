@@ -226,7 +226,7 @@ export default function ShopPage() {
           <h2 style={{
             fontFamily: 'var(--font-display)', fontWeight: 900,
             fontSize: 22, color: 'var(--ink)', margin: 0,
-          }}>Milo's wardrobe</h2>
+          }}>Milo&apos;s wardrobe</h2>
 
           {allSlots.map(slot => {
             const slotItems = SHOP_ITEMS.filter(i => i.slot === slot)

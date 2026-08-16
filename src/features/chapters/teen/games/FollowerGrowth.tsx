@@ -174,7 +174,8 @@ function buildStartGrowthTask(): Task {
 
 // ── L2: slope from two weeks → build the matching line (from a point too) ────
 function twoPointsTask(): Task {
-  let x1 = rint(0, 3), x2 = rint(1, 4)
+  const x1 = rint(0, 3)
+  let x2 = rint(1, 4)
   let guard = 0
   while (x2 === x1 && guard++ < 20) x2 = rint(1, 4)
   const b = startB(RANGE - 1)

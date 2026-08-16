@@ -145,7 +145,10 @@ export type WalkBeat =
   | { kind: 'say'; text: string; biome?: BiomeId }
   | { kind: 'count'; to: number; obj: CountKind; biome?: BiomeId }   // Milo demonstrates counting 1→N aloud
   | { kind: 'guide'; n: number; obj: CountKind; biome?: BiomeId }    // child taps all N to count (guided, unscored)
-  | { kind: 'catch'; beat: Beat<any>; biome?: BiomeId }              // the scored practice (SkillBeat) // eslint-disable-line @typescript-eslint/no-explicit-any
+  // the scored practice (SkillBeat). `any` because a Beat is generic over each chapter's own
+  // question type and this union is shared by all of them.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { kind: 'catch'; beat: Beat<any>; biome?: BiomeId }
   | { kind: 'skill'; beat: Beat<any> } // eslint-disable-line @typescript-eslint/no-explicit-any
 
 // `biomes` lists the backgrounds this chapter visits (its storytelling's three

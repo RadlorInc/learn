@@ -269,7 +269,7 @@ export default function ParentDashboard() {
                 <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
                   <div style={{ width:44, height:44, borderRadius:12, background:'#FFF4D6', fontSize:24, display:'flex', alignItems:'center', justifyContent:'center' }}>📬</div>
                   <div>
-                    <div style={{ fontSize:15, fontWeight:800, color:'#1a1a1a' }}>You've been invited!</div>
+                    <div style={{ fontSize:15, fontWeight:800, color:'#1a1a1a' }}>You&apos;ve been invited!</div>
                     <div style={{ fontSize:13, color:'#888', marginTop:2 }}>
                       Access to: <strong>{inv.learner_name ?? 'a learner'}</strong>
                     </div>

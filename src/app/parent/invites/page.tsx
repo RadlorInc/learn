@@ -97,7 +97,7 @@ export default function InvitesPage() {
         <BackButton href='/parent' label='← Dashboard' />
         <div>
           <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-dark)' }}>Share Access</div>
-          <div style={{ fontSize: 12, color: '#888' }}>Invite anyone to view a learner's progress</div>
+          <div style={{ fontSize: 12, color: '#888' }}>Invite anyone to view a learner&apos;s progress</div>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default function InvitesPage() {
             ✉️ Send an invite
           </h3>
           <p style={{ fontSize: 13, color: '#888', margin: '0 0 16px' }}>
-            Share a learner's progress with a parent, teacher, or carer
+            Share a learner&apos;s progress with a parent, teacher, or carer
           </p>
 
           {/* Learner selector */}

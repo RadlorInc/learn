@@ -85,6 +85,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             inline scripts of its own — a prerequisite for a strict script-src CSP. See next.config.ts.
             No `defer`: it must run mid-parse — if the HTML stream never finishes, a deferred
             script (and its localhost self-heal) would never execute. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts -- deliberate, see above: this
+            must run mid-parse, and `defer` would skip it entirely on a stream that never ends. */}
         <script src="/sw-register.js" />
       </body>
     </html>

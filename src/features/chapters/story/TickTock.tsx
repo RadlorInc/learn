@@ -625,7 +625,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
     // The last beat waits for the child (its final step has already offered the dial); the others roll on.
     if (!last) timers.push(window.setTimeout(advance, t + 600))
     return () => { timers.forEach(window.clearTimeout); stopSpeech() }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [beat])
 
   // the child's one go, on the last beat

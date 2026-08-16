@@ -165,7 +165,7 @@ export default function GamePage() {
     {/* Full-screen stage: holds the background and clips so nothing scrolls. The
         chapter is centered-at-top and scaled by the fit controller. */}
     <div className="kit-screen" style={{ backgroundColor: stageBg.backgroundColor, backgroundImage: stageBg.backgroundImage, position: 'fixed', inset: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-      <div ref={fitRef} className="game-zoom" style={{ width: 'min(100vw, 680px)', ['--game-zoom' as any]: zoom } as React.CSSProperties}>
+      <div ref={fitRef} className="game-zoom" style={{ width: 'min(100vw, 680px)', '--game-zoom': zoom } as React.CSSProperties & Record<'--game-zoom', number>}>
         {/* GameTopbar is rendered inside each chapter component */}
         {!chapterDone && playingChapter && (() => {
           const Chapter = CHAPTER_COMPONENTS[playingChapter]

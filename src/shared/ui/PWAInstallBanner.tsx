@@ -141,8 +141,8 @@ export default function PWAInstallBanner() {
           fontSize: 14, lineHeight: 1.8,
         }}>
           <div>1. Tap the <strong>Share</strong> button <span style={{fontSize:18}}>⬆</span> in Safari</div>
-          <div>2. Scroll down and tap <strong>"Add to Home Screen"</strong></div>
-          <div>3. Tap <strong>"Add"</strong> — done! 🎉</div>
+          <div>2. Scroll down and tap <strong>&quot;Add to Home Screen&quot;</strong></div>
+          <div>3. Tap <strong>&quot;Add&quot;</strong> — done! 🎉</div>
         </div>
       )}
 

@@ -53,13 +53,14 @@ function swVersion(): Promise<string> {
   return new Promise((resolve) => {
     const sw = typeof navigator !== 'undefined' ? navigator.serviceWorker : undefined
     if (!sw?.controller) { resolve('none'); return }
-    let timer: ReturnType<typeof setTimeout>
-    const cleanup = () => { clearTimeout(timer); sw.removeEventListener('message', onMsg) }
+    // Declared in dependency order so the timer needs no deferred `let`: each of these is only
+    // CALLED later, so referring forward is safe, and every binding can be const.
     const onMsg = (e: MessageEvent) => {
       if (e.data?.type === 'VERSION') { cleanup(); resolve(String(e.data.version)) }
     }
+    const timer = setTimeout(() => { cleanup(); resolve('no reply') }, 1000)
+    const cleanup = () => { clearTimeout(timer); sw.removeEventListener('message', onMsg) }
     sw.addEventListener('message', onMsg)
-    timer = setTimeout(() => { cleanup(); resolve('no reply') }, 1000)
     sw.controller.postMessage({ type: 'VERSION' })
   })
 }

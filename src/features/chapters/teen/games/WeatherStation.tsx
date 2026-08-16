@@ -47,7 +47,7 @@ function numChoices(ans: number, ...extra: number[]): number[] {
 
 // Compare two balances: which is lower / higher.
 function colder(): Task {
-  let a = pick([-8, -6, -5, -3, -2, 4, 6]); let b = pick([-9, -7, -4, -1, 3, 5])
+  const a = pick([-8, -6, -5, -3, -2, 4, 6]); let b = pick([-9, -7, -4, -1, 3, 5])
   if (a === b) b = a - 1
   const low = Math.random() < 0.5
   const ans = low ? Math.min(a, b) : Math.max(a, b)

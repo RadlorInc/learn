@@ -221,7 +221,7 @@ export function OfflineBanner(): React.ReactElement | null {
         <>
           <span>📡</span>
           <span>
-            You're offline
+            You&apos;re offline
             {pendingCount > 0
               ? ` — ${pendingCount} session${pendingCount !== 1 ? 's' : ''} will sync when reconnected`
               : ' — progress saves when reconnected'}

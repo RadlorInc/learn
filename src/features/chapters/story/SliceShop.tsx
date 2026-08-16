@@ -900,7 +900,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
     // The last beat waits for the child; the others roll on.
     if (!last) timers.push(window.setTimeout(() => setBeat(x => x + 1), t + 600))
     return () => { timers.forEach(window.clearTimeout); stopSpeech() }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [beat])
 
   const layTry = () => {

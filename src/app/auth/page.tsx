@@ -276,7 +276,7 @@ export default function AuthPage() {
         </button>
 
         <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', margin: 0 }}>
-          Your child's progress is saved securely to your account
+          Your child&apos;s progress is saved securely to your account
         </p>
       </div>
 
