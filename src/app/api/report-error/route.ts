@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { callerKey, overLimit } from '../_rateLimit'
 
 // Client-error sink. The browser ErrorBoundary POSTs here so client-side crashes (which
 // instrumentation.ts's onRequestError does NOT see — that's server-only) reach the same place.
@@ -10,7 +11,17 @@ export const dynamic = 'force-dynamic'
 const INGEST_URL = process.env.MONITORING_INGEST_URL
 const cap = (s: unknown, n: number) => (typeof s === 'string' ? s.slice(0, n) : undefined)
 
+/** ⚠️ THIS ONE COSTS MONEY THE DAY MONITORING IS WIRED. Unlimited, it forwards every POST to
+ *  MONITORING_INGEST_URL — so an open endpoint becomes an open billing line on someone else's
+ *  service, and the log noise buries the real crash it exists to surface. 30/min is generous for a
+ *  genuinely broken page (the boundary reports once per crash) and cheap for anyone else. */
+const LIMIT = 30
+const WINDOW_MS = 60_000
+
 export async function POST(req: Request) {
+  // Silent 200 rather than a 429: this is a crash reporter, and a browser that has just crashed
+  // must not be handed an error to handle. Dropping the surplus is the whole point.
+  if (overLimit(callerKey(req, 'err'), LIMIT, WINDOW_MS)) return NextResponse.json({ ok: true })
   try {
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>
     const record = {

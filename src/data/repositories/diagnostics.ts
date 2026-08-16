@@ -20,12 +20,21 @@ export interface DiagnosticPayload {
 /**
  * Cold-funnel lead capture: record the email a logged-out visitor gives before the checkup, so a
  * visitor who never signs up is still counted. Best-effort + fire-and-forget — never blocks or throws
- * (the checkup starts regardless). The diagnostic_leads table is insert-only for anon (no reads).
+ * (the checkup starts regardless).
+ *
+ * ⚠️ VIA OUR OWN ROUTE, NOT STRAIGHT INTO THE TABLE. This used to insert with the anon key, which is
+ * public by design — so the write was an open, unlimited, unauthenticated endpoint that anyone could
+ * POST for ever (launch-plan finding #9). `/api/lead` rate-limits by IP and validates the address;
+ * the anon INSERT grant is revoked by `20260816170000_leads_server_only.sql`.
  */
 export async function captureDiagnosticLead(email: string, band: string): Promise<void> {
   try {
-    const supabase = db()
-    await supabase.from('diagnostic_leads').insert({ email: email.slice(0, 254), band })
+    await fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.slice(0, 254), band }),
+      keepalive: true,   // the checkup navigates immediately after; without this the POST is cancelled
+    })
   } catch { /* best-effort — a failed lead capture must never stop the checkup */ }
 }
 
