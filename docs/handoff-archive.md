@@ -1,5 +1,143 @@
 # Handoff archive — Milo Story Mode
 
+> ⚠️ **THE THREE BLOCKS BELOW ARE THE SAME DAY AND THE LAST ONE IS PARTLY SUPERSEDED BY THE TWO
+> ABOVE IT.** `story/AngleShop.tsx` no longer exists — the chapter is
+> `teen/games/AngleShopGame.tsx` on GameShell — and `angles.ts` has lost its whole layout half. What
+> the 📐 block records that IS still true and still enforced: the daily anchor, the week, the paper
+> table, the no-obtuse-slope rule, the reason-argues-for-the-KIND rule, and the set-square staying on
+> an exact-degrees round. Read it for WHY those exist, not for where the code is.
+>
+> 📐 **2026-08-14 — THE ANGLE SHOP GETS ITS DAILY ANCHOR AND THEN LOSES ITS PAINTED WORLD, ON TWO FOUNDER CALLS — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT ITS TOP TIER COULD NOT BE ANSWERED BY KNOWING ANYTHING, AND THAT THE TWO MARKS THAT STATE THE ANGLE WERE BOTH DRAWN OFF IT. ⚠️ NOT COMMITTED — the founder has not been asked.** `tsc` 0 · **994/994 vitest** (was 972, **+22**) · `next build` 0 · **eslint 5 problems against 12 at HEAD, i.e. seven FEWER and zero new** · 0 console errors in a fresh tab · driven at 1280×720 and 640×320 · **19/20 planted regressions caught, the 20th proven INERT by measurement.**
+>
+> **The asks, in order:** *"in band 9-11 … joh angles and symmetry chapter hai usko bhi daily real
+> world example se connect karna hai"* → on the two questions put to him: **split the world by verb —
+> ramp for angles, paper for folds** · **keep the square-corner guide on exact rounds** → then, on a
+> third question I had to raise mid-build: **one park, several things, each job naming its own** →
+> and finally **"remove the background and that characters.. make it just like the neon one which we
+> have in decimal, fraction chapters."**
+>
+> ## ⓪ ⚠️⚠️ THE TOP TIER WAS A LOTTERY, AND IT WAS ALREADY SHIPPING
+> `useDegrees = d === 3` and `guideShown = d < 3`, so **every** exact-degrees round was asked with the
+> set-square retired. The child got an arm at a start angle they cannot read (`showDeg={settled}` —
+> correct, rule 1), ◀ ▶ at 5° a tap, **no readout, no scale, and nothing at 90° to judge against**,
+> then `grade` demanding `deg === 85`. Half the rounds are angle rounds and a strong child gets ~2
+> rounds at L3, so the chapter **ended** on a question that cannot be answered by knowing anything.
+> FitOut's dead-button shape: the scaffold that retired was the only reference the exact question had.
+> ⇒ The guide now stays whenever the job is `degrees`, whatever the tier. **On a KIND round it gives
+> the ANSWER away and must go; on a DEGREES round it gives a REFERENCE away, which is what a set
+> square is for.**
+>
+> ## ① ⚠️ AND THE ANCHOR THE PLAN RECORDED HAD NEVER REACHED THE CODE
+> `grep -i anchor` over `angles.ts` + `AngleShop.tsx` returned nothing but a local variable; the
+> briefing read *"It is Slate's first week on the crew"* — a job, not a thing a nine-year-old has
+> done. [story-9-11-ar-plan.md §10](docs/story-9-11-ar-plan.md) has carried *"how steep the ramp or
+> the slide is"* since it was written. **Factor Lab's desks, verbatim, one chapter along.**
+>
+> ## ② ⚠️⚠️ THE FOUNDER'S OWN ANCHOR CANNOT EXPRESS A THIRD OF THE CHAPTER, AND THE ARITHMETIC SAYS SO BEFORE ANY CODE
+> **Obtuse is the beam swung PAST vertical, and real ramps live between about 5° and 40° — every
+> slope is acute.** So *"make the ramp obtuse"* asks a child to build a thing that does not exist, and
+> the shipped week did exactly that: `wants: 'obtuse'` on *"the approach ramp — a barrow has to get up
+> it loaded"*, drawing a plank leaning backwards over the bank at 75° above the horizontal while the
+> words said *"shallower"*. **I raised it before building rather than shipping it**; the founder took
+> *one park, several things* — the ramp and the slide carry acute, the two things that genuinely OPEN
+> past square (the park gate, the barrier arm) carry obtuse, and one upright (the hoop post) carries
+> right. Each job names its own object, which is the structure the chapter already had.
+>
+> ## ③ ⚠️ AND THE SAME FAULT ONE LEVEL DOWN — DRIVEN ON SCREEN, IN ONE SENTENCE
+> *"Make the slide SHARPER than a square corner — any steeper and it is a drop, not a slide."* The
+> requirement says sharper and the reason says do not be steeper. Its sibling, *"push your bike up it,
+> loaded"*, is true of the 30° L1 draws and plainly false of the 85° L3 draws — **and both are acute,
+> so the round is correct and the world is lying.** ⇒ **A reason must argue for the KIND, never for a
+> magnitude the tier is free to change.** Both acute reasons rewritten; gated by sweeping the reason's
+> own words against the kind it belongs to.
+>
+> ## ④ ⚠️⚠️ THEN THE FOUNDER SAW IT AND KILLED THE PAINTED WORLD — AND HE WAS RIGHT
+> I had generated three backdrops (a BMX spot with the ramp plank missing, a playground with the slide
+> chute missing, a kitchen table), value-graded them against the cast, and wired a storybook scene
+> with Slate and Milo in it. *"Remove the background and that characters.. make it just like the neon
+> one which we have in decimal, fraction chapters."* The chapter now runs on **`preteen/kit.tsx`,
+> accent `violet`**, exactly as The Coin Tray and The Pizza Counter do.
+> ⚠️ **THE ANCHOR DID NOT GO WITH IT, AND THAT IS THE POINT WORTH KEEPING: it lives in the WORDS and
+> in what the instrument IS.** The arm you turn is the ramp at the park; the sheet you fold is the
+> fair's paper. That is exactly how money works in The Coin Tray, which is a neon lab and still the
+> most daily-anchored chapter in the band.
+> ⚠️ **And a whole class of fault went with the painting, which is worth more than the pixels:** no
+> painted ground line means no `coverFit`, no site geometry, and **no share-of-an-IMAGE used as a
+> share-of-the-VIEWPORT** — which had already cost this chapter one **3.6× blow-up** (see ⑥).
+> **DELETED: 3 old backdrops · 3 backdrops generated and never shipped · Slate's 3 sheets** (she was
+> cast by this chapter alone; the foreman bear survives in The Order Desk, so nothing went idle).
+>
+> ## ⑤ ⚠️⚠️ TWO MARKS WERE DRAWN OFF THE THING THEY MEASURE, AND BOTH HAD SHIPPED
+> Caught by eye on a screenshot, as this repo's layout faults always are. The arc hangs off the
+> vertex on a **zero-height** container, so `bottom: -20` resolves 20px below its TOP — and the path
+> put the centre at svg-local `(20+arcR, 20+arcR)`, landing at **`(vx + arcR, vy − arcR)`**: the mark
+> that STATES the angle, drawn a whole radius up and right of the angle. The set-square had the
+> matching fault — its upright was right and its horizontal arm ran along the svg's top edge, **a full
+> `size` above the fixed arm it is meant to lie on.** Invisible to every band, layer and type check:
+> both elements are present, correctly sized, and in roughly the right region of the screen.
+>
+> ## ⑥ ⚠️ AND A GROUND LINE BELOW WHERE THE CONTROLS ALLOW ONE DOES NOT FLOAT THE CAST — IT EJECTS THE PICTURE
+> The scale-to-close-the-gap term is `(vh − groundPx) / ((1 − share) · SCENE_H)`, so as `share` → 1
+> the denominator → 0. Measured at 0.95 against a usable ground of 0.807: the backdrop rendered
+> **4981px wide at x = −1850, with the working surface 1142px ABOVE the frame.** The gate that caught
+> it then found the real ceiling is **`groundY/vh`, tightest on the SHORTEST frame** — 0.807 at
+> 1280×720 but **0.756 at 640×270**. Recorded in chapter-craft even though the painting is now gone,
+> because the next chapter to lay a scene over a ground line will meet it.
+>
+> ## ⑦ WHAT WAS ACTUALLY DRIVEN
+> **1280×720:** the neon briefing with both doors · both demos beat by beat, including **the puck
+> running the full length and off on the correct-answer shot** · the guided round answered with the
+> steppers and **committed WRONG on purpose** → `125°` printed post-commit in mono, the miss line
+> *"That's past the square corner — bring it in."*, and **the puck stopped dead at the vertex with the
+> bump mark** — the `through=false` branch · 0 console errors in a fresh tab.
+> **640×320:** the fold demo with all four axes on the square · **every fixed layer crossed with every
+> other → 1 reported overlap, MEASURED and dismissed**: it is the full-width control CONTAINER, not
+> its buttons — Milo's box is **26–90** and the nearest button starts at **233**, i.e. **143px clear**.
+> ⚠️ That is centring doing the work rather than the reserve, so the reserve is now gated instead of
+> assumed. No h- or v-scroll.
+> ⚠️ A temp `?jump=` phase override was used to reach the guided round without sitting through 45s of
+> demo each time, and **reverted and grepped (0 hits)**.
+>
+> ## ⑧ THE GATE — +22 tests, **19/20 planted regressions caught, RE-RUN AGAINST THE FINAL CODE**
+> [angleShopGeometry.test.ts](src/__tests__/angleShopGeometry.test.ts). ⚠️ **The first mutation pass
+> left FOUR survivors and every one was my own gate being weaker than its rule**, three of them this
+> file's recorded shapes: ① `expect(ask.length).toBeLessThanOrEqual(ASK_BUDGET)` **moves with the
+> constant** — loosening it to 400 stayed green while the question grew back onto the arm (pinned to
+> the measured literal now); ② `toContain('{ANCHOR}')` **also matches `${ANCHOR}`** in the demo's
+> template string, so deleting it from the briefing walked through (the `alt={` / `x_alt={` shape);
+> ③ nothing source-checked that the SCENE calls `guideShown`, so `const guide = false` restored the
+> dead L3 round with every module test green; ④ nothing asserted the chrome cleared the Menu button.
+> **The second pass left four more**, and the same rule caught them: `toContain('LabBackdrop')`
+> **passes on a local `const LabBackdrop = () => null`** — a name check cannot tell the kit's
+> component from a shadow of it — and one check had been **deleted with the block around it** when the
+> painted world went, which is its own lesson about moving tests.
+> ⚠️ **The one survivor is INERT and is recorded as such rather than "fixed":** the arm's
+> clear-Milo bound never binds, because `vw × 0.30` binds first at every swept size (192 against 233
+> at 640×320, 540 against 806 at 1800×870). Left in deliberately, with the measurement in the comment.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **NOT COMMITTED, and `public/sw.js` is still v93.** The founder has not been asked.
+> 2. ⚠️ **NO SCORED ROUND HAS BEEN PLAYED PAST ROUND 1, AND NO L3 ROUND AT ALL** — so the exact-degrees
+>    round this session exists to fix has been driven only through the gate and the demo, never as a
+>    scored round with the guide on screen. **That is the single most useful next drive**, and it needs
+>    a run that is right just often enough to reach L3.
+> 3. ⚠️ **No ten-round run, no re-teach seen fire, no mastery exit.** Same shape as The Pizza Counter's
+>    open item; two runs are needed (a perfect one exits early, only an erring one walks all ten).
+> 4. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO ANY OF THE AR — eighteen readings deep.** The tilt
+>    path is unchanged by this session and everything above came through the steppers.
+> 5. **Six backdrops and three character sheets were deleted**; the three park scenes were generated
+>    (~7 credits) and never shipped. If the founder ever wants a painted 9–11 chapter again, that art
+>    is recoverable from this session's history, and the value-grading numbers are in ⑥ and the
+>    storyboard.
+> 6. **Everything in the 📏, 🪙, 🍕 and ✋ blocks below still stands**, and the 🗑️ block (the two
+>    deleted chapters, and the unanswered founder call on their rebuild shape) has moved to
+>    [docs/handoff-archive.md](docs/handoff-archive.md).
+> 7. Of this session's faults, **two came from reading the shipped code before touching it, one from
+>    reading the founder's own anchor against arithmetic, three from driving it (one of them a
+>    sentence contradicting itself on screen), two from measuring a backdrop against the cast, and
+>    EIGHT from mutation-testing my own gate. None from the type-checker.**
+
+
 > 📏 **2026-08-14 — UNITCONVERTER → THE HEIGHT BAR, ON THE FOUNDER'S CALL TO CONNECT THE 9–11 MEASUREMENT CHAPTER TO A DAILY REAL-WORLD EXAMPLE — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT ITS CONVERTER PRINTED THE METHOD ON EVERY ROUND AND THAT ELEVEN OF ITS TWELVE UNIT QUESTIONS WERE COIN FLIPS. ⚠️ NOT COMMITTED — the founder has not been asked.** `tsc` 0 · **972/972 vitest** (was 902, **+70**) · `next build` 0 · **eslint: byte-for-byte CoinTray's rule profile, i.e. zero new classes** · 0 console errors in a fresh tab · driven at 1280×720, 640×320 and **334×676** on BOTH inputs · **47/47 planted regressions caught, re-run against the final code.**
 >
 > ⚠️ **PORTED 2026-08-14 (see 🧱): `story/HeightBar.tsx` is DELETED and the chapter is now `teen/games/HeightBarGame.tsx` on GameShell.** `inches.ts` survives untouched apart from its layout half, so every pedagogical rule below is still live and still gated — only the shell around it changed.

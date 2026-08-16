@@ -33,8 +33,8 @@
 >
 > **⚠️ THE 3D IS GONE.** `story/FloorPlot.tsx` (1,380 lines of react-three-fiber) and `story/plotSite.ts`
 > (628 lines of procedural site) are DELETED — founder's call, 2026-08-15: *"totally remove that 3d
-> concept"*. **Nothing in `src/` imports three.js any more**, so `three` / `@react-three/fiber` /
-> `@react-three/drei` / `@types/three` are dead dependencies awaiting one `npm uninstall`.
+> concept"*. ✅ The four dead dependencies (`three` / `@react-three/fiber` / `@react-three/drei` /
+> `@types/three`) were **uninstalled 2026-08-16**; production dependencies are 10 → 7.
 >
 > **To add or change a ported chapter:** it is a data file — palette, `makeTask` L1/L2/L3, a
 > self-running tutorial, a `GameConfig`. Mirror `CoinTrayGame.tsx`. Shared parts are
@@ -68,6 +68,112 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🚀 **2026-08-16 — LAUNCH HARDENING. THE MVP PLAN IS RE-GROUNDED AGAINST THE RUNNING SYSTEM, AND NINE OF ITS ITEMS ARE DONE AND ON PROD: 0 SECURITY ADVISORIES, A CRASH SCREEN FOR EVERY FAILURE, SELF-HOSTED FONTS, AN ENFORCED CSP, PARENT DATA RIGHTS, LEGAL PAGES, A FAQ, A LAUNCH RUNBOOK, AND TWO GATES THAT CATCH THE MISTAKES I MADE TODAY.** 🚀 SHIPPED — `main`@`b7f4c0e`, prod serving **sw v98**. `tsc` 0 · **1039/1039 vitest** · `next build` 0 · **211/211 chapters × 3 frames, against production**.
+>
+> **The asks:** *"ek proper detailed … chhoti si chhoti cheez bhi chhutna naii chahiye … puri list banao … mein naii chahata hu ki launch hone ke pehle din hi kuch chale naa"* → then *"C1, C2 aur C7 shuru karo"* → *"font migration kar do, phir CSP enforce karo"* → *"implement all which you have mentioned"*.
+>
+> ## 📋 THE PLAN IS THE DELIVERABLE — [docs/launch-plan.md](docs/launch-plan.md), RE-GROUNDED NOT REWRITTEN
+> The 2026-07-18 draft was right about SHAPE and a month stale about STATE (it said "sw.js at v27";
+> we were on v94) and it assigned every item to named specialist agents that were removed on
+> 2026-07-20. It now has **two owners only — `[C]` I can do it, `[F]` only the founder can** — and
+> §1 is *verified*, with the command or advisor query behind each fact named so it can be re-run.
+> ⚠️ **Half the value was finding what was ALREADY TRUE**: no ERROR-level Supabase lints, all four
+> `SECURITY DEFINER` RPCs correctly guarded by `learner_access` → `42501`, the SW update path sound,
+> and three of the old plan's open items already fixed. **A stale plan wastes work in both
+> directions** — it hides real gaps and it re-opens closed ones.
+>
+> ## ✅ WHAT SHIPPED (nine items)
+> | | what | commit |
+> |---|---|---|
+> | C1 | `npm audit` **4 high → 0**, prod and dev. `next` 16.2.6 → 16.3.1 (a Turbopack middleware bypass — this build), `sharp` → 0.35.3. **Removed `three` + 3 friends: prod deps 10 → 7.** | `05446b5` |
+> | C2 | `app/error.tsx`, `app/global-error.tsx`, `app/not-found.tsx` — a Milo screen for every crash and dead link | `611b061` |
+> | C7 | `npm run test:chapters` — **all 70 chapters × 3 frames** | `e1190aa` |
+> | C10 | All five fonts self-hosted via `next/font` — **0 runtime requests to Google** | `396bfe0` |
+> | C11 | **CSP ENFORCED**, one policy instead of two | `a968dbb` |
+> | C14 | `npm run preflight` | `d1fa8fe` |
+> | C6 | Parent data export + findable deletion | `d1fa8fe` |
+> | C9 | `/help` — parent-facing FAQ | `d1fa8fe` |
+> | C8 | [runbooks/launch-day.md](docs/runbooks/launch-day.md) | `d1fa8fe` |
+>
+> ## ⚠️⚠️ THE FOUR TRAPS, EACH OF WHICH WOULD HAVE SHIPPED
+> ① **ENFORCING THE CSP AS WRITTEN WOULD HAVE SILENTLY KILLED EVERY AR CHAPTER** — the band's
+> defining feature. `@mediapipe/tasks-vision` fetches WASM from **jsDelivr**, its model from
+> **storage.googleapis.com**, instantiates WebAssembly (`wasm-unsafe-eval`) and runs a **`blob:`
+> worker**. `default-src 'self'` blocks all three and **nothing fails until a child opens the
+> camera**. Now named allowances, verified with a NEGATIVE CONTROL (`example.com` blocked) rather
+> than only positive ones — a policy that is absent passes every positive test.
+> ② **THE FONTS WERE THE REASON CSP COULD NEVER BE ENFORCED**, and nobody had connected the two. Three
+> CSS `@import`s to Google meant `font-src 'self'` would have rendered the whole product in fallback
+> system fonts. Found by the C7 gate catching an intermittent `gstatic` 404 — the 404 was trivial and
+> what it *pointed at* was not. ⚠️ And `preteen/kit.tsx` hardcoded the family NAMES, which
+> `next/font` hashes — that band's mono numerals would have silently fallen back.
+> ③ **THE PERF MIGRATION'S FIRST DRAFT GUESSED THE RLS PREDICATES AND WAS WRONG.**
+> `diagnostic_plan_progress` has no `learner_id` — it reaches the parent through
+> `plan_id → diagnostic_plans.learner_id`, and all five policies are `EXISTS` joins, not `IN`
+> subqueries. **That is a cross-tenant access change wearing a performance-tuning commit message.**
+> Every predicate is now read off `pg_policies.qual` on the live DB. ⚠️ **Never rewrite a policy from
+> memory.**
+> ④ **`app/error.tsx`'s PROP IS `retry`, NOT `reset`.** From memory it is `reset`, which type-checks
+> as an unused prop and renders a button that does nothing. Proven live: *Try again* fires a SECOND
+> `/api/report-error` POST. AGENTS.md earns its keep — `global-error` also gets **no global CSS or
+> fonts**, and an unmatched URL is `global-not-found` (experimental) while the stable
+> `not-found.tsx` covers this app.
+>
+> ## ⚠️⚠️ AND THE MISTAKE I MADE MYSELF, WHICH IS NOW A GATE
+> **I shipped the fonts + CSP with NO `sw.js` BUMP.** The verification afterwards then reported 3
+> Google font requests and let `example.com` through — i.e. it looked like the work had not deployed.
+> It had: the browser was serving the **v96 cache**, and **a cached response keeps its HTTP headers**,
+> so the old report-only CSP came with it. `sw.js` is `must-revalidate`, so the browser re-fetches
+> it — but the bytes were unchanged, so **no update ever triggers and the stale shell is permanent**.
+> Two rules out of it, both now enforced rather than remembered:
+> - **`npm run preflight` fails if shipped files changed and `VERSION` did not** (diffed against
+>   `origin/main`). It caught the very next commit — 8 files, still v97.
+> - **After any deploy, clear the service worker before you believe a prod check, or you are grading
+>   the previous release.** Written into the launch-day runbook.
+>
+> ## 🧪 THE C7 GATE, AND WHY A LOCALHOST-GREEN GATE IS NOT A GREEN GATE
+> 211/211 on localhost, then **23 failures against prod** — and 21 of them were the TEST being wrong:
+> the 3–11 story chapters are landscape-first, so on a 390×844 phone they correctly show *"Turn your
+> phone sideways"*, which has no button. ⚠️ **It passed on dev and failed on prod because
+> `useNeedsRotate` runs in an EFFECT** — dev caught the pre-effect frame, prod the settled one. My
+> first fix re-introduced the same race one level up (branching on an instantaneous `isVisible()`);
+> it now waits for `control.or(rotateGate)`, so there is no instant to be wrong at. The other 2 were
+> the **deploy-propagation window** — both passed untouched minutes later.
+> ⚠️ **And the sweep was quietly covering a QUARTER of the chapter**: `makeRound(d)` with the default
+> `asked = []` is deterministic by type, because unmet-first is what `coverage` is for — so 400 draws
+> per tier were 400 `howMany` rounds. Caught by the one check asserting all four types are reachable.
+>
+> ## 🧹 AND SIX DOCS WENT, AFTER CHECKING EACH ONE
+> `area3d-brief` + `ar-phase0-brief` (subjects deleted, rules already harvested into chapter-craft),
+> `scaling-roadmap` (its premise — "one age group with 11 chapters" — is false; its goal is shipped),
+> and three spent one-shot PROMPTS. ⚠️ **"Unreferenced" is not "useless"**: eight docs had zero inbound
+> links and only two were dead — the five unlinked storyboards all describe LIVE chapters. Two of the
+> four had live inbound links, repointed rather than left dangling. **`README.md` was 100% stock
+> `create-next-app`** with two stray `# Milo` lines glued on; rewritten with numbers verified against
+> source.
+>
+> ## ▶ OPEN — and the top item is not code
+> 1. ⚠️⚠️ **THE ATTORNEY IS THE LONG POLE AND NOTHING ELSE CAN CLOSE IT** (blocker B1). Privacy
+>    Policy + ToS + COPPA notice. **The plumbing is DONE** — `/legal/privacy`, `/legal/terms`, the
+>    consent line on signup — all wired against placeholder copy in `src/app/legal/content.ts`, so
+>    it is now a PASTE plus `DRAFT = false`. Until then every page shows a red "not reviewed by a
+>    lawyer" banner and preflight warns. **A placeholder that looks final is worse than none.**
+> 2. **Founder accounts, then I wire them in minutes**: monitoring ingest URL (C3 — the seam exists),
+>    analytics tool (C4), SMTP (C6/B6 — no email is sent at all today), leaked-password toggle, Auth
+>    rate limits, Vercel WAF, PITR.
+> 3. 🟡 **C10b migration written, NOT applied** — `supabase/migrations/20260816120000_perf_advisors.sql`.
+>    Prod DDL is the founder's.
+> 4. ⚠️ **THE SCRATCH-PAD COLLISION IS STILL OPEN** and is still one line — live in a shipped chapter.
+> 5. **C13 — OrderDesk + LevelRun (~3,344 lines)** deliberately NOT bundled into launch hardening. Not
+>    launch-blocking: both pass the C7 gate as storybook chapters. Its own piece of work.
+> 6. **231 pre-existing eslint errors**, almost all `react-hooks/refs` and `set-state-in-effect` —
+>    byte-identical before today's work and deliberately untouched. **A mass hook refactor is the last
+>    thing to do in launch week**, but they are the exact classes this repo has shipped bugs from.
+> 7. Of today's faults: **two were mine and are now gates** (the sw bump; the vacuous sweep), **two
+>    were caught by reading the live system instead of guessing** (the RLS predicates, the MediaPipe
+>    origins), **one by the docs** (`retry` vs `reset`), and **one by prod disagreeing with localhost**
+>    (the rotate gate). None from the type-checker.
 
 > 📊 **2026-08-15 — THE LOADING BAY COMES ACROSS: THE FIRST OF THE THREE STORYBOOK CHAPTERS ON GameShell, AND THE FIRST TIME ONE FINGER COUNT MEANS TWO DIFFERENT THINGS IN ONE CHAPTER. 815 BESPOKE LINES → ~250 OF DATA + ~330 OF PURE MODULE. ⚠️ NOT COMMITTED.** `tsc` 0 · **1039/1039 vitest** (was 987, **+52**) · `next build` 0 · **eslint 0 errors** (1 pre-existing `<img>` warning, same as The Pizza Counter) · **32/32 planted regressions caught, re-run against the final code** · driven at 1280×720 and 640×320, on BOTH inputs, including a full ten-round run and the camera path.
 >
@@ -206,8 +312,7 @@
 >    the first time it has been watched happen and it is worth a founder's eye.
 > 6. **Two chapters left**: OrderDesk (`bigNumbers`, 1,620) and LevelRun (`rounding`, 1,724) — both
 >    storybook, ~3,344 lines between them.
-> 7. **Four dead dependencies still awaiting one `npm uninstall`** (three.js and friends) — unchanged
->    from the 🏗️ block.
+> 7. ✅ **The four dead three.js dependencies were removed 2026-08-16** — see the 🚀 block.
 > 8. Of this session's faults, **one came from opening the camera door (③), one from reading a demo
 >    beat's words against its own picture (②), one from the founder's own question about the counter,
 >    one from measuring the short frame twice (⑤), and THREE from mutation-testing my own gate — plus
@@ -769,142 +874,5 @@
 > The one thing recorded ONLY here, and still true: **`chapterLevel` is written for 9–11 on every
 > submit and never read back** (the read is gated by `resumesTier`, the write is not). Harmless, one
 > branch fewer, but the stored level for a 9–11 chapter is dead data.
-
-> ⚠️ **THE THREE BLOCKS BELOW ARE THE SAME DAY AND THE LAST ONE IS PARTLY SUPERSEDED BY THE TWO
-> ABOVE IT.** `story/AngleShop.tsx` no longer exists — the chapter is
-> `teen/games/AngleShopGame.tsx` on GameShell — and `angles.ts` has lost its whole layout half. What
-> the 📐 block records that IS still true and still enforced: the daily anchor, the week, the paper
-> table, the no-obtuse-slope rule, the reason-argues-for-the-KIND rule, and the set-square staying on
-> an exact-degrees round. Read it for WHY those exist, not for where the code is.
->
-> 📐 **2026-08-14 — THE ANGLE SHOP GETS ITS DAILY ANCHOR AND THEN LOSES ITS PAINTED WORLD, ON TWO FOUNDER CALLS — AND READING THE SHIPPED CHAPTER FIRST FOUND THAT ITS TOP TIER COULD NOT BE ANSWERED BY KNOWING ANYTHING, AND THAT THE TWO MARKS THAT STATE THE ANGLE WERE BOTH DRAWN OFF IT. ⚠️ NOT COMMITTED — the founder has not been asked.** `tsc` 0 · **994/994 vitest** (was 972, **+22**) · `next build` 0 · **eslint 5 problems against 12 at HEAD, i.e. seven FEWER and zero new** · 0 console errors in a fresh tab · driven at 1280×720 and 640×320 · **19/20 planted regressions caught, the 20th proven INERT by measurement.**
->
-> **The asks, in order:** *"in band 9-11 … joh angles and symmetry chapter hai usko bhi daily real
-> world example se connect karna hai"* → on the two questions put to him: **split the world by verb —
-> ramp for angles, paper for folds** · **keep the square-corner guide on exact rounds** → then, on a
-> third question I had to raise mid-build: **one park, several things, each job naming its own** →
-> and finally **"remove the background and that characters.. make it just like the neon one which we
-> have in decimal, fraction chapters."**
->
-> ## ⓪ ⚠️⚠️ THE TOP TIER WAS A LOTTERY, AND IT WAS ALREADY SHIPPING
-> `useDegrees = d === 3` and `guideShown = d < 3`, so **every** exact-degrees round was asked with the
-> set-square retired. The child got an arm at a start angle they cannot read (`showDeg={settled}` —
-> correct, rule 1), ◀ ▶ at 5° a tap, **no readout, no scale, and nothing at 90° to judge against**,
-> then `grade` demanding `deg === 85`. Half the rounds are angle rounds and a strong child gets ~2
-> rounds at L3, so the chapter **ended** on a question that cannot be answered by knowing anything.
-> FitOut's dead-button shape: the scaffold that retired was the only reference the exact question had.
-> ⇒ The guide now stays whenever the job is `degrees`, whatever the tier. **On a KIND round it gives
-> the ANSWER away and must go; on a DEGREES round it gives a REFERENCE away, which is what a set
-> square is for.**
->
-> ## ① ⚠️ AND THE ANCHOR THE PLAN RECORDED HAD NEVER REACHED THE CODE
-> `grep -i anchor` over `angles.ts` + `AngleShop.tsx` returned nothing but a local variable; the
-> briefing read *"It is Slate's first week on the crew"* — a job, not a thing a nine-year-old has
-> done. [story-9-11-ar-plan.md §10](docs/story-9-11-ar-plan.md) has carried *"how steep the ramp or
-> the slide is"* since it was written. **Factor Lab's desks, verbatim, one chapter along.**
->
-> ## ② ⚠️⚠️ THE FOUNDER'S OWN ANCHOR CANNOT EXPRESS A THIRD OF THE CHAPTER, AND THE ARITHMETIC SAYS SO BEFORE ANY CODE
-> **Obtuse is the beam swung PAST vertical, and real ramps live between about 5° and 40° — every
-> slope is acute.** So *"make the ramp obtuse"* asks a child to build a thing that does not exist, and
-> the shipped week did exactly that: `wants: 'obtuse'` on *"the approach ramp — a barrow has to get up
-> it loaded"*, drawing a plank leaning backwards over the bank at 75° above the horizontal while the
-> words said *"shallower"*. **I raised it before building rather than shipping it**; the founder took
-> *one park, several things* — the ramp and the slide carry acute, the two things that genuinely OPEN
-> past square (the park gate, the barrier arm) carry obtuse, and one upright (the hoop post) carries
-> right. Each job names its own object, which is the structure the chapter already had.
->
-> ## ③ ⚠️ AND THE SAME FAULT ONE LEVEL DOWN — DRIVEN ON SCREEN, IN ONE SENTENCE
-> *"Make the slide SHARPER than a square corner — any steeper and it is a drop, not a slide."* The
-> requirement says sharper and the reason says do not be steeper. Its sibling, *"push your bike up it,
-> loaded"*, is true of the 30° L1 draws and plainly false of the 85° L3 draws — **and both are acute,
-> so the round is correct and the world is lying.** ⇒ **A reason must argue for the KIND, never for a
-> magnitude the tier is free to change.** Both acute reasons rewritten; gated by sweeping the reason's
-> own words against the kind it belongs to.
->
-> ## ④ ⚠️⚠️ THEN THE FOUNDER SAW IT AND KILLED THE PAINTED WORLD — AND HE WAS RIGHT
-> I had generated three backdrops (a BMX spot with the ramp plank missing, a playground with the slide
-> chute missing, a kitchen table), value-graded them against the cast, and wired a storybook scene
-> with Slate and Milo in it. *"Remove the background and that characters.. make it just like the neon
-> one which we have in decimal, fraction chapters."* The chapter now runs on **`preteen/kit.tsx`,
-> accent `violet`**, exactly as The Coin Tray and The Pizza Counter do.
-> ⚠️ **THE ANCHOR DID NOT GO WITH IT, AND THAT IS THE POINT WORTH KEEPING: it lives in the WORDS and
-> in what the instrument IS.** The arm you turn is the ramp at the park; the sheet you fold is the
-> fair's paper. That is exactly how money works in The Coin Tray, which is a neon lab and still the
-> most daily-anchored chapter in the band.
-> ⚠️ **And a whole class of fault went with the painting, which is worth more than the pixels:** no
-> painted ground line means no `coverFit`, no site geometry, and **no share-of-an-IMAGE used as a
-> share-of-the-VIEWPORT** — which had already cost this chapter one **3.6× blow-up** (see ⑥).
-> **DELETED: 3 old backdrops · 3 backdrops generated and never shipped · Slate's 3 sheets** (she was
-> cast by this chapter alone; the foreman bear survives in The Order Desk, so nothing went idle).
->
-> ## ⑤ ⚠️⚠️ TWO MARKS WERE DRAWN OFF THE THING THEY MEASURE, AND BOTH HAD SHIPPED
-> Caught by eye on a screenshot, as this repo's layout faults always are. The arc hangs off the
-> vertex on a **zero-height** container, so `bottom: -20` resolves 20px below its TOP — and the path
-> put the centre at svg-local `(20+arcR, 20+arcR)`, landing at **`(vx + arcR, vy − arcR)`**: the mark
-> that STATES the angle, drawn a whole radius up and right of the angle. The set-square had the
-> matching fault — its upright was right and its horizontal arm ran along the svg's top edge, **a full
-> `size` above the fixed arm it is meant to lie on.** Invisible to every band, layer and type check:
-> both elements are present, correctly sized, and in roughly the right region of the screen.
->
-> ## ⑥ ⚠️ AND A GROUND LINE BELOW WHERE THE CONTROLS ALLOW ONE DOES NOT FLOAT THE CAST — IT EJECTS THE PICTURE
-> The scale-to-close-the-gap term is `(vh − groundPx) / ((1 − share) · SCENE_H)`, so as `share` → 1
-> the denominator → 0. Measured at 0.95 against a usable ground of 0.807: the backdrop rendered
-> **4981px wide at x = −1850, with the working surface 1142px ABOVE the frame.** The gate that caught
-> it then found the real ceiling is **`groundY/vh`, tightest on the SHORTEST frame** — 0.807 at
-> 1280×720 but **0.756 at 640×270**. Recorded in chapter-craft even though the painting is now gone,
-> because the next chapter to lay a scene over a ground line will meet it.
->
-> ## ⑦ WHAT WAS ACTUALLY DRIVEN
-> **1280×720:** the neon briefing with both doors · both demos beat by beat, including **the puck
-> running the full length and off on the correct-answer shot** · the guided round answered with the
-> steppers and **committed WRONG on purpose** → `125°` printed post-commit in mono, the miss line
-> *"That's past the square corner — bring it in."*, and **the puck stopped dead at the vertex with the
-> bump mark** — the `through=false` branch · 0 console errors in a fresh tab.
-> **640×320:** the fold demo with all four axes on the square · **every fixed layer crossed with every
-> other → 1 reported overlap, MEASURED and dismissed**: it is the full-width control CONTAINER, not
-> its buttons — Milo's box is **26–90** and the nearest button starts at **233**, i.e. **143px clear**.
-> ⚠️ That is centring doing the work rather than the reserve, so the reserve is now gated instead of
-> assumed. No h- or v-scroll.
-> ⚠️ A temp `?jump=` phase override was used to reach the guided round without sitting through 45s of
-> demo each time, and **reverted and grepped (0 hits)**.
->
-> ## ⑧ THE GATE — +22 tests, **19/20 planted regressions caught, RE-RUN AGAINST THE FINAL CODE**
-> [angleShopGeometry.test.ts](src/__tests__/angleShopGeometry.test.ts). ⚠️ **The first mutation pass
-> left FOUR survivors and every one was my own gate being weaker than its rule**, three of them this
-> file's recorded shapes: ① `expect(ask.length).toBeLessThanOrEqual(ASK_BUDGET)` **moves with the
-> constant** — loosening it to 400 stayed green while the question grew back onto the arm (pinned to
-> the measured literal now); ② `toContain('{ANCHOR}')` **also matches `${ANCHOR}`** in the demo's
-> template string, so deleting it from the briefing walked through (the `alt={` / `x_alt={` shape);
-> ③ nothing source-checked that the SCENE calls `guideShown`, so `const guide = false` restored the
-> dead L3 round with every module test green; ④ nothing asserted the chrome cleared the Menu button.
-> **The second pass left four more**, and the same rule caught them: `toContain('LabBackdrop')`
-> **passes on a local `const LabBackdrop = () => null`** — a name check cannot tell the kit's
-> component from a shadow of it — and one check had been **deleted with the block around it** when the
-> painted world went, which is its own lesson about moving tests.
-> ⚠️ **The one survivor is INERT and is recorded as such rather than "fixed":** the arm's
-> clear-Milo bound never binds, because `vw × 0.30` binds first at every swept size (192 against 233
-> at 640×320, 540 against 806 at 1800×870). Left in deliberately, with the measurement in the comment.
->
-> ## ▶ OPEN
-> 1. ⚠️ **NOT COMMITTED, and `public/sw.js` is still v93.** The founder has not been asked.
-> 2. ⚠️ **NO SCORED ROUND HAS BEEN PLAYED PAST ROUND 1, AND NO L3 ROUND AT ALL** — so the exact-degrees
->    round this session exists to fix has been driven only through the gate and the demo, never as a
->    scored round with the guide on screen. **That is the single most useful next drive**, and it needs
->    a run that is right just often enough to reach L3.
-> 3. ⚠️ **No ten-round run, no re-teach seen fire, no mastery exit.** Same shape as The Pizza Counter's
->    open item; two runs are needed (a perfect one exits early, only an erring one walks all ten).
-> 4. ⚠️ **STILL NOBODY HAS HELD A REAL HAND UP TO ANY OF THE AR — eighteen readings deep.** The tilt
->    path is unchanged by this session and everything above came through the steppers.
-> 5. **Six backdrops and three character sheets were deleted**; the three park scenes were generated
->    (~7 credits) and never shipped. If the founder ever wants a painted 9–11 chapter again, that art
->    is recoverable from this session's history, and the value-grading numbers are in ⑥ and the
->    storyboard.
-> 6. **Everything in the 📏, 🪙, 🍕 and ✋ blocks below still stands**, and the 🗑️ block (the two
->    deleted chapters, and the unanswered founder call on their rebuild shape) has moved to
->    [docs/handoff-archive.md](docs/handoff-archive.md).
-> 7. Of this session's faults, **two came from reading the shipped code before touching it, one from
->    reading the founder's own anchor against arithmetic, three from driving it (one of them a
->    sentence contradicting itself on screen), two from measuring a backdrop against the cast, and
->    EIGHT from mutation-testing my own gate. None from the type-checker.**
 
 _Older sessions (2026-06-15 → 2026-08-12) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision._
