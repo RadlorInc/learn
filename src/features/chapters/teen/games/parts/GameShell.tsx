@@ -1112,14 +1112,30 @@ function TutorialPlayer<V, T extends BaseTask>({
     )
   }
 
-  // Legacy fallback (chapters with no illustrated scene): board on top, instrument
-  // below — the original one-column walkthrough.
+  // Fallback for chapters with no illustrated scene — which is EVERY 9–11 chapter,
+  // since the ported band answers on an Instrument rather than a TutorialScene. Board
+  // on top, instrument below.
+  //
+  // ⚠️ THE INSTRUMENT MUST BE IN A FitSlot HERE, EXACTLY AS IT IS IN PLAY. Without it
+  // this path renders the instrument at its natural size inside CenterFill, and an
+  // instrument that cannot shrink below its content overflows BOTH ways — which is the
+  // fault FitSlot's own doc comment describes, left in place on the one path that never
+  // got it. Measured at 800×450 on The Coin Tray's walkthrough: the tray painted 741×319
+  // inside a 560×314 slot, 90px over each side and 52px UP across the chalkboard, with
+  // the step controls pushed off the bottom and "I've got it →" (y 474–503 of a 450px
+  // frame, no scroll) unreachable — i.e. a child on that frame could not leave the
+  // walkthrough at all. The same chapter's PLAY stage was correct throughout, which is
+  // why every drive that started at the guided round looked clean.
   return (
     <>
       <BoardSlot roomy={roomy}>{babyBoard}</BoardSlot>
       <CenterFill>
-        <config.Instrument task={cur.task} value={cur.value} setValue={() => {}} disabled reveal={false} palette={P} onCommit={() => {}} />
-        {!ended && <HandCue P={P} kind={cur.hand} />}
+        <FitSlot max={portrait ? PORTRAIT_MAX : 1}>
+          <config.Instrument task={cur.task} value={cur.value} setValue={() => {}} disabled reveal={false} palette={P} onCommit={() => {}} />
+          {/* Inside the slot so it counts toward the measured column height, per the
+              play-stage call — outside, it pushes the scaled instrument back out. */}
+          {!ended && <HandCue P={P} kind={cur.hand} />}
+        </FitSlot>
         {controls}
       </CenterFill>
     </>

@@ -188,6 +188,75 @@ test.describe('every chapter opens', () => {
 
           // 5. Nothing threw while it mounted.
           expect(errors, `${ch.id}: console errors — ${errors.slice(0, 2).join(' | ')}`).toEqual([])
+
+          /**
+           * 6. ⚠️ AND ONE SCREEN IN, BECAUSE THE START CARD IS THE ONE SCREEN THAT ALWAYS FITS.
+           *
+           * Checks 1–5 opened each chapter and stopped, so the whole walkthrough — where the board,
+           * the instrument, the step transport and the skip chip are all on screen at once — was
+           * never swept. It shipped a real dead end: on an 800×450 frame The Coin Tray's
+           * walkthrough drew the tray 741×319 inside a 560×314 slot (the legacy no-TutorialScene
+           * path had no FitSlot, unlike play), pushing "I've got it →" to y 474–503 of a 450px
+           * viewport with no scroll — unreachable, i.e. a child could not leave the walkthrough.
+           * Every 9–11 chapter takes that path.
+           *
+           * Deliberately shallow: press the primary control ONCE and re-run the fit checks. It is
+           * ~10s across the sweep and it doubles the reach. Anything that needs a real answer
+           * belongs in a per-chapter drive, not here.
+           */
+          if (await rotateGate.isVisible().catch(() => false)) return
+          /**
+           * ⚠️ NOT `button:visible.first()` — THAT IS "‹ Menu", WHICH LEAVES THE CHAPTER.
+           * The first draft did exactly that and reported five offscreen controls named "Sign in",
+           * "Terms" and "Continue with Google": it had walked out to the auth page and was
+           * measuring THAT. It failed on the planted regression, so it looked like a working gate,
+           * and it would have failed identically with the bug fixed. A failure is only evidence
+           * when it is the failure you planted.
+           *
+           * The entry control is the biggest one on the card — every start card styles its primary
+           * CTA large — so take it by area, and refuse anything that navigates.
+           */
+          const before = page.url()
+          const picked = await page.evaluate(() => {
+            let best: Element | null = null, bestA = 0
+            for (const el of Array.from(document.querySelectorAll('button'))) {
+              const r = el.getBoundingClientRect()
+              if (!r.width || !r.height) continue
+              if (getComputedStyle(el).visibility === 'hidden') continue
+              if (/^\s*‹?\s*(menu|back)/i.test(el.textContent || '')) continue
+              if (r.width * r.height > bestA) { bestA = r.width * r.height; best = el }
+            }
+            if (!best) return null
+            ;(best as HTMLElement).click()
+            return (best.textContent || '').trim().slice(0, 24)
+          })
+          if (!picked) return
+          await page.waitForTimeout(400)
+          expect(page.url(), `${ch.id}: "${picked}" navigated away from the chapter`).toBe(before)
+          // Let the stage swap and its measure-then-scale settle; the instrument is scaled from a
+          // ResizeObserver, which delivers on the rendering steps rather than synchronously.
+          await page.waitForTimeout(900)
+
+          const deep = await page.evaluate(() => {
+            const out: string[] = []
+            for (const el of Array.from(document.querySelectorAll('button, a[href]'))) {
+              const r = el.getBoundingClientRect()
+              if (!r.width || !r.height) continue
+              if (getComputedStyle(el).visibility === 'hidden') continue
+              const label = (el.textContent || '').trim().slice(0, 24) || el.tagName
+              // `top > innerHeight` alone misses the commonest case — a control that STRADDLES the
+              // bottom edge is still unhittable. Require the whole box to be inside the frame.
+              if (r.bottom > innerHeight + 1 || r.top < -1 || r.right > innerWidth + 1 || r.left < -1) {
+                out.push(`offscreen after entering: ${label} (${Math.round(r.top)}–${Math.round(r.bottom)} of ${innerHeight})`)
+              }
+            }
+            if (document.documentElement.scrollWidth - document.documentElement.clientWidth > 1) {
+              out.push('horizontal overflow after entering')
+            }
+            return out
+          })
+          expect(deep, `${ch.id}: ${deep.join(' | ')}`).toEqual([])
+          expect(errors, `${ch.id}: console errors after entering — ${errors.slice(0, 2).join(' | ')}`).toEqual([])
         })
       }
     })
