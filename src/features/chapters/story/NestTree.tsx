@@ -199,22 +199,14 @@ function Mother({ at, h, facingLeft }: { at: { left: number; top: number }; h: n
 // ─── Layout ──────────────────────────────────────────────────────────────────────────
 const PERCH = { left: 12, top: 26 }
 const BRANCH_Y = 62
+// Derived from `useViewport` (already imported here) rather than a second unthrottled listener —
+// same arithmetic, no local state, and it can no longer render one frame at the stale 110 default.
 function useNestSize(n: number): number {
-  const [s, setS] = useState(110)
-  useEffect(() => {
-    const calc = () => {
-      const w = window.innerWidth, vh = window.innerHeight
-      const short = vh < 470
-      const byWidth = (w * (n <= 2 ? 0.30 : n === 3 ? 0.23 : 0.18)) / 1.25
-      const byHeight = vh * (short ? 0.30 : 0.27)
-      setS(Math.round(Math.max(short ? 54 : 74, Math.min(byWidth, byHeight, 168))))
-    }
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [n])
-  return s
+  const { w, h: vh } = useViewport()
+  const short = vh < 470
+  const byWidth = (w * (n <= 2 ? 0.30 : n === 3 ? 0.23 : 0.18)) / 1.25
+  const byHeight = vh * (short ? 0.30 : 0.27)
+  return Math.round(Math.max(short ? 54 : 74, Math.min(byWidth, byHeight, 168)))
 }
 /** Nests sit ON the branch, so they all share its y — the branch is what makes them read as one row. */
 function placeFor(n: number): { left: number; top: number }[] {

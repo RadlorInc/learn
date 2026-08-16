@@ -25,13 +25,6 @@ export interface LearnerEvent {
   client_ts: string
 }
 
-function randomId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = (Math.random() * 16) | 0
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
-  })
-}
-
 function readQueue(): LearnerEvent[] {
   try { return JSON.parse(kv.get(QUEUE_KEY) ?? '[]') } catch { return [] }
 }
@@ -70,7 +63,10 @@ export function track(event: string, props: Record<string, unknown> = {}): void 
     const learner = getActiveLearner()
     if (!learner) return
     const q = readQueue()
-    q.push({ learner_id: learner.id, event, props, client_id: randomId(), client_ts: new Date().toISOString() })
+    // crypto.randomUUID — same source `auth.ts` already uses for its own dedupe key, and a
+    // Math.random UUID is not one (it collides far sooner than the v4 space suggests, and
+    // `client_id` is what stops a retry double-inserting).
+    q.push({ learner_id: learner.id, event, props, client_id: crypto.randomUUID(), client_ts: new Date().toISOString() })
     writeQueue(q)
     void flushEvents()
   } catch { /* analytics must never break the app */ }

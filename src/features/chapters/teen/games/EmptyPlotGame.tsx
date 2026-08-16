@@ -29,6 +29,7 @@ import React from 'react'
 import { Game, type BaseTask, type GameConfig, type InstrumentProps } from './parts/GameShell'
 import { KID_P as P, Cue, useLatest } from './parts/kidKit'
 import { useHand, type HandRead } from '@/infra/ar/HandInput'
+import { useViewport } from '@/shared/hooks/useViewport'
 import {
   makeRound, gradePeg, missFor, slotsFor, slotBox, equationFor, explainBeats, badgeFor, contextFor,
   instructionFor, spanMetres, snapMetres, workFrames, ROAD_GAP, visibleDepth, metreOf, roadBand, roadStrip, planXY, markers, MAX_DEPTH, DEMO, GUIDED,
@@ -60,16 +61,12 @@ export const PLAN_BOX = { w: 340, h: 340 }
  */
 export const PLAN_BOX_LAND = { w: 560, h: 300 }
 
-/** Which way round the plan is drawn. The long axis follows the frame's long axis. */
+/** Which way round the plan is drawn. The long axis follows the frame's long axis.
+ *  Derived from the shared `useViewport` — it defaulted to `true` and corrected in an effect, so a
+ *  portrait phone drew the plan the wrong way round for one frame. */
 function useLandscape() {
-  const [land, setLand] = React.useState(true)
-  React.useEffect(() => {
-    const f = () => setLand(window.innerWidth / Math.max(1, window.innerHeight) >= 1.25)
-    f()
-    window.addEventListener('resize', f)
-    return () => window.removeEventListener('resize', f)
-  }, [])
-  return land
+  const { w, h } = useViewport()
+  return w / Math.max(1, h) >= 1.25
 }
 /**
  * The road along the top of the plan. It holds TWO things — the word and the frontage numeral — and

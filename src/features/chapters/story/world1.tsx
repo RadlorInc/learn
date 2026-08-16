@@ -25,25 +25,20 @@ const bare: React.CSSProperties = { background: 'transparent', border: 'none', p
 // oversized and crowded on a real ~1900px browser. This keeps them a "medium" size at
 // any width (≈ preview size at 1000px, only modestly bigger on a wide screen).
 const DESIGN_W = 1000
+// A pure function of the viewport, so it derives from `useViewport` (already imported and used in
+// this very file) rather than owning a second, UNTHROTTLED resize listener beside it. Same numbers,
+// same result — but no local state, no effect, and the measurement is rAF-throttled with an
+// unchanged-size guard, which the hand-rolled pair was not.
 function useScale() {
-  const [s, setS] = useState(1)
-  useEffect(() => {
-    const calc = () => {
-      const raw = window.innerWidth / DESIGN_W
-      const damped = raw <= 1 ? raw : 1 + (raw - 1) * 0.4   // only 40% of the extra width
-      const wScale = Math.max(0.85, Math.min(1.45, damped))
-      // On SHORT viewports (landscape phones) shrink the creatures so they don't sprawl down
-      // into the answer buttons. Tall frames (portrait / tablet / desktop) keep hFactor = 1,
-      // so their look is unchanged.
-      const hFactor = Math.min(1, window.innerHeight / 560)
-      setS(Math.max(0.5, wScale * hFactor))
-    }
-    calc()
-    window.addEventListener('resize', calc)
-    window.addEventListener('orientationchange', calc)
-    return () => { window.removeEventListener('resize', calc); window.removeEventListener('orientationchange', calc) }
-  }, [])
-  return s
+  const { w, h } = useViewport()
+  const raw = w / DESIGN_W
+  const damped = raw <= 1 ? raw : 1 + (raw - 1) * 0.4   // only 40% of the extra width
+  const wScale = Math.max(0.85, Math.min(1.45, damped))
+  // On SHORT viewports (landscape phones) shrink the creatures so they don't sprawl down
+  // into the answer buttons. Tall frames (portrait / tablet / desktop) keep hFactor = 1,
+  // so their look is unchanged.
+  const hFactor = Math.min(1, h / 560)
+  return Math.max(0.5, wScale * hFactor)
 }
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
@@ -329,8 +324,16 @@ export const FlyingCountPlay: React.FC<{ data: CountData; onSubmit: (c: boolean)
       return next
     })
   }
+  // The 950ms is the beat between the last tap and the round being marked — long enough for a child
+  // to see what they counted. ⚠️ It is CLEARED on unmount: without that, a child who counts the last
+  // object and taps Menu inside the beat submits a correct answer for a round they walked out of,
+  // and the session is written. The `done` ref stops it firing twice (it survives StrictMode's
+  // double-invoke, which is why this is safe now that StrictMode is on); only the leak is new here.
   useEffect(() => {
-    if (allCounted && !done.current) { done.current = true; window.setTimeout(() => onSubmit(true), 950) }
+    if (!allCounted || done.current) return
+    done.current = true
+    const t = window.setTimeout(() => onSubmit(true), 950)
+    return () => window.clearTimeout(t)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allCounted])
 

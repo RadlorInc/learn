@@ -11,18 +11,23 @@
  * The width test matters as much as the orientation one: a tablet in portrait is 768–1024 wide and
  * has plenty of room, so it is NOT sent away — only genuinely narrow, upright screens are.
  */
-import React, { useState, useEffect } from 'react'
+import React from 'react'
+import { useViewport } from '@/shared/hooks/useViewport'
 
+/**
+ * ⚠️ THIS IS DERIVED, NOT STORED IN AN EFFECT, AND THAT IS A BUG FIX RATHER THAN TIDYING.
+ * Held in `useState(false)` and corrected by an effect, the hook reported "no rotate needed" for
+ * ONE FRAME on every mount — so a portrait phone painted the chapter squeezed before being told to
+ * turn. That frame is the one the C7 gate tripped over: 21 chapters passed against the dev server
+ * (which caught the pre-effect frame) and failed against production (which caught the settled one),
+ * and the fix at the time was to make the gate wait rather than to remove the instant.
+ * `useViewport`'s lazy initializer reads the real viewport during the first CLIENT render, so there
+ * is no longer an instant at which this can be wrong. It is also rAF-throttled with an
+ * unchanged-size guard, which the two hand-rolled listeners were not.
+ */
 export function useNeedsRotate(): boolean {
-  const [need, setNeed] = useState(false)
-  useEffect(() => {
-    const check = () => setNeed(window.innerHeight > window.innerWidth && window.innerWidth < 820)
-    check()
-    window.addEventListener('resize', check)
-    window.addEventListener('orientationchange', check)
-    return () => { window.removeEventListener('resize', check); window.removeEventListener('orientationchange', check) }
-  }, [])
-  return need
+  const { w, h } = useViewport()
+  return h > w && w < 820
 }
 
 /** Matches chapter 1's wording and look, so a child moving between chapters sees the same screen. */

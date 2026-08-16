@@ -12,6 +12,7 @@ import { speak, speakSeq, stopSpeech } from '@/infra/useMiloSpeaker'
 import MiloSprite from './MiloSprite'
 import { SkillBeat, type Beat } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
+import { useNeedsRotate } from './RotateGate'
 import { type CountKind } from './art'
 import { FlyingCountDemo, FlyingCountPlay } from './world1'
 import { BIOMES, BIOME_ORDER, type BiomeId } from './biomes'
@@ -124,17 +125,10 @@ function BiomeBackground({ biome, walking, ids = BIOME_ORDER }: { biome: BiomeId
 }
 
 // ─── Rotate-to-landscape gate (mobile) ─────────────────────────
-function useNeedsRotate() {
-  const [need, setNeed] = useState(false)
-  useEffect(() => {
-    const check = () => setNeed(window.innerHeight > window.innerWidth && window.innerWidth < 820)
-    check()
-    window.addEventListener('resize', check)
-    window.addEventListener('orientationchange', check)
-    return () => { window.removeEventListener('resize', check); window.removeEventListener('orientationchange', check) }
-  }, [])
-  return need
-}
+// ⚠️ This was a VERBATIM copy of `RotateGate`'s hook — same predicate, same 820 breakpoint, same
+// two listeners. Two copies of one rule is one place a breakpoint can be corrected and the other
+// left behind, which is exactly how this chapter's gate would silently disagree with the other 20.
+// Imported from the shared module above.
 
 // ─── Beats ─────────────────────────────────────────────────────
 // `biome` sets the place (background + where creatures spawn). It carries forward

@@ -21,6 +21,7 @@
  * Math-without-fear: no timer, no red X, no score, no coins.
  */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useViewport } from '@/shared/hooks/useViewport'
 import { useAdaptive } from '@/core/adaptive'
 import { speak, speakAfterCurrent, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -1333,10 +1334,13 @@ function ExplanationPanel({ P, overview, read, onDone }: {
  *  instruments drop to 0.63–0.83 (THE SHOT 727px natural → 0.699 at 1280×800). The
  *  band in flow is about `vh − 312`, so 1100 is where the tallest instrument still
  *  fits at 1.0. At ≥1900×1200 every chapter measured 1.000 in flow. */
+/** Derived from `useViewport` rather than stored by an effect. The equality guard that used to live
+ *  in the setState is now `useViewport`'s own unchanged-size guard plus `useMemo`, and the shell no
+ *  longer paints one frame at the all-false default before the effect corrects it — on a laptop
+ *  that frame was `roomy: false`, i.e. the chalkboard stacked before it pinned. */
 function useFrame(): { roomy: boolean; short: boolean; tall: boolean; portrait: boolean } {
-  const [f, setF] = useState({ roomy: false, short: false, tall: false, portrait: false })
-  useEffect(() => {
-    const calc = () => setF((p) => {
+  const { w, h } = useViewport()
+  return useMemo(() => {
       // PORTRAIT is a shape, not a size: taller than it is wide by a clear margin.
       // Two things follow, and both are about the fact that every size in this shell
       // is `clamp(px, vw, px)` — WIDTH-derived, with no vh term anywhere:
@@ -1348,20 +1352,14 @@ function useFrame(): { roomy: boolean; short: boolean; tall: boolean; portrait: 
       //     laptop and wrong on a portrait tablet — measured 834×1194, the board sat
       //     in a corner with the bottom third of the screen empty. A portrait frame
       //     is never roomy, so it stacks the board above the interactive instead.
-      const portrait = window.innerHeight >= window.innerWidth * 1.2
-      const n = {
-        roomy: window.innerWidth >= 820 && !portrait,
-        short: window.innerHeight < 470,
-        tall: window.innerHeight >= 1100,
+      const portrait = h >= w * 1.2
+      return {
+        roomy: w >= 820 && !portrait,
+        short: h < 470,
+        tall: h >= 1100,
         portrait,
       }
-      return p.roomy === n.roomy && p.short === n.short && p.tall === n.tall && p.portrait === n.portrait ? p : n
-    })
-    calc()
-    window.addEventListener('resize', calc)
-    return () => window.removeEventListener('resize', calc)
-  }, [])
-  return f
+  }, [w, h])
 }
 
 /** The chalkboard slot — pinned top-left on a roomy screen (absolute, out of flow

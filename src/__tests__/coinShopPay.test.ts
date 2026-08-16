@@ -16,7 +16,7 @@
  * ⚠️ A gate that reads a chapter's DATA cannot see how the chapter INDEXES it — hence `stallAt`.
  */
 import { describe, it, expect } from 'vitest'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   makeRound, fewestFor, POOL, KINDS, VALUES, pileFor, poolFor, openerFor, missFor, askFor, ASK, ASK_PILE,
@@ -33,8 +33,8 @@ import { bannerBottom } from '@/features/chapters/story/yard'
 import { hasSheet, aspectOf, CAST } from '@/features/chapters/story/critters'
 
 const ASSETS = join(process.cwd(), 'public', 'assets')
-const src = () => require('node:fs').readFileSync(
-  join(process.cwd(), 'src', 'features', 'chapters', 'story', 'CoinShop.tsx'), 'utf8') as string
+const src = () => readFileSync(
+  join(process.cwd(), 'src', 'features', 'chapters', 'story', 'CoinShop.tsx'), 'utf8')
 const TIERS: (1 | 2 | 3)[] = [1, 2, 3]
 const DRAWS = 400
 const SIZES: [number, number][] = [
