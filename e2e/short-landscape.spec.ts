@@ -54,7 +54,7 @@ const MIN_TAP = 24
 const TIGHT_TAP = 44
 
 interface Box { label: string; x: number; y: number; w: number; h: number; inBoard: boolean; scrollable: boolean }
-interface Shot { W: number; H: number; scrollW: number; ctrls: Box[]; art: Box[]; board: Box | null }
+interface Shot { W: number; H: number; scrollW: number; ctrls: Box[]; art: Box[]; board: Box | null; pinnedHits: string[] }
 
 async function measure(page: Page): Promise<Shot> {
   return page.evaluate(() => {
@@ -97,6 +97,47 @@ async function measure(page: Page): Promise<Shot> {
       // band plus every walkthrough scene; canvas covers the ScribblePad.
       art: [...document.querySelectorAll('main svg, main canvas')].filter(seen).map((s) => box(s, s.tagName)),
       board: board && seen(board) ? box(board, 'BOARD') : null,
+      /**
+       * ⚠️ THE SHELL'S OWN `position: fixed` LAYERS — the ones no chapter draws and every chapter
+       * has to live under. This gate crossed board × art and controls × frame edges, i.e. every
+       * pair containing the element somebody had in mind, and that is exactly the sweep shape this
+       * repo has already been burned by. What it could not see: `ScribblePad`'s closed button
+       * (fixed, ~121×44, UNSCALED) drawn on top of The Coin Tray's 5, 6 and 7 keys — shipped, and
+       * driven twice, because every tap still lands on something and only crossing the boxes finds
+       * it. A 9–11 instrument is scaled DOWN by FitSlot and centred in the right-hand column, so
+       * the two meet on a short frame and nowhere else.
+       */
+      /**
+       * ⚠️ COMPUTED HERE, NOT FROM BOXES, BECAUSE THE TEST IS CONTAINMENT AND BOXES HAVE NO
+       * IDENTITY. A fixed element only COVERS a control if it does not CONTAIN it — and the
+       * outermost fixed element in this app is the root, at 0,0 640×320, wrapping the entire
+       * screen. Any filter phrased in geometry alone either compares that root against every
+       * button (everything "collides") or, as my first version did, skips every control as
+       * living-inside-a-fixed-layer and compares nothing at all. That version passed the planted
+       * ScribblePad regression, which is the only reason it was caught.
+       */
+      pinnedHits: (() => {
+        const layers = [...document.querySelectorAll('body *')]
+          .filter((el) => getComputedStyle(el).position === 'fixed').filter(seen)
+        const buttons = [...document.querySelectorAll('button:not([disabled])')].filter(seen)
+        const hits: string[] = []
+        for (const p of layers) {
+          const pr = p.getBoundingClientRect()
+          // A full-bleed layer is the app root or a backdrop, not an affordance sitting on top of
+          // the answer. It is excluded by containment below anyway; this just keeps it cheap.
+          for (const c of buttons) {
+            if (p === c || p.contains(c) || c.contains(p)) continue
+            const cr = c.getBoundingClientRect()
+            const ox = Math.min(pr.right, cr.right) - Math.max(pr.left, cr.left)
+            const oy = Math.min(pr.bottom, cr.bottom) - Math.max(pr.top, cr.top)
+            if (ox > 2 && oy > 2) {
+              const name = (el: Element) => ((el as HTMLElement).innerText || el.tagName).replace(/\s+/g, ' ').trim().slice(0, 24)
+              hits.push(`pinned layer "${name(p)}" covers control "${name(c)}" by ${Math.round(ox)}×${Math.round(oy)}px`)
+            }
+          }
+        }
+        return [...new Set(hits)]
+      })(),
     }
   })
 }
@@ -135,6 +176,13 @@ function check(tag: string, s: Shot, failures: string[], notes: string[], strict
     else if (strict) failures.push(`${tag}: ${a.label} art is below the fold at ${a.x},${a.y} ${a.w}×${a.h} — this screen must fit`)
     else notes.push(`${tag}: ${a.label} art needs a scroll — ${a.x},${a.y} ${a.w}×${a.h}`)
   }
+
+  // ⚠️ EVERY PINNED LAYER × EVERY CONTROL, computed in the page (see `pinnedHits`). The shell's
+  // fixed affordances are UNSCALED while the instrument beneath them is scaled down by FitSlot, so
+  // they only meet on a short frame — and the tap still lands on the layer, so nothing errors and
+  // no other check here can see it. This is the pair that shipped: ScribblePad's closed button over
+  // The Coin Tray's 5, 6 and 7 keys.
+  for (const h of s.pinnedHits) failures.push(`${tag}: ${h}`)
 
   // On a short frame board and instrument are flex-row siblings, so an intersection
   // means something escaped its column (the pinned absolute board is the classic way).
