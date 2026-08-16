@@ -224,6 +224,21 @@ function makeTask(d: 1 | 2 | 3): Task {
   return Math.random() < 0.5 ? stdVertexTask() : complexTask()
 }
 
+/** ⚠️ MODULE LEVEL, NOT INSIDE THE INSTRUMENT. Declared in the parent this is a new component
+ *  TYPE on every render, so React unmounts and remounts the whole row each time the value
+ *  changes — throwing away the button elements the child is tapping and restarting every
+ *  transition on them. `disabled` becomes a prop; the palette is already module scope. */
+function Part({ label, val, on, disabled }: { label: string; val: number; on: (n: number) => void; disabled?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px,0.9vw,12px)' }}>
+      <span style={{ width: 'clamp(56px,6vw,84px)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1vw,13px)', letterSpacing: '0.07em', color: P.mutedOnPaper, textTransform: 'uppercase' }}>{label}</span>
+      <Nudge P={P} label="−" disabled={disabled} onClick={() => on(Math.max(-12, val - 1))} />
+      <span style={{ minWidth: 'clamp(32px,3.2vw,46px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{disp(val)}</span>
+      <Nudge P={P} label="+" disabled={disabled} onClick={() => on(Math.min(12, val + 1))} />
+    </div>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // THE PRICE BOARD — build a pair of numbers, with the profit curve drawn from the
 // pair the child has set so a wrong vertex looks wrong.
@@ -235,21 +250,13 @@ function PriceBoard({ task, value, setValue, disabled, reveal, onCommit }: {
   const b = value.k === 'pair' ? value.b : 0
   const [la, lb] = task.labels ?? ['first', 'second']
   const col = reveal ? P.mint : P.gold
-  const Part = ({ label, val, on }: { label: string; val: number; on: (n: number) => void }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px,0.9vw,12px)' }}>
-      <span style={{ width: 'clamp(56px,6vw,84px)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1vw,13px)', letterSpacing: '0.07em', color: P.mutedOnPaper, textTransform: 'uppercase' }}>{label}</span>
-      <Nudge P={P} label="−" disabled={disabled} onClick={() => on(Math.max(-12, val - 1))} />
-      <span style={{ minWidth: 'clamp(32px,3.2vw,46px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{disp(val)}</span>
-      <Nudge P={P} label="+" disabled={disabled} onClick={() => on(Math.min(12, val + 1))} />
-    </div>
-  )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.3vw,18px)', width: '100%' }}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(24px,3.2vw,44px)', fontWeight: 800, color: col, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55` }}>
         {task.kind === 'roots' ? `${disp(a)} and ${disp(b)}` : `(${disp(a)}, ${disp(b)})`}
       </div>
-      <Part label={la} val={a} on={(n) => setValue({ k: 'pair', a: n, b })} />
-      <Part label={lb} val={b} on={(n) => setValue({ k: 'pair', a, b: n })} />
+      <Part label={la} val={a} on={(n) => setValue({ k: 'pair', a: n, b })} disabled={disabled} />
+      <Part label={lb} val={b} on={(n) => setValue({ k: 'pair', a, b: n })} disabled={disabled} />
       <CommitBtn P={P} label="PRICE IT ✓" disabled={disabled} onClick={() => onCommit({ k: 'pair', a, b })} />
     </div>
   )

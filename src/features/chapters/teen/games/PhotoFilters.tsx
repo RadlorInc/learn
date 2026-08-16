@@ -180,6 +180,21 @@ function makeTask(d: 1 | 2 | 3): Task {
   return chainTask()
 }
 
+/** ⚠️ MODULE LEVEL, NOT INSIDE THE INSTRUMENT. Declared in the parent this is a new component
+ *  TYPE on every render, so React unmounts and remounts the whole row each time the value
+ *  changes — throwing away the button elements the child is tapping and restarting every
+ *  transition on them. `disabled` becomes a prop; the palette is already module scope. */
+function Ctl({ label, val, on, disabled }: { label: string; val: number; on: (n: number) => void; disabled?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(5px,0.8vw,10px)' }}>
+      <span style={{ width: 'clamp(66px,7vw,96px)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,0.95vw,12px)', letterSpacing: '0.07em', color: P.mutedOnPaper, textTransform: 'uppercase' }}>{label}</span>
+      <Nudge P={P} label="−" disabled={disabled} onClick={() => on(Math.max(-5, val - 1))} />
+      <span style={{ minWidth: 'clamp(28px,2.8vw,40px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(16px,1.8vw,25px)', color: P.cream }}>{disp(val)}</span>
+      <Nudge P={P} label="+" disabled={disabled} onClick={() => on(Math.min(5, val + 1))} />
+    </div>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // THE FILTER RACK — shift across, shift up, invert; the curve moves with them.
 // ══════════════════════════════════════════════════════════════════════════════
@@ -202,14 +217,6 @@ function FilterRack({ value, setValue, disabled, reveal, onCommit }: {
     return `${i ? 'L' : 'M'} ${rx(x).toFixed(1)} ${ry(Math.max(-RG - 2, Math.min(RG + 2, f(x)))).toFixed(1)}`
   }).join(' ')
 
-  const Ctl = ({ label, val, on }: { label: string; val: number; on: (n: number) => void }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(5px,0.8vw,10px)' }}>
-      <span style={{ width: 'clamp(66px,7vw,96px)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(9px,0.95vw,12px)', letterSpacing: '0.07em', color: P.mutedOnPaper, textTransform: 'uppercase' }}>{label}</span>
-      <Nudge P={P} label="−" disabled={disabled} onClick={() => on(Math.max(-5, val - 1))} />
-      <span style={{ minWidth: 'clamp(28px,2.8vw,40px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(16px,1.8vw,25px)', color: P.cream }}>{disp(val)}</span>
-      <Nudge P={P} label="+" disabled={disabled} onClick={() => on(Math.min(5, val + 1))} />
-    </div>
-  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px,1.1vw,15px)', width: '100%' }}>
@@ -228,8 +235,8 @@ function FilterRack({ value, setValue, disabled, reveal, onCommit }: {
         <path d={draw(g)} fill="none" stroke={col} strokeWidth={2.6} style={{ transition: 'd 300ms' }} />
       </svg>
 
-      <Ctl label="across" val={dx} on={(n) => setValue({ k: 'set', dx: n, dy, flip })} />
-      <Ctl label="up" val={dy} on={(n) => setValue({ k: 'set', dx, dy: n, flip })} />
+      <Ctl label="across" val={dx} on={(n) => setValue({ k: 'set', dx: n, dy, flip })} disabled={disabled} />
+      <Ctl label="up" val={dy} on={(n) => setValue({ k: 'set', dx, dy: n, flip })} disabled={disabled} />
       <button type="button" disabled={disabled} onClick={() => setValue({ k: 'set', dx, dy, flip: !flip })}
         style={{
           padding: 'clamp(9px,1vw,13px) clamp(14px,1.6vw,22px)', borderRadius: 10, minHeight: 44,

@@ -219,6 +219,21 @@ function makeTask(d: 1 | 2 | 3): Task {
   return instTask()
 }
 
+/** ⚠️ MODULE LEVEL, NOT INSIDE THE INSTRUMENT. Declared in the parent this is a new component
+ *  TYPE on every render, so React unmounts and remounts the whole row each time the value
+ *  changes — throwing away the button elements the child is tapping and restarting every
+ *  transition on them. `disabled` becomes a prop; the palette is already module scope. */
+function Part({ label, val, lo, hi, on, disabled }: { label: string; val: number; lo: number; hi: number; on: (n: number) => void; disabled?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px,0.9vw,12px)' }}>
+      <span style={{ width: 'clamp(74px,8vw,110px)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1vw,13px)', letterSpacing: '0.07em', color: P.mutedOnPaper, textTransform: 'uppercase' }}>{label}</span>
+      <Nudge P={P} label="−" disabled={disabled} onClick={() => on(Math.max(lo, val - 1))} />
+      <span style={{ minWidth: 'clamp(30px,3vw,44px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{val}</span>
+      <Nudge P={P} label="+" disabled={disabled} onClick={() => on(Math.min(hi, val + 1))} />
+    </div>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // THE WINDOW TRACE — f(x) = x² drawn as the run, P pinned at x = a, Q sliding in.
 // It shows the AVERAGE over the window, never the limit, and the window stops at
@@ -280,21 +295,13 @@ function RuleBuilder({ value, setValue, disabled, reveal, onCommit }: {
   const c = value.k === 'deriv' ? value.c : 1
   const p = value.k === 'deriv' ? value.p : 1
   const col = reveal ? P.mint : P.gold
-  const Part = ({ label, val, lo, hi, on }: { label: string; val: number; lo: number; hi: number; on: (n: number) => void }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px,0.9vw,12px)' }}>
-      <span style={{ width: 'clamp(74px,8vw,110px)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1vw,13px)', letterSpacing: '0.07em', color: P.mutedOnPaper, textTransform: 'uppercase' }}>{label}</span>
-      <Nudge P={P} label="−" disabled={disabled} onClick={() => on(Math.max(lo, val - 1))} />
-      <span style={{ minWidth: 'clamp(30px,3vw,44px)', textAlign: 'center', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(18px,2vw,28px)', color: P.cream }}>{val}</span>
-      <Nudge P={P} label="+" disabled={disabled} onClick={() => on(Math.min(hi, val + 1))} />
-    </div>
-  )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.3vw,18px)', width: '100%' }}>
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(28px,3.6vw,50px)', fontWeight: 800, color: col, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55` }}>
         {deriv(c, p)}
       </div>
-      <Part label="in front" val={c} lo={1} hi={6} on={(n) => setValue({ k: 'deriv', c: n, p })} />
-      <Part label="exponent" val={p} lo={0} hi={5} on={(n) => setValue({ k: 'deriv', c, p: n })} />
+      <Part label="in front" val={c} lo={1} hi={6} on={(n) => setValue({ k: 'deriv', c: n, p })} disabled={disabled} />
+      <Part label="exponent" val={p} lo={0} hi={5} on={(n) => setValue({ k: 'deriv', c, p: n })} disabled={disabled} />
       <CommitBtn P={P} label="LOCK IN ✓" disabled={disabled} onClick={() => onCommit({ k: 'deriv', c, p })} />
     </div>
   )
