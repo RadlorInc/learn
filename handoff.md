@@ -177,6 +177,26 @@
 >    hid because the run that certified 211/211 was pointed at prod with `E2E_BASE_URL`. Now branched
 >    on `NODE_ENV` and gated in BOTH directions (`cspHeader.test.ts`): the production leak is the
 >    dangerous half, losing it in dev is the half that eats a day. Gate back to **211/211**.
+>    ⚠️⚠️ **AND THEN THE PROD CONSOLE GAVE UP A THIRD CSP CASUALTY, WHICH IS THE BIGGEST OF THE
+>    THREE: `media-src` WAS NEVER SET, SO THE RECORDED VOICE WAS SILENTLY DEAD ON MOBILE.**
+>    `default-src 'self'` was the fallback and it blocked the `data:` WAV that `unlockVoiceClips()`
+>    plays inside the intro tap — the mobile-autoplay unlock, i.e. the one gesture that grants iOS
+>    playback to the single reused `<audio>` the whole app plays through. Blocked, it is never
+>    unlocked, so **every pre-rendered ElevenLabs clip in bands 12–18 falls back to browser speech**,
+>    which most Chrome installs do not have at all. Nothing reports it: the player swallows its own
+>    errors by design (a missing clip must fall back, not throw), so on a desktop it is one console
+>    line and on a phone it is a chapter that has simply gone quiet. **That is now three things the
+>    enforced CSP broke whose failure is invisible until a specific device does a specific thing —
+>    the fonts, MediaPipe, and this. Read the prod console on a real page after any header change;
+>    a 200 on every route says nothing about it.** ⚠️ And it took a FRESH TAB to believe the fix: the
+>    console buffer survives navigation, so the old violation was still printing against the new
+>    header, reading exactly like a deploy that had not landed.
+> 4b. ⚠️ **`npm run preflight` ONLY DIFFS COMMITTED WORK** (`origin/main...HEAD`), so an uncommitted
+>    change is invisible to its sw-bump gate — it reported "no shipped files changed" over a live CSP
+>    edit. Commit first, then run it. And a CSP change **does** need the bump: the policy rides a
+>    response HEADER and a cached response keeps its headers, which is this repo's own recorded trap.
+>    Prod is on **sw v100**, verified on the live origin along with `media-src 'self' data:` and a
+>    production `script-src` carrying **no** bare `'unsafe-eval'`.
 > 5. ✅ **C13 IS CLOSED — NOT DONE, DECIDED.** Founder, 2026-08-16: *"woh dono chapter waise hi
 >    rahenge… bina neon mein"*. **OrderDesk and LevelRun stay storybook `SkillBeat`; do not port
 >    them.** Both pass the C7 gate as they are. The 9–11 band is mixed by design — eight on

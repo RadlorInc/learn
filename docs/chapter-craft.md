@@ -2057,6 +2057,19 @@ count the matches.
   to production is the dangerous half; losing it in dev is the half that eats a day), and **when a
   gate fails wholesale right after you touch one file, stash the change and re-run before believing
   it** — six lines of shell, and it is the difference between fixing a bug and inventing one.
+- ⚠️⚠️ **A SECURITY HEADER BREAKS THINGS THAT DO NOT FAIL UNTIL A SPECIFIC DEVICE DOES A SPECIFIC
+  THING, SO READ THE PROD CONSOLE ON A REAL PAGE — a 200 on every route says nothing about it.**
+  Enforcing one CSP broke three separate things this way, each invisible to the type-checker, the
+  gate and a route smoke: the **fonts** (whole product in fallback faces), **MediaPipe** (every AR
+  chapter dead, but only once a child opens the camera), and **`media-src`** — never set, so
+  `default-src 'self'` blocked the `data:` WAV of the mobile-autoplay unlock, and **every recorded
+  voice clip in bands 12–18 silently fell back to browser speech on mobile**. That last one reports
+  nothing anywhere, because the clip player swallows its own errors by design (a missing clip must
+  fall back, not throw). ⚠️ **And verify the fix in a FRESH TAB**: the console buffer survives
+  navigation, so the old violation keeps printing against the new header and reads exactly like a
+  deploy that never landed. Enumerate every *kind* of subresource the app loads — script, style,
+  font, image, media, worker, connect — and check each against the policy, rather than the ones you
+  happened to think of.
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---
