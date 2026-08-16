@@ -138,6 +138,16 @@ describe('the shared band kit', () => {
       .toMatch(/maxWidth: `min\(96vw, \$\{choices\.length \* PAD/)
   })
 
+  it('⚠️ the scratch-pad button is IN FLOW, so it cannot be drawn over an instrument', () => {
+    // Pinned `position:fixed` bottom-right it covered The Coin Tray's keys 5, 6 and 7 at 640×320 —
+    // shipped, and driven twice without anyone seeing it, because every tap still landed somewhere.
+    // A 9–11 instrument is scaled by FitSlot and centred in the right-hand column, so the two meet.
+    const PAD_SRC = readFileSync('src/features/chapters/teen/games/parts/ScribblePad.tsx', 'utf8')
+      .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')   // its own prose explains the rule it forbids
+    expect(PAD_SRC, 'nothing in the pad may be position:fixed').not.toMatch(/position: 'fixed'/)
+    expect(PAD_SRC.match(/flex: '0 0 auto', width: '100%'/g) ?? [], 'both states in flow: closed button + open drawer').toHaveLength(2)
+  })
+
   it('one palette for the whole band, so ten chapters cannot drift into ten violets', () => {
     expect(KID_P.gold).toBe('#A06BFF')
     expect(KID_P.nightBot).toBe('#0A1026')

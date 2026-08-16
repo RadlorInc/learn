@@ -204,18 +204,26 @@ export default function ScribblePad({ P, resetKey, open, onToggle }: { P: Palett
   })
 
   if (!open) {
+    // IN FLOW, for the same reason the open drawer is (see below): pinned
+    // `position:fixed` bottom-right it was drawn OVER the answer surface of a 9–11
+    // instrument, which FitSlot scales down and centres in the right-hand column —
+    // so at 640×320 it covered The Coin Tray's keys 5, 6 and 7 (shipped) and The
+    // Empty Plot's `back ▶`. Every tap still landed somewhere, which is why nothing
+    // but crossing the boxes found it. In flow the collision is not expressible, and
+    // the cost is one 44px row — the tap floor, so it cannot be bought back.
     return (
-      <button
-        type="button" aria-label="Open the scratch pad" onClick={() => onToggle(true)}
-        style={{
-          position: 'fixed', right: 12, bottom: 12, zIndex: 8,
-          display: 'flex', alignItems: 'center', gap: 8,
-          background: P.cream, border: 'none', borderRadius: 12, color: P.inkOnPaper,
-          fontFamily: 'var(--font-body)', fontWeight: 900, fontSize: 'clamp(13px, 1.2vw, 17px)',
-          padding: '10px 16px', minHeight: 44, cursor: 'pointer',
-          boxShadow: '0 6px 20px rgba(0,0,0,0.45)', touchAction: 'manipulation',
-        }}
-      >✏️ Scratch pad</button>
+      <div style={{ position: 'relative', zIndex: 8, flex: '0 0 auto', width: '100%', display: 'flex', justifyContent: 'flex-end', padding: '0 12px 12px', boxSizing: 'border-box' }}>
+        <button
+          type="button" aria-label="Open the scratch pad" onClick={() => onToggle(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: P.cream, border: 'none', borderRadius: 12, color: P.inkOnPaper,
+            fontFamily: 'var(--font-body)', fontWeight: 900, fontSize: 'clamp(13px, 1.2vw, 17px)',
+            padding: '10px 16px', minHeight: 44, cursor: 'pointer',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.45)', touchAction: 'manipulation',
+          }}
+        >✏️ Scratch pad</button>
+      </div>
     )
   }
 
