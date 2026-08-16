@@ -88,22 +88,22 @@ Nothing here needs an account, a card, or a signature. Give me the go and I work
 | ✅ C2 | **Crash + 404 screens** — DONE 2026-08-16 (`611b061`). `app/error.tsx`, `app/global-error.tsx`, `app/not-found.tsx`, all in Milo's voice with two ways out, verified in a **production** build. Closes finding #10. | S | — |
 | C3 | **Wire monitoring** once you give me a DSN/ingest URL | S | The seam already exists — it is one env var plus verification. |
 | C4 | **Wire analytics** and instrument the funnel: signup → diagnostic complete → first chapter finished → week-6 re-check | M | Pick the tool (I suggest one that is COPPA-safe and cookieless); I will make sure it records **no child PII**. |
-| C5 | **Legal pages** — build `/privacy`, `/terms`, and a parent-facing "your data" page, wired into signup + lead capture | M | I build the pages and the consent UI; the *words* must come from B1. |
-| C6 | **Data export + deletion, parent-facing** — deletion exists; I will add "download my child's data" and make the deletion path explicit and findable | M | COPPA gives parents both rights. |
+| 🟡 C5 | **Legal pages — PLUMBING DONE** (`d1fa8fe`). `/legal/privacy`, `/legal/terms`, a `ConsentLine` on signup, and the parent data section all built and wired against placeholder copy in `src/app/legal/content.ts`. ⚠️ `DRAFT = true` shows a red banner on every page and preflight warns. **Remaining: paste the attorney's words and set `DRAFT = false`.** | M | No longer blocked behind B1 — it is now a paste. |
+| ✅ C6 | **Data export + deletion** — DONE (`d1fa8fe`). One "<name>'s data" section on `/parent`: download a JSON copy, plus the existing delete control reused (not duplicated). | M | — |
 | ✅ C7 | **Full-app smoke** — DONE 2026-08-16 (`e1190aa`). `npm run test:chapters` drives **all 70 chapters × 3 frames = 211 checks: 211 passed.** Per chapter: no failure screen, a visible control, no horizontal overflow, no offscreen control, zero console errors. The chapter list is DERIVED from source, so it cannot rot. | L | Re-run before every deploy. ~2 min. |
-| C8 | **Launch-day runbook** — what to watch, what "broken" looks like, the exact rollback command, and a one-page triage script for the first parent email | S | So launch day has a procedure, not adrenaline. |
-| C9 | **Support content** — FAQ, "how it works" for parents, a privacy FAQ, and what to do when progress looks lost | M | Cuts your day-one support load. |
+| ✅ C8 | **Launch-day runbook** — DONE (`d1fa8fe`), [runbooks/launch-day.md](runbooks/launch-day.md). Includes the two verification traps found this week: wait for the new `sw.js` VERSION, and clear the service worker or you grade the previous release. | S | — |
+| ✅ C9 | **Support content** — DONE (`d1fa8fe`). `/help`, parent-facing, led by the three most likely day-one emails. Distinct from `docs/support.md`, which is the internal triage process. | M | — |
 
 ### Tier 2 — can land during or just after soft launch
 
 | # | task |
 |---|---|
 | ✅ C10 | **Self-host the fonts** — DONE (`396bfe0`). All five families via `next/font/google`, 0 runtime requests to Google. |
-| C10b | Supabase performance advisors: wrap `auth.<fn>()` in `(select …)` on the 5 diagnostic policies, add the 3 missing FK indexes |
+| 🟡 C10b | Supabase performance advisors — **migration written, NOT applied** (`d1fa8fe`). ⚠️ Predicates read off `pg_policies` on the live DB after a first draft guessed them wrong (`diagnostic_plan_progress` reaches the parent via `plan_id`, not `learner_id`). **You apply it** — prod DDL is yours. |
 | ✅ C11 | **CSP ENFORCED** — DONE (`a968dbb`). One policy, not two. ⚠️ Enforcing it as written would have silently killed every AR chapter (MediaPipe fetches WASM from jsDelivr, its model from storage.googleapis.com, and runs a `blob:` worker); those are now explicit, named allowances. Verified with a negative control and 211/211 chapters against the enforced build. Two `unsafe-inline`s remain, documented — removing them needs nonces and a styling rewrite, not a config change. |
 | C12 | Week-6 nudge automation (blocked on B6) |
 | C13 | Finish the two remaining 9–11 chapters (OrderDesk, LevelRun) — *only if* you want the band uniform at launch |
-| C14 | An automated pre-deploy checklist so the gate + `sw.js` bump can never be skipped |
+| ✅ C14 | **`npm run preflight`** — DONE (`d1fa8fe`). tsc · vitest · build · production `npm audit` · **sw.js bump vs origin/main** · DRAFT-legal warning. It caught the missing bump on the very next commit. |
 
 ---
 
