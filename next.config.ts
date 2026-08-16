@@ -80,8 +80,14 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              // 'wasm-unsafe-eval' + jsDelivr: the MediaPipe hand-tracking WASM loader.
-              "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
+              /** 'wasm-unsafe-eval' + jsDelivr: the MediaPipe hand-tracking WASM loader.
+               *  ⚠️ 'unsafe-eval' IN DEV ONLY, and it is not cosmetic: React's dev build calls
+               *  `eval()` for its debugging features, so with it blocked EVERY page logs a console
+               *  error — which made `npm run test:chapters` (the C7 gate, whose contract is "zero
+               *  console errors") fail 210 of 211 against the dev server it is documented to drive.
+               *  It went unnoticed because the gate was last run against production. Never shipped:
+               *  this whole branch is dropped from the production header. */
+              `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"} https://cdn.jsdelivr.net`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob:",
               // 'self' only — the fonts are self-hosted now. data: stays for inlined glyphs.
