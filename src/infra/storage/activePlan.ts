@@ -69,6 +69,54 @@ export function revisePlanDeeper(learnerId: string, struggledChapterId: string, 
   return deeperChapterId
 }
 
+/**
+ * THE WHOLE END-OF-CHAPTER PLAN DECISION, in one place.
+ *
+ * ⚠️ THIS EXISTS BECAUSE THE DECISION USED TO LIVE IN `app/game/page.tsx`'s `handleComplete`, WHICH
+ * NEVER RAN. `handleComplete` reached a chapter as `ChapterProps.onComplete` — and both registry
+ * factories in `ChapterPortal` drop it (`function StoryChapter(_props)`, and `TeenChapter` reads
+ * only `props.childName`). The portal calls `finishAndSync` itself, so the SESSION was written and
+ * everything else in `handleComplete` was dead: the pointer never advanced, the revision never
+ * fired, and no completion event was ever recorded.
+ *
+ * Production, three months: **797 `chapter_open` events, 40 completed sessions, ZERO
+ * `practice_complete`** — and 77 of 77 `diagnostic_plan_progress` rows still `status = 'todo'`.
+ * Every child who finished the first chapter of their plan was handed that same chapter again,
+ * for ever. Nothing threw; the chapter scored normally and the menu just never moved on.
+ *
+ * It lives HERE, called from `finishAndSync`, because that is the single function every completion
+ * path already routes through — the portal (all 46 chapters), `CountingStoryChapter`, and `/game`.
+ * Putting it back in a caller would leave the next caller broken in exactly the same silent way.
+ */
+export function advanceAfterChapter(
+  learnerId: string,
+  completedChapterId: string,
+  correct: number,
+  wrong: number,
+  mastered: boolean,
+  deeperFor: (chapterId: string) => string | null,
+): { kind: 'revised' | 'advanced'; to: string | null } | null {
+  const plan = getActivePlan(learnerId)
+  if (!plan) return null
+
+  // Play-data revision: the probe's root can sit one level SHALLOW when a prerequisite was
+  // lucky-guessed (~25% on a 4-choice item), and the plan's FIRST chapter is a dozen adaptive
+  // questions on that very skill — far stronger evidence than one probe item. "Struggled" is
+  // deliberately conservative: a false trigger silently rewrites a child's plan, a miss just means
+  // chapter one is slow. `mastered` can never coincide — it requires a correct streak.
+  const total = correct + wrong
+  const struggled = !mastered && total >= 4 && correct / total < 0.5
+  const atRoot = plan.index === 0 && plan.chapters[0] === completedChapterId
+  if (atRoot && struggled) {
+    const deeper = deeperFor(completedChapterId)
+    const applied = deeper ? revisePlanDeeper(learnerId, completedChapterId, deeper) : null
+    // Revised: the pointer now rests on the deeper chapter, so it must NOT also advance past the
+    // root. Only a successful revision short-circuits — if it did not apply, fall through.
+    if (applied) return { kind: 'revised', to: applied }
+  }
+  return { kind: 'advanced', to: advancePlan(learnerId, completedChapterId) }
+}
+
 /** { done, total } for a progress readout ("Step 2 of 5"). */
 export function planProgress(learnerId: string): { done: number; total: number } | null {
   const p = getActivePlan(learnerId)

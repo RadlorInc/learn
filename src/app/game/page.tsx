@@ -8,8 +8,6 @@ import { getChapter, type AgeGroup } from '@/core/chapters'
 
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { setLastPlayed } from '@/infra/storage/lastPlayed'
-import { advancePlan, getActivePlan, revisePlanDeeper } from '@/infra/storage/activePlan'
-import { deeperChapter } from '@/core/diagnosticEngine'
 import CelebrationModal from '@/shared/ui/CelebrationModal'
 import MiloPointer from '@/shared/ui/MiloPointer'
 import { useChapterSync } from '@/data/supabase/useChapterSync'
@@ -29,7 +27,7 @@ export default function GamePage() {
   const profile        = useMiloStore(s => s.profile)
   const currentChapter = useMiloStore(s => s.currentChapter)
   const celebration    = useMiloStore(s => s.celebration)
-  const { finishAndSync, flushQueue } = useChapterSync()
+  const { flushQueue } = useChapterSync()
 
   const [playingChapter,  setPlayingChapter]  = useState(currentChapter)
   const [chapterDone,    setChapterDone]    = useState(false)
@@ -115,41 +113,24 @@ export default function GamePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChapter])
 
-  async function handleComplete(correct: number, wrong: number, mastered?: boolean) {
+  function handleComplete(_correct: number, _wrong: number, _mastered?: boolean) {
     if (!playingChapter) return
     if (completedRef.current) return   // ignore a double-fired completion
     completedRef.current = true
     setChapterDone(true)
-    track('practice_complete', { chapter: playingChapter, correct, wrong })
-    // Works offline — queues locally (IndexedDB via kv) if no network.
-    // `mastered` (early finish at the top tier) forces the full 3 stars.
-    await finishAndSync(playingChapter, correct, wrong, 'practice', mastered)
-    // Step 7: if this was the child's current diagnostic-plan chapter, advance the pointer so the
-    // menu's "Continue your plan" card moves to the next one.
-    const learner = getActiveLearner()
-    if (learner) {
-      // Play-data feedback (claim-2 evidence): the probe's root can sit one level SHALLOW when a
-      // prerequisite was lucky-guessed (~25%/item — a guess looks like a pass, so the probe cannot
-      // catch it). The plan's FIRST chapter is a dozen adaptive questions on that very skill —
-      // far stronger evidence than the single probe item. Struggle there ⇒ revise the plan one
-      // prerequisite deeper instead of advancing. "Struggle" = under half right across the set
-      // even though the adaptive engine was easing the questions on every miss (`mastered` can
-      // never coincide — it requires a correct streak). Threshold is deliberately conservative:
-      // a false trigger silently rewrites a child's plan, a miss just means chapter one is slow.
-      const total = correct + wrong
-      const struggled = !mastered && total >= 4 && correct / total < 0.5
-      const plan = getActivePlan(learner.id)
-      const atRoot = plan != null && plan.index === 0 && plan.chapters[0] === playingChapter
-      if (atRoot && struggled) {
-        const deeper = deeperChapter(playingChapter)
-        const applied = deeper ? revisePlanDeeper(learner.id, playingChapter, deeper) : null
-        if (applied) {
-          track('plan_revised_deeper', { from: playingChapter, to: applied, correct, wrong })
-          return   // pointer now rests on the deeper chapter — do not advance past the root
-        }
-      }
-      advancePlan(learner.id, playingChapter)
-    }
+    /**
+     * ⚠️ THE TRACKING AND THE PLAN POINTER USED TO LIVE HERE, AND NEVER RAN. This function is
+     * handed to a chapter as `ChapterProps.onComplete`, and both registry factories in
+     * `ChapterPortal` discard that prop — `StoryChapter(_props)` never reads it and `TeenChapter`
+     * reads only `props.childName`. The portal calls `finishAndSync` itself, so every chapter
+     * scored correctly while the plan sat still. Moved into `finishAndSync`, which is the single
+     * function all four completion paths route through.
+     *
+     * This is kept as a no-op-safe hook for the ONE path that still uses it (a chapter mounted
+     * directly by this page rather than through the portal) and must NOT call `finishAndSync`
+     * again: the portal has already scored the run, and a second call double-writes the session
+     * and double-awards XP and coins.
+     */
   }
 
   if (!ready && !playingChapter) return null

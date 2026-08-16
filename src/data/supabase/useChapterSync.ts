@@ -11,6 +11,9 @@ import { useMiloStore } from '@/state/store'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { syncSession } from '@/data/repositories'
 import { enqueueSession, flushQueue } from '@/infra/useOfflineSync'
+import { advanceAfterChapter } from '@/infra/storage/activePlan'
+import { deeperChapter } from '@/core/diagnosticEngine'
+import { track } from '@/infra/analytics'
 
 
 function randomId(): string {
@@ -38,6 +41,26 @@ export function useChapterSync() {
     // 2. Build payload
     const learner = getActiveLearner()
     if (!learner) return
+
+    /**
+     * 2a. THE PLAN POINTER AND THE COMPLETION EVENT — here, because this is the ONE function every
+     * completion path already calls. It used to live in `/game`'s `handleComplete`, which reached a
+     * chapter as `ChapterProps.onComplete` and was never invoked: both registry factories in
+     * `ChapterPortal` drop that prop. So sessions were written and the plan never moved.
+     *
+     * ⚠️ BEFORE THE NETWORK, DELIBERATELY. The pointer is local and must advance for a child playing
+     * offline; below this point the function can return early on `!navigator.onLine`.
+     * ⚠️ PRACTICE ONLY — a lesson completion is not a plan step.
+     * ⚠️ BEST-EFFORT — a storage or analytics failure must never cost a child their score, which has
+     * already been written to the store above.
+     */
+    if (phase === 'practice') {
+      try {
+        track('practice_complete', { chapter, correct, wrong, mastered })
+        const moved = advanceAfterChapter(learner.id, chapter, correct, wrong, mastered, deeperChapter)
+        if (moved?.kind === 'revised') track('plan_revised_deeper', { from: chapter, to: moved.to, correct, wrong })
+      } catch { /* scoring already landed; never let bookkeeping undo it */ }
+    }
 
     const payload = {
       learnerId:    learner.id,
