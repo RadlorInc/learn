@@ -40,7 +40,7 @@
  * rewritten as STRUCTURED generators that expose the built answer instead of a
  * string. Two deliberate narrowings are marked ⚠️ below.
  */
-import { useRef, type ReactElement } from 'react'
+import { useState, type ReactElement } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, CommitBtn, Nudge, numChoices } from './parts/gameKit'
@@ -307,18 +307,15 @@ function StreetMap({ a, b, span, legs, showLine }: {
 // WALK PAD — the instrument for every answer that IS a complex number. Two
 // sliders (east, north) with ± nudges, a live a + bi readout, and the map where
 // the answer really is a place. One commit for both parts.
-// ══════════════════════════════════════════════════════════════════════════════
-function WalkPad({ task, value, setValue, disabled, reveal, onCommit }: {
-  task: Task; value: V; setValue: (v: V) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: V) => void
+/** ⚠️ DECLARED AT MODULE LEVEL, NOT INSIDE WalkPad. Defined in the parent it is a NEW component
+ *  type on every render, so React unmounts and remounts the subtree each time — which on a native
+ *  `<input type="range">` means the slider is destroyed and rebuilt mid-drag, losing the pointer
+ *  capture the child is dragging with. The closed-over values become props. */
+function Leg({ label, val, onSet, lo, hi, disabled, reveal }: {
+  label: string; val: number; onSet: (n: number) => void
+  lo: number; hi: number; disabled?: boolean; reveal?: boolean
 }) {
-  const a = value.k === 'walk' ? value.a : 0
-  const b = value.k === 'walk' ? value.b : 0
-  const lo = task.lo ?? -12, hi = task.hi ?? 12
-  const clamp = (n: number) => Math.max(lo, Math.min(hi, n))
-  const set = (na: number, nb: number) => setValue({ k: 'walk', a: clamp(na), b: clamp(nb) })
-  const span = Math.max(6, Math.abs(a), Math.abs(b), Math.abs(task.ra ?? 0), Math.abs(task.rb ?? 0))
-
-  const Leg = ({ label, val, onSet }: { label: string; val: number; onSet: (n: number) => void }) => (
+  return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px,0.9vw,12px)', width: '100%' }}>
       <span style={{ width: 'clamp(58px,6vw,84px)', fontFamily: 'var(--font-numeric)', fontSize: 'clamp(10px,1.1vw,13px)', letterSpacing: '0.08em', color: P.mutedOnPaper, textTransform: 'uppercase' }}>{label}</span>
       <Nudge P={P} label="−" disabled={disabled} onClick={() => onSet(val - 1)} />
@@ -332,6 +329,19 @@ function WalkPad({ task, value, setValue, disabled, reveal, onCommit }: {
       <span style={{ width: 'clamp(30px,3vw,44px)', textAlign: 'right', fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: 'clamp(16px,1.8vw,24px)', color: reveal ? P.mint : P.cream }}>{disp(val)}</span>
     </div>
   )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+function WalkPad({ task, value, setValue, disabled, reveal, onCommit }: {
+  task: Task; value: V; setValue: (v: V) => void; disabled?: boolean; reveal?: boolean; onCommit: (v: V) => void
+}) {
+  const a = value.k === 'walk' ? value.a : 0
+  const b = value.k === 'walk' ? value.b : 0
+  const lo = task.lo ?? -12, hi = task.hi ?? 12
+  const clamp = (n: number) => Math.max(lo, Math.min(hi, n))
+  const set = (na: number, nb: number) => setValue({ k: 'walk', a: clamp(na), b: clamp(nb) })
+  const span = Math.max(6, Math.abs(a), Math.abs(b), Math.abs(task.ra ?? 0), Math.abs(task.rb ?? 0))
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.2vw,16px)', width: '100%' }}>
@@ -340,8 +350,8 @@ function WalkPad({ task, value, setValue, disabled, reveal, onCommit }: {
         {fmtComplex(a, b)}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(6px,0.8vw,10px)', width: '100%', maxWidth: 'clamp(280px, 40vw, 460px)' }}>
-        <Leg label="east" val={a} onSet={(n) => set(n, b)} />
-        <Leg label="north" val={b} onSet={(n) => set(a, n)} />
+        <Leg label="east" val={a} onSet={(n) => set(n, b)} lo={lo} hi={hi} disabled={disabled} reveal={reveal} />
+        <Leg label="north" val={b} onSet={(n) => set(a, n)} lo={lo} hi={hi} disabled={disabled} reveal={reveal} />
       </div>
       <CommitBtn P={P} label="LOCK IT IN ✓" disabled={disabled} onClick={() => onCommit({ k: 'walk', a, b })} />
     </div>
@@ -447,10 +457,17 @@ function WalkScene({ value }: { value: V }) {
   // all worked examples (GameShell flattens them into one timeline), so an
   // index-based route is only correct while this example happens to be the first
   // one — it would silently draw the wrong path the moment another is prepended.
-  const seen = useRef<{ x: number; y: number }[]>([])
-  const last = seen.current[seen.current.length - 1]
-  if (!last || last.x !== a || last.y !== b) seen.current = [...seen.current, { x: a, y: b }]
-  const legs = seen.current.filter((p) => p.x !== 0 || p.y !== 0)
+  // ⚠️ STATE, NOT A REF — this accumulates ACROSS renders and was being mutated DURING one.
+  // A ref written in the render phase is not idempotent: StrictMode renders twice, and React may
+  // discard a concurrent render entirely — either way the write has already happened, so the route
+  // gains a duplicate corner that no re-render can take back out. This is React's sanctioned
+  // "information from previous renders" pattern: setting state during the render of the SAME
+  // component makes React throw this render away and immediately re-run it with the new value, so
+  // a doubled or discarded render converges on the same route instead of accumulating.
+  const [seen, setSeen] = useState<{ x: number; y: number }[]>([])
+  const last = seen[seen.length - 1]
+  if (!last || last.x !== a || last.y !== b) setSeen([...seen, { x: a, y: b }])
+  const legs = seen.filter((p) => p.x !== 0 || p.y !== 0)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: '100%' }}>
       <StreetMap a={a} b={b} span={6} legs={legs} />
