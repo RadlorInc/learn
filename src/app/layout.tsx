@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Fredoka, Nunito, IBM_Plex_Sans, IBM_Plex_Mono, Gaegu } from 'next/font/google'
 import { MiloErrorBoundary } from '@/shared/ui/ErrorBoundary'
 import StorageGate from '@/shared/ui/StorageGate'
+import { SITE_URL } from './site'
 
 import { OfflineBanner } from '@/infra/useOfflineSync'
 import './globals.css'
@@ -43,9 +44,43 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
+/**
+ * ⚠️ `metadataBase` IS WHAT MAKES EVERY OTHER URL HERE ABSOLUTE. Without it Next emits a relative
+ * `og:image`, which every scraper (WhatsApp, iMessage, Slack, X) drops — so a shared link previewed
+ * as a blank card, which is the single most likely way a parent meets this product.
+ *
+ * The `template` gives every page a suffix without each page repeating it; `/help` and
+ * `/legal/[slug]` already export their own titles and now inherit the brand for free.
+ *
+ * ⚠️ THE DESCRIPTION SAYS WHAT THE PRODUCT DOES, NOT WHAT IT IS CALLED. "Milo's interactive
+ * learning adventure for kids" contains no word a parent would type. This one names the job
+ * (find the gap) and the ages, because the description is the only sentence most people read.
+ */
 export const metadata: Metadata = {
-  title: "Milo's Story Mode",
-  description: "Milo's interactive learning adventure for kids",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Milo — find the gap that's holding your child back in maths",
+    template: '%s · Milo',
+  },
+  description:
+    'A short placement check finds the deepest gap under your child’s maths — not the newest thing they got wrong — then a plan fixes it. Ages 3–18. No timer, no score, no red crosses.',
+  applicationName: 'Milo',
+  openGraph: {
+    type: 'website',
+    siteName: 'Milo',
+    title: "Milo — find the gap that's holding your child back in maths",
+    description:
+      'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
+    url: '/',
+    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'Milo' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: "Milo — find the gap that's holding your child back in maths",
+    description:
+      'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
+    images: ['/icons/icon-512.png'],
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
