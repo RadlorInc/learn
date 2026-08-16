@@ -36,6 +36,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { Hop, SheetCell, Arrive, CRITTER_CSS, hopOf, inFlowJourney } from './critters'
 import { rint } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 const MILO = '/assets/characters/milo_hop_side.png'
 
@@ -653,7 +654,7 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
   const [beat, setBeat] = useState(0)          // 0 loose+counting · 1 lost · 2 grouped · 3.. hopping
   const [ones, setOnes] = useState(0)
   const [jig, setJig] = useState(0)
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
   const total = group * need
 
   useEffect(() => {

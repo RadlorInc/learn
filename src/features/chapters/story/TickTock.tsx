@@ -47,6 +47,7 @@ import {
   type Ask, type Slot, type Reading,
 } from './clock'
 import { rint, pick } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 const wrap = (i: number, n: number) => ((i % n) + n) % n
 
@@ -445,7 +446,7 @@ const Reteach: React.FC<{ data: TimeRound; onDone: () => void }> = ({ data, onDo
   const l = layoutFor(vw, vh)
   const [view, setView] = useState<ClockView>({ h: 12, m: 0, ring: true })
   const [line, setLine] = useState('')
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
 
   useEffect(() => {
     const numeral = numeralForMinute(m)

@@ -50,6 +50,7 @@ import {
   askTextFor, revealFor, missFor, denWord, numWord, layoutFor, wholeSize,
   type Den, type FrRound, type Order, type Shape,
 } from './slice'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 /**
  * How long a narrated line stays on screen. Derived from the sentence's own length so the pacing
@@ -720,7 +721,7 @@ const Reteach: React.FC<{ data: FrRound; onDone: () => void }> = ({ data, onDone
   const [laid, setLaid] = useState(0)
   const [share, setShare] = useState(false)
   const [line, setLine] = useState('')
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
 
   useEffect(() => {
     const thing = data.on === 'group' ? `${numWord(data.n)} ${order.items}` : `the ${order.treat}`

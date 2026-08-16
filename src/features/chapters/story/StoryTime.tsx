@@ -32,6 +32,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney, aspectOf } from './critters'
 import { rint, pick } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -656,7 +657,7 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
   const short = vh < 470
   const [s, setS] = useState<StageState>(emptyStage)
   const set = (patch: Partial<StageState>) => setS(prev => ({ ...prev, ...patch }))
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
   useEffect(() => {
     const lines: string[] = []
     const steps: Array<() => void> = []

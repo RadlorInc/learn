@@ -28,6 +28,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useFingerCounter, type HandRead, type Reads } from '@/infra/ar/useFingerCounter'
 import { getHandInput, setHandInput, type HandInput as InputKind } from '@/infra/storage/handInput'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 export type { HandRead, Reads }
 export type { InputKind }
@@ -201,9 +202,9 @@ export function useDwell<T>(
 ): number {
   const { value, key, ready } = r
   const [progress, setProgress] = useState(0)
-  const cb = useRef(onCommit); cb.current = onCommit
-  const valRef = useRef(value); valRef.current = value
-  const keyRef = useRef(key); keyRef.current = key
+  const cb = useLatestRef(onCommit)
+  const valRef = useLatestRef(value)
+  const keyRef = useLatestRef(key)
 
   /**
    * ⚠️ THE READING THE CHILD WAS ALREADY HOLDING WHEN THE QUESTION APPEARED IS NOT AN ANSWER.

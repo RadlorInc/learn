@@ -25,6 +25,7 @@ import { TensOnes } from '../lessons/Numbers100Lesson'
 import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { rint, shuffle } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
@@ -237,7 +238,7 @@ const NumberExplain: React.FC<{ world: NumWorld; data: NumRound; onDone: () => v
   const [ro, setRo] = useState(0)          // ones revealed
   const [big, setBig] = useState<number | null>(null)   // running count
   const [showNum, setShowNum] = useState(false)
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
   const tensPart = t > 0 ? `${t} ${nounFor(t, 'tens')}` : ''
   const onesPart = o > 0 ? `${o} ${nounFor(o, 'ones')}` : ''
   useEffect(() => {

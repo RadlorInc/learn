@@ -34,6 +34,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import { SheetSprite, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { rint } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 /** The three signs, in the order they are drawn. The answer is a SIGN, not a side. */
 export const SIGNS = ['>', '<', '=']
@@ -354,7 +355,7 @@ const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data
   const short = vh < 470
   const [tilt, setTilt] = useState(false)
   const [reveal, setReveal] = useState(false)
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
   useEffect(() => {
     const lines = [
       `${numberToWords(a)} on this side, and ${numberToWords(b)} on that side.`,

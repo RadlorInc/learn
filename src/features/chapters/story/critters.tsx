@@ -18,6 +18,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { SHEETS } from './canvas/sheets'
 import { shuffle } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 export const STRIDE = 0.85                      // how far one cycle carries a body, in body heights
 // 3600, not the old 2400. The ceiling is what decides how hard a creature has to hurry: the cycle
@@ -453,8 +454,8 @@ export function Hop({ src, h, facesLeft, distPx, delayMs = 0, resetKey, onLand, 
   const j = hopOf(src, h, distPx)
   const [landed, setLanded] = useState(0)          // jumps completed
   const [going, setGoing] = useState(false)
-  const land = useRef(onLand); land.current = onLand
-  const done = useRef(onDone); done.current = onDone
+  const land = useLatestRef(onLand)
+  const done = useLatestRef(onDone)
 
   // Reset during RENDER, not in an effect: effects run after paint, so a re-hop would be painted
   // one frame at the previous journey's end offset before being pulled back. Same reason as Arrive.

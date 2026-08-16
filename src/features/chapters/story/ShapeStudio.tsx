@@ -22,6 +22,7 @@ import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { rint, shuffle, pick } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
@@ -199,7 +200,7 @@ const ShapeExplain: React.FC<{ world: ShWorld; data: ShRound; onDone: () => void
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
   const [label, setLabel] = useState(false)
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
   const solid = is3D(data.target)
   const s = solid ? null : sidesOf(data.target)
   useEffect(() => {

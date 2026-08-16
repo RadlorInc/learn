@@ -76,6 +76,7 @@ import {
   Chalkboard, GotIt, ThePlan, StepBoard, CHALK_GOLD, CHALK_CSS, chalkText,
   isShort, stepWindow, stepBoardRect,
 } from './chalkboard'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 // ─── Numbers in words ───────────────────────────────────────────────────────────────────
 const ONES_W = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
@@ -868,7 +869,7 @@ function Customer({ src, h, x, vw, groundPx, leaving, resetKey, line, onArrive }
   /** ⚠️ **THE BUBBLE WAITS FOR THE WALK-IN** — it renders outside the travelling element, so without
    *  this it sits at the destination with its tail on empty ground for the whole journey. */
   const [here, setHere] = useState(false)
-  const arrivedRef = useRef(onArrive); arrivedRef.current = onArrive
+  const arrivedRef = useLatestRef(onArrive)
   useEffect(() => {
     setHere(false)
     const t = window.setTimeout(() => { setHere(true); arrivedRef.current?.() }, jIn.ms)
@@ -1056,9 +1057,9 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
      * ⚠️ AND THE POINT IS READ FROM A REF, so the drop uses where the hand WAS when the fingers
      * opened rather than where the effect's closure was created.
      */
-    const atRef = useRef(at); atRef.current = at
-    const putRef = useRef(put); putRef.current = put
-    const trayRef = useRef(data.tray); trayRef.current = data.tray
+    const atRef = useLatestRef(at)
+    const putRef = useLatestRef(put)
+    const trayRef = useLatestRef(data.tray)
     useEffect(() => {
       if (!live) return
       if (held) {
@@ -1133,7 +1134,7 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
      * GRABS. Nothing is left to pick up once the board is complete, so the two poses can never both
      * be live at once.
      */
-    const commitRef = useRef(commit); commitRef.current = commit
+    const commitRef = useLatestRef(commit)
     const thumbWas = useRef(false)
     useEffect(() => {
       const up = onCam && read.thumbsUp
@@ -1327,7 +1328,7 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void; onSkip?
   const [step, setStep] = useState(0)
   const [entered, setEntered] = useState<number[]>(() => data.answer.map(() => -1))
   const [board, setBoard] = useState<string[]>([])
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
 
   /**
    * ⚠️ BABY STEPS — ONE IDEA, ONE SPOKEN LINE, ONE BOARD LINE, ONE CHANGE ON SCREEN.

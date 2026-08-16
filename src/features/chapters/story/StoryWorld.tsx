@@ -20,6 +20,7 @@ import { type ChapterType } from '@/state/store'
 import { CSS as KIT_CSS } from '../lessons/_kit'
 import { Backdrop, type BackdropKind } from './art'
 import MiloSprite from './MiloSprite'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 const STORY_CSS = `
 @keyframes s_walk { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-10px) rotate(2deg)} }
@@ -155,7 +156,7 @@ export function useChapterShell(
 // streak, Milo re-explains in-story, then the child retries.
 export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Beat<any>; onComplete: (correct: number, wrong: number, mastered?: boolean) => void; onInterlude?: () => Promise<void>; onRound?: (data: any, round: number) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
   const ada = useAdaptive(beat.skillId)
-  const adaRef = useRef(ada); adaRef.current = ada
+  const adaRef = useLatestRef(ada)
   const [roundIdx, setRoundIdx] = useState(0)
   const [phase, setPhase] = useState<'play' | 'feedback' | 'reteach' | 'interlude'>('play')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)

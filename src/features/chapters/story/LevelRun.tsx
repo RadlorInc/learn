@@ -85,6 +85,7 @@ import {
 import { slideIndex, snapIndex, reachSpan } from '@/infra/ar/slide'
 import { SWEEP_MAX_Y } from '@/infra/ar/sweep'
 import { GotIt, ThePlan, StepBoard, CHALK_CSS, stepBoardRect } from './chalkboard'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 // ─── The level: ten runs ────────────────────────────────────────────────────────────────
 /**
@@ -946,7 +947,7 @@ const LevelPlay: React.FC<{ data: LvRound; mode: Mode; onComplete: (correct: boo
   const [warps, setWarps] = useState(0)
   const erred = useRef(false)
   const done = useRef(false)
-  const picksRef = useRef(picks); picksRef.current = picks
+  const picksRef = useLatestRef(picks)
 
   const key = `${data.qType}|${data.legs.join(',')}|${data.m}`
 
@@ -1336,7 +1337,7 @@ const LevelExplain: React.FC<{ data: LvRound; onDone: () => void; onSkip?: () =>
   const { w: vw, h: vh } = useViewport()
   const L = levelLayout(vw, vh, data.site.pathY)
   const [step, setStep] = useState(0)
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
 
   const m = data.m
   const n = data.legs[0]

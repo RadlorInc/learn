@@ -32,6 +32,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { SheetSprite, CRITTER_CSS, aspectOf, inFlowJourney } from './critters'
 import { rint, shuffle } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -484,7 +485,7 @@ const MultExplain: React.FC<{ data: MultRound; onDone: () => void }> = ({ data, 
   const short = vh < 470
   const [s, setS] = useState<StageState>(empty)
   const set = (patch: Partial<StageState>) => setS(prev => ({ ...prev, ...patch }))
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
   useEffect(() => {
     const lines: string[] = []
     const steps: Array<() => void> = []

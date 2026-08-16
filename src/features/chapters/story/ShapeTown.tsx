@@ -35,6 +35,7 @@ import { ShapeSVG, SHAPES, SHAPE_ORDER, type ShapeName } from '../lessons/Shapes
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { shuffle } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 /**
  * The ONLY thing a tap waits for. Deliberately not `useIsSpeaking()`: a wrong tap speaks a line,
@@ -488,7 +489,7 @@ export default function ShapeTown({ onFinish, onExit }: {
   const [stepIdx, setStepIdx] = useState(DEMO_STEP)
   const [flight, setFlight] = useState<Flight | null>(null)
   const partEls = useRef<Record<string, HTMLDivElement | null>>({})
-  const stepRef = useRef(stepIdx); stepRef.current = stepIdx
+  const stepRef = useLatestRef(stepIdx)
   const timers = useRef<number[]>([])
   useEffect(() => () => { timers.current.forEach(clearTimeout) }, [])
 

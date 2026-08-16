@@ -65,6 +65,7 @@ import {
   SHOPPERS, shopperAt, SHOPPER_X, SHOPPER_LIFT, SHOPPER_SCALE,
 } from './market'
 import { rint, pick } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 export {
   STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot,
@@ -646,7 +647,7 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
   const [t, setT] = useState<Till>(EMPTY)
   const [leg, setLeg] = useState<Leg>(0)
   const [note, setNote] = useState('')
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
 
   useEffect(() => {
     const plan = fewestFor(data.price, poolFor(data.price))

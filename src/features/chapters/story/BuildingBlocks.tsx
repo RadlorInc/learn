@@ -70,6 +70,7 @@ import {
   ROD_SEGMENTS, PAD_BAND, YARD_CSS, GROUND, groundOf, type Material, type Shades,
 } from './yard'
 import { rint } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
 const MILO = '/assets/characters/milo_side.png'
@@ -653,7 +654,7 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
   const [r, setR] = useState<Room>(EMPTY)
   const [line, setLine] = useState('')
   const [order, setOrder] = useState<number | null>(null)
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
   const a = data.n, b = (a % 10) * 10 + Math.floor(a / 10)      // the same digits, the other way round
 
   useEffect(() => {

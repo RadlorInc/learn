@@ -24,6 +24,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { speak } from '@/infra/useMiloSpeaker'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 /** A short frame, the band-wide breakpoint. Lives here because both boards window on it. */
 export const isShort = (vh: number) => vh < 470
@@ -102,7 +103,7 @@ export function ThePlan({ problem, points, onDone, onSkip }: {
   const { w: vw } = useViewport()
   const words = useMemo(() => [problem, ...points].join(' ').split(' ').filter(Boolean), [problem, points])
   const [lit, setLit] = useState(-1)
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
 
   useEffect(() => {
     let alive = true

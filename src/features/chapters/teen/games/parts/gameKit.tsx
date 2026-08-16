@@ -13,6 +13,7 @@
 import { useRef, useState } from 'react'
 import { shuffle, pick } from '@/core/rand'
 import { disp } from '@/core/fmt'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 // ── palette (each world supplies its own; shape matches ShopRush's P) ─────────
 export interface Palette {
@@ -308,7 +309,7 @@ export function CrankGear({
   const dragging = useRef(false)
   const lastA = useRef(0)
   const acc = useRef(0)                 // accumulated turn since the last crank tick
-  const valRef = useRef(value); valRef.current = value
+  const valRef = useLatestRef(value)
   const [dragRot, setDragRot] = useState<number | null>(null)
   const fill = reveal ? P.mint : P.gold
   const rim = reveal ? '#3fa77c' : P.goldDeep

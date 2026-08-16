@@ -49,6 +49,7 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
 import { loadPage, floodRegion, floodNearest, inRegion, paintRegion, type PageBitmap, type Region } from './floodFill'
 import { shuffle } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()` — a wrong tap speaks a line and
@@ -384,9 +385,9 @@ export default function RainbowTown({ onFinish, onExit }: {
   const hint = useRef<HTMLCanvasElement | null>(null)
   const [ready, setReady] = useState(false)
 
-  const phaseRef = useRef(phase); phaseRef.current = phase
-  const loadedRef = useRef(loaded); loadedRef.current = loaded
-  const stepRef = useRef(stepIdx); stepRef.current = stepIdx
+  const phaseRef = useLatestRef(phase)
+  const loadedRef = useLatestRef(loaded)
+  const stepRef = useLatestRef(stepIdx)
   const submit = useRef<((correct: boolean) => void) | null>(null)
   const erred = useRef(false)
   const strayFills = useRef(0)
@@ -414,7 +415,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     hint.current?.getContext('2d')?.clearRect(0, 0, page.w, page.h)
   }, [page])
   // Read inside the tap handler, which must not be rebuilt per round — see `tapPage`.
-  const pageRef = useRef(page); pageRef.current = page
+  const pageRef = useLatestRef(page)
 
   /**
    * Light up the area Milo is asking for. The child should never have to work out WHICH shape is the

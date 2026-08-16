@@ -75,6 +75,7 @@ import {
   type Material, type Shades,
 } from './yard'
 import { rint } from '@/core/rand'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 // Re-exported unchanged so the 56-test gate keeps importing them from here — which is what makes
 // that suite the proof the extraction changed nothing.
 export { ROD_SEGMENTS, MAT_SAT, MAT_VAL, PAD_BAND, bannerBottom }
@@ -546,7 +547,7 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
   const [y, setY] = useState<Yard>(() => initYard(plan))
   const [line, setLine] = useState('')
   const [shown, setShown] = useState(false)
-  const doneRef = useRef(onDone); doneRef.current = onDone
+  const doneRef = useLatestRef(onDone)
   const carryMs = useMemo(() => inFlowJourney(MILO, miloH, ((RODS_X0 + 1 - MILO_X) / 100) * vw).ms, [miloH, vw])
 
   useEffect(() => {
