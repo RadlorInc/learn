@@ -43,45 +43,63 @@ const nextConfig: NextConfig = {
           // ON-DEVICE and no frame ever leaves the browser. It was deliberately revoked in the July
           // audit when the /play AR track was deleted — if this chapter ever goes, revoke it again.
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), interest-cohort=()' },
-          // V3/V4 — CSP. The app is fully STATIC-rendered, so a nonce-based strict CSP is not viable
-          // (Next requires dynamic rendering on every page for nonces — killing static/CDN caching and
-          // risking the AR + OAuth flows). So we split it:
-          //
-          //  1) ENFORCED subset below — only directives with no legitimate use in this app, so they
-          //     cannot break anything: no <object>/<embed>, no <base> hijack, no external framing,
-          //     forms post only to self/Google, and http subresources auto-upgrade. Real protection now.
-          //     (Deliberately NO default-src here — that would cascade and restrict scripts/fetch/img.)
+          /**
+           *  CSP — ONE ENFORCED POLICY (2026-08-16). It used to be two headers: a small enforced
+           *  subset plus a Report-Only full policy. Browsers AND multiple CSP headers together, so
+           *  keeping both once the full one is enforced is redundant and makes the real policy hard
+           *  to read. The subset's directives are all folded in below.
+           *
+           *  The app is fully STATIC-rendered, so a nonce-based strict CSP is not viable — Next
+           *  requires dynamic rendering on every page for nonces, which would kill static/CDN
+           *  caching and risk the AR + OAuth flows.
+           *
+           *  It stayed Report-Only for months for one reason: the fonts came from
+           *  `fonts.googleapis.com` at runtime, so enforcing `font-src 'self'` would have rendered
+           *  the entire product in fallback system fonts. `next/font` now self-hosts all five
+           *  families, which is what unblocked this.
+           *
+           *  ⚠️ AND ENFORCING THE POLICY AS IT WAS WRITTEN WOULD HAVE KILLED EVERY AR CHAPTER —
+           *     the 9–11 band's defining feature. `@mediapipe/tasks-vision` fetches its WASM from
+           *     jsDelivr and its hand model from storage.googleapis.com AT RUNTIME, instantiates
+           *     WebAssembly (which needs `wasm-unsafe-eval`), and runs its detector in a worker
+           *     created from a `blob:` URL. `default-src 'self'` blocks all three, and the failure
+           *     is silent unless you actually open the camera. Every entry below that is not
+           *     `'self'` is here for a reason that was verified by driving the app, not assumed.
+           *
+           *  Two `'unsafe-inline'`s remain, both load-bearing rather than lazy:
+           *   • script-src — Next inlines its own hydration payload (`self.__next_f.push`). The app
+           *     ships no inline scripts OF ITS OWN (SW registration lives in /public/sw-register.js
+           *     for exactly this reason); removing this needs Next's nonce support via middleware,
+           *     which is a bigger change than launch week should carry.
+           *   • style-src — this codebase styles almost everything with React inline `style` props.
+           *     Removing it is a rewrite, not a config change.
+           *  Enforcing WITH them is still a large win: it blocks every script, frame, form target
+           *  and connection origin that is not on this list.
+           */
           {
             key: 'Content-Security-Policy',
             value: [
-              "object-src 'none'",
-              "base-uri 'self'",
-              "frame-ancestors 'none'",
-              "form-action 'self' https://accounts.google.com",
-              // upgrade-insecure-requests is production-only: Safari (unlike Chrome) applies it
-              // even on http://localhost, rewriting EVERY subresource to https:// — the plain-HTTP
-              // dev server can't answer, so no JS/CSS loads and the app never hydrates (blank splash).
-              ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
-            ].join('; '),
-          },
-          //  2) REPORT-ONLY full strict policy — collects real violations (toward enforcing script-src
-          //     via experimental SRI, plus the exact connect/img/style allowlist) WITHOUT breaking the
-          //     app. Add a report-uri + flip to enforced once the reports are clean. The app now ships
-          //     no inline scripts of its own (SW registration moved to /public/sw-register.js), so the
-          //     only remaining script-src gap is Next's own static-hydration inline scripts.
-          {
-            key: 'Content-Security-Policy-Report-Only',
-            value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'",
+              // 'wasm-unsafe-eval' + jsDelivr: the MediaPipe hand-tracking WASM loader.
+              "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob:",
+              // 'self' only — the fonts are self-hosted now. data: stays for inlined glyphs.
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+              // Supabase (REST + realtime), and the two origins MediaPipe pulls its model from.
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://storage.googleapis.com",
+              // MediaPipe runs its detector in a blob: worker; our own service worker is 'self'.
+              "worker-src 'self' blob:",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self' https://accounts.google.com",
               "object-src 'none'",
+              /**
+               * ⚠️ PRODUCTION ONLY. Safari (unlike Chrome) applies this even on http://localhost,
+               * rewriting EVERY subresource to https:// — the plain-HTTP dev server cannot answer,
+               * so no JS/CSS loads and the app never hydrates (blank splash).
+               */
+              ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
             ].join('; '),
           },
         ],
