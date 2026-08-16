@@ -15,6 +15,7 @@ import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pe
 import { setActivePlan } from '@/infra/storage/activePlan'
 import { hasCheckup, markCheckupDone } from '@/infra/storage/checkup'
 import { setActiveLearner } from '@/data/supabase/useLearnerSession'
+import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { CHAPTER_PARENT_LABELS, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
@@ -370,7 +371,13 @@ export default function ParentDashboard() {
               </div>
             </div>
 
-            {/* Owner: Delete / Viewer: Remove self */}
+            {/* COPPA: a parent may SEE what is stored and have it DELETED. Both live under one
+                heading so they are findable — the export is new, the delete control below is the
+                existing one, reused rather than re-implemented. */}
+            <DataRights
+              name={active.learner.display_name}
+              bundle={{ learner: active.learner, stats: active.stats, progress: active.progress, sessions: active.sessions }}
+            >
             {confirming === active.learner.id ? (
               <div style={{ background:'#FEF2F2', border:'1.5px solid #FCA5A5', borderRadius:16, padding:'16px', marginBottom:16 }}>
                 <p style={{ fontSize:14, fontWeight:700, color:'#991B1B', margin:'0 0 12px' }}>
@@ -400,6 +407,7 @@ export default function ParentDashboard() {
                   : `✕ Remove myself from ${active.learner.display_name}'s profile`}
               </button>
             )}
+            </DataRights>
 
             {/* Chapter progress */}
             <div style={{ background:'#fff', borderRadius:20, padding:'18px 16px', marginBottom:16, boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>

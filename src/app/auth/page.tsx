@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { signUpWithEmail, signInWithEmail, signInWithGoogleOAuth } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
 import { getLeadEmail } from '@/infra/storage/leadEmail'
+import { ConsentLine } from '@/shared/ui/ConsentLine'
 
 type Mode = 'login' | 'signup'
 
@@ -235,6 +236,9 @@ export default function AuthPage() {
         >
           {loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}
         </button>
+
+        {/* COPPA/ToS: the documents are linked at the moment an adult submits an address. */}
+        <ConsentLine />
 
         {/* Divider */}
         <div style={{
