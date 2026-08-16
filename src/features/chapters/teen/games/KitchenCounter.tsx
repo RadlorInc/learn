@@ -398,8 +398,17 @@ function DecimalArea({ P, task, setValue, disabled, reveal, onCommit }: {
   const db = Math.round((task.db ?? 0) * 10)   // rows for factor b
   const [ca, setCa] = useState(0)
   const [rb, setRb] = useState(0)
-  useEffect(() => { setCa(0); setRb(0) }, [task])
-  useEffect(() => { if (reveal) { setCa(da); setRb(db) } }, [reveal, da, db])
+  // ⚠️ RESET DURING RENDER, NOT IN AN EFFECT. An effect runs AFTER paint, so a new round
+  // painted the PREVIOUS round's grid for a frame before snapping to empty — the child sees a
+  // flash of the last answer over the new question. This is React's documented "adjusting
+  // state when a prop changes": the render is thrown away and re-run before anything is shown.
+  const [seenTask, setSeenTask] = useState(task)
+  if (seenTask !== task) { setSeenTask(task); setCa(0); setRb(0) }
+  // Same again for the reveal: in an effect it painted the child's own (wrong) answer for a
+  // frame before snapping to the correct one — on the single beat where the correct one is the
+  // whole point. Keyed on the TRANSITION so it fires once, exactly as the effect did.
+  const [seenReveal, setSeenReveal] = useState(reveal)
+  if (seenReveal !== reveal) { setSeenReveal(reveal); if (reveal) { setCa(da); setRb(db) } }
   const overlap = ca * rb
   const product = tidy(overlap / 100)
   const hit = Math.abs(product - task.answer) < 1e-6
