@@ -6,12 +6,12 @@
      kit.css              (scene, clouds, topbar, modal, shop-card)
    ================================================================= */
 
-/* ── Fonts ─────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap');
-/* Teen "Field Lab" fonts (ages 12–18) — IBM Plex Sans (UI) + IBM Plex Mono (all math). */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
-/* Chalk handwriting for the "solving it, step by step" chalkboard. */
-@import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap');
+/* ── Fonts ─────────────────────────────────────────────────────────
+   ⚠️ LOADED BY `next/font/google` IN `app/layout.tsx`, NOT BY @import. They are self-hosted at
+   build time, so the app makes ZERO runtime requests to Google — which is what lets the CSP be
+   enforced (`font-src 'self'`), removes a render-blocking third-party chain from the critical
+   path, and keeps a child's IP out of a third party's logs. The families arrive here as the
+   CSS variables below; do not add an @import back. */
 
 /* Chalk write-on: a word appears letter-by-letter (--n = its letter count). */
 @keyframes mb-write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
@@ -73,13 +73,13 @@
   --info:               var(--sky-blue);
 
   /* Typography */
-  --font-display:       'Fredoka', 'Baloo 2', 'Quicksand', system-ui, sans-serif;
-  --font-body:          'Nunito', 'Fredoka', system-ui, sans-serif;
-  --font-numeric:       'Fredoka', system-ui, sans-serif;
+  --font-display:       var(--f-fredoka), 'Baloo 2', 'Quicksand', system-ui, sans-serif;
+  --font-body:          var(--f-nunito), var(--f-fredoka), system-ui, sans-serif;
+  --font-numeric:       var(--f-fredoka), system-ui, sans-serif;
   /* ⚠️ ON :root, NOT ONLY INSIDE [data-band]. Gaegu is imported globally, but the token used to be
      declared for the teen bands alone — so a 3–11 chalkboard silently inherited the body font with
      nothing erroring, which is the trap that kept the teen board out of this band. */
-  --font-chalk:         'Gaegu', 'Comic Sans MS', cursive;
+  --font-chalk:         var(--f-gaegu), 'Comic Sans MS', cursive;
 
   --t-display:          84px;
   --t-h1:               44px;
@@ -142,11 +142,11 @@
    (never red), kept --garden-green for the quiet correct-reveal.
    ================================================================= */
 [data-band="9-11"], [data-band="12-14"], [data-band="15-16"], [data-band="17-18"] {
-  --font-display: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-body:    'IBM Plex Sans', system-ui, sans-serif;
-  --font-numeric: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-display: var(--f-plex-sans), system-ui, sans-serif;
+  --font-body:    var(--f-plex-sans), system-ui, sans-serif;
+  --font-numeric: var(--f-plex-mono), ui-monospace, 'SF Mono', Menlo, monospace;
   /* kept here as well as on :root so a teen-band remap of the other font tokens reads consistently */
-  --font-chalk:   'Gaegu', 'Comic Sans MS', cursive;
+  --font-chalk:   var(--f-gaegu), 'Comic Sans MS', cursive;
   /* Teen-specific tokens used by the Field Lab kit */
   --note-amber:        #E8A33D;   /* warm "note" for gentle wrong-answer reframe (never red) */
   --accent:            var(--milo-orange);       /* teal, set per band below */

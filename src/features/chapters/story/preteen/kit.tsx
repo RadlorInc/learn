@@ -16,8 +16,14 @@ export const PT = {
   ink: '#eaf1ff', inkSoft: '#a9b8d6', inkMute: '#6f80a6',
   line: 'rgba(120,150,220,0.30)', lineStrong: 'rgba(150,180,240,0.55)',
   ok: '#2ee6a6', okDeep: '#12b384', warn: '#ff5d7a', warnDeep: '#e03a5c',
-  mono: "ui-monospace,'SF Mono','IBM Plex Mono',Menlo,monospace",
-  sans: "'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif",
+  /**
+   * ⚠️ THE FAMILY COMES FROM THE VARIABLE, NOT ITS NAME. The fonts are self-hosted by
+   * `next/font/google`, which generates a hashed family (`__IBM_Plex_Sans_<hash>`) — so a literal
+   * `'IBM Plex Sans'` here matches nothing and falls back to a system font, silently, on the one
+   * band whose whole look is the mono numerals. The system stack stays as the fallback.
+   */
+  mono: "var(--f-plex-mono),ui-monospace,'SF Mono',Menlo,monospace",
+  sans: "var(--f-plex-sans),system-ui,-apple-system,'Segoe UI',sans-serif",
 }
 export type Accent = { base: string; deep: string; soft: string }
 export const ACCENTS: Record<string, Accent> = {
