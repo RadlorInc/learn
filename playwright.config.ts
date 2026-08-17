@@ -16,6 +16,29 @@ export default defineConfig({
     headless: true,
     viewport: { width: 1280, height: 820 },
     trace: 'retain-on-failure',
+    /**
+     * ⚠️ VERCEL'S WAF CHALLENGES AUTOMATION, AND IT LOOKS EXACTLY LIKE FLAKINESS.
+     * A run against production makes hundreds of requests from one IP; at roughly forty of them
+     * Vercel starts serving a JS challenge instead of the app — `403` with
+     * `x-vercel-mitigated: challenge`. A real browser solves that transparently and Playwright
+     * cannot, so the navigation dies as `net::ERR_ABORTED` and reads as a broken chapter. Measured:
+     * it hit at tests 41–42 of a prod sweep, the same two chapters passed on the other two frames
+     * minutes later, and the block persisted well past 20s — so RETRIES DO NOT HELP, they just fail
+     * slower. (It also blocks every path afterwards, static assets included.)
+     *
+     * The fix is to identify as our own automation rather than to hide the symptom. Generate a
+     * bypass secret in the Vercel project (Settings → Deployment Protection → Protection Bypass for
+     * Automation) and export it; unset, this is inert and nothing changes.
+     *   VERCEL_AUTOMATION_BYPASS_SECRET=… E2E_BASE_URL=https://… npm run test:chapters
+     * `x-vercel-set-bypass-cookie` makes the browser carry it on subsequent navigations too, which
+     * a header alone does not cover once the page starts fetching its own subresources.
+     */
+    extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+      ? {
+          'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+          'x-vercel-set-bypass-cookie': 'true',
+        }
+      : {},
   },
   projects: [{ name: 'chromium' }],
 })

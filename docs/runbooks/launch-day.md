@@ -11,8 +11,22 @@ Run in this order. Do not announce until all five are green.
 
 ```bash
 npm run preflight        # tsc · vitest · build · prod advisories · sw.js bump · legal-draft flag
-npm run test:chapters    # all 70 chapters × 3 frames — ~2 min
+npm run test:chapters    # all 70 chapters × 3 frames — ~2 min, AGAINST THE DEV SERVER
 ```
+
+⚠️ **RUN `test:chapters` LOCALLY, NOT AGAINST PRODUCTION.** Pointed at the live origin with
+`E2E_BASE_URL`, it makes 211 navigations plus every subresource from one IP — and at roughly the
+fortieth, Vercel's WAF starts serving a JS challenge instead of the app (`403`,
+`x-vercel-mitigated: challenge`). A real browser solves that transparently; Playwright cannot, so
+the navigation dies as `net::ERR_ABORTED` and reads as a broken chapter. **Measured 2026-08-17: it
+hit at tests 41–42, the same two chapters passed on the other two frames minutes later, and the
+block persisted past 20s and covered every path including static assets.** Retrying does not help —
+it fails slower — and re-running until green is how a gate stops meaning anything.
+
+The local run is what gates the code. Production needs a *smoke*, not a sweep — step 3 below, which
+stays far under the threshold. If you ever do want the full sweep against prod, generate a bypass
+secret (Vercel → Settings → Deployment Protection → Protection Bypass for Automation) and export
+`VERCEL_AUTOMATION_BYPASS_SECRET`; `playwright.config.ts` already sends it and is inert without it.
 
 Then, **after** the deploy has landed:
 
@@ -31,7 +45,22 @@ Then, **after** the deploy has landed:
    ⚠️ **Without this you are grading the previous release.** A controlled worker serves the old
    cached shell *including its old HTTP headers* — this bit us on 2026-08-16, where a shipped CSP
    and self-hosted fonts both appeared not to have deployed.
-3. Smoke the routes: `/`, `/auth`, `/diagnostic`, `/menu`, `/parent`, `/legal/privacy` → all 200.
+3. **Smoke production — a handful of requests, not a sweep.** Routes `/`, `/auth`, `/diagnostic`,
+   `/menu`, `/parent`, `/legal/privacy` → all 200; then open ONE story chapter
+   (`/story?ch=order`) and ONE game chapter and look at them. Also check the headers that only
+   exist in production, because a 200 says nothing about them:
+   ```bash
+   curl -sI https://milo-story-mode.vercel.app/assets/backgrounds/garden.png | grep -i cache-control
+   # want: public, max-age=2592000, stale-while-revalidate=31536000
+   curl -sI https://milo-story-mode.vercel.app/sw.js | grep -i cache-control
+   # want: max-age=0, must-revalidate — if this ever goes long-lived, the update path is dead
+   curl -sI -H 'Accept: image/avif,*/*' \
+     'https://milo-story-mode.vercel.app/_next/image?url=%2Fassets%2Fbackgrounds%2Fgarden.png&w=1280&q=75' \
+     | grep -iE 'content-type|content-length'   # want image/avif, ~81 KB against a 583 KB source
+   ```
+   ⚠️ And read the browser console on a real page. Three separate things the enforced CSP broke
+   (fonts, MediaPipe, the recorded voice) were invisible to every route check and visible in one
+   console line.
 4. Send a test error and confirm it lands in the monitoring sink (once C3 is wired).
 5. **Rehearse the rollback once**, on a preview. A rollback you have never run is a plan, not a path.
 
