@@ -68,7 +68,7 @@
 > REAL HAND on a real camera** — MediaPipe is proven to boot on prod under the enforced CSP
 > (`Graph successfully started running.`, 0 violations), but the band's defining feature is
 > unverified end to end and only the founder can close it. Everything is committed; prod is on
-> **sw v104**.
+> **sw v110**.
 >
 > ---
 >
@@ -76,6 +76,126 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> ⚡ **2026-08-17 (2nd session) — A PERFORMANCE PASS. THE GAME PAGE WAS RE-RENDERING THE WHOLE CHAPTER TREE SEVEN TIMES A SECOND FOR EVER, 57 MB OF ART WAS REVALIDATED ON EVERY REQUEST, EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, AND EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME. NONE OF THE FOUR CHANGED A SINGLE PIXEL, WHICH IS WHY THEY ALL SHIPPED.** ⚡ SHIPPED — `main`@`72024c0` (+3 follow-ups), prod serving **sw v110**. `tsc` 0 · **1093/1093 vitest** (was 1071, **+22**) · `next build` 0 · **211/211 chapters × 3 frames, LOCAL AND AGAINST PRODUCTION** · eslint **132, unchanged**.
+>
+> **The asks:** a senior-performance-engineer pass → *"the things which you have flagged are fixed?"* → *"yes, do it"* (the Critter one) → *"commit it on main"* → *"yes push it"* → *"do this if it is important for future"* → *"what to do for this?"* → *"let everything scale"*.
+>
+> ## ⓪ ⚠️⚠️ THE BUNDLE WAS NEVER THE PROBLEM, AND THAT IS THE FIRST THING TO KNOW
+> 170 chunks, largest **71 KB gzipped**, code-splitting already correct, `next/dynamic` per chapter.
+> **JS is not this app's bottleneck and tuning it would have been wasted work.** The cost is 58 MB of
+> PNG art and a handful of hot render paths. Measure before optimising; the obvious lever was inert.
+>
+> ## ① ⚠️⚠️ `/game` RE-RENDERED THE ENTIRE CHAPTER TREE ~7×/s, FOR AS LONG AS A CHILD WAS IN A CHAPTER
+> The fit controller ran `setInterval(measure, 150)`, and each tick forced a synchronous layout
+> (`getBoundingClientRect`) **plus** a style recalc (`getComputedStyle`) — **6.7 forced reflows a
+> second on the one page whose frame budget goes to walk cycles.**
+> ⚠️⚠️ **And it also re-rendered, for a reason that is invisible in the source.** `measure` closes over
+> `stageBg` with `[]` deps, so it compared against the INITIAL value for ever — and that value is the
+> literal string `'var(--bg-page)'` while `getComputedStyle` always resolves to `rgb(252, 234, 182)`.
+> **Measured in a browser: those two can never be equal.** So the guard was permanently true and
+> `setStageBg` was handed a **fresh object literal every tick**; React only bails on `Object.is`, so
+> every tick committed a render — and with **zero `React.memo` in the codebase** and `props` rebuilt
+> as an object literal each render, the whole chapter subtree went with it. **The paint was
+> identical, which is why it survived.** Now `ResizeObserver` + `MutationObserver` (the interval's own
+> comment named `childList` as its only job) and the comparand is a ref.
+> ⚠️ **Gated at the SOURCE, not driven, and the test says why**: `/game` sits behind `useAuthGuard`
+> and cannot be reached without a real sign-in. **It has still never been watched running — the one
+> open item from this session.** Mutation-tested 4/4; its own first draft failed on correct code
+> because the effect's comment quotes the `setInterval` it explains, so the slice is comment-stripped.
+>
+> ## ② 57 MB OF ART WAS REVALIDATED ON EVERY SINGLE REQUEST
+> Production returned `cache-control: public, max-age=0, must-revalidate` on a **583 KB** backdrop —
+> Next's default for `public/`. A conditional round-trip per file per load for every client the
+> service worker is not controlling: a first visit, the load after an SW update, a private window, an
+> evicted cache. **The single largest scalability item in the app, and it was a header.**
+> **NOT `immutable`:** this repo has rewritten art IN PLACE (the 83→58 MB pass rewrote 86 files under
+> their existing names), so a year would strand those clients. 30 days + a year of
+> `stale-while-revalidate` gives the same zero-round-trip serve and still propagates.
+>
+> ## ③ EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, THROUGH 34 COPIES OF ONE `<img>` IDIOM
+> `next.config.ts` had AVIF/WebP configured since the C10 pass **and its own comment said it was
+> waiting for exactly this**. One shared `shared/ui/SceneBg.tsx`. Measured off the wire:
+> `garden.png` **583 KB → 81 KB AVIF (7.2×)** · The Clock **1,988 → 346 KB** · Follow the Leader
+> **~2.3 MB → 270 KB (8.5×)**.
+> ⚠️⚠️ **AND THE MIGRATION MADE FIRST PAINT WORSE ON FIVE CHAPTERS BEFORE IT MADE IT BETTER.**
+> `next/image` **lazy-loads by default** and a raw `<img>` with no `loading` attribute does not — so
+> the LCP element started waiting on an IntersectionObserver. **Caught by watching a chapter open
+> onto a bare gradient, not by any test.** Every backdrop now names `priority` either way, gated.
+> ⚠️ **Named `SceneBg`, not `Bg`, because four chapters declare a local `interface Bg` — and that
+> combination COMPILES**, TypeScript letting the interface govern the type while the import governed
+> the value. `ForestWalk`'s own local `SceneBg` is now `GradientBiome`; the gate found it.
+>
+> ## ④ ⚠️⚠️ EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME
+> `Critter` travelled on `left`, `top`, `width`, `height` — all four are LAYOUT properties. Measured
+> on the real component with CDP `Performance.getMetrics`, 63 creatures journeying for six seconds:
+> **195 layout passes / 59.1 ms → 4 / 1.7 ms.** Now a `transform`, composited.
+> ⚠️⚠️ **AND `translate(Xvw, Yvh)` IS NOT `left: X%` — THE OBVIOUS REWRITE IS SILENTLY WRONG ON THE
+> ONE ROUTE CHILDREN PLAY.** `/game` wraps every chapter in `.game-zoom { zoom: … }`; a fixed
+> element's percentage offsets are scaled by that zoom and viewport units are not. **Measured, they
+> diverge by up to 576px at zoom 1.45.** The position stays a PERCENTAGE of a stage that is itself
+> the size of the containing block. Size is `scale()` about `transform-origin: 50% 100%` — **the
+> FEET**, which is what keeps a creature on its ground line.
+> ⚠️ **The base box is `w / scale`, never `size`**: `w` and `h` are each rounded, and re-deriving them
+> through a different rounding chain moved the visible creature **2.2px** and its strip **26px**.
+> **Verified by a throwaway `critterlab` route: 2,772 rendered rects (sprite · sheet cell · contact
+> shadow · number sign) over 63 combinations × 4 viewports × 3 zooms, before and after — 0 moved.**
+> The baseline was captured TWICE first and required to be identical, because `ci_breathe` is an
+> infinite 2px loop that made the first one jitter.
+> ⚠️⚠️ **AND THAT PROOF WAS NARROWER THAN IT SOUNDED — IT FROZE ANIMATIONS.** The hop, the breathe
+> and the `drop-shadow` filter live INSIDE the scaled box, so their px values now follow depth (hop
+> 13 → 10.4px at scale 0.8, → 16.9px at 1.3); a `filter` offset never appears in a rect at all. The
+> first cut then divided the contact shadow back out to keep it fixed, which left **the shadow saying
+> "depth does not affect me" while the hop said it does.** Founder's call: **everything scales** —
+> nearer is lower AND bigger, which is the cue chapter-craft already asks for.
+>
+> ## 🧪 THE GATES, AND THE ONE THAT SURVIVED
+> Four new files, **all mutation-tested**: `gameFitController` 4/4 · `sceneBgPriority` 2/2 ·
+> `critterTravelIsComposited` 4/4 · `assetCacheHeaders` 5/6.
+> ⚠️ **I first said the asset headers were "not gateable". That was too broad and conflated two
+> risks** — Vercel's optimizer behaviour is outside CI, but the `/assets` rule existing, matching and
+> not being weakened is gateable through the pattern `cspHeader.test.ts` already uses (drive the real
+> `headers()`). **Asked "what to do for this?", the answer was to write the gate, not restate the
+> excuse.**
+> ⚠️ **The survivor is the interesting one.** Widening the asset rule to `/:path*` so it swallows
+> `sw.js` passed everything. Applied to a real `next start`, `/sw.js` still returned
+> `max-age=0, must-revalidate` — the dedicated rule sits later and overrides — so the mutation is
+> **inert, and measuring it confirmed the resolver's one assumption (last matching rule wins) against
+> a running server** rather than leaving it a guess. The version that DOES change behaviour (widened
+> **and** reordered below `/sw.js`) fails.
+>
+> ## 📉 VERIFIED ON PRODUCTION, AFTER CLEARING THE SERVICE WORKER
+> `/assets` + `/audio` **30 days + SWR** · `/sw.js` still `max-age=0, must-revalidate` (or the update
+> path dies) · optimizer serving **image/avif at 81,391 B** · one chapter **11 backdrop requests, all
+> optimized, 0 raw PNG, 277 KB, exactly 1 eager** · 0 console errors · **211/211 against prod (17.9m)**.
+> ⚠️ **`minimumCacheTTL` IS NOT WHAT PROD SERVES.** Same commit, same source header, two optimizers:
+> `next start` gives `max-age=31536000, must-revalidate` (its floor), **Vercel passes the UPSTREAM
+> header through** → 30 days + SWR. Fine, arguably better, and now commented in `next.config.ts`
+> because a config reading 31536000 while prod reads 2592000 eats an afternoon.
+>
+> ## ▶ OPEN
+> 1. ⚠️ **`/game`'s fix has NEVER been watched running on `/game`** — it needs a real sign-in. Root
+>    cause measured in a browser, wiring source-gated, but nobody has seen the fixed page. **30
+>    seconds, signed in.** Everything else this session was driven end to end.
+> 2. **`React.memo` is still absent everywhere** — deliberately. Fixing ① removed the pressure; adding
+>    it speculatively is guesswork. If a chapter ever feels heavy again, this is the first lever.
+> 3. **`Background` mounts every scene in a run at once** (up to 9 requests) so the cross-fade has
+>    something to fade to. Design, not a defect, and at ~270 KB no longer worth touching.
+> 4. **The Vercel optimizer inheritance is documented, not gated** — it is Vercel-side and invisible
+>    to `headers()`. Re-measure with `curl -I` after any change to the `/assets` rule.
+> 5. Everything from the previous session still stands: **`MONITORING_INGEST_URL` unset** is still the
+>    highest-value founder item, B1 attorney, `practice_complete` never yet observed in the DB.
+> 6. Of this session's faults, **two came from measuring after guessing wrong** (a fixed 5s window
+>    that missed the journey entirely and read as "this costs nothing"; comparing a local server
+>    against Vercel), **one from a founder question** (the hop/breathe gap my own sweep had frozen
+>    out), **one from watching a chapter open** (the lazy LCP), **one from a mutation survivor**, and
+>    **one from the type-checker** (the `Bg` collision, which compiled anyway). **The 1,071-test suite
+>    was green through every one of them.**
+> 7. **Where the rules went:** `chapter-craft.md` §1 gained *a journey is a `transform`*, *`vw` is not
+>    `%` under `zoom`*, *scale about the feet*, *derive the base as `w / scale`*; §4 gained *diff the
+>    rendered rects, keyed semantically, with animations frozen*, *a fixed sample window misses the
+>    event*, *`waitForSelector` waits for VISIBLE*, *Next ignores a `_`-prefixed folder*, and
+>    *`next/image` lazy-loads by default and a raw `<img>` does not*.
 
 > 🕳️ **2026-08-17 — AN ARCHITECTURE REVIEW TURNED INTO A P0: THE DIAGNOSTIC PLAN NEVER ADVANCED, FOR THREE MONTHS, BECAUSE `ChapterPortal` DROPS `onComplete` AND `advancePlan`'s ONLY CALLER WAS INSIDE THE FUNCTION IT ORPHANED. EVERY PAGE ALSO SHIPPED ONE EMOJI TO CRAWLERS, AND `/` WAS A REDIRECT.** 🕳️ SHIPPED — `main`@`68587e5`, prod serving **sw v109**. `tsc` 0 · **1071/1071 vitest** (was 1051, **+20**) · `next build` 0 · **212/212 e2e** · eslint 136 → **132**.
 >
@@ -476,153 +596,4 @@
 >    origins), **one by the docs** (`retry` vs `reset`), and **one by prod disagreeing with localhost**
 >    (the rotate gate). None from the type-checker.
 
-> 📊 **2026-08-15 — THE LOADING BAY COMES ACROSS: THE FIRST OF THE THREE STORYBOOK CHAPTERS ON GameShell, AND THE FIRST TIME ONE FINGER COUNT MEANS TWO DIFFERENT THINGS IN ONE CHAPTER. 815 BESPOKE LINES → ~250 OF DATA + ~330 OF PURE MODULE. ⚠️ NOT COMMITTED.** `tsc` 0 · **1039/1039 vitest** (was 987, **+52**) · `next build` 0 · **eslint 0 errors** (1 pre-existing `<img>` warning, same as The Pizza Counter) · **32/32 planted regressions caught, re-run against the final code** · driven at 1280×720 and 640×320, on BOTH inputs, including a full ten-round run and the camera path.
->
-> **The ask:** *"in band 9-11, convert the 'Data and Graphs' chapter same as the 12-18 band."* On the two questions put to him, both recommendations taken: **fingers meaning two things** · **hide the cart's counter until the commit**.
->
-> ## ⓪ WHAT WENT, AND WHAT REPLACED IT
-> `story/LoadingBay.tsx` (815) is DELETED. The maths, the words and the grader are `story/cargo.ts`
-> (~330); the chapter is `teen/games/LoadingBayGame.tsx` (~250). **The verb did not move** — a
-> delivery lands, four stacks ARE the chart, and the correct answer sends the cart. What went with
-> the painted world: three depot backdrops and their per-scene ground lines, the foreman sprite, his
-> speech bubble, the cart parked in the foreground to dodge that bubble, and `bayLayout` — ~70 lines
-> of arithmetic that had to be swept at ten viewport sizes. **The pictograph sprites STAYED**, with
-> their `ink` bbox scaling: a chapter whose question is *which bar is tallest* cannot let a
-> fat-padded melon read as taller than an equally tall column of apples.
->
-> ## ① ⚠️ ONE READING, TWO MEANINGS — AND IT IS THE ONLY SCHEME THAT COVERS THE CHAPTER
-> On a `most` round 1–4 fingers picks a STACK; on a count round the fingers ARE the number and that
-> many goods ride onto the cart. The Angle Shop's precedent verbatim, which is what `HandSpec.value`
-> taking the TASK exists for. The two alternatives were measured and rejected on arithmetic:
-> **`reads: 'slide'`** (point at a bar — honest, and `catch ÷ jitter` ≈ 4.4 across four full-width
-> columns) fires `onRead` on POSITION ONLY, so the finger count is a dead button and half the chapter
-> goes tap-only; **`reads: 'span'`** (hands apart = the bar's height) is the prettiest idea here and
-> is a **live oracle** — the bars are on screen, so a child slides their hands until the ghost lines
-> up with the bar top and reads nothing. That last one is worth keeping: *quantity-as-length is only
-> an honest gesture when the thing being measured is not already drawn.*
-> ⚠️ **`total` HAS NO HAND PATH AT ALL** — its answers run to 22 and two hands hold ten — and
-> `instructionFor` says so on screen, because a gesture that silently does nothing for one round in
-> four reads as a broken camera.
->
-> ## ② ⚠️ `disabled` IS NOT "THE ROUND IS OVER", AND THE DEMO TAUGHT THE OPPOSITE OF ITS OWN LINE
-> The cart's counter and the chart's numerals open together on the commit (founder's call — a counter
-> climbing 6 → 11 → 13 → 22 does the adding on a `total` round). Written as `reveal || disabled` —
-> which correctly covers the miss, the re-teach and a solved round — it also covers **every beat of
-> the walkthrough**, because the shell renders a tutorial instrument permanently disabled. So beat 2
-> of the first demo printed all four values above the bars under the words *"the biggest one reaches
-> highest — you can see it without counting a thing."* Keyed on the VALUE instead
-> (`reveal || (disabled && ready(r, v))`) it opens exactly when Milo announces the answer, and in play
-> on the commit. ⚠️ And `reveal` alone is not enough either — the shell reveals only a WRONG answer,
-> so the axis would be written for nobody who got it right (the 🏗️ block's own lesson, one chapter on).
->
-> ## ③ ⚠️ THE CAMERA DOOR PRINTED A REDIRECT AT A CHILD WHO HAD DONE NOTHING
-> `nudgeFor` refuses a stack number out of range, written `n < 1 || n > STACKS` — arithmetically
-> right, and **an empty frame is a count of 0**, so opening the camera door showed *"There are only 4
-> stacks — hold up 1, 2, 3 or 4"* before any hand existed, **displacing the instruction chip that
-> should have been there**. Bounded above only now. The gate had swept 5, 6, 7, 9 and 10 and never
-> once swept 0.
->
-> ## ④ ✅ WHAT WAS DRIVEN — both inputs, both frames
-> **1280×720, taps:** both doors · all three walkthroughs, with the diff demo's picture checked
-> against its own numbers off the DOM (6 pumpkins, **3 loaded, 3 still standing**, axis written) ·
-> the guided round answered by **four taps inside ONE React batch → 4 on the cart** (the batched-tap
-> guard, this repo's ninth encounter) · a wrong answer captured frame by frame: numerals at opacity
-> **0 while live → miss line on the commit → 1 after**, then the glide · a CORRECT answer revealing
-> the axis too · **a full ten-round run that ended itself**, and a second clean run proving the tier
-> climb: **1 most · 2 howMany · 5 diff (L2) · 6 total (L3, 6+5+3+7 = 21 SOLVED ✓)** — all four
-> readings on screen, `coverage` steering.
-> **CAMERA:** the denial gate on the chapter's own copy · the remembered pick flipping the doors ·
-> ring **4** → dwell → 4 baskets on the cart → graded → `1 / 10` · ⚠️ **the hand then PARKED at 4
-> across the round boundary committed nothing** for 2.5 s+ (the held-over guard, proven the decisive
-> way) · then **ring 2 → dwell → SOLVED ✓ on a `most` round**, i.e. both meanings of the one reading
-> driven live.
-> **640×320:** every fixed layer crossed → nothing off-screen, no scroll, commit **18px clear** of
-> the scratch-pad button.
->
-> ## ⑤ ⚠️ THE SHORT-FRAME READING WAS A LIE UNTIL THE TAB WAS FRONTED — AND IT LOOKED CATASTROPHIC
-> Measured at 640×320 before any screenshot: the chart's top **112px off the frame**, the commit at
-> y 325–379 of a 320px viewport, the cue below that — a cut-off chart and an unreachable commit.
-> **`FitSlot` sizes itself from a ResizeObserver**, whose callbacks ride the rendering steps and are
-> frozen in a backgrounded tab. One screenshot later the same DOM read scale-applied and clean.
-> Recorded in chapter-craft, because every short-frame pass in this repo is taken that way.
->
-> ## ⑥ THE GATE — 52 tests, **32/32 planted regressions caught**, re-run against the final code
-> [loadingBayData.test.ts](src/__tests__/loadingBayData.test.ts). ⚠️ **It passed 50/50 first time,
-> which by this file is not evidence — the first mutation pass left THREE survivors and all three
-> were my own gate being weaker than its rule:** ① every "wrong stacks" cart I had written already
-> failed on the FOCUS count alone, so **deleting the `and nothing else` clause left the whole check
-> green** (five melons *plus three apples* is the case that guards it); ② the "the hand loads the
-> FOCUS stack" test used a round whose focus WAS stack 0, so hard-wiring the hand to stack 0 passed
-> it — **the fixture doing the work the assertion claimed to**; ③ a mutation that silently matched
-> nothing, reported as NO MATCH rather than believed.
-> ⚠️⚠️ **AND THE SWEEP ITSELF WAS SWEEPING A QUARTER OF THE CHAPTER.** `makeRound(d)` with the
-> default `asked = []` is *deterministic by type*, because unmet-first is the whole point of
-> `coverage` — so 400 draws per tier were 400 `howMany` rounds and every check behind them meant a
-> quarter of what it claimed. It looks exactly like a thorough sweep. What caught it was the one
-> check asserting the generator can produce all four types, which failed honestly.
->
-> ## 🚀 SHIPPED — `main`@`dbeeaa5`, prod serving **sw v95**
-> Three commits, clean fast-forward (`origin/main` was an ancestor), 0 ahead / 0 behind:
-> `92bffca` (the chapter — the data file, the pure module, the gate, the registry rewiring and the
-> DELETE of `story/LoadingBay.tsx`, ONE commit because `registry.tsx`, `storyChapters.tsx` and
-> `story/page.tsx` are each touched by it and splitting risks a registry importing a component that
-> does not exist yet) · `9bf995b` (the craft rules it paid for) · `dbeeaa5` (sw v94 → v95).
-> Gates re-run before staging rather than trusted from this file: `tsc` 0 · **1039/1039** ·
-> `next build` 0.
-> ⚠️ **THE BRANCH WAS BUILT CLEAN IN A SCRATCH WORKTREE FIRST** — `tsc` 0, 1039/1039, `next build` 0
-> from the commits alone, the deleted chapter confirmed absent and **0 hits for `__miloFingers` in
-> the emitted `.js`** (the dev drive hook dead-code-eliminates; it survives only in a `.js.map`).
-> ⚠️ A worktree in `/private/tmp` with a SYMLINKED `node_modules` fails outright —
-> *"Symlink [project]/node_modules is invalid, it points out of the filesystem root"*. Put the
-> worktree on the same filesystem as the repo and `cp -al` the deps. Worktree removed, tree clean.
->
-> **Post-deploy, on the live origin:** prod `sw.js` **v95 on the fourth poll** · 9 routes 200
-> (⚠️ `/play` 404s because that route was deliberately deleted in `10d814d` — my smoke list was
-> wrong, not a regression) · the SW unregistered and `milo-shell-v95` cleared before driving, per the
-> recorded fault of a controlled worker serving the old shell.
-> **Driven at 1280×720:** the briefing with both doors · the walkthrough · the guided round · then
-> **six scored rounds, all four readings, ending in the MASTERY EXIT** —
-> `1 most · 2 howMany · 3 howMany · 4 most · 5 diff (L2) · 6 total (L3, 7+3+6+4 = 20)`, at which
-> point the chapter ended itself at round 6 of 10. **0 console errors.**
-> ## ✅ AND THAT CLOSES THE BAND'S OLDEST OPEN ITEM — THE MASTERY EXIT HAS NOW BEEN SEEN TO FIRE
-> Every block since 🎛️ (2026-08-14, now in [the archive](docs/handoff-archive.md)) has carried *"no mastery exit"* as an open item for this whole band. It fired
-> here, on production, at round 6 — and it fired **only after all four readings had been asked**,
-> which is `coverage` doing precisely the job it was added for: a strong child got the early finish
-> AND met `total`, the reading that lives at L3 alone and would otherwise have been skipped as a
-> reward for doing well.
-> ⚠️ **What the prod drive still does NOT cover:** the camera path (a webcam cannot be driven
-> headlessly and the dev hooks are stripped from production by design), the full ten-round loop, and
-> **the re-teach** — a run that exits at 6 cannot show either of the last two, and an erring run and
-> a perfect run are different evidence. All are proven on localhost; those two are not on prod.
->
-> ## ▶ OPEN
-> 1. ✅ **SHIPPED — see above.** `public/sw.js` is v95.
-> 2. ⚠️ **THE SCRATCH-PAD COLLISION IS STILL THE MOST VALUABLE THING OUTSTANDING** (🏗️ ⑤) — it is
->    live in a shipped chapter and it is one line. This chapter meets it mildly: at 640×320
->    `ScribblePad`'s closed button clips **11px of the instruction chip's last line**, and the commit
->    clears it by 18px. Still a founder's call on hiding that button below `vh < 470`.
-> 3. ✅ **THE MASTERY EXIT IS CLOSED** (see 🚀 — fired on prod at round 6, after coverage completed).
->    ⚠️ **The RE-TEACH is still never seen fire**, here or anywhere in the band: it needs three wrong
->    in a row, which is mutually exclusive with the run that proved the exit.
-> 4. **No EXPLORE beat.** The shell supports one and this chapter has an obvious candidate
->    (*"build me a stack as tall as that one"*, unscored).
-> 5. ⚠️ **A struggling child never meets `diff` or `total`** — they live at L2/L3 and `coverage`
->    withholds the mastery exit rather than forcing a type the tier does not stock. Proven live: a
->    run with two deliberate misses played all ten rounds as `most`/`howMany` only. That is the same
->    shape `pizza.ts` records and is arguably correct (mastery needs the top tier anyway), but it is
->    the first time it has been watched happen and it is worth a founder's eye.
-> 6. **Two chapters left**: OrderDesk (`bigNumbers`, 1,620) and LevelRun (`rounding`, 1,724) — both
->    storybook, ~3,344 lines between them.
-> 7. ✅ **The four dead three.js dependencies were removed 2026-08-16** — see the 🚀 block.
-> 8. Of this session's faults, **one came from opening the camera door (③), one from reading a demo
->    beat's words against its own picture (②), one from the founder's own question about the counter,
->    one from measuring the short frame twice (⑤), and THREE from mutation-testing my own gate — plus
->    the sweep that was quietly a quarter of the chapter. None from the type-checker, and none from
->    the gate, which went green first time and had to be mutation-tested to be worth anything.**
-> 9. **Where the rules went:** `chapter-craft.md` gained *`disabled` is not "the round is over"*, *a
->    sweep over a coverage-driven generator must vary `asked`*, *a fixture can do the work the
->    assertion claims to*, and *`FitSlot` does not shrink until the tab is fronted*;
->    `chapter-craft-ar.md` gained *a redirect keyed on a reading must not fire on that reading's
->    ABSENT state*.
-
-_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, and 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17._
+_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, and 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) on 2026-08-17._
