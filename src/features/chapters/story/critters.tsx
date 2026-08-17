@@ -590,15 +590,17 @@ export function Critter({ src, facesLeft, at, size, move, z, durMs, cycleScale =
               As a sibling it carried its own transition, so when a march stretched the creature's
               travel to 2800ms the shadow still ran at 950ms and slid out ahead of the feet. Parented,
               it cannot drift — there is only one thing moving.
-              ⚠️ Its height is divided by the scale so that, once the box is scaled back up, it lands
-              at exactly the `size * 0.17` it has always been. The width and offset need no such
-              correction — they are percentages of a box whose own height is now `size`, so the scale
-              cancels itself. Preserving this rather than letting it scale is deliberate: a shadow
-              that grows with depth may well be more correct, but that is a look change nobody asked
-              for, and this component is not the place to slip one in. */}
+              ⚠️ IT SCALES WITH THE CREATURE, AND SO DOES EVERYTHING ELSE INSIDE THIS BOX — that
+              uniformity is the point. Moving the travel onto a `scale()` put the hop, the breathe
+              and the drop-shadow filter inside the scaled subtree, so their pixel values follow
+              depth whether anyone intends it or not; the first cut then divided THIS one back out
+              to keep it fixed, which left the shadow saying "depth does not affect me" while the hop
+              said it does. Either rule is defensible, both together is not. Everything scales:
+              a nearer creature gets a bigger hop and a bigger shadow, which is the depth cue
+              chapter-craft already asks for (nearer is lower AND bigger). Founder's call. */}
           {move === 'land' && (
             <span aria-hidden style={{ position: 'absolute', left: '50%', bottom: '-3%', transform: 'translateX(-50%)',
-              zIndex: 0, width: '78%', height: (size * 0.17) / s, pointerEvents: 'none',
+              zIndex: 0, width: '78%', height: size * 0.17, pointerEvents: 'none',
               background: 'radial-gradient(ellipse at center, rgba(46,38,24,.3) 0%, rgba(46,38,24,0) 72%)' }} />
           )}
           {/* Every effect gets its own wrapper. Stack two transforms on one element and the later one
