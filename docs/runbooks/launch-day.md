@@ -24,9 +24,17 @@ block persisted past 20s and covered every path including static assets.** Retry
 it fails slower — and re-running until green is how a gate stops meaning anything.
 
 The local run is what gates the code. Production needs a *smoke*, not a sweep — step 3 below, which
-stays far under the threshold. If you ever do want the full sweep against prod, generate a bypass
-secret (Vercel → Settings → Deployment Protection → Protection Bypass for Automation) and export
-`VERCEL_AUTOMATION_BYPASS_SECRET`; `playwright.config.ts` already sends it and is inert without it.
+stays far under the threshold.
+
+⚠️ **There is no setting to change, and nothing to buy.** This is Vercel's AUTOMATIC system-level
+mitigation, on by default for every plan; nobody enabled it and it clears itself after a while. The
+firewall-level remedy is an IP bypass, and it is plan-gated — `vercel firewall system-bypass list`
+answers *"IP Bypass is unavailable for this plan"* on this account. ⚠️ And
+`VERCEL_AUTOMATION_BYPASS_SECRET` does **not** help here: that bypasses DEPLOYMENT PROTECTION (the
+Vercel-Authentication login wall), which is a different system from the firewall. It is wired up in
+`playwright.config.ts` for the case it DOES solve — this project has
+`ssoProtection: all_except_custom_domains`, so PREVIEW deployments need it before any automation can
+reach them.
 
 Then, **after** the deploy has landed:
 

@@ -204,10 +204,15 @@
 >    request 38, and the block persisted past 20s across EVERY path including static assets — so
 >    **retries do not help, they fail slower.** ⚠️ **I called this "transient, the deploy-propagation
 >    window" twice, including in this file, on the strength of it having happened before. It is not
->    transient.** The runbook now says run the sweep LOCALLY and give prod a SMOKE; if you do want
->    the full sweep against prod, `playwright.config.ts` sends `x-vercel-protection-bypass` when
->    `VERCEL_AUTOMATION_BYPASS_SECRET` is set (Vercel → Settings → Deployment Protection → Protection
->    Bypass for Automation). Inert without it, verified on the wire both ways.
+>    transient.** The runbook now says run the sweep LOCALLY and give prod a SMOKE.
+>    ⚠️⚠️ **AND MY FIRST PRESCRIPTION WAS WRONG TOO: `VERCEL_AUTOMATION_BYPASS_SECRET` DOES NOT FIX
+>    THIS.** It bypasses DEPLOYMENT PROTECTION (the Vercel-Authentication wall); the challenge comes
+>    from the FIREWALL, a separate system whose remedy is an IP bypass — and that is **plan-gated**:
+>    `vercel firewall system-bypass list` answers *"IP Bypass is unavailable for this plan"*. **There
+>    is nothing to configure and nothing to buy**; the mitigation is automatic on every plan and
+>    clears itself. The bypass headers stay in `playwright.config.ts` for the case they DO solve —
+>    `ssoProtection: all_except_custom_domains` means PREVIEW deployments are behind the login wall,
+>    so automation against a preview URL needs the secret. Inert without it, verified on the wire.
 >    ⚠️ **And the WAF is armed on production right now** — harmless for one child in a browser, worth
 >    knowing for a classroom behind one NAT IP.
 > 5. Everything from the previous session still stands: **`MONITORING_INGEST_URL` unset** is still the

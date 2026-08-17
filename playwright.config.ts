@@ -26,12 +26,21 @@ export default defineConfig({
      * minutes later, and the block persisted well past 20s — so RETRIES DO NOT HELP, they just fail
      * slower. (It also blocks every path afterwards, static assets included.)
      *
-     * The fix is to identify as our own automation rather than to hide the symptom. Generate a
-     * bypass secret in the Vercel project (Settings → Deployment Protection → Protection Bypass for
-     * Automation) and export it; unset, this is inert and nothing changes.
-     *   VERCEL_AUTOMATION_BYPASS_SECRET=… E2E_BASE_URL=https://… npm run test:chapters
-     * `x-vercel-set-bypass-cookie` makes the browser carry it on subsequent navigations too, which
-     * a header alone does not cover once the page starts fetching its own subresources.
+     * ⚠️⚠️ AND THE HEADERS BELOW DO **NOT** FIX THAT. They bypass DEPLOYMENT PROTECTION (the
+     * Vercel-Authentication login wall); the challenge above comes from the FIREWALL, which is a
+     * separate system. Its remedy is a firewall IP bypass, and on this account that is plan-gated —
+     * `vercel firewall system-bypass list` answers *"IP Bypass is unavailable for this plan"*. So
+     * the real fix for the sweep is not to run it against production at all (see the launch-day
+     * runbook); the automatic mitigation is time-limited and clears itself.
+     *
+     * These headers are kept because they solve a real and DIFFERENT problem: this project has
+     * `ssoProtection: all_except_custom_domains`, so PREVIEW deployments sit behind Vercel
+     * Authentication and no automation can reach them without a bypass secret. Generate one at
+     * Settings → Deployment Protection → Protection Bypass for Automation and export it:
+     *   VERCEL_AUTOMATION_BYPASS_SECRET=… E2E_BASE_URL=https://<preview-url> npm run test:chapters
+     * Unset, this is inert and nothing changes. `x-vercel-set-bypass-cookie` makes the browser carry
+     * it on subsequent navigations too, which a header alone does not cover once the page starts
+     * fetching its own subresources. (Shape taken from Vercel's own documented Playwright example.)
      */
     extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
       ? {
