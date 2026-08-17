@@ -8,13 +8,40 @@ const nextConfig: NextConfig = {
   },
 
   // Image optimization. `sharp` ships as next's own optionalDependency, so next/image transcodes the
-  // heavy PNG/JPEG art to AVIF/WebP at the requested display size on demand and caches
-  // it for a year. This is the single biggest bandwidth/LCP win for the story art
-  // (originals are 2–3 MB each) — as <img> tags migrate to next/image they inherit it.
+  // heavy PNG/JPEG art to AVIF/WebP at the requested display size on demand. This is the single
+  // biggest bandwidth/LCP win for the story art — measured on production, `garden.png` goes
+  // 583,594 B of PNG → 81,391 B of AVIF at w=1280, a 7.2× cut, and one chapter's backdrops went
+  // 2.3 MB → 277 KB. The 3–11 and 12–18 chapters reach it through `shared/ui/SceneBg`.
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [360, 640, 768, 1024, 1280, 1536],
     imageSizes: [64, 96, 128, 256],
+    /**
+     * ⚠️ THIS NUMBER IS NOT WHAT PRODUCTION SERVES, AND THE DIFFERENCE IS VERCEL, NOT A BUG.
+     * Measured on ONE commit, same source header, two optimizers:
+     *
+     *   next start (Next's own)   cache-control: public, max-age=31536000, must-revalidate
+     *   Vercel                    cache-control: public, max-age=2592000, stale-while-revalidate=31536000
+     *
+     * Next treats `minimumCacheTTL` as a FLOOR; Vercel's optimizer passes the UPSTREAM image's
+     * `Cache-Control` through instead — and the upstream is now the `/assets/:path*` rule in
+     * `headers()` below, which deliberately says 30 days + a year of stale-while-revalidate rather
+     * than `immutable` (see that rule for why: this repo has rewritten art in place before).
+     *
+     * So on prod the optimized variants inherit 30 days + SWR. That is FINE and arguably better —
+     * stale-while-revalidate means no request ever blocks on a revalidation, and an in-place art
+     * edit now propagates through the optimizer too instead of being pinned for a year. It is
+     * recorded here only because the config saying `31536000` while prod says `2592000` is exactly
+     * the kind of thing that eats an afternoon.
+     *
+     * The value STAYS a year: it is still the floor for Next's own optimizer (self-hosted, `next
+     * start`, the C7 gate) and for any source that arrives without a `Cache-Control` of its own.
+     *
+     * ⚠️ Deliberately NOT gated. The behaviour is Vercel-side and invisible to `headers()`, so any
+     * test written here could only assert that this file contains the number it contains — an inert
+     * check that would read as coverage. Re-measure it with a `curl -I` against the live origin
+     * after any change to the `/assets` rule.
+     */
     minimumCacheTTL: 31536000,
   },
 
