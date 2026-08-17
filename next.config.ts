@@ -119,6 +119,37 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        /**
+         * ⚠️ THE ART WAS BEING REVALIDATED ON EVERY SINGLE REQUEST. Measured on production:
+         * `/assets/backgrounds/garden.png` came back `cache-control: public, max-age=0,
+         * must-revalidate` — Next's default for `public/` — against a 583 KB body. That is 41 MB of
+         * backdrops and sprite sheets plus 16 MB of voice clips, none of which has ever changed
+         * under its own name, costing a conditional round-trip per file per load for every client
+         * the service worker is not controlling: a first visit, the load right after an SW update,
+         * a private window, and any phone that has evicted the SW cache. It is the single largest
+         * scalability item in the app, and it is a header.
+         *
+         * NOT `immutable`: this repo has rewritten art IN PLACE before (the 83 MB → 58 MB
+         * recompression pass rewrote 86 files under their existing names), so a year of immutable
+         * would strand those clients for a year. A month of freshness with a year of
+         * stale-while-revalidate gives the same zero-round-trip serve in the common case, and an
+         * in-place art change still propagates on its own — immediately for SW-controlled clients,
+         * since `sw.js`'s VERSION keys the asset cache and `npm run preflight` already fails a
+         * shipped-file change that does not bump it.
+         */
+        source: '/assets/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=31536000' }],
+      },
+      {
+        // Same argument, for the pre-rendered ElevenLabs voice clips (16 MB) and the PWA icons.
+        source: '/audio/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=31536000' }],
+      },
+      {
+        source: '/icons/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=31536000' }],
+      },
+      {
         source: '/sw.js',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
