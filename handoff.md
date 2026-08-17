@@ -230,7 +230,12 @@
 >    API → `service_role`). Until then the table stays empty and crashes go to Vercel logs only —
 >    exactly today's behaviour, so nothing regressed. `vercel env ls production` currently shows only
 >    the two Supabase public vars. **This same key also unblocks `/api/lead` and the
->    `leads_server_only` migration**, which is still unapplied.
+>    `leads_server_only` migration**, which is still unapplied — **one paste closes three items.**
+>    🕐 **DEFERRED BY THE FOUNDER (2026-08-17): "that I'll do once the company domain will get
+>    purchased."** So this is waiting on the domain, not forgotten. ⚠️ **The consequence to hold on
+>    to: until it is set, crash visibility is Vercel logs at ~1 hour of retention — which is the
+>    status quo and is fine for now, but it means LAUNCHING before this is set is launching blind on
+>    crashes.** That is the exact condition under which the plan-pointer P0 survived three months.
 > 5b. **Prod DDL applied this session:** `20260817142406_error_events`. ⚠️ Still NOT applied:
 >    `20260816120000_perf_advisors` and `20260816170000_leads_server_only` (the latter must wait for
 >    the service-role key, or lead capture stops silently).
