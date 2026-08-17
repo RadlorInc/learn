@@ -77,9 +77,9 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> ⚡ **2026-08-17 (2nd session) — A PERFORMANCE PASS. 57 MB OF ART WAS REVALIDATED ON EVERY REQUEST, EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, AND EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME. NONE OF THEM CHANGED A SINGLE PIXEL, WHICH IS WHY THEY ALL SHIPPED — ⚠️ AND THE FOURTH FINDING, THE ONE I WAS SUREST OF, TURNED OUT TO BE DEAD CODE THAT NEVER RAN.** ⚡ SHIPPED — `main`@`90d7a5f`, **16 commits**, prod serving **sw v112**. `tsc` 0 · **1089/1089 vitest** · `next build` 0 · **211/211 chapters × 3 frames LOCAL** (prod: 209 + 2 blocked by Vercel's own firewall, both green on re-run — see ▶7) · eslint **132, unchanged**.
+> ⚡ **2026-08-17 (2nd session) — A PERFORMANCE PASS. 57 MB OF ART WAS REVALIDATED ON EVERY REQUEST, EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, AND EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME. NONE OF THEM CHANGED A SINGLE PIXEL, WHICH IS WHY THEY ALL SHIPPED — ⚠️ AND THE FOURTH FINDING, THE ONE I WAS SUREST OF, TURNED OUT TO BE DEAD CODE THAT NEVER RAN.** ⚡ SHIPPED — `main`@`d21fd36`, **21 commits**, prod serving **sw v113** (confirmed on the live origin). `tsc` 0 · **1098/1098 vitest** (was 1071, **+27**) · `next build` 0 · **211/211 chapters × 3 frames LOCAL** (prod: 209 + 2 blocked by Vercel's own firewall, both green on re-run — see ▶7) · eslint **132, unchanged**.
 >
-> **The asks:** a senior-performance-engineer pass → *"the things which you have flagged are fixed?"* → *"yes, do it"* (the Critter one) → *"commit it on main"* → *"yes push it"* → *"do this if it is important for future"* → *"what to do for this?"* → *"let everything scale"* → *"ab /game wala check karke batao kya karna hai"* → *"delete it and fix the handoff"* → *"ab prod pe check karke batao sab sahi hai"* → *"what we can do to solve this"* → *"WAF wala Vercel dashboard me kya set karna hai… subscription lagta hai kya?"*.
+> **The asks:** a senior-performance-engineer pass → *"the things which you have flagged are fixed?"* → *"yes, do it"* (the Critter one) → *"commit it on main"* → *"yes push it"* → *"do this if it is important for future"* → *"what to do for this?"* → *"let everything scale"* → *"ab /game wala check karke batao kya karna hai"* → *"delete it and fix the handoff"* → *"ab prod pe check karke batao sab sahi hai"* → *"what we can do to solve this"* → *"WAF wala Vercel dashboard me kya set karna hai… subscription lagta hai kya?"* → *"monitoring ingest URL wala setup karo"*.
 >
 > ⚠️ **THE SHAPE OF THIS SESSION IS THE LESSON: EVERY TIME THE FOUNDER ASKED "IS IT REALLY DONE?", SOMETHING CAME APART.** "Are the flagged things fixed?" surfaced ④. "What to do for this?" turned a shrug about an ungateable header into a 6-mutation gate. "Check the /game one" turned a fix I had reported done TWICE into a deletion. "What can we do to solve this" turned "transient, re-run it" into a firewall diagnosis — **and "does it need a subscription?" caught me prescribing the WRONG BYPASS for it.** Three wrong calls in a row on that one issue, each corrected only because the question was asked again. **Nothing in the test suite ever objected to any of it.** The common fault is one thing: reasoning from a plausible mechanism instead of querying the system. `vercel firewall system-bypass list` took two seconds and settled what an hour of inference had got backwards.
 >
@@ -159,6 +159,34 @@
 > "depth does not affect me" while the hop said it does.** Founder's call: **everything scales** —
 > nearer is lower AND bigger, which is the cue chapter-craft already asks for.
 >
+> ## ⑤ CRASHES NOW HAVE A DURABLE SINK — AND THE STANDING DESCRIPTION OF THE OLD ONE WAS WRONG
+> The handoff said `/api/report-error` *"forwards every crash into a void"*. **It never did.** Both
+> paths have always `console.error`'d a structured line, so crashes reach Vercel logs. What is
+> missing is **retention and someone looking**: Hobby keeps runtime logs about an hour, so a 2am
+> crash is gone by breakfast — **which is exactly the condition the plan-pointer P0 survived three
+> months in.**
+> `infra/errorSink.ts` is now the ONE place a crash goes, used by BOTH paths (the browser
+> ErrorBoundary via `/api/report-error`, and Next's server `onRequestError`) so they cannot drift:
+> **console always and FIRST**, then the new `error_events` table, then the `MONITORING_INGEST_URL`
+> seam — kept, so Sentry stays a one-env-var change if a real product is ever wanted.
+> ⚠️ **NO ANON FALLBACK, DELIBERATELY, AND THE GATE ASSERTS IT.**
+> `20260816170000_leads_server_only.sql` is this repo's own record of why an anonymous INSERT
+> surface is a mistake — its named mitigation ("Supabase Auth rate limits") does not apply to a
+> PostgREST write. An anon fallback here would reopen that AND bypass `/api/report-error`'s own
+> 30/min limit. The table is RLS-on with **zero policies**; verified on prod that anon INSERT and
+> anon SELECT are both refused with `42501`, and Supabase advisors show only an INFO
+> `rls_enabled_no_policy`, which is the design rather than a finding.
+> ⚠️ **Why a table and not Sentry:** this project already has a database and a dashboard the founder
+> opens daily, and no monitoring vendor. A table costs nothing and needs no account. **This is the
+> floor, not the ceiling.**
+> **Mutation-tested 5/5 — and the fifth needed a second pass.** Moving the `console.error` BELOW the
+> awaits survived a gate that only asserted it was *called*; that matters, because a function killed
+> mid-await loses the one sink needing no configuration. The test now asserts **order**.
+> ⚠️ **The CLIENT path is driven end to end** (200, full record logged, rate limit holding at 29 of
+> 33 flooded against a 30/min cap). **The SERVER path is not** — `onRequestError` is covered by the
+> build and unit tests only; nobody has watched it fire. It will prove itself on the first real
+> server error.
+>
 > ## 🧪 THE GATES, AND THE ONE THAT SURVIVED
 > Four new files, **all mutation-tested**: `gameFitController` 4/4 · `sceneBgPriority` 2/2 ·
 > `critterTravelIsComposited` 4/4 · `assetCacheHeaders` 5/6.
@@ -184,64 +212,52 @@
 > because a config reading 31536000 while prod reads 2592000 eats an afternoon.
 >
 > ## ▶ OPEN
-> 1. ✅ **CLOSED — and it closed by deleting the thing.** /game WAS driven (see ①): the fit
->    controller never ran, so it is gone. **What to keep from it: a source gate proves the code says
->    what you meant, never that anything reaches it.** Reaching /game from a test needs the session
->    under **`milo-auth`** (not the supabase default — `client.ts` overrides `storageKey`) and a
->    well-formed JWT; that is worth two minutes next time rather than another "cannot be driven".
-> 2. **`React.memo` is still absent everywhere** — deliberately. Fixing ① removed the pressure; adding
->    it speculatively is guesswork. If a chapter ever feels heavy again, this is the first lever.
-> 3. **`Background` mounts every scene in a run at once** (up to 9 requests) so the cross-fade has
->    something to fade to. Design, not a defect, and at ~270 KB no longer worth touching.
-> 4. **The Vercel optimizer inheritance is documented, not gated** — it is Vercel-side and invisible
->    to `headers()`. Re-measure with `curl -I` after any change to the `/assets` rule.
-> 7. ⚠️ **DO NOT RUN `test:chapters` AGAINST PRODUCTION — IT TRIPS VERCEL'S WAF, AND THE FAILURE
->    LOOKS EXACTLY LIKE A BROKEN CHAPTER.** 211 navigations plus subresources from one IP, and at
->    roughly the fortieth Vercel serves a JS challenge instead of the app (`403`,
+> 1. 🕐 **THE ONE THING BETWEEN MONITORING AND WORKING: `SUPABASE_SERVICE_ROLE_KEY` IN VERCEL**
+>    (value: Supabase → Settings → API → `service_role`). **Deferred by the founder, 2026-08-17:
+>    *"that I'll do once the company domain will get purchased."*** Waiting on the domain, not
+>    forgotten. `vercel env ls production` currently shows only the two Supabase public vars.
+>    **One paste closes three items** — `error_events` starts filling, `/api/lead` stops falling back
+>    to the anon key, and `leads_server_only` becomes safe to apply.
+>    ⚠️ **The consequence to hold on to: until it is set, crash visibility is Vercel logs at ~1 hour.
+>    That is the status quo and fine for now — but LAUNCHING in that state is launching blind on
+>    crashes**, which is precisely how the plan-pointer P0 survived three months.
+> 2. **Prod DDL applied this session:** `20260817142406_error_events`. ⚠️ Still NOT applied:
+>    `20260816120000_perf_advisors` and `20260816170000_leads_server_only` (the latter must wait for
+>    the key above, or lead capture stops **silently**).
+> 3. ✅ **`/game` is CLOSED — and it closed by deleting the thing** (see ①). **What to keep: a source
+>    gate proves the code says what you meant, never that anything reaches it.** Driving /game from a
+>    test needs the session under **`milo-auth`** (not the supabase default — `client.ts` overrides
+>    `storageKey`) and a well-formed JWT. Two minutes, and worth it over another "cannot be driven".
+> 4. ⚠️ **DO NOT RUN `test:chapters` AGAINST PRODUCTION — IT TRIPS VERCEL'S OWN FIREWALL, AND THE
+>    FAILURE LOOKS EXACTLY LIKE A BROKEN CHAPTER.** 211 navigations plus subresources from one IP,
+>    and at roughly the fortieth Vercel serves a JS challenge instead of the app (`403`,
 >    `x-vercel-mitigated: challenge`). Playwright cannot solve it, so the navigation dies as
 >    `net::ERR_ABORTED`. **Measured:** it hit at tests 41–42, those two passed on the other two
->    frames minutes later and 6/6 on re-run in 2–3s, a deliberate 40-request burst reproduced it at
->    request 38, and the block persisted past 20s across EVERY path including static assets — so
->    **retries do not help, they fail slower.** ⚠️ **I called this "transient, the deploy-propagation
->    window" twice, including in this file, on the strength of it having happened before. It is not
->    transient.** The runbook now says run the sweep LOCALLY and give prod a SMOKE.
->    ⚠️⚠️ **AND MY FIRST PRESCRIPTION WAS WRONG TOO: `VERCEL_AUTOMATION_BYPASS_SECRET` DOES NOT FIX
->    THIS.** It bypasses DEPLOYMENT PROTECTION (the Vercel-Authentication wall); the challenge comes
->    from the FIREWALL, a separate system whose remedy is an IP bypass — and that is **plan-gated**:
->    `vercel firewall system-bypass list` answers *"IP Bypass is unavailable for this plan"*. **There
->    is nothing to configure and nothing to buy**; the mitigation is automatic on every plan and
->    clears itself. The bypass headers stay in `playwright.config.ts` for the case they DO solve —
->    `ssoProtection: all_except_custom_domains` means PREVIEW deployments are behind the login wall,
->    so automation against a preview URL needs the secret. Inert without it, verified on the wire.
->    ⚠️ **And the WAF is armed on production right now** — harmless for one child in a browser, worth
->    knowing for a classroom behind one NAT IP.
-> 5. ✅ **MONITORING IS WIRED — and the standing description of it was wrong.** The handoff said
->    `/api/report-error` "forwards every crash into a void". It never did: both paths have always
->    `console.error`'d a structured line, so crashes reach Vercel logs. What was missing is
->    **retention and someone looking** — Hobby keeps runtime logs about an hour, so a 2am crash is
->    gone by breakfast, which is exactly how the plan-pointer P0 ran three months unseen.
->    `infra/errorSink.ts` is now the ONE place a crash goes, for both the browser ErrorBoundary and
->    the server `onRequestError`: console always and FIRST, then the new `error_events` table, then
->    the `MONITORING_INGEST_URL` seam (kept, so Sentry stays a one-env-var change).
->    ⚠️ **NO ANON FALLBACK, and the gate asserts it** — `leads_server_only.sql` is this repo's own
->    record of why an anonymous INSERT surface is a mistake. The table is RLS-on with ZERO policies;
->    verified on prod that anon INSERT and anon SELECT are both refused with `42501`.
->    ⚠️ **ONE FOUNDER STEP LEFT: set `SUPABASE_SERVICE_ROLE_KEY` in Vercel** (Supabase → Settings →
->    API → `service_role`). Until then the table stays empty and crashes go to Vercel logs only —
->    exactly today's behaviour, so nothing regressed. `vercel env ls production` currently shows only
->    the two Supabase public vars. **This same key also unblocks `/api/lead` and the
->    `leads_server_only` migration**, which is still unapplied — **one paste closes three items.**
->    🕐 **DEFERRED BY THE FOUNDER (2026-08-17): "that I'll do once the company domain will get
->    purchased."** So this is waiting on the domain, not forgotten. ⚠️ **The consequence to hold on
->    to: until it is set, crash visibility is Vercel logs at ~1 hour of retention — which is the
->    status quo and is fine for now, but it means LAUNCHING before this is set is launching blind on
->    crashes.** That is the exact condition under which the plan-pointer P0 survived three months.
-> 5b. **Prod DDL applied this session:** `20260817142406_error_events`. ⚠️ Still NOT applied:
->    `20260816120000_perf_advisors` and `20260816170000_leads_server_only` (the latter must wait for
->    the service-role key, or lead capture stops silently).
-> 5c. Everything else from the previous session stands: **B1 attorney**, and `practice_complete`
->    never yet observed in the DB.
-> 6. Of this session's faults, **the biggest was mine and it was a METHOD fault, not a code one**:
+>    frames minutes later and 6/6 on re-run, a deliberate 40-request burst reproduced it at request
+>    38, and the block persisted past 20s across EVERY path including static assets — so **retries do
+>    not help, they fail slower.** ⚠️ **I called it "transient" twice and then prescribed the WRONG
+>    BYPASS for it.** `VERCEL_AUTOMATION_BYPASS_SECRET` covers DEPLOYMENT PROTECTION, not the
+>    firewall; the firewall remedy is an IP bypass and it is **plan-gated** (*"IP Bypass is
+>    unavailable for this plan"*). **Nothing to configure, nothing to buy** — the mitigation is
+>    automatic on every plan and clears itself. The runbook now sweeps LOCALLY and smokes prod.
+>    ⚠️ **And I tripped it again with my own deploy-polling loop, minutes after writing that down.**
+>    The bypass headers stay in `playwright.config.ts` for the case they DO solve:
+>    `ssoProtection: all_except_custom_domains` means PREVIEW deployments are behind the login wall.
+> 5. **`React.memo` is still absent everywhere** — deliberately. Fixing ① removed the pressure; adding
+>    it speculatively is guesswork. If a chapter ever feels heavy again, this is the first lever.
+> 6. **`Background` mounts every scene in a run at once** (up to 9 requests) so the cross-fade has
+>    something to fade to. Design, not a defect, and at ~298 KB no longer worth touching.
+> 7. **The Vercel optimizer inherits the SOURCE `Cache-Control`**, so optimized images are 30 days +
+>    SWR rather than the 1-year `minimumCacheTTL` the config states. Documented in `next.config.ts`,
+>    deliberately not gated — it is Vercel-side and invisible to `headers()`. Re-measure with
+>    `curl -I` after any change to the `/assets` rule.
+> 8. Everything from the previous session stands: **B1 attorney** (`DRAFT = true` is LIVE on prod),
+>    **AR never driven with a real hand**, and **`practice_complete` never observed in the DB**.
+> 9. Of this session's faults, **the biggest was mine and it was a METHOD fault, not a code one**:
+>    ⚠️ **And the runner-up is the same shape: I tripped Vercel's firewall with my own deploy-polling
+>    loop MINUTES after documenting that exact mechanism, then left the loop running in the
+>    background so it kept the block alive.** The runbook rule I had just written — do not hammer
+>    prod — I applied to the test sweep and not to my own tooling.
 >    ① was diagnosed from the source, gated at the source, and reported done twice, and the whole
 >    thing was unreachable. The rest: **two from measuring after guessing wrong** (a fixed 5s window
 >    that missed the journey and read as "this costs nothing"; comparing a local server against
@@ -250,7 +266,7 @@
 >    the type-checker** (the `Bg` collision, which compiled anyway). ⚠️ **Also: two scripted edits
 >    silently matched nothing and I re-ran the same spec three times before noticing** — assert the
 >    edit landed. **The test suite was green through every one of them.**
-> 7. **Where the rules went:** `chapter-craft.md` §1 gained *a journey is a `transform`*, *`vw` is not
+> 10. **Where the rules went:** `chapter-craft.md` §1 gained *a journey is a `transform`*, *`vw` is not
 >    `%` under `zoom`*, *scale about the feet*, *derive the base as `w / scale`*; §4 gained *diff the
 >    rendered rects, keyed semantically, with animations frozen*, *a fixed sample window misses the
 >    event*, *`waitForSelector` waits for VISIBLE*, *Next ignores a `_`-prefixed folder*, and
@@ -517,142 +533,4 @@
 >    *a security header breaks things that do not fail until a specific device does a specific thing —
 >    read the prod console on a real page*.
 
-> 🚀 **2026-08-16 — LAUNCH HARDENING. THE MVP PLAN IS RE-GROUNDED AGAINST THE RUNNING SYSTEM, AND NINE OF ITS ITEMS ARE DONE AND ON PROD: 0 SECURITY ADVISORIES, A CRASH SCREEN FOR EVERY FAILURE, SELF-HOSTED FONTS, AN ENFORCED CSP, PARENT DATA RIGHTS, LEGAL PAGES, A FAQ, A LAUNCH RUNBOOK, AND TWO GATES THAT CATCH THE MISTAKES I MADE TODAY.** 🚀 SHIPPED — `main`@`b7f4c0e`, prod serving **sw v98**. `tsc` 0 · **1039/1039 vitest** · `next build` 0 · **211/211 chapters × 3 frames, against production**.
->
-> **The asks:** *"ek proper detailed … chhoti si chhoti cheez bhi chhutna naii chahiye … puri list banao … mein naii chahata hu ki launch hone ke pehle din hi kuch chale naa"* → then *"C1, C2 aur C7 shuru karo"* → *"font migration kar do, phir CSP enforce karo"* → *"implement all which you have mentioned"*.
->
-> ## 📋 THE PLAN IS THE DELIVERABLE — [docs/launch-plan.md](docs/launch-plan.md), RE-GROUNDED NOT REWRITTEN
-> The 2026-07-18 draft was right about SHAPE and a month stale about STATE (it said "sw.js at v27";
-> we were on v94) and it assigned every item to named specialist agents that were removed on
-> 2026-07-20. It now has **two owners only — `[C]` I can do it, `[F]` only the founder can** — and
-> §1 is *verified*, with the command or advisor query behind each fact named so it can be re-run.
-> ⚠️ **Half the value was finding what was ALREADY TRUE**: no ERROR-level Supabase lints, all four
-> `SECURITY DEFINER` RPCs correctly guarded by `learner_access` → `42501`, the SW update path sound,
-> and three of the old plan's open items already fixed. **A stale plan wastes work in both
-> directions** — it hides real gaps and it re-opens closed ones.
->
-> ## ✅ WHAT SHIPPED (nine items)
-> | | what | commit |
-> |---|---|---|
-> | C1 | `npm audit` **4 high → 0**, prod and dev. `next` 16.2.6 → 16.3.1 (a Turbopack middleware bypass — this build), `sharp` → 0.35.3. **Removed `three` + 3 friends: prod deps 10 → 7.** | `05446b5` |
-> | C2 | `app/error.tsx`, `app/global-error.tsx`, `app/not-found.tsx` — a Milo screen for every crash and dead link | `611b061` |
-> | C7 | `npm run test:chapters` — **all 70 chapters × 3 frames** | `e1190aa` |
-> | C10 | All five fonts self-hosted via `next/font` — **0 runtime requests to Google** | `396bfe0` |
-> | C11 | **CSP ENFORCED**, one policy instead of two | `a968dbb` |
-> | C14 | `npm run preflight` | `d1fa8fe` |
-> | C6 | Parent data export + findable deletion | `d1fa8fe` |
-> | C9 | `/help` — parent-facing FAQ | `d1fa8fe` |
-> | C8 | [runbooks/launch-day.md](docs/runbooks/launch-day.md) | `d1fa8fe` |
->
-> ## ⚠️⚠️ THE FOUR TRAPS, EACH OF WHICH WOULD HAVE SHIPPED
-> ① **ENFORCING THE CSP AS WRITTEN WOULD HAVE SILENTLY KILLED EVERY AR CHAPTER** — the band's
-> defining feature. `@mediapipe/tasks-vision` fetches WASM from **jsDelivr**, its model from
-> **storage.googleapis.com**, instantiates WebAssembly (`wasm-unsafe-eval`) and runs a **`blob:`
-> worker**. `default-src 'self'` blocks all three and **nothing fails until a child opens the
-> camera**. Now named allowances, verified with a NEGATIVE CONTROL (`example.com` blocked) rather
-> than only positive ones — a policy that is absent passes every positive test.
-> ② **THE FONTS WERE THE REASON CSP COULD NEVER BE ENFORCED**, and nobody had connected the two. Three
-> CSS `@import`s to Google meant `font-src 'self'` would have rendered the whole product in fallback
-> system fonts. Found by the C7 gate catching an intermittent `gstatic` 404 — the 404 was trivial and
-> what it *pointed at* was not. ⚠️ And `preteen/kit.tsx` hardcoded the family NAMES, which
-> `next/font` hashes — that band's mono numerals would have silently fallen back.
-> ③ **THE PERF MIGRATION'S FIRST DRAFT GUESSED THE RLS PREDICATES AND WAS WRONG.**
-> `diagnostic_plan_progress` has no `learner_id` — it reaches the parent through
-> `plan_id → diagnostic_plans.learner_id`, and all five policies are `EXISTS` joins, not `IN`
-> subqueries. **That is a cross-tenant access change wearing a performance-tuning commit message.**
-> Every predicate is now read off `pg_policies.qual` on the live DB. ⚠️ **Never rewrite a policy from
-> memory.**
-> ④ **`app/error.tsx`'s PROP IS `retry`, NOT `reset`.** From memory it is `reset`, which type-checks
-> as an unused prop and renders a button that does nothing. Proven live: *Try again* fires a SECOND
-> `/api/report-error` POST. AGENTS.md earns its keep — `global-error` also gets **no global CSS or
-> fonts**, and an unmatched URL is `global-not-found` (experimental) while the stable
-> `not-found.tsx` covers this app.
->
-> ## ⚠️⚠️ AND THE MISTAKE I MADE MYSELF, WHICH IS NOW A GATE
-> **I shipped the fonts + CSP with NO `sw.js` BUMP.** The verification afterwards then reported 3
-> Google font requests and let `example.com` through — i.e. it looked like the work had not deployed.
-> It had: the browser was serving the **v96 cache**, and **a cached response keeps its HTTP headers**,
-> so the old report-only CSP came with it. `sw.js` is `must-revalidate`, so the browser re-fetches
-> it — but the bytes were unchanged, so **no update ever triggers and the stale shell is permanent**.
-> Two rules out of it, both now enforced rather than remembered:
-> - **`npm run preflight` fails if shipped files changed and `VERSION` did not** (diffed against
->   `origin/main`). It caught the very next commit — 8 files, still v97.
-> - **After any deploy, clear the service worker before you believe a prod check, or you are grading
->   the previous release.** Written into the launch-day runbook.
->
-> ## 🧪 THE C7 GATE, AND WHY A LOCALHOST-GREEN GATE IS NOT A GREEN GATE
-> 211/211 on localhost, then **23 failures against prod** — and 21 of them were the TEST being wrong:
-> the 3–11 story chapters are landscape-first, so on a 390×844 phone they correctly show *"Turn your
-> phone sideways"*, which has no button. ⚠️ **It passed on dev and failed on prod because
-> `useNeedsRotate` runs in an EFFECT** — dev caught the pre-effect frame, prod the settled one. My
-> first fix re-introduced the same race one level up (branching on an instantaneous `isVisible()`);
-> it now waits for `control.or(rotateGate)`, so there is no instant to be wrong at. The other 2 were
-> the **deploy-propagation window** — both passed untouched minutes later.
-> ⚠️ **And the sweep was quietly covering a QUARTER of the chapter**: `makeRound(d)` with the default
-> `asked = []` is deterministic by type, because unmet-first is what `coverage` is for — so 400 draws
-> per tier were 400 `howMany` rounds. Caught by the one check asserting all four types are reachable.
->
-> ## 🧹 AND SIX DOCS WENT, AFTER CHECKING EACH ONE
-> `area3d-brief` + `ar-phase0-brief` (subjects deleted, rules already harvested into chapter-craft),
-> `scaling-roadmap` (its premise — "one age group with 11 chapters" — is false; its goal is shipped),
-> and three spent one-shot PROMPTS. ⚠️ **"Unreferenced" is not "useless"**: eight docs had zero inbound
-> links and only two were dead — the five unlinked storyboards all describe LIVE chapters. Two of the
-> four had live inbound links, repointed rather than left dangling. **`README.md` was 100% stock
-> `create-next-app`** with two stray `# Milo` lines glued on; rewritten with numbers verified against
-> source.
->
-> ## ▶ OPEN — and the top item is not code
-> 1. ⚠️⚠️ **THE ATTORNEY IS THE LONG POLE AND NOTHING ELSE CAN CLOSE IT** (blocker B1). Privacy
->    Policy + ToS + COPPA notice. **The plumbing is DONE** — `/legal/privacy`, `/legal/terms`, the
->    consent line on signup — all wired against placeholder copy in `src/app/legal/content.ts`, so
->    it is now a PASTE plus `DRAFT = false`. Until then every page shows a red "not reviewed by a
->    lawyer" banner and preflight warns. **A placeholder that looks final is worse than none.**
-> 2. **Founder accounts, then I wire them in minutes**: monitoring ingest URL (C3 — the seam exists),
->    analytics tool (C4), SMTP (C6/B6 — no email is sent at all today), leaked-password toggle, Auth
->    rate limits, Vercel WAF, PITR.
-> 3. 🟡 **C10b migration written, NOT applied** — `supabase/migrations/20260816120000_perf_advisors.sql`.
->    Prod DDL is the founder's.
-> 4. ✅ **THE SCRATCH-PAD COLLISION IS FIXED** (2026-08-16) — the closed button was `position: fixed`
->    while the open drawer was deliberately in flow, i.e. the state that is up 99% of the time broke
->    the promise the other state's own comment documents. Both states are one flow row now; measured
->    at 640×320 on The Coin Tray and The Empty Plot: 0 collisions, nothing offscreen, no scroll.
->    ⚠️ **And chasing it found the C7 gate 210/211 RED and broken since the CSP was enforced** —
->    `script-src` dropped `'unsafe-eval'`, which React's DEV build needs and production does not, so
->    every page logged a console error against the very server the gate is documented to drive. It
->    hid because the run that certified 211/211 was pointed at prod with `E2E_BASE_URL`. Now branched
->    on `NODE_ENV` and gated in BOTH directions (`cspHeader.test.ts`): the production leak is the
->    dangerous half, losing it in dev is the half that eats a day. Gate back to **211/211**.
->    ⚠️⚠️ **AND THEN THE PROD CONSOLE GAVE UP A THIRD CSP CASUALTY, WHICH IS THE BIGGEST OF THE
->    THREE: `media-src` WAS NEVER SET, SO THE RECORDED VOICE WAS SILENTLY DEAD ON MOBILE.**
->    `default-src 'self'` was the fallback and it blocked the `data:` WAV that `unlockVoiceClips()`
->    plays inside the intro tap — the mobile-autoplay unlock, i.e. the one gesture that grants iOS
->    playback to the single reused `<audio>` the whole app plays through. Blocked, it is never
->    unlocked, so **every pre-rendered ElevenLabs clip in bands 12–18 falls back to browser speech**,
->    which most Chrome installs do not have at all. Nothing reports it: the player swallows its own
->    errors by design (a missing clip must fall back, not throw), so on a desktop it is one console
->    line and on a phone it is a chapter that has simply gone quiet. **That is now three things the
->    enforced CSP broke whose failure is invisible until a specific device does a specific thing —
->    the fonts, MediaPipe, and this. Read the prod console on a real page after any header change;
->    a 200 on every route says nothing about it.** ⚠️ And it took a FRESH TAB to believe the fix: the
->    console buffer survives navigation, so the old violation was still printing against the new
->    header, reading exactly like a deploy that had not landed.
-> 4b. ⚠️ **`npm run preflight` ONLY DIFFS COMMITTED WORK** (`origin/main...HEAD`), so an uncommitted
->    change is invisible to its sw-bump gate — it reported "no shipped files changed" over a live CSP
->    edit. Commit first, then run it. And a CSP change **does** need the bump: the policy rides a
->    response HEADER and a cached response keeps its headers, which is this repo's own recorded trap.
->    Prod is on **sw v100**, verified on the live origin along with `media-src 'self' data:` and a
->    production `script-src` carrying **no** bare `'unsafe-eval'`.
-> 5. ✅ **C13 IS CLOSED — NOT DONE, DECIDED.** Founder, 2026-08-16: *"woh dono chapter waise hi
->    rahenge… bina neon mein"*. **OrderDesk and LevelRun stay storybook `SkillBeat`; do not port
->    them.** Both pass the C7 gate as they are. The 9–11 band is mixed by design — eight on
->    GameShell, two storybook — so the ~3,344 lines are not outstanding work and the port is finished
->    at eight.
-> 6. **231 pre-existing eslint errors**, almost all `react-hooks/refs` and `set-state-in-effect` —
->    byte-identical before today's work and deliberately untouched. **A mass hook refactor is the last
->    thing to do in launch week**, but they are the exact classes this repo has shipped bugs from.
-> 7. Of today's faults: **two were mine and are now gates** (the sw bump; the vacuous sweep), **two
->    were caught by reading the live system instead of guessing** (the RLS predicates, the MediaPipe
->    origins), **one by the docs** (`retry` vs `reset`), and **one by prod disagreeing with localhost**
->    (the rotate gate). None from the type-checker.
-
-_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, and 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) on 2026-08-17._
+_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17._
