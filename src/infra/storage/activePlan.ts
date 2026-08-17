@@ -117,6 +117,57 @@ export function advanceAfterChapter(
   return { kind: 'advanced', to: advancePlan(learnerId, completedChapterId) }
 }
 
+/**
+ * CROSS-DEVICE RECONCILIATION — the plan pointer survives a device switch.
+ *
+ * ⚠️ THE POINTER IS localStorage, SO IT USED TO DIE WITH THE BROWSER. A parent who ran the check
+ * on their phone and handed the child a tablet got no plan at all: the "Continue your plan" card
+ * simply did not render, and the diagnostic's whole output — the thing the product is for —
+ * existed only on the device that produced it.
+ *
+ * ⚠️ DERIVED, NOT SYNCED, AND THAT IS THE POINT. `diagnostic_plan_progress` exists for this and is
+ * write-once/read-never (77 rows, all `todo`), so the obvious fix is a second write path that can
+ * disagree with the first. It is not needed: the plan's `chapter_sequence` is already on the server
+ * and `learner_progress` already records which chapters have been played, so the pointer is a
+ * FUNCTION of data that is already synced. Nothing new to write, nothing to keep in step, and it
+ * self-heals if a device misses a write.
+ *
+ * ⚠️ MONOTONIC, like `mergeServerProgress`: the pointer only ever moves FORWARD. A device that is
+ * behind must never drag a child back to a chapter they finished, and a local plan that has been
+ * REVISED deeper keeps its own chapter list — the remote copy predates the revision and would undo
+ * it.
+ *
+ * Returns the reconciled plan, or null when there is nothing to reconcile.
+ */
+export function reconcilePlan(
+  learnerId: string,
+  remoteChapters: string[],
+  completedChapterIds: readonly string[],
+): ActivePlan | null {
+  const local = getActivePlan(learnerId)
+  // A revised local plan is AHEAD of the remote one; seeding from remote would drop the deeper
+  // chapter the revision just added.
+  const chapters = local ? local.chapters : remoteChapters
+  if (chapters.length === 0) return null
+
+  const done = new Set(completedChapterIds)
+  // The leading run of finished plan chapters. A chapter played OUT of order does not move the
+  // pointer, which is the same rule `advancePlan` enforces locally.
+  let derived = 0
+  while (derived < chapters.length && done.has(chapters[derived])) derived++
+
+  const plan: ActivePlan = {
+    learnerId,
+    band: local?.band ?? '',
+    chapters,
+    index: Math.max(local?.index ?? 0, derived),
+    startedAt: local?.startedAt ?? new Date().toISOString(),
+    ...(local?.revised ? { revised: true } : null),
+  }
+  try { localStorage.setItem(key(learnerId), JSON.stringify(plan)) } catch { /* storage unavailable */ }
+  return plan
+}
+
 /** { done, total } for a progress readout ("Step 2 of 5"). */
 export function planProgress(learnerId: string): { done: number; total: number } | null {
   const p = getActivePlan(learnerId)

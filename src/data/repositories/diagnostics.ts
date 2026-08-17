@@ -102,6 +102,30 @@ export async function getLatestGap(learnerId: string): Promise<{ band: string; r
   return { band: data.band as string, rootGap: (data.root_gap_skill as string | null) ?? null }
 }
 
+/**
+ * The learner's active plan chapter sequence, from the server.
+ *
+ * ⚠️ THIS IS WHAT MAKES THE PLAN SURVIVE A DEVICE SWITCH. The walkable pointer is localStorage, so
+ * a parent who ran the check on a phone and handed over a tablet previously got no plan card at
+ * all. Read-only and gated by the table's own RLS (`diag_plans_read`, via `learner_access`), so it
+ * needs no new grant, no migration and no second write path — `reconcilePlan` derives the position
+ * from `learner_progress`, which is already synced.
+ */
+export async function getActivePlanChapters(learnerId: string): Promise<string[]> {
+  const supabase = db()
+  const { data, error } = await supabase
+    .from('diagnostic_plans')
+    .select('chapter_sequence')
+    .eq('learner_id', learnerId)
+    .eq('active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  // Best-effort: no plan, no access or no network just means the local pointer stands.
+  if (error || !data) return []
+  return (data.chapter_sequence as string[] | null) ?? []
+}
+
 /** Week-N re-check status for the guarantee loop: is a re-check DUE (a real gap, diagnosed ≥6 weeks
  *  ago, and not already closed by a later re-check)? Powers the in-app nudge on the parent dashboard. */
 export async function getCheckupStatus(learnerId: string): Promise<

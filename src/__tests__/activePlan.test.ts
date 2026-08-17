@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { setActivePlan, currentPlanChapter, advancePlan, planProgress, revisePlanDeeper, advanceAfterChapter } from '@/infra/storage/activePlan'
+import { setActivePlan, currentPlanChapter, advancePlan, planProgress, revisePlanDeeper, advanceAfterChapter, reconcilePlan } from '@/infra/storage/activePlan'
 import { deeperChapter } from '@/core/diagnosticEngine'
 
 describe('activePlan', () => {
@@ -133,5 +133,63 @@ describe('the end-of-chapter plan decision (the path, not just the unit)', () =>
     // code says that phrase too, so the loose version matched prose and failed on correct code.
     expect(src.indexOf('advanceAfterChapter('), 'plan advance must precede the offline early-return')
       .toBeLessThan(src.indexOf('if (!navigator.onLine)'))
+  })
+})
+
+/**
+ * ⚠️ THE PLAN USED TO DIE WITH THE BROWSER. The pointer is localStorage, so a parent who ran the
+ * check on their phone and handed the child a tablet got NO plan card at all — the diagnostic's
+ * entire output existed only on the device that produced it.
+ *
+ * `reconcilePlan` derives the position from data already synced (the plan's chapter_sequence on the
+ * server + `learner_progress`), so there is no second write path to disagree with the first. These
+ * pin the two properties that make that safe: it only moves FORWARD, and it never overwrites a
+ * locally revised plan with the pre-revision remote copy.
+ */
+describe('the plan pointer survives a device switch', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('seeds a plan on a device that has never seen one, at the right step', () => {
+    expect(currentPlanChapter('L')).toBeNull()                       // fresh device
+    const p = reconcilePlan('L', ['a', 'b', 'c'], ['a'])
+    expect(p?.chapters).toEqual(['a', 'b', 'c'])
+    expect(currentPlanChapter('L')).toBe('b')
+  })
+
+  it('counts only the LEADING run of finished chapters', () => {
+    // 'c' played out of order must not drag the pointer past the unfinished 'b' — the same rule
+    // advancePlan enforces locally.
+    reconcilePlan('L', ['a', 'b', 'c'], ['a', 'c'])
+    expect(currentPlanChapter('L')).toBe('b')
+  })
+
+  it('NEVER moves the pointer backwards', () => {
+    // The device that is behind must not drag a child back to a chapter they finished. This is the
+    // property that makes deriving safe at all.
+    setActivePlan('L', '9-11', ['a', 'b', 'c'])
+    advancePlan('L', 'a'); advancePlan('L', 'b')          // local is at 'c'
+    reconcilePlan('L', ['a', 'b', 'c'], [])               // a server that knows nothing
+    expect(currentPlanChapter('L')).toBe('c')
+  })
+
+  it('keeps a REVISED local plan rather than the pre-revision remote copy', () => {
+    // The revision prepended a deeper chapter; the remote sequence predates it, so adopting remote
+    // would silently undo the very thing the play-data revision decided the child needs.
+    setActivePlan('L', '9-11', ['a', 'b'])
+    revisePlanDeeper('L', 'a', 'deep')
+    reconcilePlan('L', ['a', 'b'], [])
+    expect(currentPlanChapter('L')).toBe('deep')
+    expect(JSON.parse(localStorage.getItem('milo_active_plan_L')!).revised).toBe(true)
+  })
+
+  it('no local plan and no remote plan is a no-op, not an empty plan', () => {
+    expect(reconcilePlan('L', [], [])).toBeNull()
+    expect(currentPlanChapter('L')).toBeNull()
+  })
+
+  it('a completed plan reports its end rather than looping', () => {
+    reconcilePlan('L', ['a', 'b'], ['a', 'b'])
+    expect(currentPlanChapter('L')).toBeNull()
+    expect(planProgress('L')).toEqual({ done: 2, total: 2 })
   })
 })

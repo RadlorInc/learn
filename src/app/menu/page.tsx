@@ -11,11 +11,11 @@ import ChapterPicker from '@/shared/ui/ChapterPicker'
 import PWAInstallBanner from '@/shared/ui/PWAInstallBanner'
 import { getActiveLearner, clearActiveLearner } from '@/data/supabase/useLearnerSession'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
-import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds } from '@/data/repositories'
+import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds, getActivePlanChapters } from '@/data/repositories'
 import type { LearnerState } from '@/data/supabase/types'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
 import { track } from '@/infra/analytics'
-import { currentPlanChapter, planProgress } from '@/infra/storage/activePlan'
+import { currentPlanChapter, planProgress, reconcilePlan } from '@/infra/storage/activePlan'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
 const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
@@ -127,6 +127,30 @@ export default function MainMenu() {
 
           const { stats, progress, state } = boot.data
           applyServerProgress(stats, progress, state)
+
+          /**
+           * ⚠️ THE PLAN POINTER, RECONCILED ACROSS DEVICES. It lives in localStorage, so before
+           * this a parent who ran the check on their phone and handed the child a tablet got NO
+           * plan card at all — the diagnostic's entire output existed only on the device that
+           * produced it.
+           *
+           * Derived rather than synced: the chapter sequence is already on the server and
+           * `progress` (right here, already fetched) says which chapters have been played, so the
+           * position is a function of data we hold. No second write path to disagree with the
+           * first. Monotonic — it can only move forward. Best-effort: a failure leaves the local
+           * pointer exactly as it was.
+           */
+          try {
+            const remote = await getActivePlanChapters(learner.id)
+            const played = progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string)
+            const plan = reconcilePlan(learner.id, remote, played)
+            if (plan) {
+              const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
+              setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
+                ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total }
+                : null)
+            }
+          } catch { /* the local pointer stands */ }
 
           // Continue-where-you-left-off, cross-device: progress is ordered by
           // last_played_at desc, so progress[0] is the most recently played
