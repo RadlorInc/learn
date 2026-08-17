@@ -77,7 +77,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> ⚡ **2026-08-17 (2nd session) — A PERFORMANCE PASS. 57 MB OF ART WAS REVALIDATED ON EVERY REQUEST, EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, AND EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME. NONE OF THEM CHANGED A SINGLE PIXEL, WHICH IS WHY THEY ALL SHIPPED — ⚠️ AND THE FOURTH FINDING, THE ONE I WAS SUREST OF, TURNED OUT TO BE DEAD CODE THAT NEVER RAN.** ⚡ SHIPPED — `main`@`a14ec20` (+1), prod serving **sw v111**. `tsc` 0 · **1089/1089 vitest** · `next build` 0 · **211/211 chapters × 3 frames, LOCAL AND AGAINST PRODUCTION** · eslint **132, unchanged**.
+> ⚡ **2026-08-17 (2nd session) — A PERFORMANCE PASS. 57 MB OF ART WAS REVALIDATED ON EVERY REQUEST, EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, AND EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME. NONE OF THEM CHANGED A SINGLE PIXEL, WHICH IS WHY THEY ALL SHIPPED — ⚠️ AND THE FOURTH FINDING, THE ONE I WAS SUREST OF, TURNED OUT TO BE DEAD CODE THAT NEVER RAN.** ⚡ SHIPPED — `main`@`a14ec20` (+1), prod serving **sw v111**. `tsc` 0 · **1089/1089 vitest** · `next build` 0 · **211/211 chapters × 3 frames LOCAL** (prod: 209 + 2 blocked by Vercel's WAF, both green on re-run — see ▶7) · eslint **132, unchanged**.
 >
 > **The asks:** a senior-performance-engineer pass → *"the things which you have flagged are fixed?"* → *"yes, do it"* (the Critter one) → *"commit it on main"* → *"yes push it"* → *"do this if it is important for future"* → *"what to do for this?"* → *"let everything scale"* → *"ab /game wala check karke batao kya karna hai"* → *"delete it and fix the handoff"*.
 >
@@ -195,6 +195,21 @@
 >    something to fade to. Design, not a defect, and at ~270 KB no longer worth touching.
 > 4. **The Vercel optimizer inheritance is documented, not gated** — it is Vercel-side and invisible
 >    to `headers()`. Re-measure with `curl -I` after any change to the `/assets` rule.
+> 7. ⚠️ **DO NOT RUN `test:chapters` AGAINST PRODUCTION — IT TRIPS VERCEL'S WAF, AND THE FAILURE
+>    LOOKS EXACTLY LIKE A BROKEN CHAPTER.** 211 navigations plus subresources from one IP, and at
+>    roughly the fortieth Vercel serves a JS challenge instead of the app (`403`,
+>    `x-vercel-mitigated: challenge`). Playwright cannot solve it, so the navigation dies as
+>    `net::ERR_ABORTED`. **Measured:** it hit at tests 41–42, those two passed on the other two
+>    frames minutes later and 6/6 on re-run in 2–3s, a deliberate 40-request burst reproduced it at
+>    request 38, and the block persisted past 20s across EVERY path including static assets — so
+>    **retries do not help, they fail slower.** ⚠️ **I called this "transient, the deploy-propagation
+>    window" twice, including in this file, on the strength of it having happened before. It is not
+>    transient.** The runbook now says run the sweep LOCALLY and give prod a SMOKE; if you do want
+>    the full sweep against prod, `playwright.config.ts` sends `x-vercel-protection-bypass` when
+>    `VERCEL_AUTOMATION_BYPASS_SECRET` is set (Vercel → Settings → Deployment Protection → Protection
+>    Bypass for Automation). Inert without it, verified on the wire both ways.
+>    ⚠️ **And the WAF is armed on production right now** — harmless for one child in a browser, worth
+>    knowing for a classroom behind one NAT IP.
 > 5. Everything from the previous session still stands: **`MONITORING_INGEST_URL` unset** is still the
 >    highest-value founder item, B1 attorney, `practice_complete` never yet observed in the DB.
 > 6. Of this session's faults, **the biggest was mine and it was a METHOD fault, not a code one**:
