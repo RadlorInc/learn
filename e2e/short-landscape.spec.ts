@@ -16,12 +16,21 @@ import { reachPractice, IGNORED_ERRORS } from './personas'
 //   • WALKTHROUGH — 15–16 shipped scenes that were CLIPPED, not scaled
 //   • PRACTICE    — where the instrument and its own commit button live
 //
-// ⚠️ COVERAGE LIMIT, stated rather than implied: only the FIRST scored question is
-// measured, and which question KIND that is depends on the generator's draw. A chapter
-// with five kinds therefore gets one of them measured per run, sampled differently each
-// time — visible in the 2026-07-26 run, where complexNumbers showed its compass at
-// 640×320 and its PartsBuilder at 1024×400 (and the PartsBuilder is the tighter of the
-// two). Repeat runs widen the sample; forcing every kind needs a per-chapter hook.
+// ⚠️⚠️ THIS SUITE USED TO BE A COIN FLIP, AND THAT IS WORSE THAN A GAP. Only the FIRST scored
+// question is measured and the question KIND comes from an unseeded `Math.random` in the
+// generator, so a chapter with five kinds measured a different one every run: complexNumbers
+// @ 640×320 failed 3 runs in 7 on a REAL defect (23×23 nudges under the 24px floor) and passed
+// the other 4. A gate that flips a coin gets re-run until it is green, which is exactly how a
+// live defect survives a green suite.
+//
+// `Math.random` is now SEEDED per test (see `seedRandom`), so a run is reproducible: the same
+// chapter at the same size draws the same question every time, and a failure can be reproduced
+// by anyone from the printed seed. This costs no runtime.
+//
+// Breadth is the separate axis and is bought with `E2E_SEED`, not with re-runs: the default is
+// fixed so CI is stable, and a nightly can sweep seeds to widen which kinds get measured. The
+// coverage limit itself is unchanged — one question per chapter per run — but it is now a KNOWN
+// question rather than an unknown one.
 const CHAPTERS = [
   'functionToolkit', 'quadraticAnalysis', 'polynomialFunctions', 'complexNumbers',
   'rationalFunctions', 'expLogFunctions', 'unitCircleTrig', 'trigGraphsIdentities',
@@ -46,6 +55,31 @@ const ALL_TEEN = [
 const SIZES = [
   { w: 640, h: 320 }, { w: 667, h: 375 }, { w: 740, h: 360 }, { w: 1024, h: 400 },
 ]
+
+/** Fixed unless overridden, so the default run is reproducible and a sweep is opt-in. */
+const SEED = Number(process.env.E2E_SEED ?? 20260817)
+
+/**
+ * Replace the page's `Math.random` with mulberry32 BEFORE any app code runs, so every generator
+ * draw — question kind, values, answer-choice shuffle — is deterministic for a given seed.
+ *
+ * A test-only instrument: `addInitScript` never touches the shipped bundle. Seeded per (chapter,
+ * size) so two chapters in one run do not draw the same sequence, which would quietly correlate
+ * their coverage.
+ */
+async function seedRandom(page: Page, salt: string) {
+  let h = SEED
+  for (const ch of salt) h = (Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0)
+  await page.addInitScript((a0: number) => {
+    let a = a0
+    Math.random = () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0
+      let t = Math.imul(a ^ (a >>> 15), 1 | a)
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    }
+  }, h)
+}
 
 // A finger wants ~44px (WCAG 2.5.5). Below MIN_TAP a control is not operable at all and
 // this FAILS; between the two it is tight and is only REPORTED — 15–16 shipped a
@@ -206,6 +240,7 @@ for (const chapter of CHAPTERS) {
       page.on('pageerror', (e) => errors.push(String(e)))
 
       await page.setViewportSize({ width: w, height: h })
+      await seedRandom(page, `${chapter}:${w}x${h}`)
       await page.goto(`/teen-preview?c=${chapter}`)
 
       const failures: string[] = []
@@ -267,6 +302,7 @@ for (const chapter of ALL_TEEN) {
       page.on('pageerror', (e) => errors.push(String(e)))
 
       await page.setViewportSize({ width: w, height: h })
+      await seedRandom(page, `${chapter}:${w}x${h}`)
       await page.goto(`/teen-preview?c=${chapter}`)
       // The sim is what we are measuring, so wait for it rather than a fixed beat.
       const ok = await page.locator('.mb-explore-fit svg, .mb-explore-fit canvas, .mb-explore-fit input')
