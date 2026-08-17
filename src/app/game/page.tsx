@@ -34,103 +34,10 @@ export default function GamePage() {
   const [ready,          setReady]          = useState(false)
   const [childName,      setChildName]      = useState(profile.childName)
 
-  // ── Fit-to-screen: scale the chapter as large as possible while still fitting
-  // the viewport, so it's BIG but never scrolls. Recomputes on resize / content
-  // change. MAX caps how large; it shrinks below 1 only on very short screens.
-  const fitRef = useRef<HTMLDivElement>(null)
   // Guards against a chapter firing onComplete twice (double-tap / re-render):
   // a second call would double-count XP, coins and stars both locally and via
   // sync. Reset when a new chapter opens.
   const completedRef = useRef(false)
-  const zoomRef = useRef(1)
-  const [zoom, setZoom] = useState(1)
-  // The chapter's themed background, painted across the whole stage so the color
-  // fills the screen even when the (centered) content is narrower/shorter than it.
-  const [stageBg, setStageBg] = useState<{ backgroundColor: string; backgroundImage: string }>({ backgroundColor: 'var(--bg-page)', backgroundImage: 'none' })
-  /**
-   * ⚠️⚠️ THIS COMPARAND MUST BE A REF, AND THE STATE VERSION RE-RENDERED THE WHOLE CHAPTER TREE
-   * ~7×/s FOR THE ENTIRE TIME A CHILD WAS IN A CHAPTER.
-   *
-   * `measure` closes over `stageBg` with `[]` deps, so it saw the INITIAL value for ever — and the
-   * initial value is the literal string `'var(--bg-page)'` while `getComputedStyle` always resolves
-   * to `rgb(252, 234, 182)`. Measured in the browser: those two can never be equal, so the guard was
-   * permanently true and `setStageBg` was handed a FRESH OBJECT on every tick. React only bails out
-   * on `Object.is`, so every tick committed a render of this page — and with no `React.memo` in the
-   * codebase and `props` rebuilt as an object literal each render, the whole chapter subtree
-   * re-rendered with it. Nothing looked wrong, which is why it survived: the paint is identical.
-   *
-   * A ref is read at call time, so it holds what was last WRITTEN rather than what was last
-   * rendered, and the comparison is against the real value.
-   */
-  const stageBgRef = useRef(stageBg)
-  useEffect(() => {
-    const MIN = 0.5, PAD = 0.985
-    const applyBg = (content: HTMLElement) => {
-      const cs = getComputedStyle(content)
-      const prev = stageBgRef.current
-      if (cs.backgroundColor === prev.backgroundColor && cs.backgroundImage === prev.backgroundImage) return
-      const next = { backgroundColor: cs.backgroundColor, backgroundImage: cs.backgroundImage }
-      stageBgRef.current = next
-      setStageBg(next)
-    }
-    function measure() {
-      const wrap = fitRef.current
-      const content = wrap?.firstElementChild as HTMLElement | null
-      if (!wrap || !content) return
-      // Lessons are full-height (nav pinned top, canvas centered, ScaleToFill grows
-      // the content) — they aren't zoom-scaled. Only practice chapters are scaled.
-      if (content.classList.contains('milo-lesson')) {
-        if (zoomRef.current !== 1) { zoomRef.current = 1; setZoom(1) }
-        applyBg(content)
-        return
-      }
-      const MAX = 1.45
-      // Rendered size (includes the current zoom). The relative step converges to
-      // "fit the viewport" in one tick regardless of how zoom affects measurement.
-      const r = content.getBoundingClientRect()
-      if (!r.height || !r.width) return
-      const cur = zoomRef.current || 1
-      const factor = Math.min((window.innerWidth * PAD) / r.width, (window.innerHeight * PAD) / r.height)
-      const next = Math.max(MIN, Math.min(MAX, cur * factor))
-      if (Math.abs(next - cur) > 0.01) { zoomRef.current = next; setZoom(next) }
-      // Mirror the chapter's background onto the full-screen stage.
-      applyBg(content)
-    }
-
-    /**
-     * ⚠️ EVENT-DRIVEN, NOT POLLED. This ran on `setInterval(measure, 150)`, and every tick forced a
-     * synchronous layout (`getBoundingClientRect`) plus a style recalc (`getComputedStyle`) — 6.7
-     * forced reflows a second, for the whole chapter, on the one page whose frame budget is spent on
-     * walk cycles. The interval's own comment gives its only reason: *"re-reads firstElementChild →
-     * handles round/phase swaps"*, which is exactly what a `MutationObserver` on `childList` reports,
-     * and a `ResizeObserver` covers the content growing under it. Both fire only when something has
-     * actually changed, so a settled chapter now costs nothing at all.
-     *
-     * The zoom feedback loop (measuring a subtree whose size the zoom changes) terminates on the
-     * same epsilon the poll relied on — `Math.abs(next - cur) > 0.01` is the fixpoint.
-     */
-    const wrap = fitRef.current
-    if (!wrap) return
-    const ro = new ResizeObserver(measure)
-    let watched: Element | null = null
-    const rewatch = () => {
-      const content = wrap.firstElementChild
-      if (content === watched) return
-      if (watched) { ro.unobserve(watched); attrs.disconnect() }
-      watched = content
-      // A chapter can re-theme its own root without swapping it (a phase changing its background),
-      // so the stage colour needs the child's own attribute changes too.
-      if (content) { ro.observe(content); attrs.observe(content, { attributes: true, attributeFilter: ['style', 'class'] }) }
-    }
-    const attrs = new MutationObserver(measure)
-    const kids = new MutationObserver(() => { rewatch(); measure() })
-    kids.observe(wrap, { childList: true })
-    rewatch()
-    measure()
-    window.addEventListener('resize', measure)
-    return () => { ro.disconnect(); attrs.disconnect(); kids.disconnect(); window.removeEventListener('resize', measure) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   useEffect(() => {
     const learner = getActiveLearner()
@@ -192,18 +99,17 @@ export default function GamePage() {
     <>
     {/* Full-screen stage: holds the background and clips so nothing scrolls. The
         chapter is centered-at-top and scaled by the fit controller. */}
-    <div className="kit-screen" style={{ backgroundColor: stageBg.backgroundColor, backgroundImage: stageBg.backgroundImage, position: 'fixed', inset: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-      <div ref={fitRef} className="game-zoom" style={{ width: 'min(100vw, 680px)', '--game-zoom': zoom } as React.CSSProperties & Record<'--game-zoom', number>}>
-        {/* GameTopbar is rendered inside each chapter component */}
-        {!chapterDone && playingChapter && (() => {
-          const Chapter = CHAPTER_COMPONENTS[playingChapter]
-          return Chapter ? (
-            <Suspense fallback={null}>
-              <Chapter {...props} />
-            </Suspense>
-          ) : null
-        })()}
-      </div>
+    <div className="kit-screen" style={{ background: 'var(--bg-page)', position: 'fixed', inset: 0, overflow: 'hidden' }}>
+      {/* Every chapter `createPortal`s itself to document.body, so nothing renders in flow here —
+          this element is only the mount point and the backdrop behind the portal. */}
+      {!chapterDone && playingChapter && (() => {
+        const Chapter = CHAPTER_COMPONENTS[playingChapter]
+        return Chapter ? (
+          <Suspense fallback={null}>
+            <Chapter {...props} />
+          </Suspense>
+        ) : null
+      })()}
     </div>
     {/* Modal + pointer live OUTSIDE the zoom wrapper so they stay full-screen and
         their fixed coords aren't double-scaled. The counting story renders its own

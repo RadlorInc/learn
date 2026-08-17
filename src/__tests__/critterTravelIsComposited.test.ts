@@ -13,11 +13,12 @@ import { join } from 'node:path'
  *     left/top/width/height   195 layout passes, 59.1 ms of layout
  *     transform                 4 layout passes,  1.7 ms
  *
- * ⚠️ AND THE OBVIOUS REPLACEMENT IS WRONG. `translate(Xvw, Yvh)` reads as the same thing as
- * `left: X%` and is not: `/game` wraps every chapter in `.game-zoom { zoom: … }`, a fixed element's
- * percentage offsets are scaled by that zoom, and viewport units are not. Measured, the two forms
- * diverge by up to 576px at zoom 1.45. The shipped form keeps the position as a PERCENTAGE of a
- * stage that is itself the size of the containing block — so it means the same thing at every zoom.
+ * ⚠️ AND THE OBVIOUS REPLACEMENT IS WRONG UNDER CSS `zoom`. `translate(Xvw, Yvh)` reads as the same
+ * thing as `left: X%` and is not: a fixed element's percentage offsets are scaled by an ancestor's
+ * zoom and viewport units are not — measured, the two diverge by up to 576px at zoom 1.45. `/game`
+ * DID zoom every chapter via `.game-zoom`; that wrapper has since been deleted as dead code, so
+ * nothing zooms them today. The percentage form is still what ships and still what this asserts:
+ * it costs nothing and is the one that survives a zoomed ancestor coming back.
  *
  * ⚠️ AND THE BASE SIZE IS `w / scale`, NOT `size`. `w` and `h` are each rounded, so re-deriving
  * them through a different rounding chain moved the visible creature by up to 2.2px and its strip

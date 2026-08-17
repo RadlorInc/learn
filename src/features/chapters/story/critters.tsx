@@ -546,12 +546,14 @@ export function Critter({ src, facesLeft, at, size, move, z, durMs, cycleScale =
    * cheapest frame-rate win available in the 3–11 band, because `Critter` is the one component
    * every chapter in it draws several of at once.
    *
-   * ⚠️ AND `translate(Xvw, Yvh)` IS NOT A VALID SUBSTITUTE FOR `left: X%`, WHICH IS THE TRAP THIS
-   * SHAPE EXISTS TO AVOID. `/game` wraps every chapter in `.game-zoom { zoom: … }`, and a fixed
-   * element's percentage offsets are scaled by that zoom while `vw`/`vh` are not — measured, they
-   * diverge by up to 576px at zoom 1.45. So the position stays a PERCENTAGE, of a stage that is
-   * itself the size of the containing block, whatever the zoom has made that. Then
-   * `translate(X%, Y%)` on a full-size mover is `left: X%` exactly, at every zoom.
+   * ⚠️ AND THE POSITION STAYS A PERCENTAGE, NOT `translate(Xvw, Yvh)`. The two read as equivalent
+   * and are not the moment any ancestor carries CSS `zoom`: a fixed element's percentage offsets
+   * are scaled by the zoom and viewport units are not — measured at the time, they diverged by up
+   * to 576px at zoom 1.45. `/game` DID wrap every chapter in `.game-zoom { zoom: … }`; that wrapper
+   * has since been deleted (it was dead — every chapter `createPortal`s to document.body, so it
+   * never had a child to scale), so nothing zooms these today. The percentage form is kept anyway
+   * because it costs nothing and is the one that stays correct if a zoomed ancestor ever returns:
+   * `translate(X%, Y%)` on a mover the size of the containing block IS `left: X%`, at any zoom.
    *
    * Proven, not asserted: 2,772 rendered rects (sprite · sheet cell · contact shadow · number sign)
    * across 63 creature/spot/size combinations × 4 viewports × 3 zoom levels, before and after —
