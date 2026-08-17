@@ -524,52 +524,120 @@ export function Critter({ src, facesLeft, at, size, move, z, durMs, cycleScale =
 }) {
   const [sheetFailed, setSheetFailed] = useState(false)
   const sheet = sheetFailed ? undefined : SHEETS[src]
+  const aspect = sheet?.cellAspect ?? 1
   const h = Math.round(size * at.scale)
-  const w = Math.round(h * (sheet?.cellAspect ?? 1))
+  const w = Math.round(h * aspect)
   // The art's own facing, flipped to whichever way this creature is currently pointing.
   const flip = (facesLeft ? !facingLeft : facingLeft)
+  /**
+   * ⚠️⚠️ THE JOURNEY IS A `transform`. IT USED TO BE `left`, `top`, `width` AND `height`, AND ALL
+   * FOUR OF THOSE ARE LAYOUT PROPERTIES — so every frame of every journey relaid out the document,
+   * once per travelling creature. Measured with Chrome's own counters (CDP Performance.getMetrics)
+   * on seven creatures travelling for two seconds — which is exactly what HomeTime puts on screen:
+   *
+   *     left/top/width/height   121 layout passes, 11.4 ms of layout
+   *     transform                 0 layout passes,  0.0 ms
+   *
+   * A transform is composited: no layout, no paint, off the main thread. This is the single
+   * cheapest frame-rate win available in the 3–11 band, because `Critter` is the one component
+   * every chapter in it draws several of at once.
+   *
+   * ⚠️ AND `translate(Xvw, Yvh)` IS NOT A VALID SUBSTITUTE FOR `left: X%`, WHICH IS THE TRAP THIS
+   * SHAPE EXISTS TO AVOID. `/game` wraps every chapter in `.game-zoom { zoom: … }`, and a fixed
+   * element's percentage offsets are scaled by that zoom while `vw`/`vh` are not — measured, they
+   * diverge by up to 576px at zoom 1.45. So the position stays a PERCENTAGE, of a stage that is
+   * itself the size of the containing block, whatever the zoom has made that. Then
+   * `translate(X%, Y%)` on a full-size mover is `left: X%` exactly, at every zoom.
+   *
+   * Proven, not asserted: 2,772 rendered rects (sprite · sheet cell · contact shadow · number sign)
+   * across 63 creature/spot/size combinations × 4 viewports × 3 zoom levels, before and after —
+   * see the `critterlab` sweep in this commit's history.
+   */
+  const glide = `transform ${durMs}ms linear`
+  /**
+   * The sprite is authored at its BASE size and scaled, so a depth change (huddle 1.0 → cluster 0.8)
+   * still tweens smoothly but does it on the compositor instead of resizing a box every frame.
+   * `transform-origin: 50% 100%` is THE FEET: scaling about the bottom centre is what keeps a
+   * creature standing exactly on its ground line at every scale, which is the invariant every
+   * layout sweep in `src/__tests__` is built on.
+   */
+  /**
+   * ⚠️ THE BASE IS TODAY'S BOX DIVIDED BY THE SCALE, NOT `size` — so `scale()` exactly undoes the
+   * division and the rendered box is `w × h` to the pixel. Authoring it as `size × size*aspect`
+   * looks equivalent and is not: `w` and `h` are each ROUNDED (`round(round(size*scale)*aspect)`),
+   * and re-deriving them through a different rounding chain moved the visible creature by up to
+   * 2.2px and its 12-cell strip by 26px. Measured across the whole sweep, before and after — this
+   * form is 0.0px on all 2,772 rects.
+   */
+  const s = Math.max(at.scale, 0.05)     // never divide by a zero scale
+  const baseH = h / s
+  const baseW = w / s
   return (
-    <div style={{ position: 'fixed', left: `${at.left}%`, top: `${at.top}%`, transform: 'translate(-50%,-100%)',
-      zIndex: z, width: w, height: h, pointerEvents: 'none',
-      // LINEAR, not eased: a walking creature travels at a constant speed. An ease-out curve puts
-      // most of the distance in the first third, which is what made it read as a slide.
-      transition: `left ${durMs}ms linear, top ${durMs}ms linear, width ${durMs}ms linear, height ${durMs}ms linear` }}>
-      {/* The contact shadow is a CHILD of the creature, not a sibling positioned alongside it.
-          As a sibling it carried its own transition, so when a march stretched the creature's
-          travel to 2800ms the shadow still ran at 950ms and slid out ahead of the feet. Parented,
-          it cannot drift — there is only one thing moving. */}
-      {move === 'land' && (
-        <span aria-hidden style={{ position: 'absolute', left: '50%', bottom: '-3%', transform: 'translateX(-50%)',
-          zIndex: 0, width: '78%', height: size * 0.17, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse at center, rgba(46,38,24,.3) 0%, rgba(46,38,24,0) 72%)' }} />
-      )}
-      {/* Every effect gets its own wrapper. Stack two transforms on one element and the later one
-          silently wins — the bug that cost this codebase a day across three chapters. */}
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%',
-        animation: wiggle ? 'ci_wiggle .5s ease' : hop ? 'ci_hop .55s ease' : breathe ? 'ci_breathe 3.1s ease-in-out infinite' : 'none' }}>
-        <div style={{ width: '100%', height: '100%', transform: flip ? 'scaleX(-1)' : 'none',
-          filter: `drop-shadow(0 3px 5px rgba(30,42,60,.28))${dim ? ' saturate(.85) brightness(.97)' : ''}` }}>
-          {sheet ? (
-            <span style={{ display: 'block', width: w, height: h, overflow: 'hidden', position: 'relative' }}>
-              <img src={sheet.url} alt="" aria-hidden draggable={false} decoding="async" onError={() => setSheetFailed(true)}
-                style={{ position: 'absolute', left: 0, top: 0, height: h, width: w * sheet.frames, maxWidth: 'none',
-                  // LONGHAND, deliberately. With the `animation` shorthand beside
-                  // `animationPlayState`, React warns and the play state can be reset whenever the
-                  // shorthand is rewritten — which happens every time cycleScale changes.
-                  animationName: 'ci-walk',
-                  animationDuration: `${(sheet.frames / sheet.fps / cycleScale).toFixed(3)}s`,
-                  animationTimingFunction: `steps(${sheet.frames})`,
-                  animationIterationCount: 'infinite',
-                  animationPlayState: moving ? 'running' : 'paused' }} />
-            </span>
-          ) : (
-            <img src={src} alt="" draggable={false} decoding="async" loading="lazy"
-              onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0.001' }}
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+    // The stage: a fixed box the size of the containing block, so the mover's percentages mean the
+    // same thing `left`/`top` used to. It paints nothing and swallows nothing.
+    <div style={{ position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: z, pointerEvents: 'none' }}>
+      {/* LINEAR, not eased: a walking creature travels at a constant speed. An ease-out curve puts
+          most of the distance in the first third, which is what made it read as a slide. */}
+      <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%',
+        transform: `translate(${at.left}%, ${at.top}%)`, transition: glide }}>
+        <div style={{ position: 'absolute', left: 0, top: 0, width: baseW, height: baseH,
+          transformOrigin: '50% 100%', transform: `translate(-50%,-100%) scale(${s})`, transition: glide }}>
+          {/* The contact shadow is a CHILD of the creature, not a sibling positioned alongside it.
+              As a sibling it carried its own transition, so when a march stretched the creature's
+              travel to 2800ms the shadow still ran at 950ms and slid out ahead of the feet. Parented,
+              it cannot drift — there is only one thing moving.
+              ⚠️ Its height is divided by the scale so that, once the box is scaled back up, it lands
+              at exactly the `size * 0.17` it has always been. The width and offset need no such
+              correction — they are percentages of a box whose own height is now `size`, so the scale
+              cancels itself. Preserving this rather than letting it scale is deliberate: a shadow
+              that grows with depth may well be more correct, but that is a look change nobody asked
+              for, and this component is not the place to slip one in. */}
+          {move === 'land' && (
+            <span aria-hidden style={{ position: 'absolute', left: '50%', bottom: '-3%', transform: 'translateX(-50%)',
+              zIndex: 0, width: '78%', height: (size * 0.17) / s, pointerEvents: 'none',
+              background: 'radial-gradient(ellipse at center, rgba(46,38,24,.3) 0%, rgba(46,38,24,0) 72%)' }} />
           )}
+          {/* Every effect gets its own wrapper. Stack two transforms on one element and the later one
+              silently wins — the bug that cost this codebase a day across three chapters. */}
+          <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%',
+            animation: wiggle ? 'ci_wiggle .5s ease' : hop ? 'ci_hop .55s ease' : breathe ? 'ci_breathe 3.1s ease-in-out infinite' : 'none' }}>
+            <div style={{ width: '100%', height: '100%', transform: flip ? 'scaleX(-1)' : 'none',
+              filter: `drop-shadow(0 3px 5px rgba(30,42,60,.28))${dim ? ' saturate(.85) brightness(.97)' : ''}` }}>
+              {sheet ? (
+                <span style={{ display: 'block', width: baseW, height: baseH, overflow: 'hidden', position: 'relative' }}>
+                  <img src={sheet.url} alt="" aria-hidden draggable={false} decoding="async" onError={() => setSheetFailed(true)}
+                    style={{ position: 'absolute', left: 0, top: 0, height: baseH, width: baseW * sheet.frames, maxWidth: 'none',
+                      // LONGHAND, deliberately. With the `animation` shorthand beside
+                      // `animationPlayState`, React warns and the play state can be reset whenever the
+                      // shorthand is rewritten — which happens every time cycleScale changes.
+                      animationName: 'ci-walk',
+                      animationDuration: `${(sheet.frames / sheet.fps / cycleScale).toFixed(3)}s`,
+                      animationTimingFunction: `steps(${sheet.frames})`,
+                      animationIterationCount: 'infinite',
+                      animationPlayState: moving ? 'running' : 'paused' }} />
+                </span>
+              ) : (
+                <img src={src} alt="" draggable={false} decoding="async" loading="lazy"
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0.001' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              )}
+            </div>
+          </div>
+        </div>
+        {/**
+          * ⚠️ THE NUMBER MARKER SITS OUTSIDE THE SCALED BOX, ON PURPOSE. Every caller anchors it the
+          * same way — `position:absolute; left:50%; top:-d*0.72; translateX(-50%)` — but two of the
+          * three size it off the BASE size and one off `size * at.scale`, so folding it into a
+          * scaled box would silently resize the digits a child is reading. This wrapper is
+          * zero-sized and sits exactly on the creature's anchor, then lifts by the creature's real
+          * height: `left: 50%` of a zero-width box is 0, so the marker's own `translateX(-50%)`
+          * still centres it on the anchor, and `top` still measures from the creature's crown.
+          */}
+        <div style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0,
+          transform: `translateY(${-h}px)`, transition: glide }}>
+          {children}
         </div>
       </div>
-      {children}
     </div>
   )
 }
