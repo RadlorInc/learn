@@ -12,13 +12,13 @@
  * add @sentry/nextjs and swap the fetch for Sentry.captureException — the seam is here.
  */
 import type { Instrumentation } from 'next'
-
-const INGEST_URL = process.env.MONITORING_INGEST_URL
+import { sinkError } from '@/infra/errorSink'
 
 export const onRequestError: Instrumentation.onRequestError = async (err, request, context) => {
   const error = err as { message?: string; digest?: string; stack?: string }
   const record = {
     at: new Date().toISOString(),
+    source: 'server' as const,
     message: error?.message ?? 'unknown error',
     digest: error?.digest,
     method: request?.method,
@@ -28,19 +28,5 @@ export const onRequestError: Instrumentation.onRequestError = async (err, reques
     stack: error?.stack?.split('\n').slice(0, 8).join('\n'),
   }
 
-  // Always visible in Vercel logs.
-  console.error('[milo.error]', JSON.stringify(record))
-
-  // Forward to an external sink if one is configured. Best-effort; never throw from here.
-  if (INGEST_URL) {
-    try {
-      await fetch(INGEST_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(record),
-      })
-    } catch {
-      /* monitoring must never break request handling */
-    }
-  }
+  await sinkError(record)
 }

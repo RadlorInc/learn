@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
 import { callerKey, overLimit } from '../_rateLimit'
+import { sinkError } from '@/infra/errorSink'
 
 // Client-error sink. The browser ErrorBoundary POSTs here so client-side crashes (which
 // instrumentation.ts's onRequestError does NOT see — that's server-only) reach the same place.
-// Forwards to MONITORING_INGEST_URL (Sentry/Logtail/etc.) when configured; always lands in
-// Vercel logs otherwise. Payload is bounded + field-picked so this public endpoint can't be
-// used to amplify arbitrary data into the log/sink.
+// Every sink lives in `infra/errorSink` so this route and the server's onRequestError cannot
+// drift apart: Vercel logs always, the `error_events` table when a service-role key is set, and
+// MONITORING_INGEST_URL when one is configured. Payload is bounded + field-picked so this public
+// endpoint can't be used to amplify arbitrary data into any of them.
 export const dynamic = 'force-dynamic'
 
-const INGEST_URL = process.env.MONITORING_INGEST_URL
 const cap = (s: unknown, n: number) => (typeof s === 'string' ? s.slice(0, n) : undefined)
 
 /** ⚠️ THIS ONE COSTS MONEY THE DAY MONITORING IS WIRED. Unlimited, it forwards every POST to
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>
     const record = {
       at: new Date().toISOString(),
-      source: 'client',
+      source: 'client' as const,
       message: cap(body.message, 500) ?? 'unknown client error',
       stack: cap(body.stack, 2000),
       componentStack: cap(body.componentStack, 2000),
@@ -37,14 +38,7 @@ export async function POST(req: Request) {
       // account in one hop. Capped like every other field so this public endpoint stays bounded.
       learnerId: cap(body.learnerId, 64),
     }
-    console.error('[milo.client-error]', JSON.stringify(record))
-    if (INGEST_URL) {
-      await fetch(INGEST_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(record),
-      }).catch(() => {})
-    }
+    await sinkError(record)
   } catch {
     /* reporting must never fail the caller */
   }
