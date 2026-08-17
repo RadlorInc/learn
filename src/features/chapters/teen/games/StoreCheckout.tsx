@@ -21,6 +21,7 @@ import { motion, useMotionValue, useTransform, animate, useReducedMotion, type M
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, PaintGrid, Nudge, CommitBtn, numChoices, reduce, tidy, money } from './parts/gameKit'
 import { pick } from '@/core/rand'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const P: Palette = {
   nightTop: '#10212e', nightBot: '#183245',
@@ -190,7 +191,7 @@ function StoreCheckoutScene({ palette: P, task, value, stepIndex, frameCount, en
   return (
     <div style={{ position: 'relative', width: 'clamp(248px, 44vw, 372px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(14px,3vw,22px)', gap: 'clamp(12px,2.4vh,20px)' }}>
       {/* illustrated store-checkout backdrop + a soft scrim so the grid/tag read clearly */}
-      <img src={`${ART}/shop_checkout_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <SceneBg src={`${ART}/shop_checkout_bg.png`} priority />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(6,20,16,.42), rgba(6,20,16,.66))' }} />
 
       <style>{'@keyframes scPop{0%{opacity:0;transform:translateY(6px) scale(.8)}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes scStamp{0%{opacity:0;transform:rotate(-14deg) scale(1.5)}60%{opacity:1;transform:rotate(-14deg) scale(.92)}100%{opacity:1;transform:rotate(-14deg) scale(1)}}@keyframes scGlow{0%,100%{opacity:.5}50%{opacity:1}}'}</style>

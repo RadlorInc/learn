@@ -37,6 +37,7 @@ import { RotateGate, useNeedsRotate } from './RotateGate'
 import { Hop, SheetCell, Arrive, CRITTER_CSS, hopOf, inFlowJourney } from './critters'
 import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const MILO = '/assets/characters/milo_hop_side.png'
 
@@ -839,9 +840,8 @@ export default function HopAlong({ onFinish, onExit }: {
       {/* Painted scene, crossfading between the three settings. */}
       <div style={{ position: 'absolute', inset: 0, background: '#dcecdb' }}>
         {Object.values(SETTINGS).map(s => (
-          <img key={s.id} src={s.bg} alt="" draggable={false} decoding="async"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-              opacity: s.id === bg.id ? 1 : 0, transition: 'opacity .6s ease' }} />
+          <SceneBg key={s.id} src={s.bg} priority={s.id === bg.id}
+            style={{ opacity: s.id === bg.id ? 1 : 0, transition: 'opacity .6s ease' }} />
         ))}
       </div>
 

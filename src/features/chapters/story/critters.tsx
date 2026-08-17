@@ -19,6 +19,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { SHEETS } from './canvas/sheets'
 import { shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 export const STRIDE = 0.85                      // how far one cycle carries a body, in body heights
 // 3600, not the old 2400. The ceiling is what decides how hard a creature has to hurry: the cycle
@@ -93,11 +94,14 @@ export const aspectOf = (src: string) => SHEETS[src]?.cellAspect ?? 1
 export function Background({ scene, scenes }: { scene: string; scenes: string[] }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#9ccf7e' }}>
+      {/* ⚠️ EVERY SCENE IN THE RUN IS MOUNTED AT ONCE so the cross-fade has something to fade TO —
+          which is three 250–580 KB backdrops on a chapter that rotates three. Through `SceneBg` they are
+          AVIF at the displayed width instead of full-size PNG (measured: 583 KB → 108 KB at w=1280),
+          and only the one on screen is fetched eagerly. */}
       {scenes.map(s => (
-        <img key={s} src={s} alt="" draggable={false} decoding="async"
+        <SceneBg key={s} src={s} priority={s === scene}
           onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-            opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }} />
+          style={{ opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }} />
       ))}
     </div>
   )

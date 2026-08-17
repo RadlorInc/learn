@@ -17,6 +17,7 @@ import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, LineSetter, numChoices, type Line } from './parts/gameKit'
 import { shuffle, pick } from '@/core/rand'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const P: Palette = {
   nightTop: '#0d2230', nightBot: '#123444',
@@ -305,7 +306,7 @@ function WaterTankScene({ palette: P, value, stepIndex, frameCount, ended }: {
       <style>{'@keyframes wtDrip{0%{transform:translateY(-2px) scaleY(.7);opacity:.3}60%{opacity:1}100%{transform:translateY(10px) scaleY(1);opacity:0}}@keyframes wtRipple{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}@keyframes wtPop{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}@keyframes wtGlow{0%,100%{box-shadow:0 0 0 rgba(95,224,176,0)}50%{box-shadow:0 0 22px rgba(95,224,176,.65)}}'}</style>
 
       {/* illustrated pump-room backdrop + scrim so the tank reads clearly */}
-      <img src={`${ART}/tank_pump_room_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <SceneBg src={`${ART}/tank_pump_room_bg.png`} priority />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(10,26,40,0.30), rgba(10,26,40,0.60))' }} />
 
       {/* inflow tap (illustrated faucet) + falling drip */}

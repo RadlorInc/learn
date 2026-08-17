@@ -26,6 +26,7 @@ import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { rint, shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
@@ -106,9 +107,7 @@ function Background({ scene, scenes }: { scene: Scene; scenes: Scene[] }) {
       {scenes.map(s => (
         <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: SCENE[s].bg.grad }} />
-          <img src={SCENE[s].bg.img} alt="" draggable={false} decoding="async"
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <SceneBg src={SCENE[s].bg.img} priority={s === scene} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
       ))}
     </div>

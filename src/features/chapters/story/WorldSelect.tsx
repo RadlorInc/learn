@@ -10,6 +10,7 @@
 import React from 'react'
 import { speak, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { TintedSprite } from './TintedSprite'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 export interface PickWorld { id: string; label: string; emoji: string; bgImage?: string; itemImage?: string; itemTint?: string }
 
@@ -52,8 +53,10 @@ export default function WorldSelect({ title = 'Where shall we go today?', worlds
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 12px 0 rgba(61,37,22,.18)' }}
             onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 8px 0 rgba(61,37,22,.18)' }}>
             <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', background: '#cfe8df' }}>
-              {world.bgImage && <img src={world.bgImage} alt="" draggable={false} decoding="async" loading="lazy" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
+              {/* A card thumbnail, not a backdrop — `sizes` says so, or the optimizer buys a
+                  full-viewport width for a tile that is never more than ~360 CSS px wide. */}
+              {world.bgImage && <SceneBg src={world.bgImage} sizes="(max-width: 700px) 90vw, 360px"
+                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />}
               {/* a REAL item sprite from the world (not an emoji); emoji only if no sprite is given */}
               {world.itemImage
                 ? <ItemBadge src={world.itemImage} emoji={world.emoji} tint={world.itemTint} />

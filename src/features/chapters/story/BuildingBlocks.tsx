@@ -71,6 +71,7 @@ import {
 } from './yard'
 import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
 const MILO = '/assets/characters/milo_side.png'
@@ -747,8 +748,7 @@ export default function BuildingBlocks({ onFinish, onExit }: {
 
       {RUN.map((s, i) => (
         <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === active ? 1 : 0, transition: 'opacity .6s ease' }}>
-          <img src={BG(s.scene)} alt="" draggable={false} decoding="async"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <SceneBg src={BG(s.scene)} priority={i === active} />
         </div>
       ))}
 

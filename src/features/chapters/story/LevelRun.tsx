@@ -86,6 +86,7 @@ import { slideIndex, snapIndex, reachSpan } from '@/infra/ar/slide'
 import { SWEEP_MAX_Y } from '@/infra/ar/sweep'
 import { GotIt, ThePlan, StepBoard, CHALK_CSS, stepBoardRect } from './chalkboard'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 // ─── The level: ten runs ────────────────────────────────────────────────────────────────
 /**
@@ -1160,12 +1161,9 @@ const LevelPlay: React.FC<{ data: LvRound; mode: Mode; onComplete: (correct: boo
       {!onCam ? (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10, overflow: 'hidden' }}>
           {[CAVERN, SKY, MEADOW].map(s => (
-            <img key={s} src={s} alt="" draggable={false} decoding="async"
+            <SceneBg key={s} src={s} priority={s === data.site.scene}
               onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }}
-              style={{
-                position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                opacity: s === data.site.scene ? 1 : 0, transition: 'opacity .6s ease',
-              }} />
+              style={{ opacity: s === data.site.scene ? 1 : 0, transition: 'opacity .6s ease' }} />
           ))}
         </div>
       ) : (
@@ -1458,9 +1456,7 @@ const LevelExplain: React.FC<{ data: LvRound; onDone: () => void; onSkip?: () =>
   return (
     <>
       <div style={{ position: 'fixed', inset: 0, zIndex: 10, overflow: 'hidden' }}>
-        <img src={data.site.scene} alt="" draggable={false} decoding="async"
-          onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <SceneBg src={data.site.scene} priority onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }} />
       </div>
       {checks.map((v, i) => (
         <CheckPost key={`${legShown}:${v}`} value={v} x={L.checkX(i)} pathPx={L.pathPx} h={L.postH} font={L.boardFont}

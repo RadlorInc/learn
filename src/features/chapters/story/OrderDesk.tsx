@@ -77,6 +77,7 @@ import {
   isShort, stepWindow, stepBoardRect,
 } from './chalkboard'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 // ─── Numbers in words ───────────────────────────────────────────────────────────────────
 const ONES_W = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
@@ -1149,8 +1150,7 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
             mounted behind this by the shell, and painting the yard over it would simply hide it. */}
         {!onCam && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 10, overflow: 'hidden' }}>
-            <img src={data.yard.scene} alt="" draggable={false} decoding="async"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            <SceneBg src={data.yard.scene} priority />
           </div>
         )}
 
@@ -1424,8 +1424,7 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void; onSkip?
   return (
     <>
       <div style={{ position: 'fixed', inset: 0, zIndex: 10, overflow: 'hidden' }}>
-        <img src={data.yard.scene} alt="" draggable={false} decoding="async"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <SceneBg src={data.yard.scene} priority />
       </div>
       {/* the walkthrough always SHOWS what it is working from — it is teaching, not measuring */}
       <Docket text={numWords(saidAmount(data))} top={L.docketTop} vw={vw} />

@@ -18,6 +18,7 @@ import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, VThermo, signed, glideNumber } from './parts/gameKit'
 import { shuffle, pick } from '@/core/rand'
 import { disp } from '@/core/fmt'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const P: Palette = {
   nightTop: '#0d2a1e', nightBot: '#123d2c',
@@ -175,7 +176,7 @@ function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
       <style>{'@keyframes baZeroFlash{0%,100%{opacity:.55}50%{opacity:1}}@keyframes baBob{0%,100%{transform:translateY(-1px)}50%{transform:translateY(4px)}}@keyframes baPop{0%{opacity:0;transform:translateX(-50%) scale(.7)}100%{opacity:1;transform:translateX(-50%) scale(1)}}'}</style>
 
       {/* illustrated bank-vault backdrop + a soft scrim so the meter reads clearly */}
-      <img src={`${ART}/bank_scene_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <SceneBg src={`${ART}/bank_scene_bg.png`} priority />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(9,30,22,0.28), rgba(9,30,22,0.58))' }} />
 
       {/* the balance column — coordinate space for everything below */}
@@ -186,12 +187,12 @@ function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
 
         {/* CREDIT fill — a gold coin stack, revealed from the zero line UP to the balance */}
         <motion.div style={{ position: 'absolute', left: '9%', right: '9%', top: `${balPct(TOP_BAL)}%`, height: `${zeroPct - balPct(TOP_BAL)}%`, overflow: 'hidden', clipPath: creditClip }}>
-          <img src={`${ART}/bank_coin_column.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'bottom', filter: resultPhase ? `drop-shadow(0 0 8px ${P.mint})` : undefined }} />
+          <SceneBg src={`${ART}/bank_coin_column.png`} priority style={{ objectPosition: 'bottom', filter: resultPhase ? `drop-shadow(0 0 8px ${P.mint})` : undefined }} />
         </motion.div>
 
         {/* DEBT fill — a red IOU stack, revealed from the zero line DOWN to the balance */}
         <motion.div style={{ position: 'absolute', left: '9%', right: '9%', top: `${zeroPct}%`, height: `${balPct(BOT_BAL) - zeroPct}%`, overflow: 'hidden', clipPath: debtClip }}>
-          <img src={`${ART}/bank_debt_column.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', filter: resultPhase ? `drop-shadow(0 0 8px ${P.coral})` : undefined }} />
+          <SceneBg src={`${ART}/bank_debt_column.png`} priority style={{ objectPosition: 'top', filter: resultPhase ? `drop-shadow(0 0 8px ${P.coral})` : undefined }} />
         </motion.div>
 
         {/* dollar marks + left-edge labels */}

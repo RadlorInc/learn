@@ -33,6 +33,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney, aspectOf } from './critters'
 import { rint, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -290,9 +291,7 @@ function Background({ bg, dark }: { bg: Bg; dark?: boolean }) {
       {ALL_BGS.map(b => (
         <div key={b.img} style={{ position: 'absolute', inset: 0, opacity: b === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
-          <img src={b.img} alt="" draggable={false} decoding="async"
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <SceneBg src={b.img} priority={b === bg} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
       ))}
     </div>

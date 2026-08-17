@@ -33,6 +33,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { SHEETS } from './canvas/sheets'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { rint, shuffle } from '@/core/rand'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const SPEAK_LOCK_MS = 600
 const LOOKALIKE: Record<number, number> = { 6: 9, 9: 6, 7: 1, 1: 7, 3: 8, 8: 3, 5: 6, 2: 7 }
@@ -89,9 +90,7 @@ function Background({ scene, scenes, dusk }: { scene: string; scenes: string[]; 
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#cfe3d2' }}>
       {scenes.map(s => (
         <div key={s} style={{ position: 'absolute', inset: 0, opacity: s === scene ? 1 : 0, transition: 'opacity .6s ease' }}>
-          <img src={s} alt="" draggable={false} decoding="async"
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <SceneBg src={s} priority={s === scene} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
       ))}
       {dusk && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(30,26,66,.30), rgba(20,16,48,.52))' }} />}

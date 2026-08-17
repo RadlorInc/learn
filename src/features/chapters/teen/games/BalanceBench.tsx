@@ -17,6 +17,7 @@ import { motion, useMotionValue, useTransform, animate, useReducedMotion, type M
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, BalanceBeam, Nudge, CommitBtn, numChoices, glideNumber } from './parts/gameKit'
 import { pick } from '@/core/rand'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const P: Palette = {
   nightTop: '#101d24', nightBot: '#152a33',
@@ -266,7 +267,7 @@ function BaggageScaleScene({ palette: P, value: rawValue, stepIndex, frameCount,
       <style>{'@keyframes bsPop{0%{opacity:0;transform:translate(-50%,6px)}100%{opacity:1;transform:translate(-50%,0)}}@keyframes bsBob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}@keyframes bsGlow{0%,100%{opacity:.5}50%{opacity:1}}'}</style>
 
       {/* illustrated airport check-in backdrop + a soft dark scrim so the scale reads clearly */}
-      <img src={`${ART}/bag_checkin_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <SceneBg src={`${ART}/bag_checkin_bg.png`} priority />
       <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}dd)` }} />
 
       {/* equation banner across the top */}
@@ -430,7 +431,7 @@ function RayScene({ palette: P, task, value, stepIndex, frameCount, ended }: {
   const col = resultPhase ? P.mint : P.gold
   return (
     <div style={{ position: 'relative', width: 'clamp(240px, 44vw, 372px)', height: 'clamp(300px, 46vh, 440px)', borderRadius: 16, background: P.nightTop, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(16px,3.4vh,30px)', padding: 'clamp(16px,3vw,26px)' }}>
-      <img src={`${ART}/bag_checkin_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <SceneBg src={`${ART}/bag_checkin_bg.png`} priority />
       <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}dd)` }} />
       <div style={{ position: 'relative', zIndex: 1, padding: '4px 16px', borderRadius: 999, background: P.glass, border: `1px solid ${P.glassBorder}`, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(15px,2vw,20px)', color: resultPhase ? P.mint : P.cream }}>{task.badge}</div>
       <div style={{ position: 'relative', zIndex: 1, width: '86%' }}><RayViz P={P} min={task.min} max={task.max} sol={sol} col={col} /></div>

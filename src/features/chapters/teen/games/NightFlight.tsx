@@ -13,6 +13,7 @@ import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, PlotGrid, type XY } from './parts/gameKit'
 import { disp } from '@/core/fmt'
 import { pick } from '@/core/rand'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const P: Palette = {
   nightTop: '#0d1626', nightBot: '#121f33',
@@ -187,7 +188,7 @@ function DeliveryDroneScene({ palette: P, task, value, stepIndex, frameCount, en
       <style>{'@keyframes nfHover{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 3px))}}@keyframes nfPin{0%{opacity:0;transform:translate(-50%,-88%) scale(.6)}100%{opacity:1;transform:translate(-50%,-100%) scale(1)}}@keyframes nfPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}@keyframes nfPulse{0%,100%{opacity:.5}50%{opacity:1}}'}</style>
 
       {/* illustrated aerial-map backdrop — very low opacity so the grid stays readable on top */}
-      <img src={`${ART}/drone_aerial_map.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.14, pointerEvents: 'none' }} />
+      <SceneBg src={`${ART}/drone_aerial_map.png`} priority style={{ opacity: 0.14, pointerEvents: 'none' }} />
 
       {/* the plot — the coordinate space for everything below (inset square) */}
       <div style={{ position: 'absolute', top: '9%', left: '11%', right: '5%', bottom: '9%' }}>

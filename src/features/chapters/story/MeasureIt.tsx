@@ -42,6 +42,7 @@ import WorldSelect from './WorldSelect'
 import { TintedSprite } from './TintedSprite'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 // A viewport shorter than this is a landscape phone (812×375, 667×375).
 export const SHORT_H = 470
@@ -396,10 +397,9 @@ function Background({ thing, things }: { thing: Thing; things: Thing[] }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#dfe8d8' }}>
       {srcs.map(src => (
-        <img key={src} src={src} alt="" draggable={false} decoding="async"
+        <SceneBg key={src} src={src} priority={src === thing.bg}
           onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-            opacity: src === thing.bg ? 1 : 0, transition: 'opacity .6s ease' }} />
+          style={{ opacity: src === thing.bg ? 1 : 0, transition: 'opacity .6s ease' }} />
       ))}
     </div>
   )

@@ -76,7 +76,7 @@ function ImageScroll({ src, moving }: { src: string; moving: boolean }) {
 
 // Gradient placeholder for any biome without painted art yet (all current biomes —
 // forest, underwater, garden — ship a bgImage, so this is just a graceful fallback).
-function SceneBg({ moving }: { id: BiomeId; moving: boolean }) {
+function GradientBiome({ moving }: { id: BiomeId; moving: boolean }) {
   return (
     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,#bfe6f7 0%,#d8f0e6 38%,#8fd0e8 46%,#5fb4d8 72%,#3f97c2 100%)' }}>
       <div style={{ position: 'absolute', top: '8%', left: '16%', width: 70, height: 70, borderRadius: '50%', background: 'radial-gradient(circle,#fff6c2,#ffe9a8)', opacity: 0.9 }} />
@@ -116,7 +116,7 @@ function BiomeBackground({ biome, walking, ids = BIOME_ORDER }: { biome: BiomeId
           <div key={id} style={{ position: 'absolute', inset: 0, overflow: 'hidden', opacity: active ? 1 : 0, transition: 'opacity 1s ease', pointerEvents: 'none' }}>
             {render && (b.bgImage
               ? <ImageScroll src={b.bgImage} moving={active && walking} />
-              : <SceneBg id={id} moving={active && walking} />)}
+              : <GradientBiome id={id} moving={active && walking} />)}
           </div>
         )
       })}

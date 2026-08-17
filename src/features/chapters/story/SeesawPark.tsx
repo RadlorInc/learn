@@ -35,6 +35,7 @@ import { SheetSprite, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 /** The three signs, in the order they are drawn. The answer is a SIGN, not a side. */
 export const SIGNS = ['>', '<', '=']
@@ -159,9 +160,7 @@ function Background({ bg }: { bg: Bg }) {
       {ALL_BGS.map(b => (
         <div key={b.img} style={{ position: 'absolute', inset: 0, opacity: b === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
-          <img src={b.img} alt="" draggable={false} decoding="async"
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <SceneBg src={b.img} priority={b === bg} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
       ))}
     </div>

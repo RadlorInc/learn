@@ -16,6 +16,7 @@ import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, BarShade, Nudge, CommitBtn, reduce, tidy, glideNumber, numChoices } from './parts/gameKit'
 import { pick } from '@/core/rand'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const P: Palette = {
   nightTop: '#2a1c10', nightBot: '#3a2815',
@@ -266,7 +267,7 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
       <div style={box}>
         <style>{keyframes}</style>
         {/* workshop backdrop */}
-        <img src={`${ART}/cut_workshop_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />
+        <SceneBg src={`${ART}/cut_workshop_bg.png`} priority style={{ opacity: 0.5 }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}cc)` }} />
         <div style={{ position: 'relative', color: P.creamSoft, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(14px,2vw,18px)', marginBottom: 'clamp(10px,2.4vh,18px)', letterSpacing: 0.3 }}>
           {task.badge}
@@ -329,7 +330,7 @@ function CuttingBenchScene({ palette: P, task, value, stepIndex, frameCount, end
     <div style={box}>
       <style>{keyframes}</style>
       {/* workshop backdrop */}
-      <img src={`${ART}/cut_workshop_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />
+      <SceneBg src={`${ART}/cut_workshop_bg.png`} priority style={{ opacity: 0.5 }} />
       <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}cc)` }} />
       <div style={{ position: 'relative', color: P.creamSoft, fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(14px,2vw,18px)', marginBottom: 'clamp(42px,7vh,56px)', letterSpacing: 0.3 }}>
         {task.badge}

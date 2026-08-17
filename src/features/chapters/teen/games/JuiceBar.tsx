@@ -17,6 +17,7 @@ import { motion, useMotionValue, useTransform, animate, useReducedMotion, type M
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, TwoTaps, numChoices, type Mix } from './parts/gameKit'
 import { pick } from '@/core/rand'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const P: Palette = {
   nightTop: '#1a1230', nightBot: '#241640',
@@ -218,7 +219,7 @@ function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ende
   return (
     <div style={{ position: 'relative', width: 'clamp(244px,44vw,356px)', height: 'clamp(300px,46vh,440px)', borderRadius: 16, background: `linear-gradient(${P.nightTop}, ${P.nightBot})`, border: `1.5px solid ${P.glassBorder}`, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' }}>
       {/* illustrated art-studio backdrop + a scrim so the tray/buckets read clearly */}
-      <img src={`${ART}/paint_studio_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <SceneBg src={`${ART}/paint_studio_bg.png`} priority />
       <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}e6)` }} />
       <style>{'@keyframes psPop{0%{opacity:0;transform:translate(-50%,6px) scale(.8)}100%{opacity:1;transform:translate(-50%,0) scale(1)}}@keyframes psGlow{0%,100%{box-shadow:0 0 18px var(--g),0 6px 16px rgba(0,0,0,.4)}50%{box-shadow:0 0 34px var(--g),0 6px 16px rgba(0,0,0,.4)}}'}</style>
 

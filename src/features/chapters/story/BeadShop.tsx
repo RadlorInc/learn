@@ -42,6 +42,7 @@ import { patternUnitLen, type Difficulty } from '@/core/adaptive'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { shuffle } from '@/core/rand'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()`: a wrong tap speaks a line and
@@ -138,9 +139,7 @@ function Background({ make }: { make: Make }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#fff3e2' }}>
       <div style={{ position: 'absolute', inset: 0, background: make.grad }} />
-      <img src={make.bg} alt="" draggable={false} decoding="async"
-        onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <SceneBg src={make.bg} priority onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
     </div>
   )
 }

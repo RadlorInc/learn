@@ -48,6 +48,7 @@ import {
 } from './clock'
 import { rint, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const wrap = (i: number, n: number) => ((i % n) + n) % n
 
@@ -113,12 +114,10 @@ function Scene({ slot, sunPx }: { slot: number; sunPx: number }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#e9dcc0' }}>
       {DAY.map((d, i) => (
-        <img key={d.scene} src={`/assets/backgrounds/${d.scene}`} alt="" draggable={false} decoding="async"
+        <SceneBg key={d.scene} src={`/assets/backgrounds/${d.scene}`}
+          priority={i === Math.min(slot, DAY.length - 1)}
           onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-            opacity: i === Math.min(slot, DAY.length - 1) ? 1 : 0, transition: 'opacity .7s ease',
-          }} />
+          style={{ opacity: i === Math.min(slot, DAY.length - 1) ? 1 : 0, transition: 'opacity .7s ease' }} />
       ))}
       <Sky slot={slot} px={sunPx} />
       <div style={{ position: 'absolute', inset: 0, background: tint.wash, opacity: tint.alpha, transition: 'opacity .7s ease, background .7s ease', pointerEvents: 'none' }} />

@@ -23,6 +23,7 @@ import FitBox from './FitBox'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { rint, shuffle, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
@@ -82,8 +83,7 @@ function Background({ bg, world }: { bg: number; world: ShWorld }) {
       {world.bgs.map((b, i) => (
         <div key={i} style={{ position: 'absolute', inset: 0, opacity: i === bg ? 1 : 0, transition: 'opacity .6s ease' }}>
           <div style={{ position: 'absolute', inset: 0, background: b.grad }} />
-          <img src={b.img} alt="" draggable={false} decoding="async" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <SceneBg src={b.img} priority={i === bg} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
       ))}
     </div>

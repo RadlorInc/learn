@@ -51,6 +51,7 @@ import {
   type Den, type FrRound, type Order, type Shape,
 } from './slice'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 /**
  * How long a narrated line stays on screen. Derived from the sentence's own length so the pacing
@@ -66,12 +67,10 @@ function Scene({ slot }: { slot: number }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#f3ead8' }}>
       {ORDERS.map((o, i) => (
-        <img key={o.scene} src={`/assets/backgrounds/${o.scene}`} alt="" draggable={false} decoding="async"
+        <SceneBg key={o.scene} src={`/assets/backgrounds/${o.scene}`}
+          priority={i === Math.min(slot, ORDERS.length - 1)}
           onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-            opacity: i === Math.min(slot, ORDERS.length - 1) ? 1 : 0, transition: 'opacity .7s ease',
-          }} />
+          style={{ opacity: i === Math.min(slot, ORDERS.length - 1) ? 1 : 0, transition: 'opacity .7s ease' }} />
       ))}
       {/* A soft wash, so a white bubble and a code-drawn whole read against any of the ten scenes. */}
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,248,232,.30), rgba(255,244,224,.10) 55%, rgba(90,64,40,.16))', pointerEvents: 'none' }} />

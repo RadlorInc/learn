@@ -19,6 +19,7 @@ import { motion, useMotionValue, useTransform, animate, useReducedMotion, type M
 import { Game, type BaseTask, type GameConfig } from './parts/GameShell'
 import { Palette, CrankGear, Nudge, CommitBtn, glideNumber, numChoices } from './parts/gameKit'
 import { pick } from '@/core/rand'
+import { SceneBg } from '@/shared/ui/SceneBg'
 
 const P: Palette = {
   nightTop: '#2a1712', nightBot: '#3a201a',
@@ -219,7 +220,7 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
     return (
       <div style={sceneBox(P, boxW, boxH)}>
         <style>{TILE_KEYFRAMES}</style>
-        <img src={`${ART}/tile_factory_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <SceneBg src={`${ART}/tile_factory_bg.png`} priority />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}e6)` }} />
         <div style={{ position: 'absolute', top: '9%', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--font-numeric)', fontWeight: 800, fontSize: 'clamp(20px,3.4vw,30px)', color: resultPhase ? P.mint : P.cream }}>
           {label}{resultPhase ? ` = ${answerText}` : ''}
@@ -245,7 +246,7 @@ function TileFactoryScene({ palette: P, task, value, stepIndex, frameCount, ende
   return (
     <div style={sceneBox(P, boxW, boxH)}>
       <style>{TILE_KEYFRAMES}</style>
-      <img src={`${ART}/tile_factory_bg.png`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <SceneBg src={`${ART}/tile_factory_bg.png`} priority />
       <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${P.nightTop}cc, ${P.nightBot}e6)` }} />
 
       {/* header: the power/root label, → answer on the result beat */}
