@@ -235,7 +235,7 @@ describe('the round', () => {
 // ─── the closed set, and covering it ──────────────────────────────────────────────────
 /**
  * The shared engine's real rules, replicated here ONLY to simulate a run
- * (`core/adaptive.ts`: promote on 3 correct in a row at ≥80%, master at the top tier on a streak of 6).
+ * (`core/progression.ts`: promote on 3 correct in a row at ≥80%, master at the top tier on a streak of 6).
  * Everything the chapter itself decides — which minute, which reading — comes from the real functions.
  */
 function simulate(answers: (round: number) => boolean, coverageOn = true) {

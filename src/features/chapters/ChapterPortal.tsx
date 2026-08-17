@@ -23,7 +23,7 @@ import CelebrationModal from '@/shared/ui/CelebrationModal'
 import MasteryState from '@/features/chapters/teen/MasteryState'
 import ExploreStep from '@/features/chapters/teen/ExploreStep'
 import type { AgeBand } from '@/features/chapters/teen/types'
-import type { ChapterType } from '@/state/store'
+import type { ChapterType } from '@/core/chapters'
 
 export type ChapterProps = { onComplete: (correct: number, wrong: number, mastered?: boolean) => void; childName: string }
 type Finish = (correct: number, wrong: number, mastered?: boolean) => void

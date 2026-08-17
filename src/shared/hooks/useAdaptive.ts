@@ -1,11 +1,14 @@
 /**
- * Milo Adaptive Learning Engine
+ * useAdaptive — the React binding for the progression engine.
  * ─────────────────────────────────────────────────────────────
- * Tracks per-chapter performance in real-time and adjusts:
- *   - Difficulty level (1 easy → 2 medium → 3 hard)
- *   - Which question types to serve more/less of
- *   - Encouragement tone in Milo's speech
- *   - Pacing (how many hints to give)
+ * The RULES (promote, demote, hint, mastery) are pure and live in
+ * `@/core/progression`. This file owns only what genuinely needs React: the
+ * snapshot state, the synchronous ref, and the praise/encouragement strings,
+ * which are presentation and are randomly picked.
+ *
+ * It sits in `shared/hooks` rather than `core/` because `core/` is the pure
+ * domain layer and may not import a UI framework — gated by
+ * `src/__tests__/layering.test.ts`.
  *
  * Usage inside a chapter:
  *   const ada = useAdaptive('counting')
@@ -19,17 +22,19 @@
  */
 
 import { useRef, useState, useCallback } from 'react'
-import { type ChapterType } from '@/state/store'
+import { type ChapterType } from '@/core/chapters'
+import {
+  type Difficulty,
+  type Progress,
+  initialProgress,
+  step,
+  isMastered,
+} from '@/core/progression'
 
-// ─── Types ────────────────────────────────────────────────────
-
-export type Difficulty = 1 | 2 | 3
-
-// Demonstrated mastery: a child sitting at the hardest tier with this many
-// correct in a row has clearly got it — the session can end early (with full
-// stars) instead of grinding the repetitive tail. Reaching tier 3 already takes
-// a strong streak, so this is "top tier AND a clean run on top of that".
-export const MASTERY_STREAK = 6
+// Deliberately NOT re-exported: `Difficulty` and `MASTERY_STREAK` are domain and
+// belong to `@/core/progression`. A convenience re-export here would put the
+// domain behind a React hook, which is the barrel that `state/store.ts` was
+// carrying and `src/__tests__/layering.test.ts` now forbids.
 
 // What `record()` hands back, read synchronously by the practice loop the same
 // tick (so an early-exit decision never races a stale render closure).
@@ -80,45 +85,9 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-// ─── Difficulty rules ─────────────────────────────────────────
-//
-//  Promote:   3 correct in a row  AND  accuracy ≥ 80%
-//  Demote:    2 wrong in a row    OR   accuracy < 40% after ≥ 4 questions
-//  Hint:      2+ wrong in a row   OR   difficulty == 1 AND accuracy < 50%
-
-function calcDifficulty(
-  current: Difficulty,
-  streak: number,
-  correct: number,
-  total: number,
-  wrongStreak: number,
-): Difficulty {
-  const accuracy = total > 0 ? correct / total : 1
-
-  // Promote
-  if (streak >= 3 && accuracy >= 0.8 && current < 3) {
-    return (current + 1) as Difficulty
-  }
-  // Demote
-  if ((wrongStreak >= 2 || (total >= 4 && accuracy < 0.4)) && current > 1) {
-    return (current - 1) as Difficulty
-  }
-  return current
-}
-
 // ─── Hook ────────────────────────────────────────────────────
 
-interface AdaptiveSnapshot {
-  difficulty:    Difficulty
-  streak:        number
-  wrongStreak:   number
-  correct:       number
-  wrong:         number
-  isOnFire:      boolean
-  shouldHint:    boolean
-  praise:        string
-  encouragement: string
-}
+type AdaptiveSnapshot = Progress & { praise: string; encouragement: string }
 
 export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty = 1): AdaptiveState {
   // All mutable counters live in ONE snapshot object that is mirrored in a ref.
@@ -133,13 +102,7 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
   // on (see infra/storage/chapterLevel). Default 1 = start easy (unchanged). The
   // engine stays pure — the caller loads/saves the level.
   const [snapshot, setSnapshot] = useState<AdaptiveSnapshot>(() => ({
-    difficulty:    initialDifficulty,
-    streak:        0,
-    wrongStreak:   0,
-    correct:       0,
-    wrong:         0,
-    isOnFire:      false,
-    shouldHint:    false,
+    ...initialProgress(initialDifficulty),
     praise:        pick(PRAISE[Math.min(initialDifficulty - 1, 2)]),
     encouragement: pick(ENCOURAGEMENT[Math.min(initialDifficulty - 1, 2)]),
   }))
@@ -147,35 +110,23 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
 
   const record = useCallback((isCorrect: boolean): RecordResult => {
     const s = ref.current
-    const newCorrect = isCorrect ? s.correct + 1 : s.correct
-    const newWrong   = isCorrect ? s.wrong       : s.wrong + 1
-    const newStreak  = isCorrect ? s.streak + 1  : 0
-    const newWS      = isCorrect ? 0             : s.wrongStreak + 1
-    const total      = newCorrect + newWrong
-    const newDiff    = calcDifficulty(s.difficulty, newStreak, newCorrect, total, newWS)
-    const fire       = newStreak >= 3
-    const lvl        = Math.min(newDiff - 1, 2)
+    const p = step(s, isCorrect)
+    const lvl = Math.min(p.difficulty - 1, 2)
 
     const next: AdaptiveSnapshot = {
-      difficulty:    newDiff,
-      streak:        newStreak,
-      wrongStreak:   newWS,
-      correct:       newCorrect,
-      wrong:         newWrong,
-      isOnFire:      fire,
-      shouldHint:    newWS >= 2 || (newDiff === 1 && total >= 2 && newCorrect / total < 0.5),
-      praise:        isCorrect ? (fire ? pick(ON_FIRE) : pick(PRAISE[lvl])) : s.praise,
+      ...p,
+      praise:        isCorrect ? (p.isOnFire ? pick(ON_FIRE) : pick(PRAISE[lvl])) : s.praise,
       encouragement: isCorrect ? s.encouragement : pick(ENCOURAGEMENT[lvl]),
     }
     ref.current = next   // synchronous — the next tap this tick reads the new values
     setSnapshot(next)    // re-render with the new values
 
     return {
-      difficulty: newDiff,
-      streak:     newStreak,
-      correct:    newCorrect,
-      wrong:      newWrong,
-      mastered:   newDiff === 3 && newStreak >= MASTERY_STREAK,
+      difficulty: p.difficulty,
+      streak:     p.streak,
+      correct:    p.correct,
+      wrong:      p.wrong,
+      mastered:   isMastered(p),
     }
   }, [])
 
@@ -191,36 +142,10 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
     sessionWrong:   snapshot.wrong,
     shouldHint:     snapshot.shouldHint,
     isOnFire:       snapshot.isOnFire,
-    mastered:       snapshot.difficulty === 3 && snapshot.streak >= MASTERY_STREAK,
+    mastered:       isMastered(snapshot),
     praise:         snapshot.praise,
     encouragement:  snapshot.encouragement,
     record,
     difficultyLabel,
   }
-}
-
-// ─── Difficulty-aware number generators ───────────────────────
-// These are the shared building blocks chapters call to get
-// appropriate numbers for the current difficulty.
-
-export function patternUnitLen(difficulty: Difficulty): number {
-  // Patterns: how many distinct items in the repeating unit. A demotion makes
-  // the unit shorter again (ABCD → ABC → AB), i.e. genuinely easier.
-  if (difficulty === 1) return 2   // AB
-  if (difficulty === 2) return 3   // ABC
-  return 4                          // ABCD
-}
-
-export function matchTarget(difficulty: Difficulty): number {
-  // Apple Basket: how many to put in the basket. Tiers step down clearly so a
-  // demotion really does hand the child smaller numbers again.
-  if (difficulty === 1) return Math.floor(Math.random() * 3) + 1   // 1–3
-  if (difficulty === 2) return Math.floor(Math.random() * 4) + 3   // 3–6
-  return Math.floor(Math.random() * 5) + 6                          // 6–10
-}
-
-export function seqLength(difficulty: Difficulty): number {
-  if (difficulty === 1) return 3   // show 3 items
-  if (difficulty === 2) return 4   // show 4 items
-  return 5                          // show 5 items
 }

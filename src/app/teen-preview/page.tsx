@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import TasteBanner from '@/features/chapters/story/TasteBanner'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
-import type { ChapterType } from '@/state/store'
+import type { ChapterType } from '@/core/chapters'
 
 export default function TeenPreviewPage() {
   const [c, setC] = useState('integers')

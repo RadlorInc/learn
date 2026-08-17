@@ -125,7 +125,7 @@ export function kindOf(m: number): Reading {
  * ⚠️ WHY THIS IS NOT A UNIFORM DRAW, and it is the most important arithmetic in this file.
  *
  * The shared engine promotes on 3 correct in a row and ends the run at the top tier on a streak of 6
- * (`core/adaptive.ts`), so a child who answers well gets **rounds 1–3 at L1, exactly ONE round at L2,
+ * (`core/progression.ts`), so a child who answers well gets **rounds 1–3 at L1, exactly ONE round at L2,
  * and exactly TWO at L3** before the chapter finishes. Drawing `m` uniformly from twelve values then
  * means the whole "to" side — the hardest thing here, and the reason the lesson has a fourth beat —
  * is asked twice at best, and `(7/12)² ≈ 34%` of strong children were finishing having never met it

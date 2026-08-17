@@ -2,7 +2,8 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useMiloStore, CHAPTER_ORDER, CHAPTER_NAMES } from '@/state/store'
+import { useMiloStore } from '@/state/store'
+import { CHAPTER_ORDER, CHAPTER_NAMES } from '@/core/chapters'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 
 const STAR_MSGS = ['', 'Keep practising — you can do it!', 'Well done! You are getting there!', 'Amazing! You are a star!']

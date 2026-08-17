@@ -22,11 +22,11 @@
  */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useViewport } from '@/shared/hooks/useViewport'
-import { useAdaptive } from '@/core/adaptive'
+import { useAdaptive } from '@/shared/hooks/useAdaptive'
 import { speak, speakAfterCurrent, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
-import type { ChapterType } from '@/state/store'
+import type { ChapterType } from '@/core/chapters'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import {
   useHandInput, useDwell, CamView, CamGate, DwellRing, HandProvider,
@@ -228,7 +228,7 @@ export interface GameConfig<V, T extends BaseTask> {
   /**
    * ⚠️ WITHHOLD THE MASTERY EXIT UNTIL EVERY READING HAS BEEN ASKED — `SkillBeat` has carried this
    * for the 3–11 band and this shell did not, so porting a chapter across would have silently lost
-   * it. The arithmetic is why it matters: `core/adaptive` promotes on 3-in-a-row at ≥80% and masters
+   * it. The arithmetic is why it matters: `core/progression` promotes on 3-in-a-row at ≥80% and masters
    * on a streak of 6 at the top tier, so a strong child is asked roughly THREE questions at L1, ONE
    * at L2 and TWO at L3 — and then the chapter ends. Anything living late in the pool is asked only
    * of a child who is struggling, i.e. skipped as a REWARD for doing well. Measured on TickTock: a

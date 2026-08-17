@@ -98,7 +98,7 @@ export const densFor = (d: 1 | 2 | 3): Den[] => (d === 1 ? [2, 4] : [2, 3, 4])
 /**
  * ⚠️ WHY THIS IS NOT A UNIFORM DRAW, and it is the most important arithmetic in this file.
  *
- * `core/adaptive.ts` promotes on 3 correct in a row and ends the run at the top tier on a streak of
+ * `core/progression.ts` promotes on 3 correct in a row and ends the run at the top tier on a streak of
  * 6, so a child who answers well gets **about three rounds at L1, exactly ONE at L2 and TWO at L3**
  * and then the chapter finishes. Drawing the denominator uniformly then means thirds — the one this
  * chapter has to teach, and the only one L1 never shows — are missed outright by a large share of

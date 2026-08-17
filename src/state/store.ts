@@ -7,10 +7,10 @@ import { CHAPTER_IDS, type ChapterType } from '@/core/chapters'
 import { scoreChapter, type ChapterScore } from '@/core/scoring'
 import { mergeServerProgress } from '@/state/progressMerge'
 
-// Chapter metadata now lives in the single registry (src/lib/chapters.ts).
-// Re-exported here so existing `@/state/store` imports keep working.
-export type { ChapterType } from '@/core/chapters'
-export { CHAPTER_ORDER, CHAPTER_NAMES, CHAPTER_EMOJIS } from '@/core/chapters'
+// Chapter metadata and level maths are pure domain and live in `@/core`.
+// This module deliberately does NOT re-export them: a module that needs a
+// chapter id must not have to import zustand, IndexedDB and Supabase to get
+// one. Enforced by `src/__tests__/layering.test.ts`.
 
 // ─────────────────────────────────────────────────────────────
 //  Types
@@ -43,9 +43,6 @@ export interface CelebrationData {
   completedChapter: ChapterType
 }
 
-// Level math is pure domain — lives in core/leveling. Re-exported so existing
-// `@/state/store` import sites (profile page, HUD) keep working unchanged.
-export { getLevelFromXP, getLevelName, getNextLevelXP, getLevelProgress } from '@/core/leveling'
 import { getLevelFromXP } from '@/core/leveling'
 
 // ─────────────────────────────────────────────────────────────

@@ -34,7 +34,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
-import { seqLength } from '@/core/adaptive'
+import { seqLength } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { SHEETS } from './canvas/sheets'
 import { useNeedsRotate, RotateGate } from './RotateGate'

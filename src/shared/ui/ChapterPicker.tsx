@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useMiloStore, type ChapterType } from '@/state/store'
+import { useMiloStore } from '@/state/store'
+import { type ChapterType } from '@/core/chapters'
 import { CHAPTER_NAMES, getChapter } from '@/core/chapters'
 import { useLearnerChapters } from '@/shared/hooks/useLearnerChapters'
 

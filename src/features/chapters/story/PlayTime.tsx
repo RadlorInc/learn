@@ -36,7 +36,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
-import type { Difficulty } from '@/core/adaptive'
+import type { Difficulty } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import {

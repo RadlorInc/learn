@@ -16,7 +16,7 @@
 import nextDynamic from 'next/dynamic'
 import { makeStoryChapter, makeTeenChapter, type ChapterProps, type TeenChapterCfg, type TeenGame, type Sim } from '@/features/chapters/ChapterPortal'
 import { STORY_CHAPTERS, type StorySkill } from '@/features/chapters/storyChapters'
-import type { ChapterType } from '@/state/store'
+import type { ChapterType } from '@/core/chapters'
 
 type Loaded = { default: React.ComponentType<ChapterProps> }
 const lazy = (load: () => Promise<Loaded>) => nextDynamic(load, { ssr: false })

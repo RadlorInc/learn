@@ -16,7 +16,7 @@ import { CAST, aspectOf, BANNER_PX, STRIP_PX } from '@/features/chapters/story/c
 import {
   compareLayout, groupSpot, groupGeom, makeRound, GROUP_GAP_K,
 } from '@/features/chapters/story/BigOrSmall'
-import type { Difficulty } from '@/core/adaptive'
+import type { Difficulty } from '@/core/progression'
 
 const OFF_RIGHT = 124
 const MAX_ON_SCREEN = 10

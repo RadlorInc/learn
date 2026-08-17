@@ -38,7 +38,7 @@ import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpea
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
-import { patternUnitLen, type Difficulty } from '@/core/adaptive'
+import { patternUnitLen, type Difficulty } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { shuffle } from '@/core/rand'

@@ -19,7 +19,7 @@ import {
 } from '@/features/chapters/story/critters'
 import { SHEETS } from '@/features/chapters/story/canvas/sheets'
 import { playLayout, playGeom, makeRound } from '@/features/chapters/story/PlayTime'
-import type { Difficulty } from '@/core/adaptive'
+import type { Difficulty } from '@/core/progression'
 
 const SCREENS: Array<[number, number]> = [[640, 320], [740, 360], [1024, 600], [1280, 800], [1920, 1080]]
 

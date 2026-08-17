@@ -22,7 +22,7 @@ import { CAST, aspectOf, BANNER_PX } from '@/features/chapters/story/critters'
 import {
   playLayout, playSpot, playGeom, markerHeight, makeRound, choicesFor, PLAY_RIGHT,
 } from '@/features/chapters/story/PlayTime'
-import type { Difficulty } from '@/core/adaptive'
+import type { Difficulty } from '@/core/progression'
 
 const EXIT_X = -16, OFF_RIGHT = 124
 
