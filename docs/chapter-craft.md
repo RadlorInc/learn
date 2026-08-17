@@ -798,6 +798,31 @@ from the journey's identity during render instead (React's own escape hatch). Sa
 "waiting at the start position needs no transition" rule: **a placement is not a journey**, and
 anything that lets the two be confused produces a slide in the wrong direction.
 
+- ⚠️⚠️ **A JOURNEY IS A `transform`. ANIMATING `left`/`top`/`width`/`height` RELAYS OUT THE WHOLE
+  DOCUMENT ON EVERY FRAME, ONCE PER TRAVELLING CREATURE — and it costs nothing visible, which is why
+  it shipped for a year.** Measured on `Critter` itself with Chrome's own counters (CDP
+  `Performance.getMetrics`), 63 creatures journeying continuously for six seconds: **195 layout
+  passes / 59.1 ms** on the four layout properties against **4 / 1.7 ms** on `transform`. A transform
+  is composited — no layout, no paint, off the main thread. This is the cheapest frame-rate win in
+  the band, because `Critter` is the one component every chapter here draws several of at once.
+  ⚠️ **AND `translate(Xvw, Yvh)` IS NOT `left: X%`.** `/game` wraps every chapter in
+  `.game-zoom { zoom: … }`; a fixed element's percentage offsets are scaled by that zoom and
+  viewport units are not — measured, the two diverge by up to **576px at zoom 1.45**, i.e. the
+  obvious substitution is silently wrong on the one route children actually play through. Keep the
+  position a PERCENTAGE, of a stage that is itself the size of the containing block: a `fixed`
+  full-size stage, a mover of the same size carrying `translate(X%, Y%)`, and the creature inside it.
+  Then it means the same thing at every zoom.
+  ⚠️ **AND SIZE IS `scale()` ABOUT THE FEET** (`transform-origin: 50% 100%`), so a depth change still
+  tweens but on the compositor — and scaling about the bottom centre is what keeps a creature
+  standing exactly on its ground line, which every layout sweep in `src/__tests__` assumes.
+  ⚠️ **DERIVE THE BASE BOX AS `w / scale`, NEVER FROM `size` AGAIN.** `w` and `h` are each ROUNDED
+  (`round(round(size*scale)*aspect)`); re-deriving them through a different rounding chain moved the
+  visible creature by up to **2.2px** and its 12-cell strip by **26px**. Dividing by the scale makes
+  `scale()` exactly undo it — 0.0px across 2,772 rects.
+  ⚠️ **AND ANYTHING NOT PART OF THE CREATURE COMES OUT OF THE SCALED BOX.** The number marker is
+  sized off the BASE size by two of its three callers, so folding it in would silently resize the
+  digits a child is reading. It goes in a zero-sized wrapper on the creature's anchor, lifted by the
+  creature's real height.
 - **One cycle carries one stride.** A sheet playing `fps/frames` cycles per second, each carrying
   `STRIDE` body-heights, gives a real ground speed; the duration falls out of it. A creature
   crossing twice the distance takes twice as long.
@@ -2101,6 +2126,38 @@ count the matches.
   work (0.52 → 0.77, and a 44px control stopped rendering at 23px). **Measure the CONTAINER, then
   the content, then the scale — and if a fix looks impossible, check which of the three you actually
   read.**
+- ⚠️⚠️ **TO PROVE A REFACTOR MOVED NOTHING, DIFF THE RENDERED RECTS — AND KEY THEM SEMANTICALLY,
+  NOT BY POSITION.** Changing how `Critter` expresses its position is exactly the kind of edit no
+  gate in this repo can see, so it was verified by a throwaway `critterlab` route that sweeps the
+  component (63 creature × spot × size combinations) and a spec that records every rendered rect at
+  4 viewports × 3 zoom levels, before and after: **2,772 measurements, 0 moved.** Three things make
+  that check worth anything, and each of them was got wrong first:
+  - **Freeze every animation before measuring.** `ci_breathe` is a 3.1s infinite loop moving the
+    sprite 2px and scaling it 1.5%, and a third of the sweep had it on — so the first baseline
+    jittered and any diff against it was noise. One injected
+    `*{animation:none!important;transition:none!important}` fixes it. **Measured geometry has to be
+    STATIC geometry**, and the way to know is to capture the baseline TWICE and require max Δ 0.000.
+  - **Key on what the element IS, not where it sits.** A refactor that adds wrapper elements shifts
+    every index, so an index-keyed diff compares a sprite against a wrapper and reports the whole
+    sweep as moved. Select the sprite, the sheet-cell clip, the contact shadow and the number sign
+    by what identifies each one.
+  - **Separate the visible from the invisible.** The sprite `<img>` is a 12-cell STRIP that is
+    clipped to one frame; it can move 26px with nothing on screen changing. Report the CELL.
+- ⚠️ **A FIXED SAMPLE WINDOW MISSES THE EVENT, AND READS AS "THIS COSTS NOTHING".** The first attempt
+  to measure a journey's layout cost sampled a flat 5 seconds and returned `layoutCount: 0` — the
+  journeys had already finished before the window opened. Open the window on the thing's own signal
+  (`transitionstart`) or drive the animation yourself, and sanity-check the count against a form you
+  know is expensive.
+- ⚠️ **`waitForSelector` WAITS FOR *VISIBLE*.** A zero-size wrapper is never visible, so a harness
+  that renders 63 cases times out at 60s while the page is perfectly fine. `{ state: 'attached' }`.
+  Same family as the disabled-button rule above: read the thing you actually care about.
+- ⚠️ **NEXT'S APP ROUTER IGNORES A `_`-PREFIXED FOLDER**, so a scratch route at `src/app/_lab/` 404s
+  and looks like a broken build.
+- ⚠️ **`next/image` LAZY-LOADS BY DEFAULT AND A RAW `<img>` DOES NOT.** Migrating a backdrop to
+  `next/image` without `priority` therefore makes first paint WORSE while making the bytes smaller —
+  the LCP element waits for an IntersectionObserver. It shipped on five chapters here and was caught
+  by watching a chapter open onto a bare gradient, not by any test. Mark the one that is on screen;
+  in a cross-fade stack that is the same condition the opacity is keyed on.
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---
