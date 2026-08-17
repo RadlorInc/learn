@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { callerKey, overLimit } from '../_rateLimit'
+import { sinkError } from '@/infra/errorSink'
 
 /**
  * Cold-funnel lead capture, moved OFF the browser.
@@ -43,8 +44,14 @@ export async function POST(req: Request) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url || !key) return NextResponse.json({ ok: true })   // misconfigured ≠ break the checkup
 
+  // ⚠️ `fetch` DOES NOT THROW ON 4xx/5xx, so a bare `await fetch(...)` inside try/catch reports a
+  // 403 as success and the lead is gone with no signal anywhere. That is not hypothetical here: the
+  // key above falls back to the ANON key when SUPABASE_SERVICE_ROLE_KEY is unset, and the moment
+  // `20260816170000_leads_server_only.sql` revokes the anon INSERT grant every capture starts
+  // 403ing. Silent is the one thing this must not be — a lead we never knew we lost is worse than
+  // an error we can see. Still best-effort for the CALLER: it never throws and never returns non-ok.
   try {
-    await fetch(`${url}/rest/v1/diagnostic_leads`, {
+    const res = await fetch(`${url}/rest/v1/diagnostic_leads`, {
       method: 'POST',
       headers: {
         apikey: key,
@@ -54,8 +61,23 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({ email, band }),
     })
-  } catch {
-    /* best-effort — a failed lead capture must never stop the checkup */
+    if (!res.ok) {
+      // Body, not just the status: PostgREST puts the actual reason (RLS, grant, constraint) there.
+      const detail = await res.text().catch(() => '')
+      await sinkError({
+        at: new Date().toISOString(),
+        source: 'server',
+        message: `lead insert failed ${res.status}: ${detail.slice(0, 300)}`,
+        routePath: '/api/lead',
+      })
+    }
+  } catch (e) {
+    await sinkError({
+      at: new Date().toISOString(),
+      source: 'server',
+      message: `lead insert threw: ${e instanceof Error ? e.message : String(e)}`,
+      routePath: '/api/lead',
+    }).catch(() => {})
   }
   return NextResponse.json({ ok: true })
 }

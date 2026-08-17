@@ -81,6 +81,11 @@ export async function sinkError(record: ErrorRecord): Promise<void> {
             Prefer: 'return=minimal',
           },
           body: JSON.stringify(toRow(record)),
+          // ⚠️ `fetch` does not throw on 4xx/5xx, so allSettled alone reports a rejected INSERT as
+          // fulfilled and the durable sink silently stops recording. Report it to sink (1), which
+          // always works — NEVER back into sinkError(), which would recurse on a failing database.
+        }).then(res => {
+          if (!res.ok) console.error('[milo.sink] error_events insert failed', res.status)
         })
       : null,
     ingest

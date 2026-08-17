@@ -45,11 +45,17 @@ export async function getMyLearners(): Promise<LearnerWithRole[]> {
   }))
 }
 
+/**
+ * ⚠️ NO DATE OF BIRTH — deliberately, and do not add it back without a use for it.
+ * The column existed and was written as `null` by the only caller; nothing ever read it, so it was
+ * an exact-birthdate field on a CHILD collected for no purpose, which is the first thing a COPPA /
+ * GDPR-K reviewer asks about. `age_group` is what the product actually branches on. Dropped in
+ * `20260817_drop_learner_dob.sql`. If an age is ever genuinely needed, store the BAND, not the date.
+ */
 export async function createLearner(
   name: string,
   avatarIndex: number,
   ageGroup: AgeGroup,
-  dob?: string,
   gradeId?: string,
 ): Promise<Learner | null> {
   const supabase = db()
@@ -62,7 +68,6 @@ export async function createLearner(
   const payload: Record<string, unknown> = {
     display_name:  name,
     avatar_index:  avatarIndex,
-    date_of_birth: dob ?? null,
     age_group:     ageGroup,
     created_by:    user.id,
   }

@@ -34,7 +34,16 @@ export function overLimit(key: string, limit: number, windowMs: number): boolean
     // Evict opportunistically rather than on a timer: no interval to leak in a serverless runtime.
     if (hits.size >= MAX_KEYS) {
       for (const [k, v] of hits) if (now - v.start >= windowMs) hits.delete(k)
-      if (hits.size >= MAX_KEYS) hits.clear()   // all live: drop the whole window rather than grow
+      // ⚠️ NOT `hits.clear()`. Wiping the map resets EVERY live counter, so filling it is itself the
+      // bypass: flood MAX_KEYS distinct keys and every real abuser's count goes back to zero. Evict
+      // the OLDEST windows instead — they are the closest to expiring anyway, so the newest and
+      // most-active counters (the ones a limit exists to hold) always survive.
+      if (hits.size >= MAX_KEYS) {
+        const oldest = [...hits.entries()]
+          .sort((a, b) => a[1].start - b[1].start)
+          .slice(0, Math.ceil(MAX_KEYS / 10))
+        for (const [k] of oldest) hits.delete(k)
+      }
     }
     hits.set(key, { start: now, n: 1 })
     return false

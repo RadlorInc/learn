@@ -551,7 +551,7 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
     const trimmed = name.trim()
     if (!trimmed || trimmed.length < 2) { setError('Please enter a name (at least 2 characters)'); return }
     setLoading(true)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup, undefined, gradeId ?? undefined)
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup, gradeId ?? undefined)
     if (!learner) { setError('Something went wrong. Please try again.'); setLoading(false); return }
     // Capture-at-report loop: if this parent just took the logged-out diagnostic, save that result
     // against the child they're creating now — but ONLY when the bands match (a 9–11 plan is

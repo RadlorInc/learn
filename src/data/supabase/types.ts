@@ -28,7 +28,6 @@ export interface Database {
           id:            string
           display_name:  string
           avatar_index:  number
-          date_of_birth: string | null
           age_group:     AgeGroup
           grade_id:      string | null
           created_by:    string

@@ -115,6 +115,49 @@ begin
   -- A7c (positive control): logging your OWN event works — else the feature is dead.
   insert into public.auth_events (user_id, event, client_id) values (v_attacker, 'login', gen_random_uuid());
 
+  -- A8 (V16/V19, 2026-08-17): the crash log is service-role only, and cannot be wiped from the API.
+  -- A8a: nobody reads error_events — it holds url/ua/stack/learner_id, i.e. child-linked telemetry.
+  v_blocked := false;
+  begin
+    perform * from public.error_events limit 1;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  if not v_blocked then raise exception 'RLS FAIL A8a: authenticated user can read error_events'; end if;
+  -- A8b: nor writes to it (RLS on with ZERO policies; the sink uses the service-role key).
+  v_blocked := false;
+  begin
+    insert into public.error_events (at, source, message) values (now(), 'client', 'rls-probe');
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  if not v_blocked then raise exception 'RLS FAIL A8b: authenticated user wrote to error_events'; end if;
+  -- A8c (V19 regression): the retention function must NOT be reachable from the API. Postgres
+  -- creates a SECURITY DEFINER function with PUBLIC EXECUTE, and Supabase exposes every
+  -- public-schema function at /rest/v1/rpc/<name> — so without the REVOKE, anyone could wipe the
+  -- crash log on demand. This assertion is the only thing standing between that and a silent regress.
+  v_blocked := false;
+  begin
+    perform public.prune_error_events();
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  if not v_blocked then raise exception 'RLS FAIL A8c: prune_error_events is callable from the API (V19 is back — the crash log can be wiped)'; end if;
+
+  -- A9 (V13, 2026-08-17): the lead table is write-only and shape-checked.
+  -- A9a: lead emails are never readable from the API.
+  v_blocked := false;
+  begin
+    perform * from public.diagnostic_leads limit 1;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  if not v_blocked then raise exception 'RLS FAIL A9a: lead emails are readable from the API'; end if;
+  -- A9b: a non-email is rejected. The original policy bounded LENGTH only, so every 3-character
+  -- string was a valid lead; the shape check is what makes the table mean anything.
+  v_blocked := false;
+  begin
+    insert into public.diagnostic_leads (email) values ('abc');
+  exception when insufficient_privilege or check_violation then v_blocked := true;
+  end;
+  if not v_blocked then raise exception 'RLS FAIL A9b: a non-email was accepted as a lead'; end if;
+
   -- A4/A5: attacker cannot read the learner's sessions or stats.
   select count(*) into v_cnt from public.sessions where learner_id = v_learner;
   if v_cnt <> 0 then raise exception 'RLS FAIL A4: attacker read another learner''s sessions (% rows)', v_cnt; end if;

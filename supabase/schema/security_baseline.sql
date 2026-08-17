@@ -9,16 +9,28 @@
 --
 -- REGENERATE + DIFF: run the query in docs/security.md against prod and overwrite
 -- this file; a non-empty `git diff` means the live security posture changed.
--- Last generated: 2026-07-03 (post V1–V11 hardening).
+-- Last generated: 2026-08-17 (post V13–V19 audit). Covers auth_events, diagnostic_leads,
+-- error_events + the V12 column-grant and the V19 EXECUTE revokes, none of which existed at the
+-- 2026-07-03 snapshot — so the drift check had been comparing against a 6-week-stale baseline.
 -- ============================================================================
 
 -- ==== TABLES: RLS status — every data table has rls=t AND >=1 policy ====
+--   auth_events                rls=t  policies=1   (V-audit 2026-07-21: INSERT-only, own rows; no read)
 --   chapters                   rls=t  policies=1   (public catalog: SELECT using(true) — intentional)
 --   diagnostic_items           rls=t  policies=1
+--   diagnostic_leads           rls=t  policies=1   ⚠️ V13: anon holds the INSERT GRANT, so the public
+--                                                  anon key can write here directly, bypassing
+--                                                  /api/lead's rate limit. Policy now checks email
+--                                                  SHAPE (was length-only). No SELECT — not readable.
+--                                                  Close by revoking the grant once the service-role
+--                                                  key is set: 20260816170000_leads_server_only.sql
 --   diagnostic_plan_progress   rls=t  policies=1
 --   diagnostic_plans           rls=t  policies=1
 --   diagnostic_rechecks        rls=t  policies=1
 --   diagnostic_sessions        rls=t  policies=1
+--   error_events               rls=t  policies=0   INTENTIONAL: RLS on with ZERO policies = deny-all,
+--                                                  service-role only. Advisor reports this as INFO
+--                                                  rls_enabled_no_policy — that is the design.
 --   grade_chapters             rls=t  policies=3
 --   grades                     rls=t  policies=4
 --   learner_access             rls=t  policies=3   (SELECT/INSERT/DELETE — DELETE added V11)
@@ -42,6 +54,14 @@
 --   learner_invites: sender      ALL     using(invited_by = auth.uid())
 --                                        check(invited_by = auth.uid() AND EXISTS owned-learner)   [V1 FIX]
 --   learner_invites: recipient   SELECT/UPDATE  where invited_email = lower(jwt email)
+--                                ⚠️ V12 FIX IS A COLUMN-LEVEL GRANT, NOT A POLICY — `authenticated`
+--                                holds UPDATE on `status` ONLY. RLS WITH CHECK cannot see OLD values,
+--                                so the grant is the only thing stopping a recipient from repointing
+--                                learner_id/invited_by and self-granting on a stranger's child.
+--                                Verified live 2026-08-17. Do not "simplify" it back to a table grant.
+--   auth_events: own inserts     INSERT  check(user_id = auth.uid())      [write-only; no SELECT policy]
+--   diagnostic_leads: insert     INSERT  check(length 3..254 AND email ~ shape)   [anon+authenticated]
+--   error_events                 (no policies — deny-all by design; service-role writes only)
 --   learner_progress/state/stats ALL     using+check EXISTS(learner_access where parent_id = auth.uid())
 --   learners: select        SELECT  using(created_by = auth.uid() OR id in learner_access)
 --   learners: insert        INSERT  check(created_by = auth.uid())
@@ -65,8 +85,18 @@
 --     grant_owner_access(), init_learner_stats(), handle_new_user(),
 --     enforce_learner_cap(), enforce_grade_cap(), enforce_grade_ownership(),
 --     rls_auto_enable()  [event trigger — auto-enables RLS on any new public table]
+--     prune_error_events()  [V16 retention, run by pg_cron 'prune-error-events' daily 03:17]
+--        ⚠️ V19: created SECURITY DEFINER, which Postgres gives PUBLIC EXECUTE by DEFAULT, and
+--        Supabase exposes every public-schema function at /rest/v1/rpc/<name> — i.e. for a few
+--        minutes ANY anonymous caller could wipe the crash log. Revoked. THE GENERAL RULE: always
+--        pair `create function ... security definer` with an explicit REVOKE, and verify `proacl`
+--        afterwards — a successful migration tells you nothing about who can call the result.
 --   INVOKER trigger helpers: set_updated_at() (revoked),
---     touch_grades_updated_at()  [NOTE: still has anon+authenticated EXECUTE — harmless invoker trigger fn, minor cleanup candidate]
+--     touch_grades_updated_at()  [FIXED 2026-08-17 — PUBLIC/anon EXECUTE revoked; was the last
+--        function in the schema still callable from the API. Same class as V19.]
+--
+--   As of 2026-08-17: ALL 12 DEFINER functions pin search_path, NONE is anon-callable, and no
+--   function in `public` retains default PUBLIC EXECUTE. Verified against pg_proc.proacl.
 
 -- ==== TRIGGERS (public tables) ====
 --   learners.on_learner_created           -> grant_owner_access      (owner gets learner_access on create)
