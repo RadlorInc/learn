@@ -77,6 +77,131 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🕳️ **2026-08-17 — AN ARCHITECTURE REVIEW TURNED INTO A P0: THE DIAGNOSTIC PLAN NEVER ADVANCED, FOR THREE MONTHS, BECAUSE `ChapterPortal` DROPS `onComplete` AND `advancePlan`'s ONLY CALLER WAS INSIDE THE FUNCTION IT ORPHANED. EVERY PAGE ALSO SHIPPED ONE EMOJI TO CRAWLERS, AND `/` WAS A REDIRECT.** 🕳️ SHIPPED — `main`@`68587e5`, prod serving **sw v109**. `tsc` 0 · **1071/1071 vitest** (was 1051, **+20**) · `next build` 0 · **212/212 e2e** · eslint 136 → **132**.
+>
+> **The asks:** an investor stress-test + architecture review + SEO → *"fix all the things which you have mention"* → *"which things are better do that"* → *"act like a senior debugging engineer"* → *"commit and deploy it"* → *"can you please fix these three"*.
+>
+> ## ⓪ ⚠️⚠️ THE P0, AND IT IS THE WORST SHAPE A BUG CAN HAVE: THE LOUD HALF KEPT WORKING
+> `advancePlan` had exactly ONE caller — `/game`'s `handleComplete`, which reaches a chapter as
+> `ChapterProps.onComplete`. **Both registry factories in `ChapterPortal` DISCARD that prop**:
+> `function StoryChapter(_props)` (the identifier appears ONCE in the file, its own declaration) and
+> `TeenChapter` reads only `props.childName`. The portal calls `finishAndSync` itself, so stars, XP,
+> coins, the celebration and a synced `sessions` row all landed correctly — **everything a parent or
+> a founder would LOOK AT was right.** Dead with it: `advancePlan`, `revisePlanDeeper` and both
+> completion events. **Every child on a plan was handed their plan's first chapter again, for ever**,
+> and the menu's "Step 1 of 5" stayed honest about a pointer that could not move.
+> **Production said so in three independent ways:** 797 `chapter_open` · 40 completed `sessions` ·
+> **0 `practice_complete`** · **77 of 77 `diagnostic_plan_progress` rows still `todo`**.
+> ⚠️ **`menu/page.tsx:73` asserted the behaviour in a comment** — *"advances (in /game) as chapters
+> are completed"* — which is this repo's own *a comment asserting a rule is followed is the most
+> expensive kind of lie*.
+> ⚠️⚠️ **AND `activePlan.test.ts` WAS GREEN THROUGHOUT, WITH SIX TESTS DRIVING `advancePlan`
+> DIRECTLY. The unit was always correct; nothing REACHED it.** Same class as *a gate that reads a
+> chapter's DATA cannot see how it INDEXES it*. **The fix therefore lives in `finishAndSync`** — the
+> one function all three completion paths already route through (the portal's two factories,
+> `CountingStoryChapter`, `/game`) — and the gate is an **e2e that plays a real chapter to completion
+> through the real portal**, which fails on the pre-fix code. Placed BEFORE the network branch so an
+> offline child still advances. **Verified on PRODUCTION** by playing The Mission Brief to a mastery
+> exit: pointer `{0, wordProblems}` → `{1, factorsMultiples}`.
+>
+> ## ① ⚠️⚠️ EVERY URL ON THE DOMAIN SERVED 13 VISIBLE CHARACTERS
+> `StorageGate` sits in the ROOT LAYOUT and early-returned a fox splash until IndexedDB hydrated, so
+> `/help` shipped *"Milo — Help 🦊"* and so did both legal pages. Three faults from one early return:
+> **`/legal/[slug]`'s own comment says a policy page "must render … with JS blocked"** — it did not,
+> so the COPPA policy was an artifact that did not exist; **zero indexable content** anywhere; and
+> **LCP on two pages of static text blocked behind an IndexedDB open**, 4s backstop, for state
+> neither page reads. Exempted the routes that read no local state. `/` is on that list and had to
+> be — it reads only the Supabase session, never kv.
+> **`/` was also just a redirect with a fox on it** (66 visible chars). It is now a server component
+> with copy assembled from words already in the repo; the session redirect is isolated in
+> `ResumeSignedIn` so it no longer owns the render. **66 → 1,328.** `/help` **13 → 2,220**.
+> Plus `robots.ts` + `sitemap.ts` (both 404'd) and `metadataBase` + OG — **without metadataBase Next
+> emits a RELATIVE og:image, which every scraper drops**, so a shared link previewed as a blank card.
+> ⚠️ **`vercel.json`'s `/` → `/auth` rewrite is NOT live** (`"c":["",""]` vs `["","auth"]`) — Next's
+> App Router serves `/` itself, so `page.tsx` was always the front door and the REWRITE was the dead
+> artifact. I had that backwards in the review and the browser corrected me.
+>
+> ## ② THE GATE I WROTE FOR THE FIXED-LAYER BUG WAS **INERT**, AND PASSED 152/152
+> `short-landscape` crossed board × art and controls × edges — every pair containing the element
+> somebody had in mind — and could not see the pair that SHIPPED (ScribblePad's closed button over
+> The Coin Tray's 5, 6, 7). My first fix filtered fixed elements to "outermost only"; **the outermost
+> fixed element in this app is the ROOT at 0,0 640×320**, so every layer collapsed into one
+> full-screen container and every control was skipped as living-inside-a-fixed-layer. **Nothing was
+> ever compared.** Caught only by planting the original ScribblePad regression and watching it
+> SURVIVE. The test is CONTAINMENT (a layer covers a control only if it does not CONTAIN it), which
+> needs DOM identity, so it is computed in the page. Re-planted, it names the real controls.
+> **A green check is not evidence until you have watched it go red.**
+>
+> ## ③ AND THAT SUITE WAS A COIN FLIP, WHICH IS WORSE THAN A GAP
+> It measures one randomly-drawn question kind per chapter off an unseeded `Math.random`, so
+> complexNumbers @ 640×320 failed **3 runs in 7** on a REAL defect and passed the other 4. **A gate
+> that flips a coin gets re-run until it is green.** `Math.random` is now mulberry32, seeded per
+> (chapter, size) via `addInitScript` — no production code touched, no runtime cost — and breadth is
+> `E2E_SEED` for a nightly rather than re-runs.
+> ⚠️ **My first determinism check was worthless**: four identical "2 failed" that I read as
+> deterministic were four identical `ERR_CONNECTION_REFUSED` with the dev server down.
+>
+> ## ④ THE WALK HOME'S NUDGES WERE 23×23, UNDER THE 24px FLOOR — AND BOTH MY DIAGNOSES WERE WRONG
+> `WalkPad` stacks map → readout → two `Leg` rows → commit: **280 × 382 natural in a 364 × 200 slot**,
+> so `FitSlot` is HEIGHT-bound at 0.5236 and a correctly-authored 44px `Nudge` renders at 23.
+> I first blamed the board eating the width (**the board is 243px; `CenterFill` gets 364**), then
+> concluded there was no spare width — because **I took the slot's OUTPUT box (147, the scaled
+> result) for its constraint.** There were 217px spare. Reflowed to a row on a short frame:
+> **scale 0.5236 → 0.7745, nudges 23 → 34, commit 24 → 36px tall.** Shrinking the parts instead
+> would have landed within a pixel of the floor, which is not a fix.
+>
+> ## ⑤ THE PLAN POINTER NOW SURVIVES A DEVICE SWITCH — **DERIVED, NOT SYNCED**
+> It is localStorage, so a parent who ran the check on a phone and handed over a tablet got **no plan
+> card at all**. `diagnostic_plan_progress` exists for exactly this and is **write-once/read-never**
+> (77 rows, all `todo`; only `sync_diagnostic` touches it, at creation) — so the obvious fix is a
+> second write path that can disagree with the first. **Not needed:** `chapter_sequence` is on the
+> server and `learner_progress` says what was played, so the position is a FUNCTION of data the menu
+> has already fetched. No migration, no new grant (`diag_plans_read` already allows the read).
+> Two properties make it safe, mutation-tested 4/4: **monotonic** (never drags a child back), and a
+> **revised** local plan keeps its own chapters (the remote copy predates the revision).
+>
+> ## 🧹 ALSO SHIPPED
+> `reactStrictMode: true` — verified empirically, not asserted (211/211, and beat pacing measured at
+> 1 step / 6.3s to rule out doubled timers) · **6 of 9 duplicate resize listeners** derived from the
+> shared hook, including **`RotateGate`'s pre-effect frame — the hook behind the 21 C7 failures** ·
+> **`useViewport` returned a ZERO size** in an unlaid-out frame, which flips every aspect test so a
+> landscape laptop draws its PORTRAIT layout (guarded, 3/3) · a `world1` timer that **scored a round
+> 950ms after the child left** · `crypto.randomUUID` in analytics · a Node build script that was
+> being **served to the browser**, deleted · **art 83 MB → 58 MB** (86 files, 0 with altered
+> geometry — `cellAspect`/`frames` make a resize fatal, so the script verifies and refuses).
+>
+> ## 📉 AND THE NUMBER THAT SHOULD DECIDE THE NEXT MONTH
+> Production, all time: **7 accounts · 17 learners · 40 sessions · EIGHT children have ever played ·
+> best-ever retention 14 sessions across 5 days, last played 2026-07-26 · 5 real leads · £0 of
+> monetisation surface — no price, no packaging, nowhere to pay.** 15 months, 467 commits, 77.5k
+> lines. **The engineering is not what is wrong with this company.**
+>
+> ## ▶ OPEN
+> 1. ⚠️⚠️ **`MONITORING_INGEST_URL` IS STILL UNSET, AND IT IS WHY ⓪ RAN FOR THREE MONTHS UNSEEN.**
+>    `/api/report-error` forwards every crash into a void. Highest-value founder item by far.
+> 2. **B1 attorney** is still a paste (`DRAFT = true` is LIVE on prod) · a real domain
+>    (`mi2utor.com` is owned) · the `leads_server_only` migration · **dev still points at PROD** ·
+>    **7 test leads of mine** in the prod table.
+> 3. **`practice_complete` has still never been observed in the DB** — my prod verification used a
+>    synthetic learner and `learner_events.learner_id` is FK'd to `learners(id)`, so the insert was
+>    rejected and `track()` swallowed it by design. It should appear on the first REAL completion;
+>    **if it does not, ⓪ is not fully fixed.** Watch it.
+> 4. **The cross-device plan (⑤) has NOT been driven across two real devices** — unit and type layers
+>    only. Stated rather than rounded up.
+> 5. **132 eslint errors**, all three hook rules; they need the Suspense/`use()` migration, not 132
+>    disable comments.
+> 6. `diagnostic_plan_progress` is dead schema — deliberately NOT wired, since ⑤ derives instead.
+> 7. **`short-landscape` is 57 minutes** and belongs in CI, not a working session. I killed it at 40
+>    minutes once after treating it as a blocker for a question a 4-minute sample answered.
+> 8. Of this session's faults, **the P0 came from reading production's own event table, not from any
+>    test; two came from measuring after guessing wrong (the slot box, the board width); one from
+>    planting a regression and watching it survive; one from the dev server being down twice; and one
+>    from the type-checker. The 1,051-test suite was green through every one of them.**
+> 9. **Where the rules went:** `chapter-craft.md` §4 gained *a unit test cannot see that nothing
+>    calls the unit*, *a green check is not evidence until you have watched it go red*, *a sweep that
+>    samples is a coin flip — seed it*, and *do not mistake a shrink-to-fit element's OUTPUT box for
+>    the space it was given*.
+
 > 🔒 **2026-08-16 (2nd session) — LAUNCH HARDENING, ROUND TWO. THREE ASKS, AND EVERY ONE OF THEM TURNED UP SOMETHING WORSE THAN THE THING ASKED ABOUT: A DEAD END A CHILD COULD NOT ESCAPE, A GATE THAT HAD BEEN RED FOR A DAY, AND THE RECORDED VOICE SILENTLY DEAD ON MOBILE.** 🔒 SHIPPED — `main`@`c80e1c7`, prod serving **sw v104**. `tsc` 0 · **1051/1051 vitest** (was 1039, **+12**) · `next build` 0 · **211/211 chapters × 3 frames** · preflight green.
 >
 > **The asks:** *"abhi kya karna hai plan ke according?"* → *"karo"* (the scratch-pad fix) → *"woh dono
@@ -500,304 +625,4 @@
 >    `chapter-craft-ar.md` gained *a redirect keyed on a reading must not fire on that reading's
 >    ABSENT state*.
 
-> 🏗️ **2026-08-15 — THE BAND'S LAST NEON CHAPTER COMES ACROSS, AND THE 3D GOES WITH IT ON THE FOUNDER'S CALL. THE EMPTY PLOT IS ~2,000 LINES OF react-three-fiber REPLACED BY ~330 OF INSTRUMENT — AND IT IS THE FIRST TIME A HAND HAS BEEN DRIVEN ON THIS SHELL, AND THE FIRST SCORED SPAN ANYWHERE IN THE BAND. ⚠️ NOT COMMITTED.** `tsc` 0 · **987/987 vitest** · `next build` 0 · **eslint 0 problems on all three files** (the other ported chapters' gates carry 7) · **28/28 planted regressions caught across four live mutation suites, ALL re-run against the final code** · driven at 1280×720 on BOTH inputs, at 640×320 and at 390×844.
->
-> **The asks:** *"in band 9-11… area and perimeter chapter ko bhi 12-18 waale jaise structure mein laalo"* → on the two questions put to him: **"totally remove that 3d concept"** and **"something more interesting AR interaction"**.
->
-> ## ⓪ THE ONE CHAPTER THE HANDOFF SAID COULD NOT BE PORTED — AND THE ARGUMENT WAS HALF RIGHT
-> It had been raised three times as *"react-three-fiber — cannot become a data file over a 2D shell"*.
-> The reason was real (*the answer is a PLACE, and a place cannot be offered as a chip*) and it does
-> not imply 3D: **drawn from ABOVE, the place is still a place.** The verb did not move — the foreman
-> gives a load and the road frontage, the yard is empty, the child works out how far back the far edge
-> goes and pegs it — so `plotMaths.ts` survives almost whole (ladder, grader, miss lines, demo beats),
-> which is the whole reason the port is cheap. **DELETED: `story/FloorPlot.tsx` (1,380) and
-> `story/plotSite.ts` (628).**
->
-> ## ① ⚠️ AND REMOVING THE DIMENSION DELETED A WHOLE CLASS OF FAULT, WHICH IS THE POINT WORTH KEEPING
-> First person put the child at the far edge **facing away from the road**, so everything the delivery
-> laid was behind them — a wrong peg read *"part of it would be bare"* over an empty green field, on
-> every round. That cost this chapter a camera swing, a hold time, a raised side view, the
-> `fov`-is-vertical trap, and a play loop `useFrame` will not run in a backgrounded tab. **A plan view
-> has the whole plot on screen at every instant and there is nothing to swing round to.** Driven: a
-> fence pegged at 6 m when the answer was 3 drew the fence running out **partway down the sides with
-> the far end open**, under its own sentence *"the fence runs out before it gets all the way round"*.
->
-> ## ② ⚠️⚠️ AND THE SHELL REVEALS ONLY A *WRONG* ANSWER — SO THE CHAPTER'S PAYOFF SHIPPED TO NOBODY WHO GOT IT RIGHT
-> `GameShell` hands the instrument `reveal` on a miss and on the re-teach; a correct answer goes
-> straight to "You solved it ✓". Entirely reasonable, and it meant the delivery — the tiles coming out
-> **exactly**, *"and it comes out to the metre"*, the beat the chapter exists for — was shown only to
-> children who got it wrong. Nothing failed, every piece was individually correct, the gate was green.
-> **Caught by driving the camera path and reading `units: 0` on a correct commit.** Now
-> `reveal || v.laid || (v.pegged && gradePeg(...))`, re-driven: `units: 9` with `3 × 3 = 9`.
->
-> ## ③ ⚠️ THE AR IS A SPAN, AND THE HEIGHT BAR'S REFUSAL DID NOT TRANSFER — THE ARITHMETIC SAYS SO
-> *"Hold your hands apart to show how far back it goes."* The Height Bar measured this gesture at
-> **±2.3 in on a 0–60 in scale** and shipped it unscored, which reads as a verdict on the gesture and
-> is a verdict on the SCALE. Same noise (±0.25 hand widths), different question: at 1.5 m per hand
-> width that is **±0.37 m against a 1 m step — 2.7:1, better than the Angle Shop's tilt, which is
-> live.** Holding up fingers was the alternative and was rejected on the chapter's own terms: N
-> fingers STATES the depth, i.e. the answer becomes a number, which is what three rejected mechanics
-> were rejected to protect.
-> ⚠️ **AND A SPAN NEEDS A REFERENT OR IT IS A NUMBER TYPED WITH THE ARMS** — five fingers already look
-> like five; hands 40 cm apart mean nothing until the thing measured sits between them. A dashed
-> GHOST of the far edge follows the live reading, says only what was read, and is gone the instant the
-> peg is in.
->
-> ## ④ ✅ WHAT WAS DRIVEN — AND THE BAND'S OLDEST OPEN ITEM IS CLOSED
-> **1280×720, taps:** both doors · both walkthroughs beat by beat (the walk beat walks, the peg beat
-> pegs, the last beat lays the units and writes `2 × (5 + 2) = 14`) · the guided round answered by
-> **three `back ▶` taps inside ONE React batch → `3 metres back`**, i.e. the batched-tap guard working
-> (this repo's eighth encounter) · **`1 / 10`** · two scored rounds missed on purpose, each showing
-> the plot the CHILD pegged plus its own miss line, then the glide walking the peg home.
-> **CAMERA — ⚠️ THE FIRST HAND EVER DRIVEN ON GameShell, closing the 🧱 block's #1 open item (2026-08-14, now in [the archive](docs/handoff-archive.md)):** the
-> camera door · the walk buttons correctly GONE · `–` / *"Show Milo both hands"* · **`__miloSpan(2.0)`
-> → the ring reads `3` → held 1.85 s → the dwell fired, the peg went in at 3 m and graded correct.**
-> The denial gate reads *"Milo can watch your hands, or you can walk it with the buttons"*.
->
-> ## ⑤ ⚠️ AND THE SHORT FRAME FOUND SOMETHING THAT IS NOT THIS CHAPTER'S — IT IS THE BAND'S, AND IT SHIPPED
-> At **640×320** `ScribblePad`'s closed button (`fixed; right 12; bottom 12`, ~121 × 44, unscaled) is
-> drawn over this chapter's `back ▶` (526–583 against the pad's 507–628) — **and over THE COIN TRAY's
-> keys 5, 6 and 7**, which is live in production and has been driven twice. A 9–11 instrument is
-> *scaled down* by `FitSlot` and centred near x 446 rather than 320, so the two meet. Every tap still
-> lands somewhere, which is why only crossing the boxes finds it. **One line in the shared component
-> fixes six chapters; not touched tonight because it is 36 chapters' worth of blast radius and nobody
-> asked.**
->
-> ## ⑥ THE GATE — **16/16 planted regressions caught**, re-run against the final code
-> [floorPlotArea.test.ts](src/__tests__/floorPlotArea.test.ts), 80 → 60 tests: the whole procedural-world
-> half (nothing countable in the site, the palette separations, the collinear-props trap) went with
-> `plotSite.ts`, and **a gate guarding deleted code is worse than none, because it reads as coverage.**
-> What is new: the span's reachability swept over every depth the generator draws, the hysteresis
-> **jittered ACROSS a boundary rather than around a centre**, the right-answer reveal, the reveal
-> laying the CHILD's plot, and the no-grid check **scoped to what is DRAWN** — a file-wide ban on
-> `for (` would have caught the miss-glide loop, and a ban that gets loosened is worse than no ban.
-> ⚠️ Tree checked clean after the mutation run, per the recorded fault of a killed run leaving it
-> dirty — and the whole set re-run AFTER the last edit, because a mutation score only means anything
-> about the code actually shipped.
-> ⚠️ **The last edit came from the LINTER, and it is where the port's one piece of dead data
-> surfaced:** `makeRound(d, round, asked)` took a `round` only to seed the procedural site, so with
-> `plotSite.ts` deleted the parameter was unused — a signature still asking for something nothing uses
-> is the next reader's wrong turn. Removed, with its three call sites in the gate.
->
-> ## 🎬 THE EXPLANATION NOW MOVES — founder, on a screenshot of the arithmetic beat
-> *"joh explanation daale ho … uske according animation generate karo … narration ke according frame
-> per second … aur narration ke according run karo."* He was looking at **the one beat with a static
-> screen**, and it was the worst possible one: *"12 tiles, in rows of 4. 12 divided by 4 is 3. So it
-> goes 3 metres back"* played over an empty yard and a walker who had not moved — i.e. **the entire
-> teaching in audio, on a band whose devices mostly have no voice.** Three of the six beats shared one
-> value, and the one in the middle was the division.
->
-> **On the question put to him he took in-engine over generated video**, and the reason is the same
-> arithmetic that decides everything else here: the narration is BUILT from each round's numbers, so a
-> pre-rendered film can only ever say one set of them — the two fixed demos would animate and the
-> re-teach, which re-narrates the child's own round, would stay still. Drawn from the data, every
-> round animates. It also cost no credits and stayed neon, which the painted route would not have.
->
-> **THE LOAD IS A BAR AND THE WORKING CUTS IT UP** (`workFrames`, in the pure module so the gate can
-> read the picture against the beat's own words). An area round cuts it into rows of the frontage, one
-> row per frame — *12 tiles → one row of 4 → 2 rows of 4 → **3 rows of 4*** — so the row count IS the
-> answer, being counted, and it lands on the same number the sentence lands on. A perimeter round takes
-> two lots of the frontage off the top and splits what is left in two: *14 m → one side: 5 → two sides:
-> 10 → 4 left for the other two → **2 each***. One widget, because both readings are partitions of the
-> same given number, and the two cuts are visibly different sums.
-> **And the walk beat now WALKS** — 0 → 1 → 2 → 3, one metre a frame, under *"counting my metres. 1, 2,
-> 3."* It used to slide the whole way in 180 ms.
->
-> ⚠️ **THE CADENCE COMES FROM THE NARRATION'S OWN SPEED, because a beat's duration cannot be known** —
-> it ends when an utterance ends, or on `speakSteps`' fallback timer on a silent device. What IS shared
-> is the child's speech-rate pick: narration is `2600 / m` a step, a frame is `620 / m`, so 🐢 Slower
-> slows the picture exactly as much as the words. `setInterval`, never rAF (frozen in a backgrounded
-> tab, i.e. in every drive).
-> ⚠️ **THE BAR IS COUNTABLE, AND THAT IS ONLY SAFE BECAUSE IT CANNOT REACH A SCORED ROUND** — it hangs
-> off `PlotV.step`, which the walkthrough beats set and nothing in play does. One test, driven through
-> `initialValue`, `hand.enter` and the glide rather than grepped.
-> ⚠️ **AND THE RESET IS DERIVED DURING RENDER, NOT IN AN EFFECT** — an effect runs after paint, so the
-> walk beat opened with the walker already at 3. The React lint named it; the rule was already in
-> chapter-craft for a journey's phase.
->
-> **Driven, frame by frame off the live DOM:** work `– → one row of 4 → 2 rows of 4 → 3 rows of 4 →
-> holds`; walk `0 → 1 → 2 → 3 → holds`.
-> **Gate +5 tests (60 → 65) and a second mutation run, 13/13** — and ⚠️ **the first pass left ONE
-> survivor, which is the Supply Run fault wearing the animation's clothes:** shrinking a perimeter
-> round's two final pieces to a single unit each left the note still reading *"2 each"* and the whole
-> check green. **The caption was asserted and the drawing was not.** Now the piece SIZES are.
->
-> ## 🎥 AND THEN THE ANIMATION WAS GENERATED FOR REAL — founder: *"kuch khaas naii hai .. higgsfield se generate karo .. accha proper"*
-> The code-drawn bar taught the sum and looked like a progress bar. So the two WALKTHROUGH examples now
-> play a **generated film** (Kling, 2 × 7.5 credits of 1024), cut to a 12-cell strip and stepped by the
-> same beat clock: `12 tiles along the kerb → they fly down → 3 rows of 4`, and
-> `14 panels → the fence runs round → the loop closes`.
->
-> ## ⚠️⚠️ A VIDEO MODEL CANNOT COUNT, AND THAT IS THE WHOLE PROBLEM WITH FILM IN A MATHS CHAPTER
-> Ask Kling for twelve tiles in rows of four and it returns eleven, beautifully lit. A picture that
-> disagrees with the number is the worst defect this app can ship, so a better prompt is not the answer.
-> **`kling3_0` takes a `start_image` AND an `end_image`** — so both ends are COMPOSED here
-> (`scripts/plot-keyframes.py`, in the chapter's own hex values: exactly 12 along the kerb, exactly
-> 3 × 4 in the plot) and the model supplies only the motion between them. Arithmetic at both ends,
-> atmosphere in the middle. ⚠️ **And the caption stays code-drawn from `workFrames`** — the picture may
-> be the model's, the words may not be.
->
-> ## ⚠️ THE FILM COVERS TWO EXAMPLES AND CAN NEVER COVER MORE, WHICH IS WHY THE BAR SURVIVES
-> A film says one set of numbers for ever; the re-teach re-narrates the CHILD's round. So `filmFor`
-> returns a strip for the two fixed demos and `null` for everything else, which falls back to the
-> data-drawn bar — swept over the whole generator, and the film is gated to `step === 'work'` so it
-> cannot reach a scored round. **The fallback was built first; the film is the polish on top.**
->
-> ## ⚠️ AND THE CUT'S END IS FOUND BY CONVERGENCE, NOT BY MOTION — a re-cut paid for this
-> The front of a clip is a held start frame (this repo's recorded 9-of-12-static fault, met again: 3 of
-> the first 12 cells were identical). The BACK is subtler: an interpolated clip *converges* on its end
-> frame, so per-frame difference decays to noise while the picture is still assembling. Measured on the
-> fence clip, motion was down to **7% of peak 60 frames before the loop actually closed**, and the
-> first strip ended with the fence half-built. **Distance to the FINAL frame is the honest signal**,
-> because with a composed `end_image` that frame is the answer. `scripts/explain-frames.py` does both.
->
-> **Driven:** the area film stepped all 12 cells `0% → 100%` with the caption tracking
-> `one row of 4 → 2 rows of 4 → 3 rows of 4`, landing on 3 exactly as the sentence does; the perimeter
-> film plays in demo 2 under *"Two sides of 5 is 10…"*. **Gate 65 → 68 and a third mutation run, 6/6**,
-> including one that **re-cuts the shipped PNG a cell shorter** — the strip's cell count lives in a file
-> AND in the source, so a re-cut silently lands every cell on the wrong picture with nothing erroring.
-> ⚠️ Three existing checks went red on the film and all three were RIGHT (a `backgroundSize`, a
-> `${r.depth}` inside the film's lookup key, and `/assets/` in a chapter that had none). **Each was
-> tightened rather than loosened** — scoped to what the Yard DRAWS, and the asset list pinned to
-> exactly the two strips, so a third smuggled-in example fails.
->
-> ## 📏 AND THE PLOT WAS DRAWN AT A SIXTH OF THE ROOM — founder: *"the size is too small bro"*
-> The culprit was a rule this file already carries: **a lane that will fill must be reserved from
-> empty.** The plan reserved all twelve metres of walkable depth so it could not jump under a child
-> pacing it — and at a typed 22px a metre, a 5 × 2 plot then filled **14% of that box**, which
-> `FitSlot` shrank again to fit the slot. The reserve was right and its price had never been costed.
-> Three moves, and the order matters:
-> ① **the BOX is fixed and the METRE is derived** (`metreOf = min(W/frontage, H/visible)`), so a narrow
-> plot gets a big metre, the instrument is always the same size in the layout, and nothing jumps;
-> ② ⚠️ **the plan closes up ONLY after the peg** — closing it on the round's own depth while the
-> question is live would make the box's HEIGHT the answer, drawn instead of written, so before the
-> commit it is identical on every round and after it the plan zooms to what was built (*go back and
-> look at what was made*, done with scale instead of a camera);
-> ③ **the walk bound went 12 → 10**, which buys ~20% more metre AND closes a hole: at 12 the tap path
-> could peg depths a two-hand span **cannot express**, i.e. one-instrument-two-inputs quietly broken.
-> `MAX_DEPTH === HAND_MAX_M` is now asserted.
-> **Measured, 1280×720:** the pegged plot went from **44 × 110 → 110 × 278** with 10 countable tiles;
-> the demo's fence plot 345 × 141.
->
-> ⚠️ **AND A BIGGER INSTRUMENT REACHES FURTHER, SO THE LAYERS HAD TO BE RE-CROSSED.** Widening it ran
-> the plot's top-left **65 × 62 px under the shell's pinned chalkboard** (board 20–404, plot 339–764) —
-> the question drawn over the answer. The cause was the readout column sitting BESIDE the plan and
-> shoving it ~110px left of centre; stacked underneath, the plan sits on the column's centre line and
-> it now clears the board by **64px**.
->
-> ⚠️ **AND THE FIRST MUTATION PASS ON THIS LEFT TWO SURVIVORS, BOTH THE SAME RECORDED FAULT:** the new
-> size checks carried **their own copy of the box constants**, so putting a typed `const U = 22` back
-> in the component — or shrinking the box to 120 — left every one of them green. *A gate that
-> re-implements a rule cannot see the rule being removed.* `PLAN_BOX` is exported and the gate drives
-> the shipped value; 4/4 after.
->
-> ## 🚶 AND THEN THE CHARACTER — founder: *"tum dekh sakhte ho... kitna chota dekh raha hai .. yeh character"*
-> The same fault as 📏, one layer in, and it was CREATED by fixing that one. **The metre stopped being
-> a constant and every marker around it stayed typed:** walker 16px, peg 15px, posts 10px, numeral
-> 17px — so at a 56px metre the child's own character rendered a third of a metre tall and disappeared.
-> All four are derived from the metre now (`markers(u)`, with floors that bind on the widest plot where
-> the metre is smallest). **Measured at 1280×720: the walker went 16 → 34px** and scales from here.
->
-> ⚠️ **AND GROWING HIM COLLIDED WITH THE THING ABOVE HIM — the road band, for the SECOND time.** First
-> the frontage numeral was drawn across the word ROAD; now the walker's head was drawn across the
-> numeral. Both times all three elements were individually centred and individually correct. So the
-> band is `roadBand()` in the pure module — its height derived from everything that has to fit in it —
-> and the gate sweeps **every metre the generator can produce** rather than the one size somebody looked at.
-> ⚠️ **AND AN EMOJI'S BOX IS NOT ITS INK:** modelled with a 3px gap the arithmetic said it cleared and
-> the DOM said it overlapped by 2px, because a glyph's line box carries leading the font size does not
-> describe — and `FitSlot` then scales the gap down again. 8px authored, measured clear on the DOM.
->
-> ⚠️ **THE MUTATION RUN ON THIS LEFT THREE SURVIVORS AND ALL THREE WERE THE SAME BLIND SPOT:** a check
-> that only asks *do these boxes overlap* **cannot see a marker frozen SMALL**, because a tiny thing
-> collides with nothing — freezing the walker at 30px, freezing the peg at 15px and setting the
-> clearance to zero all passed. The gate now asserts the RELATIONSHIP (a bigger metre gives a bigger
-> marker) and a real clearance rather than `>= 0`; 6/6 after.
->
-> ## 🔄 AND THE PLAN NOW TURNS WITH THE SCREEN — founder: *"laptop screen pe yeh ek proper horizontal rectangle mein dikhe … abhi woh vertical mein hai, joh phone ke liye sahi"*
-> The last size fix made the plot fill its box; it did not ask whether the BOX was the right shape. The
-> long axis here is the WALK, so with the depth running down the page the plan is a tall sliver in a
-> laptop's wide slot — correct on a phone, wrong on a desk. **The plan's orientation now follows the
-> frame's**: road along the top with the depth running down on a portrait frame, road down the LEFT
-> with the depth running across on a landscape one.
-> **Measured at 1280×720: the plan went 110 × 340 → 658 × 168, and the walker 34 → 59px.** Nothing was
-> resized — the same derived metre simply had room. Re-measured at 390×844 the plan flips back and the
-> road band restacks (ROAD 286–298, numeral 308–324, walker 329 — 10px and 5px of clearance).
-> ⚠️ **ONE MAPPER, NOT TWO RENDERERS.** Everything is placed in the world's own units (`across` along
-> the road, `deep` into the yard) and `planXY(land, …)` turns that into pixels. Two copies of the
-> drawing would drift the first time a marker moved.
-> ⚠️ **AND THE MUTATION RUN IS WHY IT IS AN EXPORTED FUNCTION AT ALL:** with the mapping inline, a tile
-> grid that had **stopped turning with the plan** passed every box-size and metre check in the file —
-> all of which were still perfectly correct. The gate drives `planXY` and asserts the two orientations
-> are transposes of each other at every slot the generator can produce; 5/5 after.
-> ⚠️ Two of the four mutation suites went stale as the code moved under them (`SKIP (0x)` reads exactly
-> like a mutation that does not apply, not one whose target has been edited). Repaired and re-run: **13/13,
-> 4/4, 6/6, 5/5, with the tree checked clean afterwards.**
->
-> ## 🚀 SHIPPED — `main`@`12cdfa6`, prod serving **sw v94**
-> Three commits, clean fast-forward (`origin/main` was an ancestor), 0 ahead / 0 behind:
-> `d2e4e10` (the whole band port — 54 files, **+4,410 / −6,860**, i.e. net −2,450 lines) ·
-> `3da540d` (the craft rules it paid for) · `12cdfa6` (sw v93 → v94).
-> **ONE code commit rather than three**, deliberately: `registry.tsx`, `storyChapters.tsx` and
-> `story/page.tsx` are each touched by every chapter, so splitting per chapter means hand-cutting
-> hunks and risking a broken intermediate — the recorded *"a registry importing a component that does
-> not exist yet"* fault. Gates re-run before staging rather than trusted from this file: `tsc` 0 ·
-> **987/987** · `next build` 0.
-> ⚠️ **THE BRANCH WAS BUILT CLEAN IN A SCRATCH WORKTREE FIRST** (`tsc` 0 · 987/987 · both strips
-> present), because a green working tree says nothing about the branch — a file left unstaged compiles
-> locally and breaks on the remote. Worktree removed, tree checked clean after.
-> ⚠️ **`docs/recovered/`, `python script/` and the voice caches are now `.gitignore`d** rather than
-> committed; `scratch/` already was.
->
-> **Post-deploy, on the live origin:** prod `sw.js` **v94 on the fourth poll** · 9 routes 200 ·
-> **both film strips 200 and byte-exact (166,438 and 92,059)** — the asset the previous block warned
-> would 404 if it missed the commit · the SW unregistered and `milo-shell-v94` cleared before driving,
-> per the recorded fault of a controlled worker serving the old shell.
-> **Driven at 1280×720:** the briefing with both doors · the walkthrough · the guided round *"9 tiles,
-> 3 metres along the road"* answered **3** → **SOLVED ✓ with `units: 9` and `3 × 3 = 9`** — i.e. ②'s
-> right-answer reveal live in production · **0 console errors**.
-> ⚠️ **What the prod drive does NOT cover:** the camera path (a webcam cannot be driven headlessly and
-> the dev hooks are stripped from production by design), the ten-round loop, the re-teach and the
-> mastery exit. All are proven on localhost; none on prod.
->
-> ## ▶ OPEN
-> 1. ✅ **SHIPPED — see above.** `public/sw.js` is v94. ⚠️ **`public/assets/explain/` (256 KB, two
->    strips) is new and untracked** — it must go in the same commit as the chapter or the walkthrough
->    404s in production. `scratch/` (the mp4s and composed keyframes, 3.8 MB) is now git-ignored.
-> 2. ⚠️ **THE SCRATCH-PAD COLLISION (⑤) IS THE MOST VALUABLE THING HERE** — it is live, it is in a
->    shipped chapter, and it is one line. Founder's call on hiding that button below `vh < 470`.
-> 3. **Four dead dependencies**: nothing in `src/` imports three.js now.
->    `npm uninstall three @react-three/fiber @react-three/drei @types/three` — left undone because a
->    lockfile churn at the end of a big change is not a thing to do unasked.
-> 4. **No ten-round run, no re-teach seen fire, no mastery exit** on this chapter (the band's standing gap).
-> 4b. ⚠️ **THE RE-TEACH DOES NOT ANIMATE, AND IT IS THE SAME EXPLANATION** (and it is the bar, not the
->    film, since its numbers vary).** `GameShell` narrates
->    `task.work` after 3 wrong but never drives the instrument through those lines — it holds the
->    reveal. The walkthrough animates; the re-teach still says the words over a still picture. Fixing
->    it means passing the shell's `reteachAt` to the instrument, which is a change to 36 chapters, so
->    it is a founder's call rather than something to do unasked.
-> 5. **No EXPLORE beat** — the shell supports one and this chapter would take a good one (*"show me
->    about how long three metres is"*, unscored, which is the span's other honest home).
-> 6. **Three chapters left**: OrderDesk, LevelRun, LoadingBay — all storybook, ~4,159 lines, and none
->    of them has the 3D excuse any more.
-> 7. Of this session's faults, **one came from driving the camera path (②, the biggest), one from the
->    FOUNDER reading a screenshot (the static arithmetic beat — see 🎬, and no check of any kind can
->    see "this beat shows nothing"), one from measuring two centred labels against each other (the
->    frontage numeral drawn across the word ROAD), one from a disabled commit saying nothing (now
->    "Walk back into the yard"), one from crossing a SHELL layer with the answer surface at 640×320,
->    and two from the linter (a parameter the deleted 3D was the only user of, and a setState in an
->    effect that would have opened the walk beat at its end). None from the type-checker, and none
->    from the gate — which went green first time both times and had to be mutation-tested to be worth
->    anything.**
-> 8. **Where the rules went**, so the next session does not re-learn them from this block:
->    `chapter-craft.md` gained *removing a dimension can delete a whole class of fault*, *a shell that
->    reveals only a WRONG answer leaves the chapter owing its payoff*, *a fixed corner affordance the
->    SHELL owns is a layer too*, and — from 🎬 — *the beat that does the arithmetic is the one most
->    likely to be a still, find them by comparing consecutive beat values, animate at the narration's
->    own rate, and assert the piece SIZES rather than the caption*; **`chapter-craft-art.md` gained the
->    whole EXPLAINER-FILM pipeline from 🎥** — compose both keyframes because the model cannot count,
->    keep the caption code-drawn, a film may only play on hard-coded examples, cut the end by
->    convergence rather than by motion, and pin the strip's cell count in the gate; `chapter-craft-ar.md` gained *a continuous reading's verdict
->    belongs to the answer SCALE, not to the gesture* (with the two chapters' noise table) and *a span
->    needs a referent or it is a number typed with the arms*.
-
-_Older sessions (2026-06-15 → **2026-08-14**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. The two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) were moved there on 2026-08-16 to keep this file inside its size budget._
+_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, and 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17._

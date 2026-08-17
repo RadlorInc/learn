@@ -2070,6 +2070,37 @@ count the matches.
   deploy that never landed. Enumerate every *kind* of subresource the app loads — script, style,
   font, image, media, worker, connect — and check each against the policy, rather than the ones you
   happened to think of.
+- ⚠️⚠️ **A UNIT TEST CANNOT SEE THAT NOTHING CALLS THE UNIT — AND THAT IS HOW A P0 SURVIVES A GREEN
+  SUITE FOR THREE MONTHS.** `advancePlan` had six passing tests driving it directly and exactly ONE
+  production caller, which sat inside a function that was never invoked (`ChapterPortal` discards
+  the `onComplete` prop it is handed). The unit was always correct; nothing REACHED it. Everything
+  loud still worked — stars, XP, the synced session row — so every screen a person would look at was
+  right while the child's plan never moved. This is *a gate that reads a chapter's DATA cannot see
+  how it INDEXES it*, one level up. **For anything that must happen as a CONSEQUENCE of a real user
+  action, the gate has to drive that action end to end**, and the cheap companion is a source check
+  that the wiring is still present in the path that actually runs. Nothing else can see a caller
+  disappear.
+- ⚠️⚠️ **A GREEN CHECK IS NOT EVIDENCE UNTIL YOU HAVE WATCHED IT GO RED.** A gate written for the
+  ScribblePad-over-the-keys collision passed 152/152 and was **inert**: it filtered fixed elements to
+  the "outermost", and the outermost fixed element in this app is the ROOT at 0,0, so every layer
+  collapsed into one full-screen box and every control was skipped as living inside it. Nothing was
+  ever compared. It was caught only by planting the original bug and watching it SURVIVE. The
+  repo's mutation discipline already says this for a gate you are *changing*; it applies just as
+  hard to a gate you have just *written*, which has never once been observed failing.
+- ⚠️ **A SWEEP THAT SAMPLES IS A COIN FLIP, AND A COIN-FLIP GATE GETS RE-RUN UNTIL IT IS GREEN.**
+  `short-landscape` measured one randomly-drawn question kind per chapter off an unseeded
+  `Math.random`, so a real defect (23×23 nudges, under the tap floor) failed 3 runs in 7 and passed
+  the other 4 — and "152 passed" was never evidence of absence. **Seed the generator from the test**
+  (`addInitScript` replacing `Math.random`, salted per chapter+size) so a run is reproducible and a
+  failure can be reproduced from the printed seed; it costs no runtime and touches no shipped code.
+  Buy BREADTH with a seed sweep in a nightly, never with re-runs.
+- ⚠️ **DO NOT MISTAKE A SHRINK-TO-FIT ELEMENT'S BOX FOR THE SPACE IT WAS GIVEN.** Diagnosing why
+  `FitSlot` had scaled an instrument to 0.52, the slot measured 147 wide — so it read as
+  width-starved and "there is no room to reflow". 147 was the OUTPUT: the scaled content's own size.
+  The column it sat in was **364**, and 217px were spare, which is exactly what made a row reflow
+  work (0.52 → 0.77, and a 44px control stopped rendering at 23px). **Measure the CONTAINER, then
+  the content, then the scale — and if a fix looks impossible, check which of the three you actually
+  read.**
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---
