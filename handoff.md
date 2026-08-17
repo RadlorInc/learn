@@ -68,7 +68,7 @@
 > REAL HAND on a real camera** — MediaPipe is proven to boot on prod under the enforced CSP
 > (`Graph successfully started running.`, 0 violations), but the band's defining feature is
 > unverified end to end and only the founder can close it. Everything is committed; prod is on
-> **sw v110**.
+> **sw v111**.
 >
 > ---
 >
@@ -77,33 +77,43 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> ⚡ **2026-08-17 (2nd session) — A PERFORMANCE PASS. THE GAME PAGE WAS RE-RENDERING THE WHOLE CHAPTER TREE SEVEN TIMES A SECOND FOR EVER, 57 MB OF ART WAS REVALIDATED ON EVERY REQUEST, EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, AND EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME. NONE OF THE FOUR CHANGED A SINGLE PIXEL, WHICH IS WHY THEY ALL SHIPPED.** ⚡ SHIPPED — `main`@`72024c0` (+3 follow-ups), prod serving **sw v110**. `tsc` 0 · **1093/1093 vitest** (was 1071, **+22**) · `next build` 0 · **211/211 chapters × 3 frames, LOCAL AND AGAINST PRODUCTION** · eslint **132, unchanged**.
+> ⚡ **2026-08-17 (2nd session) — A PERFORMANCE PASS. 57 MB OF ART WAS REVALIDATED ON EVERY REQUEST, EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, AND EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME. NONE OF THEM CHANGED A SINGLE PIXEL, WHICH IS WHY THEY ALL SHIPPED — ⚠️ AND THE FOURTH FINDING, THE ONE I WAS SUREST OF, TURNED OUT TO BE DEAD CODE THAT NEVER RAN.** ⚡ SHIPPED — `main`@`a14ec20` (+1), prod serving **sw v111**. `tsc` 0 · **1089/1089 vitest** · `next build` 0 · **211/211 chapters × 3 frames, LOCAL AND AGAINST PRODUCTION** · eslint **132, unchanged**.
 >
-> **The asks:** a senior-performance-engineer pass → *"the things which you have flagged are fixed?"* → *"yes, do it"* (the Critter one) → *"commit it on main"* → *"yes push it"* → *"do this if it is important for future"* → *"what to do for this?"* → *"let everything scale"*.
+> **The asks:** a senior-performance-engineer pass → *"the things which you have flagged are fixed?"* → *"yes, do it"* (the Critter one) → *"commit it on main"* → *"yes push it"* → *"do this if it is important for future"* → *"what to do for this?"* → *"let everything scale"* → *"ab /game wala check karke batao kya karna hai"* → *"delete it and fix the handoff"*.
+>
+> ⚠️ **THE SHAPE OF THIS SESSION IS THE LESSON: EVERY TIME THE FOUNDER ASKED "IS IT REALLY DONE?", SOMETHING CAME APART.** "Are the flagged things fixed?" surfaced ④. "What to do for this?" turned a shrug about an ungateable header into a 6-mutation gate. "Check the /game one" turned a fix I had reported done TWICE into a deletion. **Nothing in the 1,071-test suite ever objected.**
 >
 > ## ⓪ ⚠️⚠️ THE BUNDLE WAS NEVER THE PROBLEM, AND THAT IS THE FIRST THING TO KNOW
 > 170 chunks, largest **71 KB gzipped**, code-splitting already correct, `next/dynamic` per chapter.
 > **JS is not this app's bottleneck and tuning it would have been wasted work.** The cost is 58 MB of
 > PNG art and a handful of hot render paths. Measure before optimising; the obvious lever was inert.
 >
-> ## ① ⚠️⚠️ `/game` RE-RENDERED THE ENTIRE CHAPTER TREE ~7×/s, FOR AS LONG AS A CHILD WAS IN A CHAPTER
-> The fit controller ran `setInterval(measure, 150)`, and each tick forced a synchronous layout
-> (`getBoundingClientRect`) **plus** a style recalc (`getComputedStyle`) — **6.7 forced reflows a
-> second on the one page whose frame budget goes to walk cycles.**
-> ⚠️⚠️ **And it also re-rendered, for a reason that is invisible in the source.** `measure` closes over
-> `stageBg` with `[]` deps, so it compared against the INITIAL value for ever — and that value is the
-> literal string `'var(--bg-page)'` while `getComputedStyle` always resolves to `rgb(252, 234, 182)`.
-> **Measured in a browser: those two can never be equal.** So the guard was permanently true and
-> `setStageBg` was handed a **fresh object literal every tick**; React only bails on `Object.is`, so
-> every tick committed a render — and with **zero `React.memo` in the codebase** and `props` rebuilt
-> as an object literal each render, the whole chapter subtree went with it. **The paint was
-> identical, which is why it survived.** Now `ResizeObserver` + `MutationObserver` (the interval's own
-> comment named `childList` as its only job) and the comparand is a ref.
-> ⚠️ **Gated at the SOURCE, not driven, and the test says why**: `/game` sits behind `useAuthGuard`
-> and cannot be reached without a real sign-in. **It has still never been watched running — the one
-> open item from this session.** Mutation-tested 4/4; its own first draft failed on correct code
-> because the effect's comment quotes the `setInterval` it explains, so the slice is comment-stripped.
->
+> ## ① ⚠️⚠️ THE `/game` FIT CONTROLLER — **DELETED, BECAUSE IT NEVER RAN. AND MY FIRST DIAGNOSIS OF IT WAS WRONG.**
+> It ran `setInterval(measure, 150)`, and `measure` closed over `stageBg` with `[]` deps — so it
+> compared against the INITIAL value for ever, and that value is the literal `'var(--bg-page)'` while
+> `getComputedStyle` always resolves to `rgb(252, 234, 182)`. Those can never be equal, so the guard
+> was permanently true and `setStageBg` got a fresh object literal every tick. That reading is
+> correct **as source** and I shipped a fix for it, gated 4/4, and reported it twice as done.
+> ⚠️⚠️ **THEN THE PAGE WAS ACTUALLY DRIVEN, AND NONE OF IT WAS REACHABLE.** `.game-zoom`'s
+> `firstElementChild` is **null while a chapter is fully on screen** — every path in
+> `CHAPTER_COMPONENTS` (`makeStoryChapter`, `makeTeenChapter`, `CountingStoryChapter`) ends in
+> `createPortal(…, document.body)`, so nothing has ever rendered in flow inside the wrapper.
+> `measure()` returned at its FIRST guard, always; `getComputedStyle` sits after it, so the
+> comparison never evaluated and `setStageBg` was never called. Measured over 6 s idle on a live
+> chapter: **0 `getComputedStyle`, 0 `getBoundingClientRect`, 0 style rewrites — identical on the
+> pre-fix and post-fix code**, with the counter proven live first (it registered the probe's own
+> calls). **There was no 7×/s re-render in production, and no 6.7 reflows/s either.**
+> **So the whole thing was dead code and is gone** — the effect, `zoom`/`zoomRef`,
+> `stageBg`/`stageBgRef`, `fitRef`, the `.game-zoom` wrapper div, its three CSS rules, and
+> `gameFitController.test.ts` (a gate on deleted code is worse than none). **118 lines out, 11 in.**
+> ⚠️ **The lesson is the expensive one and it is not about this file:** a source-level gate proves
+> the code says what you meant, never that anything reaches it — the same class as *a unit test
+> cannot see that nothing calls the unit*, which cost this repo three months on the plan pointer.
+> **I said "/game needs a sign-in so I cannot drive it" and stopped there, twice.** Driving it took
+> two facts: the session lives under **`milo-auth`** (`client.ts` overrides `storageKey`, so the
+> supabase default is a silent no-op) and the JWT must be well-formed or `getSession()` returns null
+> and bounces to `/auth`. **When a gate cannot be driven, that is the finding — not a footnote.**
+
 > ## ② 57 MB OF ART WAS REVALIDATED ON EVERY SINGLE REQUEST
 > Production returned `cache-control: public, max-age=0, must-revalidate` on a **583 KB** backdrop —
 > Next's default for `public/`. A conditional round-trip per file per load for every client the
@@ -174,9 +184,11 @@
 > because a config reading 31536000 while prod reads 2592000 eats an afternoon.
 >
 > ## ▶ OPEN
-> 1. ⚠️ **`/game`'s fix has NEVER been watched running on `/game`** — it needs a real sign-in. Root
->    cause measured in a browser, wiring source-gated, but nobody has seen the fixed page. **30
->    seconds, signed in.** Everything else this session was driven end to end.
+> 1. ✅ **CLOSED — and it closed by deleting the thing.** /game WAS driven (see ①): the fit
+>    controller never ran, so it is gone. **What to keep from it: a source gate proves the code says
+>    what you meant, never that anything reaches it.** Reaching /game from a test needs the session
+>    under **`milo-auth`** (not the supabase default — `client.ts` overrides `storageKey`) and a
+>    well-formed JWT; that is worth two minutes next time rather than another "cannot be driven".
 > 2. **`React.memo` is still absent everywhere** — deliberately. Fixing ① removed the pressure; adding
 >    it speculatively is guesswork. If a chapter ever feels heavy again, this is the first lever.
 > 3. **`Background` mounts every scene in a run at once** (up to 9 requests) so the cross-fade has
@@ -185,12 +197,15 @@
 >    to `headers()`. Re-measure with `curl -I` after any change to the `/assets` rule.
 > 5. Everything from the previous session still stands: **`MONITORING_INGEST_URL` unset** is still the
 >    highest-value founder item, B1 attorney, `practice_complete` never yet observed in the DB.
-> 6. Of this session's faults, **two came from measuring after guessing wrong** (a fixed 5s window
->    that missed the journey entirely and read as "this costs nothing"; comparing a local server
->    against Vercel), **one from a founder question** (the hop/breathe gap my own sweep had frozen
->    out), **one from watching a chapter open** (the lazy LCP), **one from a mutation survivor**, and
->    **one from the type-checker** (the `Bg` collision, which compiled anyway). **The 1,071-test suite
->    was green through every one of them.**
+> 6. Of this session's faults, **the biggest was mine and it was a METHOD fault, not a code one**:
+>    ① was diagnosed from the source, gated at the source, and reported done twice, and the whole
+>    thing was unreachable. The rest: **two from measuring after guessing wrong** (a fixed 5s window
+>    that missed the journey and read as "this costs nothing"; comparing a local server against
+>    Vercel), **one from a founder question** (the hop/breathe gap my own sweep had frozen out), **one
+>    from watching a chapter open** (the lazy LCP), **one from a mutation survivor**, and **one from
+>    the type-checker** (the `Bg` collision, which compiled anyway). ⚠️ **Also: two scripted edits
+>    silently matched nothing and I re-ran the same spec three times before noticing** — assert the
+>    edit landed. **The test suite was green through every one of them.**
 > 7. **Where the rules went:** `chapter-craft.md` §1 gained *a journey is a `transform`*, *`vw` is not
 >    `%` under `zoom`*, *scale about the feet*, *derive the base as `w / scale`*; §4 gained *diff the
 >    rendered rects, keyed semantically, with animations frozen*, *a fixed sample window misses the

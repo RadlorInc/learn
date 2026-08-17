@@ -2158,6 +2158,17 @@ count the matches.
   the LCP element waits for an IntersectionObserver. It shipped on five chapters here and was caught
   by watching a chapter open onto a bare gradient, not by any test. Mark the one that is on screen;
   in a cross-fade stack that is the same condition the opacity is keyed on.
+- ⚠️⚠️ **A SOURCE GATE PROVES THE CODE SAYS WHAT YOU MEANT. IT NEVER PROVES ANYTHING REACHES IT.**
+  `/game`'s fit controller was diagnosed from the source, fixed, gated with four mutations, and
+  reported done twice — and the entire effect was unreachable: every chapter `createPortal`s to
+  `document.body`, so the element it measured never had a child and `measure()` returned at its
+  first guard. Measured on the live page: **0 `getComputedStyle`, 0 `getBoundingClientRect`,
+  identical before and after the "fix"**. Same class as *a unit test cannot see that nothing calls
+  the unit*, which cost this repo three months on the plan pointer. **When you catch yourself
+  writing a source check BECAUSE the thing cannot be driven, that inability is the finding** — go
+  and make it drivable, because the reason it is hard is often that nothing runs it. (Here it took
+  two facts: the Supabase session lives under `milo-auth`, since `client.ts` overrides `storageKey`,
+  and the JWT must be well-formed or `getSession()` returns null.)
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---
