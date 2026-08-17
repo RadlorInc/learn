@@ -45,6 +45,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { Game, type BaseTask, type GameConfig, type DemoStep } from './parts/GameShell'
 import { Palette, SlideValue, CommitBtn, Nudge, numChoices } from './parts/gameKit'
 import { rint, pick } from '@/core/rand'
+import { useViewport } from '@/shared/hooks/useViewport'
 import { disp } from '@/core/fmt'
 
 const P: Palette = {
@@ -343,9 +344,32 @@ function WalkPad({ task, value, setValue, disabled, reveal, onCommit }: {
   const span = Math.max(6, Math.abs(a), Math.abs(b), Math.abs(task.ra ?? 0), Math.abs(task.rb ?? 0))
 
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.2vw,16px)', width: '100%' }}>
-      {task.map && <StreetMap a={a} b={b} span={span} />}
+  /**
+   * ⚠️ ON A SHORT FRAME THE MAP GOES BESIDE THE CONTROLS, NOT ABOVE THEM — and this is the
+   * chapter-craft rule "a tall board in a short wide band needs REFLOW, not a smaller scale",
+   * measured rather than assumed.
+   *
+   * Stacked, this instrument is 280 × 382 natural in a slot of 364 × 200, so `FitSlot` is
+   * HEIGHT-bound at 0.5236 — and a 44px `Nudge` (authored correctly, with the tap floor in mind)
+   * renders at **23 × 23**, under the 24px operable floor. The child cannot reliably hit the
+   * control that sets their answer. Shrinking the parts would land within a pixel of the floor,
+   * which is not a fix.
+   *
+   * ⚠️ The width was there the whole time: the column is 364px wide and the instrument only ever
+   * asked for 280. (My first reading of this took the slot's OUTPUT box — 147 wide, the scaled
+   * result — for its constraint, and concluded there was no room. There was 217px of it.)
+   * Side by side the natural box becomes ~470 × 200, so the bind moves to WIDTH at ~0.78 and the
+   * nudges land near 34px, with headroom rather than on the boundary.
+   *
+   * Only when there IS a map: a `power`/`conj` round has no map, is already short, and gains
+   * nothing from a row. `short` is GameShell's own rule (`innerHeight < 470`) read through the
+   * shared viewport hook, so the two cannot drift.
+   */
+  const { h: vh } = useViewport()
+  const side = vh < 470 && !!task.map
+
+  const controls = (
+    <>
       <div style={{ fontFamily: 'var(--font-numeric)', fontVariantNumeric: 'tabular-nums', fontSize: 'clamp(24px,3.2vw,42px)', fontWeight: 800, color: reveal ? P.mint : P.gold, textShadow: `0 0 18px ${(reveal ? '#3fa77c' : P.goldDeep)}55`, letterSpacing: '0.02em' }}>
         {fmtComplex(a, b)}
       </div>
@@ -354,6 +378,26 @@ function WalkPad({ task, value, setValue, disabled, reveal, onCommit }: {
         <Leg label="north" val={b} onSet={(n) => set(a, n)} lo={lo} hi={hi} disabled={disabled} reveal={reveal} />
       </div>
       <CommitBtn P={P} label="LOCK IT IN ✓" disabled={disabled} onClick={() => onCommit({ k: 'walk', a, b })} />
+    </>
+  )
+
+  if (side) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 'clamp(10px,1.6vw,20px)' }}>
+        <StreetMap a={a} b={b} span={span} />
+        {/* Fixed basis, not flex:1 — the legs must not squeeze to nothing beside the map, and the
+            slot is scaled to fit afterwards anyway, so asking for the natural width is honest. */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(8px,1vw,14px)', width: 280, flex: '0 0 auto' }}>
+          {controls}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px,1.2vw,16px)', width: '100%' }}>
+      {task.map && <StreetMap a={a} b={b} span={span} />}
+      {controls}
     </div>
   )
 }
