@@ -24,6 +24,11 @@
 -- `learner_id` is a plain uuid column and deliberately NOT a foreign key: a crash must still be
 -- recorded when the learner id is stale, absent, or from a device whose row was deleted.
 
+-- ⚠️ APPLIED TO PRODUCTION 2026-08-17 (recorded remotely as version 20260817142406, which is why
+-- this file carries that timestamp — a mismatch would make a future `supabase db push` re-apply it
+-- and fail on "table already exists"). Verified after applying: RLS on, 0 policies, NO grants to
+-- anon or authenticated, and both an anon INSERT and an anon SELECT refused with 42501.
+
 create table public.error_events (
   id          uuid primary key default gen_random_uuid(),
   at          timestamptz not null default now(),

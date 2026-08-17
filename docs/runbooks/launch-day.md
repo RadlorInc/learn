@@ -69,7 +69,17 @@ Then, **after** the deploy has landed:
    ⚠️ And read the browser console on a real page. Three separate things the enforced CSP broke
    (fonts, MediaPipe, the recorded voice) were invisible to every route check and visible in one
    console line.
-4. Send a test error and confirm it lands in the monitoring sink (once C3 is wired).
+4. **Send a test error and confirm it is RETAINED**, not just logged:
+   ```bash
+   curl -s -X POST https://milo-story-mode.vercel.app/api/report-error \
+     -H 'Content-Type: application/json' -d '{"message":"launch-day smoke"}'
+   ```
+   Then in the Supabase SQL editor: `select at, source, message from public.error_events
+   order by at desc limit 5;` — the row should be there.
+   ⚠️ **If the table is empty but Vercel logs show `[milo.client-error]`, the service-role key is
+   not set** — `errorSink.ts` writes to the table only when `SUPABASE_SERVICE_ROLE_KEY` is present
+   and deliberately has NO anon fallback. Set it in Vercel → Settings → Environment Variables
+   (value: Supabase → Settings → API → `service_role`), redeploy, retry.
 5. **Rehearse the rollback once**, on a preview. A rollback you have never run is a plan, not a path.
 
 ---

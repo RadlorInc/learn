@@ -215,8 +215,27 @@
 >    so automation against a preview URL needs the secret. Inert without it, verified on the wire.
 >    ⚠️ **And the WAF is armed on production right now** — harmless for one child in a browser, worth
 >    knowing for a classroom behind one NAT IP.
-> 5. Everything from the previous session still stands: **`MONITORING_INGEST_URL` unset** is still the
->    highest-value founder item, B1 attorney, `practice_complete` never yet observed in the DB.
+> 5. ✅ **MONITORING IS WIRED — and the standing description of it was wrong.** The handoff said
+>    `/api/report-error` "forwards every crash into a void". It never did: both paths have always
+>    `console.error`'d a structured line, so crashes reach Vercel logs. What was missing is
+>    **retention and someone looking** — Hobby keeps runtime logs about an hour, so a 2am crash is
+>    gone by breakfast, which is exactly how the plan-pointer P0 ran three months unseen.
+>    `infra/errorSink.ts` is now the ONE place a crash goes, for both the browser ErrorBoundary and
+>    the server `onRequestError`: console always and FIRST, then the new `error_events` table, then
+>    the `MONITORING_INGEST_URL` seam (kept, so Sentry stays a one-env-var change).
+>    ⚠️ **NO ANON FALLBACK, and the gate asserts it** — `leads_server_only.sql` is this repo's own
+>    record of why an anonymous INSERT surface is a mistake. The table is RLS-on with ZERO policies;
+>    verified on prod that anon INSERT and anon SELECT are both refused with `42501`.
+>    ⚠️ **ONE FOUNDER STEP LEFT: set `SUPABASE_SERVICE_ROLE_KEY` in Vercel** (Supabase → Settings →
+>    API → `service_role`). Until then the table stays empty and crashes go to Vercel logs only —
+>    exactly today's behaviour, so nothing regressed. `vercel env ls production` currently shows only
+>    the two Supabase public vars. **This same key also unblocks `/api/lead` and the
+>    `leads_server_only` migration**, which is still unapplied.
+> 5b. **Prod DDL applied this session:** `20260817142406_error_events`. ⚠️ Still NOT applied:
+>    `20260816120000_perf_advisors` and `20260816170000_leads_server_only` (the latter must wait for
+>    the service-role key, or lead capture stops silently).
+> 5c. Everything else from the previous session stands: **B1 attorney**, and `practice_complete`
+>    never yet observed in the DB.
 > 6. Of this session's faults, **the biggest was mine and it was a METHOD fault, not a code one**:
 >    ① was diagnosed from the source, gated at the source, and reported done twice, and the whole
 >    thing was unreachable. The rest: **two from measuring after guessing wrong** (a fixed 5s window
