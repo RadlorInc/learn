@@ -71,9 +71,18 @@
 > **sw v119**.
 >
 > ⚠️ **THE REPO AND THE HOST MOVED ON 2026-08-18, SO THE OLD PATHS IN THESE BLOCKS ARE HISTORY:**
-> the repo is now **`RadlorMain/learn`** (a GitHub Organization) and it is **PRIVATE** — Vercel Hobby
-> hosts a private, org-owned repo perfectly well, which was proven by driving it rather than argued.
+> the repo is now **`RadlorMain/learn`** (a GitHub Organization) and it is **PUBLIC**.
 > `git remote` must be `https://github.com/RadlorMain/learn.git`.
+> ⚠️⚠️ **IT MUST STAY PUBLIC UNTIL VERCEL IS ON PRO, AND THIS IS VERCEL'S OWN RULE:** *"The repository
+> 'learn' is private and owned by an organization, which is not supported on the Hobby plan."* The
+> unsupported thing is the COMBINATION — private **and** org-owned. Private-on-a-personal-account is
+> fine; this repo is neither. Flipping it private disconnects Git and **no push can deploy at all.**
+> ⚠️ **AND I "PROVED" THE OPPOSITE FIRST, WHICH IS THE LESSON WORTH KEEPING.** With the repo private I
+> POSTed a `gitSource` deployment to `/v13/deployments`, watched it build READY, and concluded Hobby
+> supports it. That call runs on a USER TOKEN and never crosses the plan gate — the gate sits on the
+> Git *integration*, not on an API deploy. So I had proven Vercel could CLONE the repo and reported it
+> as proof of something else entirely, which is exactly this repo's recurring fault: **verify the
+> thing itself, not the nearest thing that is easy to run.**
 > ⚠️⚠️ **AND THE DEPLOY PIPELINE BROKE SILENTLY TWICE ON THAT MOVE** — once on the transfer, once on
 > going private. Both times GitHub accepted the push, Vercel created no deployment, and prod sat on
 > the old build with **no error anywhere**. Vercel's project git link read correctly on the settings
