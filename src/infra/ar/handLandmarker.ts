@@ -15,15 +15,41 @@ export type HandLandmarkerInstance = any
  * EVICTS the tracked hand from the only slot, and each eviction is exactly the discontinuity
  * an event detector is least able to tell from a real gesture.
  */
+/**
+ * ⚠️ THE LOAD IS TIMED OUT, AND THAT IS NOT BELT-AND-BRACES — IT IS THE ONLY WAY OUT.
+ * This pulls ~7.8 MB of model from storage.googleapis.com and ~11 MB of wasm from jsDelivr. On a
+ * slow 3G phone, or with either host blocked, those fetches do not REJECT — they hang, so a bare
+ * `await` never settles, `useFingerCounter`'s try/catch never fires, `status` stays 'loading' for
+ * ever and `CamGate` sits on the screen. A promise that never settles is not an error path anyone
+ * can catch; it has to be raced. Rejecting turns the hang into the denial case the gate already
+ * handles, which offers the tap door that works with no camera at all.
+ */
+export const LOAD_TIMEOUT_MS = 20_000
+
 export async function createHandLandmarker(numHands: 1 | 2 = 1): Promise<HandLandmarkerInstance> {
-  const { FilesetResolver, HandLandmarker } = await import('@mediapipe/tasks-vision')
-  const fileset = await FilesetResolver.forVisionTasks(WASM_URL)
-  return HandLandmarker.createFromOptions(fileset, {
-    baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
-    runningMode: 'VIDEO',
-    numHands,
-    minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
-  })
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const load = (async () => {
+    const { FilesetResolver, HandLandmarker } = await import('@mediapipe/tasks-vision')
+    const fileset = await FilesetResolver.forVisionTasks(WASM_URL)
+    return HandLandmarker.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
+      runningMode: 'VIDEO',
+      numHands,
+      minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+    })
+  })()
+  try {
+    return await Promise.race([
+      load,
+      new Promise<never>((_, rej) => {
+        // `name` is what CamGate matches on, so give it one that reads as "not denied, not missing"
+        // and falls through to its generic "have another go, or tap instead".
+        timer = setTimeout(() => rej(Object.assign(new Error('camera model download timed out'), { name: 'ModelTimeout' })), LOAD_TIMEOUT_MS)
+      }),
+    ])
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 export async function openCamera(video: HTMLVideoElement): Promise<MediaStream> {

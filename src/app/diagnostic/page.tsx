@@ -72,6 +72,49 @@ const STORY_KEY: Record<string, string> = {
 function activeLearner(): { id?: string; name?: string; display_name?: string; age_group?: string; theme?: ItemTheme } | null {
   try { return JSON.parse(sessionStorage.getItem('milo_active_learner') || 'null') } catch { return null }
 }
+/**
+ * Mid-check resume. The probe lived only in React state, so ONE Back press (or a refresh, or a
+ * backgrounded tab being evicted) threw away a check that takes minutes — measured: answering to
+ * Q4 then pressing Back landed on the marketing page with every answer gone.
+ *
+ * `ProbeState` + the attempt number is the whole thing: `resolve()` rebuilds the current question
+ * from them, and `buildContext(attempt)` is deterministic per child, so the restored run serves the
+ * SAME items rather than a fresh draw the child could re-roll.
+ *
+ * ⚠️ sessionStorage, not localStorage, and not the DB: this is a per-tab, per-sitting resume. A
+ * check abandoned days ago should start fresh (the child has moved on), and a half-finished probe
+ * is not a result — nothing here is worth syncing.
+ */
+const RESUME_KEY = 'milo_diag_resume'
+function saveResume(band: Band, s: ProbeState, attempt: number) {
+  // The learner rides along so a restore can tell WHOSE run this was — see `resumable` below.
+  try { sessionStorage.setItem(RESUME_KEY, JSON.stringify({ band, s, attempt, learner: activeLearner()?.id ?? null })) } catch { /* private mode / full: resume is a nicety, never a blocker */ }
+}
+function readResume(): { band: Band; s: ProbeState; attempt: number; learner: string | null } | null {
+  try {
+    const r = JSON.parse(sessionStorage.getItem(RESUME_KEY) || 'null')
+    // Guard the shape: a stale/garbled entry must not crash the page a child is trying to start.
+    return r && (BANDS as string[]).includes(r.band) && Array.isArray(r.s?.asked) ? r : null
+  } catch { return null }
+}
+/**
+ * ⚠️ A RESUME IS NOT ALWAYS THE RIGHT ANSWER, AND GETTING THIS WRONG SILENTLY SERVES THE WRONG
+ * CHILD THE WRONG CHECK. Caught by driving it: with a 6–8 probe mid-flight, opening
+ * `/diagnostic?band=12-14` restored the 6–8 run and ignored the URL entirely — a parent following a
+ * band-specific link got someone else's half-finished questions with nothing on screen saying so.
+ *
+ * Two things outrank a resume, and both mean "this is a different run":
+ *   · an EXPLICIT `?band=` that disagrees — the link is a deliberate instruction, the resume is a
+ *     convenience, so the instruction wins;
+ *   · a different active learner — sibling B must never continue sibling A's probe, and the items
+ *     are seeded per learner anyway, so the restored run would not even be self-consistent.
+ * Anything else (no `?band=`, same child, a plain refresh or Back) resumes, which is the point.
+ */
+function resumable(r: ReturnType<typeof readResume>, urlBand: string | null, learnerId: string | null) {
+  return !!r && (!urlBand || urlBand === r.band) && learnerId === r.learner
+}
+const clearResume = () => { try { sessionStorage.removeItem(RESUME_KEY) } catch { /* nothing to clear */ } }
+
 /** Phase 4: build the per-child context from the active learner (safe to call in a handler). */
 function buildContext(attempt: number): DiagContext {
   const l = activeLearner()
@@ -155,13 +198,24 @@ export default function DiagnosticPage() {
     const p = new URLSearchParams(window.location.search).get('band')
     if (p && (BANDS as string[]).includes(p)) { setBand(p as Band); setBandKnown(true) }
     else if (l?.age_group && (BANDS as string[]).includes(l.age_group)) { setBand(l.age_group as Band); setBandKnown(true) }
+
+    // A check already in flight in this tab wins over all of the above — the child is mid-probe and
+    // the band is whatever they were answering under — UNLESS it belongs to another run entirely.
+    const r = readResume()
+    if (resumable(r, p, l?.id ?? null)) {
+      ctxRef.current = buildContext(r!.attempt)
+      setBand(r!.band); setBandKnown(true); setAttempt(r!.attempt)
+      setSlot(resolve(r!.s, r!.band, ctxRef.current)); setPhase('probe')
+    } else if (r) clearResume()   // another child's, or another band's: drop it rather than half-honour it
   }, [])
 
   const pickBand = (b: Band) => { setBand(b); setBandKnown(true) }
 
   const startProbeNow = () => {
     ctxRef.current = buildContext(attempt)          // Phase 4: seed the probe for this child + attempt
-    setSlot(resolve(startProbe(band), band, ctxRef.current)); setPhase('probe')
+    const s = startProbe(band)
+    saveResume(band, s, attempt)
+    setSlot(resolve(s, band, ctxRef.current)); setPhase('probe')
   }
   // Cold (logged-out) visitors give an email first — required, for lead capture. Signed-in users
   // already have an account, so they go straight in. Once captured (this or a prior visit), we don't
@@ -205,7 +259,7 @@ export default function DiagnosticPage() {
     }
   }
 
-  const retake = () => { setAttempt(a => a + 1); setPhase('intro'); setResult(null); setSlot(null); setPicked(null) }
+  const retake = () => { clearResume(); setAttempt(a => a + 1); setPhase('intro'); setResult(null); setSlot(null); setPicked(null) }
 
   // Stash the result to the browser so it survives sign-up (the parent page replays it against the
   // learner they create). Called by BOTH the "save this plan" CTA and the "just start playing" taste,
@@ -236,9 +290,10 @@ export default function DiagnosticPage() {
       if (!next.skill) {
         const dx = diagnose(next.s)
         finalStateRef.current = next.s
+        clearResume()   // finished: the report owns the run now, and a resume would re-open the probe
         setResult(dx); setPhase('report')
         persistRef.current = persistDiagnosis(band, next.s, dx)   // signed-in → saves; cold/preview → skips cleanly
-      } else setSlot(next)
+      } else { saveResume(band, next.s, attempt); setSlot(next) }
     }, 320)
   }
 

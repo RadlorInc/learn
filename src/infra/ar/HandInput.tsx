@@ -385,13 +385,18 @@ export function CamGate({ status, error, skin, denied, onTaps, onRetry, onExit }
               : missing ? 'No camera on this device — no problem. You can tap instead.'
                 : 'Something got in the way. Have another go, or tap instead.'}
         </div>
-        {status !== 'loading' && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 18 }}>
-            <button onClick={onTaps} style={btn(true)}>Tap instead →</button>
-            <button onClick={onRetry} style={btn()}>Try the camera again</button>
-            <button onClick={onExit} style={btn()}>Back</button>
-          </div>
-        )}
+        {/**
+          * ⚠️ THE TAP DOOR IS OFFERED WHILE LOADING TOO. It used to be `status !== 'loading'`, which
+          * is exactly backwards on the one device that needs it: the wait is longest on a slow phone
+          * (~19 MB of model + wasm), and that is precisely when a child is stranded on "One moment"
+          * with nothing to press. Taps answer every one of these chapters, so there is never a reason
+          * to withhold them. Retry is still hidden while a load is in flight — pressing it would
+          * start a SECOND download on a connection already struggling with the first. */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 18 }}>
+          <button onClick={onTaps} style={btn(true)}>Tap instead →</button>
+          {status !== 'loading' && <button onClick={onRetry} style={btn()}>Try the camera again</button>}
+          <button onClick={onExit} style={btn()}>Back</button>
+        </div>
       </div>
     </div>
   )
