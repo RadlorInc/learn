@@ -68,7 +68,19 @@
 > REAL HAND on a real camera** — MediaPipe is proven to boot on prod under the enforced CSP
 > (`Graph successfully started running.`, 0 violations), but the band's defining feature is
 > unverified end to end and only the founder can close it. Everything is committed; prod is on
-> **sw v117**.
+> **sw v119**.
+>
+> ⚠️ **THE REPO AND THE HOST MOVED ON 2026-08-18, SO THE OLD PATHS IN THESE BLOCKS ARE HISTORY:**
+> the repo is now **`RadlorMain/learn`** (a GitHub Organization) and it is **PRIVATE** — Vercel Hobby
+> hosts a private, org-owned repo perfectly well, which was proven by driving it rather than argued.
+> `git remote` must be `https://github.com/RadlorMain/learn.git`.
+> ⚠️⚠️ **AND THE DEPLOY PIPELINE BROKE SILENTLY TWICE ON THAT MOVE** — once on the transfer, once on
+> going private. Both times GitHub accepted the push, Vercel created no deployment, and prod sat on
+> the old build with **no error anywhere**. Vercel's project git link read correctly on the settings
+> page while the webhook was dead. **After ANY repo/host change, push once and confirm a deployment
+> appears; a green settings page is not evidence.** If it is dead: GitHub → org → Settings → GitHub
+> Apps → Vercel → Configure → re-select the repo; and a deploy can be forced meanwhile with a
+> `gitSource` POST to `/v13/deployments`.
 >
 > ---
 >
