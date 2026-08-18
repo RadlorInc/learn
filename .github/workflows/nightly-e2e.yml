@@ -1,0 +1,92 @@
+name: Nightly E2E
+
+# THE LAUNCH GATE, ON A TIMER. `all-chapters` asks the one question that decides launch day —
+# *does all of it still open?* — across every chapter a child can reach, on three frames. Until now
+# it ran only when someone remembered, which for a 70-chapter app means "not before the deploy that
+# breaks one". Measured at 7.7 min against a production build (the ~18 min figure in the docs is a
+# DEV-server run — `next start` is roughly twice as fast), plus ~2 min for install and build. Still
+# too slow for the PR path, so it lives here; `ci.yml` keeps the fast gates (tsc, 1118 vitest,
+# build, audit) where they can block a merge.
+#
+# ⚠️ IT RUNS AGAINST A PRODUCTION BUILD ON THE RUNNER, NEVER AGAINST PRODUCTION.
+# Pointing this at the live site would trip Vercel's firewall at roughly the fortieth navigation
+# (403 + x-vercel-mitigated: challenge), which Playwright cannot solve, so the run dies as
+# net::ERR_ABORTED and reads exactly like a broken chapter. Retries make it slower, not greener.
+# See playwright.config.ts for the full write-up. `next start` also matches production more closely
+# than `next dev` does: the production CSP (no 'unsafe-eval') and the production React build, which
+# is what the "zero console errors" contract is really asserting.
+#
+# The placeholder Supabase env is the same pair ci.yml uses: `all-chapters` only opens chapters and
+# watches the console, and the chapter routes are public — no auth, no database. Specs that DO need
+# a real user (adaptive, plan-advance) rely on the dev-only [data-test-answer] hook, which is
+# dead-code-eliminated from a production build, so they are deliberately NOT in this job.
+#
+# Verified before shipping: full 211-test sweep run locally against exactly this setup
+# (production build + placeholder env + `next start -p 3017`).
+
+on:
+  schedule:
+    - cron: '15 3 * * *' # 03:15 UTC, after the 02:30 backup
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Narrow to chapters (comma-separated, e.g. decimals,rounding)'
+        required: false
+        default: ''
+
+jobs:
+  chapters:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45 # 7.7 min observed; the cap is here so a hang cannot burn the budget
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx next build
+
+      - name: Start production server
+        run: |
+          # nohup + disown so the server survives this step's shell exiting; a plain `&` is the
+          # usual way this breaks and it fails as 211 unexplained navigation errors, not as a
+          # missing server.
+          nohup npx next start -p 3017 > /tmp/next-start.log 2>&1 &
+          disown || true
+          # Poll rather than sleep: a fixed sleep is either flaky or wasted time, and a server that
+          # never comes up should fail HERE with a clear message.
+          for i in $(seq 1 60); do
+            if [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3017/api/health)" = "200" ]; then
+              echo "server up after ${i}s"; exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::server did not become healthy in 60s"; cat /tmp/next-start.log; exit 1
+
+      # ⚠️ E2E_ONLY IS SET ONLY WHEN NON-EMPTY, AND THE SPEC ALSO TREATS EMPTY AS "ALL".
+      # A `schedule` run passes '' for the unset input, and the spec's original parse turned '' into
+      # an empty-but-TRUTHY array — which skipped every chapter and still reported green. Both ends
+      # are fixed; belt and braces, because a nightly that silently tests nothing is worse than none.
+      - name: Every chapter opens (70 chapters x 3 frames)
+        run: |
+          if [ -n "${{ github.event.inputs.only }}" ]; then
+            export E2E_ONLY="${{ github.event.inputs.only }}"
+          fi
+          npx playwright test e2e/all-chapters.spec.ts
+
+      # Traces are retain-on-failure, so this uploads only when there is something to look at —
+      # which is the difference between a red nightly you can diagnose and one you re-run blindly.
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-trace-${{ github.run_id }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore

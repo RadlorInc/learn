@@ -57,7 +57,15 @@ const SIZES = [
 ]
 
 /** Fixed unless overridden, so the default run is reproducible and a sweep is opt-in. */
-const SEED = Number(process.env.E2E_SEED ?? 20260817)
+/**
+ * ⚠️ `??` DOES NOT CATCH AN EMPTY STRING, AND `Number('')` IS 0 — SO AN UNSET-BUT-PRESENT
+ * `E2E_SEED` SILENTLY CHANGES THE SEED. GitHub Actions passes `''` for an unset
+ * `workflow_dispatch` input on a `schedule` run, so the weekly job would have swept seed **0**
+ * while every dispatched/local run used 20260817. Nothing fails; the runs just stop being
+ * comparable, which defeats the entire reason this suite is seeded (a reproducible red instead of
+ * a coin flip people re-run). Same empty-string class as `E2E_ONLY` in all-chapters.spec.ts.
+ */
+const SEED = Number(process.env.E2E_SEED || 20260817)
 
 /**
  * Replace the page's `Math.random` with mulberry32 BEFORE any app code runs, so every generator

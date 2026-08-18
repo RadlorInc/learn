@@ -86,7 +86,18 @@ const FAILURE_TEXT = [
   'Oops! Something went wrong',          // MiloErrorBoundary
 ]
 
-const ONLY = process.env.E2E_ONLY?.split(',').map(s => s.trim()).filter(Boolean)
+/**
+ * ⚠️ AN EMPTY `E2E_ONLY` MUST MEAN "ALL", NOT "NONE" — and the naive parse means "none".
+ * `''?.split(',')` is `['']` (optional chaining only short-circuits on null/undefined, not on an
+ * empty string), which filters to `[]`, and `[]` is TRUTHY — so `ONLY && !ONLY.includes(id)` was
+ * true for every chapter and the whole sweep was skipped. It still reports green, because the only
+ * surviving test is the list-derivation guard. Exactly the vacuity fault that guard was written to
+ * catch, arriving one layer above it.
+ * This is not hypothetical: GitHub Actions passes `''` for an unset `workflow_dispatch` input on a
+ * `schedule` run, so the nightly would have tested NOTHING, every night, in green.
+ */
+const ONLY_RAW = process.env.E2E_ONLY?.split(',').map(s => s.trim()).filter(Boolean)
+const ONLY = ONLY_RAW?.length ? ONLY_RAW : undefined
 const FRAME_NAMES = (process.env.E2E_FRAMES?.split(',').map(s => s.trim()).filter(Boolean)
   ?? Object.keys(FRAMES)) as FrameName[]
 
@@ -100,6 +111,12 @@ test.describe('every chapter opens', () => {
     expect(ALL.filter(c => c.shell === 'gameshell').length).toBeGreaterThan(30)
     expect(ALL.filter(c => c.shell === 'story').length).toBeGreaterThan(10)
     expect(new Set(ALL.map(c => c.id)).size).toBe(ALL.length)
+
+    // ⚠️ And that the SELECTION is non-empty. The check above proves the chapter list parsed; it
+    // cannot see a filter that then matches nothing — a typo'd `E2E_ONLY=decimls` sweeps zero
+    // chapters and reports green, which is the same vacuity one step later.
+    const selected = ONLY ? ALL.filter(c => ONLY.includes(c.id)) : ALL
+    expect(selected.length, `E2E_ONLY matched no chapters: ${process.env.E2E_ONLY}`).toBeGreaterThan(0)
   })
 
   for (const frameName of FRAME_NAMES) {

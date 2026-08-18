@@ -1,0 +1,96 @@
+name: Weekly layout sweep (short-landscape)
+
+# The layer-collision gate: proves the teen shell is still OPERABLE on a wide-but-short frame, not
+# merely non-overlapping. Every size in that shell is `clamp(px, vw, px)` — width-derived, no vh
+# term — so a short frame gets near-desktop sizes with no vertical room, and the failure mode is a
+# commit button rendered 61x13 rather than anything that throws. Nothing else in the repo can see it.
+#
+# ⚠️ WHY WEEKLY AND NOT NIGHTLY. It is ~57 minutes. Nightly, that is ~29 runner-hours a month to
+# re-measure layout constants that change a few times a year — and the practical cost of a slow gate
+# is that people stop reading it. The defects it catches arrive with a LAYOUT change, not with time,
+# so it is scheduled weekly AND exposed via workflow_dispatch to run on demand before a release or
+# after touching FitSlot / GameShell / kidKit. If it ever starts finding things weekly, make it
+# nightly then — do not pay for that up front.
+#
+# ⚠️⚠️ THIS ONE NEEDS `next dev`, AND THE NIGHTLY DELIBERATELY DOES NOT.
+# It drives real questions through `reachPractice`, which reads the `[data-test-answer]` /
+# `[data-test-phase]` hooks — and those are emitted ONLY by `next dev`; they are dead-code-eliminated
+# from any production build (that is deliberate: the hook must never ship the answer to a child).
+# So `next start` — correct for nightly-e2e.yml, which only opens chapters — would leave every
+# `reachPractice` call finding no board, and the suite would measure the wrong screen while passing.
+# The CSP is branched on NODE_ENV precisely so the dev build still gets 'unsafe-eval' and the
+# "zero console errors" contract holds here too.
+#
+# ⚠️ THE SEED IS PINNED AND THAT IS THE POINT. This suite measures ONE randomly-drawn question kind
+# per chapter; unseeded it was a coin flip that failed 3 runs in 7 on a real defect, which teaches
+# people to re-run instead of read. `E2E_SEED` defaults to a fixed value in the spec, so a red run is
+# reproducible from the log. Buy BREADTH by dispatching with a different seed — never with re-runs.
+
+on:
+  schedule:
+    - cron: '40 4 * * 1' # Mondays 04:40 UTC — a fresh result waiting at the start of the week
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: 'E2E_SEED override (breadth: try a different seed, do not re-run the same one)'
+        required: false
+        default: ''
+
+jobs:
+  layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90 # ~57 min observed; headroom for a slower runner, capped so a hang cannot idle
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Start dev server
+        run: |
+          # nohup + disown so it survives this step's shell; a plain `&` fails later as a wall of
+          # navigation errors rather than as a missing server.
+          #
+          # ⚠️ THE PORT MUST BE EXPLICIT. `npm run dev` is `next dev`, which binds 3000 — while
+          # playwright's baseURL is 3017. Locally that mismatch is invisible because the preview
+          # tooling starts it from .claude/launch.json, which pins 3017; in CI there is no
+          # launch.json, so this job would have failed the health poll every Monday. Named directly
+          # rather than via `npm run dev -- -p`, so there is no arg-forwarding to get wrong.
+          nohup npx next dev -p 3017 > /tmp/next-dev.log 2>&1 &
+          disown || true
+          # Dev compiles routes on first request, so poll generously and fail HERE with the log if
+          # it never comes up.
+          for i in $(seq 1 120); do
+            if [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3017/api/health)" = "200" ]; then
+              echo "dev server up after ${i}s"; exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::dev server did not become healthy in 120s"; cat /tmp/next-dev.log; exit 1
+
+      # Set E2E_SEED only when non-empty: a `schedule` run passes '' for an unset input, and
+      # `Number('')` is 0 — a silently DIFFERENT seed from the spec's pinned default, which would
+      # make the scheduled run unreproducible against a dispatched one. Same class of empty-string
+      # trap that made the nightly sweep zero chapters; checked for here rather than rediscovered.
+      - name: Short-landscape layout sweep
+        run: |
+          if [ -n "${{ github.event.inputs.seed }}" ]; then
+            export E2E_SEED="${{ github.event.inputs.seed }}"
+          fi
+          npx playwright test e2e/short-landscape.spec.ts
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: layout-trace-${{ github.run_id }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
