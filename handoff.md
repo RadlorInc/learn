@@ -70,26 +70,10 @@
 > unverified end to end and only the founder can close it. Everything is committed; prod is on
 > **sw v119**.
 >
-> ⚠️ **THE REPO AND THE HOST MOVED ON 2026-08-18, SO THE OLD PATHS IN THESE BLOCKS ARE HISTORY:**
-> the repo is now **`RadlorMain/learn`** (a GitHub Organization) and it is **PUBLIC**.
-> `git remote` must be `https://github.com/RadlorMain/learn.git`.
-> ⚠️⚠️ **IT MUST STAY PUBLIC UNTIL VERCEL IS ON PRO, AND THIS IS VERCEL'S OWN RULE:** *"The repository
-> 'learn' is private and owned by an organization, which is not supported on the Hobby plan."* The
-> unsupported thing is the COMBINATION — private **and** org-owned. Private-on-a-personal-account is
-> fine; this repo is neither. Flipping it private disconnects Git and **no push can deploy at all.**
-> ⚠️ **AND I "PROVED" THE OPPOSITE FIRST, WHICH IS THE LESSON WORTH KEEPING.** With the repo private I
-> POSTed a `gitSource` deployment to `/v13/deployments`, watched it build READY, and concluded Hobby
-> supports it. That call runs on a USER TOKEN and never crosses the plan gate — the gate sits on the
-> Git *integration*, not on an API deploy. So I had proven Vercel could CLONE the repo and reported it
-> as proof of something else entirely, which is exactly this repo's recurring fault: **verify the
-> thing itself, not the nearest thing that is easy to run.**
-> ⚠️⚠️ **AND THE DEPLOY PIPELINE BROKE SILENTLY TWICE ON THAT MOVE** — once on the transfer, once on
-> going private. Both times GitHub accepted the push, Vercel created no deployment, and prod sat on
-> the old build with **no error anywhere**. Vercel's project git link read correctly on the settings
-> page while the webhook was dead. **After ANY repo/host change, push once and confirm a deployment
-> appears; a green settings page is not evidence.** If it is dead: GitHub → org → Settings → GitHub
-> Apps → Vercel → Configure → re-select the repo; and a deploy can be forced meanwhile with a
-> `gitSource` POST to `/v13/deployments`.
+> 📍 **WHERE THINGS LIVE NOW (2026-08-18/19).** Repo **`RadlorMain/learn`** (GitHub Org, **PUBLIC —
+> must stay public until Vercel is Pro**). `git remote` = `https://github.com/RadlorMain/learn.git`.
+> App is live on **`https://adaptivelearn.radlor.com`** and on `milo-story-mode.vercel.app`. Support
+> address is **support@radlor.com**; mi2utor is retired. Full story + the traps in the 🏗️ block below.
 >
 > ---
 >
@@ -97,6 +81,109 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🏗️ **2026-08-18/19 — EVERYTHING MOVED OFF THE PERSONAL GMAIL AND ONTO THE COMPANY (RADLOR). THE APP IS LIVE ON `adaptivelearn.radlor.com`. ⚠️ AND ALONG THE WAY THE FOUNDER LOCKED HIMSELF OUT OF THE PRODUCTION DATABASE, THE DEPLOY PIPELINE BROKE SILENTLY THREE TIMES, AND I "PROVED" A PLAN LIMIT THAT WAS THE OPPOSITE OF TRUE.** 🏗️ SHIPPED — `main`@`e450cd6`, prod serving **sw v120**. `tsc` 0 · **1122/1122 vitest** · `next build` 0.
+>
+> **The asks:** *"vercel sahi option hai?"* → *"sab domain ke email pe transfer karna hai"* →
+> *"kaunse subdomain?"* → *"social media handles"* → *"google oAuth custom domain se"* →
+> *"github ka batao"* → *"supabase mein problem ho gayi"* → *"learn.radlor.com kaise banau"*.
+>
+> ## ⓪ ⚠️⚠️ THE ONE THAT NEARLY COST THE CHILDREN'S DATA
+> Transferring the Supabase org, the founder made `admin@radlor.com` an Owner and then hit
+> **"Leave team" on the personal account before confirming the new owner worked.** Result: the
+> personal account saw **zero organizations**, `admin@` saw the project but got *"You do not have
+> access to this project"*, and **my MCP lost all access too** (`execute_sql` → "no permission") —
+> so I could not have helped extract anything. Recovered by the founder; 17 learners / 8 accounts /
+> 44 sessions all intact.
+> ⚠️ **THE DATABASE NEVER WENT DOWN** — REST, auth and the app stayed 200 throughout, because those
+> run on the anon key and the URL, not on dashboard membership. **Check that first and say it first;
+> "I am locked out" is not "the app is down".**
+> **THE RULE: on any ownership transfer, verify the NEW owner can actually use the thing, THEN
+> remove the old one. Never the other way round.** The same rule was then applied to Google Cloud
+> and Vercel and both went cleanly.
+>
+> ## ① ⚠️⚠️ THE DEPLOY PIPELINE BROKE SILENTLY **THREE** TIMES IN ONE DAY
+> Repo transfer → private → and once more. Every time: **GitHub accepted the push, Vercel created no
+> deployment, production sat on the old build, and there was no error in any UI.** Worse, Vercel's
+> Settings → Git page showed the correct repo *while the webhook was dead*, so the thing you would
+> naturally check to confirm the fix was itself green and wrong.
+> **THE RULE, now also in the header: after ANY repo or host change, push once and confirm a
+> deployment appears. A green settings page is not evidence.** To force one meanwhile:
+> `POST /v13/deployments` with `{gitSource:{type:'github',repoId,ref:'main'}}`.
+>
+> ## ② ⚠️⚠️ I PROVED THE WRONG THING ABOUT THE VERCEL PLAN, AND THE FOUNDER WAS RIGHT
+> He said Hobby will not host a private repo. I said it would, flipped it private, POSTed a
+> `gitSource` deployment, watched it go **READY**, and reported that as proof. Vercel's own message
+> when he tried to reconnect Git: *"The repository 'learn' is private and owned by an organization,
+> which is not supported on the Hobby plan."*
+> **The API deploy runs on a USER TOKEN and never crosses the plan gate — the gate is on the Git
+> *integration*.** So I had proven Vercel could CLONE the repo and reported it as proof the plan
+> allowed the integration. It also explains two of the three "mysterious" dead webhooks: no mystery,
+> the plan was blocking. **The unsupported thing is the COMBINATION — private AND org-owned.**
+> Repo is back PUBLIC and must stay so until Pro.
+>
+> ## ③ 🔍 THE VERIFICATION TOOL THIS SESSION FOUND: `auth_logs`
+> Whether `adaptivelearn.radlor.com` was on Supabase's redirect allowlist is the one thing that
+> could silently kill sign-in for **5 of 8 accounts**, and I could not test it: driving
+> `/auth/v1/authorize` with the new origin redirected to Google — **but so did a CONTROL with an
+> obviously-forbidden domain.** Supabase validates at the CALLBACK, not at authorize, so the probe
+> could not tell allowed from forbidden. Reported as UNVERIFIED rather than as working.
+> ⚠️ **Then the founder signed in, and `query_logs` on `source='auth_logs'` showed it end to end:**
+> `path=/callback status=302 referer=https://adaptivelearn.radlor.com`, `action=login
+> provider=google`, then `/user` 200s. Plus `"reloading api with new configuration"` at the moment
+> he saved the allowlist. **Supabase auth logs are how you verify an auth change actually worked —
+> use them instead of inferring from a redirect.**
+>
+> ## ④ WHAT ACTUALLY MOVED
+> - **GitHub** → `RadlorMain/learn` (Org). Repo ID `1248492657` is unchanged by transfer/rename,
+>   which is why Vercel's link survived while its cached `org/repo` label read the old path.
+> - **Supabase** → org owned by `admin@radlor.com`. ⚠️ My MCP connection is **OAuth, not a PAT** —
+>   neither account's Access Tokens page lists it. To move it: disconnect/reconnect the connector
+>   while signed in as the company account.
+> - **Google Cloud** → the OAuth client lives in project **"AI Detector"** (`ai-detector-493801`),
+>   found from the client ID's numeric prefix = the project number **12513320995**, and the URL
+>   `console.cloud.google.com/apis/credentials?project=<number>` resolves straight to it.
+>   ⚠️ **`admin@radlor.com` is only EDITOR — still open.** Editor cannot manage IAM, so the personal
+>   Gmail is still the real owner.
+> - **Vercel** → still `plan: hobby`, still the personal scope. Email change is the cheap move; the
+>   Team + project transfer waits for Pro.
+> - **Google OAuth cleanup shipped:** `access_type: 'offline'` and `prompt: 'consent'` removed —
+>   nothing ever read `provider_token`, and forcing consent made every returning parent re-approve.
+>   Verified on the PROD URL: both params `<<ABSENT>>`, scope/client/redirect unchanged.
+>
+> ## ⑤ INFRA VERDICTS GIVEN (measured, not guessed)
+> - **Stay on Vercel; upgrade to Pro before launch.** Hobby is non-commercial-only, its ~1 h log
+>   retention is how the plan-pointer P0 hid for three months, and now it also blocks the private
+>   repo. Every alternative is a compatibility layer for Next 16 App Router.
+> - **No Google Workspace needed** (₹325/user/mo). Email is on Microsoft 365; a plain Google account
+>   on a custom address owns a Cloud project for free. ⚠️ Completing a Workspace signup for
+>   radlor.com would have demanded MX pointing at Google and **broken the M365 mailboxes**.
+> - ⚠️ **Supabase's built-in mailer will block signups at launch** — hit live: `{"code":429,"msg":
+>   "email rate limit exceeded"}`. 3 of 8 accounts sign up by email. Needs custom SMTP on a
+>   dedicated sending subdomain (`mail.radlor.com`).
+> - **Social handles:** `github.com/radlor` is TAKEN; `radlorhq`/`radlor-labs`/`getradlor` free.
+>   ⚠️ HTTP status alone cannot tell a taken handle from a free one — **a control handle is what made
+>   that check mean anything**, and the same control trick then invalidated my allowlist probe in ③.
+>
+> ## ▶ OPEN
+> 1. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA — AND TODAY SHOWED WHY.** `backup.yml` is committed
+>    and inert. Add to `RadlorMain/learn` → Settings → Secrets → Actions: `SUPABASE_ACCESS_TOKEN`,
+>    `BACKUP_PASSPHRASE`, `PROD_DB_PASSWORD`, `PROD_PROJECT_REF=qaymxunzlarwusogwyak`, then run
+>    **Backup (prod database)**. Ten minutes. This is the highest-value thing left in the repo.
+> 2. **Google Cloud: `admin@radlor.com` Editor → OWNER**, accept the emailed invite, then remove the
+>    personal Gmail LAST. ⚠️ Never delete the OAuth client or regenerate its secret — 5 users.
+> 3. **Vercel:** set `adaptivelearn.radlor.com` as the **Production Domain** and add
+>    `NEXT_PUBLIC_SITE_URL=https://adaptivelearn.radlor.com`, or sitemap/robots/og-image keep
+>    advertising the vercel.app host. Keep the vercel.app entry in Supabase's allowlist for now.
+> 4. **Vercel Pro** — gates the private repo, commercial use, and real log retention, all at once.
+> 5. **`SUPABASE_SERVICE_ROLE_KEY`** — the domain blocker is long gone. Order: set key → apply
+>    `20260816170000_leads_server_only.sql` → submit one real lead → then `…_leads_retention.sql`.
+> 6. **`DRAFT = true` is still live**, and everything from prior sessions stands (AR never driven
+>    with a real hand · `practice_complete` unobserved · dropped EXPLORE beats · 132 eslint errors).
+> 7. Of this session's faults, **the biggest was mine and the founder was right**: I contradicted him
+>    on the plan limit and backed it with a test that measured a different thing. The runner-up is
+>    that I gave a CNAME target Vercel later stopped recommending. **Both are the same fault — trust
+>    the system's own answer at the moment you need it, not the one you captured earlier.**
 
 > 🛡️ **2026-08-18 (2nd session) — A FIVE-ROLE RED-TEAM PASS, THEN THE FIXES. THE BACKEND HELD (I COULD NOT REACH ONE ROW OF ANOTHER ACCOUNT'S DATA), BUT AR COULD STRAND A CHILD FOR EVER ON A SLOW PHONE, AND THE PLACEMENT CHECK DIED ON ONE BACK PRESS. ⚠️ AND THE FIX FOR THE SECOND ONE SHIPPED A REGRESSION THAT tsc, 1122 TESTS AND THE BUILD ALL PASSED — CAUGHT ONLY BECAUSE THE FOUNDER ASKED "SO THE THINGS YOU FLAGGED ARE FIXED?" FOR THE FOURTH SESSION RUNNING.** 🛡️ SHIPPED — `main`@`e72de1a`, **4 commits**, prod serving **sw v117**. `tsc` 0 · **1122/1122 vitest** (+4 new) · `next build` 0 · **18/18 e2e on the six AR chapters × 3 frames** · plan-advance 1/1.
 >
@@ -390,199 +477,4 @@
 >    and reporting **590 false failures**, and **one from another session reviewing my workflow.**
 >    The 1,122-test suite was green through every one of them.
 
-> ⚡ **2026-08-17 (2nd session) — A PERFORMANCE PASS. 57 MB OF ART WAS REVALIDATED ON EVERY REQUEST, EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, AND EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME. NONE OF THEM CHANGED A SINGLE PIXEL, WHICH IS WHY THEY ALL SHIPPED — ⚠️ AND THE FOURTH FINDING, THE ONE I WAS SUREST OF, TURNED OUT TO BE DEAD CODE THAT NEVER RAN.** ⚡ SHIPPED — `main`@`d21fd36`, **21 commits**, prod serving **sw v113** (confirmed on the live origin). `tsc` 0 · **1098/1098 vitest** (was 1071, **+27**) · `next build` 0 · **211/211 chapters × 3 frames LOCAL** (prod: 209 + 2 blocked by Vercel's own firewall, both green on re-run — see ▶7) · eslint **132, unchanged**.
->
-> **The asks:** a senior-performance-engineer pass → *"the things which you have flagged are fixed?"* → *"yes, do it"* (the Critter one) → *"commit it on main"* → *"yes push it"* → *"do this if it is important for future"* → *"what to do for this?"* → *"let everything scale"* → *"ab /game wala check karke batao kya karna hai"* → *"delete it and fix the handoff"* → *"ab prod pe check karke batao sab sahi hai"* → *"what we can do to solve this"* → *"WAF wala Vercel dashboard me kya set karna hai… subscription lagta hai kya?"* → *"monitoring ingest URL wala setup karo"*.
->
-> ⚠️ **THE SHAPE OF THIS SESSION IS THE LESSON: EVERY TIME THE FOUNDER ASKED "IS IT REALLY DONE?", SOMETHING CAME APART.** "Are the flagged things fixed?" surfaced ④. "What to do for this?" turned a shrug about an ungateable header into a 6-mutation gate. "Check the /game one" turned a fix I had reported done TWICE into a deletion. "What can we do to solve this" turned "transient, re-run it" into a firewall diagnosis — **and "does it need a subscription?" caught me prescribing the WRONG BYPASS for it.** Three wrong calls in a row on that one issue, each corrected only because the question was asked again. **Nothing in the test suite ever objected to any of it.** The common fault is one thing: reasoning from a plausible mechanism instead of querying the system. `vercel firewall system-bypass list` took two seconds and settled what an hour of inference had got backwards.
->
-> ## ⓪ ⚠️⚠️ THE BUNDLE WAS NEVER THE PROBLEM, AND THAT IS THE FIRST THING TO KNOW
-> 170 chunks, largest **71 KB gzipped**, code-splitting already correct, `next/dynamic` per chapter.
-> **JS is not this app's bottleneck and tuning it would have been wasted work.** The cost is 58 MB of
-> PNG art and a handful of hot render paths. Measure before optimising; the obvious lever was inert.
->
-> ## ① ⚠️⚠️ THE `/game` FIT CONTROLLER — **DELETED, BECAUSE IT NEVER RAN. AND MY FIRST DIAGNOSIS OF IT WAS WRONG.**
-> It ran `setInterval(measure, 150)`, and `measure` closed over `stageBg` with `[]` deps — so it
-> compared against the INITIAL value for ever, and that value is the literal `'var(--bg-page)'` while
-> `getComputedStyle` always resolves to `rgb(252, 234, 182)`. Those can never be equal, so the guard
-> was permanently true and `setStageBg` got a fresh object literal every tick. That reading is
-> correct **as source** and I shipped a fix for it, gated 4/4, and reported it twice as done.
-> ⚠️⚠️ **THEN THE PAGE WAS ACTUALLY DRIVEN, AND NONE OF IT WAS REACHABLE.** `.game-zoom`'s
-> `firstElementChild` is **null while a chapter is fully on screen** — every path in
-> `CHAPTER_COMPONENTS` (`makeStoryChapter`, `makeTeenChapter`, `CountingStoryChapter`) ends in
-> `createPortal(…, document.body)`, so nothing has ever rendered in flow inside the wrapper.
-> `measure()` returned at its FIRST guard, always; `getComputedStyle` sits after it, so the
-> comparison never evaluated and `setStageBg` was never called. Measured over 6 s idle on a live
-> chapter: **0 `getComputedStyle`, 0 `getBoundingClientRect`, 0 style rewrites — identical on the
-> pre-fix and post-fix code**, with the counter proven live first (it registered the probe's own
-> calls). **There was no 7×/s re-render in production, and no 6.7 reflows/s either.**
-> **So the whole thing was dead code and is gone** — the effect, `zoom`/`zoomRef`,
-> `stageBg`/`stageBgRef`, `fitRef`, the `.game-zoom` wrapper div, its three CSS rules, and
-> `gameFitController.test.ts` (a gate on deleted code is worse than none). **118 lines out, 11 in.**
-> ⚠️ **The lesson is the expensive one and it is not about this file:** a source-level gate proves
-> the code says what you meant, never that anything reaches it — the same class as *a unit test
-> cannot see that nothing calls the unit*, which cost this repo three months on the plan pointer.
-> **I said "/game needs a sign-in so I cannot drive it" and stopped there, twice.** Driving it took
-> two facts: the session lives under **`milo-auth`** (`client.ts` overrides `storageKey`, so the
-> supabase default is a silent no-op) and the JWT must be well-formed or `getSession()` returns null
-> and bounces to `/auth`. **When a gate cannot be driven, that is the finding — not a footnote.**
-
-> ## ② 57 MB OF ART WAS REVALIDATED ON EVERY SINGLE REQUEST
-> Production returned `cache-control: public, max-age=0, must-revalidate` on a **583 KB** backdrop —
-> Next's default for `public/`. A conditional round-trip per file per load for every client the
-> service worker is not controlling: a first visit, the load after an SW update, a private window, an
-> evicted cache. **The single largest scalability item in the app, and it was a header.**
-> **NOT `immutable`:** this repo has rewritten art IN PLACE (the 83→58 MB pass rewrote 86 files under
-> their existing names), so a year would strand those clients. 30 days + a year of
-> `stale-while-revalidate` gives the same zero-round-trip serve and still propagates.
->
-> ## ③ EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, THROUGH 34 COPIES OF ONE `<img>` IDIOM
-> `next.config.ts` had AVIF/WebP configured since the C10 pass **and its own comment said it was
-> waiting for exactly this**. One shared `shared/ui/SceneBg.tsx`. Measured off the wire:
-> `garden.png` **583 KB → 81 KB AVIF (7.2×)** · The Clock **1,988 → 346 KB** · Follow the Leader
-> **~2.3 MB → 270 KB (8.5×)**.
-> ⚠️⚠️ **AND THE MIGRATION MADE FIRST PAINT WORSE ON FIVE CHAPTERS BEFORE IT MADE IT BETTER.**
-> `next/image` **lazy-loads by default** and a raw `<img>` with no `loading` attribute does not — so
-> the LCP element started waiting on an IntersectionObserver. **Caught by watching a chapter open
-> onto a bare gradient, not by any test.** Every backdrop now names `priority` either way, gated.
-> ⚠️ **Named `SceneBg`, not `Bg`, because four chapters declare a local `interface Bg` — and that
-> combination COMPILES**, TypeScript letting the interface govern the type while the import governed
-> the value. `ForestWalk`'s own local `SceneBg` is now `GradientBiome`; the gate found it.
->
-> ## ④ ⚠️⚠️ EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME
-> `Critter` travelled on `left`, `top`, `width`, `height` — all four are LAYOUT properties. Measured
-> on the real component with CDP `Performance.getMetrics`, 63 creatures journeying for six seconds:
-> **195 layout passes / 59.1 ms → 4 / 1.7 ms.** Now a `transform`, composited.
-> ⚠️⚠️ **AND `translate(Xvw, Yvh)` IS NOT `left: X%` — THE OBVIOUS REWRITE IS SILENTLY WRONG ON THE
-> ONE ROUTE CHILDREN PLAY.** `/game` wraps every chapter in `.game-zoom { zoom: … }`; a fixed
-> element's percentage offsets are scaled by that zoom and viewport units are not. **Measured, they
-> diverge by up to 576px at zoom 1.45.** The position stays a PERCENTAGE of a stage that is itself
-> the size of the containing block. Size is `scale()` about `transform-origin: 50% 100%` — **the
-> FEET**, which is what keeps a creature on its ground line.
-> ⚠️ **The base box is `w / scale`, never `size`**: `w` and `h` are each rounded, and re-deriving them
-> through a different rounding chain moved the visible creature **2.2px** and its strip **26px**.
-> **Verified by a throwaway `critterlab` route: 2,772 rendered rects (sprite · sheet cell · contact
-> shadow · number sign) over 63 combinations × 4 viewports × 3 zooms, before and after — 0 moved.**
-> The baseline was captured TWICE first and required to be identical, because `ci_breathe` is an
-> infinite 2px loop that made the first one jitter.
-> ⚠️⚠️ **AND THAT PROOF WAS NARROWER THAN IT SOUNDED — IT FROZE ANIMATIONS.** The hop, the breathe
-> and the `drop-shadow` filter live INSIDE the scaled box, so their px values now follow depth (hop
-> 13 → 10.4px at scale 0.8, → 16.9px at 1.3); a `filter` offset never appears in a rect at all. The
-> first cut then divided the contact shadow back out to keep it fixed, which left **the shadow saying
-> "depth does not affect me" while the hop said it does.** Founder's call: **everything scales** —
-> nearer is lower AND bigger, which is the cue chapter-craft already asks for.
->
-> ## ⑤ CRASHES NOW HAVE A DURABLE SINK — AND THE STANDING DESCRIPTION OF THE OLD ONE WAS WRONG
-> The handoff said `/api/report-error` *"forwards every crash into a void"*. **It never did.** Both
-> paths have always `console.error`'d a structured line, so crashes reach Vercel logs. What is
-> missing is **retention and someone looking**: Hobby keeps runtime logs about an hour, so a 2am
-> crash is gone by breakfast — **which is exactly the condition the plan-pointer P0 survived three
-> months in.**
-> `infra/errorSink.ts` is now the ONE place a crash goes, used by BOTH paths (the browser
-> ErrorBoundary via `/api/report-error`, and Next's server `onRequestError`) so they cannot drift:
-> **console always and FIRST**, then the new `error_events` table, then the `MONITORING_INGEST_URL`
-> seam — kept, so Sentry stays a one-env-var change if a real product is ever wanted.
-> ⚠️ **NO ANON FALLBACK, DELIBERATELY, AND THE GATE ASSERTS IT.**
-> `20260816170000_leads_server_only.sql` is this repo's own record of why an anonymous INSERT
-> surface is a mistake — its named mitigation ("Supabase Auth rate limits") does not apply to a
-> PostgREST write. An anon fallback here would reopen that AND bypass `/api/report-error`'s own
-> 30/min limit. The table is RLS-on with **zero policies**; verified on prod that anon INSERT and
-> anon SELECT are both refused with `42501`, and Supabase advisors show only an INFO
-> `rls_enabled_no_policy`, which is the design rather than a finding.
-> ⚠️ **Why a table and not Sentry:** this project already has a database and a dashboard the founder
-> opens daily, and no monitoring vendor. A table costs nothing and needs no account. **This is the
-> floor, not the ceiling.**
-> **Mutation-tested 5/5 — and the fifth needed a second pass.** Moving the `console.error` BELOW the
-> awaits survived a gate that only asserted it was *called*; that matters, because a function killed
-> mid-await loses the one sink needing no configuration. The test now asserts **order**.
-> ⚠️ **The CLIENT path is driven end to end** (200, full record logged, rate limit holding at 29 of
-> 33 flooded against a 30/min cap). **The SERVER path is not** — `onRequestError` is covered by the
-> build and unit tests only; nobody has watched it fire. It will prove itself on the first real
-> server error.
->
-> ## 🧪 THE GATES, AND THE ONE THAT SURVIVED
-> Four new files, **all mutation-tested**: `gameFitController` 4/4 · `sceneBgPriority` 2/2 ·
-> `critterTravelIsComposited` 4/4 · `assetCacheHeaders` 5/6.
-> ⚠️ **I first said the asset headers were "not gateable". That was too broad and conflated two
-> risks** — Vercel's optimizer behaviour is outside CI, but the `/assets` rule existing, matching and
-> not being weakened is gateable through the pattern `cspHeader.test.ts` already uses (drive the real
-> `headers()`). **Asked "what to do for this?", the answer was to write the gate, not restate the
-> excuse.**
-> ⚠️ **The survivor is the interesting one.** Widening the asset rule to `/:path*` so it swallows
-> `sw.js` passed everything. Applied to a real `next start`, `/sw.js` still returned
-> `max-age=0, must-revalidate` — the dedicated rule sits later and overrides — so the mutation is
-> **inert, and measuring it confirmed the resolver's one assumption (last matching rule wins) against
-> a running server** rather than leaving it a guess. The version that DOES change behaviour (widened
-> **and** reordered below `/sw.js`) fails.
->
-> ## 📉 VERIFIED ON PRODUCTION, AFTER CLEARING THE SERVICE WORKER
-> `/assets` + `/audio` **30 days + SWR** · `/sw.js` still `max-age=0, must-revalidate` (or the update
-> path dies) · optimizer serving **image/avif at 81,391 B** · one chapter **11 backdrop requests, all
-> optimized, 0 raw PNG, 277 KB, exactly 1 eager** · 0 console errors · **211/211 against prod (17.9m)**.
-> ⚠️ **`minimumCacheTTL` IS NOT WHAT PROD SERVES.** Same commit, same source header, two optimizers:
-> `next start` gives `max-age=31536000, must-revalidate` (its floor), **Vercel passes the UPSTREAM
-> header through** → 30 days + SWR. Fine, arguably better, and now commented in `next.config.ts`
-> because a config reading 31536000 while prod reads 2592000 eats an afternoon.
->
-> ## ▶ OPEN
-> 1. 🕐 **THE ONE THING BETWEEN MONITORING AND WORKING: `SUPABASE_SERVICE_ROLE_KEY` IN VERCEL**
->    (value: Supabase → Settings → API → `service_role`). **Deferred by the founder, 2026-08-17:
->    *"that I'll do once the company domain will get purchased."*** Waiting on the domain, not
->    forgotten. `vercel env ls production` currently shows only the two Supabase public vars.
->    **One paste closes three items** — `error_events` starts filling, `/api/lead` stops falling back
->    to the anon key, and `leads_server_only` becomes safe to apply.
->    ⚠️ **The consequence to hold on to: until it is set, crash visibility is Vercel logs at ~1 hour.
->    That is the status quo and fine for now — but LAUNCHING in that state is launching blind on
->    crashes**, which is precisely how the plan-pointer P0 survived three months.
-> 2. **Prod DDL applied this session:** `20260817142406_error_events`. ⚠️ Still NOT applied:
->    `20260816120000_perf_advisors` and `20260816170000_leads_server_only` (the latter must wait for
->    the key above, or lead capture stops **silently**).
-> 3. ✅ **`/game` is CLOSED — and it closed by deleting the thing** (see ①). **What to keep: a source
->    gate proves the code says what you meant, never that anything reaches it.** Driving /game from a
->    test needs the session under **`milo-auth`** (not the supabase default — `client.ts` overrides
->    `storageKey`) and a well-formed JWT. Two minutes, and worth it over another "cannot be driven".
-> 4. ⚠️ **DO NOT RUN `test:chapters` AGAINST PRODUCTION — IT TRIPS VERCEL'S OWN FIREWALL, AND THE
->    FAILURE LOOKS EXACTLY LIKE A BROKEN CHAPTER.** 211 navigations plus subresources from one IP,
->    and at roughly the fortieth Vercel serves a JS challenge instead of the app (`403`,
->    `x-vercel-mitigated: challenge`). Playwright cannot solve it, so the navigation dies as
->    `net::ERR_ABORTED`. **Measured:** it hit at tests 41–42, those two passed on the other two
->    frames minutes later and 6/6 on re-run, a deliberate 40-request burst reproduced it at request
->    38, and the block persisted past 20s across EVERY path including static assets — so **retries do
->    not help, they fail slower.** ⚠️ **I called it "transient" twice and then prescribed the WRONG
->    BYPASS for it.** `VERCEL_AUTOMATION_BYPASS_SECRET` covers DEPLOYMENT PROTECTION, not the
->    firewall; the firewall remedy is an IP bypass and it is **plan-gated** (*"IP Bypass is
->    unavailable for this plan"*). **Nothing to configure, nothing to buy** — the mitigation is
->    automatic on every plan and clears itself. The runbook now sweeps LOCALLY and smokes prod.
->    ⚠️ **And I tripped it again with my own deploy-polling loop, minutes after writing that down.**
->    The bypass headers stay in `playwright.config.ts` for the case they DO solve:
->    `ssoProtection: all_except_custom_domains` means PREVIEW deployments are behind the login wall.
-> 5. **`React.memo` is still absent everywhere** — deliberately. Fixing ① removed the pressure; adding
->    it speculatively is guesswork. If a chapter ever feels heavy again, this is the first lever.
-> 6. **`Background` mounts every scene in a run at once** (up to 9 requests) so the cross-fade has
->    something to fade to. Design, not a defect, and at ~298 KB no longer worth touching.
-> 7. **The Vercel optimizer inherits the SOURCE `Cache-Control`**, so optimized images are 30 days +
->    SWR rather than the 1-year `minimumCacheTTL` the config states. Documented in `next.config.ts`,
->    deliberately not gated — it is Vercel-side and invisible to `headers()`. Re-measure with
->    `curl -I` after any change to the `/assets` rule.
-> 8. Everything from the previous session stands: **B1 attorney** (`DRAFT = true` is LIVE on prod),
->    **AR never driven with a real hand**, and **`practice_complete` never observed in the DB**.
-> 9. Of this session's faults, **the biggest was mine and it was a METHOD fault, not a code one**:
->    ⚠️ **And the runner-up is the same shape: I tripped Vercel's firewall with my own deploy-polling
->    loop MINUTES after documenting that exact mechanism, then left the loop running in the
->    background so it kept the block alive.** The runbook rule I had just written — do not hammer
->    prod — I applied to the test sweep and not to my own tooling.
->    ① was diagnosed from the source, gated at the source, and reported done twice, and the whole
->    thing was unreachable. The rest: **two from measuring after guessing wrong** (a fixed 5s window
->    that missed the journey and read as "this costs nothing"; comparing a local server against
->    Vercel), **one from a founder question** (the hop/breathe gap my own sweep had frozen out), **one
->    from watching a chapter open** (the lazy LCP), **one from a mutation survivor**, and **one from
->    the type-checker** (the `Bg` collision, which compiled anyway). ⚠️ **Also: two scripted edits
->    silently matched nothing and I re-ran the same spec three times before noticing** — assert the
->    edit landed. **The test suite was green through every one of them.**
-> 10. **Where the rules went:** `chapter-craft.md` §1 gained *a journey is a `transform`*, *`vw` is not
->    `%` under `zoom`*, *scale about the feet*, *derive the base as `w / scale`*; §4 gained *diff the
->    rendered rects, keyed semantically, with animations frozen*, *a fixed sample window misses the
->    event*, *`waitForSelector` waits for VISIBLE*, *Next ignores a `_`-prefixed folder*, and
->    *`next/image` lazy-loads by default and a raw `<img>` does not*.
-
-_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18._
+_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19._
