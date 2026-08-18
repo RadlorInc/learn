@@ -9,11 +9,11 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : 'https://radlor.com')
+    : 'https://learn.radlor.com')
 // ⚠️ ORDER MATTERS AND IT IS DELIBERATE. Once radlor.com is assigned as the project's PRODUCTION
-// domain in Vercel, `VERCEL_PROJECT_PRODUCTION_URL` becomes radlor.com on its own and this is
+// domain in Vercel, `VERCEL_PROJECT_PRODUCTION_URL` becomes learn.radlor.com on its own and this is
 // self-correcting. Until that DNS is live it still resolves to the vercel.app host, so set
-// NEXT_PUBLIC_SITE_URL=https://radlor.com explicitly to close the gap — otherwise sitemap, robots
+// NEXT_PUBLIC_SITE_URL=https://learn.radlor.com explicitly to close the gap — otherwise sitemap, robots
 // and every og:image advertise the old origin while the site answers on the new one.
 
 /**
