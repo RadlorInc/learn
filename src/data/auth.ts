@@ -48,11 +48,25 @@ export function signInWithEmail(email: string, password: string) {
   })
 }
 
-/** Google OAuth — the browser navigates away to Google on success. */
+/**
+ * Google OAuth — the browser navigates away to Google on success.
+ *
+ * ⚠️ NO `access_type: 'offline'` AND NO `prompt: 'consent'`, DELIBERATELY. Both were here and
+ * neither earned its place:
+ *   · `access_type: 'offline'` asks Google for a REFRESH token, i.e. permission to act for the
+ *     parent while they are away. Nothing in this app has ever read `provider_token` or
+ *     `provider_refresh_token` — we sign the parent in and never touch Google again. Asking for a
+ *     credential you do not use is the kind of thing a privacy-minded parent is right to object to.
+ *   · `prompt: 'consent'` FORCES the full consent screen on EVERY sign-in. Google's default already
+ *     shows it the first time; forcing it means a returning parent re-approves the same scopes every
+ *     single time instead of just picking their account.
+ * The scopes are unchanged (`email profile`), so no existing user has to re-consent and no
+ * identity changes — `sub` is what Supabase keys on, and that is untouched.
+ */
 export function signInWithGoogleOAuth(redirectTo: string) {
   return createClient().auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } },
+    options: { redirectTo },
   })
 }
 
