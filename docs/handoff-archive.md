@@ -1,5 +1,142 @@
 # Handoff archive — Milo Story Mode
 
+> 🔒 **2026-08-16 (2nd session) — LAUNCH HARDENING, ROUND TWO. THREE ASKS, AND EVERY ONE OF THEM TURNED UP SOMETHING WORSE THAN THE THING ASKED ABOUT: A DEAD END A CHILD COULD NOT ESCAPE, A GATE THAT HAD BEEN RED FOR A DAY, AND THE RECORDED VOICE SILENTLY DEAD ON MOBILE.** 🔒 SHIPPED — `main`@`c80e1c7`, prod serving **sw v104**. `tsc` 0 · **1051/1051 vitest** (was 1039, **+12**) · `next build` 0 · **211/211 chapters × 3 frames** · preflight green.
+>
+> **The asks:** *"abhi kya karna hai plan ke according?"* → *"karo"* (the scratch-pad fix) → *"woh dono
+> chapter waise hi rahege… bina neon mein"* → *"1, 2, 3 …. teeno karo"* → *"the things which are
+> remaining on your side do that all"*.
+>
+> ## 🔒 THE FOUNDER'S CALL: C13 IS CLOSED, NOT DONE — **OrderDesk and LevelRun STAY STORYBOOK**
+> The 9–11 band is finished at eight on GameShell and two on `SkillBeat`, **mixed by design**. Both
+> pass the C7 gate as they are. Recorded in the header table, [docs/launch-plan.md](docs/launch-plan.md)
+> (C13 ❌ DROPPED) and the memory index, because a stale plan makes the next session start porting them.
+>
+> ## ① ⚠️⚠️ THE WALKTHROUGH HAD NO SCALE-TO-FIT AT ALL, AND ITS SKIP BUTTON WAS OFF THE SCREEN
+> Reported as *"the chalkboard overlaps the tray at 800×450"*. It is not the board: **every 9–11
+> chapter answers on an `Instrument` rather than a `TutorialScene`, so every one takes
+> `TutorialPlayer`'s legacy path — and that path rendered the instrument bare inside `CenterFill`
+> while the PLAY stage wrapped it in `FitSlot`.** The fault is the one `FitSlot`'s own doc comment
+> describes, left in place on the single path that never got it. Measured: the tray painted
+> **741 × 319 inside a 560 × 314 slot** — 90px over each side, 52px UP across the chalkboard — with
+> the step transport pushed off the bottom and **"I've got it →" at y 474–503 of a 450px viewport
+> with no scroll. Unreachable: a child on that frame could not leave the walkthrough.**
+> ⚠️ **MY FIRST DIAGNOSIS WAS WRONG AND THE INSTRUMENTATION IS WHAT CAUGHT IT.** I matched it to the
+> stale-ResizeObserver fault recorded that morning, rewrote `FitSlot` with a layout effect, and the
+> bug did not move. A temporary `data-av` attribute showed **ZERO FitSlot boxes in that subtree** —
+> the component I had spent an hour on was not on screen. Reverted whole; the real fix is one wrapper.
+> ⚠️ **AND THE GATE I WROTE FOR IT FIRST FAILED FOR THE WRONG REASON.** `button:visible.first()` is
+> `‹ Menu`, so it walked out to the AUTH page and reported "Sign in", "Terms" and "Continue with
+> Google" as offscreen. **It failed on the planted regression, so it looked like a working gate — and
+> it would have failed identically with the bug fixed.** Now it takes the largest non-Menu button and
+> asserts the URL did not change. Re-planted: fails on `decimals` AND `areaPerimeter` naming the real
+> controls. `all-chapters.spec.ts` now presses the primary control once and re-runs the fit checks —
+> **the start card is the one screen that always fits, which is why five checks over 70 chapters had
+> never seen this.**
+>
+> ## ② ⚠️⚠️ THE C7 GATE HAD BEEN 210/211 RED SINCE THE CSP WENT ENFORCING, AND NOBODY KNEW
+> `script-src` dropped `'unsafe-eval'`, which **React's DEVELOPMENT build needs and production does
+> not** — so every page logged a console error against the dev server the gate is documented to
+> drive, and the gate's contract is *zero console errors*. It hid for a day because the run that
+> certified 211/211 was pointed at prod with `E2E_BASE_URL`. **Confirmed pre-existing by stashing my
+> change and re-running.** Now branched on `NODE_ENV`; the production header is byte-identical.
+> **Gated in BOTH directions** ([cspHeader.test.ts](src/__tests__/cspHeader.test.ts), which drives the
+> real `headers()` at each env rather than checking the source string): a leak to production is the
+> dangerous half, losing it in dev is the half that eats a day. `next.config.ts` had no gate of any kind.
+>
+> ## ③ ⚠️⚠️ AND THE PROD CONSOLE GAVE UP THE BIGGEST ONE — `media-src` WAS NEVER SET, SO THE RECORDED VOICE WAS SILENTLY DEAD ON MOBILE
+> `default-src 'self'` was the fallback and it blocked the `data:` WAV that `unlockVoiceClips()`
+> plays inside the intro tap — **the mobile-autoplay unlock**, i.e. the one gesture that grants iOS
+> playback to the single reused `<audio>` the whole app plays through. Blocked, it is never unlocked,
+> so **every pre-rendered ElevenLabs clip in bands 12–18 falls back to browser speech**, which most
+> Chrome installs do not have. **Nothing reports it**: the player swallows its own errors by design (a
+> missing clip must fall back, not throw), so on a desktop it is one console line and on a phone it is
+> a chapter that has gone quiet.
+> **That is THREE things the enforced CSP broke whose failure is invisible until a specific device
+> does a specific thing — the fonts, MediaPipe, and this.** The rule is now in chapter-craft: read the
+> prod console on a real page after any header change; a 200 on every route says nothing.
+> ⚠️ **And it took a FRESH TAB to believe the fix** — the console buffer survives navigation, so the
+> old violation kept printing against the new header and read exactly like a deploy that had not landed.
+> ✅ **The same drive proved MediaPipe DOES boot on prod under the enforced CSP** — console reads
+> `Graph successfully started running.` with 0 violations, i.e. the jsDelivr WASM, the WebAssembly
+> instantiation, the `blob:` worker and the googleapis model all load. That was reasoned before; it is
+> measured now. **A real hand on a real camera is still unproven and is the founder's to close.**
+>
+> ## ④ THE PUBLIC WRITE PATHS ARE RATE-LIMITED (launch-plan finding #9)
+> `diagnostic_leads` was written straight from the browser with the anon key — **which is public by
+> design, it ships in the JS bundle** — so there was nowhere a limit could go, and the original
+> migration named "Supabase Auth rate limits" as the mitigation, which does not apply to a table
+> write. Capture now goes through `/api/lead` (6/min per IP + a real email shape check; the table's
+> CHECK only bounds LENGTH, so every 3-character string was a valid lead).
+> ⚠️ **`/api/report-error` is arguably the bigger one**: unlimited, it forwards every POST to
+> `MONITORING_INGEST_URL`, so the moment C3 is wired an open endpoint becomes an open billing line on
+> someone else's service and the noise buries the crash it exists to surface. 30/min, dropped
+> **silently** (200, not 429) — a browser that has just crashed must not be handed an error to handle.
+> `ponytail:` in-memory and per serverless instance, a named ceiling with its upgrade path (WAF).
+> ⚠️ **Mutation-tested 6/6, and the survivor mattered**: clearing the key map when a NEW key arrives
+> passed every other test and defeats the limit completely — rotate one IP between calls and the
+> counter is wiped. That property is asserted now.
+>
+> ## ⑤ ESLINT: **227 → 133**, AND TEN OF THEM WERE REAL DEFECTS
+> Founder reaffirmed after being told a mass hook refactor is the riskiest thing to do in launch week.
+> Done in slices, gates green after each. What it actually found:
+> - **a `// eslint-disable-line` written after another `//`** — inert text inside the first comment,
+>   counted as an error for months (ForestWalk).
+> - **`MiloMark`'s id was a MODULE COUNTER in `useMemo`** — not SSR-safe, so server and client can
+>   disagree, and that suffix names both the CSS class and the `@keyframes`: the class points at an
+>   animation that went out under another name and **silently does not animate.** Now `useId()`.
+> - **`ToastProvider` published its setter DURING RENDER** — a discarded or StrictMode render leaves a
+>   setter for a tree React threw away.
+> - **`WalkHome`'s route MUTATED a ref during render** — accumulating, so a doubled render adds a
+>   duplicate corner no re-render can remove. Now React's sanctioned adjust-during-render.
+> - **FIVE answer surfaces were components declared INSIDE their parent**, so React remounted the
+>   element the child was touching: a `<input type="range">` losing its drag mid-gesture (WalkHome),
+>   three nudge rows, and `motion` elements whose springs restarted mid-flight (the balance beam, the
+>   tickets, the paint pour). `static-components` is now **0**.
+> - **TWO chapters painted the PREVIOUS round's answer for a frame** on every new question, and the
+>   child's own wrong answer for a frame on the reveal — `useEffect(…, [task])` runs after paint. This
+>   is the class chapter-craft already records; found by the lint rather than by a screenshot.
+>
+> ⚠️ **AND TWO I ALMOST SHIPPED MYSELF, BOTH CAUGHT BY CHECKING THE EDIT RATHER THAN THE RESULT:**
+> the script threading `disabled` into six call sites **silently matched nothing** (`[^>]` cannot
+> cross the `=>` in `on={(n) => …}`), and `tsc` stayed clean **because the prop is optional** — so the
+> rows would have stayed LIVE during the walkthrough and the reveal. Proven fixed by reading
+> `.disabled` off all four nudges in the browser. And `gameKit`'s `P` is a **prop**, not a module
+> constant (the shared kit serves every band's palette) — `tsc` caught that one.
+>
+> ⚠️ **`useLatestRef` ([src/shared/hooks/useLatestRef.ts](src/shared/hooks/useLatestRef.ts)) holds the
+> idiom that appeared verbatim in 21 files**, and the write STAYS in the render phase with ONE
+> documented disable. The rule is right in general — but that assignment is **idempotent**, whereas
+> WalkHome's was accumulating, and moving it to an effect changes timing across the AR path and the
+> critter engine for no behavioural gain. **Know which kind of render-phase write you have.**
+>
+> ## ▶ OPEN — and NOTHING on my side is unblocked
+> 1. ⚠️⚠️ **B1 ATTORNEY IS STILL THE ONLY ITEM THAT CANNOT BE COMPRESSED.** The plumbing is done; it
+>    is a paste into `src/app/legal/content.ts` plus `DRAFT = false`.
+> 2. **Accounts → I wire in minutes:** monitoring ingest URL (C3) · analytics (C4) · SMTP (B6 — **no
+>    email is sent at all today**) → unblocks C12.
+> 3. **Dashboard toggles:** leaked-password, Auth rate limits, Vercel WAF, PITR, staging.
+> 4. **Prod DDL is the founder's — TWO migrations now.** ⚠️ `20260816170000_leads_server_only.sql`
+>    must NOT be applied until `SUPABASE_SERVICE_ROLE_KEY` is set in Vercel and a lead is seen to
+>    land, or capture stops **silently**. `20260816120000_perf_advisors.sql` (C10b) is not blocking.
+>    ⚠️ **7 test rows of mine are in the prod leads table** (`a@b.com` ×6, `c@d.com`, 2026-08-16) —
+>    verified 7 match / 5 remain. **The dev server points at PROD**, which is how they got there.
+> 5. **B9 + F5 — a real human on a real device, and 20 minutes watching a real child.** Fold the AR
+>    camera into it: MediaPipe boots on prod, a real hand has never been read on GameShell.
+> 6. **133 eslint errors left, and the recommendation is to LEAVE them.** They are dominated by
+>    async-data-loading `set-state-in-effect`, which is correct under this architecture; clearing them
+>    means a Suspense/`use()` migration (post-launch) or 133 disable comments that bury the signal
+>    that just caught ten real bugs. **A count is not the goal; an unread gate is the problem.**
+> 7. **The EXPLORE beats are still gone** and the **re-teach has still never been seen fire**.
+> 8. Of this session's faults, **one came from a founder screenshot (①), one from stashing my change
+>    and re-running (②), one from the PROD CONSOLE (③), one from a mutation survivor (④), two from
+>    checking that my own edit landed (⑤), and one from `tsc`. None from the existing test suite** —
+>    which stayed 100% green through every one of them.
+> 9. **Where the rules went:** `chapter-craft.md` gained *a component with two states must put BOTH in
+>    flow*, *a gate last run against production can be broken against the server it documents*, and
+>    *a security header breaks things that do not fail until a specific device does a specific thing —
+>    read the prod console on a real page*.
+
+
 > 🚀 **2026-08-16 — LAUNCH HARDENING. THE MVP PLAN IS RE-GROUNDED AGAINST THE RUNNING SYSTEM, AND NINE OF ITS ITEMS ARE DONE AND ON PROD: 0 SECURITY ADVISORIES, A CRASH SCREEN FOR EVERY FAILURE, SELF-HOSTED FONTS, AN ENFORCED CSP, PARENT DATA RIGHTS, LEGAL PAGES, A FAQ, A LAUNCH RUNBOOK, AND TWO GATES THAT CATCH THE MISTAKES I MADE TODAY.** 🚀 SHIPPED — `main`@`b7f4c0e`, prod serving **sw v98**. `tsc` 0 · **1039/1039 vitest** · `next build` 0 · **211/211 chapters × 3 frames, against production**.
 >
 > **The asks:** *"ek proper detailed … chhoti si chhoti cheez bhi chhutna naii chahiye … puri list banao … mein naii chahata hu ki launch hone ke pehle din hi kuch chale naa"* → then *"C1, C2 aur C7 shuru karo"* → *"font migration kar do, phir CSP enforce karo"* → *"implement all which you have mentioned"*.

