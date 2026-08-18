@@ -68,7 +68,7 @@
 > REAL HAND on a real camera** — MediaPipe is proven to boot on prod under the enforced CSP
 > (`Graph successfully started running.`, 0 violations), but the band's defining feature is
 > unverified end to end and only the founder can close it. Everything is committed; prod is on
-> **sw v116**.
+> **sw v117**.
 >
 > ---
 >
@@ -76,6 +76,153 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🛡️ **2026-08-18 (2nd session) — A FIVE-ROLE RED-TEAM PASS, THEN THE FIXES. THE BACKEND HELD (I COULD NOT REACH ONE ROW OF ANOTHER ACCOUNT'S DATA), BUT AR COULD STRAND A CHILD FOR EVER ON A SLOW PHONE, AND THE PLACEMENT CHECK DIED ON ONE BACK PRESS. ⚠️ AND THE FIX FOR THE SECOND ONE SHIPPED A REGRESSION THAT tsc, 1122 TESTS AND THE BUILD ALL PASSED — CAUGHT ONLY BECAUSE THE FOUNDER ASKED "SO THE THINGS YOU FLAGGED ARE FIXED?" FOR THE FOURTH SESSION RUNNING.** 🛡️ SHIPPED — `main`@`e72de1a`, **4 commits**, prod serving **sw v117**. `tsc` 0 · **1122/1122 vitest** (+4 new) · `next build` 0 · **18/18 e2e on the six AR chapters × 3 frames** · plan-advance 1/1.
+>
+> **The asks:** attack the app as five different people → *"so the things which you have flagged are fixed?"* → *"commit it on main"* → *"yes push it"* → *"commit the remaining e2e and workflow files too"* → *"yes apply it to both"* → *"vercel sahi option hai?"* → *"sab domain ke email pe transfer karna hai"* → *"kaunse subdomain?"* → *"mi2utor pura hatana hai, sirf radlor rahega"* → *"commit and push"*.
+>
+> ## ⓪ ⚠️⚠️ THE METHOD LESSON, AND IT IS NOW FOUR SESSIONS IN A ROW
+> The founder asked *"are the flagged things fixed?"* and the answer was again **no** — but this time
+> the gap was **a regression I had just introduced myself, in the fix I had reported as done.** My
+> diagnostic-resume put `ProbeState` in sessionStorage and restored it on mount; it also **outranked
+> an explicit `?band=`**, so `/diagnostic?band=12-14` restored a mid-flight 6–8 run and ignored the
+> URL. Same latent bug meant **sibling B would continue sibling A's probe.** `tsc` 0, 1122 tests and
+> `next build` were all green over it — nothing tested that interaction. Found by DRIVING the URL,
+> not by reading. `resumable(r, urlBand, learnerId)` now drops a resume belonging to another band or
+> another learner. **The rule this repo keeps paying for: a fix is not done until you have driven the
+> thing you did not think to test.**
+>
+> ## ① THE RED TEAM — FIVE ROLES, AND THE BACKEND GENUINELY HELD
+> Intruder · six-year-old · worried parent · COPPA regulator · unlucky user (old Android, 3G).
+> ⚠️ **The database is hardened and I want that on the record, because it is unusual.** Verified
+> EMPIRICALLY, not read off migrations: RLS enabled on **all 19 public tables**; every policy scoped
+> to `auth.uid()`; all four authenticated `SECURITY DEFINER` RPCs check `learner_access` before
+> writing; **no anon-executable RPC**; no storage buckets; no secret in the client bundle. Then, with
+> DB-level impersonation of one real account attacking another's child: **0 rows on every read**,
+> `get_learner_bootstrap` null, `can_self_grant_access` false, self-grant INSERT refused by RLS.
+> **I did not reach one row of another account's data.**
+> ⚠️ Anon `DELETE /chapters` returns **204 and deletes nothing** — PostgREST reporting success on an
+> RLS-filtered zero-row delete. Do not read that 204 as a breach; verify the row count after.
+>
+> ## ② THE TWO REAL DEFECTS, BOTH DEAD ENDS FOR A CHILD
+> - ⚠️⚠️ **AR COULD HANG FOR EVER WITH NOTHING TO PRESS — TWO FAULTS AT ONCE.**
+>   `createHandLandmarker` pulls **7.82 MB of model** (storage.googleapis.com) + **11.15 MB of wasm**
+>   (jsDelivr), measured. On a slow phone or a blocked host those fetches **do not reject — they
+>   HANG**, so `useFingerCounter`'s try/catch never fires and `status` sticks on `'loading'`. And
+>   `CamGate` **hid every button** while loading (`status !== 'loading'`), so that state rendered
+>   *"Waking the camera… One moment."* with no escape — **exactly backwards, since the wait is
+>   longest on the device least able to afford it.** Now: a 20 s timeout turns the hang into the
+>   denial case the gate already handles, and the tap door shows DURING loading (retry stays hidden —
+>   a second download on a struggling connection). **Verified by injecting a real hang and driving
+>   The Factor Lab**: the gate showed *Tap instead*, and it landed on a playable tap surface.
+>   Mutation-tested both halves (`src/__tests__/arLoadEscape.test.ts`, 4 tests).
+> - **THE PLACEMENT CHECK DIED ON ONE BACK PRESS.** The probe lived only in React state, so Back (or
+>   refresh) threw away minutes and dumped the child on the marketing page. Now sessionStorage;
+>   `resolve()` rebuilds the question and `buildContext(attempt)` is deterministic, so the SAME items
+>   come back rather than a fresh draw the child could re-roll. Driven: Back and refresh both resume
+>   with answers intact, and answering once after restore moves `asked` by **exactly 1**.
+>
+> ## ③ WHAT THE OTHER THREE ROLES FOUND
+> - **Worried parent — the good news is verified:** camera frames and hand landmarks **never leave
+>   the device**. No upload path in `infra/ar/*`, and the CSP `connect-src` allowlist makes one
+>   impossible. Landing page contacts **only its own origin** — no analytics, no tracker.
+>   Deleting a learner **does** cascade to every child table (FK chain checked).
+> - ⚠️ **`diagnostic_leads` was hit by THREE roles at once** and is the app's weakest surface: anon
+>   can still `POST /rest/v1/diagnostic_leads` directly (**reproduced: HTTP 201**, skipping
+>   `/api/lead`'s 6/min limit); it holds a parent email + a child's AGE BAND collected **before any
+>   account exists**; it has **no learner_id, so the delete cascade cannot reach it**; and it had no
+>   retention. `20260818090000_leads_retention.sql` (24-month prune) is written and **NOT APPLIED**.
+> - **Regulator (COPPA):** verifiable parental consent **NOT COMPLIANT** (email/password is not a VPC
+>   method, and the funnel collects before any account); written retention policy, separate
+>   third-party consent, third-party disclosure all **NOT COMPLIANT**; security programme **CANNOT
+>   DETERMINE**; data minimisation **COMPLIANT** (`date_of_birth` already dropped). Hand landmarks:
+>   **CANNOT DETERMINE** legally, but the technical facts are favourable and now verified.
+> - **Unlucky user, measured on prod:** first visit **1.07 MB — of which 0.83 MB is 97 woff2 files
+>   (77%)**; second visit **~0 MB** (all 111 resources from the SW cache — the caching is excellent).
+>
+> ## ④ ⚠️⚠️ BOTH SCHEDULED SWEEPS WERE VACUOUS, AND THE PROOF IS ONE NUMBER
+> The prior session's CI work was still uncommitted, so I read it before committing — and verified
+> its central claim rather than trusting the comment. **With the old parse, `E2E_ONLY=''` collects
+> `1` test instead of `211`.** GitHub Actions passes `''` for an unset `workflow_dispatch` input on a
+> `schedule` run, so **the nightly launch gate would have swept NOTHING, every night, reporting
+> green.** (`''?.split(',')` → `['']` → filters to `[]` → **`[]` is truthy**.) The weekly had the same
+> trap wearing a different hat: `??` misses `''` and `Number('')` is **0**, so it would have run seed
+> 0 while every other run used 20260817. Both fixed at spec AND workflow; a typo'd
+> `E2E_ONLY=decimls` now **fails naming the value** instead of sweeping zero.
+> ⚠️ **AND I FOUND A SCRIPT-INJECTION IN THOSE WORKFLOWS AND FIXED IT** (`f04dd4f`): `${{ }}` is
+> expanded by Actions BEFORE bash sees the line, so a dispatch input was pasted in as CODE.
+> **Demonstrated, not asserted** — the old form ran `touch /tmp/milo_pwned`, the new form (via `env:`)
+> treated it as data. Low severity (dispatch needs repo write) and fixed anyway, because the same
+> workflow directory holds `SUPABASE_ACCESS_TOKEN` and `PROD_DB_PASSWORD`.
+>
+> ## ⑤ 🏷️ BRAND — **`radlor.com` IS NOW THE ONE PUBLIC DOMAIN. mi2utor IS RETIRED.**
+> Founder's call. The app was never live on mi2utor.com in its current state (parked at GoDaddy), so
+> there was **nothing to migrate on the web side** — only code and email.
+> ⚠️ **The support address was FOUR strings, which is why this was a refactor not a find-replace.**
+> `SUPPORT_EMAIL` already existed in `infra/diagnostics.ts` and `SupportPanel` used it properly, while
+> `page.tsx`, `help/page.tsx` and `legal/[slug]/page.tsx` each repeated the literal. It now lives in
+> **`app/site.ts`** (one definition; `diagnostics.ts` re-exports so `SupportPanel`'s import is
+> unchanged) — in site.ts rather than diagnostics.ts because **diagnostics.ts is `'use client'` and
+> three of the four consumers are Server Components.**
+> ✅ **Google sign-in is NOT affected, and this was checked rather than assumed:** the app passes
+> `${window.location.origin}/auth/callback`, and the URI registered in Google Cloud is **Supabase's
+> own callback**, which does not move with the domain. **5 of 8 users sign in with Google** — they
+> need no Google Cloud change; only Supabase's Site URL + redirect allowlist need radlor.com adding.
+>
+> ## ⑥ INFRASTRUCTURE, MEASURED RATHER THAN ASSUMED
+> - **Vercel is `plan: hobby`** (queried, not guessed). Verdict given: **stay on Vercel, upgrade to
+>   Pro.** Next 16 App Router + Turbopack is native there; every alternative is a compatibility layer,
+>   and this codebase's whole history of pain is *invisible platform behaviour* (the CSP casualties,
+>   the optimizer inheriting `Cache-Control`). Two reasons Hobby must go before launch: **it is
+>   non-commercial-only**, and **~1 h log retention is exactly how the plan-pointer P0 hid for three
+>   months.** Migration would be motion, not progress.
+> - ⚠️ **THE ASSET NOBODY HAS BACKED UP IS STILL THE BIGGEST RISK.** Supabase is on free → no
+>   downloadable backup. `backup.yml` is now committed but **inert until its secrets exist**.
+> - ⚠️ **SUPABASE'S BUILT-IN MAILER WILL BLOCK SIGNUPS AT LAUNCH.** Hit live during testing:
+>   `{"code":429,"msg":"email rate limit exceeded"}`. **3 of 8 users signed up by email**, so they
+>   get confirmation mail. Needs custom SMTP on a dedicated sending subdomain (`mail.radlor.com`), so
+>   transactional reputation cannot poison the human mailbox.
+>
+> ## ⚠️ THE ONE THING THIS SESSION MADE WORSE, DELIBERATELY
+> **`support@radlor.com` is LIVE on prod and there is no mailbox behind it.** Verified: radlor.com has
+> **no MX record** (registered 2026-08-17, parked at GoDaddy); mi2utor.com *does* (Microsoft 365). So
+> a working address was traded for one that is not built yet — accepted, because the brand decision
+> was made and leaving the old address in code guarantees it gets missed later. ⚠️ radlor.com also
+> already publishes **DMARC `p=quarantine` with no SPF**, so SPF+DKIM must land WITH the mailbox or
+> Radlor's own mail goes to spam. **Until then every support request bounces.**
+>
+> ## ▶ OPEN
+> 1. 🔴 **`support@radlor.com` HAS NO MAILBOX AND IT IS LIVE.** Add radlor.com to the existing
+>    Microsoft 365 tenant (no new subscription), create the mailbox, **and add SPF+DKIM in the same
+>    change** (DMARC quarantine is already on). Highest-priority founder item.
+> 2. ⚠️⚠️ **`SUPABASE_SERVICE_ROLE_KEY` — THE DOMAIN BLOCKER IS GONE.** It was deferred until the
+>    company domain existed; radlor.com is bought and mi2utor.com has been paid for 62 days. It still
+>    gates three things: the leads bypass fix, durable crash retention, and `/api/lead`'s anon
+>    fallback. ⚠️ **STRICT ORDER: set the key → apply `20260816170000_leads_server_only.sql` → submit
+>    one real lead and confirm it lands.** Then apply `20260818090000_leads_retention.sql`.
+> 3. **The domain switch itself** (I did the code half; these are dashboard):
+>    Vercel: add radlor.com, make it the production domain, point GoDaddy DNS · Vercel env
+>    `NEXT_PUBLIC_SITE_URL=https://radlor.com` · **Supabase → Auth → URL Configuration: Site URL
+>    `https://radlor.com` + add `https://radlor.com/**` to redirect URLs, and DO NOT remove the
+>    vercel.app entry during transition** · mi2utor.com → 301 to radlor.com, keep mail forwarding a
+>    year (5 real leads came in under that address) · then **drive one real Google sign-in.**
+> 4. **`backup.yml` secrets** — `SUPABASE_ACCESS_TOKEN`, `BACKUP_PASSPHRASE`, `PROD_DB_PASSWORD`,
+>    `PROD_PROJECT_REF`. **There is still no restorable copy of the children's data.** And rehearse
+>    one restore: a Supabase restore inherits DEFAULT PRIVILEGES, which silently reopens V12 while
+>    every RLS policy still looks correct.
+> 5. **Vercel Pro** before charging anyone (Hobby is non-commercial) · **Supabase Pro** for backups
+>    and no-pause · **custom SMTP** before launch, or email signups die at the rate limit.
+> 6. **`DRAFT = true` is still LIVE on prod.** The policy now states the verified facts (the
+>    Google/jsDelivr model download and what those hosts do and do not see, Supabase/Vercel as
+>    processors, retention matching the real cron jobs, the leads deletion route) — but the flag
+>    asserts legal review, which has not happened.
+> 7. **Everything from prior sessions stands:** **AR has never been driven with a real hand** ·
+>    `practice_complete` still unobserved · the dropped EXPLORE beats · 132 eslint errors.
+> 8. Of this session's faults, **the biggest was again mine and it was caught by the founder's
+>    question, not by any gate** — a regression inside my own fix, green across 1122 tests. The
+>    others: reading a `204` as a deletion until I checked the row count, and trusting HTTP status
+>    for social-handle availability until a **control handle** showed the check could not tell taken
+>    from free. **Add a control before believing any probe.**
 
 > 🧭 **2026-08-18 — THREE ASKS (ARCHITECTURE · SECURITY · DEVOPS), AND THE SAME QUESTION BROKE ALL THREE OPEN: "so the things you flagged are fixed?" WAS ASKED THREE TIMES AND FOUND SOMETHING EVERY TIME — A GATE THAT TESTED NOTHING, A WORKFLOW THAT WOULD FAIL EVERY MONDAY, AND FLAGS I HAD CALLED VERIFIED WITHOUT RUNNING THEM.** 🧭 SHIPPED — `main`@`1e9e497`, prod serving **sw v116**. `tsc` 0 · **1122/1122 vitest** (was 1098, **+24**) · `next build` 0 · **211/211 chapters (7.7m)** · **152 passed + 48 skipped short-landscape (57.1m)** · eslint **132, unchanged**.
 >
@@ -205,7 +352,8 @@
 >    lead and confirm it lands.** Reversed, lead capture stops (loudly now, thanks to V14).
 > 2. ⚠️ **SUPABASE PRO (~$25/mo) IS A LAUNCH DECISION, NOT A NICE-TO-HAVE** — it buys no-pause,
 >    downloadable backups and PITR. On free the app can be taken offline by its own quietness.
-> 3. **Commit the script-injection fix** (2 workflow files, in the tree, uncommitted).
+> 3. ~~Commit the script-injection fix~~ ✅ **DONE 2026-08-18 (`f04dd4f`)** — and hardened properly,
+>    via `env:` rather than `${{ }}` in the script. See the 🛡️ block below.
 > 4. **Dashboard-only, still open:** leaked-password protection · Auth rate limits · refresh-token
 >    lifetime · `SUPABASE_DB_URL` (activates the CI RLS suite) · `MONITORING_INGEST_URL` ·
 >    `BACKUP_PASSPHRASE` + `PROD_PROJECT_REF` (activates `backup.yml`) · uptime monitor (two checks,
@@ -416,129 +564,4 @@
 >    event*, *`waitForSelector` waits for VISIBLE*, *Next ignores a `_`-prefixed folder*, and
 >    *`next/image` lazy-loads by default and a raw `<img>` does not*.
 
-> 🕳️ **2026-08-17 — AN ARCHITECTURE REVIEW TURNED INTO A P0: THE DIAGNOSTIC PLAN NEVER ADVANCED, FOR THREE MONTHS, BECAUSE `ChapterPortal` DROPS `onComplete` AND `advancePlan`'s ONLY CALLER WAS INSIDE THE FUNCTION IT ORPHANED. EVERY PAGE ALSO SHIPPED ONE EMOJI TO CRAWLERS, AND `/` WAS A REDIRECT.** 🕳️ SHIPPED — `main`@`68587e5`, prod serving **sw v109**. `tsc` 0 · **1071/1071 vitest** (was 1051, **+20**) · `next build` 0 · **212/212 e2e** · eslint 136 → **132**.
->
-> **The asks:** an investor stress-test + architecture review + SEO → *"fix all the things which you have mention"* → *"which things are better do that"* → *"act like a senior debugging engineer"* → *"commit and deploy it"* → *"can you please fix these three"*.
->
-> ## ⓪ ⚠️⚠️ THE P0, AND IT IS THE WORST SHAPE A BUG CAN HAVE: THE LOUD HALF KEPT WORKING
-> `advancePlan` had exactly ONE caller — `/game`'s `handleComplete`, which reaches a chapter as
-> `ChapterProps.onComplete`. **Both registry factories in `ChapterPortal` DISCARD that prop**:
-> `function StoryChapter(_props)` (the identifier appears ONCE in the file, its own declaration) and
-> `TeenChapter` reads only `props.childName`. The portal calls `finishAndSync` itself, so stars, XP,
-> coins, the celebration and a synced `sessions` row all landed correctly — **everything a parent or
-> a founder would LOOK AT was right.** Dead with it: `advancePlan`, `revisePlanDeeper` and both
-> completion events. **Every child on a plan was handed their plan's first chapter again, for ever**,
-> and the menu's "Step 1 of 5" stayed honest about a pointer that could not move.
-> **Production said so in three independent ways:** 797 `chapter_open` · 40 completed `sessions` ·
-> **0 `practice_complete`** · **77 of 77 `diagnostic_plan_progress` rows still `todo`**.
-> ⚠️ **`menu/page.tsx:73` asserted the behaviour in a comment** — *"advances (in /game) as chapters
-> are completed"* — which is this repo's own *a comment asserting a rule is followed is the most
-> expensive kind of lie*.
-> ⚠️⚠️ **AND `activePlan.test.ts` WAS GREEN THROUGHOUT, WITH SIX TESTS DRIVING `advancePlan`
-> DIRECTLY. The unit was always correct; nothing REACHED it.** Same class as *a gate that reads a
-> chapter's DATA cannot see how it INDEXES it*. **The fix therefore lives in `finishAndSync`** — the
-> one function all three completion paths already route through (the portal's two factories,
-> `CountingStoryChapter`, `/game`) — and the gate is an **e2e that plays a real chapter to completion
-> through the real portal**, which fails on the pre-fix code. Placed BEFORE the network branch so an
-> offline child still advances. **Verified on PRODUCTION** by playing The Mission Brief to a mastery
-> exit: pointer `{0, wordProblems}` → `{1, factorsMultiples}`.
->
-> ## ① ⚠️⚠️ EVERY URL ON THE DOMAIN SERVED 13 VISIBLE CHARACTERS
-> `StorageGate` sits in the ROOT LAYOUT and early-returned a fox splash until IndexedDB hydrated, so
-> `/help` shipped *"Milo — Help 🦊"* and so did both legal pages. Three faults from one early return:
-> **`/legal/[slug]`'s own comment says a policy page "must render … with JS blocked"** — it did not,
-> so the COPPA policy was an artifact that did not exist; **zero indexable content** anywhere; and
-> **LCP on two pages of static text blocked behind an IndexedDB open**, 4s backstop, for state
-> neither page reads. Exempted the routes that read no local state. `/` is on that list and had to
-> be — it reads only the Supabase session, never kv.
-> **`/` was also just a redirect with a fox on it** (66 visible chars). It is now a server component
-> with copy assembled from words already in the repo; the session redirect is isolated in
-> `ResumeSignedIn` so it no longer owns the render. **66 → 1,328.** `/help` **13 → 2,220**.
-> Plus `robots.ts` + `sitemap.ts` (both 404'd) and `metadataBase` + OG — **without metadataBase Next
-> emits a RELATIVE og:image, which every scraper drops**, so a shared link previewed as a blank card.
-> ⚠️ **`vercel.json`'s `/` → `/auth` rewrite is NOT live** (`"c":["",""]` vs `["","auth"]`) — Next's
-> App Router serves `/` itself, so `page.tsx` was always the front door and the REWRITE was the dead
-> artifact. I had that backwards in the review and the browser corrected me.
->
-> ## ② THE GATE I WROTE FOR THE FIXED-LAYER BUG WAS **INERT**, AND PASSED 152/152
-> `short-landscape` crossed board × art and controls × edges — every pair containing the element
-> somebody had in mind — and could not see the pair that SHIPPED (ScribblePad's closed button over
-> The Coin Tray's 5, 6, 7). My first fix filtered fixed elements to "outermost only"; **the outermost
-> fixed element in this app is the ROOT at 0,0 640×320**, so every layer collapsed into one
-> full-screen container and every control was skipped as living-inside-a-fixed-layer. **Nothing was
-> ever compared.** Caught only by planting the original ScribblePad regression and watching it
-> SURVIVE. The test is CONTAINMENT (a layer covers a control only if it does not CONTAIN it), which
-> needs DOM identity, so it is computed in the page. Re-planted, it names the real controls.
-> **A green check is not evidence until you have watched it go red.**
->
-> ## ③ AND THAT SUITE WAS A COIN FLIP, WHICH IS WORSE THAN A GAP
-> It measures one randomly-drawn question kind per chapter off an unseeded `Math.random`, so
-> complexNumbers @ 640×320 failed **3 runs in 7** on a REAL defect and passed the other 4. **A gate
-> that flips a coin gets re-run until it is green.** `Math.random` is now mulberry32, seeded per
-> (chapter, size) via `addInitScript` — no production code touched, no runtime cost — and breadth is
-> `E2E_SEED` for a nightly rather than re-runs.
-> ⚠️ **My first determinism check was worthless**: four identical "2 failed" that I read as
-> deterministic were four identical `ERR_CONNECTION_REFUSED` with the dev server down.
->
-> ## ④ THE WALK HOME'S NUDGES WERE 23×23, UNDER THE 24px FLOOR — AND BOTH MY DIAGNOSES WERE WRONG
-> `WalkPad` stacks map → readout → two `Leg` rows → commit: **280 × 382 natural in a 364 × 200 slot**,
-> so `FitSlot` is HEIGHT-bound at 0.5236 and a correctly-authored 44px `Nudge` renders at 23.
-> I first blamed the board eating the width (**the board is 243px; `CenterFill` gets 364**), then
-> concluded there was no spare width — because **I took the slot's OUTPUT box (147, the scaled
-> result) for its constraint.** There were 217px spare. Reflowed to a row on a short frame:
-> **scale 0.5236 → 0.7745, nudges 23 → 34, commit 24 → 36px tall.** Shrinking the parts instead
-> would have landed within a pixel of the floor, which is not a fix.
->
-> ## ⑤ THE PLAN POINTER NOW SURVIVES A DEVICE SWITCH — **DERIVED, NOT SYNCED**
-> It is localStorage, so a parent who ran the check on a phone and handed over a tablet got **no plan
-> card at all**. `diagnostic_plan_progress` exists for exactly this and is **write-once/read-never**
-> (77 rows, all `todo`; only `sync_diagnostic` touches it, at creation) — so the obvious fix is a
-> second write path that can disagree with the first. **Not needed:** `chapter_sequence` is on the
-> server and `learner_progress` says what was played, so the position is a FUNCTION of data the menu
-> has already fetched. No migration, no new grant (`diag_plans_read` already allows the read).
-> Two properties make it safe, mutation-tested 4/4: **monotonic** (never drags a child back), and a
-> **revised** local plan keeps its own chapters (the remote copy predates the revision).
->
-> ## 🧹 ALSO SHIPPED
-> `reactStrictMode: true` — verified empirically, not asserted (211/211, and beat pacing measured at
-> 1 step / 6.3s to rule out doubled timers) · **6 of 9 duplicate resize listeners** derived from the
-> shared hook, including **`RotateGate`'s pre-effect frame — the hook behind the 21 C7 failures** ·
-> **`useViewport` returned a ZERO size** in an unlaid-out frame, which flips every aspect test so a
-> landscape laptop draws its PORTRAIT layout (guarded, 3/3) · a `world1` timer that **scored a round
-> 950ms after the child left** · `crypto.randomUUID` in analytics · a Node build script that was
-> being **served to the browser**, deleted · **art 83 MB → 58 MB** (86 files, 0 with altered
-> geometry — `cellAspect`/`frames` make a resize fatal, so the script verifies and refuses).
->
-> ## 📉 AND THE NUMBER THAT SHOULD DECIDE THE NEXT MONTH
-> Production, all time: **7 accounts · 17 learners · 40 sessions · EIGHT children have ever played ·
-> best-ever retention 14 sessions across 5 days, last played 2026-07-26 · 5 real leads · £0 of
-> monetisation surface — no price, no packaging, nowhere to pay.** 15 months, 467 commits, 77.5k
-> lines. **The engineering is not what is wrong with this company.**
->
-> ## ▶ OPEN
-> 1. ⚠️⚠️ **`MONITORING_INGEST_URL` IS STILL UNSET, AND IT IS WHY ⓪ RAN FOR THREE MONTHS UNSEEN.**
->    `/api/report-error` forwards every crash into a void. Highest-value founder item by far.
-> 2. **B1 attorney** is still a paste (`DRAFT = true` is LIVE on prod) · a real domain
->    (`mi2utor.com` is owned) · the `leads_server_only` migration · **dev still points at PROD** ·
->    **7 test leads of mine** in the prod table.
-> 3. **`practice_complete` has still never been observed in the DB** — my prod verification used a
->    synthetic learner and `learner_events.learner_id` is FK'd to `learners(id)`, so the insert was
->    rejected and `track()` swallowed it by design. It should appear on the first REAL completion;
->    **if it does not, ⓪ is not fully fixed.** Watch it.
-> 4. **The cross-device plan (⑤) has NOT been driven across two real devices** — unit and type layers
->    only. Stated rather than rounded up.
-> 5. **132 eslint errors**, all three hook rules; they need the Suspense/`use()` migration, not 132
->    disable comments.
-> 6. `diagnostic_plan_progress` is dead schema — deliberately NOT wired, since ⑤ derives instead.
-> 7. **`short-landscape` is 57 minutes** and belongs in CI, not a working session. I killed it at 40
->    minutes once after treating it as a blocker for a question a 4-minute sample answered.
-> 8. Of this session's faults, **the P0 came from reading production's own event table, not from any
->    test; two came from measuring after guessing wrong (the slot box, the board width); one from
->    planting a regression and watching it survive; one from the dev server being down twice; and one
->    from the type-checker. The 1,051-test suite was green through every one of them.**
-> 9. **Where the rules went:** `chapter-craft.md` §4 gained *a unit test cannot see that nothing
->    calls the unit*, *a green check is not evidence until you have watched it go red*, *a sweep that
->    samples is a coin flip — seed it*, and *do not mistake a shrink-to-fit element's OUTPUT box for
->    the space it was given*.
-
-_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18._
+_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18._

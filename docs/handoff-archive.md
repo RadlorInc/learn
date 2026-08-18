@@ -1,5 +1,130 @@
 # Handoff archive — Milo Story Mode
 
+> 🕳️ **2026-08-17 — AN ARCHITECTURE REVIEW TURNED INTO A P0: THE DIAGNOSTIC PLAN NEVER ADVANCED, FOR THREE MONTHS, BECAUSE `ChapterPortal` DROPS `onComplete` AND `advancePlan`'s ONLY CALLER WAS INSIDE THE FUNCTION IT ORPHANED. EVERY PAGE ALSO SHIPPED ONE EMOJI TO CRAWLERS, AND `/` WAS A REDIRECT.** 🕳️ SHIPPED — `main`@`68587e5`, prod serving **sw v109**. `tsc` 0 · **1071/1071 vitest** (was 1051, **+20**) · `next build` 0 · **212/212 e2e** · eslint 136 → **132**.
+>
+> **The asks:** an investor stress-test + architecture review + SEO → *"fix all the things which you have mention"* → *"which things are better do that"* → *"act like a senior debugging engineer"* → *"commit and deploy it"* → *"can you please fix these three"*.
+>
+> ## ⓪ ⚠️⚠️ THE P0, AND IT IS THE WORST SHAPE A BUG CAN HAVE: THE LOUD HALF KEPT WORKING
+> `advancePlan` had exactly ONE caller — `/game`'s `handleComplete`, which reaches a chapter as
+> `ChapterProps.onComplete`. **Both registry factories in `ChapterPortal` DISCARD that prop**:
+> `function StoryChapter(_props)` (the identifier appears ONCE in the file, its own declaration) and
+> `TeenChapter` reads only `props.childName`. The portal calls `finishAndSync` itself, so stars, XP,
+> coins, the celebration and a synced `sessions` row all landed correctly — **everything a parent or
+> a founder would LOOK AT was right.** Dead with it: `advancePlan`, `revisePlanDeeper` and both
+> completion events. **Every child on a plan was handed their plan's first chapter again, for ever**,
+> and the menu's "Step 1 of 5" stayed honest about a pointer that could not move.
+> **Production said so in three independent ways:** 797 `chapter_open` · 40 completed `sessions` ·
+> **0 `practice_complete`** · **77 of 77 `diagnostic_plan_progress` rows still `todo`**.
+> ⚠️ **`menu/page.tsx:73` asserted the behaviour in a comment** — *"advances (in /game) as chapters
+> are completed"* — which is this repo's own *a comment asserting a rule is followed is the most
+> expensive kind of lie*.
+> ⚠️⚠️ **AND `activePlan.test.ts` WAS GREEN THROUGHOUT, WITH SIX TESTS DRIVING `advancePlan`
+> DIRECTLY. The unit was always correct; nothing REACHED it.** Same class as *a gate that reads a
+> chapter's DATA cannot see how it INDEXES it*. **The fix therefore lives in `finishAndSync`** — the
+> one function all three completion paths already route through (the portal's two factories,
+> `CountingStoryChapter`, `/game`) — and the gate is an **e2e that plays a real chapter to completion
+> through the real portal**, which fails on the pre-fix code. Placed BEFORE the network branch so an
+> offline child still advances. **Verified on PRODUCTION** by playing The Mission Brief to a mastery
+> exit: pointer `{0, wordProblems}` → `{1, factorsMultiples}`.
+>
+> ## ① ⚠️⚠️ EVERY URL ON THE DOMAIN SERVED 13 VISIBLE CHARACTERS
+> `StorageGate` sits in the ROOT LAYOUT and early-returned a fox splash until IndexedDB hydrated, so
+> `/help` shipped *"Milo — Help 🦊"* and so did both legal pages. Three faults from one early return:
+> **`/legal/[slug]`'s own comment says a policy page "must render … with JS blocked"** — it did not,
+> so the COPPA policy was an artifact that did not exist; **zero indexable content** anywhere; and
+> **LCP on two pages of static text blocked behind an IndexedDB open**, 4s backstop, for state
+> neither page reads. Exempted the routes that read no local state. `/` is on that list and had to
+> be — it reads only the Supabase session, never kv.
+> **`/` was also just a redirect with a fox on it** (66 visible chars). It is now a server component
+> with copy assembled from words already in the repo; the session redirect is isolated in
+> `ResumeSignedIn` so it no longer owns the render. **66 → 1,328.** `/help` **13 → 2,220**.
+> Plus `robots.ts` + `sitemap.ts` (both 404'd) and `metadataBase` + OG — **without metadataBase Next
+> emits a RELATIVE og:image, which every scraper drops**, so a shared link previewed as a blank card.
+> ⚠️ **`vercel.json`'s `/` → `/auth` rewrite is NOT live** (`"c":["",""]` vs `["","auth"]`) — Next's
+> App Router serves `/` itself, so `page.tsx` was always the front door and the REWRITE was the dead
+> artifact. I had that backwards in the review and the browser corrected me.
+>
+> ## ② THE GATE I WROTE FOR THE FIXED-LAYER BUG WAS **INERT**, AND PASSED 152/152
+> `short-landscape` crossed board × art and controls × edges — every pair containing the element
+> somebody had in mind — and could not see the pair that SHIPPED (ScribblePad's closed button over
+> The Coin Tray's 5, 6, 7). My first fix filtered fixed elements to "outermost only"; **the outermost
+> fixed element in this app is the ROOT at 0,0 640×320**, so every layer collapsed into one
+> full-screen container and every control was skipped as living-inside-a-fixed-layer. **Nothing was
+> ever compared.** Caught only by planting the original ScribblePad regression and watching it
+> SURVIVE. The test is CONTAINMENT (a layer covers a control only if it does not CONTAIN it), which
+> needs DOM identity, so it is computed in the page. Re-planted, it names the real controls.
+> **A green check is not evidence until you have watched it go red.**
+>
+> ## ③ AND THAT SUITE WAS A COIN FLIP, WHICH IS WORSE THAN A GAP
+> It measures one randomly-drawn question kind per chapter off an unseeded `Math.random`, so
+> complexNumbers @ 640×320 failed **3 runs in 7** on a REAL defect and passed the other 4. **A gate
+> that flips a coin gets re-run until it is green.** `Math.random` is now mulberry32, seeded per
+> (chapter, size) via `addInitScript` — no production code touched, no runtime cost — and breadth is
+> `E2E_SEED` for a nightly rather than re-runs.
+> ⚠️ **My first determinism check was worthless**: four identical "2 failed" that I read as
+> deterministic were four identical `ERR_CONNECTION_REFUSED` with the dev server down.
+>
+> ## ④ THE WALK HOME'S NUDGES WERE 23×23, UNDER THE 24px FLOOR — AND BOTH MY DIAGNOSES WERE WRONG
+> `WalkPad` stacks map → readout → two `Leg` rows → commit: **280 × 382 natural in a 364 × 200 slot**,
+> so `FitSlot` is HEIGHT-bound at 0.5236 and a correctly-authored 44px `Nudge` renders at 23.
+> I first blamed the board eating the width (**the board is 243px; `CenterFill` gets 364**), then
+> concluded there was no spare width — because **I took the slot's OUTPUT box (147, the scaled
+> result) for its constraint.** There were 217px spare. Reflowed to a row on a short frame:
+> **scale 0.5236 → 0.7745, nudges 23 → 34, commit 24 → 36px tall.** Shrinking the parts instead
+> would have landed within a pixel of the floor, which is not a fix.
+>
+> ## ⑤ THE PLAN POINTER NOW SURVIVES A DEVICE SWITCH — **DERIVED, NOT SYNCED**
+> It is localStorage, so a parent who ran the check on a phone and handed over a tablet got **no plan
+> card at all**. `diagnostic_plan_progress` exists for exactly this and is **write-once/read-never**
+> (77 rows, all `todo`; only `sync_diagnostic` touches it, at creation) — so the obvious fix is a
+> second write path that can disagree with the first. **Not needed:** `chapter_sequence` is on the
+> server and `learner_progress` says what was played, so the position is a FUNCTION of data the menu
+> has already fetched. No migration, no new grant (`diag_plans_read` already allows the read).
+> Two properties make it safe, mutation-tested 4/4: **monotonic** (never drags a child back), and a
+> **revised** local plan keeps its own chapters (the remote copy predates the revision).
+>
+> ## 🧹 ALSO SHIPPED
+> `reactStrictMode: true` — verified empirically, not asserted (211/211, and beat pacing measured at
+> 1 step / 6.3s to rule out doubled timers) · **6 of 9 duplicate resize listeners** derived from the
+> shared hook, including **`RotateGate`'s pre-effect frame — the hook behind the 21 C7 failures** ·
+> **`useViewport` returned a ZERO size** in an unlaid-out frame, which flips every aspect test so a
+> landscape laptop draws its PORTRAIT layout (guarded, 3/3) · a `world1` timer that **scored a round
+> 950ms after the child left** · `crypto.randomUUID` in analytics · a Node build script that was
+> being **served to the browser**, deleted · **art 83 MB → 58 MB** (86 files, 0 with altered
+> geometry — `cellAspect`/`frames` make a resize fatal, so the script verifies and refuses).
+>
+> ## 📉 AND THE NUMBER THAT SHOULD DECIDE THE NEXT MONTH
+> Production, all time: **7 accounts · 17 learners · 40 sessions · EIGHT children have ever played ·
+> best-ever retention 14 sessions across 5 days, last played 2026-07-26 · 5 real leads · £0 of
+> monetisation surface — no price, no packaging, nowhere to pay.** 15 months, 467 commits, 77.5k
+> lines. **The engineering is not what is wrong with this company.**
+>
+> ## ▶ OPEN
+> 1. ⚠️⚠️ **`MONITORING_INGEST_URL` IS STILL UNSET, AND IT IS WHY ⓪ RAN FOR THREE MONTHS UNSEEN.**
+>    `/api/report-error` forwards every crash into a void. Highest-value founder item by far.
+> 2. **B1 attorney** is still a paste (`DRAFT = true` is LIVE on prod) · a real domain
+>    (`mi2utor.com` is owned) · the `leads_server_only` migration · **dev still points at PROD** ·
+>    **7 test leads of mine** in the prod table.
+> 3. **`practice_complete` has still never been observed in the DB** — my prod verification used a
+>    synthetic learner and `learner_events.learner_id` is FK'd to `learners(id)`, so the insert was
+>    rejected and `track()` swallowed it by design. It should appear on the first REAL completion;
+>    **if it does not, ⓪ is not fully fixed.** Watch it.
+> 4. **The cross-device plan (⑤) has NOT been driven across two real devices** — unit and type layers
+>    only. Stated rather than rounded up.
+> 5. **132 eslint errors**, all three hook rules; they need the Suspense/`use()` migration, not 132
+>    disable comments.
+> 6. `diagnostic_plan_progress` is dead schema — deliberately NOT wired, since ⑤ derives instead.
+> 7. **`short-landscape` is 57 minutes** and belongs in CI, not a working session. I killed it at 40
+>    minutes once after treating it as a blocker for a question a 4-minute sample answered.
+> 8. Of this session's faults, **the P0 came from reading production's own event table, not from any
+>    test; two came from measuring after guessing wrong (the slot box, the board width); one from
+>    planting a regression and watching it survive; one from the dev server being down twice; and one
+>    from the type-checker. The 1,051-test suite was green through every one of them.**
+> 9. **Where the rules went:** `chapter-craft.md` §4 gained *a unit test cannot see that nothing
+>    calls the unit*, *a green check is not evidence until you have watched it go red*, *a sweep that
+>    samples is a coin flip — seed it*, and *do not mistake a shrink-to-fit element's OUTPUT box for
+>    the space it was given*.
+
 > 🔒 **2026-08-16 (2nd session) — LAUNCH HARDENING, ROUND TWO. THREE ASKS, AND EVERY ONE OF THEM TURNED UP SOMETHING WORSE THAN THE THING ASKED ABOUT: A DEAD END A CHILD COULD NOT ESCAPE, A GATE THAT HAD BEEN RED FOR A DAY, AND THE RECORDED VOICE SILENTLY DEAD ON MOBILE.** 🔒 SHIPPED — `main`@`c80e1c7`, prod serving **sw v104**. `tsc` 0 · **1051/1051 vitest** (was 1039, **+12**) · `next build` 0 · **211/211 chapters × 3 frames** · preflight green.
 >
 > **The asks:** *"abhi kya karna hai plan ke according?"* → *"karo"* (the scratch-pad fix) → *"woh dono
