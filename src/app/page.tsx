@@ -20,6 +20,7 @@
  * anti-fear rule. Change the words freely; keep them TRUE, because this is the one page that makes
  * a promise before anybody has played anything.
  */
+import { SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -119,7 +120,7 @@ export default function RootPage() {
           <Link href="/help" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Help</Link>
           <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Privacy</Link>
           <Link href="/legal/terms" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Terms</Link>
-          <a href="mailto:support@mi2utor.com" style={{ color: '#7a6a55', textDecoration: 'none' }}>support@mi2utor.com</a>
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#7a6a55', textDecoration: 'none' }}>{SUPPORT_EMAIL}</a>
         </footer>
       </div>
     </main>

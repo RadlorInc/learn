@@ -9,7 +9,23 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : 'https://milo-story-mode.vercel.app')
+    : 'https://radlor.com')
+// ⚠️ ORDER MATTERS AND IT IS DELIBERATE. Once radlor.com is assigned as the project's PRODUCTION
+// domain in Vercel, `VERCEL_PROJECT_PRODUCTION_URL` becomes radlor.com on its own and this is
+// self-correcting. Until that DNS is live it still resolves to the vercel.app host, so set
+// NEXT_PUBLIC_SITE_URL=https://radlor.com explicitly to close the gap — otherwise sitemap, robots
+// and every og:image advertise the old origin while the site answers on the new one.
+
+/**
+ * The address a parent writes to, in ONE place for the same reason `SITE_URL` is.
+ *
+ * ⚠️ It lived as a literal in FOUR files (here it was only in `infra/diagnostics.ts`, with
+ * `page.tsx`, `help/page.tsx` and `legal/[slug]/page.tsx` each repeating the string). Dropping the
+ * mi2utor domain meant editing four places and hoping none was missed — which is precisely the
+ * drift this module was created to stop. It lives HERE rather than in `diagnostics.ts` because that
+ * file is `'use client'` and three of the four consumers are Server Components.
+ */
+export const SUPPORT_EMAIL = 'support@radlor.com'
 
 /**
  * The only routes that may be crawled. Everything else is a signed-in surface: it renders nothing

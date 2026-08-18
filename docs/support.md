@@ -12,7 +12,7 @@ Related: [devops.md](devops.md) (infrastructure) · [runbooks/rollback.md](runbo
 
 Pick one fixed time (morning, with coffee). Check two things:
 
-1. **support@mi2utor.com**
+1. **support@radlor.com**
 2. **The daily health check** — [the routine's latest run](https://claude.ai/code/routines/trig_01GKnmbsiyHjvsC58jMTeiG6)
 
 Both empty? Close the laptop. That is the entire support routine at current scale.
@@ -25,7 +25,7 @@ Both empty? Close the laptop. That is the entire support routine at current scal
 
 ## 2. The channel
 
-**support@mi2utor.com**, linked from the bottom of the parent dashboard as "Need help?".
+**support@radlor.com**, linked from the bottom of the parent dashboard as "Need help?".
 
 The screen promises **a reply within 2 working days**. That is the only commitment — keep it, and
 don't widen it. A promise you miss is worse than no promise.

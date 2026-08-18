@@ -10,6 +10,7 @@
  *
  * A Server Component — it is text and links.
  */
+import { SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -91,7 +92,7 @@ export default function HelpPage() {
 
         <p style={{ marginTop: 24, fontSize: 15, color: '#5b4c39' }}>
           Still stuck? Email{' '}
-          <a href="mailto:support@mi2utor.com" style={{ color: '#F26B2C', fontWeight: 700 }}>support@mi2utor.com</a>
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#F26B2C', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>
           {' '}— tell us the device and browser, and we will come back to you.
         </p>
       </div>

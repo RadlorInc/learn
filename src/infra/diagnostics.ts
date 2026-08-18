@@ -122,7 +122,10 @@ export function formatDiagnostics(d: Diagnostics): string {
   return lines.join('\n')
 }
 
-export const SUPPORT_EMAIL = 'support@mi2utor.com'
+// Re-exported so existing importers (SupportPanel) keep their import path, while the VALUE has
+// exactly one definition — see app/site.ts.
+export { SUPPORT_EMAIL } from '@/app/site'
+import { SUPPORT_EMAIL } from '@/app/site'
 
 /** Build the `mailto:` a parent's "Email support" button opens. */
 export function supportMailto(block: string, note: string): string {

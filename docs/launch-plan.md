@@ -71,8 +71,8 @@ Ordered by lead time, longest first. **Start #1 today**; it is the only item tha
 | B7 | Turn on leaked-password protection + Auth rate limits | **[F]** dashboard | Two toggles; one is in the advisor report right now. |
 | B8 | Vercel WAF rate-limit rules (esp. the anon lead-insert path) | **[F]** dashboard | Your only defence against day-one abuse. |
 | B9 | **A real human signs up on a real device with a real email**, adds a learner, runs the diagnostic, plays a chapter, and confirms progress persists after closing the app | **[F]** | I cannot receive an email or hold a phone. Nothing else substitutes for this. |
-| B10 | Decide the public brand: **`mi2utor.com` vs `milo-story-mode.vercel.app` vs "Milo"** | **[F]** | Blocks every piece of copy, and the support email domain. |
-| B11 | Confirm `support@mi2utor.com` actually receives mail and someone reads it | **[F]** | It is hard-coded as the in-app support address. |
+| B10 | ~~Decide the public brand~~ **DECIDED 2026-08-18: `radlor.com`** (parent company) is the one public domain; mi2utor.com is retired to a 301. Milo stays the product/character name inside the app. | ✅ | Was blocking copy and the support address; both now point at radlor.com. |
+| B11 | Confirm **`support@radlor.com`** actually receives mail and someone reads it | **[F]** | It is the in-app support address (now from ONE constant, `app/site.ts`). ⚠️ radlor.com has **no MX record yet** — until a mailbox exists, every support request bounces. |
 
 ---
 
@@ -159,5 +159,5 @@ Week 4+  open the doors only when: 0 P0/P1 defects from real use,
 2. **US-only?** *(recommend: yes — EU adds GDPR-K and roughly doubles the compliance surface for no launch benefit)*
 3. **All six age bands, or launch narrower?** *(recommend: launch all — every one of the 70 chapters resolves and the gates are green; but a narrower launch means a tighter efficacy story and less to watch)*
 4. **Schools/classrooms at launch?** *(recommend: no — direct-to-parent only; schools pull in FERPA)*
-5. **Brand: `mi2utor.com` or `Milo`?**
+5. **Brand — RESOLVED (2026-08-18): `radlor.com`.**
 6. **Which of my Tier-1 list do you want first?** My order: C1 → C2 → C7, because those three are the ones that stop it breaking.

@@ -5,6 +5,7 @@
  * render for someone who is not signed in, on a bad connection, with JS blocked. Nothing here
  * needs the client.
  */
+import { SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -58,7 +59,7 @@ export default async function LegalPage({ params }: { params: Promise<{ slug: st
 
         <p style={{ marginTop: 28, fontSize: 14, color: '#6b5c47' }}>
           Questions about your child&apos;s data? Email{' '}
-          <a href="mailto:support@mi2utor.com" style={{ color: '#F26B2C' }}>support@mi2utor.com</a>.
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#F26B2C' }}>{SUPPORT_EMAIL}</a>.
           You can download or delete everything from the{' '}
           <Link href="/parent" style={{ color: '#F26B2C' }}>parent dashboard</Link>.
         </p>
