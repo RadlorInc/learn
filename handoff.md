@@ -68,7 +68,7 @@
 > REAL HAND on a real camera** — MediaPipe is proven to boot on prod under the enforced CSP
 > (`Graph successfully started running.`, 0 violations), but the band's defining feature is
 > unverified end to end and only the founder can close it. Everything is committed; prod is on
-> **sw v119**.
+> **sw v120**.
 >
 > 📍 **WHERE THINGS LIVE NOW (2026-08-18/19).** Repo **`RadlorMain/learn`** (GitHub Org, **PUBLIC —
 > must stay public until Vercel is Pro**). `git remote` = `https://github.com/RadlorMain/learn.git`.
