@@ -9,6 +9,27 @@ there is no setting to change it** — the only route is a new project plus a da
 
 ---
 
+## ⏸ STATUS: DEFERRED UNTIL THE PRO UPGRADE — founder's call, 2026-08-19
+
+**This migration happens at the same time as the Supabase Pro upgrade, not before it.** The reasoning
+is sound and should not be re-litigated:
+
+- Pro brings daily backups and PITR, so §1a's whole problem — no restorable copy of eight real
+  families' data — is solved by the plan change rather than by the stop-gap workflow.
+- The new project would otherwise be created on free, which pauses after 7 days of low activity, and
+  would then need upgrading anyway. One event instead of two.
+- The restore rehearsal that §1a asks for comes free with PITR.
+
+⚠️ **What stays open in the meantime:** there is still no restorable copy of the children's data.
+`backup.yml` is committed and inert. If Pro is more than a couple of weeks away, wire it up anyway
+(§1a) — the gap has been open for several sessions and the data is real.
+
+⚠️ **And the trigger has not moved:** the MVP audience is entirely US (founder, 2026-08-19), so this
+must be done **before those users arrive**, not after. Migrating 8 accounts is an afternoon;
+migrating 800 is a project. Pro + migration is therefore a pre-launch item, not a someday item.
+
+---
+
 ## 0. Measured state (2026-08-19) — re-measure before you start
 
 | | |
