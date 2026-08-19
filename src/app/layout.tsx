@@ -31,7 +31,24 @@ const fredoka = Fredoka({ subsets: ['latin'], weight: ['500', '600', '700'], var
 const nunito = Nunito({ subsets: ['latin'], weight: ['600', '700', '800', '900'], variable: '--f-nunito', display: 'swap' })
 const plexSans = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--f-plex-sans', display: 'swap' })
 const plexMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--f-plex-mono', display: 'swap' })
-const gaegu = Gaegu({ subsets: ['latin'], weight: ['400', '700'], variable: '--f-gaegu', display: 'swap' })
+/**
+ * ⚠️ `preload: false` IS LOAD-BEARING AND IT IS THE WHOLE FONT BUDGET.
+ *
+ * `next/font/google` defaults to `preload: true`, which emits a `<link rel="preload">` for EVERY
+ * unicode-range subset of the family — on every page. Gaegu is a Korean face, so that is ~45 ranges
+ * × 2 weights = **90 preload links**. Measured on production 2026-08-19: the landing page preloaded
+ * **90 Gaegu files, 671 KB — 82% of all font bytes and ~40% of the entire first visit — while
+ * rendering ZERO elements in it.** The other four families are 1–4 files and 29–39 KB each.
+ *
+ * Gaegu is the chalkboard face (`--font-chalk`), used only inside teen-band chapters. It still
+ * loads there, on demand, per unicode-range, and `display: 'swap'` means the board renders in the
+ * fallback for a beat rather than blocking. Do not turn preload back on to fix a flash of fallback
+ * text on the chalkboard — that trade costs every child on every page 671 KB.
+ *
+ * The other four stay preloaded deliberately: Fredoka is the landing page's LCP text, and none of
+ * them is big enough to be worth the risk of a late swap.
+ */
+const gaegu = Gaegu({ subsets: ['latin'], weight: ['400', '700'], variable: '--f-gaegu', display: 'swap', preload: false })
 
 const FONT_VARS = [fredoka, nunito, plexSans, plexMono, gaegu].map(f => f.variable).join(' ')
 
@@ -77,14 +94,14 @@ export const metadata: Metadata = {
     description:
       'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
     url: '/',
-    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'AdaptiveLearn' }],
+    // ⚠️ No `images` here on purpose — `app/opengraph-image.tsx` supplies the 1200×630 card.
+    // Naming one back would override the file-based route and reinstate the square.
   },
   twitter: {
     card: 'summary',
     title: "AdaptiveLearn — find the gap that's holding your child back in maths",
     description:
       'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
-    images: ['/icons/icon-512.png'],
   },
   manifest: '/manifest.json',
   appleWebApp: {

@@ -21,6 +21,25 @@ export const metadata: Metadata = {
   alternates: { canonical: '/help' },
 }
 
+/**
+ * The visible answer is the ONLY copy of the answer.
+ *
+ * ⚠️ The obvious way to add FAQ structured data is a second `plain:` string beside each `a`, and
+ * that is the duplicate-fact trap this codebase keeps paying for: the two drift, and the one that
+ * drifts is the one nobody reads — the machine copy. Walk the element tree instead. It uses no
+ * renderer (so `<Link>` needs no router context) and the schema literally cannot disagree with
+ * what is on screen.
+ */
+function plainText(node: React.ReactNode): string {
+  if (node === null || node === undefined || typeof node === 'boolean') return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(plainText).join('')
+  if (typeof node === 'object' && 'props' in node) {
+    return plainText((node as { props: { children?: React.ReactNode } }).props.children)
+  }
+  return ''
+}
+
 const FAQ: { q: string; a: React.ReactNode }[] = [
   {
     q: 'The app looks wrong, or older than it should',
@@ -73,6 +92,23 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
 ]
 
+function HelpJsonLd() {
+  const json = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        // Collapse the whitespace the JSX indentation introduces.
+        text: plainText(f.a).replace(/\s+/g, ' ').trim(),
+      },
+    })),
+  }
+  return <script type="application/ld+json">{JSON.stringify(json)}</script>
+}
+
 export default function HelpPage() {
   return (
     <main style={{
@@ -101,6 +137,7 @@ export default function HelpPage() {
           {' '}— tell us the device and browser, and we will come back to you.
         </p>
       </div>
+      <HelpJsonLd />
     </main>
   )
 }

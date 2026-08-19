@@ -82,6 +82,50 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> ⚡ **2026-08-19 (third pass) — A DECORATIVE FONT WAS 82% OF THE APP'S FONT BYTES AND ~40% OF THE ENTIRE FIRST VISIT, PRELOADED ON EVERY PAGE, RENDERING NOTHING. ONE OPTION FIXED IT: 816 KB → 146 KB.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v122 → v123**.
+>
+> ## ⓪ ⚠️⚠️ `next/font/google` PRELOADS **EVERY UNICODE SUBSET**, AND `preload` DEFAULTS TO TRUE
+> Measured on production, not inferred: the landing page emitted **97 `<link rel="preload" as="font">`
+> tags and fetched 97 woff2 files, 816 KB — 49% of a 1.68 MB first visit.** Broken down per family
+> by matching each fetched file back to the `@font-face` rule that names it:
+>
+> | family | files | KB | share |
+> |---|---|---|---|
+> | **Gaegu** | **90** | **671** | **82%** |
+> | IBM Plex Sans | 1 | 39 | 5% |
+> | IBM Plex Mono | 4 | 39 | 5% |
+> | Nunito | 1 | 38 | 5% |
+> | Fredoka | 1 | 29 | 4% |
+>
+> **Gaegu is a KOREAN face** used only for `--font-chalk` (the teen band's chalkboard). Google splits
+> it into ~45 unicode ranges × 2 weights, and `preload: true` — the DEFAULT — emits a preload link for
+> **every one of them, on every page**. ⚠️ **The landing page rendered ZERO elements in it.** Counted
+> live: `elementsUsingGaeguOnThisPage: 0`, against 29 for Fredoka and 0 for the other three.
+>
+> **Fix: `preload: false` on Gaegu alone.** After: **7 preload links, 7 files, 146 KB.** The other
+> four stay preloaded on purpose — Fredoka is the landing page's LCP text and none of them is big
+> enough to risk a late swap.
+>
+> ⚠️ **VERIFIED THAT THE CHALKBOARD STILL WORKS, because that is the risk of the change:** Gaegu's
+> **179 `@font-face` rules are still declared**, `--font-chalk` still resolves to `Gaegu, "Gaegu
+> Fallback", "Comic Sans MS", cursive`, and `document.fonts.load('400 16px Gaegu', …)` returns
+> **true** while fetching **4 files** — the ranges that text actually needs, not 90.
+> ⚠️ **Do not turn preload back on to remove a flash of fallback on the board.** That trade costs
+> every child on every page 671 KB, and `display: 'swap'` is already handling it.
+>
+> ## ① THREE SMALLER SURFACES, ALL PREVIOUSLY MISSING
+> - **`FAQPage` on `/help`.** ⚠️ The answers are JSX with `<Link>` inside, and the obvious way to get
+>   plain text for the schema is a second `plain:` string per item — the duplicate-fact trap this repo
+>   keeps paying for, where the copy that drifts is the machine one nobody reads. Instead `plainText()`
+>   walks the element tree: **no renderer** (so `<Link>` needs no router context) and the schema
+>   cannot disagree with what is on screen. 8 questions emitted.
+> - **A 1200×630 `opengraph-image`.** ⚠️ `og:image` had been `/icons/icon-512.png` — **the PWA icon, a
+>   SQUARE.** Every social card slot is 1.91:1, so a square is letterboxed or cropped to a strip, on a
+>   product parents forward by link. The hand-declared `images` arrays are gone from `layout.tsx`;
+>   naming one back would override the file-based route and reinstate the square.
+> - **`/llms.txt`**, generated from `PUBLIC_ROUTES`. It leads with the two facts a model most often
+>   gets wrong here: Milo is the CHARACTER, and the camera never uploads anything.
+
 > 🔎 **2026-08-19 (same day, second pass) — THE APP'S PUBLIC SEO WAS BROKEN AND NOTHING IN 1,122 TESTS COULD SEE IT. ⚠️ AND FIXING IT TRIPPED `security.test.ts`, WHICH WAS RIGHT — THE FIX THAT SATISFIED IT IS STRICTLY BETTER THAN WHAT I FIRST WROTE.** `tsc` 0 · **1135/1135 vitest** (+13) · `next build` 0 · sw **v121 → v122**.
 >
 > ## ⓪ WHAT WAS ACTUALLY WRONG, MEASURED ON THE RUNNING APP
