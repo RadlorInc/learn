@@ -113,9 +113,9 @@ export default function AuthPage() {
           fontSize: 30, fontWeight: 800,
           color: '#F26B2C', margin: 0,
           fontFamily: 'var(--font-display)',
-        }}>Milo Story Mode</h1>
+        }}>AdaptiveLearn</h1>
         <p style={{ fontSize: 15, color: '#888', margin: '6px 0 0', fontWeight: 500 }}>
-          Learning adventures for little ones
+          Adaptive maths for ages 3 to 18
         </p>
       </div>
 

@@ -52,6 +52,11 @@ export const viewport: Viewport = {
  * The `template` gives every page a suffix without each page repeating it; `/help` and
  * `/legal/[slug]` already export their own titles and now inherit the brand for free.
  *
+ * ⚠️ MILO IS THE CHARACTER. ADAPTIVELEARN IS THE PRODUCT. Only naming positions — the title,
+ * the manifest, the wordmark, the legal definitions — carry the product name. Everywhere the pony
+ * is doing something (speaking, asking, tripping over an error) he stays Milo, and that is
+ * deliberate: it is the Duo/Duolingo split, not an inconsistency. Do not "fix" it either way.
+ *
  * ⚠️ THE DESCRIPTION SAYS WHAT THE PRODUCT DOES, NOT WHAT IT IS CALLED. "Milo's interactive
  * learning adventure for kids" contains no word a parent would type. This one names the job
  * (find the gap) and the ages, because the description is the only sentence most people read.
@@ -59,24 +64,24 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Milo — find the gap that's holding your child back in maths",
-    template: '%s · Milo',
+    default: "AdaptiveLearn — find the gap that's holding your child back in maths",
+    template: '%s · AdaptiveLearn',
   },
   description:
     'A short placement check finds the deepest gap under your child’s maths — not the newest thing they got wrong — then a plan fixes it. Ages 3–18. No timer, no score, no red crosses.',
-  applicationName: 'Milo',
+  applicationName: 'AdaptiveLearn',
   openGraph: {
     type: 'website',
-    siteName: 'Milo',
-    title: "Milo — find the gap that's holding your child back in maths",
+    siteName: 'AdaptiveLearn',
+    title: "AdaptiveLearn — find the gap that's holding your child back in maths",
     description:
       'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
     url: '/',
-    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'Milo' }],
+    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'AdaptiveLearn' }],
   },
   twitter: {
     card: 'summary',
-    title: "Milo — find the gap that's holding your child back in maths",
+    title: "AdaptiveLearn — find the gap that's holding your child back in maths",
     description:
       'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
     images: ['/icons/icon-512.png'],
@@ -85,13 +90,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Milo',
+    title: 'AdaptiveLearn',
   },
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
-    'apple-mobile-web-app-title': 'Milo',
+    'apple-mobile-web-app-title': 'AdaptiveLearn',
     'msapplication-TileColor': '#F26B2C',
     'msapplication-tap-highlight': 'no',
   },

@@ -31,7 +31,7 @@ export const PRIVACY: LegalDoc = {
   updated: 'not yet published',
   body: `PLACEHOLDER — awaiting legal review.
 
-Milo is used by children, so we keep the amount we store small and we do not sell or share it.
+AdaptiveLearn is used by children, so we keep the amount we store small and we do not sell or share it.
 
 What we store: the parent's email address, the child's display name and age band, their answers to the placement check, and which chapters they have played. If you used the free check before making an account, we also store the email address you gave us there. We do not store a child's date of birth, only their age band.
 
@@ -52,7 +52,7 @@ export const TERMS: LegalDoc = {
   updated: 'not yet published',
   body: `PLACEHOLDER — awaiting legal review.
 
-Milo is a maths practice app for children aged 3 to 18, used with a parent or teacher's account.
+AdaptiveLearn is a maths practice app for children aged 3 to 18, used with a parent or teacher's account.
 
 An adult creates the account and adds each child. You are responsible for the account and for supervising your child's use of it.
 

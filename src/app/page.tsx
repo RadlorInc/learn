@@ -20,7 +20,7 @@
  * anti-fear rule. Change the words freely; keep them TRUE, because this is the one page that makes
  * a promise before anybody has played anything.
  */
-import { SUPPORT_EMAIL } from '@/app/site'
+import { APP_ID, APP_NAME, COMPANY, COMPANY_ID, COMPANY_URL, SUPPORT_EMAIL, SITE_URL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -29,6 +29,37 @@ import ResumeSignedIn from './ResumeSignedIn'
 export const metadata: Metadata = {
   // The root inherits the layout's title/description; only the canonical is page-specific.
   alternates: { canonical: '/' },
+}
+
+/**
+ * The only structured data in the app, and it lives here because this is the only page a crawler
+ * both reaches and can read — everything else is a signed-in surface.
+ *
+ * ⚠️ It REFERENCES Radlor by `@id` instead of describing it. The company is declared once, on
+ * radlor.com. See the note in `site.ts`.
+ */
+function AppJsonLd() {
+  const json = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'SoftwareApplication',
+        '@id': APP_ID,
+        name: APP_NAME,
+        alternateName: `${APP_NAME} by ${COMPANY}`,
+        url: SITE_URL,
+        applicationCategory: 'EducationalApplication',
+        operatingSystem: 'Web browser',
+        description:
+          'A short placement check finds the deepest gap under a child\u2019s maths, then story chapters teach from there with the difficulty moving question by question. Ages 3 to 18.',
+        publisher: { '@id': COMPANY_ID },
+        brand: { '@id': COMPANY_ID },
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+      },
+      { '@type': 'Organization', '@id': COMPANY_ID, name: COMPANY, url: COMPANY_URL },
+    ],
+  }
+  return <script type="application/ld+json">{JSON.stringify(json)}</script>
 }
 
 const POINTS: { h: string; p: string }[] = [
@@ -60,7 +91,7 @@ export default function RootPage() {
           <Image src="/assets/characters/milo-happy.png" alt="" width={44} height={44} priority
             style={{ objectFit: 'contain' }} />
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, color: '#F26B2C' }}>
-            Milo
+            AdaptiveLearn
           </span>
           <Link href="/auth" style={{
             marginLeft: 'auto', fontSize: 15, fontWeight: 700, color: '#7a6a55', textDecoration: 'none',
@@ -79,7 +110,7 @@ export default function RootPage() {
 
         <p style={{ fontSize: 18, lineHeight: 1.6, color: '#5b4c39', margin: '0 0 26px' }}>
           Most maths trouble is not about the topic your child is failing today — it is about
-          something further down that never quite landed. Milo runs a short placement check to find
+          something further down that never quite landed. AdaptiveLearn runs a short placement check to find
           that, then builds a plan that fixes it. Ages 3 to 18.
         </p>
 
@@ -121,7 +152,11 @@ export default function RootPage() {
           <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Privacy</Link>
           <Link href="/legal/terms" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Terms</Link>
           <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#7a6a55', textDecoration: 'none' }}>{SUPPORT_EMAIL}</a>
+          <a href={COMPANY_URL} style={{ color: '#7a6a55', textDecoration: 'none', marginLeft: 'auto' }}>
+            {APP_NAME} is made by {COMPANY}
+          </a>
         </footer>
+        <AppJsonLd />
       </div>
     </main>
   )

@@ -14,7 +14,12 @@ import { SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-export const metadata: Metadata = { title: 'Milo — Help' }
+export const metadata: Metadata = {
+  title: 'Help',
+  description:
+    'Answers to the questions parents ask about AdaptiveLearn: offline play, lost progress, how it decides what to teach, the camera, and choosing the right level for a child.',
+  alternates: { canonical: '/help' },
+}
 
 const FAQ: { q: string; a: React.ReactNode }[] = [
   {
@@ -75,7 +80,7 @@ export default function HelpPage() {
       padding: '28px 20px 60px',
     }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← Milo</Link>
+        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← AdaptiveLearn</Link>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#3d2516', margin: '14px 0 20px' }}>
           Help
         </h1>

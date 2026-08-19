@@ -18,7 +18,14 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const doc = DOCS.find(d => d.slug === slug)
-  return { title: doc ? `Milo — ${doc.title}` : 'Milo' }
+  if (!doc) return { title: 'AdaptiveLearn' }
+  return {
+    title: doc.title,
+    // ⚠️ Without this every legal page inherited the landing page's marketing description, so all
+    // of them advertised a placement check instead of saying what the document is.
+    description: `${doc.title} for AdaptiveLearn by Radlor — what we store about a child, who can see it, and how to have it deleted.`,
+    alternates: { canonical: `/legal/${doc.slug}` },
+  }
 }
 
 export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -32,7 +39,7 @@ export default async function LegalPage({ params }: { params: Promise<{ slug: st
       padding: '28px 20px 60px',
     }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← Milo</Link>
+        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← AdaptiveLearn</Link>
 
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#3d2516', margin: '14px 0 4px' }}>
           {doc.title}

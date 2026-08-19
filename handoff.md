@@ -82,6 +82,86 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🔎 **2026-08-19 (same day, second pass) — THE APP'S PUBLIC SEO WAS BROKEN AND NOTHING IN 1,122 TESTS COULD SEE IT. ⚠️ AND FIXING IT TRIPPED `security.test.ts`, WHICH WAS RIGHT — THE FIX THAT SATISFIED IT IS STRICTLY BETTER THAN WHAT I FIRST WROTE.** `tsc` 0 · **1135/1135 vitest** (+13) · `next build` 0 · sw **v121 → v122**.
+>
+> ## ⓪ WHAT WAS ACTUALLY WRONG, MEASURED ON THE RUNNING APP
+> - **Four of the five `PUBLIC_ROUTES` declared NO canonical.** Only `/` had one.
+> - **All five shared ONE description** — the root's — so `/legal/privacy` advertised a placement
+>   check. Five pages, one meta description, which search engines read as duplicates.
+> - ⚠️ **`/diagnostic` had no title and no `<h1>` of its own**, i.e. **the highest-intent public page
+>   in the product was not a distinct page to a crawler.** The cause is worth remembering:
+>   **`page.tsx` is `'use client'`, and a client component CANNOT export `metadata`.** The only fix
+>   without converting it to a server component is a `layout.tsx` beside it. There is now one.
+> - **Zero structured data anywhere in the app.**
+>
+> ## ① ⚠️⚠️ `security.test.ts` FIRED ON MY JSON-LD, AND THE CORRECT RESPONSE WAS NOT TO WHITELIST IT
+> JSON-LD is normally written with `dangerouslySetInnerHTML` — Next's own docs show that — and this
+> repo's gate fails the build on the first such sink, **by design**: the handoff's V15 entry accepts
+> CSP `'unsafe-inline'` *only* because the app has zero injection sinks, so the PREMISE is gated
+> rather than the header. Adding an exemption would have quietly retired that argument.
+> **Measured instead of assumed** (throwaway vitest, `renderToStaticMarkup`):
+> `<script type="application/ld+json">{jsonString}</script>` renders `</script>` inside the string as
+> **`</\u0073cript>`** — so a breakout is impossible — while leaving quotes and `&` alone, and the
+> JSON **round-trips byte-identical**. So the safe form is also the correct form and the dangerous
+> one was never needed. Rewritten in the app AND in all 8 blocks on `../radlor-site`.
+> **THE RULE: when a gate fires on a standard idiom, measure the safe alternative before weakening
+> the gate.** The gate was right; the idiom was lazy.
+> ⚠️ Note for the next throwaway test: `vitest.config.ts` includes **`src/**/*.test.ts` only** — a
+> `.tsx` test file runs zero tests and reports success.
+>
+> ## ② THE TWO PROPERTIES NOW DESCRIBE ONE ENTITY, AND THAT IS THE POINT
+> ⚠️ **"AdaptiveLearn" is a GENERIC phrase in a crowded category** — searched 2026-08-19, it returns
+> "adaptive learning" the concept plus AdaptedMind / bettermarks / DreamBox / Prodigy. **"Radlor" is
+> distinctive and effectively unclaimed** (one Instagram handle, one hair salon in Madrid). So the
+> brand has to carry the entity:
+> - both sites emit `SoftwareApplication` with the **identical `@id`** `https://adaptivelearn.radlor.com/#app`
+> - both point `publisher` at `https://radlor.com/#organization`, **declared once on radlor.com and
+>   only REFERENCED here** — two declarations would be two companies sharing one name
+> - the app links to radlor.com **visibly**, in the footer, because a schema-only claim is weaker
+>
+> ⚠️ **Retyping either `@id` silently splits the product in half.** `APP_ID`/`COMPANY_ID` live in
+> `src/app/site.ts`; the gate asserts the exact strings.
+>
+> ## ③ THE GATE: `src/__tests__/publicSeo.test.ts` (13 assertions)
+> Reads the real `metadata` exports rather than re-stating the rules, counts its own coverage against
+> `PUBLIC_ROUTES` so it cannot fall behind, and asserts no two public pages share a description.
+> **Five regressions planted in the SOURCE, all five caught** — dropped canonical, dropped
+> description, duplicated legal descriptions, a mismatched `@id`, and the visible Radlor link removed
+> while the schema stayed.
+> ⚠️ **It deliberately does NOT import the root layout**: `layout.tsx` calls `next/font/google` at
+> module scope, which throws under vitest. "Declares its own, and no two match" is both runnable and
+> the stronger claim — the bug was that these pages declared nothing at all.
+
+> 🏷️ **2026-08-19 — THE PRODUCT IS NAMED `AdaptiveLearn`. MILO IS THE CHARACTER, AND THE SPLIT IS DELIBERATE.** Founder's call while building the Radlor company site, which had been calling the product AdaptiveLearn while the app called itself Milo — the same product under two names across two properties, which is the one thing that stops either name accumulating any search or answer-engine authority. `tsc` 0 · **1122/1122 vitest** · `next build` 0 · prod sw bumped **v120 → v121**.
+>
+> ⚠️⚠️ **THE RENAME IS SURGICAL AND A FIND-AND-REPLACE WOULD DESTROY THE CHARACTER.** There are
+> ~1,300 occurrences of "Milo" in this repo and **the overwhelming majority are the pony** — every
+> chapter's speech, every `alt`, `PtMilo`, `useMiloStore`, `useMiloSpeaker`, `MiloErrorBoundary`.
+> **The rule, and it is the Duo/Duolingo split:**
+> - **A NAMING POSITION carries the product name** — `<title>`, `applicationName`, `og:site_name`,
+>   the manifest, the landing wordmark, the sign-in headline, the help/legal titles and back links,
+>   and the legal documents' own definition of the service (*"AdaptiveLearn is a maths practice app
+>   for children aged 3 to 18"*). Those 17 strings changed.
+> - **THE PONY DOING SOMETHING STAYS MILO** — *"Milo can't find that page"*, *"Oops! Milo tripped
+>   over something"*, *"Milo will ask a few quick questions"*, *"Milo's wardrobe"*, and all 626
+>   occurrences in `src/features`. **Do not "fix" these for consistency.** A mascot with a name is
+>   the point; the product having two names was the bug.
+>
+> ⚠️ **THE MANIFEST `name`/`short_name` CHANGED, WHICH IS NOT A FREE EDIT.** Every device with the
+> app on a home screen re-reads the manifest and may re-prompt or relabel the installed icon. That
+> is the correct trade here and it is worth knowing before the next support message about it.
+>
+> ⚠️ **The app icon is still the pony and that is right** — Duolingo's icon is Duo. Do not regenerate
+> the icon set to say "AdaptiveLearn".
+>
+> **Also fixed:** the sign-in page's subtitle read *"Learning adventures for little ones"* on a
+> product that goes to eighteen. Now *"Adaptive maths for ages 3 to 18"*.
+>
+> 🌐 **AND THERE IS A SECOND REPO NOW: `../radlor-site`** — the Radlor company website
+> (`radlor.com`), deliberately a separate repo and a separate Vercel project so a marketing edit
+> cannot touch this deploy pipeline. Ten pages, structured data throughout, `llms.txt`. Its
+> `docs/seo-geo-setup.md` is the standing list of what is left. **Nothing there is pushed yet.**
+
 > 🏗️ **2026-08-18/19 — EVERYTHING MOVED OFF THE PERSONAL GMAIL AND ONTO THE COMPANY (RADLOR). THE APP IS LIVE ON `adaptivelearn.radlor.com`. ⚠️ AND ALONG THE WAY THE FOUNDER LOCKED HIMSELF OUT OF THE PRODUCTION DATABASE, THE DEPLOY PIPELINE BROKE SILENTLY THREE TIMES, AND I "PROVED" A PLAN LIMIT THAT WAS THE OPPOSITE OF TRUE.** 🏗️ SHIPPED — `main`@`e450cd6`, prod serving **sw v120**. `tsc` 0 · **1122/1122 vitest** · `next build` 0.
 >
 > **The asks:** *"vercel sahi option hai?"* → *"sab domain ke email pe transfer karna hai"* →
