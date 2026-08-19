@@ -8,9 +8,9 @@ import type { Metadata } from 'next'
  * that can fix that without turning the page into a server component.
  */
 export const metadata: Metadata = {
-  title: 'Free maths placement check',
+  title: 'Free math placement check',
   description:
-    'A ten-minute check that finds the deepest gap under your child’s maths — not the newest thing they got wrong. No account needed, no timer, no score. Ages 3 to 18.',
+    'A ten-minute check that finds the deepest gap under your child’s math — not the newest thing they got wrong. No account needed, no timer, no score. Ages 3 to 18.',
   alternates: { canonical: '/diagnostic' },
 }
 

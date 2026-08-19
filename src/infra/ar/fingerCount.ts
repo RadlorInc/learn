@@ -94,7 +94,7 @@ export function thumbsUp(lm: { x: number; y: number }[] | undefined): boolean {
 export function palmTilt(lm: Landmark[]): number | null {
   if (!lm || lm.length < 10) return null
   const dx = -(lm[9].x - lm[0].x)   // mirrored
-  const dy = -(lm[9].y - lm[0].y)   // y grows DOWN in the frame; flip it for maths orientation
+  const dy = -(lm[9].y - lm[0].y)   // y grows DOWN in the frame; flip it for math orientation
   if (!dx && !dy) return null
   return norm180((Math.atan2(dy, dx) * 180) / Math.PI)
 }

@@ -3,7 +3,7 @@ import { APP_NAME, COMPANY } from '@/app/site'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
-export const alt = `${APP_NAME} by ${COMPANY} — adaptive maths for ages 3 to 18`
+export const alt = `${APP_NAME} by ${COMPANY} — adaptive math for ages 3 to 18`
 
 /**
  * ⚠️ THIS REPLACES A 512×512 SQUARE, AND THE SHAPE WAS THE BUG.
@@ -33,7 +33,7 @@ export default function OpengraphImage() {
           {`${APP_NAME} by ${COMPANY}`}
         </div>
         <div style={{ fontSize: 72, lineHeight: 1.15, maxWidth: 980 }}>
-          Find the gap that&rsquo;s holding your child back in maths.
+          Find the gap that&rsquo;s holding your child back in math.
         </div>
         <div style={{ fontSize: 30, color: '#7a6a55' }}>
           Ages 3 to 18 · No timer, no score, no red crosses

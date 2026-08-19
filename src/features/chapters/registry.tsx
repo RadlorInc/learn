@@ -169,7 +169,7 @@ const TEEN_CHAPTERS = {
     () => import("@/features/chapters/teen/games/AngleShopGame"),
   ),
   wordProblems: teen(
-    { skill: "wordProblems", band: "9-11", conceptsConfirmed: ["Choosing the operation", "One-step problems", "Two-step problems", "Reading a story for its maths"], nextPointer: "That is the whole set." },
+    { skill: "wordProblems", band: "9-11", conceptsConfirmed: ["Choosing the operation", "One-step problems", "Two-step problems", "Reading a story for its math"], nextPointer: "That is the whole set." },
     () => import("@/features/chapters/teen/games/MissionBriefGame"),
   ),
   /** ⚠️ THE ONE THAT WAS 3D. `story/FloorPlot.tsx` (react-three-fiber, first person) and its
@@ -181,7 +181,7 @@ const TEEN_CHAPTERS = {
   ),
   /** ⚠️ FIRST OF THE THREE STORYBOOK ONES TO COME ACROSS. `story/LoadingBay.tsx` (815 lines — three
    *  painted depot backdrops, a foreman sprite, a speech bubble and its own layout chain) is DELETED;
-   *  the maths lives in `story/cargo.ts` and the chapter is a data file. */
+   *  the math lives in `story/cargo.ts` and the chapter is a data file. */
   dataGraphs: teen(
     { skill: "dataGraphs", band: "9-11", conceptsConfirmed: ["Reading a pictograph", "Counting one bar", "How many more", "Adding every bar"], nextPointer: "Next: word problems." },
     () => import("@/features/chapters/teen/games/LoadingBayGame"),

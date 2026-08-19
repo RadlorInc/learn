@@ -10,7 +10,7 @@
  *   • MARK THE FOLDS — the child marks every axis they believe holds, then folds them all at once.
  *
  * Both are EXACT TRANSFORMS, which is why this chapter can be built from painted art: a rotation
- * of `deg` IS `deg`, and a mirror about an axis IS a fold. The art carries the maths.
+ * of `deg` IS `deg`, and a mirror about an axis IS a fold. The art carries the math.
  *
  * See docs/storyboards/angle-shop.md for the shot list and docs/chapter-craft.md for the rules
  * every number here is obeying.
@@ -436,7 +436,7 @@ export function sigFor(r: Round): string {
  * (2026-08-14) rather than being kept alive for a gate to test.
  *
  * What did NOT go is everything above this line: the week, the paper table, the axis sets, the
- * grader and the words. That split — maths and words here, layout in the shell — is the whole
+ * grader and the words. That split — math and words here, layout in the shell — is the whole
  * reason ten chapters can share one engine.
  */
 export {}

@@ -2,7 +2,7 @@
  * THE COIN TRAY (9–11, `decimals`) — the gate.
  *
  * The answering surface is a webcam, so nothing above story/cents.ts can be driven here. What this
- * file holds to account is the maths, the ladder, every word the child reads, and the one piece of
+ * file holds to account is the math, the ladder, every word the child reads, and the one piece of
  * layout arithmetic that decides whether the tray lands on the controls.
  *
  * The faults it exists to make unrepeatable, all of them shipped by the chapter this replaces:

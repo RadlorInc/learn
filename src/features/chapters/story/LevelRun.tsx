@@ -112,7 +112,7 @@ import { SceneBg } from '@/shared/ui/SceneBg'
  */
 export interface Site { scene: string; label: string; pathY: number }
 
-/** Every level scene is generated at this size; the cover-fit maths below depends on it. */
+/** Every level scene is generated at this size; the cover-fit math below depends on it. */
 export const IMG_W = 1376
 export const IMG_H = 768
 
@@ -1398,7 +1398,7 @@ const LevelExplain: React.FC<{ data: LvRound; onDone: () => void; onSkip?: () =>
 
   /**
    * THE WRITTEN WORKING — one terse line per spoken line, on the 12–18 band's step board. The bubble
-   * keeps the narration; the board keeps the maths, so the two are not two copies of one string.
+   * keeps the narration; the board keeps the math, so the two are not two copies of one string.
    *
    * ⚠️ INDEX-ALIGNED WITH `lines`, so the same step-index guard applies: do not add, split or reorder
    * one without the other. `''` means that beat writes nothing.

@@ -81,27 +81,27 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "AdaptiveLearn — find the gap that's holding your child back in maths",
+    default: "AdaptiveLearn — find the gap that's holding your child back in math",
     template: '%s · AdaptiveLearn',
   },
   description:
-    'A short placement check finds the deepest gap under your child’s maths — not the newest thing they got wrong — then a plan fixes it. Ages 3–18. No timer, no score, no red crosses.',
+    'A short placement check finds the deepest gap under your child’s math — not the newest thing they got wrong — then a plan fixes it. Ages 3–18. No timer, no score, no red crosses.',
   applicationName: 'AdaptiveLearn',
   openGraph: {
     type: 'website',
     siteName: 'AdaptiveLearn',
-    title: "AdaptiveLearn — find the gap that's holding your child back in maths",
+    title: "AdaptiveLearn — find the gap that's holding your child back in math",
     description:
-      'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
+      'A short placement check finds the deepest gap under your child’s math, then a plan fixes it. Ages 3–18.',
     url: '/',
     // ⚠️ No `images` here on purpose — `app/opengraph-image.tsx` supplies the 1200×630 card.
     // Naming one back would override the file-based route and reinstate the square.
   },
   twitter: {
     card: 'summary',
-    title: "AdaptiveLearn — find the gap that's holding your child back in maths",
+    title: "AdaptiveLearn — find the gap that's holding your child back in math",
     description:
-      'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
+      'A short placement check finds the deepest gap under your child’s math, then a plan fixes it. Ages 3–18.',
   },
   manifest: '/manifest.json',
   appleWebApp: {

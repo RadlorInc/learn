@@ -51,10 +51,10 @@ function AppJsonLd() {
         applicationCategory: 'EducationalApplication',
         operatingSystem: 'Web browser',
         description:
-          'A short placement check finds the deepest gap under a child\u2019s maths, then story chapters teach from there with the difficulty moving question by question. Ages 3 to 18.',
+          'A short placement check finds the deepest gap under a child\u2019s math, then story chapters teach from there with the difficulty moving question by question. Ages 3 to 18.',
         publisher: { '@id': COMPANY_ID },
         brand: { '@id': COMPANY_ID },
-        offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       },
       { '@type': 'Organization', '@id': COMPANY_ID, name: COMPANY, url: COMPANY_URL },
     ],
@@ -73,7 +73,7 @@ const POINTS: { h: string; p: string }[] = [
   },
   {
     h: 'It is a world, not a worksheet',
-    p: 'Every chapter is somewhere to be — a market, a rail line, a building plot — with something to do and someone who needs it done. The maths is the thing that makes it work.',
+    p: 'Every chapter is somewhere to be — a market, a rail line, a building plot — with something to do and someone who needs it done. The math is the thing that makes it work.',
   },
 ]
 
@@ -105,11 +105,11 @@ export default function RootPage() {
           fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 34, lineHeight: 1.2,
           color: '#3d2516', margin: '0 0 14px',
         }}>
-          Find the gap that’s holding your child back in maths
+          Find the gap that’s holding your child back in math
         </h1>
 
         <p style={{ fontSize: 18, lineHeight: 1.6, color: '#5b4c39', margin: '0 0 26px' }}>
-          Most maths trouble is not about the topic your child is failing today — it is about
+          Most math trouble is not about the topic your child is failing today — it is about
           something further down that never quite landed. AdaptiveLearn runs a short placement check to find
           that, then builds a plan that fixes it. Ages 3 to 18.
         </p>

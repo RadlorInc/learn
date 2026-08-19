@@ -52,7 +52,7 @@ export const TERMS: LegalDoc = {
   updated: 'not yet published',
   body: `PLACEHOLDER — awaiting legal review.
 
-AdaptiveLearn is a maths practice app for children aged 3 to 18, used with a parent or teacher's account.
+AdaptiveLearn is a math practice app for children aged 3 to 18, used with a parent or teacher's account.
 
 An adult creates the account and adds each child. You are responsible for the account and for supervising your child's use of it.
 

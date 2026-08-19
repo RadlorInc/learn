@@ -52,7 +52,7 @@ describe('the generator', () => {
   })
 
   /** ⚠️ The asked-for digit is never 0 on a one-digit round: a child cannot tell "the answer is 0"
-   *  from "I forgot to write in that box", so a zero answer grades their attention, not their maths. */
+   *  from "I forgot to write in that box", so a zero answer grades their attention, not their math. */
   it('never asks a one-digit question whose answer is zero', () => {
     draw(900, q => { if (q.focus >= 0) expect(q.answer[0]).toBeGreaterThan(0) })
   })

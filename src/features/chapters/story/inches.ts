@@ -3,7 +3,7 @@
  *
  * Everything the chapter renders and grades from lives here, outside React, because the answering
  * surface is a WEBCAM and a webcam cannot be driven by a gate. The scene is eyeball-only; this file
- * is where the maths, the ladder, the words and the grader are held to account
+ * is where the math, the ladder, the words and the grader are held to account
  * (see __tests__/heightBarUnits.test.ts).
  *
  * THE VERB IS "DOES IT FIT?", AND THE CONVERSION IS THE WORK RATHER THAN THE ANSWER.
@@ -258,7 +258,7 @@ export const LIMITS: readonly number[] = [36, 42, 44, 48, 52, 54]
  *
  * ⚠️ IT IS A GENERATOR CONSTRAINT, NOT A COSMETIC ONE. The first cut drew the shortfall from a flat
  * `rint(1, 11)` under a sign as low as 36 in, which produces `2 ft 1 in` and tells a nine-year-old
- * that is their height on the door frame. The maths would have been perfect and the sentence absurd.
+ * that is their height on the door frame. The math would have been perfect and the sentence absurd.
  */
 export const MIN_HEIGHT = 36
 /**
@@ -570,7 +570,7 @@ export const exploreText = (input: Answering, short: boolean): string =>
  * at ten viewport sizes in four separate gates. GameShell owns the bands now and `FitSlot` scales the
  * instrument into whatever is left, so all of it went with the bespoke scene (2026-08-14).
  *
- * What did NOT go is everything above: the ladder, the grader and the words. That split — maths and
+ * What did NOT go is everything above: the ladder, the grader and the words. That split — math and
  * words in the module, layout in the shell — is the whole reason ten chapters can share one engine.
  */
 export {}

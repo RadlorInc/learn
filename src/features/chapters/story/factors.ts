@@ -3,7 +3,7 @@
  *
  * Everything the AR chapter renders and grades from lives here, outside React, because the
  * chapter's answering surface is a WEBCAM and a webcam cannot be driven by a gate. The scene is
- * eyeball-only; this file is where the maths, the question ladder and the grader are held to
+ * eyeball-only; this file is where the math, the question ladder and the grader are held to
  * account (see __tests__/factorLabAr.test.ts).
  *
  * THE GESTURE: the child's FINGERS ARE THE DIVISOR. Milo puts n units on the bench, the child
@@ -68,7 +68,7 @@ export const ANCHOR = 'A hall set out for an exam: the desks go in equal rows, n
  */
 export const padChoices = (): number[] => Array.from({ length: MAX_FINGERS + 1 }, (_, i) => i)
 
-// ─── maths (moved here from the deleted FactorsLesson, its only consumer) ───────────────
+// ─── math (moved here from the deleted FactorsLesson, its only consumer) ───────────────
 export function isPrime(n: number): boolean {
   if (n < 2) return false
   for (let i = 2; i * i <= n; i++) if (n % i === 0) return false
@@ -400,7 +400,7 @@ export const benchLabel = (r: FlRound): { word: string; per: number } =>
  * at ten viewport sizes in four separate gates. GameShell owns the bands now and `FitSlot` scales the
  * instrument into whatever is left, so all of it went with the bespoke scene (2026-08-14).
  *
- * What did NOT go is everything above: the ladder, the grader and the words. That split — maths and
+ * What did NOT go is everything above: the ladder, the grader and the words. That split — math and
  * words in the module, layout in the shell — is the whole reason ten chapters can share one engine.
  */
 export {}

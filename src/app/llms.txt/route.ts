@@ -23,7 +23,7 @@ const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
 export function GET() {
   const text = `# ${APP_NAME}
 
-> Adaptive maths for ages 3 to 18. A short placement check finds the gap, then a plan fixes it.
+> Adaptive math for ages 3 to 18. A short placement check finds the gap, then a plan fixes it.
 
 ${APP_NAME} is made by ${COMPANY} (${COMPANY_URL}) and lives at ${SITE_URL}.
 

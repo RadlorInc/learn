@@ -115,7 +115,7 @@ export default function AuthPage() {
           fontFamily: 'var(--font-display)',
         }}>AdaptiveLearn</h1>
         <p style={{ fontSize: 15, color: '#888', margin: '6px 0 0', fontWeight: 500 }}>
-          Adaptive maths for ages 3 to 18
+          Adaptive math for ages 3 to 18
         </p>
       </div>
 

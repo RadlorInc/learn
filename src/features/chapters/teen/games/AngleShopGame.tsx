@@ -5,7 +5,7 @@
  * TWO VERBS, ONE CONTROL SHAPE: TURN IT (the job names a requirement, the child turns a real thing)
  * and MARK THE FOLDS (mark every axis you believe holds, then fold them all at once). Both are EXACT
  * TRANSFORMS — a rotation of `deg` IS `deg`, a mirror about an axis IS a fold — so the instrument can
- * be code-drawn without the picture lying about the maths.
+ * be code-drawn without the picture lying about the math.
  *
  * ⚠️ EVERYTHING THAT CAN BE WRONG IS STILL IN `story/angles.ts`, UNTOUCHED — the week, the paper
  * table, the axis sets, the grader, `guideShown` (the set-square STAYS on an exact-degrees round,

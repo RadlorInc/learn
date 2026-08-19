@@ -350,7 +350,7 @@ const CONFIG: GameConfig<number, Task> = {
   //            where ±1 would be noise)
   //   roots  → halving n instead of rooting it, plus the side one off either way.
   //            Past n = 36 that half (72 for √144) is nowhere near the root — a child
-  //            eliminates it without doing any maths — so big n uses near sides instead.
+  //            eliminates it without doing any math — so big n uses near sides instead.
   //   sci    → one power of ten too many/too few, plus the bare coefficient
   answerPad: (t) => {
     const a = t.answer

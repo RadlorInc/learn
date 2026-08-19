@@ -1,7 +1,7 @@
 /**
  * THE SLIDE — the palm's position on an axis, read as a POSITION ON A SCALE (reading **F**).
  *
- * Three chapters in the 9–11 plan want this and each wants it because the position IS the maths, not
+ * Three chapters in the 9–11 plan want this and each wants it because the position IS the math, not
  * because a slider was convenient:
  *   · The Rail Line — slide along the track to say where 47 sits, then commit at the nearer halt.
  *     Rounding *is* "which end is it nearer", so a hand travelling the line is the question.

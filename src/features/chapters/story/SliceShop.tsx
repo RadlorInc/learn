@@ -164,7 +164,7 @@ function Whole({ shape, colors, art, pieceDen, laid, w, h, lit, topping }: {
    * The version this replaces drew flat SVG wedges in a flat colour, which is a DIAGRAM laid over a
    * painted scene: the same fault as BlockYard's brown slab and the shapes chapter's hairline ghost
    * house, and the founder rejected it on sight for the same reason. The old chapter's excuse for
-   * geometry was that the maths has to be exact — and it does — but exact and painted are not a
+   * geometry was that the math has to be exact — and it does — but exact and painted are not a
    * choice: the sprite is clipped BY the wedge, so the division is still arithmetic while what a
    * child sees is the actual pizza.
    *
