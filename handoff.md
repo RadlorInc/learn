@@ -91,6 +91,13 @@
 > `src/app/site.ts` (`APP_ID`/`COMPANY_ID`) and `../radlor-site/site.ts`, and
 > `src/__tests__/publicSeo.test.ts` asserts the exact values.
 >
+> ⚠️ **`SOCIAL` IN `../radlor-site/site.ts` IS LOAD-BEARING AND FOUR OF ITS SIX LINKS LIVE IN A
+> GODADDY PANEL.** It feeds `Organization.sameAs`, the footer and `llms.txt` from one list. Four go
+> through our own `*.radlor.com` forwards, so a forward silently repointed at a platform homepage
+> tells every answer engine that the entity called Radlor **is Facebook**. **Run `npm run
+> check:social` after any GoDaddy edit and before any deploy that touches it** — it follows each
+> link to its final URL and fails on a bare homepage.
+>
 > ⚠️ **radlor.com's production domain is the APEX.** `www` 308s to it. Flipping that breaks every
 > canonical, because the `@id` above is the apex. Full story + the traps in the 🇺🇸 and 🏗️ blocks.
 >
@@ -100,6 +107,85 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🔗 **2026-08-20 — THE SOCIAL HANDLES ARE WIRED INTO `sameAs`, THE FOOTER AND `llms.txt` FROM ONE LIST — AND THE OBVIOUS WAY TO DO IT WOULD HAVE TOLD EVERY ANSWER ENGINE THAT RADLOR IS FACEBOOK. ⚠️ ALSO: THE GITHUB ORG WAS RENAMED UNDER US AND BOTH REMOTES WERE STILL POINTING AT THE OLD NAME.** `tsc` 0 · `next build` 0 · `check:social` 6/6 · IndexNow 10/10 · `learn`@`0e3c396` · `website`@`5d05d1e`. No sw bump — no app code changed.
+>
+> **The asks:** *"subdomains add kiye phir bhi site can't be reached"* → *"toh phir yeh sabko bhi add karo main website mein for SEO and GEO"* → *"github aur facebook ka kya hua dekho"* → *"add the profile README in RadlorInc"* → *"dono repos commit karke push kar do"*.
+>
+> ## ⓪ ⚠️⚠️ THE VANITY FORWARD IS THE RIGHT DESIGN AND THE WRONG `sameAs`, AND THE DIFFERENCE IS INVISIBLE IN THE PANEL
+> The founder set up `facebook.radlor.com` / `instagram.radlor.com` / `x.radlor.com` /
+> `linkedin.radlor.com` as GoDaddy 301s and asked for them on the site. Putting those strings
+> straight into `Organization.sameAs` is one line and would have been **worse than the empty array
+> it replaced**: every forward's destination was the platform's **HOMEPAGE**, so a crawler following
+> `facebook.radlor.com` lands on `facebook.com/` and corroborates **Facebook** as the entity named
+> Radlor. Measured, all four: `→ https://www.linkedin.com/`, `→ https://www.instagram.com/`,
+> `→ https://x.com/`. ⚠️ **In the GoDaddy table a homepage forward and a profile forward look
+> IDENTICAL** — same "Permanent (301)", same green row.
+> **The design was kept and gated instead of abandoned**, because the founder's instinct is right:
+> our own forwards mean a handle change is a DNS edit, not a deploy. **`scripts/check-social.sh`
+> (`npm run check:social`) follows every URL in `SOCIAL` to its final address and fails on a bare
+> host.** It caught all four on the first run, and went green only after the destinations were fixed.
+> ⚠️ **It checks WHERE a link goes, never WHOSE the profile is** — `instagram.com/radlor` is an
+> unrelated account with 818 followers, so a human confirms each destination once.
+>
+> ## ① 🕳️ THE GITHUB ORG WAS RENAMED AND NOTHING SAID SO
+> Probing for a GitHub profile to add, `api.github.com/orgs/RadlorMain` returned **404** — as did
+> `/users/RadlorMain`, while `github.com/RadlorMain/learn` still worked. It had been renamed
+> **`RadlorMain` → `RadlorInc`**; repo ID `1248492657` is unchanged, which is how the repos kept
+> resolving. **Both git remotes were still on the old name in both repos.** GitHub 301s a renamed
+> org only until somebody else claims the name, and then every push breaks. Re-pointed and verified
+> with `git ls-remote` (not with a settings page — see 🏗️ §①).
+> ✅ **And the webhook survived**, confirmed the way this repo learned to confirm it: pushed once and
+> read the deployment back off the Vercel API — `githubCommitOrg: RadlorInc`, sha `0e3c396`,
+> production. Repo ID is what Vercel routes on, so a rename is safe where a *disconnect* is not.
+> ⚠️ **`handoff.md` named `RadlorMain` in five places and is auto-loaded into every session** — the
+> most expensive place to leave a stale fact, because the next session reads the remote out of the
+> header and trusts it. Fixed; the two historical mentions are annotated rather than rewritten.
+>
+> ## ② WHAT SHIPPED ON THE SITE
+> One list (`SOCIAL` in `site.ts`) feeds three surfaces, so they cannot disagree:
+> - **`Organization.sameAs`** — six profiles. The strongest GEO signal available, and it was empty.
+> - **A visible footer row** (`rel="me noopener"`). ⚠️ **A schema-only claim is the weaker half** —
+>   the same reason the app links back to radlor.com visibly rather than only in JSON-LD.
+> - **`llms.txt` → `## Profiles`**, generated from the same array. *"These are the only accounts
+>   Radlor operates"* is a **disambiguating** claim here, not a directory listing, precisely because
+>   `instagram.com/radlor` is someone else's.
+>
+> **`github.com/RadlorInc` now has a profile README** (`RadlorInc/.github` → `profile/README.md`).
+> That page is what a model lands on when it follows that `sameAs`, and it held nothing but two
+> repos. It leads with the three facts most often got wrong here — **Radlor** the company,
+> **AdaptiveLearn** the product, **Milo** the character — plus the on-device camera claim.
+>
+> ## ③ ⚠️ FACEBOOK'S FORWARD HAS NO CERT, AND THE SYMPTOM LOOKED LIKE A BROKEN DEPLOY
+> The founder's report was Chrome's *"This site can't be reached"*. DNS was fine and HTTP 301'd
+> correctly; **only 443 was dead**, because GoDaddy has two forwarding pools and that row sat on the
+> non-SSL one — `3.33.152.147` / `15.197.142.173`, TTL **600**, port 443 closed, against the other
+> three on `3.33.251.168` / `15.197.225.128`, TTL 3600, 443 open. Chrome auto-upgrades to HTTPS, so
+> it hit the dead port. **Still not issued after a full day**, so Facebook alone ships as its raw
+> profile URL — a dead `sameAs` entry is worth less than none. Swap it back when `check:social`
+> passes on it.
+>
+> ## ④ 🔬 THE INSTRUMENT WAS WRONG TWICE, AND BOTH TIMES IT LOOKED LIKE THE SITE WAS
+> - Verifying the live footer, `grep -c 'rel="me"'` returned **0** on a page that was serving all
+>   six links — the attribute is `rel="me noopener"`, so the quoted match could never hit. **A
+>   background watcher armed on the same string never fired.** Nearly reported a working deploy as
+>   broken.
+> - Checking the reciprocal links (the profile's own website field, which is what confirms `sameAs`
+>   from the other side), five of six returned no `radlor.com` — but **LinkedIn served 1,529 bytes
+>   and Facebook 1,542**, i.e. login walls, and Instagram a 610 KB JS shell. **Only GitHub is
+>   verifiable from here** (`blog=radlor.com`). Reported as unverifiable rather than as missing —
+>   the 🛡️ block's *add a control before believing any probe*, met again.
+>
+> ## ▶ OPEN
+> 1. **Crunchbase is the last missing `sameAs` entry**, and it is the direct counter to §③ of the
+>    🇺🇸 block: Google answers "radlor" with a radler and **RADLOR LIMITED, dissolved June 2026**.
+>    LinkedIn + GitHub + Crunchbase are three live structured records against one dead one.
+> 2. **The reciprocal half is unverified on five platforms.** The founder set the website field on
+>    each; nothing here can confirm it. One logged-out browser pass closes it.
+> 3. `facebook.radlor.com`'s cert (§③) — cosmetic, `check:social` will announce it.
+> 4. **Everything from prior sessions stands unchanged:** no backup of the children's data ·
+>    `SUPABASE_SERVICE_ROLE_KEY` · Vercel Pro · custom SMTP · `DRAFT = true` · AR never driven with
+>    a real hand · 132 eslint errors · `support@radlor.com` may still have no mailbox.
 
 > 🇺🇸 **2026-08-19 (fourth pass) — THE MVP AUDIENCE IS THE US, AND EVERY PUBLIC STRING IN BOTH REPOS WAS BRITISH. 64 "maths", ZERO "math". PLUS: radlor.com IS LIVE AND INDEXED, SEARCH CONSOLE + BING + INDEXNOW ARE WIRED, AND THE SUPABASE REGION MIGRATION HAS A RUNBOOK.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v123 → v124** · `main`@`c6d0252`.
 >
@@ -223,7 +309,7 @@
 > 🔴 Still open and unchanged: **no backup of the children's data** · `SUPABASE_SERVICE_ROLE_KEY` ·
 > Vercel Pro (Hobby is non-commercial) · custom SMTP (Supabase's mailer 429s at launch) ·
 > `DRAFT = true` on the legal text · AR never driven with a real hand · 132 eslint errors.
-> **And two new ones:** `sameAs` is empty (§③) and `support@radlor.com` may not exist (§⑥).
+> **And two new ones:** ~~`sameAs` is empty (§③)~~ **CLOSED 2026-08-20, see 🔗** and `support@radlor.com` may not exist (§⑥).
 
 > ⚡ **2026-08-19 (third pass) — A DECORATIVE FONT WAS 82% OF THE APP'S FONT BYTES AND ~40% OF THE ENTIRE FIRST VISIT, PRELOADED ON EVERY PAGE, RENDERING NOTHING. ONE OPTION FIXED IT: 816 KB → 146 KB.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v122 → v123**.
 >
@@ -452,151 +538,4 @@
 >    that I gave a CNAME target Vercel later stopped recommending. **Both are the same fault — trust
 >    the system's own answer at the moment you need it, not the one you captured earlier.**
 
-> 🛡️ **2026-08-18 (2nd session) — A FIVE-ROLE RED-TEAM PASS, THEN THE FIXES. THE BACKEND HELD (I COULD NOT REACH ONE ROW OF ANOTHER ACCOUNT'S DATA), BUT AR COULD STRAND A CHILD FOR EVER ON A SLOW PHONE, AND THE PLACEMENT CHECK DIED ON ONE BACK PRESS. ⚠️ AND THE FIX FOR THE SECOND ONE SHIPPED A REGRESSION THAT tsc, 1122 TESTS AND THE BUILD ALL PASSED — CAUGHT ONLY BECAUSE THE FOUNDER ASKED "SO THE THINGS YOU FLAGGED ARE FIXED?" FOR THE FOURTH SESSION RUNNING.** 🛡️ SHIPPED — `main`@`e72de1a`, **4 commits**, prod serving **sw v117**. `tsc` 0 · **1122/1122 vitest** (+4 new) · `next build` 0 · **18/18 e2e on the six AR chapters × 3 frames** · plan-advance 1/1.
->
-> **The asks:** attack the app as five different people → *"so the things which you have flagged are fixed?"* → *"commit it on main"* → *"yes push it"* → *"commit the remaining e2e and workflow files too"* → *"yes apply it to both"* → *"vercel sahi option hai?"* → *"sab domain ke email pe transfer karna hai"* → *"kaunse subdomain?"* → *"mi2utor pura hatana hai, sirf radlor rahega"* → *"commit and push"*.
->
-> ## ⓪ ⚠️⚠️ THE METHOD LESSON, AND IT IS NOW FOUR SESSIONS IN A ROW
-> The founder asked *"are the flagged things fixed?"* and the answer was again **no** — but this time
-> the gap was **a regression I had just introduced myself, in the fix I had reported as done.** My
-> diagnostic-resume put `ProbeState` in sessionStorage and restored it on mount; it also **outranked
-> an explicit `?band=`**, so `/diagnostic?band=12-14` restored a mid-flight 6–8 run and ignored the
-> URL. Same latent bug meant **sibling B would continue sibling A's probe.** `tsc` 0, 1122 tests and
-> `next build` were all green over it — nothing tested that interaction. Found by DRIVING the URL,
-> not by reading. `resumable(r, urlBand, learnerId)` now drops a resume belonging to another band or
-> another learner. **The rule this repo keeps paying for: a fix is not done until you have driven the
-> thing you did not think to test.**
->
-> ## ① THE RED TEAM — FIVE ROLES, AND THE BACKEND GENUINELY HELD
-> Intruder · six-year-old · worried parent · COPPA regulator · unlucky user (old Android, 3G).
-> ⚠️ **The database is hardened and I want that on the record, because it is unusual.** Verified
-> EMPIRICALLY, not read off migrations: RLS enabled on **all 19 public tables**; every policy scoped
-> to `auth.uid()`; all four authenticated `SECURITY DEFINER` RPCs check `learner_access` before
-> writing; **no anon-executable RPC**; no storage buckets; no secret in the client bundle. Then, with
-> DB-level impersonation of one real account attacking another's child: **0 rows on every read**,
-> `get_learner_bootstrap` null, `can_self_grant_access` false, self-grant INSERT refused by RLS.
-> **I did not reach one row of another account's data.**
-> ⚠️ Anon `DELETE /chapters` returns **204 and deletes nothing** — PostgREST reporting success on an
-> RLS-filtered zero-row delete. Do not read that 204 as a breach; verify the row count after.
->
-> ## ② THE TWO REAL DEFECTS, BOTH DEAD ENDS FOR A CHILD
-> - ⚠️⚠️ **AR COULD HANG FOR EVER WITH NOTHING TO PRESS — TWO FAULTS AT ONCE.**
->   `createHandLandmarker` pulls **7.82 MB of model** (storage.googleapis.com) + **11.15 MB of wasm**
->   (jsDelivr), measured. On a slow phone or a blocked host those fetches **do not reject — they
->   HANG**, so `useFingerCounter`'s try/catch never fires and `status` sticks on `'loading'`. And
->   `CamGate` **hid every button** while loading (`status !== 'loading'`), so that state rendered
->   *"Waking the camera… One moment."* with no escape — **exactly backwards, since the wait is
->   longest on the device least able to afford it.** Now: a 20 s timeout turns the hang into the
->   denial case the gate already handles, and the tap door shows DURING loading (retry stays hidden —
->   a second download on a struggling connection). **Verified by injecting a real hang and driving
->   The Factor Lab**: the gate showed *Tap instead*, and it landed on a playable tap surface.
->   Mutation-tested both halves (`src/__tests__/arLoadEscape.test.ts`, 4 tests).
-> - **THE PLACEMENT CHECK DIED ON ONE BACK PRESS.** The probe lived only in React state, so Back (or
->   refresh) threw away minutes and dumped the child on the marketing page. Now sessionStorage;
->   `resolve()` rebuilds the question and `buildContext(attempt)` is deterministic, so the SAME items
->   come back rather than a fresh draw the child could re-roll. Driven: Back and refresh both resume
->   with answers intact, and answering once after restore moves `asked` by **exactly 1**.
->
-> ## ③ WHAT THE OTHER THREE ROLES FOUND
-> - **Worried parent — the good news is verified:** camera frames and hand landmarks **never leave
->   the device**. No upload path in `infra/ar/*`, and the CSP `connect-src` allowlist makes one
->   impossible. Landing page contacts **only its own origin** — no analytics, no tracker.
->   Deleting a learner **does** cascade to every child table (FK chain checked).
-> - ⚠️ **`diagnostic_leads` was hit by THREE roles at once** and is the app's weakest surface: anon
->   can still `POST /rest/v1/diagnostic_leads` directly (**reproduced: HTTP 201**, skipping
->   `/api/lead`'s 6/min limit); it holds a parent email + a child's AGE BAND collected **before any
->   account exists**; it has **no learner_id, so the delete cascade cannot reach it**; and it had no
->   retention. `20260818090000_leads_retention.sql` (24-month prune) is written and **NOT APPLIED**.
-> - **Regulator (COPPA):** verifiable parental consent **NOT COMPLIANT** (email/password is not a VPC
->   method, and the funnel collects before any account); written retention policy, separate
->   third-party consent, third-party disclosure all **NOT COMPLIANT**; security programme **CANNOT
->   DETERMINE**; data minimisation **COMPLIANT** (`date_of_birth` already dropped). Hand landmarks:
->   **CANNOT DETERMINE** legally, but the technical facts are favourable and now verified.
-> - **Unlucky user, measured on prod:** first visit **1.07 MB — of which 0.83 MB is 97 woff2 files
->   (77%)**; second visit **~0 MB** (all 111 resources from the SW cache — the caching is excellent).
->
-> ## ④ ⚠️⚠️ BOTH SCHEDULED SWEEPS WERE VACUOUS, AND THE PROOF IS ONE NUMBER
-> The prior session's CI work was still uncommitted, so I read it before committing — and verified
-> its central claim rather than trusting the comment. **With the old parse, `E2E_ONLY=''` collects
-> `1` test instead of `211`.** GitHub Actions passes `''` for an unset `workflow_dispatch` input on a
-> `schedule` run, so **the nightly launch gate would have swept NOTHING, every night, reporting
-> green.** (`''?.split(',')` → `['']` → filters to `[]` → **`[]` is truthy**.) The weekly had the same
-> trap wearing a different hat: `??` misses `''` and `Number('')` is **0**, so it would have run seed
-> 0 while every other run used 20260817. Both fixed at spec AND workflow; a typo'd
-> `E2E_ONLY=decimls` now **fails naming the value** instead of sweeping zero.
-> ⚠️ **AND I FOUND A SCRIPT-INJECTION IN THOSE WORKFLOWS AND FIXED IT** (`f04dd4f`): `${{ }}` is
-> expanded by Actions BEFORE bash sees the line, so a dispatch input was pasted in as CODE.
-> **Demonstrated, not asserted** — the old form ran `touch /tmp/milo_pwned`, the new form (via `env:`)
-> treated it as data. Low severity (dispatch needs repo write) and fixed anyway, because the same
-> workflow directory holds `SUPABASE_ACCESS_TOKEN` and `PROD_DB_PASSWORD`.
->
-> ## ⑤ 🏷️ BRAND — **`radlor.com` IS NOW THE ONE PUBLIC DOMAIN. mi2utor IS RETIRED.**
-> Founder's call. The app was never live on mi2utor.com in its current state (parked at GoDaddy), so
-> there was **nothing to migrate on the web side** — only code and email.
-> ⚠️ **The support address was FOUR strings, which is why this was a refactor not a find-replace.**
-> `SUPPORT_EMAIL` already existed in `infra/diagnostics.ts` and `SupportPanel` used it properly, while
-> `page.tsx`, `help/page.tsx` and `legal/[slug]/page.tsx` each repeated the literal. It now lives in
-> **`app/site.ts`** (one definition; `diagnostics.ts` re-exports so `SupportPanel`'s import is
-> unchanged) — in site.ts rather than diagnostics.ts because **diagnostics.ts is `'use client'` and
-> three of the four consumers are Server Components.**
-> ✅ **Google sign-in is NOT affected, and this was checked rather than assumed:** the app passes
-> `${window.location.origin}/auth/callback`, and the URI registered in Google Cloud is **Supabase's
-> own callback**, which does not move with the domain. **5 of 8 users sign in with Google** — they
-> need no Google Cloud change; only Supabase's Site URL + redirect allowlist need radlor.com adding.
->
-> ## ⑥ INFRASTRUCTURE, MEASURED RATHER THAN ASSUMED
-> - **Vercel is `plan: hobby`** (queried, not guessed). Verdict given: **stay on Vercel, upgrade to
->   Pro.** Next 16 App Router + Turbopack is native there; every alternative is a compatibility layer,
->   and this codebase's whole history of pain is *invisible platform behaviour* (the CSP casualties,
->   the optimizer inheriting `Cache-Control`). Two reasons Hobby must go before launch: **it is
->   non-commercial-only**, and **~1 h log retention is exactly how the plan-pointer P0 hid for three
->   months.** Migration would be motion, not progress.
-> - ⚠️ **THE ASSET NOBODY HAS BACKED UP IS STILL THE BIGGEST RISK.** Supabase is on free → no
->   downloadable backup. `backup.yml` is now committed but **inert until its secrets exist**.
-> - ⚠️ **SUPABASE'S BUILT-IN MAILER WILL BLOCK SIGNUPS AT LAUNCH.** Hit live during testing:
->   `{"code":429,"msg":"email rate limit exceeded"}`. **3 of 8 users signed up by email**, so they
->   get confirmation mail. Needs custom SMTP on a dedicated sending subdomain (`mail.radlor.com`), so
->   transactional reputation cannot poison the human mailbox.
->
-> ## ⚠️ THE ONE THING THIS SESSION MADE WORSE, DELIBERATELY
-> **`support@radlor.com` is LIVE on prod and there is no mailbox behind it.** Verified: radlor.com has
-> **no MX record** (registered 2026-08-17, parked at GoDaddy); mi2utor.com *does* (Microsoft 365). So
-> a working address was traded for one that is not built yet — accepted, because the brand decision
-> was made and leaving the old address in code guarantees it gets missed later. ⚠️ radlor.com also
-> already publishes **DMARC `p=quarantine` with no SPF**, so SPF+DKIM must land WITH the mailbox or
-> Radlor's own mail goes to spam. **Until then every support request bounces.**
->
-> ## ▶ OPEN
-> 1. 🔴 **`support@radlor.com` HAS NO MAILBOX AND IT IS LIVE.** Add radlor.com to the existing
->    Microsoft 365 tenant (no new subscription), create the mailbox, **and add SPF+DKIM in the same
->    change** (DMARC quarantine is already on). Highest-priority founder item.
-> 2. ⚠️⚠️ **`SUPABASE_SERVICE_ROLE_KEY` — THE DOMAIN BLOCKER IS GONE.** It was deferred until the
->    company domain existed; radlor.com is bought and mi2utor.com has been paid for 62 days. It still
->    gates three things: the leads bypass fix, durable crash retention, and `/api/lead`'s anon
->    fallback. ⚠️ **STRICT ORDER: set the key → apply `20260816170000_leads_server_only.sql` → submit
->    one real lead and confirm it lands.** Then apply `20260818090000_leads_retention.sql`.
-> 3. **The domain switch itself** (I did the code half; these are dashboard):
->    Vercel: add radlor.com, make it the production domain, point GoDaddy DNS · Vercel env
->    `NEXT_PUBLIC_SITE_URL=https://radlor.com` · **Supabase → Auth → URL Configuration: Site URL
->    `https://radlor.com` + add `https://radlor.com/**` to redirect URLs, and DO NOT remove the
->    vercel.app entry during transition** · mi2utor.com → 301 to radlor.com, keep mail forwarding a
->    year (5 real leads came in under that address) · then **drive one real Google sign-in.**
-> 4. **`backup.yml` secrets** — `SUPABASE_ACCESS_TOKEN`, `BACKUP_PASSPHRASE`, `PROD_DB_PASSWORD`,
->    `PROD_PROJECT_REF`. **There is still no restorable copy of the children's data.** And rehearse
->    one restore: a Supabase restore inherits DEFAULT PRIVILEGES, which silently reopens V12 while
->    every RLS policy still looks correct.
-> 5. **Vercel Pro** before charging anyone (Hobby is non-commercial) · **Supabase Pro** for backups
->    and no-pause · **custom SMTP** before launch, or email signups die at the rate limit.
-> 6. **`DRAFT = true` is still LIVE on prod.** The policy now states the verified facts (the
->    Google/jsDelivr model download and what those hosts do and do not see, Supabase/Vercel as
->    processors, retention matching the real cron jobs, the leads deletion route) — but the flag
->    asserts legal review, which has not happened.
-> 7. **Everything from prior sessions stands:** **AR has never been driven with a real hand** ·
->    `practice_complete` still unobserved · the dropped EXPLORE beats · 132 eslint errors.
-> 8. Of this session's faults, **the biggest was again mine and it was caught by the founder's
->    question, not by any gate** — a regression inside my own fix, green across 1122 tests. The
->    others: reading a `204` as a deletion until I checked the row count, and trusting HTTP status
->    for social-handle availability until a **control handle** showed the check could not tell taken
->    from free. **Add a control before believing any probe.**
-
-_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19._
+_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20._

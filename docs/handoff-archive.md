@@ -1,3 +1,152 @@
+> 🛡️ **2026-08-18 (2nd session) — A FIVE-ROLE RED-TEAM PASS, THEN THE FIXES. THE BACKEND HELD (I COULD NOT REACH ONE ROW OF ANOTHER ACCOUNT'S DATA), BUT AR COULD STRAND A CHILD FOR EVER ON A SLOW PHONE, AND THE PLACEMENT CHECK DIED ON ONE BACK PRESS. ⚠️ AND THE FIX FOR THE SECOND ONE SHIPPED A REGRESSION THAT tsc, 1122 TESTS AND THE BUILD ALL PASSED — CAUGHT ONLY BECAUSE THE FOUNDER ASKED "SO THE THINGS YOU FLAGGED ARE FIXED?" FOR THE FOURTH SESSION RUNNING.** 🛡️ SHIPPED — `main`@`e72de1a`, **4 commits**, prod serving **sw v117**. `tsc` 0 · **1122/1122 vitest** (+4 new) · `next build` 0 · **18/18 e2e on the six AR chapters × 3 frames** · plan-advance 1/1.
+>
+> **The asks:** attack the app as five different people → *"so the things which you have flagged are fixed?"* → *"commit it on main"* → *"yes push it"* → *"commit the remaining e2e and workflow files too"* → *"yes apply it to both"* → *"vercel sahi option hai?"* → *"sab domain ke email pe transfer karna hai"* → *"kaunse subdomain?"* → *"mi2utor pura hatana hai, sirf radlor rahega"* → *"commit and push"*.
+>
+> ## ⓪ ⚠️⚠️ THE METHOD LESSON, AND IT IS NOW FOUR SESSIONS IN A ROW
+> The founder asked *"are the flagged things fixed?"* and the answer was again **no** — but this time
+> the gap was **a regression I had just introduced myself, in the fix I had reported as done.** My
+> diagnostic-resume put `ProbeState` in sessionStorage and restored it on mount; it also **outranked
+> an explicit `?band=`**, so `/diagnostic?band=12-14` restored a mid-flight 6–8 run and ignored the
+> URL. Same latent bug meant **sibling B would continue sibling A's probe.** `tsc` 0, 1122 tests and
+> `next build` were all green over it — nothing tested that interaction. Found by DRIVING the URL,
+> not by reading. `resumable(r, urlBand, learnerId)` now drops a resume belonging to another band or
+> another learner. **The rule this repo keeps paying for: a fix is not done until you have driven the
+> thing you did not think to test.**
+>
+> ## ① THE RED TEAM — FIVE ROLES, AND THE BACKEND GENUINELY HELD
+> Intruder · six-year-old · worried parent · COPPA regulator · unlucky user (old Android, 3G).
+> ⚠️ **The database is hardened and I want that on the record, because it is unusual.** Verified
+> EMPIRICALLY, not read off migrations: RLS enabled on **all 19 public tables**; every policy scoped
+> to `auth.uid()`; all four authenticated `SECURITY DEFINER` RPCs check `learner_access` before
+> writing; **no anon-executable RPC**; no storage buckets; no secret in the client bundle. Then, with
+> DB-level impersonation of one real account attacking another's child: **0 rows on every read**,
+> `get_learner_bootstrap` null, `can_self_grant_access` false, self-grant INSERT refused by RLS.
+> **I did not reach one row of another account's data.**
+> ⚠️ Anon `DELETE /chapters` returns **204 and deletes nothing** — PostgREST reporting success on an
+> RLS-filtered zero-row delete. Do not read that 204 as a breach; verify the row count after.
+>
+> ## ② THE TWO REAL DEFECTS, BOTH DEAD ENDS FOR A CHILD
+> - ⚠️⚠️ **AR COULD HANG FOR EVER WITH NOTHING TO PRESS — TWO FAULTS AT ONCE.**
+>   `createHandLandmarker` pulls **7.82 MB of model** (storage.googleapis.com) + **11.15 MB of wasm**
+>   (jsDelivr), measured. On a slow phone or a blocked host those fetches **do not reject — they
+>   HANG**, so `useFingerCounter`'s try/catch never fires and `status` sticks on `'loading'`. And
+>   `CamGate` **hid every button** while loading (`status !== 'loading'`), so that state rendered
+>   *"Waking the camera… One moment."* with no escape — **exactly backwards, since the wait is
+>   longest on the device least able to afford it.** Now: a 20 s timeout turns the hang into the
+>   denial case the gate already handles, and the tap door shows DURING loading (retry stays hidden —
+>   a second download on a struggling connection). **Verified by injecting a real hang and driving
+>   The Factor Lab**: the gate showed *Tap instead*, and it landed on a playable tap surface.
+>   Mutation-tested both halves (`src/__tests__/arLoadEscape.test.ts`, 4 tests).
+> - **THE PLACEMENT CHECK DIED ON ONE BACK PRESS.** The probe lived only in React state, so Back (or
+>   refresh) threw away minutes and dumped the child on the marketing page. Now sessionStorage;
+>   `resolve()` rebuilds the question and `buildContext(attempt)` is deterministic, so the SAME items
+>   come back rather than a fresh draw the child could re-roll. Driven: Back and refresh both resume
+>   with answers intact, and answering once after restore moves `asked` by **exactly 1**.
+>
+> ## ③ WHAT THE OTHER THREE ROLES FOUND
+> - **Worried parent — the good news is verified:** camera frames and hand landmarks **never leave
+>   the device**. No upload path in `infra/ar/*`, and the CSP `connect-src` allowlist makes one
+>   impossible. Landing page contacts **only its own origin** — no analytics, no tracker.
+>   Deleting a learner **does** cascade to every child table (FK chain checked).
+> - ⚠️ **`diagnostic_leads` was hit by THREE roles at once** and is the app's weakest surface: anon
+>   can still `POST /rest/v1/diagnostic_leads` directly (**reproduced: HTTP 201**, skipping
+>   `/api/lead`'s 6/min limit); it holds a parent email + a child's AGE BAND collected **before any
+>   account exists**; it has **no learner_id, so the delete cascade cannot reach it**; and it had no
+>   retention. `20260818090000_leads_retention.sql` (24-month prune) is written and **NOT APPLIED**.
+> - **Regulator (COPPA):** verifiable parental consent **NOT COMPLIANT** (email/password is not a VPC
+>   method, and the funnel collects before any account); written retention policy, separate
+>   third-party consent, third-party disclosure all **NOT COMPLIANT**; security programme **CANNOT
+>   DETERMINE**; data minimisation **COMPLIANT** (`date_of_birth` already dropped). Hand landmarks:
+>   **CANNOT DETERMINE** legally, but the technical facts are favourable and now verified.
+> - **Unlucky user, measured on prod:** first visit **1.07 MB — of which 0.83 MB is 97 woff2 files
+>   (77%)**; second visit **~0 MB** (all 111 resources from the SW cache — the caching is excellent).
+>
+> ## ④ ⚠️⚠️ BOTH SCHEDULED SWEEPS WERE VACUOUS, AND THE PROOF IS ONE NUMBER
+> The prior session's CI work was still uncommitted, so I read it before committing — and verified
+> its central claim rather than trusting the comment. **With the old parse, `E2E_ONLY=''` collects
+> `1` test instead of `211`.** GitHub Actions passes `''` for an unset `workflow_dispatch` input on a
+> `schedule` run, so **the nightly launch gate would have swept NOTHING, every night, reporting
+> green.** (`''?.split(',')` → `['']` → filters to `[]` → **`[]` is truthy**.) The weekly had the same
+> trap wearing a different hat: `??` misses `''` and `Number('')` is **0**, so it would have run seed
+> 0 while every other run used 20260817. Both fixed at spec AND workflow; a typo'd
+> `E2E_ONLY=decimls` now **fails naming the value** instead of sweeping zero.
+> ⚠️ **AND I FOUND A SCRIPT-INJECTION IN THOSE WORKFLOWS AND FIXED IT** (`f04dd4f`): `${{ }}` is
+> expanded by Actions BEFORE bash sees the line, so a dispatch input was pasted in as CODE.
+> **Demonstrated, not asserted** — the old form ran `touch /tmp/milo_pwned`, the new form (via `env:`)
+> treated it as data. Low severity (dispatch needs repo write) and fixed anyway, because the same
+> workflow directory holds `SUPABASE_ACCESS_TOKEN` and `PROD_DB_PASSWORD`.
+>
+> ## ⑤ 🏷️ BRAND — **`radlor.com` IS NOW THE ONE PUBLIC DOMAIN. mi2utor IS RETIRED.**
+> Founder's call. The app was never live on mi2utor.com in its current state (parked at GoDaddy), so
+> there was **nothing to migrate on the web side** — only code and email.
+> ⚠️ **The support address was FOUR strings, which is why this was a refactor not a find-replace.**
+> `SUPPORT_EMAIL` already existed in `infra/diagnostics.ts` and `SupportPanel` used it properly, while
+> `page.tsx`, `help/page.tsx` and `legal/[slug]/page.tsx` each repeated the literal. It now lives in
+> **`app/site.ts`** (one definition; `diagnostics.ts` re-exports so `SupportPanel`'s import is
+> unchanged) — in site.ts rather than diagnostics.ts because **diagnostics.ts is `'use client'` and
+> three of the four consumers are Server Components.**
+> ✅ **Google sign-in is NOT affected, and this was checked rather than assumed:** the app passes
+> `${window.location.origin}/auth/callback`, and the URI registered in Google Cloud is **Supabase's
+> own callback**, which does not move with the domain. **5 of 8 users sign in with Google** — they
+> need no Google Cloud change; only Supabase's Site URL + redirect allowlist need radlor.com adding.
+>
+> ## ⑥ INFRASTRUCTURE, MEASURED RATHER THAN ASSUMED
+> - **Vercel is `plan: hobby`** (queried, not guessed). Verdict given: **stay on Vercel, upgrade to
+>   Pro.** Next 16 App Router + Turbopack is native there; every alternative is a compatibility layer,
+>   and this codebase's whole history of pain is *invisible platform behaviour* (the CSP casualties,
+>   the optimizer inheriting `Cache-Control`). Two reasons Hobby must go before launch: **it is
+>   non-commercial-only**, and **~1 h log retention is exactly how the plan-pointer P0 hid for three
+>   months.** Migration would be motion, not progress.
+> - ⚠️ **THE ASSET NOBODY HAS BACKED UP IS STILL THE BIGGEST RISK.** Supabase is on free → no
+>   downloadable backup. `backup.yml` is now committed but **inert until its secrets exist**.
+> - ⚠️ **SUPABASE'S BUILT-IN MAILER WILL BLOCK SIGNUPS AT LAUNCH.** Hit live during testing:
+>   `{"code":429,"msg":"email rate limit exceeded"}`. **3 of 8 users signed up by email**, so they
+>   get confirmation mail. Needs custom SMTP on a dedicated sending subdomain (`mail.radlor.com`), so
+>   transactional reputation cannot poison the human mailbox.
+>
+> ## ⚠️ THE ONE THING THIS SESSION MADE WORSE, DELIBERATELY
+> **`support@radlor.com` is LIVE on prod and there is no mailbox behind it.** Verified: radlor.com has
+> **no MX record** (registered 2026-08-17, parked at GoDaddy); mi2utor.com *does* (Microsoft 365). So
+> a working address was traded for one that is not built yet — accepted, because the brand decision
+> was made and leaving the old address in code guarantees it gets missed later. ⚠️ radlor.com also
+> already publishes **DMARC `p=quarantine` with no SPF**, so SPF+DKIM must land WITH the mailbox or
+> Radlor's own mail goes to spam. **Until then every support request bounces.**
+>
+> ## ▶ OPEN
+> 1. 🔴 **`support@radlor.com` HAS NO MAILBOX AND IT IS LIVE.** Add radlor.com to the existing
+>    Microsoft 365 tenant (no new subscription), create the mailbox, **and add SPF+DKIM in the same
+>    change** (DMARC quarantine is already on). Highest-priority founder item.
+> 2. ⚠️⚠️ **`SUPABASE_SERVICE_ROLE_KEY` — THE DOMAIN BLOCKER IS GONE.** It was deferred until the
+>    company domain existed; radlor.com is bought and mi2utor.com has been paid for 62 days. It still
+>    gates three things: the leads bypass fix, durable crash retention, and `/api/lead`'s anon
+>    fallback. ⚠️ **STRICT ORDER: set the key → apply `20260816170000_leads_server_only.sql` → submit
+>    one real lead and confirm it lands.** Then apply `20260818090000_leads_retention.sql`.
+> 3. **The domain switch itself** (I did the code half; these are dashboard):
+>    Vercel: add radlor.com, make it the production domain, point GoDaddy DNS · Vercel env
+>    `NEXT_PUBLIC_SITE_URL=https://radlor.com` · **Supabase → Auth → URL Configuration: Site URL
+>    `https://radlor.com` + add `https://radlor.com/**` to redirect URLs, and DO NOT remove the
+>    vercel.app entry during transition** · mi2utor.com → 301 to radlor.com, keep mail forwarding a
+>    year (5 real leads came in under that address) · then **drive one real Google sign-in.**
+> 4. **`backup.yml` secrets** — `SUPABASE_ACCESS_TOKEN`, `BACKUP_PASSPHRASE`, `PROD_DB_PASSWORD`,
+>    `PROD_PROJECT_REF`. **There is still no restorable copy of the children's data.** And rehearse
+>    one restore: a Supabase restore inherits DEFAULT PRIVILEGES, which silently reopens V12 while
+>    every RLS policy still looks correct.
+> 5. **Vercel Pro** before charging anyone (Hobby is non-commercial) · **Supabase Pro** for backups
+>    and no-pause · **custom SMTP** before launch, or email signups die at the rate limit.
+> 6. **`DRAFT = true` is still LIVE on prod.** The policy now states the verified facts (the
+>    Google/jsDelivr model download and what those hosts do and do not see, Supabase/Vercel as
+>    processors, retention matching the real cron jobs, the leads deletion route) — but the flag
+>    asserts legal review, which has not happened.
+> 7. **Everything from prior sessions stands:** **AR has never been driven with a real hand** ·
+>    `practice_complete` still unobserved · the dropped EXPLORE beats · 132 eslint errors.
+> 8. Of this session's faults, **the biggest was again mine and it was caught by the founder's
+>    question, not by any gate** — a regression inside my own fix, green across 1122 tests. The
+>    others: reading a `204` as a deletion until I checked the row count, and trusting HTTP status
+>    for social-handle availability until a **control handle** showed the check could not tell taken
+>    from free. **Add a control before believing any probe.**
+
+---
+
 # Handoff archive — Milo Story Mode
 
 > 🧭 **2026-08-18 — THREE ASKS (ARCHITECTURE · SECURITY · DEVOPS), AND THE SAME QUESTION BROKE ALL THREE OPEN: "so the things you flagged are fixed?" WAS ASKED THREE TIMES AND FOUND SOMETHING EVERY TIME — A GATE THAT TESTED NOTHING, A WORKFLOW THAT WOULD FAIL EVERY MONDAY, AND FLAGS I HAD CALLED VERIFIED WITHOUT RUNNING THEM.** 🧭 SHIPPED — `main`@`1e9e497`, prod serving **sw v116**. `tsc` 0 · **1122/1122 vitest** (was 1098, **+24**) · `next build` 0 · **211/211 chapters (7.7m)** · **152 passed + 48 skipped short-landscape (57.1m)** · eslint **132, unchanged**.
