@@ -74,11 +74,14 @@
 >
 > | | |
 > |---|---|
-> | **the product** | `RadlorMain/learn` → **`https://adaptivelearn.radlor.com`** — this repo |
-> | **the company site** | `RadlorMain/website` → **`https://radlor.com`** — at `../radlor-site` |
+> | **the product** | `RadlorInc/learn` → **`https://adaptivelearn.radlor.com`** — this repo |
+> | **the company site** | `RadlorInc/website` → **`https://radlor.com`** — at `../radlor-site` |
 >
 > ⚠️ **Both repos must stay PUBLIC until Vercel is Pro** — Hobby refuses a private *org-owned* repo
-> through the Git integration. `git remote` here is `https://github.com/RadlorMain/learn.git`.
+> through the Git integration. `git remote` here is `https://github.com/RadlorInc/learn.git`.
+> ⚠️ **The org was RENAMED `RadlorMain` → `RadlorInc` on 2026-08-20.** Repo ID `1248492657` is
+> unchanged, so Vercel's link survives — but GitHub 301s the old name only until somebody claims
+> it, so nothing may reference `RadlorMain`. Both remotes were re-pointed and verified.
 > Support address **support@radlor.com** (⚠️ may have no mailbox — see 🇺🇸 §⑥); mi2utor is retired.
 >
 > ⚠️ **THE TWO PROPERTIES DESCRIBE ONE ENTITY AND THAT IS LOAD-BEARING.** Both emit
@@ -399,7 +402,7 @@
 > use them instead of inferring from a redirect.**
 >
 > ## ④ WHAT ACTUALLY MOVED
-> - **GitHub** → `RadlorMain/learn` (Org). Repo ID `1248492657` is unchanged by transfer/rename,
+> - **GitHub** → `RadlorMain/learn` (Org) — **since renamed `RadlorInc/learn`, 2026-08-20.** Repo ID `1248492657` is unchanged by transfer/rename,
 >   which is why Vercel's link survived while its cached `org/repo` label read the old path.
 > - **Supabase** → org owned by `admin@radlor.com`. ⚠️ My MCP connection is **OAuth, not a PAT** —
 >   neither account's Access Tokens page lists it. To move it: disconnect/reconnect the connector
@@ -431,7 +434,7 @@
 >
 > ## ▶ OPEN
 > 1. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA — AND TODAY SHOWED WHY.** `backup.yml` is committed
->    and inert. Add to `RadlorMain/learn` → Settings → Secrets → Actions: `SUPABASE_ACCESS_TOKEN`,
+>    and inert. Add to `RadlorInc/learn` → Settings → Secrets → Actions: `SUPABASE_ACCESS_TOKEN`,
 >    `BACKUP_PASSPHRASE`, `PROD_DB_PASSWORD`, `PROD_PROJECT_REF=qaymxunzlarwusogwyak`, then run
 >    **Backup (prod database)**. Ten minutes. This is the highest-value thing left in the repo.
 > 2. **Google Cloud: `admin@radlor.com` Editor → OWNER**, accept the emailed invite, then remove the
