@@ -8,6 +8,7 @@
 import { useCallback } from 'react'
 import { ChapterType } from '@/data/supabase/types'
 import { useMiloStore } from '@/state/store'
+import { getChapterLevel } from '@/infra/storage/chapterLevel'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { syncSession } from '@/data/repositories'
 import { enqueueSession, flushQueue } from '@/infra/useOfflineSync'
@@ -73,6 +74,9 @@ export function useChapterSync() {
       coinsEarned,
       clientId:     randomId(),
       completedAt:  new Date().toISOString(),
+      // The tier the run ended on, straight off the same per-device store both engines write after
+      // every scored answer — so the row the server keeps and the row this device keeps agree.
+      difficulty:   getChapterLevel(learner.id, chapter),
     }
 
     // 3. Try to sync — queue if offline or failed

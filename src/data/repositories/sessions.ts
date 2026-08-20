@@ -15,6 +15,9 @@ export interface SessionPayload {
   coinsEarned:  number
   clientId:     string
   completedAt:  string
+  /** The adaptive tier the child left this chapter on (1–3), so the next device resumes there.
+   *  Optional: an offline queue written by an older bundle has no field, and 1 is the old behaviour. */
+  difficulty?:  1 | 2 | 3
 }
 
 export async function syncSession(payload: SessionPayload): Promise<SyncOutcome> {
@@ -33,6 +36,7 @@ export async function syncSession(payload: SessionPayload): Promise<SyncOutcome>
     p_coins:        payload.coinsEarned,
     p_client_id:    payload.clientId,
     p_completed_at: payload.completedAt,
+    p_difficulty:   payload.difficulty ?? 1,
   })
 
   if (error) {

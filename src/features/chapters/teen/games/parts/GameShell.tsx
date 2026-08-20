@@ -23,6 +23,7 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useAdaptive } from '@/shared/hooks/useAdaptive'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { speak, speakAfterCurrent, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
@@ -53,8 +54,12 @@ import { setClipOnly } from '@/infra/voiceClipPlayer'
  */
 export const DEFAULT_BAND: AgeBand = '12-14'
 export const roundsFor = (b: AgeBand) => (b === '9-11' ? 10 : 8)
-export const resumesTier = (b: AgeBand) => b !== '9-11'
-const RETEACH_AFTER = 3
+/** Every band resumes at the tier the child left off on — founder's call, 2026-08-20. It used to
+ *  exclude 9–11; the storybook engine (SkillBeat) now resumes too, so all six bands behave alike. */
+export const resumesTier = (_b: AgeBand) => true
+/** Consecutive misses before Milo re-explains. ⚠️ SkillBeat exports the same number for the
+ *  storybook chapters; `adaptiveDeepSweep.test.ts` asserts the two agree. */
+export const RETEACH_AFTER = 3
 // How many of the most-recent walkthrough board lines to keep on the chalkboard.
 // The longest examples write ~14 lines; capping the visible window keeps working
 // memory (and the pinned board slot) from overflowing. (ux-design.md §6.3)
@@ -282,12 +287,21 @@ export function Game<V, T extends BaseTask>({
   const TOTAL = roundsFor(BAND)
   // Resume at the difficulty this child last left off on (see chapterLevel). No
   // learner (logged-out preview) → starts at easy, unchanged. Computed once.
-  // ⚠️ 9–11 NEVER RESUMES — it always opens at difficulty 1, per chapter-craft. A nine-year-old
-  // coming back a week later meeting their old top tier on question 1 is the fault that rule exists
-  // for, and it also switches the warm-up offer off, since there is nothing to warm up FROM.
+  // ⚠️ EVERY BAND RESUMES (founder's call, 2026-08-20 — 9–11 used to be excluded). The fear the old
+  // rule carried, a child meeting their old top tier cold on question 1, is answered by the warm-up
+  // offered below plus the engine demoting on two misses in a row.
   const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
   const [startDiff] = useState<1 | 2 | 3>(() => (resumesTier(BAND) ? getChapterLevel(learnerId, config.chapterId) : 1))
   const ada = useAdaptive(config.chapterId, startDiff)
+  // ⚠️ READ THE TIER OFF A LIVE REF, NEVER OFF THE RENDER CLOSURE. `submit` schedules the next
+  // `loadTask` on a 1650 ms timer, so the callback it captures belongs to the render the ANSWER was
+  // given in — i.e. the tier the engine held BEFORE `ada.record()` moved it. Read from the closure
+  // and every promotion and every demotion lands one question late: measured live on `integers`,
+  // the engine said tier 2 while the question served was tier 1, then 3 while 2 was served, so a
+  // child who mastered the chapter was asked exactly ONE top-tier question instead of the two the
+  // round budget in chapter-craft.md is built on. `SkillBeat` never had this — it reads
+  // `adaRef.current.difficulty` for the same reason.
+  const adaRef = useLatestRef(ada)
   // Opt-in warm-up (only offered when resuming above easy). Prepends WARMUP_COUNT
   // gentler questions (one tier down) before the set climbs back to their level.
   const [warmup, setWarmup] = useState(false)
@@ -390,7 +404,7 @@ export function Game<V, T extends BaseTask>({
     timers.current.forEach(clearTimeout); timers.current = []
     // Warm-up: the first WARMUP_COUNT questions run one tier below the resumed
     // level to ease back in; after that, the normal adaptive tier takes over.
-    const d = warmup && nextIdx < WARMUP_COUNT ? warmupDiff : ada.difficulty
+    const d = warmup && nextIdx < WARMUP_COUNT ? warmupDiff : adaRef.current.difficulty
     const t = nextTask(d)
     setTask(t); setValue(config.initialValue(t)); setSub('active'); setIdx(nextIdx); setPicked(null)
     flashCue('turn')
@@ -400,7 +414,7 @@ export function Game<V, T extends BaseTask>({
     // still carries the question (info is never audio-only), and the spoken hint
     // returns automatically on a demotion, since it tracks the live tier.
     if (d < 3) speakAfterCurrent(t.say)
-  }, [ada.difficulty, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue])
+  }, [adaRef, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue])
 
   const demoDone = useRef(false)
   const finishDemo = useCallback(() => {

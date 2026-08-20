@@ -15,6 +15,7 @@ import { useAuthGuard } from '@/data/supabase/useAuthGuard'
 import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds, getActivePlanChapters } from '@/data/repositories'
 import type { LearnerState } from '@/data/supabase/types'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
+import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
 import { track } from '@/infra/analytics'
 import { currentPlanChapter, planProgress, reconcilePlan } from '@/infra/storage/activePlan'
 
@@ -128,6 +129,9 @@ export default function MainMenu() {
 
           const { stats, progress, state } = boot.data
           applyServerProgress(stats, progress, state)
+          // Difficulty memory follows the child across devices: seed this device from the server's
+          // rows where it has none of its own. See hydrateChapterLevels for why it is not a merge.
+          hydrateChapterLevels(learner.id, progress)
 
           /**
            * ⚠️ THE PLAN POINTER, RECONCILED ACROSS DEVICES. It lives in localStorage, so before

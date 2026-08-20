@@ -58,9 +58,20 @@ intro (one card, one button)  →  demo (Milo/an adult does it)  →  guided (ch
   10 rounds, re-teach after 3 wrong, mastery early-exit, `sig` to dedupe questions.
 - `SkillBeat` **rebuilds its contents every round.** Anything that must persist across the chapter
   (a collect tray, a journey strip, a filling tree) has to live OUTSIDE it, driven by `onRound`.
-- 3–11 story chapters call `useAdaptive(skillId)` with **no start tier** — they always open at
-  difficulty 1. Resume-at-difficulty is teen-only (`GameShell`/`ShopRush`). If a chapter looks too
-  hard on question 1, the tier is not the suspect; the generator is.
+- ⚠️ **EVERY BAND NOW RESUMES AT THE TIER THE CHILD LEFT OFF ON — founder's call, 2026-08-20
+  (*"sab mein waise chahiye"*), reversing the rule that used to sit here.** It read *"3–11 story
+  chapters call `useAdaptive(skillId)` with no start tier — they always open at difficulty 1;
+  resume-at-difficulty is teen-only"*, on the argument that a nine-year-old coming back a week later
+  and meeting their old top tier on question 1 is a fault. That fear is now answered from the other
+  side rather than by starting everyone at easy: the chapter still opens with its demo and its
+  UNSCORED guided round, `GameShell` offers a warm-up (two questions one tier down) whenever the
+  resumed tier is above easy, and the engine demotes on **two** misses in a row — so a tier that no
+  longer fits is given back inside two questions. The tier is saved after every scored answer
+  (`infra/storage/chapterLevel`) and rides the finished-session payload into
+  `learner_progress.current_level`, so it follows the child across devices.
+  ⚠️ **So if a chapter looks too hard on question 1, the tier IS now a suspect** — that is new. Check
+  what `getChapterLevel(learnerId, chapterId)` holds for that child before blaming the generator.
+  The gate is `src/__tests__/adaptiveDeepSweep.test.ts` §⑥.
 - **Difficulty must grow BOTH count and magnitude.** Tier 1 controlling only "how many numbers"
   let chapter 2 open a three-year-old on 7·8·9. Cap the ceiling per tier as well as the count.
 - Landscape-first. Every chapter mounts [`RotateGate`](../src/features/chapters/story/RotateGate.tsx);

@@ -366,6 +366,99 @@ function askForKind(want: AngleKind, job: AngleJob): string {
   return `Make ${job.piece} ${how} — ${job.because}.`
 }
 
+/**
+ * WHERE THE FOLD LINES ACTUALLY ARE, in words, keyed by the shape that is drawn.
+ *
+ * ⚠️ EVERY ENTRY HAS TO AGREE WITH `SHAPE_LINES`, AND THE GATE CHECKS THAT IT DOES — the same rule
+ * `PAPER` carries one table up. A sentence saying "three from corner to corner and three across"
+ * beside a shape with four lines is the picture-disagreeing-with-the-words fault, arriving in the
+ * one place written to stop a child being confused.
+ *
+ * ⚠️ EACH ENTRY IS A WHOLE SENTENCE, never a fragment behind a shared prefix. `They run ${…}` reads
+ * for five of the six and gives "They run just the one" for the isosceles — the same glue fault as
+ * "hold up it" and "0 pennyies", which this repo has now paid for three times. One verb cannot serve
+ * six shapes; write them out.
+ *
+ * ⚠️ THE RECTANGLE'S LINE NAMES THE MISCONCEPTION OUT LOUD, deliberately. `candidateAxes` puts the
+ * diagonals on the bar precisely because a rectangle folded corner-to-corner is what a nine-year-old
+ * expects to work — so the re-teach has to say that it does not, rather than only list what does.
+ */
+export const FOLD_WHERE: Record<Shape, string> = {
+  square:      'They run down the middle, across the middle, and both diagonals — four in all.',
+  rectangle:   'They run down the middle and across the middle. NOT corner to corner: fold a rectangle on its diagonal and the halves miss.',
+  equilateral: 'They run from each corner to the middle of the side opposite — three corners, three lines.',
+  isosceles:   'There is just one, down the middle between the two matching sides. The third side is the odd one out.',
+  pentagon:    'They run from each corner to the middle of the side opposite — five corners, five lines.',
+  hexagon:     'Three run corner to opposite corner, and three run side-middle to side-middle — six in all.',
+}
+
+/** How the ask words each kind. ONE source, so the re-teach cannot drift from the question. */
+const HOW: Record<AngleKind, string> = {
+  acute:  'SHARPER than a square corner',
+  obtuse: 'SHALLOWER than a square corner',
+  right:  'exactly SQUARE',
+}
+
+/**
+ * Milo's re-explanation after three misses in a row — the chalkboard's `work` lines.
+ *
+ * ⚠️ THIS EXISTS BECAUSE THE CHAPTER SHIPPED WITHOUT IT. `AngleShopGame.toTask` built its own
+ * `work` as `[r.ask, 'Judge it against the square corner.', 'Then set it and see.']` — measured
+ * 2026-08-20, only ONE of those three lines varied with the round, so a child who had just missed
+ * three in a row had the question read back at them and was told to try again. Every other 9–11
+ * chapter hands over a WORKED explanation from its own module; this is that, here.
+ *
+ * It may name the answer: the shell puts the instrument in `reveal` before the re-teach, so the
+ * answer is already on screen — the job left is to show HOW, which is what a re-teach is for.
+ */
+export function explainBeats(r: Round): string[] {
+  if (r.type === 'fold') {
+    const n = SHAPE_LINES[r.shape]
+    const p = PAPER[r.shape]
+    return [
+      'A fold line is a mirror: fold along it and the two halves land exactly on top of each other.',
+      `${cap(p.piece)} is ${SHAPE_LABEL[r.shape].startsWith('e') || SHAPE_LABEL[r.shape].startsWith('i') ? 'an' : 'a'} ${SHAPE_LABEL[r.shape]}, so ${n} line${n === 1 ? '' : 's'} hold${n === 1 ? 's' : ''}.`,
+      FOLD_WHERE[r.shape],
+      'Fold it in your head before you mark it — if the halves miss, it is not a line.',
+    ]
+  }
+  if (r.job === 'degrees') {
+    const target = r.target as number
+    const gap = Math.abs(target - r.start)
+    const taps = gap / STEP
+    const dir = target > r.start ? 'open' : 'close'
+    // The count in fives, SHOWN rather than described — but never the whole run: 15° to 165° is 30
+    // taps and the board holds four lines. Two steps and the destination is enough to show WHAT is
+    // being counted, which is the method the round is really testing.
+    // ⚠️ THE ELLIPSIS ONLY WHEN THERE IS SOMETHING LEFT TO ELIDE. `startFor` keeps the gap at
+    // START_GAP or more, so today taps is always >= 5 — but that is the generator's choice, not this
+    // function's guarantee, and a smaller pool would make this print `85, 90, 95… up to 90`, i.e. a
+    // count that runs past its own target.
+    const dirStep = target > r.start ? STEP : -STEP
+    const shown = Array.from({ length: Math.min(2, Math.max(0, taps - 1)) }, (_, i) => r.start + dirStep * (i + 1))
+    const run = [r.start, ...shown].join(', ') + (taps > shown.length + 1 ? '… up to ' : ', ') + target
+    return [
+      `The arm starts at ${r.start}° and the job asks for exactly ${target}°.`,
+      `That is ${gap}° to travel, and one turn moves it ${STEP}° — so ${taps} tap${taps === 1 ? '' : 's'} to ${dir} it.`,
+      `Count them in ${STEP}s: ${run}.`,
+      `${target}° is ${kindOf(target)} — ${kindOf(target) === 'acute' ? 'still inside the square corner' : kindOf(target) === 'obtuse' ? 'past the square corner' : 'flush with the square corner'}.`,
+    ]
+  }
+  const started = kindOf(r.start)
+  const move =
+    r.want === 'acute'  ? `Bring the arm back until it is under 90° — it started at ${r.start}°, which is ${started}.`
+  : r.want === 'obtuse' ? `Open the arm past 90° — it started at ${r.start}°, which is ${started}.`
+  :                       `Land the arm exactly on 90° — it started at ${r.start}°, which is ${started}.`
+  return [
+    'A square corner is 90°: the arm standing straight up.',
+    `${cap(r.job_.piece)} has to be ${HOW[r.want]}.`,
+    r.want === 'acute'  ? 'Sharper means the arm has not reached straight up yet — anything under 90°.'
+  : r.want === 'obtuse' ? 'Shallower means the arm has swung past straight up — anything over 90°.'
+  :                       'Square means exactly 90° — flush with the corner, no gap and no overlap.',
+    move,
+  ]
+}
+
 // ─── grading ─────────────────────────────────────────────────────────────────────────
 export type Answer = number | number[]
 

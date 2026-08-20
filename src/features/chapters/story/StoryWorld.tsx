@@ -15,6 +15,8 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import { useAdaptive } from '@/shared/hooks/useAdaptive'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import { type Difficulty } from '@/core/progression'
 import { makeDistinct } from '@/core/questionVariety'
 import { type ChapterType } from '@/core/chapters'
@@ -153,10 +155,20 @@ export function useChapterShell(
 }
 
 // ─── SkillBeat: the unbreakable pedagogy core ──────────────────
-// Runs `rounds` adaptive rounds. Warm wrong-answers (no red X). On a 2-wrong
-// streak, Milo re-explains in-story, then the child retries.
+// Runs `rounds` adaptive rounds. Warm wrong-answers (no red X). On a RETEACH_AFTER-wrong streak
+// (THREE, not two), Milo re-explains the round they just missed in-story, and the run then moves ON
+// to the next round — it is NOT a retry of the same question. The engine has already eased the tier
+// by then: it demotes on the SECOND miss, so the round being re-explained was built one tier down.
 export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Beat<any>; onComplete: (correct: number, wrong: number, mastered?: boolean) => void; onInterlude?: () => Promise<void>; onRound?: (data: any, round: number) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const ada = useAdaptive(beat.skillId)
+  // ⚠️ THE BAND RESUMES AT THE TIER THE CHILD LEFT OFF ON — founder's call, 2026-08-20, replacing
+  // the earlier "3–11 NEVER resumes" rule. The fault that rule was written for (a nine-year-old
+  // meeting their old top tier cold on question 1) is covered from the other side: the chapter
+  // still opens with its demo and its unscored guided round, and the engine demotes on two misses
+  // in a row, so a tier that no longer fits is given back inside two questions.
+  // No learner (the logged-out /story preview) → tier 1, exactly as before.
+  const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
+  const [startDiff] = useState<Difficulty>(() => getChapterLevel(learnerId, beat.skillId))
+  const ada = useAdaptive(beat.skillId, startDiff)
   const adaRef = useLatestRef(ada)
   const [roundIdx, setRoundIdx] = useState(0)
   const [phase, setPhase] = useState<'play' | 'feedback' | 'reteach' | 'interlude'>('play')
@@ -191,6 +203,9 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   const onSubmit = useCallback((correct: boolean) => {
     if (phase !== 'play') return
     const res = ada.record(correct)
+    // Remember the tier after EVERY scored answer, not at the end: a child who closes the tab
+    // mid-chapter still resumes where they actually were. Same call GameShell makes.
+    setChapterLevel(learnerId, beat.skillId, res.difficulty)
     if (correct) tally.current.correct++; else tally.current.wrong++
     setFeedback(correct ? 'correct' : 'wrong')
     setPhase('feedback')
@@ -224,7 +239,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       }
       setPhase('play'); setRoundIdx(next)
     }, 1300)
-  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude])
+  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude, learnerId])
 
   const finishReteach = useCallback(() => {
     setWrongRun(0)

@@ -124,6 +124,8 @@ export interface Database {
           total_xp:        number
           total_sessions:  number
           last_played_at:  string | null
+          /** ⚠️ The adaptive DIFFICULTY tier (1–3) this learner left this chapter on — NOT the XP
+           *  level. `learner_stats.current_level` is the XP level, and the two share a name. */
           current_level:   number
           updated_at:      string
         }

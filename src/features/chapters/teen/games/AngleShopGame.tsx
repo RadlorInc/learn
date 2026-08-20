@@ -22,6 +22,7 @@ import { useHand } from '@/infra/ar/HandInput'
 import {
   STEP, clampDeg, snapDeg, nearestAxis, candidateAxes, trueAxes, isTrueAxis, SHAPE_LINES,
   makeRound, grade, missFor, verdictFor, sigFor, guideShown, handDrivesAngle, pieceOf, ANCHOR,
+  explainBeats,
   type Round, type FoldRound, type QType, type Tier,
 } from '@/features/chapters/story/angles'
 
@@ -41,7 +42,10 @@ function toTask(r: Round): AsTask {
     prompt: r.ask,
     context: r.ask,
     say: r.ask,
-    work: [r.ask, 'Judge it against the square corner.', 'Then set it and see.'],
+    /** ⚠️ FROM THE MODULE, NEVER ASSEMBLED HERE. This used to be
+     *  `[r.ask, 'Judge it against the square corner.', 'Then set it and see.']` — the question read
+     *  back plus two fixed sentences, to a child who had just missed three in a row. */
+    work: explainBeats(r),
     showEquals: false,
   }
 }

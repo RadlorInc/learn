@@ -43,7 +43,8 @@
 > self-running tutorial, a `GameConfig`. Mirror `CoinTrayGame.tsx`. Shared parts are
 > `teen/games/parts/kidKit.tsx` (palette · `KeyRow` · `Cue` · `PIP`/`PAD` · `useLatest`) and the
 > engine is `teen/games/parts/GameShell.tsx`.
-> - `band: '9-11'` is what buys the ten-round loop and **no resume-at-difficulty**.
+> - `band: '9-11'` is what buys the ten-round loop. ⚠️ It used to also mean *no*
+>   resume-at-difficulty; **every band resumes now** — founder's call, 2026-08-20. See 🎚️.
 > - `hand: {…}` is the whole AR wiring — the shell owns the camera, both doors, the dwell and the
 >   gate. Readings in use: a finger COUNT (five chapters — and in The Loading Bay ONE count means a
 >   stack number on one round type and a quantity on another), a TILT (The Angle Shop) and a two-hand
@@ -107,6 +108,113 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🎚️ **2026-08-20 — THE ADAPTIVE LOOP, DEEP-TESTED. ⚠️ `GameShell` WAS SERVING EVERY QUESTION AT A TIER THE ENGINE HAD ALREADY LEFT, AND THE ENGINE'S OWN TESTS WERE GREEN THE WHOLE TIME. PLUS: THE RE-TEACH SEEN FIRING FOR THE FIRST TIME, AND EVERY BAND NOW RESUMES AT THE TIER THE CHILD LEFT OFF ON.** `tsc` 0 · **1193/1193** (+58) · `next build` 0 · **18/18 planted source mutations caught** · sw **v124 → v125**.
+>
+> **The asks:** *"deep testing … adaptive system proper kaam kar raha hai / re-explanation aa raha hai / difficulty ke according aa raha hai"* → *"level persistent hai naa?"* → *"sab mein waise chahiye"* + sync.
+>
+> ## ⓪ ⚠️⚠️ THE STALE-CLOSURE TIER — ONE QUESTION LATE, IN 52 OF 61 CHAPTERS
+> `submit` schedules the next `loadTask` on a **1650 ms timer**, so the callback it captures belongs
+> to the render the ANSWER was given in — i.e. `ada.difficulty` *before* `ada.record()` moved it.
+> Every promotion and every demotion therefore landed **one question late**. Measured live on
+> `/teen-preview?c=integers`: **engine said tier 2 while the question served was tier 1**, then 3
+> while 2 was served. The price is exact, because the round budget is only six questions long: a
+> child who mastered the chapter met **ONE** top-tier question instead of the two
+> `chapter-craft.md` promises. After the fix the same drive serves `1,1,1,2,3,3`.
+> **`SkillBeat` never had it** — it reads `adaRef.current.difficulty`, a live ref. The fix makes
+> GameShell do the same (`useLatestRef`).
+> ⚠️ **THE LESSON: this is "a unit test cannot see that nothing calls the unit", one layer along.**
+> The unit WAS called — with a stale argument. `progression.test.ts` had six green tests on the rules
+> and could not see either shell fail to ASK. **A rule engine needs a gate on the CALLER's argument,
+> not only on the rule.**
+>
+> ## ① THE RE-TEACH FIRES — SEEN, FOR THE FIRST TIME
+> This file has carried *"the re-teach has never been seen fire anywhere in the band"* for days.
+> Driven to 3 consecutive misses it fired on **`integers`** (12–14, 2 work lines) and on
+> **`decimals` / The Coin Tray** (9–11, 4 lines). It is reachable everywhere: gated that every live
+> chapter plays ≥ `RETEACH_AFTER` rounds, derived from the `STORY_CHAPTERS` table so the list cannot
+> fall behind. ⚠️ The dead `world1` World ships four beats at `rounds: 1`/`2`, where a re-teach is
+> **structurally unreachable** — nothing imports it; worth deleting.
+> ⚠️ **Difficulty of the re-teach is right by ORDERING, and that is worth knowing:** demote fires at
+> **2** misses, re-teach at **3** — so the round being re-explained was already built one tier down.
+> ⚠️ **One outlier, since FIXED — see ⑤.** The Angle Shop's scored `work` was
+> `[r.ask, 'Judge it against the square corner.', 'Then set it and see.']`: measured, only **1 of 3
+> lines varied**, so a child who had missed three in a row got the question read back at them.
+>
+> ## ② 🌟 STARS AND THE TOP TIER — YOUR RULE ALREADY HOLDS, BUT ONLY BY ACCIDENT
+> `calcStars(correct, wrong)` is **pure accuracy** (≥85% → 3) with **no difficulty term in it at
+> all**. Swept EXHAUSTIVELY (1024 patterns × 10 rounds, 256 × 8, at every resume tier): **zero**
+> patterns earn 3 stars without at least one correct top-tier answer. The founder's own case — six
+> straight from easy → mastery → 3 stars — meets the top tier **twice** (it was **once** before ⓪).
+> ⚠️ It works out only because you cannot reach 85% without being promoted along the way. Move the
+> promote rule, the star threshold or the round count and it breaks **silently**, so it is now gated:
+> loosening the star threshold to 60% fails 4 tests, making promotion need a streak of 5 fails 7.
+>
+> ## ③ 🎚️ EVERY BAND NOW RESUMES — THE OLD 3–11 RULE IS REVERSED
+> Founder's call: *"sab mein waise chahiye"*. Before this, **34 of 61 chapters never resumed**:
+> `SkillBeat` called `useAdaptive(beat.skillId)` with one argument, and `resumesTier('9-11')` was
+> hard-coded false. Both now resume; `chapter-craft.md`'s rule was rewritten rather than deleted, and
+> ⚠️ **"if a chapter looks too hard on question 1, the tier IS now a suspect" — that is new.**
+> Verified on screen: The Coin Tray seeded at tier 3 opens with *"You left off at Champion ⭐⭐⭐.
+> Want a quick warm-up first?"* — the warm-up (two questions one tier down) is what makes resuming
+> safe for a nine-year-old, and it comes free from the shell.
+>
+> ## ④ 🗄️ THE TIER NOW FOLLOWS THE CHILD ACROSS DEVICES — AND NEEDED NO NEW COLUMN
+> It was device-local (IndexedDB `kv`), so a second device or a cleared browser put every chapter
+> back to easy and nothing in the app could tell. ⚠️ **`learner_progress.current_level` (smallint NOT
+> NULL DEFAULT 1) has existed since the base schema, written by nothing and read by nothing** — every
+> other `current_level` in the app is `learner_stats.current_level`, the XP level, in a different
+> table. Measured on prod: **29 rows, all 1**. So the migration reuses it and adds no column.
+> ⚠️ **`sync_session` gets an 11-argument version and the 10-argument one stays as a FORWARDER.** A
+> defaulted 11th argument would leave a 10-named-argument call ambiguous (PostgREST resolves by
+> name), so a browser still holding the previous JS bundle would start failing its sync mid-deploy.
+> ⚠️ **The merge is LAST WRITE WINS, never GREATEST.** Stars and XP are achievements and stay
+> monotonic; a tier is a CURRENT FIT, and a child who has struggled back down to easy must not be
+> handed tier 3 again by a monotonic merge. Same reason `hydrateChapterLevels` seeds a device only
+> where it holds **nothing** — a local demotion made offline is the freshest answer there is.
+>
+> ## ⑤ 📐 THE ANGLE SHOP'S RE-TEACH IS A REAL EXPLANATION NOW, AND THE DEAD `world1` IS GONE
+> **`angles.ts` gained `explainBeats`** — the module owned every other word the chapter says and not
+> this one, which is exactly how the chapter ended up assembling `work` in the scene as
+> `[r.ask, 'Judge it…', 'Then set it and see.']`. Four worked lines per round type: a **degrees**
+> round names the gap, divides it by `STEP` and counts the taps (*"That is 75° to travel, and one
+> turn moves it 5° — so 15 taps to open it. Count them in 5s: 25, 30, 35… up to 100."*); a **kind**
+> round places 90° first, then says which side of it and why the start angle was not it; a **fold**
+> round names the mirror rule, the count, and WHERE the lines run.
+> ⚠️ **`FOLD_WHERE`'s rectangle line names the misconception out loud** — *"NOT corner to corner:
+> fold a rectangle on its diagonal and the halves miss"* — because `candidateAxes` deliberately puts
+> the diagonals on the bar. Its entries agree with `SHAPE_LINES` and the gate checks that, the same
+> rule `PAPER` already carries.
+> ⚠️ **TWO CONCATENATION FAULTS IN MY OWN FIRST DRAFT, BOTH CAUGHT BY READING THE OUTPUT, NEITHER
+> BY A TYPE OR A GATE:** `${cap(piece)} has to be … , because ${because}` gave **"because or every
+> shot goes wide"** (two of the five reasons are *"or …"* clauses, which read correctly only after the
+> ask's em-dash), and `They run ${FOLD_WHERE[shape]}` gave **"They run just the one"** for the
+> isosceles. Same family as *"hold up it"* and *"0 pennyies"*, third time recorded. **One verb cannot
+> serve six shapes — write them out.** Fixed by removing the glue, not by rewording the strings.
+> ⚠️ **And the count could run PAST its own target.** A fixed two-steps-then-ellipsis prints
+> `85, 90, 95… up to 90` on a one-tap gap. `startFor` keeps the gap at `START_GAP`, so it cannot
+> happen today — **that is the generator's choice, not this function's guarantee**, so the ellipsis
+> now appears only when something is left to elide, gated across the whole reachable lattice
+> (31 × 31 start/target pairs) rather than on sampled draws.
+>
+> **`world1` DELETED** — the five-scene "Milo's Picnic Party" World plus its `doorBeat`,
+> `basketBeat`, `compareBeat` and `orderBeat`. 995 → 766 lines. **Nothing imported it**; all four
+> skills have real chapters now (NestTree · HomeTime · BigOrSmall · FollowTheLeader), and all four
+> beats declared `rounds: 1` or `2`, so each carried a `Reteach` that **could never be shown** and a
+> difficulty that could never be promoted. ⚠️ Verified the deletion orphaned nothing: eslint's
+> unused-symbol list is byte-identical before and after once the 8 imports it stranded were removed
+> (the 8 that remain — `CATCH_INTRO`, `CountBadge`, `PerchedItem`, `spotsFor`, `speakSeq`,
+> `Difficulty`, `useMemo`, `counted` — were **already** dead before this session and are left alone).
+> ⚠️ **It did strand five art exports** — `DoorArt`, `Berry`, `Stone`, `CountStage`, `COUNT_LABEL`
+> now have zero references outside `art.tsx`. **Left deliberately:** an unused export in a component
+> library is tree-shaken and carries no lie, whereas `world1` carried unreachable pedagogy. Deleting
+> drawn art nobody asked for is the riskier move.
+>
+> ## ▶ OPEN
+> 1. 🔴 **NOTHING IS COMMITTED.** ✅ The migration IS applied to prod and verified (§④) — so the app
+>    can deploy whenever. There is still no backup of the children's data.
+> 2. Five orphaned art exports in `art.tsx` (§⑤) — delete only if you want the library tidy.
+> 3. Everything from prior sessions stands unchanged.
 
 > 🔗 **2026-08-20 — THE SOCIAL HANDLES ARE WIRED INTO `sameAs`, THE FOOTER AND `llms.txt` FROM ONE LIST — AND THE OBVIOUS WAY TO DO IT WOULD HAVE TOLD EVERY ANSWER ENGINE THAT RADLOR IS FACEBOOK. ⚠️ ALSO: THE GITHUB ORG WAS RENAMED UNDER US AND BOTH REMOTES WERE STILL POINTING AT THE OLD NAME.** `tsc` 0 · `next build` 0 · `check:social` 6/6 · IndexNow 10/10 · `learn`@`0e3c396` · `website`@`5d05d1e`. No sw bump — no app code changed.
 >
