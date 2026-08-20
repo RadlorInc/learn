@@ -99,7 +99,22 @@ export const stepsFor = (q: QType): 1 | 2 => (q === 'area' ? 1 : 2)
 export function makeRound(d: 1 | 2 | 3, asked: readonly string[] = []): PlotRound {
   const tier = TIERS[d] ?? TIERS[1]
   const frontage = rint(tier.frontage[0], tier.frontage[1])
-  const depth = rint(tier.depth[0], tier.depth[1])
+  /**
+   * ⚠️ NEVER A SQUARE PLOT. Drawn independently, `depth === frontage` on 25% of tier-1 rounds,
+   * 16.6% of tier 2 and 14.2% of tier 3 (measured 2026-08-20) — and on those the prompt reads
+   * "4 metres along the road, and 16 tiles to use up" with the answer 4. A child who paces the same
+   * distance as the road side is right, having done no division at all, and the blind-guess rate on
+   * a quarter of the easiest rounds more than doubles.
+   *
+   * This is `badgeFor`/`contextFor`'s own stated rule — "NEITHER MAY NAME THE DEPTH, however
+   * helpfully: it is the whole question" — being broken by ARITHMETIC rather than by wording, which
+   * is exactly how the same fault reached The Mission Brief (a square division: 25 shared into 5
+   * racks is 5 per rack) and Factor Lab (base × base: a crate of 8 needing 8 crates).
+   *
+   * Every tier's depth range has at least three other values, so this can never spin.
+   */
+  let depth = rint(tier.depth[0], tier.depth[1])
+  for (let i = 0; i < 20 && depth === frontage; i++) depth = rint(tier.depth[0], tier.depth[1])
 
   const unmet = (['area', 'perimeter'] as QType[]).filter(k => !asked.includes(k))
   const qType = unmet.length === 1 ? unmet[0] : pick<QType>(['area', 'perimeter'])

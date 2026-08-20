@@ -427,7 +427,7 @@ function makeRound(d: 1 | 2 | 3, round: number): HomeRound {
   return { scene, target, pool: Math.min(10, target + spares), castIdx }
 }
 
-function makeHomeBeat(): Beat<HomeRound> {
+export function makeHomeBeat(): Beat<HomeRound> {
   return {
     skillId: 'matchingQuantities', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),

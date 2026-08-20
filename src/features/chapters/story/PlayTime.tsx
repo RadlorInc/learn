@@ -481,7 +481,7 @@ export function makeRound(op: Op, d: Difficulty, round: number): PlayRound {
   return { scene, op, a, b, answer: a - b, choices: choicesFor(a - b, op), castIdx }
 }
 
-function makePlayBeat(op: Op): Beat<PlayRound> {
+export function makePlayBeat(op: Op): Beat<PlayRound> {
   const add = op === '+'
   return {
     skillId: add ? 'addition' : 'subtraction', rounds: 10, walkEvery: 3,

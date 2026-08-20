@@ -140,7 +140,7 @@ const TEACH_PAGE: Page = {
   ],
 }
 
-const TEST_PAGE: Page = {
+export const TEST_PAGE: Page = {
   // The parts are named as parts on purpose. This drawing encloses a teddy as a head AND a tummy AND
   // four limbs, and a cat as a head AND a body; asking for "the teddy" would fill a quarter of one
   // and look broken. A colouring book really does have you do a head and a tummy separately, and the
@@ -170,7 +170,7 @@ const SCORED_ROUNDS = TEST_PAGE.targets.length
 // ─── Round shape ─────────────────────────────────────────────────────────────────────
 interface ColorRound { seq: number; pots: ColorName[] }
 
-function makeColorRound(page: Page, d: 1 | 2 | 3, round: number): ColorRound {
+export function makeColorRound(page: Page, d: 1 | 2 | 3, round: number): ColorRound {
   const seq = Math.min(round, page.targets.length - 1)
   const target = page.targets[seq].color
   const n = d === 1 ? 3 : d === 2 ? 4 : 6
@@ -267,11 +267,11 @@ function MiloPainter() {
 }
 
 // ─── Round copy ──────────────────────────────────────────────────────────────────────
-const promptFor = (page: Page, d: ColorRound) => {
+export const promptFor = (page: Page, d: ColorRound) => {
   const t = page.targets[d.seq]
   return `Colour the ${t.noun} ${COLORS[t.color].label}!`
 }
-const sayFor = (page: Page, d: ColorRound) => {
+export const sayFor = (page: Page, d: ColorRound) => {
   const t = page.targets[d.seq]
   const c = COLORS[t.color].label
   // Names the colour twice and the glow once. The glow settles WHERE, so all the words can spend

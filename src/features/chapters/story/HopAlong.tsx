@@ -779,7 +779,7 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
 }
 
 // ─── Beat ────────────────────────────────────────────────────────────────────────────
-function makeBeat(): Beat<FetchRound> {
+export function makeBeat(): Beat<FetchRound> {
   return {
     skillId: 'skipCounting', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeFetch(scoredSlot(round) ?? RUN[RUN.length - 1], (d || 1) as 1 | 2 | 3),

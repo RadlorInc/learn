@@ -465,7 +465,7 @@ export function makeRound(d: Difficulty, round: number): CmpRound {
   return { scene, counts: [a, b], mode, want, castIdx }
 }
 
-function makeCmpBeat(): Beat<CmpRound> {
+export function makeCmpBeat(): Beat<CmpRound> {
   return {
     skillId: 'numberComparison', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as Difficulty, round),

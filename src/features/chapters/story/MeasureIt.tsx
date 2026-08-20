@@ -413,7 +413,7 @@ export function poolFor(world: MWorld, d: 1 | 2 | 3): Thing[] {
   return p.length ? p : world.things
 }
 
-function makeMeasureBeat(world: MWorld, onRecord: (t: Thing) => void): Beat<Thing> {
+export function makeMeasureBeat(world: MWorld, onRecord: (t: Thing) => void): Beat<Thing> {
   return {
     skillId: 'measurement', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => { const p = poolFor(world, (d || 1) as 1 | 2 | 3); return p[round % p.length] },

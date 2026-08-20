@@ -45,7 +45,7 @@ const MOTHER = '/assets/objects/bird_side.png'
 const NESTLING = '/assets/objects/nest_side.png'
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
-interface NestWorld {
+export interface NestWorld {
   id: string; label: string; emoji: string
   scenes: string[]                     // stable backdrops, rotated per round (never scrolled)
   chick: string                        // the baby sprite in every nest
@@ -54,7 +54,7 @@ interface NestWorld {
   milo: { src: string; emoji: string; accessory: string }
   intro: string
 }
-const WORLDS: NestWorld[] = [
+export const WORLDS: NestWorld[] = [
   {
     id: 'forest', label: 'Forest Nests', emoji: '🌳',
     scenes: ['/assets/backgrounds/forest_2.jpeg', '/assets/backgrounds/forest_3.jpeg', '/assets/backgrounds/forest_4.jpeg'],
@@ -344,7 +344,7 @@ function makeRound(world: NestWorld, d: 1 | 2 | 3, round: number): NestRound {
   return { scene, nums, answerIdx: nums.indexOf(target) }
 }
 
-function makeNestBeat(world: NestWorld): Beat<NestRound> {
+export function makeNestBeat(world: NestWorld): Beat<NestRound> {
   return {
     skillId: 'numberRecognition', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),

@@ -702,7 +702,7 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
 }
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
-const BEAT: Beat<MoneyRound> = {
+export const BEAT: Beat<MoneyRound> = {
   skillId: 'money', rounds: 10, walkEvery: 3,
   make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
   // The DIRECTION is part of the question: the same price named as a number and held out as a pile

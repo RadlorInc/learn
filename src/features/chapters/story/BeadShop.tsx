@@ -115,9 +115,11 @@ interface PatternRound {
 }
 
 /** What `make` needs to know about the string so far. Held in a ref — see the orchestrator. */
-interface StrandState { strand: BeadColor[]; runStart: number; unit: BeadColor[] }
+export interface StrandState { strand: BeadColor[]; runStart: number; unit: BeadColor[] }
+/** Where the strand starts — named once so the component and the gate cannot disagree about it. */
+export const EMPTY_STRAND: StrandState = { strand: [], runStart: 0, unit: [] }
 
-function makePatternRound(s: StrandState, d: Difficulty, round: number): PatternRound {
+export function makePatternRound(s: StrandState, d: Difficulty, round: number): PatternRound {
   const len = patternUnitLen(d)
   const sameUnit = s.unit.length === len
   const unit = sameUnit ? s.unit
@@ -341,9 +343,9 @@ function MiloBead({ make }: { make: Make }) {
 type Thread = (from: HTMLElement, color: BeadColor) => number
 
 // ─── Round copy ──────────────────────────────────────────────────────────────────────
-const promptFor = () => 'What comes next?'
+export const promptFor = () => 'What comes next?'
 /** The chant. A pattern at this age is a rhythm as much as a picture, so Milo says it out loud. */
-const sayFor = (make: Make) => (d: PatternRound) => {
+export const sayFor = (make: Make) => (d: PatternRound) => {
   const chant = d.unit.map(c => BEADS[c].label).join(', ')
   return `${chant}, ${chant}… what ${make.noun} comes next? Tap it!`
 }
@@ -453,7 +455,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
   const [runStart, setRunStart] = useState(0)
   const [unit, setUnit] = useState<BeadColor[]>([])
   // `make` runs inside SkillBeat's useMemo, so it reads the string through a ref rather than props.
-  const sRef = useRef<StrandState>({ strand: [], runStart: 0, unit: [] })
+  const sRef = useRef<StrandState>(EMPTY_STRAND)
   sRef.current = { strand, runStart, unit }
 
   const [flight, setFlight] = useState<Flight | null>(null)

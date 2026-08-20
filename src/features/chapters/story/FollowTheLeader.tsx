@@ -375,7 +375,7 @@ function makeRound(d: 1 | 2 | 3, round: number): LineRound {
   return { scene, nums: shuffle(nums), castIdx }
 }
 
-function makeLineBeat(): Beat<LineRound> {
+export function makeLineBeat(): Beat<LineRound> {
   return {
     skillId: 'numberOrdering', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),

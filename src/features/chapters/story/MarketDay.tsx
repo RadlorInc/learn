@@ -515,7 +515,7 @@ const MultExplain: React.FC<{ data: MultRound; onDone: () => void }> = ({ data, 
 }
 
 // ─── Value generation ──────────────────────────────────────────────────────────────
-function makeMultBeat(): Beat<MultRound> {
+export function makeMultBeat(): Beat<MultRound> {
   return {
     skillId: 'multiplication', rounds: SCORED_N, walkEvery: 3,
     make: (d, round = 0) => makeMultRound((d || 1) as 1 | 2 | 3, round),

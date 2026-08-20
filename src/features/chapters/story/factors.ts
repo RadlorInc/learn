@@ -220,7 +220,18 @@ export function makeRound(d: Tier, asked: readonly string[] = []): FlRound {
   if (t === 'evenOdd') return mkEvenOdd(d === 1 ? rint(4, 11) : rint(8, 21))
   if (t === 'multiple') {
     const base = pick(d === 1 ? [2, 5] : d === 2 ? [2, 3, 4, 5, 10] : [2, 3, 4, 5, 6, 7, 8, 9, 10])
-    return mkMultiple(base, rint(2, d === 1 ? 6 : MAX_FINGERS))
+    const top = d === 1 ? 6 : MAX_FINGERS
+    /**
+     * ⚠️ NEVER base × base. Measured 2026-08-20: k === base on 14.4% of multiple rounds, and there
+     * the crate size the prompt states IS the number of crates — so the miss line ("keep counting
+     * up in 8s") and the redirect ("Count up in 8s…") both name the answer to a child who has just
+     * been told they are wrong. `verdictFor` below already refuses to print a figure that could be
+     * the answer by coincidence; this is the same rule reached through the generator instead of
+     * through the wording, which is cheaper and cannot be argued with.
+     */
+    let k = rint(2, top)
+    for (let i = 0; i < 20 && k === base; i++) k = rint(2, top)
+    return mkMultiple(base, k)
   }
   return mkSplit(pick(t === 'prime' ? PRIMES[d] : COMPOSITES[d]))
 }

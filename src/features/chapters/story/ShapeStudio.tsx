@@ -28,9 +28,9 @@ import { SceneBg } from '@/shared/ui/SceneBg'
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
 interface Bg { grad: string; img: string }
-interface ShWorld { id: string; label: string; emoji: string; bgs: Bg[]; milo: { src: string; emoji: string; accessory: string }; intro: string }
+export interface ShWorld { id: string; label: string; emoji: string; bgs: Bg[]; milo: { src: string; emoji: string; accessory: string }; intro: string }
 const G = (grad: string, img: string): Bg => ({ grad, img: `/assets/backgrounds/${img}` })
-const WORLDS: ShWorld[] = [
+export const WORLDS: ShWorld[] = [
   { id: 'studio', label: 'Art Studio', emoji: '🎨',
     bgs: [G('linear-gradient(#f3dff7,#e0d4ee)', 'rainbow_market.jpeg'), G('linear-gradient(#e8e0ee,#d8d2e6)', 'craft_gems.png'), G('linear-gradient(#f0e4dc,#e4d2c4)', 'craft_buttons.png')],
     milo: { src: '/assets/characters/milo_painter.png', emoji: '🦊', accessory: '🎨' },
@@ -230,12 +230,14 @@ const ShapeExplain: React.FC<{ world: ShWorld; data: ShRound; onDone: () => void
 }
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
-function makeShapeBeat(world: ShWorld): Beat<ShRound> {
+export function makeShapeBeat(world: ShWorld): Beat<ShRound> {
   return {
     skillId: 'shapes2d3d', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeShapeRound((d || 1) as 1 | 2 | 3, round, world.bgs.length),
     sig: d => `${d.mode}:${d.target}`,
-    prompt: d => d.mode === 'sides' ? 'How many sides?' : `Tap the ${d.target}`,
+    // Both readings end their sentence. 'How many sides?' always did and \`Tap the …\` did not —
+    // the same pill, in the same chapter, punctuated two ways. Gated in storybookQuestions.test.ts.
+    prompt: d => (d.mode === 'sides' ? 'How many sides?' : `Tap the ${d.target}!`),
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ShapePlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <ShapeExplain world={world} data={data} onDone={onDone} />,

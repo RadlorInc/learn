@@ -485,6 +485,36 @@ answer; then draw the generator so the collision cannot occur (here: no limit th
 the conversion factor). ⚠️ The tier where the intermediate IS the answer is the exception and must
 stay one — at L1 the answer is `ft × 12`, so there it is the LIMIT that has to differ from it.
 
+⚠️⚠️ **AND THE COMMONEST WAY A QUESTION PRINTS ITS OWN ANSWER IS A DEGENERATE DRAW, NOT A BADLY
+WRITTEN SENTENCE — SO FIX IT IN THE GENERATOR.** Three chapters were caught by the same sweep on
+2026-08-20 and all three had correct, careful wording; what was wrong was that the two numbers the
+generator drew were allowed to be *the same number*:
+
+| chapter | the degenerate draw | rate | what the child reads |
+|---|---|---|---|
+| The Empty Plot | `depth === frontage` — a SQUARE plot | **25% of L1** | *"4 metres along the road, and 16 tiles to use up"* → answer **4** |
+| The Mission Brief | `q === b` — a SQUARE division | **16% of ÷** | *"25 bolts shared equally into 5 racks"* → answer **5** |
+| Factor Lab | `k === base` — base × base | **14% of ×** | *"a crate holds 8"*, miss line *"keep counting up in 8s"* → answer **8** |
+
+In every one the answer is not stated AS the answer; it is a GIVEN that happens to equal it, so a
+child can copy a number off the screen and be right without doing the operation the chapter exists
+to teach. The Empty Plot is the sharpest: one tier-1 round in four, on the band's easiest tier, and
+the module's own comment already said *"NEITHER may name the depth, however helpfully: it is the
+whole question"* — broken by arithmetic rather than by wording, which is why nobody saw it.
+
+**The fix is one redraw, in the generator, never a reworded sentence** — the sentence was right.
+Put the guard where the numbers are chosen and it covers every question type the chapter has now
+and every one somebody adds later; put it in three makers and the seventh maker forgets.
+
+⚠️ **BUT NOT EVERY COINCIDENCE IS A DEFECT, AND DELETING THE BEST QUESTION TO CLOSE ONE IS A BAD
+TRADE.** The Pizza Counter collides on **34.7%** of `match` rounds — the answer is a count of slices
+and the givens are two denominators. It stays, measured and documented, for two reasons. Tier 1 is
+match-only over three pairs and `[2, 4]` — half a pizza against quarters — collides on its ONLY
+numerator, and that is the single most canonical equivalence in the chapter. And it is the
+**harmless direction**: a collision here can only make a guess luckier, never make a correct method
+wrong — unlike The Height Bar's `4 × 12 = 48` landing on a posted limit of 48, which manufactures a
+wrong answer and is gated. **Ask which direction the collision runs before removing anything.**
+
 ⚠️ **A NUMBER IN A VERDICT CAN BE THE ANSWER BY COINCIDENCE.** *"No miss line ever names an accepted
 answer"* is already the rule; arithmetic reaches it by a side door. Eight rows out of a pair test of
 15 strand SEVEN, and seven pairs is what was asked — so a count of what did NOT fit prints the
@@ -2180,6 +2210,17 @@ count the matches.
   and make it drivable, because the reason it is hard is often that nothing runs it. (Here it took
   two facts: the Supabase session lives under `milo-auth`, since `client.ts` overrides `storageKey`,
   and the JWT must be well-formed or `getSession()` returns null.)
+- ⚠️⚠️ **"NOTHING CAN REACH THIS" IS A MEASUREMENT, NOT AN OBSERVATION — TAKE IT BEFORE YOU WRITE IT
+  DOWN.** This file already says that when you catch yourself writing a source check BECAUSE the
+  thing cannot be driven, *that inability is the finding*. It has a second half: **the inability has
+  to be tested.** On 2026-08-20 a sweep concluded that the 24 storybook chapters "keep their
+  generators inside their .tsx components, so no gate can reach their question text at all", and it
+  went into the handoff as a finding. It was false. A story `.tsx` imports perfectly well under
+  vitest and `beat.make()` / `beat.say()` both run; the blocker was **22 module-scope declarations
+  that happened not to say `export`**. One throwaway test — `await import(...)`, call the factory,
+  print the prompt — settled it in under a minute, and 21 of the 24 chapters were in the gate the
+  same afternoon. **An assumed impossibility is the most expensive kind of comment**, because it
+  stops the next person checking too. Import it and call it before you claim you cannot.
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---

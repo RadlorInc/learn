@@ -391,7 +391,7 @@ const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data
 }
 
 // ─── Beat ───────────────────────────────────────────────────────────────────────────
-function makeCompareBeat(): Beat<CmpRound> {
+export function makeCompareBeat(): Beat<CmpRound> {
   return {
     skillId: 'compareNumbers', rounds: SCORED_N, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),

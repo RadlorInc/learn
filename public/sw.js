@@ -1,4 +1,4 @@
-const VERSION      = 'v125'
+const VERSION      = 'v126'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`

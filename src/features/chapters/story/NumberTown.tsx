@@ -55,7 +55,7 @@ const SCENE: Record<Scene, SceneCfg> = {
   satellite: { noun: 'satellite', item: '🛰️', itemImg: '/assets/objects/satellite.png', bg: { grad: 'linear-gradient(#243056 0%, #1b2548 55%, #131a36 100%)', img: '/assets/backgrounds/space_deepspace.png' } },
 }
 
-interface NumWorld {
+export interface NumWorld {
   id: string; label: string; emoji: string
   scenes: Scene[]
   milo: { src: string; emoji: string; accessory: string }
@@ -64,7 +64,7 @@ interface NumWorld {
   objSize?: string                        // per-world object size (some sprites are taller/narrower)
   intro: string
 }
-const WORLDS: NumWorld[] = [
+export const WORLDS: NumWorld[] = [
   { id: 'street', label: 'Number Street', emoji: '🏘️', scenes: ['house', 'shop', 'mailbox'],
     milo: { src: '/assets/characters/milo_postman.png', emoji: '🦊', accessory: '✉️' },
     intro: 'Milo is the postman today! Every house has a number. Listen for the number, then tap the one that matches so Milo can deliver. First, watch Milo read a number!' },
@@ -287,7 +287,7 @@ function makeRound(world: NumWorld, d: 1 | 2 | 3, round: number): NumRound {
   return { scene, target, choices: buildChoices(target, d) }
 }
 
-function makeNumBeat(world: NumWorld): Beat<NumRound> {
+export function makeNumBeat(world: NumWorld): Beat<NumRound> {
   return {
     skillId: 'numbersTo100', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),

@@ -624,7 +624,7 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
 }
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
-function makeBeat(op: Op): Beat<ASRound> {
+export function makeBeat(op: Op): Beat<ASRound> {
   return {
     skillId: op === '+' ? 'additionTo100' : 'subtractionTo100',
     rounds: 10, walkEvery: 3,

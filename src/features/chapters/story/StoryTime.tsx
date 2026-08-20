@@ -723,7 +723,7 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
 }
 
 // ─── Value generation ──────────────────────────────────────────────────────────────
-function makeStoryBeat(): Beat<SpRound> {
+export function makeStoryBeat(): Beat<SpRound> {
   return {
     skillId: 'storyProblems', rounds: SCORED_N, walkEvery: 3,
     make: (d, round = 0) => makeStoryRound((d || 1) as 1 | 2 | 3, round),

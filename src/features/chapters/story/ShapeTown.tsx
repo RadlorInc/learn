@@ -444,7 +444,7 @@ const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 }
 
 // ─── The scored practice ─────────────────────────────────────────────────────────────
-function makeShapeBeat(fit: Fit): Beat<ShapeRound> {
+export function makeShapeBeat(fit: Fit): Beat<ShapeRound> {
   return {
     skillId: 'shapes', rounds: SCORED_ROUNDS,
     // One walk, on the round the second build starts — so the change of place reads as Milo

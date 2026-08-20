@@ -700,7 +700,7 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
 }
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
-const BEAT: Beat<PvRound> = {
+export const BEAT: Beat<PvRound> = {
   skillId: 'placeValue', rounds: 10, walkEvery: 3,
   make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
   sig: d => `${d.n}${d.kind}`,

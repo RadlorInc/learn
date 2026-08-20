@@ -109,6 +109,115 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> ❓ **2026-08-20 — THE QUESTIONS, SWEPT ACROSS EVERY CHAPTER WITH A PURE MODULE. THREE CHAPTERS WERE PRINTING THEIR OWN ANSWER — AND ALL THREE WERE THE SAME FAULT: A DEGENERATE DRAW, NOT A BADLY WRITTEN SENTENCE. ⚠️ THE INSTRUMENT WAS WRONG FIVE TIMES BEFORE THE APP WAS WRONG THREE.** `tsc` 0 · **1344/1344** (+151) · `next build` 0 · 17 planted mutations caught, 5 proven inert · sw **v125 → v126**. Not committed.
+>
+> **The ask:** *"check that the questions in all the chapters are correct and make sense… crystal clear… just do the proper deep test"*.
+>
+> ## ⓪ ⚠️⚠️ THE ANSWER EQUALS A GIVEN — 25% OF THE EMPTY PLOT'S EASIEST ROUNDS
+> The new gate is `src/__tests__/questionQualitySweep.test.ts`: ONE file applying `chapter-craft.md`
+> §0a/§0b **horizontally**, to all nine chapters that own a pure module. Every 9–11 chapter already
+> has a 50-test gate and they are all VERTICAL — each knows its own chapter deeply and nothing about
+> its neighbours', which is precisely the doc's own complaint (*"most of those rules were learned in
+> chapter 1, forgotten, and re-learned the hard way in a later chapter"*).
+>
+> | chapter | the degenerate draw | rate | what the child reads |
+> |---|---|---|---|
+> | **The Empty Plot** | `depth === frontage` — a SQUARE plot | **25% of L1**, 16.6% L2, 14.2% L3 | *"4 metres along the road, and 16 tiles to use up"* → answer **4** |
+> | **The Mission Brief** | `q === b` — a SQUARE division | **16.0% of ÷**, 9.6% of ×then−, 1.0% of − | *"25 bolts shared equally into 5 racks"* → answer **5** |
+> | **Factor Lab** | `k === base` — base × base | **14.4% of ×** | *"a crate holds 8"*; the miss line is *"keep counting up in 8s"* → answer **8** |
+>
+> **In none of them is the answer stated AS the answer.** It is a GIVEN that happens to equal it, so
+> a child copies a number off the screen and is right without doing the operation the chapter exists
+> for. The Empty Plot is the sharpest — one tier-1 round in FOUR — and `plotMaths`' own comment
+> already said *"NEITHER may name the depth, however helpfully: it is the whole question"*. It was
+> broken by ARITHMETIC rather than by wording, which is why it survived a 74-test gate.
+> ⚠️ The Mission Brief case also collapses that chapter's stated design — *"every distractor is the
+> answer you would get from the wrong operation"* — because over a THREE-choice pad, "copy a number
+> you can see" beats deciding which operation it is.
+> **All three fixed in the GENERATOR, one redraw each, never a reworded sentence — the sentences were
+> right.** Measured after: 0.00%, 0.00%, 0.00%.
+>
+> ## ① 🟰 TWO COINCIDENCES DELIBERATELY LEFT, BOTH MEASURED
+> **The Pizza Counter collides on 34.7% of `match` rounds** (the answer is a count of slices, the
+> givens are two denominators) and it STAYS. Tier 1 is match-only over three pairs, and `[2, 4]` —
+> half a pizza against quarters — collides on its ONLY numerator: that is the single most canonical
+> equivalence in the chapter, and deleting the best worked example to close a coincidence is a bad
+> trade. ⚠️ **It is also the harmless DIRECTION:** it can only make a guess luckier, never make a
+> correct method wrong — unlike The Height Bar's `4 × 12 = 48` landing on a posted limit of 48, which
+> manufactures a wrong answer and is gated. **Ask which way the collision runs before removing
+> anything.** Same call for Slice Shop's miss line naming the friend who went without: that is the
+> chapter's whole argument (a denominator is how many people are waiting), not a proximity hint.
+>
+> ## ② 🔬 THE INSTRUMENT WAS WRONG FIVE TIMES BEFORE THE APP WAS WRONG THREE
+> Every one looked exactly like a defect on first read:
+> - *"no reachable input grades true"* on **every** Coin Tray round — I had read the pad as the answer
+>   surface, and the answer is a PAIR of wells; the pad is one DIGIT of it.
+> - *"Set the bike ramp to exactly 85° names the answer 85"* — naming the figure IS the ask there,
+>   exactly like a coin-tray `make` round.
+> - `plotMaths` has no `answer` field (the answer is `depth`; `target` is the load) and `cargo` has no
+>   `spoken`. **`tsc` caught both** — the probe was typed against the real modules, which is the only
+>   reason those two took seconds instead of an hour.
+> - The Loading Bay's *"There are only 4 stacks — hold up 1, 2, 3 or 4"* names the answer **and every
+>   other option**: it restates the pad. Singling one out is the leak; listing them all is the
+>   instrument.
+>
+> ## ③ ⚠️⚠️ AND THE SWEEP'S OWN WORST BUG: Q1 WAS A TAUTOLOGY
+> *"Every question is answerable"* read `r.accepts` straight off the round instead of driving
+> `graded`, so it compared the data with itself. **A planted grader that refuses the answer 3 walked
+> through a green sweep.** Every `accepted` now drives the chapter's own grader, and the re-planted
+> mutation fails. Found by mutation, not by reading — the repo's own rule, met again.
+> ⚠️ Two mutations survive and BOTH are proven inert rather than holes: a hot/cold miss line in
+> Factor Lab (its `missFor` does not receive the guess, so it structurally cannot leak it — stronger
+> than any check; the same mutation in The Empty Plot, which DOES receive it, is caught by two rules
+> at once), and an off-by-one Coin Tray grader (caught by `coinTrayDecimals.test.ts`, which is where
+> grader correctness belongs). **The sweep owns horizontal question quality; the per-chapter gates own
+> vertical correctness, and that division is demonstrated rather than assumed.**
+>
+> ## ④ WHAT IS AND IS NOT COVERED — stated honestly
+> - ✅ **9 chapters swept** (8 × 9–11 + Slice Shop, 6–8): answerable · nothing pre-answer names the
+>   answer · no miss line or redirect names it · a miss does not narrow with the guess · no malformed
+>   string · the answer surface is not a coin flip.
+> - ✅ **37 teen chapters** already have `e2e/question-quality.spec.ts` (structural, browser-driven).
+> - ⚠️ **I wrote here that the 24 storybook chapters were unreachable. That was WRONG — see ⑤.**
+>   They needed an `export` keyword, not an extraction, and 21 of the 24 ids are now swept.
+>
+> ## ⑤ 📚 …AND THEN THE 24 STORYBOOK CHAPTERS WENT IN TOO — I HAD CALLED IT IMPOSSIBLE AND IT WAS A MISSING `export` KEYWORD
+> §④ above concluded *"no gate can reach their question text at all"* and **that was wrong**. Founder:
+> *"What we can do for this?"* — so I measured instead of planning. **A story `.tsx` imports perfectly
+> well under vitest and `beat.make()` / `beat.say()` both run.** The blocker was 22 module-scope
+> declarations that happened not to say `export`. Sized before touching anything: 14 factories + 2
+> `const BEAT` + 3 `WORLDS` arrays + 3 interfaces = **22 one-word edits**, plus 4 pure functions each
+> in BeadShop and RainbowTown (whose beats are built in a `useMemo` from component state, so their
+> module-scope GENERATORS are driven instead of the beat being lifted). No behaviour changed.
+> ⚠️ **THE CLAIM WAS WORTH LESS THAN THE MINUTE IT TOOK TO TEST IT**, and it had already been written
+> into this file as a finding. Same family as *"a source check written BECAUSE the thing cannot be
+> driven — that inability is the finding"*: the inability has to be MEASURED, not assumed.
+>
+> **`src/__tests__/storybookQuestions.test.ts` — 87 tests over 28 chapter × world combinations.**
+> ⚠️ **`prompt` AND `say` ARE CHECKED SEPARATELY, and the first draft got that wrong.** Sweeping
+> sentence case over BOTH flagged Market Day's *"two pens of four ducklings. How many in all?"* and
+> Bead Shop's chant *"red, blue, red, blue… what bead comes next?"* — both SPOKEN, where case is
+> inaudible and the lower-case chant is the point. A rule that fires on correct copy gets deleted, so
+> it moved to the channel it is about: shape rules on the drawn line, malformed-text rules on both.
+>
+> **Found, and fixed: Shape Studio punctuates the same pill two ways** — `'How many sides?'` ends its
+> sentence and `` `Tap the ${target}` `` did not, in one chapter, on one surface, across 12 shapes.
+> Every other chapter's drawn prompt ends with punctuation.
+>
+> ## ⑥ ⚠️ THE REAL GAP IS **THREE** CHAPTERS, NOT TWENTY-FOUR — AND IT IS NOW NAMED
+> Block Yard (both ids), Building Blocks and Coin Shop set `prompt: () => ''` — correctly, per *"TWO
+> PILLS SAYING THE SAME THING IS A DUPLICATE"* — and carry no `say`. Their round data is numbers
+> only (`{slot, a, b, answer, regroup}`), so **the sentence a child reads is assembled inside the
+> component's JSX and nothing can reach it.** `BANNER_OWNED` names those four ids and the gate
+> asserts the list EXACTLY, not as a floor: a chapter that stops stating its question is a chapter
+> that stopped asking one. The fix for each is to lift its banner sentence into a module function —
+> `cargo.instructionFor`'s shape — and it is now three small jobs instead of a band-wide unknown.
+>
+> ## ▶ OPEN
+> 1. **Three chapters state their question in JSX** (§⑥) — Block Yard, Building Blocks, Coin Shop.
+>    The whole remaining question-quality gap, precisely named.
+> 2. Everything from the 🎚️ block below still stands.
+
 > 🎚️ **2026-08-20 — THE ADAPTIVE LOOP, DEEP-TESTED. ⚠️ `GameShell` WAS SERVING EVERY QUESTION AT A TIER THE ENGINE HAD ALREADY LEFT, AND THE ENGINE'S OWN TESTS WERE GREEN THE WHOLE TIME. PLUS: THE RE-TEACH SEEN FIRING FOR THE FIRST TIME, AND EVERY BAND NOW RESUMES AT THE TIER THE CHILD LEFT OFF ON.** `tsc` 0 · **1193/1193** (+58) · `next build` 0 · **18/18 planted source mutations caught** · sw **v124 → v125**.
 >
 > **The asks:** *"deep testing … adaptive system proper kaam kar raha hai / re-explanation aa raha hai / difficulty ke according aa raha hai"* → *"level persistent hai naa?"* → *"sab mein waise chahiye"* + sync.
