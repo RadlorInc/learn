@@ -143,7 +143,13 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
     const btn = Math.max(56, Math.min(short ? 90 : 104, Math.round(Math.min(vw / 7, vh / (short ? 4.6 : 5.4)))))
     return (
       <>
-        {Prompt('How many sides?', world, short)}
+        {/* ⚠️ NOT IN PRACTICE — SkillBeat draws a pill from `beat.prompt` there, and a chapter that
+            also draws its own ships TWO pills saying the same thing (chapter-craft §3). Measured on
+            production 2026-08-20: both rendered, 21px apart, the lower one `text-transform:
+            capitalize` so it read "Tap The Triangle!". SkillBeat's is the one to keep — it replays
+            Milo's voice on a tap; this one is `pointerEvents: none`. The guided round renders
+            OUTSIDE SkillBeat, so there it is the only pill and stays. */}
+        {mode !== 'practice' && Prompt(promptFor(data), world, short)}
         <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '44%' : '42%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw', filter: glow ? 'drop-shadow(0 0 16px var(--sun-yellow))' : 'none', transition: 'filter .3s' }}>
           <FitBox availW={vw * 0.9} availH={short ? vh * 0.34 : vh * 0.46} max={2.6}>
             <Shape name={data.target} size={200} />
@@ -167,7 +173,7 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
   const opts = data.options!
   return (
     <>
-      {Prompt(`Tap the ${data.target}!`, world, short)}
+      {mode !== 'practice' && Prompt(promptFor(data), world, short)}
       <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '48%' : '50%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw' }}>
         <FitBox availW={vw * 0.92} availH={short ? vh * 0.42 : vh * 0.52} max={1.8}>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 24 }}>
@@ -186,6 +192,17 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
     </>
   )
 }
+
+/**
+ * The question, in ONE place.
+ *
+ * ⚠️ IT USED TO BE WRITTEN TWICE — once here for the beat and once inside `ShapePlay`'s own pill —
+ * and the two had drifted: the beat said "Tap the triangle" and the pill said "Tap the triangle!".
+ * Both readings also punctuated differently ('How many sides?' ended its sentence, `Tap the …` did
+ * not), which is what made the drift visible on a production screenshot.
+ */
+export const promptFor = (d: ShRound): string =>
+  d.mode === 'sides' ? 'How many sides?' : `Tap the ${d.target}!`
 
 function Prompt(text: string, world: ShWorld, short?: boolean) {
   return (
@@ -235,9 +252,7 @@ export function makeShapeBeat(world: ShWorld): Beat<ShRound> {
     skillId: 'shapes2d3d', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeShapeRound((d || 1) as 1 | 2 | 3, round, world.bgs.length),
     sig: d => `${d.mode}:${d.target}`,
-    // Both readings end their sentence. 'How many sides?' always did and \`Tap the …\` did not —
-    // the same pill, in the same chapter, punctuated two ways. Gated in storybookQuestions.test.ts.
-    prompt: d => (d.mode === 'sides' ? 'How many sides?' : `Tap the ${d.target}!`),
+    prompt: promptFor,
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ShapePlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <ShapeExplain world={world} data={data} onDone={onDone} />,

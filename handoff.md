@@ -109,7 +109,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> ❓ **2026-08-20 — THE QUESTIONS, SWEPT ACROSS EVERY CHAPTER WITH A PURE MODULE. THREE CHAPTERS WERE PRINTING THEIR OWN ANSWER — AND ALL THREE WERE THE SAME FAULT: A DEGENERATE DRAW, NOT A BADLY WRITTEN SENTENCE. ⚠️ THE INSTRUMENT WAS WRONG FIVE TIMES BEFORE THE APP WAS WRONG THREE.** `tsc` 0 · **1344/1344** (+151) · `next build` 0 · 17 planted mutations caught, 5 proven inert · sw **v125 → v126**. Not committed.
+> ❓ **2026-08-20 — THE QUESTIONS, SWEPT ACROSS EVERY CHAPTER WITH A PURE MODULE. THREE CHAPTERS WERE PRINTING THEIR OWN ANSWER — AND ALL THREE WERE THE SAME FAULT: A DEGENERATE DRAW, NOT A BADLY WRITTEN SENTENCE. ⚠️ THE INSTRUMENT WAS WRONG FIVE TIMES BEFORE THE APP WAS WRONG THREE.** `tsc` 0 · **1345/1345** (+152) · `next build` 0 · 18 planted mutations caught, 5 proven inert · sw **v125 → v127**.
 >
 > **The ask:** *"check that the questions in all the chapters are correct and make sense… crystal clear… just do the proper deep test"*.
 >
@@ -213,9 +213,31 @@
 > that stopped asking one. The fix for each is to lift its banner sentence into a module function —
 > `cargo.instructionFor`'s shape — and it is now three small jobs instead of a band-wide unknown.
 >
+> ## ⑦ 🖼️ AND THE DEPLOY FOUND ONE MORE — TWO PILLS, VISIBLE ONLY ONCE THEY AGREED
+> Verifying the Shape Studio punctuation fix on **production**, the screenshot showed the sentence
+> TWICE: *"Tap the triangle!"* in SkillBeat's replay pill and *"Tap The Triangle!"* 21px under it in
+> the chapter's own (`text-transform: capitalize`). Confirmed in the DOM, on the live host.
+> ⚠️ **IT HAD SHIPPED FOR MONTHS AND THE PUNCTUATION FIX IS WHAT EXPOSED IT.** The two copies had
+> DRIFTED — the beat said *"Tap the triangle"*, the pill said *"Tap The Triangle!"* — different
+> enough to read as a heading above a question. Making them identical made the pair obvious.
+> **A sentence written in two places is the fault; the duplicate pill is only the symptom.**
+> Fixed properly: `promptFor(d)` exported and called by BOTH, and the chapter's own pill renders only
+> when `mode !== 'practice'` — the guided round runs OUTSIDE SkillBeat, so there it is the only pill
+> and stays. SkillBeat's is the one worth keeping: a tap on it replays Milo's voice, the chapter's is
+> `pointerEvents: none`.
+> ⚠️ **The other four chapters that draw their own pill are CLEAN, and checking cost one grep:**
+> BigOrSmall, HomeTime, PlayTime and SeesawPark all guard theirs on `phase === 'demo' | 'guided'`.
+> Shape Studio was the only one with no guard. A source heuristic flagged all five; only driving the
+> screen told them apart.
+> ⚠️ **No gate can see this class** — both halves are individually correct and the duplication is a
+> property of the rendered DOM. `S4` pins the one chapter that had it; the general case needs an eye,
+> or a live drive that counts pills.
+>
 > ## ▶ OPEN
 > 1. **Three chapters state their question in JSX** (§⑥) — Block Yard, Building Blocks, Coin Shop.
 >    The whole remaining question-quality gap, precisely named.
+> 2. **Nothing counts duplicate pills on a live screen.** Shape Studio's pair survived every gate in
+>    the repo and was caught by looking at production.
 > 2. Everything from the 🎚️ block below still stands.
 
 > 🎚️ **2026-08-20 — THE ADAPTIVE LOOP, DEEP-TESTED. ⚠️ `GameShell` WAS SERVING EVERY QUESTION AT A TIER THE ENGINE HAD ALREADY LEFT, AND THE ENGINE'S OWN TESTS WERE GREEN THE WHOLE TIME. PLUS: THE RE-TEACH SEEN FIRING FOR THE FIRST TIME, AND EVERY BAND NOW RESUMES AT THE TIER THE CHILD LEFT OFF ON.** `tsc` 0 · **1193/1193** (+58) · `next build` 0 · **18/18 planted source mutations caught** · sw **v124 → v125**.

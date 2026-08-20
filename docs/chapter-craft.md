@@ -1282,6 +1282,16 @@ line wants a bare verb ("…hold up the tens digit"), the chip has no object aft
 phrase ("hold up that many fingers"). Same family as *"0 pennyies"*, and the same fix: write the
 variants out rather than gluing parts together.
 
+⚠️ **AND THE DUPLICATE IS INVISIBLE UNTIL THE TWO COPIES AGREE.** Shape Studio shipped both pills
+for months and nobody saw it, because the beat's prompt said *"Tap the triangle"* and the chapter's
+own pill said *"Tap The Triangle!"* — different enough to read as a heading plus a question. Giving
+the beat its missing `!` made them identical, and the pair became obvious on the first production
+screenshot. **A sentence written in two places is the fault; the duplicate pill is the symptom.**
+Write it once (`export const promptFor = …`), have the beat and any phase-local pill both call it,
+and render the chapter's own pill only in the phases SkillBeat does not wrap (`demo`, `guided`).
+⚠️ **A gate cannot see this** — both halves are individually correct and the duplication is a
+property of the rendered DOM. It took an eye on a screenshot, which is what this whole file is about.
+
 **TWO PILLS SAYING THE SAME THING IS A DUPLICATE, NOT A FALLBACK.** `SkillBeat` draws a prompt pill
 from `beat.prompt`, so a chapter whose own play surface also states the question ends up with two —
 and at 640×320 they land on top of each other and neither can be read. Give `beat.prompt` an empty

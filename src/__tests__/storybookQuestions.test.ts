@@ -21,6 +21,7 @@
  * checking stays with the per-chapter gates. This file owns what every chapter has in common.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { RETEACH_AFTER, type Beat } from '@/features/chapters/story/StoryWorld'
 
 import { makeCmpBeat } from '@/features/chapters/story/BigOrSmall'
@@ -211,6 +212,29 @@ describe('S2 · no question is malformed', () => {
       }
     })
   }
+})
+
+describe('S4 · a chapter with a beat prompt does not ALSO draw its own pill in practice', () => {
+  it('Shape Studio — found on a production screenshot, 2026-08-20', () => {
+    /**
+     * ⚠️ SkillBeat draws a pill from `beat.prompt`, so a chapter whose Play surface ALSO draws one
+     * ships two pills saying the same thing (chapter-craft §3). Measured live on
+     * adaptivelearn.radlor.com: both rendered, 21px apart, the lower one `text-transform:
+     * capitalize` so it read "Tap The Triangle!" under "Tap the triangle!". SkillBeat's is the one
+     * to keep — a tap on it replays Milo's voice; the chapter's is `pointerEvents: none`.
+     *
+     * ⚠️ THIS IS A SOURCE CHECK AND IT ONLY GUARDS THE ONE CHAPTER THAT HAD THE FAULT. The general
+     * case — "no chapter renders a second pill" — is a property of the rendered DOM and needs a
+     * live drive. The other four chapters that draw their own pill (BigOrSmall, HomeTime, PlayTime,
+     * SeesawPark) guard it on `phase === 'demo' | 'guided'`, i.e. the phases SkillBeat does not
+     * wrap, and were verified clean.
+     */
+    const src = readFileSync('src/features/chapters/story/ShapeStudio.tsx', 'utf8')
+    const calls = [...src.matchAll(/\{mode !== 'practice' && Prompt\(/g)]
+    expect(calls.length, 'both Prompt call sites are guarded out of practice').toBe(2)
+    expect(src, 'and the sentence is written ONCE').not.toMatch(/Prompt\(`Tap the \$\{/)
+    expect(src).toMatch(/prompt: promptFor,/)
+  })
 })
 
 describe('S3 · the DRAWN question reads as a sentence', () => {
