@@ -111,9 +111,9 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 📐 **2026-08-21 — A TESTER'S FOUR BUGS, THEN EVERY CHAPTER SWEPT FOR RESPONSIVENESS, AND FINALLY THE GUTTHI THIS FILE HAS CARRIED FOR WEEKS: ⚠️⚠️ A `useRef` GUARD WAS FREEZING TEN CHAPTERS' DEMOS — IN DEV ONLY — AND THE EARLIER SESSION'S "IT WORKS ON PROD" RULED IT OUT BACKWARDS.** `tsc` 0 · **1360/1360** (+4) · **267/267 e2e** · `next build` 0 · sw **v127 → v132**. 🔴 Nothing committed.
+> 📐 **2026-08-21 — A TESTER'S FOUR BUGS, THEN EVERY CHAPTER SWEPT FOR RESPONSIVENESS, AND FINALLY THE GUTTHI THIS FILE HAS CARRIED FOR WEEKS: ⚠️⚠️ A `useRef` GUARD WAS FREEZING TEN CHAPTERS' DEMOS — IN DEV ONLY — AND THE EARLIER SESSION'S "IT WORKS ON PROD" RULED IT OUT BACKWARDS.** `tsc` 0 · **1360/1360** (+4) · **267/267 e2e** · **20/20 storybook** · `next build` 0 · sw **v127 → v133**. ✅ SHIPPED — `main`@`ea6ee6b`, 6 commits, deployment READY and prod serving v133.
 >
-> **The asks:** *"google drive access kar paa rahe ho?"* → tester sheet ke 3 issues → *"pura screen responsiveness check karo"* → *"wo gutthi suljhao"*.
+> **The asks:** *"google drive access kar paa rahe ho?"* → tester sheet ke 3 issues → *"pura screen responsiveness check karo"* → *"wo gutthi suljhao"* → *"9 chapters — yeh karo"*.
 >
 > ## ⓪ ⚠️⚠️ THE GUTTHI, SOLVED: STRICTMODE + A `useRef` GUARD = "RUN ONCE" BECOMES "RUN NEVER"
 > This file has carried *"why headless cannot drive a storybook chapter's opening is unexplained"*
@@ -209,15 +209,49 @@
 > `margin: auto` + `overflowY: auto` + vh-capped decoration: 0px clipped, all three buttons reachable.
 > **#2 (Milo's robotic voice) is still open** — that is 3–11 recorded clips, a real piece of work.
 >
+> ## ⑤ 🎯 AND THEN ALL TWENTY — PLUS THE DISCOVERY THAT FIVE OF THE NINE WERE NEVER A HARNESS LIMIT
+> ⓪ and ① took storybook coverage from 3 of 20 to 11. The nine that still would not go were exactly
+> the ones whose guided round wants a CORRECT answer, which a blind driver cannot produce — so every
+> gate living on a scored screen quietly covered half the band.
+> **Teaching the driver each chapter's answers was the obvious fix and the wrong one**, and this spec
+> already carried the reason: *"a chapter-specific driver is a driver that silently skips chapters"*.
+> `src/shared/hooks/useChapterPhase.ts` skips the teaching rather than faking it — `?e2e=practice`
+> opens a chapter AT its scored round, so the check lands on exactly the screen it is about. Same
+> dev-only pattern as `data-test-answer` and `window.__miloPace`, and **verified rather than assumed
+> to dead-code-eliminate: zero hits for the parameter in `.next/static` and `.next/server`, every hit
+> under `.next/dev`.** 22 chapters wired.
+>
+> ⚠️⚠️ **FIVE OF THE NINE WERE CORRECT ALL ALONG, AND THE REPORTING IS WHAT WAS BROKEN.** Skip, Slice
+> Shop, TickTock, Order Desk and Level Run set `prompt: () => ''`, so SkillBeat draws NO pill and this
+> spec's anchor (`button[aria-label="Hear it again"]`) **cannot exist** there — chapter-craft §3, the
+> richer surface owns the pill. Their skip was always right.
+> **But the spec reported both reasons as "NOT reached", and that is the dangerous part: a chapter
+> that LOST its pill would have skipped just as quietly and read as "the driver couldn't get there".**
+> Three buckets now — checked · owns-its-pill · genuinely unreached — and `OWN_PILL` is asserted
+> EXACTLY, the way `storybookQuestions.test.ts` asserts `BANNER_OWNED`. Those five are additionally
+> asserted to draw NO SkillBeat pill, so a beat gaining a prompt is caught before it becomes a
+> duplicate. **Only RainbowTown was genuinely unwired** — its phases are `start/teach/bridge/test`, so
+> its scored phase is not called "practice"; named in `SCORED_PHASE` rather than guessed.
+> **20/20 covered, 20 passed, 0 skipped.**
+>
+> ## ⑥ 🔧 AND A HARNESS FAULT OF MINE THAT BURNED THREE HOURS OF WALL CLOCK
+> To wait for a long run I wrote `until ! pgrep -f "storybook-pills"; do sleep 25; done`. **Every
+> waiting shell has that string in its OWN command line**, so each loop saw the other loops and
+> concluded the test was still running. Nine of them kept each other alive for ~3h; the founder
+> spotted the pile of "Running" chips. Nothing was burning CPU (the real run had long finished) but
+> nothing would ever exit either. **A `pgrep` pattern that can match the waiting process itself is a
+> deadlock.** Match on something only the target has, or poll the artefact (the log) not the process.
+>
 > ## ▶ OPEN
-> 1. 🔴 **NOTHING FROM THIS SESSION IS COMMITTED**, and there is still no backup of the children's data.
-> 2. **9 storybook chapters still do not reach a scored round** — but that is now a HARNESS limit (the
->    blind driver does not know the answers), not an unexplained hang. Tractable.
-> 3. **Google Cloud: `admin@radlor.com` is still only EDITOR, not OWNER** (carried forward from the
+> 1. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA.** Everything else here shipped; this has not moved.
+> 2. ✅ ~~9 storybook chapters do not reach a scored round~~ — **CLOSED, see ⑤. 20/20.**
+> 3. **Tester issue #2 — Milo's robotic voice — is untouched**, and it is the only one of the four
+>    left. 3–11 is on browser TTS with no recorded clips; that is a real piece of work, not a fix.
+> 4. **Google Cloud: `admin@radlor.com` is still only EDITOR, not OWNER** (carried forward from the
 >    archived 🏗️ block so it is not lost). Never delete the OAuth client — 5 users.
-> 4. **The tester sheet's status column is NOT updated** — the Drive connector can rename/move/share
+> 5. **The tester sheet's status column is NOT updated** — the Drive connector can rename/move/share
 >    but cannot write cells, and no Sheets connector is in the registry. Needs a browser pass.
-> 5. Everything from the blocks below still stands.
+> 6. Everything from the blocks below still stands.
 
 > ❓ **2026-08-20 — THE QUESTIONS, SWEPT ACROSS EVERY CHAPTER WITH A PURE MODULE. THREE CHAPTERS WERE PRINTING THEIR OWN ANSWER — AND ALL THREE WERE THE SAME FAULT: A DEGENERATE DRAW, NOT A BADLY WRITTEN SENTENCE. ⚠️ THE INSTRUMENT WAS WRONG FIVE TIMES BEFORE THE APP WAS WRONG THREE.** `tsc` 0 · **1356/1356** (+163) · `next build` 0 · 20 planted mutations caught, 5 proven inert · sw **v125 → v127**.
 >
