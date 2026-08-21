@@ -38,8 +38,9 @@ import { makeCompareBeat } from '@/features/chapters/story/SeesawPark'
 import { makeShapeBeat as makeShapeStudioBeat, WORLDS as SHAPE_WORLDS } from '@/features/chapters/story/ShapeStudio'
 import { makeShapeBeat as makeShapeTownBeat } from '@/features/chapters/story/ShapeTown'
 import { makeStoryBeat } from '@/features/chapters/story/StoryTime'
-import { BEAT as BUILDING_BLOCKS } from '@/features/chapters/story/BuildingBlocks'
-import { BEAT as COIN_SHOP } from '@/features/chapters/story/CoinShop'
+import { BEAT as BUILDING_BLOCKS, askFor as blocksAsk } from '@/features/chapters/story/BuildingBlocks'
+import { BEAT as COIN_SHOP, askFor as coinAsk, openerFor, stallAt } from '@/features/chapters/story/CoinShop'
+import { askFor as yardAsk } from '@/features/chapters/story/BlockYard'
 import { makeTimeBeat } from '@/features/chapters/story/TickTock'
 import { makeFrBeat } from '@/features/chapters/story/SliceShop'
 import { makeBeat as makeOrderBeat } from '@/features/chapters/story/OrderDesk'
@@ -78,24 +79,29 @@ interface Chapter {
   prompt: (d: Tier, round: number) => string
   /** what is SPOKEN. Empty where the chapter has no narration for the round. */
   say: (d: Tier, round: number) => string
+  /** true where the drawn line is a standing BANNER rather than a question pill — see S3. */
+  banner?: true
 }
 
 /**
- * ⚠️ THREE CHAPTERS STATE THEIR QUESTION IN JSX, AND NOTHING CAN REACH IT.
+ * ⚠️ FOUR IDS DRAW THEIR QUESTION THEMSELVES RATHER THAN THROUGH `beat.prompt`, AND THAT IS
+ * CORRECT — "two pills saying the same thing is a duplicate", so a chapter that owns its own banner
+ * leaves SkillBeat's pill empty. It used to make their sentence unreachable: their round data is
+ * numbers only (`{slot, a, b, answer, regroup}`), so the words lived in JSX where no gate could see
+ * them, and this file said so as a standing gap.
  *
- * They set `prompt: () => ''` (correctly — chapter-craft: "TWO PILLS SAYING THE SAME THING IS A
- * DUPLICATE", so the chapter's own banner owns the pill) and carry no `say`. Their round data is
- * numbers only: `{slot, a, b, answer, regroup}`, `{slot, n, kind, answer, digits}`,
- * `{slot, kind, price, shown, asPile}`. The sentence a child reads is assembled inside the
- * component, where no gate can see it.
+ * ⚠️ CLOSED 2026-08-20 by exporting the sentence rather than by changing what renders. Each of the
+ * three modules now has an `askFor(...)`, the component calls it, and the probes below drive it —
+ * so the beat stays silent (no duplicate pill) AND the words are checkable. Exporting one function
+ * beat writing a source check, which is all a JSX sentence would ever have allowed.
  *
- * That is the WHOLE of the remaining gap, and naming it here is the point: the claim it replaces was
- * "the 24 storybook chapters keep their generators inside their .tsx components, so no gate can
- * reach their question text at all". It is three chapters, not twenty-four, and the fix for each is
- * to lift its banner sentence into a module function — `cargo.instructionFor`'s shape.
+ * ⚠️ BLOCK YARD HAS NO PER-ROUND QUESTION AT ALL, and that is its design: the quantities are stated
+ * ONLY as objects, because "a printed question makes the picture beside it decoration". Its banner
+ * carries a standing instruction, which is what `askFor(op)` returns.
  *
- * ⚠️ THE LIST MAY NOT GROW SILENTLY. A chapter that stops stating its question is a chapter that
- * stopped asking one, so the assertion below is EXACT rather than a floor.
+ * The list below is now a claim about the BEAT — these four ids leave `beat.prompt` empty — and the
+ * gate asserts it EXACTLY rather than as a floor, so a chapter that quietly stops stating its
+ * question through the beat still has to be a deliberate edit here.
  */
 const BANNER_OWNED = [
   'additionTo100 · Block Yard (+)',
@@ -143,6 +149,38 @@ const CHAPTERS: Chapter[] = [
   ...NEST_WORLDS.map(w => fromBeat(`numberRecognition · Nest Tree (${w.id})`, makeNestBeat(w))),
   ...NUM_WORLDS.map(w => fromBeat(`numbersTo100 · Number Town (${w.id})`, makeNumBeat(w))),
   ...SHAPE_WORLDS.map(w => fromBeat(`shapes2d3d · Shape Studio (${w.id})`, makeShapeStudioBeat(w))),
+  // ── the four ids whose beat is silent: driven through the module function their banner calls ──
+  {
+    id: 'additionTo100 · Block Yard (+) · banner',
+    banner: true,
+    rounds: makeBlockYardBeat('+').rounds,
+    prompt: () => yardAsk('+'),
+    say: () => '',
+  },
+  {
+    id: 'subtractionTo100 · Block Yard (−) · banner',
+    banner: true,
+    rounds: makeBlockYardBeat('-').rounds,
+    prompt: () => yardAsk('-'),
+    say: () => '',
+  },
+  {
+    id: 'placeValue · Building Blocks · banner',
+    banner: true,
+    rounds: BUILDING_BLOCKS.rounds,
+    prompt: (d, round) => blocksAsk(BUILDING_BLOCKS.make(d, round, [])),
+    say: () => '',
+  },
+  {
+    id: 'money · Coin Shop · banner',
+    banner: true,
+    rounds: COIN_SHOP.rounds,
+    // ⚠️ BOTH HALVES. `openerFor` is what the keeper SAYS and `askFor` is what the bubble WRITES;
+    // the module composes the first from the second on purpose, so checking only one would miss a
+    // drift between them — which is exactly the fault Building Blocks had.
+    prompt: (d, round) => coinAsk(COIN_SHOP.make(d, round, [])),
+    say: (d, round) => { const r = COIN_SHOP.make(d, round, []); return openerFor(stallAt(r.slot), r) },
+  },
   // the two driven through their module-scope generators instead of through a beat
   {
     id: 'patterns · Bead Shop',
@@ -168,14 +206,24 @@ describe('every live storybook chapter is reachable at all', () => {
 })
 
 describe('S1 · every chapter states its question, at every tier and every round', () => {
-  it('the banner-owned list is EXACTLY those three chapters, and has not grown', () => {
-    const silent = CHAPTERS.filter(c => {
+  it('the silent-BEAT list is EXACTLY those four ids, and has not grown', () => {
+    // A claim about `beat.prompt`, not about the child: all four DO state their question, through
+    // the banner probes above. What this pins is that nothing else quietly joins them.
+    const silent = CHAPTERS.filter(c => !c.id.endsWith('· banner')).filter(c => {
       for (const d of TIERS) for (let r = 0; r < c.rounds; r++) {
         if ((c.prompt(d, r) + c.say(d, r)).trim().length) return false
       }
       return true
     }).map(c => c.id)
     expect(silent.sort()).toEqual([...BANNER_OWNED].sort())
+  })
+
+  it('⚠️ NO chapter is unreachable — every id has a question a gate can read', () => {
+    const ids = new Set(CHAPTERS.map(c => c.id.replace(/ · banner$/, '').replace(/ \(\w+\)$/, '')))
+    for (const owned of BANNER_OWNED) {
+      const bare = owned.replace(/ \(\w+\)$/, '')
+      expect([...ids].some(i => i.startsWith(bare.split(' · ')[0])), `${owned} has no reachable question`).toBe(true)
+    }
   })
 
   for (const c of CHAPTERS.filter(x => !BANNER_OWNED.includes(x.id))) {
@@ -237,12 +285,56 @@ describe('S4 · a chapter with a beat prompt does not ALSO draw its own pill in 
   })
 })
 
-describe('S3 · the DRAWN question reads as a sentence', () => {
+describe('S5 · a chapter speaks and writes the SAME sentence, from one place', () => {
+  /**
+   * ⚠️ FOUND BY DRIVING THE SCREEN AFTER THIS FILE WAS ALREADY GREEN. Building Blocks' banner reads
+   * "Make twenty-three. Tens on the left, ones on the right." — built inline in the round's effect —
+   * while `ASK.make` said "Make the number on the order", which the note overrides 400 ms in and no
+   * child ever sees. So the string a gate could reach was NOT the string on screen, and this file
+   * claimed the chapter was covered.
+   *
+   * CoinShop had already written the rule down: `openerFor` composes `askFor` because the line is
+   * "both spoken and written, and those two drifting apart is how a chapter narrates one thing while
+   * the screen says another". The shape check below is what stops the inline form coming back — the
+   * drift itself is invisible to every other rule here, because both strings are well-formed.
+   */
+  it('Building Blocks builds its ask in askFor, never at the call site', () => {
+    const src = readFileSync('src/features/chapters/story/BuildingBlocks.tsx', 'utf8')
+    expect(src, 'the make line is not inlined into a say()').not.toMatch(/say\(`Make \$\{/)
+    expect(src, 'both branches speak what the banner writes').toMatch(/say\(askFor\(data\)\)/)
+    expect(src, 'and the banner writes it too').toMatch(/text=\{note \|\| askFor\(data\)\}/)
+  })
+
+  it('Coin Shop composes its spoken opener from the written ask', () => {
+    const src = readFileSync('src/features/chapters/story/CoinShop.tsx', 'utf8')
+    expect(src).toMatch(/\$\{askFor\(r\)\}/)
+    expect(src).toMatch(/text=\{note \|\| askFor\(data\)\}/)
+  })
+})
+
+describe('S3 · the drawn question PILL reads as a sentence', () => {
+  /**
+   * ⚠️ PILLS ONLY — NOT THE FOUR STANDING BANNERS, and that exemption is measured rather than
+   * assumed. All 21 pill prompts end their sentence (20 always did; Shape Studio was the one that
+   * did not, and is fixed). All FOUR banners do not:
+   *
+   *     "Ten ones make one rod"                    "Make the number on the order"
+   *     "Send the order, then count what is left"  "Count that out for me"
+   *
+   * A rule that fires on an entire coherent group is a rule that is wrong about that group — the
+   * same call made earlier when sweeping `say` flagged Market Day's spoken line and Bead Shop's
+   * chant. A pill is a question and closes it; a banner is a standing instruction strip and reads
+   * as UI copy. Shape Studio's fault was different in kind: it punctuated the SAME pill two ways.
+   *
+   * ⚠️ Coin Shop's would also have been wrong to "fix": its `ASK` strings are composed into a spoken
+   * sentence that appends its own full stop — `${goods}. This is what it costs. ${askFor(r)}.` — so
+   * punctuating the map would have produced "Count that out for me..".
+   */
   // ⚠️ `prompt` ONLY. The first draft swept `say` too and flagged Market Day's *"two pens of four
   // ducklings. How many in all?"* and Bead Shop's chant *"red, blue, red, blue… what bead comes
   // next?"* — both spoken, where case is inaudible and the lower-case chant is the point. A rule
   // that fires on correct copy is a rule that gets deleted, so it moved to the channel it is about.
-  for (const c of CHAPTERS.filter(x => !BANNER_OWNED.includes(x.id))) {
+  for (const c of CHAPTERS.filter(x => !BANNER_OWNED.includes(x.id) && !x.banner)) {
     it(`${c.id}`, () => {
       for (const d of TIERS) for (let r = 0; r < Math.max(c.rounds, ROUNDS); r++) {
         const t = c.prompt(d, r).trim()

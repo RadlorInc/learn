@@ -120,6 +120,17 @@ const SUB_RUN: Slot[] = [
 ]
 /** This chapter runs BOTH operations from one component, so the op is a value, not a branch. */
 export type Op = '+' | '-'
+
+/**
+ * ⚠️ THIS CHAPTER HAS NO QUESTION SENTENCE, AND THAT IS THE DESIGN. The quantities are stated ONLY
+ * as objects — "a printed question makes the picture beside it decoration" (chapter-craft §0a), and
+ * this chapter was rebuilt twice to get there. So the banner carries a standing INSTRUCTION rather
+ * than a per-round ask, and SkillBeat's pill is deliberately empty.
+ *
+ * It is exported so a gate can still read the one sentence a child does see.
+ */
+export const askFor = (op: Op): string =>
+  op === '+' ? 'Ten ones make one rod' : 'Send the order, then count what is left'
 export const applyOp = (op: Op, a: number, b: number) => (op === '+' ? a + b : a - b)
 
 const runFor = (op: Op) => (op === '+' ? ADD_RUN : SUB_RUN)
@@ -519,7 +530,7 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
     }
   }
 
-  const idle = op === '+' ? 'Ten ones make one rod' : 'Send the order, then count what is left'
+  const idle = askFor(op)
   return (
     <>
       <Banner text={note || idle} vh={vh} ok={ok} />
@@ -683,7 +694,7 @@ export default function BlockYard({ op, onFinish, onExit }: {
       ))}
 
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
         {/* The cumulative arc, OUTSIDE SkillBeat — anything drawn inside a round resets every round. */}
         {shipped > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,252,244,.86)', border: '2px solid var(--outline)', borderRadius: 999, padding: '4px 12px' }}>
