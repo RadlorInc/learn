@@ -1,3 +1,232 @@
+> ⚡ **2026-08-19 (third pass) — A DECORATIVE FONT WAS 82% OF THE APP'S FONT BYTES AND ~40% OF THE ENTIRE FIRST VISIT, PRELOADED ON EVERY PAGE, RENDERING NOTHING. ONE OPTION FIXED IT: 816 KB → 146 KB.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v122 → v123**.
+>
+> ## ⓪ ⚠️⚠️ `next/font/google` PRELOADS **EVERY UNICODE SUBSET**, AND `preload` DEFAULTS TO TRUE
+> Measured on production, not inferred: the landing page emitted **97 `<link rel="preload" as="font">`
+> tags and fetched 97 woff2 files, 816 KB — 49% of a 1.68 MB first visit.** Broken down per family
+> by matching each fetched file back to the `@font-face` rule that names it:
+>
+> | family | files | KB | share |
+> |---|---|---|---|
+> | **Gaegu** | **90** | **671** | **82%** |
+> | IBM Plex Sans | 1 | 39 | 5% |
+> | IBM Plex Mono | 4 | 39 | 5% |
+> | Nunito | 1 | 38 | 5% |
+> | Fredoka | 1 | 29 | 4% |
+>
+> **Gaegu is a KOREAN face** used only for `--font-chalk` (the teen band's chalkboard). Google splits
+> it into ~45 unicode ranges × 2 weights, and `preload: true` — the DEFAULT — emits a preload link for
+> **every one of them, on every page**. ⚠️ **The landing page rendered ZERO elements in it.** Counted
+> live: `elementsUsingGaeguOnThisPage: 0`, against 29 for Fredoka and 0 for the other three.
+>
+> **Fix: `preload: false` on Gaegu alone.** After: **7 preload links, 7 files, 146 KB.** The other
+> four stay preloaded on purpose — Fredoka is the landing page's LCP text and none of them is big
+> enough to risk a late swap.
+>
+> ⚠️ **VERIFIED THAT THE CHALKBOARD STILL WORKS, because that is the risk of the change:** Gaegu's
+> **179 `@font-face` rules are still declared**, `--font-chalk` still resolves to `Gaegu, "Gaegu
+> Fallback", "Comic Sans MS", cursive`, and `document.fonts.load('400 16px Gaegu', …)` returns
+> **true** while fetching **4 files** — the ranges that text actually needs, not 90.
+> ⚠️ **Do not turn preload back on to remove a flash of fallback on the board.** That trade costs
+> every child on every page 671 KB, and `display: 'swap'` is already handling it.
+>
+> ## ① THREE SMALLER SURFACES, ALL PREVIOUSLY MISSING
+> - **`FAQPage` on `/help`.** ⚠️ The answers are JSX with `<Link>` inside, and the obvious way to get
+>   plain text for the schema is a second `plain:` string per item — the duplicate-fact trap this repo
+>   keeps paying for, where the copy that drifts is the machine one nobody reads. Instead `plainText()`
+>   walks the element tree: **no renderer** (so `<Link>` needs no router context) and the schema
+>   cannot disagree with what is on screen. 8 questions emitted.
+> - **A 1200×630 `opengraph-image`.** ⚠️ `og:image` had been `/icons/icon-512.png` — **the PWA icon, a
+>   SQUARE.** Every social card slot is 1.91:1, so a square is letterboxed or cropped to a strip, on a
+>   product parents forward by link. The hand-declared `images` arrays are gone from `layout.tsx`;
+>   naming one back would override the file-based route and reinstate the square.
+> - **`/llms.txt`**, generated from `PUBLIC_ROUTES`. It leads with the two facts a model most often
+>   gets wrong here: Milo is the CHARACTER, and the camera never uploads anything.
+
+> 🔎 **2026-08-19 (same day, second pass) — THE APP'S PUBLIC SEO WAS BROKEN AND NOTHING IN 1,122 TESTS COULD SEE IT. ⚠️ AND FIXING IT TRIPPED `security.test.ts`, WHICH WAS RIGHT — THE FIX THAT SATISFIED IT IS STRICTLY BETTER THAN WHAT I FIRST WROTE.** `tsc` 0 · **1135/1135 vitest** (+13) · `next build` 0 · sw **v121 → v122**.
+>
+> ## ⓪ WHAT WAS ACTUALLY WRONG, MEASURED ON THE RUNNING APP
+> - **Four of the five `PUBLIC_ROUTES` declared NO canonical.** Only `/` had one.
+> - **All five shared ONE description** — the root's — so `/legal/privacy` advertised a placement
+>   check. Five pages, one meta description, which search engines read as duplicates.
+> - ⚠️ **`/diagnostic` had no title and no `<h1>` of its own**, i.e. **the highest-intent public page
+>   in the product was not a distinct page to a crawler.** The cause is worth remembering:
+>   **`page.tsx` is `'use client'`, and a client component CANNOT export `metadata`.** The only fix
+>   without converting it to a server component is a `layout.tsx` beside it. There is now one.
+> - **Zero structured data anywhere in the app.**
+>
+> ## ① ⚠️⚠️ `security.test.ts` FIRED ON MY JSON-LD, AND THE CORRECT RESPONSE WAS NOT TO WHITELIST IT
+> JSON-LD is normally written with `dangerouslySetInnerHTML` — Next's own docs show that — and this
+> repo's gate fails the build on the first such sink, **by design**: the handoff's V15 entry accepts
+> CSP `'unsafe-inline'` *only* because the app has zero injection sinks, so the PREMISE is gated
+> rather than the header. Adding an exemption would have quietly retired that argument.
+> **Measured instead of assumed** (throwaway vitest, `renderToStaticMarkup`):
+> `<script type="application/ld+json">{jsonString}</script>` renders `</script>` inside the string as
+> **`</\u0073cript>`** — so a breakout is impossible — while leaving quotes and `&` alone, and the
+> JSON **round-trips byte-identical**. So the safe form is also the correct form and the dangerous
+> one was never needed. Rewritten in the app AND in all 8 blocks on `../radlor-site`.
+> **THE RULE: when a gate fires on a standard idiom, measure the safe alternative before weakening
+> the gate.** The gate was right; the idiom was lazy.
+> ⚠️ Note for the next throwaway test: `vitest.config.ts` includes **`src/**/*.test.ts` only** — a
+> `.tsx` test file runs zero tests and reports success.
+>
+> ## ② THE TWO PROPERTIES NOW DESCRIBE ONE ENTITY, AND THAT IS THE POINT
+> ⚠️ **"AdaptiveLearn" is a GENERIC phrase in a crowded category** — searched 2026-08-19, it returns
+> "adaptive learning" the concept plus AdaptedMind / bettermarks / DreamBox / Prodigy. **"Radlor" is
+> distinctive and effectively unclaimed** (one Instagram handle, one hair salon in Madrid). So the
+> brand has to carry the entity:
+> - both sites emit `SoftwareApplication` with the **identical `@id`** `https://adaptivelearn.radlor.com/#app`
+> - both point `publisher` at `https://radlor.com/#organization`, **declared once on radlor.com and
+>   only REFERENCED here** — two declarations would be two companies sharing one name
+> - the app links to radlor.com **visibly**, in the footer, because a schema-only claim is weaker
+>
+> ⚠️ **Retyping either `@id` silently splits the product in half.** `APP_ID`/`COMPANY_ID` live in
+> `src/app/site.ts`; the gate asserts the exact strings.
+>
+> ## ③ THE GATE: `src/__tests__/publicSeo.test.ts` (13 assertions)
+> Reads the real `metadata` exports rather than re-stating the rules, counts its own coverage against
+> `PUBLIC_ROUTES` so it cannot fall behind, and asserts no two public pages share a description.
+> **Five regressions planted in the SOURCE, all five caught** — dropped canonical, dropped
+> description, duplicated legal descriptions, a mismatched `@id`, and the visible Radlor link removed
+> while the schema stayed.
+> ⚠️ **It deliberately does NOT import the root layout**: `layout.tsx` calls `next/font/google` at
+> module scope, which throws under vitest. "Declares its own, and no two match" is both runnable and
+> the stronger claim — the bug was that these pages declared nothing at all.
+
+> 🏷️ **2026-08-19 — THE PRODUCT IS NAMED `AdaptiveLearn`. MILO IS THE CHARACTER, AND THE SPLIT IS DELIBERATE.** Founder's call while building the Radlor company site, which had been calling the product AdaptiveLearn while the app called itself Milo — the same product under two names across two properties, which is the one thing that stops either name accumulating any search or answer-engine authority. `tsc` 0 · **1122/1122 vitest** · `next build` 0 · prod sw bumped **v120 → v121**.
+>
+> ⚠️⚠️ **THE RENAME IS SURGICAL AND A FIND-AND-REPLACE WOULD DESTROY THE CHARACTER.** There are
+> ~1,300 occurrences of "Milo" in this repo and **the overwhelming majority are the pony** — every
+> chapter's speech, every `alt`, `PtMilo`, `useMiloStore`, `useMiloSpeaker`, `MiloErrorBoundary`.
+> **The rule, and it is the Duo/Duolingo split:**
+> - **A NAMING POSITION carries the product name** — `<title>`, `applicationName`, `og:site_name`,
+>   the manifest, the landing wordmark, the sign-in headline, the help/legal titles and back links,
+>   and the legal documents' own definition of the service (*"AdaptiveLearn is a maths practice app
+>   for children aged 3 to 18"*). Those 17 strings changed.
+> - **THE PONY DOING SOMETHING STAYS MILO** — *"Milo can't find that page"*, *"Oops! Milo tripped
+>   over something"*, *"Milo will ask a few quick questions"*, *"Milo's wardrobe"*, and all 626
+>   occurrences in `src/features`. **Do not "fix" these for consistency.** A mascot with a name is
+>   the point; the product having two names was the bug.
+>
+> ⚠️ **THE MANIFEST `name`/`short_name` CHANGED, WHICH IS NOT A FREE EDIT.** Every device with the
+> app on a home screen re-reads the manifest and may re-prompt or relabel the installed icon. That
+> is the correct trade here and it is worth knowing before the next support message about it.
+>
+> ⚠️ **The app icon is still the pony and that is right** — Duolingo's icon is Duo. Do not regenerate
+> the icon set to say "AdaptiveLearn".
+>
+> **Also fixed:** the sign-in page's subtitle read *"Learning adventures for little ones"* on a
+> product that goes to eighteen. Now *"Adaptive maths for ages 3 to 18"*.
+>
+> 🌐 **AND THERE IS A SECOND REPO NOW: `../radlor-site`** — the Radlor company website
+> (`radlor.com`), deliberately a separate repo and a separate Vercel project so a marketing edit
+> cannot touch this deploy pipeline. Ten pages, structured data throughout, `llms.txt`. Its
+> `docs/seo-geo-setup.md` is the standing list of what is left. **Nothing there is pushed yet.**
+
+> 🏗️ **2026-08-18/19 — EVERYTHING MOVED OFF THE PERSONAL GMAIL AND ONTO THE COMPANY (RADLOR). THE APP IS LIVE ON `adaptivelearn.radlor.com`. ⚠️ AND ALONG THE WAY THE FOUNDER LOCKED HIMSELF OUT OF THE PRODUCTION DATABASE, THE DEPLOY PIPELINE BROKE SILENTLY THREE TIMES, AND I "PROVED" A PLAN LIMIT THAT WAS THE OPPOSITE OF TRUE.** 🏗️ SHIPPED — `main`@`e450cd6`, prod serving **sw v120**. `tsc` 0 · **1122/1122 vitest** · `next build` 0.
+>
+> **The asks:** *"vercel sahi option hai?"* → *"sab domain ke email pe transfer karna hai"* →
+> *"kaunse subdomain?"* → *"social media handles"* → *"google oAuth custom domain se"* →
+> *"github ka batao"* → *"supabase mein problem ho gayi"* → *"learn.radlor.com kaise banau"*.
+>
+> ## ⓪ ⚠️⚠️ THE ONE THAT NEARLY COST THE CHILDREN'S DATA
+> Transferring the Supabase org, the founder made `admin@radlor.com` an Owner and then hit
+> **"Leave team" on the personal account before confirming the new owner worked.** Result: the
+> personal account saw **zero organizations**, `admin@` saw the project but got *"You do not have
+> access to this project"*, and **my MCP lost all access too** (`execute_sql` → "no permission") —
+> so I could not have helped extract anything. Recovered by the founder; 17 learners / 8 accounts /
+> 44 sessions all intact.
+> ⚠️ **THE DATABASE NEVER WENT DOWN** — REST, auth and the app stayed 200 throughout, because those
+> run on the anon key and the URL, not on dashboard membership. **Check that first and say it first;
+> "I am locked out" is not "the app is down".**
+> **THE RULE: on any ownership transfer, verify the NEW owner can actually use the thing, THEN
+> remove the old one. Never the other way round.** The same rule was then applied to Google Cloud
+> and Vercel and both went cleanly.
+>
+> ## ① ⚠️⚠️ THE DEPLOY PIPELINE BROKE SILENTLY **THREE** TIMES IN ONE DAY
+> Repo transfer → private → and once more. Every time: **GitHub accepted the push, Vercel created no
+> deployment, production sat on the old build, and there was no error in any UI.** Worse, Vercel's
+> Settings → Git page showed the correct repo *while the webhook was dead*, so the thing you would
+> naturally check to confirm the fix was itself green and wrong.
+> **THE RULE, now also in the header: after ANY repo or host change, push once and confirm a
+> deployment appears. A green settings page is not evidence.** To force one meanwhile:
+> `POST /v13/deployments` with `{gitSource:{type:'github',repoId,ref:'main'}}`.
+>
+> ## ② ⚠️⚠️ I PROVED THE WRONG THING ABOUT THE VERCEL PLAN, AND THE FOUNDER WAS RIGHT
+> He said Hobby will not host a private repo. I said it would, flipped it private, POSTed a
+> `gitSource` deployment, watched it go **READY**, and reported that as proof. Vercel's own message
+> when he tried to reconnect Git: *"The repository 'learn' is private and owned by an organization,
+> which is not supported on the Hobby plan."*
+> **The API deploy runs on a USER TOKEN and never crosses the plan gate — the gate is on the Git
+> *integration*.** So I had proven Vercel could CLONE the repo and reported it as proof the plan
+> allowed the integration. It also explains two of the three "mysterious" dead webhooks: no mystery,
+> the plan was blocking. **The unsupported thing is the COMBINATION — private AND org-owned.**
+> Repo is back PUBLIC and must stay so until Pro.
+>
+> ## ③ 🔍 THE VERIFICATION TOOL THIS SESSION FOUND: `auth_logs`
+> Whether `adaptivelearn.radlor.com` was on Supabase's redirect allowlist is the one thing that
+> could silently kill sign-in for **5 of 8 accounts**, and I could not test it: driving
+> `/auth/v1/authorize` with the new origin redirected to Google — **but so did a CONTROL with an
+> obviously-forbidden domain.** Supabase validates at the CALLBACK, not at authorize, so the probe
+> could not tell allowed from forbidden. Reported as UNVERIFIED rather than as working.
+> ⚠️ **Then the founder signed in, and `query_logs` on `source='auth_logs'` showed it end to end:**
+> `path=/callback status=302 referer=https://adaptivelearn.radlor.com`, `action=login
+> provider=google`, then `/user` 200s. Plus `"reloading api with new configuration"` at the moment
+> he saved the allowlist. **Supabase auth logs are how you verify an auth change actually worked —
+> use them instead of inferring from a redirect.**
+>
+> ## ④ WHAT ACTUALLY MOVED
+> - **GitHub** → `RadlorMain/learn` (Org) — **since renamed `RadlorInc/learn`, 2026-08-20.** Repo ID `1248492657` is unchanged by transfer/rename,
+>   which is why Vercel's link survived while its cached `org/repo` label read the old path.
+> - **Supabase** → org owned by `admin@radlor.com`. ⚠️ My MCP connection is **OAuth, not a PAT** —
+>   neither account's Access Tokens page lists it. To move it: disconnect/reconnect the connector
+>   while signed in as the company account.
+> - **Google Cloud** → the OAuth client lives in project **"AI Detector"** (`ai-detector-493801`),
+>   found from the client ID's numeric prefix = the project number **12513320995**, and the URL
+>   `console.cloud.google.com/apis/credentials?project=<number>` resolves straight to it.
+>   ⚠️ **`admin@radlor.com` is only EDITOR — still open.** Editor cannot manage IAM, so the personal
+>   Gmail is still the real owner.
+> - **Vercel** → still `plan: hobby`, still the personal scope. Email change is the cheap move; the
+>   Team + project transfer waits for Pro.
+> - **Google OAuth cleanup shipped:** `access_type: 'offline'` and `prompt: 'consent'` removed —
+>   nothing ever read `provider_token`, and forcing consent made every returning parent re-approve.
+>   Verified on the PROD URL: both params `<<ABSENT>>`, scope/client/redirect unchanged.
+>
+> ## ⑤ INFRA VERDICTS GIVEN (measured, not guessed)
+> - **Stay on Vercel; upgrade to Pro before launch.** Hobby is non-commercial-only, its ~1 h log
+>   retention is how the plan-pointer P0 hid for three months, and now it also blocks the private
+>   repo. Every alternative is a compatibility layer for Next 16 App Router.
+> - **No Google Workspace needed** (₹325/user/mo). Email is on Microsoft 365; a plain Google account
+>   on a custom address owns a Cloud project for free. ⚠️ Completing a Workspace signup for
+>   radlor.com would have demanded MX pointing at Google and **broken the M365 mailboxes**.
+> - ⚠️ **Supabase's built-in mailer will block signups at launch** — hit live: `{"code":429,"msg":
+>   "email rate limit exceeded"}`. 3 of 8 accounts sign up by email. Needs custom SMTP on a
+>   dedicated sending subdomain (`mail.radlor.com`).
+> - **Social handles:** `github.com/radlor` is TAKEN; `radlorhq`/`radlor-labs`/`getradlor` free.
+>   ⚠️ HTTP status alone cannot tell a taken handle from a free one — **a control handle is what made
+>   that check mean anything**, and the same control trick then invalidated my allowlist probe in ③.
+>
+> ## ▶ OPEN
+> 1. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA — AND TODAY SHOWED WHY.** `backup.yml` is committed
+>    and inert. Add to `RadlorInc/learn` → Settings → Secrets → Actions: `SUPABASE_ACCESS_TOKEN`,
+>    `BACKUP_PASSPHRASE`, `PROD_DB_PASSWORD`, `PROD_PROJECT_REF=qaymxunzlarwusogwyak`, then run
+>    **Backup (prod database)**. Ten minutes. This is the highest-value thing left in the repo.
+> 2. **Google Cloud: `admin@radlor.com` Editor → OWNER**, accept the emailed invite, then remove the
+>    personal Gmail LAST. ⚠️ Never delete the OAuth client or regenerate its secret — 5 users.
+> 3. **Vercel:** set `adaptivelearn.radlor.com` as the **Production Domain** and add
+>    `NEXT_PUBLIC_SITE_URL=https://adaptivelearn.radlor.com`, or sitemap/robots/og-image keep
+>    advertising the vercel.app host. Keep the vercel.app entry in Supabase's allowlist for now.
+> 4. **Vercel Pro** — gates the private repo, commercial use, and real log retention, all at once.
+> 5. **`SUPABASE_SERVICE_ROLE_KEY`** — the domain blocker is long gone. Order: set key → apply
+>    `20260816170000_leads_server_only.sql` → submit one real lead → then `…_leads_retention.sql`.
+> 6. **`DRAFT = true` is still live**, and everything from prior sessions stands (AR never driven
+>    with a real hand · `practice_complete` unobserved · dropped EXPLORE beats · 132 eslint errors).
+> 7. Of this session's faults, **the biggest was mine and the founder was right**: I contradicted him
+>    on the plan limit and backed it with a test that measured a different thing. The runner-up is
+>    that I gave a CNAME target Vercel later stopped recommending. **Both are the same fault — trust
+>    the system's own answer at the moment you need it, not the one you captured earlier.**
+
+---
+
 > 🛡️ **2026-08-18 (2nd session) — A FIVE-ROLE RED-TEAM PASS, THEN THE FIXES. THE BACKEND HELD (I COULD NOT REACH ONE ROW OF ANOTHER ACCOUNT'S DATA), BUT AR COULD STRAND A CHILD FOR EVER ON A SLOW PHONE, AND THE PLACEMENT CHECK DIED ON ONE BACK PRESS. ⚠️ AND THE FIX FOR THE SECOND ONE SHIPPED A REGRESSION THAT tsc, 1122 TESTS AND THE BUILD ALL PASSED — CAUGHT ONLY BECAUSE THE FOUNDER ASKED "SO THE THINGS YOU FLAGGED ARE FIXED?" FOR THE FOURTH SESSION RUNNING.** 🛡️ SHIPPED — `main`@`e72de1a`, **4 commits**, prod serving **sw v117**. `tsc` 0 · **1122/1122 vitest** (+4 new) · `next build` 0 · **18/18 e2e on the six AR chapters × 3 frames** · plan-advance 1/1.
 >
 > **The asks:** attack the app as five different people → *"so the things which you have flagged are fixed?"* → *"commit it on main"* → *"yes push it"* → *"commit the remaining e2e and workflow files too"* → *"yes apply it to both"* → *"vercel sahi option hai?"* → *"sab domain ke email pe transfer karna hai"* → *"kaunse subdomain?"* → *"mi2utor pura hatana hai, sirf radlor rahega"* → *"commit and push"*.

@@ -96,7 +96,9 @@
 > GODADDY PANEL.** It feeds `Organization.sameAs`, the footer and `llms.txt` from one list. Four go
 > through our own `*.radlor.com` forwards, so a forward silently repointed at a platform homepage
 > tells every answer engine that the entity called Radlor **is Facebook**. **Run `npm run
-> check:social` after any GoDaddy edit and before any deploy that touches it** — it follows each
+> check:social` after any GoDaddy edit and before any deploy that touches it** — ⚠️ that script and its
+> npm alias live in **`../radlor-site`, NOT this repo** (verified 2026-08-21: there is no `check:social`
+> in this package.json and no `scripts/check-social.sh` here), so run it from there. It follows each
 > link to its final URL and fails on a bare homepage.
 >
 > ⚠️ **radlor.com's production domain is the APEX.** `www` 308s to it. Flipping that breaks every
@@ -109,7 +111,115 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> ❓ **2026-08-20 — THE QUESTIONS, SWEPT ACROSS EVERY CHAPTER WITH A PURE MODULE. THREE CHAPTERS WERE PRINTING THEIR OWN ANSWER — AND ALL THREE WERE THE SAME FAULT: A DEGENERATE DRAW, NOT A BADLY WRITTEN SENTENCE. ⚠️ THE INSTRUMENT WAS WRONG FIVE TIMES BEFORE THE APP WAS WRONG THREE.** `tsc` 0 · **1345/1345** (+152) · `next build` 0 · 18 planted mutations caught, 5 proven inert · sw **v125 → v127**.
+> 📐 **2026-08-21 — A TESTER'S FOUR BUGS, THEN EVERY CHAPTER SWEPT FOR RESPONSIVENESS, AND FINALLY THE GUTTHI THIS FILE HAS CARRIED FOR WEEKS: ⚠️⚠️ A `useRef` GUARD WAS FREEZING TEN CHAPTERS' DEMOS — IN DEV ONLY — AND THE EARLIER SESSION'S "IT WORKS ON PROD" RULED IT OUT BACKWARDS.** `tsc` 0 · **1360/1360** (+4) · **267/267 e2e** · `next build` 0 · sw **v127 → v132**. 🔴 Nothing committed.
+>
+> **The asks:** *"google drive access kar paa rahe ho?"* → tester sheet ke 3 issues → *"pura screen responsiveness check karo"* → *"wo gutthi suljhao"*.
+>
+> ## ⓪ ⚠️⚠️ THE GUTTHI, SOLVED: STRICTMODE + A `useRef` GUARD = "RUN ONCE" BECOMES "RUN NEVER"
+> This file has carried *"why headless cannot drive a storybook chapter's opening is unexplained"*
+> since 2026-08-20. It is now named, and it was a REAL BUG rather than a harness limit:
+> StrictMode invokes an effect twice (mount → cleanup → mount) and **a `useRef` is not reset in
+> between**, so `if (ran.current) return; ran.current = true` starts the narration, CANCELS it on the
+> cleanup, and then refuses to start it again. `speakSteps` drives the VISUALS too, so the whole
+> chapter freezes on its first beat. **Eleven guards across ten chapters.** Every developer running
+> `npm run dev` has been looking at dead demos.
+> **Measured, not guessed:** patch `speechSynthesis.speak` in an `addInitScript` and log every
+> utterance. Dev produced **ZERO speak calls in 42s**; the identical build on production produced
+> **seven** and walked on into the guided round.
+> ⚠️⚠️ **AND THE EXPENSIVE HALF IS THE INFERENCE, NOT THE BUG.** The 2026-08-20 block says *"I guessed
+> StrictMode's double-mount and the guess was WRONG — the prod run killed it, since StrictMode is
+> dev-only."* That is backwards: StrictMode being dev-only is exactly why prod working proves
+> nothing about dev. The prod run could only ever have told you whether PROD had the same fault.
+> **Before ruling a cause out, ask whether your experiment could have detected it at all.** The wrong
+> inference then sat here as a settled finding and kept the question open for weeks.
+> Fix: `src/shared/hooks/useOnceGuard.ts` — the flag resets in its OWN cleanup, which runs after the
+> guarded effect's and before the re-run; a dep-change re-run still sees the guard set, so
+> `StoryWorld`'s `[onDone]` guard behaves exactly as before. Rule written into `chapter-craft.md` §4.
+>
+> ## ① 🎯 AND THE PAYOFF WAS IMMEDIATE — TWO SHIPPED DEFECTS NOTHING COULD REACH
+> Storybook chapters driven into a scored round went **3 of 20 → 11 of 20** (the harness also needed
+> one fix: `storybook-pills`' blind driver always pressed `candidates[0]`, i.e. the same wrong answer
+> for the whole budget — it rotates now).
+> - **Seesaw Park draws its question TWICE** — *"Which sign is right?"*, SkillBeat's pill plus its
+>   own 80px below. The exact fault chapter-craft §3 describes, shipped, and unseen because nothing
+>   could reach the screen it appears on. Fixed the Shape Studio way: one exported `ASK`, chapter
+>   pill only when `mode !== 'practice'`.
+> - **Bead Shop 404s on every load** — `milo_beads.png` was never drawn but headed the sprite list,
+>   so the picture was always right (fallback) and the console always had an error in it. Removed.
+> ⚠️ **§⑦ of the 2026-08-20 block called Seesaw Park CLEAN, from a grep. Corrected in place.** The
+> other three (BigOrSmall · HomeTime · PlayTime) really are clean — **and that is now a measurement**:
+> `kitchen` passes `storybook-pills`, and HomeTime/PlayTime were driven directly (temporarily started
+> in `practice`) and render their prompt exactly once. ⚠️ An intermediate draft of that correction
+> claimed they had no beat `prompt`, which was false — the same grep-shaped mistake one layer along,
+> recorded because I made it while writing the rule against it.
+> **The general lesson: a source heuristic gives a false ALL-CLEAR as readily as a false alarm.**
+>
+> ## ② 📱 THE RESPONSIVENESS SWEEP — 70 CHAPTERS × 7 SIZES, PLUS THE SCREENS NOBODY GATED
+> 320×568 · 390×844 · **640×320** · 768×1024 · 1024×600 · 1280×720 · 1920×1080.
+> **Structurally clean: 0 horizontal overflow, 0 unreachable controls, 0 console errors, 0 load
+> failures** across every chapter and screen. 63 rotate gates are by design.
+> Everything found was TAP-TARGET SIZE, and at the 44px aim it went **683 → 2**:
+>
+> | | before | after |
+> |---|---|---|
+> | `‹ Menu` (teen) | 145 | 0 |
+> | `← Menu` (story) | 112 | 2 (deliberate) |
+> | range sliders 16px | 305 | 0 |
+> | `Use taps instead` | 49 | 0 |
+> | landing footer 19px | 35 | 0 |
+>
+> ⚠️ **The 16px sliders are the one `all-chapters` could never have seen** — its selector is
+> `button, a[href]`, no `input` — and they are the FIRST control a child meets in all 37 teen
+> chapters. One CSS line (`input[type="range"] { height: 44px }`); track and thumb look identical.
+> ⚠️ **The two remaining 30px chips are a deliberate refusal.** SliceShop and TickTock derive
+> `chromeTop` — the band the whole world stands under — FROM their menu button, so forcing 44 on a
+> short frame takes 14px out of the play area, against chapter-craft's rule that height comes out of
+> the chrome first. The floor went into `chrome.ts` (`menuBtn.minH`), 44 on a roomy frame where the
+> banner already makes the band that tall, unset on a short one. **`chromeTop` before/after is
+> byte-identical: short 46, roomy 60.**
+>
+> ## ③ 🔬 TWO GATES DISAGREEING ABOUT ONE RULE, AND MY OWN SWEEP THAT CHECKED NOTHING
+> - **My first tap check failed at 44px and went red on 30 chapters** — while `short-landscape.spec.ts`
+>   had already, deliberately, made 24 the hard floor and 44 a NOTE. Both thresholds now come from
+>   `personas.ts`. ⚠️ **`all-chapters`' check 4 claimed the 44px floor in a COMMENT and never
+>   implemented it** — the most expensive kind of lie, because it stops the next reader checking.
+> - ⚠️⚠️ **My first full sweep ran over ZERO chapters and finished green in 20 seconds.** I had
+>   rewritten the shipped chapter-derivation with my own regex, which matched nothing. Had I reported
+>   then, *"all chapters are clean"* would have been a lie. Fixed to call the same derivation.
+> - ⚠️ A `ROTATEGATE` count that moved 63 → 62 was chased rather than shrugged at: driving
+>   `bigNumbers` at 768×1024 showed the gate present. It was my sweep's fixed 350ms wait racing
+>   `useNeedsRotate`'s effect — which is why the shipped gate uses `.or()` instead.
+>
+> ## ④ THE TESTER'S SHEET (Chapter_Testing_tester2, 2026-08-20)
+> **#1 answer options** — *"How did it go?"* could not be answered *"Yes, on their own"*. Now the
+> tester's own wording, one source for both diagnostic surfaces.
+> **#3 turtle spacing** — the real one. `FollowTheLeader` called `fitBands` and nothing else;
+> `fitBands` says nothing about rows being distinguishable, so at 640×320 with four little ones
+> **three rows sat SEVEN pixels apart under a 91px sprite**. Driven before/after: before, only 3 of 5
+> numbers were visible; after, all five, two rows 41px apart. `maxSizeForRows` + `spreadBand` (both
+> already in `critters.tsx`, both unused here) + rows capped at two. New gate
+> `followTheLeaderHuddle.test.ts`, 4/4 planted mutations caught.
+> ⚠️ **The DOM lied**: all five tag boxes existed and did not overlap. The numbers were buried by the
+> NEAR ROW'S SPRITE, which is what `ROW_SEP` measures — so the invariant was right and a box-overlap
+> check would have passed.
+> **#4 star popup** — heading and body both said *"Amazing!"*. Founder chose the tester's wording and
+> then dropped the 3-star heading entirely. ⚠️ Verifying it found a shipped bug nobody reported:
+> **the celebration modal is 697px tall and `align-items: center` CLIPS an overflowing child**, so at
+> 640×320 its top **189px — Milo and the whole message — were off screen with no way to scroll back**.
+> `margin: auto` + `overflowY: auto` + vh-capped decoration: 0px clipped, all three buttons reachable.
+> **#2 (Milo's robotic voice) is still open** — that is 3–11 recorded clips, a real piece of work.
+>
+> ## ▶ OPEN
+> 1. 🔴 **NOTHING FROM THIS SESSION IS COMMITTED**, and there is still no backup of the children's data.
+> 2. **9 storybook chapters still do not reach a scored round** — but that is now a HARNESS limit (the
+>    blind driver does not know the answers), not an unexplained hang. Tractable.
+> 3. **Google Cloud: `admin@radlor.com` is still only EDITOR, not OWNER** (carried forward from the
+>    archived 🏗️ block so it is not lost). Never delete the OAuth client — 5 users.
+> 4. **The tester sheet's status column is NOT updated** — the Drive connector can rename/move/share
+>    but cannot write cells, and no Sheets connector is in the registry. Needs a browser pass.
+> 5. Everything from the blocks below still stands.
+
+> ❓ **2026-08-20 — THE QUESTIONS, SWEPT ACROSS EVERY CHAPTER WITH A PURE MODULE. THREE CHAPTERS WERE PRINTING THEIR OWN ANSWER — AND ALL THREE WERE THE SAME FAULT: A DEGENERATE DRAW, NOT A BADLY WRITTEN SENTENCE. ⚠️ THE INSTRUMENT WAS WRONG FIVE TIMES BEFORE THE APP WAS WRONG THREE.** `tsc` 0 · **1356/1356** (+163) · `next build` 0 · 20 planted mutations caught, 5 proven inert · sw **v125 → v127**.
 >
 > **The ask:** *"check that the questions in all the chapters are correct and make sense… crystal clear… just do the proper deep test"*.
 >
@@ -225,19 +335,89 @@
 > when `mode !== 'practice'` — the guided round runs OUTSIDE SkillBeat, so there it is the only pill
 > and stays. SkillBeat's is the one worth keeping: a tap on it replays Milo's voice, the chapter's is
 > `pointerEvents: none`.
-> ⚠️ **The other four chapters that draw their own pill are CLEAN, and checking cost one grep:**
-> BigOrSmall, HomeTime, PlayTime and SeesawPark all guard theirs on `phase === 'demo' | 'guided'`.
-> Shape Studio was the only one with no guard. A source heuristic flagged all five; only driving the
-> screen told them apart.
+> ⚠️⚠️ **THIS PARAGRAPH USED TO SAY THE OTHER FOUR WERE CLEAN "AND CHECKING COST ONE GREP". THE
+> GREP WAS WRONG ABOUT SEESAW PARK — CORRECTED 2026-08-21**, after that chapter was driven into a
+> scored round for the first time (which only became possible once the StrictMode `useRef` guard was
+> fixed, see the 2026-08-21 block) and drew *"Which sign is right?"* **TWICE**: SkillBeat's pill and
+> its own, 80px apart. It gives its beat a real `prompt` AND rendered its own pill unconditionally.
+> Fixed the same way Shape Studio was — one exported `ASK`, and the chapter's pill only when
+> `mode !== 'practice'`. So Shape Studio was NOT "the only one with no guard": there were two.
+> ✅ **The other three ARE clean, and this time that is a MEASUREMENT, not a grep.** BigOrSmall
+> (`kitchen`) is covered by `storybook-pills` and passes; HomeTime and PlayTime cannot be reached by
+> that spec's blind driver, so they were driven directly (temporarily started in `practice`) and each
+> renders its prompt exactly ONCE, inside SkillBeat's pill. ⚠️ All three DO have non-empty beat
+> prompts — an intermediate draft of this correction claimed they did not, which was wrong and is
+> recorded here because it was the same grep-shaped mistake one layer along.
+> **The general lesson this entry originally missed: a source heuristic gives a false ALL-CLEAR as
+> readily as a false alarm.**
 > ⚠️ **No gate can see this class** — both halves are individually correct and the duplication is a
 > property of the rendered DOM. `S4` pins the one chapter that had it; the general case needs an eye,
 > or a live drive that counts pills.
 >
+> ## ⑧ ✅ BOTH OPEN ITEMS CLOSED — ONE CLEANLY, ONE WITH A LIMIT WORTH KNOWING
+> **(a) The three JSX-only chapters are reachable now.** Block Yard, Building Blocks and Coin Shop
+> each got an exported `askFor(...)` that the component's own banner calls, so the sentence exists in
+> ONE place and a gate can read it — without touching what renders, and without giving their beat a
+> prompt (which would have put a second pill on screen, the very fault §⑦ was about). Coin Shop
+> already had one. **All 25 storybook chapter ids are now swept; the gap is closed, not narrowed.**
+> ⚠️ Building Blocks' banner read `note || (isMake ? 'Make the number on the order' : ASK[kind])` —
+> and `ASK.make` IS `'Make the number on the order'`, so the ternary was a second copy of a string
+> the map already held. Now `note || askFor(data)`.
+> ⚠️ **AND THE FOUR BANNERS ARE EXEMPT FROM THE SENTENCE-SHAPE RULE, measured rather than assumed.**
+> All 21 pill prompts end their sentence; all FOUR banners do not (*"Ten ones make one rod"*, *"Make
+> the number on the order"*…). A rule that fires on an entire coherent group is wrong about that
+> group — a pill is a question and closes it, a banner is a standing instruction strip. Coin Shop
+> would have been actively wrong to "fix": its `ASK` strings are composed into a spoken sentence that
+> appends its own full stop, so punctuating the map gives *"Count that out for me.."*.
+>
+> **(b) `e2e/storybook-pills.spec.ts` counts the pills on a live screen** — anchored on
+> `button[aria-label="Hear it again"]`, which is SkillBeat's pill and exists only in a scored round.
+> **Proven: with the Shape Studio regression planted it fails with the exact diagnosis** — *"Tap the
+> triangle!" is drawn 2 times — SkillBeat's pill plus 1 more at y=76 (text-transform: capitalize)*.
+> ⚠️⚠️ **IT IS NOT A PER-COMMIT GATE AND MUST NOT BECOME ONE.** Driving a storybook chapter into a
+> scored round means sitting through a self-paced intro, showcase, demo and guided round with no
+> voice to pace them, and headless Chromium cannot reliably get there: `solids` reached a round on
+> one run and not the next, and **`shapes` never reached one in 120s against the dev server OR
+> against production**, sitting on a showcase whose own timers are a deterministic 9.5s.
+> ⚠️ **I guessed StrictMode's double-mount and the guess was WRONG** — the prod run killed it, since
+> StrictMode is dev-only. Recorded because the next person will guess the same thing.
+> So the spec **SKIPS rather than fails** when it cannot reach a round: it may only ever go red on a
+> real duplicate. `afterAll` prints which chapters were actually covered, because a run where
+> everything skips checked nothing and would otherwise pass in silence.
+>
+> ## ⑨ ⚠️⚠️ "NOW EVERYTHING IS FIXED?" FOUND ANOTHER ONE — FIFTH SESSION RUNNING
+> Asked after ⑧ was reported done and green. The answer was no, and the thing it found was **in the
+> file I had just fixed**: I changed RENDERING code (Building Blocks' banner) and verified it with
+> unit tests only. Driving it on screen took two minutes.
+>
+> **The banner reads *"Make twenty-three. Tens on the left, ones on the right."* — built inline in the
+> round's effect — while the `askFor` I had just exported returned `ASK.make`, *"Make the number on
+> the order"*.** The note overrides the banner 400 ms in, so `ASK.make` is text **no child has ever
+> seen**, and the gate was reading it while calling the chapter covered. ⑧'s claim that "all 25 ids
+> are swept" was true of the function and false of the screen.
+> ⚠️ **CoinShop had already written the rule down and I did not read it**: `openerFor` composes
+> `askFor` because the line is *"both spoken and written, and those two drifting apart is how a
+> chapter narrates one thing while the screen says another"*. Building Blocks is now the same shape —
+> `askFor` owns the make sentence, the effect speaks `askFor(data)`, the banner writes it — and the
+> gate reads the same string the screen shows (verified against a live screenshot, both
+> *"Make twenty-three. Tens on the left, ones on the right."*).
+> ⚠️ **The drift itself is invisible to every content rule in the file**, because both strings are
+> well-formed. `S5` pins the SHAPE instead: no `say(\`Make ${…}\`)` at a call site. Mutation-tested.
+> ✅ Checked the other two while there: **CoinShop is clean** (it composes), and **Block Yard has no
+> per-round question by design** — but its step coaching (*"Not enough ones left. Tap a rod…"*) is
+> still built inline and no gate can reach it.
+>
 > ## ▶ OPEN
-> 1. **Three chapters state their question in JSX** (§⑥) — Block Yard, Building Blocks, Coin Shop.
->    The whole remaining question-quality gap, precisely named.
-> 2. **Nothing counts duplicate pills on a live screen.** Shape Studio's pair survived every gate in
->    the repo and was caught by looking at production.
+> 1. **Block Yard's step coaching is unreachable** — the same category as a `missFor`, which IS gated
+>    in all eight 9–11 modules. The last of this class.
+> 2. ✅ **CLOSED 2026-08-21 — and it WAS a product bug, contrary to this line.** *"Why headless cannot
+>    drive a storybook chapter's opening"* was a StrictMode `useRef` guard freezing the demo in dev.
+>    See the 2026-08-21 block ⓪. The claim below that it is *"not a product bug — the chapters play
+>    fine in a real browser and on production"* was true of PRODUCTION and false of dev, which is
+>    exactly the inference that kept it open.
+> 3. ⚠️ **The lesson, five sessions running: the part that was BUILT gets verified, the part that was
+>    RENDERED gets assumed.** Every time this question has been asked it has found something, and
+>    every time it was in something already reported as done.
 > 2. Everything from the 🎚️ block below still stands.
 
 > 🎚️ **2026-08-20 — THE ADAPTIVE LOOP, DEEP-TESTED. ⚠️ `GameShell` WAS SERVING EVERY QUESTION AT A TIER THE ENGINE HAD ALREADY LEFT, AND THE ENGINE'S OWN TESTS WERE GREEN THE WHOLE TIME. PLUS: THE RE-TEACH SEEN FIRING FOR THE FIRST TIME, AND EVERY BAND NOW RESUMES AT THE TIER THE CHILD LEFT OFF ON.** `tsc` 0 · **1193/1193** (+58) · `next build` 0 · **18/18 planted source mutations caught** · sw **v124 → v125**.
@@ -424,7 +604,7 @@
 > 3. `facebook.radlor.com`'s cert (§③) — cosmetic, `check:social` will announce it.
 > 4. **Everything from prior sessions stands unchanged:** no backup of the children's data ·
 >    `SUPABASE_SERVICE_ROLE_KEY` · Vercel Pro · custom SMTP · `DRAFT = true` · AR never driven with
->    a real hand · 132 eslint errors · `support@radlor.com` may still have no mailbox.
+>    a real hand · 146 eslint errors (was 132; re-measured 2026-08-21) · `support@radlor.com` may still have no mailbox.
 
 > 🇺🇸 **2026-08-19 (fourth pass) — THE MVP AUDIENCE IS THE US, AND EVERY PUBLIC STRING IN BOTH REPOS WAS BRITISH. 64 "maths", ZERO "math". PLUS: radlor.com IS LIVE AND INDEXED, SEARCH CONSOLE + BING + INDEXNOW ARE WIRED, AND THE SUPABASE REGION MIGRATION HAS A RUNBOOK.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v123 → v124** · `main`@`c6d0252`.
 >
@@ -547,234 +727,7 @@
 > ✅ radlor.com live · GSC + Bing + IndexNow wired · the GEO baseline recorded · a migration runbook.
 > 🔴 Still open and unchanged: **no backup of the children's data** · `SUPABASE_SERVICE_ROLE_KEY` ·
 > Vercel Pro (Hobby is non-commercial) · custom SMTP (Supabase's mailer 429s at launch) ·
-> `DRAFT = true` on the legal text · AR never driven with a real hand · 132 eslint errors.
+> `DRAFT = true` on the legal text · AR never driven with a real hand · 146 eslint errors (was 132; re-measured 2026-08-21).
 > **And two new ones:** ~~`sameAs` is empty (§③)~~ **CLOSED 2026-08-20, see 🔗** and `support@radlor.com` may not exist (§⑥).
 
-> ⚡ **2026-08-19 (third pass) — A DECORATIVE FONT WAS 82% OF THE APP'S FONT BYTES AND ~40% OF THE ENTIRE FIRST VISIT, PRELOADED ON EVERY PAGE, RENDERING NOTHING. ONE OPTION FIXED IT: 816 KB → 146 KB.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v122 → v123**.
->
-> ## ⓪ ⚠️⚠️ `next/font/google` PRELOADS **EVERY UNICODE SUBSET**, AND `preload` DEFAULTS TO TRUE
-> Measured on production, not inferred: the landing page emitted **97 `<link rel="preload" as="font">`
-> tags and fetched 97 woff2 files, 816 KB — 49% of a 1.68 MB first visit.** Broken down per family
-> by matching each fetched file back to the `@font-face` rule that names it:
->
-> | family | files | KB | share |
-> |---|---|---|---|
-> | **Gaegu** | **90** | **671** | **82%** |
-> | IBM Plex Sans | 1 | 39 | 5% |
-> | IBM Plex Mono | 4 | 39 | 5% |
-> | Nunito | 1 | 38 | 5% |
-> | Fredoka | 1 | 29 | 4% |
->
-> **Gaegu is a KOREAN face** used only for `--font-chalk` (the teen band's chalkboard). Google splits
-> it into ~45 unicode ranges × 2 weights, and `preload: true` — the DEFAULT — emits a preload link for
-> **every one of them, on every page**. ⚠️ **The landing page rendered ZERO elements in it.** Counted
-> live: `elementsUsingGaeguOnThisPage: 0`, against 29 for Fredoka and 0 for the other three.
->
-> **Fix: `preload: false` on Gaegu alone.** After: **7 preload links, 7 files, 146 KB.** The other
-> four stay preloaded on purpose — Fredoka is the landing page's LCP text and none of them is big
-> enough to risk a late swap.
->
-> ⚠️ **VERIFIED THAT THE CHALKBOARD STILL WORKS, because that is the risk of the change:** Gaegu's
-> **179 `@font-face` rules are still declared**, `--font-chalk` still resolves to `Gaegu, "Gaegu
-> Fallback", "Comic Sans MS", cursive`, and `document.fonts.load('400 16px Gaegu', …)` returns
-> **true** while fetching **4 files** — the ranges that text actually needs, not 90.
-> ⚠️ **Do not turn preload back on to remove a flash of fallback on the board.** That trade costs
-> every child on every page 671 KB, and `display: 'swap'` is already handling it.
->
-> ## ① THREE SMALLER SURFACES, ALL PREVIOUSLY MISSING
-> - **`FAQPage` on `/help`.** ⚠️ The answers are JSX with `<Link>` inside, and the obvious way to get
->   plain text for the schema is a second `plain:` string per item — the duplicate-fact trap this repo
->   keeps paying for, where the copy that drifts is the machine one nobody reads. Instead `plainText()`
->   walks the element tree: **no renderer** (so `<Link>` needs no router context) and the schema
->   cannot disagree with what is on screen. 8 questions emitted.
-> - **A 1200×630 `opengraph-image`.** ⚠️ `og:image` had been `/icons/icon-512.png` — **the PWA icon, a
->   SQUARE.** Every social card slot is 1.91:1, so a square is letterboxed or cropped to a strip, on a
->   product parents forward by link. The hand-declared `images` arrays are gone from `layout.tsx`;
->   naming one back would override the file-based route and reinstate the square.
-> - **`/llms.txt`**, generated from `PUBLIC_ROUTES`. It leads with the two facts a model most often
->   gets wrong here: Milo is the CHARACTER, and the camera never uploads anything.
-
-> 🔎 **2026-08-19 (same day, second pass) — THE APP'S PUBLIC SEO WAS BROKEN AND NOTHING IN 1,122 TESTS COULD SEE IT. ⚠️ AND FIXING IT TRIPPED `security.test.ts`, WHICH WAS RIGHT — THE FIX THAT SATISFIED IT IS STRICTLY BETTER THAN WHAT I FIRST WROTE.** `tsc` 0 · **1135/1135 vitest** (+13) · `next build` 0 · sw **v121 → v122**.
->
-> ## ⓪ WHAT WAS ACTUALLY WRONG, MEASURED ON THE RUNNING APP
-> - **Four of the five `PUBLIC_ROUTES` declared NO canonical.** Only `/` had one.
-> - **All five shared ONE description** — the root's — so `/legal/privacy` advertised a placement
->   check. Five pages, one meta description, which search engines read as duplicates.
-> - ⚠️ **`/diagnostic` had no title and no `<h1>` of its own**, i.e. **the highest-intent public page
->   in the product was not a distinct page to a crawler.** The cause is worth remembering:
->   **`page.tsx` is `'use client'`, and a client component CANNOT export `metadata`.** The only fix
->   without converting it to a server component is a `layout.tsx` beside it. There is now one.
-> - **Zero structured data anywhere in the app.**
->
-> ## ① ⚠️⚠️ `security.test.ts` FIRED ON MY JSON-LD, AND THE CORRECT RESPONSE WAS NOT TO WHITELIST IT
-> JSON-LD is normally written with `dangerouslySetInnerHTML` — Next's own docs show that — and this
-> repo's gate fails the build on the first such sink, **by design**: the handoff's V15 entry accepts
-> CSP `'unsafe-inline'` *only* because the app has zero injection sinks, so the PREMISE is gated
-> rather than the header. Adding an exemption would have quietly retired that argument.
-> **Measured instead of assumed** (throwaway vitest, `renderToStaticMarkup`):
-> `<script type="application/ld+json">{jsonString}</script>` renders `</script>` inside the string as
-> **`</\u0073cript>`** — so a breakout is impossible — while leaving quotes and `&` alone, and the
-> JSON **round-trips byte-identical**. So the safe form is also the correct form and the dangerous
-> one was never needed. Rewritten in the app AND in all 8 blocks on `../radlor-site`.
-> **THE RULE: when a gate fires on a standard idiom, measure the safe alternative before weakening
-> the gate.** The gate was right; the idiom was lazy.
-> ⚠️ Note for the next throwaway test: `vitest.config.ts` includes **`src/**/*.test.ts` only** — a
-> `.tsx` test file runs zero tests and reports success.
->
-> ## ② THE TWO PROPERTIES NOW DESCRIBE ONE ENTITY, AND THAT IS THE POINT
-> ⚠️ **"AdaptiveLearn" is a GENERIC phrase in a crowded category** — searched 2026-08-19, it returns
-> "adaptive learning" the concept plus AdaptedMind / bettermarks / DreamBox / Prodigy. **"Radlor" is
-> distinctive and effectively unclaimed** (one Instagram handle, one hair salon in Madrid). So the
-> brand has to carry the entity:
-> - both sites emit `SoftwareApplication` with the **identical `@id`** `https://adaptivelearn.radlor.com/#app`
-> - both point `publisher` at `https://radlor.com/#organization`, **declared once on radlor.com and
->   only REFERENCED here** — two declarations would be two companies sharing one name
-> - the app links to radlor.com **visibly**, in the footer, because a schema-only claim is weaker
->
-> ⚠️ **Retyping either `@id` silently splits the product in half.** `APP_ID`/`COMPANY_ID` live in
-> `src/app/site.ts`; the gate asserts the exact strings.
->
-> ## ③ THE GATE: `src/__tests__/publicSeo.test.ts` (13 assertions)
-> Reads the real `metadata` exports rather than re-stating the rules, counts its own coverage against
-> `PUBLIC_ROUTES` so it cannot fall behind, and asserts no two public pages share a description.
-> **Five regressions planted in the SOURCE, all five caught** — dropped canonical, dropped
-> description, duplicated legal descriptions, a mismatched `@id`, and the visible Radlor link removed
-> while the schema stayed.
-> ⚠️ **It deliberately does NOT import the root layout**: `layout.tsx` calls `next/font/google` at
-> module scope, which throws under vitest. "Declares its own, and no two match" is both runnable and
-> the stronger claim — the bug was that these pages declared nothing at all.
-
-> 🏷️ **2026-08-19 — THE PRODUCT IS NAMED `AdaptiveLearn`. MILO IS THE CHARACTER, AND THE SPLIT IS DELIBERATE.** Founder's call while building the Radlor company site, which had been calling the product AdaptiveLearn while the app called itself Milo — the same product under two names across two properties, which is the one thing that stops either name accumulating any search or answer-engine authority. `tsc` 0 · **1122/1122 vitest** · `next build` 0 · prod sw bumped **v120 → v121**.
->
-> ⚠️⚠️ **THE RENAME IS SURGICAL AND A FIND-AND-REPLACE WOULD DESTROY THE CHARACTER.** There are
-> ~1,300 occurrences of "Milo" in this repo and **the overwhelming majority are the pony** — every
-> chapter's speech, every `alt`, `PtMilo`, `useMiloStore`, `useMiloSpeaker`, `MiloErrorBoundary`.
-> **The rule, and it is the Duo/Duolingo split:**
-> - **A NAMING POSITION carries the product name** — `<title>`, `applicationName`, `og:site_name`,
->   the manifest, the landing wordmark, the sign-in headline, the help/legal titles and back links,
->   and the legal documents' own definition of the service (*"AdaptiveLearn is a maths practice app
->   for children aged 3 to 18"*). Those 17 strings changed.
-> - **THE PONY DOING SOMETHING STAYS MILO** — *"Milo can't find that page"*, *"Oops! Milo tripped
->   over something"*, *"Milo will ask a few quick questions"*, *"Milo's wardrobe"*, and all 626
->   occurrences in `src/features`. **Do not "fix" these for consistency.** A mascot with a name is
->   the point; the product having two names was the bug.
->
-> ⚠️ **THE MANIFEST `name`/`short_name` CHANGED, WHICH IS NOT A FREE EDIT.** Every device with the
-> app on a home screen re-reads the manifest and may re-prompt or relabel the installed icon. That
-> is the correct trade here and it is worth knowing before the next support message about it.
->
-> ⚠️ **The app icon is still the pony and that is right** — Duolingo's icon is Duo. Do not regenerate
-> the icon set to say "AdaptiveLearn".
->
-> **Also fixed:** the sign-in page's subtitle read *"Learning adventures for little ones"* on a
-> product that goes to eighteen. Now *"Adaptive maths for ages 3 to 18"*.
->
-> 🌐 **AND THERE IS A SECOND REPO NOW: `../radlor-site`** — the Radlor company website
-> (`radlor.com`), deliberately a separate repo and a separate Vercel project so a marketing edit
-> cannot touch this deploy pipeline. Ten pages, structured data throughout, `llms.txt`. Its
-> `docs/seo-geo-setup.md` is the standing list of what is left. **Nothing there is pushed yet.**
-
-> 🏗️ **2026-08-18/19 — EVERYTHING MOVED OFF THE PERSONAL GMAIL AND ONTO THE COMPANY (RADLOR). THE APP IS LIVE ON `adaptivelearn.radlor.com`. ⚠️ AND ALONG THE WAY THE FOUNDER LOCKED HIMSELF OUT OF THE PRODUCTION DATABASE, THE DEPLOY PIPELINE BROKE SILENTLY THREE TIMES, AND I "PROVED" A PLAN LIMIT THAT WAS THE OPPOSITE OF TRUE.** 🏗️ SHIPPED — `main`@`e450cd6`, prod serving **sw v120**. `tsc` 0 · **1122/1122 vitest** · `next build` 0.
->
-> **The asks:** *"vercel sahi option hai?"* → *"sab domain ke email pe transfer karna hai"* →
-> *"kaunse subdomain?"* → *"social media handles"* → *"google oAuth custom domain se"* →
-> *"github ka batao"* → *"supabase mein problem ho gayi"* → *"learn.radlor.com kaise banau"*.
->
-> ## ⓪ ⚠️⚠️ THE ONE THAT NEARLY COST THE CHILDREN'S DATA
-> Transferring the Supabase org, the founder made `admin@radlor.com` an Owner and then hit
-> **"Leave team" on the personal account before confirming the new owner worked.** Result: the
-> personal account saw **zero organizations**, `admin@` saw the project but got *"You do not have
-> access to this project"*, and **my MCP lost all access too** (`execute_sql` → "no permission") —
-> so I could not have helped extract anything. Recovered by the founder; 17 learners / 8 accounts /
-> 44 sessions all intact.
-> ⚠️ **THE DATABASE NEVER WENT DOWN** — REST, auth and the app stayed 200 throughout, because those
-> run on the anon key and the URL, not on dashboard membership. **Check that first and say it first;
-> "I am locked out" is not "the app is down".**
-> **THE RULE: on any ownership transfer, verify the NEW owner can actually use the thing, THEN
-> remove the old one. Never the other way round.** The same rule was then applied to Google Cloud
-> and Vercel and both went cleanly.
->
-> ## ① ⚠️⚠️ THE DEPLOY PIPELINE BROKE SILENTLY **THREE** TIMES IN ONE DAY
-> Repo transfer → private → and once more. Every time: **GitHub accepted the push, Vercel created no
-> deployment, production sat on the old build, and there was no error in any UI.** Worse, Vercel's
-> Settings → Git page showed the correct repo *while the webhook was dead*, so the thing you would
-> naturally check to confirm the fix was itself green and wrong.
-> **THE RULE, now also in the header: after ANY repo or host change, push once and confirm a
-> deployment appears. A green settings page is not evidence.** To force one meanwhile:
-> `POST /v13/deployments` with `{gitSource:{type:'github',repoId,ref:'main'}}`.
->
-> ## ② ⚠️⚠️ I PROVED THE WRONG THING ABOUT THE VERCEL PLAN, AND THE FOUNDER WAS RIGHT
-> He said Hobby will not host a private repo. I said it would, flipped it private, POSTed a
-> `gitSource` deployment, watched it go **READY**, and reported that as proof. Vercel's own message
-> when he tried to reconnect Git: *"The repository 'learn' is private and owned by an organization,
-> which is not supported on the Hobby plan."*
-> **The API deploy runs on a USER TOKEN and never crosses the plan gate — the gate is on the Git
-> *integration*.** So I had proven Vercel could CLONE the repo and reported it as proof the plan
-> allowed the integration. It also explains two of the three "mysterious" dead webhooks: no mystery,
-> the plan was blocking. **The unsupported thing is the COMBINATION — private AND org-owned.**
-> Repo is back PUBLIC and must stay so until Pro.
->
-> ## ③ 🔍 THE VERIFICATION TOOL THIS SESSION FOUND: `auth_logs`
-> Whether `adaptivelearn.radlor.com` was on Supabase's redirect allowlist is the one thing that
-> could silently kill sign-in for **5 of 8 accounts**, and I could not test it: driving
-> `/auth/v1/authorize` with the new origin redirected to Google — **but so did a CONTROL with an
-> obviously-forbidden domain.** Supabase validates at the CALLBACK, not at authorize, so the probe
-> could not tell allowed from forbidden. Reported as UNVERIFIED rather than as working.
-> ⚠️ **Then the founder signed in, and `query_logs` on `source='auth_logs'` showed it end to end:**
-> `path=/callback status=302 referer=https://adaptivelearn.radlor.com`, `action=login
-> provider=google`, then `/user` 200s. Plus `"reloading api with new configuration"` at the moment
-> he saved the allowlist. **Supabase auth logs are how you verify an auth change actually worked —
-> use them instead of inferring from a redirect.**
->
-> ## ④ WHAT ACTUALLY MOVED
-> - **GitHub** → `RadlorMain/learn` (Org) — **since renamed `RadlorInc/learn`, 2026-08-20.** Repo ID `1248492657` is unchanged by transfer/rename,
->   which is why Vercel's link survived while its cached `org/repo` label read the old path.
-> - **Supabase** → org owned by `admin@radlor.com`. ⚠️ My MCP connection is **OAuth, not a PAT** —
->   neither account's Access Tokens page lists it. To move it: disconnect/reconnect the connector
->   while signed in as the company account.
-> - **Google Cloud** → the OAuth client lives in project **"AI Detector"** (`ai-detector-493801`),
->   found from the client ID's numeric prefix = the project number **12513320995**, and the URL
->   `console.cloud.google.com/apis/credentials?project=<number>` resolves straight to it.
->   ⚠️ **`admin@radlor.com` is only EDITOR — still open.** Editor cannot manage IAM, so the personal
->   Gmail is still the real owner.
-> - **Vercel** → still `plan: hobby`, still the personal scope. Email change is the cheap move; the
->   Team + project transfer waits for Pro.
-> - **Google OAuth cleanup shipped:** `access_type: 'offline'` and `prompt: 'consent'` removed —
->   nothing ever read `provider_token`, and forcing consent made every returning parent re-approve.
->   Verified on the PROD URL: both params `<<ABSENT>>`, scope/client/redirect unchanged.
->
-> ## ⑤ INFRA VERDICTS GIVEN (measured, not guessed)
-> - **Stay on Vercel; upgrade to Pro before launch.** Hobby is non-commercial-only, its ~1 h log
->   retention is how the plan-pointer P0 hid for three months, and now it also blocks the private
->   repo. Every alternative is a compatibility layer for Next 16 App Router.
-> - **No Google Workspace needed** (₹325/user/mo). Email is on Microsoft 365; a plain Google account
->   on a custom address owns a Cloud project for free. ⚠️ Completing a Workspace signup for
->   radlor.com would have demanded MX pointing at Google and **broken the M365 mailboxes**.
-> - ⚠️ **Supabase's built-in mailer will block signups at launch** — hit live: `{"code":429,"msg":
->   "email rate limit exceeded"}`. 3 of 8 accounts sign up by email. Needs custom SMTP on a
->   dedicated sending subdomain (`mail.radlor.com`).
-> - **Social handles:** `github.com/radlor` is TAKEN; `radlorhq`/`radlor-labs`/`getradlor` free.
->   ⚠️ HTTP status alone cannot tell a taken handle from a free one — **a control handle is what made
->   that check mean anything**, and the same control trick then invalidated my allowlist probe in ③.
->
-> ## ▶ OPEN
-> 1. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA — AND TODAY SHOWED WHY.** `backup.yml` is committed
->    and inert. Add to `RadlorInc/learn` → Settings → Secrets → Actions: `SUPABASE_ACCESS_TOKEN`,
->    `BACKUP_PASSPHRASE`, `PROD_DB_PASSWORD`, `PROD_PROJECT_REF=qaymxunzlarwusogwyak`, then run
->    **Backup (prod database)**. Ten minutes. This is the highest-value thing left in the repo.
-> 2. **Google Cloud: `admin@radlor.com` Editor → OWNER**, accept the emailed invite, then remove the
->    personal Gmail LAST. ⚠️ Never delete the OAuth client or regenerate its secret — 5 users.
-> 3. **Vercel:** set `adaptivelearn.radlor.com` as the **Production Domain** and add
->    `NEXT_PUBLIC_SITE_URL=https://adaptivelearn.radlor.com`, or sitemap/robots/og-image keep
->    advertising the vercel.app host. Keep the vercel.app entry in Supabase's allowlist for now.
-> 4. **Vercel Pro** — gates the private repo, commercial use, and real log retention, all at once.
-> 5. **`SUPABASE_SERVICE_ROLE_KEY`** — the domain blocker is long gone. Order: set key → apply
->    `20260816170000_leads_server_only.sql` → submit one real lead → then `…_leads_retention.sql`.
-> 6. **`DRAFT = true` is still live**, and everything from prior sessions stands (AR never driven
->    with a real hand · `practice_complete` unobserved · dropped EXPLORE beats · 132 eslint errors).
-> 7. Of this session's faults, **the biggest was mine and the founder was right**: I contradicted him
->    on the plan limit and backed it with a test that measured a different thing. The runner-up is
->    that I gave a CNAME target Vercel later stopped recommending. **Both are the same fault — trust
->    the system's own answer at the moment you need it, not the one you captured earlier.**
-
-_Older sessions (2026-06-15 → **2026-08-15**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20._
+_Older sessions (2026-06-15 → **2026-08-19**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
