@@ -34,6 +34,7 @@ import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney, aspectOf } from './critt
 import { rint, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -751,7 +752,7 @@ export default function StoryTime({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<SpRound['w']>(SETTINGS[0])
   const [bg, setBg] = useState(0)

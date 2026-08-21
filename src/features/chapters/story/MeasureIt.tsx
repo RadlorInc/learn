@@ -44,6 +44,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 // A viewport shorter than this is a landscape phone (812×375, 667×375).
 export const SHORT_H = 470
@@ -445,7 +446,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
   const { h: vh } = useViewport()
   const short = vh < SHORT_H
   const [world, setWorld] = useState<MWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [thing, setThing] = useState<Thing>(FOREST[0])
   const [demoIdx, setDemoIdx] = useState(0)
   const [book, setBook] = useState<Thing[]>([])

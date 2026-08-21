@@ -44,6 +44,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import { shuffle } from '@/core/rand'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()`: a wrong tap speaks a line and
@@ -450,7 +451,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
   const { w: vw, h: vh } = useViewport()
   const short = vh < SHORT_H
   const [make, setMake] = useState<Make | null>(() => (forcedId ? makeById(forcedId) ?? null : null))
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
 
   /**
    * The one string. It lives HERE, not inside SkillBeat, which rebuilds its contents every round —

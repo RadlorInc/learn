@@ -38,6 +38,7 @@ import { shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 /**
  * The ONLY thing a tap waits for. Deliberately not `useIsSpeaking()`: a wrong tap speaks a line,
@@ -482,7 +483,7 @@ export default function ShapeTown({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   // The build lives HERE, not inside SkillBeat, which rebuilds its contents every round — anything
   // mounted in there resets with them, so a cumulative arc drawn inside a round can never accumulate.
   const [built, setBuilt] = useState<Set<string>>(() => new Set())

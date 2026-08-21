@@ -38,6 +38,7 @@ import { Hop, SheetCell, Arrive, CRITTER_CSS, hopOf, inFlowJourney } from './cri
 import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 const MILO = '/assets/characters/milo_hop_side.png'
 
@@ -815,7 +816,7 @@ export default function HopAlong({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const [scene, setScene] = useState<Setting>(RUN[0].w)
   const { exit, tally } = useChapterShell(onFinish, onExit)

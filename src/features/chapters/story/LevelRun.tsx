@@ -87,6 +87,7 @@ import { SWEEP_MAX_Y } from '@/infra/ar/sweep'
 import { GotIt, ThePlan, StepBoard, CHALK_CSS, stepBoardRect } from './chalkboard'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 // ─── The level: ten runs ────────────────────────────────────────────────────────────────
 /**
@@ -1535,7 +1536,7 @@ export default function LevelRun({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [demoIdx, setDemoIdx] = useState(0)
   const [served, setServed] = useState<number[]>([])     // the cumulative arc — OUTSIDE SkillBeat
   const needsRotate = useNeedsRotate()

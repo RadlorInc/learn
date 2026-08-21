@@ -47,6 +47,7 @@ import {
 } from './critters'
 import { rint, shuffle } from '@/core/rand'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 export type Op = '+' | '-'
 
@@ -517,7 +518,7 @@ export default function PlayTime({ op = '+', onFinish, onExit }: {
 }) {
   const needsRotate = useNeedsRotate()
   const add = op === '+'
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [stage, setStage] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

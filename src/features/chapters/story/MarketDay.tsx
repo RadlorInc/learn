@@ -34,6 +34,7 @@ import { SheetSprite, CRITTER_CSS, aspectOf, inFlowJourney } from './critters'
 import { rint, shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -544,7 +545,7 @@ export default function MarketDay({ onFinish, onExit }: {
   const needsRotate = useNeedsRotate()
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<MultWorld>(SETTINGS[0])
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

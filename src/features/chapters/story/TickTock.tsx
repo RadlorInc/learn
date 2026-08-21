@@ -49,6 +49,7 @@ import {
 import { rint, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 const wrap = (i: number, n: number) => ((i % n) + n) % n
 
@@ -722,7 +723,7 @@ export default function TickTock({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [gIdx, setGIdx] = useState(0)
   const [slot, setSlot] = useState(0)
   const { w: vw, h: vh } = useViewport()

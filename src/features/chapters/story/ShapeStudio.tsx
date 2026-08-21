@@ -24,6 +24,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { rint, shuffle, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
@@ -268,7 +269,7 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
   onExit?: () => void
 }) {
   const [world, setWorld] = useState<ShWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()

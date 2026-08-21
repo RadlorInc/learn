@@ -44,6 +44,7 @@ import {
 } from './critters'
 import { rint } from '@/core/rand'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 // Same reasoning as chapters 4 and 9: long enough to swallow a double-tap, and deliberately NOT
 // tied to Milo's voice, which stays "speaking" for over 3.2s after a single word.
@@ -496,7 +497,7 @@ export default function BigOrSmall({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [stage, setStage] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

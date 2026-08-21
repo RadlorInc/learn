@@ -27,6 +27,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { rint, shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
@@ -313,7 +314,7 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
   const { h: vh } = useViewport()
   const short = vh < 470
   const [world, setWorld] = useState<NumWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [scene, setScene] = useState<Scene>('house')
   const [demoIdx, setDemoIdx] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

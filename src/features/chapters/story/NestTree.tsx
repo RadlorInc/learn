@@ -35,6 +35,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import { rint, shuffle } from '@/core/rand'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 const SPEAK_LOCK_MS = 600
 const LOOKALIKE: Record<number, number> = { 6: 9, 9: 6, 7: 1, 1: 7, 3: 8, 8: 3, 5: 6, 2: 7 }
@@ -374,7 +375,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
 }) {
   const needsRotate = useNeedsRotate()
   const [world, setWorld] = useState<NestWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [scene, setScene] = useState<string>(WORLDS[0].scenes[0])
   const [demoIdx, setDemoIdx] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

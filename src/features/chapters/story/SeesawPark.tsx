@@ -36,6 +36,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 /** The three signs, in the order they are drawn. The answer is a SIGN, not a side. */
 export const SIGNS = ['>', '<', '=']
@@ -434,7 +435,7 @@ export default function SeesawPark({ onFinish, onExit }: {
 }) {
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<CmpWorld>(SETTINGS[0])
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro')
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()

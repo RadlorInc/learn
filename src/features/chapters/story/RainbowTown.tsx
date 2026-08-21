@@ -51,6 +51,7 @@ import { loadPage, floodRegion, floodNearest, inRegion, paintRegion, type PageBi
 import { shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()` — a wrong tap speaks a line and
@@ -357,7 +358,7 @@ export default function RainbowTown({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('start')
+  const [phase, setPhase] = useChapterPhase<Phase>('start')
   // The skip is offered only to a child who has already sat through the lesson once. Read at mount,
   // so finishing the lesson now does not make the button appear behind the child mid-run.
   const learnerId = useMemo(() => getActiveLearner()?.id, [])

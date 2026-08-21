@@ -40,7 +40,7 @@ const KEYS = [
 const PILL = 'button[aria-label="Hear it again"]'
 
 /** How many chapters this worker actually got into a scored round. See the afterAll below. */
-const tally = { reached: [] as string[], skipped: [] as string[] }
+const tally = { reached: [] as string[], ownPill: [] as string[], skipped: [] as string[] }
 
 /** Walk a storybook chapter from its intro into a scored round. Every chapter's opening differs, so
  *  this clicks whatever moves FORWARD and never the Menu, then stops when SkillBeat's pill appears. */
@@ -99,6 +99,29 @@ async function copiesOf(page: Page, text: string) {
   }, text)
 }
 
+/**
+ * ⚠️ TWO CHAPTERS DO NOT CALL THEIR SCORED PHASE "practice". A wrong value renders nothing, which
+ * is a visible failure rather than a silent one — but it would arrive here as a SKIP, so the names
+ * are stated rather than guessed.
+ */
+const SCORED_PHASE: Record<string, string> = { rainbow: 'test' }
+
+/**
+ * ⚠️ THE CHAPTERS THAT OWN THEIR OWN PILL, AND WHY THIS LIST IS ASSERTED EXACTLY.
+ *
+ * Each of these sets `prompt: () => ''`, so SkillBeat draws NO pill — deliberately, per
+ * chapter-craft §3: "two pills saying the same thing is a duplicate", and the richer surface owns
+ * it. This spec's anchor (`button[aria-label="Hear it again"]`) therefore cannot exist there, and
+ * skipping is CORRECT rather than a driver limit.
+ *
+ * Until 2026-08-21 those two reasons were reported as the same thing — "NOT reached" — which hid
+ * the case that matters: a chapter that SHOULD have a pill and loses one would skip quietly and
+ * read as "the driver couldn't get there". So the list is checked EXACTLY, the way
+ * `storybookQuestions.test.ts` checks `BANNER_OWNED`: a chapter joining or leaving it fails, and
+ * somebody looks at why.
+ */
+const OWN_PILL = new Set(['time', 'fractions', 'bignum', 'round', 'skip'])
+
 for (const key of KEYS) {
   test(`${key}: the question is on screen exactly once`, async ({ page }) => {
     test.setTimeout(180_000)
@@ -106,22 +129,51 @@ for (const key of KEYS) {
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()) })
     page.on('pageerror', e => errors.push(String(e)))
 
-    await page.goto(`/story?ch=${key}`)
+    /**
+     * `?e2e=practice` opens the chapter AT its scored round — see `useChapterPhase`. Without it the
+     * driver has to sit through an intro, a showcase, a demo and a guided round that wants a
+     * CORRECT answer, which a blind driver cannot produce: measured 2026-08-21, 11 of 20 chapters
+     * reached a round and the nine that did not were exactly the ones with an answerable guided
+     * round. The parameter is honoured only outside production.
+     *
+     * ⚠️ THE ORIGINAL DIAGNOSIS IN THIS COMMENT WAS WRONG AND IS KEPT BECAUSE OF THAT. It said
+     * "whatever headless Chromium is doing to these self-paced, speech-adjacent openings" — it was
+     * doing nothing. React StrictMode double-invokes an effect and a `useRef` guard survives the
+     * simulated unmount, so the demo started, was cancelled, and refused to restart. Dev only,
+     * which is why `shapes` failed here and played fine on production. See `useOnceGuard`.
+     */
+    await page.goto(`/story?ch=${key}&e2e=${SCORED_PHASE[key] ?? 'practice'}`)
     /**
      * ⚠️ SKIP, NEVER FAIL, WHEN THE DRIVER CANNOT GET THERE — this spec may only go red on a real
-     * duplicate. Measured 2026-08-20: `solids` reached a round on one run and not the next, and
-     * `shapes` never reached one in 120s against the dev server OR against production, sitting on
-     * its "Meet the shapes!" showcase — a phase whose own timers are a deterministic 9.5s. Whatever
-     * headless Chromium is doing to these self-paced, speech-adjacent openings, it is not something
-     * this spec can assert about, and a gate that fails for a reason unrelated to what it checks is
-     * a gate people learn to re-run instead of read.
+     * duplicate. A gate that fails for a reason unrelated to what it checks is a gate people learn
+     * to re-run instead of read. The blind driver below is still the fallback for any chapter the
+     * parameter does not land squarely in a scored round.
      *
      * The count below is what stops that becoming a silent nothing: a run where every chapter skips
      * is a run that checked nothing, and it says so.
      */
     const reached = await reachRound(page)
-    ;(reached ? tally.reached : tally.skipped).push(key)
-    test.skip(!reached, `${key}: the driver never reached a scored round — not a duplicate-pill failure`)
+    /**
+     * ⚠️ A CHAPTER THAT OWNS ITS OWN PILL IS NOT A CHAPTER THE DRIVER FAILED TO REACH, and
+     * conflating them is how a LOST pill would hide. If `OWN_PILL` says this chapter has no
+     * SkillBeat pill, not finding one is the expected outcome — but if it says the chapter DOES
+     * have one and there is none, that is a real regression and it FAILS.
+     */
+    const ownsPill = OWN_PILL.has(key)
+    if (!reached && !ownsPill) {
+      tally.skipped.push(key)
+      test.skip(true, `${key}: the driver never reached a scored round — not a duplicate-pill failure`)
+      return
+    }
+    if (ownsPill) {
+      // It must still have opened a scored round; it just draws the question itself.
+      const live = await page.locator('button, [role="button"]').first().isVisible().catch(() => false)
+      expect(live, `${key}: nothing operable on screen at its scored phase`).toBe(true)
+      expect(await page.locator(PILL).count(), `${key} is in OWN_PILL, so SkillBeat must draw NO pill — it drew one. Either the chapter gained a beat prompt (and now has two) or the list is stale.`).toBe(0)
+      tally.ownPill.push(key)
+      return
+    }
+    tally.reached.push(key)
 
     // Two rounds, because a chapter can render one phase cleanly and duplicate in another.
     const seen: string[] = []
@@ -165,10 +217,14 @@ for (const key of KEYS) {
  * inferred from a passing tick. (Per worker — with several workers, read the lines together.)
  */
 test.afterAll(async () => {
-  const total = tally.reached.length + tally.skipped.length
+  const total = tally.reached.length + tally.ownPill.length + tally.skipped.length
+  const covered = tally.reached.length + tally.ownPill.length
   console.log(
-    `\n[storybook-pills] checked ${tally.reached.length}/${total} chapters this worker` +
-    (tally.reached.length ? `\n  reached: ${tally.reached.join(', ')}` : '') +
+    `\n[storybook-pills] covered ${covered}/${total} chapters this worker` +
+    (tally.reached.length ? `\n  pill checked:   ${tally.reached.join(', ')}` : '') +
+    // Covered, not skipped: SkillBeat draws no pill here BY DESIGN and that was asserted.
+    (tally.ownPill.length ? `\n  owns its pill:  ${tally.ownPill.join(', ')}` : '') +
+    // The only genuinely unchecked bucket. Anything in it is a hole, not a design choice.
     (tally.skipped.length ? `\n  NOT reached (checked nothing): ${tally.skipped.join(', ')}` : ''),
   )
 })
