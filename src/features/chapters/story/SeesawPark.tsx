@@ -299,7 +299,13 @@ function SignRow({ picked, answer, onPick, revealed, short }: { picked: string |
 
 // ─── Interactive play surface (guided / practice) ───────────────────────────────────
 type Mode = 'guided' | 'practice'
-const sayFor = (d: CmpRound) => `${numberToWords(d.a)} and ${numberToWords(d.b)}. Which sign is right?`
+/**
+ * The written question. ONE place, because it is drawn by the chapter's own pill AND by SkillBeat's
+ * — chapter-craft §3: "a sentence written in two places is the fault; the duplicate pill is only
+ * the symptom".
+ */
+export const ASK = 'Which sign is right?'
+const sayFor = (d: CmpRound) => `${numberToWords(d.a)} and ${numberToWords(d.b)}. ${ASK}`
 
 const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { a, b, item, answer } = data
@@ -333,12 +339,24 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
 
   return (
     <>
+      {/*
+        ⚠️ ONLY OUTSIDE SkillBeat. In a scored round SkillBeat draws its own prompt pill from
+        `beat.prompt`, so rendering this one too put "Which sign is right?" on screen TWICE — one
+        pill 80px down and another above it. The guided round runs outside SkillBeat, so there this
+        is the only pill and it stays. SkillBeat's is the one worth keeping in play: a tap on it
+        replays Milo's voice, this one is `pointerEvents: none`.
+        It had shipped, and no gate could see it: both halves are individually correct and the
+        duplication is a property of the rendered DOM. It took driving the chapter into a scored
+        round, which only became possible once the StrictMode guard was fixed (useOnceGuard).
+      */}
+      {mode !== 'practice' && (
       <div style={{ position: 'fixed', top: short ? 52 : 80, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
         <div style={{ maxWidth: 'min(88vw, 560px)', background: 'rgba(255,255,255,.92)', border: '3px solid var(--outline)', borderRadius: 18, padding: short ? '5px 14px' : '10px 18px',
           fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 'clamp(12px,3.4vh,15px)' : 'clamp(15px,2.2vh,19px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.14)' }}>
-          Which sign is right?
+          {ASK}
         </div>
       </div>
+      )}
       <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '52%' : '46%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 'clamp(8px,2vh,16px)' : 'clamp(12px,3vh,28px)' }}>
         <Scale a={a} b={b} item={item} tilt={tilt} short={short} />
         <SignRow picked={picked} answer={answer} onPick={choose} short={short} />
@@ -396,7 +414,7 @@ export function makeCompareBeat(): Beat<CmpRound> {
     skillId: 'compareNumbers', rounds: SCORED_N, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.a}:${d.b}`,   // dedupe on the MATH (the pair), not the rotating scene/animal
-    prompt: () => 'Which sign is right?',
+    prompt: () => ASK,
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ComparePlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <CompareExplain data={data} onDone={onDone} />,
@@ -457,7 +475,7 @@ export default function SeesawPark({ onFinish, onExit }: {
       <style>{SP_CSS + CRITTER_CSS}</style>
       <Background bg={shown.w.bgs[shown.bg]} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

@@ -1810,6 +1810,43 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   imperative in there — a canvas, a scroll position, a media element — is destroyed with it. In the
   colouring chapter one wrong answer wiped every colour the child had put down. Use
   `el.animate(...)`, which retriggers without touching the DOM.
+- ⚠️⚠️ **A `useRef` GUARD SURVIVES STRICTMODE'S SIMULATED UNMOUNT, SO "RUN THIS ONCE" BECOMES "RUN
+  THIS NEVER" — IN DEV ONLY, WHICH IS WHY IT COST WEEKS.** StrictMode invokes an effect twice —
+  mount, cleanup, mount — and a ref is NOT reset in between. So the shape every story chapter used:
+
+  ```
+  const ran = useRef(false)
+  useEffect(() => {
+    if (ran.current) return; ran.current = true
+    const cancel = speakSteps(lines, { onStep })
+    return cancel                    // ← StrictMode calls this…
+  }, [])                             // ← …then re-runs, and the guard says "already ran"
+  ```
+
+  starts the narration, CANCELS it, and then refuses to start it again. **The demo sits on its first
+  beat for ever**, and since `speakSteps` drives the VISUALS too, the whole chapter is frozen. It was
+  in ELEVEN guards across ten chapters. Use [`useOnceGuard`](../src/shared/hooks/useOnceGuard.ts),
+  which resets the flag in its own cleanup — cleanups run in declaration order, so it fires after
+  the guarded effect's and before the re-run, and a dep-change re-run still sees the guard set.
+  ⚠️⚠️ **AND THE VERIFICATION LESSON IS THE BIGGER HALF: "IT WORKS ON PRODUCTION" IS NOT EVIDENCE
+  AGAINST A DEV-ONLY CAUSE — IT IS WHAT THAT CAUSE PREDICTS.** An earlier session guessed StrictMode,
+  ran the same chapter against prod, saw it work, and wrote the guess off. StrictMode is dev-only, so
+  that run could only ever have told you whether PROD had the same fault; it said nothing about dev.
+  The wrong inference then sat in the handoff as a settled finding, and *"why headless cannot drive a
+  storybook chapter"* stayed open for weeks. **Before you rule a cause out, ask whether your
+  experiment could have detected it at all.**
+  ⚠️ The way it was finally named was not reading, it was instrumenting: patch
+  `speechSynthesis.speak` in an `addInitScript` and log every utterance's start/end/error. Dev
+  produced **zero** speak calls in 42s; prod produced seven and walked into the guided round. One
+  probe, two minutes, and the difference is not arguable.
+- ⚠️ **AND A FROZEN DEMO IS NOT ONLY A TEST PROBLEM — IT IS WHAT KEEPS REAL DEFECTS ALIVE.** Fixing
+  the guard let the storybook chapters be driven into a scored round for the first time (3 of 20 →
+  11 of 20), and the very first full run found Seesaw Park drawing its question **twice** — the
+  duplicate-pill fault §3 already describes, shipped and unseen because nothing could reach the
+  screen it appears on. **A chapter that cannot be driven is a chapter whose gates are decorative.**
+  ⚠️ Worse, the handoff had recorded that chapter as CLEAN, from a grep. Driving it disproved the
+  grep. Same rule as the five-chapters-flagged story in §3, arriving from the opposite direction:
+  a source heuristic can produce a false ALL-CLEAR just as easily as a false alarm.
 - ⚠️ **`getBoundingClientRect` ON A SPRITE-SHEET `<img>` RETURNS THE WHOLE STRIP, NOT THE CREATURE.**
   A 12-cell sheet measures 12 cells wide and is translated inside an overflow-hidden cell, so its
   `bottom` is not where the feet are and its `left` is off-frame by design. Measure the **clipping

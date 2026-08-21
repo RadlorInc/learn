@@ -43,6 +43,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { shuffle } from '@/core/rand'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()`: a wrong tap speaks a line and
@@ -320,7 +321,12 @@ function Tray({ make, choices, stateFor, onTap, trayRef }: {
 function MiloBead({ make }: { make: Make }) {
   const [step, setStep] = useState(0)
   const { h: vh } = useViewport()
-  const srcs = ['/assets/characters/milo_beads.png', '/assets/characters/milo_idle.png']
+  // ⚠️ `milo_beads.png` WAS NEVER DRAWN. It headed this list, so every single load of the chapter
+  // fetched it, took a 404, and fell through to `milo_idle.png` — the picture was always right and
+  // the console always had an error in it, which is the kind of noise a real error then hides in.
+  // (It also fails this repo's own e2e contract, which is zero console errors.) The remaining
+  // fallback to an emoji stays: that is a last resort for a missing file, not art direction.
+  const srcs = ['/assets/characters/milo_idle.png']
   const dim = vh < SHORT_H ? 'min(24vh, 118px)' : 'min(28vh, 230px)'
   return (
     <div style={{ position: 'fixed', left: '9%', bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: dim, height: dim }}>
@@ -401,7 +407,7 @@ const BeadsExplain: React.FC<{ data: PatternRound; make: Make; thread: Thread; p
   const [taken, setTaken] = useState<number | null>(null)
   const [glow, setGlow] = useState(false)
   const trayRef = useRef<HTMLDivElement | null>(null)
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const chant = unit.map(c => BEADS[c].label).join(', ')
@@ -553,7 +559,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
       <Background make={make} />
 
       <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (
