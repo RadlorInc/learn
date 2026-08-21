@@ -139,7 +139,10 @@ export default function AuthPage() {
               key={m}
               onClick={() => { setMode(m); reset() }}
               style={{
-                flex: 1, padding: '9px',
+                // 44px tap floor. At `padding: '9px'` these measured 34px tall at every viewport —
+                // over WCAG AA's 24 but under the 44 this repo aims at, on the two controls that
+                // decide which form a parent is filling in.
+                flex: 1, padding: '9px', minHeight: 44,
                 borderRadius: 9, border: 'none',
                 fontSize: 14, fontWeight: 700, cursor: 'pointer',
                 background: mode === m ? '#fff' : 'transparent',

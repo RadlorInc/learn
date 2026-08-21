@@ -41,6 +41,7 @@ import {
   GATHER_LEFT, GATHER_COL, HUDDLE_RIGHT, LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, STRIP_PX,
   groundSpeed, journeyOf, TRAVEL_MIN, type Journey,
 } from './critters'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 
 // Just long enough to swallow a double-tap. It is deliberately NOT tied to Milo's voice: measured
 // live, `speechSynthesis.speaking` stays true for over 3.2 SECONDS after a single spoken digit
@@ -241,7 +242,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
 
   // The demo drives words and movement from ONE narration, so they can never drift apart — and
   // when audio is blocked speakSteps still paces the steps on a timer.
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (mode !== 'demo') {
       if (mode === 'guided') { setHint('take'); speak(`Now you! Milo needs exactly ${target} ${target === 1 ? kind.little : kind.plural}.`) }
@@ -486,7 +487,7 @@ export default function HomeTime({ onFinish, onExit }: {
       <style>{CRITTER_CSS}{HT_CSS}</style>
       <Background scene={bgScene} scenes={allScenes} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

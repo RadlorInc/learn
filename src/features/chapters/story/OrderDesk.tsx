@@ -1523,7 +1523,7 @@ export default function OrderDesk({ onFinish, onExit }: {
       )}
 
       <button onClick={exit}
-        style={{ position: 'fixed', left: 12, top: 10, zIndex: 60, padding: '7px 14px', borderRadius: 999,
+        style={{ position: 'fixed', left: 12, top: 10, zIndex: 60, padding: '7px 14px', minHeight: 44, borderRadius: 999,
           background: 'var(--paper, #fdf6e8)', border: '3px solid var(--milo-orange, #f26b2c)',
           color: 'var(--milo-orange, #f26b2c)', fontFamily: 'var(--font-display)', fontWeight: 800,
           fontSize: 13, cursor: 'pointer' }}>← Menu</button>
@@ -1573,6 +1573,11 @@ export default function OrderDesk({ onFinish, onExit }: {
             <div>
               <button onClick={() => { unlockSpeech(); if (onCam) hand.useTaps(); else hand.useCamera(); setPhase('plan') }}
                 style={{ marginTop: 12, border: 'none', background: 'transparent', cursor: 'pointer',
+                  // ⚠️ THIS IS THE WAY OUT OF CAMERA MODE, and it measured 21px tall — under WCAG
+                  // 2.5.8 AA's 24px floor. An escape hatch a finger keeps missing is the "AR door
+                  // that could strand a child" fault wearing a smaller costume. Height is bought in
+                  // PADDING so the underlined link looks exactly the same.
+                  padding: '12px 8px', minHeight: 44,
                   fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: '#7a6a55',
                   textDecoration: 'underline' }}>
                 {onCam ? 'Tap the digits instead' : 'Move the digits with your hand and the camera'}

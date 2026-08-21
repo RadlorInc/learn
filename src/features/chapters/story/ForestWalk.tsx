@@ -254,7 +254,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
 
       {/* Top bar */}
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', gap: 10, zIndex: 20 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
         <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'center' }}>
           {chapter.beats.map((_, i) => (
             <div key={i} style={{ width: i === idx ? 18 : 7, height: 7, borderRadius: 4, transition: 'all .3s', background: i < idx ? 'var(--garden-green)' : i === idx ? 'var(--milo-orange)' : 'rgba(61,37,22,.18)' }} />

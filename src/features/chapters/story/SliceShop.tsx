@@ -1059,7 +1059,7 @@ export default function SliceShop({ onFinish, onExit }: {
       <div style={{ position: 'absolute', top: CHROME_PAD, left: 14, zIndex: 50 }}>
         {/* Sized from the same metrics `chromeTop` budgets for, so the band below cannot be wrong. */}
         <button onClick={exit} style={{
-          padding: `${menuBtn(l.short).padY}px ${menuBtn(l.short).padX}px`, borderRadius: 50,
+          padding: `${menuBtn(l.short).padY}px ${menuBtn(l.short).padX}px`, borderRadius: 50, minHeight: menuBtn(l.short).minH,
           background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)',
           fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: menuBtn(l.short).font, cursor: 'pointer',
         }}>← Menu</button>

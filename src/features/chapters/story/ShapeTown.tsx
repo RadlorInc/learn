@@ -37,6 +37,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import { shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 
 /**
  * The ONLY thing a tap waits for. Deliberately not `useIsSpeaking()`: a wrong tap speaks a line,
@@ -377,7 +378,7 @@ const ShapesExplain: React.FC<{ data: ShapeRound; fit: Fit; onDone: () => void }
   const label = SHAPES[part.name].label
   const [taken, setTaken] = useState<number | null>(null)
   const pile = useRef<HTMLDivElement | null>(null)
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const cancel = speakSteps([
@@ -411,7 +412,7 @@ const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   const { w: vw, h: vh } = useViewport()
   const short = vh < SHORT_H
   const px = Math.max(48, Math.min(vw * 0.14, vh * 0.18, 120))
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   const fired = useRef(false)
   const finish = useCallback(() => { if (fired.current) return; fired.current = true; stopSpeech(); onDone() }, [onDone])
   useEffect(() => {
@@ -544,7 +545,7 @@ export default function ShapeTown({ onFinish, onExit }: {
       <Background buildIdx={step.bi} />
 
       <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

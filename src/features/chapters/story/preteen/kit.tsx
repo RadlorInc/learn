@@ -70,7 +70,7 @@ export function LabBackdrop({ accent }: { accent: Accent }) {
 }
 
 export function BackChip({ onExit }: { onExit: () => void }) {
-  return <button onClick={onExit} style={{ position: 'absolute', top: 'calc(14px + env(safe-area-inset-top))', left: 16, zIndex: 55, padding: '7px 15px', borderRadius: 10, background: PT.panel, border: `1px solid ${PT.line}`, color: PT.inkSoft, fontFamily: PT.sans, fontWeight: 600, fontSize: 13, letterSpacing: .3, cursor: 'pointer', backdropFilter: 'blur(6px)' }}>‹ Menu</button>
+  return <button onClick={onExit} style={{ position: 'absolute', top: 'calc(14px + env(safe-area-inset-top))', left: 16, zIndex: 55, padding: '7px 15px', minHeight: 44, borderRadius: 10, background: PT.panel, border: `1px solid ${PT.line}`, color: PT.inkSoft, fontFamily: PT.sans, fontWeight: 600, fontSize: 13, letterSpacing: .3, cursor: 'pointer', backdropFilter: 'blur(6px)' }}>‹ Menu</button>
 }
 
 // Neon corner brackets (HUD flourish) around a panel.

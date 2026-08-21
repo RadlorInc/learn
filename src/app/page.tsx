@@ -77,6 +77,10 @@ const POINTS: { h: string; p: string }[] = [
   },
 ]
 
+/** A footer link's hit area: 44px tall (the aim this repo states everywhere) bought entirely in
+ *  padding, so the row still reads as a line of small text. */
+const tapRow = { display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 8px' } as const
+
 export default function RootPage() {
   return (
     <main style={{
@@ -144,15 +148,23 @@ export default function RootPage() {
           no image is ever uploaded, and every one of those chapters can be tapped instead.
         </p>
 
+        {/*
+          ⚠️ THESE ARE STANDALONE CONTROLS, NOT WORDS IN A SENTENCE, so they owe a real tap target.
+          At `fontSize: 14` with no padding each one measured 19px tall at EVERY viewport — under
+          even WCAG 2.5.8 AA's 24px floor, on the most public page in the product. `tapRow` buys the
+          height in PADDING, so nothing looks different: the text, the colour and the row spacing are
+          unchanged and only the hit area grows. Row `gap` drops to 4 because each link now carries
+          its own 15px of breathing room.
+        */}
         <footer style={{
-          marginTop: 34, paddingTop: 18, borderTop: '2px solid rgba(61,37,22,.10)',
-          display: 'flex', flexWrap: 'wrap', gap: 18, fontSize: 14,
+          marginTop: 34, paddingTop: 8, borderTop: '2px solid rgba(61,37,22,.10)',
+          display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 4, fontSize: 14,
         }}>
-          <Link href="/help" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Help</Link>
-          <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Privacy</Link>
-          <Link href="/legal/terms" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Terms</Link>
-          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#7a6a55', textDecoration: 'none' }}>{SUPPORT_EMAIL}</a>
-          <a href={COMPANY_URL} style={{ color: '#7a6a55', textDecoration: 'none', marginLeft: 'auto' }}>
+          <Link href="/help" style={{ ...tapRow, color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Help</Link>
+          <Link href="/legal/privacy" style={{ ...tapRow, color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Privacy</Link>
+          <Link href="/legal/terms" style={{ ...tapRow, color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Terms</Link>
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ ...tapRow, color: '#7a6a55', textDecoration: 'none' }}>{SUPPORT_EMAIL}</a>
+          <a href={COMPANY_URL} style={{ ...tapRow, color: '#7a6a55', textDecoration: 'none', marginLeft: 'auto' }}>
             {APP_NAME} is made by {COMPANY}
           </a>
         </footer>

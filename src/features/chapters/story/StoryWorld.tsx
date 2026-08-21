@@ -24,6 +24,7 @@ import { CSS as KIT_CSS } from '../lessons/_kit'
 import { Backdrop, type BackdropKind } from './art'
 import MiloSprite from './MiloSprite'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 
 const STORY_CSS = `
 @keyframes s_walk { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-10px) rotate(2deg)} }
@@ -302,7 +303,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
 
 // ─── Walk transition between scenes ────────────────────────────
 function WalkTransition({ onDone }: { onDone: () => void }) {
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const id = window.setTimeout(onDone, 2400)   // long enough to see the walk

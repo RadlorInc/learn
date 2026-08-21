@@ -46,6 +46,7 @@ import {
   groundSpeed, journeyOf, TRAVEL_MIN, type Journey, seeded, maxSizeForRows, spreadBand, BAND_JITTER,
 } from './critters'
 import { rint, shuffle } from '@/core/rand'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 
 export type Op = '+' | '-'
 
@@ -283,7 +284,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
   // In the demo, words and movement come from ONE narration so they can never drift apart (and
   // speakSteps still paces the steps when audio is blocked). In the scored round the same timeline
   // runs with NO voice, because Milo counting aloud would be Milo handing over the answer.
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const movers = Array.from({ length: b }, (_, k) => k)      // always the leftmost slots
@@ -552,7 +553,7 @@ export default function PlayTime({ op = '+', onFinish, onExit }: {
       <style>{CRITTER_CSS}{PT_CSS}</style>
       <Background scene={bgScene} scenes={allScenes} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

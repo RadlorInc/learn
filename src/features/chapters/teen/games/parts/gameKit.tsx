@@ -40,9 +40,23 @@ export function glideNumber(from: number, to: number, setValue: (n: number) => v
 // ── themed styles (functions of palette) ──────────────────────────────────────
 // Sizes use clamp(mobilePx, vw-term, maxPx): phones stay at the mobile floor, but on
 // a roomy laptop the vw term wins so everything scales up to fill the wide screen.
+/**
+ * The teen shell's chrome chip — '‹ Menu', 'Use taps instead', '↺ start over'. ONE style for all of
+ * them, which is why the tap floor is one edit here rather than 37.
+ *
+ * ⚠️ `minHeight` IS FREE, AND THAT WAS MEASURED BEFORE IT WAS WRITTEN. chapter-craft.md's rule is
+ * that on a short frame height comes out of the CHROME before it comes out of the world — so a
+ * taller chip would normally be the wrong trade. It is not one here: at 640x320 the header row
+ * already renders 47px tall (its own padding) against a 31px chip, so 44 fits inside the row that
+ * exists and the play area does not move. Re-measure before raising it again.
+ *
+ * Bought in `minHeight` rather than in `padding` so the chip's own box grows while its text, border
+ * and radius stay exactly where they were — a button centres its content vertically.
+ */
 export const headerChip = (P: Palette): React.CSSProperties => ({
   background: P.glass, border: `1px solid ${P.glassBorder}`, borderRadius: 8, color: P.creamSoft,
   fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'clamp(13px, 1.2vw, 17px)', padding: '6px 12px', cursor: 'pointer',
+  minHeight: 44,
 })
 export const bigBtn = (P: Palette): React.CSSProperties => ({
   padding: 'clamp(13px, 1.4vw, 19px) clamp(34px, 3.6vw, 56px)', borderRadius: 14, background: `linear-gradient(${P.coral}, ${P.coralDeep})`,

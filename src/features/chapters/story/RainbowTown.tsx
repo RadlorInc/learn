@@ -50,6 +50,7 @@ import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
 import { loadPage, floodRegion, floodNearest, inRegion, paintRegion, type PageBitmap, type Region } from './floodFill'
 import { shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()` — a wrong tap speaks a line and
@@ -301,7 +302,7 @@ const Register: React.FC<{ onSubmit: (c: boolean) => void; register: (f: (c: boo
  * child struggled. Renders nothing.
  */
 const Explain: React.FC<{ page: Page; seq: number; onLoad: (c: ColorName) => void; onPaint: () => void; onDone: () => void }> = ({ page, seq, onLoad, onPaint, onDone }) => {
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const t = page.targets[seq]
@@ -637,7 +638,7 @@ export default function RainbowTown({ onFinish, onExit }: {
       </div>
 
       <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {/* One button on the open page — no explaining card, no picker. It exists only to carry the

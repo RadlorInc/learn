@@ -133,6 +133,21 @@ export const strugglerKid = {
 }
 
 /** Console/page errors that are known environment noise, not real defects. */
+/**
+ * THE TWO TAP FLOORS, in one place because three specs now use them and a rule stated twice is a
+ * rule waiting to disagree with itself.
+ *
+ * `MIN_TAP` is the HARD floor — WCAG 2.5.8 AA. Under it a control is not reliably operable by a
+ * finger and the gate fails.
+ * `TIGHT_TAP` is the AIM — Apple/Google guidance and the number chapter-craft.md quotes throughout.
+ * Between the two a control is NOTED, never failed: `short-landscape.spec.ts` made that call first,
+ * deliberately, because a teen instrument packs real controls into a short frame and a hard 44 there
+ * would fail screens that work. Do not raise the hard floor to 44 in one spec only — that is two
+ * gates disagreeing about one rule, and the looser one teaches people to ignore the stricter.
+ */
+export const MIN_TAP = 24
+export const TIGHT_TAP = 44
+
 export const IGNORED_ERRORS =
   /React DevTools|Autoplay|speechSynthesis|AudioContext|user gesture|not allowed to (start|play)|ResizeObserver loop/i
 

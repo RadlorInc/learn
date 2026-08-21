@@ -43,6 +43,7 @@ import { TintedSprite } from './TintedSprite'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 
 // A viewport shorter than this is a landscape phone (812×375, 667×375).
 export const SHORT_H = 470
@@ -321,7 +322,7 @@ const MeasureExplain: React.FC<{ world: MWorld; thing: Thing; onDone: () => void
   const { unit, band } = measureLayout(world.axis, vw, vh)
   const [laid, setLaid] = useState<Laid[]>([])
   const [glow, setGlow] = useState(false)
-  const ran = useRef(false), keyRef = useRef(0)
+  const ran = useOnceGuard(), keyRef = useRef(0)
 
   useEffect(() => {
     if (ran.current) return; ran.current = true
@@ -486,7 +487,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
       <style>{MI_CSS}</style>
       <Background thing={shown} things={world.things} />
       <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)',
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)',
           color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 

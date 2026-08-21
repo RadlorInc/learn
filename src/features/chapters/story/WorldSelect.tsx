@@ -34,7 +34,7 @@ export default function WorldSelect({ title = 'Where shall we go today?', worlds
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(14px,3vh,28px)', padding: '4vh 4vw', background: 'linear-gradient(180deg,#bfe6f7 0%,#d9f0e6 60%,#cdeccf 100%)' }}>
       {onExit && (
-        <button onClick={onExit} style={{ position: 'absolute', top: 14, left: 16, padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={onExit} style={{ position: 'absolute', top: 14, left: 16, padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

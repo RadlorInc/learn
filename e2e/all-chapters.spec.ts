@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { IGNORED_ERRORS } from './personas'
+import { IGNORED_ERRORS, MIN_TAP, TIGHT_TAP } from './personas'
 
 /**
  * THE LAUNCH GATE: every chapter a child can reach actually opens, on every frame they might hold.
@@ -186,21 +186,49 @@ test.describe('every chapter opens', () => {
             document.documentElement.scrollWidth - document.documentElement.clientWidth)
           expect(overflow, `${ch.id}: ${overflow}px of horizontal overflow`).toBeLessThanOrEqual(1)
 
-          // 4. Every visible control is actually on screen and big enough to hit. 44px is the tap
-          //    floor this repo holds everywhere; a control a finger cannot land on is a dead button.
-          const badControls = await page.evaluate(() => {
+          /**
+           * 4. Every visible control is actually on screen AND big enough to hit.
+           *
+           * ⚠️ THIS COMMENT USED TO CLAIM THE 44px FLOOR AND THE CODE ONLY CHECKED `offscreen` —
+           * the tap-size half was never written. "A comment asserting a rule is followed is the
+           * most expensive kind of lie", because it is exactly what stops the next reader checking.
+           * Found while sweeping responsiveness on 2026-08-21.
+           *
+           * The floor is on the SMALLER side of the box, because a 200x20 button is as unhittable
+           * as a 20x200 one. Text links are exempt: `a[href]` inside a sentence is inline and is
+           * legitimately line-height tall — the floor is for CONTROLS, so it is applied to buttons
+           * and to links that are styled as one (a border, a background, or a block display).
+           *
+           * ⚠️ IT FAILS AT `MIN_TAP` (24, WCAG AA) AND ONLY NOTES AT `TIGHT_TAP` (44). The first
+           * draft failed at 44 and went red on 30 chapters over their "Menu" chip — while
+           * `short-landscape.spec.ts` had already, deliberately, made 44 a note. Two gates
+           * disagreeing about one rule is worse than either rule.
+           */
+          const badControls = await page.evaluate(({ MIN_TAP, TIGHT_TAP }) => {
             const out: string[] = []
+            const tight: string[] = []
             for (const el of Array.from(document.querySelectorAll('button, a[href]'))) {
               const r = el.getBoundingClientRect()
               if (!r.width || !r.height) continue                       // not rendered
-              if (getComputedStyle(el).visibility === 'hidden') continue
+              const cs = getComputedStyle(el)
+              if (cs.visibility === 'hidden') continue
               const label = (el.textContent || '').trim().slice(0, 24) || el.tagName
               if (r.right < 0 || r.left > innerWidth || r.bottom < 0 || r.top > innerHeight) {
                 out.push(`offscreen: ${label}`)
+                continue
               }
+              const inlineLink = el.tagName === 'A'
+                && cs.display.startsWith('inline')
+                && cs.borderBottomWidth === '0px'
+                && (cs.backgroundColor === 'rgba(0, 0, 0, 0)' || cs.backgroundColor === 'transparent')
+              if (inlineLink) continue
+              const min = Math.min(r.width, r.height)
+              if (min < MIN_TAP) out.push(`${Math.round(r.width)}x${Math.round(r.height)}: ${label}`)
+              else if (min < TIGHT_TAP) tight.push(`${Math.round(r.width)}x${Math.round(r.height)}: ${label}`)
             }
+            if (tight.length) console.info(`[tight tap] ${tight.join(' | ')}`)
             return out
-          })
+          }, { MIN_TAP, TIGHT_TAP })
           expect(badControls, `${ch.id}: ${badControls.join(' | ')}`).toEqual([])
 
           // 5. Nothing threw while it mounted.

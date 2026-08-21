@@ -34,6 +34,7 @@ import { SHEETS } from './canvas/sheets'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { rint, shuffle } from '@/core/rand'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 
 const SPEAK_LOCK_MS = 600
 const LOOKALIKE: Record<number, number> = { 6: 9, 9: 6, 7: 1, 1: 7, 3: 8, 8: 3, 5: 6, 2: 7 }
@@ -298,7 +299,7 @@ const NestExplain: React.FC<{ world: NestWorld; data: NestRound; onDone: () => v
   const [hint, setHint] = useState(false)
   const [fed, setFed] = useState(false)
   const { at, flyTo } = useFlight(slots)
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const lines = [
@@ -411,7 +412,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
       <style>{NT_CSS}</style>
       <Background scene={bgScene} scenes={world.scenes} dusk={world.dusk} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (
