@@ -250,8 +250,14 @@ export const BAND_JITTER = 2
  * short screen it happily returns a band of a few pixels and both rows land on the same line.
  */
 export function maxSizeForRows(vh: number, rows: number): number {
-  const usable = Math.max(1, vh - BANNER_PX - STRIP_PX)
-  return usable / (1 + ROW_SEP * Math.max(0, rows - 1))
+  // BAND_JITTER is subtracted because `spreadBand` reserves it at the top of the band, and a clamp
+  // that ignores a nudge applied after it is not a clamp. Without this the cap said a sprite fitted
+  // and spreadBand then could not find it the room — measured on chapter 2's bunny at 640x320, rows
+  // 47.6px apart against the 52.8px they needed.
+  const usable = Math.max(1, vh - BANNER_PX - STRIP_PX - vh * BAND_JITTER / 100)
+  // FLOORED: every caller rounds the size it finally draws, and a cap a rounding step can
+  // exceed is not a cap — 92.6 rounded to 93 left chapter 2's rows 0.6px short of ROW_SEP.
+  return Math.floor(usable / (1 + ROW_SEP * Math.max(0, rows - 1)))
 }
 
 /**
@@ -267,7 +273,17 @@ export function spreadBand(b: Habitat, vh: number, size: number, rows: number): 
   const needPct = (size * ROW_SEP * (rows - 1)) / Math.max(1, vh) * 100
   if (b.waitY1 - b.waitY0 >= needPct) return b
   const headroomPct = (BANNER_PX + size) / Math.max(1, vh) * 100 + BAND_JITTER
-  return { ...b, waitY0: Math.max(b.waitY1 - needPct, headroomPct) }
+  // Pulling the FAR edge up is the first move, because feet must stay clear of the bottom strip.
+  // But a habitat whose art direction holds the band high — fish mid-water, fliers up in the sky —
+  // can run out of headroom before the rows are separated, and then the near row simply covers the
+  // far one. Measured on chapter 2 at 640x320: the reef sat 36.8px apart against 52.8px needed
+  // while 26% of the frame below it stood empty. So when the far edge has given all it can, the
+  // NEAR edge takes the rest — down to `maxFeet`, which is the floor fitBands already enforces.
+  // Art direction is worth keeping right up to the point where a number cannot be read.
+  const waitY0 = Math.max(b.waitY1 - needPct, headroomPct)
+  if (b.waitY1 - waitY0 >= needPct) return { ...b, waitY0 }
+  const maxFeet = (vh - STRIP_PX) / Math.max(1, vh) * 100
+  return { ...b, waitY0, waitY1: Math.min(maxFeet, waitY0 + needPct) }
 }
 
 // ─── Timing: one cycle carries one stride ────────────────────────────────────────────

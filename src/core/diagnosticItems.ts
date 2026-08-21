@@ -164,8 +164,17 @@ export function makeItem(skillId: string, ctx?: DiagContext): DiagItem | null {
 // Parent-guided/observational: a pre-reader can't take an MCQ, so the PARENT does a short hands-on
 // activity with the child and taps how it went. "Ready" = can do it (on their own or with a nudge);
 // "Not yet" = a growing edge. Framing is readiness, NOT remediation. Personalized via name + theme.
-const READY_OUTCOMES = ['Yes, on their own', 'With a little help', 'Not yet']
-const READY_PASS = ['Yes, on their own', 'With a little help']
+// These are the answers to "How did it go?" on the parent card, so each one has to finish THAT
+// question. They used to open with 'Yes, on their own' — a yes/no answer to a question that asks
+// neither, and not parallel with the other two. Wording is the tester's own (2026-08-20), with one
+// change: they wrote "this activity" twice and "the activity" once, and being parallel is the whole
+// point of the report, so all three say "this activity".
+const READY_OUTCOMES = [
+  'My child was able to complete this activity on their own',
+  'My child was able to complete this activity with a little help',
+  'My child was not able to complete this activity',
+]
+const READY_PASS = [READY_OUTCOMES[0], READY_OUTCOMES[1]]
 const readyItem = (activity: string): DiagItem => ({ prompt: activity, choices: READY_OUTCOMES.slice(), answer: READY_OUTCOMES[0], kind: 'parent', passSet: READY_PASS.slice() })
 
 const READINESS_GENERATORS: Record<string, () => DiagItem> = {

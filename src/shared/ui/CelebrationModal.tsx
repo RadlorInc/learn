@@ -6,7 +6,10 @@ import { useMiloStore } from '@/state/store'
 import { CHAPTER_ORDER, CHAPTER_NAMES } from '@/core/chapters'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 
-const STAR_MSGS = ['', 'Keep practising — you can do it!', 'Well done! You are getting there!', 'Amazing! You are a star!']
+// The 1- and 2-star lines sit under a heading ("🌟 Great job!" / "💪 Good try!"), so neither may
+// repeat its own heading's word — the 3-star pair used to read "Amazing! / Amazing! You are a
+// star!". Three stars now has no heading at all: this line is the whole announcement.
+const STAR_MSGS = ['', 'Keep practising — you can do it!', 'Well done! You are getting there!', 'Activity Completed! Wow! You\'re doing great!']
 
 interface Props {
   onPlayAgain?: () => void   // override the default "play again" (chapter restart)
@@ -57,16 +60,30 @@ export default function CelebrationModal({ onPlayAgain, onExit, exitLabel, hideN
   }
 
   return (
+    // ⚠️ `align-items: center` CLIPS AN OVERFLOWING CHILD AT THE TOP, and there is no scrolling
+    // back to it. Measured at 640x320 — a short-landscape phone, which is what this band is played
+    // on — the card is 697px tall and its top 189px, Milo and the whole message, were simply off
+    // the screen and unreachable. `margin: auto` centres the same card without clipping, so the
+    // overflow becomes scrollable instead of lost. The shrinking below keeps the scroll short; it
+    // cannot remove it, because three buttons plus the stars are ~500px on any frame.
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100,
       background: 'rgba(61,37,22,0.7)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: 24,
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+      overflowY: 'auto', overscrollBehavior: 'contain',
+      // `min(24px, 2vh)`: the card is 684px tall, so a flat 24px each side pushed it 12px past a
+      // 720-tall laptop and made a celebration scroll for the sake of its own margin. Below ~800
+      // the margin is the cheapest thing in the layout to give back, and on a short frame the
+      // overlay scrolls anyway so nothing is lost there either.
+      padding: 'min(24px, 2vh)',
     }}>
       {/* Confetti */}
       {[...Array(18)].map((_, i) => (
+        // `fixed`, not `absolute`: once the overlay scrolls, an absolute % top is a share of the
+        // CONTENT height, so the confetti stretched out down the whole card instead of falling
+        // across the screen.
         <div key={i} style={{
-          position: 'absolute',
+          position: 'fixed',
           top: `${(i * 17) % 80}%`,
           left: `${(i * 23) % 100}%`,
           width: 14, height: 14,
@@ -79,17 +96,26 @@ export default function CelebrationModal({ onPlayAgain, onExit, exitLabel, hideN
 
       <div style={{
         background: 'var(--paper)', border: '4px solid var(--outline)',
-        borderRadius: 32, padding: '36px 28px 28px',
-        maxWidth: 360, width: '100%', textAlign: 'center',
+        borderRadius: 32, padding: 'min(36px, 6vh) 28px 28px',
+        maxWidth: 360, width: '100%', textAlign: 'center', margin: 'auto',
         boxShadow: '0 8px 0 var(--outline)', position: 'relative', zIndex: 1,
       }}>
+        {/* The two purely decorative things are what a short frame buys its room from — never the
+            buttons, which are what a finger has to hit, and never the words. Plain CSS rather than
+            a viewport hook: no hook means no re-render and it holds at every size, not the ones
+            somebody remembered to branch on. */}
         <Image src="/assets/characters/milo-happy.png" alt="Milo" width={110} height={110}
-          style={{ objectFit: 'contain', marginBottom: 4 }}
+          style={{ objectFit: 'contain', marginBottom: 4, height: 'min(110px, 22vh)', width: 'auto' }}
           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
 
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--t-h1)', color: 'var(--ink)', margin: '0 0 4px' }}>
-          {stars === 3 ? '🎉 Amazing!' : stars === 2 ? '🌟 Great job!' : '💪 Good try!'}
-        </h2>
+        {/* No heading on three stars: the line below is the whole announcement there, and a heading
+            above it only repeated the celebration a second time. Two stars and one still get one —
+            those lines are encouragement, and encouragement wants something to sit under. */}
+        {stars < 3 && (
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--t-h1)', color: 'var(--ink)', margin: '0 0 4px' }}>
+            {stars === 2 ? '🌟 Great job!' : '💪 Good try!'}
+          </h2>
+        )}
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t-body-lg)', color: 'var(--ink-soft)', margin: '0 0 20px' }}>
           {STAR_MSGS[stars]}
         </p>
@@ -97,7 +123,7 @@ export default function CelebrationModal({ onPlayAgain, onExit, exitLabel, hideN
         {/* Stars */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
           {[1,2,3].map(n => (
-            <span key={n} style={{ fontSize: 44, opacity: n <= stars ? 1 : 0.18 }}>⭐</span>
+            <span key={n} style={{ fontSize: 'min(44px, 12vh)', lineHeight: 1, opacity: n <= stars ? 1 : 0.18 }}>⭐</span>
           ))}
         </div>
 
