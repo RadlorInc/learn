@@ -630,11 +630,30 @@ export function Game<V, T extends BaseTask>({
         // landscape phone (measured 740×360) the board + answers no longer fit the
         // 230px that leaves, so let the play area scroll rather than push a tile
         // under the paper. Nothing changes while the drawer is closed.
-        ...(scratch ? { overflowY: 'auto' as const } : null) }}>
+        // ⚠️ AND THE START CARD, FOR A DIFFERENT REASON: it is the one stage with no FitSlot
+        // scaling anything down, so when its ticket + blurb + buttons come out taller than the
+        // column, the start button is simply not on the screen and the chapter cannot be begun at
+        // all. Measured at 640×320 against a production build: the button at y 284–330 of 320 in
+        // EIGHT chapters — ten pixels past the bottom, and `main` reported exactly 10px of unshown
+        // overflow. `auto` shows nothing until that happens; with CenterFill's `safe center` the
+        // overflow can only run off the bottom, so scrolling always reaches the button. Silent
+        // clipping is the dead end. This is the backstop; the gap below is the actual fix.
+        ...(scratch || stage === 'start' ? { overflowY: 'auto' as const } : null) }}>
 
         {stage === 'start' && (
           <CenterFill>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, textAlign: 'center' }}>
+            {/* ⚠️ THE GAP IS THE HEIGHT, AND ON A SHORT FRAME IT IS THE WHOLE DEFECT. Measured at
+                640×320 against a production build: this card's start button rendered at
+                **y 284–330 of 320** — ten pixels below the fold, stable across four seconds and
+                every font-load state, in EIGHT chapters (conicSections, systemsMatrices,
+                systemsOfEquations, quadraticAnalysis, expLogFunctions, unitCircleTrig,
+                trigGraphsIdentities, statsInference). That is the FIRST screen of the chapter and
+                its only forward control, so on a landscape phone those chapters could not be
+                started at all. Two gaps of 18px between ticket, blurb and buttons is 36px of pure
+                spacing on a 320px screen; 8px buys back 20 and the card fits with room over.
+                Height comes out of the SPACING before it comes out of the words — the rule this
+                shell already follows for its header and main padding one screen along. */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 8 : 18, textAlign: 'center' }}>
               <Ticket P={P}>
                 <TicketHead P={P} n={1} label={config.ticketLabel} />
                 <Row P={P} title={config.start.ticket.title} badge={config.start.ticket.badge} tone={config.start.ticket.tone} />
@@ -1429,7 +1448,27 @@ function CenterFill({ children, short, grow = true }: { children: React.ReactNod
   // margins (the row already places it) and no max-width cap to fight the flex basis.
   // grow=false: PlayFrame is centring board+pad as one group, so this column must
   // size to its content — a flex:1 child would absorb the free space and defeat it.
-  return <div style={{ flex: grow ? 1 : '0 0 auto', width: short ? undefined : '100%', minWidth: 0, maxWidth: short ? undefined : 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(10px, 1vw, 16px)', margin: short ? undefined : '0 auto', minHeight: 0, padding: '2px 0 6px', boxSizing: 'border-box' }}>{children}</div>
+  /**
+   * ⚠️ `safe center`, NOT `center` — and the difference is a chapter a child cannot START.
+   * A flex item that cannot shrink below its content overflows BOTH ways under plain
+   * `justify-content: center` (the FitSlot comment below already names this trap for the play
+   * stage). On the START card the overflow is small and the consequence is total: measured at
+   * 640×320 against a production build, the start button rendered at **y 284–330 of 320** in
+   * EIGHT chapters — conicSections, systemsMatrices, systemsOfEquations, quadraticAnalysis,
+   * expLogFunctions, unitCircleTrig, trigGraphsIdentities, statsInference — i.e. hanging off the
+   * screen with no way to begin the chapter. Nightly E2E reported only two of the eight and it
+   * read as flakiness, because `all-chapters` reaches this screen only when it is slow enough to.
+   * `safe` falls back to flex-start the moment the content does not fit, so an overflow can
+   * only ever run off the BOTTOM (where the padding is) and never off the top under the header.
+   * It changes nothing when the content fits, which is every other case.
+   *
+   * ponytail: the `safe` keyword needs Chrome 115+ / Safari 17+. Where it is not understood the
+   * whole declaration is dropped and the column top-aligns instead of centring — cosmetic, and
+   * the button stays reachable, which is the invariant this exists for. If a hand-me-down iPad
+   * on iOS 16 ever matters, the universal equivalent is `overflow-y: auto` on the scroller plus
+   * `margin: auto` on the child (the pattern the celebration modal already uses).
+   */
+  return <div style={{ flex: grow ? 1 : '0 0 auto', width: short ? undefined : '100%', minWidth: 0, maxWidth: short ? undefined : 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'safe center', gap: 'clamp(10px, 1vw, 16px)', margin: short ? undefined : '0 auto', minHeight: 0, padding: '2px 0 6px', boxSizing: 'border-box' }}>{children}</div>
 }
 
 /** Scale-to-fit slot for the INSTRUMENT column (the instrument + its own commit
