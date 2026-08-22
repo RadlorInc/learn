@@ -116,6 +116,86 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🎯 **2026-08-22 (third pass) — THE GAP FINDER IS NOW **96–98% EXACT** AND MISSES A REAL GAP **0%** OF THE TIME. ⚠️⚠️ AND THE FIRST NUMBER I REPORTED THAT MORNING (81–87%) WAS FLATTERED BY MY OWN TOO-KIND GUESS MODEL — THE HONEST BASELINE WAS 73–75%.** `tsc` 0 · **1437/1437** · `next build` 0 · sw **v136 → v137**. NOT COMMITTED.
+>
+> **The ask:** *"jab tak proper gap find karne waala system bane… rukne ki zaroorat naii hai… bas high accuracy gap find karne waala system bane yeh meko chahiye"*.
+>
+> | | morning | now |
+> |---|---|---|
+> | names the EXACT root gap | 26–34% → 81–87%* | **96–98%** |
+> | tells a gapped child they are on track | 10–38% | **0%** |
+> | root one step too SHALLOW (plan starts above the gap) | 12–19%* | **1–2%** |
+> | root one step too DEEP (starts early, climbs) | 5–14% | **1–2%** |
+> | on-grade child wrongly told "a band below" | 6–9% | **0–2%** |
+> | questions, child WITH a gap (median) | 15–27 | **29–50** |
+> | questions, child with NO gap (median) | 9–17 | **20–36** |
+>
+> ## ⓪ ⚠️⚠️ THE INSTRUMENT WAS WRONG BEFORE THE PRODUCT WAS — AGAIN, AND IN MY FAVOUR THIS TIME
+> The morning's gate modelled a child who does not have a skill as passing a TYPED item 3% of the
+> time, flat. That is not a measurement, it is a hope: **a typed answer is only as unguessable as
+> its answer space is wide.** Deriving the rate from what each generator can actually produce
+> dropped the honest figure to **73–75%**, and the same measurement turned up the sharpest bug of
+> the day: **`i.dataGraphs` shuffled a fixed `[2,4,6,9]`, so "how many more" was ALWAYS 7** — one
+> possible answer across every draw the generator could make. The bars varied, so the item looked
+> varied. This repo's own rule, met again from the other side: *the instrument was wrong five times
+> before the app was wrong three* — and a kind instrument is as dangerous as a broken one.
+>
+> ## ① 🎚️ THE RULE: KEEP ASKING UNTIL ONE ANSWER **LEADS** — BY TWO TO PASS, BY **THREE** TO FAIL
+> Not a fixed count. Three designs were built and measured on the way, and each sounds right:
+>
+> | | exact | told "on track" with a real gap | too shallow | on-grade questions |
+> |---|---|---|---|---|
+> | confirm FAILS only (morning) | 73–75% | 3–9% | **12–19%** | 9–17 |
+> | + confirm passes inside a DESCENT | 84–87% | 4–9% | 2–5% | 17–25 |
+> | + confirm passes on SPINE entries | 86–91% | 0–7% | 1–5% | 17–25 |
+> | **+ confirm every answer, asymmetric lead** | **96–98%** | **0%** | **1–2%** | 20–36 |
+>
+> ⚠️ **The asymmetry is the part that is not obvious.** A symmetric "lead of two" fixed the lucky
+> pass and created its mirror — with a 10% slip over thirty questions a double-slip is almost
+> routine, and **8% of ON-GRADE 12–14 children were told their gap sat a whole band below them.** A
+> pass and a fail do not cost the same thing: a pass moves on, a fail sends the search downward and
+> tells a family their child is behind. One more agreeing miss takes that to ~0.1% per skill and
+> costs one extra item on a skill that really is broken — which a broken skill supplies immediately.
+>
+> ## ② 🔢 AND THE ANSWER SPACES WERE WIDENED WHERE THEY WERE NARROW ENOUGH TO GUESS
+> Measured per generator, then fixed: `i.dataGraphs` (1 answer!), `p.fractionsIntro` 3 → ~30,
+> `e.shapes2d` 3 → 5, `i.measureUnits` 5 → five different conversions, plus a dozen more.
+> **Four remaining `pick` items became typed**, because a choice is the only surface left that can
+> be guessed at:
+> - `i.anglesSymmetry` "acute/right/obtuse" (33%!) → *how many degrees away from a square corner* —
+>   ⚠️ and the 90 is deliberately NOT stated, or the item stops being about angles and becomes a
+>   subtraction;
+> - `m.coordinatePlane` "which quadrant" (25%) → read the point's x or y, which also exercises the
+>   sign, the half children actually get wrong;
+> - `a.expressions` → type the coefficient; `a.factoring` → type the smaller root.
+>
+> Only three picks remain and all are honestly categorical: `e.numeralRecog` (naming the glyph IS
+> the skill), `e.patterns`, `c.unitCircleTrig` (its values are surds).
+>
+> ## ③ ⚠️ THE COPY WAS A LIE THE MOMENT THE PROBE GOT LONGER, AND THAT IS PART OF THE CHANGE
+> The intro promised *"a few quick questions"* and the door said *"2 minutes"* — true of a coin flip,
+> false of a 20–50 question placement check. **Copy that undersells the length is worse than copy
+> that oversells it**: a parent promised two minutes abandons at question fifteen and the diagnosis
+> is thrown away. Now *"About ten minutes"*, and the briefing says out loud that Milo asks a few
+> extra whenever he is not sure yet — which is exactly what the engine does.
+>
+> ## ④ WHAT IT COSTS, STATED PLAINLY
+> A child with a gap answers **29–50** questions (17–18 median 50, worst case 70). A child with no
+> gap still answers **20–36**, because every answer is confirmed. Caps are set to the measured p99
+> per band — ⚠️ a cap between p95 and p99 does not shorten anything, it TRUNCATES the one child in a
+> hundred who needed the room, and a truncated search reports whatever it had reached.
+>
+> ## ▶ OPEN
+> 1. 🔴 **NOT COMMITTED.** `tsc` 0 · 1437/1437 · `next build` 0 · lint clean on every changed file ·
+>    driven end to end (full probe → report, 0 console errors).
+> 2. ⚠️ **This is now a placement TEST, not a check.** 20–36 questions for a child with nothing wrong
+>    is the founder's explicit trade (accuracy over length, stated twice) and it is the thing most
+>    worth watching in real use: if completion drops, the lever is the sweep (3–9 questions) or the
+>    pass-confirmation on sweep leaves, and both are one line.
+> 3. **The 3–5 band is untouched** — its items are parent-observed, so "not yet" is an observation
+>    rather than a miss and nothing is re-asked.
+> 4. Everything from the blocks below still stands.
+
 > 🚚 **2026-08-22 (second pass) — THE TWO MISSING CHAPTERS ARE BUILT. `i.multFacts` — THE MOST LOAD-BEARING NODE IN THE WHOLE 3–18 GRAPH — HAD NO CHAPTER FOR NINE DAYS, AND ~10% OF DIAGNOSED 9–11 CHILDREN ROOTED ON IT. THE CONTENT HOLE IS NOW 0% IN EVERY BAND.** `tsc` 0 · **1436/1436** (+59) · `next build` 0 · lint clean on all new files · sw **v134 → v135**. NOT COMMITTED.
 >
 > **The ask:** *"Times Tables + Division chapter ka design bhi same waise hi rakho jaise decimal chapter aur jaise 12-18 age band ke chapters ka hai… daily real world examples"* → then *"dono worlds theek hain, (i) karo — banana shuru karo"*.
@@ -470,207 +550,6 @@
 >    but cannot write cells, and no Sheets connector is in the registry. Needs a browser pass.
 > 6. Everything from the blocks below still stands.
 
-> ❓ **2026-08-20 — THE QUESTIONS, SWEPT ACROSS EVERY CHAPTER WITH A PURE MODULE. THREE CHAPTERS WERE PRINTING THEIR OWN ANSWER — AND ALL THREE WERE THE SAME FAULT: A DEGENERATE DRAW, NOT A BADLY WRITTEN SENTENCE. ⚠️ THE INSTRUMENT WAS WRONG FIVE TIMES BEFORE THE APP WAS WRONG THREE.** `tsc` 0 · **1356/1356** (+163) · `next build` 0 · 20 planted mutations caught, 5 proven inert · sw **v125 → v127**.
->
-> **The ask:** *"check that the questions in all the chapters are correct and make sense… crystal clear… just do the proper deep test"*.
->
-> ## ⓪ ⚠️⚠️ THE ANSWER EQUALS A GIVEN — 25% OF THE EMPTY PLOT'S EASIEST ROUNDS
-> The new gate is `src/__tests__/questionQualitySweep.test.ts`: ONE file applying `chapter-craft.md`
-> §0a/§0b **horizontally**, to all nine chapters that own a pure module. Every 9–11 chapter already
-> has a 50-test gate and they are all VERTICAL — each knows its own chapter deeply and nothing about
-> its neighbours', which is precisely the doc's own complaint (*"most of those rules were learned in
-> chapter 1, forgotten, and re-learned the hard way in a later chapter"*).
->
-> | chapter | the degenerate draw | rate | what the child reads |
-> |---|---|---|---|
-> | **The Empty Plot** | `depth === frontage` — a SQUARE plot | **25% of L1**, 16.6% L2, 14.2% L3 | *"4 metres along the road, and 16 tiles to use up"* → answer **4** |
-> | **The Mission Brief** | `q === b` — a SQUARE division | **16.0% of ÷**, 9.6% of ×then−, 1.0% of − | *"25 bolts shared equally into 5 racks"* → answer **5** |
-> | **Factor Lab** | `k === base` — base × base | **14.4% of ×** | *"a crate holds 8"*; the miss line is *"keep counting up in 8s"* → answer **8** |
->
-> **In none of them is the answer stated AS the answer.** It is a GIVEN that happens to equal it, so
-> a child copies a number off the screen and is right without doing the operation the chapter exists
-> for. The Empty Plot is the sharpest — one tier-1 round in FOUR — and `plotMaths`' own comment
-> already said *"NEITHER may name the depth, however helpfully: it is the whole question"*. It was
-> broken by ARITHMETIC rather than by wording, which is why it survived a 74-test gate.
-> ⚠️ The Mission Brief case also collapses that chapter's stated design — *"every distractor is the
-> answer you would get from the wrong operation"* — because over a THREE-choice pad, "copy a number
-> you can see" beats deciding which operation it is.
-> **All three fixed in the GENERATOR, one redraw each, never a reworded sentence — the sentences were
-> right.** Measured after: 0.00%, 0.00%, 0.00%.
->
-> ## ① 🟰 TWO COINCIDENCES DELIBERATELY LEFT, BOTH MEASURED
-> **The Pizza Counter collides on 34.7% of `match` rounds** (the answer is a count of slices, the
-> givens are two denominators) and it STAYS. Tier 1 is match-only over three pairs, and `[2, 4]` —
-> half a pizza against quarters — collides on its ONLY numerator: that is the single most canonical
-> equivalence in the chapter, and deleting the best worked example to close a coincidence is a bad
-> trade. ⚠️ **It is also the harmless DIRECTION:** it can only make a guess luckier, never make a
-> correct method wrong — unlike The Height Bar's `4 × 12 = 48` landing on a posted limit of 48, which
-> manufactures a wrong answer and is gated. **Ask which way the collision runs before removing
-> anything.** Same call for Slice Shop's miss line naming the friend who went without: that is the
-> chapter's whole argument (a denominator is how many people are waiting), not a proximity hint.
->
-> ## ② 🔬 THE INSTRUMENT WAS WRONG FIVE TIMES BEFORE THE APP WAS WRONG THREE
-> Every one looked exactly like a defect on first read:
-> - *"no reachable input grades true"* on **every** Coin Tray round — I had read the pad as the answer
->   surface, and the answer is a PAIR of wells; the pad is one DIGIT of it.
-> - *"Set the bike ramp to exactly 85° names the answer 85"* — naming the figure IS the ask there,
->   exactly like a coin-tray `make` round.
-> - `plotMaths` has no `answer` field (the answer is `depth`; `target` is the load) and `cargo` has no
->   `spoken`. **`tsc` caught both** — the probe was typed against the real modules, which is the only
->   reason those two took seconds instead of an hour.
-> - The Loading Bay's *"There are only 4 stacks — hold up 1, 2, 3 or 4"* names the answer **and every
->   other option**: it restates the pad. Singling one out is the leak; listing them all is the
->   instrument.
->
-> ## ③ ⚠️⚠️ AND THE SWEEP'S OWN WORST BUG: Q1 WAS A TAUTOLOGY
-> *"Every question is answerable"* read `r.accepts` straight off the round instead of driving
-> `graded`, so it compared the data with itself. **A planted grader that refuses the answer 3 walked
-> through a green sweep.** Every `accepted` now drives the chapter's own grader, and the re-planted
-> mutation fails. Found by mutation, not by reading — the repo's own rule, met again.
-> ⚠️ Two mutations survive and BOTH are proven inert rather than holes: a hot/cold miss line in
-> Factor Lab (its `missFor` does not receive the guess, so it structurally cannot leak it — stronger
-> than any check; the same mutation in The Empty Plot, which DOES receive it, is caught by two rules
-> at once), and an off-by-one Coin Tray grader (caught by `coinTrayDecimals.test.ts`, which is where
-> grader correctness belongs). **The sweep owns horizontal question quality; the per-chapter gates own
-> vertical correctness, and that division is demonstrated rather than assumed.**
->
-> ## ④ WHAT IS AND IS NOT COVERED — stated honestly
-> - ✅ **9 chapters swept** (8 × 9–11 + Slice Shop, 6–8): answerable · nothing pre-answer names the
->   answer · no miss line or redirect names it · a miss does not narrow with the guess · no malformed
->   string · the answer surface is not a coin flip.
-> - ✅ **37 teen chapters** already have `e2e/question-quality.spec.ts` (structural, browser-driven).
-> - ⚠️ **I wrote here that the 24 storybook chapters were unreachable. That was WRONG — see ⑤.**
->   They needed an `export` keyword, not an extraction, and 21 of the 24 ids are now swept.
->
-> ## ⑤ 📚 …AND THEN THE 24 STORYBOOK CHAPTERS WENT IN TOO — I HAD CALLED IT IMPOSSIBLE AND IT WAS A MISSING `export` KEYWORD
-> §④ above concluded *"no gate can reach their question text at all"* and **that was wrong**. Founder:
-> *"What we can do for this?"* — so I measured instead of planning. **A story `.tsx` imports perfectly
-> well under vitest and `beat.make()` / `beat.say()` both run.** The blocker was 22 module-scope
-> declarations that happened not to say `export`. Sized before touching anything: 14 factories + 2
-> `const BEAT` + 3 `WORLDS` arrays + 3 interfaces = **22 one-word edits**, plus 4 pure functions each
-> in BeadShop and RainbowTown (whose beats are built in a `useMemo` from component state, so their
-> module-scope GENERATORS are driven instead of the beat being lifted). No behaviour changed.
-> ⚠️ **THE CLAIM WAS WORTH LESS THAN THE MINUTE IT TOOK TO TEST IT**, and it had already been written
-> into this file as a finding. Same family as *"a source check written BECAUSE the thing cannot be
-> driven — that inability is the finding"*: the inability has to be MEASURED, not assumed.
->
-> **`src/__tests__/storybookQuestions.test.ts` — 87 tests over 28 chapter × world combinations.**
-> ⚠️ **`prompt` AND `say` ARE CHECKED SEPARATELY, and the first draft got that wrong.** Sweeping
-> sentence case over BOTH flagged Market Day's *"two pens of four ducklings. How many in all?"* and
-> Bead Shop's chant *"red, blue, red, blue… what bead comes next?"* — both SPOKEN, where case is
-> inaudible and the lower-case chant is the point. A rule that fires on correct copy gets deleted, so
-> it moved to the channel it is about: shape rules on the drawn line, malformed-text rules on both.
->
-> **Found, and fixed: Shape Studio punctuates the same pill two ways** — `'How many sides?'` ends its
-> sentence and `` `Tap the ${target}` `` did not, in one chapter, on one surface, across 12 shapes.
-> Every other chapter's drawn prompt ends with punctuation.
->
-> ## ⑥ ⚠️ THE REAL GAP IS **THREE** CHAPTERS, NOT TWENTY-FOUR — AND IT IS NOW NAMED
-> Block Yard (both ids), Building Blocks and Coin Shop set `prompt: () => ''` — correctly, per *"TWO
-> PILLS SAYING THE SAME THING IS A DUPLICATE"* — and carry no `say`. Their round data is numbers
-> only (`{slot, a, b, answer, regroup}`), so **the sentence a child reads is assembled inside the
-> component's JSX and nothing can reach it.** `BANNER_OWNED` names those four ids and the gate
-> asserts the list EXACTLY, not as a floor: a chapter that stops stating its question is a chapter
-> that stopped asking one. The fix for each is to lift its banner sentence into a module function —
-> `cargo.instructionFor`'s shape — and it is now three small jobs instead of a band-wide unknown.
->
-> ## ⑦ 🖼️ AND THE DEPLOY FOUND ONE MORE — TWO PILLS, VISIBLE ONLY ONCE THEY AGREED
-> Verifying the Shape Studio punctuation fix on **production**, the screenshot showed the sentence
-> TWICE: *"Tap the triangle!"* in SkillBeat's replay pill and *"Tap The Triangle!"* 21px under it in
-> the chapter's own (`text-transform: capitalize`). Confirmed in the DOM, on the live host.
-> ⚠️ **IT HAD SHIPPED FOR MONTHS AND THE PUNCTUATION FIX IS WHAT EXPOSED IT.** The two copies had
-> DRIFTED — the beat said *"Tap the triangle"*, the pill said *"Tap The Triangle!"* — different
-> enough to read as a heading above a question. Making them identical made the pair obvious.
-> **A sentence written in two places is the fault; the duplicate pill is only the symptom.**
-> Fixed properly: `promptFor(d)` exported and called by BOTH, and the chapter's own pill renders only
-> when `mode !== 'practice'` — the guided round runs OUTSIDE SkillBeat, so there it is the only pill
-> and stays. SkillBeat's is the one worth keeping: a tap on it replays Milo's voice, the chapter's is
-> `pointerEvents: none`.
-> ⚠️⚠️ **THIS PARAGRAPH USED TO SAY THE OTHER FOUR WERE CLEAN "AND CHECKING COST ONE GREP". THE
-> GREP WAS WRONG ABOUT SEESAW PARK — CORRECTED 2026-08-21**, after that chapter was driven into a
-> scored round for the first time (which only became possible once the StrictMode `useRef` guard was
-> fixed, see the 2026-08-21 block) and drew *"Which sign is right?"* **TWICE**: SkillBeat's pill and
-> its own, 80px apart. It gives its beat a real `prompt` AND rendered its own pill unconditionally.
-> Fixed the same way Shape Studio was — one exported `ASK`, and the chapter's pill only when
-> `mode !== 'practice'`. So Shape Studio was NOT "the only one with no guard": there were two.
-> ✅ **The other three ARE clean, and this time that is a MEASUREMENT, not a grep.** BigOrSmall
-> (`kitchen`) is covered by `storybook-pills` and passes; HomeTime and PlayTime cannot be reached by
-> that spec's blind driver, so they were driven directly (temporarily started in `practice`) and each
-> renders its prompt exactly ONCE, inside SkillBeat's pill. ⚠️ All three DO have non-empty beat
-> prompts — an intermediate draft of this correction claimed they did not, which was wrong and is
-> recorded here because it was the same grep-shaped mistake one layer along.
-> **The general lesson this entry originally missed: a source heuristic gives a false ALL-CLEAR as
-> readily as a false alarm.**
-> ⚠️ **No gate can see this class** — both halves are individually correct and the duplication is a
-> property of the rendered DOM. `S4` pins the one chapter that had it; the general case needs an eye,
-> or a live drive that counts pills.
->
-> ## ⑧ ✅ BOTH OPEN ITEMS CLOSED — ONE CLEANLY, ONE WITH A LIMIT WORTH KNOWING
-> **(a) The three JSX-only chapters are reachable now.** Block Yard, Building Blocks and Coin Shop
-> each got an exported `askFor(...)` that the component's own banner calls, so the sentence exists in
-> ONE place and a gate can read it — without touching what renders, and without giving their beat a
-> prompt (which would have put a second pill on screen, the very fault §⑦ was about). Coin Shop
-> already had one. **All 25 storybook chapter ids are now swept; the gap is closed, not narrowed.**
-> ⚠️ Building Blocks' banner read `note || (isMake ? 'Make the number on the order' : ASK[kind])` —
-> and `ASK.make` IS `'Make the number on the order'`, so the ternary was a second copy of a string
-> the map already held. Now `note || askFor(data)`.
-> ⚠️ **AND THE FOUR BANNERS ARE EXEMPT FROM THE SENTENCE-SHAPE RULE, measured rather than assumed.**
-> All 21 pill prompts end their sentence; all FOUR banners do not (*"Ten ones make one rod"*, *"Make
-> the number on the order"*…). A rule that fires on an entire coherent group is wrong about that
-> group — a pill is a question and closes it, a banner is a standing instruction strip. Coin Shop
-> would have been actively wrong to "fix": its `ASK` strings are composed into a spoken sentence that
-> appends its own full stop, so punctuating the map gives *"Count that out for me.."*.
->
-> **(b) `e2e/storybook-pills.spec.ts` counts the pills on a live screen** — anchored on
-> `button[aria-label="Hear it again"]`, which is SkillBeat's pill and exists only in a scored round.
-> **Proven: with the Shape Studio regression planted it fails with the exact diagnosis** — *"Tap the
-> triangle!" is drawn 2 times — SkillBeat's pill plus 1 more at y=76 (text-transform: capitalize)*.
-> ⚠️⚠️ **IT IS NOT A PER-COMMIT GATE AND MUST NOT BECOME ONE.** Driving a storybook chapter into a
-> scored round means sitting through a self-paced intro, showcase, demo and guided round with no
-> voice to pace them, and headless Chromium cannot reliably get there: `solids` reached a round on
-> one run and not the next, and **`shapes` never reached one in 120s against the dev server OR
-> against production**, sitting on a showcase whose own timers are a deterministic 9.5s.
-> ⚠️ **I guessed StrictMode's double-mount and the guess was WRONG** — the prod run killed it, since
-> StrictMode is dev-only. Recorded because the next person will guess the same thing.
-> So the spec **SKIPS rather than fails** when it cannot reach a round: it may only ever go red on a
-> real duplicate. `afterAll` prints which chapters were actually covered, because a run where
-> everything skips checked nothing and would otherwise pass in silence.
->
-> ## ⑨ ⚠️⚠️ "NOW EVERYTHING IS FIXED?" FOUND ANOTHER ONE — FIFTH SESSION RUNNING
-> Asked after ⑧ was reported done and green. The answer was no, and the thing it found was **in the
-> file I had just fixed**: I changed RENDERING code (Building Blocks' banner) and verified it with
-> unit tests only. Driving it on screen took two minutes.
->
-> **The banner reads *"Make twenty-three. Tens on the left, ones on the right."* — built inline in the
-> round's effect — while the `askFor` I had just exported returned `ASK.make`, *"Make the number on
-> the order"*.** The note overrides the banner 400 ms in, so `ASK.make` is text **no child has ever
-> seen**, and the gate was reading it while calling the chapter covered. ⑧'s claim that "all 25 ids
-> are swept" was true of the function and false of the screen.
-> ⚠️ **CoinShop had already written the rule down and I did not read it**: `openerFor` composes
-> `askFor` because the line is *"both spoken and written, and those two drifting apart is how a
-> chapter narrates one thing while the screen says another"*. Building Blocks is now the same shape —
-> `askFor` owns the make sentence, the effect speaks `askFor(data)`, the banner writes it — and the
-> gate reads the same string the screen shows (verified against a live screenshot, both
-> *"Make twenty-three. Tens on the left, ones on the right."*).
-> ⚠️ **The drift itself is invisible to every content rule in the file**, because both strings are
-> well-formed. `S5` pins the SHAPE instead: no `say(\`Make ${…}\`)` at a call site. Mutation-tested.
-> ✅ Checked the other two while there: **CoinShop is clean** (it composes), and **Block Yard has no
-> per-round question by design** — but its step coaching (*"Not enough ones left. Tap a rod…"*) is
-> still built inline and no gate can reach it.
->
-> ## ▶ OPEN
-> 1. **Block Yard's step coaching is unreachable** — the same category as a `missFor`, which IS gated
->    in all eight 9–11 modules. The last of this class.
-> 2. ✅ **CLOSED 2026-08-21 — and it WAS a product bug, contrary to this line.** *"Why headless cannot
->    drive a storybook chapter's opening"* was a StrictMode `useRef` guard freezing the demo in dev.
->    See the 2026-08-21 block ⓪. The claim below that it is *"not a product bug — the chapters play
->    fine in a real browser and on production"* was true of PRODUCTION and false of dev, which is
->    exactly the inference that kept it open.
-> 3. ⚠️ **The lesson, five sessions running: the part that was BUILT gets verified, the part that was
->    RENDERED gets assumed.** Every time this question has been asked it has found something, and
->    every time it was in something already reported as done.
-> 2. Everything from the 🎚️ block below still stands.
-
 > 🎚️ **2026-08-20 — THE ADAPTIVE LOOP, DEEP-TESTED. ⚠️ `GameShell` WAS SERVING EVERY QUESTION AT A TIER THE ENGINE HAD ALREADY LEFT, AND THE ENGINE'S OWN TESTS WERE GREEN THE WHOLE TIME. PLUS: THE RE-TEACH SEEN FIRING FOR THE FIRST TIME, AND EVERY BAND NOW RESUMES AT THE TIER THE CHILD LEFT OFF ON.** `tsc` 0 · **1193/1193** (+58) · `next build` 0 · **18/18 planted source mutations caught** · sw **v124 → v125**.
 >
 > **The asks:** *"deep testing … adaptive system proper kaam kar raha hai / re-explanation aa raha hai / difficulty ke according aa raha hai"* → *"level persistent hai naa?"* → *"sab mein waise chahiye"* + sync.
@@ -778,4 +657,4 @@
 > 2. Five orphaned art exports in `art.tsx` (§⑤) — delete only if you want the library tidy.
 > 3. Everything from prior sessions stands unchanged.
 
-_Older sessions (2026-06-15 → **2026-08-20**, including 🇺🇸 the US-spelling / SEO / region-migration day and 🔗 the social-handles day, both moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-20**, including 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day and ❓ the question-quality sweep, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._

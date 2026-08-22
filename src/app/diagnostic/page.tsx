@@ -320,7 +320,12 @@ export default function DiagnosticPage() {
             cta={readiness ? "Let's play together" : "Let's explore"}
             body={readiness
               ? "Sit with your child for a few minutes of play. Milo suggests a small activity; you do it together and tap how it went — no scores, no pass/fail, just a friendly picture of what they're ready for."
-              : "Milo will ask a few quick questions to find exactly where to help — not a test, no scores, no timers. Just play along; some will be easy, some tricky. Milo figures out the rest."}
+              /* ⚠️ "A FEW QUICK QUESTIONS" AND "2 MINUTES" WERE TRUE OF THE FIRST BUILD AND BECAME
+                    A LIE ON 2026-08-22, when the probe started confirming every answer to reach
+                    96–97% accuracy: a child now answers 20–50 of them. Copy that undersells the
+                    length is worse than copy that oversells it — a parent who was promised two
+                    minutes abandons at question fifteen, and the diagnosis is thrown away. */
+              : "Milo will ask a set of questions to find exactly where to help — not a test, no scores, no timers, and nothing to lose by getting one wrong. Some will be easy and some tricky; he asks a few extra whenever he is not sure yet. About ten minutes."}
             onStart={begin} />}
         <PtMilo left={9} />
       </div>
@@ -583,7 +588,7 @@ function EmailGate({ accent, short, onSubmit }: { accent: Accent; short?: boolea
         />
         {err && <div style={{ marginTop: 8, fontFamily: PT.sans, fontSize: 13, color: '#ff8a80' }}>{err}</div>}
         <button onClick={submit} disabled={!valid} style={{ marginTop: 16, width: '100%', padding: 16, borderRadius: 50, border: 'none', cursor: valid ? 'pointer' : 'not-allowed', background: valid ? accent.base : PT.line, color: valid ? '#06121f' : PT.inkMute, fontFamily: PT.sans, fontWeight: 800, fontSize: 17, boxShadow: valid ? `0 0 22px ${accent.base}66` : 'none', transition: 'all .16s ease' }}>Start the check →</button>
-        <p style={{ margin: '12px 0 0', fontFamily: PT.sans, fontSize: 11.5, color: PT.inkMute }}>Free · takes about 2 minutes</p>
+        <p style={{ margin: '12px 0 0', fontFamily: PT.sans, fontSize: 11.5, color: PT.inkMute }}>Free · takes about ten minutes</p>
       </div>
     </div>
   )
@@ -599,7 +604,7 @@ function AgePicker({ accent, onPick }: { accent: Accent; onPick: (b: Band) => vo
         // `minHeight` means anything, and centring keeps the label where it was.
         display: 'inline-flex', alignItems: 'center', minHeight: 44 }}>Log in →</a>
       <div style={{ textAlign: 'center', maxWidth: 460 }}>
-        <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2, color: accent.base, textTransform: 'uppercase', marginBottom: 8 }}>Free · 2 minutes · no account needed</div>
+        <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2, color: accent.base, textTransform: 'uppercase', marginBottom: 8 }}>Free · about 10 minutes · no account needed</div>
         <h2 style={{ margin: '0 0 6px', fontFamily: PT.sans, fontWeight: 700, fontSize: 24, color: PT.ink }}>How old is your child?</h2>
         <p style={{ margin: 0, fontFamily: PT.sans, fontSize: 15, lineHeight: 1.5, color: PT.inkSoft }}>Milo will find exactly where to help — the deepest thing worth fixing first.</p>
       </div>

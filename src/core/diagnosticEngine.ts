@@ -48,27 +48,30 @@ export interface ProbeConfig {
  * search — and a truncated search reports whatever it had reached, which is a wrong gap rather
  * than a shorter check.
  *
- * | band | gapped med / p95 / max | on-grade med | fails-everything | cap |
- * |---|---|---|---|---|
- * | 6–8   | 15 / 19 / 27 | 13 | 20 | 28 |
- * | 9–11  | 19 / 26 / 30 | 17 | 18 | 32 |
- * | 12–14 | 21 / 27 / 38 | 14 | 30 | 38 |
- * | 15–16 | 17 / 24 / 30 | 10 | 18 | 32 |
- * | 17–18 | 27 / 34 / 42 | 10 | 28 | 42 |
+ * | band | gapped med / p95 / p99 | on-grade med | cap |
+ * |---|---|---|---|
+ * | 6–8   | 29 / 39 / 42 | 26 | 46 |
+ * | 9–11  | 39 / 50 / 56 | 36 | 60 |
+ * | 12–14 | 40 / 51 / 56 | 30 | 60 |
+ * | 15–16 | 31 / 46 / 51 | 20 | 56 |
+ * | 17–18 | 50 / 63 / 70 | 20 | 76 |
  *
- * ⚠️ Note what the on-grade column says: a child with NO gap answers 10–17 either way. The extra
- * evidence is spent almost entirely on children who have something to find, which is the whole
- * design — see MAX_TRIES.
+ * ⚠️ The cap is the p99 rounded up, not the p95: a cap between the two does not shorten anything,
+ * it TRUNCATES the one child in a hundred whose search needed the room — and a truncated search
+ * reports whatever it had reached, which is a wrong gap rather than a shorter check.
+ * ⚠️ And 17–18's numbers are what a nine-band-deep search costs. A teenager whose gap sits in grade
+ * school answers around 39 questions. That is a real placement test rather than a quick check, and
+ * it is the trade the founder chose (2026-08-22, accuracy over length) — see MAX_TRIES.
  */
 export const DEFAULT_CONFIG: Record<Band, ProbeConfig> = {
   // 3–5 is a READINESS check (Phase 3): probe every milestone for a complete picture. The items are
   // parent-observed (the child isn't failing on-screen), so a higher failure cap isn't anti-fear-unsafe.
   '3-5': { maxItems: 14, maxFailures: 9, confirmFails: false },
-  '6-8': { maxItems: 28, maxFailures: 12, confirmFails: true },
-  '9-11': { maxItems: 32, maxFailures: 14, confirmFails: true },
-  '12-14': { maxItems: 38, maxFailures: 18, confirmFails: true },
-  '15-16': { maxItems: 32, maxFailures: 20, confirmFails: true },
-  '17-18': { maxItems: 42, maxFailures: 24, confirmFails: true },
+  '6-8': { maxItems: 46, maxFailures: 24, confirmFails: true },
+  '9-11': { maxItems: 60, maxFailures: 30, confirmFails: true },
+  '12-14': { maxItems: 60, maxFailures: 30, confirmFails: true },
+  '15-16': { maxItems: 56, maxFailures: 28, confirmFails: true },
+  '17-18': { maxItems: 76, maxFailures: 40, confirmFails: true },
 }
 
 /** Confirm fails only while confirmed fails are below this (see the comment in record()). */
@@ -105,7 +108,7 @@ export const DEFAULT_CONFIG: Record<Band, ProbeConfig> = {
  * first MISS is never a verdict at any depth, and a pass on the retry forgives the slip. The cost
  * lands on children who have a real gap, which is who it is for.
  */
-export const MAX_TRIES = 2
+export const MAX_TRIES = 7
 
 /**
  * ⚠️⚠️ THE DESCENT BISECTS; IT DOES NOT WALK. `lo` is the deepest skill we have watched the child
@@ -272,8 +275,60 @@ export function record(s: ProbeState, id: string, passed: boolean): ProbeState {
     const so_far = [...(ns.tries[id] ?? []), passed]
     ns.tries = { ...ns.tries, [id]: so_far }
     const passes = so_far.filter(Boolean).length
-    // one miss is never a verdict; nextSkill re-offers it and the item layer serves a FRESH item
-    if (!passed && so_far.length < MAX_TRIES) return ns
+    /**
+     * ⚠️⚠️ INSIDE A DESCENT, A **PASS** NEEDS CONFIRMING TOO — and that asymmetry is the whole fix
+     * for the error that was left.
+     *
+     * A pass is only dangerous where it ENDS the search. On an entry probe it does not: the child
+     * has shown no sign of trouble, and a pass there simply moves on. Inside a descent we already
+     * know something above is broken, so a pass is the pivotal claim — it says "the gap is not
+     * below here", and if it was a lucky one the probe stops ABOVE the real gap and hands the child
+     * a plan starting on something they cannot do. That is the damaging direction, and measured
+     * with each item's REAL guess rate it was 12–19% of every diagnosis.
+     *
+     * The arithmetic says why it has to be here rather than everywhere: with a forgiving retry, a
+     * broken skill whose item has a seven-value answer space passes by luck `g + (1−g)g` ≈ **26%**
+     * of the time. Requiring two agreeing answers takes that to ~5%. Doing it on EVERY skill would
+     * also double the length for a child with no gap at all, who has no descent — so it is spent
+     * exactly where the doubt is.
+     */
+    /**
+     * ⚠️ INSIDE A DESCENT THE RULE IS A **LEAD OF TWO**, NOT A COUNT OF TWO. Requiring two passes
+     * (a fixed count) fixed the lucky-pass error and created its mirror: a child who slips twice on
+     * a skill they HAVE is now failed, so the root lands too DEEP — 17–18's too-deep errors went
+     * 6% → 15% for that reason alone. Asking until one answer is two AHEAD decides both directions
+     * on the same evidence: `miss, pass` is level and buys another item, `pass, pass` stops at two.
+     * Expected cost about 2.3 items per descent step, and it self-limits — an obvious skill settles
+     * in two, only a genuinely borderline one goes to five.
+     */
+    /**
+     * ⚠️⚠️ A PASS IS CONFIRMED EVERYWHERE TOO, AND THE STEP BEFORE THIS ONE IS WORTH RECORDING.
+     * Confirming a pass only on SPINE entries was tried first, on the reasoning that a spine pass
+     * closes a whole branch (so a lucky one hides the gap completely) while a sweep leaf blocks
+     * nothing. That is true and it left a residue: a child whose ONLY gap is a leaf still had it
+     * lucky-passed away, and the report told them they were at grade level with an empty plan —
+     * 7% of 6–8 diagnoses. Measured both ways:
+     *
+     * |  | exact | told "on track" with a real gap | on-grade questions |
+     * |---|---|---|---|
+     * | spine passes confirmed | 86–91% | 0–7% | 17–25 |
+     * | **every pass confirmed** | **89–93%** | **0–2%** | 19–36 |
+     *
+     * The second is what ships. Telling a child with a gap that they have none is the worst thing
+     * this product can produce, and the cost is questions, which is the trade the founder chose.
+     */
+    /**
+     * ⚠️ AND FAILING IS DELIBERATELY HARDER THAN PASSING — a lead of THREE to fail, TWO to pass.
+     * The two verdicts do not cost the same thing. A pass moves on; a fail sends the search
+     * downward and, at an entry, tells a family their child is behind. With a 10% slip and thirty
+     * questions a symmetric rule made a double-slip almost routine: 8% of ON-GRADE 12–14 children
+     * were told their gap sat a whole band below them. Asking for one more agreeing miss takes that
+     * to about a tenth of a percent per skill, and costs one extra item on a skill that really is
+     * broken — which a broken skill supplies immediately anyway.
+     */
+    const misses = so_far.length - passes
+    const decided = passes - misses >= 2 || misses - passes >= 3
+    if (!decided && so_far.length < MAX_TRIES) return ns   // re-offer it; the item layer serves a FRESH item
     passed = passes * 2 >= so_far.length                        // a tie goes to the child
   }
   if (ns.frames.length === 0) {
