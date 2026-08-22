@@ -290,9 +290,42 @@ test.describe('every chapter opens', () => {
               if (getComputedStyle(el).visibility === 'hidden') continue
               const label = (el.textContent || '').trim().slice(0, 24) || el.tagName
               // `top > innerHeight` alone misses the commonest case — a control that STRADDLES the
-              // bottom edge is still unhittable. Require the whole box to be inside the frame.
-              if (r.bottom > innerHeight + 1 || r.top < -1 || r.right > innerWidth + 1 || r.left < -1) {
-                out.push(`offscreen after entering: ${label} (${Math.round(r.top)}–${Math.round(r.bottom)} of ${innerHeight})`)
+              // bottom edge is still unhittable. Require the whole box to be inside the frame
+              // VERTICALLY, which is the axis on which nothing in this app is ever staged.
+              // ⚠️ The message names its AXIS. The old one printed the y-range for a violation that
+              // was horizontal (`BUTTON (30–249 of 720)` on a 720-tall frame reads as perfectly
+              // in-frame), which is what made two nights of nightly failures unreadable.
+              if (r.bottom > innerHeight + 1 || r.top < -1) {
+                out.push(`offscreen after entering (vertical): ${label} (y ${Math.round(r.top)}–${Math.round(r.bottom)} of ${innerHeight})`)
+              }
+              /**
+               * ⚠️⚠️ HORIZONTAL IS A DIFFERENT AXIS AND REQUIRING THE WHOLE BOX INSIDE IT WAS A
+               * FALSE ALARM THAT WENT RED FOR TWO NIGHTS. In the 3–5 story band an answer creature
+               * IS a `<button>`, and chapter-craft's first rule is that nothing materialises — a
+               * creature WAITS off-stage and arrives on its own legs. Measured on `counting` at
+               * 1280×720 against a production build: two buttons parked at x −332..−78 and
+               * 1358..1612, each carrying `transition: left 2.6s linear`. They are staging, not a
+               * defect, and they only appear ~4 s after entering — so a fast machine measured
+               * before the parade spawned and the slow CI runner measured after it. The check was a
+               * race, and the thing it raced against was the chapter working correctly.
+               *
+               * So the exemption is narrow and is read off the element itself. ⚠️ `transition-
+               * property` ALONE IS NOT ENOUGH AND SILENTLY EXEMPTED EVERYTHING: a first draft also
+               * matched `all`, and `← Menu` computes `transition-property: all` with
+               * `transition-duration: 0s` — i.e. every ordinary styled button in the app. Mutating
+               * the bound to `r.right > 1` then failed to flag a single control, which is what a
+               * check that exempts the whole world looks like from the outside: green. The
+               * discriminator is the property AND a real duration; a hover transition has none.
+               *
+               * Everything else still fails here — including a `position: fixed` control genuinely
+               * pushed sideways out of reach, the ScribblePad-over-the-keys shape this repo has
+               * already shipped once — and page-level overflow still fails on `scrollWidth` below.
+               */
+              const cs2 = getComputedStyle(el)
+              const dur = Math.max(...cs2.transitionDuration.split(',').map(d => parseFloat(d) || 0))
+              const travelling = dur >= 0.3 && /\b(left|transform)\b/.test(cs2.transitionProperty)
+              if (!travelling && (r.right > innerWidth + 1 || r.left < -1)) {
+                out.push(`offscreen after entering (horizontal): ${label} (x ${Math.round(r.left)}–${Math.round(r.right)} of ${innerWidth})`)
               }
             }
             if (document.documentElement.scrollWidth - document.documentElement.clientWidth > 1) {

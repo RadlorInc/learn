@@ -86,7 +86,12 @@ jobs:
           if [ -n "$ONLY_INPUT" ]; then
             export E2E_ONLY="$ONLY_INPUT"
           fi
-          npx playwright test e2e/all-chapters.spec.ts
+          # ⚠️ `start-card` runs alongside, and it is not redundant. `all-chapters` enters a
+          # chapter by clicking its biggest control and measuring 900 ms later, which on a
+          # GameShell route lands on the ExploreStep — one screen BEFORE the start card. Eight
+          # chapters shipped with their start button 10px below the fold at 640×320 and that gate
+          # reported them clean, because it never loaded the screen the defect is on.
+          npx playwright test e2e/all-chapters.spec.ts e2e/start-card.spec.ts
 
       # Traces are retain-on-failure, so this uploads only when there is something to look at —
       # which is the difference between a red nightly you can diagnose and one you re-run blindly.
