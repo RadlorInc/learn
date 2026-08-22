@@ -26,7 +26,7 @@ export type ChapterType =
   | 'numbersTo100' | 'placeValue' | 'skipCounting' | 'storyProblems' | 'multiplication' | 'fractions' | 'money' | 'time'
   | 'compareNumbers' | 'additionTo100' | 'subtractionTo100' | 'shapes2d3d'
   // 9–11
-  | 'bigNumbers' | 'rounding' | 'factorsMultiples' | 'fractionsCompare' | 'decimals' | 'measurementUnits' | 'areaPerimeter' | 'anglesSymmetry' | 'dataGraphs' | 'wordProblems'
+  | 'bigNumbers' | 'rounding' | 'timesTables' | 'division' | 'factorsMultiples' | 'fractionsCompare' | 'decimals' | 'measurementUnits' | 'areaPerimeter' | 'anglesSymmetry' | 'dataGraphs' | 'wordProblems'
   // 12–14 (teen "Field Lab")
   | 'integers' | 'signedRationalOps' | 'rationalOps' | 'ratioProportion' | 'percentages' | 'exponentsRoots'
   | 'orderOfOperations' | 'algebraicExpressions' | 'equationsInequalities' | 'coordinatePlane' | 'linearRelationships' | 'geometryMeasurement'
@@ -81,6 +81,8 @@ export const CHAPTERS: ChapterMeta[] = [
   // ── 9–11 ──
   { id: 'bigNumbers',         name: 'Big Numbers',        parentLabel: 'Big Numbers',       emoji: '🔢', asset: '/assets/objects/star.png',           hint: 'Place value to thousands!', ageGroups: ['9-11'] },
   { id: 'rounding',           name: 'Rounding',           parentLabel: 'Rounding',          emoji: '🎯', asset: '/assets/objects/star.png',           hint: 'Round to the nearest 10 or 100!', ageGroups: ['9-11'] },
+  { id: 'timesTables',        name: 'The Packing Shed',   parentLabel: 'Times Tables',      emoji: '📦', asset: '/assets/objects/apple.png',          hint: 'Every crate holds the same — how many altogether?', ageGroups: ['9-11'] },
+  { id: 'division',           name: 'The Minibus Run',    parentLabel: 'Division',          emoji: '🚌', asset: '/assets/objects/star.png',           hint: 'Share them out — and see who is left waiting!', ageGroups: ['9-11'] },
   { id: 'factorsMultiples',   name: 'Factors & Primes',   parentLabel: 'Factors & Primes',  emoji: '🧩', asset: '/assets/objects/star.png',           hint: 'Even/odd, multiples, factors & primes!', ageGroups: ['9-11'] },
   { id: 'fractionsCompare',   name: 'Fractions',          parentLabel: 'Fractions',         emoji: '🍕', asset: '/assets/objects/pizza_base.png',     hint: 'Same amount, different slices!',       ageGroups: ['9-11'] },
   { id: 'decimals',           name: 'Decimals',           parentLabel: 'Decimals',          emoji: '🏷️', asset: '/assets/objects/star.png',           hint: 'Dimes are tenths, pennies are hundredths!', ageGroups: ['9-11'] },

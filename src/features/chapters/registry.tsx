@@ -152,6 +152,19 @@ const TEEN_CHAPTERS = {
    *  is — `band: '9-11'` is what makes each a ten-round, never-resuming, hand-answerable run. They
    *  left `storyChapters.tsx`, so `/story?ch=…` now reports an unknown key for them by design; the
    *  preview is `/teen-preview?c=<id>`. */
+  /** ⚠️ THE TWO CHAPTERS THE SKILL GRAPH HAD NO ROUTE TO. `i.multFacts` is the most load-bearing
+   *  node in the whole 3–18 graph and `i.division` sits right above it, and both mapped to `''`
+   *  after Times Tables and Division were deleted (2026-08-13) — so ~10% of diagnosed 9–11 children
+   *  rooted on a skill with no chapter, and the stand-in sent them to equal-groups multiplication,
+   *  which by the definition of a root they had already PASSED. Built 2026-08-22. */
+  timesTables: teen(
+    { skill: "timesTables", band: "9-11", conceptsConfirmed: ["Times-table facts without counting", "Finding the missing factor", "Splitting a two-digit crate into tens and ones", "Reading a multiplication back as an array"], nextPointer: "Next: division." },
+    () => import("@/features/chapters/teen/games/PackingShedGame"),
+  ),
+  division: teen(
+    { skill: "division", band: "9-11", conceptsConfirmed: ["Sharing equally between groups", "Counting how many groups fit", "What is left over", "Why a remainder means one more"], nextPointer: "Next: factors, multiples & primes." },
+    () => import("@/features/chapters/teen/games/BusRunGame"),
+  ),
   factorsMultiples: teen(
     { skill: "factorsMultiples", band: "9-11", conceptsConfirmed: ["Even and odd", "Counting in multiples", "Factors as equal rows", "Primes"], nextPointer: "Next: comparing fractions." },
     () => import("@/features/chapters/teen/games/FactorLabGame"),
