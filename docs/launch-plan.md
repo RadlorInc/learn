@@ -72,7 +72,7 @@ Ordered by lead time, longest first. **Start #1 today**; it is the only item tha
 | B8 | Vercel WAF rate-limit rules (esp. the anon lead-insert path) | **[F]** dashboard | Your only defence against day-one abuse. |
 | B9 | **A real human signs up on a real device with a real email**, adds a learner, runs the diagnostic, plays a chapter, and confirms progress persists after closing the app | **[F]** | I cannot receive an email or hold a phone. Nothing else substitutes for this. |
 | B10 | ~~Decide the public brand~~ **DECIDED 2026-08-18: `radlor.com`** (parent company) is the one public domain; mi2utor.com is retired to a 301. Milo stays the product/character name inside the app. | ✅ | Was blocking copy and the support address; both now point at radlor.com. |
-| B11 | Confirm **`support@radlor.com`** actually receives mail and someone reads it | **[F]** | It is the in-app support address (now from ONE constant, `app/site.ts`). ⚠️ radlor.com has **no MX record yet** — until a mailbox exists, every support request bounces. |
+| B11 | Confirm **`support@radlor.com`** actually receives mail and someone reads it | **[F]** | It is the in-app support address (now from ONE constant, `app/site.ts`). ✅ **DNS half is DONE, measured 2026-08-23**: MX → `radlor-com.mail.protection.outlook.com` (Microsoft 365), SPF `v=spf1 include:spf.protection.outlook.com include:secureserver.net -all`, DMARC `p=quarantine`. ⚠️ Mail can now ARRIVE; whether a human reads it is still the founder's half, and that is what this row is now about. |
 
 ---
 

@@ -1,3 +1,146 @@
+> 📐 **2026-08-21 — A TESTER'S FOUR BUGS, THEN EVERY CHAPTER SWEPT FOR RESPONSIVENESS, AND FINALLY THE GUTTHI THIS FILE HAS CARRIED FOR WEEKS: ⚠️⚠️ A `useRef` GUARD WAS FREEZING TEN CHAPTERS' DEMOS — IN DEV ONLY — AND THE EARLIER SESSION'S "IT WORKS ON PROD" RULED IT OUT BACKWARDS.** `tsc` 0 · **1360/1360** (+4) · **267/267 e2e** · **20/20 storybook** · `next build` 0 · sw **v127 → v133**. ✅ SHIPPED — `main`@`ea6ee6b`, 6 commits, deployment READY and prod serving v133.
+>
+> **The asks:** *"google drive access kar paa rahe ho?"* → tester sheet ke 3 issues → *"pura screen responsiveness check karo"* → *"wo gutthi suljhao"* → *"9 chapters — yeh karo"*.
+>
+> ## ⓪ ⚠️⚠️ THE GUTTHI, SOLVED: STRICTMODE + A `useRef` GUARD = "RUN ONCE" BECOMES "RUN NEVER"
+> This file has carried *"why headless cannot drive a storybook chapter's opening is unexplained"*
+> since 2026-08-20. It is now named, and it was a REAL BUG rather than a harness limit:
+> StrictMode invokes an effect twice (mount → cleanup → mount) and **a `useRef` is not reset in
+> between**, so `if (ran.current) return; ran.current = true` starts the narration, CANCELS it on the
+> cleanup, and then refuses to start it again. `speakSteps` drives the VISUALS too, so the whole
+> chapter freezes on its first beat. **Eleven guards across ten chapters.** Every developer running
+> `npm run dev` has been looking at dead demos.
+> **Measured, not guessed:** patch `speechSynthesis.speak` in an `addInitScript` and log every
+> utterance. Dev produced **ZERO speak calls in 42s**; the identical build on production produced
+> **seven** and walked on into the guided round.
+> ⚠️⚠️ **AND THE EXPENSIVE HALF IS THE INFERENCE, NOT THE BUG.** The 2026-08-20 block says *"I guessed
+> StrictMode's double-mount and the guess was WRONG — the prod run killed it, since StrictMode is
+> dev-only."* That is backwards: StrictMode being dev-only is exactly why prod working proves
+> nothing about dev. The prod run could only ever have told you whether PROD had the same fault.
+> **Before ruling a cause out, ask whether your experiment could have detected it at all.** The wrong
+> inference then sat here as a settled finding and kept the question open for weeks.
+> Fix: `src/shared/hooks/useOnceGuard.ts` — the flag resets in its OWN cleanup, which runs after the
+> guarded effect's and before the re-run; a dep-change re-run still sees the guard set, so
+> `StoryWorld`'s `[onDone]` guard behaves exactly as before. Rule written into `chapter-craft.md` §4.
+>
+> ## ① 🎯 AND THE PAYOFF WAS IMMEDIATE — TWO SHIPPED DEFECTS NOTHING COULD REACH
+> Storybook chapters driven into a scored round went **3 of 20 → 11 of 20** (the harness also needed
+> one fix: `storybook-pills`' blind driver always pressed `candidates[0]`, i.e. the same wrong answer
+> for the whole budget — it rotates now).
+> - **Seesaw Park draws its question TWICE** — *"Which sign is right?"*, SkillBeat's pill plus its
+>   own 80px below. The exact fault chapter-craft §3 describes, shipped, and unseen because nothing
+>   could reach the screen it appears on. Fixed the Shape Studio way: one exported `ASK`, chapter
+>   pill only when `mode !== 'practice'`.
+> - **Bead Shop 404s on every load** — `milo_beads.png` was never drawn but headed the sprite list,
+>   so the picture was always right (fallback) and the console always had an error in it. Removed.
+> ⚠️ **§⑦ of the 2026-08-20 block called Seesaw Park CLEAN, from a grep. Corrected in place.** The
+> other three (BigOrSmall · HomeTime · PlayTime) really are clean — **and that is now a measurement**:
+> `kitchen` passes `storybook-pills`, and HomeTime/PlayTime were driven directly (temporarily started
+> in `practice`) and render their prompt exactly once. ⚠️ An intermediate draft of that correction
+> claimed they had no beat `prompt`, which was false — the same grep-shaped mistake one layer along,
+> recorded because I made it while writing the rule against it.
+> **The general lesson: a source heuristic gives a false ALL-CLEAR as readily as a false alarm.**
+>
+> ## ② 📱 THE RESPONSIVENESS SWEEP — 70 CHAPTERS × 7 SIZES, PLUS THE SCREENS NOBODY GATED
+> 320×568 · 390×844 · **640×320** · 768×1024 · 1024×600 · 1280×720 · 1920×1080.
+> **Structurally clean: 0 horizontal overflow, 0 unreachable controls, 0 console errors, 0 load
+> failures** across every chapter and screen. 63 rotate gates are by design.
+> Everything found was TAP-TARGET SIZE, and at the 44px aim it went **683 → 2**:
+>
+> | | before | after |
+> |---|---|---|
+> | `‹ Menu` (teen) | 145 | 0 |
+> | `← Menu` (story) | 112 | 2 (deliberate) |
+> | range sliders 16px | 305 | 0 |
+> | `Use taps instead` | 49 | 0 |
+> | landing footer 19px | 35 | 0 |
+>
+> ⚠️ **The 16px sliders are the one `all-chapters` could never have seen** — its selector is
+> `button, a[href]`, no `input` — and they are the FIRST control a child meets in all 37 teen
+> chapters. One CSS line (`input[type="range"] { height: 44px }`); track and thumb look identical.
+> ⚠️ **The two remaining 30px chips are a deliberate refusal.** SliceShop and TickTock derive
+> `chromeTop` — the band the whole world stands under — FROM their menu button, so forcing 44 on a
+> short frame takes 14px out of the play area, against chapter-craft's rule that height comes out of
+> the chrome first. The floor went into `chrome.ts` (`menuBtn.minH`), 44 on a roomy frame where the
+> banner already makes the band that tall, unset on a short one. **`chromeTop` before/after is
+> byte-identical: short 46, roomy 60.**
+>
+> ## ③ 🔬 TWO GATES DISAGREEING ABOUT ONE RULE, AND MY OWN SWEEP THAT CHECKED NOTHING
+> - **My first tap check failed at 44px and went red on 30 chapters** — while `short-landscape.spec.ts`
+>   had already, deliberately, made 24 the hard floor and 44 a NOTE. Both thresholds now come from
+>   `personas.ts`. ⚠️ **`all-chapters`' check 4 claimed the 44px floor in a COMMENT and never
+>   implemented it** — the most expensive kind of lie, because it stops the next reader checking.
+> - ⚠️⚠️ **My first full sweep ran over ZERO chapters and finished green in 20 seconds.** I had
+>   rewritten the shipped chapter-derivation with my own regex, which matched nothing. Had I reported
+>   then, *"all chapters are clean"* would have been a lie. Fixed to call the same derivation.
+> - ⚠️ A `ROTATEGATE` count that moved 63 → 62 was chased rather than shrugged at: driving
+>   `bigNumbers` at 768×1024 showed the gate present. It was my sweep's fixed 350ms wait racing
+>   `useNeedsRotate`'s effect — which is why the shipped gate uses `.or()` instead.
+>
+> ## ④ THE TESTER'S SHEET (Chapter_Testing_tester2, 2026-08-20)
+> **#1 answer options** — *"How did it go?"* could not be answered *"Yes, on their own"*. Now the
+> tester's own wording, one source for both diagnostic surfaces.
+> **#3 turtle spacing** — the real one. `FollowTheLeader` called `fitBands` and nothing else;
+> `fitBands` says nothing about rows being distinguishable, so at 640×320 with four little ones
+> **three rows sat SEVEN pixels apart under a 91px sprite**. Driven before/after: before, only 3 of 5
+> numbers were visible; after, all five, two rows 41px apart. `maxSizeForRows` + `spreadBand` (both
+> already in `critters.tsx`, both unused here) + rows capped at two. New gate
+> `followTheLeaderHuddle.test.ts`, 4/4 planted mutations caught.
+> ⚠️ **The DOM lied**: all five tag boxes existed and did not overlap. The numbers were buried by the
+> NEAR ROW'S SPRITE, which is what `ROW_SEP` measures — so the invariant was right and a box-overlap
+> check would have passed.
+> **#4 star popup** — heading and body both said *"Amazing!"*. Founder chose the tester's wording and
+> then dropped the 3-star heading entirely. ⚠️ Verifying it found a shipped bug nobody reported:
+> **the celebration modal is 697px tall and `align-items: center` CLIPS an overflowing child**, so at
+> 640×320 its top **189px — Milo and the whole message — were off screen with no way to scroll back**.
+> `margin: auto` + `overflowY: auto` + vh-capped decoration: 0px clipped, all three buttons reachable.
+> **#2 (Milo's robotic voice) is still open** — that is 3–11 recorded clips, a real piece of work.
+>
+> ## ⑤ 🎯 AND THEN ALL TWENTY — PLUS THE DISCOVERY THAT FIVE OF THE NINE WERE NEVER A HARNESS LIMIT
+> ⓪ and ① took storybook coverage from 3 of 20 to 11. The nine that still would not go were exactly
+> the ones whose guided round wants a CORRECT answer, which a blind driver cannot produce — so every
+> gate living on a scored screen quietly covered half the band.
+> **Teaching the driver each chapter's answers was the obvious fix and the wrong one**, and this spec
+> already carried the reason: *"a chapter-specific driver is a driver that silently skips chapters"*.
+> `src/shared/hooks/useChapterPhase.ts` skips the teaching rather than faking it — `?e2e=practice`
+> opens a chapter AT its scored round, so the check lands on exactly the screen it is about. Same
+> dev-only pattern as `data-test-answer` and `window.__miloPace`, and **verified rather than assumed
+> to dead-code-eliminate: zero hits for the parameter in `.next/static` and `.next/server`, every hit
+> under `.next/dev`.** 22 chapters wired.
+>
+> ⚠️⚠️ **FIVE OF THE NINE WERE CORRECT ALL ALONG, AND THE REPORTING IS WHAT WAS BROKEN.** Skip, Slice
+> Shop, TickTock, Order Desk and Level Run set `prompt: () => ''`, so SkillBeat draws NO pill and this
+> spec's anchor (`button[aria-label="Hear it again"]`) **cannot exist** there — chapter-craft §3, the
+> richer surface owns the pill. Their skip was always right.
+> **But the spec reported both reasons as "NOT reached", and that is the dangerous part: a chapter
+> that LOST its pill would have skipped just as quietly and read as "the driver couldn't get there".**
+> Three buckets now — checked · owns-its-pill · genuinely unreached — and `OWN_PILL` is asserted
+> EXACTLY, the way `storybookQuestions.test.ts` asserts `BANNER_OWNED`. Those five are additionally
+> asserted to draw NO SkillBeat pill, so a beat gaining a prompt is caught before it becomes a
+> duplicate. **Only RainbowTown was genuinely unwired** — its phases are `start/teach/bridge/test`, so
+> its scored phase is not called "practice"; named in `SCORED_PHASE` rather than guessed.
+> **20/20 covered, 20 passed, 0 skipped.**
+>
+> ## ⑥ 🔧 AND A HARNESS FAULT OF MINE THAT BURNED THREE HOURS OF WALL CLOCK
+> To wait for a long run I wrote `until ! pgrep -f "storybook-pills"; do sleep 25; done`. **Every
+> waiting shell has that string in its OWN command line**, so each loop saw the other loops and
+> concluded the test was still running. Nine of them kept each other alive for ~3h; the founder
+> spotted the pile of "Running" chips. Nothing was burning CPU (the real run had long finished) but
+> nothing would ever exit either. **A `pgrep` pattern that can match the waiting process itself is a
+> deadlock.** Match on something only the target has, or poll the artefact (the log) not the process.
+>
+> ## ▶ OPEN
+> 1. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA.** Everything else here shipped; this has not moved.
+> 2. ✅ ~~9 storybook chapters do not reach a scored round~~ — **CLOSED, see ⑤. 20/20.**
+> 3. **Tester issue #2 — Milo's robotic voice — is untouched**, and it is the only one of the four
+>    left. 3–11 is on browser TTS with no recorded clips; that is a real piece of work, not a fix.
+> 4. **Google Cloud: `admin@radlor.com` is still only EDITOR, not OWNER** (carried forward from the
+>    archived 🏗️ block so it is not lost). Never delete the OAuth client — 5 users.
+> 5. **The tester sheet's status column is NOT updated** — the Drive connector can rename/move/share
+>    but cannot write cells, and no Sheets connector is in the registry. Needs a browser pass.
+> 6. Everything from the blocks below still stands.
+
+
 > 🎚️ **2026-08-20 — THE ADAPTIVE LOOP, DEEP-TESTED. ⚠️ `GameShell` WAS SERVING EVERY QUESTION AT A TIER THE ENGINE HAD ALREADY LEFT, AND THE ENGINE'S OWN TESTS WERE GREEN THE WHOLE TIME. PLUS: THE RE-TEACH SEEN FIRING FOR THE FIRST TIME, AND EVERY BAND NOW RESUMES AT THE TIER THE CHILD LEFT OFF ON.** `tsc` 0 · **1193/1193** (+58) · `next build` 0 · **18/18 planted source mutations caught** · sw **v124 → v125**.
 >
 > **The asks:** *"deep testing … adaptive system proper kaam kar raha hai / re-explanation aa raha hai / difficulty ke according aa raha hai"* → *"level persistent hai naa?"* → *"sab mein waise chahiye"* + sync.

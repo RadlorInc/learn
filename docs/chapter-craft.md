@@ -2231,6 +2231,40 @@ count the matches.
   action, the gate has to drive that action end to end**, and the cheap companion is a source check
   that the wiring is still present in the path that actually runs. Nothing else can see a caller
   disappear.
+- ⚠️⚠️ **A GATE THAT ENTERS A CHAPTER BY "CLICK THE BIGGEST CONTROL" GRADES WHATEVER SCREEN THAT
+  LANDS ON — WHICH MAY NOT BE THE SCREEN YOU MEAN.** `all-chapters` clicks the largest visible
+  control and measures 900 ms later. On a GameShell route that reaches the **ExploreStep**, one
+  screen before the start card — so it never loaded the card, and reported all 70 chapters clean
+  while **eight of them shipped their start button at y 284–330 of a 320px frame**: the only forward
+  control on the first screen of the chapter, ten pixels below the fold, on production. This is *a
+  unit test cannot see that nothing calls the unit* wearing a browser: the check ran, it just ran
+  somewhere else. **Name the screen a spec is about, enter it deliberately, and assert you ARRIVED**
+  (`onCard`) — a spec that cannot tell it graded the wrong screen will tell you the right one is
+  fine. Gate: [start-card.spec.ts](../e2e/start-card.spec.ts).
+- ⚠️⚠️ **A LAYOUT VIOLATION MUST NAME ITS AXIS, OR THE FAILURE IS UNREADABLE — AND OFF-FRAME
+  SIDEWAYS IS OFTEN THE CHAPTER WORKING.** The same gate printed `offscreen after entering: BUTTON
+  (30–249 of 720)` on a 720-tall frame: a y-range entirely inside the frame, for a violation that
+  was horizontal. It cost most of a triage. Worse, the thing it caught was correct: in the 3–5 band
+  an answer creature IS a `<button>`, and this file's first rule is that **nothing materialises** —
+  a creature WAITS off-stage and arrives on its own legs. Measured on `counting` at 1280×720, two
+  buttons parked at x −332..−78 and 1358..1612 carrying `transition: left 2.6s linear`. They appear
+  ~4 s after entering, so a fast machine measured before the parade spawned and the slow CI runner
+  measured after: the check was a race against the animation, and it went red for two nights while
+  the app was fine. **Require the whole box inside the frame VERTICALLY** (nothing here is ever
+  staged on that axis) and exempt only what DECLARES itself in motion horizontally.
+  ⚠️ And the declaration has to be read carefully: a first draft exempted anything whose
+  `transition-property` mentioned `left`, `transform` **or `all`** — and `← Menu` computes
+  `transition-property: all` with `transition-duration: 0s`, i.e. every ordinary styled button in
+  the app. Mutating the bound to `r.right > 1` then flagged nothing at all, which is what a check
+  that has exempted the whole world looks like from outside: green. The travelling sprites measure
+  `left` at **2.6s**, so the test is the property AND a real duration — a hover transition has none.
+- ⚠️ **THE GAMESHELL START CARD IS THE ONE STAGE WITH NO `FitSlot`, SO ITS SPACING *IS* ITS HEIGHT.**
+  Everywhere else a short frame is absorbed by scale-to-fit; on the start card nothing shrinks, so
+  two 18px gaps between ticket, blurb and buttons are 36px of pure spacing on a 320px screen and the
+  card silently overflows. 8px on a short frame bought back 20 and took all eight chapters from
+  −10px to +10px. **Height comes out of the SPACING before it comes out of the words** — and pair it
+  with `justify-content: safe center`, because plain `center` on a flex column that cannot shrink
+  overflows BOTH ways, pushing the top under the header where no scroll can reach it.
 - ⚠️⚠️ **A GREEN CHECK IS NOT EVIDENCE UNTIL YOU HAVE WATCHED IT GO RED.** A gate written for the
   ScribblePad-over-the-keys collision passed 152/152 and was **inert**: it filtered fixed elements to
   the "outermost", and the outermost fixed element in this app is the ROOT at 0,0, so every layer
