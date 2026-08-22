@@ -1,8 +1,15 @@
 # Skill Graph — Teacher Validation Checklist
 
-**Goal:** red-pen the prerequisite claims before the diagnostic ships on any band. You do NOT
-need all 74 nodes validated to start — validate the **7 spines + 5 load-bearing nodes** first,
-because those carry the diagnostic. A wrong edge → wrong root gap → broken parent trust.
+**Goal:** red-pen the prerequisite claims before the diagnostic ships on any band. A wrong edge →
+wrong root gap → broken parent trust.
+
+> ⚠️ **START AT [skill-graph-audit.md](skill-graph-audit.md) §1, NOT HERE.** Every one of the 130
+> edges was measured on 2026-08-22 by removing it and counting how many of 201 planted diagnoses
+> change: **twelve edges decide a GAP, twenty-one change nothing at all**, and the rest change only
+> the chapter list. That cuts this checklist to an hour. ⚠️ It also disagrees with this file's own
+> instinct — the "high-risk claim" flagged below (`i.fractionEquiv ← i.multFacts`) turns out to
+> change **0 roots**, so it belongs in pass two. What the measurement CANNOT see is a MISSING edge,
+> which is what the "is anything missing" question below is for — keep that part.
 
 Source of truth: `src/lib/skillGraph.ts`. For each item below, mark:
 **✅ correct · ✏️ fix (write the correction) · ❓ unsure (needs a second opinion)**.

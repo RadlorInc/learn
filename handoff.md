@@ -116,6 +116,65 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🕸️ **2026-08-22 (fourth pass) — THE ENGINE IS 96–98%, SO THE BOTTLENECK IS NOW THE GRAPH — AND THE GRAPH IS STILL v0.9 DRAFT WITH 130 UNVALIDATED EDGES. AUDITED: TWELVE OF THEM DECIDE A GAP, TWENTY-ONE DECIDE NOTHING.** `tsc` 0 · **1444/1444** (+7, 1 skipped by design) · `next build` 0. NOT COMMITTED.
+>
+> **The ask:** *"A karo"* — a self-audit of the skill graph, to cut the teacher's checklist down.
+>
+> ## ⓪ THE INSTRUMENT: REMOVE AN EDGE, COUNT THE DIAGNOSES THAT CHANGE
+> Ranking edges by MY OPINION of the pedagogy would have been worth very little. Instead every one
+> of the 130 edges was deleted in turn and all **201 plantable gaps** across the five child bands
+> re-run with a PERFECT answerer (which isolates the graph's contribution from the items' noise).
+> Two numbers per edge: how many children would be told a **different gap**, and how many the same
+> gap with a **different route**. → [docs/skill-graph-audit.md](docs/skill-graph-audit.md).
+>
+> | | |
+> |---|---|
+> | edges that change a GAP if wrong | **12** (top: `p.addTo100 ← e.addWithin10` at 13 of 201) |
+> | edges that change only the ROUTE | 97 |
+> | edges that change **nothing at all** | **21** |
+>
+> ## ① ⚠️⚠️ THE CHECKLIST'S OWN "HIGH-RISK CLAIM" IS 0 ROOTS
+> `docs/skill-graph-validation.md` marks `i.fractionEquiv ← i.multFacts` as its one flagged
+> high-risk claim — *does equivalent fractions truly require fact fluency?* Measured: **0 roots, 16
+> routes.** If it is wrong, not one child is told the wrong gap. It is a real question and it
+> belongs in pass two. **The instinct about which claims are RISKY and the measurement of which are
+> COSTLY do not agree**, which is the whole argument for ranking this way. The checklist now opens
+> with a pointer to the ranking so nobody starts at 130 again.
+>
+> ## ② 🔍 WHAT I THINK IS ACTUALLY WRONG — opinion, flagged as opinion
+> **The top one: `p.subTo100 ← p.addTo100`.** The graph says subtracting within 100 requires
+> *adding* within 100 — they are siblings, not a chain. And **`e.subWithin10` exists as a skill and
+> is nobody's prerequisite**: written down, then never wired to the thing it obviously underpins.
+> That is the shape of an omission. Suggested `p.subTo100 ← [p.placeValue2, e.subWithin10]`, and the
+> edge carries **12 of 201 diagnoses — the second-highest in the graph**.
+> Four more in §3 of the doc: `m.exponentsRoots ← i.factors` (do square roots need primes?),
+> `m.coordinatePlane ← e.numberOrder` (a 12–14 skill reaching back to Pre-K, past five bands),
+> `i.areaPerimeter ← p.shapes2d3d` (rectangle area needs the 2D half, not the 3D one), and
+> **`e.colors` — the one non-mathematics node in a mathematics prerequisite graph**, inert in every
+> direction: no prereqs, no dependents, no item, no probe reaches it.
+>
+> ## ③ ⚠️⚠️ WHAT THIS METHOD CANNOT DO, STATED LOUDLY
+> **It cannot see a MISSING edge.** It tests only the claims that are written down — and a graph is
+> built by writing down what somebody thought of, so the omissions are by definition the things
+> nobody thought of. That is the half a teacher still has to do, and §4.3 of the doc points it at
+> the **20 nodes that rest on a SINGLE claim**, where "is this the only thing a stuck child could be
+> missing?" is most likely to be answered no.
+>
+> ## ④ WHAT IS GATED NOW — `src/__tests__/skillGraphAudit.test.ts`
+> The structural half runs every time: acyclic, no dangling id, no prerequisite pointing UP a band,
+> **exactly one inert node** (so a second cannot drift in), the band skips are the two known ones,
+> the load-bearing order is the one the doc names, and the suspected missing subtraction edge is
+> pinned so FIXING it is a deliberate act. The expensive ranking is behind a flag —
+> `GRAPH_SENSITIVITY=1 npx vitest run src/__tests__/skillGraphAudit.test.ts` — because it is a
+> property of the WHOLE graph and the numbers move when the shape does.
+>
+> ## ▶ OPEN
+> 1. 🔴 **NOT COMMITTED.**
+> 2. **A teacher still has to red-pen twelve edges.** That is the hour that protects the guarantee,
+>    and nothing in the engine can substitute for it. Until then the 96–98% means *"the engine finds
+>    what the graph says"*, not *"the engine finds the child's real gap"*.
+> 3. Everything from the blocks below still stands.
+
 > 🎯 **2026-08-22 (third pass) — THE GAP FINDER IS NOW **96–98% EXACT** AND MISSES A REAL GAP **0%** OF THE TIME. ⚠️⚠️ AND THE FIRST NUMBER I REPORTED THAT MORNING (81–87%) WAS FLATTERED BY MY OWN TOO-KIND GUESS MODEL — THE HONEST BASELINE WAS 73–75%.** `tsc` 0 · **1437/1437** · `next build` 0 · sw **v136 → v137**. NOT COMMITTED.
 >
 > **The ask:** *"jab tak proper gap find karne waala system bane… rukne ki zaroorat naii hai… bas high accuracy gap find karne waala system bane yeh meko chahiye"*.
