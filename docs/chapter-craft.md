@@ -645,6 +645,32 @@ first frame of a new beat is painted carrying the previous beat's index and the 
 the walker already at the end. Same rule this file already gives for a journey's phase, and the React
 lint names it too.
 
+⚠️⚠️ **AND A CONTAINER'S OWN CAPACITY, DRAWN AS SLOTS, IS THE ANSWER — COUNTABLE, AND IT LOOKS LIKE
+ORDINARY FURNITURE.** The Minibus Run draws each bus with its seats, which is exactly right on the
+two round types where the seat count is a GIVEN, and hands the answer over on the third: a `sharing`
+round asks *how many ride in each bus*, so a child could count the empty seats in one bus and read
+it off without sharing anything. The fix is per round type — where the capacity is the question the
+bus is an open box that holds whatever you put in it, and it only grows seats where the seat count
+is something the ticket already told you. **Ask of every drawn container, on every round type
+separately, whether its own size is a given or the answer.** Same family as the ruled grid on the
+plot floor: a repeated mark on a container is a number, whether or not anybody typed it.
+
+⚠️⚠️ **AND THE SHARPEST VERSION OF THE HOT/COLD RULE: AN INSTRUMENT THAT SHOWS THE CONSEQUENCE OF
+THE ANSWER YOU ARE PROPOSING IS AN ORACLE, EVEN THOUGH SHOWING CONSEQUENCES IS THE WHOLE POINT.**
+This one is worth the words because the wrong version is the one that sounds like good teaching. The
+Minibus Run's first build loaded the buses live from whatever count was showing — *a wrong action
+allowed and visible rather than blocked*, which is a rule this file already gives — so the pavement
+read "still waiting" until the number happened to be right and then flipped to "pavement clear". Tap
+1, 2, 3, watch the label, commit. The child divides nothing. Every piece was individually correct
+and no gate could see it; it took driving the thing and tapping four numbers.
+**The resolution is the ORDER, not the feedback.** While the child is choosing, the instrument shows
+their number as a SETTING — seats reserved, buses called for, nobody moved — and the consequence
+happens ON the commit, where it is the check rather than the answer. Afterwards it is still derived
+from THEIR number, so a wrong answer still leaves a visibly wrong world. Same order The Empty Plot
+arrived at from a different direction: commit to a number BEFORE the thing exists to be counted.
+⚠️ And the tell is usually one WORD, not a picture: a status label that reads "clear" versus
+"waiting" is the entire oracle, however carefully the rest of the scene behaves.
+
 ⚠️ **AND A CONTAINER'S OWN HEIGHT CAN BE THE ANSWER, PRINTED AS A LENGTH.** A receiving slot's box
 is sized by its capacity, and on a sharing round the capacity is derived from the answer — so
 anything drawn to the box's full height *is* the answer, before the child has done anything. The
@@ -2183,6 +2209,18 @@ count the matches.
   deploy that never landed. Enumerate every *kind* of subresource the app loads — script, style,
   font, image, media, worker, connect — and check each against the policy, rather than the ones you
   happened to think of.
+- ⚠️⚠️ **A CHECK THAT DRIVES A PERFECT ORACLE MEASURES THE ALGORITHM, NEVER THE PRODUCT — AND IT
+  STAYS GREEN WHILE THE PRODUCT IS WRONG TWO TIMES IN THREE.** The diagnostic had eleven passing
+  engine tests, every one of which answered *"knows the skill ⇒ correct, doesn't ⇒ wrong"*. A real
+  child GUESSES (a 4-choice item hands back a quarter of every wrong answer) and a real child SLIPS.
+  Neither was modelled anywhere in 1,360 tests, so the number the whole product is sold on — does the
+  report name the right gap — had never been measured; it was **26–34%**, and the searching logic it
+  was blamed on turned out to be innocent (90–98% with clean items). **Whenever a check supplies the
+  answers, ask what your oracle assumes about the human**, and put the noise in: a guess rate taken
+  from the real answer surface, a slip rate, and an assertion on the resulting RATE. ⚠️ Seed it — an
+  unseeded accuracy sweep is a coin-flip gate, and a coin-flip gate gets re-run instead of read.
+  ⚠️ And gate the COST as well as the score: accuracy is trivially buyable with more questions, so a
+  check that only asserts accuracy silently licenses a 28-question test for a nine-year-old.
 - ⚠️⚠️ **A UNIT TEST CANNOT SEE THAT NOTHING CALLS THE UNIT — AND THAT IS HOW A P0 SURVIVES A GREEN
   SUITE FOR THREE MONTHS.** `advancePlan` had six passing tests driving it directly and exactly ONE
   production caller, which sat inside a function that was never invoked (`ChapterPortal` discards

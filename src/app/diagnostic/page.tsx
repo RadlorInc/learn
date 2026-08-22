@@ -18,7 +18,7 @@ import {
   startProbe, nextSkill, record, diagnose, type ProbeState, type Diagnosis,
 } from '@/core/diagnosticEngine'
 import { NODE_BY_ID, chapterFor, type Band } from '@/core/skillGraph'
-import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
+import { makeItem, makeReadinessItem, pickThemeFor, gradeItem, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
 import { CHAPTER_NAMES } from '@/core/chapters'
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
 import { stashPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
@@ -38,6 +38,7 @@ function newClientId(): string {
 import { PT, ACCENTS, LabBackdrop, BackChip, ChoiceButton, PtMilo, IntroCard, type Accent, type ChoiceState } from '@/features/chapters/story/preteen/kit'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { DiagVisualView } from '@/features/diagnostic/DiagVisual'
+import { DiagPad } from '@/features/diagnostic/DiagPad'
 
 const BANDS: Band[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan
@@ -139,6 +140,14 @@ function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis): Promise<voi
 }
 
 const label = (id: string) => NODE_BY_ID[id]?.label ?? id
+/**
+ * ⚠️ THE PLAN IS WALKED ONE CHAPTER AT A TIME, SO THE REPORT SHOWS THE FIRST FEW AND SAYS HOW MANY.
+ * The route is derived from the gap up to the child's grade, and for a deep gap that is honestly
+ * long — measured, a 17–18 learner rooting in grade school needs ~19 chapters. Printing all of them
+ * turns "here is the plan" into a wall a parent cannot read, and reads as a bill rather than a
+ * route. Truncating the DATA would be worse (the pointer walks the whole list), so only the display
+ * is capped, and the count is stated rather than hidden. */
+const PLAN_SHOWN = 5
 const chapterName = (id: string | undefined) => (id && CHAPTER_NAMES[id as keyof typeof CHAPTER_NAMES]) || id || ''
 
 interface Slot { s: ProbeState; skill: string | null; item: DiagItem | null }
@@ -162,8 +171,9 @@ function resolve(state: ProbeState, band: Band, ctx: DiagContext): Slot {
   }
   return { s, skill: null, item: null }
 }
-/** Whether the chosen response counts as "passing" the skill (parent items use passSet; MCQ uses answer). */
-const isPass = (item: DiagItem, choice: string) => item.passSet ? item.passSet.includes(choice) : choice === item.answer
+/** Whether a response counts as "passing" the skill. `gradeItem` owns it: parent items use their
+ *  passSet, a typed number compares NUMERICALLY (so "07" passes), everything else is exact. */
+const isPass = gradeItem
 
 type Phase = 'intro' | 'email' | 'probe' | 'report'
 
@@ -387,7 +397,14 @@ export default function DiagnosticPage() {
           </div>
         </div>
         <div ref={tilesRef} style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(12px,3vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
-          {item.choices.map(c => {
+          {item.input === 'num' || item.input === 'frac' ? (
+            // Keyed on the skill + how many have been asked, so the pad EMPTIES between questions —
+            // a remount is right here (there is nothing imperative inside it to lose) and without it
+            // the next child's answer starts with the previous one still in the window.
+            <DiagPad key={`${slot.skill}:${asked}`} kind={item.input} keys={item.keys} accent={accent}
+              size={Math.max(44, Math.min(short ? 48 : 58, Math.round(Math.min(vw / 11, vh / (short ? 7.5 : 9)))))}
+              disabled={!!picked} onSubmit={answer} />
+          ) : item.choices.map(c => {
             const st: ChoiceState = picked === c ? 'right' : picked ? 'dim' : 'idle'
             // 'right' just gives a neutral selected highlight here — correctness is never revealed.
             return <ChoiceButton key={c} label={c} accent={accent} state={picked === c ? 'idle' : st === 'dim' ? 'dim' : 'idle'} size={btn} onClick={() => answer(c)} disabled={!!picked} />
@@ -415,6 +432,8 @@ function RemediationReport({ r, accent, onStart, onRetake, onSave }: { r: Diagno
   const highlightNames = r.downstreamHighlights.map(label)
   const planNames: string[] = []
   for (const ch of r.planChapters) { const n = chapterName(ch); if (n && !planNames.includes(n)) planNames.push(n) }
+  const shown = planNames.slice(0, PLAN_SHOWN)
+  const more = planNames.length - shown.length
   return (
     <ReportShell accent={accent} subtitle={r.workingLevel} onStart={onStart} onRetake={onRetake} onSave={onSave} cta={root ? 'Start the plan →' : 'Get ahead →'}>
       {!root ? (
@@ -440,10 +459,18 @@ function RemediationReport({ r, accent, onStart, onRetake, onSave }: { r: Diagno
           <Card accent={{ base: PT.warn } as Accent} title="⏳ Why it matters now">
             This skill is the foundation for {highlightNames.join(', ') || 'the skills above it'}
             {r.reachesAlgebra ? ', and in time, algebra' : ''}. Left alone the gap compounds — each new
-            topic stacks on it. Caught now, it&apos;s weeks of work, not years.
+            topic stacks on it.{' '}
+            {/* ⚠️ "Weeks of work, not years" is TRUE of a short route and a lie about a long one, and
+                the report prints the length two inches below — so on a deep gap the two lines
+                contradicted each other on the same screen. Measured: a learner rooting four bands
+                down draws a 40-step route beside the promise that it is not years. Say what is true
+                of THIS child: the distance is real, and the next step is small either way. */}
+            {planNames.length > 8
+              ? <>It is a real distance to make up — and it is walked one short chapter at a time, starting today.</>
+              : <>Caught now, it&apos;s weeks of work, not years.</>}
           </Card>
-          <Card accent={accent} title="🗺️ The plan">
-            {planNames.join('  →  ')}<br />
+          <Card accent={accent} title={`🗺️ The plan${planNames.length > 1 ? ` — ${planNames.length} steps` : ''}`}>
+            {shown.join('  →  ')}{more > 0 && <span style={{ color: PT.inkSoft }}>  →  <strong>+{more} more</strong>, one step at a time</span>}<br />
             <span style={{ color: PT.inkSoft }}>10 minutes a day, starting at the gap and rebuilding up — as play, no timers, no red X&apos;s.</span>
           </Card>
           <Card accent={accent} title="🔒 Our promise">

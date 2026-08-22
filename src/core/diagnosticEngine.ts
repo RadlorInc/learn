@@ -14,7 +14,7 @@
  * score / red X); the failure cap is a generous safety backstop, not the primary UX lever.
  */
 import {
-  type Band, PROBE_ENTRY, NODE_BY_ID, SKILL_NODES, prereqsOf, dependentsOf, blockedBy, chapterFor,
+  type Band, PROBE_ENTRY, NODE_BY_ID, SKILL_NODES, prereqsOf, dependentsOf, blockedBy, routeChapterFor,
 } from '@/core/skillGraph'
 
 const BAND_ORDER: Record<Band, number> = { '3-5': 0, '6-8': 1, '9-11': 2, '12-14': 3, '15-16': 4, '17-18': 5 }
@@ -45,15 +45,15 @@ export interface ProbeConfig {
 export const DEFAULT_CONFIG: Record<Band, ProbeConfig> = {
   // 3–5 is a READINESS check (Phase 3): probe every milestone for a complete picture. The items are
   // parent-observed (the child isn't failing on-screen), so a higher failure cap isn't anti-fear-unsafe.
-  '3-5': { maxItems: 12, maxFailures: 8, confirmFails: false },
+  '3-5': { maxItems: 14, maxFailures: 9, confirmFails: false },
   // The confirming bands carry +CONFIRM_UNTIL_FAILS maxItems headroom (the exact worst-case cost
   // of the retries, since confirmation stops after that many confirmed fails). Verified by the
   // full planted-gap matrix: every reachable gap in every band resolves to the EXACT root at
   // these caps, including the extreme cross-band floors. Passes are unchanged, so a grade-level
   // child's probe is exactly as long as before.
-  '6-8': { maxItems: 14, maxFailures: 5, confirmFails: true },
-  '9-11': { maxItems: 19, maxFailures: 7, confirmFails: true },
-  '12-14': { maxItems: 20, maxFailures: 12, confirmFails: true },
+  '6-8': { maxItems: 18, maxFailures: 7, confirmFails: true },
+  '9-11': { maxItems: 24, maxFailures: 9, confirmFails: true },
+  '12-14': { maxItems: 21, maxFailures: 12, confirmFails: true },
   '15-16': { maxItems: 24, maxFailures: 16, confirmFails: true },
   '17-18': { maxItems: 28, maxFailures: 20, confirmFails: true },
 }
@@ -61,20 +61,42 @@ export const DEFAULT_CONFIG: Record<Band, ProbeConfig> = {
 /** Confirm fails only while confirmed fails are below this (see the comment in record()). */
 const CONFIRM_UNTIL_FAILS = 4
 
-interface Frame { node: string; queue: string[] }   // node failed; queue = untried prereqs (deepest-first)
+/**
+ * ⚠️⚠️ THE DESCENT BISECTS; IT DOES NOT WALK. `lo` is the deepest skill we have watched the child
+ * FAIL on this branch, `cands` is every skill under it that could still be the root.
+ *
+ * It used to step one prerequisite at a time, which costs a question per LEVEL — and the chains are
+ * long: a 17–18 learner rooting in grade school is nine levels down. Measured, that band spent
+ * **11.3 of its 20.2 questions on the descent alone**, and every one of those is another chance for
+ * a careless slip to plant a false, deeper root — which is exactly what its 72% exact-root rate was
+ * made of. Halving the candidate set instead turns nine questions into about four, so the probe gets
+ * shorter AND more accurate from one change.
+ */
+interface Frame {
+  lo: string        // deepest skill known to FAIL on this branch
+  cands: string[]   // everything under it that could still be the root
+  /** ⚠️ HAS ANYTHING UNDER `lo` ACTUALLY FAILED YET? Bisection is only worth its price once we know
+   *  the root is somewhere DEEP. Measured: bisecting from the start took a grade-level 17–18 child
+   *  from 9 questions to 22, because a slip fails one entry and the search then prunes a 40-node
+   *  closure a subtree at a time — when the cheap question was "do this skill's DIRECT prerequisites
+   *  hold?", which is three probes and ends it. So the branch opens in direct-prerequisite mode and
+   *  switches to bisecting the moment a probe under it fails, which is exactly when the long chains
+   *  appear. */
+  deep: boolean
+}
 
 export interface ProbeState {
   band: Band
   config: ProbeConfig
   agenda: string[]        // independent entry skills still to investigate
-  frames: Frame[]         // current depth-first descent under the active entry
+  frames: Frame[]         // the active branch's bisecting search (0 or 1 deep)
   passed: string[]
   failed: string[]
   asked: string[]
   roots: string[]         // confirmed root gaps (≤1 per entry branch)
-  /** Skills with ONE unconfirmed miss (confirmFails). The skill stays at the front of its
-   *  agenda/queue, so nextSkill re-offers it; the item layer must serve a FRESH item for a
-   *  repeat ask (see resolve() in diagnostic/page.tsx). Never reaches `failed`/diagnose. */
+  /** Skills with ONE unconfirmed miss (confirmFails). Nothing else moves, so nextSkill re-offers
+   *  the same skill; the item layer must serve a FRESH item for a repeat ask (see resolve() in
+   *  diagnostic/page.tsx). Never reaches `failed`/diagnose. */
   strikes: string[]
 }
 
@@ -92,43 +114,85 @@ function depth(id: string, guard = new Set<string>()): number {
 
 const seen = (s: ProbeState, id: string) => s.passed.includes(id) || s.failed.includes(id)
 
-/** Candidate prerequisites to investigate under a failed node: unseen or already-failed, deepest-first. */
-function frameQueue(s: ProbeState, node: string): string[] {
-  return prereqsOf(node)
-    .filter(p => NODE_BY_ID[p] && !s.passed.includes(p))
-    .sort((a, b) => depth(b) - depth(a))
+/**
+ * Every skill under `id` that could still BE the root: its transitive prerequisites, minus anything
+ * the child has PASSED — a pass bounds the search below it, because you cannot do a skill without
+ * its prerequisites. Already-FAILED nodes stay in, so the search can drop into them for free.
+ */
+function candidatesUnder(s: ProbeState, id: string): string[] {
+  const out: string[] = []
+  const walk = (x: string) => {
+    for (const p of prereqsOf(x)) {
+      if (!NODE_BY_ID[p] || out.includes(p) || s.passed.includes(p)) continue
+      out.push(p); walk(p)
+    }
+  }
+  walk(id)
+  return out
 }
 
-/** Resolve completed frames: descend into known-failed prereqs; when a frame's queue empties, its
- *  node is a ROOT (all prereqs passed) → record it and end that entry's investigation. Mutates s. */
+/**
+ * The candidate that best HALVES the remaining search: if it fails the root is at or below it, if
+ * it passes the root is above it, so the informative choice is the one whose own sub-tree is
+ * closest to half of what is left. Ties break DEEPER, which is the cheaper mistake — a root found
+ * one level too deep starts the plan one chapter early and climbs.
+ */
+function bisect(s: ProbeState, f: Frame): string | null {
+  const cands = f.deep ? f.cands : f.cands.filter(c => prereqsOf(f.lo).includes(c))
+  if (!cands.length) return f.cands[0] ?? null
+  let best = cands[0], bestScore = Infinity
+  for (const c of cands) {
+    const below = candidatesUnder(s, c).filter(x => f.cands.includes(x)).length
+    const score = f.deep ? Math.max(below, f.cands.length - below - 1) : -below
+    if (score < bestScore || (score === bestScore && depth(c) > depth(best))) { best = c; bestScore = score }
+  }
+  return best
+}
+
+/** Resolve the active branch: recompute what is still in play, drop for free into anything already
+ *  known to fail, and declare a root when nothing is left under it. Mutates s. */
 function normalize(s: ProbeState): void {
   let guard = 0
   while (s.frames.length && guard++ < 500) {
-    const top = s.frames[s.frames.length - 1]
-    // drop already-passed prereqs
-    while (top.queue.length && s.passed.includes(top.queue[0])) top.queue.shift()
-    // descend into an already-failed prereq without re-probing
-    const failedIdx = top.queue.findIndex(p => s.failed.includes(p))
-    if (failedIdx >= 0) {
-      const p = top.queue.splice(failedIdx, 1)[0]
-      s.frames.push({ node: p, queue: frameQueue(s, p) })
-      continue
-    }
-    if (top.queue.length === 0) {
-      // all prerequisites pass → `top.node` is the deepest broken skill on this branch = a root
-      if (!s.roots.includes(top.node)) s.roots.push(top.node)
+    const f = s.frames[0]
+    f.cands = candidatesUnder(s, f.lo)
+    // A candidate we have ALREADY watched fail (reached under an earlier entry) is a free level of
+    // descent — the root is at or below it and we know that without spending a question.
+    const known = f.cands.find(c => s.failed.includes(c))
+    if (known) { f.lo = known; f.deep = true; continue }
+    if (f.cands.length === 0) {
+      // nothing broken under it → `lo` is the deepest broken skill on this branch = a root
+      if (!s.roots.includes(f.lo)) s.roots.push(f.lo)
       s.frames.length = 0   // this entry is diagnosed; move on to the next agenda entry
       // NOTE: do NOT shift the agenda here — the failed entry was already shifted off in record()
-      // when it was first probed. Shifting again would skip the NEXT entry (breaking multi-gap
-      // detection and, for the 3–5 readiness band whose entries are leaves, dropping milestones).
-      // The skip-seen loop below advances past any entry already visited during this descent.
+      // when it was first probed. The skip loop below advances past anything already visited.
       continue
     }
-    break // need to probe top.queue[0]
+    break // need to probe a candidate
   }
   // Skip entry skills we've already probed (e.g. reached as a prereq of an earlier entry) — don't
   // re-investigate them or waste the failure budget.
-  if (!s.frames.length) while (s.agenda.length && seen(s, s.agenda[0])) s.agenda.shift()
+  //
+  // ⚠️ AND SKIP THE ONES THE GRAPH HAS ALREADY ANSWERED. A sweep entry sitting on top of a skill we
+  // have just watched the child fail is not a question, it is arithmetic. Asking "the largest number
+  // that divides into both 24 and 36" of a child who could not do 6 × 6 costs a question, costs a
+  // failure out of the anti-fear budget, and hands them another thing they cannot do — to learn what
+  // the prerequisite edge already states. It is recorded as failed (which is what the edge CLAIMS)
+  // so the chapter still reaches the child's route. It can never invent a root gap: `rootCandidates`
+  // keeps only failures with no failed prerequisite, and an inferred failure has one by construction.
+  if (!s.frames.length) {
+    // …and the mirror of it: an entry that is a PREREQUISITE of something the child has already
+    // passed is answered too — you cannot do the harder skill without it. Recorded as passed, so it
+    // never reaches the route. (Together these two are worth several questions on a clean run.)
+    while (s.agenda.length && (seen(s, s.agenda[0])
+        || prereqsOf(s.agenda[0]).some(p => s.failed.includes(p))
+        || s.passed.some(done => prereqsOf(done).includes(s.agenda[0])))) {
+      const id = s.agenda.shift()!
+      if (seen(s, id)) continue
+      if (s.passed.some(done => prereqsOf(done).includes(id))) s.passed.push(id)
+      else s.failed.push(id)
+    }
+  }
 }
 
 export function startProbe(band: Band, config: ProbeConfig = DEFAULT_CONFIG[band]): ProbeState {
@@ -140,7 +204,7 @@ export function nextSkill(s: ProbeState): string | null {
   if (s.asked.length >= s.config.maxItems) return null
   if (s.failed.length >= s.config.maxFailures) return null   // safety backstop
   normalize(s)
-  if (s.frames.length) return s.frames[s.frames.length - 1].queue[0] ?? null
+  if (s.frames.length) return bisect(s, s.frames[0])
   if (s.agenda.length) return s.agenda[0]
   return null
 }
@@ -150,7 +214,7 @@ export function record(s: ProbeState, id: string, passed: boolean): ProbeState {
   const ns: ProbeState = {
     ...s,
     agenda: s.agenda.slice(),
-    frames: s.frames.map(f => ({ node: f.node, queue: f.queue.slice() })),
+    frames: s.frames.map(f => ({ lo: f.lo, cands: f.cands.slice(), deep: f.deep })),
     passed: s.passed.slice(), failed: s.failed.slice(), asked: [...s.asked, id], roots: s.roots.slice(),
     strikes: (s.strikes ?? []).slice(),
   }
@@ -176,14 +240,12 @@ export function record(s: ProbeState, id: string, passed: boolean): ProbeState {
     // entry probe
     if (id === ns.agenda[0]) ns.agenda.shift()
     if (passed) ns.passed.push(id)
-    else { ns.failed.push(id); ns.frames.push({ node: id, queue: frameQueue(ns, id) }) }
+    else { ns.failed.push(id); ns.frames.push({ lo: id, cands: candidatesUnder(ns, id), deep: false }) }
   } else {
-    // prerequisite probe under the active frame
-    const top = ns.frames[ns.frames.length - 1]
-    const i = top.queue.indexOf(id)
-    if (i >= 0) top.queue.splice(i, 1)
+    // a candidate under the active branch: a fail moves the floor DOWN to it, a pass prunes it and
+    // everything beneath it (normalize recomputes the candidate set from `lo` either way).
     if (passed) ns.passed.push(id)
-    else { ns.failed.push(id); ns.frames.push({ node: id, queue: frameQueue(ns, id) }) }
+    else { ns.failed.push(id); ns.frames[0].lo = id; ns.frames[0].deep = true }
   }
   normalize(ns)
   return ns
@@ -223,9 +285,33 @@ export function diagnose(s: ProbeState): Diagnosis {
   const rootGap = cands[0] ?? null
   const secondGap = rootGap ? (cands.find(c => c !== rootGap && !related(c, rootGap)) ?? null) : null
 
-  const planSkills = [...s.failed].sort((a, b) => depth(a) - depth(b))
+  // ⚠️⚠️ THE ROUTE IS DERIVED FROM THE GAP, NOT FROM WHICH QUESTIONS HAPPENED TO GET ASKED.
+  // It used to be `[...s.failed]`, which was a fair approximation while the descent walked every
+  // level — and became wrong the moment it started BISECTING, because a bisecting search skips
+  // levels on purpose and those skipped chapters are exactly the ones between the child's gap and
+  // their grade. Spec's own words: "walk UP the dependency chain toward the child's grade node".
+  //
+  // So: everything we watched fail, PLUS every skill that lies on a chain from a root gap up to an
+  // entry the child failed — bounded by that chain, not by `blockedBy(root)`, which for a deep root
+  // is most of the graph and would hand a nine-year-old a twenty-chapter plan. Anything the child
+  // PASSED is excluded even when the graph says it is downstream: evidence beats the edge.
+  const onChain = new Set<string>(s.failed)
+  for (const r of cands) {
+    const below = blockedBy(r)
+    for (const entry of s.failed) {
+      if (entry === r) continue
+      for (const x of [entry, ...prereqClosure(entry)]) {
+        if (!s.passed.includes(x) && below.includes(x)) onChain.add(x)
+      }
+    }
+  }
+  const planSkills = [...onChain].sort((a, b) => depth(a) - depth(b))
   const planChapters: string[] = []
-  for (const sk of planSkills) { const ch = chapterFor(sk); if (ch && !planChapters.includes(ch)) planChapters.push(ch) }
+  // ⚠️ Every skill must yield a chapter here. Three of them did not between 2026-08-13 and
+  // 2026-08-22 — multiplication facts, multi-digit multiplication, division — and one was a 9–11
+  // probe entry, so this loop silently dropped the child's own gap out of their route and started
+  // them downstream of it. `diagnosticAccuracy.test.ts` fails if that ever becomes possible again.
+  for (const sk of planSkills) { const ch = routeChapterFor(sk); if (ch && !planChapters.includes(ch)) planChapters.push(ch) }
 
   const strengths = [...s.passed]
     .sort((a, b) => BAND_ORDER[NODE_BY_ID[b].band] - BAND_ORDER[NODE_BY_ID[a].band])

@@ -20,21 +20,18 @@ export interface SkillNode {
   band: Band
   label: string
   /**
-   * chapters.ts id — the remediation unit for this skill, or `''` when the skill is real and
-   * currently has no chapter to send a child to.
+   * chapters.ts id — where a child whose gap is this skill is sent.
    *
-   * ⚠️ `''` IS A DELIBERATE STATE, NOT A GAP IN THE DATA — three nodes carry it today
-   * (`i.multFacts`, `i.multMultiDigit`, `i.division`), because Times Tables and Division were
-   * deleted 2026-08-13 pending a rethink of what the child is actually learning. The SKILLS stay:
-   * they are in the DB (`learner_progress.chapter` and `sessions.chapter` are FK'd to
-   * `chapters(id)`, so the rows cannot be removed), `i.multFacts` is one of the most load-bearing
-   * nodes in the whole 3–18 graph, and they are all still probed.
+   * ⚠️ EVERY SKILL HAS ONE, AND THAT IS ASSERTED RATHER THAN ASSUMED. Three carried `''` from
+   * 2026-08-13 to 2026-08-22 (`i.multFacts`, `i.multMultiDigit`, `i.division`, after Times Tables
+   * and Division were deleted) — and `diagnose()` skips a chapter-less skill when it builds the
+   * route, so ~10% of diagnosed 9–11 children were started DOWNSTREAM of their own gap, silently.
+   * The Packing Shed and The Minibus Run closed it. `diagnosticAccuracy.test.ts` fails the day a
+   * skill loses its chapter again, which is the only thing that keeps this true.
    *
-   * ⚠️ THE COST, STATED RATHER THAN HIDDEN: `diagnose()` builds `planChapters` with
-   * `if (ch && …)`, so a skill with no chapter is simply skipped — which means a child whose ROOT
-   * gap is multiplication facts gets a plan that starts at its prerequisites (6–8 skip-counting and
-   * multiplication concept) and never at the gap itself. That is the right failure while a chapter
-   * is missing, and it is a real hole until one exists.
+   * ⚠️ TWO SKILLS MAY SHARE ONE CHAPTER (`timesTables` carries fact fluency AND multi-digit;
+   * `fractionsCompare` carries equivalence AND adding) — but then `deeperChapter`'s chapter → skill
+   * lookup resolves to whichever is DECLARED FIRST, so declare the more foundational one first.
    */
   chapter: string
   prereqs: string[]     // direct prerequisite skill ids (may cross bands)
@@ -71,9 +68,12 @@ export const SKILL_NODES: SkillNode[] = [
   // ── Band 9–11 · Intermediate (remediation core) ────────────────────────────
   { id: 'i.bigNumbers',    band: '9-11', label: 'Place value to 10,000+',    chapter: 'bigNumbers',         prereqs: ['p.placeValue2'] },
   { id: 'i.rounding',      band: '9-11', label: 'Rounding',                  chapter: 'rounding',           prereqs: ['i.bigNumbers'] },
-  { id: 'i.multFacts',     band: '9-11', label: 'Multiplication facts fluency', chapter: '',                prereqs: ['p.skipCount', 'p.multConcept'] },
-  { id: 'i.multMultiDigit',band: '9-11', label: 'Multi-digit multiplication', chapter: '',                prereqs: ['i.multFacts', 'p.placeValue2'] },
-  { id: 'i.division',      band: '9-11', label: 'Division w/ remainders',    chapter: '',                prereqs: ['i.multFacts', 'p.subTo100'] },
+  // ⚠️ `i.multFacts` and `i.multMultiDigit` share one chapter (fact fluency at L1–L2, two-digit at
+  //  L3 — the curriculum's own split), and `i.multFacts` is declared first so `deeperChapter`
+  //  resolves to it: the more foundational of the two, and the right one to revise down to.
+  { id: 'i.multFacts',     band: '9-11', label: 'Multiplication facts fluency', chapter: 'timesTables',      prereqs: ['p.skipCount', 'p.multConcept'] },
+  { id: 'i.multMultiDigit',band: '9-11', label: 'Multi-digit multiplication', chapter: 'timesTables',        prereqs: ['i.multFacts', 'p.placeValue2'] },
+  { id: 'i.division',      band: '9-11', label: 'Division w/ remainders',    chapter: 'division',            prereqs: ['i.multFacts', 'p.subTo100'] },
   { id: 'i.factors',       band: '9-11', label: 'Factors, multiples, primes', chapter: 'factorsMultiples',  prereqs: ['i.multFacts', 'i.division'] },
   { id: 'i.fractionEquiv', band: '9-11', label: 'Equivalent fractions & compare', chapter: 'fractionsCompare', prereqs: ['p.fractionsIntro', 'i.multFacts'] },
   { id: 'i.fractionOps',   band: '9-11', label: 'Add/subtract fractions',    chapter: 'fractionsCompare',   prereqs: ['i.fractionEquiv'] },
@@ -128,8 +128,30 @@ export const SKILL_NODES: SkillNode[] = [
   { id: 'c.introCalculus', band: '17-18', label: 'Limits / derivative intro', chapter: 'introCalculus',     prereqs: ['c.functionToolkit', 'a.slopeGraphs', 'c.rationalFns'] },
 ]
 
-/** Where the probe starts for each band (grade-expected nodes); it branches DOWN on failure. */
-export const PROBE_ENTRY: Record<Band, string[]> = {
+/**
+ * WHERE THE PROBE LOOKS. Two tiers, and the split is the whole coverage story.
+ *
+ * ⚠️⚠️ A PROBE THAT ONLY WALKS **DOWN** FROM A FEW ENTRIES CANNOT SEE A LEAF, AND WE HAVE TEN
+ * BUILT CHAPTERS SITTING ON LEAVES. `PROBE_ENTRY` used to be this spine alone; measured, that made
+ * 14 skills — `e.subWithin10`, `p.subTo100`, `p.money`, `p.time`, `p.wordProbAddSub`, `i.rounding`,
+ * `i.factors`, `i.fractionOps`, `i.measureUnits`, `i.anglesSymmetry`, `i.wordProbMulti`,
+ * `m.percentages` … — unreachable by ANY band's probe, because nothing depends on them and the
+ * descent only ever goes toward prerequisites. So the diagnostic could not diagnose a rounding
+ * gap, a time gap, a money gap or a word-problem gap at all, and a 6–8 child's whole check
+ * covered 11 of 74 skills and could not even ask about subtraction.
+ *
+ * · `PROBE_SPINE` — the load-bearing, high-blocking skills. Probed FIRST; a failure DESCENDS into
+ *   prerequisites. This is what produces the ROOT GAP and the "one snag" claim.
+ * · `PROBE_SWEEP` — the leaf chapters the spine cannot reach. Probed after, so the ROUTE can name
+ *   them. A leaf blocks nothing, so `diagnose()`'s most-unlocking-first ranking already puts it
+ *   last: a sweep failure can only become the headline root gap when the spine found nothing at
+ *   all, which is the honest reading of "the only thing they missed was rounding".
+ *
+ * Measured cost of the sweep: 9–11 goes from 18 to 23 routable chapters and 6–8 from 11 to 17, for
+ * ~4 extra questions, with root-gap accuracy unchanged. `e.colors` is deliberately NOT swept — it
+ * is the one non-math node in the graph.
+ */
+export const PROBE_SPINE: Record<Band, string[]> = {
   '3-5':   ['e.counting10', 'e.numeralRecog', 'e.matchQty', 'e.compare', 'e.numberOrder', 'e.addWithin10', 'e.shapes2d', 'e.patterns'],
   '6-8':   ['p.compare100', 'p.addTo100', 'p.multConcept', 'p.fractionsIntro'],
   '9-11':  ['i.multFacts', 'i.fractionEquiv', 'i.division', 'i.decimals', 'i.areaPerimeter', 'i.dataGraphs'],
@@ -137,12 +159,48 @@ export const PROBE_ENTRY: Record<Band, string[]> = {
   '15-16': ['a.signedFluency', 'a.linearEqIneq', 'a.functions', 'a.quadratics', 'a.systems', 'a.geomTransform', 'a.proofTrig'],
   '17-18': ['c.introCalculus', 'c.trigGraphsId', 'c.expLog', 'c.complex', 'c.conics', 'c.systemsMatrices', 'c.sequencesSeries', 'c.statsInference'],
 }
+export const PROBE_SWEEP: Record<Band, string[]> = {
+  '3-5':   ['e.subWithin10', 'e.measureCompare'],
+  '6-8':   ['p.subTo100', 'p.wordProbAddSub', 'p.money', 'p.time', 'p.shapes2d3d', ...['e.patterns', 'e.measureCompare']],
+  '9-11':  ['i.rounding', 'i.factors', 'i.fractionOps', 'i.measureUnits', 'i.anglesSymmetry', 'i.wordProbMulti', ...['p.money', 'p.time', 'p.wordProbAddSub']],
+  '12-14': ['m.percentages', ...['i.rounding', 'i.measureUnits', 'i.anglesSymmetry', 'i.dataGraphs', 'i.wordProbMulti']],
+  '15-16': [...['m.percentages']],
+  '17-18': [],
+}
+/**
+ * ⚠️ THE `...[]` GROUPS ABOVE ARE THE **PREVIOUS BAND'S** STANDALONE TOPICS, AND THE DISTINCTION
+ * THEY ENCODE IS THE WHOLE REASON THE LIST IS NOT LONGER.
+ *
+ * A 9–11 child who cannot tell the time was invisible: `p.time` is a 6–8 leaf, nothing depends on
+ * it, and the 9–11 descent has no reason to go near it. Measured, each band cannot reach 9–13
+ * lower-band chapters this way. Sweeping ALL of them is wrong in both directions — it would ask a
+ * seventeen-year-old "which is more, 3 or 7", and it would add a dozen questions to every check.
+ *
+ * The split that works: a **standalone topic** (money, telling time, story problems, rounding,
+ * units, angles, charts) is something a child can be missing on its own while everything around it
+ * is fine, so nothing else will ever reveal it — it has to be asked. A **foundational** skill
+ * (compare, number order, subtraction within 10) is underneath everything, so any failure above it
+ * sends the descent through it anyway; asking it up front buys nothing and costs a question.
+ *
+ * Two bands down is deliberately NOT swept: by then the descent is the honest instrument, because a
+ * child that far below grade will have failed something on the way.
+ */
+/** Spine then sweep — the order the probe asks them in. */
+export const PROBE_ENTRY: Record<Band, string[]> = Object.fromEntries(
+  (Object.keys(PROBE_SPINE) as Band[]).map(b => [b, [...PROBE_SPINE[b], ...PROBE_SWEEP[b]]]),
+) as Record<Band, string[]>
 
 // ── Derived lookups + helpers (pure; the probe engine builds on these) ─────────
 export const NODE_BY_ID: Record<string, SkillNode> = Object.fromEntries(SKILL_NODES.map(n => [n.id, n]))
 export const prereqsOf = (id: string): string[] => NODE_BY_ID[id]?.prereqs ?? []
 export const dependentsOf = (id: string): string[] => SKILL_NODES.filter(n => n.prereqs.includes(id)).map(n => n.id)
 export const chapterFor = (id: string): string | undefined => NODE_BY_ID[id]?.chapter
+/** The chapter to put in a child's ROUTE for this skill.
+ *  ⚠️ This briefly wrapped a `remediation` stand-in field, for the nine days when three skills had
+ *  no chapter of their own. Both chapters exist now, so the stand-in is gone and this is simply the
+ *  chapter — kept as its own name because the ROUTE is what it is for, and because the gate that
+ *  guarantees it is never empty asserts on this. */
+export const routeChapterFor = (id: string): string | undefined => NODE_BY_ID[id]?.chapter || undefined
 
 /** All skills that (transitively) depend on `id` — the "downstream cost" of a root gap. */
 export function blockedBy(id: string): string[] {

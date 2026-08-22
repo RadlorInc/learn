@@ -13,9 +13,11 @@
 >
 > ## 📍 WHERE THE 9–11 BAND IS — read this before touching it
 >
-> **The port is FINISHED at eight** (founder's call, 2026-08-14: treat 9–11 like 12–18, same engine,
-> same format, **AR as the thing that makes it its own band**). EIGHT chapters are across and
-> **the last two are deliberately staying storybook — founder's call, 2026-08-16: *"woh dono chapter
+> **The port is FINISHED at TEN** (founder's call, 2026-08-14: treat 9–11 like 12–18, same engine,
+> same format, **AR as the thing that makes it its own band**) — eight ported plus **two BUILT NEW on
+> 2026-08-22**, The Packing Shed and The Minibus Run, which is what finally closed the
+> multiplication/division content hole the diagnostic had been routing children into. And
+> **two more are deliberately staying storybook — founder's call, 2026-08-16: *"woh dono chapter
 > waise hi rahenge… bina neon mein"***. So this table is the finished state, not a to-do list.
 > ⚠️ **The two halves work completely differently — check which kind you are in before you touch
 > one.** Do NOT port `OrderDesk` or `LevelRun`; they are storybook `SkillBeat` on purpose, and both
@@ -31,6 +33,8 @@
 > | ✅ | `wordProblems` | `teen/games/MissionBriefGame.tsx` | the shell's AnswerPad |
 > | ✅ | `areaPerimeter` | `teen/games/EmptyPlotGame.tsx` | a PLACE on a plan · **hands apart** |
 > | ✅ | `dataGraphs` | `teen/games/LoadingBayGame.tsx` | a stack OR a count · hand or taps |
+> | 🆕 | `timesTables` | `teen/games/PackingShedGame.tsx` | a TYPED total · taps only (answers reach 116) |
+> | 🆕 | `division` | `teen/games/BusRunGame.tsx` | a count ≤ 10 · **hand** or taps |
 > | 🔒 | `bigNumbers` | `story/OrderDesk.tsx` | storybook · SkillBeat — **staying storybook, do not port** |
 > | 🔒 | `rounding` | `story/LevelRun.tsx` | storybook · SkillBeat — **staying storybook, do not port** |
 >
@@ -51,7 +55,8 @@
 >   SPAN (The Empty Plot, and the first one ever scored — see 🏗️ for the noise arithmetic).
 > - `coverage: {…}` withholds the mastery exit until every reading has been asked.
 > - ⚠️ **The maths still lives in `story/<module>.ts`** (`cents` · `factors` · `pizza` · `inches` ·
->   `angles` · `words` · `plotMaths` · `cargo`), untouched by the port and still carrying every gate. **Put a rule there, not
+>   `angles` · `words` · `plotMaths` · `cargo` · **`packing`** · **`busRun`**), untouched by the port
+>   and still carrying every gate. **Put a rule there, not
 >   in the data file** — that split is the only reason ten chapters can share one engine.
 > - ⚠️ **Author an instrument BIG.** `FitSlot` runs at `max={1}` on landscape: it only ever shrinks.
 > - Previews are **`/teen-preview?c=<id>`**. `/story?ch=` now rejects all EIGHT keys by design; only
@@ -110,6 +115,218 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🚚 **2026-08-22 (second pass) — THE TWO MISSING CHAPTERS ARE BUILT. `i.multFacts` — THE MOST LOAD-BEARING NODE IN THE WHOLE 3–18 GRAPH — HAD NO CHAPTER FOR NINE DAYS, AND ~10% OF DIAGNOSED 9–11 CHILDREN ROOTED ON IT. THE CONTENT HOLE IS NOW 0% IN EVERY BAND.** `tsc` 0 · **1436/1436** (+59) · `next build` 0 · lint clean on all new files · sw **v134 → v135**. NOT COMMITTED.
+>
+> **The ask:** *"Times Tables + Division chapter ka design bhi same waise hi rakho jaise decimal chapter aur jaise 12-18 age band ke chapters ka hai… daily real world examples"* → then *"dono worlds theek hain, (i) karo — banana shuru karo"*.
+>
+> | | |
+> |---|---|
+> | `timesTables` | **THE PACKING SHED** · `story/packing.ts` + `teen/games/PackingShedGame.tsx` |
+> | `division` | **THE MINIBUS RUN** · `story/busRun.ts` + `teen/games/BusRunGame.tsx` |
+>
+> Both are Coin Tray's shape exactly: a data file on `GameShell`, `band: '9-11'`, all the maths and
+> every word in a pure `story/<module>.ts`, ten-round loop, adaptive tiers, re-teach, mastery exit,
+> `coverage` over three readings. Registered in `chapters.ts` + `registry.tsx`; previews are
+> `/teen-preview?c=timesTables` and `?c=division`.
+>
+> ## ⓪ 📦 THE PACKING SHED — THE CRATES ARE CLOSED, AND THAT IS THE WHOLE CHAPTER
+> An order arrives: *"Four crates. Five peaches in each."* The crates are **shut** — fact fluency
+> means knowing 7 × 8 without counting, so an array a child can count is the scene answering the
+> question. They type the total on the shipping label, and THEN the crates tip out and the pallet
+> becomes the CHECK. The Empty Plot's order, for the Empty Plot's reason.
+> **One chapter carries two graph nodes**, which is the curriculum's own split: L1 the skip-count
+> families (×2/×5/×10), L2 the hard middle (6–9 × 6–9) where fluency actually lives, **L3 2-digit ×
+> 1-digit** — so `i.multFacts` AND `i.multMultiDigit` both route here.
+> ⚠️ **Answers are TYPED, not picked.** `GameConfig.answerPad` offers chips, and a times-table fact
+> is precisely the question a child wins by ELIMINATING — the fault the diagnostic was rebuilt this
+> same day to remove. The label carries its own ten digits, the way the tray does.
+> ⚠️ **Send is live the moment there is something to send.** Answers run 6 → 116, so a fixed-width
+> commit gate would be FitOut's dead button by construction.
+>
+> ## ① 🚌 THE MINIBUS RUN — THE REMAINDER HAS SOMEWHERE PHYSICAL TO BE
+> The class is going on a trip; every bus has the same seats. Three readings: **share** them out
+> (how many each), **group** them (how many buses fill), and the one the chapter exists for —
+> **who is left standing on the pavement**. That is the lesson worth keeping from the deleted Supply
+> Run, which chapter-craft still records: *"a remainder with somewhere physical to be"*.
+> ⚠️⚠️ **AND THE WORLD'S RULE WOULD HAVE CONTRADICTED THE MATHS IF THE OBVIOUS QUESTION HAD BEEN
+> ASKED.** *"25 children, buses seat 6 — how many buses?"* has two honest answers: the division says
+> 4 r 1 and any real teacher orders **5**. Asking for the quotient there teaches the opposite of what
+> the world shows, on every remainder round. So the scored question is the unambiguous physical one
+> (how many are still waiting) and *"so we need one more bus"* is the CONSEQUENCE in the reveal —
+> the same call The Height Bar makes with its gate.
+> ⚠️ **This is the AR chapter and The Packing Shed is not, and the reason is arithmetic:** a hand
+> reads 0–10. Every Minibus answer is a count inside that, so camera and taps express exactly the
+> same set of questions; The Packing Shed's answers reach the hundreds, so wiring a hand there would
+> be the one-instrument-two-inputs hole. **The generator is bounded to keep that true**, and it is
+> gated.
+>
+> ## ② ⚠️⚠️ TWO REAL DEFECTS, BOTH FOUND BY DRIVING IT, NEITHER VISIBLE TO ANY GATE
+> **(a) The instrument was a hot/cold ORACLE, and the wrong version is the one that sounds like good
+> teaching.** The buses loaded LIVE from whatever number was showing — *a wrong action allowed and
+> visible*, which is a rule this repo already has — so the pavement read "still waiting" until the
+> count happened to be right and then flipped to **"pavement clear"**. Tap 1, 2, 3, watch the label,
+> commit; the child divides nothing. Fixed by the ORDER, not by removing the feedback: while
+> choosing, the yard shows their number as a SETTING (seats reserved, nobody moved) and the loading
+> happens ON the commit. ⚠️ The tell was one WORD — "clear" versus "waiting" — not a picture.
+> **(b) The bus was drawn with its seats on every round — and on a `sharing` round the seat count IS
+> the answer.** Count the empty seats in one bus and read it off. Now the capacity is drawn only
+> where the ticket already gave it; where it is the question the bus is an open box.
+> Both generalised into `chapter-craft.md` §1.
+>
+> ## ③ 🔬 WHAT THE GATES CAUGHT BEFORE THE SCREEN DID (55 new module tests, written first)
+> - **`6 crates of 12`** — the taught method is "split into tens and ones", so the child's own
+>   partial product `6 × 2` is **12**, the crate size printed an inch away. The Height Bar's fault
+>   exactly: not a hidden answer but a MANUFACTURED wrong one. Fixed in the generator.
+> - **`10 buses of 5`, guess 8** — the verdict read *"10 children still on the pavement"*, and 10 is
+>   the answer. chapter-craft: *"a number in a verdict can be the answer by coincidence — check the
+>   numbers a template can produce, not just the words in it."* The verdict states the DIRECTION now.
+> - Square runs and square pallets (`buses === seats`, `crates === per`) refused at the draw — The
+>   Mission Brief shipped that on 16% of its division rounds.
+> - Class sizes bounded so the pavement is children rather than a pile.
+> - ⚠️ And a prompt that read **"nine crates. Two lemons in each."** — a sentence opening in lower
+>   case, on the chalkboard, in every `total` and `multi` round. Caught on a screenshot, then pinned.
+>
+> ## ④ 🎯 WHAT IT DOES TO THE DIAGNOSTIC
+> `i.multFacts`, `i.multMultiDigit` and `i.division` now carry real chapters, so the `remediation`
+> stand-in field added this morning is **deleted again the same day** — it existed to point a
+> chapter-less skill at the nearest thing we owned, and nothing is chapter-less any more. What holds
+> the line instead is the gate. Measured after: **0% of diagnosed roots land on a
+> skill with no chapter, in every band** (was 5–10%). And the play-data revision woke up — the
+> `activePlan` gate had pinned `deeperChapter('factorsMultiples') === null` with the note *"pinned so
+> the day a chapter comes back, this starts returning one and somebody notices"*. It now returns
+> `timesTables`. **The pin fired exactly as written.**
+>
+> ## ▶ OPEN
+> 1. 🔴 **NOTHING IS COMMITTED** (this and the diagnostic work of the same day). Driven end to end at
+>    1280×720 and 640×320: start card → walkthrough → guided → scored round → correct answer, on both
+>    chapters. 0 console errors, 0 offscreen, 0 unreachable controls, no scroll.
+> 2. ⚠️ **At 640×320 every control scales to ~28px**, under the 44px floor — `FitSlot` only ever
+>    shrinks. **Measured against the shipped Coin Tray at the same frame: 29×29.** So this is a
+>    band-wide property, not something these two chapters introduced — but it is the whole band, and
+>    it is not written down anywhere as accepted.
+> 3. **No backdrops were generated, deliberately** — the 9–11 GameShell chapters use `motif` (one
+>    huge faint emoji) rather than a scene PNG, exactly as The Coin Tray does. If the band ever moves
+>    to painted scenes, these two need two crops each like the 12–14 chapters.
+> 4. **AR is still never driven with a REAL HAND** — The Minibus Run adds a second chapter to that
+>    gap rather than closing it.
+> 5. Everything from the blocks below still stands.
+
+> 🎯 **2026-08-22 — THE DIAGNOSTIC, RETHOUGHT AND THEN HARDENED. ⚠️⚠️ IT NAMED THE RIGHT ROOT GAP **26–34%** OF THE TIME AND TOLD **10–38%** OF GAPPED CHILDREN THEY WERE ON TRACK — AND ELEVEN GREEN ENGINE TESTS COULD NOT SEE IT, BECAUSE EVERY ONE DRIVES A PERFECT ORACLE. NOW **81–86% / 1–6%**, TEN UNDIAGNOSABLE CHAPTERS ARE REACHABLE, AND THE WEEK-6 GUARANTEE LOOP FIRES FOR THE FIRST TIME.** `tsc` 0 · **1377/1377** (+17) · `next build` 0 · sw **v133 → v134**. NOT COMMITTED.
+>
+> **The asks:** *"daignostic … dekho ki effective hai kya naii hai"* → *"pura properly rethink karo taaki zyada se zyada baccho ka gap mile aur hamare joh bhi chapters hai unki help se ek personalised route de"* → *"yeh problems ka solution find karo aur apply karo … high accuracy pe hona chahiye"*.
+>
+> | | before | after |
+> |---|---|---|
+> | names the EXACT root gap | **26–34%** | **81–86%** |
+> | tells a gapped child they are on track | **10–38%** | **1–6%** |
+> | says "a band below" to an ON-GRADE child | — | **≤ 4%** |
+> | leaf-chapter gap reaches the route | **impossible** | **83–95%** |
+> | route starts at the gap when the gap owns no chapter | **never** | always |
+> | on-grade probe length (median) | — | 9–16 |
+>
+> ## ⓪ ⚠️⚠️ THE ANSWER SURFACE WAS THE WHOLE STORY, AND THE ENGINE WAS INNOCENT
+> Measured by simulating learners with a PLANTED gap, answering with each item's REAL guess rate and
+> a 10% slip. **Driven with clean items the same descent resolves the exact root 90–98%** — which is
+> what stopped a rewrite of the search. Three multiplying causes, all outside it:
+> - **one 4-choice MCQ per skill = 25% lucky pass** (50% on four of them — `e.compare`, `p.compare100`,
+>   `i.bigNumbers`, `i.decimals` — two of which are band ENTRIES);
+> - ⚠️ **the fail-confirmation STRIKE doubles it.** A first miss re-offers the skill, so a broken child
+>   gets TWO shots at the guess: `p + (1−p)p` → 25% becomes **44%**, 50% becomes **75%**. The guard was
+>   written for false FAILS and its cost on false PASSES was never priced;
+> - **a lucky pass on an ENTRY closes that whole branch for ever** — the gap disappears entirely and
+>   the report says *"At or above grade level"* with an empty plan.
+>
+> **Fix: where the answer is a NUMBER the child types it** (`input:'num'`, guess ≈ 0), a fraction gets
+> two boxes, and `'pick'` survives only where the answer space is genuinely categorical — widened 4→6.
+> ⚠️ **The pad's extra keys (`−`, `.`) are declared PER QUESTION TYPE, never derived from the answer** —
+> deriving them prints the answer's sign before the child touches anything.
+>
+> ## ① 🕳️ COVERAGE: TEN BUILT CHAPTERS THE PROBE COULD NEVER REACH — AND THEN NINE MORE ONE BAND DOWN
+> A probe that only walks DOWN from entries cannot see a LEAF. **14 skills were unreachable by ANY
+> band**, so a rounding, time, money or word-problem gap was structurally undiagnosable and a 6–8
+> child's whole check covered 11 of 74 skills. `PROBE_ENTRY` is now `PROBE_SPINE` (descend on fail →
+> the root gap) + `PROBE_SWEEP` (leaf chapters → route entries).
+> ⚠️ **Then the founder's own case: a 9–11 child who cannot tell the time.** `p.time` is a 6–8 leaf, so
+> nothing in 9–11 goes near it — each band misses **9–13** lower-band chapters this way. Sweeping all
+> of them would ask a seventeen-year-old *"which is more, 3 or 7"*. The split that works: a
+> **standalone topic** (money, time, story problems, rounding, units, angles, charts) can be missing on
+> its own and nothing else will ever reveal it — it must be asked; a **foundational** skill (compare,
+> number order) sits under everything, so any failure above sends the descent through it anyway. One
+> band down only; two bands down, the descent is the honest instrument.
+>
+> ## ② ✂️ THE DESCENT BISECTS NOW — SHORTER *AND* MORE ACCURATE FROM ONE CHANGE
+> Instrumented where the questions actually go: **17–18 spent 11.3 of 20.2 on the descent**, one
+> question per LEVEL down a nine-level chain, each an extra chance for a slip to plant a false deeper
+> root. Halving the candidate set instead took that band 72% → **81%** and 12–14 to **84%**.
+> ⚠️⚠️ **Pure bisection was WRONG and the measurement caught it: a grade-level 17–18 child went from 9
+> questions to 22.** With nothing broken below, the cheap question is *"do this skill's own direct
+> prerequisites hold?"* — three probes and it is over — while a bisector prunes a 40-node closure a
+> sub-tree at a time. So a branch opens in direct-prerequisite mode and switches to bisecting the
+> moment something under it fails, which is exactly when the long chains appear.
+> ⚠️ Two more free questions saved, both from the graph rather than a cap: an entry whose prerequisite
+> has already FAILED is not asked (it is arithmetic, not a question) and an entry that is a
+> PREREQUISITE of something already PASSED is not asked either.
+>
+> ## ③ 🗺️ THE ROUTE IS DERIVED FROM THE GAP, NOT FROM WHICH QUESTIONS GOT ASKED
+> `planSkills = [...s.failed]` was a fair approximation while the descent walked every level and
+> became wrong the instant it bisected — a bisecting search **skips levels on purpose**, and those
+> skipped chapters are exactly the ones between the child's gap and their grade. It is now the failed
+> set PLUS every skill on a chain from a root up to a failed entry, bounded by that chain (not by
+> `blockedBy(root)`, which for a deep root is most of the graph). Median route: 2 / 4 / 6 / 9 / 16
+> chapters by band.
+> ⚠️ **And the report then contradicted itself on one screen.** A learner rooting four bands down drew
+> a **40-step** route printed two inches under *"Caught now, it's weeks of work, not years"* — which is
+> true of a short route and a lie about a long one. The plan card now shows the first five with
+> "+N more, one step at a time", and the timeline sentence is chosen by the route's actual length.
+>
+> ## ④ 🔍 THE WEEK-6 GUARANTEE LOOP HAD NEVER FIRED, AND IT WAS NOT THE LOGIC
+> Prod: **0 rechecks, ever** — and querying the sessions, **five children are 45–50 days past their
+> check-up and genuinely due one**, so it was not "nothing is ripe yet". `getCheckupStatus` is correct;
+> the nudge lived only on the **parent dashboard**, for whichever learner happened to be selected. It
+> now renders on `/menu`, the screen the child opens every session. Driven end to end (`Check 1 of 3`
+> → typed answers → result).
+> ⚠️ The loop is the promise, the retention signal AND the efficacy dataset — one mechanism doing three
+> jobs, and it was reachable only by a parent visiting a screen they have no reason to open.
+>
+> ## ⑤ 🔬 THE BUG FOUND ALONG THE WAY: THE "PER-CHILD REPRODUCIBLE PROBE" WAS NOT
+> 14 generators used `pick` from `@/core/rand` — which is `Math.random`, and **that file's own header
+> says reproducible cases must not use it.** `resolve()` rebuilds the current question from the seed on
+> a mid-probe resume, so those items came back DIFFERENT. A determinism test existed and passed: it
+> checked ONE skill, which happens not to use `pick`. Now a seeded `pk`, swept across all 74.
+>
+> ## ⑥ 🚧 THE GATE IS THE REAL ARTEFACT — `src/__tests__/diagnosticAccuracy.test.ts`
+> ⚠️⚠️ **Eleven engine tests were green through all of this because every one drives a PERFECT ORACLE**
+> ("knows it ⇒ correct"). A real child guesses and slips; nothing in 1360 tests modelled either, so the
+> product's central claim was unmeasured. The gate plants a gap, answers with the real per-item guess
+> rate, and asserts exact-root rate, missed-gap rate, false-alarm rate **split into any-gap vs a-gap-in-
+> a-lower-band** (only the second is damaging), leaf coverage, route-starts-at-the-gap, route LENGTH,
+> probe LENGTH (accuracy is trivially buyable with more questions), and the exact list of chapterless
+> skills. Seeded, so it is not a coin flip.
+> ⚠️ `diagVisual`'s *"the tallest bar must be the answer"* changed with its question: that was right
+> while `i.dataGraphs` asked *"which has the most"* — answerable by LOOKING — and it now asks *"how many
+> more X than Y"*. The surviving invariant is that the picture supports the arithmetic.
+>
+> ## ▶ OPEN
+> 1. 🔴 **NOTHING IS COMMITTED.** `tsc` 0 · 1377/1377 · `next build` 0 · lint baseline unchanged ·
+>    driven on screen at 1280×720 and 640×320 (number pad, fraction pad, full probe → report, and the
+>    re-check flow). 0 offscreen, 0 controls under 44px, 0 console errors.
+> 2. ⚠️⚠️ **THE ONE THING THE ENGINE CANNOT FIX: ~10% of diagnosed 9–11 children root on a skill with
+>    NO CHAPTER** (`i.multFacts`, `i.multMultiDigit`, `i.division`; 5–8% for the teen bands). And the
+>    stand-in is weaker than it sounds — a child whose root gap is multiplication FACTS has, by the
+>    definition of a root, already PASSED equal groups, so the plan sends them to a chapter they can
+>    already do. **This needs a Times Tables (fluency) chapter and a Division chapter.** Gated
+>    (`exactly three skills have no chapter`) so it cannot silently widen. **Founder decision needed:
+>    that is a chapter build — verb, world, art — not an engine change.**
+> 3. **Probe length is the live trade.** On-grade median 9–16 (9–11 longest: it sweeps the most leaf
+>    chapters); gapped p95 16–27. Above the spec's "8–12 items", inside its "5–8 min". The sweep is
+>    3–4 questions and is the only thing that can find a money/time/rounding gap.
+> 4. **17–18 and 15–16 are the weakest bands at 81%** — its descents cross the most bands, so a slip has the most
+>    room to land on a wrong-but-deeper root.
+> 5. **The `/menu` re-check card is NOT visually verified** — it needs a signed-in learner with a
+>    6-week-old gap, which the local dev server has no session for. Its destination WAS driven.
+> 6. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA**, and tester issue #2 (Milo's robotic voice) is
+>    untouched. Everything from the blocks below still stands.
 
 > 📐 **2026-08-21 — A TESTER'S FOUR BUGS, THEN EVERY CHAPTER SWEPT FOR RESPONSIVENESS, AND FINALLY THE GUTTHI THIS FILE HAS CARRIED FOR WEEKS: ⚠️⚠️ A `useRef` GUARD WAS FREEZING TEN CHAPTERS' DEMOS — IN DEV ONLY — AND THE EARLIER SESSION'S "IT WORKS ON PROD" RULED IT OUT BACKWARDS.** `tsc` 0 · **1360/1360** (+4) · **267/267 e2e** · **20/20 storybook** · `next build` 0 · sw **v127 → v133**. ✅ SHIPPED — `main`@`ea6ee6b`, 6 commits, deployment READY and prod serving v133.
 >
@@ -561,207 +778,4 @@
 > 2. Five orphaned art exports in `art.tsx` (§⑤) — delete only if you want the library tidy.
 > 3. Everything from prior sessions stands unchanged.
 
-> 🔗 **2026-08-20 — THE SOCIAL HANDLES ARE WIRED INTO `sameAs`, THE FOOTER AND `llms.txt` FROM ONE LIST — AND THE OBVIOUS WAY TO DO IT WOULD HAVE TOLD EVERY ANSWER ENGINE THAT RADLOR IS FACEBOOK. ⚠️ ALSO: THE GITHUB ORG WAS RENAMED UNDER US AND BOTH REMOTES WERE STILL POINTING AT THE OLD NAME.** `tsc` 0 · `next build` 0 · `check:social` 6/6 · IndexNow 10/10 · `learn`@`0e3c396` · `website`@`5d05d1e`. No sw bump — no app code changed.
->
-> **The asks:** *"subdomains add kiye phir bhi site can't be reached"* → *"toh phir yeh sabko bhi add karo main website mein for SEO and GEO"* → *"github aur facebook ka kya hua dekho"* → *"add the profile README in RadlorInc"* → *"dono repos commit karke push kar do"*.
->
-> ## ⓪ ⚠️⚠️ THE VANITY FORWARD IS THE RIGHT DESIGN AND THE WRONG `sameAs`, AND THE DIFFERENCE IS INVISIBLE IN THE PANEL
-> The founder set up `facebook.radlor.com` / `instagram.radlor.com` / `x.radlor.com` /
-> `linkedin.radlor.com` as GoDaddy 301s and asked for them on the site. Putting those strings
-> straight into `Organization.sameAs` is one line and would have been **worse than the empty array
-> it replaced**: every forward's destination was the platform's **HOMEPAGE**, so a crawler following
-> `facebook.radlor.com` lands on `facebook.com/` and corroborates **Facebook** as the entity named
-> Radlor. Measured, all four: `→ https://www.linkedin.com/`, `→ https://www.instagram.com/`,
-> `→ https://x.com/`. ⚠️ **In the GoDaddy table a homepage forward and a profile forward look
-> IDENTICAL** — same "Permanent (301)", same green row.
-> **The design was kept and gated instead of abandoned**, because the founder's instinct is right:
-> our own forwards mean a handle change is a DNS edit, not a deploy. **`scripts/check-social.sh`
-> (`npm run check:social`) follows every URL in `SOCIAL` to its final address and fails on a bare
-> host.** It caught all four on the first run, and went green only after the destinations were fixed.
-> ⚠️ **It checks WHERE a link goes, never WHOSE the profile is** — `instagram.com/radlor` is an
-> unrelated account with 818 followers, so a human confirms each destination once.
->
-> ## ① 🕳️ THE GITHUB ORG WAS RENAMED AND NOTHING SAID SO
-> Probing for a GitHub profile to add, `api.github.com/orgs/RadlorMain` returned **404** — as did
-> `/users/RadlorMain`, while `github.com/RadlorMain/learn` still worked. It had been renamed
-> **`RadlorMain` → `RadlorInc`**; repo ID `1248492657` is unchanged, which is how the repos kept
-> resolving. **Both git remotes were still on the old name in both repos.** GitHub 301s a renamed
-> org only until somebody else claims the name, and then every push breaks. Re-pointed and verified
-> with `git ls-remote` (not with a settings page — see 🏗️ §①).
-> ✅ **And the webhook survived**, confirmed the way this repo learned to confirm it: pushed once and
-> read the deployment back off the Vercel API — `githubCommitOrg: RadlorInc`, sha `0e3c396`,
-> production. Repo ID is what Vercel routes on, so a rename is safe where a *disconnect* is not.
-> ⚠️ **`handoff.md` named `RadlorMain` in five places and is auto-loaded into every session** — the
-> most expensive place to leave a stale fact, because the next session reads the remote out of the
-> header and trusts it. Fixed; the two historical mentions are annotated rather than rewritten.
->
-> ## ② WHAT SHIPPED ON THE SITE
-> One list (`SOCIAL` in `site.ts`) feeds three surfaces, so they cannot disagree:
-> - **`Organization.sameAs`** — six profiles. The strongest GEO signal available, and it was empty.
-> - **A visible footer row** (`rel="me noopener"`). ⚠️ **A schema-only claim is the weaker half** —
->   the same reason the app links back to radlor.com visibly rather than only in JSON-LD.
-> - **`llms.txt` → `## Profiles`**, generated from the same array. *"These are the only accounts
->   Radlor operates"* is a **disambiguating** claim here, not a directory listing, precisely because
->   `instagram.com/radlor` is someone else's.
->
-> **`github.com/RadlorInc` now has a profile README** (`RadlorInc/.github` → `profile/README.md`).
-> That page is what a model lands on when it follows that `sameAs`, and it held nothing but two
-> repos. It leads with the three facts most often got wrong here — **Radlor** the company,
-> **AdaptiveLearn** the product, **Milo** the character — plus the on-device camera claim.
->
-> ## ③ ⚠️ FACEBOOK'S FORWARD HAS NO CERT, AND THE SYMPTOM LOOKED LIKE A BROKEN DEPLOY
-> The founder's report was Chrome's *"This site can't be reached"*. DNS was fine and HTTP 301'd
-> correctly; **only 443 was dead**, because GoDaddy has two forwarding pools and that row sat on the
-> non-SSL one — `3.33.152.147` / `15.197.142.173`, TTL **600**, port 443 closed, against the other
-> three on `3.33.251.168` / `15.197.225.128`, TTL 3600, 443 open. Chrome auto-upgrades to HTTPS, so
-> it hit the dead port. **Still not issued after a full day**, so Facebook alone ships as its raw
-> profile URL — a dead `sameAs` entry is worth less than none. Swap it back when `check:social`
-> passes on it.
->
-> ## ④ 🔬 THE INSTRUMENT WAS WRONG TWICE, AND BOTH TIMES IT LOOKED LIKE THE SITE WAS
-> - Verifying the live footer, `grep -c 'rel="me"'` returned **0** on a page that was serving all
->   six links — the attribute is `rel="me noopener"`, so the quoted match could never hit. **A
->   background watcher armed on the same string never fired.** Nearly reported a working deploy as
->   broken.
-> - Checking the reciprocal links (the profile's own website field, which is what confirms `sameAs`
->   from the other side), five of six returned no `radlor.com` — but **LinkedIn served 1,529 bytes
->   and Facebook 1,542**, i.e. login walls, and Instagram a 610 KB JS shell. **Only GitHub is
->   verifiable from here** (`blog=radlor.com`). Reported as unverifiable rather than as missing —
->   the 🛡️ block's *add a control before believing any probe*, met again.
->
-> ## ▶ OPEN
-> 1. **Crunchbase is the last missing `sameAs` entry**, and it is the direct counter to §③ of the
->    🇺🇸 block: Google answers "radlor" with a radler and **RADLOR LIMITED, dissolved June 2026**.
->    LinkedIn + GitHub + Crunchbase are three live structured records against one dead one.
-> 2. **The reciprocal half is unverified on five platforms.** The founder set the website field on
->    each; nothing here can confirm it. One logged-out browser pass closes it.
-> 3. `facebook.radlor.com`'s cert (§③) — cosmetic, `check:social` will announce it.
-> 4. **Everything from prior sessions stands unchanged:** no backup of the children's data ·
->    `SUPABASE_SERVICE_ROLE_KEY` · Vercel Pro · custom SMTP · `DRAFT = true` · AR never driven with
->    a real hand · 146 eslint errors (was 132; re-measured 2026-08-21) · `support@radlor.com` may still have no mailbox.
-
-> 🇺🇸 **2026-08-19 (fourth pass) — THE MVP AUDIENCE IS THE US, AND EVERY PUBLIC STRING IN BOTH REPOS WAS BRITISH. 64 "maths", ZERO "math". PLUS: radlor.com IS LIVE AND INDEXED, SEARCH CONSOLE + BING + INDEXNOW ARE WIRED, AND THE SUPABASE REGION MIGRATION HAS A RUNBOOK.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v123 → v124** · `main`@`c6d0252`.
->
-> ## ⓪ ⚠️ "maths" IS THE WRONG KEYWORD FOR THE AUDIENCE WE ARE ACTUALLY LAUNCHING TO
-> Founder, mid-session: the MVP is entirely US. Measured before touching anything: **64 lowercase
-> `maths` and zero `math`** across both repos' copy, `locale: en_IN`, `priceCurrency: INR` in three
-> places. A US parent searches *"math app for kids"* — so every title, description and `llms.txt`
-> was optimising for a string Americans do not type, and the whole site read as non-US to an answer
-> engine.
->
-> Swept with a case-sensitive `\bmaths\b`, which **deliberately cannot match `plotMaths`** — that is
-> a module name, not copy. Verified after: 0 remain, `plotMaths` intact in all 5 references. The 5
-> test files asserting on the string were swept with the source so the suite stays honest.
->
-> ⚠️ **TWO THINGS DELIBERATELY NOT SWEPT, AND THE SECOND IS NOT A SPELLING QUESTION AT ALL:**
-> - **`colour`, 31 in `src/features`** — measured, **15 are code identifiers** (`COLOURS`, `colourOf`)
->   and 16 are prose. A blind script renames identifiers, which is the fault this repo already has a
->   rule about. Needs the halves separated by hand.
-> - **`metre`, 180** — this is **CURRICULUM**. US schools teach customary units alongside metric and
->   the app already uses inches in 191 places (The Height Bar). Changing metres to feet changes the
->   arithmetic in every area/perimeter chapter, its generators and its gates. **Recommended: leave
->   it.** Metric is taught in the US; these chapters are British-leaning, not wrong.
->
-> ## ① ⚠️⚠️ I TRIPPED VERCEL'S BOT PROTECTION WITH MY OWN POLLING LOOP — THE SAME FAULT THIS FILE ALREADY RECORDS
-> Polling both origins with `curl` every 15 s for ten minutes to watch a deploy land put my IP behind
-> **"Vercel Security Checkpoint"**, and I briefly read that as a broken deploy. It was not: the
-> deployment was `READY`, and a **real browser passed the challenge in about a second** — verified,
-> so no user was affected. The previous session's block records me doing exactly this and I did it
-> again. **Confirm a deploy through the Vercel API (`list_deployments`), not a curl loop**; if you
-> must poll, 20 s+ intervals.
->
-> ## ② radlor.com IS LIVE, AND GOOGLE INDEXED IT WITHIN HOURS — WITH THE STALE COPY
-> Apex `216.198.79.1`, `www` → 308 → apex, cert valid, `llms.txt`/`robots.txt`/`sitemap.xml` all 200.
-> ⚠️ **Google crawled `/about` and `/data-and-safety` faster than the US-spelling fix could deploy**,
-> so the live snippet read *"adaptive maths for ages"* for a while. If a copy fix is imminent, hold
-> the indexing request — Google will not wait for you.
->
-> ⚠️ **THE PRODUCTION DOMAIN MUST BE THE APEX, NOT `www`.** The founder had `www` set as production
-> and apex 308-ing to it. Both repos hardcode the entity `@id` `https://radlor.com/#organization`,
-> and `NEXT_PUBLIC_SITE_URL` is the apex — so `www`-as-production means every canonical points at a
-> URL that redirects away. Flipped. **Do not flip it back without changing the `@id` in both repos.**
->
-> ## ③ 📉 THE GEO BASELINE, RECORDED — GOOGLE THINKS RADLOR IS A BEER
-> Captured hours after launch and written into `../radlor-site/docs/seo-geo-setup.md` §F0, because in
-> three months nobody remembers what the wrong answer used to be. Google's AI Overview for `radlor`:
-> *"you might mean a **radler** (a mixed beer drink) or made a typo"*, with a knowledge panel pointing
-> at **RADLOR LIMITED, Companies House — DISSOLVED 23 June 2026**.
-> ⚠️ **The competitor is not a business, it is a stale government record with better provenance than
-> a site that is hours old.** That makes `sameAs` the top code item rather than a nicety: nothing
-> currently corroborates that Radlor is a live company. One LinkedIn company page would.
-> ⚠️ I earlier reported the name as "effectively unclaimed with an Instagram handle and a Madrid hair
-> salon" — the Companies House record was there and my search missed it.
->
-> ## ④ SEARCH CONSOLE, BING, INDEXNOW — ALL LIVE
-> - **GSC**: a **Domain property** (DNS TXT), so one property covers `radlor.com` *and*
->   `adaptivelearn.radlor.com`. Both sitemaps submitted (10 URLs / 5 URLs).
->   ⚠️ **Google's Domain Connect flow was CANCELLED on purpose** — it bundles *"Gmail Setup"* with
->   domain verification and GoDaddy warned it *"will allow Google to potentially remove o365"*. One
->   click from killing the M365 mailboxes. **Always use the manual TXT record here.**
-> - **Bing** — imported from GSC. ⚠️ Bing properties are URL-prefix, **not** domain: the subdomain
->   needs adding as a separate site or the app never enters Bing's index, and Bing is what ChatGPT
->   search and Copilot read.
-> - **IndexNow** — key file in `public/` of BOTH repos (verification is per host) plus
->   `scripts/indexnow.sh`. ⚠️ **Deliberately NOT a workflow on push**: IndexNow's value is that the
->   crawler comes immediately, which is actively harmful if it arrives before the new build is live —
->   it re-indexes the OLD page. The script refuses any URL not already serving 200. First submissions
->   accepted (202): 10 URLs + 5 URLs.
->
-> ## ⑤ 🗄️ SUPABASE REGION MIGRATION — RUNBOOK WRITTEN, DEFERRED TO THE PRO UPGRADE
-> `docs/supabase-region-migration.md`. The DB is `ap-southeast-2` (Sydney), the browser talks to it
-> **directly**, and the MVP audience is US — so every auth call crosses the Pacific. Region is fixed
-> at project creation; the only route is a new project plus a migration. **15 MB, 8 auth users, 17
-> learners** — an afternoon now, a project at 800 users.
->
-> ⚠️⚠️ **WRITING IT TURNED UP THE ASSUMPTION THAT WOULD HAVE WRECKED IT: THE REPO'S MIGRATIONS ARE
-> NOT A REPLAYABLE HISTORY OF PRODUCTION.** The repo holds **66** files; `schema_migrations` holds
-> **65** rows; **62 of the repo's versions are absent from the database and 59 of the database's are
-> absent from the repo** — only the six most recent overlap, because they were applied through the
-> MCP/dashboard, which stamps its own timestamp. **`supabase db push` against a fresh project is an
-> unverified REBUILD, not a migration.** The runbook dumps from production instead.
-> ⚠️ Also recorded, because a dump brings none of them: the **2 pg_cron retention jobs** (losing them
-> silently reopens a commitment made on `/data-and-safety`), the **default privileges** a restore
-> hands back, the auth dashboard config, and the extensions.
-> ⚠️ And the step that can lock out **5 of 8 users**: Supabase's OAuth callback contains the project
-> ref, so a new project needs its callback **ADDED** to the Google Cloud client — while
-> `admin@radlor.com` still has only **Editor** there. **Check that before starting, not halfway.**
->
-> **Founder's call: this happens WITH the Pro upgrade, not before it.** Pro brings daily backups and
-> PITR, which solves the runbook's own §1a blocker by changing the plan rather than wiring the
-> stop-gap workflow. ⚠️ **Until then there is still no restorable copy of the children's data.**
->
-> ## ⑥ 🔴 `support@radlor.com` MAY HAVE NO MAILBOX, AND IT IS PRINTED ON A LIVE SITE
-> Microsoft's sign-in **could not find an account for `admin@radlor.com`**. DNS proves the DOMAIN is
-> on M365 (MX, DKIM, autodiscover, tenant `NETORGFT21042623`) — it does **not** prove a mailbox
-> exists. ⚠️ I earlier asserted that address "is already a Microsoft account"; that was inferred from
-> DNS, not verified, and it was wrong. **Two-minute test: send mail to both addresses and see if it
-> bounces.** `support@radlor.com` is on `/contact`, the footer, the legal pages, `llms.txt` and the
-> schema of a live site.
->
-> ## ⑦ 🎨 LOGO — IN PROGRESS, NOT FINISHED
-> Two supplied logos were combined by hand from their SVG paths: logo 1's wordmark + book-in-the-"o",
-> logo 2's bulb-and-pencil mark. Work in `~/Downloads/Radlor logo final/` (SVG + transparent + PNG).
-> Decisions made: tagline dropped (the site has a better line), polygons reduced from 15 web paths to
-> 8 and pulled inward, bulb recoloured into the logo's navy by **luminance** so its shading survives,
-> bulb aligned to the letters' baseline at 1.73× the "R", and background-coloured knockouts behind the
-> bulb, "R" (9), the book (9) and the final "r" (15) — **different widths on purpose: a wide knockout
-> reads as a clean bite out of a dark polygon but is invisible over thin grey lines.**
-> ⚠️ **Knockouts must be drawn BEFORE the bulb**, or the R's knockout erases the bulb's shine lines.
->
-> **⚠️ TWO THINGS STILL OPEN, AND THE FIRST IS A REAL CONSTRAINT:**
-> - **The book IS the "o"** — welded into path `#43` with the "l". Remove the book and the word
->   becomes "Radl_r". Any replacement mark either fills that slot or an "o" has to be drawn.
-> - **Bulb OR chest, not both.** A treasure chest was requested and drawn (front view, open lid,
->   light rays, ~15 strokes) — but both marks emit rays and cannot share one lockup.
-> ⚠️ **The chest is my drawing and it shows** — geometric arcs against an illustrator's hand. Its
-> structure is right; the gems inside were attempted three ways and none worked at that stroke weight.
-> **Best handed to a designer as reference.**
->
-> ## ▶ WHAT CHANGED IN THE OPEN LIST
-> ✅ radlor.com live · GSC + Bing + IndexNow wired · the GEO baseline recorded · a migration runbook.
-> 🔴 Still open and unchanged: **no backup of the children's data** · `SUPABASE_SERVICE_ROLE_KEY` ·
-> Vercel Pro (Hobby is non-commercial) · custom SMTP (Supabase's mailer 429s at launch) ·
-> `DRAFT = true` on the legal text · AR never driven with a real hand · 146 eslint errors (was 132; re-measured 2026-08-21).
-> **And two new ones:** ~~`sameAs` is empty (§③)~~ **CLOSED 2026-08-20, see 🔗** and `support@radlor.com` may not exist (§⑥).
-
-_Older sessions (2026-06-15 → **2026-08-19**) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-20**, including 🇺🇸 the US-spelling / SEO / region-migration day and 🔗 the social-handles day, both moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._

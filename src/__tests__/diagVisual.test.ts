@@ -15,10 +15,20 @@ describe('diagnostic item visuals', () => {
         const nums: number[] = []
         switch (v.t) {
           case 'bars': {
+            // ⚠️ The chart must ANSWER the question it is drawn for. This used to assert "the
+            // tallest bar is the answer", which was right while the question was "which has the
+            // most" — a question a child answers by LOOKING, which is why it became "how many more
+            // X than Y" (reading plus a comparison, with a number for an answer). The invariant
+            // that survives the change is that the picture supports the arithmetic: both named
+            // bars are unambiguous, and their difference IS the answer.
             expect(v.vals).toHaveLength(v.labels.length)
-            const top = v.labels[v.vals.indexOf(Math.max(...v.vals))]
-            expect(top, `${skill}: tallest bar must be the answer`).toBe(item.answer)
-            expect(v.vals.filter(x => x === Math.max(...v.vals)), `${skill}: no tie for tallest`).toHaveLength(1)
+            const hi = Math.max(...v.vals), lo = Math.min(...v.vals)
+            expect(v.vals.filter(x => x === hi), `${skill}: no tie for tallest`).toHaveLength(1)
+            expect(v.vals.filter(x => x === lo), `${skill}: no tie for shortest`).toHaveLength(1)
+            const hiL = v.labels[v.vals.indexOf(hi)], loL = v.labels[v.vals.indexOf(lo)]
+            expect(item.prompt, `${skill}: prompt must name both bars it compares`).toContain(hiL)
+            expect(item.prompt).toContain(loL)
+            expect(String(hi - lo), `${skill}: the drawn difference must be the answer`).toBe(item.answer)
             nums.push(...v.vals); break
           }
           case 'point': nums.push(v.x, v.y); break

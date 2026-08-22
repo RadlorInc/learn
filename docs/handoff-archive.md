@@ -1,3 +1,206 @@
+> 🔗 **2026-08-20 — THE SOCIAL HANDLES ARE WIRED INTO `sameAs`, THE FOOTER AND `llms.txt` FROM ONE LIST — AND THE OBVIOUS WAY TO DO IT WOULD HAVE TOLD EVERY ANSWER ENGINE THAT RADLOR IS FACEBOOK. ⚠️ ALSO: THE GITHUB ORG WAS RENAMED UNDER US AND BOTH REMOTES WERE STILL POINTING AT THE OLD NAME.** `tsc` 0 · `next build` 0 · `check:social` 6/6 · IndexNow 10/10 · `learn`@`0e3c396` · `website`@`5d05d1e`. No sw bump — no app code changed.
+>
+> **The asks:** *"subdomains add kiye phir bhi site can't be reached"* → *"toh phir yeh sabko bhi add karo main website mein for SEO and GEO"* → *"github aur facebook ka kya hua dekho"* → *"add the profile README in RadlorInc"* → *"dono repos commit karke push kar do"*.
+>
+> ## ⓪ ⚠️⚠️ THE VANITY FORWARD IS THE RIGHT DESIGN AND THE WRONG `sameAs`, AND THE DIFFERENCE IS INVISIBLE IN THE PANEL
+> The founder set up `facebook.radlor.com` / `instagram.radlor.com` / `x.radlor.com` /
+> `linkedin.radlor.com` as GoDaddy 301s and asked for them on the site. Putting those strings
+> straight into `Organization.sameAs` is one line and would have been **worse than the empty array
+> it replaced**: every forward's destination was the platform's **HOMEPAGE**, so a crawler following
+> `facebook.radlor.com` lands on `facebook.com/` and corroborates **Facebook** as the entity named
+> Radlor. Measured, all four: `→ https://www.linkedin.com/`, `→ https://www.instagram.com/`,
+> `→ https://x.com/`. ⚠️ **In the GoDaddy table a homepage forward and a profile forward look
+> IDENTICAL** — same "Permanent (301)", same green row.
+> **The design was kept and gated instead of abandoned**, because the founder's instinct is right:
+> our own forwards mean a handle change is a DNS edit, not a deploy. **`scripts/check-social.sh`
+> (`npm run check:social`) follows every URL in `SOCIAL` to its final address and fails on a bare
+> host.** It caught all four on the first run, and went green only after the destinations were fixed.
+> ⚠️ **It checks WHERE a link goes, never WHOSE the profile is** — `instagram.com/radlor` is an
+> unrelated account with 818 followers, so a human confirms each destination once.
+>
+> ## ① 🕳️ THE GITHUB ORG WAS RENAMED AND NOTHING SAID SO
+> Probing for a GitHub profile to add, `api.github.com/orgs/RadlorMain` returned **404** — as did
+> `/users/RadlorMain`, while `github.com/RadlorMain/learn` still worked. It had been renamed
+> **`RadlorMain` → `RadlorInc`**; repo ID `1248492657` is unchanged, which is how the repos kept
+> resolving. **Both git remotes were still on the old name in both repos.** GitHub 301s a renamed
+> org only until somebody else claims the name, and then every push breaks. Re-pointed and verified
+> with `git ls-remote` (not with a settings page — see 🏗️ §①).
+> ✅ **And the webhook survived**, confirmed the way this repo learned to confirm it: pushed once and
+> read the deployment back off the Vercel API — `githubCommitOrg: RadlorInc`, sha `0e3c396`,
+> production. Repo ID is what Vercel routes on, so a rename is safe where a *disconnect* is not.
+> ⚠️ **`handoff.md` named `RadlorMain` in five places and is auto-loaded into every session** — the
+> most expensive place to leave a stale fact, because the next session reads the remote out of the
+> header and trusts it. Fixed; the two historical mentions are annotated rather than rewritten.
+>
+> ## ② WHAT SHIPPED ON THE SITE
+> One list (`SOCIAL` in `site.ts`) feeds three surfaces, so they cannot disagree:
+> - **`Organization.sameAs`** — six profiles. The strongest GEO signal available, and it was empty.
+> - **A visible footer row** (`rel="me noopener"`). ⚠️ **A schema-only claim is the weaker half** —
+>   the same reason the app links back to radlor.com visibly rather than only in JSON-LD.
+> - **`llms.txt` → `## Profiles`**, generated from the same array. *"These are the only accounts
+>   Radlor operates"* is a **disambiguating** claim here, not a directory listing, precisely because
+>   `instagram.com/radlor` is someone else's.
+>
+> **`github.com/RadlorInc` now has a profile README** (`RadlorInc/.github` → `profile/README.md`).
+> That page is what a model lands on when it follows that `sameAs`, and it held nothing but two
+> repos. It leads with the three facts most often got wrong here — **Radlor** the company,
+> **AdaptiveLearn** the product, **Milo** the character — plus the on-device camera claim.
+>
+> ## ③ ⚠️ FACEBOOK'S FORWARD HAS NO CERT, AND THE SYMPTOM LOOKED LIKE A BROKEN DEPLOY
+> The founder's report was Chrome's *"This site can't be reached"*. DNS was fine and HTTP 301'd
+> correctly; **only 443 was dead**, because GoDaddy has two forwarding pools and that row sat on the
+> non-SSL one — `3.33.152.147` / `15.197.142.173`, TTL **600**, port 443 closed, against the other
+> three on `3.33.251.168` / `15.197.225.128`, TTL 3600, 443 open. Chrome auto-upgrades to HTTPS, so
+> it hit the dead port. **Still not issued after a full day**, so Facebook alone ships as its raw
+> profile URL — a dead `sameAs` entry is worth less than none. Swap it back when `check:social`
+> passes on it.
+>
+> ## ④ 🔬 THE INSTRUMENT WAS WRONG TWICE, AND BOTH TIMES IT LOOKED LIKE THE SITE WAS
+> - Verifying the live footer, `grep -c 'rel="me"'` returned **0** on a page that was serving all
+>   six links — the attribute is `rel="me noopener"`, so the quoted match could never hit. **A
+>   background watcher armed on the same string never fired.** Nearly reported a working deploy as
+>   broken.
+> - Checking the reciprocal links (the profile's own website field, which is what confirms `sameAs`
+>   from the other side), five of six returned no `radlor.com` — but **LinkedIn served 1,529 bytes
+>   and Facebook 1,542**, i.e. login walls, and Instagram a 610 KB JS shell. **Only GitHub is
+>   verifiable from here** (`blog=radlor.com`). Reported as unverifiable rather than as missing —
+>   the 🛡️ block's *add a control before believing any probe*, met again.
+>
+> ## ▶ OPEN
+> 1. **Crunchbase is the last missing `sameAs` entry**, and it is the direct counter to §③ of the
+>    🇺🇸 block: Google answers "radlor" with a radler and **RADLOR LIMITED, dissolved June 2026**.
+>    LinkedIn + GitHub + Crunchbase are three live structured records against one dead one.
+> 2. **The reciprocal half is unverified on five platforms.** The founder set the website field on
+>    each; nothing here can confirm it. One logged-out browser pass closes it.
+> 3. `facebook.radlor.com`'s cert (§③) — cosmetic, `check:social` will announce it.
+> 4. **Everything from prior sessions stands unchanged:** no backup of the children's data ·
+>    `SUPABASE_SERVICE_ROLE_KEY` · Vercel Pro · custom SMTP · `DRAFT = true` · AR never driven with
+>    a real hand · 146 eslint errors (was 132; re-measured 2026-08-21) · `support@radlor.com` may still have no mailbox.
+
+> 🇺🇸 **2026-08-19 (fourth pass) — THE MVP AUDIENCE IS THE US, AND EVERY PUBLIC STRING IN BOTH REPOS WAS BRITISH. 64 "maths", ZERO "math". PLUS: radlor.com IS LIVE AND INDEXED, SEARCH CONSOLE + BING + INDEXNOW ARE WIRED, AND THE SUPABASE REGION MIGRATION HAS A RUNBOOK.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v123 → v124** · `main`@`c6d0252`.
+>
+> ## ⓪ ⚠️ "maths" IS THE WRONG KEYWORD FOR THE AUDIENCE WE ARE ACTUALLY LAUNCHING TO
+> Founder, mid-session: the MVP is entirely US. Measured before touching anything: **64 lowercase
+> `maths` and zero `math`** across both repos' copy, `locale: en_IN`, `priceCurrency: INR` in three
+> places. A US parent searches *"math app for kids"* — so every title, description and `llms.txt`
+> was optimising for a string Americans do not type, and the whole site read as non-US to an answer
+> engine.
+>
+> Swept with a case-sensitive `\bmaths\b`, which **deliberately cannot match `plotMaths`** — that is
+> a module name, not copy. Verified after: 0 remain, `plotMaths` intact in all 5 references. The 5
+> test files asserting on the string were swept with the source so the suite stays honest.
+>
+> ⚠️ **TWO THINGS DELIBERATELY NOT SWEPT, AND THE SECOND IS NOT A SPELLING QUESTION AT ALL:**
+> - **`colour`, 31 in `src/features`** — measured, **15 are code identifiers** (`COLOURS`, `colourOf`)
+>   and 16 are prose. A blind script renames identifiers, which is the fault this repo already has a
+>   rule about. Needs the halves separated by hand.
+> - **`metre`, 180** — this is **CURRICULUM**. US schools teach customary units alongside metric and
+>   the app already uses inches in 191 places (The Height Bar). Changing metres to feet changes the
+>   arithmetic in every area/perimeter chapter, its generators and its gates. **Recommended: leave
+>   it.** Metric is taught in the US; these chapters are British-leaning, not wrong.
+>
+> ## ① ⚠️⚠️ I TRIPPED VERCEL'S BOT PROTECTION WITH MY OWN POLLING LOOP — THE SAME FAULT THIS FILE ALREADY RECORDS
+> Polling both origins with `curl` every 15 s for ten minutes to watch a deploy land put my IP behind
+> **"Vercel Security Checkpoint"**, and I briefly read that as a broken deploy. It was not: the
+> deployment was `READY`, and a **real browser passed the challenge in about a second** — verified,
+> so no user was affected. The previous session's block records me doing exactly this and I did it
+> again. **Confirm a deploy through the Vercel API (`list_deployments`), not a curl loop**; if you
+> must poll, 20 s+ intervals.
+>
+> ## ② radlor.com IS LIVE, AND GOOGLE INDEXED IT WITHIN HOURS — WITH THE STALE COPY
+> Apex `216.198.79.1`, `www` → 308 → apex, cert valid, `llms.txt`/`robots.txt`/`sitemap.xml` all 200.
+> ⚠️ **Google crawled `/about` and `/data-and-safety` faster than the US-spelling fix could deploy**,
+> so the live snippet read *"adaptive maths for ages"* for a while. If a copy fix is imminent, hold
+> the indexing request — Google will not wait for you.
+>
+> ⚠️ **THE PRODUCTION DOMAIN MUST BE THE APEX, NOT `www`.** The founder had `www` set as production
+> and apex 308-ing to it. Both repos hardcode the entity `@id` `https://radlor.com/#organization`,
+> and `NEXT_PUBLIC_SITE_URL` is the apex — so `www`-as-production means every canonical points at a
+> URL that redirects away. Flipped. **Do not flip it back without changing the `@id` in both repos.**
+>
+> ## ③ 📉 THE GEO BASELINE, RECORDED — GOOGLE THINKS RADLOR IS A BEER
+> Captured hours after launch and written into `../radlor-site/docs/seo-geo-setup.md` §F0, because in
+> three months nobody remembers what the wrong answer used to be. Google's AI Overview for `radlor`:
+> *"you might mean a **radler** (a mixed beer drink) or made a typo"*, with a knowledge panel pointing
+> at **RADLOR LIMITED, Companies House — DISSOLVED 23 June 2026**.
+> ⚠️ **The competitor is not a business, it is a stale government record with better provenance than
+> a site that is hours old.** That makes `sameAs` the top code item rather than a nicety: nothing
+> currently corroborates that Radlor is a live company. One LinkedIn company page would.
+> ⚠️ I earlier reported the name as "effectively unclaimed with an Instagram handle and a Madrid hair
+> salon" — the Companies House record was there and my search missed it.
+>
+> ## ④ SEARCH CONSOLE, BING, INDEXNOW — ALL LIVE
+> - **GSC**: a **Domain property** (DNS TXT), so one property covers `radlor.com` *and*
+>   `adaptivelearn.radlor.com`. Both sitemaps submitted (10 URLs / 5 URLs).
+>   ⚠️ **Google's Domain Connect flow was CANCELLED on purpose** — it bundles *"Gmail Setup"* with
+>   domain verification and GoDaddy warned it *"will allow Google to potentially remove o365"*. One
+>   click from killing the M365 mailboxes. **Always use the manual TXT record here.**
+> - **Bing** — imported from GSC. ⚠️ Bing properties are URL-prefix, **not** domain: the subdomain
+>   needs adding as a separate site or the app never enters Bing's index, and Bing is what ChatGPT
+>   search and Copilot read.
+> - **IndexNow** — key file in `public/` of BOTH repos (verification is per host) plus
+>   `scripts/indexnow.sh`. ⚠️ **Deliberately NOT a workflow on push**: IndexNow's value is that the
+>   crawler comes immediately, which is actively harmful if it arrives before the new build is live —
+>   it re-indexes the OLD page. The script refuses any URL not already serving 200. First submissions
+>   accepted (202): 10 URLs + 5 URLs.
+>
+> ## ⑤ 🗄️ SUPABASE REGION MIGRATION — RUNBOOK WRITTEN, DEFERRED TO THE PRO UPGRADE
+> `docs/supabase-region-migration.md`. The DB is `ap-southeast-2` (Sydney), the browser talks to it
+> **directly**, and the MVP audience is US — so every auth call crosses the Pacific. Region is fixed
+> at project creation; the only route is a new project plus a migration. **15 MB, 8 auth users, 17
+> learners** — an afternoon now, a project at 800 users.
+>
+> ⚠️⚠️ **WRITING IT TURNED UP THE ASSUMPTION THAT WOULD HAVE WRECKED IT: THE REPO'S MIGRATIONS ARE
+> NOT A REPLAYABLE HISTORY OF PRODUCTION.** The repo holds **66** files; `schema_migrations` holds
+> **65** rows; **62 of the repo's versions are absent from the database and 59 of the database's are
+> absent from the repo** — only the six most recent overlap, because they were applied through the
+> MCP/dashboard, which stamps its own timestamp. **`supabase db push` against a fresh project is an
+> unverified REBUILD, not a migration.** The runbook dumps from production instead.
+> ⚠️ Also recorded, because a dump brings none of them: the **2 pg_cron retention jobs** (losing them
+> silently reopens a commitment made on `/data-and-safety`), the **default privileges** a restore
+> hands back, the auth dashboard config, and the extensions.
+> ⚠️ And the step that can lock out **5 of 8 users**: Supabase's OAuth callback contains the project
+> ref, so a new project needs its callback **ADDED** to the Google Cloud client — while
+> `admin@radlor.com` still has only **Editor** there. **Check that before starting, not halfway.**
+>
+> **Founder's call: this happens WITH the Pro upgrade, not before it.** Pro brings daily backups and
+> PITR, which solves the runbook's own §1a blocker by changing the plan rather than wiring the
+> stop-gap workflow. ⚠️ **Until then there is still no restorable copy of the children's data.**
+>
+> ## ⑥ 🔴 `support@radlor.com` MAY HAVE NO MAILBOX, AND IT IS PRINTED ON A LIVE SITE
+> Microsoft's sign-in **could not find an account for `admin@radlor.com`**. DNS proves the DOMAIN is
+> on M365 (MX, DKIM, autodiscover, tenant `NETORGFT21042623`) — it does **not** prove a mailbox
+> exists. ⚠️ I earlier asserted that address "is already a Microsoft account"; that was inferred from
+> DNS, not verified, and it was wrong. **Two-minute test: send mail to both addresses and see if it
+> bounces.** `support@radlor.com` is on `/contact`, the footer, the legal pages, `llms.txt` and the
+> schema of a live site.
+>
+> ## ⑦ 🎨 LOGO — IN PROGRESS, NOT FINISHED
+> Two supplied logos were combined by hand from their SVG paths: logo 1's wordmark + book-in-the-"o",
+> logo 2's bulb-and-pencil mark. Work in `~/Downloads/Radlor logo final/` (SVG + transparent + PNG).
+> Decisions made: tagline dropped (the site has a better line), polygons reduced from 15 web paths to
+> 8 and pulled inward, bulb recoloured into the logo's navy by **luminance** so its shading survives,
+> bulb aligned to the letters' baseline at 1.73× the "R", and background-coloured knockouts behind the
+> bulb, "R" (9), the book (9) and the final "r" (15) — **different widths on purpose: a wide knockout
+> reads as a clean bite out of a dark polygon but is invisible over thin grey lines.**
+> ⚠️ **Knockouts must be drawn BEFORE the bulb**, or the R's knockout erases the bulb's shine lines.
+>
+> **⚠️ TWO THINGS STILL OPEN, AND THE FIRST IS A REAL CONSTRAINT:**
+> - **The book IS the "o"** — welded into path `#43` with the "l". Remove the book and the word
+>   becomes "Radl_r". Any replacement mark either fills that slot or an "o" has to be drawn.
+> - **Bulb OR chest, not both.** A treasure chest was requested and drawn (front view, open lid,
+>   light rays, ~15 strokes) — but both marks emit rays and cannot share one lockup.
+> ⚠️ **The chest is my drawing and it shows** — geometric arcs against an illustrator's hand. Its
+> structure is right; the gems inside were attempted three ways and none worked at that stroke weight.
+> **Best handed to a designer as reference.**
+>
+> ## ▶ WHAT CHANGED IN THE OPEN LIST
+> ✅ radlor.com live · GSC + Bing + IndexNow wired · the GEO baseline recorded · a migration runbook.
+> 🔴 Still open and unchanged: **no backup of the children's data** · `SUPABASE_SERVICE_ROLE_KEY` ·
+> Vercel Pro (Hobby is non-commercial) · custom SMTP (Supabase's mailer 429s at launch) ·
+> `DRAFT = true` on the legal text · AR never driven with a real hand · 146 eslint errors (was 132; re-measured 2026-08-21).
+> **And two new ones:** ~~`sameAs` is empty (§③)~~ **CLOSED 2026-08-20, see 🔗** and `support@radlor.com` may not exist (§⑥).
+
 > ⚡ **2026-08-19 (third pass) — A DECORATIVE FONT WAS 82% OF THE APP'S FONT BYTES AND ~40% OF THE ENTIRE FIRST VISIT, PRELOADED ON EVERY PAGE, RENDERING NOTHING. ONE OPTION FIXED IT: 816 KB → 146 KB.** `tsc` 0 · **1135/1135** · `next build` 0 · sw **v122 → v123**.
 >
 > ## ⓪ ⚠️⚠️ `next/font/google` PRELOADS **EVERY UNICODE SUBSET**, AND `preload` DEFAULTS TO TRUE

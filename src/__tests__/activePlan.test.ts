@@ -52,11 +52,15 @@ describe('activePlan', () => {
       expect(deeperChapter('bigNumbers')).toBe('placeValue')
       expect(deeperChapter('counting')).toBeNull()      // graph floor — nothing deeper exists
       expect(deeperChapter('not-a-chapter')).toBeNull() // unknown id → no revision, never a guess
-      /** ⚠️ A SKILL WITH NO CHAPTER YIELDS NO REVISION, which is the state Times Tables and
-       *  Division are in since 2026-08-13 — `i.factors`' only prerequisites are both chapter-less,
-       *  so there is nothing deeper to prepend. Pinned so the day a chapter comes back, this
-       *  starts returning one and somebody notices. */
-      expect(deeperChapter('factorsMultiples')).toBeNull()
+      /** ⚠️ THE PIN FIRED, EXACTLY AS IT WAS WRITTEN TO. This used to assert `null` with the note
+       *  *"pinned so the day a chapter comes back, this starts returning one and somebody
+       *  notices"* — because `i.factors`' only prerequisites (`i.multFacts`, `i.division`) were
+       *  BOTH chapter-less from 2026-08-13, so a child struggling in Factors & Primes had nothing
+       *  deeper to be revised to. The Packing Shed exists now, so the play-data revision can send
+       *  them to the multiplication facts underneath it — which is the whole point of the revision.
+       *  ⚠️ It resolves to `timesTables` rather than `division` because `deeperChapter` ranks
+       *  most-unlocking first, and multiplication facts sit under division as well. */
+      expect(deeperChapter('factorsMultiples')).toBe('timesTables')
     })
   })
 })

@@ -18,6 +18,7 @@ import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/stora
 import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
 import { track } from '@/infra/analytics'
 import { currentPlanChapter, planProgress, reconcilePlan } from '@/infra/storage/activePlan'
+import { getCheckupStatus } from '@/data/repositories'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
 const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
@@ -67,6 +68,7 @@ export default function MainMenu() {
   const [chapterIds,   setChapterIds]   = useState<ChapterType[]>([])
   const [lastPlayed,   setLastPlayedState] = useState<ChapterType | null>(null)
   const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number } | null>(null)
+  const [recheck,      setRecheck]      = useState<{ skill: string; band: string; weeks: number } | null>(null)
 
   // The checkup is OPTIONAL — no play gate. A child can enter the menu directly; the checkup is
   // reachable by choice from the parent dashboard ("Find starting point"), never forced.
@@ -77,6 +79,28 @@ export default function MainMenu() {
     if (!learnerId) { setPlanNext(null); return }
     const ch = currentPlanChapter(learnerId), prog = planProgress(learnerId)
     setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType] ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total } : null)
+  }, [learnerId])
+
+  /**
+   * ⚠️⚠️ THE WEEK-6 RE-CHECK, WHERE THE CHILD ACTUALLY IS. It is the promise ("gap closed or you
+   * don't pay"), the retention signal AND the efficacy dataset — one mechanism doing three jobs —
+   * and on production it had fired **zero times**, with FIVE children 45–50 days past their check-up
+   * and genuinely due one. The logic was never broken: the nudge lived only on the PARENT dashboard,
+   * for whichever learner happened to be selected, so it required a parent to visit a screen they
+   * have no reason to open. The child opens THIS one every session.
+   *
+   * Best-effort: a failed lookup just means no card, never a blocked menu.
+   */
+  useEffect(() => {
+    if (!learnerId) return
+    let cancelled = false
+    getCheckupStatus(learnerId)
+      .then(st => { if (!cancelled && st?.recheckDue && st.rootGap) setRecheck({ skill: st.rootGap, band: st.band, weeks: st.weeksSince }) })
+      .catch(() => { /* the menu must open regardless */ })
+    // Clearing on the way OUT rather than on the way in: it runs before the next learner's lookup,
+    // so a sibling can never see the previous child's card, and nothing sets state synchronously
+    // inside the effect body.
+    return () => { cancelled = true; setRecheck(null) }
   }, [learnerId])
 
   useEffect(() => {
@@ -300,6 +324,24 @@ export default function MainMenu() {
             </div>
           </div>
         </div>
+
+        {/* ── Week-6 re-check — the guarantee loop, surfaced to the child who has to take it ── */}
+        {recheck && (
+          <button onClick={() => router.push(`/diagnostic/recheck?skill=${encodeURIComponent(recheck.skill)}&band=${recheck.band}&week=${recheck.weeks}`)} className="milo-card" style={{
+            width: '100%', maxWidth: 700, padding: '14px 20px', textAlign: 'left', cursor: 'pointer',
+            background: 'linear-gradient(135deg, #FFF4DA 0%, #fff 100%)', border: '3px solid var(--milo-orange)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
+              <div style={{ fontSize: 36 }}>🔍</div>
+              <div style={{ flex: 1, minWidth: 150 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--milo-orange-deep)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Quick check · 2 minutes</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Milo wants to see how much you&apos;ve grown</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>Just a few questions — no scores, no timers.</div>
+              </div>
+              <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: 'var(--milo-orange)', border: '3px solid var(--milo-orange-deep)', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Let&apos;s go ▶</span>
+            </div>
+          </button>
+        )}
 
         {/* ── Your plan — walk the diagnostic's arranged chapters, foundational-first ── */}
         {planNext && (
