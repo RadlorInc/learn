@@ -76,6 +76,35 @@
 > unverified end to end and only the founder can close it. Everything is committed; prod is on
 > **sw v120**.
 >
+> 🔎 **THE DIAGNOSTIC — WHERE IT STANDS (2026-08-22), read before touching it**
+>
+> It was rebuilt from the answer surface up on 2026-08-22 and now names the exact planted root gap
+> **96–98%** of the time (was **26–34%**), telling a child with a real gap they are on track **0%**
+> of the time (was 10–38%). The contract is `src/__tests__/diagnosticAccuracy.test.ts` — it plants a
+> gap, answers with each item's REAL guess rate, and gates exact-root, missed-gap, false-alarm,
+> route and LENGTH. Spec: [docs/diagnostic-engine.md](docs/diagnostic-engine.md).
+>
+> ⚠️ **THE PRICE IS LENGTH, AND IT IS NOT SMALL.** Every answer is confirmed (a lead of two to pass,
+> **three** to fail), so a child with a gap answers **29–50** questions and a child with NO gap still
+> answers **20–36**. The intro copy says "about ten minutes" now — it said "2 minutes" while the
+> thing was a coin flip. Founder's call, accuracy over length, stated twice.
+>
+> ⚠️⚠️ **AND THE HONEST CAVEAT: EVERY ONE OF THOSE NUMBERS COMES FROM A SIMULATION.** No real child
+> has taken the new probe. It has been driven against seven learner models, five of which it was NOT
+> designed for, and it degrades gracefully — see the 🔬 block. **The one thing that would settle it
+> is a real child with a known weakness**, and only the founder can do that.
+>
+> ⚠️ **THE BOTTLENECK IS NOW THE SKILL GRAPH, NOT THE ENGINE.** `skillGraph.ts` is still v0.9 DRAFT:
+> 130 prerequisite edges, none teacher-validated, and its own header says *"a wrong edge = a wrong
+> root gap; do not ship the guarantee on a band until that band's spine edges are validated."* All
+> 130 were measured on 2026-08-22 — **twelve decide a gap, twenty-one decide nothing** →
+> [docs/skill-graph-audit.md](docs/skill-graph-audit.md) §1 is the teacher's one-hour list.
+> **Until that hour happens, 96–98% means "the engine finds what the graph says", NOT "the engine
+> finds the child's real gap."**
+>
+> 🔴 **AND NONE OF IT IS LIVE.** Five commits sit on `main` unpushed; production is still serving the
+> 26–34% version. Vercel deploys `main`, so a push ships it.
+
 > 📍 **WHERE THINGS LIVE NOW (2026-08-19).** **TWO repos, two Vercel projects, two hosts.**
 >
 > | | |
@@ -115,6 +144,84 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🔬 **2026-08-22 (fifth pass) — "MEKO YEH TENSION HAI KI YEH SAHI KAAM KAR RAHA HAI YAA NAII." SO THE ENGINE WAS DRIVEN AGAINST SEVEN DIFFERENT CHILDREN, FIVE OF WHICH IT WAS NOT DESIGNED FOR. IT DEGRADES GRACEFULLY — AND TWO REAL WEAKNESSES FELL OUT.** No code changed; this pass is measurement and one honest admission.
+>
+> **The asks:** *"yeh hata de kya pura? kyuki yeh rule based hai aur meko kuch samjh naii rha hai"* →
+> *"meko wohi tension hai ki yeh sahi kaam kar raha yaa naii… iska hi darr hai"*.
+>
+> ## ⓪ ⚠️⚠️ THE ADMISSION THAT SHOULD HAVE COME FIRST: I WAS MARKING MY OWN HOMEWORK
+> Every accuracy number reported all day came from a simulation **I wrote**, against a learner model
+> **I invented**, testing an engine **I built**. The founder's unease was the correct response to
+> that, and no further table from the same source would have answered it. ⚠️ It is the same shape as
+> this repo's own standing rule — *the instrument was wrong five times before the app was wrong
+> three* — one level up: **the instrument can also be wrong in your FAVOUR**, and a kind model is
+> harder to notice than a broken one.
+>
+> ## ① 🧒 SEVEN CHILDREN, FIVE OF THEM NOT DESIGNED FOR
+> | child | exact gap | within ONE step | **"no gap" when there IS one** |
+> |---|---|---|---|
+> | **A** the model I designed for (10% slip) | 96–99% | 97–99% | 0–3% |
+> | **G** always guesses, never blank | 91–95% | 96–98% | 0–2% |
+> | **C** PATCHY — the graph's own assumption is violated | 76–80% | 82–88% | 0–1% |
+> | **B** careless, 25% slip | 68–80% | 77–88% | **0%** |
+> | **E** tires as the probe goes on | 54–86% | 66–92% | **0%** |
+> | **D** the gap is HALF-learned, not absent | 41–46% | 72–92% | 7–27% |
+> | **F** TWO separate gaps | names one 98–100% · both 43–91% | — | **0%** |
+>
+> ⚠️ **THE LINE THAT MATTERS IS THE LAST COLUMN.** In every model, "there is a gap and we said there
+> isn't" is **0–3%**. When it is wrong it names a NEIGHBOURING skill, so the child still starts
+> beside their gap and climbs into it. That is the failure mode you want, and it survives models
+> built to break it.
+> ⚠️ **C is the reassuring one**: it makes skills independent — i.e. the prerequisite graph is simply
+> WRONG for that child — and the answer is still right or adjacent 82–88% of the time. So a graph
+> with some bad edges does not collapse the product, which is exactly the risk the un-validated
+> graph carries.
+>
+> ## ② ⚠️⚠️ TWO REAL WEAKNESSES, AND ONE OF THEM REVERSES THIS MORNING'S TRADE
+> **Fatigue at 17–18: 54%.** Their probe is the longest (58 questions), so a rising slip rate bites
+> hardest exactly where there is most to bite. **The 96% figure assumes a child who does not tire —
+> so in the real world a SHORTER probe may be MORE accurate than a longer one.** That is not a UX
+> objection to length, it is an accuracy objection, and it points the other way from the decision
+> taken this morning. Worth measuring before defending the current setting.
+> **A half-learned gap: 41% exact** (72–92% within one step). Arguably correct behaviour — if a child
+> half-has the skill, "is this the gap" is a genuinely blurred question — but it is the case a real
+> tester is most likely to bring, so know it before they do.
+>
+> ## ③ ⚠️ A MEASUREMENT OF MINE WAS UNFAIR AND WAS REDONE
+> The two-gap child first scored 55–62%, which read as a weakness. It was the METRIC: it counted
+> only `rootGap` while `diagnose()` also returns `secondGap`, so reporting the child's OTHER real gap
+> was scored as a miss. Measured properly: **names at least one real gap 98–100%**, both 43–91%,
+> route covers both 44–93%. Same family as the tautology rules in chapter-craft — *a check that
+> compares a value with itself*, here a check that ignores half the output it is judging.
+>
+> ## ④ 🧭 WHY "IT IS RULE-BASED" IS NOT THE PROBLEM (founder asked whether to delete it)
+> With 14 sessions on production, an ML/IRT placement model is not an option — those need thousands
+> of learners. Every adaptive product starts from a hand-built graph. And rule-based is what made the
+> whole of today possible: you can ask a graph *"which of your 130 assumptions actually matters"* and
+> get an answer. You cannot ask that of a model.
+> ⚠️ **The real complaint was legibility, not architecture.** Nothing in the app shows WHY a gap was
+> named — not to the parent, not to the founder. A traced example (34 questions, each one's verdict,
+> and why Milo descended where he did) made it obvious in one read. **That trace belongs in the
+> report**, and it is only possible BECAUSE the system is rule-based.
+>
+> ## ▶ OPEN — in the order that matters
+> 1. 🔴 **NOTHING IS PUSHED.** Production still serves the **26–34%** diagnostic. Every day it stays
+>    that way, cold traffic gets a coin-flip diagnosis. Five commits are ready on `main`.
+> 2. **An ABANDONED probe leaves NO trace** — verified on prod: 14 session rows, 0 incomplete,
+>    because a row is only written on completion. The probe just went from ~10 to 20–50 questions and
+>    **we cannot see whether anyone is giving up.** Write the session row at START and update on
+>    finish; without it the next month is blind on the one number that now matters most.
+> 3. **The "how Milo worked it out" trace, in the report** (§④). Answers the founder's own question
+>    permanently and is the strongest trust artefact a rule-based system has.
+> 4. **One REAL child with a known weakness.** The only evidence that is not mine. 10 minutes.
+> 5. **The teacher's hour on twelve edges** ([docs/skill-graph-audit.md](docs/skill-graph-audit.md) §1).
+> 6. ⚠️ **The report promises "if this gap hasn't measurably closed, you don't pay" on an
+>    un-validated graph** — and `skillGraph.ts` itself says not to ship the guarantee before that.
+>    Consider softening to "we'll re-check and adjust" until the twelve edges are red-penned; a soft
+>    promise can be hardened later, the reverse cannot.
+> 7. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA** — carried for many sessions, and the data is worth
+>    more now than it was.
 
 > 🕸️ **2026-08-22 (fourth pass) — THE ENGINE IS 96–98%, SO THE BOTTLENECK IS NOW THE GRAPH — AND THE GRAPH IS STILL v0.9 DRAFT WITH 130 UNVALIDATED EDGES. AUDITED: TWELVE OF THEM DECIDE A GAP, TWENTY-ONE DECIDE NOTHING.** `tsc` 0 · **1444/1444** (+7, 1 skipped by design) · `next build` 0. NOT COMMITTED.
 >
@@ -609,111 +716,4 @@
 >    but cannot write cells, and no Sheets connector is in the registry. Needs a browser pass.
 > 6. Everything from the blocks below still stands.
 
-> 🎚️ **2026-08-20 — THE ADAPTIVE LOOP, DEEP-TESTED. ⚠️ `GameShell` WAS SERVING EVERY QUESTION AT A TIER THE ENGINE HAD ALREADY LEFT, AND THE ENGINE'S OWN TESTS WERE GREEN THE WHOLE TIME. PLUS: THE RE-TEACH SEEN FIRING FOR THE FIRST TIME, AND EVERY BAND NOW RESUMES AT THE TIER THE CHILD LEFT OFF ON.** `tsc` 0 · **1193/1193** (+58) · `next build` 0 · **18/18 planted source mutations caught** · sw **v124 → v125**.
->
-> **The asks:** *"deep testing … adaptive system proper kaam kar raha hai / re-explanation aa raha hai / difficulty ke according aa raha hai"* → *"level persistent hai naa?"* → *"sab mein waise chahiye"* + sync.
->
-> ## ⓪ ⚠️⚠️ THE STALE-CLOSURE TIER — ONE QUESTION LATE, IN 52 OF 61 CHAPTERS
-> `submit` schedules the next `loadTask` on a **1650 ms timer**, so the callback it captures belongs
-> to the render the ANSWER was given in — i.e. `ada.difficulty` *before* `ada.record()` moved it.
-> Every promotion and every demotion therefore landed **one question late**. Measured live on
-> `/teen-preview?c=integers`: **engine said tier 2 while the question served was tier 1**, then 3
-> while 2 was served. The price is exact, because the round budget is only six questions long: a
-> child who mastered the chapter met **ONE** top-tier question instead of the two
-> `chapter-craft.md` promises. After the fix the same drive serves `1,1,1,2,3,3`.
-> **`SkillBeat` never had it** — it reads `adaRef.current.difficulty`, a live ref. The fix makes
-> GameShell do the same (`useLatestRef`).
-> ⚠️ **THE LESSON: this is "a unit test cannot see that nothing calls the unit", one layer along.**
-> The unit WAS called — with a stale argument. `progression.test.ts` had six green tests on the rules
-> and could not see either shell fail to ASK. **A rule engine needs a gate on the CALLER's argument,
-> not only on the rule.**
->
-> ## ① THE RE-TEACH FIRES — SEEN, FOR THE FIRST TIME
-> This file has carried *"the re-teach has never been seen fire anywhere in the band"* for days.
-> Driven to 3 consecutive misses it fired on **`integers`** (12–14, 2 work lines) and on
-> **`decimals` / The Coin Tray** (9–11, 4 lines). It is reachable everywhere: gated that every live
-> chapter plays ≥ `RETEACH_AFTER` rounds, derived from the `STORY_CHAPTERS` table so the list cannot
-> fall behind. ⚠️ The dead `world1` World ships four beats at `rounds: 1`/`2`, where a re-teach is
-> **structurally unreachable** — nothing imports it; worth deleting.
-> ⚠️ **Difficulty of the re-teach is right by ORDERING, and that is worth knowing:** demote fires at
-> **2** misses, re-teach at **3** — so the round being re-explained was already built one tier down.
-> ⚠️ **One outlier, since FIXED — see ⑤.** The Angle Shop's scored `work` was
-> `[r.ask, 'Judge it against the square corner.', 'Then set it and see.']`: measured, only **1 of 3
-> lines varied**, so a child who had missed three in a row got the question read back at them.
->
-> ## ② 🌟 STARS AND THE TOP TIER — YOUR RULE ALREADY HOLDS, BUT ONLY BY ACCIDENT
-> `calcStars(correct, wrong)` is **pure accuracy** (≥85% → 3) with **no difficulty term in it at
-> all**. Swept EXHAUSTIVELY (1024 patterns × 10 rounds, 256 × 8, at every resume tier): **zero**
-> patterns earn 3 stars without at least one correct top-tier answer. The founder's own case — six
-> straight from easy → mastery → 3 stars — meets the top tier **twice** (it was **once** before ⓪).
-> ⚠️ It works out only because you cannot reach 85% without being promoted along the way. Move the
-> promote rule, the star threshold or the round count and it breaks **silently**, so it is now gated:
-> loosening the star threshold to 60% fails 4 tests, making promotion need a streak of 5 fails 7.
->
-> ## ③ 🎚️ EVERY BAND NOW RESUMES — THE OLD 3–11 RULE IS REVERSED
-> Founder's call: *"sab mein waise chahiye"*. Before this, **34 of 61 chapters never resumed**:
-> `SkillBeat` called `useAdaptive(beat.skillId)` with one argument, and `resumesTier('9-11')` was
-> hard-coded false. Both now resume; `chapter-craft.md`'s rule was rewritten rather than deleted, and
-> ⚠️ **"if a chapter looks too hard on question 1, the tier IS now a suspect" — that is new.**
-> Verified on screen: The Coin Tray seeded at tier 3 opens with *"You left off at Champion ⭐⭐⭐.
-> Want a quick warm-up first?"* — the warm-up (two questions one tier down) is what makes resuming
-> safe for a nine-year-old, and it comes free from the shell.
->
-> ## ④ 🗄️ THE TIER NOW FOLLOWS THE CHILD ACROSS DEVICES — AND NEEDED NO NEW COLUMN
-> It was device-local (IndexedDB `kv`), so a second device or a cleared browser put every chapter
-> back to easy and nothing in the app could tell. ⚠️ **`learner_progress.current_level` (smallint NOT
-> NULL DEFAULT 1) has existed since the base schema, written by nothing and read by nothing** — every
-> other `current_level` in the app is `learner_stats.current_level`, the XP level, in a different
-> table. Measured on prod: **29 rows, all 1**. So the migration reuses it and adds no column.
-> ⚠️ **`sync_session` gets an 11-argument version and the 10-argument one stays as a FORWARDER.** A
-> defaulted 11th argument would leave a 10-named-argument call ambiguous (PostgREST resolves by
-> name), so a browser still holding the previous JS bundle would start failing its sync mid-deploy.
-> ⚠️ **The merge is LAST WRITE WINS, never GREATEST.** Stars and XP are achievements and stay
-> monotonic; a tier is a CURRENT FIT, and a child who has struggled back down to easy must not be
-> handed tier 3 again by a monotonic merge. Same reason `hydrateChapterLevels` seeds a device only
-> where it holds **nothing** — a local demotion made offline is the freshest answer there is.
->
-> ## ⑤ 📐 THE ANGLE SHOP'S RE-TEACH IS A REAL EXPLANATION NOW, AND THE DEAD `world1` IS GONE
-> **`angles.ts` gained `explainBeats`** — the module owned every other word the chapter says and not
-> this one, which is exactly how the chapter ended up assembling `work` in the scene as
-> `[r.ask, 'Judge it…', 'Then set it and see.']`. Four worked lines per round type: a **degrees**
-> round names the gap, divides it by `STEP` and counts the taps (*"That is 75° to travel, and one
-> turn moves it 5° — so 15 taps to open it. Count them in 5s: 25, 30, 35… up to 100."*); a **kind**
-> round places 90° first, then says which side of it and why the start angle was not it; a **fold**
-> round names the mirror rule, the count, and WHERE the lines run.
-> ⚠️ **`FOLD_WHERE`'s rectangle line names the misconception out loud** — *"NOT corner to corner:
-> fold a rectangle on its diagonal and the halves miss"* — because `candidateAxes` deliberately puts
-> the diagonals on the bar. Its entries agree with `SHAPE_LINES` and the gate checks that, the same
-> rule `PAPER` already carries.
-> ⚠️ **TWO CONCATENATION FAULTS IN MY OWN FIRST DRAFT, BOTH CAUGHT BY READING THE OUTPUT, NEITHER
-> BY A TYPE OR A GATE:** `${cap(piece)} has to be … , because ${because}` gave **"because or every
-> shot goes wide"** (two of the five reasons are *"or …"* clauses, which read correctly only after the
-> ask's em-dash), and `They run ${FOLD_WHERE[shape]}` gave **"They run just the one"** for the
-> isosceles. Same family as *"hold up it"* and *"0 pennyies"*, third time recorded. **One verb cannot
-> serve six shapes — write them out.** Fixed by removing the glue, not by rewording the strings.
-> ⚠️ **And the count could run PAST its own target.** A fixed two-steps-then-ellipsis prints
-> `85, 90, 95… up to 90` on a one-tap gap. `startFor` keeps the gap at `START_GAP`, so it cannot
-> happen today — **that is the generator's choice, not this function's guarantee**, so the ellipsis
-> now appears only when something is left to elide, gated across the whole reachable lattice
-> (31 × 31 start/target pairs) rather than on sampled draws.
->
-> **`world1` DELETED** — the five-scene "Milo's Picnic Party" World plus its `doorBeat`,
-> `basketBeat`, `compareBeat` and `orderBeat`. 995 → 766 lines. **Nothing imported it**; all four
-> skills have real chapters now (NestTree · HomeTime · BigOrSmall · FollowTheLeader), and all four
-> beats declared `rounds: 1` or `2`, so each carried a `Reteach` that **could never be shown** and a
-> difficulty that could never be promoted. ⚠️ Verified the deletion orphaned nothing: eslint's
-> unused-symbol list is byte-identical before and after once the 8 imports it stranded were removed
-> (the 8 that remain — `CATCH_INTRO`, `CountBadge`, `PerchedItem`, `spotsFor`, `speakSeq`,
-> `Difficulty`, `useMemo`, `counted` — were **already** dead before this session and are left alone).
-> ⚠️ **It did strand five art exports** — `DoorArt`, `Berry`, `Stone`, `CountStage`, `COUNT_LABEL`
-> now have zero references outside `art.tsx`. **Left deliberately:** an unused export in a component
-> library is tree-shaken and carries no lie, whereas `world1` carried unreachable pedagogy. Deleting
-> drawn art nobody asked for is the riskier move.
->
-> ## ▶ OPEN
-> 1. 🔴 **NOTHING IS COMMITTED.** ✅ The migration IS applied to prod and verified (§④) — so the app
->    can deploy whenever. There is still no backup of the children's data.
-> 2. Five orphaned art exports in `art.tsx` (§⑤) — delete only if you want the library tidy.
-> 3. Everything from prior sessions stands unchanged.
-
-_Older sessions (2026-06-15 → **2026-08-20**, including 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day and ❓ the question-quality sweep, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-20**, including 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
