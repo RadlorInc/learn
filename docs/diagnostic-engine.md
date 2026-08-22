@@ -17,7 +17,7 @@ downstream of it, answering with each item's REAL guess rate and a 10% careless 
 
 | | v1 (4-choice MCQ) | v2 (typed answers + sweep + bisection) |
 |---|---|---|
-| names the EXACT root gap | **26–34%** | **81–86%** |
+| names the EXACT root gap | **26–34%** | **81–87%** |
 | tells a child with a real gap they are on track | **10–38%** | **1–6%** |
 | names a gap a BAND BELOW for an on-grade child | — | **≤ 4%** |
 | a gap on a leaf chapter reaches the route | **impossible** | **83–95%** |
@@ -44,17 +44,26 @@ Three independent causes, all outside the search algorithm:
    stand-in. The route is also **derived from the gap now, not from which questions got asked** —
    `[...failed]` was a fair approximation of the chain while the descent walked every level, and
    became wrong the moment it started bisecting.
-4. **The descent walked; now it BISECTS.** One question per LEVEL, and the chains are nine deep — the
+4. **Confirmation stopped too early.** A first miss was re-asked — but only while confirmed fails
+   were below four, on the argument that a child failing that much is not slipping. True, and it
+   meant the bands that descend furthest burned through four fails on the way DOWN, so most of a
+   17–18 descent ran unguarded and one slip there planted a root two or three chapters too deep.
+   Measured, the too-deep error tracked the descent distance almost exactly — 1% at one band below
+   the child, 9% at 3.6 bands. Guarding at every depth took 17–18 from 76% to **83%** and its
+   too-deep errors from 10% to 5%. ⚠️ A THIRD item on the ambiguous "miss then pass" was built and
+   measured and bought **nothing** (exact flat, on-grade false alarms 14% → 25%); five tries came
+   out identical to three. See `MAX_TRIES`.
+5. **The descent walked; now it BISECTS.** One question per LEVEL, and the chains are nine deep — the
    17–18 band spent **11.3 of its 20.2 questions on the descent alone**, and each of those is another
    chance for a slip to plant a false deeper root. Halving the candidate set instead is shorter *and*
    more accurate. ⚠️ It opens in direct-prerequisite mode and only starts bisecting once something
    under the node fails: bisecting from the start took a grade-level 17–18 child from 9 questions to
    22, because with nothing broken the cheap question is "do this skill's own prerequisites hold?".
-5. **The leaf sweep reaches one band DOWN.** A 9–11 child who cannot tell the time was invisible.
+6. **The leaf sweep reaches one band DOWN.** A 9–11 child who cannot tell the time was invisible.
    Each band now also sweeps the previous band's **standalone topics** (money, time, story problems,
    rounding, units, angles, charts) — the ones nothing else can reveal — and deliberately not its
    foundational skills, which any failure above already routes the descent through.
-6. **The week-6 re-check is surfaced to the CHILD.** It had fired zero times on production with five
+7. **The week-6 re-check is surfaced to the CHILD.** It had fired zero times on production with five
    children 45–50 days overdue: the nudge lived only on the parent dashboard, for whichever learner
    happened to be selected. It is now a card on `/menu`, which the child opens every session.
 

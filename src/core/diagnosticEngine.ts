@@ -37,29 +37,75 @@ export interface ProbeConfig {
    *  double the length of every probe, a bad trade against anti-fear. */
   confirmFails?: boolean
 }
-// maxItems bounds the probe LENGTH (the primary UX lever); maxFailures is a generous anti-fear
-// backstop, NOT the length lever (the descent gets EASIER toward the bottom, ending on success).
-// The teen bands probe MORE strands (6–8 entries) and can descend MANY bands to a cross-band root
-// (a grade-11 kid rooting at a grade-3 multiplication gap), so their caps scale up with band —
-// a too-tight failure cap gets spent on the entry probes alone and truncates before the true root.
+/**
+ * maxItems bounds the probe LENGTH; maxFailures is an anti-fear backstop and NOT the length lever
+ * (the descent gets easier toward the bottom, so it ends on success).
+ *
+ * ⚠️ RAISED 2026-08-22 WHEN CONFIRMATION BECAME UNCONDITIONAL — founder's call, accuracy over
+ * length. Set from a measured distribution rather than picked: each is the band's p95 for a child
+ * with a real gap, rounded up, and it also clears the worst case there is (a child who fails
+ * absolutely everything). A cap set below the p95 does not shorten the probe, it TRUNCATES the
+ * search — and a truncated search reports whatever it had reached, which is a wrong gap rather
+ * than a shorter check.
+ *
+ * | band | gapped med / p95 / max | on-grade med | fails-everything | cap |
+ * |---|---|---|---|---|
+ * | 6–8   | 15 / 19 / 27 | 13 | 20 | 28 |
+ * | 9–11  | 19 / 26 / 30 | 17 | 18 | 32 |
+ * | 12–14 | 21 / 27 / 38 | 14 | 30 | 38 |
+ * | 15–16 | 17 / 24 / 30 | 10 | 18 | 32 |
+ * | 17–18 | 27 / 34 / 42 | 10 | 28 | 42 |
+ *
+ * ⚠️ Note what the on-grade column says: a child with NO gap answers 10–17 either way. The extra
+ * evidence is spent almost entirely on children who have something to find, which is the whole
+ * design — see MAX_TRIES.
+ */
 export const DEFAULT_CONFIG: Record<Band, ProbeConfig> = {
   // 3–5 is a READINESS check (Phase 3): probe every milestone for a complete picture. The items are
   // parent-observed (the child isn't failing on-screen), so a higher failure cap isn't anti-fear-unsafe.
   '3-5': { maxItems: 14, maxFailures: 9, confirmFails: false },
-  // The confirming bands carry +CONFIRM_UNTIL_FAILS maxItems headroom (the exact worst-case cost
-  // of the retries, since confirmation stops after that many confirmed fails). Verified by the
-  // full planted-gap matrix: every reachable gap in every band resolves to the EXACT root at
-  // these caps, including the extreme cross-band floors. Passes are unchanged, so a grade-level
-  // child's probe is exactly as long as before.
-  '6-8': { maxItems: 18, maxFailures: 7, confirmFails: true },
-  '9-11': { maxItems: 24, maxFailures: 9, confirmFails: true },
-  '12-14': { maxItems: 21, maxFailures: 12, confirmFails: true },
-  '15-16': { maxItems: 24, maxFailures: 16, confirmFails: true },
-  '17-18': { maxItems: 28, maxFailures: 20, confirmFails: true },
+  '6-8': { maxItems: 28, maxFailures: 12, confirmFails: true },
+  '9-11': { maxItems: 32, maxFailures: 14, confirmFails: true },
+  '12-14': { maxItems: 38, maxFailures: 18, confirmFails: true },
+  '15-16': { maxItems: 32, maxFailures: 20, confirmFails: true },
+  '17-18': { maxItems: 42, maxFailures: 24, confirmFails: true },
 }
 
 /** Confirm fails only while confirmed fails are below this (see the comment in record()). */
-const CONFIRM_UNTIL_FAILS = 4
+/**
+ * ⚠️⚠️ EVIDENCE PER SKILL — AND THE THING THAT WAS WRONG WAS *WHERE* IT STOPPED, NOT HOW MUCH.
+ *
+ * Founder's call, 2026-08-22: *"exact aur proper gap find kare… chalega bacche ko zyada questions
+ * solve karna padhege toh"* — accuracy first, length second. So the obvious moves were measured
+ * rather than assumed, and the obvious ones lost:
+ *
+ * | rule | exact | on-grade FALSE gap | gapped p95 | on-grade questions |
+ * |---|---|---|---|---|
+ * | before: confirm a fail, but stop after 4 confirmed fails | 76–87% | 9–16% | 17–28 | 9–17 |
+ * | **now: confirm a fail at EVERY depth, a pass forgives** | **82–87%** | **7–14%** | 18–32 | 9–16 |
+ * | three items each, majority decides | 82–88% | **7–25%** | 20–34 | 9–17 |
+ * | five items each, majority | 82–88% | 7–25% | 20–34 | 9–17 |
+ * | three items on EVERY skill, majority | 94–99% | 0% | 63–90 | **25–46** |
+ *
+ * ⚠️ Two of those are traps. **A third item buys nothing** — exact is flat against two, because the
+ * ambiguous "miss then pass" is overwhelmingly a real child slipping on a skill they HAVE, and
+ * majority-of-three converts about one slip in ten into a false fail: 9–11's false-gap rate went
+ * 14% → 25% for no gain at all. **And five is identical to three**, because a majority of three can
+ * never tie, so the fourth item is never reached — a measured floor on how much more evidence per
+ * skill is worth buying at all. The last row is the accurate one and is not shippable: 25–46
+ * questions for a child with no gap is a different product, and anti-fear is non-negotiable here.
+ *
+ * What DID pay was removing the ceiling. Confirmation used to stop after four confirmed fails, on
+ * the argument that a child failing that much is not slipping — true, and it meant the bands that
+ * descend furthest spent most of their descent unguarded. Measured, the too-deep error tracked the
+ * descent distance almost exactly (1% at one band below the child, 9% at 3.6 bands), and 17–18
+ * went 76% → 84% once the guard ran all the way down.
+ *
+ * So: a first PASS settles it (a typed answer flukes ~3% of the time — see diagnosticItems.ts), a
+ * first MISS is never a verdict at any depth, and a pass on the retry forgives the slip. The cost
+ * lands on children who have a real gap, which is who it is for.
+ */
+export const MAX_TRIES = 2
 
 /**
  * ⚠️⚠️ THE DESCENT BISECTS; IT DOES NOT WALK. `lo` is the deepest skill we have watched the child
@@ -94,10 +140,11 @@ export interface ProbeState {
   failed: string[]
   asked: string[]
   roots: string[]         // confirmed root gaps (≤1 per entry branch)
-  /** Skills with ONE unconfirmed miss (confirmFails). Nothing else moves, so nextSkill re-offers
-   *  the same skill; the item layer must serve a FRESH item for a repeat ask (see resolve() in
-   *  diagnostic/page.tsx). Never reaches `failed`/diagnose. */
-  strikes: string[]
+  /** What each skill has actually answered so far, while it is still undecided. Nothing else moves
+   *  until a verdict is reached, so nextSkill re-offers the same skill; the item layer must serve a
+   *  FRESH item for a repeat ask (see resolve() in diagnostic/page.tsx). Never reaches
+   *  `failed`/`passed`/diagnose — only the majority verdict does. */
+  tries: Record<string, boolean[]>
 }
 
 // Prerequisite depth (foundational = low). Graph is acyclic (verified), guard anyway.
@@ -196,7 +243,7 @@ function normalize(s: ProbeState): void {
 }
 
 export function startProbe(band: Band, config: ProbeConfig = DEFAULT_CONFIG[band]): ProbeState {
-  return { band, config, agenda: [...PROBE_ENTRY[band]], frames: [], passed: [], failed: [], asked: [], roots: [], strikes: [] }
+  return { band, config, agenda: [...PROBE_ENTRY[band]], frames: [], passed: [], failed: [], asked: [], roots: [], tries: {} }
 }
 
 /** The next skill to probe, or null when the probe is done (caps hit or nothing left). */
@@ -211,31 +258,24 @@ export function nextSkill(s: ProbeState): string | null {
 
 /** Record a probe result; returns a new state. */
 export function record(s: ProbeState, id: string, passed: boolean): ProbeState {
+  // `passed` is re-decided below once enough evidence is in; see MAX_TRIES.
   const ns: ProbeState = {
     ...s,
     agenda: s.agenda.slice(),
     frames: s.frames.map(f => ({ lo: f.lo, cands: f.cands.slice(), deep: f.deep })),
     passed: s.passed.slice(), failed: s.failed.slice(), asked: [...s.asked, id], roots: s.roots.slice(),
-    strikes: (s.strikes ?? []).slice(),
+    tries: { ...(s.tries ?? {}) },
   }
-  // Fail confirmation: a FIRST miss is a strike, not a verdict. Leave the agenda/queue untouched
-  // so nextSkill re-offers the same skill (with a fresh item); a pass on the retry forgives the
-  // slip, a second miss falls through to the real fail path below.
-  //
-  // Only while confirmed fails are FEW. The catastrophic slip is the near-grade-level child whose
-  // single fumble sends the probe descending and reports a gap that does not exist — that child
-  // has 1–3 fails, all guarded. A child already at 4 confirmed fails isn't slipping; their
-  // pattern IS the signal, and confirming every level of a deep descent would mean failing
-  // everything twice (measured: 62 asks for a 17-18 learner rooting at pre-K — an ordeal, not a
-  // probe). Past the threshold a mid-descent slip costs at most a root one level too DEEP — a
-  // plan that starts one chapter early and climbs, mild next to a false root. Bounds the retry
-  // overhead to ≤ CONFIRM_UNTIL_FAILS extra asks, priced into the maxItems caps above.
-  if (!passed && (ns.config.confirmFails ?? ns.band !== '3-5')
-      && ns.failed.length < CONFIRM_UNTIL_FAILS && !ns.strikes.includes(id)) {
-    ns.strikes.push(id)
-    return ns
+  // See MAX_TRIES above for the measurements behind this.
+  const confirming = ns.config.confirmFails ?? ns.band !== '3-5'
+  if (confirming) {
+    const so_far = [...(ns.tries[id] ?? []), passed]
+    ns.tries = { ...ns.tries, [id]: so_far }
+    const passes = so_far.filter(Boolean).length
+    // one miss is never a verdict; nextSkill re-offers it and the item layer serves a FRESH item
+    if (!passed && so_far.length < MAX_TRIES) return ns
+    passed = passes * 2 >= so_far.length                        // a tie goes to the child
   }
-  ns.strikes = ns.strikes.filter(x => x !== id)   // verdict reached either way — clear the strike
   if (ns.frames.length === 0) {
     // entry probe
     if (id === ns.agenda[0]) ns.agenda.shift()

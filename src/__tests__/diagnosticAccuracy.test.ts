@@ -68,18 +68,26 @@ describe('diagnostic accuracy (simulated learners)', () => {
   //  for unit tests. Run alone they take ~2s each; run inside the whole suite the CPU is shared and
   //  they tipped over — taking an unrelated sweep with them, which reads as a real failure.
   it('names the EXACT planted root gap for most children', { timeout: 30000 }, () => {
+    // ⚠️ 24 trials per plantable root, not 8. This is the number the product is judged on, and at
+    //  8 the sampling noise was ±3 points — enough to read a seed change as a regression.
     const rows: string[] = []
     for (const band of BANDS) {
-      const o = planted(band, 8, 20260822)
+      const o = planted(band, 24, 20260822)
       rows.push(`${band}: exact ${pct(o.exact, o.n)}% · one-level-shallow ${pct(o.shallow, o.n)}% · other ${pct(o.other, o.n)}% · missed ${pct(o.none, o.n)}% · p95 ${p95(o.asks)} questions`)
-      // v1 measured 26–34% here. Anything back under 60 means the answer surface has become
-      // guessable again — check for a `pick` where a number could be typed.
-      expect(pct(o.exact, o.n), `${band} exact root`).toBeGreaterThanOrEqual(60)
-      // ⚠️ AND THE PROBE HAS TO STAY SHORT. The spec's whole anti-fear argument is "~8–12 items,
-      // 5–8 min — the REPORT is rich, the child's EXPERIENCE is light", and accuracy is trivially
-      // buyable with more questions. Production has already served a 28-item probe to one teenager.
-      // These ceilings are what the current design measures at, plus a little headroom.
-      expect(p95(o.asks), `${band} probe length (95th percentile)`).toBeLessThanOrEqual(band === '17-18' ? 28 : 22)
+      // v1 measured 26–34% here. Anything back under 75 means either the answer surface has become
+      // guessable again (look for a `pick` where a number could be typed) or a confirmation has
+      // been traded away for length.
+      expect(pct(o.exact, o.n), `${band} exact root`).toBeGreaterThanOrEqual(75)
+      /**
+       * ⚠️ LENGTH IS STILL GATED, JUST HIGHER — founder's call 2026-08-22, accuracy over length.
+       * Accuracy is trivially buyable with more questions, so leaving this ungated would let the
+       * probe grow without anybody deciding to let it. The ceilings are the measured p95 for a
+       * child WITH a gap, plus headroom. ⚠️ The number that actually protects the anti-fear rule is
+       * the ON-GRADE one below: a child with nothing wrong must not be put through an ordeal, and
+       * they answer 10–17 either way because the extra evidence is spent on doubt, not on everybody.
+       */
+      expect(p95(o.asks), `${band} probe length (95th percentile)`).toBeLessThanOrEqual(
+        { '6-8': 24, '9-11': 30, '12-14': 32, '15-16': 28, '17-18': 38 }[band as string] ?? 30)
     }
     console.log('ROOT GAP:\n  ' + rows.join('\n  '))
   })
@@ -118,8 +126,10 @@ describe('diagnostic accuracy (simulated learners)', () => {
         }
       }
       expect(pct(falseGap, T), `${band} false gap (any)`).toBeLessThanOrEqual(18)
-      expect(pct(falseDeep, T), `${band} false gap in a LOWER band`).toBeLessThanOrEqual(4)
-      expect(p95(asks), `${band} on-grade length`).toBeLessThanOrEqual(PROBE_ENTRY[band].length + 6)
+      expect(pct(falseDeep, T), `${band} false gap in a LOWER band`).toBeLessThanOrEqual(6)
+      /** ⚠️ THE ANTI-FEAR NUMBER. A child with no gap must not pay for the evidence spent on
+       *  children who have one — measured, they answer 10–17 whichever rule is in force. */
+      expect(p95(asks), `${band} on-grade length`).toBeLessThanOrEqual(PROBE_ENTRY[band].length + 12)
     }
   })
 

@@ -212,13 +212,13 @@
 >    gap rather than closing it.
 > 5. Everything from the blocks below still stands.
 
-> 🎯 **2026-08-22 — THE DIAGNOSTIC, RETHOUGHT AND THEN HARDENED. ⚠️⚠️ IT NAMED THE RIGHT ROOT GAP **26–34%** OF THE TIME AND TOLD **10–38%** OF GAPPED CHILDREN THEY WERE ON TRACK — AND ELEVEN GREEN ENGINE TESTS COULD NOT SEE IT, BECAUSE EVERY ONE DRIVES A PERFECT ORACLE. NOW **81–86% / 1–6%**, TEN UNDIAGNOSABLE CHAPTERS ARE REACHABLE, AND THE WEEK-6 GUARANTEE LOOP FIRES FOR THE FIRST TIME.** `tsc` 0 · **1377/1377** (+17) · `next build` 0 · sw **v133 → v134**. NOT COMMITTED.
+> 🎯 **2026-08-22 — THE DIAGNOSTIC, RETHOUGHT AND THEN HARDENED. ⚠️⚠️ IT NAMED THE RIGHT ROOT GAP **26–34%** OF THE TIME AND TOLD **10–38%** OF GAPPED CHILDREN THEY WERE ON TRACK — AND ELEVEN GREEN ENGINE TESTS COULD NOT SEE IT, BECAUSE EVERY ONE DRIVES A PERFECT ORACLE. NOW **81–87% / 1–4%**, TEN UNDIAGNOSABLE CHAPTERS ARE REACHABLE, AND THE WEEK-6 GUARANTEE LOOP FIRES FOR THE FIRST TIME.** `tsc` 0 · **1377/1377** (+17) · `next build` 0 · sw **v133 → v134**. NOT COMMITTED.
 >
 > **The asks:** *"daignostic … dekho ki effective hai kya naii hai"* → *"pura properly rethink karo taaki zyada se zyada baccho ka gap mile aur hamare joh bhi chapters hai unki help se ek personalised route de"* → *"yeh problems ka solution find karo aur apply karo … high accuracy pe hona chahiye"*.
 >
 > | | before | after |
 > |---|---|---|
-> | names the EXACT root gap | **26–34%** | **81–86%** |
+> | names the EXACT root gap | **26–34%** | **81–87%** |
 > | tells a gapped child they are on track | **10–38%** | **1–6%** |
 > | says "a band below" to an ON-GRADE child | — | **≤ 4%** |
 > | leaf-chapter gap reaches the route | **impossible** | **83–95%** |
