@@ -14,6 +14,24 @@ Two job-specific halves are NOT auto-loaded, to keep the standing spec small. Re
 - `docs/chapter-craft-ar.md` — **before building or changing any AR (camera) chapter.**
 - `docs/chapter-craft-art.md` — **before generating any new art** (sprite, walk cycle, backdrop, line art) **or touching the code-drawn 3D scene.**
 
+## Verifying anything by searching for it
+
+**⚠️ A SCAN THAT FINDS NOTHING PROVES NOTHING UNTIL YOU HAVE SHOWN IT CAN FIND SOMETHING.**
+Before reporting an absence — no secret in the bundle, no caller of a function, no offending
+pattern in the source — run the same search against something you KNOW is present and confirm it
+comes back. A silent search and a broken search are indistinguishable from the outside, and the
+broken one reads as good news.
+
+Paid for on 2026-08-24: confirming the Supabase service-role key had not leaked into the client
+bundle, the first grep searched for JWTs and found zero. That looked like a clean result. The keys
+are the new `sb_publishable_` / `sb_secret_` format and are not JWTs at all, so the scan could not
+have found the key even if it had been there. The positive control — the same grep DOES find the
+anon key, which is public by design and definitely present — is what made the zero mean anything.
+
+The same rule already appears in [docs/chapter-craft.md](docs/chapter-craft.md) §4 in three other
+costumes (a tautological check, an inert gate, a sweep that exempts the whole world). It is here
+because it is not a chapter rule; it applies to every grep, every catalog query and every audit.
+
 ## Updating the Handoff
 When I type `/handoff`, or when the session is wrapping up, update handoff.md with:
 - What was accomplished this session
