@@ -18,7 +18,9 @@
  *   · that hand-tracking runs ON DEVICE and no camera frame ever leaves the browser
  *   · verifiable parental consent — the parent creates the learner, which is the consent vector
  *   · the parent's right to see and delete (both now live at /parent — see DataRights)
- *   · retention, and who can read what (the RLS model)
+ *   · retention, and who can read what (the RLS model) — note the deliberate split: the placement
+ *     check's RAW ANSWERS are analytics and prune at 90 days, while the PLAN derived from them is
+ *     progress and is kept until the parent deletes the profile
  *   · no behavioural advertising, no third-party trackers
  */
 export const DRAFT = true
@@ -39,9 +41,9 @@ The camera: some chapters let a child answer by holding up their hand. That runs
 
 Who else sees the data: Supabase hosts our database and Vercel serves the site, both as processors acting on our instructions. We do not sell or share your child's data, and there is no advertising or behavioural tracking anywhere in the app.
 
-How long we keep it: your child's profile and progress are kept until you delete them. Diagnostic and gameplay analytics are deleted automatically after 90 days, as are crash reports. An email given to the free check before an account exists is kept for up to 24 months.
+How long we keep it: your child's profile and progress are kept until you delete them, and that includes the learning plan the placement check produces. Their individual answers to the placement check are deleted automatically after 90 days, as are gameplay analytics and crash reports — we keep what the check concluded, not every answer they gave. An email given to the free check before an account exists is kept for up to 24 months.
 
-Your choices: you can download a copy of everything we hold about your child, or delete it permanently, from the parent dashboard at any time. Deleting a child's profile removes their progress, sessions, placement results and analytics. If you gave us an email for the free check and never made an account, write to us and we will delete it.
+Your choices: you can download a copy of everything we hold about your child — their profile, progress, sessions, placement checks and learning plans, and the activity log — or delete it permanently, from the parent dashboard at any time. Deleting a child's profile removes their progress, sessions, placement results and analytics. If you gave us an email for the free check and never made an account, write to us and we will delete it.
 
 This wording has not been reviewed by a lawyer yet and is not the final policy.`,
 }
