@@ -14,20 +14,21 @@
 --  (pg_class / pg_constraint / pg_indexes / pg_policies / pg_get_functiondef /
 --  pg_get_triggerdef / relacl), NOT hand-written from memory.
 --
---  ⚠️⚠️ WHAT IT MAY AND MAY NOT CONTAIN — this is the rule, and it is not the obvious one.
---  It ran the migrations after itself and they collided, which is how the rule was found:
---    · `create table` / `create index` / `create trigger` are written IF NOT EXISTS or
---      drop-then-create by every migration here, so duplicating them is a harmless no-op.
---      All 20 tables are kept, because the seven base tables' foreign keys point at the
---      other thirteen and must resolve at the moment this file runs.
---    · `CREATE POLICY` HAS NO `IF NOT EXISTS`, in any version of Postgres. So the 21
---      policies that a migration creates MUST NOT be created here — the migration would
---      hit 42710 `policy already exists` and the run dies. Only the 12 that no migration
---      owns live here.
---    · Same for the three indexes the migrations create unguarded (auth_events_user_time,
---      error_events_at, error_events_learner).
---  `src/__tests__/baselineSchema.test.ts` asserts this so the next person cannot
---  re-introduce it by pasting a fuller dump.
+--  ⚠️⚠️ WHICH POLICIES BELONG HERE IS A PER-POLICY, ORDER-DEPENDENT QUESTION, and it cost
+--  three red pipelines because it fails in BOTH directions:
+--    · `CREATE POLICY` has no `IF NOT EXISTS` in any version of Postgres, so a policy a
+--      migration creates with a BARE create must NOT be created here — the migration hits
+--      42710 `already exists` and the replay dies. Exactly two are like that:
+--      "learner_state: parent access" and "own inserts only".
+--    · But twelve policies are ALTERed by 20260615180001/180003 and created by no migration
+--      at all — they were dashboard-made. Those MUST be here, or the ALTER hits 42704
+--      `does not exist`. Removing them is what broke the third run, one migration later.
+--    · The remaining nineteen are drop-then-create in their own migration, so they are safe
+--      either way, and are kept because this file's worth is being a faithful snapshot.
+--  Three indexes are likewise created unguarded by migrations (auth_events_user_time,
+--  error_events_at, error_events_learner) and are left out.
+--  `src/__tests__/baselineSchema.test.ts` DERIVES all of this from the migrations rather than
+--  hard-coding it, so the answer stays correct when somebody adds a migration.
 --
 --  ⚠️ IT IS DELIBERATELY *NOT* IN supabase/migrations/. Two reasons:
 --    1. Ordering — it would have to sort before 67 existing migrations, and Supabase would then
@@ -513,8 +514,8 @@ $function$;
 -- NOTE: sync_session, sync_diagnostic, sync_recheck, get_parent_dashboard,
 -- get_insights_rollup and get_learner_bootstrap are deliberately absent — every one of them
 -- IS defined by a migration, which CI applies straight after this. Functions are
--- `create or replace`, so including them would merely be redundant rather than fatal; they
--- are left out to keep the drift surface small.
+-- `create or replace`, so including them would be redundant rather than fatal; they are left
+-- out to keep the drift surface small.
 
 -- ── Triggers ────────────────────────────────────────────────────────────────
 drop trigger if exists on_auth_user_created on auth.users;
@@ -592,6 +593,7 @@ alter table public.sessions                 enable row level security;
 create policy "profiles: own row" on public.profiles for all
   using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
 
+create policy "chapters: select" on public.chapters for select using (true);
 
 create policy "learners: select" on public.learners for select to authenticated
   using (created_by = (select auth.uid())
@@ -606,7 +608,21 @@ create policy "learners: delete" on public.learners for delete to authenticated
 
 create policy "learner_access: select" on public.learner_access for select to authenticated
   using (parent_id = (select auth.uid()));
+-- V1 FIX lives in can_self_grant_access(). RLS suite A3 is an assertion about it.
+create policy "learner_access: insert" on public.learner_access for insert to authenticated
+  with check (parent_id = (select auth.uid()) and can_self_grant_access(learner_id, access_role));
+create policy "learner_access: delete" on public.learner_access for delete to authenticated
+  using (learner_id in (select learners.id from public.learners
+                        where learners.created_by = (select auth.uid())));
 
+-- V1 FIX: the sender's WITH CHECK requires they own the learner. Without the EXISTS,
+-- an attacker forges an invite for a stranger's child (RLS suite A2).
+create policy "learner_invites: sender" on public.learner_invites for all to authenticated
+  using (invited_by = (select auth.uid()))
+  with check (invited_by = (select auth.uid())
+              and exists (select 1 from public.learners l
+                          where l.id = learner_invites.learner_id
+                            and l.created_by = (select auth.uid())));
 create policy "learner_invites: recipient can view" on public.learner_invites for select to authenticated
   using (invited_email = lower(((select auth.jwt()) ->> 'email')));
 create policy "learner_invites: recipient can accept" on public.learner_invites for update to authenticated
@@ -631,6 +647,60 @@ create policy "learner_stats: parent access" on public.learner_stats for all
                  where la.learner_id = learner_stats.learner_id and la.parent_id = (select auth.uid())))
   with check (exists (select 1 from public.learner_access la
                       where la.learner_id = learner_stats.learner_id and la.parent_id = (select auth.uid())));
+
+
+create policy learner_events_select on public.learner_events for select to authenticated
+  using (learner_id in (select learner_access.learner_id from public.learner_access
+                        where learner_access.parent_id = (select auth.uid())));
+create policy learner_events_insert on public.learner_events for insert to authenticated
+  with check (learner_id in (select learner_access.learner_id from public.learner_access
+                             where learner_access.parent_id = (select auth.uid())));
+
+create policy "grades: select" on public.grades for select
+  using (created_by = (select auth.uid())
+         or id in (select l.grade_id from public.learners l
+                   join public.learner_access la on la.learner_id = l.id
+                   where la.parent_id = (select auth.uid()) and l.grade_id is not null));
+create policy "grades: insert" on public.grades for insert
+  with check (created_by = (select auth.uid()));
+create policy "grades: update" on public.grades for update
+  using (created_by = (select auth.uid())) with check (created_by = (select auth.uid()));
+create policy "grades: delete" on public.grades for delete
+  using (created_by = (select auth.uid()));
+
+create policy "grade_chapters: select" on public.grade_chapters for select
+  using (grade_id in (select grades.id from public.grades where grades.created_by = (select auth.uid()))
+         or grade_id in (select l.grade_id from public.learners l
+                         join public.learner_access la on la.learner_id = l.id
+                         where la.parent_id = (select auth.uid()) and l.grade_id is not null));
+create policy "grade_chapters: insert" on public.grade_chapters for insert
+  with check (grade_id in (select grades.id from public.grades where grades.created_by = (select auth.uid())));
+create policy "grade_chapters: delete" on public.grade_chapters for delete
+  using (grade_id in (select grades.id from public.grades where grades.created_by = (select auth.uid())));
+
+create policy diag_sessions_read on public.diagnostic_sessions for select
+  using (exists (select 1 from public.learner_access la
+                 where la.learner_id = diagnostic_sessions.learner_id and la.parent_id = auth.uid()));
+create policy diag_items_read on public.diagnostic_items for select
+  using (exists (select 1 from public.diagnostic_sessions s
+                 join public.learner_access la on la.learner_id = s.learner_id
+                 where s.id = diagnostic_items.session_id and la.parent_id = auth.uid()));
+create policy diag_plans_read on public.diagnostic_plans for select
+  using (exists (select 1 from public.learner_access la
+                 where la.learner_id = diagnostic_plans.learner_id and la.parent_id = auth.uid()));
+create policy diag_progress_read on public.diagnostic_plan_progress for select
+  using (exists (select 1 from public.diagnostic_plans p
+                 join public.learner_access la on la.learner_id = p.learner_id
+                 where p.id = diagnostic_plan_progress.plan_id and la.parent_id = auth.uid()));
+create policy diag_rechecks_read on public.diagnostic_rechecks for select
+  using (exists (select 1 from public.learner_access la
+                 where la.learner_id = diagnostic_rechecks.learner_id and la.parent_id = auth.uid()));
+
+-- V13: write-only, and shape-checked. The original bounded LENGTH only, so every
+-- 3-character string was a valid lead (RLS suite A9b).
+create policy "diagnostic_leads: insert" on public.diagnostic_leads for insert to anon, authenticated
+  with check (char_length(email) >= 3 and char_length(email) <= 254
+              and email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$');
 
 
 -- error_events: RLS ON with ZERO policies = deny-all, service-role only. INTENTIONAL —

@@ -3,71 +3,95 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * ⚠️ THE BASELINE AND THE MIGRATIONS MUST NOT BOTH CREATE THE SAME OBJECT.
+ * ⚠️⚠️ WHICH OBJECTS `baseline_schema.sql` MAY CREATE IS DERIVED HERE, NOT HARD-CODED —
+ * because I hard-coded it twice and was wrong both times, in opposite directions.
  *
- * `supabase/schema/baseline_schema.sql` exists because seven base tables were created in the
- * Supabase dashboard and appear in ZERO migrations, so no database can be built from source
- * without it — which is why the RLS regression suite had never run anywhere but production.
+ * The baseline exists because seven base tables were made in the Supabase dashboard and are in
+ * ZERO migrations, so no database can be built from source without it. CI applies it, then all
+ * 68 migrations, to a throwaway local Postgres. The two halves must not fight, and the rule is
+ * per-object and ORDER-DEPENDENT:
  *
- * CI applies the baseline, then all 67 migrations, to a throwaway local Postgres. That only
- * works if the two halves do not collide, and the rule is NOT "the baseline is a full dump":
+ *   · A policy a migration creates with a BARE `create policy` must NOT be in the baseline.
+ *     CREATE POLICY has no IF NOT EXISTS, so the migration dies with 42710. (Run 1 died on
+ *     `policy "learner_state: parent access" ... already exists`.)
+ *   · A policy a migration ALTERs but never creates MUST be in the baseline, or the ALTER dies
+ *     with 42704 `does not exist`. (Run 3 died on `alter policy "learner_access: insert"` after
+ *     I over-corrected and stripped 21 policies instead of 2.)
+ *   · A policy a migration drop-then-creates is safe either way.
  *
- *   · create table / create index / create trigger are IF NOT EXISTS or drop-then-create
- *     everywhere here, so duplicating them is a harmless no-op.
- *   · CREATE POLICY has no IF NOT EXISTS in any version of Postgres. A policy created by both
- *     halves fails the migration with 42710 and takes the whole run with it. That is exactly
- *     how this was found — the first pipeline run died on
- *     `policy "learner_state: parent access" for table "learner_state" already exists`.
- *   · Three indexes are created unguarded by migrations and hit the same wall.
- *
- * A source check is the right instrument here and not a lazy one: the failure is a property of
- * two FILES, and the only way to observe it otherwise is a full CI run with a Docker Postgres.
- * This turns a six-minute red pipeline into a millisecond.
+ * Deriving it means the answer stays right when someone adds a migration — a hard-coded list
+ * would silently rot into the same two failures.
  */
 const ROOT = join(__dirname, '../..')
-const baseline = readFileSync(join(ROOT, 'supabase/schema/baseline_schema.sql'), 'utf8')
-const migrations = readdirSync(join(ROOT, 'supabase/migrations'))
-  .filter(f => f.endsWith('.sql'))
-  .map(f => readFileSync(join(ROOT, 'supabase/migrations', f), 'utf8'))
-  .join('\n')
+const baselinePath = join(ROOT, 'supabase/schema/baseline_schema.sql')
+const migDir = join(ROOT, 'supabase/migrations')
 
-/** Statement-leading `create policy <name>` only — never a mention inside a comment. */
-const policyNames = (sql: string): string[] =>
-  [...sql.matchAll(/^\s*create policy (?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))/gm)]
-    .map(m => m[1] ?? m[2])
+const baseline = readFileSync(baselinePath, 'utf8')
+const migFiles = readdirSync(migDir).filter(f => f.endsWith('.sql')).sort()
 
-/** `create index foo on` WITHOUT `if not exists` — the form that cannot be applied twice. */
-const unguardedIndexNames = (sql: string): string[] =>
-  [...sql.matchAll(/^\s*create (?:unique )?index (?!if not exists)([A-Za-z_][A-Za-z0-9_]*)/gm)]
-    .map(m => m[1])
+/** `create|alter|drop policy [if exists] "name"|name` at the head of a statement. */
+const POLICY = /^[ \t]*(create|alter|drop) policy (?:if exists )?(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))/gim
+
+type Touch = { kind: 'create' | 'alter' | 'drop'; name: string }
+const migrationTouches: Touch[] = migFiles.flatMap(f => {
+  const sql = readFileSync(join(migDir, f), 'utf8')
+  return [...sql.matchAll(POLICY)].map(m => ({
+    kind: m[1].toLowerCase() as Touch['kind'],
+    name: (m[2] ?? m[3]) as string,
+  }))
+})
+
+const baselinePolicies = new Set(
+  [...baseline.matchAll(/^create policy (?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))/gm)].map(m => (m[1] ?? m[2]) as string),
+)
+
+/** In migration order: what happens to this policy first, ignoring drops (which make a later create safe). */
+function verdict(name: string): 'must-not' | 'must' | 'either' {
+  let dropped = false
+  for (const t of migrationTouches) {
+    if (t.name !== name) continue
+    if (t.kind === 'drop') { dropped = true; continue }
+    if (t.kind === 'alter') return 'must'
+    return dropped ? 'either' : 'must-not'   // bare create
+  }
+  return 'must'                               // only ever dropped, or never mentioned
+}
+
+const allNames = [...new Set([...migrationTouches.map(t => t.name), ...baselinePolicies])]
 
 describe('baseline_schema.sql vs supabase/migrations', () => {
-  it('creates no policy that a migration also creates', () => {
-    const owned = new Set(policyNames(migrations))
-    const clash = policyNames(baseline).filter(n => owned.has(n))
-    expect(clash, `CREATE POLICY has no IF NOT EXISTS — these would fail the migration run with 42710:\n  ${clash.join('\n  ')}`).toEqual([])
+  it('omits every policy a migration creates with a bare CREATE (else 42710 kills the replay)', () => {
+    const wrong = allNames.filter(n => verdict(n) === 'must-not' && baselinePolicies.has(n))
+    expect(wrong, `CREATE POLICY has no IF NOT EXISTS — remove these from the baseline:\n  ${wrong.join('\n  ')}`).toEqual([])
   })
 
-  it('creates no index that a migration creates unguarded', () => {
-    const owned = new Set(unguardedIndexNames(migrations))
-    const baselineIdx = [...baseline.matchAll(/^\s*create (?:unique )?index (?:if not exists )?([A-Za-z_][A-Za-z0-9_]*)/gm)].map(m => m[1])
-    const clash = baselineIdx.filter(n => owned.has(n))
-    expect(clash, `these indexes are created unguarded by a migration and must not be in the baseline:\n  ${clash.join('\n  ')}`).toEqual([])
+  it('contains every policy a migration ALTERs but never creates (else 42704 kills the replay)', () => {
+    const missing = allNames.filter(n => verdict(n) === 'must' && !baselinePolicies.has(n))
+    expect(missing, `a migration ALTERs these and nothing creates them — the baseline must:\n  ${missing.join('\n  ')}`).toEqual([])
   })
 
-  it('still creates the seven tables that no migration creates — the whole reason it exists', () => {
-    // ⚠️ The mirror risk: someone "fixes" a future collision by deleting from the baseline
-    // until it is empty, and CI goes green having built a database with no learners table.
+  it('omits every index a migration creates unguarded', () => {
+    const unguarded = new Set(migFiles.flatMap(f =>
+      [...readFileSync(join(migDir, f), 'utf8').matchAll(/^[ \t]*create (?:unique )?index (?!if not exists)([A-Za-z_][A-Za-z0-9_]*)/gim)].map(m => m[1])))
+    const inBaseline = [...baseline.matchAll(/^create (?:unique )?index (?:if not exists )?([A-Za-z_][A-Za-z0-9_]*)/gm)].map(m => m[1])
+    const clash = inBaseline.filter(n => unguarded.has(n))
+    expect(clash, `created unguarded by a migration, so must not be in the baseline:\n  ${clash.join('\n  ')}`).toEqual([])
+  })
+
+  it('still creates the seven tables no migration creates — the whole reason it exists', () => {
+    // ⚠️ The mirror risk: someone "fixes" a future collision by deleting from the baseline until
+    // CI goes green having built a database with no learners table in it.
+    const allMigrations = migFiles.map(f => readFileSync(join(migDir, f), 'utf8')).join('\n')
     for (const t of ['profiles', 'learners', 'learner_access', 'learner_invites',
                      'sessions', 'learner_progress', 'learner_stats']) {
       expect(new RegExp(`create table if not exists public\\.${t}\\b`).test(baseline), `baseline no longer creates public.${t}`).toBe(true)
-      expect(new RegExp(`create table (if not exists )?public\\.${t}\\b`).test(migrations), `public.${t} is now created by a migration — check whether the baseline still needs it`).toBe(false)
+      expect(new RegExp(`create table (if not exists )?public\\.${t}\\b`).test(allMigrations), `public.${t} is now created by a migration — re-check whether the baseline still needs it`).toBe(false)
     }
   })
 
   it('is never committed into supabase/migrations/', () => {
-    // CI copies it in as 00000000000000_baseline.sql on a throwaway runner. Committed, it
-    // would be a backdated migration that `supabase db push` applies to PRODUCTION.
-    expect(readdirSync(join(ROOT, 'supabase/migrations'))).not.toContain('00000000000000_baseline.sql')
+    // CI stages it as 00000000000000_baseline.sql on a throwaway runner. Committed, it would be
+    // a backdated migration that `supabase db push` applies to PRODUCTION.
+    expect(readdirSync(migDir)).not.toContain('00000000000000_baseline.sql')
   })
 })
