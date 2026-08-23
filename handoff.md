@@ -147,6 +147,70 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🧾 **2026-08-24 (second pass) — THE LEDGER IS REPAIRED, AND THE DIRECTION WAS THE OPPOSITE OF THE ONE PLANNED: 58 REPO FILES MOVED, THE PRODUCTION LEDGER WAS NEVER WRITTEN. ⚠️ `perf_advisors` IS APPLIED AND CLEARED EIGHT LIVE ADVISOR FINDINGS.** `tsc` 0 · **1457/1458** · `next build` 0 · **`db push --dry-run` equivalent: 0 pending.**
+
+**The asks:** apply `perf_advisors` behind the new stale-migration diff · accept the ledger snapshot as the safety net but add *no backups* as a launch blocker · compute the dry-run rather than putting a production password into CI.
+
+## ① ✅ THE STALE-MIGRATION DIFF RAN FOR THE FIRST TIME, AND PASSED
+All five `diag_*` predicates were read off `pg_policies.qual` and compared with what the file would
+write: **identical except the `(select auth.uid())` wrap**, `with_check` null on all five, `cmd`
+SELECT, roles `{public}` — and `diagnostic_engine_schema` is the only other file in the repo that
+touches them, so nothing newer could be reverted. Applied, then verified from the CATALOG, not the
+success flag: five quals now carry `( SELECT auth.uid()`, three indexes exist, and the advisor
+report went **5 `auth_rls_initplan` + 3 `unindexed_foreign_keys` → 0** (three new `unused_index`
+INFOs, which the migration's own closing comment predicts — no traffic yet).
+
+## ② ⚠️⚠️ THE REPAIR WRITES NOTHING TO PRODUCTION — THE PLAN SAID 71 LEDGER UPDATES
+Renaming the repo files reaches the same acceptance test with **zero** production writes, and it is
+what `docs/runbooks/applying-migrations.md` already prescribes. **The ledger holds the true apply
+ORDER; the repo now agrees with it rather than the other way round.** So the snapshot committed
+first (`d880f68`, 73 rows) guards a write that never happened — kept, because it is also the record
+of the pairing. 58 files moved: 57 relabelled to the versions production recorded, plus
+`perf_advisors` at **20260823225313**.
+⚠️ **Checked before renaming: the ledger order is an order-PRESERVING relabelling of all 71
+previously-applied files — no permutation**, so replay order is unchanged. `perf_advisors` is the
+one file that moves, to last, which is safe for the two reasons in ①.
+
+## ③ 🔍 PAIRING BY CONTENT, AND THE TRAP THAT MAKES IT LOOK LIKE MASS DRIFT
+⚠️ **A RAW hash does not compare: the CLI strips comments preceding the first statement** when it
+stores a migration (`index_chapter_fks` is 331 bytes on disk, 173 in the ledger), so only **13 of
+72** files matched raw. Strip `--` comments and all whitespace from both sides and **68 of 72 pair
+exactly**; the other four are each explained (two amended in the repo after they ran, two split into
+a pair of rows by production, and `perf_advisors`, which had never run anywhere). Name-only pairing
+would have marked that last one applied and lost it for ever — which is the whole argument.
+Two remote-only rows survive by design (`grades_pin_touch_search_path`, `sync_recheck`) and two rows'
+`name` columns disagree with the repo filename on purpose; both tables are in
+[docs/schema-baseline-debt.md](docs/schema-baseline-debt.md).
+
+## ④ 🧮 THE DRY-RUN, COMPUTED RATHER THAN CREDENTIALLED
+No `SUPABASE_ACCESS_TOKEN` or DB password went into CI. `db push --dry-run` does one thing — compare
+local filename versions against `schema_migrations.version` — so the set difference IS the command:
+**74 ledger rows, 72 repo files, LOCAL-not-in-REMOTE = 0, REMOTE-not-in-LOCAL = 2** (the split-point
+rows). Both directions and the exact query are written out in the debt doc. The founder will run the
+real command later as confirmation, not as a gate.
+
+## ⑤ 🔴 "NO BACKUPS" IS NOW LAUNCH BLOCKER **B12**, NOT A NICE-TO-HAVE
+Founder's call and his words: *we cannot take a parent's money for a service whose entire record of
+their child's progress has no recovery path.* Supabase Pro is $25/month for daily backups + 7-day
+PITR and is already in the cost model. ⚠️ `baseline_schema.sql` returns the STRUCTURE and **none of
+the data** — it must not be read as a backup, and neither must the ledger snapshot.
+
+## ▶ OPEN
+1. ⏳ **The RLS suite has not yet looked at this.** It only runs on a PR to `main`, and the branch
+   `chore/ledger-repair` is pushed with PR **#51** open for exactly that. Read `ci / rls-tests`
+   before merging — it is the thing that caught the last regression in four minutes.
+   ⚠️ Note it has ALWAYS replayed `perf_advisors` (it replays repo files, and the file existed), so
+   CI's database has been ahead of production on those five policies for days; what is new to it is
+   the file moving to last.
+2. 🔴 **B12 — still no backup of the children's data.** Now blocking, and one dashboard toggle.
+3. ⚠️ Three migration comments and `src/app/api/lead/route.ts` still say the anon INSERT revoke
+   "cannot be applied until SUPABASE_SERVICE_ROLE_KEY is set" — it was applied yesterday. Prose
+   drift, not behaviour; a chip is filed.
+4. ▶ **Stage 1 next:** schema, RLS, regression tests, no UI — plus `last_reassigned_at`, the case
+   asserting the `sessions` / `learner_progress` entitlement guards cannot diverge, and the free-set
+   proposal against the AR constraint.
+5. Everything from the blocks below still stands.
+
 > 🔐 **2026-08-24 — THE ROAD TO A PAYWALL WENT THROUGH FIVE REAL PROBLEMS AND NEVER REACHED THE PAYWALL. ⚠️⚠️ THE RLS SUITE HAD NEVER RUN ONCE; IT NOW DOES, AND ON ITS SECOND DAY IT CAUGHT A SECURITY REGRESSION I HAD SHIPPED FOUR MINUTES EARLIER. AND THE MIGRATION LEDGER TURNS OUT TO BE 58 FILES OUT OF SYNC WITH PRODUCTION.** `tsc` 0 · **1457/1458** · `next build` 0 · **3 PRs merged** (#48, #49, #50). ⏸️ **STAGE 1 NOT STARTED — one decision block is open, see ▶.**
 >
 > **The ask:** subscription billing + paywall → *"STOP — DO NOT WRITE CODE YET"* → a plan, then a
@@ -228,9 +292,9 @@
 > | explained mismatches (my edit today · repo files amended in place · a different split point) | **5** |
 > | 🔴 **genuinely unapplied** | **1** |
 >
-> ⚠️ **`20260816120000_perf_advisors.sql` has never run.** Confirmed against live state: all five
-> `diagnostic_*` policies still evaluate `auth.uid()` **per row**, matching the `auth_rls_initplan`
-> advisor warnings. Marking it "applied" would skip it for ever — which is exactly why the pairing
+> ⚠️ ~~**`20260816120000_perf_advisors.sql` has never run.**~~ **APPLIED 2026-08-24 second pass**, ledger version `20260823225313`, file renamed to match; eight advisor findings cleared. Was confirmed against live state at the time: all five
+> `diagnostic_*` policies evaluated `auth.uid()` **per row**, matching the `auth_rls_initplan`
+> advisor warnings; they no longer do. Marking it "applied" would skip it for ever — which is exactly why the pairing
 > had to be by content.
 > ⚠️ **If `deploy.yml`'s `migrate-prod` were enabled today** it would attempt **58 pending migrations
 > in version order and abort partway** — `chapters_as_data` re-adds `sessions_chapter_fkey`, which
@@ -245,7 +309,7 @@
 > [docs/schema-baseline-debt.md](docs/schema-baseline-debt.md) names the frozen drift (7 tables, 2
 > enums, 5 functions, 7 triggers, 2 indexes, 12 policies) with the two-step resolution written out.
 >
-> ## ▶ OPEN — ⏸️ THREE ANSWERS NEEDED BEFORE THE LEDGER REPAIR, THEN STAGE 1
+> ## ▶ OPEN — ✅ ALL THREE ANSWERED AND THE REPAIR IS DONE (see the 🧾 block above)
 > 1. ⏸️ **`perf_advisors`: apply it, or leave it pending?** Leaving it means `db push --dry-run`
 >    reports 1, not zero, so the acceptance test cannot pass. Applying it means running the new
 >    stale-migration diff first. Recommend applying.

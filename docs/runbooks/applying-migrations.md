@@ -42,6 +42,18 @@ Compare with what the migration will create. If production is **stricter or newe
 stale: bring it forward first, or write a follow-up that restores the newer state, and say so in
 the file.
 
+## ⚠️ Pair a repo file to a ledger row by CONTENT, never by name
+
+The ledger stores the SQL it applied, so "has this file run?" is answerable exactly. Answering it by
+NAME is a guess, and on 2026-08-24 the guess would have marked `perf_advisors` applied when it had
+never run once — skipping it for ever.
+
+Two traps: a **raw** hash does not compare (the CLI strips comments preceding the first statement, so
+only 13 of 72 files matched raw and it looked like mass drift) — strip `--` comments and all
+whitespace from both sides; and a file may pair with a row of a **different name**, because
+production sometimes split one file into two migrations. Full method and the exact query:
+[docs/schema-baseline-debt.md](../schema-baseline-debt.md#the-ledger-side--repaired-2026-08-24).
+
 ## Preconditions that are not optional
 
 - **A one-way door needs a real check, not a plausible one.** If a migration can break a live path
