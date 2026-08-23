@@ -87,11 +87,28 @@ $function$;
 
 -- User-facing RPCs: keep authenticated, drop anon/public.
 revoke execute on function public.sync_session(uuid,text,text,integer,integer,integer,integer,integer,text,timestamptz) from anon, public;
-revoke execute on function public.accept_learner_invite(uuid) from anon, public;
-revoke execute on function public.accept_learner_invites_for_current_user() from anon, public;
-revoke execute on function public.delete_learner_profile(text) from anon, public;
-revoke execute on function public.reject_learner_invite(uuid) from anon, public;
-revoke execute on function public.remove_my_learner_access(text) from anon, public;
+-- ⚠️ THESE FIVE NO LONGER EXIST, AND THAT MAKES A BARE REVOKE UNREPLAYABLE. They were
+-- created in the Supabase dashboard, locked down here, and then deliberately deleted by
+-- 20260617250000_drop_dead_rpcs.sql. Against production that is fine — this migration ran
+-- while they still existed. Against a FRESH database it is fatal: `revoke ... on function`
+-- raises 42883 for a function that was never created, and the whole replay stops on the
+-- fifth migration of sixty-eight. That is what CI hit the first time it built the schema
+-- from source (2026-08-24), and it is the reason nobody had noticed: nothing had ever
+-- replayed this history from zero.
+--
+-- Tolerated rather than deleted, because deleting them would erase the record that these
+-- RPCs were locked down before they were dropped — which is the audit trail V-2 exists for.
+do $$
+begin
+  revoke execute on function public.accept_learner_invite(uuid) from anon, public;
+  revoke execute on function public.accept_learner_invites_for_current_user() from anon, public;
+  revoke execute on function public.delete_learner_profile(text) from anon, public;
+  revoke execute on function public.reject_learner_invite(uuid) from anon, public;
+  revoke execute on function public.remove_my_learner_access(text) from anon, public;
+exception
+  when undefined_function then
+    raise notice 'skipping revoke on dead RPCs (dropped by 20260617250000) — fresh-database replay';
+end $$;
 
 -- Trigger-only functions: never meant to be called via the REST API. Triggers run as the
 -- table owner regardless of grants, so revoking EXECUTE does not affect them.
