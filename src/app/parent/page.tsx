@@ -376,6 +376,7 @@ export default function ParentDashboard() {
                 existing one, reused rather than re-implemented. */}
             <DataRights
               name={active.learner.display_name}
+              learnerId={active.learner.id}
               bundle={{ learner: active.learner, stats: active.stats, progress: active.progress, sessions: active.sessions }}
             >
             {confirming === active.learner.id ? (
