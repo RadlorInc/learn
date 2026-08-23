@@ -73,8 +73,8 @@
 > re-teach has never been seen fire anywhere in the band** · ⚠️ **AR has never been driven with a
 > REAL HAND on a real camera** — MediaPipe is proven to boot on prod under the enforced CSP
 > (`Graph successfully started running.`, 0 violations), but the band's defining feature is
-> unverified end to end and only the founder can close it. Everything is committed; prod is on
-> **sw v120**.
+> unverified end to end and only the founder can close it. Everything is committed and LIVE; prod is
+> on **sw v138** (2026-08-23).
 >
 > 🔎 **THE DIAGNOSTIC — WHERE IT STANDS (2026-08-22), read before touching it**
 >
@@ -102,8 +102,10 @@
 > **Until that hour happens, 96–98% means "the engine finds what the graph says", NOT "the engine
 > finds the child's real gap."**
 >
-> 🔴 **AND NONE OF IT IS LIVE.** Five commits sit on `main` unpushed; production is still serving the
-> 26–34% version. Vercel deploys `main`, so a push ships it.
+> ✅ **AND IT IS LIVE NOW** — pushed 2026-08-23 as part of `9cc7787..6dd9224`. Production serves the
+> 96–98% probe; verified on the live site (the door reads *"about 10 minutes"*, 0 console errors).
+> The caveats above are unchanged by shipping: the numbers are still simulated and the graph is still
+> v0.9 DRAFT.
 
 > 📍 **WHERE THINGS LIVE NOW (2026-08-19).** **TWO repos, two Vercel projects, two hosts.**
 >
@@ -145,7 +147,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 🚦 **2026-08-23 — "PRODUCTION MEIN JAANE KE LIYE TAIYYAR HAI?" — THE CODE IS; THE THINGS AROUND IT ARE NOT. ⚠️⚠️ THREE WORKFLOWS REPORT GREEN WHILE DOING NOTHING, THE ERROR SINK WRITES NOWHERE (PROVED WITH A LIVE PROBE), AND EIGHT CHAPTERS COULD NOT BE STARTED ON A LANDSCAPE PHONE.** `tsc` 0 · **1444/1444** · `next build` 0 · **218/218 e2e** vs a production build (7.2 min, foreground) · lint baseline unchanged. NOT COMMITTED.
+> 🚦 **2026-08-23 — "PRODUCTION MEIN JAANE KE LIYE TAIYYAR HAI?" — THE CODE IS; THE THINGS AROUND IT ARE NOT. ⚠️⚠️ THREE WORKFLOWS REPORT GREEN WHILE DOING NOTHING, THE ERROR SINK WRITES NOWHERE (PROVED WITH A LIVE PROBE), AND EIGHT CHAPTERS COULD NOT BE STARTED ON A LANDSCAPE PHONE.** `tsc` 0 · **1444/1444** · `next build` 0 · **218/218 e2e** vs a production build (7.2 min, foreground) · lint baseline unchanged. ✅ **SHIPPED — `main`@`6dd9224`, 3 commits; and it carried the NINE-commit backlog with it, so the 96–98% diagnostic and both new 9–11 chapters are LIVE at last.** `ci / verify` **green for the first time since 2026-08-20**; prod serving **sw v138**.
 >
 > **The asks:** *"Performance, scalability, responsive… deeply check karo"* → *"haan yeh fix kar do aur nightly failures triage karo"*.
 >
@@ -227,9 +229,27 @@
 > foreground, which is what finally produced the number. And a waiter that never exits does not just
 > waste time: it silently swallows whatever was chained after it.
 >
+> ## ⑥ 🚀 SHIPPED, AND VERIFIED ON THE LIVE SITE RATHER THAN ASSUMED
+> Pushed `9cc7787..6dd9224` — **9 commits**, six of which had been sitting on `main` for two days.
+> The Deploy workflow came back **`ci / verify: success`**, which is the real proof of the
+> `testTimeout` fix: it could only ever be proven on the slow runner that was failing.
+>
+> | checked on `https://adaptivelearn.radlor.com` | |
+> |---|---|
+> | `sw.js` VERSION | **v138** — the launch runbook's own "did it actually land" check |
+> | `Switch it on →` @ 640×320 | **264–310 of 320, +10px clear** (was 284–330, −10px), `safe center` applied |
+> | The Packing Shed / The Minibus Run | `200` at `?c=timesTables` and `?c=division` |
+> | the diagnostic door | *"FREE · ABOUT 10 MINUTES · NO ACCOUNT NEEDED"* — the rebuild is live |
+> | console errors on `/diagnostic` | 0 |
+>
+> ⚠️ **`ci / rls-tests` also reported `success` in that same run and executed nothing** — see ⓪. The
+> pipeline being green is now evidence about `verify` and about nothing else.
+>
 > ## ▶ OPEN — the honest launch verdict
-> 1. 🔴 **NOT COMMITTED**, and production is still **6 commits behind** (`9cc7787`) — cold traffic is
->    getting the 26–34% diagnostic and no Times Tables / Division chapter.
+> 1. ✅ ~~Not committed / production behind~~ — **DONE.** Prod is `6dd9224` and verified (§⑥).
+>    ⏭️ **The next thing to look at is TONIGHT'S NIGHTLY**, which now runs `start-card` beside
+>    `all-chapters`. Green tomorrow = the two-night red is genuinely closed; red = the gate triage
+>    in §③ missed something and the traces are on the run.
 > 2. 🔴 **NO BACKUPS.** Three secrets in GitHub settings turns `backup.yml` real. Highest-value hour.
 > 3. 🔴 **BLIND IN PRODUCTION.** `SUPABASE_SERVICE_ROLE_KEY` on Vercel + Web Analytics on.
 > 4. 🔴 **`DRAFT = true`** — privacy policy and ToS are still placeholders (B1/B2). Hard blocker for
@@ -307,8 +327,8 @@
 > report**, and it is only possible BECAUSE the system is rule-based.
 >
 > ## ▶ OPEN — in the order that matters
-> 1. 🔴 **NOTHING IS PUSHED.** Production still serves the **26–34%** diagnostic. Every day it stays
->    that way, cold traffic gets a coin-flip diagnosis. Five commits are ready on `main`.
+> 1. ✅ ~~Nothing is pushed~~ — **SHIPPED 2026-08-23** (`6dd9224`). Production serves the 96–98%
+>    probe. Everything else in this list still stands.
 > 2. **An ABANDONED probe leaves NO trace** — verified on prod: 14 session rows, 0 incomplete,
 >    because a row is only written on completion. The probe just went from ~10 to 20–50 questions and
 >    **we cannot see whether anyone is giving up.** Write the session row at START and update on
@@ -324,7 +344,7 @@
 > 7. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA** — carried for many sessions, and the data is worth
 >    more now than it was.
 
-> 🕸️ **2026-08-22 (fourth pass) — THE ENGINE IS 96–98%, SO THE BOTTLENECK IS NOW THE GRAPH — AND THE GRAPH IS STILL v0.9 DRAFT WITH 130 UNVALIDATED EDGES. AUDITED: TWELVE OF THEM DECIDE A GAP, TWENTY-ONE DECIDE NOTHING.** `tsc` 0 · **1444/1444** (+7, 1 skipped by design) · `next build` 0. NOT COMMITTED.
+> 🕸️ **2026-08-22 (fourth pass) — THE ENGINE IS 96–98%, SO THE BOTTLENECK IS NOW THE GRAPH — AND THE GRAPH IS STILL v0.9 DRAFT WITH 130 UNVALIDATED EDGES. AUDITED: TWELVE OF THEM DECIDE A GAP, TWENTY-ONE DECIDE NOTHING.** `tsc` 0 · **1444/1444** (+7, 1 skipped by design) · `next build` 0. ✅ SHIPPED 2026-08-23 in `6dd9224`.
 >
 > **The ask:** *"A karo"* — a self-audit of the skill graph, to cut the teacher's checklist down.
 >
@@ -377,13 +397,13 @@
 > property of the WHOLE graph and the numbers move when the shape does.
 >
 > ## ▶ OPEN
-> 1. 🔴 **NOT COMMITTED.**
+> 1. ✅ ~~Not committed~~ — **SHIPPED 2026-08-23** (`6dd9224`).
 > 2. **A teacher still has to red-pen twelve edges.** That is the hour that protects the guarantee,
 >    and nothing in the engine can substitute for it. Until then the 96–98% means *"the engine finds
 >    what the graph says"*, not *"the engine finds the child's real gap"*.
 > 3. Everything from the blocks below still stands.
 
-> 🎯 **2026-08-22 (third pass) — THE GAP FINDER IS NOW **96–98% EXACT** AND MISSES A REAL GAP **0%** OF THE TIME. ⚠️⚠️ AND THE FIRST NUMBER I REPORTED THAT MORNING (81–87%) WAS FLATTERED BY MY OWN TOO-KIND GUESS MODEL — THE HONEST BASELINE WAS 73–75%.** `tsc` 0 · **1437/1437** · `next build` 0 · sw **v136 → v137**. NOT COMMITTED.
+> 🎯 **2026-08-22 (third pass) — THE GAP FINDER IS NOW **96–98% EXACT** AND MISSES A REAL GAP **0%** OF THE TIME. ⚠️⚠️ AND THE FIRST NUMBER I REPORTED THAT MORNING (81–87%) WAS FLATTERED BY MY OWN TOO-KIND GUESS MODEL — THE HONEST BASELINE WAS 73–75%.** `tsc` 0 · **1437/1437** · `next build` 0 · sw **v136 → v137**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
 >
 > **The ask:** *"jab tak proper gap find karne waala system bane… rukne ki zaroorat naii hai… bas high accuracy gap find karne waala system bane yeh meko chahiye"*.
 >
@@ -453,7 +473,7 @@
 > hundred who needed the room, and a truncated search reports whatever it had reached.
 >
 > ## ▶ OPEN
-> 1. 🔴 **NOT COMMITTED.** `tsc` 0 · 1437/1437 · `next build` 0 · lint clean on every changed file ·
+> 1. ✅ ~~Not committed~~ — **SHIPPED 2026-08-23** (`6dd9224`). `tsc` 0 · 1437/1437 · `next build` 0 · lint clean on every changed file ·
 >    driven end to end (full probe → report, 0 console errors).
 > 2. ⚠️ **This is now a placement TEST, not a check.** 20–36 questions for a child with nothing wrong
 >    is the founder's explicit trade (accuracy over length, stated twice) and it is the thing most
@@ -463,7 +483,7 @@
 >    rather than a miss and nothing is re-asked.
 > 4. Everything from the blocks below still stands.
 
-> 🚚 **2026-08-22 (second pass) — THE TWO MISSING CHAPTERS ARE BUILT. `i.multFacts` — THE MOST LOAD-BEARING NODE IN THE WHOLE 3–18 GRAPH — HAD NO CHAPTER FOR NINE DAYS, AND ~10% OF DIAGNOSED 9–11 CHILDREN ROOTED ON IT. THE CONTENT HOLE IS NOW 0% IN EVERY BAND.** `tsc` 0 · **1436/1436** (+59) · `next build` 0 · lint clean on all new files · sw **v134 → v135**. NOT COMMITTED.
+> 🚚 **2026-08-22 (second pass) — THE TWO MISSING CHAPTERS ARE BUILT. `i.multFacts` — THE MOST LOAD-BEARING NODE IN THE WHOLE 3–18 GRAPH — HAD NO CHAPTER FOR NINE DAYS, AND ~10% OF DIAGNOSED 9–11 CHILDREN ROOTED ON IT. THE CONTENT HOLE IS NOW 0% IN EVERY BAND.** `tsc` 0 · **1436/1436** (+59) · `next build` 0 · lint clean on all new files · sw **v134 → v135**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
 >
 > **The ask:** *"Times Tables + Division chapter ka design bhi same waise hi rakho jaise decimal chapter aur jaise 12-18 age band ke chapters ka hai… daily real world examples"* → then *"dono worlds theek hain, (i) karo — banana shuru karo"*.
 >
@@ -545,7 +565,7 @@
 > `timesTables`. **The pin fired exactly as written.**
 >
 > ## ▶ OPEN
-> 1. 🔴 **NOTHING IS COMMITTED** (this and the diagnostic work of the same day). Driven end to end at
+> 1. ✅ ~~Nothing is committed~~ — **SHIPPED 2026-08-23** (`6dd9224`), with the diagnostic work of the same day. Driven end to end at
 >    1280×720 and 640×320: start card → walkthrough → guided → scored round → correct answer, on both
 >    chapters. 0 console errors, 0 offscreen, 0 unreachable controls, no scroll.
 > 2. ⚠️ **At 640×320 every control scales to ~28px**, under the 44px floor — `FitSlot` only ever
@@ -559,7 +579,7 @@
 >    gap rather than closing it.
 > 5. Everything from the blocks below still stands.
 
-> 🎯 **2026-08-22 — THE DIAGNOSTIC, RETHOUGHT AND THEN HARDENED. ⚠️⚠️ IT NAMED THE RIGHT ROOT GAP **26–34%** OF THE TIME AND TOLD **10–38%** OF GAPPED CHILDREN THEY WERE ON TRACK — AND ELEVEN GREEN ENGINE TESTS COULD NOT SEE IT, BECAUSE EVERY ONE DRIVES A PERFECT ORACLE. NOW **81–87% / 1–4%**, TEN UNDIAGNOSABLE CHAPTERS ARE REACHABLE, AND THE WEEK-6 GUARANTEE LOOP FIRES FOR THE FIRST TIME.** `tsc` 0 · **1377/1377** (+17) · `next build` 0 · sw **v133 → v134**. NOT COMMITTED.
+> 🎯 **2026-08-22 — THE DIAGNOSTIC, RETHOUGHT AND THEN HARDENED. ⚠️⚠️ IT NAMED THE RIGHT ROOT GAP **26–34%** OF THE TIME AND TOLD **10–38%** OF GAPPED CHILDREN THEY WERE ON TRACK — AND ELEVEN GREEN ENGINE TESTS COULD NOT SEE IT, BECAUSE EVERY ONE DRIVES A PERFECT ORACLE. NOW **81–87% / 1–4%**, TEN UNDIAGNOSABLE CHAPTERS ARE REACHABLE, AND THE WEEK-6 GUARANTEE LOOP FIRES FOR THE FIRST TIME.** `tsc` 0 · **1377/1377** (+17) · `next build` 0 · sw **v133 → v134**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
 >
 > **The asks:** *"daignostic … dekho ki effective hai kya naii hai"* → *"pura properly rethink karo taaki zyada se zyada baccho ka gap mile aur hamare joh bhi chapters hai unki help se ek personalised route de"* → *"yeh problems ka solution find karo aur apply karo … high accuracy pe hona chahiye"*.
 >
@@ -655,7 +675,7 @@
 > more X than Y"*. The surviving invariant is that the picture supports the arithmetic.
 >
 > ## ▶ OPEN
-> 1. 🔴 **NOTHING IS COMMITTED.** `tsc` 0 · 1377/1377 · `next build` 0 · lint baseline unchanged ·
+> 1. ✅ ~~Nothing is committed~~ — **SHIPPED 2026-08-23** (`6dd9224`). `tsc` 0 · 1377/1377 · `next build` 0 · lint baseline unchanged ·
 >    driven on screen at 1280×720 and 640×320 (number pad, fraction pad, full probe → report, and the
 >    re-check flow). 0 offscreen, 0 controls under 44px, 0 console errors.
 > 2. ⚠️⚠️ **THE ONE THING THE ENGINE CANNOT FIX: ~10% of diagnosed 9–11 children root on a skill with
