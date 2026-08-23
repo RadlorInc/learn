@@ -113,6 +113,22 @@ describe('baseline_schema.sql vs supabase/migrations', () => {
     }
   })
 
+  it('carries every column a migration drops — the baseline is migration-ZERO, not today', () => {
+    // ⚠️ The subtlest failure of the five. The baseline is generated from TODAY'S production
+    // catalog, but the migrations replay HISTORY: 20260704120000 redefines sync_session against
+    // learner_stats.current_streak/longest_streak and 20260704120100 drops them; 20260817174352
+    // drops learners.date_of_birth. Generated from today they are absent and the replay dies on
+    // `ALTER COLUMN current_streak SET DEFAULT 0`. They must be present and are dropped again by
+    // those same migrations, so the end state still equals production.
+    const all = migFiles.map(f => readFileSync(join(migDir, f), 'utf8')).join('\n')
+    const droppedCols = [...new Set(
+      [...all.matchAll(/drop column (?:if exists )?([a-z_][a-z0-9_]*)/gi)].map(m => m[1].toLowerCase()),
+    )]
+    expect(droppedCols.length, 'no dropped columns found — the regex has rotted').toBeGreaterThan(0)
+    const missing = droppedCols.filter(c => !new RegExp(`^\\s*${c}\\s`, 'mi').test(baseline))
+    expect(missing, `a migration drops these, so the baseline must create them first:\n  ${missing.join('\n  ')}`).toEqual([])
+  })
+
   it('is never committed into supabase/migrations/', () => {
     // CI stages it as 00000000000000_baseline.sql on a throwaway runner. Committed, it would be
     // a backdated migration that `supabase db push` applies to PRODUCTION.

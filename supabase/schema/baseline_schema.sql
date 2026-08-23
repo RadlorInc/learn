@@ -30,6 +30,14 @@
 --  `src/__tests__/baselineSchema.test.ts` DERIVES all of this from the migrations rather than
 --  hard-coding it, so the answer stays correct when somebody adds a migration.
 --
+--  ⚠️⚠️ AND IT IS THE SCHEMA AT *MIGRATION-ZERO*, NOT THE SCHEMA TODAY. That distinction is
+--  what run 5 taught: the migrations replay HISTORY, and history references three columns
+--  that have since been dropped — learner_stats.current_streak / longest_streak and
+--  learners.date_of_birth. Generated from today's catalog they are absent, and the replay
+--  dies on `ALTER COLUMN current_streak SET DEFAULT 0`. They are carried here and dropped
+--  again by the very migrations that dropped them in production, so the END state is
+--  identical to prod — which is the only thing the RLS suite actually runs against.
+--
 --  ⚠️ IT IS DELIBERATELY *NOT* IN supabase/migrations/. Two reasons:
 --    1. Ordering — it would have to sort before 67 existing migrations, and Supabase would then
 --       try to apply a backdated version to production, where every one of these objects already
@@ -102,7 +110,12 @@ create table if not exists public.learners (
   created_at timestamp with time zone default now() not null,
   updated_at timestamp with time zone default now() not null,
   age_group text default '3-5'::text not null,
-  grade_id uuid
+  grade_id uuid,
+  -- ⚠️ NOT IN PRODUCTION — dropped by 20260817174352_privacy_and_leads_hardening. Present for
+  -- the same migration-zero reason as the streak columns. It was an exact birthdate on a CHILD,
+  -- written as null by its only caller and read by nothing; `age_group` is what the product
+  -- branches on. Do not reintroduce it anywhere but here.
+  date_of_birth date
 );
 
 create table if not exists public.learner_access (
@@ -156,7 +169,13 @@ create table if not exists public.learner_stats (
   total_coins integer default 0 not null,
   current_level smallint default 1 not null,
   last_played_at timestamp with time zone,
-  updated_at timestamp with time zone default now() not null
+  updated_at timestamp with time zone default now() not null,
+  -- ⚠️ NOT IN PRODUCTION, AND DELIBERATELY HERE. See the note on migration-zero below:
+  -- 20260704120000 redefines sync_session against these columns and 20260704120100 drops
+  -- them. Replaying history without them fails on `ALTER COLUMN current_streak SET DEFAULT 0`.
+  -- They are dropped again by that same migration, so the end state still matches prod.
+  current_streak integer default 0 not null,
+  longest_streak integer default 0 not null
 );
 
 create table if not exists public.learner_state (
