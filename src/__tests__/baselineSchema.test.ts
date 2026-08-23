@@ -80,13 +80,13 @@ describe('baseline_schema.sql vs supabase/migrations', () => {
 
   it('omits every constraint a migration adds with a bare ADD CONSTRAINT', () => {
     // ⚠️ Third object type with no IF NOT EXISTS, found the same way as the other two: run 4
-    // died on `add constraint sessions_chapter_fkey` in 20260616093000_chapters_as_data.sql.
+    // died on `add constraint sessions_chapter_fkey` in 20260616094022_chapters_as_data.sql.
     // The baseline wraps its own adds in an exception handler, which protects THIS file and
     // does nothing at all for the migrations that run after it.
     // Three forms are safe and must not be flagged:
     //   · the migration drops the constraint first;
     //   · the add sits inside an `if not exists (select 1 from pg_constraint where conname = …)`
-    //     guard, which 20260616090000 uses and no regex over the ADD alone can see;
+    //     guard, which 20260616074944 uses and no regex over the ADD alone can see;
     //   · (a later migration re-adding one it just dropped is the first case again.)
     const sources = migFiles.map(f => readFileSync(join(migDir, f), 'utf8'))
     const all = sources.join('\n')
@@ -115,7 +115,7 @@ describe('baseline_schema.sql vs supabase/migrations', () => {
 
   it('omits every table a migration creates with a bare CREATE TABLE', () => {
     // ⚠️ Fourth object type with no guard — I had assumed every migration used IF NOT EXISTS
-    // for tables. Two do not: 20260721080000 (auth_events) and 20260817174352 (error_events),
+    // for tables. Two do not: 20260721053831 (auth_events) and 20260817174352 (error_events),
     // and run 6 died on 42P07 for auth_events.
     const all = migFiles.map(f => readFileSync(join(migDir, f), 'utf8')).join('\n')
     const bare = new Set([...all.matchAll(/^\s*create table (?!if not exists)(?:public\.)?([a-z_][a-z0-9_]*)/gim)].map(m => m[1].toLowerCase()))
@@ -127,8 +127,8 @@ describe('baseline_schema.sql vs supabase/migrations', () => {
 
   it('carries every column a migration drops — the baseline is migration-ZERO, not today', () => {
     // ⚠️ The subtlest failure of the five. The baseline is generated from TODAY'S production
-    // catalog, but the migrations replay HISTORY: 20260704120000 redefines sync_session against
-    // learner_stats.current_streak/longest_streak and 20260704120100 drops them; 20260817174352
+    // catalog, but the migrations replay HISTORY: 20260705161254 redefines sync_session against
+    // learner_stats.current_streak/longest_streak and 20260705161328 drops them; 20260817174352
     // drops learners.date_of_birth. Generated from today they are absent and the replay dies on
     // `ALTER COLUMN current_streak SET DEFAULT 0`. They must be present and are dropped again by
     // those same migrations, so the end state still equals production.

@@ -53,7 +53,7 @@ $$;
 revoke insert, update, delete on public.learner_invites from anon;
 
 -- V11 (Low): learner_access had only SELECT + INSERT policies, so a grant could never be revoked
--- through the API (the revoke RPCs were dropped in 20260617250000). Add an owner-scoped DELETE so an
+-- through the API (the revoke RPCs were dropped in 20260617140142). Add an owner-scoped DELETE so an
 -- owning parent can withdraw shared/erroneous access. Still owner-only (a viewer can't delete rows).
 drop policy if exists "learner_access: delete" on public.learner_access;
 create policy "learner_access: delete" on public.learner_access

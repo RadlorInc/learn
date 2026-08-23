@@ -15,7 +15,7 @@
 
 -- ── 1. auth_rls_initplan ───────────────────────────────────────────────────────────────────
 -- A bare `auth.uid()` in a policy is re-evaluated FOR EVERY ROW; `(select auth.uid())` is evaluated
--- once per statement. Identical semantics — the same fix `20260615180001_secure_learners_rls.sql`
+-- once per statement. Identical semantics — the same fix `20260615142012_secure_learners_rls.sql`
 -- already applied to `learners`. These five were written before that lesson.
 
 alter policy "diag_sessions_read" on public.diagnostic_sessions

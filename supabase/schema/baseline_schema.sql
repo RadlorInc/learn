@@ -20,7 +20,7 @@
 --      migration creates with a BARE create must NOT be created here — the migration hits
 --      42710 `already exists` and the replay dies. Exactly two are like that:
 --      "learner_state: parent access" and "own inserts only".
---    · But twelve policies are ALTERed by 20260615180001/180003 and created by no migration
+--    · But twelve policies are ALTERed by 20260615142012/180003 and created by no migration
 --      at all — they were dashboard-made. Those MUST be here, or the ALTER hits 42704
 --      `does not exist`. Removing them is what broke the third run, one migration later.
 --    · The remaining nineteen are drop-then-create in their own migration, so they are safe
@@ -70,7 +70,7 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 -- ⚠️ auth_events AND error_events ARE NOT HERE, and neither is prune_error_events().
--- Both tables are created by a migration with a BARE `create table` (20260721080000 and
+-- Both tables are created by a migration with a BARE `create table` (20260721053831 and
 -- 20260817174352), so creating them here makes those migrations fail with 42P07. The
 -- function's body reads error_events and `language sql` bodies are validated at creation
 -- time, so it cannot be defined before its table exists — and its own migration defines it.
@@ -178,7 +178,7 @@ create table if not exists public.learner_stats (
   last_played_at timestamp with time zone,
   updated_at timestamp with time zone default now() not null,
   -- ⚠️ NOT IN PRODUCTION, AND DELIBERATELY HERE. See the note on migration-zero below:
-  -- 20260704120000 redefines sync_session against these columns and 20260704120100 drops
+  -- 20260705161254 redefines sync_session against these columns and 20260705161328 drops
   -- them. Replaying history without them fails on `ALTER COLUMN current_streak SET DEFAULT 0`.
   -- They are dropped again by that same migration, so the end state still matches prod.
   current_streak integer default 0 not null,
@@ -272,7 +272,7 @@ create table if not exists public.diagnostic_rechecks (
 --
 -- ⚠️ AND THE WRAPPER ONLY PROTECTS *THIS* FILE, NOT THE MIGRATIONS THAT FOLLOW IT — which is
 -- the same trap as CREATE POLICY, one object type along. `sessions_chapter_fkey` and
--- `learner_progress_chapter_fkey` are added by 20260616093000_chapters_as_data.sql with a bare
+-- `learner_progress_chapter_fkey` are added by 20260616094022_chapters_as_data.sql with a bare
 -- `add constraint`, so creating them here makes that migration fail with 42710. They are
 -- deliberately absent; the migration adds them, and the FK exists from that point on.
 -- (`learners_age_group_check` IS here, because its migration drops it first.)

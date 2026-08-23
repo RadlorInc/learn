@@ -1,5 +1,5 @@
 -- V12 (Medium) — tenant isolation: the "learner_invites: recipient can accept" UPDATE policy
--- (20260615180003:41-43) pins only invited_email in USING + WITH CHECK, so a recipient can UPDATE
+-- (20260615142138:41-43) pins only invited_email in USING + WITH CHECK, so a recipient can UPDATE
 -- ANY invite addressed to their email and rewrite learner_id / invited_by / expires_at / status to
 -- arbitrary values. Chained with a self-created invite this re-opens the V1 class: repoint an invite
 -- at a stranger's learner AND set invited_by to that learner's owner → can_self_grant_access()'s

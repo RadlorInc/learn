@@ -454,7 +454,7 @@ const CHAPTER_COMPONENTS: Record<ChapterType, React.ComponentType<ChapterProps>>
 
 ## 7. DB / migrations — `supabase/migrations/`
 
-### Schema: `public.chapters` reference table (`20260616093000_chapters_as_data.sql`)
+### Schema: `public.chapters` reference table (`20260616094022_chapters_as_data.sql`)
 ```sql
 create table if not exists public.chapters (
   id          text   primary key,
@@ -468,7 +468,7 @@ create table if not exists public.chapters (
 chapter id MUST have a seed row before any session for it can be saved** (FK integrity), and the
 client-side `chapterId` string must exactly match `chapters.id`.
 
-### Seed-a-chapter migration — real example (`20260616100000_seed_chapter_numbers_to_100.sql`, verbatim)
+### Seed-a-chapter migration — real example (`20260616100231_seed_chapter_numbers_to_100.sql`, verbatim)
 ```sql
 -- 6–8 chapter #1: Numbers to 100. Row mirrors the code registry so progress
 -- (sessions / learner_progress, FK → chapters.id) can be saved for it.
@@ -480,9 +480,9 @@ on conflict (id) do update set
 ```
 - Filename convention: `YYYYMMDDHHMMSS_seed_chapter_<snake_name>.sql`.
 - Always `on conflict (id) do update set …` (idempotent / re-runnable).
-- Multiple ids can be seeded in one migration (see `20260616180000_seed_chapters_6_8_extend.sql`).
+- Multiple ids can be seeded in one migration (see `20260616141828_seed_chapters_6_8_extend.sql`).
 
-### Widen `learners.age_group` CHECK — real example (`20260617120000_widen_age_group_9_11.sql`, verbatim)
+### Widen `learners.age_group` CHECK — real example (`20260617004359_widen_age_group_9_11.sql`, verbatim)
 ```sql
 -- Widen the learners.age_group check to allow the new 9–11 age group.
 alter table public.learners drop constraint if exists learners_age_group_check;
@@ -496,10 +496,10 @@ alter table public.learners
 
 ### Current state (verified)
 - **`learners.age_group` CHECK allowed values:** `'3-5'`, `'6-8'`, `'9-11'` (last set by the
-  20260617120000 migration). Column default is `'3-5'`.
+  20260617004359 migration). Column default is `'3-5'`.
 - **Max `sort_order` in the chapters seed:** **35** (`wordProblems`, the last 9–11 chapter,
-  `20260617240000_seed_chapter_word_problems.sql`). New chapters should use `sort_order >= 36`.
-- The server RPC `sync_session(p_chapter text, …)` (defined in `20260616093000…`) trusts the
+  `20260617133316_seed_chapter_word_problems.sql`). New chapters should use `sort_order >= 36`.
+- The server RPC `sync_session(p_chapter text, …)` (defined in `20260616094022…`) trusts the
   client-supplied stars/xp/coins and inserts into `sessions` + upserts `learner_progress` +
   `learner_stats`. No per-chapter logic — adding chapters needs only a seed row.
 
