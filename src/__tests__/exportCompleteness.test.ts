@@ -59,6 +59,11 @@ const EXCLUDED: Record<string, string> = {
   error_events: 'service-role only; a parent cannot read it, and it is crash telemetry not child data',
   // The access-control edge itself (which adult may see this child), not data about the child.
   learner_access: 'an authorisation edge between adults, not child data',
+  // ⚠️ Flagged by this gate on its first run, which is the gate working. It carries learner_id,
+  // but a row is an invitation from the owner to ANOTHER ADULT and holds that adult's email —
+  // third-party PII. Handing it out inside a child-data export would disclose someone else's
+  // address to satisfy a right that is about the child.
+  learner_invites: "an invitation to another adult; contains a third party's email address",
 }
 
 describe('the data export covers every child-data table', () => {

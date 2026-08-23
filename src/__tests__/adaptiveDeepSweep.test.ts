@@ -525,7 +525,10 @@ describe('⑥ difficulty memory between sittings', () => {
     // `learner_progress.current_level` has existed since the base schema, written by nothing and
     // read by nothing (every other current_level in the app is learner_stats' XP level). Measured
     // on prod 2026-08-20: 29 rows, all 1.
-    const mig = readFileSync('supabase/migrations/20260820120000_sync_session_difficulty.sql', 'utf8')
+    // ⚠️ 20260820111858, not 20260820120000: this migration was applied to production
+    // out-of-band under a different version, and the repo file was renamed to match rather
+    // than rewriting the production ledger. See docs/schema-baseline-debt.md.
+    const mig = readFileSync('supabase/migrations/20260820111858_sync_session_difficulty.sql', 'utf8')
     expect(mig, 'no new column').not.toMatch(/ADD COLUMN/i)
     expect(mig, 'the old arity survives as a forwarder so a stale bundle keeps syncing')
       .toMatch(/SELECT public\.sync_session\(p_learner_id/)
