@@ -113,6 +113,18 @@ describe('baseline_schema.sql vs supabase/migrations', () => {
     }
   })
 
+  it('omits every table a migration creates with a bare CREATE TABLE', () => {
+    // ⚠️ Fourth object type with no guard — I had assumed every migration used IF NOT EXISTS
+    // for tables. Two do not: 20260721080000 (auth_events) and 20260817174352 (error_events),
+    // and run 6 died on 42P07 for auth_events.
+    const all = migFiles.map(f => readFileSync(join(migDir, f), 'utf8')).join('\n')
+    const bare = new Set([...all.matchAll(/^\s*create table (?!if not exists)(?:public\.)?([a-z_][a-z0-9_]*)/gim)].map(m => m[1].toLowerCase()))
+    const droppedT = new Set([...all.matchAll(/^\s*drop table (?:if exists )?(?:public\.)?([a-z_][a-z0-9_]*)/gim)].map(m => m[1].toLowerCase()))
+    const inBaseline = [...baseline.matchAll(/^create table if not exists public\.([a-z_][a-z0-9_]*)/gm)].map(m => m[1].toLowerCase())
+    const clash = inBaseline.filter(t => bare.has(t) && !droppedT.has(t))
+    expect(clash, `created bare by a migration, so must not be in the baseline (nor may anything reference them):\n  ${clash.join('\n  ')}`).toEqual([])
+  })
+
   it('carries every column a migration drops — the baseline is migration-ZERO, not today', () => {
     // ⚠️ The subtlest failure of the five. The baseline is generated from TODAY'S production
     // catalog, but the migrations replay HISTORY: 20260704120000 redefines sync_session against

@@ -69,6 +69,13 @@ do $$ begin
   create type public.user_role as enum ('parent', 'learner', 'teacher');
 exception when duplicate_object then null; end $$;
 
+-- ⚠️ auth_events AND error_events ARE NOT HERE, and neither is prune_error_events().
+-- Both tables are created by a migration with a BARE `create table` (20260721080000 and
+-- 20260817174352), so creating them here makes those migrations fail with 42P07. The
+-- function's body reads error_events and `language sql` bodies are validated at creation
+-- time, so it cannot be defined before its table exists — and its own migration defines it.
+-- RLS-enable, grants and revokes for all three moved with them.
+
 -- ── Tables ──────────────────────────────────────────────────────────────────
 create table if not exists public.profiles (
   id uuid not null,
@@ -196,28 +203,7 @@ create table if not exists public.learner_events (
   created_at timestamp with time zone default now() not null
 );
 
-create table if not exists public.auth_events (
-  id uuid default gen_random_uuid() not null,
-  user_id uuid not null,
-  event text not null,
-  client_id uuid,
-  created_at timestamp with time zone default now() not null
-);
 
-create table if not exists public.error_events (
-  id uuid default gen_random_uuid() not null,
-  at timestamp with time zone default now() not null,
-  source text not null,
-  message text not null,
-  stack text,
-  component_stack text,
-  url text,
-  ua text,
-  method text,
-  route_path text,
-  digest text,
-  learner_id uuid
-);
 
 create table if not exists public.diagnostic_leads (
   id uuid default gen_random_uuid() not null,
@@ -306,8 +292,6 @@ begin
     'alter table public.learner_stats add constraint learner_stats_pkey primary key (learner_id)',
     'alter table public.learner_state add constraint learner_state_pkey primary key (learner_id)',
     'alter table public.learner_events add constraint learner_events_pkey primary key (id)',
-    'alter table public.auth_events add constraint auth_events_pkey primary key (id)',
-    'alter table public.error_events add constraint error_events_pkey primary key (id)',
     'alter table public.diagnostic_leads add constraint diagnostic_leads_pkey primary key (id)',
     'alter table public.diagnostic_sessions add constraint diagnostic_sessions_pkey primary key (id)',
     'alter table public.diagnostic_items add constraint diagnostic_items_pkey primary key (id)',
@@ -315,24 +299,13 @@ begin
     'alter table public.diagnostic_plan_progress add constraint diagnostic_plan_progress_pkey primary key (id)',
     'alter table public.diagnostic_rechecks add constraint diagnostic_rechecks_pkey primary key (id)',
 
-    'alter table public.auth_events add constraint auth_events_client_id_key unique (client_id)',
     'alter table public.learner_access add constraint learner_access_learner_id_parent_id_key unique (learner_id, parent_id)',
     'alter table public.learner_events add constraint learner_events_client_id_key unique (client_id)',
     'alter table public.learner_progress add constraint learner_progress_learner_id_chapter_key unique (learner_id, chapter)',
     'alter table public.sessions add constraint sessions_client_id_key unique (client_id)',
 
-    'alter table public.auth_events add constraint auth_events_event_check check ((event = any (array[''login''::text, ''logout''::text])))',
     'alter table public.diagnostic_leads add constraint diagnostic_leads_band_check check (((band is null) or (char_length(band) <= 24)))',
     'alter table public.diagnostic_leads add constraint diagnostic_leads_email_check check (((char_length(email) >= 3) and (char_length(email) <= 254)))',
-    'alter table public.error_events add constraint error_events_component_stack_check check (((component_stack is null) or (char_length(component_stack) <= 2000)))',
-    'alter table public.error_events add constraint error_events_digest_check check (((digest is null) or (char_length(digest) <= 100)))',
-    'alter table public.error_events add constraint error_events_message_check check ((char_length(message) <= 500))',
-    'alter table public.error_events add constraint error_events_method_check check (((method is null) or (char_length(method) <= 10)))',
-    'alter table public.error_events add constraint error_events_route_path_check check (((route_path is null) or (char_length(route_path) <= 300)))',
-    'alter table public.error_events add constraint error_events_source_check check ((source = any (array[''client''::text, ''server''::text])))',
-    'alter table public.error_events add constraint error_events_stack_check check (((stack is null) or (char_length(stack) <= 2000)))',
-    'alter table public.error_events add constraint error_events_ua_check check (((ua is null) or (char_length(ua) <= 300)))',
-    'alter table public.error_events add constraint error_events_url_check check (((url is null) or (char_length(url) <= 500)))',
     'alter table public.grades add constraint grades_age_group_check check ((age_group = any (array[''3-5''::text, ''6-8''::text, ''9-11''::text, ''12-14''::text, ''15-16''::text, ''17-18''::text])))',
     'alter table public.grades add constraint grades_name_check check (((char_length(trim(both from name)) >= 1) and (char_length(trim(both from name)) <= 60)))',
     'alter table public.learner_access add constraint learner_access_access_role_check check ((access_role = any (array[''owner''::text, ''viewer''::text])))',
@@ -344,7 +317,6 @@ begin
     'alter table public.sessions add constraint sessions_stars_earned_check check (((stars_earned >= 0) and (stars_earned <= 3)))',
 
     'alter table public.profiles add constraint profiles_id_fkey foreign key (id) references auth.users(id) on delete cascade',
-    'alter table public.auth_events add constraint auth_events_user_id_fkey foreign key (user_id) references auth.users(id) on delete cascade',
     'alter table public.grades add constraint grades_created_by_fkey foreign key (created_by) references auth.users(id) on delete cascade',
     'alter table public.grade_chapters add constraint grade_chapters_chapter_id_fkey foreign key (chapter_id) references public.chapters(id) on delete cascade',
     'alter table public.grade_chapters add constraint grade_chapters_grade_id_fkey foreign key (grade_id) references public.grades(id) on delete cascade',
@@ -505,14 +477,6 @@ as $function$
     );
 $function$;
 
--- V16 retention. ⚠️ V19: created SECURITY DEFINER, which Postgres gives PUBLIC EXECUTE by
--- default and Supabase exposes at /rest/v1/rpc/<name> — the REVOKE at the foot of this file
--- is the only thing stopping anyone wiping the crash log. RLS suite A8c asserts it.
-create or replace function public.prune_error_events()
- returns void language sql security definer set search_path to 'public'
-as $function$
-  delete from public.error_events where at < now() - interval '90 days';
-$function$;
 
 create or replace function public.rls_auto_enable()
  returns event_trigger language plpgsql security definer set search_path to 'pg_catalog'
@@ -592,7 +556,6 @@ drop event trigger if exists ensure_rls;
 create event trigger ensure_rls on ddl_command_end execute function public.rls_auto_enable();
 
 -- ── RLS: ON for every table ─────────────────────────────────────────────────
-alter table public.auth_events              enable row level security;
 alter table public.chapters                 enable row level security;
 alter table public.diagnostic_items         enable row level security;
 alter table public.diagnostic_leads         enable row level security;
@@ -600,7 +563,6 @@ alter table public.diagnostic_plan_progress enable row level security;
 alter table public.diagnostic_plans         enable row level security;
 alter table public.diagnostic_rechecks      enable row level security;
 alter table public.diagnostic_sessions      enable row level security;
-alter table public.error_events             enable row level security;
 alter table public.grade_chapters           enable row level security;
 alter table public.grades                   enable row level security;
 alter table public.learner_access           enable row level security;
@@ -735,9 +697,6 @@ grant usage on schema public to anon, authenticated, service_role;
 grant all on all tables in schema public to anon, authenticated, service_role;
 
 -- Exceptions, reproduced from production's relacl. Each one is a fix with a history.
-revoke all on public.error_events    from anon, authenticated;
-revoke all on public.auth_events     from anon, authenticated;
-grant insert on public.auth_events   to authenticated;
 revoke all on public.diagnostic_leads from anon, authenticated;
 grant insert on public.diagnostic_leads to anon, authenticated;
 
@@ -761,7 +720,6 @@ revoke all on function public.touch_grades_updated_at()  from public, anon, auth
 revoke all on function public.enforce_learner_cap()      from public, anon, authenticated;
 revoke all on function public.enforce_grade_cap()        from public, anon, authenticated;
 revoke all on function public.enforce_grade_ownership()  from public, anon, authenticated;
-revoke all on function public.prune_error_events()       from public, anon, authenticated;
 revoke all on function public.rls_auto_enable()          from public, anon, authenticated;
 
 revoke all on function public.can_self_grant_access(uuid, text) from public, anon;
