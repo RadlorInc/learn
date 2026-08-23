@@ -147,6 +147,91 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🧾💳 **2026-08-24 (third pass) — STAGE 1 IS BUILT: THE PAYWALL'S SCHEMA, RLS AND ENTITLEMENT, WITH THE GUARD AT ALL THREE WRITE PATHS AND A TEST THAT DRIVES BOTH OF THEM RATHER THAN READING THEM. ⚠️ THE STAGE-1 PLAN ITSELF WAS LOST — IT ONLY EVER LIVED IN CHAT — SO THE B-CASE NUMBERING IS RE-DERIVED AND NOW WRITTEN DOWN.** `tsc` 0 · **1466/1467** · `next build` 0 · **`ci / rls-tests` 46/46 on PR #52** (was 17). NOT applied to production.
+
+**The ask:** *"STAGE 1 — GO. Schema, RLS, regression tests. No UI. Stop at the end for review."*
+
+## ⓪ ⚠️ THE PLAN WAS GONE, AND SAYING SO WAS THE FIRST TASK
+The billing plan — the settled decisions, the B1–B11 case list, the wording of the AR constraint —
+was agreed in chat and never written to a file; by the time Stage 1 started that context had been
+summarised away, and `search_session_transcripts` finds nothing. Everything was re-derived from the
+decisions recorded in this file and is flagged as a re-derivation at the top of
+[docs/billing-stage-1.md](docs/billing-stage-1.md), which now HOLDS the plan. **A decision that lives
+only in a chat log is a decision you will re-make.**
+
+## ① 🔒 WHAT A PAYWALL ON THIS PRODUCT CAN ACTUALLY DO
+RLS gates the **record**, not the chapter **content** — chapters are client-side JS and stay that
+way. So every guard is a WRITE guard and an unentitled child can still open a paid chapter; what
+they cannot do is have it saved, counted, or appear in the report. **Reads are deliberately
+untouched**: a lapsed subscriber keeps their child's whole history, which is why the entitlement
+sits in `learner_progress`'s WITH CHECK and never in its USING (B11d asserts it did not creep in).
+And the refusal is LOUD — `sync_session` raises 42501 rather than returning quietly, because a
+swallowed refusal is *"a tap that does nothing"* wearing a server costume. Stage 2 owes it a lock screen.
+
+## ② 🧩 ONE GUARD, THREE CALL SITES, AND A TEST THAT DRIVES THEM
+`is_chapter_entitled` is called from the `sessions` INSERT policy, the `learner_progress` WITH CHECK,
+and inside `sync_session`. ⚠️ **`sync_session` is SECURITY DEFINER, so RLS does not apply to it** —
+the policy alone leaves the RPC wide open and the RPC alone leaves direct writes open. The only way
+two guards cannot diverge is for them to BE the same guard.
+**B12 does not read the source.** It drives BOTH paths and asserts the verdicts are EQUAL, for an
+unentitled chapter and for a free one — plus the VALUE each time, because equality alone passes if
+both are broken open.
+⚠️ `subscriptions.status` carries **no CHECK**, on purpose: it holds whatever Stripe last said, and
+the function allow-lists, so an unknown status fails **closed** instead of failing the write.
+
+## ③ ⚠️ THE REVOKE IS NOT BELT-AND-BRACES — IT CHANGES THE FAILURE MODE
+Supabase's default privileges hand `anon`/`authenticated` ALL on new public tables. With the grant
+in place and no UPDATE policy, an attempted **self-upgrade matches zero rows and returns QUIETLY** —
+a silent no-op the client cannot tell from success. Revoked, the same statement raises 42501. B4
+asserts both halves: that it raised, AND that `seats_paid` is still 2.
+`reassign_learner_seat`'s single write is an UPDATE of one existing row — no INSERT, no DELETE — so
+it is *structurally* unable to raise the seat count. Its period limit is
+`coalesce(current_period_start, '-infinity')`: without the coalesce a NULL period start makes the
+comparison NULL and the limit silently does not exist, which is the state someone would engineer by
+suppressing a webhook.
+
+## ④ 🧪 13 MUTATIONS, AND THE ONE THAT SURVIVED IS THE FINDING
+The source gate `src/__tests__/billingSchema.test.ts` caught 13 of 13 planted against the SQL — but
+its first version was **blind to the most important one**. The sessions-policy check used a character
+budget (`[\s\S]{0,800}?`), so deleting the guard from that policy let the window run on into the
+NEXT policy, which still had one: green, with the guard that matters gone. It is `[^;]*` now, because
+a policy statement contains no semicolon of its own. **A window measured in characters is not a
+window bounded by the statement.**
+Two of its nine checks are GENERAL rules, measured to pass on all 20 tables and all 11 SECURITY
+DEFINER functions before being written: **every table a migration creates must be named in
+`security_baseline.sql`**, and **every SECURITY DEFINER function must carry an explicit REVOKE** (V19
+as a standing rule). ✅ And yesterday's `exportCompleteness` gate caught `subscription_seats` on its
+first run — recorded as a deliberate exclusion with its reason, not ignored.
+
+## ⑤ 🎥 THE FREE SET, AND THE AR CONSTRAINT ANSWERED PLAINLY
+Re-derived constraint: *a free chapter must be one the child answers with the camera* — the free set
+protects nothing, so its only job is to sell, and AR is the one thing a screenshot cannot convey.
+**Measured: eight chapters carry AR wiring and ALL EIGHT are in 9–11** (six finger-count, one tilt,
+one span — the handoff's "five" predates The Minibus Run). So **the constraint is satisfiable in
+exactly one band out of six**, and stretching it to "is interactive" makes it vacuous.
+The alternative is to name what AR stood in for — *it cannot be evaluated from a screenshot* — and
+apply THAT to the other bands. Seeded proposal: **the first chapter of every band plus `decimals`**
+(7 of 72), because a free chapter a parent has to hunt for converts nobody.
+⚠️⚠️ **AND IT SURFACED A CONSEQUENCE NOBODY HAD COSTED:** the diagnostic routes a child to their root
+gap, which is almost never chapter 1 — so under that set **a plan's first step can be locked, right
+after a 20–50 question check that just promised a route.** Two ways out in §4 of the doc; recommend
+making the plan's first unmet step always entitled. **Not built — it changes what is sold.**
+
+## ▶ OPEN
+1. ⏸️ **PR #52 is waiting for review; it stacks on #51.** Both are green, `rls-tests` **46/46**.
+   Nothing is applied to production and nothing is merged.
+2. ⏸️ **The free set needs your pick** (§⑤ and doc §4), and with it the locked-first-step question.
+3. **Stage 2 = Stripe**: the webhook, the seat materialiser (nothing creates seat rows yet — the
+   tests insert them in setup), checkout, the customer portal. **Stage 3 = UI**, starting with the
+   lock screen the 42501 now demands.
+4. ⚠️ **A contradiction found, flagged, not resolved:** `exportCompleteness.test.ts` says Stage 1
+   adds an `ON DELETE SET NULL` fkey to `error_events.learner_id`; `20260817142406_error_events.sql`
+   says the column is deliberately NOT a foreign key so a crash is still recorded when the learner id
+   is stale. The migration's reasoning is better, so the fkey is NOT added and the test's note is the
+   thing that is wrong.
+5. 🔴 **B12 (the launch blocker, not the test case) — still no backup of the children's data.**
+6. Everything from the blocks below still stands.
+
 > 🧾 **2026-08-24 (second pass) — THE LEDGER IS REPAIRED, AND THE DIRECTION WAS THE OPPOSITE OF THE ONE PLANNED: 58 REPO FILES MOVED, THE PRODUCTION LEDGER WAS NEVER WRITTEN. ⚠️ `perf_advisors` IS APPLIED AND CLEARED EIGHT LIVE ADVISOR FINDINGS.** `tsc` 0 · **1457/1458** · `next build` 0 · **`db push --dry-run` equivalent: 0 pending.**
 
 **The asks:** apply `perf_advisors` behind the new stale-migration diff · accept the ledger snapshot as the safety net but add *no backups* as a launch blocker · compute the dry-run rather than putting a production password into CI.
@@ -206,9 +291,8 @@ the data** — it must not be read as a backup, and neither must the ledger snap
 3. ⚠️ Three migration comments and `src/app/api/lead/route.ts` still say the anon INSERT revoke
    "cannot be applied until SUPABASE_SERVICE_ROLE_KEY is set" — it was applied yesterday. Prose
    drift, not behaviour; a chip is filed.
-4. ▶ **Stage 1 next:** schema, RLS, regression tests, no UI — plus `last_reassigned_at`, the case
-   asserting the `sessions` / `learner_progress` entitlement guards cannot diverge, and the free-set
-   proposal against the AR constraint.
+4. ✅ ~~Stage 1 next~~ — **BUILT, PR #52** (see the 🧾💳 block above): `last_reassigned_at`, the
+   divergence case, and the free-set proposal against the AR constraint. Not applied, not merged.
 5. Everything from the blocks below still stands.
 
 > 🔐 **2026-08-24 — THE ROAD TO A PAYWALL WENT THROUGH FIVE REAL PROBLEMS AND NEVER REACHED THE PAYWALL. ⚠️⚠️ THE RLS SUITE HAD NEVER RUN ONCE; IT NOW DOES, AND ON ITS SECOND DAY IT CAUGHT A SECURITY REGRESSION I HAD SHIPPED FOUR MINUTES EARLIER. AND THE MIGRATION LEDGER TURNS OUT TO BE 58 FILES OUT OF SYNC WITH PRODUCTION.** `tsc` 0 · **1457/1458** · `next build` 0 · **3 PRs merged** (#48, #49, #50). ⏸️ **STAGE 1 NOT STARTED — one decision block is open, see ▶.**
@@ -536,143 +620,4 @@ the data** — it must not be read as a backup, and neither must the ledger snap
 > 7. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA** — carried for many sessions, and the data is worth
 >    more now than it was.
 
-> 🕸️ **2026-08-22 (fourth pass) — THE ENGINE IS 96–98%, SO THE BOTTLENECK IS NOW THE GRAPH — AND THE GRAPH IS STILL v0.9 DRAFT WITH 130 UNVALIDATED EDGES. AUDITED: TWELVE OF THEM DECIDE A GAP, TWENTY-ONE DECIDE NOTHING.** `tsc` 0 · **1444/1444** (+7, 1 skipped by design) · `next build` 0. ✅ SHIPPED 2026-08-23 in `6dd9224`.
->
-> **The ask:** *"A karo"* — a self-audit of the skill graph, to cut the teacher's checklist down.
->
-> ## ⓪ THE INSTRUMENT: REMOVE AN EDGE, COUNT THE DIAGNOSES THAT CHANGE
-> Ranking edges by MY OPINION of the pedagogy would have been worth very little. Instead every one
-> of the 130 edges was deleted in turn and all **201 plantable gaps** across the five child bands
-> re-run with a PERFECT answerer (which isolates the graph's contribution from the items' noise).
-> Two numbers per edge: how many children would be told a **different gap**, and how many the same
-> gap with a **different route**. → [docs/skill-graph-audit.md](docs/skill-graph-audit.md).
->
-> | | |
-> |---|---|
-> | edges that change a GAP if wrong | **12** (top: `p.addTo100 ← e.addWithin10` at 13 of 201) |
-> | edges that change only the ROUTE | 97 |
-> | edges that change **nothing at all** | **21** |
->
-> ## ① ⚠️⚠️ THE CHECKLIST'S OWN "HIGH-RISK CLAIM" IS 0 ROOTS
-> `docs/skill-graph-validation.md` marks `i.fractionEquiv ← i.multFacts` as its one flagged
-> high-risk claim — *does equivalent fractions truly require fact fluency?* Measured: **0 roots, 16
-> routes.** If it is wrong, not one child is told the wrong gap. It is a real question and it
-> belongs in pass two. **The instinct about which claims are RISKY and the measurement of which are
-> COSTLY do not agree**, which is the whole argument for ranking this way. The checklist now opens
-> with a pointer to the ranking so nobody starts at 130 again.
->
-> ## ② 🔍 WHAT I THINK IS ACTUALLY WRONG — opinion, flagged as opinion
-> **The top one: `p.subTo100 ← p.addTo100`.** The graph says subtracting within 100 requires
-> *adding* within 100 — they are siblings, not a chain. And **`e.subWithin10` exists as a skill and
-> is nobody's prerequisite**: written down, then never wired to the thing it obviously underpins.
-> That is the shape of an omission. Suggested `p.subTo100 ← [p.placeValue2, e.subWithin10]`, and the
-> edge carries **12 of 201 diagnoses — the second-highest in the graph**.
-> Four more in §3 of the doc: `m.exponentsRoots ← i.factors` (do square roots need primes?),
-> `m.coordinatePlane ← e.numberOrder` (a 12–14 skill reaching back to Pre-K, past five bands),
-> `i.areaPerimeter ← p.shapes2d3d` (rectangle area needs the 2D half, not the 3D one), and
-> **`e.colors` — the one non-mathematics node in a mathematics prerequisite graph**, inert in every
-> direction: no prereqs, no dependents, no item, no probe reaches it.
->
-> ## ③ ⚠️⚠️ WHAT THIS METHOD CANNOT DO, STATED LOUDLY
-> **It cannot see a MISSING edge.** It tests only the claims that are written down — and a graph is
-> built by writing down what somebody thought of, so the omissions are by definition the things
-> nobody thought of. That is the half a teacher still has to do, and §4.3 of the doc points it at
-> the **20 nodes that rest on a SINGLE claim**, where "is this the only thing a stuck child could be
-> missing?" is most likely to be answered no.
->
-> ## ④ WHAT IS GATED NOW — `src/__tests__/skillGraphAudit.test.ts`
-> The structural half runs every time: acyclic, no dangling id, no prerequisite pointing UP a band,
-> **exactly one inert node** (so a second cannot drift in), the band skips are the two known ones,
-> the load-bearing order is the one the doc names, and the suspected missing subtraction edge is
-> pinned so FIXING it is a deliberate act. The expensive ranking is behind a flag —
-> `GRAPH_SENSITIVITY=1 npx vitest run src/__tests__/skillGraphAudit.test.ts` — because it is a
-> property of the WHOLE graph and the numbers move when the shape does.
->
-> ## ▶ OPEN
-> 1. ✅ ~~Not committed~~ — **SHIPPED 2026-08-23** (`6dd9224`).
-> 2. **A teacher still has to red-pen twelve edges.** That is the hour that protects the guarantee,
->    and nothing in the engine can substitute for it. Until then the 96–98% means *"the engine finds
->    what the graph says"*, not *"the engine finds the child's real gap"*.
-> 3. Everything from the blocks below still stands.
-
-> 🎯 **2026-08-22 (third pass) — THE GAP FINDER IS NOW **96–98% EXACT** AND MISSES A REAL GAP **0%** OF THE TIME. ⚠️⚠️ AND THE FIRST NUMBER I REPORTED THAT MORNING (81–87%) WAS FLATTERED BY MY OWN TOO-KIND GUESS MODEL — THE HONEST BASELINE WAS 73–75%.** `tsc` 0 · **1437/1437** · `next build` 0 · sw **v136 → v137**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
->
-> **The ask:** *"jab tak proper gap find karne waala system bane… rukne ki zaroorat naii hai… bas high accuracy gap find karne waala system bane yeh meko chahiye"*.
->
-> | | morning | now |
-> |---|---|---|
-> | names the EXACT root gap | 26–34% → 81–87%* | **96–98%** |
-> | tells a gapped child they are on track | 10–38% | **0%** |
-> | root one step too SHALLOW (plan starts above the gap) | 12–19%* | **1–2%** |
-> | root one step too DEEP (starts early, climbs) | 5–14% | **1–2%** |
-> | on-grade child wrongly told "a band below" | 6–9% | **0–2%** |
-> | questions, child WITH a gap (median) | 15–27 | **29–50** |
-> | questions, child with NO gap (median) | 9–17 | **20–36** |
->
-> ## ⓪ ⚠️⚠️ THE INSTRUMENT WAS WRONG BEFORE THE PRODUCT WAS — AGAIN, AND IN MY FAVOUR THIS TIME
-> The morning's gate modelled a child who does not have a skill as passing a TYPED item 3% of the
-> time, flat. That is not a measurement, it is a hope: **a typed answer is only as unguessable as
-> its answer space is wide.** Deriving the rate from what each generator can actually produce
-> dropped the honest figure to **73–75%**, and the same measurement turned up the sharpest bug of
-> the day: **`i.dataGraphs` shuffled a fixed `[2,4,6,9]`, so "how many more" was ALWAYS 7** — one
-> possible answer across every draw the generator could make. The bars varied, so the item looked
-> varied. This repo's own rule, met again from the other side: *the instrument was wrong five times
-> before the app was wrong three* — and a kind instrument is as dangerous as a broken one.
->
-> ## ① 🎚️ THE RULE: KEEP ASKING UNTIL ONE ANSWER **LEADS** — BY TWO TO PASS, BY **THREE** TO FAIL
-> Not a fixed count. Three designs were built and measured on the way, and each sounds right:
->
-> | | exact | told "on track" with a real gap | too shallow | on-grade questions |
-> |---|---|---|---|---|
-> | confirm FAILS only (morning) | 73–75% | 3–9% | **12–19%** | 9–17 |
-> | + confirm passes inside a DESCENT | 84–87% | 4–9% | 2–5% | 17–25 |
-> | + confirm passes on SPINE entries | 86–91% | 0–7% | 1–5% | 17–25 |
-> | **+ confirm every answer, asymmetric lead** | **96–98%** | **0%** | **1–2%** | 20–36 |
->
-> ⚠️ **The asymmetry is the part that is not obvious.** A symmetric "lead of two" fixed the lucky
-> pass and created its mirror — with a 10% slip over thirty questions a double-slip is almost
-> routine, and **8% of ON-GRADE 12–14 children were told their gap sat a whole band below them.** A
-> pass and a fail do not cost the same thing: a pass moves on, a fail sends the search downward and
-> tells a family their child is behind. One more agreeing miss takes that to ~0.1% per skill and
-> costs one extra item on a skill that really is broken — which a broken skill supplies immediately.
->
-> ## ② 🔢 AND THE ANSWER SPACES WERE WIDENED WHERE THEY WERE NARROW ENOUGH TO GUESS
-> Measured per generator, then fixed: `i.dataGraphs` (1 answer!), `p.fractionsIntro` 3 → ~30,
-> `e.shapes2d` 3 → 5, `i.measureUnits` 5 → five different conversions, plus a dozen more.
-> **Four remaining `pick` items became typed**, because a choice is the only surface left that can
-> be guessed at:
-> - `i.anglesSymmetry` "acute/right/obtuse" (33%!) → *how many degrees away from a square corner* —
->   ⚠️ and the 90 is deliberately NOT stated, or the item stops being about angles and becomes a
->   subtraction;
-> - `m.coordinatePlane` "which quadrant" (25%) → read the point's x or y, which also exercises the
->   sign, the half children actually get wrong;
-> - `a.expressions` → type the coefficient; `a.factoring` → type the smaller root.
->
-> Only three picks remain and all are honestly categorical: `e.numeralRecog` (naming the glyph IS
-> the skill), `e.patterns`, `c.unitCircleTrig` (its values are surds).
->
-> ## ③ ⚠️ THE COPY WAS A LIE THE MOMENT THE PROBE GOT LONGER, AND THAT IS PART OF THE CHANGE
-> The intro promised *"a few quick questions"* and the door said *"2 minutes"* — true of a coin flip,
-> false of a 20–50 question placement check. **Copy that undersells the length is worse than copy
-> that oversells it**: a parent promised two minutes abandons at question fifteen and the diagnosis
-> is thrown away. Now *"About ten minutes"*, and the briefing says out loud that Milo asks a few
-> extra whenever he is not sure yet — which is exactly what the engine does.
->
-> ## ④ WHAT IT COSTS, STATED PLAINLY
-> A child with a gap answers **29–50** questions (17–18 median 50, worst case 70). A child with no
-> gap still answers **20–36**, because every answer is confirmed. Caps are set to the measured p99
-> per band — ⚠️ a cap between p95 and p99 does not shorten anything, it TRUNCATES the one child in a
-> hundred who needed the room, and a truncated search reports whatever it had reached.
->
-> ## ▶ OPEN
-> 1. ✅ ~~Not committed~~ — **SHIPPED 2026-08-23** (`6dd9224`). `tsc` 0 · 1437/1437 · `next build` 0 · lint clean on every changed file ·
->    driven end to end (full probe → report, 0 console errors).
-> 2. ⚠️ **This is now a placement TEST, not a check.** 20–36 questions for a child with nothing wrong
->    is the founder's explicit trade (accuracy over length, stated twice) and it is the thing most
->    worth watching in real use: if completion drops, the lever is the sweep (3–9 questions) or the
->    pass-confirmation on sweep leaves, and both are one line.
-> 3. **The 3–5 band is untouched** — its items are parent-observed, so "not yet" is an observation
->    rather than a miss and nothing is re-asked.
-> 4. Everything from the blocks below still stands.
-
-_Older sessions (2026-06-15 → **2026-08-20**, including 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-22**, including 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
