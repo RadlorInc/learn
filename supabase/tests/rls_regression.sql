@@ -29,6 +29,16 @@ declare
   v_chapter  text;
   v_cnt      int;
   v_blocked  boolean;
+  v_direct   boolean;                     -- did the DIRECT (policy) write path allow it?
+  v_rpc      boolean;                     -- did the sync_session RPC allow it?
+  v_learner2 uuid := gen_random_uuid();   -- a second learner the OWNER created (a seat to move to)
+  v_learner3 uuid := gen_random_uuid();   -- a third, for the second reassignment in one period
+  v_subid    uuid := gen_random_uuid();
+  v_seat1    uuid := gen_random_uuid();   -- occupied by v_learner
+  v_seat2    uuid := gen_random_uuid();   -- empty
+  v_free     text;                        -- a chapter with is_free = true
+  v_paid     text;                        -- a chapter with is_free = false
+  v_n        int;
   -- ⚠️ COUNTS THE ASSERTIONS THAT ACTUALLY RAN, and CI fails if the number is missing or 0.
   -- A test file that is never reached, or is silently emptied, is indistinguishable from a
   -- passing one from outside — which is exactly how `rls-tests` reported success for weeks
@@ -57,6 +67,29 @@ begin
     values (v_alearner, 'Attacker Kid', v_attacker);
   insert into public.learner_invites (id, learner_id, invited_by, invited_email, status, expires_at)
     values (v_invite, v_alearner, v_attacker, 'attacker.rlstest@milo.invalid', 'pending', now() + interval '7 days');
+
+  -- ── Billing setup (Stage 1) ───────────────────────────────────────────────
+  -- Still the migration role, so RLS is bypassed. That is the ONLY way these rows can exist: there
+  -- is no INSERT policy on either billing table, which is itself asserted below (B3, B9).
+  select id into v_free from public.chapters where is_free      order by sort_order limit 1;
+  select id into v_paid from public.chapters where not is_free  order by sort_order limit 1;
+  -- B0 (fixture positive control): if the free set were empty — or everything were free — every
+  -- entitlement assertion below would pass while testing nothing. The fixture is checked first.
+  v_asserts := v_asserts + 1;
+  if v_free is null or v_paid is null then
+    raise exception 'RLS FAIL B0: chapters has no free/paid split (free=%, paid=%)', v_free, v_paid;
+  end if;
+
+  insert into public.learners (id, display_name, created_by) values
+    (v_learner2, 'RLS Test Kid 2', v_owner),
+    (v_learner3, 'RLS Test Kid 3', v_owner);
+
+  insert into public.subscriptions (id, account_id, status, seats_paid,
+                                    current_period_start, current_period_end)
+    values (v_subid, v_owner, 'active', 2, now() - interval '10 days', now() + interval '20 days');
+  insert into public.subscription_seats (id, subscription_id, seat_index, learner_id, assigned_at)
+    values (v_seat1, v_subid, 1, v_learner, now()),
+           (v_seat2, v_subid, 2, null,      null);
 
   -- ── Impersonate the ATTACKER ──────────────────────────────────────────────
   set local role authenticated;
@@ -188,6 +221,156 @@ begin
   v_asserts := v_asserts + 1;
   if v_cnt <> 0 then raise exception 'RLS FAIL A5: attacker read another learner''s stats (% rows)', v_cnt; end if;
 
+
+  -- ═══ BILLING (Stage 1) — the attacker's half ═══════════════════════════════
+  -- The attacker has NO subscription and owns v_alearner, so they are the unentitled case.
+
+  -- B1: a stranger cannot read another account's subscription.
+  select count(*) into v_cnt from public.subscriptions where account_id = v_owner;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 0 then raise exception 'RLS FAIL B1: attacker read another account''s subscription (% rows)', v_cnt; end if;
+
+  -- B6: billing_events is unreadable. It carries Stripe customer ids and amounts — account-level
+  -- financial data with no reason to reach a browser. RLS on, ZERO policies (error_events precedent).
+  v_blocked := false;
+  begin
+    perform * from public.billing_events limit 1;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B6: authenticated user can read billing_events'; end if;
+
+  -- B7: nor writable — a forged webhook row is a forged subscription.
+  v_blocked := false;
+  begin
+    insert into public.billing_events (stripe_event_id, type) values ('evt_rls_probe', 'probe');
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B7: authenticated user wrote to billing_events'; end if;
+
+  -- B8: a stranger cannot read another account's seats (who is in them is family information).
+  select count(*) into v_cnt from public.subscription_seats where subscription_id = v_subid;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 0 then raise exception 'RLS FAIL B8: attacker read another account''s seats (% rows)', v_cnt; end if;
+
+  -- B9: nobody can INSERT a seat. A seat a parent can create is a seat nobody paid for.
+  v_blocked := false;
+  begin
+    insert into public.subscription_seats (subscription_id, seat_index, learner_id)
+      values (v_subid, 3, v_alearner);
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B9: a seat was created from the API (capacity is decided by Stripe, not by the client)'; end if;
+
+  -- B10: nor UPDATE one directly — reassignment must go through reassign_learner_seat, which is
+  -- where the one-per-billing-period rule lives. A direct UPDATE would route around it entirely.
+  v_blocked := false;
+  begin
+    update public.subscription_seats set learner_id = v_alearner where id = v_seat2;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B10: a seat was reassigned by direct UPDATE, bypassing the period limit'; end if;
+
+  -- B11: the entitlement guard on the DIRECT write paths, both directions.
+  -- B11a: a FREE chapter records for a learner with no subscription at all (positive control — the
+  -- guard must be scoped, not deny-all, or the free tier does not exist).
+  insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
+                               stars_earned, xp_earned, coins_earned, client_id)
+    values (v_alearner, v_free, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
+  get diagnostics v_cnt = row_count;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL B11a: a FREE chapter could not be recorded without a subscription'; end if;
+
+  -- B11b: a PAID chapter does not.
+  v_blocked := false;
+  begin
+    insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
+                                 stars_earned, xp_earned, coins_earned, client_id)
+      values (v_alearner, v_paid, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
+  exception when insufficient_privilege or check_violation then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B11b: an unentitled chapter was recorded to sessions'; end if;
+
+  -- B11c: learner_progress carries the same guard — it is a second write path to the same record,
+  -- and the app writes it directly on the local-first merge, not only through the RPC.
+  v_blocked := false;
+  begin
+    insert into public.learner_progress (learner_id, chapter, best_stars, total_xp, total_sessions)
+      values (v_alearner, v_paid, 1, 10, 1);
+  exception when insufficient_privilege or check_violation then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B11c: an unentitled chapter was recorded to learner_progress'; end if;
+
+  -- B11d: reading is NOT gated. A lapsed subscriber keeps their child's history; the product
+  -- refuses to hold a record hostage to a card failure. This asserts the guard did not creep into
+  -- USING, which is the easy mistake when adding it to a `for all` policy.
+  select count(*) into v_cnt from public.sessions where learner_id = v_alearner and chapter = v_free;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL B11d: the entitlement guard leaked into the READ path (% rows)', v_cnt; end if;
+
+  -- ═══ B12 — THE TWO WRITE PATHS CANNOT DIVERGE ══════════════════════════════
+  -- `sync_session` is SECURITY DEFINER: it runs as the table owner, so RLS does not apply to it.
+  -- The policy alone leaves the RPC open; the RPC alone leaves direct writes open. This does not
+  -- inspect the source of either — it DRIVES both and asserts the verdicts are EQUAL, so editing
+  -- one path and not the other fails here whatever the edit looks like.
+  -- B12a: the unentitled chapter — both must refuse.
+  v_direct := true;
+  begin
+    insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
+                                 stars_earned, xp_earned, coins_earned, client_id)
+      values (v_alearner, v_paid, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
+  exception when insufficient_privilege or check_violation then v_direct := false;
+  end;
+  v_rpc := true;
+  begin
+    perform public.sync_session(v_alearner, v_paid, 'practice', 1, 0, 1, 10, 5,
+                                gen_random_uuid()::text, now(), 1);
+  exception when insufficient_privilege or check_violation then v_rpc := false;
+  end;
+  v_asserts := v_asserts + 1;
+  if v_direct <> v_rpc then
+    raise exception 'RLS FAIL B12a: the two write paths DIVERGED on an unentitled chapter (direct=%, rpc=%) — one of them lost the is_chapter_entitled guard', v_direct, v_rpc;
+  end if;
+  -- ⚠️ Equality alone is a tautology if both are broken open, so the VALUE is asserted too.
+  v_asserts := v_asserts + 1;
+  if v_direct then raise exception 'RLS FAIL B12a: both write paths accepted an unentitled chapter'; end if;
+
+  -- B12b: the free chapter — both must allow. Same shape, other direction, so a guard that has
+  -- become deny-all cannot pass B12a and hide.
+  v_direct := true;
+  begin
+    insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
+                                 stars_earned, xp_earned, coins_earned, client_id)
+      values (v_alearner, v_free, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
+  exception when insufficient_privilege or check_violation then v_direct := false;
+  end;
+  v_rpc := true;
+  begin
+    perform public.sync_session(v_alearner, v_free, 'practice', 1, 0, 1, 10, 5,
+                                gen_random_uuid()::text, now(), 1);
+  exception when insufficient_privilege or check_violation then v_rpc := false;
+  end;
+  v_asserts := v_asserts + 1;
+  if v_direct <> v_rpc then
+    raise exception 'RLS FAIL B12b: the two write paths DIVERGED on a FREE chapter (direct=%, rpc=%)', v_direct, v_rpc;
+  end if;
+  v_asserts := v_asserts + 1;
+  if not v_direct then raise exception 'RLS FAIL B12b: both write paths refused a FREE chapter — the free tier is dead'; end if;
+
+  -- B13a: a stranger cannot reassign somebody else's seat.
+  v_blocked := false;
+  begin
+    perform public.reassign_learner_seat(v_seat2, v_alearner);
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B13a: attacker reassigned another account''s seat'; end if;
+
   -- ── Impersonate the OWNER (positive control — RLS is scoped, not deny-all) ─
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_owner, 'email', 'owner.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
@@ -198,6 +381,102 @@ begin
   select count(*) into v_cnt from public.sessions where learner_id = v_learner;
   v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL O2: owner cannot see their OWN learner''s sessions (% rows)', v_cnt; end if;
+
+
+  -- ═══ BILLING (Stage 1) — the owner's half ══════════════════════════════════
+  -- B2: the owner CAN see what they are paying for.
+  select count(*) into v_cnt from public.subscriptions where account_id = v_owner;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL B2: owner cannot read their OWN subscription (% rows)', v_cnt; end if;
+
+  -- B3: and cannot create one. A subscription row a client can write is a free subscription.
+  v_blocked := false;
+  begin
+    insert into public.subscriptions (account_id, status, seats_paid) values (v_attacker, 'active', 4);
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B3: a subscription was created from the API'; end if;
+
+  -- B4: nor update their own — the self-upgrade. ⚠️ THE REVOKE IS WHAT MAKES THIS RAISE. With the
+  -- default grant left in place and no UPDATE policy, this statement matches no rows and returns
+  -- quietly; a silent no-op is indistinguishable from success to the client. So the assertion is
+  -- BOTH that it was refused AND that the row is unchanged — the second half is what would catch
+  -- the grant being handed back.
+  v_blocked := false;
+  begin
+    update public.subscriptions set status = 'active', seats_paid = 4 where account_id = v_owner;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B4: a subscription was UPDATED from the API (self-upgrade)'; end if;
+  select count(*) into v_cnt from public.subscriptions where account_id = v_owner and seats_paid = 2;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL B4: seats_paid changed from the API (% rows still at 2)', v_cnt; end if;
+
+  -- B5: nor delete it (cancelling by DELETE would leave Stripe billing a row we no longer have).
+  v_blocked := false;
+  begin
+    delete from public.subscriptions where account_id = v_owner;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B5: a subscription was DELETED from the API'; end if;
+
+  -- ═══ B13 — reassign_learner_seat ═══════════════════════════════════════════
+  select count(*) into v_n from public.subscription_seats where subscription_id = v_subid;
+
+  -- B13b: the seat may only be pointed at a child THIS account created. Entitlement follows
+  -- `learners.created_by`, so seating someone else's child would have two accounts paying for one.
+  v_blocked := false;
+  begin
+    perform public.reassign_learner_seat(v_seat2, v_alearner);
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B13b: a seat was pointed at a learner the account did not create'; end if;
+
+  -- B13c: a legitimate reassignment works (positive control).
+  perform public.reassign_learner_seat(v_seat2, v_learner2);
+  select count(*) into v_cnt from public.subscription_seats where id = v_seat2 and learner_id = v_learner2;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL B13c: a legitimate seat reassignment did not take'; end if;
+
+  -- B13d: STRUCTURALLY UNABLE TO RAISE THE ACTIVE COUNT. The function's only write is an UPDATE of
+  -- one existing row; this counts the rows either side of it. src/__tests__/billingSchema.test.ts
+  -- gates the other half — that no INSERT or DELETE against this table exists in the body.
+  v_cnt := v_n;
+  select count(*) into v_n from public.subscription_seats where subscription_id = v_subid;
+  v_asserts := v_asserts + 1;
+  if v_n <> v_cnt then raise exception 'RLS FAIL B13d: the seat COUNT changed during a reassignment (% -> %)', v_cnt, v_n; end if;
+
+  -- B13e: ONE REASSIGNMENT PER BILLING PERIOD. Without it a single seat rotates through all 25
+  -- profiles the learner cap allows, and buying one seat buys the whole family.
+  v_blocked := false;
+  begin
+    perform public.reassign_learner_seat(v_seat2, v_learner3);
+  exception when check_violation then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B13e: a seat was reassigned twice in one billing period'; end if;
+  select count(*) into v_cnt from public.subscription_seats where id = v_seat2 and learner_id = v_learner2;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL B13e: the refused reassignment still moved the seat'; end if;
+
+  -- B13f: re-pointing a seat at the child ALREADY in it is a no-op and must not burn the period's
+  -- one reassignment — otherwise a double-tap in the UI costs a parent their whole month.
+  perform public.reassign_learner_seat(v_seat2, v_learner2);
+  v_asserts := v_asserts + 1;   -- reaching here at all is the assertion: it did not raise
+
+  -- B13g: and the seat now ENTITLES that child — the guard turns ON as well as off.
+  v_asserts := v_asserts + 1;
+  if not public.is_chapter_entitled(v_learner2, v_paid) then
+    raise exception 'RLS FAIL B13g: a seated learner is still not entitled to a paid chapter';
+  end if;
+  v_asserts := v_asserts + 1;
+  if public.is_chapter_entitled(v_learner3, v_paid) then
+    raise exception 'RLS FAIL B13g: an UNSEATED learner on the same account is entitled — entitlement is not per-seat';
+  end if;
 
   reset role;
   -- The machine-readable line CI greps for. Keep the `RLS_ASSERTIONS=` token stable.
