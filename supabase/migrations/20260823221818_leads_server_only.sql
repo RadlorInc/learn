@@ -14,10 +14,28 @@
 -- ship first and this can be applied whenever — there is no window where lead capture is broken.
 -- What this migration buys is closing the OLD path, which otherwise stays open beside the new one.
 --
--- ⚠️ IF NO SERVICE-ROLE KEY IS SET IN THE DEPLOYMENT, DO NOT APPLY THIS YET: the route falls back to
--- the anon key, and revoking the grant would then silently stop lead capture (the client treats it as
--- best-effort and never reports a failure). Set SUPABASE_SERVICE_ROLE_KEY in Vercel first, confirm a
--- lead lands, then apply.
+-- ⚠️ APPLIED 2026-08-24, and only after the precondition was PROVED rather than assumed. The
+-- warning this replaces read: "IF NO SERVICE-ROLE KEY IS SET IN THE DEPLOYMENT, DO NOT APPLY THIS
+-- YET — the route falls back to the anon key, and revoking the grant would then silently stop lead
+-- capture (the client treats it as best-effort and never reports a failure)."
+--
+-- That was a one-way door, so it got a real check instead of a guess. `SUPABASE_SERVICE_ROLE_KEY`
+-- was confirmed bound in the PRODUCTION runtime by POSTing a probe to /api/report-error and reading
+-- the row back out of error_events — `sinkError` has no anon fallback, so a row there can ONLY mean
+-- the service-role key is present, which is a stronger proof than "a lead landed" (that path falls
+-- back to anon and would have looked identical either way).
+--
+-- ⚠️ IT TOOK FOUR PROBES. The first three returned nothing: the variable existed in Vercel but was
+-- not ticked for the PRODUCTION environment, and env vars bind at deploy time, so each check also
+-- needed a fresh production deployment. "The deploy succeeded" is not evidence; the row is.
+--
+-- Verified after applying:
+--   · anon key → POST /rest/v1/diagnostic_leads  →  HTTP 401, 42501 permission denied  (was 201)
+--   · has_table_privilege('anon', 'diagnostic_leads', 'INSERT')  →  false
+--   · POST /api/lead  →  200, and the row landed  (capture still works, via the service-role key)
+--   · 1.15 MB of production-served JS across 22 chunks  →  zero `sb_secret_`, only the
+--     `sb_publishable_` anon key that is public by design. Positive control: the grep DOES find
+--     the anon key, so its silence on the secret one means something.
 
 revoke insert on public.diagnostic_leads from anon;
 
