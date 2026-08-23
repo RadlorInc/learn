@@ -29,6 +29,11 @@ declare
   v_chapter  text;
   v_cnt      int;
   v_blocked  boolean;
+  -- ⚠️ COUNTS THE ASSERTIONS THAT ACTUALLY RAN, and CI fails if the number is missing or 0.
+  -- A test file that is never reached, or is silently emptied, is indistinguishable from a
+  -- passing one from outside — which is exactly how `rls-tests` reported success for weeks
+  -- while executing nothing at all. The count is the evidence.
+  v_asserts  int := 0;
 begin
   -- ── Setup (as the migration role; RLS bypassed here) ──────────────────────
   select id into v_chapter from public.chapters limit 1;   -- a real chapter (sessions.chapter is FK'd)
@@ -60,6 +65,7 @@ begin
 
   -- A1: attacker cannot SEE a learner they don't own.
   select count(*) into v_cnt from public.learners where id = v_learner;
+  v_asserts := v_asserts + 1;
   if v_cnt <> 0 then raise exception 'RLS FAIL A1: attacker read a learner they do not own (% rows)', v_cnt; end if;
 
   -- A2 (V1 regression): attacker cannot FORGE an invite for a learner they don't own.
@@ -69,6 +75,7 @@ begin
       values (v_learner, v_attacker, 'attacker.rlstest@milo.invalid');
   exception when insufficient_privilege or check_violation then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A2: attacker forged an invite for a learner they do not own (V1 escalation is back!)'; end if;
 
   -- A3: attacker cannot self-grant learner_access.
@@ -78,6 +85,7 @@ begin
       values (v_learner, v_attacker, 'viewer');
   exception when insufficient_privilege or check_violation then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A3: attacker self-granted access to a learner they do not own'; end if;
 
   -- A6 (V12 regression): the recipient of an invite cannot REPOINT it. The accept flow only flips
@@ -90,11 +98,13 @@ begin
      where id = v_invite;
   exception when insufficient_privilege or check_violation then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A6: recipient repointed an invite''s learner_id/invited_by (V12 → V1 self-grant path is back!)'; end if;
 
   -- A6b: the addressee CAN still flip status (accept must keep working).
   update public.learner_invites set status = 'accepted' where id = v_invite;
   select count(*) into v_cnt from public.learner_invites where id = v_invite and status = 'accepted';
+  v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL A6b: recipient can no longer accept their own invite (% rows)', v_cnt; end if;
 
   -- A7 (auth_events, 2026-07-21): the account-access log is WRITE-ONLY from the API.
@@ -104,6 +114,7 @@ begin
     perform * from public.auth_events limit 1;
   exception when insufficient_privilege then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A7a: authenticated user can read auth_events'; end if;
   -- A7b: cannot log an event AS ANOTHER USER (forging someone's login history).
   v_blocked := false;
@@ -111,9 +122,15 @@ begin
     insert into public.auth_events (user_id, event) values (v_owner, 'login');
   exception when insufficient_privilege then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A7b: attacker inserted an auth event for another user'; end if;
   -- A7c (positive control): logging your OWN event works — else the feature is dead.
+  -- ⚠️ It used to be a bare INSERT with nothing checking it: an unasserted statement is not a
+  -- test, it is a statement. Asserted now, so it also counts toward v_asserts.
   insert into public.auth_events (user_id, event, client_id) values (v_attacker, 'login', gen_random_uuid());
+  get diagnostics v_cnt = row_count;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL A7c: a user could not log their OWN auth event'; end if;
 
   -- A8 (V16/V19, 2026-08-17): the crash log is service-role only, and cannot be wiped from the API.
   -- A8a: nobody reads error_events — it holds url/ua/stack/learner_id, i.e. child-linked telemetry.
@@ -122,6 +139,7 @@ begin
     perform * from public.error_events limit 1;
   exception when insufficient_privilege then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A8a: authenticated user can read error_events'; end if;
   -- A8b: nor writes to it (RLS on with ZERO policies; the sink uses the service-role key).
   v_blocked := false;
@@ -129,6 +147,7 @@ begin
     insert into public.error_events (at, source, message) values (now(), 'client', 'rls-probe');
   exception when insufficient_privilege then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A8b: authenticated user wrote to error_events'; end if;
   -- A8c (V19 regression): the retention function must NOT be reachable from the API. Postgres
   -- creates a SECURITY DEFINER function with PUBLIC EXECUTE, and Supabase exposes every
@@ -139,6 +158,7 @@ begin
     perform public.prune_error_events();
   exception when insufficient_privilege then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A8c: prune_error_events is callable from the API (V19 is back — the crash log can be wiped)'; end if;
 
   -- A9 (V13, 2026-08-17): the lead table is write-only and shape-checked.
@@ -148,6 +168,7 @@ begin
     perform * from public.diagnostic_leads limit 1;
   exception when insufficient_privilege then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A9a: lead emails are readable from the API'; end if;
   -- A9b: a non-email is rejected. The original policy bounded LENGTH only, so every 3-character
   -- string was a valid lead; the shape check is what makes the table mean anything.
@@ -156,12 +177,15 @@ begin
     insert into public.diagnostic_leads (email) values ('abc');
   exception when insufficient_privilege or check_violation then v_blocked := true;
   end;
+  v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A9b: a non-email was accepted as a lead'; end if;
 
   -- A4/A5: attacker cannot read the learner's sessions or stats.
   select count(*) into v_cnt from public.sessions where learner_id = v_learner;
+  v_asserts := v_asserts + 1;
   if v_cnt <> 0 then raise exception 'RLS FAIL A4: attacker read another learner''s sessions (% rows)', v_cnt; end if;
   select count(*) into v_cnt from public.learner_stats where learner_id = v_learner;
+  v_asserts := v_asserts + 1;
   if v_cnt <> 0 then raise exception 'RLS FAIL A5: attacker read another learner''s stats (% rows)', v_cnt; end if;
 
   -- ── Impersonate the OWNER (positive control — RLS is scoped, not deny-all) ─
@@ -169,12 +193,16 @@ begin
     json_build_object('sub', v_owner, 'email', 'owner.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
 
   select count(*) into v_cnt from public.learners where id = v_learner;
+  v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL O1: owner cannot see their OWN learner (% rows)', v_cnt; end if;
   select count(*) into v_cnt from public.sessions where learner_id = v_learner;
+  v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL O2: owner cannot see their OWN learner''s sessions (% rows)', v_cnt; end if;
 
   reset role;
+  -- The machine-readable line CI greps for. Keep the `RLS_ASSERTIONS=` token stable.
   raise notice 'RLS REGRESSION SUITE: ALL ASSERTIONS PASSED';
+  raise notice 'RLS_ASSERTIONS=%', v_asserts;
 end $$;
 
 rollback;

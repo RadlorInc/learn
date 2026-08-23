@@ -31,19 +31,84 @@ jobs:
         # HIGH or CRITICAL CVE fails the build instead of sitting unnoticed. See docs/security.md.
         run: npm audit --audit-level=high
 
-  # RLS regression suite — proves the DB denies a cross-tenant attacker (guards against V1's return).
-  # Runs only when a SUPABASE_DB_URL secret is configured; point it at a TEST/branch DB, never prod.
+  # ─────────────────────────────────────────────────────────────────────────────
+  # RLS regression suite — proves the database DENIES a cross-tenant attacker.
+  #
+  # ⚠️⚠️ THIS JOB USED TO REPORT SUCCESS WHILE EXECUTING NOTHING. It was gated on a
+  # SUPABASE_DB_URL secret that was never set, so it printed a ::warning:: and `exit 0`.
+  # On a children's app, the one suite that proves account A cannot read account B's data
+  # had therefore never run — and the green tick said the opposite, which is worse than
+  # having no job at all. The skip path is gone. There is no way for this job to pass
+  # without the suite running to completion.
+  #
+  # It needs no secret and no cloud database: `supabase db start` brings up a local
+  # Postgres in Docker on the runner. Nothing here can touch production.
+  # ─────────────────────────────────────────────────────────────────────────────
   rls-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run RLS regression suite
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: CLI + config
         run: |
-          if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "::warning::SUPABASE_DB_URL not set — skipping RLS regression suite. See docs/security.md."
-            exit 0
+          supabase --version
+          cat supabase/config.toml
+
+      # ⚠️ THE BASELINE IS STAGED HERE AND DELIBERATELY NOT COMMITTED INTO migrations/.
+      # Seven tables (profiles, learners, learner_access, sessions, learner_progress,
+      # learner_stats, learner_invites) were created in the Supabase dashboard and are in
+      # ZERO migrations, so a database built from supabase/migrations/* alone does not have
+      # them and the suite dies at setup. supabase/schema/baseline_schema.sql reconstructs
+      # them from the production catalog.
+      #
+      # It must run BEFORE the 67 real migrations (they ALTER these tables), which means a
+      # version that sorts first. Committing such a file would mean `supabase db push`
+      # applying a backdated migration to PRODUCTION, where every object already exists and
+      # where the policy re-creation it performs would briefly drop live policies. Copying it
+      # in here, on a throwaway runner, gets the ordering without ever putting it on a path
+      # that can reach prod.
+      - name: Stage baseline schema as the first migration (CI only, never committed)
+        run: cp supabase/schema/baseline_schema.sql supabase/migrations/00000000000000_baseline.sql
+
+      - name: Start local Postgres and apply baseline + migrations
+        run: supabase db start
+
+      - name: Run the RLS regression suite
+        env:
+          PGURL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -uo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+          psql "$PGURL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql 2>&1 | tee /tmp/rls.log
+          psql_status=${PIPESTATUS[0]}
+          if [ "$psql_status" -ne 0 ]; then
+            echo "::error::rls_regression.sql failed (psql exit $psql_status) — an assertion denied, or the file could not run."
+            exit 1
           fi
-          sudo apt-get update && sudo apt-get install -y postgresql-client
-          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql
+
+          # ⚠️ EXIT 0 IS NOT ENOUGH. A file that is empty, truncated, or whose DO block was
+          # commented out also exits 0. The suite prints how many assertions it actually
+          # executed; no line, or a zero, means nothing was proven and the job fails.
+          count=$(grep -oE 'RLS_ASSERTIONS=[0-9]+' /tmp/rls.log | tail -1 | cut -d= -f2)
+          if [ -z "${count:-}" ]; then
+            echo "::error::No RLS_ASSERTIONS line in the output — the suite did not run to completion."
+            exit 1
+          fi
+          if [ "$count" -lt 1 ]; then
+            echo "::error::The suite ran $count assertions. An empty suite reports the same green as a passing one."
+            exit 1
+          fi
+
+          echo "RLS regression suite: $count assertions executed and passed."
+          echo "### 🔒 RLS regression: **$count** assertions executed and passed" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          supabase status || true
+          docker ps -a || true
