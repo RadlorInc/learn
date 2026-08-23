@@ -196,3 +196,42 @@ signal), and the **efficacy dataset** that later opens schools. One mechanism, t
 1. Items per skill for a reliable pass (1 vs 2)? Start at 2, tune on real data.
 2. Week-N for the guarantee per band (6 assumed for 6–11; teens may be shorter/skill-scoped).
 3. Do teens self-serve the probe or is there a parent report handoff? (Likely both: teen takes it, parent gets the report + guarantee.)
+
+---
+
+## Retention, and why the "how Milo worked it out" trace expires at 90 days
+
+**Decided 2026-08-24, alongside the `diagnostic_items` retention job.** Written here rather than
+only in a migration comment because the wrong fix is the easy one, and somebody will reach for it.
+
+The diagnostic's data splits in two, and the split is a privacy decision as much as a schema one:
+
+| | what it is | retention |
+|---|---|---|
+| `diagnostic_items` | the child's **individual answers**, one row per question | **90 days** — this is analytics, and keeping raw responses for ever fails data minimisation |
+| `diagnostic_sessions`, `_plans`, `_plan_progress`, `_rechecks` | the **conclusion** — root gap, blocked skills, strengths, working level, and the chapter route built from them | kept until the parent deletes the profile — this is progress |
+
+Verified before the job was written: **nothing in the app reads `diagnostic_items`.** It is written
+by `sync_diagnostic` and never selected. The plan is materialised on `diagnostic_plans`
+(`skill_sequence` / `chapter_sequence`) and the conclusion on `diagnostic_sessions`, so pruning the
+answers cannot cost a child their plan.
+
+### The consequence for the trace
+
+The proposed **"how Milo worked it out"** trace — showing a parent each question, its verdict, and
+why the search descended where it did — needs the per-question rows. So it is only constructible
+for **90 days after the check**. That is acceptable: the trace is most valuable in the days after a
+diagnosis, when a parent is deciding whether to believe it.
+
+### ⚠️ If we later want it to outlive 90 days
+
+**Materialise the trace at diagnosis time. Do not extend the retention on the raw answers.**
+
+Storing a short, derived explanation — the ordered list of skills probed, each verdict, and the
+descent decisions — is a handful of rows or one JSON column on `diagnostic_sessions`. It is the
+*conclusion*, so it lives under the same "kept until you delete" rule as the plan.
+
+Keeping `diagnostic_items` longer instead would mean retaining every raw response a child ever
+gave, for ever, to power a UI feature. That is the option that looks cheaper in a sprint and is a
+data-minimisation failure the moment it is written down in a privacy policy — and ours now says,
+in as many words, that we keep what the check concluded and not every answer they gave.

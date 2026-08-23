@@ -81,10 +81,30 @@ describe('the data export covers every child-data table', () => {
     // drift from the code — a table mapped to a key that no longer exists would otherwise pass.
     const out = buildExport('Test', { learner: {}, stats: {}, progress: [], sessions: [] }, {
       learnerState: {}, events: [], diagnosticSessions: [], diagnosticAnswers: [],
-      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [],
+      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], notes: [],
     })
     const missing = Object.entries(EXPORTED).filter(([, key]) => !(key in out)).map(([t, k]) => `${t} → ${k}`)
     expect(missing, `buildExport does not emit:\n  ${missing.join('\n  ')}`).toEqual([])
+  })
+
+  it('says so in the file when a section was capped or unreadable', () => {
+    // ⚠️ The failure this guards is silent partial success: before the cap, an 8s
+    // statement_timeout on the events fetch was caught and turned into an EMPTY section, so a
+    // parent got a file labelled "everything we hold" that quietly held less. Measured on prod:
+    // events are 96% of the payload, so they are the section that can actually blow the timeout.
+    const whole = buildExport('Test', { learner: {}, stats: {}, progress: [], sessions: [] }, {
+      learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
+      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], notes: [],
+    }) as { completeness: { complete: boolean; notes: string[] } }
+    expect(whole.completeness.complete, 'a whole export must not claim to be partial').toBe(true)
+
+    const partial = buildExport('Test', { learner: {}, stats: {}, progress: [], sessions: [] }, {
+      learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
+      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [],
+      notes: ['the activity log was capped'],
+    }) as { completeness: { complete: boolean; notes: string[] } }
+    expect(partial.completeness.complete, 'a capped export must not claim to be complete').toBe(false)
+    expect(partial.completeness.notes, 'the reason must travel with the file, not just a flag').toHaveLength(1)
   })
 
   it('still emits the four original sections (a rewrite must not lose them)', () => {
