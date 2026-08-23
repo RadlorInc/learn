@@ -78,6 +78,30 @@ describe('baseline_schema.sql vs supabase/migrations', () => {
     expect(clash, `created unguarded by a migration, so must not be in the baseline:\n  ${clash.join('\n  ')}`).toEqual([])
   })
 
+  it('omits every constraint a migration adds with a bare ADD CONSTRAINT', () => {
+    // ⚠️ Third object type with no IF NOT EXISTS, found the same way as the other two: run 4
+    // died on `add constraint sessions_chapter_fkey` in 20260616093000_chapters_as_data.sql.
+    // The baseline wraps its own adds in an exception handler, which protects THIS file and
+    // does nothing at all for the migrations that run after it.
+    // Three forms are safe and must not be flagged:
+    //   · the migration drops the constraint first;
+    //   · the add sits inside an `if not exists (select 1 from pg_constraint where conname = …)`
+    //     guard, which 20260616090000 uses and no regex over the ADD alone can see;
+    //   · (a later migration re-adding one it just dropped is the first case again.)
+    const sources = migFiles.map(f => readFileSync(join(migDir, f), 'utf8'))
+    const all = sources.join('\n')
+    const dropped = new Set([...all.matchAll(/drop constraint (?:if exists )?([a-z_][a-z0-9_]*)/gi)].map(m => m[1]))
+    const guarded = new Set([...all.matchAll(/conname\s*=\s*'([a-z_][a-z0-9_]*)'/gi)].map(m => m[1]))
+    const bare = new Set(
+      [...all.matchAll(/add constraint ([a-z_][a-z0-9_]*)/gi)]
+        .map(m => m[1])
+        .filter(n => !dropped.has(n) && !guarded.has(n)),
+    )
+    const inBaseline = [...baseline.matchAll(/add constraint ([a-z_][a-z0-9_]*)/g)].map(m => m[1])
+    const clash = [...new Set(inBaseline.filter(n => bare.has(n)))]
+    expect(clash, `added with a bare ADD CONSTRAINT by a migration, so must not be in the baseline:\n  ${clash.join('\n  ')}`).toEqual([])
+  })
+
   it('still creates the seven tables no migration creates — the whole reason it exists', () => {
     // ⚠️ The mirror risk: someone "fixes" a future collision by deleting from the baseline until
     // CI goes green having built a database with no learners table in it.

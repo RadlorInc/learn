@@ -264,6 +264,13 @@ create table if not exists public.diagnostic_rechecks (
 -- ── Constraints ─────────────────────────────────────────────────────────────
 -- Wrapped so the file is re-runnable: `add constraint` has no IF NOT EXISTS, and a
 -- single bare failure would abort every statement after it.
+--
+-- ⚠️ AND THE WRAPPER ONLY PROTECTS *THIS* FILE, NOT THE MIGRATIONS THAT FOLLOW IT — which is
+-- the same trap as CREATE POLICY, one object type along. `sessions_chapter_fkey` and
+-- `learner_progress_chapter_fkey` are added by 20260616093000_chapters_as_data.sql with a bare
+-- `add constraint`, so creating them here makes that migration fail with 42710. They are
+-- deliberately absent; the migration adds them, and the FK exists from that point on.
+-- (`learners_age_group_check` IS here, because its migration drops it first.)
 do $$
 declare s text;
 begin
@@ -328,9 +335,7 @@ begin
     'alter table public.learner_access add constraint learner_access_parent_id_fkey foreign key (parent_id) references public.profiles(id) on delete cascade',
     'alter table public.learner_invites add constraint learner_invites_invited_by_fkey foreign key (invited_by) references public.profiles(id) on delete cascade',
     'alter table public.learner_invites add constraint learner_invites_learner_id_fkey foreign key (learner_id) references public.learners(id) on delete cascade',
-    'alter table public.sessions add constraint sessions_chapter_fkey foreign key (chapter) references public.chapters(id)',
     'alter table public.sessions add constraint sessions_learner_id_fkey foreign key (learner_id) references public.learners(id) on delete cascade',
-    'alter table public.learner_progress add constraint learner_progress_chapter_fkey foreign key (chapter) references public.chapters(id)',
     'alter table public.learner_progress add constraint learner_progress_learner_id_fkey foreign key (learner_id) references public.learners(id) on delete cascade',
     'alter table public.learner_stats add constraint learner_stats_learner_id_fkey foreign key (learner_id) references public.learners(id) on delete cascade',
     'alter table public.learner_state add constraint learner_state_learner_id_fkey foreign key (learner_id) references public.learners(id) on delete cascade',
