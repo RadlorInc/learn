@@ -138,6 +138,23 @@ jobs:
             exit 1
           fi
 
+          # ⚠️⚠️ PUBLISH THE FINGERPRINT OF THE ARTEFACT THIS JOB ACTUALLY TESTED, BEFORE UNDOING IT.
+          #
+          # The billing migrations ship with `billing_config.enforced = false`, and this suite turns
+          # it ON (F0) — so the enforcing path is exercised HERE and nowhere else. On production the
+          # flag stays false, which means the post-apply smoke write succeeds whether or not the
+          # guard is correctly wired: a check that cannot fail in the interesting direction.
+          #
+          # So the proof that production got the guard is EQUALITY WITH THIS ARTEFACT, not the live
+          # write. These three hashes are what an apply must reproduce; the live write is only the
+          # smoke test that nothing else broke.
+          echo "── fingerprints of the applied (enforcing-capable) schema ──"
+          psql "$PGURL" -Atc "select 'sessions policy      ' || md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='sessions: parent can insert'"
+          psql "$PGURL" -Atc "select 'learner_progress pol ' || md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='learner_progress: parent access'"
+          psql "$PGURL" -Atc "select 'is_chapter_entitled  ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='is_chapter_entitled'"
+          psql "$PGURL" -Atc "select 'sync_session(11)     ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_session' and pronargs=11"
+          psql "$PGURL" -Atc "select 'sync_diagnostic      ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_diagnostic'"
+
           psql "$PGURL" -v ON_ERROR_STOP=1 -f supabase/schema/rollback_20260824_billing.sql
 
           # The fingerprints captured from PRODUCTION before anything was applied.

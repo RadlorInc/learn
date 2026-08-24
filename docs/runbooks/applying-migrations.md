@@ -30,6 +30,12 @@ written by the same person on the same day as the rule above it. The grep that s
 redefines this function* was **case-sensitive**, and `harden_rpc_inputs` writes
 `CREATE OR REPLACE FUNCTION` in capitals. `pg_get_functiondef` found it in one query.
 
+⚠️ **AND READING A TRUNCATED LOG IS THE SAME FAULT.** Founder's words, 2026-08-24: both are
+answering from a convenient view instead of the real one. The CI step that exercises the rollback
+passed all seven of its assertions and the job still failed; a 30-line log window that stopped two
+lines short of the error had me concluding the seventh had failed when it had passed. The answer was
+in the log. I had not looked at it.
+
 ⚠️ **The lesson is not "write better greps".** A source search is a claim about your regex; the
 catalog is a claim about the database. When the question is *what will this overwrite*, the repo
 cannot answer it — only production can.
@@ -111,12 +117,20 @@ catalog and `diagnostic_plans.active`. Neither is a child's work.
    regression.
 3. **Apply**, one migration at a time.
 4. **Verify from the CATALOG, not the success flag.**
-5. ⚠️ **THEN DRIVE A REAL WRITE END TO END.** This is the step that matters and the one a catalog
+5. ⚠️⚠️ **HASH THE APPLIED OBJECTS AGAINST WHAT CI TESTED — THAT IS THE PROOF. THE LIVE WRITE IS
+   ONLY THE SMOKE TEST.** The billing migrations land with `billing_config.enforced = false`, so
+   `is_chapter_entitled` returns true unconditionally and a real write succeeds **whether or not the
+   guard is correctly wired**: a check that cannot fail in the interesting direction. The enforcing
+   path is exercised in `ci / rls-tests` and nowhere else, so that job PUBLISHES the fingerprints of
+   the schema it tested — the two policy predicates and three function bodies — and an apply is
+   proven by reproducing them. ⚠️ Do NOT flip `enforced` to true in production to test it, even
+   briefly: that is the state that stops 65 of 72 chapters saving.
+6. ⚠️ **THEN DRIVE A REAL WRITE END TO END.** This is the step that matters and the one a catalog
    query cannot stand in for. When the billing guard reaches the `sessions` policy on a database
    with no subscriptions, every object is exactly as intended and every family has silently stopped
    being able to save. The catalog would have said everything was fine.
-6. **Rename the repo file** to the version the ledger recorded — repo-side, zero ledger writes.
-7. Re-run the advisors, and watch `ci / rls-tests` on the next PR.
+7. **Rename the repo file** to the version the ledger recorded — repo-side, zero ledger writes.
+8. Re-run the advisors, and watch `ci / rls-tests` on the next PR.
 
 ## Preconditions that are not optional
 
