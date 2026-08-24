@@ -137,6 +137,12 @@ interface Frame {
 export interface ProbeState {
   band: Band
   config: ProbeConfig
+  /**
+   * ⚠️ DID THIS PROBE START FROM THE WHOLE BAND, or from a narrowed agenda? It is the ONLY thing
+   * that separates "we looked everywhere and found nothing" from "we looked where you pointed and
+   * found nothing", and those two must never reach a parent as the same sentence. See `coverage`.
+   */
+  fullAgenda: boolean
   agenda: string[]        // independent entry skills still to investigate
   frames: Frame[]         // the active branch's bisecting search (0 or 1 deep)
   passed: string[]
@@ -245,8 +251,27 @@ function normalize(s: ProbeState): void {
   }
 }
 
-export function startProbe(band: Band, config: ProbeConfig = DEFAULT_CONFIG[band]): ProbeState {
-  return { band, config, agenda: [...PROBE_ENTRY[band]], frames: [], passed: [], failed: [], asked: [], roots: [], tries: {} }
+/**
+ * Start a probe.
+ *
+ * `agenda` narrows which entry skills are investigated. Two callers want that:
+ *   · the SHORT PASS — `PROBE_SPINE[band]`, the load-bearing chain, leaving the sweep for later;
+ *   · 17–18's DOOR 2 — a single strand the student named ("I'm fine until quadratics"), which is
+ *     real information at that age and noise at six.
+ *
+ * ⚠️ A NARROWED PROBE IS NOT A SHORTER PROBE, IT IS A NARROWER CLAIM, and `coverage` is how the
+ * report is stopped from confusing the two. Measured for 17–18: seeded at the right strand it names
+ * the exact root 94% of the time in 28 questions against the full probe's 97% in 50 — but seeded at
+ * the WRONG strand it reports no gap 100% of the time, in two questions. That is not a bad probe;
+ * it is a probe answering the question it was asked. What would make it a lie is saying "on track".
+ */
+export function startProbe(band: Band, config: ProbeConfig = DEFAULT_CONFIG[band], agenda?: string[]): ProbeState {
+  return {
+    band, config,
+    fullAgenda: agenda === undefined,
+    agenda: [...(agenda ?? PROBE_ENTRY[band])],
+    frames: [], passed: [], failed: [], asked: [], roots: [], tries: {},
+  }
 }
 
 /** The next skill to probe, or null when the probe is done (caps hit or nothing left). */
@@ -347,6 +372,22 @@ export function record(s: ProbeState, id: string, passed: boolean): ProbeState {
 }
 
 export interface Diagnosis {
+  /**
+   * ⚠️⚠️ WHETHER THIS RESULT MAY MAKE A CLAIM ABOUT THE CHILD AT ALL.
+   *
+   * `full` — the whole band's agenda was investigated and neither cap was reached. Only a `full`
+   * result with no root gap is allowed to say anything a parent reads as a clean bill of health.
+   * `partial` — a narrowed agenda (the short pass, or 17–18's door 2) or a cap-truncated search.
+   * It may say where to START. It may NEVER say "on track", "no gaps", or anything that reads as
+   * one, because it did not look. Founder's rule, 2026-08-24: *only the deep pass is allowed to
+   * make a claim about whether a child is at grade level.*
+   *
+   * Without this the arithmetic is brutal: measured, the spine alone misses a third to a half of
+   * gaps in 6–8 and 9–11, and a wrongly-seeded 17–18 probe misses 100% of them. Framed as "here is
+   * where we're starting" that is a less-targeted plan; framed as "no gaps found" it is a lie told
+   * to the parent of a child who has one.
+   */
+  coverage: 'full' | 'partial'
   rootGap: string | null
   secondGap: string | null
   blockedSkills: string[]     // full downstream cost of the root gap
@@ -423,13 +464,31 @@ export function diagnose(s: ProbeState): Diagnosis {
   const reachesAlgebra = blocked.some(id => BAND_ORDER[NODE_BY_ID[id].band] >= 4)
 
   const gapBandsBelow = rootGap ? BAND_ORDER[s.band] - BAND_ORDER[NODE_BY_ID[rootGap].band] : 0
+  /**
+   * Started from the whole band, and finished: nothing left on the agenda and no branch still open.
+   *
+   * ⚠️ THE CAPS ARE DELIBERATELY NOT TESTED HERE, AND THAT IS A MEASUREMENT RATHER THAN AN
+   * OVERSIGHT. The obvious version also required `asked < maxItems && failed < maxFailures`.
+   * Mutation-testing showed removing those two clauses changed nothing — because a cap that stops
+   * the search mid-flight ALWAYS leaves the agenda or a frame non-empty, which the first two
+   * conditions already catch. And in the one case they are not redundant they are wrong: a cap
+   * reached at the exact moment the last entry resolves would report a FINISHED search as partial.
+   * An inert clause in a rule this load-bearing is worse than none — it reads as protection.
+   */
+  const coverage: 'full' | 'partial' =
+    s.fullAgenda !== false && s.agenda.length === 0 && s.frames.length === 0 ? 'full' : 'partial'
   const workingLevel = !rootGap
-    ? `At or above grade level (${BAND_LABEL[s.band]}).`
+    // ⚠️ THE ONE SENTENCE THAT MAY NOT BE SHARED BETWEEN THE TWO. A partial pass that found nothing
+    // says where to start; it does not say the child is fine, because it did not look.
+    ? (coverage === 'full'
+        ? `At or above grade level (${BAND_LABEL[s.band]}).`
+        : `Nothing broken in what we checked — here is where to start.`)
     : gapBandsBelow <= 0 ? `Working at grade level with one specific gap.`
     : gapBandsBelow === 1 ? `One grade band below in this strand (gap in ${BAND_LABEL[NODE_BY_ID[rootGap].band]}).`
     : `Foundational gap ~${gapBandsBelow} bands below grade (in ${BAND_LABEL[NODE_BY_ID[rootGap].band]}).`
 
   return {
+    coverage,
     rootGap, secondGap,
     blockedSkills: blocked, downstreamHighlights, reachesAlgebra,
     strengths, workingLevel, gapBandsBelow, planSkills, planChapters,

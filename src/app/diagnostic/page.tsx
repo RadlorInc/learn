@@ -454,10 +454,34 @@ function RemediationReport({ r, accent, onStart, onRetake, onSave }: { r: Diagno
   return (
     <ReportShell accent={accent} subtitle={r.workingLevel} onStart={onStart} onRetake={onRetake} onSave={onSave} cta={root ? 'Start the plan →' : 'Get ahead →'}>
       {!root ? (
-        <Card accent={accent} title="✅ On track — ready to get ahead">
-          Milo didn&apos;t find a gap holding things back. Great place to be — we&apos;ll set a plan that
-          stretches into the next skills.
-        </Card>
+        /**
+         * ⚠️⚠️ ONLY A `full` PASS MAY SAY "ON TRACK". A narrowed probe — the short pass, or 17–18's
+         * "I know what I'm stuck on" door — did not look everywhere, and measured, the spine alone
+         * misses a third to a half of gaps in 6–8 and 9–11 while a wrongly-named strand misses all
+         * of them. Framed as "here is where we're starting" that is a less-targeted plan; framed as
+         * "no gaps found" it is a lie told to the parent of a child who has one, which is the worst
+         * thing this product can produce. Founder's rule: only the deep pass gets to make a claim
+         * about grade level.
+         *
+         * ⚠️ AND THE OFFER OF THE FULL CHECK IS PART OF THE FIX, NOT A CONSOLATION. A student who
+         * named the wrong strand reaches this screen after TWO questions; the full check has to be
+         * one tap away and worded as the better option.
+         */
+        r.coverage === 'full' ? (
+          <Card accent={accent} title="✅ On track — ready to get ahead">
+            Milo didn&apos;t find a gap holding things back. Great place to be — we&apos;ll set a plan that
+            stretches into the next skills.
+          </Card>
+        ) : (
+          <Card accent={accent} title="🔍 Nothing broken in what we checked">
+            Milo looked at the part you pointed him at and everything there held up — so this is a good
+            place to start. He hasn&apos;t looked at everything yet, though.{' '}
+            <button onClick={onRetake} style={{
+              background: 'none', border: 'none', padding: 0, font: 'inherit', color: accent.base,
+              fontWeight: 800, textDecoration: 'underline', cursor: 'pointer',
+            }}>Take the full check</button>{' '}— it&apos;s longer, and it finds gaps you might not know about.
+          </Card>
+        )
       ) : (
         <>
           {r.strengths.length > 0 && (
