@@ -144,6 +144,15 @@ catalog and `diagnostic_plans.active`. Neither is a child's work.
   deployment. A variable check needs a fresh production deploy, and "the deploy succeeded" is not
   evidence — read the effect.
 
+## Applying through the pipeline instead
+
+Prefer it — hand-applying is the root cause of the 58-file ledger drift, and `supabase db push`
+applies migrations under their own filename versions, so the rename dance disappears. It is not
+enabled: see [docs/migrate-prod-proposal.md](../migrate-prod-proposal.md) for the three conditions
+(B12 first · a required reviewer, verified by watching a job PAUSE rather than by reading a settings
+page · and the pipeline running the stale-migration diff and the B12 rule itself, or it is faster
+and worse).
+
 ## How to apply
 
 Prefer the pipeline (`deploy.yml` → `migrate-prod`, behind the required-reviewer gate) once it is
