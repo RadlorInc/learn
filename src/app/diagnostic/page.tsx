@@ -15,7 +15,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import {
-  startProbe, nextSkill, record, diagnose, type ProbeState, type Diagnosis,
+  startProbe, nextSkill, record, diagnose, strandChoices, type ProbeState, type Diagnosis,
 } from '@/core/diagnosticEngine'
 import { NODE_BY_ID, chapterFor, type Band } from '@/core/skillGraph'
 import { demoEligible } from '@/core/arChapters'
@@ -176,7 +176,7 @@ function resolve(state: ProbeState, band: Band, ctx: DiagContext): Slot {
  *  passSet, a typed number compares NUMERICALLY (so "07" passes), everything else is exact. */
 const isPass = gradeItem
 
-type Phase = 'intro' | 'email' | 'probe' | 'report'
+type Phase = 'intro' | 'email' | 'door' | 'probe' | 'report'
 
 export default function DiagnosticPage() {
   const { w: vw, h: vh } = useViewport()
@@ -222,23 +222,30 @@ export default function DiagnosticPage() {
 
   const pickBand = (b: Band) => { setBand(b); setBandKnown(true) }
 
-  const startProbeNow = () => {
+  /** `seed` narrows the agenda to one named strand (17–18's door 2). Omitted = the whole band. */
+  const startProbeNow = (seed?: string[]) => {
     ctxRef.current = buildContext(attempt)          // Phase 4: seed the probe for this child + attempt
-    const s = startProbe(band)
+    const s = startProbe(band, undefined, seed)     // undefined config → the band's default
     saveResume(band, s, attempt)
     setSlot(resolve(s, band, ctxRef.current)); setPhase('probe')
+  }
+  // Where the intro and the email gate both hand off to. 17–18 is asked which strand first; every
+  // other band goes straight in, because a self-report at that age is noise (see strandChoices).
+  const afterIntro = () => {
+    if (strandChoices(band).length) setPhase('door')
+    else startProbeNow()
   }
   // Cold (logged-out) visitors give an email first — required, for lead capture. Signed-in users
   // already have an account, so they go straight in. Once captured (this or a prior visit), we don't
   // re-ask on a retake.
   const begin = () => {
     if (!hasLearner && !getLeadEmail()) { setPhase('email'); return }
-    startProbeNow()
+    afterIntro()
   }
   const submitEmail = (email: string) => {
     setLeadEmail(email)                    // prefill the later "free account" signup
     void captureDiagnosticLead(email, band)  // durable lead (best-effort — never blocks the checkup)
-    startProbeNow()
+    afterIntro()
   }
 
   // Launch the plan (step 6). SIGNED-IN → save the arranged plan for this learner + drop into the REAL
@@ -282,6 +289,18 @@ export default function DiagnosticPage() {
   }
 
   const retake = () => { clearResume(); setAttempt(a => a + 1); setPhase('intro'); setResult(null); setSlot(null); setPicked(null) }
+  /**
+   * ⚠️ THE PARTIAL REPORT'S "TAKE THE FULL CHECK" STARTS THE FULL PROBE **DIRECTLY** — it must never
+   * be routed through `retake` / the intro. A student who named the wrong strand reaches that card
+   * after TWO questions; sending them back to the intro puts the strand door in front of them again,
+   * where the obvious move is to name another strand and collect another two-question nothing.
+   * Calling `startProbeNow()` with no seed makes that loop UNWRITABLE rather than merely unlikely:
+   * there is no flag to forget and no branch left that could show the door.
+   */
+  const fullCheck = () => {
+    clearResume(); setAttempt(a => a + 1); setResult(null); setPicked(null)
+    startProbeNow()
+  }
 
   // Stash the result to the browser so it survives sign-up (the parent page replays it against the
   // learner they create). Called by BOTH the "save this plan" CTA and the "just start playing" taste,
@@ -350,6 +369,18 @@ export default function DiagnosticPage() {
       <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
         <LabBackdrop accent={accent} /><BackChip onExit={() => setPhase('intro')} />
         <EmailGate accent={accent} short={short} onSubmit={submitEmail} />
+        <PtMilo left={9} />
+      </div>
+    )
+  }
+
+  // ── STRAND DOOR (17–18 only) ─────────────────────────────────────────────────────────
+  if (phase === 'door') {
+    return (
+      <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
+        <LabBackdrop accent={accent} /><BackChip onExit={() => setPhase('intro')} />
+        <StrandDoor accent={accent} short={short} strands={strandChoices(band)}
+          onPick={id => startProbeNow([id])} onFull={() => startProbeNow()} />
         <PtMilo left={9} />
       </div>
     )
@@ -437,14 +468,14 @@ export default function DiagnosticPage() {
     const onSave = hasLearner ? undefined : captureAndSignup   // cold traffic → offer account-creation
     return readiness
       ? <ReadinessReport r={result} accent={accent} onStart={startPlan} onRetake={retake} onSave={onSave} name={ctxRef.current.name} />
-      : <RemediationReport r={result} accent={accent} onStart={startPlan} onRetake={retake} onSave={onSave} />
+      : <RemediationReport r={result} accent={accent} onStart={startPlan} onRetake={retake} onFullCheck={fullCheck} onSave={onSave} />
   }
 
   return null
 }
 
 // ── Remediation report (6–8 … 17–18): strengths → the one snag → cost → plan → guarantee ──
-function RemediationReport({ r, accent, onStart, onRetake, onSave }: { r: Diagnosis; accent: Accent; onStart: () => void; onRetake: () => void; onSave?: () => void }) {
+function RemediationReport({ r, accent, onStart, onRetake, onFullCheck, onSave }: { r: Diagnosis; accent: Accent; onStart: () => void; onRetake: () => void; onFullCheck: () => void; onSave?: () => void }) {
   const root = r.rootGap
   const highlightNames = r.downstreamHighlights.map(label)
   const planNames: string[] = []
@@ -476,7 +507,7 @@ function RemediationReport({ r, accent, onStart, onRetake, onSave }: { r: Diagno
           <Card accent={accent} title="🔍 Nothing broken in what we checked">
             Milo looked at the part you pointed him at and everything there held up — so this is a good
             place to start. He hasn&apos;t looked at everything yet, though.{' '}
-            <button onClick={onRetake} style={{
+            <button onClick={onFullCheck} style={{
               background: 'none', border: 'none', padding: 0, font: 'inherit', color: accent.base,
               fontWeight: 800, textDecoration: 'underline', cursor: 'pointer',
             }}>Take the full check</button>{' '}— it&apos;s longer, and it finds gaps you might not know about.
@@ -657,6 +688,76 @@ function AgePicker({ accent, onPick }: { accent: Accent; onPick: (b: Band) => vo
             <div style={{ fontFamily: PT.mono, fontSize: 11, color: PT.inkMute, marginTop: 3 }}>{b.grade}</div>
           </button>
         ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * 17–18's DOOR 2 — the student names where it starts getting hard, and the probe is seeded there.
+ *
+ * ⚠️ THE ESCAPE IS NOT A COURTESY, IT IS THE DEFAULT PATH FOR ANYONE UNSURE. A student who guesses
+ * a strand to get past this screen buys a two-question nothing; "not sure" has to be an obvious,
+ * unembarrassing tile rather than fine print, or the door manufactures exactly the wrong answers it
+ * exists to avoid. It is listed LAST because naming a strand is the better outcome when they can.
+ *
+ * ⚠️ AND THE COPY MAY NOT PROMISE A SHORTER CHECK. It is a NARROWER one — same questions, aimed at
+ * one strand — and 28 against 50 is a consequence, not the offer. Sold as "the quick version" it
+ * recruits the students least able to name a strand, which is the population it is worst for.
+ */
+function StrandDoor({ accent, short, strands, onPick, onFull }: {
+  accent: Accent; short: boolean; strands: { id: string; label: string }[]
+  onPick: (id: string) => void; onFull: () => void
+}) {
+  const tile: React.CSSProperties = {
+    padding: short ? '12px 12px' : '16px 14px', borderRadius: 15, cursor: 'pointer', textAlign: 'center',
+    minHeight: 44,   // tap floor
+    background: PT.panel, backdropFilter: 'blur(6px)', border: `1.5px solid ${accent.base}55`,
+    boxShadow: `0 0 14px ${accent.base}18, 0 6px 16px rgba(0,0,0,0.3)`, transition: 'transform .14s ease',
+    fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 15 : 17, color: PT.ink,
+  }
+  const lift = {
+    onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'translateY(-3px)' },
+    onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = '' },
+  }
+  return (
+    // `safe center` + scroll: nine tiles do not fit a short landscape frame, and plain `center` on a
+    // column that cannot shrink overflows BOTH ways — pushing the heading up under the chrome where
+    // no scroll can reach it. (Paid for by the GameShell start card, 2026-08-23.)
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'safe center', gap: short ? 10 : 20,
+      padding: short ? '14px 6vw' : '0 6vw', overflowY: 'auto',
+    }}>
+      {/**
+        * ⚠️ MEASURED AT 640×320: THE ESCAPE TILE HUNG 24px BELOW THE FOLD. Nine tiles plus a
+        * two-line paragraph is 358px of content in a 320px frame, and the tile that fell off the
+        * bottom was "Not sure — check everything" — the one a student who cannot name a strand
+        * needs, i.e. the default path, hidden from exactly the people it is for. It scrolled, which
+        * is not the same as being on screen.
+        *
+        * Height comes out of the PROSE before it comes out of the tiles: the eyebrow goes (it says
+        * nothing the screen does not) and the body drops to its one load-bearing clause — the
+        * reassurance that a wrong guess is fine, which is the whole reason the door is safe. The
+        * rest is restated by the escape tile two inches below. */}
+      <div style={{ textAlign: 'center', maxWidth: 460 }}>
+        {!short && <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2, color: accent.base, textTransform: 'uppercase', marginBottom: 8 }}>Step 1 of 2</div>}
+        <h2 style={{ margin: '0 0 6px', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 19 : 24, color: PT.ink }}>Where does it start getting hard?</h2>
+        <p style={{ margin: 0, fontFamily: PT.sans, fontSize: short ? 13 : 15, lineHeight: 1.45, color: PT.inkSoft }}>
+          {short
+            ? <>Pick the nearest one — you don&apos;t have to be right.</>
+            : <>Milo will start there and work backwards to whatever is actually underneath it. Pick
+              the nearest one — you don&apos;t have to be right.</>}
+        </p>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: short ? 8 : 12, width: '100%', maxWidth: 480 }}>
+        {strands.map(t => (
+          <button key={t.id} onClick={() => onPick(t.id)} style={tile} {...lift}>{t.label}</button>
+        ))}
+        <button onClick={onFull} style={{ ...tile, border: `1.5px dashed ${accent.base}55`, color: PT.inkSoft }} {...lift}>
+          Not sure — check everything
+          <div style={{ fontFamily: PT.mono, fontSize: 11, color: PT.inkMute, marginTop: 3, fontWeight: 400 }}>longer, finds more</div>
+        </button>
       </div>
     </div>
   )

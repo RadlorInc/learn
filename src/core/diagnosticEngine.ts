@@ -14,7 +14,7 @@
  * score / red X); the failure cap is a generous safety backstop, not the primary UX lever.
  */
 import {
-  type Band, PROBE_ENTRY, NODE_BY_ID, SKILL_NODES, prereqsOf, dependentsOf, blockedBy, routeChapterFor,
+  type Band, PROBE_ENTRY, PROBE_SPINE, NODE_BY_ID, SKILL_NODES, prereqsOf, dependentsOf, blockedBy, routeChapterFor,
 } from '@/core/skillGraph'
 
 const BAND_ORDER: Record<Band, number> = { '3-5': 0, '6-8': 1, '9-11': 2, '12-14': 3, '15-16': 4, '17-18': 5 }
@@ -274,6 +274,31 @@ export function startProbe(band: Band, config: ProbeConfig = DEFAULT_CONFIG[band
   }
 }
 
+/**
+ * ⚠️⚠️ 17–18'S SECOND DOOR — AND IT IS A DOOR, NOT A CUT. THAT DISTINCTION IS THE WHOLE POINT.
+ *
+ * The tempting shortcut for a band whose full probe costs 50 questions is to CUT it — ask 20 and
+ * report what you found. Measured, that is not a shorter check, it is a wrong one: a 20-item cut
+ * names a root **3 levels too shallow 63%** of the time, the true chapter is absent from the plan
+ * **2 times in 3**, and only **4%** of those runs announce themselves as incomplete. It reports
+ * confidently and it is wrong, which is the worst thing this product can do.
+ *
+ * A door is the opposite trade. A seventeen-year-old can say where it starts getting hard —
+ * information a six-year-old does not have, which is why this is 17–18 only and must stay that way.
+ * Seeded at the strand they name, the probe is **94% exact at 28 questions** against the full
+ * check's 97% at 50. Seeded at the WRONG strand it finds nothing, in **two questions** — cheap, and
+ * survivable only because `diagnose()` marks it `coverage: 'partial'` and the report is structurally
+ * unable to say "on track" from it. **Door 2 without that guard is the cut wearing better manners.**
+ *
+ * The strands are the band's SPINE, derived — never a hand-typed list. A typed copy drifts from the
+ * graph the moment a node is added, and the failure mode is silent: the student names a strand that
+ * seeds an agenda the engine cannot answer.
+ */
+export function strandChoices(band: Band): { id: string; label: string }[] {
+  if (band !== '17-18') return []   // a self-report below this age is noise; see above
+  return PROBE_SPINE[band].map(id => ({ id, label: NODE_BY_ID[id].label }))
+}
+
 /** The next skill to probe, or null when the probe is done (caps hit or nothing left). */
 export function nextSkill(s: ProbeState): string | null {
   if (s.asked.length >= s.config.maxItems) return null
@@ -497,8 +522,8 @@ export function diagnose(s: ProbeState): Diagnosis {
 }
 
 /** Convenience for tests / headless runs: drive the whole probe with an answer oracle. */
-export function runProbe(band: Band, answer: (skillId: string) => boolean, config?: ProbeConfig): { state: ProbeState; result: Diagnosis } {
-  let s = startProbe(band, config)
+export function runProbe(band: Band, answer: (skillId: string) => boolean, config?: ProbeConfig, agenda?: string[]): { state: ProbeState; result: Diagnosis } {
+  let s = startProbe(band, config, agenda)
   let id: string | null
   while ((id = nextSkill(s)) !== null) s = record(s, id, answer(id))
   return { state: s, result: diagnose(s) }
