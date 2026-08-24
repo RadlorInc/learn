@@ -20,26 +20,39 @@ it is indistinguishable from success.
 Nothing here is deployed until it is **pushed** — Vercel builds from GitHub, so local commits, however
 many, change nothing about what you are testing.
 
+⚠️⚠️ **GREP EACH ROUTE'S OWN BUNDLE. NEXT CODE-SPLITS PER ROUTE.** The first version of this section
+told you to grep `/menu` for every string — and `Skip for now` came back **0**, because it lives on
+`/diagnostic` and `/menu` never loads that chunk. That reads as "the feature is not deployed" when it
+is. The pre-flight check had the exact defect it was written to prevent; it was caught by running it.
+
 ```bash
-curl -s https://adaptivelearn.radlor.com/menu -o /tmp/m.html && : > /tmp/b.js && \
-for u in $(grep -oE '/_next/static/immutable/chunks/[A-Za-z0-9._-]+\.js' /tmp/m.html | sort -u); do \
-  curl -s "https://adaptivelearn.radlor.com$u" >> /tmp/b.js; done && \
-for s in "Your plan · step" "Skip for now" "Starting from the beginning" "Pick up where you left off" "Where does it start getting hard"; do \
-  printf '%-34s %s\n' "$s" "$(grep -c "$s" /tmp/b.js)"; done
+b() { curl -s "https://adaptivelearn.radlor.com$1" -o /tmp/p.html; : > /tmp/b.js
+      for u in $(grep -oE '/_next/static/immutable/chunks/[A-Za-z0-9._-]+\.js' /tmp/p.html | sort -u); do
+        curl -s "https://adaptivelearn.radlor.com$u" >> /tmp/b.js; done; }
+g() { printf '%-36s %s\n' "$1" "$(grep -c "$1" /tmp/b.js)"; }
+
+b /diagnostic
+g "Find your starting point"          # CONTROL — must be ≥1
+g "Skip for now"                      # the check is optional
+g "Pick up where you left off"        # durable resume
+g "Where does it start getting hard"  # 17–18 door 2
+
+b /menu
+g "Your plan · step"                  # CONTROL — must be ≥1
+g "Starting from the beginning"       # the honest plan subtitle
+g "Want a plan built around"          # the one-time re-offer
 ```
 
-| string | expected | if it is 0 |
-|---|---|---|
-| `Your plan · step` | **≥1** | ⚠️ **THE CONTROL. If this is 0 the grep is broken and every other number below is meaningless** — the chunk path changed, or the fetch failed. Fix this before reading anything else |
-| `Skip for now` | ≥1 | the optional-checkup work is not deployed — **stop, nothing below is testable** |
-| `Starting from the beginning` | ≥1 | the honest plan subtitle is not deployed — step 4 will "fail" and mean nothing |
-| `Pick up where you left off` | ≥1 | durable resume is not deployed |
-| `Where does it start getting hard` | ≥1 | 17–18's door 2 is not deployed |
+Every line must print **1**. Verified against the deploy of `ee6e05d` — all seven, both controls.
 
-⚠️ **The control row is not ceremony.** The first time this grep was run it used the wrong chunk path
+| if a CONTROL is 0 | ⚠️ the grep is broken and every other number is meaningless — the chunk path changed, or the fetch failed. Fix that before reading anything else |
+|---|---|
+| **if a feature string is 0** | that feature is not deployed. **Stop** — the steps below are not testable and a "pass" would be a reading of some other mechanism |
+
+⚠️ **The control rows are not ceremony.** The first run of this grep used the wrong chunk path
 (`/_next/static/chunks/` — prod serves `/_next/static/immutable/chunks/`) and returned 0 for
-everything, including things that were definitely there. Without a string you KNOW is present, that
-looks exactly like "the feature is missing".
+everything, including strings that were definitely present. Without one you KNOW is there, that is
+indistinguishable from "the feature is missing".
 
 Also worth confirming the service worker actually rolled over — `curl -s
 https://adaptivelearn.radlor.com/sw.js | head -1` should show at least **v142**. A stale worker can
