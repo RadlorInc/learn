@@ -11,7 +11,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { gradeStartPlan, chaptersForAge, CHAPTER_NAMES, type AgeGroup } from '@/core/chapters'
 import { checkupSkips, recordCheckupSkip, shouldReoffer, checkupSettled, markCheckupDone, clearCheckupCache } from '@/infra/storage/checkup'
-import { setActivePlan, getActivePlan, currentPlanChapter } from '@/infra/storage/activePlan'
+import { setActivePlan, getActivePlan, currentPlanChapter, reconcilePlan, planSource } from '@/infra/storage/activePlan'
 
 const BANDS: AgeGroup[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 beforeEach(() => { localStorage.clear() })
@@ -35,6 +35,33 @@ describe('skipping leaves a plan', () => {
   it('a plan written without a source reads as diagnostic — every pre-2026-08-24 plan was one', () => {
     setActivePlan('kid', '9-11', ['rounding'])
     expect(getActivePlan('kid')!.source).toBe('diagnostic')
+  })
+
+  /**
+   * ⚠️⚠️ THE REGRESSION THIS FILE MISSED FIRST TIME, AND WHY. `reconcilePlan` REBUILDS the plan
+   * field by field, so it dropped `source` and a skipper's card reverted to "Milo picked this to
+   * close the gap" on the next menu load. Three gates passed over it: the unit test went
+   * setActivePlan → getActivePlan and never through the reconcile; the source check asserted the
+   * menu BRANCHES on source, which it does — the branch was right and the data was wiped upstream;
+   * and the browser drive ran with a rejected JWT, so `getLearnerBootstrap` 401'd and the reconcile
+   * path never executed at all. I SAW those 401s and read them as harness noise. They were also the
+   * reason a whole code path went unexercised.
+   */
+  it('a reconcile must not re-label a grade-start plan as diagnosed', () => {
+    setActivePlan('kid', '12-14', gradeStartPlan('12-14'), 'gradeStart')
+    const done = [gradeStartPlan('12-14')[0]]
+    reconcilePlan('kid', gradeStartPlan('12-14'), done)          // what the menu does on every load
+    expect(planSource('kid'), 'the reconcile re-labelled a skipper as diagnosed').toBe('gradeStart')
+    expect(getActivePlan('kid')!.index, 'the reconcile also has to still do its own job').toBe(1)
+  })
+
+  it('a reconcile with no local plan seeds from remote and IS diagnosed', () => {
+    // diagnostic_plans is only ever written by a completed check, so the default is correct here —
+    // asserted so the fix above cannot be "over-corrected" into tagging every plan gradeStart.
+    reconcilePlan('kid', ['integers', 'rationalOps'], [])
+    // ⚠️ Through `planSource`, not the raw field: a remote-seeded plan stores NO source, and the
+    // default is a judgement about what we may claim — which has exactly one home.
+    expect(planSource('kid')).toBe('diagnostic')
   })
 
   it("SOURCE C: the free tier's first two steps are entitled for a skipper too", () => {
@@ -92,6 +119,26 @@ describe('the surfaces (source)', () => {
     expect(at, 'the plan subtitle is gone — this gate is inert').toBeGreaterThan(0)
     expect(src.slice(Math.max(0, at - 400), at), 'the gap claim is printed without checking the plan source')
       .toMatch(/source === 'gradeStart'/)
+  })
+
+  /**
+   * ⚠️ THE BRANCH BEING PRESENT DOES NOT MEAN THE VALUE IS COMPUTED. Found by mutation: replacing
+   * `source: planSource(learnerId)` with a hard-coded `'diagnostic'` passed EVERY other check in
+   * this file, because the branch it asserts is still right there — reading a constant. Assert the
+   * derivation, and COUNT it: the menu sets planNext from two places (first load, and the
+   * cross-device reconcile) and only one of them being right is the whole bug this file exists for.
+   */
+  it('the menu DERIVES the plan source at both call sites, never hard-codes it', () => {
+    const src = readFileSync('src/app/menu/page.tsx', 'utf8')
+    // ⚠️ THREE setPlanNext sites, TWO of which build a plan — the third is `setPlanNext(null)`.
+    // The first draft of this gate asserted 2 and went red on a clean tree: a check that cries wolf
+    // on correct code gets muted, which is how a real one stops being read.
+    expect((src.match(/setPlanNext\(/g) ?? []).length,
+      'the setPlanNext call sites changed — re-read this gate before adjusting the number').toBe(3)
+    expect((src.match(/source: planSource\(/g) ?? []).length,
+      'a setPlanNext site is not deriving the source — a skipper will be told a gap was diagnosed').toBe(2)
+    expect(src, 'the plan source is hard-coded somewhere instead of derived')
+      .not.toMatch(/source: '(diagnostic|gradeStart)'/)
   })
 
   it('the offer names the outcome and the resume, and leads with neither a question count nor a test', () => {

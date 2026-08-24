@@ -172,9 +172,37 @@ export function reconcilePlan(
     index: Math.max(local?.index ?? 0, derived),
     startedAt: local?.startedAt ?? new Date().toISOString(),
     ...(local?.revised ? { revised: true } : null),
+    /**
+     * ⚠️⚠️ CARRY THE SOURCE, OR THE RECONCILE SILENTLY RE-LABELS A GRADE-START PLAN AS DIAGNOSED.
+     *
+     * This function REBUILDS the plan field by field, so anything not named here is dropped — and
+     * `source` absent reads as 'diagnostic', which is correct for every plan written before
+     * 2026-08-24 and a lie about a skipper's. The menu runs this on every load with a learner
+     * bootstrap, so a skipped child's card would revert to "Milo picked this to close the gap"
+     * within one visit: the app claiming a diagnosis nobody made, which is the exact defect
+     * `source` was added to prevent.
+     *
+     * A remote-seeded plan (no local) genuinely IS diagnosed — `diagnostic_plans` is only ever
+     * written by a completed check — so the default is right in that case and wrong only here.
+     *
+     * ⚠️ Field-by-field rebuilds do this every time somebody adds a field. If a third one arrives,
+     * consider spreading `local` and overriding, rather than listing what survives.
+     */
+    ...(local?.source ? { source: local.source } : null),
   }
   try { localStorage.setItem(key(learnerId), JSON.stringify(plan)) } catch { /* storage unavailable */ }
   return plan
+}
+
+/**
+ * WHAT THE UI MAY CLAIM ABOUT THIS PLAN — one definition, because the answer is a JUDGEMENT and not
+ * a stored field. `source` is absent on every plan written before 2026-08-24 and on any plan seeded
+ * from `diagnostic_plans` (only a completed check writes that table), and both of those genuinely
+ * ARE diagnosed — so the default belongs with the data, not repeated at each call site. The menu had
+ * `?? 'diagnostic'` written out twice, in two branches, which is two places deciding one thing.
+ */
+export function planSource(learnerId: string): 'diagnostic' | 'gradeStart' {
+  return getActivePlan(learnerId)?.source === 'gradeStart' ? 'gradeStart' : 'diagnostic'
 }
 
 /** { done, total } for a progress readout ("Step 2 of 5"). */

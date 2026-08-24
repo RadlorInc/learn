@@ -18,7 +18,7 @@ import type { LearnerState } from '@/data/supabase/types'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
 import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
 import { track } from '@/infra/analytics'
-import { currentPlanChapter, planProgress, reconcilePlan, getActivePlan } from '@/infra/storage/activePlan'
+import { currentPlanChapter, planProgress, reconcilePlan, planSource } from '@/infra/storage/activePlan'
 import { getCheckupStatus } from '@/data/repositories'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -80,9 +80,8 @@ export default function MainMenu() {
   useEffect(() => {
     if (!learnerId) { setPlanNext(null); return }
     const ch = currentPlanChapter(learnerId), prog = planProgress(learnerId)
-    const plan = getActivePlan(learnerId)
     setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
-      ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: plan?.source ?? 'diagnostic' }
+      ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learnerId) }
       : null)
     // ⚠️ THE RE-OFFER IS EVIDENCE-GATED, NOT TIME-GATED. It appears only once the child has actually
     // FINISHED a plan chapter — the parent has now seen the thing work, so the ask has something
@@ -186,7 +185,7 @@ export default function MainMenu() {
             if (plan) {
               const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
               setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
-                ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: getActivePlan(learner.id)?.source ?? 'diagnostic' }
+                ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learner.id) }
                 : null)
               setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
             }
