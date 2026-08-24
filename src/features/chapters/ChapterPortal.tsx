@@ -25,7 +25,21 @@ import ExploreStep from '@/features/chapters/teen/ExploreStep'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import type { ChapterType } from '@/core/chapters'
 
-export type ChapterProps = { onComplete: (correct: number, wrong: number, mastered?: boolean) => void; childName: string }
+export type ChapterProps = {
+  onComplete: (correct: number, wrong: number, mastered?: boolean) => void
+  childName: string
+  /**
+   * ⚠️ WHERE "BACK" GOES. Defaults to `/menu`, which is right for a signed-in child and wrong for
+   * every visitor who has not signed in yet: `/menu` bounces them to `/auth`, so abandoning a demo
+   * chapter lands a parent on a login wall at the exact moment we were trying to earn the right to
+   * ask for a login. And abandoning is the MAIN exit — most people who open a chapter look, poke
+   * and leave; finishing is the rarer path.
+   *
+   * ⚠️ A DESTINATION, NOT A CONDITION. The portal must not learn about sessions, demos or auth —
+   * the caller knows where its own back button belongs and passes it. A parameter, not knowledge.
+   */
+  onExit?: () => void
+}
 type Finish = (correct: number, wrong: number, mastered?: boolean) => void
 
 /**
@@ -88,7 +102,7 @@ export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInn
   return function StoryChapter(props: ChapterProps) {
     const { router, body, runKey, finish, replay } = usePortalRun(skill, false, props.onComplete)
     if (!body) return null
-    const exit = () => router.push('/menu')
+    const exit = () => props.onExit ? props.onExit() : router.push('/menu')
     return createPortal(
       <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: bg }}>
         <Inner key={runKey} onFinish={finish} onExit={exit} />
@@ -168,7 +182,9 @@ export function makeTeenChapter(cfg: TeenChapterCfg, Game: TeenGame, SimComp?: S
   return function TeenChapter(props: ChapterProps) {
     const { router, body, runKey, finish, replay } = usePortalRun(cfg.skill, true, props.onComplete)
     if (!body) return null
-    const exit = () => { stopSpeech(); router.push('/menu') }
+    // ⚠️ `stopSpeech` runs on EITHER path. A caller-supplied exit that skipped it would leave Milo
+    // narrating over whatever screen comes next, which is the sort of thing only a person notices.
+    const exit = () => { stopSpeech(); if (props.onExit) props.onExit(); else router.push('/menu') }
     return createPortal(
       <div data-band={cfg.band} style={{ position: 'fixed', inset: 0, zIndex: 900, overflowY: 'auto', background: 'var(--bg-page)', color: 'var(--ink)' }}>
         <TeenWorld

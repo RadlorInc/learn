@@ -26,6 +26,16 @@ test('a demo chapter played to the end advances the demo', async ({ page }) => {
   await expect(first, 'the demo offered no chapter to play').toBeVisible()
   await first.click()
 
+  /**
+   * ⚠️ WAIT FOR THE CHAPTER TO BE ON SCREEN BEFORE HANDING OVER. Chapters are `lazy()`-loaded, so on
+   * a cold `next dev` the compile can outlast the demo screen — and `reachPractice` opens by
+   * clicking the first button whose label ends in an arrow, which on the demo screen is the button
+   * we just clicked. Handing over mid-transition made this spec fail on the first run after a server
+   * start and pass on every one after: a coin-flip gate, which gets re-run instead of read.
+   */
+  await expect(page.getByText(/Chapter 1 of 2/), 'the chapter never replaced the demo screen')
+    .toHaveCount(0, { timeout: 90_000 })
+
   expect(await reachPractice(page), 'never reached a live board').toBe(true)
   for (let i = 0; i < 24; i++) {
     const turn = await aceKid.play(page)
@@ -66,4 +76,24 @@ test('the wall appears after the cap, and sells the account', async ({ page }) =
   // ⚠️ It must not read as "you ran out" — the honest sentence is what an account BUYS.
   await expect(page.locator('body')).not.toContainText(/used up|run out|no more free|limit reached/i)
   await expect(page.getByRole('button', { name: /Integers/ }), 'a spent demo still offered a chapter').toHaveCount(0)
+})
+
+test('abandoning a chapter returns to the demo, not a login wall', async ({ page }) => {
+  test.setTimeout(120_000)
+  await page.goto('/demo')
+  await page.getByRole('button', { name: /Ages 12–14/ }).click()
+  await page.getByRole('button', { name: /Integers/ }).click()
+
+  // ⚠️ THE MAIN EXIT, NOT AN EDGE CASE. Most visitors who open a chapter look, poke and leave —
+  // finishing is the rarer path. Untouched, the chapter's back button goes to /menu, which bounces
+  // a logged-out parent to /auth: a login wall at the moment we were trying to earn the right to
+  // ask for one.
+  const back = page.getByRole('button', { name: /Menu/i }).first()
+  await back.waitFor({ state: 'visible', timeout: 30_000 })
+  await back.click()
+
+  await expect(page.getByText(/Chapter 1 of 2/),
+    'abandoning left the demo — the chapter is unplayed and should still be offered')
+    .toBeVisible({ timeout: 15_000 })
+  expect(page.url(), 'a logged-out visitor was dropped on the auth page').not.toContain('/auth')
 })

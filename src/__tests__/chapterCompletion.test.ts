@@ -60,3 +60,42 @@ describe('waking the handler must not change /game', () => {
       .not.toMatch(/!\s*\w*[Dd]one\w*\s*&&/)
   })
 })
+
+/**
+ * Where "back" goes. `/menu` is right for a signed-in child and wrong for anyone who has not signed
+ * in: it bounces them to `/auth`. Abandoning is the MAIN exit from a demo chapter — most visitors
+ * look, poke and leave — so a login wall there lands at the exact moment we were trying to earn the
+ * right to ask for a login.
+ */
+describe('the exit destination is a parameter, not knowledge', () => {
+  it('BOTH factories honour a caller-supplied exit, and BOTH still default to /menu', () => {
+    /**
+     * ⚠️ COUNT THE FACTORIES, NOT THE OCCURRENCES. The first draft asserted `props.onExit` appears
+     * twice; it appears FOUR times (each exit names it in a condition and a call), so the gate went
+     * red on correct code — and reverting a factory made the count 2, i.e. the mutation made the
+     * broken gate PASS. A count is only a check when you have counted the right thing.
+     */
+    const exits = strip(portal).match(/const exit = \(\) => .*/g) ?? []
+    expect(exits.length, 'the exits changed shape — re-read this gate').toBe(2)
+    for (const e of exits) {
+      expect(e, `a factory ignores the caller's exit, stranding a logged-out visitor: ${e}`).toMatch(/props\.onExit/)
+      expect(e, `a factory lost its /menu default, which a signed-in child needs: ${e}`).toMatch(/router\.push\('\/menu'\)/)
+    }
+  })
+
+  it('the portal learns nothing about sessions, demos or auth', () => {
+    // The whole point of passing a destination is that this file stays ignorant. A session lookup
+    // here would be the portal deciding policy for 72 chapters.
+    expect(strip(portal), 'the portal is making an auth decision — pass a destination instead')
+      .not.toMatch(/getSession|isLoggedIn|activeLearner|\/auth|\/demo/)
+  })
+
+  it('the teen exit still stops speech on the caller-supplied path', () => {
+    // Easy to lose in a ternary: Milo would go on narrating over whatever screen comes next, which
+    // is the sort of thing only a person notices.
+    const at = strip(portal).indexOf('const exit = () => { stopSpeech()')
+    expect(at, 'the teen exit changed shape — re-read this gate').toBeGreaterThan(0)
+    const line = strip(portal).slice(at, at + 160)
+    expect(line).toMatch(/stopSpeech\(\);\s*if \(props\.onExit\)/)
+  })
+})

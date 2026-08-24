@@ -18,12 +18,15 @@ import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
 import { useChapterAccess, CameraConsentCard } from '@/shared/ui/CameraConsentGate'
 import type { ChapterType } from '@/core/chapters'
 
-export function GuardedChapter({ id, onComplete, childName = 'Sam' }: {
+export function GuardedChapter({ id, onComplete, onExit, childName = 'Sam' }: {
   id: string
   /** ⚠️ Real callers must do something with this. `/teen-preview` passes a no-op on purpose (it is
    *  a taste, with nothing to advance); `/demo` counts the completion. A discarded callback is how
    *  this repo lost three months on the plan pointer, so it is worth saying which one you are. */
   onComplete: () => void
+  /** Where the chapter's own back button goes. Omitted → `/menu`, which bounces a logged-out
+   *  visitor to `/auth`; any caller that expects one should pass its own. */
+  onExit?: () => void
   childName?: string
 }) {
   // ⚠️ ABOVE THE EARLY RETURNS. A hook after a conditional return changes the hook count between
@@ -33,5 +36,5 @@ export function GuardedChapter({ id, onComplete, childName = 'Sam' }: {
   if (!Chapter) return <div style={{ padding: 24, fontFamily: 'sans-serif' }}>Unknown chapter: {id}</div>
   if (access === 'checking') return null
   if (access === 'blocked') return <CameraConsentCard />
-  return <Chapter onComplete={onComplete} childName={childName} />
+  return <Chapter onComplete={onComplete} onExit={onExit} childName={childName} />
 }

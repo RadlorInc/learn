@@ -53,7 +53,14 @@ export default function DemoPage() {
 
   // ── PLAYING ──────────────────────────────────────────────────────────────────────
   if (playing) {
-    return <GuardedChapter id={playing} onComplete={() => {
+    return <GuardedChapter id={playing} onExit={() => {
+      // ⚠️ ABANDONING IS THE DEMO'S MAIN EXIT, not its edge case: most visitors who open a chapter
+      // look, poke and leave. Without this it goes to `/menu`, which bounces a logged-out parent to
+      // `/auth` — a login wall at the moment we were trying to earn the right to ask for a login.
+      // Nothing is recorded: the chapter is unplayed and still theirs to try.
+      setPlaying(null)
+      track('demo_chapter_left', { chapter: playing, band: run?.band })
+    }} onComplete={() => {
       // ⚠️ THIS CALLBACK IS THE WHOLE FEATURE. `/teen-preview` discards its own on purpose; if this
       // one is ever dropped the demo silently never ends and the wall never appears, which is the
       // `ChapterPortal` fault (three months, no plan advanced) with a different consequence.

@@ -118,10 +118,14 @@ describe('the route (source)', () => {
   it('counts the completion — the callback is not discarded', () => {
     // `/teen-preview` passes a no-op on purpose. If THIS one becomes one, the demo never ends and
     // the wall never appears — the ChapterPortal fault with a different consequence.
-    const at = src.indexOf('<GuardedChapter')
-    expect(at, 'the chapter render is gone — this gate is inert').toBeGreaterThan(0)
-    const call = src.slice(at, at + 700)
-    expect(call, 'the demo discards its completion callback').toMatch(/completeDemoChapter\(/)
+    // ⚠️ ANCHOR ON THE HANDLER, NOT A CHARACTER BUDGET FROM THE ELEMENT. The first version sliced
+    // 700 chars from `<GuardedChapter`; adding an `onExit` handler before `onComplete` pushed the
+    // call out of the window and the gate went red on correct code. A window measured in characters
+    // is not a window bounded by the thing you meant.
+    const at = src.indexOf('onComplete={')
+    expect(at, 'the completion handler is gone — this gate is inert').toBeGreaterThan(0)
+    const handler = src.slice(at, src.indexOf('}}', at))
+    expect(handler, 'the demo discards its completion callback').toMatch(/completeDemoChapter\(/)
   })
 
   it('both logged-out doors go through the one guard', () => {

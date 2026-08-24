@@ -29,6 +29,37 @@ artefact without the feature, a world without the bug. **You cannot learn to spo
 were written by someone who had just written down the rule that catches them. The only thing
 separating a real check from these is having watched it go red for the reason it exists.
 
+⚠️⚠️ **AND THERE IS AN ELEVENTH THAT IS A DIFFERENT ANIMAL — NOT A CHECK THAT CANNOT FAIL, BUT A
+WIRE THAT IS NOT CONNECTED WHILE BOTH ENDS READ AS CONNECTED.**
+
+`ChapterProps.onComplete` has been in every chapter's signature since the beginning. Both registry
+factories in `ChapterPortal` took it as `_props` and dropped it. **Its first occurrence is the
+three-month P0** — `/game`'s handler was never invoked, so every chapter scored correctly while no
+child's diagnostic plan moved. That was fixed by relocating the plan pointer into `finishAndSync`,
+which was the right fix, **and left the prop in place: still typed, still passed, still discarded.**
+On 2026-08-25 the next caller trusted it — `/demo`, which cannot use `finishAndSync` at all, because
+a logged-out visitor has no learner and it returns at `if (!learner) return`.
+
+**What makes this class its own is that it is invisible from BOTH ends.** The caller believes it
+passed a handler and has no way to see it was ignored. The chapter shows its end screen either way,
+so the screen a person looks at is identical whether the wire is connected or cut. Everything above
+is a check that could not fail; this is a connection nobody is checking at all, and neither side is
+wrong to think it holds.
+
+- **Follow the value, not the signature.** A prop's presence in a type is not evidence it is read;
+  grep the consumer for the parameter NAME (`_props` is a confession) before building on it.
+- **Anything that must happen as a consequence of a real action needs an end-to-end drive.** Nothing
+  cheaper can see this: a unit test calls the callback itself, and a source check reads the caller.
+  `e2e/demo-route.spec.ts` plays a chapter to its end and asserts the DEMO advanced — deliberately
+  not the chapter's end screen, which looks the same when the callback is discarded.
+- ⚠️⚠️ **AND ITS COROLLARY: DEAD CODE IS NOT NEUTRAL, IT IS A TRAP WITH A TIMER SOMEBODY ELSE
+  STARTS.** `/game`'s dormant handler set a `chapterDone` flag, and the mount read
+  `{!chapterDone && playingChapter && …}`. Harmless for three months — and the moment the wire was
+  connected, i.e. the moment somebody did the obviously correct thing, **every chapter in the app
+  would have unmounted the instant a child finished it**, taking its own end screen with it. The
+  landmine is armed by the fix, so the person who trips it is never the person who laid it. Delete
+  dead code; do not gate it and do not leave it "in case".
+
 ⚠️ **AND THE CLASS REACHES NUMBERS, NOT JUST CHECKS.** The eighth is the sharpest because nothing
 about it is code: a metric whose population cannot express the comparison it claims to make is worse
 than having no metric, because a founder acts on it. **Before shipping a query, ask what values it
