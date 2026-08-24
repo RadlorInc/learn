@@ -1,3 +1,143 @@
+
+> 🕸️ **2026-08-22 (fourth pass) — THE ENGINE IS 96–98%, SO THE BOTTLENECK IS NOW THE GRAPH — AND THE GRAPH IS STILL v0.9 DRAFT WITH 130 UNVALIDATED EDGES. AUDITED: TWELVE OF THEM DECIDE A GAP, TWENTY-ONE DECIDE NOTHING.** `tsc` 0 · **1444/1444** (+7, 1 skipped by design) · `next build` 0. ✅ SHIPPED 2026-08-23 in `6dd9224`.
+>
+> **The ask:** *"A karo"* — a self-audit of the skill graph, to cut the teacher's checklist down.
+>
+> ## ⓪ THE INSTRUMENT: REMOVE AN EDGE, COUNT THE DIAGNOSES THAT CHANGE
+> Ranking edges by MY OPINION of the pedagogy would have been worth very little. Instead every one
+> of the 130 edges was deleted in turn and all **201 plantable gaps** across the five child bands
+> re-run with a PERFECT answerer (which isolates the graph's contribution from the items' noise).
+> Two numbers per edge: how many children would be told a **different gap**, and how many the same
+> gap with a **different route**. → [docs/skill-graph-audit.md](docs/skill-graph-audit.md).
+>
+> | | |
+> |---|---|
+> | edges that change a GAP if wrong | **12** (top: `p.addTo100 ← e.addWithin10` at 13 of 201) |
+> | edges that change only the ROUTE | 97 |
+> | edges that change **nothing at all** | **21** |
+>
+> ## ① ⚠️⚠️ THE CHECKLIST'S OWN "HIGH-RISK CLAIM" IS 0 ROOTS
+> `docs/skill-graph-validation.md` marks `i.fractionEquiv ← i.multFacts` as its one flagged
+> high-risk claim — *does equivalent fractions truly require fact fluency?* Measured: **0 roots, 16
+> routes.** If it is wrong, not one child is told the wrong gap. It is a real question and it
+> belongs in pass two. **The instinct about which claims are RISKY and the measurement of which are
+> COSTLY do not agree**, which is the whole argument for ranking this way. The checklist now opens
+> with a pointer to the ranking so nobody starts at 130 again.
+>
+> ## ② 🔍 WHAT I THINK IS ACTUALLY WRONG — opinion, flagged as opinion
+> **The top one: `p.subTo100 ← p.addTo100`.** The graph says subtracting within 100 requires
+> *adding* within 100 — they are siblings, not a chain. And **`e.subWithin10` exists as a skill and
+> is nobody's prerequisite**: written down, then never wired to the thing it obviously underpins.
+> That is the shape of an omission. Suggested `p.subTo100 ← [p.placeValue2, e.subWithin10]`, and the
+> edge carries **12 of 201 diagnoses — the second-highest in the graph**.
+> Four more in §3 of the doc: `m.exponentsRoots ← i.factors` (do square roots need primes?),
+> `m.coordinatePlane ← e.numberOrder` (a 12–14 skill reaching back to Pre-K, past five bands),
+> `i.areaPerimeter ← p.shapes2d3d` (rectangle area needs the 2D half, not the 3D one), and
+> **`e.colors` — the one non-mathematics node in a mathematics prerequisite graph**, inert in every
+> direction: no prereqs, no dependents, no item, no probe reaches it.
+>
+> ## ③ ⚠️⚠️ WHAT THIS METHOD CANNOT DO, STATED LOUDLY
+> **It cannot see a MISSING edge.** It tests only the claims that are written down — and a graph is
+> built by writing down what somebody thought of, so the omissions are by definition the things
+> nobody thought of. That is the half a teacher still has to do, and §4.3 of the doc points it at
+> the **20 nodes that rest on a SINGLE claim**, where "is this the only thing a stuck child could be
+> missing?" is most likely to be answered no.
+>
+> ## ④ WHAT IS GATED NOW — `src/__tests__/skillGraphAudit.test.ts`
+> The structural half runs every time: acyclic, no dangling id, no prerequisite pointing UP a band,
+> **exactly one inert node** (so a second cannot drift in), the band skips are the two known ones,
+> the load-bearing order is the one the doc names, and the suspected missing subtraction edge is
+> pinned so FIXING it is a deliberate act. The expensive ranking is behind a flag —
+> `GRAPH_SENSITIVITY=1 npx vitest run src/__tests__/skillGraphAudit.test.ts` — because it is a
+> property of the WHOLE graph and the numbers move when the shape does.
+>
+> ## ▶ OPEN
+> 1. ✅ ~~Not committed~~ — **SHIPPED 2026-08-23** (`6dd9224`).
+> 2. **A teacher still has to red-pen twelve edges.** That is the hour that protects the guarantee,
+>    and nothing in the engine can substitute for it. Until then the 96–98% means *"the engine finds
+>    what the graph says"*, not *"the engine finds the child's real gap"*.
+> 3. Everything from the blocks below still stands.
+
+> 🎯 **2026-08-22 (third pass) — THE GAP FINDER IS NOW **96–98% EXACT** AND MISSES A REAL GAP **0%** OF THE TIME. ⚠️⚠️ AND THE FIRST NUMBER I REPORTED THAT MORNING (81–87%) WAS FLATTERED BY MY OWN TOO-KIND GUESS MODEL — THE HONEST BASELINE WAS 73–75%.** `tsc` 0 · **1437/1437** · `next build` 0 · sw **v136 → v137**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
+>
+> **The ask:** *"jab tak proper gap find karne waala system bane… rukne ki zaroorat naii hai… bas high accuracy gap find karne waala system bane yeh meko chahiye"*.
+>
+> | | morning | now |
+> |---|---|---|
+> | names the EXACT root gap | 26–34% → 81–87%* | **96–98%** |
+> | tells a gapped child they are on track | 10–38% | **0%** |
+> | root one step too SHALLOW (plan starts above the gap) | 12–19%* | **1–2%** |
+> | root one step too DEEP (starts early, climbs) | 5–14% | **1–2%** |
+> | on-grade child wrongly told "a band below" | 6–9% | **0–2%** |
+> | questions, child WITH a gap (median) | 15–27 | **29–50** |
+> | questions, child with NO gap (median) | 9–17 | **20–36** |
+>
+> ## ⓪ ⚠️⚠️ THE INSTRUMENT WAS WRONG BEFORE THE PRODUCT WAS — AGAIN, AND IN MY FAVOUR THIS TIME
+> The morning's gate modelled a child who does not have a skill as passing a TYPED item 3% of the
+> time, flat. That is not a measurement, it is a hope: **a typed answer is only as unguessable as
+> its answer space is wide.** Deriving the rate from what each generator can actually produce
+> dropped the honest figure to **73–75%**, and the same measurement turned up the sharpest bug of
+> the day: **`i.dataGraphs` shuffled a fixed `[2,4,6,9]`, so "how many more" was ALWAYS 7** — one
+> possible answer across every draw the generator could make. The bars varied, so the item looked
+> varied. This repo's own rule, met again from the other side: *the instrument was wrong five times
+> before the app was wrong three* — and a kind instrument is as dangerous as a broken one.
+>
+> ## ① 🎚️ THE RULE: KEEP ASKING UNTIL ONE ANSWER **LEADS** — BY TWO TO PASS, BY **THREE** TO FAIL
+> Not a fixed count. Three designs were built and measured on the way, and each sounds right:
+>
+> | | exact | told "on track" with a real gap | too shallow | on-grade questions |
+> |---|---|---|---|---|
+> | confirm FAILS only (morning) | 73–75% | 3–9% | **12–19%** | 9–17 |
+> | + confirm passes inside a DESCENT | 84–87% | 4–9% | 2–5% | 17–25 |
+> | + confirm passes on SPINE entries | 86–91% | 0–7% | 1–5% | 17–25 |
+> | **+ confirm every answer, asymmetric lead** | **96–98%** | **0%** | **1–2%** | 20–36 |
+>
+> ⚠️ **The asymmetry is the part that is not obvious.** A symmetric "lead of two" fixed the lucky
+> pass and created its mirror — with a 10% slip over thirty questions a double-slip is almost
+> routine, and **8% of ON-GRADE 12–14 children were told their gap sat a whole band below them.** A
+> pass and a fail do not cost the same thing: a pass moves on, a fail sends the search downward and
+> tells a family their child is behind. One more agreeing miss takes that to ~0.1% per skill and
+> costs one extra item on a skill that really is broken — which a broken skill supplies immediately.
+>
+> ## ② 🔢 AND THE ANSWER SPACES WERE WIDENED WHERE THEY WERE NARROW ENOUGH TO GUESS
+> Measured per generator, then fixed: `i.dataGraphs` (1 answer!), `p.fractionsIntro` 3 → ~30,
+> `e.shapes2d` 3 → 5, `i.measureUnits` 5 → five different conversions, plus a dozen more.
+> **Four remaining `pick` items became typed**, because a choice is the only surface left that can
+> be guessed at:
+> - `i.anglesSymmetry` "acute/right/obtuse" (33%!) → *how many degrees away from a square corner* —
+>   ⚠️ and the 90 is deliberately NOT stated, or the item stops being about angles and becomes a
+>   subtraction;
+> - `m.coordinatePlane` "which quadrant" (25%) → read the point's x or y, which also exercises the
+>   sign, the half children actually get wrong;
+> - `a.expressions` → type the coefficient; `a.factoring` → type the smaller root.
+>
+> Only three picks remain and all are honestly categorical: `e.numeralRecog` (naming the glyph IS
+> the skill), `e.patterns`, `c.unitCircleTrig` (its values are surds).
+>
+> ## ③ ⚠️ THE COPY WAS A LIE THE MOMENT THE PROBE GOT LONGER, AND THAT IS PART OF THE CHANGE
+> The intro promised *"a few quick questions"* and the door said *"2 minutes"* — true of a coin flip,
+> false of a 20–50 question placement check. **Copy that undersells the length is worse than copy
+> that oversells it**: a parent promised two minutes abandons at question fifteen and the diagnosis
+> is thrown away. Now *"About ten minutes"*, and the briefing says out loud that Milo asks a few
+> extra whenever he is not sure yet — which is exactly what the engine does.
+>
+> ## ④ WHAT IT COSTS, STATED PLAINLY
+> A child with a gap answers **29–50** questions (17–18 median 50, worst case 70). A child with no
+> gap still answers **20–36**, because every answer is confirmed. Caps are set to the measured p99
+> per band — ⚠️ a cap between p95 and p99 does not shorten anything, it TRUNCATES the one child in a
+> hundred who needed the room, and a truncated search reports whatever it had reached.
+>
+> ## ▶ OPEN
+> 1. ✅ ~~Not committed~~ — **SHIPPED 2026-08-23** (`6dd9224`). `tsc` 0 · 1437/1437 · `next build` 0 · lint clean on every changed file ·
+>    driven end to end (full probe → report, 0 console errors).
+> 2. ⚠️ **This is now a placement TEST, not a check.** 20–36 questions for a child with nothing wrong
+>    is the founder's explicit trade (accuracy over length, stated twice) and it is the thing most
+>    worth watching in real use: if completion drops, the lever is the sweep (3–9 questions) or the
+>    pass-confirmation on sweep leaves, and both are one line.
+> 3. **The 3–5 band is untouched** — its items are parent-observed, so "not yet" is an observation
+>    rather than a miss and nothing is re-asked.
+> 4. Everything from the blocks below still stands.
+
 > 🚚 **2026-08-22 (second pass) — THE TWO MISSING CHAPTERS ARE BUILT. `i.multFacts` — THE MOST LOAD-BEARING NODE IN THE WHOLE 3–18 GRAPH — HAD NO CHAPTER FOR NINE DAYS, AND ~10% OF DIAGNOSED 9–11 CHILDREN ROOTED ON IT. THE CONTENT HOLE IS NOW 0% IN EVERY BAND.** `tsc` 0 · **1436/1436** (+59) · `next build` 0 · lint clean on all new files · sw **v134 → v135**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
 >
 > **The ask:** *"Times Tables + Division chapter ka design bhi same waise hi rakho jaise decimal chapter aur jaise 12-18 age band ke chapters ka hai… daily real world examples"* → then *"dono worlds theek hain, (i) karo — banana shuru karo"*.

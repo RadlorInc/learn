@@ -64,6 +64,12 @@ const EXCLUDED: Record<string, string> = {
   // third-party PII. Handing it out inside a child-data export would disclose someone else's
   // address to satisfy a right that is about the child.
   learner_invites: "an invitation to another adult; contains a third party's email address",
+  // ⚠️ Flagged by this gate on ITS first run too, the day the billing schema landed — which is the
+  // second time it has caught a table nobody thought about. It carries learner_id, and the only
+  // thing a row says about the child is "this one occupies a paid seat". That is the parent's
+  // BILLING allocation, visible on their subscription page; it contains no work, no answers and no
+  // observation of the child, so it does not belong in "everything we hold about your child".
+  subscription_seats: 'the account\u2019s billing allocation; says nothing about the child but that a seat is theirs',
 }
 
 describe('the data export covers every child-data table', () => {

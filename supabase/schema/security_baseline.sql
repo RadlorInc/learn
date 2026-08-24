@@ -49,12 +49,32 @@
 --   learner_stats              rls=t  policies=1
 --   learners                   rls=t  policies=4
 --   profiles                   rls=t  policies=1
---   sessions                   rls=t  policies=2
+--   sessions                   rls=t  policies=2   (INSERT now also requires is_chapter_entitled)
+--   billing_events             rls=t  policies=0   INTENTIONAL, the error_events precedent: RLS on
+--                                                  with ZERO policies = deny-all, service-role only.
+--                                                  Holds Stripe customer ids, event types and
+--                                                  payloads — account-level financial data with no
+--                                                  reason to reach a browser. Advisor reports this
+--                                                  as INFO rls_enabled_no_policy; that is the design.
+--   subscriptions              rls=t  policies=1   SELECT only (account_id = auth.uid()). There is
+--                                                  deliberately NO insert/update/delete policy, and
+--                                                  the default grants are REVOKED so an attempted
+--                                                  self-upgrade RAISES 42501 instead of quietly
+--                                                  matching zero rows.
+--   subscription_seats         rls=t  policies=1   SELECT only, via subscriptions.account_id. Seats
+--                                                  are created by Stripe (service role) and moved
+--                                                  only by reassign_learner_seat().
 
 -- ==== RLS POLICIES (every access predicate is scoped by auth.uid()/jwt email) ====
 --   chapters: select        SELECT  using(true)                          [public catalog]
 --   diagnostic_*            SELECT  using(learner_access join, parent_id = auth.uid())   [owner-scoped, read-only; writes via SECURITY DEFINER RPC]
 --   grades / grade_chapters SELECT/INSERT/UPDATE/DELETE scoped to grades.created_by = auth.uid() (+ learner_access for read)
+--   subscriptions: owner can read       SELECT  using(account_id = auth.uid())          [no write policy exists]
+--   subscription_seats: owner can read  SELECT  using(exists subscriptions where account_id = auth.uid())
+--   sessions: parent can insert         INSERT  check(learner_access AND is_chapter_entitled(learner_id, chapter))
+--   learner_progress: parent access     ALL     using(learner_access) / check(learner_access AND is_chapter_entitled(...))
+--                                               ⚠️ the entitlement is in WITH CHECK only, never USING:
+--                                               a lapsed subscriber keeps READING their child's record.
 --   learner_access: select  SELECT  using(parent_id = auth.uid())
 --   learner_access: insert  INSERT  check(parent_id = auth.uid() AND can_self_grant_access(learner_id, access_role))
 --   learner_access: delete  DELETE  using(learner_id in owned learners)   [V11: owner can revoke]
@@ -111,6 +131,21 @@
 --   As of 2026-08-17: ALL 12 DEFINER functions pin search_path, NONE is anon-callable, and no
 --   function in `public` retains default PUBLIC EXECUTE. Verified against pg_proc.proacl.
 
+--   is_chapter_entitled(uuid,text)      DEFINER  STABLE  search_path=public
+--       THE single definition of "may this be recorded". Called from the sessions INSERT policy, the
+--       learner_progress WITH CHECK, and inside sync_session — one function in three places, because
+--       two guards that are separately written are two guards that drift. sync_session is DEFINER so
+--       RLS does not apply to it; the policy alone would leave the RPC open. REVOKEd from PUBLIC and
+--       anon; EXECUTE to authenticated (required — a policy predicate runs with the caller's rights)
+--       and service_role. ⚠️ Accepted: that grant makes it a one-bit oracle for anyone who already
+--       knows a learner UUID. Non-enumerable ids, and the bit is "is this family paying".
+--   reassign_learner_seat(uuid,uuid)    DEFINER  search_path=public
+--       The only billing write a parent may make. Checks subscriptions.account_id = auth.uid() and
+--       learners.created_by = auth.uid() (entitlement follows created_by), refuses a second
+--       reassignment inside the same billing period, and its single write is an UPDATE of one
+--       existing row — no INSERT, no DELETE — so it is structurally unable to raise the seat count.
+--       REVOKEd from PUBLIC/anon; EXECUTE to authenticated, service_role.
+--
 -- ==== TRIGGERS (public tables) ====
 --   learners.on_learner_created           -> grant_owner_access      (owner gets learner_access on create)
 --   learners.on_learner_created_stats     -> init_learner_stats
