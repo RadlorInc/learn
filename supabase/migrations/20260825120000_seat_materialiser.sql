@@ -72,6 +72,15 @@ $$;
 -- standing rule by `billingSchema.test.ts` for every SECURITY DEFINER function in the schema.
 revoke all on function public.materialize_seats(uuid, int) from public, anon, authenticated;
 
+-- ⚠️⚠️ AND THE GRANT BACK TO `service_role` IS NOT BELT-AND-BRACES — WITHOUT IT THE WEBHOOK CANNOT
+-- CALL THIS AT ALL. The REVOKE above strips the PUBLIC EXECUTE that Postgres creates a function
+-- with, and the only caller that ever should reach it is the Stripe webhook, which arrives through
+-- PostgREST as `service_role`. Whether the revoke also removed service_role's access depends on
+-- Supabase's default privileges — i.e. on something outside this file — so it is stated here rather
+-- than assumed, and rls_regression M7 DRIVES it as `service_role` (M6 drives the refusal for
+-- `authenticated`). A one-sided check would pass on a function nobody can call.
+grant execute on function public.materialize_seats(uuid, int) to service_role;
+
 comment on function public.materialize_seats(uuid, int) is
   'Reconcile a subscription''s seat rows to a target count. Idempotent and order-independent: the '
   'Stripe webhook is at-least-once and may deliver out of order. Service-role only.';

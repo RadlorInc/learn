@@ -8,7 +8,7 @@ The most expensive defect class in this repo is not a bug. It is **something tha
 and isn't** — a gate, grep, guard or test that reports success while examining nothing. It is worse
 than having no check at all, because it is what stops the next person looking.
 
-Thirteen of them across 2026-08-24/25, and the mechanisms have nothing in common. **This table is
+Fourteen of them across 2026-08-24/25, and the mechanisms have nothing in common. **This table is
 meant to grow — a frozen list becomes decoration itself.** Add the next one rather than admiring it:
 
 | what it looked like | what it was |
@@ -24,10 +24,12 @@ meant to grow — a frozen list becomes decoration itself.** Add the next one ra
 | a hand-verification step reported as **passing** | **an artefact that does not contain the feature.** The build under test had no "Skip for now" in its bundle, so the child could not have skipped — the "pass" came from the OLD gate letting them through for its own reasons. ⚠️ Committed by the person READING the results rather than the one producing them, which is the version nobody catches |
 | a browser drive of the plan card, green | **an environment where the failure cannot occur.** The harness used a rejected JWT, so `getLearnerBootstrap` 401'd and the cross-device reconcile — the exact code that wiped the field — never executed. A correct check, pointed at a world where the bug is impossible |
 | an e2e seeding its own fixture, going red | **a check failing about a world that does not exist.** The spec hand-rolled the stored record (`done: string[]`) and the app's shape moved on (`results: DemoResult[]`), so the guard correctly rejected it and the gate reported a defect in working code. The mirror of the inert clause: not a check that cannot fail, but one that fails about nothing — and both spend the same thing, **the reader's trust in a red** |
+| a REVOKE test proving an account cannot call the seat materialiser | **a one-sided permission check.** `M6` asserts `authenticated` is refused — and a function that **nobody at all** can execute satisfies that completely. The one caller it exists for is the Stripe webhook, arriving as `service_role`, which the REVOKE had left with no grant: the first real purchase would have written a perfect subscription row and seated **nobody**, with the suite green. A denial asserted without the matching permission is an absence that was never positive-controlled |
 | a source gate reading `src.slice(at, at + 700)` | **a proxy for the boundary it meant.** A byte budget stands in for "this statement" / "this element", and ANY edit that adds bytes before the target moves it out of the window — after which the gate reports confidently about text it never saw. **Three times in one session** (a policy window running into the next policy; a 700-char slice losing its call when a prop was added above it; a window stopping at the first `) : (` *inside* the ternary it was checking). Not three mistakes — one technique that does not work |
 
 A skip, a shape, a moment, an order, a flag, a dead clause, a wrong target, a one-valued metric, an
-artefact without the feature, a world without the bug, a proxy boundary, a drifted fixture. **You
+artefact without the feature, a world without the bug, a proxy boundary, a drifted fixture, a
+one-sided permission. **You
 cannot learn to spot these by pattern** — nothing about any of them looked wrong, and four
 were written by someone who had just written down the rule that catches them. The only thing
 separating a real check from these is having watched it go red for the reason it exists.

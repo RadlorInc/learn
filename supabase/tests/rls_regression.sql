@@ -706,6 +706,23 @@ begin
       reset role;
       v_asserts := v_asserts + 1;
     end;
+
+    -- M7: ⚠️ THE OTHER HALF OF M6, AND THE HALF THAT FAILS IN PRODUCTION RATHER THAN IN A TEST.
+    -- `service_role` MUST be able to call it — that is the Stripe webhook's only route to a seat,
+    -- through PostgREST. M6 alone is satisfied by a function NOBODY can execute, which looks exactly
+    -- like a well-locked-down one right up until the first real purchase grants no seats. Positive
+    -- control for the grant, driven as the role that will really make the call.
+    set local role service_role;
+    begin
+      perform public.materialize_seats(v_sub_m, 2);
+      reset role;
+    exception when insufficient_privilege then
+      reset role;
+      raise exception 'RLS FAIL M7: service_role cannot call materialize_seats — the webhook cannot seat anyone';
+    end;
+    select count(*) into v_cnt from public.subscription_seats where subscription_id = v_sub_m;
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 2 then raise exception 'RLS FAIL M7b: service_role call left % seats, expected 2', v_cnt; end if;
   end;
 
   -- The machine-readable line CI greps for. Keep the `RLS_ASSERTIONS=` token stable.

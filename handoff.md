@@ -157,6 +157,90 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 💳 **2026-08-25 (third pass) — STAGE 2b: THE PRICE LADDER, THE PRODUCTS, CHECKOUT AND THE WEBHOOK. TEST MODE ONLY, ENFORCED BY A THROW RATHER THAN BY A RULE SOMEBODY REMEMBERS. ⚠️ AND THE SEAT MATERIALISER COULD NOT HAVE BEEN CALLED BY THE ONE CALLER IT EXISTS FOR.** `tsc` 0 · **1575/1576** (was 1535) · `next build` 0 · **12 mutations planted, 12 caught** · `rls_regression` 73 → **74 — EXPECTED, NOT SEEN**: no psql, no Docker, no CLI on this machine, so the SQL half of this is unverified until `ci / rls-tests` reports it. **NOT applied, NOT merged.**
+
+**The ask:** the confirmed amounts, *"record them in a constants module first"*, then **Stage 2b — products, checkout, webhook. Test mode only, as specced.**
+
+## ① ✅ THE LADDER IS WRITTEN DOWN, WHICH IS THE THING STAGE 1 FAILED TWICE
+`src/core/billing.ts` and nowhere else: **monthly $7.99 then $4.99 · annual $63.99 then $39.99**,
+graduated, `up_to: 1` then `up_to: 'inf'` — **the 4-seat cap lives in the app, not in Stripe**, so it
+stays changeable without a new product. Development values; the SHAPE does not move.
+⚠️ **The totals test types the four numbers out** (`$12.98 / $17.97 / $22.96`, `$103.98 / $143.97 /
+$183.96`). Computing `first + extra × (n−1)` would let the ladder *define* what is correct instead of
+being *checked against* it — a restatement, not a check. Proven by mutation: `extra: 599` fails three.
+
+## ② ⚠️⚠️ THE STAGE-2a REVOKE LOCKED OUT THE WEBHOOK, AND M6 WAS SATISFIED BY THAT
+`materialize_seats` carried `revoke all … from public, anon, authenticated` and **no grant back**.
+The webhook reaches it through PostgREST as `service_role`, so the first real purchase would have
+written a perfect `subscriptions` row and seated **nobody** — with the RLS suite green, because
+**M6 asserts an account CANNOT call it and a function nobody can call satisfies that completely.**
+One-sided, and the missing side is the one that fails in production. Fixed with an explicit
+`grant execute … to service_role` and **M7, the positive control**, driven as the role that will
+really make the call. Same family as *positive-control every absence*, one layer down: the check was
+correct and could only ever report good news.
+
+## ③ 🔁 THE WEBHOOK'S THREE PROPERTIES ARE STRUCTURAL, BECAUSE NONE OF THEM SHOWS IN A GREEN RUN
+**Idempotent** — `billing_events.stripe_event_id` is `unique`, so the DATABASE is the authority, not
+a Set in a serverless instance's memory. ⚠️ **Keyed on `processed_at`, not on the row existing**: a
+delivery that logs the event and then dies would otherwise be skipped for ever having done nothing,
+with no error anywhere. **Order-independent** — nothing reads state from the payload; it takes the
+subscription id and **re-fetches from Stripe**, so a late-delivered old event writes today's truth.
+**Convergent** — upsert + a reconciler given a TARGET.
+⚠️ **The grace window is DERIVED (`period_start + 7 days`), never stamped.** `now() + 7 days` moves
+the deadline forward on every redelivery — an at-least-once channel quietly turning a 7-day grace
+into an unbounded one, invisible on every screen.
+⚠️ **`invoice.payment_failed` is deliberately not handled**: a failed renewal already emits
+`customer.subscription.updated`, and a second source of truth buys nothing.
+
+## ④ 🪤 `current_period_start` MOVED OFF THE SUBSCRIPTION
+From API `2025-03-31.basil` (the SDK pins `2026-07-29.dahlia`) the period fields are on the
+**item**. Reading the old place is `undefined` — no error, both periods null — and a null
+`current_period_start` silently deletes **both** the grace window and `reassign_learner_seat`'s
+one-per-period limit. The fixture puts a *different* value in the old place so the item's has to win.
+
+## ⑤ 🧪 DRIVEN, NOT READ — 40 NEW ASSERTIONS, 12 MUTATIONS, 12 CAUGHT
+`src/__tests__/billingStripe.test.ts` drives both routes end to end against a stubbed Stripe and a
+stubbed PostgREST, with a **real signature** from the SDK's own `generateTestHeaderString` (so no test
+depends on my reading of the scheme). C3 is the one only a drive can see: a stale payload saying
+4 seats / `active` against a Stripe currently saying 1 / `past_due` — we write **1**. C8 asserts the
+outbound call list is **empty** on a bad signature, because the status alone passes on a handler that
+writes first and checks after. Mutations caught include *trust the payload*, *key idempotency on the
+row*, *verify after logging*, *take the account from the request body*, and *drop the clamp* — that
+last one matters because `seats_paid` has a CHECK, so an unclamped quantity of 7 fails the INSERT and
+**loses the whole event**.
+
+## ⑥ 🔒 TEST MODE IS A THROW
+`stripeClient()` refuses anything that is not `sk_test_`, and the setup script uses the same
+function, so there is one definition rather than a copy that drifts. Watched it fail for the right
+reason on the real script. No price id is hard-coded (gated, with a positive control). Unset keys →
+**503** everywhere and nothing else in the app notices. ✅ The SDK is **server-only — 0 hits for
+`api.stripe.com` in `.next/static`**, with a positive control proving the search works.
+📄 [docs/billing-stage-2.md](docs/billing-stage-2.md) §5 is the founder's step-3 runbook: create the
+products, `stripe listen`, buy with 4242…, then **check `subscription_seats` has N rows** — the one
+thing that would be empty if ②'s grant were missing while everything else looked perfect.
+
+## ▶ OPEN
+1. ⏸️ **BRANCH `feat/billing-stage-2b`, and it CONTAINS #59's commit** (rebased onto `main`, which had
+   moved). Merging it makes **PR #59 redundant — close it.** Nothing applied, nothing merged.
+2. 🔴 **B12 IS STILL THE FOUNDER'S AND STILL BLOCKS EVERYTHING FROM STEP 1.** Supabase Pro before any
+   live key and before `enforced` is ever true.
+3. ⚠️ **THE SQL HALF IS UNVERIFIED AND MUST NOT BE READ AS GREEN.** ②'s grant and M7 have never run
+   anywhere — I cannot stand up a Postgres here. **Read `RLS_ASSERTIONS=74` off the CI job before
+   believing any of it**, exactly as Stage 2a's block says of 73.
+4. ⏭️ **Next: step 3 — the test-mode purchase, watched.** It needs a Stripe test account and
+   `stripe listen`; the runbook is written. ⚠️ **It cannot show you the paywall** — `enforced` is
+   false, so a seat grants nothing a non-seat does not already have. Entitlement is exercised only in
+   `ci / rls-tests`, with the flag forced on.
+5. ⏭️ **Then Stage 3 = UI**: the lock screen `sync_session`'s 42501 has been owed since Stage 1, a
+   pricing page, the seat manager, and the customer portal.
+6. 🔴 **`DRAFT = true` — the privacy policy and ToS are still placeholders (B1/B2).** You cannot
+   charge a parent under a placeholder ToS, so this blocks going live as hard as B12 does.
+7. 🟡 Vercel Web Analytics still off; the funnel this all hangs off is unmeasured.
+8. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
+9. ⚠️ **Prose drift, rescued from the block archived today rather than lost with it:**
+   `20260817174352_privacy_and_leads_hardening.sql` and `src/app/api/lead/route.ts` still say the
+   anon INSERT revoke has not been applied. It was, on 2026-08-24. Comments only, no behaviour.
+
 > 🧾 **2026-08-25 (second pass) — STAGE 2a: THE SEAT MATERIALISER, THE ONE THING STAGE 1 LEFT DEAD. AND THE WHOLE OF STAGE 2 IS TEST-MODE-ONLY BY FOUNDER'S ORDER — NOTHING IN IT CAN TAKE A REAL CARD.** `tsc` 0 · **1535/1536** · **`ci / rls-tests` 64 → 73 assertions, green on a real Postgres** · **PR [#59](https://github.com/RadlorInc/learn/pull/59) OPEN, NOT MERGED, NOT APPLIED.** 🔴 **BLOCKED on the price ladder — see ▶2.**
 
 ## ① 🪑 `materialize_seats` — A RECONCILER, NOT AN INSERTER, AND THAT IS THE WHOLE DESIGN
@@ -193,8 +277,8 @@ is `sk_test_`, because a rule somebody has to remember is not a constraint.
 
 ## ▶ OPEN
 1. ⏸️ **PR #59 is green and waiting** (`rls-tests` 73, `verify` green). Not merged, not applied.
-2. 🔴 **THE PRICE LADDER IS RECORDED NOWHERE, AND THIS IS THE STAGE-1 PLAN FAILING THE SAME WAY
-   TWICE.** The SHAPE is settled and written down (graduated never volume · 4 seats · USD · tax off);
+2. ✅ ~~**THE PRICE LADDER IS RECORDED NOWHERE**~~ — **CONFIRMED AND WRITTEN DOWN 2026-08-25**, in
+   `src/core/billing.ts`; see the 💳 block above. What follows is why it mattered. The SHAPE is settled and written down (graduated never volume · 4 seats · USD · tax off);
    the AMOUNTS exist only in the founder's head. Needed to finish products, checkout and the totals:
    the monthly ladder per tier, the annual equivalent, and how the annual discount is expressed (its
    own price object, or a % off monthly). **Write them into `billing-stage-2.md` the moment they are
@@ -513,67 +597,4 @@ making the plan's first unmet step always entitled. **Not built — it changes w
 5. 🔴 **B12 (the launch blocker, not the test case) — still no backup of the children's data.**
 6. Everything from the blocks below still stands.
 
-> 🧾 **2026-08-24 (second pass) — THE LEDGER IS REPAIRED, AND THE DIRECTION WAS THE OPPOSITE OF THE ONE PLANNED: 58 REPO FILES MOVED, THE PRODUCTION LEDGER WAS NEVER WRITTEN. ⚠️ `perf_advisors` IS APPLIED AND CLEARED EIGHT LIVE ADVISOR FINDINGS.** `tsc` 0 · **1457/1458** · `next build` 0 · **`db push --dry-run` equivalent: 0 pending.**
-
-**The asks:** apply `perf_advisors` behind the new stale-migration diff · accept the ledger snapshot as the safety net but add *no backups* as a launch blocker · compute the dry-run rather than putting a production password into CI.
-
-## ① ✅ THE STALE-MIGRATION DIFF RAN FOR THE FIRST TIME, AND PASSED
-All five `diag_*` predicates were read off `pg_policies.qual` and compared with what the file would
-write: **identical except the `(select auth.uid())` wrap**, `with_check` null on all five, `cmd`
-SELECT, roles `{public}` — and `diagnostic_engine_schema` is the only other file in the repo that
-touches them, so nothing newer could be reverted. Applied, then verified from the CATALOG, not the
-success flag: five quals now carry `( SELECT auth.uid()`, three indexes exist, and the advisor
-report went **5 `auth_rls_initplan` + 3 `unindexed_foreign_keys` → 0** (three new `unused_index`
-INFOs, which the migration's own closing comment predicts — no traffic yet).
-
-## ② ⚠️⚠️ THE REPAIR WRITES NOTHING TO PRODUCTION — THE PLAN SAID 71 LEDGER UPDATES
-Renaming the repo files reaches the same acceptance test with **zero** production writes, and it is
-what `docs/runbooks/applying-migrations.md` already prescribes. **The ledger holds the true apply
-ORDER; the repo now agrees with it rather than the other way round.** So the snapshot committed
-first (`d880f68`, 73 rows) guards a write that never happened — kept, because it is also the record
-of the pairing. 58 files moved: 57 relabelled to the versions production recorded, plus
-`perf_advisors` at **20260823225313**.
-⚠️ **Checked before renaming: the ledger order is an order-PRESERVING relabelling of all 71
-previously-applied files — no permutation**, so replay order is unchanged. `perf_advisors` is the
-one file that moves, to last, which is safe for the two reasons in ①.
-
-## ③ 🔍 PAIRING BY CONTENT, AND THE TRAP THAT MAKES IT LOOK LIKE MASS DRIFT
-⚠️ **A RAW hash does not compare: the CLI strips comments preceding the first statement** when it
-stores a migration (`index_chapter_fks` is 331 bytes on disk, 173 in the ledger), so only **13 of
-72** files matched raw. Strip `--` comments and all whitespace from both sides and **68 of 72 pair
-exactly**; the other four are each explained (two amended in the repo after they ran, two split into
-a pair of rows by production, and `perf_advisors`, which had never run anywhere). Name-only pairing
-would have marked that last one applied and lost it for ever — which is the whole argument.
-Two remote-only rows survive by design (`grades_pin_touch_search_path`, `sync_recheck`) and two rows'
-`name` columns disagree with the repo filename on purpose; both tables are in
-[docs/schema-baseline-debt.md](docs/schema-baseline-debt.md).
-
-## ④ 🧮 THE DRY-RUN, COMPUTED RATHER THAN CREDENTIALLED
-No `SUPABASE_ACCESS_TOKEN` or DB password went into CI. `db push --dry-run` does one thing — compare
-local filename versions against `schema_migrations.version` — so the set difference IS the command:
-**74 ledger rows, 72 repo files, LOCAL-not-in-REMOTE = 0, REMOTE-not-in-LOCAL = 2** (the split-point
-rows). Both directions and the exact query are written out in the debt doc. The founder will run the
-real command later as confirmation, not as a gate.
-
-## ⑤ 🔴 "NO BACKUPS" IS NOW LAUNCH BLOCKER **B12**, NOT A NICE-TO-HAVE
-Founder's call and his words: *we cannot take a parent's money for a service whose entire record of
-their child's progress has no recovery path.* Supabase Pro is $25/month for daily backups + 7-day
-PITR and is already in the cost model. ⚠️ `baseline_schema.sql` returns the STRUCTURE and **none of
-the data** — it must not be read as a backup, and neither must the ledger snapshot.
-
-## ▶ OPEN
-1. ⏳ **The RLS suite has not yet looked at this.** It only runs on a PR to `main`, and the branch
-   `chore/ledger-repair` is pushed with PR **#51** open for exactly that. Read `ci / rls-tests`
-   before merging — it is the thing that caught the last regression in four minutes.
-   ⚠️ Note it has ALWAYS replayed `perf_advisors` (it replays repo files, and the file existed), so
-   CI's database has been ahead of production on those five policies for days; what is new to it is
-   the file moving to last.
-2. 🔴 **B12 — still no backup of the children's data.** Now blocking, and one dashboard toggle.
-3. ⚠️ Three migration comments and `src/app/api/lead/route.ts` still say the anon INSERT revoke
-   "cannot be applied until SUPABASE_SERVICE_ROLE_KEY is set" — it was applied yesterday. Prose
-   drift, not behaviour; a chip is filed.
-4. ✅ ~~Stage 1 next~~ — **BUILT, PR #52** (see the 🧾💳 block above): `last_reassigned_at`, the
-   divergence case, and the free-set proposal against the AR constraint. Not applied, not merged.
-5. Everything from the blocks below still stands.
-
-_Older sessions (2026-06-15 → **2026-08-24**, including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-24**, including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
