@@ -1,4 +1,129 @@
 > 🔬 **2026-08-22 (fifth pass) — "MEKO YEH TENSION HAI KI YEH SAHI KAAM KAR RAHA HAI YAA NAII." SO THE ENGINE WAS DRIVEN AGAINST SEVEN DIFFERENT CHILDREN, FIVE OF WHICH IT WAS NOT DESIGNED FOR. IT DEGRADES GRACEFULLY — AND TWO REAL WEAKNESSES FELL OUT.** No code changed; this pass is measurement and one honest admission.
+
+> 🚦 **2026-08-23 — "PRODUCTION MEIN JAANE KE LIYE TAIYYAR HAI?" — THE CODE IS; THE THINGS AROUND IT ARE NOT. ⚠️⚠️ THREE WORKFLOWS REPORT GREEN WHILE DOING NOTHING, THE ERROR SINK WRITES NOWHERE (PROVED WITH A LIVE PROBE), AND EIGHT CHAPTERS COULD NOT BE STARTED ON A LANDSCAPE PHONE.** `tsc` 0 · **1444/1444** · `next build` 0 · **218/218 e2e** vs a production build (7.2 min, foreground) · lint baseline unchanged. ✅ **SHIPPED — `main`@`6dd9224`, 3 commits; and it carried the NINE-commit backlog with it, so the 96–98% diagnostic and both new 9–11 chapters are LIVE at last.** `ci / verify` **green for the first time since 2026-08-20**; prod serving **sw v138**.
+>
+> **The asks:** *"Performance, scalability, responsive… deeply check karo"* → *"haan yeh fix kar do aur nightly failures triage karo"*.
+>
+> ## ⓪ ⚠️⚠️ THE THREE GREEN TICKS THAT DO NOTHING — THIS IS THE FINDING OF THE DAY
+> Every one warns and `exit 0`, so the Actions list shows success:
+> - **`backup.yml`** — `SUPABASE_ACCESS_TOKEN` / `BACKUP_PASSPHRASE` / `PROD_PROJECT_REF` unset →
+>   *"Backup not configured"*, **8 seconds, green, zero bytes.** The free plan has no downloadable
+>   backup and no PITR, so **there is still no recoverable copy of the children's data** — and now
+>   the dashboard says there is, which is worse than the honest nothing it replaced.
+> - **`ci.yml` → `rls-tests`** — `SUPABASE_DB_URL` unset → skipped. The suite that proves the
+>   database denies a cross-tenant attacker, on a children's app, **has never run.**
+>   ✅ **FIXED 2026-08-24** — CI stands up its own Postgres; 17 assertions; an empty run now fails.
+> - **`deploy.yml` → migrate-staging/prod** — `if: vars.STAGING_PROJECT_REF != ''`, never set.
+>
+> ⚠️ **And `ci / verify` is genuinely RED on every push since 2026-08-20 while Vercel deploys anyway**
+> (its git integration is independent of the workflow), so a red pipeline stopped nothing — it only
+> meant a real failure could no longer be told from the flake. Cause found and fixed: `vitest.config.ts`
+> set no `testTimeout`, and `questionQualitySweep`'s Q6 on `measurementUnits` measures **1959 ms here**
+> against a ~3× slower runner. `testTimeout: 20_000`, **mutation-proved** — at 500 ms it fails with the
+> exact CI error, at 20 s it passes.
+>
+> ## ① 🔴 PRODUCTION ERROR MONITORING IS DEAD, AND IT WAS PROVED RATHER THAN INFERRED
+> POSTed a probe to the live `/api/report-error`: **`{"ok":true}` HTTP 200, and `error_events` stayed
+> at 0 rows.** `SUPABASE_SERVICE_ROLE_KEY` is not set on Vercel, `MONITORING_INGEST_URL` is unset, and
+> the route swallows its own errors by design — so every client crash goes only to Vercel runtime logs.
+> **Vercel Web Analytics is also not enabled** (404). Launch day is blind. Blockers B5/B7 stand.
+>
+> ## ② 📱 EIGHT CHAPTERS COULD NOT BE STARTED ON A LANDSCAPE PHONE — SHIPPED, AND ON PROD NOW
+> The GameShell **start card** renders its start button at **y 284–330 of 320** at 640×320 — ten pixels
+> below the fold, stable across four seconds and every font-load state — in `conicSections`,
+> `systemsMatrices`, `systemsOfEquations`, `quadraticAnalysis`, `expLogFunctions`, `unitCircleTrig`,
+> `trigGraphsIdentities`, `statsInference`. First screen of the chapter, only forward control.
+> **The start card is the one stage with no `FitSlot`, so its spacing IS its height:** two 18px gaps is
+> 36px of pure spacing on a 320px screen. `gap: short ? 8 : 18` → **−10px becomes +10px in all eight**,
+> with `justify-content: safe center` and `overflowY: auto` on the start stage as backstops. 1280×720
+> untouched (165px clearance).
+> ⚠️ **`all-chapters` reported all 70 clean because it grades a screen it never loaded** — it clicks the
+> biggest control and measures 900 ms later, which on these routes lands on the **ExploreStep, one
+> screen earlier**, which fits fine. New gate **`e2e/start-card.spec.ts`** names the screen, enters it
+> deliberately and asserts it ARRIVED; wired into `nightly-e2e.yml` beside `all-chapters`.
+> Mutation-proved: reverting the gap fails all eight with a readable message.
+>
+> ## ③ 🏃 THE OTHER HALF OF THE NIGHTLY WAS THE GATE BEING WRONG
+> `counting` failed at 1280×720 and 640×320 on an unlabelled `BUTTON`. Measured: answer creatures
+> **parked off-stage** at x −332..−78 and 1358..1612 with `transition: left 2.6s linear` — this file's
+> own first rule, *nothing materialises, a creature arrives on its own legs*. They spawn ~4 s after
+> entering, so a fast machine measured before the parade and the slow runner after: **the check was
+> racing the chapter working correctly.** Vertical straddle still fails; horizontal now exempts only
+> what declares itself in motion, and the message names its AXIS (the old one printed a y-range for a
+> horizontal violation, which is what made two nights unreadable).
+> ⚠️ **My first exemption also matched `all` — and `← Menu` computes `transition-property: all` with
+> `duration: 0s`, i.e. every styled button.** Mutating the bound to `r.right > 1` then flagged NOTHING,
+> which is what a check that has exempted the whole world looks like from outside: green. The test is
+> the property AND a real duration. Caught by mutation, not by reading.
+>
+> ## ④ ✅ WHAT ACTUALLY HELD UP (measured, not assumed)
+> `npm audit --omit=dev` **0 vulnerabilities** · security headers live on prod (CSP enforced, HSTS
+> preload, `X-Frame-Options: DENY`, nosniff, Permissions-Policy) · image optimisation **583 KB PNG →
+> 81 KB AVIF (7.2×)** · per-route brotli JS **259–285 KB**, chapters code-split · landing page load
+> 1.17 s / 397 KB / 22 requests, `lang` set, 0 images without alt, 0 unlabelled buttons · **retention
+> crons alive, 71 successful runs**, `learner_events` bounded at 90 days · `can_self_grant_access`
+> inspected and sound (the advisor warning is a false positive) · rate limiting live on both public
+> POST routes · sw bumped **v137 → v138**.
+> ✅ **`radlor.com` now HAS mail DNS** — MX → Microsoft 365, SPF, DMARC `p=quarantine`. The standing
+> *"no MX record"* warning was stale; `docs/launch-plan.md` B11 corrected in place.
+>
+> ## ⑤ 🐛⚠️⚠️ I BROKE THE 2026-08-21 `pgrep` RULE, THEN BROKE IT AGAIN INSIDE MY OWN FIX
+> I waited on runs with `pgrep -f "playwright test e2e/all-chapters"` — **which matches the waiting
+> shell's own command line.** Waiters kept each other alive; one reported 46 minutes elapsed for a run
+> that had long finished, and I nearly diagnosed a hung suite from it.
+> ⚠️ **The expensive half is what I did next.** I "fixed" it by polling
+> `pgrep -f "chrome-headless-shell"` instead, reasoning that only the browser has that string — and
+> then wrote that string into the waiter's own command line. Same deadlock, one layer along, and this
+> time it burned **an hour**: six waiters watching each other, no browser and no playwright process
+> alive, and the run that was gated behind them (`until … ; then re-verify`) **never started at all**.
+> The founder spotted the pile of chips; `pgrep -fl` showed four "chrome-headless-shell" processes that
+> were all zsh.
+> **The rule is not "pick a better pattern" — ANY pattern you put in the waiting command is a pattern
+> the waiter matches.** Poll the ARTEFACT (the output file), not a process; or run the thing in the
+> foreground, which is what finally produced the number. And a waiter that never exits does not just
+> waste time: it silently swallows whatever was chained after it.
+>
+> ## ⑥ 🚀 SHIPPED, AND VERIFIED ON THE LIVE SITE RATHER THAN ASSUMED
+> Pushed `9cc7787..6dd9224` — **9 commits**, six of which had been sitting on `main` for two days.
+> The Deploy workflow came back **`ci / verify: success`**, which is the real proof of the
+> `testTimeout` fix: it could only ever be proven on the slow runner that was failing.
+>
+> | checked on `https://adaptivelearn.radlor.com` | |
+> |---|---|
+> | `sw.js` VERSION | **v138** — the launch runbook's own "did it actually land" check |
+> | `Switch it on →` @ 640×320 | **264–310 of 320, +10px clear** (was 284–330, −10px), `safe center` applied |
+> | The Packing Shed / The Minibus Run | `200` at `?c=timesTables` and `?c=division` |
+> | the diagnostic door | *"FREE · ABOUT 10 MINUTES · NO ACCOUNT NEEDED"* — the rebuild is live |
+> | console errors on `/diagnostic` | 0 |
+>
+> ⚠️ **`ci / rls-tests` also reported `success` in that same run and executed nothing** — see ⓪. The
+> pipeline being green is now evidence about `verify` and about nothing else.
+>
+> ## ▶ OPEN — the honest launch verdict
+> 1. ✅ ~~Not committed / production behind~~ — **DONE.** Prod is `6dd9224` and verified (§⑥).
+>    ⏭️ **The next thing to look at is TONIGHT'S NIGHTLY**, which now runs `start-card` beside
+>    `all-chapters`. Green tomorrow = the two-night red is genuinely closed; red = the gate triage
+>    in §③ missed something and the traces are on the run.
+> 2. 🔴 **NO BACKUPS.** Three secrets in GitHub settings turns `backup.yml` real. Highest-value hour.
+> 3. 🟡 ~~Blind in production~~ — **HALF CLOSED 2026-08-24.** `SUPABASE_SERVICE_ROLE_KEY` is live and
+>    `error_events` receives rows (proved with a probe). **Vercel Web Analytics is still off.**
+> 4. 🔴 **`DRAFT = true`** — privacy policy and ToS are still placeholders (B1/B2). Hard blocker for
+>    marketing math to under-13s.
+> 5. ✅ ~~`SUPABASE_DB_URL` so the RLS suite actually runs~~ — **SOLVED DIFFERENTLY 2026-08-24.** No
+>    secret needed: CI stands up its own Postgres with `supabase db start`. 17 assertions, and the
+>    job now fails if the suite runs nothing.
+> 6. **Supabase free plan** — pauses on inactivity, 500 MB cap, no PITR, DB in Sydney while functions
+>    run in Virginia. Pro before real traffic.
+> 7. 🟢 **`getInsightsRawRows` has no `.limit()`** — MILDER THAN FILED: measured 2026-08-24,
+>    `pgrst.db_max_rows` is UNSET on this project, so PostgREST does not silently truncate. Still
+>    unbounded in principle; fallback path only.
+> 8. **The diagnostic writes its session row only on completion** — the probe is now 20–50 questions
+>    and abandonment is invisible. Still the most important unmeasured number.
+> 9. ⚠️ Dependabot has a PR bumping **TypeScript 7, eslint 10, jsdom 30** in one batch. Do not merge
+>    as a batch.
+> 10. Everything from the blocks below still stands.
+
+
 >
 > **The asks:** *"yeh hata de kya pura? kyuki yeh rule based hai aur meko kuch samjh naii rha hai"* →
 > *"meko wohi tension hai ki yeh sahi kaam kar raha yaa naii… iska hi darr hai"*.

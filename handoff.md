@@ -102,6 +102,16 @@
 > **Until that hour happens, 96–98% means "the engine finds what the graph says", NOT "the engine
 > finds the child's real gap."**
 >
+> 🚪 **AND SINCE 2026-08-25 IT IS OPTIONAL.** Nobody is forced through it: the offer carries a
+> one-tap "Skip for now" that issues a `gradeStartPlan`, and it is re-offered exactly once (on the
+> menu, after the child finishes a plan chapter) before retiring to the parent dashboard. **The
+> probe itself is completely unchanged** — not shortened, no new modes, both 17–18 doors, the
+> never-say-"on-track" rule intact. The short pass was measured and REJECTED as a length lever: it
+> misses a third to a half of gaps in the bands where it saves any time, and 17–18 has none at all.
+> ⚠️ So *"the diagnostic routes a child to their root gap"* is now true only of the children whose
+> parents chose it; everybody else walks a grade-start plan that `advanceAfterChapter` refines from
+> real play. Both are plans — nobody is handed 72 chapters.
+>
 > ✅ **AND IT IS LIVE NOW** — pushed 2026-08-23 as part of `9cc7787..6dd9224`. Production serves the
 > 96–98% probe; verified on the live site (the door reads *"about 10 minutes"*, 0 console errors).
 > The caveats above are unchanged by shipping: the numbers are still simulated and the graph is still
@@ -146,6 +156,90 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
+
+> 🚪 **2026-08-25 — THE FUNNEL: THE CHECK BECAME OPTIONAL, THE DEMO ROUTE SHIPPED, AND SIGNING UP NOW CARRIES THE PLAY ONTO THE ACCOUNT. ⚠️⚠️ AND THE THREE-MONTH `onComplete` P0 TURNED OUT TO HAVE LEFT ITS CORPSE IN PLACE — I WAS THE NEXT CALLER TO TRUST IT.** `tsc` 0 · **1535/1536** · `next build` 0 · e2e demo **3/3** + adaptive **2/2** · **9 commits, pushed** · prod **sw v145**.
+
+**The asks, in order:** the pipeline decision · door 2 · durable resume · *"the check stays exactly as it is, unchanged, and becomes optional"* · the demo route · the local→server adopt.
+
+## ⓪ 🧯 THE CHECK-SHAPED DEFECT CLASS IS NOW THE TOP OF CLAUDE.md, AND IT GREW TO THIRTEEN
+Founder's call: the through-line is the organising principle, not a list. **A check is not a check
+until you have watched it fail for the right reason. Green is not evidence. Present is not
+enforcing. Found-nothing is not clean.** The instances are keyed on MECHANISM — a skip, a shape, a
+moment, an order, a flag, a dead clause, a wrong target, a one-valued metric, an artefact without
+the feature, a world without the bug, a proxy boundary, a drifted fixture — because *the point is
+that pattern-matching will not find the next one.* **The table is meant to grow.**
+⚠️ **#11 IS A DIFFERENT ANIMAL AND HAS ITS OWN SECTION**: not a check that cannot fail but **a wire
+that is not connected while both ends read as connected** — see ②.
+
+## ① 🎚️ THE CHECK IS OPTIONAL, AND THE SHORT PASS WAS MEASURED AND REJECTED
+The founder had argued FOR forcing it, and reversed himself on the numbers: forcing was defensible
+only while a MIDDLE option existed. Measured, the spine-only short pass is a bad trade in every band
+— 6–8 halves the length and misses **45%** of gaps (exact 95% → 53%), 9–11 misses 32%, and **17–18
+has no short pass at all** (`PROBE_SWEEP['17-18']` is empty, so spine IS the full agenda; a "quick
+check" button there is a control that changes nothing).
+So: **the check is untouched — not shortened, no new modes** — and skipping is one tap with no
+confirmation. ⚠️ **OPTIONAL MUST NOT MEAN PLANLESS**: a skip issues `gradeStartPlan(band)`, and
+`ActivePlan.source` now records where a plan came from, because *"Milo picked this to close the gap"*
+is a straight falsehood after a skip. Re-offered ONCE, on the menu, after the child finishes a plan
+chapter; a second decline retires it to the parent dashboard for good.
+📊 Metrics + **pre-registered interpretations** in [docs/checkup-optional-metrics.md](docs/checkup-optional-metrics.md).
+
+## ② ⚠️⚠️ THE `onComplete` P0 LEFT A CORPSE, AND IT WAS STILL WARM
+`ChapterProps.onComplete` has been in every chapter's signature since the beginning; both registry
+factories took it as `_props` and dropped it. **That is the P0 that stalled every child's plan for
+three months.** It was fixed by moving the pointer into `finishAndSync` — correct — **and left the
+prop in place, still typed, still passed, still discarded.** `/demo` is the next caller, and cannot
+use `finishAndSync` at all (a logged-out visitor has no learner: `if (!learner) return`).
+**What makes it its own class is that it is invisible from BOTH ends.** The caller believes it passed
+a handler; the chapter shows its end screen either way. Only an e2e that plays a chapter to its end
+and asserts *the demo advanced* can see it.
+⚠️⚠️ **AND WAKING IT WOULD HAVE BROKEN ALL 72 CHAPTERS.** `/game`'s dormant `handleComplete` set
+`chapterDone`, and the mount read `{!chapterDone && playingChapter && …}` — so the moment the wire
+was connected, every chapter would have **unmounted the instant a child finished it**, taking its
+own end screen with it. **Dead code is a trap with a timer somebody else starts.** Flag deleted.
+
+## ③ 🚪 THE DEMO ROUTE, AND THE ADOPT THAT MAKES IT WORTH ANYTHING
+`/demo`: band picker → the first two chapters of that band's `gradeStartPlan` (**the same plan a
+skipper gets — no second curriculum to drift**), minus anything AR → then the account. No email, no
+name, no account up front. The wall says what an account BUYS, never that the demo is spent.
+`adoptDemoRun` runs at learner creation beside the pending-diagnostic replay it is modelled on: a
+session per played chapter with stars/XP recomputed via the pure `scoreChapter`, and the plan's
+pointer walked past what they played. ⚠️ **Peek-then-consume-on-match** — a band mismatch LEAVES the
+run stashed. ⚠️ **A diagnosis outranks the demo for the PLAN**; the sessions are adopted either way.
+⚠️ `GuardedChapter` gives `/demo` and `/teen-preview` **one** camera guard — two copies is the day
+they disagree, and the disagreement shows a logged-out child a camera button.
+
+## ④ 💾 DURABLE RESUME + 17–18's DOOR 2
+The probe's resume moved from per-tab sessionStorage to **kv, per learner, 7-day TTL** — the old
+comment argued for sessionStorage and was right when the probe was short; at 20–50 questions
+"abandoned" means "ran out of evening". ⚠️ Across sittings it is **OFFERED, never applied** (silently
+reopening question 26 leaves no route to a fresh check). Door 2 seeds the probe at a strand the
+student names — `strandChoices` derives them from the spine, 17–18 only.
+
+## ⑤ 🚦 THE PIPELINE: DECIDED, NOT BUILT
+✅ **`migrate-prod` gets its own `production-db` environment**, created WITH its reviewer rule at
+enable time and not before. ⚠️ **The casing trap in the last handoff was NOT REAL** — GitHub matches
+environment names case-insensitively (measured). What IS real: `Production` is **Vercel's** (68
+deployments), so a reviewer there would gate the whole site's deploy path to protect a schema apply,
+and the first wedged hotfix removes it — taking the database protection with it.
+
+## ⑥ 🧹 EVERY CHARACTER WINDOW IS GONE FROM THE GATES
+Three in one session reported on text they never saw. Swept all 12 sites onto
+`src/__tests__/_window.ts` (`balanced` / `element` / `strip`). ⚠️ **A negated class is also a proxy**
+— `[^>]*` is a real bound in SQL and a lie in JSX, because `=>` contains a `>`.
+
+## ▶ OPEN
+1. 🔴 **B12 IS THE ONLY THING BLOCKING, AND IT IS THE FOUNDER'S.** Supabase Pro before `enforced` is
+   ever flipped true and before any live Stripe key exists. It also gates the pipeline (⑤).
+2. ✅ **The smoke test passed** (2026-08-25): a chapter played to completion on an established
+   account, stars saved — progress writes survive the billing guard with the flag off. First time
+   anybody had watched it.
+3. ⏭️ **STAGE 2 — STRIPE, TEST MODE ONLY.** Founder's hard constraint: no live keys, no live
+   products, no live webhook, nothing that can take a real card, for the WHOLE stage. Live keys are
+   a deliberate later step — after B12, after the fingerprint check, and after the founder has
+   watched a test-mode purchase end to end.
+4. ⚠️ **NINE DEPENDABOT PRs STILL OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
+5. ⚠️ Accepted limitation, unchanged: RLS gates the RECORD, not chapter CONTENT.
 
 > 💳 **2026-08-24 (fourth pass) — THE BILLING SCHEMA IS APPLIED TO PRODUCTION AND COMPLETELY INERT. ⚠️⚠️ CAPTURING THE ROLLBACK CAUGHT MY OWN MIGRATION SILENTLY REVERTING A SECURITY FIX, FOUR HOURS AFTER I WROTE THE RULE THAT CATCHES IT.** `tsc` 0 · **1477/1478** · `ci / rls-tests` **64 assertions** · ledger **74 → 76**. **6 PRs merged** (#51–#56).
 
@@ -544,127 +638,4 @@ the data** — it must not be read as a backup, and neither must the ledger snap
 >    the JavaScript. Do NOT move question generation server-side.
 > 8. Everything from the blocks below still stands.
 
-> 🚦 **2026-08-23 — "PRODUCTION MEIN JAANE KE LIYE TAIYYAR HAI?" — THE CODE IS; THE THINGS AROUND IT ARE NOT. ⚠️⚠️ THREE WORKFLOWS REPORT GREEN WHILE DOING NOTHING, THE ERROR SINK WRITES NOWHERE (PROVED WITH A LIVE PROBE), AND EIGHT CHAPTERS COULD NOT BE STARTED ON A LANDSCAPE PHONE.** `tsc` 0 · **1444/1444** · `next build` 0 · **218/218 e2e** vs a production build (7.2 min, foreground) · lint baseline unchanged. ✅ **SHIPPED — `main`@`6dd9224`, 3 commits; and it carried the NINE-commit backlog with it, so the 96–98% diagnostic and both new 9–11 chapters are LIVE at last.** `ci / verify` **green for the first time since 2026-08-20**; prod serving **sw v138**.
->
-> **The asks:** *"Performance, scalability, responsive… deeply check karo"* → *"haan yeh fix kar do aur nightly failures triage karo"*.
->
-> ## ⓪ ⚠️⚠️ THE THREE GREEN TICKS THAT DO NOTHING — THIS IS THE FINDING OF THE DAY
-> Every one warns and `exit 0`, so the Actions list shows success:
-> - **`backup.yml`** — `SUPABASE_ACCESS_TOKEN` / `BACKUP_PASSPHRASE` / `PROD_PROJECT_REF` unset →
->   *"Backup not configured"*, **8 seconds, green, zero bytes.** The free plan has no downloadable
->   backup and no PITR, so **there is still no recoverable copy of the children's data** — and now
->   the dashboard says there is, which is worse than the honest nothing it replaced.
-> - **`ci.yml` → `rls-tests`** — `SUPABASE_DB_URL` unset → skipped. The suite that proves the
->   database denies a cross-tenant attacker, on a children's app, **has never run.**
->   ✅ **FIXED 2026-08-24** — CI stands up its own Postgres; 17 assertions; an empty run now fails.
-> - **`deploy.yml` → migrate-staging/prod** — `if: vars.STAGING_PROJECT_REF != ''`, never set.
->
-> ⚠️ **And `ci / verify` is genuinely RED on every push since 2026-08-20 while Vercel deploys anyway**
-> (its git integration is independent of the workflow), so a red pipeline stopped nothing — it only
-> meant a real failure could no longer be told from the flake. Cause found and fixed: `vitest.config.ts`
-> set no `testTimeout`, and `questionQualitySweep`'s Q6 on `measurementUnits` measures **1959 ms here**
-> against a ~3× slower runner. `testTimeout: 20_000`, **mutation-proved** — at 500 ms it fails with the
-> exact CI error, at 20 s it passes.
->
-> ## ① 🔴 PRODUCTION ERROR MONITORING IS DEAD, AND IT WAS PROVED RATHER THAN INFERRED
-> POSTed a probe to the live `/api/report-error`: **`{"ok":true}` HTTP 200, and `error_events` stayed
-> at 0 rows.** `SUPABASE_SERVICE_ROLE_KEY` is not set on Vercel, `MONITORING_INGEST_URL` is unset, and
-> the route swallows its own errors by design — so every client crash goes only to Vercel runtime logs.
-> **Vercel Web Analytics is also not enabled** (404). Launch day is blind. Blockers B5/B7 stand.
->
-> ## ② 📱 EIGHT CHAPTERS COULD NOT BE STARTED ON A LANDSCAPE PHONE — SHIPPED, AND ON PROD NOW
-> The GameShell **start card** renders its start button at **y 284–330 of 320** at 640×320 — ten pixels
-> below the fold, stable across four seconds and every font-load state — in `conicSections`,
-> `systemsMatrices`, `systemsOfEquations`, `quadraticAnalysis`, `expLogFunctions`, `unitCircleTrig`,
-> `trigGraphsIdentities`, `statsInference`. First screen of the chapter, only forward control.
-> **The start card is the one stage with no `FitSlot`, so its spacing IS its height:** two 18px gaps is
-> 36px of pure spacing on a 320px screen. `gap: short ? 8 : 18` → **−10px becomes +10px in all eight**,
-> with `justify-content: safe center` and `overflowY: auto` on the start stage as backstops. 1280×720
-> untouched (165px clearance).
-> ⚠️ **`all-chapters` reported all 70 clean because it grades a screen it never loaded** — it clicks the
-> biggest control and measures 900 ms later, which on these routes lands on the **ExploreStep, one
-> screen earlier**, which fits fine. New gate **`e2e/start-card.spec.ts`** names the screen, enters it
-> deliberately and asserts it ARRIVED; wired into `nightly-e2e.yml` beside `all-chapters`.
-> Mutation-proved: reverting the gap fails all eight with a readable message.
->
-> ## ③ 🏃 THE OTHER HALF OF THE NIGHTLY WAS THE GATE BEING WRONG
-> `counting` failed at 1280×720 and 640×320 on an unlabelled `BUTTON`. Measured: answer creatures
-> **parked off-stage** at x −332..−78 and 1358..1612 with `transition: left 2.6s linear` — this file's
-> own first rule, *nothing materialises, a creature arrives on its own legs*. They spawn ~4 s after
-> entering, so a fast machine measured before the parade and the slow runner after: **the check was
-> racing the chapter working correctly.** Vertical straddle still fails; horizontal now exempts only
-> what declares itself in motion, and the message names its AXIS (the old one printed a y-range for a
-> horizontal violation, which is what made two nights unreadable).
-> ⚠️ **My first exemption also matched `all` — and `← Menu` computes `transition-property: all` with
-> `duration: 0s`, i.e. every styled button.** Mutating the bound to `r.right > 1` then flagged NOTHING,
-> which is what a check that has exempted the whole world looks like from outside: green. The test is
-> the property AND a real duration. Caught by mutation, not by reading.
->
-> ## ④ ✅ WHAT ACTUALLY HELD UP (measured, not assumed)
-> `npm audit --omit=dev` **0 vulnerabilities** · security headers live on prod (CSP enforced, HSTS
-> preload, `X-Frame-Options: DENY`, nosniff, Permissions-Policy) · image optimisation **583 KB PNG →
-> 81 KB AVIF (7.2×)** · per-route brotli JS **259–285 KB**, chapters code-split · landing page load
-> 1.17 s / 397 KB / 22 requests, `lang` set, 0 images without alt, 0 unlabelled buttons · **retention
-> crons alive, 71 successful runs**, `learner_events` bounded at 90 days · `can_self_grant_access`
-> inspected and sound (the advisor warning is a false positive) · rate limiting live on both public
-> POST routes · sw bumped **v137 → v138**.
-> ✅ **`radlor.com` now HAS mail DNS** — MX → Microsoft 365, SPF, DMARC `p=quarantine`. The standing
-> *"no MX record"* warning was stale; `docs/launch-plan.md` B11 corrected in place.
->
-> ## ⑤ 🐛⚠️⚠️ I BROKE THE 2026-08-21 `pgrep` RULE, THEN BROKE IT AGAIN INSIDE MY OWN FIX
-> I waited on runs with `pgrep -f "playwright test e2e/all-chapters"` — **which matches the waiting
-> shell's own command line.** Waiters kept each other alive; one reported 46 minutes elapsed for a run
-> that had long finished, and I nearly diagnosed a hung suite from it.
-> ⚠️ **The expensive half is what I did next.** I "fixed" it by polling
-> `pgrep -f "chrome-headless-shell"` instead, reasoning that only the browser has that string — and
-> then wrote that string into the waiter's own command line. Same deadlock, one layer along, and this
-> time it burned **an hour**: six waiters watching each other, no browser and no playwright process
-> alive, and the run that was gated behind them (`until … ; then re-verify`) **never started at all**.
-> The founder spotted the pile of chips; `pgrep -fl` showed four "chrome-headless-shell" processes that
-> were all zsh.
-> **The rule is not "pick a better pattern" — ANY pattern you put in the waiting command is a pattern
-> the waiter matches.** Poll the ARTEFACT (the output file), not a process; or run the thing in the
-> foreground, which is what finally produced the number. And a waiter that never exits does not just
-> waste time: it silently swallows whatever was chained after it.
->
-> ## ⑥ 🚀 SHIPPED, AND VERIFIED ON THE LIVE SITE RATHER THAN ASSUMED
-> Pushed `9cc7787..6dd9224` — **9 commits**, six of which had been sitting on `main` for two days.
-> The Deploy workflow came back **`ci / verify: success`**, which is the real proof of the
-> `testTimeout` fix: it could only ever be proven on the slow runner that was failing.
->
-> | checked on `https://adaptivelearn.radlor.com` | |
-> |---|---|
-> | `sw.js` VERSION | **v138** — the launch runbook's own "did it actually land" check |
-> | `Switch it on →` @ 640×320 | **264–310 of 320, +10px clear** (was 284–330, −10px), `safe center` applied |
-> | The Packing Shed / The Minibus Run | `200` at `?c=timesTables` and `?c=division` |
-> | the diagnostic door | *"FREE · ABOUT 10 MINUTES · NO ACCOUNT NEEDED"* — the rebuild is live |
-> | console errors on `/diagnostic` | 0 |
->
-> ⚠️ **`ci / rls-tests` also reported `success` in that same run and executed nothing** — see ⓪. The
-> pipeline being green is now evidence about `verify` and about nothing else.
->
-> ## ▶ OPEN — the honest launch verdict
-> 1. ✅ ~~Not committed / production behind~~ — **DONE.** Prod is `6dd9224` and verified (§⑥).
->    ⏭️ **The next thing to look at is TONIGHT'S NIGHTLY**, which now runs `start-card` beside
->    `all-chapters`. Green tomorrow = the two-night red is genuinely closed; red = the gate triage
->    in §③ missed something and the traces are on the run.
-> 2. 🔴 **NO BACKUPS.** Three secrets in GitHub settings turns `backup.yml` real. Highest-value hour.
-> 3. 🟡 ~~Blind in production~~ — **HALF CLOSED 2026-08-24.** `SUPABASE_SERVICE_ROLE_KEY` is live and
->    `error_events` receives rows (proved with a probe). **Vercel Web Analytics is still off.**
-> 4. 🔴 **`DRAFT = true`** — privacy policy and ToS are still placeholders (B1/B2). Hard blocker for
->    marketing math to under-13s.
-> 5. ✅ ~~`SUPABASE_DB_URL` so the RLS suite actually runs~~ — **SOLVED DIFFERENTLY 2026-08-24.** No
->    secret needed: CI stands up its own Postgres with `supabase db start`. 17 assertions, and the
->    job now fails if the suite runs nothing.
-> 6. **Supabase free plan** — pauses on inactivity, 500 MB cap, no PITR, DB in Sydney while functions
->    run in Virginia. Pro before real traffic.
-> 7. 🟢 **`getInsightsRawRows` has no `.limit()`** — MILDER THAN FILED: measured 2026-08-24,
->    `pgrst.db_max_rows` is UNSET on this project, so PostgREST does not silently truncate. Still
->    unbounded in principle; fallback path only.
-> 8. **The diagnostic writes its session row only on completion** — the probe is now 20–50 questions
->    and abandonment is invisible. Still the most important unmeasured number.
-> 9. ⚠️ Dependabot has a PR bumping **TypeScript 7, eslint 10, jsdom 30** in one batch. Do not merge
->    as a batch.
-> 10. Everything from the blocks below still stands.
-
-_Older sessions (2026-06-15 → **2026-08-22**, including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-23**, including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._

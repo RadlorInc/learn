@@ -41,6 +41,11 @@ b /menu
 g "Your plan · step"                  # CONTROL — must be ≥1
 g "Starting from the beginning"       # the honest plan subtitle
 g "Want a plan built around"          # the one-time re-offer
+
+b /demo
+g "How old is your child"             # CONTROL — must be ≥1
+g "no account, no email"              # the try-two-chapters door
+g "none of it is being saved"         # the wall that sells the account
 ```
 
 Every line must print **1**. Verified against the deploy of `ee6e05d` — all seven, both controls.

@@ -8,7 +8,7 @@ The most expensive defect class in this repo is not a bug. It is **something tha
 and isn't** — a gate, grep, guard or test that reports success while examining nothing. It is worse
 than having no check at all, because it is what stops the next person looking.
 
-Twelve of them across 2026-08-24/25, and the mechanisms have nothing in common. **This table is
+Thirteen of them across 2026-08-24/25, and the mechanisms have nothing in common. **This table is
 meant to grow — a frozen list becomes decoration itself.** Add the next one rather than admiring it:
 
 | what it looked like | what it was |
@@ -23,11 +23,12 @@ meant to grow — a frozen list becomes decoration itself.** Add the next one ra
 | a "what share of parents skip the check" query | **a population that excludes the alternative.** It counted `checkup_offer` rows and divided — but only a SKIP emits that event, so the denominator was made entirely of skippers and the query could only ever return **100%**. Not a check at all: a METRIC that can return exactly one value, which would have been reported, believed and acted on |
 | a hand-verification step reported as **passing** | **an artefact that does not contain the feature.** The build under test had no "Skip for now" in its bundle, so the child could not have skipped — the "pass" came from the OLD gate letting them through for its own reasons. ⚠️ Committed by the person READING the results rather than the one producing them, which is the version nobody catches |
 | a browser drive of the plan card, green | **an environment where the failure cannot occur.** The harness used a rejected JWT, so `getLearnerBootstrap` 401'd and the cross-device reconcile — the exact code that wiped the field — never executed. A correct check, pointed at a world where the bug is impossible |
+| an e2e seeding its own fixture, going red | **a check failing about a world that does not exist.** The spec hand-rolled the stored record (`done: string[]`) and the app's shape moved on (`results: DemoResult[]`), so the guard correctly rejected it and the gate reported a defect in working code. The mirror of the inert clause: not a check that cannot fail, but one that fails about nothing — and both spend the same thing, **the reader's trust in a red** |
 | a source gate reading `src.slice(at, at + 700)` | **a proxy for the boundary it meant.** A byte budget stands in for "this statement" / "this element", and ANY edit that adds bytes before the target moves it out of the window — after which the gate reports confidently about text it never saw. **Three times in one session** (a policy window running into the next policy; a 700-char slice losing its call when a prop was added above it; a window stopping at the first `) : (` *inside* the ternary it was checking). Not three mistakes — one technique that does not work |
 
 A skip, a shape, a moment, an order, a flag, a dead clause, a wrong target, a one-valued metric, an
-artefact without the feature, a world without the bug, a proxy boundary. **You cannot learn to spot
-these by pattern** — nothing about any of them looked wrong, and four
+artefact without the feature, a world without the bug, a proxy boundary, a drifted fixture. **You
+cannot learn to spot these by pattern** — nothing about any of them looked wrong, and four
 were written by someone who had just written down the rule that catches them. The only thing
 separating a real check from these is having watched it go red for the reason it exists.
 
@@ -108,6 +109,19 @@ Everything below is a corollary of that one sentence:
   examined text that is not the text it names. ⚠️ Where a lazy quantifier already ends on a real
   terminator (`[\s\S]*?\/>`), the numeric cap adds nothing and can only cut the match short:
   delete it, and bound the middle with a class that cannot leave the construct.
+  ⚠️⚠️ **AND A NEGATED CLASS IS ALSO A PROXY — IT ONLY LOOKS STRUCTURAL.** `[^>]*` is a real bound
+  inside a SQL statement and a lie inside JSX, because an arrow function's `=>` contains a `>`, so
+  the class stops before the element even begins. **A negated class is structural only if the
+  construct genuinely cannot contain that character, and that is something to CHECK, not assume.**
+  Found by the suite going red on correct code during the sweep that removed the character windows —
+  the sweep paying for itself inside itself. Where you cannot name such a character, walk the
+  delimiters (`src/__tests__/_window.ts`).
+- ⚠️ **A FIXTURE IS A SECOND COPY OF THE SCHEMA. DERIVE IT.** A hand-written seed drifts from the
+  shape the app actually stores, and then the gate reports on a state the app can never be in —
+  failing about a world that does not exist. Where a fixture must exist, build it with the same
+  factory or type the app uses, so it cannot drift independently; where it must be literal, make the
+  shape guard the thing that fails, and read the failure as "my fixture is stale" before "the code
+  is broken".
 - ⚠️⚠️ **NEVER CHAIN A TEST RUN TO A COMMIT.** `npm test && git commit` does not wait for anyone to
   READ the result: the message is written before the outcome exists and is then true by assertion.
   Same family as asserting a result you have not read, except the vector is a shell operator, which
