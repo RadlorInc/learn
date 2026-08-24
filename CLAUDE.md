@@ -8,7 +8,7 @@ The most expensive defect class in this repo is not a bug. It is **something tha
 and isn't** — a gate, grep, guard or test that reports success while examining nothing. It is worse
 than having no check at all, because it is what stops the next person looking.
 
-Seven of them on 2026-08-24 alone, and the mechanisms have nothing in common. **This table is
+Eight of them on 2026-08-24 alone, and the mechanisms have nothing in common. **This table is
 meant to grow — a frozen list becomes decoration itself.** Add the next one rather than admiring it:
 
 | what it looked like | what it was |
@@ -20,11 +20,17 @@ meant to grow — a frozen list becomes decoration itself.** Add the next one ra
 | the post-apply smoke write succeeding | **wrong flag state.** With `enforced = false` the write succeeds whether the guard holds or not — it cannot fail in the interesting direction |
 | `asked < maxItems` guarding the coverage rule | **a clause that cannot bind.** A cap always leaves the agenda or a frame open; in the one case it was not redundant it was *wrong*, reporting a finished search as partial |
 | `git pull` on `main` saying "Already up to date" | **the wrong target.** Local `main` tracked `origin/chore/applied-billing-migrations`, a deleted feature branch — so the pull succeeded, twice, while `main` sat two commits behind, and a `push` from `main` would have gone to the dead branch. The command reported success having done nothing *to the thing that was asked about* |
+| a "what share of parents skip the check" query | **a population that excludes the alternative.** It counted `checkup_offer` rows and divided — but only a SKIP emits that event, so the denominator was made entirely of skippers and the query could only ever return **100%**. Not a check at all: a METRIC that can return exactly one value, which would have been reported, believed and acted on |
 
-A skip, a shape, a moment, an order, a flag, a dead clause, a wrong target. **You cannot learn to
-spot these by pattern** — nothing about any of them looked wrong, and four were written by someone
-who had just written down the rule that catches them. The only thing separating a real check from
-these is having watched it go red for the reason it exists.
+A skip, a shape, a moment, an order, a flag, a dead clause, a wrong target, a one-valued metric.
+**You cannot learn to spot these by pattern** — nothing about any of them looked wrong, and four
+were written by someone who had just written down the rule that catches them. The only thing
+separating a real check from these is having watched it go red for the reason it exists.
+
+⚠️ **AND THE CLASS REACHES NUMBERS, NOT JUST CHECKS.** The eighth is the sharpest because nothing
+about it is code: a metric whose population cannot express the comparison it claims to make is worse
+than having no metric, because a founder acts on it. **Before shipping a query, ask what values it
+is CAPABLE of returning** — if the answer is "one", it is decoration with a percentage sign.
 
 Everything below is a corollary of that one sentence:
 
@@ -48,6 +54,12 @@ Everything below is a corollary of that one sentence:
 - **Prefer a structure that cannot express the bug over a check that catches it.** A flag someone
   must remember to set is a check waiting to rot; a call with no flag to set cannot rot. Where both
   are available, take the structure and spend the check elsewhere.
+- ⚠️ **PRE-REGISTER WHAT A NUMBER WILL MEAN, IN THE DOC, BEFORE THE QUERY SHIPS.** Deciding what a
+  result would tell us is only honest while we still do not know what it says; once it says
+  something, everyone has a reason to read it their way. Standing rule from 2026-08-24 — the
+  skipper-conversion metric was shipped with *"a bad number means the grade-start plan is not good
+  enough, NOT that the check should be re-forced"* already written down. **Every metric added from
+  here carries its interpretation in the same commit as its query.**
 
 ⚠️ **This is not a chapter rule.** It governs every grep, gate, migration, catalog query and audit
 in the repo. [docs/chapter-craft.md](docs/chapter-craft.md) §4 carries the chapter-shaped costumes
