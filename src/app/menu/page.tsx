@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useMiloStore } from '@/state/store'
 import { type ChapterType } from '@/core/chapters'
 import { CHAPTER_NAMES, CHAPTER_EMOJIS, chaptersForAge, type AgeGroup } from '@/core/chapters'
+import { shouldReoffer, recordCheckupSkip } from '@/infra/storage/checkup'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 import BackButton from '@/shared/ui/BackButton'
 import ChapterPicker from '@/shared/ui/ChapterPicker'
@@ -17,7 +18,7 @@ import type { LearnerState } from '@/data/supabase/types'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
 import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
 import { track } from '@/infra/analytics'
-import { currentPlanChapter, planProgress, reconcilePlan } from '@/infra/storage/activePlan'
+import { currentPlanChapter, planProgress, reconcilePlan, getActivePlan } from '@/infra/storage/activePlan'
 import { getCheckupStatus } from '@/data/repositories'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -67,7 +68,8 @@ export default function MainMenu() {
   const [ageGroup,     setAgeGroup]     = useState<AgeGroup>('3-5')
   const [chapterIds,   setChapterIds]   = useState<ChapterType[]>([])
   const [lastPlayed,   setLastPlayedState] = useState<ChapterType | null>(null)
-  const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number } | null>(null)
+  const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number; source: string } | null>(null)
+  const [reoffer,      setReoffer]      = useState(false)
   const [recheck,      setRecheck]      = useState<{ skill: string; band: string; weeks: number } | null>(null)
 
   // The checkup is OPTIONAL — no play gate. A child can enter the menu directly; the checkup is
@@ -78,7 +80,15 @@ export default function MainMenu() {
   useEffect(() => {
     if (!learnerId) { setPlanNext(null); return }
     const ch = currentPlanChapter(learnerId), prog = planProgress(learnerId)
-    setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType] ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total } : null)
+    const plan = getActivePlan(learnerId)
+    setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
+      ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: plan?.source ?? 'diagnostic' }
+      : null)
+    // ⚠️ THE RE-OFFER IS EVIDENCE-GATED, NOT TIME-GATED. It appears only once the child has actually
+    // FINISHED a plan chapter — the parent has now seen the thing work, so the ask has something
+    // behind it, and they are a different person from the one who skipped at signup. A second
+    // decline retires it to the parent dashboard for good.
+    setReoffer(shouldReoffer(learnerId, prog?.done ?? 0))
   }, [learnerId])
 
   /**
@@ -176,8 +186,9 @@ export default function MainMenu() {
             if (plan) {
               const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
               setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
-                ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total }
+                ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: getActivePlan(learner.id)?.source ?? 'diagnostic' }
                 : null)
+              setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
             }
           } catch { /* the local pointer stands */ }
 
@@ -354,11 +365,58 @@ export default function MainMenu() {
               <div style={{ flex: 1, minWidth: 150 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#1e9e5f', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Your plan · step {planNext.step} of {planNext.total}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Next: {CHAPTER_NAMES[planNext.ch]}</div>
-                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>Milo picked this to close the gap — a few minutes today.</div>
+                {/* ⚠️ A GRADE-START PLAN HAS NO DIAGNOSED GAP, so it may not claim one. "Milo picked
+                    this to close the gap" is true after a check and a straight falsehood after a
+                    skip — nobody looked. Same rule as the report's never-say-"on track". */}
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>{planNext.source === 'gradeStart'
+                  ? 'Starting from the beginning — Milo adjusts as they play.'
+                  : 'Milo picked this to close the gap — a few minutes today.'}</div>
               </div>
               <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: '#2BB673', border: '3px solid #1e9e5f', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Continue ▶</span>
             </div>
           </button>
+        )}
+
+        {/**
+          * ── The check, offered a second and FINAL time ──────────────────────────────────────
+          *
+          * ⚠️ ONCE. A parent who skipped at signup has now watched their child finish a chapter and
+          * enjoy it, so the ask finally has evidence behind it — but an offer that keeps returning
+          * is not an offer, it is nagging with a dismiss button, and it teaches people to ignore
+          * the surface it lives on. The second "Not now" retires it to the parent dashboard's
+          * "Find starting point", which is always there and never interrupts.
+          *
+          * ⚠️ IT IS A CARD, NOT A MODAL. It sits BELOW the plan, so the child's next chapter is
+          * still the first thing on screen. Anything that covers the play button to ask a parent a
+          * question has made the product worse for the child in order to sell to the adult.
+          */}
+        {reoffer && (
+          <div className="milo-card" style={{
+            width: '100%', maxWidth: 700, padding: '14px 20px', textAlign: 'left',
+            background: 'linear-gradient(135deg, #EEF4FF 0%, #fff 100%)', border: '3px solid #6C8FE8',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
+              <div style={{ fontSize: 36 }}>🔍</div>
+              <div style={{ flex: 1, minWidth: 150 }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18 }}>Want a plan built around {childName || 'your child'}?</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
+                  Milo can find the one thing worth fixing first, instead of starting from the top.
+                  About ten minutes — you can stop and pick up where you left off.
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+                <button onClick={() => {
+                  track('checkup_offer', { action: 'taken', at: 'reoffer', band: ageGroup })
+                  router.push(`/diagnostic?band=${ageGroup}`)
+                }} style={{ minHeight: 44, background: '#6C8FE8', border: '3px solid #4A6FD0', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff', cursor: 'pointer' }}>Find it ▶</button>
+                <button onClick={() => {
+                  if (learnerId) recordCheckupSkip(learnerId)   // → 2: retired to the parent dashboard
+                  track('checkup_offer', { action: 'skipped', at: 'reoffer', band: ageGroup })
+                  setReoffer(false)
+                }} style={{ minHeight: 44, background: 'transparent', border: '2px solid var(--ink-mute, #bbb)', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink-soft)', cursor: 'pointer' }}>Not now</button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ── Story Mode — the 3–5 storyline adventure ── */}

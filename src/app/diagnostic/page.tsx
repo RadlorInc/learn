@@ -20,11 +20,12 @@ import {
 import { NODE_BY_ID, chapterFor, type Band } from '@/core/skillGraph'
 import { demoEligible } from '@/core/arChapters'
 import { makeItem, makeReadinessItem, pickThemeFor, gradeItem, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
-import { CHAPTER_NAMES } from '@/core/chapters'
+import { CHAPTER_NAMES, gradeStartPlan, type AgeGroup } from '@/core/chapters'
+import { track } from '@/infra/analytics'
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
 import { stashPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
 import { setActivePlan } from '@/infra/storage/activePlan'
-import { markCheckupDone } from '@/infra/storage/checkup'
+import { markCheckupDone, recordCheckupSkip } from '@/infra/storage/checkup'
 import { setLeadEmail, getLeadEmail } from '@/infra/storage/leadEmail'
 import { kv } from '@/infra/storage/kv'
 import { saveResume, readResume, clearResume, resumable, sameTab, type DiagResume } from '@/infra/storage/diagResume'
@@ -196,6 +197,24 @@ export default function DiagnosticPage() {
 
   const pickBand = (b: Band) => { setBand(b); setBandKnown(true) }
 
+  /**
+   * ⚠️ SKIPPING IS ONE TAP AND ARGUES BACK ABOUT NOTHING. No confirmation, no "are you sure", no
+   * second screen making the case again — a skip that argues back is not optional, it is a toll.
+   *
+   * ⚠️ AND IT IS NOT PLANLESS. The child leaves with a `gradeStartPlan`: their band, in curriculum
+   * order, from the beginning. Less informed than a diagnosed plan and refined from real gameplay
+   * afterwards by `advanceAfterChapter` — but a plan, which is the product's shape. Handing a
+   * parent 72 chapters instead is what every other maths app does.
+   */
+  const skipCheck = () => {
+    const id = activeLearner()?.id
+    if (!id) return                            // cold traffic has no learner to plan for; no skip is offered
+    recordCheckupSkip(id)
+    setActivePlan(id, band, gradeStartPlan(band as AgeGroup), 'gradeStart')
+    track('checkup_offer', { action: 'skipped', at: attempt === 0 ? 'signup' : 'reoffer', band })
+    window.location.href = window.location.origin + '/menu?plan=1'
+  }
+
   /** `seed` narrows the agenda to one named strand (17–18's door 2). Omitted = the whole band. */
   const startProbeNow = (seed?: string[]) => {
     ctxRef.current = buildContext(attempt)          // Phase 4: seed the probe for this child + attempt
@@ -337,6 +356,12 @@ export default function DiagnosticPage() {
           : <IntroCard accent={accent} short={short}
             title={readiness ? 'A quick readiness check' : 'Find your starting point'}
             cta={readiness ? "Let's play together" : "Let's explore"}
+            /**
+             * ⚠️ THE SKIP IS OFFERED ONLY TO A SIGNED-IN LEARNER, because skipping has to leave the
+             * child with a plan and cold traffic has nobody to make one for. For a logged-out
+             * visitor this screen is still the front door, unchanged.
+             */
+            alt={hasLearner ? { label: 'Skip for now', onPick: skipCheck } : undefined}
             body={readiness
               ? "Sit with your child for a few minutes of play. Milo suggests a small activity; you do it together and tap how it went — no scores, no pass/fail, just a friendly picture of what they're ready for."
               /* ⚠️ "A FEW QUICK QUESTIONS" AND "2 MINUTES" WERE TRUE OF THE FIRST BUILD AND BECAME
@@ -344,7 +369,21 @@ export default function DiagnosticPage() {
                     96–97% accuracy: a child now answers 20–50 of them. Copy that undersells the
                     length is worse than copy that oversells it — a parent who was promised two
                     minutes abandons at question fifteen, and the diagnosis is thrown away. */
-              : "Milo will ask a set of questions to find exactly where to help — not a test, no scores, no timers, and nothing to lose by getting one wrong. Some will be easy and some tricky; he asks a few extra whenever he is not sure yet. About ten minutes."}
+              /* ⚠️ SAY WHAT IT DOES, NOT HOW LONG IT IS. "Take a 20–40 question placement check"
+                    prices the cost and hides the product; the length still has to be here (copy
+                    that undersells it is worse — a parent promised two minutes abandons at question
+                    fifteen and the diagnosis is thrown away), but it comes AFTER the outcome.
+                 ⚠️ AND THE OFFER NAMES THE RESUME. A parent deciding whether to begin is exactly
+                    who needs to know they can stop — it is the single fact most likely to turn a
+                    "not now" into a "go on then", and it has been true since 2026-08-24. */
+              /* ⚠️ AND IT IS SHORTER ON A SHORT FRAME. Measured at 640×320 with the full body: the
+                    card cleared the top by 5px and "Skip for now" cleared the bottom by 5 — it fit,
+                    with no margin for a font-load shift or a wider glyph. The three facts that
+                    survive are the ones the decision turns on: what it finds, how long, and that
+                    they can stop. The anti-fear detail belongs in the check, not the offer. */
+              : short
+                ? "Milo will find the one thing worth fixing first — not a test, and nothing to lose by getting one wrong. About ten minutes, and you can stop and pick up where you left off."
+                : "Milo will find exactly where your child should start — the one thing worth fixing first, not a grade. Not a test: no scores, no timers, nothing to lose by getting one wrong. About ten minutes, and you can stop and pick up where you left off."}
             onStart={begin} />}
         <PtMilo left={9} />
       </div>

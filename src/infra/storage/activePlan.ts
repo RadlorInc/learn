@@ -15,13 +15,22 @@ export interface ActivePlan {
   index: number        // pointer to the current (next-to-play) chapter
   startedAt: string
   revised?: boolean    // play-data revision already applied (fires at most once)
+  /**
+   * ⚠️ WHERE THE PLAN CAME FROM, AND IT IS NOT BOOKKEEPING — IT DECIDES WHAT WE MAY SAY ABOUT IT.
+   * The plan card's own words are "Milo picked this to close the gap", which is true of a diagnosed
+   * plan and FALSE of a grade-start one: nobody looked, so there is no gap to have closed. Same
+   * family as the diagnostic's never-say-"on-track" rule — the claim has to match the evidence, and
+   * without this field the UI cannot tell the two apart. Absent = 'diagnostic' (every plan written
+   * before 2026-08-24 came from a completed check).
+   */
+  source?: 'diagnostic' | 'gradeStart'
 }
 
 const key = (learnerId: string) => `milo_active_plan_${learnerId}`
 
-export function setActivePlan(learnerId: string, band: string, chapters: string[]): ActivePlan | null {
+export function setActivePlan(learnerId: string, band: string, chapters: string[], source: 'diagnostic' | 'gradeStart' = 'diagnostic'): ActivePlan | null {
   if (!learnerId || chapters.length === 0) return null
-  const plan: ActivePlan = { learnerId, band, chapters: [...chapters], index: 0, startedAt: new Date().toISOString() }
+  const plan: ActivePlan = { learnerId, band, chapters: [...chapters], index: 0, startedAt: new Date().toISOString(), source }
   try { localStorage.setItem(key(learnerId), JSON.stringify(plan)) } catch { /* storage unavailable */ }
   return plan
 }

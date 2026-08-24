@@ -151,6 +151,20 @@ export function chaptersForAge(age: AgeGroup): ChapterMeta[] {
   return CHAPTERS.filter(c => c.ageGroups.includes(age))
 }
 
+/**
+ * THE PLAN FOR A CHILD WE HAVE NOT DIAGNOSED — the band's chapters, in curriculum order, from the
+ * beginning.
+ *
+ * ⚠️ A PLAN ALWAYS EXISTS. It is the product's shape: every other maths app hands a parent 72
+ * chapters and calls it choice. Skipping the check (or finishing it with no gap found) buys a LESS
+ * INFORMED plan, never no plan — and `advanceAfterChapter`'s play-data revision then refines it
+ * from real gameplay, so a skipped check self-corrects slowly rather than not at all.
+ *
+ * ⚠️ It must also stay compatible with the free tier: the first two unmet steps are entitled, so a
+ * family that skipped does not hit a wall the diagnosed family avoids.
+ */
+export const gradeStartPlan = (age: AgeGroup): ChapterType[] => chaptersForAge(age).map(c => c.id)
+
 // ── Back-compat derived maps (so existing imports keep working) ────────────
 export const CHAPTER_ORDER: ChapterType[] = CHAPTER_IDS
 

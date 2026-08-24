@@ -13,7 +13,7 @@ import {
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
 import { setActivePlan } from '@/infra/storage/activePlan'
-import { hasCheckup, markCheckupDone } from '@/infra/storage/checkup'
+import { hasCheckup, markCheckupDone, checkupSkips } from '@/infra/storage/checkup'
 import { setActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
@@ -154,17 +154,22 @@ export default function ParentDashboard() {
     if (r === 'teacher') router.replace('/parent/grades')
   }
 
-  // A BRAND-NEW learner does the checkup once on their first "Start learning". Established kids —
+  // A BRAND-NEW learner is OFFERED the checkup on their first "Start learning". Established kids —
   // any who already have play history (progress / sessions / XP) OR have already done a checkup —
-  // skip straight into the app and are never asked again. So existing profiles are grandfathered
-  // (never force-gated), while a new child is sent to the checkup exactly once.
+  // go straight into the app and are never asked. So existing profiles are grandfathered, while a
+  // new child sees the offer exactly once.
+  //
+  // ⚠️ OFFERED, NOT FORCED, SINCE 2026-08-24 — the destination is the same screen, but that screen
+  // now carries a one-tap "Skip for now" that issues a grade-start plan. `checkupSkips` is what
+  // stops the offer reappearing on every launch: without it, "optional" would mean "asked forever",
+  // which is worse than mandatory because it never even resolves.
   function isEstablished(d: LearnerData): boolean {
     return !!d.stats?.last_played_at || (d.stats?.total_xp ?? 0) > 0 || d.progress.length > 0 || d.sessions.length > 0
   }
   async function launchGame(d: LearnerData) {
     const learner = d.learner
     setActiveLearner(learner)
-    if (isEstablished(d) || await hasCheckup(learner.id)) router.push('/menu')
+    if (isEstablished(d) || checkupSkips(learner.id) > 0 || await hasCheckup(learner.id)) router.push('/menu')
     else router.push(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
   }
 
