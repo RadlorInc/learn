@@ -20,6 +20,35 @@ Nothing about the file looked wrong. It was reviewed, it was correct when writte
 a security fix eight days newer than itself. `rls_regression.sql` A9b caught it about four minutes
 later — which is the whole reason that suite was given a database.
 
+## ⚠️⚠️ READING THE REPO ANSWERS "WHAT DID WE INTEND". QUERYING PRODUCTION ANSWERS "WHAT IS TRUE". ONLY THE SECOND ONE IS A CHECK.
+
+Founder's words, 2026-08-24, and they were earned twice in one day.
+
+`plan_entitlement.sql` rebuilt `sync_diagnostic` from a migration OLDER than `harden_rpc_inputs`,
+which would have silently reverted the V5 payload bounds — the `leads_server_only` class exactly,
+written by the same person on the same day as the rule above it. The grep that said *nothing newer
+redefines this function* was **case-sensitive**, and `harden_rpc_inputs` writes
+`CREATE OR REPLACE FUNCTION` in capitals. `pg_get_functiondef` found it in one query.
+
+⚠️ **The lesson is not "write better greps".** A source search is a claim about your regex; the
+catalog is a claim about the database. When the question is *what will this overwrite*, the repo
+cannot answer it — only production can.
+
+The gates that now cover the same class **at review time**, both derived and both measured against
+the real corpus before being written:
+- **functions** — the newest definition of every function must keep every `raise exception`
+  condition an earlier definition added (exactly one violation across 18 functions; it was the new
+  one);
+- **policies** — the newest definition of every policy must keep every LITERAL an earlier one used,
+  because a policy's guard is one anonymous expression with no named conditions to compare, and the
+  literal (a regex, a status, a bound) is what survives a legitimate rewrite. Zero violations today;
+  replayed to the corpus as it stood when `leads_server_only` shipped, it flags exactly that.
+  ⚠️ `baseline_schema.sql` must be ordered FIRST in that check — it is migration-zero, but it is
+  GENERATED FROM LIVE PRODUCTION, so ordered last it supplies the very predicate a regression just
+  removed and the gate finds nothing.
+
+Neither replaces the diff below. They catch what the repo can see; the diff catches what it cannot.
+
 ## The check, before you apply
 
 For each object the migration touches (policy, function, trigger, constraint, grant):
@@ -67,7 +96,13 @@ catalog and `diagnostic_plans.active`. Neither is a child's work.
 
 ## The sequence for applying a migration by hand
 
-1. **Capture the rollback FIRST, and commit it.** For every object the migration replaces: the
+1. **Capture the rollback FIRST, commit it — and make sure CI RUNS it.** ⚠️ A rollback nobody has
+   run is a document, not a rollback: it is the one artefact that is only ever used on the worst
+   day, which is the worst possible day to find out it does not parse. Reading ours already caught
+   one defect (`pg_policies` reports a null qual for an INSERT policy, so the capture emitted
+   `using (true)`, which is not valid DDL) — and reading is not running. `ci / rls-tests` applies
+   the migrations to its throwaway Postgres, runs the rollback, and asserts production's captured
+   fingerprints come back. For every object the migration replaces: the
    current `qual`/`with_check` from `pg_policies`, `pg_get_functiondef` for each function, and the
    before-values of any row the migration UPDATEs. That file IS the rollback script. ⚠️ It is not a
    backup, and calling it one is how you end up without either.

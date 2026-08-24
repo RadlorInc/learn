@@ -104,6 +104,71 @@ jobs:
             exit 1
           fi
 
+      # ═══════════════════════════════════════════════════════════════════════════════════════
+      #  ⚠️⚠️ EXERCISE THE ROLLBACK. A ROLLBACK NOBODY HAS RUN IS A DOCUMENT, NOT A ROLLBACK.
+      #
+      #  It is the one artefact in the billing plan that only ever gets used on the worst day —
+      #  which is the worst possible day to discover it does not parse. Reading it already caught
+      #  one defect (pg_policies reports a null qual for an INSERT policy, so the capture emitted
+      #  `using (true)`, which is not valid DDL). Reading is not running.
+      #
+      #  This applies the billing migrations (they are part of the replay above), then RUNS the
+      #  rollback, then asserts production's captured fingerprints come back — the three function
+      #  bodies and the two policy predicates, hashed the same way they were captured from
+      #  production on 2026-08-24.
+      # ═══════════════════════════════════════════════════════════════════════════════════════
+      - name: Exercise the billing rollback against the throwaway database
+        env:
+          PGURL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -euo pipefail
+
+          # ⚠️ POSITIVE CONTROL FIRST. Without it this whole step passes on a database where the
+          # billing migrations never applied — asserting that objects are absent when they were
+          # never present. A scan that finds nothing proves nothing until it has been shown it can
+          # find something.
+          before_tables=$(psql "$PGURL" -Atc "select count(*) from information_schema.tables where table_schema='public' and table_name in ('subscriptions','subscription_seats','billing_events','billing_config')")
+          before_guard=$(psql "$PGURL" -Atc "select count(*) from pg_policies where schemaname='public' and policyname='sessions: parent can insert' and with_check like '%is_chapter_entitled%'")
+          echo "before rollback: billing tables=$before_tables, sessions policy carries the guard=$before_guard"
+          if [ "$before_tables" -ne 4 ] || [ "$before_guard" -ne 1 ]; then
+            echo "::error::the billing migrations are not applied, so rolling them back proves nothing"
+            exit 1
+          fi
+
+          psql "$PGURL" -v ON_ERROR_STOP=1 -f supabase/schema/rollback_20260824_billing.sql
+
+          # The fingerprints captured from PRODUCTION before anything was applied.
+          expect() {
+            got=$(psql "$PGURL" -Atc "$2")
+            if [ "$got" != "$3" ]; then
+              echo "::error::$1 did not come back: got $got, expected $3"
+              exit 1
+            fi
+            echo "  ok  $1"
+          }
+          expect "sync_diagnostic body" \
+            "select md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_diagnostic'" \
+            "cf46a74591aa0bbf809f69726e483e5f"
+          expect "sync_session(11) body" \
+            "select md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_session' and pronargs=11" \
+            "d1c9cab3c6a5afa869958a4ef2345cef"
+          expect "sync_session(10) body" \
+            "select md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_session' and pronargs=10" \
+            "ab108f90b7f9823ae7ededdce89ca444"
+          expect "sessions insert policy predicate" \
+            "select md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='sessions: parent can insert'" \
+            "816720e8c4ec7fb39fa1cf0c2d751da5"
+          expect "learner_progress policy predicate" \
+            "select md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='learner_progress: parent access'" \
+            "942404d3f338ba61b62938215fc2872c"
+          expect "billing tables are gone" \
+            "select count(*) from information_schema.tables where table_schema='public' and table_name in ('subscriptions','subscription_seats','billing_events','billing_config')" \
+            "0"
+          expect "is_chapter_entitled is gone" \
+            "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='is_chapter_entitled'" \
+            "0"
+          echo "### ♻️ Billing rollback exercised: production's fingerprints restored" >> "$GITHUB_STEP_SUMMARY"
+
           echo "RLS regression suite: $count assertions executed and passed."
           echo "### 🔒 RLS regression: **$count** assertions executed and passed" >> "$GITHUB_STEP_SUMMARY"
 

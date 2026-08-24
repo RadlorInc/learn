@@ -70,7 +70,15 @@ So: one row, `enforced boolean default false`, and `is_chapter_entitled` short-c
 while it is false. The tables, the policies and the functions all land **inert**. The paywall goes
 live later by flipping one boolean, with everything already applied and already exercised.
 
-⚠️ **IT FAILS OPEN, WHICH IS THE OPPOSITE OF THE CAMERA GUARD, AND THE STAKES ARE WHY.** A camera
+⚠️ **IT FAILS OPEN, AND THE CAMERA GUARD FAILS CLOSED. THAT IS NOT AN INCONSISTENCY — RECORD IT
+BEFORE SOMEBODY "FIXES" IT FOR CONSISTENCY.** Founder's words, 2026-08-24:
+
+> a camera without consent harms a child, so that guard fails closed
+> a paywall failing closed breaks a working product for every family at once
+>
+> Different failure costs, therefore different defaults.
+
+**IT FAILS OPEN, AND THE STAKES ARE WHY.** A camera
 offered without consent harms a child, so that guard fails closed. A paywall that fails closed
 breaks a working product for every family at once; one that fails open costs money. Missing row,
 missing table, unreadable value → not enforced.
