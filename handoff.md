@@ -157,6 +157,68 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🧾 **2026-08-25 (second pass) — STAGE 2a: THE SEAT MATERIALISER, THE ONE THING STAGE 1 LEFT DEAD. AND THE WHOLE OF STAGE 2 IS TEST-MODE-ONLY BY FOUNDER'S ORDER — NOTHING IN IT CAN TAKE A REAL CARD.** `tsc` 0 · **1535/1536** · **`ci / rls-tests` 64 → 73 assertions, green on a real Postgres** · **PR [#59](https://github.com/RadlorInc/learn/pull/59) OPEN, NOT MERGED, NOT APPLIED.** 🔴 **BLOCKED on the price ladder — see ▶2.**
+
+## ① 🪑 `materialize_seats` — A RECONCILER, NOT AN INSERTER, AND THAT IS THE WHOLE DESIGN
+Stage 1 created `subscription_seats` and never wrote a row to it: the tests insert seats by hand, so
+entitlement was structurally correct and **practically dead**. This is the function the webhook will
+call. ⚠️ **The Stripe webhook is at-least-once AND out-of-order**, so "add N seats" is wrong under
+both — a replay costs a seat every single time. Given a TARGET it makes the world match, so replaying
+changes nothing and any delivery order converges on whatever the last event said.
+- ⚠️ **A downgrade takes EMPTY seats first, then the highest occupied ones.** 4 → 2 must not evict a
+  seated child while an unoccupied seat sits beside them. Deterministic: the same downgrade always
+  frees the same seat.
+- ⚠️ **It CLAMPS an over-quantity rather than raising.** Stripe owns the quantity and losing a
+  webhook is worse than clamping one — the same reasoning `subscriptions.status` carries no CHECK
+  for. The column's own `check (seat_index between 1 and 4)` still makes a fifth row unwritable.
+- **Nine assertions, DRIVEN against a real Postgres** (`ci / rls-tests`, `RLS_ASSERTIONS=73`): lowest
+  indexes filled, a replay changes nothing, a seated child survives a downgrade, 7 clamps to 4,
+  cancelling frees every seat without touching the child's record, and **`authenticated` cannot call
+  it — asserted by ATTEMPTING it**, because a grant handed back by a later migration is invisible to
+  the REVOKE in the source.
+⚠️ **I cannot run that suite locally** (no psql, no Docker, no CLI on this machine). The PR exists so
+CI runs it; nothing here was believed before the job reported 73.
+
+## ② 🔒 TEST MODE FOR THE WHOLE STAGE — [docs/billing-stage-2.md](docs/billing-stage-2.md)
+Founder's hard constraint: **no live keys, no live products, no live webhook, nothing that can charge
+a real person, for all of Stage 2.** Two reasons, both outranking convenience: **B12 is still open**
+(the first real payment is when losing that database stops being recoverable by apology), and
+**checkout is the one piece that can charge someone before `enforced` has any say** — the flag gates
+ACCESS, not PAYMENT, so `enforced = false` is *not* a safety net here and must not be sold as one.
+**The go-live sequence, ordered, no step skipped:** ① B12 → ② the applied-schema fingerprint check
+re-run against production → ③ **a test-mode purchase the founder watches end to end** → ④ live keys
+→ ⑤ `enforced = true`. ⚠️ **④ and ⑤ are separate on purpose**: prove the payment path on real cards
+BEFORE removing anyone's access. Enforced in code, not discipline — a gate asserts the configured key
+is `sk_test_`, because a rule somebody has to remember is not a constraint.
+
+## ▶ OPEN
+1. ⏸️ **PR #59 is green and waiting** (`rls-tests` 73, `verify` green). Not merged, not applied.
+2. 🔴 **THE PRICE LADDER IS RECORDED NOWHERE, AND THIS IS THE STAGE-1 PLAN FAILING THE SAME WAY
+   TWICE.** The SHAPE is settled and written down (graduated never volume · 4 seats · USD · tax off);
+   the AMOUNTS exist only in the founder's head. Needed to finish products, checkout and the totals:
+   the monthly ladder per tier, the annual equivalent, and how the annual discount is expressed (its
+   own price object, or a % off monthly). **Write them into `billing-stage-2.md` the moment they are
+   said.** ⚠️ The totals test hand-computes its expectations rather than deriving them from the
+   ladder — otherwise a typo redefines "correct" instead of failing.
+3. ⏭️ **Next, and unblocked:** the webhook + `billing_events` idempotency (`stripe_event_id` is
+   already `unique`, so the DB is the idempotency authority, not application memory). Will add the
+   `stripe` SDK — signature verification is a security path, not a place to save a dependency; it is
+   server-only, so no client-bundle cost.
+4. 🔴 **B12 remains the founder's and now blocks two things**: the pipeline, and every step of §② from
+   ④ onward.
+5. 🔴 **`DRAFT = true` — THE PRIVACY POLICY AND ToS ARE STILL PLACEHOLDERS (B1/B2).** A hard blocker
+   for marketing maths to under-13s, and it now also blocks taking money: you cannot charge a parent
+   under a placeholder ToS. ⚠️ **Carried up here on 2026-08-25 because it was about to be archived
+   with the 🔐 block and existed nowhere else** — the same way "Vercel Web Analytics is still off"
+   (⑥ below) was quietly lost when the 🚦 block was archived earlier the same day.
+6. 🟡 **Production is still half-blind: Vercel Web Analytics is NOT enabled** (404 when checked
+   2026-08-23). `error_events` receives rows since the service-role key landed, so crashes are
+   captured; nothing measures traffic or the funnel this session just built. ⚠️ Which means **the two
+   numbers in [docs/checkup-optional-metrics.md](docs/checkup-optional-metrics.md) are answerable
+   from `learner_events` and nothing else is.**
+7. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch — the standing
+   warning about TypeScript 7 / eslint 10 / jsdom 30 still applies.
+
 > 🚪 **2026-08-25 — THE FUNNEL: THE CHECK BECAME OPTIONAL, THE DEMO ROUTE SHIPPED, AND SIGNING UP NOW CARRIES THE PLAY ONTO THE ACCOUNT. ⚠️⚠️ AND THE THREE-MONTH `onComplete` P0 TURNED OUT TO HAVE LEFT ITS CORPSE IN PLACE — I WAS THE NEXT CALLER TO TRUST IT.** `tsc` 0 · **1535/1536** · `next build` 0 · e2e demo **3/3** + adaptive **2/2** · **9 commits, pushed** · prod **sw v145**.
 
 **The asks, in order:** the pipeline decision · door 2 · durable resume · *"the check stays exactly as it is, unchanged, and becomes optional"* · the demo route · the local→server adopt.
@@ -514,128 +576,4 @@ the data** — it must not be read as a backup, and neither must the ledger snap
    divergence case, and the free-set proposal against the AR constraint. Not applied, not merged.
 5. Everything from the blocks below still stands.
 
-> 🔐 **2026-08-24 — THE ROAD TO A PAYWALL WENT THROUGH FIVE REAL PROBLEMS AND NEVER REACHED THE PAYWALL. ⚠️⚠️ THE RLS SUITE HAD NEVER RUN ONCE; IT NOW DOES, AND ON ITS SECOND DAY IT CAUGHT A SECURITY REGRESSION I HAD SHIPPED FOUR MINUTES EARLIER. AND THE MIGRATION LEDGER TURNS OUT TO BE 58 FILES OUT OF SYNC WITH PRODUCTION.** `tsc` 0 · **1457/1458** · `next build` 0 · **3 PRs merged** (#48, #49, #50). ⏸️ **STAGE 1 NOT STARTED — one decision block is open, see ▶.**
->
-> **The ask:** subscription billing + paywall → *"STOP — DO NOT WRITE CODE YET"* → a plan, then a
-> series of pre-Stage-1 gaps that each turned out to be real.
->
-> ## ⓪ ⚠️⚠️ THE RLS SUITE HAD NEVER EXECUTED, AND MAKING IT RUN TOOK SIX RED PIPELINES
-> `ci / rls-tests` was gated on a `SUPABASE_DB_URL` secret that was never set: it printed a
-> `::warning::` and `exit 0`. On a children's app the one suite proving account A cannot read
-> account B's data had **never run once**, and reported green throughout. It now brings up its own
-> Postgres with `supabase db start` — no secret, no cloud DB — and **fails unless the suite reports
-> a non-zero assertion count** (currently `RLS_ASSERTIONS=17`). Proved by simulation: with the file
-> reduced to `begin; rollback;`, psql exits **0** and the job still **fails**.
->
-> ⚠️ **The blocker nobody had hit, because nobody had ever built this schema from source:** seven
-> base tables (`profiles`, `learners`, `learner_access`, `learner_invites`, `sessions`,
-> `learner_progress`, `learner_stats`) are created by **zero** of the 68 migrations — they were made
-> in the dashboard. `supabase/schema/baseline_schema.sql` reconstructs them from the live catalog.
-> Getting it to coexist with the migrations took **six red runs, each a distinct object class**:
-> `CREATE POLICY` (42710) → dead RPCs revoked then dropped (42883) → over-correction, 12 policies are
-> ALTERed and created by nothing (42704) → `ADD CONSTRAINT` (42710) → the baseline is migration-**ZERO**
-> not today, so it must carry three dropped columns → bare `CREATE TABLE` (42P07).
-> **`src/__tests__/baselineSchema.test.ts` DERIVES all five rules from the migrations** rather than
-> hard-coding them, because I hard-coded them twice and was wrong in opposite directions.
->
-> ## ① 🔴 THREE PRIVACY GAPS BETWEEN THE PUBLISHED COPY AND THE SYSTEM (#49)
-> - **The export returned 4 of 11 child-data tables.** "Download a copy of everything we hold about
->   your child" omitted the entire diagnostic (166 answers) and every analytics event (2,024 rows) —
->   while the policy names placement-check answers as stored data. Under COPPA that button IS the
->   parent's review right. ⚠️ The new gate **derives** the child-data table list from the SQL and
->   caught `learner_invites` on its first run: it carries `learner_id` but holds a **third party's**
->   email, so exporting it would disclose someone else's address to satisfy a right about the child.
-> - **`diagnostic_items` was retained for ever** while the copy said 90 days. Split where the line
->   belongs — raw answers are analytics (90 days), the derived plan is progress (kept). Verified
->   first: **nothing in the app reads `diagnostic_items`**, so pruning cannot cost a child their plan.
-> - **"Write to us and we will delete it" had no tool.** `delete_lead_by_email()` — service-role only
->   by explicit REVOKE, or it is an address-enumeration oracle. `docs/runbooks/data-requests.md`.
-> - **The export could time out silently.** Measured: heaviest learner 165 kB, **96% events**;
->   `authenticated` carries `statement_timeout = 8s`; `pgrst.db_max_rows` is unset so no silent
->   PostgREST truncation. `.limit(5000)` + a `completeness: {complete, notes}` block, so a capped or
->   failed read **says so in the file** instead of quietly holding less.
->
-> ## ② 🔴 THE ANON INSERT IS CLOSED — AND IT TOOK FOUR PROBES TO PROVE THE PRECONDITION (#50)
-> Anyone with the public anon key could POST `/rest/v1/diagnostic_leads` directly and skip
-> `/api/lead`'s limit, on a table holding **4 real prospect addresses**. This was a ONE-WAY DOOR:
-> `/api/lead` falls back to the anon key, so revoking first would have stopped capture **dead and
-> silently**. Proof came from `/api/report-error`, not from a lead — `sinkError` has **no** anon
-> fallback, so a row in `error_events` can only mean the service-role key is present; a landed lead
-> would have looked identical either way.
-> ⚠️ **Three probes returned nothing.** The variable existed in Vercel but was not ticked for the
-> **Production environment**, and env vars bind at **deploy time**. What made it diagnosable was the
-> runtime log: `sinkError` logs `[milo.sink] … insert failed` on a rejected insert, so its ABSENCE
-> beside a present `[milo.client-error]` line distinguished *key missing* from *key rejected*.
-> Verified by doing the attack: anon → **HTTP 401 / 42501** (was 201) · `/api/lead` → 200, row lands ·
-> **1.15 MB of production JS across 22 chunks → zero `sb_secret_`**.
-> ✅ Production error monitoring is now durable for the first time (blocker B5, first half).
->
-> ## ③ ⚠️⚠️ I SHIPPED A SECURITY REGRESSION AND THE SUITE CAUGHT IT IN FOUR MINUTES
-> `leads_server_only` was WRITTEN 2026-08-16, when the leads policy bounded email LENGTH only. On
-> 2026-08-17 `privacy_and_leads_hardening` tightened the SAME policy to require an email SHAPE — the
-> V13 fix. Applying the older file recreated the policy **as written** and dropped the newer check.
-> `RLS FAIL A9b: a non-email was accepted as a lead`, on the next CI run. Restored and verified.
-> **Nothing about the file looked wrong.** It was reviewed, correct on the day it was written, and it
-> reverted a security fix eight days newer than itself. The general rule is now
-> [docs/runbooks/applying-migrations.md](docs/runbooks/applying-migrations.md): **diff a stale
-> migration's objects against production's CURRENT definitions before applying, and STOP if they
-> differ.** ⚠️ And the positive-control rule went into **CLAUDE.md**, because it is not a chapter
-> rule: *a scan that finds nothing proves nothing until you have shown it can find something* — my
-> first bundle grep searched for JWTs and found zero, and these keys are not JWTs.
->
-> ## ④ 🔴 THE LEDGER: 58 REPO FILES ARE OUT OF SYNC WITH PRODUCTION — VERIFIED, NOT REPAIRED
-> The two-file drift reported on 2026-08-23 was the visible edge. **The entire migration history was
-> applied out-of-band with generated timestamps** (`20260615180001_secure_learners_rls` ↔ ledger
-> `20260615142012 secure_learners_rls`, and so on). Paired all 72 repo files against 73 ledger rows
-> **by name AND content hash** (the ledger stores the applied SQL, so this is exact, not name-guessing):
->
-> | | |
-> |---|---|
-> | paired by name **and** identical SQL | **66** |
-> | explained mismatches (my edit today · repo files amended in place · a different split point) | **5** |
-> | 🔴 **genuinely unapplied** | **1** |
->
-> ⚠️ ~~**`20260816120000_perf_advisors.sql` has never run.**~~ **APPLIED 2026-08-24 second pass**, ledger version `20260823225313`, file renamed to match; eight advisor findings cleared. Was confirmed against live state at the time: all five
-> `diagnostic_*` policies evaluated `auth.uid()` **per row**, matching the `auth_rls_initplan`
-> advisor warnings; they no longer do. Marking it "applied" would skip it for ever — which is exactly why the pairing
-> had to be by content.
-> ⚠️ **If `deploy.yml`'s `migrate-prod` were enabled today** it would attempt **58 pending migrations
-> in version order and abort partway** — `chapters_as_data` re-adds `sessions_chapter_fkey`, which
-> already exists (42710) — leaving ~7 re-applied and the run half-done. It is doubly inert
-> (`PROD_PROJECT_REF` unset AND `migrate-staging` skipped) and **stays disabled**.
->
-> ## ⑤ ✅ ALSO DONE
-> Retention crons staggered **03:17 / 03:22 / 03:27 / 03:32** (four at one minute would contend once
-> the tables grow; `cron.schedule` on an existing name updates in place, so no window without a job) ·
-> `20260818090000_leads_retention` applied, **3 → 4 cron jobs** · migration files renamed to the
-> versions production recorded, repo-side, **zero ledger writes** ·
-> [docs/schema-baseline-debt.md](docs/schema-baseline-debt.md) names the frozen drift (7 tables, 2
-> enums, 5 functions, 7 triggers, 2 indexes, 12 policies) with the two-step resolution written out.
->
-> ## ▶ OPEN — ✅ ALL THREE ANSWERED AND THE REPAIR IS DONE (see the 🧾 block above)
-> 1. ⏸️ **`perf_advisors`: apply it, or leave it pending?** Leaving it means `db push --dry-run`
->    reports 1, not zero, so the acceptance test cannot pass. Applying it means running the new
->    stale-migration diff first. Recommend applying.
-> 2. ⏸️ **The backup prerequisite cannot be met.** Supabase **free plan has no downloadable backup and
->    no PITR**. Offered substitute: snapshot the 73 ledger rows to a committed file first. That is
->    **not** a database backup and must not be treated as one.
-> 3. ⏸️ **`supabase db push --dry-run` needs credentials I do not have** (CLI + `SUPABASE_ACCESS_TOKEN`
->    + DB password; no CLI/Docker/psql on this machine). Either the founder runs it, or a temporary
->    CI job with those two secrets does. The equivalent is computable, but the founder asked for the
->    literal output.
-> 4. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA** — `backup.yml` reports green and writes zero bytes.
->    Unchanged, and now also blocking (2).
-> 5. 🔴 **`DRAFT = true`** — privacy/ToS still placeholders (B1/B2).
-> 6. **Billing decisions are all settled** and recorded in the plan: graduated tiering (never volume),
->    4 paid seats / 25 profile cap, teachers out of scope, entitlement follows `learners.created_by`,
->    no trial, USD + Stripe Tax off, `RADLOR MILO` descriptor, Resend, 7-day grace, and the $1
->    proration floor replaced by `proration_behavior: 'none'` below $1. **Stage 1 = schema, RLS,
->    regression tests, no UI** — plus `last_reassigned_at` (one seat reassignment per billing period,
->    enforced in-function), a case asserting the `sessions` / `learner_progress` entitlement guards
->    cannot diverge, and the free-set proposal against the AR constraint.
-> 7. ⚠️ **Accepted limitation, written down deliberately:** RLS gates the RECORD, not chapter CONTENT
->    — chapters are client-side JS. Founder's call: sell the plan, the diagnostic and the record, not
->    the JavaScript. Do NOT move question generation server-side.
-> 8. Everything from the blocks below still stands.
-
-_Older sessions (2026-06-15 → **2026-08-23**, including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-24**, including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
