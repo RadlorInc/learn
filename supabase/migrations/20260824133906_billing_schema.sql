@@ -1,10 +1,12 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 --  BILLING — STAGE 1: schema, RLS, entitlement. NO UI, NO STRIPE CALLS.
 --
---  ⚠️ NOT YET APPLIED TO PRODUCTION. It is applied by hand through the prod gate; when it is, the
---  ledger records a GENERATED version and this file must be renamed to it (see
---  docs/runbooks/applying-migrations.md and docs/schema-baseline-debt.md). CI replays it from zero
---  against a throwaway Postgres on every PR, which is where it is actually being tested today.
+--  ✅ APPLIED TO PRODUCTION 2026-08-24, recorded as version **20260824133906** — which is why this
+--  file carries that timestamp rather than the one it was written under. Verified not by the
+--  success flag but by FINGERPRINT: the two policy predicates and sync_session's body hash
+--  identically to the schema `ci / rls-tests` published, which is the only place the ENFORCING path
+--  is exercised (the flag below ships off, so a live write proves nothing about the guard).
+--  Rollback: supabase/schema/rollback_20260824_billing.sql, which CI runs on every PR.
 --
 --  ⚠️⚠️ WHAT THIS CAN AND CANNOT GATE. RLS gates the RECORD, not the chapter CONTENT. Chapters are
 --  client-side JavaScript and stay that way (founder's call: sell the plan, the diagnostic and the

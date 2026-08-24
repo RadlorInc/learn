@@ -1,9 +1,10 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 --  PLAN-DERIVED ENTITLEMENT (free-tier source C) + the `active` leak that was already there.
 --
---  ⚠️ NOT YET APPLIED TO PRODUCTION. CI replays it from zero on every PR; applying is a separate
---  decision behind the prod gate, after which this file is renamed to the version the ledger
---  records (docs/runbooks/applying-migrations.md).
+--  ✅ APPLIED TO PRODUCTION 2026-08-24, recorded as version **20260824134125**. Verified by
+--  fingerprint against what `ci / rls-tests` published, not by the success flag. The `active`
+--  backfill touched 0 rows, as predicted: 14 plans, no learner had two. 9 of the 14 gained
+--  free_chapters. Rollback: supabase/schema/rollback_20260824_billing.sql.
 --
 --  Three sources of entitlement, in order: A demo (pre-signup, local only, no server row at all),
 --  B `chapters.is_free`, C the plan. This adds C.

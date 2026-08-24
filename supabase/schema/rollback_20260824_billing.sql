@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════
---  ROLLBACK for 20260824090000_billing_schema.sql + 20260824120000_plan_entitlement.sql
+--  ROLLBACK for 20260824133906_billing_schema.sql + 20260824134125_plan_entitlement.sql
 --  Captured from PRODUCTION 2026-08-24, BEFORE either was applied. Step 1 of the apply sequence in
 --  docs/runbooks/applying-migrations.md.
 --

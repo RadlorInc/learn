@@ -147,6 +147,85 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 💳 **2026-08-24 (fourth pass) — THE BILLING SCHEMA IS APPLIED TO PRODUCTION AND COMPLETELY INERT. ⚠️⚠️ CAPTURING THE ROLLBACK CAUGHT MY OWN MIGRATION SILENTLY REVERTING A SECURITY FIX, FOUR HOURS AFTER I WROTE THE RULE THAT CATCHES IT.** `tsc` 0 · **1477/1478** · `ci / rls-tests` **64 assertions** · ledger **74 → 76**. **6 PRs merged** (#51–#56).
+
+## ⓪ ⚠️⚠️ THE MIGRATION WAS NOT APPLICABLE AS WRITTEN, AND "RISKY" WOULD HAVE BEEN THE WRONG WORD
+Production has zero subscriptions, so the moment `is_chapter_entitled` reached the `sessions`
+policy, entitlement would collapse to `is_free` and **every existing family would stop being able to
+save progress in 65 of the 72 chapters, instantly.** `billing_config.enforced` (default **false**)
+makes the whole surface land inert; the paywall goes live by flipping one boolean later.
+⚠️ **IT FAILS OPEN AND THE CAMERA GUARD FAILS CLOSED — NOT AN INCONSISTENCY.** Founder's words: *a
+camera without consent harms a child; a paywall failing closed breaks a working product for every
+family at once.* Different failure costs, different defaults. Recorded in the doc so nobody
+reconciles them.
+⚠️ **A DEFAULT-OFF FLAG IS A HOLE UNLESS THE SUITE FORCES IT ON *AND ASSERTS IT DID*** (F0). Setting
+alone is silently removable. It also closes an unrelated hazard: an accidental `PROD_PROJECT_REF`
+waking `deploy.yml` now applies a paywall that does nothing.
+
+## ① ⚠️⚠️ THE ROLLBACK CAPTURE CAUGHT A REVERTED SECURITY FIX — MINE
+`plan_entitlement.sql` rebuilt `sync_diagnostic` from `20260702131627_diagnostic_idempotency`, which
+is OLDER than `20260703014331_harden_rpc_inputs` — so it silently dropped the **V5 payload bounds**.
+The `leads_server_only` class exactly, on the same day, by the person who wrote the runbook rule.
+⚠️ **READING THE REPO DID NOT FIND IT: my grep was CASE-SENSITIVE and the hardening file writes
+`CREATE OR REPLACE FUNCTION` in capitals.** `pg_get_functiondef` found it in one query. Founder's
+sentence, now in the runbook: *reading the repo answers "what did we intend", querying production
+answers "what is true" — only the second one is a check.*
+
+## ② 🧪 TWO DERIVED GATES, BOTH MEASURED BEFORE BEING WRITTEN
+- **functions** — the newest definition must keep every `raise exception` an earlier one added.
+  Exactly 1 violation across the 18 redefined functions; it was mine.
+- **policies** — the newest must keep every LITERAL an earlier one used (a policy's guard is one
+  anonymous expression, so there is no named condition to compare; a regex/status/bound survives a
+  rewrite). **0 violations today; replayed to the corpus as it stood when `leads_server_only`
+  shipped, exactly 1 — that one.** The restore's `between 3 and 254` → `>= 3 and <= 254` is
+  correctly NOT flagged.
+  ⚠️⚠️ **`baseline_schema.sql` MUST BE ORDERED FIRST.** It is migration-zero but is GENERATED FROM
+  LIVE PRODUCTION — ordered last it supplies the very predicate a regression just removed. Ordered
+  last: zero findings. Ordered first: it finds the regression. **Fourth "check that silently finds
+  nothing" today**, hence the new standing habit in CLAUDE.md.
+
+## ③ ♻️ THE ROLLBACK IS RUN, NOT READ
+`ci / rls-tests` applies the billing migrations, runs `supabase/schema/rollback_20260824_billing.sql`
+and asserts production's captured fingerprints come back — with a **positive control first**, or the
+step passes on a database where the migrations never applied. Reading it had already caught one
+defect (`pg_policies` reports a null qual for an INSERT policy, so the capture emitted `using
+(true)` — invalid DDL). Reading is not running.
+
+## ④ ✅ APPLIED, AND VERIFIED BY FINGERPRINT RATHER THAN BY A LIVE WRITE
+| | |
+|---|---|
+| `20260824133906` | `billing_schema` |
+| `20260824134125` | `plan_entitlement` |
+⚠️ **THE POST-APPLY WRITE PROVES NOTHING ABOUT THE GUARD** — with `enforced = false` it succeeds
+either way. So `ci / rls-tests` PUBLISHES the fingerprints of the schema it tested with the
+enforcing path on, and **all five matched production exactly** (2 policy predicates,
+`is_chapter_entitled`, `sync_session(11)`, `sync_diagnostic`). That is the proof; the live write is
+only a smoke test — **and it could not be run: `execute_sql` connects as `supabase_read_only_user`.**
+It needs a real signed-in session. ⚠️ Still owed.
+`active` backfill touched **0 rows** as predicted (14 plans, none doubled); 9 gained `free_chapters`.
+Advisors: no new problems — three `rls_enabled_no_policy` INFOs are the intended deny-all design.
+
+## ⑤ 📷 AND THE COPPA FIX SHIPPED FIRST, ALONE (#53)
+`/teen-preview?c=<AR id>&taste=1` rendered a camera chapter to a logged-out child — 12–30% of report
+links in four bands. Guard at the ROUTE, not a picker: the live leak had no picker, the URL *is* the
+picker. `e2e/ar-consent.spec.ts` drives the real URL for all eight and asserts `getUserMedia` is
+never called, with three controls. ⚠️ And the fix blinded `all-chapters` until that was fixed too.
+
+## ▶ OPEN
+1. ⏸️ **A REAL SIGNED-IN WRITE ON PRODUCTION** — the one step of the apply sequence I cannot perform.
+   Play any chapter as a real family and confirm it still saves. Everything says it will; nothing has
+   watched it.
+2. 🔴 **B12 IS NOW ON THE CRITICAL PATH.** Supabase Pro must be on BEFORE `enforced` is ever flipped
+   true — the day we take money is the day losing that database stops being recoverable by apology.
+3. ⏸️ **17–18: two doors, not a cut** (measured: a 20-item cut names a root 3 levels too shallow 63%
+   of the time and the true chapter is absent from the plan 2 times in 3). Door 2 = a seeded probe
+   from the named strand: **94% at 28 questions**, and a wrong self-report costs 2 questions.
+4. ⏭️ The rest of the funnel: short pass (spine prefix, never says "on track"), durable resume, the
+   demo route, the local→server adopt at signup.
+5. ⚠️ **NEXT MIGRATION SHOULD GO THROUGH THE PIPELINE, NOT BY HAND.** Every one of the 58 ledger
+   mismatches repaired this morning came from a by-hand apply, and these two added two more. The flag
+   has removed the reason `migrate-prod` was too dangerous to enable.
+
 > 🧾💳 **2026-08-24 (third pass) — STAGE 1 IS BUILT: THE PAYWALL'S SCHEMA, RLS AND ENTITLEMENT, WITH THE GUARD AT ALL THREE WRITE PATHS AND A TEST THAT DRIVES BOTH OF THEM RATHER THAN READING THEM. ⚠️ THE STAGE-1 PLAN ITSELF WAS LOST — IT ONLY EVER LIVED IN CHAT — SO THE B-CASE NUMBERING IS RE-DERIVED AND NOW WRITTEN DOWN.** `tsc` 0 · **1466/1467** · `next build` 0 · **`ci / rls-tests` 46/46 on PR #52** (was 17). NOT applied to production.
 
 **The ask:** *"STAGE 1 — GO. Schema, RLS, regression tests. No UI. Stop at the end for review."*

@@ -1,7 +1,7 @@
 # Billing — Stage 1 (schema, RLS, regression tests). No UI, no Stripe calls.
 
-**Status 2026-08-24: built, gated, and NOT applied to production.** The migration is
-`supabase/migrations/20260824090000_billing_schema.sql`; CI replays it from zero against a throwaway
+**Status 2026-08-24: built, gated, and APPLIED to production** (ledger versions `20260824133906` and `20260824134125`), **with `billing_config.enforced = false` so the whole surface is inert.** The migration is
+`supabase/migrations/20260824133906_billing_schema.sql`; CI replays it from zero against a throwaway
 Postgres on every PR, which is where it is being tested. Applying it to production is a separate
 decision behind the prod gate — and when it happens the file must be renamed to the version the
 ledger records ([runbooks/applying-migrations.md](runbooks/applying-migrations.md)).
