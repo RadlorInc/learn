@@ -85,9 +85,14 @@ security definer
 set search_path = public
 as $$
   select
+    -- ⚠️ THE SWITCH STAYS FIRST. This `create or replace` is the definition that WINS, so dropping
+    -- the flag here would re-arm the paywall on a production with no subscriptions — which is the
+    -- state that stops 65 chapters saving for every family. billingSchema.test.ts asserts every
+    -- definition of this function carries it, not just the first.
+    not coalesce((select bc.enforced from public.billing_config bc), false)
     -- A. (demo) never reaches here: a pre-signup visitor has no account and no rows.
     -- B. the fixed free set.
-    coalesce((select c.is_free from public.chapters c where c.id = p_chapter), false)
+    or coalesce((select c.is_free from public.chapters c where c.id = p_chapter), false)
     -- C. the learner's ACTIVE plan's recorded free steps, plus at most one revision.
     or exists (
       select 1 from public.diagnostic_plans dp
