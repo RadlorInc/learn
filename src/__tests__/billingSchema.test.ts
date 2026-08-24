@@ -76,6 +76,106 @@ describe('security_baseline.sql keeps up with the schema', () => {
   })
 })
 
+describe('a redefinition never drops a guard an earlier one added', () => {
+  it('the newest definition of every function keeps its predecessors\' raise conditions', () => {
+    /**
+     * ⚠️⚠️ THIS IS THE `leads_server_only` REGRESSION AS A STANDING RULE, AND IT CAUGHT ITS FIRST
+     * ONE THE DAY IT WAS WRITTEN. `plan_entitlement.sql` rebuilt `sync_diagnostic` from the
+     * IDEMPOTENCY migration, which is OLDER than `harden_rpc_inputs` — so it silently dropped the
+     * V5 payload bounds. `create or replace` means the LAST definition wins, so rebuilding a
+     * function from any version but the newest reverts everything added in between.
+     *
+     * ⚠️ AND IT WAS NOT CAUGHT BY READING THE REPO. The grep that said nothing newer redefined that
+     * function was CASE-SENSITIVE, and `harden_rpc_inputs` writes `CREATE OR REPLACE FUNCTION` in
+     * capitals — so this check is deliberately case-insensitive, and the runbook still says to diff
+     * against production, because a source search is a claim about your regex.
+     *
+     * Measured before being written: exactly one violation across the 18 functions any migration
+     * redefines, and it was the new one.
+     */
+    const defs: Record<string, { file: string; body: string }[]> = {}
+    for (const f of migFiles) {
+      const src = raw(f)   // NOT comment-stripped: a `raise exception` inside a comment is not a guard,
+      for (const m of src.matchAll(/create\s+or\s+replace\s+function\s+(?:public\.)?([a-z_][a-z0-9_]*)\s*\(/gi)) {
+        const rest = src.slice(m.index! + m[0].length)
+        const tag = rest.match(/\$[a-z_]*\$/i)
+        if (!tag) continue
+        const i = rest.indexOf(tag[0]) + tag[0].length
+        const j = rest.indexOf(tag[0], i)
+        ;(defs[m[1].toLowerCase()] ??= []).push({ file: f, body: j > 0 ? rest.slice(i, j) : rest.slice(i) })
+      }
+    }
+    expect(Object.keys(defs).length, 'no function definitions parsed — the regex has rotted').toBeGreaterThan(10)
+
+    const conditions = (b: string) => new Set([...b.matchAll(/raise\s+exception\s+'([^']*)'/gi)].map(m => m[1]))
+    const lost: string[] = []
+    for (const [fn, ds] of Object.entries(defs)) {
+      if (ds.length < 2) continue
+      const newest = ds[ds.length - 1]
+      const earlier = new Set<string>()
+      for (const d of ds.slice(0, -1)) for (const c of conditions(d.body)) earlier.add(c)
+      for (const c of earlier) {
+        if (!newest.body.includes(c)) lost.push(`${fn} (newest: ${newest.file}) no longer raises "${c}"`)
+      }
+    }
+    expect(lost, `a redefinition dropped a guard an earlier migration added:\n  ${lost.join('\n  ')}`).toEqual([])
+  })
+})
+
+describe('a policy redefinition never drops a guard an earlier one added', () => {
+  it("the newest definition of every policy keeps its predecessors' literals", () => {
+    /**
+     * ⚠️⚠️ THE `leads_server_only` REGRESSION ITSELF — the function gate above covers the same
+     * class in a FUNCTION, and this is the asymmetry that left. `leads_server_only` recreated
+     * `diagnostic_leads: insert` as written on 2026-08-16, silently dropping the email SHAPE check
+     * that V13 had added on 08-17. Nothing caught it in review; the RLS suite caught it four
+     * minutes after it reached a database.
+     *
+     * ⚠️ IT COMPARES **LITERALS**, NOT THE PREDICATE. A policy's guard is one anonymous boolean
+     * expression, so there is no equivalent of `raise exception 'message'` to compare — and a
+     * whole-predicate comparison would flag every legitimate rewrite. What survives a rewrite is
+     * the literal: a regex pattern, a status value, a bound. Measured on the real corpus, that
+     * distinction is exactly right — the restore migration rewrote `between 3 and 254` as
+     * `>= 3 and <= 254`, which changes the operators and keeps the literals, and it is NOT flagged.
+     *
+     * MEASURED BEFORE BEING WRITTEN, both directions:
+     *   · today, across 21 redefined policies → 0 violations;
+     *   · replayed to the corpus as it stood when `leads_server_only` shipped → exactly 1, that one.
+     *
+     * ⚠️ AND THE BASELINE MUST BE ORDERED **FIRST**. It is migration-ZERO, not today — but it is
+     * generated from LIVE production, so appending it last makes it the "newest" definition of
+     * every policy it holds and it would supply the very predicate a regression had just removed.
+     * Ordered last, this gate found nothing at all; ordered first, it finds the regression. That
+     * was not a hypothesis, it was two runs.
+     */
+    const ordered = [readFileSync(join(ROOT, 'supabase/schema/baseline_schema.sql'), 'utf8'), ...migFiles.map(raw)]
+      .map(decomment)
+    const defs: Record<string, string[]> = {}
+    ordered.forEach((src, i) => {
+      for (const m of src.matchAll(/create\s+policy\s+(?:"([^"]+)"|([a-z_][a-z0-9_]*))\s+on\s+(?:public\.)?([a-z_]+)([\s\S]*?);/gi)) {
+        const key = `${m[3]}.${m[1] ?? m[2]}`
+        ;(defs[key] ??= []).push(m[4])
+        void i
+      }
+    })
+    expect(Object.keys(defs).length, 'no policies parsed — the regex has rotted').toBeGreaterThan(20)
+
+    const lits = (b: string) => new Set([
+      ...[...b.matchAll(/'((?:[^']|'')*)'/g)].map(m => m[1]),
+      ...[...b.matchAll(/(?<![\w.])(\d+)(?![\w.])/g)].map(m => m[1]),
+    ])
+    const lost: string[] = []
+    for (const [key, ds] of Object.entries(defs)) {
+      if (ds.length < 2) continue
+      const newest = lits(ds[ds.length - 1])
+      const earlier = new Set<string>()
+      for (const d of ds.slice(0, -1)) for (const l of lits(d)) earlier.add(l)
+      for (const l of earlier) if (!newest.has(l)) lost.push(`${key} no longer constrains on ${JSON.stringify(l.slice(0, 48))}`)
+    }
+    expect(lost, `a policy redefinition dropped a literal an earlier one required:\n  ${lost.join('\n  ')}`).toEqual([])
+  })
+})
+
 describe('the entitlement guard cannot diverge', () => {
   // The runtime half is rls_regression.sql B12, which DRIVES both write paths and asserts the
   // verdicts are equal. This half asserts the call sites still exist, in all THREE places, because

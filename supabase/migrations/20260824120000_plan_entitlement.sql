@@ -154,6 +154,35 @@ begin
     raise exception 'not authorized for learner %', p_learner_id using errcode = '42501';
   end if;
 
+  -- ⚠️⚠️ CARRIED FORWARD FROM `20260703014331_harden_rpc_inputs.sql` (V5), AND THIS FILE HAD LOST IT.
+  -- I rebuilt this function from the IDEMPOTENCY migration (20260702131627) — which is OLDER than
+  -- the hardening — so the version below would have silently reverted a security fix, exactly like
+  -- `leads_server_only` did, on the same day the runbook rule about it was written.
+  --
+  -- It was caught by READING PRODUCTION while capturing the rollback, not by reading the repo: the
+  -- grep that told me nothing newer redefined this function was CASE-SENSITIVE, and
+  -- harden_rpc_inputs writes `CREATE OR REPLACE FUNCTION` in capitals. A source search is a claim
+  -- about your regex; `pg_get_functiondef` is a claim about production.
+  -- V5: bound the payload so a valid session can't amplify storage or poison aggregates.
+  if length(coalesce(p_band, '')) > 24
+     or length(coalesce(p_root_gap, '')) > 64
+     or length(coalesce(p_second_gap, '')) > 64
+     or length(coalesce(p_working_level, '')) > 64
+     or coalesce(array_length(p_blocked, 1), 0) > 100
+     or coalesce(array_length(p_strengths, 1), 0) > 100
+     or coalesce(array_length(p_plan_skills, 1), 0) > 200
+     or coalesce(array_length(p_plan_chapters, 1), 0) > 200 then
+    raise exception 'diagnostic payload out of bounds' using errcode = '22023';
+  end if;
+  if p_items is not null then
+    if jsonb_typeof(p_items) <> 'array' then
+      raise exception 'items must be a json array' using errcode = '22023';
+    end if;
+    if jsonb_array_length(p_items) > 500 then
+      raise exception 'diagnostic payload out of bounds' using errcode = '22023';
+    end if;
+  end if;
+
   insert into public.diagnostic_sessions
     (learner_id, band, status, root_gap_skill, second_gap_skill, blocked_skills, strengths, working_level, completed_at, client_id)
   values

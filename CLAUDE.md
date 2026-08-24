@@ -32,6 +32,28 @@ The same rule already appears in [docs/chapter-craft.md](docs/chapter-craft.md) 
 costumes (a tautological check, an inert gate, a sweep that exempts the whole world). It is here
 because it is not a chapter rule; it applies to every grep, every catalog query and every audit.
 
+## A NEW CHECK THAT FINDS NOTHING ON ITS FIRST RUN HAS NOT PASSED — IT HAS NOT BEEN TESTED
+
+The rule above says a scan that finds nothing proves nothing until you have shown it can find
+something. This is that rule aimed at the moment it is most often skipped: **the first run of a check
+you have just written.** A green first run feels like confirmation and is the least informative
+result there is — it is equally consistent with "nothing is wrong" and with "this cannot see
+anything". Before believing it, make it fail: plant the defect it exists for, or point it at a known
+past one, and watch it go red.
+
+Four in a single day, 2026-08-24, each of which reported success while examining nothing:
+- `ci / rls-tests` printed a warning and `exit 0` for weeks — the suite proving one family cannot
+  read another's data had never run once;
+- the bundle grep for a leaked service key searched for JWTs, and the keys are not JWTs;
+- `all-chapters` read its failure text at `domcontentloaded`, before the screen existed, so it could
+  not fail at all;
+- the policy-regression gate was written with `baseline_schema.sql` ordered LAST — it is generated
+  from live production, so it supplied the very predicate a regression had just removed. Ordered
+  last: zero findings. Ordered first: it flags the real historical regression.
+
+The last one is the sharpest, because the check was correct, the corpus was correct, and only the
+ORDER made it blind. Nothing about it looked wrong.
+
 ## Updating the Handoff
 When I type `/handoff`, or when the session is wrapping up, update handoff.md with:
 - What was accomplished this session
