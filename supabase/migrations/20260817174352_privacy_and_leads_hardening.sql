@@ -35,7 +35,7 @@ select cron.schedule('prune-error-events', '17 3 * * *', $$select public.prune_e
 --
 --   ⚠️ THIS DOES NOT CLOSE THE BYPASS — it only stops the table filling with values that are not
 --   even emails. Closing it means revoking the anon INSERT grant
---   (20260816170000_leads_server_only.sql), and that CANNOT be applied until
+--   (20260823221818_leads_server_only.sql), and that CANNOT be applied until
 --   SUPABASE_SERVICE_ROLE_KEY is set in Vercel: /api/lead falls back to the anon key, so revoking
 --   the grant without the key stops lead capture dead. Deliberately left as two steps.
 drop policy if exists "diagnostic_leads: insert" on public.diagnostic_leads;

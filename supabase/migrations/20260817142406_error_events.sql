@@ -12,7 +12,7 @@
 --
 -- SECURITY: RLS on, and NO insert policy for anon or authenticated. Writes come from the API routes
 -- with the service-role key, which bypasses RLS. That is deliberate and is the lesson of
--- `20260816170000_leads_server_only.sql`: `diagnostic_leads` opened an anonymous INSERT surface,
+-- `20260823221818_leads_server_only.sql`: `diagnostic_leads` opened an anonymous INSERT surface,
 -- named "Supabase Auth rate limits" as the mitigation, and that mitigation does not apply to a
 -- PostgREST table write — so anyone holding the public anon key could fill it for free, for ever.
 -- ⚠️ DO NOT ADD AN ANON INSERT POLICY HERE. The whole point of routing through `/api/report-error`

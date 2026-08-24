@@ -9,7 +9,9 @@
 --
 -- REGENERATE + DIFF: run the query in docs/security.md against prod and overwrite
 -- this file; a non-empty `git diff` means the live security posture changed.
--- Last generated: 2026-08-17 (post V13–V19 audit). Covers auth_events, diagnostic_leads,
+-- Last FULLY generated: 2026-08-17 (post V13–V19 audit). ⚠️ PARTIALLY HAND-UPDATED 2026-08-24 for
+-- the leads lockdown and the four new retention/data-rights functions below — a full regeneration is
+-- owed and the diff should be reviewed when it happens. Covers auth_events, diagnostic_leads,
 -- error_events + the V12 column-grant and the V19 EXECUTE revokes, none of which existed at the
 -- 2026-07-03 snapshot — so the drift check had been comparing against a 6-week-stale baseline.
 -- ============================================================================
@@ -18,12 +20,18 @@
 --   auth_events                rls=t  policies=1   (V-audit 2026-07-21: INSERT-only, own rows; no read)
 --   chapters                   rls=t  policies=1   (public catalog: SELECT using(true) — intentional)
 --   diagnostic_items           rls=t  policies=1
---   diagnostic_leads           rls=t  policies=1   ⚠️ V13: anon holds the INSERT GRANT, so the public
---                                                  anon key can write here directly, bypassing
---                                                  /api/lead's rate limit. Policy now checks email
---                                                  SHAPE (was length-only). No SELECT — not readable.
---                                                  Close by revoking the grant once the service-role
---                                                  key is set: 20260816170000_leads_server_only.sql
+--   diagnostic_leads           rls=t  policies=1   ✅ CLOSED 2026-08-24. anon no longer holds the
+--                                                  INSERT grant and is gone from the ACL entirely
+--                                                  (verified: anon → POST /rest/v1/diagnostic_leads
+--                                                  returns 401 / 42501; was 201). The policy is
+--                                                  `authenticated` only and checks email SHAPE.
+--                                                  ⚠️ The shape check was briefly LOST: the
+--                                                  now-applied leads_server_only was written
+--                                                  2026-08-16, before V13 added it, so applying it
+--                                                  recreated the length-only policy. rls_regression
+--                                                  A9b caught it; restored by
+--                                                  20260823222545_leads_insert_restore_shape_check.
+--                                                  Still no SELECT — not readable through the API.
 --   diagnostic_plan_progress   rls=t  policies=1
 --   diagnostic_plans           rls=t  policies=1
 --   diagnostic_rechecks        rls=t  policies=1
@@ -85,7 +93,12 @@
 --     grant_owner_access(), init_learner_stats(), handle_new_user(),
 --     enforce_learner_cap(), enforce_grade_cap(), enforce_grade_ownership(),
 --     rls_auto_enable()  [event trigger — auto-enables RLS on any new public table]
---     prune_error_events()  [V16 retention, run by pg_cron 'prune-error-events' daily 03:17]
+--     prune_error_events()  [V16 retention, pg_cron 'prune-error-events' daily 03:27 since 2026-08-24]
+--     prune_diagnostic_leads()  [24-month lead retention, pg_cron 'prune-diagnostic-leads' 03:32]
+--     prune_diagnostic_items()  [90-day RAW placement answers, pg_cron 'prune-diagnostic-items' 03:22]
+--     delete_lead_by_email(text) [honours a lead's deletion request; docs/runbooks/data-requests.md]
+--        ⚠️ All four are SECURITY DEFINER with an explicit REVOKE from public/anon/authenticated —
+--        the V19 rule. delete_lead_by_email is an address-enumeration oracle without it.
 --        ⚠️ V19: created SECURITY DEFINER, which Postgres gives PUBLIC EXECUTE by DEFAULT, and
 --        Supabase exposes every public-schema function at /rest/v1/rpc/<name> — i.e. for a few
 --        minutes ANY anonymous caller could wipe the crash log. Revoked. THE GENERAL RULE: always

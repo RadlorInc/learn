@@ -89,7 +89,7 @@ $function$;
 revoke execute on function public.sync_session(uuid,text,text,integer,integer,integer,integer,integer,text,timestamptz) from anon, public;
 -- ⚠️ THESE FIVE NO LONGER EXIST, AND THAT MAKES A BARE REVOKE UNREPLAYABLE. They were
 -- created in the Supabase dashboard, locked down here, and then deliberately deleted by
--- 20260617250000_drop_dead_rpcs.sql. Against production that is fine — this migration ran
+-- 20260617140142_drop_dead_rpcs.sql. Against production that is fine — this migration ran
 -- while they still existed. Against a FRESH database it is fatal: `revoke ... on function`
 -- raises 42883 for a function that was never created, and the whole replay stops on the
 -- fifth migration of sixty-eight. That is what CI hit the first time it built the schema
@@ -107,7 +107,7 @@ begin
   revoke execute on function public.remove_my_learner_access(text) from anon, public;
 exception
   when undefined_function then
-    raise notice 'skipping revoke on dead RPCs (dropped by 20260617250000) — fresh-database replay';
+    raise notice 'skipping revoke on dead RPCs (dropped by 20260617140142) — fresh-database replay';
 end $$;
 
 -- Trigger-only functions: never meant to be called via the REST API. Triggers run as the

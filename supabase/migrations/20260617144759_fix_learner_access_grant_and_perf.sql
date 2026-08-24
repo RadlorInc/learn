@@ -1,5 +1,5 @@
 -- Perf hardening (the CRITICAL learner_access grant fix is in the next migration,
--- 20260617261000, via a SECURITY DEFINER helper to avoid RLS recursion).
+-- 20260617145125, via a SECURITY DEFINER helper to avoid RLS recursion).
 
 -- ── Perf: stop per-row re-evaluation of auth.uid() on the hottest table ──────
 -- learner_events is the highest-write table; wrapping auth.uid() in a scalar

@@ -17,7 +17,7 @@
 -- ⚠️ AND THIS IS THE SMALLER HALF OF THE LEADS PROBLEM. The anon INSERT grant is still open, so
 -- anyone holding the public anon key can POST /rest/v1/diagnostic_leads directly and skip
 -- /api/lead's 6/min limit — reproduced, HTTP 201. Closing that is
--- `20260816170000_leads_server_only.sql`, which CANNOT be applied until SUPABASE_SERVICE_ROLE_KEY
+-- `20260823221818_leads_server_only.sql`, which CANNOT be applied until SUPABASE_SERVICE_ROLE_KEY
 -- is set in Vercel (the route falls back to the anon key, so revoking the grant first stops lead
 -- capture dead and silently). Retention bounds how long the junk lives; it does not stop the junk.
 create extension if not exists pg_cron;

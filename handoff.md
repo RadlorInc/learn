@@ -147,6 +147,194 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🧾 **2026-08-24 (second pass) — THE LEDGER IS REPAIRED, AND THE DIRECTION WAS THE OPPOSITE OF THE ONE PLANNED: 58 REPO FILES MOVED, THE PRODUCTION LEDGER WAS NEVER WRITTEN. ⚠️ `perf_advisors` IS APPLIED AND CLEARED EIGHT LIVE ADVISOR FINDINGS.** `tsc` 0 · **1457/1458** · `next build` 0 · **`db push --dry-run` equivalent: 0 pending.**
+
+**The asks:** apply `perf_advisors` behind the new stale-migration diff · accept the ledger snapshot as the safety net but add *no backups* as a launch blocker · compute the dry-run rather than putting a production password into CI.
+
+## ① ✅ THE STALE-MIGRATION DIFF RAN FOR THE FIRST TIME, AND PASSED
+All five `diag_*` predicates were read off `pg_policies.qual` and compared with what the file would
+write: **identical except the `(select auth.uid())` wrap**, `with_check` null on all five, `cmd`
+SELECT, roles `{public}` — and `diagnostic_engine_schema` is the only other file in the repo that
+touches them, so nothing newer could be reverted. Applied, then verified from the CATALOG, not the
+success flag: five quals now carry `( SELECT auth.uid()`, three indexes exist, and the advisor
+report went **5 `auth_rls_initplan` + 3 `unindexed_foreign_keys` → 0** (three new `unused_index`
+INFOs, which the migration's own closing comment predicts — no traffic yet).
+
+## ② ⚠️⚠️ THE REPAIR WRITES NOTHING TO PRODUCTION — THE PLAN SAID 71 LEDGER UPDATES
+Renaming the repo files reaches the same acceptance test with **zero** production writes, and it is
+what `docs/runbooks/applying-migrations.md` already prescribes. **The ledger holds the true apply
+ORDER; the repo now agrees with it rather than the other way round.** So the snapshot committed
+first (`d880f68`, 73 rows) guards a write that never happened — kept, because it is also the record
+of the pairing. 58 files moved: 57 relabelled to the versions production recorded, plus
+`perf_advisors` at **20260823225313**.
+⚠️ **Checked before renaming: the ledger order is an order-PRESERVING relabelling of all 71
+previously-applied files — no permutation**, so replay order is unchanged. `perf_advisors` is the
+one file that moves, to last, which is safe for the two reasons in ①.
+
+## ③ 🔍 PAIRING BY CONTENT, AND THE TRAP THAT MAKES IT LOOK LIKE MASS DRIFT
+⚠️ **A RAW hash does not compare: the CLI strips comments preceding the first statement** when it
+stores a migration (`index_chapter_fks` is 331 bytes on disk, 173 in the ledger), so only **13 of
+72** files matched raw. Strip `--` comments and all whitespace from both sides and **68 of 72 pair
+exactly**; the other four are each explained (two amended in the repo after they ran, two split into
+a pair of rows by production, and `perf_advisors`, which had never run anywhere). Name-only pairing
+would have marked that last one applied and lost it for ever — which is the whole argument.
+Two remote-only rows survive by design (`grades_pin_touch_search_path`, `sync_recheck`) and two rows'
+`name` columns disagree with the repo filename on purpose; both tables are in
+[docs/schema-baseline-debt.md](docs/schema-baseline-debt.md).
+
+## ④ 🧮 THE DRY-RUN, COMPUTED RATHER THAN CREDENTIALLED
+No `SUPABASE_ACCESS_TOKEN` or DB password went into CI. `db push --dry-run` does one thing — compare
+local filename versions against `schema_migrations.version` — so the set difference IS the command:
+**74 ledger rows, 72 repo files, LOCAL-not-in-REMOTE = 0, REMOTE-not-in-LOCAL = 2** (the split-point
+rows). Both directions and the exact query are written out in the debt doc. The founder will run the
+real command later as confirmation, not as a gate.
+
+## ⑤ 🔴 "NO BACKUPS" IS NOW LAUNCH BLOCKER **B12**, NOT A NICE-TO-HAVE
+Founder's call and his words: *we cannot take a parent's money for a service whose entire record of
+their child's progress has no recovery path.* Supabase Pro is $25/month for daily backups + 7-day
+PITR and is already in the cost model. ⚠️ `baseline_schema.sql` returns the STRUCTURE and **none of
+the data** — it must not be read as a backup, and neither must the ledger snapshot.
+
+## ▶ OPEN
+1. ⏳ **The RLS suite has not yet looked at this.** It only runs on a PR to `main`, and the branch
+   `chore/ledger-repair` is pushed with PR **#51** open for exactly that. Read `ci / rls-tests`
+   before merging — it is the thing that caught the last regression in four minutes.
+   ⚠️ Note it has ALWAYS replayed `perf_advisors` (it replays repo files, and the file existed), so
+   CI's database has been ahead of production on those five policies for days; what is new to it is
+   the file moving to last.
+2. 🔴 **B12 — still no backup of the children's data.** Now blocking, and one dashboard toggle.
+3. ⚠️ Three migration comments and `src/app/api/lead/route.ts` still say the anon INSERT revoke
+   "cannot be applied until SUPABASE_SERVICE_ROLE_KEY is set" — it was applied yesterday. Prose
+   drift, not behaviour; a chip is filed.
+4. ▶ **Stage 1 next:** schema, RLS, regression tests, no UI — plus `last_reassigned_at`, the case
+   asserting the `sessions` / `learner_progress` entitlement guards cannot diverge, and the free-set
+   proposal against the AR constraint.
+5. Everything from the blocks below still stands.
+
+> 🔐 **2026-08-24 — THE ROAD TO A PAYWALL WENT THROUGH FIVE REAL PROBLEMS AND NEVER REACHED THE PAYWALL. ⚠️⚠️ THE RLS SUITE HAD NEVER RUN ONCE; IT NOW DOES, AND ON ITS SECOND DAY IT CAUGHT A SECURITY REGRESSION I HAD SHIPPED FOUR MINUTES EARLIER. AND THE MIGRATION LEDGER TURNS OUT TO BE 58 FILES OUT OF SYNC WITH PRODUCTION.** `tsc` 0 · **1457/1458** · `next build` 0 · **3 PRs merged** (#48, #49, #50). ⏸️ **STAGE 1 NOT STARTED — one decision block is open, see ▶.**
+>
+> **The ask:** subscription billing + paywall → *"STOP — DO NOT WRITE CODE YET"* → a plan, then a
+> series of pre-Stage-1 gaps that each turned out to be real.
+>
+> ## ⓪ ⚠️⚠️ THE RLS SUITE HAD NEVER EXECUTED, AND MAKING IT RUN TOOK SIX RED PIPELINES
+> `ci / rls-tests` was gated on a `SUPABASE_DB_URL` secret that was never set: it printed a
+> `::warning::` and `exit 0`. On a children's app the one suite proving account A cannot read
+> account B's data had **never run once**, and reported green throughout. It now brings up its own
+> Postgres with `supabase db start` — no secret, no cloud DB — and **fails unless the suite reports
+> a non-zero assertion count** (currently `RLS_ASSERTIONS=17`). Proved by simulation: with the file
+> reduced to `begin; rollback;`, psql exits **0** and the job still **fails**.
+>
+> ⚠️ **The blocker nobody had hit, because nobody had ever built this schema from source:** seven
+> base tables (`profiles`, `learners`, `learner_access`, `learner_invites`, `sessions`,
+> `learner_progress`, `learner_stats`) are created by **zero** of the 68 migrations — they were made
+> in the dashboard. `supabase/schema/baseline_schema.sql` reconstructs them from the live catalog.
+> Getting it to coexist with the migrations took **six red runs, each a distinct object class**:
+> `CREATE POLICY` (42710) → dead RPCs revoked then dropped (42883) → over-correction, 12 policies are
+> ALTERed and created by nothing (42704) → `ADD CONSTRAINT` (42710) → the baseline is migration-**ZERO**
+> not today, so it must carry three dropped columns → bare `CREATE TABLE` (42P07).
+> **`src/__tests__/baselineSchema.test.ts` DERIVES all five rules from the migrations** rather than
+> hard-coding them, because I hard-coded them twice and was wrong in opposite directions.
+>
+> ## ① 🔴 THREE PRIVACY GAPS BETWEEN THE PUBLISHED COPY AND THE SYSTEM (#49)
+> - **The export returned 4 of 11 child-data tables.** "Download a copy of everything we hold about
+>   your child" omitted the entire diagnostic (166 answers) and every analytics event (2,024 rows) —
+>   while the policy names placement-check answers as stored data. Under COPPA that button IS the
+>   parent's review right. ⚠️ The new gate **derives** the child-data table list from the SQL and
+>   caught `learner_invites` on its first run: it carries `learner_id` but holds a **third party's**
+>   email, so exporting it would disclose someone else's address to satisfy a right about the child.
+> - **`diagnostic_items` was retained for ever** while the copy said 90 days. Split where the line
+>   belongs — raw answers are analytics (90 days), the derived plan is progress (kept). Verified
+>   first: **nothing in the app reads `diagnostic_items`**, so pruning cannot cost a child their plan.
+> - **"Write to us and we will delete it" had no tool.** `delete_lead_by_email()` — service-role only
+>   by explicit REVOKE, or it is an address-enumeration oracle. `docs/runbooks/data-requests.md`.
+> - **The export could time out silently.** Measured: heaviest learner 165 kB, **96% events**;
+>   `authenticated` carries `statement_timeout = 8s`; `pgrst.db_max_rows` is unset so no silent
+>   PostgREST truncation. `.limit(5000)` + a `completeness: {complete, notes}` block, so a capped or
+>   failed read **says so in the file** instead of quietly holding less.
+>
+> ## ② 🔴 THE ANON INSERT IS CLOSED — AND IT TOOK FOUR PROBES TO PROVE THE PRECONDITION (#50)
+> Anyone with the public anon key could POST `/rest/v1/diagnostic_leads` directly and skip
+> `/api/lead`'s limit, on a table holding **4 real prospect addresses**. This was a ONE-WAY DOOR:
+> `/api/lead` falls back to the anon key, so revoking first would have stopped capture **dead and
+> silently**. Proof came from `/api/report-error`, not from a lead — `sinkError` has **no** anon
+> fallback, so a row in `error_events` can only mean the service-role key is present; a landed lead
+> would have looked identical either way.
+> ⚠️ **Three probes returned nothing.** The variable existed in Vercel but was not ticked for the
+> **Production environment**, and env vars bind at **deploy time**. What made it diagnosable was the
+> runtime log: `sinkError` logs `[milo.sink] … insert failed` on a rejected insert, so its ABSENCE
+> beside a present `[milo.client-error]` line distinguished *key missing* from *key rejected*.
+> Verified by doing the attack: anon → **HTTP 401 / 42501** (was 201) · `/api/lead` → 200, row lands ·
+> **1.15 MB of production JS across 22 chunks → zero `sb_secret_`**.
+> ✅ Production error monitoring is now durable for the first time (blocker B5, first half).
+>
+> ## ③ ⚠️⚠️ I SHIPPED A SECURITY REGRESSION AND THE SUITE CAUGHT IT IN FOUR MINUTES
+> `leads_server_only` was WRITTEN 2026-08-16, when the leads policy bounded email LENGTH only. On
+> 2026-08-17 `privacy_and_leads_hardening` tightened the SAME policy to require an email SHAPE — the
+> V13 fix. Applying the older file recreated the policy **as written** and dropped the newer check.
+> `RLS FAIL A9b: a non-email was accepted as a lead`, on the next CI run. Restored and verified.
+> **Nothing about the file looked wrong.** It was reviewed, correct on the day it was written, and it
+> reverted a security fix eight days newer than itself. The general rule is now
+> [docs/runbooks/applying-migrations.md](docs/runbooks/applying-migrations.md): **diff a stale
+> migration's objects against production's CURRENT definitions before applying, and STOP if they
+> differ.** ⚠️ And the positive-control rule went into **CLAUDE.md**, because it is not a chapter
+> rule: *a scan that finds nothing proves nothing until you have shown it can find something* — my
+> first bundle grep searched for JWTs and found zero, and these keys are not JWTs.
+>
+> ## ④ 🔴 THE LEDGER: 58 REPO FILES ARE OUT OF SYNC WITH PRODUCTION — VERIFIED, NOT REPAIRED
+> The two-file drift reported on 2026-08-23 was the visible edge. **The entire migration history was
+> applied out-of-band with generated timestamps** (`20260615180001_secure_learners_rls` ↔ ledger
+> `20260615142012 secure_learners_rls`, and so on). Paired all 72 repo files against 73 ledger rows
+> **by name AND content hash** (the ledger stores the applied SQL, so this is exact, not name-guessing):
+>
+> | | |
+> |---|---|
+> | paired by name **and** identical SQL | **66** |
+> | explained mismatches (my edit today · repo files amended in place · a different split point) | **5** |
+> | 🔴 **genuinely unapplied** | **1** |
+>
+> ⚠️ ~~**`20260816120000_perf_advisors.sql` has never run.**~~ **APPLIED 2026-08-24 second pass**, ledger version `20260823225313`, file renamed to match; eight advisor findings cleared. Was confirmed against live state at the time: all five
+> `diagnostic_*` policies evaluated `auth.uid()` **per row**, matching the `auth_rls_initplan`
+> advisor warnings; they no longer do. Marking it "applied" would skip it for ever — which is exactly why the pairing
+> had to be by content.
+> ⚠️ **If `deploy.yml`'s `migrate-prod` were enabled today** it would attempt **58 pending migrations
+> in version order and abort partway** — `chapters_as_data` re-adds `sessions_chapter_fkey`, which
+> already exists (42710) — leaving ~7 re-applied and the run half-done. It is doubly inert
+> (`PROD_PROJECT_REF` unset AND `migrate-staging` skipped) and **stays disabled**.
+>
+> ## ⑤ ✅ ALSO DONE
+> Retention crons staggered **03:17 / 03:22 / 03:27 / 03:32** (four at one minute would contend once
+> the tables grow; `cron.schedule` on an existing name updates in place, so no window without a job) ·
+> `20260818090000_leads_retention` applied, **3 → 4 cron jobs** · migration files renamed to the
+> versions production recorded, repo-side, **zero ledger writes** ·
+> [docs/schema-baseline-debt.md](docs/schema-baseline-debt.md) names the frozen drift (7 tables, 2
+> enums, 5 functions, 7 triggers, 2 indexes, 12 policies) with the two-step resolution written out.
+>
+> ## ▶ OPEN — ✅ ALL THREE ANSWERED AND THE REPAIR IS DONE (see the 🧾 block above)
+> 1. ⏸️ **`perf_advisors`: apply it, or leave it pending?** Leaving it means `db push --dry-run`
+>    reports 1, not zero, so the acceptance test cannot pass. Applying it means running the new
+>    stale-migration diff first. Recommend applying.
+> 2. ⏸️ **The backup prerequisite cannot be met.** Supabase **free plan has no downloadable backup and
+>    no PITR**. Offered substitute: snapshot the 73 ledger rows to a committed file first. That is
+>    **not** a database backup and must not be treated as one.
+> 3. ⏸️ **`supabase db push --dry-run` needs credentials I do not have** (CLI + `SUPABASE_ACCESS_TOKEN`
+>    + DB password; no CLI/Docker/psql on this machine). Either the founder runs it, or a temporary
+>    CI job with those two secrets does. The equivalent is computable, but the founder asked for the
+>    literal output.
+> 4. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA** — `backup.yml` reports green and writes zero bytes.
+>    Unchanged, and now also blocking (2).
+> 5. 🔴 **`DRAFT = true`** — privacy/ToS still placeholders (B1/B2).
+> 6. **Billing decisions are all settled** and recorded in the plan: graduated tiering (never volume),
+>    4 paid seats / 25 profile cap, teachers out of scope, entitlement follows `learners.created_by`,
+>    no trial, USD + Stripe Tax off, `RADLOR MILO` descriptor, Resend, 7-day grace, and the $1
+>    proration floor replaced by `proration_behavior: 'none'` below $1. **Stage 1 = schema, RLS,
+>    regression tests, no UI** — plus `last_reassigned_at` (one seat reassignment per billing period,
+>    enforced in-function), a case asserting the `sessions` / `learner_progress` entitlement guards
+>    cannot diverge, and the free-set proposal against the AR constraint.
+> 7. ⚠️ **Accepted limitation, written down deliberately:** RLS gates the RECORD, not chapter CONTENT
+>    — chapters are client-side JS. Founder's call: sell the plan, the diagnostic and the record, not
+>    the JavaScript. Do NOT move question generation server-side.
+> 8. Everything from the blocks below still stands.
+
 > 🚦 **2026-08-23 — "PRODUCTION MEIN JAANE KE LIYE TAIYYAR HAI?" — THE CODE IS; THE THINGS AROUND IT ARE NOT. ⚠️⚠️ THREE WORKFLOWS REPORT GREEN WHILE DOING NOTHING, THE ERROR SINK WRITES NOWHERE (PROVED WITH A LIVE PROBE), AND EIGHT CHAPTERS COULD NOT BE STARTED ON A LANDSCAPE PHONE.** `tsc` 0 · **1444/1444** · `next build` 0 · **218/218 e2e** vs a production build (7.2 min, foreground) · lint baseline unchanged. ✅ **SHIPPED — `main`@`6dd9224`, 3 commits; and it carried the NINE-commit backlog with it, so the 96–98% diagnostic and both new 9–11 chapters are LIVE at last.** `ci / verify` **green for the first time since 2026-08-20**; prod serving **sw v138**.
 >
 > **The asks:** *"Performance, scalability, responsive… deeply check karo"* → *"haan yeh fix kar do aur nightly failures triage karo"*.
@@ -159,6 +347,7 @@
 >   the dashboard says there is, which is worse than the honest nothing it replaced.
 > - **`ci.yml` → `rls-tests`** — `SUPABASE_DB_URL` unset → skipped. The suite that proves the
 >   database denies a cross-tenant attacker, on a children's app, **has never run.**
+>   ✅ **FIXED 2026-08-24** — CI stands up its own Postgres; 17 assertions; an empty run now fails.
 > - **`deploy.yml` → migrate-staging/prod** — `if: vars.STAGING_PROJECT_REF != ''`, never set.
 >
 > ⚠️ **And `ci / verify` is genuinely RED on every push since 2026-08-20 while Vercel deploys anyway**
@@ -251,15 +440,18 @@
 >    `all-chapters`. Green tomorrow = the two-night red is genuinely closed; red = the gate triage
 >    in §③ missed something and the traces are on the run.
 > 2. 🔴 **NO BACKUPS.** Three secrets in GitHub settings turns `backup.yml` real. Highest-value hour.
-> 3. 🔴 **BLIND IN PRODUCTION.** `SUPABASE_SERVICE_ROLE_KEY` on Vercel + Web Analytics on.
+> 3. 🟡 ~~Blind in production~~ — **HALF CLOSED 2026-08-24.** `SUPABASE_SERVICE_ROLE_KEY` is live and
+>    `error_events` receives rows (proved with a probe). **Vercel Web Analytics is still off.**
 > 4. 🔴 **`DRAFT = true`** — privacy policy and ToS are still placeholders (B1/B2). Hard blocker for
 >    marketing math to under-13s.
-> 5. **`SUPABASE_DB_URL`** so the RLS suite actually runs.
+> 5. ✅ ~~`SUPABASE_DB_URL` so the RLS suite actually runs~~ — **SOLVED DIFFERENTLY 2026-08-24.** No
+>    secret needed: CI stands up its own Postgres with `supabase db start`. 17 assertions, and the
+>    job now fails if the suite runs nothing.
 > 6. **Supabase free plan** — pauses on inactivity, 500 MB cap, no PITR, DB in Sydney while functions
 >    run in Virginia. Pro before real traffic.
-> 7. **`getInsightsRawRows` has no `.limit()`** — PostgREST's default max-rows would silently truncate
->    rather than error, so the founder dashboard would quietly report wrong numbers at scale. Fallback
->    path only, low severity.
+> 7. 🟢 **`getInsightsRawRows` has no `.limit()`** — MILDER THAN FILED: measured 2026-08-24,
+>    `pgrst.db_max_rows` is UNSET on this project, so PostgREST does not silently truncate. Still
+>    unbounded in principle; fallback path only.
 > 8. **The diagnostic writes its session row only on completion** — the probe is now 20–50 questions
 >    and abandonment is invisible. Still the most important unmeasured number.
 > 9. ⚠️ Dependabot has a PR bumping **TypeScript 7, eslint 10, jsdom 30** in one batch. Do not merge
@@ -483,216 +675,4 @@
 >    rather than a miss and nothing is re-asked.
 > 4. Everything from the blocks below still stands.
 
-> 🚚 **2026-08-22 (second pass) — THE TWO MISSING CHAPTERS ARE BUILT. `i.multFacts` — THE MOST LOAD-BEARING NODE IN THE WHOLE 3–18 GRAPH — HAD NO CHAPTER FOR NINE DAYS, AND ~10% OF DIAGNOSED 9–11 CHILDREN ROOTED ON IT. THE CONTENT HOLE IS NOW 0% IN EVERY BAND.** `tsc` 0 · **1436/1436** (+59) · `next build` 0 · lint clean on all new files · sw **v134 → v135**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
->
-> **The ask:** *"Times Tables + Division chapter ka design bhi same waise hi rakho jaise decimal chapter aur jaise 12-18 age band ke chapters ka hai… daily real world examples"* → then *"dono worlds theek hain, (i) karo — banana shuru karo"*.
->
-> | | |
-> |---|---|
-> | `timesTables` | **THE PACKING SHED** · `story/packing.ts` + `teen/games/PackingShedGame.tsx` |
-> | `division` | **THE MINIBUS RUN** · `story/busRun.ts` + `teen/games/BusRunGame.tsx` |
->
-> Both are Coin Tray's shape exactly: a data file on `GameShell`, `band: '9-11'`, all the maths and
-> every word in a pure `story/<module>.ts`, ten-round loop, adaptive tiers, re-teach, mastery exit,
-> `coverage` over three readings. Registered in `chapters.ts` + `registry.tsx`; previews are
-> `/teen-preview?c=timesTables` and `?c=division`.
->
-> ## ⓪ 📦 THE PACKING SHED — THE CRATES ARE CLOSED, AND THAT IS THE WHOLE CHAPTER
-> An order arrives: *"Four crates. Five peaches in each."* The crates are **shut** — fact fluency
-> means knowing 7 × 8 without counting, so an array a child can count is the scene answering the
-> question. They type the total on the shipping label, and THEN the crates tip out and the pallet
-> becomes the CHECK. The Empty Plot's order, for the Empty Plot's reason.
-> **One chapter carries two graph nodes**, which is the curriculum's own split: L1 the skip-count
-> families (×2/×5/×10), L2 the hard middle (6–9 × 6–9) where fluency actually lives, **L3 2-digit ×
-> 1-digit** — so `i.multFacts` AND `i.multMultiDigit` both route here.
-> ⚠️ **Answers are TYPED, not picked.** `GameConfig.answerPad` offers chips, and a times-table fact
-> is precisely the question a child wins by ELIMINATING — the fault the diagnostic was rebuilt this
-> same day to remove. The label carries its own ten digits, the way the tray does.
-> ⚠️ **Send is live the moment there is something to send.** Answers run 6 → 116, so a fixed-width
-> commit gate would be FitOut's dead button by construction.
->
-> ## ① 🚌 THE MINIBUS RUN — THE REMAINDER HAS SOMEWHERE PHYSICAL TO BE
-> The class is going on a trip; every bus has the same seats. Three readings: **share** them out
-> (how many each), **group** them (how many buses fill), and the one the chapter exists for —
-> **who is left standing on the pavement**. That is the lesson worth keeping from the deleted Supply
-> Run, which chapter-craft still records: *"a remainder with somewhere physical to be"*.
-> ⚠️⚠️ **AND THE WORLD'S RULE WOULD HAVE CONTRADICTED THE MATHS IF THE OBVIOUS QUESTION HAD BEEN
-> ASKED.** *"25 children, buses seat 6 — how many buses?"* has two honest answers: the division says
-> 4 r 1 and any real teacher orders **5**. Asking for the quotient there teaches the opposite of what
-> the world shows, on every remainder round. So the scored question is the unambiguous physical one
-> (how many are still waiting) and *"so we need one more bus"* is the CONSEQUENCE in the reveal —
-> the same call The Height Bar makes with its gate.
-> ⚠️ **This is the AR chapter and The Packing Shed is not, and the reason is arithmetic:** a hand
-> reads 0–10. Every Minibus answer is a count inside that, so camera and taps express exactly the
-> same set of questions; The Packing Shed's answers reach the hundreds, so wiring a hand there would
-> be the one-instrument-two-inputs hole. **The generator is bounded to keep that true**, and it is
-> gated.
->
-> ## ② ⚠️⚠️ TWO REAL DEFECTS, BOTH FOUND BY DRIVING IT, NEITHER VISIBLE TO ANY GATE
-> **(a) The instrument was a hot/cold ORACLE, and the wrong version is the one that sounds like good
-> teaching.** The buses loaded LIVE from whatever number was showing — *a wrong action allowed and
-> visible*, which is a rule this repo already has — so the pavement read "still waiting" until the
-> count happened to be right and then flipped to **"pavement clear"**. Tap 1, 2, 3, watch the label,
-> commit; the child divides nothing. Fixed by the ORDER, not by removing the feedback: while
-> choosing, the yard shows their number as a SETTING (seats reserved, nobody moved) and the loading
-> happens ON the commit. ⚠️ The tell was one WORD — "clear" versus "waiting" — not a picture.
-> **(b) The bus was drawn with its seats on every round — and on a `sharing` round the seat count IS
-> the answer.** Count the empty seats in one bus and read it off. Now the capacity is drawn only
-> where the ticket already gave it; where it is the question the bus is an open box.
-> Both generalised into `chapter-craft.md` §1.
->
-> ## ③ 🔬 WHAT THE GATES CAUGHT BEFORE THE SCREEN DID (55 new module tests, written first)
-> - **`6 crates of 12`** — the taught method is "split into tens and ones", so the child's own
->   partial product `6 × 2` is **12**, the crate size printed an inch away. The Height Bar's fault
->   exactly: not a hidden answer but a MANUFACTURED wrong one. Fixed in the generator.
-> - **`10 buses of 5`, guess 8** — the verdict read *"10 children still on the pavement"*, and 10 is
->   the answer. chapter-craft: *"a number in a verdict can be the answer by coincidence — check the
->   numbers a template can produce, not just the words in it."* The verdict states the DIRECTION now.
-> - Square runs and square pallets (`buses === seats`, `crates === per`) refused at the draw — The
->   Mission Brief shipped that on 16% of its division rounds.
-> - Class sizes bounded so the pavement is children rather than a pile.
-> - ⚠️ And a prompt that read **"nine crates. Two lemons in each."** — a sentence opening in lower
->   case, on the chalkboard, in every `total` and `multi` round. Caught on a screenshot, then pinned.
->
-> ## ④ 🎯 WHAT IT DOES TO THE DIAGNOSTIC
-> `i.multFacts`, `i.multMultiDigit` and `i.division` now carry real chapters, so the `remediation`
-> stand-in field added this morning is **deleted again the same day** — it existed to point a
-> chapter-less skill at the nearest thing we owned, and nothing is chapter-less any more. What holds
-> the line instead is the gate. Measured after: **0% of diagnosed roots land on a
-> skill with no chapter, in every band** (was 5–10%). And the play-data revision woke up — the
-> `activePlan` gate had pinned `deeperChapter('factorsMultiples') === null` with the note *"pinned so
-> the day a chapter comes back, this starts returning one and somebody notices"*. It now returns
-> `timesTables`. **The pin fired exactly as written.**
->
-> ## ▶ OPEN
-> 1. ✅ ~~Nothing is committed~~ — **SHIPPED 2026-08-23** (`6dd9224`), with the diagnostic work of the same day. Driven end to end at
->    1280×720 and 640×320: start card → walkthrough → guided → scored round → correct answer, on both
->    chapters. 0 console errors, 0 offscreen, 0 unreachable controls, no scroll.
-> 2. ⚠️ **At 640×320 every control scales to ~28px**, under the 44px floor — `FitSlot` only ever
->    shrinks. **Measured against the shipped Coin Tray at the same frame: 29×29.** So this is a
->    band-wide property, not something these two chapters introduced — but it is the whole band, and
->    it is not written down anywhere as accepted.
-> 3. **No backdrops were generated, deliberately** — the 9–11 GameShell chapters use `motif` (one
->    huge faint emoji) rather than a scene PNG, exactly as The Coin Tray does. If the band ever moves
->    to painted scenes, these two need two crops each like the 12–14 chapters.
-> 4. **AR is still never driven with a REAL HAND** — The Minibus Run adds a second chapter to that
->    gap rather than closing it.
-> 5. Everything from the blocks below still stands.
-
-> 🎯 **2026-08-22 — THE DIAGNOSTIC, RETHOUGHT AND THEN HARDENED. ⚠️⚠️ IT NAMED THE RIGHT ROOT GAP **26–34%** OF THE TIME AND TOLD **10–38%** OF GAPPED CHILDREN THEY WERE ON TRACK — AND ELEVEN GREEN ENGINE TESTS COULD NOT SEE IT, BECAUSE EVERY ONE DRIVES A PERFECT ORACLE. NOW **81–87% / 1–4%**, TEN UNDIAGNOSABLE CHAPTERS ARE REACHABLE, AND THE WEEK-6 GUARANTEE LOOP FIRES FOR THE FIRST TIME.** `tsc` 0 · **1377/1377** (+17) · `next build` 0 · sw **v133 → v134**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
->
-> **The asks:** *"daignostic … dekho ki effective hai kya naii hai"* → *"pura properly rethink karo taaki zyada se zyada baccho ka gap mile aur hamare joh bhi chapters hai unki help se ek personalised route de"* → *"yeh problems ka solution find karo aur apply karo … high accuracy pe hona chahiye"*.
->
-> | | before | after |
-> |---|---|---|
-> | names the EXACT root gap | **26–34%** | **81–87%** |
-> | tells a gapped child they are on track | **10–38%** | **1–6%** |
-> | says "a band below" to an ON-GRADE child | — | **≤ 4%** |
-> | leaf-chapter gap reaches the route | **impossible** | **83–95%** |
-> | route starts at the gap when the gap owns no chapter | **never** | always |
-> | on-grade probe length (median) | — | 9–16 |
->
-> ## ⓪ ⚠️⚠️ THE ANSWER SURFACE WAS THE WHOLE STORY, AND THE ENGINE WAS INNOCENT
-> Measured by simulating learners with a PLANTED gap, answering with each item's REAL guess rate and
-> a 10% slip. **Driven with clean items the same descent resolves the exact root 90–98%** — which is
-> what stopped a rewrite of the search. Three multiplying causes, all outside it:
-> - **one 4-choice MCQ per skill = 25% lucky pass** (50% on four of them — `e.compare`, `p.compare100`,
->   `i.bigNumbers`, `i.decimals` — two of which are band ENTRIES);
-> - ⚠️ **the fail-confirmation STRIKE doubles it.** A first miss re-offers the skill, so a broken child
->   gets TWO shots at the guess: `p + (1−p)p` → 25% becomes **44%**, 50% becomes **75%**. The guard was
->   written for false FAILS and its cost on false PASSES was never priced;
-> - **a lucky pass on an ENTRY closes that whole branch for ever** — the gap disappears entirely and
->   the report says *"At or above grade level"* with an empty plan.
->
-> **Fix: where the answer is a NUMBER the child types it** (`input:'num'`, guess ≈ 0), a fraction gets
-> two boxes, and `'pick'` survives only where the answer space is genuinely categorical — widened 4→6.
-> ⚠️ **The pad's extra keys (`−`, `.`) are declared PER QUESTION TYPE, never derived from the answer** —
-> deriving them prints the answer's sign before the child touches anything.
->
-> ## ① 🕳️ COVERAGE: TEN BUILT CHAPTERS THE PROBE COULD NEVER REACH — AND THEN NINE MORE ONE BAND DOWN
-> A probe that only walks DOWN from entries cannot see a LEAF. **14 skills were unreachable by ANY
-> band**, so a rounding, time, money or word-problem gap was structurally undiagnosable and a 6–8
-> child's whole check covered 11 of 74 skills. `PROBE_ENTRY` is now `PROBE_SPINE` (descend on fail →
-> the root gap) + `PROBE_SWEEP` (leaf chapters → route entries).
-> ⚠️ **Then the founder's own case: a 9–11 child who cannot tell the time.** `p.time` is a 6–8 leaf, so
-> nothing in 9–11 goes near it — each band misses **9–13** lower-band chapters this way. Sweeping all
-> of them would ask a seventeen-year-old *"which is more, 3 or 7"*. The split that works: a
-> **standalone topic** (money, time, story problems, rounding, units, angles, charts) can be missing on
-> its own and nothing else will ever reveal it — it must be asked; a **foundational** skill (compare,
-> number order) sits under everything, so any failure above sends the descent through it anyway. One
-> band down only; two bands down, the descent is the honest instrument.
->
-> ## ② ✂️ THE DESCENT BISECTS NOW — SHORTER *AND* MORE ACCURATE FROM ONE CHANGE
-> Instrumented where the questions actually go: **17–18 spent 11.3 of 20.2 on the descent**, one
-> question per LEVEL down a nine-level chain, each an extra chance for a slip to plant a false deeper
-> root. Halving the candidate set instead took that band 72% → **81%** and 12–14 to **84%**.
-> ⚠️⚠️ **Pure bisection was WRONG and the measurement caught it: a grade-level 17–18 child went from 9
-> questions to 22.** With nothing broken below, the cheap question is *"do this skill's own direct
-> prerequisites hold?"* — three probes and it is over — while a bisector prunes a 40-node closure a
-> sub-tree at a time. So a branch opens in direct-prerequisite mode and switches to bisecting the
-> moment something under it fails, which is exactly when the long chains appear.
-> ⚠️ Two more free questions saved, both from the graph rather than a cap: an entry whose prerequisite
-> has already FAILED is not asked (it is arithmetic, not a question) and an entry that is a
-> PREREQUISITE of something already PASSED is not asked either.
->
-> ## ③ 🗺️ THE ROUTE IS DERIVED FROM THE GAP, NOT FROM WHICH QUESTIONS GOT ASKED
-> `planSkills = [...s.failed]` was a fair approximation while the descent walked every level and
-> became wrong the instant it bisected — a bisecting search **skips levels on purpose**, and those
-> skipped chapters are exactly the ones between the child's gap and their grade. It is now the failed
-> set PLUS every skill on a chain from a root up to a failed entry, bounded by that chain (not by
-> `blockedBy(root)`, which for a deep root is most of the graph). Median route: 2 / 4 / 6 / 9 / 16
-> chapters by band.
-> ⚠️ **And the report then contradicted itself on one screen.** A learner rooting four bands down drew
-> a **40-step** route printed two inches under *"Caught now, it's weeks of work, not years"* — which is
-> true of a short route and a lie about a long one. The plan card now shows the first five with
-> "+N more, one step at a time", and the timeline sentence is chosen by the route's actual length.
->
-> ## ④ 🔍 THE WEEK-6 GUARANTEE LOOP HAD NEVER FIRED, AND IT WAS NOT THE LOGIC
-> Prod: **0 rechecks, ever** — and querying the sessions, **five children are 45–50 days past their
-> check-up and genuinely due one**, so it was not "nothing is ripe yet". `getCheckupStatus` is correct;
-> the nudge lived only on the **parent dashboard**, for whichever learner happened to be selected. It
-> now renders on `/menu`, the screen the child opens every session. Driven end to end (`Check 1 of 3`
-> → typed answers → result).
-> ⚠️ The loop is the promise, the retention signal AND the efficacy dataset — one mechanism doing three
-> jobs, and it was reachable only by a parent visiting a screen they have no reason to open.
->
-> ## ⑤ 🔬 THE BUG FOUND ALONG THE WAY: THE "PER-CHILD REPRODUCIBLE PROBE" WAS NOT
-> 14 generators used `pick` from `@/core/rand` — which is `Math.random`, and **that file's own header
-> says reproducible cases must not use it.** `resolve()` rebuilds the current question from the seed on
-> a mid-probe resume, so those items came back DIFFERENT. A determinism test existed and passed: it
-> checked ONE skill, which happens not to use `pick`. Now a seeded `pk`, swept across all 74.
->
-> ## ⑥ 🚧 THE GATE IS THE REAL ARTEFACT — `src/__tests__/diagnosticAccuracy.test.ts`
-> ⚠️⚠️ **Eleven engine tests were green through all of this because every one drives a PERFECT ORACLE**
-> ("knows it ⇒ correct"). A real child guesses and slips; nothing in 1360 tests modelled either, so the
-> product's central claim was unmeasured. The gate plants a gap, answers with the real per-item guess
-> rate, and asserts exact-root rate, missed-gap rate, false-alarm rate **split into any-gap vs a-gap-in-
-> a-lower-band** (only the second is damaging), leaf coverage, route-starts-at-the-gap, route LENGTH,
-> probe LENGTH (accuracy is trivially buyable with more questions), and the exact list of chapterless
-> skills. Seeded, so it is not a coin flip.
-> ⚠️ `diagVisual`'s *"the tallest bar must be the answer"* changed with its question: that was right
-> while `i.dataGraphs` asked *"which has the most"* — answerable by LOOKING — and it now asks *"how many
-> more X than Y"*. The surviving invariant is that the picture supports the arithmetic.
->
-> ## ▶ OPEN
-> 1. ✅ ~~Nothing is committed~~ — **SHIPPED 2026-08-23** (`6dd9224`). `tsc` 0 · 1377/1377 · `next build` 0 · lint baseline unchanged ·
->    driven on screen at 1280×720 and 640×320 (number pad, fraction pad, full probe → report, and the
->    re-check flow). 0 offscreen, 0 controls under 44px, 0 console errors.
-> 2. ⚠️⚠️ **THE ONE THING THE ENGINE CANNOT FIX: ~10% of diagnosed 9–11 children root on a skill with
->    NO CHAPTER** (`i.multFacts`, `i.multMultiDigit`, `i.division`; 5–8% for the teen bands). And the
->    stand-in is weaker than it sounds — a child whose root gap is multiplication FACTS has, by the
->    definition of a root, already PASSED equal groups, so the plan sends them to a chapter they can
->    already do. **This needs a Times Tables (fluency) chapter and a Division chapter.** Gated
->    (`exactly three skills have no chapter`) so it cannot silently widen. **Founder decision needed:
->    that is a chapter build — verb, world, art — not an engine change.**
-> 3. **Probe length is the live trade.** On-grade median 9–16 (9–11 longest: it sweeps the most leaf
->    chapters); gapped p95 16–27. Above the spec's "8–12 items", inside its "5–8 min". The sweep is
->    3–4 questions and is the only thing that can find a money/time/rounding gap.
-> 4. **17–18 and 15–16 are the weakest bands at 81%** — its descents cross the most bands, so a slip has the most
->    room to land on a wrong-but-deeper root.
-> 5. **The `/menu` re-check card is NOT visually verified** — it needs a signed-in learner with a
->    6-week-old gap, which the local dev server has no session for. Its destination WAS driven.
-> 6. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA**, and tester issue #2 (Milo's robotic voice) is
->    untouched. Everything from the blocks below still stands.
-
-_Older sessions (2026-06-15 → **2026-08-20**, including 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-20**, including 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._

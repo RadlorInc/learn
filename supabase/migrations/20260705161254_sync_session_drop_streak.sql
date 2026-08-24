@@ -1,6 +1,6 @@
 -- Product change (founder decision, 2026-07-04): remove the day-streak completely.
 -- Step 1 of 2 (non-destructive): stop sync_session computing/writing current_streak & longest_streak.
--- The columns are dropped in the follow-up migration 20260704120100_drop_streak_columns.sql; keeping
+-- The columns are dropped in the follow-up migration 20260705161328_drop_streak_columns.sql; keeping
 -- the drop separate lets the destructive DDL go through the pipeline's prod-approval gate on its own.
 --
 -- Defensive: pin a DEFAULT 0 on the streak columns first, so this redefinition's INSERT (which no

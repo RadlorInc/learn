@@ -15,7 +15,7 @@
  *      product later stays a one-env-var change with no code edit.
  *
  * ⚠️ THE SERVICE-ROLE KEY IS REQUIRED FOR (2) AND THERE IS NO ANON FALLBACK, DELIBERATELY.
- * `20260816170000_leads_server_only.sql` is this repo's own record of why: `diagnostic_leads`
+ * `20260823221818_leads_server_only.sql` is this repo's own record of why: `diagnostic_leads`
  * opened an anonymous INSERT surface and the mitigation it named ("Supabase Auth rate limits")
  * does not apply to a PostgREST write, so anyone with the public anon key could fill it for free.
  * Falling back to anon here would reopen exactly that, and would bypass `/api/report-error`'s own

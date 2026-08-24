@@ -1,3 +1,215 @@
+> 🚚 **2026-08-22 (second pass) — THE TWO MISSING CHAPTERS ARE BUILT. `i.multFacts` — THE MOST LOAD-BEARING NODE IN THE WHOLE 3–18 GRAPH — HAD NO CHAPTER FOR NINE DAYS, AND ~10% OF DIAGNOSED 9–11 CHILDREN ROOTED ON IT. THE CONTENT HOLE IS NOW 0% IN EVERY BAND.** `tsc` 0 · **1436/1436** (+59) · `next build` 0 · lint clean on all new files · sw **v134 → v135**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
+>
+> **The ask:** *"Times Tables + Division chapter ka design bhi same waise hi rakho jaise decimal chapter aur jaise 12-18 age band ke chapters ka hai… daily real world examples"* → then *"dono worlds theek hain, (i) karo — banana shuru karo"*.
+>
+> | | |
+> |---|---|
+> | `timesTables` | **THE PACKING SHED** · `story/packing.ts` + `teen/games/PackingShedGame.tsx` |
+> | `division` | **THE MINIBUS RUN** · `story/busRun.ts` + `teen/games/BusRunGame.tsx` |
+>
+> Both are Coin Tray's shape exactly: a data file on `GameShell`, `band: '9-11'`, all the maths and
+> every word in a pure `story/<module>.ts`, ten-round loop, adaptive tiers, re-teach, mastery exit,
+> `coverage` over three readings. Registered in `chapters.ts` + `registry.tsx`; previews are
+> `/teen-preview?c=timesTables` and `?c=division`.
+>
+> ## ⓪ 📦 THE PACKING SHED — THE CRATES ARE CLOSED, AND THAT IS THE WHOLE CHAPTER
+> An order arrives: *"Four crates. Five peaches in each."* The crates are **shut** — fact fluency
+> means knowing 7 × 8 without counting, so an array a child can count is the scene answering the
+> question. They type the total on the shipping label, and THEN the crates tip out and the pallet
+> becomes the CHECK. The Empty Plot's order, for the Empty Plot's reason.
+> **One chapter carries two graph nodes**, which is the curriculum's own split: L1 the skip-count
+> families (×2/×5/×10), L2 the hard middle (6–9 × 6–9) where fluency actually lives, **L3 2-digit ×
+> 1-digit** — so `i.multFacts` AND `i.multMultiDigit` both route here.
+> ⚠️ **Answers are TYPED, not picked.** `GameConfig.answerPad` offers chips, and a times-table fact
+> is precisely the question a child wins by ELIMINATING — the fault the diagnostic was rebuilt this
+> same day to remove. The label carries its own ten digits, the way the tray does.
+> ⚠️ **Send is live the moment there is something to send.** Answers run 6 → 116, so a fixed-width
+> commit gate would be FitOut's dead button by construction.
+>
+> ## ① 🚌 THE MINIBUS RUN — THE REMAINDER HAS SOMEWHERE PHYSICAL TO BE
+> The class is going on a trip; every bus has the same seats. Three readings: **share** them out
+> (how many each), **group** them (how many buses fill), and the one the chapter exists for —
+> **who is left standing on the pavement**. That is the lesson worth keeping from the deleted Supply
+> Run, which chapter-craft still records: *"a remainder with somewhere physical to be"*.
+> ⚠️⚠️ **AND THE WORLD'S RULE WOULD HAVE CONTRADICTED THE MATHS IF THE OBVIOUS QUESTION HAD BEEN
+> ASKED.** *"25 children, buses seat 6 — how many buses?"* has two honest answers: the division says
+> 4 r 1 and any real teacher orders **5**. Asking for the quotient there teaches the opposite of what
+> the world shows, on every remainder round. So the scored question is the unambiguous physical one
+> (how many are still waiting) and *"so we need one more bus"* is the CONSEQUENCE in the reveal —
+> the same call The Height Bar makes with its gate.
+> ⚠️ **This is the AR chapter and The Packing Shed is not, and the reason is arithmetic:** a hand
+> reads 0–10. Every Minibus answer is a count inside that, so camera and taps express exactly the
+> same set of questions; The Packing Shed's answers reach the hundreds, so wiring a hand there would
+> be the one-instrument-two-inputs hole. **The generator is bounded to keep that true**, and it is
+> gated.
+>
+> ## ② ⚠️⚠️ TWO REAL DEFECTS, BOTH FOUND BY DRIVING IT, NEITHER VISIBLE TO ANY GATE
+> **(a) The instrument was a hot/cold ORACLE, and the wrong version is the one that sounds like good
+> teaching.** The buses loaded LIVE from whatever number was showing — *a wrong action allowed and
+> visible*, which is a rule this repo already has — so the pavement read "still waiting" until the
+> count happened to be right and then flipped to **"pavement clear"**. Tap 1, 2, 3, watch the label,
+> commit; the child divides nothing. Fixed by the ORDER, not by removing the feedback: while
+> choosing, the yard shows their number as a SETTING (seats reserved, nobody moved) and the loading
+> happens ON the commit. ⚠️ The tell was one WORD — "clear" versus "waiting" — not a picture.
+> **(b) The bus was drawn with its seats on every round — and on a `sharing` round the seat count IS
+> the answer.** Count the empty seats in one bus and read it off. Now the capacity is drawn only
+> where the ticket already gave it; where it is the question the bus is an open box.
+> Both generalised into `chapter-craft.md` §1.
+>
+> ## ③ 🔬 WHAT THE GATES CAUGHT BEFORE THE SCREEN DID (55 new module tests, written first)
+> - **`6 crates of 12`** — the taught method is "split into tens and ones", so the child's own
+>   partial product `6 × 2` is **12**, the crate size printed an inch away. The Height Bar's fault
+>   exactly: not a hidden answer but a MANUFACTURED wrong one. Fixed in the generator.
+> - **`10 buses of 5`, guess 8** — the verdict read *"10 children still on the pavement"*, and 10 is
+>   the answer. chapter-craft: *"a number in a verdict can be the answer by coincidence — check the
+>   numbers a template can produce, not just the words in it."* The verdict states the DIRECTION now.
+> - Square runs and square pallets (`buses === seats`, `crates === per`) refused at the draw — The
+>   Mission Brief shipped that on 16% of its division rounds.
+> - Class sizes bounded so the pavement is children rather than a pile.
+> - ⚠️ And a prompt that read **"nine crates. Two lemons in each."** — a sentence opening in lower
+>   case, on the chalkboard, in every `total` and `multi` round. Caught on a screenshot, then pinned.
+>
+> ## ④ 🎯 WHAT IT DOES TO THE DIAGNOSTIC
+> `i.multFacts`, `i.multMultiDigit` and `i.division` now carry real chapters, so the `remediation`
+> stand-in field added this morning is **deleted again the same day** — it existed to point a
+> chapter-less skill at the nearest thing we owned, and nothing is chapter-less any more. What holds
+> the line instead is the gate. Measured after: **0% of diagnosed roots land on a
+> skill with no chapter, in every band** (was 5–10%). And the play-data revision woke up — the
+> `activePlan` gate had pinned `deeperChapter('factorsMultiples') === null` with the note *"pinned so
+> the day a chapter comes back, this starts returning one and somebody notices"*. It now returns
+> `timesTables`. **The pin fired exactly as written.**
+>
+> ## ▶ OPEN
+> 1. ✅ ~~Nothing is committed~~ — **SHIPPED 2026-08-23** (`6dd9224`), with the diagnostic work of the same day. Driven end to end at
+>    1280×720 and 640×320: start card → walkthrough → guided → scored round → correct answer, on both
+>    chapters. 0 console errors, 0 offscreen, 0 unreachable controls, no scroll.
+> 2. ⚠️ **At 640×320 every control scales to ~28px**, under the 44px floor — `FitSlot` only ever
+>    shrinks. **Measured against the shipped Coin Tray at the same frame: 29×29.** So this is a
+>    band-wide property, not something these two chapters introduced — but it is the whole band, and
+>    it is not written down anywhere as accepted.
+> 3. **No backdrops were generated, deliberately** — the 9–11 GameShell chapters use `motif` (one
+>    huge faint emoji) rather than a scene PNG, exactly as The Coin Tray does. If the band ever moves
+>    to painted scenes, these two need two crops each like the 12–14 chapters.
+> 4. **AR is still never driven with a REAL HAND** — The Minibus Run adds a second chapter to that
+>    gap rather than closing it.
+> 5. Everything from the blocks below still stands.
+
+> 🎯 **2026-08-22 — THE DIAGNOSTIC, RETHOUGHT AND THEN HARDENED. ⚠️⚠️ IT NAMED THE RIGHT ROOT GAP **26–34%** OF THE TIME AND TOLD **10–38%** OF GAPPED CHILDREN THEY WERE ON TRACK — AND ELEVEN GREEN ENGINE TESTS COULD NOT SEE IT, BECAUSE EVERY ONE DRIVES A PERFECT ORACLE. NOW **81–87% / 1–4%**, TEN UNDIAGNOSABLE CHAPTERS ARE REACHABLE, AND THE WEEK-6 GUARANTEE LOOP FIRES FOR THE FIRST TIME.** `tsc` 0 · **1377/1377** (+17) · `next build` 0 · sw **v133 → v134**. ✅ SHIPPED 2026-08-23 in `6dd9224`.
+>
+> **The asks:** *"daignostic … dekho ki effective hai kya naii hai"* → *"pura properly rethink karo taaki zyada se zyada baccho ka gap mile aur hamare joh bhi chapters hai unki help se ek personalised route de"* → *"yeh problems ka solution find karo aur apply karo … high accuracy pe hona chahiye"*.
+>
+> | | before | after |
+> |---|---|---|
+> | names the EXACT root gap | **26–34%** | **81–87%** |
+> | tells a gapped child they are on track | **10–38%** | **1–6%** |
+> | says "a band below" to an ON-GRADE child | — | **≤ 4%** |
+> | leaf-chapter gap reaches the route | **impossible** | **83–95%** |
+> | route starts at the gap when the gap owns no chapter | **never** | always |
+> | on-grade probe length (median) | — | 9–16 |
+>
+> ## ⓪ ⚠️⚠️ THE ANSWER SURFACE WAS THE WHOLE STORY, AND THE ENGINE WAS INNOCENT
+> Measured by simulating learners with a PLANTED gap, answering with each item's REAL guess rate and
+> a 10% slip. **Driven with clean items the same descent resolves the exact root 90–98%** — which is
+> what stopped a rewrite of the search. Three multiplying causes, all outside it:
+> - **one 4-choice MCQ per skill = 25% lucky pass** (50% on four of them — `e.compare`, `p.compare100`,
+>   `i.bigNumbers`, `i.decimals` — two of which are band ENTRIES);
+> - ⚠️ **the fail-confirmation STRIKE doubles it.** A first miss re-offers the skill, so a broken child
+>   gets TWO shots at the guess: `p + (1−p)p` → 25% becomes **44%**, 50% becomes **75%**. The guard was
+>   written for false FAILS and its cost on false PASSES was never priced;
+> - **a lucky pass on an ENTRY closes that whole branch for ever** — the gap disappears entirely and
+>   the report says *"At or above grade level"* with an empty plan.
+>
+> **Fix: where the answer is a NUMBER the child types it** (`input:'num'`, guess ≈ 0), a fraction gets
+> two boxes, and `'pick'` survives only where the answer space is genuinely categorical — widened 4→6.
+> ⚠️ **The pad's extra keys (`−`, `.`) are declared PER QUESTION TYPE, never derived from the answer** —
+> deriving them prints the answer's sign before the child touches anything.
+>
+> ## ① 🕳️ COVERAGE: TEN BUILT CHAPTERS THE PROBE COULD NEVER REACH — AND THEN NINE MORE ONE BAND DOWN
+> A probe that only walks DOWN from entries cannot see a LEAF. **14 skills were unreachable by ANY
+> band**, so a rounding, time, money or word-problem gap was structurally undiagnosable and a 6–8
+> child's whole check covered 11 of 74 skills. `PROBE_ENTRY` is now `PROBE_SPINE` (descend on fail →
+> the root gap) + `PROBE_SWEEP` (leaf chapters → route entries).
+> ⚠️ **Then the founder's own case: a 9–11 child who cannot tell the time.** `p.time` is a 6–8 leaf, so
+> nothing in 9–11 goes near it — each band misses **9–13** lower-band chapters this way. Sweeping all
+> of them would ask a seventeen-year-old *"which is more, 3 or 7"*. The split that works: a
+> **standalone topic** (money, time, story problems, rounding, units, angles, charts) can be missing on
+> its own and nothing else will ever reveal it — it must be asked; a **foundational** skill (compare,
+> number order) sits under everything, so any failure above sends the descent through it anyway. One
+> band down only; two bands down, the descent is the honest instrument.
+>
+> ## ② ✂️ THE DESCENT BISECTS NOW — SHORTER *AND* MORE ACCURATE FROM ONE CHANGE
+> Instrumented where the questions actually go: **17–18 spent 11.3 of 20.2 on the descent**, one
+> question per LEVEL down a nine-level chain, each an extra chance for a slip to plant a false deeper
+> root. Halving the candidate set instead took that band 72% → **81%** and 12–14 to **84%**.
+> ⚠️⚠️ **Pure bisection was WRONG and the measurement caught it: a grade-level 17–18 child went from 9
+> questions to 22.** With nothing broken below, the cheap question is *"do this skill's own direct
+> prerequisites hold?"* — three probes and it is over — while a bisector prunes a 40-node closure a
+> sub-tree at a time. So a branch opens in direct-prerequisite mode and switches to bisecting the
+> moment something under it fails, which is exactly when the long chains appear.
+> ⚠️ Two more free questions saved, both from the graph rather than a cap: an entry whose prerequisite
+> has already FAILED is not asked (it is arithmetic, not a question) and an entry that is a
+> PREREQUISITE of something already PASSED is not asked either.
+>
+> ## ③ 🗺️ THE ROUTE IS DERIVED FROM THE GAP, NOT FROM WHICH QUESTIONS GOT ASKED
+> `planSkills = [...s.failed]` was a fair approximation while the descent walked every level and
+> became wrong the instant it bisected — a bisecting search **skips levels on purpose**, and those
+> skipped chapters are exactly the ones between the child's gap and their grade. It is now the failed
+> set PLUS every skill on a chain from a root up to a failed entry, bounded by that chain (not by
+> `blockedBy(root)`, which for a deep root is most of the graph). Median route: 2 / 4 / 6 / 9 / 16
+> chapters by band.
+> ⚠️ **And the report then contradicted itself on one screen.** A learner rooting four bands down drew
+> a **40-step** route printed two inches under *"Caught now, it's weeks of work, not years"* — which is
+> true of a short route and a lie about a long one. The plan card now shows the first five with
+> "+N more, one step at a time", and the timeline sentence is chosen by the route's actual length.
+>
+> ## ④ 🔍 THE WEEK-6 GUARANTEE LOOP HAD NEVER FIRED, AND IT WAS NOT THE LOGIC
+> Prod: **0 rechecks, ever** — and querying the sessions, **five children are 45–50 days past their
+> check-up and genuinely due one**, so it was not "nothing is ripe yet". `getCheckupStatus` is correct;
+> the nudge lived only on the **parent dashboard**, for whichever learner happened to be selected. It
+> now renders on `/menu`, the screen the child opens every session. Driven end to end (`Check 1 of 3`
+> → typed answers → result).
+> ⚠️ The loop is the promise, the retention signal AND the efficacy dataset — one mechanism doing three
+> jobs, and it was reachable only by a parent visiting a screen they have no reason to open.
+>
+> ## ⑤ 🔬 THE BUG FOUND ALONG THE WAY: THE "PER-CHILD REPRODUCIBLE PROBE" WAS NOT
+> 14 generators used `pick` from `@/core/rand` — which is `Math.random`, and **that file's own header
+> says reproducible cases must not use it.** `resolve()` rebuilds the current question from the seed on
+> a mid-probe resume, so those items came back DIFFERENT. A determinism test existed and passed: it
+> checked ONE skill, which happens not to use `pick`. Now a seeded `pk`, swept across all 74.
+>
+> ## ⑥ 🚧 THE GATE IS THE REAL ARTEFACT — `src/__tests__/diagnosticAccuracy.test.ts`
+> ⚠️⚠️ **Eleven engine tests were green through all of this because every one drives a PERFECT ORACLE**
+> ("knows it ⇒ correct"). A real child guesses and slips; nothing in 1360 tests modelled either, so the
+> product's central claim was unmeasured. The gate plants a gap, answers with the real per-item guess
+> rate, and asserts exact-root rate, missed-gap rate, false-alarm rate **split into any-gap vs a-gap-in-
+> a-lower-band** (only the second is damaging), leaf coverage, route-starts-at-the-gap, route LENGTH,
+> probe LENGTH (accuracy is trivially buyable with more questions), and the exact list of chapterless
+> skills. Seeded, so it is not a coin flip.
+> ⚠️ `diagVisual`'s *"the tallest bar must be the answer"* changed with its question: that was right
+> while `i.dataGraphs` asked *"which has the most"* — answerable by LOOKING — and it now asks *"how many
+> more X than Y"*. The surviving invariant is that the picture supports the arithmetic.
+>
+> ## ▶ OPEN
+> 1. ✅ ~~Nothing is committed~~ — **SHIPPED 2026-08-23** (`6dd9224`). `tsc` 0 · 1377/1377 · `next build` 0 · lint baseline unchanged ·
+>    driven on screen at 1280×720 and 640×320 (number pad, fraction pad, full probe → report, and the
+>    re-check flow). 0 offscreen, 0 controls under 44px, 0 console errors.
+> 2. ⚠️⚠️ **THE ONE THING THE ENGINE CANNOT FIX: ~10% of diagnosed 9–11 children root on a skill with
+>    NO CHAPTER** (`i.multFacts`, `i.multMultiDigit`, `i.division`; 5–8% for the teen bands). And the
+>    stand-in is weaker than it sounds — a child whose root gap is multiplication FACTS has, by the
+>    definition of a root, already PASSED equal groups, so the plan sends them to a chapter they can
+>    already do. **This needs a Times Tables (fluency) chapter and a Division chapter.** Gated
+>    (`exactly three skills have no chapter`) so it cannot silently widen. **Founder decision needed:
+>    that is a chapter build — verb, world, art — not an engine change.**
+> 3. **Probe length is the live trade.** On-grade median 9–16 (9–11 longest: it sweeps the most leaf
+>    chapters); gapped p95 16–27. Above the spec's "8–12 items", inside its "5–8 min". The sweep is
+>    3–4 questions and is the only thing that can find a money/time/rounding gap.
+> 4. **17–18 and 15–16 are the weakest bands at 81%** — its descents cross the most bands, so a slip has the most
+>    room to land on a wrong-but-deeper root.
+> 5. **The `/menu` re-check card is NOT visually verified** — it needs a signed-in learner with a
+>    6-week-old gap, which the local dev server has no session for. Its destination WAS driven.
+> 6. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA**, and tester issue #2 (Milo's robotic voice) is
+>    untouched. Everything from the blocks below still stands.
+
 > 📐 **2026-08-21 — A TESTER'S FOUR BUGS, THEN EVERY CHAPTER SWEPT FOR RESPONSIVENESS, AND FINALLY THE GUTTHI THIS FILE HAS CARRIED FOR WEEKS: ⚠️⚠️ A `useRef` GUARD WAS FREEZING TEN CHAPTERS' DEMOS — IN DEV ONLY — AND THE EARLIER SESSION'S "IT WORKS ON PROD" RULED IT OUT BACKWARDS.** `tsc` 0 · **1360/1360** (+4) · **267/267 e2e** · **20/20 storybook** · `next build` 0 · sw **v127 → v133**. ✅ SHIPPED — `main`@`ea6ee6b`, 6 commits, deployment READY and prod serving v133.
 >
 > **The asks:** *"google drive access kar paa rahe ho?"* → tester sheet ke 3 issues → *"pura screen responsiveness check karo"* → *"wo gutthi suljhao"* → *"9 chapters — yeh karo"*.

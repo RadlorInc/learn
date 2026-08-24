@@ -25,7 +25,7 @@ export interface DiagnosticPayload {
  * ⚠️ VIA OUR OWN ROUTE, NOT STRAIGHT INTO THE TABLE. This used to insert with the anon key, which is
  * public by design — so the write was an open, unlimited, unauthenticated endpoint that anyone could
  * POST for ever (launch-plan finding #9). `/api/lead` rate-limits by IP and validates the address;
- * the anon INSERT grant is revoked by `20260816170000_leads_server_only.sql`.
+ * the anon INSERT grant is revoked by `20260823221818_leads_server_only.sql`.
  */
 export async function captureDiagnosticLead(email: string, band: string): Promise<void> {
   try {

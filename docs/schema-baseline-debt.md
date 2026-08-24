@@ -72,3 +72,85 @@ that production no longer has — `learner_stats.current_streak`, `learner_stats
 `learners.date_of_birth` — because migrations replay history and reference them before dropping
 them. `src/__tests__/baselineSchema.test.ts` derives all five compatibility rules from the
 migrations rather than hard-coding them; read its header before changing the file.
+
+---
+
+# The ledger side — repaired 2026-08-24
+
+Separate from the baseline debt above, and now closed: the repo's migration **filenames** disagreed
+with the versions production had actually recorded, for 57 of 72 files. Every one had been applied
+by hand through the MCP `apply_migration`, which records a **generated** version, not the one in the
+filename — so `20260615180001_secure_learners_rls` was sitting in the ledger as `20260615142012`.
+
+## How the pairing was done, and why it matters
+
+**By CONTENT, not by name.** The ledger stores the SQL it applied, so a repo file can be matched to
+a ledger row exactly:
+
+```sql
+select version, name,
+       md5(regexp_replace(regexp_replace(array_to_string(statements, E'\n'),
+           '--[^\n]*', '', 'g'), '\s+', '', 'g')) as norm_md5
+from supabase_migrations.schema_migrations order by version;
+```
+
+⚠️ **A RAW hash does not compare.** The CLI strips comments that precede the first statement when it
+stores a migration — `index_chapter_fks` is 331 bytes on disk and 173 in the ledger — so only 13 of
+72 files matched raw, and it reads exactly like mass drift. Strip `--` comments and all whitespace
+from BOTH sides and 68 of 72 pair exactly.
+
+⚠️ **And name-only pairing would have been a disaster, not merely weaker.** It would have matched
+`20260816120000_perf_advisors` to nothing and — under the obvious "assume applied, just renamed"
+reading — marked it applied. It had **never run**. Content pairing is what proved it, and applying
+it cleared 5 `auth_rls_initplan` warnings and 3 `unindexed_foreign_keys` from the live advisor report.
+
+## What the repair did
+
+**Repo-side. Zero writes to `schema_migrations`.** Renaming the files reaches the same acceptance
+test as rewriting the ledger, with nothing to roll back, and it is what
+[runbooks/applying-migrations.md](runbooks/applying-migrations.md) already prescribes. The ledger
+holds the true apply ORDER; the repo now agrees with it rather than the other way round.
+
+Checked before renaming: the ledger order is an order-**preserving** relabelling of all 71
+previously-applied files — no permutation — so replay order is unchanged. `perf_advisors` is the one
+file that moves (it becomes last, recorded as `20260823225313`), which is safe because nothing else
+in the repo touches the five `diag_*` policies and its three indexes are `if not exists`.
+
+The prior state is committed at [`../supabase/schema/ledger_snapshot_20260824.tsv`](../supabase/schema/ledger_snapshot_20260824.tsv)
+— 73 rows, version + name + both hashes. ⚠️ It is bookkeeping, **not a database backup**; see
+launch blocker B12.
+
+## What is still drift, deliberately
+
+**Two remote-only ledger rows**, the halves of two split points where production ran the work in two
+migrations and the repo carries one file:
+
+| ledger row | the repo file that covers it |
+|---|---|
+| `20260629023502 grades_pin_touch_search_path` | `20260629023238_grades.sql` (carries the pin) |
+| `20260702113253 sync_recheck` | `20260702121810_sync_recheck.sql` (carries the ORDER BY fix) |
+
+They are informational — `db push` matches on **version** and only applies local files the remote
+does not have, so neither blocks anything.
+
+**Two rows whose `name` column disagrees with the repo filename**, because version is the key and
+name is not, and adopting production's name would have made a filename lie about its contents:
+
+| version | ledger name | repo filename |
+|---|---|---|
+| `20260617145125` | `fix_learner_access_recursion` | `..._fix_learner_access_grant.sql` |
+| `20260702121810` | `fix_sync_recheck_order_by` | `..._sync_recheck.sql` (it creates the whole RPC) |
+
+## The acceptance test
+
+`supabase db push --dry-run` must report **zero pending**. Computed 2026-08-24 (the CLI is not
+installed on the build machine; this is the same set comparison the command makes):
+
+```
+ledger rows: 74      repo files: 72
+LOCAL not in REMOTE  (= pending):        0
+REMOTE not in LOCAL  (informational):    2   ← the two split-point rows above
+```
+
+Re-run it as: list `supabase/migrations/*.sql`, cut the version prefix, and `comm` against
+`select version from supabase_migrations.schema_migrations`.
