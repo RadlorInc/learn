@@ -243,7 +243,11 @@ export function IntroCard({ title, body, accent, cta = 'Start', onStart, short, 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <button onClick={onStart} style={{ padding: '13px 40px', borderRadius: 14, border: `1px solid ${accent.base}`, cursor: 'pointer', background: accent.base, color: '#06121f', fontFamily: PT.sans, fontWeight: 700, fontSize: 19, boxShadow: `0 0 26px ${accent.base}88`, letterSpacing: .3 }}>{cta} →</button>
         {alt && (
-          <button onClick={alt.onPick} style={{ padding: '10px 26px', borderRadius: 999, border: `1px solid ${PT.lineStrong}`, cursor: 'pointer', background: 'transparent', color: PT.inkMute, fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 14 : 15 }}>{alt.label}</button>
+          <button onClick={alt.onPick} style={{ padding: '10px 26px', borderRadius: 999, border: `1px solid ${PT.lineStrong}`, cursor: 'pointer', background: 'transparent', color: PT.inkMute, fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 14 : 15,
+          // 44px tap floor — it measured 40. This prop had no user until the diagnostic's "start
+          // fresh" (2026-08-24), and that one is an ESCAPE from a resumed run: the control a
+          // returning parent needs when the offer is not what they wanted.
+          minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{alt.label}</button>
         )}
       </div>
     </div>

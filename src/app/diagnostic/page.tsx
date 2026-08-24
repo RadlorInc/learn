@@ -26,6 +26,8 @@ import { stashPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
 import { setActivePlan } from '@/infra/storage/activePlan'
 import { markCheckupDone } from '@/infra/storage/checkup'
 import { setLeadEmail, getLeadEmail } from '@/infra/storage/leadEmail'
+import { kv } from '@/infra/storage/kv'
+import { saveResume, readResume, clearResume, resumable, sameTab, type DiagResume } from '@/infra/storage/diagResume'
 import { captureDiagnosticLead } from '@/data/repositories'
 
 // UUID v4 dedupe key (matches the session-sync clientId pattern) — makes the save idempotent so a
@@ -74,49 +76,6 @@ const STORY_KEY: Record<string, string> = {
 function activeLearner(): { id?: string; name?: string; display_name?: string; age_group?: string; theme?: ItemTheme } | null {
   try { return JSON.parse(sessionStorage.getItem('milo_active_learner') || 'null') } catch { return null }
 }
-/**
- * Mid-check resume. The probe lived only in React state, so ONE Back press (or a refresh, or a
- * backgrounded tab being evicted) threw away a check that takes minutes — measured: answering to
- * Q4 then pressing Back landed on the marketing page with every answer gone.
- *
- * `ProbeState` + the attempt number is the whole thing: `resolve()` rebuilds the current question
- * from them, and `buildContext(attempt)` is deterministic per child, so the restored run serves the
- * SAME items rather than a fresh draw the child could re-roll.
- *
- * ⚠️ sessionStorage, not localStorage, and not the DB: this is a per-tab, per-sitting resume. A
- * check abandoned days ago should start fresh (the child has moved on), and a half-finished probe
- * is not a result — nothing here is worth syncing.
- */
-const RESUME_KEY = 'milo_diag_resume'
-function saveResume(band: Band, s: ProbeState, attempt: number) {
-  // The learner rides along so a restore can tell WHOSE run this was — see `resumable` below.
-  try { sessionStorage.setItem(RESUME_KEY, JSON.stringify({ band, s, attempt, learner: activeLearner()?.id ?? null })) } catch { /* private mode / full: resume is a nicety, never a blocker */ }
-}
-function readResume(): { band: Band; s: ProbeState; attempt: number; learner: string | null } | null {
-  try {
-    const r = JSON.parse(sessionStorage.getItem(RESUME_KEY) || 'null')
-    // Guard the shape: a stale/garbled entry must not crash the page a child is trying to start.
-    return r && (BANDS as string[]).includes(r.band) && Array.isArray(r.s?.asked) ? r : null
-  } catch { return null }
-}
-/**
- * ⚠️ A RESUME IS NOT ALWAYS THE RIGHT ANSWER, AND GETTING THIS WRONG SILENTLY SERVES THE WRONG
- * CHILD THE WRONG CHECK. Caught by driving it: with a 6–8 probe mid-flight, opening
- * `/diagnostic?band=12-14` restored the 6–8 run and ignored the URL entirely — a parent following a
- * band-specific link got someone else's half-finished questions with nothing on screen saying so.
- *
- * Two things outrank a resume, and both mean "this is a different run":
- *   · an EXPLICIT `?band=` that disagrees — the link is a deliberate instruction, the resume is a
- *     convenience, so the instruction wins;
- *   · a different active learner — sibling B must never continue sibling A's probe, and the items
- *     are seeded per learner anyway, so the restored run would not even be self-consistent.
- * Anything else (no `?band=`, same child, a plain refresh or Back) resumes, which is the point.
- */
-function resumable(r: ReturnType<typeof readResume>, urlBand: string | null, learnerId: string | null) {
-  return !!r && (!urlBand || urlBand === r.band) && learnerId === r.learner
-}
-const clearResume = () => { try { sessionStorage.removeItem(RESUME_KEY) } catch { /* nothing to clear */ } }
-
 /** Phase 4: build the per-child context from the active learner (safe to call in a handler). */
 function buildContext(attempt: number): DiagContext {
   const l = activeLearner()
@@ -195,6 +154,7 @@ export default function DiagnosticPage() {
   const [picked, setPicked] = useState<string | null>(null)
   const [result, setResult] = useState<Diagnosis | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [pending, setPending] = useState<DiagResume | null>(null)   // a saved run from an earlier sitting, offered rather than applied
   const ctxRef = useRef<DiagContext>({})
   const finalStateRef = useRef<ProbeState | null>(null)   // probe state at report time (for capture/save)
   const persistRef = useRef<Promise<void> | null>(null)   // the in-flight DB save (awaited before we navigate away)
@@ -210,15 +170,29 @@ export default function DiagnosticPage() {
     if (p && (BANDS as string[]).includes(p)) { setBand(p as Band); setBandKnown(true) }
     else if (l?.age_group && (BANDS as string[]).includes(l.age_group)) { setBand(l.age_group as Band); setBandKnown(true) }
 
-    // A check already in flight in this tab wins over all of the above — the child is mid-probe and
-    // the band is whatever they were answering under — UNLESS it belongs to another run entirely.
-    const r = readResume()
-    if (resumable(r, p, l?.id ?? null)) {
-      ctxRef.current = buildContext(r!.attempt)
-      setBand(r!.band); setBandKnown(true); setAttempt(r!.attempt)
-      setSlot(resolve(r!.s, r!.band, ctxRef.current)); setPhase('probe')
-    } else if (r) clearResume()   // another child's, or another band's: drop it rather than half-honour it
+    // ⚠️ kv IS HYDRATED ASYNCHRONOUSLY, so a synchronous read here returns null on a cold load and
+    // the resume silently never fires — the exact shape of a check that reports "nothing to resume"
+    // having looked at an empty map. Wait for ready() before reading.
+    let dead = false
+    void kv.ready().then(() => {
+      if (dead) return
+      const r = readResume(l?.id ?? null)
+      if (!resumable(r, p)) { if (r) clearResume(l?.id ?? null); return }   // another band: drop it
+      // SAME TAB → the child is mid-probe and never left; resume silently, as it always has.
+      // ANOTHER SITTING → they came back. Dropping them into question 26 of a run they may not
+      // remember starting, with no way back to a fresh check, is a dead end — so it is OFFERED.
+      if (sameTab()) { applyResume(r!) } else { setPending(r!); setBandKnown(true); setBand(r!.band) }
+    })
+    return () => { dead = true }
   }, [])
+
+  const applyResume = (r: DiagResume) => {
+    ctxRef.current = buildContext(r.attempt)
+    setBand(r.band); setBandKnown(true); setAttempt(r.attempt); setPending(null)
+    setSlot(resolve(r.s, r.band, ctxRef.current)); setPhase('probe')
+  }
+  /** "Start fresh" on the resume offer: bin the saved run and fall back to the ordinary intro. */
+  const discardResume = () => { clearResume(activeLearner()?.id ?? null); setPending(null) }
 
   const pickBand = (b: Band) => { setBand(b); setBandKnown(true) }
 
@@ -226,7 +200,7 @@ export default function DiagnosticPage() {
   const startProbeNow = (seed?: string[]) => {
     ctxRef.current = buildContext(attempt)          // Phase 4: seed the probe for this child + attempt
     const s = startProbe(band, undefined, seed)     // undefined config → the band's default
-    saveResume(band, s, attempt)
+    saveResume(activeLearner()?.id ?? null, band, s, attempt)
     setSlot(resolve(s, band, ctxRef.current)); setPhase('probe')
   }
   // Where the intro and the email gate both hand off to. 17–18 is asked which strand first; every
@@ -288,7 +262,7 @@ export default function DiagnosticPage() {
     }
   }
 
-  const retake = () => { clearResume(); setAttempt(a => a + 1); setPhase('intro'); setResult(null); setSlot(null); setPicked(null) }
+  const retake = () => { clearResume(activeLearner()?.id ?? null); setAttempt(a => a + 1); setPhase('intro'); setResult(null); setSlot(null); setPicked(null) }
   /**
    * ⚠️ THE PARTIAL REPORT'S "TAKE THE FULL CHECK" STARTS THE FULL PROBE **DIRECTLY** — it must never
    * be routed through `retake` / the intro. A student who named the wrong strand reaches that card
@@ -298,7 +272,7 @@ export default function DiagnosticPage() {
    * there is no flag to forget and no branch left that could show the door.
    */
   const fullCheck = () => {
-    clearResume(); setAttempt(a => a + 1); setResult(null); setPicked(null)
+    clearResume(activeLearner()?.id ?? null); setAttempt(a => a + 1); setResult(null); setPicked(null)
     startProbeNow()
   }
 
@@ -331,10 +305,10 @@ export default function DiagnosticPage() {
       if (!next.skill) {
         const dx = diagnose(next.s)
         finalStateRef.current = next.s
-        clearResume()   // finished: the report owns the run now, and a resume would re-open the probe
+        clearResume(activeLearner()?.id ?? null)   // finished: the report owns the run now, and a resume would re-open the probe
         setResult(dx); setPhase('report')
         persistRef.current = persistDiagnosis(band, next.s, dx)   // signed-in → saves; cold/preview → skips cleanly
-      } else { saveResume(band, next.s, attempt); setSlot(next) }
+      } else { saveResume(activeLearner()?.id ?? null, band, next.s, attempt); setSlot(next) }
     }, 320)
   }
 
@@ -344,7 +318,21 @@ export default function DiagnosticPage() {
       <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
         <style>{`@keyframes pt_float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes pt_pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}@keyframes pt_twinkle{0%,100%{opacity:.25}50%{opacity:.8}}`}</style>
         <LabBackdrop accent={accent} /><BackChip onExit={() => history.back()} />
-        {!bandKnown
+        {pending
+          /**
+           * ⚠️ A DURABLE RESUME IS OFFERED ACROSS SITTINGS, NEVER APPLIED. Silently reopening
+           * question 26 of a run started days ago leaves a returning parent with no route to a
+           * fresh check at all — the retake control only exists on the REPORT, which they cannot
+           * reach without finishing the old run first. `IntroCard`'s `alt` is the escape, and it
+           * says what continuing costs (the questions already answered) rather than just "resume".
+           */
+          ? <IntroCard accent={accent} short={short}
+            title="Pick up where you left off?"
+            cta="Keep going"
+            body={`Milo still has your check from last time — ${pending.s.asked.length} question${pending.s.asked.length === 1 ? '' : 's'} answered. Carry on from there, or start a fresh one.`}
+            onStart={() => applyResume(pending)}
+            alt={{ label: 'Start fresh', onPick: discardResume }} />
+          : !bandKnown
           ? <AgePicker accent={accent} onPick={pickBand} />
           : <IntroCard accent={accent} short={short}
             title={readiness ? 'A quick readiness check' : 'Find your starting point'}
