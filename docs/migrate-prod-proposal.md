@@ -19,8 +19,8 @@ ledger consistency and end of transcription, while keeping a human between a mer
 schema change. The only thing lost is the ability to apply **by accident**, which is the thing we
 are trying not to have.
 
-`deploy.yml`'s `migrate-prod` already declares `environment: production` and already carries a
-comment saying to add the rule. The wiring exists; the rule and the credentials do not.
+`deploy.yml`'s `migrate-prod` declares `environment: production-db` and carries a comment saying
+to create it with its rule. The wiring exists; the environment, the rule and the credentials do not.
 
 ---
 
@@ -37,23 +37,56 @@ is the wrong order to do things in. Supabase Pro goes on before the pipeline doe
 |---|---|
 | repo visibility | **public** |
 | org plan | free |
-| environments that exist | `Preview`, `Production`, `staging` |
+| environments that exist | `Preview`, `Production`, `staging` — the first two are **Vercel's**, see below |
 | protection rules on any of them | **NONE** |
 | repo variables / secrets | **none at all** |
 
-Environment protection rules are free for **public** repositories, so a required reviewer on
-`Production` costs nothing. (This is another reason the repo staying public is load-bearing — see
+Environment protection rules are free for **public** repositories, so the required reviewer below
+costs nothing. (This is another reason the repo staying public is load-bearing — see
 the handoff's note about Vercel Hobby.)
 
-⚠️⚠️ **AND THERE IS A TRAP IN THE NAMES, WHICH IS EXACTLY THE CLASS OF THING THAT BITES US.** The
-workflow says `environment: production` (lower case) and the environment that exists is
-`Production`. **A workflow referencing an environment that does not exist CREATES it, unprotected.**
-If the reference resolves to a new, ruleless `production` rather than the `Production` somebody
-added a reviewer to, the gate is bypassed and everything looks configured. So:
+⚠️⚠️ **WHAT IS REAL, AND WAS UNDER THE SAME STONE: `Production` IS VERCEL'S.** It holds **68
+deployments created by `vercel[bot]`**, the most recent today; `Preview` holds 32. Neither was made
+by us, neither is unused, and the environment `migrate-prod` was declared against is the same object
+Vercel writes to on every push to `main`.
+
+### ✅ DECIDED — `migrate-prod` uses its own `production-db` environment, never `Production`
+
+Founder's call, 2026-08-24. The reasoning matters more than the name, because the tempting option is
+the one that looks tidier:
+
+A required reviewer on `Production` would gate **the site's entire deploy path** in order to protect
+a database apply. The guard would then be more expensive than the risk it covers — and the first
+time it wedged a hotfix, somebody would remove it under pressure, **taking the database protection
+with it.** A protection rule that gets deleted during an incident protects nothing on the day it
+matters most.
+
+A second environment costs nothing (rules are free on public repos) and decouples the two
+completely: Vercel keeps deploying the site unattended, and the only thing behind a human is the
+schema change. So the workflow declares `environment: production-db`.
+
+⚠️ **The environment does not exist yet, deliberately.** It is created *with* its required-reviewer
+rule as part of enabling the pipeline — never before. An environment that exists without a rule is a
+door standing open in a corridor nobody walks down, and `migrate-prod` referencing a name that is
+not there is harmless while the job is inert (`PROD_PROJECT_REF` unset). Creating it early is the
+only way to get the worst of both.
+
+⚠️ **THE NAME TRAP THAT SENT US LOOKING HERE WAS WRITTEN DOWN AS A FACT AND IS NOT ONE — MEASURED
+2026-08-24.** The claim was that `environment: production` (lower case) would not resolve to the
+`Production` that exists, and would silently create a second, ruleless environment. **GitHub matches
+environment names case-insensitively:** `GET /repos/RadlorInc/learn/environments/production` returns
+`Production`, `created_at 2026-05-25T18:41:45Z` — the same object, not a new one.
+
+*(The general trap is real for a genuinely different name — a typo'd `prod`, a renamed environment,
+or `production-db` above before it is created. It just was not the casing. This is the rule at the
+top of CLAUDE.md paying out in the other direction: reading the workflow beside the settings page
+produced a confident finding that one API call disproved. It was carried into the handoff and
+repeated as fact before anybody queried it.)*
 
 > **Do not verify the reviewer by looking at the settings page. Verify it by running the workflow
 > and watching the job PAUSE for approval.** A protection rule nobody has watched stop a deploy is
-> the same artefact as a rollback nobody has run.
+> the same artefact as a rollback nobody has run. That rule is unchanged, and it is the whole reason
+> the name question above was answerable at all.
 
 ## Condition 3 — the pipeline must be SAFER than the hand-apply, not merely more consistent
 

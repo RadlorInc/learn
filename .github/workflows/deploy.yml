@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     # Add a required-reviewer protection rule on this GitHub Environment so a human approves
     # every production schema change. Migrations only reach prod after staging + RLS suite pass.
-    environment: production
+    environment: production-db   # NOT Vercel's `Production` — see docs/migrate-prod-proposal.md. Create it WITH its required-reviewer rule when enabling this job, not before.
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1

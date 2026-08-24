@@ -1,5 +1,59 @@
 @AGENTS.md
 
+# A CHECK IS NOT A CHECK UNTIL YOU HAVE WATCHED IT FAIL FOR THE RIGHT REASON
+
+**Green is not evidence. Present is not enforcing. Found-nothing is not clean.**
+
+The most expensive defect class in this repo is not a bug. It is **something that looks like a check
+and isn't** — a gate, grep, guard or test that reports success while examining nothing. It is worse
+than having no check at all, because it is what stops the next person looking.
+
+Seven of them on 2026-08-24 alone, and the mechanisms have nothing in common. **This table is
+meant to grow — a frozen list becomes decoration itself.** Add the next one rather than admiring it:
+
+| what it looked like | what it was |
+|---|---|
+| `ci / rls-tests` green for weeks | a **skip path**. The suite proving one family cannot read another's data had never run once |
+| a clean bundle grep for a leaked service key | **wrong shape** — it searched for JWTs, and the keys are `sb_secret_`, so it could not have found one if it were there |
+| `all-chapters` passing on all 70 chapters | **wrong moment**. It read its failure text at `domcontentloaded`, before the screen existed, so it could not fail |
+| the policy-regression gate finding zero | **wrong order.** Correct gate, correct corpus — but `baseline_schema.sql` was ordered LAST, and being generated from live production it supplied the very predicate a regression had just removed. Ordered first it flags the real one |
+| the post-apply smoke write succeeding | **wrong flag state.** With `enforced = false` the write succeeds whether the guard holds or not — it cannot fail in the interesting direction |
+| `asked < maxItems` guarding the coverage rule | **a clause that cannot bind.** A cap always leaves the agenda or a frame open; in the one case it was not redundant it was *wrong*, reporting a finished search as partial |
+| `git pull` on `main` saying "Already up to date" | **the wrong target.** Local `main` tracked `origin/chore/applied-billing-migrations`, a deleted feature branch — so the pull succeeded, twice, while `main` sat two commits behind, and a `push` from `main` would have gone to the dead branch. The command reported success having done nothing *to the thing that was asked about* |
+
+A skip, a shape, a moment, an order, a flag, a dead clause, a wrong target. **You cannot learn to
+spot these by pattern** — nothing about any of them looked wrong, and four were written by someone
+who had just written down the rule that catches them. The only thing separating a real check from
+these is having watched it go red for the reason it exists.
+
+Everything below is a corollary of that one sentence:
+
+- **Make it fail before you believe it.** Plant the defect it exists for, or point it at a known
+  past one. A new check's green first run is the least informative result there is — equally
+  consistent with "nothing is wrong" and "this cannot see anything".
+- **Positive-control every absence.** Before reporting no secret in the bundle, no caller of a
+  function, no offending pattern in the source: run the same search against something you KNOW is
+  present and watch it come back. A silent search and a broken search look identical from outside,
+  and the broken one reads as good news.
+- **Query the thing, not the description of it.** Reading the repo answers *what did we intend*;
+  querying production answers *what is true*. Only the second is a check. The reverted V5 payload
+  bounds were invisible to the repo grep — it was case-sensitive — and took `pg_get_functiondef`
+  one query.
+- **Run it, don't read it.** Reading the rollback script caught one defect; only running it proves
+  the schema comes back. Same for a mutation: assert the edit actually landed before concluding
+  anything about the gate it was meant to test.
+- **An inert clause is worse than no clause**, because it reads as protection and nobody looks
+  again. If a condition cannot change the answer, delete it — and check first whether the case
+  where it *isn't* redundant is a case where it is wrong.
+- **Prefer a structure that cannot express the bug over a check that catches it.** A flag someone
+  must remember to set is a check waiting to rot; a call with no flag to set cannot rot. Where both
+  are available, take the structure and spend the check elsewhere.
+
+⚠️ **This is not a chapter rule.** It governs every grep, gate, migration, catalog query and audit
+in the repo. [docs/chapter-craft.md](docs/chapter-craft.md) §4 carries the chapter-shaped costumes
+of the same class — a tautological check, a gate that re-implements the rule it guards, a sweep
+that exempts the whole world. Put new ones of that kind there, and the general form here.
+
 # Project Context
 
 ## Session Continuity
@@ -13,46 +67,6 @@ Every rule in it was paid for by a founder catching a fault on a screenshot, and
 Two job-specific halves are NOT auto-loaded, to keep the standing spec small. Read the one the job calls for, and put new rules of that kind in it rather than back in chapter-craft.md:
 - `docs/chapter-craft-ar.md` — **before building or changing any AR (camera) chapter.**
 - `docs/chapter-craft-art.md` — **before generating any new art** (sprite, walk cycle, backdrop, line art) **or touching the code-drawn 3D scene.**
-
-## Verifying anything by searching for it
-
-**⚠️ A SCAN THAT FINDS NOTHING PROVES NOTHING UNTIL YOU HAVE SHOWN IT CAN FIND SOMETHING.**
-Before reporting an absence — no secret in the bundle, no caller of a function, no offending
-pattern in the source — run the same search against something you KNOW is present and confirm it
-comes back. A silent search and a broken search are indistinguishable from the outside, and the
-broken one reads as good news.
-
-Paid for on 2026-08-24: confirming the Supabase service-role key had not leaked into the client
-bundle, the first grep searched for JWTs and found zero. That looked like a clean result. The keys
-are the new `sb_publishable_` / `sb_secret_` format and are not JWTs at all, so the scan could not
-have found the key even if it had been there. The positive control — the same grep DOES find the
-anon key, which is public by design and definitely present — is what made the zero mean anything.
-
-The same rule already appears in [docs/chapter-craft.md](docs/chapter-craft.md) §4 in three other
-costumes (a tautological check, an inert gate, a sweep that exempts the whole world). It is here
-because it is not a chapter rule; it applies to every grep, every catalog query and every audit.
-
-## A NEW CHECK THAT FINDS NOTHING ON ITS FIRST RUN HAS NOT PASSED — IT HAS NOT BEEN TESTED
-
-The rule above says a scan that finds nothing proves nothing until you have shown it can find
-something. This is that rule aimed at the moment it is most often skipped: **the first run of a check
-you have just written.** A green first run feels like confirmation and is the least informative
-result there is — it is equally consistent with "nothing is wrong" and with "this cannot see
-anything". Before believing it, make it fail: plant the defect it exists for, or point it at a known
-past one, and watch it go red.
-
-Four in a single day, 2026-08-24, each of which reported success while examining nothing:
-- `ci / rls-tests` printed a warning and `exit 0` for weeks — the suite proving one family cannot
-  read another's data had never run once;
-- the bundle grep for a leaked service key searched for JWTs, and the keys are not JWTs;
-- `all-chapters` read its failure text at `domcontentloaded`, before the screen existed, so it could
-  not fail at all;
-- the policy-regression gate was written with `baseline_schema.sql` ordered LAST — it is generated
-  from live production, so it supplied the very predicate a regression had just removed. Ordered
-  last: zero findings. Ordered first: it flags the real historical regression.
-
-The last one is the sharpest, because the check was correct, the corpus was correct, and only the
-ORDER made it blind. Nothing about it looked wrong.
 
 ## Updating the Handoff
 When I type `/handoff`, or when the session is wrapping up, update handoff.md with:
