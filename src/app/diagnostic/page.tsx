@@ -18,6 +18,7 @@ import {
   startProbe, nextSkill, record, diagnose, type ProbeState, type Diagnosis,
 } from '@/core/diagnosticEngine'
 import { NODE_BY_ID, chapterFor, type Band } from '@/core/skillGraph'
+import { demoEligible } from '@/core/arChapters'
 import { makeItem, makeReadinessItem, pickThemeFor, gradeItem, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
 import { CHAPTER_NAMES } from '@/core/chapters'
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
@@ -261,11 +262,22 @@ export default function DiagnosticPage() {
     // COLD: stash the result so a play-first visitor is still captured after the taste, then open the
     // free sample with the sign-up banner (?taste=1).
     stashResult()
-    if (Object.prototype.hasOwnProperty.call(STORY_KEY, ch)) {
-      const key = STORY_KEY[ch]
+    /**
+     * ⚠️ THE TASTE IS THE PLAN'S FIRST **DEMO-ELIGIBLE** CHAPTER, NOT ITS FIRST CHAPTER. This line
+     * was the live COPPA leak: measured over the planted-gap simulation, `plan[0]` is one of the
+     * eight camera chapters for 30% of 9–11 visitors and 12–22% of the bands above, and it sent a
+     * logged-out child straight at that chapter's "Turn on the camera" start card.
+     * `useChapterAccess` now refuses that render whatever the URL says — this is the other half, so
+     * we do not walk a parent into a wall we put there. A plan of NOTHING but camera chapters is
+     * possible in principle, and then the honest move is the account, not a worse chapter.
+     */
+    const tasteCh = chs.find(demoEligible)
+    if (tasteCh == null) { window.location.href = window.location.origin + '/auth'; return }
+    if (Object.prototype.hasOwnProperty.call(STORY_KEY, tasteCh)) {
+      const key = STORY_KEY[tasteCh]
       window.location.href = window.location.origin + '/story?taste=1' + (key ? `&ch=${key}` : '')
     } else {
-      window.location.href = window.location.origin + `/teen-preview?c=${ch}&taste=1`
+      window.location.href = window.location.origin + `/teen-preview?c=${tasteCh}&taste=1`
     }
   }
 

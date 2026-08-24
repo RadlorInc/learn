@@ -1,5 +1,15 @@
 import { test, expect, Page } from '@playwright/test'
 import { aceKid, strugglerKid, reachPractice, GESTURE_VERBS, IGNORED_ERRORS } from './personas'
+import { seedSession } from './session'
+
+/**
+ * ⚠️ SIGNED IN, BECAUSE THE CAMERA GUARD REFUSES AN AR CHAPTER WITHOUT A SESSION. Eight chapters
+ * (all in 9–11) do not render at all to a logged-out visitor — see src/core/arChapters.ts. Without
+ * this seed, this sweep would quietly grade the consent card for those eight and report them clean,
+ * which is the "graded the wrong screen" fault start-card.spec.ts exists to prevent. The logged-out
+ * side is covered deliberately by ar-consent.spec.ts.
+ */
+test.beforeEach(async ({ page }) => { await seedSession(page) })
 
 // Regression gate for the 2026-07-19 question-clarity pass. Every teen chapter is
 // driven into its scored loop and each question board is checked against the invariants
