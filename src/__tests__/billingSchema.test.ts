@@ -142,6 +142,47 @@ describe('a parent cannot write their own billing', () => {
   })
 })
 
+describe('plan-derived entitlement (source C)', () => {
+  const plan = decomment(raw(migFiles.find(f => f.endsWith('_plan_entitlement.sql'))!))
+
+  it('reads a RECORDED column, never a live "first two unmet" query', () => {
+    // ⚠️ THE WHOLE DIFFERENCE BETWEEN A BOUNDED FREE TIER AND A FREE PRODUCT. Computed live,
+    // finishing step one promotes step three and the plan walks free one chapter at a time.
+    // rls_regression C3 drives it; this is what notices the column being swapped for a subquery.
+    const fn = plan.match(/create or replace function public\.is_chapter_entitled[\s\S]*?\$\$([\s\S]*?)\$\$/i)
+    expect(fn, 'is_chapter_entitled not found — this gate is inert').not.toBeNull()
+    const body = fn![1]
+    expect(body).toMatch(/= any \(dp\.free_chapters\)/)
+    expect(body, 'entitlement must read the ACTIVE plan only').toMatch(/dp\.active/)
+    expect(body, 'the free set must not be recomputed from progress at read time')
+      .not.toMatch(/learner_progress/)
+  })
+
+  it('makes one-active-plan-per-learner structural, not just something the RPC does', () => {
+    // A rule that lives only inside an RPC is a rule the next writer of that RPC can drop.
+    expect(plan).toMatch(/create unique index if not exists diagnostic_plans_one_active_per_learner[\s\S]{0,120}?where active/i)
+    // …and the backfill has to come first, or the index cannot be created at all.
+    expect(plan.indexOf('set active = false'))
+      .toBeLessThan(plan.indexOf('diagnostic_plans_one_active_per_learner'))
+  })
+
+  it('retires the previous plan when a new one is issued, and not on an idempotent retry', () => {
+    const fn = plan.match(/create or replace function public\.sync_diagnostic[\s\S]*?\$\$([\s\S]*?)\$\$/i)![1]
+    expect(fn).toMatch(/update public\.diagnostic_plans set active = false\s*\n?\s*where learner_id = p_learner_id and active/i)
+    // ⚠️ The early return for a duplicate client_id must come BEFORE the deactivation, or a retried
+    // network call leaves a learner with no active plan and no free chapters at all.
+    expect(fn.indexOf('return v_session_id;')).toBeLessThan(fn.indexOf('set active = false'))
+  })
+
+  it('caps the play-data revision at exactly one per plan', () => {
+    const fn = plan.match(/create or replace function public\.entitle_revised_step[\s\S]*?\$\$([\s\S]*?)\$\$/i)
+    expect(fn, 'entitle_revised_step not found — this gate is inert').not.toBeNull()
+    // The cap IS the null check: the column is only writable while it is empty.
+    expect(fn![1]).toMatch(/revised_chapter is null/)
+    expect(fn![1], 'it must be scoped to the ACTIVE plan').toMatch(/and active/)
+  })
+})
+
 describe('reassign_learner_seat cannot raise the active seat count', () => {
   it('contains no INSERT and no DELETE against subscription_seats', () => {
     // The runtime half is rls_regression B13d, which counts the rows either side of a reassignment.
