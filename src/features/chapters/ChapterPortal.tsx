@@ -28,13 +28,32 @@ import type { ChapterType } from '@/core/chapters'
 export type ChapterProps = { onComplete: (correct: number, wrong: number, mastered?: boolean) => void; childName: string }
 type Finish = (correct: number, wrong: number, mastered?: boolean) => void
 
-/** Portal mount + one-shot result sync + replay. `quiet` also stops speech on unmount. */
-function usePortalRun(skill: ChapterType, quiet: boolean) {
+/**
+ * Portal mount + one-shot result sync + replay. `quiet` also stops speech on unmount.
+ *
+ * ⚠️⚠️ `onComplete` IS THE PROP THAT COST THIS REPO THREE MONTHS, AND IT IS NOW ACTUALLY CALLED.
+ * `ChapterProps.onComplete` has been part of every chapter's signature since the beginning and both
+ * registry factories took it as `_props` and dropped it — so `/game`'s handler never ran and no
+ * child's plan advanced. That was fixed by moving the plan pointer into `finishAndSync`, which was
+ * the right call (it is the one function every completion path reaches) and left the PROP behind,
+ * still in the type, still looking wired. A callback that looks connected and is not is exactly the
+ * shape of the original fault, sitting there for the next caller to trust.
+ *
+ * `/demo` is that next caller: a logged-out visitor has no learner, so `finishAndSync` returns at
+ * `if (!learner) return` and the demo would never learn the chapter finished. So the prop is real
+ * now — called AFTER the sync, so a throw in a caller's handler cannot cost a child their score.
+ *
+ * ⚠️ HELD IN A REF so `finish` keeps its identity. Callers pass an inline arrow; threading it
+ * through the dep array would give every chapter a new `onFinish` on every render.
+ */
+function usePortalRun(skill: ChapterType, quiet: boolean, onComplete?: Finish) {
   const router = useRouter()
   const { finishAndSync } = useChapterSync()
   const [body, setBody] = useState<HTMLElement | null>(null)
   const [runKey, setRunKey] = useState(0)
   const doneRef = useRef(false)
+  const cbRef = useRef(onComplete)
+  cbRef.current = onComplete
 
   useEffect(() => {
     setBody(document.body)
@@ -47,6 +66,9 @@ function usePortalRun(skill: ChapterType, quiet: boolean) {
     if (doneRef.current) return
     doneRef.current = true
     finishAndSync(skill, c, w, 'practice', mastered)
+    // After the sync, and guarded: the score is already written and a caller's handler must never
+    // be able to undo it. Same reasoning as the plan pointer's own try/catch in `finishAndSync`.
+    try { cbRef.current?.(c, w, mastered) } catch { /* a caller's bookkeeping is not the child's score */ }
   }, [finishAndSync, skill])
 
   const replay = useCallback(() => { doneRef.current = false; setRunKey(k => k + 1) }, [])
@@ -63,8 +85,8 @@ export type StoryProps = { onFinish?: Finish; onExit?: () => void; world?: strin
 export type StoryInner = React.ComponentType<StoryProps>
 
 export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInner) {
-  return function StoryChapter(_props: ChapterProps) {
-    const { router, body, runKey, finish, replay } = usePortalRun(skill, false)
+  return function StoryChapter(props: ChapterProps) {
+    const { router, body, runKey, finish, replay } = usePortalRun(skill, false, props.onComplete)
     if (!body) return null
     const exit = () => router.push('/menu')
     return createPortal(
@@ -144,7 +166,7 @@ function TeenWorld({ cfg, Game, SimComp, childName, onFinish, onExit, onReplay }
 
 export function makeTeenChapter(cfg: TeenChapterCfg, Game: TeenGame, SimComp?: Sim) {
   return function TeenChapter(props: ChapterProps) {
-    const { router, body, runKey, finish, replay } = usePortalRun(cfg.skill, true)
+    const { router, body, runKey, finish, replay } = usePortalRun(cfg.skill, true, props.onComplete)
     if (!body) return null
     const exit = () => { stopSpeech(); router.push('/menu') }
     return createPortal(

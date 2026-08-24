@@ -15,9 +15,7 @@
  */
 import { useEffect, useState } from 'react'
 import TasteBanner from '@/features/chapters/story/TasteBanner'
-import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
-import { useChapterAccess, CameraConsentCard } from '@/shared/ui/CameraConsentGate'
-import type { ChapterType } from '@/core/chapters'
+import { GuardedChapter } from '@/features/chapters/GuardedChapter'
 
 export default function TeenPreviewPage() {
   const [c, setC] = useState('integers')
@@ -28,14 +26,8 @@ export default function TeenPreviewPage() {
     setTaste(p.get('taste') === '1')
   }, [])
 
-  // ⚠️ ABOVE THE EARLY RETURNS. A hook after a conditional return changes the hook count between
-  // renders and React tears the page into the error boundary — the same rule `RotateGate` carries.
-  const access = useChapterAccess(c)
-
-  const Chapter = CHAPTER_COMPONENTS[c as ChapterType]
-  if (!Chapter) return <div style={{ padding: 24, fontFamily: 'sans-serif' }}>Unknown chapter: {c}</div>
-  // Fail closed: nothing of the chapter mounts until the session is known.
-  if (access === 'checking') return null
-  if (access === 'blocked') return <CameraConsentCard />
-  return <>{<Chapter onComplete={() => {}} childName="Sam" />}{taste && <TasteBanner />}</>
+  // The guard moved to `GuardedChapter` when `/demo` became a second logged-out door — see the note
+  // there. ⚠️ The no-op `onComplete` is deliberate: a taste has nothing to advance. `/demo` is the
+  // caller that counts.
+  return <>{<GuardedChapter id={c} onComplete={() => {}} />}{taste && <TasteBanner />}</>
 }

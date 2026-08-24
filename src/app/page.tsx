@@ -125,9 +125,23 @@ export default function RootPage() {
         }}>
           Start the free check
         </Link>
-        <p style={{ fontSize: 14, color: '#8a7a63', margin: '12px 0 34px' }}>
+        <p style={{ fontSize: 14, color: '#8a7a63', margin: '12px 0 14px' }}>
           No account needed to start. It takes about ten minutes.
         </p>
+        {/**
+          * ⚠️ THE SECOND DOOR IS FOR THE PARENT WHO WILL NOT SPEND TEN MINUTES ON A STRANGER'S
+          * WEBSITE, AND THAT IS MOST OF THEM. The check is the better product and stays the primary
+          * CTA; this one asks for an age and nothing else, because a parent who watches their child
+          * enjoy a chapter is a warmer lead than one who abandoned a placement test at question
+          * fifteen. It is deliberately quieter than the check — a link, not a second button
+          * competing with it.
+          */}
+        <Link href="/demo" style={{
+          minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          color: '#F26B2C', fontSize: 15, fontWeight: 700, textDecoration: 'underline', marginBottom: 34,
+        }}>
+          Or just try two chapters first →
+        </Link>
 
         {POINTS.map(({ h, p }) => (
           <section key={h} style={{
