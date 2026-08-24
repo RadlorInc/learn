@@ -225,7 +225,7 @@ describe('a parent cannot write their own billing', () => {
   })
 
   it('has no policy at all on billing_events — RLS on, zero policies, the error_events precedent', () => {
-    const any = [...allMigrations.matchAll(/create policy[\s\S]{0,200}?on public\.billing_events/gi)]
+    const any = [...allMigrations.matchAll(/create policy[^;]*?on public\.billing_events/gi)]
     expect(any.map(m => m[0]), 'billing_events must have NO policy; it is service-role only').toEqual([])
     expect(billing).toMatch(/alter table public\.billing_events\s+enable row level security/i)
   })
@@ -263,7 +263,7 @@ describe('the paywall ships OFF, and the suite must turn it on', () => {
     expect(billing).toMatch(/create table if not exists public\.billing_config/i)
     expect(billing).toMatch(/alter table public\.billing_config\s+enable row level security/i)
     expect(billing).toMatch(/revoke all on public\.billing_config\s+from anon, authenticated/i)
-    const anyPolicy = [...allMigrations.matchAll(/create policy[\s\S]{0,200}?on public\.billing_config/gi)]
+    const anyPolicy = [...allMigrations.matchAll(/create policy[^;]*?on public\.billing_config/gi)]
     expect(anyPolicy.map(m => m[0]), 'a client that can write this row has turned the paywall off').toEqual([])
   })
 
@@ -299,7 +299,7 @@ describe('plan-derived entitlement (source C)', () => {
 
   it('makes one-active-plan-per-learner structural, not just something the RPC does', () => {
     // A rule that lives only inside an RPC is a rule the next writer of that RPC can drop.
-    expect(plan).toMatch(/create unique index if not exists diagnostic_plans_one_active_per_learner[\s\S]{0,120}?where active/i)
+    expect(plan).toMatch(/create unique index if not exists diagnostic_plans_one_active_per_learner[^;]*?where active/i)
     // …and the backfill has to come first, or the index cannot be created at all.
     expect(plan.indexOf('set active = false'))
       .toBeLessThan(plan.indexOf('diagnostic_plans_one_active_per_learner'))

@@ -56,7 +56,7 @@ describe('SceneBg', () => {
     // matched NOTHING — a multi-line style object contains `>` in its arrow functions and the class
     // is spread over four lines — so the check reported a clean sweep while a raw backdrop was still
     // there. It is the repo's own "a green check is not evidence until you have watched it go red".
-    const idiom = /<img[\s\S]{0,400}?inset: 0, width: '100%', height: '100%', objectFit: 'cover'/
+    const idiom = /<img[^>]*?inset: 0, width: '100%', height: '100%', objectFit: 'cover'/
     const left = tsxFiles(CHAPTERS)
       .filter(p => idiom.test(readFileSync(p, 'utf8')))
       .map(p => p.split('/').pop()!)

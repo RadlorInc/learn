@@ -8,7 +8,7 @@ The most expensive defect class in this repo is not a bug. It is **something tha
 and isn't** — a gate, grep, guard or test that reports success while examining nothing. It is worse
 than having no check at all, because it is what stops the next person looking.
 
-Ten of them on 2026-08-24 alone, and the mechanisms have nothing in common. **This table is
+Twelve of them across 2026-08-24/25, and the mechanisms have nothing in common. **This table is
 meant to grow — a frozen list becomes decoration itself.** Add the next one rather than admiring it:
 
 | what it looked like | what it was |
@@ -23,9 +23,11 @@ meant to grow — a frozen list becomes decoration itself.** Add the next one ra
 | a "what share of parents skip the check" query | **a population that excludes the alternative.** It counted `checkup_offer` rows and divided — but only a SKIP emits that event, so the denominator was made entirely of skippers and the query could only ever return **100%**. Not a check at all: a METRIC that can return exactly one value, which would have been reported, believed and acted on |
 | a hand-verification step reported as **passing** | **an artefact that does not contain the feature.** The build under test had no "Skip for now" in its bundle, so the child could not have skipped — the "pass" came from the OLD gate letting them through for its own reasons. ⚠️ Committed by the person READING the results rather than the one producing them, which is the version nobody catches |
 | a browser drive of the plan card, green | **an environment where the failure cannot occur.** The harness used a rejected JWT, so `getLearnerBootstrap` 401'd and the cross-device reconcile — the exact code that wiped the field — never executed. A correct check, pointed at a world where the bug is impossible |
+| a source gate reading `src.slice(at, at + 700)` | **a proxy for the boundary it meant.** A byte budget stands in for "this statement" / "this element", and ANY edit that adds bytes before the target moves it out of the window — after which the gate reports confidently about text it never saw. **Three times in one session** (a policy window running into the next policy; a 700-char slice losing its call when a prop was added above it; a window stopping at the first `) : (` *inside* the ternary it was checking). Not three mistakes — one technique that does not work |
 
 A skip, a shape, a moment, an order, a flag, a dead clause, a wrong target, a one-valued metric, an
-artefact without the feature, a world without the bug. **You cannot learn to spot these by pattern** — nothing about any of them looked wrong, and four
+artefact without the feature, a world without the bug, a proxy boundary. **You cannot learn to spot
+these by pattern** — nothing about any of them looked wrong, and four
 were written by someone who had just written down the rule that catches them. The only thing
 separating a real check from these is having watched it go red for the reason it exists.
 
@@ -98,6 +100,25 @@ Everything below is a corollary of that one sentence:
   401s in a drive were correctly diagnosed as a fake JWT AND silently meant an entire code path —
   the one holding the bug — never ran. When you dismiss an error in a test run, say out loud what
   stopped executing because of it.
+- ⚠️⚠️ **NEVER SCOPE A CHECK BY A CHARACTER COUNT. MATCH ON STRUCTURE.** Balanced delimiters, a
+  statement boundary, a negated class that cannot cross the thing (`[^;]*` for a SQL statement,
+  `[^>]*` inside one JSX tag), or the literal itself. A `slice(at, at + N)` and a `[\s\S]{0,N}?` are
+  the same fault: **a byte budget is a proxy for a boundary**, and any edit that adds bytes before
+  the target silently moves it outside — the gate then passes, or fails on correct code, having
+  examined text that is not the text it names. ⚠️ Where a lazy quantifier already ends on a real
+  terminator (`[\s\S]*?\/>`), the numeric cap adds nothing and can only cut the match short:
+  delete it, and bound the middle with a class that cannot leave the construct.
+- ⚠️⚠️ **NEVER CHAIN A TEST RUN TO A COMMIT.** `npm test && git commit` does not wait for anyone to
+  READ the result: the message is written before the outcome exists and is then true by assertion.
+  Same family as asserting a result you have not read, except the vector is a shell operator, which
+  makes it invisible — this is how a red suite got committed under a message claiming green
+  (2026-08-25). **Separate invocations, always**, with the output actually read in between. There is
+  no exception for "it was green a minute ago".
+- ⚠️ **A COUNT IS ONLY A CHECK WHEN YOU HAVE COUNTED THE RIGHT THING.** A gate asserting
+  `props.onExit` appears twice — it appears four times, once per condition and once per call — went
+  red on correct code, **and reverting a factory made the count right, so the mutation made the
+  broken gate pass**. Count the things the rule is about (the two factories), not the occurrences of
+  a token.
 - ⚠️ **A BRANCH ASSERTION IS SATISFIED BY A CONSTANT.** Checking that the code *branches* on a value
   says nothing about whether that value is ever computed: hard-coding the input passed every
   branch-shaped check written for it. Assert the DERIVATION — that the real function is called, at

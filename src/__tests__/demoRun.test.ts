@@ -11,6 +11,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { balanced, strip } from './_window'
 import {
   demoChapters, pickDemo, readDemo, startDemo, completeDemoChapter, nextDemoChapter, demoUsedUp, clearDemo,
   DEMO_LIMIT,
@@ -107,13 +108,8 @@ describe('the run ends, exactly once', () => {
 /** Source checks, labelled: they prove the page SAYS it, not that anything reaches it. */
 describe('the route (source)', () => {
   const src = readFileSync('src/app/demo/page.tsx', 'utf8')
-  /**
-   * ⚠️ STRIP COMMENTS BEFORE MATCHING COPY. A comment that explains why NOT to write a phrase
-   * contains the phrase — this file's wall check went red on its own source's note reading
-   * *"you've used your free chapters" makes the product the thing that ran out*. Third time today a
-   * gate has matched prose instead of code; the shipped copy is what a parent reads.
-   */
-  const code = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+  // ⚠️ `strip` first: a comment that explains why NOT to write a phrase contains the phrase, and
+  // this file's wall check went red on its own source's note. The shipped copy is what a parent reads.
 
   it('counts the completion — the callback is not discarded', () => {
     // `/teen-preview` passes a no-op on purpose. If THIS one becomes one, the demo never ends and
@@ -124,7 +120,7 @@ describe('the route (source)', () => {
     // is not a window bounded by the thing you meant.
     const at = src.indexOf('onComplete={')
     expect(at, 'the completion handler is gone — this gate is inert').toBeGreaterThan(0)
-    const handler = src.slice(at, src.indexOf('}}', at))
+    const handler = balanced(src, at)          // the `{() => { … }}` expression container
     expect(handler, 'the demo discards its completion callback').toMatch(/completeDemoChapter\(/)
   })
 
@@ -140,7 +136,7 @@ describe('the route (source)', () => {
   it('the wall sells the account rather than announcing a spent demo', () => {
     const at = src.indexOf('demoUsedUp(run)')
     expect(at, 'the wall is gone — this gate is inert').toBeGreaterThan(0)
-    const wall = code(src.slice(at, at + 1400))
+    const wall = strip(balanced(src, at))   // the whole `if (demoUsedUp(run)) { … }` block
     expect(wall, 'the wall must offer the account').toMatch(/href="\/auth"/)
     expect(wall, 'the wall reads as "you ran out" rather than what an account buys')
       .not.toMatch(/used (up|your)|run out|no more free|limit reached/i)

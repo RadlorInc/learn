@@ -47,7 +47,7 @@ function derivedArChapters(): string[] {
     const src = readFileSync(join(dir, f), 'utf8')
     // Anchored on the real GameConfig field — two spaces of indent, with a `reads:` inside — so a
     // comment discussing hands, or an `onHand:` prop, cannot trip it.
-    if (!/^\s{2}hand: \{[\s\S]{0,400}?reads: '/m.test(src)) continue
+    if (!/^\s{2}hand: \{[^}]*?reads: '/m.test(src)) continue
     const id = byModule[f.replace(/\.tsx$/, '')]
     if (id) ar.push(id); else unmapped.push(f)
   }

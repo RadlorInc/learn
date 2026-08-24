@@ -524,7 +524,7 @@ describe('the source keeps the rules it claims', () => {
     expect(src).toMatch(/tryN\.current/)
     expect(src).toMatch(/seenRound\.current !== roundKey/)
     // an effect here would paint one frame of the previous round's board
-    expect(src).not.toMatch(/useEffect\([\s\S]{0,200}setLaid\(0\)/)
+    expect(src).not.toMatch(/useEffect\([^)]*setLaid\(0\)/)
   })
 
   /**

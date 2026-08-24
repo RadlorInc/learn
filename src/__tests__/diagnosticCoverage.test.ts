@@ -131,11 +131,19 @@ describe('coverage — what a result is allowed to claim', () => {
     expect(region, 'the on-track card is printed without checking coverage').toMatch(/r\.coverage === 'full'/)
     // The offer of the full check is part of the fix, not a consolation: a student who named the
     // wrong strand reaches this screen after TWO questions.
-    expect(src.slice(partialAt, partialAt + 1200), 'the partial branch must offer the full check')
-      .toMatch(/Take the full check/)
+    // ⚠️ THE CARD, NOT 1200 CHARACTERS OF IT. This was `slice(partialAt, partialAt + 1200)` — a byte
+    // budget standing in for "the partial card", which any copy added above the CTA silently pushes
+    // the CTA out of. Bounded by the element instead: its own `<Card …>` to its own `</Card>`.
+    const cardStart = src.lastIndexOf('<Card', partialAt)
+    const cardEnd = src.indexOf('</Card>', partialAt)
+    expect(cardStart, 'the partial card is not inside a Card — re-read this gate').toBeGreaterThan(start)
+    expect(cardEnd, 'the partial card never closes — re-read this gate').toBeGreaterThan(partialAt)
+    const card = src.slice(cardStart, cardEnd + '</Card>'.length)
+
+    expect(card, 'the partial branch must offer the full check').toMatch(/Take the full check/)
     // …and the on-track wording lives ONLY in the full branch.
     for (const bad of ON_TRACK) {
-      expect(src.slice(partialAt, partialAt + 1200), `the partial card reads as "${bad}"`).not.toMatch(bad)
+      expect(card, `the partial card reads as "${bad}"`).not.toMatch(bad)
     }
   })
 })

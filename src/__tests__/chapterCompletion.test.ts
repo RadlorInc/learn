@@ -13,10 +13,11 @@
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { balanced, strip } from './_window'
 
 const portal = readFileSync('src/features/chapters/ChapterPortal.tsx', 'utf8')
 const game = readFileSync('src/app/game/page.tsx', 'utf8')
-const strip = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+
 
 describe('the completion callback reaches its caller', () => {
   it('BOTH registry factories pass onComplete through — one is the bug', () => {
@@ -45,7 +46,7 @@ describe('waking the handler must not change /game', () => {
     // child finished it — the stars, "Play again", the way back.
     const at = game.indexOf('function handleComplete')
     expect(at, 'handleComplete is gone — this gate is inert').toBeGreaterThan(0)
-    const body = strip(game.slice(at, game.indexOf('\n  }', at)))
+    const body = strip(balanced(game, at))     // the whole function body, brace to brace
     expect(body, 'handleComplete gained a state update — read the note above it first')
       .not.toMatch(/set[A-Z]\w*\(/)
     expect(body, 'handleComplete must never re-sync: the portal already scored the run')
@@ -55,7 +56,8 @@ describe('waking the handler must not change /game', () => {
   it('the chapter mount is not gated on a completion flag', () => {
     const at = game.indexOf('CHAPTER_COMPONENTS[playingChapter]')
     expect(at, 'the chapter mount is gone — this gate is inert').toBeGreaterThan(0)
-    const mount = strip(game.slice(Math.max(0, at - 200), at))
+    // ⚠️ Backwards to the JSX expression that OPENS this branch, not a byte count behind it.
+    const mount = strip(game.slice(game.lastIndexOf('{', at), at))
     expect(mount, 'the chapter unmounts when it completes, taking its own end screen with it')
       .not.toMatch(/!\s*\w*[Dd]one\w*\s*&&/)
   })
@@ -95,7 +97,7 @@ describe('the exit destination is a parameter, not knowledge', () => {
     // is the sort of thing only a person notices.
     const at = strip(portal).indexOf('const exit = () => { stopSpeech()')
     expect(at, 'the teen exit changed shape — re-read this gate').toBeGreaterThan(0)
-    const line = strip(portal).slice(at, at + 160)
+    const line = balanced(strip(portal), at)   // the arrow body, brace to brace
     expect(line).toMatch(/stopSpeech\(\);\s*if \(props\.onExit\)/)
   })
 })
