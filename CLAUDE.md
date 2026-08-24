@@ -8,7 +8,7 @@ The most expensive defect class in this repo is not a bug. It is **something tha
 and isn't** — a gate, grep, guard or test that reports success while examining nothing. It is worse
 than having no check at all, because it is what stops the next person looking.
 
-Eight of them on 2026-08-24 alone, and the mechanisms have nothing in common. **This table is
+Ten of them on 2026-08-24 alone, and the mechanisms have nothing in common. **This table is
 meant to grow — a frozen list becomes decoration itself.** Add the next one rather than admiring it:
 
 | what it looked like | what it was |
@@ -21,9 +21,11 @@ meant to grow — a frozen list becomes decoration itself.** Add the next one ra
 | `asked < maxItems` guarding the coverage rule | **a clause that cannot bind.** A cap always leaves the agenda or a frame open; in the one case it was not redundant it was *wrong*, reporting a finished search as partial |
 | `git pull` on `main` saying "Already up to date" | **the wrong target.** Local `main` tracked `origin/chore/applied-billing-migrations`, a deleted feature branch — so the pull succeeded, twice, while `main` sat two commits behind, and a `push` from `main` would have gone to the dead branch. The command reported success having done nothing *to the thing that was asked about* |
 | a "what share of parents skip the check" query | **a population that excludes the alternative.** It counted `checkup_offer` rows and divided — but only a SKIP emits that event, so the denominator was made entirely of skippers and the query could only ever return **100%**. Not a check at all: a METRIC that can return exactly one value, which would have been reported, believed and acted on |
+| a hand-verification step reported as **passing** | **an artefact that does not contain the feature.** The build under test had no "Skip for now" in its bundle, so the child could not have skipped — the "pass" came from the OLD gate letting them through for its own reasons. ⚠️ Committed by the person READING the results rather than the one producing them, which is the version nobody catches |
+| a browser drive of the plan card, green | **an environment where the failure cannot occur.** The harness used a rejected JWT, so `getLearnerBootstrap` 401'd and the cross-device reconcile — the exact code that wiped the field — never executed. A correct check, pointed at a world where the bug is impossible |
 
-A skip, a shape, a moment, an order, a flag, a dead clause, a wrong target, a one-valued metric.
-**You cannot learn to spot these by pattern** — nothing about any of them looked wrong, and four
+A skip, a shape, a moment, an order, a flag, a dead clause, a wrong target, a one-valued metric, an
+artefact without the feature, a world without the bug. **You cannot learn to spot these by pattern** — nothing about any of them looked wrong, and four
 were written by someone who had just written down the rule that catches them. The only thing
 separating a real check from these is having watched it go red for the reason it exists.
 
@@ -54,6 +56,21 @@ Everything below is a corollary of that one sentence:
 - **Prefer a structure that cannot express the bug over a check that catches it.** A flag someone
   must remember to set is a check waiting to rot; a call with no flag to set cannot rot. Where both
   are available, take the structure and spend the check elsewhere.
+- ⚠️⚠️ **CONFIRM THE THING YOU ARE TESTING IS IN THE ARTEFACT YOU ARE TESTING.** Before reading any
+  hand-verification result, check the feature is actually present — a string from it in the deployed
+  bundle, a version marker, anything. A pass on a build without the feature is not a weak pass, it
+  is a reading of some *other* mechanism, and it is indistinguishable from success. This one is most
+  dangerous when the person checking is not the person who built it: they have no reason to doubt
+  the artefact, and the builder never sees the run.
+- ⚠️⚠️ **A FAILING CALL IN A HARNESS IS TWO CLAIMS, NOT ONE.** "This error is noise" is usually
+  right. "And nothing downstream of it mattered" is never free, and it is the one that costs. Four
+  401s in a drive were correctly diagnosed as a fake JWT AND silently meant an entire code path —
+  the one holding the bug — never ran. When you dismiss an error in a test run, say out loud what
+  stopped executing because of it.
+- ⚠️ **A BRANCH ASSERTION IS SATISFIED BY A CONSTANT.** Checking that the code *branches* on a value
+  says nothing about whether that value is ever computed: hard-coding the input passed every
+  branch-shaped check written for it. Assert the DERIVATION — that the real function is called, at
+  every call site, counted — and forbid the literal.
 - ⚠️ **PRE-REGISTER WHAT A NUMBER WILL MEAN, IN THE DOC, BEFORE THE QUERY SHIPS.** Deciding what a
   result would tell us is only honest while we still do not know what it says; once it says
   something, everyone has a reason to read it their way. Standing rule from 2026-08-24 — the

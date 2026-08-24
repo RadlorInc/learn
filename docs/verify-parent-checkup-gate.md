@@ -6,6 +6,48 @@ So it is **unverified**, not verified-and-fine. This is what to check and what c
 
 Five minutes. Do it in the same sitting as the billing smoke test.
 
+---
+
+## STEP 0 — CONFIRM THE DEPLOYED BUILD CONTAINS THE FEATURE
+
+⚠️⚠️ **DO THIS FIRST, EVERY TIME, AND DO NOT SKIP IT BECAUSE THE COMMITS "ARE IN".** On 2026-08-24
+this exact verification was run against a build that predated the change: step 4 "failed" (expected —
+the code was not there) and step 5 "passed" for a reason unrelated to the feature, because with no
+skip button the child could not have skipped and the OLD gate let them through on its own terms. A
+pass on a build without the feature is not a weak pass; it is a reading of some other mechanism, and
+it is indistinguishable from success.
+
+Nothing here is deployed until it is **pushed** — Vercel builds from GitHub, so local commits, however
+many, change nothing about what you are testing.
+
+```bash
+curl -s https://adaptivelearn.radlor.com/menu -o /tmp/m.html && : > /tmp/b.js && \
+for u in $(grep -oE '/_next/static/immutable/chunks/[A-Za-z0-9._-]+\.js' /tmp/m.html | sort -u); do \
+  curl -s "https://adaptivelearn.radlor.com$u" >> /tmp/b.js; done && \
+for s in "Your plan · step" "Skip for now" "Starting from the beginning" "Pick up where you left off" "Where does it start getting hard"; do \
+  printf '%-34s %s\n' "$s" "$(grep -c "$s" /tmp/b.js)"; done
+```
+
+| string | expected | if it is 0 |
+|---|---|---|
+| `Your plan · step` | **≥1** | ⚠️ **THE CONTROL. If this is 0 the grep is broken and every other number below is meaningless** — the chunk path changed, or the fetch failed. Fix this before reading anything else |
+| `Skip for now` | ≥1 | the optional-checkup work is not deployed — **stop, nothing below is testable** |
+| `Starting from the beginning` | ≥1 | the honest plan subtitle is not deployed — step 4 will "fail" and mean nothing |
+| `Pick up where you left off` | ≥1 | durable resume is not deployed |
+| `Where does it start getting hard` | ≥1 | 17–18's door 2 is not deployed |
+
+⚠️ **The control row is not ceremony.** The first time this grep was run it used the wrong chunk path
+(`/_next/static/chunks/` — prod serves `/_next/static/immutable/chunks/`) and returned 0 for
+everything, including things that were definitely there. Without a string you KNOW is present, that
+looks exactly like "the feature is missing".
+
+Also worth confirming the service worker actually rolled over — `curl -s
+https://adaptivelearn.radlor.com/sw.js | head -1` should show at least **v142**. A stale worker can
+serve you the previous bundle even after a successful deploy; hard-reload if it disagrees.
+
+---
+
+
 ⚠️ **USE A CHILD WHO HAS NEVER PLAYED AND NEVER DONE A CHECK.** Add a new one if needed. Any child
 with play history is *grandfathered* by `isEstablished` and goes straight to the menu — that is the
 intended behaviour and it will make every step below pass for the wrong reason.
