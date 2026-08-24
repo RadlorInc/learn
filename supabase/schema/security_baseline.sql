@@ -139,6 +139,18 @@
 --       anon; EXECUTE to authenticated (required — a policy predicate runs with the caller's rights)
 --       and service_role. ⚠️ Accepted: that grant makes it a one-bit oracle for anyone who already
 --       knows a learner UUID. Non-enumerable ids, and the bit is "is this family paying".
+--   entitle_revised_step(uuid,text)     DEFINER  search_path=public
+--       Free-tier source C's one extension: when a play-data revision prepends a deeper chapter for
+--       a STRUGGLING child, this entitles it. Capped at one per plan structurally — `revised_chapter`
+--       is only writable while null — so three free chapters maximum on that path. Checks
+--       learner_access for the caller. ⚠️ It does NOT verify the chapter really is a prerequisite of
+--       the plan's root: the skill graph is TypeScript and unavailable in SQL. The bound is
+--       arithmetic (one per plan, and a new plan costs a 20–50 question probe), and it is written
+--       down rather than left as an unnoticed hole.
+--   sync_diagnostic(…)                  DEFINER  search_path=public
+--       Now also RETIRES the learner's previous plan (`active = false`) and records the new plan's
+--       `free_chapters` — the first two steps the learner had not already completed, frozen at issue
+--       time. One active plan per learner is a partial unique index, not just what this does.
 --   reassign_learner_seat(uuid,uuid)    DEFINER  search_path=public
 --       The only billing write a parent may make. Checks subscriptions.account_id = auth.uid() and
 --       learners.created_by = auth.uid() (entitlement follows created_by), refuses a second

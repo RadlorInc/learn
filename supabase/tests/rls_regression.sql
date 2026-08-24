@@ -39,6 +39,9 @@ declare
   v_free     text;                        -- a chapter with is_free = true
   v_paid     text;                        -- a chapter with is_free = false
   v_n        int;
+  v_paids    text[];                     -- four chapters that are NOT in the fixed free set
+  v_sess     uuid;
+  v_ok       boolean;
   -- ⚠️ COUNTS THE ASSERTIONS THAT ACTUALLY RAN, and CI fails if the number is missing or 0.
   -- A test file that is never reached, or is silently emptied, is indistinguishable from a
   -- passing one from outside — which is exactly how `rls-tests` reported success for weeks
@@ -476,6 +479,103 @@ begin
   v_asserts := v_asserts + 1;
   if public.is_chapter_entitled(v_learner3, v_paid) then
     raise exception 'RLS FAIL B13g: an UNSEATED learner on the same account is entitled — entitlement is not per-seat';
+  end if;
+
+
+  -- ═══ C — PLAN-DERIVED ENTITLEMENT (free-tier source C) ═════════════════════
+  -- v_learner3 is the OWNER's third child and holds no seat (B13g just proved they are not
+  -- entitled), so anything they can record here can only have come from the plan.
+  select array_agg(id order by sort_order) into v_paids
+    from (select id, sort_order from public.chapters where not is_free order by sort_order limit 4) t;
+  v_asserts := v_asserts + 1;
+  if coalesce(array_length(v_paids, 1), 0) <> 4 then
+    raise exception 'RLS FAIL C0: need four non-free chapters for the plan fixture (got %)', coalesce(array_length(v_paids,1),0);
+  end if;
+
+  -- Issue a plan through the REAL path — the RPC a finished check calls — not by writing rows.
+  v_sess := public.sync_diagnostic(v_learner3, '9-11', 'i.multFacts', null, '{}', '{}',
+              'one gap', '{}', array[v_paids[1], v_paids[2], v_paids[3]], null, gen_random_uuid());
+
+  -- C1: the plan's two recorded chapters are entitled with no subscription at all.
+  v_asserts := v_asserts + 1;
+  if not (public.is_chapter_entitled(v_learner3, v_paids[1])
+          and public.is_chapter_entitled(v_learner3, v_paids[2])) then
+    raise exception 'RLS FAIL C1: the plan''s first two steps are not free';
+  end if;
+
+  -- C2: the THIRD step is not. Without this the plan is simply free.
+  v_asserts := v_asserts + 1;
+  if public.is_chapter_entitled(v_learner3, v_paids[3]) then
+    raise exception 'RLS FAIL C2: step three of the plan is free — the whole plan is unlocked';
+  end if;
+
+  -- C3: completing step one must NOT promote step three. This is the difference between a RECORDED
+  -- pair and a computed "first two unmet", and a computed one walks the entire plan free, one
+  -- chapter at a time, for nothing.
+  insert into public.learner_progress (learner_id, chapter, best_stars, total_xp, total_sessions)
+    values (v_learner3, v_paids[1], 3, 100, 1);
+  get diagnostics v_cnt = row_count;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL C3: an entitled plan step could not be recorded'; end if;
+  v_asserts := v_asserts + 1;
+  if public.is_chapter_entitled(v_learner3, v_paids[3]) then
+    raise exception 'RLS FAIL C3: finishing step one promoted step three — the free set is being recomputed, not recorded';
+  end if;
+
+  -- C7: ONE extra chapter for a struggling child, and exactly one. `revisePlanDeeper` prepends a
+  -- deeper chapter when the child struggles in the plan's root; without this the product's own
+  -- correction lands behind the paywall, hitting the child it exists for.
+  v_asserts := v_asserts + 1;
+  if not public.entitle_revised_step(v_learner3, v_paids[3]) then
+    raise exception 'RLS FAIL C7: the play-data revision could not be entitled';
+  end if;
+  v_asserts := v_asserts + 1;
+  if not public.is_chapter_entitled(v_learner3, v_paids[3]) then
+    raise exception 'RLS FAIL C7: the revised step is still not entitled';
+  end if;
+  -- …and a second one is refused, so the cap is three free chapters on that path and no more.
+  v_asserts := v_asserts + 1;
+  if public.entitle_revised_step(v_learner3, v_paids[4]) then
+    raise exception 'RLS FAIL C7: a SECOND revision was entitled — the one-per-plan cap is gone';
+  end if;
+  v_asserts := v_asserts + 1;
+  if public.is_chapter_entitled(v_learner3, v_paids[4]) then
+    raise exception 'RLS FAIL C7: the refused second revision entitled a chapter anyway';
+  end if;
+
+  -- C4: re-running the check REPLACES the free set rather than adding to it. Otherwise every retake
+  -- is two more free chapters, for ever.
+  v_sess := public.sync_diagnostic(v_learner3, '9-11', 'i.division', null, '{}', '{}',
+              'one gap', '{}', array[v_paids[4], v_paids[3]], null, gen_random_uuid());
+  v_asserts := v_asserts + 1;
+  if public.is_chapter_entitled(v_learner3, v_paids[2]) then
+    raise exception 'RLS FAIL C4: the OLD plan''s free chapters still entitle after a new plan was issued';
+  end if;
+  v_asserts := v_asserts + 1;
+  if not (public.is_chapter_entitled(v_learner3, v_paids[4])
+          and public.is_chapter_entitled(v_learner3, v_paids[3])) then
+    raise exception 'RLS FAIL C4: the NEW plan''s first two steps are not free';
+  end if;
+
+  -- C5: exactly one active plan per learner. Enforced by a partial unique index, so it is not
+  -- merely what the RPC happens to do — asserted from outside the RPC all the same.
+  select count(*) into v_cnt from public.diagnostic_plans where learner_id = v_learner3 and active;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL C5: % active plans for one learner', v_cnt; end if;
+
+  -- C6: and the revision allowance is per PLAN, so the new plan gets its own one.
+  v_ok := public.entitle_revised_step(v_learner3, v_paids[1]);
+  v_asserts := v_asserts + 1;
+  if not v_ok then raise exception 'RLS FAIL C6: the new plan did not get its own revision allowance'; end if;
+
+  -- C8: PER LEARNER, not per account — and not per anybody else's account either. v_alearner is the
+  -- ATTACKER's child: no seat, no plan, a different owner. ⚠️ The owner's own other children are
+  -- deliberately NOT the fixture here: they hold seats (B13), so they are entitled by source D and
+  -- would make this assertion pass for the wrong reason — a fixture that agrees with a broken
+  -- implementation proves nothing.
+  v_asserts := v_asserts + 1;
+  if public.is_chapter_entitled(v_alearner, v_paids[3]) then
+    raise exception 'RLS FAIL C8: one account''s plan entitled another account''s child';
   end if;
 
   reset role;
