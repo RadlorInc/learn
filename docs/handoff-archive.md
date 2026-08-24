@@ -1,3 +1,81 @@
+> 🔬 **2026-08-22 (fifth pass) — "MEKO YEH TENSION HAI KI YEH SAHI KAAM KAR RAHA HAI YAA NAII." SO THE ENGINE WAS DRIVEN AGAINST SEVEN DIFFERENT CHILDREN, FIVE OF WHICH IT WAS NOT DESIGNED FOR. IT DEGRADES GRACEFULLY — AND TWO REAL WEAKNESSES FELL OUT.** No code changed; this pass is measurement and one honest admission.
+>
+> **The asks:** *"yeh hata de kya pura? kyuki yeh rule based hai aur meko kuch samjh naii rha hai"* →
+> *"meko wohi tension hai ki yeh sahi kaam kar raha yaa naii… iska hi darr hai"*.
+>
+> ## ⓪ ⚠️⚠️ THE ADMISSION THAT SHOULD HAVE COME FIRST: I WAS MARKING MY OWN HOMEWORK
+> Every accuracy number reported all day came from a simulation **I wrote**, against a learner model
+> **I invented**, testing an engine **I built**. The founder's unease was the correct response to
+> that, and no further table from the same source would have answered it. ⚠️ It is the same shape as
+> this repo's own standing rule — *the instrument was wrong five times before the app was wrong
+> three* — one level up: **the instrument can also be wrong in your FAVOUR**, and a kind model is
+> harder to notice than a broken one.
+>
+> ## ① 🧒 SEVEN CHILDREN, FIVE OF THEM NOT DESIGNED FOR
+> | child | exact gap | within ONE step | **"no gap" when there IS one** |
+> |---|---|---|---|
+> | **A** the model I designed for (10% slip) | 96–99% | 97–99% | 0–3% |
+> | **G** always guesses, never blank | 91–95% | 96–98% | 0–2% |
+> | **C** PATCHY — the graph's own assumption is violated | 76–80% | 82–88% | 0–1% |
+> | **B** careless, 25% slip | 68–80% | 77–88% | **0%** |
+> | **E** tires as the probe goes on | 54–86% | 66–92% | **0%** |
+> | **D** the gap is HALF-learned, not absent | 41–46% | 72–92% | 7–27% |
+> | **F** TWO separate gaps | names one 98–100% · both 43–91% | — | **0%** |
+>
+> ⚠️ **THE LINE THAT MATTERS IS THE LAST COLUMN.** In every model, "there is a gap and we said there
+> isn't" is **0–3%**. When it is wrong it names a NEIGHBOURING skill, so the child still starts
+> beside their gap and climbs into it. That is the failure mode you want, and it survives models
+> built to break it.
+> ⚠️ **C is the reassuring one**: it makes skills independent — i.e. the prerequisite graph is simply
+> WRONG for that child — and the answer is still right or adjacent 82–88% of the time. So a graph
+> with some bad edges does not collapse the product, which is exactly the risk the un-validated
+> graph carries.
+>
+> ## ② ⚠️⚠️ TWO REAL WEAKNESSES, AND ONE OF THEM REVERSES THIS MORNING'S TRADE
+> **Fatigue at 17–18: 54%.** Their probe is the longest (58 questions), so a rising slip rate bites
+> hardest exactly where there is most to bite. **The 96% figure assumes a child who does not tire —
+> so in the real world a SHORTER probe may be MORE accurate than a longer one.** That is not a UX
+> objection to length, it is an accuracy objection, and it points the other way from the decision
+> taken this morning. Worth measuring before defending the current setting.
+> **A half-learned gap: 41% exact** (72–92% within one step). Arguably correct behaviour — if a child
+> half-has the skill, "is this the gap" is a genuinely blurred question — but it is the case a real
+> tester is most likely to bring, so know it before they do.
+>
+> ## ③ ⚠️ A MEASUREMENT OF MINE WAS UNFAIR AND WAS REDONE
+> The two-gap child first scored 55–62%, which read as a weakness. It was the METRIC: it counted
+> only `rootGap` while `diagnose()` also returns `secondGap`, so reporting the child's OTHER real gap
+> was scored as a miss. Measured properly: **names at least one real gap 98–100%**, both 43–91%,
+> route covers both 44–93%. Same family as the tautology rules in chapter-craft — *a check that
+> compares a value with itself*, here a check that ignores half the output it is judging.
+>
+> ## ④ 🧭 WHY "IT IS RULE-BASED" IS NOT THE PROBLEM (founder asked whether to delete it)
+> With 14 sessions on production, an ML/IRT placement model is not an option — those need thousands
+> of learners. Every adaptive product starts from a hand-built graph. And rule-based is what made the
+> whole of today possible: you can ask a graph *"which of your 130 assumptions actually matters"* and
+> get an answer. You cannot ask that of a model.
+> ⚠️ **The real complaint was legibility, not architecture.** Nothing in the app shows WHY a gap was
+> named — not to the parent, not to the founder. A traced example (34 questions, each one's verdict,
+> and why Milo descended where he did) made it obvious in one read. **That trace belongs in the
+> report**, and it is only possible BECAUSE the system is rule-based.
+>
+> ## ▶ OPEN — in the order that matters
+> 1. ✅ ~~Nothing is pushed~~ — **SHIPPED 2026-08-23** (`6dd9224`). Production serves the 96–98%
+>    probe. Everything else in this list still stands.
+> 2. **An ABANDONED probe leaves NO trace** — verified on prod: 14 session rows, 0 incomplete,
+>    because a row is only written on completion. The probe just went from ~10 to 20–50 questions and
+>    **we cannot see whether anyone is giving up.** Write the session row at START and update on
+>    finish; without it the next month is blind on the one number that now matters most.
+> 3. **The "how Milo worked it out" trace, in the report** (§④). Answers the founder's own question
+>    permanently and is the strongest trust artefact a rule-based system has.
+> 4. **One REAL child with a known weakness.** The only evidence that is not mine. 10 minutes.
+> 5. **The teacher's hour on twelve edges** ([docs/skill-graph-audit.md](docs/skill-graph-audit.md) §1).
+> 6. ⚠️ **The report promises "if this gap hasn't measurably closed, you don't pay" on an
+>    un-validated graph** — and `skillGraph.ts` itself says not to ship the guarantee before that.
+>    Consider softening to "we'll re-check and adjust" until the twelve edges are red-penned; a soft
+>    promise can be hardened later, the reverse cannot.
+> 7. 🔴 **STILL NO BACKUP OF THE CHILDREN'S DATA** — carried for many sessions, and the data is worth
+>    more now than it was.
+
 
 > 🕸️ **2026-08-22 (fourth pass) — THE ENGINE IS 96–98%, SO THE BOTTLENECK IS NOW THE GRAPH — AND THE GRAPH IS STILL v0.9 DRAFT WITH 130 UNVALIDATED EDGES. AUDITED: TWELVE OF THEM DECIDE A GAP, TWENTY-ONE DECIDE NOTHING.** `tsc` 0 · **1444/1444** (+7, 1 skipped by design) · `next build` 0. ✅ SHIPPED 2026-08-23 in `6dd9224`.
 >
