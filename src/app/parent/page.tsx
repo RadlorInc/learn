@@ -10,9 +10,12 @@ import {
   getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
   getMyRole, setMyRole,
 } from '@/data/repositories'
-import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
+import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
-import { setActivePlan } from '@/infra/storage/activePlan'
+import { setActivePlan, advancePlan } from '@/infra/storage/activePlan'
+import { adoptDemoRun } from '@/infra/storage/demoRun'
+import { scoreChapter } from '@/core/scoring'
+import { track } from '@/infra/analytics'
 import { hasCheckup, markCheckupDone, checkupSkips } from '@/infra/storage/checkup'
 import { setActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
@@ -577,6 +580,32 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
       void flushDiagnosticQueue()
       markCheckupDone(learner.id)   // replayed checkup → this new child passes the play gate
       setActivePlan(learner.id, pending.band, pending.planChapters)   // step 7: walkable plan for the new child
+    }
+
+    /**
+     * ⚠️ AND THE SAME LOOP FOR THE DEMO. A parent who played two chapters before signing up must not
+     * find nothing here — no stars, and a plan whose first step is the chapter their child just
+     * finished. That is worse than never having played: we showed them the product and took it away
+     * at the moment they committed.
+     *
+     * ⚠️ THE DIAGNOSTIC OUTRANKS THE DEMO FOR THE PLAN. A diagnosed plan is one somebody looked for;
+     * a grade-start plan is the band from the top. So the demo claims the plan only when the pending
+     * diagnostic did not — but its SESSIONS are adopted either way, because the child played them.
+     */
+    const claimedByDiagnostic = !!(pending && pending.band === learner.age_group)
+    const adopted = adoptDemoRun(
+      learner.id, learner.age_group as AgeGroup, !claimedByDiagnostic,
+      {
+        enqueueSession: p => enqueueSession({ ...p, chapter: p.chapter as ChapterType }),
+        score: (c, w, m) => scoreChapter(c, w, m),
+        plan: chapters => { setActivePlan(learner.id, learner.age_group ?? '3-5', chapters, 'gradeStart') },
+        advance: chapter => { advancePlan(learner.id, chapter) },
+        newId: () => crypto.randomUUID(),
+      },
+    )
+    if (adopted) {
+      void flushQueue()
+      track('demo_adopted', { chapters: adopted.adopted, planSet: adopted.planSet, band: learner.age_group })
     }
     onAdded()
   }

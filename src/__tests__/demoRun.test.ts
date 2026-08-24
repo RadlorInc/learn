@@ -14,9 +14,11 @@ import { readFileSync } from 'node:fs'
 import { balanced, strip } from './_window'
 import {
   demoChapters, pickDemo, readDemo, startDemo, completeDemoChapter, nextDemoChapter, demoUsedUp, clearDemo,
+  doneChapters,
   DEMO_LIMIT,
 } from '@/infra/storage/demoRun'
 import { gradeStartPlan, CHAPTER_NAMES, type AgeGroup, type ChapterType } from '@/core/chapters'
+import { adoptDemoRun } from '@/infra/storage/demoRun'
 import { isArChapter } from '@/core/arChapters'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
 
@@ -84,14 +86,14 @@ describe('the run ends, exactly once', () => {
     const first = nextDemoChapter(run)!
     completeDemoChapter(first)
     completeDemoChapter(first)                     // a refresh, a back button, a double fire
-    expect(readDemo()!.done).toEqual([first])
+    expect(doneChapters(readDemo())).toEqual([first])
     expect(demoUsedUp(readDemo()), 'one chapter played twice ended the demo').toBe(false)
   })
 
   it('survives the tab — a parent tries it tonight and signs up tomorrow', () => {
     startDemo('12-14')
     completeDemoChapter(demoChapters('12-14')[0])
-    expect(readDemo()!.done.length, 'the run did not persist').toBe(1)   // kv, not sessionStorage
+    expect(readDemo()!.results.length, 'the run did not persist').toBe(1)   // kv, not sessionStorage
     expect(readDemo()!.band).toBe('12-14')
   })
 
@@ -140,5 +142,92 @@ describe('the route (source)', () => {
     expect(wall, 'the wall must offer the account').toMatch(/href="\/auth"/)
     expect(wall, 'the wall reads as "you ran out" rather than what an account buys')
       .not.toMatch(/used (up|your)|run out|no more free|limit reached/i)
+  })
+})
+
+/**
+ * Signing up must carry the demo onto the account. Without this a parent who played two chapters
+ * finds no stars and a plan whose first step is the chapter their child just finished — worse than
+ * never having played, because we showed them the product and took it away as they committed.
+ */
+describe('adopting a demo run onto a real learner', () => {
+  const harness = () => {
+    const sessions: { chapter: string; starsEarned: number }[] = []
+    const advanced: string[] = []
+    let planned: string[] | null = null
+    let n = 0
+    return {
+      sessions, advanced, get planned() { return planned },
+      deps: {
+        enqueueSession: (p: { chapter: string; starsEarned: number }) => { sessions.push(p) },
+        score: (c: number) => ({ stars: c > 0 ? 3 : 0, xp: c * 10, coins: c }),
+        plan: (chapters: string[]) => { planned = chapters },
+        advance: (chapter: string) => { advanced.push(chapter) },
+        newId: () => `id-${n++}`,
+      },
+    }
+  }
+
+  it('writes a session per played chapter and starts the plan past them', () => {
+    startDemo('12-14')
+    const [a, b] = demoChapters('12-14')
+    completeDemoChapter(a, 8, 2, false)
+    completeDemoChapter(b, 10, 0, true)
+
+    const h = harness()
+    const out = adoptDemoRun('kid', '12-14', true, h.deps)!
+    expect(out.adopted, 'the play was not carried onto the account').toBe(2)
+    expect(h.sessions.map(s => s.chapter)).toEqual([a, b])
+    expect(h.sessions[0].starsEarned, 'stars were not recomputed from the recorded counts').toBeGreaterThan(0)
+    expect(h.planned, 'the new learner got no plan').toEqual(gradeStartPlan('12-14'))
+    expect(h.advanced, 'the plan would restart on a chapter the child just finished').toEqual([a, b])
+    expect(readDemo(), 'the run was not consumed — it would adopt onto a second learner too').toBeNull()
+  })
+
+  it('LEAVES the run stashed on a band mismatch — the right child may be added next', () => {
+    startDemo('9-11')
+    completeDemoChapter(demoChapters('9-11')[0], 5, 5, false)
+    const h = harness()
+    expect(adoptDemoRun('sibling', '3-5', true, h.deps), 'a 9–11 run was adopted onto a 3–5 child').toBeNull()
+    expect(h.sessions, 'sessions were written for the wrong child').toEqual([])
+    expect(readDemo(), 'a mismatch consumed the run — the capture is lost unrecoverably').not.toBeNull()
+    // …and the right child still gets it
+    expect(adoptDemoRun('kid', '9-11', true, h.deps)!.adopted).toBe(1)
+  })
+
+  it('yields the PLAN to a diagnosis but still adopts the sessions', () => {
+    // A diagnosed plan is one somebody looked for; a grade-start plan is the band from the top.
+    startDemo('6-8')
+    completeDemoChapter(demoChapters('6-8')[0], 7, 3, false)
+    const h = harness()
+    const out = adoptDemoRun('kid', '6-8', false, h.deps)!
+    expect(out.planSet).toBe(false)
+    expect(h.planned, "the demo overwrote the diagnostic's plan").toBeNull()
+    expect(h.advanced, 'the demo moved a pointer it does not own').toEqual([])
+    expect(h.sessions.length, 'the child played it — the account must record it').toBe(1)
+  })
+
+  it('no run → nothing happens, and that is not an error', () => {
+    const h = harness()
+    expect(adoptDemoRun('kid', '9-11', true, h.deps)).toBeNull()
+    expect(h.sessions).toEqual([])
+  })
+})
+
+/** Source check, labelled: the caller's ARGUMENT is invisible to every test above, which drives
+ *  `adoptDemoRun` directly. Found by mutation — passing an unconditional `true` for `claimPlan`
+ *  passed all fifteen while letting a grade-start plan overwrite a diagnosed one. */
+describe('the caller (source)', () => {
+  const parent = strip(readFileSync('src/app/parent/page.tsx', 'utf8'))
+
+  it('adopts on learner creation, and lets the diagnosis keep the plan', () => {
+    const at = parent.indexOf('adoptDemoRun(')
+    expect(at, 'nothing adopts the demo — a parent who played two chapters finds nothing').toBeGreaterThan(0)
+    const call = balanced(parent, at, '(', ')')
+    expect(call, 'the adopt call could not be bounded — re-read this gate').not.toBe('')
+    expect(call, 'the demo claims the plan unconditionally, overwriting a diagnosed one')
+      .toMatch(/claimedByDiagnostic/)
+    expect(parent, 'claimedByDiagnostic is not derived from the pending diagnostic')
+      .toMatch(/claimedByDiagnostic = !!\(pending && pending\.band === learner\.age_group\)/)
   })
 })

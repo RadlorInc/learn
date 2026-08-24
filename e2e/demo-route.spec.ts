@@ -67,7 +67,18 @@ test('the wall appears after the cap, and sells the account', async ({ page }) =
       r.onsuccess = () => { const tx = r.result.transaction('kv', 'readwrite')
         tx.objectStore('kv').put(v, 'milo-demo-run'); tx.oncomplete = () => res(null) }
     })
-    await put(JSON.stringify({ band: '12-14', done: ['integers', 'signedRationalOps'], startedAt: new Date().toISOString() }))
+    // ⚠️ THE REAL SHAPE, not a hand-rolled approximation of it. This seed carried `done: string[]`
+    // after the record moved to `results: DemoResult[]`, and `readDemo`'s shape guard correctly
+    // rejected it — the spec went red on working code. A seeded fixture is a second copy of the
+    // schema; when it drifts, the gate reports on a state the app can never be in.
+    await put(JSON.stringify({
+      band: '12-14',
+      results: [
+        { chapter: 'integers', correct: 8, wrong: 2, mastered: false },
+        { chapter: 'signedRationalOps', correct: 10, wrong: 0, mastered: true },
+      ],
+      startedAt: new Date().toISOString(),
+    }))
   })
   await page.reload()
 

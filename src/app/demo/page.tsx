@@ -60,13 +60,13 @@ export default function DemoPage() {
       // Nothing is recorded: the chapter is unplayed and still theirs to try.
       setPlaying(null)
       track('demo_chapter_left', { chapter: playing, band: run?.band })
-    }} onComplete={() => {
+    }} onComplete={(correct, wrong, mastered) => {
       // ⚠️ THIS CALLBACK IS THE WHOLE FEATURE. `/teen-preview` discards its own on purpose; if this
       // one is ever dropped the demo silently never ends and the wall never appears, which is the
       // `ChapterPortal` fault (three months, no plan advanced) with a different consequence.
-      const next = completeDemoChapter(playing)
+      const next = completeDemoChapter(playing, correct, wrong, mastered)
       setRun(next); setPlaying(null)
-      track('demo_chapter_done', { chapter: playing, band: next?.band, done: next?.done.length })
+      track('demo_chapter_done', { chapter: playing, band: next?.band, done: next?.results.length })
     }} />
   }
 
@@ -113,8 +113,8 @@ export default function DemoPage() {
   // ── NEXT UP ──────────────────────────────────────────────────────────────────────
   return (
     <Shell>
-      <Head title={run.done.length ? 'One more, then' : "Let's play"}
-        sub={`Chapter ${run.done.length + 1} of ${chapters.length} · nothing to sign up for yet.`} />
+      <Head title={run.results.length ? 'One more, then' : "Let's play"}
+        sub={`Chapter ${run.results.length + 1} of ${chapters.length} · nothing to sign up for yet.`} />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <button style={{ ...cta, border: 'none' }} onClick={() => setPlaying(next)}>
           {CHAPTER_NAMES[next as keyof typeof CHAPTER_NAMES] ?? 'Play'} →

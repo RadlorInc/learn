@@ -23,7 +23,7 @@ export function GuardedChapter({ id, onComplete, onExit, childName = 'Sam' }: {
   /** ⚠️ Real callers must do something with this. `/teen-preview` passes a no-op on purpose (it is
    *  a taste, with nothing to advance); `/demo` counts the completion. A discarded callback is how
    *  this repo lost three months on the plan pointer, so it is worth saying which one you are. */
-  onComplete: () => void
+  onComplete: (correct: number, wrong: number, mastered?: boolean) => void
   /** Where the chapter's own back button goes. Omitted → `/menu`, which bounces a logged-out
    *  visitor to `/auth`; any caller that expects one should pass its own. */
   onExit?: () => void
