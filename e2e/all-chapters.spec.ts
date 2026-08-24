@@ -2,6 +2,16 @@ import { test, expect, Page } from '@playwright/test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { IGNORED_ERRORS, MIN_TAP, TIGHT_TAP } from './personas'
+import { seedSession } from './session'
+
+/**
+ * ⚠️ SIGNED IN, BECAUSE THE CAMERA GUARD REFUSES AN AR CHAPTER WITHOUT A SESSION. Eight chapters
+ * (all in 9–11) do not render at all to a logged-out visitor — see src/core/arChapters.ts. Without
+ * this seed, this sweep would quietly grade the consent card for those eight and report them clean,
+ * which is the "graded the wrong screen" fault start-card.spec.ts exists to prevent. The logged-out
+ * side is covered deliberately by ar-consent.spec.ts.
+ */
+test.beforeEach(async ({ page }) => { await seedSession(page) })
 
 /**
  * THE LAUNCH GATE: every chapter a child can reach actually opens, on every frame they might hold.
@@ -84,6 +94,16 @@ const FAILURE_TEXT = [
   'Oops! Milo needs a moment',           // app/global-error.tsx
   'Milo can’t find that page',      // app/not-found.tsx
   'Oops! Something went wrong',          // MiloErrorBoundary
+  /**
+   * ⚠️ THE CAMERA CONSENT CARD IS A FAILURE **HERE**, THOUGH IT IS THE CORRECT SCREEN ELSEWHERE.
+   * Eight AR chapters do not render to a logged-out visitor (src/core/arChapters.ts), and this
+   * sweep drives `/teen-preview?c=<id>` — so without the seeded session above it lands on the card
+   * for those eight. Measured when the guard was added: all nine of those runs PASSED, grading a
+   * screen that is not the chapter, exactly the fault start-card.spec.ts was written for. The seed
+   * fixes it; this line is what makes REMOVING the seed go red instead of quietly narrowing the
+   * sweep to 62 chapters while reporting 70.
+   */
+  'played with your hands',              // CameraConsentGate
 ]
 
 /**
@@ -139,10 +159,6 @@ test.describe('every chapter opens', () => {
           await page.setViewportSize(frame)
           await page.goto(ch.url, { waitUntil: 'domcontentloaded' })
 
-          // 1. It rendered a chapter, not a failure screen.
-          const body = await page.locator('body').innerText()
-          for (const bad of FAILURE_TEXT) expect(body, `${ch.id}: "${bad}" on screen`).not.toContain(bad)
-
           /**
            * 2. It is OPERABLE, or it explicitly asks to be turned — never a dead screen.
            *
@@ -172,6 +188,21 @@ test.describe('every chapter opens', () => {
             control.or(rotateGate).first(),
             `${ch.id}: neither a usable control nor a rotate gate`,
           ).toBeVisible()
+
+          /**
+           * 1. It rendered a chapter, not a failure screen — AND IT IS READ AFTER THE SCREEN HAS
+           * SETTLED, not at `domcontentloaded`.
+           *
+           * ⚠️ IT USED TO RUN FIRST, AND THAT MADE IT VACUOUS THE DAY A GUARD BECAME ASYNC. The
+           * camera consent gate resolves a session before deciding, so at `domcontentloaded` the
+           * body is EMPTY — no chapter and no failure text — and the check passed on nothing.
+           * Measured: with the session seed removed, three AR chapters were graded on a consent
+           * card and all three went green. A check that runs before the screen exists is a check
+           * that cannot fail. Same family as the rotate-gate race two comments down, which is
+           * where the rule "assert the END STATE" was already written.
+           */
+          const body = await page.locator('body').innerText()
+          for (const bad of FAILURE_TEXT) expect(body, `${ch.id}: "${bad}" on screen`).not.toContain(bad)
 
           // If it asked to be turned, it must also say WHY — an empty gate is not a polite refusal.
           if (await rotateGate.isVisible().catch(() => false)) {
