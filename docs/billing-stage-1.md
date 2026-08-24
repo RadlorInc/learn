@@ -58,6 +58,45 @@ Two consequences, both deliberate:
 
 ## 3. What Stage 1 built
 
+### ⚠️ The switch — `billing_config.enforced`, and why it ships FALSE
+
+**Without it this schema cannot be applied at all.** Production has zero subscriptions and zero
+seats, so the moment `is_chapter_entitled` reaches the `sessions` policy, entitlement collapses to
+`is_free` — and **every existing family stops being able to save progress in 65 of the 72 chapters,
+instantly.** That is not a deploy risk to manage. It is a migration that is not applicable as
+written.
+
+So: one row, `enforced boolean default false`, and `is_chapter_entitled` short-circuits to true
+while it is false. The tables, the policies and the functions all land **inert**. The paywall goes
+live later by flipping one boolean, with everything already applied and already exercised.
+
+⚠️ **IT FAILS OPEN, WHICH IS THE OPPOSITE OF THE CAMERA GUARD, AND THE STAKES ARE WHY.** A camera
+offered without consent harms a child, so that guard fails closed. A paywall that fails closed
+breaks a working product for every family at once; one that fails open costs money. Missing row,
+missing table, unreadable value → not enforced.
+
+⚠️ **AND IT CLOSES A SECOND, UNRELATED HAZARD.** `deploy.yml`'s `migrate-prod` is inert only because
+`PROD_PROJECT_REF` is unset — one variable away from applying whatever is on `main`, unattended.
+With the flag, that accident applies a paywall that does nothing rather than one that silently stops
+65 chapters from saving. The flag closes the standing hazard as well as the one it was written for.
+
+⚠️ **THE CONDITION THAT MAKES IT SAFE RATHER THAN A HOLE: the RLS suite turns it ON in setup, and
+ASSERTS that it did** (F0). A flag defaulting off with a suite that inherits the default is a
+paywall that silently never turns on and a suite that passes anyway — the same shape as the CI job
+that skipped and reported success, the bundle grep that could not have found the key, and the
+failure-text read that ran before the screen existed. Three of those in one day is why this one is
+asserted rather than noted. `billingSchema.test.ts` gates the set AND the assertion, because setting
+alone is silently removable.
+
+`billing_config` is **service-role only**: RLS on, zero policies, no grant at all. A client that can
+write the row has turned the paywall off for everybody in one statement; a client that can read it
+learns nothing it needs, because what a UI wants is `is_chapter_entitled`, per chapter. F1/F1b/F2
+drive write, read-back and read.
+
+⚠️ **B12 IS NOW ON THE CRITICAL PATH, NOT BESIDE IT.** Supabase Pro must be on **before `enforced` is
+ever flipped true** — the day we start taking money is the day losing that database stops being
+recoverable by apology.
+
 ### Tables
 
 | table | RLS | policies | notes |

@@ -142,6 +142,45 @@ describe('a parent cannot write their own billing', () => {
   })
 })
 
+describe('the paywall ships OFF, and the suite must turn it on', () => {
+  const planFile = decomment(raw(migFiles.find(f => f.endsWith('_plan_entitlement.sql'))!))
+  const suite = readFileSync(join(ROOT, 'supabase/tests/rls_regression.sql'), 'utf8')
+
+  it('every definition of is_chapter_entitled short-circuits on billing_config.enforced', () => {
+    // ⚠️ EVERY definition, not the first. `create or replace` means the LAST one wins, so a later
+    // migration that rebuilds this function without the flag re-arms the paywall on a production
+    // with no subscriptions — the state that stops 65 of 72 chapters saving for every family.
+    // Wherever a rule must hold in N places, assert N.
+    const defs = [...allMigrations.matchAll(
+      /create or replace function public\.is_chapter_entitled[\s\S]*?\$\$([\s\S]*?)\$\$/gi,
+    )].map(m => m[1])
+    expect(defs.length, 'no definition found — this gate is inert').toBeGreaterThan(1)
+    const missing = defs.filter(b => !/not coalesce\(\(select bc\.enforced from public\.billing_config/i.test(b))
+    expect(missing.length, `${missing.length} of ${defs.length} definitions of is_chapter_entitled do not check the switch`).toBe(0)
+  })
+
+  it('billing_config is service-role only — no policy, no grant', () => {
+    expect(billing).toMatch(/create table if not exists public\.billing_config/i)
+    expect(billing).toMatch(/alter table public\.billing_config\s+enable row level security/i)
+    expect(billing).toMatch(/revoke all on public\.billing_config\s+from anon, authenticated/i)
+    const anyPolicy = [...allMigrations.matchAll(/create policy[\s\S]{0,200}?on public\.billing_config/gi)]
+    expect(anyPolicy.map(m => m[0]), 'a client that can write this row has turned the paywall off').toEqual([])
+  })
+
+  it('the RLS suite forces enforced ON, and says so', () => {
+    // ⚠️ THE CONDITION THAT MAKES THE FLAG SAFE RATHER THAN A HOLE. A flag defaulting off with a
+    // suite that inherits the default is a paywall that silently never turns on and a suite that
+    // passes anyway — the same shape as the CI job that skipped and reported success. The suite
+    // both SETS it and ASSERTS it: setting alone would be silently removable.
+    expect(suite, 'the suite must turn the paywall on').toMatch(/update public\.billing_config set enforced = true/i)
+    expect(suite, 'the suite must assert it is on, not merely set it').toMatch(/RLS FAIL F0/)
+    // And it must check that nobody can turn it off, in both directions.
+    expect(suite).toMatch(/RLS FAIL F1:/)
+    expect(suite).toMatch(/RLS FAIL F1b:/)
+    expect(suite).toMatch(/RLS FAIL F2:/)
+  })
+})
+
 describe('plan-derived entitlement (source C)', () => {
   const plan = decomment(raw(migFiles.find(f => f.endsWith('_plan_entitlement.sql'))!))
 

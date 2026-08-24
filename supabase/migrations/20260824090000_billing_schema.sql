@@ -114,7 +114,39 @@ create table if not exists public.billing_events (
 );
 create index if not exists billing_events_at_idx on public.billing_events (at desc);
 
+-- ── 4b. billing_config — the switch that makes all of this INERT until we mean it ────────────
+-- ⚠️⚠️ WITHOUT THIS, THIS MIGRATION IS NOT APPLICABLE AT ALL. Production has zero subscriptions and
+-- zero seats, so the moment the guard reaches the `sessions` policy, entitlement collapses to
+-- `is_free` — and **every existing family stops being able to save progress in 65 of the 72
+-- chapters, instantly.** That is not a deploy risk to manage; it is a migration that cannot be
+-- applied as written. The flag lets the schema, the policies and the functions all land INERT, and
+-- the paywall goes live later by flipping one boolean with everything already applied and verified.
+--
+-- ⚠️ IT FAILS **OPEN**, DELIBERATELY, AND THAT IS THE OPPOSITE OF THE CAMERA GUARD. The two have
+-- opposite stakes. A camera offered without consent is a harm to a child, so that one fails closed.
+-- A paywall that fails closed breaks a working product for every paying and non-paying family
+-- alike; a paywall that fails open costs money. Missing row, missing table, unreadable value → not
+-- enforced.
+--
+-- ⚠️ AND IT CLOSES A SECOND, UNRELATED HAZARD: `deploy.yml`'s `migrate-prod` is inert only because
+-- `PROD_PROJECT_REF` is unset. With this flag, somebody setting that variable and waking the
+-- pipeline applies a paywall that does nothing, instead of one that silently stops 65 chapters from
+-- saving. An accidental apply becomes harmless rather than catastrophic.
+create table if not exists public.billing_config (
+  -- One row, structurally: the only value this column accepts is `true`, so a second row is
+  -- unrepresentable rather than merely discouraged.
+  id         boolean primary key default true check (id),
+  enforced   boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+insert into public.billing_config (id, enforced) values (true, false) on conflict (id) do nothing;
+
+comment on table public.billing_config is
+  'One row. `enforced` = is the paywall live? While false, is_chapter_entitled returns true for '
+  'everything, so the whole billing surface is applied but inert. Service-role only.';
+
 -- ── 5. RLS ───────────────────────────────────────────────────────────────────
+alter table public.billing_config     enable row level security;
 alter table public.subscriptions      enable row level security;
 alter table public.subscription_seats enable row level security;
 alter table public.billing_events     enable row level security;
@@ -124,6 +156,11 @@ alter table public.billing_events     enable row level security;
 -- place and no UPDATE policy, an UPDATE matches no rows and returns "0 rows" — it does not raise.
 -- A silent no-op is the worst possible answer to an attempted self-upgrade, because the client
 -- cannot tell it from success. Revoked, the same statement raises 42501.
+-- ⚠️ ZERO POLICIES AND NO GRANT, like billing_events. A client that can write this row has turned
+-- the paywall off; a client that can even READ it learns nothing it needs, because what the UI
+-- actually needs is `is_chapter_entitled`, which already answers per chapter. rls_regression F1/F2
+-- drive both directions.
+revoke all on public.billing_config     from anon, authenticated;
 revoke all on public.subscriptions      from anon, authenticated;
 revoke all on public.subscription_seats from anon, authenticated;
 revoke all on public.billing_events     from anon, authenticated;
@@ -164,8 +201,11 @@ security definer
 set search_path = public
 as $$
   select
+    -- ⚠️ THE SWITCH, FIRST. While the paywall is not enforced this short-circuits to true and the
+    -- whole surface is inert. Fails OPEN on a missing row — see the note on billing_config.
+    not coalesce((select bc.enforced from public.billing_config bc), false)
     -- Free chapters are free for everybody, signed in or not, paying or not.
-    coalesce((select c.is_free from public.chapters c where c.id = p_chapter), false)
+    or coalesce((select c.is_free from public.chapters c where c.id = p_chapter), false)
     or exists (
       select 1
       from public.subscription_seats st

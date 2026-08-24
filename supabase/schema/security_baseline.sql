@@ -50,6 +50,17 @@
 --   learners                   rls=t  policies=4
 --   profiles                   rls=t  policies=1
 --   sessions                   rls=t  policies=2   (INSERT now also requires is_chapter_entitled)
+--   billing_config             rls=t  policies=0   ONE ROW, service-role only. `enforced` is the
+--                                                  paywall switch: while false, is_chapter_entitled
+--                                                  returns true for everything and the whole billing
+--                                                  surface is applied but INERT. ⚠️ It ships FALSE
+--                                                  because production has no subscriptions — armed
+--                                                  on apply, it would stop 65 of 72 chapters saving
+--                                                  for every existing family. ⚠️ Fails OPEN on a
+--                                                  missing row, unlike the camera guard: a paywall
+--                                                  that fails closed breaks a working product, one
+--                                                  that fails open costs money. No grant at all, so
+--                                                  a client can neither read nor flip it.
 --   billing_events             rls=t  policies=0   INTENTIONAL, the error_events precedent: RLS on
 --                                                  with ZERO policies = deny-all, service-role only.
 --                                                  Holds Stripe customer ids, event types and

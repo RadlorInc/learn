@@ -54,6 +54,35 @@ whitespace from both sides; and a file may pair with a row of a **different name
 production sometimes split one file into two migrations. Full method and the exact query:
 [docs/schema-baseline-debt.md](../schema-baseline-debt.md#the-ledger-side--repaired-2026-08-24).
 
+## ⚠️⚠️ B12 BLOCKS ANY MIGRATION THAT WOULD TOUCH CHILD DATA
+
+**The moment a migration would touch `sessions`, `learner_progress` or `learner_stats`, B12 blocks
+it.** Standing policy, founder's words, 2026-08-24. There is no backup of the children's data and no
+point-in-time recovery (launch blocker B12); `baseline_schema.sql` returns the STRUCTURE and none of
+the data. Until Supabase Pro is on, a migration that only adds objects or rewrites predicates is
+proportionate and one that rewrites rows in those three tables is not.
+
+The billing migrations pass this test on purpose: the only data they mutate is the `chapters`
+catalog and `diagnostic_plans.active`. Neither is a child's work.
+
+## The sequence for applying a migration by hand
+
+1. **Capture the rollback FIRST, and commit it.** For every object the migration replaces: the
+   current `qual`/`with_check` from `pg_policies`, `pg_get_functiondef` for each function, and the
+   before-values of any row the migration UPDATEs. That file IS the rollback script. ⚠️ It is not a
+   backup, and calling it one is how you end up without either.
+2. **Run the stale-migration diff above** — even on a file written the same day. The point is the
+   habit, and a file that replaces a live policy is exactly the case that cost us a security
+   regression.
+3. **Apply**, one migration at a time.
+4. **Verify from the CATALOG, not the success flag.**
+5. ⚠️ **THEN DRIVE A REAL WRITE END TO END.** This is the step that matters and the one a catalog
+   query cannot stand in for. When the billing guard reaches the `sessions` policy on a database
+   with no subscriptions, every object is exactly as intended and every family has silently stopped
+   being able to save. The catalog would have said everything was fine.
+6. **Rename the repo file** to the version the ledger recorded — repo-side, zero ledger writes.
+7. Re-run the advisors, and watch `ci / rls-tests` on the next PR.
+
 ## Preconditions that are not optional
 
 - **A one-way door needs a real check, not a plausible one.** If a migration can break a live path

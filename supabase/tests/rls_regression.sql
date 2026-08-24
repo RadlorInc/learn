@@ -72,6 +72,22 @@ begin
     values (v_invite, v_alearner, v_attacker, 'attacker.rlstest@milo.invalid', 'pending', now() + interval '7 days');
 
   -- ── Billing setup (Stage 1) ───────────────────────────────────────────────
+  -- ⚠️⚠️ THE PAYWALL SHIPS **OFF** AND THIS SUITE MUST TURN IT ON. `billing_config.enforced`
+  -- defaults false so the migration can be applied to a production with no subscriptions without
+  -- stopping 65 chapters from saving. A suite that inherited that default would exercise the
+  -- not-enforced short-circuit on every entitlement case and pass — testing a paywall that does
+  -- nothing. Third time today this shape has appeared: the CI job that skipped and reported
+  -- success, the bundle grep that could not have found the key, and the failure-text read that ran
+  -- before the screen existed.
+  update public.billing_config set enforced = true;
+  -- …and SAY SO, rather than trusting the line above to still be here. If it is ever removed, the
+  -- entitlement cases below would all pass vacuously; this is the one that would not.
+  select enforced into v_blocked from public.billing_config;
+  v_asserts := v_asserts + 1;
+  if not coalesce(v_blocked, false) then
+    raise exception 'RLS FAIL F0: the suite is running with the paywall OFF — every entitlement assertion below is vacuous';
+  end if;
+
   -- Still the migration role, so RLS is bypassed. That is the ONLY way these rows can exist: there
   -- is no INSERT policy on either billing table, which is itself asserted below (B3, B9).
   select id into v_free from public.chapters where is_free      order by sort_order limit 1;
@@ -227,6 +243,25 @@ begin
 
   -- ═══ BILLING (Stage 1) — the attacker's half ═══════════════════════════════
   -- The attacker has NO subscription and owns v_alearner, so they are the unentitled case.
+
+  -- F1: nobody can WRITE the switch. A client that can set `enforced = false` has turned the
+  -- paywall off for the entire product, for everybody, in one statement.
+  v_blocked := false;
+  begin
+    update public.billing_config set enforced = false;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL F1: a client disabled the paywall'; end if;
+
+  -- F2: nor read it. Zero policies, no grant — the error_events precedent.
+  v_blocked := false;
+  begin
+    perform * from public.billing_config limit 1;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL F2: authenticated user can read billing_config'; end if;
 
   -- B1: a stranger cannot read another account's subscription.
   select count(*) into v_cnt from public.subscriptions where account_id = v_owner;
@@ -579,6 +614,17 @@ begin
   end if;
 
   reset role;
+
+  -- F1b: the switch is STILL ON after everything above tried to move it. ⚠️ Read back here, as the
+  -- migration role, because `authenticated` cannot read the table at all (F2) — and because an
+  -- UPDATE with no policy and no grant is the case that returns QUIETLY rather than raising if the
+  -- revoke is ever handed back. "It raised" and "it changed nothing" are two different claims.
+  select enforced into v_blocked from public.billing_config;
+  v_asserts := v_asserts + 1;
+  if not coalesce(v_blocked, false) then
+    raise exception 'RLS FAIL F1b: the paywall switch was turned off from the API';
+  end if;
+
   -- The machine-readable line CI greps for. Keep the `RLS_ASSERTIONS=` token stable.
   raise notice 'RLS REGRESSION SUITE: ALL ASSERTIONS PASSED';
   raise notice 'RLS_ASSERTIONS=%', v_asserts;
