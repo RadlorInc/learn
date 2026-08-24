@@ -625,6 +625,89 @@ begin
     raise exception 'RLS FAIL F1b: the paywall switch was turned off from the API';
   end if;
 
+  -- ═══ M: the seat materialiser (Stage 2a) ═══════════════════════════════════════════════
+  -- ⚠️ DRIVEN, NOT READ. `materialize_seats` exists because the Stripe webhook is at-least-once and
+  -- out-of-order, and neither property is visible in the source: only replaying an event and
+  -- delivering a downgrade twice can show that it converges instead of drifting.
+  declare
+    v_sub_m uuid;
+    v_seat_learner uuid;
+    v_idx int[];
+  begin
+    insert into public.subscriptions (account_id, status, seats_paid)
+    values (v_owner, 'active', 0) on conflict (account_id) do update set seats_paid = 0
+    returning id into v_sub_m;
+    delete from public.subscription_seats where subscription_id = v_sub_m;
+
+    -- M1: 0 → 3 fills the LOWEST indexes, so seat numbers stay dense.
+    perform public.materialize_seats(v_sub_m, 3);
+    select array_agg(seat_index order by seat_index) into v_idx
+      from public.subscription_seats where subscription_id = v_sub_m;
+    v_asserts := v_asserts + 1;
+    if v_idx is distinct from array[1,2,3] then
+      raise exception 'RLS FAIL M1: expected seats {1,2,3}, got %', v_idx;
+    end if;
+
+    -- M2: THE SAME TARGET AGAIN CHANGES NOTHING. This is the at-least-once contract; an
+    -- "add N seats" function would silently reach 6 here and every replay would cost a seat.
+    perform public.materialize_seats(v_sub_m, 3);
+    select count(*) into v_cnt from public.subscription_seats where subscription_id = v_sub_m;
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 3 then raise exception 'RLS FAIL M2: a replayed event changed the seat count to %', v_cnt; end if;
+
+    -- M3: a downgrade with a CHILD IN A SEAT takes the empty ones first. Seat 1 is occupied; 3 → 1
+    -- must leave that child seated rather than evicting them while empty seats sit beside them.
+    select id into v_seat_learner from public.learners where created_by = v_owner limit 1;
+    update public.subscription_seats set learner_id = v_seat_learner, assigned_at = now()
+      where subscription_id = v_sub_m and seat_index = 1;
+    perform public.materialize_seats(v_sub_m, 1);
+    select array_agg(seat_index order by seat_index) into v_idx
+      from public.subscription_seats where subscription_id = v_sub_m;
+    v_asserts := v_asserts + 1;
+    if v_idx is distinct from array[1] then
+      raise exception 'RLS FAIL M3: a downgrade evicted a seated child — kept %', v_idx;
+    end if;
+    v_asserts := v_asserts + 1;
+    if not exists (select 1 from public.subscription_seats
+                    where subscription_id = v_sub_m and learner_id = v_seat_learner) then
+      raise exception 'RLS FAIL M3b: the seated child lost their seat to a downgrade';
+    end if;
+
+    -- M4: a quantity above the ceiling CLAMPS rather than raising. Losing a webhook is worse than
+    -- clamping one, and the column check would refuse a fifth row anyway.
+    v_asserts := v_asserts + 1;
+    if public.materialize_seats(v_sub_m, 7) <> 4 then
+      raise exception 'RLS FAIL M4: an over-quantity did not clamp to 4';
+    end if;
+    select count(*) into v_cnt from public.subscription_seats where subscription_id = v_sub_m;
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 4 then raise exception 'RLS FAIL M4b: clamped to 4 but wrote % rows', v_cnt; end if;
+
+    -- M5: down to zero. A cancelled subscription grants nothing — and the child's RECORD is
+    -- untouched, which is the rule reads are never gated by.
+    perform public.materialize_seats(v_sub_m, 0);
+    select count(*) into v_cnt from public.subscription_seats where subscription_id = v_sub_m;
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 0 then raise exception 'RLS FAIL M5: cancelling left % seats', v_cnt; end if;
+    v_asserts := v_asserts + 1;
+    if not exists (select 1 from public.learners where id = v_seat_learner) then
+      raise exception 'RLS FAIL M5b: releasing a seat deleted the child';
+    end if;
+
+    -- M6: `authenticated` cannot call it. It writes the table that decides who is entitled, so an
+    -- account could otherwise grant itself four seats. ⚠️ Asserted by ATTEMPTING it, not by reading
+    -- the REVOKE — a grant handed back by a later migration is invisible to the source.
+    set local role authenticated;
+    begin
+      perform public.materialize_seats(v_sub_m, 4);
+      reset role;
+      raise exception 'RLS FAIL M6: an account materialised its own seats';
+    exception when insufficient_privilege then
+      reset role;
+      v_asserts := v_asserts + 1;
+    end;
+  end;
+
   -- The machine-readable line CI greps for. Keep the `RLS_ASSERTIONS=` token stable.
   raise notice 'RLS REGRESSION SUITE: ALL ASSERTIONS PASSED';
   raise notice 'RLS_ASSERTIONS=%', v_asserts;
