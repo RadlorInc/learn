@@ -104,6 +104,9 @@ jobs:
             exit 1
           fi
 
+          echo "RLS regression suite: $count assertions executed and passed."
+          echo "### 🔒 RLS regression: **$count** assertions executed and passed" >> "$GITHUB_STEP_SUMMARY"
+
       # ═══════════════════════════════════════════════════════════════════════════════════════
       #  ⚠️⚠️ EXERCISE THE ROLLBACK. A ROLLBACK NOBODY HAS RUN IS A DOCUMENT, NOT A ROLLBACK.
       #
@@ -168,9 +171,6 @@ jobs:
             "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='is_chapter_entitled'" \
             "0"
           echo "### ♻️ Billing rollback exercised: production's fingerprints restored" >> "$GITHUB_STEP_SUMMARY"
-
-          echo "RLS regression suite: $count assertions executed and passed."
-          echo "### 🔒 RLS regression: **$count** assertions executed and passed" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Diagnostics on failure
         if: failure()
