@@ -252,17 +252,30 @@ family that cannot buy. **5 more mutations, 5 caught.**
    live key and before `enforced` is ever true.
 3. ✅ **THE SQL HALF RAN.** **CI reported `RLS_ASSERTIONS=74`** on `aecc348` — the SQL ran,
    on a real Postgres, and passed. ⚠️ Read ② for what that green is and is not worth.
-4. ⏭️ **Next: step 3 — the test-mode purchase, watched.** It needs a Stripe test account and
+4. ⏭️ **STEP 3 IS BLOCKED ON THREE THINGS, AND TWO OF THEM ARE MINE TO NAME RATHER THAN DO.**
+   ⚠️ **Measured: production does NOT have `materialize_seats`** (Stage 2a is unapplied) — so a
+   purchase today verifies, logs, upserts, then **404s on the RPC and 500s**, and the seat count the
+   whole step exists to show would be empty for a reason that has nothing to do with the code. That
+   is a reading taken off an artefact without the feature in it. **`billing-stage-2.md` §5 now opens
+   with a STEP 0 that checks for the function before anything else** — the runbook shipped without
+   it, which was the hole. Needs: ① a `sk_test_` key (founder — I must not create accounts or handle
+   credentials) · ② `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`, or the webhook 503s before doing
+   anything — ⚠️ **which means a test-mode purchase writes REAL ROWS to the production database**
+   (safe: test money, `enforced = false`, and the cleanup SQL is in §5) · ③ #60 merged and applied,
+   or `.env.local` pointed at a throwaway project.
+   ✅ **What IS driven:** both routes answered on a real dev server — `/api/checkout` 401 with no
+   token, `/api/stripe/webhook` 503 unconfigured. Not the harness; the running app.
+5. ⏭️ **Then: the purchase itself, watched.** It needs a Stripe test account and
    `stripe listen`; the runbook is written. ⚠️ **It cannot show you the paywall** — `enforced` is
    false, so a seat grants nothing a non-seat does not already have. Entitlement is exercised only in
    `ci / rls-tests`, with the flag forced on.
-5. ⏭️ **Then Stage 3 = UI**: the lock screen `sync_session`'s 42501 has been owed since Stage 1, a
+6. ⏭️ **Then Stage 3 = UI**: the lock screen `sync_session`'s 42501 has been owed since Stage 1, a
    pricing page, the seat manager, and the customer portal.
-6. 🔴 **`DRAFT = true` — the privacy policy and ToS are still placeholders (B1/B2).** You cannot
+7. 🔴 **`DRAFT = true` — the privacy policy and ToS are still placeholders (B1/B2).** You cannot
    charge a parent under a placeholder ToS, so this blocks going live as hard as B12 does.
-7. 🟡 Vercel Web Analytics still off; the funnel this all hangs off is unmeasured.
-8. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
-9. ⚠️ **Prose drift, rescued from the block archived today rather than lost with it:**
+8. 🟡 Vercel Web Analytics still off; the funnel this all hangs off is unmeasured.
+9. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
+10. ⚠️ **Prose drift, rescued from the block archived today rather than lost with it:**
    `20260817174352_privacy_and_leads_hardening.sql` and `src/app/api/lead/route.ts` still say the
    anon INSERT revoke has not been applied. It was, on 2026-08-24. Comments only, no behaviour.
 

@@ -222,6 +222,32 @@ body" (checkout's trust boundary).
 This is the founder's, and it is the first time anybody sees money move. Everything below is test
 mode; no real card is involved and none can be.
 
+### ⚠️⚠️ STEP 0 — CONFIRM THE THING YOU ARE TESTING IS IN THE DATABASE YOU ARE TESTING
+
+**Measured 2026-08-25, and this runbook was written without it, which was a hole.** Production has
+the Stage 1 tables (`subscriptions`, `subscription_seats`, `billing_events`, all **empty**,
+`enforced = false`, 7 free chapters) and **does NOT have `materialize_seats`** — Stage 2a is not
+applied. Run step 3 against production as it stands and the webhook verifies the signature, logs the
+event, upserts the subscription, then **404s on `rpc/materialize_seats`, returns 500, and Stripe
+retries for three days.** The seat count you came to look at would be **empty for a reason that has
+nothing to do with the code** — a pass or a fail read off an artefact that does not contain the
+feature, which is the one reading indistinguishable from success.
+
+So, before anything below:
+
+```sql
+-- must return 1. If it returns 0, STOP: merge #60, apply, and re-run this.
+select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public' and p.proname = 'materialize_seats';
+```
+
+⚠️ **AND THE WEBHOOK NEEDS `SUPABASE_SERVICE_ROLE_KEY` IN `.env.local` OR IT 503s BEFORE DOING
+ANYTHING.** Which means a **test-mode** purchase writes **real rows to the production database** —
+one `subscriptions` row, its seats, and a `billing_events` row. That is safe (test-mode money, and
+`enforced = false` so a seat grants nothing a non-seat does not already have) and it must be a
+decision rather than a surprise. The alternative is to point `.env.local` at a throwaway Supabase
+project. Cleanup for the production route is at the end of this section.
+
 1. **Stripe dashboard → test mode ON** (the toggle top-right). Copy the **test** secret key
    (`sk_test_…`) into `.env.local` as `STRIPE_SECRET_KEY`. ⚠️ A live key is refused by the app, on
    purpose — if it throws, that is the guard working.
@@ -246,6 +272,14 @@ mode; no real card is involved and none can be.
      `service_role` grant were missing, and everything else would still look perfect.
 6. **Then replay it** — `stripe events resend <evt_id>` — and check that nothing changed. That is the
    at-least-once contract, seen rather than argued.
+
+### Cleaning up afterwards (only if you ran against production)
+
+```sql
+-- deletes the seats by cascade; the child's own record is never touched.
+delete from public.subscriptions where stripe_customer_id = '<cus_… from the test purchase>';
+delete from public.billing_events where payload->>'livemode' = 'false';
+```
 
 ⚠️ **What this step CANNOT show you** (say it out loud rather than reading a green run as more than
 it is): the paywall itself. `billing_config.enforced` is `false`, so a seat grants nothing a
