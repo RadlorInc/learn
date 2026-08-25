@@ -245,30 +245,35 @@ id (deleted, or from the other mode) is retried once as a new customer, because 
 family that cannot buy. **5 more mutations, 5 caught.**
 
 ## ▶ OPEN
-1. ⏸️ **PR [#60](https://github.com/RadlorInc/learn/pull/60) IS OPEN, and it CONTAINS #59's commit**
-   (rebased onto `main`, which had moved). Merging it makes **PR #59 redundant — close it.** Nothing
-   applied, nothing merged.
+1. ✅ **MERGED AND APPLIED.** #60 (Stage 2a + 2b) merged; #59 closed as superseded; #61 captured the
+   rollback and made CI run it; #62 recorded the apply. **`materialize_seats` is LIVE in production**
+   as ledger version `20260825030558`, verified from the catalog and **fingerprint-matched to the
+   artefact CI tested** — body `5ee877cc8970db10a0d6b8daac5082f3` and
+   `service_role=true authenticated=false anon=false` on **both** sides. Advisors: **no new
+   findings**, and `materialize_seats` is absent from the SECURITY-DEFINER-executable WARN list — a
+   third instrument agreeing that `authenticated` cannot call it.
+   ⚠️ **B12 did not block it and the rule was APPLIED, not skipped:** one function created, zero rows
+   mutated, none of `sessions` / `learner_progress` / `learner_stats` touched.
 2. 🔴 **B12 IS STILL THE FOUNDER'S AND STILL BLOCKS EVERYTHING FROM STEP 1.** Supabase Pro before any
    live key and before `enforced` is ever true.
-3. ✅ **THE SQL HALF RAN.** **CI reported `RLS_ASSERTIONS=74`** on `aecc348` — the SQL ran,
-   on a real Postgres, and passed. ⚠️ Read ② for what that green is and is not worth.
-4. ⏭️ **STEP 3 IS BLOCKED ON THREE THINGS, AND TWO OF THEM ARE MINE TO NAME RATHER THAN DO.**
-   ⚠️ **Measured: production does NOT have `materialize_seats`** (Stage 2a is unapplied) — so a
-   purchase today verifies, logs, upserts, then **404s on the RPC and 500s**, and the seat count the
-   whole step exists to show would be empty for a reason that has nothing to do with the code. That
-   is a reading taken off an artefact without the feature in it. **`billing-stage-2.md` §5 now opens
-   with a STEP 0 that checks for the function before anything else** — the runbook shipped without
-   it, which was the hole. Needs: ① a `sk_test_` key (founder — I must not create accounts or handle
-   credentials) · ② `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`, or the webhook 503s before doing
-   anything — ⚠️ **which means a test-mode purchase writes REAL ROWS to the production database**
-   (safe: test money, `enforced = false`, and the cleanup SQL is in §5) · ③ #60 merged and applied,
-   or `.env.local` pointed at a throwaway project.
-   ✅ **What IS driven:** both routes answered on a real dev server — `/api/checkout` 401 with no
-   token, `/api/stripe/webhook` 503 unconfigured. Not the harness; the running app.
-5. ⏭️ **Then: the purchase itself, watched.** It needs a Stripe test account and
-   `stripe listen`; the runbook is written. ⚠️ **It cannot show you the paywall** — `enforced` is
-   false, so a seat grants nothing a non-seat does not already have. Entitlement is exercised only in
-   `ci / rls-tests`, with the flag forced on.
+3. ✅ **THE SQL HALF RAN, THREE TIMES.** `RLS_ASSERTIONS=74` on every run since. ⚠️ Read ② for what
+   that green is and is not worth.
+4. ⏭️ **STEP 3 IS NOW BLOCKED ON THE FOUNDER ONLY — the Stripe side.** ✅ Step 0 returns **1**.
+   ✅ Both routes driven on a real dev server (`/api/checkout` 401 with no token,
+   `/api/stripe/webhook` 503 unconfigured). Still needs: a `sk_test_` key (I must not create
+   accounts or handle credentials) · `stripe listen`'s `whsec_…` · and
+   `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`, without which the webhook 503s before doing anything.
+5. ⚠️⚠️ **THE PURCHASE RUNS AGAINST PRODUCTION, DELIBERATELY — founder's call, and the reason is this
+   session's own principle.** *The point of the test is the PRODUCTION schema, function and grants; a
+   throwaway project is a database nobody will ever pay against* — i.e. verifying where the failure
+   cannot occur. **Three conditions, none optional:** ① record the Stripe customer and subscription
+   ids BEFORE buying, so cleanup targets known rows rather than "everything that looks like a test"
+   · ② clean up immediately after and **verify the cleanup by query** — not "ran the delete" but
+   "queried and the rows are gone" · ③ **once**; needing to repeat it is the signal to reconsider.
+   All three billing tables are **empty today** (measured), so the after-state is the same number
+   rather than a judgement call. **Watch, in order: `stripe listen` → 200 · `subscriptions` one row
+   `active` with `seats_paid = N` · `subscription_seats` N rows.** The third is the one that would be
+   empty while the first two looked perfect. I read all three back from production myself afterwards.
 6. ⏭️ **Then Stage 3 = UI**: the lock screen `sync_session`'s 42501 has been owed since Stage 1, a
    pricing page, the seat manager, and the customer portal.
 7. 🔴 **`DRAFT = true` — the privacy policy and ToS are still placeholders (B1/B2).** You cannot
