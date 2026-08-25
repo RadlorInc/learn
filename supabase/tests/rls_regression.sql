@@ -707,11 +707,14 @@ begin
       v_asserts := v_asserts + 1;
     end;
 
-    -- M7: ⚠️ THE OTHER HALF OF M6, AND THE HALF THAT FAILS IN PRODUCTION RATHER THAN IN A TEST.
-    -- `service_role` MUST be able to call it — that is the Stripe webhook's only route to a seat,
-    -- through PostgREST. M6 alone is satisfied by a function NOBODY can execute, which looks exactly
-    -- like a well-locked-down one right up until the first real purchase grants no seats. Positive
-    -- control for the grant, driven as the role that will really make the call.
+    -- M7: ⚠️ THE OTHER HALF OF M6. `service_role` MUST be able to call it — that is the Stripe
+    -- webhook's only route to a seat, through PostgREST. M6 ALONE is equally satisfied by a function
+    -- NOBODY at all can execute, which looks exactly like a well-locked-down one right up until the
+    -- first real purchase grants no seats.
+    -- ⚠️ It has never yet caught anything, and that is worth saying: measured against production,
+    -- Supabase's default privileges already grant `service_role` EXECUTE and the REVOKE cannot take
+    -- it away, so this passed the first time it ran. What it pins is that the property stops
+    -- depending on a platform default nobody in this repo controls.
     set local role service_role;
     begin
       perform public.materialize_seats(v_sub_m, 2);

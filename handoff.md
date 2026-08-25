@@ -157,7 +157,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 💳 **2026-08-25 (third pass) — STAGE 2b: THE PRICE LADDER, THE PRODUCTS, CHECKOUT AND THE WEBHOOK. TEST MODE ONLY, ENFORCED BY A THROW RATHER THAN BY A RULE SOMEBODY REMEMBERS. ⚠️ AND THE SEAT MATERIALISER COULD NOT HAVE BEEN CALLED BY THE ONE CALLER IT EXISTS FOR.** `tsc` 0 · **1579/1580** (was 1535) · `next build` 0 · **17 mutations planted, 17 caught** · `rls_regression` 73 → **74 — EXPECTED, NOT SEEN**: no psql, no Docker, no CLI on this machine, so the SQL half of this is unverified until `ci / rls-tests` reports it. **NOT applied, NOT merged.**
+> 💳 **2026-08-25 (third pass) — STAGE 2b: THE PRICE LADDER, THE PRODUCTS, CHECKOUT AND THE WEBHOOK. TEST MODE ONLY, ENFORCED BY A THROW RATHER THAN BY A RULE SOMEBODY REMEMBERS. ⚠️⚠️ AND I REPORTED A DEFECT I HAD NOT MEASURED: THE SUITE WAS HALF A CHECK, THE SYSTEM WAS FINE.** `tsc` 0 · **1579/1580** (was 1535) · `next build` 0 · **17 mutations planted, 17 caught** · **`ci / rls-tests` reported `RLS_ASSERTIONS=74`** (73 → 74). **NOT applied, NOT merged.**
 
 **The ask:** the confirmed amounts, *"record them in a constants module first"*, then **Stage 2b — products, checkout, webhook. Test mode only, as specced.**
 
@@ -169,15 +169,28 @@ stays changeable without a new product. Development values; the SHAPE does not m
 $183.96`). Computing `first + extra × (n−1)` would let the ladder *define* what is correct instead of
 being *checked against* it — a restatement, not a check. Proven by mutation: `extra: 599` fails three.
 
-## ② ⚠️⚠️ THE STAGE-2a REVOKE LOCKED OUT THE WEBHOOK, AND M6 WAS SATISFIED BY THAT
-`materialize_seats` carried `revoke all … from public, anon, authenticated` and **no grant back**.
-The webhook reaches it through PostgREST as `service_role`, so the first real purchase would have
-written a perfect `subscriptions` row and seated **nobody** — with the RLS suite green, because
-**M6 asserts an account CANNOT call it and a function nobody can call satisfies that completely.**
-One-sided, and the missing side is the one that fails in production. Fixed with an explicit
-`grant execute … to service_role` and **M7, the positive control**, driven as the role that will
-really make the call. Same family as *positive-control every absence*, one layer down: the check was
-correct and could only ever report good news.
+## ② ⚠️⚠️ I REPORTED A DEFECT I HAD NOT MEASURED — AND THAT IS #15, NOT #14
+**What I said:** `materialize_seats` carried `revoke all … from public, anon, authenticated` with no
+grant back, the webhook arrives as `service_role`, therefore the first real purchase would have
+seated **nobody** with the suite green.
+**What is true:** measured against production, Supabase's default privileges grant
+`service_role=X/postgres` explicitly on functions in `public` owned by `postgres`, and a REVOKE from
+`public, anon, authenticated` cannot remove it. Four live functions of **identical shape**
+(`enforce_learner_cap`, `enforce_grade_cap`, `enforce_grade_ownership`, `prune_error_events`) all read
+`{postgres=X,service_role=X}` with `service_role_can_execute = true`. **The webhook could always have
+called it. The impact I published was invented**, and M7 passed on its first run for that reason.
+- ⚠️ **The real fault was mine, and it is the engagement's own rule turned on the person applying
+  it:** I read the repo (*what did we intend*) and shipped a conclusion that only production could
+  answer (*what is true*). One query, thirty seconds. **A check-shaped FINDING needs the same
+  positive control as a check.**
+- ✅ **What still stands, and is why #14 keeps its row:** *a negative assertion is satisfied by total
+  absence.* M6 asserts `authenticated` is refused and is equally satisfied by a function nobody at
+  all can call — **the SUITE was half a check** even though the system was fine, and no run of it
+  could have told you which. Founder's rule, kept: **every REVOKE assertion needs a paired GRANT
+  assertion, driven as the REAL caller.**
+- The grant and **M7 stay**, relabelled as what they are: redundant today, and worth writing so the
+  property stops depending on a platform default nobody in this repo controls. M7 has caught nothing
+  and the comment says so.
 
 ## ③ 🔁 THE WEBHOOK'S THREE PROPERTIES ARE STRUCTURAL, BECAUSE NONE OF THEM SHOWS IN A GREEN RUN
 **Idempotent** — `billing_events.stripe_event_id` is `unique`, so the DATABASE is the authority, not
@@ -237,9 +250,8 @@ family that cannot buy. **5 more mutations, 5 caught.**
    applied, nothing merged.
 2. 🔴 **B12 IS STILL THE FOUNDER'S AND STILL BLOCKS EVERYTHING FROM STEP 1.** Supabase Pro before any
    live key and before `enforced` is ever true.
-3. ⚠️ **THE SQL HALF IS UNVERIFIED AND MUST NOT BE READ AS GREEN.** ②'s grant and M7 have never run
-   anywhere — I cannot stand up a Postgres here. **Read `RLS_ASSERTIONS=74` off the CI job before
-   believing any of it**, exactly as Stage 2a's block says of 73.
+3. ✅ **THE SQL HALF RAN.** **CI reported `RLS_ASSERTIONS=74`** on `aecc348` — the SQL ran,
+   on a real Postgres, and passed. ⚠️ Read ② for what that green is and is not worth.
 4. ⏭️ **Next: step 3 — the test-mode purchase, watched.** It needs a Stripe test account and
    `stripe listen`; the runbook is written. ⚠️ **It cannot show you the paywall** — `enforced` is
    false, so a seat grants nothing a non-seat does not already have. Entitlement is exercised only in
