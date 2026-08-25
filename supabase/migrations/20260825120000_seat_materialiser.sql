@@ -72,13 +72,18 @@ $$;
 -- standing rule by `billingSchema.test.ts` for every SECURITY DEFINER function in the schema.
 revoke all on function public.materialize_seats(uuid, int) from public, anon, authenticated;
 
--- ⚠️⚠️ AND THE GRANT BACK TO `service_role` IS NOT BELT-AND-BRACES — WITHOUT IT THE WEBHOOK CANNOT
--- CALL THIS AT ALL. The REVOKE above strips the PUBLIC EXECUTE that Postgres creates a function
--- with, and the only caller that ever should reach it is the Stripe webhook, which arrives through
--- PostgREST as `service_role`. Whether the revoke also removed service_role's access depends on
--- Supabase's default privileges — i.e. on something outside this file — so it is stated here rather
--- than assumed, and rls_regression M7 DRIVES it as `service_role` (M6 drives the refusal for
--- `authenticated`). A one-sided check would pass on a function nobody can call.
+-- ⚠️ THE GRANT BACK TO `service_role` IS REDUNDANT TODAY, AND IT IS STATED ANYWAY. Measured against
+-- production: Supabase's default privileges for functions in `public` owned by `postgres` include an
+-- explicit `service_role=X/postgres`, and a REVOKE from `public, anon, authenticated` cannot remove a
+-- grant held by another role — `enforce_learner_cap`, `enforce_grade_cap`, `enforce_grade_ownership`
+-- and `prune_error_events` all carry exactly this shape and all four read
+-- `{postgres=X/postgres,service_role=X/postgres}`. So the webhook could call this without the line
+-- below.
+-- It stays because the property this function's ONE caller depends on should not live in a platform
+-- default outside this file: a changed default, an owner change, or somebody adding `service_role` to
+-- the REVOKE list would otherwise be discovered on the first real purchase. rls_regression M7 is the
+-- positive control that pins it — M6 drives the refusal for `authenticated`, and M6 ALONE is equally
+-- satisfied by a function nobody at all can call.
 grant execute on function public.materialize_seats(uuid, int) to service_role;
 
 comment on function public.materialize_seats(uuid, int) is

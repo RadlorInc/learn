@@ -167,11 +167,18 @@ state of every environment until the founder runs the script.
 ⚠️ **The statement descriptor `RADLOR MILO` is an ACCOUNT setting, not a price one** (Stripe
 dashboard → Settings → Public details). It belongs to step 4 of the go-live sequence.
 
-⚠️ **`materialize_seats` needed a `grant execute … to service_role`.** The Stage 2a REVOKE strips the
-PUBLIC EXECUTE that Postgres creates a function with, and the webhook reaches it through PostgREST as
-`service_role` — so without the grant the first real purchase would grant nobody a seat. M6 (an
-account CANNOT call it) is satisfied by a function nobody can call at all; **M7 is the positive
-control**, and it drives the call as the role that will really make it.
+⚠️ **`materialize_seats` carries a `grant execute … to service_role` that is REDUNDANT — recorded
+here because it was first reported as a live defect and is not one.** Measured against production:
+Supabase's default privileges grant `service_role=X/postgres` explicitly on functions in `public`
+owned by `postgres`, and a REVOKE from `public, anon, authenticated` cannot remove it — four live
+functions of identical shape (`enforce_learner_cap`, `enforce_grade_cap`, `enforce_grade_ownership`,
+`prune_error_events`) all read `{postgres=X,service_role=X}` with `service_role_can_execute = true`.
+The webhook could always have called it.
+
+What was genuinely missing is the **assertion**: M6 says an account cannot call it, and is equally
+satisfied by a function nobody at all can call. **M7 is the positive control**, driven as the role
+that will really make the call. It has caught nothing, and the grant stays so that the property stops
+depending on a platform default nobody in this repo controls.
 
 ## 4. Cases
 
