@@ -224,10 +224,13 @@ mode; no real card is involved and none can be.
 
 ### ⚠️⚠️ STEP 0 — CONFIRM THE THING YOU ARE TESTING IS IN THE DATABASE YOU ARE TESTING
 
-**Measured 2026-08-25, and this runbook was written without it, which was a hole.** Production has
-the Stage 1 tables (`subscriptions`, `subscription_seats`, `billing_events`, all **empty**,
-`enforced = false`, 7 free chapters) and **does NOT have `materialize_seats`** — Stage 2a is not
-applied. Run step 3 against production as it stands and the webhook verifies the signature, logs the
+✅ **RESOLVED 2026-08-25 — `materialize_seats` IS NOW APPLIED** (ledger version `20260825030558`;
+the step-0 query returns **1**). What follows is why the step exists, kept because the check is
+standing, not spent.
+
+**Measured before the apply, and this runbook was written without it, which was a hole.** Production
+had the Stage 1 tables (`subscriptions`, `subscription_seats`, `billing_events`, all **empty**,
+`enforced = false`, 7 free chapters) and **not** `materialize_seats`. Run step 3 against production as it stands and the webhook verifies the signature, logs the
 event, upserts the subscription, then **404s on `rpc/materialize_seats`, returns 500, and Stripe
 retries for three days.** The seat count you came to look at would be **empty for a reason that has
 nothing to do with the code** — a pass or a fail read off an artefact that does not contain the
@@ -243,10 +246,26 @@ select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 
 ⚠️ **AND THE WEBHOOK NEEDS `SUPABASE_SERVICE_ROLE_KEY` IN `.env.local` OR IT 503s BEFORE DOING
 ANYTHING.** Which means a **test-mode** purchase writes **real rows to the production database** —
-one `subscriptions` row, its seats, and a `billing_events` row. That is safe (test-mode money, and
-`enforced = false` so a seat grants nothing a non-seat does not already have) and it must be a
-decision rather than a surprise. The alternative is to point `.env.local` at a throwaway Supabase
-project. Cleanup for the production route is at the end of this section.
+one `subscriptions` row, its seats, and a `billing_events` row.
+
+### ✅ RUN IT AGAINST PRODUCTION — founder's call, 2026-08-25, and the reason is the session's own
+
+> *The point of this test is the PRODUCTION schema, the PRODUCTION function, the PRODUCTION grants. A
+> throwaway project is a different database, and a green result there proves something about a
+> database nobody will ever pay against.*
+
+That is **verifying where the failure cannot occur**, which is half this file's defect table. A known
+small mess in the right place beats a clean result in the wrong one. It is safe on the same
+reasoning as ever: test-mode money, `enforced = false`, and a seat grants nothing a non-seat does not
+already have.
+
+**Three conditions, all founder's, none optional:**
+
+1. **Record what will be created BEFORE the purchase** — the Stripe customer id and subscription id
+   — so cleanup targets **known rows** rather than *"everything that looks like a test"*.
+2. **Clean up immediately after, and VERIFY THE CLEANUP BY QUERY.** Not *"ran the delete"* — *"queried
+   and the rows are gone"*. Same distinction as everything else here.
+3. **Once.** If it needs running repeatedly, that is the moment to reconsider the whole approach.
 
 1. **Stripe dashboard → test mode ON** (the toggle top-right). Copy the **test** secret key
    (`sk_test_…`) into `.env.local` as `STRIPE_SECRET_KEY`. ⚠️ A live key is refused by the app, on
@@ -275,11 +294,23 @@ project. Cleanup for the production route is at the end of this section.
 
 ### Cleaning up afterwards (only if you ran against production)
 
+⚠️ **Target the ids recorded in condition 1**, never a shape-match on "looks like a test".
+
 ```sql
--- deletes the seats by cascade; the child's own record is never touched.
-delete from public.subscriptions where stripe_customer_id = '<cus_… from the test purchase>';
-delete from public.billing_events where payload->>'livemode' = 'false';
+-- 1. delete, by the ids written down before the purchase.
+--    The seats go by cascade; the child's own record is never touched.
+delete from public.subscriptions  where stripe_subscription_id = '<sub_… recorded above>';
+delete from public.billing_events where payload->'data'->'object'->>'id' = '<sub_… recorded above>'
+                                     or payload->>'id' = '<evt_… from stripe listen>';
+
+-- 2. ⚠️ VERIFY THE CLEANUP. All three must return 0 — "ran the delete" is not "the rows are gone".
+select (select count(*) from public.subscriptions)      as subscriptions,
+       (select count(*) from public.subscription_seats) as seats,
+       (select count(*) from public.billing_events)     as events;
 ```
+
+(All three were **0** before the purchase, measured 2026-08-25, so the after-state is the same
+number rather than a judgement call.)
 
 ⚠️ **What this step CANNOT show you** (say it out loud rather than reading a green run as more than
 it is): the paywall itself. `billing_config.enforced` is `false`, so a seat grants nothing a
