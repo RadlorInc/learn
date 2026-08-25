@@ -92,7 +92,7 @@ object rather than on our config, because the config is not what Stripe bills fr
 
 | | | where |
 |---|---|---|
-| 2a | **the seat materialiser** — the reconciler that makes entitlement real | `20260825120000_seat_materialiser.sql` |
+| 2a | **the seat materialiser** — the reconciler that makes entitlement real | `20260825030558_seat_materialiser.sql` |
 | 2b | **the price ladder**, in one place | `src/core/billing.ts` |
 | 2b | **products + prices** (test mode), idempotent and self-verifying | `scripts/stripe-products.mts` |
 | 2b | **checkout** — a Session for N seats | `src/app/api/checkout/route.ts` |
