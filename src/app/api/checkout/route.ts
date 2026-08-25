@@ -3,6 +3,7 @@ import { callerKey, overLimit } from '../_rateLimit'
 import { stripeClient } from '@/infra/stripe'
 import { MAX_SEATS, clampSeats, type Cadence } from '@/core/billing'
 import { SITE_URL } from '@/app/site'
+import { sinkError } from '@/infra/errorSink'
 
 /**
  * Start a Stripe Checkout Session for N seats. **TEST MODE ONLY** — `stripeClient()` refuses a live
@@ -65,19 +66,58 @@ export async function POST(req: Request) {
   // a crash: this is the state of every environment until the founder runs scripts/stripe-products.
   if (!stripe || !price) return NextResponse.json({ error: 'billing_not_configured' }, { status: 503 })
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
+  /**
+   * ⚠️ REUSE THE STRIPE CUSTOMER THIS ACCOUNT ALREADY HAS. A parent who cancels and resubscribes
+   * would otherwise end up with TWO customer objects — which is harmless to US, because everything
+   * keys on `account_id`, and is not harmless to Stripe: their payment history splits across both,
+   * and the billing portal has to pick one to send them to. *"Which of your two customers is this
+   * parent"* is a support question with no good answer, and it gets worse every month it exists.
+   * Cheap now, awkward later.
+   *
+   * ⚠️ AND IT IS READ WITH THE PARENT'S OWN TOKEN, NOT THE SERVICE ROLE. `subscriptions` grants
+   * SELECT to `authenticated` behind an owner-scoped policy, so RLS guarantees this can only ever
+   * return their own row — and checkout needs no service-role key at all, which keeps the one key
+   * that bypasses every policy out of the request path a logged-in stranger can reach.
+   */
+  const owned = await fetch(
+    `${supabaseUrl}/rest/v1/subscriptions?account_id=eq.${user.id}&select=stripe_customer_id`,
+    { headers: { apikey: anon, Authorization: `Bearer ${token}` } },
+  ).then(r => (r.ok ? r.json() : [])).catch(() => [])
+  const customer = (owned as { stripe_customer_id?: string | null }[])[0]?.stripe_customer_id || null
+
+  const params = {
+    mode: 'subscription' as const,
     line_items: [{ price, quantity: seats }],
     client_reference_id: user.id,
-    // ponytail: a returning buyer gets a second Stripe CUSTOMER rather than reusing their first.
-    // Harmless for us — the account_id is what everything keys on — and the upgrade is to look up
-    // `subscriptions.stripe_customer_id` here once Stage 3 has a portal to link them from.
-    customer_email: user.email,
     subscription_data: { metadata: { account_id: user.id } },
     // No trial — founder's call, Stage 1 §1.
     success_url: `${SITE_URL}/parent?billing=success`,
     cancel_url: `${SITE_URL}/parent?billing=cancelled`,
-  })
+  }
+
+  let session
+  try {
+    // ⚠️ `customer` and `customer_email` are MUTUALLY EXCLUSIVE — Stripe rejects a session carrying
+    // both, so this is a branch rather than two fields.
+    session = await stripe.checkout.sessions.create(
+      customer ? { ...params, customer } : { ...params, customer_email: user.email },
+    )
+  } catch (e) {
+    // ⚠️ A STORED CUSTOMER ID CAN GO STALE — deleted in the dashboard, or belonging to the other
+    // mode after a test/live switch. Stripe answers `resource_missing`, and without this the parent
+    // simply cannot buy, with the reason visible only in a server log. Retry once as a new customer:
+    // a duplicate customer is the thing this block exists to avoid, and it is still far better than
+    // a checkout that is dead for one family and healthy for everyone else.
+    const missing = customer && (e as { code?: string })?.code === 'resource_missing'
+    if (!missing) throw e
+    await sinkError({
+      at: new Date().toISOString(),
+      source: 'server',
+      message: `checkout: stored stripe_customer_id ${customer} is gone — starting a new customer`,
+      routePath: '/api/checkout',
+    }).catch(() => {})
+    session = await stripe.checkout.sessions.create({ ...params, customer_email: user.email })
+  }
 
   return NextResponse.json({ url: session.url })
 }

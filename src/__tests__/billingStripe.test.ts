@@ -171,7 +171,7 @@ describe('subscriptionRow', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 //  3. THE WEBHOOK, DRIVEN.
 // ─────────────────────────────────────────────────────────────────────────────
-type Call = { url: string; method: string; body: string }
+type Call = { url: string; method: string; body: string; headers: Record<string, string> }
 
 /** Route every outbound call: api.stripe.com answers with `sub`, PostgREST answers per path. */
 function stubNetwork(opts: {
@@ -185,7 +185,8 @@ function stubNetwork(opts: {
 
   vi.stubGlobal('fetch', vi.fn(async (input: unknown, init: RequestInit = {}) => {
     const url = String(input)
-    calls.push({ url, method: (init.method ?? 'GET').toUpperCase(), body: String(init.body ?? '') })
+    calls.push({ url, method: (init.method ?? 'GET').toUpperCase(), body: String(init.body ?? ''),
+                 headers: (init.headers ?? {}) as Record<string, string> })
 
     if (url.startsWith('https://api.stripe.com/v1/subscriptions/')) return json(opts.sub ?? SUB())
     if (url.includes('/rest/v1/billing_events')) {
@@ -385,18 +386,33 @@ describe('POST /api/checkout', () => {
     }))
   }
 
-  function stubCheckout(userOk = true) {
+  function stubCheckout(opts: { userOk?: boolean; customerId?: string | null; staleCustomer?: boolean } = {}) {
+    const { userOk = true, customerId = null, staleCustomer = false } = opts
     const calls: Call[] = []
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
     vi.stubGlobal('fetch', vi.fn(async (input: unknown, init: RequestInit = {}) => {
       const url = String(input)
-      calls.push({ url, method: (init.method ?? 'GET').toUpperCase(), body: String(init.body ?? '') })
+      calls.push({ url, method: (init.method ?? 'GET').toUpperCase(), body: String(init.body ?? ''),
+                   headers: (init.headers ?? {}) as Record<string, string> })
       if (url.includes('/auth/v1/user')) {
-        return userOk
-          ? new Response(JSON.stringify({ id: ACC, email: 'p@example.com' }), { headers: { 'Content-Type': 'application/json' } })
-          : new Response(JSON.stringify({ msg: 'invalid token' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
+        return userOk ? json({ id: ACC, email: 'p@example.com' }) : json({ msg: 'invalid token' }, 401)
       }
-      return new Response(JSON.stringify({ id: 'cs_1', url: 'https://checkout.stripe.com/c/cs_1' }),
-        { headers: { 'Content-Type': 'application/json' } })
+      // The account's own subscription row — where a Stripe customer id would already be.
+      if (url.includes('/rest/v1/subscriptions')) {
+        return json(customerId ? [{ stripe_customer_id: customerId }] : [])
+      }
+      if (url.includes('/v1/checkout/sessions')) {
+        // A stale stored id: Stripe answers `resource_missing` the FIRST time and succeeds on the
+        // retry that drops it.
+        const sent = new URLSearchParams(String(init.body ?? ''))
+        if (staleCustomer && sent.get('customer')) {
+          return json({ error: { type: 'invalid_request_error', code: 'resource_missing',
+                                 message: 'No such customer' } }, 400)
+        }
+        return json({ id: 'cs_1', url: 'https://checkout.stripe.com/c/cs_1' })
+      }
+      return json({ unexpected: url }, 500)
     }))
     return calls
   }
@@ -409,7 +425,7 @@ describe('POST /api/checkout', () => {
   it('⚠️ refuses a token Supabase rejects — a 401 body is not a user', async () => {
     // `fetch` does not throw on 4xx, so an unchecked `res.json()` here yields `{}` and an `id` of
     // undefined — an unauthenticated caller reaching checkout with an account of "undefined".
-    stubCheckout(false)
+    stubCheckout({ userOk: false })
     expect((await checkout({ seats: 2 })).status).toBe(401)
   })
 
@@ -448,6 +464,58 @@ describe('POST /api/checkout', () => {
     await checkout({ seats: 40 })
     const form = new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body)
     expect(form.get('line_items[0][quantity]')).toBe(String(MAX_SEATS))
+  })
+
+
+  it('reuses the Stripe CUSTOMER this account already has', async () => {
+    // ⚠️ NOT COSMETIC, AND NOT OUR PROBLEM ALONE. A parent who cancels and resubscribes would get a
+    // SECOND customer object: harmless to us, because everything keys on `account_id`, and not
+    // harmless to Stripe — their payment history splits across both and the billing portal has to
+    // pick one. "Which of your two customers is this parent" is a support question with no good
+    // answer, and it gets worse every month it exists.
+    const calls = stubCheckout({ customerId: 'cus_existing' })
+    await checkout({ seats: 1 })
+    const form = new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body)
+    expect(form.get('customer')).toBe('cus_existing')
+    // ⚠️ `customer` and `customer_email` are mutually exclusive — a session carrying both is
+    // rejected by Stripe, so this pair is the check, not the first line alone.
+    expect(form.get('customer_email')).toBeNull()
+  })
+
+  it('starts a new customer when the account has none', async () => {
+    // The positive control for the case above: without it, "reuses the customer" is equally
+    // satisfied by a route that always sends a `customer` field, including an empty one.
+    const calls = stubCheckout({ customerId: null })
+    await checkout({ seats: 1 })
+    const form = new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body)
+    expect(form.get('customer')).toBeNull()
+    expect(form.get('customer_email')).toBe('p@example.com')
+  })
+
+  it('looks the customer up with the PARENT\'S OWN token, never the service role', async () => {
+    // ⚠️ `subscriptions` grants SELECT to `authenticated` behind an owner-scoped policy, so RLS
+    // guarantees this read can only return their own row. The service-role key bypasses every
+    // policy in the database, and this is a route a logged-in stranger can reach — so the check is
+    // that the key never appears in ANY outbound call, which is what catches the day somebody
+    // "fixes" this lookup by reaching for it.
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-sentinel'
+    const calls = stubCheckout({ customerId: 'cus_existing' })
+    await checkout({ seats: 1 })
+    const lookup = calls.find(c => c.url.includes('/rest/v1/subscriptions'))!
+    expect(lookup.url).toContain(`account_id=eq.${ACC}`)
+    expect(lookup.headers.Authorization).toBe('Bearer token-abc')
+    expect(JSON.stringify(calls)).not.toContain('service-role-sentinel')
+  })
+
+  it('a stored customer id that has gone missing does not kill the purchase', async () => {
+    // Deleted in the dashboard, or belonging to the other mode after a test/live switch. Without
+    // the retry this family simply cannot buy, and the reason is visible only in a server log.
+    const calls = stubCheckout({ customerId: 'cus_deleted', staleCustomer: true })
+    const res = await checkout({ seats: 1 })
+    expect(res.status).toBe(200)
+    const sessions = calls.filter(c => c.url.includes('/v1/checkout/sessions'))
+    expect(sessions.length, 'it did not retry').toBe(2)
+    expect(new URLSearchParams(sessions[1].body).get('customer_email')).toBe('p@example.com')
   })
 
   it('answers 503 while no price is configured', async () => {

@@ -132,6 +132,27 @@ error, both periods land null — and a null `current_period_start` silently del
 window and `reassign_learner_seat`'s one-reassignment-per-period limit. The gate's fixture puts a
 *different* value in the old place, so the item's value has to be the one that wins.
 
+### ⚠️ One Stripe CUSTOMER per account, reused — not a nicety
+
+Checkout looks up `subscriptions.stripe_customer_id` for the account and passes it back to Stripe.
+Without it a parent who cancels and resubscribes ends up with **two customer objects**: harmless to
+*us*, because everything keys on `account_id`, and not harmless to *Stripe* — their payment history
+splits across both, and Stage 4's billing portal has to pick one to send them to. *"Which of your two
+customers is this parent"* is a support question with no good answer, and it gets worse every month
+it exists. Cheap now, awkward later; fixed before Stage 4 rather than after.
+
+- ⚠️ `customer` and `customer_email` are **mutually exclusive** — a session carrying both is
+  rejected, so it is a branch rather than two fields.
+- ⚠️ The lookup uses **the parent's own token, never the service role.** `subscriptions` grants
+  SELECT to `authenticated` behind an owner-scoped policy, so RLS guarantees the read can only
+  return their own row — and the one key that bypasses every policy stays out of a request path a
+  logged-in stranger can reach. Gated by a sentinel: the service-role key must appear in **no**
+  outbound call from this route.
+- ⚠️ A stored id **can go stale** (deleted in the dashboard, or belonging to the other mode after a
+  test/live switch). Stripe answers `resource_missing`, and the route retries once as a new
+  customer — a duplicate customer is better than a family that cannot buy for a reason visible only
+  in a server log.
+
 ### Environment
 
 | | |

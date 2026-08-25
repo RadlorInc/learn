@@ -157,7 +157,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 💳 **2026-08-25 (third pass) — STAGE 2b: THE PRICE LADDER, THE PRODUCTS, CHECKOUT AND THE WEBHOOK. TEST MODE ONLY, ENFORCED BY A THROW RATHER THAN BY A RULE SOMEBODY REMEMBERS. ⚠️ AND THE SEAT MATERIALISER COULD NOT HAVE BEEN CALLED BY THE ONE CALLER IT EXISTS FOR.** `tsc` 0 · **1575/1576** (was 1535) · `next build` 0 · **12 mutations planted, 12 caught** · `rls_regression` 73 → **74 — EXPECTED, NOT SEEN**: no psql, no Docker, no CLI on this machine, so the SQL half of this is unverified until `ci / rls-tests` reports it. **NOT applied, NOT merged.**
+> 💳 **2026-08-25 (third pass) — STAGE 2b: THE PRICE LADDER, THE PRODUCTS, CHECKOUT AND THE WEBHOOK. TEST MODE ONLY, ENFORCED BY A THROW RATHER THAN BY A RULE SOMEBODY REMEMBERS. ⚠️ AND THE SEAT MATERIALISER COULD NOT HAVE BEEN CALLED BY THE ONE CALLER IT EXISTS FOR.** `tsc` 0 · **1579/1580** (was 1535) · `next build` 0 · **17 mutations planted, 17 caught** · `rls_regression` 73 → **74 — EXPECTED, NOT SEEN**: no psql, no Docker, no CLI on this machine, so the SQL half of this is unverified until `ci / rls-tests` reports it. **NOT applied, NOT merged.**
 
 **The ask:** the confirmed amounts, *"record them in a constants module first"*, then **Stage 2b — products, checkout, webhook. Test mode only, as specced.**
 
@@ -219,9 +219,22 @@ reason on the real script. No price id is hard-coded (gated, with a positive con
 products, `stripe listen`, buy with 4242…, then **check `subscription_seats` has N rows** — the one
 thing that would be empty if ②'s grant were missing while everything else looked perfect.
 
+## ⑦ 👤 ONE STRIPE CUSTOMER PER ACCOUNT — THE `ponytail:` THAT WAS NOT HARMLESS
+Founder's call, and he was right: the duplicate-customer case is harmless to **us** (everything keys
+on `account_id`) and **not to Stripe** — a parent who cancels and resubscribes has their payment
+history split across two customer objects, and Stage 4's portal has to pick one to send them to.
+*"Which of your two customers is this parent"* has no good answer and gets worse monthly. Checkout
+now reuses `subscriptions.stripe_customer_id` (⚠️ there is no `billing_customers` table — the id
+lives on the subscription row). ⚠️ Read with **the parent's own token, never the service role** —
+RLS already scopes it to their own row, and the key that bypasses every policy stays out of a route
+a logged-in stranger can reach; gated by a sentinel that must appear in NO outbound call. ⚠️ A stale
+id (deleted, or from the other mode) is retried once as a new customer, because a duplicate beats a
+family that cannot buy. **5 more mutations, 5 caught.**
+
 ## ▶ OPEN
-1. ⏸️ **BRANCH `feat/billing-stage-2b`, and it CONTAINS #59's commit** (rebased onto `main`, which had
-   moved). Merging it makes **PR #59 redundant — close it.** Nothing applied, nothing merged.
+1. ⏸️ **PR [#60](https://github.com/RadlorInc/learn/pull/60) IS OPEN, and it CONTAINS #59's commit**
+   (rebased onto `main`, which had moved). Merging it makes **PR #59 redundant — close it.** Nothing
+   applied, nothing merged.
 2. 🔴 **B12 IS STILL THE FOUNDER'S AND STILL BLOCKS EVERYTHING FROM STEP 1.** Supabase Pro before any
    live key and before `enforced` is ever true.
 3. ⚠️ **THE SQL HALF IS UNVERIFIED AND MUST NOT BE READ AS GREEN.** ②'s grant and M7 have never run
