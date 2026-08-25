@@ -1,6 +1,15 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 --  BILLING — STAGE 2a: the seat materialiser. STILL NO STRIPE CALLS.
 --
+--  ✅ APPLIED TO PRODUCTION 2026-08-25, recorded as version **20260825030558** — which is why this
+--  file carries that timestamp rather than the one it was written under (the ledger holds the true
+--  apply order; the repo is relabelled to agree with it, never the other way round). The
+--  relabelling is order-PRESERVING: it was last in the repo and it is last in the ledger.
+--  Verified from the CATALOG, not the success flag, and against the artefact CI actually tested:
+--  body md5 `5ee877cc8970db10a0d6b8daac5082f3` on both, and `service_role=true authenticated=false
+--  anon=false` on both. Rollback: supabase/schema/rollback_20260825_seat_materialiser.sql, which
+--  CI runs on every PR.
+--
 --  Stage 1 created `subscription_seats` and never created a row in it: the tests insert seats by
 --  hand, so entitlement was structurally correct and practically dead. This is the function that
 --  makes a paid subscription actually grant seats.

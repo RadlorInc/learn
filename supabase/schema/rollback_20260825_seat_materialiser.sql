@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════
---  ROLLBACK for 20260825120000_seat_materialiser.sql
+--  ROLLBACK for 20260825030558_seat_materialiser.sql
 --  Captured from PRODUCTION 2026-08-25, BEFORE it was applied. Step 1 of the apply sequence in
 --  docs/runbooks/applying-migrations.md.
 --
