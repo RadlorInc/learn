@@ -120,6 +120,46 @@ jobs:
       #  bodies and the two policy predicates, hashed the same way they were captured from
       #  production on 2026-08-24.
       # ═══════════════════════════════════════════════════════════════════════════════════════
+      # ═══════════════════════════════════════════════════════════════════════════════════════
+      #  ⚠️ NEWEST MIGRATION ROLLED BACK FIRST. `rollback_20260824_billing.sql` drops
+      #  `subscription_seats`, which is the table `materialize_seats` writes — so this runs before it.
+      #
+      #  ⚠️⚠️ AND THE FINGERPRINT PUBLISHED HERE INCLUDES THE **ACL**, WHICH IS THE THING THAT MADE
+      #  THE 2026-08-25 FINDING WRONG. `materialize_seats` is REVOKEd from public/anon/authenticated
+      #  and its one real caller is the webhook, arriving as `service_role`; whether that call works
+      #  is a property of the ACL, and it was first REPORTED (as broken) from reading the source
+      #  rather than from asking a database. So the job prints what BOTH roles can actually do, and
+      #  an apply is proven by reproducing it. rls_regression M6/M7 drive the same pair as SQL.
+      # ═══════════════════════════════════════════════════════════════════════════════════════
+      - name: Exercise the seat-materialiser rollback against the throwaway database
+        env:
+          PGURL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -euo pipefail
+
+          # ⚠️ POSITIVE CONTROL FIRST — otherwise "the function is gone" passes on a database where
+          # it was never created, which is an absence asserted about nothing.
+          before=$(psql "$PGURL" -Atc "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='materialize_seats'")
+          echo "before rollback: materialize_seats present=$before"
+          if [ "$before" -ne 1 ]; then
+            echo "::error::materialize_seats is not applied, so rolling it back proves nothing"
+            exit 1
+          fi
+
+          echo "── fingerprint of the applied seat materialiser ──"
+          psql "$PGURL" -Atc "select 'materialize_seats body ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='materialize_seats'"
+          psql "$PGURL" -Atc "select 'materialize_seats acl  service_role=' || has_function_privilege('service_role', p.oid, 'EXECUTE') || ' authenticated=' || has_function_privilege('authenticated', p.oid, 'EXECUTE') || ' anon=' || has_function_privilege('anon', p.oid, 'EXECUTE') from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='materialize_seats'"
+
+          psql "$PGURL" -v ON_ERROR_STOP=1 -f supabase/schema/rollback_20260825_seat_materialiser.sql
+
+          after=$(psql "$PGURL" -Atc "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='materialize_seats'")
+          if [ "$after" -ne 0 ]; then
+            echo "::error::materialize_seats survived its own rollback (count $after)"
+            exit 1
+          fi
+          echo "  ok  materialize_seats dropped"
+          echo "### ♻️ Seat-materialiser rollback exercised" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Exercise the billing rollback against the throwaway database
         env:
           PGURL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
