@@ -1,0 +1,31 @@
+-- ═══════════════════════════════════════════════════════════════════════════════════════════════
+--  ROLLBACK for 20260825120000_seat_materialiser.sql
+--  Captured from PRODUCTION 2026-08-25, BEFORE it was applied. Step 1 of the apply sequence in
+--  docs/runbooks/applying-migrations.md.
+--
+--  ⚠️ THIS IS NOT A BACKUP. It undoes exactly what that migration creates and nothing else. There is
+--  still no backup of the children's data and no PITR — launch blocker B12.
+--
+--  ⚠️ WHAT THE CAPTURE FOUND: NOTHING TO CAPTURE, AND THAT IS THE FINDING, NOT AN EXCUSE TO SKIP IT.
+--  The migration REPLACES no object. Queried against production before writing this file:
+--
+--    select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+--     where n.nspname = 'public' and p.proname = 'materialize_seats';   -- → 0
+--
+--  so there is no prior definition, no prior ACL and no prior row value to restore, and the rollback
+--  is a DROP. The Stage 1 rollback beside this one exists because those migrations rebuilt three
+--  live functions and two live policies; this one does not, and the difference was measured rather
+--  than assumed. ⚠️ It is written and exercised anyway: `create or replace` is exactly the statement
+--  that silently overwrites something newer, so "there was nothing there" is a claim with a date on
+--  it, and the file records the query that supports it.
+--
+--  ⚠️ B12 DOES NOT BLOCK THIS ONE, AND THE RULE IS APPLIED RATHER THAN SKIPPED. Standing policy:
+--  B12 blocks any migration that would touch `sessions`, `learner_progress` or `learner_stats`.
+--  This migration creates ONE function and mutates ZERO rows in any table — it touches none of the
+--  three, so a rollback that drops a function is proportionate while there is still no backup.
+--
+--  ⚠️ ROLL THIS BACK BEFORE rollback_20260824_billing.sql, NEWEST FIRST. That one drops
+--  `subscription_seats`, which is the table this function writes.
+-- ═══════════════════════════════════════════════════════════════════════════════════════════════
+
+drop function if exists public.materialize_seats(uuid, int);
