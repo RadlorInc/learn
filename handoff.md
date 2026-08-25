@@ -157,7 +157,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 🔒 **2026-08-25 (fourth pass) — STAGE 3: THE CHAPTER GATE AND THE SCREENS. A LOCK THAT NAMES WHAT IS BEHIND IT, A CHILD WHO NEVER SEES A PRICE, AND A PAYWALL BUILT INERT BUT TESTED REFUSING.** `tsc` 0 · **1609/1610** (was 1579) · `next build` 0 · **17 mutations planted, 17 caught** · ⚠️ **Step 3 (the watched purchase) DEFERRED, with a hard deadline.**
+> 🔒 **2026-08-25 (fourth pass) — STAGE 3: THE CHAPTER GATE AND THE SCREENS. A LOCK THAT NAMES WHAT IS BEHIND IT, A CHILD WHO NEVER SEES A PRICE, AND A PAYWALL BUILT INERT BUT TESTED REFUSING.** `tsc` 0 · **1609/1610** (was 1579) · `next build` 0 · **17 mutations planted, 17 caught** · **PR [#64](https://github.com/RadlorInc/learn/pull/64) OPEN and green** (`verify` ✅ · `rls-tests` ✅ `RLS_ASSERTIONS=74`), **not merged** · ⚠️ **Step 3 (the watched purchase) DEFERRED, with a hard deadline.**
 
 ## ⓪ 🔴 THE DEFERRAL, AND THE RISK IT CARRIES — [docs/billing-stage-3.md](docs/billing-stage-3.md) §0
 Founder's call: the test-mode purchase is **deferred, not cancelled**, with a **hard deadline of
@@ -215,33 +215,41 @@ finishes loading — driving the gate there would be driving it in a world where
 which is a class this repo has already paid for. §0's watched purchase is the honest coverage.
 
 ## ▶ OPEN
-1. 🔴 **STEP 3 — THE WATCHED TEST-MODE PURCHASE — IS DEFERRED WITH A HARD DEADLINE: BEFORE STAGE 4.**
+1. ⏸️ **PR [#64](https://github.com/RadlorInc/learn/pull/64) IS OPEN AND GREEN — NOT MERGED.** All of
+   Stage 3 is on `feat/billing-stage-3`. Today's earlier billing PRs are all merged and closed:
+   #60 (Stage 2a + 2b), #61 (the rollback capture + CI running it), #62 (the apply + rename), #63
+   (the step-3 conditions); #59 was closed as superseded.
+2. 🔴 **STEP 3 — THE WATCHED TEST-MODE PURCHASE — IS DEFERRED WITH A HARD DEADLINE: BEFORE STAGE 4.**
    Founder's call. It gates nothing in Stage 3, and the risk it carries is at the TOP of
    [docs/billing-stage-3.md](docs/billing-stage-3.md) §0 so it cannot become "before launch":
    **nothing has watched a real Stripe event become a seat row.** Every link is tested; the chain is
    not. ⚠️ Needs a `sk_test_` key + `SUPABASE_SERVICE_ROLE_KEY` locally, and runs **against
    production, deliberately** — record the ids first, verify the cleanup by query, once.
-2. 🔴 **B12 IS STILL THE FOUNDER'S** — Supabase Pro before any live key and before `enforced` is
+3. 🔴 **B12 IS STILL THE FOUNDER'S** — Supabase Pro before any live key and before `enforced` is
    ever true.
-3. ⏭️ **STAGE 4 IS NEXT, AND ①'s DEADLINE LANDS ON IT.** The customer portal, dunning mail, seat
-   management (`reassign_learner_seat` has no UI yet), and cancellation.
-4. 🟡 **Stage 3 is INERT in production** because `enforced = false`: every chapter answers entitled,
+4. ⏭️ **STAGE 4 IS NEXT, AND ②'s DEADLINE LANDS ON IT.** The customer portal, dunning mail, seat
+   management (`reassign_learner_seat` has no UI yet), and cancellation — three screens that do
+   not exist yet. ⚠️ **Checked 2026-08-25 so nobody searches again: there is NO Google Stitch MCP**
+   — not connected, and not in the MCP registry either. The design tooling that IS here is the
+   `/design` canvas (multi-artboard, published as an editable Artifact), `DesignSync` +
+   `/design-sync` for a design-system project, and the `ui-ux-pro-max` skill.
+5. 🟡 **Stage 3 is INERT in production** because `enforced = false`: every chapter answers entitled,
    no lock renders, `/parent/plan` sells something nobody needs yet. That is the intended state —
    and it is why the gate's tests drive the REFUSING path directly rather than the real one.
-5. 🔴 **`DRAFT = true` — the privacy policy and ToS are still placeholders (B1/B2).** You cannot
+6. 🔴 **`DRAFT = true` — the privacy policy and ToS are still placeholders (B1/B2).** You cannot
    charge a parent under a placeholder ToS.
-6. ⚠️ **THE FREE SET IS STILL A PROPOSAL, NOT YOUR PICK.** `billing_schema.sql` seeds Option A
+7. ⚠️ **THE FREE SET IS STILL A PROPOSAL, NOT YOUR PICK.** `billing_schema.sql` seeds Option A
    (first chapter of every band + `decimals`) with its own comment saying so. ✅ The consequence
    that made it urgent is CLOSED: source C entitles the plan's first two unmet steps, so a
    diagnostic never routes a child to a locked chapter. The pick is one UPDATE whenever you want it.
-7. 🟡 Vercel Web Analytics still off; the funnel all of this hangs off is unmeasured.
-8. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
-9. ⚠️ **A contradiction flagged and still unresolved:** `exportCompleteness.test.ts:58` says
+8. 🟡 Vercel Web Analytics still off; the funnel all of this hangs off is unmeasured.
+9. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
+10. ⚠️ **A contradiction flagged and still unresolved:** `exportCompleteness.test.ts:58` says
    `error_events.learner_id` gains an `ON DELETE SET NULL` fkey in Stage 1;
    `20260817142406_error_events.sql` says it is deliberately NOT a foreign key so a crash is still
    recorded when the learner id is stale. The migration's reasoning is better — the COMMENT is what
    is wrong. Verified still present today.
-10. ⚠️ **Prose drift:** `20260817174352_privacy_and_leads_hardening.sql` and
+11. ⚠️ **Prose drift:** `20260817174352_privacy_and_leads_hardening.sql` and
    `src/app/api/lead/route.ts` still say the anon INSERT revoke has not been applied. It was, on
    2026-08-24. Comments only, no behaviour.
 
