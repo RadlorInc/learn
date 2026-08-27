@@ -661,7 +661,7 @@ export default function BlockYard({ op, onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: op === '+' ? 'additionTo100' : 'subtractionTo100', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [slotIdx, setSlotIdx] = useState(0)
   const [shipped, setShipped] = useState(0)

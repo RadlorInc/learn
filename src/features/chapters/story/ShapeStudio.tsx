@@ -25,6 +25,7 @@ import { rint, shuffle, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
@@ -129,6 +130,10 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
   const [pickedName, setPickedName] = useState<string | null>(null)
   const [pickedNum, setPickedNum] = useState<number | null>(null)
   const [glow, setGlow] = useState(false)
+  // Chosen but not submitted. One per branch, because this chapter answers with number chips on a
+  // `sides` round and with shape tiles on a `name` one.
+  const [pendingNum, setPendingNum] = useState<number | null>(null)
+  const [pendingName, setPendingName] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false)
 
   useEffect(() => { if (mode === 'guided') speak(sayFor(data)); }, []) // eslint-disable-line
@@ -139,6 +144,18 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1300)
   }
   function wrong(reset: () => void) { erred.current = true; speak('Not quite — try again!'); window.setTimeout(reset, 900) }
+
+  /** A tap only CHOOSES; the grading below is unchanged and simply runs on Ready instead. */
+  function gradeNum(n: number) {
+    if (done.current || pickedNum !== null) return
+    setPickedNum(n)
+    if (n === data.answer) finishOk(); else wrong(() => setPickedNum(null))
+  }
+  function gradeName(name: string) {
+    if (done.current || pickedName !== null) return
+    setPickedName(name)
+    if (name === data.target) finishOk(); else wrong(() => setPickedName(null))
+  }
 
   if (data.mode === 'sides') {
     const btn = Math.max(56, Math.min(short ? 90 : 104, Math.round(Math.min(vw / 7, vh / (short ? 4.6 : 5.4)))))
@@ -160,11 +177,15 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
           {data.choices!.map(n => {
             const isPick = pickedNum === n, isOk = n === data.answer
             return (
-              <button key={n} disabled={done.current} onClick={() => { if (done.current || pickedNum !== null) return; setPickedNum(n); if (n === data.answer) finishOk(); else wrong(() => setPickedNum(null)) }}
-                style={{ width: btn, height: btn, borderRadius: Math.round(btn * 0.22), background: (isPick && isOk) ? 'var(--garden-green-soft)' : 'var(--paper)', border: `4px solid ${(isPick && isOk) ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`, boxShadow: `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.44), color: 'var(--ink)', cursor: done.current ? 'default' : 'pointer', transform: (isPick && isOk) ? 'scale(1.08) translateY(-3px)' : 'scale(1)', transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease' }}>{n}</button>
+              <button key={n} disabled={done.current} onClick={() => { if (done.current || pickedNum !== null) return; setPendingNum(p => (p === n ? null : n)) }}
+                style={{ width: btn, height: btn, borderRadius: Math.round(btn * 0.22), background: (isPick && isOk) ? 'var(--garden-green-soft)' : 'var(--paper)', border: `4px solid ${(isPick && isOk) ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`, boxShadow: pendingNum === n ? `${PICKED_RING}, 0 6px 0 #c8ac79` : `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.44), color: 'var(--ink)', cursor: done.current ? 'default' : 'pointer', transform: (isPick && isOk) ? 'scale(1.08) translateY(-3px)' : 'scale(1)', transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease' }}>{n}</button>
             )
           })}
         </div>
+        {/* Beside the chips: this row already owns the bottom strip, and the shape being counted
+            sits directly above it. Same measured reason as MarketDay. */}
+        <ReadyBar show={pendingNum !== null} onCommit={() => { const n = pendingNum; if (n == null) return; setPendingNum(null); gradeNum(n) }}
+          align="right" bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '4%'} />
       </>
     )
   }
@@ -181,8 +202,8 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
             {opts.map(name => {
               const isPick = pickedName === name, isOk = name === data.target, showOk = (isPick && isOk) || (glow && isOk)
               return (
-                <button key={name} disabled={done.current} onClick={() => { if (done.current || pickedName !== null) return; setPickedName(name); if (name === data.target) finishOk(); else wrong(() => setPickedName(null)) }}
-                  aria-label={name} style={{ background: showOk ? 'var(--garden-green-soft)' : 'rgba(255,255,255,.72)', border: `4px solid ${showOk ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`, borderRadius: 22, padding: 16, boxShadow: `0 6px 0 ${showOk ? 'var(--garden-green-deep)' : '#c8ac79'}`, cursor: done.current ? 'default' : 'pointer', transform: showOk ? 'scale(1.06) translateY(-3px)' : 'scale(1)', transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button key={name} disabled={done.current} onClick={() => { if (done.current || pickedName !== null) return; setPendingName(p => (p === name ? null : name)) }}
+                  aria-label={name} style={{ background: showOk ? 'var(--garden-green-soft)' : 'rgba(255,255,255,.72)', border: `4px solid ${showOk ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`, borderRadius: 22, padding: 16, boxShadow: pendingName === name ? `${PICKED_RING}, 0 6px 0 #c8ac79` : `0 6px 0 ${showOk ? 'var(--garden-green-deep)' : '#c8ac79'}`, cursor: done.current ? 'default' : 'pointer', transform: showOk ? 'scale(1.06) translateY(-3px)' : 'scale(1)', transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Shape name={name} size={150} />
                 </button>
               )
@@ -190,6 +211,8 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
           </div>
         </FitBox>
       </div>
+      {/* The tiles sit mid-screen here, so the bottom strip is empty and the default place is right. */}
+      <ReadyBar show={pendingName !== null} onCommit={() => { const nm = pendingName; if (!nm) return; setPendingName(null); gradeName(nm) }} />
     </>
   )
 }
@@ -269,7 +292,7 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
   onExit?: () => void
 }) {
   const [world, setWorld] = useState<ShWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'shapes2d3d', phase: 'practice' })
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()

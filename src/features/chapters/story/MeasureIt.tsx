@@ -446,7 +446,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
   const { h: vh } = useViewport()
   const short = vh < SHORT_H
   const [world, setWorld] = useState<MWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'measurement', phase: 'practice' })
   const [thing, setThing] = useState<Thing>(FOREST[0])
   const [demoIdx, setDemoIdx] = useState(0)
   const [book, setBook] = useState<Thing[]>([])

@@ -28,6 +28,7 @@ import { rint, shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
@@ -135,8 +136,10 @@ function MiloHost({ left, milo }: { left: number; milo: NumWorld['milo'] }) {
 
 // ─── A numbered thing: BIG themed sprite, numeral chip FLOATING ABOVE, contact shadow ───
 // `short` compacts the chip so the whole numeral-over-object stack fits on a landscape phone.
-function NumberedThing({ cfg, n, size, state, short, onClick }: {
+function NumberedThing({ cfg, n, size, state, short, onClick, pending }: {
   cfg: SceneCfg; n: number; size: string; state: 'idle' | 'right' | 'wrong' | 'dim'; short?: boolean; onClick: () => void
+  /** chosen, not yet submitted — a neutral ring, never the green that means correct here */
+  pending?: boolean
 }) {
   const [missing, setMissing] = useState(false)
   const ring = state === 'right' ? 'var(--garden-green)' : state === 'wrong' ? 'var(--milo-orange)' : 'var(--outline)'
@@ -149,7 +152,7 @@ function NumberedThing({ cfg, n, size, state, short, onClick }: {
     // transform can't clobber the state-based scale/lift — that transform lives on the INNER div.
     <button onClick={onClick} disabled={state === 'dim' || state === 'right'} style={{
       position: 'relative', background: 'transparent', border: 'none', padding: 0, cursor: state === 'dim' ? 'default' : 'pointer',
-      animation: 'nt_pop .35s ease both',
+      animation: 'nt_pop .35s ease both', borderRadius: 20, boxShadow: pending ? PICKED_RING : undefined,
     }}>
       <div style={{
         opacity: state === 'dim' ? 0.38 : 1, transform: state === 'right' ? 'scale(1.1) translateY(-6px)' : 'scale(1)',
@@ -182,6 +185,7 @@ const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComp
   const cfg = SCENE[scene]
   const [picked, setPicked] = useState<number | null>(null)
   const [wrongPick, setWrongPick] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false)
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
@@ -201,6 +205,20 @@ const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComp
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+
+  /** A tap only CHOOSES; nothing is graded until Ready. Re-tapping the choice unchooses it, so
+   *  the bar is never a trap. The grading path below is untouched — it simply runs later. */
+  function pick(n: number) {
+    if (done.current || picked !== null) return
+    setPending(p => (p === n ? null : n))
+  }
+  function commit() {
+    const n = pending
+    if (n == null) return
+    setPending(null)
+    choose(n)
+  }
+
   function choose(n: number) {
     if (done.current || picked !== null) return
     if (n === target) {
@@ -215,15 +233,24 @@ const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComp
   }
 
   return (
+    <>
     <div style={{ position: 'fixed', left: 0, right: 0, top: rowTop, transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 2vw' }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap, maxWidth: '96vw' }}>
         {choices.map(n => (
           <NumberedThing key={n} cfg={cfg} n={n} size={size} short={short}
             state={picked === n ? 'right' : picked !== null ? 'dim' : wrongPick === n ? 'wrong' : 'idle'}
-            onClick={() => choose(n)} />
+            onClick={() => pick(n)} pending={pending === n} />
         ))}
       </div>
     </div>
+      {/* ⚠️ A SIBLING OF THE ANSWER ROW, NEVER A CHILD OF IT. That row carries a `transform`, and a
+          transformed ancestor becomes the containing block for `position: fixed` DESCENDANTS — so
+          nested inside it the bar stopped being measured against the viewport and was drawn from the
+          row's own box instead. Measured at 640×320: it landed at y 189–236 across the middle
+          door (74–246), i.e. on top of an answer, and on this round that door was the right one.
+          Nothing in a type-check or a unit gate can see this; it took looking at the screen. */}
+    <ReadyBar show={pending !== null} onCommit={commit} />
+    </>
   )
 }
 
@@ -314,7 +341,7 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
   const { h: vh } = useViewport()
   const short = vh < 470
   const [world, setWorld] = useState<NumWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'numbersTo100', phase: 'practice' })
   const [scene, setScene] = useState<Scene>('house')
   const [demoIdx, setDemoIdx] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

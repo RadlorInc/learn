@@ -1,5 +1,91 @@
 > 🧾 **2026-08-24 (second pass) — THE LEDGER IS REPAIRED, AND THE DIRECTION WAS THE OPPOSITE OF THE ONE PLANNED: 58 REPO FILES MOVED, THE PRODUCTION LEDGER WAS NEVER WRITTEN. ⚠️ `perf_advisors` IS APPLIED AND CLEARED EIGHT LIVE ADVISOR FINDINGS.** `tsc` 0 · **1457/1458** · `next build` 0 · **`db push --dry-run` equivalent: 0 pending.**
 
+> 🧾💳 **2026-08-24 (third pass) — STAGE 1 IS BUILT: THE PAYWALL'S SCHEMA, RLS AND ENTITLEMENT, WITH THE GUARD AT ALL THREE WRITE PATHS AND A TEST THAT DRIVES BOTH OF THEM RATHER THAN READING THEM. ⚠️ THE STAGE-1 PLAN ITSELF WAS LOST — IT ONLY EVER LIVED IN CHAT — SO THE B-CASE NUMBERING IS RE-DERIVED AND NOW WRITTEN DOWN.** `tsc` 0 · **1466/1467** · `next build` 0 · **`ci / rls-tests` 46/46 on PR #52** (was 17). NOT applied to production.
+
+**The ask:** *"STAGE 1 — GO. Schema, RLS, regression tests. No UI. Stop at the end for review."*
+
+## ⓪ ⚠️ THE PLAN WAS GONE, AND SAYING SO WAS THE FIRST TASK
+The billing plan — the settled decisions, the B1–B11 case list, the wording of the AR constraint —
+was agreed in chat and never written to a file; by the time Stage 1 started that context had been
+summarised away, and `search_session_transcripts` finds nothing. Everything was re-derived from the
+decisions recorded in this file and is flagged as a re-derivation at the top of
+[docs/billing-stage-1.md](docs/billing-stage-1.md), which now HOLDS the plan. **A decision that lives
+only in a chat log is a decision you will re-make.**
+
+## ① 🔒 WHAT A PAYWALL ON THIS PRODUCT CAN ACTUALLY DO
+RLS gates the **record**, not the chapter **content** — chapters are client-side JS and stay that
+way. So every guard is a WRITE guard and an unentitled child can still open a paid chapter; what
+they cannot do is have it saved, counted, or appear in the report. **Reads are deliberately
+untouched**: a lapsed subscriber keeps their child's whole history, which is why the entitlement
+sits in `learner_progress`'s WITH CHECK and never in its USING (B11d asserts it did not creep in).
+And the refusal is LOUD — `sync_session` raises 42501 rather than returning quietly, because a
+swallowed refusal is *"a tap that does nothing"* wearing a server costume. Stage 2 owes it a lock screen.
+
+## ② 🧩 ONE GUARD, THREE CALL SITES, AND A TEST THAT DRIVES THEM
+`is_chapter_entitled` is called from the `sessions` INSERT policy, the `learner_progress` WITH CHECK,
+and inside `sync_session`. ⚠️ **`sync_session` is SECURITY DEFINER, so RLS does not apply to it** —
+the policy alone leaves the RPC wide open and the RPC alone leaves direct writes open. The only way
+two guards cannot diverge is for them to BE the same guard.
+**B12 does not read the source.** It drives BOTH paths and asserts the verdicts are EQUAL, for an
+unentitled chapter and for a free one — plus the VALUE each time, because equality alone passes if
+both are broken open.
+⚠️ `subscriptions.status` carries **no CHECK**, on purpose: it holds whatever Stripe last said, and
+the function allow-lists, so an unknown status fails **closed** instead of failing the write.
+
+## ③ ⚠️ THE REVOKE IS NOT BELT-AND-BRACES — IT CHANGES THE FAILURE MODE
+Supabase's default privileges hand `anon`/`authenticated` ALL on new public tables. With the grant
+in place and no UPDATE policy, an attempted **self-upgrade matches zero rows and returns QUIETLY** —
+a silent no-op the client cannot tell from success. Revoked, the same statement raises 42501. B4
+asserts both halves: that it raised, AND that `seats_paid` is still 2.
+`reassign_learner_seat`'s single write is an UPDATE of one existing row — no INSERT, no DELETE — so
+it is *structurally* unable to raise the seat count. Its period limit is
+`coalesce(current_period_start, '-infinity')`: without the coalesce a NULL period start makes the
+comparison NULL and the limit silently does not exist, which is the state someone would engineer by
+suppressing a webhook.
+
+## ④ 🧪 13 MUTATIONS, AND THE ONE THAT SURVIVED IS THE FINDING
+The source gate `src/__tests__/billingSchema.test.ts` caught 13 of 13 planted against the SQL — but
+its first version was **blind to the most important one**. The sessions-policy check used a character
+budget (`[\s\S]{0,800}?`), so deleting the guard from that policy let the window run on into the
+NEXT policy, which still had one: green, with the guard that matters gone. It is `[^;]*` now, because
+a policy statement contains no semicolon of its own. **A window measured in characters is not a
+window bounded by the statement.**
+Two of its nine checks are GENERAL rules, measured to pass on all 20 tables and all 11 SECURITY
+DEFINER functions before being written: **every table a migration creates must be named in
+`security_baseline.sql`**, and **every SECURITY DEFINER function must carry an explicit REVOKE** (V19
+as a standing rule). ✅ And yesterday's `exportCompleteness` gate caught `subscription_seats` on its
+first run — recorded as a deliberate exclusion with its reason, not ignored.
+
+## ⑤ 🎥 THE FREE SET, AND THE AR CONSTRAINT ANSWERED PLAINLY
+Re-derived constraint: *a free chapter must be one the child answers with the camera* — the free set
+protects nothing, so its only job is to sell, and AR is the one thing a screenshot cannot convey.
+**Measured: eight chapters carry AR wiring and ALL EIGHT are in 9–11** (six finger-count, one tilt,
+one span — the handoff's "five" predates The Minibus Run). So **the constraint is satisfiable in
+exactly one band out of six**, and stretching it to "is interactive" makes it vacuous.
+The alternative is to name what AR stood in for — *it cannot be evaluated from a screenshot* — and
+apply THAT to the other bands. Seeded proposal: **the first chapter of every band plus `decimals`**
+(7 of 72), because a free chapter a parent has to hunt for converts nobody.
+⚠️⚠️ **AND IT SURFACED A CONSEQUENCE NOBODY HAD COSTED:** the diagnostic routes a child to their root
+gap, which is almost never chapter 1 — so under that set **a plan's first step can be locked, right
+after a 20–50 question check that just promised a route.** Two ways out in §4 of the doc; recommend
+making the plan's first unmet step always entitled. **Not built — it changes what is sold.**
+
+## ▶ OPEN
+1. ⏸️ **PR #52 is waiting for review; it stacks on #51.** Both are green, `rls-tests` **46/46**.
+   Nothing is applied to production and nothing is merged.
+2. ⏸️ **The free set needs your pick** (§⑤ and doc §4), and with it the locked-first-step question.
+3. **Stage 2 = Stripe**: the webhook, the seat materialiser (nothing creates seat rows yet — the
+   tests insert them in setup), checkout, the customer portal. **Stage 3 = UI**, starting with the
+   lock screen the 42501 now demands.
+4. ⚠️ **A contradiction found, flagged, not resolved:** `exportCompleteness.test.ts` says Stage 1
+   adds an `ON DELETE SET NULL` fkey to `error_events.learner_id`; `20260817142406_error_events.sql`
+   says the column is deliberately NOT a foreign key so a crash is still recorded when the learner id
+   is stale. The migration's reasoning is better, so the fkey is NOT added and the test's note is the
+   thing that is wrong.
+5. 🔴 **B12 (the launch blocker, not the test case) — still no backup of the children's data.**
+6. Everything from the blocks below still stands.
+
+
 **The asks:** apply `perf_advisors` behind the new stale-migration diff · accept the ledger snapshot as the safety net but add *no backups* as a launch blocker · compute the dry-run rather than putting a production password into CI.
 
 ## ① ✅ THE STALE-MIGRATION DIFF RAN FOR THE FIRST TIME, AND PASSED

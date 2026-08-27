@@ -816,7 +816,7 @@ export default function HopAlong({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'skipCounting', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [scene, setScene] = useState<Setting>(RUN[0].w)
   const { exit, tally } = useChapterShell(onFinish, onExit)

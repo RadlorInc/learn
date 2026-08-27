@@ -1473,7 +1473,7 @@ export default function OrderDesk({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'bigNumbers', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [shipped, setShipped] = useState<number[]>([])
   const pending = useRef<number | null>(null)      // the cumulative arc — OUTSIDE SkillBeat
