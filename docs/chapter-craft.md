@@ -1224,12 +1224,39 @@ to draw. The "draw from the ink box, not the file box" rule, applied to a code-d
   A loop. Capping the in-line SCALE instead leaves every upstream number untouched: the step stays a
   constant, so the line is evenly spaced BY CONSTRUCTION, and a wide creature is drawn a little
   further away — which is what the line already means.
+  ⚠️⚠️ **AND THE GAP AT THE HEAD OF A QUEUE IS A DIFFERENT GAP — THE TWO BODIES EITHER SIDE OF IT
+  ARE NOT THE SAME SIZE.** The founder's follow-up, once the spacing was even: *"fish 1 still tucks
+  under mother's body."* The first place in the line sits next to the LEADER, drawn at 1.25 against
+  the line's own scale, so those two bodies differ by ~1.7× — and one constant was serving both that
+  gap and the gap between two little ones. **Enumerate the gaps in a formation and ask which ones
+  have a different creature on each side.**
+  ⚠️ **AND CALIBRATE THE FIX ON THE ONE THAT ALREADY LOOKED RIGHT, NOT ON ZERO.** Animals queue
+  nose-to-tail, so a slight overlap with the leader is CORRECT — the rabbit has one (its first
+  little one sits ~21% of its own body inside her) and that is the picture that was approved. The
+  rule is therefore *nobody sits deeper in than the rabbit*, which leaves the approved case
+  untouched by construction; a "no overlap" rule would have moved it and broken the good case to
+  rescue the bad ones. **Ask what the thing that works measures, and make that the target.**
+  ⚠️ **AND WHEN A DERIVED NUMBER FEEDS THE BUDGET IT IS SPENT FROM, RUN THE CHAIN TWICE RATHER THAN
+  ITERATING.** The head gap is measured off the sprite, the sprite is capped to the huddle's slot,
+  and the slot is what the line leaves over — a loop. One provisional pass with the old constant
+  yields a size that is always ≥ the final one, so the reserve measured from it is never short, and
+  the SAME value is then used for both the reserve and the drawing so they cannot disagree.
+  ⚠️ **AND A CHECK ON THAT MUST DRIVE THE DRAWING FUNCTION, NOT THE LAYOUT IT CAME FROM.**
+  Mutation-tested: reading the body from the layout's reported scale and the step from a typed
+  constant left "the line draws at the flat gap" AND "the line draws at a flat scale" both green —
+  the layout still REPORTED the derived values while the drawing ignored them. Read every number
+  out of the function that positions the thing (`lineSpot(k, L).left` / `.scale`), and where a
+  reserve must be compared against what is drawn, compute both ends through the real functions.
   ⚠️ **AND A DEFAULT PARAMETER MAKES THE OLD BEHAVIOUR REACHABLE.** `lineSpot(k, w, mx, scale =
   LINE_SCALE)` is the natural signature when a literal moves out into an argument, and it is a
   regression waiting to happen: mutation-tested, reverting one call site to `lineSpot(k, band, mx)`
   restored the overlapping line with **every check green**, because they all drive the layout's
-  reported value and none can see how the component USES it. Required, it is a type error. Prefer
-  the signature that cannot express the bug over the check that catches it.
+  reported value and none can see how the component USES it. Required, it is a type error.
+  ⚠️ And a required parameter is only half of it: with the default gone, passing `LINE_GAP` where
+  `headGap` belonged restored the buried-under-mother line, type-checked and green. **The end of
+  that road is to stop passing the derived values at all** — `lineSpot(k, L)` takes the layout, so
+  there is nothing left to hand over wrongly. Prefer the signature that cannot express the bug over
+  the check that catches it.
 - **a boundary next to another character is measured off THAT character, never guessed.** Chapter 2
   learned this as the cut-off leader; it applies to any adjacency. Chapters 9–10 gave their set a
   flat right limit of 74% and the three widest reef creatures (fish 1.37, turtle 1.53, shark 1.75 : 1)
