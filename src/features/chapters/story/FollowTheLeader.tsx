@@ -46,6 +46,7 @@ import {
 import { rint, shuffle } from '@/core/rand'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar from './ReadyBar'
 
 // Just long enough to swallow a double-tap. It is deliberately NOT tied to Milo's voice: measured
 // live in Chrome, `speechSynthesis.speaking` stays true for over 3.2 SECONDS after a single spoken
@@ -329,6 +330,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   // not a single slot: the child may tap 2 while 1 is still walking.
   const [flying, setFlying] = useState<Record<number, Journey>>({})
   const [wiggling, setWiggling] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const [idleHop, setIdleHop] = useState<number | null>(null)
   const [marching, setMarching] = useState(false)
   const [hint, setHint] = useState<number | null>(null)
@@ -406,6 +408,27 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /**
+   * A tap only CHOOSES which little one goes next; nobody walks until Ready.
+   *
+   * ⚠️ THIS CHAPTER BUILDS A SEQUENCE, so Ready happens ONCE PER PLACE IN THE LINE rather than once
+   * per round — the child chooses who is next, sends them, then chooses again. That keeps the
+   * per-step feedback the chapter teaches with (a wrong pick wiggles and Milo says which to look
+   * for) instead of holding a whole ordering back to be graded at the end, which would be a
+   * different chapter.
+   */
+  function pick(v: number) {
+    if (mode === 'demo' || done.current) return
+    if (joinedRef.current.includes(v)) return
+    setPending(p => (p === v ? null : v))
+  }
+  function commit() {
+    const v = pending
+    if (v == null) return
+    setPending(null)
+    tap(v)
+  }
+
   function tap(v: number) {
     // A tap waits for nothing but a double-tap guard. It does NOT wait for the previous little one
     // to reach the line — a child who has already found 2 should not be made to watch 1 walk first —
@@ -470,7 +493,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
             {/* The hit area is a plain button over the creature — the sprite itself stays
                 pointer-transparent so a tap can never be swallowed by a flipped inner wrapper. */}
             {!inLine && mode !== 'demo' && (
-              <button onClick={() => tap(v)} aria-label={`${kind.little} ${v}`}
+              <button onClick={() => pick(v)} aria-label={`${kind.little} ${v}`}
                 style={{ position: 'fixed', left: `${at.left}%`, top: `${at.top}%`, transform: 'translate(-50%,-100%)',
                   // 44px is a FLOOR, not a ratio: at the 40px sprite floor (five sharks, top tier,
                   // small short-landscape phone) 1.05x came out 42px wide — under the tap minimum on
@@ -478,11 +501,17 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
                   // stays narrower than the sprite even so, so it cannot reach a neighbour.
                   zIndex: 40, width: Math.max(44, Math.round(babySize * at.scale * 1.05)), height: Math.max(44, Math.round(babySize * at.scale * 1.15)),
                   padding: 0, border: 'none', background: 'transparent', cursor: 'pointer',
-                  outline: hint === v ? '4px dashed rgba(242,107,44,.75)' : 'none', outlineOffset: 4, borderRadius: 18 }} />
+                  // ⚠️ THE CHOSEN RING WINS OVER THE HINT, and it is white rather than the hint's
+                  // orange: a chosen little one is not yet the RIGHT little one, and this chapter
+                  // may not say which is right before the commit.
+                  outline: pending === v ? '4px solid rgba(255,255,255,.95)'
+                    : hint === v ? '4px dashed rgba(242,107,44,.75)' : 'none',
+                  outlineOffset: 4, borderRadius: 18 }} />
             )}
           </React.Fragment>
         )
       })}
+      <ReadyBar show={pending !== null} onCommit={commit} label="Send ▶" />
     </>
   )
 }
@@ -553,7 +582,7 @@ export default function FollowTheLeader({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'numberOrdering', phase: 'practice' })
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [homeStage, setHomeStage] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

@@ -37,6 +37,7 @@ import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 /** The three signs, in the order they are drawn. The answer is a SIGN, not a side. */
 export const SIGNS = ['>', '<', '=']
@@ -274,7 +275,9 @@ function Scale({ a, b, item, tilt, short }: { a: number; b: number; item: Item; 
 }
 
 // ─── The three big sign buttons ───────────────────────────────────────────────────────
-function SignRow({ picked, answer, onPick, revealed, short }: { picked: string | null; answer: string; onPick?: (s: string) => void; revealed?: boolean; short?: boolean }) {
+function SignRow({ picked, answer, onPick, revealed, short, pending }: { picked: string | null; answer: string; onPick?: (s: string) => void; revealed?: boolean; short?: boolean
+  /** chosen, not yet submitted — a neutral ring, never the green reserved for a right answer */
+  pending?: string | null }) {
   const size = short ? 'clamp(56px,15vh,80px)' : 'clamp(76px,15vmin,104px)'
   const locked = picked !== null || revealed
   return (
@@ -287,7 +290,10 @@ function SignRow({ picked, answer, onPick, revealed, short }: { picked: string |
             width: size, height: size,
             background: showOk ? 'var(--garden-green-soft)' : 'var(--paper)',
             border: `5px solid ${showOk ? 'var(--garden-green)' : isSel ? 'var(--ink-muted)' : 'var(--outline)'}`,
-            borderRadius: 24, boxShadow: `0 7px 0 ${showOk ? 'var(--garden-green-deep)' : '#c8ac79'}`,
+            borderRadius: 24,
+            boxShadow: pending === ch
+              ? `${PICKED_RING}, 0 7px 0 #c8ac79`
+              : `0 7px 0 ${showOk ? 'var(--garden-green-deep)' : '#c8ac79'}`,
             fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 'clamp(30px,8vh,44px)' : 'clamp(40px,9vmin,54px)', color: 'var(--ink)',
             cursor: locked ? 'default' : 'pointer', transform: showOk ? 'scale(1.1) translateY(-4px)' : 'scale(1)',
             transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease',
@@ -313,6 +319,7 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
   const { h: vh } = useViewport()
   const short = vh < 470
   const [picked, setPicked] = useState<string | null>(null)
+  const [pending, setPending] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false)
   // ⚠️ THE BEAM CONFIRMS AN ANSWER, IT NEVER PREVIEWS ONE. This used to tip 400ms after the
   // question loaded — before the child had answered — and the heavier pan glowed with it, so the
@@ -325,6 +332,20 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
     if (mode === 'guided') speak(sayFor(data))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+
+  /** A tap only CHOOSES; nothing is graded until Ready. Re-tapping the choice unchooses it, so
+   *  the bar is never a trap. The grading path below is untouched — it simply runs later. */
+  function pick(ch: string) {
+    if (done.current || picked !== null) return
+    setPending(p => (p === ch ? null : ch))
+  }
+  function commit() {
+    const ch = pending
+    if (ch == null) return
+    setPending(null)
+    choose(ch)
+  }
 
   function choose(ch: string) {
     if (done.current || picked !== null) return
@@ -360,8 +381,9 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
       )}
       <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '52%' : '46%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 'clamp(8px,2vh,16px)' : 'clamp(12px,3vh,28px)' }}>
         <Scale a={a} b={b} item={item} tilt={tilt} short={short} />
-        <SignRow picked={picked} answer={answer} onPick={choose} short={short} />
+        <SignRow picked={picked} answer={answer} onPick={pick} short={short} pending={pending} />
       </div>
+      <ReadyBar show={pending !== null} onCommit={commit} />
     </>
   )
 }
@@ -435,7 +457,7 @@ export default function SeesawPark({ onFinish, onExit }: {
 }) {
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<CmpWorld>(SETTINGS[0])
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'compareNumbers', phase: 'practice' })
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()

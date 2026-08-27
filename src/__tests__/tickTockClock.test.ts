@@ -372,8 +372,13 @@ describe('the four readings, and covering them', () => {
     // (or the reverse — a silent pill). Anchored on expressions, never on the prose above them.
     expect(src, 'the centred wrong pill is no longer opt-out-able')
       .toContain("feedback === 'wrong' && !beat.ownsFeedback")
-    expect(src, 'the generic spoken encouragement is no longer opt-out-able')
-      .toContain('if (!correct && !beat.ownsFeedback)')
+    // ⚠️ ONE gate now covers BOTH generic spoken lines. Spoken praise on a correct answer was added
+    // 2026-08-27, and if it had been written outside this condition a chapter that owns its
+    // feedback would have kept the pill suppressed and gained a "Great job!" landing on top of its
+    // own "That's right — half past six!" — the exact collision this test was written for,
+    // reintroduced through the other branch.
+    expect(src, 'the generic spoken line is no longer opt-out-able')
+      .toContain('if (!beat.ownsFeedback) speak(correct ? PRAISE[')
     // And the chapter still SAYS something on a miss — silence is a tap that appears to do nothing,
     // and speech alone is silence on the many devices with no usable voice, so it is written too.
     const tt = readFileSync(join(process.cwd(), 'src/features/chapters/story/TickTock.tsx'), 'utf8')

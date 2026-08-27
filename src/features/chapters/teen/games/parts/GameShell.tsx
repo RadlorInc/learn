@@ -27,6 +27,8 @@ import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { speak, speakAfterCurrent, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
+import { getChapterResume, setChapterResume, clearChapterResume } from '@/infra/storage/chapterResume'
+import { PRAISE, praisesOnCorrect } from '@/core/praise'
 import type { ChapterType } from '@/core/chapters'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import {
@@ -292,6 +294,12 @@ export function Game<V, T extends BaseTask>({
   // offered below plus the engine demoting on two misses in a row.
   const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
   const [startDiff] = useState<1 | 2 | 3>(() => (resumesTier(BAND) ? getChapterLevel(learnerId, config.chapterId) : 1))
+  // ⚠️ AND THE RUN ITSELF RESUMES, NOT ONLY THE TIER (2026-08-27). `onFinish` fires once, at the
+  // end, and it is what writes the session row, the stars and the XP — so leaving after seven of
+  // ten questions did not lose the PLACE, it lost the seven answers as well, and every screen
+  // showed the chapter as never played. Read once at mount; null for a logged-out preview, a
+  // finished chapter, or a run older than the store's TTL.
+  const [resume] = useState(() => getChapterResume(learnerId, config.chapterId))
   const ada = useAdaptive(config.chapterId, startDiff)
   // ⚠️ READ THE TIER OFF A LIVE REF, NEVER OFF THE RENDER CLOSURE. `submit` schedules the next
   // `loadTask` on a 1650 ms timer, so the callback it captures belongs to the render the ANSWER was
@@ -310,7 +318,7 @@ export function Game<V, T extends BaseTask>({
   const canWarmUp = startDiff > 1
 
   const [stage, setStage] = useState<Stage>('start')
-  const [idx, setIdx] = useState(0)
+  const [idx, setIdx] = useState(resume?.round ?? 0)
   const [task, setTask] = useState<T | null>(null)
   const [value, setValue] = useState<V | null>(null)
   const [sub, setSub] = useState<Sub>('active')
@@ -348,8 +356,8 @@ export function Game<V, T extends BaseTask>({
   // who has just missed three in a row is the last one who should be given the
   // explanation in audio only, and most Chrome installs have no voice at all.
   const [reteachAt, setReteachAt] = useState(-1)
-  const [correct, setCorrect] = useState(0)
-  const [wrong, setWrong] = useState(0)
+  const [correct, setCorrect] = useState(resume?.correct ?? 0)
+  const [wrong, setWrong] = useState(resume?.wrong ?? 0)
 
   // Legible "I do → your turn → you did it" hand-off cue (feedback-your-turn-cue):
   // a brief popup the moment control passes to the child ('turn') and when they
@@ -361,7 +369,7 @@ export function Game<V, T extends BaseTask>({
   /** ⚠️ "a hand is in frame", NOT "count > 0" — a FIST is a real answer wherever zero is one. */
   const handReady = !!HAND && (HAND.ready ? HAND.ready(cam.read) : cam.read.hands > 0)
 
-  const seen = useRef<Set<string>>(new Set())
+  const seen = useRef<Set<string>>(new Set(resume?.seen ?? []))
   const timers = useRef<number[]>([])
   const later = useCallback((fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); stopSpeech() }, [])
@@ -379,7 +387,7 @@ export function Game<V, T extends BaseTask>({
 
   /** every reading asked so far, for `config.coverage`. A ref: the generator reads it during a
    *  render that must not depend on it, and nothing renders from it. */
-  const asked = useRef<string[]>([])
+  const asked = useRef<string[]>(resume?.asked ?? [])
   const covered = useCallback(
     () => !config.coverage || config.coverage.all.every(k => asked.current.includes(k)),
     [config.coverage],
@@ -396,8 +404,10 @@ export function Game<V, T extends BaseTask>({
   }, [config])
 
   const loadTask = useCallback((nextIdx: number, c: number, w: number, mastered: boolean) => {
-    if (mastered) { onFinish(c, w, true); return }
-    if (nextIdx >= effTotal) { onFinish(c, w); return }
+    // ⚠️ THE RUN IS OVER ON BOTH OF THESE PATHS, so the resume point dies with it. A saved point
+    // that outlives its run reopens a finished chapter near its end, for ever.
+    if (mastered) { clearChapterResume(learnerId, config.chapterId); onFinish(c, w, true); return }
+    if (nextIdx >= effTotal) { clearChapterResume(learnerId, config.chapterId); onFinish(c, w); return }
     // Cancel any still-pending animation timers from the PREVIOUS question (a wrong-
     // answer glide/reveal can schedule setValue frames that would otherwise land on —
     // and clobber — the new question's fresh instrument value).
@@ -414,7 +424,16 @@ export function Game<V, T extends BaseTask>({
     // still carries the question (info is never audio-only), and the spoken hint
     // returns automatically on a demotion, since it tracks the live tier.
     if (d < 3) speakAfterCurrent(t.say)
-  }, [adaRef, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue])
+    // Where the run is now, written as each question is SERVED — this is the only moment the
+    // child's answers are safe, because a closed tab, a killed app or a flat battery fires no exit
+    // event. `nextIdx === 0` is not a resume point (nothing has been answered yet), and the store
+    // reads it back as null anyway; skipping the write keeps the "no run in progress" state clean.
+    if (nextIdx > 0) {
+      setChapterResume(learnerId, config.chapterId, {
+        round: nextIdx, correct: c, wrong: w, seen: [...seen.current], asked: asked.current,
+      })
+    }
+  }, [adaRef, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue, learnerId])
 
   const demoDone = useRef(false)
   const finishDemo = useCallback(() => {
@@ -422,8 +441,8 @@ export function Game<V, T extends BaseTask>({
     demoDone.current = true
     setStage('play')
     speak(`Your turn, ${childName}.`)
-    loadTask(0, 0, 0, false)
-  }, [childName, loadTask])
+    loadTask(resume?.round ?? 0, resume?.correct ?? 0, resume?.wrong ?? 0, false)
+  }, [childName, loadTask, resume])
 
   // "we do" — live, coached, NON-scored order(s) before real play. `guidedIdx`
   // walks the array form; the single-object form is a one-element walk.
@@ -436,6 +455,18 @@ export function Game<V, T extends BaseTask>({
     flashCue('turn')
     speakAfterCurrent(`${g.coach} ${g.task.say}`)
   }, [guidedList, config, flashCue])
+
+  // ⚠️ THE START CARD IS NEVER SKIPPED, EVEN ON A RESUME, AND THAT IS DELIBERATE. It carries two
+  // things a mid-run entry cannot do without: `unlockSpeech()`, which needs a real user gesture or
+  // the chapter is silent for the rest of the run, and — on an AR chapter — BOTH camera doors. A
+  // resume that jumped straight to play would put a child in front of a camera nobody re-consented
+  // to, which is the exact leak `e2e/ar-consent.spec.ts` exists for. What a resume skips is the
+  // TEACHING after it: the overview, the walkthrough and the guided round, all of which this child
+  // already sat through in the run they are returning to.
+  const enterAfterStart = useCallback(() => {
+    if (resume) { finishDemo(); return }
+    setStage(config.overview ? 'intro' : 'demo')
+  }, [resume, finishDemo, config.overview])
 
   const afterDemo = useCallback(() => {
     // Fade the guided round only for a returning expert (resumes at the top tier);
@@ -455,10 +486,15 @@ export function Game<V, T extends BaseTask>({
     if (ok) {
       const c = correct + 1
       setCorrect(c); setSub('sold'); setWrongRun(0)
-      // Correct = the quiet "You solved it! ✓" visual cue only. No spoken praise
-      // ("Good job / Nice / unstoppable") on every right answer — mirrors the
-      // 3–11 story chapters (StoryWorld: a tick is enough).
+      // Correct = the quiet "You solved it! ✓" visual cue, plus a spoken line for the CHILDREN'S
+      // bands only.
+      // ⚠️ GATED ON THE BAND, NOT ON THE ENGINE, and that is the whole point of `praisesOnCorrect`.
+      // 9–11 is split across two engines — ten chapters here, OrderDesk and LevelRun on the
+      // storybook one — so an engine-shaped rule would praise the same child in two chapters and
+      // stay silent in the other ten. 12–18 stays silent because "Great job!" every question reads
+      // as patronising to a fifteen-year-old.
       flashCue('solved')
+      if (praisesOnCorrect(BAND)) speak(PRAISE[idx % PRAISE.length])
       // ⚠️ THE EXIT IS WITHHELD UNTIL EVERY DECLARED READING HAS BEEN ASKED. See `coverage`.
       later(() => loadTask(idx + 1, c, wrong, res.mastered && covered()), 1650)
       return
@@ -667,13 +703,13 @@ export function Game<V, T extends BaseTask>({
                     You left off at <span style={{ color: P.gold }}>{ada.difficultyLabel}</span>. Want a quick warm-up first?
                   </p>
                   <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(true); setStage(config.overview ? 'intro' : 'demo') }} style={headerChip(P)}>☀️ Warm up first</button>
-                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(false); setStage(config.overview ? 'intro' : 'demo') }} style={bigBtn(P)}>Continue →</button>
+                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(true); enterAfterStart() }} style={headerChip(P)}>☀️ Warm up first</button>
+                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(false); enterAfterStart() }} style={bigBtn(P)}>Continue →</button>
                   </div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                  <button type="button" onClick={() => { unlockSpeech(); if (HAND && cam.onCam) cam.start(); setStage(config.overview ? 'intro' : 'demo') }} style={bigBtn(P)}>
+                  <button type="button" onClick={() => { unlockSpeech(); if (HAND && cam.onCam) cam.start(); enterAfterStart() }} style={bigBtn(P)}>
                     {HAND && cam.onCam ? 'Turn on the camera' : config.start.startLabel}
                   </button>
                   {/* ⚠️ BOTH DOORS, EVERY TIME. The device's last pick decides which is the BIG
@@ -683,7 +719,7 @@ export function Game<V, T extends BaseTask>({
                       a way to skip the chapter. */}
                   {HAND && (
                     <button type="button" style={headerChip(P)}
-                      onClick={() => { unlockSpeech(); if (cam.onCam) cam.useTaps(); else cam.useCamera(); setStage(config.overview ? 'intro' : 'demo') }}>
+                      onClick={() => { unlockSpeech(); if (cam.onCam) cam.useTaps(); else cam.useCamera(); enterAfterStart() }}>
                       {cam.onCam ? 'Use taps instead' : '✋ Use the camera instead'}
                     </button>
                   )}

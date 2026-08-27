@@ -52,6 +52,7 @@ import { shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar from './ReadyBar'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()` — a wrong tap speaks a line and
@@ -358,7 +359,7 @@ export default function RainbowTown({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useChapterPhase<Phase>('start')
+  const [phase, setPhase] = useChapterPhase<Phase>('start', { chapter: 'colors', phase: 'test' })
   // The skip is offered only to a child who has already sat through the lesson once. Read at mount,
   // so finishing the lesson now does not make the button appear behind the child mid-run.
   const learnerId = useMemo(() => getActiveLearner()?.id, [])
@@ -373,6 +374,19 @@ export default function RainbowTown({ onFinish, onExit }: {
   // gets carried forward is the colour and not the position.
   const [pots, setPots] = useState<ColorName[]>(COLOR_ORDER)
   const [loaded, setLoaded] = useState<ColorName | null>(null)
+  /**
+   * The paint the child has PUT ON the glowing part but not yet submitted.
+   *
+   * ⚠️ THE COLOUR GOES ON THE PICTURE BEFORE IT IS JUDGED, which is the opposite of what the other
+   * chapters do and is right here: this is a colouring page, and a tap that refuses to colour
+   * anything is a tap that appears to do nothing. So in the TEST the child's choice lands, they can
+   * see it, they can pick up another pot and paint straight over it as often as they like, and
+   * nothing is graded until Ready.
+   * ⚠️ THE LESSON IS DELIBERATELY UNCHANGED — there the wrong pot is still refused before it touches
+   * the page and Milo points at the one that is jumping, because that half of the chapter is
+   * teaching the word rather than measuring it.
+   */
+  const [pendingPaint, setPendingPaint] = useState<ColorName | null>(null)
   const pageEl = useRef<HTMLDivElement | null>(null)
   const nudge = useCallback(() => {
     pageEl.current?.animate(
@@ -389,6 +403,7 @@ export default function RainbowTown({ onFinish, onExit }: {
 
   const phaseRef = useLatestRef(phase)
   const loadedRef = useLatestRef(loaded)
+  const pendingPaintRef = useLatestRef(pendingPaint)
   const stepRef = useLatestRef(stepIdx)
   const submit = useRef<((correct: boolean) => void) | null>(null)
   const erred = useRef(false)
@@ -530,13 +545,15 @@ export default function RainbowTown({ onFinish, onExit }: {
     // In the LESSON it is not wrong either — the right pot is bouncing, so a wrong one is a child
     // who has not yet joined the word to the swatch, which is the entire thing being taught. Say the
     // name of what they picked, say the name we want, and point again. Nothing is recorded.
+    // TEST: whatever is on the brush goes on, and waits. Judged on Ready, in `commitPaint`.
+    if (phaseRef.current === 'test') {
+      fill(area, COLORS[brush].hex)
+      setPendingPaint(brush)
+      return
+    }
+
     if (brush !== step.color) {
-      if (phaseRef.current === 'teach') {
-        speak(`That one is ${COLORS[brush].label}. We want ${COLORS[step.color].label} — the paint that is jumping!`)
-      } else {
-        erred.current = true
-        speak(`That's ${COLORS[brush].label} paint. We need ${COLORS[step.color].label}!`)
-      }
+      speak(`That one is ${COLORS[brush].label}. We want ${COLORS[step.color].label} — the paint that is jumping!`)
       nudge()
       return
     }
@@ -559,6 +576,29 @@ export default function RainbowTown({ onFinish, onExit }: {
     const done = submit.current
     if (done) { submit.current = null; timers.current.push(window.setTimeout(() => done(!erred.current), 700)) }
   }, [fill, clearHint, nudge, learnerId])
+
+  /**
+   * Ready. Only now is the colour on the glowing part judged — and a wrong one is still retried in
+   * place, exactly as a wrong pot used to be: Milo names what they used and what is wanted, and the
+   * child paints over it. The ring, the fill and the bar say nothing about which paint is right.
+   */
+  const commitPaint = useCallback(() => {
+    const brush = pendingPaintRef.current
+    if (!brush) return
+    const step = pageRef.current.targets[stepRef.current]
+    setPendingPaint(null)
+    if (!step) return
+    if (brush !== step.color) {
+      erred.current = true
+      speak(`That's ${COLORS[brush].label} paint. We need ${COLORS[step.color].label}!`)
+      nudge()
+      return
+    }
+    clearHint()
+    const done = submit.current
+    if (done) { submit.current = null; timers.current.push(window.setTimeout(() => done(!erred.current), 700)) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearHint, nudge])
 
   const register = useCallback((f: (c: boolean) => void) => { submit.current = f; erred.current = false; strayFills.current = 0 }, [])
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 700)), [])
@@ -655,6 +695,14 @@ export default function RainbowTown({ onFinish, onExit }: {
       {(phase === 'teach' || phase === 'test') && <PaintBox pots={pots} loaded={loaded} onPick={setLoaded}
         hint={phase === 'teach' ? target?.color : null} />}
 
+      {/* ⚠️ BESIDE THE PAINT TRAY, AND THE COMMENT THAT USED TO SIT HERE WAS WRONG. It said the
+          tray is pinned to the TOP so the bottom strip is free — true on a roomy frame, false on
+          the one that matters: measured at 640×320 the pots sit at y 249–300, x 234–407, and the
+          centred bar (253–387 × 263–310) was drawn straight across them, i.e. across the paints
+          that ARE the answer. Third collision of this kind in this session, and the only reason it
+          was found is that the frame was looked at rather than the code. */}
+      <ReadyBar show={phase === 'test' && pendingPaint !== null} onCommit={commitPaint} label="Done ✓" align="right" />
+
       {phase === 'teach' && target && Banner(`${stepIdx + 1} of ${TEACH_STEPS} · This is ${COLORS[target.color].label.toUpperCase()}`)}
 
       {/* SKIP THE LESSON — and only ever for a child who has already been through it. Offered on the
@@ -697,7 +745,7 @@ export default function RainbowTown({ onFinish, onExit }: {
         // page while its BUTTONS keep theirs — the pill is a real control, it replays the question.
         <div className="rt-passthru" style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
-            onRound={(data: ColorRound) => { setStepIdx(data.seq); setPots(data.pots); setLoaded(null) }}
+            onRound={(data: ColorRound) => { setStepIdx(data.seq); setPots(data.pots); setLoaded(null); setPendingPaint(null) }}
             onComplete={tally} />
         </div>
       )}

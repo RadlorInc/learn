@@ -1,5 +1,8 @@
 'use client'
 import { useState, type Dispatch, type SetStateAction } from 'react'
+import type { ChapterType } from '@/data/supabase/types'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { hasChapterResume } from '@/infra/storage/chapterResume'
 
 /**
  * A chapter's phase state, with a DEV-ONLY way to open straight at a later phase.
@@ -24,11 +27,29 @@ import { useState, type Dispatch, type SetStateAction } from 'react'
  * ⚠️ The value is a STRING OFF THE URL and is cast to the chapter's own Phase union: unsound by
  * construction, and acceptable only because nothing but a test can set it. A wrong value simply
  * renders nothing, which is a visible failure rather than a silent one.
+ *
+ * `resumeAt` is the OTHER reason a chapter opens somewhere other than its intro: the child has an
+ * unfinished run of it. Passing it opens straight at the named phase, which is what "pick up exactly
+ * where I left off" means — sitting through the intro, the demo and a guided round again is most of
+ * what made restarting feel like losing the work. The phase is passed rather than assumed, so it is
+ * checked against the chapter's own union instead of being cast into it like the e2e value above.
+ *
+ * ⚠️ The demo is SKIPPED on a resume, deliberately: the child has already watched it this run. A
+ * chapter whose teaching a returning child genuinely needs again should point `phase` at its demo
+ * instead — that is a per-chapter judgement and this hook does not make it for them.
  */
-export function useChapterPhase<T extends string>(initial: T): [T, Dispatch<SetStateAction<T>>] {
+export function useChapterPhase<T extends string>(
+  initial: T,
+  resumeAt?: { chapter: ChapterType; phase: T },
+): [T, Dispatch<SetStateAction<T>>] {
   return useState<T>(() => {
-    if (process.env.NODE_ENV === 'production' || typeof window === 'undefined') return initial
-    const want = new URLSearchParams(window.location.search).get('e2e')
-    return (want as T) || initial
+    if (typeof window === 'undefined') return initial
+    if (process.env.NODE_ENV !== 'production') {
+      const want = new URLSearchParams(window.location.search).get('e2e')
+      if (want) return want as T
+    }
+    // An unfinished run wins over the intro. No learner, no saved run, or an expired one → initial.
+    if (resumeAt && hasChapterResume(getActiveLearner()?.id ?? null, resumeAt.chapter)) return resumeAt.phase
+    return initial
   })
 }

@@ -45,6 +45,7 @@ import {
 import { rint } from '@/core/rand'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar from './ReadyBar'
 
 // Same reasoning as chapters 4 and 9: long enough to swallow a double-tap, and deliberately NOT
 // tied to Milo's voice, which stays "speaking" for over 3.2s after a single word.
@@ -237,6 +238,7 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
   const [marching, setMarching] = useState(false)
   const [picked, setPicked] = useState<number | null>(null)
   const [wrongPick, setWrongPick] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const [idleHop, setIdleHop] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false), spoke = useRef(false)
   const timers = useRef<number[]>([])
@@ -294,6 +296,18 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /** A tap only CHOOSES a bunch; nothing marches and nothing is graded until Ready. */
+  function pickBunch(gi: number) {
+    if (mode === 'demo' || done.current || !live) return
+    setPending(p => (p === gi ? null : gi))
+  }
+  function commit() {
+    const gi = pending
+    if (gi == null) return
+    setPending(null)
+    tapBunch(gi)
+  }
+
   function tapBunch(gi: number) {
     if (mode === 'demo' || done.current || !live || tapLock.current) return
     tapLock.current = true
@@ -350,7 +364,7 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
                   pointer-transparent, so a tap can never be swallowed by a flipped inner wrapper.
                   Tapping ANY member picks its whole bunch, which is what the child means. */}
               {mode !== 'demo' && !marching && (
-                <button onClick={() => tapBunch(gi)}
+                <button onClick={() => pickBunch(gi)}
                   aria-label={numerals ? `bunch showing ${numerals[gi]}` : `bunch of ${n}`}
                   style={{ position: 'fixed', left: `${at.left}%`, top: `${at.top}%`, transform: 'translate(-50%,-100%)',
                     zIndex: 40, width: Math.max(46, Math.round(babySize * 1.05)), height: Math.max(46, Math.round(babySize * 1.2)),
@@ -358,14 +372,20 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
                     // The guided round gets ONE nudge to teach the gesture. It is not scored, which
                     // is the only reason a cue pointing at the answer may exist in this chapter at
                     // all: any signal BEFORE the commit hands the answer over.
-                    outline: mode === 'guided' && live && gi === want && picked === null && j === 0
-                      ? '4px dashed rgba(242,107,44,.75)' : 'none',
+                    // ⚠️ THE CHOSEN RING COMES FIRST, and it is white rather than the orange the
+                    // guided nudge uses — a chosen bunch is not yet a right one, and this band's
+                    // whole rule is that nothing may signal the answer before the commit.
+                    outline: pending === gi
+                      ? '4px solid rgba(255,255,255,.95)'
+                      : mode === 'guided' && live && gi === want && picked === null && j === 0
+                        ? '4px dashed rgba(242,107,44,.75)' : 'none',
                     outlineOffset: 4, borderRadius: 18 }} />
               )}
             </React.Fragment>
           )
         })
       })}
+      <ReadyBar show={pending !== null} onCommit={commit} />
     </>
   )
 }
@@ -497,7 +517,7 @@ export default function BigOrSmall({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'numberComparison', phase: 'practice' })
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [stage, setStage] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

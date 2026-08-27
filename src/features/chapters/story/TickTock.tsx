@@ -723,7 +723,7 @@ export default function TickTock({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'time', phase: 'practice' })
   const [gIdx, setGIdx] = useState(0)
   const [slot, setSlot] = useState(0)
   const { w: vw, h: vh } = useViewport()

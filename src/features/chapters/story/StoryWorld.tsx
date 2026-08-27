@@ -17,6 +17,8 @@ import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import { useAdaptive } from '@/shared/hooks/useAdaptive'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
+import { PRAISE } from '@/core/praise'
+import { getChapterResume, setChapterResume, clearChapterResume } from '@/infra/storage/chapterResume'
 import { type Difficulty } from '@/core/progression'
 import { makeDistinct } from '@/core/questionVariety'
 import { type ChapterType } from '@/core/chapters'
@@ -36,6 +38,10 @@ const STORY_CSS = `
 /** Wrong-in-a-row before Milo re-explains. It was an optional field with a default of 2, and
  *  all 34 chapters passed 3 — so it was never a knob, only a number written 34 times. */
 export const RETEACH_AFTER = 3
+
+/** Re-exported so the chapters and their gates keep one import site; the lines and the age cutoff
+ *  live in `core/praise` because `GameShell` needs the same two and must not import this file. */
+export { PRAISE } from '@/core/praise'
 
 // ─── A skill round: data + how to play it + how Milo re-teaches it ──
 export interface Beat<T> {
@@ -169,17 +175,22 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   // No learner (the logged-out /story preview) → tier 1, exactly as before.
   const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
   const [startDiff] = useState<Difficulty>(() => getChapterLevel(learnerId, beat.skillId))
+  // An unfinished run of THIS chapter, read once at mount. Everything below seeds from it, so a
+  // child who left after seven questions comes back to question eight with those seven still
+  // counted — before this, `onComplete` never fired and the whole run was discarded. Null for a
+  // logged-out preview, for a finished chapter, and for a run older than the store's TTL.
+  const [resume] = useState(() => getChapterResume(learnerId, beat.skillId))
   const ada = useAdaptive(beat.skillId, startDiff)
   const adaRef = useLatestRef(ada)
-  const [roundIdx, setRoundIdx] = useState(0)
+  const [roundIdx, setRoundIdx] = useState(resume?.round ?? 0)
   const [phase, setPhase] = useState<'play' | 'feedback' | 'reteach' | 'interlude'>('play')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [wrongRun, setWrongRun] = useState(0)
-  const tally = useRef({ correct: 0, wrong: 0 })   // reported to onComplete → drives XP
-  const seen = useRef<Set<string>>(new Set())      // question signatures already asked this session
+  const tally = useRef({ correct: resume?.correct ?? 0, wrong: resume?.wrong ?? 0 })   // reported to onComplete → drives XP
+  const seen = useRef<Set<string>>(new Set(resume?.seen ?? []))  // question signatures already asked this session
   // Which members of `beat.coverage.all` have been ASKED. Fed back into `make` so a generator can
   // spend a scarce round on something unmet, and used to withhold the early exit until the set is done.
-  const asked = useRef<string[]>([])
+  const asked = useRef<string[]>(resume?.asked ?? [])
 
   // ONE data object per round. Must be stable across re-renders (it holds the
   // random target), or the Play UI and the answer-check would disagree and the
@@ -208,6 +219,12 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     // mid-chapter still resumes where they actually were. Same call GameShell makes.
     setChapterLevel(learnerId, beat.skillId, res.difficulty)
     if (correct) tally.current.correct++; else tally.current.wrong++
+    // Where the run is NOW, written before anything can go wrong with the rest of the round. There
+    // is no exit event for a closed tab, so this is the only moment the child's work is safe.
+    setChapterResume(learnerId, beat.skillId, {
+      round: roundIdx + 1, correct: tally.current.correct, wrong: tally.current.wrong,
+      seen: [...seen.current], asked: asked.current,
+    })
     setFeedback(correct ? 'correct' : 'wrong')
     setPhase('feedback')
     const newRun = correct ? 0 : wrongRun + 1
@@ -215,7 +232,9 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     // No spoken compliment on a correct answer — a tick is enough (kids don't need praise every
     // question). Only gently encourage on a wrong one — and not at all where the beat has already
     // said something specific, or the generic line lands on top of it and cancels it.
-    if (!correct && !beat.ownsFeedback) speak(ada.encouragement)
+    // Praise a right answer, encourage a wrong one — and neither where the beat writes its own
+    // feedback, or the generic line lands on top of the specific one and cancels it.
+    if (!beat.ownsFeedback) speak(correct ? PRAISE[roundIdx % PRAISE.length] : ada.encouragement)
     window.setTimeout(() => {
       setFeedback(null)
       if (!correct && newRun >= RETEACH_AFTER) { setPhase('reteach'); return }
@@ -226,9 +245,11 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       // without ever being asked the hardest thing the chapter teaches. Bounded — the run still ends
       // at `beat.rounds` either way, so the worst case is playing the full set.
       const covered = !beat.coverage || beat.coverage.all.every(k => asked.current.includes(k))
-      if (res.mastered && covered) { onComplete(tally.current.correct, tally.current.wrong, true); return }
+      // ⚠️ The run is OVER on both of these paths, so the resume point must die with it — a saved
+      // point outliving its run reopens a finished chapter near its end, for ever.
+      if (res.mastered && covered) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong, true); return }
       const next = roundIdx + 1
-      if (next >= beat.rounds) { onComplete(tally.current.correct, tally.current.wrong); return }
+      if (next >= beat.rounds) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong); return }
       // Storyline interlude: Milo walks a few steps before certain rounds (a scene/
       // biome change), or every `walkEvery` rounds. The adaptive streak/tally carry
       // across it untouched.
@@ -245,9 +266,18 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   const finishReteach = useCallback(() => {
     setWrongRun(0)
     const next = roundIdx + 1
-    if (next >= beat.rounds) onComplete(tally.current.correct, tally.current.wrong)
-    else { setPhase('play'); setRoundIdx(next) }
-  }, [roundIdx, beat, onComplete])
+    // The re-teach moves the run on WITHOUT going through onSubmit, so it has to carry the same two
+    // duties: end the run cleanly, or record the new position. Missing this is how a resume point
+    // would sit one round behind for any child who ever saw a re-teach.
+    if (next >= beat.rounds) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong) }
+    else {
+      setChapterResume(learnerId, beat.skillId, {
+        round: next, correct: tally.current.correct, wrong: tally.current.wrong,
+        seen: [...seen.current], asked: asked.current,
+      })
+      setPhase('play'); setRoundIdx(next)
+    }
+  }, [roundIdx, beat, onComplete, learnerId])
 
   return (
     <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
@@ -267,12 +297,17 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
         </>
       )}
       {/* The task is shown AND spoken. Tapping replays Milo's voice — a tap is a
-          user gesture, so it reliably plays even if autoplay was blocked. */}
+          user gesture, so it reliably plays even if autoplay was blocked.
+          ⚠️ THE SPEAKER IS THE WHOLE POINT OF THE ICON. This has always been a button with an
+          `aria-label` of "Hear it again" and nothing visible to say so, so it read as a label and
+          a student asked for the repeat button that was already there. An affordance nobody can
+          see is an affordance nobody has. */}
       {(phase === 'play' || phase === 'feedback') && beat.prompt(data).trim() && (
         <button onClick={() => speak((beat.say ?? beat.prompt)(data))} aria-label="Hear it again"
           style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
             fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)',
             background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '8px 20px', textAlign: 'center', boxShadow: '0 4px 0 rgba(242,107,44,.25)' }}>
+          <span aria-hidden style={{ fontSize: 22, lineHeight: 1 }}>🔊</span>
           <span>{beat.prompt(data)}</span>
         </button>
       )}

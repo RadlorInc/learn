@@ -1010,7 +1010,7 @@ export default function SliceShop({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'fractions', phase: 'practice' })
   const [gIdx, setGIdx] = useState(0)
   const [slot, setSlot] = useState(0)
   const { w: vw, h: vh } = useViewport()

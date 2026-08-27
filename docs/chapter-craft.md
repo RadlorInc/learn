@@ -532,6 +532,20 @@ words contradicting the picture on the beat they are reading. Clear it when a re
 **AND A TAP THAT DOES NOTHING AT ALL IS THE WORST OUTCOME THERE IS.** Worse than a wrong answer: a
 wrong answer at least tells the child the game is listening.
 
+⚠️⚠️ **A COMMIT BUTTON IN A RETRY-IN-PLACE CHAPTER MUST GATE THE *SUBMISSION*, NEVER THE *GRADING* —
+otherwise it is an oracle AND it cannot change an outcome.** Every 3–5 chapter is retry-in-place: a
+wrong tap sets `erred` and the child goes again, and the round only ends once they are right. So a
+"Ready" that held the GRADE back could only ever be pressed on a correct answer — its mere
+appearance would say *that one is right*, which is this file's oldest rule, and it could never alter
+the score, which makes it ceremony. The shape that works is **a tap CHOOSES (marked neutrally, and
+re-tappable to unchoose) and Ready SUBMITS**: the control appears for any choice, right or wrong, so
+it tells the child nothing, and the wrong answer it submits is still marked wrong and still retried.
+⚠️ **Mark the choice in a colour that is not the verdict colour** — green means correct everywhere in
+this app — and **mark it with a `boxShadow` ring rather than a transform**, because nearly every
+answer here is positioned with an inline `translate(-50%,-100%)` that a lift would overwrite.
+⚠️ And where the child BUILDS the answer (coins, digits, clock hands, tiles) the chapter already has
+this and its control keeps its own words: you *Pay* a shopkeeper, you do not *Ready* him.
+
 ⚠️ **THE COMMONEST WAY TO BUILD ONE IS A COMMIT GATED ON A FIXED LENGTH.** FitOut's number pad is
 `windows={2}` with `if (digits.length < 2) return` and `disabled={digits.length < windows}` — three
 independent gates all assuming a two-digit answer. But `answer = rows × per` with both from
@@ -993,6 +1007,16 @@ to draw. The "draw from the ink box, not the file box" rule, applied to a code-d
   `SkillBeat` and look perfectly correct — the fault appears only once the first SCORED round loads.
   `Critter` has been `position: fixed` for exactly this reason. Generalise: **verify a chapter in its
   scored rounds, not only in its demo** — they do not share a containing block.
+- ⚠️⚠️ **AND `position: fixed` IS NOT FIXED INSIDE A TRANSFORMED ANCESTOR — IT SILENTLY BECOMES
+  ABSOLUTE, MEASURED FROM THAT ANCESTOR'S BOX.** A `transform` (even `translateX(-50%)`) makes an
+  element the containing block for every `fixed` DESCENDANT, so a bottom-anchored control nested
+  inside a centred row is drawn from the ROW rather than from the viewport. Measured at 640×320
+  when the Ready bar was added: nested inside NumberTown's answer row — which carries
+  `transform: translateY(-50%)` — the bar rendered at y 189–236 **across the middle door, which on
+  that round was the right answer**; lifted out to be the row's SIBLING it sits at 263–310, clear.
+  The same nesting was in the counting chapter's centred bottom stack. **A screen-anchored layer is
+  a sibling of the world, never a child of a positioned part of it** — and nothing but crossing the
+  rendered boxes can see it, because every element involved is individually correct.
 - ⚠️ **A PROP THAT IS ABOUT TO MOVE HAS TO BE ON SCREEN WHILE THE CHILD IS DECIDING.** A thing
   parked just off-frame "ready to go" does not exist yet — the round opens on an empty stage, and
   the object the whole gesture is about only appears as a consequence of the answer, which is the
@@ -2104,6 +2128,16 @@ count the matches.
   the hand to stack 0 passed it. Same family as the clamp tautology: **choose fixture values where
   the wrong implementation gives a different answer**, which usually means not index 0, not the
   first element, and not a value that coincides with the default.
+- ⚠️⚠️ **A BLIND DRIVER MUST NOT PRESS THE CONTROL IT IS TRYING TO MEASURE.** The Ready-bar sweep
+  clicks whatever moves a chapter forward until the commit appears — and with the commit left in
+  that rotation it pressed it, submitted the answer, watched the bar vanish and reported *"never
+  reached a commit control"* on two chapters whose bars were perfect. **A driver that can destroy
+  the state it is looking for produces a red that describes the driver**, and a red nobody can act
+  on is spent the same way a false green is. Exclude the target from the candidates.
+  ⚠️ **And check the door you are knocking on is the one that chapter has.** The same sweep sent
+  `?e2e=practice` to the counting chapter, which runs on `ForestWalk` — a LIST OF BEATS with no
+  Phase union, reading `?skip` and ignoring `?e2e` entirely — so it spent its whole budget on a
+  self-paced walk and failed about a working bar. Two engines, two door handles.
 - **The sweep must call the SAME layout function the scene renders from.** Chapter 4's sweep
   re-implements its sizing chain inside the test, so the check can agree with its own copy of the
   constants while the screen it protects falls apart. Chapters 9–10 export `playLayout` and the test

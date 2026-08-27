@@ -35,6 +35,7 @@ import { rint, shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -407,6 +408,7 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
   const [s, setS] = useState<StageState>(empty)
   const [asking, setAsking] = useState(false)
   const [picked, setPicked] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false)
   const set = (patch: Partial<StageState>) => setS(prev => ({ ...prev, ...patch }))
 
@@ -422,6 +424,18 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
     return () => T.forEach(id => window.clearTimeout(id))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /** A tap only CHOOSES; nothing is graded and nothing counts out until Ready. */
+  function pick(n: number) {
+    if (done.current || picked !== null || !asking) return
+    setPending(p => (p === n ? null : n))
+  }
+  function commit() {
+    const n = pending
+    if (n == null) return
+    setPending(null)
+    choose(n)
+  }
 
   function choose(n: number) {
     if (done.current || picked !== null || !asking) return
@@ -462,11 +476,13 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
         {choices.map(n => {
           const isPick = picked === n, isOk = n === answer
           return (
-            <button key={n} onClick={() => choose(n)} disabled={picked !== null} style={{
+            <button key={n} onClick={() => pick(n)} disabled={picked !== null} style={{
               width: btn, height: btn, borderRadius: Math.round(btn * 0.2),
               background: (isPick && isOk) ? 'var(--garden-green-soft)' : 'var(--paper)',
               border: `4px solid ${(isPick && isOk) ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`,
-              boxShadow: `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`,
+              boxShadow: pending === n
+                ? `${PICKED_RING}, 0 6px 0 #c8ac79`
+                : `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`,
               fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.42), color: 'var(--ink)',
               cursor: picked !== null ? 'default' : 'pointer', transform: (isPick && isOk) ? 'scale(1.08) translateY(-3px)' : 'scale(1)',
               transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease',
@@ -474,6 +490,14 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
           )
         })}
       </div>
+      {/* ⚠️ BESIDE THE CHIPS, NOT ABOVE THEM, AND THAT WAS A MEASUREMENT RATHER THAN A CHOICE.
+          Above the row is the `n × n = ?` readout: driven at 640×320, a centred bar came out at
+          y 190–237 against a readout at 193–235 and covered it completely, and the gap between the
+          readout and the chips is 14px against a 47px bar — there is no room in that column. The
+          chips span x 212–428 of a 640 frame, so the bar shares THEIR band and sits to the right of
+          them, which is empty in every chapter here (Milo owns bottom-LEFT). */}
+      <ReadyBar show={pending !== null} onCommit={commit} align="right"
+        bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%'} />
     </>
   )
 }
@@ -545,7 +569,7 @@ export default function MarketDay({ onFinish, onExit }: {
   const needsRotate = useNeedsRotate()
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<MultWorld>(SETTINGS[0])
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'multiplication', phase: 'practice' })
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

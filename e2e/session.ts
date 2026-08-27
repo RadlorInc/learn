@@ -33,3 +33,21 @@ export async function seedSession(page: Page) {
     }))
   })
 }
+
+/**
+ * Seed the ACTIVE LEARNER as well as the session.
+ *
+ * ⚠️ TWO DIFFERENT STORES, AND ONLY ONE OF THEM IS THE SESSION. `seedSession` writes `milo-auth`
+ * (localStorage, supabase-js), which is what the camera guard asks about. Everything keyed PER
+ * CHILD — the difficulty memory, and now the mid-chapter resume — reads `getActiveLearner()`, which
+ * is `milo_active_learner` in sessionStorage and is set when a parent picks a child. Seed only the
+ * first and `learnerId` is null, so every per-learner store silently no-ops and a resume test would
+ * pass against a chapter that never stored anything.
+ *
+ * Only `id` is read by those stores, so only `id` is promised here.
+ */
+export async function seedLearner(page: Page, id = 'e2e-learner-1') {
+  await page.addInitScript((learnerId: string) => {
+    sessionStorage.setItem('milo_active_learner', JSON.stringify({ id: learnerId, name: 'E2E', age_group: '6-8' }))
+  }, id)
+}
