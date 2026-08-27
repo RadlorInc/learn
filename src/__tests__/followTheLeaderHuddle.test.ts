@@ -140,22 +140,33 @@ describe('Follow the Leader — the line behind mother is evenly spaced for EVER
     expect(bad.join('\n')).toBe('')
   })
 
-  it('the rabbit — the one the founder approved — is left exactly as it was', () => {
-    // ⚠️ A REGRESSION GUARD POINTING THE OTHER WAY. The fix caps the in-line scale, and a cap that
-    // binds on the creature that already looked right would be a fix that broke the good case to
-    // rescue the bad ones.
-    for (const [vw, vh] of SIZES) for (const n of COUNTS) {
-      const L = lineLayout(vw, vh, n, 0)   // cast index 0 is the rabbit
+  it('the rabbit — the one the founder approved — is drawn at the FULL in-line scale', () => {
+    /**
+     * ⚠️ A REGRESSION GUARD POINTING THE OTHER WAY: the fix CAPS the in-line scale, and a cap that
+     * binds on the creature that already looked right would have broken the good case to rescue the
+     * bad ones. The rabbit is narrow, so at a roomy viewport nothing should bind and it should be
+     * drawn at the uncapped `LINE_SCALE`.
+     *
+     * ⚠️⚠️ THE FIRST VERSION OF THIS WAS A TAUTOLOGY, AND IT IS WORTH LEAVING THE NOTE. It read
+     * `expect(L.lineScale).toBeCloseTo(Math.min(0.78, L.lineScale))` — and since the scale is a
+     * `Math.min(0.78, …)` by construction, that compares a value with itself and passes for ANY
+     * implementation, including one that draws the rabbit at 0.1. Found by re-reading the file
+     * rather than by any run, because a tautology's green is indistinguishable from a real one.
+     */
+    for (const n of COUNTS) {
+      const L = lineLayout(1280, 720, n, 0)   // cast index 0 is the rabbit
       expect(L.kind.little).toBe('bunny')
-      expect(L.lineScale, `${vw}x${vh} n=${n}: the rabbit's in-line scale moved`).toBeCloseTo(Math.min(0.78, L.lineScale), 5)
-      expect(L.lineScale).toBeGreaterThan(0.6)
+      expect(lineSpot(0, L).scale, `n=${n}: the rabbit's in-line scale moved`).toBeCloseTo(0.78, 5)
     }
+    // …and the assertion is not vacuous: a WIDE creature at the same size IS capped below it.
+    const wide = lineLayout(1280, 720, 5, CAST.findIndex(c => c.little === 'ladybug'))
+    expect(lineSpot(0, wide).scale).toBeLessThan(0.78)
   })
 
   it('the in-line scale never shrinks a creature past legibility', () => {
     for (const { vw, vh, n, castIdx, L } of sweep()) {
       // The number tag has its own 24px floor; this is about the CREATURE still reading as itself.
-      const drawn = L.babySize * L.lineScale
+      const drawn = L.babySize * lineSpot(0, L).scale
       expect(drawn, `${vw}x${vh} n=${n} ${CAST[castIdx].little}`).toBeGreaterThanOrEqual(24)
     }
   })
@@ -215,7 +226,7 @@ describe('Follow the Leader — the first little one is beside mother, not insid
       const L = lineLayout(vw, vh, n, ci)
       const a = aspectOf(L.kind.src)
       const half = (scale: number) => (L.babySize * scale * a / 2) / vw * 100
-      const childHalf = half(L.lineScale)
+      const childHalf = half(lineSpot(0, L).scale)
       return (half(MOTHER_SCALE) + childHalf - 9) / (childHalf * 2)   // 9 = the old flat head gap
     }))
     expect(worstBefore, 'with the old flat gap nothing was buried — the bound proves nothing').toBeGreaterThan(0.23)
@@ -228,7 +239,10 @@ describe('Follow the Leader — the first little one is beside mother, not insid
     for (const n of COUNTS) {
       const L = lineLayout(1280, 720, n, 0)
       expect(L.kind.little).toBe('bunny')
-      expect(L.headGap, `n=${n}: the rabbit's head gap moved`).toBeCloseTo(9, 5)
+      // ⚠️ Read off the DRAWN position — `mx` minus where the first little one really stands — not
+      // off the layout's reported `headGap`. Same reason as everything else in this file: the
+      // report and the drawing are two different things, and only one of them is on screen.
+      expect(L.mx - lineSpot(0, L).left, `n=${n}: the rabbit's head gap moved`).toBeCloseTo(9, 5)
     }
   })
 
