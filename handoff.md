@@ -157,6 +157,73 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🐇 **2026-08-27 — THE LINE BEHIND MOTHER WAS EVENLY SPACED FOR EXACTLY ONE SPECIES, AND THREE ROUNDS OF MUTATION EACH FOUND A HOLE IN MY OWN CHECKING — INCLUDING A TAUTOLOGY GUARDING THE ONE PICTURE THE FOUNDER HAD APPROVED.** `tsc` 0 · **1590/1591** (was 1584) · `next build` 0 · **10 mutations planted, 10 caught** · **PR [#65](https://github.com/RadlorInc/learn/pull/65) OPEN**, not merged.
+
+**The ask:** *"For the bunny animals, all the children bunnies are evenly spaced behind the mother,
+however for the fish, butterflies, turtles, ladybugs, and squirrels, they are randomly placed."*
+Chapter is `numberOrdering` (`story/FollowTheLeader.tsx`) — the SECOND in the 3–5 band, not the
+counting one.
+
+## ① 📏 NOTHING WAS RANDOM — THE SPACING WAS IDENTICAL, THE BODIES WERE NOT
+`LINE_GAP` steps a flat 9% of the width per place and reads as perfectly even in the source.
+**Spacing is what is LEFT AFTER THE BODIES**, and the cast's aspects run **0.81 → 1.75**, so at
+1280×720 the clearance between neighbours ran **+1.65% (butterfly, clean) to −1.07% (ant,
+overlapping)**: bunny +0.76 a queue · fish −0.11 · ladybug −0.67 · squirrel −0.71 a heap. The rabbit
+is one of the few with real clearance, which is *why* it is the one that looks right.
+
+## ② 🎚️ THE FIX MOVES THE SCALE, NOT THE SPACING — BECAUSE THE SPACING IS IN A LOOP
+Widening the gap per species makes the line LONGER, and the line's length decides the huddle's room
+(`lineRight`) → the span → `babySize` → the gap. Circular, in a file whose header promises it is
+not. Capping the **in-line scale** leaves every upstream number untouched, so the step stays a
+constant and the line is evenly spaced **by construction**; a wide creature is simply drawn further
+away, which is what the line already means. Every species now sits at the rabbit's own **0.74%**.
+
+## ③ 👩 AND THE HEAD OF THE LINE IS A DIFFERENT GAP — SAME NUMBER, DIFFERENT NEIGHBOUR
+Founder's follow-up: *"fish 1 still tucks under mother's body."* The first place sits next to
+MOTHER at 1.25× against the line's own scale — the two bodies either side of that gap differ by
+~1.7×. ⚠️ **Calibrated on the rabbit, not on zero:** animals queue nose-to-tail, the rabbit's first
+little one sits ~21% of its own body inside her, and that is the approved picture — so the rule is
+*nobody deeper in than the rabbit*, which leaves the good case untouched BY CONSTRUCTION. A
+no-overlap rule would have moved it. **17–22% now, against 8–35%.** The circularity is broken by
+running the size chain **twice**: the provisional pass always yields a size ≥ the final one, so the
+reserve is never short, and one value feeds both the reserve and the drawing.
+
+## ④ 🔬 THE INK HUNCH WAS WRONG AND MEASURING KILLED IT IN ONE PASS
+It looked like ink-vs-box (a rabbit is narrow with transparent margins, a fish is a fat oval), which
+would have meant a per-sprite ink table. Alpha bboxes across all ten walk sheets: **ink fills
+0.95–1.00 of the cell for every one.** No margin to exploit; plain geometry. Thirty seconds against
+an afternoon of building the wrong thing.
+
+## ⑤ ⚠️⚠️ FOUR ROUNDS, EACH FINDING A HOLE IN MY OWN CHECKING — THE LAST ONE FOUND BY READING
+1. `lineSpot(k, w, mx, scale, headGap)`: a `scale =` DEFAULT let a caller restore the overlapping
+   line; with the default gone, passing `LINE_GAP` where `headGap` belonged restored the buried one.
+   **Both type-checked, both green.** It takes the whole layout now — `lineSpot(k, L)` — so there is
+   nothing left to hand over wrongly.
+2. The checks recomputed geometry from the layout's REPORTED values, so *"draws at the flat gap"*
+   and *"draws at a flat scale"* both survived: a gate re-implementing the rule it guards.
+3. The reserve-vs-tail check compared a value with itself.
+4. ⚠️⚠️ **AND THE CHECK PROTECTING THE RABBIT WAS A TAUTOLOGY:**
+   `expect(L.lineScale).toBeCloseTo(Math.min(0.78, L.lineScale))` — and `lineScale` IS a
+   `Math.min(0.78, …)`, so it compared a value with itself and would have passed on an
+   implementation drawing the rabbit at a tenth of its size. **Found by re-reading the file to
+   verify a claim, not by any run** — a tautology's green is indistinguishable from a real one.
+   **No assertion in the file now reads `L.lineScale` or `L.headGap`**; every number comes out of
+   `lineSpot(k, L)`. Three of the ten mutations (rabbit shrunk · line drawn tiny · line drawn on top
+   of mother) would have SURVIVED the file as it stood two commits earlier.
+
+## ▶ OPEN
+1. ⏸️ **PR [#65](https://github.com/RadlorInc/learn/pull/65) IS OPEN** — three commits, CI not yet
+   read at the time of writing. ⚠️ **It touches `handoff.md`, and so does PR
+   [#64](https://github.com/RadlorInc/learn/pull/64) (Stage 3), which also ARCHIVES the Stage-1
+   block. Whichever merges second will conflict on this file — both are insertions, so the
+   resolution is to keep both blocks.**
+2. ⚠️ **What was NOT changed, deliberately:** the waiting huddle's scatter. That jitter is a
+   documented craft decision (*"a group is a huddle, not a queue"*) and evenly spacing it would
+   reverse it. If the scatter is what reads as random rather than the line, say so.
+3. ⏭️ **The same bare-constant shape is next door and untouched:** `clusterSpot` in `critters.tsx`
+   (chapter 4's gathered group) spaces by a fixed `colPct` at a fixed `scale: 0.8`, with the same
+   cast. Not measured, not fixed — flagged because it is the same fault waiting in the same file.
+
 > 💳 **2026-08-25 (third pass) — STAGE 2b: THE PRICE LADDER, THE PRODUCTS, CHECKOUT AND THE WEBHOOK. TEST MODE ONLY, ENFORCED BY A THROW RATHER THAN BY A RULE SOMEBODY REMEMBERS. ⚠️⚠️ AND I REPORTED A DEFECT I HAD NOT MEASURED: THE SUITE WAS HALF A CHECK, THE SYSTEM WAS FINE.** `tsc` 0 · **1579/1580** (was 1535) · `next build` 0 · **17 mutations planted, 17 caught** · **`ci / rls-tests` reported `RLS_ASSERTIONS=74`** (73 → 74). **NOT applied, NOT merged.**
 
 **The ask:** the confirmed amounts, *"record them in a constants module first"*, then **Stage 2b — products, checkout, webhook. Test mode only, as specced.**
