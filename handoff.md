@@ -157,7 +157,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 🎓 **2026-08-27 (second pass) — A STUDENT'S FOUR-POINT REVIEW, ALL FOUR ACTED ON: THE RUN NOW RESUMES (AND STOPS DESTROYING THE SCORE), MILO PRAISES A RIGHT ANSWER, THE REPLAY BUTTON IS VISIBLE AT LAST, AND EVERY STORYBOOK CHAPTER HAS A COMMIT STEP. ⚠️ TWO REAL COLLISIONS FOUND BY DRIVING IT, ONE OF THEM A `position: fixed` SILENTLY TURNED ABSOLUTE BY AN ANCESTOR'S `transform`.** `tsc` 0 · **1635/1636** (was 1590) · `next build` 0 · `ready-bar.spec.ts` **17/17** · `chapter-resume.spec.ts` **2/2** · **33 mutations planted, 33 caught** · sw **v146**.
+> 🎓 **2026-08-27 (second pass) — A STUDENT'S FOUR-POINT REVIEW, ALL FOUR ACTED ON: THE RUN NOW RESUMES (AND STOPS DESTROYING THE SCORE), MILO PRAISES A RIGHT ANSWER, THE REPLAY BUTTON IS VISIBLE AT LAST, AND EVERY STORYBOOK CHAPTER HAS A COMMIT STEP. ⚠️ TWO REAL COLLISIONS FOUND BY DRIVING IT, ONE OF THEM A `position: fixed` SILENTLY TURNED ABSOLUTE BY AN ANCESTOR'S `transform`.** `tsc` 0 · **1635/1636** (was 1590) · `next build` 0 · `ready-bar.spec.ts` **18/18** · `chapter-resume.spec.ts` **2/2** · **36 mutations planted, 36 caught** · sw **v147**.
 
 **The review** (a student, on the 3–5 band): ① the line behind mother looks random for every species but the rabbit · ② sharpen the instructions, praise a right answer, add a repeat button and subtitles · ③ the Ready option should be in every game · ④ *"none of my progress saved and I had to restart"*. ⚠️ **The chapter numbering in the report is off**: ① is chapter **2** (`FollowTheLeader`), the feeding-nest game is chapter **3** (`NestTree`).
 
@@ -223,17 +223,22 @@ child's paint goes ON the picture and can be painted over until Ready. The LESSO
 - **The world picker fits** — its card was `clamp(200px,26vw,300px)`, width-derived with no `vh`
   term, so the 200px minimum won at 640×320 and forced a second row off the bottom.
   `min(26vw,40vh)` keeps desktop at 288 and lets a short frame shrink instead of wrapping.
-- **Committed**, sw bumped to **v146**.
+- **The prompt pill no longer eats the colouring page.** `SkillBeat`'s pill is a real `<button>`,
+  fine everywhere the answers sit in a band it does not use and a DEAD PATCH over a picture that
+  fills the frame: measured at 640×320 it spanned x 181–459, y 48–93 against a balloon at
+  x 415–490, y 15–120, so a tap at the centre of the answer hit the pill. RainbowTown sets
+  `prompt: () => ''`, draws its own `pointerEvents: none` banner and puts the 🔊 beside Menu.
+  `elementFromPoint` at the question's centre now returns the CANVAS, and that is the gate.
+  ⚠️ It also broke a shared anchor: `storybook-pills` identified SkillBeat's pill by
+  `aria-label="Hear it again"` alone, and the chapter's own bare 🔊 carries the same label — so the
+  spec read it as a duplicate. It matches on the pill CARRYING THE QUESTION now.
+- **Committed**, sw bumped to **v147**.
 
 ## ▶ OPEN
 1. ⚠️ **ON ITS OWN BRANCH, ON TOP OF PR [#65](https://github.com/RadlorInc/learn/pull/65).** The
    line-spacing commits are ancestors, because `FollowTheLeader.tsx` carries both changes and they
    cannot be separated by file. Merge #65 first and this rebases to nothing.
-2. ⚠️ **A REAL OVERLAP FOUND WHILE FIXING THE DRIVER, NOT YET FIXED:** in RainbowTown at 640×320 the
-   prompt pill (x 181–459, y 48–93) covers the middle of the balloon (x 415–490, y 15–120), so a
-   child aiming at the centre of that answer hits the pill instead. Playable — the balloon's top and
-   bottom are clear — and pre-existing. It is why the canvas grid had to get denser.
-3. ⏭️ Untouched and the same shape as ①: `clusterSpot` in `critters.tsx` (chapter 4's gathered group).
+2. ⏭️ Untouched and the same shape as ①: `clusterSpot` in `critters.tsx` (chapter 4's gathered group).
 
 > 🐇 **2026-08-27 — THE LINE BEHIND MOTHER WAS EVENLY SPACED FOR EXACTLY ONE SPECIES, AND THREE ROUNDS OF MUTATION EACH FOUND A HOLE IN MY OWN CHECKING — INCLUDING A TAUTOLOGY GUARDING THE ONE PICTURE THE FOUNDER HAD APPROVED.** `tsc` 0 · **1590/1591** (was 1584) · `next build` 0 · **10 mutations planted, 10 caught** · **PR [#65](https://github.com/RadlorInc/learn/pull/65) OPEN**, not merged.
 

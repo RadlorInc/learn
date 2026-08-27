@@ -39,6 +39,24 @@ const KEYS = [
 
 const PILL = 'button[aria-label="Hear it again"]'
 
+/**
+ * How many of those buttons are actually SKILLBEAT'S PROMPT PILL.
+ *
+ * ⚠️ THE ARIA-LABEL ALONE STOPPED BEING A UNIQUE ANCHOR ON 2026-08-28. A chapter may now carry a
+ * replay control of its OWN — RainbowTown puts a bare 🔊 in its chrome, because its question has to
+ * be pointer-transparent over a colouring page and a transparent button cannot be tapped — and that
+ * is not a pill. Counted by label alone, this spec read that chip as "SkillBeat drew a pill" and
+ * failed the chapter for a duplicate that does not exist.
+ *
+ * What makes SkillBeat's pill a PILL is that it CARRIES THE QUESTION, so that is what is matched:
+ * a replay button with real words in it, not just a speaker glyph. A property of the thing, not a
+ * test hook bolted onto it.
+ */
+async function promptPills(page: Page): Promise<number> {
+  return page.locator(PILL).evaluateAll(els =>
+    els.filter(e => (e.textContent || '').replace(/[^A-Za-z0-9]/g, '').length > 2).length)
+}
+
 /** How many chapters this worker actually got into a scored round. See the afterAll below. */
 const tally = { reached: [] as string[], ownPill: [] as string[], skipped: [] as string[] }
 
@@ -57,7 +75,7 @@ async function reachRound(page: Page, budgetMs = 120_000): Promise<boolean> {
    */
   let tick = 0
   while (Date.now() < deadline) {
-    if (await page.locator(PILL).count()) return true
+    if (await promptPills(page)) return true
 
     const candidates: Array<{ click: () => Promise<void>; forward: boolean }> = []
     for (const b of await page.locator('button:not([disabled])').all()) {
@@ -120,7 +138,10 @@ const SCORED_PHASE: Record<string, string> = { rainbow: 'test' }
  * `storybookQuestions.test.ts` checks `BANNER_OWNED`: a chapter joining or leaving it fails, and
  * somebody looks at why.
  */
-const OWN_PILL = new Set(['time', 'fractions', 'bignum', 'round', 'skip'])
+// ⚠️ `rainbow` JOINED 2026-08-28. Its answer surface is a colouring page that fills the frame, so
+// SkillBeat's pill — a real button — lay across the picture and swallowed taps aimed at the
+// thing being coloured; the chapter draws its own `pointerEvents: none` banner instead.
+const OWN_PILL = new Set(['time', 'fractions', 'bignum', 'round', 'skip', 'rainbow'])
 
 for (const key of KEYS) {
   test(`${key}: the question is on screen exactly once`, async ({ page }) => {
@@ -169,7 +190,7 @@ for (const key of KEYS) {
       // It must still have opened a scored round; it just draws the question itself.
       const live = await page.locator('button, [role="button"]').first().isVisible().catch(() => false)
       expect(live, `${key}: nothing operable on screen at its scored phase`).toBe(true)
-      expect(await page.locator(PILL).count(), `${key} is in OWN_PILL, so SkillBeat must draw NO pill — it drew one. Either the chapter gained a beat prompt (and now has two) or the list is stale.`).toBe(0)
+      expect(await promptPills(page), `${key} is in OWN_PILL, so SkillBeat must draw NO pill — it drew one. Either the chapter gained a beat prompt (and now has two) or the list is stale.`).toBe(0)
       tally.ownPill.push(key)
       return
     }
