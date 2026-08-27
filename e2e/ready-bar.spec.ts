@@ -212,6 +212,42 @@ test.beforeEach(async ({ page }) => { await page.setViewportSize(FRAME) })
     })
   }
 
+  /**
+   * ⚠️ THE QUESTION MUST NOT SWALLOW TAPS ON THE PICTURE. RainbowTown's answer surface is a
+   * colouring page that fills the frame, so anything drawn over it with pointer events is a dead
+   * patch of picture. `SkillBeat`'s prompt pill is a real `<button>` and was exactly that:
+   * measured at 640×320 it spanned x 181–459, y 48–93 while the balloon that round asks for spans
+   * x 415–490, y 15–120, so a child aiming at the middle of the answer hit the pill and nothing
+   * coloured. The chapter draws its own `pointerEvents: none` banner now.
+   *
+   * Asserted with `elementFromPoint` at the banner's own centre, because that is the question a
+   * finger asks: what is actually under this pixel?
+   */
+  test('rainbow — the question is drawn over the picture without blocking it', async ({ page }) => {
+    await page.goto('/story?ch=rainbow&e2e=test')
+    await page.waitForTimeout(2500)
+    const probe = await page.evaluate(() => {
+      const banner = [...document.querySelectorAll('div')]
+        .filter(e => !e.children.length && /^Colour the /.test((e.textContent || '').trim()))
+        .map(e => e.getBoundingClientRect())[0]
+      if (!banner) return { found: false as const }
+      const x = banner.left + banner.width / 2, y = banner.top + banner.height / 2
+      const hit = document.elementFromPoint(x, y)
+      return {
+        found: true as const,
+        under: hit ? hit.tagName : 'nothing',
+        replay: !!document.querySelector('button[aria-label="Hear it again"]'),
+        banner: { x: Math.round(banner.left), y: Math.round(banner.top), w: Math.round(banner.width), h: Math.round(banner.height) },
+      }
+    })
+    expect(probe.found, 'the question is not on screen at all — this check would pass on a blank page').toBe(true)
+    if (!probe.found) return
+    expect(probe.under, `a tap at the centre of the question lands on a ${probe.under}, not the picture — the question is a dead patch of colouring page`).toBe('CANVAS')
+    // And the replay it used to carry has to still exist somewhere, or fixing the dead patch cost
+    // the child the only way to hear the colour again.
+    expect(probe.replay, 'the "Hear it again" control disappeared with the pill').toBe(true)
+  })
+
   test('every converted chapter is driven, and the exemption list is empty', () => {
     expect(NOT_DRIVABLE, 'a chapter was exempted — see the note above before allowing it').toEqual([])
     expect(CHAPTERS.length + NOT_DRIVABLE.length, 'a converted chapter is in neither list').toBe(13)

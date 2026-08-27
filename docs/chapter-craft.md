@@ -1905,6 +1905,21 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   through the picture — the colouring chapter's sky could not be tapped where the banner crossed it.
   Give the class the passthrough and its real buttons their events back
   (`.x{pointer-events:none} .x button{pointer-events:auto}`).
+  ⚠️⚠️ **AND THE OVERLAY IS OFTEN NOT ONE THE CHAPTER DRAWS.** `SkillBeat`'s prompt pill is a real
+  `<button>` — tap it to hear the question again — which is right in every chapter whose answers sit
+  in a band the pill does not use, and is a DEAD PATCH in one whose answer surface fills the frame.
+  Measured on the colouring chapter at 640×320: the pill spans x 181–459, y 48–93 and the balloon
+  that page asks for spans x 415–490, y 15–120, so a child aiming at the middle of the answer hit
+  the pill and nothing coloured. The chapter had already learned this for its OWN banner and carries
+  a comment saying so; it came back through a control it does not own. **Where the answers fill the
+  frame, the chapter sets `prompt: () => ''`, draws its own pointer-transparent question, and moves
+  the replay into the chrome** — a small button in a corner that already has one costs no NEW dead
+  area. ⚠️ Then check what the corner chip lands on too: it is the same fault, smaller.
+  ⚠️ **And a shared anchor can break when you do this.** `e2e/storybook-pills.spec.ts` identified
+  SkillBeat's pill by `aria-label="Hear it again"` alone; a chapter's own bare 🔊 carries the same
+  label, so the spec read it as a duplicate pill and failed a chapter that was correct. Anchor on
+  what makes the thing that thing — the pill CARRIES THE QUESTION — not on a label two controls can
+  share.
 - **Never bump a React `key` to restart an animation.** It remounts the subtree, and anything
   imperative in there — a canvas, a scroll position, a media element — is destroyed with it. In the
   colouring chapter one wrong answer wiped every colour the child had put down. Use

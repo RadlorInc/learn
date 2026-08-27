@@ -627,7 +627,23 @@ export default function RainbowTown({ onFinish, onExit }: {
     skillId: 'colors', rounds: SCORED_ROUNDS,
     make: (d, round = 0) => makeColorRound(page, (d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.seq}`,   // one question per named area; the shuffled pot order is not variety
-    prompt: d => promptFor(page, d),
+    /**
+     * ⚠️ EMPTY ON PURPOSE — THIS CHAPTER DRAWS ITS OWN QUESTION, AND IT HAS TO.
+     *
+     * `SkillBeat`'s prompt pill is a real `<button>` (tap to hear it again), and in every other
+     * chapter that is right: it sits in a band the answers do not use. Here the answer surface is a
+     * colouring page that fills the whole frame, so the pill lies ACROSS the picture and swallows
+     * every tap underneath it. Measured at 640×320: the pill spans x 181–459, y 48–93 and the
+     * balloon this page asks for spans x 415–490, y 15–120 — so a child aiming at the middle of the
+     * answer hit the pill and the balloon never coloured.
+     *
+     * That is the same fault this file's own `Banner` comment already records for the LESSON
+     * banner, arriving in the scored half through a control the chapter does not own. The banner
+     * below is `pointerEvents: none`, so the question is still on screen and the picture is whole;
+     * the replay moved into the top chrome, beside Menu, where a small overlay is already accepted.
+     * ⚠️ `say` is untouched — SkillBeat still SPEAKS the round, it just draws nothing.
+     */
+    prompt: () => '',
     say: d => sayFor(page, d),
     Play: ({ onSubmit }) => <Register onSubmit={onSubmit} register={register} />,
     Reteach: ({ data, onDone }) => (
@@ -678,8 +694,16 @@ export default function RainbowTown({ onFinish, onExit }: {
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', mixBlendMode: 'multiply', pointerEvents: 'none' }} />
       </div>
 
-      <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
+      <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50, display: 'flex', alignItems: 'center', gap: 8 }}>
         <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        {/* The replay SkillBeat's pill used to carry. It lives here rather than over the picture:
+            this corner already has the Menu button on it, so it costs no NEW dead area, and the
+            question is spoken and never written in full on the page — a child who missed it had
+            nothing to do but guess. */}
+        {phase === 'test' && target && (
+          <button aria-label="Hear it again" onClick={() => speak(sayFor(page, { seq: stepIdx, pots }))}
+            style={{ minWidth: 44, minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: '0 10px' }}>🔊</button>
+        )}
       </div>
 
       {/* One button on the open page — no explaining card, no picker. It exists only to carry the
@@ -704,6 +728,9 @@ export default function RainbowTown({ onFinish, onExit }: {
       <ReadyBar show={phase === 'test' && pendingPaint !== null} onCommit={commitPaint} label="Done ✓" align="right" />
 
       {phase === 'teach' && target && Banner(`${stepIdx + 1} of ${TEACH_STEPS} · This is ${COLORS[target.color].label.toUpperCase()}`)}
+
+      {/* The scored question, in the chapter's own PASS-THROUGH banner — see the beat's `prompt`. */}
+      {phase === 'test' && target && Banner(promptFor(page, { seq: stepIdx, pots }))}
 
       {/* SKIP THE LESSON — and only ever for a child who has already been through it. Offered on the
           first run it is just a big button a three-year-old presses to leave the teaching, and then
