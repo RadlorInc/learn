@@ -87,6 +87,43 @@ interface LineRound { scene: string; nums: number[]; castIdx: number }
 const MOTHER_X = 94          // where mother stands if she fits; pulled left when she does not
 const LINE_GAP = 9
 const MOTHER_SCALE = 1.25
+/** How big a little one is drawn once it is IN LINE — further away than the waiting huddle, so
+ *  smaller. A CEILING now rather than a constant; see `lineScale`. */
+const LINE_SCALE = 0.78
+
+/**
+ * ⚠️⚠️ THE GAP IS FIXED AND THE BODIES ARE NOT, SO THE LINE WAS EVENLY SPACED FOR EXACTLY ONE
+ * SPECIES. `LINE_GAP` is 9% of the width for everybody, and the cast's aspects run from 0.81
+ * (rabbit) to 1.75 (shark) — so measured at 1280x720 with five little ones, the clearance between
+ * neighbouring BODIES ran from **+1.65% (butterfly, a clean gap) to −1.07% (ant, overlapping)**:
+ *
+ *     bunny  8.24% wide → +0.76  a queue        fish     9.11% → −0.11  a heap
+ *     turtle 8.86% wide → +0.14  touching       squirrel 9.71% → −0.71  a heap
+ *                                               ladybug  9.67% → −0.67  a heap
+ *
+ * The founder saw exactly that and named it: *"for the bunny the children are evenly spaced behind
+ * the mother; for the fish, butterflies, turtles, ladybugs and squirrels they are randomly placed."*
+ * Nothing was random — the spacing was identical. What differed was how much of it each body ate,
+ * and a queue whose members overlap does not read as a queue at all.
+ *
+ * ⚠️ THE FIX IS TO MEASURE THE GAP OFF THE SPRITE, WHICH IS THIS FILE'S OWN RULE ONE LEVEL DOWN:
+ * `leadX` already pulls mother back by her own half-width, `edgePct` already bounds the huddle by
+ * the sprite's own width, and `huddleRows` already counts rows from it. The LINE was the one place
+ * left holding a bare number.
+ *
+ * ⚠️ AND IT MOVES THE SCALE, NOT THE SPACING — deliberately, and it is the whole reason this is a
+ * two-line change rather than a rewrite. Widening the gap per species would make the line LONGER
+ * for a wide creature, and the line's length is what decides how much room the waiting huddle has
+ * (`lineRight`), which decides the span, which decides `babySize` — so the gap would depend on the
+ * size that depends on the gap. Capping the in-line SCALE instead leaves every one of those
+ * upstream numbers untouched: the step stays a constant 9%, so the line is evenly spaced BY
+ * CONSTRUCTION for every species, and a wide creature is simply drawn a little further away.
+ */
+const LINE_CLEAR = 1.09   // gap ÷ body. The rabbit's own ratio today — the one the founder likes.
+export function lineScale(babySize: number, aspect: number, vw: number): number {
+  const room = (LINE_GAP / LINE_CLEAR) / 100 * vw     // px a body may occupy between two steps
+  return Math.min(LINE_SCALE, room / Math.max(1, babySize * aspect))
+}
 
 /**
  * WAITING is a huddle on the LEFT; the line forms to the RIGHT of it. That ordering is not
@@ -105,8 +142,18 @@ const MOTHER_SCALE = 1.25
  */
 const lineRight = (n: number, mx: number) => mx - LINE_GAP * n - 4
 
-function lineSpot(k: number, w: Habitat, mx = MOTHER_X): Spot {
-  return { left: mx - LINE_GAP * (k + 1), top: w.lineY, scale: 0.78 }
+/**
+ * ⚠️ `scale` IS REQUIRED, AND THE MISSING DEFAULT IS THE POINT. It used to be a literal `0.78` in
+ * here; when the fix moved it out, the obvious signature was `scale = LINE_SCALE` — and a default
+ * makes the OLD behaviour reachable by simply not passing it. Mutation-tested: with a default,
+ * reverting a call site to `lineSpot(k, band, mx)` restored the overlapping line and every check in
+ * `followTheLeaderHuddle.test.ts` stayed green, because they all drive `lineLayout`'s reported value
+ * and none of them can see how the component USES it. That is the fault this repo lost three months
+ * to on the plan pointer, in miniature. Required, it is a type error instead of a silent regression
+ * — a structure that cannot express the bug, which beats a check that catches it.
+ */
+function lineSpot(k: number, w: Habitat, mx: number, scale: number): Spot {
+  return { left: mx - LINE_GAP * (k + 1), top: w.lineY, scale }
 }
 const motherSpot = (w: Habitat, mx = MOTHER_X): Spot => ({ left: mx, top: w.lineY, scale: MOTHER_SCALE })
 
@@ -176,7 +223,8 @@ export function lineLayout(vw: number, vh: number, n: number, castIdx: number) {
   // perfectly happy to return a band a few pixels tall with both rows on the same line.
   const babySize = Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows), (slotPx / aspect) * 0.98)))
   const band: Habitat = spreadBand(fitBands(world, vh, babySize), vh, babySize, rows)
-  return { kind, world, aspect, mx, edgePct, rows, babySize, band, short, vw, vh }
+  return { kind, world, aspect, mx, edgePct, rows, babySize, band, short, vw, vh,
+    lineScale: lineScale(babySize, aspect, vw) }
 }
 
 // ─── The scene ───────────────────────────────────────────────────────────────────────
@@ -191,7 +239,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   const n = nums.length
   const sorted = useMemo(() => [...nums].sort((a, b) => a - b), [nums])
   const { w: vw, h: vh } = useViewport()
-  const { kind, world, mx, edgePct, rows, babySize, band } = lineLayout(vw, vh, n, data.castIdx)
+  const { kind, world, mx, edgePct, rows, babySize, band, lineScale: inLineScale } = lineLayout(vw, vh, n, data.castIdx)
 
   const [joined, setJoined] = useState<number[]>([])     // values already in line, in join order
   const joinedRef = useRef<number[]>([])                 // same list, readable synchronously mid-tap
@@ -230,7 +278,10 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
     // The place in the line is claimed from the REF, which updates synchronously — two quick taps
     // would otherwise read the same stale state and both walk to the same spot.
     const from = waitSpot(nums.indexOf(v), n, band, lineRight(n, mx), edgePct, rows)
-    const to = lineSpot(joinedRef.current.length, band, mx)
+    // ⚠️ THE SAME SCALE THE SPOT WILL BE DRAWN AT. `journeyOf` reads both ends, so a destination
+    // computed at a different scale is two places deciding one thing — the class this file's own
+    // layout comment exists to avoid.
+    const to = lineSpot(joinedRef.current.length, band, mx, inLineScale)
     const j = journeyOf(from, to, vw, vh, babySize, kind.src)
     joinedRef.current = [...joinedRef.current, v]
     setJoined(joinedRef.current)
@@ -316,7 +367,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
       {nums.map((v, i) => {
         const k = joined.indexOf(v)
         const inLine = k >= 0
-        const base = inLine ? lineSpot(k, band, mx) : waitSpot(i, n, band, lineRight(n, mx), edgePct, rows)
+        const base = inLine ? lineSpot(k, band, mx, inLineScale) : waitSpot(i, n, band, lineRight(n, mx), edgePct, rows)
         const at = { ...base, left: base.left + (inLine ? marchDx : 0) }
         const isTravelling = flying[v] !== undefined
         return (

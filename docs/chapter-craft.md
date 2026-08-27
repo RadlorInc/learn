@@ -1208,6 +1208,28 @@ to draw. The "draw from the ink box, not the file box" rule, applied to a code-d
   21px of clear air under a 93px duck. Out of flow and centred on the feet: 2px. **The number to
   check is the sprite's own `getBoundingClientRect().bottom` against the ground line — not the
   container's**, because the container is exactly the thing that is lying to you.
+- ⚠️⚠️ **AND A FIXED GAP BETWEEN TWO SPRITES IS ONLY EVEN FOR ONE ASPECT RATIO — SPACING IS WHAT IS
+  LEFT AFTER THE BODIES, NOT THE STEP BETWEEN THEIR CENTRES.** Chapter 2's line behind mother steps
+  a flat `LINE_GAP = 9`% of the width per place, which reads as perfectly even in the source and is
+  even for exactly one creature. The cast's aspects run **0.81 (rabbit) to 1.75 (shark)**, so
+  measured at 1280×720 with five little ones the clearance between neighbouring BODIES ran from
+  **+1.65% (butterfly, a clean gap) to −1.07% (ant, overlapping)** — bunnies queued, fish and
+  ladybugs and squirrels piled up. Founder, on a screenshot: *"for the bunny the children are evenly
+  spaced behind the mother; for the fish, butterflies, turtles, ladybugs and squirrels they are
+  randomly placed."* **Nothing was random. The spacing was identical; what differed was how much of
+  it each body ate.**
+  ⚠️ **AND WHEN THE GAP CANNOT MOVE, MOVE THE SCALE.** The obvious fix — widen the gap per species —
+  makes the line LONGER for a wide creature, and its length is what decides how much room the
+  waiting huddle gets, which decides the span, which decides the sprite size, which decides the gap.
+  A loop. Capping the in-line SCALE instead leaves every upstream number untouched: the step stays a
+  constant, so the line is evenly spaced BY CONSTRUCTION, and a wide creature is drawn a little
+  further away — which is what the line already means.
+  ⚠️ **AND A DEFAULT PARAMETER MAKES THE OLD BEHAVIOUR REACHABLE.** `lineSpot(k, w, mx, scale =
+  LINE_SCALE)` is the natural signature when a literal moves out into an argument, and it is a
+  regression waiting to happen: mutation-tested, reverting one call site to `lineSpot(k, band, mx)`
+  restored the overlapping line with **every check green**, because they all drive the layout's
+  reported value and none can see how the component USES it. Required, it is a type error. Prefer
+  the signature that cannot express the bug over the check that catches it.
 - **a boundary next to another character is measured off THAT character, never guessed.** Chapter 2
   learned this as the cut-off leader; it applies to any adjacency. Chapters 9–10 gave their set a
   flat right limit of 74% and the three widest reef creatures (fish 1.37, turtle 1.53, shark 1.75 : 1)
