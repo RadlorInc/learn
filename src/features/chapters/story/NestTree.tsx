@@ -230,9 +230,21 @@ function promptFor(w: NestWorld): string { return `Tap the nest with the number 
 export function guidedSay(w: NestWorld, target: number): string {
   return `Now you! Feed the ${w.noun} in nest number ${target}. Tap it!`
 }
+/**
+ * The scored round's spoken instruction.
+ *
+ * ⚠️ IT NAMES THE ACTION, NOT JUST THE NUMBER. It used to be *"Feed the duckling in nest number 7!
+ * Number 7."* — which says WHAT is wanted and never WHAT TO DO, and the only place the action was
+ * stated was the written prompt, on a band whose whole point is that this chapter's children cannot
+ * read. A student asked for exactly this: *"Feed the duckling in nest number 7, click on the
+ * duckling that's nest says number 7."*
+ *
+ * ⚠️ THE NUMBER IS STILL SPOKEN AND STILL NEVER WRITTEN. The skill is sound → glyph, so the target
+ * may be repeated aloud as often as it likes and may not appear in `promptFor`.
+ */
 function sayFor(w: NestWorld, d: NestRound): string {
   const t = d.nums[d.answerIdx]
-  return `Feed the ${w.noun} in nest number ${t}! Number ${t}.`
+  return `Feed the ${w.noun} in nest number ${t}. Tap the nest that says ${t}!`
 }
 
 /** Shared flight choreography: fly to the nest, feed, fly home. */

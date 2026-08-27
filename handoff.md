@@ -157,7 +157,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 🎓 **2026-08-27 (second pass) — A STUDENT'S FOUR-POINT REVIEW, ALL FOUR ACTED ON: THE RUN NOW RESUMES (AND STOPS DESTROYING THE SCORE), MILO PRAISES A RIGHT ANSWER, THE REPLAY BUTTON IS VISIBLE AT LAST, AND EVERY STORYBOOK CHAPTER HAS A COMMIT STEP. ⚠️ TWO REAL COLLISIONS FOUND BY DRIVING IT, ONE OF THEM A `position: fixed` SILENTLY TURNED ABSOLUTE BY AN ANCESTOR'S `transform`.** `tsc` 0 · **1635/1636** (was 1590) · `next build` 0 · `ready-bar.spec.ts` **18/18** · `chapter-resume.spec.ts` **2/2** · **36 mutations planted, 36 caught** · sw **v147**.
+> 🎓 **2026-08-27 (second pass) — A STUDENT'S FOUR-POINT REVIEW, ALL FOUR ACTED ON: THE RUN NOW RESUMES (AND STOPS DESTROYING THE SCORE), MILO PRAISES A RIGHT ANSWER, THE REPLAY BUTTON IS VISIBLE AT LAST, AND EVERY STORYBOOK CHAPTER HAS A COMMIT STEP. ⚠️ TWO REAL COLLISIONS FOUND BY DRIVING IT, ONE OF THEM A `position: fixed` SILENTLY TURNED ABSOLUTE BY AN ANCESTOR'S `transform`.** `tsc` 0 · **1635/1636** (was 1590) · `next build` 0 · `ready-bar.spec.ts` **18/18** · `chapter-resume.spec.ts` **2/2** · **41 mutations planted, 41 caught** · sw **v148**.
 
 **The review** (a student, on the 3–5 band): ① the line behind mother looks random for every species but the rabbit · ② sharpen the instructions, praise a right answer, add a repeat button and subtitles · ③ the Ready option should be in every game · ④ *"none of my progress saved and I had to restart"*. ⚠️ **The chapter numbering in the report is off**: ① is chapter **2** (`FollowTheLeader`), the feeding-nest game is chapter **3** (`NestTree`).
 
@@ -176,6 +176,13 @@ every path that ends a run, 7-day TTL.
 doors** — jumping into play would put a child in front of a camera nobody re-consented to. Gated.
 
 ## ② 🔊 ONE REAL DEFECT, ONE INVISIBLE AFFORDANCE, ONE FOUNDER REVERSAL
+- ⚠️ **THE SPOKEN INSTRUCTION ITSELF WAS NOT SHARPENED UNTIL A SECOND PASS — I JUDGED IT CLOSE
+  ENOUGH AND IT WAS NOT.** It said *"Feed the duckling in nest number 7! Number 7."*, which names
+  WHAT is wanted and never WHAT TO DO; the only place the action appeared was the WRITTEN prompt, on
+  a band whose children cannot read. Now *"Feed the duckling in nest number 7. Tap the nest that
+  says 7!"* — the student's own sentence. Gated in `nestTreeCopy.test.ts`, which also pins the
+  opposite constraint sitting right beside it: the drawn prompt may never contain a digit, because
+  the skill is sound → glyph.
 - **The demo's teaching was speech-only.** `NestExplain` spoke three lines and wrote none, and this
   band has no recorded clips — so on the many Chrome installs with no voice the chapter's entire
   explanation was delivered into a channel that is not there. Written now.
