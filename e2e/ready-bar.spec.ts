@@ -73,7 +73,7 @@ const overlaps = (a: { top: number; bottom: number; left: number; right: number 
   a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
 
 test.describe('the Ready bar clears every other layer at 640×320', () => {
-  test.describe.configure({ timeout: 150_000 })
+  test.describe.configure({ timeout: 240_000 })
 test.beforeEach(async ({ page }) => { await page.setViewportSize(FRAME) })
 
   for (const [key, query, answersOnCanvas] of CHAPTERS) {
@@ -86,7 +86,18 @@ test.beforeEach(async ({ page }) => { await page.setViewportSize(FRAME) })
       // whole point is to reach the state where the commit is SHOWING.
       let tick = 0
       let bar: { top: number; bottom: number; left: number; right: number; what: string } | null = null
-      const deadline = Date.now() + 100_000
+      /**
+       * ⚠️ GENEROUS BECAUSE THE COUNTING CHAPTER IS GENUINELY MANY TAPS — its chips appear only once
+       * EVERY parader has been tapped, and they arrive one at a time on a ~1.8 s walk. It failed
+       * once at 100 s on a COLD dev server, where the route's first compile ate the budget.
+       *
+       * ⚠️ AND NOT BY SEEDING `Math.random`, WHICH WAS TRIED AND MADE IT WORSE. That is the repo's
+       * usual answer to a flaky sweep and it is wrong here: this chapter uses randomness for the
+       * parade's spawn SLOTS as well as its count, so a fixed stream stacked the creatures and the
+       * driver could never tap them all. Counting then failed deterministically — a check that
+       * fails about a world the app is never in, which is worse than the flake it replaced.
+       */
+      const deadline = Date.now() + 150_000
       while (Date.now() < deadline) {
         const found = (await layers(page)).find(l => COMMIT.test(l.what))
         if (found) { bar = found; break }
