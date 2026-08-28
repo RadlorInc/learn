@@ -157,6 +157,290 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 📏 **2026-08-28 (second pass) — THE STUDENT RAISED "I CANNOT SEE ALL THE NUMBERS" A SECOND TIME, AND IT WAS A SECOND, SEPARATE MECHANISM: THE NUMBER IS DRAWN OUTSIDE THE SPRITE'S BOX AND EVERY BAND HELPER RESERVES FROM THE BOX. FIXED, PLUS THE SAME FAULT FOUND UNREPORTED ONE FUNCTION ALONG IN CHAPTER 4.** `tsc` 0 · **1641/1642** · `next build` 0 · **7 mutations planted, 7 caught** · sw **v150**. **PR [#68](https://github.com/RadlorInc/learn/pull/68) OPEN** — pushed, not merged. Full detail in ③ and ▶ OPEN 2 of the block below.
+>
+> ⚠️ **AND THE VERIFICATION SWEEP FOR IT WAS BLIND FOR ITS FIRST TWO RUNS** — it read `L.huddleRight` (the field is `huddleRightPct`), so half of it measured `NaN` and reported a confident **0 findings** while its positive control fired on the *other* half. `vitest` does not type-check. See ③.
+
+> 🎓 **2026-08-27/28 — A STUDENT'S FOUR-POINT REVIEW, ALL FOUR FIXED AND LIVE: THE RUN NOW RESUMES (AND STOPS DESTROYING THE SCORE), THE NEST CHAPTER SAYS WHAT TO DO, EVERY STORYBOOK CHAPTER HAS A COMMIT STEP, AND MILO PRAISES 3–8. ⚠️ THREE REAL COLLISIONS FOUND BY DRIVING IT — ONE A `position: fixed` SILENTLY TURNED ABSOLUTE BY AN ANCESTOR'S `transform`, ONE SKILLBEAT'S OWN PILL LYING ACROSS A COLOURING PAGE.** `tsc` 0 · **1639/1640** (was 1590) · `next build` 0 · `ready-bar` **18/18** · `chapter-resume` **4/4** · `needs-sound` **2/2** · **49 mutations planted, 49 caught** · sw **v149**. **MERGED — PRs [#65](https://github.com/RadlorInc/learn/pull/65) · [#66](https://github.com/RadlorInc/learn/pull/66) · [#67](https://github.com/RadlorInc/learn/pull/67). LIVE on production, verified in the deployed bundle.**
+
+**The review** (a student, on the 3–5 band): ① the line behind mother looks random for every species but the rabbit · ② sharpen the instructions, praise a right answer, add a repeat button and subtitles · ③ the Ready option should be in every game · ④ *"none of my progress saved and I had to restart"*. ⚠️ **The chapter numbering in the report is off**: ① is chapter **2** (`FollowTheLeader`), the feeding-nest game is chapter **3** (`NestTree`).
+
+## ① 📏 FIXED AND MERGED
+Same report as the 🐇 block below — [PR #65](https://github.com/RadlorInc/learn/pull/65), merged
+2026-08-28. ⚠️ **Its sibling was never measured — see ▶ OPEN 2.**
+
+## ⚠️⚠️ ③ THE TESTER RAISED "I CANNOT SEE ALL THE NUMBERS" A SECOND TIME — AND IT WAS A SECOND, SEPARATE CAUSE. THE NUMBER IS NOT INSIDE THE SPRITE'S BOX, AND EVERY BAND HELPER RESERVES FROM THE BOX.
+The 2026-08-21 fix (three rows → two, `maxSizeForRows` + `spreadBand`) was correct and closed the
+BURIAL cause. It could not close this one: `NumberTag` is drawn at `top: -d*0.72` — **outside** the
+creature's box — while `fitBands` proves the *head* clears `BANNER_PX` and `spreadBand` clamps the
+far row to the same line. So the band fitted perfectly and the NUMBERS sat behind the prompt pill.
+- **Measured live at 640×320, scored round 1:** the middle tag rendered at **y 82–121** against a
+  pill occupying **155–485 × 48–93** — 28% of the badge covered — and `elementFromPoint` at its top
+  returned **the pill button**. After the fix the same tag sits at y 115–146, `hiddenByPillPct: 0`,
+  and `elementFromPoint` returns the scene. Sprite 92 → 74px: a readable number beats a bigger bunny.
+- **It binds only on the shortest frame.** 812×375, 1024×400 and 1280×720 all measured 0% hidden;
+  46 of 420 modelled combinations failed, every one at 640×320.
+- **The fix is a `topPx` on the three shared helpers** (`maxSizeForRows` · `fitBands` · `spreadBand`)
+  — *what this chapter draws above a head* — defaulting to 0, so `BigOrSmall` and `PlayTime` are
+  untouched. Chapter 2 measures it off the PROVISIONAL size, the same two-pass trick the head gap
+  already uses, because the lift depends on the size that depends on the lift.
+- **Gated** in `followTheLeaderHuddle.test.ts` — the top of the TAG, driven through `waitSpot` and
+  `tagLift`, plus a check that the reserve's formula IS `NumberTag`'s. **4 mutations, 4 caught**
+  (drop `topPx` from the band · from the size cap · make the parameter inert · understate the lift).
+  `tsc` 0 · **1641/1642** · `next build` 0 · sw **v150**. ✅ **Committed and pushed —
+  PR [#68](https://github.com/RadlorInc/learn/pull/68), OPEN, not merged.**
+- ⚠️⚠️ **AND MY OWN SWEEP WAS BLIND FOR ITS FIRST TWO RUNS, WHICH IS THE LESSON WORTH KEEPING.** It
+  read `L.huddleRight` — the field is `huddleRightPct` — so every `waitSpot` came back `NaN` and the
+  BURIAL half of the sweep reported a confident **0 findings**. `vitest` does not type-check, so it
+  ran clean; `tsc` caught it only because the file was still on disk. The banner half was valid
+  because it reads `.top`, so the run looked half-alive rather than dead. **A positive control on
+  one mechanism says nothing about the other mechanisms in the same sweep** — the rows=3 control was
+  firing the whole time, on the half that worked. Fixed, the control reports 426 findings including
+  *"tag 2 38% under sprite 1"* on turtles, the tester's original words.
+- ✅ **Chapter 4's `AskSign` was checked for the same overhang and is CLEAR — but on x, not on y.**
+  50 combinations put the sign above `BANNER_PX`; the pill is centred (155–485 at 640 wide) and Milo
+  stands far right, so the sign sits at ~509–624 and misses it. True by luck rather than by
+  construction, and worth a gate line if that chapter's layout ever moves.
+
+## ④ 💾 THE PROGRESS LOSS WAS WORSE THAN REPORTED — IT DESTROYED THE SCORE, NOT THE PLACE
+`SkillBeat` and `GameShell` both report **once, at the end**: that single `onComplete` is what writes
+the session row, the stars and the XP. So leaving after seven of ten questions lost the seven
+answers too, and every screen showed the chapter as never played. New `infra/storage/chapterResume.ts`
+(round · score · question history · coverage), wired into **both** engines, so it covers all 72
+chapters. Written after every scored answer — there is no exit event for a closed tab — cleared on
+every path that ends a run, 7-day TTL.
+⚠️ **What a resume deliberately does NOT skip in GameShell: the start card.** It carries
+`unlockSpeech()` (a real gesture, or the whole run is silent) and, on an AR chapter, **both camera
+doors** — jumping into play would put a child in front of a camera nobody re-consented to. Gated.
+
+## ② 🔊 ONE REAL DEFECT, ONE INVISIBLE AFFORDANCE, ONE FOUNDER REVERSAL
+- ⚠️ **THE SPOKEN INSTRUCTION ITSELF WAS NOT SHARPENED UNTIL A SECOND PASS — I JUDGED IT CLOSE
+  ENOUGH AND IT WAS NOT.** It said *"Feed the duckling in nest number 7! Number 7."*, which names
+  WHAT is wanted and never WHAT TO DO; the only place the action appeared was the WRITTEN prompt, on
+  a band whose children cannot read. Now *"Feed the duckling in nest number 7. Tap the nest that
+  says 7!"* — the student's own sentence. Gated in `nestTreeCopy.test.ts`, which also pins the
+  opposite constraint sitting right beside it: the drawn prompt may never contain a digit, because
+  the skill is sound → glyph.
+- **The demo's teaching was speech-only.** `NestExplain` spoke three lines and wrote none, and this
+  band has no recorded clips — so on the many Chrome installs with no voice the chapter's entire
+  explanation was delivered into a channel that is not there. Written now.
+- **The repeat button already existed and could not be seen**: SkillBeat's prompt pill has always
+  been a `button` with `aria-label="Hear it again"` and nothing visible saying so. It has a 🔊 now.
+  ⚠️ And the **guided round had no replay at all** — the one screen where the child answers first.
+- **Spoken praise on a correct answer** reverses the recorded *"a tick is enough"* call. Founder's
+  decision. Rotating, and short enough to fit the 1300 ms gap before the next question cancels it.
+- ⚠️ **Subtitling the QUESTION would delete the chapter** — the number is spoken and never written
+  because the skill IS sound → glyph. Subtitles are in the demo, where teaching is the point.
+
+## ③ ✅ READY IS EVERYWHERE — 13 CHAPTERS CONVERTED, 10 ALREADY HAD ONE
+⚠️ **The band is RETRY-IN-PLACE, which changes what Ready can honestly be.** A wrong tap sets `erred`
+and the child goes again; the round only ends when they are right. So a Ready gating the GRADE could
+only ever be pressed on a correct answer — an oracle, and one that cannot change an outcome. Built as
+**tap CHOOSES, Ready SUBMITS**: it appears for any choice, so it says nothing, and a wrong commit is
+still marked wrong and still retried. Shared `story/ReadyBar.tsx` + a neutral `PICKED_RING`.
+⚠️ The ten that already commit keep their own words — you *Pay ✓* a shopkeeper, *Warp her ✓*, *Put it
+up ✓*. Renaming them to "Ready" would be worse.
+⚠️ **RainbowTown is the one that works differently and is named as such**: a colouring page, so the
+child's paint goes ON the picture and can be painted over until Ready. The LESSON is untouched.
+
+## ⚠️⚠️ WHAT DRIVING IT FOUND THAT NO GATE COULD
+1. **`position: fixed` is NOT fixed inside a transformed ancestor.** Nested in NumberTown's answer
+   row (`transform: translateY(-50%)`), the bar was drawn from the ROW's box — **y 189–236, across
+   the middle door, which that round was the right answer**. Same nesting in the counting chapter.
+2. **MarketDay / StoryTime**: centred, the bar covered the `3 × 3 = ?` readout completely (190–237
+   against 193–235). Those pass `align="right"` now; the free space is sideways, not upward.
+3. **BeadShop**: the centred bar sat across the middle bead. Right-aligned.
+4. ⚠️ **My own sweep was pressing the button it was measuring**, submitting the answer and reporting
+   *"never reached a commit"* on two working chapters — a red that describes the driver.
+📄 General rules written into [docs/chapter-craft.md](docs/chapter-craft.md) §1, §0b and §4.
+
+## ✅ THE FIVE LOOSE ENDS, CLOSED
+- **Praise has an AGE cutoff, not an engine one** — `core/praise.ts` · `praisesOnCorrect(band)`.
+  ⚠️ **It STOPS AT 6–8** (founder's call, 2026-08-28). It shipped reaching through 9–11 for a few
+  hours, which cuts against this product's own rule that **9–11 must not look like 3–8** — the whole
+  reason that band moved onto the Field Lab design — and the student who asked was reviewing 3–5.
+  Gated on the band and never on the engine, because 9–11 is split across both: an engine-shaped
+  rule praises the same child in two chapters and not in the other ten.
+- **The resume is DRIVEN now** — `e2e/chapter-resume.spec.ts` plays two rounds, leaves for `/menu`,
+  comes back and asserts the round AND the score, reading the record straight out of IndexedDB.
+  ⚠️ **With a positive control**: the same drive with no active learner must store nothing and
+  restart, or the test cannot tell "it resumed" from "there was nothing to resume".
+- **The sweep's exemption list is EMPTY** — all 13 driven, and the two "unreachable" chapters were
+  both DRIVER faults: stale coordinates for creatures that were still walking on (click inside the
+  page, not by coordinate), and a canvas grid too coarse to land on a balloon.
+- **The world picker fits** — its card was `clamp(200px,26vw,300px)`, width-derived with no `vh`
+  term, so the 200px minimum won at 640×320 and forced a second row off the bottom.
+  `min(26vw,40vh)` keeps desktop at 288 and lets a short frame shrink instead of wrapping.
+- **The prompt pill no longer eats the colouring page.** `SkillBeat`'s pill is a real `<button>`,
+  fine everywhere the answers sit in a band it does not use and a DEAD PATCH over a picture that
+  fills the frame: measured at 640×320 it spanned x 181–459, y 48–93 against a balloon at
+  x 415–490, y 15–120, so a tap at the centre of the answer hit the pill. RainbowTown sets
+  `prompt: () => ''`, draws its own `pointerEvents: none` banner and puts the 🔊 beside Menu.
+  `elementFromPoint` at the question's centre now returns the CANVAS, and that is the gate.
+  ⚠️ It also broke a shared anchor: `storybook-pills` identified SkillBeat's pill by
+  `aria-label="Hear it again"` alone, and the chapter's own bare 🔊 carries the same label — so the
+  spec read it as a duplicate. It matches on the pill CARRYING THE QUESTION now.
+- **Merged and live**, sw **v149**.
+
+## 🔁 THE SECOND DAY: THE OTHER ENGINE, A CHAPTER THAT NEEDS SOUND, AND A FLAKE THAT WAS MINE
+- **The resume is driven on `GameShell` too**, not just the storybook engine — `wordProblems` (non-AR,
+  answers on the shared AnswerPad, whose dev-only `data-test-answer` lets a driver answer without
+  solving the sum). Two right, one WRONG, leave, come back: re-enters at 4/10 having stored
+  `{round: 3, correct: 2, wrong: 1}`.
+  ⚠️ **The first version of that check was mostly decorative.** Two of four mutations SURVIVED —
+  seeding `correct` from 0 (the "3 / 10" a child sees is driven by `idx` and says nothing about what
+  they got right) and seeding `wrong` from 0 (a run of only right answers leaves it 0 either way, so
+  the check agreed with the bug by never disagreeing). Both observable now: the drive reads the
+  ledger back AFTER resuming and deliberately gets one wrong on the way out.
+  ⚠️ It also measured that `idx`'s `useState` seed is belt-and-braces (`finishDemo`'s `loadTask`
+  overwrites it) while `correct`/`wrong` have no second writer — noted in the shell so the asymmetry
+  is not mistaken for redundancy and tidied away.
+- ⚠️⚠️ **THE FEEDING-NEST CHAPTER IS UNANSWERABLE WITHOUT A VOICE, AND NOW SAYS SO.** It SPEAKS the
+  target number and deliberately never draws it — sound → glyph is the skill. Every other chapter
+  writes its question too and so a silent device costs them warmth; this one it costs the ANSWER, and
+  `speakSteps`' silent fallback does not help (it paces the demo, it does not deliver the number).
+  **The fix is NOT to write the number** — that turns listening into matching. `useNoVoice()` + a
+  notice addressed to the grown-up stands in until the band has recorded clips.
+  ⚠️ Voices arrive LATE (`voiceschanged`), so a first read of "none" is the question asked too early —
+  hence a hook, not a constant. ⚠️ And simulating it needs `addInitScript`: `_loadVoices` refuses to
+  clear an already-populated list, so stubbing from the console after boot cannot flip it and reports
+  "no notice" on a browser that really has none. Gated BOTH ways; the negative matters more, since a
+  notice on a working device tells a parent their chapter is broken.
+- ⚠️⚠️ **AND THE `counting` FLAKE WAS MY OWN FILTER, AFTER THREE CONFIDENT WRONG DIAGNOSES.** I blamed
+  a cold dev server, then the parade being slow, then reached for seeding `Math.random` — which made
+  it WORSE, because that chapter randomises spawn SLOTS as well as counts, so a fixed stream stacked
+  the creatures and it began failing deterministically (a check failing about a world the app is
+  never in). One instrumented run settled it: the driver reported **`eligible=0` for 148 of its 150
+  seconds**. Its reachability filter demanded the ENTIRE box inside the frame, and those creatures are
+  tall and stand low, so every one was excluded. It tests the CLICK POINT now — **~150 s and marginal
+  → 9–11 s**. ⚠️ I had also called it "stable, 20/20 twice"; two warm-server runs is not evidence.
+  📄 Both general rules are in [docs/chapter-craft.md](docs/chapter-craft.md) §4.
+
+## 📋 THE TESTER'S SHEET, AUDITED AGAINST THE DEPLOYED SITE — 2026-08-28
+`Chapter_Testing_tester2` (Drive, owner kuwarirafi@) had **six rows still `Open`**. Every one was
+checked against **production** (sw v149 at the time), by driving it, not by reading this file. Every
+bundle search carried a positive AND a negative control.
+
+| # | issue | sheet said | measured |
+|---|---|---|---|
+| 1 | answer-choice grammar | Ready for Retest | ✅ live — new wording present, `"Yes, on their own"` gone |
+| 2 | Milo's robotic voice | Open | ❌ **correctly open** — captured the utterances going to `speechSynthesis` on prod; the 605 clips are 12–18 only |
+| 3 | turtle spacing / numbers | Open | ✅ fixed **2026-08-21** (`99e1d94`) — drove 5 turtles at 640×320, all five numbers visible. ⚠️ **then re-raised, and the second cause is real — see ③** |
+| 4 | "Amazing! Amazing!" | Resolved | — not re-verified |
+| 5 | smallest-first line spacing | Open | ✅ fixed — drove 4 turtles behind mother: body gaps **6 · 5 · 6 px**, head gap −11px by design |
+| 6 | nest game | Open | ✅ 3 of 4 — captured on prod: *"Feed the chick in nest number 4. Tap the nest that says 4!"* and *"Yes! Nest number 2! Great job!"*, 🔊 present. ⚠️ subtitling the QUESTION's number stays refused: sound→glyph IS the skill |
+| 7 | Ready everywhere | Open | ✅ drove **Ready ✓** on prod in the counting AND nest chapters. ⚠️ send/pay chapters keep their own verb |
+| 8 | saving game status | Open | ✅ `milo-chres-` in the prod bundle, `chapter-resume` drives 4/4. ⚠️ **signed-in children only** — the logged-out preview stores nothing by design, so retest from a child profile |
+
+**So five of six can move to Ready for Retest; only #2 is genuinely open.** ⚠️ The sheet was NOT
+edited — that is the founder's to do.
+
+⚠️ **AND THE GATE FOR #7 IS FLAKY.** `ready-bar.spec.ts` failed on `counting` locally (240 s timeout,
+*"never reached a commit control"*) while the bar works on production — the driver has to catch
+paraders in a narrow on-frame window. **A flaky gate gets re-run instead of read**, so #7's guard is
+not trustworthy even though the feature is. Not fixed; next in line.
+
+## ▶ OPEN
+1. 🎙️ **RECORDED CLIPS FOR 3–11 ARE THE ONLY THING LEFT FROM THIS REVIEW, and they are the founder's
+   to start** (a voice choice and the ElevenLabs spend). The pipeline already exists — `clipKey`,
+   `voiceClipPlayer`, and 12–18's clips. Until then a voiceless device gets the notice above instead
+   of an unwinnable round, which is honest but is not the fix.
+2. ⏸️ **PR [#68](https://github.com/RadlorInc/learn/pull/68) IS OPEN AND UNMERGED** — chapter 2's tag
+   overhang (③) and chapter 4's cluster scale (④). CI not read at the time of writing.
+3. ⚠️ **THE `counting` CASE OF `ready-bar.spec.ts` IS FLAKY** — it failed locally on a 240 s timeout
+   (*"never reached a commit control"*) while the bar demonstrably works on production, because its
+   driver has to catch paraders inside a narrow on-frame window. **A flaky gate gets re-run instead
+   of read**, so the guard on "Ready is everywhere" is not trustworthy even though the feature is.
+   Fix the DRIVER, not the chapter. Not started.
+4. ✅ **`clusterSpot` (chapter 4's gathered huddle) IS MEASURED NOW — 2026-08-28 — AND IT WAS THE SAME
+   FAULT, WORSE.** Flat `GATHER_COL = 5.4`% per column at a flat `scale: 0.8` against aspects 0.805 →
+   1.746: the share of each body still showing ran **74% (rabbit) to 26% (shark)**, and **driven live
+   at 1280×720, five gathered fish read as three** — in the one place the child counts what they have
+   chosen. Fixed with chapter 2's own lever, `clusterScale(src) = 0.8 × min(1, 0.805 / aspect)`,
+   calibrated on the rabbit so the approved picture is untouched by construction; the pitch could not
+   be the lever (the gather band leaves ~6.3% per column and a shark wants 11.7%). The row separation
+   came free with it, 0.22 → 0.37 body heights, having been under this repo's own 0.55 floor.
+   `src` is REQUIRED on `clusterSpot` — a default is what lets a caller restore the flat 0.8 green.
+   Gated in `homeTimeGeometry.test.ts` §②b, driving `clusterSpot` at both ends rather than
+   recomputing the rule; **3 mutations planted, 3 caught** (flat 0.8 · cap dropped · calibrated on
+   the shark). `tsc` 0 · **1641/1642** · `next build` 0. ✅ **Committed and pushed in the same
+   PR [#68](https://github.com/RadlorInc/learn/pull/68) as ③ — OPEN, not merged.**
+   ⚠️ **Two things seen while driving it and deliberately NOT changed:** Milo's `AskSign` covers
+   ~29% of the nearest gathered creature (it is anchored to him, and this predates the fix), and the
+   gathered set is now 0.47 of the waiting one for a shark — a bigger depth jump than before, which
+   is a founder call rather than a defect.
+5. ⏭️ **What was deliberately NOT done on ②, so it is not re-litigated by accident:** the QUESTION's
+   number is still never written. Subtitling it would turn a listening task into a matching one and
+   delete the chapter. The action is spoken and written, the demo's teaching lines are written, and
+   the target stays spoken-only.
+
+> 🐇 **2026-08-27 — THE LINE BEHIND MOTHER WAS EVENLY SPACED FOR EXACTLY ONE SPECIES, AND THREE ROUNDS OF MUTATION EACH FOUND A HOLE IN MY OWN CHECKING — INCLUDING A TAUTOLOGY GUARDING THE ONE PICTURE THE FOUNDER HAD APPROVED.** `tsc` 0 · **1590/1591** (was 1584) · `next build` 0 · **10 mutations planted, 10 caught** · **PR [#65](https://github.com/RadlorInc/learn/pull/65) OPEN**, not merged.
+
+**The ask:** *"For the bunny animals, all the children bunnies are evenly spaced behind the mother,
+however for the fish, butterflies, turtles, ladybugs, and squirrels, they are randomly placed."*
+Chapter is `numberOrdering` (`story/FollowTheLeader.tsx`) — the SECOND in the 3–5 band, not the
+counting one.
+
+## ① 📏 NOTHING WAS RANDOM — THE SPACING WAS IDENTICAL, THE BODIES WERE NOT
+`LINE_GAP` steps a flat 9% of the width per place and reads as perfectly even in the source.
+**Spacing is what is LEFT AFTER THE BODIES**, and the cast's aspects run **0.81 → 1.75**, so at
+1280×720 the clearance between neighbours ran **+1.65% (butterfly, clean) to −1.07% (ant,
+overlapping)**: bunny +0.76 a queue · fish −0.11 · ladybug −0.67 · squirrel −0.71 a heap. The rabbit
+is one of the few with real clearance, which is *why* it is the one that looks right.
+
+## ② 🎚️ THE FIX MOVES THE SCALE, NOT THE SPACING — BECAUSE THE SPACING IS IN A LOOP
+Widening the gap per species makes the line LONGER, and the line's length decides the huddle's room
+(`lineRight`) → the span → `babySize` → the gap. Circular, in a file whose header promises it is
+not. Capping the **in-line scale** leaves every upstream number untouched, so the step stays a
+constant and the line is evenly spaced **by construction**; a wide creature is simply drawn further
+away, which is what the line already means. Every species now sits at the rabbit's own **0.74%**.
+
+## ③ 👩 AND THE HEAD OF THE LINE IS A DIFFERENT GAP — SAME NUMBER, DIFFERENT NEIGHBOUR
+Founder's follow-up: *"fish 1 still tucks under mother's body."* The first place sits next to
+MOTHER at 1.25× against the line's own scale — the two bodies either side of that gap differ by
+~1.7×. ⚠️ **Calibrated on the rabbit, not on zero:** animals queue nose-to-tail, the rabbit's first
+little one sits ~21% of its own body inside her, and that is the approved picture — so the rule is
+*nobody deeper in than the rabbit*, which leaves the good case untouched BY CONSTRUCTION. A
+no-overlap rule would have moved it. **17–22% now, against 8–35%.** The circularity is broken by
+running the size chain **twice**: the provisional pass always yields a size ≥ the final one, so the
+reserve is never short, and one value feeds both the reserve and the drawing.
+
+## ④ 🔬 THE INK HUNCH WAS WRONG AND MEASURING KILLED IT IN ONE PASS
+It looked like ink-vs-box (a rabbit is narrow with transparent margins, a fish is a fat oval), which
+would have meant a per-sprite ink table. Alpha bboxes across all ten walk sheets: **ink fills
+0.95–1.00 of the cell for every one.** No margin to exploit; plain geometry. Thirty seconds against
+an afternoon of building the wrong thing.
+
+## ⑤ ⚠️⚠️ FOUR ROUNDS, EACH FINDING A HOLE IN MY OWN CHECKING — THE LAST ONE FOUND BY READING
+1. `lineSpot(k, w, mx, scale, headGap)`: a `scale =` DEFAULT let a caller restore the overlapping
+   line; with the default gone, passing `LINE_GAP` where `headGap` belonged restored the buried one.
+   **Both type-checked, both green.** It takes the whole layout now — `lineSpot(k, L)` — so there is
+   nothing left to hand over wrongly.
+2. The checks recomputed geometry from the layout's REPORTED values, so *"draws at the flat gap"*
+   and *"draws at a flat scale"* both survived: a gate re-implementing the rule it guards.
+3. The reserve-vs-tail check compared a value with itself.
+4. ⚠️⚠️ **AND THE CHECK PROTECTING THE RABBIT WAS A TAUTOLOGY:**
+   `expect(L.lineScale).toBeCloseTo(Math.min(0.78, L.lineScale))` — and `lineScale` IS a
+   `Math.min(0.78, …)`, so it compared a value with itself and would have passed on an
+   implementation drawing the rabbit at a tenth of its size. **Found by re-reading the file to
+   verify a claim, not by any run** — a tautology's green is indistinguishable from a real one.
+   **No assertion in the file now reads `L.lineScale` or `L.headGap`**; every number comes out of
+   `lineSpot(k, L)`. Three of the ten mutations (rabbit shrunk · line drawn tiny · line drawn on top
+   of mother) would have SURVIVED the file as it stood two commits earlier.
+
+## ▶ OPEN
+1. ⏸️ **PR [#65](https://github.com/RadlorInc/learn/pull/65) IS OPEN** — three commits, CI not yet
+   read at the time of writing. ⚠️ **It touches `handoff.md`, and so does PR
+   [#64](https://github.com/RadlorInc/learn/pull/64) (Stage 3), which also ARCHIVES the Stage-1
+   block. Whichever merges second will conflict on this file — both are insertions, so the
+   resolution is to keep both blocks.**
+2. ⚠️ **What was NOT changed, deliberately:** the waiting huddle's scatter. That jitter is a
+   documented craft decision (*"a group is a huddle, not a queue"*) and evenly spacing it would
+   reverse it. If the scatter is what reads as random rather than the line, say so.
+3. ⏭️ **The same bare-constant shape is next door and untouched:** `clusterSpot` in `critters.tsx`
+   (chapter 4's gathered group) spaces by a fixed `colPct` at a fixed `scale: 0.8`, with the same
+   cast. Not measured, not fixed — flagged because it is the same fault waiting in the same file.
+
 > 🔒 **2026-08-25 (fourth pass) — STAGE 3: THE CHAPTER GATE AND THE SCREENS. A LOCK THAT NAMES WHAT IS BEHIND IT, A CHILD WHO NEVER SEES A PRICE, AND A PAYWALL BUILT INERT BUT TESTED REFUSING.** `tsc` 0 · **1609/1610** (was 1579) · `next build` 0 · **17 mutations planted, 17 caught** · **PR [#64](https://github.com/RadlorInc/learn/pull/64) OPEN and green** (`verify` ✅ · `rls-tests` ✅ `RLS_ASSERTIONS=74`), **not merged** · ⚠️ **Step 3 (the watched purchase) DEFERRED, with a hard deadline.**
 
 ## ⓪ 🔴 THE DEFERRAL, AND THE RISK IT CARRIES — [docs/billing-stage-3.md](docs/billing-stage-3.md) §0
@@ -526,129 +810,4 @@ Three in one session reported on text they never saw. Swept all 12 sites onto
 4. ⚠️ **NINE DEPENDABOT PRs STILL OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
 5. ⚠️ Accepted limitation, unchanged: RLS gates the RECORD, not chapter CONTENT.
 
-> 💳 **2026-08-24 (fourth pass) — THE BILLING SCHEMA IS APPLIED TO PRODUCTION AND COMPLETELY INERT. ⚠️⚠️ CAPTURING THE ROLLBACK CAUGHT MY OWN MIGRATION SILENTLY REVERTING A SECURITY FIX, FOUR HOURS AFTER I WROTE THE RULE THAT CATCHES IT.** `tsc` 0 · **1477/1478** · `ci / rls-tests` **64 assertions** · ledger **74 → 76**. **6 PRs merged** (#51–#56).
-
-## ⓪ ⚠️⚠️ THE MIGRATION WAS NOT APPLICABLE AS WRITTEN, AND "RISKY" WOULD HAVE BEEN THE WRONG WORD
-Production has zero subscriptions, so the moment `is_chapter_entitled` reached the `sessions`
-policy, entitlement would collapse to `is_free` and **every existing family would stop being able to
-save progress in 65 of the 72 chapters, instantly.** `billing_config.enforced` (default **false**)
-makes the whole surface land inert; the paywall goes live by flipping one boolean later.
-⚠️ **IT FAILS OPEN AND THE CAMERA GUARD FAILS CLOSED — NOT AN INCONSISTENCY.** Founder's words: *a
-camera without consent harms a child; a paywall failing closed breaks a working product for every
-family at once.* Different failure costs, different defaults. Recorded in the doc so nobody
-reconciles them.
-⚠️ **A DEFAULT-OFF FLAG IS A HOLE UNLESS THE SUITE FORCES IT ON *AND ASSERTS IT DID*** (F0). Setting
-alone is silently removable. It also closes an unrelated hazard: an accidental `PROD_PROJECT_REF`
-waking `deploy.yml` now applies a paywall that does nothing.
-
-## ① ⚠️⚠️ THE ROLLBACK CAPTURE CAUGHT A REVERTED SECURITY FIX — MINE
-`plan_entitlement.sql` rebuilt `sync_diagnostic` from `20260702131627_diagnostic_idempotency`, which
-is OLDER than `20260703014331_harden_rpc_inputs` — so it silently dropped the **V5 payload bounds**.
-The `leads_server_only` class exactly, on the same day, by the person who wrote the runbook rule.
-⚠️ **READING THE REPO DID NOT FIND IT: my grep was CASE-SENSITIVE and the hardening file writes
-`CREATE OR REPLACE FUNCTION` in capitals.** `pg_get_functiondef` found it in one query. Founder's
-sentence, now in the runbook: *reading the repo answers "what did we intend", querying production
-answers "what is true" — only the second one is a check.*
-
-## ② 🧪 TWO DERIVED GATES, BOTH MEASURED BEFORE BEING WRITTEN
-- **functions** — the newest definition must keep every `raise exception` an earlier one added.
-  Exactly 1 violation across the 18 redefined functions; it was mine.
-- **policies** — the newest must keep every LITERAL an earlier one used (a policy's guard is one
-  anonymous expression, so there is no named condition to compare; a regex/status/bound survives a
-  rewrite). **0 violations today; replayed to the corpus as it stood when `leads_server_only`
-  shipped, exactly 1 — that one.** The restore's `between 3 and 254` → `>= 3 and <= 254` is
-  correctly NOT flagged.
-  ⚠️⚠️ **`baseline_schema.sql` MUST BE ORDERED FIRST.** It is migration-zero but is GENERATED FROM
-  LIVE PRODUCTION — ordered last it supplies the very predicate a regression just removed. Ordered
-  last: zero findings. Ordered first: it finds the regression. **Fourth "check that silently finds
-  nothing" today**, hence the new standing habit in CLAUDE.md.
-
-## ③ ♻️ THE ROLLBACK IS RUN, NOT READ
-`ci / rls-tests` applies the billing migrations, runs `supabase/schema/rollback_20260824_billing.sql`
-and asserts production's captured fingerprints come back — with a **positive control first**, or the
-step passes on a database where the migrations never applied. Reading it had already caught one
-defect (`pg_policies` reports a null qual for an INSERT policy, so the capture emitted `using
-(true)` — invalid DDL). Reading is not running.
-
-## ④ ✅ APPLIED, AND VERIFIED BY FINGERPRINT RATHER THAN BY A LIVE WRITE
-| | |
-|---|---|
-| `20260824133906` | `billing_schema` |
-| `20260824134125` | `plan_entitlement` |
-⚠️ **THE POST-APPLY WRITE PROVES NOTHING ABOUT THE GUARD** — with `enforced = false` it succeeds
-either way. So `ci / rls-tests` PUBLISHES the fingerprints of the schema it tested with the
-enforcing path on, and **all five matched production exactly** (2 policy predicates,
-`is_chapter_entitled`, `sync_session(11)`, `sync_diagnostic`). That is the proof; the live write is
-only a smoke test — **and it could not be run: `execute_sql` connects as `supabase_read_only_user`.**
-It needs a real signed-in session. ⚠️ Still owed.
-`active` backfill touched **0 rows** as predicted (14 plans, none doubled); 9 gained `free_chapters`.
-Advisors: no new problems — three `rls_enabled_no_policy` INFOs are the intended deny-all design.
-
-## ⑤ 📷 AND THE COPPA FIX SHIPPED FIRST, ALONE (#53)
-`/teen-preview?c=<AR id>&taste=1` rendered a camera chapter to a logged-out child — 12–30% of report
-links in four bands. Guard at the ROUTE, not a picker: the live leak had no picker, the URL *is* the
-picker. `e2e/ar-consent.spec.ts` drives the real URL for all eight and asserts `getUserMedia` is
-never called, with three controls. ⚠️ And the fix blinded `all-chapters` until that was fixed too.
-
-## ⑥ 🚦 THE PIPELINE PROPOSAL — WRITTEN, NOT BUILT ([docs/migrate-prod-proposal.md](docs/migrate-prod-proposal.md))
-Hand-applying is the ROOT CAUSE of the 58-file drift repaired this morning, and today added two
-more plus 442 lines retyped into a tool call. ⚠️ **It is not enable-or-don't** — founder's framing:
-a GitHub **protected environment with a required reviewer** keeps a human between a merge and a
-schema change while ending the transcription. Three conditions, all unmet: **B12 first** · required
-approval · **and the pipeline must be SAFER, not merely more consistent** (it must run the stale
-diff against PRODUCTION, turn B12 into a grep over pending migrations, and fingerprint the applied
-schema — or it is faster and worse).
-✅ **Condition 2 is available**, measured via the API: repo **public**, org plan **free**, so
-environment rules cost nothing. Three environments exist and **none has a protection rule**; there
-are no repo variables or secrets at all.
-⚠️⚠️ **AND A TRAP IN THE NAMES.** `deploy.yml` says `environment: production`; the environment that
-exists is `Production`. **A workflow referencing an environment that does not exist CREATES it,
-unprotected** — so the gate can be bypassed while the settings page looks right. **Verify the
-reviewer by watching a job PAUSE, never by reading a settings page.**
-⚠️ **The flag's limit is written down** so nobody sells it as the net: `enforced` makes an accidental
-apply of THESE TWO migrations harmless and does **nothing** for a future one. The net is B12 + ③.
-
-## ⑦ 🎚️ FUNNEL ITEM ONE: A NARROWED PROBE MAY NEVER SAY "ON TRACK" (PR #58)
-The constraint is in the ENGINE, not the copy — copy is where it rots. `startProbe(band, config,
-agenda?)` narrows the investigated entries (the short pass; 17–18's door 2), and
-`Diagnosis.coverage` is `'full'` only when the whole band was investigated **and finished**. The
-report BRANCHES on it: the on-track card is unreachable from a partial pass, which offers the full
-check in one tap instead.
-⚠️⚠️ **SIX MUTATIONS, THREE SURVIVED, AND THE THREE WERE THREE DIFFERENT LESSONS.**
-- the cap clauses (`asked < maxItems`) were **INERT** — a cap always leaves the agenda or a frame
-  open — and in the one case they were not redundant they were **wrong**, reporting a FINISHED
-  search as partial. Deleted. *An inert clause in a load-bearing rule is worse than none, because it
-  reads as protection.*
-- the `frames` term was a **MISSED REGRESSION**: it matters when the last entry fails and the cap
-  cuts the descent, a state no driven test reached. Built as a fixture, with a positive control.
-- the `agenda` term was missed for the mirror reason — every case used a FAILING answerer, which
-  always opens a frame, so the frames term caught it instead.
-Each term now has a state where it is the only one that says no.
-⚠️ And the report's source gate first matched a bounded window that stopped at the first `) : (` —
-inside the very ternary it checks. **Third time today a window ended at the wrong place.**
-
-## ▶ OPEN
-1. ⏸️ **THE FOUNDER IS RUNNING THE SMOKE TEST** — sign in, play a non-free chapter, confirm it
-   saves. The one step of the apply sequence I cannot perform: `execute_sql` connects as
-   `supabase_read_only_user`. **Nothing else touches production until it comes back.**
-2. 🔴 **B12 IS ON THE CRITICAL PATH AND IS THE FOUNDER'S.** Supabase Pro before `enforced` is ever
-   flipped true — the day we take money is the day losing that database stops being recoverable by
-   apology. It also gates the pipeline proposal (⑥).
-3. ⏸️ **TWO PRs OF MINE OPEN:** #57 (the applied migrations, renamed, + the pipeline proposal) ·
-   #58 (probe coverage). Six merged today: #51–#56.
-   ⚠️ **AND NINE DEPENDABOT PRs ARE OPEN AND UNTRIAGED** (#28–#47), the oldest from weeks ago —
-   including `actions/checkout 4 → 7`, `setup-node 4 → 7` and `supabase/setup-cli 1 → 3`, all of
-   which touch the CI that this session has been leaning on. Do NOT merge them as a batch (the
-   standing warning about TypeScript 7 / eslint 10 / jsdom 30 still applies).
-4. ⏭️ **THE REST OF THE FUNNEL, in order:** 17–18's door 2 as a seeded probe on top of #58 · the
-   short pass (spine prefix) · durable resume (the probe resume is sessionStorage, per-tab — "comes
-   back tomorrow" needs kv, per learner) · the demo route (band picker → 2 chapters, local only) ·
-   the local→server adopt at signup (`progressMerge` is server→local only; demo runs never reach
-   the server, so a second device shows nothing).
-5. ⚠️ **17–18 IS TWO DOORS, NOT A CUT** — measured: a 20-item cut names a root **3 levels too
-   shallow 63%** of the time and the true chapter is absent from the plan **2 times in 3**, while
-   only 4% announce themselves as empty. Door 2 (seeded at the named strand) is **94% at 28
-   questions**; a wrong self-report costs 2 questions and is caught by ⑦.
-6. ⚠️ **Accepted limitation, unchanged:** RLS gates the RECORD, not chapter CONTENT.
-
-_Older sessions (2026-06-15 → **2026-08-24**, including 🧾💳 **the Stage-1 day** (the paywall's schema, RLS and entitlement, the guard at all three write paths, and the free-set proposal against the AR constraint), moved 2026-08-25 — ⚠️ its two still-live items (the free set is a PROPOSAL not a pick; the `error_events` fkey contradiction) were lifted into the current ▶ OPEN rather than archived with it; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-24**, including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._

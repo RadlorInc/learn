@@ -14,7 +14,7 @@
  * - Single active utterance — always cancel previous before new one
  */
 
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { pointAt, clearPointer } from '@/infra/miloPointer'
 import { speakLine, stopClip, unlockVoiceClips } from '@/infra/voiceClipPlayer'
 
@@ -574,6 +574,39 @@ export function useIsSpeaking(): boolean {
     () => _speaking,
     () => false,
   )
+}
+
+/**
+ * TRUE WHEN THIS BROWSER HAS NO USABLE VOICE AT ALL.
+ *
+ * ⚠️ WHY A CHAPTER WOULD ASK. Most of the band states its question in writing as well as aloud, so
+ * a silent device costs warmth and nothing else. A HEARD-NOT-READ chapter is different: the feeding
+ * nest speaks the target number and deliberately never draws it, because going sound → glyph IS the
+ * skill. On a device with no voice that round is not merely quieter, it is UNANSWERABLE — the
+ * number exists nowhere on screen and the child can only guess. `speakSteps`' silent fallback does
+ * not help; it paces the demo, it does not deliver the number.
+ *
+ * So the chapter asks, and says so, rather than letting a three-year-old fail at a guessing game
+ * nobody told them was one. ⚠️ The answer is NOT to draw the number — that turns listening into
+ * matching and deletes the chapter. The real fix is recorded clips for this band (the 12–18 pipeline
+ * already exists); this is what stands in until then.
+ *
+ * ⚠️ VOICES ARRIVE LATE. Chrome populates `getVoices()` asynchronously and fires `voiceschanged`,
+ * so a first read of "none" is not an answer — it is the question being asked too early. This
+ * re-reads on that event, which is why it is a hook and not a constant.
+ */
+export function useNoVoice(): boolean {
+  const [none, setNone] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) { setNone(true); return }
+    const check = () => setNone(_pickVoice() === null)
+    check()
+    window.speechSynthesis.addEventListener('voiceschanged', check)
+    // A backstop for browsers that populate the list without ever firing the event.
+    const t = window.setTimeout(check, 2000)
+    return () => { window.speechSynthesis.removeEventListener('voiceschanged', check); window.clearTimeout(t) }
+  }, [])
+  return none
 }
 
 export function useMiloSpeaker(opts?: { rate?: number; pitch?: number }) {

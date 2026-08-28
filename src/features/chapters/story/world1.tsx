@@ -23,6 +23,7 @@ import { CountItem, type CountKind, COUNT_PLURAL } from './art'
 import { BIOMES, type Band, type Biome, type BiomeId, type Storytelling } from './biomes'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { rint, shuffle } from '@/core/rand'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 // Fisher-Yates — an unbiased shuffle. (The old `sort(() => Math.random() - 0.5)` left
 // small arrays mostly in place, so the practice nearly always opened on the pool's first
@@ -543,6 +544,7 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
   const [crowd, setCrowd] = useState<Slot[]>([])
   const [counted, setCounted] = useState(0)
   const [picked, setPicked] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const speaking = useIsSpeaking()
   const { w: vw, h: vh } = useViewport()
   const scale = useScale()
@@ -591,6 +593,16 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
   }
   const gone = (key: number) => setCrowd(prev => prev.filter(c => c.key !== key))
   function choose(v: number) { if (locked) return; setPicked(v); window.setTimeout(() => onSubmit(v === data.n), 450) }
+  /**
+   * A tap only CHOOSES; nothing is submitted until Ready.
+   *
+   * ⚠️ THIS IS THE ONE CHAPTER IN THE BAND WHERE READY REALLY DECIDES THE SCORE. Everywhere else a
+   * wrong answer is retried in place and only the SLIP is recorded, so Ready adds deliberation but
+   * cannot change the outcome; here `onSubmit(v === data.n)` ends the round either way, so an
+   * accidental tap used to be the answer. That is precisely the case the student was describing.
+   */
+  function pick(v: number) { if (locked || picked != null) return; setPending(p => (p === v ? null : v)) }
+  function commit() { const v = pending; if (v == null) return; setPending(null); choose(v) }
   useEffect(() => {
     if (allCounted && !asked.current) { asked.current = true; speakAfterCurrent('So how many did you count? Tap the number!') }
   }, [allCounted])
@@ -613,10 +625,11 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
             {data.choices.map(v => {
               const isPick = picked === v, ok = isPick && v === data.n
               return (
-                <button key={v} onClick={() => choose(v)} disabled={picked != null || speaking} style={{
+                <button key={v} onClick={() => pick(v)} disabled={picked != null || speaking} style={{
                   width: btn, height: btn, borderRadius: Math.round(btn * 0.23), fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.48), cursor: picked != null ? 'default' : 'pointer',
                   color: ok ? '#fff' : 'var(--milo-orange)', background: ok ? 'var(--garden-green)' : 'var(--paper)',
-                  border: `${Math.max(3, Math.round(btn * 0.05))}px solid ${ok ? 'var(--garden-green-deep)' : 'var(--milo-orange)'}`, boxShadow: '0 6px 0 rgba(242,107,44,.3)',
+                  border: `${Math.max(3, Math.round(btn * 0.05))}px solid ${ok ? 'var(--garden-green-deep)' : 'var(--milo-orange)'}`,
+                  boxShadow: pending === v ? `${PICKED_RING}, 0 6px 0 rgba(242,107,44,.3)` : '0 6px 0 rgba(242,107,44,.3)',
                   transform: isPick ? 'translateY(-4px)' : 'none', transition: 'all .15s' }}>{v}</button>
               )
             })}
@@ -625,6 +638,13 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
         {/* Each tapped creature gathers here (they don't just vanish), so the child sees the count grow. */}
         <CollectTray obj={data.obj} n={counted} maxCell={Math.max(40, Math.round(size * 0.42))} vw={vw} />
       </div>
+      {/* ⚠️ A SIBLING OF THE BOTTOM STACK, NEVER A CHILD OF IT. That column is centred with a
+          `transform`, and a transformed ancestor becomes the containing block for `position: fixed`
+          DESCENDANTS — nested inside, the bar stops being measured against the viewport and is drawn
+          from the column's own box instead. NumberTown shipped exactly that for the length of one
+          drive and put the bar across an answer door. To the RIGHT, because the chips and the
+          collect tray own the middle of that strip. */}
+      <ReadyBar show={pending !== null} onCommit={commit} align="right" />
     </>
   )
 }

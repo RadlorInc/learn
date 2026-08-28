@@ -39,6 +39,7 @@ import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 /**
  * The ONLY thing a tap waits for. Deliberately not `useIsSpeaking()`: a wrong tap speaks a line,
@@ -277,7 +278,7 @@ function Build({ buildIdx, built, target, elsRef }: {
 // ─── The pieces ──────────────────────────────────────────────────────────────────────
 // A pile of parts on the ground between Milo and the build, wrapping two to a row so three reads as
 // a heap rather than a quiz row. Each rests on its own contact shadow.
-type PieceState = 'idle' | 'wrong' | 'taken'
+type PieceState = 'idle' | 'wrong' | 'taken' | 'picked'
 function PiecePile({ options, stateFor, onTap, boxRef, aspect }: {
   options: ShapeName[]; stateFor: (i: number) => PieceState
   onTap?: (i: number, el: HTMLElement) => void
@@ -297,6 +298,7 @@ function PiecePile({ options, stateFor, onTap, boxRef, aspect }: {
               aria-label={SHAPES[name].label}
               style={{ position: 'relative', width: pieceBox, height: pieceBox * 1.16, padding: 0, border: 'none',
                 background: 'transparent', cursor: onTap ? 'pointer' : 'default', lineHeight: 0,
+                borderRadius: 14, boxShadow: st === 'picked' ? PICKED_RING : undefined,
                 opacity: st === 'taken' ? 0 : 1, transition: 'opacity .15s' }}>
               <div aria-hidden style={{ position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)',
                 width: pieceBox * 0.66, height: pieceBox * 0.17,
@@ -336,11 +338,27 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete:
   const [taken, setTaken] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false)
+  const [pending, setPending] = useState<number | null>(null)
+  const pendingEl = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     if (mode === 'guided') speak(`Now you! The ${part.label} needs a ${label}. Tap it!`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /** A tap only CHOOSES; the piece does not move and nothing is graded until Ready. The flight
+   *  needs the element it starts from, so the chosen button is held alongside the index. */
+  function pick(i: number, el: HTMLElement) {
+    if (done.current) return
+    pendingEl.current = el
+    setPending(p => (p === i ? null : i))
+  }
+  function commit() {
+    const i = pending, el = pendingEl.current
+    if (i == null || !el) return
+    setPending(null)
+    tap(i, el)
+  }
 
   function tap(i: number, el: HTMLElement) {
     if (done.current || tapLock.current) return
@@ -362,8 +380,11 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete:
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), ms + 260)
   }
 
-  return <PiecePile options={options} aspect={BUILDS[SEQUENCE[data.seq].bi].aspect}
-    stateFor={i => (taken === i ? 'taken' : wrongIdx === i ? 'wrong' : 'idle')} onTap={tap} />
+  return <>
+    <PiecePile options={options} aspect={BUILDS[SEQUENCE[data.seq].bi].aspect}
+      stateFor={i => (taken === i ? 'taken' : wrongIdx === i ? 'wrong' : pending === i ? 'picked' : 'idle')} onTap={pick} />
+    <ReadyBar show={pending !== null} onCommit={commit} />
+  </>
 }
 
 // ─── Milo shows how (opening demo + the 3-wrong re-teach) ────────────────────────────
@@ -483,7 +504,7 @@ export default function ShapeTown({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'shapes', phase: 'practice' })
   // The build lives HERE, not inside SkillBeat, which rebuilds its contents every round — anything
   // mounted in there resets with them, so a cumulative arc drawn inside a round can never accumulate.
   const [built, setBuilt] = useState<Set<string>>(() => new Set())

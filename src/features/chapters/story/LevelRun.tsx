@@ -1536,7 +1536,7 @@ export default function LevelRun({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'rounding', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [served, setServed] = useState<number[]>([])     // the cumulative arc — OUTSIDE SkillBeat
   const needsRotate = useNeedsRotate()

@@ -11,6 +11,8 @@ import { useRouter } from 'next/navigation'
 import { speak, speakSeq, stopSpeech } from '@/infra/useMiloSpeaker'
 import MiloSprite from './MiloSprite'
 import { SkillBeat, type Beat } from './StoryWorld'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { hasChapterResume } from '@/infra/storage/chapterResume'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate } from './RotateGate'
 import { type CountKind } from './art'
@@ -161,8 +163,20 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
   const miloW = Math.round(miloH * 0.82)
   // ?skip jumps straight to the catch/practice beat (dev shortcut to preview biome changes)
   const skipToPractice = typeof window !== 'undefined' && window.location.search.includes('skip')
-  const startIdx = skipToPractice ? chapter.beats.findIndex(b => b.kind === 'catch') : 0
-  const [idx, setIdx] = useState(Math.max(0, startIdx))
+  // This chapter has no Phase union — it is a LIST OF BEATS walked in order — so `useChapterPhase`'s
+  // resume argument has nothing to attach to and the seam is the starting index instead. Same rule
+  // as everywhere else: an unfinished run opens at the practice rather than replaying the walk, the
+  // demo and the guided count the child already sat through.
+  // ⚠️ The skill is DERIVED from the practice beat rather than typed in beside it: this component is
+  // shared, and a second literal naming the chapter is a second thing to keep in step with the first.
+  const [idx, setIdx] = useState(() => {
+    const practiceIdx = chapter.beats.findIndex(b => b.kind === 'catch' || b.kind === 'skill')
+    if (practiceIdx < 0) return 0
+    if (skipToPractice) return practiceIdx
+    const b = chapter.beats[practiceIdx]
+    const skill = 'beat' in b ? b.beat.skillId : null
+    return skill && hasChapterResume(getActiveLearner()?.id ?? null, skill) ? practiceIdx : 0
+  })
   const [forceWalk, setForceWalk] = useState(false)   // brief walk interlude during practice
   const [biome, setBiome] = useState<BiomeId>(chapter.biomes?.[0] ?? 'forest')   // current place (bg + spawn band)
   const beat = chapter.beats[idx]

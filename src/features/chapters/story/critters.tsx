@@ -160,6 +160,29 @@ export function waitSpot(i: number, n: number, w: Habitat, rightPct: number, edg
  */
 export const GATHER_LEFT = 62        // the gather band's LEFT limit — it never reaches the huddle
 export const GATHER_COL = 5.4        // % between columns; two rows, so a column holds two
+
+/**
+ * How small the gathered set is drawn. It stands further back than the waiting huddle, and the size
+ * difference is doing real work — it reads as somewhere else in the scene rather than a second row
+ * of the same thing.
+ *
+ * ⚠️ AND THE CAP IS PER SPECIES, BECAUSE THE COLUMN PITCH IS A CONSTANT AND THE CAST IS NOT.
+ * `GATHER_COL` steps a flat 5.4% of the width per column, which reads as an even huddle in the
+ * source and is even for exactly one creature. Spacing is what is LEFT AFTER THE BODIES, and the
+ * cast's aspects run 0.805 (rabbit) to 1.746 (shark) — so at a flat 0.8 the share of each body still
+ * showing ran from 74% (rabbit, a readable huddle) to 26% (shark, a heap). Measured live at
+ * 1280×720: FIVE gathered fish read as three, in the one place the child has to count what they
+ * have chosen. Same fault as chapter 2's line behind mother, one file along.
+ *
+ * ⚠️ Calibrated on the RABBIT, not on zero. A gathered group overlaps on purpose — that is what a
+ * huddle is, and the rabbit's is the picture that was approved — so the rule is *nobody is buried
+ * deeper than the rabbit*, which leaves the good case untouched by construction. A no-overlap rule
+ * would have moved it. Pulling the SCALE back rather than widening the pitch is forced: measured,
+ * the gather band leaves ~6.3% per column for four columns, so there is no room to spread into.
+ */
+export const CLUSTER_SCALE = 0.8
+const CLUSTER_ASPECT = 0.805         // the rabbit's, from SHEETS — the approved picture
+export const clusterScale = (src: string) => CLUSTER_SCALE * Math.min(1, CLUSTER_ASPECT / aspectOf(src))
 export const HUDDLE_RIGHT = GATHER_LEFT - 6   // huddle ends here → every journey runs left→right
 export const LEAD_X = 92             // where the leader stands if the sprite fits
 export const LEAD_SCALE = 1.3
@@ -171,7 +194,7 @@ export const LEAD_SCALE = 1.3
  * chapters are built to avoid, and a child counting a group cannot count it while it rearranges.
  * The row offset is half a column so the two rows interleave instead of stacking.
  */
-export function clusterSpot(k: number, w: Habitat, anchor: number, colPct: number, minLeft: number): Spot {
+export function clusterSpot(k: number, w: Habitat, anchor: number, colPct: number, minLeft: number, src: string): Spot {
   const col = Math.floor(k / 2), row = k % 2
   return {
     // Grows LEFTWARD from the leader, so the first to arrive stands right beside the character it
@@ -180,9 +203,9 @@ export function clusterSpot(k: number, w: Habitat, anchor: number, colPct: numbe
     // quarter of the screen away from Milo, gathered with nobody.
     left: Math.max(anchor - col * colPct - row * colPct * 0.5, minLeft),
     top: w.lineY + row * 3.5,
-    // Smaller than the waiting huddle: this group stands further back. The size difference is
-    // doing real work — it reads as somewhere else in the scene, not a second row of the same thing.
-    scale: 0.8,
+    // Per species — see clusterScale. `src` is REQUIRED rather than defaulted: a default is exactly
+    // what lets a caller restore the flat 0.8 while everything still type-checks and stays green.
+    scale: clusterScale(src),
   }
 }
 
@@ -218,9 +241,11 @@ export const STRIP_PX = 64
  * `leadScale` is the biggest thing standing on the far band (mother at 1.25×, Milo at his own
  * scale) — clearance has to be measured against THAT, not against the smaller creatures beside it.
  */
-export function fitBands(h: Habitat, vh: number, sizePx: number, leadScale = 1.25): Habitat {
+export function fitBands(h: Habitat, vh: number, sizePx: number, leadScale = 1.25, topPx = 0): Habitat {
   const minLine = (BANNER_PX + sizePx * leadScale) / Math.max(1, vh) * 100
-  const minWait = (BANNER_PX + sizePx) / Math.max(1, vh) * 100
+  // `topPx` only lifts the WAITING band: it is what the chapter draws above a little one's head
+  // (chapter 2's number tag). The leader carries no tag, and her own scale already dominates.
+  const minWait = (BANNER_PX + topPx + sizePx) / Math.max(1, vh) * 100
   const maxFeet = (vh - STRIP_PX) / Math.max(1, vh) * 100
   if (h.lineY >= minLine && h.waitY0 >= minWait && h.waitY1 <= maxFeet) return h   // roomy: keep the art
   const lineY = Math.max(h.lineY, minLine)
@@ -249,12 +274,16 @@ export const BAND_JITTER = 2
  * the strip, but it says nothing about the rows being distinguishable from each other, so on a
  * short screen it happily returns a band of a few pixels and both rows land on the same line.
  */
-export function maxSizeForRows(vh: number, rows: number): number {
+export function maxSizeForRows(vh: number, rows: number, topPx = 0): number {
   // BAND_JITTER is subtracted because `spreadBand` reserves it at the top of the band, and a clamp
   // that ignores a nudge applied after it is not a clamp. Without this the cap said a sprite fitted
   // and spreadBand then could not find it the room — measured on chapter 2's bunny at 640x320, rows
   // 47.6px apart against the 52.8px they needed.
-  const usable = Math.max(1, vh - BANNER_PX - STRIP_PX - vh * BAND_JITTER / 100)
+  // ⚠️ `topPx` IS WHATEVER THE CHAPTER DRAWS ABOVE THE HEAD, and leaving it at 0 when there is
+  // something there is how chapter 2's numbers ended up behind the prompt pill: BANNER_PX reserves
+  // room for the SPRITE, and a number tag floats above it, OUTSIDE that box. Anything a chapter
+  // hangs over a creature has to be declared here or the band it is given cannot hold it.
+  const usable = Math.max(1, vh - BANNER_PX - topPx - STRIP_PX - vh * BAND_JITTER / 100)
   // FLOORED: every caller rounds the size it finally draws, and a cap a rounding step can
   // exceed is not a cap — 92.6 rounded to 93 left chapter 2's rows 0.6px short of ROW_SEP.
   return Math.floor(usable / (1 + ROW_SEP * Math.max(0, rows - 1)))
@@ -268,11 +297,11 @@ export function maxSizeForRows(vh: number, rows: number): number {
  * On a roomy screen the band already satisfies this and is returned untouched, which keeps each
  * habitat's art direction intact — fish mid-water, fliers high — exactly as fitBands intends.
  */
-export function spreadBand(b: Habitat, vh: number, size: number, rows: number): Habitat {
+export function spreadBand(b: Habitat, vh: number, size: number, rows: number, topPx = 0): Habitat {
   if (rows <= 1) return b
   const needPct = (size * ROW_SEP * (rows - 1)) / Math.max(1, vh) * 100
   if (b.waitY1 - b.waitY0 >= needPct) return b
-  const headroomPct = (BANNER_PX + size) / Math.max(1, vh) * 100 + BAND_JITTER
+  const headroomPct = (BANNER_PX + topPx + size) / Math.max(1, vh) * 100 + BAND_JITTER
   // Pulling the FAR edge up is the first move, because feet must stay clear of the bottom strip.
   // But a habitat whose art direction holds the band high — fish mid-water, fliers up in the sky —
   // can run out of headroom before the rows are separated, and then the near row simply covers the

@@ -39,6 +39,7 @@ import {
   type Habitat, type Spot, HABITATS, CAST, kindAt, homeOf, aspectOf,
   Background, Critter, CRITTER_CSS, huddleGeom, huddleRows, waitSpot, clusterSpot, leadX, fitBands,
   GATHER_LEFT, GATHER_COL, HUDDLE_RIGHT, LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, STRIP_PX,
+  clusterScale,
   groundSpeed, journeyOf, TRAVEL_MIN, type Journey,
 } from './critters'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
@@ -65,8 +66,8 @@ const INTRO = 'Milo is walking the little ones home — but only the number he a
 
 /** Fixed SLOTS rather than a row that re-packs — see clusterSpot. The band itself lives in
  *  ./critters so the invariant sweep measures the real numbers rather than a copy of them. */
-const gatherSpot = (k: number, w: Habitat, mx: number): Spot =>
-  clusterSpot(k, w, mx - 6, GATHER_COL, GATHER_LEFT)
+const gatherSpot = (k: number, w: Habitat, mx: number, src: string): Spot =>
+  clusterSpot(k, w, mx - 6, GATHER_COL, GATHER_LEFT, src)
 /**
  * Chapter 4's own bands, per habitat. Chapter 2 can put its leader straight onto the line because
  * the leader IS one of them — a mother butterfly belongs at a butterfly's height. Milo is a pony,
@@ -76,7 +77,7 @@ const gatherSpot = (k: number, w: Habitat, mx: number): Spot =>
  * of its own, BELOW the group it is gathering.
  *
  * Depth stays consistent across all three: the waiting set is nearest the camera (lowest, biggest),
- * the gathered set is further back (higher, drawn at 0.8), and the leader stands nearest of all. An
+ * the gathered set is further back (higher, drawn at `clusterScale`), and the leader is nearest. An
  * earlier pass had the sky flock waiting ABOVE its gathering point, which inverted the cue — they
  * arrived lower AND smaller at once, and a child reading depth off size then gets the opposite
  * answer from the one they read off height.
@@ -198,7 +199,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   }, [pool, marching])
 
   const spotOf = useCallback((i: number, slot: number | undefined): Spot =>
-    slot === undefined ? waitSpot(i, pool, band, HUDDLE_RIGHT, edgePct, rows) : gatherSpot(slot, band, mx),
+    slot === undefined ? waitSpot(i, pool, band, HUDDLE_RIGHT, edgePct, rows) : gatherSpot(slot, band, mx, kind.src),
   [pool, band, edgePct, rows, mx])
 
   /** Send one little one over to Milo. Timed from ITS OWN journey, so its leg cycle and the ground
@@ -208,7 +209,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
     // the same stale length and both walk to the same place.
     const used = new Set(Object.values(slotsRef.current))
     let slot = 0; while (used.has(slot)) slot++
-    const j = journeyOf(spotOf(i, undefined), gatherSpot(slot, band, mx), vw, vh, babySize, kind.src)
+    const j = journeyOf(spotOf(i, undefined), gatherSpot(slot, band, mx, kind.src), vw, vh, babySize, kind.src)
     slotsRef.current = { ...slotsRef.current, [i]: slot }
     setSlots(slotsRef.current)
     setTravelling(t => ({ ...t, [i]: j }))
@@ -220,7 +221,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   const sendBack = useCallback((i: number) => {
     const slot = slotsRef.current[i]
     if (slot === undefined) return
-    const j = journeyOf(gatherSpot(slot, band, mx), spotOf(i, undefined), vw, vh, babySize, kind.src)
+    const j = journeyOf(gatherSpot(slot, band, mx, kind.src), spotOf(i, undefined), vw, vh, babySize, kind.src)
     const next = { ...slotsRef.current }; delete next[i]
     slotsRef.current = next
     setSlots(next)
@@ -347,7 +348,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
             <Critter src={kind.src} facesLeft={kind.facesLeft} at={at} size={babySize} move={world.move}
               z={withMilo ? 24 : 30 + (i % 2) * 2}
               durMs={marching ? MARCH_MS : (travelling[i]?.ms ?? TRAVEL_MIN)}
-              cycleScale={marching ? cycleFor(kind.src, babySize * 0.8) : (travelling[i]?.cycleScale ?? 1)}
+              cycleScale={marching ? cycleFor(kind.src, babySize * clusterScale(kind.src)) : (travelling[i]?.cycleScale ?? 1)}
               moving={isTravelling || (marching && withMilo)}
               facingLeft={!!returning[i]}
               breathe={!withMilo && !isTravelling} hop={idleHop === i}
@@ -455,7 +456,7 @@ export default function HomeTime({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'matchingQuantities', phase: 'practice' })
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [homeStage, setHomeStage] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

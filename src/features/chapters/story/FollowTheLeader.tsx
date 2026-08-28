@@ -46,6 +46,7 @@ import {
 import { rint, shuffle } from '@/core/rand'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar from './ReadyBar'
 
 // Just long enough to swallow a double-tap. It is deliberately NOT tied to Milo's voice: measured
 // live in Chrome, `speechSynthesis.speaking` stays true for over 3.2 SECONDS after a single spoken
@@ -87,6 +88,43 @@ interface LineRound { scene: string; nums: number[]; castIdx: number }
 const MOTHER_X = 94          // where mother stands if she fits; pulled left when she does not
 const LINE_GAP = 9
 const MOTHER_SCALE = 1.25
+/** How big a little one is drawn once it is IN LINE — further away than the waiting huddle, so
+ *  smaller. A CEILING now rather than a constant; see `lineScale`. */
+const LINE_SCALE = 0.78
+
+/**
+ * ⚠️⚠️ THE GAP IS FIXED AND THE BODIES ARE NOT, SO THE LINE WAS EVENLY SPACED FOR EXACTLY ONE
+ * SPECIES. `LINE_GAP` is 9% of the width for everybody, and the cast's aspects run from 0.81
+ * (rabbit) to 1.75 (shark) — so measured at 1280x720 with five little ones, the clearance between
+ * neighbouring BODIES ran from **+1.65% (butterfly, a clean gap) to −1.07% (ant, overlapping)**:
+ *
+ *     bunny  8.24% wide → +0.76  a queue        fish     9.11% → −0.11  a heap
+ *     turtle 8.86% wide → +0.14  touching       squirrel 9.71% → −0.71  a heap
+ *                                               ladybug  9.67% → −0.67  a heap
+ *
+ * The founder saw exactly that and named it: *"for the bunny the children are evenly spaced behind
+ * the mother; for the fish, butterflies, turtles, ladybugs and squirrels they are randomly placed."*
+ * Nothing was random — the spacing was identical. What differed was how much of it each body ate,
+ * and a queue whose members overlap does not read as a queue at all.
+ *
+ * ⚠️ THE FIX IS TO MEASURE THE GAP OFF THE SPRITE, WHICH IS THIS FILE'S OWN RULE ONE LEVEL DOWN:
+ * `leadX` already pulls mother back by her own half-width, `edgePct` already bounds the huddle by
+ * the sprite's own width, and `huddleRows` already counts rows from it. The LINE was the one place
+ * left holding a bare number.
+ *
+ * ⚠️ AND IT MOVES THE SCALE, NOT THE SPACING — deliberately, and it is the whole reason this is a
+ * two-line change rather than a rewrite. Widening the gap per species would make the line LONGER
+ * for a wide creature, and the line's length is what decides how much room the waiting huddle has
+ * (`lineRight`), which decides the span, which decides `babySize` — so the gap would depend on the
+ * size that depends on the gap. Capping the in-line SCALE instead leaves every one of those
+ * upstream numbers untouched: the step stays a constant 9%, so the line is evenly spaced BY
+ * CONSTRUCTION for every species, and a wide creature is simply drawn a little further away.
+ */
+const LINE_CLEAR = 1.09   // gap ÷ body. The rabbit's own ratio today — the one the founder likes.
+export function lineScale(babySize: number, aspect: number, vw: number): number {
+  const room = (LINE_GAP / LINE_CLEAR) / 100 * vw     // px a body may occupy between two steps
+  return Math.min(LINE_SCALE, room / Math.max(1, babySize * aspect))
+}
 
 /**
  * WAITING is a huddle on the LEFT; the line forms to the RIGHT of it. That ordering is not
@@ -103,23 +141,90 @@ const MOTHER_SCALE = 1.25
  * and what this chapter states is only where the LINE ends up, i.e. how much room the huddle has
  * left over. `- LINE_GAP * n - 4` is exactly that: whatever the line will not need.
  */
-const lineRight = (n: number, mx: number) => mx - LINE_GAP * n - 4
+/**
+ * ⚠️⚠️ THE HEAD OF THE LINE IS A DIFFERENT GAP FROM THE REST OF IT, AND IT WAS THE SAME NUMBER.
+ * `LINE_GAP` separates two LITTLE ONES; the first place in the line sits next to MOTHER, who is
+ * drawn at `MOTHER_SCALE` (1.25) against the line's own scale — so the two bodies either side of
+ * that first gap differ by roughly 1.7x, and using one constant for both meant the first little one
+ * was tucked inside her. Founder, on the fish: *"fish 1 still tucks under mother's body."*
+ *
+ * ⚠️ MEASURED, NOT ASSUMED — AND THE FIRST GUESS WAS WRONG. This looked like it might be an ink-vs-
+ * box problem (a rabbit is tall and narrow with transparent margins, a fish is a fat oval that fills
+ * its cell), which would have meant a per-sprite ink table. Measuring every walk sheet's alpha bbox
+ * says the ink fills **0.95–1.00** of the cell for all ten: there is no margin to exploit and the
+ * boxes ARE the creatures. So it is plain geometry, and the fix is arithmetic rather than new data.
+ *
+ * ⚠️ AND IT IS CALIBRATED SO THE RABBIT DOES NOT MOVE. Little ones queue nose-to-tail and a slight
+ * overlap with mother is CORRECT — the rabbit has one today (its right edge sits ~1.8% of the width
+ * inside her) and that is the picture the founder approved. So the rule is not "no overlap", it is
+ * *every species overlaps mother by the same share of its own body as the rabbit does*. `OVERLAP_OK`
+ * is the rabbit's own value; at 1280x720 the rabbit's head gap comes back as exactly today's 9%.
+ */
+const OVERLAP_OK = 0.22      // how far a little one may sit inside mother, as a share of its own body
 
-function lineSpot(k: number, w: Habitat, mx = MOTHER_X): Spot {
-  return { left: mx - LINE_GAP * (k + 1), top: w.lineY, scale: 0.78 }
+export function lineHeadGap(babySize: number, aspect: number, vw: number): number {
+  const half = (scale: number) => (babySize * scale * aspect / 2) / Math.max(1, vw) * 100
+  const motherHalf = half(MOTHER_SCALE)
+  const childHalf = half(lineScale(babySize, aspect, vw))
+  // Edge to edge, minus the overlap that reads as queueing rather than as burying.
+  return Math.max(LINE_GAP, motherHalf + childHalf - OVERLAP_OK * childHalf * 2)
+}
+
+/**
+ * The huddle waits on the LEFT and the line forms to its RIGHT — the geometry lives in ./critters,
+ * and what this chapter states is only where the LINE ends up, i.e. how much room the huddle has
+ * left over. ⚠️ The head gap is a separate term now: the line is `headGap` to mother's first
+ * neighbour and `LINE_GAP` for each one after it, so this is `whatever the line will not need`
+ * exactly as before — it just no longer assumes the two gaps are the same size.
+ */
+const lineRight = (n: number, mx: number, headGap: number) => mx - headGap - LINE_GAP * (n - 1) - 4
+
+/**
+ * Where the k-th little one stands once it is IN LINE.
+ *
+ * ⚠️⚠️ IT TAKES THE WHOLE LAYOUT, NOT FOUR LOOSE NUMBERS, AND THAT IS THE POINT. Every one of its
+ * inputs — the band, mother's x, the in-line scale, the head gap — is derived, and each one handed
+ * over separately is one more thing a call site can get subtly wrong while still type-checking.
+ * Mutation-tested, twice: first a `scale = LINE_SCALE` default let a caller silently restore the
+ * overlapping line, and then, with the default gone, passing `LINE_GAP` where `headGap` belonged
+ * restored the buried-under-mother line — **both with every check in
+ * `followTheLeaderHuddle.test.ts` green**, because they drive the layout and cannot see how the
+ * component USES it. That is the plan-pointer fault in miniature, and no amount of checking fixes
+ * it. Taking the layout object removes the parameters, so there is nothing left to pass wrongly —
+ * a structure that cannot express the bug, which this repo prefers to a check that catches one.
+ */
+export function lineSpot(k: number, L: ReturnType<typeof lineLayout>): Spot {
+  return { left: L.mx - L.headGap - LINE_GAP * k, top: L.band.lineY, scale: L.lineScale }
 }
 const motherSpot = (w: Habitat, mx = MOTHER_X): Spot => ({ left: mx, top: w.lineY, scale: MOTHER_SCALE })
 
 /** How far the family has to travel to leave the picture COMPLETELY. Sized off the tail of the
  *  line, not off mother — a fixed offset walked her off screen while the last two were still
  *  standing there, so the round ended with half the family stranded mid-exit. */
-const marchDistance = (n: number, mx = MOTHER_X) => 122 - (mx - LINE_GAP * n)
+const marchDistance = (n: number, mx: number, headGap: number) => 122 - (mx - headGap - LINE_GAP * (n - 1))
 
 /** The number a little one is wearing. Floats just above it, exactly as the counting chapter puts
  *  its count above each parading creature — same idiom, so a child moving between chapters reads
  *  it the same way. Painted cream, not a white UI pill: this sits inside the picture. */
+/**
+ * The tag's own size, and how far it floats ABOVE the head — one definition, because three things
+ * need it and they must not drift: the component that draws it, the layout that has to reserve
+ * room for it, and the gate that checks it is readable.
+ *
+ * ⚠️⚠️ THIS OVERHANG IS OUTSIDE THE SPRITE'S BOX, AND EVERY BAND HELPER RESERVES FROM THE BOX.
+ * `fitBands` proves the creature's HEAD clears the prompt pill and `spreadBand` clamps the far row
+ * to the same line — neither knew about a number hanging above that head, so on a short frame the
+ * band was fitted perfectly and the NUMBERS sat behind the pill. Measured live at 640×320: the tag
+ * for the middle little one rendered at y 82–121 against a pill occupying 155–485 × 48–93, i.e.
+ * 28% of the badge covered, and `elementFromPoint` at its top returned the pill. A student
+ * reported it twice — *"I was unable to see all the numbers"* — and the first fix (two rows
+ * instead of three) was a DIFFERENT and equally real cause, which is why it did not close this one.
+ */
+export const tagSize = (size: number) => Math.max(24, Math.round(size * 0.42))
+export const tagLift = (size: number) => tagSize(size) * 0.72
+
 function NumberTag({ n, size, lit }: { n: number; size: number; lit: boolean }) {
-  const d = Math.max(24, Math.round(size * 0.42))
+  const d = tagSize(size)
   return (
     <span aria-hidden style={{ position: 'absolute', left: '50%', top: -d * 0.72, transform: 'translateX(-50%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: d, height: d, padding: '0 6px',
@@ -152,7 +257,43 @@ export function lineLayout(vw: number, vh: number, n: number, castIdx: number) {
   const rawSize = baseSize * (kind.scale ?? 1)
   const mx = leadX(MOTHER_X, rawSize, aspect, MOTHER_SCALE, vw)
   const edgePct = (rawSize * aspect / 2) / Math.max(1, vw) * 100
-  const spanPct = huddleGeom(n, lineRight(n, mx), edgePct).span
+
+  /**
+   * ⚠️⚠️ TWO PASSES, AND THE REASON IS THE CIRCULARITY THIS FILE'S HEADER PROMISES THERE IS NONE OF.
+   * The head gap is measured off the sprite, the sprite is capped to the huddle's slot, the slot
+   * comes from the room the LINE leaves — so the gap depends on the size that depends on the gap.
+   *
+   * Broken by running the size chain twice rather than by iterating to a fixed point: pass 1 uses
+   * the old flat gap and yields a PROVISIONAL size, the head gap is measured from that, and pass 2
+   * spends it. ⚠️ The provisional size is always ≥ the final one (a longer line leaves a smaller
+   * slot, which caps harder), so the head gap is measured for a sprite at least as big as the one
+   * finally drawn — the reserve is never short, only ever a hair generous. And the SAME `headGap`
+   * value is used for the budget and for the drawing, so the two cannot disagree at all.
+   */
+  const sizeChain = (headGap: number, topPx: number) => {
+    const spanPct = huddleGeom(n, lineRight(n, mx, headGap), edgePct).span
+    const rows = Math.min(2, huddleRows(spanPct, (rawSize * aspect) / Math.max(1, vw) * 100))
+    const slotPx = spanPct * rows / 100 * vw
+    return { spanPct, rows, babySize: Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows, topPx), (slotPx / aspect) * 0.98))) }
+  }
+  /**
+   * The tag's lift depends on the size, and the size depends on the lift — the same circularity the
+   * head gap has, broken the same way and for the same reason: measured off the PROVISIONAL pass,
+   * which always yields a size at least as big as the final one, so the reserve is never short.
+   */
+  const provisional = sizeChain(LINE_GAP, 0).babySize
+  const topPx = tagLift(provisional)
+  const headGap = lineHeadGap(sizeChain(LINE_GAP, topPx).babySize, aspect, vw)
+  /**
+   * ⚠️ ONE VALUE, COMPUTED ONCE AND HANDED OUT. The huddle's right edge was recomputed in three
+   * places — here, and at both `waitSpot` call sites in the scene — and once the head gap became
+   * derived, three copies of `lineRight(n, mx, headGap)` are three chances for one of them to be
+   * spending a different gap from the line that is drawn. Mutation-tested: with the copies in
+   * place, giving the RESERVE the old flat gap while the line drew at the derived one left every
+   * check in this file green, and the line's tail would have run into the huddle.
+   */
+  const huddleRightPct = lineRight(n, mx, headGap)
+  const spanPct = huddleGeom(n, huddleRightPct, edgePct).span
   // NO floor on the slot. A `Math.max(span*2, 15)` floor here was the actual reason the huddle
   // crowded: it sized sprites for 15% of the width while spacing them by less than that, so they
   // were guaranteed to overlap exactly when the huddle was tightest.
@@ -174,9 +315,22 @@ export function lineLayout(vw: number, vh: number, n: number, castIdx: number) {
   // `maxSizeForRows` is the vertical half of that same trade, and leaving it out is what let the
   // rows collapse: fitBands only proves heads clear the prompt and feet clear the strip, and is
   // perfectly happy to return a band a few pixels tall with both rows on the same line.
-  const babySize = Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows), (slotPx / aspect) * 0.98)))
-  const band: Habitat = spreadBand(fitBands(world, vh, babySize), vh, babySize, rows)
-  return { kind, world, aspect, mx, edgePct, rows, babySize, band, short, vw, vh }
+  const babySize = Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows, topPx), (slotPx / aspect) * 0.98)))
+  const band: Habitat = spreadBand(fitBands(world, vh, babySize, MOTHER_SCALE, topPx), vh, babySize, rows, topPx)
+  return { kind, world, aspect, mx, edgePct, rows, babySize, band, short, vw, vh, headGap, topPx,
+    lineScale: lineScale(babySize, aspect, vw),
+    /**
+     * ⚠️ REPORTED SO THE GATE CAN CHECK THE TWO AGAINST EACH OTHER. `huddleRight` is the room the
+     * line RESERVED and `lineTail` is where the line actually ENDS — the same number computed from
+     * the two ends of the two-pass chain. Mutation-tested: computing the reserve from the old flat
+     * gap while drawing at the derived one left every other check in this file green, and the line's
+     * tail would then have run left into the waiting huddle — where a creature standing right of its
+     * destination travels BACKWARDS to reach it, which is the moonwalk this layout was built to
+     * remove. Neither value is a constant a test can retype: they must agree.
+     */
+    /** ⚠️ The huddle's right edge, computed ONCE here and handed to both `waitSpot` call sites —
+     *  see the note where it is derived. */
+    huddleRightPct }
 }
 
 // ─── The scene ───────────────────────────────────────────────────────────────────────
@@ -191,7 +345,8 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   const n = nums.length
   const sorted = useMemo(() => [...nums].sort((a, b) => a - b), [nums])
   const { w: vw, h: vh } = useViewport()
-  const { kind, world, mx, edgePct, rows, babySize, band } = lineLayout(vw, vh, n, data.castIdx)
+  const L = lineLayout(vw, vh, n, data.castIdx)
+  const { kind, world, mx, edgePct, rows, babySize, band, headGap, huddleRightPct } = L
 
   const [joined, setJoined] = useState<number[]>([])     // values already in line, in join order
   const joinedRef = useRef<number[]>([])                 // same list, readable synchronously mid-tap
@@ -199,6 +354,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   // not a single slot: the child may tap 2 while 1 is still walking.
   const [flying, setFlying] = useState<Record<number, Journey>>({})
   const [wiggling, setWiggling] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const [idleHop, setIdleHop] = useState<number | null>(null)
   const [marching, setMarching] = useState(false)
   const [hint, setHint] = useState<number | null>(null)
@@ -229,8 +385,11 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
     // fix: the clamp routinely overrode it and the legs then ran at a speed the body was not moving.
     // The place in the line is claimed from the REF, which updates synchronously — two quick taps
     // would otherwise read the same stale state and both walk to the same spot.
-    const from = waitSpot(nums.indexOf(v), n, band, lineRight(n, mx), edgePct, rows)
-    const to = lineSpot(joinedRef.current.length, band, mx)
+    const from = waitSpot(nums.indexOf(v), n, band, huddleRightPct, edgePct, rows)
+    // ⚠️ THE SAME SCALE THE SPOT WILL BE DRAWN AT. `journeyOf` reads both ends, so a destination
+    // computed at a different scale is two places deciding one thing — the class this file's own
+    // layout comment exists to avoid.
+    const to = lineSpot(joinedRef.current.length, L)
     const j = journeyOf(from, to, vw, vh, babySize, kind.src)
     joinedRef.current = [...joinedRef.current, v]
     setJoined(joinedRef.current)
@@ -273,6 +432,27 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /**
+   * A tap only CHOOSES which little one goes next; nobody walks until Ready.
+   *
+   * ⚠️ THIS CHAPTER BUILDS A SEQUENCE, so Ready happens ONCE PER PLACE IN THE LINE rather than once
+   * per round — the child chooses who is next, sends them, then chooses again. That keeps the
+   * per-step feedback the chapter teaches with (a wrong pick wiggles and Milo says which to look
+   * for) instead of holding a whole ordering back to be graded at the end, which would be a
+   * different chapter.
+   */
+  function pick(v: number) {
+    if (mode === 'demo' || done.current) return
+    if (joinedRef.current.includes(v)) return
+    setPending(p => (p === v ? null : v))
+  }
+  function commit() {
+    const v = pending
+    if (v == null) return
+    setPending(null)
+    tap(v)
+  }
+
   function tap(v: number) {
     // A tap waits for nothing but a double-tap guard. It does NOT wait for the previous little one
     // to reach the line — a child who has already found 2 should not be made to watch 1 walk first —
@@ -301,10 +481,10 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
 
   // The whole family slides off together on the march — one shared offset, so the line keeps its
   // spacing and reads as a procession rather than a scatter.
-  const marchDx = marching ? marchDistance(n, mx) : 0
+  const marchDx = marching ? marchDistance(n, mx, headGap) : 0
   // The exit covers far more ground per second than a stroll, so the cycle is sped up by exactly
   // that ratio — chapter 1's lesson, and the only way feet and ground stay locked on the way out.
-  const marchCycle = Math.max(1, (marchDistance(n, mx) / 100 * vw) / (MARCH_MS / 1000) / groundSpeed(kind.src, babySize))
+  const marchCycle = Math.max(1, (marchDistance(n, mx, headGap) / 100 * vw) / (MARCH_MS / 1000) / groundSpeed(kind.src, babySize))
   const mother = motherSpot(band, mx)
   const motherAt = { ...mother, left: mother.left + marchDx }
 
@@ -316,7 +496,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
       {nums.map((v, i) => {
         const k = joined.indexOf(v)
         const inLine = k >= 0
-        const base = inLine ? lineSpot(k, band, mx) : waitSpot(i, n, band, lineRight(n, mx), edgePct, rows)
+        const base = inLine ? lineSpot(k, L) : waitSpot(i, n, band, huddleRightPct, edgePct, rows)
         const at = { ...base, left: base.left + (inLine ? marchDx : 0) }
         const isTravelling = flying[v] !== undefined
         return (
@@ -337,7 +517,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
             {/* The hit area is a plain button over the creature — the sprite itself stays
                 pointer-transparent so a tap can never be swallowed by a flipped inner wrapper. */}
             {!inLine && mode !== 'demo' && (
-              <button onClick={() => tap(v)} aria-label={`${kind.little} ${v}`}
+              <button onClick={() => pick(v)} aria-label={`${kind.little} ${v}`}
                 style={{ position: 'fixed', left: `${at.left}%`, top: `${at.top}%`, transform: 'translate(-50%,-100%)',
                   // 44px is a FLOOR, not a ratio: at the 40px sprite floor (five sharks, top tier,
                   // small short-landscape phone) 1.05x came out 42px wide — under the tap minimum on
@@ -345,11 +525,17 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
                   // stays narrower than the sprite even so, so it cannot reach a neighbour.
                   zIndex: 40, width: Math.max(44, Math.round(babySize * at.scale * 1.05)), height: Math.max(44, Math.round(babySize * at.scale * 1.15)),
                   padding: 0, border: 'none', background: 'transparent', cursor: 'pointer',
-                  outline: hint === v ? '4px dashed rgba(242,107,44,.75)' : 'none', outlineOffset: 4, borderRadius: 18 }} />
+                  // ⚠️ THE CHOSEN RING WINS OVER THE HINT, and it is white rather than the hint's
+                  // orange: a chosen little one is not yet the RIGHT little one, and this chapter
+                  // may not say which is right before the commit.
+                  outline: pending === v ? '4px solid rgba(255,255,255,.95)'
+                    : hint === v ? '4px dashed rgba(242,107,44,.75)' : 'none',
+                  outlineOffset: 4, borderRadius: 18 }} />
             )}
           </React.Fragment>
         )
       })}
+      <ReadyBar show={pending !== null} onCommit={commit} label="Send ▶" />
     </>
   )
 }
@@ -420,7 +606,7 @@ export default function FollowTheLeader({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'numberOrdering', phase: 'practice' })
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [homeStage, setHomeStage] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)

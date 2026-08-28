@@ -26,7 +26,7 @@
  * choices 2 → 3 → 4, and look-alike distractors (6/9, 7/1, 3/8) at the hardest tier.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, speakSteps, useIsSpeaking, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakSteps, useIsSpeaking, stopSpeech, useNoVoice } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -36,6 +36,7 @@ import { rint, shuffle } from '@/core/rand'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar from './ReadyBar'
 
 const SPEAK_LOCK_MS = 600
 const LOOKALIKE: Record<number, number> = { 6: 9, 9: 6, 7: 1, 1: 7, 3: 8, 8: 3, 5: 6, 2: 7 }
@@ -110,7 +111,10 @@ function Branch({ y }: { y: number }) {
 }
 
 // ─── A nest: chick + numeral sign, the tappable answer ───────────────────────────────
-type NestState = 'hungry' | 'fed' | 'wrong' | 'hint'
+/** ⚠️ `picked` is CHOSEN, NOT GRADED — it must look the same whether the choice is right or
+ *  wrong, so it is a plain white lift and deliberately NOT the green `hint` glow, which in this
+ *  app's palette means correct. A marker that only appears on the right nest is the answer. */
+type NestState = 'hungry' | 'fed' | 'wrong' | 'hint' | 'picked'
 
 function Nest({ num, state, size, left, top, onTap, aria }: {
   num: number; state: NestState; size: number
@@ -129,8 +133,11 @@ function Nest({ num, state, size, left, top, onTap, aria }: {
       {/* Animation lives on this wrapper only — never on the positioned button, whose inline
           translate an animation would silently override. */}
       <div style={{ position: 'absolute', inset: 0,
-        animation: state === 'wrong' ? 'nt_shake .42s ease' : state === 'hint' ? 'nt_pop .5s ease' : 'none',
-        filter: state === 'hint' ? 'drop-shadow(0 0 16px var(--garden-green)) drop-shadow(0 0 10px var(--garden-green))' : 'drop-shadow(0 5px 8px rgba(0,0,0,.3))' }}>
+        animation: state === 'wrong' ? 'nt_shake .42s ease' : state === 'hint' ? 'nt_pop .5s ease' : state === 'picked' ? 'nt_pop .35s ease' : 'none',
+        transform: state === 'picked' ? 'translateY(-6px)' : 'none', transition: 'transform .18s ease',
+        filter: state === 'hint' ? 'drop-shadow(0 0 16px var(--garden-green)) drop-shadow(0 0 10px var(--garden-green))'
+          : state === 'picked' ? 'drop-shadow(0 0 14px rgba(255,255,255,.95)) drop-shadow(0 4px 8px rgba(61,37,22,.45))'
+          : 'drop-shadow(0 5px 8px rgba(0,0,0,.3))' }}>
         {sheet ? (
           <span style={{ display: 'block', width: w, height: h, overflow: 'hidden', position: 'relative' }}>
             {/* A FED chick stops chirping — pausing the cycle is the cheapest honest way to say
@@ -217,9 +224,27 @@ function placeFor(n: number): { left: number; top: number }[] {
 
 // ─── Round copy ──────────────────────────────────────────────────────────────────────
 function promptFor(w: NestWorld): string { return `Tap the nest with the number you heard!` }
+/** The guided round's one instruction. Written out once because it is now said in TWO places —
+ *  spoken on mount, and spoken again when the child taps the banner to hear it. Two copies of a
+ *  sentence is the fault; the second pill is only the symptom. */
+export function guidedSay(w: NestWorld, target: number): string {
+  return `Now you! Feed the ${w.noun} in nest number ${target}. Tap it!`
+}
+/**
+ * The scored round's spoken instruction.
+ *
+ * ⚠️ IT NAMES THE ACTION, NOT JUST THE NUMBER. It used to be *"Feed the duckling in nest number 7!
+ * Number 7."* — which says WHAT is wanted and never WHAT TO DO, and the only place the action was
+ * stated was the written prompt, on a band whose whole point is that this chapter's children cannot
+ * read. A student asked for exactly this: *"Feed the duckling in nest number 7, click on the
+ * duckling that's nest says number 7."*
+ *
+ * ⚠️ THE NUMBER IS STILL SPOKEN AND STILL NEVER WRITTEN. The skill is sound → glyph, so the target
+ * may be repeated aloud as often as it likes and may not appear in `promptFor`.
+ */
 function sayFor(w: NestWorld, d: NestRound): string {
   const t = d.nums[d.answerIdx]
-  return `Feed the ${w.noun} in nest number ${t}! Number ${t}.`
+  return `Feed the ${w.noun} in nest number ${t}. Tap the nest that says ${t}!`
 }
 
 /** Shared flight choreography: fly to the nest, feed, fly home. */
@@ -248,6 +273,7 @@ const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComp
   const { h: vh } = useViewport()
   const [fedIdx, setFedIdx] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
+  const [pickedIdx, setPickedIdx] = useState<number | null>(null)
   const { at, flyTo } = useFlight(slots)
   const erred = useRef(false), done = useRef(false), wrongLock = useRef(false), tapLock = useRef(false)
   const speaking = useIsSpeaking()
@@ -259,15 +285,27 @@ const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComp
   }, [mode, target, onComplete])
 
   useEffect(() => {
-    if (mode === 'guided') speak(`Now you! Feed the ${world.noun} in nest number ${target}. Tap it!`)
+    if (mode === 'guided') speak(guidedSay(world, target))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /** A tap only CHOOSES. Nothing is graded, nothing is spoken about it, and the child may change
+   *  their mind as often as they like — which is the whole of what "submit when you are ready"
+   *  buys. Re-tapping the chosen nest unchooses it, so the bar is never a trap. */
   function tap(i: number) {
     if (done.current || speaking || tapLock.current) return
+    setPickedIdx(p => (p === i ? null : i))
+  }
+
+  /** Ready. NOW it is graded — and a wrong one is still marked wrong and still retried in place,
+   *  exactly as a wrong tap used to be. The bar itself says nothing about which nest was chosen. */
+  function commit() {
+    const i = pickedIdx
+    if (i == null || done.current || tapLock.current) return
+    setPickedIdx(null)
     if (i === answerIdx) {
       tapLock.current = true
-      // The tap CAUSES the journey — she flies there, feeds, and only then does the round end.
+      // The commit CAUSES the journey — she flies there, feeds, and only then does the round end.
       flyTo(i, () => { setFedIdx(i); window.setTimeout(finish, 700) })
     } else {
       erred.current = true; setWrongIdx(i)
@@ -281,10 +319,11 @@ const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComp
       <Branch y={BRANCH_Y} />
       {nums.map((num, i) => (
         <Nest key={i} num={num} size={size}
-          state={fedIdx === i ? 'fed' : wrongIdx === i ? 'wrong' : 'hungry'}
+          state={fedIdx === i ? 'fed' : wrongIdx === i ? 'wrong' : pickedIdx === i ? 'picked' : 'hungry'}
           left={slots[i].left} top={slots[i].top} onTap={() => tap(i)} aria={`nest ${num}`} />
       ))}
       <Mother at={at} h={Math.round(size * 0.62)} facingLeft={false} />
+      <ReadyBar show={pickedIdx != null} onCommit={commit} />
       <span aria-hidden style={{ position: 'fixed', left: `${PERCH.left}%`, top: `${PERCH.top + 7}%`, transform: 'translateX(-50%)', fontSize: Math.max(10, vh * 0.018), color: '#fff', opacity: 0, pointerEvents: 'none' }}>perch</span>
     </>
   )
@@ -299,6 +338,14 @@ const NestExplain: React.FC<{ world: NestWorld; data: NestRound; onDone: () => v
   const size = useNestSize(n)
   const [hint, setHint] = useState(false)
   const [fed, setFed] = useState(false)
+  // ⚠️ THE DEMO'S THREE LINES WERE SPOKEN AND NEVER DRAWN. Most Chrome installs ship no voice at
+  // all and this band has no recorded clips, so on those devices the teaching was a silent bird
+  // flying to a nest and nothing else — the chapter's entire explanation, delivered in a channel
+  // that is not there. Everything spoken in a demo is written too.
+  // ⚠️ AND WRITING IT HERE IS SAFE PRECISELY BECAUSE IT IS THE DEMO. The line names the target
+  // number, which in a SCORED round would hand over the answer and delete the skill (the child
+  // must go sound → glyph). A demo is teaching, not measuring, and it already glows the answer.
+  const [line, setLine] = useState('')
   const { at, flyTo } = useFlight(slots)
   const ran = useOnceGuard()
   useEffect(() => {
@@ -310,6 +357,7 @@ const NestExplain: React.FC<{ world: NestWorld; data: NestRound; onDone: () => v
     ]
     const cancel = speakSteps(lines, {
       onStep: (i) => {
+        setLine(lines[i] ?? '')
         if (i === 1) setHint(true)
         if (i === 2) flyTo(answerIdx, () => setFed(true))
       },
@@ -327,6 +375,13 @@ const NestExplain: React.FC<{ world: NestWorld; data: NestRound; onDone: () => v
           left={slots[i].left} top={slots[i].top} aria={`example ${num}`} />
       ))}
       <Mother at={at} h={Math.round(size * 0.62)} facingLeft={false} />
+      {/* Sits in the demo banner's own band, below it — the nests are on the branch further down
+          and Milo is bottom-left, so this is the one strip of the frame nothing else occupies. */}
+      {line && (
+        <div style={{ position: 'absolute', top: 96, left: 0, right: 0, zIndex: 44, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
+          <div style={{ maxWidth: '76%', background: 'rgba(255,255,255,.94)', border: '3px solid var(--outline)', borderRadius: 16, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(13px, 1.6vh, 17px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 3px 0 rgba(61,37,22,.12)' }}>{line}</div>
+        </div>
+      )}
     </>
   )
 }
@@ -375,10 +430,25 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
 }) {
   const needsRotate = useNeedsRotate()
   const [world, setWorld] = useState<NestWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'numberRecognition', phase: 'practice' })
   const [scene, setScene] = useState<string>(WORLDS[0].scenes[0])
   const [demoIdx, setDemoIdx] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)
+  /**
+   * ⚠️ THIS CHAPTER IS UNANSWERABLE WITHOUT A VOICE, AND THAT HAS TO BE SAID OUT LOUD.
+   *
+   * The target number is SPOKEN and deliberately never drawn — going sound → glyph is the whole
+   * skill (see `promptFor`, which may not contain a digit). So on a device with no voice the child
+   * is not merely missing the warmth, they are being asked to guess, with nothing on screen that
+   * could tell them the answer. Every other chapter in the band writes its question too and degrades
+   * gracefully; this one cannot.
+   *
+   * ⚠️ THE FIX IS NOT TO DRAW THE NUMBER — that turns listening into matching and deletes the
+   * chapter. It is recorded clips for this band, which 12–18 already has a pipeline for. Until then
+   * this notice is the honest thing: it is addressed to the grown-up, because the child cannot read
+   * it either.
+   */
+  const noVoice = useNoVoice()
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => (world ? makeNestBeat(world) : null), [world])
@@ -402,9 +472,17 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
   const GUIDED_ROUND: NestRound = { scene: world.scenes[2] ?? world.scenes[0], nums: [4, 2], answerIdx: 1 }
   const bgScene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : phase === 'demo' ? DEMO_ROUNDS[demoIdx].scene : world.scenes[0]
 
-  const Banner = (text: string) => (
+  // ⚠️ THE GUIDED ROUND HAD NO WAY TO HEAR THE QUESTION TWICE. The number is spoken once, on
+  // mount, and never written — which is the whole skill — so a child who missed it had nothing to
+  // do but guess. The scored rounds have had a replay all along (SkillBeat's prompt pill); this is
+  // the one screen that did not, and it is the screen where the child answers for the first time.
+  const Banner = (text: string, onReplay?: () => void) => (
     <div style={{ position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
-      <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '10px 24px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
+      {React.createElement(onReplay ? 'button' : 'div',
+        { onClick: onReplay, 'aria-label': onReplay ? 'Hear it again' : undefined,
+          style: { display: 'flex', alignItems: 'center', gap: 10, minHeight: 44, cursor: onReplay ? 'pointer' : 'default', background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '10px 24px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' } },
+        onReplay ? <span key="i" aria-hidden style={{ fontSize: 22, lineHeight: 1 }}>🔊</span> : null,
+        <span key="t">{text}</span>)}
     </div>
   )
 
@@ -415,6 +493,17 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
         <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
+
+      {/* Not during the demo — the demo's own written subtitle owns this slot, and the demo is
+          watchable without sound. This is for the phases where the CHILD has to answer by ear. */}
+      {noVoice && phase !== 'demo' && (
+        <div style={{ position: 'fixed', top: 96, left: 0, right: 0, zIndex: 46, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
+          <div style={{ maxWidth: '78%', background: 'rgba(255,248,235,.96)', border: '3px solid var(--milo-orange)', borderRadius: 14, padding: '7px 16px', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'clamp(12px, 1.6vh, 15px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 3px 0 rgba(242,107,44,.2)' }}>
+            🔇 This game needs sound — Milo says the number out loud and never writes it down.
+            This browser has no voice available.
+          </div>
+        </div>
+      )}
 
       {phase === 'intro' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
@@ -430,7 +519,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
         <NestExplain key={`demo${demoIdx}`} world={world} data={DEMO_ROUNDS[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO_ROUNDS.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
-      {phase === 'guided' && (<>{Banner(`Now you! Tap the nest Milo says`)}
+      {phase === 'guided' && (<>{Banner(`Now you! Tap the nest Milo says`, () => speak(guidedSay(world, GUIDED_ROUND.nums[GUIDED_ROUND.answerIdx])))}
         <NestPlay key="guided" world={world} data={GUIDED_ROUND} mode="guided" onComplete={() => setPhase('practice')} /></>)}
 
       {phase === 'practice' && (

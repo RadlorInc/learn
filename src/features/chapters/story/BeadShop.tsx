@@ -45,6 +45,7 @@ import { shuffle } from '@/core/rand'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()`: a wrong tap speaks a line and
@@ -165,7 +166,7 @@ function usePainted(src: string): boolean {
   return _loaded[src] ?? false
 }
 
-type ItemState = 'idle' | 'glow' | 'wrong' | 'pop'
+type ItemState = 'idle' | 'glow' | 'wrong' | 'pop' | 'picked'
 function Item({ make, color, size, state = 'idle', shadow = true, dim }: {
   make: Make; color: BeadColor; size: number; state?: ItemState; shadow?: boolean; dim?: boolean
 }) {
@@ -308,6 +309,7 @@ function Tray({ make, choices, stateFor, onTap, trayRef }: {
         <button key={i} onClick={onTap ? e => onTap(i, e.currentTarget) : undefined} disabled={!onTap}
           aria-label={`${BEADS[c].label} ${make.noun}`}
           style={{ background: 'transparent', border: 'none', padding: 0, cursor: onTap ? 'pointer' : 'default', lineHeight: 0,
+            borderRadius: 14, boxShadow: stateFor(i) === 'picked' ? PICKED_RING : undefined,
             marginTop: yjit[i] ?? 0, opacity: stateFor(i) === 'pop' ? 0 : 1, transition: 'opacity .15s',
             transform: stateFor(i) === 'glow' ? 'scale(1.12)' : 'scale(1)' }}>
           <Item make={make} color={c} size={box} state={stateFor(i)} />
@@ -364,11 +366,27 @@ const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: 
   const [taken, setTaken] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false)
+  const [pending, setPending] = useState<number | null>(null)
+  const pendingEl = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     if (mode === 'guided') speak(`Now you! What ${make.noun} comes next? Tap it!`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /** A tap only CHOOSES; the bead stays in the tray until Ready. The thread animation needs the
+   *  element it leaves from, so the chosen button is held alongside the index. */
+  function pick(i: number, el: HTMLElement) {
+    if (done.current) return
+    pendingEl.current = el
+    setPending(p => (p === i ? null : i))
+  }
+  function commit() {
+    const i = pending, el = pendingEl.current
+    if (i == null || !el) return
+    setPending(null)
+    tap(i, el)
+  }
 
   function tap(i: number, el: HTMLElement) {
     if (done.current || tapLock.current) return
@@ -389,8 +407,14 @@ const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: 
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), ms + 260)
   }
 
-  return <Tray make={make} choices={choices} onTap={tap}
-    stateFor={i => (taken === i ? 'pop' : wrongIdx === i ? 'wrong' : 'idle')} />
+  return <>
+    <Tray make={make} choices={choices} onTap={pick}
+      stateFor={i => (taken === i ? 'pop' : wrongIdx === i ? 'wrong' : pending === i ? 'picked' : 'idle')} />
+    {/* ⚠️ BESIDE THE TRAY, NOT UNDER IT. Measured at 640×320 the tray of beads runs to y 294 on a
+        320-tall frame, so the centred bar at 263–310 was drawn straight across the MIDDLE bead —
+        one of the three answers. There is no room below the tray; the room is to the right. */}
+    <ReadyBar show={pending !== null} onCommit={commit} align="right" />
+  </>
 }
 
 // ─── Milo shows how (opening demo + the 3-wrong re-teach) ────────────────────────────
@@ -451,7 +475,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
   const { w: vw, h: vh } = useViewport()
   const short = vh < SHORT_H
   const [make, setMake] = useState<Make | null>(() => (forcedId ? makeById(forcedId) ?? null : null))
-  const [phase, setPhase] = useChapterPhase<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'patterns', phase: 'practice' })
 
   /**
    * The one string. It lives HERE, not inside SkillBeat, which rebuilds its contents every round —

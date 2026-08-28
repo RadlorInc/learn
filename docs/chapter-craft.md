@@ -532,6 +532,20 @@ words contradicting the picture on the beat they are reading. Clear it when a re
 **AND A TAP THAT DOES NOTHING AT ALL IS THE WORST OUTCOME THERE IS.** Worse than a wrong answer: a
 wrong answer at least tells the child the game is listening.
 
+⚠️⚠️ **A COMMIT BUTTON IN A RETRY-IN-PLACE CHAPTER MUST GATE THE *SUBMISSION*, NEVER THE *GRADING* —
+otherwise it is an oracle AND it cannot change an outcome.** Every 3–5 chapter is retry-in-place: a
+wrong tap sets `erred` and the child goes again, and the round only ends once they are right. So a
+"Ready" that held the GRADE back could only ever be pressed on a correct answer — its mere
+appearance would say *that one is right*, which is this file's oldest rule, and it could never alter
+the score, which makes it ceremony. The shape that works is **a tap CHOOSES (marked neutrally, and
+re-tappable to unchoose) and Ready SUBMITS**: the control appears for any choice, right or wrong, so
+it tells the child nothing, and the wrong answer it submits is still marked wrong and still retried.
+⚠️ **Mark the choice in a colour that is not the verdict colour** — green means correct everywhere in
+this app — and **mark it with a `boxShadow` ring rather than a transform**, because nearly every
+answer here is positioned with an inline `translate(-50%,-100%)` that a lift would overwrite.
+⚠️ And where the child BUILDS the answer (coins, digits, clock hands, tiles) the chapter already has
+this and its control keeps its own words: you *Pay* a shopkeeper, you do not *Ready* him.
+
 ⚠️ **THE COMMONEST WAY TO BUILD ONE IS A COMMIT GATED ON A FIXED LENGTH.** FitOut's number pad is
 `windows={2}` with `if (digits.length < 2) return` and `disabled={digits.length < windows}` — three
 independent gates all assuming a two-digit answer. But `answer = rows × per` with both from
@@ -993,6 +1007,16 @@ to draw. The "draw from the ink box, not the file box" rule, applied to a code-d
   `SkillBeat` and look perfectly correct — the fault appears only once the first SCORED round loads.
   `Critter` has been `position: fixed` for exactly this reason. Generalise: **verify a chapter in its
   scored rounds, not only in its demo** — they do not share a containing block.
+- ⚠️⚠️ **AND `position: fixed` IS NOT FIXED INSIDE A TRANSFORMED ANCESTOR — IT SILENTLY BECOMES
+  ABSOLUTE, MEASURED FROM THAT ANCESTOR'S BOX.** A `transform` (even `translateX(-50%)`) makes an
+  element the containing block for every `fixed` DESCENDANT, so a bottom-anchored control nested
+  inside a centred row is drawn from the ROW rather than from the viewport. Measured at 640×320
+  when the Ready bar was added: nested inside NumberTown's answer row — which carries
+  `transform: translateY(-50%)` — the bar rendered at y 189–236 **across the middle door, which on
+  that round was the right answer**; lifted out to be the row's SIBLING it sits at 263–310, clear.
+  The same nesting was in the counting chapter's centred bottom stack. **A screen-anchored layer is
+  a sibling of the world, never a child of a positioned part of it** — and nothing but crossing the
+  rendered boxes can see it, because every element involved is individually correct.
 - ⚠️ **A PROP THAT IS ABOUT TO MOVE HAS TO BE ON SCREEN WHILE THE CHILD IS DECIDING.** A thing
   parked just off-frame "ready to go" does not exist yet — the round opens on an empty stage, and
   the object the whole gesture is about only appears as a consequence of the answer, which is the
@@ -1208,6 +1232,96 @@ to draw. The "draw from the ink box, not the file box" rule, applied to a code-d
   21px of clear air under a 93px duck. Out of flow and centred on the feet: 2px. **The number to
   check is the sprite's own `getBoundingClientRect().bottom` against the ground line — not the
   container's**, because the container is exactly the thing that is lying to you.
+- ⚠️⚠️ **AND A FIXED GAP BETWEEN TWO SPRITES IS ONLY EVEN FOR ONE ASPECT RATIO — SPACING IS WHAT IS
+  LEFT AFTER THE BODIES, NOT THE STEP BETWEEN THEIR CENTRES.** Chapter 2's line behind mother steps
+  a flat `LINE_GAP = 9`% of the width per place, which reads as perfectly even in the source and is
+  even for exactly one creature. The cast's aspects run **0.81 (rabbit) to 1.75 (shark)**, so
+  measured at 1280×720 with five little ones the clearance between neighbouring BODIES ran from
+  **+1.65% (butterfly, a clean gap) to −1.07% (ant, overlapping)** — bunnies queued, fish and
+  ladybugs and squirrels piled up. Founder, on a screenshot: *"for the bunny the children are evenly
+  spaced behind the mother; for the fish, butterflies, turtles, ladybugs and squirrels they are
+  randomly placed."* **Nothing was random. The spacing was identical; what differed was how much of
+  it each body ate.**
+  ⚠️ **AND WHEN THE GAP CANNOT MOVE, MOVE THE SCALE.** The obvious fix — widen the gap per species —
+  makes the line LONGER for a wide creature, and its length is what decides how much room the
+  waiting huddle gets, which decides the span, which decides the sprite size, which decides the gap.
+  A loop. Capping the in-line SCALE instead leaves every upstream number untouched: the step stays a
+  constant, so the line is evenly spaced BY CONSTRUCTION, and a wide creature is drawn a little
+  further away — which is what the line already means.
+  ⚠️⚠️ **AND THE GAP AT THE HEAD OF A QUEUE IS A DIFFERENT GAP — THE TWO BODIES EITHER SIDE OF IT
+  ARE NOT THE SAME SIZE.** The founder's follow-up, once the spacing was even: *"fish 1 still tucks
+  under mother's body."* The first place in the line sits next to the LEADER, drawn at 1.25 against
+  the line's own scale, so those two bodies differ by ~1.7× — and one constant was serving both that
+  gap and the gap between two little ones. **Enumerate the gaps in a formation and ask which ones
+  have a different creature on each side.**
+  ⚠️ **AND CALIBRATE THE FIX ON THE ONE THAT ALREADY LOOKED RIGHT, NOT ON ZERO.** Animals queue
+  nose-to-tail, so a slight overlap with the leader is CORRECT — the rabbit has one (its first
+  little one sits ~21% of its own body inside her) and that is the picture that was approved. The
+  rule is therefore *nobody sits deeper in than the rabbit*, which leaves the approved case
+  untouched by construction; a "no overlap" rule would have moved it and broken the good case to
+  rescue the bad ones. **Ask what the thing that works measures, and make that the target.**
+  ⚠️ **AND WHEN A DERIVED NUMBER FEEDS THE BUDGET IT IS SPENT FROM, RUN THE CHAIN TWICE RATHER THAN
+  ITERATING.** The head gap is measured off the sprite, the sprite is capped to the huddle's slot,
+  and the slot is what the line leaves over — a loop. One provisional pass with the old constant
+  yields a size that is always ≥ the final one, so the reserve measured from it is never short, and
+  the SAME value is then used for both the reserve and the drawing so they cannot disagree.
+  ⚠️ **AND A CHECK ON THAT MUST DRIVE THE DRAWING FUNCTION, NOT THE LAYOUT IT CAME FROM.**
+  Mutation-tested: reading the body from the layout's reported scale and the step from a typed
+  constant left "the line draws at the flat gap" AND "the line draws at a flat scale" both green —
+  the layout still REPORTED the derived values while the drawing ignored them. Read every number
+  out of the function that positions the thing (`lineSpot(k, L).left` / `.scale`), and where a
+  reserve must be compared against what is drawn, compute both ends through the real functions.
+  ⚠️ **AND A DEFAULT PARAMETER MAKES THE OLD BEHAVIOUR REACHABLE.** `lineSpot(k, w, mx, scale =
+  LINE_SCALE)` is the natural signature when a literal moves out into an argument, and it is a
+  regression waiting to happen: mutation-tested, reverting one call site to `lineSpot(k, band, mx)`
+  restored the overlapping line with **every check green**, because they all drive the layout's
+  reported value and none can see how the component USES it. Required, it is a type error.
+  ⚠️ And a required parameter is only half of it: with the default gone, passing `LINE_GAP` where
+  `headGap` belonged restored the buried-under-mother line, type-checked and green. **The end of
+  that road is to stop passing the derived values at all** — `lineSpot(k, L)` takes the layout, so
+  there is nothing left to hand over wrongly. Prefer the signature that cannot express the bug over
+  the check that catches it.
+  ⚠️⚠️ **AND THE FAULT IS IN EVERY FORMATION WITH A FIXED PITCH, NOT JUST THE ONE SOMEBODY
+  REPORTED — GO AND MEASURE THE SIBLINGS.** The student named chapter 2's line; the same shape was
+  sitting one function along in the same file. `clusterSpot` (chapter 4's gathered set) steps a flat
+  `GATHER_COL = 5.4`% per column at a flat `scale: 0.8`, so the share of each body still showing ran
+  **74% for the rabbit down to 26% for the shark** — measured live at 1280×720, **five gathered fish
+  read as three**, in the one place the child has to count what they have just chosen. The huddle
+  beside it never had the fault because its sprite is already capped to its own slot
+  (`size = min(rawSize, slotPx / aspect)`); the cluster inherited that size and not the cap.
+  **A formation whose pitch is a constant owes every species a scale cap** —
+  `CLUSTER_SCALE * min(1, RABBIT_ASPECT / aspect)`, size- and viewport-independent, so the approved
+  picture is untouched by construction and everyone else gets its geometry exactly.
+  ⚠️ Check whether the pitch is really the locked lever before reaching for scale: here it is —
+  measured, the gather band leaves ~6.3% per column across four columns, and a shark wants 11.7%.
+  ⚠️ And the same cap pays for the ROW separation for free (0.22 → 0.37 body heights for a fish),
+  which was independently under this file's own `ROW_SEP` floor of 0.55.
+
+⚠️⚠️ **AND ANYTHING A CHAPTER HANGS ABOVE A CREATURE IS OUTSIDE THE SPRITE'S BOX, WHILE EVERY BAND
+HELPER RESERVES FROM THE BOX — SO THE BAND FITS AND THE THING ABOVE IT DOES NOT.** `fitBands` proves
+the HEAD clears the prompt pill and `spreadBand` clamps the far row to the same line; neither has any
+way to know a number tag floats `0.72 × d` higher. Chapter 2 measured at 640×320: the middle tag
+rendered at y 82–121 against a pill occupying 155–485 × 48–93 — 28% of the badge covered, with
+`elementFromPoint` at its top returning the pill — while every head cleared correctly and every gate
+was green. **A student reported it TWICE**, and the first fix (three rows → two, which was a real and
+separate cause) is exactly why the second report looked like a regression rather than a second
+mechanism. **Declare the overhang** (`maxSizeForRows` / `fitBands` / `spreadBand` take a `topPx`) and
+gate the top of the TAG, not the top of the head. ⚠️ It binds only on the shortest frame — 812×375 and
+up measured 0% hidden — so a roomy-frame pass cannot see it.
+⚠️ **The overhang depends on the size that depends on the overhang**; break it the way the head gap
+does, with a provisional pass whose size is always ≥ the final one, never by iterating.
+⚠️ **And a sibling that "clears" may be clearing on the OTHER axis by luck.** Chapter 4's `AskSign`
+rises above the same banner line in 50 combinations and misses the pill only because the pill is
+centred and Milo stands far right. Say which axis is saving you, because the other one is not.
+
+⚠️⚠️ **AND A POSITIVE CONTROL ON ONE MECHANISM SAYS NOTHING ABOUT THE OTHER MECHANISMS IN THE SAME
+SWEEP.** The sweep that found the above checked two things — a tag behind the pill, and a tag buried
+by a nearer sprite — and read `L.huddleRight` when the field is `huddleRightPct`. Every `waitSpot`
+came back `NaN`, so the BURIAL half reported a confident **0 findings** while the banner half (which
+reads `.top`) worked. **The rows=3 positive control was firing the whole time, on the half that was
+alive**, so the sweep read as verified. `vitest` does not type-check, which is why it ran clean at
+all. Two rules: **give every mechanism in a sweep its own positive control**, and where a probe
+reaches into a returned object, let `tsc` see the file before believing a zero.
 - **a boundary next to another character is measured off THAT character, never guessed.** Chapter 2
   learned this as the cut-off leader; it applies to any adjacency. Chapters 9–10 gave their set a
   flat right limit of 74% and the three widest reef creatures (fish 1.37, turtle 1.53, shark 1.75 : 1)
@@ -1832,6 +1946,21 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   through the picture — the colouring chapter's sky could not be tapped where the banner crossed it.
   Give the class the passthrough and its real buttons their events back
   (`.x{pointer-events:none} .x button{pointer-events:auto}`).
+  ⚠️⚠️ **AND THE OVERLAY IS OFTEN NOT ONE THE CHAPTER DRAWS.** `SkillBeat`'s prompt pill is a real
+  `<button>` — tap it to hear the question again — which is right in every chapter whose answers sit
+  in a band the pill does not use, and is a DEAD PATCH in one whose answer surface fills the frame.
+  Measured on the colouring chapter at 640×320: the pill spans x 181–459, y 48–93 and the balloon
+  that page asks for spans x 415–490, y 15–120, so a child aiming at the middle of the answer hit
+  the pill and nothing coloured. The chapter had already learned this for its OWN banner and carries
+  a comment saying so; it came back through a control it does not own. **Where the answers fill the
+  frame, the chapter sets `prompt: () => ''`, draws its own pointer-transparent question, and moves
+  the replay into the chrome** — a small button in a corner that already has one costs no NEW dead
+  area. ⚠️ Then check what the corner chip lands on too: it is the same fault, smaller.
+  ⚠️ **And a shared anchor can break when you do this.** `e2e/storybook-pills.spec.ts` identified
+  SkillBeat's pill by `aria-label="Hear it again"` alone; a chapter's own bare 🔊 carries the same
+  label, so the spec read it as a duplicate pill and failed a chapter that was correct. Anchor on
+  what makes the thing that thing — the pill CARRIES THE QUESTION — not on a label two controls can
+  share.
 - **Never bump a React `key` to restart an animation.** It remounts the subtree, and anything
   imperative in there — a canvas, a scroll position, a media element — is destroyed with it. In the
   colouring chapter one wrong answer wiped every colour the child had put down. Use
@@ -2055,6 +2184,16 @@ count the matches.
   the hand to stack 0 passed it. Same family as the clamp tautology: **choose fixture values where
   the wrong implementation gives a different answer**, which usually means not index 0, not the
   first element, and not a value that coincides with the default.
+- ⚠️⚠️ **A BLIND DRIVER MUST NOT PRESS THE CONTROL IT IS TRYING TO MEASURE.** The Ready-bar sweep
+  clicks whatever moves a chapter forward until the commit appears — and with the commit left in
+  that rotation it pressed it, submitted the answer, watched the bar vanish and reported *"never
+  reached a commit control"* on two chapters whose bars were perfect. **A driver that can destroy
+  the state it is looking for produces a red that describes the driver**, and a red nobody can act
+  on is spent the same way a false green is. Exclude the target from the candidates.
+  ⚠️ **And check the door you are knocking on is the one that chapter has.** The same sweep sent
+  `?e2e=practice` to the counting chapter, which runs on `ForestWalk` — a LIST OF BEATS with no
+  Phase union, reading `?skip` and ignoring `?e2e` entirely — so it spent its whole budget on a
+  self-paced walk and failed about a working bar. Two engines, two door handles.
 - **The sweep must call the SAME layout function the scene renders from.** Chapter 4's sweep
   re-implements its sizing chain inside the test, so the check can agree with its own copy of the
   constants while the screen it protects falls apart. Chapters 9–10 export `playLayout` and the test
