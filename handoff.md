@@ -157,12 +157,13 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 🎓 **2026-08-27 (second pass) — A STUDENT'S FOUR-POINT REVIEW, ALL FOUR ACTED ON: THE RUN NOW RESUMES (AND STOPS DESTROYING THE SCORE), MILO PRAISES A RIGHT ANSWER, THE REPLAY BUTTON IS VISIBLE AT LAST, AND EVERY STORYBOOK CHAPTER HAS A COMMIT STEP. ⚠️ TWO REAL COLLISIONS FOUND BY DRIVING IT, ONE OF THEM A `position: fixed` SILENTLY TURNED ABSOLUTE BY AN ANCESTOR'S `transform`.** `tsc` 0 · **1635/1636** (was 1590) · `next build` 0 · `ready-bar.spec.ts` **18/18** · `chapter-resume.spec.ts` **2/2** · **41 mutations planted, 41 caught** · sw **v148**.
+> 🎓 **2026-08-27/28 — A STUDENT'S FOUR-POINT REVIEW, ALL FOUR FIXED AND LIVE: THE RUN NOW RESUMES (AND STOPS DESTROYING THE SCORE), THE NEST CHAPTER SAYS WHAT TO DO, EVERY STORYBOOK CHAPTER HAS A COMMIT STEP, AND MILO PRAISES 3–8. ⚠️ THREE REAL COLLISIONS FOUND BY DRIVING IT — ONE A `position: fixed` SILENTLY TURNED ABSOLUTE BY AN ANCESTOR'S `transform`, ONE SKILLBEAT'S OWN PILL LYING ACROSS A COLOURING PAGE.** `tsc` 0 · **1639/1640** (was 1590) · `next build` 0 · `ready-bar` **18/18** · `chapter-resume` **4/4** · `needs-sound` **2/2** · **49 mutations planted, 49 caught** · sw **v149**. **MERGED — PRs [#65](https://github.com/RadlorInc/learn/pull/65) · [#66](https://github.com/RadlorInc/learn/pull/66) · [#67](https://github.com/RadlorInc/learn/pull/67). LIVE on production, verified in the deployed bundle.**
 
 **The review** (a student, on the 3–5 band): ① the line behind mother looks random for every species but the rabbit · ② sharpen the instructions, praise a right answer, add a repeat button and subtitles · ③ the Ready option should be in every game · ④ *"none of my progress saved and I had to restart"*. ⚠️ **The chapter numbering in the report is off**: ① is chapter **2** (`FollowTheLeader`), the feeding-nest game is chapter **3** (`NestTree`).
 
-## ① 📏 ALREADY FIXED, AND STILL OPEN AS A PR
-Same report as the 🐇 block below — [PR #65](https://github.com/RadlorInc/learn/pull/65), unmerged.
+## ① 📏 FIXED AND MERGED
+Same report as the 🐇 block below — [PR #65](https://github.com/RadlorInc/learn/pull/65), merged
+2026-08-28. ⚠️ **Its sibling was never measured — see ▶ OPEN 2.**
 
 ## ④ 💾 THE PROGRESS LOSS WAS WORSE THAN REPORTED — IT DESTROYED THE SCORE, NOT THE PLACE
 `SkillBeat` and `GameShell` both report **once, at the end**: that single `onComplete` is what writes
@@ -217,9 +218,12 @@ child's paint goes ON the picture and can be painted over until Ready. The LESSO
 📄 General rules written into [docs/chapter-craft.md](docs/chapter-craft.md) §1, §0b and §4.
 
 ## ✅ THE FIVE LOOSE ENDS, CLOSED
-- **Praise has an AGE cutoff, not an engine one** — `core/praise.ts` · `praisesOnCorrect(band)`, true
-  to 9–11 and false from 12–14. Gated on the band precisely because 9–11 is split across both
-  engines; an engine-shaped rule praises the same child in two chapters and not in the other ten.
+- **Praise has an AGE cutoff, not an engine one** — `core/praise.ts` · `praisesOnCorrect(band)`.
+  ⚠️ **It STOPS AT 6–8** (founder's call, 2026-08-28). It shipped reaching through 9–11 for a few
+  hours, which cuts against this product's own rule that **9–11 must not look like 3–8** — the whole
+  reason that band moved onto the Field Lab design — and the student who asked was reviewing 3–5.
+  Gated on the band and never on the engine, because 9–11 is split across both: an engine-shaped
+  rule praises the same child in two chapters and not in the other ten.
 - **The resume is DRIVEN now** — `e2e/chapter-resume.spec.ts` plays two rounds, leaves for `/menu`,
   comes back and asserts the round AND the score, reading the record straight out of IndexedDB.
   ⚠️ **With a positive control**: the same drive with no active learner must store nothing and
@@ -239,13 +243,55 @@ child's paint goes ON the picture and can be painted over until Ready. The LESSO
   ⚠️ It also broke a shared anchor: `storybook-pills` identified SkillBeat's pill by
   `aria-label="Hear it again"` alone, and the chapter's own bare 🔊 carries the same label — so the
   spec read it as a duplicate. It matches on the pill CARRYING THE QUESTION now.
-- **Committed**, sw bumped to **v147**.
+- **Merged and live**, sw **v149**.
+
+## 🔁 THE SECOND DAY: THE OTHER ENGINE, A CHAPTER THAT NEEDS SOUND, AND A FLAKE THAT WAS MINE
+- **The resume is driven on `GameShell` too**, not just the storybook engine — `wordProblems` (non-AR,
+  answers on the shared AnswerPad, whose dev-only `data-test-answer` lets a driver answer without
+  solving the sum). Two right, one WRONG, leave, come back: re-enters at 4/10 having stored
+  `{round: 3, correct: 2, wrong: 1}`.
+  ⚠️ **The first version of that check was mostly decorative.** Two of four mutations SURVIVED —
+  seeding `correct` from 0 (the "3 / 10" a child sees is driven by `idx` and says nothing about what
+  they got right) and seeding `wrong` from 0 (a run of only right answers leaves it 0 either way, so
+  the check agreed with the bug by never disagreeing). Both observable now: the drive reads the
+  ledger back AFTER resuming and deliberately gets one wrong on the way out.
+  ⚠️ It also measured that `idx`'s `useState` seed is belt-and-braces (`finishDemo`'s `loadTask`
+  overwrites it) while `correct`/`wrong` have no second writer — noted in the shell so the asymmetry
+  is not mistaken for redundancy and tidied away.
+- ⚠️⚠️ **THE FEEDING-NEST CHAPTER IS UNANSWERABLE WITHOUT A VOICE, AND NOW SAYS SO.** It SPEAKS the
+  target number and deliberately never draws it — sound → glyph is the skill. Every other chapter
+  writes its question too and so a silent device costs them warmth; this one it costs the ANSWER, and
+  `speakSteps`' silent fallback does not help (it paces the demo, it does not deliver the number).
+  **The fix is NOT to write the number** — that turns listening into matching. `useNoVoice()` + a
+  notice addressed to the grown-up stands in until the band has recorded clips.
+  ⚠️ Voices arrive LATE (`voiceschanged`), so a first read of "none" is the question asked too early —
+  hence a hook, not a constant. ⚠️ And simulating it needs `addInitScript`: `_loadVoices` refuses to
+  clear an already-populated list, so stubbing from the console after boot cannot flip it and reports
+  "no notice" on a browser that really has none. Gated BOTH ways; the negative matters more, since a
+  notice on a working device tells a parent their chapter is broken.
+- ⚠️⚠️ **AND THE `counting` FLAKE WAS MY OWN FILTER, AFTER THREE CONFIDENT WRONG DIAGNOSES.** I blamed
+  a cold dev server, then the parade being slow, then reached for seeding `Math.random` — which made
+  it WORSE, because that chapter randomises spawn SLOTS as well as counts, so a fixed stream stacked
+  the creatures and it began failing deterministically (a check failing about a world the app is
+  never in). One instrumented run settled it: the driver reported **`eligible=0` for 148 of its 150
+  seconds**. Its reachability filter demanded the ENTIRE box inside the frame, and those creatures are
+  tall and stand low, so every one was excluded. It tests the CLICK POINT now — **~150 s and marginal
+  → 9–11 s**. ⚠️ I had also called it "stable, 20/20 twice"; two warm-server runs is not evidence.
+  📄 Both general rules are in [docs/chapter-craft.md](docs/chapter-craft.md) §4.
 
 ## ▶ OPEN
-1. ⚠️ **ON ITS OWN BRANCH, ON TOP OF PR [#65](https://github.com/RadlorInc/learn/pull/65).** The
-   line-spacing commits are ancestors, because `FollowTheLeader.tsx` carries both changes and they
-   cannot be separated by file. Merge #65 first and this rebases to nothing.
-2. ⏭️ Untouched and the same shape as ①: `clusterSpot` in `critters.tsx` (chapter 4's gathered group).
+1. 🎙️ **RECORDED CLIPS FOR 3–11 ARE THE ONLY THING LEFT FROM THIS REVIEW, and they are the founder's
+   to start** (a voice choice and the ElevenLabs spend). The pipeline already exists — `clipKey`,
+   `voiceClipPlayer`, and 12–18's clips. Until then a voiceless device gets the notice above instead
+   of an unwinnable round, which is honest but is not the fix.
+2. ⚠️ **`clusterSpot` in `critters.tsx` (chapter 4's gathered huddle) HAS NEVER BEEN MEASURED.** It is
+   the same bare-constant shape as chapter 2's line, which the student DID report and which is fixed.
+   Nobody has said the huddle looks wrong and nobody has checked — it is recorded as unknown rather
+   than folded into ①'s tick.
+3. ⏭️ **What was deliberately NOT done on ②, so it is not re-litigated by accident:** the QUESTION's
+   number is still never written. Subtitling it would turn a listening task into a matching one and
+   delete the chapter. The action is spoken and written, the demo's teaching lines are written, and
+   the target stays spoken-only.
 
 > 🐇 **2026-08-27 — THE LINE BEHIND MOTHER WAS EVENLY SPACED FOR EXACTLY ONE SPECIES, AND THREE ROUNDS OF MUTATION EACH FOUND A HOLE IN MY OWN CHECKING — INCLUDING A TAUTOLOGY GUARDING THE ONE PICTURE THE FOUNDER HAD APPROVED.** `tsc` 0 · **1590/1591** (was 1584) · `next build` 0 · **10 mutations planted, 10 caught** · **PR [#65](https://github.com/RadlorInc/learn/pull/65) OPEN**, not merged.
 
@@ -587,129 +633,4 @@ Three in one session reported on text they never saw. Swept all 12 sites onto
 4. ⚠️ **NINE DEPENDABOT PRs STILL OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
 5. ⚠️ Accepted limitation, unchanged: RLS gates the RECORD, not chapter CONTENT.
 
-> 💳 **2026-08-24 (fourth pass) — THE BILLING SCHEMA IS APPLIED TO PRODUCTION AND COMPLETELY INERT. ⚠️⚠️ CAPTURING THE ROLLBACK CAUGHT MY OWN MIGRATION SILENTLY REVERTING A SECURITY FIX, FOUR HOURS AFTER I WROTE THE RULE THAT CATCHES IT.** `tsc` 0 · **1477/1478** · `ci / rls-tests` **64 assertions** · ledger **74 → 76**. **6 PRs merged** (#51–#56).
-
-## ⓪ ⚠️⚠️ THE MIGRATION WAS NOT APPLICABLE AS WRITTEN, AND "RISKY" WOULD HAVE BEEN THE WRONG WORD
-Production has zero subscriptions, so the moment `is_chapter_entitled` reached the `sessions`
-policy, entitlement would collapse to `is_free` and **every existing family would stop being able to
-save progress in 65 of the 72 chapters, instantly.** `billing_config.enforced` (default **false**)
-makes the whole surface land inert; the paywall goes live by flipping one boolean later.
-⚠️ **IT FAILS OPEN AND THE CAMERA GUARD FAILS CLOSED — NOT AN INCONSISTENCY.** Founder's words: *a
-camera without consent harms a child; a paywall failing closed breaks a working product for every
-family at once.* Different failure costs, different defaults. Recorded in the doc so nobody
-reconciles them.
-⚠️ **A DEFAULT-OFF FLAG IS A HOLE UNLESS THE SUITE FORCES IT ON *AND ASSERTS IT DID*** (F0). Setting
-alone is silently removable. It also closes an unrelated hazard: an accidental `PROD_PROJECT_REF`
-waking `deploy.yml` now applies a paywall that does nothing.
-
-## ① ⚠️⚠️ THE ROLLBACK CAPTURE CAUGHT A REVERTED SECURITY FIX — MINE
-`plan_entitlement.sql` rebuilt `sync_diagnostic` from `20260702131627_diagnostic_idempotency`, which
-is OLDER than `20260703014331_harden_rpc_inputs` — so it silently dropped the **V5 payload bounds**.
-The `leads_server_only` class exactly, on the same day, by the person who wrote the runbook rule.
-⚠️ **READING THE REPO DID NOT FIND IT: my grep was CASE-SENSITIVE and the hardening file writes
-`CREATE OR REPLACE FUNCTION` in capitals.** `pg_get_functiondef` found it in one query. Founder's
-sentence, now in the runbook: *reading the repo answers "what did we intend", querying production
-answers "what is true" — only the second one is a check.*
-
-## ② 🧪 TWO DERIVED GATES, BOTH MEASURED BEFORE BEING WRITTEN
-- **functions** — the newest definition must keep every `raise exception` an earlier one added.
-  Exactly 1 violation across the 18 redefined functions; it was mine.
-- **policies** — the newest must keep every LITERAL an earlier one used (a policy's guard is one
-  anonymous expression, so there is no named condition to compare; a regex/status/bound survives a
-  rewrite). **0 violations today; replayed to the corpus as it stood when `leads_server_only`
-  shipped, exactly 1 — that one.** The restore's `between 3 and 254` → `>= 3 and <= 254` is
-  correctly NOT flagged.
-  ⚠️⚠️ **`baseline_schema.sql` MUST BE ORDERED FIRST.** It is migration-zero but is GENERATED FROM
-  LIVE PRODUCTION — ordered last it supplies the very predicate a regression just removed. Ordered
-  last: zero findings. Ordered first: it finds the regression. **Fourth "check that silently finds
-  nothing" today**, hence the new standing habit in CLAUDE.md.
-
-## ③ ♻️ THE ROLLBACK IS RUN, NOT READ
-`ci / rls-tests` applies the billing migrations, runs `supabase/schema/rollback_20260824_billing.sql`
-and asserts production's captured fingerprints come back — with a **positive control first**, or the
-step passes on a database where the migrations never applied. Reading it had already caught one
-defect (`pg_policies` reports a null qual for an INSERT policy, so the capture emitted `using
-(true)` — invalid DDL). Reading is not running.
-
-## ④ ✅ APPLIED, AND VERIFIED BY FINGERPRINT RATHER THAN BY A LIVE WRITE
-| | |
-|---|---|
-| `20260824133906` | `billing_schema` |
-| `20260824134125` | `plan_entitlement` |
-⚠️ **THE POST-APPLY WRITE PROVES NOTHING ABOUT THE GUARD** — with `enforced = false` it succeeds
-either way. So `ci / rls-tests` PUBLISHES the fingerprints of the schema it tested with the
-enforcing path on, and **all five matched production exactly** (2 policy predicates,
-`is_chapter_entitled`, `sync_session(11)`, `sync_diagnostic`). That is the proof; the live write is
-only a smoke test — **and it could not be run: `execute_sql` connects as `supabase_read_only_user`.**
-It needs a real signed-in session. ⚠️ Still owed.
-`active` backfill touched **0 rows** as predicted (14 plans, none doubled); 9 gained `free_chapters`.
-Advisors: no new problems — three `rls_enabled_no_policy` INFOs are the intended deny-all design.
-
-## ⑤ 📷 AND THE COPPA FIX SHIPPED FIRST, ALONE (#53)
-`/teen-preview?c=<AR id>&taste=1` rendered a camera chapter to a logged-out child — 12–30% of report
-links in four bands. Guard at the ROUTE, not a picker: the live leak had no picker, the URL *is* the
-picker. `e2e/ar-consent.spec.ts` drives the real URL for all eight and asserts `getUserMedia` is
-never called, with three controls. ⚠️ And the fix blinded `all-chapters` until that was fixed too.
-
-## ⑥ 🚦 THE PIPELINE PROPOSAL — WRITTEN, NOT BUILT ([docs/migrate-prod-proposal.md](docs/migrate-prod-proposal.md))
-Hand-applying is the ROOT CAUSE of the 58-file drift repaired this morning, and today added two
-more plus 442 lines retyped into a tool call. ⚠️ **It is not enable-or-don't** — founder's framing:
-a GitHub **protected environment with a required reviewer** keeps a human between a merge and a
-schema change while ending the transcription. Three conditions, all unmet: **B12 first** · required
-approval · **and the pipeline must be SAFER, not merely more consistent** (it must run the stale
-diff against PRODUCTION, turn B12 into a grep over pending migrations, and fingerprint the applied
-schema — or it is faster and worse).
-✅ **Condition 2 is available**, measured via the API: repo **public**, org plan **free**, so
-environment rules cost nothing. Three environments exist and **none has a protection rule**; there
-are no repo variables or secrets at all.
-⚠️⚠️ **AND A TRAP IN THE NAMES.** `deploy.yml` says `environment: production`; the environment that
-exists is `Production`. **A workflow referencing an environment that does not exist CREATES it,
-unprotected** — so the gate can be bypassed while the settings page looks right. **Verify the
-reviewer by watching a job PAUSE, never by reading a settings page.**
-⚠️ **The flag's limit is written down** so nobody sells it as the net: `enforced` makes an accidental
-apply of THESE TWO migrations harmless and does **nothing** for a future one. The net is B12 + ③.
-
-## ⑦ 🎚️ FUNNEL ITEM ONE: A NARROWED PROBE MAY NEVER SAY "ON TRACK" (PR #58)
-The constraint is in the ENGINE, not the copy — copy is where it rots. `startProbe(band, config,
-agenda?)` narrows the investigated entries (the short pass; 17–18's door 2), and
-`Diagnosis.coverage` is `'full'` only when the whole band was investigated **and finished**. The
-report BRANCHES on it: the on-track card is unreachable from a partial pass, which offers the full
-check in one tap instead.
-⚠️⚠️ **SIX MUTATIONS, THREE SURVIVED, AND THE THREE WERE THREE DIFFERENT LESSONS.**
-- the cap clauses (`asked < maxItems`) were **INERT** — a cap always leaves the agenda or a frame
-  open — and in the one case they were not redundant they were **wrong**, reporting a FINISHED
-  search as partial. Deleted. *An inert clause in a load-bearing rule is worse than none, because it
-  reads as protection.*
-- the `frames` term was a **MISSED REGRESSION**: it matters when the last entry fails and the cap
-  cuts the descent, a state no driven test reached. Built as a fixture, with a positive control.
-- the `agenda` term was missed for the mirror reason — every case used a FAILING answerer, which
-  always opens a frame, so the frames term caught it instead.
-Each term now has a state where it is the only one that says no.
-⚠️ And the report's source gate first matched a bounded window that stopped at the first `) : (` —
-inside the very ternary it checks. **Third time today a window ended at the wrong place.**
-
-## ▶ OPEN
-1. ⏸️ **THE FOUNDER IS RUNNING THE SMOKE TEST** — sign in, play a non-free chapter, confirm it
-   saves. The one step of the apply sequence I cannot perform: `execute_sql` connects as
-   `supabase_read_only_user`. **Nothing else touches production until it comes back.**
-2. 🔴 **B12 IS ON THE CRITICAL PATH AND IS THE FOUNDER'S.** Supabase Pro before `enforced` is ever
-   flipped true — the day we take money is the day losing that database stops being recoverable by
-   apology. It also gates the pipeline proposal (⑥).
-3. ⏸️ **TWO PRs OF MINE OPEN:** #57 (the applied migrations, renamed, + the pipeline proposal) ·
-   #58 (probe coverage). Six merged today: #51–#56.
-   ⚠️ **AND NINE DEPENDABOT PRs ARE OPEN AND UNTRIAGED** (#28–#47), the oldest from weeks ago —
-   including `actions/checkout 4 → 7`, `setup-node 4 → 7` and `supabase/setup-cli 1 → 3`, all of
-   which touch the CI that this session has been leaning on. Do NOT merge them as a batch (the
-   standing warning about TypeScript 7 / eslint 10 / jsdom 30 still applies).
-4. ⏭️ **THE REST OF THE FUNNEL, in order:** 17–18's door 2 as a seeded probe on top of #58 · the
-   short pass (spine prefix) · durable resume (the probe resume is sessionStorage, per-tab — "comes
-   back tomorrow" needs kv, per learner) · the demo route (band picker → 2 chapters, local only) ·
-   the local→server adopt at signup (`progressMerge` is server→local only; demo runs never reach
-   the server, so a second device shows nothing).
-5. ⚠️ **17–18 IS TWO DOORS, NOT A CUT** — measured: a 20-item cut names a root **3 levels too
-   shallow 63%** of the time and the true chapter is absent from the plan **2 times in 3**, while
-   only 4% announce themselves as empty. Door 2 (seeded at the named strand) is **94% at 28
-   questions**; a wrong self-report costs 2 questions and is caught by ⑦.
-6. ⚠️ **Accepted limitation, unchanged:** RLS gates the RECORD, not chapter CONTENT.
-
-_Older sessions (2026-06-15 → **2026-08-24**, including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-24**, including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
