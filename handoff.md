@@ -165,6 +165,38 @@
 Same report as the 🐇 block below — [PR #65](https://github.com/RadlorInc/learn/pull/65), merged
 2026-08-28. ⚠️ **Its sibling was never measured — see ▶ OPEN 2.**
 
+## ⚠️⚠️ ③ THE TESTER RAISED "I CANNOT SEE ALL THE NUMBERS" A SECOND TIME — AND IT WAS A SECOND, SEPARATE CAUSE. THE NUMBER IS NOT INSIDE THE SPRITE'S BOX, AND EVERY BAND HELPER RESERVES FROM THE BOX.
+The 2026-08-21 fix (three rows → two, `maxSizeForRows` + `spreadBand`) was correct and closed the
+BURIAL cause. It could not close this one: `NumberTag` is drawn at `top: -d*0.72` — **outside** the
+creature's box — while `fitBands` proves the *head* clears `BANNER_PX` and `spreadBand` clamps the
+far row to the same line. So the band fitted perfectly and the NUMBERS sat behind the prompt pill.
+- **Measured live at 640×320, scored round 1:** the middle tag rendered at **y 82–121** against a
+  pill occupying **155–485 × 48–93** — 28% of the badge covered — and `elementFromPoint` at its top
+  returned **the pill button**. After the fix the same tag sits at y 115–146, `hiddenByPillPct: 0`,
+  and `elementFromPoint` returns the scene. Sprite 92 → 74px: a readable number beats a bigger bunny.
+- **It binds only on the shortest frame.** 812×375, 1024×400 and 1280×720 all measured 0% hidden;
+  46 of 420 modelled combinations failed, every one at 640×320.
+- **The fix is a `topPx` on the three shared helpers** (`maxSizeForRows` · `fitBands` · `spreadBand`)
+  — *what this chapter draws above a head* — defaulting to 0, so `BigOrSmall` and `PlayTime` are
+  untouched. Chapter 2 measures it off the PROVISIONAL size, the same two-pass trick the head gap
+  already uses, because the lift depends on the size that depends on the lift.
+- **Gated** in `followTheLeaderHuddle.test.ts` — the top of the TAG, driven through `waitSpot` and
+  `tagLift`, plus a check that the reserve's formula IS `NumberTag`'s. **4 mutations, 4 caught**
+  (drop `topPx` from the band · from the size cap · make the parameter inert · understate the lift).
+  `tsc` 0 · **1641/1642** · `next build` 0. ⚠️ NOT committed, NOT pushed.
+- ⚠️⚠️ **AND MY OWN SWEEP WAS BLIND FOR ITS FIRST TWO RUNS, WHICH IS THE LESSON WORTH KEEPING.** It
+  read `L.huddleRight` — the field is `huddleRightPct` — so every `waitSpot` came back `NaN` and the
+  BURIAL half of the sweep reported a confident **0 findings**. `vitest` does not type-check, so it
+  ran clean; `tsc` caught it only because the file was still on disk. The banner half was valid
+  because it reads `.top`, so the run looked half-alive rather than dead. **A positive control on
+  one mechanism says nothing about the other mechanisms in the same sweep** — the rows=3 control was
+  firing the whole time, on the half that worked. Fixed, the control reports 426 findings including
+  *"tag 2 38% under sprite 1"* on turtles, the tester's original words.
+- ✅ **Chapter 4's `AskSign` was checked for the same overhang and is CLEAR — but on x, not on y.**
+  50 combinations put the sign above `BANNER_PX`; the pill is centred (155–485 at 640 wide) and Milo
+  stands far right, so the sign sits at ~509–624 and misses it. True by luck rather than by
+  construction, and worth a gate line if that chapter's layout ever moves.
+
 ## ④ 💾 THE PROGRESS LOSS WAS WORSE THAN REPORTED — IT DESTROYED THE SCORE, NOT THE PLACE
 `SkillBeat` and `GameShell` both report **once, at the end**: that single `onComplete` is what writes
 the session row, the stars and the XP. So leaving after seven of ten questions lost the seven
@@ -284,10 +316,22 @@ child's paint goes ON the picture and can be painted over until Ready. The LESSO
    to start** (a voice choice and the ElevenLabs spend). The pipeline already exists — `clipKey`,
    `voiceClipPlayer`, and 12–18's clips. Until then a voiceless device gets the notice above instead
    of an unwinnable round, which is honest but is not the fix.
-2. ⚠️ **`clusterSpot` in `critters.tsx` (chapter 4's gathered huddle) HAS NEVER BEEN MEASURED.** It is
-   the same bare-constant shape as chapter 2's line, which the student DID report and which is fixed.
-   Nobody has said the huddle looks wrong and nobody has checked — it is recorded as unknown rather
-   than folded into ①'s tick.
+2. ✅ **`clusterSpot` (chapter 4's gathered huddle) IS MEASURED NOW — 2026-08-28 — AND IT WAS THE SAME
+   FAULT, WORSE.** Flat `GATHER_COL = 5.4`% per column at a flat `scale: 0.8` against aspects 0.805 →
+   1.746: the share of each body still showing ran **74% (rabbit) to 26% (shark)**, and **driven live
+   at 1280×720, five gathered fish read as three** — in the one place the child counts what they have
+   chosen. Fixed with chapter 2's own lever, `clusterScale(src) = 0.8 × min(1, 0.805 / aspect)`,
+   calibrated on the rabbit so the approved picture is untouched by construction; the pitch could not
+   be the lever (the gather band leaves ~6.3% per column and a shark wants 11.7%). The row separation
+   came free with it, 0.22 → 0.37 body heights, having been under this repo's own 0.55 floor.
+   `src` is REQUIRED on `clusterSpot` — a default is what lets a caller restore the flat 0.8 green.
+   Gated in `homeTimeGeometry.test.ts` §②b, driving `clusterSpot` at both ends rather than
+   recomputing the rule; **3 mutations planted, 3 caught** (flat 0.8 · cap dropped · calibrated on
+   the shark). `tsc` 0 · **1639/1640** · `next build` 0. ⚠️ NOT committed, NOT pushed.
+   ⚠️ **Two things seen while driving it and deliberately NOT changed:** Milo's `AskSign` covers
+   ~29% of the nearest gathered creature (it is anchored to him, and this predates the fix), and the
+   gathered set is now 0.47 of the waiting one for a shark — a bigger depth jump than before, which
+   is a founder call rather than a defect.
 3. ⏭️ **What was deliberately NOT done on ②, so it is not re-litigated by accident:** the QUESTION's
    number is still never written. Subtitling it would turn a listening task into a matching one and
    delete the chapter. The action is spoken and written, the demo's teaching lines are written, and

@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest'
 import {
   CAST, HABITATS, homeOf, aspectOf, huddleGeom, huddleRows, waitSpot, clusterSpot, leadX, fitBands,
   GATHER_LEFT, GATHER_COL, HUDDLE_RIGHT, LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, BANNER_PX, STRIP_PX,
-  type Habitat,
+  type Habitat, type Kind,
 } from '@/features/chapters/story/critters'
 
 const BANDS: Record<Habitat['move'], { lead: number; cluster: number; wait: [number, number] }> = {
@@ -68,7 +68,7 @@ describe('Home Time layout invariants', () => {
 
           const waits = Array.from({ length: pool }, (_, i) => waitSpot(i, pool, L.band, HUDDLE_RIGHT, L.edgePct, L.rows))
           // The whole gather cluster, at its worst case: every one of the pool chosen at once.
-          const cluster = Array.from({ length: pool }, (_, k) => clusterSpot(k, L.band, L.mx - 6, GATHER_COL, GATHER_LEFT))
+          const cluster = Array.from({ length: pool }, (_, k) => clusterSpot(k, L.band, L.mx - 6, GATHER_COL, GATHER_LEFT, L.kind.src))
 
           // ① Travel always runs left→right. A creature standing right of where it is going walks
           //    BACKWARDS while its legs run forwards — that is the moonwalk.
@@ -82,8 +82,23 @@ describe('Home Time layout invariants', () => {
           if (leftMost < 0) failures.push(`${tag}: leftmost sprite off screen at ${leftMost.toFixed(1)}%`)
           const miloRight = L.mx + halfW(L.size, MILO_SCALE, aspectOf(L.miloSrc), vw)
           if (miloRight > 97.5) failures.push(`${tag}: Milo's right edge at ${miloRight.toFixed(1)}%`)
-          const clusterRight = Math.max(...cluster.map(s => s.left)) + halfW(L.size, 0.8, L.aspect, vw)
+          const clusterRight = Math.max(...cluster.map(s => s.left)) + halfW(L.size, cluster[0].scale, L.aspect, vw)
           if (clusterRight > 100) failures.push(`${tag}: cluster runs off the right at ${clusterRight.toFixed(1)}%`)
+
+          // ②b The gathered set is the group the child COUNTS to check their own answer, and the
+          //     column pitch is a flat constant while the cast's aspects run 0.805 → 1.746 — so at
+          //     one scale a shark's body is three columns wide and five of them read as two.
+          //     Nobody may be buried deeper than the rabbit, whose huddle is the approved picture.
+          //     Both ends come out of clusterSpot: recomputing the rule here would be a second copy
+          //     that agrees with itself while the screen falls apart.
+          const showing = (k: Kind) => {
+            const spot = clusterSpot(0, L.band, L.mx - 6, GATHER_COL, GATHER_LEFT, k.src)
+            const next = clusterSpot(2, L.band, L.mx - 6, GATHER_COL, GATHER_LEFT, k.src)   // same row
+            const bodyPct = L.size * spot.scale * aspectOf(k.src) / vw * 100
+            return Math.min(1, (spot.left - next.left) / bodyPct)
+          }
+          const share = showing(L.kind), approved = showing(CAST[0])
+          if (share < approved - 0.01) failures.push(`${tag}: only ${(share * 100).toFixed(0)}% of each gathered ${L.kind.little} shows, against ${(approved * 100).toFixed(0)}% for the rabbit`)
 
           // ③ Two creatures in the SAME huddle row must not overlap, or one buries the other and
           //    the child cannot count them.
@@ -105,7 +120,7 @@ describe('Home Time layout invariants', () => {
           // Milo stands on his own GROUND line, not the cluster's or the huddle's — see BANDS.
           const miloHead = L.leadY / 100 * vh - L.size * MILO_SCALE
           if (miloHead < BANNER_PX - EPS) failures.push(`${tag}: Milo's head ${(BANNER_PX - miloHead).toFixed(0)}px behind the prompt`)
-          const clusterHead = L.band.lineY / 100 * vh - L.size * 0.8
+          const clusterHead = L.band.lineY / 100 * vh - L.size * cluster[0].scale
           if (clusterHead < BANNER_PX - EPS) failures.push(`${tag}: gathered head ${(BANNER_PX - clusterHead).toFixed(0)}px behind the prompt`)
           // Measured off the REAL spots, not the band they came from: waitSpot adds an organic
           // per-creature jitter, and reading the band instead of the spot is exactly how a 5px

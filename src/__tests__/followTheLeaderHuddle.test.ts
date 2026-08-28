@@ -16,8 +16,8 @@
  * constants — a check that mirrors its own copy passes happily while the screen falls apart.
  */
 import { describe, it, expect } from 'vitest'
-import { lineLayout, lineScale, lineHeadGap, lineSpot } from '@/features/chapters/story/FollowTheLeader'
-import { CAST, ROW_SEP, aspectOf, waitSpot } from '@/features/chapters/story/critters'
+import { lineLayout, lineScale, lineHeadGap, lineSpot, tagSize, tagLift } from '@/features/chapters/story/FollowTheLeader'
+import { CAST, ROW_SEP, aspectOf, waitSpot, BANNER_PX } from '@/features/chapters/story/critters'
 
 // Every size the layout has to hold, smallest short-landscape phone first.
 const SIZES: [number, number][] = [[640, 320], [667, 375], [812, 375], [1024, 600], [1280, 720], [1920, 900]]
@@ -55,6 +55,45 @@ describe('Follow the Leader — the waiting huddle can be read', () => {
       if (n > 1 && spriteW > sameRowPx + 0.5) bad.push(`${vw}x${vh} n=${n} ${CAST[castIdx].little}: sprite ${spriteW.toFixed(0)}px wide, only ${sameRowPx.toFixed(0)}px of room`)
     }
     expect(bad.join('\n')).toBe('')
+  })
+
+  /**
+   * ⚠️⚠️ AND THE NUMBER IS NOT INSIDE THE SPRITE'S BOX, WHICH IS THE SECOND, SEPARATE CAUSE OF THE
+   * SAME REPORT. Every band helper reserves head clearance from the SIZE it is handed, and the tag
+   * floats `tagLift` px ABOVE that box — so the band fitted perfectly and the numbers went behind
+   * the prompt pill. Measured live at 640×320 before the fix: the middle tag rendered at y 82–121
+   * against a pill occupying 155–485 × 48–93, 28% of the badge covered, and `elementFromPoint` at
+   * its top returned the pill button. The student reported it a SECOND time after the three-rows
+   * fix, which is what a second cause looks like from outside.
+   *
+   * The top of the TAG is the thing that has to clear the banner, so that is what this asserts —
+   * driven through `waitSpot` and `tagLift`, never recomputed from the band.
+   */
+  it('keeps every NUMBER — not merely every head — clear of the prompt pill', () => {
+    const bad: string[] = []
+    for (const { vw, vh, n, L } of sweep()) {
+      for (let i = 0; i < n; i++) {
+        const s = waitSpot(i, n, L.band, L.huddleRightPct, L.edgePct, L.rows)
+        const headPx = s.top / 100 * vh - L.babySize          // top of the sprite
+        const tagTopPx = headPx - tagLift(L.babySize)         // top of the number above it
+        if (tagTopPx < BANNER_PX)
+          bad.push(`${vw}x${vh} n=${n} ${L.kind.little}: number ${i} tops out at ${tagTopPx.toFixed(0)}px, inside the prompt band (${BANNER_PX})`)
+      }
+    }
+    expect(bad.slice(0, 6)).toEqual([])
+  })
+
+  it('…and the tag the layout reserves for is the tag the component draws', () => {
+    // A reserve computed from a different formula than the one NumberTag uses is two definitions
+    // of one number waiting to drift, so both come out of the same pair of exported functions.
+    for (const size of [40, 57, 58, 92, 168]) {
+      expect(tagSize(size)).toBe(Math.max(24, Math.round(size * 0.42)))
+      expect(tagLift(size)).toBeCloseTo(tagSize(size) * 0.72, 6)
+    }
+    // And the layout must actually SPEND it: a bigger sprite hangs its number higher.
+    const small = lineLayout(640, 320, 5, 9), big = lineLayout(1280, 720, 3, 0)
+    expect(tagLift(big.babySize)).toBeGreaterThan(tagLift(small.babySize))
+    expect(small.topPx).toBeGreaterThan(0)
   })
 
   it('keeps every number tag above its 24px floor', () => {
