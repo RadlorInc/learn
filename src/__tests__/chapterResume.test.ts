@@ -153,9 +153,12 @@ describe('spoken praise on a correct answer', () => {
    * — ten chapters on `GameShell`, OrderDesk and LevelRun on the storybook one — so an engine-shaped
    * rule praises the same child in two chapters and stays silent in the other ten.
    */
-  it('reaches every children\'s band and stops at 12', () => {
-    for (const b of ['3-5', '6-8', '9-11']) expect(praisesOnCorrect(b), `${b} lost its praise`).toBe(true)
-    for (const b of ['12-14', '15-16', '17-18']) expect(praisesOnCorrect(b), `${b} is being praised like a six-year-old`).toBe(false)
+  it('reaches the young bands and stops at 9', () => {
+    for (const b of ['3-5', '6-8']) expect(praisesOnCorrect(b), `${b} lost its praise`).toBe(true)
+    // ⚠️ 9–11 IS OFF ON PURPOSE, and this line is the whole reason the cutoff is where it is: that
+    // band moved onto the Field Lab design precisely so it would not look like 3–8, and praising it
+    // after every question undoes that. Founder's call, 2026-08-28.
+    for (const b of ['9-11', '12-14', '15-16', '17-18']) expect(praisesOnCorrect(b), `${b} is being praised like a six-year-old`).toBe(false)
     expect(praisesOnCorrect(''), 'an unknown band opts IN, which is the wrong default').toBe(false)
   })
 

@@ -26,7 +26,7 @@
  * choices 2 → 3 → 4, and look-alike distractors (6/9, 7/1, 3/8) at the hardest tier.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, speakSteps, useIsSpeaking, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakSteps, useIsSpeaking, stopSpeech, useNoVoice } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -434,6 +434,21 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
   const [scene, setScene] = useState<string>(WORLDS[0].scenes[0])
   const [demoIdx, setDemoIdx] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)
+  /**
+   * ⚠️ THIS CHAPTER IS UNANSWERABLE WITHOUT A VOICE, AND THAT HAS TO BE SAID OUT LOUD.
+   *
+   * The target number is SPOKEN and deliberately never drawn — going sound → glyph is the whole
+   * skill (see `promptFor`, which may not contain a digit). So on a device with no voice the child
+   * is not merely missing the warmth, they are being asked to guess, with nothing on screen that
+   * could tell them the answer. Every other chapter in the band writes its question too and degrades
+   * gracefully; this one cannot.
+   *
+   * ⚠️ THE FIX IS NOT TO DRAW THE NUMBER — that turns listening into matching and deletes the
+   * chapter. It is recorded clips for this band, which 12–18 already has a pipeline for. Until then
+   * this notice is the honest thing: it is addressed to the grown-up, because the child cannot read
+   * it either.
+   */
+  const noVoice = useNoVoice()
 
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => (world ? makeNestBeat(world) : null), [world])
@@ -478,6 +493,17 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
         <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
+
+      {/* Not during the demo — the demo's own written subtitle owns this slot, and the demo is
+          watchable without sound. This is for the phases where the CHILD has to answer by ear. */}
+      {noVoice && phase !== 'demo' && (
+        <div style={{ position: 'fixed', top: 96, left: 0, right: 0, zIndex: 46, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
+          <div style={{ maxWidth: '78%', background: 'rgba(255,248,235,.96)', border: '3px solid var(--milo-orange)', borderRadius: 14, padding: '7px 16px', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'clamp(12px, 1.6vh, 15px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 3px 0 rgba(242,107,44,.2)' }}>
+            🔇 This game needs sound — Milo says the number out loud and never writes it down.
+            This browser has no voice available.
+          </div>
+        </div>
+      )}
 
       {phase === 'intro' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
