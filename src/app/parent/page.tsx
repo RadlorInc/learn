@@ -8,7 +8,7 @@ import {
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
   getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
-  getMyRole, setMyRole,
+  getMyRole, setMyRole, entitledChapters,
 } from '@/data/repositories'
 import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
@@ -52,6 +52,7 @@ export default function ParentDashboard() {
   const [actionMsg,    setActionMsg]    = useState<string | null>(null)
   const [confirming,   setConfirming]   = useState<string | null>(null) // learnerId being confirmed
   const [activeChapterIds, setActiveChapterIds] = useState<ChapterType[]>([])
+  const [chapterLocks, setChapterLocks] = useState<Record<string, boolean | null>>({})
   const [recheckDue, setRecheckDue] = useState<{ weeks: number } | null>(null)   // week-6 nudge for the active learner
   const [role, setRole] = useState<UserRole | null | 'loading'>('loading')       // null = show the one-time Teacher/Parent picker
 
@@ -207,6 +208,25 @@ export default function ParentDashboard() {
       .catch(() => { if (!cancelled) setActiveChapterIds(fallback) })
     return () => { cancelled = true }
   }, [active?.learner.id, active?.learner.grade_id, active?.learner.age_group])
+
+  /**
+   * ⚠️ WHICH OF THOSE CHAPTERS IS BEHIND THE PAYWALL — ASKED, NOT DERIVED. `is_chapter_entitled` is
+   * the single definition (the `sessions` policy, `learner_progress`'s WITH CHECK and `sync_session`
+   * all call it); working the answer out here from `is_free`, the plan and the seats would be a
+   * FOURTH copy of the rule, free to disagree with the other three. About a dozen calls, in
+   * parallel, on a page a parent opens rarely. Today they all answer `true`, because
+   * `billing_config.enforced` is false — so nothing renders and the whole surface is inert.
+   * ⚠️ `null` (could not find out) is NOT a lock: same fail-open rule as the child's gate.
+   */
+  useEffect(() => {
+    setChapterLocks({})
+    if (!active || activeChapterIds.length === 0) return
+    let cancelled = false
+    entitledChapters(active.learner.id, activeChapterIds)
+      .then(m => { if (!cancelled) setChapterLocks(m) })
+      .catch(() => { /* fail open — no locks shown */ })
+    return () => { cancelled = true }
+  }, [active?.learner.id, activeChapterIds])
 
   // Week-6 re-check nudge: surface the guarantee loop in-app when a re-check is due for this learner.
   useEffect(() => {
@@ -420,7 +440,12 @@ export default function ParentDashboard() {
 
             {/* Chapter progress */}
             <div style={{ background:'#fff', borderRadius:20, padding:'18px 16px', marginBottom:16, boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>
-              <h3 style={{ fontSize:15, fontWeight:800, margin:'0 0 14px', color:'#1a1a1a' }}>Chapter progress</h3>
+              <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'0 0 14px' }}>
+                <h3 style={{ fontSize:15, fontWeight:800, margin:0, color:'#1a1a1a' }}>Chapter progress</h3>
+                {/* Findable without hitting a wall first — pricing is a thing a parent may want to
+                    read before anything is locked, and it lives on this side of the product only. */}
+                <button onClick={() => router.push('/parent/plan')} style={{ background:'none', border:'none', padding:0, fontSize:12, fontWeight:700, color:'#F26B2C', cursor:'pointer' }}>Plan &amp; billing →</button>
+              </div>
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 {activeChapterIds.map(ch => {
                   const prog  = active.progress.find(p => p.chapter === ch)
@@ -435,6 +460,16 @@ export default function ParentDashboard() {
                       </div>
                       {prog?.total_sessions ? (
                         <div style={{ fontSize:11, color:'#888', fontWeight:600, minWidth:32, textAlign:'right' }}>{prog.total_sessions}x</div>
+                      ) : null}
+                      {/* ⚠️ THE PARENT SIDE IS THE ONLY SIDE THAT ROUTES TO CHECKOUT. The child's
+                          lock card carries no price and no way to pay; this one does, because a
+                          grown-up is reading it. `false` only — `null` means we could not find out
+                          and must not become a lock. */}
+                      {chapterLocks[ch] === false ? (
+                        <button
+                          onClick={() => router.push('/parent/plan')}
+                          style={{ background:'#FFF3EC', border:'1px solid #F26B2C', color:'#F26B2C', borderRadius:50, padding:'4px 10px', fontSize:11, fontWeight:800, cursor:'pointer' }}
+                        >🔓 Unlock</button>
                       ) : null}
                     </div>
                   )
