@@ -120,17 +120,38 @@ test.beforeEach(async ({ page }) => { await page.setViewportSize(FRAME) })
             if (/menu/i.test(label) || /hear it again/i.test(aria)) return
             if (/^(Ready|Send|Done|Paint)\b/i.test(label)) return
             const r = b.getBoundingClientRect()
-            // ⚠️ ON-SCREEN ONLY. A parader WAITS off-frame and arrives on its own legs (measured at
-            // x −130), and nothing can click that.
+            /**
+             * ⚠️ THE CENTRE ON SCREEN, NOT THE WHOLE BOX — and the difference cost three wrong
+             * diagnoses. A parader WAITS off-frame and arrives on its own legs (measured at x −130),
+             * so some reachability filter is needed. Requiring the ENTIRE box inside the frame is
+             * too strong: the counting chapter's creatures are tall and stand low, so their boxes
+             * overflow a 320px frame by a few pixels and every one of them was excluded. Instrumented,
+             * the driver reported `eligible=0` for 148 of its 150 seconds and then failed as though
+             * the chapter had no commit control — a red describing the driver, blamed twice on a cold
+             * server and once on the parade being slow. What matters for a click is whether the point
+             * you would click is on screen.
+             */
             if (r.width < 8 || r.height < 8) return
-            if (r.left < 0 || r.top < 0 || r.right > frame.width || r.bottom > frame.height) return
+            const cx = r.left + r.width / 2, cy = r.top + r.height / 2
+            if (cx < 0 || cy < 0 || cx > frame.width || cy > frame.height) return
             ok.push(b)
           })
           if (!ok.length) return 0
+          /**
+           * ⚠️ TAP THEM ALL, NOT ONE PER PASS — rotation is the wrong strategy for a PARADE. The
+           * counting chapter shows its answer chips only once EVERY creature has been tapped, so
+           * "click one, wait, check" is not exploring a choice, it is doing required work one item
+           * at a time; under load it ran out of budget and the sweep reported a bar that works as
+           * missing. Three separate runs blamed on the server before the driver was the answer.
+           * Harmless everywhere else: a tap only SELECTS now, so a row of choices simply ends on
+           * the last one and the bar appears either way. `n` still rotates which is left selected.
+           */
+          for (const b of ok) b.click()
           ok[n % ok.length].click()
           return ok.length
         }, [FRAME, tick++] as [{ width: number; height: number }, number])
         if (!clicked) await page.waitForTimeout(500)
+        else await page.waitForTimeout(150)
 
         /**
          * ⚠️ AND SOME ANSWERS ARE NOT BUTTONS. The colouring chapter is a CANVAS: the child picks up
