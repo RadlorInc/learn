@@ -1281,6 +1281,47 @@ to draw. The "draw from the ink box, not the file box" rule, applied to a code-d
   that road is to stop passing the derived values at all** — `lineSpot(k, L)` takes the layout, so
   there is nothing left to hand over wrongly. Prefer the signature that cannot express the bug over
   the check that catches it.
+  ⚠️⚠️ **AND THE FAULT IS IN EVERY FORMATION WITH A FIXED PITCH, NOT JUST THE ONE SOMEBODY
+  REPORTED — GO AND MEASURE THE SIBLINGS.** The student named chapter 2's line; the same shape was
+  sitting one function along in the same file. `clusterSpot` (chapter 4's gathered set) steps a flat
+  `GATHER_COL = 5.4`% per column at a flat `scale: 0.8`, so the share of each body still showing ran
+  **74% for the rabbit down to 26% for the shark** — measured live at 1280×720, **five gathered fish
+  read as three**, in the one place the child has to count what they have just chosen. The huddle
+  beside it never had the fault because its sprite is already capped to its own slot
+  (`size = min(rawSize, slotPx / aspect)`); the cluster inherited that size and not the cap.
+  **A formation whose pitch is a constant owes every species a scale cap** —
+  `CLUSTER_SCALE * min(1, RABBIT_ASPECT / aspect)`, size- and viewport-independent, so the approved
+  picture is untouched by construction and everyone else gets its geometry exactly.
+  ⚠️ Check whether the pitch is really the locked lever before reaching for scale: here it is —
+  measured, the gather band leaves ~6.3% per column across four columns, and a shark wants 11.7%.
+  ⚠️ And the same cap pays for the ROW separation for free (0.22 → 0.37 body heights for a fish),
+  which was independently under this file's own `ROW_SEP` floor of 0.55.
+
+⚠️⚠️ **AND ANYTHING A CHAPTER HANGS ABOVE A CREATURE IS OUTSIDE THE SPRITE'S BOX, WHILE EVERY BAND
+HELPER RESERVES FROM THE BOX — SO THE BAND FITS AND THE THING ABOVE IT DOES NOT.** `fitBands` proves
+the HEAD clears the prompt pill and `spreadBand` clamps the far row to the same line; neither has any
+way to know a number tag floats `0.72 × d` higher. Chapter 2 measured at 640×320: the middle tag
+rendered at y 82–121 against a pill occupying 155–485 × 48–93 — 28% of the badge covered, with
+`elementFromPoint` at its top returning the pill — while every head cleared correctly and every gate
+was green. **A student reported it TWICE**, and the first fix (three rows → two, which was a real and
+separate cause) is exactly why the second report looked like a regression rather than a second
+mechanism. **Declare the overhang** (`maxSizeForRows` / `fitBands` / `spreadBand` take a `topPx`) and
+gate the top of the TAG, not the top of the head. ⚠️ It binds only on the shortest frame — 812×375 and
+up measured 0% hidden — so a roomy-frame pass cannot see it.
+⚠️ **The overhang depends on the size that depends on the overhang**; break it the way the head gap
+does, with a provisional pass whose size is always ≥ the final one, never by iterating.
+⚠️ **And a sibling that "clears" may be clearing on the OTHER axis by luck.** Chapter 4's `AskSign`
+rises above the same banner line in 50 combinations and misses the pill only because the pill is
+centred and Milo stands far right. Say which axis is saving you, because the other one is not.
+
+⚠️⚠️ **AND A POSITIVE CONTROL ON ONE MECHANISM SAYS NOTHING ABOUT THE OTHER MECHANISMS IN THE SAME
+SWEEP.** The sweep that found the above checked two things — a tag behind the pill, and a tag buried
+by a nearer sprite — and read `L.huddleRight` when the field is `huddleRightPct`. Every `waitSpot`
+came back `NaN`, so the BURIAL half reported a confident **0 findings** while the banner half (which
+reads `.top`) worked. **The rows=3 positive control was firing the whole time, on the half that was
+alive**, so the sweep read as verified. `vitest` does not type-check, which is why it ran clean at
+all. Two rules: **give every mechanism in a sweep its own positive control**, and where a probe
+reaches into a returned object, let `tsc` see the file before believing a zero.
 - **a boundary next to another character is measured off THAT character, never guessed.** Chapter 2
   learned this as the cut-off leader; it applies to any adjacency. Chapters 9–10 gave their set a
   flat right limit of 74% and the three widest reef creatures (fish 1.37, turtle 1.53, shark 1.75 : 1)

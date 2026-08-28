@@ -206,8 +206,25 @@ const marchDistance = (n: number, mx: number, headGap: number) => 122 - (mx - he
 /** The number a little one is wearing. Floats just above it, exactly as the counting chapter puts
  *  its count above each parading creature — same idiom, so a child moving between chapters reads
  *  it the same way. Painted cream, not a white UI pill: this sits inside the picture. */
+/**
+ * The tag's own size, and how far it floats ABOVE the head — one definition, because three things
+ * need it and they must not drift: the component that draws it, the layout that has to reserve
+ * room for it, and the gate that checks it is readable.
+ *
+ * ⚠️⚠️ THIS OVERHANG IS OUTSIDE THE SPRITE'S BOX, AND EVERY BAND HELPER RESERVES FROM THE BOX.
+ * `fitBands` proves the creature's HEAD clears the prompt pill and `spreadBand` clamps the far row
+ * to the same line — neither knew about a number hanging above that head, so on a short frame the
+ * band was fitted perfectly and the NUMBERS sat behind the pill. Measured live at 640×320: the tag
+ * for the middle little one rendered at y 82–121 against a pill occupying 155–485 × 48–93, i.e.
+ * 28% of the badge covered, and `elementFromPoint` at its top returned the pill. A student
+ * reported it twice — *"I was unable to see all the numbers"* — and the first fix (two rows
+ * instead of three) was a DIFFERENT and equally real cause, which is why it did not close this one.
+ */
+export const tagSize = (size: number) => Math.max(24, Math.round(size * 0.42))
+export const tagLift = (size: number) => tagSize(size) * 0.72
+
 function NumberTag({ n, size, lit }: { n: number; size: number; lit: boolean }) {
-  const d = Math.max(24, Math.round(size * 0.42))
+  const d = tagSize(size)
   return (
     <span aria-hidden style={{ position: 'absolute', left: '50%', top: -d * 0.72, transform: 'translateX(-50%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: d, height: d, padding: '0 6px',
@@ -253,13 +270,20 @@ export function lineLayout(vw: number, vh: number, n: number, castIdx: number) {
    * finally drawn — the reserve is never short, only ever a hair generous. And the SAME `headGap`
    * value is used for the budget and for the drawing, so the two cannot disagree at all.
    */
-  const sizeChain = (headGap: number) => {
+  const sizeChain = (headGap: number, topPx: number) => {
     const spanPct = huddleGeom(n, lineRight(n, mx, headGap), edgePct).span
     const rows = Math.min(2, huddleRows(spanPct, (rawSize * aspect) / Math.max(1, vw) * 100))
     const slotPx = spanPct * rows / 100 * vw
-    return { spanPct, rows, babySize: Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows), (slotPx / aspect) * 0.98))) }
+    return { spanPct, rows, babySize: Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows, topPx), (slotPx / aspect) * 0.98))) }
   }
-  const headGap = lineHeadGap(sizeChain(LINE_GAP).babySize, aspect, vw)
+  /**
+   * The tag's lift depends on the size, and the size depends on the lift — the same circularity the
+   * head gap has, broken the same way and for the same reason: measured off the PROVISIONAL pass,
+   * which always yields a size at least as big as the final one, so the reserve is never short.
+   */
+  const provisional = sizeChain(LINE_GAP, 0).babySize
+  const topPx = tagLift(provisional)
+  const headGap = lineHeadGap(sizeChain(LINE_GAP, topPx).babySize, aspect, vw)
   /**
    * ⚠️ ONE VALUE, COMPUTED ONCE AND HANDED OUT. The huddle's right edge was recomputed in three
    * places — here, and at both `waitSpot` call sites in the scene — and once the head gap became
@@ -291,9 +315,9 @@ export function lineLayout(vw: number, vh: number, n: number, castIdx: number) {
   // `maxSizeForRows` is the vertical half of that same trade, and leaving it out is what let the
   // rows collapse: fitBands only proves heads clear the prompt and feet clear the strip, and is
   // perfectly happy to return a band a few pixels tall with both rows on the same line.
-  const babySize = Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows), (slotPx / aspect) * 0.98)))
-  const band: Habitat = spreadBand(fitBands(world, vh, babySize), vh, babySize, rows)
-  return { kind, world, aspect, mx, edgePct, rows, babySize, band, short, vw, vh, headGap,
+  const babySize = Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows, topPx), (slotPx / aspect) * 0.98)))
+  const band: Habitat = spreadBand(fitBands(world, vh, babySize, MOTHER_SCALE, topPx), vh, babySize, rows, topPx)
+  return { kind, world, aspect, mx, edgePct, rows, babySize, band, short, vw, vh, headGap, topPx,
     lineScale: lineScale(babySize, aspect, vw),
     /**
      * ⚠️ REPORTED SO THE GATE CAN CHECK THE TWO AGAINST EACH OTHER. `huddleRight` is the room the
