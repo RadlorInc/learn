@@ -157,6 +157,10 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 📏 **2026-08-28 (second pass) — THE STUDENT RAISED "I CANNOT SEE ALL THE NUMBERS" A SECOND TIME, AND IT WAS A SECOND, SEPARATE MECHANISM: THE NUMBER IS DRAWN OUTSIDE THE SPRITE'S BOX AND EVERY BAND HELPER RESERVES FROM THE BOX. FIXED, PLUS THE SAME FAULT FOUND UNREPORTED ONE FUNCTION ALONG IN CHAPTER 4.** `tsc` 0 · **1641/1642** · `next build` 0 · **7 mutations planted, 7 caught** · sw **v150**. **PR [#68](https://github.com/RadlorInc/learn/pull/68) OPEN** — pushed, not merged. Full detail in ③ and ▶ OPEN 2 of the block below.
+>
+> ⚠️ **AND THE VERIFICATION SWEEP FOR IT WAS BLIND FOR ITS FIRST TWO RUNS** — it read `L.huddleRight` (the field is `huddleRightPct`), so half of it measured `NaN` and reported a confident **0 findings** while its positive control fired on the *other* half. `vitest` does not type-check. See ③.
+
 > 🎓 **2026-08-27/28 — A STUDENT'S FOUR-POINT REVIEW, ALL FOUR FIXED AND LIVE: THE RUN NOW RESUMES (AND STOPS DESTROYING THE SCORE), THE NEST CHAPTER SAYS WHAT TO DO, EVERY STORYBOOK CHAPTER HAS A COMMIT STEP, AND MILO PRAISES 3–8. ⚠️ THREE REAL COLLISIONS FOUND BY DRIVING IT — ONE A `position: fixed` SILENTLY TURNED ABSOLUTE BY AN ANCESTOR'S `transform`, ONE SKILLBEAT'S OWN PILL LYING ACROSS A COLOURING PAGE.** `tsc` 0 · **1639/1640** (was 1590) · `next build` 0 · `ready-bar` **18/18** · `chapter-resume` **4/4** · `needs-sound` **2/2** · **49 mutations planted, 49 caught** · sw **v149**. **MERGED — PRs [#65](https://github.com/RadlorInc/learn/pull/65) · [#66](https://github.com/RadlorInc/learn/pull/66) · [#67](https://github.com/RadlorInc/learn/pull/67). LIVE on production, verified in the deployed bundle.**
 
 **The review** (a student, on the 3–5 band): ① the line behind mother looks random for every species but the rabbit · ② sharpen the instructions, praise a right answer, add a repeat button and subtitles · ③ the Ready option should be in every game · ④ *"none of my progress saved and I had to restart"*. ⚠️ **The chapter numbering in the report is off**: ① is chapter **2** (`FollowTheLeader`), the feeding-nest game is chapter **3** (`NestTree`).
@@ -183,7 +187,8 @@ far row to the same line. So the band fitted perfectly and the NUMBERS sat behin
 - **Gated** in `followTheLeaderHuddle.test.ts` — the top of the TAG, driven through `waitSpot` and
   `tagLift`, plus a check that the reserve's formula IS `NumberTag`'s. **4 mutations, 4 caught**
   (drop `topPx` from the band · from the size cap · make the parameter inert · understate the lift).
-  `tsc` 0 · **1641/1642** · `next build` 0. ⚠️ NOT committed, NOT pushed.
+  `tsc` 0 · **1641/1642** · `next build` 0 · sw **v150**. ✅ **Committed and pushed —
+  PR [#68](https://github.com/RadlorInc/learn/pull/68), OPEN, not merged.**
 - ⚠️⚠️ **AND MY OWN SWEEP WAS BLIND FOR ITS FIRST TWO RUNS, WHICH IS THE LESSON WORTH KEEPING.** It
   read `L.huddleRight` — the field is `huddleRightPct` — so every `waitSpot` came back `NaN` and the
   BURIAL half of the sweep reported a confident **0 findings**. `vitest` does not type-check, so it
@@ -311,12 +316,43 @@ child's paint goes ON the picture and can be painted over until Ready. The LESSO
   → 9–11 s**. ⚠️ I had also called it "stable, 20/20 twice"; two warm-server runs is not evidence.
   📄 Both general rules are in [docs/chapter-craft.md](docs/chapter-craft.md) §4.
 
+## 📋 THE TESTER'S SHEET, AUDITED AGAINST THE DEPLOYED SITE — 2026-08-28
+`Chapter_Testing_tester2` (Drive, owner kuwarirafi@) had **six rows still `Open`**. Every one was
+checked against **production** (sw v149 at the time), by driving it, not by reading this file. Every
+bundle search carried a positive AND a negative control.
+
+| # | issue | sheet said | measured |
+|---|---|---|---|
+| 1 | answer-choice grammar | Ready for Retest | ✅ live — new wording present, `"Yes, on their own"` gone |
+| 2 | Milo's robotic voice | Open | ❌ **correctly open** — captured the utterances going to `speechSynthesis` on prod; the 605 clips are 12–18 only |
+| 3 | turtle spacing / numbers | Open | ✅ fixed **2026-08-21** (`99e1d94`) — drove 5 turtles at 640×320, all five numbers visible. ⚠️ **then re-raised, and the second cause is real — see ③** |
+| 4 | "Amazing! Amazing!" | Resolved | — not re-verified |
+| 5 | smallest-first line spacing | Open | ✅ fixed — drove 4 turtles behind mother: body gaps **6 · 5 · 6 px**, head gap −11px by design |
+| 6 | nest game | Open | ✅ 3 of 4 — captured on prod: *"Feed the chick in nest number 4. Tap the nest that says 4!"* and *"Yes! Nest number 2! Great job!"*, 🔊 present. ⚠️ subtitling the QUESTION's number stays refused: sound→glyph IS the skill |
+| 7 | Ready everywhere | Open | ✅ drove **Ready ✓** on prod in the counting AND nest chapters. ⚠️ send/pay chapters keep their own verb |
+| 8 | saving game status | Open | ✅ `milo-chres-` in the prod bundle, `chapter-resume` drives 4/4. ⚠️ **signed-in children only** — the logged-out preview stores nothing by design, so retest from a child profile |
+
+**So five of six can move to Ready for Retest; only #2 is genuinely open.** ⚠️ The sheet was NOT
+edited — that is the founder's to do.
+
+⚠️ **AND THE GATE FOR #7 IS FLAKY.** `ready-bar.spec.ts` failed on `counting` locally (240 s timeout,
+*"never reached a commit control"*) while the bar works on production — the driver has to catch
+paraders in a narrow on-frame window. **A flaky gate gets re-run instead of read**, so #7's guard is
+not trustworthy even though the feature is. Not fixed; next in line.
+
 ## ▶ OPEN
 1. 🎙️ **RECORDED CLIPS FOR 3–11 ARE THE ONLY THING LEFT FROM THIS REVIEW, and they are the founder's
    to start** (a voice choice and the ElevenLabs spend). The pipeline already exists — `clipKey`,
    `voiceClipPlayer`, and 12–18's clips. Until then a voiceless device gets the notice above instead
    of an unwinnable round, which is honest but is not the fix.
-2. ✅ **`clusterSpot` (chapter 4's gathered huddle) IS MEASURED NOW — 2026-08-28 — AND IT WAS THE SAME
+2. ⏸️ **PR [#68](https://github.com/RadlorInc/learn/pull/68) IS OPEN AND UNMERGED** — chapter 2's tag
+   overhang (③) and chapter 4's cluster scale (④). CI not read at the time of writing.
+3. ⚠️ **THE `counting` CASE OF `ready-bar.spec.ts` IS FLAKY** — it failed locally on a 240 s timeout
+   (*"never reached a commit control"*) while the bar demonstrably works on production, because its
+   driver has to catch paraders inside a narrow on-frame window. **A flaky gate gets re-run instead
+   of read**, so the guard on "Ready is everywhere" is not trustworthy even though the feature is.
+   Fix the DRIVER, not the chapter. Not started.
+4. ✅ **`clusterSpot` (chapter 4's gathered huddle) IS MEASURED NOW — 2026-08-28 — AND IT WAS THE SAME
    FAULT, WORSE.** Flat `GATHER_COL = 5.4`% per column at a flat `scale: 0.8` against aspects 0.805 →
    1.746: the share of each body still showing ran **74% (rabbit) to 26% (shark)**, and **driven live
    at 1280×720, five gathered fish read as three** — in the one place the child counts what they have
@@ -327,12 +363,13 @@ child's paint goes ON the picture and can be painted over until Ready. The LESSO
    `src` is REQUIRED on `clusterSpot` — a default is what lets a caller restore the flat 0.8 green.
    Gated in `homeTimeGeometry.test.ts` §②b, driving `clusterSpot` at both ends rather than
    recomputing the rule; **3 mutations planted, 3 caught** (flat 0.8 · cap dropped · calibrated on
-   the shark). `tsc` 0 · **1639/1640** · `next build` 0. ⚠️ NOT committed, NOT pushed.
+   the shark). `tsc` 0 · **1641/1642** · `next build` 0. ✅ **Committed and pushed in the same
+   PR [#68](https://github.com/RadlorInc/learn/pull/68) as ③ — OPEN, not merged.**
    ⚠️ **Two things seen while driving it and deliberately NOT changed:** Milo's `AskSign` covers
    ~29% of the nearest gathered creature (it is anchored to him, and this predates the fix), and the
    gathered set is now 0.47 of the waiting one for a shark — a bigger depth jump than before, which
    is a founder call rather than a defect.
-3. ⏭️ **What was deliberately NOT done on ②, so it is not re-litigated by accident:** the QUESTION's
+5. ⏭️ **What was deliberately NOT done on ②, so it is not re-litigated by accident:** the QUESTION's
    number is still never written. Subtitling it would turn a listening task into a matching one and
    delete the chapter. The action is spoken and written, the demo's teaching lines are written, and
    the target stays spoken-only.
