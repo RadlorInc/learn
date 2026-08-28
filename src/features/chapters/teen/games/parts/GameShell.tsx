@@ -318,6 +318,11 @@ export function Game<V, T extends BaseTask>({
   const canWarmUp = startDiff > 1
 
   const [stage, setStage] = useState<Stage>('start')
+  /** ⚠️ `idx`'s seed is BELT-AND-BRACES; `correct`/`wrong` below are not. `finishDemo` calls
+   *  `loadTask(resume.round, …)`, which `setIdx`es straight away — measured by mutation: seeding
+   *  this from 0 changes nothing a child can see. The score has no such second writer, so if those
+   *  two do not start from the stored run they start from zero and the child loses the answers they
+   *  already gave. Kept symmetric so the three are read as one statement about resuming. */
   const [idx, setIdx] = useState(resume?.round ?? 0)
   const [task, setTask] = useState<T | null>(null)
   const [value, setValue] = useState<V | null>(null)

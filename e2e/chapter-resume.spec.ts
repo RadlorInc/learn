@@ -137,3 +137,151 @@ test('with no learner it stores nothing and restarts, exactly as before', async 
   await enterPractice(page)
   expect(await roundShown(page), 'a chapter with no learner resumed from somewhere').toBe(1)
 })
+
+
+/**
+ * AND THE SAME THING ON THE OTHER ENGINE.
+ *
+ * ⚠️ WHY THIS EXISTS SEPARATELY. The storybook drive above proves `SkillBeat`. `GameShell` is a
+ * DIFFERENT implementation of the same feature — its own `idx`/`correct`/`wrong`, its own
+ * `loadTask` seam, its own start card — and it serves the other ten 9–11 chapters plus all of
+ * 12–18. "Same store, same wiring" is an argument, not a measurement, and this repo has lost three
+ * months to a unit that was always correct and simply never called.
+ *
+ * `wordProblems` because it answers on the shared AnswerPad and is NOT an AR chapter — no camera
+ * door to consent to, and the pad exposes `data-test-answer` (dev-only, dead-code-eliminated in a
+ * production build) so the driver can answer without solving the arithmetic itself.
+ */
+const TEEN = 'wordProblems'
+const TEEN_KEY = 'milo-chres-teen-e2e-wordProblems'
+
+async function teenStored(page: Page) {
+  return page.evaluate((key: string) => new Promise<Record<string, unknown> | null>(resolve => {
+    const req = indexedDB.open('milo', 1)
+    req.onerror = () => resolve(null)
+    req.onsuccess = () => {
+      const os = req.result.transaction('kv', 'readonly').objectStore('kv')
+      const g = os.get(key)
+      g.onsuccess = () => resolve(g.result ? JSON.parse(g.result as string) : null)
+      g.onerror = () => resolve(null)
+    }
+  }), TEEN_KEY)
+}
+
+/** The "N / M" the shell prints top-right while playing. */
+async function teenProgress(page: Page): Promise<string | null> {
+  return page.evaluate(() => {
+    for (const s of [...document.querySelectorAll('span')]) {
+      const t = (s.textContent || '').trim()
+      if (/^\d+ \/ \d+$/.test(t)) return t
+    }
+    return null
+  })
+}
+
+/**
+ * Through the start card and any walkthrough, into the scored run.
+ *
+ * ⚠️ THE START CARD IS NOT SKIPPED EVEN ON A RESUME, deliberately — it carries `unlockSpeech()` (a
+ * real gesture, or the whole run is silent) and, on an AR chapter, BOTH camera doors. So the driver
+ * has to press it both times, and that is the behaviour, not a limitation.
+ */
+async function teenEnterPlay(page: Page) {
+  await page.goto(`/teen-preview?c=${TEEN}`)
+  await page.waitForTimeout(2500)
+  const start = page.locator('button').filter({ hasNotText: /Menu/ }).first()
+  if (await start.count()) await start.click({ timeout: 2000 }).catch(() => {})
+  await page.waitForTimeout(2500)
+  // The walkthrough's quiet skip, when this chapter shows one.
+  const gotIt = page.locator('button', { hasText: /got it/ }).first()
+  if (await gotIt.count()) { await gotIt.click({ timeout: 2000 }).catch(() => {}); await page.waitForTimeout(2500) }
+}
+
+/** Answer the live question correctly, using the shell's dev-only hook. */
+async function teenAnswer(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const el = document.querySelector('[data-test-phase]')
+    const a = el?.getAttribute('data-test-answer')
+    if (!a) return false
+    const b = [...document.querySelectorAll('button')].find(x => (x.textContent || '').trim() === a)
+    if (!b) return false
+    ;(b as HTMLButtonElement).click()
+    return true
+  })
+}
+
+/**
+ * Answer the live question WRONG on purpose.
+ *
+ * ⚠️ WITHOUT ONE OF THESE THE DRIVE CANNOT SEE `wrong` AT ALL. Mutation-tested: seeding it from 0
+ * instead of from the stored run survived every assertion, because a run made only of right answers
+ * leaves `wrong` at 0 either way — the check agreed with the bug by never disagreeing with anything.
+ */
+async function teenAnswerWrong(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const el = document.querySelector('[data-test-phase]')
+    const a = el?.getAttribute('data-test-answer')
+    if (!a) return false
+    const b = [...document.querySelectorAll('button')]
+      .filter(x => /^\d+$/.test((x.textContent || '').trim()))
+      .find(x => (x.textContent || '').trim() !== a)
+    if (!b) return false
+    ;(b as HTMLButtonElement).click()
+    return true
+  })
+}
+
+test('GameShell resumes its run too, on a 9–11 chapter', async ({ page }) => {
+  await seedLearner(page, 'teen-e2e')
+  await teenEnterPlay(page)
+  expect(await teenProgress(page), 'never reached the scored run').toBe('1 / 10')
+
+  expect(await teenAnswer(page), 'the dev answer hook is gone — this drive cannot answer').toBe(true)
+  await page.waitForTimeout(3000)
+  expect(await teenAnswer(page), 'could not answer the second question').toBe(true)
+  await page.waitForTimeout(3000)
+  // One WRONG on purpose, so the run carries a non-zero `wrong` for the resume to preserve.
+  expect(await teenAnswerWrong(page), 'could not answer the third question').toBe(true)
+  await page.waitForTimeout(4500)
+  expect(await teenProgress(page), 'expected to be on question 4').toBe('4 / 10')
+
+  await page.waitForTimeout(800)
+  const rec = await teenStored(page)
+  expect(rec, 'GameShell stored nothing for this chapter').not.toBeNull()
+  expect(rec!.round, 'the stored round is not where the child got to').toBe(3)
+  expect(rec!.correct, 'the stored score lost an answer').toBe(2)
+  expect(rec!.wrong, 'the stored run forgot the miss').toBe(1)
+
+  await page.goto('/menu')
+  await page.waitForTimeout(800)
+  await teenEnterPlay(page)
+  expect(await teenProgress(page), 'the chapter restarted from question 1 — the whole defect').toBe('4 / 10')
+
+  /**
+   * ⚠️ AND THE SCORE HAS TO CONTINUE, NOT JUST THE PLACE — which the round number alone cannot
+   * show. Mutation-tested: seeding `correct` from 0 instead of from the stored run SURVIVED every
+   * assertion above, because the "3 / 10" a child sees is driven by `idx` and says nothing about
+   * what they have got right. So answer one more and read the ledger: 2 carried over plus 1 is 3.
+   * With the score reset it stores 1, and this is the only line that notices.
+   */
+  expect(await teenAnswer(page), 'could not answer after resuming').toBe(true)
+  await page.waitForTimeout(3000)
+  const after = await teenStored(page)
+  expect(after, 'nothing was stored after resuming').not.toBeNull()
+  expect(after!.correct, 'the score restarted at zero on the way back in').toBe(3)
+  expect(after!.wrong, 'the miss was forgotten on the way back in').toBe(1)
+  expect(after!.round, 'the round did not advance after resuming').toBe(4)
+})
+
+/** The same positive control: no learner, nothing stored, back to question 1. */
+test('GameShell with no learner stores nothing and restarts', async ({ page }) => {
+  await teenEnterPlay(page)
+  expect(await teenProgress(page)).toBe('1 / 10')
+  expect(await teenAnswer(page)).toBe(true)
+  await page.waitForTimeout(3000)
+  await page.waitForTimeout(800)
+  expect(await teenStored(page), 'a run was stored against no learner').toBeNull()
+  await page.goto('/menu')
+  await teenEnterPlay(page)
+  expect(await teenProgress(page), 'a chapter with no learner resumed from somewhere').toBe('1 / 10')
+})
