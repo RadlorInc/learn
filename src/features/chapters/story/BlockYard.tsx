@@ -534,7 +534,7 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
   const idle = askFor(op)
   return (
     <>
-      <Banner text={note || idle} vh={vh} ok={ok} />
+      <Banner text={note || idle} vh={vh} ok={ok} chapter={op === '+' ? 'additionTo100' : 'subtractionTo100'} />
       <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} hint={y.step === 'stuck'}
         onRun={y.step === 'stuck' && op === '+' ? tradeUp : undefined}
         onRod={y.step === 'stuck' && op === '-' ? tradeDown : undefined} />
@@ -622,7 +622,7 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
 
   return (
     <>
-      <Banner text={line || 'Watch Milo trade the blocks…'} vh={vh} />
+      <Banner text={line || 'Watch Milo trade the blocks…'} vh={vh} chapter={op === '+' ? 'additionTo100' : 'subtractionTo100'} />
       <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} />
       {shown && (
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.05), zIndex: 36, display: 'flex', justifyContent: 'center' }}>

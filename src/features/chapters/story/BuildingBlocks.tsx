@@ -548,7 +548,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
   return (
     <>
       {/* the target rides INSIDE the question pill — see `lead` in yard.tsx */}
-      <Banner text={note || askFor(data)} vh={vh} ok={ok}
+      <Banner text={note || askFor(data)} vh={vh} ok={ok} chapter="placeValue"
         side="right" lead={isMake && !ok ? n : undefined} />
       <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
       <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
@@ -711,7 +711,7 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
   const ground = groundOf(vh)
   return (
     <>
-      <Banner text={line || 'Watch Milo fill the order…'} vh={vh} side="right" lead={order ?? undefined} />
+      <Banner text={line || 'Watch Milo fill the order…'} vh={vh} side="right" lead={order ?? undefined} chapter="placeValue" />
       <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
       <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
       <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} />

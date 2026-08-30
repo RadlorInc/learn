@@ -159,7 +159,62 @@ function _doSpeakBrowser(text: string, rate: number, pitch: number) {
   }, 100)
 }
 
+// ─── Speech diary (a DIAGNOSTIC, not a fix) ───────────────────────────────────
+/**
+ * ⚠️⚠️ THIS IS AN INSTRUMENT FOR A FAULT WE HAVE NOT MEASURED YET, AND IT FIXES NOTHING.
+ *
+ * "Milo's voice does not speak" has been reported twice now (the nest chapter, then Shape House on
+ * 2026-08-30, where a tester lost the voice around the hull round). Both times the only thing anyone
+ * could check afterwards was whether `speak()` was CALLED — and it was, every time. That is not the
+ * question. The question is whether the utterance ever PRODUCED AUDIO, and the two differ under a
+ * known Chromium behaviour: speech that stops after roughly fifteen seconds of cumulative talking,
+ * or on a long utterance, with the API left believing it is still speaking and no error raised.
+ *
+ * The signature of that is exactly this: `speak` recorded, `started` set, `ended` never set — or
+ * `started` never set at all while `speechSynthesis.speaking` stays true.
+ *
+ * ⚠️ IT CANNOT BE MEASURED IN EITHER BROWSER WE DRIVE. Both the in-app pane and Chrome under
+ * automation produce no audio at all here: utterance ZERO never fires `start`, on the app and on a
+ * blank page alike, so a run in them is a world in which the bug cannot be observed. This diary is
+ * how the next person on a device with a working voice settles it: play the chapter until it goes
+ * quiet, then read `__miloSpeech()` in the console.
+ *
+ * Deliberately always on (not dev-gated): the fault appears on the tester's real device, on
+ * production, and a dev-only diagnostic could not see it there. It holds Milo's own lines — no
+ * child's data — capped at the last 60.
+ */
+export type SpeechNote = { text: string; at: number; started?: number; ended?: number; error?: string }
+const DIARY_MAX = 60
+const _diary: SpeechNote[] = []
+function _remember(note: SpeechNote) {
+  _diary.push(note)
+  if (_diary.length > DIARY_MAX) _diary.shift()
+}
+
+/** What was asked for, what was heard, and the gap between them. */
+export function speechDiary() {
+  const notes = [..._diary]
+  return {
+    notes,
+    spoken: notes.length,
+    started: notes.filter(n => n.started != null).length,
+    /** Started talking and never reported finishing — the shape of the Chromium stall. */
+    hung: notes.filter(n => n.started != null && n.ended == null && !n.error).length,
+    /** Never even started, and nothing said why. */
+    silent: notes.filter(n => n.started == null && !n.error).length,
+    errors: notes.filter(n => n.error).map(n => n.error),
+    engine: typeof window !== 'undefined' && 'speechSynthesis' in window
+      ? { speaking: window.speechSynthesis.speaking, pending: window.speechSynthesis.pending, paused: window.speechSynthesis.paused }
+      : null,
+  }
+}
+if (typeof window !== 'undefined') {
+  ;(window as unknown as { __miloSpeech?: typeof speechDiary }).__miloSpeech = speechDiary
+}
+
 function _actuallySpeak(text: string, rate: number, pitch: number) {
+  const note: SpeechNote = { text, at: Math.round(Date.now()) }
+  _remember(note)
   const u = new SpeechSynthesisUtterance(text)
   u.rate   = rate
   u.pitch  = pitch
@@ -169,6 +224,7 @@ function _actuallySpeak(text: string, rate: number, pitch: number) {
   if (voice) u.voice = voice
 
   u.onstart = () => {
+    note.started = Math.round(Date.now())
     _setBlocked(false)
     _setSpeaking(true)
     _keepalive = setInterval(() => {
@@ -182,9 +238,10 @@ function _actuallySpeak(text: string, rate: number, pitch: number) {
     _singleWatch = setTimeout(() => _setSpeaking(false), Math.max(6000, text.length * 140))
   }
 
-  u.onend = () => _setSpeaking(false)
+  u.onend = () => { note.ended = Math.round(Date.now()); _setSpeaking(false) }
 
   u.onerror = (e) => {
+    note.error = e.error
     _setSpeaking(false)
     if (e.error === 'not-allowed') {
       _setBlocked(true)

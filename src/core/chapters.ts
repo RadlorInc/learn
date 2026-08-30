@@ -57,12 +57,12 @@ export const CHAPTERS: ChapterMeta[] = [
   { id: 'numberRecognition',  name: 'Nest Tree',          parentLabel: 'Nest Tree',         emoji: '🐣', asset: '/assets/objects/nest_side.png',      hint: 'Feed the nest Milo calls!',  ageGroups: ['3-5'] },
   { id: 'matchingQuantities', name: 'Home Time',          parentLabel: 'Home Time',         emoji: '🏡', asset: '/assets/objects/rabbit_side.png',    hint: 'Send exactly how many Milo asks for!', ageGroups: ['3-5'] },
   { id: 'numberComparison',   name: 'Bigger or Smaller',  parentLabel: 'Bigger or Smaller', emoji: '⚖️', asset: '/assets/objects/squirrel_side.png',  hint: 'Which bunch has more?',      ageGroups: ['3-5'] },
-  { id: 'shapes',             name: 'Shape House',        parentLabel: 'Shape House',       emoji: '🏠', asset: '/assets/shapes/house-complete.png',  hint: "Build Milo's house.",        ageGroups: ['3-5'] },
+  { id: 'shapes',             name: 'Shape House',        parentLabel: 'Shape House',       emoji: '🏠', asset: '/assets/shapes/house-complete.png',  hint: "Tap the shape that fits the empty hole!",        ageGroups: ['3-5'] },
   { id: 'colors',             name: 'Rainbow Town',       parentLabel: 'Rainbow Town',      emoji: '🌈', asset: '/assets/objects/flower-red.png',     hint: 'Tap the color Milo names!', ageGroups: ['3-5'] },
   { id: 'patterns',           name: 'Bead Shop',          parentLabel: 'Bead Shop',         emoji: '📿', asset: '/assets/objects/star.png',           hint: 'Tap the bead that comes next!', ageGroups: ['3-5'] },
   { id: 'addition',           name: 'Play Time',          parentLabel: 'Addition',          emoji: '🎈', asset: '/assets/objects/rabbit_side.png',    hint: 'More friends come to play!', ageGroups: ['3-5'] },
   { id: 'subtraction',        name: 'Time to Go',         parentLabel: 'Subtraction',       emoji: '👋', asset: '/assets/objects/fish_side.png',      hint: 'How many are left?',         ageGroups: ['3-5'] },
-  { id: 'measurement',        name: 'Measurement',        parentLabel: 'Measurement',       emoji: '📏', asset: '/assets/objects/star.png',           hint: 'Tall, short, heavy, light!', ageGroups: ['3-5'] },
+  { id: 'measurement',        name: 'Measuring',          parentLabel: 'Measuring',       emoji: '📏', asset: '/assets/objects/star.png',           hint: 'Lay blocks, then tap Done!', ageGroups: ['3-5'] },
 
   // ── 6–8 ──
   { id: 'numbersTo100',       name: 'Numbers to 100',     parentLabel: 'Numbers to 100',    emoji: '💯', asset: '/assets/objects/star.png',           hint: 'Read big numbers up to 100!', ageGroups: ['6-8'] },

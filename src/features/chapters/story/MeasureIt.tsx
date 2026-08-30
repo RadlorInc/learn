@@ -45,6 +45,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import { DirectionsInline } from '@/features/chapters/directions'
 
 // A viewport shorter than this is a landscape phone (812×375, 667×375).
 export const SHORT_H = 470
@@ -234,17 +235,17 @@ function Controls({ world, count, onAdd, onUndo, onDone, live }: {
   return (
     <div style={{ position: 'fixed', left: 0, right: 0, bottom: 9, zIndex: 46,
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '0 10px' }}>
-      <button onClick={live ? onAdd : undefined} disabled={!live} aria-label="Add a block"
+      <button onClick={live ? onAdd : undefined} disabled={!live} aria-label="Add block"
         style={{ ...btn(world.tint), display: 'flex', alignItems: 'center', gap: 8, padding: '9px 20px', opacity: live ? 1 : .5 }}>
         <span style={{ display: 'grid', placeItems: 'center', width: 26, height: 26 }}>
           <Cutout c={BLOCK} size={24} on="h" tint="#ffffff" />
         </span>
-        Add a block
+        Add block
       </button>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--outline)', borderRadius: 999, padding: '7px 16px',
         fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 20, color: 'var(--ink)', minWidth: 50, textAlign: 'center' }}>{count}</div>
-      <button onClick={live && count > 0 ? onUndo : undefined} disabled={!live || count === 0} aria-label="Take one back"
-        style={{ ...btn('#8a94a3'), opacity: live && count > 0 ? 1 : .4, padding: '11px 15px', fontSize: 15 }}>↩ Take one back</button>
+      <button onClick={live && count > 0 ? onUndo : undefined} disabled={!live || count === 0} aria-label="Remove block"
+        style={{ ...btn('#8a94a3'), opacity: live && count > 0 ? 1 : .4, padding: '11px 15px', fontSize: 15 }}>↩ Remove block</button>
       <button onClick={live ? onDone : undefined} disabled={!live} aria-label="Done"
         style={{ ...btn('linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))'), opacity: live ? 1 : .5 }}>Done ✓</button>
     </div>
@@ -479,7 +480,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: pillTop(short), left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '10px 24px',
-        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
+        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}<DirectionsInline chapter="measurement" /></div>
     </div>
   )
 

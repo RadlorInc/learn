@@ -29,6 +29,7 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import { getChapterResume, setChapterResume, clearChapterResume } from '@/infra/storage/chapterResume'
 import { PRAISE, praisesOnCorrect } from '@/core/praise'
+import { getChapter } from '@/core/chapters'
 import type { ChapterType } from '@/core/chapters'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import {
@@ -653,7 +654,18 @@ export function Game<V, T extends BaseTask>({
           here is a px the interactive doesn't have to be scaled out of. */}
       <header style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 'clamp(660px, 66vw, 820px)', display: 'flex', alignItems: 'center', gap: 10, padding: short ? '4px 14px 0' : '12px 16px 4px', boxSizing: 'border-box' }}>
         <button type="button" onClick={() => { stopSpeech(); onExit() }} style={headerChip(P)}>‹ Menu</button>
-        <span style={{ fontWeight: 900, fontSize: 'clamp(15px, 1.7vw, 26px)', letterSpacing: '0.05em', color: P.gold, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{config.title}</span>
+        <span style={{ flex: '0 0 auto', fontWeight: 900, fontSize: 'clamp(15px, 1.7vw, 26px)', letterSpacing: '0.05em', color: P.gold, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{config.title}</span>
+        {/* ⚠️ THE TYPED DIRECTIONS, AND THEY ARE A FLEX CHILD RATHER THAN A FIXED CARD ON PURPOSE.
+            A tester asked for a corner box saying what to do, in every chapter (2026-08-30). Dropped
+            on top of this row as a `fixed` card it covered the chapter TITLE at 640×320 — measured —
+            because every band's header row is already full. In the row, an overlap is not
+            expressible; a narrow frame ellipsises the line instead of hiding something else.
+            One line of words, from the catalogue's own per-chapter hint, so there is no second copy
+            to drift. It is NOT the question — the instruction chip on the instrument is that. */}
+        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          fontSize: 'clamp(11px, 1.05vw, 14px)', fontWeight: 700, color: P.creamSoft,
+          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)',
+          borderRadius: 999, padding: short ? '2px 9px' : '3px 12px' }}>{getChapter(config.chapterId).hint}</span>
         <span style={{ flex: 1 }} />
         {stage === 'play' && <span style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', color: P.creamSoft }}>{Math.min(idx + 1, effTotal)} / {effTotal}</span>}
       </header>

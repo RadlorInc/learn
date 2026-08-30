@@ -53,6 +53,8 @@ import {
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import { DirectionsInline } from '@/features/chapters/directions'
+import type { ChapterType } from '@/core/chapters'
 
 /**
  * How long a narrated line stays on screen. Derived from the sentence's own length so the pacing
@@ -352,7 +354,10 @@ function Bar({ L: l, children }: { L: L; children: React.ReactNode }) {
  * runs across the board on a narrow frame, putting the two things a child must read at once on top
  * of each other.
  */
-function Bubble({ L: l, text }: { L: L; text: string }) {
+/** ⚠️ `chapter` puts the TYPED DIRECTIONS in the bubble, for the same reason TickTock does: this
+ *  chapter sets `prompt: () => ''` (the bubble is its only question region) and draws its own banner
+ *  on the chrome row, so a floating strip there would be laid over that banner. */
+function Bubble({ L: l, text, chapter }: { L: L; text: string; chapter?: ChapterType }) {
   return (
     <div style={{
       position: 'fixed', left: l.bubbleLeft, width: l.bubbleW, top: l.bubbleTop, minHeight: l.bubbleH, zIndex: 42,
@@ -362,7 +367,7 @@ function Bubble({ L: l, text }: { L: L; text: string }) {
       fontFamily: 'var(--font-display)', fontWeight: 700, lineHeight: 1.15, textAlign: 'center',
       fontSize: l.short ? 13 : 17, color: 'var(--ink)',
     }}>
-      {text}
+      <span>{text}{chapter && <DirectionsInline chapter={chapter} />}</span>
       {/* the tail — what keeps the words visibly HIS rather than a banner pinned to the frame */}
       <span aria-hidden style={{
         position: 'absolute', bottom: -11, left: `${l.tailPct}%`, width: 0, height: 0,
@@ -686,7 +691,7 @@ const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolea
   const side = l.short ? 44 : 52
   return (
     <>
-      <Bubble L={l} text={miss ?? (done ? revealFor(data) : askText)} />
+      <Bubble L={l} chapter="fractions" text={miss ?? (done ? revealFor(data) : askText)} />
       <Board L={l} order={order} on={data.on} n={data.n} pieceDen={pieceDen} laid={laid} lit={done} vw={vw} />
       {/*
         ⚠️ WHO IS WAITING IS THE QUESTION. On a TAKE round every friend is already there, so the row
@@ -1029,7 +1034,7 @@ export default function SliceShop({ onFinish, onExit }: {
         background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999,
         padding: l.short ? '4px 14px' : '8px 20px', fontFamily: 'var(--font-display)', fontWeight: 800,
         fontSize: l.short ? 12 : 17, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center',
-      }}>{text}</div>
+      }}>{text}<DirectionsInline chapter="fractions" /></div>
     </div>
   )
 
