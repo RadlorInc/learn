@@ -107,6 +107,25 @@ Everything below is a corollary of that one sentence:
   it did not) and looking instead of picking the flattering one. **`git status` before you believe a
   number**, and treat any disagreement between two of your own measurements as a fact about the
   tree, not a rounding error.
+- ⚠️⚠️ **AN INSTRUMENT CAN LIE IN THE CONFIDENT DIRECTION, AND `document.fonts.check()` IS ONE.**
+  It answered **false** for `15px "IBM Plex Sans"` on two platforms while Chrome was demonstrably
+  PAINTING that exact face (`CSS.getPlatformFontsForNode` → `familyName: 'IBM Plex Sans',
+  isCustomFont: true`) — so "the webfont did not load" was a confident wrong answer that survived
+  into a PR body. It returns false for a face that is loaded but split across unicode-range subsets,
+  among other things, and there is no error to notice. **Ask the consumer what it did, not the API
+  what it thinks**: for fonts that is `CSS.getPlatformFontsForNode` over CDP, which reports what was
+  actually rasterised. Second time in one stretch that a check's own reliability was the finding.
+- ⚠️ **YOU CAN REPRODUCE ANOTHER PLATFORM'S TEXT METRICS ON YOUR OWN MACHINE, AND IT TURNS A
+  CI-ONLY DEFECT CLASS INTO A LOCAL ONE.** `E2E_WIDE_TEXT=1` (`e2e/all-chapters.spec.ts`,
+  `e2e/start-card.spec.ts`) widens every glyph's advance by 8% via `letter-spacing`. On the
+  known-bad start card it reproduces the CI failure **verbatim on a Mac** — `top 288, −13px past the
+  bottom`, the runner's exact number — for a defect that had been invisible locally for a week.
+  ⚠️ **Two caveats, both load-bearing.** The 8% was chosen to clear the **5.1%** measured between two
+  real platforms; it is **not a proven worst case** for every device, only wider than the gap we have
+  evidence for. And a stress is only as good as the screen it is pointed at: with the flag on and the
+  defect restored, `all-chapters` at shortPhone reported **3 PASSED**, because it enters a chapter by
+  clicking its biggest control and never reaches the start card. **The "3 passed" is the more
+  instructive half** — a stress aimed at the wrong screen is decoration wearing a scarier name.
 - **Run it, don't read it.** Reading the rollback script caught one defect; only running it proves
   the schema comes back. Same for a mutation: assert the edit actually landed before concluding
   anything about the gate it was meant to test.

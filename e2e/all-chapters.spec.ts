@@ -29,6 +29,22 @@ import { seedSession } from './session'
  * metric-change from failing, which is worth knowing BEFORE a device finds it — it is not a claim
  * that any user sees that screen. Run it when a layout changes; do not put it on the timer, where
  * it would eventually be re-run rather than read.
+ *
+ * ⚠️⚠️ TWO CAVEATS THAT TRAVEL WITH ANY RESULT FROM IT.
+ *   1. **8% IS NOT A PROVEN WORST CASE.** It was chosen to clear the 5.1% measured between the two
+ *      platforms we have evidence for. A device wider than that is not covered by a green here, and
+ *      nothing schedulable would tell us — this raises the floor, it does not close the question.
+ *   2. **IT ONLY WORKS POINTED AT A SPEC THAT REACHES THE SCREEN UNDER TEST.** With the flag on and
+ *      the pre-fix start card restored, THIS spec reported **3 passed** at shortPhone: it enters a
+ *      chapter by clicking the biggest control, which lands on the explore step or straight past the
+ *      card into the walkthrough. `start-card.spec.ts` carries the same flag for that reason, and
+ *      that "3 passed" is the more instructive half of the story — a stress aimed at the wrong
+ *      screen is decoration wearing a scarier name.
+ *
+ * ⚠️ What it is NOT a diagnosis of: the +5.1% itself. Chrome paints the DECLARED face on both
+ * platforms (`CSS.getPlatformFontsForNode` → `IBM Plex Sans`, `isCustomFont: true`), so the face is
+ * neither failing to load in CI nor falling back — two candidates eliminated, the third (platform
+ * text shaping) not proven, and none of the layout work depends on which it is.
  */
 const WIDE_TEXT = process.env.E2E_WIDE_TEXT === '1'
 

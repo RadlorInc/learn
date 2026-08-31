@@ -71,6 +71,11 @@ test('GameShell start card — every control is on screen at 640x320', async ({ 
    * because it enters a chapter by clicking its biggest control, which on this route lands on the
    * explore step or straight past the card into the walkthrough. A stress pointed at a screen that
    * does not contain the defect is decoration, which is the same trap this spec exists for.
+   *
+   * ⚠️ Watched: on the known-bad card with the flag on, this reproduces the CI failure verbatim on a
+   * Mac — `"Switch it on →" off screen (top 288, -13px past the bottom)`, the runner's exact number
+   * — so the flag is a local proxy for an environment we otherwise cannot reach. It is NOT a proven
+   * worst case: 8% was chosen to clear the 5.1% measured between two real platforms, no more.
    */
   if (process.env.E2E_WIDE_TEXT === '1') {
     await page.addInitScript(() => {
