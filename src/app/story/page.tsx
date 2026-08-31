@@ -18,6 +18,8 @@ import WorldSelect from '@/features/chapters/story/WorldSelect'
 import { makeCountingChapter } from '@/features/chapters/story/chapters'
 import { COUNTING_WORLDS, storytellingById } from '@/features/chapters/story/biomes'
 import { STORY_CHAPTERS, type StorySkill } from '@/features/chapters/storyChapters'
+import DirectionsCard from '@/features/chapters/DirectionsCard'
+import type { ChapterType } from '@/core/chapters'
 import TasteBanner from '@/features/chapters/story/TasteBanner'
 
 /**
@@ -104,7 +106,8 @@ export default function StoryPage() {
 
   function renderChapter() {
     const skill = PREVIEW[ch]
-    if (skill) { const View = VIEWS[skill]; return <View world={orderWorld} /> }
+    // The card the portal draws in the real game, so this preview shows what a child sees.
+    if (skill) { const View = VIEWS[skill]; return <><View world={orderWorld} /><DirectionsCard chapter={skill as ChapterType} /></> }
     if (!ready) return null
     /**
      * ⚠️ AN UNKNOWN `?ch=` SAYS SO RATHER THAN FALLING THROUGH TO COUNTING. It used to land on the
@@ -117,7 +120,7 @@ export default function StoryPage() {
      */
     if (ch !== 'counting') return <Missing ch={ch} />
     // Counting: play the forced/chosen world, else show the picker.
-    if (chapter) return <ForestWalk chapter={chapter} />
+    if (chapter) return <><ForestWalk chapter={chapter} /><DirectionsCard chapter="counting" /></>
     return <WorldSelect title="Where shall we count today?" worlds={COUNTING_WORLDS}
       onPick={(id) => { const s = storytellingById(id); if (s) setChapter(makeCountingChapter(s)) }} />
   }

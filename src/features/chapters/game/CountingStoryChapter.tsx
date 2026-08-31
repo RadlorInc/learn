@@ -18,6 +18,7 @@ import { makeCountingChapter } from '@/features/chapters/story/chapters'
 import { COUNTING_WORLDS, storytellingById, type Storytelling } from '@/features/chapters/story/biomes'
 import { useChapterSync } from '@/data/supabase/useChapterSync'
 import CelebrationModal from '@/shared/ui/CelebrationModal'
+import DirectionsCard from '@/features/chapters/DirectionsCard'
 
 export default function CountingStoryChapter(_props: { onComplete: (correct: number, wrong: number) => void; childName: string }) {
   const router = useRouter()
@@ -47,6 +48,8 @@ export default function CountingStoryChapter(_props: { onComplete: (correct: num
       {story && chapter && (
         <>
           <ForestWalk key={runKey} chapter={chapter} onFinish={finish} onExit={() => router.push('/menu')} />
+          {/* Chapter 1 keeps its own wrapper, so it needs the directions card wired by hand. */}
+          <DirectionsCard chapter="counting" />
           {/* Renders inside the same portal so it layers over the forest, not a blank screen. */}
           <CelebrationModal onExit={() => router.push('/menu')} onPlayAgain={restart} />
         </>

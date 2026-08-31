@@ -72,7 +72,7 @@ const TWIN: Partial<Record<ShapeName, ShapeName>> = { square: 'rectangle', recta
  * the same units, and every number below was derived from where that path's own bbox sits inside
  * its 100×100 viewBox — which is why nothing here needs a non-uniform scale to line up.
  *
- * `parts` is also the BUILD ORDER, and the build order is the question order: walls before roof,
+ * `parts` is also the BUILD ORDER, and the build order is the question order: wall before roof,
  * hull before sail. It is what a child watching someone build would expect to happen next.
  */
 interface Part { name: ShapeName; left: number; top: number; size: number; rotate?: number; label: string }
@@ -99,7 +99,7 @@ const BUILDS: BuildDef[] = [
     grad: 'linear-gradient(#cdeeff 0%, #e7f6d8 52%, #aedd86 100%)',
     opening: 'Milo is building a house!',
     parts: [
-      { name: 'square',    left: 15,   top: 63,   size: 70,   label: 'walls' },
+      { name: 'square',    left: 15,   top: 63,   size: 70,   label: 'wall' },
       { name: 'triangle',  left: 14.4, top: 2.4,  size: 71.1, label: 'roof' },
       // The same rectangle bar, stood upright. The rotation lives on the positioned box, never on
       // an element that also carries a keyframe — stack the two and the animation silently wins and
@@ -376,7 +376,7 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete:
     // The piece leaves the pile and travels into its socket; the round ends when it lands. A fixed
     // delay would drift out of step with the flight, and the flight is what completes the build.
     const ms = fit(el)
-    if (mode === 'guided') speak(`Yes! The ${label} fits!`)
+    if (mode === 'guided') speak(`Great job! The ${label} fits!`)
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), ms + 260)
   }
 
@@ -542,7 +542,21 @@ export default function ShapeTown({ onFinish, onExit }: {
     return ms
   }, [])
 
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
+  /**
+   * The one interlude this chapter has: the move from the house to the boat. It used to be a silent
+   * 850ms pause — and `opening` was declared PER BUILD and rendered nowhere, so the new build simply
+   * appeared with no word said or written about it. That is the beat a tester reported as Milo not
+   * speaking, and the hull is the first thing asked for once it is over. Said AND written, because
+   * most Chrome installs have no voice.
+   * ⚠️ 2100ms, not 850: the next round's question is spoken the moment this resolves and `speak()`
+   * cancels whatever is still talking, so a shorter hold cuts this line off mid-word.
+   */
+  const [moving, setMoving] = useState(false)
+  const interlude = useCallback(() => new Promise<void>(res => {
+    setMoving(true)
+    speak(BUILDS[1].opening)
+    window.setTimeout(() => { setMoving(false); res() }, 2100)
+  }), [])
   const beat = useMemo(() => makeShapeBeat(fit), [fit])
   // Memoized because they SHUFFLE: rebuilt on every render, the option order — and so `answerIdx` —
   // would change under the surface that is already showing them.
@@ -589,6 +603,8 @@ export default function ShapeTown({ onFinish, onExit }: {
       {phase === 'guided' && (<>{Banner('Now you! Tap the piece that fits')}
         <ShapesPlay key="guided" data={guidedData} mode="guided" fit={fit}
           onComplete={() => { setStepIdx(FIRST_SCORED); setPhase('practice') }} /></>)}
+
+      {moving && Banner(BUILDS[1].opening)}
 
       {phase === 'practice' && (
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>

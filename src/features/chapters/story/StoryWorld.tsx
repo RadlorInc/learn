@@ -18,6 +18,7 @@ import { useAdaptive } from '@/shared/hooks/useAdaptive'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
 import { PRAISE } from '@/core/praise'
+import { DirectionsInline, ownsChromeRow } from '@/features/chapters/directions'
 import { getChapterResume, setChapterResume, clearChapterResume } from '@/infra/storage/chapterResume'
 import { type Difficulty } from '@/core/progression'
 import { makeDistinct } from '@/core/questionVariety'
@@ -308,7 +309,11 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
             fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)',
             background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '8px 20px', textAlign: 'center', boxShadow: '0 4px 0 rgba(242,107,44,.25)' }}>
           <span aria-hidden style={{ fontSize: 22, lineHeight: 1 }}>🔊</span>
-          <span>{beat.prompt(data)}</span>
+          {/* ⚠️ AND IN THE THREE CHAPTERS THAT OWN THE CHROME ROW, THIS PILL CARRIES THE TYPED
+              DIRECTIONS TOO — they get no floating strip, because on that row a strip is either
+              over the question or under it. Everywhere else `DirectionsCard` draws it and this
+              renders nothing, so no chapter shows the line twice. */}
+          <span>{beat.prompt(data)}{ownsChromeRow(beat.skillId) && <DirectionsInline chapter={beat.skillId} />}</span>
         </button>
       )}
       {phase === 'reteach'

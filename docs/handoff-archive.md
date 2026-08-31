@@ -1,3 +1,278 @@
+_Moved from handoff.md on 2026-08-30: the three 2026-08-25 billing/funnel blocks (💳 Stage 2b, 🧾 Stage 2a, 🚪 the funnel). ⚠️ Their still-live items — B12 (Supabase Pro), `DRAFT = true` on the privacy policy and ToS, the nine untriaged Dependabot PRs, Vercel Web Analytics still off, and the anon-INSERT prose drift — were checked against the newer 🔒 Stage 3 block first and are all still recorded there._
+
+> 💳 **2026-08-25 (third pass) — STAGE 2b: THE PRICE LADDER, THE PRODUCTS, CHECKOUT AND THE WEBHOOK. TEST MODE ONLY, ENFORCED BY A THROW RATHER THAN BY A RULE SOMEBODY REMEMBERS. ⚠️⚠️ AND I REPORTED A DEFECT I HAD NOT MEASURED: THE SUITE WAS HALF A CHECK, THE SYSTEM WAS FINE.** `tsc` 0 · **1579/1580** (was 1535) · `next build` 0 · **17 mutations planted, 17 caught** · **`ci / rls-tests` reported `RLS_ASSERTIONS=74`** (73 → 74). **NOT applied, NOT merged.**
+
+**The ask:** the confirmed amounts, *"record them in a constants module first"*, then **Stage 2b — products, checkout, webhook. Test mode only, as specced.**
+
+## ① ✅ THE LADDER IS WRITTEN DOWN, WHICH IS THE THING STAGE 1 FAILED TWICE
+`src/core/billing.ts` and nowhere else: **monthly $7.99 then $4.99 · annual $63.99 then $39.99**,
+graduated, `up_to: 1` then `up_to: 'inf'` — **the 4-seat cap lives in the app, not in Stripe**, so it
+stays changeable without a new product. Development values; the SHAPE does not move.
+⚠️ **The totals test types the four numbers out** (`$12.98 / $17.97 / $22.96`, `$103.98 / $143.97 /
+$183.96`). Computing `first + extra × (n−1)` would let the ladder *define* what is correct instead of
+being *checked against* it — a restatement, not a check. Proven by mutation: `extra: 599` fails three.
+
+## ② ⚠️⚠️ I REPORTED A DEFECT I HAD NOT MEASURED — AND THAT IS #15, NOT #14
+**What I said:** `materialize_seats` carried `revoke all … from public, anon, authenticated` with no
+grant back, the webhook arrives as `service_role`, therefore the first real purchase would have
+seated **nobody** with the suite green.
+**What is true:** measured against production, Supabase's default privileges grant
+`service_role=X/postgres` explicitly on functions in `public` owned by `postgres`, and a REVOKE from
+`public, anon, authenticated` cannot remove it. Four live functions of **identical shape**
+(`enforce_learner_cap`, `enforce_grade_cap`, `enforce_grade_ownership`, `prune_error_events`) all read
+`{postgres=X,service_role=X}` with `service_role_can_execute = true`. **The webhook could always have
+called it. The impact I published was invented**, and M7 passed on its first run for that reason.
+- ⚠️ **The real fault was mine, and it is the engagement's own rule turned on the person applying
+  it:** I read the repo (*what did we intend*) and shipped a conclusion that only production could
+  answer (*what is true*). One query, thirty seconds. **A check-shaped FINDING needs the same
+  positive control as a check.**
+- ✅ **What still stands, and is why #14 keeps its row:** *a negative assertion is satisfied by total
+  absence.* M6 asserts `authenticated` is refused and is equally satisfied by a function nobody at
+  all can call — **the SUITE was half a check** even though the system was fine, and no run of it
+  could have told you which. Founder's rule, kept: **every REVOKE assertion needs a paired GRANT
+  assertion, driven as the REAL caller.**
+- The grant and **M7 stay**, relabelled as what they are: redundant today, and worth writing so the
+  property stops depending on a platform default nobody in this repo controls. M7 has caught nothing
+  and the comment says so.
+
+## ③ 🔁 THE WEBHOOK'S THREE PROPERTIES ARE STRUCTURAL, BECAUSE NONE OF THEM SHOWS IN A GREEN RUN
+**Idempotent** — `billing_events.stripe_event_id` is `unique`, so the DATABASE is the authority, not
+a Set in a serverless instance's memory. ⚠️ **Keyed on `processed_at`, not on the row existing**: a
+delivery that logs the event and then dies would otherwise be skipped for ever having done nothing,
+with no error anywhere. **Order-independent** — nothing reads state from the payload; it takes the
+subscription id and **re-fetches from Stripe**, so a late-delivered old event writes today's truth.
+**Convergent** — upsert + a reconciler given a TARGET.
+⚠️ **The grace window is DERIVED (`period_start + 7 days`), never stamped.** `now() + 7 days` moves
+the deadline forward on every redelivery — an at-least-once channel quietly turning a 7-day grace
+into an unbounded one, invisible on every screen.
+⚠️ **`invoice.payment_failed` is deliberately not handled**: a failed renewal already emits
+`customer.subscription.updated`, and a second source of truth buys nothing.
+
+## ④ 🪤 `current_period_start` MOVED OFF THE SUBSCRIPTION
+From API `2025-03-31.basil` (the SDK pins `2026-07-29.dahlia`) the period fields are on the
+**item**. Reading the old place is `undefined` — no error, both periods null — and a null
+`current_period_start` silently deletes **both** the grace window and `reassign_learner_seat`'s
+one-per-period limit. The fixture puts a *different* value in the old place so the item's has to win.
+
+## ⑤ 🧪 DRIVEN, NOT READ — 40 NEW ASSERTIONS, 12 MUTATIONS, 12 CAUGHT
+`src/__tests__/billingStripe.test.ts` drives both routes end to end against a stubbed Stripe and a
+stubbed PostgREST, with a **real signature** from the SDK's own `generateTestHeaderString` (so no test
+depends on my reading of the scheme). C3 is the one only a drive can see: a stale payload saying
+4 seats / `active` against a Stripe currently saying 1 / `past_due` — we write **1**. C8 asserts the
+outbound call list is **empty** on a bad signature, because the status alone passes on a handler that
+writes first and checks after. Mutations caught include *trust the payload*, *key idempotency on the
+row*, *verify after logging*, *take the account from the request body*, and *drop the clamp* — that
+last one matters because `seats_paid` has a CHECK, so an unclamped quantity of 7 fails the INSERT and
+**loses the whole event**.
+
+## ⑥ 🔒 TEST MODE IS A THROW
+`stripeClient()` refuses anything that is not `sk_test_`, and the setup script uses the same
+function, so there is one definition rather than a copy that drifts. Watched it fail for the right
+reason on the real script. No price id is hard-coded (gated, with a positive control). Unset keys →
+**503** everywhere and nothing else in the app notices. ✅ The SDK is **server-only — 0 hits for
+`api.stripe.com` in `.next/static`**, with a positive control proving the search works.
+📄 [docs/billing-stage-2.md](docs/billing-stage-2.md) §5 is the founder's step-3 runbook: create the
+products, `stripe listen`, buy with 4242…, then **check `subscription_seats` has N rows** — the one
+thing that would be empty if ②'s grant were missing while everything else looked perfect.
+
+## ⑦ 👤 ONE STRIPE CUSTOMER PER ACCOUNT — THE `ponytail:` THAT WAS NOT HARMLESS
+Founder's call, and he was right: the duplicate-customer case is harmless to **us** (everything keys
+on `account_id`) and **not to Stripe** — a parent who cancels and resubscribes has their payment
+history split across two customer objects, and Stage 4's portal has to pick one to send them to.
+*"Which of your two customers is this parent"* has no good answer and gets worse monthly. Checkout
+now reuses `subscriptions.stripe_customer_id` (⚠️ there is no `billing_customers` table — the id
+lives on the subscription row). ⚠️ Read with **the parent's own token, never the service role** —
+RLS already scopes it to their own row, and the key that bypasses every policy stays out of a route
+a logged-in stranger can reach; gated by a sentinel that must appear in NO outbound call. ⚠️ A stale
+id (deleted, or from the other mode) is retried once as a new customer, because a duplicate beats a
+family that cannot buy. **5 more mutations, 5 caught.**
+
+## ▶ OPEN
+1. ✅ **MERGED AND APPLIED.** #60 (Stage 2a + 2b) merged; #59 closed as superseded; #61 captured the
+   rollback and made CI run it; #62 recorded the apply. **`materialize_seats` is LIVE in production**
+   as ledger version `20260825030558`, verified from the catalog and **fingerprint-matched to the
+   artefact CI tested** — body `5ee877cc8970db10a0d6b8daac5082f3` and
+   `service_role=true authenticated=false anon=false` on **both** sides. Advisors: **no new
+   findings**, and `materialize_seats` is absent from the SECURITY-DEFINER-executable WARN list — a
+   third instrument agreeing that `authenticated` cannot call it.
+   ⚠️ **B12 did not block it and the rule was APPLIED, not skipped:** one function created, zero rows
+   mutated, none of `sessions` / `learner_progress` / `learner_stats` touched.
+2. 🔴 **B12 IS STILL THE FOUNDER'S AND STILL BLOCKS EVERYTHING FROM STEP 1.** Supabase Pro before any
+   live key and before `enforced` is ever true.
+3. ✅ **THE SQL HALF RAN, THREE TIMES.** `RLS_ASSERTIONS=74` on every run since. ⚠️ Read ② for what
+   that green is and is not worth.
+4. ⏭️ **STEP 3 IS NOW BLOCKED ON THE FOUNDER ONLY — the Stripe side.** ✅ Step 0 returns **1**.
+   ✅ Both routes driven on a real dev server (`/api/checkout` 401 with no token,
+   `/api/stripe/webhook` 503 unconfigured). Still needs: a `sk_test_` key (I must not create
+   accounts or handle credentials) · `stripe listen`'s `whsec_…` · and
+   `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`, without which the webhook 503s before doing anything.
+5. ⚠️⚠️ **THE PURCHASE RUNS AGAINST PRODUCTION, DELIBERATELY — founder's call, and the reason is this
+   session's own principle.** *The point of the test is the PRODUCTION schema, function and grants; a
+   throwaway project is a database nobody will ever pay against* — i.e. verifying where the failure
+   cannot occur. **Three conditions, none optional:** ① record the Stripe customer and subscription
+   ids BEFORE buying, so cleanup targets known rows rather than "everything that looks like a test"
+   · ② clean up immediately after and **verify the cleanup by query** — not "ran the delete" but
+   "queried and the rows are gone" · ③ **once**; needing to repeat it is the signal to reconsider.
+   All three billing tables are **empty today** (measured), so the after-state is the same number
+   rather than a judgement call. **Watch, in order: `stripe listen` → 200 · `subscriptions` one row
+   `active` with `seats_paid = N` · `subscription_seats` N rows.** The third is the one that would be
+   empty while the first two looked perfect. I read all three back from production myself afterwards.
+6. ⏭️ **Then Stage 3 = UI**: the lock screen `sync_session`'s 42501 has been owed since Stage 1, a
+   pricing page, the seat manager, and the customer portal.
+7. 🔴 **`DRAFT = true` — the privacy policy and ToS are still placeholders (B1/B2).** You cannot
+   charge a parent under a placeholder ToS, so this blocks going live as hard as B12 does.
+8. 🟡 Vercel Web Analytics still off; the funnel this all hangs off is unmeasured.
+9. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
+10. ⚠️ **Prose drift, rescued from the block archived today rather than lost with it:**
+   `20260817174352_privacy_and_leads_hardening.sql` and `src/app/api/lead/route.ts` still say the
+   anon INSERT revoke has not been applied. It was, on 2026-08-24. Comments only, no behaviour.
+
+> 🧾 **2026-08-25 (second pass) — STAGE 2a: THE SEAT MATERIALISER, THE ONE THING STAGE 1 LEFT DEAD. AND THE WHOLE OF STAGE 2 IS TEST-MODE-ONLY BY FOUNDER'S ORDER — NOTHING IN IT CAN TAKE A REAL CARD.** `tsc` 0 · **1535/1536** · **`ci / rls-tests` 64 → 73 assertions, green on a real Postgres** · **PR [#59](https://github.com/RadlorInc/learn/pull/59) OPEN, NOT MERGED, NOT APPLIED.** 🔴 **BLOCKED on the price ladder — see ▶2.**
+
+## ① 🪑 `materialize_seats` — A RECONCILER, NOT AN INSERTER, AND THAT IS THE WHOLE DESIGN
+Stage 1 created `subscription_seats` and never wrote a row to it: the tests insert seats by hand, so
+entitlement was structurally correct and **practically dead**. This is the function the webhook will
+call. ⚠️ **The Stripe webhook is at-least-once AND out-of-order**, so "add N seats" is wrong under
+both — a replay costs a seat every single time. Given a TARGET it makes the world match, so replaying
+changes nothing and any delivery order converges on whatever the last event said.
+- ⚠️ **A downgrade takes EMPTY seats first, then the highest occupied ones.** 4 → 2 must not evict a
+  seated child while an unoccupied seat sits beside them. Deterministic: the same downgrade always
+  frees the same seat.
+- ⚠️ **It CLAMPS an over-quantity rather than raising.** Stripe owns the quantity and losing a
+  webhook is worse than clamping one — the same reasoning `subscriptions.status` carries no CHECK
+  for. The column's own `check (seat_index between 1 and 4)` still makes a fifth row unwritable.
+- **Nine assertions, DRIVEN against a real Postgres** (`ci / rls-tests`, `RLS_ASSERTIONS=73`): lowest
+  indexes filled, a replay changes nothing, a seated child survives a downgrade, 7 clamps to 4,
+  cancelling frees every seat without touching the child's record, and **`authenticated` cannot call
+  it — asserted by ATTEMPTING it**, because a grant handed back by a later migration is invisible to
+  the REVOKE in the source.
+⚠️ **I cannot run that suite locally** (no psql, no Docker, no CLI on this machine). The PR exists so
+CI runs it; nothing here was believed before the job reported 73.
+
+## ② 🔒 TEST MODE FOR THE WHOLE STAGE — [docs/billing-stage-2.md](docs/billing-stage-2.md)
+Founder's hard constraint: **no live keys, no live products, no live webhook, nothing that can charge
+a real person, for all of Stage 2.** Two reasons, both outranking convenience: **B12 is still open**
+(the first real payment is when losing that database stops being recoverable by apology), and
+**checkout is the one piece that can charge someone before `enforced` has any say** — the flag gates
+ACCESS, not PAYMENT, so `enforced = false` is *not* a safety net here and must not be sold as one.
+**The go-live sequence, ordered, no step skipped:** ① B12 → ② the applied-schema fingerprint check
+re-run against production → ③ **a test-mode purchase the founder watches end to end** → ④ live keys
+→ ⑤ `enforced = true`. ⚠️ **④ and ⑤ are separate on purpose**: prove the payment path on real cards
+BEFORE removing anyone's access. Enforced in code, not discipline — a gate asserts the configured key
+is `sk_test_`, because a rule somebody has to remember is not a constraint.
+
+## ▶ OPEN
+1. ⏸️ **PR #59 is green and waiting** (`rls-tests` 73, `verify` green). Not merged, not applied.
+2. ✅ ~~**THE PRICE LADDER IS RECORDED NOWHERE**~~ — **CONFIRMED AND WRITTEN DOWN 2026-08-25**, in
+   `src/core/billing.ts`; see the 💳 block above. What follows is why it mattered. The SHAPE is settled and written down (graduated never volume · 4 seats · USD · tax off);
+   the AMOUNTS exist only in the founder's head. Needed to finish products, checkout and the totals:
+   the monthly ladder per tier, the annual equivalent, and how the annual discount is expressed (its
+   own price object, or a % off monthly). **Write them into `billing-stage-2.md` the moment they are
+   said.** ⚠️ The totals test hand-computes its expectations rather than deriving them from the
+   ladder — otherwise a typo redefines "correct" instead of failing.
+3. ⏭️ **Next, and unblocked:** the webhook + `billing_events` idempotency (`stripe_event_id` is
+   already `unique`, so the DB is the idempotency authority, not application memory). Will add the
+   `stripe` SDK — signature verification is a security path, not a place to save a dependency; it is
+   server-only, so no client-bundle cost.
+4. 🔴 **B12 remains the founder's and now blocks two things**: the pipeline, and every step of §② from
+   ④ onward.
+5. 🔴 **`DRAFT = true` — THE PRIVACY POLICY AND ToS ARE STILL PLACEHOLDERS (B1/B2).** A hard blocker
+   for marketing maths to under-13s, and it now also blocks taking money: you cannot charge a parent
+   under a placeholder ToS. ⚠️ **Carried up here on 2026-08-25 because it was about to be archived
+   with the 🔐 block and existed nowhere else** — the same way "Vercel Web Analytics is still off"
+   (⑥ below) was quietly lost when the 🚦 block was archived earlier the same day.
+6. 🟡 **Production is still half-blind: Vercel Web Analytics is NOT enabled** (404 when checked
+   2026-08-23). `error_events` receives rows since the service-role key landed, so crashes are
+   captured; nothing measures traffic or the funnel this session just built. ⚠️ Which means **the two
+   numbers in [docs/checkup-optional-metrics.md](docs/checkup-optional-metrics.md) are answerable
+   from `learner_events` and nothing else is.**
+7. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch — the standing
+   warning about TypeScript 7 / eslint 10 / jsdom 30 still applies.
+
+> 🚪 **2026-08-25 — THE FUNNEL: THE CHECK BECAME OPTIONAL, THE DEMO ROUTE SHIPPED, AND SIGNING UP NOW CARRIES THE PLAY ONTO THE ACCOUNT. ⚠️⚠️ AND THE THREE-MONTH `onComplete` P0 TURNED OUT TO HAVE LEFT ITS CORPSE IN PLACE — I WAS THE NEXT CALLER TO TRUST IT.** `tsc` 0 · **1535/1536** · `next build` 0 · e2e demo **3/3** + adaptive **2/2** · **9 commits, pushed** · prod **sw v145**.
+
+**The asks, in order:** the pipeline decision · door 2 · durable resume · *"the check stays exactly as it is, unchanged, and becomes optional"* · the demo route · the local→server adopt.
+
+## ⓪ 🧯 THE CHECK-SHAPED DEFECT CLASS IS NOW THE TOP OF CLAUDE.md, AND IT GREW TO THIRTEEN
+Founder's call: the through-line is the organising principle, not a list. **A check is not a check
+until you have watched it fail for the right reason. Green is not evidence. Present is not
+enforcing. Found-nothing is not clean.** The instances are keyed on MECHANISM — a skip, a shape, a
+moment, an order, a flag, a dead clause, a wrong target, a one-valued metric, an artefact without
+the feature, a world without the bug, a proxy boundary, a drifted fixture — because *the point is
+that pattern-matching will not find the next one.* **The table is meant to grow.**
+⚠️ **#11 IS A DIFFERENT ANIMAL AND HAS ITS OWN SECTION**: not a check that cannot fail but **a wire
+that is not connected while both ends read as connected** — see ②.
+
+## ① 🎚️ THE CHECK IS OPTIONAL, AND THE SHORT PASS WAS MEASURED AND REJECTED
+The founder had argued FOR forcing it, and reversed himself on the numbers: forcing was defensible
+only while a MIDDLE option existed. Measured, the spine-only short pass is a bad trade in every band
+— 6–8 halves the length and misses **45%** of gaps (exact 95% → 53%), 9–11 misses 32%, and **17–18
+has no short pass at all** (`PROBE_SWEEP['17-18']` is empty, so spine IS the full agenda; a "quick
+check" button there is a control that changes nothing).
+So: **the check is untouched — not shortened, no new modes** — and skipping is one tap with no
+confirmation. ⚠️ **OPTIONAL MUST NOT MEAN PLANLESS**: a skip issues `gradeStartPlan(band)`, and
+`ActivePlan.source` now records where a plan came from, because *"Milo picked this to close the gap"*
+is a straight falsehood after a skip. Re-offered ONCE, on the menu, after the child finishes a plan
+chapter; a second decline retires it to the parent dashboard for good.
+📊 Metrics + **pre-registered interpretations** in [docs/checkup-optional-metrics.md](docs/checkup-optional-metrics.md).
+
+## ② ⚠️⚠️ THE `onComplete` P0 LEFT A CORPSE, AND IT WAS STILL WARM
+`ChapterProps.onComplete` has been in every chapter's signature since the beginning; both registry
+factories took it as `_props` and dropped it. **That is the P0 that stalled every child's plan for
+three months.** It was fixed by moving the pointer into `finishAndSync` — correct — **and left the
+prop in place, still typed, still passed, still discarded.** `/demo` is the next caller, and cannot
+use `finishAndSync` at all (a logged-out visitor has no learner: `if (!learner) return`).
+**What makes it its own class is that it is invisible from BOTH ends.** The caller believes it passed
+a handler; the chapter shows its end screen either way. Only an e2e that plays a chapter to its end
+and asserts *the demo advanced* can see it.
+⚠️⚠️ **AND WAKING IT WOULD HAVE BROKEN ALL 72 CHAPTERS.** `/game`'s dormant `handleComplete` set
+`chapterDone`, and the mount read `{!chapterDone && playingChapter && …}` — so the moment the wire
+was connected, every chapter would have **unmounted the instant a child finished it**, taking its
+own end screen with it. **Dead code is a trap with a timer somebody else starts.** Flag deleted.
+
+## ③ 🚪 THE DEMO ROUTE, AND THE ADOPT THAT MAKES IT WORTH ANYTHING
+`/demo`: band picker → the first two chapters of that band's `gradeStartPlan` (**the same plan a
+skipper gets — no second curriculum to drift**), minus anything AR → then the account. No email, no
+name, no account up front. The wall says what an account BUYS, never that the demo is spent.
+`adoptDemoRun` runs at learner creation beside the pending-diagnostic replay it is modelled on: a
+session per played chapter with stars/XP recomputed via the pure `scoreChapter`, and the plan's
+pointer walked past what they played. ⚠️ **Peek-then-consume-on-match** — a band mismatch LEAVES the
+run stashed. ⚠️ **A diagnosis outranks the demo for the PLAN**; the sessions are adopted either way.
+⚠️ `GuardedChapter` gives `/demo` and `/teen-preview` **one** camera guard — two copies is the day
+they disagree, and the disagreement shows a logged-out child a camera button.
+
+## ④ 💾 DURABLE RESUME + 17–18's DOOR 2
+The probe's resume moved from per-tab sessionStorage to **kv, per learner, 7-day TTL** — the old
+comment argued for sessionStorage and was right when the probe was short; at 20–50 questions
+"abandoned" means "ran out of evening". ⚠️ Across sittings it is **OFFERED, never applied** (silently
+reopening question 26 leaves no route to a fresh check). Door 2 seeds the probe at a strand the
+student names — `strandChoices` derives them from the spine, 17–18 only.
+
+## ⑤ 🚦 THE PIPELINE: DECIDED, NOT BUILT
+✅ **`migrate-prod` gets its own `production-db` environment**, created WITH its reviewer rule at
+enable time and not before. ⚠️ **The casing trap in the last handoff was NOT REAL** — GitHub matches
+environment names case-insensitively (measured). What IS real: `Production` is **Vercel's** (68
+deployments), so a reviewer there would gate the whole site's deploy path to protect a schema apply,
+and the first wedged hotfix removes it — taking the database protection with it.
+
+## ⑥ 🧹 EVERY CHARACTER WINDOW IS GONE FROM THE GATES
+Three in one session reported on text they never saw. Swept all 12 sites onto
+`src/__tests__/_window.ts` (`balanced` / `element` / `strip`). ⚠️ **A negated class is also a proxy**
+— `[^>]*` is a real bound in SQL and a lie in JSX, because `=>` contains a `>`.
+
+## ▶ OPEN
+1. 🔴 **B12 IS THE ONLY THING BLOCKING, AND IT IS THE FOUNDER'S.** Supabase Pro before `enforced` is
+   ever flipped true and before any live Stripe key exists. It also gates the pipeline (⑤).
+2. ✅ **The smoke test passed** (2026-08-25): a chapter played to completion on an established
+   account, stars saved — progress writes survive the billing guard with the flag off. First time
+   anybody had watched it.
+3. ⏭️ **STAGE 2 — STRIPE, TEST MODE ONLY.** Founder's hard constraint: no live keys, no live
+   products, no live webhook, nothing that can take a real card, for the WHOLE stage. Live keys are
+   a deliberate later step — after B12, after the fingerprint check, and after the founder has
+   watched a test-mode purchase end to end.
+4. ⚠️ **NINE DEPENDABOT PRs STILL OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
+5. ⚠️ Accepted limitation, unchanged: RLS gates the RECORD, not chapter CONTENT.
+
 > 🧾 **2026-08-24 (second pass) — THE LEDGER IS REPAIRED, AND THE DIRECTION WAS THE OPPOSITE OF THE ONE PLANNED: 58 REPO FILES MOVED, THE PRODUCTION LEDGER WAS NEVER WRITTEN. ⚠️ `perf_advisors` IS APPLIED AND CLEARED EIGHT LIVE ADVISOR FINDINGS.** `tsc` 0 · **1457/1458** · `next build` 0 · **`db push --dry-run` equivalent: 0 pending.**
 
 > 💳 **2026-08-24 (fourth pass) — THE BILLING SCHEMA IS APPLIED TO PRODUCTION AND COMPLETELY INERT. ⚠️⚠️ CAPTURING THE ROLLBACK CAUGHT MY OWN MIGRATION SILENTLY REVERTING A SECURITY FIX, FOUR HOURS AFTER I WROTE THE RULE THAT CATCHES IT.** `tsc` 0 · **1477/1478** · `ci / rls-tests` **64 assertions** · ledger **74 → 76**. **6 PRs merged** (#51–#56).

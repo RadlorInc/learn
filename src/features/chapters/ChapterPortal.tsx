@@ -22,6 +22,7 @@ import { stopSpeech } from '@/infra/useMiloSpeaker'
 import CelebrationModal from '@/shared/ui/CelebrationModal'
 import MasteryState from '@/features/chapters/teen/MasteryState'
 import ExploreStep from '@/features/chapters/teen/ExploreStep'
+import DirectionsCard from '@/features/chapters/DirectionsCard'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import type { ChapterType } from '@/core/chapters'
 
@@ -106,6 +107,8 @@ export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInn
     return createPortal(
       <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: bg }}>
         <Inner key={runKey} onFinish={finish} onExit={exit} />
+        {/* The typed "what to do" note, in one place for all 24 story chapters rather than 24 copies. */}
+        <DirectionsCard chapter={skill} />
         <CelebrationModal onExit={exit} onPlayAgain={replay} />
       </div>,
       body,
@@ -169,6 +172,9 @@ function TeenWorld({ cfg, Game, SimComp, childName, onFinish, onExit, onReplay }
     )
   }
 
+  // ⚠️ NO `DirectionsCard` HERE. The 12–18 shell draws its own directions IN its header row
+  // (`GameShell`), because a fixed card dropped on that row covered the chapter title — measured at
+  // 640×320. A flex child cannot overlap; a floating one over somebody else's layout can.
   return (
     <Game
       childName={childName}

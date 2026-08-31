@@ -157,6 +157,116 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🗒️ **2026-08-30 — A SECOND TESTER PASS ON TWO 3–5 CHAPTERS, AND THE ONE CROSS-CUTTING ASK: EVERY CHAPTER NOW CARRIES A TYPED LINE OF DIRECTIONS. ⚠️ THE FIRST VERSION OF THAT FEATURE WAS CLIPPED ON ONE OF THE TWO CHAPTERS THAT ASKED FOR IT — A FLOATING CARD LAID OVER EIGHT CHAPTERS' OWN BANNERS — AND THE FIX WAS TO STOP STACKING, NOT TO RE-RANK.** `tsc` 0 · **1684 passed, 1 skipped by design** (see ⑤) · `next build` 0 · **26 mutations planted, 26 caught** · `e2e/directions` **8/8** · sw **v151**. **PR [#69](https://github.com/RadlorInc/learn/pull/69) OPEN — not merged; #68 merges first.**
+
+**The feedback.** Shape House: *"instead of Milo saying 'yes' when the correct answer is chosen, he should say something along the lines of 'great job'"*, and *"when I got the hull part, Milo's voice seems to not speak."* Measuring: the title should be **Measuring**; *"Take one back"* should be **Add block** / **Remove block**; and — *"this goes for all chapters"* — **a little box in a corner with typed directions.**
+
+## ① 🏠 SHAPE HOUSE — THE PRAISE, AND THE BEAT THAT WAS ACTUALLY SILENT
+- The guided round said `Yes! The triangle fits!`; it says **`Great job!`** now. The scored rounds already rotate `core/praise.ts` (`Great job / Nice work / Well done / You got it / Lovely`) — verified by driving the chapter, not by reading it.
+- ⚠️ **`opening` WAS DECLARED PER BUILD AND RENDERED NOWHERE.** The move from the house to the boat was a silent 850 ms pause with no word said or written — and **the hull is the first thing asked for once it is over**, which is exactly where the tester lost the voice. It is spoken AND written now, and the interlude holds **2100 ms**: the next round's question is spoken the moment it resolves and `speak()` cancels whatever is still talking, so a shorter hold cuts the line off mid-word.
+- Also fixed in passing: the demo said *"the walls is missing"*. The square's label is `wall`.
+
+## ② ⚠️⚠️ THE HULL SILENCE IS **NOT** FIXED, AND THE INSTRUMENT TO SETTLE IT IS THE DELIVERABLE
+**What was measured:** driving the chapter with `speechSynthesis.speak` wrapped, every round — including *"The hull needs a rectangle"* — reached `speak()`. **That is the wrong question**, and it is the same wrong question that was asked the last time this was reported: it says the call happened, not that audio came out.
+**The founder's hypothesis, which is the right one to test:** the known Chromium behaviour where synthesis stops after roughly fifteen seconds of cumulative speech, or on a long utterance, **with no error raised**. The hull is late in the sequence, so by then the chapter has spoken a lot.
+⚠️⚠️ **AND IT CANNOT BE TESTED IN EITHER BROWSER THIS SESSION CAN DRIVE.** In the in-app pane AND in real Chrome under automation, **utterance ZERO never fires `start`** — on the app and on a blank page alike — while `speechSynthesis.speaking` stays `true` for ever. No audio is produced at all, so a run there is a world in which the bug cannot occur; a green or red from it would mean nothing.
+✅ **So what shipped is the measurement, not a fix:** `speechDiary()` in `useMiloSpeaker.ts`, exposed as **`window.__miloSpeech()`**, recording per utterance `{text, at, started, ended, error}` (last 60, Milo's own lines only, **deliberately not dev-gated** — the fault only ever appears on a real device on production).
+📋 **HOW TO SETTLE IT, on a device with a working voice:** play Shape House to the boat, and the moment the voice goes quiet run `__miloSpeech()` in the console.
+- `hung > 0` (started, never ended) → **the Chromium stall is confirmed**; the mitigation is an unconditional `pause()/resume()` ping while speaking (today's keepalive only resumes `if (paused)`, which a stall does not set) plus keeping lines short.
+- `silent > 0` with `engine.speaking: true` → the synth never started at all, which is a different fault and points at the device/voice, not at length.
+- everything `started`+`ended` → the words were produced and the problem is elsewhere (volume, the clip path, the child's attention). **Do not claim any of the three without the numbers.**
+
+## ③ 📏 MEASURING — TITLE AND CONTROLS
+`Measurement` → **`Measuring`** (menu name and parent-dashboard label). **`Add block`** / **`↩ Remove block`**, visible text and `aria-label` both, gated as a pair so they cannot drift.
+
+## ④ 🗒️ THE TYPED DIRECTIONS, IN ALL 72 CHAPTERS — AND WHY THE FIRST VERSION WAS WRONG
+**The words come from the catalogue's own `hint`**, which is already `Record<ChapterType, …>`-complete: every chapter has a line **by construction**, and a second per-chapter map is exactly what would let one ship with none. Two hints were rewritten from topic to action (`shapes` → *"Tap the shape that fits the empty hole!"*, `measurement` → *"Lay blocks, then tap Done!"*).
+- **12–18 (`GameShell`)**: a **flex child of the header row**, beside the chapter title. Dropped there as a `fixed` card first, it covered the title at 640×320 — measured. In the row an overlap is not expressible.
+- **The 3–11 storybook chapters**: a small `pointerEvents: none` strip on the Menu row, wired once in `ChapterPortal` (+ counting's own wrapper), so 24 chapters get it from one place.
+- ⚠️⚠️ **AND THE PART THAT WAS WRONG AND IS THE LESSON: A FLOATING STRIP ON THAT ROW IS EITHER OVER THE QUESTION OR UNDER IT.** Eight story chapters draw their own banner there — MeasureIt lifts its question pill to `pillTop(short) = 14` to buy height for the blocks, ShapeStudio and SeesawPark sit at `top: 12`, SliceShop and TickTock at `CHROME_PAD`, and BlockYard/BuildingBlocks use `yard.tsx`'s `BANNER_TOP`, which is **25px on a 720-tall frame**. Ranking the strip underneath them (z 42) kept the question readable and **clipped the directions to "Lay blocks to t…" on one of the two chapters the tester asked for**. Founder's call, and it is the right one: **do not stack — the chapter's own banner carries the line.**
+  - `ownsChromeRow()` (in `features/chapters/directions.tsx`) suppresses the strip for those eight; `SkillBeat`'s prompt pill carries the line inline for the ones that have a pill, `yard.tsx`'s shared banner for BlockYard/BuildingBlocks, and **Milo's bubble** for SliceShop and TickTock — the two that set `prompt: () => ''`, whose scored rounds would otherwise show no directions at all.
+  - ⚠️ **HopAlong is deliberately NOT on the list** even though its round row sits at `top: 40`: it renders no pill there (its ask is a pill at the bottom), so the strip has the row to itself. **Measured at 640×320, not assumed.**
+- ⚠️ **The prose was the lever, exactly as chapter-craft says.** With the direction inline, MeasureIt's pill ran 86 → 553 and slid 10px under the ← Menu button; shortening the hint to *"Lay blocks, then tap Done!"* put it at 123 → 553, clear. A hint budget of 50 characters is gated, because both surfaces render one line.
+
+## 🔬 VERIFIED BY MEASURING, AT 640×320, ON ALL EIGHT CHAPTERS THAT CARRY THE LINE THEMSELVES
+`e2e/directions.spec.ts` (needs a dev server; not part of `npm test`). Three mechanisms per chapter,
+none of which subsumes another — plus a fourth added when giving four chapters their own line made
+their banner taller: the line must not move onto a control either.
+
+⚠️⚠️ **THE FIRST VERSION OF THAT SPEC COULD NOT SEE THE DEFECT IT WAS WRITTEN FOR, AND THE FOUNDER
+SPECIFIED IT.** Text equality + `scrollWidth`/`clientWidth` **passed on last session's clipped
+build**: the whole string was in the DOM and the chapter's question pill was painted OVER it. **The
+defect was occlusion, not overflow.** Re-written as a paint-order check it goes red naming
+`BUTTON(z45) 192,12,447,57` — MeasureIt's own pill. ⚠️ And its own first draft skipped that button by
+filtering on `position !== 'static'`; the covering pill IS static and takes its stacking from an
+ancestor. **Two wrong instruments in a row for one defect.** The general rule is now the founder's,
+at the top of [CLAUDE.md](CLAUDE.md): *an assertion that passes on the known-bad state is not a check.*
+
+| chapter | carrier | box | rendered === hint | covered | on a control |
+|---|---|---|---|---|---|
+| Measuring | pill, inline | 352,31 → 496,45 | ✅ | none | none |
+| Shape Studio | pill, inline | 334,63 → 495,77 | ✅ | none | none |
+| Seesaw Park | pill, inline | 351,63 → 487,77 | ✅ | none | none |
+| Slice Shop | Milo's bubble, own line | 85,73 → 574,87 | ✅ | none | none |
+| TickTock | Milo's bubble, own line | 192,73 → 467,87 | ✅ | none | none |
+| BlockYard + | yard banner, own line | 117,107 → 369,120 | ✅ | none | none |
+| BlockYard − | yard banner, own line | 117,91 → 369,104 | ✅ | none | none |
+| Building Blocks | yard banner, own line | 342,91 → 595,104 | ✅ | none | none |
+
+⚠️ **AND FIVE OF THE EIGHT NEEDED A DIFFERENT SHAPE, WHICH ONLY LOOKING AT THE SCREEN SHOWED.**
+Inline after a SHORT question in a pill is right (the three the feedback named). Forced into a wide
+banner or a small bubble it breaks: SliceShop wrapped to `Halves, thirds and / quarters!` against the
+right edge of a 610px bubble, BlockYard orphaned `numbers!` on a line of its own, and TickTock's
+bubble is 13px on a short frame — 0.58em of that is **under 8px**. Those four (five chapters) take
+`block`: its own centred line under the question, with a **floor** on the size so a small container
+cannot shrink it away. Screenshots of all eight in `docs/verification/2026-08-31-directions/`.
+
+## 🧪 24 MUTATIONS, 24 CAUGHT — AND ONE SURVIVED FIRST AND IS WORTH KEEPING
+`src/__tests__/chapterDirections.test.ts`. Every check here is about a STRING A CHILD READS, which nothing else in the repo can see.
+⚠️ **The one that survived: deleting `chapter="fractions"` from SliceShop's PLAY bubble left the gate green**, because the same chapter's LESSON banner carries the same string — the count-the-right-thing trap from CLAUDE.md, again. The check is anchored on the play call AND counts both occurrences now, and the same was done for TickTock.
+⚠️ **The exception list is a claim about eight chapters' layout held in a ninth file**, so each entry is pinned to the expression it claims (`pillTop`, `CHROME_PAD`, `BANNER_TOP`): change one of those layouts and the gate fails rather than rotting.
+
+## ⑤ 🟡 THE ONE SKIPPED TEST — NAMED, BECAUSE "1684/1685" READS AS GREEN AND IS NOT
+`npm test` reports **1684 passed, 1 skipped**. The skipped one is
+`src/__tests__/skillGraphAudit.test.ts › skill graph · edge sensitivity › ranks every edge by what a
+wrong one would cost`.
+- **Skipped, not failing and not flaky.** `describe.runIf(process.env.GRAPH_SENSITIVITY)` — opt-in,
+  off by default because it re-runs every diagnosis once per edge. Nothing in it is
+  non-deterministic; the flag is about runtime, not stability.
+- **It passes when you run it:** `GRAPH_SENSITIVITY=1 npx vitest run src/__tests__/skillGraphAudit.test.ts`
+  → **8 passed in 25.9s**, run 2026-08-31. A skip is not evidence, so it was run rather than assumed.
+- **Pre-existing, not this branch's.** Introduced `d5f02ad` (2026-08-22, the skill-graph audit day)
+  and byte-identical to `main` — `git diff main` on that file is empty.
+📄 It is here so the next person does not rediscover it as a mystery, and so the headline number
+stops being quoted as if the suite were wholly green.
+
+## ▶ OPEN
+1. 🔴 **THE HULL SILENCE IS UNRESOLVED AND UNMEASURED.** See ②. It needs one run on a device with a working voice and a paste of `__miloSpeech()`. **Nothing in this session may be read as having fixed it.**
+   📄 **The deliverable is the note, not the diary**: [docs/voice-check-for-tester.md](docs/voice-check-for-tester.md)
+   is written for the tester, assumes no technical knowledge, and is the thing to forward — ⚠️ **only
+   once this is deployed**, or its last step answers `__miloSpeech is not defined` and they have spent
+   their time for nothing.
+2. 🎙️ Recorded clips for 3–11 remain the founder's to start (a voice choice and the ElevenLabs spend) — and if ② turns out to be the Chromium stall, clips route around it entirely for the lines that have them.
+3. ⏸️ **PR [#69](https://github.com/RadlorInc/learn/pull/69) is open and NOT merged.** Merge order agreed with the founder: **#68 first** — which turned out to be already done (merged 2026-08-28, see 5) — then rebase #69 onto `main`, which was a no-op for the same reason. Both handoff blocks are present and neither replaced the other.
+4. ⚠️ **The intro/demo screens of BlockYard, BuildingBlocks and HopAlong** show the line only where their banner or the pill renders; no chapter is left without it in a scored round, which is where it was asked for.
+5. ⚠️⚠️ **AND A CORRECTION I OWE THIS FILE: I REPORTED PR #68 AS OPEN AND FLAGGED A `handoff.md`
+   MERGE COLLISION WITH IT. BOTH WERE FALSE.** #68 merged on **2026-08-28 as `e2be6d2`**, three days
+   before this session and BEFORE the commit this branch is based on — so it was already in `main`,
+   there was never a collision, and the rebase was a no-op (`git merge-base --is-ancestor` says the
+   branch already contains all of `main`). **Where the claim came from: this file's own ▶ OPEN item,
+   written by the 2026-08-28 session hours before its PR merged, and never updated.** I read stale
+   prose and repeated it as current fact without asking GitHub — the reader's half of CLAUDE.md's
+   own rule, *do not amplify a finding past the evidence it arrived with*.
+   ⚠️⚠️ **AND THE RELAY HAD TWO NODES, NOT ONE — the founder's own half, added by him.** He
+   reconfirmed *"merge #68 first"* **twice, in two separate replies**, without checking GitHub
+   either, and thanked me for flagging the collision. **A claim repeated back as an INSTRUCTION is
+   what makes it look confirmed**: it stopped reading as my guess and started reading as the agreed
+   plan, which is why neither of us looked for three exchanges. The producer's rule is *do not
+   report what you have not watched*; the consumer's is *do not repeat it back as a decision*.
+   Neither half catches this alone — the second is what turns an unverified line into a schedule. ✅ Every "#68 is open" line in this file is corrected
+   below. **A PR's state is one `gh pr view` away; this file is not a source of truth for it.**
+6. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky (2026-08-28), unchanged by this work.
+
 > 📏 **2026-08-28 (second pass) — THE STUDENT RAISED "I CANNOT SEE ALL THE NUMBERS" A SECOND TIME, AND IT WAS A SECOND, SEPARATE MECHANISM: THE NUMBER IS DRAWN OUTSIDE THE SPRITE'S BOX AND EVERY BAND HELPER RESERVES FROM THE BOX. FIXED, PLUS THE SAME FAULT FOUND UNREPORTED ONE FUNCTION ALONG IN CHAPTER 4.** `tsc` 0 · **1641/1642** · `next build` 0 · **7 mutations planted, 7 caught** · sw **v150**. **PR [#68](https://github.com/RadlorInc/learn/pull/68) OPEN** — pushed, not merged. Full detail in ③ and ▶ OPEN 2 of the block below.
 >
 > ⚠️ **AND THE VERIFICATION SWEEP FOR IT WAS BLIND FOR ITS FIRST TWO RUNS** — it read `L.huddleRight` (the field is `huddleRightPct`), so half of it measured `NaN` and reported a confident **0 findings** while its positive control fired on the *other* half. `vitest` does not type-check. See ③.
@@ -188,7 +298,9 @@ far row to the same line. So the band fitted perfectly and the NUMBERS sat behin
   `tagLift`, plus a check that the reserve's formula IS `NumberTag`'s. **4 mutations, 4 caught**
   (drop `topPx` from the band · from the size cap · make the parameter inert · understate the lift).
   `tsc` 0 · **1641/1642** · `next build` 0 · sw **v150**. ✅ **Committed and pushed —
-  PR [#68](https://github.com/RadlorInc/learn/pull/68), OPEN, not merged.**
+  PR [#68](https://github.com/RadlorInc/learn/pull/68) — ✅ **MERGED 2026-08-28 as `e2be6d2`** (this
+  line said "OPEN, not merged" until 2026-08-31; it was written hours before the merge and is what
+  led the next session to report a collision that did not exist).**
 - ⚠️⚠️ **AND MY OWN SWEEP WAS BLIND FOR ITS FIRST TWO RUNS, WHICH IS THE LESSON WORTH KEEPING.** It
   read `L.huddleRight` — the field is `huddleRightPct` — so every `waitSpot` came back `NaN` and the
   BURIAL half of the sweep reported a confident **0 findings**. `vitest` does not type-check, so it
@@ -345,8 +457,9 @@ not trustworthy even though the feature is. Not fixed; next in line.
    to start** (a voice choice and the ElevenLabs spend). The pipeline already exists — `clipKey`,
    `voiceClipPlayer`, and 12–18's clips. Until then a voiceless device gets the notice above instead
    of an unwinnable round, which is honest but is not the fix.
-2. ⏸️ **PR [#68](https://github.com/RadlorInc/learn/pull/68) IS OPEN AND UNMERGED** — chapter 2's tag
-   overhang (③) and chapter 4's cluster scale (④). CI not read at the time of writing.
+2. ✅ **PR [#68](https://github.com/RadlorInc/learn/pull/68) MERGED 2026-08-28 as `e2be6d2`** — chapter
+   2's tag overhang (③) and chapter 4's cluster scale (④). ⚠️ This item read "OPEN AND UNMERGED"
+   until 2026-08-31 and was believed by a later session; corrected there, see the 🗒️ block's ▶ 5.
 3. ⚠️ **THE `counting` CASE OF `ready-bar.spec.ts` IS FLAKY** — it failed locally on a 240 s timeout
    (*"never reached a commit control"*) while the bar demonstrably works on production, because its
    driver has to catch paraders inside a narrow on-frame window. **A flaky gate gets re-run instead
@@ -364,7 +477,7 @@ not trustworthy even though the feature is. Not fixed; next in line.
    Gated in `homeTimeGeometry.test.ts` §②b, driving `clusterSpot` at both ends rather than
    recomputing the rule; **3 mutations planted, 3 caught** (flat 0.8 · cap dropped · calibrated on
    the shark). `tsc` 0 · **1641/1642** · `next build` 0. ✅ **Committed and pushed in the same
-   PR [#68](https://github.com/RadlorInc/learn/pull/68) as ③ — OPEN, not merged.**
+   PR [#68](https://github.com/RadlorInc/learn/pull/68) as ③ — ✅ **MERGED 2026-08-28 as `e2be6d2`.**
    ⚠️ **Two things seen while driving it and deliberately NOT changed:** Milo's `AskSign` covers
    ~29% of the nearest gathered creature (it is anchored to him, and this predates the fix), and the
    gathered set is now 0.47 of the waiting one for a shark — a bigger depth jump than before, which
@@ -537,277 +650,5 @@ which is a class this repo has already paid for. §0's watched purchase is the h
    `src/app/api/lead/route.ts` still say the anon INSERT revoke has not been applied. It was, on
    2026-08-24. Comments only, no behaviour.
 
-> 💳 **2026-08-25 (third pass) — STAGE 2b: THE PRICE LADDER, THE PRODUCTS, CHECKOUT AND THE WEBHOOK. TEST MODE ONLY, ENFORCED BY A THROW RATHER THAN BY A RULE SOMEBODY REMEMBERS. ⚠️⚠️ AND I REPORTED A DEFECT I HAD NOT MEASURED: THE SUITE WAS HALF A CHECK, THE SYSTEM WAS FINE.** `tsc` 0 · **1579/1580** (was 1535) · `next build` 0 · **17 mutations planted, 17 caught** · **`ci / rls-tests` reported `RLS_ASSERTIONS=74`** (73 → 74). **NOT applied, NOT merged.**
 
-**The ask:** the confirmed amounts, *"record them in a constants module first"*, then **Stage 2b — products, checkout, webhook. Test mode only, as specced.**
-
-## ① ✅ THE LADDER IS WRITTEN DOWN, WHICH IS THE THING STAGE 1 FAILED TWICE
-`src/core/billing.ts` and nowhere else: **monthly $7.99 then $4.99 · annual $63.99 then $39.99**,
-graduated, `up_to: 1` then `up_to: 'inf'` — **the 4-seat cap lives in the app, not in Stripe**, so it
-stays changeable without a new product. Development values; the SHAPE does not move.
-⚠️ **The totals test types the four numbers out** (`$12.98 / $17.97 / $22.96`, `$103.98 / $143.97 /
-$183.96`). Computing `first + extra × (n−1)` would let the ladder *define* what is correct instead of
-being *checked against* it — a restatement, not a check. Proven by mutation: `extra: 599` fails three.
-
-## ② ⚠️⚠️ I REPORTED A DEFECT I HAD NOT MEASURED — AND THAT IS #15, NOT #14
-**What I said:** `materialize_seats` carried `revoke all … from public, anon, authenticated` with no
-grant back, the webhook arrives as `service_role`, therefore the first real purchase would have
-seated **nobody** with the suite green.
-**What is true:** measured against production, Supabase's default privileges grant
-`service_role=X/postgres` explicitly on functions in `public` owned by `postgres`, and a REVOKE from
-`public, anon, authenticated` cannot remove it. Four live functions of **identical shape**
-(`enforce_learner_cap`, `enforce_grade_cap`, `enforce_grade_ownership`, `prune_error_events`) all read
-`{postgres=X,service_role=X}` with `service_role_can_execute = true`. **The webhook could always have
-called it. The impact I published was invented**, and M7 passed on its first run for that reason.
-- ⚠️ **The real fault was mine, and it is the engagement's own rule turned on the person applying
-  it:** I read the repo (*what did we intend*) and shipped a conclusion that only production could
-  answer (*what is true*). One query, thirty seconds. **A check-shaped FINDING needs the same
-  positive control as a check.**
-- ✅ **What still stands, and is why #14 keeps its row:** *a negative assertion is satisfied by total
-  absence.* M6 asserts `authenticated` is refused and is equally satisfied by a function nobody at
-  all can call — **the SUITE was half a check** even though the system was fine, and no run of it
-  could have told you which. Founder's rule, kept: **every REVOKE assertion needs a paired GRANT
-  assertion, driven as the REAL caller.**
-- The grant and **M7 stay**, relabelled as what they are: redundant today, and worth writing so the
-  property stops depending on a platform default nobody in this repo controls. M7 has caught nothing
-  and the comment says so.
-
-## ③ 🔁 THE WEBHOOK'S THREE PROPERTIES ARE STRUCTURAL, BECAUSE NONE OF THEM SHOWS IN A GREEN RUN
-**Idempotent** — `billing_events.stripe_event_id` is `unique`, so the DATABASE is the authority, not
-a Set in a serverless instance's memory. ⚠️ **Keyed on `processed_at`, not on the row existing**: a
-delivery that logs the event and then dies would otherwise be skipped for ever having done nothing,
-with no error anywhere. **Order-independent** — nothing reads state from the payload; it takes the
-subscription id and **re-fetches from Stripe**, so a late-delivered old event writes today's truth.
-**Convergent** — upsert + a reconciler given a TARGET.
-⚠️ **The grace window is DERIVED (`period_start + 7 days`), never stamped.** `now() + 7 days` moves
-the deadline forward on every redelivery — an at-least-once channel quietly turning a 7-day grace
-into an unbounded one, invisible on every screen.
-⚠️ **`invoice.payment_failed` is deliberately not handled**: a failed renewal already emits
-`customer.subscription.updated`, and a second source of truth buys nothing.
-
-## ④ 🪤 `current_period_start` MOVED OFF THE SUBSCRIPTION
-From API `2025-03-31.basil` (the SDK pins `2026-07-29.dahlia`) the period fields are on the
-**item**. Reading the old place is `undefined` — no error, both periods null — and a null
-`current_period_start` silently deletes **both** the grace window and `reassign_learner_seat`'s
-one-per-period limit. The fixture puts a *different* value in the old place so the item's has to win.
-
-## ⑤ 🧪 DRIVEN, NOT READ — 40 NEW ASSERTIONS, 12 MUTATIONS, 12 CAUGHT
-`src/__tests__/billingStripe.test.ts` drives both routes end to end against a stubbed Stripe and a
-stubbed PostgREST, with a **real signature** from the SDK's own `generateTestHeaderString` (so no test
-depends on my reading of the scheme). C3 is the one only a drive can see: a stale payload saying
-4 seats / `active` against a Stripe currently saying 1 / `past_due` — we write **1**. C8 asserts the
-outbound call list is **empty** on a bad signature, because the status alone passes on a handler that
-writes first and checks after. Mutations caught include *trust the payload*, *key idempotency on the
-row*, *verify after logging*, *take the account from the request body*, and *drop the clamp* — that
-last one matters because `seats_paid` has a CHECK, so an unclamped quantity of 7 fails the INSERT and
-**loses the whole event**.
-
-## ⑥ 🔒 TEST MODE IS A THROW
-`stripeClient()` refuses anything that is not `sk_test_`, and the setup script uses the same
-function, so there is one definition rather than a copy that drifts. Watched it fail for the right
-reason on the real script. No price id is hard-coded (gated, with a positive control). Unset keys →
-**503** everywhere and nothing else in the app notices. ✅ The SDK is **server-only — 0 hits for
-`api.stripe.com` in `.next/static`**, with a positive control proving the search works.
-📄 [docs/billing-stage-2.md](docs/billing-stage-2.md) §5 is the founder's step-3 runbook: create the
-products, `stripe listen`, buy with 4242…, then **check `subscription_seats` has N rows** — the one
-thing that would be empty if ②'s grant were missing while everything else looked perfect.
-
-## ⑦ 👤 ONE STRIPE CUSTOMER PER ACCOUNT — THE `ponytail:` THAT WAS NOT HARMLESS
-Founder's call, and he was right: the duplicate-customer case is harmless to **us** (everything keys
-on `account_id`) and **not to Stripe** — a parent who cancels and resubscribes has their payment
-history split across two customer objects, and Stage 4's portal has to pick one to send them to.
-*"Which of your two customers is this parent"* has no good answer and gets worse monthly. Checkout
-now reuses `subscriptions.stripe_customer_id` (⚠️ there is no `billing_customers` table — the id
-lives on the subscription row). ⚠️ Read with **the parent's own token, never the service role** —
-RLS already scopes it to their own row, and the key that bypasses every policy stays out of a route
-a logged-in stranger can reach; gated by a sentinel that must appear in NO outbound call. ⚠️ A stale
-id (deleted, or from the other mode) is retried once as a new customer, because a duplicate beats a
-family that cannot buy. **5 more mutations, 5 caught.**
-
-## ▶ OPEN
-1. ✅ **MERGED AND APPLIED.** #60 (Stage 2a + 2b) merged; #59 closed as superseded; #61 captured the
-   rollback and made CI run it; #62 recorded the apply. **`materialize_seats` is LIVE in production**
-   as ledger version `20260825030558`, verified from the catalog and **fingerprint-matched to the
-   artefact CI tested** — body `5ee877cc8970db10a0d6b8daac5082f3` and
-   `service_role=true authenticated=false anon=false` on **both** sides. Advisors: **no new
-   findings**, and `materialize_seats` is absent from the SECURITY-DEFINER-executable WARN list — a
-   third instrument agreeing that `authenticated` cannot call it.
-   ⚠️ **B12 did not block it and the rule was APPLIED, not skipped:** one function created, zero rows
-   mutated, none of `sessions` / `learner_progress` / `learner_stats` touched.
-2. 🔴 **B12 IS STILL THE FOUNDER'S AND STILL BLOCKS EVERYTHING FROM STEP 1.** Supabase Pro before any
-   live key and before `enforced` is ever true.
-3. ✅ **THE SQL HALF RAN, THREE TIMES.** `RLS_ASSERTIONS=74` on every run since. ⚠️ Read ② for what
-   that green is and is not worth.
-4. ⏭️ **STEP 3 IS NOW BLOCKED ON THE FOUNDER ONLY — the Stripe side.** ✅ Step 0 returns **1**.
-   ✅ Both routes driven on a real dev server (`/api/checkout` 401 with no token,
-   `/api/stripe/webhook` 503 unconfigured). Still needs: a `sk_test_` key (I must not create
-   accounts or handle credentials) · `stripe listen`'s `whsec_…` · and
-   `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`, without which the webhook 503s before doing anything.
-5. ⚠️⚠️ **THE PURCHASE RUNS AGAINST PRODUCTION, DELIBERATELY — founder's call, and the reason is this
-   session's own principle.** *The point of the test is the PRODUCTION schema, function and grants; a
-   throwaway project is a database nobody will ever pay against* — i.e. verifying where the failure
-   cannot occur. **Three conditions, none optional:** ① record the Stripe customer and subscription
-   ids BEFORE buying, so cleanup targets known rows rather than "everything that looks like a test"
-   · ② clean up immediately after and **verify the cleanup by query** — not "ran the delete" but
-   "queried and the rows are gone" · ③ **once**; needing to repeat it is the signal to reconsider.
-   All three billing tables are **empty today** (measured), so the after-state is the same number
-   rather than a judgement call. **Watch, in order: `stripe listen` → 200 · `subscriptions` one row
-   `active` with `seats_paid = N` · `subscription_seats` N rows.** The third is the one that would be
-   empty while the first two looked perfect. I read all three back from production myself afterwards.
-6. ⏭️ **Then Stage 3 = UI**: the lock screen `sync_session`'s 42501 has been owed since Stage 1, a
-   pricing page, the seat manager, and the customer portal.
-7. 🔴 **`DRAFT = true` — the privacy policy and ToS are still placeholders (B1/B2).** You cannot
-   charge a parent under a placeholder ToS, so this blocks going live as hard as B12 does.
-8. 🟡 Vercel Web Analytics still off; the funnel this all hangs off is unmeasured.
-9. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
-10. ⚠️ **Prose drift, rescued from the block archived today rather than lost with it:**
-   `20260817174352_privacy_and_leads_hardening.sql` and `src/app/api/lead/route.ts` still say the
-   anon INSERT revoke has not been applied. It was, on 2026-08-24. Comments only, no behaviour.
-
-> 🧾 **2026-08-25 (second pass) — STAGE 2a: THE SEAT MATERIALISER, THE ONE THING STAGE 1 LEFT DEAD. AND THE WHOLE OF STAGE 2 IS TEST-MODE-ONLY BY FOUNDER'S ORDER — NOTHING IN IT CAN TAKE A REAL CARD.** `tsc` 0 · **1535/1536** · **`ci / rls-tests` 64 → 73 assertions, green on a real Postgres** · **PR [#59](https://github.com/RadlorInc/learn/pull/59) OPEN, NOT MERGED, NOT APPLIED.** 🔴 **BLOCKED on the price ladder — see ▶2.**
-
-## ① 🪑 `materialize_seats` — A RECONCILER, NOT AN INSERTER, AND THAT IS THE WHOLE DESIGN
-Stage 1 created `subscription_seats` and never wrote a row to it: the tests insert seats by hand, so
-entitlement was structurally correct and **practically dead**. This is the function the webhook will
-call. ⚠️ **The Stripe webhook is at-least-once AND out-of-order**, so "add N seats" is wrong under
-both — a replay costs a seat every single time. Given a TARGET it makes the world match, so replaying
-changes nothing and any delivery order converges on whatever the last event said.
-- ⚠️ **A downgrade takes EMPTY seats first, then the highest occupied ones.** 4 → 2 must not evict a
-  seated child while an unoccupied seat sits beside them. Deterministic: the same downgrade always
-  frees the same seat.
-- ⚠️ **It CLAMPS an over-quantity rather than raising.** Stripe owns the quantity and losing a
-  webhook is worse than clamping one — the same reasoning `subscriptions.status` carries no CHECK
-  for. The column's own `check (seat_index between 1 and 4)` still makes a fifth row unwritable.
-- **Nine assertions, DRIVEN against a real Postgres** (`ci / rls-tests`, `RLS_ASSERTIONS=73`): lowest
-  indexes filled, a replay changes nothing, a seated child survives a downgrade, 7 clamps to 4,
-  cancelling frees every seat without touching the child's record, and **`authenticated` cannot call
-  it — asserted by ATTEMPTING it**, because a grant handed back by a later migration is invisible to
-  the REVOKE in the source.
-⚠️ **I cannot run that suite locally** (no psql, no Docker, no CLI on this machine). The PR exists so
-CI runs it; nothing here was believed before the job reported 73.
-
-## ② 🔒 TEST MODE FOR THE WHOLE STAGE — [docs/billing-stage-2.md](docs/billing-stage-2.md)
-Founder's hard constraint: **no live keys, no live products, no live webhook, nothing that can charge
-a real person, for all of Stage 2.** Two reasons, both outranking convenience: **B12 is still open**
-(the first real payment is when losing that database stops being recoverable by apology), and
-**checkout is the one piece that can charge someone before `enforced` has any say** — the flag gates
-ACCESS, not PAYMENT, so `enforced = false` is *not* a safety net here and must not be sold as one.
-**The go-live sequence, ordered, no step skipped:** ① B12 → ② the applied-schema fingerprint check
-re-run against production → ③ **a test-mode purchase the founder watches end to end** → ④ live keys
-→ ⑤ `enforced = true`. ⚠️ **④ and ⑤ are separate on purpose**: prove the payment path on real cards
-BEFORE removing anyone's access. Enforced in code, not discipline — a gate asserts the configured key
-is `sk_test_`, because a rule somebody has to remember is not a constraint.
-
-## ▶ OPEN
-1. ⏸️ **PR #59 is green and waiting** (`rls-tests` 73, `verify` green). Not merged, not applied.
-2. ✅ ~~**THE PRICE LADDER IS RECORDED NOWHERE**~~ — **CONFIRMED AND WRITTEN DOWN 2026-08-25**, in
-   `src/core/billing.ts`; see the 💳 block above. What follows is why it mattered. The SHAPE is settled and written down (graduated never volume · 4 seats · USD · tax off);
-   the AMOUNTS exist only in the founder's head. Needed to finish products, checkout and the totals:
-   the monthly ladder per tier, the annual equivalent, and how the annual discount is expressed (its
-   own price object, or a % off monthly). **Write them into `billing-stage-2.md` the moment they are
-   said.** ⚠️ The totals test hand-computes its expectations rather than deriving them from the
-   ladder — otherwise a typo redefines "correct" instead of failing.
-3. ⏭️ **Next, and unblocked:** the webhook + `billing_events` idempotency (`stripe_event_id` is
-   already `unique`, so the DB is the idempotency authority, not application memory). Will add the
-   `stripe` SDK — signature verification is a security path, not a place to save a dependency; it is
-   server-only, so no client-bundle cost.
-4. 🔴 **B12 remains the founder's and now blocks two things**: the pipeline, and every step of §② from
-   ④ onward.
-5. 🔴 **`DRAFT = true` — THE PRIVACY POLICY AND ToS ARE STILL PLACEHOLDERS (B1/B2).** A hard blocker
-   for marketing maths to under-13s, and it now also blocks taking money: you cannot charge a parent
-   under a placeholder ToS. ⚠️ **Carried up here on 2026-08-25 because it was about to be archived
-   with the 🔐 block and existed nowhere else** — the same way "Vercel Web Analytics is still off"
-   (⑥ below) was quietly lost when the 🚦 block was archived earlier the same day.
-6. 🟡 **Production is still half-blind: Vercel Web Analytics is NOT enabled** (404 when checked
-   2026-08-23). `error_events` receives rows since the service-role key landed, so crashes are
-   captured; nothing measures traffic or the funnel this session just built. ⚠️ Which means **the two
-   numbers in [docs/checkup-optional-metrics.md](docs/checkup-optional-metrics.md) are answerable
-   from `learner_events` and nothing else is.**
-7. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch — the standing
-   warning about TypeScript 7 / eslint 10 / jsdom 30 still applies.
-
-> 🚪 **2026-08-25 — THE FUNNEL: THE CHECK BECAME OPTIONAL, THE DEMO ROUTE SHIPPED, AND SIGNING UP NOW CARRIES THE PLAY ONTO THE ACCOUNT. ⚠️⚠️ AND THE THREE-MONTH `onComplete` P0 TURNED OUT TO HAVE LEFT ITS CORPSE IN PLACE — I WAS THE NEXT CALLER TO TRUST IT.** `tsc` 0 · **1535/1536** · `next build` 0 · e2e demo **3/3** + adaptive **2/2** · **9 commits, pushed** · prod **sw v145**.
-
-**The asks, in order:** the pipeline decision · door 2 · durable resume · *"the check stays exactly as it is, unchanged, and becomes optional"* · the demo route · the local→server adopt.
-
-## ⓪ 🧯 THE CHECK-SHAPED DEFECT CLASS IS NOW THE TOP OF CLAUDE.md, AND IT GREW TO THIRTEEN
-Founder's call: the through-line is the organising principle, not a list. **A check is not a check
-until you have watched it fail for the right reason. Green is not evidence. Present is not
-enforcing. Found-nothing is not clean.** The instances are keyed on MECHANISM — a skip, a shape, a
-moment, an order, a flag, a dead clause, a wrong target, a one-valued metric, an artefact without
-the feature, a world without the bug, a proxy boundary, a drifted fixture — because *the point is
-that pattern-matching will not find the next one.* **The table is meant to grow.**
-⚠️ **#11 IS A DIFFERENT ANIMAL AND HAS ITS OWN SECTION**: not a check that cannot fail but **a wire
-that is not connected while both ends read as connected** — see ②.
-
-## ① 🎚️ THE CHECK IS OPTIONAL, AND THE SHORT PASS WAS MEASURED AND REJECTED
-The founder had argued FOR forcing it, and reversed himself on the numbers: forcing was defensible
-only while a MIDDLE option existed. Measured, the spine-only short pass is a bad trade in every band
-— 6–8 halves the length and misses **45%** of gaps (exact 95% → 53%), 9–11 misses 32%, and **17–18
-has no short pass at all** (`PROBE_SWEEP['17-18']` is empty, so spine IS the full agenda; a "quick
-check" button there is a control that changes nothing).
-So: **the check is untouched — not shortened, no new modes** — and skipping is one tap with no
-confirmation. ⚠️ **OPTIONAL MUST NOT MEAN PLANLESS**: a skip issues `gradeStartPlan(band)`, and
-`ActivePlan.source` now records where a plan came from, because *"Milo picked this to close the gap"*
-is a straight falsehood after a skip. Re-offered ONCE, on the menu, after the child finishes a plan
-chapter; a second decline retires it to the parent dashboard for good.
-📊 Metrics + **pre-registered interpretations** in [docs/checkup-optional-metrics.md](docs/checkup-optional-metrics.md).
-
-## ② ⚠️⚠️ THE `onComplete` P0 LEFT A CORPSE, AND IT WAS STILL WARM
-`ChapterProps.onComplete` has been in every chapter's signature since the beginning; both registry
-factories took it as `_props` and dropped it. **That is the P0 that stalled every child's plan for
-three months.** It was fixed by moving the pointer into `finishAndSync` — correct — **and left the
-prop in place, still typed, still passed, still discarded.** `/demo` is the next caller, and cannot
-use `finishAndSync` at all (a logged-out visitor has no learner: `if (!learner) return`).
-**What makes it its own class is that it is invisible from BOTH ends.** The caller believes it passed
-a handler; the chapter shows its end screen either way. Only an e2e that plays a chapter to its end
-and asserts *the demo advanced* can see it.
-⚠️⚠️ **AND WAKING IT WOULD HAVE BROKEN ALL 72 CHAPTERS.** `/game`'s dormant `handleComplete` set
-`chapterDone`, and the mount read `{!chapterDone && playingChapter && …}` — so the moment the wire
-was connected, every chapter would have **unmounted the instant a child finished it**, taking its
-own end screen with it. **Dead code is a trap with a timer somebody else starts.** Flag deleted.
-
-## ③ 🚪 THE DEMO ROUTE, AND THE ADOPT THAT MAKES IT WORTH ANYTHING
-`/demo`: band picker → the first two chapters of that band's `gradeStartPlan` (**the same plan a
-skipper gets — no second curriculum to drift**), minus anything AR → then the account. No email, no
-name, no account up front. The wall says what an account BUYS, never that the demo is spent.
-`adoptDemoRun` runs at learner creation beside the pending-diagnostic replay it is modelled on: a
-session per played chapter with stars/XP recomputed via the pure `scoreChapter`, and the plan's
-pointer walked past what they played. ⚠️ **Peek-then-consume-on-match** — a band mismatch LEAVES the
-run stashed. ⚠️ **A diagnosis outranks the demo for the PLAN**; the sessions are adopted either way.
-⚠️ `GuardedChapter` gives `/demo` and `/teen-preview` **one** camera guard — two copies is the day
-they disagree, and the disagreement shows a logged-out child a camera button.
-
-## ④ 💾 DURABLE RESUME + 17–18's DOOR 2
-The probe's resume moved from per-tab sessionStorage to **kv, per learner, 7-day TTL** — the old
-comment argued for sessionStorage and was right when the probe was short; at 20–50 questions
-"abandoned" means "ran out of evening". ⚠️ Across sittings it is **OFFERED, never applied** (silently
-reopening question 26 leaves no route to a fresh check). Door 2 seeds the probe at a strand the
-student names — `strandChoices` derives them from the spine, 17–18 only.
-
-## ⑤ 🚦 THE PIPELINE: DECIDED, NOT BUILT
-✅ **`migrate-prod` gets its own `production-db` environment**, created WITH its reviewer rule at
-enable time and not before. ⚠️ **The casing trap in the last handoff was NOT REAL** — GitHub matches
-environment names case-insensitively (measured). What IS real: `Production` is **Vercel's** (68
-deployments), so a reviewer there would gate the whole site's deploy path to protect a schema apply,
-and the first wedged hotfix removes it — taking the database protection with it.
-
-## ⑥ 🧹 EVERY CHARACTER WINDOW IS GONE FROM THE GATES
-Three in one session reported on text they never saw. Swept all 12 sites onto
-`src/__tests__/_window.ts` (`balanced` / `element` / `strip`). ⚠️ **A negated class is also a proxy**
-— `[^>]*` is a real bound in SQL and a lie in JSX, because `=>` contains a `>`.
-
-## ▶ OPEN
-1. 🔴 **B12 IS THE ONLY THING BLOCKING, AND IT IS THE FOUNDER'S.** Supabase Pro before `enforced` is
-   ever flipped true and before any live Stripe key exists. It also gates the pipeline (⑤).
-2. ✅ **The smoke test passed** (2026-08-25): a chapter played to completion on an established
-   account, stars saved — progress writes survive the billing guard with the flag off. First time
-   anybody had watched it.
-3. ⏭️ **STAGE 2 — STRIPE, TEST MODE ONLY.** Founder's hard constraint: no live keys, no live
-   products, no live webhook, nothing that can take a real card, for the WHOLE stage. Live keys are
-   a deliberate later step — after B12, after the fingerprint check, and after the founder has
-   watched a test-mode purchase end to end.
-4. ⚠️ **NINE DEPENDABOT PRs STILL OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
-5. ⚠️ Accepted limitation, unchanged: RLS gates the RECORD, not chapter CONTENT.
-
-_Older sessions (2026-06-15 → **2026-08-24**, including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-25**, including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
