@@ -178,18 +178,45 @@ export default function MainMenu() {
            * first. Monotonic — it can only move forward. Best-effort: a failure leaves the local
            * pointer exactly as it was.
            */
+          /**
+           * ⚠️⚠️ THE POINTER IS DERIVED ON EVERY LOAD, ONLINE OR NOT — AND THE OFFLINE HALF IS A FIX,
+           * NOT TIDYING. `setActivePlan` writes `index: 0`, so a child who re-runs the check (their
+           * own door is on this screen now) walks out of the diagnostic pointing at chapter 1 of the
+           * new plan, and it is THIS reconcile that pulls the pointer past what they have already
+           * finished. If it is skipped because the bootstrap threw — offline, an expired token — the
+           * menu shows "Next up" as a chapter the child completed weeks ago. Their stars and progress
+           * are untouched and the next successful load corrects it, but the one screen they are
+           * looking at is wrong, which is the screen that matters.
+           *
+           * So the evidence degrades instead of the feature: server progress when we have it, and
+           * the local profile's own stars when we do not. `chapterStars > 0` is the local equivalent
+           * of the server's `total_sessions > 0` — `calcStars` never returns less than 1, so any
+           * chapter that has been finished once carries at least one star on this device.
+           *
+           * ⚠️ A genuinely fresh device has neither, and then the plan opens at its first chapter —
+           * correct, because nothing known says otherwise.
+           */
+          const applyPlan = (played: string[], remote: string[]) => {
+            const plan = reconcilePlan(learner.id, remote, played)
+            if (!plan) return
+            const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
+            setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
+              ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learner.id) }
+              : null)
+            setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
+          }
+          const localPlayed = () => {
+            const stars = useMiloStore.getState().profile.chapterStars
+            return Object.keys(stars).filter(ch => (stars[ch as ChapterType] ?? 0) > 0)
+          }
           try {
             const remote = await getActivePlanChapters(learner.id)
-            const played = progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string)
-            const plan = reconcilePlan(learner.id, remote, played)
-            if (plan) {
-              const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
-              setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
-                ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learner.id) }
-                : null)
-              setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
-            }
-          } catch { /* the local pointer stands */ }
+            applyPlan(progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string), remote)
+          } catch {
+            // ⚠️ `remote: []` on purpose — with a local plan present `reconcilePlan` keeps the local
+            // chapter list, so this derives the POSITION without inventing a plan we cannot read.
+            applyPlan(localPlayed(), [])
+          }
 
           // Continue-where-you-left-off, cross-device: progress is ordered by
           // last_played_at desc, so progress[0] is the most recently played
@@ -416,6 +443,41 @@ export default function MainMenu() {
               </div>
             </div>
           </div>
+        )}
+
+        {/**
+          * ⚠️⚠️ THE CHILD'S OWN DOOR TO THE CHECK — PERMANENT, AND THE POINT IS THAT IT NEVER CLOSES.
+          * Founder's call, 2026-08-31: *"mein chahata hu ki bacche ka jab mann kare woh diagnostic
+          * kare — woh chiz bann naii hona chahiye."* Until now the only permanent door was on the
+          * PARENT dashboard (`findStartingPoint`); on the child's own screen the check existed as an
+          * offer made at most twice, which then retired. Optional was never meant to mean
+          * unavailable — a child who wants to find out where they stand had no way to say so.
+          *
+          * ⚠️ NEVER TOGETHER WITH THE RE-OFFER ABOVE. That card is the same action with an argument
+          * attached; two cards asking one thing on one screen is the duplicate this repo keeps
+          * paying for. While the offer is up it owns the ask, and this is hidden.
+          *
+          * ⚠️ IT SITS BELOW THE PLAN, like the offer, so the child's next chapter is still the first
+          * thing on screen. A door, not a suggestion — no badge, no pulse, nothing competing with
+          * playing.
+          */}
+        {!reoffer && (
+          <button onClick={() => {
+            track('checkup_offer', { action: 'taken', at: 'menu_door', band: ageGroup })
+            router.push(`/diagnostic?band=${ageGroup}`)
+          }} className="milo-card" style={{
+            width: '100%', maxWidth: 700, padding: '12px 20px', textAlign: 'left', cursor: 'pointer',
+            background: 'linear-gradient(135deg, #EEF4FF 0%, #fff 100%)', border: '3px solid #6C8FE8',
+            display: 'flex', alignItems: 'center', gap: 14,
+          }}>
+            <span style={{ fontSize: 30, lineHeight: 1 }} aria-hidden>🔍</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17 }}>Find my starting point</span>
+              <span style={{ display: 'block', fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
+                Milo asks some questions and works out what to play next. Stop any time — nothing is lost.
+              </span>
+            </span>
+          </button>
         )}
 
         {/* ── Story Mode — the 3–5 storyline adventure ── */}

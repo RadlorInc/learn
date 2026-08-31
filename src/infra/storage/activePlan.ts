@@ -35,6 +35,24 @@ export function setActivePlan(learnerId: string, band: string, chapters: string[
   return plan
 }
 
+/**
+ * A plan the child is PART-WAY THROUGH — the only case where a new diagnosis costs something.
+ *
+ * ⚠️ WHY THIS EXISTS. `setActivePlan` replaces the plan wholesale and resets `index` to 0, which is
+ * right for a first check and wrong the moment the CHILD can start one whenever they feel like it
+ * (founder's call, 2026-08-31: *"jab mann kare woh diagnostic kare"*). A child who runs it for fun
+ * on chapter 4 of their plan would silently lose their place — nothing in the app would say so, and
+ * their XP and stars would be untouched, which makes it harder to notice rather than easier.
+ * So the diagnostic ASKS before replacing, and this is the one question it needs answered.
+ *
+ * ⚠️ `index > 0`, not "a plan exists": replacing a plan nobody has walked yet costs nothing, and
+ * asking there would be a toll on the common path (skip → grade-start plan → check later).
+ */
+export function planInProgress(learnerId: string): ActivePlan | null {
+  const plan = getActivePlan(learnerId)
+  return plan && plan.index > 0 ? plan : null
+}
+
 export function getActivePlan(learnerId: string): ActivePlan | null {
   try {
     const raw = localStorage.getItem(key(learnerId))
