@@ -92,6 +92,7 @@ Everything below is a corollary of that one sentence:
   past one. A new check's green first run is the least informative result there is — equally
   consistent with "nothing is wrong" and "this cannot see anything".
 - **Bind the check to the intent, never to the implementation.** If the expectation is imported from, grepped out of, or otherwise derived from the code under test, the check asserts that the code equals itself and will survive every change you make. Write the expected value out, in the test, by hand — and **measure it at the state of the UI where the defect actually exists**, which for anything behind a click is after the click.
+- **A defect you notice in a neighbouring file gets WRITTEN DOWN before you go back to what you were doing** — in that file, or in that repo's handoff, where its next reader will stand. Not fixed, not escalated, not carried in your head to the end of the task: written. Two minutes, which is why it survives being busy. Founder's rule, 2026-08-31, after I named a weaker property in a sibling script while fixing its twin and moved on — the same shape as the `/api/waitlist` finding, which only got recorded because I was told to record it. **Noticing is not the deliverable; the note is.**
 - **Positive-control every absence.** Before reporting no secret in the bundle, no caller of a
   function, no offending pattern in the source: run the same search against something you KNOW is
   present and watch it come back. A silent search and a broken search look identical from outside,
