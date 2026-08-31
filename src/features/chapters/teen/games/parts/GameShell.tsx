@@ -706,16 +706,35 @@ export function Game<V, T extends BaseTask>({
                 spacing on a 320px screen; 8px buys back 20 and the card fits with room over.
                 Height comes out of the SPACING before it comes out of the words — the rule this
                 shell already follows for its header and main padding one screen along. */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 8 : 18, textAlign: 'center' }}>
-              <Ticket P={P}>
-                <TicketHead P={P} n={1} label={config.ticketLabel} />
-                <Row P={P} title={config.start.ticket.title} badge={config.start.ticket.badge} tone={config.start.ticket.tone} />
-              </Ticket>
-              <p style={{ margin: 0, maxWidth: 'clamp(400px, 48vw, 600px)', fontSize: 'clamp(15px, 1.5vw, 22px)', lineHeight: 1.55, color: P.creamSoft, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>{config.start.blurb}</p>
+            {/* ⚠️⚠️ AND THE GAP WAS NOT ENOUGH, BECAUSE THE HEIGHT IS A FUNCTION OF HOW MANY LINES
+                THE BLURB HAPPENS TO TAKE. 8px of spacing bought this card 10px of clearance at
+                640×320 — one wrapped line from failing again, which is exactly what the CI runner
+                shows: the same screen measures y 288–334 there against 264–310 here. And an AR
+                chapter has TWO buttons on this card, which spends the margin a second way: at
+                640×320 `dataGraphs` renders "Use taps instead" at y 299–343 — the escape hatch from
+                the camera, half off the screen, while "Turn on the camera" is fully visible. The
+                child who cannot use a camera is looking at a screen whose only whole option is the
+                one they cannot take.
+
+                So the layout no longer depends on the line count: the BUTTONS are `flex: 0 0 auto`
+                and the blurb is the only thing that may shrink (`min-height: 0` + its own
+                `overflow-y: auto`). Whatever the text metrics do, the controls stay on screen and
+                the prose gives way — which is this shell's own rule that height comes out of the
+                words before it comes out of a tap target. */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 8 : 18, textAlign: 'center',
+              minHeight: 0, maxHeight: '100%' }}>
+              <div style={{ flex: '0 1 auto', minHeight: 0, width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <Ticket P={P}>
+                  <TicketHead P={P} n={1} label={config.ticketLabel} />
+                  <Row P={P} title={config.start.ticket.title} badge={config.start.ticket.badge} tone={config.start.ticket.tone} />
+                </Ticket>
+              </div>
+              <p style={{ margin: 0, maxWidth: 'clamp(400px, 48vw, 600px)', fontSize: 'clamp(15px, 1.5vw, 22px)', lineHeight: 1.55, color: P.creamSoft, textShadow: '0 1px 8px rgba(0,0,0,0.6)',
+                minHeight: 0, flexShrink: 1, overflowY: 'auto' }}>{config.start.blurb}</p>
               {canWarmUp ? (
                 // Returning above easy → offer an optional warm-up (a few gentler
                 // questions first) or jump straight back in at their level.
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%', flex: '0 0 auto' }}>
                   <p style={{ margin: 0, maxWidth: 'clamp(360px, 46vw, 560px)', fontSize: 'clamp(14px, 1.4vw, 20px)', fontWeight: 700, color: P.cream, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
                     You left off at <span style={{ color: P.gold }}>{ada.difficultyLabel}</span>. Want a quick warm-up first?
                   </p>
@@ -725,7 +744,7 @@ export function Game<V, T extends BaseTask>({
                   </div>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, flex: '0 0 auto' }}>
                   <button type="button" onClick={() => { unlockSpeech(); if (HAND && cam.onCam) cam.start(); enterAfterStart() }} style={bigBtn(P)}>
                     {HAND && cam.onCam ? 'Turn on the camera' : config.start.startLabel}
                   </button>

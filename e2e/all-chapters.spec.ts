@@ -11,7 +11,37 @@ import { seedSession } from './session'
  * which is the "graded the wrong screen" fault start-card.spec.ts exists to prevent. The logged-out
  * side is covered deliberately by ar-consent.spec.ts.
  */
-test.beforeEach(async ({ page }) => { await seedSession(page) })
+/**
+ * ⚠️⚠️ THE WIDE-TEXT STRESS — `E2E_WIDE_TEXT=1`, A DELIBERATE ONE-OFF, NEVER THE NIGHTLY DEFAULT.
+ *
+ * Measured 2026-08-31: the same start-card blurb is 5 lines here and **6 on the CI runner**, because
+ * the text renders ~5.1% wider there (canvas probe 312.09 → 328; generic `sans-serif` measures
+ * identically on both, so it is the face, not the browser). One line = 23.25px = exactly the -13px
+ * overflow the nightly had been reporting for seven nights.
+ *
+ * So a green nightly proves the layout survives ONE font's metrics — the runner's. A real device
+ * whose fallback is wider breaks it again and no schedulable run would tell us, because the runner
+ * only has the fonts it has. This flag stops the question depending on which fonts a machine
+ * happens to own: it widens every glyph's advance by a fixed 8% via `letter-spacing`, which is
+ * deterministic everywhere and comfortably past the 5.1% the two real platforms differ by.
+ *
+ * ⚠️ It is a STRESS, not a truth: nothing renders like this. A red under it means a screen is one
+ * metric-change from failing, which is worth knowing BEFORE a device finds it — it is not a claim
+ * that any user sees that screen. Run it when a layout changes; do not put it on the timer, where
+ * it would eventually be re-run rather than read.
+ */
+const WIDE_TEXT = process.env.E2E_WIDE_TEXT === '1'
+
+test.beforeEach(async ({ page }) => {
+  await seedSession(page)
+  if (WIDE_TEXT) {
+    await page.addInitScript(() => {
+      const css = '*, *::before, *::after { letter-spacing: 0.08em !important }'
+      const put = () => document.head.appendChild(Object.assign(document.createElement('style'), { textContent: css }))
+      if (document.head) put(); else document.addEventListener('DOMContentLoaded', put)
+    })
+  }
+})
 
 /**
  * THE LAUNCH GATE: every chapter a child can reach actually opens, on every frame they might hold.
