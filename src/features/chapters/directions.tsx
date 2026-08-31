@@ -43,10 +43,26 @@ export const ownsChromeRow = (chapter: ChapterType): boolean => OWNS_CHROME_ROW.
 /**
  * The direction as part of somebody else's line — smaller and quieter than the question beside it,
  * because the question is what is being answered and this is the standing "how you play".
+ *
+ * ⚠️⚠️ TWO SHAPES, AND WHICH ONE A CHAPTER GETS WAS DECIDED BY LOOKING AT THE RENDERED SCREEN, NOT
+ * BY SYMMETRY. Inline is right after a SHORT question in a pill (MeasureIt, ShapeStudio, SeesawPark:
+ * one line, reads as an aside). Forced into a wide banner or a small bubble it breaks: at 640×320
+ * SliceShop wrapped it to `Halves, thirds and / quarters!` against the right edge of a 610px bubble,
+ * BlockYard orphaned `numbers!` on a line of its own, and TickTock's bubble is 13px on a short
+ * frame — 0.58em of that is under 8px, which is not a line anybody reads.
+ *
+ * So those four take `block`: its own centred line under the question, with a FLOOR on the size so a
+ * small container cannot shrink it out of existence. Same words, same element, no overlay either way.
  */
-export function DirectionsInline({ chapter }: { chapter: ChapterType }) {
+export function DirectionsInline({ chapter, block }: { chapter: ChapterType; block?: boolean }) {
   const text = directionsFor(chapter)
   if (!text) return null
+  if (block) {
+    return (
+      <span style={{ display: 'block', marginTop: 3, fontSize: 'max(11px, 0.6em)', fontWeight: 800,
+        opacity: 0.66, lineHeight: 1.2, whiteSpace: 'normal' }}>{text}</span>
+    )
+  }
   return (
     <span style={{ fontSize: '0.58em', fontWeight: 800, opacity: 0.72, whiteSpace: 'normal' }}>
       <span aria-hidden style={{ margin: '0 0.5em', opacity: 0.5 }}>·</span>{text}

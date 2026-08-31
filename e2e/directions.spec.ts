@@ -26,9 +26,19 @@ const OUT = process.env.SHOT_DIR ?? '.'
 // this asserts the RENDERING, not the copy. A wrong or truncated string still fails; a reworded
 // hint does not, which is right: the words are a product decision and this is a layout check.
 const CASES: Array<{ id: ChapterType; url: string; shot: string; pick?: string }> = [
-  { id: 'measurement',    url: '/story?ch=measure&e2e=practice&world=forest', shot: 'measuring.png' },
-  { id: 'shapes2d3d',     url: '/story?ch=solids&e2e=practice',               shot: 'shape-studio.png', pick: 'Art Studio' },
-  { id: 'compareNumbers', url: '/story?ch=compare&e2e=practice',              shot: 'seesaw-park.png' },
+  // ⚠️ ALL NINE CHAPTERS THAT CARRY THE LINE THEMSELVES, not the three the feedback named. The six
+  // added here are the ones whose implementation differs most — SliceShop and TickTock hang it in
+  // Milo's BUBBLE (they set `prompt: () => ''`, so there is no pill to put it in) and BlockYard and
+  // BuildingBlocks in `yard.tsx`'s shared banner — and the most different implementations are the
+  // most likely to break. The other 15 story chapters draw the floating strip and are unchanged.
+  { id: 'measurement',      url: '/story?ch=measure&e2e=practice&world=forest', shot: 'measuring.png' },
+  { id: 'shapes2d3d',       url: '/story?ch=solids&e2e=practice',               shot: 'shape-studio.png', pick: 'Art Studio' },
+  { id: 'compareNumbers',   url: '/story?ch=compare&e2e=practice',              shot: 'seesaw-park.png' },
+  { id: 'fractions',        url: '/story?ch=fractions&e2e=practice',            shot: 'slice-shop.png' },
+  { id: 'time',             url: '/story?ch=time&e2e=practice',                 shot: 'ticktock.png' },
+  { id: 'additionTo100',    url: '/story?ch=add100&e2e=practice',               shot: 'blockyard-add.png' },
+  { id: 'subtractionTo100', url: '/story?ch=sub100&e2e=practice',               shot: 'blockyard-sub.png' },
+  { id: 'placeValue',       url: '/story?ch=place&e2e=practice',                shot: 'building-blocks.png' },
 ]
 
 for (const c of CASES) {
@@ -74,8 +84,20 @@ for (const c of CASES) {
         if (b.left < r.right && b.right > r.left && b.top < r.bottom && b.bottom > r.top && zOf(o) >= zEl)
           covering.push(`${o.tagName}(z${zOf(o)}) ${[b.x | 0, b.y | 0, b.right | 0, b.bottom | 0]}`)
       }
+      // ⚠️ AND THE OTHER DIRECTION: the line moving INTO something. Giving four chapters their own
+      // line inside a banner makes that banner taller, and the thing under a story chapter's banner
+      // is usually a control. A one-directional overlap check would not see that at all.
+      const overButtons: string[] = []
+      for (const btn of document.querySelectorAll('button')) {
+        if (btn.contains(el) || el.contains(btn)) continue
+        const b = btn.getBoundingClientRect()
+        if (!b.width || !b.height) continue
+        if (b.left < r.right && b.right > r.left && b.top < r.bottom && b.bottom > r.top)
+          overButtons.push(`${(btn.getAttribute('aria-label') || btn.textContent || '').trim().slice(0, 18)} ${[b.x | 0, b.y | 0, b.right | 0, b.bottom | 0]}`)
+      }
       return {
         rendered: el.textContent!.replace(/^\s*·\s*/, '').trim(),
+        overButtons,
         box: [r.x | 0, r.y | 0, r.right | 0, r.bottom | 0],
         coveredBy: covering,
         clipped: el.scrollWidth > el.clientWidth + 1,
@@ -90,6 +112,7 @@ for (const c of CASES) {
     expect(m!.rendered).toBe(hint)
     expect(m!.coveredBy, `${c.id}: something is painted over the directions line`).toEqual([])
     expect(m!.clipped, `${c.id}: the line is ellipsised`).toBe(false)
+    expect(m!.overButtons, `${c.id}: the directions line is sitting on a control`).toEqual([])
     expect(m!.offscreen).toBe(false)
     expect(m!.overMenu, `${c.id}: the line runs under the ← Menu button`).toBe(false)
     console.log(`RESULT ${c.id} ${JSON.stringify(m)}`)

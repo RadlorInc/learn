@@ -329,7 +329,7 @@ export function Banner({ text, vh, ok, side, lead, chapter }: {
           <span style={{ flexShrink: 0, fontWeight: 900, lineHeight: 1,
             fontSize: `clamp(24px, ${Math.round(vh * 0.075)}px, 44px)`, color: 'var(--ink)' }}>{lead}</span>
         )}
-        <span>{text}{chapter && <DirectionsInline chapter={chapter} />}</span>
+        <span>{text}{chapter && <DirectionsInline chapter={chapter} block />}</span>
       </div>
     </div>
   )

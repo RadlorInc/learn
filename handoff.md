@@ -183,34 +183,57 @@
 **The words come from the catalogue's own `hint`**, which is already `Record<ChapterType, …>`-complete: every chapter has a line **by construction**, and a second per-chapter map is exactly what would let one ship with none. Two hints were rewritten from topic to action (`shapes` → *"Tap the shape that fits the empty hole!"*, `measurement` → *"Lay blocks, then tap Done!"*).
 - **12–18 (`GameShell`)**: a **flex child of the header row**, beside the chapter title. Dropped there as a `fixed` card first, it covered the title at 640×320 — measured. In the row an overlap is not expressible.
 - **The 3–11 storybook chapters**: a small `pointerEvents: none` strip on the Menu row, wired once in `ChapterPortal` (+ counting's own wrapper), so 24 chapters get it from one place.
-- ⚠️⚠️ **AND THE PART THAT WAS WRONG AND IS THE LESSON: A FLOATING STRIP ON THAT ROW IS EITHER OVER THE QUESTION OR UNDER IT.** Nine story chapters draw their own banner there — MeasureIt lifts its question pill to `pillTop(short) = 14` to buy height for the blocks, ShapeStudio and SeesawPark sit at `top: 12`, SliceShop and TickTock at `CHROME_PAD`, and BlockYard/BuildingBlocks use `yard.tsx`'s `BANNER_TOP`, which is **25px on a 720-tall frame**. Ranking the strip underneath them (z 42) kept the question readable and **clipped the directions to "Lay blocks to t…" on one of the two chapters the tester asked for**. Founder's call, and it is the right one: **do not stack — the chapter's own banner carries the line.**
-  - `ownsChromeRow()` (in `features/chapters/directions.tsx`) suppresses the strip for those nine; `SkillBeat`'s prompt pill carries the line inline for the ones that have a pill, `yard.tsx`'s shared banner for BlockYard/BuildingBlocks, and **Milo's bubble** for SliceShop and TickTock — the two that set `prompt: () => ''`, whose scored rounds would otherwise show no directions at all.
+- ⚠️⚠️ **AND THE PART THAT WAS WRONG AND IS THE LESSON: A FLOATING STRIP ON THAT ROW IS EITHER OVER THE QUESTION OR UNDER IT.** Eight story chapters draw their own banner there — MeasureIt lifts its question pill to `pillTop(short) = 14` to buy height for the blocks, ShapeStudio and SeesawPark sit at `top: 12`, SliceShop and TickTock at `CHROME_PAD`, and BlockYard/BuildingBlocks use `yard.tsx`'s `BANNER_TOP`, which is **25px on a 720-tall frame**. Ranking the strip underneath them (z 42) kept the question readable and **clipped the directions to "Lay blocks to t…" on one of the two chapters the tester asked for**. Founder's call, and it is the right one: **do not stack — the chapter's own banner carries the line.**
+  - `ownsChromeRow()` (in `features/chapters/directions.tsx`) suppresses the strip for those eight; `SkillBeat`'s prompt pill carries the line inline for the ones that have a pill, `yard.tsx`'s shared banner for BlockYard/BuildingBlocks, and **Milo's bubble** for SliceShop and TickTock — the two that set `prompt: () => ''`, whose scored rounds would otherwise show no directions at all.
   - ⚠️ **HopAlong is deliberately NOT on the list** even though its round row sits at `top: 40`: it renders no pill there (its ask is a pill at the bottom), so the strip has the row to itself. **Measured at 640×320, not assumed.**
 - ⚠️ **The prose was the lever, exactly as chapter-craft says.** With the direction inline, MeasureIt's pill ran 86 → 553 and slid 10px under the ← Menu button; shortening the hint to *"Lay blocks, then tap Done!"* put it at 123 → 553, clear. A hint budget of 50 characters is gated, because both surfaces render one line.
 
-## 🔬 VERIFIED BY MEASURING, AT 640×320, ON EVERY CHAPTER THAT CHANGED SHAPE
-Not by eye: for each, the element carrying the line was found in the DOM and checked for `scrollWidth > clientWidth` (truncation), for going off-frame, and for crossing the ← Menu button.
+## 🔬 VERIFIED BY MEASURING, AT 640×320, ON ALL EIGHT CHAPTERS THAT CARRY THE LINE THEMSELVES
+`e2e/directions.spec.ts` (needs a dev server; not part of `npm test`). Three mechanisms per chapter,
+none of which subsumes another — plus a fourth added when giving four chapters their own line made
+their banner taller: the line must not move onto a control either.
 
-| chapter | carrier | box | truncated | overlaps |
-|---|---|---|---|---|
-| Measuring | SkillBeat pill, inline | 351–496 × 31–44 | no | none |
-| Shape Studio | SkillBeat pill, inline | 315–476 × 63–76 | no | none |
-| Seesaw Park | SkillBeat pill, inline | 351–486 × 63–76 | no | none |
-| TickTock | Milo's bubble | 436–497 × 68–77 | no | none |
-| Slice Shop | Milo's bubble | 314–609 × 60–85 | no | none |
-| BlockYard | yard banner (wraps to 2 lines inside it) | 227–355 × 61–86 | no | none |
-| HopAlong | the strip | 104–544 × 14–38 | no | none |
-| The Mission Brief (12–18) | GameShell header | header row | no | none |
+⚠️⚠️ **THE FIRST VERSION OF THAT SPEC COULD NOT SEE THE DEFECT IT WAS WRITTEN FOR, AND THE FOUNDER
+SPECIFIED IT.** Text equality + `scrollWidth`/`clientWidth` **passed on last session's clipped
+build**: the whole string was in the DOM and the chapter's question pill was painted OVER it. **The
+defect was occlusion, not overflow.** Re-written as a paint-order check it goes red naming
+`BUTTON(z45) 192,12,447,57` — MeasureIt's own pill. ⚠️ And its own first draft skipped that button by
+filtering on `position !== 'static'`; the covering pill IS static and takes its stacking from an
+ancestor. **Two wrong instruments in a row for one defect.** The general rule is now the founder's,
+at the top of [CLAUDE.md](CLAUDE.md): *an assertion that passes on the known-bad state is not a check.*
+
+| chapter | carrier | box | rendered === hint | covered | on a control |
+|---|---|---|---|---|---|
+| Measuring | pill, inline | 352,31 → 496,45 | ✅ | none | none |
+| Shape Studio | pill, inline | 334,63 → 495,77 | ✅ | none | none |
+| Seesaw Park | pill, inline | 351,63 → 487,77 | ✅ | none | none |
+| Slice Shop | Milo's bubble, own line | 85,73 → 574,87 | ✅ | none | none |
+| TickTock | Milo's bubble, own line | 192,73 → 467,87 | ✅ | none | none |
+| BlockYard + | yard banner, own line | 117,107 → 369,120 | ✅ | none | none |
+| BlockYard − | yard banner, own line | 117,91 → 369,104 | ✅ | none | none |
+| Building Blocks | yard banner, own line | 342,91 → 595,104 | ✅ | none | none |
+
+⚠️ **AND FIVE OF THE EIGHT NEEDED A DIFFERENT SHAPE, WHICH ONLY LOOKING AT THE SCREEN SHOWED.**
+Inline after a SHORT question in a pill is right (the three the feedback named). Forced into a wide
+banner or a small bubble it breaks: SliceShop wrapped to `Halves, thirds and / quarters!` against the
+right edge of a 610px bubble, BlockYard orphaned `numbers!` on a line of its own, and TickTock's
+bubble is 13px on a short frame — 0.58em of that is **under 8px**. Those four (five chapters) take
+`block`: its own centred line under the question, with a **floor** on the size so a small container
+cannot shrink it away. Screenshots of all eight in `docs/verification/2026-08-31-directions/`.
 
 ## 🧪 24 MUTATIONS, 24 CAUGHT — AND ONE SURVIVED FIRST AND IS WORTH KEEPING
 `src/__tests__/chapterDirections.test.ts`. Every check here is about a STRING A CHILD READS, which nothing else in the repo can see.
 ⚠️ **The one that survived: deleting `chapter="fractions"` from SliceShop's PLAY bubble left the gate green**, because the same chapter's LESSON banner carries the same string — the count-the-right-thing trap from CLAUDE.md, again. The check is anchored on the play call AND counts both occurrences now, and the same was done for TickTock.
-⚠️ **The exception list is a claim about nine chapters' layout held in a tenth file**, so each entry is pinned to the expression it claims (`pillTop`, `CHROME_PAD`, `BANNER_TOP`): change one of those layouts and the gate fails rather than rotting.
+⚠️ **The exception list is a claim about eight chapters' layout held in a ninth file**, so each entry is pinned to the expression it claims (`pillTop`, `CHROME_PAD`, `BANNER_TOP`): change one of those layouts and the gate fails rather than rotting.
 
 ## ▶ OPEN
 1. 🔴 **THE HULL SILENCE IS UNRESOLVED AND UNMEASURED.** See ②. It needs one run on a device with a working voice and a paste of `__miloSpeech()`. **Nothing in this session may be read as having fixed it.**
+   📄 **The deliverable is the note, not the diary**: [docs/voice-check-for-tester.md](docs/voice-check-for-tester.md)
+   is written for the tester, assumes no technical knowledge, and is the thing to forward — ⚠️ **only
+   once this is deployed**, or its last step answers `__miloSpeech is not defined` and they have spent
+   their time for nothing.
 2. 🎙️ Recorded clips for 3–11 remain the founder's to start (a voice choice and the ElevenLabs spend) — and if ② turns out to be the Chromium stall, clips route around it entirely for the lines that have them.
-3. ⏸️ **Still not committed.** Everything above is in the working tree.
+3. ⏸️ **PR [#69](https://github.com/RadlorInc/learn/pull/69) is open and NOT merged.** Merge order agreed with the founder: **#68 first**, then rebase #69 onto `main` and resolve `handoff.md` in the branch (keeping both blocks), so the resolution is reviewable rather than buried in a merge commit.
 4. ⚠️ **The intro/demo screens of BlockYard, BuildingBlocks and HopAlong** show the line only where their banner or the pill renders; no chapter is left without it in a scored round, which is where it was asked for.
 5. ⏭️ **PR [#68](https://github.com/RadlorInc/learn/pull/68) is still open and unmerged** from 2026-08-28 (chapter 2's tag overhang, chapter 4's cluster scale), and the `counting` case of `ready-bar.spec.ts` is still flaky.
 

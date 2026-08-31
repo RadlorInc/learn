@@ -58,10 +58,10 @@ describe('every chapter carries a line of typed directions', () => {
   /**
    * ⚠️⚠️ THE STRIP IS NEVER STACKED ON A CHAPTER'S OWN BANNER, AND THAT IS THE WHOLE OF THE FIX.
    * Laid over MeasureIt at 640×320 it was clipped to "Lay blocks to t…" — the feature failing on one
-   * of the two chapters it was asked for. Nine chapters draw something of their own on that row;
+   * of the two chapters it was asked for. EIGHT chapters draw something of their own on that row;
    * each carries the line INSIDE that element instead, where an overlap is not expressible.
    *
-   * The list is a claim about nine chapters' layout held in a tenth file, so each entry is pinned to
+   * The list is a claim about eight chapters' layout held in a ninth file, so each entry is pinned to
    * the expression it is claiming — change the layout and this fails rather than rotting quietly.
    */
   const ROW: Array<[ChapterType, string, string]> = [
@@ -108,8 +108,15 @@ describe('every chapter carries a line of typed directions', () => {
       const n = src.split(`chapter="${ch}"`).length - 1
       expect(n, `${ch} must carry the line in its lesson banner AND its play bubble`).toBe(2)
     }
+    // ⚠️ `block`: its own line under the question, not inline after it. Forced inline into this
+    // banner at 640×320 it orphaned "numbers!" on a line of its own — see `directions.tsx`.
     expect(read('src/features/chapters/story/yard.tsx'), "BlockYard/BuildingBlocks' shared banner lost the line")
-      .toContain('{chapter && <DirectionsInline chapter={chapter} />}')
+      .toContain('{chapter && <DirectionsInline chapter={chapter} block />}')
+    // The two bubbles take the same shape, and for the same reason.
+    for (const f of ['SliceShop', 'TickTock']) {
+      expect(read(`src/features/chapters/story/${f}.tsx`), `${f}'s bubble stopped giving the line its own row`)
+        .toContain('<DirectionsInline chapter={chapter} block />')
+    }
     for (const f of ['BlockYard', 'BuildingBlocks']) {
       const n = read(`src/features/chapters/story/${f}.tsx`).split('chapter=').length - 1
       expect(n, `${f} draws two banners and both must carry the line`).toBe(2)

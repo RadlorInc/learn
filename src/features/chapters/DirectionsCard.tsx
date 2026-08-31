@@ -13,7 +13,7 @@
  * construction — a second per-chapter map would be a copy, and the chapters somebody forgot to add
  * to it would silently show nothing at all.
  *
- * ⚠️ NOT IN EVERY CHAPTER: the three that draw their own banner on this row carry the line inside
+ * ⚠️ NOT IN EVERY CHAPTER: the eight that draw their own banner on this row carry the line inside
  * that banner instead (`ownsChromeRow`), so nothing is ever stacked on anything.
  *
  * ⚠️⚠️ IT LIVES ON THE MENU ROW, AND THAT IS THE ONLY PLACE IN A STORY CHAPTER WITH ROOM — measured,

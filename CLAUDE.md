@@ -8,7 +8,16 @@ The most expensive defect class in this repo is not a bug. It is **something tha
 and isn't** — a gate, grep, guard or test that reports success while examining nothing. It is worse
 than having no check at all, because it is what stops the next person looking.
 
-Sixteen of them across 2026-08-24/25, and the mechanisms have nothing in common. **This table is
+⚠️⚠️ **THE FOUNDER'S RULE, WRITTEN AFTER HIS OWN CHECK CERTIFIED A DEFECT HE HAD PHOTOGRAPHED (2026-08-31):
+AN ASSERTION THAT PASSES ON THE KNOWN-BAD STATE IS NOT A CHECK. EVERY NEW CHECK GETS RUN AGAINST THE
+DEFECT IT WAS WRITTEN FOR, AND MUST GO RED, BEFORE IT IS TRUSTED.** Not a similar defect, not a
+plausible one — **that** one, in the state it was in. It costs one `git stash` and one run, and it is
+the only step that tells a real check from a decorative one. ⚠️ And when it passes on the bad state,
+the finding is not "the check needs tightening": **you have the MECHANISM wrong**, and the check you
+have been writing is measuring something else.
+
+Seventeen of them now, sixteen across 2026-08-24/25 and one on 2026-08-31, and the mechanisms have
+nothing in common. **This table is
 meant to grow — a frozen list becomes decoration itself.** Add the next one rather than admiring it:
 
 | what it looked like | what it was |
@@ -28,11 +37,13 @@ meant to grow — a frozen list becomes decoration itself.** Add the next one ra
 | ⚠️⚠️ **…and the FINDING I reported off that suite — "the first real purchase would have seated nobody"** | **a defect inferred from source and never measured — by the person writing the rule against exactly that.** I read a `REVOKE` with no matching `GRANT` and published the impact. One query settled it: Supabase's default privileges grant `service_role=X/postgres` explicitly and a revoke from `public, anon, authenticated` cannot remove it — four live functions of identical shape all read `{postgres=X,service_role=X}`. **A check-shaped FINDING needs the same positive control as a check**: *"this gate is blind"* is a claim, and it goes in this table only after it has been watched failing. Reading the repo answers what we intended; only querying production answers what is true |
 | ⚠️⚠️ **…and the READER'S half of that one — the founder's own, added by him** | **a claim gains confidence each time it is repeated by someone who did not verify it.** I wrote *"would have"*; he wrote *"would have, and here is what it would have cost"*. **Nothing was measured in between — the certainty was manufactured by relay**, and it had already happened once that week (the environment-name trap). The producer's rule is *do not report what you have not watched fail*; the consumer's is **do not amplify a finding past the evidence it arrived with — if a report says "would have", ask "did you watch it?" before repeating it.** Neither half is enough alone: the second is the only one that catches an inference the first person believed |
 | ⚠️ **AND THE RULE #14 LEAVES BEHIND, WHICH IS WHY IT IS HERE AS ITS OWN LINE** | **A NEGATIVE TEST WITHOUT ITS POSITIVE TWIN IS HALF A CHECK.** *"Nobody unauthorised can call it"* and *"nobody at all can call it"* are the same green. **Every REVOKE assertion needs a paired GRANT assertion — and the pair must be DRIVEN AS THE REAL CALLER**, not as the superuser a suite happens to run as. ⚠️ And note WHEN this class fires when it is real: not in development and not on a test account, but on the **first real purchase** — a parent pays, a flawless row appears, their child stays locked out, and every dashboard, test and log says fine. That cost is why the paired assertion is worth writing **even where you have measured the permission to be already in place**: what it buys is that the property stops depending on a platform default nobody in the repo controls |
+| a text-equality + overflow check written for a line that rendered as "Lay blocks to t…" | **the wrong mechanism, and it was specified by the person who had SEEN the defect.** The whole string was in the DOM and `scrollWidth`/`clientWidth` were clean: the chapter's own question pill was painted OVER the strip, so the fault was OCCLUSION and the check measured OVERFLOW. It passed on the known-bad build — i.e. it would have certified the photographed defect as fixed. Re-written as a paint-order check it goes red naming `BUTTON(z45) 192,12,447,57`, which is the pill. ⚠️ Its own first draft then skipped that button, because it filtered on `position !== 'static'` and the covering pill IS static — it takes its stacking from an ancestor. **Two wrong instruments in a row for one defect, both written by someone looking straight at it** |
 | a source gate reading `src.slice(at, at + 700)` | **a proxy for the boundary it meant.** A byte budget stands in for "this statement" / "this element", and ANY edit that adds bytes before the target moves it out of the window — after which the gate reports confidently about text it never saw. **Three times in one session** (a policy window running into the next policy; a 700-char slice losing its call when a prop was added above it; a window stopping at the first `) : (` *inside* the ternary it was checking). Not three mistakes — one technique that does not work |
 
 A skip, a shape, a moment, an order, a flag, a dead clause, a wrong target, a one-valued metric, an
 artefact without the feature, a world without the bug, a proxy boundary, a drifted fixture, a
-one-sided permission, a finding published without one, and that finding amplified by its reader. **You
+one-sided permission, a finding published without one, that finding amplified by its reader, and a
+check aimed at the wrong mechanism entirely. **You
 cannot learn to spot these by pattern** — nothing about any of them looked wrong, and four
 were written by someone who had just written down the rule that catches them. The only thing
 separating a real check from these is having watched it go red for the reason it exists.

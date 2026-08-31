@@ -367,7 +367,7 @@ function Bubble({ L: l, text, chapter }: { L: L; text: string; chapter?: Chapter
       fontFamily: 'var(--font-display)', fontWeight: 700, lineHeight: 1.15, textAlign: 'center',
       fontSize: l.short ? 13 : 17, color: 'var(--ink)',
     }}>
-      <span>{text}{chapter && <DirectionsInline chapter={chapter} />}</span>
+      <span>{text}{chapter && <DirectionsInline chapter={chapter} block />}</span>
       {/* the tail — what keeps the words visibly HIS rather than a banner pinned to the frame */}
       <span aria-hidden style={{
         position: 'absolute', bottom: -11, left: `${l.tailPct}%`, width: 0, height: 0,
