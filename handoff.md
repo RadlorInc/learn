@@ -157,6 +157,95 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🌙 **2026-08-31 — THE NIGHTLY HAD BEEN RED ON ALL 12 OF ITS RUNS SINCE THE DAY IT WAS CREATED, AND A REAL CHILD-FACING DEFECT HAD BEEN SITTING INSIDE IT FOR SEVEN NIGHTS. FOUR FAILURES, ALL FIXED; THE MECHANISM MEASURED ON THE RUNNER RATHER THAN GUESSED AT LOCALLY.** `tsc` 0 · **1684 passed, 1 skipped by design** · `next build` 0 · `start-card` **16/16** · Nightly E2E **218/218 — the first green run in that job's history**. **MERGED — PR [#71](https://github.com/RadlorInc/learn/pull/71) as `22d75fb`.**
+
+## ① 🎥 THE ONE A CHILD WOULD HAVE MET: THE ESCAPE HATCH FROM THE CAMERA, HALF OFF THE SCREEN
+The GameShell start card carries TWO doors on an AR chapter — `Turn on the camera` and
+`Use taps instead`. At 640×320 the second rendered at **y 299–343 of 320**, cut in half, while the
+camera button was whole. **A child who cannot or will not use a camera saw a screen whose only
+complete option was the one they cannot take.** Every AR chapter had it (`anglesSymmetry` −28,
+`areaPerimeter` −23, …), not just the `dataGraphs` the nightly named. ⚠️ Reachable by a 23px scroll
+is not a defence: the affordance to scroll is invisible when the visible content looks finished.
+
+## ② 📐 THE OTHER THREE — MEASURED IN CI, WHICH IS THE ONLY PLACE THEY HAPPEN
+Locally the same screen passed with 10px to spare; the runner reported −13px. The measurement, from
+the CI browser and from mine:
+
+| | local (macOS) | CI (Linux) |
+|---|---|---|
+| start-card blurb | 116px / **5 lines** | 140px / **6 lines** |
+| canvas probe, computed stack | 312.09 | **328** (+5.1%) |
+| canvas probe, generic `sans-serif` | 296.81 | **296.81** |
+| line-height · column · dpr · Chromium | 23.25 · 400 · 1 · 149.0.7827.55 | identical |
+
+**One line = 23.25px = exactly the −13px the nightly reported.**
+⚠️⚠️ **AND MY FIRST EXPLANATION FOR THE +5.1% WAS WRONG, WHICH IS WORTH MORE THAN THE NUMBER.** I
+reported it as `next/font`'s generated fallback resolving to different physical fonts per OS. Chrome's
+own `CSS.getPlatformFontsForNode` says **both platforms paint the declared face** — `IBM Plex Sans`,
+`isCustomFont: true`, `document.fonts.status: loaded`, on macOS and on the runner. So the face is
+**not** failing to load in CI (not a misconfigured runner) and the fallback is **not** what renders
+(not a `size-adjust` failure) — the two candidates, both eliminated. Same face, ~5% wider on Linux,
+which leaves platform text shaping; **two ruled out, the third not proven**, and nothing in the fix
+depends on which it is. ⚠️ `document.fonts.check('15px "IBM Plex Sans"')` returns **false on both**
+while the face is demonstrably painting — that API is the wrong instrument and is what produced my
+earlier "not loaded" reading.
+
+## ③ 🧱 THE FIX IS STRUCTURAL: THE CARD'S HEIGHT NO LONGER FOLLOWS THE TEXT
+Buttons are `flex: 0 0 auto`; the blurb is the only thing that may give (`min-height: 0` + its own
+`overflow-y: auto`). Height comes out of the words before it comes out of a tap target — this shell's
+own rule, made structural instead of spent as spacing. **10px of clearance was one wrapped line from
+failing, which is precisely what the runner was showing.**
+Watched on the known-bad build: `Use taps instead` **−23 → +14**; `Switch it on →` **10 → −13 with
+one line added** (the CI number) **→ +14 with four added**.
+
+## ④ 🧪 THE SPEC, AND THE STRESS
+`start-card.spec.ts` now covers **all 16 chapters that reach this card** (the 8 explore ones it was
+written for + all 8 AR — ⚠️ its list was the eight that failed the day it was written, so it could
+only ever re-catch those eight), asserts **both** AR doors exist, and asserts the property itself:
+four extra lines of blurb must not push any control off. It also recognises a camera start button
+(`Turn on the camera` has no arrow), which is why it had been reporting *"never reached a start
+card"* for every AR chapter.
+🔬 **`E2E_WIDE_TEXT=1`** widens every glyph's advance by 8% — deterministic anywhere, past the 5.1%
+the two platforms differ by. **Dispatch-only (`wide_text` input), never on the timer**, where it
+would become a red people re-run instead of read. ⚠️ It had to go in `start-card.spec.ts` too: with
+the flag on and the pre-fix card restored, `all-chapters` at shortPhone reported **3 PASSED**,
+because it enters by clicking the biggest control and never lands on the card. **On the known-bad
+card it reproduces the CI failure verbatim on a Mac** — `top 288, −13px` — so it is a local proxy for
+an environment I otherwise cannot reach.
+
+## ⑤ 🚨 THE BIGGEST FINDING IS NOT A CHAPTER: A CHECK THAT HAS NEVER BEEN GREEN WAS NEVER A GATE
+12 runs, 12 red, from the day the workflow was created (2026-08-19). Nobody read one, so ① sat in the
+open inside it for seven nights. The founder's rule is now its own row in [CLAUDE.md](CLAUDE.md):
+**a new CI job must go green on the commit that adds it, or it does not land.**
+✅ And the job now tells someone — one issue on failure, updated in place, **closed by the first
+green**. All three paths watched on a scratch branch rather than assumed: filed (#70, naming the
+failing test and commit) → commented in place, no duplicate → **closed** on green. ⚠️ #70 was a
+deliberate test of the alarm, not a regression; it is closed with a comment saying so.
+
+## ▶ OPEN
+1. 🕒 **GREEN IS NOT THE RESTING STATE YET — EVERY GREEN RUN SO FAR WAS HAND-DISPATCHED.** The cron
+   (03:15 UTC) has never once produced a green, and the schedule itself is therefore untested in
+   exactly the way the notifier was. **It is not wired until a run nobody dispatched appears green.**
+   Check `gh run list --workflow "Nightly E2E"` for a `schedule` event after 2026-09-01.
+2. 🔴 **THE HULL SILENCE IS STILL UNMEASURED** — see the 🗒️ block. `docs/voice-check-for-tester.md`
+   is ready to forward and `__miloSpeech()` is verified live on production.
+3. ⏭️ **The `counting` case of `ready-bar.spec.ts`** is still flaky, untouched by this work.
+4. 🔴 **CARRIED FORWARD FROM THE ARCHIVED 🔒 STAGE 3 BLOCK (moved 2026-08-31), because they are
+   launch blockers and would otherwise leave this file with the block:**
+   - **Step 3 — the watched test-mode purchase — is DEFERRED with a hard deadline: BEFORE STAGE 4.**
+     Every link is tested; **nothing has watched a real Stripe event become a seat row.**
+     [docs/billing-stage-3.md](docs/billing-stage-3.md) §0.
+   - **B12: Supabase Pro** before any live key and before `enforced` is ever true. Founder's.
+   - **`DRAFT = true` — the privacy policy and ToS are still placeholders.** You cannot charge a
+     parent under a placeholder ToS.
+   - **The free chapter set is still a PROPOSAL** (`billing_schema.sql` seeds Option A and says so).
+   - **Nine Dependabot PRs open and untriaged** (#28–#47); do not merge as a batch.
+   - Vercel Web Analytics still off; two prose-drift notes (the `error_events` fkey comment, and the
+     anon-INSERT comments that say "not applied" when it was applied 2026-08-24).
+5. ⏭️ **What the wide-text stress has NOT been run against**: the full 70 × 3 sweep. It was run on
+   the start card (16/16) and on three chapters at shortPhone. One dispatch with `wide_text: true`
+   would cover the rest; worth doing once after any layout change, not on the timer.
+
 > 🗒️ **2026-08-30 — A SECOND TESTER PASS ON TWO 3–5 CHAPTERS, AND THE ONE CROSS-CUTTING ASK: EVERY CHAPTER NOW CARRIES A TYPED LINE OF DIRECTIONS. ⚠️ THE FIRST VERSION OF THAT FEATURE WAS CLIPPED ON ONE OF THE TWO CHAPTERS THAT ASKED FOR IT — A FLOATING CARD LAID OVER EIGHT CHAPTERS' OWN BANNERS — AND THE FIX WAS TO STOP STACKING, NOT TO RE-RANK.** `tsc` 0 · **1684 passed, 1 skipped by design** (see ⑤) · `next build` 0 · **26 mutations planted, 26 caught** · `e2e/directions` **8/8** · sw **v151**. **PR [#69](https://github.com/RadlorInc/learn/pull/69) OPEN — not merged; #68 merges first.**
 
 **The feedback.** Shape House: *"instead of Milo saying 'yes' when the correct answer is chosen, he should say something along the lines of 'great job'"*, and *"when I got the hull part, Milo's voice seems to not speak."* Measuring: the title should be **Measuring**; *"Take one back"* should be **Add block** / **Remove block**; and — *"this goes for all chapters"* — **a little box in a corner with typed directions.**
@@ -554,101 +643,4 @@ an afternoon of building the wrong thing.
    (chapter 4's gathered group) spaces by a fixed `colPct` at a fixed `scale: 0.8`, with the same
    cast. Not measured, not fixed — flagged because it is the same fault waiting in the same file.
 
-> 🔒 **2026-08-25 (fourth pass) — STAGE 3: THE CHAPTER GATE AND THE SCREENS. A LOCK THAT NAMES WHAT IS BEHIND IT, A CHILD WHO NEVER SEES A PRICE, AND A PAYWALL BUILT INERT BUT TESTED REFUSING.** `tsc` 0 · **1609/1610** (was 1579) · `next build` 0 · **17 mutations planted, 17 caught** · **PR [#64](https://github.com/RadlorInc/learn/pull/64) OPEN and green** (`verify` ✅ · `rls-tests` ✅ `RLS_ASSERTIONS=74`), **not merged** · ⚠️ **Step 3 (the watched purchase) DEFERRED, with a hard deadline.**
-
-## ⓪ 🔴 THE DEFERRAL, AND THE RISK IT CARRIES — [docs/billing-stage-3.md](docs/billing-stage-3.md) §0
-Founder's call: the test-mode purchase is **deferred, not cancelled**, with a **hard deadline of
-BEFORE STAGE 4 STARTS** — not "before live keys", not "before launch". It gates nothing in Stage 3,
-because entitlement is applied and tested and the UI drives from seeded state. **The risk, written
-at the top of the Stage 3 doc so it cannot quietly become "before launch": nothing has yet watched a
-real Stripe event become a seat row.** Each link is tested — `is_chapter_entitled` with the flag
-forced ON, `materialize_seats` M1–M7, the webhook C1–C9 — and **the chain is not**. Stage 3's UI is
-therefore built against entitlement that was SEEDED rather than entitlement that arrived the way a
-real one will. §0 closes by pasting the seat query's output into it, or it stays open.
-
-## ① 🚪 FOUR SOURCES, ONE DEFINITION, ASKED NOT DERIVED
-A demo (pre-signup, local, no rows) · B `chapters.is_free` · C the plan's first two unmet steps,
-frozen at issue time · D a paid seat. **B, C and D were already one function** and the UI does not
-re-implement a word of it — a TypeScript copy would be a FOURTH guard beside the `sessions` policy,
-`learner_progress`'s WITH CHECK and `sync_session`, free to disagree silently in the direction of
-letting a child into a chapter the database then refuses to save.
-
-## ② ⏱️ THE CHECK IS AT ENTRY, AND THAT IS STRUCTURAL RATHER THAN A PROMISE
-The verdict is taken once per chapter id, before the chapter mounts; `/game` does not render the
-component at all until it is `allowed`. **There is no later evaluation for a re-render to flip**, so
-there is no state in which a child can be interrupted mid-question by money. ⚠️ **It fails OPEN** —
-a lost network or an unknown session is `allowed`, because this is a UX gate over a database that
-already refuses the WRITE, and locking a paying child out on a dropped packet is the worse failure.
-⚠️ **The diagnostic is never gated**, and the check for that COUNTS the call sites rather than
-asserting an absence.
-
-## ③ 🧒 WHAT A CHILD SEES — AND THE SWEEP THAT WAS WRONG FIRST
-"Ask a grown-up." No price, no checkout link, no upgrade button. ⚠️ **And it NAMES what is behind
-the lock** — the chapter's emoji, its name and its catalogue hint, plus "played with your hands" for
-a camera chapter — carrying the consent card's principle: *a lock that explains itself is doing
-work; one that just refuses is doing none.*
-⚠️ **The no-price sweep was a source grep and it was WRONG: `\d+\.\d\d` matched `lineHeight: 1.55`.**
-The property is about what a child READS, so it renders the card for **every chapter in the
-catalogue** and sweeps the text. ⚠️ Two other checks failed on the gate's own prose (the pricing
-page's header quotes the "$12.98" it forbids) — everything runs comment-stripped now, third time in
-this repo. ⚠️ And the positive control caught itself: the planted string had no "subscribe" in it,
-so it was proving only part of the sweep worked.
-
-## ④ 👛 WHAT A PARENT SEES
-`/parent/plan`: first child · each additional · the 4 cap · monthly and annual, **every figure
-derived from `core/billing.ts`** so the page cannot quote one number while Stripe charges another.
-Driven on screen: **3 children yearly = $143.97**, the founder's hand-computed value, and clean at
-375px. No countdown — gated by forbidding a timer in the module at all. A locked chapter in the
-dashboard routes here; the child's card never can.
-
-## ⑤ 🧪 17 MUTATIONS, 17 CAUGHT — AND THE TWO THAT SURVIVED THE FIRST PASS WERE THE TWO WORTH HAVING
-A **dead** locked branch (`if (false && …)`) passed a `/gate === 'locked'/` check while rendering a
-**blank screen** — worse than the refusal it replaced. And **an RPC error turned into `false`**,
-which reads as harmless defensiveness and locks a PAYING child out on a dropped packet; the hook's
-mock could not see it, so the repository is now driven against a stubbed client.
-⚠️ **What is NOT driven, in the doc rather than a footnote:** the browser chain `/menu` → `/game` →
-a real RPC. The e2e harness's unsigned JWT makes `getLearnerBootstrap` 401, so the menu never
-finishes loading — driving the gate there would be driving it in a world where it cannot be reached,
-which is a class this repo has already paid for. §0's watched purchase is the honest coverage.
-
-## ▶ OPEN
-1. ⏸️ **PR [#64](https://github.com/RadlorInc/learn/pull/64) IS OPEN AND GREEN — NOT MERGED.** All of
-   Stage 3 is on `feat/billing-stage-3`. Today's earlier billing PRs are all merged and closed:
-   #60 (Stage 2a + 2b), #61 (the rollback capture + CI running it), #62 (the apply + rename), #63
-   (the step-3 conditions); #59 was closed as superseded.
-2. 🔴 **STEP 3 — THE WATCHED TEST-MODE PURCHASE — IS DEFERRED WITH A HARD DEADLINE: BEFORE STAGE 4.**
-   Founder's call. It gates nothing in Stage 3, and the risk it carries is at the TOP of
-   [docs/billing-stage-3.md](docs/billing-stage-3.md) §0 so it cannot become "before launch":
-   **nothing has watched a real Stripe event become a seat row.** Every link is tested; the chain is
-   not. ⚠️ Needs a `sk_test_` key + `SUPABASE_SERVICE_ROLE_KEY` locally, and runs **against
-   production, deliberately** — record the ids first, verify the cleanup by query, once.
-3. 🔴 **B12 IS STILL THE FOUNDER'S** — Supabase Pro before any live key and before `enforced` is
-   ever true.
-4. ⏭️ **STAGE 4 IS NEXT, AND ②'s DEADLINE LANDS ON IT.** The customer portal, dunning mail, seat
-   management (`reassign_learner_seat` has no UI yet), and cancellation — three screens that do
-   not exist yet. ⚠️ **Checked 2026-08-25 so nobody searches again: there is NO Google Stitch MCP**
-   — not connected, and not in the MCP registry either. The design tooling that IS here is the
-   `/design` canvas (multi-artboard, published as an editable Artifact), `DesignSync` +
-   `/design-sync` for a design-system project, and the `ui-ux-pro-max` skill.
-5. 🟡 **Stage 3 is INERT in production** because `enforced = false`: every chapter answers entitled,
-   no lock renders, `/parent/plan` sells something nobody needs yet. That is the intended state —
-   and it is why the gate's tests drive the REFUSING path directly rather than the real one.
-6. 🔴 **`DRAFT = true` — the privacy policy and ToS are still placeholders (B1/B2).** You cannot
-   charge a parent under a placeholder ToS.
-7. ⚠️ **THE FREE SET IS STILL A PROPOSAL, NOT YOUR PICK.** `billing_schema.sql` seeds Option A
-   (first chapter of every band + `decimals`) with its own comment saying so. ✅ The consequence
-   that made it urgent is CLOSED: source C entitles the plan's first two unmet steps, so a
-   diagnostic never routes a child to a locked chapter. The pick is one UPDATE whenever you want it.
-8. 🟡 Vercel Web Analytics still off; the funnel all of this hangs off is unmeasured.
-9. ⚠️ **NINE DEPENDABOT PRs OPEN AND UNTRIAGED** (#28–#47). Do not merge as a batch.
-10. ⚠️ **A contradiction flagged and still unresolved:** `exportCompleteness.test.ts:58` says
-   `error_events.learner_id` gains an `ON DELETE SET NULL` fkey in Stage 1;
-   `20260817142406_error_events.sql` says it is deliberately NOT a foreign key so a crash is still
-   recorded when the learner id is stale. The migration's reasoning is better — the COMMENT is what
-   is wrong. Verified still present today.
-11. ⚠️ **Prose drift:** `20260817174352_privacy_and_leads_hardening.sql` and
-   `src/app/api/lead/route.ts` still say the anon INSERT revoke has not been applied. It was, on
-   2026-08-24. Comments only, no behaviour.
-
-
-_Older sessions (2026-06-15 → **2026-08-25**, including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-25**, including 🔒 **Stage 3** (the chapter gate and the screens — a lock that names what is behind it, and a paywall built inert but tested refusing), moved 2026-08-31 — ⚠️ its still-live items (the deferred watched purchase, B12, `DRAFT = true`, the free-set pick, the nine Dependabot PRs, Vercel Analytics, the prose drift) were lifted into the 🌙 block's ▶ OPEN rather than archived with it; including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
