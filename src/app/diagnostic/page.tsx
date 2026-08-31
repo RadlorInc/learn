@@ -21,6 +21,7 @@ import { NODE_BY_ID, chapterFor, type Band } from '@/core/skillGraph'
 import { demoEligible } from '@/core/arChapters'
 import { makeItem, makeReadinessItem, pickThemeFor, gradeItem, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
 import { CHAPTER_NAMES, gradeStartPlan, type AgeGroup } from '@/core/chapters'
+import { swapCopy } from '@/core/planCopy'
 import { track } from '@/infra/analytics'
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
 import { stashPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
@@ -521,16 +522,14 @@ export default function DiagnosticPage() {
   // ── "YOU ARE PART-WAY THROUGH A PLAN" ────────────────────────────────────────────────
   // Same shape as the resume offer above: offered, never applied silently.
   if (replaceAsk) {
-    const at = replaceAsk.plan.index + 1
+    const swap = swapCopy(replaceAsk.plan.index + 1, replaceAsk.plan.chapters.length)
     return (
       <div style={{ position: 'relative', width: '100vw', minHeight: '100dvh', overflow: 'hidden' }}>
         <LabBackdrop accent={accent} />
         <IntroCard accent={accent} short={short}
-          title="Swap to the new plan?"
-          cta="Use the new plan"
-          body={`You were on chapter ${at} of ${replaceAsk.plan.chapters.length} of your last plan. The new one starts from the beginning — your stars and everything you have played stay exactly as they are.`}
+          title={swap.title} cta={swap.cta} body={swap.body}
           onStart={() => void finishReplace(true)}
-          alt={{ label: 'Keep my old plan', onPick: () => void finishReplace(false) }} />
+          alt={{ label: swap.alt, onPick: () => void finishReplace(false) }} />
         <PtMilo left={9} />
       </div>
     )

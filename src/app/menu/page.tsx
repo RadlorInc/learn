@@ -19,6 +19,8 @@ import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/stora
 import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
 import { track } from '@/infra/analytics'
 import { currentPlanChapter, planProgress, reconcilePlan, planSource } from '@/infra/storage/activePlan'
+import { planLine } from '@/core/planCopy'
+import CheckDoor from '@/shared/ui/CheckDoor'
 import { getCheckupStatus } from '@/data/repositories'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -394,9 +396,10 @@ export default function MainMenu() {
                 {/* ⚠️ A GRADE-START PLAN HAS NO DIAGNOSED GAP, so it may not claim one. "Milo picked
                     this to close the gap" is true after a check and a straight falsehood after a
                     skip — nobody looked. Same rule as the report's never-say-"on track". */}
-                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>{planNext.source === 'gradeStart'
-                  ? 'Starting from the beginning — Milo adjusts as they play.'
-                  : 'Milo picked this to close the gap — a few minutes today.'}</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
+                  {planLine(planNext.source === 'gradeStart' ? 'gradeStart' : 'diagnostic',
+                    (profile.chapterStars[planNext.ch] ?? 0) > 0)}
+                </div>
               </div>
               <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: '#2BB673', border: '3px solid #1e9e5f', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Continue ▶</span>
             </div>
@@ -462,22 +465,10 @@ export default function MainMenu() {
           * playing.
           */}
         {!reoffer && (
-          <button onClick={() => {
+          <CheckDoor onOpen={() => {
             track('checkup_offer', { action: 'taken', at: 'menu_door', band: ageGroup })
             router.push(`/diagnostic?band=${ageGroup}`)
-          }} className="milo-card" style={{
-            width: '100%', maxWidth: 700, padding: '12px 20px', textAlign: 'left', cursor: 'pointer',
-            background: 'linear-gradient(135deg, #EEF4FF 0%, #fff 100%)', border: '3px solid #6C8FE8',
-            display: 'flex', alignItems: 'center', gap: 14,
-          }}>
-            <span style={{ fontSize: 30, lineHeight: 1 }} aria-hidden>🔍</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17 }}>Find my starting point</span>
-              <span style={{ display: 'block', fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
-                Milo asks some questions and works out what to play next. Stop any time — nothing is lost.
-              </span>
-            </span>
-          </button>
+          }} />
         )}
 
         {/* ── Story Mode — the 3–5 storyline adventure ── */}

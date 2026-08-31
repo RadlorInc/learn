@@ -9,6 +9,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { planLine } from '@/core/planCopy'
 import { gradeStartPlan, chaptersForAge, CHAPTER_NAMES, type AgeGroup } from '@/core/chapters'
 import { checkupSkips, recordCheckupSkip, shouldReoffer, checkupSettled, markCheckupDone, clearCheckupCache } from '@/infra/storage/checkup'
 import { setActivePlan, getActivePlan, currentPlanChapter, reconcilePlan, planSource } from '@/infra/storage/activePlan'
@@ -110,15 +111,23 @@ describe('the surfaces (source)', () => {
     expect(body, 'a skip that asks "are you sure" is not optional').not.toMatch(/confirm|window\.confirm|setPhase\(/)
   })
 
+  /**
+   * ⚠️ THIS GATE WAS A SOURCE GREP AND IS NOW A DRIVE, because the words moved. `planLine` in
+   * `core/planCopy.ts` is the one place the plan card's subtitle is written (2026-08-31, when a
+   * repeat chapter needed its own line), so the claim can be READ rather than pattern-matched —
+   * and the greps that used to anchor on a literal in `menu/page.tsx` would have gone quietly
+   * inert the moment it moved. It did move, and this one failed, which is why it is here.
+   */
   it('the plan card does not claim a closed gap on a grade-start plan', () => {
-    const src = readFileSync('src/app/menu/page.tsx', 'utf8')
-    // ⚠️ ANCHOR ON THE STRING LITERAL, NOT THE PHRASE. The first draft searched for "close the
-    // gap" and matched the COMMENT above the code explaining the rule — the gate tripping on its
-    // own prose, and it reported the real, correct code as broken.
-    const at = src.indexOf("'Milo picked this to close the gap")
-    expect(at, 'the plan subtitle is gone — this gate is inert').toBeGreaterThan(0)
-    expect(src.slice(Math.max(0, at - 400), at), 'the gap claim is printed without checking the plan source')
-      .toMatch(/source === 'gradeStart'/)
+    for (const played of [false, true]) {
+      expect(planLine('gradeStart', played), 'a skipped plan claims a gap nobody looked for')
+        .not.toMatch(/gap/i)
+      expect(planLine('diagnostic', played), 'a diagnosed plan stopped naming the reason it exists')
+        .toMatch(/gap|another go/i)
+    }
+    // and the card still asks the module rather than writing its own words
+    expect(readFileSync('src/app/menu/page.tsx', 'utf8'), 'the menu builds the subtitle inline again')
+      .toContain('planLine(planNext.source')
   })
 
   /**

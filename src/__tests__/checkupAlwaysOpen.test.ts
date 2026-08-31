@@ -16,6 +16,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import { setActivePlan, advancePlan, planInProgress, getActivePlan, reconcilePlan } from '@/infra/storage/activePlan'
 import { shouldReoffer } from '@/infra/storage/checkup'
+import { CHECK_DOOR, swapCopy, planLine } from '@/core/planCopy'
 import { strip } from './_window'
 
 const read = (p: string) => strip(readFileSync(join(process.cwd(), p), 'utf8'))
@@ -26,8 +27,13 @@ const L = 'learner-1'
 describe('the check is always reachable from the child\'s own screen', () => {
   it('draws a permanent door on the menu, pointing at the diagnostic', () => {
     const src = read(MENU)
-    expect(src).toContain('Find my starting point')
+    // ⚠️ The words live in `core/planCopy` and the markup in `CheckDoor`, so the menu is asserted
+    // to RENDER the component — a literal here would go inert the day either moves, which is
+    // exactly what happened to the gate next door when they did.
+    expect(src).toContain('<CheckDoor onOpen={() => {')
     expect(src).toContain("router.push(`/diagnostic?band=${ageGroup}`)")
+    expect(CHECK_DOOR.title).toBe('Find my starting point')
+    expect(read('src/shared/ui/CheckDoor.tsx')).toContain('{CHECK_DOOR.title}')
   })
 
   /**
@@ -41,6 +47,35 @@ describe('the check is always reachable from the child\'s own screen', () => {
     expect(src).toContain('{reoffer && (')
     // and the offer is still the thing that retires — the door is not a second ask
     expect(shouldReoffer(L, 1), 'a learner who never skipped is not re-offered').toBe(false)
+  })
+})
+
+/**
+ * ⚠️⚠️ THE LINE A RETURNING CHAPTER IS EXPLAINED WITH, AND WHY IT NEEDED ITS OWN CHECK.
+ * A completed chapter can come back — the pointer only skips the LEADING run of finished ones, and
+ * a re-diagnosis putting one mid-plan is saying the gap is there. Founder, 2026-08-31: *"a kid who
+ * finished something yesterday and is handed it again reads that as 'I got it wrong'."*
+ *
+ * ⚠️ AND THE FIRST VERSION OF THIS GATE MISSED IT. Reverting the repeat line to the ordinary
+ * "Milo picked this to close the gap" SURVIVED, because the check next door only asked that a
+ * diagnosed line mention a gap — which that line does. What has to be asserted is the DIFFERENCE:
+ * a chapter the child has already finished may not be announced in the same words as a new one.
+ */
+describe('a chapter that comes back says why', () => {
+  it('never uses the same words for a repeat as for a first time', () => {
+    for (const src of ['diagnostic', 'gradeStart'] as const) {
+      expect(planLine(src, true), `${src}: a returning chapter reads exactly like a new one`)
+        .not.toBe(planLine(src, false))
+      expect(planLine(src, true), `${src}: the repeat is not acknowledged at all`)
+        .toMatch(/played this one/i)
+    }
+  })
+
+  /** ⚠️ And the reason must match the evidence: after a SKIP nobody looked, so no gap may be
+   *  claimed — the same rule the plan card's own comment already carries. */
+  it('gives a reason after a check and none after a skip', () => {
+    expect(planLine('diagnostic', true)).toMatch(/Milo saw|worth another go/i)
+    expect(planLine('gradeStart', true), 'a skipped plan claims Milo saw something').not.toMatch(/Milo saw|gap/i)
   })
 })
 
@@ -58,8 +93,13 @@ describe('a re-run never silently resets a plan the child has walked', () => {
     const src = read(DIAG)
     expect(src).toContain('const walked = chs.length ? planInProgress(lid) : null')
     expect(src).toContain('if (walked) { setReplaceAsk(')
-    expect(src).toContain("cta=\"Use the new plan\"")
-    expect(src).toContain("label: 'Keep my old plan'")
+    expect(src).toContain('title={swap.title} cta={swap.cta} body={swap.body}')
+    expect(src).toContain('label: swap.alt')
+    const c = swapCopy(4, 7)
+    expect(c.cta).toBe('Use the new plan')
+    expect(c.alt).toBe('Keep my old plan')
+    expect(c.body, 'the body must say what a "yes" costs, in the child\'s own terms').toContain('chapter 4 of 7')
+    expect(c.body, 'and settle the fear that makes a yes expensive').toMatch(/stars/i)
   })
 
   /**
