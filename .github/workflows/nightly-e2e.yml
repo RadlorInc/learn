@@ -34,6 +34,10 @@ on:
         required: false
         default: ''
 
+permissions:
+  contents: read
+  issues: write        # the failure notice below is the whole point of running this on a timer
+
 jobs:
   chapters:
     runs-on: ubuntu-latest
@@ -91,7 +95,9 @@ jobs:
           # GameShell route lands on the ExploreStep — one screen BEFORE the start card. Eight
           # chapters shipped with their start button 10px below the fold at 640×320 and that gate
           # reported them clean, because it never loaded the screen the defect is on.
-          npx playwright test e2e/all-chapters.spec.ts e2e/start-card.spec.ts
+          # tee, so the failure notice below can quote the actual failing tests rather than a link.
+          set -o pipefail
+          npx playwright test e2e/all-chapters.spec.ts e2e/start-card.spec.ts 2>&1 | tee /tmp/e2e.log
 
       # Traces are retain-on-failure, so this uploads only when there is something to look at —
       # which is the difference between a red nightly you can diagnose and one you re-run blindly.
@@ -103,3 +109,41 @@ jobs:
           path: test-results/
           retention-days: 14
           if-no-files-found: ignore
+
+      # ⚠️⚠️ A RED NIGHTLY NOBODY IS TOLD ABOUT IS THE SAME FAILURE AS NO NIGHTLY AT ALL.
+      # This job was red on all 12 of its first runs, from the day it was created, and nobody read
+      # one of them — a real regression (an AR chapter's camera escape hatch hanging off a 640×320
+      # screen) sat in the open inside it for seven nights. A scheduled run has no author watching a
+      # PR, so the result has to go and find someone: one issue, reopened and updated rather than a
+      # new one every night, so it cannot become its own kind of noise.
+      - name: File (or update) the failure notice
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          TITLE='Nightly E2E is red'
+          FAILING=$(grep -E '^\s+✘' /tmp/e2e.log | sed 's/([0-9.]*m*s)//' | head -20 || true)
+          [ -n "$FAILING" ] || FAILING='(the run failed before any test reported — see the log)'
+          BODY=$(printf '%s\n\n```\n%s\n```\n\n%s\n' \
+            "Last red run: $RUN_URL (commit ${GITHUB_SHA:0:7})" "$FAILING" \
+            "This issue is updated in place each night it fails, and closed by the first green run.")
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number -q '.[0].number' || true)
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label bug || gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
+      # And the other half: a gate that never closes its own ticket teaches people to ignore the
+      # ticket instead of the job.
+      - name: Close the notice on a green run
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          EXISTING=$(gh issue list --state open --search 'Nightly E2E is red in:title' --json number -q '.[0].number' || true)
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --comment "Green again: $RUN_URL"
+          fi
