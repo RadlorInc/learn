@@ -157,7 +157,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 🗒️ **2026-08-30 — A SECOND TESTER PASS ON TWO 3–5 CHAPTERS, AND THE ONE CROSS-CUTTING ASK: EVERY CHAPTER NOW CARRIES A TYPED LINE OF DIRECTIONS. ⚠️ THE FIRST VERSION OF THAT FEATURE WAS CLIPPED ON ONE OF THE TWO CHAPTERS THAT ASKED FOR IT — A FLOATING CARD LAID OVER NINE CHAPTERS' OWN BANNERS — AND THE FIX WAS TO STOP STACKING, NOT TO RE-RANK.** `tsc` 0 · **1684/1685** (was 1671) · `next build` 0 · **24 mutations planted, 24 caught** · sw **v151**. **NOT committed, not pushed.**
+> 🗒️ **2026-08-30 — A SECOND TESTER PASS ON TWO 3–5 CHAPTERS, AND THE ONE CROSS-CUTTING ASK: EVERY CHAPTER NOW CARRIES A TYPED LINE OF DIRECTIONS. ⚠️ THE FIRST VERSION OF THAT FEATURE WAS CLIPPED ON ONE OF THE TWO CHAPTERS THAT ASKED FOR IT — A FLOATING CARD LAID OVER EIGHT CHAPTERS' OWN BANNERS — AND THE FIX WAS TO STOP STACKING, NOT TO RE-RANK.** `tsc` 0 · **1684 passed, 1 skipped by design** (see ⑤) · `next build` 0 · **26 mutations planted, 26 caught** · `e2e/directions` **8/8** · sw **v151**. **PR [#69](https://github.com/RadlorInc/learn/pull/69) OPEN — not merged; #68 merges first.**
 
 **The feedback.** Shape House: *"instead of Milo saying 'yes' when the correct answer is chosen, he should say something along the lines of 'great job'"*, and *"when I got the hull part, Milo's voice seems to not speak."* Measuring: the title should be **Measuring**; *"Take one back"* should be **Add block** / **Remove block**; and — *"this goes for all chapters"* — **a little box in a corner with typed directions.**
 
@@ -225,6 +225,20 @@ cannot shrink it away. Screenshots of all eight in `docs/verification/2026-08-31
 `src/__tests__/chapterDirections.test.ts`. Every check here is about a STRING A CHILD READS, which nothing else in the repo can see.
 ⚠️ **The one that survived: deleting `chapter="fractions"` from SliceShop's PLAY bubble left the gate green**, because the same chapter's LESSON banner carries the same string — the count-the-right-thing trap from CLAUDE.md, again. The check is anchored on the play call AND counts both occurrences now, and the same was done for TickTock.
 ⚠️ **The exception list is a claim about eight chapters' layout held in a ninth file**, so each entry is pinned to the expression it claims (`pillTop`, `CHROME_PAD`, `BANNER_TOP`): change one of those layouts and the gate fails rather than rotting.
+
+## ⑤ 🟡 THE ONE SKIPPED TEST — NAMED, BECAUSE "1684/1685" READS AS GREEN AND IS NOT
+`npm test` reports **1684 passed, 1 skipped**. The skipped one is
+`src/__tests__/skillGraphAudit.test.ts › skill graph · edge sensitivity › ranks every edge by what a
+wrong one would cost`.
+- **Skipped, not failing and not flaky.** `describe.runIf(process.env.GRAPH_SENSITIVITY)` — opt-in,
+  off by default because it re-runs every diagnosis once per edge. Nothing in it is
+  non-deterministic; the flag is about runtime, not stability.
+- **It passes when you run it:** `GRAPH_SENSITIVITY=1 npx vitest run src/__tests__/skillGraphAudit.test.ts`
+  → **8 passed in 25.9s**, run 2026-08-31. A skip is not evidence, so it was run rather than assumed.
+- **Pre-existing, not this branch's.** Introduced `d5f02ad` (2026-08-22, the skill-graph audit day)
+  and byte-identical to `main` — `git diff main` on that file is empty.
+📄 It is here so the next person does not rediscover it as a mystery, and so the headline number
+stops being quoted as if the suite were wholly green.
 
 ## ▶ OPEN
 1. 🔴 **THE HULL SILENCE IS UNRESOLVED AND UNMEASURED.** See ②. It needs one run on a device with a working voice and a paste of `__miloSpeech()`. **Nothing in this session may be read as having fixed it.**
