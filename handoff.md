@@ -256,8 +256,14 @@ stops being quoted as if the suite were wholly green.
    branch already contains all of `main`). **Where the claim came from: this file's own ▶ OPEN item,
    written by the 2026-08-28 session hours before its PR merged, and never updated.** I read stale
    prose and repeated it as current fact without asking GitHub — the reader's half of CLAUDE.md's
-   own rule, *do not amplify a finding past the evidence it arrived with*, and it cost the founder a
-   thank-you for a catch that was not real. ✅ Every "#68 is open" line in this file is corrected
+   own rule, *do not amplify a finding past the evidence it arrived with*.
+   ⚠️⚠️ **AND THE RELAY HAD TWO NODES, NOT ONE — the founder's own half, added by him.** He
+   reconfirmed *"merge #68 first"* **twice, in two separate replies**, without checking GitHub
+   either, and thanked me for flagging the collision. **A claim repeated back as an INSTRUCTION is
+   what makes it look confirmed**: it stopped reading as my guess and started reading as the agreed
+   plan, which is why neither of us looked for three exchanges. The producer's rule is *do not
+   report what you have not watched*; the consumer's is *do not repeat it back as a decision*.
+   Neither half catches this alone — the second is what turns an unverified line into a schedule. ✅ Every "#68 is open" line in this file is corrected
    below. **A PR's state is one `gh pr view` away; this file is not a source of truth for it.**
 6. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky (2026-08-28), unchanged by this work.
 
