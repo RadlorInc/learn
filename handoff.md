@@ -223,10 +223,14 @@ failing test and commit) → commented in place, no duplicate → **closed** on 
 deliberate test of the alarm, not a regression; it is closed with a comment saying so.
 
 ## ▶ OPEN
-1. 🕒 **GREEN IS NOT THE RESTING STATE YET — EVERY GREEN RUN SO FAR WAS HAND-DISPATCHED.** The cron
-   (03:15 UTC) has never once produced a green, and the schedule itself is therefore untested in
-   exactly the way the notifier was. **It is not wired until a run nobody dispatched appears green.**
-   Check `gh run list --workflow "Nightly E2E"` for a `schedule` event after 2026-09-01.
+1. 🕒 **GREEN IS NOT THE RESTING STATE YET — EVERY GREEN RUN SO FAR WAS HAND-DISPATCHED.**
+   ⚠️ The SCHEDULE itself is proven to fire: an undispatched `schedule` run landed on `main` at
+   09:48 UTC on 2026-08-31 — but on `9a4bcc3`, i.e. **before** #71 merged, so it reported the same
+   four failures. It also predates the notifier, so it filed nothing. What has still never happened
+   is **a scheduled run that is green on a main that contains the fix**, and until one does, the
+   green above is a hand-dispatched result about a branch.
+   📋 Check with `gh run list --workflow "Nightly E2E"` and look for `schedule` + `success` on a sha
+   at or after `22d75fb`; the run should also close nothing, because nothing is open.
 2. 🔴 **THE HULL SILENCE IS STILL UNMEASURED** — see the 🗒️ block. `docs/voice-check-for-tester.md`
    is ready to forward and `__miloSpeech()` is verified live on production.
 3. ⏭️ **The `counting` case of `ready-bar.spec.ts`** is still flaky, untouched by this work.
