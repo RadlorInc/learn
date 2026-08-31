@@ -33,6 +33,15 @@ on:
         description: 'Narrow to chapters (comma-separated, e.g. decimals,rounding)'
         required: false
         default: ''
+      wide_text:
+        # ⚠️ A ONE-OFF, DELIBERATELY NOT ON THE TIMER. The scheduled run proves the layout survives
+        # the RUNNER's font metrics; this proves it survives a metric 8% wider than any of them, so
+        # a device whose fallback is wider than DejaVu cannot be the thing that finds the next one.
+        # On the schedule it would become a nightly red that people re-run instead of read, which is
+        # the failure this job spent twelve runs demonstrating.
+        description: 'Stress the layout with 8% wider text (one-off, not nightly)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: read
@@ -86,9 +95,14 @@ jobs:
         # two lines, and this runner has repo-scoped credentials in the same workflow file.
         env:
           ONLY_INPUT: ${{ github.event.inputs.only }}
+          WIDE_INPUT: ${{ github.event.inputs.wide_text }}
         run: |
           if [ -n "$ONLY_INPUT" ]; then
             export E2E_ONLY="$ONLY_INPUT"
+          fi
+          if [ "$WIDE_INPUT" = "true" ]; then
+            export E2E_WIDE_TEXT=1
+            echo "::notice::wide-text stress ON — every glyph 8% wider than it renders anywhere"
           fi
           # ⚠️ `start-card` runs alongside, and it is not redundant. `all-chapters` enters a
           # chapter by clicking its biggest control and measuring 900 ms later, which on a

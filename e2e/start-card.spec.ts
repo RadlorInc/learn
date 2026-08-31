@@ -65,6 +65,20 @@ test('GameShell start card — every control is on screen at 640x320', async ({ 
   // ⚠️ Without this an AR chapter renders the CameraConsentCard to a logged-out visitor, and this
   // spec would grade that screen — the same wrong-screen fault it was written to close.
   await seedSession(page)
+  /**
+   * ⚠️⚠️ AND THE WIDE-TEXT STRESS HAS TO APPLY **HERE**, NOT ONLY IN `all-chapters`. Measured: with
+   * the flag on and the pre-fix card restored, `all-chapters` at shortPhone reported 3 passed —
+   * because it enters a chapter by clicking its biggest control, which on this route lands on the
+   * explore step or straight past the card into the walkthrough. A stress pointed at a screen that
+   * does not contain the defect is decoration, which is the same trap this spec exists for.
+   */
+  if (process.env.E2E_WIDE_TEXT === '1') {
+    await page.addInitScript(() => {
+      const css = '*, *::before, *::after { letter-spacing: 0.08em !important }'
+      const put = () => document.head.appendChild(Object.assign(document.createElement('style'), { textContent: css }))
+      if (document.head) put(); else document.addEventListener('DOMContentLoaded', put)
+    })
+  }
   const bad: string[] = []
   for (const h of HEIGHTS) {
     await page.setViewportSize({ width: 640, height: h })
