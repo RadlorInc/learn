@@ -98,6 +98,15 @@ Everything below is a corollary of that one sentence:
   querying production answers *what is true*. Only the second is a check. The reverted V5 payload
   bounds were invisible to the repo grep — it was case-sensitive — and took `pg_get_functiondef`
   one query.
+- ⚠️⚠️ **VERIFY THE TREE YOU ARE MEASURING IS THE TREE YOU THINK IT IS. A measurement taken on the
+  wrong working state is not a weak measurement — it is a confident WRONG ANSWER, and it looks
+  identical to a right one.** Founder's line, 2026-08-31, after this one: a fix was stashed to run a
+  known-bad control, restored, and then swallowed by a `git commit -a` on a scratch branch two
+  commands later — so the next probe measured unfixed code and reported it FIXED, with plausible
+  numbers. What caught it was two instruments disagreeing (a probe said the card held, the spec said
+  it did not) and looking instead of picking the flattering one. **`git status` before you believe a
+  number**, and treat any disagreement between two of your own measurements as a fact about the
+  tree, not a rounding error.
 - **Run it, don't read it.** Reading the rollback script caught one defect; only running it proves
   the schema comes back. Same for a mutation: assert the edit actually landed before concluding
   anything about the gate it was meant to test.
