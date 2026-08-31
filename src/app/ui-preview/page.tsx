@@ -25,7 +25,7 @@ import { planLine, swapCopy } from '@/core/planCopy'
 
 function Surfaces() {
   const p = useSearchParams().get('p') ?? 'door'
-  const swap = swapCopy(4, 7)
+  const swap = swapCopy(4, 7, 9)
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: 14, padding: 16, background: 'var(--bg-page, #FDF6E3)', boxSizing: 'border-box' }}>

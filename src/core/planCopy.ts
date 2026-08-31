@@ -23,11 +23,11 @@ export type PlanSource = 'diagnostic' | 'gradeStart'
 export function planLine(source: PlanSource, alreadyPlayed: boolean): string {
   if (source === 'gradeStart') {
     return alreadyPlayed
-      ? 'You have played this one — a quick second go, then something new.'
+      ? "You've played this one — a quick second go, then something new."
       : 'Starting from the beginning — Milo adjusts as they play.'
   }
   return alreadyPlayed
-    ? 'You have played this one — Milo saw something here worth another go.'
+    ? "You've played this one — Milo saw something here worth another go."
     : 'Milo picked this to close the gap — a few minutes today.'
 }
 
@@ -48,11 +48,17 @@ export const CHECK_DOOR = {
  * "yes" feel expensive — and it is unfounded: `setActivePlan` writes one pointer and touches no
  * progress at all.
  */
-export function swapCopy(at: number, total: number) {
+export function swapCopy(at: number, was: number, now: number) {
   return {
     title: 'Swap to the new plan?',
     cta: 'Use the new plan',
     alt: 'Keep my old plan',
-    body: `You were on chapter ${at} of ${total} of your last plan. The new one starts from the beginning — your stars and everything you have played stay exactly as they are.`,
+    /**
+     * ⚠️ "STARTS FROM THE BEGINNING" IS GONE, AND THE REASON IS WORTH KEEPING. Founder, 2026-08-31:
+     * it is the one phrase across these three surfaces that a child can read as LOSS — *I go back
+     * to zero* — and the clause after it was then busy un-scaring a fear the sentence had just
+     * created. A new plan has its OWN chapter 1; saying that plainly means nothing needs undoing.
+     */
+    body: `You were on chapter ${at} of ${was} of your last plan. The new plan has its own ${now} chapters, starting at 1 — your stars and everything you've played stay exactly as they are.`,
   }
 }

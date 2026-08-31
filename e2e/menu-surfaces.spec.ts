@@ -86,7 +86,7 @@ test('the door renders whole on the REAL /menu at 640×320', async ({ page }) =>
 
 const CASES = [
   { p: 'door', want: CHECK_DOOR.blurb },
-  { p: 'swap', want: swapCopy(4, 7).body },
+  { p: 'swap', want: swapCopy(4, 7, 9).body },
   { p: 'plan', want: planLine('diagnostic', true) },   // the line a returning chapter is explained with
 ]
 

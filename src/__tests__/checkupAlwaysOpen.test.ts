@@ -95,7 +95,7 @@ describe('a re-run never silently resets a plan the child has walked', () => {
     expect(src).toContain('if (walked) { setReplaceAsk(')
     expect(src).toContain('title={swap.title} cta={swap.cta} body={swap.body}')
     expect(src).toContain('label: swap.alt')
-    const c = swapCopy(4, 7)
+    const c = swapCopy(4, 7, 9)
     expect(c.cta).toBe('Use the new plan')
     expect(c.alt).toBe('Keep my old plan')
     expect(c.body, 'the body must say what a "yes" costs, in the child\'s own terms').toContain('chapter 4 of 7')

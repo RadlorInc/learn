@@ -522,7 +522,7 @@ export default function DiagnosticPage() {
   // ── "YOU ARE PART-WAY THROUGH A PLAN" ────────────────────────────────────────────────
   // Same shape as the resume offer above: offered, never applied silently.
   if (replaceAsk) {
-    const swap = swapCopy(replaceAsk.plan.index + 1, replaceAsk.plan.chapters.length)
+    const swap = swapCopy(replaceAsk.plan.index + 1, replaceAsk.plan.chapters.length, replaceAsk.chapters.length)
     return (
       <div style={{ position: 'relative', width: '100vw', minHeight: '100dvh', overflow: 'hidden' }}>
         <LabBackdrop accent={accent} />
