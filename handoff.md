@@ -247,9 +247,19 @@ stops being quoted as if the suite were wholly green.
    once this is deployed**, or its last step answers `__miloSpeech is not defined` and they have spent
    their time for nothing.
 2. 🎙️ Recorded clips for 3–11 remain the founder's to start (a voice choice and the ElevenLabs spend) — and if ② turns out to be the Chromium stall, clips route around it entirely for the lines that have them.
-3. ⏸️ **PR [#69](https://github.com/RadlorInc/learn/pull/69) is open and NOT merged.** Merge order agreed with the founder: **#68 first**, then rebase #69 onto `main` and resolve `handoff.md` in the branch (keeping both blocks), so the resolution is reviewable rather than buried in a merge commit.
+3. ⏸️ **PR [#69](https://github.com/RadlorInc/learn/pull/69) is open and NOT merged.** Merge order agreed with the founder: **#68 first** — which turned out to be already done (merged 2026-08-28, see 5) — then rebase #69 onto `main`, which was a no-op for the same reason. Both handoff blocks are present and neither replaced the other.
 4. ⚠️ **The intro/demo screens of BlockYard, BuildingBlocks and HopAlong** show the line only where their banner or the pill renders; no chapter is left without it in a scored round, which is where it was asked for.
-5. ⏭️ **PR [#68](https://github.com/RadlorInc/learn/pull/68) is still open and unmerged** from 2026-08-28 (chapter 2's tag overhang, chapter 4's cluster scale), and the `counting` case of `ready-bar.spec.ts` is still flaky.
+5. ⚠️⚠️ **AND A CORRECTION I OWE THIS FILE: I REPORTED PR #68 AS OPEN AND FLAGGED A `handoff.md`
+   MERGE COLLISION WITH IT. BOTH WERE FALSE.** #68 merged on **2026-08-28 as `e2be6d2`**, three days
+   before this session and BEFORE the commit this branch is based on — so it was already in `main`,
+   there was never a collision, and the rebase was a no-op (`git merge-base --is-ancestor` says the
+   branch already contains all of `main`). **Where the claim came from: this file's own ▶ OPEN item,
+   written by the 2026-08-28 session hours before its PR merged, and never updated.** I read stale
+   prose and repeated it as current fact without asking GitHub — the reader's half of CLAUDE.md's
+   own rule, *do not amplify a finding past the evidence it arrived with*, and it cost the founder a
+   thank-you for a catch that was not real. ✅ Every "#68 is open" line in this file is corrected
+   below. **A PR's state is one `gh pr view` away; this file is not a source of truth for it.**
+6. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky (2026-08-28), unchanged by this work.
 
 > 📏 **2026-08-28 (second pass) — THE STUDENT RAISED "I CANNOT SEE ALL THE NUMBERS" A SECOND TIME, AND IT WAS A SECOND, SEPARATE MECHANISM: THE NUMBER IS DRAWN OUTSIDE THE SPRITE'S BOX AND EVERY BAND HELPER RESERVES FROM THE BOX. FIXED, PLUS THE SAME FAULT FOUND UNREPORTED ONE FUNCTION ALONG IN CHAPTER 4.** `tsc` 0 · **1641/1642** · `next build` 0 · **7 mutations planted, 7 caught** · sw **v150**. **PR [#68](https://github.com/RadlorInc/learn/pull/68) OPEN** — pushed, not merged. Full detail in ③ and ▶ OPEN 2 of the block below.
 >
@@ -282,7 +292,9 @@ far row to the same line. So the band fitted perfectly and the NUMBERS sat behin
   `tagLift`, plus a check that the reserve's formula IS `NumberTag`'s. **4 mutations, 4 caught**
   (drop `topPx` from the band · from the size cap · make the parameter inert · understate the lift).
   `tsc` 0 · **1641/1642** · `next build` 0 · sw **v150**. ✅ **Committed and pushed —
-  PR [#68](https://github.com/RadlorInc/learn/pull/68), OPEN, not merged.**
+  PR [#68](https://github.com/RadlorInc/learn/pull/68) — ✅ **MERGED 2026-08-28 as `e2be6d2`** (this
+  line said "OPEN, not merged" until 2026-08-31; it was written hours before the merge and is what
+  led the next session to report a collision that did not exist).**
 - ⚠️⚠️ **AND MY OWN SWEEP WAS BLIND FOR ITS FIRST TWO RUNS, WHICH IS THE LESSON WORTH KEEPING.** It
   read `L.huddleRight` — the field is `huddleRightPct` — so every `waitSpot` came back `NaN` and the
   BURIAL half of the sweep reported a confident **0 findings**. `vitest` does not type-check, so it
@@ -439,8 +451,9 @@ not trustworthy even though the feature is. Not fixed; next in line.
    to start** (a voice choice and the ElevenLabs spend). The pipeline already exists — `clipKey`,
    `voiceClipPlayer`, and 12–18's clips. Until then a voiceless device gets the notice above instead
    of an unwinnable round, which is honest but is not the fix.
-2. ⏸️ **PR [#68](https://github.com/RadlorInc/learn/pull/68) IS OPEN AND UNMERGED** — chapter 2's tag
-   overhang (③) and chapter 4's cluster scale (④). CI not read at the time of writing.
+2. ✅ **PR [#68](https://github.com/RadlorInc/learn/pull/68) MERGED 2026-08-28 as `e2be6d2`** — chapter
+   2's tag overhang (③) and chapter 4's cluster scale (④). ⚠️ This item read "OPEN AND UNMERGED"
+   until 2026-08-31 and was believed by a later session; corrected there, see the 🗒️ block's ▶ 5.
 3. ⚠️ **THE `counting` CASE OF `ready-bar.spec.ts` IS FLAKY** — it failed locally on a 240 s timeout
    (*"never reached a commit control"*) while the bar demonstrably works on production, because its
    driver has to catch paraders inside a narrow on-frame window. **A flaky gate gets re-run instead
@@ -458,7 +471,7 @@ not trustworthy even though the feature is. Not fixed; next in line.
    Gated in `homeTimeGeometry.test.ts` §②b, driving `clusterSpot` at both ends rather than
    recomputing the rule; **3 mutations planted, 3 caught** (flat 0.8 · cap dropped · calibrated on
    the shark). `tsc` 0 · **1641/1642** · `next build` 0. ✅ **Committed and pushed in the same
-   PR [#68](https://github.com/RadlorInc/learn/pull/68) as ③ — OPEN, not merged.**
+   PR [#68](https://github.com/RadlorInc/learn/pull/68) as ③ — ✅ **MERGED 2026-08-28 as `e2be6d2`.**
    ⚠️ **Two things seen while driving it and deliberately NOT changed:** Milo's `AskSign` covers
    ~29% of the nearest gathered creature (it is anchored to him, and this predates the fix), and the
    gathered set is now 0.47 of the waiting one for a shark — a bigger depth jump than before, which
