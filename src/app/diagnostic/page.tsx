@@ -21,10 +21,11 @@ import { NODE_BY_ID, chapterFor, type Band } from '@/core/skillGraph'
 import { demoEligible } from '@/core/arChapters'
 import { makeItem, makeReadinessItem, pickThemeFor, gradeItem, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
 import { CHAPTER_NAMES, gradeStartPlan, type AgeGroup } from '@/core/chapters'
+import { swapCopy } from '@/core/planCopy'
 import { track } from '@/infra/analytics'
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
 import { stashPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
-import { setActivePlan } from '@/infra/storage/activePlan'
+import { setActivePlan, planInProgress, type ActivePlan } from '@/infra/storage/activePlan'
 import { markCheckupDone, recordCheckupSkip } from '@/infra/storage/checkup'
 import { setLeadEmail, getLeadEmail } from '@/infra/storage/leadEmail'
 import { kv } from '@/infra/storage/kv'
@@ -159,6 +160,13 @@ export default function DiagnosticPage() {
   const ctxRef = useRef<DiagContext>({})
   const finalStateRef = useRef<ProbeState | null>(null)   // probe state at report time (for capture/save)
   const persistRef = useRef<Promise<void> | null>(null)   // the in-flight DB save (awaited before we navigate away)
+  /**
+   * ⚠️ A CHILD CAN START THIS CHECK WHENEVER THEY LIKE NOW (the menu carries its own door), so
+   * finishing one is no longer always a FIRST check — it can land on a plan somebody is four
+   * chapters into, and `setActivePlan` resets the pointer to 0. So it asks first. Null = nothing to
+   * ask about.
+   */
+  const [replaceAsk, setReplaceAsk] = useState<{ plan: ActivePlan; chapters: string[]; lid: string } | null>(null)
 
   const accent = accentFor(band)
   const readiness = band === '3-5'
@@ -241,6 +249,24 @@ export default function DiagnosticPage() {
     afterIntro()
   }
 
+  /**
+   * The two answers to that question. EITHER WAY the diagnosis is already saved — it persists when
+   * the probe ENDS (`persistDiagnosis`), not here — so declining costs the pointer and nothing else,
+   * and the report is still in the parent's dashboard.
+   *
+   * ⚠️ Keeping the old plan is DEVICE-LOCAL, exactly like the checkup skip: `reconcilePlan` prefers
+   * a local plan over the remote one, so the choice holds here. A fresh device with no local plan
+   * seeds the newer remote one — the same window the skip has, and closing it would mean a second
+   * write path that can disagree with the first.
+   */
+  const finishReplace = async (replace: boolean) => {
+    const ask = replaceAsk
+    if (!ask) return
+    if (replace) setActivePlan(ask.lid, band, ask.chapters)
+    try { await Promise.race([persistRef.current ?? Promise.resolve(), new Promise(r => setTimeout(r, 4000))]) } catch { /* best-effort */ }
+    window.location.href = window.location.origin + '/menu' + (replace ? '?plan=1' : '')
+  }
+
   // Launch the plan (step 6). SIGNED-IN → save the arranged plan for this learner + drop into the REAL
   // app (the menu owns learner-loading + progress-saving launch; the plan card walks them through it).
   // COLD/preview → the free preview door (a taste of the first chapter; no profile to save to yet).
@@ -251,6 +277,9 @@ export default function DiagnosticPage() {
     // SIGNED-IN → always land in the REAL app. An on-track child (no gap → empty plan) still goes to
     // /menu to "get ahead", NOT the anonymous /story preview (which would drop their real profile).
     if (hasLearner && lid) {
+      // ⚠️ Only when there is something to lose — a plan nobody has walked is replaced silently.
+      const walked = chs.length ? planInProgress(lid) : null
+      if (walked) { setReplaceAsk({ plan: walked, chapters: chs, lid }); return }
       if (chs.length) setActivePlan(lid, band, chs)
       // Don't lose the diagnosis to a fast click: let the in-flight save finish (cap so we never hang).
       try { await Promise.race([persistRef.current ?? Promise.resolve(), new Promise(r => setTimeout(r, 4000))]) } catch { /* best-effort */ }
@@ -485,6 +514,22 @@ export default function DiagnosticPage() {
             return <ChoiceButton key={c} label={c} accent={accent} state={picked === c ? 'idle' : st === 'dim' ? 'dim' : 'idle'} size={btn} onClick={() => answer(c)} disabled={!!picked} />
           })}
         </div>
+        <PtMilo left={9} />
+      </div>
+    )
+  }
+
+  // ── "YOU ARE PART-WAY THROUGH A PLAN" ────────────────────────────────────────────────
+  // Same shape as the resume offer above: offered, never applied silently.
+  if (replaceAsk) {
+    const swap = swapCopy(replaceAsk.plan.index + 1, replaceAsk.plan.chapters.length, replaceAsk.chapters.length)
+    return (
+      <div style={{ position: 'relative', width: '100vw', minHeight: '100dvh', overflow: 'hidden' }}>
+        <LabBackdrop accent={accent} />
+        <IntroCard accent={accent} short={short}
+          title={swap.title} cta={swap.cta} body={swap.body}
+          onStart={() => void finishReplace(true)}
+          alt={{ label: swap.alt, onPick: () => void finishReplace(false) }} />
         <PtMilo left={9} />
       </div>
     )
