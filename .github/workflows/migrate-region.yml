@@ -9,7 +9,7 @@ name: Migrate region (dump Sydney → restore into a new project)
 # No access token: `db dump --db-url` bypasses platform auth (measured: it fails on Docker, not auth).
 #
 # Order is load-bearing (docs/supabase-region-migration.md §3–4):
-#   revoke default privileges → extensions → schema → auth data → public data → cron → verify.
+#   revoke default privileges → extensions → schema → ledger → data (auth then public) → cron → verify.
 # Restoring onto default privileges silently re-opens V12/V19 with every RLS policy reading correct.
 
 on:
@@ -82,9 +82,9 @@ jobs:
           set -euo pipefail
           supabase db dump --db-url "$OLD_DB_URL" -f schema.sql
           supabase db dump --db-url "$OLD_DB_URL" -f data.sql --data-only --use-copy
-          # -x auth.schema_migrations: GoTrue's OWN ledger already exists on a fresh project; copying
-          # Sydney's rows over it is a duplicate-key error on a restore that is otherwise correct.
-          supabase db dump --db-url "$OLD_DB_URL" -f auth.sql --data-only --use-copy --schema auth -x auth.schema_migrations
+          # No separate auth dump: measured on run 33780131987, data.sql already carries all 22 auth
+          # tables (auth.users included) ahead of the public ones, and carries NEITHER ledger. Dumping
+          # auth again and loading both is what produced `duplicate key ... flow_state_pkey`.
           # the CLI's migration ledger: without it, the next `supabase db push` on the new project
           # would try to replay all 77 files onto a schema that already has them.
           supabase db dump --db-url "$OLD_DB_URL" -f ledger.sql --data-only --use-copy --schema supabase_migrations
@@ -92,20 +92,19 @@ jobs:
           # run 33778061428 died on `column "created_by" does not exist` because the hand-written
           # version had drifted from the one production actually has.
           supabase db dump --db-url "$OLD_DB_URL" -f ledger_schema.sql --schema supabase_migrations
-          for f in schema.sql data.sql auth.sql ledger.sql ledger_schema.sql; do test -s $f || { echo "::error::$f empty"; exit 1; }; done
-          echo "schema $(wc -c <schema.sql)B · data $(wc -c <data.sql)B · auth $(wc -c <auth.sql)B · ledger $(wc -c <ledger.sql)B"
+          for f in schema.sql data.sql ledger.sql ledger_schema.sql; do test -s $f || { echo "::error::$f empty"; exit 1; }; done
+          echo "schema $(wc -c <schema.sql)B · data $(wc -c <data.sql)B · ledger $(wc -c <ledger.sql)B"
           # Table NAMES only, never rows — this dump carries children's data and the repo is public.
           # Printed BEFORE the assertions so a failure says what the file does contain, rather than
           # leaving "no auth.users block" ambiguous between "not dumped" and "grep of the wrong shape".
           echo "--- COPY blocks in data.sql ---";   grep -oE '^COPY [^ (]+' data.sql   || echo "(none)"
-          echo "--- COPY blocks in auth.sql ---";   grep -oE '^COPY [^ (]+' auth.sql   || echo "(none)"
           echo "--- COPY blocks in ledger.sql ---"; grep -oE '^COPY [^ (]+' ledger.sql || echo "(none)"
           # positive control on the one file that decides whether 11 families keep their logins:
           # the CLI treats auth as managed and MAY silently exclude it — assert the block is there.
           # Quoting-tolerant: pg_dump writes `COPY auth.users` or `COPY "auth"."users"` depending on
           # version and identifier. A pattern matching only one shape cannot fail for the other —
           # the bundle-grep trap: it would read as a missing block on a dump that is perfectly fine.
-          grep -Eq '^COPY "?auth"?[.]"?users"? ' auth.sql || { echo "::error::auth.sql has no auth.users block"; exit 1; }
+          grep -Eq '^COPY "?auth"?[.]"?users"? ' data.sql || { echo "::error::data.sql has no auth.users block"; exit 1; }
           grep -Eq '^COPY "?supabase_migrations"?[.]"?schema_migrations"? ' ledger.sql || { echo "::error::ledger.sql has no ledger block"; exit 1; }
           grep -Eqi 'create table[^;]*schema_migrations' ledger_schema.sql || { echo "::error::ledger_schema.sql has no schema_migrations table"; exit 1; }
           psql "$OLD_DB_URL" -f supabase/tests/security_posture.sql > posture.old.txt
@@ -130,7 +129,6 @@ jobs:
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -f ledger_schema.sql
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f ledger.sql
           # replica role: FKs and triggers stay quiet while rows land in dependency order
-          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f auth.sql
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f data.sql
           # the 4 retention jobs live in cron.job, which a dump does not carry (measured 2026-09-03)
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
@@ -139,7 +137,7 @@ jobs:
             select cron.schedule('prune-error-events',      '27 3 * * *', 'select public.prune_error_events()');
             select cron.schedule('prune-diagnostic-leads',  '32 3 * * *', 'select public.prune_diagnostic_leads()');
           SQL
-          rm -f schema.sql data.sql auth.sql ledger.sql ledger_schema.sql
+          rm -f schema.sql data.sql ledger.sql ledger_schema.sql
 
       - name: Verify — same queries, two databases, must agree
         env: { NEW_DB_URL: "${{ secrets.NEW_DB_URL }}" }
