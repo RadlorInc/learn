@@ -88,8 +88,13 @@ jobs:
           # ⚠️ Done here rather than with the CLI's own -x: `-x 'storage.*'` (run 33781398915) left
           # every storage table in AND silently dropped the supabase_migrations block, i.e. it
           # excluded the one thing we need and none of what we asked for.
+          # block headers and terminators only — no row ever prints, either side of the filter
+          echo "--- data.sql structure BEFORE the filter (tail) ---"
+          grep -nE '^COPY |^\\\.$' data.sql | tail -24
           awk '/^COPY "storage"\./{skip=1} skip && /^\\\.$/{skip=0; next} !skip' data.sql > data.filtered
           mv data.filtered data.sql
+          echo "--- data.sql structure AFTER the filter (tail) ---"
+          grep -nE '^COPY |^\\\.$' data.sql | tail -12
           # No separate auth dump: measured on run 33780131987, data.sql already carries all 22 auth
           # tables (auth.users included) ahead of the public ones, and carries NEITHER ledger. Dumping
           # auth again and loading both is what produced `duplicate key ... flow_state_pkey`.
