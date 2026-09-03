@@ -208,13 +208,35 @@ jobs) → verify (`security_posture.sql` on BOTH databases, diffed; then the RLS
 `concurrency: migrate-region-<ref>`. No artifact is ever uploaded — the repo is public and the dump
 carries children's data; every diagnostic prints table NAMES only, never a row.
 
-## ▶ OPEN — the copy is done; everything left is a cutover step and all of it is the founder's
-1. 🔴 **Google OAuth, and it is the one that can BLOCK** — [credentials console](https://console.cloud.google.com/apis/credentials?project=12513320995) → **ADD** `https://wrnjqjhrbnqxornmfisf.supabase.co/auth/v1/callback`, **keeping** the old `qaymxunzlarwusogwyak` one. Additive, so it is safe to do now, today, with nothing else moving. If `admin@radlor.com` cannot Save, get Owner — 7 of 11 accounts sign in with Google.
-2. 🔴 **New project's auth config** — site URL + redirect allowlist (doc §4③). Also safe now: nothing talks to that project.
-3. ⚠️ **RE-RUN THE MIGRATION IMMEDIATELY BEFORE THE CUTOVER**, `wipe_target=true`. What is there now is a snapshot of ~16:50 on 2026-09-03; any child who plays between then and the flip is not in it. One dispatch, ~3 minutes.
-4. 🔴 **Then** the two Vercel env vars (§7), then a real Google sign-in, then `auth_logs`. **Until that flip, Sydney is still production** — the new project is a verified copy nobody is using.
-5. A week on the new project, then delete Sydney (~$10/mo back).
-6. ⏭️ After cutover: apply `20260903100000` + `20260903100100` (the ledger rode across, so only those two are pending), then read `pg_stat_statements` for the `is_chapter_entitled` after-number the morning block promised.
+## ✅ AND THEN THE CUTOVER RAN THE SAME EVENING — PRODUCTION IS NOW us-east-1
+Google redirect URI added (old one kept) · Google provider enabled on the new project with the SAME
+client · URL configuration copied · migration re-run for a fresh snapshot (green, `wipe_target=true`)
+· **three** Vercel env vars repointed (§7 said two; `SUPABASE_SERVICE_ROLE_KEY` is the third) ·
+redeployed on `6c80255`.
+**Verified from the RUNNING deployment, not the settings page:** the live bundle carries the new ref
+and the new publishable key, and **zero** occurrences of the old ref (positive control: 72 mentions
+of "supabase" in 871 KB across 13 chunks — the first attempt fetched 0 chunks because the path is
+`/_next/static/immutable/chunks/`, and its "old ref: 0" looked exactly like the real answer).
+**Verified on both databases, two-sided:** new project 1 session in 30 min, last sign-in 17:51:18;
+Sydney 0 new sessions, last sign-in the previous day.
+⚠️ **And the check that mattered most: users stayed 11 and profiles stayed 11.** Had
+`auth.identities` not come across intact, Google would have made a TWELFTH user and the parent's own
+children would have been invisible to them, with nothing erroring.
+
+## ▶ OPEN — what is left after the cutover
+1. 🔴 **`SUPABASE_SERVICE_ROLE_KEY` IS THE ONE THING STILL UNVERIFIED.** It is server-side, so it
+   is not in the bundle and no browser check can see it. It is read by `errorSink`, `/api/lead` and
+   **the Stripe webhook** — and `errorSink` swallows its own errors by design, so a wrong value there
+   is silent. Its first real proof is a webhook turning a payment into seats, or an `error_events`
+   row appearing on the new project. Do not record it as working until one of those is seen.
+2. 🔴 **The other ten accounts are still logged out** and have to sign in again (per-project JWT
+   keys). If any of them cannot, it is the Google config, not the data.
+3. ⚠️ **Sydney stays for a week as the rollback**, then delete it (~$10/mo back). Rolling back is the
+   same three env vars in reverse — but anything played on the new project after the flip would not
+   be in it, so after a day or so the rollback stops being free.
+4. ✅ DONE: Google redirect URI added (old kept), Google provider on the new project using the SAME
+   OAuth client, URL configuration copied, three Vercel env vars, redeploy, real Google sign-in.
+5. ⏭️ **Now due:** apply `20260903100000` + `20260903100100` (the ledger rode across, so only those two are pending), then read `pg_stat_statements` for the `is_chapter_entitled` after-number the morning block promised.
 7. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`, or a push to `main` migrates production unreviewed.
 8. ⏭️ `backup.yml` still unconfigured (managed backups make `BACKUP_PASSPHRASE` optional). The uncommitted pile from the morning block (`menu/page.tsx`, the RPC, the two migrations) is **still uncommitted** — this session touched none of it.
 9. ⏭️ `supabase/config.toml` says `major_version = 17` now; `.gitignore` gained `supabase/.temp/`.
