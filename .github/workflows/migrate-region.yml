@@ -1,0 +1,104 @@
+name: Migrate region (dump Sydney → restore into a new project)
+
+# ONE job, no artifact: the repo is public, so a dump with children's data must never be uploaded.
+# Docker is on ubuntu-latest, which is the only reason this runs here and not on a Mac.
+# Needs exactly two secrets, both copied from each project's Connect panel → "Session pooler"
+# (port 5432, IPv4 — GitHub runners have no IPv6, so the direct db.<ref> host will not connect):
+#   OLD_DB_URL   production (Sydney)     — READ ONLY here: dump, and the fingerprint
+#   NEW_DB_URL   the fresh us-east-1 project, still empty
+# No access token: `db dump --db-url` bypasses platform auth (measured: it fails on Docker, not auth).
+#
+# Order is load-bearing (docs/supabase-region-migration.md §3–4):
+#   revoke default privileges → extensions → schema → auth data → public data → cron → verify.
+# Restoring onto default privileges silently re-opens V12/V19 with every RLS policy reading correct.
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_ref:
+        description: 'Project ref of the NEW (empty) project. Refuses to run if it equals PROD_PROJECT_REF.'
+        required: true
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Refuse to restore production onto itself
+        env:
+          NEW_REF: ${{ inputs.new_ref }}
+          OLD_REF: ${{ vars.PROD_PROJECT_REF }}
+          NEW_DB_URL: ${{ secrets.NEW_DB_URL }}
+        run: |
+          set -euo pipefail
+          [ -n "$OLD_REF" ] || { echo "::error::PROD_PROJECT_REF unset"; exit 1; }
+          [ "$NEW_REF" != "$OLD_REF" ] || { echo "::error::new_ref equals production"; exit 1; }
+          case "$NEW_DB_URL" in *"$OLD_REF"*) echo "::error::NEW_DB_URL points at production"; exit 1;; esac
+          case "$NEW_DB_URL" in *"$NEW_REF"*) ;; *) echo "::error::NEW_DB_URL does not contain new_ref"; exit 1;; esac
+          # the target must be EMPTY — a second run onto a populated project is not a migration
+          n=$(psql "$NEW_DB_URL" -tAc "select count(*) from pg_tables where schemaname='public'")
+          [ "$n" = "0" ] || { echo "::error::new project already has $n public tables"; exit 1; }
+
+      - name: Dump production (read-only)
+        env: { OLD_DB_URL: "${{ secrets.OLD_DB_URL }}" }
+        run: |
+          set -euo pipefail
+          supabase db dump --db-url "$OLD_DB_URL" -f schema.sql
+          supabase db dump --db-url "$OLD_DB_URL" -f data.sql --data-only --use-copy
+          # -x auth.schema_migrations: GoTrue's OWN ledger already exists on a fresh project; copying
+          # Sydney's rows over it is a duplicate-key error on a restore that is otherwise correct.
+          supabase db dump --db-url "$OLD_DB_URL" -f auth.sql --data-only --use-copy --schema auth -x auth.schema_migrations
+          # the CLI's migration ledger: without it, the next `supabase db push` on the new project
+          # would try to replay all 77 files onto a schema that already has them.
+          supabase db dump --db-url "$OLD_DB_URL" -f ledger.sql --data-only --use-copy --schema supabase_migrations
+          for f in schema.sql data.sql auth.sql ledger.sql; do test -s $f || { echo "::error::$f empty"; exit 1; }; done
+          # positive control on the one file that decides whether 11 families keep their logins:
+          # the CLI treats auth as managed and MAY silently exclude it — assert the block is there.
+          grep -q '^COPY auth.users ' auth.sql || { echo "::error::auth.sql has no auth.users block"; exit 1; }
+          grep -q '^COPY supabase_migrations.schema_migrations ' ledger.sql || { echo "::error::ledger.sql has no ledger block"; exit 1; }
+          echo "schema $(wc -c <schema.sql)B · data $(wc -c <data.sql)B · auth $(wc -c <auth.sql)B · ledger $(wc -c <ledger.sql)B"
+          psql "$OLD_DB_URL" -f supabase/tests/security_posture.sql > posture.old.txt
+
+      - name: Restore into the new project
+        env: { NEW_DB_URL: "${{ secrets.NEW_DB_URL }}" }
+        run: |
+          set -euo pipefail
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+            alter default privileges in schema public revoke all on tables    from anon, authenticated;
+            alter default privileges in schema public revoke all on functions from anon, authenticated;
+            create extension if not exists pg_cron;
+            create extension if not exists pg_stat_statements;
+            create extension if not exists pgcrypto;
+            create extension if not exists "uuid-ossp";
+            create extension if not exists supabase_vault;
+          SQL
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -f schema.sql
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -c 'create schema if not exists supabase_migrations' \
+            -c 'create table if not exists supabase_migrations.schema_migrations (version text primary key, statements text[], name text)'
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f ledger.sql
+          # replica role: FKs and triggers stay quiet while rows land in dependency order
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f auth.sql
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f data.sql
+          # the 4 retention jobs live in cron.job, which a dump does not carry (measured 2026-09-03)
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+            select cron.schedule('purge-old-learner-events','17 3 * * *', $$delete from public.learner_events where created_at < now() - interval '90 days'$$);
+            select cron.schedule('prune-diagnostic-items',  '22 3 * * *', 'select public.prune_diagnostic_items()');
+            select cron.schedule('prune-error-events',      '27 3 * * *', 'select public.prune_error_events()');
+            select cron.schedule('prune-diagnostic-leads',  '32 3 * * *', 'select public.prune_diagnostic_leads()');
+          SQL
+          rm -f schema.sql data.sql auth.sql ledger.sql
+
+      - name: Verify — same queries, two databases, must agree
+        env: { NEW_DB_URL: "${{ secrets.NEW_DB_URL }}" }
+        run: |
+          set -euo pipefail
+          psql "$NEW_DB_URL" -f supabase/tests/security_posture.sql > posture.new.txt
+          if diff posture.old.txt posture.new.txt; then echo "✓ posture + fingerprint identical"; else echo "::error::new project differs from production (above)"; exit 1; fi
+          # isolation: the suite proving one family cannot read another's data
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql
+          echo "✓ RLS regression suite green on the new project"
+          echo "::notice::Restore verified. Nothing is pointed at it yet — §5 (Google redirect URI) and §7 (Vercel env) are manual."

@@ -8,4 +8,4 @@
 project_id = "milo-story-mode"
 
 [db]
-major_version = 15
+major_version = 17

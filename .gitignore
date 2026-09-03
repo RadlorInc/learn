@@ -69,8 +69,10 @@ scratch/
 docs/recovered/
 python script/
 scripts/.voice-corpus.json
+scripts/.voice-corpus-3-5.json
 scripts/.voice-fragments.json
 
 # Staged by CI only (see .github/workflows/ci.yml) — must never be committed:
 # committing it would let `supabase db push` apply a backdated migration to PRODUCTION.
 supabase/migrations/00000000000000_baseline.sql
+supabase/.temp/
