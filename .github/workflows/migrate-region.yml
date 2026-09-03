@@ -128,6 +128,14 @@ jobs:
           # the exclusion actually bit — otherwise the restore dies on a managed table again
           grep -Eq '^COPY "?storage"?[.]' data.sql && { echo "::error::-x storage.* did not exclude storage"; exit 1; } || true
           grep -Eqi 'create table[^;]*schema_migrations' ledger_schema.sql || { echo "::error::ledger_schema.sql has no schema_migrations table"; exit 1; }
+          # A schema dump carries no triggers defined on a MANAGED schema's tables, and one of them
+          # (on_auth_user_created → public.handle_new_user) is what gives every new signup a profile
+          # row. Run 33782802949 restored without it: 11 existing profiles present and correct — they
+          # ride in the data dump — and every FUTURE parent would have got an auth row, no profile,
+          # and no way to add a child. Dumped from production rather than written out here.
+          psql "$OLD_DB_URL" -tAc "select pg_get_triggerdef(t.oid) || ';' from pg_trigger t join pg_class c on c.oid = t.tgrelid join pg_namespace n on n.oid = c.relnamespace where not t.tgisinternal and n.nspname = 'auth'" > auth_triggers.sql
+          grep -qi 'create trigger' auth_triggers.sql || { echo "::error::no auth triggers dumped — production has at least on_auth_user_created"; exit 1; }
+          echo "--- auth triggers to carry across ---"; cat auth_triggers.sql
           psql "$OLD_DB_URL" -f supabase/tests/security_posture.sql > posture.old.txt
 
       - name: Restore into the new project
@@ -151,6 +159,7 @@ jobs:
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f ledger.sql
           # replica role: FKs and triggers stay quiet while rows land in dependency order
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f data.sql
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -f auth_triggers.sql
           # the 4 retention jobs live in cron.job, which a dump does not carry (measured 2026-09-03)
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
             select cron.schedule('purge-old-learner-events','17 3 * * *', $$delete from public.learner_events where created_at < now() - interval '90 days'$$);
@@ -158,7 +167,7 @@ jobs:
             select cron.schedule('prune-error-events',      '27 3 * * *', 'select public.prune_error_events()');
             select cron.schedule('prune-diagnostic-leads',  '32 3 * * *', 'select public.prune_diagnostic_leads()');
           SQL
-          rm -f schema.sql data.sql ledger.sql ledger_schema.sql
+          rm -f schema.sql data.sql ledger.sql ledger_schema.sql auth_triggers.sql
 
       - name: Verify — same queries, two databases, must agree
         env: { NEW_DB_URL: "${{ secrets.NEW_DB_URL }}" }

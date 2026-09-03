@@ -36,6 +36,18 @@ union all select 'auth.identities',  count(*) from auth.identities
 union all select 'learners',         count(*) from public.learners
 union all select 'chapters',         count(*) from public.chapters
 union all select 'cron jobs',        count(*) from cron.job
+-- ⚠️ Triggers were NOT in this fingerprint until 2026-09-03, and their absence let it report
+-- "identical" on a restore that was missing `on_auth_user_created` on auth.users — i.e. one where
+-- every FUTURE signup would get an auth row and no profile, silently, because the existing
+-- profiles came across in the data dump. A schema dump does not carry triggers defined on a
+-- MANAGED schema's tables, so this is exactly the class the diff has to be able to see.
+-- Caught by the RLS suite, not by this file; it is here so the fingerprint cannot miss it again.
+union all select 'triggers (auth)',  count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid
+                                     join pg_namespace n on n.oid=c.relnamespace
+                                     where not t.tgisinternal and n.nspname='auth'
+union all select 'triggers (public)', count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid
+                                     join pg_namespace n on n.oid=c.relnamespace
+                                     where not t.tgisinternal and n.nspname='public'
 -- sessions / learner_events deliberately ABSENT: they grow on their own (gameplay, and the
 -- 03:17 prune), so a strict diff on them turns a correct restore red if a child is playing.
 order by 1;
