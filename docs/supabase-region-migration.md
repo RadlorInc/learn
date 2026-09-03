@@ -204,8 +204,16 @@ unit*). The login is the only test that covers §5.
 
 ## 7. Cutover
 
-1. Vercel → project `adaptivelearn` → env: `NEXT_PUBLIC_SUPABASE_URL` and
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY` → the new project's values
+0. **Re-run `migrate-region.yml` with `wipe_target=true` FIRST.** Whatever is on the new project is
+   a snapshot from whenever it last ran; any child who played since is not in it. ~3 minutes.
+1. Vercel → project `adaptivelearn` → env → the new project's values. ⚠️ **THREE variables, not two.**
+   This section said two until 2026-09-03; `grep -r 'process.env.*SUPABASE' src` returns:
+   - `NEXT_PUBLIC_SUPABASE_URL` — the client, and `errorSink` / `/api/lead` / the Stripe webhook
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the client, `/api/checkout`, and `/api/lead`'s fallback
+   - `SUPABASE_SERVICE_ROLE_KEY` — `errorSink`, `/api/lead`, **the Stripe webhook**
+   Leave the third pointed at Sydney and it is a service key for one project sent to another's URL:
+   the webhook that turns a payment into seats fails, and `errorSink` swallows its own errors by
+   design, so the sink stays quiet about being broken. Half a cutover is worse than none.
 2. Redeploy, and **confirm a deployment actually appears** — this pipeline has broken silently three
    times and a green settings page was never evidence
 3. Sign in as a real user on production. Google first, since that is the fragile path

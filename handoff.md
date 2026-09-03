@@ -157,6 +157,222 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> ✅ **2026-09-03 (evening) — THE REGION MOVE RAN. THE NEW us-east-1 DATABASE IS A VERIFIED COPY OF SYDNEY, AND NOTHING IS POINTED AT IT YET.** Eleven dispatches, ten red, and **every red was a real defect in the workflow I wrote — not one in production, and not one "just re-run it"**. Sydney was READ ONLY throughout: zero writes, all day. Green run **33783519089**: `✓ posture + fingerprint identical` · **RLS suite 74 assertions, all pass** on the new project. Verified again independently (I queried BOTH databases myself rather than reading the workflow's own diff): users 11/11 · identities 12/12 · profiles 11/11 · learners 19/19 · chapters 72/72 · learner_progress 31/31 · ledger 77/77 · cron jobs 4/4 · policies 35/35 · `on_auth_user_created` present on both.
+
+## ⚠️ THE ONE THAT WOULD HAVE SHIPPED SILENTLY, AND WHAT CAUGHT IT
+The restore completed, the posture diff said **identical**, and the RLS suite then failed inserting a
+learner whose owner had no `profiles` row. Measured on both: production has one non-internal trigger
+in the `auth` schema — `on_auth_user_created` → `public.handle_new_user` — and the restored project
+had **none**. **A schema dump does not carry triggers defined on a MANAGED schema's tables.**
+**What it would have cost:** existing profiles ride in the data dump, so all 11 accounts look
+perfect and every count matches. It is every **FUTURE** parent who breaks — an auth row, no profile,
+and `learners.created_by` references `profiles`, so they cannot add a child. Nothing errors.
+⚠️⚠️ **And the fingerprint said "identical" while that was true of one side.** It counted tables,
+functions, policies, rows and cron jobs — and **no triggers**, i.e. it agreed about everything except
+the thing that differed. Both trigger counts are in `security_posture.sql` now. The RLS suite is what
+actually caught this; that file is why it will not have to next time.
+
+## 🧨 THE TEN REDS, BECAUSE THE LIST IS THE POINT
+| # | died at | the actual mechanism |
+|---|---|---|
+| 1 | guard | `NEW_DB_URL` password (Session pooler needs `postgres.<ref>`, and a symbol in the password breaks URI parsing) |
+| 2 | dump | my grep was `^COPY auth.users `; pg_dump writes `COPY "auth"."users"`. **A correct dump reported as missing** |
+| 3 | restore | the ledger table was hand-written `(version, statements, name)` — production also has `created_by`. A second copy of a schema we do not own |
+| 4–6 | restore | **three dispatches in two minutes, two of them six seconds apart on ONE database.** One dropped schema public while the other created types in it. No concurrency group; `deploy.yml` has had one since it was written |
+| 7 | restore | `data.sql` already carries all 22 auth tables → loading `auth.sql` too sent every auth row twice (`duplicate key … flow_state_pkey`) |
+| 8 | restore | `data.sql` also carries 7 `storage` tables, owned by `supabase_storage_admin`: `permission denied for table buckets_vectors`. All seven measured **0 rows** on production, so they are filtered out of the dump |
+| 9 | dump | the CLI's own `-x 'storage.*'` **left every storage table in and silently dropped the ledger block** — the exclusion excluded only the thing we needed |
+| 10 | verify | the auth trigger, above |
+
+## ⚠️ AND ONE OF THOSE TEN WAS MY MEASUREMENT, NOT THE CODE — WORTH MORE THAN THE OTHER NINE
+I reported *"data.sql carries the ledger"* and deleted the separate ledger dump on the strength of it.
+It came from `grep -A80 'COPY blocks in data.sql'`, whose window ran **past the end of that inventory
+and into the `ledger.sql` inventory printed right after it** — so a line belonging to one file was
+read as belonging to another. **A byte-count window crossing the boundary it was meant to respect**,
+which [CLAUDE.md](CLAUDE.md) already records as a technique that does not work — used here on a LOG
+rather than on source, which is why it did not look like that rule. Two commits acted on it before
+the workflow printed `data.sql`'s own structure and settled it.
+⚠️ **The auth half of the same reading was right, and the difference is the lesson:** it had TWO
+instruments behind it (data.sql's own inventory, and the duplicate-key error). The ledger half had one.
+⚠️ A second one, caught before it shipped: the first control on the storage filter ran `awk` against a
+fixture that was not named `data.sql`, wrote a zero-byte file, and three greps read the empty output
+and reported *"storage gone, rows gone"*. It survived only because *"ledger lost"* was in the same
+batch and could not be true. **The re-run asserts the output is non-empty before believing any of it.**
+
+## 🧰 WHAT THE WORKFLOW IS NOW
+Guard (4 ref checks → optional `wipe_target` → target must be empty) → dump Sydney read-only
+(`schema` · `data`, storage blocks cut out by an awk range · `ledger` · `ledger_schema` · the auth
+triggers via `pg_get_triggerdef`), each with its own positive control → restore (default privileges
+revoked FIRST → 5 extensions → schema → ledger DDL → ledger rows → data → **auth triggers** → 4 cron
+jobs) → verify (`security_posture.sql` on BOTH databases, diffed; then the RLS suite on the new one).
+`concurrency: migrate-region-<ref>`. No artifact is ever uploaded — the repo is public and the dump
+carries children's data; every diagnostic prints table NAMES only, never a row.
+
+## ▶ OPEN — the copy is done; everything left is a cutover step and all of it is the founder's
+1. 🔴 **Google OAuth, and it is the one that can BLOCK** — [credentials console](https://console.cloud.google.com/apis/credentials?project=12513320995) → **ADD** `https://wrnjqjhrbnqxornmfisf.supabase.co/auth/v1/callback`, **keeping** the old `qaymxunzlarwusogwyak` one. Additive, so it is safe to do now, today, with nothing else moving. If `admin@radlor.com` cannot Save, get Owner — 7 of 11 accounts sign in with Google.
+2. 🔴 **New project's auth config** — site URL + redirect allowlist (doc §4③). Also safe now: nothing talks to that project.
+3. ⚠️ **RE-RUN THE MIGRATION IMMEDIATELY BEFORE THE CUTOVER**, `wipe_target=true`. What is there now is a snapshot of ~16:50 on 2026-09-03; any child who plays between then and the flip is not in it. One dispatch, ~3 minutes.
+4. 🔴 **Then** the two Vercel env vars (§7), then a real Google sign-in, then `auth_logs`. **Until that flip, Sydney is still production** — the new project is a verified copy nobody is using.
+5. A week on the new project, then delete Sydney (~$10/mo back).
+6. ⏭️ After cutover: apply `20260903100000` + `20260903100100` (the ledger rode across, so only those two are pending), then read `pg_stat_statements` for the `is_chapter_entitled` after-number the morning block promised.
+7. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`, or a push to `main` migrates production unreviewed.
+8. ⏭️ `backup.yml` still unconfigured (managed backups make `BACKUP_PASSPHRASE` optional). The uncommitted pile from the morning block (`menu/page.tsx`, the RPC, the two migrations) is **still uncommitted** — this session touched none of it.
+9. ⏭️ `supabase/config.toml` says `major_version = 17` now; `.gitignore` gained `supabase/.temp/`.
+
+> 🚀 **2026-09-03 (later) — PRO IS ON, THE REGION MOVE IS GO, AND THE MECHANISM IS A ONE-JOB WORKFLOW THAT DIFFS THE SAME QUERY ON BOTH DATABASES.** ⚠️ **ITEMS 1–5 OF ITS ▶ OPEN ARE SUPERSEDED BY THE ✅ BLOCK ABOVE — the workflow HAS since run and the copy is verified. Kept for the pre-flight measurements.** The block below was written BEFORE any of it ran: **NOTHING HAS RUN YET — it waits on two connection-string secrets and a push.** Pre-flight only: `migrate-region.yml` YAML parses · `security_posture.sql` validated on PG 17 against production · `verify-backup.sh` re-proven **1 positive + 5 negative, exit codes read** · new project verified empty on 17.6 · **NOTHING committed, NOTHING dispatched, NOTHING applied.** `tsc`/`npm test` not run (no TS touched).
+
+## ① ✅ PRO — QUERIED, AND THE FIRST TWO THINGS I SAID ABOUT IT WERE WRONG
+`get_organization` → the **`Radlor`** org (`nwhbiwrglymeittzjvph`, which holds production) reads `plan: pro`; the personal org `MohammedRafiquekuwari` is still `free` — the plan string is per-org. Dashboard shows **seven daily physical backups, 27 Aug → 02 Sep**, so a restorable copy of the children's data now exists.
+⚠️ Two corrections, both mine: (a) I inferred "Pro since the 27th" from the backup dates — the invoice (`RSEBPT-00001`, $25, paid) is dated **today**; physical backups are taken on every project regardless of plan and Pro only unlocked *seeing* them. (b) I said a new project is "$0/mo, confirmed by API" — `get_cost` answered the wrong question. The Pro credit covers ONE Micro and production spends it; **each additional Micro is ~$9.81/mo** (`$0.01344/h`), charged in arrears. The founder's "$43.46 projected" is exactly $25 + three Micros − $10 credit.
+
+## ② 🧭 THE DECISION: MIGRATE, NOT REPLICATE; AND THE MIGRATION IS THE REHEARSAL
+Read replica in `us-east-1` was priced from the docs (~+$20/mo: primary must go Micro→Small, replica inherits; fixes `GET` reads only; **all Auth and every write stay in Sydney**; async lag on a local-first reconcile path this repo has already been burned by) and **rejected** — eleven users is the cheapest a migration will ever be. **The same-region "Restore to new project (BETA)" clone was skipped**: the docs say it restores into the *same region* (data residency), so it is not the move, and a migration IS a restore into a fresh project — doing both is the same operation twice. Sydney stays live and untouched until two Vercel env vars change, and for a week after as rollback.
+
+## ③ 🧰 WHAT WAS BUILT (uncommitted)
+- **`.github/workflows/migrate-region.yml`** — ONE job, **no artifact** (the repo is public; a dump with child data must never be uploaded). Refuses if `new_ref == PROD_PROJECT_REF`, if `NEW_DB_URL` contains the prod ref, or if the target has any public table. Dumps Sydney read-only (`schema` · `data --use-copy` · `auth -x auth.schema_migrations` · `supabase_migrations` ledger), asserts the `COPY auth.users` and ledger blocks are present (the CLI treats both schemas as managed and MAY silently skip them), restores in §4's order — **default privileges revoked FIRST** (or V12/V19 silently reopen with every policy reading correct) → 5 extensions → schema → ledger → auth → data, the last three under `session_replication_role = replica` — re-creates the **4** cron jobs, then runs `security_posture.sql` on BOTH databases and **diffs the output**, then the RLS regression suite on the new one.
+  ⚠️ **No access token needed**: `supabase db dump --db-url …` was measured to fail on *Docker*, not auth — it bypasses the platform. Docker IS still required on CLI 2.116.0 (measured), which is why this runs on `ubuntu-latest` and not a Mac. Two secrets total: `OLD_DB_URL`, `NEW_DB_URL`, both **Session pooler, port 5432** (runners have no IPv6; the direct host will not connect).
+  ⚠️ Three faults found reviewing my own first draft, all fixed and all confirmed necessary by probing the new project: `auth.schema_migrations` already has 77 rows there (duplicate-key red if copied); the `supabase_migrations` schema does not exist there (would have failed the ledger restore; without the ledger the next `db push` replays all 77 files); and the fingerprint excluded `sessions`/`learner_events`, which grow on their own — a strict diff on them turns a correct restore red if a child is playing.
+- **`supabase/tests/security_posture.sql`** — `docs/security.md`'s four drift queries as a runnable file (they had been prose for six weeks, which is how the baseline went stale) plus a stable fingerprint. Run on PG 17 against production: valid.
+- **`supabase/config.toml`** `major_version` 15 → **17** (production runs 17; the doc had flagged it).
+- **`docs/supabase-region-migration.md`** — STATUS DEFERRED → **GO**; §0 re-measured; §1b, §4①, §5, §6 corrected (below).
+- **`docs/backup-restore-runbook.md`** — the $0 claim corrected; the one-click clone path recorded with its same-region caveat; the positive twin added (§④).
+- `.gitignore` +`supabase/.temp/` (the CLI wrote it during a `--dry-run`).
+
+## ④ 🔬 WHAT THE PRE-FLIGHT CORRECTED IN THE DOCS — every 2026-08-19 number was stale
+| doc said | measured 2026-09-03 |
+|---|---|
+| 2 cron jobs | **4** — `prune-diagnostic-items` (03:22) and `prune-diagnostic-leads` (03:32) were added since |
+| the purge job has `and event <> 'daily_complete'` | **production's job does NOT** — the workflow copies what runs, not what the doc remembered |
+| 5 of 8 users on Google | **7 of 11** (12 identities: 7 google, 5 email) — §5 is now the highest-risk step |
+| 8 users · 17 learners · 20 tables · 17 functions | **11 · 19 · 24 · 25**, 35 policies |
+| ledger 66 files / 65 rows, 62+59 mismatched | **77 / 77, 75 match.** `20260629023502` and `20260702113253` applied with no file; `20260903100000/100100` are files not yet applied. Conclusion unchanged: dump the real schema |
+| `verify-backup.sh` "3 controls, 3 red" | **three NEGATIVE controls and no positive twin** — a script that refuses everything reads identically. Re-run with exit codes: valid artifact → **0**; unencrypted / wrong passphrase / no-`COPY` / garbage / unset passphrase → **1**. Now it discriminates |
+
+## ⑤ 🆕 THE TARGET PROJECT — created by the founder in the dashboard (so the real price was on screen)
+**`Radlor_app`** · ref **`wrnjqjhrbnqxornmfisf`** · `us-east-1` (same region as Vercel's `iad1`) · Micro · PG **17.6.1.166** · `ACTIVE_HEALTHY` · **0 public tables** · `pg_cron` available-not-installed · MCP can reach it. `Interactive_learn` (`qaymxunzlarwusogwyak`) is untouched.
+
+## ⑥ 💸 BILLING, EXPLAINED ONCE SO IT IS NOT RE-DERIVED
+Three Micros now (`Interactive_learn`, `radlor-site`, `Radlor_app`) → ~$19/mo over the $25 plan. Deleting Sydney a week after cutover → ~$10. **`radlor-site` is $10/mo for a waitlist form**; project transfer to the free personal org is self-serve (Settings → General → Transfer; ref/URL/keys unchanged; 1–2 min downtime paid→free) — ⚠️ but on free it **pauses after 7 quiet days, and `/api/waitlist` answers 303 either way**, so a paused DB would look healthy while every signup was lost. Founder's call; I leaned keep-it. Spend cap is ON, so the failure mode above quota is read-only, not a bill.
+
+## ▶ OPEN — ⚠️ **1–5 SUPERSEDED 2026-09-03 evening: the secrets are set, the push happened, the workflow ran green. Read the ✅ block's ▶ OPEN instead.**
+1. ✅ **DONE — Founder: two secrets, own terminal** — `gh secret set OLD_DB_URL` (Interactive_learn → Connect → Session pooler) and `NEW_DB_URL` (Radlor_app, same). Not through chat.
+2. 🔴 **Founder: yes to a push.** `workflow_dispatch` needs the file on a ref. Plan: branch `region-migration` with ONLY this session's five files, then `gh workflow run migrate-region.yml --ref region-migration -f new_ref=wrnjqjhrbnqxornmfisf`. **Expect the first run red** — most likely the `supabase_migrations` schema dump (the CLI may refuse a managed schema → fallback is `supabase migration repair --status applied` per version) or an extension line. That is the rehearsal.
+3. 🔴 **Founder: the Google OAuth Editor check** — [console.cloud.google.com/apis/credentials?project=12513320995](https://console.cloud.google.com/apis/credentials?project=12513320995): can `admin@radlor.com` (Editor) save a redirect URI? If not, get Owner **before** cutover. Not blocking the dispatch; blocking §5.
+4. After green: apply `20260903100000` + `20260903100100` to **Radlor_app** (`supabase db push` — the ledger rides across, so only those two apply), then read `pg_stat_statements` there for the after-number ④ of the morning block promised.
+5. Cutover (§5 ADD the redirect URI, §4③ auth config on the new project, §7 two Vercel env vars, a real Google sign-in, `auth_logs`) — all founder-only. Then a week, then delete Sydney.
+6. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`; `SUPABASE_ACCESS_TOKEN` + `PROD_DB_PASSWORD` are `deploy.yml`'s, not the migration's — whenever.
+7. ⏭️ `backup.yml` kept, founder's call; still unconfigured. With managed backups real, `BACKUP_PASSPHRASE` is optional.
+8. ⏭️ Last session's uncommitted pile (③④⑤ of the morning block — `menu/page.tsx`, the RPC, the two migrations) is **still uncommitted and still untouched**; it lands on whichever project is production, i.e. Radlor_app after ④.
+
+> 🌏 **2026-09-03 — WHERE MILO BREAKS UNDER LOAD, STEP 1: MEASURED WITHOUT LOAD. THE HEADLINE IS NOT A QUERY — THE DATABASE IS IN SYDNEY AND EVERY USER IS IN THE US — AND THE THING THAT HAS TO HAPPEN BEFORE THE MOVE IS A BACKUP, BECAUSE THE NIGHTLY ONE HAD NEVER RUN.** `tsc` 0 · **1704 passed, 1 skipped by design** · `next build` 0 · gate `menuRoundTrips` **12/12, 3 mutations planted, 3 caught** · both new migrations driven on PG 17 (PGlite), **3 SQL mutations planted, 3 caught** · `scripts/verify-backup.sh` **3 controls, 3 red** · **NOTHING committed, NOTHING applied, NOT deployed** — founder's order is backup → restore rehearsal → region move, and the move waits for his Pro decision.
+
+## ① 🌏 THE REGION, READ OFF THE DASHBOARD, NOT INFERRED
+Settings → General → *Project region: Oceania (Sydney) · ap-southeast-2*. Every edge-log request in
+24 h came from the US (EWR); the fastest origin time was **212 ms**, the average **344 ms**, on
+queries that execute in 0.1–9 ms. The other free slot is `radlor-site` (us-west-2, the waitlist).
+**A region cannot be changed in place** (Supabase docs): it is a CLI dump → new project → psql
+restore. What that involves and what breaks is in the 2026-09-03 report; the short form: ~2–3 h of
+work, Docker + Supabase CLI (neither on this machine), **all users re-login** (per-project JWT keys),
+Google OAuth callback re-registered, 4 cron jobs re-created, both Vercel projects' env repointed,
+the MCP token re-issued, and **the two-project cap blocks creating the third** — pause `radlor-site`
+for the hour, or go Pro.
+
+## ② 🔴 THE NIGHTLY BACKUP HAS NEVER BACKED ANYTHING UP — GREEN, 30 DAYS OF RUNS, ZERO DUMPS
+`backup.yml` is *"inert until configured"*: `PROD_PROJECT_REF` and `BACKUP_PASSPHRASE` were never
+set as GitHub variables/secrets, so every run prints a `::warning::` and exits 0 with the dump step
+**skipped**. `gh run list` shows success × 30; `gh run view` shows `Dump schema + data: skipped`.
+And the dashboard says *"Free Plan does not include project backups"*. **So there is no recoverable
+copy of production anywhere**, and the region move needs one as its first step. Row 1 of the
+CLAUDE.md table (a skip path) recurring by design; written down, not fixed — the secrets are yours.
+
+## ③ 📉 THE PARENT DASHBOARD N+1 → ONE RPC
+`entitled_chapters(learner, chapters[])` — one round trip, calls `is_chapter_entitled` per chapter
+server-side so the ONE definition stays one. `entitledChapters()` uses it; a failed call is `null`
+for every chapter (not found out ≠ refused). RLS suite gained **B13h** (seated + unseated agreement).
+
+## ④ ⏱️ `is_chapter_entitled` PLANNING — MEASURED, AND MY FIRST NUMBER WAS WRONG
+I reported *"11 ms to plan, 0.13 ms to execute"*. The 11 ms was MY reader connection planning the
+hand-inlined body cold (568 catalog buffers). Production's own figure for the RPC is **2.6 ms mean,
+0.5 ms min**. The mechanism is real, though: on PG 17 a SQL-language function's body is re-planned
+on every call and a SECURITY DEFINER one cannot be inlined. In-database on PG 17.5, 2000 calls × 5:
+**SQL 190 µs · plpgsql 34 µs · plpgsql with `discard plans` forced per call 218 µs** — the whole gap
+IS the plan cache. Migration `20260903100000` makes it plpgsql, same body. **The after-number comes
+from `extensions.pg_stat_statements` once applied** — nothing here can produce it.
+
+## ⑤ 🍽️ `/menu` 6 → 2
+The check-up trio (`auth/v1/user` + 2 selects) and the plan select ride inside
+`get_learner_bootstrap` (migration `20260903100100`); the 6-week rule is one pure function
+`checkupStatus` shared with the parent dashboard; `getCheckupStatus` reads the local session instead
+of GoTrue. ⚠️ Found while doing it: the *"offline half"* the pointer comment promised did not exist —
+the local-stars derivation sat in the catch of a fetch that ran only after the bootstrap succeeded.
+It now runs on the real no-server-data paths (offline · no session · thrown bootstrap), and the
+existing gate that names `applyPlan(localPlayed(), [])` guards a branch that is finally reachable.
+
+## ⑥ 💾 THE BACKUP, STEP 1 — AS FAR AS IT GOES WITHOUT THE FOUNDER'S CREDENTIALS
+The repo held **zero** secrets and **zero** variables, so all FOUR inputs `backup.yml` names were
+missing, not three. What exists now: `PROD_PROJECT_REF` is set (a repo variable, 2026-09-03);
+[docs/backup-restore-runbook.md](docs/backup-restore-runbook.md) carries the exact `gh secret set`
+lines for `SUPABASE_ACCESS_TOKEN`, `PROD_DB_PASSWORD` and a generated `BACKUP_PASSPHRASE` (**his to
+type — credentials never go through a chat**); `scripts/verify-backup.sh` verifies an artifact FROM
+ITS CONTENTS (sizes, table/function/policy counts, rows per `COPY` block, the `counting` row) and
+was watched going red on an unencrypted tarball, a wrong passphrase and a no-`COPY` dump; the
+runbook holds production's row-count fingerprint of 2026-09-02 to compare against (72 chapters ·
+19 learners · 49 sessions · 1,631 events · 11 auth users …).
+⚠️ **Setting `PROD_PROJECT_REF` also arms `deploy.yml`'s `migrate-prod`** the moment the two
+Supabase secrets exist. It stays skipped only because `migrate-staging` is skipped
+(`STAGING_PROJECT_REF` unset). **Create the `production-db` environment WITH its required-reviewer
+rule before anyone sets a staging ref**, or a push to `main` migrates production unreviewed.
+⚠️ Expect the dump to be missing the 4 `pg_cron` jobs (extension schema, excluded by `db dump`);
+whether `auth.users` rides in `data.sql` is what the script's row table settles — the CLI reference
+and the restore guide say different things. No custom login roles exist, so no `roles.sql` needed.
+
+## ⑦ ❓ A REQUEST THAT DOES NOT BELONG TO THIS REPO
+The founder's last message asked for a combobox on an issue form's `area`/`type` fields
+(`/tester`, "the sheet's Issue Category", `check-tester-cannot-read-admin.mjs`, an admin with 13
+rows). **None of that exists in `milo-story-mode` or `../radlor-site`** — a wider search was
+interrupted before it ran. Most likely the video-reviewer repo CLAUDE.md's table cites. Not done;
+ask which repo before touching anything.
+
+## ▶ OPEN — in the founder's order, and each one stops before the next
+⚠️ **Items 1–4 SUPERSEDED the same afternoon — see the 🚀 block above.** Pro landed, managed backups exist, the clone was skipped as redundant, and the region move is GO with its own workflow. Kept for the record.
+1. 🔴 **BACKUP, MADE REAL.** He sets the three secrets (runbook §1); then trigger `backup.yml`,
+   download the artifact, run `scripts/verify-backup.sh`, compare to the fingerprint (runbook §2).
+   Green is not the evidence — it has been green thirty times; the artifact is.
+2. 🔴 **RESTORE IT ONCE, somewhere disposable** (runbook §3). Only a real Supabase project can find
+   a missing role/extension/cron job — which is the Pro decision (third project = staging too).
+   Report what was missing; something usually is.
+3. 🔴 **THE REGION MOVE — not before Rafi says.** Sydney → a US region; the checklist is in ①.
+   Nothing in ③–⑤ deploys to Sydney first: apply `20260903100000` then `20260903100100` in whichever
+   project is going to be production, then read `pg_stat_statements` for the `is_chapter_entitled`
+   RPC and the edge logs for `/menu` (expect 2 requests: `learner_events` + `get_learner_bootstrap`).
+   The client fails open if it lands first (batch RPC 404 → all `null`).
+4. 🎯 **Load-test step 2** waits for all three, on the staging project — the founder refused
+   `loadtest-` rows in production on the strength of "someone will delete them".
+5. ⏭️ `saveLearnerState` still calls `auth.getUser()` (conditional, rare) with the same "forces
+   hydration" comment — same shape as ⑤, not touched.
+6. ⏭️ Lint on `menu/page.tsx` reports two `set-state-in-effect` errors — **pre-existing on `main`**,
+   identical before and after this session's edits.
+7. 🎙️ **VOICE CLIPS — 17–18 DONE, 3–5 ON TEDDY TWINKLE, 872/1411 RENDERED (2026-09-03, later session).**
+   The key in `.env.local` works again (200; the ElevenLabs MCP still carries the dead one). **17–18:**
+   all 161 missing lines rendered on Stevie — 613/613 in `public/audio/IvUJKFyjVb5hItY9dJAT/manifest.json`,
+   watched end to end (Two Receipts requested a Stevie mp3, 0 TTS; that key was absent from HEAD).
+   **3–5 (founder's call: Teddy Twinkle, `XjGYkUkzth8BPs29fmcV`):** the corpus is built by
+   `VOICE_CORPUS=1 npx vitest run src/__tests__/_voiceCorpus35.test.ts` → `scripts/.voice-corpus-3-5.json`
+   (gitignored; 1,411 lines in four priority buckets — scored 387 · teach 126 · redirect 321 · reteach 577).
+   Voice is routed by BAND: `BAND_VOICE['3-5']` in `voicePref.ts`, read in `voiceClipPlayer.speakLine`
+   off `getActiveLearner().age_group`; an explicit 'device' pick still wins. Watched both ways (Shape House
+   with a 3–5 learner in `sessionStorage.milo_active_learner` → seven Teddy mp3s, 0 TTS; no learner → Stevie).
+   ⚠️ **The run stopped on the monthly quota with scored + teach + redirect COMPLETE and reteach 38/577.**
+   Quota resets **2026-09-06**; the generator is idempotent, so the rest is one command after that date:
+   `npx tsx scripts/voice-generate.mts XjGYkUkzth8BPs29fmcV --corpus scripts/.voice-corpus-3-5.json`
+   (~24k chars left to render). Until then a re-teach line a child hits falls back to browser TTS — the
+   fallback is NOT suppressed for 3–5 (clip-only is still 12–14 only), so nothing goes silent.
+   ⚠️ The templated lines are enumerated in the builder from the same tables the components read — a
+   reworded template silently falls back until the corpus is rebuilt and re-rendered; the builder is the
+   place to add a line. Six tracked Stevie orphans (keys no longer in any corpus) were deleted.
+   ⚠️ `/teen-preview` with no learner plays Stevie for a 3–5 chapter, because the band comes from the
+   learner, not the chapter. 6–8 and the 9–11 storybook pair still have no clips.
+
 > 🌙 **2026-08-31 — THE NIGHTLY HAD BEEN RED ON ALL 12 OF ITS RUNS SINCE THE DAY IT WAS CREATED, AND A REAL CHILD-FACING DEFECT HAD BEEN SITTING INSIDE IT FOR SEVEN NIGHTS. FOUR FAILURES, ALL FIXED; THE MECHANISM MEASURED ON THE RUNNER RATHER THAN GUESSED AT LOCALLY.** `tsc` 0 · **1684 passed, 1 skipped by design** · `next build` 0 · `start-card` **16/16** · Nightly E2E **218/218 — the first green run in that job's history**. **MERGED — PR [#71](https://github.com/RadlorInc/learn/pull/71) as `22d75fb`.**
 
 ## ① 🎥 THE ONE A CHILD WOULD HAVE MET: THE ESCAPE HATCH FROM THE CAMERA, HALF OFF THE SCREEN
@@ -360,291 +576,4 @@ stops being quoted as if the suite were wholly green.
    below. **A PR's state is one `gh pr view` away; this file is not a source of truth for it.**
 6. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky (2026-08-28), unchanged by this work.
 
-> 📏 **2026-08-28 (second pass) — THE STUDENT RAISED "I CANNOT SEE ALL THE NUMBERS" A SECOND TIME, AND IT WAS A SECOND, SEPARATE MECHANISM: THE NUMBER IS DRAWN OUTSIDE THE SPRITE'S BOX AND EVERY BAND HELPER RESERVES FROM THE BOX. FIXED, PLUS THE SAME FAULT FOUND UNREPORTED ONE FUNCTION ALONG IN CHAPTER 4.** `tsc` 0 · **1641/1642** · `next build` 0 · **7 mutations planted, 7 caught** · sw **v150**. **PR [#68](https://github.com/RadlorInc/learn/pull/68) OPEN** — pushed, not merged. Full detail in ③ and ▶ OPEN 2 of the block below.
->
-> ⚠️ **AND THE VERIFICATION SWEEP FOR IT WAS BLIND FOR ITS FIRST TWO RUNS** — it read `L.huddleRight` (the field is `huddleRightPct`), so half of it measured `NaN` and reported a confident **0 findings** while its positive control fired on the *other* half. `vitest` does not type-check. See ③.
-
-> 🎓 **2026-08-27/28 — A STUDENT'S FOUR-POINT REVIEW, ALL FOUR FIXED AND LIVE: THE RUN NOW RESUMES (AND STOPS DESTROYING THE SCORE), THE NEST CHAPTER SAYS WHAT TO DO, EVERY STORYBOOK CHAPTER HAS A COMMIT STEP, AND MILO PRAISES 3–8. ⚠️ THREE REAL COLLISIONS FOUND BY DRIVING IT — ONE A `position: fixed` SILENTLY TURNED ABSOLUTE BY AN ANCESTOR'S `transform`, ONE SKILLBEAT'S OWN PILL LYING ACROSS A COLOURING PAGE.** `tsc` 0 · **1639/1640** (was 1590) · `next build` 0 · `ready-bar` **18/18** · `chapter-resume` **4/4** · `needs-sound` **2/2** · **49 mutations planted, 49 caught** · sw **v149**. **MERGED — PRs [#65](https://github.com/RadlorInc/learn/pull/65) · [#66](https://github.com/RadlorInc/learn/pull/66) · [#67](https://github.com/RadlorInc/learn/pull/67). LIVE on production, verified in the deployed bundle.**
-
-**The review** (a student, on the 3–5 band): ① the line behind mother looks random for every species but the rabbit · ② sharpen the instructions, praise a right answer, add a repeat button and subtitles · ③ the Ready option should be in every game · ④ *"none of my progress saved and I had to restart"*. ⚠️ **The chapter numbering in the report is off**: ① is chapter **2** (`FollowTheLeader`), the feeding-nest game is chapter **3** (`NestTree`).
-
-## ① 📏 FIXED AND MERGED
-Same report as the 🐇 block below — [PR #65](https://github.com/RadlorInc/learn/pull/65), merged
-2026-08-28. ⚠️ **Its sibling was never measured — see ▶ OPEN 2.**
-
-## ⚠️⚠️ ③ THE TESTER RAISED "I CANNOT SEE ALL THE NUMBERS" A SECOND TIME — AND IT WAS A SECOND, SEPARATE CAUSE. THE NUMBER IS NOT INSIDE THE SPRITE'S BOX, AND EVERY BAND HELPER RESERVES FROM THE BOX.
-The 2026-08-21 fix (three rows → two, `maxSizeForRows` + `spreadBand`) was correct and closed the
-BURIAL cause. It could not close this one: `NumberTag` is drawn at `top: -d*0.72` — **outside** the
-creature's box — while `fitBands` proves the *head* clears `BANNER_PX` and `spreadBand` clamps the
-far row to the same line. So the band fitted perfectly and the NUMBERS sat behind the prompt pill.
-- **Measured live at 640×320, scored round 1:** the middle tag rendered at **y 82–121** against a
-  pill occupying **155–485 × 48–93** — 28% of the badge covered — and `elementFromPoint` at its top
-  returned **the pill button**. After the fix the same tag sits at y 115–146, `hiddenByPillPct: 0`,
-  and `elementFromPoint` returns the scene. Sprite 92 → 74px: a readable number beats a bigger bunny.
-- **It binds only on the shortest frame.** 812×375, 1024×400 and 1280×720 all measured 0% hidden;
-  46 of 420 modelled combinations failed, every one at 640×320.
-- **The fix is a `topPx` on the three shared helpers** (`maxSizeForRows` · `fitBands` · `spreadBand`)
-  — *what this chapter draws above a head* — defaulting to 0, so `BigOrSmall` and `PlayTime` are
-  untouched. Chapter 2 measures it off the PROVISIONAL size, the same two-pass trick the head gap
-  already uses, because the lift depends on the size that depends on the lift.
-- **Gated** in `followTheLeaderHuddle.test.ts` — the top of the TAG, driven through `waitSpot` and
-  `tagLift`, plus a check that the reserve's formula IS `NumberTag`'s. **4 mutations, 4 caught**
-  (drop `topPx` from the band · from the size cap · make the parameter inert · understate the lift).
-  `tsc` 0 · **1641/1642** · `next build` 0 · sw **v150**. ✅ **Committed and pushed —
-  PR [#68](https://github.com/RadlorInc/learn/pull/68) — ✅ **MERGED 2026-08-28 as `e2be6d2`** (this
-  line said "OPEN, not merged" until 2026-08-31; it was written hours before the merge and is what
-  led the next session to report a collision that did not exist).**
-- ⚠️⚠️ **AND MY OWN SWEEP WAS BLIND FOR ITS FIRST TWO RUNS, WHICH IS THE LESSON WORTH KEEPING.** It
-  read `L.huddleRight` — the field is `huddleRightPct` — so every `waitSpot` came back `NaN` and the
-  BURIAL half of the sweep reported a confident **0 findings**. `vitest` does not type-check, so it
-  ran clean; `tsc` caught it only because the file was still on disk. The banner half was valid
-  because it reads `.top`, so the run looked half-alive rather than dead. **A positive control on
-  one mechanism says nothing about the other mechanisms in the same sweep** — the rows=3 control was
-  firing the whole time, on the half that worked. Fixed, the control reports 426 findings including
-  *"tag 2 38% under sprite 1"* on turtles, the tester's original words.
-- ✅ **Chapter 4's `AskSign` was checked for the same overhang and is CLEAR — but on x, not on y.**
-  50 combinations put the sign above `BANNER_PX`; the pill is centred (155–485 at 640 wide) and Milo
-  stands far right, so the sign sits at ~509–624 and misses it. True by luck rather than by
-  construction, and worth a gate line if that chapter's layout ever moves.
-
-## ④ 💾 THE PROGRESS LOSS WAS WORSE THAN REPORTED — IT DESTROYED THE SCORE, NOT THE PLACE
-`SkillBeat` and `GameShell` both report **once, at the end**: that single `onComplete` is what writes
-the session row, the stars and the XP. So leaving after seven of ten questions lost the seven
-answers too, and every screen showed the chapter as never played. New `infra/storage/chapterResume.ts`
-(round · score · question history · coverage), wired into **both** engines, so it covers all 72
-chapters. Written after every scored answer — there is no exit event for a closed tab — cleared on
-every path that ends a run, 7-day TTL.
-⚠️ **What a resume deliberately does NOT skip in GameShell: the start card.** It carries
-`unlockSpeech()` (a real gesture, or the whole run is silent) and, on an AR chapter, **both camera
-doors** — jumping into play would put a child in front of a camera nobody re-consented to. Gated.
-
-## ② 🔊 ONE REAL DEFECT, ONE INVISIBLE AFFORDANCE, ONE FOUNDER REVERSAL
-- ⚠️ **THE SPOKEN INSTRUCTION ITSELF WAS NOT SHARPENED UNTIL A SECOND PASS — I JUDGED IT CLOSE
-  ENOUGH AND IT WAS NOT.** It said *"Feed the duckling in nest number 7! Number 7."*, which names
-  WHAT is wanted and never WHAT TO DO; the only place the action appeared was the WRITTEN prompt, on
-  a band whose children cannot read. Now *"Feed the duckling in nest number 7. Tap the nest that
-  says 7!"* — the student's own sentence. Gated in `nestTreeCopy.test.ts`, which also pins the
-  opposite constraint sitting right beside it: the drawn prompt may never contain a digit, because
-  the skill is sound → glyph.
-- **The demo's teaching was speech-only.** `NestExplain` spoke three lines and wrote none, and this
-  band has no recorded clips — so on the many Chrome installs with no voice the chapter's entire
-  explanation was delivered into a channel that is not there. Written now.
-- **The repeat button already existed and could not be seen**: SkillBeat's prompt pill has always
-  been a `button` with `aria-label="Hear it again"` and nothing visible saying so. It has a 🔊 now.
-  ⚠️ And the **guided round had no replay at all** — the one screen where the child answers first.
-- **Spoken praise on a correct answer** reverses the recorded *"a tick is enough"* call. Founder's
-  decision. Rotating, and short enough to fit the 1300 ms gap before the next question cancels it.
-- ⚠️ **Subtitling the QUESTION would delete the chapter** — the number is spoken and never written
-  because the skill IS sound → glyph. Subtitles are in the demo, where teaching is the point.
-
-## ③ ✅ READY IS EVERYWHERE — 13 CHAPTERS CONVERTED, 10 ALREADY HAD ONE
-⚠️ **The band is RETRY-IN-PLACE, which changes what Ready can honestly be.** A wrong tap sets `erred`
-and the child goes again; the round only ends when they are right. So a Ready gating the GRADE could
-only ever be pressed on a correct answer — an oracle, and one that cannot change an outcome. Built as
-**tap CHOOSES, Ready SUBMITS**: it appears for any choice, so it says nothing, and a wrong commit is
-still marked wrong and still retried. Shared `story/ReadyBar.tsx` + a neutral `PICKED_RING`.
-⚠️ The ten that already commit keep their own words — you *Pay ✓* a shopkeeper, *Warp her ✓*, *Put it
-up ✓*. Renaming them to "Ready" would be worse.
-⚠️ **RainbowTown is the one that works differently and is named as such**: a colouring page, so the
-child's paint goes ON the picture and can be painted over until Ready. The LESSON is untouched.
-
-## ⚠️⚠️ WHAT DRIVING IT FOUND THAT NO GATE COULD
-1. **`position: fixed` is NOT fixed inside a transformed ancestor.** Nested in NumberTown's answer
-   row (`transform: translateY(-50%)`), the bar was drawn from the ROW's box — **y 189–236, across
-   the middle door, which that round was the right answer**. Same nesting in the counting chapter.
-2. **MarketDay / StoryTime**: centred, the bar covered the `3 × 3 = ?` readout completely (190–237
-   against 193–235). Those pass `align="right"` now; the free space is sideways, not upward.
-3. **BeadShop**: the centred bar sat across the middle bead. Right-aligned.
-4. ⚠️ **My own sweep was pressing the button it was measuring**, submitting the answer and reporting
-   *"never reached a commit"* on two working chapters — a red that describes the driver.
-📄 General rules written into [docs/chapter-craft.md](docs/chapter-craft.md) §1, §0b and §4.
-
-## ✅ THE FIVE LOOSE ENDS, CLOSED
-- **Praise has an AGE cutoff, not an engine one** — `core/praise.ts` · `praisesOnCorrect(band)`.
-  ⚠️ **It STOPS AT 6–8** (founder's call, 2026-08-28). It shipped reaching through 9–11 for a few
-  hours, which cuts against this product's own rule that **9–11 must not look like 3–8** — the whole
-  reason that band moved onto the Field Lab design — and the student who asked was reviewing 3–5.
-  Gated on the band and never on the engine, because 9–11 is split across both: an engine-shaped
-  rule praises the same child in two chapters and not in the other ten.
-- **The resume is DRIVEN now** — `e2e/chapter-resume.spec.ts` plays two rounds, leaves for `/menu`,
-  comes back and asserts the round AND the score, reading the record straight out of IndexedDB.
-  ⚠️ **With a positive control**: the same drive with no active learner must store nothing and
-  restart, or the test cannot tell "it resumed" from "there was nothing to resume".
-- **The sweep's exemption list is EMPTY** — all 13 driven, and the two "unreachable" chapters were
-  both DRIVER faults: stale coordinates for creatures that were still walking on (click inside the
-  page, not by coordinate), and a canvas grid too coarse to land on a balloon.
-- **The world picker fits** — its card was `clamp(200px,26vw,300px)`, width-derived with no `vh`
-  term, so the 200px minimum won at 640×320 and forced a second row off the bottom.
-  `min(26vw,40vh)` keeps desktop at 288 and lets a short frame shrink instead of wrapping.
-- **The prompt pill no longer eats the colouring page.** `SkillBeat`'s pill is a real `<button>`,
-  fine everywhere the answers sit in a band it does not use and a DEAD PATCH over a picture that
-  fills the frame: measured at 640×320 it spanned x 181–459, y 48–93 against a balloon at
-  x 415–490, y 15–120, so a tap at the centre of the answer hit the pill. RainbowTown sets
-  `prompt: () => ''`, draws its own `pointerEvents: none` banner and puts the 🔊 beside Menu.
-  `elementFromPoint` at the question's centre now returns the CANVAS, and that is the gate.
-  ⚠️ It also broke a shared anchor: `storybook-pills` identified SkillBeat's pill by
-  `aria-label="Hear it again"` alone, and the chapter's own bare 🔊 carries the same label — so the
-  spec read it as a duplicate. It matches on the pill CARRYING THE QUESTION now.
-- **Merged and live**, sw **v149**.
-
-## 🔁 THE SECOND DAY: THE OTHER ENGINE, A CHAPTER THAT NEEDS SOUND, AND A FLAKE THAT WAS MINE
-- **The resume is driven on `GameShell` too**, not just the storybook engine — `wordProblems` (non-AR,
-  answers on the shared AnswerPad, whose dev-only `data-test-answer` lets a driver answer without
-  solving the sum). Two right, one WRONG, leave, come back: re-enters at 4/10 having stored
-  `{round: 3, correct: 2, wrong: 1}`.
-  ⚠️ **The first version of that check was mostly decorative.** Two of four mutations SURVIVED —
-  seeding `correct` from 0 (the "3 / 10" a child sees is driven by `idx` and says nothing about what
-  they got right) and seeding `wrong` from 0 (a run of only right answers leaves it 0 either way, so
-  the check agreed with the bug by never disagreeing). Both observable now: the drive reads the
-  ledger back AFTER resuming and deliberately gets one wrong on the way out.
-  ⚠️ It also measured that `idx`'s `useState` seed is belt-and-braces (`finishDemo`'s `loadTask`
-  overwrites it) while `correct`/`wrong` have no second writer — noted in the shell so the asymmetry
-  is not mistaken for redundancy and tidied away.
-- ⚠️⚠️ **THE FEEDING-NEST CHAPTER IS UNANSWERABLE WITHOUT A VOICE, AND NOW SAYS SO.** It SPEAKS the
-  target number and deliberately never draws it — sound → glyph is the skill. Every other chapter
-  writes its question too and so a silent device costs them warmth; this one it costs the ANSWER, and
-  `speakSteps`' silent fallback does not help (it paces the demo, it does not deliver the number).
-  **The fix is NOT to write the number** — that turns listening into matching. `useNoVoice()` + a
-  notice addressed to the grown-up stands in until the band has recorded clips.
-  ⚠️ Voices arrive LATE (`voiceschanged`), so a first read of "none" is the question asked too early —
-  hence a hook, not a constant. ⚠️ And simulating it needs `addInitScript`: `_loadVoices` refuses to
-  clear an already-populated list, so stubbing from the console after boot cannot flip it and reports
-  "no notice" on a browser that really has none. Gated BOTH ways; the negative matters more, since a
-  notice on a working device tells a parent their chapter is broken.
-- ⚠️⚠️ **AND THE `counting` FLAKE WAS MY OWN FILTER, AFTER THREE CONFIDENT WRONG DIAGNOSES.** I blamed
-  a cold dev server, then the parade being slow, then reached for seeding `Math.random` — which made
-  it WORSE, because that chapter randomises spawn SLOTS as well as counts, so a fixed stream stacked
-  the creatures and it began failing deterministically (a check failing about a world the app is
-  never in). One instrumented run settled it: the driver reported **`eligible=0` for 148 of its 150
-  seconds**. Its reachability filter demanded the ENTIRE box inside the frame, and those creatures are
-  tall and stand low, so every one was excluded. It tests the CLICK POINT now — **~150 s and marginal
-  → 9–11 s**. ⚠️ I had also called it "stable, 20/20 twice"; two warm-server runs is not evidence.
-  📄 Both general rules are in [docs/chapter-craft.md](docs/chapter-craft.md) §4.
-
-## 📋 THE TESTER'S SHEET, AUDITED AGAINST THE DEPLOYED SITE — 2026-08-28
-`Chapter_Testing_tester2` (Drive, owner kuwarirafi@) had **six rows still `Open`**. Every one was
-checked against **production** (sw v149 at the time), by driving it, not by reading this file. Every
-bundle search carried a positive AND a negative control.
-
-| # | issue | sheet said | measured |
-|---|---|---|---|
-| 1 | answer-choice grammar | Ready for Retest | ✅ live — new wording present, `"Yes, on their own"` gone |
-| 2 | Milo's robotic voice | Open | ❌ **correctly open** — captured the utterances going to `speechSynthesis` on prod; the 605 clips are 12–18 only |
-| 3 | turtle spacing / numbers | Open | ✅ fixed **2026-08-21** (`99e1d94`) — drove 5 turtles at 640×320, all five numbers visible. ⚠️ **then re-raised, and the second cause is real — see ③** |
-| 4 | "Amazing! Amazing!" | Resolved | — not re-verified |
-| 5 | smallest-first line spacing | Open | ✅ fixed — drove 4 turtles behind mother: body gaps **6 · 5 · 6 px**, head gap −11px by design |
-| 6 | nest game | Open | ✅ 3 of 4 — captured on prod: *"Feed the chick in nest number 4. Tap the nest that says 4!"* and *"Yes! Nest number 2! Great job!"*, 🔊 present. ⚠️ subtitling the QUESTION's number stays refused: sound→glyph IS the skill |
-| 7 | Ready everywhere | Open | ✅ drove **Ready ✓** on prod in the counting AND nest chapters. ⚠️ send/pay chapters keep their own verb |
-| 8 | saving game status | Open | ✅ `milo-chres-` in the prod bundle, `chapter-resume` drives 4/4. ⚠️ **signed-in children only** — the logged-out preview stores nothing by design, so retest from a child profile |
-
-**So five of six can move to Ready for Retest; only #2 is genuinely open.** ⚠️ The sheet was NOT
-edited — that is the founder's to do.
-
-⚠️ **AND THE GATE FOR #7 IS FLAKY.** `ready-bar.spec.ts` failed on `counting` locally (240 s timeout,
-*"never reached a commit control"*) while the bar works on production — the driver has to catch
-paraders in a narrow on-frame window. **A flaky gate gets re-run instead of read**, so #7's guard is
-not trustworthy even though the feature is. Not fixed; next in line.
-
-## ▶ OPEN
-1. 🎙️ **RECORDED CLIPS FOR 3–11 ARE THE ONLY THING LEFT FROM THIS REVIEW, and they are the founder's
-   to start** (a voice choice and the ElevenLabs spend). The pipeline already exists — `clipKey`,
-   `voiceClipPlayer`, and 12–18's clips. Until then a voiceless device gets the notice above instead
-   of an unwinnable round, which is honest but is not the fix.
-2. ✅ **PR [#68](https://github.com/RadlorInc/learn/pull/68) MERGED 2026-08-28 as `e2be6d2`** — chapter
-   2's tag overhang (③) and chapter 4's cluster scale (④). ⚠️ This item read "OPEN AND UNMERGED"
-   until 2026-08-31 and was believed by a later session; corrected there, see the 🗒️ block's ▶ 5.
-3. ⚠️ **THE `counting` CASE OF `ready-bar.spec.ts` IS FLAKY** — it failed locally on a 240 s timeout
-   (*"never reached a commit control"*) while the bar demonstrably works on production, because its
-   driver has to catch paraders inside a narrow on-frame window. **A flaky gate gets re-run instead
-   of read**, so the guard on "Ready is everywhere" is not trustworthy even though the feature is.
-   Fix the DRIVER, not the chapter. Not started.
-4. ✅ **`clusterSpot` (chapter 4's gathered huddle) IS MEASURED NOW — 2026-08-28 — AND IT WAS THE SAME
-   FAULT, WORSE.** Flat `GATHER_COL = 5.4`% per column at a flat `scale: 0.8` against aspects 0.805 →
-   1.746: the share of each body still showing ran **74% (rabbit) to 26% (shark)**, and **driven live
-   at 1280×720, five gathered fish read as three** — in the one place the child counts what they have
-   chosen. Fixed with chapter 2's own lever, `clusterScale(src) = 0.8 × min(1, 0.805 / aspect)`,
-   calibrated on the rabbit so the approved picture is untouched by construction; the pitch could not
-   be the lever (the gather band leaves ~6.3% per column and a shark wants 11.7%). The row separation
-   came free with it, 0.22 → 0.37 body heights, having been under this repo's own 0.55 floor.
-   `src` is REQUIRED on `clusterSpot` — a default is what lets a caller restore the flat 0.8 green.
-   Gated in `homeTimeGeometry.test.ts` §②b, driving `clusterSpot` at both ends rather than
-   recomputing the rule; **3 mutations planted, 3 caught** (flat 0.8 · cap dropped · calibrated on
-   the shark). `tsc` 0 · **1641/1642** · `next build` 0. ✅ **Committed and pushed in the same
-   PR [#68](https://github.com/RadlorInc/learn/pull/68) as ③ — ✅ **MERGED 2026-08-28 as `e2be6d2`.**
-   ⚠️ **Two things seen while driving it and deliberately NOT changed:** Milo's `AskSign` covers
-   ~29% of the nearest gathered creature (it is anchored to him, and this predates the fix), and the
-   gathered set is now 0.47 of the waiting one for a shark — a bigger depth jump than before, which
-   is a founder call rather than a defect.
-5. ⏭️ **What was deliberately NOT done on ②, so it is not re-litigated by accident:** the QUESTION's
-   number is still never written. Subtitling it would turn a listening task into a matching one and
-   delete the chapter. The action is spoken and written, the demo's teaching lines are written, and
-   the target stays spoken-only.
-
-> 🐇 **2026-08-27 — THE LINE BEHIND MOTHER WAS EVENLY SPACED FOR EXACTLY ONE SPECIES, AND THREE ROUNDS OF MUTATION EACH FOUND A HOLE IN MY OWN CHECKING — INCLUDING A TAUTOLOGY GUARDING THE ONE PICTURE THE FOUNDER HAD APPROVED.** `tsc` 0 · **1590/1591** (was 1584) · `next build` 0 · **10 mutations planted, 10 caught** · **PR [#65](https://github.com/RadlorInc/learn/pull/65) OPEN**, not merged.
-
-**The ask:** *"For the bunny animals, all the children bunnies are evenly spaced behind the mother,
-however for the fish, butterflies, turtles, ladybugs, and squirrels, they are randomly placed."*
-Chapter is `numberOrdering` (`story/FollowTheLeader.tsx`) — the SECOND in the 3–5 band, not the
-counting one.
-
-## ① 📏 NOTHING WAS RANDOM — THE SPACING WAS IDENTICAL, THE BODIES WERE NOT
-`LINE_GAP` steps a flat 9% of the width per place and reads as perfectly even in the source.
-**Spacing is what is LEFT AFTER THE BODIES**, and the cast's aspects run **0.81 → 1.75**, so at
-1280×720 the clearance between neighbours ran **+1.65% (butterfly, clean) to −1.07% (ant,
-overlapping)**: bunny +0.76 a queue · fish −0.11 · ladybug −0.67 · squirrel −0.71 a heap. The rabbit
-is one of the few with real clearance, which is *why* it is the one that looks right.
-
-## ② 🎚️ THE FIX MOVES THE SCALE, NOT THE SPACING — BECAUSE THE SPACING IS IN A LOOP
-Widening the gap per species makes the line LONGER, and the line's length decides the huddle's room
-(`lineRight`) → the span → `babySize` → the gap. Circular, in a file whose header promises it is
-not. Capping the **in-line scale** leaves every upstream number untouched, so the step stays a
-constant and the line is evenly spaced **by construction**; a wide creature is simply drawn further
-away, which is what the line already means. Every species now sits at the rabbit's own **0.74%**.
-
-## ③ 👩 AND THE HEAD OF THE LINE IS A DIFFERENT GAP — SAME NUMBER, DIFFERENT NEIGHBOUR
-Founder's follow-up: *"fish 1 still tucks under mother's body."* The first place sits next to
-MOTHER at 1.25× against the line's own scale — the two bodies either side of that gap differ by
-~1.7×. ⚠️ **Calibrated on the rabbit, not on zero:** animals queue nose-to-tail, the rabbit's first
-little one sits ~21% of its own body inside her, and that is the approved picture — so the rule is
-*nobody deeper in than the rabbit*, which leaves the good case untouched BY CONSTRUCTION. A
-no-overlap rule would have moved it. **17–22% now, against 8–35%.** The circularity is broken by
-running the size chain **twice**: the provisional pass always yields a size ≥ the final one, so the
-reserve is never short, and one value feeds both the reserve and the drawing.
-
-## ④ 🔬 THE INK HUNCH WAS WRONG AND MEASURING KILLED IT IN ONE PASS
-It looked like ink-vs-box (a rabbit is narrow with transparent margins, a fish is a fat oval), which
-would have meant a per-sprite ink table. Alpha bboxes across all ten walk sheets: **ink fills
-0.95–1.00 of the cell for every one.** No margin to exploit; plain geometry. Thirty seconds against
-an afternoon of building the wrong thing.
-
-## ⑤ ⚠️⚠️ FOUR ROUNDS, EACH FINDING A HOLE IN MY OWN CHECKING — THE LAST ONE FOUND BY READING
-1. `lineSpot(k, w, mx, scale, headGap)`: a `scale =` DEFAULT let a caller restore the overlapping
-   line; with the default gone, passing `LINE_GAP` where `headGap` belonged restored the buried one.
-   **Both type-checked, both green.** It takes the whole layout now — `lineSpot(k, L)` — so there is
-   nothing left to hand over wrongly.
-2. The checks recomputed geometry from the layout's REPORTED values, so *"draws at the flat gap"*
-   and *"draws at a flat scale"* both survived: a gate re-implementing the rule it guards.
-3. The reserve-vs-tail check compared a value with itself.
-4. ⚠️⚠️ **AND THE CHECK PROTECTING THE RABBIT WAS A TAUTOLOGY:**
-   `expect(L.lineScale).toBeCloseTo(Math.min(0.78, L.lineScale))` — and `lineScale` IS a
-   `Math.min(0.78, …)`, so it compared a value with itself and would have passed on an
-   implementation drawing the rabbit at a tenth of its size. **Found by re-reading the file to
-   verify a claim, not by any run** — a tautology's green is indistinguishable from a real one.
-   **No assertion in the file now reads `L.lineScale` or `L.headGap`**; every number comes out of
-   `lineSpot(k, L)`. Three of the ten mutations (rabbit shrunk · line drawn tiny · line drawn on top
-   of mother) would have SURVIVED the file as it stood two commits earlier.
-
-## ▶ OPEN
-1. ⏸️ **PR [#65](https://github.com/RadlorInc/learn/pull/65) IS OPEN** — three commits, CI not yet
-   read at the time of writing. ⚠️ **It touches `handoff.md`, and so does PR
-   [#64](https://github.com/RadlorInc/learn/pull/64) (Stage 3), which also ARCHIVES the Stage-1
-   block. Whichever merges second will conflict on this file — both are insertions, so the
-   resolution is to keep both blocks.**
-2. ⚠️ **What was NOT changed, deliberately:** the waiting huddle's scatter. That jitter is a
-   documented craft decision (*"a group is a huddle, not a queue"*) and evenly spacing it would
-   reverse it. If the scatter is what reads as random rather than the line, say so.
-3. ⏭️ **The same bare-constant shape is next door and untouched:** `clusterSpot` in `critters.tsx`
-   (chapter 4's gathered group) spaces by a fixed `colPct` at a fixed `scale: 0.8`, with the same
-   cast. Not measured, not fixed — flagged because it is the same fault waiting in the same file.
-
-_Older sessions (2026-06-15 → **2026-08-25**, including 🔒 **Stage 3** (the chapter gate and the screens — a lock that names what is behind it, and a paywall built inert but tested refusing), moved 2026-08-31 — ⚠️ its still-live items (the deferred watched purchase, B12, `DRAFT = true`, the free-set pick, the nine Dependabot PRs, Vercel Analytics, the prose drift) were lifted into the 🌙 block's ▶ OPEN rather than archived with it; including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-08-28**, including 📏🎓 **the student-review days** (the run resumes, Ready everywhere, praise to 6–8, the number-tag overhang) and 🐇 **the line behind mother** (even spacing for one species, and the tautology guarding the approved picture), all moved 2026-09-03 — ⚠️ their still-live items (recorded clips for 3–11, the `counting` flake in `ready-bar.spec.ts`) are already carried in the 🌙 and 🗒️ blocks' ▶ OPEN; including 🔒 **Stage 3** (the chapter gate and the screens — a lock that names what is behind it, and a paywall built inert but tested refusing), moved 2026-08-31 — ⚠️ its still-live items (the deferred watched purchase, B12, `DRAFT = true`, the free-set pick, the nine Dependabot PRs, Vercel Analytics, the prose drift) were lifted into the 🌙 block's ▶ OPEN rather than archived with it; including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
