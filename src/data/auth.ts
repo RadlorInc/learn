@@ -7,7 +7,7 @@
  * client, so infrastructure never leaks into the UI layer.
  */
 import { createClient } from '@/data/supabase/client'
-import type { AuthChangeEvent, Session, Subscription, User } from '@supabase/supabase-js'
+import type { AuthChangeEvent, EmailOtpType, Session, Subscription, User } from '@supabase/supabase-js'
 
 /** Current session (local storage read, no network). Null when signed out. */
 export async function getCurrentSession(): Promise<Session | null> {
@@ -24,6 +24,22 @@ export async function getCurrentUser(): Promise<User | null> {
 /** Email + password sign-up. Sends a confirmation email that returns to `emailRedirectTo`. */
 export function signUpWithEmail(email: string, password: string, emailRedirectTo: string) {
   return createClient().auth.signUp({ email, password, options: { emailRedirectTo } })
+}
+
+/**
+ * Invite / recovery link → a session, from the `token_hash` in the URL.
+ *
+ * The invite email links to `/auth/set-password?token_hash=…&type=invite` rather than to the
+ * default `{{ .ConfirmationURL }}`, which lands on the Site URL with the tokens in the hash and
+ * leaves the invited person signed in with NO password ever set — able to get in exactly once.
+ */
+export function verifyEmailToken(tokenHash: string, type: EmailOtpType) {
+  return createClient().auth.verifyOtp({ token_hash: tokenHash, type })
+}
+
+/** Set the signed-in user's password. Requires a session (from an invite link or a sign-in). */
+export function setPassword(password: string) {
+  return createClient().auth.updateUser({ password })
 }
 
 /** Durable account-access log → `auth_events` (insert-only; reads are dashboard-only).
