@@ -81,12 +81,15 @@ jobs:
         run: |
           set -euo pipefail
           supabase db dump --db-url "$OLD_DB_URL" -f schema.sql
-          # -x storage.*: those 7 tables are owned by supabase_storage_admin and `postgres` cannot
-          # write them (run 33780851922: permission denied for table buckets_vectors). Measured on
-          # production the same day, all seven hold 0 rows — this app stores no files — so excluding
-          # them loses nothing. Asserted below, because a pattern the CLI does not understand would
-          # silently leave them in.
-          supabase db dump --db-url "$OLD_DB_URL" -f data.sql --data-only --use-copy -x 'storage.*'
+          supabase db dump --db-url "$OLD_DB_URL" -f data.sql --data-only --use-copy
+          # Drop the 7 storage tables from the dump. They are owned by supabase_storage_admin and
+          # `postgres` cannot write them (run 33780851922: permission denied for buckets_vectors);
+          # measured on production the same day, all seven hold 0 rows — this app stores no files.
+          # ⚠️ Done here rather than with the CLI's own -x: `-x 'storage.*'` (run 33781398915) left
+          # every storage table in AND silently dropped the supabase_migrations block, i.e. it
+          # excluded the one thing we need and none of what we asked for.
+          awk '/^COPY "storage"\./{skip=1} skip && /^\\\.$/{skip=0; next} !skip' data.sql > data.filtered
+          mv data.filtered data.sql
           # No separate auth dump: measured on run 33780131987, data.sql already carries all 22 auth
           # tables (auth.users included) ahead of the public ones, and carries NEITHER ledger. Dumping
           # auth again and loading both is what produced `duplicate key ... flow_state_pkey`.
