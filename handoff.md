@@ -236,9 +236,30 @@ children would have been invisible to them, with nothing erroring.
    be in it, so after a day or so the rollback stops being free.
 4. ✅ DONE: Google redirect URI added (old kept), Google provider on the new project using the SAME
    OAuth client, URL configuration copied, three Vercel env vars, redeploy, real Google sign-in.
-5. ⏭️ **Now due:** apply `20260903100000` + `20260903100100` (the ledger rode across, so only those two are pending), then read `pg_stat_statements` for the `is_chapter_entitled` after-number the morning block promised.
+5. ✅ **BOTH PENDING MIGRATIONS APPLIED** to the new production (2026-09-03 ~17:58), and committed
+   FIRST (`c7c2a43`) so the ledger could not record a version whose file is not in the repo.
+   Before/after, measured on the catalog either side: `is_chapter_entitled` `sql` → **plpgsql**;
+   `entitled_chapters` **did not exist** → exists; `get_learner_bootstrap`'s definition now contains
+   `recheck_closed`, which is what proves the new BODY landed rather than a function of that name.
+   Grants on all three: `authenticated` + `service_role`, nothing for `anon`/`public`.
+   ⚠️ **NOTHING HAS BEEN EXECUTED.** That is a catalog reading, not a run: the MCP role is read-only
+   and not `authenticated`, so calling them returns `permission denied` (correct, per those grants).
+   `is_chapter_entitled` exercises itself — the `sessions` INSERT policy calls it, so the next
+   gameplay session is its test. **`entitled_chapters` has no caller at all** until the client code
+   in ⑧ lands, so it is written and never once run. Do not read "applied" as "working".
+   ⚠️ **And the `pg_stat_statements` after-number the morning block promised cannot exist yet** for
+   the same reason — an unexecuted function has no row there.
+6. ⚠️ **Ledger drift, +2 rows.** `apply_migration` stamps its OWN timestamp, so the two canonical
+   versions went in by an explicit insert in the same migration AND the MCP wrote
+   `20260903175820` / `20260903175833`, which have no file in the repo. Harmless — the DDL is
+   `create or replace` — and it is the same drift this repo already carries two rows of. Clean with
+   `supabase migration repair --status reverted 20260903175820 20260903175833`.
 7. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`, or a push to `main` migrates production unreviewed.
-8. ⏭️ `backup.yml` still unconfigured (managed backups make `BACKUP_PASSPHRASE` optional). The uncommitted pile from the morning block (`menu/page.tsx`, the RPC, the two migrations) is **still uncommitted** — this session touched none of it.
+8. ⏭️ `backup.yml` still unconfigured (managed backups make `BACKUP_PASSPHRASE` optional). The
+   morning block's uncommitted pile is now **the client half only** — `menu/page.tsx`, the three
+   repositories, `useAdaptive`, the voice files. The two migrations are committed and applied; the
+   code that calls `entitled_chapters` and reads the bootstrap's new keys is not, which is why ⑤
+   says that function has never run. Landing it is what turns /menu's six round trips into two.
 9. ⏭️ `supabase/config.toml` says `major_version = 17` now; `.gitignore` gained `supabase/.temp/`.
 
 > 🚀 **2026-09-03 (later) — PRO IS ON, THE REGION MOVE IS GO, AND THE MECHANISM IS A ONE-JOB WORKFLOW THAT DIFFS THE SAME QUERY ON BOTH DATABASES.** ⚠️ **ITEMS 1–5 OF ITS ▶ OPEN ARE SUPERSEDED BY THE ✅ BLOCK ABOVE — the workflow HAS since run and the copy is verified. Kept for the pre-flight measurements.** The block below was written BEFORE any of it ran: **NOTHING HAS RUN YET — it waits on two connection-string secrets and a push.** Pre-flight only: `migrate-region.yml` YAML parses · `security_posture.sql` validated on PG 17 against production · `verify-backup.sh` re-proven **1 positive + 5 negative, exit codes read** · new project verified empty on 17.6 · **NOTHING committed, NOTHING dispatched, NOTHING applied.** `tsc`/`npm test` not run (no TS touched).
