@@ -56,11 +56,19 @@ jobs:
           # would try to replay all 77 files onto a schema that already has them.
           supabase db dump --db-url "$OLD_DB_URL" -f ledger.sql --data-only --use-copy --schema supabase_migrations
           for f in schema.sql data.sql auth.sql ledger.sql; do test -s $f || { echo "::error::$f empty"; exit 1; }; done
+          echo "schema $(wc -c <schema.sql)B · data $(wc -c <data.sql)B · auth $(wc -c <auth.sql)B · ledger $(wc -c <ledger.sql)B"
+          # Table NAMES only, never rows — this dump carries children's data and the repo is public.
+          # Printed BEFORE the assertions so a failure says what the file does contain, rather than
+          # leaving "no auth.users block" ambiguous between "not dumped" and "grep of the wrong shape".
+          echo "--- COPY blocks in auth.sql ---";   grep -oE '^COPY [^ (]+' auth.sql   || echo "(none)"
+          echo "--- COPY blocks in ledger.sql ---"; grep -oE '^COPY [^ (]+' ledger.sql || echo "(none)"
           # positive control on the one file that decides whether 11 families keep their logins:
           # the CLI treats auth as managed and MAY silently exclude it — assert the block is there.
-          grep -q '^COPY auth.users ' auth.sql || { echo "::error::auth.sql has no auth.users block"; exit 1; }
-          grep -q '^COPY supabase_migrations.schema_migrations ' ledger.sql || { echo "::error::ledger.sql has no ledger block"; exit 1; }
-          echo "schema $(wc -c <schema.sql)B · data $(wc -c <data.sql)B · auth $(wc -c <auth.sql)B · ledger $(wc -c <ledger.sql)B"
+          # Quoting-tolerant: pg_dump writes `COPY auth.users` or `COPY "auth"."users"` depending on
+          # version and identifier. A pattern matching only one shape cannot fail for the other —
+          # the bundle-grep trap: it would read as a missing block on a dump that is perfectly fine.
+          grep -Eq '^COPY "?auth"?[.]"?users"? ' auth.sql || { echo "::error::auth.sql has no auth.users block"; exit 1; }
+          grep -Eq '^COPY "?supabase_migrations"?[.]"?schema_migrations"? ' ledger.sql || { echo "::error::ledger.sql has no ledger block"; exit 1; }
           psql "$OLD_DB_URL" -f supabase/tests/security_posture.sql > posture.old.txt
 
       - name: Restore into the new project
