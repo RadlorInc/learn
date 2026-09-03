@@ -23,6 +23,13 @@ on:
         required: false
         default: 'false'
 
+# Two dispatches six seconds apart (33779354496 / 33779365167) restored into the SAME database
+# at the same time: one dropped schema public while the other was creating types in it, so a
+# confirmed DROP SCHEMA was followed by `type "invite_status" already exists`. Never concurrent.
+concurrency:
+  group: migrate-region-${{ inputs.new_ref }}
+  cancel-in-progress: false # never abort a half-applied restore mid-flight
+
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -90,6 +97,7 @@ jobs:
           # Table NAMES only, never rows — this dump carries children's data and the repo is public.
           # Printed BEFORE the assertions so a failure says what the file does contain, rather than
           # leaving "no auth.users block" ambiguous between "not dumped" and "grep of the wrong shape".
+          echo "--- COPY blocks in data.sql ---";   grep -oE '^COPY [^ (]+' data.sql   || echo "(none)"
           echo "--- COPY blocks in auth.sql ---";   grep -oE '^COPY [^ (]+' auth.sql   || echo "(none)"
           echo "--- COPY blocks in ledger.sql ---"; grep -oE '^COPY [^ (]+' ledger.sql || echo "(none)"
           # positive control on the one file that decides whether 11 families keep their logins:
