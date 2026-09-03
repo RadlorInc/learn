@@ -18,6 +18,10 @@ on:
       new_ref:
         description: 'Project ref of the NEW (empty) project. Refuses to run if it equals PROD_PROJECT_REF.'
         required: true
+      wipe_target:
+        description: 'Drop everything on the TARGET first, so a failed restore can be re-run. Safe by construction: the ref checks run BEFORE it, so it can only ever reach the new project.'
+        required: false
+        default: 'false'
 
 jobs:
   migrate:
@@ -33,12 +37,34 @@ jobs:
           NEW_REF: ${{ inputs.new_ref }}
           OLD_REF: ${{ vars.PROD_PROJECT_REF }}
           NEW_DB_URL: ${{ secrets.NEW_DB_URL }}
+          WIPE: ${{ inputs.wipe_target }}
         run: |
           set -euo pipefail
           [ -n "$OLD_REF" ] || { echo "::error::PROD_PROJECT_REF unset"; exit 1; }
           [ "$NEW_REF" != "$OLD_REF" ] || { echo "::error::new_ref equals production"; exit 1; }
           case "$NEW_DB_URL" in *"$OLD_REF"*) echo "::error::NEW_DB_URL points at production"; exit 1;; esac
           case "$NEW_DB_URL" in *"$NEW_REF"*) ;; *) echo "::error::NEW_DB_URL does not contain new_ref"; exit 1;; esac
+          # A failed restore leaves debris, and the emptiness check below then refuses the retry.
+          # This runs AFTER the four checks above — that ordering is what makes it safe, so do not
+          # move it: on its own it is a `drop schema cascade` with a URL from a secret.
+          if [ "$WIPE" = "true" ]; then
+            echo "::warning::wiping $NEW_REF before restore"
+            psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+              drop schema if exists public cascade;
+              create schema public;
+              grant usage on schema public to anon, authenticated, service_role;
+              grant all   on schema public to postgres, service_role;
+              drop schema if exists supabase_migrations cascade;
+              -- auth is managed: its tables cannot be dropped, only emptied. Enumerated from the
+              -- catalog rather than listed here, so this cannot drift from what auth actually has.
+              do $$ declare t record; begin
+                for t in select tablename from pg_tables
+                         where schemaname = 'auth' and tablename <> 'schema_migrations' loop
+                  execute format('truncate table auth.%I cascade', t.tablename);
+                end loop;
+              end $$;
+          SQL
+          fi
           # the target must be EMPTY — a second run onto a populated project is not a migration
           n=$(psql "$NEW_DB_URL" -tAc "select count(*) from pg_tables where schemaname='public'")
           [ "$n" = "0" ] || { echo "::error::new project already has $n public tables"; exit 1; }
@@ -55,7 +81,11 @@ jobs:
           # the CLI's migration ledger: without it, the next `supabase db push` on the new project
           # would try to replay all 77 files onto a schema that already has them.
           supabase db dump --db-url "$OLD_DB_URL" -f ledger.sql --data-only --use-copy --schema supabase_migrations
-          for f in schema.sql data.sql auth.sql ledger.sql; do test -s $f || { echo "::error::$f empty"; exit 1; }; done
+          # ...and that table's OWN DDL. Hand-writing it is a second copy of a schema we do not own:
+          # run 33778061428 died on `column "created_by" does not exist` because the hand-written
+          # version had drifted from the one production actually has.
+          supabase db dump --db-url "$OLD_DB_URL" -f ledger_schema.sql --schema supabase_migrations
+          for f in schema.sql data.sql auth.sql ledger.sql ledger_schema.sql; do test -s $f || { echo "::error::$f empty"; exit 1; }; done
           echo "schema $(wc -c <schema.sql)B · data $(wc -c <data.sql)B · auth $(wc -c <auth.sql)B · ledger $(wc -c <ledger.sql)B"
           # Table NAMES only, never rows — this dump carries children's data and the repo is public.
           # Printed BEFORE the assertions so a failure says what the file does contain, rather than
@@ -69,6 +99,7 @@ jobs:
           # the bundle-grep trap: it would read as a missing block on a dump that is perfectly fine.
           grep -Eq '^COPY "?auth"?[.]"?users"? ' auth.sql || { echo "::error::auth.sql has no auth.users block"; exit 1; }
           grep -Eq '^COPY "?supabase_migrations"?[.]"?schema_migrations"? ' ledger.sql || { echo "::error::ledger.sql has no ledger block"; exit 1; }
+          grep -Eqi 'create table[^;]*schema_migrations' ledger_schema.sql || { echo "::error::ledger_schema.sql has no schema_migrations table"; exit 1; }
           psql "$OLD_DB_URL" -f supabase/tests/security_posture.sql > posture.old.txt
 
       - name: Restore into the new project
@@ -85,8 +116,10 @@ jobs:
             create extension if not exists supabase_vault;
           SQL
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -f schema.sql
-          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -c 'create schema if not exists supabase_migrations' \
-            -c 'create table if not exists supabase_migrations.schema_migrations (version text primary key, statements text[], name text)'
+          # the ledger's own DDL as production has it — only create the schema if the dump does not
+          grep -Eqi 'create schema[^;]*supabase_migrations' ledger_schema.sql \
+            || psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -c 'create schema if not exists supabase_migrations'
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -f ledger_schema.sql
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f ledger.sql
           # replica role: FKs and triggers stay quiet while rows land in dependency order
           psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f auth.sql
@@ -98,7 +131,7 @@ jobs:
             select cron.schedule('prune-error-events',      '27 3 * * *', 'select public.prune_error_events()');
             select cron.schedule('prune-diagnostic-leads',  '32 3 * * *', 'select public.prune_diagnostic_leads()');
           SQL
-          rm -f schema.sql data.sql auth.sql ledger.sql
+          rm -f schema.sql data.sql auth.sql ledger.sql ledger_schema.sql
 
       - name: Verify — same queries, two databases, must agree
         env: { NEW_DB_URL: "${{ secrets.NEW_DB_URL }}" }
