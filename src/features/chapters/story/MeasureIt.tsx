@@ -36,7 +36,7 @@
  * per world. Wrapped by the registry row `measurement`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { TintedSprite } from './TintedSprite'
@@ -302,14 +302,21 @@ const MeasurePlay: React.FC<{
     }
     // Wrong: SHOW the true measure rather than only saying it — lay or lift blocks one at a time up
     // to the real count, so the child watches the run reach the end of the thing.
-    speak(n > thing.units ? 'Oops — that went past the end. Watch…' : 'Not quite there yet. Watch…')
     const steps = Math.abs(n - thing.units)
     for (let i = 0; i < steps; i++) {
       after(700 + i * 380, () => setLaid(l => (l.length < thing.units ? [...l, { key: keyRef.current++ }] : l.slice(0, -1))))
     }
     const end = 700 + steps * 380
-    after(end + 260, () => { setGlow(true); speak(`${thing.units}. The ${thing.noun} is ${thing.units} blocks ${world.word}.`) })
-    after(end + 1800, () => onComplete(false))
+    // Two lines, one narration: "Watch…" runs ~2.6s and the measure used to land on top of it at
+    // `end + 260`. The blocks still move on their own timers above; only the words wait.
+    speakPaced([
+      n > thing.units ? 'Oops — that went past the end. Watch…' : 'Not quite there yet. Watch…',
+      `${thing.units}. The ${thing.noun} is ${thing.units} blocks ${world.word}.`,
+    ], {
+      onStep: (i) => { if (i === 1) setGlow(true) },
+      minMs: (_l, i) => (i === 0 ? end + 260 : 1800),
+      onDone: () => onComplete(false),
+    })
   }, [laid, live, thing, world.word, onComplete, onRecord, after])
 
   return (<>
@@ -339,15 +346,27 @@ const MeasureExplain: React.FC<{ world: MWorld; thing: Thing; onDone: () => void
      * demos and the guided round arriving inside four seconds. The same rule the colour and shape
      * showcases already run on.
      */
-    speak(`How ${world.word} is the ${thing.noun}? Let's lay Milo's blocks!`)
     const LAY = 1000
-    for (let n = 1; n <= thing.units; n++) {
-      at(2200 + (n - 1) * LAY, () => { setLaid(l => [...l, { key: keyRef.current++ }]); speak(String(n)) })
-    }
-    const after = 2200 + thing.units * LAY
-    at(after + 300, () => { setGlow(true); speak(`We reached ${end}! So the ${thing.noun} is ${thing.units} blocks ${world.word}.`) })
-    at(after + 3600, onDone)
-    return () => { timers.forEach(t => window.clearTimeout(t)); stopSpeech() }
+    const lines = [
+      `How ${world.word} is the ${thing.noun}? Let's lay Milo's blocks!`,
+      ...Array.from({ length: thing.units }, (_, i) => String(i + 1)),
+      `We reached ${end}! So the ${thing.noun} is ${thing.units} blocks ${world.word}.`,
+    ]
+    // ⚠️ The opening line ran ~3.5s with a real clip and the first count landed at 2200ms, so Milo
+    // was cut off mid-sentence on the very first thing this chapter says. `speakPaced` keeps the
+    // deterministic pacing the note above is about (a block a second, timer-driven, never hanging
+    // on a speech event) and simply will not START the next step while he is still talking.
+    const cancel = speakPaced(lines, {
+      onStep: (i) => {
+        if (i === 0) return
+        if (i <= thing.units) { setLaid(l => [...l, { key: keyRef.current++ }]); return }
+        setGlow(true)
+      },
+      minMs: (_l, i) => (i === 0 ? 2200 : i <= thing.units ? LAY : 300),
+      onDone,
+      tailMs: 1200,
+    })
+    return () => { cancel(); timers.forEach(t => window.clearTimeout(t)); stopSpeech() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

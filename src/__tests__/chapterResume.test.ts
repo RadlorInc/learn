@@ -145,7 +145,9 @@ describe('spoken praise on a correct answer', () => {
   })
 
   it('is still suppressed for a beat that writes its own feedback', () => {
-    expect(read(STORY)).toContain('if (!beat.ownsFeedback) speak(correct ? PRAISE[')
+    // ⚠️ AND IT QUEUES RATHER THAN CUTS (2026-09-04) — `speakAfterCurrent`, with a second gate so a
+    // re-teach is not preceded by an encouragement its own narration would supersede a beat later.
+    expect(read(STORY)).toContain('if (!beat.ownsFeedback && !reteaching) speakAfterCurrent(correct ? PRAISE[')
   })
 
   /**

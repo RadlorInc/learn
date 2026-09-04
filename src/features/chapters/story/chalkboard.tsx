@@ -23,7 +23,7 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useViewport } from '@/shared/hooks/useViewport'
-import { speak } from '@/infra/useMiloSpeaker'
+import { afterSpeech, speak } from '@/infra/useMiloSpeaker'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 /** A short frame, the band-wide breakpoint. Lives here because both boards window on it. */
@@ -107,6 +107,7 @@ export function ThePlan({ problem, points, onDone, onSkip }: {
 
   useEffect(() => {
     let alive = true
+    let waiting: (() => void) | null = null
     const timers: number[] = []
     speak([problem, ...points].join(' '))
     let i = 0
@@ -119,12 +120,15 @@ export function ThePlan({ problem, points, onDone, onSkip }: {
       const t = window.setTimeout(() => {
         i++
         if (i < words.length) run()
-        else window.setTimeout(() => alive && doneRef.current(), 1200)
+        // ⚠️ The highlight walks at ~42ms a character and the plan is spoken as ONE utterance, so
+        // the words run out well before Milo does — and whatever comes next (the walkthrough's own
+        // narration) then cut the plan off mid-sentence. Wait for him, under a ceiling.
+        else waiting = afterSpeech(() => { waiting = null; if (alive) window.setTimeout(() => alive && doneRef.current(), 1200) }, 12000)
       }, Math.max(190, Math.min(520, 70 + w.length * 42)))
       timers.push(t)
     }
     run()
-    return () => { alive = false; timers.forEach(window.clearTimeout) }
+    return () => { alive = false; waiting?.(); timers.forEach(window.clearTimeout) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

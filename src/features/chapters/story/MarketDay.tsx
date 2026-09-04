@@ -24,7 +24,7 @@
  * game/MultiplicationChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import FitBox from './FitBox'
@@ -420,7 +420,9 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
     // The last pen has to be FULL before the answer is offered — derived from the creatures' own
     // gait, so a slow-walking cast is waited out rather than talked over.
     t += groupFillMs(data.item.img, itemPxFor(g, per, vw, vh, data.item.img, short), per) + 120
-    T.push(window.setTimeout(() => { setAsking(true); set({ showBox: true }); speak('How many in all?') }, t))
+    // `speakAfterCurrent`: on a small round the pens fill in less time than the story line takes
+    // to say, and the question used to cut it off.
+    T.push(window.setTimeout(() => { setAsking(true); set({ showBox: true }); speakAfterCurrent('How many in all?') }, t))
     return () => T.forEach(id => window.clearTimeout(id))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -447,7 +449,9 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
       const tick = () => {
         k++; set({ glowN: k, boxValue: k * per })
         if (k < g) window.setTimeout(tick, 460)
-        else { set({ boxDone: true }); if (mode === 'guided') speak(`${numberToWords(g)} times ${numberToWords(per)} is ${numberToWords(answer)}!`) }
+        // `speakAfterCurrent`: the count runs 250 + g*460ms, which on a two-group round is shorter
+        // than "Yes! Let's skip-count." takes to say.
+        else { set({ boxDone: true }); if (mode === 'guided') speakAfterCurrent(`${numberToWords(g)} times ${numberToWords(per)} is ${numberToWords(answer)}!`) }
       }
       window.setTimeout(tick, 250)
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), g * 460 + 1500)

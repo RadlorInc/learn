@@ -64,7 +64,7 @@
  * why replacing a chapter's only commit-feeding control is how a round becomes unsubmittable.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { afterSpeech, speak, speakAfterCurrent, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -1110,7 +1110,9 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
     // same fault as the bubble showing early, in the other channel.
     useEffect(() => {
       if (!ready) return
-      speak(data.ask)
+      // `speakAfterCurrent`: the customer arrives while the previous round's line may still be
+      // running, and their question must not take it away mid-word.
+      speakAfterCurrent(data.ask)
       return () => stopSpeech()
     }, [ready, data.ask])
 
@@ -1402,6 +1404,7 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void; onSkip?
     let alive = true
     const timers: number[] = []
     let i = 0
+    let waiting: (() => void) | null = null
     const run = () => {
       if (!alive) return
       setStep(i)
@@ -1409,15 +1412,23 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void; onSkip?
       // the scene is a function of the step, never of a separate schedule
       setEntered(beats[i].entered)
       setBoard(beats.slice(0, i + 1).map(b => b.board).filter(Boolean) as string[])
+      // ⚠️ THE DWELL IS A FLOOR, NOT THE WHOLE STORY. `dwellFor` caps at 6400ms and a real clip of
+      // these lines runs past it, so the next step used to land mid-sentence and cancel it.
+      // `afterSpeech` holds the step open until Milo stops — under a ceiling, because a walkthrough
+      // that can only advance on a speech event freezes on the devices that drop those events.
       const t = window.setTimeout(() => {
-        i++
-        if (i < lines.length) run()
-        else window.setTimeout(() => alive && doneRef.current(), 1300)
+        waiting = afterSpeech(() => {
+          waiting = null
+          if (!alive) return
+          i++
+          if (i < lines.length) run()
+          else window.setTimeout(() => alive && doneRef.current(), 1300)
+        }, 9000)
       }, dwellFor(lines[i]))
       timers.push(t)
     }
     run()
-    return () => { alive = false; timers.forEach(window.clearTimeout); stopSpeech() }
+    return () => { alive = false; waiting?.(); timers.forEach(window.clearTimeout); stopSpeech() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready])
 
@@ -1456,7 +1467,9 @@ export function makeBeat(): Beat<OdRound> {
     // the board and contradict it.
     ownsFeedback: true,
     prompt: () => '',
-    say: d => d.ask,
+    // ⚠️ NO `say`. The chapter speaks the ask itself, on the customer's ARRIVAL, and a `say` here
+    // would be the same line queued a second time now that the shell waits its turn.
+
     Play: ({ data, onSubmit }) => <OrderPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <OrderExplain data={data} onDone={onDone} />,
   }

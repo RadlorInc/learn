@@ -25,7 +25,7 @@
  * Wrapped by game/StoryProblemsChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -584,7 +584,9 @@ const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boo
       T.push(window.setTimeout(() => set({ bShown: b }), t)); t += stepFor(b)
     }
     t += 400
-    T.push(window.setTimeout(() => { setAsking(true); set({ showBox: true }); speak(txt.question) }, t))
+    // `speakAfterCurrent`: on a small round the creatures land in less time than the story takes
+    // to say, and the question used to cut it off.
+    T.push(window.setTimeout(() => { setAsking(true); set({ showBox: true }); speakAfterCurrent(txt.question) }, t))
     return () => T.forEach(id => window.clearTimeout(id))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -614,7 +616,8 @@ const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boo
         if (op === 'compare') set({ litExtra: k, boxValue: k })
         else set({ litA: k, boxValue: k })
         if (k < answer) window.setTimeout(tick, 300)
-        else { set({ boxDone: true }); if (mode === 'guided') speak(`${numberToWords(answer)}!`) }
+        // `speakAfterCurrent`: the count runs 250 + answer*300ms, shorter than "Yes! Let's count."
+        else { set({ boxDone: true }); if (mode === 'guided') speakAfterCurrent(`${numberToWords(answer)}!`) }
       }
       window.setTimeout(tick, 250)
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), answer * 300 + 1500)

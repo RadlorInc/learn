@@ -41,7 +41,7 @@
  * Landscape-first, wrapped by the registry / `?ch=rainbow`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -617,7 +617,9 @@ export default function RainbowTown({ onFinish, onExit }: {
     const t = TEACH_PAGE.targets[stepIdx]
     if (!t) return
     const c = COLORS[t.color].label
-    speak(`This colour is ${c}. The ${t.noun} is ${c}! Pick up the ${c} paint — it is jumping up and down — then tap the ${t.noun}.`)
+    // `speakAfterCurrent`: a correct fill says "red! the tulip is red." and immediately advances
+    // the step, so this beat's own line used to arrive on top of it.
+    speakAfterCurrent(`This colour is ${c}. The ${t.noun} is ${c}! Pick up the ${c} paint — it is jumping up and down — then tap the ${t.noun}.`)
   }, [phase, stepIdx])
 
   // Depends on the open page and nothing that changes DURING a round, so picking up a pot can never

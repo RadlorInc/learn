@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
+import { afterSpeech, speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import ScaleToFill from './ScaleToFill'
 
 // ─── Spoken numbers (0–100) ──────────────────────────────────
@@ -195,7 +195,9 @@ export function LessonScaffold({childName,onLessonComplete,steps,finalSpeech,cha
     stopSpeech()
     if(step>=steps.length-1){
       speak(finalSpeech)
-      window.setTimeout(onLessonComplete,3200)
+      // Leaving the lesson unmounts the speaker, so a flat 3200ms cut a longer closing line off.
+      // `afterSpeech` waits for Milo, under its own ceiling.
+      afterSpeech(onLessonComplete, 9000)
       return
     }
     setStep(s=>s+1); setNextReady(false)

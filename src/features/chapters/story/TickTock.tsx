@@ -33,7 +33,7 @@
  * game/TimeChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
@@ -371,7 +371,9 @@ const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: bo
   const askText = askTextFor(data)
 
   useEffect(() => {
-    if (speakOnMount) speak(askText)
+    // `speakAfterCurrent`: this mounts straight out of the lesson's last line, which is still
+    // being said. Where nothing is talking it behaves exactly like `speak`.
+    if (speakOnMount) speakAfterCurrent(askText)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -472,14 +474,13 @@ const Reteach: React.FC<{ data: TimeRound; onDone: () => void }> = ({ data, onDo
     // Self-paced for the same reason the lesson is — see the long note in `Lesson`. A re-teach whose
     // visuals hang off speech events freezes on any device that stops delivering them, and a frozen
     // re-teach is a dead end reached by a child who has already got three wrong.
-    const timers: number[] = []
-    let t = 0
-    lines.forEach((line, i) => {
-      timers.push(window.setTimeout(() => { steps[i]?.(); setLine(line); speak(line) }, t))
-      t += dwellFor(line)
+    const cancel = speakPaced(lines, {
+      onStep: i => { steps[i]?.(); setLine(lines[i]) },
+      onDone: () => doneRef.current(),
+      minMs: dwellFor,
+      tailMs: 1200,
     })
-    timers.push(window.setTimeout(() => doneRef.current(), t + 1200))
-    return () => { timers.forEach(window.clearTimeout); stopSpeech() }
+    return () => { cancel(); stopSpeech() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -614,23 +615,22 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
      *
      * So the visuals no longer depend on speech at all: each line dwells for a time derived from its
      * own length, and `speak()` rides along. This is the call MeasureIt already made for the same
-     * reason, and it is why the colour and shape showcases are self-paced too. The honest cost is that
-     * a slow voice can have its tail cut by the next line — which is a far smaller price than a lesson
-     * that freezes, and `speak()` cancels cleanly rather than overlapping.
+     * reason, and it is why the colour and shape showcases are self-paced too.
+     *
+     * ⚠️ IT USED TO SAY THAT A SLOW VOICE HAVING ITS TAIL CUT WAS AN ACCEPTABLE PRICE. It was not —
+     * the founder heard it, across every band, on 2026-09-04. `speakPaced` keeps the property that
+     * matters (the visuals are on their OWN timer and can never hang on a missing speech event) and
+     * removes the cut: a beat ends at the LATER of its dwell and Milo actually finishing, with a
+     * ceiling so a device that never reports the end still rolls on.
      */
-    const timers: number[] = []
-    let t = 0
-    b.lines.forEach((line, i) => {
-      timers.push(window.setTimeout(() => {
-        b.steps[i]?.()
-        setLine(line)
-        speak(line)
-      }, t))
-      t += dwellFor(line)
+    const cancel = speakPaced(b.lines, {
+      onStep: i => { b.steps[i]?.(); setLine(b.lines[i]) },
+      // The last beat waits for the child (its final step has already offered the dial); the others roll on.
+      onDone: last ? undefined : advance,
+      minMs: dwellFor,
+      tailMs: 600,
     })
-    // The last beat waits for the child (its final step has already offered the dial); the others roll on.
-    if (!last) timers.push(window.setTimeout(advance, t + 600))
-    return () => { timers.forEach(window.clearTimeout); stopSpeech() }
+    return () => { cancel(); stopSpeech() }
      
   }, [beat])
 

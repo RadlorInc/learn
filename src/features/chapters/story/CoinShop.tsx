@@ -51,7 +51,7 @@
  * scenes are not used all live in [market.ts](./market.ts). Read that before touching the geometry.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
@@ -494,7 +494,9 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
     setT(EMPTY); setNote(''); setOk(false); setLive(false); setLeg(0)
     // The question opens when Milo has actually ARRIVED, timed off the same journey he walks.
     const walkIn = legMs(0, miloH, vw)
-    after(walkIn, () => { setLive(true); speak(openerFor(st, data)) })
+    // `speakAfterCurrent`: the walk-in is timed off Milo's journey, which is shorter than the
+    // previous round's "the apple is yours!" — a plain `speak` cut the sale line off every round.
+    after(walkIn, () => { setLive(true); speakAfterCurrent(openerFor(st, data)) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [price, kind, data.asPile, st.key])
 

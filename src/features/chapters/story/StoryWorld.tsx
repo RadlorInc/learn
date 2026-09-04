@@ -13,7 +13,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech } from '@/infra/useMiloSpeaker'
 import { useAdaptive } from '@/shared/hooks/useAdaptive'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
@@ -209,7 +209,11 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       if (k && !asked.current.includes(k)) asked.current = [...asked.current, k]
     }
     onRound?.(data, roundIdx)
-    speak((beat.say ?? beat.prompt)(data))
+    // ⚠️ `speakAfterCurrent`, NOT `speak`. The round advances on a 1300ms timer after the verdict
+    // line is spoken (below), and most verdicts are longer than that — so a plain `speak` here cut
+    // Milo off mid-praise on EVERY round of every storybook chapter, in all four bands that run on
+    // this beat. The visuals still advance on their own timer; only the words wait their turn.
+    speakAfterCurrent((beat.say ?? beat.prompt)(data))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundIdx])
 
@@ -235,7 +239,16 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     // said something specific, or the generic line lands on top of it and cancels it.
     // Praise a right answer, encourage a wrong one — and neither where the beat writes its own
     // feedback, or the generic line lands on top of the specific one and cancels it.
-    if (!beat.ownsFeedback) speak(correct ? PRAISE[roundIdx % PRAISE.length] : ada.encouragement)
+    // ⚠️ `speakAfterCurrent` again, for the OTHER half of the same fault. Plenty of chapters that
+    // do not set `ownsFeedback` still say something specific the instant the child commits
+    // ("five blocks! the log is five blocks long"), and a generic line fired on top of it took the
+    // specific one away — the thing this branch's own comment was written to prevent, arriving
+    // through timing rather than through the flag.
+    // ⚠️ AND NOTHING GENERIC AT ALL WHEN A RE-TEACH IS ABOUT TO RUN. The re-teach is a `speakSteps`
+    // sequence that supersedes whatever is talking, so an encouragement queued here would be cut
+    // off by it a second later — and the re-explanation is the warm response anyway.
+    const reteaching = !correct && newRun >= RETEACH_AFTER
+    if (!beat.ownsFeedback && !reteaching) speakAfterCurrent(correct ? PRAISE[roundIdx % PRAISE.length] : ada.encouragement)
     window.setTimeout(() => {
       setFeedback(null)
       if (!correct && newRun >= RETEACH_AFTER) { setPhase('reteach'); return }

@@ -1857,6 +1857,63 @@ and nudge, deterministically off the same seeded stream) and keep the gate asser
 - Never fire rapid consecutive `speak()` calls; each cancels the last.
 - Demos are deliberately slow: `rate: 0.8`, `gapMs: 1100`, and a slow fallback step when silent.
 
+### ⚠️⚠️ NOTHING MILO SAYS MAY BE CUT OFF BY THE NEXT THING — AND THE DEFAULT VERB CUTS
+
+Founder, 2026-09-04, across every band: *"kuch chapters mein voice aane lagti hai aur next chiz aa
+jaati hai toh woh cut ho jaati hai"*. It was true nearly everywhere, from two mechanisms that each
+look completely correct in the source.
+
+**`speak()` SUPERSEDES. That is right for a tap and wrong for everything else.** A child counting
+1, 2, 3 must hear the newest number, not a queue trailing behind their finger — so `speak()` cancels
+whatever is talking, and must keep doing so. But a *narration* following another narration is the
+opposite case, and every round boundary in the app is one: the chapter's own verdict, then the
+shell's praise, then the next question, on 1300–1800ms timers that are shorter than any of those
+lines takes to say. Three lines, two of them cut, on every round of every chapter.
+
+| you are about to say… | use |
+|---|---|
+| a response to something the child just DID (a tap, a count, a wrong pick) | `speak()` — newest wins |
+| anything that FOLLOWS another line (a round question, praise, a hand-over, an end screen) | `speakAfterCurrent()` — queues, in order, bounded to two waiting |
+| a walkthrough, lesson or re-teach of several lines | `speakPaced()` (self-paced) or `speakSteps()` (speech-paced) |
+| "do this when Milo stops" | `afterSpeech(cb, ceilingMs)` |
+
+- ⚠️ **`speakAfterCurrent` waits on IN-FLIGHT, not on "is he talking".** `_speaking` only turns true
+  at the clip's `onStart` — one async manifest lookup and an `audio.play()` promise after the call —
+  and a round advance calls it in the SAME TICK as the line it means to follow. Gated on `_speaking`
+  it read "nothing is playing" about a line already on its way and cancelled it: it could only ever
+  work on a device with **no clips**, which is why every drive in this repo showed it working.
+- ⚠️ **A QUEUE THAT ONLY WORKS ONE DEEP IS THE SAME DEFECT ONE LINE FURTHER ALONG.** Written as one
+  "speak when the current line ends" callback per waiter, the end of the first line released all of
+  them at once and the last to wake up cancelled the rest — so the middle line of every three
+  vanished. It is a real FIFO now, and **bounded to two waiting**, because a queue is a way of
+  running late: a child who answers faster than Milo talks would otherwise hear the commentary on
+  the question before last.
+- ⚠️⚠️ **A SELF-PACED LESSON'S DWELL IS A FLOOR, NEVER THE WHOLE STORY.** The lessons are
+  deliberately NOT driven by speech events — a walkthrough whose visuals hang off `onstart` freezes
+  for ever on a device that starts line one and drops the rest, which this repo has shipped — and
+  the price written down for that was *"a slow voice can have its tail cut by the next line"*. That
+  price was never acceptable; it is what the founder heard. `speakPaced` keeps the property that
+  matters (the visuals run on their OWN timer and can never hang) and ends each step at the **later**
+  of its dwell and Milo actually finishing, under a ceiling. `dwellFor` at 72ms a character is under
+  a real clip's length often enough to matter, and `Math.min(6200, …)` guarantees it on a long line.
+- ⚠️ **TWO SEQUENCES 1800ms APART ARE NOT A SEQUENCE.** A second `speakSteps` supersedes the first,
+  so GameShell's reveal was chopped off mid-word by the re-teach the child had just earned. Say them
+  as ONE `speakSteps` and drive the board from its `onStep` — a sequence only starts a line when the
+  previous one has ended, so nothing inside it can cut anything.
+- ⚠️ **A GENERIC LINE MUST NOT LAND ON A SPECIFIC ONE.** `ownsFeedback` exists for that and only
+  covers the chapters that set it; plenty of others still say something specific the instant the
+  child commits ("five blocks! the log is five blocks long"). The shell queues its praise behind
+  them now, and says nothing at all when a re-teach is about to run.
+- ⚠️ **AND THE SAME LINE DECLARED IN TWO PLACES IS NOW HEARD TWICE, NOT ONCE.** Order Desk and Level
+  Run both carried `say: d => d.ask` on the beat AND spoke `data.ask` themselves; while the shell
+  superseded, the duplicate was invisible. The moment it queues, it is audible. **When you move a
+  line to `speakAfterCurrent`, check nothing else says it.**
+- **Verify it by listening, or by the mock.** Every one of these is a single word — `speak` vs
+  `speakAfterCurrent` — that reverts to something perfectly sensible. Both spellings type-check,
+  both render identically, and the difference is only audible on a device that HAS clips.
+  `src/__tests__/voiceNoOverlap.test.ts` mocks the clip player with a clip that is deliberately
+  SLOWER than the caller's timer, which is the only world in which any of these faults exists.
+
 ### Never let two voices overlap
 
 - Never gate a tap on the animation — a child who has already found the next answer should not be

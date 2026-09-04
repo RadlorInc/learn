@@ -377,8 +377,11 @@ describe('the four readings, and covering them', () => {
     // feedback would have kept the pill suppressed and gained a "Great job!" landing on top of its
     // own "That's right — half past six!" — the exact collision this test was written for,
     // reintroduced through the other branch.
+    // ⚠️ AND IT QUEUES RATHER THAN CUTS (2026-09-04). `speakAfterCurrent`, plus a second gate on
+    // `reteaching`, so a chapter that says something specific keeps it and a re-teach is not
+    // preceded by an encouragement it would immediately supersede.
     expect(src, 'the generic spoken line is no longer opt-out-able')
-      .toContain('if (!beat.ownsFeedback) speak(correct ? PRAISE[')
+      .toContain('if (!beat.ownsFeedback && !reteaching) speakAfterCurrent(correct ? PRAISE[')
     // And the chapter still SAYS something on a miss — silence is a tap that appears to do nothing,
     // and speech alone is silence on the many devices with no usable voice, so it is written too.
     const tt = readFileSync(join(process.cwd(), 'src/features/chapters/story/TickTock.tsx'), 'utf8')

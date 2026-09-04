@@ -150,7 +150,11 @@ describe("Shape House — Milo praises, and the wall is one wall", () => {
    */
   it('announces the move to the boat, out loud and in writing', () => {
     const src = read(SHAPES)
-    expect(src).toContain('speak(BUILDS[1].opening)')
+    // ⚠️ `speakAfterCurrent` since 2026-09-04: the interlude fires 1300ms after the round's praise,
+    // so a plain `speak` here took that praise away — and the 1800ms hold below was a workaround for
+    // the SAME fault in the other direction (the next question cutting THIS line). The hold stays as
+    // the visual beat; neither line can be cut now.
+    expect(src).toContain('speakAfterCurrent(BUILDS[1].opening)')
     expect(src).toContain('{moving && Banner(BUILDS[1].opening)}')
     const hold = /setMoving\(false\); res\(\) }, (\d+)\)/.exec(src)
     expect(hold, 'the interlude no longer holds for a measured time').toBeTruthy()

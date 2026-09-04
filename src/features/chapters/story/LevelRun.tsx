@@ -73,7 +73,7 @@
  * TickTock records.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { afterSpeech, speak, speakAfterCurrent, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -982,7 +982,9 @@ const LevelPlay: React.FC<{ data: LvRound; mode: Mode; onComplete: (correct: boo
     setMiss(null); setSolved(false); setDropped(false)
     done.current = false; erred.current = false
     setWarps(0); setRunnerX(homeX)
-    speak(data.ask)
+    // `speakAfterCurrent`: the round advances 1300ms after the previous one's "off she goes" line,
+    // which runs longer than that — a plain `speak` chopped it off at the start of every round.
+    speakAfterCurrent(data.ask)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
@@ -1427,6 +1429,7 @@ const LevelExplain: React.FC<{ data: LvRound; onDone: () => void; onSkip?: () =>
     let alive = true
     const timers: number[] = []
     let i = 0
+    let waiting: (() => void) | null = null
     const run = () => {
       if (!alive) return
       setStep(i)
@@ -1442,15 +1445,24 @@ const LevelExplain: React.FC<{ data: LvRound; onDone: () => void; onSkip?: () =>
       // A new leg is a new picture, so Astro is PLACED back at the start rather than travelling
       // there — a placement is not a journey, and animating it would read as her running backwards.
       if (i === 3) { setRunnerX(L.homeX) }
+      // ⚠️ THE DWELL IS A FLOOR, NOT THE WHOLE STORY. `dwellFor` caps at 6200ms and these lines run
+      // longer than that with a real clip, so the next step used to arrive mid-sentence and cancel
+      // it. `afterSpeech` holds the step open until Milo has actually stopped — under a ceiling,
+      // because a walkthrough that can only advance on a speech event freezes on the devices that
+      // drop those events, which is why this loop is on a timer in the first place.
       const t = window.setTimeout(() => {
-        i++
-        if (i < lines.length) run()
-        else window.setTimeout(() => alive && doneRef.current(), 1500)
+        waiting = afterSpeech(() => {
+          waiting = null
+          if (!alive) return
+          i++
+          if (i < lines.length) run()
+          else window.setTimeout(() => alive && doneRef.current(), 1500)
+        }, 9000)
       }, dwellFor(lines[i]))
       timers.push(t)
     }
     run()
-    return () => { alive = false; timers.forEach(window.clearTimeout) }
+    return () => { alive = false; waiting?.(); timers.forEach(window.clearTimeout) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1515,7 +1527,9 @@ export function makeBeat(): Beat<LvRound> {
     ownsFeedback: true,
     // Empty → SkillBeat draws no pill. Milo's bubble is the only question region.
     prompt: () => '',
-    say: d => d.ask,
+    // ⚠️ NO `say`. The chapter speaks the ask itself, from the round's own mount effect, and a `say`
+    // here would be the SAME line queued a second time now that the shell waits its turn instead of
+    // superseding — heard twice rather than once.
     Play: ({ data, onSubmit }) => <LevelPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <LevelExplain data={data} onDone={onDone} />,
   }

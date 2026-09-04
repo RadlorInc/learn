@@ -451,7 +451,11 @@ export function Game<V, T extends BaseTask>({
     if (demoDone.current) return
     demoDone.current = true
     setStage('play')
-    speak(`Your turn, ${childName}.`)
+    // ⚠️ `speakAfterCurrent`, not `speak`. This runs 1700ms after the guided round's own verdict
+    // line ("You did it, Ava! Now let's play.") — shorter than that line takes to say — so a plain
+    // `speak` chopped the guided round's last words off. And `loadTask` on the very next statement
+    // speaks the question, which must in turn queue behind THIS one rather than cut it.
+    speakAfterCurrent(`Your turn, ${childName}.`)
     loadTask(resume?.round ?? 0, resume?.correct ?? 0, resume?.wrong ?? 0, false)
   }, [childName, loadTask, resume])
 
@@ -513,51 +517,62 @@ export function Game<V, T extends BaseTask>({
     const w = wrong + 1
     const run = wrongRun + 1
     setWrong(w); setWrongRun(run); setSub('reveal')
-    /**
-     * ⚠️ TWO UTTERANCES, NOT ONE SENTENCE, AND THE REASON IS THE CLIP CORPUS. Spoken as
-     * `It was X. <encouragement>` this is ONE line to the clip layer, so every reveal has to be
-     * recorded once per encouragement — and there are ten of them. Measured on 9–11: 3,640 lines
-     * and 114,506 characters as one utterance against 374 lines and ~4,300 split, i.e. a 10x
-     * multiplication of the whole bucket, and a month's ElevenLabs quota spent on saying the same
-     * ten endings over and over.
-     * ⚠️ It must be `speakSteps`, never `speak` followed by `speakAfterCurrent`: `_speaking` only
-     * turns true when the clip's onStart fires, so a synchronous second call takes the `else`
-     * branch and `_doSpeak` CANCELS the line that is still loading. The first half would simply
-     * disappear, on the machines that have clips.
-     */
-    speakSteps([`It was ${config.revealText(task)}.`, ada.encouragement])
     if (value != null) config.glide(task, value, setValue, later)
 
     if (run >= RETEACH_AFTER) {
-      later(() => {
-        setSub('reteach'); setReteachAt(0)
-        // speakSteps, not speakSeq: it reports which line is being spoken (so the
-        // board can write it) and it still paces itself when speech is blocked or
-        // absent. The child's own speed multiplier applies here too.
-        const m = getSpeechRate()
-        let done = false
-        const advance = () => {
-          if (done) return
-          done = true
-          setReteachAt(-1); setWrongRun(0); loadTask(idx + 1, correct, w, false)
-        }
-        speakSteps(task.work, {
-          rate: 0.8 * m,
-          gapMs: Math.round(900 / m),
-          fallbackStepMs: Math.round(2600 / m),
-          onStep: setReteachAt,
-          // Advance when the re-explanation actually FINISHES, never on a flat timer.
-          // The old fixed 6400ms was tuned against the silent fallback, so a real
-          // voice — or a child who has chosen "Slower" — had the last line or two cut
-          // off. That is the craft doc's own backstop-timed-against-the-wrong-thing
-          // fault, and it bites hardest here, where the words are the whole point.
-          onDone: advance,
-        })
-        // Backstop, guarded so it can never double-advance: if onDone somehow never
-        // fires, the round must not strand the child on the re-teach for ever.
-        later(advance, 4000 + task.work.length * Math.round(3200 / m))
-      }, 1800)
+      /**
+       * ⚠️ THE REVEAL AND THE RE-EXPLANATION ARE **ONE** SEQUENCE, NOT TWO THINGS ON A TIMER.
+       *
+       * They used to be a `speakSteps` reveal followed by a second `speakSteps` 1800ms later — and
+       * a second sequence SUPERSEDES the first, so "It was seventy-two point five." plus its
+       * encouragement (well over 1800ms with a real clip) was chopped off mid-word by the very
+       * explanation the child had earned. Said as one sequence it cannot happen: `speakSeq` only
+       * starts a line when the previous one has ended.
+       *
+       * The encouragement is dropped on this path on purpose — a full re-explanation is the warm
+       * response, and "nearly!" in front of it is one more thing to sit through.
+       */
+      const m = getSpeechRate()
+      let done = false
+      const advance = () => {
+        if (done) return
+        done = true
+        setReteachAt(-1); setWrongRun(0); loadTask(idx + 1, correct, w, false)
+      }
+      // The BOARD still appears on its own timer — a screen that waits on a speech event is the
+      // frozen-lesson fault, and this one can be reached only by a child who has missed three.
+      later(() => { setSub('reteach'); setReteachAt(0) }, 1800)
+      speakSteps([`It was ${config.revealText(task)}.`, ...task.work], {
+        rate: 0.8 * m,
+        gapMs: Math.round(900 / m),
+        fallbackStepMs: Math.round(2600 / m),
+        // Line 0 is the reveal and belongs to no board step; the rest write themselves out.
+        onStep: (i) => { if (i > 0) { setSub('reteach'); setReteachAt(i - 1) } },
+        // Advance when the re-explanation actually FINISHES, never on a flat timer.
+        // The old fixed 6400ms was tuned against the silent fallback, so a real
+        // voice — or a child who has chosen "Slower" — had the last line or two cut
+        // off. That is the craft doc's own backstop-timed-against-the-wrong-thing
+        // fault, and it bites hardest here, where the words are the whole point.
+        onDone: advance,
+      })
+      // Backstop, guarded so it can never double-advance: if onDone somehow never
+      // fires, the round must not strand the child on the re-teach for ever.
+      later(advance, 6000 + task.work.length * Math.round(3200 / m))
     } else {
+      /**
+       * ⚠️ TWO UTTERANCES, NOT ONE SENTENCE, AND THE REASON IS THE CLIP CORPUS. Spoken as
+       * `It was X. <encouragement>` this is ONE line to the clip layer, so every reveal has to be
+       * recorded once per encouragement — and there are ten of them. Measured on 9–11: 3,640 lines
+       * and 114,506 characters as one utterance against 374 lines and ~4,300 split, i.e. a 10x
+       * multiplication of the whole bucket, and a month's ElevenLabs quota spent on saying the same
+       * ten endings over and over.
+       * ⚠️ It must be `speakSteps`, never `speak` followed by `speakAfterCurrent`: a sequence is
+       * one thing in flight, so the next question queues behind BOTH halves. Two separate calls
+       * would leave the second racing the first.
+       */
+      speakSteps([`It was ${config.revealText(task)}.`, ada.encouragement])
+      // The next question is spoken by `loadTask` via `speakAfterCurrent`, so it queues behind
+      // this reveal rather than cutting it — the 2300ms is the VISUAL pace, nothing more.
       later(() => loadTask(idx + 1, correct, w, false), 2300)
     }
   }

@@ -29,7 +29,7 @@
  * Landscape-first, wrapped by the registry / `?ch=shapes`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, speakPaced, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { ShapeSVG, SHAPES, SHAPE_ORDER, type ShapeName } from '../lessons/ShapesLesson'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -439,15 +439,19 @@ const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   const finish = useCallback(() => { if (fired.current) return; fired.current = true; stopSpeech(); onDone() }, [onDone])
   useEffect(() => {
     if (ran.current) return; ran.current = true
-    const timers: Array<ReturnType<typeof setTimeout>> = []
-    speak('These are the shapes!')
-    let t = 1800
-    SHAPE_ORDER.forEach((s, i) => {
-      timers.push(setTimeout(() => { setLit(i); speak(SHAPES[s].label) }, t))
-      t += SHOWCASE_DWELL
-    })
-    timers.push(setTimeout(finish, t + 500))
-    return () => timers.forEach(clearTimeout)
+    // One paced narration: each name waits for the one before it to finish, so the opener is not
+    // cut by "triangle" and "triangle" is not cut by "square". The dwells are unchanged — they are
+    // now a FLOOR rather than the whole story.
+    const cancel = speakPaced(
+      ['These are the shapes!', ...SHAPE_ORDER.map(s => SHAPES[s].label)],
+      {
+        onStep: (i) => { if (i > 0) setLit(i - 1) },
+        minMs: (_l, i) => (i === 0 ? 1800 : SHOWCASE_DWELL),
+        onDone: finish,
+        tailMs: 500,
+      },
+    )
+    return cancel
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return (
@@ -554,7 +558,8 @@ export default function ShapeTown({ onFinish, onExit }: {
   const [moving, setMoving] = useState(false)
   const interlude = useCallback(() => new Promise<void>(res => {
     setMoving(true)
-    speak(BUILDS[1].opening)
+    // `speakAfterCurrent`: the interlude fires 1300ms after the round's praise, which runs longer.
+    speakAfterCurrent(BUILDS[1].opening)
     window.setTimeout(() => { setMoving(false); res() }, 2100)
   }), [])
   const beat = useMemo(() => makeShapeBeat(fit), [fit])

@@ -108,6 +108,13 @@ const BANNER_OWNED = [
   'subtractionTo100 · Block Yard (−)',
   'placeValue · Building Blocks',
   'money · Coin Shop',
+  // ⚠️ THESE TWO JOINED THE LIST ON 2026-09-04, DELIBERATELY. Both already left `beat.prompt` empty
+  // (Milo's bubble is their only question region) and carried `say: d => d.ask` purely so the shell
+  // would speak it. The shell now QUEUES its line instead of superseding, so that `say` became the
+  // same question said twice — once by the shell, once by the chapter — and it was dropped. The
+  // question is still driven below, from the generator the bubble itself reads.
+  'bigNumbers · Order Desk',
+  'rounding · Level Run',
 ]
 
 const noop = () => {}
@@ -149,7 +156,7 @@ const CHAPTERS: Chapter[] = [
   ...NEST_WORLDS.map(w => fromBeat(`numberRecognition · Nest Tree (${w.id})`, makeNestBeat(w))),
   ...NUM_WORLDS.map(w => fromBeat(`numbersTo100 · Number Town (${w.id})`, makeNumBeat(w))),
   ...SHAPE_WORLDS.map(w => fromBeat(`shapes2d3d · Shape Studio (${w.id})`, makeShapeStudioBeat(w))),
-  // ── the four ids whose beat is silent: driven through the module function their banner calls ──
+  // ── the ids whose beat is silent: driven through the module function their banner calls ──
   {
     id: 'additionTo100 · Block Yard (+) · banner',
     banner: true,
@@ -169,6 +176,20 @@ const CHAPTERS: Chapter[] = [
     banner: true,
     rounds: BUILDING_BLOCKS.rounds,
     prompt: (d, round) => blocksAsk(BUILDING_BLOCKS.make(d, round, [])),
+    say: () => '',
+  },
+  {
+    id: 'bigNumbers · Order Desk · banner',
+    banner: true,
+    rounds: makeOrderBeat().rounds,
+    prompt: (d, round) => (makeOrderBeat().make(d, round, []) as { ask: string }).ask,
+    say: () => '',
+  },
+  {
+    id: 'rounding · Level Run · banner',
+    banner: true,
+    rounds: makeLevelBeat().rounds,
+    prompt: (d, round) => (makeLevelBeat().make(d, round, []) as { ask: string }).ask,
     say: () => '',
   },
   {
@@ -206,7 +227,7 @@ describe('every live storybook chapter is reachable at all', () => {
 })
 
 describe('S1 · every chapter states its question, at every tier and every round', () => {
-  it('the silent-BEAT list is EXACTLY those four ids, and has not grown', () => {
+  it('the silent-BEAT list is EXACTLY those six ids, and has not grown', () => {
     // A claim about `beat.prompt`, not about the child: all four DO state their question, through
     // the banner probes above. What this pins is that nothing else quietly joins them.
     const silent = CHAPTERS.filter(c => !c.id.endsWith('· banner')).filter(c => {

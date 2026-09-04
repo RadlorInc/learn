@@ -41,8 +41,75 @@ let _activeSeqCancel: (() => void) | null = null
 // and plays ON TOP of the new one (heard as clip + browser TTS, or two clips, at once).
 let _activeLineCancel: (() => void) | null = null
 
+/**
+ * ⚠️ A LINE IS "IN FLIGHT" FROM THE MOMENT IT IS DISPATCHED, NOT FROM THE MOMENT IT IS HEARD —
+ * and that gap is where Milo's voice was being cut off.
+ *
+ * `_speaking` only turns true at the clip's (or utterance's) `onStart`, which is one async clip
+ * lookup plus Chrome's mandatory 100ms cancel gap after the call. Anything that asked "is Milo
+ * talking?" inside that window got FALSE about a line that was already on its way — so it started
+ * its own line, and `_doSpeak` cancelled the one still loading. The first half simply vanished, on
+ * exactly the machines that HAVE clips.
+ *
+ * This flag closes the window: it is set synchronously by the dispatch and cleared only when the
+ * line truly ends. It carries its own ceiling because a device that never delivers `onend` (both
+ * Chrome and Safari drop it silently) must not leave every later line queued for ever.
+ */
+let _inFlight = false
+let _inFlightWatch: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * Lines waiting their turn behind the one being said, in order.
+ *
+ * ⚠️ IT HAS TO BE A REAL QUEUE, NOT ONE CALLBACK PER WAITER. Three lines land back-to-back on an
+ * ordinary round — the chapter's own verdict ("five blocks! the log is five blocks long"), the
+ * shell's praise, then the next question — and with each waiter holding its own "speak when the
+ * current line ends" callback, the end of the FIRST line released all of them at once and the last
+ * one to wake up cancelled the rest. A queue that only works one deep is the same defect as no
+ * queue, one line further along.
+ */
+let _queue: Array<{ text: string; rate: number; pitch: number }> = []
+/**
+ * ⚠️ AND IT IS BOUNDED, because a queue is a way of running LATE. A round is at most three lines
+ * deep (the chapter's verdict, the shell's praise, the next question) and a child who answers
+ * faster than Milo talks would otherwise build a backlog and hear commentary on the question
+ * before last. Past this depth the OLDEST waiting line is dropped: the newest is the one that
+ * still describes what is on screen.
+ */
+const QUEUE_MAX = 2
+/** True only while the queue itself is starting a line, so its `_doSpeak` does not wipe the rest. */
+let _draining = false
+
+function _drainQueue() {
+  if (!_queue.length || _speaking || _inFlight) return
+  const head = _queue[0]
+  setTimeout(() => {
+    // Anything that superseded us emptied the queue; if the head has moved, this call is stale.
+    if (_queue[0] !== head) return
+    _queue.shift()
+    _draining = true
+    try { _doSpeak(head.text, head.rate, head.pitch) } finally { _draining = false }
+  }, 200)
+}
+
 const _subs = new Set<() => void>()
 function _notify() { _subs.forEach(f => f()) }
+
+/** Mark a line/sequence as dispatched. `text` only sizes the never-ends ceiling. */
+function _markInFlight(text: string) {
+  _inFlight = true
+  if (_inFlightWatch) clearTimeout(_inFlightWatch)
+  _inFlightWatch = setTimeout(_lineDone, Math.max(8000, text.length * 170))
+}
+
+/** The line is over (ended, errored, cancelled or timed out): release anything waiting on it. */
+function _lineDone() {
+  _inFlight = false
+  if (_inFlightWatch) { clearTimeout(_inFlightWatch); _inFlightWatch = null }
+  const cbs = [..._onEndCbs]; _onEndCbs = []
+  cbs.forEach(cb => cb())
+  _drainQueue()
+}
 
 function _setSpeaking(v: boolean) {
   if (_speaking === v) return
@@ -51,8 +118,7 @@ function _setSpeaking(v: boolean) {
   if (!v) {
     if (_keepalive) { clearInterval(_keepalive); _keepalive = null }
     if (_singleWatch) { clearTimeout(_singleWatch); _singleWatch = null }
-    const cbs = [..._onEndCbs]; _onEndCbs = []
-    cbs.forEach(cb => cb())
+    _lineDone()
   }
 }
 
@@ -115,6 +181,12 @@ function _doSpeak(text: string, rate: number, pitch: number) {
   // A new single utterance supersedes everything currently speaking — a running
   // sequence, a prior single line (incl. its pending async clip lookup), a pending
   // fallback timer, and any leftover browser utterance — so two lines can never overlap.
+  // ⚠️ THE QUEUE IS EMPTIED FIRST, BEFORE ANYTHING IS CANCELLED. A new line supersedes what is
+  // queued behind the old one as well as the old one itself — and the ORDER matters, because
+  // cancelling drains the queue: drop it afterwards and the line that was politely waiting its
+  // turn has already been handed a 200ms timer, and wakes up to cancel the new line.
+  _onEndCbs = []
+  if (!_draining) _queue = []
   if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
   if (_activeLineCancel) { const c = _activeLineCancel; _activeLineCancel = null; c() }
   if (_speakTimer) { clearTimeout(_speakTimer); _speakTimer = null }
@@ -122,9 +194,10 @@ function _doSpeak(text: string, rate: number, pitch: number) {
   try { window.speechSynthesis.cancel() } catch {}
 
   // A pre-rendered clip if we hold one; otherwise the browser path below, unchanged.
+  _markInFlight(text)
   const cancel = speakLine(text, {
     onStart: () => _setSpeaking(true),
-    onDone: () => { _setSpeaking(false); if (_activeLineCancel === cancel) _activeLineCancel = null },
+    onDone: () => { _setSpeaking(false); _lineDone(); if (_activeLineCancel === cancel) _activeLineCancel = null },
     fallback: () => _doSpeakBrowser(text, rate, pitch),
   })
   _activeLineCancel = cancel
@@ -242,7 +315,10 @@ function _actuallySpeak(text: string, rate: number, pitch: number) {
 
   u.onerror = (e) => {
     note.error = e.error
+    // `_setSpeaking(false)` is a no-op when the line never started (blocked audio), so release
+    // whatever is waiting on it explicitly — otherwise the next line sits queued until the ceiling.
     _setSpeaking(false)
+    _lineDone()
     if (e.error === 'not-allowed') {
       _setBlocked(true)
       return
@@ -257,6 +333,7 @@ function _actuallySpeak(text: string, rate: number, pitch: number) {
   } catch (err) {
     console.warn('[Milo] speak() threw:', err)
     _setSpeaking(false)
+    _lineDone()
   }
 }
 
@@ -276,13 +353,107 @@ export function speakAt(text: string, target: HTMLElement | null, rate = 0.88, p
   pointAt(target)
 }
 
+/**
+ * Speak `text` only once Milo has finished what he is saying — the queueing counterpart of
+ * `speak()`, which supersedes. Use it wherever one NARRATION follows another (a verdict, then the
+ * next question); use `speak()` where the newest line is genuinely the only one worth hearing (a
+ * child tapping numbers).
+ *
+ * ⚠️ It waits on `_inFlight`, not on `_speaking`. Gated on `_speaking` it was a coin flip: called
+ * in the same tick as the line it was meant to follow — which is exactly how a round advance does
+ * it — the clip had not reached `onStart` yet, so it took the "nothing is playing" branch and
+ * cancelled the line it was queueing behind.
+ */
 export function speakAfterCurrent(text: string, rate = 0.88, pitch = 1.05) {
+  // An empty line is a no-op in `_doSpeak`, and queueing one would park the drain on a line that
+  // never speaks and never ends — every line behind it stuck until the ceiling.
+  if (!text?.trim()) return
   clearPointer()
-  if (_speaking) {
-    _onEndCbs.push(() => setTimeout(() => _doSpeak(text, rate, pitch), 200))
-  } else {
-    setTimeout(() => _doSpeak(text, rate, pitch), 100)
+  if (_speaking || _inFlight || _queue.length) {
+    while (_queue.length >= QUEUE_MAX) _queue.shift()
+    _queue.push({ text, rate, pitch })
+    return
   }
+  setTimeout(() => _doSpeak(text, rate, pitch), 100)
+}
+
+/**
+ * Run `cb` when Milo has stopped talking — or after `ceilingMs`, whichever comes FIRST.
+ *
+ * This is how a beat holds itself open for the voice instead of advancing on a fixed timer that
+ * cuts the tail off a long line. The ceiling is not optional: both Chrome and Safari start an
+ * utterance and then silently drop `onend`, so a wait that can only end on an event would freeze
+ * the teaching on a device that HAS a voice — which is the failure this repo has already shipped
+ * once. `cb` runs exactly once either way.
+ */
+export function afterSpeech(cb: () => void, ceilingMs = 12000): () => void {
+  let done = false
+  let timer: ReturnType<typeof setTimeout> | null = null
+  const fire = () => { if (done) return; done = true; if (timer) clearTimeout(timer); cb() }
+  if (!_speaking && !_inFlight) { timer = setTimeout(fire, 0); return () => { done = true; if (timer) clearTimeout(timer) } }
+  timer = setTimeout(fire, ceilingMs)
+  _onEndCbs.push(fire)
+  return () => { done = true; if (timer) clearTimeout(timer) }
+}
+
+/**
+ * Narrate a walkthrough line by line, self-paced.
+ *
+ * Each line reveals its visual (`onStep`), speaks, and holds for AT LEAST `minMs(line)` and until
+ * Milo has actually stopped — so a silent device still plays the lesson at a watchable speed, and a
+ * real voice is never chopped off by the next line arriving.
+ *
+ * ⚠️ THIS IS NOT `speakSteps`, AND THE DIFFERENCE IS DELIBERATE. `speakSteps` reveals each visual
+ * from the utterance's `onstart`, so a device that starts line one and then drops the rest freezes
+ * the teaching for ever — the founder sat on a frozen lesson beat for exactly that reason. Here the
+ * visuals are on their own timer and the voice only ever ADDS wait, bounded by `maxWaitMs`.
+ *
+ * Returns a cancel fn; call it from the effect cleanup.
+ */
+export function speakPaced(
+  lines: string[],
+  opts: {
+    onStep?: (i: number) => void
+    onDone?: () => void
+    minMs?: (line: string, i: number) => number
+    maxWaitMs?: number
+    /** Quiet beat after the last line before `onDone` (the visual gets a moment to land). */
+    tailMs?: number
+  } = {},
+): () => void {
+  const { onStep, onDone, minMs = (l: string) => Math.max(2400, l.length * 72), maxWaitMs = 12000, tailMs = 0 } = opts
+  let i = 0
+  let cancelled = false
+  let timer: ReturnType<typeof setTimeout> | null = null
+  let unwait: (() => void) | null = null
+  const stop = () => {
+    if (cancelled) return
+    cancelled = true
+    if (timer) { clearTimeout(timer); timer = null }
+    if (unwait) { unwait(); unwait = null }
+  }
+  // The minimum dwell and Milo's own line run TOGETHER, and the step ends at the later of the two.
+  const hold = (ms: number, then: () => void) => {
+    timer = setTimeout(() => {
+      timer = null
+      if (cancelled) return
+      unwait = afterSpeech(() => { unwait = null; if (!cancelled) then() }, maxWaitMs)
+    }, ms)
+  }
+  const step = () => {
+    if (cancelled || i >= lines.length) return
+    const idx = i++
+    const line = lines[idx]
+    try { onStep?.(idx) } catch {}
+    speak(line)
+    hold(minMs(line, idx), () => {
+      if (i < lines.length) step()
+      else if (tailMs > 0) { timer = setTimeout(() => { timer = null; if (!cancelled) onDone?.() }, tailMs) }
+      else onDone?.()
+    })
+  }
+  step()
+  return stop
 }
 
 /**
@@ -309,6 +480,9 @@ export function unlockSpeech() {
 export function stopSpeech() {
   if (_speakTimer) { clearTimeout(_speakTimer); _speakTimer = null }
   _onEndCbs = []
+  _queue = []
+  _inFlight = false
+  if (_inFlightWatch) { clearTimeout(_inFlightWatch); _inFlightWatch = null }
   clearPointer()
   stopClip()
   // Truly stop any running sequence so it can't advance to its next line.
@@ -331,7 +505,9 @@ export function speakSeq(
   const { onWord, onDone, rate = 0.88, pitch = 1.05, gapMs = 0 } = opts
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) { onDone?.(); return () => {} }
   clearPointer()   // callers re-point per word via onWord if they want a pointer
-  // Supersede any previous sequence cleanly.
+  // Supersede any previous sequence cleanly — queued lines first, for the reason in _doSpeak.
+  _onEndCbs = []
+  _queue = []
   if (_activeSeqCancel) { const c = _activeSeqCancel; _activeSeqCancel = null; c() }
   if (_activeLineCancel) { const c = _activeLineCancel; _activeLineCancel = null; c() }
   if (_speakTimer) { clearTimeout(_speakTimer); _speakTimer = null }
@@ -346,12 +522,14 @@ export function speakSeq(
     stopClip()
     try { window.speechSynthesis.cancel() } catch {}
     _setSpeaking(false)
+    _inFlight = false
+    if (_inFlightWatch) { clearTimeout(_inFlightWatch); _inFlightWatch = null }
   }
   const next = () => {
     if (cancelled) return
     if (i >= words.length) {
       if (_activeSeqCancel === cancel) _activeSeqCancel = null
-      _setSpeaking(false); onDone?.(); return
+      _setSpeaking(false); _lineDone(); onDone?.(); return
     }
     const idx = i; i++
     const txt = words[idx]
@@ -399,6 +577,9 @@ export function speakSeq(
     })
   }
   _activeSeqCancel = cancel
+  // The whole sequence is one thing in flight, so a `speakAfterCurrent` fired while it is still
+  // loading its first clip queues behind ALL of it rather than cancelling it mid-explanation.
+  _markInFlight(words.join(' '))
   try { window.speechSynthesis.cancel() } catch {}
   _speakTimer = setTimeout(() => { _speakTimer = null; if (!cancelled) next() }, 120)
   return cancel
