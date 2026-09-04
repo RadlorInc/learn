@@ -54,7 +54,7 @@ function add(kind: Bucket, src: string, ...texts: string[]) {
   }
 }
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i)
-const DRAWS = 1200
+const DRAWS = Number(process.env.VOICE_DRAWS ?? 1200)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function fromBeat(src: string, beat: Beat<any>) {
@@ -215,7 +215,7 @@ it('builds the 3–5 corpus', () => {
   const out = [...lines.entries()]
     .map(([key, v]) => ({ key, text: v.text, chars: v.text.length, kind: v.kind, sources: v.sources }))
     .sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) || b.chars - a.chars)
-  writeFileSync('scripts/.voice-corpus-3-5.json', JSON.stringify(out, null, 2))
+  writeFileSync(process.env.VOICE_OUT ?? 'scripts/.voice-corpus-3-5.json', JSON.stringify(out, null, 2))
   let cum = 0
   const report = ORDER.map(k => { const ls = out.filter(l => l.kind === k); const c = ls.reduce((n, l) => n + l.chars, 0); cum += c
     return `${k.padEnd(9)} ${String(ls.length).padStart(4)} lines ${String(c).padStart(6)} chars  (cumulative ${cum})` })

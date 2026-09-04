@@ -122,7 +122,7 @@ it('measures the 12–18 corpus', () => {
     for (const t of list(c.tutorial)) for (const s of t.steps ?? []) add(band, name, 'teach', s.say)
     for (const g of list(c.guided)) add(band, name, 'teach', `${g.coach} ${g.task.say}`)
     const cov: string[] = c.coverage?.all ?? []
-    for (let i = 0; i < 1500; i++) {
+    for (let i = 0; i < Number(process.env.VOICE_DRAWS ?? 1500); i++) {
       const d = ((i % 3) + 1) as 1 | 2 | 3
       let t: any
       try { t = c.makeTask(d, cov.slice(0, i % (cov.length + 1))) } catch { continue }
@@ -133,6 +133,6 @@ it('measures the 12–18 corpus', () => {
       if (typeof rev === 'string') add(band, name, 'miss', `It was ${rev}.`)
     }
   }
-  writeFileSync('scripts/.voice-corpus-teen.json',
+  writeFileSync(process.env.VOICE_OUT ?? 'scripts/.voice-corpus-teen.json',
     JSON.stringify([...lines.entries()].map(([key, v]) => ({ key, chars: v.text.length, ...v })), null, 2))
 })

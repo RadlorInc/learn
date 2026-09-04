@@ -67,7 +67,7 @@ const CONFIGS: [string, any][] = [
   ['emptyPlot', EMPTY_PLOT_CONFIG], ['loadingBay', LOADING_BAY_CONFIG], ['packingShed', PACKING_SHED_CONFIG],
   ['busRun', BUS_RUN_CONFIG],
 ]
-const DRAWS = 1500
+const DRAWS = Number(process.env.VOICE_DRAWS ?? 1500)
 const list = (x: any) => (x == null ? [] : Array.isArray(x) ? x : [x])
 
 it('builds the 9–11 corpus', () => {
@@ -110,7 +110,7 @@ it('builds the 9–11 corpus', () => {
   const out = [...lines.entries()]
     .map(([key, v]) => ({ key, text: v.text, chars: v.text.length, kind: v.kind, sources: v.sources }))
     .sort((a, b) => RENDER.indexOf(a.kind) - RENDER.indexOf(b.kind) || b.chars - a.chars)
-  writeFileSync('scripts/.voice-corpus-9-11.json', JSON.stringify(out, null, 2))
+  writeFileSync(process.env.VOICE_OUT ?? 'scripts/.voice-corpus-9-11.json', JSON.stringify(out, null, 2))
   const per = ORDER.map(k => `${k} ${out.filter(l => l.kind === k).length}`).join(' · ')
   console.warn(`9–11 corpus: ${out.length} lines · ${out.reduce((n, l) => n + l.chars, 0).toLocaleString()} chars — ${per}`)
 })

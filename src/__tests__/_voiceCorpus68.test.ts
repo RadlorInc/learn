@@ -46,7 +46,7 @@ const add = (chapter: string, kind: string, ...texts: (string | undefined)[]) =>
 
 function fromBeat(chapter: string, beat: Beat<any>) {
   const cov = beat.coverage?.all ?? []
-  for (let i = 0; i < 1500; i++) {
+  for (let i = 0; i < Number(process.env.VOICE_DRAWS ?? 1500); i++) {
     const d = ((i % 3) + 1) as 1 | 2 | 3
     let data: any
     try { data = beat.make(d, i % beat.rounds, cov.slice(0, i % (cov.length + 1))) } catch { continue }
@@ -80,6 +80,6 @@ it('measures the 6–8 corpus', () => {
   for (const [name, mk] of CH) {
     try { fromBeat(name, mk()) } catch (e) { console.warn(`skip ${name}: ${e}`) }
   }
-  writeFileSync('scripts/.voice-corpus-6-8.json',
+  writeFileSync(process.env.VOICE_OUT ?? 'scripts/.voice-corpus-6-8.json',
     JSON.stringify([...lines.entries()].map(([key, v]) => ({ key, chars: v.text.length, ...v })), null, 2))
 })
