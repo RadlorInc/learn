@@ -29,7 +29,7 @@ jobs:
     environment: staging
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: latest
       # The mirror of the prod guard, and the worse direction: a STAGING ref pointing at production
@@ -71,7 +71,7 @@ jobs:
     environment: production-db   # NOT Vercel's `Production` — see docs/migrate-prod-proposal.md. Create it WITH its required-reviewer rule when enabling this job, not before.
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: latest
       # ⚠️ THE REF IS ASSERTED IN THE REPO, NOT TRUSTED FROM THE DASHBOARD. `PROD_PROJECT_REF` sat
