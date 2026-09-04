@@ -47,6 +47,29 @@ export async function captureDiagnosticLead(email: string, band: string): Promis
  *  - 'retry' — signed out now / network hiccup; keep queued, try again on next flush
  *  - 'drop'  — permanently rejected (learner gone / not owned); discard so it can't loop forever
  */
+/**
+ * Record that a probe STARTED. Before 2026-09-05 nothing did, so `diagnostic_sessions` held only
+ * completions — 13 of 13 rows with `completed_at = started_at` exactly — and "how many start the
+ * check vs finish it" had no denominator: it could only ever return 100%.
+ *
+ * Best-effort and deliberately NOT queued: an unrecorded start costs one row in a funnel, while
+ * blocking or retrying it would delay a child getting to their first question. A failure IS
+ * reported, though — a silently swallowed write is what hid the missing login history for six weeks.
+ *
+ * ⚠️ Returns false for a signed-out visitor. `/diagnostic` is reachable logged-out (lead capture),
+ * and there is no learner to attach a start to, so anonymous starts are genuinely not counted.
+ */
+export async function startDiagnostic(learnerId: string, band: string, clientId: string): Promise<boolean> {
+  const supabase = db()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user) return false
+  const { error } = await supabase.rpc('start_diagnostic', {
+    p_learner_id: learnerId, p_band: band, p_client_id: clientId,
+  })
+  if (error) { console.error('[startDiagnostic] rpc failed:', error.message); return false }
+  return true
+}
+
 export async function saveDiagnostic(p: DiagnosticPayload): Promise<SyncOutcome> {
   const supabase = db()
   const { data: { user } } = await supabase.auth.getUser()
@@ -95,6 +118,9 @@ export async function getLatestGap(learnerId: string): Promise<{ band: string; r
     .from('diagnostic_sessions')
     .select('band, root_gap_skill')
     .eq('learner_id', learnerId)
+    // ⚠️ an in-progress row has completed_at NULL, and a NULL sorts FIRST under DESC in Postgres —
+    // without this filter an abandoned probe becomes "the latest diagnosis", with no gap.
+    .eq('status', 'completed')
     .order('completed_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -126,24 +152,41 @@ export async function getActivePlanChapters(learnerId: string): Promise<string[]
   return (data.chapter_sequence as string[] | null) ?? []
 }
 
-/** Week-N re-check status for the guarantee loop: is a re-check DUE (a real gap, diagnosed ≥6 weeks
- *  ago, and not already closed by a later re-check)? Powers the in-app nudge on the parent dashboard. */
-export async function getCheckupStatus(learnerId: string): Promise<
-  { rootGap: string | null; band: string; weeksSince: number; recheckDue: boolean } | null
-> {
+/** The latest check-up, as the bootstrap RPC and the two direct selects both return it. */
+export interface CheckupRow { band: string; root_gap_skill: string | null; completed_at: string | null }
+export interface CheckupStatus { rootGap: string | null; band: string; weeksSince: number; recheckDue: boolean }
+
+/**
+ * The week-N rule, in one place: a re-check is DUE when there is a real gap, it was diagnosed at
+ * least six weeks ago, and no later re-check has closed it. Pure, so the menu (which now gets the
+ * rows inside `get_learner_bootstrap`) and the parent dashboard (`getCheckupStatus`) cannot drift.
+ * A check-up with no `completed_at` counts as now — week zero.
+ */
+export function checkupStatus(sess: CheckupRow | null, alreadyClosed: boolean, now = Date.now()): CheckupStatus | null {
+  if (!sess) return null
+  const completedAt = sess.completed_at ? new Date(sess.completed_at).getTime() : now
+  const weeksSince = Math.floor((now - completedAt) / (7 * 86_400_000))
+  const recheckDue = !!sess.root_gap_skill && weeksSince >= 6 && !alreadyClosed
+  return { rootGap: sess.root_gap_skill ?? null, band: sess.band, weeksSince, recheckDue }
+}
+
+/** Week-N re-check status for the guarantee loop — the parent dashboard's nudge. The menu no longer
+ *  calls this: its rows ride inside `get_learner_bootstrap`. Two reads, gated by the tables' own RLS.
+ *  ⚠️ `getSession()` is a local read; `getUser()` was a round trip to GoTrue on every menu load that
+ *  bought nothing — RLS is the boundary on the reads below, exactly as `getMyLearners` says. */
+export async function getCheckupStatus(learnerId: string): Promise<CheckupStatus | null> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user) return null
   const { data: sess } = await supabase
     .from('diagnostic_sessions')
     .select('band, root_gap_skill, completed_at')
     .eq('learner_id', learnerId)
+    .eq('status', 'completed')   // ⚠️ see getLatestGap — a NULL completed_at sorts first under DESC
     .order('completed_at', { ascending: false })
     .limit(1)
     .maybeSingle()
   if (!sess) return null
-  const completedAt = sess.completed_at ? new Date(sess.completed_at as string).getTime() : Date.now()
-  const weeksSince = Math.floor((Date.now() - completedAt) / (7 * 86_400_000))
   const { data: rc } = await supabase
     .from('diagnostic_rechecks')
     .select('gap_closed')
@@ -151,7 +194,5 @@ export async function getCheckupStatus(learnerId: string): Promise<
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
-  const alreadyClosed = rc?.gap_closed === true
-  const recheckDue = !!sess.root_gap_skill && weeksSince >= 6 && !alreadyClosed
-  return { rootGap: (sess.root_gap_skill as string | null) ?? null, band: sess.band as string, weeksSince, recheckDue }
+  return checkupStatus(sess as CheckupRow, rc?.gap_closed === true)
 }

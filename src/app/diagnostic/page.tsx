@@ -30,7 +30,7 @@ import { markCheckupDone, recordCheckupSkip } from '@/infra/storage/checkup'
 import { setLeadEmail, getLeadEmail } from '@/infra/storage/leadEmail'
 import { kv } from '@/infra/storage/kv'
 import { saveResume, readResume, clearResume, resumable, sameTab, type DiagResume } from '@/infra/storage/diagResume'
-import { captureDiagnosticLead } from '@/data/repositories'
+import { captureDiagnosticLead, startDiagnostic } from '@/data/repositories'
 
 // UUID v4 dedupe key (matches the session-sync clientId pattern) — makes the save idempotent so a
 // queue re-flush can never duplicate the diagnosis. Generated ONCE per completed diagnosis.
@@ -84,7 +84,9 @@ function buildContext(attempt: number): DiagContext {
   const seed = l?.id || 'anon'
   return { name: l?.name || l?.display_name, theme: l?.theme || pickThemeFor(seed), seed, nonce: attempt }
 }
-function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis): Promise<void> {
+/** @param clientId the id generated when the probe STARTED, so this completion updates the
+ *  `diagnostic_sessions` row `start_diagnostic` opened instead of inserting a second one. */
+function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis, clientId: string): Promise<void> {
   const id = activeLearner()?.id
   if (!id) return Promise.resolve()   // preview run, no learner context — nothing to persist to
   markCheckupDone(id)   // this child has now completed their mandatory checkup → passes the play gate
@@ -96,7 +98,7 @@ function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis): Promise<voi
     blocked: dx.blockedSkills, strengths: dx.strengths, workingLevel: dx.workingLevel,
     planSkills: dx.planSkills, planChapters: dx.planChapters,
     items: s.asked.map(sk => ({ skill: sk, correct: s.passed.includes(sk) })),
-    clientId: newClientId(),
+    clientId,   // ⚠️ the START's id, not a new one — see startProbeNow
   })
   return flushDiagnosticQueue().then(() => {}).catch(() => {})
 }
@@ -160,6 +162,10 @@ export default function DiagnosticPage() {
   const ctxRef = useRef<DiagContext>({})
   const finalStateRef = useRef<ProbeState | null>(null)   // probe state at report time (for capture/save)
   const persistRef = useRef<Promise<void> | null>(null)   // the in-flight DB save (awaited before we navigate away)
+  /** This attempt's dedupe key, generated when the probe starts. The START row and the COMPLETION
+   *  must carry the same one, or `diagnostic_sessions` gets two rows and "how many finished" is
+   *  wrong in the flattering direction. Survives a reload via the resume record. */
+  const attemptIdRef = useRef<string | null>(null)
   /**
    * ⚠️ A CHILD CAN START THIS CHECK WHENEVER THEY LIKE NOW (the menu carries its own door), so
    * finishing one is no longer always a FIRST check — it can land on a plan somebody is four
@@ -196,6 +202,10 @@ export default function DiagnosticPage() {
   }, [])
 
   const applyResume = (r: DiagResume) => {
+    // Same attempt continuing, so the same dedupe key — otherwise a reload mid-probe would open a
+    // SECOND start row and inflate the "started" count with the child's own refreshes. A resume
+    // written before 2026-09-05 has none; that attempt simply has no start row to update.
+    attemptIdRef.current = r.clientId ?? newClientId()
     ctxRef.current = buildContext(r.attempt)
     setBand(r.band); setBandKnown(true); setAttempt(r.attempt); setPending(null)
     setSlot(resolve(r.s, r.band, ctxRef.current)); setPhase('probe')
@@ -227,7 +237,18 @@ export default function DiagnosticPage() {
   const startProbeNow = (seed?: string[]) => {
     ctxRef.current = buildContext(attempt)          // Phase 4: seed the probe for this child + attempt
     const s = startProbe(band, undefined, seed)     // undefined config → the band's default
-    saveResume(activeLearner()?.id ?? null, band, s, attempt)
+    /**
+     * ⚠️ RECORD THAT THIS STARTED. Until 2026-09-05 nothing did: `diagnostic_sessions` was written
+     * only at completion, so every row had `completed_at = started_at` and "how many start the
+     * check vs finish it" could only ever answer 100%. Fire-and-forget on purpose — a child must
+     * not wait on a network call to reach question one — but NOT swallowed: `startDiagnostic`
+     * logs its own failure.
+     */
+    const cid = newClientId()
+    attemptIdRef.current = cid
+    const lid = activeLearner()?.id
+    if (lid) void startDiagnostic(lid, band, cid)   // logged-out visitors have no learner to attach to
+    saveResume(lid ?? null, band, s, attempt, undefined, cid)
     setSlot(resolve(s, band, ctxRef.current)); setPhase('probe')
   }
   // Where the intro and the email gate both hand off to. 17–18 is asked which strand first; every
@@ -355,7 +376,7 @@ export default function DiagnosticPage() {
         finalStateRef.current = next.s
         clearResume(activeLearner()?.id ?? null)   // finished: the report owns the run now, and a resume would re-open the probe
         setResult(dx); setPhase('report')
-        persistRef.current = persistDiagnosis(band, next.s, dx)   // signed-in → saves; cold/preview → skips cleanly
+        persistRef.current = persistDiagnosis(band, next.s, dx, attemptIdRef.current ?? newClientId())   // signed-in → saves; cold/preview → skips cleanly
       } else { saveResume(activeLearner()?.id ?? null, band, next.s, attempt); setSlot(next) }
     }, 320)
   }

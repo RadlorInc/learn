@@ -127,6 +127,9 @@ export async function getGradeTriage(gradeId: string): Promise<GradeTriageData |
     .from('diagnostic_sessions')
     .select('learner_id, band, root_gap_skill, completed_at')
     .in('learner_id', ids)
+    // ⚠️ completed only: an in-progress probe has completed_at NULL, which sorts FIRST under DESC,
+    // so a child mid-check would show a teacher a diagnosis with no gap.
+    .eq('status', 'completed')
     .order('completed_at', { ascending: false })
   if (de) console.warn('[getGradeTriage] diagnostics', de.message)  // degrade to "no check yet", don't fail
 

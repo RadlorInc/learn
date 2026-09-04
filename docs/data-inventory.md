@@ -15,7 +15,7 @@ document: *a plausible column name is not evidence, and neither is a non-null va
 | trap | what it looks like | what it is |
 |---|---|---|
 | `sessions.started_at` | a start timestamp, never null | the row's INSERT time. Both it and `completed_at` mark the END. **All 49 rows had a NEGATIVE duration** (median −1s, min −22s) |
-| `diagnostic_sessions.completed_at` | a completion time | `NOT NULL DEFAULT now()`, and the row is only inserted **on completion** — all 13 rows have `completed_at = started_at` exactly. **A started-and-abandoned probe writes nothing**, so "how many start it" has no denominator |
+| `diagnostic_sessions.completed_at` | a completion time | ~~`NOT NULL DEFAULT now()`, row inserted only **on completion** — all 13 rows have `completed_at = started_at` exactly, so "how many start it" had no denominator and could only return 100%~~ **FIXED 2026-09-05** (`20260905140000`): `start_diagnostic` opens the row at `status='in_progress'` with a NULL `completed_at`, and `sync_diagnostic` completes it. ⚠️ Every read meaning "the latest diagnosis" must now require `status = 'completed'` — a NULL sorts **first** under `DESC` |
 | `auth_events` | a login history | **1 row**, against ≥18 real logins since it was created. Logins happen and are not recorded |
 
 None of these throws. None shows up in a type-check. Each would have produced a confident,
@@ -115,7 +115,7 @@ real data-rights export. Changing retention means changing both, in the same com
 |---|---|---|
 | session length | §0 — both timestamps mark the end | a real `started_at` (done 2026-09-05) |
 | question-level accuracy | no per-question row exists | an `answer` event: chapter + question id + correct |
-| diagnostic **starts** | row inserted on completion only | insert on start; set `completed_at` on finish |
+| ~~diagnostic **starts**~~ | **fixed 2026-09-05** — `start_diagnostic` | — |
 | logins over time | `auth_events` not firing | see §4 |
 | retention beyond ~13 weeks | the 90-day purge | a rollup that survives it |
 
