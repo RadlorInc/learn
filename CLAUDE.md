@@ -92,6 +92,30 @@ Everything below is a corollary of that one sentence:
 - **Make it fail before you believe it.** Plant the defect it exists for, or point it at a known
   past one. A new check's green first run is the least informative result there is — equally
   consistent with "nothing is wrong" and "this cannot see anything".
+- ⚠️⚠️ **AND PLANT IT WITH `scripts/break-check.sh`, NEVER BY HAND. A RULE THAT IS NOT IN THE FILE
+  YOU ARE STANDING IN DOES NOT PROTECT YOU.** Founder's rule, 2026-09-04, after this went wrong for
+  the second time in one session: a stray `git checkout` in my own mutation cleanup silently
+  reverted a fix from ten minutes earlier — in the same session I had already been warned about it,
+  with the discipline written down in THIS FILE and the tool that prevents it (`break-check.sh`)
+  already built and working one repo over, in `video_reviewer`. Written-down care is not a
+  mechanism; neither is a tool nobody standing here can see. The port is now `scripts/break-check.sh`
+  + `scripts/break-verdict.mjs` (`npm run break`), and:
+  - **It restores on a trap (`EXIT INT TERM`), not on remembering** — your uncommitted work is
+    parked in a stash first, the break is stashed and dropped afterwards, and it prints
+    `git status --short` so you SEE the tree came back rather than assuming it. Proven against a
+    13-path dirty tree including untracked files: byte-identical, on every exit code and on Ctrl-C.
+  - **It refuses to accept any red as proof.** A break that stops the file parsing turns the run red
+    without the assertion ever running, and a tool that counted that would certify a check that also
+    goes red if you delete a semicolon — green-for-the-wrong-reason wearing the other hat. Exit 0
+    means the NAMED file failed on its own `AssertionError`; 1 means it passed on the broken state
+    (the check is decorative); 3 the break edited nothing; 4 red for the wrong reason; 5 nothing ran.
+  - ⚠️ **And the checker is itself checked, with LIVE breaks rather than crafted fixtures**
+    (`npm run break:live`, one real break per exit code, asserting the code AND the restore). A
+    hand-written JSON fixture encodes the runner's report shape on the day it was written and keeps
+    passing after an upgrade changes it. That is not hypothetical: writing this, the exit-5 case came
+    back as 4, and measuring showed vitest reports a broken SETUP file byte-identically to a broken
+    SOURCE file — so the reader genuinely cannot tell them apart, and the tool now says so instead of
+    pretending. **Re-run it after any vitest upgrade.**
 - ⚠️⚠️ **A DEFECT CAN BE MASKED BY ANOTHER DEFECT, AND FIXING THE MASK DOES NOT CREATE THE SECOND
   FAULT — IT REVEALS ONE THAT WAS ALWAYS THERE AND NEVER HEARD.** Founder's rule, 2026-09-04. Order
   Desk and Level Run each declared their question TWICE — `say: d => d.ask` on the beat AND their own
