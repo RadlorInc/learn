@@ -494,7 +494,7 @@ export default function ParentDashboard() {
                         <div style={{ fontSize:24 }}>{s.stars_earned === 3 ? '🌟' : s.stars_earned === 2 ? '⭐' : '✨'}</div>
                         <div style={{ flex:1 }}>
                           <div style={{ fontSize:13, fontWeight:700, color:'#1a1a1a' }}>{CH_LABELS[s.chapter] ?? s.chapter}</div>
-                          <div style={{ fontSize:11, color:'#888', marginTop:2 }}>{s.correct_count} correct · +{s.xp_earned} XP · {new Date(s.started_at).toLocaleDateString()}</div>
+                          <div style={{ fontSize:11, color:'#888', marginTop:2 }}>{s.correct_count} correct · +{s.xp_earned} XP · {(a => a ? new Date(a).toLocaleDateString() : '—')(s.completed_at ?? s.started_at)}</div>
                         </div>
                         <div style={{ fontSize:12, fontWeight:700, color:'#16a34a' }}>+{s.coins_earned} 🪙</div>
                       </div>

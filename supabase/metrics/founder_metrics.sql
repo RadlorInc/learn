@@ -26,13 +26,15 @@ real_learners as (
   from learners l where l.created_by not in (select id from internal)
 ),
 s as (
-  select se.learner_id, se.started_at
+  select se.learner_id, coalesce(se.completed_at, se.started_at) as started_at
   from sessions se where se.learner_id in (select id from real_learners)
 )
 
 -- ── 1. Engagement ────────────────────────────────────────────────
 -- Unit is a LEARNER playing, not an account logging in: parents sign in rarely,
--- kids play. Fully historical from sessions.started_at — no event tracking
+-- kids play. ⚠️ Reads coalesce(completed_at, started_at): started_at is NULLABLE since
+-- 2026-09-05 and was never a start time, and a NULL silently DROPS the row from every
+-- `where started_at > ...` below — measured 1 of 2 learners instead of 2. No event tracking
 -- needed, and it works retroactively.
 select 'dau  (learners active, 1d)'  as metric, count(distinct learner_id)::text as value from s where started_at > now() - interval '1 day'
 union all select 'wau  (learners active, 7d)',  count(distinct learner_id)::text from s where started_at > now() - interval '7 days'

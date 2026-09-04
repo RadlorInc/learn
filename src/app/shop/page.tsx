@@ -9,17 +9,46 @@ import { useMiloStore } from '@/state/store'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { saveLearnerState } from '@/data/repositories'
+import { reportCrash } from '@/infra/reportCrash'
 
-// Push the latest coins/owned/equipped to Supabase so the shop syncs across devices.
-function syncShopState() {
+/**
+ * Push the latest coins/owned/equipped to Supabase so the shop syncs across devices.
+ *
+ * ⚠️ THIS USED TO END IN `.catch(() => {})`, WHICH DISCARDED BOTH HALVES OF THE FAILURE SIGNAL.
+ * `saveLearnerState` returns `Promise<boolean>` SPECIFICALLY to report failure — it returns false
+ * when there is no session, and rejects on a network or RLS error — and the caller threw away the
+ * boolean AND the rejection. A child could buy a crown, see it appear (the local store is written
+ * first), and find it gone on their next device, with nothing logged anywhere. This is the same
+ * shape as `logAuthEvent`, whose silent failure hid a missing login history for six weeks; it is
+ * worse here because it costs a child something they earned.
+ *
+ * The payload is TOTAL state, not a delta (coinsSpent / ownedItems / equippedItems are absolutes),
+ * so a retry is idempotent and a later successful sync fully repairs an earlier failed one.
+ */
+async function syncShopState() {
   const learner = getActiveLearner()
   if (!learner) return
   const p = useMiloStore.getState().profile
-  saveLearnerState(learner.id, {
+  const state = {
     coinsSpent:    p.coinsSpent,
     ownedItems:    p.ownedItems,
     equippedItems: p.equippedItems,
-  }).catch(() => {})
+  }
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      if (await saveLearnerState(learner.id, state)) return   // ← the boolean IS the signal
+      // false = no session. Retrying will not conjure one, so stop and say so.
+      reportCrash(new Error('shop sync skipped: no authenticated session'), 'shop.syncShopState')
+      return
+    } catch (e) {
+      if (attempt === 0) { await new Promise(r => setTimeout(r, 1200)); continue }
+      // ⚠️ VISIBLE, not swallowed. The local store already has the purchase, so the child keeps
+      // what they bought on THIS device; what is lost is cross-device sync, and that is exactly
+      // the kind of thing nobody discovers until a parent writes in.
+      reportCrash(e, 'shop.syncShopState')
+    }
+  }
 }
 
 interface ShopItem {

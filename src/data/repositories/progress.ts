@@ -34,7 +34,9 @@ export async function getRecentSessions(learnerId: string, limit = 5): Promise<S
     .from('sessions')
     .select('*')
     .eq('learner_id', learnerId)
-    .order('started_at', { ascending: false })
+    // ⚠️ completed_at, not started_at: the latter is nullable and a NULL sorts a brand-new
+    // session to the wrong end. It was never an activity time. See docs/data-inventory.md.
+    .order('completed_at', { ascending: false })
     .limit(limit)
   return (data ?? []) as Session[]
 }
@@ -96,7 +98,7 @@ export async function getInsightsRollup(sinceISO: string): Promise<InsightsRollu
 }
 
 // Raw-row shapes for the legacy /insights fallback (when the rollup RPC is unavailable).
-export interface InsightsSessionRow { learner_id: string; phase: string; correct_count: number; wrong_count: number; completed_at: string | null; started_at: string }
+export interface InsightsSessionRow { learner_id: string; phase: string; correct_count: number; wrong_count: number; completed_at: string | null; started_at: string | null }
 export interface InsightsEventRow   { learner_id: string; event: string; created_at: string }
 
 /**
@@ -110,7 +112,8 @@ export async function getInsightsRawRows(
 ): Promise<{ sessions: InsightsSessionRow[]; events: InsightsEventRow[] }> {
   const supabase = db()
   const [s, e] = await Promise.all([
-    supabase.from('sessions').select('learner_id, phase, correct_count, wrong_count, completed_at, started_at').in('learner_id', learnerIds).gte('started_at', sinceISO),
+    // ⚠️ completed_at, not started_at: a NULL started_at makes `gte` drop the row entirely.
+    supabase.from('sessions').select('learner_id, phase, correct_count, wrong_count, completed_at, started_at').in('learner_id', learnerIds).gte('completed_at', sinceISO),
     supabase.from('learner_events').select('learner_id, event, created_at').in('learner_id', learnerIds).gte('created_at', sinceISO),
   ])
   if (s.error) throw new Error(s.error.message)

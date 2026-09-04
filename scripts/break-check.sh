@@ -26,6 +26,15 @@
 #      the other hat, and it fails in the confident direction. `break-verdict.mjs` requires the named
 #      file to have failed on an ASSERTION.
 #
+# ⚠️⚠️ IT CANNOT VERIFY A CHECK FOR CODE YOU HAVE NOT COMMITTED — WHICH IS EXACTLY WHEN YOU WRITE
+# ONE. The tree is parked with `git stash --include-untracked`, so a new migration and its new test
+# are stashed AWAY before the break runs; the break then edits nothing and you get exit 3. That is
+# the tool refusing to certify rather than lying, which is right — but the message says "the
+# pattern has drifted", which sends you hunting a regex that is fine. Third time `git stash` has
+# cost this project something (2026-09-05). COMMIT FIRST, then run this. If you cannot commit,
+# mutate with a file copy and a `trap ... EXIT INT TERM` and NO git operations at all — that has
+# the property this script exists for (the restore is not a habit) without the stash.
+#
 # ⚠️ VITEST ONLY, DELIBERATELY. Milo has two runners and this covers one: the verdict reader knows
 # vitest's JSON report and has been driven against real breaks of every kind it claims to classify.
 # A playwright path would be a second reader nobody has watched fail, which is the thing this file
@@ -36,7 +45,8 @@
 #   0  the named file went red on its own assertion
 #   1  the named file passed on the broken state          → the check is decorative
 #   2  usage
-#   3  the break edited nothing (its pattern has drifted) → nothing was tested
+#   3  the break edited nothing → nothing was tested. Either the pattern drifted, OR the file is
+#      UNCOMMITTED and was stashed away by the parking step above — check that first
 #   4  the named file went red, but not on an assertion   → red for the wrong reason
 #   5  the run never reached the named file               → nothing was tested
 #   6  e2e target: tree restored, verdict not attempted   → read the output yourself
