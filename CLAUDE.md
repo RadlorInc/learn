@@ -116,6 +116,14 @@ Everything below is a corollary of that one sentence:
     back as 4, and measuring showed vitest reports a broken SETUP file byte-identically to a broken
     SOURCE file — so the reader genuinely cannot tell them apart, and the tool now says so instead of
     pretending. **Re-run it after any vitest upgrade.**
+  - ⚠️ **AND IT NOW EXISTS TWICE, WITH DIFFERENT RUNNERS, SO A FIX TO ONE WILL NOT REACH THE OTHER.**
+    The original is `video_reviewer/scripts/break-check.sh` and drives **playwright**; this port
+    drives **vitest**, and the verdict half — a report shape and an error-message format — is exactly
+    where they diverge. A shared version would need one reader that knows both runners and has been
+    watched failing in both, which is more than either repo needs, so the duplication is deliberate.
+    **What is not deliberate is a lesson landing in one copy only: if you improve the verdict logic,
+    the trap or the exit codes here, say so in `video_reviewer`'s CLAUDE.md too, and vice versa.**
+    Noted in both, 2026-09-04.
 - ⚠️⚠️ **A DEFECT CAN BE MASKED BY ANOTHER DEFECT, AND FIXING THE MASK DOES NOT CREATE THE SECOND
   FAULT — IT REVEALS ONE THAT WAS ALWAYS THERE AND NEVER HEARD.** Founder's rule, 2026-09-04. Order
   Desk and Level Run each declared their question TWICE — `say: d => d.ask` on the beat AND their own
