@@ -32,6 +32,18 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      # The mirror of the prod guard, and the worse direction: a STAGING ref pointing at production
+      # would `db push` AND run the RLS regression suite — which writes — against real children's
+      # data. Never trust two dashboard variables to differ.
+      - name: Refuse if the staging ref is production
+        env:
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+        run: |
+          if [ "$STAGING_PROJECT_REF" = "wrnjqjhrbnqxornmfisf" ]; then
+            echo "::error::STAGING_PROJECT_REF is the PRODUCTION project. Refusing — this job pushes"
+            echo "::error::migrations and runs a suite that WRITES. See scripts/assert-prod-ref.sh."
+            exit 1
+          fi
       - name: Apply migrations to staging
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -62,6 +74,13 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      # ⚠️ THE REF IS ASSERTED IN THE REPO, NOT TRUSTED FROM THE DASHBOARD. `PROD_PROJECT_REF` sat
+      # at the decommissioned Sydney project for two days after the region move (2026-09-05). A
+      # wrong ref does not fail — it SUCCEEDS against the wrong database and reports green.
+      - name: Refuse unless the configured ref is this repo's production
+        env:
+          PROD_PROJECT_REF: ${{ vars.PROD_PROJECT_REF }}
+        run: scripts/assert-prod-ref.sh
       - name: Apply migrations to prod
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

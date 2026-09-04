@@ -153,6 +153,46 @@ Everything below is a corollary of that one sentence:
   function, no offending pattern in the source: run the same search against something you KNOW is
   present and watch it come back. A silent search and a broken search look identical from outside,
   and the broken one reads as good news.
+- ⚠️⚠️ **A FUNCTION DEFINITION IS `pg_get_functiondef` OUTPUT WITH NAMED LINES CHANGED. NEVER
+  RETYPED, NEVER RECONSTRUCTED FROM A PARTIAL READ — AND THE REASON IS PRIVILEGE, NOT TIDINESS.**
+  Founder's rule, 2026-09-05, after I rebuilt `get_insights_rollup` from a truncated read while
+  changing one WHERE clause: the retype silently dropped `active_days`, `accuracy`, `event_counts`
+  and `daily_days` from the return shape **and added a `SECURITY DEFINER` the original does not
+  have.** The shape was the visible half. The dangerous half is the one word.
+  **`SECURITY DEFINER` makes a function run as its OWNER, and the owner owns the tables, so RLS is
+  not applied.** In an app whose entire protection of children's data is RLS — one family cannot
+  read another's — that is the most expensive single word that can be introduced by accident, and
+  it arrives looking like boilerplate you copied because every neighbouring function has it.
+  So the rule has two halves, and the second is the point:
+  - **the mechanism** — copy the definition from the live database and change only lines you can
+    name. If you cannot say which lines you changed, you have not made an edit, you have made a
+    replacement;
+  - **the privilege rule it protects** — any diff that ADDS OR REMOVES `SECURITY DEFINER`, changes
+    `SET search_path`, or changes an owner **is a security change and must be called out as one in
+    the commit message and the review**, never a side effect of retyping. A migration that alters
+    one of those without saying so is indistinguishable from an attack, and it will pass every test
+    in this repo, because the tests run as a role that was never going to be stopped anyway.
+  ⚠️ And the ambient pressure runs the wrong way: most RPCs here genuinely need DEFINER, so the
+  word looks right everywhere. Check what the ORIGINAL had, not what its neighbours have.
+- ⚠️⚠️ **A MIGRATION THAT CHANGES WHAT RUNNING CODE READS SHIPS IN THE SAME COMMIT AS ITS READERS,
+  OR AFTER THEM — NEVER BEFORE.** Founder's rule, 2026-09-05. Making `sessions.started_at` nullable
+  and fixing the six readers that assumed it was always set went in as two commits, so for a while
+  `main` held a migration that would have taken DAU/WAU silently downward the moment anyone applied
+  it. Nothing auto-applies here, so nothing broke — but the window existed, and "nothing applies
+  automatically" is a fact about today's CI, not a property of the repo. **Expand, migrate,
+  contract**: the readers tolerate both shapes first, the data moves second, the old shape is
+  removed third. A deploy-order constraint discovered while writing a migration belongs **at the
+  top of that migration file and in the deploy runbook** — never only in a report or a chat
+  message, because the person applying it in six weeks is reading the file, not the conversation.
+- ⚠️ **ASSERT WHICH DATABASE YOU ARE ABOUT TO WRITE TO, IN THE REPO, AS A LITERAL.** A wrong
+  connection target is worse than a missing one: a missing one fails, and a wrong one **succeeds
+  against the wrong database and reports green**. `PROD_PROJECT_REF` pointed at the decommissioned
+  Sydney project for two days after the region move, and `migrate-prod` was inert only because
+  three unrelated things happened to be absent — one of which was on the roadmap to be created
+  deliberately. **An inert landmine with a scheduled step-on date is not a noted risk, it is a
+  countdown.** `scripts/assert-prod-ref.sh` refuses unless the configured ref equals a literal in
+  the repo, so changing which database is production takes a reviewed commit rather than a
+  dashboard edit that leaves no diff.
 - **Query the thing, not the description of it.** Reading the repo answers *what did we intend*;
   querying production answers *what is true*. Only the second is a check. The reverted V5 payload
   bounds were invisible to the repo grep — it was case-sensitive — and took `pg_get_functiondef`

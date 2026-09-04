@@ -127,6 +127,58 @@ event-span wherever it is shown; do not call it session length.
 
 ---
 
+## 3a. The rollup — decided 2026-09-05, id-free, not yet built
+
+`learner_events` dies at 90 days, so any event-derived metric needs a rollup that runs before the
+purge. **The identity model was decided before building it, because it is irreversible.**
+
+⚠️ **A `learner_id`-keyed rollup that survives the purge is gameplay analytics retained
+indefinitely** — re-identifiable by joining `learners`. That makes the published sentence
+("gameplay analytics ... deleted automatically after 90 days") false in exactly the way a retention
+extension would have, only less visibly. **Rejected on that ground, not on cost.**
+
+**What is built: id-free aggregates. And it is cheaper than it looks, because most metrics never
+touch it** — `sessions`, `learners`, `learner_progress`, `diagnostic_sessions` and `profiles` are
+never purged. Only four things are event-derived: DAU/WAU, `chapter_open` counts (the
+started-vs-finished ranking), event-span session length, and the funnel's *first chapter opened*.
+
+**Store the MARGINS, not the cross-product.** Founder's rule, and it is the mechanism that replaces
+a judgement call about "keeping dimensions coarse", which erodes. Separate tables:
+
+    (day)                     -> distinct_learners, session_starts, chapter_opens, completes
+    (cohort_week, active_week)-> count
+    (day, age_band)           -> count
+    (day, chapter_id)         -> opens
+
+not one table keyed on all of them at once. **Identifiability comes almost entirely from the
+cross-product**: `(day, age_band, cohort_week, distinct = 1)` is a fact about one person even with
+no id, and with three testers most cross-product buckets would be 1. Margins answer everything the
+dashboard asks and a bucket of one is far harder to produce.
+
+**Suppress at WRITE time, not display time.** A row below the threshold is never stored.
+Display-time suppression leaves the fact in the database, which is the thing being avoided.
+
+Three constraints that fall out, all accepted:
+
+1. **Distinct counts do not re-aggregate.** Daily distinct learners cannot be summed into weekly — a
+   learner active on three days would count three times. Every grain (day / week / month) is its own
+   precomputed row.
+2. **Store histograms, not just medians**, so quartiles stay recomputable. This is the cheap hedge
+   against A's one real cost: a definition (a histogram's buckets, the 30-minute inactivity timeout)
+   can never be changed retroactively once the raw rows are gone.
+3. **Re-aggregate a trailing window every night, not just yesterday.** Max observed late-flush is
+   **8.9 days** (§1), so a rollup that only computes "yesterday" silently under-counts every child
+   who was offline. The window is a named constant, and a check fires when any event arrives with a
+   skew greater than it — otherwise a growing tail looks exactly like a slow week.
+
+⚠️ **Verification, when it is built:** reconstruct one known day's numbers from raw events by an
+independent path and assert the rollup row equals it. If the check computes the expected value with
+the rollup's own query it asserts that the code equals itself. This matters more than the other
+checks in this repo, because **the raw rows are gone afterwards** and a wrong rollup is not
+correctable.
+
+---
+
 ## 4. Writes whose failure is invisible
 
 The defect behind the missing login history is not "logins aren't logged". It is that a **failing

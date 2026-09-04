@@ -1,3 +1,19 @@
+-- ⚠️⚠️ STOP — DEPLOY ORDER. SHIP THE CLIENT BEFORE APPLYING THIS MIGRATION.
+--
+--   The backfill at the bottom sets `sessions.started_at` to NULL on every legacy row. A browser
+--   still running a bundle from before 2026-09-05 renders a session's date as
+--   `new Date(s.started_at)`, and `new Date(null)` is the epoch — so a parent would open the
+--   dashboard and see every one of their child's past sessions dated 1/1/1970. Verified, not
+--   assumed: `new Date(null).toLocaleDateString()` === "1/1/1970".
+--
+--   The corrected client reads `completed_at` and falls back to '—'. It is in the same commit as
+--   this file. If you are applying migrations from a checkout that is AHEAD of what Vercel has
+--   deployed, wait for the deploy first.
+--
+--   This is expand/contract: readers tolerate both shapes FIRST, data moves SECOND. See
+--   docs/backup-restore-runbook.md and the rule in CLAUDE.md.
+--
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
 -- The activity timestamp is `completed_at`. `started_at` is ONLY for duration.
 --
 -- ⚠️ THIS IS A PREREQUISITE FOR 20260905120000, NOT A TIDY-UP. That migration lets `started_at` be
