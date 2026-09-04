@@ -1,0 +1,4 @@
+scored     387 lines  20425 chars  (cumulative 20425)
+teach      126 lines   5333 chars  (cumulative 25758)
+redirect   321 lines  13723 chars  (cumulative 39481)
+reteach    577 lines  22510 chars  (cumulative 61991)
