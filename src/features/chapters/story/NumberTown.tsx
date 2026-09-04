@@ -18,7 +18,7 @@
  * 50–100. Reuses committed art (no new assets). Wrapped by game/Numbers100Chapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords, CSS as KIT_CSS, BigCount, nounFor } from '../lessons/_kit'
 import { TensOnes } from '../lessons/Numbers100Lesson'
@@ -201,7 +201,7 @@ const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComp
   const gap = short ? 'clamp(6px,2vw,20px)' : 'clamp(8px,3vw,44px)'
 
   useEffect(() => {
-    if (mode === 'guided') speak(`Find number ${numberToWords(target)}. Tap the one that says ${target}.`)
+    if (mode === 'guided') speakAfterCurrent(`Find number ${numberToWords(target)}. Tap the one that says ${target}.`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

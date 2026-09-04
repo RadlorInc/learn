@@ -1908,6 +1908,19 @@ lines takes to say. Three lines, two of them cut, on every round of every chapte
   Run both carried `say: d => d.ask` on the beat AND spoke `data.ask` themselves; while the shell
   superseded, the duplicate was invisible. The moment it queues, it is audible. **When you move a
   line to `speakAfterCurrent`, check nothing else says it.**
+- ⚠️⚠️ **A LOCAL WRAPPER HIDES AN EMISSION SITE FROM EVERY GREP FOR THE VERB.** BlockYard and
+  BuildingBlocks route every line through `say(s) { setNote(s); speak(s) }` — thirteen emission
+  sites invisible to a `speak(` search, and two of them were the ROUND'S OWN QUESTION fired from a
+  timer 400ms in, cancelling the previous round's verdict and praise. They were found by enumerating
+  wrappers, not verbs, and they had never been read. **When you audit a call surface, enumerate the
+  local functions that call it as well as the calls themselves** — and where a chapter has such a
+  wrapper, give it a queueing twin (`sayNext`, `tellNext`) rather than making every line queue: the
+  lines that answer a TAP must still cut in.
+- ⚠️ **THE RULE IS GATED, NOT REMEMBERED.** `src/__tests__/voiceBoundaryVerb.test.ts` fails if any
+  file under the chapter directories fires a cancelling verb — `speak`, `speakAt`, or a local
+  wrapper of them — from a deferred path (a `useEffect` body, or a callback handed to a scheduler),
+  unless it is in that file's ALLOW list with a written reason. It is asserted EXACTLY, so a new
+  chapter cannot reintroduce this and a stale exception cannot sit there being a rule about nothing.
 - **Verify it by listening, or by the mock.** Every one of these is a single word — `speak` vs
   `speakAfterCurrent` — that reverts to something perfectly sensible. Both spellings type-check,
   both render identically, and the difference is only audible on a device that HAS clips.

@@ -26,7 +26,7 @@
  * choices 2 → 3 → 4, and look-alike distractors (6/9, 7/1, 3/8) at the hardest tier.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, speakSteps, useIsSpeaking, stopSpeech, useNoVoice } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSteps, useIsSpeaking, stopSpeech, useNoVoice } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -285,7 +285,7 @@ const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComp
   }, [mode, target, onComplete])
 
   useEffect(() => {
-    if (mode === 'guided') speak(guidedSay(world, target))
+    if (mode === 'guided') speakAfterCurrent(guidedSay(world, target))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -34,7 +34,7 @@
  * groups stay visible and separate rather than collapsing into a total.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import type { Difficulty } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -305,7 +305,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
         : 0
       after(OPENING_MS + (movers.length - 1) * JOIN_GAP_MS + longest + 200, () => setAsking(true))
       if (mode === 'guided') {
-        speak(add ? 'Some more come to play! Count them all, then tap how many.'
+        speakAfterCurrent(add ? 'Some more come to play! Count them all, then tap how many.'
                   : 'Some go home! Count who is left, then tap how many.')
       }
       return

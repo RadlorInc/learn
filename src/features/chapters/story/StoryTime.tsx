@@ -571,7 +571,7 @@ const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boo
     const movers = op === 'compare' ? 0 : b
     const travel = movers ? (movers - 1) * ARRIVE_GAP + L.ms : 0
     let t = 300
-    if (mode === 'guided') speak(txt.story)
+    if (mode === 'guided') speakAfterCurrent(txt.story)
     // Group A steps into place — it no longer pops in one at a time.
     T.push(window.setTimeout(() => set({ aShown: a }), t)); t += stepFor(a)
     if (op === 'add') {

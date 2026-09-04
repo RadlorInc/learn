@@ -30,7 +30,7 @@
  * Design doc: docs/hopalong-design.md. Craft rules: docs/chapter-craft.md.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, useChapterShell, type Beat } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { RotateGate, useNeedsRotate } from './RotateGate'
@@ -417,6 +417,14 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
    * screen, and the founder pressed it and watched nothing happen. Everything spoken here is ALSO
    * written.
    */
+  /** The queueing twin of `tell`, for a line a PHASE fires rather than the child. Same writing,
+   *  same nudge — it just waits for whatever the previous phase was still saying. */
+  const tellNext = useCallback((msg: string) => {
+    speakAfterCurrent(msg)
+    setNudge(msg)
+    window.clearTimeout(nudgeT.current)
+    nudgeT.current = window.setTimeout(() => setNudge(null), 3000)
+  }, [])
   const tell = useCallback((msg: string) => {
     speak(msg)
     setNudge(msg)
@@ -426,7 +434,7 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
   useEffect(() => () => window.clearTimeout(nudgeT.current), [])
 
   useEffect(() => {
-    if (mode === 'guided') tell(`Milo needs ${data.target} ${data.item.many}. They come in ${data.w.family}s of ${data.group}. Tap a ${data.w.family} to fetch it!`)
+    if (mode === 'guided') tellNext(`Milo needs ${data.target} ${data.item.many}. They come in ${data.w.family}s of ${data.group}. Tap a ${data.w.family} to fetch it!`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

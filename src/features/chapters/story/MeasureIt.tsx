@@ -36,7 +36,7 @@
  * per world. Wrapped by the registry row `measurement`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { TintedSprite } from './TintedSprite'
@@ -268,7 +268,7 @@ const MeasurePlay: React.FC<{
   useEffect(() => () => { timers.current.forEach(t => window.clearTimeout(t)) }, [])
 
   useEffect(() => {
-    if (mode === 'guided') speak(`Your turn! Lay the blocks until you reach the end of the ${thing.noun}.`)
+    if (mode === 'guided') speakAfterCurrent(`Your turn! Lay the blocks until you reach the end of the ${thing.noun}.`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

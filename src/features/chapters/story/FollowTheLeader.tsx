@@ -32,7 +32,7 @@
  * the count sequence.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { seqLength } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -413,7 +413,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   // when audio is blocked speakSteps still paces the steps on a timer.
   const ran = useOnceGuard()
   useEffect(() => {
-    if (mode !== 'demo') { if (mode === 'guided') speak(`Now you! Tap the smallest ${kind.little} first.`); return }
+    if (mode !== 'demo') { if (mode === 'guided') speakAfterCurrent(`Now you! Tap the smallest ${kind.little} first.`); return }
     if (ran.current) return; ran.current = true
     const lines = [
       `${kind.mother} is waiting. The smallest one goes first.`,

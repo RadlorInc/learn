@@ -8,7 +8,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { speak, speakSeq, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSeq, stopSpeech } from '@/infra/useMiloSpeaker'
 import MiloSprite from './MiloSprite'
 import { SkillBeat, type Beat } from './StoryWorld'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -236,7 +236,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
       const cap = window.setTimeout(go, Math.max(4500, beat.text.length * 90))
       return () => { cancel(); window.clearTimeout(cap) }
     }
-    if (beat.kind === 'guide') { speak('Now you count! Tap each one you see.') }
+    if (beat.kind === 'guide') { speakAfterCurrent('Now you count! Tap each one you see.') }
     return () => stopSpeech()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx])

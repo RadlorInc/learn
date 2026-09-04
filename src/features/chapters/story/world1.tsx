@@ -351,7 +351,7 @@ export const FlyingCountDemo: React.FC<{ to: number; obj: CountKind; band?: Band
   useEffect(() => {
     if (didInit.current) return
     didInit.current = true
-    speak("Let's count together!")
+    speakAfterCurrent("Let's count together!")
     // Fill the opening one/two slots (same spawn machinery as the practice parade).
     setStage(() => {
       const next: (Slot | null)[] = [null, null]

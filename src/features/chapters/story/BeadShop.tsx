@@ -34,7 +34,7 @@
  * Landscape-first, wrapped by the registry / `?ch=beads`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
@@ -370,7 +370,7 @@ const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: 
   const pendingEl = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    if (mode === 'guided') speak(`Now you! What ${make.noun} comes next? Tap it!`)
+    if (mode === 'guided') speakAfterCurrent(`Now you! What ${make.noun} comes next? Tap it!`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

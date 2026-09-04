@@ -342,7 +342,7 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete:
   const pendingEl = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    if (mode === 'guided') speak(`Now you! The ${part.label} needs a ${label}. Tap it!`)
+    if (mode === 'guided') speakAfterCurrent(`Now you! The ${part.label} needs a ${label}. Tap it!`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

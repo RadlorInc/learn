@@ -322,7 +322,13 @@ describe('S5 · a chapter speaks and writes the SAME sentence, from one place', 
   it('Building Blocks builds its ask in askFor, never at the call site', () => {
     const src = readFileSync('src/features/chapters/story/BuildingBlocks.tsx', 'utf8')
     expect(src, 'the make line is not inlined into a say()').not.toMatch(/say\(`Make \$\{/)
-    expect(src, 'both branches speak what the banner writes').toMatch(/say\(askFor\(data\)\)/)
+    // ⚠️ `sayNext`, not `say`, since 2026-09-04: the ask is fired from a timer 400ms into the round,
+    // where the plain (cancelling) wrapper took the previous round's verdict and praise away. Both
+    // wrappers write the same note; only the verb underneath differs. Anchored on the SUFFIX so it
+    // holds for either, and the queueing rule itself is gated in voiceBoundaryVerb.test.ts.
+    expect(src, 'both branches speak what the banner writes').toMatch(/say(?:Next)?\(askFor\(data\)\)/)
+    expect((src.match(/sayNext\(askFor\(data\)\)/g) ?? []).length,
+      'the round ask went back to the cancelling wrapper').toBe(2)
     expect(src, 'and the banner writes it too').toMatch(/text=\{note \|\| askFor\(data\)\}/)
   })
 

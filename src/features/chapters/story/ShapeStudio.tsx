@@ -15,7 +15,7 @@
  * game/Shapes2D3DChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { ShapeView, SHAPES_2D, SHAPES_3D, sidesOf, is3D, buildNameChoices } from '../lessons/Shapes2D3DLesson'
 import WorldSelect from './WorldSelect'
@@ -137,7 +137,7 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
   const [pendingName, setPendingName] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false)
 
-  useEffect(() => { if (mode === 'guided') speak(sayFor(data)); }, []) // eslint-disable-line
+  useEffect(() => { if (mode === 'guided') speakAfterCurrent(sayFor(data)); }, []) // eslint-disable-line
 
   function finishOk() {
     done.current = true; setGlow(true)

@@ -415,7 +415,7 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
   useEffect(() => {
     const T: number[] = []
     let t = 300
-    if (mode === 'guided') speak(sayFor(world, data))
+    if (mode === 'guided') speakAfterCurrent(sayFor(world, data))
     for (let i = 1; i <= g; i++) { const c = i; T.push(window.setTimeout(() => set({ shown: c }), t)); t += 380 }
     // The last pen has to be FULL before the answer is offered — derived from the creatures' own
     // gait, so a slow-walking cast is waited out rather than talked over.

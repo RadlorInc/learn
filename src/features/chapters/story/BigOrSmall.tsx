@@ -31,7 +31,7 @@
  * equal pair needs a third answer the tap-a-bunch mechanic has nowhere to put. Worth revisiting.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import type { Difficulty } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -274,7 +274,7 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
     if (ran.current) return; ran.current = true
     if (mode !== 'demo') {
       after(OPENING_MS, () => setLive(true))
-      if (mode === 'guided') speak(`Now you! Tap the bunch with ${askWord}.`)
+      if (mode === 'guided') speakAfterCurrent(`Now you! Tap the bunch with ${askWord}.`)
       return
     }
     // The demo drives words and movement from ONE narration, so they cannot drift apart — and when

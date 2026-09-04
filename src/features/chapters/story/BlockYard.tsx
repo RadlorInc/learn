@@ -60,7 +60,7 @@
  * so no generated prop can drift out of it the way `cart.png` did.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
@@ -462,6 +462,9 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
   const after = useCallback((ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); timers.current = [] }, [])
   const say = useCallback((s: string) => { setNote(s); speak(s) }, [])
+  /** The queueing twin of `say`, for a line the ROUND fires rather than the child: it lands on a
+   *  timer while the previous round's verdict and praise may still be running, and `speak` cut them. */
+  const sayNext = useCallback((s: string) => { setNote(s); speakAfterCurrent(s) }, [])
 
   // How long a delivery takes to travel in, and how long Milo takes to walk the yard, so the
   // question opens when things have actually ARRIVED rather than after a guessed delay.
@@ -477,8 +480,8 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
         setY(s => ({ ...s, step: 'incoming', rods: s.rods + p.addCarts, ones: s.ones + p.fits,
           waiting: p.spill, from: 'lane', key: 'b' }))
         after(inMs, () => {
-          if (p.spill > 0) { setY(s => ({ ...s, step: 'stuck' })); say('Ten ones on the ground, and more still waiting. Tap them — ten ones make ONE rod.') }
-          else { setY(s => ({ ...s, step: 'answer' })); say('All in. How many altogether?') }
+          if (p.spill > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext('Ten ones on the ground, and more still waiting. Tap them — ten ones make ONE rod.') }
+          else { setY(s => ({ ...s, step: 'answer' })); sayNext('All in. How many altogether?') }
         })
       } else {
         const p = plan as ReturnType<typeof loadPlan> & { takeCarts: number; takeOnes: number; short: number }
@@ -486,8 +489,8 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
         setY(s => ({ ...s, step: 'incoming', ones: s.ones - canTake, leaving: canTake }))
         after(1400, () => {
           setY(s => ({ ...s, leaving: 0 }))
-          if (p.short > 0) { setY(s => ({ ...s, step: 'stuck' })); say('Not enough ones left. Tap a rod — Milo will fetch it and break it open.') }
-          else { setY(s => ({ ...s, step: 'answer', rods: s.rods - p.takeCarts })); say('All sent. How many are left?') }
+          if (p.short > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext('Not enough ones left. Tap a rod — Milo will fetch it and break it open.') }
+          else { setY(s => ({ ...s, step: 'answer', rods: s.rods - p.takeCarts })); sayNext('All sent. How many are left?') }
         })
       }
     })

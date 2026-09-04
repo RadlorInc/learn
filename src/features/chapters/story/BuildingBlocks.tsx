@@ -59,7 +59,7 @@
  * Art: **zero.** Every block is code-drawn; every backdrop already shipped.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
@@ -433,6 +433,9 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
   const after = useCallback((ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); timers.current = [] }, [])
   const say = useCallback((s: string) => { setNote(s); speak(s) }, [])
+  /** The queueing twin of `say`, for a line the ROUND fires rather than the child: it lands on a
+   *  timer while the previous round's verdict and praise may still be running, and `speak` cut them. */
+  const sayNext = useCallback((s: string) => { setNote(s); speakAfterCurrent(s) }, [])
 
   // ⚠️ Derived from the count rather than announced by the tap that caused it — the tap handler
   // cannot see the new value, and a batched pair of taps would announce the wrong one.
@@ -447,14 +450,14 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
   useEffect(() => {
     setR(EMPTY); setDigits([]); setNote(''); setOk(false); setLive(false)
     if (isMake) {
-      after(400, () => { setLive(true); say(askFor(data)) })
+      after(400, () => { setLive(true); sayNext(askFor(data)) })
       return
     }
     after(400, () => {
       setR(s => ({ ...s, bay: plan.firstWave, settled: 0, waiting: plan.waiting, from: 'right', key: 'b' }))
       after(inMs, () => {
-        if (plan.firstWave === 10) { say('Ten ones on the ground — that is one ten. Tap them.') }
-        else { setLive(true); say(askFor(data)) }
+        if (plan.firstWave === 10) { sayNext('Ten ones on the ground — that is one ten. Tap them.') }
+        else { setLive(true); sayNext(askFor(data)) }
       })
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps

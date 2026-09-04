@@ -23,7 +23,7 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useViewport } from '@/shared/hooks/useViewport'
-import { afterSpeech, speak } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, afterSpeech, speak } from '@/infra/useMiloSpeaker'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 
 /** A short frame, the band-wide breakpoint. Lives here because both boards window on it. */
@@ -109,7 +109,7 @@ export function ThePlan({ problem, points, onDone, onSkip }: {
     let alive = true
     let waiting: (() => void) | null = null
     const timers: number[] = []
-    speak([problem, ...points].join(' '))
+    speakAfterCurrent([problem, ...points].join(' '))
     let i = 0
     const run = () => {
       if (!alive) return

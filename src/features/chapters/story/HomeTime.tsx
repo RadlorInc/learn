@@ -30,7 +30,7 @@
  * spares, so the higher tiers have more little ones on screen than the answer needs.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { matchTarget } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -247,7 +247,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   const ran = useOnceGuard()
   useEffect(() => {
     if (mode !== 'demo') {
-      if (mode === 'guided') { setHint('take'); speak(`Now you! Milo needs exactly ${target} ${target === 1 ? kind.little : kind.plural}.`) }
+      if (mode === 'guided') { setHint('take'); speakAfterCurrent(`Now you! Milo needs exactly ${target} ${target === 1 ? kind.little : kind.plural}.`) }
       return
     }
     if (ran.current) return; ran.current = true
