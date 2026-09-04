@@ -342,7 +342,7 @@ const DEMO_CENTRE_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'conicSections',
   title: 'TORCH ON THE WALL',
   ticketLabel: 'beam log',

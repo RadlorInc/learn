@@ -498,7 +498,7 @@ function PieceTape({ P, task, value, setValue, disabled, reveal, onCommit }: {
   )
 }
 
-const CONFIG: GameConfig<number, Task> = {
+export const CONFIG: GameConfig<number, Task> = {
   chapterId: 'rationalOps',
   title: 'CUTTING BENCH',
   motif: '🪚',

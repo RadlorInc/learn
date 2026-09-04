@@ -417,7 +417,7 @@ function TidyBoard({ P, task, value, stepIndex, ended }: {
   )
 }
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'expressionsVariables',
   title: 'TICKET CHECKOUT',
   ticketLabel: 'order',

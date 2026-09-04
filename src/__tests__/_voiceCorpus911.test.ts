@@ -66,6 +66,9 @@ const list = (x: any) => (x == null ? [] : Array.isArray(x) ? x : [x])
 it('builds the 9–11 corpus', () => {
   if (!process.env.VOICE_CORPUS) return
 
+  // Shared by every band on this shell — the second half of every miss line.
+  add('miss', 'shared encouragement', ...ENCOURAGEMENT.flat())
+
   for (const [name, c] of CONFIGS) {
     add('teach', name, typeof c.start?.blurb === 'string' ? c.start.blurb : undefined, c.overview?.say)
     for (const t of list(c.tutorial)) for (const s of t.steps ?? []) add('teach', name, s.say)
@@ -85,8 +88,11 @@ it('builds the 9–11 corpus', () => {
       // t.say is spoken at tiers 1–2 only; collected regardless of the draw's own d.
       add('scored', name, t.say)
       add('reteach', name, ...(t.work ?? []))
+      // ⚠️ THE TWO HALVES SEPARATELY, because GameShell speaks them as two utterances. Written as
+      // one sentence this bucket is the reveal CROSS the ten encouragements — measured at 3,640
+      // lines and 114,506 characters against 374 and ~4,600 split, for identical audio.
       const rev = c.revealText?.(t)
-      if (typeof rev === 'string') for (const e of ENCOURAGEMENT.flat()) add('miss', name, `It was ${rev}. ${e}`)
+      if (typeof rev === 'string') add('miss', name, `It was ${rev}.`)
     }
   }
 

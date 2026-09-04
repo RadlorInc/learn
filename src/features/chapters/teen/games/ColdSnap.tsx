@@ -463,7 +463,7 @@ const DEMO_ZEROS_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'polynomialFunctions',
   title: 'COLD SNAP',
   ticketLabel: 'week log',

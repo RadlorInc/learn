@@ -561,7 +561,7 @@ function TurnScene({ value, ended }: { value: V; ended: boolean }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'complexNumbers',
   title: 'THE WALK HOME',
   ticketLabel: 'route card',

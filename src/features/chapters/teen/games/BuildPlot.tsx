@@ -469,7 +469,7 @@ const STEPS_C: DemoStep<V>[] = [
   { say: 'So the box holds minus three. Tap minus three.', value: { k: 'num', n: -3 }, board: '▢ = −3' },
 ]
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'factoringPolynomials',
   title: 'BUILD PLOT',
   ticketLabel: 'blueprint',

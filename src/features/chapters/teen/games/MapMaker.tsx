@@ -624,7 +624,7 @@ function ZoneScene({ palette, task, value, stepIndex, ended }: {
   )
 }
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'geometryTransformations',
   title: 'MAP MAKER',
   ticketLabel: 'level spec',

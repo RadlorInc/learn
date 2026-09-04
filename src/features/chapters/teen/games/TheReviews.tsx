@@ -318,7 +318,7 @@ const DEMO_DRAG_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'statsInference',
   title: 'THE REVIEWS',
   ticketLabel: 'listing',

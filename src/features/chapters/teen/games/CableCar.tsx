@@ -387,7 +387,7 @@ const isTap = (t: Task) => t.kind === 'isFn' || t.kind === 'readGraph'
 const padAnswer = (t: Task): number | null =>
   t.kind === 'rate' ? t.answer!.m : t.kind === 'start' ? t.answer!.b : null
 
-const CONFIG: GameConfig<LV, Task> = {
+export const CONFIG: GameConfig<LV, Task> = {
   chapterId: 'linearRelationships',
   title: 'WATER TANK',
   motif: '💧',

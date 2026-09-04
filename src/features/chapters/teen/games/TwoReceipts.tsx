@@ -246,7 +246,7 @@ const DEMO_ADD_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'systemsMatrices',
   title: 'TWO RECEIPTS',
   ticketLabel: 'receipts',

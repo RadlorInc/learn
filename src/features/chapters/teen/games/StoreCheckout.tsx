@@ -402,7 +402,7 @@ function answerPad(t: Task): number[] {
   return numChoices(t.answer, near, { min: 1, max: price * 2, count: 4 })
 }
 
-const CONFIG: GameConfig<number, Task> = {
+export const CONFIG: GameConfig<number, Task> = {
   chapterId: 'percentages',
   title: 'STORE CHECKOUT',
   ticketLabel: 'receipt',

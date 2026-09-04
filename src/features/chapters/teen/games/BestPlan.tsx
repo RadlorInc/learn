@@ -616,7 +616,7 @@ function BillBoard({ P: p, value, stepIndex, frameCount }: {
   )
 }
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'systemsOfEquations',
   title: 'BEST PLAN',
   ticketLabel: 'plan compare',

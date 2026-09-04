@@ -324,7 +324,7 @@ const DEMO_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'introCalculus',
   title: 'PACE',
   ticketLabel: 'run log',

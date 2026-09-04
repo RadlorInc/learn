@@ -398,7 +398,7 @@ const GUIDED_TASK: Task = {
 }
 const DEMO_STATES: GV[] = [{ fill: 0, side: 0 }, { fill: 6, side: 0 }, { fill: 12, side: 0 }, { fill: 18, side: 0 }, { fill: 24, side: 0 }]
 
-const CONFIG: GameConfig<GV, Task> = {
+export const CONFIG: GameConfig<GV, Task> = {
   chapterId: 'geometryMeasurement',
   title: 'ROOM RENO',
   motif: '🏠',

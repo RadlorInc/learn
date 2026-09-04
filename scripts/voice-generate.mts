@@ -87,10 +87,26 @@ for (const [i, l] of todo.entries()) {
     model_id: MODEL,
     voice_settings: { stability: 0.5, similarity_boost: 0.75, use_speaker_boost: true },
   }
-  const res = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=${FORMAT}`,
-    { method: 'POST', headers: { 'xi-api-key': KEY!, 'content-type': 'application/json' }, body: JSON.stringify(body) },
-  )
+  /**
+   * ⚠️ A NETWORK ERROR IS NOT AN HTTP ERROR, AND UNCAUGHT IT KILLS THE WHOLE RUN — INCLUDING THE
+   * MANIFEST WRITE AT THE END. Measured twice on 2026-09-04: `ETIMEDOUT` on a single request threw
+   * out of this loop, so the process died having rendered hundreds of clips that were then absent
+   * from the manifest, i.e. on disk and unfindable — the same silent shape as a stale manifest.
+   * One retry, then skip the line and carry on; the run is idempotent, so a skipped line is picked
+   * up by the next invocation.
+   */
+  let res: Response | undefined
+  for (let attempt = 0; attempt < 2 && !res; attempt++) {
+    try {
+      res = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=${FORMAT}`,
+        { method: 'POST', headers: { 'xi-api-key': KEY!, 'content-type': 'application/json' }, body: JSON.stringify(body) },
+      )
+    } catch (e) {
+      console.error(`  ~ ${l.key} network error (${(e as Error).message.slice(0, 60)})${attempt ? ' — skipping' : ' — retrying'}`)
+    }
+  }
+  if (!res) { failed++; continue }
   if (!res.ok) {
     failed++
     const msg = await res.text()

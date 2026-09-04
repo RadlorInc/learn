@@ -511,7 +511,7 @@ function StatScene({ palette, task, value, stepIndex, frameCount, ended }: {
   )
 }
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'exponentsPolynomials',
   title: 'POWER-UPS',
   ticketLabel: 'upgrade log',

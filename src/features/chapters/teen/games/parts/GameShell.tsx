@@ -508,7 +508,19 @@ export function Game<V, T extends BaseTask>({
     const w = wrong + 1
     const run = wrongRun + 1
     setWrong(w); setWrongRun(run); setSub('reveal')
-    speak(`It was ${config.revealText(task)}. ${ada.encouragement}`)
+    /**
+     * ⚠️ TWO UTTERANCES, NOT ONE SENTENCE, AND THE REASON IS THE CLIP CORPUS. Spoken as
+     * `It was X. <encouragement>` this is ONE line to the clip layer, so every reveal has to be
+     * recorded once per encouragement — and there are ten of them. Measured on 9–11: 3,640 lines
+     * and 114,506 characters as one utterance against 374 lines and ~4,300 split, i.e. a 10x
+     * multiplication of the whole bucket, and a month's ElevenLabs quota spent on saying the same
+     * ten endings over and over.
+     * ⚠️ It must be `speakSteps`, never `speak` followed by `speakAfterCurrent`: `_speaking` only
+     * turns true when the clip's onStart fires, so a synchronous second call takes the `else`
+     * branch and `_doSpeak` CANCELS the line that is still loading. The first half would simply
+     * disappear, on the machines that have clips.
+     */
+    speakSteps([`It was ${config.revealText(task)}.`, ada.encouragement])
     if (value != null) config.glide(task, value, setValue, later)
 
     if (run >= RETEACH_AFTER) {

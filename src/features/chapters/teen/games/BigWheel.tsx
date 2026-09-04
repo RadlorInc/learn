@@ -290,7 +290,7 @@ const DEMO_SIGNS_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'unitCircleTrig',
   title: 'THE BIG WHEEL',
   ticketLabel: 'ride log',

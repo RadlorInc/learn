@@ -549,7 +549,7 @@ const DEMO_RAY_STEPS: DemoStep<V>[] = [
   { say: 'Up to five weeks. That is the answer — a boundary and a direction, and the flip is what gave you the direction.', value: { k: 'ray', n: 5, dir: -1 }, board: 'x ≤ 5 ✓' },
 ]
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'linearEquationsInequalities',
   title: 'SAVING GOAL',
   ticketLabel: 'savings plan',

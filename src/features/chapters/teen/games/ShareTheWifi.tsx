@@ -280,7 +280,7 @@ const DEMO_FAULT_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'rationalFunctions',
   title: 'SHARE THE WIFI',
   ticketLabel: 'connection log',

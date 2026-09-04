@@ -278,7 +278,7 @@ const DEMO_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'quadraticAnalysis',
   title: 'THE RESALE FLIP',
   ticketLabel: 'price sheet',

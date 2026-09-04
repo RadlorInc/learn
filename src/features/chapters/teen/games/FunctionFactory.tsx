@@ -267,7 +267,7 @@ const GUIDED_TASK: Task = {
   work: ['Put 3 in place of x: 3 + 2.', '3 + 2 = 5.'],
 }
 
-const CONFIG: GameConfig<FV, Task> = {
+export const CONFIG: GameConfig<FV, Task> = {
   chapterId: 'algebraicExpressions',
   title: 'TAXI METER',
   motif: '🚕',

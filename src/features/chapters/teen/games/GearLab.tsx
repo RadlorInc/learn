@@ -335,7 +335,7 @@ function RootPatch({ P, task, value, setValue, disabled, reveal, onCommit }: {
   )
 }
 
-const CONFIG: GameConfig<number, Task> = {
+export const CONFIG: GameConfig<number, Task> = {
   chapterId: 'exponentsRoots',
   title: 'TILE FACTORY',
   motif: '🧱',

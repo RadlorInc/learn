@@ -241,7 +241,7 @@ function BankAccountScene({ palette: P, value, stepIndex, frameCount, ended }: {
   )
 }
 
-const CONFIG: GameConfig<number, Task> = {
+export const CONFIG: GameConfig<number, Task> = {
   chapterId: 'integers',
   title: 'BANK ACCOUNT',
   motif: '🏦',

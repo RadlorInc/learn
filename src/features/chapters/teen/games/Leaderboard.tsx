@@ -613,7 +613,7 @@ function ScoreScene({ palette, value, stepIndex, frameCount, ended }: {
   )
 }
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'signedNumberFluency',
   title: 'LEADERBOARD',
   ticketLabel: 'match log',
