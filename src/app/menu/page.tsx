@@ -13,7 +13,7 @@ import ChapterPicker from '@/shared/ui/ChapterPicker'
 import PWAInstallBanner from '@/shared/ui/PWAInstallBanner'
 import { getActiveLearner, clearActiveLearner } from '@/data/supabase/useLearnerSession'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
-import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds, getActivePlanChapters } from '@/data/repositories'
+import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds, checkupStatus, type LearnerBootstrap } from '@/data/repositories'
 import type { LearnerState } from '@/data/supabase/types'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
 import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
@@ -21,7 +21,6 @@ import { track } from '@/infra/analytics'
 import { currentPlanChapter, planProgress, reconcilePlan, planSource } from '@/infra/storage/activePlan'
 import { planLine } from '@/core/planCopy'
 import CheckDoor from '@/shared/ui/CheckDoor'
-import { getCheckupStatus } from '@/data/repositories'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
 const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
@@ -52,6 +51,9 @@ function shopStateMatchesServer(
 // session; 30s is long enough to skip navigation churn, short enough to stay fresh.
 const _bootAt = new Map<string, number>()
 const BOOT_TTL_MS = 30_000
+// The last bootstrap per learner, so a remount inside the TTL can redraw what was derived from it
+// (the re-check card) without the round trip it exists to skip.
+const _lastBoot = new Map<string, LearnerBootstrap>()
 
 // Speak the welcome greeting only ONCE per app load — not on every menu→game→menu
 // bounce (the component remounts each return, which re-ran the greeting). Module-scoped
@@ -102,17 +104,15 @@ export default function MainMenu() {
    *
    * Best-effort: a failed lookup just means no card, never a blocked menu.
    */
-  useEffect(() => {
-    if (!learnerId) return
-    let cancelled = false
-    getCheckupStatus(learnerId)
-      .then(st => { if (!cancelled && st?.recheckDue && st.rootGap) setRecheck({ skill: st.rootGap, band: st.band, weeks: st.weeksSince }) })
-      .catch(() => { /* the menu must open regardless */ })
-    // Clearing on the way OUT rather than on the way in: it runs before the next learner's lookup,
-    // so a sibling can never see the previous child's card, and nothing sets state synchronously
-    // inside the effect body.
-    return () => { cancelled = true; setRecheck(null) }
-  }, [learnerId])
+  // ⚠️ Its rows now arrive INSIDE the bootstrap below — this used to be three more round trips
+  // (auth/v1/user + two selects) on every menu load, sequential, each paying the Sydney→US floor.
+  // The 6-week rule itself is `checkupStatus`, shared with the parent dashboard. Clearing on the way
+  // OUT, so a sibling can never see the previous child's card.
+  const showRecheck = (boot: LearnerBootstrap) => {
+    const st = checkupStatus(boot.checkup, boot.recheckClosed)
+    if (st?.recheckDue && st.rootGap) setRecheck({ skill: st.rootGap, band: st.band, weeks: st.weeksSince })
+  }
+  useEffect(() => () => setRecheck(null), [learnerId])
 
   useEffect(() => {
     const learner = getActiveLearner()
@@ -143,24 +143,70 @@ export default function MainMenu() {
       // they log in on. Then push the merged state back to reconcile the server
       // (propagates anything bought/earned offline). All merges are monotonic.
       ;(async () => {
+        /**
+         * ⚠️⚠️ THE POINTER IS DERIVED ON EVERY LOAD, ONLINE OR NOT — AND THE OFFLINE HALF IS A FIX,
+         * NOT TIDYING. `setActivePlan` writes `index: 0`, so a child who re-runs the check (their
+         * own door is on this screen now) walks out of the diagnostic pointing at chapter 1 of the
+         * new plan, and it is THIS reconcile that pulls the pointer past what they have already
+         * finished. If it is skipped because the bootstrap threw — offline, an expired token — the
+         * menu shows "Next up" as a chapter the child completed weeks ago. Their stars and progress
+         * are untouched and the next successful load corrects it, but the one screen they are
+         * looking at is wrong, which is the screen that matters.
+         *
+         * So the evidence degrades instead of the feature: server progress when we have it, and
+         * the local profile's own stars when we do not. `chapterStars > 0` is the local equivalent
+         * of the server's `total_sessions > 0` — `calcStars` never returns less than 1, so any
+         * chapter that has been finished once carries at least one star on this device.
+         *
+         * ⚠️ A genuinely fresh device has neither, and then the plan opens at its first chapter —
+         * correct, because nothing known says otherwise.
+         *
+         * ⚠️ Until 2026-09-03 the local half sat in the catch of a SEPARATE plan fetch that ran only
+         * AFTER the bootstrap had succeeded — so "offline" and "expired token" both returned before
+         * it and the comment above was describing a branch that did not exist. The plan now rides
+         * inside the bootstrap, and the local derivation runs on exactly the paths with no server
+         * data: offline, no session, and a thrown bootstrap.
+         */
+        const applyPlan = (played: string[], remote: string[]) => {
+          const plan = reconcilePlan(learner.id, remote, played)
+          if (!plan) return
+          const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
+          setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
+            ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learner.id) }
+            : null)
+          setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
+        }
+        const localPlayed = () => {
+          const stars = useMiloStore.getState().profile.chapterStars
+          return Object.keys(stars).filter(ch => (stars[ch as ChapterType] ?? 0) > 0)
+        }
+        // ⚠️ `remote: []` on purpose — with a local plan present `reconcilePlan` keeps the local
+        // chapter list, so this derives the POSITION without inventing a plan we cannot read.
+        const deriveFromLocal = () => { try { applyPlan(localPlayed(), []) } catch { /* best-effort */ } }
         try {
-          // Offline: local profile stands; nothing to pull/push.
-          if (!navigator.onLine) return
+          // Offline: local profile stands; nothing to pull/push — but the pointer still moves.
+          if (!navigator.onLine) { deriveFromLocal(); return }
 
           // Skip the bootstrap round trip if we synced this learner very recently (navigation churn).
           const lastBoot = _bootAt.get(learner.id) ?? 0
-          if (Date.now() - lastBoot < BOOT_TTL_MS) return
+          if (Date.now() - lastBoot < BOOT_TTL_MS) {
+            const cached = _lastBoot.get(learner.id)
+            if (cached) showRecheck(cached)
+            return
+          }
 
           // One round trip pulls access role + stats + progress + shop state.
           const boot = await getLearnerBootstrap(learner.id)
-          // Not signed in yet / transient — leave the active learner untouched.
-          if (boot.status === 'no-auth') return
+          // Not signed in yet / transient — leave the active learner untouched, derive locally.
+          if (boot.status === 'no-auth') { deriveFromLocal(); return }
           // Signed in but no access → stale or foreign active learner. Clear it
           // and bounce to the picker (stops the FK/RLS sync errors at the source).
           if (boot.status === 'no-access') { clearActiveLearner(); router.replace('/parent'); return }
 
           // Successful sync — mark fresh so quick re-mounts within the TTL skip the round trip.
           _bootAt.set(learner.id, Date.now())
+          _lastBoot.set(learner.id, boot.data)
+          showRecheck(boot.data)
 
           const { stats, progress, state } = boot.data
           applyServerProgress(stats, progress, state)
@@ -174,51 +220,15 @@ export default function MainMenu() {
            * plan card at all — the diagnostic's entire output existed only on the device that
            * produced it.
            *
-           * Derived rather than synced: the chapter sequence is already on the server and
-           * `progress` (right here, already fetched) says which chapters have been played, so the
-           * position is a function of data we hold. No second write path to disagree with the
-           * first. Monotonic — it can only move forward. Best-effort: a failure leaves the local
-           * pointer exactly as it was.
+           * Derived rather than synced: the chapter sequence is already on the server (inside the
+           * bootstrap since 2026-09-03) and `progress` (right here, already fetched) says which
+           * chapters have been played, so the position is a function of data we hold. No second
+           * write path to disagree with the first. Monotonic — it can only move forward.
            */
-          /**
-           * ⚠️⚠️ THE POINTER IS DERIVED ON EVERY LOAD, ONLINE OR NOT — AND THE OFFLINE HALF IS A FIX,
-           * NOT TIDYING. `setActivePlan` writes `index: 0`, so a child who re-runs the check (their
-           * own door is on this screen now) walks out of the diagnostic pointing at chapter 1 of the
-           * new plan, and it is THIS reconcile that pulls the pointer past what they have already
-           * finished. If it is skipped because the bootstrap threw — offline, an expired token — the
-           * menu shows "Next up" as a chapter the child completed weeks ago. Their stars and progress
-           * are untouched and the next successful load corrects it, but the one screen they are
-           * looking at is wrong, which is the screen that matters.
-           *
-           * So the evidence degrades instead of the feature: server progress when we have it, and
-           * the local profile's own stars when we do not. `chapterStars > 0` is the local equivalent
-           * of the server's `total_sessions > 0` — `calcStars` never returns less than 1, so any
-           * chapter that has been finished once carries at least one star on this device.
-           *
-           * ⚠️ A genuinely fresh device has neither, and then the plan opens at its first chapter —
-           * correct, because nothing known says otherwise.
-           */
-          const applyPlan = (played: string[], remote: string[]) => {
-            const plan = reconcilePlan(learner.id, remote, played)
-            if (!plan) return
-            const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
-            setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
-              ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learner.id) }
-              : null)
-            setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
-          }
-          const localPlayed = () => {
-            const stars = useMiloStore.getState().profile.chapterStars
-            return Object.keys(stars).filter(ch => (stars[ch as ChapterType] ?? 0) > 0)
-          }
-          try {
-            const remote = await getActivePlanChapters(learner.id)
-            applyPlan(progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string), remote)
-          } catch {
-            // ⚠️ `remote: []` on purpose — with a local plan present `reconcilePlan` keeps the local
-            // chapter list, so this derives the POSITION without inventing a plan we cannot read.
-            applyPlan(localPlayed(), [])
-          }
+          // `boot.data.plan` is [] when there is no plan or none this account can read — and with a
+          // local plan present `reconcilePlan` keeps the local chapter list, so this derives the
+          // POSITION without inventing a plan we cannot read.
+          applyPlan(progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string), boot.data.plan)
 
           // Continue-where-you-left-off, cross-device: progress is ordered by
           // last_played_at desc, so progress[0] is the most recently played
@@ -240,7 +250,7 @@ export default function MainMenu() {
               equippedItems: p.equippedItems,
             })
           }
-        } catch { /* offline / transient — local profile stands until next online load */ }
+        } catch { deriveFromLocal() /* offline / transient — local profile stands until next online load */ }
       })()
 
       // Personalised greeting — but only ONCE per app load. Returning to the menu

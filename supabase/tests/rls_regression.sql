@@ -516,6 +516,21 @@ begin
     raise exception 'RLS FAIL B13g: an UNSEATED learner on the same account is entitled — entitlement is not per-seat';
   end if;
 
+  -- B13h: the batched form asks the SAME question. `entitled_chapters` is the parent dashboard's
+  -- one round trip (it replaced 12–24 parallel RPCs); it must agree with `is_chapter_entitled` on a
+  -- seated learner (true for paid) AND an unseated one (false for paid), with the free one true for
+  -- both — a positive and a negative, or a function that returns {} would pass.
+  v_asserts := v_asserts + 1;
+  if public.entitled_chapters(v_learner2, array[v_paid, v_free]) <> jsonb_build_object(v_paid, true, v_free, true) then
+    raise exception 'RLS FAIL B13h: entitled_chapters disagrees with is_chapter_entitled for a seated learner: %',
+      public.entitled_chapters(v_learner2, array[v_paid, v_free]);
+  end if;
+  v_asserts := v_asserts + 1;
+  if public.entitled_chapters(v_learner3, array[v_paid, v_free]) <> jsonb_build_object(v_paid, false, v_free, true) then
+    raise exception 'RLS FAIL B13h: entitled_chapters disagrees with is_chapter_entitled for an UNSEATED learner: %',
+      public.entitled_chapters(v_learner3, array[v_paid, v_free]);
+  end if;
+
 
   -- ═══ C — PLAN-DERIVED ENTITLEMENT (free-tier source C) ═════════════════════
   -- v_learner3 is the OWNER's third child and holds no seat (B13g just proved they are not

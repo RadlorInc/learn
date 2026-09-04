@@ -6,6 +6,7 @@
  */
 import { db } from '@/data/repositories/_shared'
 import type { LearnerWithRole } from '@/data/repositories/learners'
+import type { CheckupRow } from '@/data/repositories/diagnostics'
 import type { Learner, LearnerStats, LearnerProgress, LearnerState, Session } from '@/data/supabase/types'
 
 export async function getLearnerStats(learnerId: string): Promise<LearnerStats | null> {
@@ -125,6 +126,12 @@ export interface LearnerBootstrap {
   stats:    LearnerStats | null
   progress: LearnerProgress[]
   state:    LearnerState | null
+  /** The latest check-up (for the week-6 re-check card); null when the child never took one. */
+  checkup:  CheckupRow | null
+  /** Whether the latest re-check closed the gap. */
+  recheckClosed: boolean
+  /** The active diagnostic plan's chapter list; [] when there is none (or none this account can read). */
+  plan:     string[]
 }
 
 export type BootstrapResult =
@@ -133,9 +140,10 @@ export type BootstrapResult =
   | { status: 'no-access' }   // signed in, but this account has no access to the learner — stale/foreign
 
 /**
- * One RPC for everything the menu needs: access role + stats + progress + shop
- * state. Replaces getMyAccessRole + getLearnerStats + getLearnerProgress +
- * getLearnerState (4 round trips → 1).
+ * One RPC for everything the menu needs: access role + stats + progress + shop state, and since
+ * 2026-09-03 the latest check-up, the latest re-check and the active plan. Replaces
+ * getMyAccessRole + getLearnerStats + getLearnerProgress + getLearnerState (4 round trips → 1),
+ * then getCheckupStatus (auth/v1/user + 2 selects) + getActivePlanChapters (6 → 2 on /menu).
  *
  * Resolves the auth user first so we can tell "not signed in yet" (don't touch
  * the active learner) apart from "signed in but no access" (evict the stale
@@ -153,8 +161,14 @@ export async function getLearnerBootstrap(learnerId: string): Promise<BootstrapR
   if (error) { console.error('[getLearnerBootstrap] rpc failed:', error.message); return { status: 'no-auth' } }
   if (!data) return { status: 'no-access' }
 
-  const d = data as { role: 'owner' | 'viewer'; stats: LearnerStats | null; progress: LearnerProgress[] | null; state: LearnerState | null }
-  return { status: 'ok', data: { role: d.role, stats: d.stats ?? null, progress: d.progress ?? [], state: d.state ?? null } }
+  const d = data as {
+    role: 'owner' | 'viewer'; stats: LearnerStats | null; progress: LearnerProgress[] | null; state: LearnerState | null
+    checkup?: CheckupRow | null; recheck_closed?: boolean; plan?: string[] | null
+  }
+  return { status: 'ok', data: {
+    role: d.role, stats: d.stats ?? null, progress: d.progress ?? [], state: d.state ?? null,
+    checkup: d.checkup ?? null, recheckClosed: d.recheck_closed === true, plan: Array.isArray(d.plan) ? d.plan : [],
+  } }
 }
 
 // ─── Shop / coins state (cross-device) ────────────────────────

@@ -126,14 +126,32 @@ export async function getActivePlanChapters(learnerId: string): Promise<string[]
   return (data.chapter_sequence as string[] | null) ?? []
 }
 
-/** Week-N re-check status for the guarantee loop: is a re-check DUE (a real gap, diagnosed ≥6 weeks
- *  ago, and not already closed by a later re-check)? Powers the in-app nudge on the parent dashboard. */
-export async function getCheckupStatus(learnerId: string): Promise<
-  { rootGap: string | null; band: string; weeksSince: number; recheckDue: boolean } | null
-> {
+/** The latest check-up, as the bootstrap RPC and the two direct selects both return it. */
+export interface CheckupRow { band: string; root_gap_skill: string | null; completed_at: string | null }
+export interface CheckupStatus { rootGap: string | null; band: string; weeksSince: number; recheckDue: boolean }
+
+/**
+ * The week-N rule, in one place: a re-check is DUE when there is a real gap, it was diagnosed at
+ * least six weeks ago, and no later re-check has closed it. Pure, so the menu (which now gets the
+ * rows inside `get_learner_bootstrap`) and the parent dashboard (`getCheckupStatus`) cannot drift.
+ * A check-up with no `completed_at` counts as now — week zero.
+ */
+export function checkupStatus(sess: CheckupRow | null, alreadyClosed: boolean, now = Date.now()): CheckupStatus | null {
+  if (!sess) return null
+  const completedAt = sess.completed_at ? new Date(sess.completed_at).getTime() : now
+  const weeksSince = Math.floor((now - completedAt) / (7 * 86_400_000))
+  const recheckDue = !!sess.root_gap_skill && weeksSince >= 6 && !alreadyClosed
+  return { rootGap: sess.root_gap_skill ?? null, band: sess.band, weeksSince, recheckDue }
+}
+
+/** Week-N re-check status for the guarantee loop — the parent dashboard's nudge. The menu no longer
+ *  calls this: its rows ride inside `get_learner_bootstrap`. Two reads, gated by the tables' own RLS.
+ *  ⚠️ `getSession()` is a local read; `getUser()` was a round trip to GoTrue on every menu load that
+ *  bought nothing — RLS is the boundary on the reads below, exactly as `getMyLearners` says. */
+export async function getCheckupStatus(learnerId: string): Promise<CheckupStatus | null> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user) return null
   const { data: sess } = await supabase
     .from('diagnostic_sessions')
     .select('band, root_gap_skill, completed_at')
@@ -142,8 +160,6 @@ export async function getCheckupStatus(learnerId: string): Promise<
     .limit(1)
     .maybeSingle()
   if (!sess) return null
-  const completedAt = sess.completed_at ? new Date(sess.completed_at as string).getTime() : Date.now()
-  const weeksSince = Math.floor((Date.now() - completedAt) / (7 * 86_400_000))
   const { data: rc } = await supabase
     .from('diagnostic_rechecks')
     .select('gap_closed')
@@ -151,7 +167,5 @@ export async function getCheckupStatus(learnerId: string): Promise<
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
-  const alreadyClosed = rc?.gap_closed === true
-  const recheckDue = !!sess.root_gap_skill && weeksSince >= 6 && !alreadyClosed
-  return { rootGap: (sess.root_gap_skill as string | null) ?? null, band: sess.band as string, weeksSince, recheckDue }
+  return checkupStatus(sess as CheckupRow, rc?.gap_closed === true)
 }
