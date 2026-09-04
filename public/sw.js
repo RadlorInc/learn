@@ -1,4 +1,4 @@
-const VERSION      = 'v154'
+const VERSION      = 'v155'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
@@ -82,6 +82,26 @@ self.addEventListener('fetch', event => {
     return
   }
 
+  /**
+   * Voice clips. ⚠️ THE TWO HALVES NEED OPPOSITE STRATEGIES AND THAT IS THE WHOLE BUG.
+   * An mp3 is content-addressed — its filename IS a hash of the line — so it can be cached for
+   * ever and never goes stale. `manifest.json` is the opposite: it is rewritten by every render,
+   * and it GATES every lookup. With no branch here it fell to the stale-while-revalidate case
+   * below, so a device that had once loaded the app kept serving the OLD key list — the new
+   * clips sat on the CDN and were never asked for, every line fell back to browser speech, and
+   * on a Chrome with no installed voice that is SILENCE. Found 2026-09-04: 17–18 played in
+   * Safari (no service worker) and was mute in Chrome (service worker, cached 433-key manifest),
+   * on the same account, same deploy. Nothing was broken but this branch's absence.
+   */
+  if (url.pathname.startsWith('/audio/')) {
+    event.respondWith(
+      url.pathname.endsWith('.json')
+        ? networkFirst(request, ASSETS_CACHE)
+        : cacheFirst(request, ASSETS_CACHE)
+    )
+    return
+  }
+
   // Images and fonts — cache first
   if (
     url.pathname.startsWith('/assets/') ||
@@ -124,6 +144,19 @@ self.addEventListener('fetch', event => {
     })
   )
 })
+
+/** Network first, falling back to the cached copy — for a small file whose CONTENT changes
+ *  and whose staleness is silent (see the /audio/ branch). */
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName)
+  try {
+    const r = await fetch(request)
+    if (r.ok) cache.put(request, r.clone())
+    return r
+  } catch {
+    return (await cache.match(request)) || new Response('', { status: 503 })
+  }
+}
 
 async function cacheFirst(request, cacheName) {
   const cache  = await caches.open(cacheName)
