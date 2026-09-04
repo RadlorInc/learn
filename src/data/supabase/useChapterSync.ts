@@ -5,7 +5,7 @@
  * syncs to Supabase in background, queues if offline.
  */
 
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { ChapterType } from '@/data/supabase/types'
 import { useMiloStore } from '@/state/store'
 import { getChapterLevel } from '@/infra/storage/chapterLevel'
@@ -24,8 +24,29 @@ function randomId(): string {
   })
 }
 
-export function useChapterSync() {
+/**
+ * @param chapter the chapter currently on screen. Passing it ARMS the start clock; omitting it
+ *   (as `/game` does, which only wants `flushQueue`) leaves `started_at` null — honestly unknown.
+ *
+ * ⚠️ THE CHAPTER IS A PARAMETER RATHER THAN A `markStart()` A CALLER MUST REMEMBER, DELIBERATELY.
+ * This repo has already paid three months for a wire both ends believed in: `ChapterProps.onComplete`
+ * was typed, passed and silently dropped, so no child's plan advanced. A separate "call me when the
+ * chapter opens" function is that same shape waiting to happen — the hook that owns the END of the
+ * measurement now owns the START, and there is nothing left to forget.
+ */
+export function useChapterSync(chapter?: ChapterType) {
   const finishChapter = useMiloStore(s => s.finishChapter)
+
+  /**
+   * Armed DURING RENDER, not in an effect. Effects run after paint, so an effect-set start would
+   * miss everything the child does in the first frame — and this repo's own rule (chapter-craft §1)
+   * is that per-run state is derived during render for exactly that reason. Re-running with the same
+   * chapter is a no-op, so StrictMode's double render cannot move it.
+   */
+  const startRef = useRef<{ chapter: ChapterType; at: string } | null>(null)
+  if (chapter && startRef.current?.chapter !== chapter) {
+    startRef.current = { chapter, at: new Date().toISOString() }
+  }
 
   const finishAndSync = useCallback(async (
     chapter: ChapterType,
@@ -74,6 +95,9 @@ export function useChapterSync() {
       coinsEarned,
       clientId:     randomId(),
       completedAt:  new Date().toISOString(),
+      // Only this chapter's own start counts. If the hook was mounted without a chapter, or the
+      // child somehow finished a different one, we say nothing rather than guessing.
+      startedAt:    startRef.current?.chapter === chapter ? startRef.current.at : undefined,
       // The tier the run ended on, straight off the same per-device store both engines write after
       // every scored answer — so the row the server keeps and the row this device keeps agree.
       difficulty:   getChapterLevel(learner.id, chapter),
@@ -85,13 +109,17 @@ export function useChapterSync() {
       return
     }
 
+    // A replay of the SAME chapter must time itself, not inherit the finished run's clock. Cleared
+    // here so the next render re-arms; `runKey` remounts the chapter, which guarantees that render.
+    startRef.current = null
+
     const outcome = await syncSession(payload)
     // Only queue for retry on a transient failure. A 'drop' (learner gone / not
     // owned) can never succeed, so queueing it would just loop forever.
     if (outcome === 'retry') {
       enqueueSession(payload)
     }
-  }, [finishChapter])
+  }, [finishChapter, chapter])
 
   const flushOfflineQueue = useCallback(async () => {
     await flushQueue()

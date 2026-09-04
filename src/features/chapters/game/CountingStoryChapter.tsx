@@ -22,7 +22,7 @@ import DirectionsCard from '@/features/chapters/DirectionsCard'
 
 export default function CountingStoryChapter(_props: { onComplete: (correct: number, wrong: number) => void; childName: string }) {
   const router = useRouter()
-  const { finishAndSync } = useChapterSync()
+  const { finishAndSync } = useChapterSync('counting')   // it only ever completes 'counting' (line 38)
   const [body, setBody] = useState<HTMLElement | null>(null)
   const [runKey, setRunKey] = useState(0)        // bump to replay the chapter
   // The child PICKS a storytelling (Nature / Farm / Space) on the world-select screen;

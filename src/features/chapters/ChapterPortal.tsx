@@ -63,7 +63,7 @@ type Finish = (correct: number, wrong: number, mastered?: boolean) => void
  */
 function usePortalRun(skill: ChapterType, quiet: boolean, onComplete?: Finish) {
   const router = useRouter()
-  const { finishAndSync } = useChapterSync()
+  const { finishAndSync } = useChapterSync(skill)
   const [body, setBody] = useState<HTMLElement | null>(null)
   const [runKey, setRunKey] = useState(0)
   const doneRef = useRef(false)
