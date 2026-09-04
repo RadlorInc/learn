@@ -50,6 +50,9 @@
 #   4  the named file went red, but not on an assertion   → red for the wrong reason
 #   5  the run never reached the named file               → nothing was tested
 #   6  e2e target: tree restored, verdict not attempted   → read the output yourself
+#
+# ⚠️ `npm run break -- <file> '<break>'` mangles quoting inside the break command; call
+# `scripts/break-check.sh` directly whenever the break contains quotes.
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -86,6 +89,17 @@ restore() {
   exit $rc
 }
 trap restore EXIT INT TERM
+
+# ⚠️ AND THE NOTE ABOVE IS NOW ENFORCED, NOT JUST WRITTEN. Two sessions hit this independently on
+# 2026-09-05 and both only documented it; a rule you have to remember while reading a 90-line header
+# is not a mechanism. Refusing outright is — and it turns "exit 3, the pattern drifted" (which sends
+# you hunting a regex that is fine) into a sentence naming the real cause.
+if ! git diff --quiet HEAD -- "$TARGET"; then
+  echo "✗ $TARGET has uncommitted changes." >&2
+  echo "  This tool PARKS your work and tests the COMMITTED file, so it would verify a version you" >&2
+  echo "  are not looking at. Commit the check first, then break-check it." >&2
+  exit 2
+fi
 
 # Park any uncommitted work so the break cannot be confused with it, and so the restore is a
 # mechanical `git stash pop` rather than a judgement call about which hunks were yours.
