@@ -1,7 +1,7 @@
 /**
  * Render the extracted corpus to audio clips.
  *
- *   ELEVENLABS_API_KEY=... npx tsx scripts/voice-generate.mts <voiceId> [--limit N] [--dry]
+ *   ELEVENLABS_API_KEY=... npx tsx scripts/voice-generate.mts <voiceId> [--limit N] [--dry] [--corpus path]
  *
  * IDEMPOTENT: a clip already on disk is skipped, never re-billed. Safe to re-run after
  * hitting the monthly character cap — it picks up exactly where it stopped.
@@ -10,7 +10,7 @@
  * is stripped from the key, so retagging a line does NOT orphan its clip... it re-renders
  * it, which is what you want.
  */
-import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, readdirSync } from 'node:fs'
 
 const [voiceId, ...rest] = process.argv.slice(2)
 if (!voiceId) { console.error('usage: voice-generate.mts <voiceId> [--limit N] [--dry]'); process.exit(1) }
@@ -41,7 +41,8 @@ const FRAGMENTS = rest.includes('--fragments')
 // whole-line clip, or a bare segment would be spoken in place of a full sentence.
 const OUT = FRAGMENTS ? `public/audio/${voiceId}/frag` : `public/audio/${voiceId}`
 const MANIFEST = FRAGMENTS ? 'fragments.json' : 'manifest.json'
-const corpus: Line[] = FRAGMENTS ? loadFragments() : JSON.parse(readFileSync('scripts/.voice-corpus.json', 'utf8'))
+const CORPUS = rest.includes('--corpus') ? rest[rest.indexOf('--corpus') + 1] : 'scripts/.voice-corpus.json'
+const corpus: Line[] = FRAGMENTS ? loadFragments() : JSON.parse(readFileSync(CORPUS, 'utf8'))
 
 /**
  * Fragment corpus: the literal runs of a templated prompt, plus the value vocabulary.
@@ -103,10 +104,13 @@ for (const [i, l] of todo.entries()) {
   if ((i + 1) % 25 === 0 || i === todo.length - 1) console.log(`  ${ok} rendered, ${failed} failed`)
 }
 
-// Manifest = exactly what's on disk, so a runtime lookup never promises a missing clip.
-const have = corpus.filter((l) => existsSync(`${OUT}/${l.key}.mp3`))
-writeFileSync(`${OUT}/${MANIFEST}`, JSON.stringify(have.map((l) => l.key)))
+// Manifest = exactly what's on disk — READ FROM THE FOLDER, not from this run's corpus.
+// ⚠️ Derived from the corpus it would drop every key rendered from a DIFFERENT corpus into the
+// same voice: one `--corpus` run for 9–11 would have un-listed all 613 of Stevie's teen clips,
+// with the mp3s still sitting there. The folder is the one thing that cannot be partial.
+const have = readdirSync(OUT).filter((f) => f.endsWith('.mp3')).map((f) => f.slice(0, -4))
+writeFileSync(`${OUT}/${MANIFEST}`, JSON.stringify(have))
 
-const bytes = have.reduce((n, l) => n + statSync(`${OUT}/${l.key}.mp3`).size, 0)
+const bytes = have.reduce((n, k) => n + statSync(`${OUT}/${k}.mp3`).size, 0)
 console.log(`\ndone: ${ok} rendered, ${failed} failed`)
 console.log(`manifest: ${have.length}/${corpus.length} lines · ${(bytes / 1e6).toFixed(1)} MB`)

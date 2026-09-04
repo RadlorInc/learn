@@ -1,5 +1,5 @@
 /**
- * Extract the spoken corpus for the teen game bands (12–14 + 15–16) into a manifest.
+ * Extract the spoken corpus for the GameShell bands (9–11 + 12–14 + 15–16 + 17–18) into a manifest.
  *
  *   npx tsx scripts/voice-corpus.mts
  *
@@ -15,8 +15,16 @@ const BAND_12_14 = ['WeatherStation', 'SkyTower', 'KitchenCounter', 'JuiceBar', 
   'FunctionFactory', 'BalanceBench', 'NightFlight', 'CableCar', 'BuildSite', 'StoreCheckout']
 const BAND_15_16 = ['Leaderboard', 'TicketCheckout', 'SavingGoal', 'FollowerGrowth', 'GoingViral', 'BestPlan',
   'PowerUps', 'ScreenDistance', 'BuildPlot', 'TheShot', 'MapMaker', 'SkateRamp']
+// The 13 games registry.tsx maps to band '17-18'.
+const BAND_17_18 = ['TwoReceipts', 'DaylightHours', 'BigWheel', 'TorchOnTheWall', 'BalanceThatGrows', 'ColdSnap',
+  'TheReviews', 'WalkHome', 'PhotoFilters', 'Pace', 'ResaleFlip', 'ShareTheWifi', 'TrainingBlock']
 
-const FILES = [...BAND_12_14, ...BAND_15_16].map((n) => `${G}/${n}.tsx`).concat(`${G}/parts/GameShell.tsx`)
+// The ten 9–11 games registry.tsx maps to band '9-11'. (OrderDesk/LevelRun stay storybook
+// — they live in story/ and are not extractable by these patterns.)
+const BAND_9_11 = ['CoinTrayGame', 'FactorLabGame', 'PizzaCounterGame', 'HeightBarGame', 'AngleShopGame',
+  'MissionBriefGame', 'EmptyPlotGame', 'LoadingBayGame', 'PackingShedGame', 'BusRunGame']
+
+const FILES = [...BAND_9_11, ...BAND_12_14, ...BAND_15_16, ...BAND_17_18].map((n) => `${G}/${n}.tsx`).concat(`${G}/parts/GameShell.tsx`)
 
 // Spoken fields. `say` = narration, `coach` = the guided line, `work` = the reteach steps,
 // `blurb` = the start card. Single-quoted only: a backtick string may interpolate.

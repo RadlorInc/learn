@@ -59,7 +59,7 @@ const SHORT_H = 470
 
 // ─── Colours (the pattern variable) ──────────────────────────────────────────────────
 type BeadColor = 'red' | 'blue' | 'yellow' | 'green' | 'orange' | 'purple' | 'pink'
-const BEADS: Record<BeadColor, { label: string; hex: string; deep: string }> = {
+export const BEADS: Record<BeadColor, { label: string; hex: string; deep: string }> = {
   red:    { label: 'red',    hex: '#E64545', deep: '#B5302F' },
   blue:   { label: 'blue',   hex: '#3FA3EE', deep: '#2575B8' },
   yellow: { label: 'yellow', hex: '#FFC93C', deep: '#D69A12' },
@@ -86,7 +86,7 @@ interface Make {
   src: string; bg: string; grad: string
   intro: string
 }
-const MAKES: Make[] = [
+export const MAKES: Make[] = [
   { id: 'beads', label: 'A necklace', emoji: '📿', kind: 'bead', noun: 'bead', thing: 'necklace',
     connector: 'string', line: 0.5, src: '/assets/objects/pat_bead.png',
     bg: '/assets/backgrounds/bead_shop.png', grad: 'linear-gradient(#ffe9cf 0%, #fff3e2 52%, #f3dcc0 100%)',

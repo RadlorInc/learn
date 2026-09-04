@@ -14,7 +14,15 @@ const KEY = 'milo-voice'
 /** Voices we hold rendered clips for. Add a row when a new voice is generated. */
 export const VOICES = [
   { id: 'IvUJKFyjVb5hItY9dJAT', label: 'Stevie', hint: 'Warm and expressive' },
+  { id: 'XjGYkUkzth8BPs29fmcV', label: 'Teddy', hint: 'Little and playful' },
 ] as const
+
+/**
+ * A band that always hears ITS voice, whatever the device picked — 3–5 is Teddy (founder's call,
+ * 2026-09-03). The one thing it never overrides is an explicit 'device', which means "no clips".
+ * Add a row when a band gets its own corpus; a band with no row hears the device pick.
+ */
+export const BAND_VOICE: Partial<Record<string, string>> = { '3-5': 'XjGYkUkzth8BPs29fmcV' }
 
 export type VoiceId = (typeof VOICES)[number]['id'] | 'device'
 

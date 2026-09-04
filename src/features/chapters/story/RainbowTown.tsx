@@ -64,7 +64,7 @@ const SHORT_H = 470
 
 // ─── The paints ──────────────────────────────────────────────────────────────────────
 type ColorName = 'red' | 'yellow' | 'blue' | 'green' | 'orange' | 'purple'
-const COLORS: Record<ColorName, { label: string; hex: string; deep: string }> = {
+export const COLORS: Record<ColorName, { label: string; hex: string; deep: string }> = {
   red:    { label: 'red',    hex: '#E64545', deep: '#B5302F' },
   yellow: { label: 'yellow', hex: '#FFC93C', deep: '#D69A12' },
   blue:   { label: 'blue',   hex: '#3FA3EE', deep: '#2575B8' },
@@ -128,7 +128,7 @@ interface Page { id: string; label: string; src: string; w: number; h: number; t
  * Generalised, and now in the craft doc: TEACH where the world backs the answer up, TEST where it
  * cannot help.
  */
-const TEACH_PAGE: Page = {
+export const TEACH_PAGE: Page = {
   id: 'garden', label: 'Garden', src: '/assets/backgrounds/colour_garden.png', w: 1376, h: 768,
   // ONE canonical home per colour, and only six, because the teaching pass is one beat per word.
   // Ordered by COLOR_ORDER so the lesson runs red · yellow · blue · green · orange · purple. The

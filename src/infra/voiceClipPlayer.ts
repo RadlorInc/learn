@@ -12,7 +12,8 @@
  * timed-sweep handling we do not want to duplicate or regress.
  */
 import { clipKey } from '@/core/voiceClips'
-import { getVoicePref } from '@/infra/storage/voicePref'
+import { getVoicePref, BAND_VOICE } from '@/infra/storage/voicePref'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 
 // When on, a selected custom voice is the ONLY voice: a line with no clip stays silent
 // rather than falling back to browser TTS, so the teen game never mixes the two voices.
@@ -190,8 +191,10 @@ export function speakLine(text: string, opts: Opts): () => void {
     stopClip()
   }
 
-  const voice = getVoicePref()
-  if (voice === 'device') { fallback(); return cancel }
+  const pref = getVoicePref()
+  if (pref === 'device') { fallback(); return cancel }
+  // The learner's band may own a voice (3–5 → Teddy); otherwise the device pick stands.
+  const voice = BAND_VOICE[getActiveLearner()?.age_group ?? ''] ?? pref
 
   // A miss with a custom voice selected: stay silent (custom-voice-only) instead of the
   // free voice, unless clip-only is off — then fall back exactly as before.

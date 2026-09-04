@@ -68,7 +68,7 @@ const PRAISE = [
   ['Amazing!', 'You\'re on fire! 🔥', 'Superstar! ⭐', 'Incredible! 🎉'],     // level 3 — excited
 ]
 
-const ENCOURAGEMENT = [
+export const ENCOURAGEMENT = [
   ['Good try!', 'Nearly there!', 'Let\'s look again…', 'Almost!'],
   ['Not quite — but you\'re getting it!', 'Keep going!', 'Try again — you can do it!'],
   ['Oops! No worries — let\'s try another!', 'Keep practising!', 'Don\'t give up!'],

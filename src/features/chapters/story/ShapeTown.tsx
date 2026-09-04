@@ -92,7 +92,7 @@ interface Part { name: ShapeName; left: number; top: number; size: number; rotat
  */
 interface BuildDef { id: string; aspect: number; ground: number; depth: number; bg: string; grad: string; opening: string; parts: Part[] }
 
-const BUILDS: BuildDef[] = [
+export const BUILDS: BuildDef[] = [
   {
     id: 'house', aspect: 1.35, ground: 26, depth: 0.78,
     bg: '/assets/backgrounds/town_garden.jpeg',
@@ -131,7 +131,7 @@ const BUILDS: BuildDef[] = [
  * finish exactly as the practice does.
  */
 interface Step { bi: number; pi: number }
-const SEQUENCE: Step[] = BUILDS.flatMap((b, bi) => b.parts.map((_, pi) => ({ bi, pi })))
+export const SEQUENCE: Step[] = BUILDS.flatMap((b, bi) => b.parts.map((_, pi) => ({ bi, pi })))
 const DEMO_STEP = 0, GUIDED_STEP = 1, FIRST_SCORED = 2
 const SCORED_ROUNDS = SEQUENCE.length - FIRST_SCORED
 // The round the second build starts on, so the walk interlude lands there rather than on a count.
