@@ -157,6 +157,134 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🔊 **2026-09-04 — THE VOICE WAS ON THE CDN THE WHOLE TIME AND NOBODY WAS ASKING FOR IT. THREE SILENT DEFECTS IN ONE CHAIN, ALL DEPLOYED AND VERIFIED FROM THE RUNNING SITE; PLUS THE FIRST HONEST ACCOUNTING OF WHAT THE REMAINING VOICE WORK COSTS.** `tsc` 0 · **1710 passed, 1 skipped by design** · `next build` 0 · **SIX commits, all pushed and live**: `590232b` `9eb78bd` `33bb2cf` `aec3ee0` `31437c2` `cce03b2` · sw v153 → **v158**.
+
+## ① 🔇 THE CHAIN, AND WHY EVERY LINK REPORTED SUCCESS
+The founder: *"3–5 aur 17–18 mein voice hi naii aa rahi"*, then *"12–14, 15–16 Chrome mein theek
+hai, 17–18 nahi"*, then *"Safari mein Stevie aati hai, Chrome mein kuch nahi"*. Three different
+faults wearing one symptom, each measured rather than reasoned about:
+1. **Nothing was deployed.** Prod's Stevie manifest held **433** keys (0 of 70 sampled 17–18
+   lines) and `/audio/XjGY…/manifest.json` answered **404** — the 3–5 voice folder did not exist
+   there. 1,109 clips and the band routing had sat uncommitted since the previous session.
+2. **`sw.js` had no `/audio/` branch**, so the manifest fell to the app-pages case —
+   stale-while-revalidate — and a device that had loaded the app kept the old key list. Measured
+   live: `caches.match(manifest)` in `milo-shell-v154` → **true**.
+3. **The 30-day header.** `/audio/:path*` served `max-age=2592000, stale-while-revalidate=31536000`,
+   right for a clip and wrong for the index. Read out of the founder's own Chrome: plain `fetch()`
+   → **433 keys**, `fetch(…{cache:'no-cache'})` → **670**, with the new service worker already
+   active. That is why 12–14/15–16 played (their keys were in the stale copy) and 17–18 did not.
+
+⚠️ **THE WHOLE CLASS IS "A STALE INDEX IS NOT AN ERROR, IT IS A SHORTER LIST."** Every dropped key
+is a clean miss, every miss falls back to browser speech, and Chrome ships no usable voice on most
+machines — so the app, the CDN, the build and every log reported success while a child heard
+silence. **Anything that GATES a lookup must revalidate even when the things it gates may not.**
+Both halves shipped: the header (`max-age=0, must-revalidate` on `manifest.json`/`fragments.json`,
+placed AFTER the general rule because the last match wins — above it, it is inert, which is the
+version I wrote first and `assetCacheHeaders.test.ts` caught), and `cache: 'no-cache'` on the two
+fetches, because a header cannot reach a browser that already holds the 30-day copy.
+
+## ② ⚠️ CLIP-ONLY WITHOUT A STITCHER IS SILENCE, NOT FALLBACK — AND THE NOTE IS AT THE SWITCH
+`setClipOnly` does not mean "prefer clips": it suppresses the browser fallback, so a line with no
+clip is **silent**, and nothing logs it. 12–14 survives it ONLY because its templated lines are
+stitched from `frag/`. The next person to reason *"12–14 works fine, turn it on for 3–5"* ships a
+child a silent chapter. Written on `setClipOnly` itself and on the GameShell effect that flips it —
+where somebody stands when they widen that band check — not in a doc.
+
+## ③ 💸 THE MISS LINE WAS BEING RECORDED TEN TIMES OVER
+GameShell spoke `It was X. <encouragement>` as ONE utterance, so the clip layer saw one line and
+every reveal needed recording once per encouragement — and there are ten. **3,640 lines / 114,506
+chars as one utterance against 374 / ~4,600 split**, for audio nobody can tell apart. Now two
+utterances, and 9–11's whole wrong-answer bucket is **374/374** for the price of a rounding error.
+⚠️ `speakSteps`, never `speak` + `speakAfterCurrent`: `_speaking` only turns true at the clip's
+`onStart`, so a synchronous second call takes the else branch and `_doSpeak` **cancels** the line
+still loading — the first half vanishes on exactly the machines that have clips.
+⚠️ And `voice-generate.mts` could lose a whole run to one bad packet: an uncaught `fetch` rejection
+(`ETIMEDOUT`, twice) threw out of the render loop and killed the process **before the manifest
+write**, leaving hundreds of clips on disk and unlisted — ① in miniature. One retry, then skip.
+
+## ④ 📊 WHAT IS RENDERED, AND WHAT THE REST COSTS
+Live on prod: manifest **2,646 keys** (was 433). 3–5 Teddy 872 · 17–18 complete on Stevie · 9–11
+**teach 69/69, miss 374/374, scored 1590/3172, reteach 0**. Rendered cheapest-first *within* each
+value bucket — measured, that buys 1,361 lines against 719 for the same spend.
+⚠️ **The key quota fact: the API key carried its own 40,000 cap** while the plan showed 121,022,
+so a run 401'd at a third of the month. Raised; watch for it before concluding a month is spent.
+
+| band | corpus (**FLOOR**) | rendered | remaining, stitched |
+|---|---|---|---|
+| 3–5 | ≥1,411 | 872 | 26k — whole-line **by design** (a three-year-old's line must not be stitched) |
+| 6–8 | ≥2,602 ⚠️ | 0 | ≥82k |
+| 9–11 | ≥7,904 | 1,946 | ≥114k |
+| 12–14 | ≥1,666 | 180 | ≥19k |
+| 15–16 | ≥11,858 | 326 | ≥25k |
+| 17–18 | ≥8,638 | 149 | ≥30k |
+| **total remaining** | | | **~296k stitched vs ≥2,343,335 whole-line** |
+
+Credits ≈ characters (29 clips = 1,897, measured). At 121,022/month (reset **4 Oct**) the stitched
+path finishes without buying anything; whole-line does not finish at all.
+⚠️ 6–8's number is a floor TWICE: only 9 of 12 chapters are reachable, because `placeValue`,
+`additionTo100`, `subtractionTo100` and `money` return an empty `prompt` and speak from their own
+components. **They are missing from the corpus, not empty.**
+
+## ⑤ 🔬 THE MEASUREMENT THE WHOLE STITCHER DECISION RESTS ON — AND ITS HONEST WORDING
+Founder's challenge: *"our questions aren't limited, they're adaptive — did generating audio for a
+limited set break that?"* No: the wiring is one-way (the chapter builds its line, the player hashes
+it, a miss falls back) and the corpus is built by DRIVING the real generators. But the second half
+of his question was right and cost me a claim. Escalating the sweep:
+
+| chapter | whole lines 1.5k→24k | templates | literal runs |
+|---|---|---|---|
+| goingViral 15–16 | 821 → **1,299** | **13** flat | **34** flat |
+| coinTray 9–11 | 920 → **1,653** | 391 → **425 flat at 6k** | 434 |
+| packingShed 9–11 | 1,839 → **2,501** | 706 → **848 flat** | 819 |
+| walkHome 17–18 | 1,562 → **9,123** ↑ | 301 → **513** ↑ | 121 → 137 |
+
+Pushed the worst case further, runs only — **1.5k/6k/24k/48k/96k → 125, 130, 138, 140, 144**
+(+4.0%, +6.2%, +1.4%, +2.9%). Over **64× the draws: lines 17×, templates 1.9×, runs 1.15×**.
+⚠️ **So the right words are "bounded in practice, still creeping" — NOT "saturated".** I first
+wrote *"nearly flat"*, and the founder's correction is the rule worth keeping: **a word like
+"nearly flat" does the work of "saturated" without having measured it.** Quote a run count with the
+draw count it was measured at. The argument survives its own worst case — walkHome's NEW templates
+are new combinations of runs it already has — but it is a working ceiling (~150 runs), not a proof.
+⚠️ **And every whole-line figure in this repo is now a FLOOR and must travel as `>=`** — the
+drivers sample 1,500 draws, which is not a generator's space. Written into all three corpus
+drivers' headers so the next reader cannot pick the number up as a total.
+
+## ▶ OPEN
+1. 🔴 **THE DECISION: build the fragment stitcher, or keep buying whole lines.** ~36k credits are
+   left this month. Whole-line spends them on ~500 9–11 round lines; the stitcher makes the same
+   36k go roughly 8× further and applies to every band. Costs engineering time, not credits.
+   12–14's stitcher (`/audio/<voice>/frag/`, `fragment-templates.json`, `stitchKeys`) is the model.
+2. 🔴 **6–8 has no clips at all**, and 4 of its 12 chapters cannot even be enumerated yet (④).
+3. ⏭️ **3–5 has 539 lines left** (whole-line by design) — one command, ~26k.
+4. ⏭️ The teen bands' reveal halves are unrendered, so 15–16/17–18 now play a clip for the
+   encouragement and browser speech for `It was X.` — mixed within one breath. Rendering them needs
+   the 37 configs that ARE now exported (this session) driven for `revealText`.
+5. 🕒 **Nightly E2E has still never gone green on a SCHEDULED run against a main containing the
+   fix** (carried from the archived 🌙 block). `gh run list --workflow "Nightly E2E"`, look for
+   `schedule` + `success` at or after `22d75fb`.
+6. 🔴 **The hull silence is still unmeasured** — `docs/voice-check-for-tester.md` is ready to
+   forward, `__miloSpeech()` verified live (carried from 🌙).
+7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky (carried from 🌙).
+8. 🔴 **Launch blockers, carried from 🌙 and unchanged**: the watched test-mode Stripe purchase is
+   deferred with a hard deadline BEFORE STAGE 4 ([docs/billing-stage-3.md](docs/billing-stage-3.md)
+   §0) · B12 Supabase Pro before any live key · **`DRAFT = true` — the privacy policy and ToS are
+   still placeholders, and you cannot charge a parent under one** · the free chapter set is still a
+   PROPOSAL · **nine Dependabot PRs open and untriaged (#28–#47)**, do not merge as a batch ·
+   Vercel Web Analytics still off · two prose-drift notes (the `error_events` fkey comment, the
+   anon-INSERT comments saying "not applied" when it was applied 2026-08-24).
+9. ⏭️ **Nobody has HEARD any of this on a real device.** Every check this session and last is a
+   network request plus a patched `play()`; the preview pane produces no audio. The first real
+   listen is what decides whether Teddy's `[clearly]`/`[gently]` tags — written for Stevie — suit a
+   cartoon-child voice, and whether the 3–5 ABCD bead chants are too long for the band.
+   (Carried from the archived 🎙️ 2026-09-03/04 block.)
+10. ⏭️ **`OrderDesk` and `LevelRun` — the two 9–11 chapters that stay storybook — have no clips**,
+   and are not in any corpus: they run the `SkillBeat` engine, not GameShell, so `_voiceCorpus911`
+   cannot see them. Same builder shape as the 6–8 driver would do it. (Carried from 🎙️.)
+11. ⏭️ The ElevenLabs **MCP** still holds the rotated key; its 401 is what produced the stale
+   "key is dead" line on 2026-09-03. Measure the key with `curl`, never through it. (Carried from 🎙️.)
+12. ⏭️ Uncommitted and untouched all session: the `/menu` 6→2 RPC half (`menu/page.tsx`, the three
+   repositories) — deliberately kept out of the voice deploys.
+
 > ✅ **2026-09-03 (evening) — THE REGION MOVE RAN. THE NEW us-east-1 DATABASE IS A VERIFIED COPY OF SYDNEY, AND NOTHING IS POINTED AT IT YET.** Eleven dispatches, ten red, and **every red was a real defect in the workflow I wrote — not one in production, and not one "just re-run it"**. Sydney was READ ONLY throughout: zero writes, all day. Green run **33783519089**: `✓ posture + fingerprint identical` · **RLS suite 74 assertions, all pass** on the new project. Verified again independently (I queried BOTH databases myself rather than reading the workflow's own diff): users 11/11 · identities 12/12 · profiles 11/11 · learners 19/19 · chapters 72/72 · learner_progress 31/31 · ledger 77/77 · cron jobs 4/4 · policies 35/35 · `on_auth_user_created` present on both.
 
 ## ⚠️ THE ONE THAT WOULD HAVE SHIPPED SILENTLY, AND WHAT CAUGHT IT
@@ -395,228 +523,6 @@ ask which repo before touching anything.
    hydration" comment — same shape as ⑤, not touched.
 6. ⏭️ Lint on `menu/page.tsx` reports two `set-state-in-effect` errors — **pre-existing on `main`**,
    identical before and after this session's edits.
-7. 🎙️ **VOICE CLIPS — 17–18 DONE, 3–5 ON TEDDY TWINKLE, 872/1411 RENDERED (2026-09-03, later session).**
-   The key in `.env.local` works again (200; the ElevenLabs MCP still carries the dead one). **17–18:**
-   all 161 missing lines rendered on Stevie — 613/613 in `public/audio/IvUJKFyjVb5hItY9dJAT/manifest.json`,
-   watched end to end (Two Receipts requested a Stevie mp3, 0 TTS; that key was absent from HEAD).
-   **3–5 (founder's call: Teddy Twinkle, `XjGYkUkzth8BPs29fmcV`):** the corpus is built by
-   `VOICE_CORPUS=1 npx vitest run src/__tests__/_voiceCorpus35.test.ts` → `scripts/.voice-corpus-3-5.json`
-   (gitignored; 1,411 lines in four priority buckets — scored 387 · teach 126 · redirect 321 · reteach 577).
-   Voice is routed by BAND: `BAND_VOICE['3-5']` in `voicePref.ts`, read in `voiceClipPlayer.speakLine`
-   off `getActiveLearner().age_group`; an explicit 'device' pick still wins. Watched both ways (Shape House
-   with a 3–5 learner in `sessionStorage.milo_active_learner` → seven Teddy mp3s, 0 TTS; no learner → Stevie).
-   ⚠️ **The run stopped on the monthly quota with scored + teach + redirect COMPLETE and reteach 38/577.**
-   Quota resets **2026-09-06**; the generator is idempotent, so the rest is one command after that date:
-   `npx tsx scripts/voice-generate.mts XjGYkUkzth8BPs29fmcV --corpus scripts/.voice-corpus-3-5.json`
-   (~24k chars left to render). Until then a re-teach line a child hits falls back to browser TTS — the
-   fallback is NOT suppressed for 3–5 (clip-only is still 12–14 only), so nothing goes silent.
-   ⚠️ The templated lines are enumerated in the builder from the same tables the components read — a
-   reworded template silently falls back until the corpus is rebuilt and re-rendered; the builder is the
-   place to add a line. Six tracked Stevie orphans (keys no longer in any corpus) were deleted.
-   ⚠️ `/teen-preview` with no learner plays Stevie for a 3–5 chapter, because the band comes from the
-   learner, not the chapter. 6–8 and the 9–11 storybook pair still have no clips.
+7. 🎙️ Voice clips — superseded by the 🎙️ 2026-09-03/04 block above (17–18 done on Stevie; 3–5 on Teddy, resume after 2026-09-06).
 
-> 🌙 **2026-08-31 — THE NIGHTLY HAD BEEN RED ON ALL 12 OF ITS RUNS SINCE THE DAY IT WAS CREATED, AND A REAL CHILD-FACING DEFECT HAD BEEN SITTING INSIDE IT FOR SEVEN NIGHTS. FOUR FAILURES, ALL FIXED; THE MECHANISM MEASURED ON THE RUNNER RATHER THAN GUESSED AT LOCALLY.** `tsc` 0 · **1684 passed, 1 skipped by design** · `next build` 0 · `start-card` **16/16** · Nightly E2E **218/218 — the first green run in that job's history**. **MERGED — PR [#71](https://github.com/RadlorInc/learn/pull/71) as `22d75fb`.**
-
-## ① 🎥 THE ONE A CHILD WOULD HAVE MET: THE ESCAPE HATCH FROM THE CAMERA, HALF OFF THE SCREEN
-The GameShell start card carries TWO doors on an AR chapter — `Turn on the camera` and
-`Use taps instead`. At 640×320 the second rendered at **y 299–343 of 320**, cut in half, while the
-camera button was whole. **A child who cannot or will not use a camera saw a screen whose only
-complete option was the one they cannot take.** Every AR chapter had it (`anglesSymmetry` −28,
-`areaPerimeter` −23, …), not just the `dataGraphs` the nightly named. ⚠️ Reachable by a 23px scroll
-is not a defence: the affordance to scroll is invisible when the visible content looks finished.
-
-## ② 📐 THE OTHER THREE — MEASURED IN CI, WHICH IS THE ONLY PLACE THEY HAPPEN
-Locally the same screen passed with 10px to spare; the runner reported −13px. The measurement, from
-the CI browser and from mine:
-
-| | local (macOS) | CI (Linux) |
-|---|---|---|
-| start-card blurb | 116px / **5 lines** | 140px / **6 lines** |
-| canvas probe, computed stack | 312.09 | **328** (+5.1%) |
-| canvas probe, generic `sans-serif` | 296.81 | **296.81** |
-| line-height · column · dpr · Chromium | 23.25 · 400 · 1 · 149.0.7827.55 | identical |
-
-**One line = 23.25px = exactly the −13px the nightly reported.**
-⚠️⚠️ **AND MY FIRST EXPLANATION FOR THE +5.1% WAS WRONG, WHICH IS WORTH MORE THAN THE NUMBER.** I
-reported it as `next/font`'s generated fallback resolving to different physical fonts per OS. Chrome's
-own `CSS.getPlatformFontsForNode` says **both platforms paint the declared face** — `IBM Plex Sans`,
-`isCustomFont: true`, `document.fonts.status: loaded`, on macOS and on the runner. So the face is
-**not** failing to load in CI (not a misconfigured runner) and the fallback is **not** what renders
-(not a `size-adjust` failure) — the two candidates, both eliminated. Same face, ~5% wider on Linux,
-which leaves platform text shaping; **two ruled out, the third not proven**, and nothing in the fix
-depends on which it is. ⚠️ `document.fonts.check('15px "IBM Plex Sans"')` returns **false on both**
-while the face is demonstrably painting — that API is the wrong instrument and is what produced my
-earlier "not loaded" reading.
-
-## ③ 🧱 THE FIX IS STRUCTURAL: THE CARD'S HEIGHT NO LONGER FOLLOWS THE TEXT
-Buttons are `flex: 0 0 auto`; the blurb is the only thing that may give (`min-height: 0` + its own
-`overflow-y: auto`). Height comes out of the words before it comes out of a tap target — this shell's
-own rule, made structural instead of spent as spacing. **10px of clearance was one wrapped line from
-failing, which is precisely what the runner was showing.**
-Watched on the known-bad build: `Use taps instead` **−23 → +14**; `Switch it on →` **10 → −13 with
-one line added** (the CI number) **→ +14 with four added**.
-
-## ④ 🧪 THE SPEC, AND THE STRESS
-`start-card.spec.ts` now covers **all 16 chapters that reach this card** (the 8 explore ones it was
-written for + all 8 AR — ⚠️ its list was the eight that failed the day it was written, so it could
-only ever re-catch those eight), asserts **both** AR doors exist, and asserts the property itself:
-four extra lines of blurb must not push any control off. It also recognises a camera start button
-(`Turn on the camera` has no arrow), which is why it had been reporting *"never reached a start
-card"* for every AR chapter.
-🔬 **`E2E_WIDE_TEXT=1`** widens every glyph's advance by 8% — deterministic anywhere, past the 5.1%
-the two platforms differ by. **Dispatch-only (`wide_text` input), never on the timer**, where it
-would become a red people re-run instead of read. ⚠️ It had to go in `start-card.spec.ts` too: with
-the flag on and the pre-fix card restored, `all-chapters` at shortPhone reported **3 PASSED**,
-because it enters by clicking the biggest control and never lands on the card. **On the known-bad
-card it reproduces the CI failure verbatim on a Mac** — `top 288, −13px` — so it is a local proxy for
-an environment I otherwise cannot reach.
-
-## ⑤ 🚨 THE BIGGEST FINDING IS NOT A CHAPTER: A CHECK THAT HAS NEVER BEEN GREEN WAS NEVER A GATE
-12 runs, 12 red, from the day the workflow was created (2026-08-19). Nobody read one, so ① sat in the
-open inside it for seven nights. The founder's rule is now its own row in [CLAUDE.md](CLAUDE.md):
-**a new CI job must go green on the commit that adds it, or it does not land.**
-✅ And the job now tells someone — one issue on failure, updated in place, **closed by the first
-green**. All three paths watched on a scratch branch rather than assumed: filed (#70, naming the
-failing test and commit) → commented in place, no duplicate → **closed** on green. ⚠️ #70 was a
-deliberate test of the alarm, not a regression; it is closed with a comment saying so.
-
-## ▶ OPEN
-1. 🕒 **GREEN IS NOT THE RESTING STATE YET — EVERY GREEN RUN SO FAR WAS HAND-DISPATCHED.**
-   ⚠️ The SCHEDULE itself is proven to fire: an undispatched `schedule` run landed on `main` at
-   09:48 UTC on 2026-08-31 — but on `9a4bcc3`, i.e. **before** #71 merged, so it reported the same
-   four failures. It also predates the notifier, so it filed nothing. What has still never happened
-   is **a scheduled run that is green on a main that contains the fix**, and until one does, the
-   green above is a hand-dispatched result about a branch.
-   📋 Check with `gh run list --workflow "Nightly E2E"` and look for `schedule` + `success` on a sha
-   at or after `22d75fb`; the run should also close nothing, because nothing is open.
-2. 🔴 **THE HULL SILENCE IS STILL UNMEASURED** — see the 🗒️ block. `docs/voice-check-for-tester.md`
-   is ready to forward and `__miloSpeech()` is verified live on production.
-3. ⏭️ **The `counting` case of `ready-bar.spec.ts`** is still flaky, untouched by this work.
-4. 🔴 **CARRIED FORWARD FROM THE ARCHIVED 🔒 STAGE 3 BLOCK (moved 2026-08-31), because they are
-   launch blockers and would otherwise leave this file with the block:**
-   - **Step 3 — the watched test-mode purchase — is DEFERRED with a hard deadline: BEFORE STAGE 4.**
-     Every link is tested; **nothing has watched a real Stripe event become a seat row.**
-     [docs/billing-stage-3.md](docs/billing-stage-3.md) §0.
-   - **B12: Supabase Pro** before any live key and before `enforced` is ever true. Founder's.
-   - **`DRAFT = true` — the privacy policy and ToS are still placeholders.** You cannot charge a
-     parent under a placeholder ToS.
-   - **The free chapter set is still a PROPOSAL** (`billing_schema.sql` seeds Option A and says so).
-   - **Nine Dependabot PRs open and untriaged** (#28–#47); do not merge as a batch.
-   - Vercel Web Analytics still off; two prose-drift notes (the `error_events` fkey comment, and the
-     anon-INSERT comments that say "not applied" when it was applied 2026-08-24).
-5. ⏭️ **What the wide-text stress has NOT been run against**: the full 70 × 3 sweep. It was run on
-   the start card (16/16) and on three chapters at shortPhone. One dispatch with `wide_text: true`
-   would cover the rest; worth doing once after any layout change, not on the timer.
-
-> 🗒️ **2026-08-30 — A SECOND TESTER PASS ON TWO 3–5 CHAPTERS, AND THE ONE CROSS-CUTTING ASK: EVERY CHAPTER NOW CARRIES A TYPED LINE OF DIRECTIONS. ⚠️ THE FIRST VERSION OF THAT FEATURE WAS CLIPPED ON ONE OF THE TWO CHAPTERS THAT ASKED FOR IT — A FLOATING CARD LAID OVER EIGHT CHAPTERS' OWN BANNERS — AND THE FIX WAS TO STOP STACKING, NOT TO RE-RANK.** `tsc` 0 · **1684 passed, 1 skipped by design** (see ⑤) · `next build` 0 · **26 mutations planted, 26 caught** · `e2e/directions` **8/8** · sw **v151**. **PR [#69](https://github.com/RadlorInc/learn/pull/69) OPEN — not merged; #68 merges first.**
-
-**The feedback.** Shape House: *"instead of Milo saying 'yes' when the correct answer is chosen, he should say something along the lines of 'great job'"*, and *"when I got the hull part, Milo's voice seems to not speak."* Measuring: the title should be **Measuring**; *"Take one back"* should be **Add block** / **Remove block**; and — *"this goes for all chapters"* — **a little box in a corner with typed directions.**
-
-## ① 🏠 SHAPE HOUSE — THE PRAISE, AND THE BEAT THAT WAS ACTUALLY SILENT
-- The guided round said `Yes! The triangle fits!`; it says **`Great job!`** now. The scored rounds already rotate `core/praise.ts` (`Great job / Nice work / Well done / You got it / Lovely`) — verified by driving the chapter, not by reading it.
-- ⚠️ **`opening` WAS DECLARED PER BUILD AND RENDERED NOWHERE.** The move from the house to the boat was a silent 850 ms pause with no word said or written — and **the hull is the first thing asked for once it is over**, which is exactly where the tester lost the voice. It is spoken AND written now, and the interlude holds **2100 ms**: the next round's question is spoken the moment it resolves and `speak()` cancels whatever is still talking, so a shorter hold cuts the line off mid-word.
-- Also fixed in passing: the demo said *"the walls is missing"*. The square's label is `wall`.
-
-## ② ⚠️⚠️ THE HULL SILENCE IS **NOT** FIXED, AND THE INSTRUMENT TO SETTLE IT IS THE DELIVERABLE
-**What was measured:** driving the chapter with `speechSynthesis.speak` wrapped, every round — including *"The hull needs a rectangle"* — reached `speak()`. **That is the wrong question**, and it is the same wrong question that was asked the last time this was reported: it says the call happened, not that audio came out.
-**The founder's hypothesis, which is the right one to test:** the known Chromium behaviour where synthesis stops after roughly fifteen seconds of cumulative speech, or on a long utterance, **with no error raised**. The hull is late in the sequence, so by then the chapter has spoken a lot.
-⚠️⚠️ **AND IT CANNOT BE TESTED IN EITHER BROWSER THIS SESSION CAN DRIVE.** In the in-app pane AND in real Chrome under automation, **utterance ZERO never fires `start`** — on the app and on a blank page alike — while `speechSynthesis.speaking` stays `true` for ever. No audio is produced at all, so a run there is a world in which the bug cannot occur; a green or red from it would mean nothing.
-✅ **So what shipped is the measurement, not a fix:** `speechDiary()` in `useMiloSpeaker.ts`, exposed as **`window.__miloSpeech()`**, recording per utterance `{text, at, started, ended, error}` (last 60, Milo's own lines only, **deliberately not dev-gated** — the fault only ever appears on a real device on production).
-📋 **HOW TO SETTLE IT, on a device with a working voice:** play Shape House to the boat, and the moment the voice goes quiet run `__miloSpeech()` in the console.
-- `hung > 0` (started, never ended) → **the Chromium stall is confirmed**; the mitigation is an unconditional `pause()/resume()` ping while speaking (today's keepalive only resumes `if (paused)`, which a stall does not set) plus keeping lines short.
-- `silent > 0` with `engine.speaking: true` → the synth never started at all, which is a different fault and points at the device/voice, not at length.
-- everything `started`+`ended` → the words were produced and the problem is elsewhere (volume, the clip path, the child's attention). **Do not claim any of the three without the numbers.**
-
-## ③ 📏 MEASURING — TITLE AND CONTROLS
-`Measurement` → **`Measuring`** (menu name and parent-dashboard label). **`Add block`** / **`↩ Remove block`**, visible text and `aria-label` both, gated as a pair so they cannot drift.
-
-## ④ 🗒️ THE TYPED DIRECTIONS, IN ALL 72 CHAPTERS — AND WHY THE FIRST VERSION WAS WRONG
-**The words come from the catalogue's own `hint`**, which is already `Record<ChapterType, …>`-complete: every chapter has a line **by construction**, and a second per-chapter map is exactly what would let one ship with none. Two hints were rewritten from topic to action (`shapes` → *"Tap the shape that fits the empty hole!"*, `measurement` → *"Lay blocks, then tap Done!"*).
-- **12–18 (`GameShell`)**: a **flex child of the header row**, beside the chapter title. Dropped there as a `fixed` card first, it covered the title at 640×320 — measured. In the row an overlap is not expressible.
-- **The 3–11 storybook chapters**: a small `pointerEvents: none` strip on the Menu row, wired once in `ChapterPortal` (+ counting's own wrapper), so 24 chapters get it from one place.
-- ⚠️⚠️ **AND THE PART THAT WAS WRONG AND IS THE LESSON: A FLOATING STRIP ON THAT ROW IS EITHER OVER THE QUESTION OR UNDER IT.** Eight story chapters draw their own banner there — MeasureIt lifts its question pill to `pillTop(short) = 14` to buy height for the blocks, ShapeStudio and SeesawPark sit at `top: 12`, SliceShop and TickTock at `CHROME_PAD`, and BlockYard/BuildingBlocks use `yard.tsx`'s `BANNER_TOP`, which is **25px on a 720-tall frame**. Ranking the strip underneath them (z 42) kept the question readable and **clipped the directions to "Lay blocks to t…" on one of the two chapters the tester asked for**. Founder's call, and it is the right one: **do not stack — the chapter's own banner carries the line.**
-  - `ownsChromeRow()` (in `features/chapters/directions.tsx`) suppresses the strip for those eight; `SkillBeat`'s prompt pill carries the line inline for the ones that have a pill, `yard.tsx`'s shared banner for BlockYard/BuildingBlocks, and **Milo's bubble** for SliceShop and TickTock — the two that set `prompt: () => ''`, whose scored rounds would otherwise show no directions at all.
-  - ⚠️ **HopAlong is deliberately NOT on the list** even though its round row sits at `top: 40`: it renders no pill there (its ask is a pill at the bottom), so the strip has the row to itself. **Measured at 640×320, not assumed.**
-- ⚠️ **The prose was the lever, exactly as chapter-craft says.** With the direction inline, MeasureIt's pill ran 86 → 553 and slid 10px under the ← Menu button; shortening the hint to *"Lay blocks, then tap Done!"* put it at 123 → 553, clear. A hint budget of 50 characters is gated, because both surfaces render one line.
-
-## 🔬 VERIFIED BY MEASURING, AT 640×320, ON ALL EIGHT CHAPTERS THAT CARRY THE LINE THEMSELVES
-`e2e/directions.spec.ts` (needs a dev server; not part of `npm test`). Three mechanisms per chapter,
-none of which subsumes another — plus a fourth added when giving four chapters their own line made
-their banner taller: the line must not move onto a control either.
-
-⚠️⚠️ **THE FIRST VERSION OF THAT SPEC COULD NOT SEE THE DEFECT IT WAS WRITTEN FOR, AND THE FOUNDER
-SPECIFIED IT.** Text equality + `scrollWidth`/`clientWidth` **passed on last session's clipped
-build**: the whole string was in the DOM and the chapter's question pill was painted OVER it. **The
-defect was occlusion, not overflow.** Re-written as a paint-order check it goes red naming
-`BUTTON(z45) 192,12,447,57` — MeasureIt's own pill. ⚠️ And its own first draft skipped that button by
-filtering on `position !== 'static'`; the covering pill IS static and takes its stacking from an
-ancestor. **Two wrong instruments in a row for one defect.** The general rule is now the founder's,
-at the top of [CLAUDE.md](CLAUDE.md): *an assertion that passes on the known-bad state is not a check.*
-
-| chapter | carrier | box | rendered === hint | covered | on a control |
-|---|---|---|---|---|---|
-| Measuring | pill, inline | 352,31 → 496,45 | ✅ | none | none |
-| Shape Studio | pill, inline | 334,63 → 495,77 | ✅ | none | none |
-| Seesaw Park | pill, inline | 351,63 → 487,77 | ✅ | none | none |
-| Slice Shop | Milo's bubble, own line | 85,73 → 574,87 | ✅ | none | none |
-| TickTock | Milo's bubble, own line | 192,73 → 467,87 | ✅ | none | none |
-| BlockYard + | yard banner, own line | 117,107 → 369,120 | ✅ | none | none |
-| BlockYard − | yard banner, own line | 117,91 → 369,104 | ✅ | none | none |
-| Building Blocks | yard banner, own line | 342,91 → 595,104 | ✅ | none | none |
-
-⚠️ **AND FIVE OF THE EIGHT NEEDED A DIFFERENT SHAPE, WHICH ONLY LOOKING AT THE SCREEN SHOWED.**
-Inline after a SHORT question in a pill is right (the three the feedback named). Forced into a wide
-banner or a small bubble it breaks: SliceShop wrapped to `Halves, thirds and / quarters!` against the
-right edge of a 610px bubble, BlockYard orphaned `numbers!` on a line of its own, and TickTock's
-bubble is 13px on a short frame — 0.58em of that is **under 8px**. Those four (five chapters) take
-`block`: its own centred line under the question, with a **floor** on the size so a small container
-cannot shrink it away. Screenshots of all eight in `docs/verification/2026-08-31-directions/`.
-
-## 🧪 24 MUTATIONS, 24 CAUGHT — AND ONE SURVIVED FIRST AND IS WORTH KEEPING
-`src/__tests__/chapterDirections.test.ts`. Every check here is about a STRING A CHILD READS, which nothing else in the repo can see.
-⚠️ **The one that survived: deleting `chapter="fractions"` from SliceShop's PLAY bubble left the gate green**, because the same chapter's LESSON banner carries the same string — the count-the-right-thing trap from CLAUDE.md, again. The check is anchored on the play call AND counts both occurrences now, and the same was done for TickTock.
-⚠️ **The exception list is a claim about eight chapters' layout held in a ninth file**, so each entry is pinned to the expression it claims (`pillTop`, `CHROME_PAD`, `BANNER_TOP`): change one of those layouts and the gate fails rather than rotting.
-
-## ⑤ 🟡 THE ONE SKIPPED TEST — NAMED, BECAUSE "1684/1685" READS AS GREEN AND IS NOT
-`npm test` reports **1684 passed, 1 skipped**. The skipped one is
-`src/__tests__/skillGraphAudit.test.ts › skill graph · edge sensitivity › ranks every edge by what a
-wrong one would cost`.
-- **Skipped, not failing and not flaky.** `describe.runIf(process.env.GRAPH_SENSITIVITY)` — opt-in,
-  off by default because it re-runs every diagnosis once per edge. Nothing in it is
-  non-deterministic; the flag is about runtime, not stability.
-- **It passes when you run it:** `GRAPH_SENSITIVITY=1 npx vitest run src/__tests__/skillGraphAudit.test.ts`
-  → **8 passed in 25.9s**, run 2026-08-31. A skip is not evidence, so it was run rather than assumed.
-- **Pre-existing, not this branch's.** Introduced `d5f02ad` (2026-08-22, the skill-graph audit day)
-  and byte-identical to `main` — `git diff main` on that file is empty.
-📄 It is here so the next person does not rediscover it as a mystery, and so the headline number
-stops being quoted as if the suite were wholly green.
-
-## ▶ OPEN
-1. 🔴 **THE HULL SILENCE IS UNRESOLVED AND UNMEASURED.** See ②. It needs one run on a device with a working voice and a paste of `__miloSpeech()`. **Nothing in this session may be read as having fixed it.**
-   📄 **The deliverable is the note, not the diary**: [docs/voice-check-for-tester.md](docs/voice-check-for-tester.md)
-   is written for the tester, assumes no technical knowledge, and is the thing to forward — ⚠️ **only
-   once this is deployed**, or its last step answers `__miloSpeech is not defined` and they have spent
-   their time for nothing.
-2. 🎙️ Recorded clips for 3–11 remain the founder's to start (a voice choice and the ElevenLabs spend) — and if ② turns out to be the Chromium stall, clips route around it entirely for the lines that have them.
-3. ⏸️ **PR [#69](https://github.com/RadlorInc/learn/pull/69) is open and NOT merged.** Merge order agreed with the founder: **#68 first** — which turned out to be already done (merged 2026-08-28, see 5) — then rebase #69 onto `main`, which was a no-op for the same reason. Both handoff blocks are present and neither replaced the other.
-4. ⚠️ **The intro/demo screens of BlockYard, BuildingBlocks and HopAlong** show the line only where their banner or the pill renders; no chapter is left without it in a scored round, which is where it was asked for.
-5. ⚠️⚠️ **AND A CORRECTION I OWE THIS FILE: I REPORTED PR #68 AS OPEN AND FLAGGED A `handoff.md`
-   MERGE COLLISION WITH IT. BOTH WERE FALSE.** #68 merged on **2026-08-28 as `e2be6d2`**, three days
-   before this session and BEFORE the commit this branch is based on — so it was already in `main`,
-   there was never a collision, and the rebase was a no-op (`git merge-base --is-ancestor` says the
-   branch already contains all of `main`). **Where the claim came from: this file's own ▶ OPEN item,
-   written by the 2026-08-28 session hours before its PR merged, and never updated.** I read stale
-   prose and repeated it as current fact without asking GitHub — the reader's half of CLAUDE.md's
-   own rule, *do not amplify a finding past the evidence it arrived with*.
-   ⚠️⚠️ **AND THE RELAY HAD TWO NODES, NOT ONE — the founder's own half, added by him.** He
-   reconfirmed *"merge #68 first"* **twice, in two separate replies**, without checking GitHub
-   either, and thanked me for flagging the collision. **A claim repeated back as an INSTRUCTION is
-   what makes it look confirmed**: it stopped reading as my guess and started reading as the agreed
-   plan, which is why neither of us looked for three exchanges. The producer's rule is *do not
-   report what you have not watched*; the consumer's is *do not repeat it back as a decision*.
-   Neither half catches this alone — the second is what turns an unverified line into a schedule. ✅ Every "#68 is open" line in this file is corrected
-   below. **A PR's state is one `gh pr view` away; this file is not a source of truth for it.**
-6. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky (2026-08-28), unchanged by this work.
-
-_Older sessions (2026-06-15 → **2026-08-28**, including 📏🎓 **the student-review days** (the run resumes, Ready everywhere, praise to 6–8, the number-tag overhang) and 🐇 **the line behind mother** (even spacing for one species, and the tautology guarding the approved picture), all moved 2026-09-03 — ⚠️ their still-live items (recorded clips for 3–11, the `counting` flake in `ready-bar.spec.ts`) are already carried in the 🌙 and 🗒️ blocks' ▶ OPEN; including 🔒 **Stage 3** (the chapter gate and the screens — a lock that names what is behind it, and a paywall built inert but tested refusing), moved 2026-08-31 — ⚠️ its still-live items (the deferred watched purchase, B12, `DRAFT = true`, the free-set pick, the nine Dependabot PRs, Vercel Analytics, the prose drift) were lifted into the 🌙 block's ▶ OPEN rather than archived with it; including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-09-04**, including 🎙️ **the first voice-rendering session** (17–18 got its 161 clips, 3–5 got Teddy Twinkle and 872 of 1,411 lines), moved 2026-09-04 the same day it was superseded — ⚠️ everything it left uncommitted was committed and deployed in the 🔊 block above, and its still-live items (nobody has heard it on a device, OrderDesk/LevelRun have no clips, the MCP key) are carried there; including 🌙 **the nightly-E2E day** (12 runs red since the day it was created, the AR escape hatch half off a 640×320 screen, and the CI-only text-metric difference), moved 2026-09-04 — ⚠️ its still-live items (the scheduled-run green, the hull silence, the `counting` flake, and every launch blocker in its ▶ OPEN) are carried in the 🔊 2026-09-04 block above; including 🗒️ **the second tester pass** (Great job!, the hull silence diary, the typed directions line in all 72 chapters), moved 2026-09-04 — ⚠️ its still-live items (the hull silence, the `counting` flake) are carried in the 🌙 block's ▶ OPEN, and its "PR #69 is open" line was already stale when archived (merged 2026-08-31 as `9a4bcc3`); including 📏🎓 **the student-review days** (the run resumes, Ready everywhere, praise to 6–8, the number-tag overhang) and 🐇 **the line behind mother** (even spacing for one species, and the tautology guarding the approved picture), all moved 2026-09-03 — ⚠️ their still-live items (recorded clips for 3–11, the `counting` flake in `ready-bar.spec.ts`) are already carried in the 🌙 block's ▶ OPEN and the 🎙️ 2026-09-03/04 block; including 🔒 **Stage 3** (the chapter gate and the screens — a lock that names what is behind it, and a paywall built inert but tested refusing), moved 2026-08-31 — ⚠️ its still-live items (the deferred watched purchase, B12, `DRAFT = true`, the free-set pick, the nine Dependabot PRs, Vercel Analytics, the prose drift) were lifted into the 🌙 block's ▶ OPEN rather than archived with it; including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
