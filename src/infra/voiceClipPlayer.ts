@@ -67,7 +67,15 @@ function loadManifest(voice: string): Promise<void> {
   if (_keys && _loadedFor === voice) return Promise.resolve()
   if (!_loading || _loadedFor !== voice) {
     _loadedFor = voice
-    _loading = fetch(`/audio/${voice}/manifest.json`)
+    // ⚠️ `no-cache` = REVALIDATE, not "do not cache" — the request still goes out with the
+    // ETag and an unchanged manifest comes back 304. It is here because the header fix alone
+    // cannot reach a browser that ALREADY holds the old copy: `/audio/` was served with
+    // max-age=2592000, so a device that loaded the app before a render keeps the previous key
+    // list for up to a month and simply never asks for the new clips. That is exactly how
+    // 17–18 stayed mute in Chrome while 12–14 and 15–16 played (their keys were in the stale
+    // list) — and it is silent by construction, because a short list is a clean miss, and a
+    // miss falls back to browser speech, which on most Chrome installs is nothing at all.
+    _loading = fetch(`/audio/${voice}/manifest.json`, { cache: 'no-cache' })
       .then((r) => (r.ok ? r.json() : []))
       .then((keys: string[]) => { _keys = new Set(keys) })
       .catch(() => { _keys = new Set() })      // no manifest → every line falls back
@@ -97,7 +105,7 @@ function loadFragments(voice: string): Promise<void> {
   if (_frags) return Promise.resolve()
   if (!_fragLoading) {
     _fragLoading = Promise.all([
-      fetch(`/audio/${voice}/frag/fragments.json`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`/audio/${voice}/frag/fragments.json`, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : [])),
       fetch('/audio/fragment-templates.json').then((r) => (r.ok ? r.json() : [])),
     ])
       .then(([keys, tpls]: [string[], { segments: string[] }[]]) => {
