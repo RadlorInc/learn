@@ -25,12 +25,30 @@ export interface SessionPayload {
   difficulty?:  1 | 2 | 3
 }
 
+/**
+ * ⚠️ EXPAND STEP: THIS TOLERATES BOTH SCHEMA VERSIONS, DELIBERATELY.
+ *
+ * `main` auto-deploys to Vercel, so a commit that starts calling a NEW RPC signature goes live the
+ * moment it is pushed — before anybody applies the migration that creates it. That happened on
+ * 2026-09-05: the 12-argument `sync_session` did not exist yet, PostgREST answered
+ * **PGRST202 / HTTP 404** ("Could not find the function ... in the schema cache"), and every
+ * completion fell to `classifySyncError` → 'retry' and sat in the offline queue. Nothing was lost —
+ * the queue is why — but the server saw no sessions until the migration landed.
+ *
+ * The rule in CLAUDE.md is "a migration that changes what running code READS ships with or after
+ * its readers". This is its mirror: a CLIENT that calls a new signature must tolerate the old one,
+ * or the deploy order becomes a constraint somebody has to remember. Tolerating both removes the
+ * ordering hazard entirely — the migration can be applied whenever.
+ *
+ * ⚠️ DO NOT DELETE THIS FALLBACK once the migration is applied without also confirming no browser
+ * is still running an older bundle; it costs one extra round trip only in the failure case.
+ */
 export async function syncSession(payload: SessionPayload): Promise<SyncOutcome> {
   const supabase = db()
 
   // Single RPC call — replaces 3 separate upserts
   // Reduces DB round trips from 3 to 1
-  const { error } = await supabase.rpc('sync_session', {
+  const args = {
     p_learner_id:   payload.learnerId,
     p_chapter:      payload.chapter,
     p_phase:        payload.phase,
@@ -46,7 +64,18 @@ export async function syncSession(payload: SessionPayload): Promise<SyncOutcome>
     // it took the column default now() at INSERT while completed_at is stamped on the client — both
     // marked the END, and all 49 production rows had a NEGATIVE duration. null here is honest.
     p_started_at:   payload.startedAt ?? null,
-  })
+  }
+  let { error } = await supabase.rpc('sync_session', args)
+
+  // PGRST202 = no function with these parameter names. The only new parameter is p_started_at, so
+  // retry once without it: the pre-2026-09-05 database still records the session, just with an
+  // unknown start. A lost session is a child's stars gone; an unknown start is one null column.
+  if (error && (error as { code?: string }).code === 'PGRST202') {
+    const { p_started_at: _dropped, ...legacy } = args
+    const retry = await supabase.rpc('sync_session', legacy)
+    if (!retry.error) return 'ok'
+    error = retry.error
+  }
 
   if (error) {
     const outcome = classifySyncError(error)

@@ -26,8 +26,9 @@ plausible-looking number on a dashboard.
 ## 1. Timezone — the good news
 
 **Every timestamp in the database is `timestamptz`.** There is not one naive `timestamp` column
-anywhere. So timezone is purely a *presentation* choice; Sydney and India never enter it, and a
-dashboard may declare US Eastern freely.
+anywhere. So timezone is purely a *presentation* choice; the database's own region (us-east-1 since
+the 2026-09-03 move) and the reader's location never enter it, and a dashboard declares US Eastern
+freely.
 
 The real timezone trap is a different one:
 
