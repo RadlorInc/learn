@@ -157,8 +157,7 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
-> 🔊 **2026-09-04 — THE VOICE WAS ON THE CDN THE WHOLE TIME AND NOBODY WAS ASKING FOR IT. THREE SILENT DEFECTS IN ONE CHAIN, ALL DEPLOYED AND VERIFIED FROM THE RUNNING SITE; PLUS THE FIRST HONEST ACCOUNTING OF WHAT THE REMAINING VOICE WORK COSTS.** `tsc` 0 · **1710 passed, 1 skipped by design** · `next build` 0 · **SIX commits, all pushed and live**: `590232b` `9eb78bd` `33bb2cf` `aec3ee0` `31437c2` `cce03b2` · sw v153 → **v158**.
-
+> 🔊 **2026-09-04 — THE VOICE WAS ON THE CDN THE WHOLE TIME AND NOBODY WAS ASKING FOR IT. THREE SILENT DEFECTS IN ONE CHAIN, ALL DEPLOYED AND VERIFIED FROM THE RUNNING SITE — THEN THE FIRST HONEST ACCOUNTING OF WHAT THE REST COSTS, AND THE STITCHER THAT WAS GOING TO PAY FOR IT FAILED ITS LISTENING TEST.** `tsc` 0 · **1710 passed, 1 skipped by design** · `next build` 0 · **NINE commits, all pushed and live**: `590232b` `9eb78bd` `33bb2cf` `aec3ee0` `31437c2` `cce03b2` `9385aa1` `dbe7508` `fada6d8` · sw v153 → **v160**. **EVERY STATIC LINE IN THE APP NOW HAS A CLIP, IN BOTH VOICES.**
 ## ① 🔇 THE CHAIN, AND WHY EVERY LINK REPORTED SUCCESS
 The founder: *"3–5 aur 17–18 mein voice hi naii aa rahi"*, then *"12–14, 15–16 Chrome mein theek
 hai, 17–18 nahi"*, then *"Safari mein Stevie aati hai, Chrome mein kuch nahi"*. Three different
@@ -203,27 +202,41 @@ still loading — the first half vanishes on exactly the machines that have clip
 write**, leaving hundreds of clips on disk and unlisted — ① in miniature. One retry, then skip.
 
 ## ④ 📊 WHAT IS RENDERED, AND WHAT THE REST COSTS
-Live on prod: manifest **2,646 keys** (was 433). 3–5 Teddy 872 · 17–18 complete on Stevie · 9–11
-**teach 69/69, miss 374/374, scored 1590/3172, reteach 0**. Rendered cheapest-first *within* each
-value bucket — measured, that buys 1,361 lines against 719 for the same spend.
-⚠️ **The key quota fact: the API key carried its own 40,000 cap** while the plan showed 121,022,
-so a run 401'd at a third of the month. Raised; watch for it before concluding a month is spent.
+Live on prod, verified from the running deployment: Stevie **2,912 keys** (was 433 this morning),
+Teddy **927**. 9–11 `teach` 69/69 · `miss` 374/374 · `scored` 1590/3172 · `reteach` 0. **All 265
+number-free lines across every band are rendered, plus 6–8's 56-line walkthrough.**
+Rendered cheapest-first *within* each value bucket — measured, that buys 1,361 lines against 719.
+⚠️ **The API key carried its own 40,000 cap** while the plan showed 121,022, so a run 401'd at a
+third of the month. Raised; check it before concluding a month is spent.
+⚠️ **Characters are NOT credits at a fixed ratio.** ~1:1 on long lines, **~0.6:1** on short ones
+(15,705 predicted, 7,775 billed). Size a run, then let the API stop it; do not plan to the count.
 
-| band | corpus (**FLOOR**) | rendered | remaining, stitched |
-|---|---|---|---|
-| 3–5 | ≥1,411 | 872 | 26k — whole-line **by design** (a three-year-old's line must not be stitched) |
-| 6–8 | ≥2,602 ⚠️ | 0 | ≥82k |
-| 9–11 | ≥7,904 | 1,946 | ≥114k |
-| 12–14 | ≥1,666 | 180 | ≥19k |
-| 15–16 | ≥11,858 | 326 | ≥25k |
-| 17–18 | ≥8,638 | 149 | ≥30k |
-| **total remaining** | | | **~296k stitched vs ≥2,343,335 whole-line** |
+**The whole-line remainder, re-measured at 12,000 draws instead of 1,500 — and it MOVED:**
 
-Credits ≈ characters (29 clips = 1,897, measured). At 121,022/month (reset **4 Oct**) the stitched
-path finishes without buying anything; whole-line does not finish at all.
-⚠️ 6–8's number is a floor TWICE: only 9 of 12 chapters are reachable, because `placeValue`,
-`additionTo100`, `subtractionTo100` and `money` return an empty `prompt` and speak from their own
-components. **They are missing from the corpus, not empty.**
+| band | corpus @1.5k | @12k | growth | rendered | remaining credits |
+|---|---|---|---|---|---|
+| 3–5 | 1,411 | 1,411 | **1.00×** | 927 | **26,088** — a real total |
+| 12–14 | 1,666 | 1,687 | **1.01×** | — | **112,683** — a real total |
+| 6–8 | 2,602 | 7,294 | 2.80× | 56 | ≥424,073 |
+| 9–11 | 7,904 | 15,969 | 2.02× | 1,946 | ≥1,152,964 |
+| 15–16 | 11,858 | 28,467 | 2.40× | — | ≥2,560,133 |
+| 17–18 | 8,638 | 28,620 | 3.31× | — | ≥1,785,722 |
+| **total** | | | | | **≥6,061,663 — 50 months** |
+
+**≥2,343,335 at 1,500 draws became ≥6,061,663 at 12,000.** Only 3–5 and 12–14 converge; their
+vocabularies are small. For the other four, whole-line voice is not a project with a price, it is a
+**subscription** — and every new chapter adds to it.
+⚠️ **THE EXPENSIVE PART IS NOT THE EXPLANATION — THE FOUNDER'S READ, AND IT HELD.** The walkthrough
+is static and was already almost entirely recorded (15–16 and 17–18 sat at **zero** remaining,
+because those lines are literals the grep corpus took months ago). What costs is the **re-teach**,
+which `explainBeats(r)` rebuilds from each round's numbers: 9–11 has 554 number-free re-teach lines
+against **6,265** numbered; 15–16 has 6 against **14,134**.
+⚠️⚠️ **AND A CORRECTION THAT TRAVELLED TWO MESSAGES BEFORE IT WAS CHECKED.** I put the static
+remainder at **113,063** credits by testing for a DIGIT. In 3–5 and 6–8 the numbers are spelled as
+WORDS — *"four and seven. Which sign is right?"* — so **98%** of that band's "no digit" lines were
+per-round lines the test could not see. Counting number-words as numbers took the static remainder
+to **16,009** and 6–8's share from 259,510 to **1,391**. Same class as the "nearly flat" wording
+below: **a proxy quietly standing in for the property it approximates.**
 
 ## ⑤ 🔬 THE MEASUREMENT THE WHOLE STITCHER DECISION RESTS ON — AND ITS HONEST WORDING
 Founder's challenge: *"our questions aren't limited, they're adaptive — did generating audio for a
@@ -250,38 +263,43 @@ drivers sample 1,500 draws, which is not a generator's space. Written into all t
 drivers' headers so the next reader cannot pick the number up as a total.
 
 ## ▶ OPEN
-1. 🔴 **THE DECISION: build the fragment stitcher, or keep buying whole lines.** ~36k credits are
-   left this month. Whole-line spends them on ~500 9–11 round lines; the stitcher makes the same
-   36k go roughly 8× further and applies to every band. Costs engineering time, not credits.
-   12–14's stitcher (`/audio/<voice>/frag/`, `fragment-templates.json`, `stitchKeys`) is the model.
-2. 🔴 **6–8 has no clips at all**, and 4 of its 12 chapters cannot even be enumerated yet (④).
-3. ⏭️ **3–5 has 539 lines left** (whole-line by design) — one command, ~26k.
-4. ⏭️ The teen bands' reveal halves are unrendered, so 15–16/17–18 now play a clip for the
-   encouragement and browser speech for `It was X.` — mixed within one breath. Rendering them needs
-   the 37 configs that ARE now exported (this session) driven for `revealText`.
-5. 🕒 **Nightly E2E has still never gone green on a SCHEDULED run against a main containing the
-   fix** (carried from the archived 🌙 block). `gh run list --workflow "Nightly E2E"`, look for
-   `schedule` + `success` at or after `22d75fb`.
-6. 🔴 **The hull silence is still unmeasured** — `docs/voice-check-for-tester.md` is ready to
-   forward, `__miloSpeech()` verified live (carried from 🌙).
-7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky (carried from 🌙).
-8. 🔴 **Launch blockers, carried from 🌙 and unchanged**: the watched test-mode Stripe purchase is
-   deferred with a hard deadline BEFORE STAGE 4 ([docs/billing-stage-3.md](docs/billing-stage-3.md)
-   §0) · B12 Supabase Pro before any live key · **`DRAFT = true` — the privacy policy and ToS are
-   still placeholders, and you cannot charge a parent under one** · the free chapter set is still a
-   PROPOSAL · **nine Dependabot PRs open and untriaged (#28–#47)**, do not merge as a batch ·
-   Vercel Web Analytics still off · two prose-drift notes (the `error_events` fkey comment, the
-   anon-INSERT comments saying "not applied" when it was applied 2026-08-24).
-9. ⏭️ **Nobody has HEARD any of this on a real device.** Every check this session and last is a
-   network request plus a patched `play()`; the preview pane produces no audio. The first real
-   listen is what decides whether Teddy's `[clearly]`/`[gently]` tags — written for Stevie — suit a
-   cartoon-child voice, and whether the 3–5 ABCD bead chants are too long for the band.
-   (Carried from the archived 🎙️ 2026-09-03/04 block.)
-10. ⏭️ **`OrderDesk` and `LevelRun` — the two 9–11 chapters that stay storybook — have no clips**,
-   and are not in any corpus: they run the `SkillBeat` engine, not GameShell, so `_voiceCorpus911`
-   cannot see them. Same builder shape as the 6–8 driver would do it. (Carried from 🎙️.)
-11. ⏭️ The ElevenLabs **MCP** still holds the rotated key; its 401 is what produced the stale
-   "key is dead" line on 2026-09-03. Measure the key with `curl`, never through it. (Carried from 🎙️.)
+1. 🔴 **THE STITCHER FAILED ITS LISTENING TEST, AND THAT IS THE OPEN QUESTION.** One real 12–14
+   line was assembled from its six existing fragments and put beside the whole-line recording of
+   the same sentence: *"Fly the drone to the halfway point between 2, 2 and 4, 6."* Founder, on
+   the pair: *"B natural lagg raha hai."* Measured alongside: stitched ran **7.84s against 5.65s**;
+   silence-trimming each fragment took it to 6.38s (+14%), and the residue is **delivery, not
+   padding** — a lone `"2"` is 0.85s after trimming because it was recorded as its own sentence.
+   Playing it through the real `<audio>` + `playbackRate` + `preservesPitch` path added a further
+   **~120ms per join** that no trimming can reach (`/tmp/abtest/rate-test.html`, the harness).
+   ⚠️ Note what this rules out: **the founder's own fallback — "record whole templates, stitch only
+   the numbers" — IS what was tested.** The run *"Fly the drone to the halfway point between"* is a
+   single recording. So that option is not a way out; it is the thing that failed.
+   The one cheap experiment left is **prosody-in-context**: fragments were recorded in isolation, so
+   each ends on a falling tone. Re-render the number clips with list intonation (`"2,"` `"4,"` `"6."`)
+   — about 20 credits — and listen again. If that fails, whole-line is the answer and the cost above
+   is the cost.
+2. ⏭️ **The best remaining spend is 3–5** (539 lines, ~26k, and the band is measured saturated so it
+   never asks again). 26,072 credits are left this month; billing has run ~60% of the estimate.
+3. 🔴 **6–8 has no per-round clips at all** (only its 56 walkthrough lines). 4 of its 12 chapters
+   still cannot be enumerated from the beat surface: `placeValue`, `additionTo100`,
+   `subtractionTo100` and `money` return an empty `prompt` and speak from their own components.
+4. ⏭️ 15–16 and 17–18 now play a clip for the encouragement and browser speech for `It was X.` —
+   mixed within one breath. Their reveal halves need the 37 configs (exported this session) driven.
+5. 🕒 **Nightly E2E has still never gone green on a SCHEDULED run against a main containing the fix.**
+   `gh run list --workflow "Nightly E2E"`, look for `schedule` + `success` at or after `22d75fb`.
+6. 🔴 **The hull silence is still unmeasured** — `docs/voice-check-for-tester.md` ready to forward.
+7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky.
+8. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase is deferred with a hard
+   deadline BEFORE STAGE 4 ([docs/billing-stage-3.md](docs/billing-stage-3.md) §0) · B12 Supabase Pro
+   before any live key · **`DRAFT = true` — the privacy policy and ToS are still placeholders, and you
+   cannot charge a parent under one** · the free chapter set is still a PROPOSAL · **nine Dependabot
+   PRs open and untriaged (#28–#47)**, do not merge as a batch · Vercel Web Analytics still off · two
+   prose-drift notes (the `error_events` fkey comment, the anon-INSERT comments).
+9. ⏭️ **Nobody has HEARD any of the rendered clips on a real device** beyond the A/B pair above.
+   Every other check is a network request plus a patched `play()`.
+10. ⏭️ **`OrderDesk` and `LevelRun` — the two 9–11 storybook chapters — have no clips** and are in no
+   corpus: they run `SkillBeat`, not GameShell.
+11. ⏭️ The ElevenLabs **MCP** still holds the rotated key; measure the key with `curl`, never it.
 12. ⏭️ Uncommitted and untouched all session: the `/menu` 6→2 RPC half (`menu/page.tsx`, the three
    repositories) — deliberately kept out of the voice deploys.
 
