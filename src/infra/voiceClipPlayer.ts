@@ -19,6 +19,17 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 // rather than falling back to browser TTS, so the teen game never mixes the two voices.
 // Only bites when a real voice is picked — with 'device' there are no clips, so we must
 // still fall back or teen games would be silent. Set by the teen GameShell while mounted.
+//
+// ⚠️⚠️ DO NOT TURN THIS ON FOR A BAND THAT HAS NO FRAGMENT STITCHER. Clip-only does not mean
+// "prefer clips" — it means a line we hold no clip for is SILENT, not spoken by the browser, and
+// nothing anywhere logs it, because a miss is a normal expected event. 12–14 survives it ONLY
+// because its templated lines are stitched from `frag/`. Measured 2026-09-04 by driving the
+// generators: one 12–14 chapter's entire spoken space is 22 whole lines, while a 9–11 chapter was
+// still producing NEW ones at 24,000 draws (1,653 and climbing). Whole-line coverage of a band
+// like that is a FLOOR that never reaches 100%, so clip-only there is a child sitting in front of
+// a silent chapter. Before flipping it for 3–5, 6–8, 9–11, 15–16 or 17–18: build that band's
+// stitcher first. (Templates and literal RUNS do saturate — that is what makes a stitcher finite
+// where whole lines are not: goingViral renders 1,299 distinct lines from 13 templates / 34 runs.)
 let _clipOnly = false
 export function setClipOnly(v: boolean): void { _clipOnly = v }
 

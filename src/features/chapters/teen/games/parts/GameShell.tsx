@@ -382,6 +382,11 @@ export function Game<V, T extends BaseTask>({
   // 12–14 ONLY: a chosen custom voice is the ONLY voice — no browser-TTS fallback, so the
   // recorded and free voices never mix. Other bands (incl. 15–16 on this same shell) keep
   // the fallback. Off again when we leave the shell.
+  // ⚠️⚠️ THE BAND CHECK IS LOAD-BEARING, NOT TIDINESS — widening it does NOT give another band
+  // "clips where we have them", it gives it SILENCE wherever we do not, because clip-only
+  // suppresses the browser fallback and a miss logs nothing. 12–14 can afford it only because its
+  // lines are stitched from fragments; no other band has a stitcher yet, and their whole-line
+  // coverage is a floor that never reaches 100%. See the note on setClipOnly before touching this.
   useEffect(() => {
     if (getActiveLearner()?.age_group !== '12-14') return
     setClipOnly(true); return () => setClipOnly(false)

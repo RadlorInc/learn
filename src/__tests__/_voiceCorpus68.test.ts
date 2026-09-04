@@ -5,6 +5,15 @@
  *   VOICE_CORPUS=1 npx vitest run src/__tests__/_voiceCorpus68.test.ts
  *
  * Reporting only — writes scripts/.voice-corpus-6-8.json, renders nothing.
+ *
+ * ⚠️⚠️ ITS NUMBER IS A FLOOR TWICE OVER, and must be quoted as ">=" both times.
+ *   1. Only 9 of the band's 12 chapters are reachable here. `placeValue`, `additionTo100`,
+ *      `subtractionTo100` and `money` return an EMPTY `prompt` on purpose — their play surface
+ *      states the question itself (chapter-craft.md: two pills saying the same thing is a
+ *      duplicate, not a fallback) — so what those chapters speak lives in their components and
+ *      nothing at the beat surface can see it. They are missing, not empty.
+ *   2. 1,500 draws is a sample, not the generator's space; whole-line counts keep climbing with
+ *      the sweep while templates and literal runs saturate (see _voiceCorpusTeen.test.ts).
  */
 import { it } from 'vitest'
 import { writeFileSync } from 'node:fs'

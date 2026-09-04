@@ -18,6 +18,13 @@
  *   overview.say, tutorial step says, start.blurb
  * NOT collected: anything carrying the child's name (unrenderable), and PRAISE — `praisesOnCorrect`
  * is 3–5 / 6–8 only, so this band hears none.
+ *
+ * ⚠️⚠️ THIS CORPUS IS A FLOOR, NOT A TOTAL — say ">=" wherever its size is quoted. `DRAWS` is a
+ * sample of each generator, not its space: measured 2026-09-04, The Coin Tray produced 920 distinct
+ * lines at 1,500 draws, 1,427 at 6,000 and 1,653 at 24,000, and The Packing Shed behaved the same
+ * way. Its TEMPLATES saturate (425 by 6k) and its literal RUNS with them (434) — which is why a
+ * fragment stitcher is finite work and whole-line coverage of this band is not, and why "9–11 is
+ * N% covered" is a statement about this file rather than about the chapter.
  */
 import { it } from 'vitest'
 import { writeFileSync } from 'node:fs'

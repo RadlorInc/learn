@@ -6,6 +6,20 @@
  *   VOICE_CORPUS=1 npx vitest run src/__tests__/_voiceCorpusTeen.test.ts
  *
  * Writes scripts/.voice-corpus-teen.json. Reporting only — nothing renders from it yet.
+ *
+ * ⚠️⚠️ WHAT THIS FILE PRODUCES IS A FLOOR, NEVER A TOTAL, AND ANY NUMBER TAKEN OUT OF IT MUST
+ * TRAVEL AS ONE. It samples each generator 1,500 times; that is not the generator's space.
+ * Measured 2026-09-04 by re-running the same sweep at 1.5k / 6k / 24k draws:
+ *
+ *   goingViral 15-16    821 →  1,299 whole lines  ·  13 templates flat  ·  34 runs flat
+ *   coinTray    9-11    920 →  1,653              ·  425 (saturates at 6k) ·  434
+ *   walkHome   17-18  1,562 →  9,123 and climbing ·  513 and climbing     ·  121 → 137
+ *
+ * So the whole-line count keeps growing with the sweep — a band's real one is unbounded for
+ * practical purposes — while the TEMPLATES and, decisively, the LITERAL RUNS do saturate. That
+ * asymmetry is the entire argument for a fragment stitcher: the thing a stitcher pays for is
+ * finite (goingViral says 1,299 different lines out of 34 runs) and the thing whole-line clips
+ * pay for is not. Quote the run/template counts as real; quote the whole-line ones as ">=".
  */
 import { it } from 'vitest'
 import { writeFileSync } from 'node:fs'
