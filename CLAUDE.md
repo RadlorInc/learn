@@ -174,8 +174,36 @@ Everything below is a corollary of that one sentence:
     in this repo, because the tests run as a role that was never going to be stopped anyway.
   ⚠️ And the ambient pressure runs the wrong way: most RPCs here genuinely need DEFINER, so the
   word looks right everywhere. Check what the ORIGINAL had, not what its neighbours have.
-- ⚠️⚠️ **A MIGRATION THAT CHANGES WHAT RUNNING CODE READS SHIPS IN THE SAME COMMIT AS ITS READERS,
-  OR AFTER THEM — NEVER BEFORE.** Founder's rule, 2026-09-05. Making `sessions.started_at` nullable
+- ⚠️⚠️ **THE SCHEMA AND THE CODE THAT USES IT MUST NEVER BE APART IN EITHER DIRECTION — AND ON THIS
+  REPO THE CLIENT HALF DEPLOYS THE INSTANT YOU PUSH.** Founder's rule, extended 2026-09-05 after
+  being bitten by both halves of it in one day. There is one rule with two faces, and having
+  written down the first face I shipped the second four hours later:
+  - **schema ahead of code** — a migration that changes what running code READS ships in the same
+    commit as its readers, or after them. Making `sessions.started_at` nullable while six readers
+    still assumed it was always set would have taken DAU/WAU silently downward and read as a slow
+    week.
+  - **code ahead of schema** — a client that CALLS something the database does not have yet is the
+    identical defect running the other way. The commit that started sending `p_started_at` went
+    live before anyone applied the migration creating the 12-argument `sync_session`; PostgREST
+    resolves an RPC by parameter NAMES, so it answered `PGRST202 / HTTP 404` and every completion
+    fell to the offline queue. Measured, not guessed — a read-only RPC called with a bogus
+    parameter returns exactly that.
+  ⚠️⚠️ **AND THE THING THAT MAKES THE SECOND FACE THE DEFAULT HERE: `main` AUTO-DEPLOYS TO VERCEL.**
+  There is no separate "deploy" step to forget, so the client half of any expand/contract pair goes
+  live **the moment it is pushed, whether or not you intended to deploy anything**. Migrations, by
+  contrast, are applied by hand. So on this repo the natural order is always code-first, i.e.
+  always the wrong way round, unless you do something about it.
+  **What to do about it: make the CLIENT tolerate both shapes, rather than documenting an order
+  somebody has to remember.** `syncSession` retries without the new argument on `PGRST202`; that
+  removes the constraint instead of writing it down, and it is the only version that also survives
+  a browser still running yesterday's bundle. Expand → migrate → contract, with the expand step
+  doing real work rather than being a comment.
+  ⚠️ A deploy-order constraint you cannot design away belongs **at the top of the migration file
+  and in the deploy runbook** — never only in a report or a chat message, because the person
+  applying it in six weeks is reading the file, not the conversation.
+
+- ⚠️ **(the original half, kept because its example is the sharper one) A MIGRATION THAT CHANGES
+  WHAT RUNNING CODE READS SHIPS IN THE SAME COMMIT AS ITS READERS, OR AFTER THEM — NEVER BEFORE.** Founder's rule, 2026-09-05. Making `sessions.started_at` nullable
   and fixing the six readers that assumed it was always set went in as two commits, so for a while
   `main` held a migration that would have taken DAU/WAU silently downward the moment anyone applied
   it. Nothing auto-applies here, so nothing broke — but the window existed, and "nothing applies

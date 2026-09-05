@@ -59,58 +59,38 @@ cd "$(dirname "$0")/.."
 
 [ $# -ge 2 ] || { echo "usage: $0 <test file expected to go red> \"<break command>\" [vitest args…]" >&2; exit 2; }
 
+# ⚠️⚠️ THE BREAK RUNS IN A THROWAWAY `git worktree`, NOT IN YOUR TREE. THAT IS THE WHOLE DESIGN.
+#
+# This tool used to park your work with `git stash push --include-untracked` and put it back
+# afterwards. That is correct for tracked changes and CATASTROPHIC for untracked ones: a file that
+# exists in NO COMMIT gets swept into the stash, and when the pop goes wrong — a second session
+# running this concurrently, an interrupted run, a conflicting stash — the file is gone from the
+# tree AND from history, surviving only as a dangling object nobody knows to look for.
+#
+# It ate work four times here. On 2026-09-05, with two sessions in the repo at once, one ran this
+# script and the other lost an uncommitted migration, four pages, a 302-line test and a runbook.
+# They came back from `git fsck --unreachable` — that time.
+#
+# A header note was tried first and was written into this file the same morning the work was
+# destroyed. Then a blunt refusal. Both were mitigations for a design that should not have touched
+# your tree at all. So now it does not: the break is applied to a detached checkout of HEAD in a
+# temp directory, `node_modules` is symlinked in, vitest runs with that as its cwd, and the
+# worktree is deleted afterwards. **Nothing can happen to your working tree because nothing in it
+# is read, moved, stashed or restored.** No stash means no lost stash.
+#
+# What this deliberately still refuses: a TARGET that is not committed, because a worktree at HEAD
+# cannot see it — testing it would silently verify some other version of the file, or none.
 # ══════════════════════════════════════════════════════════════════════════════════════════════
-# ⚠️⚠️ REFUSE TO RUN WITH ANY UNTRACKED FILE IN THE TREE. THIS IS NOT A PRECAUTION, IT IS THE
-# RESPONSE TO THIS TOOL EATING WORK FOR THE FOURTH TIME IN THIS PROJECT'S HISTORY.
-#
-# The parking step below is `git stash push --include-untracked`, which is correct for tracked
-# changes and CATASTROPHIC for untracked ones: a brand-new file — a migration, a new test, a new
-# route — is swept into the stash, and when anything goes wrong with the pop (a second session
-# running this at the same time, an interrupted run, a conflicting stash) the file is simply gone.
-# It is not in the tree and it is not in any commit; it survives only as a dangling object nobody
-# knows to look for.
-#
-# On 2026-09-05 that happened while TWO sessions were working in this repo at once: one ran this
-# script, and the other's uncommitted migration, dashboard pages, test file and runbook all
-# disappeared. They were recovered from `git fsck --unreachable` — this time.
-#
-# ⚠️ A HEADER NOTE WAS NOT ENOUGH. One was written into this file that morning, describing this
-# exact hazard, and the work was destroyed that afternoon anyway. Written-down care is not a
-# mechanism. The mechanism is refusing.
-#
-# The refusal is deliberately BLUNT — any untracked file, not "untracked files the break touches" —
-# because the tool cannot know which files another session is about to need, and a rule that has to
-# guess is the rule that failed.
-# ══════════════════════════════════════════════════════════════════════════════════════════════
-UNTRACKED="$(git status --porcelain 2>/dev/null | grep '^??' || true)"
-if [ -n "$UNTRACKED" ]; then
-  cat >&2 <<EOF
-✗ REFUSING TO RUN — there are untracked files in this tree.
-
-$(echo "$UNTRACKED" | sed 's/^?? /    /')
-
-This script parks your work with \`git stash push --include-untracked\`, which sweeps files that
-exist in NO COMMIT into a stash. If the pop then fails — a second session running this at the same
-time, an interrupted run — those files are gone from the tree and from history, recoverable only
-from dangling objects. That has now happened four times here, most recently 2026-09-05.
-
-Do one of:
-  · commit them first (this is almost always the right answer — it is also how the verdict logic
-    gets something real to mutate, since a break cannot edit a file that was stashed away);
-  · move them out of the repo for the duration;
-  · or fix this properly: run the break in a \`git worktree\` on a temporary checkout, so the tree
-    you are standing in is never touched at all. That is the real repair and it is why this refusal
-    is a stopgap rather than the fix.
-
-If you genuinely need to bypass this, set BREAK_CHECK_ALLOW_UNTRACKED=1 — and understand you are
-accepting that those files can be destroyed.
-EOF
-  [ "\${BREAK_CHECK_ALLOW_UNTRACKED:-0}" = "1" ] || exit 1
-  echo "⚠️  BREAK_CHECK_ALLOW_UNTRACKED=1 — proceeding anyway. Your untracked files are at risk." >&2
-fi
 TARGET="$1"; shift
 BREAK="$1"; shift
 [ -f "$TARGET" ] || { echo "no such test file: $TARGET" >&2; exit 2; }
+if ! git ls-files --error-unmatch "$TARGET" >/dev/null 2>&1; then
+  echo "✗ $TARGET is not committed." >&2
+  echo "  The break runs in a worktree checked out at HEAD, which cannot see an untracked file, so" >&2
+  echo "  there would be nothing to test. Commit the check first — that is also the only way the" >&2
+  echo "  verdict has something real to attribute a failure to." >&2
+  exit 2
+fi
 
 # ⚠️ THE VERDICT SCRIPT IS COPIED OUT OF THE TREE BEFORE ANYTHING IS STASHED. Found the hard way in
 # the origin repo: `git stash --include-untracked` parked the verdict script (still untracked at the
@@ -118,27 +98,45 @@ BREAK="$1"; shift
 # Copying it out makes that impossible regardless of what is or is not committed.
 WORK="$(mktemp -d -t break-check)"
 REPORT="$WORK/report.json"
-cp scripts/break-verdict.mjs "$WORK/verdict.mjs"
-STASHED=0
+TREE="$WORK/tree"
+REPO="$(pwd)"
+BEFORE="$(git status --porcelain)"
 
-dirty() { ! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; }
-
-restore() {
+cleanup() {
   local rc=$?
-  # 1. Stash the BREAK away and drop it — this also removes any file the break created.
-  if dirty; then
-    git stash push --include-untracked --quiet -m "break-check: the break (dropped)" && git stash drop --quiet
-  fi
-  # 2. Put your own work back.
-  if [ "$STASHED" = 1 ]; then git stash pop --quiet; fi
+  # ⚠️ BACK TO THE REPO FIRST. The run `cd`s into the worktree, and removing it leaves the shell in
+  # a directory that no longer exists — every later git command then dies with "Unable to read
+  # current working directory", the comparison below sees an empty string, and the tool shouts
+  # "YOUR TREE CHANGED" on a run where nothing changed. Caught on the first real drive of this
+  # version. A check that cries wolf gets ignored exactly like one that never fires.
+  cd "$REPO" || return
+  # Remove the worktree. `--force` because the break deliberately left it dirty; that dirt is the
+  # break itself and is meant to die with it. Your tree was never involved.
+  git worktree remove --force "$TREE" >/dev/null 2>&1 || rm -rf "$TREE"
+  git worktree prune >/dev/null 2>&1
   rm -rf "$WORK"
   echo
-  echo "--- tree after restore (must match what you started with) ---"
-  git status --short
-  git stash list | grep -q 'break-check' && echo "⚠️  a break-check stash survived — inspect 'git stash list'"
+  # ⚠️ ASSERTED, NOT ASSUMED. The old version printed `git status` and invited you to eyeball it.
+  # This compares against the exact state we started in and says so out loud, because "the restore
+  # worked" is precisely the claim that was false the four times this tool destroyed something.
+  if [ "$(git status --porcelain)" = "$BEFORE" ]; then
+    echo "--- your tree is byte-identical to when this started (nothing was stashed or restored) ---"
+  else
+    echo "⚠️⚠️  YOUR TREE CHANGED. It should be impossible — the break ran in a worktree. Diff:" >&2
+    diff <(echo "$BEFORE") <(git status --porcelain) >&2 || true
+  fi
   exit $rc
 }
-trap restore EXIT INT TERM
+trap cleanup EXIT INT TERM
+
+# A detached checkout of HEAD. The break happens HERE.
+git worktree add --detach --quiet "$TREE" HEAD || { echo "could not create a worktree" >&2; exit 2; }
+# vitest needs the installed deps; symlinking is instant and read-only in practice.
+ln -s "$REPO/node_modules" "$TREE/node_modules"
+cp scripts/break-verdict.mjs "$WORK/verdict.mjs"
+cd "$TREE"
+
+dirty() { ! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; }
 
 # ⚠️ AND THE NOTE ABOVE IS NOW ENFORCED, NOT JUST WRITTEN. Two sessions hit this independently on
 # 2026-09-05 and both only documented it; a rule you have to remember while reading a 90-line header
@@ -151,13 +149,7 @@ if ! git diff --quiet HEAD -- "$TARGET"; then
   exit 2
 fi
 
-# Park any uncommitted work so the break cannot be confused with it, and so the restore is a
-# mechanical `git stash pop` rather than a judgement call about which hunks were yours.
-if dirty; then
-  git stash push --include-untracked --quiet -m "break-check: your work"
-  STASHED=1
-  echo "· parked your uncommitted work in a stash"
-fi
+echo "· worktree at HEAD: $TREE (your tree is not touched)"
 
 echo "· applying break: $BREAK"
 eval "$BREAK"
