@@ -16,7 +16,12 @@
 -- ── the role ─────────────────────────────────────────────────────────────────────────────────
 -- Added to the existing enum rather than introduced as an email list in code. There is no
 -- "admin@" check anywhere; membership is a row a human sets in the database.
-alter type public.profile_role add value if not exists 'admin';
+-- ⚠️ THE TYPE IS `user_role`, NOT `profile_role`. Named wrong on the first attempt, which turned
+-- CI red for five commits with `type "public.profile_role" does not exist` — and the local test
+-- passed the whole time because its hand-written fixture CREATED a type called `profile_role`.
+-- A fixture that invents the schema agrees with the bug. Verified against production 2026-09-05:
+-- profiles.role has udt_name = user_role, labels (parent, learner, teacher).
+alter type public.user_role add value if not exists 'admin';
 
 -- ── internal accounts ────────────────────────────────────────────────────────────────────────
 -- ⚠️ EMAIL DOMAIN CANNOT IDENTIFY THESE: 10 of 11 production accounts are gmail.com (measured

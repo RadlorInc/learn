@@ -29,8 +29,12 @@ do $$ begin
   if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated; end if;
   if not exists (select 1 from pg_roles where rolname='service_role') then create role service_role; end if;
 end $$;
-create type public.profile_role as enum ('parent','learner','teacher');
-create table public.profiles (id uuid primary key, role public.profile_role default 'parent', display_name text not null default '', avatar_index smallint not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+-- ⚠️ NAME AND LABELS TAKEN FROM PRODUCTION (information_schema.columns.udt_name for
+-- profiles.role, 2026-09-05), not invented. The first version of this fixture created a type
+-- called \`profile_role\`, which does not exist anywhere — so the migration's \`alter type\`
+-- succeeded here and failed on every real database. The gate below pins the name.
+create type public.user_role as enum ('parent','learner','teacher');
+create table public.profiles (id uuid primary key, role public.user_role default 'parent', display_name text not null default '', avatar_index smallint not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
 create table public.learners (id uuid primary key, display_name text not null default '', avatar_index smallint not null default 0, created_by uuid not null, created_at timestamptz not null default now(), updated_at timestamptz not null default now(), age_group text not null default '3-5', grade_id uuid);
 create table public.sessions (id uuid primary key default gen_random_uuid(), learner_id uuid not null, chapter text not null, phase text not null default 'practice', started_at timestamptz, completed_at timestamptz, correct_count smallint not null default 0, wrong_count smallint not null default 0, stars_earned smallint not null default 0, xp_earned int not null default 0, coins_earned int not null default 0, client_id text);
 create table public.learner_events (id uuid primary key default gen_random_uuid(), learner_id uuid not null, event text not null, props jsonb not null default '{}', client_id text, client_ts timestamptz, created_at timestamptz not null default now());
@@ -63,7 +67,7 @@ insert into public.profiles (id, created_at) values
   ('${P(5)}', mon() - interval '14 days'), ('${P(6)}', mon() - interval '14 days'),
   ('${ADMIN}', mon() - interval '14 days');
 update public.profiles set is_internal = true where id in ('${P(6)}', '${ADMIN}');
-update public.profiles set role = 'admin'::public.profile_role where id = '${ADMIN}';
+update public.profiles set role = 'admin'::public.user_role where id = '${ADMIN}';
 
 insert into public.learners (id, created_by, age_group, created_at) values
   ('${L(1)}','${P(1)}','3-5', mon() - interval '14 days'),
@@ -298,5 +302,43 @@ describe('no query can return an identifier', () => {
     const blob = JSON.stringify([overview, learning, funnel])
     expect(blob).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
     expect(blob).not.toMatch(/@/)
+  })
+})
+
+describe('the migration names types that actually exist', () => {
+  /**
+   * ⚠️ THE CHECK THAT WOULD HAVE SAVED FIVE RED CI RUNS.
+   *
+   * `20260905150000` opened with `alter type public.profile_role add value 'admin'`. No such type
+   * exists — production calls it `user_role` — so every real database answered
+   * `type "public.profile_role" does not exist (SQLSTATE 42704)` and CI was red on main for five
+   * commits. The local suite passed the entire time, because the fixture above CREATED a type
+   * named `profile_role`: a hand-written fixture agreeing with the bug it was supposed to catch.
+   *
+   * So this does not test the fixture. It reads the enum name out of `baseline_schema.sql` — the
+   * same file CI stages as its first migration — and requires the migration to use that name.
+   * Derived from the thing CI actually applies, so it cannot drift with either side.
+   */
+  it("the enum altered by the migration is the one the baseline declares for profiles.role", () => {
+    const baseline = readFileSync(resolve(__dirname, '../../supabase/schema/baseline_schema.sql'), 'utf8')
+    // walk the profiles table body to its closing paren — not a character window
+    const at = baseline.search(/create table if not exists public\.profiles\s*\(/i)
+    expect(at, 'profiles is not in the baseline — this check has rotted').toBeGreaterThan(-1)
+    const body = baseline.slice(at, baseline.indexOf(');', at))
+    const roleType = body.match(/^\s*role\s+([a-z_][a-z0-9_]*)/im)?.[1]
+    expect(roleType, 'could not read profiles.role type from the baseline').toBeTruthy()
+
+    const altered = [...MIG.matchAll(/alter\s+type\s+(?:public\.)?([a-z_][a-z0-9_]*)\s+add\s+value/gi)]
+      .map(m => m[1].toLowerCase())
+    expect(altered.length, 'the migration no longer alters a type — has this check rotted?').toBe(1)
+    expect(altered[0]).toBe(roleType!.toLowerCase())
+  })
+
+  it('positive control: the baseline really does declare a named type here', () => {
+    // Without this, a baseline whose profiles block moved would make the check above vacuous by
+    // returning undefined on both sides.
+    const baseline = readFileSync(resolve(__dirname, '../../supabase/schema/baseline_schema.sql'), 'utf8')
+    expect(baseline).toMatch(/create table if not exists public\.profiles/i)
+    expect(baseline).toMatch(/^\s*role\s+user_role/im)
   })
 })
