@@ -58,6 +58,56 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 
 [ $# -ge 2 ] || { echo "usage: $0 <test file expected to go red> \"<break command>\" [vitest args…]" >&2; exit 2; }
+
+# ══════════════════════════════════════════════════════════════════════════════════════════════
+# ⚠️⚠️ REFUSE TO RUN WITH ANY UNTRACKED FILE IN THE TREE. THIS IS NOT A PRECAUTION, IT IS THE
+# RESPONSE TO THIS TOOL EATING WORK FOR THE FOURTH TIME IN THIS PROJECT'S HISTORY.
+#
+# The parking step below is `git stash push --include-untracked`, which is correct for tracked
+# changes and CATASTROPHIC for untracked ones: a brand-new file — a migration, a new test, a new
+# route — is swept into the stash, and when anything goes wrong with the pop (a second session
+# running this at the same time, an interrupted run, a conflicting stash) the file is simply gone.
+# It is not in the tree and it is not in any commit; it survives only as a dangling object nobody
+# knows to look for.
+#
+# On 2026-09-05 that happened while TWO sessions were working in this repo at once: one ran this
+# script, and the other's uncommitted migration, dashboard pages, test file and runbook all
+# disappeared. They were recovered from `git fsck --unreachable` — this time.
+#
+# ⚠️ A HEADER NOTE WAS NOT ENOUGH. One was written into this file that morning, describing this
+# exact hazard, and the work was destroyed that afternoon anyway. Written-down care is not a
+# mechanism. The mechanism is refusing.
+#
+# The refusal is deliberately BLUNT — any untracked file, not "untracked files the break touches" —
+# because the tool cannot know which files another session is about to need, and a rule that has to
+# guess is the rule that failed.
+# ══════════════════════════════════════════════════════════════════════════════════════════════
+UNTRACKED="$(git status --porcelain 2>/dev/null | grep '^??' || true)"
+if [ -n "$UNTRACKED" ]; then
+  cat >&2 <<EOF
+✗ REFUSING TO RUN — there are untracked files in this tree.
+
+$(echo "$UNTRACKED" | sed 's/^?? /    /')
+
+This script parks your work with \`git stash push --include-untracked\`, which sweeps files that
+exist in NO COMMIT into a stash. If the pop then fails — a second session running this at the same
+time, an interrupted run — those files are gone from the tree and from history, recoverable only
+from dangling objects. That has now happened four times here, most recently 2026-09-05.
+
+Do one of:
+  · commit them first (this is almost always the right answer — it is also how the verdict logic
+    gets something real to mutate, since a break cannot edit a file that was stashed away);
+  · move them out of the repo for the duration;
+  · or fix this properly: run the break in a \`git worktree\` on a temporary checkout, so the tree
+    you are standing in is never touched at all. That is the real repair and it is why this refusal
+    is a stopgap rather than the fix.
+
+If you genuinely need to bypass this, set BREAK_CHECK_ALLOW_UNTRACKED=1 — and understand you are
+accepting that those files can be destroyed.
+EOF
+  [ "\${BREAK_CHECK_ALLOW_UNTRACKED:-0}" = "1" ] || exit 1
+  echo "⚠️  BREAK_CHECK_ALLOW_UNTRACKED=1 — proceeding anyway. Your untracked files are at risk." >&2
+fi
 TARGET="$1"; shift
 BREAK="$1"; shift
 [ -f "$TARGET" ] || { echo "no such test file: $TARGET" >&2; exit 2; }
