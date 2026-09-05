@@ -89,6 +89,22 @@ is CAPABLE of returning** — if the answer is "one", it is decoration with a pe
 
 Everything below is a corollary of that one sentence:
 
+- ⚠️⚠️ **A CHECK THAT CRIES WOLF IS SPENT EXACTLY LIKE ONE THAT NEVER FIRES.** Founder's line,
+  2026-09-05. This file is mostly about checks that cannot fail; this is the other end of the same
+  axis, and it costs the same thing — **the reader's attention**. A gate that goes red on correct
+  code teaches people to re-run it, then to skim it, then to ignore the run where it was right.
+  The `Nightly E2E` row above is this failure at scale: 12 red runs from the day it was created, so
+  its output became noise and a real regression sat inside it in the open for seven nights.
+  It arrives in small ways constantly, and every one was found by watching a check on a run where
+  nothing was wrong: a cleanup that compared the tree against its starting state **after** deleting
+  the directory it was standing in, so every git command died and it shouted "YOUR TREE CHANGED" on
+  a clean run; a `SECURITY DEFINER` drift gate keyed on a function NAME rather than its signature,
+  reporting a deliberately-INVOKER forwarding shim as drift; a service-role gate matching
+  `/SERVICE_ROLE/` and firing on the comment saying the key is never read there; a sweep reporting
+  12 unpinned `search_path` functions because its regex knew `SET search_path TO` and not `= `.
+  **So a new check is not finished when it goes red on the defect. It is finished when it has ALSO
+  been watched staying green on a run where nothing is wrong** — and when its failure message names
+  something a reader can act on, rather than a symptom of the check's own plumbing.
 - **Make it fail before you believe it.** Plant the defect it exists for, or point it at a known
   past one. A new check's green first run is the least informative result there is — equally
   consistent with "nothing is wrong" and "this cannot see anything".
