@@ -53,10 +53,13 @@ describe('a draft legal page never renders as live', () => {
     // The positive control for the gate above: if a well-meaning tidy-up resolved the markers, the
     // guard would go quiet and report a clean document. This compares the rendered copy against the
     // markdown it came from, so a removal is a failure rather than a silent pass.
-    const md = read('app-terms-of-service.md')
+    // ⚠️ THE SOURCE DOCUMENT IS IN THE REPO, and it has to be: this comparison is the positive
+    // control for the whole draft gate, and it passed locally for one run against an UNTRACKED file
+    // — green on my machine, ENOENT in CI. A check whose corpus is not committed is not a check.
+    const md = read('docs/app-terms-of-service.md')
     const count = (hay: string, needle: string) => hay.split(needle).length - 1
     for (const p of PLACEHOLDERS) {
-      expect(count(md, p), `${p} missing from app-terms-of-service.md`).toBeGreaterThan(0)
+      expect(count(md, p), `${p} missing from docs/app-terms-of-service.md`).toBeGreaterThan(0)
       expect(count(TERMS.body, p), `${p} was dropped between the .md and TERMS.body`)
         .toBe(count(md, p))
     }
