@@ -1,74 +1,123 @@
 name: Red main
 
 # ⚠️ WHY THIS EXISTS. On 2026-09-05 `ci / rls-tests` failed on five consecutive commits to main and
-# nobody noticed for a day. Measured afterwards, the two halves of that:
+# nobody noticed for a day. Measured afterwards: NO branch protection, NO required status check, NO
+# workflow reading a CI result — and Vercel building on push independently, so all five red commits
+# reached production READY. CI was a report nobody read.
 #
-#   · there is NO branch protection on main, NO required status check, and NO workflow that reacts
-#     to a failed run — nothing in this repo looks at a CI result;
-#   · Vercel builds on push, independently of GitHub Actions. All five red commits reached
-#     production with state READY. CI never gated anything.
+# It now watches BOTH directions, because they are the same defect mirrored:
 #
-# So a red CI run was, in practice, a report nobody read. The resolution offered first was "I'll
-# check CI after pushing", which is a promise to remember — this project has replaced several of
-# those with mechanisms and only the mechanisms held.
+#   · CI red        -> broken code would have gone live      (the original failure)
+#   · promote red   -> WORKING code silently does NOT go live (the gate failing closed)
+#   · drift         -> the gate quietly stopped passing anything through at all
 #
-# ⚠️ THIS IS A SIGNAL, NOT A GATE. It cannot stop a broken commit reaching production; only moving
-# the production deploy behind CI can do that (see docs/devops.md). What it guarantees is that a red
-# main is never SILENT.
+# The third is the one that hides: a gate that has silently stopped promoting looks identical to a
+# quiet week with no pushes. Nothing errors, nothing is red, production just stops moving.
 
 on:
   workflow_run:
     workflows: ["Deploy"]
     types: [completed]
     branches: [main]
-  # ⚠️ So the issue-filing path can be driven on demand rather than only by a real failure. A
-  # notifier nobody has watched fire is the same as no notifier.
+  schedule:
+    - cron: '37 6 * * *'          # daily drift check
   workflow_dispatch:
     inputs:
-      simulate:
-        description: 'Simulate a failure to test the issue-filing path'
-        type: boolean
-        default: true
+      mode:
+        description: 'Which path to drive (for verifying this notifier actually fires)'
+        type: choice
+        options: [ci-red, promote-red, drift]
+        default: drift
 
 permissions:
   issues: write
   actions: read
+  contents: read
 
 jobs:
   notify:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
+    if: >-
+      ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      # ⚠️ gh needs a repo context and this job has no checkout — without -R every command dies with
+      # "fatal: not a git repository". Found by DRIVING the first version, which could not have
+      # fired at all: the notifier would have been silent on a real red main, which is the exact
+      # failure it exists to prevent.
+      REPO: ${{ github.repository }}
+      EVENT: ${{ github.event_name }}
+      MODE: ${{ inputs.mode }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+      RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+      RUN_TITLE: ${{ github.event.workflow_run.display_title }}
     steps:
-      - name: Open or update the red-main issue
-        env:
-          GH_TOKEN: ${{ github.token }}
-          # ⚠️ gh needs a repo context and this job has no checkout — without -R every command
-          # dies with "not a git repository". Found by driving it: the notifier would have been
-          # silent on a real red main, which is the exact failure it exists to prevent.
-          REPO: ${{ github.repository }}
-          SIM: ${{ github.event_name == 'workflow_dispatch' }}
-          RUN_URL: ${{ github.event.workflow_run.html_url }}
-          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
-          RUN_TITLE: ${{ github.event.workflow_run.display_title }}
+      - name: Work out what to say
+        id: msg
         run: |
           set -euo pipefail
-          TITLE="🔴 main is red"
-          if [ "$SIM" = "true" ]; then
-            BODY="**Simulated run** (workflow_dispatch) — this is a test of the notification path, not a real failure. Close it.
-          
-          If you are reading this and it was NOT triggered by hand, the notifier is misfiring."
-          else
-            BODY="\`$RUN_SHA\` — $RUN_TITLE
+          TITLE=""; BODY=""
+
+          drift_check() {
+            # How far is main ahead of what production is actually serving?
+            AHEAD=$(gh api "repos/$REPO/compare/release...main" --jq '.ahead_by' 2>/dev/null || echo "NO_RELEASE")
+            echo "ahead_by=$AHEAD"
+            if [ "$AHEAD" = "NO_RELEASE" ]; then
+              TITLE="🔴 release branch is missing — production is not being promoted"
+              BODY="\`release\` does not exist, so the promote job has never successfully run. If Vercel's Production Branch is already set to \`release\`, **production is not receiving any new code at all.**"
+            elif [ "$AHEAD" -gt 2 ]; then
+              TITLE="🔴 main is $AHEAD commits ahead of release"
+              BODY="Production serves \`release\`. It is **$AHEAD commits behind main**, which means the promote job has stopped passing changes through — a gate that quietly refuses everything looks exactly like a quiet week.
+
+          Check the most recent Deploy run: https://github.com/$REPO/actions/workflows/deploy.yml"
+            fi
+          }
+
+          case "${EVENT}:${MODE:-}" in
+            workflow_run:*)
+              # Which half failed? A red CI and a red promote mean opposite things and the message
+              # must not blur them.
+              FAILED=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select(.conclusion=="failure") | .name] | join(", ")' 2>/dev/null || echo "unknown")
+              if echo "$FAILED" | grep -qi "promote"; then
+                TITLE="🔴 promote failed — production is NOT updating"
+                BODY="\`$RUN_SHA\` — $RUN_TITLE
+
+          **CI passed but the promote step failed**, so \`release\` did not move and production is still serving the previous commit. Working code is silently not live — the mirror of a broken commit going live.
+
+          Failed job(s): $FAILED
+          $RUN_URL"
+              else
+                TITLE="🔴 main is red"
+                BODY="\`$RUN_SHA\` — $RUN_TITLE
 
           CI failed on main: $RUN_URL
+          Failed job(s): $FAILED
 
-          ⚠️ **This commit has almost certainly already deployed.** Vercel builds on push, independently
-          of GitHub Actions, and there is no branch protection on this repo — a red CI run does not
-          stop anything reaching production. Check the deployment before assuming the failure is
-          contained to CI."
-          fi
-          # One issue, reused — a new issue per red commit would be its own kind of noise.
-          EXISTING=$(gh issue list -R "$REPO" --state open --search "$TITLE in:title" --json number --jq '.[0].number // empty')
+          \`release\` was not advanced, so this commit is **not** in production. That is the gate working."
+              fi
+              ;;
+            schedule:*|workflow_dispatch:drift) drift_check ;;
+            workflow_dispatch:ci-red)
+              TITLE="🔴 main is red"
+              BODY="**Simulated** (workflow_dispatch, mode=ci-red) — verifying the notification path. Close it." ;;
+            workflow_dispatch:promote-red)
+              TITLE="🔴 promote failed — production is NOT updating"
+              BODY="**Simulated** (workflow_dispatch, mode=promote-red) — verifying the notification path. Close it." ;;
+          esac
+
+          if [ -z "$TITLE" ]; then echo "nothing to report"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          { echo "title<<EOF"; echo "$TITLE"; echo "EOF"; echo "body<<EOF"; echo "$BODY"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the issue
+        if: steps.msg.outputs.skip != '1'
+        run: |
+          set -euo pipefail
+          TITLE='${{ steps.msg.outputs.title }}'
+          BODY='${{ steps.msg.outputs.body }}'
+          # One issue per KIND, reused — a new issue per commit would be its own kind of noise.
+          EXISTING=$(gh issue list -R "$REPO" --state open --search "$TITLE in:title" --json number,title \
+                     --jq "[.[] | select(.title==\"$TITLE\")][0].number // empty")
           if [ -n "$EXISTING" ]; then
             gh issue comment -R "$REPO" "$EXISTING" --body "$BODY"
             echo "commented on #$EXISTING"

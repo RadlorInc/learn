@@ -2,10 +2,18 @@ name: Deploy
 
 # Production pipeline. On push to main: run CI, apply migrations to STAGING + prove the RLS
 # suite there, then apply the SAME migrations to PROD behind a required-reviewer approval gate.
-# Vercel deploys the code automatically via its GitHub integration; because every migration is
-# backward-compatible (expand/contract), code and schema can land independently without breakage.
-# For strict schema-before-code ordering, disable Vercel auto-deploy and add a `vercel deploy
-# --prod` step after migrate-prod (see docs/devops.md).
+# ⚠️ PRODUCTION DEPLOYS ARE GATED BY CI VIA THE `release` BRANCH. Vercel's Production Branch is
+# `release`, not `main`, and the `promote` job below is the only thing that moves it — so a red CI
+# means `release` never advances and production simply keeps serving the last good commit.
+#
+# Measured 2026-09-05, before this existed: `ci / rls-tests` failed on five consecutive commits to
+# main and ALL FIVE reached production with state READY. There was no branch protection, no
+# required status check and nothing reading a CI result. CI was a report nobody read.
+#
+# Branch protection would not have helped — required checks only gate merges via PR, and a direct
+# push to main runs its checks after the push. Vercel's Ignored Build Step would not either: it
+# runs seconds after the push while CI takes minutes, so the commit status is still `pending`.
+# Promoting a branch is the one mechanism that needs no token and no change to how anyone works.
 
 on:
   push:
@@ -19,6 +27,31 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
     secrets: inherit
+
+  # The gate. `needs: ci` is the whole mechanism: a red CI means this job never runs, `release`
+  # never moves, and Vercel has nothing new to build.
+  #
+  # ⚠️ ITS OWN FAILURE MUST NOT BE SILENT. If this step breaks — permissions, a rejected push, a
+  # bad ref — production stops updating and looks exactly like "nothing changed", which is the
+  # mirror of the defect this gate exists to fix: instead of broken code going live, working code
+  # silently does not. `red-main.yml` fires on a failed Deploy run and names WHICH half failed, and
+  # a scheduled drift check catches the case where this stops passing things through quietly.
+  promote:
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Promote main to release (this is what Vercel builds)
+        run: |
+          set -euo pipefail
+          echo "promoting $(git rev-parse --short HEAD) to release"
+          git push origin HEAD:release
+          echo "release now at $(git rev-parse --short HEAD)"
 
   migrate-staging:
     needs: ci
