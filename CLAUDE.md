@@ -105,6 +105,28 @@ Everything below is a corollary of that one sentence:
   **So a new check is not finished when it goes red on the defect. It is finished when it has ALSO
   been watched staying green on a run where nothing is wrong** — and when its failure message names
   something a reader can act on, rather than a symptom of the check's own plumbing.
+- ⚠️⚠️ **A GATE IS NOT WORTH A CAPABILITY MORE DANGEROUS THAN WHAT IT DETECTS.** Founder's rule,
+  2026-09-05. A check is a cost as well as a benefit, and the cost is not only the reader's
+  attention — it is whatever the check has to be GIVEN in order to see. Weigh the thing you are
+  about to create against the thing you are trying to notice, and if the instrument is the larger
+  exposure, build a smaller instrument.
+  The instance: `radlor-site` needed to assert that the public waitlist endpoint's anon grant is
+  column-scoped to `(email, age_band, source)` rather than table-wide. The obvious route was to read
+  `information_schema` — which meant adding an `exec_sql` RPC to production so an npm script could
+  run catalog queries through PostgREST. **That is a general SQL-execution endpoint on a live
+  database, created to detect an over-broad grant.** It would have been, by a wide margin, the most
+  dangerous object in the project — added in the name of security.
+  The smaller instrument was already available: the property is observable from OUTSIDE. A
+  column-scoped grant and a table-wide one are indistinguishable to every ordinary probe — the form
+  works either way, reads are refused either way — and differ ONLY in whether the caller may name
+  `id` and `created_at`. Two INSERTs that try, plus a positive control proving `service_role` CAN
+  write the same body, assert the whole property with nothing added to the database at all.
+  ⚠️ **The tell is when a check needs new permissions, a new endpoint, a new key, or a new role.**
+  That is the moment to ask what the check could observe instead of what it would like to query.
+  Read-only introspection is not automatically safe either: the question is not "does this write?"
+  but "what could hold this, and what would they reach?" See also **@docs/security.md** — the
+  `SECURITY DEFINER` inventory exists precisely because objects created for good reasons accumulate
+  reach nobody re-examines.
 - **Make it fail before you believe it.** Plant the defect it exists for, or point it at a known
   past one. A new check's green first run is the least informative result there is — equally
   consistent with "nothing is wrong" and "this cannot see anything".
