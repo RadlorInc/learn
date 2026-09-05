@@ -157,6 +157,43 @@
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.)_
 
+> 🧪 **2026-09-05 — CHATTERBOX TTS (Resemble AI, MIT) EVALUATED IN A SCRATCH VENV. Founder's reason: 6–8 and 9–11 corpora are UNBOUNDED, so whole-line rendering on a per-character API is a subscription, not a project. Nothing installed into this repo; nothing integrated; `voice-generate.mts` untouched. Turbo English rendered five lines with the BUILT-IN voice — our ElevenLabs voice was deliberately NOT cloned, so no provider-terms question sits in the middle of the evaluation. Decision is by ear and is the founder's.**
+>
+> ⚠️ **THE TIMINGS FROM THIS MACHINE ARE ABOUT THIS MACHINE.** M1, **8 GB**. Measured mid-render:
+> **7.60 GB of 9.22 GB swap in use, 11% memory free** — and RTF climbed **16.4 → 35.7 → 41.6** across
+> lines 1–3, which is thrashing, not the model. Founder's call, and it is the right one: *"every
+> timing number from this machine is about the laptop and none of it informs the decision"*, so Nano
+> was dropped rather than measured (it shrinks only T3; the 1,015 MB vocoder is unchanged, so it
+> would not escape swap either). **Do not quote these seconds as Chatterbox's speed.**
+>
+> ⚠️⚠️ **`chatterbox-tts` CRASHES ON IMPORT IN A FRESH VENV WITH A MESSAGE THAT NAMES NOTHING TRUE:**
+> `TypeError: 'NoneType' object is not callable` from `perth.PerthImplicitWatermarker()`. The real
+> cause is `resemble-perth` importing **`pkg_resources`**, which setuptools removed in 81 — and a
+> modern venv ships no setuptools at all. Fix: **`pip install "setuptools<81"`**. Another error
+> message that lies about its own cause; the class was `None` because a nested import had failed
+> silently. ⚠️ **The watermarker was NOT disabled to get past it** — that changes the output, and an
+> evaluation of audio you have altered is not an evaluation.
+>
+> ⚠️ **LOADED SIZE ≠ DOWNLOAD SIZE. Size a machine from the loaded figure.** Both repos ship a
+> **1,007 MB `s3gen.safetensors` the loader never touches** (it uses the meanflow variant):
+>
+> | | download | actually loaded |
+> |---|---|---|
+> | Turbo | 3,857 MB | **2,847 MB** (t3 1,826 · s3gen_meanflow 1,015 · ve 5) |
+> | Nano | 2,860 MB | **1,850 MB** (t3 **829** · s3gen_meanflow 1,015 · ve 5) |
+>
+> 🚫 **NANO IS OFF THE TABLE FOR PRODUCTION UNTIL UPSTREAM SHIPS A LOADER.** `chatterbox-tts 0.1.7`
+> (latest) has none — `chatterbox.tts_turbo` hardcodes `t3_turbo_v1.safetensors` and Turbo's
+> hyper-parameters. A hand-written adapter loads it (the architecture is already in the package;
+> four values come off `t3_nano_v1.yaml`), which is fine for an evaluation and is an unsupported path
+> against moving upstream code. Founder: revisit if upstream ships one.
+>
+> 🎯 **THE MEASUREMENT THAT WOULD ACTUALLY DECIDE IT, AND IT IS NOT ON A MAC: rendering cost on a
+> RENTED GPU.** Rough shape from the founder: ~20,000 lines at ~3 s each is ~17 hours of audio, which
+> at better-than-realtime is single-digit dollars of compute — against the ≥6,061,663 credits (~50
+> months) the whole-line remainder costs on ElevenLabs. **Not chased now.** Scratch venv, script and
+> the five wavs: `scratchpad/chatterbox/` (session-local, will not survive).
+
 > 🔊 **2026-09-04 — THE VOICE WAS ON THE CDN THE WHOLE TIME AND NOBODY WAS ASKING FOR IT. THREE SILENT DEFECTS IN ONE CHAIN, ALL DEPLOYED AND VERIFIED FROM THE RUNNING SITE — THEN THE FIRST HONEST ACCOUNTING OF WHAT THE REST COSTS, AND THE STITCHER THAT WAS GOING TO PAY FOR IT FAILED ITS LISTENING TEST.** `tsc` 0 · **1710 passed, 1 skipped by design** · `next build` 0 · **NINE commits, all pushed and live**: `590232b` `9eb78bd` `33bb2cf` `aec3ee0` `31437c2` `cce03b2` `9385aa1` `dbe7508` `fada6d8` · sw v153 → **v160**. **EVERY STATIC LINE IN THE APP NOW HAS A CLIP, IN BOTH VOICES.**
 ## ① 🔇 THE CHAIN, AND WHY EVERY LINK REPORTED SUCCESS
 The founder: *"3–5 aur 17–18 mein voice hi naii aa rahi"*, then *"12–14, 15–16 Chrome mein theek
