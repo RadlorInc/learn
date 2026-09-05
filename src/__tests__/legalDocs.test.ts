@@ -26,6 +26,22 @@ import {
 } from '@/app/legal/content'
 import { SURVIVORS } from '@/core/accountDeletion'
 
+/**
+ * THE MARKERS STILL OPEN IN THE APP'S TERMS, WRITTEN OUT BY HAND.
+ *
+ * ⚠️ `PLACEHOLDERS` is the REFUSAL list — nothing carrying one of those may ever render as final,
+ * and that list does not shrink when a decision is made. This is the different question: which of
+ * them are unresolved *today*. It exists so that resolving one is a diff a human reviews, never a
+ * gate quietly going green because there was less left to find.
+ *
+ * ⚠️ 2026-09-06 — `[DATE]` left this list. The founder set the date to 6 September 2026, which was
+ * always theirs to set: `[DATE]` marked "nobody has decided", not "a lawyer must decide". THE
+ * DOCUMENT IS STILL A DRAFT and `DRAFT` is still true. A date is not a review, and the four below
+ * are still open — including §8's refund sentence, which is not waiting on counsel but is simply
+ * unwritten, and which says so in its own text.
+ */
+const OPEN = ['[LAWYER REVIEW', '[NN]', '[URL]', '[Describe the refund'] as const
+
 const ROOT = resolve(__dirname, '../..')
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8')
 
@@ -45,7 +61,7 @@ describe('a draft legal page never renders as live', () => {
 
     const err = draftGuardError(false, DOCS)
     expect(err).not.toBeNull()
-    for (const p of PLACEHOLDERS) expect(err).toContain(p)
+    for (const p of OPEN) expect(err).toContain(p)
     expect(err).toContain('terms:')
   })
 
@@ -67,12 +83,27 @@ describe('a draft legal page never renders as live', () => {
      * placeholder. `unresolvedPlaceholders` reads the same three fields for the same reason.
      */
     const shipped = `${TERMS.title}\n${TERMS.updated}\n${TERMS.body}`
+
+    // ⚠️ BOTH DIRECTIONS, AND THAT IS THE POINT. An OPEN marker that has vanished was resolved by
+    // somebody without recording it; a RESOLVED one that has come back means the document regressed.
+    // Neither can happen quietly, because both change this list and this list is written by hand.
     for (const p of PLACEHOLDERS) {
-      expect(count(md, p), `${p} missing from docs/app-terms-of-service.md`).toBeGreaterThan(0)
-      expect(count(shipped, p), `${p} was dropped between the .md and the shipped document`)
+      const open = (OPEN as readonly string[]).includes(p)
+      if (open) {
+        expect(count(md, p),
+          `${p} is listed as OPEN but is gone from docs/app-terms-of-service.md — if that decision ` +
+          `was made, take it out of OPEN in the same commit and say who made it`).toBeGreaterThan(0)
+      } else {
+        expect(count(md, p),
+          `${p} was resolved, but it is back in docs/app-terms-of-service.md`).toBe(0)
+      }
+      // Verbatim between source and shipped either way — this is what catches a marker resolved on
+      // one side only, which is how the page and the document start telling different stories.
+      expect(count(shipped, p), `${p} differs between the .md and the shipped document`)
         .toBe(count(md, p))
     }
-    expect(unresolvedPlaceholders(TERMS).length).toBe(PLACEHOLDERS.length)
+    expect([...unresolvedPlaceholders(TERMS)].sort(), 'the markers actually left in the document ' +
+      'are not the ones OPEN says are left').toEqual([...OPEN].sort())
   })
 
   it('the lifted date line still says what the source document says', () => {
@@ -107,7 +138,7 @@ describe('a draft legal page never renders as live', () => {
     const { default: LegalPage } = await import('@/app/legal/[slug]/page')
     const html = renderToStaticMarkup(await LegalPage({ params: Promise.resolve({ slug: 'terms' }) }))
     const text = html.replace(/<[^>]*>/g, ' ')
-    for (const p of PLACEHOLDERS) expect(text, `${p} is not visible on the rendered page`).toContain(p)
+    for (const p of OPEN) expect(text, `${p} is not visible on the rendered page`).toContain(p)
     expect(text).toContain('has not been reviewed by a lawyer')
   })
 })

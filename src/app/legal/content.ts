@@ -53,12 +53,17 @@ export const TERMS: LegalDoc = {
   title: 'Terms of Service',
   /**
    * ⚠️ THE DOCUMENT'S OWN "Last updated" LINE, LIFTED OUT OF THE BODY — the page header renders it,
-   * so leaving it in the body too printed it twice on one screen. It is still a PLACEHOLDER and is
-   * still rendered as one: `unresolvedPlaceholders` reads `title`, `updated` AND `body`, so moving
-   * it here did not move it out of the guard's sight. `legalDocs.test.ts` asserts this field equals
-   * the source document's own date line, so the lift cannot quietly resolve it.
+   * so leaving it in the body too printed it twice on one screen. `legalDocs.test.ts` asserts this
+   * field equals the source document's own date line, so the two cannot drift.
+   *
+   * ⚠️ THIS WAS `[DATE]` UNTIL 2026-09-06 AND IT IS NOT A TIDY-UP. The founder set the date; that
+   * is a decision they were entitled to make and `[DATE]` only ever marked "nobody has decided".
+   * THE DOCUMENT IS STILL A DRAFT — `DRAFT` is true, the banner is up, and four markers are still
+   * open (§3's and §15's [NN] windows, §15's [URL], §8's unwritten refund sentence, and nine
+   * [LAWYER REVIEW] notes). A date is not a review. See `OPEN` in the gate, which is where a
+   * resolved marker has to be recorded by hand so one can never go quiet on its own.
    */
-  updated: '[DATE]',
+  updated: '6 September 2026',
   /**
    * ⚠️ VERBATIM from `docs/app-terms-of-service.md`, minus exactly two things, both structural and
    * both rendered elsewhere on the same page: its markdown H1 (the page draws its own <h1> from

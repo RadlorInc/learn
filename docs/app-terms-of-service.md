@@ -1,6 +1,6 @@
 # Terms of Service — Milo by Radlor
 
-**Last updated: [DATE]**
+**Last updated: 6 September 2026**
 
 ---
 
