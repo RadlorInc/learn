@@ -127,6 +127,45 @@ Everything below is a corollary of that one sentence:
   but "what could hold this, and what would they reach?" See also **@docs/security.md** — the
   `SECURITY DEFINER` inventory exists precisely because objects created for good reasons accumulate
   reach nobody re-examines.
+- ⚠️⚠️ **"I CANNOT SEE" AND "THERE IS NOTHING TO SEE" MUST NEVER RENDER AS THE SAME RESULT.**
+  Founder's line, 2026-09-05, called out as the most reusable of the day. This is the root the
+  positive-control rule grows from, and it is worth stating above that rule rather than under it:
+  a blind instrument and a clean subject produce identical output unless you deliberately make
+  them different. Every "no rows", "no matches", "no cookies", "no third-party requests", "0
+  findings" is two states wearing one face.
+  ⚠️ **AND THE FIX IS NOT ONLY A POSITIVE CONTROL — IT IS ALSO A DISTINCT EXIT AND A DISTINCT
+  MESSAGE.** A control tells YOU the probe was live; the exit code and the wording tell whatever
+  reads the run next. So: exit **2** for "could not look", **1** for "looked and found a defect",
+  **0** only for "looked and it was clean" — three states, three codes, never two.
+  The instance that earned the third clause: `check:migrations` compares a production ledger
+  against files on disk, and its positive control is "at least one ledger row resolved to a local
+  file". In a repo owning ONE such file, deleting that file zeroes the control — so a real deletion
+  printed `PROBE VOID` and nothing else. Honest, and useless: the message named no migration, and
+  the branch a genuine deletion lands in is exactly the branch that said the least. **A void
+  result still has to say what it failed to resolve.** It now lists them, and names the missing
+  migration. ⚠️ When a check reports "I cannot see", ask what it would have needed to see and print
+  THAT — the blind branch is not an excuse to stop being useful, it is the branch a reader is most
+  likely to meet on a bad day.
+- ⚠️⚠️ **A MEASUREMENT WRITTEN INTO PROSE IS TRUE ONLY ON THE DAY IT WAS TAKEN.** Founder's rule,
+  2026-09-05, after **four instances surfaced in a single day**: a migration comment stating "RLS is
+  on and there are deliberately no policies — do not add one" four days after production got the
+  policy the live form depends on; two paragraphs in `radlor-site/handoff.md` describing the
+  waitlist as "0 policies, no grants, 0 rows" and "empty and ready" when it had all three and a real
+  signup; and the retention number repeated in three files.
+  A measured fact written in the present tense **reads as a current fact for as long as nobody
+  re-measures**, and prose has no mechanism that can go red. The danger is not that it is wrong —
+  it is that it is wrong AND authoritative, and the next reader obeys it. The migration comment was
+  an instruction to revoke the grant the signup form depends on.
+  ⚠️ **SO, WHERE A DOCUMENT STATES A FACT ABOUT THE LIVE SYSTEM, IT MUST EITHER BE GATED AGAINST
+  THAT SYSTEM OR REPLACED WITH A POINTER TO THE CHECK THAT RE-MEASURES IT.** Both halves are real
+  moves. Gated: `/privacy` claims no analytics and no cookies, and `check:site-claims` loads the
+  live pages and fails if that stops being true. Pointed: the waitlist paragraph in that handoff now
+  says *"`npm run check:waitlist-rls` is what tells you the live posture; prefer running it to
+  trusting this paragraph."* **The pointer is the standard move, not a one-off** — it is cheap,
+  it never goes stale, and it moves the authority to the thing that can fail.
+  ⚠️ If you cannot gate it and cannot point at a check, **date it in the sentence itself** and write
+  it in the past tense: "as measured 2026-09-05" is honest; the same words in the present tense are
+  a claim about tomorrow that nobody has the means to keep.
 - **Make it fail before you believe it.** Plant the defect it exists for, or point it at a known
   past one. A new check's green first run is the least informative result there is — equally
   consistent with "nothing is wrong" and "this cannot see anything".
