@@ -42,6 +42,10 @@ jobs:
       - name: Open or update the red-main issue
         env:
           GH_TOKEN: ${{ github.token }}
+          # ⚠️ gh needs a repo context and this job has no checkout — without -R every command
+          # dies with "not a git repository". Found by driving it: the notifier would have been
+          # silent on a real red main, which is the exact failure it exists to prevent.
+          REPO: ${{ github.repository }}
           SIM: ${{ github.event_name == 'workflow_dispatch' }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
           RUN_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -64,10 +68,10 @@ jobs:
           contained to CI."
           fi
           # One issue, reused — a new issue per red commit would be its own kind of noise.
-          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number // empty')
+          EXISTING=$(gh issue list -R "$REPO" --state open --search "$TITLE in:title" --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
-            gh issue comment "$EXISTING" --body "$BODY"
+            gh issue comment -R "$REPO" "$EXISTING" --body "$BODY"
             echo "commented on #$EXISTING"
           else
-            gh issue create --title "$TITLE" --body "$BODY"
+            gh issue create -R "$REPO" --title "$TITLE" --body "$BODY"
           fi
