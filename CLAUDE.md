@@ -304,6 +304,47 @@ Everything below is a corollary of that one sentence:
   Found by the suite going red on correct code during the sweep that removed the character windows —
   the sweep paying for itself inside itself. Where you cannot name such a character, walk the
   delimiters (`src/__tests__/_window.ts`).
+- ⚠️⚠️ **A FIXTURE IS DERIVED ENTIRELY, OR THE UN-DERIVED PART IS NAMED AND GATED. "MOSTLY
+  DERIVED" IS UNDERIVED AT EXACTLY THE POINT WHERE THE TWO SCHEMAS CAN DISAGREE.** Founder's rule,
+  2026-09-05. `adminMetrics.test.ts` built its tables by generating DDL from production's
+  `information_schema` — and then hand-wrote one line, the enum: `create type public.profile_role`.
+  There is no such type; production calls it `user_role`. So the migration's
+  `alter type public.profile_role add value 'admin'` succeeded against the fixture and failed
+  against every real database with `type "public.profile_role" does not exist`, and **`ci /
+  rls-tests` was red on main for five commits while the local suite passed every time.**
+  **The hand-written part is BY DEFINITION where drift lives** — everything derived is correct by
+  construction, so the one line somebody typed is the only place the two schemas can differ, and it
+  is the last place anyone looks because the fixture "came from production". A fixture that invents
+  the schema agrees with the bug it exists to catch.
+  So: derive all of it, or **name the un-derived part and gate it against the same source the real
+  environment uses.** The repair here reads the enum name out of `supabase/schema/baseline_schema.sql`
+  — the file CI stages as its own first migration — and requires the migration to alter that name;
+  it cannot drift with either side, and it has a positive control so a moved `profiles` block cannot
+  make it vacuous. ⚠️ The corrected fixture now reproduces the CI failure locally, byte-identical,
+  in 1.35s instead of a CI round trip — which is the test the fixture should always have been.
+
+- ⚠️⚠️ **CI IS NOT A GATE UNLESS SOMETHING STOPS A RED COMMIT. MEASURE WHETHER IT DOES BEFORE
+  TRUSTING IT.** Measured 2026-09-05, after five red commits went unnoticed for a day: `main` has
+  **no branch protection, no required status check, and no workflow reacting to a failed run** —
+  and Vercel builds on push independently of GitHub Actions, so **all five red commits reached
+  production with state READY.** A red CI run stopped nothing and told nobody. Two separate
+  failures that compound into "nothing at all stands between a broken commit and production".
+  ⚠️ And the resolution that does NOT work is "I will check CI after pushing" — a promise to
+  remember. This repo has swapped several of those for mechanisms and **only the mechanisms held**
+  (`red-main.yml` files an issue on a red main; the real gate is moving the production deploy behind
+  CI, which is one Vercel setting). **Local gates green is not the same claim as "this works":** the
+  difference is precisely the environment that rebuilds the schema from scratch instead of already
+  carrying it.
+
+- ⚠️ **A TIMEOUT FAILURE IS NOT AN ASSERTION FAILURE — ASK WHAT ELSE WAS RUNNING BEFORE BELIEVING
+  IT.** Three tests "failed" at 112s, 49s and 31s and were reported as regressions; on a settled
+  machine the same three take **16.8s, 1.9s and 4.6s against budgets of 60s, 20s and 30s — 28%, 9%
+  and 15%**. The machine was at load average 20.6 with 18 vitest processes, most of them mine, from
+  running concurrent suites. ⚠️ **AND THE MARGIN MUST BE READ AGAINST THE TEST'S OWN TIMEOUT, NOT
+  THE GLOBAL DEFAULT.** I reported one as "84% of budget, dangerously close" by dividing by the
+  20,000 default while the test carries its own `{ timeout: 60000 }` — a wrong number that nearly
+  bought a pointless refactor. Read the override before quoting a percentage.
+
 - ⚠️ **A FIXTURE IS A SECOND COPY OF THE SCHEMA. DERIVE IT.** A hand-written seed drifts from the
   shape the app actually stores, and then the gate reports on a state the app can never be in —
   failing about a world that does not exist. Where a fixture must exist, build it with the same

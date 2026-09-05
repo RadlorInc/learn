@@ -162,3 +162,51 @@ journey, or a `HEAD` on the Supabase REST endpoint — and alert on that separat
 **SLOs:** 99.9% availability · p95 page < 1s · p95 RPC < 300ms · error rate < 0.5%. Alert on SLO burn rate, not raw metrics.
 
 See also [`docs/runbooks/rollback.md`](runbooks/rollback.md) and [`docs/security.md`](security.md).
+
+## The production deploy is not gated by CI — and what it would cost to gate it
+
+**Measured 2026-09-05.** `ci / rls-tests` failed on five consecutive commits to `main`
+(`2d55790`, `9b82cea`, `ece7281`, `3e1b9d5`, `020a051`) and **all five deployed to production
+anyway**, `state: READY`, `target: production`. There is no branch protection on `main`, no
+required status check, and — until `red-main.yml` — nothing that reacted to a failed run.
+
+Vercel's Git integration builds on push, independently of GitHub Actions. CI has never gated a
+deploy on this repo.
+
+### What exists now
+
+`red-main.yml` files (or comments on) a GitHub issue when CI fails on `main`. **That is a signal,
+not a gate** — it makes a red main impossible to miss; it does not stop the commit going live.
+Both of its branches were driven by hand before being trusted (it creates once, comments after),
+and its first version could not have fired at all: `gh` needs `-R` in a job with no checkout.
+
+### The cheapest real gate — one Vercel setting plus ~10 lines
+
+Point Vercel's **Production Branch** at `release` instead of `main`, then have `deploy.yml` push
+`main` to `release` only after CI passes:
+
+```yaml
+  promote:
+    needs: ci                     # red CI -> this job never runs -> release never moves
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: git push origin HEAD:release
+```
+
+Why this shape rather than the alternatives:
+
+- **it needs no Vercel token** — the promotion is a git push, using `GITHUB_TOKEN`;
+- **it does not change how anyone works** — you still push to `main`;
+- **preview deploys keep working** from `main`, so you can still look at a branch before it is live;
+- **branch protection would not work here**: required status checks only gate *merges via PR*, and
+  a direct push to `main` runs its checks after the push has already happened;
+- **Vercel's "Ignored Build Step" would not work either**: Vercel starts building within seconds of
+  the push, while CI takes minutes, so the commit status is almost always still `pending` — treating
+  pending as "deploy" makes it useless and as "don't deploy" blocks everything.
+
+⚠️ **Not implemented, deliberately.** It changes what "pushed to main" means, and that is the
+founder's call. Until it is, assume every commit on `main` is live within about two minutes,
+whatever CI says.
