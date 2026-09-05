@@ -223,21 +223,44 @@ begin
                'rate', case when started > 0 then round(finished::numeric / started, 3) end) order by rate_sort, chapter), '[]'::json)
       from (
         select c.id as chapter,
-               (select count(distinct e.learner_id) from public.learner_events e
-                 join public.admin_scope_learners l on l.id = e.learner_id
-                where e.event = 'chapter_open' and e.props->>'chapter' = c.id) as started,
+               -- ⚠️ STARTED = OPENED **OR** COMPLETED, AND THE UNION IS LOAD-BEARING.
+               -- `chapter_open` lives in learner_events, which is PURGED AT 90 DAYS; `sessions`
+               -- are kept for ever. So a completion whose chapter_open has aged out would give
+               -- finished > started and a completion rate above 100%. Production shows no such
+               -- row today only because the oldest event is 78 days old — the first purge is
+               -- 2026-09-27. That is the funnel bug's exact shape: true by luck, about to stop
+               -- being. A learner who completed a chapter definitionally started it, so counting
+               -- them makes `finished <= started` true BY CONSTRUCTION rather than by assertion.
+               (select count(distinct x.learner_id) from (
+                  select e.learner_id from public.learner_events e
+                    join public.admin_scope_learners l on l.id = e.learner_id
+                   where e.event = 'chapter_open' and e.props->>'chapter' = c.id
+                  union
+                  select s.learner_id from public.sessions s
+                    join public.admin_scope_learners l on l.id = s.learner_id
+                   where s.chapter = c.id) x) as started,
                (select count(distinct s.learner_id) from public.sessions s
                  join public.admin_scope_learners l on l.id = s.learner_id
                 where s.chapter = c.id) as finished,
-               case when (select count(distinct e.learner_id) from public.learner_events e
-                           join public.admin_scope_learners l on l.id = e.learner_id
-                          where e.event = 'chapter_open' and e.props->>'chapter' = c.id) > 0
+               case when (select count(distinct x.learner_id) from (
+                            select e.learner_id from public.learner_events e
+                              join public.admin_scope_learners l on l.id = e.learner_id
+                             where e.event = 'chapter_open' and e.props->>'chapter' = c.id
+                            union
+                            select s.learner_id from public.sessions s
+                              join public.admin_scope_learners l on l.id = s.learner_id
+                             where s.chapter = c.id) x) > 0
                     then (select count(distinct s.learner_id) from public.sessions s
                            join public.admin_scope_learners l on l.id = s.learner_id
                           where s.chapter = c.id)::numeric
-                       / (select count(distinct e.learner_id) from public.learner_events e
-                           join public.admin_scope_learners l on l.id = e.learner_id
-                          where e.event = 'chapter_open' and e.props->>'chapter' = c.id)
+                       / (select count(distinct x.learner_id) from (
+                            select e.learner_id from public.learner_events e
+                              join public.admin_scope_learners l on l.id = e.learner_id
+                             where e.event = 'chapter_open' and e.props->>'chapter' = c.id
+                            union
+                            select s.learner_id from public.sessions s
+                              join public.admin_scope_learners l on l.id = s.learner_id
+                             where s.chapter = c.id) x)
                end as rate_sort
         from public.chapters c
       ) f where started > 0),
@@ -259,7 +282,10 @@ begin
     'diagnostic', (
       select json_build_object(
         'completed', count(*) filter (where d.status = 'completed'),
-        'in_progress', count(*) filter (where d.status = 'in_progress'))
+        'in_progress', count(*) filter (where d.status = 'in_progress'),
+        -- returned so `completed + in_progress = total` is CHECKABLE. If a third status ever
+        -- appears it shows up as a broken invariant rather than as rows quietly missing.
+        'total', count(*))
       from public.diagnostic_sessions d
       join public.admin_scope_learners l on l.id = d.learner_id)
   ) into v;

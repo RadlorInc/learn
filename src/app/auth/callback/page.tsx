@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { getCurrentSession, onAuthStateChange, logAuthEvent } from '@/data/auth'
+import { getCurrentSession, onAuthStateChange } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
 
 export default function AuthCallbackPage() {
@@ -33,10 +33,10 @@ export default function AuthCallbackPage() {
         (event, session) => {
           if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
             subscription.unsubscribe()
-            // A session materialising HERE is a fresh sign-in (OAuth exchange or the
-            // email-confirmation landing) — password logins log inside signInWithEmail
-            // and never route through this exchange wait, so no double-log.
-            void logAuthEvent('login', session.user.id)
+            // ⚠️ NO LOGGING HERE ANY MORE. It used to log, and the early return above — which fires
+            // when a session already exists, i.e. almost always, because supabase-js processes the
+            // OAuth hash during client construction — meant this line was usually never reached.
+            // The global listener in infra/AuthEventLogger records the sign-in wherever it happens.
             goHome()
           }
         }

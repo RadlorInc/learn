@@ -8,6 +8,8 @@
 import { useEffect, useState } from 'react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/data/supabase/client'
+import { checkPage, type Violation } from '@/features/admin/invariants'
+import { reportCrash } from '@/infra/reportCrash'
 
 export const S = {
   page:  { padding: 24, maxWidth: 1100, margin: '0 auto', fontFamily: 'ui-sans-serif, system-ui', color: '#1d2430' } as const,
@@ -32,7 +34,7 @@ export function useMetrics(page: 'overview' | 'learning' | 'funnel') {
   // ⚠️ `err` MUST BE RENDERABLE, and the page must never sit on "Loading…" for ever. Before this,
   // any failure that was not a 404 left `data` undefined and the page showed "Loading…" with no end
   // — indistinguishable from a slow network, which is how a real failure gets mistaken for latency.
-  const [state, setState] = useState<{ data?: any; minCohort?: number; err?: string; rid?: string }>({})
+  const [state, setState] = useState<{ data?: any; minCohort?: number; err?: string; rid?: string; violations?: Violation[] }>({})
   useEffect(() => {
     let dead = false
     ;(async () => {
@@ -51,7 +53,21 @@ export function useMetrics(page: 'overview' | 'learning' | 'funnel') {
         setState({ err: `Could not load metrics (HTTP ${r.status}).`, rid: j?.rid })
         return
       }
-      setState({ data: j.data, minCohort: j.minCohort, rid: j.rid })
+      /**
+       * ⚠️ EVALUATED ON THE REAL RESPONSE, EVERY LOAD. The funnel bug was on screen — 4 larger
+       * than 3 — and nobody was looking. A machine looking catches it instantly, so a page that
+       * has DETECTED an impossible number says so rather than drawing it as though it were fine.
+       * Reported server-side too: a warning only the person already looking can see is the same
+       * silence in a different shape.
+       */
+      const violations = checkPage(page, j.data)
+      if (violations.length) {
+        reportCrash(
+          new Error(`admin invariant violated on /${page}: ` +
+                    violations.map(v => `[${v.id}] ${v.detail}`).join(' | ')),
+          'admin.invariant')
+      }
+      setState({ data: j.data, minCohort: j.minCohort, rid: j.rid, violations })
     })().catch(e => {
       // A thrown fetch (offline, DNS, CORS) previously left the page on "Loading…" for ever.
       if (!dead) setState({ err: `Could not load metrics: ${e instanceof Error ? e.message : String(e)}` })
@@ -59,6 +75,28 @@ export function useMetrics(page: 'overview' | 'learning' | 'funnel') {
     return () => { dead = true }
   }, [page])
   return state
+}
+
+/**
+ * Shown ABOVE the panels when a payload violates an invariant. Loud on purpose: the number below
+ * it is impossible, so the reader must not take it at face value while it is up.
+ */
+export function InvariantWarning({ violations }: { violations?: Violation[] }) {
+  if (!violations?.length) return null
+  return (
+    <div style={{ ...S.card, background: '#fff4e0', borderColor: '#e0b45a' }}>
+      <h2 style={{ ...S.h2, color: '#8a4b00' }}>
+        ⚠️ {violations.length === 1 ? 'A number on this page is impossible' : `${violations.length} numbers on this page are impossible`}
+      </h2>
+      <p style={S.sub}>
+        The data failed a check that no correct dataset can fail, so at least one figure below is
+        wrong. Reported to the server. Do not act on this page until it clears.
+      </p>
+      <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#6b4a1a', lineHeight: 1.7 }}>
+        {violations.map(v => <li key={v.id + v.detail}><code>{v.id}</code> — {v.detail}</li>)}
+      </ul>
+    </div>
+  )
 }
 
 /** The one place a load failure is rendered. Always shows the request id when the server sent one,

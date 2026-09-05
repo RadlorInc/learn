@@ -1,8 +1,8 @@
 'use client'
-import { S, N, Def, NotYet, Computed, useMetrics, LoadError } from '../_parts'
+import { S, N, Def, NotYet, Computed, useMetrics, LoadError, InvariantWarning } from '../_parts'
 
 export default function Funnel() {
-  const { data, err, rid } = useMetrics('funnel')
+  const { data, err, rid, violations } = useMetrics('funnel')
   if (err) return <LoadError err={err} rid={rid} />
   if (!data) return <div style={S.page}><p style={S.sub}>Loading…</p></div>
 
@@ -11,6 +11,7 @@ export default function Funnel() {
 
   return (
     <div style={S.page}>
+      <InvariantWarning violations={violations} />
       <div style={S.card}>
         <h2 style={S.h2}>Funnel</h2>
         <Def>
@@ -86,12 +87,13 @@ export default function Funnel() {
         shows="Median time in a session, with the mean beside it, and the inactivity timeout stated."
         why="sessions.started_at was never a start time — the RPC never supplied it, so it took the
              column default now() at INSERT while completed_at is stamped on the client. All 49 rows
-             had a NEGATIVE duration. Fixed 2026-09-05, but only sessions played AFTER that fix
-             carry a real start; the 49 older rows are backfilled to NULL rather than left lying."
-        since="2026-09-05, once the migration is applied."
-        meaningful="After ~50 completed sessions with a real start — a few weeks at current volume.
-                    It will be shown as a MEDIAN with an event-span caveat: the proxy ends at the
-                    last recorded event, so it under-measures the tail."
+             had a NEGATIVE duration. Fixed and APPLIED to production on 2026-09-05; the 49 legacy
+             rows are backfilled to NULL rather than left lying. No chapter has been completed since,
+             so there is nothing yet to measure."
+        since="2026-09-05 — the schema records it; the first row arrives with the next completed chapter."
+        meaningful="After ~50 completed sessions with a real start. It will be shown as a MEDIAN with
+                    an event-span caveat: the proxy ends at the last recorded event, so it
+                    under-measures the tail."
       />
       <Computed at={data.computed_at} />
     </div>

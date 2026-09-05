@@ -1,8 +1,8 @@
 'use client'
-import { S, N, Def, Bars, NotYet, Computed, useMetrics, LoadError } from './_parts'
+import { S, N, Def, Bars, NotYet, Computed, useMetrics, LoadError, InvariantWarning } from './_parts'
 
 export default function Overview() {
-  const { data, err, rid } = useMetrics('overview')
+  const { data, err, rid, violations } = useMetrics('overview')
   if (err) return <LoadError err={err} rid={rid} />
   if (!data) return <div style={S.page}><p style={S.sub}>Loading…</p></div>
 
@@ -13,6 +13,7 @@ export default function Overview() {
 
   return (
     <div style={S.page}>
+      <InvariantWarning violations={violations} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div style={S.card}>
           <h2 style={S.h2}>Total accounts</h2>
@@ -64,12 +65,14 @@ export default function Overview() {
       <NotYet
         title="Logins over time"
         shows="Sign-ins per day, split by method (Google / email)."
-        why="auth_events has 1 row against at least 18 real logins since it was created. The write is
-             fired from three scattered call sites and its failure is swallowed, so six weeks passed
-             with nobody noticing. The repair is a single global auth-state listener with the write
-             made observable — scheduled, not done."
-        since="Not yet recording."
-        meaningful="About a week after that fix ships and one login on each method has been confirmed."
+        why="The write existed but almost never fired: auth_events held ONE row against at least 18
+             real logins in six weeks. Two causes, both now gone — it was fired from three scattered
+             call sites whose failures were swallowed, and the OAuth callback returned early before
+             reaching its logging line. A single global onAuthStateChange listener now records every
+             sign-in, on every provider and route, and reports a failed write instead of discarding it."
+        since="2026-09-05 — recording from this deploy. No data before that date exists or ever will."
+        meaningful="Once a handful of real sign-ins have accumulated — days, not weeks. The first
+                    two (one Google, one email) are a deliberate check, not data."
       />
       <Computed at={data.computed_at} />
     </div>

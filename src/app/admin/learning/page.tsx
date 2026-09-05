@@ -1,27 +1,30 @@
 'use client'
-import { S, N, Def, Bars, NotYet, Computed, useMetrics, LoadError } from '../_parts'
+import { S, N, Def, Bars, NotYet, Computed, useMetrics, LoadError, InvariantWarning } from '../_parts'
 
 export default function Learning() {
-  const { data, err, rid } = useMetrics('learning')
+  const { data, err, rid, violations } = useMetrics('learning')
   if (err) return <LoadError err={err} rid={rid} />
   if (!data) return <div style={S.page}><p style={S.sub}>Loading…</p></div>
   const c = data.chapters_per_learner
 
   return (
     <div style={S.page}>
+      <InvariantWarning violations={violations} />
       <div style={S.card}>
         <h2 style={S.h2}>Chapters completed per learner</h2>
         <Def>
           Numerator: <strong>distinct</strong> chapters with at least one completed practice session
           (a child replaying one chapter ten times has completed one).
           <strong> Two denominators, both shown</strong> — they are different numbers with the same
-          name, which is how this metric usually misleads.
+          name, which is how this metric usually misleads. ⚠️ The second is learners who have
+          <strong>completed</strong> at least one chapter, not opened one; this panel said
+          &ldquo;opened&rdquo; until 2026-09-05, which was the same mislabel one layer up.
         </Def>
         <div style={{ display: 'flex', gap: 36, flexWrap: 'wrap' }}>
           <Stat label="Mean · all learners"     v={c.mean_all}      sub={`n = ${c.n_all}`} />
           <Stat label="Median · all learners"   v={c.median_all}    sub={`n = ${c.n_all}`} />
-          <Stat label="Mean · opened ≥1"        v={c.mean_engaged}  sub={`n = ${c.n_engaged}`} />
-          <Stat label="Median · opened ≥1"      v={c.median_engaged} sub={`n = ${c.n_engaged}`} />
+          <Stat label="Mean · completed ≥1"        v={c.mean_engaged}  sub={`n = ${c.n_engaged}`} />
+          <Stat label="Median · completed ≥1"      v={c.median_engaged} sub={`n = ${c.n_engaged}`} />
         </div>
         <p style={{ ...S.sub, marginTop: 14, marginBottom: 6 }}>
           Distribution — the shape the mean hides. Zero-activity learners are <strong>included</strong>

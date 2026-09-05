@@ -7,6 +7,7 @@
  * client, so infrastructure never leaks into the UI layer.
  */
 import { createClient } from '@/data/supabase/client'
+import { record } from '@/infra/AuthEventLogger'
 import type { AuthChangeEvent, EmailOtpType, Session, Subscription, User } from '@supabase/supabase-js'
 
 /** Current session (local storage read, no network). Null when signed out. */
@@ -48,20 +49,22 @@ export function setPassword(password: string) {
  *  never throws, never blocks the auth flow it rides on. `client_id` dedupes retries.
  *  NOTE `logout` only captures the explicit sign-out tap — closing the tab logs nothing
  *  (true of any SPA); play activity/retention math reads `sessions`, not this. */
-export function logAuthEvent(event: 'login' | 'logout', userId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- learner_events pattern: table not in generated types
-  return (createClient() as any)
-    .from('auth_events')
-    .insert({ user_id: userId, event, client_id: crypto.randomUUID() })
-    .then(() => undefined, () => undefined)
+export function logAuthEvent(event: 'login' | 'logout', userId: string): Promise<boolean> {
+  // ⚠️ NOW A THIN FORWARDER TO THE OBSERVABLE WRITE. This used to end in
+  // `.then(() => undefined, () => undefined)` — a failure vanished, and `auth_events` held ONE row
+  // against at least 18 real logins over six weeks with nobody able to notice.
+  // ⚠️ AND SIGN-INS ARE NO LONGER LOGGED FROM HERE. A single global `onAuthStateChange` listener
+  // (infra/AuthEventLogger) records every login, on every provider and route, and cannot race the
+  // client attaching its token. This remains only for LOGOUT, which has no auth-state event of its
+  // own that fires reliably before the token is revoked.
+  return record(event, userId)
 }
 
 /** Email + password sign-in. Logs a durable `login` event on success. */
 export function signInWithEmail(email: string, password: string) {
-  return createClient().auth.signInWithPassword({ email, password }).then((res) => {
-    if (!res.error && res.data.user) void logAuthEvent('login', res.data.user.id)
-    return res
-  })
+  // No logging here: the global listener records the SIGNED_IN this produces. Logging in both
+  // places would double-count, and logging only here would miss every OAuth sign-in.
+  return createClient().auth.signInWithPassword({ email, password })
 }
 
 /**
