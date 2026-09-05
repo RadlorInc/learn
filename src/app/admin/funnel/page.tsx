@@ -1,9 +1,9 @@
 'use client'
-import { S, N, Def, NotYet, Computed, useMetrics } from '../_parts'
+import { S, N, Def, NotYet, Computed, useMetrics, LoadError } from '../_parts'
 
 export default function Funnel() {
-  const { data, err } = useMetrics('funnel')
-  if (err) return <div style={S.page}><p>{err}</p></div>
+  const { data, err, rid } = useMetrics('funnel')
+  if (err) return <LoadError err={err} rid={rid} />
   if (!data) return <div style={S.page}><p style={S.sub}>Loading…</p></div>
 
   const steps = data.steps ?? []

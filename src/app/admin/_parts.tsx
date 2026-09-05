@@ -29,7 +29,10 @@ export function Def({ children }: { children: React.ReactNode }) {
 }
 
 export function useMetrics(page: 'overview' | 'learning' | 'funnel') {
-  const [state, setState] = useState<{ data?: any; minCohort?: number; err?: string }>({})
+  // ⚠️ `err` MUST BE RENDERABLE, and the page must never sit on "Loading…" for ever. Before this,
+  // any failure that was not a 404 left `data` undefined and the page showed "Loading…" with no end
+  // — indistinguishable from a slow network, which is how a real failure gets mistaken for latency.
+  const [state, setState] = useState<{ data?: any; minCohort?: number; err?: string; rid?: string }>({})
   useEffect(() => {
     let dead = false
     ;(async () => {
@@ -43,13 +46,39 @@ export function useMetrics(page: 'overview' | 'learning' | 'funnel') {
       // somebody who may not see it. The real boundary is admin_assert() in the database; this is
       // the part that declines to tell them there is a door.
       if (r.status === 404) { notFound(); return }
-      if (!r.ok) { setState({ err: `Could not load metrics (HTTP ${r.status}).` }); return }
-      const j = await r.json()
-      setState({ data: j.data, minCohort: j.minCohort })
-    })()
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok) {
+        setState({ err: `Could not load metrics (HTTP ${r.status}).`, rid: j?.rid })
+        return
+      }
+      setState({ data: j.data, minCohort: j.minCohort, rid: j.rid })
+    })().catch(e => {
+      // A thrown fetch (offline, DNS, CORS) previously left the page on "Loading…" for ever.
+      if (!dead) setState({ err: `Could not load metrics: ${e instanceof Error ? e.message : String(e)}` })
+    })
     return () => { dead = true }
   }, [page])
   return state
+}
+
+/** The one place a load failure is rendered. Always shows the request id when the server sent one,
+ *  because the client's 404/502 is deliberately uninformative and the id is what ties it to a log
+ *  line saying which of route-missing / not-an-admin / query-failed it actually was. */
+export function LoadError({ err, rid }: { err: string; rid?: string }) {
+  return (
+    <div style={S.page}>
+      <div style={{ ...S.card, borderColor: '#e0b4b4', background: '#fdf6f6' }}>
+        <h2 style={S.h2}>Couldn&rsquo;t load this page</h2>
+        <p style={S.sub}>{err}</p>
+        {rid
+          ? <p style={{ ...S.sub, marginBottom: 0 }}>
+              Request id <code style={{ background: '#f0f3f7', padding: '1px 6px', borderRadius: 4 }}>{rid}</code>
+              {' '}— the server log for this id says which of the three it was.
+            </p>
+          : <p style={{ ...S.sub, marginBottom: 0 }}>No request id — the request did not reach the server.</p>}
+      </div>
+    </div>
+  )
 }
 
 /** A bar chart. `incompleteKey` marks today, which is a partial day and must not read as a fall. */

@@ -278,14 +278,30 @@ begin
   with acct as (select id, created_at from public.admin_scope_accounts),
   -- Every step is measured on the ACCOUNT, so all four share one denominator. Mixing accounts and
   -- learners inside one funnel is how a drop-off gets invented out of a unit change.
+  -- ⚠️⚠️ THE STEPS ARE NESTED, AND THEY WERE NOT AT FIRST. Written as four INDEPENDENT predicates
+  -- on an account, a later step can EXCEED an earlier one — and it did: flagging the founder's two
+  -- accounts internal took the funnel to 9 -> 6 -> 3 -> 4, with more accounts "coming back" than
+  -- had completed anything. That is arithmetically impossible for a funnel and makes every "lost
+  -- here" figure wrong, because returning does not require completing. It was invisible while the
+  -- earlier populations happened to come out monotonic (11->7->5->5, 10->6->4->4) — a defect hidden
+  -- by luck in the data, which is the worst way to not have one.
+  -- Each step now REQUIRES the one before it, so a drop is a real drop.
   opened as (
     select distinct l.created_by id from public.admin_scope_learners l
     join public.learner_events e on e.learner_id = l.id and e.event = 'chapter_open'),
   finished as (
     select distinct l.created_by id from public.admin_scope_learners l
-    join public.sessions s on s.learner_id = l.id),
+    join public.sessions s on s.learner_id = l.id
+    where l.created_by in (select id from opened)),
   -- "Second session" = came back on a DIFFERENT DAY. Two sessions in one sitting is one visit.
   returned as (
+    select l.created_by id from public.admin_scope_learners l
+    join public.learner_events e on e.learner_id = l.id and e.event = 'session_start'
+    where l.created_by in (select id from finished)
+    group by l.created_by having count(distinct (e.client_ts at time zone v_tz)::date) >= 2),
+  -- Kept separately because it is genuinely interesting and is NOT a funnel step: accounts that
+  -- came back on another day WITHOUT ever finishing a chapter.
+  returned_any as (
     select l.created_by id from public.admin_scope_learners l
     join public.learner_events e on e.learner_id = l.id and e.event = 'session_start'
     group by l.created_by having count(distinct (e.client_ts at time zone v_tz)::date) >= 2),
@@ -305,6 +321,8 @@ begin
       json_build_object('step', 'completed a chapter',   'n', (select count(*) from acct a where a.id in (select id from finished))),
       json_build_object('step', 'came back another day', 'n', (select count(*) from acct a where a.id in (select id from returned)))
     ),
+    'returned_without_finishing', (select count(*) from acct a
+       where a.id in (select id from returned_any) and a.id not in (select id from finished)),
     'cohorts', (
       select coalesce(json_agg(json_build_object(
                'cohort_week', cw::text, 'size', size,

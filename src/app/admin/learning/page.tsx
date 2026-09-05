@@ -1,9 +1,9 @@
 'use client'
-import { S, N, Def, Bars, NotYet, Computed, useMetrics } from '../_parts'
+import { S, N, Def, Bars, NotYet, Computed, useMetrics, LoadError } from '../_parts'
 
 export default function Learning() {
-  const { data, err } = useMetrics('learning')
-  if (err) return <div style={S.page}><p>{err}</p></div>
+  const { data, err, rid } = useMetrics('learning')
+  if (err) return <LoadError err={err} rid={rid} />
   if (!data) return <div style={S.page}><p style={S.sub}>Loading…</p></div>
   const c = data.chapters_per_learner
 

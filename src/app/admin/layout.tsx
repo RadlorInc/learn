@@ -45,6 +45,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div style={{ background: '#f5f7fa', minHeight: '100vh' }}>
       {/* ⚠️ PERSISTENT, ON EVERY PAGE, whenever the threshold is below 5. The point is to be
           reminded rather than to quietly forget that a bucket of one or two names a person. */}
+      {/* Below 5 the risk is identification, so the warning is loud and permanent. At 5 and above
+          the threshold is still stated in the header — an unexplained dash is its own failure. */}
       {minCohort !== null && minCohort < 5 && (
         <div style={{ background: '#8a1c1c', color: '#fff', padding: '9px 16px', fontSize: 13, fontWeight: 600 }}>
           Small-N mode (threshold {minCohort}): with this few users, a number can identify an
@@ -64,6 +66,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
         <span style={{ marginLeft: 'auto', fontSize: 11, color: '#8b95a3' }}>
           aggregate only · read-only · US Eastern
+          {/* ⚠️ ALWAYS SHOWN, at every threshold. The red banner only appears below 5, so at the
+              default of 5 the page filled with em dashes and NOTHING said why — a correct page that
+              reads as broken. The threshold is the explanation, so it is never hidden. */}
+          {minCohort !== null && <> · suppressing buckets under {minCohort}</>}
         </span>
       </header>
       {children}

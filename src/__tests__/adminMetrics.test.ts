@@ -181,14 +181,32 @@ describe('chapters ranked started vs finished', () => {
 })
 
 describe('the funnel', () => {
-  it('four steps on one denominator, and the 6-hour session is ONE visit', () => {
-    // BY HAND:
-    //   account created      P1..P5                             = 5
-    //   opened a chapter     P2,P3,P4,P5 (P1 has no events)     = 4
-    //   completed a chapter  P3 (counting), P5 (three)          = 2
-    //   came back another day  L2 has MON-14d and MON-7d -> P2  = 1
-    //     ⚠️ L3's two visits are 09:00 and 15:00 on the SAME day. One day. P3 is NOT here.
-    expect(funnel.steps.map((s: { n: number }) => Number(s.n))).toEqual([5, 4, 2, 1])
+  it('the steps are NESTED, so a later one can never exceed an earlier one', () => {
+    // BY HAND, and the nesting is the point — each step REQUIRES the one before it:
+    //   1 account created      P1..P5                                        = 5
+    //   2 opened a chapter     P2,P3,P4,P5 (P1 has no events at all)         = 4
+    //   3 completed a chapter  of those, P3 (counting) and P5 (three)        = 2
+    //   4 came back another day  of THOSE TWO: P3 played only MON-14d (its two visits are 09:00
+    //     and 15:00 on the SAME day — one day), P5 only MON-7d. Neither returned = 0
+    //
+    // ⚠️ THIS EXPECTATION USED TO READ [5,4,2,1], AND THAT WAS THE BUG. Written as four INDEPENDENT
+    // predicates, step 4 counted P2 — who came back on two days but never finished anything — so a
+    // later step could EXCEED an earlier one. It did, on production: flagging two internal accounts
+    // took the live funnel to 9 -> 6 -> 3 -> 4. Arithmetically impossible for a funnel, and it made
+    // every "lost here" figure wrong. It stayed invisible while the data happened to come out
+    // monotonic by luck.
+    expect(funnel.steps.map((s: { n: number }) => Number(s.n))).toEqual([5, 4, 2, 0])
+  })
+
+  it('is monotonically non-increasing — the property the old shape could violate', () => {
+    const n = funnel.steps.map((s: { n: number }) => Number(s.n))
+    for (let i = 1; i < n.length; i++) expect(n[i]).toBeLessThanOrEqual(n[i - 1])
+  })
+
+  it('counts returning-without-finishing separately, because it is not a funnel step', () => {
+    // BY HAND: P2 came back on MON-14d and MON-7d and never completed a chapter = 1.
+    // Genuinely interesting, and precisely the population that must NOT sit inside the funnel.
+    expect(Number(funnel.returned_without_finishing)).toBe(1)
   })
 })
 

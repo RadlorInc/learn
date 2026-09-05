@@ -1,9 +1,9 @@
 'use client'
-import { S, N, Def, Bars, NotYet, Computed, useMetrics } from './_parts'
+import { S, N, Def, Bars, NotYet, Computed, useMetrics, LoadError } from './_parts'
 
 export default function Overview() {
-  const { data, err } = useMetrics('overview')
-  if (err) return <div style={S.page}><p>{err}</p></div>
+  const { data, err, rid } = useMetrics('overview')
+  if (err) return <LoadError err={err} rid={rid} />
   if (!data) return <div style={S.page}><p style={S.sub}>Loading…</p></div>
 
   const internalNote = Number(data.internal_flagged) === 0

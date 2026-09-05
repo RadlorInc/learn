@@ -1,4 +1,4 @@
-const VERSION      = 'v162'
+const VERSION      = 'v163'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
@@ -38,6 +38,20 @@ self.addEventListener('fetch', event => {
   if (!url.protocol.startsWith('http')) return
   if (url.hostname.includes('supabase.co')) return
   if (url.pathname.includes('hmr') || url.pathname.includes('webpack')) return
+  /**
+   * ⚠️ API ROUTES ARE NEVER CACHED, AND THERE WAS NO SUCH RULE UNTIL 2026-09-05.
+   *
+   * Without this, /api/* fell through to the stale-while-revalidate branch at the bottom, which
+   * caches any `r.ok` response into the SHELL cache and then serves it IMMEDIATELY on later loads.
+   * For a metrics dashboard that means yesterday's numbers presented as today's, with nothing on
+   * screen saying so — the exact defect class the dashboard exists to avoid.
+   *
+   * It had been latent rather than harmful: the SW only intercepts GET, and until /api/admin/metrics
+   * shipped, /api/health was the ONLY GET route (everything else — checkout, lead, report-error,
+   * the Stripe webhook — is POST and was always skipped). A cached /api/health would have made a
+   * liveness probe answer from cache, which is its own small lie; nothing else was exposed.
+   */
+  if (url.pathname.startsWith('/api/')) return
 
   // Root navigations redirect (→ /auth or /parent). A SW must NOT serve a
   // redirected response to a navigation, so pass the request straight through
