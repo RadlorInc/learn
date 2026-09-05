@@ -1,3 +1,138 @@
+> 🚀 **2026-09-03 (later) — PRO IS ON, THE REGION MOVE IS GO, AND THE MECHANISM IS A ONE-JOB WORKFLOW THAT DIFFS THE SAME QUERY ON BOTH DATABASES.** ⚠️ **ITEMS 1–5 OF ITS ▶ OPEN ARE SUPERSEDED BY THE ✅ BLOCK ABOVE — the workflow HAS since run and the copy is verified. Kept for the pre-flight measurements.** The block below was written BEFORE any of it ran: **NOTHING HAS RUN YET — it waits on two connection-string secrets and a push.** Pre-flight only: `migrate-region.yml` YAML parses · `security_posture.sql` validated on PG 17 against production · `verify-backup.sh` re-proven **1 positive + 5 negative, exit codes read** · new project verified empty on 17.6 · **NOTHING committed, NOTHING dispatched, NOTHING applied.** `tsc`/`npm test` not run (no TS touched).
+
+## ① ✅ PRO — QUERIED, AND THE FIRST TWO THINGS I SAID ABOUT IT WERE WRONG
+`get_organization` → the **`Radlor`** org (`nwhbiwrglymeittzjvph`, which holds production) reads `plan: pro`; the personal org `MohammedRafiquekuwari` is still `free` — the plan string is per-org. Dashboard shows **seven daily physical backups, 27 Aug → 02 Sep**, so a restorable copy of the children's data now exists.
+⚠️ Two corrections, both mine: (a) I inferred "Pro since the 27th" from the backup dates — the invoice (`RSEBPT-00001`, $25, paid) is dated **today**; physical backups are taken on every project regardless of plan and Pro only unlocked *seeing* them. (b) I said a new project is "$0/mo, confirmed by API" — `get_cost` answered the wrong question. The Pro credit covers ONE Micro and production spends it; **each additional Micro is ~$9.81/mo** (`$0.01344/h`), charged in arrears. The founder's "$43.46 projected" is exactly $25 + three Micros − $10 credit.
+
+## ② 🧭 THE DECISION: MIGRATE, NOT REPLICATE; AND THE MIGRATION IS THE REHEARSAL
+Read replica in `us-east-1` was priced from the docs (~+$20/mo: primary must go Micro→Small, replica inherits; fixes `GET` reads only; **all Auth and every write stay in Sydney**; async lag on a local-first reconcile path this repo has already been burned by) and **rejected** — eleven users is the cheapest a migration will ever be. **The same-region "Restore to new project (BETA)" clone was skipped**: the docs say it restores into the *same region* (data residency), so it is not the move, and a migration IS a restore into a fresh project — doing both is the same operation twice. Sydney stays live and untouched until two Vercel env vars change, and for a week after as rollback.
+
+## ③ 🧰 WHAT WAS BUILT (uncommitted)
+- **`.github/workflows/migrate-region.yml`** — ONE job, **no artifact** (the repo is public; a dump with child data must never be uploaded). Refuses if `new_ref == PROD_PROJECT_REF`, if `NEW_DB_URL` contains the prod ref, or if the target has any public table. Dumps Sydney read-only (`schema` · `data --use-copy` · `auth -x auth.schema_migrations` · `supabase_migrations` ledger), asserts the `COPY auth.users` and ledger blocks are present (the CLI treats both schemas as managed and MAY silently skip them), restores in §4's order — **default privileges revoked FIRST** (or V12/V19 silently reopen with every policy reading correct) → 5 extensions → schema → ledger → auth → data, the last three under `session_replication_role = replica` — re-creates the **4** cron jobs, then runs `security_posture.sql` on BOTH databases and **diffs the output**, then the RLS regression suite on the new one.
+  ⚠️ **No access token needed**: `supabase db dump --db-url …` was measured to fail on *Docker*, not auth — it bypasses the platform. Docker IS still required on CLI 2.116.0 (measured), which is why this runs on `ubuntu-latest` and not a Mac. Two secrets total: `OLD_DB_URL`, `NEW_DB_URL`, both **Session pooler, port 5432** (runners have no IPv6; the direct host will not connect).
+  ⚠️ Three faults found reviewing my own first draft, all fixed and all confirmed necessary by probing the new project: `auth.schema_migrations` already has 77 rows there (duplicate-key red if copied); the `supabase_migrations` schema does not exist there (would have failed the ledger restore; without the ledger the next `db push` replays all 77 files); and the fingerprint excluded `sessions`/`learner_events`, which grow on their own — a strict diff on them turns a correct restore red if a child is playing.
+- **`supabase/tests/security_posture.sql`** — `docs/security.md`'s four drift queries as a runnable file (they had been prose for six weeks, which is how the baseline went stale) plus a stable fingerprint. Run on PG 17 against production: valid.
+- **`supabase/config.toml`** `major_version` 15 → **17** (production runs 17; the doc had flagged it).
+- **`docs/supabase-region-migration.md`** — STATUS DEFERRED → **GO**; §0 re-measured; §1b, §4①, §5, §6 corrected (below).
+- **`docs/backup-restore-runbook.md`** — the $0 claim corrected; the one-click clone path recorded with its same-region caveat; the positive twin added (§④).
+- `.gitignore` +`supabase/.temp/` (the CLI wrote it during a `--dry-run`).
+
+## ④ 🔬 WHAT THE PRE-FLIGHT CORRECTED IN THE DOCS — every 2026-08-19 number was stale
+| doc said | measured 2026-09-03 |
+|---|---|
+| 2 cron jobs | **4** — `prune-diagnostic-items` (03:22) and `prune-diagnostic-leads` (03:32) were added since |
+| the purge job has `and event <> 'daily_complete'` | **production's job does NOT** — the workflow copies what runs, not what the doc remembered |
+| 5 of 8 users on Google | **7 of 11** (12 identities: 7 google, 5 email) — §5 is now the highest-risk step |
+| 8 users · 17 learners · 20 tables · 17 functions | **11 · 19 · 24 · 25**, 35 policies |
+| ledger 66 files / 65 rows, 62+59 mismatched | **77 / 77, 75 match.** `20260629023502` and `20260702113253` applied with no file; `20260903100000/100100` are files not yet applied. Conclusion unchanged: dump the real schema |
+| `verify-backup.sh` "3 controls, 3 red" | **three NEGATIVE controls and no positive twin** — a script that refuses everything reads identically. Re-run with exit codes: valid artifact → **0**; unencrypted / wrong passphrase / no-`COPY` / garbage / unset passphrase → **1**. Now it discriminates |
+
+## ⑤ 🆕 THE TARGET PROJECT — created by the founder in the dashboard (so the real price was on screen)
+**`Radlor_app`** · ref **`wrnjqjhrbnqxornmfisf`** · `us-east-1` (same region as Vercel's `iad1`) · Micro · PG **17.6.1.166** · `ACTIVE_HEALTHY` · **0 public tables** · `pg_cron` available-not-installed · MCP can reach it. `Interactive_learn` (`qaymxunzlarwusogwyak`) is untouched.
+
+## ⑥ 💸 BILLING, EXPLAINED ONCE SO IT IS NOT RE-DERIVED
+Three Micros now (`Interactive_learn`, `radlor-site`, `Radlor_app`) → ~$19/mo over the $25 plan. Deleting Sydney a week after cutover → ~$10. **`radlor-site` is $10/mo for a waitlist form**; project transfer to the free personal org is self-serve (Settings → General → Transfer; ref/URL/keys unchanged; 1–2 min downtime paid→free) — ⚠️ but on free it **pauses after 7 quiet days, and `/api/waitlist` answers 303 either way**, so a paused DB would look healthy while every signup was lost. Founder's call; I leaned keep-it. Spend cap is ON, so the failure mode above quota is read-only, not a bill.
+
+## ▶ OPEN — ⚠️ **1–5 SUPERSEDED 2026-09-03 evening: the secrets are set, the push happened, the workflow ran green. Read the ✅ block's ▶ OPEN instead.**
+1. ✅ **DONE — Founder: two secrets, own terminal** — `gh secret set OLD_DB_URL` (Interactive_learn → Connect → Session pooler) and `NEW_DB_URL` (Radlor_app, same). Not through chat.
+2. 🔴 **Founder: yes to a push.** `workflow_dispatch` needs the file on a ref. Plan: branch `region-migration` with ONLY this session's five files, then `gh workflow run migrate-region.yml --ref region-migration -f new_ref=wrnjqjhrbnqxornmfisf`. **Expect the first run red** — most likely the `supabase_migrations` schema dump (the CLI may refuse a managed schema → fallback is `supabase migration repair --status applied` per version) or an extension line. That is the rehearsal.
+3. 🔴 **Founder: the Google OAuth Editor check** — [console.cloud.google.com/apis/credentials?project=12513320995](https://console.cloud.google.com/apis/credentials?project=12513320995): can `admin@radlor.com` (Editor) save a redirect URI? If not, get Owner **before** cutover. Not blocking the dispatch; blocking §5.
+4. After green: apply `20260903100000` + `20260903100100` to **Radlor_app** (`supabase db push` — the ledger rides across, so only those two apply), then read `pg_stat_statements` there for the after-number ④ of the morning block promised.
+5. Cutover (§5 ADD the redirect URI, §4③ auth config on the new project, §7 two Vercel env vars, a real Google sign-in, `auth_logs`) — all founder-only. Then a week, then delete Sydney.
+6. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`; `SUPABASE_ACCESS_TOKEN` + `PROD_DB_PASSWORD` are `deploy.yml`'s, not the migration's — whenever.
+7. ⏭️ `backup.yml` kept, founder's call; still unconfigured. With managed backups real, `BACKUP_PASSPHRASE` is optional.
+8. ⏭️ Last session's uncommitted pile (③④⑤ of the morning block — `menu/page.tsx`, the RPC, the two migrations) is **still uncommitted and still untouched**; it lands on whichever project is production, i.e. Radlor_app after ④.
+
+> 🌏 **2026-09-03 — WHERE MILO BREAKS UNDER LOAD, STEP 1: MEASURED WITHOUT LOAD. THE HEADLINE IS NOT A QUERY — THE DATABASE IS IN SYDNEY AND EVERY USER IS IN THE US — AND THE THING THAT HAS TO HAPPEN BEFORE THE MOVE IS A BACKUP, BECAUSE THE NIGHTLY ONE HAD NEVER RUN.** `tsc` 0 · **1704 passed, 1 skipped by design** · `next build` 0 · gate `menuRoundTrips` **12/12, 3 mutations planted, 3 caught** · both new migrations driven on PG 17 (PGlite), **3 SQL mutations planted, 3 caught** · `scripts/verify-backup.sh` **3 controls, 3 red** · **NOTHING committed, NOTHING applied, NOT deployed** — founder's order is backup → restore rehearsal → region move, and the move waits for his Pro decision.
+
+## ① 🌏 THE REGION, READ OFF THE DASHBOARD, NOT INFERRED
+Settings → General → *Project region: Oceania (Sydney) · ap-southeast-2*. Every edge-log request in
+24 h came from the US (EWR); the fastest origin time was **212 ms**, the average **344 ms**, on
+queries that execute in 0.1–9 ms. The other free slot is `radlor-site` (us-west-2, the waitlist).
+**A region cannot be changed in place** (Supabase docs): it is a CLI dump → new project → psql
+restore. What that involves and what breaks is in the 2026-09-03 report; the short form: ~2–3 h of
+work, Docker + Supabase CLI (neither on this machine), **all users re-login** (per-project JWT keys),
+Google OAuth callback re-registered, 4 cron jobs re-created, both Vercel projects' env repointed,
+the MCP token re-issued, and **the two-project cap blocks creating the third** — pause `radlor-site`
+for the hour, or go Pro.
+
+## ② 🔴 THE NIGHTLY BACKUP HAS NEVER BACKED ANYTHING UP — GREEN, 30 DAYS OF RUNS, ZERO DUMPS
+`backup.yml` is *"inert until configured"*: `PROD_PROJECT_REF` and `BACKUP_PASSPHRASE` were never
+set as GitHub variables/secrets, so every run prints a `::warning::` and exits 0 with the dump step
+**skipped**. `gh run list` shows success × 30; `gh run view` shows `Dump schema + data: skipped`.
+And the dashboard says *"Free Plan does not include project backups"*. **So there is no recoverable
+copy of production anywhere**, and the region move needs one as its first step. Row 1 of the
+CLAUDE.md table (a skip path) recurring by design; written down, not fixed — the secrets are yours.
+
+## ③ 📉 THE PARENT DASHBOARD N+1 → ONE RPC
+`entitled_chapters(learner, chapters[])` — one round trip, calls `is_chapter_entitled` per chapter
+server-side so the ONE definition stays one. `entitledChapters()` uses it; a failed call is `null`
+for every chapter (not found out ≠ refused). RLS suite gained **B13h** (seated + unseated agreement).
+
+## ④ ⏱️ `is_chapter_entitled` PLANNING — MEASURED, AND MY FIRST NUMBER WAS WRONG
+I reported *"11 ms to plan, 0.13 ms to execute"*. The 11 ms was MY reader connection planning the
+hand-inlined body cold (568 catalog buffers). Production's own figure for the RPC is **2.6 ms mean,
+0.5 ms min**. The mechanism is real, though: on PG 17 a SQL-language function's body is re-planned
+on every call and a SECURITY DEFINER one cannot be inlined. In-database on PG 17.5, 2000 calls × 5:
+**SQL 190 µs · plpgsql 34 µs · plpgsql with `discard plans` forced per call 218 µs** — the whole gap
+IS the plan cache. Migration `20260903100000` makes it plpgsql, same body. **The after-number comes
+from `extensions.pg_stat_statements` once applied** — nothing here can produce it.
+
+## ⑤ 🍽️ `/menu` 6 → 2
+The check-up trio (`auth/v1/user` + 2 selects) and the plan select ride inside
+`get_learner_bootstrap` (migration `20260903100100`); the 6-week rule is one pure function
+`checkupStatus` shared with the parent dashboard; `getCheckupStatus` reads the local session instead
+of GoTrue. ⚠️ Found while doing it: the *"offline half"* the pointer comment promised did not exist —
+the local-stars derivation sat in the catch of a fetch that ran only after the bootstrap succeeded.
+It now runs on the real no-server-data paths (offline · no session · thrown bootstrap), and the
+existing gate that names `applyPlan(localPlayed(), [])` guards a branch that is finally reachable.
+
+## ⑥ 💾 THE BACKUP, STEP 1 — AS FAR AS IT GOES WITHOUT THE FOUNDER'S CREDENTIALS
+The repo held **zero** secrets and **zero** variables, so all FOUR inputs `backup.yml` names were
+missing, not three. What exists now: `PROD_PROJECT_REF` is set (a repo variable, 2026-09-03);
+[docs/backup-restore-runbook.md](docs/backup-restore-runbook.md) carries the exact `gh secret set`
+lines for `SUPABASE_ACCESS_TOKEN`, `PROD_DB_PASSWORD` and a generated `BACKUP_PASSPHRASE` (**his to
+type — credentials never go through a chat**); `scripts/verify-backup.sh` verifies an artifact FROM
+ITS CONTENTS (sizes, table/function/policy counts, rows per `COPY` block, the `counting` row) and
+was watched going red on an unencrypted tarball, a wrong passphrase and a no-`COPY` dump; the
+runbook holds production's row-count fingerprint of 2026-09-02 to compare against (72 chapters ·
+19 learners · 49 sessions · 1,631 events · 11 auth users …).
+⚠️ **Setting `PROD_PROJECT_REF` also arms `deploy.yml`'s `migrate-prod`** the moment the two
+Supabase secrets exist. It stays skipped only because `migrate-staging` is skipped
+(`STAGING_PROJECT_REF` unset). **Create the `production-db` environment WITH its required-reviewer
+rule before anyone sets a staging ref**, or a push to `main` migrates production unreviewed.
+⚠️ Expect the dump to be missing the 4 `pg_cron` jobs (extension schema, excluded by `db dump`);
+whether `auth.users` rides in `data.sql` is what the script's row table settles — the CLI reference
+and the restore guide say different things. No custom login roles exist, so no `roles.sql` needed.
+
+## ⑦ ❓ A REQUEST THAT DOES NOT BELONG TO THIS REPO
+The founder's last message asked for a combobox on an issue form's `area`/`type` fields
+(`/tester`, "the sheet's Issue Category", `check-tester-cannot-read-admin.mjs`, an admin with 13
+rows). **None of that exists in `milo-story-mode` or `../radlor-site`** — a wider search was
+interrupted before it ran. Most likely the video-reviewer repo CLAUDE.md's table cites. Not done;
+ask which repo before touching anything.
+
+## ▶ OPEN — in the founder's order, and each one stops before the next
+⚠️ **Items 1–4 SUPERSEDED the same afternoon — see the 🚀 block above.** Pro landed, managed backups exist, the clone was skipped as redundant, and the region move is GO with its own workflow. Kept for the record.
+1. 🔴 **BACKUP, MADE REAL.** He sets the three secrets (runbook §1); then trigger `backup.yml`,
+   download the artifact, run `scripts/verify-backup.sh`, compare to the fingerprint (runbook §2).
+   Green is not the evidence — it has been green thirty times; the artifact is.
+2. 🔴 **RESTORE IT ONCE, somewhere disposable** (runbook §3). Only a real Supabase project can find
+   a missing role/extension/cron job — which is the Pro decision (third project = staging too).
+   Report what was missing; something usually is.
+3. 🔴 **THE REGION MOVE — not before Rafi says.** Sydney → a US region; the checklist is in ①.
+   Nothing in ③–⑤ deploys to Sydney first: apply `20260903100000` then `20260903100100` in whichever
+   project is going to be production, then read `pg_stat_statements` for the `is_chapter_entitled`
+   RPC and the edge logs for `/menu` (expect 2 requests: `learner_events` + `get_learner_bootstrap`).
+   The client fails open if it lands first (batch RPC 404 → all `null`).
+4. 🎯 **Load-test step 2** waits for all three, on the staging project — the founder refused
+   `loadtest-` rows in production on the strength of "someone will delete them".
+5. ⏭️ `saveLearnerState` still calls `auth.getUser()` (conditional, rare) with the same "forces
+   hydration" comment — same shape as ⑤, not touched.
+6. ⏭️ Lint on `menu/page.tsx` reports two `set-state-in-effect` errors — **pre-existing on `main`**,
+   identical before and after this session's edits.
+7. 🎙️ Voice clips — superseded by the 🎙️ 2026-09-03/04 block above (17–18 done on Stevie; 3–5 on Teddy, resume after 2026-09-06).
+
 > 🎙️ **2026-09-03/04 — THE VOICE SESSION: 17–18 GETS ITS CLIPS (IT HAD ZERO), AND 3–5 GETS ITS OWN VOICE — TEDDY TWINKLE, FOUNDER'S PICK — WITH 872 OF 1,411 LINES RENDERED BEFORE THE MONTHLY QUOTA RAN OUT. BOTH WATCHED PLAYING, AND BOTH WATCHED FALLING BACK.** `tsc` 0 · **1705 passed, 1 skipped by design** · `next build` **NOT run** · **NOTHING committed, NOT deployed.**
 
 ## ① 🔑 THE KEY WAS NOT DEAD — THE HANDOFF WAS STALE
