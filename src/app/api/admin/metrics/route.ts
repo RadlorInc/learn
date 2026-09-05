@@ -41,7 +41,13 @@ export async function GET(req: NextRequest) {
     const body = await r.text()
     // 42501 is admin_assert refusing. Answer 404 — /admin must not confirm it exists to someone
     // who may not see it, and the page itself renders notFound() on this.
+    // 42501 is admin_assert refusing a SIGNED-IN non-admin -> 404, so /admin does not confirm it
+    // exists to someone who may not see it.
     if (body.includes('42501') || r.status === 403) return NextResponse.json({ error: 'not found' }, { status: 404 })
+    // ⚠️ A REJECTED TOKEN IS NOT AN UPSTREAM FAILURE. This used to fall through to 502 "query
+    // failed", which says the database broke when in fact the caller was not authenticated — a
+    // misleading status is its own small lie, and it is the one a debugger would chase first.
+    if (r.status === 401) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
     return NextResponse.json({ error: 'query failed' }, { status: 502 })
   }
   return NextResponse.json({ data: await r.json(), minCohort }, { headers: { 'Cache-Control': 'no-store' } })
