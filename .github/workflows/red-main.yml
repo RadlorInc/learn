@@ -1,0 +1,73 @@
+name: Red main
+
+# ⚠️ WHY THIS EXISTS. On 2026-09-05 `ci / rls-tests` failed on five consecutive commits to main and
+# nobody noticed for a day. Measured afterwards, the two halves of that:
+#
+#   · there is NO branch protection on main, NO required status check, and NO workflow that reacts
+#     to a failed run — nothing in this repo looks at a CI result;
+#   · Vercel builds on push, independently of GitHub Actions. All five red commits reached
+#     production with state READY. CI never gated anything.
+#
+# So a red CI run was, in practice, a report nobody read. The resolution offered first was "I'll
+# check CI after pushing", which is a promise to remember — this project has replaced several of
+# those with mechanisms and only the mechanisms held.
+#
+# ⚠️ THIS IS A SIGNAL, NOT A GATE. It cannot stop a broken commit reaching production; only moving
+# the production deploy behind CI can do that (see docs/devops.md). What it guarantees is that a red
+# main is never SILENT.
+
+on:
+  workflow_run:
+    workflows: ["Deploy"]
+    types: [completed]
+    branches: [main]
+  # ⚠️ So the issue-filing path can be driven on demand rather than only by a real failure. A
+  # notifier nobody has watched fire is the same as no notifier.
+  workflow_dispatch:
+    inputs:
+      simulate:
+        description: 'Simulate a failure to test the issue-filing path'
+        type: boolean
+        default: true
+
+permissions:
+  issues: write
+  actions: read
+
+jobs:
+  notify:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open or update the red-main issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIM: ${{ github.event_name == 'workflow_dispatch' }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_TITLE: ${{ github.event.workflow_run.display_title }}
+        run: |
+          set -euo pipefail
+          TITLE="🔴 main is red"
+          if [ "$SIM" = "true" ]; then
+            BODY="**Simulated run** (workflow_dispatch) — this is a test of the notification path, not a real failure. Close it.
+          
+          If you are reading this and it was NOT triggered by hand, the notifier is misfiring."
+          else
+            BODY="\`$RUN_SHA\` — $RUN_TITLE
+
+          CI failed on main: $RUN_URL
+
+          ⚠️ **This commit has almost certainly already deployed.** Vercel builds on push, independently
+          of GitHub Actions, and there is no branch protection on this repo — a red CI run does not
+          stop anything reaching production. Check the deployment before assuming the failure is
+          contained to CI."
+          fi
+          # One issue, reused — a new issue per red commit would be its own kind of noise.
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            echo "commented on #$EXISTING"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
