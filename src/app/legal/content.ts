@@ -51,28 +51,24 @@ This wording has not been reviewed by a lawyer yet and is not the final policy.`
 export const TERMS: LegalDoc = {
   slug: 'terms',
   title: 'Terms of Service',
-  // ⚠️ A PLACEHOLDER, RENDERED. '[DATE]' is one of the unresolved decisions in the body below and it
-  // is shown on screen deliberately — see PLACEHOLDERS. Filling it in is not a tidy-up, it is a
-  // decision nobody has made.
+  /**
+   * ⚠️ THE DOCUMENT'S OWN "Last updated" LINE, LIFTED OUT OF THE BODY — the page header renders it,
+   * so leaving it in the body too printed it twice on one screen. It is still a PLACEHOLDER and is
+   * still rendered as one: `unresolvedPlaceholders` reads `title`, `updated` AND `body`, so moving
+   * it here did not move it out of the guard's sight. `legalDocs.test.ts` asserts this field equals
+   * the source document's own date line, so the lift cannot quietly resolve it.
+   */
   updated: '[DATE]',
   /**
-   * ⚠️ VERBATIM from `app-terms-of-service.md`, minus its markdown H1 only (the page renders its own
-   * <h1> from `title`). Nothing else was edited — not the note to Rafi, not the [LAWYER REVIEW]
-   * markers, not the unwritten refund sentence in §8. Every one of those marks a decision that is
-   * not a developer's to make, and resolving one silently is how a draft becomes a false statement.
+   * ⚠️ VERBATIM from `docs/app-terms-of-service.md`, minus exactly two things, both structural and
+   * both rendered elsewhere on the same page: its markdown H1 (the page draws its own <h1> from
+   * `title`) and the "Last updated" line above. Nothing else is edited — not the [LAWYER REVIEW]
+   * markers, not the [NN] response windows, not the [URL], not the unwritten refund sentence in §8.
+   * Every one of those marks a decision that is not a developer's to make.
    *
    * It is markdown, and the page renders it as markdown — see `renderDoc` in [slug]/page.tsx.
    */
-  body: `**Last updated: [DATE]**
-**Effective: [DATE]**
-
-> **Note to Rafi, delete before publishing.** Every factual statement below was
-> written against the live production schema on 2026-09-05, not from memory. If
-> the app changes what it records, this document changes with it. Sections marked
-> **[LAWYER REVIEW]** are the ones where a US attorney's sign-off matters most —
-> they are not gaps in the draft, they are gaps in what I am allowed to decide.
-
----
+  body: `---
 
 ## 1. Who this agreement is between
 

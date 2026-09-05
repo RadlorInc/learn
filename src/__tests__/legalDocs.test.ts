@@ -58,12 +58,45 @@ describe('a draft legal page never renders as live', () => {
     // — green on my machine, ENOENT in CI. A check whose corpus is not committed is not a check.
     const md = read('docs/app-terms-of-service.md')
     const count = (hay: string, needle: string) => hay.split(needle).length - 1
+
+    /**
+     * ⚠️ COMPARED AGAINST THE WHOLE SHIPPED DOCUMENT, NOT JUST `body` — and that is the half this
+     * check would have lost. The source's "Last updated" line is lifted into the `updated` FIELD
+     * (the page header renders it) rather than sitting in the body, so a body-only comparison would
+     * see `[DATE]` once in the .md and zero times in the shipped copy and call that a resolved
+     * placeholder. `unresolvedPlaceholders` reads the same three fields for the same reason.
+     */
+    const shipped = `${TERMS.title}\n${TERMS.updated}\n${TERMS.body}`
     for (const p of PLACEHOLDERS) {
       expect(count(md, p), `${p} missing from docs/app-terms-of-service.md`).toBeGreaterThan(0)
-      expect(count(TERMS.body, p), `${p} was dropped between the .md and TERMS.body`)
+      expect(count(shipped, p), `${p} was dropped between the .md and the shipped document`)
         .toBe(count(md, p))
     }
     expect(unresolvedPlaceholders(TERMS).length).toBe(PLACEHOLDERS.length)
+  })
+
+  it('the lifted date line still says what the source document says', () => {
+    /**
+     * ⚠️ THE LIFT IS THE PLACE A PLACEHOLDER COULD BE RESOLVED WITHOUT ANY OTHER CHECK NOTICING.
+     * The body comes across verbatim, but `updated` is retyped by hand — so it is the one field
+     * where "[DATE]" could quietly become a real date while the .md still carried the marker and
+     * every count above still balanced. Bind the two.
+     */
+    const md = read('docs/app-terms-of-service.md')
+    const line = /^\*\*Last updated: (.+?)\*\*$/m.exec(md)
+    expect(line, 'the source document no longer carries a "Last updated" line to lift').not.toBeNull()
+    expect(TERMS.updated, 'the page header and the source document disagree about the date')
+      .toBe(line![1])
+  })
+
+  it('carries no internal note addressed to a person', () => {
+    // ⚠️ A NOTE TO A NAMED HUMAN ON A PUBLIC LEGAL PAGE MAKES A DELIBERATE DRAFT READ AS AN
+    // UNFINISHED ONE, which is a different and worse claim than the banner's. The banner says
+    // "not final"; a note saying "delete before publishing" says "nobody checked this page at all".
+    for (const hay of [read('docs/app-terms-of-service.md'), TERMS.body, PRIVACY.body]) {
+      expect(hay).not.toMatch(/Note to \w+, delete before publishing/)
+      expect(hay).not.toContain('Note to Rafi')
+    }
   })
 
   it('the renderer shows placeholders rather than eating them', async () => {

@@ -1,13 +1,6 @@
 # Terms of Service — Milo by Radlor
 
 **Last updated: [DATE]**
-**Effective: [DATE]**
-
-> **Note to Rafi, delete before publishing.** Every factual statement below was
-> written against the live production schema on 2026-09-05, not from memory. If
-> the app changes what it records, this document changes with it. Sections marked
-> **[LAWYER REVIEW]** are the ones where a US attorney's sign-off matters most —
-> they are not gaps in the draft, they are gaps in what I am allowed to decide.
 
 ---
 
