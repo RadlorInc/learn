@@ -101,6 +101,15 @@ export default function PlanPage() {
           </div>
         </div>
 
+        {/* ⚠️ NEXT TO THE PRICE AND BEFORE PAYMENT, not in a footer. Section 8 of the Terms is what
+            says the subscription renews automatically and how to cancel; a parent has to be able to
+            read that on the screen where they decide, not after they have been charged. */}
+        <p style={{ fontSize: 12, color: '#8a7a63', margin: '0 0 14px', lineHeight: 1.5, textAlign: 'center' }}>
+          {usd(totalCents(seats, cadence))} {cadence === 'monthly' ? 'per month' : 'per year'}, renewing
+          until you cancel. See the{' '}
+          <Link href="/legal/terms" style={{ color: '#F26B2C', fontWeight: 700 }}>Terms of Service</Link>.
+        </p>
+
         {error && <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 700, margin: '0 0 12px' }}>{error}</p>}
 
         <button onClick={checkout} disabled={busy} style={{

@@ -220,6 +220,11 @@ export default function AuthPage() {
           />
         </div>
 
+        {/* COPPA/ToS: the documents are linked ABOVE the button, so they are on screen before the
+            adult commits rather than after. This is the consent record — without it we cannot show
+            that anyone was told what they were agreeing to. */}
+        <ConsentLine />
+
         {/* Email auth button */}
         <button
           onClick={handleEmailAuth}
@@ -239,9 +244,6 @@ export default function AuthPage() {
         >
           {loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}
         </button>
-
-        {/* COPPA/ToS: the documents are linked at the moment an adult submits an address. */}
-        <ConsentLine />
 
         {/* Divider */}
         <div style={{

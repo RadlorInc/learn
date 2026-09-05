@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   getMyLearners, getParentDashboard, getLearnerStats, getLearnerProgress,
   getRecentSessions, signOut, createLearner,
@@ -512,6 +513,23 @@ export default function ParentDashboard() {
           reach us, our support system is that they leave. */}
       <div style={{ padding:'8px 16px 28px', textAlign:'center' }}>
         <SupportPanel learnerId={selected ?? undefined} />
+
+        {/* ⚠️ BOTH DOCUMENTS, REACHABLE FROM INSIDE THE APP. A parent who agreed at signup has to be
+            able to go back and read what they agreed to without hunting for the marketing site —
+            and while these are drafts, this is also the only way anyone signed in can see the
+            draft banner. Same pair, same order, as the signup consent line. */}
+        {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, AND IT IS DELIBERATELY DOWN HERE, small and last —
+            past the learners, the progress and the support panel. The threat is a child on a
+            parent's signed-in device, so the destructive path must not be somewhere a child
+            wandering the app arrives at. Nothing on the child's side (/game, /menu, /shop) links
+            anywhere under /parent. The page itself carries the real guards. */}
+        <p style={{ margin:'18px 0 0', fontSize:12, color:'#9a8b78' }}>
+          <Link href="/parent/account" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>Close your account</Link>
+          <span style={{ margin:'0 8px', opacity:0.5 }}>·</span>
+          <Link href="/legal/terms" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>Terms of Service</Link>
+          <span style={{ margin:'0 8px', opacity:0.5 }}>·</span>
+          <Link href="/legal/privacy" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>Privacy Policy</Link>
+        </p>
       </div>
 
       {/* Add child modal */}
