@@ -304,6 +304,42 @@ Everything below is a corollary of that one sentence:
   Found by the suite going red on correct code during the sweep that removed the character windows —
   the sweep paying for itself inside itself. Where you cannot name such a character, walk the
   delimiters (`src/__tests__/_window.ts`).
+- ⚠️⚠️ **A COLUMN A CLIENT CAN WRITE MUST NEVER BE READ AS AN AUTHORISATION DECISION — AND AN RLS
+  `with check` CONSTRAINS WHICH *ROW*, NEVER WHICH *COLUMN*.** Founder's catch, 2026-09-05, one
+  step before it reached production. A draft of the /admin gate added `'admin'` to the `user_role`
+  enum and had `admin_assert()` read `profiles.role`. Reproduced against production's verbatim
+  policy and grants:
+
+      policy[ALL] "profiles: own row"  USING auth.uid()=id  WITH CHECK auth.uid()=id
+      ACL: authenticated = arwdDxtm
+
+      acting as authenticated · role before: parent
+      update public.profiles set role='admin' where id=auth.uid();   -> ACCEPTED
+      role after: admin
+
+  **Every signed-in parent could have granted themselves the dashboard.** And the policy is not a
+  bug: `setMyRole()` exists deliberately, because the one-time Teacher/Parent picker is MEANT to let
+  a user write their own role. ⚠️ **It is a FEATURE that stops being safe the moment a privileged
+  value joins the same column** — which is why reviewing the policy alone would never have found it.
+  The question is not "is this policy correct" but **"is anything privileged now being decided by a
+  column the user owns"**.
+  **The fix is structural, not a tighter predicate.** A `with check` cannot express "any column but
+  this one", and a column-level `GRANT` would have broken the picker. So the privileged fact moved
+  to its own table with **RLS enabled and NO policies at all** — under RLS, no policy means no row
+  is visible or writable, so there is no predicate to get wrong; **the absence IS the mechanism** —
+  plus every privilege revoked from `public`/`anon`/`authenticated` so it is unreachable before RLS
+  is even consulted. `profiles.role` keeps only parent/learner/teacher: there is nothing to
+  escalate TO.
+  ⚠️ **Sweep this whenever you add a privileged read.** Cross every table a client can write
+  (`pg_policies` with `cmd in ('ALL','INSERT','UPDATE')` and a client role) against every column
+  read by an RLS predicate or a SECURITY DEFINER guard. Done 2026-09-05: the entitlement chain is
+  closed (`billing_config`, `chapters`, `diagnostic_plans`, `subscriptions`, `subscription_seats`
+  all have **0** client write policies), and the one live example is `profiles.is_internal` — a
+  user can hide their own account from /admin metrics. That grants nothing, so it is recorded
+  rather than fixed, but it is the same shape.
+  ⚠️ **And assert BOTH halves.** A build that refused every profile update would pass a
+  refusal-only check and silently break the picker.
+
 - ⚠️⚠️ **A FIXTURE IS DERIVED ENTIRELY, OR THE UN-DERIVED PART IS NAMED AND GATED. "MOSTLY
   DERIVED" IS UNDERIVED AT EXACTLY THE POINT WHERE THE TWO SCHEMAS CAN DISAGREE.** Founder's rule,
   2026-09-05. `adminMetrics.test.ts` built its tables by generating DDL from production's

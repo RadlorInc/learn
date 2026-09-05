@@ -40,6 +40,7 @@ create table public.sessions (id uuid primary key default gen_random_uuid(), lea
 create table public.learner_events (id uuid primary key default gen_random_uuid(), learner_id uuid not null, event text not null, props jsonb not null default '{}', client_id text, client_ts timestamptz, created_at timestamptz not null default now());
 create table public.chapters (id text primary key, name text not null default '', emoji text not null default '', sort_order int not null default 0, age_groups text[] not null default '{}', is_free boolean not null default false);
 create table public.diagnostic_sessions (id uuid primary key default gen_random_uuid(), learner_id uuid not null, band text not null default '3-5', status text not null default 'completed', root_gap_skill text, second_gap_skill text, blocked_skills text[] not null default '{}', strengths text[] not null default '{}', working_level text, started_at timestamptz not null default now(), completed_at timestamptz, client_id uuid);
+create table public.admin_users (user_id uuid primary key, granted_at timestamptz not null default now(), note text);
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
 insert into public.chapters (id) values ('counting'), ('numberOrder'), ('shapes');
 `
@@ -67,7 +68,7 @@ insert into public.profiles (id, created_at) values
   ('${P(5)}', mon() - interval '14 days'), ('${P(6)}', mon() - interval '14 days'),
   ('${ADMIN}', mon() - interval '14 days');
 update public.profiles set is_internal = true where id in ('${P(6)}', '${ADMIN}');
-update public.profiles set role = 'admin'::public.user_role where id = '${ADMIN}';
+insert into public.admin_users (user_id) values ('${ADMIN}');   -- admin is a ROW, not a role value
 
 insert into public.learners (id, created_by, age_group, created_at) values
   ('${L(1)}','${P(1)}','3-5', mon() - interval '14 days'),
@@ -305,40 +306,31 @@ describe('no query can return an identifier', () => {
   })
 })
 
-describe('the migration names types that actually exist', () => {
+describe('admin is not a value any client can write', () => {
   /**
-   * ⚠️ THE CHECK THAT WOULD HAVE SAVED FIVE RED CI RUNS.
+   * ⚠️ THE CHECK FOR A LIVE PRIVILEGE ESCALATION. An earlier draft made 'admin' a value in the
+   * `user_role` enum. Under production's verbatim policy — `for all ... with check auth.uid()=id`,
+   * which constrains WHICH ROW and never WHICH COLUMN — plus a table-level UPDATE grant to
+   * `authenticated`, a signed-in parent could run
+   *     update public.profiles set role='admin' where id=auth.uid();
+   * and it was ACCEPTED. Reproduced before this design existed.
    *
-   * `20260905150000` opened with `alter type public.profile_role add value 'admin'`. No such type
-   * exists — production calls it `user_role` — so every real database answered
-   * `type "public.profile_role" does not exist (SQLSTATE 42704)` and CI was red on main for five
-   * commits. The local suite passed the entire time, because the fixture above CREATED a type
-   * named `profile_role`: a hand-written fixture agreeing with the bug it was supposed to catch.
-   *
-   * So this does not test the fixture. It reads the enum name out of `baseline_schema.sql` — the
-   * same file CI stages as its first migration — and requires the migration to use that name.
-   * Derived from the thing CI actually applies, so it cannot drift with either side.
+   * So the migration must never touch that enum, and admin must live where no client can reach it.
    */
-  it("the enum altered by the migration is the one the baseline declares for profiles.role", () => {
-    const baseline = readFileSync(resolve(__dirname, '../../supabase/schema/baseline_schema.sql'), 'utf8')
-    // walk the profiles table body to its closing paren — not a character window
-    const at = baseline.search(/create table if not exists public\.profiles\s*\(/i)
-    expect(at, 'profiles is not in the baseline — this check has rotted').toBeGreaterThan(-1)
-    const body = baseline.slice(at, baseline.indexOf(');', at))
-    const roleType = body.match(/^\s*role\s+([a-z_][a-z0-9_]*)/im)?.[1]
-    expect(roleType, 'could not read profiles.role type from the baseline').toBeTruthy()
-
-    const altered = [...MIG.matchAll(/alter\s+type\s+(?:public\.)?([a-z_][a-z0-9_]*)\s+add\s+value/gi)]
-      .map(m => m[1].toLowerCase())
-    expect(altered.length, 'the migration no longer alters a type — has this check rotted?').toBe(1)
-    expect(altered[0]).toBe(roleType!.toLowerCase())
+  it('the migration alters no enum at all', () => {
+    expect([...MIG.matchAll(/alter\s+type\s+/gi)].length).toBe(0)
   })
 
-  it('positive control: the baseline really does declare a named type here', () => {
-    // Without this, a baseline whose profiles block moved would make the check above vacuous by
-    // returning undefined on both sides.
-    const baseline = readFileSync(resolve(__dirname, '../../supabase/schema/baseline_schema.sql'), 'utf8')
-    expect(baseline).toMatch(/create table if not exists public\.profiles/i)
-    expect(baseline).toMatch(/^\s*role\s+user_role/im)
+  it('admin_users has RLS on, no policies, and no client grants', () => {
+    expect(MIG).toMatch(/alter\s+table\s+public\.admin_users\s+enable\s+row\s+level\s+security/i)
+    expect(MIG).toMatch(/revoke\s+all\s+on\s+public\.admin_users\s+from\s+public,\s*anon,\s*authenticated/i)
+    // no policy may be created on it — the absence is the mechanism
+    expect(MIG).not.toMatch(/create\s+policy[^;]*\bon\s+public\.admin_users/i)
+  })
+
+  it('admin_assert reads admin_users, never profiles.role', () => {
+    const body = MIG.slice(MIG.indexOf('function public.admin_assert'), MIG.indexOf('$$;', MIG.indexOf('function public.admin_assert')))
+    expect(body).toMatch(/from\s+public\.admin_users/i)
+    expect(body).not.toMatch(/profiles/i)
   })
 })

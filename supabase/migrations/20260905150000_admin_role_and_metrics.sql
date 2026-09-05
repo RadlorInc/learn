@@ -13,15 +13,45 @@
 --   3. `search_path` is pinned, so the caller cannot substitute their own `profiles`.
 -- See the SECURITY DEFINER rule in CLAUDE.md.
 
--- ── the role ─────────────────────────────────────────────────────────────────────────────────
--- Added to the existing enum rather than introduced as an email list in code. There is no
--- "admin@" check anywhere; membership is a row a human sets in the database.
--- ⚠️ THE TYPE IS `user_role`, NOT `profile_role`. Named wrong on the first attempt, which turned
--- CI red for five commits with `type "public.profile_role" does not exist` — and the local test
--- passed the whole time because its hand-written fixture CREATED a type called `profile_role`.
--- A fixture that invents the schema agrees with the bug. Verified against production 2026-09-05:
--- profiles.role has udt_name = user_role, labels (parent, learner, teacher).
-alter type public.user_role add value if not exists 'admin';
+-- ── who is an admin ──────────────────────────────────────────────────────────────────────────
+-- ⚠️⚠️ ADMIN IS ITS OWN TABLE, NOT A VALUE IN `profiles.role`, AND THAT IS A SECURITY DECISION.
+--
+-- An earlier draft added 'admin' to the `user_role` enum. Reproduced against production's verbatim
+-- policy and grants (2026-09-05), that would have been a live privilege escalation:
+--
+--     policy[ALL] "profiles: own row"  USING auth.uid()=id  WITH CHECK auth.uid()=id
+--     ACL: authenticated = arwdDxtm   (table-level UPDATE)
+--
+--     acting as authenticated · role before: parent
+--     update public.profiles set role='admin' where id=auth.uid();   -> ACCEPTED
+--     role after: admin
+--
+-- The `with check` constrains WHICH ROW, never WHICH COLUMN, so every signed-in parent could have
+-- granted themselves the dashboard. And the policy is not a mistake — `setMyRole()` exists on
+-- purpose, because the one-time Teacher/Parent picker is MEANT to let a user write their own role.
+-- It is a feature that stops being safe the instant a privileged value joins the same column.
+--
+-- So the privileged fact is moved somewhere a client cannot reach at all:
+--   · a separate table with RLS on and **no policies whatsoever** — under RLS, no policy means no
+--     row is visible or writable to a non-superuser, so there is nothing to get wrong in a WHERE
+--     clause. The absence IS the mechanism;
+--   · every privilege revoked from `public`, `anon` and `authenticated`, so it is not even
+--     reachable before RLS is consulted;
+--   · `profiles.role` is left exactly as it is — parent/learner/teacher, still self-service, still
+--     driving nothing but which page you land on. There is no 'admin' value to escalate TO.
+create table if not exists public.admin_users (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  granted_at timestamptz not null default now(),
+  note       text
+);
+alter table public.admin_users enable row level security;
+-- Deliberately NO policies. See above: with RLS enabled and no policy, the table is closed.
+revoke all on public.admin_users from public, anon, authenticated;
+
+comment on table public.admin_users is
+  'Who may read /admin. A row here is the ONLY thing that grants it. RLS on with no policies and '
+  'no grants: unreadable and unwritable by any client. Rows are inserted by hand from the Supabase '
+  'dashboard. Deliberately NOT a value in profiles.role, which users can write themselves.';
 
 -- ── internal accounts ────────────────────────────────────────────────────────────────────────
 -- ⚠️ EMAIL DOMAIN CANNOT IDENTIFY THESE: 10 of 11 production accounts are gmail.com (measured
@@ -33,16 +63,12 @@ comment on column public.profiles.is_internal is
   'cannot identify these (10 of 11 accounts are gmail.com).';
 
 -- ── the guard ────────────────────────────────────────────────────────────────────────────────
--- ⚠️ Compares role AS TEXT. `alter type ... add value` above cannot have its new value USED in the
--- same transaction that adds it, and `supabase db push` runs a migration in one. Casting to text
--- avoids that entirely and behaves identically.
+-- SECURITY DEFINER because `admin_users` is closed to every client role — the caller cannot read
+-- it to answer the question themselves, which is the point.
 create or replace function public.admin_assert()
 returns void language plpgsql stable security definer set search_path to 'public' as $$
 begin
-  if not exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role::text = 'admin'
-  ) then
+  if not exists (select 1 from public.admin_users a where a.user_id = auth.uid()) then
     raise exception 'not an administrator' using errcode = '42501';
   end if;
 end;
