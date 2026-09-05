@@ -61,7 +61,20 @@ jobs:
 
           drift_check() {
             # How far is main ahead of what production is actually serving?
-            AHEAD=$(gh api "repos/$REPO/compare/release...main" --jq '.ahead_by' 2>/dev/null || echo "NO_RELEASE")
+            #
+            # ⚠️ THE OBVIOUS SHAPE `$(cmd || echo SENTINEL)` IS BROKEN HERE AND FAILED SILENTLY.
+            # `gh api` prints its error JSON to STDOUT, not stderr, so on a 404 the substitution
+            # captured BOTH the error body and the sentinel:
+            #     ahead_by={"message":"Not Found",...,"status":"404"}NO_RELEASE
+            # which equals neither the sentinel nor an integer, so every branch below was false and
+            # the check reported "nothing to report" while `release` did not exist at all. Ask
+            # explicitly whether the branch is there, and accept ONLY a bare integer as a count.
+            if ! gh api "repos/$REPO/branches/release" >/dev/null 2>&1; then
+              AHEAD="NO_RELEASE"
+            else
+              AHEAD=$(gh api "repos/$REPO/compare/release...main" --jq '.ahead_by' 2>/dev/null || true)
+              printf '%s' "$AHEAD" | grep -qE '^[0-9]+$' || AHEAD="NO_RELEASE"
+            fi
             echo "ahead_by=$AHEAD"
             if [ "$AHEAD" = "NO_RELEASE" ]; then
               TITLE="🔴 release branch is missing — production is not being promoted"
