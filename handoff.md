@@ -247,6 +247,89 @@ Aggregate-only by construction (`group by` + aggregates, so a per-child row is n
 > months) the whole-line remainder costs on ElevenLabs. **Not chased now.** Scratch venv, script and
 > the five wavs: `scratchpad/chatterbox/` (session-local, will not survive).
 
+> 🗣️ **2026-09-04/05 — NOTHING MILO SAYS IS CUT OFF BY THE NEXT THING, IN ANY BAND — AND THE AUDIT THAT PROVED IT WAS ONLY HALF DONE THE FIRST TIME.** `tsc` 0 · **1743 passed, 1 skipped** · `next build` 0 · five commits pushed: `0dee8a2` `95db59e` `70ec4ee` `191918e` `2e43ffd` · sw v160 → **v162**.
+>
+> Founder, across every band: *"voice aane lagti hai aur next chiz aa jaati hai toh woh cut ho jaati
+> hai"*. Two mechanisms, each correct-looking in isolation. **`speak()` SUPERSEDES** — right for a
+> tap, wrong for every round boundary, where a verdict, praise and the next question land on
+> 1300–1800ms timers shorter than any of them takes to say. And **`speakAfterCurrent` could not
+> work**: it waited on `_speaking`, which only turns true at the clip's `onStart` — one async
+> manifest lookup later — so a round advance calling it in the SAME TICK read "nothing is playing"
+> about a line already on its way. It only ever worked on a device with **no clips**, which is why
+> every drive here showed it working. Its queue was also one-deep: one callback per waiter meant the
+> first line's end released all of them and the last to wake cancelled the rest.
+>
+> Engine (`useMiloSpeaker.ts`): a real FIFO waiting on IN-FLIGHT, **bounded to two** (a queue is a
+> way of running late); `afterSpeech(cb, ceilingMs)`; and `speakPaced`, whose visuals keep their OWN
+> timer (a walkthrough hung off `onstart` freezes for ever — shipped once) while each step ends at the
+> LATER of its dwell and Milo finishing. The price written down for the cut was never acceptable.
+> Full rule in chapter-craft.md §3.
+>
+> ⚠️⚠️ **THE FIRST AUDIT WAS (b), NOT (a) — TRACED FROM THE SHELLS OUTWARD, NOT ENUMERATED — AND I
+> REPORTED IT AS COVERAGE.** Founder caught the sentence. The real enumeration found **141 direct
+> emission sites in 35 files plus 23 more reached only through local wrappers** (`say()`, `tell()`),
+> of which **35 fired a cancelling verb from a deferred path**. It found two chapters still broken
+> while the report said fixed: **BuildingBlocks and BlockYard speak the ROUND'S OWN QUESTION from a
+> timer 400ms in**, through `say()`, invisible to any `speak(` grep. Also settled: **the 72 chapter
+> ids are not 72 speech surfaces** — `teen/games/*.tsx` build `say:` STRINGS and never call the
+> speech layer, so GameShell is the sole emitter for every chapter it backs. That assumption is what
+> made the first audit feel complete.
+>
+> ✅ **Gated, not remembered: `src/__tests__/voiceBoundaryVerb.test.ts`** fails if any file under the
+> chapter directories fires a cancelling verb from a deferred path (a `useEffect` body, or a
+> scheduler callback) unless it is in an ALLOW list **with a written reason**. Asserted EXACTLY, so a
+> new chapter cannot reintroduce it and a stale exception cannot sit there being a rule about
+> nothing. It counts local wrappers and carries a **positive control**, because a finder that has
+> stopped finding reports every chapter clean. Eleven deferred sites remain, each reasoned.
+>
+> 🔧 **`scripts/break-check.sh` ported from `video_reviewer`** after a stray `git checkout` reverted a
+> fix twice in one session. ⚠️ **It exists in TWO repos with different runners now** (playwright there,
+> vitest here) — a fix to one will not reach the other; both CLAUDE.mds say so. Its live-break suite
+> paid for itself at once: the exit-5 case came back as 4, because **vitest reports a broken SETUP file
+> byte-identically to a broken SOURCE file**, so the reader stopped claiming to tell them apart.
+>
+> 🎙️ **THE AUDIO ACCOUNTING THE FOUNDER ASKED FOR, measured against the live manifest — do not re-derive:**
+>
+> | | corpus | rendered | left | note |
+> |---|---|---|---|---|
+> | 3–5 | 1,411 | 927 | **484** (17k chars) | ⭐ **a REAL total** — saturated at 12k draws (1.00×) |
+> | 6–8 | 4,006 | 57 | **3,949** (170k chars) | a floor; corpus grows 2.80× at 12k |
+> | 9–11 | 7,904 | 2,075 | **5,829** (397k chars) | a floor; grows 2.02× |
+>
+> **Static is DONE** (210/210 Stevie + 55/55 Teddy + 56/56 6–8 walkthrough + 69/69 9–11 teach + 374/374
+> 9–11 miss). ⚠️ But the static corpus is built from CHAPTER surfaces only, so **the app's own screens
+> were never counted**: 76 lines / 2,148 chars at **0 rendered** (72 × `"Let's play {chapter}!"`, two
+> celebration lines, shop, voice picker), and that is a FLOOR — shop item lines, world labels and
+> MasteryState headlines are still uncounted. Needed in BOTH voices (menu obeys `BAND_VOICE`), so
+> ~152 clips, ~2k–4k credits. They are not silent today: `clipOnly` is only flipped by GameShell, so
+> outside a chapter a miss falls back to browser speech.
+>
+> **Explanation: walkthrough yes, re-teach no.** `teach` 126/126 (3–5), 69/69 (9–11), 522/535 (12–18 —
+> the 13 missing are all the guided coach line, ~1k credits). `reteach` **93/577 · 26/4,289 ·
+> 82/10,912** — ~15,577 lines, ~925k chars, and that is the FLOOR.
+>
+> 🛠️ **`_voiceCorpus68.test.ts` never counted the explanation at all** — it drove `beat.say` and
+> stopped, so 6–8 read as complete when it had never been measured. Now RENDERS `beat.Reteach` with a
+> stubbed speaker: no app change, no template copy to drift. ⚠️ The obvious fix (extract each
+> chapter's lines into a pure function) was built for four chapters and **thrown away** — the
+> component pairs `lines[i]` with `steps[i]`, so splitting them lets words and visuals drift apart
+> silently in twelve chapters to make a reporting script easier. First run: three chapters yielded
+> NOTHING (`ResizeObserver is not defined`; jsdom has none, FitBox/FitSlot need one) and a `catch {}`
+> made that identical to "says nothing" — **a quarter of the band missing from a run reporting
+> success**. A hole is now a RED.
+>
+> ⚠️⚠️ **TWO SESSIONS RAN IN THIS ONE WORKING TREE AND ONE `git reset --hard` DESTROYED THE OTHER'S
+> UNCOMMITTED WORK.** Recovered via `git fsck --unreachable` (my own `git add` had written the blobs);
+> `break-check.sh` was then MERGED rather than overwritten, since the other session had edited it too.
+> **Use `git worktree` for the second session.** Watch for `src/__tests__/adminMetrics.test.ts` —
+> untracked and missing its vitest imports, so it reds the suite in the working tree while a clean
+> checkout of `main` is green.
+>
+> ▶ **OPEN from this work:** ① **nothing has been verified BY EAR** — every check is a mock or a
+> network request. ② 6–8's `scored` half still reaches only 9 of 12 chapters (four return an empty
+> `prompt`); the re-teach half reaches all twelve. ③ the 76+ app-chrome lines are unrendered and
+> uncounted past that floor. ④ `OrderDesk`/`LevelRun` still have no clips and are in no corpus.
+
 > 🔊 **2026-09-04 — THE VOICE WAS ON THE CDN THE WHOLE TIME AND NOBODY WAS ASKING FOR IT. THREE SILENT DEFECTS IN ONE CHAIN, ALL DEPLOYED AND VERIFIED FROM THE RUNNING SITE — THEN THE FIRST HONEST ACCOUNTING OF WHAT THE REST COSTS, AND THE STITCHER THAT WAS GOING TO PAY FOR IT FAILED ITS LISTENING TEST.** `tsc` 0 · **1710 passed, 1 skipped by design** · `next build` 0 · **NINE commits, all pushed and live**: `590232b` `9eb78bd` `33bb2cf` `aec3ee0` `31437c2` `cce03b2` `9385aa1` `dbe7508` `fada6d8` · sw v153 → **v160**. **EVERY STATIC LINE IN THE APP NOW HAS A CLIP, IN BOTH VOICES.**
 ## ① 🔇 THE CHAIN, AND WHY EVERY LINK REPORTED SUCCESS
 The founder: *"3–5 aur 17–18 mein voice hi naii aa rahi"*, then *"12–14, 15–16 Chrome mein theek
