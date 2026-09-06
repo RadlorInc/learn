@@ -1,3 +1,113 @@
+> ✅ **2026-09-03 (evening) — THE REGION MOVE RAN. THE NEW us-east-1 DATABASE IS A VERIFIED COPY OF SYDNEY, AND NOTHING IS POINTED AT IT YET.** Eleven dispatches, ten red, and **every red was a real defect in the workflow I wrote — not one in production, and not one "just re-run it"**. Sydney was READ ONLY throughout: zero writes, all day. Green run **33783519089**: `✓ posture + fingerprint identical` · **RLS suite 74 assertions, all pass** on the new project. Verified again independently (I queried BOTH databases myself rather than reading the workflow's own diff): users 11/11 · identities 12/12 · profiles 11/11 · learners 19/19 · chapters 72/72 · learner_progress 31/31 · ledger 77/77 · cron jobs 4/4 · policies 35/35 · `on_auth_user_created` present on both.
+
+## ⚠️ THE ONE THAT WOULD HAVE SHIPPED SILENTLY, AND WHAT CAUGHT IT
+The restore completed, the posture diff said **identical**, and the RLS suite then failed inserting a
+learner whose owner had no `profiles` row. Measured on both: production has one non-internal trigger
+in the `auth` schema — `on_auth_user_created` → `public.handle_new_user` — and the restored project
+had **none**. **A schema dump does not carry triggers defined on a MANAGED schema's tables.**
+**What it would have cost:** existing profiles ride in the data dump, so all 11 accounts look
+perfect and every count matches. It is every **FUTURE** parent who breaks — an auth row, no profile,
+and `learners.created_by` references `profiles`, so they cannot add a child. Nothing errors.
+⚠️⚠️ **And the fingerprint said "identical" while that was true of one side.** It counted tables,
+functions, policies, rows and cron jobs — and **no triggers**, i.e. it agreed about everything except
+the thing that differed. Both trigger counts are in `security_posture.sql` now. The RLS suite is what
+actually caught this; that file is why it will not have to next time.
+
+## 🧨 THE TEN REDS, BECAUSE THE LIST IS THE POINT
+| # | died at | the actual mechanism |
+|---|---|---|
+| 1 | guard | `NEW_DB_URL` password (Session pooler needs `postgres.<ref>`, and a symbol in the password breaks URI parsing) |
+| 2 | dump | my grep was `^COPY auth.users `; pg_dump writes `COPY "auth"."users"`. **A correct dump reported as missing** |
+| 3 | restore | the ledger table was hand-written `(version, statements, name)` — production also has `created_by`. A second copy of a schema we do not own |
+| 4–6 | restore | **three dispatches in two minutes, two of them six seconds apart on ONE database.** One dropped schema public while the other created types in it. No concurrency group; `deploy.yml` has had one since it was written |
+| 7 | restore | `data.sql` already carries all 22 auth tables → loading `auth.sql` too sent every auth row twice (`duplicate key … flow_state_pkey`) |
+| 8 | restore | `data.sql` also carries 7 `storage` tables, owned by `supabase_storage_admin`: `permission denied for table buckets_vectors`. All seven measured **0 rows** on production, so they are filtered out of the dump |
+| 9 | dump | the CLI's own `-x 'storage.*'` **left every storage table in and silently dropped the ledger block** — the exclusion excluded only the thing we needed |
+| 10 | verify | the auth trigger, above |
+
+## ⚠️ AND ONE OF THOSE TEN WAS MY MEASUREMENT, NOT THE CODE — WORTH MORE THAN THE OTHER NINE
+I reported *"data.sql carries the ledger"* and deleted the separate ledger dump on the strength of it.
+It came from `grep -A80 'COPY blocks in data.sql'`, whose window ran **past the end of that inventory
+and into the `ledger.sql` inventory printed right after it** — so a line belonging to one file was
+read as belonging to another. **A byte-count window crossing the boundary it was meant to respect**,
+which [CLAUDE.md](CLAUDE.md) already records as a technique that does not work — used here on a LOG
+rather than on source, which is why it did not look like that rule. Two commits acted on it before
+the workflow printed `data.sql`'s own structure and settled it.
+⚠️ **The auth half of the same reading was right, and the difference is the lesson:** it had TWO
+instruments behind it (data.sql's own inventory, and the duplicate-key error). The ledger half had one.
+⚠️ A second one, caught before it shipped: the first control on the storage filter ran `awk` against a
+fixture that was not named `data.sql`, wrote a zero-byte file, and three greps read the empty output
+and reported *"storage gone, rows gone"*. It survived only because *"ledger lost"* was in the same
+batch and could not be true. **The re-run asserts the output is non-empty before believing any of it.**
+
+## 🧰 WHAT THE WORKFLOW IS NOW
+Guard (4 ref checks → optional `wipe_target` → target must be empty) → dump Sydney read-only
+(`schema` · `data`, storage blocks cut out by an awk range · `ledger` · `ledger_schema` · the auth
+triggers via `pg_get_triggerdef`), each with its own positive control → restore (default privileges
+revoked FIRST → 5 extensions → schema → ledger DDL → ledger rows → data → **auth triggers** → 4 cron
+jobs) → verify (`security_posture.sql` on BOTH databases, diffed; then the RLS suite on the new one).
+`concurrency: migrate-region-<ref>`. No artifact is ever uploaded — the repo is public and the dump
+carries children's data; every diagnostic prints table NAMES only, never a row.
+
+## ✅ AND THEN THE CUTOVER RAN THE SAME EVENING — PRODUCTION IS NOW us-east-1
+Google redirect URI added (old one kept) · Google provider enabled on the new project with the SAME
+client · URL configuration copied · migration re-run for a fresh snapshot (green, `wipe_target=true`)
+· **three** Vercel env vars repointed (§7 said two; `SUPABASE_SERVICE_ROLE_KEY` is the third) ·
+redeployed on `6c80255`.
+**Verified from the RUNNING deployment, not the settings page:** the live bundle carries the new ref
+and the new publishable key, and **zero** occurrences of the old ref (positive control: 72 mentions
+of "supabase" in 871 KB across 13 chunks — the first attempt fetched 0 chunks because the path is
+`/_next/static/immutable/chunks/`, and its "old ref: 0" looked exactly like the real answer).
+**Verified on both databases, two-sided:** new project 1 session in 30 min, last sign-in 17:51:18;
+Sydney 0 new sessions, last sign-in the previous day.
+⚠️ **And the check that mattered most: users stayed 11 and profiles stayed 11.** Had
+`auth.identities` not come across intact, Google would have made a TWELFTH user and the parent's own
+children would have been invisible to them, with nothing erroring.
+
+## ▶ OPEN — what is left after the cutover
+1. 🔴 **`SUPABASE_SERVICE_ROLE_KEY` IS THE ONE THING STILL UNVERIFIED.** It is server-side, so it
+   is not in the bundle and no browser check can see it. It is read by `errorSink`, `/api/lead` and
+   **the Stripe webhook** — and `errorSink` swallows its own errors by design, so a wrong value there
+   is silent. Its first real proof is a webhook turning a payment into seats, or an `error_events`
+   row appearing on the new project. Do not record it as working until one of those is seen.
+2. 🔴 **The other ten accounts are still logged out** and have to sign in again (per-project JWT
+   keys). If any of them cannot, it is the Google config, not the data.
+3. ⚠️ **Sydney stays for a week as the rollback**, then delete it (~$10/mo back). Rolling back is the
+   same three env vars in reverse — but anything played on the new project after the flip would not
+   be in it, so after a day or so the rollback stops being free.
+4. ✅ DONE: Google redirect URI added (old kept), Google provider on the new project using the SAME
+   OAuth client, URL configuration copied, three Vercel env vars, redeploy, real Google sign-in.
+5. ✅ **BOTH PENDING MIGRATIONS APPLIED** to the new production (2026-09-03 ~17:58), and committed
+   FIRST (`c7c2a43`) so the ledger could not record a version whose file is not in the repo.
+   Before/after, measured on the catalog either side: `is_chapter_entitled` `sql` → **plpgsql**;
+   `entitled_chapters` **did not exist** → exists; `get_learner_bootstrap`'s definition now contains
+   `recheck_closed`, which is what proves the new BODY landed rather than a function of that name.
+   Grants on all three: `authenticated` + `service_role`, nothing for `anon`/`public`.
+   ⚠️ **NOTHING HAS BEEN EXECUTED.** That is a catalog reading, not a run: the MCP role is read-only
+   and not `authenticated`, so calling them returns `permission denied` (correct, per those grants).
+   `is_chapter_entitled` exercises itself — the `sessions` INSERT policy calls it, so the next
+   gameplay session is its test. **`entitled_chapters` has no caller at all** until the client code
+   in ⑧ lands, so it is written and never once run. Do not read "applied" as "working".
+   ⚠️ **And the `pg_stat_statements` after-number the morning block promised cannot exist yet** for
+   the same reason — an unexecuted function has no row there.
+6. ⚠️ **Ledger drift, +2 rows.** `apply_migration` stamps its OWN timestamp, so the two canonical
+   versions went in by an explicit insert in the same migration AND the MCP wrote
+   `20260903175820` / `20260903175833`, which have no file in the repo. Harmless — the DDL is
+   `create or replace` — and it is the same drift this repo already carries two rows of. Clean with
+   `supabase migration repair --status reverted 20260903175820 20260903175833`.
+7. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`, or a push to `main` migrates production unreviewed.
+8. ⏭️ `backup.yml` still unconfigured (managed backups make `BACKUP_PASSPHRASE` optional). The
+   morning block's uncommitted pile is now **the client half only** — `menu/page.tsx`, the three
+   repositories, `useAdaptive`, the voice files. The two migrations are committed and applied; the
+   code that calls `entitled_chapters` and reads the bootstrap's new keys is not, which is why ⑤
+   says that function has never run. Landing it is what turns /menu's six round trips into two.
+9. ⏭️ `supabase/config.toml` says `major_version = 17` now; `.gitignore` gained `supabase/.temp/`.
+
+_(Moved out of handoff.md on 2026-09-06 to keep that file inside its size budget. Its still-live
+items — the Sydney rollback window, `SUPABASE_SERVICE_ROLE_KEY` never once exercised, the missing
+`production-db` environment, the uncommitted /menu RPC client half, and `entitled_chapters` having
+no caller — were lifted into the ⚖️ 2026-09-06 block's ▶ OPEN rather than archived with it.)_
+
 > 🚀 **2026-09-03 (later) — PRO IS ON, THE REGION MOVE IS GO, AND THE MECHANISM IS A ONE-JOB WORKFLOW THAT DIFFS THE SAME QUERY ON BOTH DATABASES.** ⚠️ **ITEMS 1–5 OF ITS ▶ OPEN ARE SUPERSEDED BY THE ✅ BLOCK ABOVE — the workflow HAS since run and the copy is verified. Kept for the pre-flight measurements.** The block below was written BEFORE any of it ran: **NOTHING HAS RUN YET — it waits on two connection-string secrets and a push.** Pre-flight only: `migrate-region.yml` YAML parses · `security_posture.sql` validated on PG 17 against production · `verify-backup.sh` re-proven **1 positive + 5 negative, exit codes read** · new project verified empty on 17.6 · **NOTHING committed, NOTHING dispatched, NOTHING applied.** `tsc`/`npm test` not run (no TS touched).
 
 ## ① ✅ PRO — QUERIED, AND THE FIRST TWO THINGS I SAID ABOUT IT WERE WRONG
