@@ -155,7 +155,13 @@
 > _(Everything below is the running session history — newest first, most recent ~5 sessions only.
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
-> letting it grow. The craft rules live in chapter-craft.md, not here.)_
+> letting it grow. The craft rules live in chapter-craft.md, not here.
+> ⚠️ **AT 2026-09-06 THIS FILE IS AT ITS CEILING: five blocks, ~61 KiB, against a ~60 KB budget.**
+> The ✅ region-move cutover block went to the archive that day to make room for the ⚖️ one.
+> **Adding a block means moving one out first**, and the next out is 🔊 2026-09-04 — which carries
+> a long ▶ OPEN that has to be lifted into a newer block before it goes, not archived with it.
+> ⚠️ Count the blocks by eye rather than by grepping one set of emoji: the 🗣️ block was invisible
+> to a `^> [⚖️📊🧪🔊]` sweep on the day it landed, and a miscount here is a miscounted budget.)_
 
 > ⚖️ **2026-09-06 — THE TERMS SAID THINGS THE PRODUCT DOES NOT DO, AND THE BIGGEST ONE — "delete your account at any time from your account settings" — HAD NOTHING BEHIND IT AT ALL. Both legal documents placed behind the draft banner; account deletion built, and PROVEN not to orphan before a line of it was written.** `tsc` 0 · **1817 passed, 1 skipped** · `next build` 0 · **four commits, CI green on `a9d638d`** · sw v163 → **v167** · one migration written here and applied by the founder, verified present in production.
 
