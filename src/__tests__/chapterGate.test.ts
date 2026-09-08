@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client'
 import { readdirSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { gateVerdict, lockCopy } from '@/features/billing/chapterGate'
+import { PAYWALL_ENABLED } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 import { CHAPTERS } from '@/core/chapters'
 import { isArChapter } from '@/core/arChapters'
@@ -253,7 +254,10 @@ describe('⚠️ the hook, DRIVEN — a verdict nothing reads is not a gate', ()
     return seen
   }
 
-  it('a refused chapter goes checking → locked, and never shows allowed on the way', async () => {
+  // ⚠️ PAYWALL OFF (2026-09-08): the hook short-circuits to 'allowed', so the locked WIRING cannot
+  // be exercised now. Kept, not deleted — it runs again the day PAYWALL_ENABLED flips back on and
+  // guards that the hook still refuses. The pure locked path stays covered above via gateVerdict(false).
+  it.skipIf(!PAYWALL_ENABLED)('a refused chapter goes checking → locked, and never shows allowed on the way', async () => {
     const seen = await driveHook(false, { id: 'L1' })
     expect(seen[0], 'the first paint must render nothing, not the chapter').toBe('checking')
     expect(seen[seen.length - 1]).toBe('locked')

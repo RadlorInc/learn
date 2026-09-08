@@ -13,6 +13,15 @@ import { isChapterEntitled } from '@/data/repositories'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { gateVerdict, type GateVerdict } from '@/features/billing/chapterGate'
 
+/**
+ * ⚠️ PAYWALL OFF. No chapter is gated until Stripe ships. This is the CLIENT off-switch, independent
+ * of `billing_config.enforced`: while false the gate never asks the database and can never return
+ * `locked`, so no stray entitlement row or a mis-flipped DB flag can lock a child out today.
+ * Re-enable = flip to true AND set `billing_config.enforced` — the machinery here and in
+ * chapterGate.ts is intact and tested (chapterGate.test.ts drives the locked path directly).
+ */
+export const PAYWALL_ENABLED = false
+
 export function useChapterGate(chapterId: string | null): GateVerdict {
   // `undefined` = not answered yet · `null` = asked and could not find out (→ allowed).
   const [entitled, setEntitled] = useState<boolean | null | undefined>(undefined)
@@ -23,6 +32,7 @@ export function useChapterGate(chapterId: string | null): GateVerdict {
   })
 
   useEffect(() => {
+    if (!PAYWALL_ENABLED) return           // paywall off → never ask the database
     if (!chapterId || !learnerId) return
     let live = true
     isChapterEntitled(learnerId, chapterId)
@@ -36,5 +46,6 @@ export function useChapterGate(chapterId: string | null): GateVerdict {
   // setting the verdict there paints one frame of the previous chapter's answer — the same rule
   // this repo carries for a journey's phase and for the camera guard, and here it would mean one
   // frame of a chapter a child is about to be refused.
+  if (!PAYWALL_ENABLED) return 'allowed'  // paywall off → never lock
   return gateVerdict(learnerId, chapterId ? entitled : undefined)
 }
