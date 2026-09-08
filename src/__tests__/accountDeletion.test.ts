@@ -111,7 +111,7 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
 }
 
 async function seedFamily(db: PGlite, uid: string, learners: string[], email: string) {
-  await db.exec(`insert into auth.users (id, email) values ('${uid}', '${email}')`)   // trigger makes the profile
+  await db.exec(`insert into auth.users (id, email, email_confirmed_at) values ('${uid}', '${email}', now())`)   // a confirmed account → trigger makes the profile
   await db.exec(`insert into public.grades (id, created_by, name, age_group) values (gen_random_uuid(), '${uid}', 'Class', '3-5')`)
   await db.exec(`insert into public.auth_events (user_id, event) values ('${uid}', 'login')`)
   // An admin deleting their own account is a real case, and admin_users is the table whose

@@ -40,7 +40,8 @@ create table if not exists auth.users (
   id uuid primary key,
   email text,
   raw_user_meta_data jsonb not null default '{}',
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  email_confirmed_at timestamptz          -- read by handle_new_user(): a profile is created only once this is set
 );
 create or replace function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
 create or replace function auth.role() returns text language sql stable as $$ select coalesce(nullif(current_setting('test.role', true), ''), 'authenticated') $$;
