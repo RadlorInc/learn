@@ -252,7 +252,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
     }
     if (ran.current) return; ran.current = true
     const lines = [
-      `Milo needs exactly ${target} ${kind.plural} to walk home.`,
+      `Milo needs exactly ${target} ${target === 1 ? kind.little : kind.plural} to walk home.`,
       ...Array.from({ length: target }, (_, k) => `${COUNT_WORDS[k + 1] ?? k + 1}.`),
       `That is ${target}. Milo has enough — so he STOPS, even though there are more.`,
       'Ready! Off we go.',
