@@ -15,6 +15,7 @@ from chatterbox.tts_turbo import ChatterboxTurboTTS
 ap = argparse.ArgumentParser()
 ap.add_argument('--voice', required=True); ap.add_argument('--corpus', required=True); ap.add_argument('--out', required=True)
 ap.add_argument('--limit', type=int, default=10**9); ap.add_argument('--only', default='')
+ap.add_argument('--band', default='', help="teen corpus only: render one band, e.g. 15-16 (entries carry a `band` field)")
 a = ap.parse_args()
 
 root = pathlib.Path(__file__).resolve().parent.parent
@@ -27,18 +28,20 @@ LOUDNORM = 'acompressor=threshold=-20dB:ratio=3:attack=5:release=60:makeup=2,lou
 
 seen, corpus = set(), []
 for l in json.load(open(a.corpus)):
+    if a.band and l.get('band') != a.band: continue
     if l['key'] in seen: continue
     seen.add(l['key']); corpus.append(l)
 only = set(a.only.split(',')) if a.only else None
 todo = [l for l in corpus if (only is None or l['key'] in only) and not (out / f"{l['key']}.mp3").exists()][:a.limit]
 print(f'{len(corpus)} lines · {len(todo)} to render → {out}', flush=True)
+if not todo: sys.exit(0)
 
 def write_manifest():
     keys = sorted(p.stem for p in out.glob('*.mp3'))
     (out / 'manifest.json').write_text(json.dumps(keys))
     return len(keys)
 
-dev = 'mps' if torch.backends.mps.is_available() else 'cpu'
+dev = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
 t = time.perf_counter()
 model = ChatterboxTurboTTS.from_pretrained(device=dev)
 print(f'model loaded {time.perf_counter()-t:.0f}s on {dev}', flush=True)
