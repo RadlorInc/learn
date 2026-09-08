@@ -25,18 +25,33 @@ import { useEffect } from 'react'
 import { createClient } from '@/data/supabase/client'
 import { reportCrash } from '@/infra/reportCrash'
 
+/**
+ * ⚠️ A RECOVERED SESSION ALSO ARRIVES AS `SIGNED_IN`, AND THAT IS NOT A LOGIN. supabase-js emits
+ * `SIGNED_IN` from `_recoverAndRefresh` — i.e. on EVERY page load that finds a session in storage
+ * (GoTrueClient `_recoverAndRefresh`, measured 2026-09-07). Keyed on the event alone, this wrote a
+ * `login` row per hard reload: the /admin login panel counted page loads, and the nightly E2E —
+ * whose Supabase host is a placeholder — went red on all 216 chapter loads with a DNS error.
+ *
+ * The fact that separates a sign-in from a recovery is whether a session ALREADY EXISTED when the
+ * page loaded. Read once, at module load, before any client can be constructed (the client is
+ * built lazily from a render or an effect, and both run after module evaluation), and cleared by
+ * `SIGNED_OUT` so a sign-out-then-sign-in inside one SPA session is still recorded.
+ */
+const STORAGE_KEY = 'milo-auth'   // client.ts `storageKey` — the one place a session is persisted
+export function hadSessionAtLoad(): boolean {
+  try { return typeof localStorage !== 'undefined' && !!localStorage.getItem(STORAGE_KEY) } catch { return false }
+}
+
 export default function AuthEventLogger() {
   useEffect(() => {
     const supabase = createClient()
-    // Dedupe within a tab: SIGNED_IN also fires on token refresh and on tab focus, and one visit
-    // should be one row. `client_id` dedupes across retries; this stops the noise at source.
-    const seen = new Set<string>()
+    let holdsSession = hadSessionAtLoad()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') { holdsSession = false; return }
       if (event !== 'SIGNED_IN' || !session?.user) return
-      const key = `${session.user.id}:${session.access_token.slice(-12)}`
-      if (seen.has(key)) return
-      seen.add(key)
+      if (holdsSession) return               // recovery, token refresh, tab focus — not a login
+      holdsSession = true
       void record('login', session.user.id)
     })
     return () => subscription.unsubscribe()
