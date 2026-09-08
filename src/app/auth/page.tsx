@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [mode,     setMode]     = useState<Mode>('login')
   const [email,    setEmail]    = useState(() => getLeadEmail() ?? '')   // prefill from the checkup lead capture
   const [password, setPassword] = useState('')
+  const [confirm,  setConfirm]  = useState('')     // signup only: typed twice, compared before anything is sent
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
   const [success,  setSuccess]  = useState<string | null>(null)
@@ -28,6 +29,10 @@ export default function AuthPage() {
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
+      return
+    }
+    if (mode === 'signup' && confirm !== password) {
+      setError('Passwords do not match')
       return
     }
 
@@ -137,7 +142,7 @@ export default function AuthPage() {
           {(['login', 'signup'] as Mode[]).map(m => (
             <button
               key={m}
-              onClick={() => { setMode(m); reset() }}
+              onClick={() => { setMode(m); setConfirm(''); reset() }}
               style={{
                 // 44px tap floor. At `padding: '9px'` these measured 34px tall at every viewport —
                 // over WCAG AA's 24 but under the 44 this repo aims at, on the two controls that
@@ -219,6 +224,34 @@ export default function AuthPage() {
             onBlur={e => { e.target.style.borderColor = '#e5e7eb' }}
           />
         </div>
+
+        {/* Confirm password — signup only. A typo in a password nobody can see locks a parent out of
+            the account they just made, and the only recovery is the email reset flow. */}
+        {mode === 'signup' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>
+              Confirm password
+            </label>
+            <input
+              type="password"
+              placeholder="Type it again"
+              value={confirm}
+              onChange={e => { setConfirm(e.target.value); reset() }}
+              onKeyDown={e => e.key === 'Enter' && handleEmailAuth()}
+              autoComplete="new-password"
+              aria-label="Confirm password"
+              style={{
+                padding: '12px 14px', fontSize: 15,
+                border: '2px solid #e5e7eb', borderRadius: 12,
+                outline: 'none', width: '100%', boxSizing: 'border-box',
+                fontWeight: 500,
+                transition: 'border-color 0.15s',
+              }}
+              onFocus={e => { e.target.style.borderColor = '#F26B2C' }}
+              onBlur={e => { e.target.style.borderColor = '#e5e7eb' }}
+            />
+          </div>
+        )}
 
         {/* COPPA/ToS: the documents are linked ABOVE the button, so they are on screen before the
             adult commits rather than after. This is the consent record — without it we cannot show
