@@ -55,6 +55,7 @@ try:
         pathlib.Path(tmp.name).unlink()
         wall, audio = time.perf_counter() - t, wav.shape[-1] / model.sr
         print(f'{i:5}/{len(todo)} {wall:6.1f}s  {audio:5.1f}s audio  RTF {wall/audio:5.1f}  {l["key"]}  {l["text"][:50]!r}', flush=True)
+        if dev == 'mps': torch.mps.empty_cache()   # 8 GB laptop: unbounded MPS cache is what drove swap to 20 GB
         if i % 10 == 0: write_manifest()
 finally:
     print(f'manifest: {write_manifest()} clips on disk', flush=True)
