@@ -15,15 +15,42 @@ export interface ActivePlan {
   index: number        // pointer to the current (next-to-play) chapter
   startedAt: string
   revised?: boolean    // play-data revision already applied (fires at most once)
+  /**
+   * ⚠️ WHERE THE PLAN CAME FROM, AND IT IS NOT BOOKKEEPING — IT DECIDES WHAT WE MAY SAY ABOUT IT.
+   * The plan card's own words are "Milo picked this to close the gap", which is true of a diagnosed
+   * plan and FALSE of a grade-start one: nobody looked, so there is no gap to have closed. Same
+   * family as the diagnostic's never-say-"on-track" rule — the claim has to match the evidence, and
+   * without this field the UI cannot tell the two apart. Absent = 'diagnostic' (every plan written
+   * before 2026-08-24 came from a completed check).
+   */
+  source?: 'diagnostic' | 'gradeStart'
 }
 
 const key = (learnerId: string) => `milo_active_plan_${learnerId}`
 
-export function setActivePlan(learnerId: string, band: string, chapters: string[]): ActivePlan | null {
+export function setActivePlan(learnerId: string, band: string, chapters: string[], source: 'diagnostic' | 'gradeStart' = 'diagnostic'): ActivePlan | null {
   if (!learnerId || chapters.length === 0) return null
-  const plan: ActivePlan = { learnerId, band, chapters: [...chapters], index: 0, startedAt: new Date().toISOString() }
+  const plan: ActivePlan = { learnerId, band, chapters: [...chapters], index: 0, startedAt: new Date().toISOString(), source }
   try { localStorage.setItem(key(learnerId), JSON.stringify(plan)) } catch { /* storage unavailable */ }
   return plan
+}
+
+/**
+ * A plan the child is PART-WAY THROUGH — the only case where a new diagnosis costs something.
+ *
+ * ⚠️ WHY THIS EXISTS. `setActivePlan` replaces the plan wholesale and resets `index` to 0, which is
+ * right for a first check and wrong the moment the CHILD can start one whenever they feel like it
+ * (founder's call, 2026-08-31: *"jab mann kare woh diagnostic kare"*). A child who runs it for fun
+ * on chapter 4 of their plan would silently lose their place — nothing in the app would say so, and
+ * their XP and stars would be untouched, which makes it harder to notice rather than easier.
+ * So the diagnostic ASKS before replacing, and this is the one question it needs answered.
+ *
+ * ⚠️ `index > 0`, not "a plan exists": replacing a plan nobody has walked yet costs nothing, and
+ * asking there would be a toll on the common path (skip → grade-start plan → check later).
+ */
+export function planInProgress(learnerId: string): ActivePlan | null {
+  const plan = getActivePlan(learnerId)
+  return plan && plan.index > 0 ? plan : null
 }
 
 export function getActivePlan(learnerId: string): ActivePlan | null {
@@ -163,9 +190,37 @@ export function reconcilePlan(
     index: Math.max(local?.index ?? 0, derived),
     startedAt: local?.startedAt ?? new Date().toISOString(),
     ...(local?.revised ? { revised: true } : null),
+    /**
+     * ⚠️⚠️ CARRY THE SOURCE, OR THE RECONCILE SILENTLY RE-LABELS A GRADE-START PLAN AS DIAGNOSED.
+     *
+     * This function REBUILDS the plan field by field, so anything not named here is dropped — and
+     * `source` absent reads as 'diagnostic', which is correct for every plan written before
+     * 2026-08-24 and a lie about a skipper's. The menu runs this on every load with a learner
+     * bootstrap, so a skipped child's card would revert to "Milo picked this to close the gap"
+     * within one visit: the app claiming a diagnosis nobody made, which is the exact defect
+     * `source` was added to prevent.
+     *
+     * A remote-seeded plan (no local) genuinely IS diagnosed — `diagnostic_plans` is only ever
+     * written by a completed check — so the default is right in that case and wrong only here.
+     *
+     * ⚠️ Field-by-field rebuilds do this every time somebody adds a field. If a third one arrives,
+     * consider spreading `local` and overriding, rather than listing what survives.
+     */
+    ...(local?.source ? { source: local.source } : null),
   }
   try { localStorage.setItem(key(learnerId), JSON.stringify(plan)) } catch { /* storage unavailable */ }
   return plan
+}
+
+/**
+ * WHAT THE UI MAY CLAIM ABOUT THIS PLAN — one definition, because the answer is a JUDGEMENT and not
+ * a stored field. `source` is absent on every plan written before 2026-08-24 and on any plan seeded
+ * from `diagnostic_plans` (only a completed check writes that table), and both of those genuinely
+ * ARE diagnosed — so the default belongs with the data, not repeated at each call site. The menu had
+ * `?? 'diagnostic'` written out twice, in two branches, which is two places deciding one thing.
+ */
+export function planSource(learnerId: string): 'diagnostic' | 'gradeStart' {
+  return getActivePlan(learnerId)?.source === 'gradeStart' ? 'gradeStart' : 'diagnostic'
 }
 
 /** { done, total } for a progress readout ("Step 2 of 5"). */

@@ -5,6 +5,7 @@ import StorageGate from '@/shared/ui/StorageGate'
 import { SITE_URL } from './site'
 
 import { OfflineBanner } from '@/infra/useOfflineSync'
+import AuthEventLogger from '@/infra/AuthEventLogger'
 import './globals.css'
 import { ToastProvider } from '@/shared/ui/Toast'
 
@@ -31,7 +32,24 @@ const fredoka = Fredoka({ subsets: ['latin'], weight: ['500', '600', '700'], var
 const nunito = Nunito({ subsets: ['latin'], weight: ['600', '700', '800', '900'], variable: '--f-nunito', display: 'swap' })
 const plexSans = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--f-plex-sans', display: 'swap' })
 const plexMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--f-plex-mono', display: 'swap' })
-const gaegu = Gaegu({ subsets: ['latin'], weight: ['400', '700'], variable: '--f-gaegu', display: 'swap' })
+/**
+ * ⚠️ `preload: false` IS LOAD-BEARING AND IT IS THE WHOLE FONT BUDGET.
+ *
+ * `next/font/google` defaults to `preload: true`, which emits a `<link rel="preload">` for EVERY
+ * unicode-range subset of the family — on every page. Gaegu is a Korean face, so that is ~45 ranges
+ * × 2 weights = **90 preload links**. Measured on production 2026-08-19: the landing page preloaded
+ * **90 Gaegu files, 671 KB — 82% of all font bytes and ~40% of the entire first visit — while
+ * rendering ZERO elements in it.** The other four families are 1–4 files and 29–39 KB each.
+ *
+ * Gaegu is the chalkboard face (`--font-chalk`), used only inside teen-band chapters. It still
+ * loads there, on demand, per unicode-range, and `display: 'swap'` means the board renders in the
+ * fallback for a beat rather than blocking. Do not turn preload back on to fix a flash of fallback
+ * text on the chalkboard — that trade costs every child on every page 671 KB.
+ *
+ * The other four stay preloaded deliberately: Fredoka is the landing page's LCP text, and none of
+ * them is big enough to be worth the risk of a late swap.
+ */
+const gaegu = Gaegu({ subsets: ['latin'], weight: ['400', '700'], variable: '--f-gaegu', display: 'swap', preload: false })
 
 const FONT_VARS = [fredoka, nunito, plexSans, plexMono, gaegu].map(f => f.variable).join(' ')
 
@@ -52,6 +70,11 @@ export const viewport: Viewport = {
  * The `template` gives every page a suffix without each page repeating it; `/help` and
  * `/legal/[slug]` already export their own titles and now inherit the brand for free.
  *
+ * ⚠️ MILO IS THE CHARACTER. ADAPTIVELEARN IS THE PRODUCT. Only naming positions — the title,
+ * the manifest, the wordmark, the legal definitions — carry the product name. Everywhere the pony
+ * is doing something (speaking, asking, tripping over an error) he stays Milo, and that is
+ * deliberate: it is the Duo/Duolingo split, not an inconsistency. Do not "fix" it either way.
+ *
  * ⚠️ THE DESCRIPTION SAYS WHAT THE PRODUCT DOES, NOT WHAT IT IS CALLED. "Milo's interactive
  * learning adventure for kids" contains no word a parent would type. This one names the job
  * (find the gap) and the ages, because the description is the only sentence most people read.
@@ -59,39 +82,39 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Milo — find the gap that's holding your child back in maths",
-    template: '%s · Milo',
+    default: "AdaptiveLearn — find the gap that's holding your child back in math",
+    template: '%s · AdaptiveLearn',
   },
   description:
-    'A short placement check finds the deepest gap under your child’s maths — not the newest thing they got wrong — then a plan fixes it. Ages 3–18. No timer, no score, no red crosses.',
-  applicationName: 'Milo',
+    'A short placement check finds the deepest gap under your child’s math — not the newest thing they got wrong — then a plan fixes it. Ages 3–18. No timer, no score, no red crosses.',
+  applicationName: 'AdaptiveLearn',
   openGraph: {
     type: 'website',
-    siteName: 'Milo',
-    title: "Milo — find the gap that's holding your child back in maths",
+    siteName: 'AdaptiveLearn',
+    title: "AdaptiveLearn — find the gap that's holding your child back in math",
     description:
-      'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
+      'A short placement check finds the deepest gap under your child’s math, then a plan fixes it. Ages 3–18.',
     url: '/',
-    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'Milo' }],
+    // ⚠️ No `images` here on purpose — `app/opengraph-image.tsx` supplies the 1200×630 card.
+    // Naming one back would override the file-based route and reinstate the square.
   },
   twitter: {
     card: 'summary',
-    title: "Milo — find the gap that's holding your child back in maths",
+    title: "AdaptiveLearn — find the gap that's holding your child back in math",
     description:
-      'A short placement check finds the deepest gap under your child’s maths, then a plan fixes it. Ages 3–18.',
-    images: ['/icons/icon-512.png'],
+      'A short placement check finds the deepest gap under your child’s math, then a plan fixes it. Ages 3–18.',
   },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Milo',
+    title: 'AdaptiveLearn',
   },
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
-    'apple-mobile-web-app-title': 'Milo',
+    'apple-mobile-web-app-title': 'AdaptiveLearn',
     'msapplication-TileColor': '#F26B2C',
     'msapplication-tap-highlight': 'no',
   },
@@ -111,6 +134,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <MiloErrorBoundary>
           <StorageGate>
+            {/* One listener for the whole app: every sign-in, every provider, every route. */}
+            <AuthEventLogger />
             {children}
             <OfflineBanner />
           </StorageGate>

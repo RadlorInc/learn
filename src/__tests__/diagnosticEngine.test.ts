@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { runProbe, prereqClosure, recheckSkills } from '@/core/diagnosticEngine'
+import { runProbe, prereqClosure, recheckSkills, DEFAULT_CONFIG } from '@/core/diagnosticEngine'
 
 // Oracle (the documented headless recipe): a learner who fails exactly `gap` and everything that
 // transitively depends on it, but passes everything else — the engine must descend to `gap`.
@@ -24,11 +24,15 @@ describe('diagnosticEngine', () => {
     expect(recheckSkills('i.multFacts')[0]).toBe('i.multFacts')
   })
 
-  describe('fail confirmation (strikes)', () => {
+  describe('evidence per skill', () => {
+    /**
+     * ⚠️ THE RULE: keep asking until one answer LEADS — by two to pass, by **three** to fail.
+     * The two verdicts do not cost the same thing. A pass moves on; a fail sends the search downward
+     * and, at an entry, tells a family their child is behind. Measured with each item's real guess
+     * rate, a symmetric rule made a double-slip almost routine — 8% of ON-GRADE 12–14 children were
+     * told their gap sat a whole band below them. The asymmetry took the whole band to 96–98% exact.
+     */
     it('a single careless slip is forgiven — no descent, no false root', () => {
-      // The learner knows everything but fumbles their FIRST sight of i.multFacts, then gets the
-      // retry right. Before confirmation this descended and could report a false root; now the
-      // slip must leave the diagnosis identical to a clean grade-level run.
       let fumbled = false
       const slip = (id: string) => {
         if (id === 'i.multFacts' && !fumbled) { fumbled = true; return false }
@@ -39,26 +43,38 @@ describe('diagnosticEngine', () => {
       expect(state.failed).toHaveLength(0)
       expect(state.passed).toContain('i.multFacts')
       expect(fumbled).toBe(true)                       // the slip actually happened
-      // the retry consumed exactly one extra ask
-      expect(state.asked.filter(a => a === 'i.multFacts')).toHaveLength(2)
+      // miss, then three passes to reach a lead of two — and every other skill settles in two
+      expect(state.asked.filter(a => a === 'i.multFacts')).toHaveLength(4)
     })
 
-    it('a real gap is confirmed by the second miss and still resolves to the exact root', () => {
+    it('a skill the child really has settles in two, not more', () => {
+      const { state } = runProbe('9-11', () => true)
+      for (const id of new Set(state.asked)) {
+        expect(state.asked.filter(a => a === id), `${id}`).toHaveLength(2)
+      }
+    })
+
+    it('a real gap needs three misses, and still resolves to the exact root', () => {
       const { state, result } = runProbe('9-11', oracle('i.multFacts'))
       expect(result.rootGap).toBe('i.multFacts')
-      // the EARLY fails (where a slip would fabricate a false root) are confirmed by a retry;
-      // past CONFIRM_UNTIL_FAILS the pattern is the signal and fails are single-ask
       const first = state.failed[0]
-      expect(state.asked.filter(a => a === first)).toHaveLength(2)
+      expect(state.asked.filter(a => a === first)).toHaveLength(3)
     })
 
-    it('confirmation stops once the failure pattern is established (deep descent is not doubled)', () => {
-      // A deeply-behind 17-18 learner (fails everything): only the first 4 fails cost a retry.
+    /**
+     * ⚠️⚠️ THIS USED TO ASSERT THE OPPOSITE, AND THE RULE IT PINNED WAS THE BUG. Confirmation
+     * stopped after four confirmed fails, on the argument that a child already failing that much is
+     * not slipping. True — and it meant the bands that descend furthest burned through four fails on
+     * the way DOWN, so most of a 17–18 descent ran unguarded and one slip there planted a root two
+     * or three chapters too deep. Measured, the too-deep error tracked descent distance almost
+     * exactly: 1% at one band below the child, 9% at 3.6 bands.
+     */
+    it('confirms at EVERY depth, however far behind the child is', () => {
       const { state } = runProbe('17-18', () => false)
-      const doubleAsked = state.failed.filter(f => state.asked.filter(a => a === f).length >= 2)
-      expect(doubleAsked.length).toBeLessThanOrEqual(4)
-      // and the probe stays a probe, not an ordeal
-      expect(state.asked.length).toBeLessThanOrEqual(28)
+      const thin = state.failed.filter(f => state.asked.filter(a => a === f).length < 3)
+      expect(thin, 'a fail was taken on fewer than three items').toEqual([])
+      // ⚠️ …and it stays bounded. This child fails EVERYTHING, the worst case there is.
+      expect(state.asked.length).toBeLessThanOrEqual(DEFAULT_CONFIG['17-18'].maxItems)
     })
 
     it('3-5 readiness does NOT retry — a parent "not yet" is an observation, not a miss', () => {
@@ -67,14 +83,15 @@ describe('diagnosticEngine', () => {
       expect(state.asked.filter(a => a === 'e.patterns')).toHaveLength(1)
     })
 
-    it('strikes never leak into the diagnosis', () => {
-      // End the probe with an outstanding strike by capping items right after a first miss.
-      const s = (() => { const st = runProbe('9-11', () => true, { maxItems: 1, maxFailures: 5 }).state; return st })()
-      expect(s.strikes).toHaveLength(0)   // pass path never strikes
-      // Direct check: one miss recorded, probe force-ended → skill is neither passed nor failed.
-      const one = runProbe('9-11', () => false, { maxItems: 1, maxFailures: 5 }).state
-      expect(one.strikes).toHaveLength(1)
-      expect(one.failed).toHaveLength(0)
+    it('an undecided skill never leaks into the diagnosis', () => {
+      // One answer is never enough now, in either direction, so a probe cut off after one item has
+      // decided nothing at all.
+      for (const answer of [true, false]) {
+        const st = runProbe('9-11', () => answer, { maxItems: 1, maxFailures: 9 }).state
+        expect(st.passed, `answering ${answer}`).toHaveLength(0)
+        expect(st.failed, `answering ${answer}`).toHaveLength(0)
+        expect(st.tries[st.asked[0]]).toEqual([answer])
+      }
     })
   })
 })

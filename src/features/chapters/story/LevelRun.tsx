@@ -73,7 +73,7 @@
  * TickTock records.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { afterSpeech, speak, speakAfterCurrent, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -87,6 +87,7 @@ import { SWEEP_MAX_Y } from '@/infra/ar/sweep'
 import { GotIt, ThePlan, StepBoard, CHALK_CSS, stepBoardRect } from './chalkboard'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 // ─── The level: ten runs ────────────────────────────────────────────────────────────────
 /**
@@ -112,7 +113,7 @@ import { SceneBg } from '@/shared/ui/SceneBg'
  */
 export interface Site { scene: string; label: string; pathY: number }
 
-/** Every level scene is generated at this size; the cover-fit maths below depends on it. */
+/** Every level scene is generated at this size; the cover-fit math below depends on it. */
 export const IMG_W = 1376
 export const IMG_H = 768
 
@@ -981,7 +982,9 @@ const LevelPlay: React.FC<{ data: LvRound; mode: Mode; onComplete: (correct: boo
     setMiss(null); setSolved(false); setDropped(false)
     done.current = false; erred.current = false
     setWarps(0); setRunnerX(homeX)
-    speak(data.ask)
+    // `speakAfterCurrent`: the round advances 1300ms after the previous one's "off she goes" line,
+    // which runs longer than that — a plain `speak` chopped it off at the start of every round.
+    speakAfterCurrent(data.ask)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
@@ -1398,7 +1401,7 @@ const LevelExplain: React.FC<{ data: LvRound; onDone: () => void; onSkip?: () =>
 
   /**
    * THE WRITTEN WORKING — one terse line per spoken line, on the 12–18 band's step board. The bubble
-   * keeps the narration; the board keeps the maths, so the two are not two copies of one string.
+   * keeps the narration; the board keeps the math, so the two are not two copies of one string.
    *
    * ⚠️ INDEX-ALIGNED WITH `lines`, so the same step-index guard applies: do not add, split or reorder
    * one without the other. `''` means that beat writes nothing.
@@ -1426,6 +1429,7 @@ const LevelExplain: React.FC<{ data: LvRound; onDone: () => void; onSkip?: () =>
     let alive = true
     const timers: number[] = []
     let i = 0
+    let waiting: (() => void) | null = null
     const run = () => {
       if (!alive) return
       setStep(i)
@@ -1441,15 +1445,24 @@ const LevelExplain: React.FC<{ data: LvRound; onDone: () => void; onSkip?: () =>
       // A new leg is a new picture, so Astro is PLACED back at the start rather than travelling
       // there — a placement is not a journey, and animating it would read as her running backwards.
       if (i === 3) { setRunnerX(L.homeX) }
+      // ⚠️ THE DWELL IS A FLOOR, NOT THE WHOLE STORY. `dwellFor` caps at 6200ms and these lines run
+      // longer than that with a real clip, so the next step used to arrive mid-sentence and cancel
+      // it. `afterSpeech` holds the step open until Milo has actually stopped — under a ceiling,
+      // because a walkthrough that can only advance on a speech event freezes on the devices that
+      // drop those events, which is why this loop is on a timer in the first place.
       const t = window.setTimeout(() => {
-        i++
-        if (i < lines.length) run()
-        else window.setTimeout(() => alive && doneRef.current(), 1500)
+        waiting = afterSpeech(() => {
+          waiting = null
+          if (!alive) return
+          i++
+          if (i < lines.length) run()
+          else window.setTimeout(() => alive && doneRef.current(), 1500)
+        }, 9000)
       }, dwellFor(lines[i]))
       timers.push(t)
     }
     run()
-    return () => { alive = false; timers.forEach(window.clearTimeout) }
+    return () => { alive = false; waiting?.(); timers.forEach(window.clearTimeout) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1514,7 +1527,9 @@ export function makeBeat(): Beat<LvRound> {
     ownsFeedback: true,
     // Empty → SkillBeat draws no pill. Milo's bubble is the only question region.
     prompt: () => '',
-    say: d => d.ask,
+    // ⚠️ NO `say`. The chapter speaks the ask itself, from the round's own mount effect, and a `say`
+    // here would be the SAME line queued a second time now that the shell waits its turn instead of
+    // superseding — heard twice rather than once.
     Play: ({ data, onSubmit }) => <LevelPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <LevelExplain data={data} onDone={onDone} />,
   }
@@ -1535,7 +1550,7 @@ export default function LevelRun({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'rounding', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [served, setServed] = useState<number[]>([])     // the cumulative arc — OUTSIDE SkillBeat
   const needsRotate = useNeedsRotate()
@@ -1603,7 +1618,7 @@ export default function LevelRun({ onFinish, onExit }: {
 
       <button onClick={exit}
         style={{
-          position: 'fixed', left: 12, top: 10, zIndex: 60, padding: '7px 14px', borderRadius: 999,
+          position: 'fixed', left: 12, top: 10, zIndex: 60, padding: '7px 14px', minHeight: 44, borderRadius: 999,
           background: 'var(--paper, #fdf6e8)', border: '3px solid var(--milo-orange, #f26b2c)',
           color: 'var(--milo-orange, #f26b2c)', fontFamily: 'var(--font-display)', fontWeight: 800,
           fontSize: 13, cursor: 'pointer',
@@ -1676,6 +1691,11 @@ export default function LevelRun({ onFinish, onExit }: {
               <button onClick={() => { unlockSpeech(); if (onCam) hand.useTaps(); else hand.useCamera(); setPhase('plan') }}
                 style={{
                   marginTop: 12, border: 'none', background: 'transparent', cursor: 'pointer',
+                  // ⚠️ THIS IS THE WAY OUT OF CAMERA MODE, and it measured 21px tall — under WCAG
+                  // 2.5.8 AA's 24px floor. An escape hatch a finger keeps missing is the "AR door
+                  // that could strand a child" fault wearing a smaller costume. Height is bought in
+                  // PADDING so the underlined link looks exactly the same.
+                  padding: '12px 8px', minHeight: 44,
                   fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: '#7a6a55',
                   textDecoration: 'underline',
                 }}>

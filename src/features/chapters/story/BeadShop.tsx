@@ -34,7 +34,7 @@
  * Landscape-first, wrapped by the registry / `?ch=beads`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
@@ -43,6 +43,9 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { shuffle } from '@/core/rand'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()`: a wrong tap speaks a line and
@@ -56,7 +59,7 @@ const SHORT_H = 470
 
 // ─── Colours (the pattern variable) ──────────────────────────────────────────────────
 type BeadColor = 'red' | 'blue' | 'yellow' | 'green' | 'orange' | 'purple' | 'pink'
-const BEADS: Record<BeadColor, { label: string; hex: string; deep: string }> = {
+export const BEADS: Record<BeadColor, { label: string; hex: string; deep: string }> = {
   red:    { label: 'red',    hex: '#E64545', deep: '#B5302F' },
   blue:   { label: 'blue',   hex: '#3FA3EE', deep: '#2575B8' },
   yellow: { label: 'yellow', hex: '#FFC93C', deep: '#D69A12' },
@@ -83,7 +86,7 @@ interface Make {
   src: string; bg: string; grad: string
   intro: string
 }
-const MAKES: Make[] = [
+export const MAKES: Make[] = [
   { id: 'beads', label: 'A necklace', emoji: '📿', kind: 'bead', noun: 'bead', thing: 'necklace',
     connector: 'string', line: 0.5, src: '/assets/objects/pat_bead.png',
     bg: '/assets/backgrounds/bead_shop.png', grad: 'linear-gradient(#ffe9cf 0%, #fff3e2 52%, #f3dcc0 100%)',
@@ -115,9 +118,11 @@ interface PatternRound {
 }
 
 /** What `make` needs to know about the string so far. Held in a ref — see the orchestrator. */
-interface StrandState { strand: BeadColor[]; runStart: number; unit: BeadColor[] }
+export interface StrandState { strand: BeadColor[]; runStart: number; unit: BeadColor[] }
+/** Where the strand starts — named once so the component and the gate cannot disagree about it. */
+export const EMPTY_STRAND: StrandState = { strand: [], runStart: 0, unit: [] }
 
-function makePatternRound(s: StrandState, d: Difficulty, round: number): PatternRound {
+export function makePatternRound(s: StrandState, d: Difficulty, round: number): PatternRound {
   const len = patternUnitLen(d)
   const sameUnit = s.unit.length === len
   const unit = sameUnit ? s.unit
@@ -161,7 +166,7 @@ function usePainted(src: string): boolean {
   return _loaded[src] ?? false
 }
 
-type ItemState = 'idle' | 'glow' | 'wrong' | 'pop'
+type ItemState = 'idle' | 'glow' | 'wrong' | 'pop' | 'picked'
 function Item({ make, color, size, state = 'idle', shadow = true, dim }: {
   make: Make; color: BeadColor; size: number; state?: ItemState; shadow?: boolean; dim?: boolean
 }) {
@@ -304,6 +309,7 @@ function Tray({ make, choices, stateFor, onTap, trayRef }: {
         <button key={i} onClick={onTap ? e => onTap(i, e.currentTarget) : undefined} disabled={!onTap}
           aria-label={`${BEADS[c].label} ${make.noun}`}
           style={{ background: 'transparent', border: 'none', padding: 0, cursor: onTap ? 'pointer' : 'default', lineHeight: 0,
+            borderRadius: 14, boxShadow: stateFor(i) === 'picked' ? PICKED_RING : undefined,
             marginTop: yjit[i] ?? 0, opacity: stateFor(i) === 'pop' ? 0 : 1, transition: 'opacity .15s',
             transform: stateFor(i) === 'glow' ? 'scale(1.12)' : 'scale(1)' }}>
           <Item make={make} color={c} size={box} state={stateFor(i)} />
@@ -318,7 +324,12 @@ function Tray({ make, choices, stateFor, onTap, trayRef }: {
 function MiloBead({ make }: { make: Make }) {
   const [step, setStep] = useState(0)
   const { h: vh } = useViewport()
-  const srcs = ['/assets/characters/milo_beads.png', '/assets/characters/milo_idle.png']
+  // ⚠️ `milo_beads.png` WAS NEVER DRAWN. It headed this list, so every single load of the chapter
+  // fetched it, took a 404, and fell through to `milo_idle.png` — the picture was always right and
+  // the console always had an error in it, which is the kind of noise a real error then hides in.
+  // (It also fails this repo's own e2e contract, which is zero console errors.) The remaining
+  // fallback to an emoji stays: that is a last resort for a missing file, not art direction.
+  const srcs = ['/assets/characters/milo_idle.png']
   const dim = vh < SHORT_H ? 'min(24vh, 118px)' : 'min(28vh, 230px)'
   return (
     <div style={{ position: 'fixed', left: '9%', bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: dim, height: dim }}>
@@ -341,9 +352,9 @@ function MiloBead({ make }: { make: Make }) {
 type Thread = (from: HTMLElement, color: BeadColor) => number
 
 // ─── Round copy ──────────────────────────────────────────────────────────────────────
-const promptFor = () => 'What comes next?'
+export const promptFor = () => 'What comes next?'
 /** The chant. A pattern at this age is a rhythm as much as a picture, so Milo says it out loud. */
-const sayFor = (make: Make) => (d: PatternRound) => {
+export const sayFor = (make: Make) => (d: PatternRound) => {
   const chant = d.unit.map(c => BEADS[c].label).join(', ')
   return `${chant}, ${chant}… what ${make.noun} comes next? Tap it!`
 }
@@ -355,11 +366,27 @@ const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: 
   const [taken, setTaken] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false)
+  const [pending, setPending] = useState<number | null>(null)
+  const pendingEl = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    if (mode === 'guided') speak(`Now you! What ${make.noun} comes next? Tap it!`)
+    if (mode === 'guided') speakAfterCurrent(`Now you! What ${make.noun} comes next? Tap it!`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /** A tap only CHOOSES; the bead stays in the tray until Ready. The thread animation needs the
+   *  element it leaves from, so the chosen button is held alongside the index. */
+  function pick(i: number, el: HTMLElement) {
+    if (done.current) return
+    pendingEl.current = el
+    setPending(p => (p === i ? null : i))
+  }
+  function commit() {
+    const i = pending, el = pendingEl.current
+    if (i == null || !el) return
+    setPending(null)
+    tap(i, el)
+  }
 
   function tap(i: number, el: HTMLElement) {
     if (done.current || tapLock.current) return
@@ -380,8 +407,14 @@ const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: 
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), ms + 260)
   }
 
-  return <Tray make={make} choices={choices} onTap={tap}
-    stateFor={i => (taken === i ? 'pop' : wrongIdx === i ? 'wrong' : 'idle')} />
+  return <>
+    <Tray make={make} choices={choices} onTap={pick}
+      stateFor={i => (taken === i ? 'pop' : wrongIdx === i ? 'wrong' : pending === i ? 'picked' : 'idle')} />
+    {/* ⚠️ BESIDE THE TRAY, NOT UNDER IT. Measured at 640×320 the tray of beads runs to y 294 on a
+        320-tall frame, so the centred bar at 263–310 was drawn straight across the MIDDLE bead —
+        one of the three answers. There is no room below the tray; the room is to the right. */}
+    <ReadyBar show={pending !== null} onCommit={commit} align="right" />
+  </>
 }
 
 // ─── Milo shows how (opening demo + the 3-wrong re-teach) ────────────────────────────
@@ -399,7 +432,7 @@ const BeadsExplain: React.FC<{ data: PatternRound; make: Make; thread: Thread; p
   const [taken, setTaken] = useState<number | null>(null)
   const [glow, setGlow] = useState(false)
   const trayRef = useRef<HTMLDivElement | null>(null)
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const chant = unit.map(c => BEADS[c].label).join(', ')
@@ -442,7 +475,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
   const { w: vw, h: vh } = useViewport()
   const short = vh < SHORT_H
   const [make, setMake] = useState<Make | null>(() => (forcedId ? makeById(forcedId) ?? null : null))
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'patterns', phase: 'practice' })
 
   /**
    * The one string. It lives HERE, not inside SkillBeat, which rebuilds its contents every round —
@@ -453,7 +486,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
   const [runStart, setRunStart] = useState(0)
   const [unit, setUnit] = useState<BeadColor[]>([])
   // `make` runs inside SkillBeat's useMemo, so it reads the string through a ref rather than props.
-  const sRef = useRef<StrandState>({ strand: [], runStart: 0, unit: [] })
+  const sRef = useRef<StrandState>(EMPTY_STRAND)
   sRef.current = { strand, runStart, unit }
 
   const [flight, setFlight] = useState<Flight | null>(null)
@@ -551,7 +584,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
       <Background make={make} />
 
       <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

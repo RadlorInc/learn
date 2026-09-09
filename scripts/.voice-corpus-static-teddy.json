@@ -1,0 +1,497 @@
+[
+  {
+    "key": "1l3hvj2",
+    "text": "Great job! The star fits!",
+    "chars": 25,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1uuj5tk",
+    "text": "Great job! The heart fits!",
+    "chars": 26,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1qmd25i",
+    "text": "Great job! The circle fits!",
+    "chars": 27,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "rwssph",
+    "text": "Great job! The rectangle fits!",
+    "chars": 30,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "12u2mrl",
+    "text": "Now you! Tap the smallest ant first.",
+    "chars": 36,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "102nkas",
+    "text": "Now you! Tap the smallest crab first.",
+    "chars": 37,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "172od32",
+    "text": "Now you! Tap the smallest bunny first.",
+    "chars": 38,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "mlhn1x",
+    "text": "Now you! Tap the smallest shark first.",
+    "chars": 38,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "16oerwg",
+    "text": "Now you! Tap the smallest turtle first.",
+    "chars": 39,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "17j95qr",
+    "text": "Now you! The flag needs a star. Tap it!",
+    "chars": 39,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1wlkouo",
+    "text": "Now you! Tap the smallest ladybug first.",
+    "chars": 40,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "3h2eyt",
+    "text": "Now you! Tap the smallest firefly first.",
+    "chars": 40,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1gvomce",
+    "text": "So the next bead is red. Watch it go on!",
+    "chars": 40,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1rjsrxs",
+    "text": "So the next flag is red. Watch it go on!",
+    "chars": 40,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "4ja47",
+    "text": "Now you! Tap the smallest squirrel first.",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1qeg0sx",
+    "text": "So the next bead is pink. Watch it go on!",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1p8777",
+    "text": "So the next flag is pink. Watch it go on!",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1hd6n2v",
+    "text": "Now you! Tap the smallest butterfly first.",
+    "chars": 42,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1gfsrj2",
+    "text": "So the next bead is green. Watch it go on!",
+    "chars": 42,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "61ud0g",
+    "text": "So the next flag is green. Watch it go on!",
+    "chars": 42,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "l2ru49",
+    "text": "Now you! The window needs a circle. Tap it!",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1p7ki1s",
+    "text": "Now you! The sail needs a triangle. Tap it!",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1dbsyst",
+    "text": "So the next bead is yellow. Watch it go on!",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1x1qlbz",
+    "text": "So the next bead is orange. Watch it go on!",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "jut2xz",
+    "text": "So the next bead is purple. Watch it go on!",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "118yqwn",
+    "text": "So the next flag is yellow. Watch it go on!",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1llvltd",
+    "text": "So the next flag is orange. Watch it go on!",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "dacf0t",
+    "text": "So the next flag is purple. Watch it go on!",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "ola71a",
+    "text": "Now you! The door needs a rectangle. Tap it!",
+    "chars": 44,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "xougxv",
+    "text": "Now you! The hull needs a rectangle. Tap it!",
+    "chars": 44,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "18uokek",
+    "text": "Look \u2014 the flag is missing. It needs a star.",
+    "chars": 44,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "2l53pg",
+    "text": "Now you! The porthole needs a circle. Tap it!",
+    "chars": 45,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "110er8w",
+    "text": "So the next train car is red. Watch it go on!",
+    "chars": 45,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1og692u",
+    "text": "How long is the bus? Let's lay Milo's blocks!",
+    "chars": 45,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "wbaqur",
+    "text": "So the next train car is pink. Watch it go on!",
+    "chars": 46,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1iruvz4",
+    "text": "So the next train car is green. Watch it go on!",
+    "chars": 47,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "2rspcp",
+    "text": "How tall is the daisy? Let's lay Milo's blocks!",
+    "chars": 47,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1dzjn6c",
+    "text": "How long is the snake? Let's lay Milo's blocks!",
+    "chars": 47,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1ko5nuu",
+    "text": "Look \u2014 the window is missing. It needs a circle.",
+    "chars": 48,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "xtjxxl",
+    "text": "Look \u2014 the sail is missing. It needs a triangle.",
+    "chars": 48,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1vxrvsn",
+    "text": "So the next train car is yellow. Watch it go on!",
+    "chars": 48,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "h9koq9",
+    "text": "So the next train car is orange. Watch it go on!",
+    "chars": 48,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "17z5jwt",
+    "text": "So the next train car is purple. Watch it go on!",
+    "chars": 48,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "apkb7l",
+    "text": "Look \u2014 the door is missing. It needs a rectangle.",
+    "chars": 49,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "jhvwr6",
+    "text": "Look \u2014 the hull is missing. It needs a rectangle.",
+    "chars": 49,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1uj0dlv",
+    "text": "How tall is the giraffe? Let's lay Milo's blocks!",
+    "chars": 49,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1wwryvp",
+    "text": "Look \u2014 the porthole is missing. It needs a circle.",
+    "chars": 50,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "174djyd",
+    "text": "Now you! The star on the roof needs a star. Tap it!",
+    "chars": 51,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "293wo1",
+    "text": "How tall is the pine tree? Let's lay Milo's blocks!",
+    "chars": 51,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "17r6oxo",
+    "text": "How long is the train car? Let's lay Milo's blocks!",
+    "chars": 51,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1l7pcz9",
+    "text": "How tall is the apple tree? Let's lay Milo's blocks!",
+    "chars": 52,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "4s36nf",
+    "text": "Now you! The heart on the wall needs a heart. Tap it!",
+    "chars": 53,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1b8jm2g",
+    "text": "How long is the train engine? Let's lay Milo's blocks!",
+    "chars": 54,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1auipze",
+    "text": "Look \u2014 the star on the roof is missing. It needs a star.",
+    "chars": 56,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  },
+  {
+    "key": "1gjikcq",
+    "text": "Look \u2014 the heart on the wall is missing. It needs a heart.",
+    "chars": 58,
+    "kind": "reteach",
+    "sources": [
+      "3-5"
+    ]
+  }
+]

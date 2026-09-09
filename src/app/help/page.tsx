@@ -14,7 +14,31 @@ import { SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-export const metadata: Metadata = { title: 'Milo — Help' }
+export const metadata: Metadata = {
+  title: 'Help',
+  description:
+    'Answers to the questions parents ask about AdaptiveLearn: offline play, lost progress, how it decides what to teach, the camera, and choosing the right level for a child.',
+  alternates: { canonical: '/help' },
+}
+
+/**
+ * The visible answer is the ONLY copy of the answer.
+ *
+ * ⚠️ The obvious way to add FAQ structured data is a second `plain:` string beside each `a`, and
+ * that is the duplicate-fact trap this codebase keeps paying for: the two drift, and the one that
+ * drifts is the one nobody reads — the machine copy. Walk the element tree instead. It uses no
+ * renderer (so `<Link>` needs no router context) and the schema literally cannot disagree with
+ * what is on screen.
+ */
+function plainText(node: React.ReactNode): string {
+  if (node === null || node === undefined || typeof node === 'boolean') return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(plainText).join('')
+  if (typeof node === 'object' && 'props' in node) {
+    return plainText((node as { props: { children?: React.ReactNode } }).props.children)
+  }
+  return ''
+}
 
 const FAQ: { q: string; a: React.ReactNode }[] = [
   {
@@ -68,6 +92,23 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
 ]
 
+function HelpJsonLd() {
+  const json = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        // Collapse the whitespace the JSX indentation introduces.
+        text: plainText(f.a).replace(/\s+/g, ' ').trim(),
+      },
+    })),
+  }
+  return <script type="application/ld+json">{JSON.stringify(json)}</script>
+}
+
 export default function HelpPage() {
   return (
     <main style={{
@@ -75,7 +116,7 @@ export default function HelpPage() {
       padding: '28px 20px 60px',
     }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← Milo</Link>
+        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← AdaptiveLearn</Link>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#3d2516', margin: '14px 0 20px' }}>
           Help
         </h1>
@@ -96,6 +137,7 @@ export default function HelpPage() {
           {' '}— tell us the device and browser, and we will come back to you.
         </p>
       </div>
+      <HelpJsonLd />
     </main>
   )
 }

@@ -143,6 +143,26 @@ All four were mutation-tested — each defect planted and watched fail.
 - [ ] **Set `SUPABASE_DB_URL`** repo secret (test/branch DB) to activate the CI RLS job.
 - [ ] **Set `MONITORING_INGEST_URL`** (or wire Sentry) to activate error forwarding.
 
+## `/api/stripe/webhook` — a public endpoint that is NOT rate-limited, deliberately
+
+Added 2026-08-25 (billing Stage 2b). It is the one public POST in the app with no IP rate limit, and
+that is a decision rather than an omission:
+
+- **It authenticates by SIGNATURE, not by origin.** `stripe.webhooks.constructEvent` verifies an
+  HMAC over the raw body with `STRIPE_WEBHOOK_SECRET` and rejects anything else with a 400 **before
+  a single byte is written anywhere** — driven, not read (`billingStripe.test.ts` asserts the
+  outbound call list is empty on a bad signature).
+- **A rate limit here drops real events.** Stripe delivers from a wide, changing IP range and gives
+  up after ~3 days of retries; a limiter that sheds a burst of legitimate deliveries loses money
+  quietly. `/api/lead` is limited because an anonymous caller can write a row; here they cannot.
+- **The unsigned case is not logged as a crash**, on purpose: an unsigned POST to a public URL is a
+  scan, and routing it to `sinkError` would fill the crash sink exactly when somebody starts probing.
+
+⚠️ Its service-role key writes `subscriptions`, `subscription_seats` and `billing_events` — all three
+deny-all to `anon`/`authenticated`. There is **no anon fallback** (unlike `/api/lead`, which has one
+for an unrelated reason): if it ever worked, it would mean the paywall's own tables were writable
+from a browser.
+
 ## Known accepted items
 
 - Session JWT in `localStorage` (standard Supabase-SPA tradeoff; mitigated by CSP + short refresh token).

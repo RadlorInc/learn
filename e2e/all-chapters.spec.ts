@@ -1,7 +1,63 @@
 import { test, expect, Page } from '@playwright/test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { IGNORED_ERRORS } from './personas'
+import { IGNORED_ERRORS, MIN_TAP, TIGHT_TAP } from './personas'
+import { seedSession } from './session'
+
+/**
+ * ⚠️ SIGNED IN, BECAUSE THE CAMERA GUARD REFUSES AN AR CHAPTER WITHOUT A SESSION. Eight chapters
+ * (all in 9–11) do not render at all to a logged-out visitor — see src/core/arChapters.ts. Without
+ * this seed, this sweep would quietly grade the consent card for those eight and report them clean,
+ * which is the "graded the wrong screen" fault start-card.spec.ts exists to prevent. The logged-out
+ * side is covered deliberately by ar-consent.spec.ts.
+ */
+/**
+ * ⚠️⚠️ THE WIDE-TEXT STRESS — `E2E_WIDE_TEXT=1`, A DELIBERATE ONE-OFF, NEVER THE NIGHTLY DEFAULT.
+ *
+ * Measured 2026-08-31: the same start-card blurb is 5 lines here and **6 on the CI runner**, because
+ * the text renders ~5.1% wider there (canvas probe 312.09 → 328; generic `sans-serif` measures
+ * identically on both, so it is the face, not the browser). One line = 23.25px = exactly the -13px
+ * overflow the nightly had been reporting for seven nights.
+ *
+ * So a green nightly proves the layout survives ONE font's metrics — the runner's. A real device
+ * whose fallback is wider breaks it again and no schedulable run would tell us, because the runner
+ * only has the fonts it has. This flag stops the question depending on which fonts a machine
+ * happens to own: it widens every glyph's advance by a fixed 8% via `letter-spacing`, which is
+ * deterministic everywhere and comfortably past the 5.1% the two real platforms differ by.
+ *
+ * ⚠️ It is a STRESS, not a truth: nothing renders like this. A red under it means a screen is one
+ * metric-change from failing, which is worth knowing BEFORE a device finds it — it is not a claim
+ * that any user sees that screen. Run it when a layout changes; do not put it on the timer, where
+ * it would eventually be re-run rather than read.
+ *
+ * ⚠️⚠️ TWO CAVEATS THAT TRAVEL WITH ANY RESULT FROM IT.
+ *   1. **8% IS NOT A PROVEN WORST CASE.** It was chosen to clear the 5.1% measured between the two
+ *      platforms we have evidence for. A device wider than that is not covered by a green here, and
+ *      nothing schedulable would tell us — this raises the floor, it does not close the question.
+ *   2. **IT ONLY WORKS POINTED AT A SPEC THAT REACHES THE SCREEN UNDER TEST.** With the flag on and
+ *      the pre-fix start card restored, THIS spec reported **3 passed** at shortPhone: it enters a
+ *      chapter by clicking the biggest control, which lands on the explore step or straight past the
+ *      card into the walkthrough. `start-card.spec.ts` carries the same flag for that reason, and
+ *      that "3 passed" is the more instructive half of the story — a stress aimed at the wrong
+ *      screen is decoration wearing a scarier name.
+ *
+ * ⚠️ What it is NOT a diagnosis of: the +5.1% itself. Chrome paints the DECLARED face on both
+ * platforms (`CSS.getPlatformFontsForNode` → `IBM Plex Sans`, `isCustomFont: true`), so the face is
+ * neither failing to load in CI nor falling back — two candidates eliminated, the third (platform
+ * text shaping) not proven, and none of the layout work depends on which it is.
+ */
+const WIDE_TEXT = process.env.E2E_WIDE_TEXT === '1'
+
+test.beforeEach(async ({ page }) => {
+  await seedSession(page)
+  if (WIDE_TEXT) {
+    await page.addInitScript(() => {
+      const css = '*, *::before, *::after { letter-spacing: 0.08em !important }'
+      const put = () => document.head.appendChild(Object.assign(document.createElement('style'), { textContent: css }))
+      if (document.head) put(); else document.addEventListener('DOMContentLoaded', put)
+    })
+  }
+})
 
 /**
  * THE LAUNCH GATE: every chapter a child can reach actually opens, on every frame they might hold.
@@ -84,6 +140,16 @@ const FAILURE_TEXT = [
   'Oops! Milo needs a moment',           // app/global-error.tsx
   'Milo can’t find that page',      // app/not-found.tsx
   'Oops! Something went wrong',          // MiloErrorBoundary
+  /**
+   * ⚠️ THE CAMERA CONSENT CARD IS A FAILURE **HERE**, THOUGH IT IS THE CORRECT SCREEN ELSEWHERE.
+   * Eight AR chapters do not render to a logged-out visitor (src/core/arChapters.ts), and this
+   * sweep drives `/teen-preview?c=<id>` — so without the seeded session above it lands on the card
+   * for those eight. Measured when the guard was added: all nine of those runs PASSED, grading a
+   * screen that is not the chapter, exactly the fault start-card.spec.ts was written for. The seed
+   * fixes it; this line is what makes REMOVING the seed go red instead of quietly narrowing the
+   * sweep to 62 chapters while reporting 70.
+   */
+  'played with your hands',              // CameraConsentGate
 ]
 
 /**
@@ -139,10 +205,6 @@ test.describe('every chapter opens', () => {
           await page.setViewportSize(frame)
           await page.goto(ch.url, { waitUntil: 'domcontentloaded' })
 
-          // 1. It rendered a chapter, not a failure screen.
-          const body = await page.locator('body').innerText()
-          for (const bad of FAILURE_TEXT) expect(body, `${ch.id}: "${bad}" on screen`).not.toContain(bad)
-
           /**
            * 2. It is OPERABLE, or it explicitly asks to be turned — never a dead screen.
            *
@@ -173,6 +235,21 @@ test.describe('every chapter opens', () => {
             `${ch.id}: neither a usable control nor a rotate gate`,
           ).toBeVisible()
 
+          /**
+           * 1. It rendered a chapter, not a failure screen — AND IT IS READ AFTER THE SCREEN HAS
+           * SETTLED, not at `domcontentloaded`.
+           *
+           * ⚠️ IT USED TO RUN FIRST, AND THAT MADE IT VACUOUS THE DAY A GUARD BECAME ASYNC. The
+           * camera consent gate resolves a session before deciding, so at `domcontentloaded` the
+           * body is EMPTY — no chapter and no failure text — and the check passed on nothing.
+           * Measured: with the session seed removed, three AR chapters were graded on a consent
+           * card and all three went green. A check that runs before the screen exists is a check
+           * that cannot fail. Same family as the rotate-gate race two comments down, which is
+           * where the rule "assert the END STATE" was already written.
+           */
+          const body = await page.locator('body').innerText()
+          for (const bad of FAILURE_TEXT) expect(body, `${ch.id}: "${bad}" on screen`).not.toContain(bad)
+
           // If it asked to be turned, it must also say WHY — an empty gate is not a polite refusal.
           if (await rotateGate.isVisible().catch(() => false)) {
             const gateText = (await page.locator('body').innerText()).replace(/\s+/g, ' ').trim()
@@ -186,21 +263,49 @@ test.describe('every chapter opens', () => {
             document.documentElement.scrollWidth - document.documentElement.clientWidth)
           expect(overflow, `${ch.id}: ${overflow}px of horizontal overflow`).toBeLessThanOrEqual(1)
 
-          // 4. Every visible control is actually on screen and big enough to hit. 44px is the tap
-          //    floor this repo holds everywhere; a control a finger cannot land on is a dead button.
-          const badControls = await page.evaluate(() => {
+          /**
+           * 4. Every visible control is actually on screen AND big enough to hit.
+           *
+           * ⚠️ THIS COMMENT USED TO CLAIM THE 44px FLOOR AND THE CODE ONLY CHECKED `offscreen` —
+           * the tap-size half was never written. "A comment asserting a rule is followed is the
+           * most expensive kind of lie", because it is exactly what stops the next reader checking.
+           * Found while sweeping responsiveness on 2026-08-21.
+           *
+           * The floor is on the SMALLER side of the box, because a 200x20 button is as unhittable
+           * as a 20x200 one. Text links are exempt: `a[href]` inside a sentence is inline and is
+           * legitimately line-height tall — the floor is for CONTROLS, so it is applied to buttons
+           * and to links that are styled as one (a border, a background, or a block display).
+           *
+           * ⚠️ IT FAILS AT `MIN_TAP` (24, WCAG AA) AND ONLY NOTES AT `TIGHT_TAP` (44). The first
+           * draft failed at 44 and went red on 30 chapters over their "Menu" chip — while
+           * `short-landscape.spec.ts` had already, deliberately, made 44 a note. Two gates
+           * disagreeing about one rule is worse than either rule.
+           */
+          const badControls = await page.evaluate(({ MIN_TAP, TIGHT_TAP }) => {
             const out: string[] = []
+            const tight: string[] = []
             for (const el of Array.from(document.querySelectorAll('button, a[href]'))) {
               const r = el.getBoundingClientRect()
               if (!r.width || !r.height) continue                       // not rendered
-              if (getComputedStyle(el).visibility === 'hidden') continue
+              const cs = getComputedStyle(el)
+              if (cs.visibility === 'hidden') continue
               const label = (el.textContent || '').trim().slice(0, 24) || el.tagName
               if (r.right < 0 || r.left > innerWidth || r.bottom < 0 || r.top > innerHeight) {
                 out.push(`offscreen: ${label}`)
+                continue
               }
+              const inlineLink = el.tagName === 'A'
+                && cs.display.startsWith('inline')
+                && cs.borderBottomWidth === '0px'
+                && (cs.backgroundColor === 'rgba(0, 0, 0, 0)' || cs.backgroundColor === 'transparent')
+              if (inlineLink) continue
+              const min = Math.min(r.width, r.height)
+              if (min < MIN_TAP) out.push(`${Math.round(r.width)}x${Math.round(r.height)}: ${label}`)
+              else if (min < TIGHT_TAP) tight.push(`${Math.round(r.width)}x${Math.round(r.height)}: ${label}`)
             }
+            if (tight.length) console.info(`[tight tap] ${tight.join(' | ')}`)
             return out
-          })
+          }, { MIN_TAP, TIGHT_TAP })
           expect(badControls, `${ch.id}: ${badControls.join(' | ')}`).toEqual([])
 
           // 5. Nothing threw while it mounted.
@@ -262,9 +367,42 @@ test.describe('every chapter opens', () => {
               if (getComputedStyle(el).visibility === 'hidden') continue
               const label = (el.textContent || '').trim().slice(0, 24) || el.tagName
               // `top > innerHeight` alone misses the commonest case — a control that STRADDLES the
-              // bottom edge is still unhittable. Require the whole box to be inside the frame.
-              if (r.bottom > innerHeight + 1 || r.top < -1 || r.right > innerWidth + 1 || r.left < -1) {
-                out.push(`offscreen after entering: ${label} (${Math.round(r.top)}–${Math.round(r.bottom)} of ${innerHeight})`)
+              // bottom edge is still unhittable. Require the whole box to be inside the frame
+              // VERTICALLY, which is the axis on which nothing in this app is ever staged.
+              // ⚠️ The message names its AXIS. The old one printed the y-range for a violation that
+              // was horizontal (`BUTTON (30–249 of 720)` on a 720-tall frame reads as perfectly
+              // in-frame), which is what made two nights of nightly failures unreadable.
+              if (r.bottom > innerHeight + 1 || r.top < -1) {
+                out.push(`offscreen after entering (vertical): ${label} (y ${Math.round(r.top)}–${Math.round(r.bottom)} of ${innerHeight})`)
+              }
+              /**
+               * ⚠️⚠️ HORIZONTAL IS A DIFFERENT AXIS AND REQUIRING THE WHOLE BOX INSIDE IT WAS A
+               * FALSE ALARM THAT WENT RED FOR TWO NIGHTS. In the 3–5 story band an answer creature
+               * IS a `<button>`, and chapter-craft's first rule is that nothing materialises — a
+               * creature WAITS off-stage and arrives on its own legs. Measured on `counting` at
+               * 1280×720 against a production build: two buttons parked at x −332..−78 and
+               * 1358..1612, each carrying `transition: left 2.6s linear`. They are staging, not a
+               * defect, and they only appear ~4 s after entering — so a fast machine measured
+               * before the parade spawned and the slow CI runner measured after it. The check was a
+               * race, and the thing it raced against was the chapter working correctly.
+               *
+               * So the exemption is narrow and is read off the element itself. ⚠️ `transition-
+               * property` ALONE IS NOT ENOUGH AND SILENTLY EXEMPTED EVERYTHING: a first draft also
+               * matched `all`, and `← Menu` computes `transition-property: all` with
+               * `transition-duration: 0s` — i.e. every ordinary styled button in the app. Mutating
+               * the bound to `r.right > 1` then failed to flag a single control, which is what a
+               * check that exempts the whole world looks like from the outside: green. The
+               * discriminator is the property AND a real duration; a hover transition has none.
+               *
+               * Everything else still fails here — including a `position: fixed` control genuinely
+               * pushed sideways out of reach, the ScribblePad-over-the-keys shape this repo has
+               * already shipped once — and page-level overflow still fails on `scrollWidth` below.
+               */
+              const cs2 = getComputedStyle(el)
+              const dur = Math.max(...cs2.transitionDuration.split(',').map(d => parseFloat(d) || 0))
+              const travelling = dur >= 0.3 && /\b(left|transform)\b/.test(cs2.transitionProperty)
+              if (!travelling && (r.right > innerWidth + 1 || r.left < -1)) {
+                out.push(`offscreen after entering (horizontal): ${label} (x ${Math.round(r.left)}–${Math.round(r.right)} of ${innerWidth})`)
               }
             }
             if (document.documentElement.scrollWidth - document.documentElement.clientWidth > 1) {

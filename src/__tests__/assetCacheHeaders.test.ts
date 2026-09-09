@@ -26,7 +26,14 @@ import config from '../../next.config'
  *  third one cannot slip in and be silently mis-resolved. */
 const matches = (source: string, path: string): boolean => {
   const wild = source.match(/^(.*)\/:[A-Za-z]+\*$/)
-  return wild ? path.startsWith(wild[1] + '/') : source === path
+  if (wild) return path.startsWith(wild[1] + '/')
+  // A single-segment param with a literal tail — `/audio/:voice/manifest.json`. Still not a
+  // path-to-regexp: one substitution, anchored, and `[^/]+` cannot cross a segment boundary.
+  if (source.includes('/:')) {
+    const re = source.split('/').map(seg => (seg.startsWith(':') ? '[^/]+' : seg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('/')
+    return new RegExp(`^${re}$`).test(path)
+  }
+  return source === path
 }
 
 /**
@@ -58,8 +65,9 @@ describe('static asset caching', () => {
     for (const r of rules) {
       // `/:path*` (the baseline rule, empty prefix → matches everything), `/prefix/:path*`, or an
       // exact path. It sets no Cache-Control, so it never competes with the rules below.
+      // Literal segments, `:param` segments, and an optional trailing `/:param*`.
       expect(r.source, `unrecognised source form: ${r.source}`)
-        .toMatch(/^(\/[A-Za-z0-9._/-]*)?(\/:[A-Za-z]+\*)?$/)
+        .toMatch(/^(\/(:?[A-Za-z0-9._-]+))*(\/:[A-Za-z]+\*)?$/)
     }
   })
 
@@ -74,6 +82,11 @@ describe('static asset caching', () => {
     ['/audio/IvUJKFyjVb5hItY9dJAT/1h27o8n.mp3', 'public, max-age=2592000, stale-while-revalidate=31536000'],
     ['/icons/icon-192.png', 'public, max-age=2592000, stale-while-revalidate=31536000'],
     ['/sw.js', 'public, max-age=0, must-revalidate'],
+    // ⚠️ The index, not an asset. A stale one is a SHORTER key list, which is a clean miss on
+    // every clip it has dropped — silent, and it cost the 17–18 band its whole voice in Chrome
+    // while 12–14 and 15–16 played from the same stale copy. See next.config's note.
+    ['/audio/IvUJKFyjVb5hItY9dJAT/manifest.json', 'public, max-age=0, must-revalidate'],
+    ['/audio/IvUJKFyjVb5hItY9dJAT/frag/fragments.json', 'public, max-age=0, must-revalidate'],
   ])('%s resolves to what production served', async (path, expected) => {
     expect(await cacheControlFor(path)).toBe(expected)
   })

@@ -26,7 +26,7 @@ export type ChapterType =
   | 'numbersTo100' | 'placeValue' | 'skipCounting' | 'storyProblems' | 'multiplication' | 'fractions' | 'money' | 'time'
   | 'compareNumbers' | 'additionTo100' | 'subtractionTo100' | 'shapes2d3d'
   // 9–11
-  | 'bigNumbers' | 'rounding' | 'factorsMultiples' | 'fractionsCompare' | 'decimals' | 'measurementUnits' | 'areaPerimeter' | 'anglesSymmetry' | 'dataGraphs' | 'wordProblems'
+  | 'bigNumbers' | 'rounding' | 'timesTables' | 'division' | 'factorsMultiples' | 'fractionsCompare' | 'decimals' | 'measurementUnits' | 'areaPerimeter' | 'anglesSymmetry' | 'dataGraphs' | 'wordProblems'
   // 12–14 (teen "Field Lab")
   | 'integers' | 'signedRationalOps' | 'rationalOps' | 'ratioProportion' | 'percentages' | 'exponentsRoots'
   | 'orderOfOperations' | 'algebraicExpressions' | 'equationsInequalities' | 'coordinatePlane' | 'linearRelationships' | 'geometryMeasurement'
@@ -57,12 +57,12 @@ export const CHAPTERS: ChapterMeta[] = [
   { id: 'numberRecognition',  name: 'Nest Tree',          parentLabel: 'Nest Tree',         emoji: '🐣', asset: '/assets/objects/nest_side.png',      hint: 'Feed the nest Milo calls!',  ageGroups: ['3-5'] },
   { id: 'matchingQuantities', name: 'Home Time',          parentLabel: 'Home Time',         emoji: '🏡', asset: '/assets/objects/rabbit_side.png',    hint: 'Send exactly how many Milo asks for!', ageGroups: ['3-5'] },
   { id: 'numberComparison',   name: 'Bigger or Smaller',  parentLabel: 'Bigger or Smaller', emoji: '⚖️', asset: '/assets/objects/squirrel_side.png',  hint: 'Which bunch has more?',      ageGroups: ['3-5'] },
-  { id: 'shapes',             name: 'Shape House',        parentLabel: 'Shape House',       emoji: '🏠', asset: '/assets/shapes/house-complete.png',  hint: "Build Milo's house.",        ageGroups: ['3-5'] },
+  { id: 'shapes',             name: 'Shape House',        parentLabel: 'Shape House',       emoji: '🏠', asset: '/assets/shapes/house-complete.png',  hint: "Tap the shape that fits the empty hole!",        ageGroups: ['3-5'] },
   { id: 'colors',             name: 'Rainbow Town',       parentLabel: 'Rainbow Town',      emoji: '🌈', asset: '/assets/objects/flower-red.png',     hint: 'Tap the color Milo names!', ageGroups: ['3-5'] },
   { id: 'patterns',           name: 'Bead Shop',          parentLabel: 'Bead Shop',         emoji: '📿', asset: '/assets/objects/star.png',           hint: 'Tap the bead that comes next!', ageGroups: ['3-5'] },
   { id: 'addition',           name: 'Play Time',          parentLabel: 'Addition',          emoji: '🎈', asset: '/assets/objects/rabbit_side.png',    hint: 'More friends come to play!', ageGroups: ['3-5'] },
   { id: 'subtraction',        name: 'Time to Go',         parentLabel: 'Subtraction',       emoji: '👋', asset: '/assets/objects/fish_side.png',      hint: 'How many are left?',         ageGroups: ['3-5'] },
-  { id: 'measurement',        name: 'Measurement',        parentLabel: 'Measurement',       emoji: '📏', asset: '/assets/objects/star.png',           hint: 'Tall, short, heavy, light!', ageGroups: ['3-5'] },
+  { id: 'measurement',        name: 'Measuring',          parentLabel: 'Measuring',       emoji: '📏', asset: '/assets/objects/star.png',           hint: 'Lay blocks, then tap Done!', ageGroups: ['3-5'] },
 
   // ── 6–8 ──
   { id: 'numbersTo100',       name: 'Numbers to 100',     parentLabel: 'Numbers to 100',    emoji: '💯', asset: '/assets/objects/star.png',           hint: 'Read big numbers up to 100!', ageGroups: ['6-8'] },
@@ -81,6 +81,8 @@ export const CHAPTERS: ChapterMeta[] = [
   // ── 9–11 ──
   { id: 'bigNumbers',         name: 'Big Numbers',        parentLabel: 'Big Numbers',       emoji: '🔢', asset: '/assets/objects/star.png',           hint: 'Place value to thousands!', ageGroups: ['9-11'] },
   { id: 'rounding',           name: 'Rounding',           parentLabel: 'Rounding',          emoji: '🎯', asset: '/assets/objects/star.png',           hint: 'Round to the nearest 10 or 100!', ageGroups: ['9-11'] },
+  { id: 'timesTables',        name: 'The Packing Shed',   parentLabel: 'Times Tables',      emoji: '📦', asset: '/assets/objects/apple.png',          hint: 'Every crate holds the same — how many altogether?', ageGroups: ['9-11'] },
+  { id: 'division',           name: 'The Minibus Run',    parentLabel: 'Division',          emoji: '🚌', asset: '/assets/objects/star.png',           hint: 'Share them out — and see who is left waiting!', ageGroups: ['9-11'] },
   { id: 'factorsMultiples',   name: 'Factors & Primes',   parentLabel: 'Factors & Primes',  emoji: '🧩', asset: '/assets/objects/star.png',           hint: 'Even/odd, multiples, factors & primes!', ageGroups: ['9-11'] },
   { id: 'fractionsCompare',   name: 'Fractions',          parentLabel: 'Fractions',         emoji: '🍕', asset: '/assets/objects/pizza_base.png',     hint: 'Same amount, different slices!',       ageGroups: ['9-11'] },
   { id: 'decimals',           name: 'Decimals',           parentLabel: 'Decimals',          emoji: '🏷️', asset: '/assets/objects/star.png',           hint: 'Dimes are tenths, pennies are hundredths!', ageGroups: ['9-11'] },
@@ -148,6 +150,20 @@ export function getChapter(id: ChapterType): ChapterMeta {
 export function chaptersForAge(age: AgeGroup): ChapterMeta[] {
   return CHAPTERS.filter(c => c.ageGroups.includes(age))
 }
+
+/**
+ * THE PLAN FOR A CHILD WE HAVE NOT DIAGNOSED — the band's chapters, in curriculum order, from the
+ * beginning.
+ *
+ * ⚠️ A PLAN ALWAYS EXISTS. It is the product's shape: every other maths app hands a parent 72
+ * chapters and calls it choice. Skipping the check (or finishing it with no gap found) buys a LESS
+ * INFORMED plan, never no plan — and `advanceAfterChapter`'s play-data revision then refines it
+ * from real gameplay, so a skipped check self-corrects slowly rather than not at all.
+ *
+ * ⚠️ It must also stay compatible with the free tier: the first two unmet steps are entitled, so a
+ * family that skipped does not hit a wall the diagnosed family avoids.
+ */
+export const gradeStartPlan = (age: AgeGroup): ChapterType[] => chaptersForAge(age).map(c => c.id)
 
 // ── Back-compat derived maps (so existing imports keep working) ────────────
 export const CHAPTER_ORDER: ChapterType[] = CHAPTER_IDS

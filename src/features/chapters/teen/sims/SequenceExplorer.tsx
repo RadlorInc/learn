@@ -48,7 +48,7 @@ export default function SequenceExplorer({ band }: { band: AgeBand }) {
             type="button"
             onClick={() => { setMode(m); setStep(m === 'arith' ? 3 : 2) }}
             style={{
-              padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+              padding: '7px 14px', minHeight: 44, borderRadius: 8, cursor: 'pointer',   // 44px tap floor (was 33)
               fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 13,
               background: mode === m ? 'var(--accent)' : 'transparent',
               color: mode === m ? 'var(--fg-on-color)' : 'var(--ink-soft)',

@@ -39,14 +39,14 @@ export default function PolynomialExplorer({ band }: { band: AgeBand }) {
         <button
           type="button"
           onClick={() => setSign((s) => -s)}
-          style={{ flex: 1, minWidth: 130, padding: '10px 14px', borderRadius: 10, background: 'var(--paper)', border: '1px solid var(--outline)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+          style={{ flex: 1, minWidth: 130, padding: '10px 14px', minHeight: 44, borderRadius: 10, background: 'var(--paper)', border: '1px solid var(--outline)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
         >
           Flip leading sign
         </button>
         <button
           type="button"
           onClick={() => setEven((e) => !e)}
-          style={{ flex: 1, minWidth: 130, padding: '10px 14px', borderRadius: 10, background: 'var(--paper)', border: '1px solid var(--outline)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+          style={{ flex: 1, minWidth: 130, padding: '10px 14px', minHeight: 44, borderRadius: 10, background: 'var(--paper)', border: '1px solid var(--outline)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
         >
           {even ? 'Try odd degree' : 'Try even degree'}
         </button>

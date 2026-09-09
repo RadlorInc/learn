@@ -76,10 +76,34 @@ export function mkMulAdd(): WpRound {
     choices: choicesFor(ans, [a * b, a + b + c, ans + 1]) }
 }
 
+/**
+ * ⚠️ DOES THE STORY PRINT ITS OWN ANSWER? Measured 2026-08-20 over 60,000 draws:
+ *
+ *     div      16.0%   "A bay holds 25 bolts shared equally into 5 racks. How many per rack?"   → 5
+ *     mul_sub   9.6%   "Milo has 3 boxes of 6 bolts, then gives away 12. How many are left?"    → 6
+ *     sub       1.0%   "Milo starts with 84 rovers and uses 42 of them. How many are left?"     → 42
+ *     add / mul / mul_add — 0%, they cannot
+ *
+ * A division whose divisor equals its quotient is a SQUARE, and "how many per rack" is then the
+ * same number as "how many racks" — so a child who cannot divide reads the answer off the story and
+ * taps it out of three choices. It also collapses the thing this chapter is FOR: every distractor
+ * here is the answer you would get from the wrong operation, and none of that matters if "copy a
+ * number you can see" wins.
+ *
+ * ⚠️ THE GUARD IS HERE, IN THE ONE PLACE, NOT IN THREE MAKERS. Structural constraints inside mkDiv
+ * (`q !== b`) and mkMulSub would work today and would be forgotten by the seventh maker somebody
+ * adds. Anything reachable through this function is checked, for ever.
+ */
+export const storyNamesAnswer = (r: WpRound): boolean =>
+  new RegExp(`(^|[^\\d])${r.answer}([^\\d]|$)`).test(r.story)
+
 export function makeRound(d: 1 | 2 | 3): WpRound {
-  if (d === 1) return pick([mkAdd, mkSub])()
-  if (d === 2) return pick([mkMul, mkDiv])()
-  return pick([mkMulSub, mkMulAdd])()
+  const pool = d === 1 ? [mkAdd, mkSub] : d === 2 ? [mkMul, mkDiv] : [mkMulSub, mkMulAdd]
+  // At worst 16% of draws leak, so 40 tries misses by a margin nothing will ever reach; the last
+  // one is returned rather than looping, because a chapter that hangs is worse than one that leaks.
+  let r = pick(pool)()
+  for (let i = 0; i < 40 && storyNamesAnswer(r); i++) r = pick(pool)()
+  return r
 }
 
 /** Math-only dedupe key, so a re-themed noun is not "a new question". */

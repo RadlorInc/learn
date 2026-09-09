@@ -10,11 +10,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { recheckSkills } from '@/core/diagnosticEngine'
 import { NODE_BY_ID, type Band } from '@/core/skillGraph'
-import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
+import { makeItem, makeReadinessItem, pickThemeFor, gradeItem, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
 import { saveRecheck } from '@/data/repositories'
 import { PT, ACCENTS, LabBackdrop, BackChip, ChoiceButton, PtMilo, IntroCard, type Accent } from '@/features/chapters/story/preteen/kit'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { DiagVisualView } from '@/features/diagnostic/DiagVisual'
+import { DiagPad } from '@/features/diagnostic/DiagPad'
 
 const BANDS = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan
@@ -27,7 +28,8 @@ function activeLearner(): { id?: string; name?: string; display_name?: string; t
 interface Probe { skill: string; item: DiagItem }
 type Phase = 'intro' | 'probe' | 'done'
 // Parent-guided items pass via passSet ("Yes"/"With a little help"); MCQ items via the answer.
-const isPass = (item: DiagItem, choice: string) => item.passSet ? item.passSet.includes(choice) : choice === item.answer
+/** One grader for both surfaces — see gradeItem in core/diagnosticItems (numbers compare numerically). */
+const isPass = gradeItem
 // UUID v4 dedupe key so a double-fire / retry of the re-check save is idempotent server-side.
 const newClientId = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16) })
 
@@ -186,7 +188,11 @@ export default function RecheckPage() {
           </div>
         </div>
         <div ref={tilesRef} style={{ position: 'fixed', left: 0, right: 0, bottom: '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: 'clamp(12px,3vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
-          {item.choices.map(c => (
+          {item.input === 'num' || item.input === 'frac' ? (
+            <DiagPad key={`${probes[idx].skill}:${idx}`} kind={item.input} keys={item.keys} accent={accent}
+              size={Math.max(44, Math.min(56, Math.round(Math.min(vw / 11, vh / 9))))}
+              disabled={!!picked} onSubmit={answer} />
+          ) : item.choices.map(c => (
             <ChoiceButton key={c} label={c} accent={accent} state={picked === c ? 'idle' : picked ? 'dim' : 'idle'} size={btn} onClick={() => answer(c)} disabled={!!picked} />
           ))}
         </div>

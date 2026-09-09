@@ -338,7 +338,7 @@ and the gates all become shared instead of re-implemented thirteen times. Budget
 about **13 × 650 ≈ 8,500 new against ~8,000 deleted**, plus the three primitives.
 
 No DB work: the 13 chapter rows and the `age_group` CHECK were seeded in
-`20260702140000_seed_chapters_17_18.sql` and are live.
+`20260702032342_seed_chapters_17_18.sql` and are live.
 
 ## 7. Gates
 

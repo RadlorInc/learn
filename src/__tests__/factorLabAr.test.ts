@@ -39,7 +39,7 @@ const sweep = (fn: (r: FlRound, d: Tier) => void) => {
   for (const d of TIERS) for (let i = 0; i < 800; i++) fn(makeRound(d), d)
 }
 
-describe('maths', () => {
+describe('math', () => {
   it('isPrime / factorsOf agree with each other', () => {
     for (let n = 2; n <= 100; n++) expect(isPrime(n)).toBe(factorsOf(n).length === 2)
   })

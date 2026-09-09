@@ -2,18 +2,22 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   getMyLearners, getParentDashboard, getLearnerStats, getLearnerProgress,
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
   getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
-  getMyRole, setMyRole,
+  getMyRole, setMyRole, entitledChapters,
 } from '@/data/repositories'
-import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
+import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
-import { setActivePlan } from '@/infra/storage/activePlan'
-import { hasCheckup, markCheckupDone } from '@/infra/storage/checkup'
+import { setActivePlan, advancePlan } from '@/infra/storage/activePlan'
+import { adoptDemoRun } from '@/infra/storage/demoRun'
+import { scoreChapter } from '@/core/scoring'
+import { track } from '@/infra/analytics'
+import { hasCheckup, markCheckupDone, checkupSkips } from '@/infra/storage/checkup'
 import { setActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
@@ -49,6 +53,7 @@ export default function ParentDashboard() {
   const [actionMsg,    setActionMsg]    = useState<string | null>(null)
   const [confirming,   setConfirming]   = useState<string | null>(null) // learnerId being confirmed
   const [activeChapterIds, setActiveChapterIds] = useState<ChapterType[]>([])
+  const [chapterLocks, setChapterLocks] = useState<Record<string, boolean | null>>({})
   const [recheckDue, setRecheckDue] = useState<{ weeks: number } | null>(null)   // week-6 nudge for the active learner
   const [role, setRole] = useState<UserRole | null | 'loading'>('loading')       // null = show the one-time Teacher/Parent picker
 
@@ -154,17 +159,22 @@ export default function ParentDashboard() {
     if (r === 'teacher') router.replace('/parent/grades')
   }
 
-  // A BRAND-NEW learner does the checkup once on their first "Start learning". Established kids —
+  // A BRAND-NEW learner is OFFERED the checkup on their first "Start learning". Established kids —
   // any who already have play history (progress / sessions / XP) OR have already done a checkup —
-  // skip straight into the app and are never asked again. So existing profiles are grandfathered
-  // (never force-gated), while a new child is sent to the checkup exactly once.
+  // go straight into the app and are never asked. So existing profiles are grandfathered, while a
+  // new child sees the offer exactly once.
+  //
+  // ⚠️ OFFERED, NOT FORCED, SINCE 2026-08-24 — the destination is the same screen, but that screen
+  // now carries a one-tap "Skip for now" that issues a grade-start plan. `checkupSkips` is what
+  // stops the offer reappearing on every launch: without it, "optional" would mean "asked forever",
+  // which is worse than mandatory because it never even resolves.
   function isEstablished(d: LearnerData): boolean {
     return !!d.stats?.last_played_at || (d.stats?.total_xp ?? 0) > 0 || d.progress.length > 0 || d.sessions.length > 0
   }
   async function launchGame(d: LearnerData) {
     const learner = d.learner
     setActiveLearner(learner)
-    if (isEstablished(d) || await hasCheckup(learner.id)) router.push('/menu')
+    if (isEstablished(d) || checkupSkips(learner.id) > 0 || await hasCheckup(learner.id)) router.push('/menu')
     else router.push(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
   }
 
@@ -199,6 +209,25 @@ export default function ParentDashboard() {
       .catch(() => { if (!cancelled) setActiveChapterIds(fallback) })
     return () => { cancelled = true }
   }, [active?.learner.id, active?.learner.grade_id, active?.learner.age_group])
+
+  /**
+   * ⚠️ WHICH OF THOSE CHAPTERS IS BEHIND THE PAYWALL — ASKED, NOT DERIVED. `is_chapter_entitled` is
+   * the single definition (the `sessions` policy, `learner_progress`'s WITH CHECK and `sync_session`
+   * all call it); working the answer out here from `is_free`, the plan and the seats would be a
+   * FOURTH copy of the rule, free to disagree with the other three. About a dozen calls, in
+   * parallel, on a page a parent opens rarely. Today they all answer `true`, because
+   * `billing_config.enforced` is false — so nothing renders and the whole surface is inert.
+   * ⚠️ `null` (could not find out) is NOT a lock: same fail-open rule as the child's gate.
+   */
+  useEffect(() => {
+    setChapterLocks({})
+    if (!active || activeChapterIds.length === 0) return
+    let cancelled = false
+    entitledChapters(active.learner.id, activeChapterIds)
+      .then(m => { if (!cancelled) setChapterLocks(m) })
+      .catch(() => { /* fail open — no locks shown */ })
+    return () => { cancelled = true }
+  }, [active?.learner.id, activeChapterIds])
 
   // Week-6 re-check nudge: surface the guarantee loop in-app when a re-check is due for this learner.
   useEffect(() => {
@@ -376,6 +405,7 @@ export default function ParentDashboard() {
                 existing one, reused rather than re-implemented. */}
             <DataRights
               name={active.learner.display_name}
+              learnerId={active.learner.id}
               bundle={{ learner: active.learner, stats: active.stats, progress: active.progress, sessions: active.sessions }}
             >
             {confirming === active.learner.id ? (
@@ -411,7 +441,12 @@ export default function ParentDashboard() {
 
             {/* Chapter progress */}
             <div style={{ background:'#fff', borderRadius:20, padding:'18px 16px', marginBottom:16, boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>
-              <h3 style={{ fontSize:15, fontWeight:800, margin:'0 0 14px', color:'#1a1a1a' }}>Chapter progress</h3>
+              <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'0 0 14px' }}>
+                <h3 style={{ fontSize:15, fontWeight:800, margin:0, color:'#1a1a1a' }}>Chapter progress</h3>
+                {/* Findable without hitting a wall first — pricing is a thing a parent may want to
+                    read before anything is locked, and it lives on this side of the product only. */}
+                <button onClick={() => router.push('/parent/plan')} style={{ background:'none', border:'none', padding:0, fontSize:12, fontWeight:700, color:'#F26B2C', cursor:'pointer' }}>Plan &amp; billing →</button>
+              </div>
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 {activeChapterIds.map(ch => {
                   const prog  = active.progress.find(p => p.chapter === ch)
@@ -426,6 +461,16 @@ export default function ParentDashboard() {
                       </div>
                       {prog?.total_sessions ? (
                         <div style={{ fontSize:11, color:'#888', fontWeight:600, minWidth:32, textAlign:'right' }}>{prog.total_sessions}x</div>
+                      ) : null}
+                      {/* ⚠️ THE PARENT SIDE IS THE ONLY SIDE THAT ROUTES TO CHECKOUT. The child's
+                          lock card carries no price and no way to pay; this one does, because a
+                          grown-up is reading it. `false` only — `null` means we could not find out
+                          and must not become a lock. */}
+                      {chapterLocks[ch] === false ? (
+                        <button
+                          onClick={() => router.push('/parent/plan')}
+                          style={{ background:'#FFF3EC', border:'1px solid #F26B2C', color:'#F26B2C', borderRadius:50, padding:'4px 10px', fontSize:11, fontWeight:800, cursor:'pointer' }}
+                        >🔓 Unlock</button>
                       ) : null}
                     </div>
                   )
@@ -450,7 +495,7 @@ export default function ParentDashboard() {
                         <div style={{ fontSize:24 }}>{s.stars_earned === 3 ? '🌟' : s.stars_earned === 2 ? '⭐' : '✨'}</div>
                         <div style={{ flex:1 }}>
                           <div style={{ fontSize:13, fontWeight:700, color:'#1a1a1a' }}>{CH_LABELS[s.chapter] ?? s.chapter}</div>
-                          <div style={{ fontSize:11, color:'#888', marginTop:2 }}>{s.correct_count} correct · +{s.xp_earned} XP · {new Date(s.started_at).toLocaleDateString()}</div>
+                          <div style={{ fontSize:11, color:'#888', marginTop:2 }}>{s.correct_count} correct · +{s.xp_earned} XP · {(a => a ? new Date(a).toLocaleDateString() : '—')(s.completed_at ?? s.started_at)}</div>
                         </div>
                         <div style={{ fontSize:12, fontWeight:700, color:'#16a34a' }}>+{s.coins_earned} 🪙</div>
                       </div>
@@ -468,6 +513,23 @@ export default function ParentDashboard() {
           reach us, our support system is that they leave. */}
       <div style={{ padding:'8px 16px 28px', textAlign:'center' }}>
         <SupportPanel learnerId={selected ?? undefined} />
+
+        {/* ⚠️ BOTH DOCUMENTS, REACHABLE FROM INSIDE THE APP. A parent who agreed at signup has to be
+            able to go back and read what they agreed to without hunting for the marketing site —
+            and while these are drafts, this is also the only way anyone signed in can see the
+            draft banner. Same pair, same order, as the signup consent line. */}
+        {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, AND IT IS DELIBERATELY DOWN HERE, small and last —
+            past the learners, the progress and the support panel. The threat is a child on a
+            parent's signed-in device, so the destructive path must not be somewhere a child
+            wandering the app arrives at. Nothing on the child's side (/game, /menu, /shop) links
+            anywhere under /parent. The page itself carries the real guards. */}
+        <p style={{ margin:'18px 0 0', fontSize:12, color:'#9a8b78' }}>
+          <Link href="/parent/account" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>Close your account</Link>
+          <span style={{ margin:'0 8px', opacity:0.5 }}>·</span>
+          <Link href="/legal/terms" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>Terms of Service</Link>
+          <span style={{ margin:'0 8px', opacity:0.5 }}>·</span>
+          <Link href="/legal/privacy" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>Privacy Policy</Link>
+        </p>
       </div>
 
       {/* Add child modal */}
@@ -571,6 +633,32 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
       void flushDiagnosticQueue()
       markCheckupDone(learner.id)   // replayed checkup → this new child passes the play gate
       setActivePlan(learner.id, pending.band, pending.planChapters)   // step 7: walkable plan for the new child
+    }
+
+    /**
+     * ⚠️ AND THE SAME LOOP FOR THE DEMO. A parent who played two chapters before signing up must not
+     * find nothing here — no stars, and a plan whose first step is the chapter their child just
+     * finished. That is worse than never having played: we showed them the product and took it away
+     * at the moment they committed.
+     *
+     * ⚠️ THE DIAGNOSTIC OUTRANKS THE DEMO FOR THE PLAN. A diagnosed plan is one somebody looked for;
+     * a grade-start plan is the band from the top. So the demo claims the plan only when the pending
+     * diagnostic did not — but its SESSIONS are adopted either way, because the child played them.
+     */
+    const claimedByDiagnostic = !!(pending && pending.band === learner.age_group)
+    const adopted = adoptDemoRun(
+      learner.id, learner.age_group as AgeGroup, !claimedByDiagnostic,
+      {
+        enqueueSession: p => enqueueSession({ ...p, chapter: p.chapter as ChapterType }),
+        score: (c, w, m) => scoreChapter(c, w, m),
+        plan: chapters => { setActivePlan(learner.id, learner.age_group ?? '3-5', chapters, 'gradeStart') },
+        advance: chapter => { advancePlan(learner.id, chapter) },
+        newId: () => crypto.randomUUID(),
+      },
+    )
+    if (adopted) {
+      void flushQueue()
+      track('demo_adopted', { chapters: adopted.adopted, planSet: adopted.planSet, band: learner.age_group })
     }
     onAdded()
   }

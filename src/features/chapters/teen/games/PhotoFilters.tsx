@@ -298,7 +298,7 @@ const DEMO_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'functionToolkit',
   title: 'PHOTO FILTERS',
   ticketLabel: 'filter stack',

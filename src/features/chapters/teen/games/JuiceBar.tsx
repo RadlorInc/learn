@@ -271,7 +271,7 @@ function PaintStudioScene({ palette: P, task, value, stepIndex, frameCount, ende
   )
 }
 
-const CONFIG: GameConfig<Mix, Task> = {
+export const CONFIG: GameConfig<Mix, Task> = {
   chapterId: 'ratioProportion',
   title: 'PAINT STUDIO',
   motif: '🎨',

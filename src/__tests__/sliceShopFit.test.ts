@@ -524,7 +524,7 @@ describe('the source keeps the rules it claims', () => {
     expect(src).toMatch(/tryN\.current/)
     expect(src).toMatch(/seenRound\.current !== roundKey/)
     // an effect here would paint one frame of the previous round's board
-    expect(src).not.toMatch(/useEffect\([\s\S]{0,200}setLaid\(0\)/)
+    expect(src).not.toMatch(/useEffect\([^)]*setLaid\(0\)/)
   })
 
   /**
@@ -587,7 +587,12 @@ describe('the source keeps the rules it claims', () => {
   it('the lesson and the re-teach are self-paced, not driven by speech events', () => {
     expect(src).not.toMatch(/speakSteps\s*\(/)
     expect(src).not.toMatch(/import\s*\{[^}]*\bspeakSteps\b[^}]*\}\s*from/)
-    expect(src).toMatch(/dwellFor\(/)
+    // ⚠️ THE PROPERTY IS "THE VISUALS HAVE THEIR OWN CLOCK", NOT "THERE IS A setTimeout". The loop
+    // is `speakPaced` since 2026-09-04, which keeps `dwellFor` as the FLOOR for every beat and only
+    // ever ADDS wait while Milo is still talking — so a device that stops delivering speech events
+    // still cannot freeze the teaching, and a slow clip is no longer cut off by the next line.
+    expect(src).toMatch(/speakPaced\(/)
+    expect(src).toMatch(/minMs:\s*dwellFor/)
   })
 })
 

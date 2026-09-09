@@ -501,7 +501,7 @@ const PROOF_STEPS: DemoStep<V>[] = [
 
 const numGrade = (t: Task, n: number) => Math.abs(n - (t.n ?? 0)) <= (t.tol ?? 0)
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'geometryProofTrig',
   title: 'SKATE RAMP',
   ticketLabel: 'ramp log',

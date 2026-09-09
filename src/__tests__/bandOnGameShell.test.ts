@@ -30,13 +30,18 @@ describe('the band on the shell', () => {
     expect(roundsFor('9-11')).toBe(10)
   })
 
-  it('⚠️ 9–11 NEVER resumes at a difficulty', () => {
-    // chapter-craft: "3–11 story chapters call useAdaptive with no start tier … resume-at-difficulty
-    // is teen-only. If a chapter looks too hard on question 1, the tier is not the suspect."
-    // A nine-year-old returning a week later and meeting their old top tier on question 1 is the
-    // fault the rule exists for — and it switches off the warm-up offer with it.
-    expect(resumesTier('9-11')).toBe(false)
+  it('⚠️ EVERY band resumes at the tier the child left off on', () => {
+    // Reversed 2026-08-20 (founder's call). This used to read "9–11 NEVER resumes", on the argument
+    // that a nine-year-old returning a week later must not meet their old top tier on question 1.
+    // That is now answered from the other side: the warm-up offer below, plus the engine demoting on
+    // two misses in a row, plus the chapter's own demo and unscored guided round.
+    for (const b of BANDS) expect(resumesTier(b), b).toBe(true)
     expect(SHELL).toMatch(/resumesTier\(BAND\) \? getChapterLevel/)
+  })
+
+  it('a resumed tier above easy offers the warm-up, which is what makes resuming safe', () => {
+    expect(SHELL).toMatch(/const canWarmUp = startDiff > 1/)
+    expect(SHELL).toMatch(/warmup && nextIdx < WARMUP_COUNT \? warmupDiff/)
   })
 
   it('every per-band copy bank covers the new band', () => {

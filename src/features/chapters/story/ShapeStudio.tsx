@@ -15,7 +15,7 @@
  * game/Shapes2D3DChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { ShapeView, SHAPES_2D, SHAPES_3D, sidesOf, is3D, buildNameChoices } from '../lessons/Shapes2D3DLesson'
 import WorldSelect from './WorldSelect'
@@ -24,13 +24,16 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { rint, shuffle, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
+import { DirectionsInline } from '@/features/chapters/directions'
 
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
 interface Bg { grad: string; img: string }
-interface ShWorld { id: string; label: string; emoji: string; bgs: Bg[]; milo: { src: string; emoji: string; accessory: string }; intro: string }
+export interface ShWorld { id: string; label: string; emoji: string; bgs: Bg[]; milo: { src: string; emoji: string; accessory: string }; intro: string }
 const G = (grad: string, img: string): Bg => ({ grad, img: `/assets/backgrounds/${img}` })
-const WORLDS: ShWorld[] = [
+export const WORLDS: ShWorld[] = [
   { id: 'studio', label: 'Art Studio', emoji: '🎨',
     bgs: [G('linear-gradient(#f3dff7,#e0d4ee)', 'rainbow_market.jpeg'), G('linear-gradient(#e8e0ee,#d8d2e6)', 'craft_gems.png'), G('linear-gradient(#f0e4dc,#e4d2c4)', 'craft_buttons.png')],
     milo: { src: '/assets/characters/milo_painter.png', emoji: '🦊', accessory: '🎨' },
@@ -128,9 +131,13 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
   const [pickedName, setPickedName] = useState<string | null>(null)
   const [pickedNum, setPickedNum] = useState<number | null>(null)
   const [glow, setGlow] = useState(false)
+  // Chosen but not submitted. One per branch, because this chapter answers with number chips on a
+  // `sides` round and with shape tiles on a `name` one.
+  const [pendingNum, setPendingNum] = useState<number | null>(null)
+  const [pendingName, setPendingName] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false)
 
-  useEffect(() => { if (mode === 'guided') speak(sayFor(data)); }, []) // eslint-disable-line
+  useEffect(() => { if (mode === 'guided') speakAfterCurrent(sayFor(data)); }, []) // eslint-disable-line
 
   function finishOk() {
     done.current = true; setGlow(true)
@@ -139,11 +146,29 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
   }
   function wrong(reset: () => void) { erred.current = true; speak('Not quite — try again!'); window.setTimeout(reset, 900) }
 
+  /** A tap only CHOOSES; the grading below is unchanged and simply runs on Ready instead. */
+  function gradeNum(n: number) {
+    if (done.current || pickedNum !== null) return
+    setPickedNum(n)
+    if (n === data.answer) finishOk(); else wrong(() => setPickedNum(null))
+  }
+  function gradeName(name: string) {
+    if (done.current || pickedName !== null) return
+    setPickedName(name)
+    if (name === data.target) finishOk(); else wrong(() => setPickedName(null))
+  }
+
   if (data.mode === 'sides') {
     const btn = Math.max(56, Math.min(short ? 90 : 104, Math.round(Math.min(vw / 7, vh / (short ? 4.6 : 5.4)))))
     return (
       <>
-        {Prompt('How many sides?', world, short)}
+        {/* ⚠️ NOT IN PRACTICE — SkillBeat draws a pill from `beat.prompt` there, and a chapter that
+            also draws its own ships TWO pills saying the same thing (chapter-craft §3). Measured on
+            production 2026-08-20: both rendered, 21px apart, the lower one `text-transform:
+            capitalize` so it read "Tap The Triangle!". SkillBeat's is the one to keep — it replays
+            Milo's voice on a tap; this one is `pointerEvents: none`. The guided round renders
+            OUTSIDE SkillBeat, so there it is the only pill and stays. */}
+        {mode !== 'practice' && Prompt(promptFor(data), world, short)}
         <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '44%' : '42%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw', filter: glow ? 'drop-shadow(0 0 16px var(--sun-yellow))' : 'none', transition: 'filter .3s' }}>
           <FitBox availW={vw * 0.9} availH={short ? vh * 0.34 : vh * 0.46} max={2.6}>
             <Shape name={data.target} size={200} />
@@ -153,11 +178,15 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
           {data.choices!.map(n => {
             const isPick = pickedNum === n, isOk = n === data.answer
             return (
-              <button key={n} disabled={done.current} onClick={() => { if (done.current || pickedNum !== null) return; setPickedNum(n); if (n === data.answer) finishOk(); else wrong(() => setPickedNum(null)) }}
-                style={{ width: btn, height: btn, borderRadius: Math.round(btn * 0.22), background: (isPick && isOk) ? 'var(--garden-green-soft)' : 'var(--paper)', border: `4px solid ${(isPick && isOk) ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`, boxShadow: `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.44), color: 'var(--ink)', cursor: done.current ? 'default' : 'pointer', transform: (isPick && isOk) ? 'scale(1.08) translateY(-3px)' : 'scale(1)', transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease' }}>{n}</button>
+              <button key={n} disabled={done.current} onClick={() => { if (done.current || pickedNum !== null) return; setPendingNum(p => (p === n ? null : n)) }}
+                style={{ width: btn, height: btn, borderRadius: Math.round(btn * 0.22), background: (isPick && isOk) ? 'var(--garden-green-soft)' : 'var(--paper)', border: `4px solid ${(isPick && isOk) ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`, boxShadow: pendingNum === n ? `${PICKED_RING}, 0 6px 0 #c8ac79` : `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.44), color: 'var(--ink)', cursor: done.current ? 'default' : 'pointer', transform: (isPick && isOk) ? 'scale(1.08) translateY(-3px)' : 'scale(1)', transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease' }}>{n}</button>
             )
           })}
         </div>
+        {/* Beside the chips: this row already owns the bottom strip, and the shape being counted
+            sits directly above it. Same measured reason as MarketDay. */}
+        <ReadyBar show={pendingNum !== null} onCommit={() => { const n = pendingNum; if (n == null) return; setPendingNum(null); gradeNum(n) }}
+          align="right" bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '4%'} />
       </>
     )
   }
@@ -167,15 +196,15 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
   const opts = data.options!
   return (
     <>
-      {Prompt(`Tap the ${data.target}!`, world, short)}
+      {mode !== 'practice' && Prompt(promptFor(data), world, short)}
       <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '48%' : '50%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw' }}>
         <FitBox availW={vw * 0.92} availH={short ? vh * 0.42 : vh * 0.52} max={1.8}>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 24 }}>
             {opts.map(name => {
               const isPick = pickedName === name, isOk = name === data.target, showOk = (isPick && isOk) || (glow && isOk)
               return (
-                <button key={name} disabled={done.current} onClick={() => { if (done.current || pickedName !== null) return; setPickedName(name); if (name === data.target) finishOk(); else wrong(() => setPickedName(null)) }}
-                  aria-label={name} style={{ background: showOk ? 'var(--garden-green-soft)' : 'rgba(255,255,255,.72)', border: `4px solid ${showOk ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`, borderRadius: 22, padding: 16, boxShadow: `0 6px 0 ${showOk ? 'var(--garden-green-deep)' : '#c8ac79'}`, cursor: done.current ? 'default' : 'pointer', transform: showOk ? 'scale(1.06) translateY(-3px)' : 'scale(1)', transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button key={name} disabled={done.current} onClick={() => { if (done.current || pickedName !== null) return; setPendingName(p => (p === name ? null : name)) }}
+                  aria-label={name} style={{ background: showOk ? 'var(--garden-green-soft)' : 'rgba(255,255,255,.72)', border: `4px solid ${showOk ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`, borderRadius: 22, padding: 16, boxShadow: pendingName === name ? `${PICKED_RING}, 0 6px 0 #c8ac79` : `0 6px 0 ${showOk ? 'var(--garden-green-deep)' : '#c8ac79'}`, cursor: done.current ? 'default' : 'pointer', transform: showOk ? 'scale(1.06) translateY(-3px)' : 'scale(1)', transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Shape name={name} size={150} />
                 </button>
               )
@@ -183,9 +212,22 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
           </div>
         </FitBox>
       </div>
+      {/* The tiles sit mid-screen here, so the bottom strip is empty and the default place is right. */}
+      <ReadyBar show={pendingName !== null} onCommit={() => { const nm = pendingName; if (!nm) return; setPendingName(null); gradeName(nm) }} />
     </>
   )
 }
+
+/**
+ * The question, in ONE place.
+ *
+ * ⚠️ IT USED TO BE WRITTEN TWICE — once here for the beat and once inside `ShapePlay`'s own pill —
+ * and the two had drifted: the beat said "Tap the triangle" and the pill said "Tap the triangle!".
+ * Both readings also punctuated differently ('How many sides?' ended its sentence, `Tap the …` did
+ * not), which is what made the drift visible on a production screenshot.
+ */
+export const promptFor = (d: ShRound): string =>
+  d.mode === 'sides' ? 'How many sides?' : `Tap the ${d.target}!`
 
 function Prompt(text: string, world: ShWorld, short?: boolean) {
   return (
@@ -230,12 +272,12 @@ const ShapeExplain: React.FC<{ world: ShWorld; data: ShRound; onDone: () => void
 }
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
-function makeShapeBeat(world: ShWorld): Beat<ShRound> {
+export function makeShapeBeat(world: ShWorld): Beat<ShRound> {
   return {
     skillId: 'shapes2d3d', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeShapeRound((d || 1) as 1 | 2 | 3, round, world.bgs.length),
     sig: d => `${d.mode}:${d.target}`,
-    prompt: d => d.mode === 'sides' ? 'How many sides?' : `Tap the ${d.target}`,
+    prompt: promptFor,
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ShapePlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <ShapeExplain world={world} data={data} onDone={onDone} />,
@@ -251,7 +293,7 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
   onExit?: () => void
 }) {
   const [world, setWorld] = useState<ShWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'shapes2d3d', phase: 'practice' })
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()
@@ -279,7 +321,7 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
 
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 12, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-      <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: short ? '5px 16px' : '9px 22px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: short ? 14 : 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
+      <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: short ? '5px 16px' : '9px 22px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: short ? 14 : 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}<DirectionsInline chapter="shapes2d3d" /></div>
     </div>
   )
 
@@ -288,7 +330,7 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
       <style>{SS_CSS}</style>
       <Background bg={bgIdx} world={world} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

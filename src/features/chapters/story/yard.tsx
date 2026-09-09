@@ -24,6 +24,8 @@
  */
 import React from 'react'
 import { Arrive } from './critters'
+import { DirectionsInline } from '@/features/chapters/directions'
+import type { ChapterType } from '@/core/chapters'
 
 // ─── Material ─────────────────────────────────────────────────────────────────────────
 /**
@@ -299,8 +301,12 @@ export const bannerBottom = (vh: number) => BANNER_TOP(vh) + (vh < 470 ? 78 : 62
  * there is only ONE question region on screen and the target belongs inside it. It reads better
  * too: "**28** · Make the number on the order" is one thing to look at, not two.
  */
-export function Banner({ text, vh, ok, side, lead }: {
+export function Banner({ text, vh, ok, side, lead, chapter }: {
   text: string; vh: number; ok?: boolean
+  /** ⚠️ THE TYPED DIRECTIONS RIDE IN THIS BANNER rather than in a card laid over it: this one sits
+   *  at `BANNER_TOP`, which is 25px on a 720-tall frame — the same row as the ← Menu button and the
+   *  floating strip. Inside the banner an overlap is not expressible. */
+  chapter?: ChapterType
   /** which side the banner retreats to on a short frame — the one holding only single cubes */
   side?: 'left' | 'right'
   lead?: React.ReactNode
@@ -323,7 +329,7 @@ export function Banner({ text, vh, ok, side, lead }: {
           <span style={{ flexShrink: 0, fontWeight: 900, lineHeight: 1,
             fontSize: `clamp(24px, ${Math.round(vh * 0.075)}px, 44px)`, color: 'var(--ink)' }}>{lead}</span>
         )}
-        <span>{text}</span>
+        <span>{text}{chapter && <DirectionsInline chapter={chapter} block />}</span>
       </div>
     </div>
   )

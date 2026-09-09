@@ -16,6 +16,11 @@
  * Storage is the per-device kv (IndexedDB, localStorage fallback), keyed by
  * learner + chapter. No learner (e.g. the logged-out preview) → no memory, so it
  * always starts at easy — behaviour is unchanged there.
+ *
+ * It is also SYNCED (2026-08-20): the tier rides along on the finished-session payload into
+ * `learner_progress.current_level`, and `hydrateChapterLevels` seeds this store from that row when a
+ * device signs in. Before that it was device-local, so a second device — or a cleared browser — put
+ * every chapter back to easy and nothing in the app could tell.
  */
 import type { ChapterType } from '@/data/supabase/types'
 import { kv } from '@/infra/storage/kv'
@@ -43,5 +48,29 @@ export function setChapterLevel(learnerId: string | undefined | null, chapter: C
     kv.set(key(learnerId, chapter), String(level))
   } catch {
     /* best-effort */
+  }
+}
+
+/**
+ * Seed this device's memory from the server's rows, on sign-in.
+ *
+ * ⚠️ ONLY WHERE THIS DEVICE HAS NOTHING STORED. A device that has actually played the chapter holds
+ * the fresher answer — including a demotion that happened here while offline, which is precisely the
+ * half of adaptive a "take the higher one" merge would throw away. Stars and XP merge monotonically
+ * because they are achievements; a tier is a CURRENT FIT and must be allowed to go down.
+ */
+export function hydrateChapterLevels(
+  learnerId: string | undefined | null,
+  rows: ReadonlyArray<{ chapter: string; current_level?: number | null }>,
+): void {
+  if (!learnerId) return
+  for (const row of rows) {
+    const lvl = row.current_level
+    if (lvl !== 2 && lvl !== 3) continue           // 1 / null / absent is the default; nothing to seed
+    const k = key(learnerId, row.chapter as ChapterType)
+    try {
+      if (kv.get(k) != null) continue              // this device has played it; its value wins
+      kv.set(k, String(lvl))
+    } catch { /* best-effort */ }
   }
 }

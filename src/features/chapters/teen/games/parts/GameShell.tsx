@@ -23,9 +23,13 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useAdaptive } from '@/shared/hooks/useAdaptive'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { speak, speakAfterCurrent, speakSteps, speakWithHighlight, splitWords, unlockSpeech, stopSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
+import { getChapterResume, setChapterResume, clearChapterResume } from '@/infra/storage/chapterResume'
+import { PRAISE, praisesOnCorrect } from '@/core/praise'
+import { getChapter } from '@/core/chapters'
 import type { ChapterType } from '@/core/chapters'
 import type { AgeBand } from '@/features/chapters/teen/types'
 import {
@@ -53,8 +57,12 @@ import { setClipOnly } from '@/infra/voiceClipPlayer'
  */
 export const DEFAULT_BAND: AgeBand = '12-14'
 export const roundsFor = (b: AgeBand) => (b === '9-11' ? 10 : 8)
-export const resumesTier = (b: AgeBand) => b !== '9-11'
-const RETEACH_AFTER = 3
+/** Every band resumes at the tier the child left off on — founder's call, 2026-08-20. It used to
+ *  exclude 9–11; the storybook engine (SkillBeat) now resumes too, so all six bands behave alike. */
+export const resumesTier = (_b: AgeBand) => true
+/** Consecutive misses before Milo re-explains. ⚠️ SkillBeat exports the same number for the
+ *  storybook chapters; `adaptiveDeepSweep.test.ts` asserts the two agree. */
+export const RETEACH_AFTER = 3
 // How many of the most-recent walkthrough board lines to keep on the chalkboard.
 // The longest examples write ~14 lines; capping the visible window keeps working
 // memory (and the pinned board slot) from overflowing. (ux-design.md §6.3)
@@ -282,12 +290,27 @@ export function Game<V, T extends BaseTask>({
   const TOTAL = roundsFor(BAND)
   // Resume at the difficulty this child last left off on (see chapterLevel). No
   // learner (logged-out preview) → starts at easy, unchanged. Computed once.
-  // ⚠️ 9–11 NEVER RESUMES — it always opens at difficulty 1, per chapter-craft. A nine-year-old
-  // coming back a week later meeting their old top tier on question 1 is the fault that rule exists
-  // for, and it also switches the warm-up offer off, since there is nothing to warm up FROM.
+  // ⚠️ EVERY BAND RESUMES (founder's call, 2026-08-20 — 9–11 used to be excluded). The fear the old
+  // rule carried, a child meeting their old top tier cold on question 1, is answered by the warm-up
+  // offered below plus the engine demoting on two misses in a row.
   const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
   const [startDiff] = useState<1 | 2 | 3>(() => (resumesTier(BAND) ? getChapterLevel(learnerId, config.chapterId) : 1))
+  // ⚠️ AND THE RUN ITSELF RESUMES, NOT ONLY THE TIER (2026-08-27). `onFinish` fires once, at the
+  // end, and it is what writes the session row, the stars and the XP — so leaving after seven of
+  // ten questions did not lose the PLACE, it lost the seven answers as well, and every screen
+  // showed the chapter as never played. Read once at mount; null for a logged-out preview, a
+  // finished chapter, or a run older than the store's TTL.
+  const [resume] = useState(() => getChapterResume(learnerId, config.chapterId))
   const ada = useAdaptive(config.chapterId, startDiff)
+  // ⚠️ READ THE TIER OFF A LIVE REF, NEVER OFF THE RENDER CLOSURE. `submit` schedules the next
+  // `loadTask` on a 1650 ms timer, so the callback it captures belongs to the render the ANSWER was
+  // given in — i.e. the tier the engine held BEFORE `ada.record()` moved it. Read from the closure
+  // and every promotion and every demotion lands one question late: measured live on `integers`,
+  // the engine said tier 2 while the question served was tier 1, then 3 while 2 was served, so a
+  // child who mastered the chapter was asked exactly ONE top-tier question instead of the two the
+  // round budget in chapter-craft.md is built on. `SkillBeat` never had this — it reads
+  // `adaRef.current.difficulty` for the same reason.
+  const adaRef = useLatestRef(ada)
   // Opt-in warm-up (only offered when resuming above easy). Prepends WARMUP_COUNT
   // gentler questions (one tier down) before the set climbs back to their level.
   const [warmup, setWarmup] = useState(false)
@@ -296,7 +319,12 @@ export function Game<V, T extends BaseTask>({
   const canWarmUp = startDiff > 1
 
   const [stage, setStage] = useState<Stage>('start')
-  const [idx, setIdx] = useState(0)
+  /** ⚠️ `idx`'s seed is BELT-AND-BRACES; `correct`/`wrong` below are not. `finishDemo` calls
+   *  `loadTask(resume.round, …)`, which `setIdx`es straight away — measured by mutation: seeding
+   *  this from 0 changes nothing a child can see. The score has no such second writer, so if those
+   *  two do not start from the stored run they start from zero and the child loses the answers they
+   *  already gave. Kept symmetric so the three are read as one statement about resuming. */
+  const [idx, setIdx] = useState(resume?.round ?? 0)
   const [task, setTask] = useState<T | null>(null)
   const [value, setValue] = useState<V | null>(null)
   const [sub, setSub] = useState<Sub>('active')
@@ -334,8 +362,8 @@ export function Game<V, T extends BaseTask>({
   // who has just missed three in a row is the last one who should be given the
   // explanation in audio only, and most Chrome installs have no voice at all.
   const [reteachAt, setReteachAt] = useState(-1)
-  const [correct, setCorrect] = useState(0)
-  const [wrong, setWrong] = useState(0)
+  const [correct, setCorrect] = useState(resume?.correct ?? 0)
+  const [wrong, setWrong] = useState(resume?.wrong ?? 0)
 
   // Legible "I do → your turn → you did it" hand-off cue (feedback-your-turn-cue):
   // a brief popup the moment control passes to the child ('turn') and when they
@@ -347,13 +375,18 @@ export function Game<V, T extends BaseTask>({
   /** ⚠️ "a hand is in frame", NOT "count > 0" — a FIST is a real answer wherever zero is one. */
   const handReady = !!HAND && (HAND.ready ? HAND.ready(cam.read) : cam.read.hands > 0)
 
-  const seen = useRef<Set<string>>(new Set())
+  const seen = useRef<Set<string>>(new Set(resume?.seen ?? []))
   const timers = useRef<number[]>([])
   const later = useCallback((fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); stopSpeech() }, [])
   // 12–14 ONLY: a chosen custom voice is the ONLY voice — no browser-TTS fallback, so the
   // recorded and free voices never mix. Other bands (incl. 15–16 on this same shell) keep
   // the fallback. Off again when we leave the shell.
+  // ⚠️⚠️ THE BAND CHECK IS LOAD-BEARING, NOT TIDINESS — widening it does NOT give another band
+  // "clips where we have them", it gives it SILENCE wherever we do not, because clip-only
+  // suppresses the browser fallback and a miss logs nothing. 12–14 can afford it only because its
+  // lines are stitched from fragments; no other band has a stitcher yet, and their whole-line
+  // coverage is a floor that never reaches 100%. See the note on setClipOnly before touching this.
   useEffect(() => {
     if (getActiveLearner()?.age_group !== '12-14') return
     setClipOnly(true); return () => setClipOnly(false)
@@ -365,7 +398,7 @@ export function Game<V, T extends BaseTask>({
 
   /** every reading asked so far, for `config.coverage`. A ref: the generator reads it during a
    *  render that must not depend on it, and nothing renders from it. */
-  const asked = useRef<string[]>([])
+  const asked = useRef<string[]>(resume?.asked ?? [])
   const covered = useCallback(
     () => !config.coverage || config.coverage.all.every(k => asked.current.includes(k)),
     [config.coverage],
@@ -382,15 +415,17 @@ export function Game<V, T extends BaseTask>({
   }, [config])
 
   const loadTask = useCallback((nextIdx: number, c: number, w: number, mastered: boolean) => {
-    if (mastered) { onFinish(c, w, true); return }
-    if (nextIdx >= effTotal) { onFinish(c, w); return }
+    // ⚠️ THE RUN IS OVER ON BOTH OF THESE PATHS, so the resume point dies with it. A saved point
+    // that outlives its run reopens a finished chapter near its end, for ever.
+    if (mastered) { clearChapterResume(learnerId, config.chapterId); onFinish(c, w, true); return }
+    if (nextIdx >= effTotal) { clearChapterResume(learnerId, config.chapterId); onFinish(c, w); return }
     // Cancel any still-pending animation timers from the PREVIOUS question (a wrong-
     // answer glide/reveal can schedule setValue frames that would otherwise land on —
     // and clobber — the new question's fresh instrument value).
     timers.current.forEach(clearTimeout); timers.current = []
     // Warm-up: the first WARMUP_COUNT questions run one tier below the resumed
     // level to ease back in; after that, the normal adaptive tier takes over.
-    const d = warmup && nextIdx < WARMUP_COUNT ? warmupDiff : ada.difficulty
+    const d = warmup && nextIdx < WARMUP_COUNT ? warmupDiff : adaRef.current.difficulty
     const t = nextTask(d)
     setTask(t); setValue(config.initialValue(t)); setSub('active'); setIdx(nextIdx); setPicked(null)
     flashCue('turn')
@@ -400,16 +435,29 @@ export function Game<V, T extends BaseTask>({
     // still carries the question (info is never audio-only), and the spoken hint
     // returns automatically on a demotion, since it tracks the live tier.
     if (d < 3) speakAfterCurrent(t.say)
-  }, [ada.difficulty, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue])
+    // Where the run is now, written as each question is SERVED — this is the only moment the
+    // child's answers are safe, because a closed tab, a killed app or a flat battery fires no exit
+    // event. `nextIdx === 0` is not a resume point (nothing has been answered yet), and the store
+    // reads it back as null anyway; skipping the write keeps the "no run in progress" state clean.
+    if (nextIdx > 0) {
+      setChapterResume(learnerId, config.chapterId, {
+        round: nextIdx, correct: c, wrong: w, seen: [...seen.current], asked: asked.current,
+      })
+    }
+  }, [adaRef, onFinish, nextTask, config, effTotal, warmup, warmupDiff, flashCue, learnerId])
 
   const demoDone = useRef(false)
   const finishDemo = useCallback(() => {
     if (demoDone.current) return
     demoDone.current = true
     setStage('play')
-    speak(`Your turn, ${childName}.`)
-    loadTask(0, 0, 0, false)
-  }, [childName, loadTask])
+    // ⚠️ `speakAfterCurrent`, not `speak`. This runs 1700ms after the guided round's own verdict
+    // line ("You did it, Ava! Now let's play.") — shorter than that line takes to say — so a plain
+    // `speak` chopped the guided round's last words off. And `loadTask` on the very next statement
+    // speaks the question, which must in turn queue behind THIS one rather than cut it.
+    speakAfterCurrent(`Your turn, ${childName}.`)
+    loadTask(resume?.round ?? 0, resume?.correct ?? 0, resume?.wrong ?? 0, false)
+  }, [childName, loadTask, resume])
 
   // "we do" — live, coached, NON-scored order(s) before real play. `guidedIdx`
   // walks the array form; the single-object form is a one-element walk.
@@ -422,6 +470,18 @@ export function Game<V, T extends BaseTask>({
     flashCue('turn')
     speakAfterCurrent(`${g.coach} ${g.task.say}`)
   }, [guidedList, config, flashCue])
+
+  // ⚠️ THE START CARD IS NEVER SKIPPED, EVEN ON A RESUME, AND THAT IS DELIBERATE. It carries two
+  // things a mid-run entry cannot do without: `unlockSpeech()`, which needs a real user gesture or
+  // the chapter is silent for the rest of the run, and — on an AR chapter — BOTH camera doors. A
+  // resume that jumped straight to play would put a child in front of a camera nobody re-consented
+  // to, which is the exact leak `e2e/ar-consent.spec.ts` exists for. What a resume skips is the
+  // TEACHING after it: the overview, the walkthrough and the guided round, all of which this child
+  // already sat through in the run they are returning to.
+  const enterAfterStart = useCallback(() => {
+    if (resume) { finishDemo(); return }
+    setStage(config.overview ? 'intro' : 'demo')
+  }, [resume, finishDemo, config.overview])
 
   const afterDemo = useCallback(() => {
     // Fade the guided round only for a returning expert (resumes at the top tier);
@@ -441,10 +501,15 @@ export function Game<V, T extends BaseTask>({
     if (ok) {
       const c = correct + 1
       setCorrect(c); setSub('sold'); setWrongRun(0)
-      // Correct = the quiet "You solved it! ✓" visual cue only. No spoken praise
-      // ("Good job / Nice / unstoppable") on every right answer — mirrors the
-      // 3–11 story chapters (StoryWorld: a tick is enough).
+      // Correct = the quiet "You solved it! ✓" visual cue, plus a spoken line for the CHILDREN'S
+      // bands only.
+      // ⚠️ GATED ON THE BAND, NOT ON THE ENGINE, and that is the whole point of `praisesOnCorrect`.
+      // 9–11 is split across two engines — ten chapters here, OrderDesk and LevelRun on the
+      // storybook one — so an engine-shaped rule would praise the same child in two chapters and
+      // stay silent in the other ten. 12–18 stays silent because "Great job!" every question reads
+      // as patronising to a fifteen-year-old.
       flashCue('solved')
+      if (praisesOnCorrect(BAND)) speak(PRAISE[idx % PRAISE.length])
       // ⚠️ THE EXIT IS WITHHELD UNTIL EVERY DECLARED READING HAS BEEN ASKED. See `coverage`.
       later(() => loadTask(idx + 1, c, wrong, res.mastered && covered()), 1650)
       return
@@ -452,39 +517,62 @@ export function Game<V, T extends BaseTask>({
     const w = wrong + 1
     const run = wrongRun + 1
     setWrong(w); setWrongRun(run); setSub('reveal')
-    speak(`It was ${config.revealText(task)}. ${ada.encouragement}`)
     if (value != null) config.glide(task, value, setValue, later)
 
     if (run >= RETEACH_AFTER) {
-      later(() => {
-        setSub('reteach'); setReteachAt(0)
-        // speakSteps, not speakSeq: it reports which line is being spoken (so the
-        // board can write it) and it still paces itself when speech is blocked or
-        // absent. The child's own speed multiplier applies here too.
-        const m = getSpeechRate()
-        let done = false
-        const advance = () => {
-          if (done) return
-          done = true
-          setReteachAt(-1); setWrongRun(0); loadTask(idx + 1, correct, w, false)
-        }
-        speakSteps(task.work, {
-          rate: 0.8 * m,
-          gapMs: Math.round(900 / m),
-          fallbackStepMs: Math.round(2600 / m),
-          onStep: setReteachAt,
-          // Advance when the re-explanation actually FINISHES, never on a flat timer.
-          // The old fixed 6400ms was tuned against the silent fallback, so a real
-          // voice — or a child who has chosen "Slower" — had the last line or two cut
-          // off. That is the craft doc's own backstop-timed-against-the-wrong-thing
-          // fault, and it bites hardest here, where the words are the whole point.
-          onDone: advance,
-        })
-        // Backstop, guarded so it can never double-advance: if onDone somehow never
-        // fires, the round must not strand the child on the re-teach for ever.
-        later(advance, 4000 + task.work.length * Math.round(3200 / m))
-      }, 1800)
+      /**
+       * ⚠️ THE REVEAL AND THE RE-EXPLANATION ARE **ONE** SEQUENCE, NOT TWO THINGS ON A TIMER.
+       *
+       * They used to be a `speakSteps` reveal followed by a second `speakSteps` 1800ms later — and
+       * a second sequence SUPERSEDES the first, so "It was seventy-two point five." plus its
+       * encouragement (well over 1800ms with a real clip) was chopped off mid-word by the very
+       * explanation the child had earned. Said as one sequence it cannot happen: `speakSeq` only
+       * starts a line when the previous one has ended.
+       *
+       * The encouragement is dropped on this path on purpose — a full re-explanation is the warm
+       * response, and "nearly!" in front of it is one more thing to sit through.
+       */
+      const m = getSpeechRate()
+      let done = false
+      const advance = () => {
+        if (done) return
+        done = true
+        setReteachAt(-1); setWrongRun(0); loadTask(idx + 1, correct, w, false)
+      }
+      // The BOARD still appears on its own timer — a screen that waits on a speech event is the
+      // frozen-lesson fault, and this one can be reached only by a child who has missed three.
+      later(() => { setSub('reteach'); setReteachAt(0) }, 1800)
+      speakSteps([`It was ${config.revealText(task)}.`, ...task.work], {
+        rate: 0.8 * m,
+        gapMs: Math.round(900 / m),
+        fallbackStepMs: Math.round(2600 / m),
+        // Line 0 is the reveal and belongs to no board step; the rest write themselves out.
+        onStep: (i) => { if (i > 0) { setSub('reteach'); setReteachAt(i - 1) } },
+        // Advance when the re-explanation actually FINISHES, never on a flat timer.
+        // The old fixed 6400ms was tuned against the silent fallback, so a real
+        // voice — or a child who has chosen "Slower" — had the last line or two cut
+        // off. That is the craft doc's own backstop-timed-against-the-wrong-thing
+        // fault, and it bites hardest here, where the words are the whole point.
+        onDone: advance,
+      })
+      // Backstop, guarded so it can never double-advance: if onDone somehow never
+      // fires, the round must not strand the child on the re-teach for ever.
+      later(advance, 6000 + task.work.length * Math.round(3200 / m))
     } else {
+      /**
+       * ⚠️ TWO UTTERANCES, NOT ONE SENTENCE, AND THE REASON IS THE CLIP CORPUS. Spoken as
+       * `It was X. <encouragement>` this is ONE line to the clip layer, so every reveal has to be
+       * recorded once per encouragement — and there are ten of them. Measured on 9–11: 3,640 lines
+       * and 114,506 characters as one utterance against 374 lines and ~4,300 split, i.e. a 10x
+       * multiplication of the whole bucket, and a month's ElevenLabs quota spent on saying the same
+       * ten endings over and over.
+       * ⚠️ It must be `speakSteps`, never `speak` followed by `speakAfterCurrent`: a sequence is
+       * one thing in flight, so the next question queues behind BOTH halves. Two separate calls
+       * would leave the second racing the first.
+       */
+      speakSteps([`It was ${config.revealText(task)}.`, ada.encouragement])
+      // The next question is spoken by `loadTask` via `speakAfterCurrent`, so it queues behind
+      // this reveal rather than cutting it — the 2300ms is the VISUAL pace, nothing more.
       later(() => loadTask(idx + 1, correct, w, false), 2300)
     }
   }
@@ -598,7 +686,18 @@ export function Game<V, T extends BaseTask>({
           here is a px the interactive doesn't have to be scaled out of. */}
       <header style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 'clamp(660px, 66vw, 820px)', display: 'flex', alignItems: 'center', gap: 10, padding: short ? '4px 14px 0' : '12px 16px 4px', boxSizing: 'border-box' }}>
         <button type="button" onClick={() => { stopSpeech(); onExit() }} style={headerChip(P)}>‹ Menu</button>
-        <span style={{ fontWeight: 900, fontSize: 'clamp(15px, 1.7vw, 26px)', letterSpacing: '0.05em', color: P.gold, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{config.title}</span>
+        <span style={{ flex: '0 0 auto', fontWeight: 900, fontSize: 'clamp(15px, 1.7vw, 26px)', letterSpacing: '0.05em', color: P.gold, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{config.title}</span>
+        {/* ⚠️ THE TYPED DIRECTIONS, AND THEY ARE A FLEX CHILD RATHER THAN A FIXED CARD ON PURPOSE.
+            A tester asked for a corner box saying what to do, in every chapter (2026-08-30). Dropped
+            on top of this row as a `fixed` card it covered the chapter TITLE at 640×320 — measured —
+            because every band's header row is already full. In the row, an overlap is not
+            expressible; a narrow frame ellipsises the line instead of hiding something else.
+            One line of words, from the catalogue's own per-chapter hint, so there is no second copy
+            to drift. It is NOT the question — the instruction chip on the instrument is that. */}
+        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          fontSize: 'clamp(11px, 1.05vw, 14px)', fontWeight: 700, color: P.creamSoft,
+          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)',
+          borderRadius: 999, padding: short ? '2px 9px' : '3px 12px' }}>{getChapter(config.chapterId).hint}</span>
         <span style={{ flex: 1 }} />
         {stage === 'play' && <span style={{ fontFamily: 'var(--font-numeric)', fontSize: 'clamp(12px, 1.2vw, 17px)', color: P.creamSoft }}>{Math.min(idx + 1, effTotal)} / {effTotal}</span>}
       </header>
@@ -616,31 +715,69 @@ export function Game<V, T extends BaseTask>({
         // landscape phone (measured 740×360) the board + answers no longer fit the
         // 230px that leaves, so let the play area scroll rather than push a tile
         // under the paper. Nothing changes while the drawer is closed.
-        ...(scratch ? { overflowY: 'auto' as const } : null) }}>
+        // ⚠️ AND THE START CARD, FOR A DIFFERENT REASON: it is the one stage with no FitSlot
+        // scaling anything down, so when its ticket + blurb + buttons come out taller than the
+        // column, the start button is simply not on the screen and the chapter cannot be begun at
+        // all. Measured at 640×320 against a production build: the button at y 284–330 of 320 in
+        // EIGHT chapters — ten pixels past the bottom, and `main` reported exactly 10px of unshown
+        // overflow. `auto` shows nothing until that happens; with CenterFill's `safe center` the
+        // overflow can only run off the bottom, so scrolling always reaches the button. Silent
+        // clipping is the dead end. This is the backstop; the gap below is the actual fix.
+        ...(scratch || stage === 'start' ? { overflowY: 'auto' as const } : null) }}>
 
         {stage === 'start' && (
           <CenterFill>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, textAlign: 'center' }}>
-              <Ticket P={P}>
-                <TicketHead P={P} n={1} label={config.ticketLabel} />
-                <Row P={P} title={config.start.ticket.title} badge={config.start.ticket.badge} tone={config.start.ticket.tone} />
-              </Ticket>
-              <p style={{ margin: 0, maxWidth: 'clamp(400px, 48vw, 600px)', fontSize: 'clamp(15px, 1.5vw, 22px)', lineHeight: 1.55, color: P.creamSoft, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>{config.start.blurb}</p>
+            {/* ⚠️ THE GAP IS THE HEIGHT, AND ON A SHORT FRAME IT IS THE WHOLE DEFECT. Measured at
+                640×320 against a production build: this card's start button rendered at
+                **y 284–330 of 320** — ten pixels below the fold, stable across four seconds and
+                every font-load state, in EIGHT chapters (conicSections, systemsMatrices,
+                systemsOfEquations, quadraticAnalysis, expLogFunctions, unitCircleTrig,
+                trigGraphsIdentities, statsInference). That is the FIRST screen of the chapter and
+                its only forward control, so on a landscape phone those chapters could not be
+                started at all. Two gaps of 18px between ticket, blurb and buttons is 36px of pure
+                spacing on a 320px screen; 8px buys back 20 and the card fits with room over.
+                Height comes out of the SPACING before it comes out of the words — the rule this
+                shell already follows for its header and main padding one screen along. */}
+            {/* ⚠️⚠️ AND THE GAP WAS NOT ENOUGH, BECAUSE THE HEIGHT IS A FUNCTION OF HOW MANY LINES
+                THE BLURB HAPPENS TO TAKE. 8px of spacing bought this card 10px of clearance at
+                640×320 — one wrapped line from failing again, which is exactly what the CI runner
+                shows: the same screen measures y 288–334 there against 264–310 here. And an AR
+                chapter has TWO buttons on this card, which spends the margin a second way: at
+                640×320 `dataGraphs` renders "Use taps instead" at y 299–343 — the escape hatch from
+                the camera, half off the screen, while "Turn on the camera" is fully visible. The
+                child who cannot use a camera is looking at a screen whose only whole option is the
+                one they cannot take.
+
+                So the layout no longer depends on the line count: the BUTTONS are `flex: 0 0 auto`
+                and the blurb is the only thing that may shrink (`min-height: 0` + its own
+                `overflow-y: auto`). Whatever the text metrics do, the controls stay on screen and
+                the prose gives way — which is this shell's own rule that height comes out of the
+                words before it comes out of a tap target. */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 8 : 18, textAlign: 'center',
+              minHeight: 0, maxHeight: '100%' }}>
+              <div style={{ flex: '0 1 auto', minHeight: 0, width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <Ticket P={P}>
+                  <TicketHead P={P} n={1} label={config.ticketLabel} />
+                  <Row P={P} title={config.start.ticket.title} badge={config.start.ticket.badge} tone={config.start.ticket.tone} />
+                </Ticket>
+              </div>
+              <p style={{ margin: 0, maxWidth: 'clamp(400px, 48vw, 600px)', fontSize: 'clamp(15px, 1.5vw, 22px)', lineHeight: 1.55, color: P.creamSoft, textShadow: '0 1px 8px rgba(0,0,0,0.6)',
+                minHeight: 0, flexShrink: 1, overflowY: 'auto' }}>{config.start.blurb}</p>
               {canWarmUp ? (
                 // Returning above easy → offer an optional warm-up (a few gentler
                 // questions first) or jump straight back in at their level.
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%', flex: '0 0 auto' }}>
                   <p style={{ margin: 0, maxWidth: 'clamp(360px, 46vw, 560px)', fontSize: 'clamp(14px, 1.4vw, 20px)', fontWeight: 700, color: P.cream, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
                     You left off at <span style={{ color: P.gold }}>{ada.difficultyLabel}</span>. Want a quick warm-up first?
                   </p>
                   <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(true); setStage(config.overview ? 'intro' : 'demo') }} style={headerChip(P)}>☀️ Warm up first</button>
-                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(false); setStage(config.overview ? 'intro' : 'demo') }} style={bigBtn(P)}>Continue →</button>
+                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(true); enterAfterStart() }} style={headerChip(P)}>☀️ Warm up first</button>
+                    <button type="button" onClick={() => { unlockSpeech(); setWarmup(false); enterAfterStart() }} style={bigBtn(P)}>Continue →</button>
                   </div>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                  <button type="button" onClick={() => { unlockSpeech(); if (HAND && cam.onCam) cam.start(); setStage(config.overview ? 'intro' : 'demo') }} style={bigBtn(P)}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, flex: '0 0 auto' }}>
+                  <button type="button" onClick={() => { unlockSpeech(); if (HAND && cam.onCam) cam.start(); enterAfterStart() }} style={bigBtn(P)}>
                     {HAND && cam.onCam ? 'Turn on the camera' : config.start.startLabel}
                   </button>
                   {/* ⚠️ BOTH DOORS, EVERY TIME. The device's last pick decides which is the BIG
@@ -650,7 +787,7 @@ export function Game<V, T extends BaseTask>({
                       a way to skip the chapter. */}
                   {HAND && (
                     <button type="button" style={headerChip(P)}
-                      onClick={() => { unlockSpeech(); if (cam.onCam) cam.useTaps(); else cam.useCamera(); setStage(config.overview ? 'intro' : 'demo') }}>
+                      onClick={() => { unlockSpeech(); if (cam.onCam) cam.useTaps(); else cam.useCamera(); enterAfterStart() }}>
                       {cam.onCam ? 'Use taps instead' : '✋ Use the camera instead'}
                     </button>
                   )}
@@ -1415,7 +1552,27 @@ function CenterFill({ children, short, grow = true }: { children: React.ReactNod
   // margins (the row already places it) and no max-width cap to fight the flex basis.
   // grow=false: PlayFrame is centring board+pad as one group, so this column must
   // size to its content — a flex:1 child would absorb the free space and defeat it.
-  return <div style={{ flex: grow ? 1 : '0 0 auto', width: short ? undefined : '100%', minWidth: 0, maxWidth: short ? undefined : 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(10px, 1vw, 16px)', margin: short ? undefined : '0 auto', minHeight: 0, padding: '2px 0 6px', boxSizing: 'border-box' }}>{children}</div>
+  /**
+   * ⚠️ `safe center`, NOT `center` — and the difference is a chapter a child cannot START.
+   * A flex item that cannot shrink below its content overflows BOTH ways under plain
+   * `justify-content: center` (the FitSlot comment below already names this trap for the play
+   * stage). On the START card the overflow is small and the consequence is total: measured at
+   * 640×320 against a production build, the start button rendered at **y 284–330 of 320** in
+   * EIGHT chapters — conicSections, systemsMatrices, systemsOfEquations, quadraticAnalysis,
+   * expLogFunctions, unitCircleTrig, trigGraphsIdentities, statsInference — i.e. hanging off the
+   * screen with no way to begin the chapter. Nightly E2E reported only two of the eight and it
+   * read as flakiness, because `all-chapters` reaches this screen only when it is slow enough to.
+   * `safe` falls back to flex-start the moment the content does not fit, so an overflow can
+   * only ever run off the BOTTOM (where the padding is) and never off the top under the header.
+   * It changes nothing when the content fits, which is every other case.
+   *
+   * ponytail: the `safe` keyword needs Chrome 115+ / Safari 17+. Where it is not understood the
+   * whole declaration is dropped and the column top-aligns instead of centring — cosmetic, and
+   * the button stays reachable, which is the invariant this exists for. If a hand-me-down iPad
+   * on iOS 16 ever matters, the universal equivalent is `overflow-y: auto` on the scroller plus
+   * `margin: auto` on the child (the pattern the celebration modal already uses).
+   */
+  return <div style={{ flex: grow ? 1 : '0 0 auto', width: short ? undefined : '100%', minWidth: 0, maxWidth: short ? undefined : 'clamp(560px, 66vw, 820px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'safe center', gap: 'clamp(10px, 1vw, 16px)', margin: short ? undefined : '0 auto', minHeight: 0, padding: '2px 0 6px', boxSizing: 'border-box' }}>{children}</div>
 }
 
 /** Scale-to-fit slot for the INSTRUMENT column (the instrument + its own commit

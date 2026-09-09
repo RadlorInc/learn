@@ -30,7 +30,7 @@
  * Design doc: docs/hopalong-design.md. Craft rules: docs/chapter-craft.md.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, useChapterShell, type Beat } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { RotateGate, useNeedsRotate } from './RotateGate'
@@ -38,6 +38,7 @@ import { Hop, SheetCell, Arrive, CRITTER_CSS, hopOf, inFlowJourney } from './cri
 import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 const MILO = '/assets/characters/milo_hop_side.png'
 
@@ -416,6 +417,14 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
    * screen, and the founder pressed it and watched nothing happen. Everything spoken here is ALSO
    * written.
    */
+  /** The queueing twin of `tell`, for a line a PHASE fires rather than the child. Same writing,
+   *  same nudge — it just waits for whatever the previous phase was still saying. */
+  const tellNext = useCallback((msg: string) => {
+    speakAfterCurrent(msg)
+    setNudge(msg)
+    window.clearTimeout(nudgeT.current)
+    nudgeT.current = window.setTimeout(() => setNudge(null), 3000)
+  }, [])
   const tell = useCallback((msg: string) => {
     speak(msg)
     setNudge(msg)
@@ -425,7 +434,7 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
   useEffect(() => () => window.clearTimeout(nudgeT.current), [])
 
   useEffect(() => {
-    if (mode === 'guided') tell(`Milo needs ${data.target} ${data.item.many}. They come in ${data.w.family}s of ${data.group}. Tap a ${data.w.family} to fetch it!`)
+    if (mode === 'guided') tellNext(`Milo needs ${data.target} ${data.item.many}. They come in ${data.w.family}s of ${data.group}. Tap a ${data.w.family} to fetch it!`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -779,7 +788,7 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
 }
 
 // ─── Beat ────────────────────────────────────────────────────────────────────────────
-function makeBeat(): Beat<FetchRound> {
+export function makeBeat(): Beat<FetchRound> {
   return {
     skillId: 'skipCounting', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeFetch(scoredSlot(round) ?? RUN[RUN.length - 1], (d || 1) as 1 | 2 | 3),
@@ -815,7 +824,7 @@ export default function HopAlong({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'skipCounting', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [scene, setScene] = useState<Setting>(RUN[0].w)
   const { exit, tally } = useChapterShell(onFinish, onExit)
@@ -846,7 +855,7 @@ export default function HopAlong({ onFinish, onExit }: {
       </div>
 
       <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)',
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)',
           border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)',
           fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>

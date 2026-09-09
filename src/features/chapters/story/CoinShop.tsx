@@ -51,7 +51,7 @@
  * scenes are not used all live in [market.ts](./market.ts). Read that before touching the geometry.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
@@ -66,6 +66,7 @@ import {
 } from './market'
 import { rint, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 export {
   STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot,
@@ -493,7 +494,9 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
     setT(EMPTY); setNote(''); setOk(false); setLive(false); setLeg(0)
     // The question opens when Milo has actually ARRIVED, timed off the same journey he walks.
     const walkIn = legMs(0, miloH, vw)
-    after(walkIn, () => { setLive(true); speak(openerFor(st, data)) })
+    // `speakAfterCurrent`: the walk-in is timed off Milo's journey, which is shorter than the
+    // previous round's "the apple is yours!" — a plain `speak` cut the sale line off every round.
+    after(walkIn, () => { setLive(true); speakAfterCurrent(openerFor(st, data)) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [price, kind, data.asPile, st.key])
 
@@ -702,7 +705,7 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
 }
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
-const BEAT: Beat<MoneyRound> = {
+export const BEAT: Beat<MoneyRound> = {
   skillId: 'money', rounds: 10, walkEvery: 3,
   make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
   // The DIRECTION is part of the question: the same price named as a number and held out as a pile
@@ -736,7 +739,7 @@ export default function CoinShop({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'money', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [slotIdx, setSlotIdx] = useState(0)
   const [bought, setBought] = useState<number[]>([])
@@ -789,7 +792,7 @@ export default function CoinShop({ onFinish, onExit }: {
       })}
 
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
         {/* The cumulative arc, OUTSIDE SkillBeat — anything drawn inside a round resets every round.
             Each mark is what he bought at THAT stall, so the basket reads back as the walk he made. */}
         {bought.length > 0 && (

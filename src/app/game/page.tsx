@@ -15,6 +15,8 @@ import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
 import { track } from '@/infra/analytics'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
+import { useChapterGate } from '@/features/billing/useChapterGate'
+import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 
 // Teen chapters render their own full-screen portal + MasteryState completion, so
 // the kids' CelebrationModal (which also auto-speaks) must NOT mount for them.
@@ -31,7 +33,16 @@ export default function GamePage() {
   const { flushQueue } = useChapterSync()
 
   const [playingChapter,  setPlayingChapter]  = useState(currentChapter)
-  const [chapterDone,    setChapterDone]    = useState(false)
+  /**
+   * ⚠️⚠️ THE ENTRY CHECK, AND IT IS ABOVE EVERY EARLY RETURN. Billing Stage 3: a chapter the family
+   * is not entitled to never mounts, and the verdict is taken ONCE, before the chapter exists — so
+   * "at entry, never mid-chapter" is structural rather than a promise. There is no later evaluation
+   * for a re-render to flip, which is why a child who has started always finishes.
+   * ⚠️ It fails OPEN (a lost network or an unknown session → allowed): this is a UX gate over a
+   * database that already refuses the write, and locking a paying child out because their wifi
+   * dropped is the worse failure. See docs/billing-stage-3.md §2.
+   */
+  const gate = useChapterGate(playingChapter)
   const [ready,          setReady]          = useState(false)
   const [childName,      setChildName]      = useState(profile.childName)
 
@@ -56,7 +67,6 @@ export default function GamePage() {
     if (currentChapter) {
       setPlayingChapter(currentChapter)
       track('chapter_open', { chapter: currentChapter })
-      setChapterDone(false)
       completedRef.current = false
       setReady(true)
       return
@@ -72,7 +82,6 @@ export default function GamePage() {
     if (!playingChapter) return
     if (completedRef.current) return   // ignore a double-fired completion
     completedRef.current = true
-    setChapterDone(true)
     /**
      * ⚠️ THE TRACKING AND THE PLAN POINTER USED TO LIVE HERE, AND NEVER RAN. This function is
      * handed to a chapter as `ChapterProps.onComplete`, and both registry factories in
@@ -85,12 +94,26 @@ export default function GamePage() {
      * directly by this page rather than through the portal) and must NOT call `finishAndSync`
      * again: the portal has already scored the run, and a second call double-writes the session
      * and double-awards XP and coins.
+     *
+     * ⚠️⚠️ AND IT MUST NOT UNMOUNT THE CHAPTER. It used to `setChapterDone(true)`, and the mount was
+     * written `{!chapterDone && playingChapter && …}` — so the moment this handler became REAL
+     * (2026-08-24, when `ChapterPortal` started calling `onComplete` for `/demo`), every chapter in
+     * the app would have vanished the instant a child finished it, taking its own end screen — the
+     * stars, "Play again", the way back — with it. Dormant for three months, so the shipped and
+     * working behaviour is that the chapter stays mounted and owns its ending; the flag was dead
+     * code whose revival was a regression. Removed rather than left for the next person to wake.
      */
   }
 
   if (!ready && !playingChapter) return null
 
   const props = { onComplete: handleComplete, childName: childName || profile.childName }
+
+  // ⚠️ BEFORE the chapter is rendered, not beside it: a locked chapter must not mount at all, the
+  // same way the camera guard refuses the render rather than disabling a control.
+  if (playingChapter && gate === 'locked') {
+    return <LockedChapterCard chapterId={playingChapter} onBack={() => router.replace('/menu')} />
+  }
 
   if (authed === 'checking') return (
     <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FCEAB6', fontSize: 48 }}>🦊</div>
@@ -103,7 +126,7 @@ export default function GamePage() {
     <div className="kit-screen" style={{ background: 'var(--bg-page)', position: 'fixed', inset: 0, overflow: 'hidden' }}>
       {/* Every chapter `createPortal`s itself to document.body, so nothing renders in flow here —
           this element is only the mount point and the backdrop behind the portal. */}
-      {!chapterDone && playingChapter && (() => {
+      {playingChapter && gate === 'allowed' && (() => {
         const Chapter = CHAPTER_COMPONENTS[playingChapter]
         return Chapter ? (
           <Suspense fallback={null}>

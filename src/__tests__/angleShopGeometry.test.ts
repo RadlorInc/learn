@@ -463,7 +463,7 @@ describe('what it says', () => {
 // ─── the hand ────────────────────────────────────────────────────────────────────────
 /**
  * The camera path cannot be driven by a gate at all — no test can hold a hand up. So the pure
- * maths under it carries the weight: what a palm reading MEANS, what a jittering reading is allowed
+ * math under it carries the weight: what a palm reading MEANS, what a jittering reading is allowed
  * to do to the committed value, and which rounds the hand is permitted to answer.
  */
 describe('the tilt', () => {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { BAND_FRAMING, type AgeBand } from '@/features/chapters/teen/types'
-import { speak } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent } from '@/infra/useMiloSpeaker'
 
 export interface MasteryStateProps {
   band: AgeBand
@@ -39,7 +39,9 @@ export default function MasteryState({
   useEffect(() => {
     if (announcedRef.current) return
     announcedRef.current = true
-    speak(headlineSpeechFor(band, conceptsConfirmed))
+    // `speakAfterCurrent`: this screen mounts 1650ms after the last round's praise line, which is
+    // longer than that — a plain `speak` cut the child's last "great job" off at the finish line.
+    speakAfterCurrent(headlineSpeechFor(band, conceptsConfirmed))
   }, [band, conceptsConfirmed])
 
   const persona = BAND_FRAMING[band].persona

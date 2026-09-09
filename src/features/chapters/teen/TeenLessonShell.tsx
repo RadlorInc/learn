@@ -20,7 +20,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
+import { afterSpeech, speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import type { LessonStep } from '@/features/chapters/lessons/_kit'
 import type { AgeBand, MiloMood } from '@/features/chapters/teen/types'
 import MiloMark from '@/features/chapters/teen/MiloMark'
@@ -84,9 +84,11 @@ export default function TeenLessonShell({
 
   // Clean up any pending tail-timer + speech on unmount.
   const tailRef = useRef<number | null>(null)
+  const cancelTail = useRef<(() => void) | null>(null)
   useEffect(() => {
     return () => {
       if (tailRef.current != null) window.clearTimeout(tailRef.current)
+      cancelTail.current?.()
       stopSpeech()
     }
   }, [])
@@ -96,7 +98,12 @@ export default function TeenLessonShell({
     stopSpeech()
     if (step >= total - 1) {
       speak(finalSpeech)
-      tailRef.current = window.setTimeout(() => completeRef.current(), 2600)
+      // Hold the lesson open until Milo has actually finished, not for a flat 2600ms — leaving the
+      // screen unmounts the speaker, so a longer closing line was simply cut off at the end.
+      // `afterSpeech` carries its own ceiling, so a device that never reports the end still moves on.
+      const stopWaiting = afterSpeech(() => completeRef.current(), 9000)
+      tailRef.current = null
+      cancelTail.current = stopWaiting
       return
     }
     setStep((s) => s + 1)

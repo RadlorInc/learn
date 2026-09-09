@@ -59,7 +59,7 @@
  * Art: **zero.** Every block is code-drawn; every backdrop already shipped.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
@@ -72,6 +72,7 @@ import {
 import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
 const MILO = '/assets/characters/milo_side.png'
@@ -432,6 +433,9 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
   const after = useCallback((ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); timers.current = [] }, [])
   const say = useCallback((s: string) => { setNote(s); speak(s) }, [])
+  /** The queueing twin of `say`, for a line the ROUND fires rather than the child: it lands on a
+   *  timer while the previous round's verdict and praise may still be running, and `speak` cut them. */
+  const sayNext = useCallback((s: string) => { setNote(s); speakAfterCurrent(s) }, [])
 
   // ⚠️ Derived from the count rather than announced by the tap that caused it — the tap handler
   // cannot see the new value, and a batched pair of taps would announce the wrong one.
@@ -446,14 +450,14 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
   useEffect(() => {
     setR(EMPTY); setDigits([]); setNote(''); setOk(false); setLive(false)
     if (isMake) {
-      after(400, () => { setLive(true); say(`Make ${numberToWords(n)}. Tens on the left, ones on the right.`) })
+      after(400, () => { setLive(true); sayNext(askFor(data)) })
       return
     }
     after(400, () => {
       setR(s => ({ ...s, bay: plan.firstWave, settled: 0, waiting: plan.waiting, from: 'right', key: 'b' }))
       after(inMs, () => {
-        if (plan.firstWave === 10) { say('Ten ones on the ground — that is one ten. Tap them.') }
-        else { setLive(true); say(ASK[kind]) }
+        if (plan.firstWave === 10) { sayNext('Ten ones on the ground — that is one ten. Tap them.') }
+        else { setLive(true); sayNext(askFor(data)) }
       })
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -547,7 +551,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
   return (
     <>
       {/* the target rides INSIDE the question pill — see `lead` in yard.tsx */}
-      <Banner text={note || (isMake ? 'Make the number on the order' : ASK[kind])} vh={vh} ok={ok}
+      <Banner text={note || askFor(data)} vh={vh} ok={ok} chapter="placeValue"
         side="right" lead={isMake && !ok ? n : undefined} />
       <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
       <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
@@ -620,13 +624,32 @@ function MakeControls({ m, cube, band, vw, live, canUndo, onRod, onOne, onBack, 
 
 // Everything spoken is also written — Chrome often has no voice, and a response that exists only as
 // speech is silence.
-const ASK: Record<QKind, string> = {
-  make: 'Make the number on the order',
+export const ASK: Record<Exclude<QKind, 'make'>, string> = {
   whole: 'How many altogether?',
   tens: 'How many on the TENS side?',
   ones: 'How many on the ONES side?',
   value: 'The TENS side — how much is it worth?',
 }
+
+/**
+ * The question this chapter draws on its own banner AND speaks. SkillBeat's pill stays empty here on
+ * purpose (two pills saying the same thing is a duplicate), so this is the ONLY place the sentence
+ * exists — and exporting it is what lets a gate read it at all.
+ *
+ * ⚠️ THE `make` LINE IS BUILT HERE, NOT IN THE ROUND'S EFFECT, AND THAT IS THE POINT. It used to be
+ * written inline as `say(\`Make ${numberToWords(n)}. Tens on the left, ones on the right.\`)` while
+ * `ASK.make` said "Make the number on the order" — so the string a gate could reach was NOT the
+ * string a child reads, and `ASK.make` was dead text nothing ever showed (the note overrides the
+ * banner 400 ms in). Caught by driving the chapter on screen after the gate was already green.
+ *
+ * This is CoinShop's `openerFor` rule, which says it best: ONE renderer, because it is both spoken
+ * and written, "and those two drifting apart is how a chapter narrates one thing while the screen
+ * says another".
+ */
+export const askFor = (d: PvRound): string =>
+  d.kind === 'make'
+    ? `Make ${numberToWords(d.n)}. Tens on the left, ones on the right.`
+    : ASK[d.kind]
 const SOLVED: Record<QKind, (n: number) => string> = {
   make: n => `${n}`,
   whole: n => `${Math.floor(n / 10)} tens and ${n % 10} ones make ${n}`,
@@ -691,7 +714,7 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
   const ground = groundOf(vh)
   return (
     <>
-      <Banner text={line || 'Watch Milo fill the order…'} vh={vh} side="right" lead={order ?? undefined} />
+      <Banner text={line || 'Watch Milo fill the order…'} vh={vh} side="right" lead={order ?? undefined} chapter="placeValue" />
       <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
       <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
       <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} />
@@ -700,7 +723,7 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
 }
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
-const BEAT: Beat<PvRound> = {
+export const BEAT: Beat<PvRound> = {
   skillId: 'placeValue', rounds: 10, walkEvery: 3,
   make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
   sig: d => `${d.n}${d.kind}`,
@@ -721,7 +744,7 @@ export default function BuildingBlocks({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'placeValue', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [slotIdx, setSlotIdx] = useState(0)
   const [shipped, setShipped] = useState(0)
@@ -753,7 +776,7 @@ export default function BuildingBlocks({ onFinish, onExit }: {
       ))}
 
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
         {/* The cumulative arc, OUTSIDE SkillBeat — anything drawn inside a round resets every round. */}
         {shipped > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,252,244,.86)', border: '2px solid var(--outline)', borderRadius: 999, padding: '4px 12px' }}>

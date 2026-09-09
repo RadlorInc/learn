@@ -93,7 +93,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['learner_invites']['Row'], 'id' | 'created_at'>
         // Only `status` is UPDATE-grantable to `authenticated` (migration
-        // 20260718120000_harden_invite_accept_columns) — any other column would 403 at
+        // 20260718103024_harden_invite_accept_columns) — any other column would 403 at
         // runtime, so keep the type narrow enough that tsc catches it first.
         Update: { status: InviteStatus }
       }
@@ -103,7 +103,9 @@ export interface Database {
           learner_id:    string
           chapter:       ChapterType
           phase:         'lesson' | 'practice'
-          started_at:    string
+          /** ⚠️ NULLABLE since 2026-09-05, and NULL means "unknown", not "now".
+           *  It is NOT the session's activity time — use `completed_at`. See docs/data-inventory.md. */
+          started_at:    string | null
           completed_at:  string | null
           correct_count: number
           wrong_count:   number
@@ -124,6 +126,8 @@ export interface Database {
           total_xp:        number
           total_sessions:  number
           last_played_at:  string | null
+          /** ⚠️ The adaptive DIFFICULTY tier (1–3) this learner left this chapter on — NOT the XP
+           *  level. `learner_stats.current_level` is the XP level, and the two share a name. */
           current_level:   number
           updated_at:      string
         }

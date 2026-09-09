@@ -1,5 +1,15 @@
 import { test, expect, Page } from '@playwright/test'
 import { reachPractice, IGNORED_ERRORS } from './personas'
+import { seedSession } from './session'
+
+/**
+ * ⚠️ SIGNED IN, BECAUSE THE CAMERA GUARD REFUSES AN AR CHAPTER WITHOUT A SESSION. Eight chapters
+ * (all in 9–11) do not render at all to a logged-out visitor — see src/core/arChapters.ts. Without
+ * this seed, this sweep would quietly grade the consent card for those eight and report them clean,
+ * which is the "graded the wrong screen" fault start-card.spec.ts exists to prevent. The logged-out
+ * side is covered deliberately by ar-consent.spec.ts.
+ */
+test.beforeEach(async ({ page }) => { await seedSession(page) })
 
 // Short-landscape gate for the 17–18 band (13 chapters, ~19 instruments).
 //

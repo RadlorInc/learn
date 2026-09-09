@@ -13,8 +13,13 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech } from '@/infra/useMiloSpeaker'
 import { useAdaptive } from '@/shared/hooks/useAdaptive'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
+import { PRAISE } from '@/core/praise'
+import { DirectionsInline, ownsChromeRow } from '@/features/chapters/directions'
+import { getChapterResume, setChapterResume, clearChapterResume } from '@/infra/storage/chapterResume'
 import { type Difficulty } from '@/core/progression'
 import { makeDistinct } from '@/core/questionVariety'
 import { type ChapterType } from '@/core/chapters'
@@ -22,6 +27,7 @@ import { CSS as KIT_CSS } from '../lessons/_kit'
 import { Backdrop, type BackdropKind } from './art'
 import MiloSprite from './MiloSprite'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 
 const STORY_CSS = `
 @keyframes s_walk { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-10px) rotate(2deg)} }
@@ -33,6 +39,10 @@ const STORY_CSS = `
 /** Wrong-in-a-row before Milo re-explains. It was an optional field with a default of 2, and
  *  all 34 chapters passed 3 — so it was never a knob, only a number written 34 times. */
 export const RETEACH_AFTER = 3
+
+/** Re-exported so the chapters and their gates keep one import site; the lines and the age cutoff
+ *  live in `core/praise` because `GameShell` needs the same two and must not import this file. */
+export { PRAISE } from '@/core/praise'
 
 // ─── A skill round: data + how to play it + how Milo re-teaches it ──
 export interface Beat<T> {
@@ -153,20 +163,35 @@ export function useChapterShell(
 }
 
 // ─── SkillBeat: the unbreakable pedagogy core ──────────────────
-// Runs `rounds` adaptive rounds. Warm wrong-answers (no red X). On a 2-wrong
-// streak, Milo re-explains in-story, then the child retries.
+// Runs `rounds` adaptive rounds. Warm wrong-answers (no red X). On a RETEACH_AFTER-wrong streak
+// (THREE, not two), Milo re-explains the round they just missed in-story, and the run then moves ON
+// to the next round — it is NOT a retry of the same question. The engine has already eased the tier
+// by then: it demotes on the SECOND miss, so the round being re-explained was built one tier down.
 export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Beat<any>; onComplete: (correct: number, wrong: number, mastered?: boolean) => void; onInterlude?: () => Promise<void>; onRound?: (data: any, round: number) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const ada = useAdaptive(beat.skillId)
+  // ⚠️ THE BAND RESUMES AT THE TIER THE CHILD LEFT OFF ON — founder's call, 2026-08-20, replacing
+  // the earlier "3–11 NEVER resumes" rule. The fault that rule was written for (a nine-year-old
+  // meeting their old top tier cold on question 1) is covered from the other side: the chapter
+  // still opens with its demo and its unscored guided round, and the engine demotes on two misses
+  // in a row, so a tier that no longer fits is given back inside two questions.
+  // No learner (the logged-out /story preview) → tier 1, exactly as before.
+  const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
+  const [startDiff] = useState<Difficulty>(() => getChapterLevel(learnerId, beat.skillId))
+  // An unfinished run of THIS chapter, read once at mount. Everything below seeds from it, so a
+  // child who left after seven questions comes back to question eight with those seven still
+  // counted — before this, `onComplete` never fired and the whole run was discarded. Null for a
+  // logged-out preview, for a finished chapter, and for a run older than the store's TTL.
+  const [resume] = useState(() => getChapterResume(learnerId, beat.skillId))
+  const ada = useAdaptive(beat.skillId, startDiff)
   const adaRef = useLatestRef(ada)
-  const [roundIdx, setRoundIdx] = useState(0)
+  const [roundIdx, setRoundIdx] = useState(resume?.round ?? 0)
   const [phase, setPhase] = useState<'play' | 'feedback' | 'reteach' | 'interlude'>('play')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [wrongRun, setWrongRun] = useState(0)
-  const tally = useRef({ correct: 0, wrong: 0 })   // reported to onComplete → drives XP
-  const seen = useRef<Set<string>>(new Set())      // question signatures already asked this session
+  const tally = useRef({ correct: resume?.correct ?? 0, wrong: resume?.wrong ?? 0 })   // reported to onComplete → drives XP
+  const seen = useRef<Set<string>>(new Set(resume?.seen ?? []))  // question signatures already asked this session
   // Which members of `beat.coverage.all` have been ASKED. Fed back into `make` so a generator can
   // spend a scarce round on something unmet, and used to withhold the early exit until the set is done.
-  const asked = useRef<string[]>([])
+  const asked = useRef<string[]>(resume?.asked ?? [])
 
   // ONE data object per round. Must be stable across re-renders (it holds the
   // random target), or the Play UI and the answer-check would disagree and the
@@ -184,14 +209,27 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       if (k && !asked.current.includes(k)) asked.current = [...asked.current, k]
     }
     onRound?.(data, roundIdx)
-    speak((beat.say ?? beat.prompt)(data))
+    // ⚠️ `speakAfterCurrent`, NOT `speak`. The round advances on a 1300ms timer after the verdict
+    // line is spoken (below), and most verdicts are longer than that — so a plain `speak` here cut
+    // Milo off mid-praise on EVERY round of every storybook chapter, in all four bands that run on
+    // this beat. The visuals still advance on their own timer; only the words wait their turn.
+    speakAfterCurrent((beat.say ?? beat.prompt)(data))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundIdx])
 
   const onSubmit = useCallback((correct: boolean) => {
     if (phase !== 'play') return
     const res = ada.record(correct)
+    // Remember the tier after EVERY scored answer, not at the end: a child who closes the tab
+    // mid-chapter still resumes where they actually were. Same call GameShell makes.
+    setChapterLevel(learnerId, beat.skillId, res.difficulty)
     if (correct) tally.current.correct++; else tally.current.wrong++
+    // Where the run is NOW, written before anything can go wrong with the rest of the round. There
+    // is no exit event for a closed tab, so this is the only moment the child's work is safe.
+    setChapterResume(learnerId, beat.skillId, {
+      round: roundIdx + 1, correct: tally.current.correct, wrong: tally.current.wrong,
+      seen: [...seen.current], asked: asked.current,
+    })
     setFeedback(correct ? 'correct' : 'wrong')
     setPhase('feedback')
     const newRun = correct ? 0 : wrongRun + 1
@@ -199,7 +237,18 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     // No spoken compliment on a correct answer — a tick is enough (kids don't need praise every
     // question). Only gently encourage on a wrong one — and not at all where the beat has already
     // said something specific, or the generic line lands on top of it and cancels it.
-    if (!correct && !beat.ownsFeedback) speak(ada.encouragement)
+    // Praise a right answer, encourage a wrong one — and neither where the beat writes its own
+    // feedback, or the generic line lands on top of the specific one and cancels it.
+    // ⚠️ `speakAfterCurrent` again, for the OTHER half of the same fault. Plenty of chapters that
+    // do not set `ownsFeedback` still say something specific the instant the child commits
+    // ("five blocks! the log is five blocks long"), and a generic line fired on top of it took the
+    // specific one away — the thing this branch's own comment was written to prevent, arriving
+    // through timing rather than through the flag.
+    // ⚠️ AND NOTHING GENERIC AT ALL WHEN A RE-TEACH IS ABOUT TO RUN. The re-teach is a `speakSteps`
+    // sequence that supersedes whatever is talking, so an encouragement queued here would be cut
+    // off by it a second later — and the re-explanation is the warm response anyway.
+    const reteaching = !correct && newRun >= RETEACH_AFTER
+    if (!beat.ownsFeedback && !reteaching) speakAfterCurrent(correct ? PRAISE[roundIdx % PRAISE.length] : ada.encouragement)
     window.setTimeout(() => {
       setFeedback(null)
       if (!correct && newRun >= RETEACH_AFTER) { setPhase('reteach'); return }
@@ -210,9 +259,11 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       // without ever being asked the hardest thing the chapter teaches. Bounded — the run still ends
       // at `beat.rounds` either way, so the worst case is playing the full set.
       const covered = !beat.coverage || beat.coverage.all.every(k => asked.current.includes(k))
-      if (res.mastered && covered) { onComplete(tally.current.correct, tally.current.wrong, true); return }
+      // ⚠️ The run is OVER on both of these paths, so the resume point must die with it — a saved
+      // point outliving its run reopens a finished chapter near its end, for ever.
+      if (res.mastered && covered) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong, true); return }
       const next = roundIdx + 1
-      if (next >= beat.rounds) { onComplete(tally.current.correct, tally.current.wrong); return }
+      if (next >= beat.rounds) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong); return }
       // Storyline interlude: Milo walks a few steps before certain rounds (a scene/
       // biome change), or every `walkEvery` rounds. The adaptive streak/tally carry
       // across it untouched.
@@ -224,14 +275,23 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       }
       setPhase('play'); setRoundIdx(next)
     }, 1300)
-  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude])
+  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude, learnerId])
 
   const finishReteach = useCallback(() => {
     setWrongRun(0)
     const next = roundIdx + 1
-    if (next >= beat.rounds) onComplete(tally.current.correct, tally.current.wrong)
-    else { setPhase('play'); setRoundIdx(next) }
-  }, [roundIdx, beat, onComplete])
+    // The re-teach moves the run on WITHOUT going through onSubmit, so it has to carry the same two
+    // duties: end the run cleanly, or record the new position. Missing this is how a resume point
+    // would sit one round behind for any child who ever saw a re-teach.
+    if (next >= beat.rounds) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong) }
+    else {
+      setChapterResume(learnerId, beat.skillId, {
+        round: next, correct: tally.current.correct, wrong: tally.current.wrong,
+        seen: [...seen.current], asked: asked.current,
+      })
+      setPhase('play'); setRoundIdx(next)
+    }
+  }, [roundIdx, beat, onComplete, learnerId])
 
   return (
     <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
@@ -251,13 +311,22 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
         </>
       )}
       {/* The task is shown AND spoken. Tapping replays Milo's voice — a tap is a
-          user gesture, so it reliably plays even if autoplay was blocked. */}
+          user gesture, so it reliably plays even if autoplay was blocked.
+          ⚠️ THE SPEAKER IS THE WHOLE POINT OF THE ICON. This has always been a button with an
+          `aria-label` of "Hear it again" and nothing visible to say so, so it read as a label and
+          a student asked for the repeat button that was already there. An affordance nobody can
+          see is an affordance nobody has. */}
       {(phase === 'play' || phase === 'feedback') && beat.prompt(data).trim() && (
         <button onClick={() => speak((beat.say ?? beat.prompt)(data))} aria-label="Hear it again"
           style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
             fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)',
             background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '8px 20px', textAlign: 'center', boxShadow: '0 4px 0 rgba(242,107,44,.25)' }}>
-          <span>{beat.prompt(data)}</span>
+          <span aria-hidden style={{ fontSize: 22, lineHeight: 1 }}>🔊</span>
+          {/* ⚠️ AND IN THE THREE CHAPTERS THAT OWN THE CHROME ROW, THIS PILL CARRIES THE TYPED
+              DIRECTIONS TOO — they get no floating strip, because on that row a strip is either
+              over the question or under it. Everywhere else `DirectionsCard` draws it and this
+              renders nothing, so no chapter shows the line twice. */}
+          <span>{beat.prompt(data)}{ownsChromeRow(beat.skillId) && <DirectionsInline chapter={beat.skillId} />}</span>
         </button>
       )}
       {phase === 'reteach'
@@ -287,7 +356,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
 
 // ─── Walk transition between scenes ────────────────────────────
 function WalkTransition({ onDone }: { onDone: () => void }) {
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const id = window.setTimeout(onDone, 2400)   // long enough to see the walk

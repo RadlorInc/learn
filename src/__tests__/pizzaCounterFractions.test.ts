@@ -41,7 +41,7 @@ const ALL = [...DEMO, GUIDED]
 /** A standalone number, so "2" does not match inside "12". */
 const names = (s: string, n: number) => new RegExp(`(^|[^\\d/])${n}([^\\d/]|$)`).test(s)
 
-describe('the fraction maths', () => {
+describe('the fraction math', () => {
   it('`exactly` agrees with there being a whole number of my slices in theirs', () => {
     for (let rd = 2; rd <= 12; rd++) for (let d = 2; d <= 12; d++) for (let n = 1; n < rd; n++) {
       const k = (n * d) / rd

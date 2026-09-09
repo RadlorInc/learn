@@ -36,13 +36,16 @@
  * per world. Wrapped by the registry row `measurement`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { TintedSprite } from './TintedSprite'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import { DirectionsInline } from '@/features/chapters/directions'
 
 // A viewport shorter than this is a landscape phone (812×375, 667×375).
 export const SHORT_H = 470
@@ -232,17 +235,17 @@ function Controls({ world, count, onAdd, onUndo, onDone, live }: {
   return (
     <div style={{ position: 'fixed', left: 0, right: 0, bottom: 9, zIndex: 46,
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '0 10px' }}>
-      <button onClick={live ? onAdd : undefined} disabled={!live} aria-label="Add a block"
+      <button onClick={live ? onAdd : undefined} disabled={!live} aria-label="Add block"
         style={{ ...btn(world.tint), display: 'flex', alignItems: 'center', gap: 8, padding: '9px 20px', opacity: live ? 1 : .5 }}>
         <span style={{ display: 'grid', placeItems: 'center', width: 26, height: 26 }}>
           <Cutout c={BLOCK} size={24} on="h" tint="#ffffff" />
         </span>
-        Add a block
+        Add block
       </button>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--outline)', borderRadius: 999, padding: '7px 16px',
         fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 20, color: 'var(--ink)', minWidth: 50, textAlign: 'center' }}>{count}</div>
-      <button onClick={live && count > 0 ? onUndo : undefined} disabled={!live || count === 0} aria-label="Take one back"
-        style={{ ...btn('#8a94a3'), opacity: live && count > 0 ? 1 : .4, padding: '11px 15px', fontSize: 15 }}>↩ Take one back</button>
+      <button onClick={live && count > 0 ? onUndo : undefined} disabled={!live || count === 0} aria-label="Remove block"
+        style={{ ...btn('#8a94a3'), opacity: live && count > 0 ? 1 : .4, padding: '11px 15px', fontSize: 15 }}>↩ Remove block</button>
       <button onClick={live ? onDone : undefined} disabled={!live} aria-label="Done"
         style={{ ...btn('linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))'), opacity: live ? 1 : .5 }}>Done ✓</button>
     </div>
@@ -265,7 +268,7 @@ const MeasurePlay: React.FC<{
   useEffect(() => () => { timers.current.forEach(t => window.clearTimeout(t)) }, [])
 
   useEffect(() => {
-    if (mode === 'guided') speak(`Your turn! Lay the blocks until you reach the end of the ${thing.noun}.`)
+    if (mode === 'guided') speakAfterCurrent(`Your turn! Lay the blocks until you reach the end of the ${thing.noun}.`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -299,14 +302,21 @@ const MeasurePlay: React.FC<{
     }
     // Wrong: SHOW the true measure rather than only saying it — lay or lift blocks one at a time up
     // to the real count, so the child watches the run reach the end of the thing.
-    speak(n > thing.units ? 'Oops — that went past the end. Watch…' : 'Not quite there yet. Watch…')
     const steps = Math.abs(n - thing.units)
     for (let i = 0; i < steps; i++) {
       after(700 + i * 380, () => setLaid(l => (l.length < thing.units ? [...l, { key: keyRef.current++ }] : l.slice(0, -1))))
     }
     const end = 700 + steps * 380
-    after(end + 260, () => { setGlow(true); speak(`${thing.units}. The ${thing.noun} is ${thing.units} blocks ${world.word}.`) })
-    after(end + 1800, () => onComplete(false))
+    // Two lines, one narration: "Watch…" runs ~2.6s and the measure used to land on top of it at
+    // `end + 260`. The blocks still move on their own timers above; only the words wait.
+    speakPaced([
+      n > thing.units ? 'Oops — that went past the end. Watch…' : 'Not quite there yet. Watch…',
+      `${thing.units}. The ${thing.noun} is ${thing.units} blocks ${world.word}.`,
+    ], {
+      onStep: (i) => { if (i === 1) setGlow(true) },
+      minMs: (_l, i) => (i === 0 ? end + 260 : 1800),
+      onDone: () => onComplete(false),
+    })
   }, [laid, live, thing, world.word, onComplete, onRecord, after])
 
   return (<>
@@ -321,7 +331,7 @@ const MeasureExplain: React.FC<{ world: MWorld; thing: Thing; onDone: () => void
   const { unit, band } = measureLayout(world.axis, vw, vh)
   const [laid, setLaid] = useState<Laid[]>([])
   const [glow, setGlow] = useState(false)
-  const ran = useRef(false), keyRef = useRef(0)
+  const ran = useOnceGuard(), keyRef = useRef(0)
 
   useEffect(() => {
     if (ran.current) return; ran.current = true
@@ -336,15 +346,27 @@ const MeasureExplain: React.FC<{ world: MWorld; thing: Thing; onDone: () => void
      * demos and the guided round arriving inside four seconds. The same rule the colour and shape
      * showcases already run on.
      */
-    speak(`How ${world.word} is the ${thing.noun}? Let's lay Milo's blocks!`)
     const LAY = 1000
-    for (let n = 1; n <= thing.units; n++) {
-      at(2200 + (n - 1) * LAY, () => { setLaid(l => [...l, { key: keyRef.current++ }]); speak(String(n)) })
-    }
-    const after = 2200 + thing.units * LAY
-    at(after + 300, () => { setGlow(true); speak(`We reached ${end}! So the ${thing.noun} is ${thing.units} blocks ${world.word}.`) })
-    at(after + 3600, onDone)
-    return () => { timers.forEach(t => window.clearTimeout(t)); stopSpeech() }
+    const lines = [
+      `How ${world.word} is the ${thing.noun}? Let's lay Milo's blocks!`,
+      ...Array.from({ length: thing.units }, (_, i) => String(i + 1)),
+      `We reached ${end}! So the ${thing.noun} is ${thing.units} blocks ${world.word}.`,
+    ]
+    // ⚠️ The opening line ran ~3.5s with a real clip and the first count landed at 2200ms, so Milo
+    // was cut off mid-sentence on the very first thing this chapter says. `speakPaced` keeps the
+    // deterministic pacing the note above is about (a block a second, timer-driven, never hanging
+    // on a speech event) and simply will not START the next step while he is still talking.
+    const cancel = speakPaced(lines, {
+      onStep: (i) => {
+        if (i === 0) return
+        if (i <= thing.units) { setLaid(l => [...l, { key: keyRef.current++ }]); return }
+        setGlow(true)
+      },
+      minMs: (_l, i) => (i === 0 ? 2200 : i <= thing.units ? LAY : 300),
+      onDone,
+      tailMs: 1200,
+    })
+    return () => { cancel(); timers.forEach(t => window.clearTimeout(t)); stopSpeech() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -413,7 +435,7 @@ export function poolFor(world: MWorld, d: 1 | 2 | 3): Thing[] {
   return p.length ? p : world.things
 }
 
-function makeMeasureBeat(world: MWorld, onRecord: (t: Thing) => void): Beat<Thing> {
+export function makeMeasureBeat(world: MWorld, onRecord: (t: Thing) => void): Beat<Thing> {
   return {
     skillId: 'measurement', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => { const p = poolFor(world, (d || 1) as 1 | 2 | 3); return p[round % p.length] },
@@ -444,7 +466,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
   const { h: vh } = useViewport()
   const short = vh < SHORT_H
   const [world, setWorld] = useState<MWorld | null>(() => (forcedWorldId ? worldById(forcedWorldId) ?? null : null))
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'measurement', phase: 'practice' })
   const [thing, setThing] = useState<Thing>(FOREST[0])
   const [demoIdx, setDemoIdx] = useState(0)
   const [book, setBook] = useState<Thing[]>([])
@@ -477,7 +499,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: pillTop(short), left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '10px 24px',
-        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
+        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}<DirectionsInline chapter="measurement" /></div>
     </div>
   )
 
@@ -486,7 +508,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
       <style>{MI_CSS}</style>
       <Background thing={shown} things={world.things} />
       <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)',
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)',
           color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 

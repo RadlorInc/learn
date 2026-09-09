@@ -60,7 +60,7 @@
  * so no generated prop can drift out of it the way `cart.png` did.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
@@ -77,6 +77,7 @@ import {
 import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 // Re-exported unchanged so the 56-test gate keeps importing them from here — which is what makes
 // that suite the proof the extraction changed nothing.
 export { ROD_SEGMENTS, MAT_SAT, MAT_VAL, PAD_BAND, bannerBottom }
@@ -120,6 +121,17 @@ const SUB_RUN: Slot[] = [
 ]
 /** This chapter runs BOTH operations from one component, so the op is a value, not a branch. */
 export type Op = '+' | '-'
+
+/**
+ * ⚠️ THIS CHAPTER HAS NO QUESTION SENTENCE, AND THAT IS THE DESIGN. The quantities are stated ONLY
+ * as objects — "a printed question makes the picture beside it decoration" (chapter-craft §0a), and
+ * this chapter was rebuilt twice to get there. So the banner carries a standing INSTRUCTION rather
+ * than a per-round ask, and SkillBeat's pill is deliberately empty.
+ *
+ * It is exported so a gate can still read the one sentence a child does see.
+ */
+export const askFor = (op: Op): string =>
+  op === '+' ? 'Ten ones make one rod' : 'Send the order, then count what is left'
 export const applyOp = (op: Op, a: number, b: number) => (op === '+' ? a + b : a - b)
 
 const runFor = (op: Op) => (op === '+' ? ADD_RUN : SUB_RUN)
@@ -450,6 +462,9 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
   const after = useCallback((ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); timers.current = [] }, [])
   const say = useCallback((s: string) => { setNote(s); speak(s) }, [])
+  /** The queueing twin of `say`, for a line the ROUND fires rather than the child: it lands on a
+   *  timer while the previous round's verdict and praise may still be running, and `speak` cut them. */
+  const sayNext = useCallback((s: string) => { setNote(s); speakAfterCurrent(s) }, [])
 
   // How long a delivery takes to travel in, and how long Milo takes to walk the yard, so the
   // question opens when things have actually ARRIVED rather than after a guessed delay.
@@ -465,8 +480,8 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
         setY(s => ({ ...s, step: 'incoming', rods: s.rods + p.addCarts, ones: s.ones + p.fits,
           waiting: p.spill, from: 'lane', key: 'b' }))
         after(inMs, () => {
-          if (p.spill > 0) { setY(s => ({ ...s, step: 'stuck' })); say('Ten ones on the ground, and more still waiting. Tap them — ten ones make ONE rod.') }
-          else { setY(s => ({ ...s, step: 'answer' })); say('All in. How many altogether?') }
+          if (p.spill > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext('Ten ones on the ground, and more still waiting. Tap them — ten ones make ONE rod.') }
+          else { setY(s => ({ ...s, step: 'answer' })); sayNext('All in. How many altogether?') }
         })
       } else {
         const p = plan as ReturnType<typeof loadPlan> & { takeCarts: number; takeOnes: number; short: number }
@@ -474,8 +489,8 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
         setY(s => ({ ...s, step: 'incoming', ones: s.ones - canTake, leaving: canTake }))
         after(1400, () => {
           setY(s => ({ ...s, leaving: 0 }))
-          if (p.short > 0) { setY(s => ({ ...s, step: 'stuck' })); say('Not enough ones left. Tap a rod — Milo will fetch it and break it open.') }
-          else { setY(s => ({ ...s, step: 'answer', rods: s.rods - p.takeCarts })); say('All sent. How many are left?') }
+          if (p.short > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext('Not enough ones left. Tap a rod — Milo will fetch it and break it open.') }
+          else { setY(s => ({ ...s, step: 'answer', rods: s.rods - p.takeCarts })); sayNext('All sent. How many are left?') }
         })
       }
     })
@@ -519,10 +534,10 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
     }
   }
 
-  const idle = op === '+' ? 'Ten ones make one rod' : 'Send the order, then count what is left'
+  const idle = askFor(op)
   return (
     <>
-      <Banner text={note || idle} vh={vh} ok={ok} />
+      <Banner text={note || idle} vh={vh} ok={ok} chapter={op === '+' ? 'additionTo100' : 'subtractionTo100'} />
       <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} hint={y.step === 'stuck'}
         onRun={y.step === 'stuck' && op === '+' ? tradeUp : undefined}
         onRod={y.step === 'stuck' && op === '-' ? tradeDown : undefined} />
@@ -610,7 +625,7 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
 
   return (
     <>
-      <Banner text={line || 'Watch Milo trade the blocks…'} vh={vh} />
+      <Banner text={line || 'Watch Milo trade the blocks…'} vh={vh} chapter={op === '+' ? 'additionTo100' : 'subtractionTo100'} />
       <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} />
       {shown && (
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.05), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
@@ -624,7 +639,7 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
 }
 
 // ─── Beat ─────────────────────────────────────────────────────────────────────────────
-function makeBeat(op: Op): Beat<ASRound> {
+export function makeBeat(op: Op): Beat<ASRound> {
   return {
     skillId: op === '+' ? 'additionTo100' : 'subtractionTo100',
     rounds: 10, walkEvery: 3,
@@ -649,7 +664,7 @@ export default function BlockYard({ op, onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: op === '+' ? 'additionTo100' : 'subtractionTo100', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [slotIdx, setSlotIdx] = useState(0)
   const [shipped, setShipped] = useState(0)
@@ -683,7 +698,7 @@ export default function BlockYard({ op, onFinish, onExit }: {
       ))}
 
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
         {/* The cumulative arc, OUTSIDE SkillBeat — anything drawn inside a round resets every round. */}
         {shipped > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,252,244,.86)', border: '2px solid var(--outline)', borderRadius: 999, padding: '4px 12px' }}>

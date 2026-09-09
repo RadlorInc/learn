@@ -5,7 +5,7 @@
  * TWO VERBS, ONE CONTROL SHAPE: TURN IT (the job names a requirement, the child turns a real thing)
  * and MARK THE FOLDS (mark every axis you believe holds, then fold them all at once). Both are EXACT
  * TRANSFORMS — a rotation of `deg` IS `deg`, a mirror about an axis IS a fold — so the instrument can
- * be code-drawn without the picture lying about the maths.
+ * be code-drawn without the picture lying about the math.
  *
  * ⚠️ EVERYTHING THAT CAN BE WRONG IS STILL IN `story/angles.ts`, UNTOUCHED — the week, the paper
  * table, the axis sets, the grader, `guideShown` (the set-square STAYS on an exact-degrees round,
@@ -22,6 +22,7 @@ import { useHand } from '@/infra/ar/HandInput'
 import {
   STEP, clampDeg, snapDeg, nearestAxis, candidateAxes, trueAxes, isTrueAxis, SHAPE_LINES,
   makeRound, grade, missFor, verdictFor, sigFor, guideShown, handDrivesAngle, pieceOf, ANCHOR,
+  explainBeats,
   type Round, type FoldRound, type QType, type Tier,
 } from '@/features/chapters/story/angles'
 
@@ -41,7 +42,10 @@ function toTask(r: Round): AsTask {
     prompt: r.ask,
     context: r.ask,
     say: r.ask,
-    work: [r.ask, 'Judge it against the square corner.', 'Then set it and see.'],
+    /** ⚠️ FROM THE MODULE, NEVER ASSEMBLED HERE. This used to be
+     *  `[r.ask, 'Judge it against the square corner.', 'Then set it and see.']` — the question read
+     *  back plus two fixed sentences, to a child who had just missed three in a row. */
+    work: explainBeats(r),
     showEquals: false,
   }
 }

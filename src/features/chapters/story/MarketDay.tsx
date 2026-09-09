@@ -24,7 +24,7 @@
  * game/MultiplicationChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import FitBox from './FitBox'
@@ -34,6 +34,8 @@ import { SheetSprite, CRITTER_CSS, aspectOf, inFlowJourney } from './critters'
 import { rint, shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -406,21 +408,36 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
   const [s, setS] = useState<StageState>(empty)
   const [asking, setAsking] = useState(false)
   const [picked, setPicked] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false)
   const set = (patch: Partial<StageState>) => setS(prev => ({ ...prev, ...patch }))
 
   useEffect(() => {
     const T: number[] = []
     let t = 300
-    if (mode === 'guided') speak(sayFor(world, data))
+    if (mode === 'guided') speakAfterCurrent(sayFor(world, data))
     for (let i = 1; i <= g; i++) { const c = i; T.push(window.setTimeout(() => set({ shown: c }), t)); t += 380 }
     // The last pen has to be FULL before the answer is offered — derived from the creatures' own
     // gait, so a slow-walking cast is waited out rather than talked over.
     t += groupFillMs(data.item.img, itemPxFor(g, per, vw, vh, data.item.img, short), per) + 120
-    T.push(window.setTimeout(() => { setAsking(true); set({ showBox: true }); speak('How many in all?') }, t))
+    // `speakAfterCurrent`: on a small round the pens fill in less time than the story line takes
+    // to say, and the question used to cut it off.
+    T.push(window.setTimeout(() => { setAsking(true); set({ showBox: true }); speakAfterCurrent('How many in all?') }, t))
     return () => T.forEach(id => window.clearTimeout(id))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /** A tap only CHOOSES; nothing is graded and nothing counts out until Ready. */
+  function pick(n: number) {
+    if (done.current || picked !== null || !asking) return
+    setPending(p => (p === n ? null : n))
+  }
+  function commit() {
+    const n = pending
+    if (n == null) return
+    setPending(null)
+    choose(n)
+  }
 
   function choose(n: number) {
     if (done.current || picked !== null || !asking) return
@@ -432,7 +449,9 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
       const tick = () => {
         k++; set({ glowN: k, boxValue: k * per })
         if (k < g) window.setTimeout(tick, 460)
-        else { set({ boxDone: true }); if (mode === 'guided') speak(`${numberToWords(g)} times ${numberToWords(per)} is ${numberToWords(answer)}!`) }
+        // `speakAfterCurrent`: the count runs 250 + g*460ms, which on a two-group round is shorter
+        // than "Yes! Let's skip-count." takes to say.
+        else { set({ boxDone: true }); if (mode === 'guided') speakAfterCurrent(`${numberToWords(g)} times ${numberToWords(per)} is ${numberToWords(answer)}!`) }
       }
       window.setTimeout(tick, 250)
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), g * 460 + 1500)
@@ -461,11 +480,13 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
         {choices.map(n => {
           const isPick = picked === n, isOk = n === answer
           return (
-            <button key={n} onClick={() => choose(n)} disabled={picked !== null} style={{
+            <button key={n} onClick={() => pick(n)} disabled={picked !== null} style={{
               width: btn, height: btn, borderRadius: Math.round(btn * 0.2),
               background: (isPick && isOk) ? 'var(--garden-green-soft)' : 'var(--paper)',
               border: `4px solid ${(isPick && isOk) ? 'var(--garden-green)' : isPick ? 'var(--ink-muted)' : 'var(--outline)'}`,
-              boxShadow: `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`,
+              boxShadow: pending === n
+                ? `${PICKED_RING}, 0 6px 0 #c8ac79`
+                : `0 6px 0 ${(isPick && isOk) ? 'var(--garden-green-deep)' : '#c8ac79'}`,
               fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(btn * 0.42), color: 'var(--ink)',
               cursor: picked !== null ? 'default' : 'pointer', transform: (isPick && isOk) ? 'scale(1.08) translateY(-3px)' : 'scale(1)',
               transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease',
@@ -473,6 +494,14 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
           )
         })}
       </div>
+      {/* ⚠️ BESIDE THE CHIPS, NOT ABOVE THEM, AND THAT WAS A MEASUREMENT RATHER THAN A CHOICE.
+          Above the row is the `n × n = ?` readout: driven at 640×320, a centred bar came out at
+          y 190–237 against a readout at 193–235 and covered it completely, and the gap between the
+          readout and the chips is 14px against a 47px bar — there is no room in that column. The
+          chips span x 212–428 of a 640 frame, so the bar shares THEIR band and sits to the right of
+          them, which is empty in every chapter here (Milo owns bottom-LEFT). */}
+      <ReadyBar show={pending !== null} onCommit={commit} align="right"
+        bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%'} />
     </>
   )
 }
@@ -515,7 +544,7 @@ const MultExplain: React.FC<{ data: MultRound; onDone: () => void }> = ({ data, 
 }
 
 // ─── Value generation ──────────────────────────────────────────────────────────────
-function makeMultBeat(): Beat<MultRound> {
+export function makeMultBeat(): Beat<MultRound> {
   return {
     skillId: 'multiplication', rounds: SCORED_N, walkEvery: 3,
     make: (d, round = 0) => makeMultRound((d || 1) as 1 | 2 | 3, round),
@@ -544,7 +573,7 @@ export default function MarketDay({ onFinish, onExit }: {
   const needsRotate = useNeedsRotate()
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<MultWorld>(SETTINGS[0])
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'multiplication', phase: 'practice' })
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)
@@ -579,7 +608,7 @@ export default function MarketDay({ onFinish, onExit }: {
       <style>{CRITTER_CSS}{MD_CSS}</style>
       <Background bg={shown.w.bgs[shown.bg]} dark={shown.w.dark} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

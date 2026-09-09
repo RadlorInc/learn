@@ -9,21 +9,45 @@
 --
 -- REGENERATE + DIFF: run the query in docs/security.md against prod and overwrite
 -- this file; a non-empty `git diff` means the live security posture changed.
--- Last generated: 2026-08-17 (post V13–V19 audit). Covers auth_events, diagnostic_leads,
+-- Last FULLY generated: 2026-08-17 (post V13–V19 audit). ⚠️ PARTIALLY HAND-UPDATED 2026-08-24 for
+-- the leads lockdown and the four new retention/data-rights functions below — a full regeneration is
+-- owed and the diff should be reviewed when it happens. Covers auth_events, diagnostic_leads,
 -- error_events + the V12 column-grant and the V19 EXECUTE revokes, none of which existed at the
 -- 2026-07-03 snapshot — so the drift check had been comparing against a 6-week-stale baseline.
 -- ============================================================================
 
 -- ==== TABLES: RLS status — every data table has rls=t AND >=1 policy ====
+--   admin_users                rls=t  policies=0   ⚠️ ZERO POLICIES IS DELIBERATE AND IS THE MECHANISM.
+--                                                    Under RLS, no policy means no row is visible or
+--                                                    writable to any non-superuser, so there is no
+--                                                    WHERE clause to get wrong. ALL privileges are
+--                                                    revoked from public/anon/authenticated as well,
+--                                                    so it is unreachable before RLS is even
+--                                                    consulted. Reached only by admin_assert()
+--                                                    (SECURITY DEFINER) and by a human in the
+--                                                    dashboard. ⚠️ This replaces putting 'admin' in
+--                                                    profiles.role, which was a REPRODUCED
+--                                                    privilege escalation: the `profiles: own row`
+--                                                    policy is FOR ALL with `with check auth.uid()
+--                                                    = id`, constraining WHICH ROW and never WHICH
+--                                                    COLUMN, so a signed-in parent could run
+--                                                    `update profiles set role='admin'` and it was
+--                                                    ACCEPTED (measured 2026-09-05).
 --   auth_events                rls=t  policies=1   (V-audit 2026-07-21: INSERT-only, own rows; no read)
 --   chapters                   rls=t  policies=1   (public catalog: SELECT using(true) — intentional)
 --   diagnostic_items           rls=t  policies=1
---   diagnostic_leads           rls=t  policies=1   ⚠️ V13: anon holds the INSERT GRANT, so the public
---                                                  anon key can write here directly, bypassing
---                                                  /api/lead's rate limit. Policy now checks email
---                                                  SHAPE (was length-only). No SELECT — not readable.
---                                                  Close by revoking the grant once the service-role
---                                                  key is set: 20260816170000_leads_server_only.sql
+--   diagnostic_leads           rls=t  policies=1   ✅ CLOSED 2026-08-24. anon no longer holds the
+--                                                  INSERT grant and is gone from the ACL entirely
+--                                                  (verified: anon → POST /rest/v1/diagnostic_leads
+--                                                  returns 401 / 42501; was 201). The policy is
+--                                                  `authenticated` only and checks email SHAPE.
+--                                                  ⚠️ The shape check was briefly LOST: the
+--                                                  now-applied leads_server_only was written
+--                                                  2026-08-16, before V13 added it, so applying it
+--                                                  recreated the length-only policy. rls_regression
+--                                                  A9b caught it; restored by
+--                                                  20260823222545_leads_insert_restore_shape_check.
+--                                                  Still no SELECT — not readable through the API.
 --   diagnostic_plan_progress   rls=t  policies=1
 --   diagnostic_plans           rls=t  policies=1
 --   diagnostic_rechecks        rls=t  policies=1
@@ -41,12 +65,43 @@
 --   learner_stats              rls=t  policies=1
 --   learners                   rls=t  policies=4
 --   profiles                   rls=t  policies=1
---   sessions                   rls=t  policies=2
+--   sessions                   rls=t  policies=2   (INSERT now also requires is_chapter_entitled)
+--   billing_config             rls=t  policies=0   ONE ROW, service-role only. `enforced` is the
+--                                                  paywall switch: while false, is_chapter_entitled
+--                                                  returns true for everything and the whole billing
+--                                                  surface is applied but INERT. ⚠️ It ships FALSE
+--                                                  because production has no subscriptions — armed
+--                                                  on apply, it would stop 65 of 72 chapters saving
+--                                                  for every existing family. ⚠️ Fails OPEN on a
+--                                                  missing row, unlike the camera guard: a paywall
+--                                                  that fails closed breaks a working product, one
+--                                                  that fails open costs money. No grant at all, so
+--                                                  a client can neither read nor flip it.
+--   billing_events             rls=t  policies=0   INTENTIONAL, the error_events precedent: RLS on
+--                                                  with ZERO policies = deny-all, service-role only.
+--                                                  Holds Stripe customer ids, event types and
+--                                                  payloads — account-level financial data with no
+--                                                  reason to reach a browser. Advisor reports this
+--                                                  as INFO rls_enabled_no_policy; that is the design.
+--   subscriptions              rls=t  policies=1   SELECT only (account_id = auth.uid()). There is
+--                                                  deliberately NO insert/update/delete policy, and
+--                                                  the default grants are REVOKED so an attempted
+--                                                  self-upgrade RAISES 42501 instead of quietly
+--                                                  matching zero rows.
+--   subscription_seats         rls=t  policies=1   SELECT only, via subscriptions.account_id. Seats
+--                                                  are created by Stripe (service role) and moved
+--                                                  only by reassign_learner_seat().
 
 -- ==== RLS POLICIES (every access predicate is scoped by auth.uid()/jwt email) ====
 --   chapters: select        SELECT  using(true)                          [public catalog]
 --   diagnostic_*            SELECT  using(learner_access join, parent_id = auth.uid())   [owner-scoped, read-only; writes via SECURITY DEFINER RPC]
 --   grades / grade_chapters SELECT/INSERT/UPDATE/DELETE scoped to grades.created_by = auth.uid() (+ learner_access for read)
+--   subscriptions: owner can read       SELECT  using(account_id = auth.uid())          [no write policy exists]
+--   subscription_seats: owner can read  SELECT  using(exists subscriptions where account_id = auth.uid())
+--   sessions: parent can insert         INSERT  check(learner_access AND is_chapter_entitled(learner_id, chapter))
+--   learner_progress: parent access     ALL     using(learner_access) / check(learner_access AND is_chapter_entitled(...))
+--                                               ⚠️ the entitlement is in WITH CHECK only, never USING:
+--                                               a lapsed subscriber keeps READING their child's record.
 --   learner_access: select  SELECT  using(parent_id = auth.uid())
 --   learner_access: insert  INSERT  check(parent_id = auth.uid() AND can_self_grant_access(learner_id, access_role))
 --   learner_access: delete  DELETE  using(learner_id in owned learners)   [V11: owner can revoke]
@@ -85,7 +140,12 @@
 --     grant_owner_access(), init_learner_stats(), handle_new_user(),
 --     enforce_learner_cap(), enforce_grade_cap(), enforce_grade_ownership(),
 --     rls_auto_enable()  [event trigger — auto-enables RLS on any new public table]
---     prune_error_events()  [V16 retention, run by pg_cron 'prune-error-events' daily 03:17]
+--     prune_error_events()  [V16 retention, pg_cron 'prune-error-events' daily 03:27 since 2026-08-24]
+--     prune_diagnostic_leads()  [24-month lead retention, pg_cron 'prune-diagnostic-leads' 03:32]
+--     prune_diagnostic_items()  [90-day RAW placement answers, pg_cron 'prune-diagnostic-items' 03:22]
+--     delete_lead_by_email(text) [honours a lead's deletion request; docs/runbooks/data-requests.md]
+--        ⚠️ All four are SECURITY DEFINER with an explicit REVOKE from public/anon/authenticated —
+--        the V19 rule. delete_lead_by_email is an address-enumeration oracle without it.
 --        ⚠️ V19: created SECURITY DEFINER, which Postgres gives PUBLIC EXECUTE by DEFAULT, and
 --        Supabase exposes every public-schema function at /rest/v1/rpc/<name> — i.e. for a few
 --        minutes ANY anonymous caller could wipe the crash log. Revoked. THE GENERAL RULE: always
@@ -98,6 +158,33 @@
 --   As of 2026-08-17: ALL 12 DEFINER functions pin search_path, NONE is anon-callable, and no
 --   function in `public` retains default PUBLIC EXECUTE. Verified against pg_proc.proacl.
 
+--   is_chapter_entitled(uuid,text)      DEFINER  STABLE  search_path=public
+--       THE single definition of "may this be recorded". Called from the sessions INSERT policy, the
+--       learner_progress WITH CHECK, and inside sync_session — one function in three places, because
+--       two guards that are separately written are two guards that drift. sync_session is DEFINER so
+--       RLS does not apply to it; the policy alone would leave the RPC open. REVOKEd from PUBLIC and
+--       anon; EXECUTE to authenticated (required — a policy predicate runs with the caller's rights)
+--       and service_role. ⚠️ Accepted: that grant makes it a one-bit oracle for anyone who already
+--       knows a learner UUID. Non-enumerable ids, and the bit is "is this family paying".
+--   entitle_revised_step(uuid,text)     DEFINER  search_path=public
+--       Free-tier source C's one extension: when a play-data revision prepends a deeper chapter for
+--       a STRUGGLING child, this entitles it. Capped at one per plan structurally — `revised_chapter`
+--       is only writable while null — so three free chapters maximum on that path. Checks
+--       learner_access for the caller. ⚠️ It does NOT verify the chapter really is a prerequisite of
+--       the plan's root: the skill graph is TypeScript and unavailable in SQL. The bound is
+--       arithmetic (one per plan, and a new plan costs a 20–50 question probe), and it is written
+--       down rather than left as an unnoticed hole.
+--   sync_diagnostic(…)                  DEFINER  search_path=public
+--       Now also RETIRES the learner's previous plan (`active = false`) and records the new plan's
+--       `free_chapters` — the first two steps the learner had not already completed, frozen at issue
+--       time. One active plan per learner is a partial unique index, not just what this does.
+--   reassign_learner_seat(uuid,uuid)    DEFINER  search_path=public
+--       The only billing write a parent may make. Checks subscriptions.account_id = auth.uid() and
+--       learners.created_by = auth.uid() (entitlement follows created_by), refuses a second
+--       reassignment inside the same billing period, and its single write is an UPDATE of one
+--       existing row — no INSERT, no DELETE — so it is structurally unable to raise the seat count.
+--       REVOKEd from PUBLIC/anon; EXECUTE to authenticated, service_role.
+--
 -- ==== TRIGGERS (public tables) ====
 --   learners.on_learner_created           -> grant_owner_access      (owner gets learner_access on create)
 --   learners.on_learner_created_stats     -> init_learner_stats

@@ -7,6 +7,7 @@
  * protect falls apart; this repo has shipped that twice.
  */
 import { describe, it, expect } from 'vitest'
+import { element } from './_window'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
@@ -347,7 +348,7 @@ describe('the layout', () => {
     // recorded fault — the check keeps its own copy of the rule and stays green while the board hangs
     // somewhere else. Mutation-proven: `anchorTop={undefined}` (The Fundraiser's floor anchor, which
     // does not fit this chapter at three of five sizes) passed every assertion above.
-    expect(SRC).toMatch(/<StepBoard[\s\S]{0,160}anchorTop=\{PILL_TOP\}/)
+    expect(SRC).toMatch(/<StepBoard[^>]*anchorTop=\{PILL_TOP\}/)
   })
 
   /**
@@ -746,11 +747,14 @@ describe('the skip', () => {
    * adding `onSkip` to the `Reteach` line is a one-word regression that nothing else can see.
    */
   it('offers the walkthrough skip in the demo and NEVER in the re-teach', () => {
-    const reteach = SRC.match(/Reteach:[\s\S]{0,200}?\/>/)?.[0] ?? ''
-    expect(reteach).toContain('LevelExplain')
+    // ⚠️ BOUNDED BY THE ELEMENT, not by a character budget and not by `[^>]*` either — an arrow
+    // function `=>` contains a `>`, so a negated-`>` class stops before the JSX even begins. This
+    // was `[\s\S]{0,200}?`; both are proxies. `element()` walks to the tag's own matching `>`.
+    const reteach = element(SRC, SRC.indexOf('Reteach:'))
+    expect(reteach, 'the Reteach call site was not found — this gate is inert').toContain('LevelExplain')
     expect(reteach).not.toContain('onSkip')
 
-    const demo = SRC.match(/phase === 'demo'[\s\S]{0,400}?\/>/)?.[0] ?? ''
+    const demo = element(SRC, SRC.indexOf("phase === 'demo'"))
     expect(demo).toContain('LevelExplain')
     expect(demo).toContain('onSkip')
 

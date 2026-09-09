@@ -13,7 +13,7 @@
  * add). Random near-misses would turn it into arithmetic with a story stapled on.
  *
  * ⚠️ AND ITS GENERATOR WAS EXTRACTED FROM THE COMPONENT TO GET HERE. It was the only chapter in the
- * band whose maths lived inside React, so nothing about it could be reached by a gate — and it was
+ * band whose math lived inside React, so nothing about it could be reached by a gate — and it was
  * the only 9–11 chapter with no test file at all.
  */
 import React from 'react'

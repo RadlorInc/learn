@@ -1,0 +1,387 @@
+diff --git a/src/app/menu/page.tsx b/src/app/menu/page.tsx
+index 78f0540..0788cd5 100644
+--- a/src/app/menu/page.tsx
++++ b/src/app/menu/page.tsx
+@@ -13,7 +13,7 @@ import ChapterPicker from '@/shared/ui/ChapterPicker'
+ import PWAInstallBanner from '@/shared/ui/PWAInstallBanner'
+ import { getActiveLearner, clearActiveLearner } from '@/data/supabase/useLearnerSession'
+ import { useAuthGuard } from '@/data/supabase/useAuthGuard'
+-import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds, getActivePlanChapters } from '@/data/repositories'
++import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds, checkupStatus, type LearnerBootstrap } from '@/data/repositories'
+ import type { LearnerState } from '@/data/supabase/types'
+ import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
+ import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
+@@ -21,7 +21,6 @@ import { track } from '@/infra/analytics'
+ import { currentPlanChapter, planProgress, reconcilePlan, planSource } from '@/infra/storage/activePlan'
+ import { planLine } from '@/core/planCopy'
+ import CheckDoor from '@/shared/ui/CheckDoor'
+-import { getCheckupStatus } from '@/data/repositories'
+ 
+ const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
+ const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
+@@ -52,6 +51,9 @@ function shopStateMatchesServer(
+ // session; 30s is long enough to skip navigation churn, short enough to stay fresh.
+ const _bootAt = new Map<string, number>()
+ const BOOT_TTL_MS = 30_000
++// The last bootstrap per learner, so a remount inside the TTL can redraw what was derived from it
++// (the re-check card) without the round trip it exists to skip.
++const _lastBoot = new Map<string, LearnerBootstrap>()
+ 
+ // Speak the welcome greeting only ONCE per app load — not on every menu→game→menu
+ // bounce (the component remounts each return, which re-ran the greeting). Module-scoped
+@@ -102,17 +104,15 @@ export default function MainMenu() {
+    *
+    * Best-effort: a failed lookup just means no card, never a blocked menu.
+    */
+-  useEffect(() => {
+-    if (!learnerId) return
+-    let cancelled = false
+-    getCheckupStatus(learnerId)
+-      .then(st => { if (!cancelled && st?.recheckDue && st.rootGap) setRecheck({ skill: st.rootGap, band: st.band, weeks: st.weeksSince }) })
+-      .catch(() => { /* the menu must open regardless */ })
+-    // Clearing on the way OUT rather than on the way in: it runs before the next learner's lookup,
+-    // so a sibling can never see the previous child's card, and nothing sets state synchronously
+-    // inside the effect body.
+-    return () => { cancelled = true; setRecheck(null) }
+-  }, [learnerId])
++  // ⚠️ Its rows now arrive INSIDE the bootstrap below — this used to be three more round trips
++  // (auth/v1/user + two selects) on every menu load, sequential, each paying the Sydney→US floor.
++  // The 6-week rule itself is `checkupStatus`, shared with the parent dashboard. Clearing on the way
++  // OUT, so a sibling can never see the previous child's card.
++  const showRecheck = (boot: LearnerBootstrap) => {
++    const st = checkupStatus(boot.checkup, boot.recheckClosed)
++    if (st?.recheckDue && st.rootGap) setRecheck({ skill: st.rootGap, band: st.band, weeks: st.weeksSince })
++  }
++  useEffect(() => () => setRecheck(null), [learnerId])
+ 
+   useEffect(() => {
+     const learner = getActiveLearner()
+@@ -143,24 +143,70 @@ export default function MainMenu() {
+       // they log in on. Then push the merged state back to reconcile the server
+       // (propagates anything bought/earned offline). All merges are monotonic.
+       ;(async () => {
++        /**
++         * ⚠️⚠️ THE POINTER IS DERIVED ON EVERY LOAD, ONLINE OR NOT — AND THE OFFLINE HALF IS A FIX,
++         * NOT TIDYING. `setActivePlan` writes `index: 0`, so a child who re-runs the check (their
++         * own door is on this screen now) walks out of the diagnostic pointing at chapter 1 of the
++         * new plan, and it is THIS reconcile that pulls the pointer past what they have already
++         * finished. If it is skipped because the bootstrap threw — offline, an expired token — the
++         * menu shows "Next up" as a chapter the child completed weeks ago. Their stars and progress
++         * are untouched and the next successful load corrects it, but the one screen they are
++         * looking at is wrong, which is the screen that matters.
++         *
++         * So the evidence degrades instead of the feature: server progress when we have it, and
++         * the local profile's own stars when we do not. `chapterStars > 0` is the local equivalent
++         * of the server's `total_sessions > 0` — `calcStars` never returns less than 1, so any
++         * chapter that has been finished once carries at least one star on this device.
++         *
++         * ⚠️ A genuinely fresh device has neither, and then the plan opens at its first chapter —
++         * correct, because nothing known says otherwise.
++         *
++         * ⚠️ Until 2026-09-03 the local half sat in the catch of a SEPARATE plan fetch that ran only
++         * AFTER the bootstrap had succeeded — so "offline" and "expired token" both returned before
++         * it and the comment above was describing a branch that did not exist. The plan now rides
++         * inside the bootstrap, and the local derivation runs on exactly the paths with no server
++         * data: offline, no session, and a thrown bootstrap.
++         */
++        const applyPlan = (played: string[], remote: string[]) => {
++          const plan = reconcilePlan(learner.id, remote, played)
++          if (!plan) return
++          const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
++          setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
++            ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learner.id) }
++            : null)
++          setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
++        }
++        const localPlayed = () => {
++          const stars = useMiloStore.getState().profile.chapterStars
++          return Object.keys(stars).filter(ch => (stars[ch as ChapterType] ?? 0) > 0)
++        }
++        // ⚠️ `remote: []` on purpose — with a local plan present `reconcilePlan` keeps the local
++        // chapter list, so this derives the POSITION without inventing a plan we cannot read.
++        const deriveFromLocal = () => { try { applyPlan(localPlayed(), []) } catch { /* best-effort */ } }
+         try {
+-          // Offline: local profile stands; nothing to pull/push.
+-          if (!navigator.onLine) return
++          // Offline: local profile stands; nothing to pull/push — but the pointer still moves.
++          if (!navigator.onLine) { deriveFromLocal(); return }
+ 
+           // Skip the bootstrap round trip if we synced this learner very recently (navigation churn).
+           const lastBoot = _bootAt.get(learner.id) ?? 0
+-          if (Date.now() - lastBoot < BOOT_TTL_MS) return
++          if (Date.now() - lastBoot < BOOT_TTL_MS) {
++            const cached = _lastBoot.get(learner.id)
++            if (cached) showRecheck(cached)
++            return
++          }
+ 
+           // One round trip pulls access role + stats + progress + shop state.
+           const boot = await getLearnerBootstrap(learner.id)
+-          // Not signed in yet / transient — leave the active learner untouched.
+-          if (boot.status === 'no-auth') return
++          // Not signed in yet / transient — leave the active learner untouched, derive locally.
++          if (boot.status === 'no-auth') { deriveFromLocal(); return }
+           // Signed in but no access → stale or foreign active learner. Clear it
+           // and bounce to the picker (stops the FK/RLS sync errors at the source).
+           if (boot.status === 'no-access') { clearActiveLearner(); router.replace('/parent'); return }
+ 
+           // Successful sync — mark fresh so quick re-mounts within the TTL skip the round trip.
+           _bootAt.set(learner.id, Date.now())
++          _lastBoot.set(learner.id, boot.data)
++          showRecheck(boot.data)
+ 
+           const { stats, progress, state } = boot.data
+           applyServerProgress(stats, progress, state)
+@@ -174,51 +220,15 @@ export default function MainMenu() {
+            * plan card at all — the diagnostic's entire output existed only on the device that
+            * produced it.
+            *
+-           * Derived rather than synced: the chapter sequence is already on the server and
+-           * `progress` (right here, already fetched) says which chapters have been played, so the
+-           * position is a function of data we hold. No second write path to disagree with the
+-           * first. Monotonic — it can only move forward. Best-effort: a failure leaves the local
+-           * pointer exactly as it was.
++           * Derived rather than synced: the chapter sequence is already on the server (inside the
++           * bootstrap since 2026-09-03) and `progress` (right here, already fetched) says which
++           * chapters have been played, so the position is a function of data we hold. No second
++           * write path to disagree with the first. Monotonic — it can only move forward.
+            */
+-          /**
+-           * ⚠️⚠️ THE POINTER IS DERIVED ON EVERY LOAD, ONLINE OR NOT — AND THE OFFLINE HALF IS A FIX,
+-           * NOT TIDYING. `setActivePlan` writes `index: 0`, so a child who re-runs the check (their
+-           * own door is on this screen now) walks out of the diagnostic pointing at chapter 1 of the
+-           * new plan, and it is THIS reconcile that pulls the pointer past what they have already
+-           * finished. If it is skipped because the bootstrap threw — offline, an expired token — the
+-           * menu shows "Next up" as a chapter the child completed weeks ago. Their stars and progress
+-           * are untouched and the next successful load corrects it, but the one screen they are
+-           * looking at is wrong, which is the screen that matters.
+-           *
+-           * So the evidence degrades instead of the feature: server progress when we have it, and
+-           * the local profile's own stars when we do not. `chapterStars > 0` is the local equivalent
+-           * of the server's `total_sessions > 0` — `calcStars` never returns less than 1, so any
+-           * chapter that has been finished once carries at least one star on this device.
+-           *
+-           * ⚠️ A genuinely fresh device has neither, and then the plan opens at its first chapter —
+-           * correct, because nothing known says otherwise.
+-           */
+-          const applyPlan = (played: string[], remote: string[]) => {
+-            const plan = reconcilePlan(learner.id, remote, played)
+-            if (!plan) return
+-            const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
+-            setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
+-              ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learner.id) }
+-              : null)
+-            setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
+-          }
+-          const localPlayed = () => {
+-            const stars = useMiloStore.getState().profile.chapterStars
+-            return Object.keys(stars).filter(ch => (stars[ch as ChapterType] ?? 0) > 0)
+-          }
+-          try {
+-            const remote = await getActivePlanChapters(learner.id)
+-            applyPlan(progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string), remote)
+-          } catch {
+-            // ⚠️ `remote: []` on purpose — with a local plan present `reconcilePlan` keeps the local
+-            // chapter list, so this derives the POSITION without inventing a plan we cannot read.
+-            applyPlan(localPlayed(), [])
+-          }
++          // `boot.data.plan` is [] when there is no plan or none this account can read — and with a
++          // local plan present `reconcilePlan` keeps the local chapter list, so this derives the
++          // POSITION without inventing a plan we cannot read.
++          applyPlan(progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string), boot.data.plan)
+ 
+           // Continue-where-you-left-off, cross-device: progress is ordered by
+           // last_played_at desc, so progress[0] is the most recently played
+@@ -240,7 +250,7 @@ export default function MainMenu() {
+               equippedItems: p.equippedItems,
+             })
+           }
+-        } catch { /* offline / transient — local profile stands until next online load */ }
++        } catch { deriveFromLocal() /* offline / transient — local profile stands until next online load */ }
+       })()
+ 
+       // Personalised greeting — but only ONCE per app load. Returning to the menu
+diff --git a/src/data/repositories/billing.ts b/src/data/repositories/billing.ts
+index 4be39f3..124d9b4 100644
+--- a/src/data/repositories/billing.ts
++++ b/src/data/repositories/billing.ts
+@@ -36,12 +36,30 @@ export async function isChapterEntitled(learnerId: string, chapter: string): Pro
+   }
+ }
+ 
+-/** The same question for a handful of chapters at once — the parent dashboard's scoped list, which
+- *  is about a dozen. Still one definition, asked N times; deriving the set locally is the thing
+- *  §1 of docs/billing-stage-3.md forbids. */
++/**
++ * The same question for a whole list at once — the parent dashboard's scoped chapters, about a
++ * dozen. ONE round trip: `entitled_chapters` asks `is_chapter_entitled` per chapter server-side, so
++ * it is still the one definition, asked N times, without N requests.
++ *
++ * ⚠️ It used to be N parallel RPCs (12–24 per tap of a child on the dashboard — 124 of the 275 API
++ * requests in one day on production, p90 684 ms). That fan-out was the thing most likely to fill
++ * PostgREST's pool first under load, and every request paid the same 212 ms distance floor.
++ * `null` for every chapter when the call fails, for the reason above: not found out is not refused.
++ */
+ export async function entitledChapters(
+   learnerId: string, chapters: string[],
+ ): Promise<Record<string, boolean | null>> {
+-  const verdicts = await Promise.all(chapters.map(c => isChapterEntitled(learnerId, c)))
+-  return Object.fromEntries(chapters.map((c, i) => [c, verdicts[i]]))
++  const unknown = Object.fromEntries(chapters.map(c => [c, null]))
++  if (chapters.length === 0) return unknown
++  try {
++    const { data, error } = await db().rpc('entitled_chapters', {
++      p_learner_id: learnerId,
++      p_chapters: chapters,
++    })
++    if (error || !data || typeof data !== 'object') return unknown
++    const got = data as Record<string, unknown>
++    return Object.fromEntries(chapters.map(c => [c, typeof got[c] === 'boolean' ? got[c] as boolean : null]))
++  } catch {
++    return unknown
++  }
+ }
+diff --git a/src/data/repositories/diagnostics.ts b/src/data/repositories/diagnostics.ts
+index 1cf6464..7a6ffa8 100644
+--- a/src/data/repositories/diagnostics.ts
++++ b/src/data/repositories/diagnostics.ts
+@@ -126,14 +126,32 @@ export async function getActivePlanChapters(learnerId: string): Promise<string[]
+   return (data.chapter_sequence as string[] | null) ?? []
+ }
+ 
+-/** Week-N re-check status for the guarantee loop: is a re-check DUE (a real gap, diagnosed ≥6 weeks
+- *  ago, and not already closed by a later re-check)? Powers the in-app nudge on the parent dashboard. */
+-export async function getCheckupStatus(learnerId: string): Promise<
+-  { rootGap: string | null; band: string; weeksSince: number; recheckDue: boolean } | null
+-> {
++/** The latest check-up, as the bootstrap RPC and the two direct selects both return it. */
++export interface CheckupRow { band: string; root_gap_skill: string | null; completed_at: string | null }
++export interface CheckupStatus { rootGap: string | null; band: string; weeksSince: number; recheckDue: boolean }
++
++/**
++ * The week-N rule, in one place: a re-check is DUE when there is a real gap, it was diagnosed at
++ * least six weeks ago, and no later re-check has closed it. Pure, so the menu (which now gets the
++ * rows inside `get_learner_bootstrap`) and the parent dashboard (`getCheckupStatus`) cannot drift.
++ * A check-up with no `completed_at` counts as now — week zero.
++ */
++export function checkupStatus(sess: CheckupRow | null, alreadyClosed: boolean, now = Date.now()): CheckupStatus | null {
++  if (!sess) return null
++  const completedAt = sess.completed_at ? new Date(sess.completed_at).getTime() : now
++  const weeksSince = Math.floor((now - completedAt) / (7 * 86_400_000))
++  const recheckDue = !!sess.root_gap_skill && weeksSince >= 6 && !alreadyClosed
++  return { rootGap: sess.root_gap_skill ?? null, band: sess.band, weeksSince, recheckDue }
++}
++
++/** Week-N re-check status for the guarantee loop — the parent dashboard's nudge. The menu no longer
++ *  calls this: its rows ride inside `get_learner_bootstrap`. Two reads, gated by the tables' own RLS.
++ *  ⚠️ `getSession()` is a local read; `getUser()` was a round trip to GoTrue on every menu load that
++ *  bought nothing — RLS is the boundary on the reads below, exactly as `getMyLearners` says. */
++export async function getCheckupStatus(learnerId: string): Promise<CheckupStatus | null> {
+   const supabase = db()
+-  const { data: { user } } = await supabase.auth.getUser()
+-  if (!user) return null
++  const { data: { session } } = await supabase.auth.getSession()
++  if (!session?.user) return null
+   const { data: sess } = await supabase
+     .from('diagnostic_sessions')
+     .select('band, root_gap_skill, completed_at')
+@@ -142,8 +160,6 @@ export async function getCheckupStatus(learnerId: string): Promise<
+     .limit(1)
+     .maybeSingle()
+   if (!sess) return null
+-  const completedAt = sess.completed_at ? new Date(sess.completed_at as string).getTime() : Date.now()
+-  const weeksSince = Math.floor((Date.now() - completedAt) / (7 * 86_400_000))
+   const { data: rc } = await supabase
+     .from('diagnostic_rechecks')
+     .select('gap_closed')
+@@ -151,7 +167,5 @@ export async function getCheckupStatus(learnerId: string): Promise<
+     .order('created_at', { ascending: false })
+     .limit(1)
+     .maybeSingle()
+-  const alreadyClosed = rc?.gap_closed === true
+-  const recheckDue = !!sess.root_gap_skill && weeksSince >= 6 && !alreadyClosed
+-  return { rootGap: (sess.root_gap_skill as string | null) ?? null, band: sess.band as string, weeksSince, recheckDue }
++  return checkupStatus(sess as CheckupRow, rc?.gap_closed === true)
+ }
+diff --git a/src/data/repositories/progress.ts b/src/data/repositories/progress.ts
+index 56bb8eb..a525caa 100644
+--- a/src/data/repositories/progress.ts
++++ b/src/data/repositories/progress.ts
+@@ -6,6 +6,7 @@
+  */
+ import { db } from '@/data/repositories/_shared'
+ import type { LearnerWithRole } from '@/data/repositories/learners'
++import type { CheckupRow } from '@/data/repositories/diagnostics'
+ import type { Learner, LearnerStats, LearnerProgress, LearnerState, Session } from '@/data/supabase/types'
+ 
+ export async function getLearnerStats(learnerId: string): Promise<LearnerStats | null> {
+@@ -125,6 +126,12 @@ export interface LearnerBootstrap {
+   stats:    LearnerStats | null
+   progress: LearnerProgress[]
+   state:    LearnerState | null
++  /** The latest check-up (for the week-6 re-check card); null when the child never took one. */
++  checkup:  CheckupRow | null
++  /** Whether the latest re-check closed the gap. */
++  recheckClosed: boolean
++  /** The active diagnostic plan's chapter list; [] when there is none (or none this account can read). */
++  plan:     string[]
+ }
+ 
+ export type BootstrapResult =
+@@ -133,9 +140,10 @@ export type BootstrapResult =
+   | { status: 'no-access' }   // signed in, but this account has no access to the learner — stale/foreign
+ 
+ /**
+- * One RPC for everything the menu needs: access role + stats + progress + shop
+- * state. Replaces getMyAccessRole + getLearnerStats + getLearnerProgress +
+- * getLearnerState (4 round trips → 1).
++ * One RPC for everything the menu needs: access role + stats + progress + shop state, and since
++ * 2026-09-03 the latest check-up, the latest re-check and the active plan. Replaces
++ * getMyAccessRole + getLearnerStats + getLearnerProgress + getLearnerState (4 round trips → 1),
++ * then getCheckupStatus (auth/v1/user + 2 selects) + getActivePlanChapters (6 → 2 on /menu).
+  *
+  * Resolves the auth user first so we can tell "not signed in yet" (don't touch
+  * the active learner) apart from "signed in but no access" (evict the stale
+@@ -153,8 +161,14 @@ export async function getLearnerBootstrap(learnerId: string): Promise<BootstrapR
+   if (error) { console.error('[getLearnerBootstrap] rpc failed:', error.message); return { status: 'no-auth' } }
+   if (!data) return { status: 'no-access' }
+ 
+-  const d = data as { role: 'owner' | 'viewer'; stats: LearnerStats | null; progress: LearnerProgress[] | null; state: LearnerState | null }
+-  return { status: 'ok', data: { role: d.role, stats: d.stats ?? null, progress: d.progress ?? [], state: d.state ?? null } }
++  const d = data as {
++    role: 'owner' | 'viewer'; stats: LearnerStats | null; progress: LearnerProgress[] | null; state: LearnerState | null
++    checkup?: CheckupRow | null; recheck_closed?: boolean; plan?: string[] | null
++  }
++  return { status: 'ok', data: {
++    role: d.role, stats: d.stats ?? null, progress: d.progress ?? [], state: d.state ?? null,
++    checkup: d.checkup ?? null, recheckClosed: d.recheck_closed === true, plan: Array.isArray(d.plan) ? d.plan : [],
++  } }
+ }
+ 
+ // ─── Shop / coins state (cross-device) ────────────────────────
+diff --git a/supabase/tests/rls_regression.sql b/supabase/tests/rls_regression.sql
+index a946d91..d273449 100644
+--- a/supabase/tests/rls_regression.sql
++++ b/supabase/tests/rls_regression.sql
+@@ -516,6 +516,21 @@ begin
+     raise exception 'RLS FAIL B13g: an UNSEATED learner on the same account is entitled — entitlement is not per-seat';
+   end if;
+ 
++  -- B13h: the batched form asks the SAME question. `entitled_chapters` is the parent dashboard's
++  -- one round trip (it replaced 12–24 parallel RPCs); it must agree with `is_chapter_entitled` on a
++  -- seated learner (true for paid) AND an unseated one (false for paid), with the free one true for
++  -- both — a positive and a negative, or a function that returns {} would pass.
++  v_asserts := v_asserts + 1;
++  if public.entitled_chapters(v_learner2, array[v_paid, v_free]) <> jsonb_build_object(v_paid, true, v_free, true) then
++    raise exception 'RLS FAIL B13h: entitled_chapters disagrees with is_chapter_entitled for a seated learner: %',
++      public.entitled_chapters(v_learner2, array[v_paid, v_free]);
++  end if;
++  v_asserts := v_asserts + 1;
++  if public.entitled_chapters(v_learner3, array[v_paid, v_free]) <> jsonb_build_object(v_paid, false, v_free, true) then
++    raise exception 'RLS FAIL B13h: entitled_chapters disagrees with is_chapter_entitled for an UNSEATED learner: %',
++      public.entitled_chapters(v_learner3, array[v_paid, v_free]);
++  end if;
++
+ 
+   -- ═══ C — PLAN-DERIVED ENTITLEMENT (free-tier source C) ═════════════════════
+   -- v_learner3 is the OWNER's third child and holds no seat (B13g just proved they are not

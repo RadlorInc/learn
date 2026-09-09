@@ -58,9 +58,20 @@ intro (one card, one button)  →  demo (Milo/an adult does it)  →  guided (ch
   10 rounds, re-teach after 3 wrong, mastery early-exit, `sig` to dedupe questions.
 - `SkillBeat` **rebuilds its contents every round.** Anything that must persist across the chapter
   (a collect tray, a journey strip, a filling tree) has to live OUTSIDE it, driven by `onRound`.
-- 3–11 story chapters call `useAdaptive(skillId)` with **no start tier** — they always open at
-  difficulty 1. Resume-at-difficulty is teen-only (`GameShell`/`ShopRush`). If a chapter looks too
-  hard on question 1, the tier is not the suspect; the generator is.
+- ⚠️ **EVERY BAND NOW RESUMES AT THE TIER THE CHILD LEFT OFF ON — founder's call, 2026-08-20
+  (*"sab mein waise chahiye"*), reversing the rule that used to sit here.** It read *"3–11 story
+  chapters call `useAdaptive(skillId)` with no start tier — they always open at difficulty 1;
+  resume-at-difficulty is teen-only"*, on the argument that a nine-year-old coming back a week later
+  and meeting their old top tier on question 1 is a fault. That fear is now answered from the other
+  side rather than by starting everyone at easy: the chapter still opens with its demo and its
+  UNSCORED guided round, `GameShell` offers a warm-up (two questions one tier down) whenever the
+  resumed tier is above easy, and the engine demotes on **two** misses in a row — so a tier that no
+  longer fits is given back inside two questions. The tier is saved after every scored answer
+  (`infra/storage/chapterLevel`) and rides the finished-session payload into
+  `learner_progress.current_level`, so it follows the child across devices.
+  ⚠️ **So if a chapter looks too hard on question 1, the tier IS now a suspect** — that is new. Check
+  what `getChapterLevel(learnerId, chapterId)` holds for that child before blaming the generator.
+  The gate is `src/__tests__/adaptiveDeepSweep.test.ts` §⑥.
 - **Difficulty must grow BOTH count and magnitude.** Tier 1 controlling only "how many numbers"
   let chapter 2 open a three-year-old on 7·8·9. Cap the ceiling per tier as well as the count.
 - Landscape-first. Every chapter mounts [`RotateGate`](../src/features/chapters/story/RotateGate.tsx);
@@ -474,6 +485,36 @@ answer; then draw the generator so the collision cannot occur (here: no limit th
 the conversion factor). ⚠️ The tier where the intermediate IS the answer is the exception and must
 stay one — at L1 the answer is `ft × 12`, so there it is the LIMIT that has to differ from it.
 
+⚠️⚠️ **AND THE COMMONEST WAY A QUESTION PRINTS ITS OWN ANSWER IS A DEGENERATE DRAW, NOT A BADLY
+WRITTEN SENTENCE — SO FIX IT IN THE GENERATOR.** Three chapters were caught by the same sweep on
+2026-08-20 and all three had correct, careful wording; what was wrong was that the two numbers the
+generator drew were allowed to be *the same number*:
+
+| chapter | the degenerate draw | rate | what the child reads |
+|---|---|---|---|
+| The Empty Plot | `depth === frontage` — a SQUARE plot | **25% of L1** | *"4 metres along the road, and 16 tiles to use up"* → answer **4** |
+| The Mission Brief | `q === b` — a SQUARE division | **16% of ÷** | *"25 bolts shared equally into 5 racks"* → answer **5** |
+| Factor Lab | `k === base` — base × base | **14% of ×** | *"a crate holds 8"*, miss line *"keep counting up in 8s"* → answer **8** |
+
+In every one the answer is not stated AS the answer; it is a GIVEN that happens to equal it, so a
+child can copy a number off the screen and be right without doing the operation the chapter exists
+to teach. The Empty Plot is the sharpest: one tier-1 round in four, on the band's easiest tier, and
+the module's own comment already said *"NEITHER may name the depth, however helpfully: it is the
+whole question"* — broken by arithmetic rather than by wording, which is why nobody saw it.
+
+**The fix is one redraw, in the generator, never a reworded sentence** — the sentence was right.
+Put the guard where the numbers are chosen and it covers every question type the chapter has now
+and every one somebody adds later; put it in three makers and the seventh maker forgets.
+
+⚠️ **BUT NOT EVERY COINCIDENCE IS A DEFECT, AND DELETING THE BEST QUESTION TO CLOSE ONE IS A BAD
+TRADE.** The Pizza Counter collides on **34.7%** of `match` rounds — the answer is a count of slices
+and the givens are two denominators. It stays, measured and documented, for two reasons. Tier 1 is
+match-only over three pairs and `[2, 4]` — half a pizza against quarters — collides on its ONLY
+numerator, and that is the single most canonical equivalence in the chapter. And it is the
+**harmless direction**: a collision here can only make a guess luckier, never make a correct method
+wrong — unlike The Height Bar's `4 × 12 = 48` landing on a posted limit of 48, which manufactures a
+wrong answer and is gated. **Ask which direction the collision runs before removing anything.**
+
 ⚠️ **A NUMBER IN A VERDICT CAN BE THE ANSWER BY COINCIDENCE.** *"No miss line ever names an accepted
 answer"* is already the rule; arithmetic reaches it by a side door. Eight rows out of a pair test of
 15 strand SEVEN, and seven pairs is what was asked — so a count of what did NOT fit prints the
@@ -490,6 +531,20 @@ words contradicting the picture on the beat they are reading. Clear it when a re
 
 **AND A TAP THAT DOES NOTHING AT ALL IS THE WORST OUTCOME THERE IS.** Worse than a wrong answer: a
 wrong answer at least tells the child the game is listening.
+
+⚠️⚠️ **A COMMIT BUTTON IN A RETRY-IN-PLACE CHAPTER MUST GATE THE *SUBMISSION*, NEVER THE *GRADING* —
+otherwise it is an oracle AND it cannot change an outcome.** Every 3–5 chapter is retry-in-place: a
+wrong tap sets `erred` and the child goes again, and the round only ends once they are right. So a
+"Ready" that held the GRADE back could only ever be pressed on a correct answer — its mere
+appearance would say *that one is right*, which is this file's oldest rule, and it could never alter
+the score, which makes it ceremony. The shape that works is **a tap CHOOSES (marked neutrally, and
+re-tappable to unchoose) and Ready SUBMITS**: the control appears for any choice, right or wrong, so
+it tells the child nothing, and the wrong answer it submits is still marked wrong and still retried.
+⚠️ **Mark the choice in a colour that is not the verdict colour** — green means correct everywhere in
+this app — and **mark it with a `boxShadow` ring rather than a transform**, because nearly every
+answer here is positioned with an inline `translate(-50%,-100%)` that a lift would overwrite.
+⚠️ And where the child BUILDS the answer (coins, digits, clock hands, tiles) the chapter already has
+this and its control keeps its own words: you *Pay* a shopkeeper, you do not *Ready* him.
 
 ⚠️ **THE COMMONEST WAY TO BUILD ONE IS A COMMIT GATED ON A FIXED LENGTH.** FitOut's number pad is
 `windows={2}` with `if (digits.length < 2) return` and `disabled={digits.length < windows}` — three
@@ -603,6 +658,32 @@ moment a child switches away.
 first frame of a new beat is painted carrying the previous beat's index and the walk beat opens with
 the walker already at the end. Same rule this file already gives for a journey's phase, and the React
 lint names it too.
+
+⚠️⚠️ **AND A CONTAINER'S OWN CAPACITY, DRAWN AS SLOTS, IS THE ANSWER — COUNTABLE, AND IT LOOKS LIKE
+ORDINARY FURNITURE.** The Minibus Run draws each bus with its seats, which is exactly right on the
+two round types where the seat count is a GIVEN, and hands the answer over on the third: a `sharing`
+round asks *how many ride in each bus*, so a child could count the empty seats in one bus and read
+it off without sharing anything. The fix is per round type — where the capacity is the question the
+bus is an open box that holds whatever you put in it, and it only grows seats where the seat count
+is something the ticket already told you. **Ask of every drawn container, on every round type
+separately, whether its own size is a given or the answer.** Same family as the ruled grid on the
+plot floor: a repeated mark on a container is a number, whether or not anybody typed it.
+
+⚠️⚠️ **AND THE SHARPEST VERSION OF THE HOT/COLD RULE: AN INSTRUMENT THAT SHOWS THE CONSEQUENCE OF
+THE ANSWER YOU ARE PROPOSING IS AN ORACLE, EVEN THOUGH SHOWING CONSEQUENCES IS THE WHOLE POINT.**
+This one is worth the words because the wrong version is the one that sounds like good teaching. The
+Minibus Run's first build loaded the buses live from whatever count was showing — *a wrong action
+allowed and visible rather than blocked*, which is a rule this file already gives — so the pavement
+read "still waiting" until the number happened to be right and then flipped to "pavement clear". Tap
+1, 2, 3, watch the label, commit. The child divides nothing. Every piece was individually correct
+and no gate could see it; it took driving the thing and tapping four numbers.
+**The resolution is the ORDER, not the feedback.** While the child is choosing, the instrument shows
+their number as a SETTING — seats reserved, buses called for, nobody moved — and the consequence
+happens ON the commit, where it is the check rather than the answer. Afterwards it is still derived
+from THEIR number, so a wrong answer still leaves a visibly wrong world. Same order The Empty Plot
+arrived at from a different direction: commit to a number BEFORE the thing exists to be counted.
+⚠️ And the tell is usually one WORD, not a picture: a status label that reads "clear" versus
+"waiting" is the entire oracle, however carefully the rest of the scene behaves.
 
 ⚠️ **AND A CONTAINER'S OWN HEIGHT CAN BE THE ANSWER, PRINTED AS A LENGTH.** A receiving slot's box
 is sized by its capacity, and on a sharing round the capacity is derived from the answer — so
@@ -926,6 +1007,16 @@ to draw. The "draw from the ink box, not the file box" rule, applied to a code-d
   `SkillBeat` and look perfectly correct — the fault appears only once the first SCORED round loads.
   `Critter` has been `position: fixed` for exactly this reason. Generalise: **verify a chapter in its
   scored rounds, not only in its demo** — they do not share a containing block.
+- ⚠️⚠️ **AND `position: fixed` IS NOT FIXED INSIDE A TRANSFORMED ANCESTOR — IT SILENTLY BECOMES
+  ABSOLUTE, MEASURED FROM THAT ANCESTOR'S BOX.** A `transform` (even `translateX(-50%)`) makes an
+  element the containing block for every `fixed` DESCENDANT, so a bottom-anchored control nested
+  inside a centred row is drawn from the ROW rather than from the viewport. Measured at 640×320
+  when the Ready bar was added: nested inside NumberTown's answer row — which carries
+  `transform: translateY(-50%)` — the bar rendered at y 189–236 **across the middle door, which on
+  that round was the right answer**; lifted out to be the row's SIBLING it sits at 263–310, clear.
+  The same nesting was in the counting chapter's centred bottom stack. **A screen-anchored layer is
+  a sibling of the world, never a child of a positioned part of it** — and nothing but crossing the
+  rendered boxes can see it, because every element involved is individually correct.
 - ⚠️ **A PROP THAT IS ABOUT TO MOVE HAS TO BE ON SCREEN WHILE THE CHILD IS DECIDING.** A thing
   parked just off-frame "ready to go" does not exist yet — the round opens on an empty stage, and
   the object the whole gesture is about only appears as a consequence of the answer, which is the
@@ -1141,6 +1232,96 @@ to draw. The "draw from the ink box, not the file box" rule, applied to a code-d
   21px of clear air under a 93px duck. Out of flow and centred on the feet: 2px. **The number to
   check is the sprite's own `getBoundingClientRect().bottom` against the ground line — not the
   container's**, because the container is exactly the thing that is lying to you.
+- ⚠️⚠️ **AND A FIXED GAP BETWEEN TWO SPRITES IS ONLY EVEN FOR ONE ASPECT RATIO — SPACING IS WHAT IS
+  LEFT AFTER THE BODIES, NOT THE STEP BETWEEN THEIR CENTRES.** Chapter 2's line behind mother steps
+  a flat `LINE_GAP = 9`% of the width per place, which reads as perfectly even in the source and is
+  even for exactly one creature. The cast's aspects run **0.81 (rabbit) to 1.75 (shark)**, so
+  measured at 1280×720 with five little ones the clearance between neighbouring BODIES ran from
+  **+1.65% (butterfly, a clean gap) to −1.07% (ant, overlapping)** — bunnies queued, fish and
+  ladybugs and squirrels piled up. Founder, on a screenshot: *"for the bunny the children are evenly
+  spaced behind the mother; for the fish, butterflies, turtles, ladybugs and squirrels they are
+  randomly placed."* **Nothing was random. The spacing was identical; what differed was how much of
+  it each body ate.**
+  ⚠️ **AND WHEN THE GAP CANNOT MOVE, MOVE THE SCALE.** The obvious fix — widen the gap per species —
+  makes the line LONGER for a wide creature, and its length is what decides how much room the
+  waiting huddle gets, which decides the span, which decides the sprite size, which decides the gap.
+  A loop. Capping the in-line SCALE instead leaves every upstream number untouched: the step stays a
+  constant, so the line is evenly spaced BY CONSTRUCTION, and a wide creature is drawn a little
+  further away — which is what the line already means.
+  ⚠️⚠️ **AND THE GAP AT THE HEAD OF A QUEUE IS A DIFFERENT GAP — THE TWO BODIES EITHER SIDE OF IT
+  ARE NOT THE SAME SIZE.** The founder's follow-up, once the spacing was even: *"fish 1 still tucks
+  under mother's body."* The first place in the line sits next to the LEADER, drawn at 1.25 against
+  the line's own scale, so those two bodies differ by ~1.7× — and one constant was serving both that
+  gap and the gap between two little ones. **Enumerate the gaps in a formation and ask which ones
+  have a different creature on each side.**
+  ⚠️ **AND CALIBRATE THE FIX ON THE ONE THAT ALREADY LOOKED RIGHT, NOT ON ZERO.** Animals queue
+  nose-to-tail, so a slight overlap with the leader is CORRECT — the rabbit has one (its first
+  little one sits ~21% of its own body inside her) and that is the picture that was approved. The
+  rule is therefore *nobody sits deeper in than the rabbit*, which leaves the approved case
+  untouched by construction; a "no overlap" rule would have moved it and broken the good case to
+  rescue the bad ones. **Ask what the thing that works measures, and make that the target.**
+  ⚠️ **AND WHEN A DERIVED NUMBER FEEDS THE BUDGET IT IS SPENT FROM, RUN THE CHAIN TWICE RATHER THAN
+  ITERATING.** The head gap is measured off the sprite, the sprite is capped to the huddle's slot,
+  and the slot is what the line leaves over — a loop. One provisional pass with the old constant
+  yields a size that is always ≥ the final one, so the reserve measured from it is never short, and
+  the SAME value is then used for both the reserve and the drawing so they cannot disagree.
+  ⚠️ **AND A CHECK ON THAT MUST DRIVE THE DRAWING FUNCTION, NOT THE LAYOUT IT CAME FROM.**
+  Mutation-tested: reading the body from the layout's reported scale and the step from a typed
+  constant left "the line draws at the flat gap" AND "the line draws at a flat scale" both green —
+  the layout still REPORTED the derived values while the drawing ignored them. Read every number
+  out of the function that positions the thing (`lineSpot(k, L).left` / `.scale`), and where a
+  reserve must be compared against what is drawn, compute both ends through the real functions.
+  ⚠️ **AND A DEFAULT PARAMETER MAKES THE OLD BEHAVIOUR REACHABLE.** `lineSpot(k, w, mx, scale =
+  LINE_SCALE)` is the natural signature when a literal moves out into an argument, and it is a
+  regression waiting to happen: mutation-tested, reverting one call site to `lineSpot(k, band, mx)`
+  restored the overlapping line with **every check green**, because they all drive the layout's
+  reported value and none can see how the component USES it. Required, it is a type error.
+  ⚠️ And a required parameter is only half of it: with the default gone, passing `LINE_GAP` where
+  `headGap` belonged restored the buried-under-mother line, type-checked and green. **The end of
+  that road is to stop passing the derived values at all** — `lineSpot(k, L)` takes the layout, so
+  there is nothing left to hand over wrongly. Prefer the signature that cannot express the bug over
+  the check that catches it.
+  ⚠️⚠️ **AND THE FAULT IS IN EVERY FORMATION WITH A FIXED PITCH, NOT JUST THE ONE SOMEBODY
+  REPORTED — GO AND MEASURE THE SIBLINGS.** The student named chapter 2's line; the same shape was
+  sitting one function along in the same file. `clusterSpot` (chapter 4's gathered set) steps a flat
+  `GATHER_COL = 5.4`% per column at a flat `scale: 0.8`, so the share of each body still showing ran
+  **74% for the rabbit down to 26% for the shark** — measured live at 1280×720, **five gathered fish
+  read as three**, in the one place the child has to count what they have just chosen. The huddle
+  beside it never had the fault because its sprite is already capped to its own slot
+  (`size = min(rawSize, slotPx / aspect)`); the cluster inherited that size and not the cap.
+  **A formation whose pitch is a constant owes every species a scale cap** —
+  `CLUSTER_SCALE * min(1, RABBIT_ASPECT / aspect)`, size- and viewport-independent, so the approved
+  picture is untouched by construction and everyone else gets its geometry exactly.
+  ⚠️ Check whether the pitch is really the locked lever before reaching for scale: here it is —
+  measured, the gather band leaves ~6.3% per column across four columns, and a shark wants 11.7%.
+  ⚠️ And the same cap pays for the ROW separation for free (0.22 → 0.37 body heights for a fish),
+  which was independently under this file's own `ROW_SEP` floor of 0.55.
+
+⚠️⚠️ **AND ANYTHING A CHAPTER HANGS ABOVE A CREATURE IS OUTSIDE THE SPRITE'S BOX, WHILE EVERY BAND
+HELPER RESERVES FROM THE BOX — SO THE BAND FITS AND THE THING ABOVE IT DOES NOT.** `fitBands` proves
+the HEAD clears the prompt pill and `spreadBand` clamps the far row to the same line; neither has any
+way to know a number tag floats `0.72 × d` higher. Chapter 2 measured at 640×320: the middle tag
+rendered at y 82–121 against a pill occupying 155–485 × 48–93 — 28% of the badge covered, with
+`elementFromPoint` at its top returning the pill — while every head cleared correctly and every gate
+was green. **A student reported it TWICE**, and the first fix (three rows → two, which was a real and
+separate cause) is exactly why the second report looked like a regression rather than a second
+mechanism. **Declare the overhang** (`maxSizeForRows` / `fitBands` / `spreadBand` take a `topPx`) and
+gate the top of the TAG, not the top of the head. ⚠️ It binds only on the shortest frame — 812×375 and
+up measured 0% hidden — so a roomy-frame pass cannot see it.
+⚠️ **The overhang depends on the size that depends on the overhang**; break it the way the head gap
+does, with a provisional pass whose size is always ≥ the final one, never by iterating.
+⚠️ **And a sibling that "clears" may be clearing on the OTHER axis by luck.** Chapter 4's `AskSign`
+rises above the same banner line in 50 combinations and misses the pill only because the pill is
+centred and Milo stands far right. Say which axis is saving you, because the other one is not.
+
+⚠️⚠️ **AND A POSITIVE CONTROL ON ONE MECHANISM SAYS NOTHING ABOUT THE OTHER MECHANISMS IN THE SAME
+SWEEP.** The sweep that found the above checked two things — a tag behind the pill, and a tag buried
+by a nearer sprite — and read `L.huddleRight` when the field is `huddleRightPct`. Every `waitSpot`
+came back `NaN`, so the BURIAL half reported a confident **0 findings** while the banner half (which
+reads `.top`) worked. **The rows=3 positive control was firing the whole time, on the half that was
+alive**, so the sweep read as verified. `vitest` does not type-check, which is why it ran clean at
+all. Two rules: **give every mechanism in a sweep its own positive control**, and where a probe
+reaches into a returned object, let `tsc` see the file before believing a zero.
 - **a boundary next to another character is measured off THAT character, never guessed.** Chapter 2
   learned this as the cut-off leader; it applies to any adjacency. Chapters 9–10 gave their set a
   flat right limit of 74% and the three widest reef creatures (fish 1.37, turtle 1.53, shark 1.75 : 1)
@@ -1240,6 +1421,16 @@ own instruction chip, caught by reading the screen. One verb cannot serve two se
 line wants a bare verb ("…hold up the tens digit"), the chip has no object after it and wants the whole
 phrase ("hold up that many fingers"). Same family as *"0 pennyies"*, and the same fix: write the
 variants out rather than gluing parts together.
+
+⚠️ **AND THE DUPLICATE IS INVISIBLE UNTIL THE TWO COPIES AGREE.** Shape Studio shipped both pills
+for months and nobody saw it, because the beat's prompt said *"Tap the triangle"* and the chapter's
+own pill said *"Tap The Triangle!"* — different enough to read as a heading plus a question. Giving
+the beat its missing `!` made them identical, and the pair became obvious on the first production
+screenshot. **A sentence written in two places is the fault; the duplicate pill is the symptom.**
+Write it once (`export const promptFor = …`), have the beat and any phase-local pill both call it,
+and render the chapter's own pill only in the phases SkillBeat does not wrap (`demo`, `guided`).
+⚠️ **A gate cannot see this** — both halves are individually correct and the duplication is a
+property of the rendered DOM. It took an eye on a screenshot, which is what this whole file is about.
 
 **TWO PILLS SAYING THE SAME THING IS A DUPLICATE, NOT A FALLBACK.** `SkillBeat` draws a prompt pill
 from `beat.prompt`, so a chapter whose own play surface also states the question ends up with two —
@@ -1666,6 +1857,76 @@ and nudge, deterministically off the same seeded stream) and keep the gate asser
 - Never fire rapid consecutive `speak()` calls; each cancels the last.
 - Demos are deliberately slow: `rate: 0.8`, `gapMs: 1100`, and a slow fallback step when silent.
 
+### ⚠️⚠️ NOTHING MILO SAYS MAY BE CUT OFF BY THE NEXT THING — AND THE DEFAULT VERB CUTS
+
+Founder, 2026-09-04, across every band: *"kuch chapters mein voice aane lagti hai aur next chiz aa
+jaati hai toh woh cut ho jaati hai"*. It was true nearly everywhere, from two mechanisms that each
+look completely correct in the source.
+
+**`speak()` SUPERSEDES. That is right for a tap and wrong for everything else.** A child counting
+1, 2, 3 must hear the newest number, not a queue trailing behind their finger — so `speak()` cancels
+whatever is talking, and must keep doing so. But a *narration* following another narration is the
+opposite case, and every round boundary in the app is one: the chapter's own verdict, then the
+shell's praise, then the next question, on 1300–1800ms timers that are shorter than any of those
+lines takes to say. Three lines, two of them cut, on every round of every chapter.
+
+| you are about to say… | use |
+|---|---|
+| a response to something the child just DID (a tap, a count, a wrong pick) | `speak()` — newest wins |
+| anything that FOLLOWS another line (a round question, praise, a hand-over, an end screen) | `speakAfterCurrent()` — queues, in order, bounded to two waiting |
+| a walkthrough, lesson or re-teach of several lines | `speakPaced()` (self-paced) or `speakSteps()` (speech-paced) |
+| "do this when Milo stops" | `afterSpeech(cb, ceilingMs)` |
+
+- ⚠️ **`speakAfterCurrent` waits on IN-FLIGHT, not on "is he talking".** `_speaking` only turns true
+  at the clip's `onStart` — one async manifest lookup and an `audio.play()` promise after the call —
+  and a round advance calls it in the SAME TICK as the line it means to follow. Gated on `_speaking`
+  it read "nothing is playing" about a line already on its way and cancelled it: it could only ever
+  work on a device with **no clips**, which is why every drive in this repo showed it working.
+- ⚠️ **A QUEUE THAT ONLY WORKS ONE DEEP IS THE SAME DEFECT ONE LINE FURTHER ALONG.** Written as one
+  "speak when the current line ends" callback per waiter, the end of the first line released all of
+  them at once and the last to wake up cancelled the rest — so the middle line of every three
+  vanished. It is a real FIFO now, and **bounded to two waiting**, because a queue is a way of
+  running late: a child who answers faster than Milo talks would otherwise hear the commentary on
+  the question before last.
+- ⚠️⚠️ **A SELF-PACED LESSON'S DWELL IS A FLOOR, NEVER THE WHOLE STORY.** The lessons are
+  deliberately NOT driven by speech events — a walkthrough whose visuals hang off `onstart` freezes
+  for ever on a device that starts line one and drops the rest, which this repo has shipped — and
+  the price written down for that was *"a slow voice can have its tail cut by the next line"*. That
+  price was never acceptable; it is what the founder heard. `speakPaced` keeps the property that
+  matters (the visuals run on their OWN timer and can never hang) and ends each step at the **later**
+  of its dwell and Milo actually finishing, under a ceiling. `dwellFor` at 72ms a character is under
+  a real clip's length often enough to matter, and `Math.min(6200, …)` guarantees it on a long line.
+- ⚠️ **TWO SEQUENCES 1800ms APART ARE NOT A SEQUENCE.** A second `speakSteps` supersedes the first,
+  so GameShell's reveal was chopped off mid-word by the re-teach the child had just earned. Say them
+  as ONE `speakSteps` and drive the board from its `onStep` — a sequence only starts a line when the
+  previous one has ended, so nothing inside it can cut anything.
+- ⚠️ **A GENERIC LINE MUST NOT LAND ON A SPECIFIC ONE.** `ownsFeedback` exists for that and only
+  covers the chapters that set it; plenty of others still say something specific the instant the
+  child commits ("five blocks! the log is five blocks long"). The shell queues its praise behind
+  them now, and says nothing at all when a re-teach is about to run.
+- ⚠️ **AND THE SAME LINE DECLARED IN TWO PLACES IS NOW HEARD TWICE, NOT ONCE.** Order Desk and Level
+  Run both carried `say: d => d.ask` on the beat AND spoke `data.ask` themselves; while the shell
+  superseded, the duplicate was invisible. The moment it queues, it is audible. **When you move a
+  line to `speakAfterCurrent`, check nothing else says it.**
+- ⚠️⚠️ **A LOCAL WRAPPER HIDES AN EMISSION SITE FROM EVERY GREP FOR THE VERB.** BlockYard and
+  BuildingBlocks route every line through `say(s) { setNote(s); speak(s) }` — thirteen emission
+  sites invisible to a `speak(` search, and two of them were the ROUND'S OWN QUESTION fired from a
+  timer 400ms in, cancelling the previous round's verdict and praise. They were found by enumerating
+  wrappers, not verbs, and they had never been read. **When you audit a call surface, enumerate the
+  local functions that call it as well as the calls themselves** — and where a chapter has such a
+  wrapper, give it a queueing twin (`sayNext`, `tellNext`) rather than making every line queue: the
+  lines that answer a TAP must still cut in.
+- ⚠️ **THE RULE IS GATED, NOT REMEMBERED.** `src/__tests__/voiceBoundaryVerb.test.ts` fails if any
+  file under the chapter directories fires a cancelling verb — `speak`, `speakAt`, or a local
+  wrapper of them — from a deferred path (a `useEffect` body, or a callback handed to a scheduler),
+  unless it is in that file's ALLOW list with a written reason. It is asserted EXACTLY, so a new
+  chapter cannot reintroduce this and a stale exception cannot sit there being a rule about nothing.
+- **Verify it by listening, or by the mock.** Every one of these is a single word — `speak` vs
+  `speakAfterCurrent` — that reverts to something perfectly sensible. Both spellings type-check,
+  both render identically, and the difference is only audible on a device that HAS clips.
+  `src/__tests__/voiceNoOverlap.test.ts` mocks the clip player with a clip that is deliberately
+  SLOWER than the caller's timer, which is the only world in which any of these faults exists.
+
 ### Never let two voices overlap
 
 - Never gate a tap on the animation — a child who has already found the next answer should not be
@@ -1755,10 +2016,62 @@ The founder has caught nearly every real fault by eye, on a screenshot, after th
   through the picture — the colouring chapter's sky could not be tapped where the banner crossed it.
   Give the class the passthrough and its real buttons their events back
   (`.x{pointer-events:none} .x button{pointer-events:auto}`).
+  ⚠️⚠️ **AND THE OVERLAY IS OFTEN NOT ONE THE CHAPTER DRAWS.** `SkillBeat`'s prompt pill is a real
+  `<button>` — tap it to hear the question again — which is right in every chapter whose answers sit
+  in a band the pill does not use, and is a DEAD PATCH in one whose answer surface fills the frame.
+  Measured on the colouring chapter at 640×320: the pill spans x 181–459, y 48–93 and the balloon
+  that page asks for spans x 415–490, y 15–120, so a child aiming at the middle of the answer hit
+  the pill and nothing coloured. The chapter had already learned this for its OWN banner and carries
+  a comment saying so; it came back through a control it does not own. **Where the answers fill the
+  frame, the chapter sets `prompt: () => ''`, draws its own pointer-transparent question, and moves
+  the replay into the chrome** — a small button in a corner that already has one costs no NEW dead
+  area. ⚠️ Then check what the corner chip lands on too: it is the same fault, smaller.
+  ⚠️ **And a shared anchor can break when you do this.** `e2e/storybook-pills.spec.ts` identified
+  SkillBeat's pill by `aria-label="Hear it again"` alone; a chapter's own bare 🔊 carries the same
+  label, so the spec read it as a duplicate pill and failed a chapter that was correct. Anchor on
+  what makes the thing that thing — the pill CARRIES THE QUESTION — not on a label two controls can
+  share.
 - **Never bump a React `key` to restart an animation.** It remounts the subtree, and anything
   imperative in there — a canvas, a scroll position, a media element — is destroyed with it. In the
   colouring chapter one wrong answer wiped every colour the child had put down. Use
   `el.animate(...)`, which retriggers without touching the DOM.
+- ⚠️⚠️ **A `useRef` GUARD SURVIVES STRICTMODE'S SIMULATED UNMOUNT, SO "RUN THIS ONCE" BECOMES "RUN
+  THIS NEVER" — IN DEV ONLY, WHICH IS WHY IT COST WEEKS.** StrictMode invokes an effect twice —
+  mount, cleanup, mount — and a ref is NOT reset in between. So the shape every story chapter used:
+
+  ```
+  const ran = useRef(false)
+  useEffect(() => {
+    if (ran.current) return; ran.current = true
+    const cancel = speakSteps(lines, { onStep })
+    return cancel                    // ← StrictMode calls this…
+  }, [])                             // ← …then re-runs, and the guard says "already ran"
+  ```
+
+  starts the narration, CANCELS it, and then refuses to start it again. **The demo sits on its first
+  beat for ever**, and since `speakSteps` drives the VISUALS too, the whole chapter is frozen. It was
+  in ELEVEN guards across ten chapters. Use [`useOnceGuard`](../src/shared/hooks/useOnceGuard.ts),
+  which resets the flag in its own cleanup — cleanups run in declaration order, so it fires after
+  the guarded effect's and before the re-run, and a dep-change re-run still sees the guard set.
+  ⚠️⚠️ **AND THE VERIFICATION LESSON IS THE BIGGER HALF: "IT WORKS ON PRODUCTION" IS NOT EVIDENCE
+  AGAINST A DEV-ONLY CAUSE — IT IS WHAT THAT CAUSE PREDICTS.** An earlier session guessed StrictMode,
+  ran the same chapter against prod, saw it work, and wrote the guess off. StrictMode is dev-only, so
+  that run could only ever have told you whether PROD had the same fault; it said nothing about dev.
+  The wrong inference then sat in the handoff as a settled finding, and *"why headless cannot drive a
+  storybook chapter"* stayed open for weeks. **Before you rule a cause out, ask whether your
+  experiment could have detected it at all.**
+  ⚠️ The way it was finally named was not reading, it was instrumenting: patch
+  `speechSynthesis.speak` in an `addInitScript` and log every utterance's start/end/error. Dev
+  produced **zero** speak calls in 42s; prod produced seven and walked into the guided round. One
+  probe, two minutes, and the difference is not arguable.
+- ⚠️ **AND A FROZEN DEMO IS NOT ONLY A TEST PROBLEM — IT IS WHAT KEEPS REAL DEFECTS ALIVE.** Fixing
+  the guard let the storybook chapters be driven into a scored round for the first time (3 of 20 →
+  11 of 20), and the very first full run found Seesaw Park drawing its question **twice** — the
+  duplicate-pill fault §3 already describes, shipped and unseen because nothing could reach the
+  screen it appears on. **A chapter that cannot be driven is a chapter whose gates are decorative.**
+  ⚠️ Worse, the handoff had recorded that chapter as CLEAN, from a grep. Driving it disproved the
+  grep. Same rule as the five-chapters-flagged story in §3, arriving from the opposite direction:
+  a source heuristic can produce a false ALL-CLEAR just as easily as a false alarm.
 - ⚠️ **`getBoundingClientRect` ON A SPRITE-SHEET `<img>` RETURNS THE WHOLE STRIP, NOT THE CREATURE.**
   A 12-cell sheet measures 12 cells wide and is translated inside an overflow-hidden cell, so its
   `bottom` is not where the feet are and its `left` is off-frame by design. Measure the **clipping
@@ -1941,6 +2254,16 @@ count the matches.
   the hand to stack 0 passed it. Same family as the clamp tautology: **choose fixture values where
   the wrong implementation gives a different answer**, which usually means not index 0, not the
   first element, and not a value that coincides with the default.
+- ⚠️⚠️ **A BLIND DRIVER MUST NOT PRESS THE CONTROL IT IS TRYING TO MEASURE.** The Ready-bar sweep
+  clicks whatever moves a chapter forward until the commit appears — and with the commit left in
+  that rotation it pressed it, submitted the answer, watched the bar vanish and reported *"never
+  reached a commit control"* on two chapters whose bars were perfect. **A driver that can destroy
+  the state it is looking for produces a red that describes the driver**, and a red nobody can act
+  on is spent the same way a false green is. Exclude the target from the candidates.
+  ⚠️ **And check the door you are knocking on is the one that chapter has.** The same sweep sent
+  `?e2e=practice` to the counting chapter, which runs on `ForestWalk` — a LIST OF BEATS with no
+  Phase union, reading `?skip` and ignoring `?e2e` entirely — so it spent its whole budget on a
+  self-paced walk and failed about a working bar. Two engines, two door handles.
 - **The sweep must call the SAME layout function the scene renders from.** Chapter 4's sweep
   re-implements its sizing chain inside the test, so the check can agree with its own copy of the
   constants while the screen it protects falls apart. Chapters 9–10 export `playLayout` and the test
@@ -2095,6 +2418,18 @@ count the matches.
   deploy that never landed. Enumerate every *kind* of subresource the app loads — script, style,
   font, image, media, worker, connect — and check each against the policy, rather than the ones you
   happened to think of.
+- ⚠️⚠️ **A CHECK THAT DRIVES A PERFECT ORACLE MEASURES THE ALGORITHM, NEVER THE PRODUCT — AND IT
+  STAYS GREEN WHILE THE PRODUCT IS WRONG TWO TIMES IN THREE.** The diagnostic had eleven passing
+  engine tests, every one of which answered *"knows the skill ⇒ correct, doesn't ⇒ wrong"*. A real
+  child GUESSES (a 4-choice item hands back a quarter of every wrong answer) and a real child SLIPS.
+  Neither was modelled anywhere in 1,360 tests, so the number the whole product is sold on — does the
+  report name the right gap — had never been measured; it was **26–34%**, and the searching logic it
+  was blamed on turned out to be innocent (90–98% with clean items). **Whenever a check supplies the
+  answers, ask what your oracle assumes about the human**, and put the noise in: a guess rate taken
+  from the real answer surface, a slip rate, and an assertion on the resulting RATE. ⚠️ Seed it — an
+  unseeded accuracy sweep is a coin-flip gate, and a coin-flip gate gets re-run instead of read.
+  ⚠️ And gate the COST as well as the score: accuracy is trivially buyable with more questions, so a
+  check that only asserts accuracy silently licenses a 28-question test for a nine-year-old.
 - ⚠️⚠️ **A UNIT TEST CANNOT SEE THAT NOTHING CALLS THE UNIT — AND THAT IS HOW A P0 SURVIVES A GREEN
   SUITE FOR THREE MONTHS.** `advancePlan` had six passing tests driving it directly and exactly ONE
   production caller, which sat inside a function that was never invoked (`ChapterPortal` discards
@@ -2105,6 +2440,40 @@ count the matches.
   action, the gate has to drive that action end to end**, and the cheap companion is a source check
   that the wiring is still present in the path that actually runs. Nothing else can see a caller
   disappear.
+- ⚠️⚠️ **A GATE THAT ENTERS A CHAPTER BY "CLICK THE BIGGEST CONTROL" GRADES WHATEVER SCREEN THAT
+  LANDS ON — WHICH MAY NOT BE THE SCREEN YOU MEAN.** `all-chapters` clicks the largest visible
+  control and measures 900 ms later. On a GameShell route that reaches the **ExploreStep**, one
+  screen before the start card — so it never loaded the card, and reported all 70 chapters clean
+  while **eight of them shipped their start button at y 284–330 of a 320px frame**: the only forward
+  control on the first screen of the chapter, ten pixels below the fold, on production. This is *a
+  unit test cannot see that nothing calls the unit* wearing a browser: the check ran, it just ran
+  somewhere else. **Name the screen a spec is about, enter it deliberately, and assert you ARRIVED**
+  (`onCard`) — a spec that cannot tell it graded the wrong screen will tell you the right one is
+  fine. Gate: [start-card.spec.ts](../e2e/start-card.spec.ts).
+- ⚠️⚠️ **A LAYOUT VIOLATION MUST NAME ITS AXIS, OR THE FAILURE IS UNREADABLE — AND OFF-FRAME
+  SIDEWAYS IS OFTEN THE CHAPTER WORKING.** The same gate printed `offscreen after entering: BUTTON
+  (30–249 of 720)` on a 720-tall frame: a y-range entirely inside the frame, for a violation that
+  was horizontal. It cost most of a triage. Worse, the thing it caught was correct: in the 3–5 band
+  an answer creature IS a `<button>`, and this file's first rule is that **nothing materialises** —
+  a creature WAITS off-stage and arrives on its own legs. Measured on `counting` at 1280×720, two
+  buttons parked at x −332..−78 and 1358..1612 carrying `transition: left 2.6s linear`. They appear
+  ~4 s after entering, so a fast machine measured before the parade spawned and the slow CI runner
+  measured after: the check was a race against the animation, and it went red for two nights while
+  the app was fine. **Require the whole box inside the frame VERTICALLY** (nothing here is ever
+  staged on that axis) and exempt only what DECLARES itself in motion horizontally.
+  ⚠️ And the declaration has to be read carefully: a first draft exempted anything whose
+  `transition-property` mentioned `left`, `transform` **or `all`** — and `← Menu` computes
+  `transition-property: all` with `transition-duration: 0s`, i.e. every ordinary styled button in
+  the app. Mutating the bound to `r.right > 1` then flagged nothing at all, which is what a check
+  that has exempted the whole world looks like from outside: green. The travelling sprites measure
+  `left` at **2.6s**, so the test is the property AND a real duration — a hover transition has none.
+- ⚠️ **THE GAMESHELL START CARD IS THE ONE STAGE WITH NO `FitSlot`, SO ITS SPACING *IS* ITS HEIGHT.**
+  Everywhere else a short frame is absorbed by scale-to-fit; on the start card nothing shrinks, so
+  two 18px gaps between ticket, blurb and buttons are 36px of pure spacing on a 320px screen and the
+  card silently overflows. 8px on a short frame bought back 20 and took all eight chapters from
+  −10px to +10px. **Height comes out of the SPACING before it comes out of the words** — and pair it
+  with `justify-content: safe center`, because plain `center` on a flex column that cannot shrink
+  overflows BOTH ways, pushing the top under the header where no scroll can reach it.
 - ⚠️⚠️ **A GREEN CHECK IS NOT EVIDENCE UNTIL YOU HAVE WATCHED IT GO RED.** A gate written for the
   ScribblePad-over-the-keys collision passed 152/152 and was **inert**: it filtered fixed elements to
   the "outermost", and the outermost fixed element in this app is the ROOT at 0,0, so every layer
@@ -2169,6 +2538,17 @@ count the matches.
   and make it drivable, because the reason it is hard is often that nothing runs it. (Here it took
   two facts: the Supabase session lives under `milo-auth`, since `client.ts` overrides `storageKey`,
   and the JWT must be well-formed or `getSession()` returns null.)
+- ⚠️⚠️ **"NOTHING CAN REACH THIS" IS A MEASUREMENT, NOT AN OBSERVATION — TAKE IT BEFORE YOU WRITE IT
+  DOWN.** This file already says that when you catch yourself writing a source check BECAUSE the
+  thing cannot be driven, *that inability is the finding*. It has a second half: **the inability has
+  to be tested.** On 2026-08-20 a sweep concluded that the 24 storybook chapters "keep their
+  generators inside their .tsx components, so no gate can reach their question text at all", and it
+  went into the handoff as a finding. It was false. A story `.tsx` imports perfectly well under
+  vitest and `beat.make()` / `beat.say()` both run; the blocker was **22 module-scope declarations
+  that happened not to say `export`**. One throwaway test — `await import(...)`, call the factory,
+  print the prompt — settled it in under a minute, and 21 of the 24 chapters were in the gate the
+  same afternoon. **An assumed impossibility is the most expensive kind of comment**, because it
+  stops the next person checking too. Import it and call it before you claim you cannot.
 - Gates before any commit: `tsc` · `npm test` · `next build`, then bump `public/sw.js` VERSION.
 
 ---

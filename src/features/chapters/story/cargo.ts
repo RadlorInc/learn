@@ -3,7 +3,7 @@
  *
  * Everything the chapter renders and grades from lives here, outside React, because the answering
  * surface is a WEBCAM and a webcam cannot be driven by a gate. The instrument is eyeball-only; this
- * file is where the maths, the ladder, the grader and every word the child reads are held to account
+ * file is where the math, the ladder, the grader and every word the child reads are held to account
  * (see __tests__/loadingBayData.test.ts).
  *
  * THE VERB IS "SEND THE CART", AND THE STACKS ARE THE CHART. Every round a delivery lands and the
@@ -398,7 +398,7 @@ export const GUIDED: LbRound = mkHowMany([G.apple, G.melon, G.bucket, G.basket],
  * viewport sizes. GameShell owns the bands now and `FitSlot` scales the instrument into whatever is
  * left, so all of it went with the painted world.
  *
- * What did NOT go is everything above: the ladder, the grader and the words. That split — maths and
+ * What did NOT go is everything above: the ladder, the grader and the words. That split — math and
  * words in the module, layout in the shell — is the whole reason ten chapters share one engine.
  */
 export {}

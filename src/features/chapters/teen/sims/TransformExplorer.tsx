@@ -143,7 +143,10 @@ export default function TransformExplorer({ band, onReady }: TransformExplorerPr
                   type="button"
                   onClick={() => setAxis(a)}
                   style={{
-                    flex: 1, padding: '8px 0', borderRadius: 8,
+                    // 44px tap floor — these measured 35px. Explore sims sit in a column with
+                    // room to spare even at 640x320, so the height is free here; the chips in a
+                    // PLAY instrument are the tight ones and are deliberately left alone.
+                    flex: 1, padding: '8px 0', minHeight: 44, borderRadius: 8,
                     background: on ? 'var(--accent)' : 'transparent',
                     border: `1px solid ${on ? 'var(--accent)' : 'var(--outline)'}`,
                     color: on ? 'var(--fg-on-color)' : 'var(--ink-soft)',

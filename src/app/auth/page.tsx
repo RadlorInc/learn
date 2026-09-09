@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [mode,     setMode]     = useState<Mode>('login')
   const [email,    setEmail]    = useState(() => getLeadEmail() ?? '')   // prefill from the checkup lead capture
   const [password, setPassword] = useState('')
+  const [confirm,  setConfirm]  = useState('')     // signup only: typed twice, compared before anything is sent
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
   const [success,  setSuccess]  = useState<string | null>(null)
@@ -28,6 +29,10 @@ export default function AuthPage() {
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
+      return
+    }
+    if (mode === 'signup' && confirm !== password) {
+      setError('Passwords do not match')
       return
     }
 
@@ -113,9 +118,9 @@ export default function AuthPage() {
           fontSize: 30, fontWeight: 800,
           color: '#F26B2C', margin: 0,
           fontFamily: 'var(--font-display)',
-        }}>Milo Story Mode</h1>
+        }}>AdaptiveLearn</h1>
         <p style={{ fontSize: 15, color: '#888', margin: '6px 0 0', fontWeight: 500 }}>
-          Learning adventures for little ones
+          Adaptive math for ages 3 to 18
         </p>
       </div>
 
@@ -137,9 +142,12 @@ export default function AuthPage() {
           {(['login', 'signup'] as Mode[]).map(m => (
             <button
               key={m}
-              onClick={() => { setMode(m); reset() }}
+              onClick={() => { setMode(m); setConfirm(''); reset() }}
               style={{
-                flex: 1, padding: '9px',
+                // 44px tap floor. At `padding: '9px'` these measured 34px tall at every viewport —
+                // over WCAG AA's 24 but under the 44 this repo aims at, on the two controls that
+                // decide which form a parent is filling in.
+                flex: 1, padding: '9px', minHeight: 44,
                 borderRadius: 9, border: 'none',
                 fontSize: 14, fontWeight: 700, cursor: 'pointer',
                 background: mode === m ? '#fff' : 'transparent',
@@ -217,6 +225,39 @@ export default function AuthPage() {
           />
         </div>
 
+        {/* Confirm password — signup only. A typo in a password nobody can see locks a parent out of
+            the account they just made, and the only recovery is the email reset flow. */}
+        {mode === 'signup' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>
+              Confirm password
+            </label>
+            <input
+              type="password"
+              placeholder="Type it again"
+              value={confirm}
+              onChange={e => { setConfirm(e.target.value); reset() }}
+              onKeyDown={e => e.key === 'Enter' && handleEmailAuth()}
+              autoComplete="new-password"
+              aria-label="Confirm password"
+              style={{
+                padding: '12px 14px', fontSize: 15,
+                border: '2px solid #e5e7eb', borderRadius: 12,
+                outline: 'none', width: '100%', boxSizing: 'border-box',
+                fontWeight: 500,
+                transition: 'border-color 0.15s',
+              }}
+              onFocus={e => { e.target.style.borderColor = '#F26B2C' }}
+              onBlur={e => { e.target.style.borderColor = '#e5e7eb' }}
+            />
+          </div>
+        )}
+
+        {/* COPPA/ToS: the documents are linked ABOVE the button, so they are on screen before the
+            adult commits rather than after. This is the consent record — without it we cannot show
+            that anyone was told what they were agreeing to. */}
+        <ConsentLine />
+
         {/* Email auth button */}
         <button
           onClick={handleEmailAuth}
@@ -236,9 +277,6 @@ export default function AuthPage() {
         >
           {loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}
         </button>
-
-        {/* COPPA/ToS: the documents are linked at the moment an adult submits an address. */}
-        <ConsentLine />
 
         {/* Divider */}
         <div style={{
@@ -286,7 +324,7 @@ export default function AuthPage() {
         background: '#fff', border: '2px dashed rgba(242,107,44,0.5)', borderRadius: 18,
         padding: '14px 18px', color: '#F26B2C', fontWeight: 700, fontSize: 15,
       }}>
-        🔍 Not sure where they are? Take the free 2-minute check →
+        🔍 Not sure where they are? Take the free check →
         <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#9ca3af', marginTop: 3 }}>No account needed to start</span>
       </a>
     </div>

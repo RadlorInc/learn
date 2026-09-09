@@ -26,7 +26,7 @@
  * committed sprites only (no new assets). Wrapped by game/CompareChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import FitBox from './FitBox'
@@ -36,6 +36,9 @@ import { useViewport } from '@/shared/hooks/useViewport'
 import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
+import { DirectionsInline } from '@/features/chapters/directions'
 
 /** The three signs, in the order they are drawn. The answer is a SIGN, not a side. */
 export const SIGNS = ['>', '<', '=']
@@ -273,7 +276,9 @@ function Scale({ a, b, item, tilt, short }: { a: number; b: number; item: Item; 
 }
 
 // ─── The three big sign buttons ───────────────────────────────────────────────────────
-function SignRow({ picked, answer, onPick, revealed, short }: { picked: string | null; answer: string; onPick?: (s: string) => void; revealed?: boolean; short?: boolean }) {
+function SignRow({ picked, answer, onPick, revealed, short, pending }: { picked: string | null; answer: string; onPick?: (s: string) => void; revealed?: boolean; short?: boolean
+  /** chosen, not yet submitted — a neutral ring, never the green reserved for a right answer */
+  pending?: string | null }) {
   const size = short ? 'clamp(56px,15vh,80px)' : 'clamp(76px,15vmin,104px)'
   const locked = picked !== null || revealed
   return (
@@ -286,7 +291,10 @@ function SignRow({ picked, answer, onPick, revealed, short }: { picked: string |
             width: size, height: size,
             background: showOk ? 'var(--garden-green-soft)' : 'var(--paper)',
             border: `5px solid ${showOk ? 'var(--garden-green)' : isSel ? 'var(--ink-muted)' : 'var(--outline)'}`,
-            borderRadius: 24, boxShadow: `0 7px 0 ${showOk ? 'var(--garden-green-deep)' : '#c8ac79'}`,
+            borderRadius: 24,
+            boxShadow: pending === ch
+              ? `${PICKED_RING}, 0 7px 0 #c8ac79`
+              : `0 7px 0 ${showOk ? 'var(--garden-green-deep)' : '#c8ac79'}`,
             fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: short ? 'clamp(30px,8vh,44px)' : 'clamp(40px,9vmin,54px)', color: 'var(--ink)',
             cursor: locked ? 'default' : 'pointer', transform: showOk ? 'scale(1.1) translateY(-4px)' : 'scale(1)',
             transition: 'transform 160ms cubic-bezier(.34,1.56,.64,1), background 160ms ease',
@@ -299,13 +307,20 @@ function SignRow({ picked, answer, onPick, revealed, short }: { picked: string |
 
 // ─── Interactive play surface (guided / practice) ───────────────────────────────────
 type Mode = 'guided' | 'practice'
-const sayFor = (d: CmpRound) => `${numberToWords(d.a)} and ${numberToWords(d.b)}. Which sign is right?`
+/**
+ * The written question. ONE place, because it is drawn by the chapter's own pill AND by SkillBeat's
+ * — chapter-craft §3: "a sentence written in two places is the fault; the duplicate pill is only
+ * the symptom".
+ */
+export const ASK = 'Which sign is right?'
+const sayFor = (d: CmpRound) => `${numberToWords(d.a)} and ${numberToWords(d.b)}. ${ASK}`
 
 const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { a, b, item, answer } = data
   const { h: vh } = useViewport()
   const short = vh < 470
   const [picked, setPicked] = useState<string | null>(null)
+  const [pending, setPending] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false)
   // ⚠️ THE BEAM CONFIRMS AN ANSWER, IT NEVER PREVIEWS ONE. This used to tip 400ms after the
   // question loaded — before the child had answered — and the heavier pan glowed with it, so the
@@ -315,9 +330,23 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
   const tilt = picked !== null
 
   useEffect(() => {
-    if (mode === 'guided') speak(sayFor(data))
+    if (mode === 'guided') speakAfterCurrent(sayFor(data))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+
+  /** A tap only CHOOSES; nothing is graded until Ready. Re-tapping the choice unchooses it, so
+   *  the bar is never a trap. The grading path below is untouched — it simply runs later. */
+  function pick(ch: string) {
+    if (done.current || picked !== null) return
+    setPending(p => (p === ch ? null : ch))
+  }
+  function commit() {
+    const ch = pending
+    if (ch == null) return
+    setPending(null)
+    choose(ch)
+  }
 
   function choose(ch: string) {
     if (done.current || picked !== null) return
@@ -333,16 +362,29 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
 
   return (
     <>
+      {/*
+        ⚠️ ONLY OUTSIDE SkillBeat. In a scored round SkillBeat draws its own prompt pill from
+        `beat.prompt`, so rendering this one too put "Which sign is right?" on screen TWICE — one
+        pill 80px down and another above it. The guided round runs outside SkillBeat, so there this
+        is the only pill and it stays. SkillBeat's is the one worth keeping in play: a tap on it
+        replays Milo's voice, this one is `pointerEvents: none`.
+        It had shipped, and no gate could see it: both halves are individually correct and the
+        duplication is a property of the rendered DOM. It took driving the chapter into a scored
+        round, which only became possible once the StrictMode guard was fixed (useOnceGuard).
+      */}
+      {mode !== 'practice' && (
       <div style={{ position: 'fixed', top: short ? 52 : 80, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
         <div style={{ maxWidth: 'min(88vw, 560px)', background: 'rgba(255,255,255,.92)', border: '3px solid var(--outline)', borderRadius: 18, padding: short ? '5px 14px' : '10px 18px',
           fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 'clamp(12px,3.4vh,15px)' : 'clamp(15px,2.2vh,19px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.14)' }}>
-          Which sign is right?
+          {ASK}
         </div>
       </div>
+      )}
       <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '52%' : '46%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: short ? 'clamp(8px,2vh,16px)' : 'clamp(12px,3vh,28px)' }}>
         <Scale a={a} b={b} item={item} tilt={tilt} short={short} />
-        <SignRow picked={picked} answer={answer} onPick={choose} short={short} />
+        <SignRow picked={picked} answer={answer} onPick={pick} short={short} pending={pending} />
       </div>
+      <ReadyBar show={pending !== null} onCommit={commit} />
     </>
   )
 }
@@ -391,12 +433,12 @@ const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data
 }
 
 // ─── Beat ───────────────────────────────────────────────────────────────────────────
-function makeCompareBeat(): Beat<CmpRound> {
+export function makeCompareBeat(): Beat<CmpRound> {
   return {
     skillId: 'compareNumbers', rounds: SCORED_N, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.a}:${d.b}`,   // dedupe on the MATH (the pair), not the rotating scene/animal
-    prompt: () => 'Which sign is right?',
+    prompt: () => ASK,
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ComparePlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <CompareExplain data={data} onDone={onDone} />,
@@ -416,7 +458,7 @@ export default function SeesawPark({ onFinish, onExit }: {
 }) {
   // The SETTING is now part of the round, not a choice made before the chapter starts.
   const [scene, setScene] = useState<CmpWorld>(SETTINGS[0])
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'compareNumbers', phase: 'practice' })
   const [bg, setBg] = useState(0)
   const [demoIdx, setDemoIdx] = useState(0)
   const { h: vh } = useViewport()
@@ -448,7 +490,7 @@ export default function SeesawPark({ onFinish, onExit }: {
 
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 12, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-      <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: short ? '5px 16px' : '9px 22px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: short ? 14 : 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
+      <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: short ? '5px 16px' : '9px 22px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: short ? 14 : 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}<DirectionsInline chapter="compareNumbers" /></div>
     </div>
   )
 
@@ -457,7 +499,7 @@ export default function SeesawPark({ onFinish, onExit }: {
       <style>{SP_CSS + CRITTER_CSS}</style>
       <Background bg={shown.w.bgs[shown.bg]} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

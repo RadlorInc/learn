@@ -15,17 +15,22 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import {
-  startProbe, nextSkill, record, diagnose, type ProbeState, type Diagnosis,
+  startProbe, nextSkill, record, diagnose, strandChoices, type ProbeState, type Diagnosis,
 } from '@/core/diagnosticEngine'
 import { NODE_BY_ID, chapterFor, type Band } from '@/core/skillGraph'
-import { makeItem, makeReadinessItem, pickThemeFor, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
-import { CHAPTER_NAMES } from '@/core/chapters'
+import { demoEligible } from '@/core/arChapters'
+import { makeItem, makeReadinessItem, pickThemeFor, gradeItem, type DiagItem, type DiagContext, type ItemTheme } from '@/core/diagnosticItems'
+import { CHAPTER_NAMES, gradeStartPlan, type AgeGroup } from '@/core/chapters'
+import { swapCopy } from '@/core/planCopy'
+import { track } from '@/infra/analytics'
 import { enqueueDiagnostic, flushDiagnosticQueue } from '@/infra/useOfflineSync'
 import { stashPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
-import { setActivePlan } from '@/infra/storage/activePlan'
-import { markCheckupDone } from '@/infra/storage/checkup'
+import { setActivePlan, planInProgress, type ActivePlan } from '@/infra/storage/activePlan'
+import { markCheckupDone, recordCheckupSkip } from '@/infra/storage/checkup'
 import { setLeadEmail, getLeadEmail } from '@/infra/storage/leadEmail'
-import { captureDiagnosticLead } from '@/data/repositories'
+import { kv } from '@/infra/storage/kv'
+import { saveResume, readResume, clearResume, resumable, sameTab, type DiagResume } from '@/infra/storage/diagResume'
+import { captureDiagnosticLead, startDiagnostic } from '@/data/repositories'
 
 // UUID v4 dedupe key (matches the session-sync clientId pattern) — makes the save idempotent so a
 // queue re-flush can never duplicate the diagnosis. Generated ONCE per completed diagnosis.
@@ -38,6 +43,8 @@ function newClientId(): string {
 import { PT, ACCENTS, LabBackdrop, BackChip, ChoiceButton, PtMilo, IntroCard, type Accent, type ChoiceState } from '@/features/chapters/story/preteen/kit'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { DiagVisualView } from '@/features/diagnostic/DiagVisual'
+import { DiagPad } from '@/features/diagnostic/DiagPad'
+import { EmailGate } from '@/features/diagnostic/EmailGate'
 
 const BANDS: Band[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan
@@ -72,56 +79,15 @@ const STORY_KEY: Record<string, string> = {
 function activeLearner(): { id?: string; name?: string; display_name?: string; age_group?: string; theme?: ItemTheme } | null {
   try { return JSON.parse(sessionStorage.getItem('milo_active_learner') || 'null') } catch { return null }
 }
-/**
- * Mid-check resume. The probe lived only in React state, so ONE Back press (or a refresh, or a
- * backgrounded tab being evicted) threw away a check that takes minutes — measured: answering to
- * Q4 then pressing Back landed on the marketing page with every answer gone.
- *
- * `ProbeState` + the attempt number is the whole thing: `resolve()` rebuilds the current question
- * from them, and `buildContext(attempt)` is deterministic per child, so the restored run serves the
- * SAME items rather than a fresh draw the child could re-roll.
- *
- * ⚠️ sessionStorage, not localStorage, and not the DB: this is a per-tab, per-sitting resume. A
- * check abandoned days ago should start fresh (the child has moved on), and a half-finished probe
- * is not a result — nothing here is worth syncing.
- */
-const RESUME_KEY = 'milo_diag_resume'
-function saveResume(band: Band, s: ProbeState, attempt: number) {
-  // The learner rides along so a restore can tell WHOSE run this was — see `resumable` below.
-  try { sessionStorage.setItem(RESUME_KEY, JSON.stringify({ band, s, attempt, learner: activeLearner()?.id ?? null })) } catch { /* private mode / full: resume is a nicety, never a blocker */ }
-}
-function readResume(): { band: Band; s: ProbeState; attempt: number; learner: string | null } | null {
-  try {
-    const r = JSON.parse(sessionStorage.getItem(RESUME_KEY) || 'null')
-    // Guard the shape: a stale/garbled entry must not crash the page a child is trying to start.
-    return r && (BANDS as string[]).includes(r.band) && Array.isArray(r.s?.asked) ? r : null
-  } catch { return null }
-}
-/**
- * ⚠️ A RESUME IS NOT ALWAYS THE RIGHT ANSWER, AND GETTING THIS WRONG SILENTLY SERVES THE WRONG
- * CHILD THE WRONG CHECK. Caught by driving it: with a 6–8 probe mid-flight, opening
- * `/diagnostic?band=12-14` restored the 6–8 run and ignored the URL entirely — a parent following a
- * band-specific link got someone else's half-finished questions with nothing on screen saying so.
- *
- * Two things outrank a resume, and both mean "this is a different run":
- *   · an EXPLICIT `?band=` that disagrees — the link is a deliberate instruction, the resume is a
- *     convenience, so the instruction wins;
- *   · a different active learner — sibling B must never continue sibling A's probe, and the items
- *     are seeded per learner anyway, so the restored run would not even be self-consistent.
- * Anything else (no `?band=`, same child, a plain refresh or Back) resumes, which is the point.
- */
-function resumable(r: ReturnType<typeof readResume>, urlBand: string | null, learnerId: string | null) {
-  return !!r && (!urlBand || urlBand === r.band) && learnerId === r.learner
-}
-const clearResume = () => { try { sessionStorage.removeItem(RESUME_KEY) } catch { /* nothing to clear */ } }
-
 /** Phase 4: build the per-child context from the active learner (safe to call in a handler). */
 function buildContext(attempt: number): DiagContext {
   const l = activeLearner()
   const seed = l?.id || 'anon'
   return { name: l?.name || l?.display_name, theme: l?.theme || pickThemeFor(seed), seed, nonce: attempt }
 }
-function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis): Promise<void> {
+/** @param clientId the id generated when the probe STARTED, so this completion updates the
+ *  `diagnostic_sessions` row `start_diagnostic` opened instead of inserting a second one. */
+function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis, clientId: string): Promise<void> {
   const id = activeLearner()?.id
   if (!id) return Promise.resolve()   // preview run, no learner context — nothing to persist to
   markCheckupDone(id)   // this child has now completed their mandatory checkup → passes the play gate
@@ -133,12 +99,20 @@ function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis): Promise<voi
     blocked: dx.blockedSkills, strengths: dx.strengths, workingLevel: dx.workingLevel,
     planSkills: dx.planSkills, planChapters: dx.planChapters,
     items: s.asked.map(sk => ({ skill: sk, correct: s.passed.includes(sk) })),
-    clientId: newClientId(),
+    clientId,   // ⚠️ the START's id, not a new one — see startProbeNow
   })
   return flushDiagnosticQueue().then(() => {}).catch(() => {})
 }
 
 const label = (id: string) => NODE_BY_ID[id]?.label ?? id
+/**
+ * ⚠️ THE PLAN IS WALKED ONE CHAPTER AT A TIME, SO THE REPORT SHOWS THE FIRST FEW AND SAYS HOW MANY.
+ * The route is derived from the gap up to the child's grade, and for a deep gap that is honestly
+ * long — measured, a 17–18 learner rooting in grade school needs ~19 chapters. Printing all of them
+ * turns "here is the plan" into a wall a parent cannot read, and reads as a bill rather than a
+ * route. Truncating the DATA would be worse (the pointer walks the whole list), so only the display
+ * is capped, and the count is stated rather than hidden. */
+const PLAN_SHOWN = 5
 const chapterName = (id: string | undefined) => (id && CHAPTER_NAMES[id as keyof typeof CHAPTER_NAMES]) || id || ''
 
 interface Slot { s: ProbeState; skill: string | null; item: DiagItem | null }
@@ -162,10 +136,11 @@ function resolve(state: ProbeState, band: Band, ctx: DiagContext): Slot {
   }
   return { s, skill: null, item: null }
 }
-/** Whether the chosen response counts as "passing" the skill (parent items use passSet; MCQ uses answer). */
-const isPass = (item: DiagItem, choice: string) => item.passSet ? item.passSet.includes(choice) : choice === item.answer
+/** Whether a response counts as "passing" the skill. `gradeItem` owns it: parent items use their
+ *  passSet, a typed number compares NUMERICALLY (so "07" passes), everything else is exact. */
+const isPass = gradeItem
 
-type Phase = 'intro' | 'email' | 'probe' | 'report'
+type Phase = 'intro' | 'email' | 'door' | 'probe' | 'report'
 
 export default function DiagnosticPage() {
   const { w: vw, h: vh } = useViewport()
@@ -184,9 +159,21 @@ export default function DiagnosticPage() {
   const [picked, setPicked] = useState<string | null>(null)
   const [result, setResult] = useState<Diagnosis | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [pending, setPending] = useState<DiagResume | null>(null)   // a saved run from an earlier sitting, offered rather than applied
   const ctxRef = useRef<DiagContext>({})
   const finalStateRef = useRef<ProbeState | null>(null)   // probe state at report time (for capture/save)
   const persistRef = useRef<Promise<void> | null>(null)   // the in-flight DB save (awaited before we navigate away)
+  /** This attempt's dedupe key, generated when the probe starts. The START row and the COMPLETION
+   *  must carry the same one, or `diagnostic_sessions` gets two rows and "how many finished" is
+   *  wrong in the flattering direction. Survives a reload via the resume record. */
+  const attemptIdRef = useRef<string | null>(null)
+  /**
+   * ⚠️ A CHILD CAN START THIS CHECK WHENEVER THEY LIKE NOW (the menu carries its own door), so
+   * finishing one is no longer always a FIRST check — it can land on a plan somebody is four
+   * chapters into, and `setActivePlan` resets the pointer to 0. So it asks first. Null = nothing to
+   * ask about.
+   */
+  const [replaceAsk, setReplaceAsk] = useState<{ plan: ActivePlan; chapters: string[]; lid: string } | null>(null)
 
   const accent = accentFor(band)
   const readiness = band === '3-5'
@@ -199,35 +186,107 @@ export default function DiagnosticPage() {
     if (p && (BANDS as string[]).includes(p)) { setBand(p as Band); setBandKnown(true) }
     else if (l?.age_group && (BANDS as string[]).includes(l.age_group)) { setBand(l.age_group as Band); setBandKnown(true) }
 
-    // A check already in flight in this tab wins over all of the above — the child is mid-probe and
-    // the band is whatever they were answering under — UNLESS it belongs to another run entirely.
-    const r = readResume()
-    if (resumable(r, p, l?.id ?? null)) {
-      ctxRef.current = buildContext(r!.attempt)
-      setBand(r!.band); setBandKnown(true); setAttempt(r!.attempt)
-      setSlot(resolve(r!.s, r!.band, ctxRef.current)); setPhase('probe')
-    } else if (r) clearResume()   // another child's, or another band's: drop it rather than half-honour it
+    // ⚠️ kv IS HYDRATED ASYNCHRONOUSLY, so a synchronous read here returns null on a cold load and
+    // the resume silently never fires — the exact shape of a check that reports "nothing to resume"
+    // having looked at an empty map. Wait for ready() before reading.
+    let dead = false
+    void kv.ready().then(() => {
+      if (dead) return
+      const r = readResume(l?.id ?? null)
+      if (!resumable(r, p)) { if (r) clearResume(l?.id ?? null); return }   // another band: drop it
+      // SAME TAB → the child is mid-probe and never left; resume silently, as it always has.
+      // ANOTHER SITTING → they came back. Dropping them into question 26 of a run they may not
+      // remember starting, with no way back to a fresh check, is a dead end — so it is OFFERED.
+      if (sameTab()) { applyResume(r!) } else { setPending(r!); setBandKnown(true); setBand(r!.band) }
+    })
+    return () => { dead = true }
   }, [])
+
+  const applyResume = (r: DiagResume) => {
+    // Same attempt continuing, so the same dedupe key — otherwise a reload mid-probe would open a
+    // SECOND start row and inflate the "started" count with the child's own refreshes. A resume
+    // written before 2026-09-05 has none; that attempt simply has no start row to update.
+    attemptIdRef.current = r.clientId ?? newClientId()
+    ctxRef.current = buildContext(r.attempt)
+    setBand(r.band); setBandKnown(true); setAttempt(r.attempt); setPending(null)
+    setSlot(resolve(r.s, r.band, ctxRef.current)); setPhase('probe')
+  }
+  /** "Start fresh" on the resume offer: bin the saved run and fall back to the ordinary intro. */
+  const discardResume = () => { clearResume(activeLearner()?.id ?? null); setPending(null) }
 
   const pickBand = (b: Band) => { setBand(b); setBandKnown(true) }
 
-  const startProbeNow = () => {
+  /**
+   * ⚠️ SKIPPING IS ONE TAP AND ARGUES BACK ABOUT NOTHING. No confirmation, no "are you sure", no
+   * second screen making the case again — a skip that argues back is not optional, it is a toll.
+   *
+   * ⚠️ AND IT IS NOT PLANLESS. The child leaves with a `gradeStartPlan`: their band, in curriculum
+   * order, from the beginning. Less informed than a diagnosed plan and refined from real gameplay
+   * afterwards by `advanceAfterChapter` — but a plan, which is the product's shape. Handing a
+   * parent 72 chapters instead is what every other maths app does.
+   */
+  const skipCheck = () => {
+    const id = activeLearner()?.id
+    if (!id) return                            // cold traffic has no learner to plan for; no skip is offered
+    recordCheckupSkip(id)
+    setActivePlan(id, band, gradeStartPlan(band as AgeGroup), 'gradeStart')
+    track('checkup_offer', { action: 'skipped', at: attempt === 0 ? 'signup' : 'reoffer', band })
+    window.location.href = window.location.origin + '/menu?plan=1'
+  }
+
+  /** `seed` narrows the agenda to one named strand (17–18's door 2). Omitted = the whole band. */
+  const startProbeNow = (seed?: string[]) => {
     ctxRef.current = buildContext(attempt)          // Phase 4: seed the probe for this child + attempt
-    const s = startProbe(band)
-    saveResume(band, s, attempt)
+    const s = startProbe(band, undefined, seed)     // undefined config → the band's default
+    /**
+     * ⚠️ RECORD THAT THIS STARTED. Until 2026-09-05 nothing did: `diagnostic_sessions` was written
+     * only at completion, so every row had `completed_at = started_at` and "how many start the
+     * check vs finish it" could only ever answer 100%. Fire-and-forget on purpose — a child must
+     * not wait on a network call to reach question one — but NOT swallowed: `startDiagnostic`
+     * logs its own failure.
+     */
+    const cid = newClientId()
+    attemptIdRef.current = cid
+    const lid = activeLearner()?.id
+    if (lid) void startDiagnostic(lid, band, cid)   // logged-out visitors have no learner to attach to
+    saveResume(lid ?? null, band, s, attempt, undefined, cid)
     setSlot(resolve(s, band, ctxRef.current)); setPhase('probe')
+  }
+  // Where the intro and the email gate both hand off to. 17–18 is asked which strand first; every
+  // other band goes straight in, because a self-report at that age is noise (see strandChoices).
+  const afterIntro = () => {
+    if (strandChoices(band).length) setPhase('door')
+    else startProbeNow()
   }
   // Cold (logged-out) visitors give an email first — required, for lead capture. Signed-in users
   // already have an account, so they go straight in. Once captured (this or a prior visit), we don't
   // re-ask on a retake.
   const begin = () => {
     if (!hasLearner && !getLeadEmail()) { setPhase('email'); return }
-    startProbeNow()
+    afterIntro()
   }
   const submitEmail = (email: string) => {
     setLeadEmail(email)                    // prefill the later "free account" signup
     void captureDiagnosticLead(email, band)  // durable lead (best-effort — never blocks the checkup)
-    startProbeNow()
+    afterIntro()
+  }
+
+  /**
+   * The two answers to that question. EITHER WAY the diagnosis is already saved — it persists when
+   * the probe ENDS (`persistDiagnosis`), not here — so declining costs the pointer and nothing else,
+   * and the report is still in the parent's dashboard.
+   *
+   * ⚠️ Keeping the old plan is DEVICE-LOCAL, exactly like the checkup skip: `reconcilePlan` prefers
+   * a local plan over the remote one, so the choice holds here. A fresh device with no local plan
+   * seeds the newer remote one — the same window the skip has, and closing it would mean a second
+   * write path that can disagree with the first.
+   */
+  const finishReplace = async (replace: boolean) => {
+    const ask = replaceAsk
+    if (!ask) return
+    if (replace) setActivePlan(ask.lid, band, ask.chapters)
+    try { await Promise.race([persistRef.current ?? Promise.resolve(), new Promise(r => setTimeout(r, 4000))]) } catch { /* best-effort */ }
+    window.location.href = window.location.origin + '/menu' + (replace ? '?plan=1' : '')
   }
 
   // Launch the plan (step 6). SIGNED-IN → save the arranged plan for this learner + drop into the REAL
@@ -240,6 +299,9 @@ export default function DiagnosticPage() {
     // SIGNED-IN → always land in the REAL app. An on-track child (no gap → empty plan) still goes to
     // /menu to "get ahead", NOT the anonymous /story preview (which would drop their real profile).
     if (hasLearner && lid) {
+      // ⚠️ Only when there is something to lose — a plan nobody has walked is replaced silently.
+      const walked = chs.length ? planInProgress(lid) : null
+      if (walked) { setReplaceAsk({ plan: walked, chapters: chs, lid }); return }
       if (chs.length) setActivePlan(lid, band, chs)
       // Don't lose the diagnosis to a fast click: let the in-flight save finish (cap so we never hang).
       try { await Promise.race([persistRef.current ?? Promise.resolve(), new Promise(r => setTimeout(r, 4000))]) } catch { /* best-effort */ }
@@ -251,15 +313,38 @@ export default function DiagnosticPage() {
     // COLD: stash the result so a play-first visitor is still captured after the taste, then open the
     // free sample with the sign-up banner (?taste=1).
     stashResult()
-    if (Object.prototype.hasOwnProperty.call(STORY_KEY, ch)) {
-      const key = STORY_KEY[ch]
+    /**
+     * ⚠️ THE TASTE IS THE PLAN'S FIRST **DEMO-ELIGIBLE** CHAPTER, NOT ITS FIRST CHAPTER. This line
+     * was the live COPPA leak: measured over the planted-gap simulation, `plan[0]` is one of the
+     * eight camera chapters for 30% of 9–11 visitors and 12–22% of the bands above, and it sent a
+     * logged-out child straight at that chapter's "Turn on the camera" start card.
+     * `useChapterAccess` now refuses that render whatever the URL says — this is the other half, so
+     * we do not walk a parent into a wall we put there. A plan of NOTHING but camera chapters is
+     * possible in principle, and then the honest move is the account, not a worse chapter.
+     */
+    const tasteCh = chs.find(demoEligible)
+    if (tasteCh == null) { window.location.href = window.location.origin + '/auth'; return }
+    if (Object.prototype.hasOwnProperty.call(STORY_KEY, tasteCh)) {
+      const key = STORY_KEY[tasteCh]
       window.location.href = window.location.origin + '/story?taste=1' + (key ? `&ch=${key}` : '')
     } else {
-      window.location.href = window.location.origin + `/teen-preview?c=${ch}&taste=1`
+      window.location.href = window.location.origin + `/teen-preview?c=${tasteCh}&taste=1`
     }
   }
 
-  const retake = () => { clearResume(); setAttempt(a => a + 1); setPhase('intro'); setResult(null); setSlot(null); setPicked(null) }
+  const retake = () => { clearResume(activeLearner()?.id ?? null); setAttempt(a => a + 1); setPhase('intro'); setResult(null); setSlot(null); setPicked(null) }
+  /**
+   * ⚠️ THE PARTIAL REPORT'S "TAKE THE FULL CHECK" STARTS THE FULL PROBE **DIRECTLY** — it must never
+   * be routed through `retake` / the intro. A student who named the wrong strand reaches that card
+   * after TWO questions; sending them back to the intro puts the strand door in front of them again,
+   * where the obvious move is to name another strand and collect another two-question nothing.
+   * Calling `startProbeNow()` with no seed makes that loop UNWRITABLE rather than merely unlikely:
+   * there is no flag to forget and no branch left that could show the door.
+   */
+  const fullCheck = () => {
+    clearResume(activeLearner()?.id ?? null); setAttempt(a => a + 1); setResult(null); setPicked(null)
+    startProbeNow()
+  }
 
   // Stash the result to the browser so it survives sign-up (the parent page replays it against the
   // learner they create). Called by BOTH the "save this plan" CTA and the "just start playing" taste,
@@ -290,10 +375,10 @@ export default function DiagnosticPage() {
       if (!next.skill) {
         const dx = diagnose(next.s)
         finalStateRef.current = next.s
-        clearResume()   // finished: the report owns the run now, and a resume would re-open the probe
+        clearResume(activeLearner()?.id ?? null)   // finished: the report owns the run now, and a resume would re-open the probe
         setResult(dx); setPhase('report')
-        persistRef.current = persistDiagnosis(band, next.s, dx)   // signed-in → saves; cold/preview → skips cleanly
-      } else { saveResume(band, next.s, attempt); setSlot(next) }
+        persistRef.current = persistDiagnosis(band, next.s, dx, attemptIdRef.current ?? newClientId())   // signed-in → saves; cold/preview → skips cleanly
+      } else { saveResume(activeLearner()?.id ?? null, band, next.s, attempt); setSlot(next) }
     }, 320)
   }
 
@@ -303,14 +388,53 @@ export default function DiagnosticPage() {
       <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
         <style>{`@keyframes pt_float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes pt_pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}@keyframes pt_twinkle{0%,100%{opacity:.25}50%{opacity:.8}}`}</style>
         <LabBackdrop accent={accent} /><BackChip onExit={() => history.back()} />
-        {!bandKnown
+        {pending
+          /**
+           * ⚠️ A DURABLE RESUME IS OFFERED ACROSS SITTINGS, NEVER APPLIED. Silently reopening
+           * question 26 of a run started days ago leaves a returning parent with no route to a
+           * fresh check at all — the retake control only exists on the REPORT, which they cannot
+           * reach without finishing the old run first. `IntroCard`'s `alt` is the escape, and it
+           * says what continuing costs (the questions already answered) rather than just "resume".
+           */
+          ? <IntroCard accent={accent} short={short}
+            title="Pick up where you left off?"
+            cta="Keep going"
+            body={`Milo still has your check from last time — ${pending.s.asked.length} question${pending.s.asked.length === 1 ? '' : 's'} answered. Carry on from there, or start a fresh one.`}
+            onStart={() => applyResume(pending)}
+            alt={{ label: 'Start fresh', onPick: discardResume }} />
+          : !bandKnown
           ? <AgePicker accent={accent} onPick={pickBand} />
           : <IntroCard accent={accent} short={short}
             title={readiness ? 'A quick readiness check' : 'Find your starting point'}
             cta={readiness ? "Let's play together" : "Let's explore"}
+            /**
+             * ⚠️ THE SKIP IS OFFERED ONLY TO A SIGNED-IN LEARNER, because skipping has to leave the
+             * child with a plan and cold traffic has nobody to make one for. For a logged-out
+             * visitor this screen is still the front door, unchanged.
+             */
+            alt={hasLearner ? { label: 'Skip for now', onPick: skipCheck } : undefined}
             body={readiness
               ? "Sit with your child for a few minutes of play. Milo suggests a small activity; you do it together and tap how it went — no scores, no pass/fail, just a friendly picture of what they're ready for."
-              : "Milo will ask a few quick questions to find exactly where to help — not a test, no scores, no timers. Just play along; some will be easy, some tricky. Milo figures out the rest."}
+              /* ⚠️ "A FEW QUICK QUESTIONS" AND "2 MINUTES" WERE TRUE OF THE FIRST BUILD AND BECAME
+                    A LIE ON 2026-08-22, when the probe started confirming every answer to reach
+                    96–97% accuracy: a child now answers 20–50 of them. Copy that undersells the
+                    length is worse than copy that oversells it — a parent who was promised two
+                    minutes abandons at question fifteen, and the diagnosis is thrown away. */
+              /* ⚠️ SAY WHAT IT DOES, NOT HOW LONG IT IS. "Take a 20–40 question placement check"
+                    prices the cost and hides the product; the length still has to be here (copy
+                    that undersells it is worse — a parent promised two minutes abandons at question
+                    fifteen and the diagnosis is thrown away), but it comes AFTER the outcome.
+                 ⚠️ AND THE OFFER NAMES THE RESUME. A parent deciding whether to begin is exactly
+                    who needs to know they can stop — it is the single fact most likely to turn a
+                    "not now" into a "go on then", and it has been true since 2026-08-24. */
+              /* ⚠️ AND IT IS SHORTER ON A SHORT FRAME. Measured at 640×320 with the full body: the
+                    card cleared the top by 5px and "Skip for now" cleared the bottom by 5 — it fit,
+                    with no margin for a font-load shift or a wider glyph. The three facts that
+                    survive are the ones the decision turns on: what it finds, how long, and that
+                    they can stop. The anti-fear detail belongs in the check, not the offer. */
+              : short
+                ? "Milo will find the one thing worth fixing first — not a test, and nothing to lose by getting one wrong. About ten minutes, and you can stop and pick up where you left off."
+                : "Milo will find exactly where your child should start — the one thing worth fixing first, not a grade. Not a test: no scores, no timers, nothing to lose by getting one wrong. About ten minutes, and you can stop and pick up where you left off."}
             onStart={begin} />}
         <PtMilo left={9} />
       </div>
@@ -323,6 +447,18 @@ export default function DiagnosticPage() {
       <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
         <LabBackdrop accent={accent} /><BackChip onExit={() => setPhase('intro')} />
         <EmailGate accent={accent} short={short} onSubmit={submitEmail} />
+        <PtMilo left={9} />
+      </div>
+    )
+  }
+
+  // ── STRAND DOOR (17–18 only) ─────────────────────────────────────────────────────────
+  if (phase === 'door') {
+    return (
+      <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
+        <LabBackdrop accent={accent} /><BackChip onExit={() => setPhase('intro')} />
+        <StrandDoor accent={accent} short={short} strands={strandChoices(band)}
+          onPick={id => startProbeNow([id])} onFull={() => startProbeNow()} />
         <PtMilo left={9} />
       </div>
     )
@@ -387,7 +523,14 @@ export default function DiagnosticPage() {
           </div>
         </div>
         <div ref={tilesRef} style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(12px,3vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
-          {item.choices.map(c => {
+          {item.input === 'num' || item.input === 'frac' ? (
+            // Keyed on the skill + how many have been asked, so the pad EMPTIES between questions —
+            // a remount is right here (there is nothing imperative inside it to lose) and without it
+            // the next child's answer starts with the previous one still in the window.
+            <DiagPad key={`${slot.skill}:${asked}`} kind={item.input} keys={item.keys} accent={accent}
+              size={Math.max(44, Math.min(short ? 48 : 58, Math.round(Math.min(vw / 11, vh / (short ? 7.5 : 9)))))}
+              disabled={!!picked} onSubmit={answer} />
+          ) : item.choices.map(c => {
             const st: ChoiceState = picked === c ? 'right' : picked ? 'dim' : 'idle'
             // 'right' just gives a neutral selected highlight here — correctness is never revealed.
             return <ChoiceButton key={c} label={c} accent={accent} state={picked === c ? 'idle' : st === 'dim' ? 'dim' : 'idle'} size={btn} onClick={() => answer(c)} disabled={!!picked} />
@@ -398,30 +541,72 @@ export default function DiagnosticPage() {
     )
   }
 
+  // ── "YOU ARE PART-WAY THROUGH A PLAN" ────────────────────────────────────────────────
+  // Same shape as the resume offer above: offered, never applied silently.
+  if (replaceAsk) {
+    const swap = swapCopy(replaceAsk.plan.index + 1, replaceAsk.plan.chapters.length, replaceAsk.chapters.length)
+    return (
+      <div style={{ position: 'relative', width: '100vw', minHeight: '100dvh', overflow: 'hidden' }}>
+        <LabBackdrop accent={accent} />
+        <IntroCard accent={accent} short={short}
+          title={swap.title} cta={swap.cta} body={swap.body}
+          onStart={() => void finishReplace(true)}
+          alt={{ label: swap.alt, onPick: () => void finishReplace(false) }} />
+        <PtMilo left={9} />
+      </div>
+    )
+  }
+
   // ── REPORT ───────────────────────────────────────────────────────────────────────────
   if (phase === 'report' && result) {
     const onSave = hasLearner ? undefined : captureAndSignup   // cold traffic → offer account-creation
     return readiness
       ? <ReadinessReport r={result} accent={accent} onStart={startPlan} onRetake={retake} onSave={onSave} name={ctxRef.current.name} />
-      : <RemediationReport r={result} accent={accent} onStart={startPlan} onRetake={retake} onSave={onSave} />
+      : <RemediationReport r={result} accent={accent} onStart={startPlan} onRetake={retake} onFullCheck={fullCheck} onSave={onSave} />
   }
 
   return null
 }
 
 // ── Remediation report (6–8 … 17–18): strengths → the one snag → cost → plan → guarantee ──
-function RemediationReport({ r, accent, onStart, onRetake, onSave }: { r: Diagnosis; accent: Accent; onStart: () => void; onRetake: () => void; onSave?: () => void }) {
+function RemediationReport({ r, accent, onStart, onRetake, onFullCheck, onSave }: { r: Diagnosis; accent: Accent; onStart: () => void; onRetake: () => void; onFullCheck: () => void; onSave?: () => void }) {
   const root = r.rootGap
   const highlightNames = r.downstreamHighlights.map(label)
   const planNames: string[] = []
   for (const ch of r.planChapters) { const n = chapterName(ch); if (n && !planNames.includes(n)) planNames.push(n) }
+  const shown = planNames.slice(0, PLAN_SHOWN)
+  const more = planNames.length - shown.length
   return (
     <ReportShell accent={accent} subtitle={r.workingLevel} onStart={onStart} onRetake={onRetake} onSave={onSave} cta={root ? 'Start the plan →' : 'Get ahead →'}>
       {!root ? (
-        <Card accent={accent} title="✅ On track — ready to get ahead">
-          Milo didn&apos;t find a gap holding things back. Great place to be — we&apos;ll set a plan that
-          stretches into the next skills.
-        </Card>
+        /**
+         * ⚠️⚠️ ONLY A `full` PASS MAY SAY "ON TRACK". A narrowed probe — the short pass, or 17–18's
+         * "I know what I'm stuck on" door — did not look everywhere, and measured, the spine alone
+         * misses a third to a half of gaps in 6–8 and 9–11 while a wrongly-named strand misses all
+         * of them. Framed as "here is where we're starting" that is a less-targeted plan; framed as
+         * "no gaps found" it is a lie told to the parent of a child who has one, which is the worst
+         * thing this product can produce. Founder's rule: only the deep pass gets to make a claim
+         * about grade level.
+         *
+         * ⚠️ AND THE OFFER OF THE FULL CHECK IS PART OF THE FIX, NOT A CONSOLATION. A student who
+         * named the wrong strand reaches this screen after TWO questions; the full check has to be
+         * one tap away and worded as the better option.
+         */
+        r.coverage === 'full' ? (
+          <Card accent={accent} title="✅ On track — ready to get ahead">
+            Milo didn&apos;t find a gap holding things back. Great place to be — we&apos;ll set a plan that
+            stretches into the next skills.
+          </Card>
+        ) : (
+          <Card accent={accent} title="🔍 Nothing broken in what we checked">
+            Milo looked at the part you pointed him at and everything there held up — so this is a good
+            place to start. He hasn&apos;t looked at everything yet, though.{' '}
+            <button onClick={onFullCheck} style={{
+              background: 'none', border: 'none', padding: 0, font: 'inherit', color: accent.base,
+              fontWeight: 800, textDecoration: 'underline', cursor: 'pointer',
+            }}>Take the full check</button>{' '}— it&apos;s longer, and it finds gaps you might not know about.
+          </Card>
+        )
       ) : (
         <>
           {r.strengths.length > 0 && (
@@ -440,10 +625,18 @@ function RemediationReport({ r, accent, onStart, onRetake, onSave }: { r: Diagno
           <Card accent={{ base: PT.warn } as Accent} title="⏳ Why it matters now">
             This skill is the foundation for {highlightNames.join(', ') || 'the skills above it'}
             {r.reachesAlgebra ? ', and in time, algebra' : ''}. Left alone the gap compounds — each new
-            topic stacks on it. Caught now, it&apos;s weeks of work, not years.
+            topic stacks on it.{' '}
+            {/* ⚠️ "Weeks of work, not years" is TRUE of a short route and a lie about a long one, and
+                the report prints the length two inches below — so on a deep gap the two lines
+                contradicted each other on the same screen. Measured: a learner rooting four bands
+                down draws a 40-step route beside the promise that it is not years. Say what is true
+                of THIS child: the distance is real, and the next step is small either way. */}
+            {planNames.length > 8
+              ? <>It is a real distance to make up — and it is walked one short chapter at a time, starting today.</>
+              : <>Caught now, it&apos;s weeks of work, not years.</>}
           </Card>
-          <Card accent={accent} title="🗺️ The plan">
-            {planNames.join('  →  ')}<br />
+          <Card accent={accent} title={`🗺️ The plan${planNames.length > 1 ? ` — ${planNames.length} steps` : ''}`}>
+            {shown.join('  →  ')}{more > 0 && <span style={{ color: PT.inkSoft }}>  →  <strong>+{more} more</strong>, one step at a time</span>}<br />
             <span style={{ color: PT.inkSoft }}>10 minutes a day, starting at the gap and rebuilding up — as play, no timers, no red X&apos;s.</span>
           </Card>
           <Card accent={accent} title="🔒 Our promise">
@@ -537,39 +730,17 @@ function ReportShell({ accent, subtitle, heading = "Here's what we found", cta, 
 }
 
 // ── Required email gate (cold traffic): capture a lead before the checkup, prefill signup later ──
-function EmailGate({ accent, short, onSubmit }: { accent: Accent; short?: boolean; onSubmit: (email: string) => void }) {
-  const [email, setEmail] = useState(() => getLeadEmail() ?? '')
-  const [err, setErr] = useState<string | null>(null)
-  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-  const submit = () => { if (!valid) { setErr('Please enter a valid email'); return } onSubmit(email.trim()) }
-  return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 440, background: PT.panel, backdropFilter: 'blur(8px)', border: `1px solid ${accent.base}66`, borderRadius: 20, padding: short ? '22px 20px' : '30px 28px', boxShadow: `0 0 30px ${accent.base}22, 0 18px 40px rgba(0,0,0,0.5)`, textAlign: 'center' }}>
-        <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2.5, color: accent.base, textTransform: 'uppercase', marginBottom: 10 }}>One quick thing</div>
-        <h1 style={{ margin: '0 0 8px', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 22 : 26, color: PT.ink }}>Where should we send the results?</h1>
-        <p style={{ margin: '0 0 20px', fontFamily: PT.sans, fontSize: 14.5, lineHeight: 1.5, color: PT.inkMute }}>Enter your email so we can save your child&apos;s starting point and plan. No spam — just the results.</p>
-        <input
-          type="email" inputMode="email" autoFocus value={email} placeholder="you@example.com"
-          onChange={e => { setEmail(e.target.value); if (err) setErr(null) }}
-          onKeyDown={e => { if (e.key === 'Enter') submit() }}
-          style={{ width: '100%', boxSizing: 'border-box', padding: '15px 16px', borderRadius: 12, border: `1.5px solid ${err ? '#e0483f' : PT.lineStrong}`, background: 'rgba(255,255,255,0.06)', color: PT.ink, fontFamily: PT.sans, fontSize: 17, outline: 'none', textAlign: 'center' }}
-        />
-        {err && <div style={{ marginTop: 8, fontFamily: PT.sans, fontSize: 13, color: '#ff8a80' }}>{err}</div>}
-        <button onClick={submit} disabled={!valid} style={{ marginTop: 16, width: '100%', padding: 16, borderRadius: 50, border: 'none', cursor: valid ? 'pointer' : 'not-allowed', background: valid ? accent.base : PT.line, color: valid ? '#06121f' : PT.inkMute, fontFamily: PT.sans, fontWeight: 800, fontSize: 17, boxShadow: valid ? `0 0 22px ${accent.base}66` : 'none', transition: 'all .16s ease' }}>Start the check →</button>
-        <p style={{ margin: '12px 0 0', fontFamily: PT.sans, fontSize: 11.5, color: PT.inkMute }}>Free · takes about 2 minutes</p>
-      </div>
-    </div>
-  )
-}
-
 // ── Cold-traffic age picker (the front door self-select) ───────────────────────────────
 function AgePicker({ accent, onPick }: { accent: Accent; onPick: (b: Band) => void }) {
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 6vw' }}>
       {/* Returning user? Log in and their checkup comes from their account (even on a new device). */}
-      <a href="/auth" style={{ position: 'absolute', top: 'calc(16px + env(safe-area-inset-top))', right: 18, zIndex: 46, fontFamily: PT.mono, fontSize: 13, fontWeight: 700, color: accent.base, textDecoration: 'none', background: PT.panel, border: `1px solid ${accent.base}66`, borderRadius: 10, padding: '8px 14px' }}>Log in →</a>
+      <a href="/auth" style={{ position: 'absolute', top: 'calc(16px + env(safe-area-inset-top))', right: 18, zIndex: 46, fontFamily: PT.mono, fontSize: 13, fontWeight: 700, color: accent.base, textDecoration: 'none', background: PT.panel, border: `1px solid ${accent.base}66`, borderRadius: 10, padding: '8px 14px',
+        // 44px tap floor — it measured 35px. `inline-flex` because an <a> needs a box before
+        // `minHeight` means anything, and centring keeps the label where it was.
+        display: 'inline-flex', alignItems: 'center', minHeight: 44 }}>Log in →</a>
       <div style={{ textAlign: 'center', maxWidth: 460 }}>
-        <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2, color: accent.base, textTransform: 'uppercase', marginBottom: 8 }}>Free · 2 minutes · no account needed</div>
+        <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2, color: accent.base, textTransform: 'uppercase', marginBottom: 8 }}>Free · about 10 minutes · no account needed</div>
         <h2 style={{ margin: '0 0 6px', fontFamily: PT.sans, fontWeight: 700, fontSize: 24, color: PT.ink }}>How old is your child?</h2>
         <p style={{ margin: 0, fontFamily: PT.sans, fontSize: 15, lineHeight: 1.5, color: PT.inkSoft }}>Milo will find exactly where to help — the deepest thing worth fixing first.</p>
       </div>
@@ -586,6 +757,76 @@ function AgePicker({ accent, onPick }: { accent: Accent; onPick: (b: Band) => vo
             <div style={{ fontFamily: PT.mono, fontSize: 11, color: PT.inkMute, marginTop: 3 }}>{b.grade}</div>
           </button>
         ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * 17–18's DOOR 2 — the student names where it starts getting hard, and the probe is seeded there.
+ *
+ * ⚠️ THE ESCAPE IS NOT A COURTESY, IT IS THE DEFAULT PATH FOR ANYONE UNSURE. A student who guesses
+ * a strand to get past this screen buys a two-question nothing; "not sure" has to be an obvious,
+ * unembarrassing tile rather than fine print, or the door manufactures exactly the wrong answers it
+ * exists to avoid. It is listed LAST because naming a strand is the better outcome when they can.
+ *
+ * ⚠️ AND THE COPY MAY NOT PROMISE A SHORTER CHECK. It is a NARROWER one — same questions, aimed at
+ * one strand — and 28 against 50 is a consequence, not the offer. Sold as "the quick version" it
+ * recruits the students least able to name a strand, which is the population it is worst for.
+ */
+function StrandDoor({ accent, short, strands, onPick, onFull }: {
+  accent: Accent; short: boolean; strands: { id: string; label: string }[]
+  onPick: (id: string) => void; onFull: () => void
+}) {
+  const tile: React.CSSProperties = {
+    padding: short ? '12px 12px' : '16px 14px', borderRadius: 15, cursor: 'pointer', textAlign: 'center',
+    minHeight: 44,   // tap floor
+    background: PT.panel, backdropFilter: 'blur(6px)', border: `1.5px solid ${accent.base}55`,
+    boxShadow: `0 0 14px ${accent.base}18, 0 6px 16px rgba(0,0,0,0.3)`, transition: 'transform .14s ease',
+    fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 15 : 17, color: PT.ink,
+  }
+  const lift = {
+    onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'translateY(-3px)' },
+    onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = '' },
+  }
+  return (
+    // `safe center` + scroll: nine tiles do not fit a short landscape frame, and plain `center` on a
+    // column that cannot shrink overflows BOTH ways — pushing the heading up under the chrome where
+    // no scroll can reach it. (Paid for by the GameShell start card, 2026-08-23.)
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'safe center', gap: short ? 10 : 20,
+      padding: short ? '14px 6vw' : '0 6vw', overflowY: 'auto',
+    }}>
+      {/**
+        * ⚠️ MEASURED AT 640×320: THE ESCAPE TILE HUNG 24px BELOW THE FOLD. Nine tiles plus a
+        * two-line paragraph is 358px of content in a 320px frame, and the tile that fell off the
+        * bottom was "Not sure — check everything" — the one a student who cannot name a strand
+        * needs, i.e. the default path, hidden from exactly the people it is for. It scrolled, which
+        * is not the same as being on screen.
+        *
+        * Height comes out of the PROSE before it comes out of the tiles: the eyebrow goes (it says
+        * nothing the screen does not) and the body drops to its one load-bearing clause — the
+        * reassurance that a wrong guess is fine, which is the whole reason the door is safe. The
+        * rest is restated by the escape tile two inches below. */}
+      <div style={{ textAlign: 'center', maxWidth: 460 }}>
+        {!short && <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2, color: accent.base, textTransform: 'uppercase', marginBottom: 8 }}>Step 1 of 2</div>}
+        <h2 style={{ margin: '0 0 6px', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 19 : 24, color: PT.ink }}>Where does it start getting hard?</h2>
+        <p style={{ margin: 0, fontFamily: PT.sans, fontSize: short ? 13 : 15, lineHeight: 1.45, color: PT.inkSoft }}>
+          {short
+            ? <>Pick the nearest one — you don&apos;t have to be right.</>
+            : <>Milo will start there and work backwards to whatever is actually underneath it. Pick
+              the nearest one — you don&apos;t have to be right.</>}
+        </p>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: short ? 8 : 12, width: '100%', maxWidth: 480 }}>
+        {strands.map(t => (
+          <button key={t.id} onClick={() => onPick(t.id)} style={tile} {...lift}>{t.label}</button>
+        ))}
+        <button onClick={onFull} style={{ ...tile, border: `1.5px dashed ${accent.base}55`, color: PT.inkSoft }} {...lift}>
+          Not sure — check everything
+          <div style={{ fontFamily: PT.mono, fontSize: 11, color: PT.inkMute, marginTop: 3, fontWeight: 400 }}>longer, finds more</div>
+        </button>
       </div>
     </div>
   )

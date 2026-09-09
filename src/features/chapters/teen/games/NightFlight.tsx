@@ -268,7 +268,7 @@ const GUIDED_TASK: Task = {
 // be one number tap. Tapping the map IS the answer — and it's also how the "across
 // then up/down" idea is taught. Splitting a pair into two pads would teach reading
 // x and y separately, which is the misconception this chapter exists to prevent.
-const CONFIG: GameConfig<XY, Task> = {
+export const CONFIG: GameConfig<XY, Task> = {
   chapterId: 'coordinatePlane',
   title: 'DELIVERY DRONE',
   ticketLabel: 'drop order',

@@ -585,7 +585,7 @@ function ArcScene({ palette, task, value, walk, ended }: {
 const rootsTemplate = (a: number, b: number) => `x = ${a > 0 ? `+${a}` : a}, ${b > 0 ? `+${b}` : b}`
 const vertexTemplate = (a: number, b: number) => `(${a > 0 ? `+${a}` : a}, ${b > 0 ? `+${b}` : b})`
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'quadraticsParabolas',
   title: 'THE SHOT',
   ticketLabel: 'shot chart',

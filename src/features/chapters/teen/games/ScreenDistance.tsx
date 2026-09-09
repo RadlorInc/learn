@@ -488,7 +488,7 @@ function GapScene({ palette, value, stepIndex, ended }: { palette: Palette; valu
   )
 }
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'radicalsPythagorean',
   title: 'CLIMB ROUTE',
   ticketLabel: 'route card',

@@ -7,7 +7,7 @@ import { CHAPTER_IDS, type ChapterType } from '@/core/chapters'
 import { scoreChapter, type ChapterScore } from '@/core/scoring'
 import { mergeServerProgress } from '@/state/progressMerge'
 
-// Chapter metadata and level maths are pure domain and live in `@/core`.
+// Chapter metadata and level math are pure domain and live in `@/core`.
 // This module deliberately does NOT re-export them: a module that needs a
 // chapter id must not have to import zustand, IndexedDB and Supabase to get
 // one. Enforced by `src/__tests__/layering.test.ts`.

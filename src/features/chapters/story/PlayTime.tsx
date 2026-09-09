@@ -34,7 +34,7 @@
  * groups stay visible and separate rather than collapsing into a total.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import type { Difficulty } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -46,6 +46,9 @@ import {
   groundSpeed, journeyOf, TRAVEL_MIN, type Journey, seeded, maxSizeForRows, spreadBand, BAND_JITTER,
 } from './critters'
 import { rint, shuffle } from '@/core/rand'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 export type Op = '+' | '-'
 
@@ -126,8 +129,10 @@ interface PlayRound {
  * moment a marker can be told apart before you commit, the chapter is a hot/cold game and the
  * counting is optional. (Same fault as chapter 4's Ready button turning green on the count.)
  */
-function NumberMarker({ n, h, state, onTap, nudge }: {
+function NumberMarker({ n, h, state, onTap, nudge, pending }: {
   n: number; h: number; state: 'idle' | 'right' | 'wrong'; onTap: () => void; nudge?: boolean
+  /** chosen, not yet submitted — a neutral ring, never the green that means correct */
+  pending?: boolean
 }) {
   return (
     <button onClick={onTap} aria-label={`${n}`}
@@ -138,7 +143,9 @@ function NumberMarker({ n, h, state, onTap, nudge }: {
           : 'radial-gradient(circle at 38% 30%, #fdf4e0, #ecdcbc)',
         color: state === 'right' ? '#3f6b1e' : '#5b3f22',
         border: 'none',
-        boxShadow: 'inset 0 -3px 4px rgba(90,64,34,.22), 0 3px 7px rgba(40,30,18,.34)',
+        // The chosen ring goes IN FRONT of the marker's own inset shading rather than replacing
+        // it, so a chosen marker is still a marker. One `boxShadow` key, not two.
+        boxShadow: `${pending ? PICKED_RING + ', ' : ''}inset 0 -3px 4px rgba(90,64,34,.22), 0 3px 7px rgba(40,30,18,.34)`,
         animation: state === 'wrong' ? 'pt_shake .45s ease' : nudge ? 'pt_nudge 1.1s ease-in-out infinite' : 'none',
       }}>{n}</button>
   )
@@ -233,6 +240,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
   const [marching, setMarching] = useState(false)
   const [picked, setPicked] = useState<number | null>(null)
   const [wrongPick, setWrongPick] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false), spoke = useRef(false)
   const timers = useRef<number[]>([])
   const after = useCallback((ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
@@ -283,7 +291,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
   // In the demo, words and movement come from ONE narration so they can never drift apart (and
   // speakSteps still paces the steps when audio is blocked). In the scored round the same timeline
   // runs with NO voice, because Milo counting aloud would be Milo handing over the answer.
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const movers = Array.from({ length: b }, (_, k) => k)      // always the leftmost slots
@@ -297,7 +305,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
         : 0
       after(OPENING_MS + (movers.length - 1) * JOIN_GAP_MS + longest + 200, () => setAsking(true))
       if (mode === 'guided') {
-        speak(add ? 'Some more come to play! Count them all, then tap how many.'
+        speakAfterCurrent(add ? 'Some more come to play! Count them all, then tap how many.'
                   : 'Some go home! Count who is left, then tap how many.')
       }
       return
@@ -335,6 +343,18 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
     return cancel
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /** A tap only CHOOSES; nothing marches and nothing is graded until Ready. */
+  function pickMarker(v: number) {
+    if (mode === 'demo' || done.current || !asking) return
+    setPending(p => (p === v ? null : v))
+  }
+  function commit() {
+    const v = pending
+    if (v == null) return
+    setPending(null)
+    tapMarker(v)
+  }
 
   function tapMarker(v: number) {
     if (mode === 'demo' || done.current || !asking || tapLock.current) return
@@ -410,8 +430,11 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
               // The guided round gets ONE nudge to teach the gesture. It is not scored, which is the
               // only reason a cue pointing at the answer is allowed to exist anywhere in a chapter.
               nudge={mode === 'guided' && asking && v === answer && picked === null}
-              onTap={() => tapMarker(v)} />
+              onTap={() => pickMarker(v)} pending={pending === v} />
           ))}
+          {/* Beside the markers, for the same measured reason as MarketDay: this row already owns
+              the bottom strip, and above it is the sum the child is reading. */}
+          <ReadyBar show={pending !== null} onCommit={commit} align="right" bottom={8} />
         </div>
       )}
     </>
@@ -481,7 +504,7 @@ export function makeRound(op: Op, d: Difficulty, round: number): PlayRound {
   return { scene, op, a, b, answer: a - b, choices: choicesFor(a - b, op), castIdx }
 }
 
-function makePlayBeat(op: Op): Beat<PlayRound> {
+export function makePlayBeat(op: Op): Beat<PlayRound> {
   const add = op === '+'
   return {
     skillId: add ? 'addition' : 'subtraction', rounds: 10, walkEvery: 3,
@@ -516,7 +539,7 @@ export default function PlayTime({ op = '+', onFinish, onExit }: {
 }) {
   const needsRotate = useNeedsRotate()
   const add = op === '+'
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: add ? 'addition' : 'subtraction', phase: 'practice' })
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [stage, setStage] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)
@@ -552,7 +575,7 @@ export default function PlayTime({ op = '+', onFinish, onExit }: {
       <style>{CRITTER_CSS}{PT_CSS}</style>
       <Background scene={bgScene} scenes={allScenes} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

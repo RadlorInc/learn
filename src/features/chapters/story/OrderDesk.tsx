@@ -64,7 +64,7 @@
  * why replacing a chapter's only commit-feeding control is how a round becomes unsubmittable.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { afterSpeech, speak, speakAfterCurrent, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, CRITTER_CSS, inFlowJourney } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -78,6 +78,7 @@ import {
 } from './chalkboard'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 // ─── Numbers in words ───────────────────────────────────────────────────────────────────
 const ONES_W = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
@@ -1109,7 +1110,9 @@ export const OrderPlay: React.FC<{ data: OdRound; mode: Mode; onComplete: (corre
     // same fault as the bubble showing early, in the other channel.
     useEffect(() => {
       if (!ready) return
-      speak(data.ask)
+      // `speakAfterCurrent`: the customer arrives while the previous round's line may still be
+      // running, and their question must not take it away mid-word.
+      speakAfterCurrent(data.ask)
       return () => stopSpeech()
     }, [ready, data.ask])
 
@@ -1401,6 +1404,7 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void; onSkip?
     let alive = true
     const timers: number[] = []
     let i = 0
+    let waiting: (() => void) | null = null
     const run = () => {
       if (!alive) return
       setStep(i)
@@ -1408,15 +1412,23 @@ export const OrderExplain: React.FC<{ data: OdRound; onDone: () => void; onSkip?
       // the scene is a function of the step, never of a separate schedule
       setEntered(beats[i].entered)
       setBoard(beats.slice(0, i + 1).map(b => b.board).filter(Boolean) as string[])
+      // ⚠️ THE DWELL IS A FLOOR, NOT THE WHOLE STORY. `dwellFor` caps at 6400ms and a real clip of
+      // these lines runs past it, so the next step used to land mid-sentence and cancel it.
+      // `afterSpeech` holds the step open until Milo stops — under a ceiling, because a walkthrough
+      // that can only advance on a speech event freezes on the devices that drop those events.
       const t = window.setTimeout(() => {
-        i++
-        if (i < lines.length) run()
-        else window.setTimeout(() => alive && doneRef.current(), 1300)
+        waiting = afterSpeech(() => {
+          waiting = null
+          if (!alive) return
+          i++
+          if (i < lines.length) run()
+          else window.setTimeout(() => alive && doneRef.current(), 1300)
+        }, 9000)
       }, dwellFor(lines[i]))
       timers.push(t)
     }
     run()
-    return () => { alive = false; timers.forEach(window.clearTimeout); stopSpeech() }
+    return () => { alive = false; waiting?.(); timers.forEach(window.clearTimeout); stopSpeech() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready])
 
@@ -1455,7 +1467,9 @@ export function makeBeat(): Beat<OdRound> {
     // the board and contradict it.
     ownsFeedback: true,
     prompt: () => '',
-    say: d => d.ask,
+    // ⚠️ NO `say`. The chapter speaks the ask itself, on the customer's ARRIVAL, and a `say` here
+    // would be the same line queued a second time now that the shell waits its turn.
+
     Play: ({ data, onSubmit }) => <OrderPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <OrderExplain data={data} onDone={onDone} />,
   }
@@ -1472,7 +1486,7 @@ export default function OrderDesk({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'bigNumbers', phase: 'practice' })
   const [demoIdx, setDemoIdx] = useState(0)
   const [shipped, setShipped] = useState<number[]>([])
   const pending = useRef<number | null>(null)      // the cumulative arc — OUTSIDE SkillBeat
@@ -1523,7 +1537,7 @@ export default function OrderDesk({ onFinish, onExit }: {
       )}
 
       <button onClick={exit}
-        style={{ position: 'fixed', left: 12, top: 10, zIndex: 60, padding: '7px 14px', borderRadius: 999,
+        style={{ position: 'fixed', left: 12, top: 10, zIndex: 60, padding: '7px 14px', minHeight: 44, borderRadius: 999,
           background: 'var(--paper, #fdf6e8)', border: '3px solid var(--milo-orange, #f26b2c)',
           color: 'var(--milo-orange, #f26b2c)', fontFamily: 'var(--font-display)', fontWeight: 800,
           fontSize: 13, cursor: 'pointer' }}>← Menu</button>
@@ -1573,6 +1587,11 @@ export default function OrderDesk({ onFinish, onExit }: {
             <div>
               <button onClick={() => { unlockSpeech(); if (onCam) hand.useTaps(); else hand.useCamera(); setPhase('plan') }}
                 style={{ marginTop: 12, border: 'none', background: 'transparent', cursor: 'pointer',
+                  // ⚠️ THIS IS THE WAY OUT OF CAMERA MODE, and it measured 21px tall — under WCAG
+                  // 2.5.8 AA's 24px floor. An escape hatch a finger keeps missing is the "AR door
+                  // that could strand a child" fault wearing a smaller costume. Height is bought in
+                  // PADDING so the underlined link looks exactly the same.
+                  padding: '12px 8px', minHeight: 44,
                   fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: '#7a6a55',
                   textDecoration: 'underline' }}>
                 {onCam ? 'Tap the digits instead' : 'Move the digits with your hand and the camera'}

@@ -31,19 +31,206 @@ jobs:
         # HIGH or CRITICAL CVE fails the build instead of sitting unnoticed. See docs/security.md.
         run: npm audit --audit-level=high
 
-  # RLS regression suite — proves the DB denies a cross-tenant attacker (guards against V1's return).
-  # Runs only when a SUPABASE_DB_URL secret is configured; point it at a TEST/branch DB, never prod.
+  # ─────────────────────────────────────────────────────────────────────────────
+  # RLS regression suite — proves the database DENIES a cross-tenant attacker.
+  #
+  # ⚠️⚠️ THIS JOB USED TO REPORT SUCCESS WHILE EXECUTING NOTHING. It was gated on a
+  # SUPABASE_DB_URL secret that was never set, so it printed a ::warning:: and `exit 0`.
+  # On a children's app, the one suite that proves account A cannot read account B's data
+  # had therefore never run — and the green tick said the opposite, which is worse than
+  # having no job at all. The skip path is gone. There is no way for this job to pass
+  # without the suite running to completion.
+  #
+  # It needs no secret and no cloud database: `supabase db start` brings up a local
+  # Postgres in Docker on the runner. Nothing here can touch production.
+  # ─────────────────────────────────────────────────────────────────────────────
   rls-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run RLS regression suite
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: CLI + config
         run: |
-          if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "::warning::SUPABASE_DB_URL not set — skipping RLS regression suite. See docs/security.md."
-            exit 0
+          supabase --version
+          cat supabase/config.toml
+
+      # ⚠️ THE BASELINE IS STAGED HERE AND DELIBERATELY NOT COMMITTED INTO migrations/.
+      # Seven tables (profiles, learners, learner_access, sessions, learner_progress,
+      # learner_stats, learner_invites) were created in the Supabase dashboard and are in
+      # ZERO migrations, so a database built from supabase/migrations/* alone does not have
+      # them and the suite dies at setup. supabase/schema/baseline_schema.sql reconstructs
+      # them from the production catalog.
+      #
+      # It must run BEFORE the 67 real migrations (they ALTER these tables), which means a
+      # version that sorts first. Committing such a file would mean `supabase db push`
+      # applying a backdated migration to PRODUCTION, where every object already exists and
+      # where the policy re-creation it performs would briefly drop live policies. Copying it
+      # in here, on a throwaway runner, gets the ordering without ever putting it on a path
+      # that can reach prod.
+      - name: Stage baseline schema as the first migration (CI only, never committed)
+        run: cp supabase/schema/baseline_schema.sql supabase/migrations/00000000000000_baseline.sql
+
+      - name: Start local Postgres and apply baseline + migrations
+        run: supabase db start
+
+      - name: Run the RLS regression suite
+        env:
+          PGURL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -uo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+          psql "$PGURL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql 2>&1 | tee /tmp/rls.log
+          psql_status=${PIPESTATUS[0]}
+          if [ "$psql_status" -ne 0 ]; then
+            echo "::error::rls_regression.sql failed (psql exit $psql_status) — an assertion denied, or the file could not run."
+            exit 1
           fi
-          sudo apt-get update && sudo apt-get install -y postgresql-client
-          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql
+
+          # ⚠️ EXIT 0 IS NOT ENOUGH. A file that is empty, truncated, or whose DO block was
+          # commented out also exits 0. The suite prints how many assertions it actually
+          # executed; no line, or a zero, means nothing was proven and the job fails.
+          count=$(grep -oE 'RLS_ASSERTIONS=[0-9]+' /tmp/rls.log | tail -1 | cut -d= -f2)
+          if [ -z "${count:-}" ]; then
+            echo "::error::No RLS_ASSERTIONS line in the output — the suite did not run to completion."
+            exit 1
+          fi
+          if [ "$count" -lt 1 ]; then
+            echo "::error::The suite ran $count assertions. An empty suite reports the same green as a passing one."
+            exit 1
+          fi
+
+          echo "RLS regression suite: $count assertions executed and passed."
+          echo "### 🔒 RLS regression: **$count** assertions executed and passed" >> "$GITHUB_STEP_SUMMARY"
+
+      # ═══════════════════════════════════════════════════════════════════════════════════════
+      #  ⚠️⚠️ EXERCISE THE ROLLBACK. A ROLLBACK NOBODY HAS RUN IS A DOCUMENT, NOT A ROLLBACK.
+      #
+      #  It is the one artefact in the billing plan that only ever gets used on the worst day —
+      #  which is the worst possible day to discover it does not parse. Reading it already caught
+      #  one defect (pg_policies reports a null qual for an INSERT policy, so the capture emitted
+      #  `using (true)`, which is not valid DDL). Reading is not running.
+      #
+      #  This applies the billing migrations (they are part of the replay above), then RUNS the
+      #  rollback, then asserts production's captured fingerprints come back — the three function
+      #  bodies and the two policy predicates, hashed the same way they were captured from
+      #  production on 2026-08-24.
+      # ═══════════════════════════════════════════════════════════════════════════════════════
+      # ═══════════════════════════════════════════════════════════════════════════════════════
+      #  ⚠️ NEWEST MIGRATION ROLLED BACK FIRST. `rollback_20260824_billing.sql` drops
+      #  `subscription_seats`, which is the table `materialize_seats` writes — so this runs before it.
+      #
+      #  ⚠️⚠️ AND THE FINGERPRINT PUBLISHED HERE INCLUDES THE **ACL**, WHICH IS THE THING THAT MADE
+      #  THE 2026-08-25 FINDING WRONG. `materialize_seats` is REVOKEd from public/anon/authenticated
+      #  and its one real caller is the webhook, arriving as `service_role`; whether that call works
+      #  is a property of the ACL, and it was first REPORTED (as broken) from reading the source
+      #  rather than from asking a database. So the job prints what BOTH roles can actually do, and
+      #  an apply is proven by reproducing it. rls_regression M6/M7 drive the same pair as SQL.
+      # ═══════════════════════════════════════════════════════════════════════════════════════
+      - name: Exercise the seat-materialiser rollback against the throwaway database
+        env:
+          PGURL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -euo pipefail
+
+          # ⚠️ POSITIVE CONTROL FIRST — otherwise "the function is gone" passes on a database where
+          # it was never created, which is an absence asserted about nothing.
+          before=$(psql "$PGURL" -Atc "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='materialize_seats'")
+          echo "before rollback: materialize_seats present=$before"
+          if [ "$before" -ne 1 ]; then
+            echo "::error::materialize_seats is not applied, so rolling it back proves nothing"
+            exit 1
+          fi
+
+          echo "── fingerprint of the applied seat materialiser ──"
+          psql "$PGURL" -Atc "select 'materialize_seats body ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='materialize_seats'"
+          psql "$PGURL" -Atc "select 'materialize_seats acl  service_role=' || has_function_privilege('service_role', p.oid, 'EXECUTE') || ' authenticated=' || has_function_privilege('authenticated', p.oid, 'EXECUTE') || ' anon=' || has_function_privilege('anon', p.oid, 'EXECUTE') from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='materialize_seats'"
+
+          psql "$PGURL" -v ON_ERROR_STOP=1 -f supabase/schema/rollback_20260825_seat_materialiser.sql
+
+          after=$(psql "$PGURL" -Atc "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='materialize_seats'")
+          if [ "$after" -ne 0 ]; then
+            echo "::error::materialize_seats survived its own rollback (count $after)"
+            exit 1
+          fi
+          echo "  ok  materialize_seats dropped"
+          echo "### ♻️ Seat-materialiser rollback exercised" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Exercise the billing rollback against the throwaway database
+        env:
+          PGURL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -euo pipefail
+
+          # ⚠️ POSITIVE CONTROL FIRST. Without it this whole step passes on a database where the
+          # billing migrations never applied — asserting that objects are absent when they were
+          # never present. A scan that finds nothing proves nothing until it has been shown it can
+          # find something.
+          before_tables=$(psql "$PGURL" -Atc "select count(*) from information_schema.tables where table_schema='public' and table_name in ('subscriptions','subscription_seats','billing_events','billing_config')")
+          before_guard=$(psql "$PGURL" -Atc "select count(*) from pg_policies where schemaname='public' and policyname='sessions: parent can insert' and with_check like '%is_chapter_entitled%'")
+          echo "before rollback: billing tables=$before_tables, sessions policy carries the guard=$before_guard"
+          if [ "$before_tables" -ne 4 ] || [ "$before_guard" -ne 1 ]; then
+            echo "::error::the billing migrations are not applied, so rolling them back proves nothing"
+            exit 1
+          fi
+
+          # ⚠️⚠️ PUBLISH THE FINGERPRINT OF THE ARTEFACT THIS JOB ACTUALLY TESTED, BEFORE UNDOING IT.
+          #
+          # The billing migrations ship with `billing_config.enforced = false`, and this suite turns
+          # it ON (F0) — so the enforcing path is exercised HERE and nowhere else. On production the
+          # flag stays false, which means the post-apply smoke write succeeds whether or not the
+          # guard is correctly wired: a check that cannot fail in the interesting direction.
+          #
+          # So the proof that production got the guard is EQUALITY WITH THIS ARTEFACT, not the live
+          # write. These three hashes are what an apply must reproduce; the live write is only the
+          # smoke test that nothing else broke.
+          echo "── fingerprints of the applied (enforcing-capable) schema ──"
+          psql "$PGURL" -Atc "select 'sessions policy      ' || md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='sessions: parent can insert'"
+          psql "$PGURL" -Atc "select 'learner_progress pol ' || md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='learner_progress: parent access'"
+          psql "$PGURL" -Atc "select 'is_chapter_entitled  ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='is_chapter_entitled'"
+          psql "$PGURL" -Atc "select 'sync_session(11)     ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_session' and pronargs=11"
+          psql "$PGURL" -Atc "select 'sync_diagnostic      ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_diagnostic'"
+
+          psql "$PGURL" -v ON_ERROR_STOP=1 -f supabase/schema/rollback_20260824_billing.sql
+
+          # The fingerprints captured from PRODUCTION before anything was applied.
+          expect() {
+            got=$(psql "$PGURL" -Atc "$2")
+            if [ "$got" != "$3" ]; then
+              echo "::error::$1 did not come back: got $got, expected $3"
+              exit 1
+            fi
+            echo "  ok  $1"
+          }
+          expect "sync_diagnostic body" \
+            "select md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_diagnostic'" \
+            "cf46a74591aa0bbf809f69726e483e5f"
+          expect "sync_session(11) body" \
+            "select md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_session' and pronargs=11" \
+            "d1c9cab3c6a5afa869958a4ef2345cef"
+          expect "sync_session(10) body" \
+            "select md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_session' and pronargs=10" \
+            "ab108f90b7f9823ae7ededdce89ca444"
+          expect "sessions insert policy predicate" \
+            "select md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='sessions: parent can insert'" \
+            "816720e8c4ec7fb39fa1cf0c2d751da5"
+          expect "learner_progress policy predicate" \
+            "select md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='learner_progress: parent access'" \
+            "942404d3f338ba61b62938215fc2872c"
+          expect "billing tables are gone" \
+            "select count(*) from information_schema.tables where table_schema='public' and table_name in ('subscriptions','subscription_seats','billing_events','billing_config')" \
+            "0"
+          expect "is_chapter_entitled is gone" \
+            "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='is_chapter_entitled'" \
+            "0"
+          echo "### ♻️ Billing rollback exercised: production's fingerprints restored" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          supabase status || true
+          docker ps -a || true

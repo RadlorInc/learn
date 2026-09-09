@@ -33,7 +33,7 @@
  * game/TimeChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
@@ -49,6 +49,9 @@ import {
 import { rint, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import { DirectionsInline } from '@/features/chapters/directions'
+import type { ChapterType } from '@/core/chapters'
 
 const wrap = (i: number, n: number) => ((i % n) + n) % n
 
@@ -284,7 +287,10 @@ function Bar({ L: l, children }: { L: L; children: React.ReactNode }) {
  * freely it ran straight across the clock on a 640-wide frame, which put the two things a child has
  * to read at once on top of each other.
  */
-function Bubble({ L: l, text, dark }: { L: L; text: string; dark: boolean }) {
+/** ⚠️ `chapter` puts the TYPED DIRECTIONS in the bubble. This chapter sets `prompt: () => ''` — Milo's
+ *  bubble is its only question surface — and it draws its own banner on the chrome row, so a floating
+ *  directions strip would be laid over that banner. In the bubble nothing can be covered. */
+function Bubble({ L: l, text, dark, chapter }: { L: L; text: string; dark: boolean; chapter?: ChapterType }) {
   return (
     <div style={{
       position: 'fixed', left: l.bubbleLeft, width: l.bubbleW, top: l.bubbleTop, minHeight: l.bubbleH, zIndex: 42,
@@ -295,7 +301,7 @@ function Bubble({ L: l, text, dark }: { L: L; text: string; dark: boolean }) {
       fontFamily: 'var(--font-display)', fontWeight: 700, lineHeight: 1.15, textAlign: 'center',
       fontSize: l.short ? 13 : 17, color: dark ? '#fff' : 'var(--ink)',
     }}>
-      {text}
+      <span>{text}{chapter && <DirectionsInline chapter={chapter} block />}</span>
       {/* the tail — what keeps the words visibly HIS rather than a banner pinned to the frame */}
       <span aria-hidden style={{
         position: 'absolute', bottom: -11, left: `${l.tailPct}%`, width: 0, height: 0,
@@ -365,7 +371,9 @@ const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: bo
   const askText = askTextFor(data)
 
   useEffect(() => {
-    if (speakOnMount) speak(askText)
+    // `speakAfterCurrent`: this mounts straight out of the lesson's last line, which is still
+    // being said. Where nothing is talking it behaves exactly like `speak`.
+    if (speakOnMount) speakAfterCurrent(askText)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -410,7 +418,7 @@ const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: bo
 
   return (
     <>
-      <Bubble L={l} dark={dark} text={hint ?? (done ? `That's right — ${wordsFor(h, m)}!` : askText)} />
+      <Bubble L={l} dark={dark} chapter="time" text={hint ?? (done ? `That's right — ${wordsFor(h, m)}!` : askText)} />
       <div style={{
         position: 'fixed', left: 0, right: 0, top: l.clockTop, height: l.clockBand, zIndex: 30,
         display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
@@ -466,14 +474,13 @@ const Reteach: React.FC<{ data: TimeRound; onDone: () => void }> = ({ data, onDo
     // Self-paced for the same reason the lesson is — see the long note in `Lesson`. A re-teach whose
     // visuals hang off speech events freezes on any device that stops delivering them, and a frozen
     // re-teach is a dead end reached by a child who has already got three wrong.
-    const timers: number[] = []
-    let t = 0
-    lines.forEach((line, i) => {
-      timers.push(window.setTimeout(() => { steps[i]?.(); setLine(line); speak(line) }, t))
-      t += dwellFor(line)
+    const cancel = speakPaced(lines, {
+      onStep: i => { steps[i]?.(); setLine(lines[i]) },
+      onDone: () => doneRef.current(),
+      minMs: dwellFor,
+      tailMs: 1200,
     })
-    timers.push(window.setTimeout(() => doneRef.current(), t + 1200))
-    return () => { timers.forEach(window.clearTimeout); stopSpeech() }
+    return () => { cancel(); stopSpeech() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -608,23 +615,22 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
      *
      * So the visuals no longer depend on speech at all: each line dwells for a time derived from its
      * own length, and `speak()` rides along. This is the call MeasureIt already made for the same
-     * reason, and it is why the colour and shape showcases are self-paced too. The honest cost is that
-     * a slow voice can have its tail cut by the next line — which is a far smaller price than a lesson
-     * that freezes, and `speak()` cancels cleanly rather than overlapping.
+     * reason, and it is why the colour and shape showcases are self-paced too.
+     *
+     * ⚠️ IT USED TO SAY THAT A SLOW VOICE HAVING ITS TAIL CUT WAS AN ACCEPTABLE PRICE. It was not —
+     * the founder heard it, across every band, on 2026-09-04. `speakPaced` keeps the property that
+     * matters (the visuals are on their OWN timer and can never hang on a missing speech event) and
+     * removes the cut: a beat ends at the LATER of its dwell and Milo actually finishing, with a
+     * ceiling so a device that never reports the end still rolls on.
      */
-    const timers: number[] = []
-    let t = 0
-    b.lines.forEach((line, i) => {
-      timers.push(window.setTimeout(() => {
-        b.steps[i]?.()
-        setLine(line)
-        speak(line)
-      }, t))
-      t += dwellFor(line)
+    const cancel = speakPaced(b.lines, {
+      onStep: i => { b.steps[i]?.(); setLine(b.lines[i]) },
+      // The last beat waits for the child (its final step has already offered the dial); the others roll on.
+      onDone: last ? undefined : advance,
+      minMs: dwellFor,
+      tailMs: 600,
     })
-    // The last beat waits for the child (its final step has already offered the dial); the others roll on.
-    if (!last) timers.push(window.setTimeout(advance, t + 600))
-    return () => { timers.forEach(window.clearTimeout); stopSpeech() }
+    return () => { cancel(); stopSpeech() }
      
   }, [beat])
 
@@ -722,7 +728,7 @@ export default function TickTock({ onFinish, onExit }: {
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
   onExit?: () => void
 }) {
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'time', phase: 'practice' })
   const [gIdx, setGIdx] = useState(0)
   const [slot, setSlot] = useState(0)
   const { w: vw, h: vh } = useViewport()
@@ -742,7 +748,7 @@ export default function TickTock({ onFinish, onExit }: {
         background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999,
         padding: l.short ? '4px 14px' : '8px 20px', fontFamily: 'var(--font-display)', fontWeight: 800,
         fontSize: l.short ? 12 : 17, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center',
-      }}>{text}</div>
+      }}>{text}<DirectionsInline chapter="time" /></div>
     </div>
   )
 
@@ -753,7 +759,7 @@ export default function TickTock({ onFinish, onExit }: {
       <div style={{ position: 'absolute', top: CHROME_PAD, left: 14, zIndex: 50 }}>
         {/* Sized from the same metrics `chromeTop` budgets for, so the band below cannot be wrong. */}
         <button onClick={exit} style={{
-          padding: `${menuBtn(l.short).padY}px ${menuBtn(l.short).padX}px`, borderRadius: 50,
+          padding: `${menuBtn(l.short).padY}px ${menuBtn(l.short).padX}px`, borderRadius: 50, minHeight: menuBtn(l.short).minH,
           background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)',
           fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: menuBtn(l.short).font, cursor: 'pointer',
         }}>← Menu</button>

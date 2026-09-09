@@ -339,7 +339,7 @@ const DEMO_WHEN_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'expLogFunctions',
   title: 'THE BALANCE THAT GROWS',
   ticketLabel: 'statement',

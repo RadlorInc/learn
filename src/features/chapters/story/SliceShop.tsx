@@ -32,7 +32,7 @@
  * through to the party is the ARC across the ten rounds. Wrapped by game/FractionsChapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
@@ -52,6 +52,9 @@ import {
 } from './slice'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import { DirectionsInline } from '@/features/chapters/directions'
+import type { ChapterType } from '@/core/chapters'
 
 /**
  * How long a narrated line stays on screen. Derived from the sentence's own length so the pacing
@@ -164,7 +167,7 @@ function Whole({ shape, colors, art, pieceDen, laid, w, h, lit, topping }: {
    * The version this replaces drew flat SVG wedges in a flat colour, which is a DIAGRAM laid over a
    * painted scene: the same fault as BlockYard's brown slab and the shapes chapter's hairline ghost
    * house, and the founder rejected it on sight for the same reason. The old chapter's excuse for
-   * geometry was that the maths has to be exact — and it does — but exact and painted are not a
+   * geometry was that the math has to be exact — and it does — but exact and painted are not a
    * choice: the sprite is clipped BY the wedge, so the division is still arithmetic while what a
    * child sees is the actual pizza.
    *
@@ -351,7 +354,10 @@ function Bar({ L: l, children }: { L: L; children: React.ReactNode }) {
  * runs across the board on a narrow frame, putting the two things a child must read at once on top
  * of each other.
  */
-function Bubble({ L: l, text }: { L: L; text: string }) {
+/** ⚠️ `chapter` puts the TYPED DIRECTIONS in the bubble, for the same reason TickTock does: this
+ *  chapter sets `prompt: () => ''` (the bubble is its only question region) and draws its own banner
+ *  on the chrome row, so a floating strip there would be laid over that banner. */
+function Bubble({ L: l, text, chapter }: { L: L; text: string; chapter?: ChapterType }) {
   return (
     <div style={{
       position: 'fixed', left: l.bubbleLeft, width: l.bubbleW, top: l.bubbleTop, minHeight: l.bubbleH, zIndex: 42,
@@ -361,7 +367,7 @@ function Bubble({ L: l, text }: { L: L; text: string }) {
       fontFamily: 'var(--font-display)', fontWeight: 700, lineHeight: 1.15, textAlign: 'center',
       fontSize: l.short ? 13 : 17, color: 'var(--ink)',
     }}>
-      {text}
+      <span>{text}{chapter && <DirectionsInline chapter={chapter} block />}</span>
       {/* the tail — what keeps the words visibly HIS rather than a banner pinned to the frame */}
       <span aria-hidden style={{
         position: 'absolute', bottom: -11, left: `${l.tailPct}%`, width: 0, height: 0,
@@ -648,7 +654,9 @@ const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolea
 
   const askText = askTextFor(data)
   useEffect(() => {
-    if (speakOnMount) speak(askText)
+    // `speakAfterCurrent`: this mounts straight out of the lesson's last line, which is still
+    // being said. Where nothing is talking it behaves exactly like `speak`.
+    if (speakOnMount) speakAfterCurrent(askText)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -685,7 +693,7 @@ const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolea
   const side = l.short ? 44 : 52
   return (
     <>
-      <Bubble L={l} text={miss ?? (done ? revealFor(data) : askText)} />
+      <Bubble L={l} chapter="fractions" text={miss ?? (done ? revealFor(data) : askText)} />
       <Board L={l} order={order} on={data.on} n={data.n} pieceDen={pieceDen} laid={laid} lit={done} vw={vw} />
       {/*
         ⚠️ WHO IS WAITING IS THE QUESTION. On a TAKE round every friend is already there, so the row
@@ -736,14 +744,13 @@ const Reteach: React.FC<{ data: FrRound; onDone: () => void }> = ({ data, onDone
     // Self-paced for the same reason the lesson is — see the long note in `Lesson`. A re-teach whose
     // visuals hang off speech events freezes on any device that stops delivering them, and a frozen
     // re-teach is a dead end reached by a child who has already got three wrong.
-    const timers: number[] = []
-    let t = 0
-    lines.forEach((ln, i) => {
-      timers.push(window.setTimeout(() => { steps[i]?.(); setLine(ln); speak(ln) }, t))
-      t += dwellFor(ln)
+    const cancel = speakPaced(lines, {
+      onStep: (i) => { steps[i]?.(); setLine(lines[i]) },
+      onDone: () => doneRef.current(),
+      minMs: dwellFor,
+      tailMs: 1200,
     })
-    timers.push(window.setTimeout(() => doneRef.current(), t + 1200))
-    return () => { timers.forEach(window.clearTimeout); stopSpeech() }
+    return () => { cancel(); stopSpeech() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -888,18 +895,19 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
      * fallback it fires mid-sentence on a device with a real voice and cancels a live utterance. The
      * preview pane is mute, so that failure is invisible in every run driven here.
      *
-     * The honest cost is that a slow voice can have its tail cut by the next line, which is far
-     * cheaper than a lesson that freezes — and `speak()` cancels cleanly rather than overlapping.
+     * ⚠️ IT USED TO SAY A CUT TAIL WAS AN ACCEPTABLE PRICE FOR THAT. It was not — the founder heard
+     * it across every band on 2026-09-04. `speakPaced` keeps the whole property above (the visuals
+     * are on their OWN timer and can never hang on a speech event) and drops the cut: a beat ends
+     * at the LATER of its dwell and Milo actually finishing, under a ceiling.
      */
-    const timers: number[] = []
-    let t = 0
-    b.lines.forEach((ln, i) => {
-      timers.push(window.setTimeout(() => { b.steps[i]?.(); setLine(ln); speak(ln) }, t))
-      t += dwellFor(ln)
+    const cancel = speakPaced(b.lines, {
+      onStep: (i) => { b.steps[i]?.(); setLine(b.lines[i]) },
+      // The last beat waits for the child; the others roll on.
+      onDone: last ? undefined : () => setBeat(x => x + 1),
+      minMs: dwellFor,
+      tailMs: 600,
     })
-    // The last beat waits for the child; the others roll on.
-    if (!last) timers.push(window.setTimeout(() => setBeat(x => x + 1), t + 600))
-    return () => { timers.forEach(window.clearTimeout); stopSpeech() }
+    return () => { cancel(); stopSpeech() }
      
   }, [beat])
 
@@ -1009,7 +1017,7 @@ export default function SliceShop({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'fractions', phase: 'practice' })
   const [gIdx, setGIdx] = useState(0)
   const [slot, setSlot] = useState(0)
   const { w: vw, h: vh } = useViewport()
@@ -1028,7 +1036,7 @@ export default function SliceShop({ onFinish, onExit }: {
         background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999,
         padding: l.short ? '4px 14px' : '8px 20px', fontFamily: 'var(--font-display)', fontWeight: 800,
         fontSize: l.short ? 12 : 17, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center',
-      }}>{text}</div>
+      }}>{text}<DirectionsInline chapter="fractions" /></div>
     </div>
   )
 
@@ -1059,7 +1067,7 @@ export default function SliceShop({ onFinish, onExit }: {
       <div style={{ position: 'absolute', top: CHROME_PAD, left: 14, zIndex: 50 }}>
         {/* Sized from the same metrics `chromeTop` budgets for, so the band below cannot be wrong. */}
         <button onClick={exit} style={{
-          padding: `${menuBtn(l.short).padY}px ${menuBtn(l.short).padX}px`, borderRadius: 50,
+          padding: `${menuBtn(l.short).padY}px ${menuBtn(l.short).padX}px`, borderRadius: 50, minHeight: menuBtn(l.short).minH,
           background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)',
           fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: menuBtn(l.short).font, cursor: 'pointer',
         }}>← Menu</button>

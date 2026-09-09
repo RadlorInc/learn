@@ -7,7 +7,8 @@
  * client, so infrastructure never leaks into the UI layer.
  */
 import { createClient } from '@/data/supabase/client'
-import type { AuthChangeEvent, Session, Subscription, User } from '@supabase/supabase-js'
+import { record } from '@/infra/AuthEventLogger'
+import type { AuthChangeEvent, EmailOtpType, Session, Subscription, User } from '@supabase/supabase-js'
 
 /** Current session (local storage read, no network). Null when signed out. */
 export async function getCurrentSession(): Promise<Session | null> {
@@ -26,33 +27,65 @@ export function signUpWithEmail(email: string, password: string, emailRedirectTo
   return createClient().auth.signUp({ email, password, options: { emailRedirectTo } })
 }
 
+/**
+ * Invite / recovery link → a session, from the `token_hash` in the URL.
+ *
+ * The invite email links to `/auth/set-password?token_hash=…&type=invite` rather than to the
+ * default `{{ .ConfirmationURL }}`, which lands on the Site URL with the tokens in the hash and
+ * leaves the invited person signed in with NO password ever set — able to get in exactly once.
+ */
+export function verifyEmailToken(tokenHash: string, type: EmailOtpType) {
+  return createClient().auth.verifyOtp({ token_hash: tokenHash, type })
+}
+
+/** Set the signed-in user's password. Requires a session (from an invite link or a sign-in). */
+export function setPassword(password: string) {
+  return createClient().auth.updateUser({ password })
+}
+
 /** Durable account-access log → `auth_events` (insert-only; reads are dashboard-only).
  *  Supabase's own auth logs are short-retention platform logs and `last_sign_in_at` is
  *  latest-only, so without this a login history simply does not exist. Best-effort:
  *  never throws, never blocks the auth flow it rides on. `client_id` dedupes retries.
  *  NOTE `logout` only captures the explicit sign-out tap — closing the tab logs nothing
  *  (true of any SPA); play activity/retention math reads `sessions`, not this. */
-export function logAuthEvent(event: 'login' | 'logout', userId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- learner_events pattern: table not in generated types
-  return (createClient() as any)
-    .from('auth_events')
-    .insert({ user_id: userId, event, client_id: crypto.randomUUID() })
-    .then(() => undefined, () => undefined)
+export function logAuthEvent(event: 'login' | 'logout', userId: string): Promise<boolean> {
+  // ⚠️ NOW A THIN FORWARDER TO THE OBSERVABLE WRITE. This used to end in
+  // `.then(() => undefined, () => undefined)` — a failure vanished, and `auth_events` held ONE row
+  // against at least 18 real logins over six weeks with nobody able to notice.
+  // ⚠️ AND SIGN-INS ARE NO LONGER LOGGED FROM HERE. A single global `onAuthStateChange` listener
+  // (infra/AuthEventLogger) records every login, on every provider and route, and cannot race the
+  // client attaching its token. This remains only for LOGOUT, which has no auth-state event of its
+  // own that fires reliably before the token is revoked.
+  return record(event, userId)
 }
 
 /** Email + password sign-in. Logs a durable `login` event on success. */
 export function signInWithEmail(email: string, password: string) {
-  return createClient().auth.signInWithPassword({ email, password }).then((res) => {
-    if (!res.error && res.data.user) void logAuthEvent('login', res.data.user.id)
-    return res
-  })
+  // No logging here: the global listener records the SIGNED_IN this produces. Logging in both
+  // places would double-count, and logging only here would miss every OAuth sign-in.
+  return createClient().auth.signInWithPassword({ email, password })
 }
 
-/** Google OAuth — the browser navigates away to Google on success. */
+/**
+ * Google OAuth — the browser navigates away to Google on success.
+ *
+ * ⚠️ NO `access_type: 'offline'` AND NO `prompt: 'consent'`, DELIBERATELY. Both were here and
+ * neither earned its place:
+ *   · `access_type: 'offline'` asks Google for a REFRESH token, i.e. permission to act for the
+ *     parent while they are away. Nothing in this app has ever read `provider_token` or
+ *     `provider_refresh_token` — we sign the parent in and never touch Google again. Asking for a
+ *     credential you do not use is the kind of thing a privacy-minded parent is right to object to.
+ *   · `prompt: 'consent'` FORCES the full consent screen on EVERY sign-in. Google's default already
+ *     shows it the first time; forcing it means a returning parent re-approves the same scopes every
+ *     single time instead of just picking their account.
+ * The scopes are unchanged (`email profile`), so no existing user has to re-consent and no
+ * identity changes — `sub` is what Supabase keys on, and that is untouched.
+ */
 export function signInWithGoogleOAuth(redirectTo: string) {
   return createClient().auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } },
+    options: { redirectTo },
   })
 }
 

@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
+import { afterSpeech, speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import ScaleToFill from './ScaleToFill'
 
 // ─── Spoken numbers (0–100) ──────────────────────────────────
@@ -133,7 +133,7 @@ function Shell({step,total,miloMood,bubble,children,nextReady,onBack,onSkip,onCh
       background:'var(--bg-page)',padding:'10px 14px 24px',gap:10}}>
       <style>{CSS}</style>
       <div style={{display:'flex',alignItems:'center',gap:10,width:'100%',maxWidth:520,paddingTop:6}}>
-        <button onClick={onBack} style={{display:'flex',alignItems:'center',gap:4,padding:'7px 14px',borderRadius:50,flexShrink:0,
+        <button onClick={onBack} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'7px 14px',minHeight:44,borderRadius:50,flexShrink:0,
           background:'var(--paper)',border:'3px solid var(--milo-orange)',color:'var(--milo-orange)',
           fontFamily:'var(--font-display)',fontWeight:800,fontSize:13,cursor:'pointer',boxShadow:'0 3px 0 rgba(242,107,44,.25)'}}>← Menu</button>
         <div style={{display:'flex',gap:4,flex:1,justifyContent:'center',flexWrap:'wrap'}}>
@@ -195,7 +195,9 @@ export function LessonScaffold({childName,onLessonComplete,steps,finalSpeech,cha
     stopSpeech()
     if(step>=steps.length-1){
       speak(finalSpeech)
-      window.setTimeout(onLessonComplete,3200)
+      // Leaving the lesson unmounts the speaker, so a flat 3200ms cut a longer closing line off.
+      // `afterSpeech` waits for Milo, under its own ceiling.
+      afterSpeech(onLessonComplete, 9000)
       return
     }
     setStep(s=>s+1); setNextReady(false)

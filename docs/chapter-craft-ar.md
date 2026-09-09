@@ -2,6 +2,51 @@
 
 The AR half of [chapter-craft.md](chapter-craft.md). **Read this before building or changing an AR chapter** (Factor Lab · The Angle Shop · The Fitting Crew · The Fundraiser · The Long Level · The Pizza Counter · The Coin Tray). Not needed for a tap-only chapter, which is why it lives here and is not auto-loaded.
 
+## 5.0 ⚠️⚠️ THE CAMERA MAY NOT BE OFFERED BEFORE THERE IS AN ACCOUNT — AND THE GUARD GOES AT THE ROUTE
+
+We are a child-directed service in the US. Turning on a camera for a child with no account, no
+identified parent and no consent captured is exactly the situation COPPA exists for. **Camera access
+begins after signup**, where `ConsentLine` puts the policy in front of the adult.
+
+**It was not hypothetical, and it shipped.** `/diagnostic`'s report links a LOGGED-OUT visitor at
+their plan's first chapter — `/teen-preview?c=<id>&taste=1` — and that route rendered any of 72
+chapters from a query parameter with no check at all. `GameShell` draws an AR chapter's start card
+with **"Turn on the camera" as the PRIMARY button** (`useHandInput` defaults to the hand door on a
+device with no remembered pick), so it was one tap away. Measured over the planted-gap simulation,
+`plan[0]` was one of the eight camera chapters for **30% of 9–11 visitors, 22% of 12–14, 13% of
+15–16 and 12% of 17–18**.
+
+⚠️ **THE GUARD GOES AT THE ROUTE, NOT ON A LIST.** The instruction that produced this fix said to
+keep AR chapters out of the demo picker. The live leak **had no picker** — it was a deep link, and
+**the URL is the picker**. A guard on a list would have left the exact shipping path open. Whatever
+turns an id into a chapter asks the question, however the id arrived:
+[CameraConsentGate.tsx](../src/shared/ui/CameraConsentGate.tsx).
+
+⚠️ **REFUSE THE RENDER, DO NOT DISABLE A BUTTON.** A locked tile invites a tap and a crippled
+chapter shows the band's speciality with its point removed. Nothing of the chapter mounts, so there
+is no control to find, no MediaPipe to load and no `getUserMedia` to reach.
+
+⚠️ **FAIL CLOSED, AND DERIVE THE VERDICT DURING RENDER.** The session check is async; rendering the
+chapter "until we find out" is a race that resolves the wrong way on a slow device — the only way
+this guard could fail. And assigning the verdict from an EFFECT paints one frame of the AR chapter
+first, because effects run after paint. Same rule this file's parent gives for a journey's phase,
+and it matters far more here.
+
+⚠️ **THE SET IS DERIVED IN THE GATE, NOT REMEMBERED.** `AR_CHAPTERS` has to be a typed constant — a
+runtime derivation would import the very module the guard exists to avoid loading — so
+[arConsent.test.ts](../src/__tests__/arConsent.test.ts) rebuilds it from the game sources and the
+registry and fails if the two disagree in EITHER direction. It starts from the FILES and maps to
+ids, not the reverse: a registry parse that silently misses an entry then yields an AR file with no
+id, which is loud, instead of a chapter quietly absent from the check.
+
+⚠️⚠️ **AND A GUARD LIKE THIS BLINDS THE SWEEPS THAT DRIVE THE SAME ROUTE.** `all-chapters` drives
+`/teen-preview?c=<id>` logged out, so the eight began landing on the consent card — and **every one
+of those runs passed**, grading a screen that is not the chapter. Two things were needed and both
+generalise: the sweeps seed a session ([e2e/session.ts](../e2e/session.ts)), and the failure-text
+check reads the body **after the screen settles** rather than at `domcontentloaded`, where an async
+guard leaves it empty and the check cannot fail at all. **When you add an async gate to a route,
+find every check that drives it and ask what it now grades.**
+
 ## 5. Answering with the camera
 
 Everything below was paid for building the 9–11 Factor Lab, the band's first chapter answered with a

@@ -527,7 +527,7 @@ function SortScene({ palette, value, stepIndex }: { palette: Palette; value: V; 
   )
 }
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'functionsFamilies',
   title: 'GOING VIRAL',
   ticketLabel: 'post',

@@ -10,7 +10,7 @@
  *
  * (Migrated onto the shared GameShell from the old self-contained ShopRush, so it
  * now gets the universal chalkboard-question layout + motif backdrop like every
- * other chapter. Same percentage maths.)
+ * other chapter. Same percentage math.)
  *
  * Teaching is "I do → we do → you do": a two-example WALKTHROUGH (first SHADE 25%
  * on the grid to see it is a quarter, then apply 25% off $80 on the price slider),
@@ -402,7 +402,7 @@ function answerPad(t: Task): number[] {
   return numChoices(t.answer, near, { min: 1, max: price * 2, count: 4 })
 }
 
-const CONFIG: GameConfig<number, Task> = {
+export const CONFIG: GameConfig<number, Task> = {
   chapterId: 'percentages',
   title: 'STORE CHECKOUT',
   ticketLabel: 'receipt',

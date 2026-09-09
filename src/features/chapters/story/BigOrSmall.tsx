@@ -31,7 +31,7 @@
  * equal pair needs a third answer the tap-a-bunch mechanic has nowhere to put. Worth revisiting.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
+import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import type { Difficulty } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -43,6 +43,9 @@ import {
   groundSpeed, TRAVEL_MIN, seeded, maxSizeForRows, spreadBand, BAND_JITTER,
 } from './critters'
 import { rint } from '@/core/rand'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar from './ReadyBar'
 
 // Same reasoning as chapters 4 and 9: long enough to swallow a double-tap, and deliberately NOT
 // tied to Milo's voice, which stays "speaking" for over 3.2s after a single word.
@@ -235,6 +238,7 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
   const [marching, setMarching] = useState(false)
   const [picked, setPicked] = useState<number | null>(null)
   const [wrongPick, setWrongPick] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const [idleHop, setIdleHop] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false), spoke = useRef(false)
   const timers = useRef<number[]>([])
@@ -265,12 +269,12 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
     ? (counts.length > 2 ? 'the MOST' : 'MORE')
     : (counts.length > 2 ? 'the FEWEST' : 'FEWER')
 
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     if (mode !== 'demo') {
       after(OPENING_MS, () => setLive(true))
-      if (mode === 'guided') speak(`Now you! Tap the bunch with ${askWord}.`)
+      if (mode === 'guided') speakAfterCurrent(`Now you! Tap the bunch with ${askWord}.`)
       return
     }
     // The demo drives words and movement from ONE narration, so they cannot drift apart — and when
@@ -291,6 +295,18 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
     return cancel
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /** A tap only CHOOSES a bunch; nothing marches and nothing is graded until Ready. */
+  function pickBunch(gi: number) {
+    if (mode === 'demo' || done.current || !live) return
+    setPending(p => (p === gi ? null : gi))
+  }
+  function commit() {
+    const gi = pending
+    if (gi == null) return
+    setPending(null)
+    tapBunch(gi)
+  }
 
   function tapBunch(gi: number) {
     if (mode === 'demo' || done.current || !live || tapLock.current) return
@@ -348,7 +364,7 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
                   pointer-transparent, so a tap can never be swallowed by a flipped inner wrapper.
                   Tapping ANY member picks its whole bunch, which is what the child means. */}
               {mode !== 'demo' && !marching && (
-                <button onClick={() => tapBunch(gi)}
+                <button onClick={() => pickBunch(gi)}
                   aria-label={numerals ? `bunch showing ${numerals[gi]}` : `bunch of ${n}`}
                   style={{ position: 'fixed', left: `${at.left}%`, top: `${at.top}%`, transform: 'translate(-50%,-100%)',
                     zIndex: 40, width: Math.max(46, Math.round(babySize * 1.05)), height: Math.max(46, Math.round(babySize * 1.2)),
@@ -356,14 +372,20 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
                     // The guided round gets ONE nudge to teach the gesture. It is not scored, which
                     // is the only reason a cue pointing at the answer may exist in this chapter at
                     // all: any signal BEFORE the commit hands the answer over.
-                    outline: mode === 'guided' && live && gi === want && picked === null && j === 0
-                      ? '4px dashed rgba(242,107,44,.75)' : 'none',
+                    // ⚠️ THE CHOSEN RING COMES FIRST, and it is white rather than the orange the
+                    // guided nudge uses — a chosen bunch is not yet a right one, and this band's
+                    // whole rule is that nothing may signal the answer before the commit.
+                    outline: pending === gi
+                      ? '4px solid rgba(255,255,255,.95)'
+                      : mode === 'guided' && live && gi === want && picked === null && j === 0
+                        ? '4px dashed rgba(242,107,44,.75)' : 'none',
                     outlineOffset: 4, borderRadius: 18 }} />
               )}
             </React.Fragment>
           )
         })
       })}
+      <ReadyBar show={pending !== null} onCommit={commit} />
     </>
   )
 }
@@ -465,7 +487,7 @@ export function makeRound(d: Difficulty, round: number): CmpRound {
   return { scene, counts: [a, b], mode, want, castIdx }
 }
 
-function makeCmpBeat(): Beat<CmpRound> {
+export function makeCmpBeat(): Beat<CmpRound> {
   return {
     skillId: 'numberComparison', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as Difficulty, round),
@@ -495,7 +517,7 @@ export default function BigOrSmall({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'numberComparison', phase: 'practice' })
   const [scene, setScene] = useState<string>(HABITATS.meadow.scenes[0])
   const [stage, setStage] = useState(0)
   const { exit, tally } = useChapterShell(onFinish, onExit)
@@ -527,7 +549,7 @@ export default function BigOrSmall({ onFinish, onExit }: {
       <style>{CRITTER_CSS}{BS_CSS}</style>
       <Background scene={bgScene} scenes={allScenes} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (

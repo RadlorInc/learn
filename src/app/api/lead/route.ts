@@ -11,7 +11,7 @@ import { sinkError } from '@/infra/errorSink'
  * surface is ours, so it can be counted.
  *
  * ⚠️ THE CLIENT PATH IS ONLY REALLY CLOSED WHEN THE MIGRATION IS APPLIED —
- * `20260816170000_leads_server_only.sql` revokes the anon INSERT grant. Until then this route is
+ * `20260823221818_leads_server_only.sql` revokes the anon INSERT grant. Until then this route is
  * an improvement rather than a wall, because the old direct path still exists for anyone who knows
  * it. Written that way on purpose: the route works with or without the migration, so there is no
  * ordering hazard between the deploy and the DDL (which is the founder's to run).
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   // ⚠️ `fetch` DOES NOT THROW ON 4xx/5xx, so a bare `await fetch(...)` inside try/catch reports a
   // 403 as success and the lead is gone with no signal anywhere. That is not hypothetical here: the
   // key above falls back to the ANON key when SUPABASE_SERVICE_ROLE_KEY is unset, and the moment
-  // `20260816170000_leads_server_only.sql` revokes the anon INSERT grant every capture starts
+  // `20260823221818_leads_server_only.sql` revokes the anon INSERT grant every capture starts
   // 403ing. Silent is the one thing this must not be — a lead we never knew we lost is worse than
   // an error we can see. Still best-effort for the CALLER: it never throws and never returns non-ok.
   try {

@@ -815,3 +815,20 @@ summary.plan-toggle,
 .plan-toggle > summary { list-style: none; }
 .plan-toggle > summary::-webkit-details-marker { display: none; }
 .plan-toggle[open] .plan-arrow { transform: rotate(180deg); }
+
+/*
+ * RANGE SLIDERS — a real drag target.
+ *
+ * Every teen chapter opens on EXPLORE, and every explore screen is driven by native
+ * `input[type=range]` sliders. Native ones lay out at their intrinsic height — measured on
+ * `signedNumberFluency` at 320x568, 129x16 px — so the first control a child meets in 37 chapters
+ * was a 16px drag target, under even WCAG 2.5.8 AA's 24px floor and well under the 44px this repo
+ * aims at everywhere else.
+ *
+ * `height` alone is enough and is why nothing looks different: the browser centres the track and
+ * the thumb in whatever box it is given, so the slider draws exactly as before with the extra room
+ * spent on the hit area. Verified on screen at 320x568 and 640x320 — same track, same thumb.
+ * `input, select, textarea` do NOT inherit the page font by default, which is unrelated but is the
+ * other thing people expect this rule to do; it does not.
+ */
+input[type="range"] { height: 44px; }

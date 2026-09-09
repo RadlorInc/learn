@@ -12,12 +12,24 @@
  * timed-sweep handling we do not want to duplicate or regress.
  */
 import { clipKey } from '@/core/voiceClips'
-import { getVoicePref } from '@/infra/storage/voicePref'
+import { getVoicePref, BAND_VOICE } from '@/infra/storage/voicePref'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 
 // When on, a selected custom voice is the ONLY voice: a line with no clip stays silent
 // rather than falling back to browser TTS, so the teen game never mixes the two voices.
 // Only bites when a real voice is picked — with 'device' there are no clips, so we must
 // still fall back or teen games would be silent. Set by the teen GameShell while mounted.
+//
+// ⚠️⚠️ DO NOT TURN THIS ON FOR A BAND THAT HAS NO FRAGMENT STITCHER. Clip-only does not mean
+// "prefer clips" — it means a line we hold no clip for is SILENT, not spoken by the browser, and
+// nothing anywhere logs it, because a miss is a normal expected event. 12–14 survives it ONLY
+// because its templated lines are stitched from `frag/`. Measured 2026-09-04 by driving the
+// generators: one 12–14 chapter's entire spoken space is 22 whole lines, while a 9–11 chapter was
+// still producing NEW ones at 24,000 draws (1,653 and climbing). Whole-line coverage of a band
+// like that is a FLOOR that never reaches 100%, so clip-only there is a child sitting in front of
+// a silent chapter. Before flipping it for 3–5, 6–8, 9–11, 15–16 or 17–18: build that band's
+// stitcher first. (Templates and literal RUNS do saturate — that is what makes a stitcher finite
+// where whole lines are not: goingViral renders 1,299 distinct lines from 13 templates / 34 runs.)
 let _clipOnly = false
 export function setClipOnly(v: boolean): void { _clipOnly = v }
 
@@ -66,7 +78,15 @@ function loadManifest(voice: string): Promise<void> {
   if (_keys && _loadedFor === voice) return Promise.resolve()
   if (!_loading || _loadedFor !== voice) {
     _loadedFor = voice
-    _loading = fetch(`/audio/${voice}/manifest.json`)
+    // ⚠️ `no-cache` = REVALIDATE, not "do not cache" — the request still goes out with the
+    // ETag and an unchanged manifest comes back 304. It is here because the header fix alone
+    // cannot reach a browser that ALREADY holds the old copy: `/audio/` was served with
+    // max-age=2592000, so a device that loaded the app before a render keeps the previous key
+    // list for up to a month and simply never asks for the new clips. That is exactly how
+    // 17–18 stayed mute in Chrome while 12–14 and 15–16 played (their keys were in the stale
+    // list) — and it is silent by construction, because a short list is a clean miss, and a
+    // miss falls back to browser speech, which on most Chrome installs is nothing at all.
+    _loading = fetch(`/audio/${voice}/manifest.json`, { cache: 'no-cache' })
       .then((r) => (r.ok ? r.json() : []))
       .then((keys: string[]) => { _keys = new Set(keys) })
       .catch(() => { _keys = new Set() })      // no manifest → every line falls back
@@ -96,7 +116,7 @@ function loadFragments(voice: string): Promise<void> {
   if (_frags) return Promise.resolve()
   if (!_fragLoading) {
     _fragLoading = Promise.all([
-      fetch(`/audio/${voice}/frag/fragments.json`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`/audio/${voice}/frag/fragments.json`, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : [])),
       fetch('/audio/fragment-templates.json').then((r) => (r.ok ? r.json() : [])),
     ])
       .then(([keys, tpls]: [string[], { segments: string[] }[]]) => {
@@ -190,8 +210,10 @@ export function speakLine(text: string, opts: Opts): () => void {
     stopClip()
   }
 
-  const voice = getVoicePref()
-  if (voice === 'device') { fallback(); return cancel }
+  const pref = getVoicePref()
+  if (pref === 'device') { fallback(); return cancel }
+  // The learner's band may own a voice (3–5 → Teddy); otherwise the device pick stands.
+  const voice = BAND_VOICE[getActiveLearner()?.age_group ?? ''] ?? pref
 
   // A miss with a custom voice selected: stay silent (custom-voice-only) instead of the
   // free voice, unless clip-only is off — then fall back exactly as before.

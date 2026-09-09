@@ -449,7 +449,7 @@ function TeachScene(props: { palette: Palette; task: Task; value: Val; stepIndex
   return props.task.kind === 'ineq' ? <RayScene {...props} /> : <BaggageScaleScene {...props} />
 }
 
-const CONFIG: GameConfig<Val, Task> = {
+export const CONFIG: GameConfig<Val, Task> = {
   chapterId: 'equationsInequalities',
   title: 'BAGGAGE SCALE',
   motif: '🧳',

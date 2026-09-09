@@ -480,7 +480,7 @@ function GrowthScene({ palette, value, stepIndex, frameCount, ended }: {
   )
 }
 
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'slopeLinearGraphs',
   title: 'FOLLOWER GROWTH',
   ticketLabel: 'growth log',

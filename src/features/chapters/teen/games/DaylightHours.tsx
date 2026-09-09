@@ -186,7 +186,7 @@ const DEMO_MATCH_STEPS: DemoStep<V>[] = [
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
-const CONFIG: GameConfig<V, Task> = {
+export const CONFIG: GameConfig<V, Task> = {
   chapterId: 'trigGraphsIdentities',
   title: 'DAYLIGHT HOURS',
   ticketLabel: 'almanac',

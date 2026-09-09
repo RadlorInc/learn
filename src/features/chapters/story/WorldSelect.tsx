@@ -34,7 +34,7 @@ export default function WorldSelect({ title = 'Where shall we go today?', worlds
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(14px,3vh,28px)', padding: '4vh 4vw', background: 'linear-gradient(180deg,#bfe6f7 0%,#d9f0e6 60%,#cdeccf 100%)' }}>
       {onExit && (
-        <button onClick={onExit} style={{ position: 'absolute', top: 14, left: 16, padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={onExit} style={{ position: 'absolute', top: 14, left: 16, padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -47,7 +47,16 @@ export default function WorldSelect({ title = 'Where shall we go today?', worlds
         {worlds.map(world => (
           <button key={world.id}
             onClick={() => { unlockSpeech(); speak(world.label); onPick(world.id) }}
-            style={{ width: 'clamp(200px,26vw,300px)', borderRadius: 24, overflow: 'hidden', cursor: 'pointer', padding: 0,
+            /* ⚠️ A `vh` TERM, BECAUSE A CARD'S HEIGHT IS ITS WIDTH. This was `clamp(200px,26vw,300px)`
+               — width-derived with nothing about the frame's height in it, which is the same fault
+               the teen shell was built around. At 640×320 the 26vw computes to 166 and the 200px
+               MINIMUM then wins, so three 200px cards could not sit in one row of a 589px content
+               box, wrapped to two rows of ~180px each, and the third card ran off the bottom of a
+               320px frame. Measured on `beads`, `numbers` and `counting`.
+               `min(26vw, 40vh)` keeps the roomy frames where they were (288px at 1280×720 against
+               the old 300 cap) and lets a short one shrink instead of wrapping; the floor drops to
+               120px, which is still nearly three times the 44px tap minimum. */
+            style={{ width: 'clamp(120px,min(26vw,40vh),300px)', borderRadius: 24, overflow: 'hidden', cursor: 'pointer', padding: 0,
               border: '5px solid var(--paper)', background: 'var(--paper)', boxShadow: '0 8px 0 rgba(61,37,22,.18)',
               transition: 'transform .18s ease, box-shadow .18s ease' }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 12px 0 rgba(61,37,22,.18)' }}

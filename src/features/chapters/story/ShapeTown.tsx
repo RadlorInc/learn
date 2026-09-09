@@ -29,7 +29,7 @@
  * Landscape-first, wrapped by the registry / `?ch=shapes`.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
+import { speak, speakAfterCurrent, speakPaced, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { ShapeSVG, SHAPES, SHAPE_ORDER, type ShapeName } from '../lessons/ShapesLesson'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -37,6 +37,9 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import { shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
+import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
+import ReadyBar, { PICKED_RING } from './ReadyBar'
 
 /**
  * The ONLY thing a tap waits for. Deliberately not `useIsSpeaking()`: a wrong tap speaks a line,
@@ -69,7 +72,7 @@ const TWIN: Partial<Record<ShapeName, ShapeName>> = { square: 'rectangle', recta
  * the same units, and every number below was derived from where that path's own bbox sits inside
  * its 100×100 viewBox — which is why nothing here needs a non-uniform scale to line up.
  *
- * `parts` is also the BUILD ORDER, and the build order is the question order: walls before roof,
+ * `parts` is also the BUILD ORDER, and the build order is the question order: wall before roof,
  * hull before sail. It is what a child watching someone build would expect to happen next.
  */
 interface Part { name: ShapeName; left: number; top: number; size: number; rotate?: number; label: string }
@@ -89,14 +92,14 @@ interface Part { name: ShapeName; left: number; top: number; size: number; rotat
  */
 interface BuildDef { id: string; aspect: number; ground: number; depth: number; bg: string; grad: string; opening: string; parts: Part[] }
 
-const BUILDS: BuildDef[] = [
+export const BUILDS: BuildDef[] = [
   {
     id: 'house', aspect: 1.35, ground: 26, depth: 0.78,
     bg: '/assets/backgrounds/town_garden.jpeg',
     grad: 'linear-gradient(#cdeeff 0%, #e7f6d8 52%, #aedd86 100%)',
     opening: 'Milo is building a house!',
     parts: [
-      { name: 'square',    left: 15,   top: 63,   size: 70,   label: 'walls' },
+      { name: 'square',    left: 15,   top: 63,   size: 70,   label: 'wall' },
       { name: 'triangle',  left: 14.4, top: 2.4,  size: 71.1, label: 'roof' },
       // The same rectangle bar, stood upright. The rotation lives on the positioned box, never on
       // an element that also carries a keyframe — stack the two and the animation silently wins and
@@ -128,7 +131,7 @@ const BUILDS: BuildDef[] = [
  * finish exactly as the practice does.
  */
 interface Step { bi: number; pi: number }
-const SEQUENCE: Step[] = BUILDS.flatMap((b, bi) => b.parts.map((_, pi) => ({ bi, pi })))
+export const SEQUENCE: Step[] = BUILDS.flatMap((b, bi) => b.parts.map((_, pi) => ({ bi, pi })))
 const DEMO_STEP = 0, GUIDED_STEP = 1, FIRST_SCORED = 2
 const SCORED_ROUNDS = SEQUENCE.length - FIRST_SCORED
 // The round the second build starts on, so the walk interlude lands there rather than on a count.
@@ -275,7 +278,7 @@ function Build({ buildIdx, built, target, elsRef }: {
 // ─── The pieces ──────────────────────────────────────────────────────────────────────
 // A pile of parts on the ground between Milo and the build, wrapping two to a row so three reads as
 // a heap rather than a quiz row. Each rests on its own contact shadow.
-type PieceState = 'idle' | 'wrong' | 'taken'
+type PieceState = 'idle' | 'wrong' | 'taken' | 'picked'
 function PiecePile({ options, stateFor, onTap, boxRef, aspect }: {
   options: ShapeName[]; stateFor: (i: number) => PieceState
   onTap?: (i: number, el: HTMLElement) => void
@@ -295,6 +298,7 @@ function PiecePile({ options, stateFor, onTap, boxRef, aspect }: {
               aria-label={SHAPES[name].label}
               style={{ position: 'relative', width: pieceBox, height: pieceBox * 1.16, padding: 0, border: 'none',
                 background: 'transparent', cursor: onTap ? 'pointer' : 'default', lineHeight: 0,
+                borderRadius: 14, boxShadow: st === 'picked' ? PICKED_RING : undefined,
                 opacity: st === 'taken' ? 0 : 1, transition: 'opacity .15s' }}>
               <div aria-hidden style={{ position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)',
                 width: pieceBox * 0.66, height: pieceBox * 0.17,
@@ -334,11 +338,27 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete:
   const [taken, setTaken] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false)
+  const [pending, setPending] = useState<number | null>(null)
+  const pendingEl = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    if (mode === 'guided') speak(`Now you! The ${part.label} needs a ${label}. Tap it!`)
+    if (mode === 'guided') speakAfterCurrent(`Now you! The ${part.label} needs a ${label}. Tap it!`)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /** A tap only CHOOSES; the piece does not move and nothing is graded until Ready. The flight
+   *  needs the element it starts from, so the chosen button is held alongside the index. */
+  function pick(i: number, el: HTMLElement) {
+    if (done.current) return
+    pendingEl.current = el
+    setPending(p => (p === i ? null : i))
+  }
+  function commit() {
+    const i = pending, el = pendingEl.current
+    if (i == null || !el) return
+    setPending(null)
+    tap(i, el)
+  }
 
   function tap(i: number, el: HTMLElement) {
     if (done.current || tapLock.current) return
@@ -356,12 +376,15 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete:
     // The piece leaves the pile and travels into its socket; the round ends when it lands. A fixed
     // delay would drift out of step with the flight, and the flight is what completes the build.
     const ms = fit(el)
-    if (mode === 'guided') speak(`Yes! The ${label} fits!`)
+    if (mode === 'guided') speak(`Great job! The ${label} fits!`)
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), ms + 260)
   }
 
-  return <PiecePile options={options} aspect={BUILDS[SEQUENCE[data.seq].bi].aspect}
-    stateFor={i => (taken === i ? 'taken' : wrongIdx === i ? 'wrong' : 'idle')} onTap={tap} />
+  return <>
+    <PiecePile options={options} aspect={BUILDS[SEQUENCE[data.seq].bi].aspect}
+      stateFor={i => (taken === i ? 'taken' : wrongIdx === i ? 'wrong' : pending === i ? 'picked' : 'idle')} onTap={pick} />
+    <ReadyBar show={pending !== null} onCommit={commit} />
+  </>
 }
 
 // ─── Milo shows how (opening demo + the 3-wrong re-teach) ────────────────────────────
@@ -377,7 +400,7 @@ const ShapesExplain: React.FC<{ data: ShapeRound; fit: Fit; onDone: () => void }
   const label = SHAPES[part.name].label
   const [taken, setTaken] = useState<number | null>(null)
   const pile = useRef<HTMLDivElement | null>(null)
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const cancel = speakSteps([
@@ -411,20 +434,24 @@ const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   const { w: vw, h: vh } = useViewport()
   const short = vh < SHORT_H
   const px = Math.max(48, Math.min(vw * 0.14, vh * 0.18, 120))
-  const ran = useRef(false)
+  const ran = useOnceGuard()
   const fired = useRef(false)
   const finish = useCallback(() => { if (fired.current) return; fired.current = true; stopSpeech(); onDone() }, [onDone])
   useEffect(() => {
     if (ran.current) return; ran.current = true
-    const timers: Array<ReturnType<typeof setTimeout>> = []
-    speak('These are the shapes!')
-    let t = 1800
-    SHAPE_ORDER.forEach((s, i) => {
-      timers.push(setTimeout(() => { setLit(i); speak(SHAPES[s].label) }, t))
-      t += SHOWCASE_DWELL
-    })
-    timers.push(setTimeout(finish, t + 500))
-    return () => timers.forEach(clearTimeout)
+    // One paced narration: each name waits for the one before it to finish, so the opener is not
+    // cut by "triangle" and "triangle" is not cut by "square". The dwells are unchanged — they are
+    // now a FLOOR rather than the whole story.
+    const cancel = speakPaced(
+      ['These are the shapes!', ...SHAPE_ORDER.map(s => SHAPES[s].label)],
+      {
+        onStep: (i) => { if (i > 0) setLit(i - 1) },
+        minMs: (_l, i) => (i === 0 ? 1800 : SHOWCASE_DWELL),
+        onDone: finish,
+        tailMs: 500,
+      },
+    )
+    return cancel
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return (
@@ -444,7 +471,7 @@ const ShapeShowcase: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 }
 
 // ─── The scored practice ─────────────────────────────────────────────────────────────
-function makeShapeBeat(fit: Fit): Beat<ShapeRound> {
+export function makeShapeBeat(fit: Fit): Beat<ShapeRound> {
   return {
     skillId: 'shapes', rounds: SCORED_ROUNDS,
     // One walk, on the round the second build starts — so the change of place reads as Milo
@@ -481,7 +508,7 @@ export default function ShapeTown({ onFinish, onExit }: {
   onExit?: () => void
 }) {
   const needsRotate = useNeedsRotate()
-  const [phase, setPhase] = useState<Phase>('intro')
+  const [phase, setPhase] = useChapterPhase<Phase>('intro', { chapter: 'shapes', phase: 'practice' })
   // The build lives HERE, not inside SkillBeat, which rebuilds its contents every round — anything
   // mounted in there resets with them, so a cumulative arc drawn inside a round can never accumulate.
   const [built, setBuilt] = useState<Set<string>>(() => new Set())
@@ -519,7 +546,22 @@ export default function ShapeTown({ onFinish, onExit }: {
     return ms
   }, [])
 
-  const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
+  /**
+   * The one interlude this chapter has: the move from the house to the boat. It used to be a silent
+   * 850ms pause — and `opening` was declared PER BUILD and rendered nowhere, so the new build simply
+   * appeared with no word said or written about it. That is the beat a tester reported as Milo not
+   * speaking, and the hull is the first thing asked for once it is over. Said AND written, because
+   * most Chrome installs have no voice.
+   * ⚠️ 2100ms, not 850: the next round's question is spoken the moment this resolves and `speak()`
+   * cancels whatever is still talking, so a shorter hold cuts this line off mid-word.
+   */
+  const [moving, setMoving] = useState(false)
+  const interlude = useCallback(() => new Promise<void>(res => {
+    setMoving(true)
+    // `speakAfterCurrent`: the interlude fires 1300ms after the round's praise, which runs longer.
+    speakAfterCurrent(BUILDS[1].opening)
+    window.setTimeout(() => { setMoving(false); res() }, 2100)
+  }), [])
   const beat = useMemo(() => makeShapeBeat(fit), [fit])
   // Memoized because they SHUFFLE: rebuilt on every render, the option order — and so `answerIdx` —
   // would change under the surface that is already showing them.
@@ -544,7 +586,7 @@ export default function ShapeTown({ onFinish, onExit }: {
       <Background buildIdx={step.bi} />
 
       <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 50 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       </div>
 
       {phase === 'intro' && (
@@ -566,6 +608,8 @@ export default function ShapeTown({ onFinish, onExit }: {
       {phase === 'guided' && (<>{Banner('Now you! Tap the piece that fits')}
         <ShapesPlay key="guided" data={guidedData} mode="guided" fit={fit}
           onComplete={() => { setStepIdx(FIRST_SCORED); setPhase('practice') }} /></>)}
+
+      {moving && Banner(BUILDS[1].opening)}
 
       {phase === 'practice' && (
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>

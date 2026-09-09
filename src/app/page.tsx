@@ -20,7 +20,7 @@
  * anti-fear rule. Change the words freely; keep them TRUE, because this is the one page that makes
  * a promise before anybody has played anything.
  */
-import { SUPPORT_EMAIL } from '@/app/site'
+import { APP_ID, APP_NAME, COMPANY, COMPANY_ID, COMPANY_URL, SUPPORT_EMAIL, SITE_URL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -29,6 +29,37 @@ import ResumeSignedIn from './ResumeSignedIn'
 export const metadata: Metadata = {
   // The root inherits the layout's title/description; only the canonical is page-specific.
   alternates: { canonical: '/' },
+}
+
+/**
+ * The only structured data in the app, and it lives here because this is the only page a crawler
+ * both reaches and can read — everything else is a signed-in surface.
+ *
+ * ⚠️ It REFERENCES Radlor by `@id` instead of describing it. The company is declared once, on
+ * radlor.com. See the note in `site.ts`.
+ */
+function AppJsonLd() {
+  const json = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'SoftwareApplication',
+        '@id': APP_ID,
+        name: APP_NAME,
+        alternateName: `${APP_NAME} by ${COMPANY}`,
+        url: SITE_URL,
+        applicationCategory: 'EducationalApplication',
+        operatingSystem: 'Web browser',
+        description:
+          'A short placement check finds the deepest gap under a child\u2019s math, then story chapters teach from there with the difficulty moving question by question. Ages 3 to 18.',
+        publisher: { '@id': COMPANY_ID },
+        brand: { '@id': COMPANY_ID },
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      },
+      { '@type': 'Organization', '@id': COMPANY_ID, name: COMPANY, url: COMPANY_URL },
+    ],
+  }
+  return <script type="application/ld+json">{JSON.stringify(json)}</script>
 }
 
 const POINTS: { h: string; p: string }[] = [
@@ -42,9 +73,13 @@ const POINTS: { h: string; p: string }[] = [
   },
   {
     h: 'It is a world, not a worksheet',
-    p: 'Every chapter is somewhere to be — a market, a rail line, a building plot — with something to do and someone who needs it done. The maths is the thing that makes it work.',
+    p: 'Every chapter is somewhere to be — a market, a rail line, a building plot — with something to do and someone who needs it done. The math is the thing that makes it work.',
   },
 ]
+
+/** A footer link's hit area: 44px tall (the aim this repo states everywhere) bought entirely in
+ *  padding, so the row still reads as a line of small text. */
+const tapRow = { display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 8px' } as const
 
 export default function RootPage() {
   return (
@@ -60,7 +95,7 @@ export default function RootPage() {
           <Image src="/assets/characters/milo-happy.png" alt="" width={44} height={44} priority
             style={{ objectFit: 'contain' }} />
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, color: '#F26B2C' }}>
-            Milo
+            AdaptiveLearn
           </span>
           <Link href="/auth" style={{
             marginLeft: 'auto', fontSize: 15, fontWeight: 700, color: '#7a6a55', textDecoration: 'none',
@@ -74,12 +109,12 @@ export default function RootPage() {
           fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 34, lineHeight: 1.2,
           color: '#3d2516', margin: '0 0 14px',
         }}>
-          Find the gap that’s holding your child back in maths
+          Find the gap that’s holding your child back in math
         </h1>
 
         <p style={{ fontSize: 18, lineHeight: 1.6, color: '#5b4c39', margin: '0 0 26px' }}>
-          Most maths trouble is not about the topic your child is failing today — it is about
-          something further down that never quite landed. Milo runs a short placement check to find
+          Most math trouble is not about the topic your child is failing today — it is about
+          something further down that never quite landed. AdaptiveLearn runs a short placement check to find
           that, then builds a plan that fixes it. Ages 3 to 18.
         </p>
 
@@ -90,9 +125,23 @@ export default function RootPage() {
         }}>
           Start the free check
         </Link>
-        <p style={{ fontSize: 14, color: '#8a7a63', margin: '12px 0 34px' }}>
+        <p style={{ fontSize: 14, color: '#8a7a63', margin: '12px 0 14px' }}>
           No account needed to start. It takes about ten minutes.
         </p>
+        {/**
+          * ⚠️ THE SECOND DOOR IS FOR THE PARENT WHO WILL NOT SPEND TEN MINUTES ON A STRANGER'S
+          * WEBSITE, AND THAT IS MOST OF THEM. The check is the better product and stays the primary
+          * CTA; this one asks for an age and nothing else, because a parent who watches their child
+          * enjoy a chapter is a warmer lead than one who abandoned a placement test at question
+          * fifteen. It is deliberately quieter than the check — a link, not a second button
+          * competing with it.
+          */}
+        <Link href="/demo" style={{
+          minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          color: '#F26B2C', fontSize: 15, fontWeight: 700, textDecoration: 'underline', marginBottom: 34,
+        }}>
+          Or just try two chapters first →
+        </Link>
 
         {POINTS.map(({ h, p }) => (
           <section key={h} style={{
@@ -113,15 +162,27 @@ export default function RootPage() {
           no image is ever uploaded, and every one of those chapters can be tapped instead.
         </p>
 
+        {/*
+          ⚠️ THESE ARE STANDALONE CONTROLS, NOT WORDS IN A SENTENCE, so they owe a real tap target.
+          At `fontSize: 14` with no padding each one measured 19px tall at EVERY viewport — under
+          even WCAG 2.5.8 AA's 24px floor, on the most public page in the product. `tapRow` buys the
+          height in PADDING, so nothing looks different: the text, the colour and the row spacing are
+          unchanged and only the hit area grows. Row `gap` drops to 4 because each link now carries
+          its own 15px of breathing room.
+        */}
         <footer style={{
-          marginTop: 34, paddingTop: 18, borderTop: '2px solid rgba(61,37,22,.10)',
-          display: 'flex', flexWrap: 'wrap', gap: 18, fontSize: 14,
+          marginTop: 34, paddingTop: 8, borderTop: '2px solid rgba(61,37,22,.10)',
+          display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 4, fontSize: 14,
         }}>
-          <Link href="/help" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Help</Link>
-          <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Privacy</Link>
-          <Link href="/legal/terms" style={{ color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Terms</Link>
-          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#7a6a55', textDecoration: 'none' }}>{SUPPORT_EMAIL}</a>
+          <Link href="/help" style={{ ...tapRow, color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Help</Link>
+          <Link href="/legal/privacy" style={{ ...tapRow, color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Privacy</Link>
+          <Link href="/legal/terms" style={{ ...tapRow, color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Terms</Link>
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ ...tapRow, color: '#7a6a55', textDecoration: 'none' }}>{SUPPORT_EMAIL}</a>
+          <a href={COMPANY_URL} style={{ ...tapRow, color: '#7a6a55', textDecoration: 'none', marginLeft: 'auto' }}>
+            {APP_NAME} is made by {COMPANY}
+          </a>
         </footer>
+        <AppJsonLd />
       </div>
     </main>
   )

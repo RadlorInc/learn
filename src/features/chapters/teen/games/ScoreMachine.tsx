@@ -150,7 +150,7 @@ const GUIDED_TASK: Task = {
   work: ['Item cost first: 2 × 3 is 6.', '1 + 6 is 7.'],
 }
 
-const CONFIG: GameConfig<ETok[], Task> = {
+export const CONFIG: GameConfig<ETok[], Task> = {
   chapterId: 'orderOfOperations',
   title: 'EVENT BUDGET',
   ticketLabel: 'budget',

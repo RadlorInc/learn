@@ -1,0 +1,181 @@
+name: Migrate region (dump Sydney → restore into a new project)
+
+# ONE job, no artifact: the repo is public, so a dump with children's data must never be uploaded.
+# Docker is on ubuntu-latest, which is the only reason this runs here and not on a Mac.
+# Needs exactly two secrets, both copied from each project's Connect panel → "Session pooler"
+# (port 5432, IPv4 — GitHub runners have no IPv6, so the direct db.<ref> host will not connect):
+#   OLD_DB_URL   production (Sydney)     — READ ONLY here: dump, and the fingerprint
+#   NEW_DB_URL   the fresh us-east-1 project, still empty
+# No access token: `db dump --db-url` bypasses platform auth (measured: it fails on Docker, not auth).
+#
+# Order is load-bearing (docs/supabase-region-migration.md §3–4):
+#   revoke default privileges → extensions → schema → ledger → data (auth then public) → cron → verify.
+# Restoring onto default privileges silently re-opens V12/V19 with every RLS policy reading correct.
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_ref:
+        description: 'Project ref of the NEW (empty) project. Refuses to run if it equals PROD_PROJECT_REF.'
+        required: true
+      wipe_target:
+        description: 'Drop everything on the TARGET first, so a failed restore can be re-run. Safe by construction: the ref checks run BEFORE it, so it can only ever reach the new project.'
+        required: false
+        default: 'false'
+
+# Two dispatches six seconds apart (33779354496 / 33779365167) restored into the SAME database
+# at the same time: one dropped schema public while the other was creating types in it, so a
+# confirmed DROP SCHEMA was followed by `type "invite_status" already exists`. Never concurrent.
+concurrency:
+  group: migrate-region-${{ inputs.new_ref }}
+  cancel-in-progress: false # never abort a half-applied restore mid-flight
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Refuse to restore production onto itself
+        env:
+          NEW_REF: ${{ inputs.new_ref }}
+          OLD_REF: ${{ vars.PROD_PROJECT_REF }}
+          NEW_DB_URL: ${{ secrets.NEW_DB_URL }}
+          WIPE: ${{ inputs.wipe_target }}
+        run: |
+          set -euo pipefail
+          [ -n "$OLD_REF" ] || { echo "::error::PROD_PROJECT_REF unset"; exit 1; }
+          [ "$NEW_REF" != "$OLD_REF" ] || { echo "::error::new_ref equals production"; exit 1; }
+          case "$NEW_DB_URL" in *"$OLD_REF"*) echo "::error::NEW_DB_URL points at production"; exit 1;; esac
+          case "$NEW_DB_URL" in *"$NEW_REF"*) ;; *) echo "::error::NEW_DB_URL does not contain new_ref"; exit 1;; esac
+          # A failed restore leaves debris, and the emptiness check below then refuses the retry.
+          # This runs AFTER the four checks above — that ordering is what makes it safe, so do not
+          # move it: on its own it is a `drop schema cascade` with a URL from a secret.
+          if [ "$WIPE" = "true" ]; then
+            echo "::warning::wiping $NEW_REF before restore"
+            psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+              drop schema if exists public cascade;
+              create schema public;
+              grant usage on schema public to anon, authenticated, service_role;
+              grant all   on schema public to postgres, service_role;
+              drop schema if exists supabase_migrations cascade;
+              -- auth is managed: its tables cannot be dropped, only emptied. Enumerated from the
+              -- catalog rather than listed here, so this cannot drift from what auth actually has.
+              do $$ declare t record; begin
+                for t in select tablename from pg_tables
+                         where schemaname = 'auth' and tablename <> 'schema_migrations' loop
+                  execute format('truncate table auth.%I cascade', t.tablename);
+                end loop;
+              end $$;
+          SQL
+          fi
+          # the target must be EMPTY — a second run onto a populated project is not a migration
+          n=$(psql "$NEW_DB_URL" -tAc "select count(*) from pg_tables where schemaname='public'")
+          [ "$n" = "0" ] || { echo "::error::new project already has $n public tables"; exit 1; }
+
+      - name: Dump production (read-only)
+        env: { OLD_DB_URL: "${{ secrets.OLD_DB_URL }}" }
+        run: |
+          set -euo pipefail
+          supabase db dump --db-url "$OLD_DB_URL" -f schema.sql
+          supabase db dump --db-url "$OLD_DB_URL" -f data.sql --data-only --use-copy
+          # Drop the 7 storage tables from the dump. They are owned by supabase_storage_admin and
+          # `postgres` cannot write them (run 33780851922: permission denied for buckets_vectors);
+          # measured on production the same day, all seven hold 0 rows — this app stores no files.
+          # ⚠️ Done here rather than with the CLI's own -x: `-x 'storage.*'` (run 33781398915) left
+          # every storage table in AND silently dropped the supabase_migrations block, i.e. it
+          # excluded the one thing we need and none of what we asked for.
+          # block headers and terminators only — no row ever prints, either side of the filter
+          echo "--- data.sql structure BEFORE the filter (tail) ---"
+          grep -nE '^COPY |^\\\.$' data.sql | tail -24
+          awk '/^COPY "storage"\./{skip=1} skip && /^\\\.$/{skip=0; next} !skip' data.sql > data.filtered
+          mv data.filtered data.sql
+          echo "--- data.sql structure AFTER the filter (tail) ---"
+          grep -nE '^COPY |^\\\.$' data.sql | tail -12
+          # No separate auth dump: measured on run 33780131987, data.sql already carries all 22 auth
+          # tables (auth.users included) ahead of the public ones, and carries NEITHER ledger. Dumping
+          # auth again and loading both is what produced `duplicate key ... flow_state_pkey`.
+          # The CLI's migration ledger, dumped on its own: without it the next `supabase db push`
+          # on the new project replays all 77 files onto a schema that already has them.
+          # ⚠️ This was deleted for one commit on the reading that data.sql carried it. It does not
+          # (run 33782295982 printed data.sql's own structure: it ends at storage.vector_indexes).
+          # That reading came from `grep -A80` running off the end of the data.sql inventory and
+          # into the ledger.sql one printed after it — a byte-count window crossing the boundary it
+          # was meant to respect, which is the one technique this repo has written down as not
+          # working. data.sql really does carry auth (two instruments: its own inventory, and the
+          # duplicate flow_state_pkey), so that half stands.
+          supabase db dump --db-url "$OLD_DB_URL" -f ledger.sql --data-only --use-copy --schema supabase_migrations
+          # ...and that table's OWN DDL. Hand-writing it is a second copy of a schema we do not own:
+          # run 33778061428 died on `column "created_by" does not exist` because the hand-written
+          # version had drifted from the one production actually has.
+          supabase db dump --db-url "$OLD_DB_URL" -f ledger_schema.sql --schema supabase_migrations
+          for f in schema.sql data.sql ledger.sql ledger_schema.sql; do test -s $f || { echo "::error::$f empty"; exit 1; }; done
+          echo "schema $(wc -c <schema.sql)B · data $(wc -c <data.sql)B · ledger $(wc -c <ledger.sql)B · ledger-ddl $(wc -c <ledger_schema.sql)B"
+          # Table NAMES only, never rows — this dump carries children's data and the repo is public.
+          # Printed BEFORE the assertions so a failure says what the file does contain, rather than
+          # leaving "no auth.users block" ambiguous between "not dumped" and "grep of the wrong shape".
+          echo "--- COPY blocks in data.sql ---";   grep -oE '^COPY [^ (]+' data.sql   || echo "(none)"
+          # positive control on the one file that decides whether 11 families keep their logins:
+          # the CLI treats auth as managed and MAY silently exclude it — assert the block is there.
+          # Quoting-tolerant: pg_dump writes `COPY auth.users` or `COPY "auth"."users"` depending on
+          # version and identifier. A pattern matching only one shape cannot fail for the other —
+          # the bundle-grep trap: it would read as a missing block on a dump that is perfectly fine.
+          grep -Eq '^COPY "?auth"?[.]"?users"? ' data.sql || { echo "::error::data.sql has no auth.users block"; exit 1; }
+          grep -Eq '^COPY "?supabase_migrations"?[.]"?schema_migrations"? ' ledger.sql || { echo "::error::ledger.sql has no ledger block"; exit 1; }
+          # the exclusion actually bit — otherwise the restore dies on a managed table again
+          grep -Eq '^COPY "?storage"?[.]' data.sql && { echo "::error::-x storage.* did not exclude storage"; exit 1; } || true
+          grep -Eqi 'create table[^;]*schema_migrations' ledger_schema.sql || { echo "::error::ledger_schema.sql has no schema_migrations table"; exit 1; }
+          # A schema dump carries no triggers defined on a MANAGED schema's tables, and one of them
+          # (on_auth_user_created → public.handle_new_user) is what gives every new signup a profile
+          # row. Run 33782802949 restored without it: 11 existing profiles present and correct — they
+          # ride in the data dump — and every FUTURE parent would have got an auth row, no profile,
+          # and no way to add a child. Dumped from production rather than written out here.
+          psql "$OLD_DB_URL" -tAc "select pg_get_triggerdef(t.oid) || ';' from pg_trigger t join pg_class c on c.oid = t.tgrelid join pg_namespace n on n.oid = c.relnamespace where not t.tgisinternal and n.nspname = 'auth'" > auth_triggers.sql
+          grep -qi 'create trigger' auth_triggers.sql || { echo "::error::no auth triggers dumped — production has at least on_auth_user_created"; exit 1; }
+          echo "--- auth triggers to carry across ---"; cat auth_triggers.sql
+          psql "$OLD_DB_URL" -f supabase/tests/security_posture.sql > posture.old.txt
+
+      - name: Restore into the new project
+        env: { NEW_DB_URL: "${{ secrets.NEW_DB_URL }}" }
+        run: |
+          set -euo pipefail
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+            alter default privileges in schema public revoke all on tables    from anon, authenticated;
+            alter default privileges in schema public revoke all on functions from anon, authenticated;
+            create extension if not exists pg_cron;
+            create extension if not exists pg_stat_statements;
+            create extension if not exists pgcrypto;
+            create extension if not exists "uuid-ossp";
+            create extension if not exists supabase_vault;
+          SQL
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -f schema.sql
+          # the ledger's own DDL as production has it — only create the schema if the dump does not
+          grep -Eqi 'create schema[^;]*supabase_migrations' ledger_schema.sql \
+            || psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -c 'create schema if not exists supabase_migrations'
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -f ledger_schema.sql
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f ledger.sql
+          # replica role: FKs and triggers stay quiet while rows land in dependency order
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -c 'set session_replication_role = replica' -f data.sql
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -f auth_triggers.sql
+          # the 4 retention jobs live in cron.job, which a dump does not carry (measured 2026-09-03)
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+            select cron.schedule('purge-old-learner-events','17 3 * * *', $$delete from public.learner_events where created_at < now() - interval '90 days'$$);
+            select cron.schedule('prune-diagnostic-items',  '22 3 * * *', 'select public.prune_diagnostic_items()');
+            select cron.schedule('prune-error-events',      '27 3 * * *', 'select public.prune_error_events()');
+            select cron.schedule('prune-diagnostic-leads',  '32 3 * * *', 'select public.prune_diagnostic_leads()');
+          SQL
+          rm -f schema.sql data.sql ledger.sql ledger_schema.sql auth_triggers.sql
+
+      - name: Verify — same queries, two databases, must agree
+        env: { NEW_DB_URL: "${{ secrets.NEW_DB_URL }}" }
+        run: |
+          set -euo pipefail
+          psql "$NEW_DB_URL" -f supabase/tests/security_posture.sql > posture.new.txt
+          if diff posture.old.txt posture.new.txt; then echo "✓ posture + fingerprint identical"; else echo "::error::new project differs from production (above)"; exit 1; fi
+          # isolation: the suite proving one family cannot read another's data
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql
+          echo "✓ RLS regression suite green on the new project"
+          echo "::notice::Restore verified. Nothing is pointed at it yet — §5 (Google redirect URI) and §7 (Vercel env) are manual."

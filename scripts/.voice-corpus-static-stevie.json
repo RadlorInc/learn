@@ -1,0 +1,1892 @@
+[
+  {
+    "key": "12du2td",
+    "text": "Lovely!",
+    "chars": 7,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1z0z8ch",
+    "text": "It was \u03c0.",
+    "chars": 9,
+    "kind": "miss",
+    "sources": [
+      "BigWheel"
+    ]
+  },
+  {
+    "key": "1xjnjvg",
+    "text": "It was i.",
+    "chars": 9,
+    "kind": "miss",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "163yjlw",
+    "text": "Great job!",
+    "chars": 10,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1grv0yo",
+    "text": "Nice work!",
+    "chars": 10,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "tr918i",
+    "text": "Well done!",
+    "chars": 10,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "10lkemc",
+    "text": "It was \u2212i.",
+    "chars": 10,
+    "kind": "miss",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "12ueh7y",
+    "text": "You got it!",
+    "chars": 11,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "pu7k5j",
+    "text": "It was ASA \u2713.",
+    "chars": 13,
+    "kind": "miss",
+    "sources": [
+      "SkateRamp"
+    ]
+  },
+  {
+    "key": "ldv7vl",
+    "text": "It was SAS \u2713.",
+    "chars": 13,
+    "kind": "miss",
+    "sources": [
+      "SkateRamp"
+    ]
+  },
+  {
+    "key": "q4cnh1",
+    "text": "It was y = x.",
+    "chars": 13,
+    "kind": "miss",
+    "sources": [
+      "FollowerGrowth"
+    ]
+  },
+  {
+    "key": "xyppj2",
+    "text": "It was cos\u00b2\u03b8.",
+    "chars": 13,
+    "kind": "miss",
+    "sources": [
+      "DaylightHours"
+    ]
+  },
+  {
+    "key": "1n1336l",
+    "text": "It was sin\u00b2\u03b8.",
+    "chars": 13,
+    "kind": "miss",
+    "sources": [
+      "DaylightHours"
+    ]
+  },
+  {
+    "key": "gmnm9x",
+    "text": "It was y = \u2212x.",
+    "chars": 14,
+    "kind": "miss",
+    "sources": [
+      "FollowerGrowth"
+    ]
+  },
+  {
+    "key": "1lrmguc",
+    "text": "It was (+, +).",
+    "chars": 14,
+    "kind": "miss",
+    "sources": [
+      "BigWheel"
+    ]
+  },
+  {
+    "key": "3q45ux",
+    "text": "It was (\u2212, +).",
+    "chars": 14,
+    "kind": "miss",
+    "sources": [
+      "BigWheel"
+    ]
+  },
+  {
+    "key": "28sjtu",
+    "text": "It was (\u2212, \u2212).",
+    "chars": 14,
+    "kind": "miss",
+    "sources": [
+      "BigWheel"
+    ]
+  },
+  {
+    "key": "huj3xn",
+    "text": "It was (+, \u2212).",
+    "chars": 14,
+    "kind": "miss",
+    "sources": [
+      "BigWheel"
+    ]
+  },
+  {
+    "key": "c7i4df",
+    "text": "It was circle.",
+    "chars": 14,
+    "kind": "miss",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1esil9n",
+    "text": "It was invert.",
+    "chars": 14,
+    "kind": "miss",
+    "sources": [
+      "PhotoFilters"
+    ]
+  },
+  {
+    "key": "62umvz",
+    "text": "It was ellipse.",
+    "chars": 15,
+    "kind": "miss",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "18cp7il",
+    "text": "It was parabola.",
+    "chars": 16,
+    "kind": "miss",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1phmvjj",
+    "text": "It was hyperbola.",
+    "chars": 17,
+    "kind": "miss",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1oi9gtu",
+    "text": "It was \u2191 opens up.",
+    "chars": 18,
+    "kind": "miss",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1mg4s4b",
+    "text": "It was Going viral.",
+    "chars": 19,
+    "kind": "miss",
+    "sources": [
+      "GoingViral"
+    ]
+  },
+  {
+    "key": "r59tev",
+    "text": "It was No solution.",
+    "chars": 19,
+    "kind": "miss",
+    "sources": [
+      "BestPlan"
+    ]
+  },
+  {
+    "key": "17ke6ik",
+    "text": "So i mirrors to \u2212i.",
+    "chars": 19,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "i8kair",
+    "text": "So you finish at i.",
+    "chars": 19,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "1mwvmb8",
+    "text": "So \u2212i mirrors to i.",
+    "chars": 19,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "11kp3pr",
+    "text": "It was \u2193 opens down.",
+    "chars": 20,
+    "kind": "miss",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1jrxdmt",
+    "text": "So you finish at \u2212i.",
+    "chars": 20,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "1ezffvl",
+    "text": "It was log a + log b.",
+    "chars": 21,
+    "kind": "miss",
+    "sources": [
+      "BalanceThatGrows"
+    ]
+  },
+  {
+    "key": "8tydus",
+    "text": "It was log a \u2212 log b.",
+    "chars": 21,
+    "kind": "miss",
+    "sources": [
+      "BalanceThatGrows"
+    ]
+  },
+  {
+    "key": "uwt98z",
+    "text": "It was never settles.",
+    "chars": 21,
+    "kind": "miss",
+    "sources": [
+      "ShareTheWifi"
+    ]
+  },
+  {
+    "key": "1opgusr",
+    "text": "Find the cone. Tap it!",
+    "chars": 22,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "16rgp25",
+    "text": "Find the cube. Tap it!",
+    "chars": 22,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1udxhzy",
+    "text": "Find the star. Tap it!",
+    "chars": 22,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1sq1nov",
+    "text": "It was Steady posting.",
+    "chars": 22,
+    "kind": "miss",
+    "sources": [
+      "GoingViral"
+    ]
+  },
+  {
+    "key": "cptldr",
+    "text": "It was Infinitely many.",
+    "chars": 23,
+    "kind": "miss",
+    "sources": [
+      "BestPlan"
+    ]
+  },
+  {
+    "key": "1ofvn5g",
+    "text": "Simplify sin\u00b2\u03b8 + cos\u00b2\u03b8.",
+    "chars": 23,
+    "kind": "scored",
+    "sources": [
+      "DaylightHours"
+    ]
+  },
+  {
+    "key": "p4c0lc",
+    "text": "It was climbs / climbs.",
+    "chars": 23,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "byny5n",
+    "text": "Find the square. Tap it!",
+    "chars": 24,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "mpu0de",
+    "text": "Find the circle. Tap it!",
+    "chars": 24,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "xyj8v9",
+    "text": "Find the sphere. Tap it!",
+    "chars": 24,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1xwgagi",
+    "text": "It was climbs / plunges.",
+    "chars": 24,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1vxddxw",
+    "text": "It was plunges / climbs.",
+    "chars": 24,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "gphs2w",
+    "text": "Find the hexagon. Tap it!",
+    "chars": 25,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "ol1pxi",
+    "text": "It was plunges / plunges.",
+    "chars": 25,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1awppmm",
+    "text": "Find the triangle. Tap it!",
+    "chars": 26,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "bgmk66",
+    "text": "Find the pentagon. Tap it!",
+    "chars": 26,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "omu45c",
+    "text": "Find the cylinder. Tap it!",
+    "chars": 26,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "g0h0z3",
+    "text": "Find the rectangle. Tap it!",
+    "chars": 27,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "70c8qt",
+    "text": "So tilt it past that angle.",
+    "chars": 27,
+    "kind": "reteach",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1h6cgro",
+    "text": "So tilt the torch part-way.",
+    "chars": 27,
+    "kind": "reteach",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1pg1usg",
+    "text": "It was below, below, above.",
+    "chars": 27,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1msfqc4",
+    "text": "It was below, above, below.",
+    "chars": 27,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1ai2veg",
+    "text": "It was above, below, below.",
+    "chars": 27,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1afbur0",
+    "text": "It was below, above, above.",
+    "chars": 27,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1ires88",
+    "text": "It was above, below, above.",
+    "chars": 27,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "8d19jw",
+    "text": "It was above, above, below.",
+    "chars": 27,
+    "kind": "miss",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "14y5gp7",
+    "text": "What is the conjugate of i?",
+    "chars": 27,
+    "kind": "scored",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "mvvmj3",
+    "text": "So log(a \u00b7 b) = log a + log b.",
+    "chars": 30,
+    "kind": "reteach",
+    "sources": [
+      "BalanceThatGrows"
+    ]
+  },
+  {
+    "key": "163wukq",
+    "text": "So log(a / b) = log a \u2212 log b.",
+    "chars": 30,
+    "kind": "reteach",
+    "sources": [
+      "BalanceThatGrows"
+    ]
+  },
+  {
+    "key": "1gkxnyq",
+    "text": "It was Never ends \u25b8 irrational.",
+    "chars": 31,
+    "kind": "miss",
+    "sources": [
+      "Leaderboard"
+    ]
+  },
+  {
+    "key": "y4te86",
+    "text": "What is the range of x squared?",
+    "chars": 31,
+    "kind": "scored",
+    "sources": [
+      "PhotoFilters"
+    ]
+  },
+  {
+    "key": "1qsvcva",
+    "text": "It was Opens up \u2014 a worst price.",
+    "chars": 32,
+    "kind": "miss",
+    "sources": [
+      "ResaleFlip"
+    ]
+  },
+  {
+    "key": "sib4wh",
+    "text": "What does log of a times b equal?",
+    "chars": 33,
+    "kind": "scored",
+    "sources": [
+      "BalanceThatGrows"
+    ]
+  },
+  {
+    "key": "1bk8g1s",
+    "text": "It was Opens down \u2014 a best price.",
+    "chars": 33,
+    "kind": "miss",
+    "sources": [
+      "ResaleFlip"
+    ]
+  },
+  {
+    "key": "1x0hb42",
+    "text": "Dividing asks how many pieces fit.",
+    "chars": 34,
+    "kind": "reteach",
+    "sources": [
+      "KitchenCounter"
+    ]
+  },
+  {
+    "key": "1y2d4di",
+    "text": "It was Ends or repeats \u25b8 rational.",
+    "chars": 34,
+    "kind": "miss",
+    "sources": [
+      "Leaderboard"
+    ]
+  },
+  {
+    "key": "382jhz",
+    "text": "Draining means the rate is NEGATIVE.",
+    "chars": 36,
+    "kind": "reteach",
+    "sources": [
+      "CableCar"
+    ]
+  },
+  {
+    "key": "fb70sy",
+    "text": "Set each bracket to zero on its own.",
+    "chars": 36,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1m3zwdc",
+    "text": "What is the conjugate of negative i?",
+    "chars": 36,
+    "kind": "scored",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "1ac7m9l",
+    "text": "How many sides does this square have?",
+    "chars": 37,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1g12szs",
+    "text": "So i\u2079 lands facing north \u2014 that is i.",
+    "chars": 37,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "p5gubw",
+    "text": "So i\u2075 lands facing north \u2014 that is i.",
+    "chars": 37,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "18ftcw8",
+    "text": "How many sides does this hexagon have?",
+    "chars": 38,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1mrkiwq",
+    "text": "A circle\u2019s area = \u03c0 \u00d7 radius \u00d7 radius.",
+    "chars": 38,
+    "kind": "reteach",
+    "sources": [
+      "BuildSite"
+    ]
+  },
+  {
+    "key": "16f5vlf",
+    "text": "What does log of a divided by b equal?",
+    "chars": 38,
+    "kind": "scored",
+    "sources": [
+      "BalanceThatGrows"
+    ]
+  },
+  {
+    "key": "uouk10",
+    "text": "So i\u00b3 lands facing south \u2014 that is \u2212i.",
+    "chars": 38,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "n1v4qr",
+    "text": "So i\u00b9\u2077 lands facing north \u2014 that is i.",
+    "chars": 38,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "bm0uzq",
+    "text": "So i\u00b2\u00b9 lands facing north \u2014 that is i.",
+    "chars": 38,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "m5sq93",
+    "text": "So i\u00b9\u00b3 lands facing north \u2014 that is i.",
+    "chars": 38,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "1jkm4ag",
+    "text": "So i\u2077 lands facing south \u2014 that is \u2212i.",
+    "chars": 38,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "1bn4uyi",
+    "text": "How many sides does this triangle have?",
+    "chars": 39,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1h2rtza",
+    "text": "How many sides does this pentagon have?",
+    "chars": 39,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1mm5lb1",
+    "text": "The hoop post has to be exactly SQUARE.",
+    "chars": 39,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "fda4jx",
+    "text": "That leaves the left-hand end plunging.",
+    "chars": 39,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "17knn6k",
+    "text": "That leaves the left-hand end climbing.",
+    "chars": 39,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "m6looi",
+    "text": "So i\u00b2\u00b3 lands facing south \u2014 that is \u2212i.",
+    "chars": 39,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "1465n81",
+    "text": "So i\u00b9\u2079 lands facing south \u2014 that is \u2212i.",
+    "chars": 39,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "5226ot",
+    "text": "So i\u00b9\u2075 lands facing south \u2014 that is \u2212i.",
+    "chars": 39,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "h1nqfl",
+    "text": "So i\u00b9\u00b9 lands facing south \u2014 that is \u2212i.",
+    "chars": 39,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "lbuwap",
+    "text": "How many sides does this rectangle have?",
+    "chars": 40,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "11kyq2j",
+    "text": "So hold the torch square on to the wall.",
+    "chars": 40,
+    "kind": "reteach",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1crvh8v",
+    "text": "What is the range of negative x squared?",
+    "chars": 40,
+    "kind": "scored",
+    "sources": [
+      "PhotoFilters"
+    ]
+  },
+  {
+    "key": "z3wvt3",
+    "text": "Combine like terms \u2014 add the counts of x.",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "FunctionFactory"
+    ]
+  },
+  {
+    "key": "1el9nhz",
+    "text": "That gives below, then below, then above.",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "183cif3",
+    "text": "That gives below, then above, then below.",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1yyrgxr",
+    "text": "That gives above, then below, then below.",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "190jp9n",
+    "text": "That gives below, then above, then above.",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "rz3a3v",
+    "text": "That gives above, then below, then above.",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1fwubzn",
+    "text": "That gives above, then above, then below.",
+    "chars": 41,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "bcbx7y",
+    "text": "Sweets it is \u2014 that is where the cart goes.",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "lyf3j2",
+    "text": "Apples it is \u2014 that is where the cart goes.",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1c4xy2d",
+    "text": "A higher balance sits further up the meter.",
+    "chars": 43,
+    "kind": "reteach",
+    "sources": [
+      "WeatherStation"
+    ]
+  },
+  {
+    "key": "nkjymu",
+    "text": "Buckets it is \u2014 that is where the cart goes.",
+    "chars": 44,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "2jhl3y",
+    "text": "Cookies it is \u2014 that is where the cart goes.",
+    "chars": 44,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "7qtn8i",
+    "text": "Baskets it is \u2014 that is where the cart goes.",
+    "chars": 44,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "12wrwgm",
+    "text": "Cherries it is \u2014 that is where the cart goes.",
+    "chars": 45,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "wo15i6",
+    "text": "Pumpkins it is \u2014 that is where the cart goes.",
+    "chars": 45,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "16befm6",
+    "text": "Compare how fast the top and the bottom grow.",
+    "chars": 45,
+    "kind": "reteach",
+    "sources": [
+      "ShareTheWifi"
+    ]
+  },
+  {
+    "key": "19k0pjy",
+    "text": "Matrix addition is done cell by matching cell.",
+    "chars": 46,
+    "kind": "reteach",
+    "sources": [
+      "TwoReceipts"
+    ]
+  },
+  {
+    "key": "6nmsje",
+    "text": "And it is above the middle, so up is positive.",
+    "chars": 46,
+    "kind": "reteach",
+    "sources": [
+      "BigWheel"
+    ]
+  },
+  {
+    "key": "1vb8de2",
+    "text": "And it is below the middle, so up is negative.",
+    "chars": 46,
+    "kind": "reteach",
+    "sources": [
+      "BigWheel"
+    ]
+  },
+  {
+    "key": "imh596",
+    "text": "It was A random pick of everyone who bought it.",
+    "chars": 47,
+    "kind": "miss",
+    "sources": [
+      "TheReviews"
+    ]
+  },
+  {
+    "key": "1cib9em",
+    "text": "Milo is waiting to wake up. What time is it now?",
+    "chars": 48,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "lfmra",
+    "text": "Dividing by a fraction asks how many pieces fit.",
+    "chars": 48,
+    "kind": "reteach",
+    "sources": [
+      "KitchenCounter"
+    ]
+  },
+  {
+    "key": "1y7ao0u",
+    "text": "The slide has to be SHARPER than a square corner.",
+    "chars": 49,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "77ucs2",
+    "text": "The axis runs straight through the turning point.",
+    "chars": 49,
+    "kind": "reteach",
+    "sources": [
+      "ResaleFlip"
+    ]
+  },
+  {
+    "key": "1hfnsnu",
+    "text": "negative i, minus, negative i. Where do you finish?",
+    "chars": 51,
+    "kind": "scored",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "dcd21",
+    "text": "Milo is waiting to have dinner. What time is it now?",
+    "chars": 52,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "1tcbs70",
+    "text": "The bike ramp has to be SHARPER than a square corner.",
+    "chars": 53,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1ahof7t",
+    "text": "negative f of x. What does that do to the curve of f?",
+    "chars": 53,
+    "kind": "scored",
+    "sources": [
+      "PhotoFilters"
+    ]
+  },
+  {
+    "key": "g4eh05",
+    "text": "A doubling block is short enough to add straight out.",
+    "chars": 53,
+    "kind": "reteach",
+    "sources": [
+      "TrainingBlock"
+    ]
+  },
+  {
+    "key": "dcb8jd",
+    "text": "Milo is waiting to catch the bus. What time is it now?",
+    "chars": 54,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "4c4ia0",
+    "text": "Finding the side of a square patch undoes squaring it.",
+    "chars": 54,
+    "kind": "reteach",
+    "sources": [
+      "GearLab"
+    ]
+  },
+  {
+    "key": "1bek6dy",
+    "text": "Floor area = the tiles that cover it = length \u00d7 width.",
+    "chars": 54,
+    "kind": "reteach",
+    "sources": [
+      "BuildSite"
+    ]
+  },
+  {
+    "key": "11nvgl7",
+    "text": "No starting water, so it is just rate \u00d7 time \u2014 y = mx.",
+    "chars": 54,
+    "kind": "reteach",
+    "sources": [
+      "CableCar"
+    ]
+  },
+  {
+    "key": "qpm5t8",
+    "text": "Milo is waiting to go out to play. What time is it now?",
+    "chars": 55,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "oed7cs",
+    "text": "The park gate has to be SHALLOWER than a square corner.",
+    "chars": 55,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1faj9tj",
+    "text": "It never levels off \u2014 there is no horizontal asymptote.",
+    "chars": 55,
+    "kind": "reteach",
+    "sources": [
+      "ShareTheWifi"
+    ]
+  },
+  {
+    "key": "bpggxh",
+    "text": "The foreman wants every apple counted, and nothing else.",
+    "chars": 56,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "4d0quc",
+    "text": "The foreman wants every melon counted, and nothing else.",
+    "chars": 56,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1sxqdwx",
+    "text": "The foreman wants every sweet counted, and nothing else.",
+    "chars": 56,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "pb1wv6",
+    "text": "Milo is waiting to do some painting. What time is it now?",
+    "chars": 57,
+    "kind": "scored",
+    "sources": [
+      "6-8"
+    ]
+  },
+  {
+    "key": "82e0em",
+    "text": "The barrier arm has to be SHALLOWER than a square corner.",
+    "chars": 57,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "fv4h1f",
+    "text": "The foreman wants every cookie counted, and nothing else.",
+    "chars": 57,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "q58x2n",
+    "text": "The foreman wants every bucket counted, and nothing else.",
+    "chars": 57,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "biib4b",
+    "text": "The foreman wants every basket counted, and nothing else.",
+    "chars": 57,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1cuj99x",
+    "text": "The foreman wants every pumpkin counted, and nothing else.",
+    "chars": 58,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1au68we",
+    "text": "Volume = the cubes that fill it = length \u00d7 width \u00d7 height.",
+    "chars": 58,
+    "kind": "reteach",
+    "sources": [
+      "BuildSite"
+    ]
+  },
+  {
+    "key": "7bwqu",
+    "text": "\u03b8 is acute, so cos \u03b8 is positive \u2014 take the positive root.",
+    "chars": 58,
+    "kind": "reteach",
+    "sources": [
+      "DaylightHours"
+    ]
+  },
+  {
+    "key": "assgzt",
+    "text": "A number outside the table multiplies EVERY cell inside it.",
+    "chars": 59,
+    "kind": "reteach",
+    "sources": [
+      "TwoReceipts"
+    ]
+  },
+  {
+    "key": "1xpvwd1",
+    "text": "There the pod is left of the middle, so across is negative.",
+    "chars": 59,
+    "kind": "reteach",
+    "sources": [
+      "BigWheel"
+    ]
+  },
+  {
+    "key": "18jxr8l",
+    "text": "The degree is the highest exponent in the whole expression.",
+    "chars": 59,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "ayjw38",
+    "text": "There the pod is right of the middle, so across is positive.",
+    "chars": 60,
+    "kind": "reteach",
+    "sources": [
+      "BigWheel"
+    ]
+  },
+  {
+    "key": "yid3x0",
+    "text": "A squared part is zero only when the thing inside it is zero.",
+    "chars": 61,
+    "kind": "reteach",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1lycyck",
+    "text": "Dividing inside a log drops down to a subtraction outside it.",
+    "chars": 61,
+    "kind": "reteach",
+    "sources": [
+      "BalanceThatGrows"
+    ]
+  },
+  {
+    "key": "10ggovg",
+    "text": "Tenths of a dollar. A dime is a tenth; a penny is a hundredth.",
+    "chars": 62,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "i3kw33",
+    "text": "Brackets first, then \u00d7 and \u00f7 (each item's cost), then + and \u2212.",
+    "chars": 62,
+    "kind": "reteach",
+    "sources": [
+      "ScoreMachine"
+    ]
+  },
+  {
+    "key": "yh0fpg",
+    "text": "Sort pi. Does its decimal end or repeat, or does it never end?",
+    "chars": 62,
+    "kind": "scored",
+    "sources": [
+      "Leaderboard"
+    ]
+  },
+  {
+    "key": "1g8542w",
+    "text": "Multiplying inside a log drops down to an addition outside it.",
+    "chars": 62,
+    "kind": "reteach",
+    "sources": [
+      "BalanceThatGrows"
+    ]
+  },
+  {
+    "key": "938u1y",
+    "text": "The number in front is positive, so the right-hand end climbs.",
+    "chars": 62,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "14cjddb",
+    "text": "Shape your curve until it lies on the year you have been given.",
+    "chars": 63,
+    "kind": "scored",
+    "sources": [
+      "DaylightHours"
+    ]
+  },
+  {
+    "key": "jf8jlo",
+    "text": "The number in front is negative, so the right-hand end plunges.",
+    "chars": 63,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1ryqdd0",
+    "text": "A polynomial can have at most as many real zeros as its degree.",
+    "chars": 63,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1fo3tvy",
+    "text": "Negative, so the curve never reaches zero \u2014 it never breaks even.",
+    "chars": 65,
+    "kind": "reteach",
+    "sources": [
+      "ResaleFlip"
+    ]
+  },
+  {
+    "key": "166x6k9",
+    "text": "Hundredths of a dollar. A dime is a tenth; a penny is a hundredth.",
+    "chars": 66,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "wf0mqd",
+    "text": "Fill rate = change in level \u00f7 change in time between the readings.",
+    "chars": 66,
+    "kind": "reteach",
+    "sources": [
+      "CableCar"
+    ]
+  },
+  {
+    "key": "1wawu95",
+    "text": "So tilt it to exactly the angle where the beam edge goes parallel.",
+    "chars": 66,
+    "kind": "reteach",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "ab4dc8",
+    "text": "Only the north\u2013south part flips. The east\u2013west part does not move.",
+    "chars": 66,
+    "kind": "reteach",
+    "sources": [
+      "WalkHome"
+    ]
+  },
+  {
+    "key": "1amidz7",
+    "text": "So they all go in the pennies well, and the dimes well stays empty.",
+    "chars": 67,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1jy23bv",
+    "text": "So they all go in the dimes well, and the pennies well stays empty.",
+    "chars": 67,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "jzb302",
+    "text": "On which day does the temperature plunge straight through freezing?",
+    "chars": 67,
+    "kind": "scored",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1wcyn1y",
+    "text": "The sensor drew the tank's fill as this line. Which rule matches it?",
+    "chars": 68,
+    "kind": "scored",
+    "sources": [
+      "CableCar"
+    ]
+  },
+  {
+    "key": "zvbng6",
+    "text": "The whole delivery goes out today, so every stack is on the manifest.",
+    "chars": 69,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "lkczc5",
+    "text": "Average pace is the change in distance divided by the change in time.",
+    "chars": 69,
+    "kind": "reteach",
+    "sources": [
+      "Pace"
+    ]
+  },
+  {
+    "key": "1a51r0g",
+    "text": "The highest power is even, so both ends of the week do the SAME thing.",
+    "chars": 70,
+    "kind": "reteach",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "1spwyo6",
+    "text": "After the common factor cancels, where is the real vertical asymptote?",
+    "chars": 70,
+    "kind": "scored",
+    "sources": [
+      "ShareTheWifi"
+    ]
+  },
+  {
+    "key": "1il1yrp",
+    "text": "A vertical asymptote sits wherever the bottom of the fraction hits zero.",
+    "chars": 72,
+    "kind": "reteach",
+    "sources": [
+      "ShareTheWifi"
+    ]
+  },
+  {
+    "key": "1vb2mv5",
+    "text": "Run the rule backwards: undo the adding first, then undo the multiplying.",
+    "chars": 73,
+    "kind": "reteach",
+    "sources": [
+      "PhotoFilters"
+    ]
+  },
+  {
+    "key": "1amd49b",
+    "text": "On which day does the temperature only touch freezing and lift away again?",
+    "chars": 74,
+    "kind": "scored",
+    "sources": [
+      "ColdSnap"
+    ]
+  },
+  {
+    "key": "18z0nst",
+    "text": "x\u00b2 is never negative, so the curve has a lowest point and nothing below it.",
+    "chars": 75,
+    "kind": "reteach",
+    "sources": [
+      "PhotoFilters"
+    ]
+  },
+  {
+    "key": "1to59d0",
+    "text": "The top grows faster than the bottom, so the fraction keeps growing with it.",
+    "chars": 76,
+    "kind": "reteach",
+    "sources": [
+      "ShareTheWifi"
+    ]
+  },
+  {
+    "key": "nwp9xe",
+    "text": "It is positive, so the values climb away from the vertex and it opens upward.",
+    "chars": 77,
+    "kind": "reteach",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "mswanf",
+    "text": "A log asks \"the base to WHAT power gives this?\" \u2014 so the base stays the base.",
+    "chars": 77,
+    "kind": "reteach",
+    "sources": [
+      "BalanceThatGrows"
+    ]
+  },
+  {
+    "key": "1v0cmbt",
+    "text": "It is negative, so the values fall away from the vertex and it opens downward.",
+    "chars": 78,
+    "kind": "reteach",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "1eu30xp",
+    "text": "A minus in front flips the sign of every output \u2014 the curve turns upside down.",
+    "chars": 78,
+    "kind": "reteach",
+    "sources": [
+      "PhotoFilters"
+    ]
+  },
+  {
+    "key": "1nbhyzh",
+    "text": "Fold it in your head before you mark it \u2014 if the halves miss, it is not a line.",
+    "chars": 79,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "xz3ums",
+    "text": "A lower balance sits further down the meter. Below zero is lower than above zero.",
+    "chars": 81,
+    "kind": "reteach",
+    "sources": [
+      "WeatherStation"
+    ]
+  },
+  {
+    "key": "5ley7t",
+    "text": "Each smaller window gives an average closer to the answer, but never lands on it.",
+    "chars": 81,
+    "kind": "reteach",
+    "sources": [
+      "Pace"
+    ]
+  },
+  {
+    "key": "12gikdq",
+    "text": "Flipping up \u2194 down keeps the across number and flips the sign of the up/down number.",
+    "chars": 84,
+    "kind": "reteach",
+    "sources": [
+      "NightFlight"
+    ]
+  },
+  {
+    "key": "1u1wemv",
+    "text": "The birthday card \u2014 the picture lines up when it shuts. Mark every fold that matches.",
+    "chars": 85,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "xxps48",
+    "text": "The paper plane \u2014 it veers off unless both wings match. Mark every fold that matches.",
+    "chars": 85,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "6afx2q",
+    "text": "The napkin \u2014 it folds flat whichever way you pick it up. Mark every fold that matches.",
+    "chars": 86,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1ln2cvy",
+    "text": "The paper snowflake \u2014 cut folded, so every side matches. Mark every fold that matches.",
+    "chars": 86,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "3oc0ko",
+    "text": "A minus in front turns the curve over, so it has a highest point and nothing above it.",
+    "chars": 86,
+    "kind": "reteach",
+    "sources": [
+      "PhotoFilters"
+    ]
+  },
+  {
+    "key": "nl1n17",
+    "text": "Make the bike ramp SHARPER than a square corner \u2014 past square it is a wall, not a ramp.",
+    "chars": 87,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "dcgefg",
+    "text": "Flipping left \u2194 right keeps the up/down number and flips the sign of the across number.",
+    "chars": 87,
+    "kind": "reteach",
+    "sources": [
+      "NightFlight"
+    ]
+  },
+  {
+    "key": "1mqbslk",
+    "text": "The paper rosette \u2014 the folds fall the same way all round. Mark every fold that matches.",
+    "chars": 88,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1yo0rop",
+    "text": "Make the barrier arm SHALLOWER than a square corner \u2014 or you clip your head going under.",
+    "chars": 88,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "apqyp",
+    "text": "The bunting flag \u2014 every flag on the string is cut the same. Mark every fold that matches.",
+    "chars": 90,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1tbth09",
+    "text": "Only a randomly picked set of everyone who actually bought it can stand in for all of them.",
+    "chars": 91,
+    "kind": "reteach",
+    "sources": [
+      "TheReviews"
+    ]
+  },
+  {
+    "key": "19a7igr",
+    "text": "The foreman wants every apple in the yard counted and put on the cart. Nothing else goes on.",
+    "chars": 92,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1qzo1p2",
+    "text": "The foreman wants every melon in the yard counted and put on the cart. Nothing else goes on.",
+    "chars": 92,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1plxvlz",
+    "text": "The foreman wants every sweet in the yard counted and put on the cart. Nothing else goes on.",
+    "chars": 92,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1f3j1mx",
+    "text": "The foreman wants every basket in the yard counted and put on the cart. Nothing else goes on.",
+    "chars": 93,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1pwwvup",
+    "text": "The foreman wants every cookie in the yard counted and put on the cart. Nothing else goes on.",
+    "chars": 93,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1uldz71",
+    "text": "The foreman wants every bucket in the yard counted and put on the cart. Nothing else goes on.",
+    "chars": 93,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1b3brdc",
+    "text": "The foreman wants every cherry in the yard counted and put on the cart. Nothing else goes on.",
+    "chars": 93,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1y8zg3f",
+    "text": "The foreman wants every pumpkin in the yard counted and put on the cart. Nothing else goes on.",
+    "chars": 94,
+    "kind": "scored",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "1d4qw3y",
+    "text": "Read the arc on the court. Where is the peak \u2014 the turning point of the shot? Build the vertex.",
+    "chars": 95,
+    "kind": "scored",
+    "sources": [
+      "TheShot"
+    ]
+  },
+  {
+    "key": "jns99b",
+    "text": "In vertex form the number inside the bracket is the price, and it comes out with the OPPOSITE sign.",
+    "chars": 99,
+    "kind": "reteach",
+    "sources": [
+      "ResaleFlip"
+    ]
+  },
+  {
+    "key": "3djhq2",
+    "text": "These have infinitely many solutions: the same fee and the same rate \u2014 it is the very same plan twice.",
+    "chars": 102,
+    "kind": "reteach",
+    "sources": [
+      "BestPlan"
+    ]
+  },
+  {
+    "key": "19og7x4",
+    "text": "Any pair of prices that fits the first receipt fits the second too, and there are infinitely many of those.",
+    "chars": 107,
+    "kind": "reteach",
+    "sources": [
+      "TwoReceipts"
+    ]
+  },
+  {
+    "key": "1dvbo8",
+    "text": "\u03c0 can never be written as a fraction \u2014 its decimal never ends and never repeats \u2014 so it goes in \"never ends\".",
+    "chars": 109,
+    "kind": "reteach",
+    "sources": [
+      "Leaderboard"
+    ]
+  },
+  {
+    "key": "rrcneg",
+    "text": "They run down the middle and across the middle. NOT corner to corner: fold a rectangle on its diagonal and the halves miss.",
+    "chars": 123,
+    "kind": "reteach",
+    "sources": [
+      "9-11"
+    ]
+  },
+  {
+    "key": "oqt0br",
+    "text": "Both squares are added and they are scaled the same, so nothing is stretched \u2014 that is a circle, and the torch is square on.",
+    "chars": 124,
+    "kind": "reteach",
+    "sources": [
+      "TorchOnTheWall"
+    ]
+  },
+  {
+    "key": "65u7m8",
+    "text": "This shot touches down at points you cannot count off \u2014 they are irrational. Use the quadratic formula and pick the radical form.",
+    "chars": 129,
+    "kind": "scored",
+    "sources": [
+      "TheShot"
+    ]
+  }
+]

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useMiloStore } from '@/state/store'
 import { type ChapterType } from '@/core/chapters'
 import { CHAPTER_NAMES, CHAPTER_EMOJIS, chaptersForAge, type AgeGroup } from '@/core/chapters'
+import { shouldReoffer, recordCheckupSkip } from '@/infra/storage/checkup'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 import BackButton from '@/shared/ui/BackButton'
 import ChapterPicker from '@/shared/ui/ChapterPicker'
@@ -15,8 +16,12 @@ import { useAuthGuard } from '@/data/supabase/useAuthGuard'
 import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds, getActivePlanChapters } from '@/data/repositories'
 import type { LearnerState } from '@/data/supabase/types'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
+import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
 import { track } from '@/infra/analytics'
-import { currentPlanChapter, planProgress, reconcilePlan } from '@/infra/storage/activePlan'
+import { currentPlanChapter, planProgress, reconcilePlan, planSource } from '@/infra/storage/activePlan'
+import { planLine } from '@/core/planCopy'
+import CheckDoor from '@/shared/ui/CheckDoor'
+import { getCheckupStatus } from '@/data/repositories'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
 const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
@@ -65,7 +70,9 @@ export default function MainMenu() {
   const [ageGroup,     setAgeGroup]     = useState<AgeGroup>('3-5')
   const [chapterIds,   setChapterIds]   = useState<ChapterType[]>([])
   const [lastPlayed,   setLastPlayedState] = useState<ChapterType | null>(null)
-  const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number } | null>(null)
+  const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number; source: string } | null>(null)
+  const [reoffer,      setReoffer]      = useState(false)
+  const [recheck,      setRecheck]      = useState<{ skill: string; band: string; weeks: number } | null>(null)
 
   // The checkup is OPTIONAL — no play gate. A child can enter the menu directly; the checkup is
   // reachable by choice from the parent dashboard ("Find starting point"), never forced.
@@ -75,7 +82,36 @@ export default function MainMenu() {
   useEffect(() => {
     if (!learnerId) { setPlanNext(null); return }
     const ch = currentPlanChapter(learnerId), prog = planProgress(learnerId)
-    setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType] ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total } : null)
+    setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
+      ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learnerId) }
+      : null)
+    // ⚠️ THE RE-OFFER IS EVIDENCE-GATED, NOT TIME-GATED. It appears only once the child has actually
+    // FINISHED a plan chapter — the parent has now seen the thing work, so the ask has something
+    // behind it, and they are a different person from the one who skipped at signup. A second
+    // decline retires it to the parent dashboard for good.
+    setReoffer(shouldReoffer(learnerId, prog?.done ?? 0))
+  }, [learnerId])
+
+  /**
+   * ⚠️⚠️ THE WEEK-6 RE-CHECK, WHERE THE CHILD ACTUALLY IS. It is the promise ("gap closed or you
+   * don't pay"), the retention signal AND the efficacy dataset — one mechanism doing three jobs —
+   * and on production it had fired **zero times**, with FIVE children 45–50 days past their check-up
+   * and genuinely due one. The logic was never broken: the nudge lived only on the PARENT dashboard,
+   * for whichever learner happened to be selected, so it required a parent to visit a screen they
+   * have no reason to open. The child opens THIS one every session.
+   *
+   * Best-effort: a failed lookup just means no card, never a blocked menu.
+   */
+  useEffect(() => {
+    if (!learnerId) return
+    let cancelled = false
+    getCheckupStatus(learnerId)
+      .then(st => { if (!cancelled && st?.recheckDue && st.rootGap) setRecheck({ skill: st.rootGap, band: st.band, weeks: st.weeksSince }) })
+      .catch(() => { /* the menu must open regardless */ })
+    // Clearing on the way OUT rather than on the way in: it runs before the next learner's lookup,
+    // so a sibling can never see the previous child's card, and nothing sets state synchronously
+    // inside the effect body.
+    return () => { cancelled = true; setRecheck(null) }
   }, [learnerId])
 
   useEffect(() => {
@@ -128,6 +164,9 @@ export default function MainMenu() {
 
           const { stats, progress, state } = boot.data
           applyServerProgress(stats, progress, state)
+          // Difficulty memory follows the child across devices: seed this device from the server's
+          // rows where it has none of its own. See hydrateChapterLevels for why it is not a merge.
+          hydrateChapterLevels(learner.id, progress)
 
           /**
            * ⚠️ THE PLAN POINTER, RECONCILED ACROSS DEVICES. It lives in localStorage, so before
@@ -141,17 +180,45 @@ export default function MainMenu() {
            * first. Monotonic — it can only move forward. Best-effort: a failure leaves the local
            * pointer exactly as it was.
            */
+          /**
+           * ⚠️⚠️ THE POINTER IS DERIVED ON EVERY LOAD, ONLINE OR NOT — AND THE OFFLINE HALF IS A FIX,
+           * NOT TIDYING. `setActivePlan` writes `index: 0`, so a child who re-runs the check (their
+           * own door is on this screen now) walks out of the diagnostic pointing at chapter 1 of the
+           * new plan, and it is THIS reconcile that pulls the pointer past what they have already
+           * finished. If it is skipped because the bootstrap threw — offline, an expired token — the
+           * menu shows "Next up" as a chapter the child completed weeks ago. Their stars and progress
+           * are untouched and the next successful load corrects it, but the one screen they are
+           * looking at is wrong, which is the screen that matters.
+           *
+           * So the evidence degrades instead of the feature: server progress when we have it, and
+           * the local profile's own stars when we do not. `chapterStars > 0` is the local equivalent
+           * of the server's `total_sessions > 0` — `calcStars` never returns less than 1, so any
+           * chapter that has been finished once carries at least one star on this device.
+           *
+           * ⚠️ A genuinely fresh device has neither, and then the plan opens at its first chapter —
+           * correct, because nothing known says otherwise.
+           */
+          const applyPlan = (played: string[], remote: string[]) => {
+            const plan = reconcilePlan(learner.id, remote, played)
+            if (!plan) return
+            const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
+            setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
+              ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learner.id) }
+              : null)
+            setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
+          }
+          const localPlayed = () => {
+            const stars = useMiloStore.getState().profile.chapterStars
+            return Object.keys(stars).filter(ch => (stars[ch as ChapterType] ?? 0) > 0)
+          }
           try {
             const remote = await getActivePlanChapters(learner.id)
-            const played = progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string)
-            const plan = reconcilePlan(learner.id, remote, played)
-            if (plan) {
-              const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
-              setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
-                ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total }
-                : null)
-            }
-          } catch { /* the local pointer stands */ }
+            applyPlan(progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string), remote)
+          } catch {
+            // ⚠️ `remote: []` on purpose — with a local plan present `reconcilePlan` keeps the local
+            // chapter list, so this derives the POSITION without inventing a plan we cannot read.
+            applyPlan(localPlayed(), [])
+          }
 
           // Continue-where-you-left-off, cross-device: progress is ordered by
           // last_played_at desc, so progress[0] is the most recently played
@@ -297,6 +364,24 @@ export default function MainMenu() {
           </div>
         </div>
 
+        {/* ── Week-6 re-check — the guarantee loop, surfaced to the child who has to take it ── */}
+        {recheck && (
+          <button onClick={() => router.push(`/diagnostic/recheck?skill=${encodeURIComponent(recheck.skill)}&band=${recheck.band}&week=${recheck.weeks}`)} className="milo-card" style={{
+            width: '100%', maxWidth: 700, padding: '14px 20px', textAlign: 'left', cursor: 'pointer',
+            background: 'linear-gradient(135deg, #FFF4DA 0%, #fff 100%)', border: '3px solid var(--milo-orange)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
+              <div style={{ fontSize: 36 }}>🔍</div>
+              <div style={{ flex: 1, minWidth: 150 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--milo-orange-deep)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Quick check · 2 minutes</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Milo wants to see how much you&apos;ve grown</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>Just a few questions — no scores, no timers.</div>
+              </div>
+              <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: 'var(--milo-orange)', border: '3px solid var(--milo-orange-deep)', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Let&apos;s go ▶</span>
+            </div>
+          </button>
+        )}
+
         {/* ── Your plan — walk the diagnostic's arranged chapters, foundational-first ── */}
         {planNext && (
           <button onClick={() => playChapter(planNext.ch)} className="milo-card" style={{
@@ -308,11 +393,82 @@ export default function MainMenu() {
               <div style={{ flex: 1, minWidth: 150 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#1e9e5f', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Your plan · step {planNext.step} of {planNext.total}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Next: {CHAPTER_NAMES[planNext.ch]}</div>
-                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>Milo picked this to close the gap — a few minutes today.</div>
+                {/* ⚠️ A GRADE-START PLAN HAS NO DIAGNOSED GAP, so it may not claim one. "Milo picked
+                    this to close the gap" is true after a check and a straight falsehood after a
+                    skip — nobody looked. Same rule as the report's never-say-"on track". */}
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
+                  {planLine(planNext.source === 'gradeStart' ? 'gradeStart' : 'diagnostic',
+                    (profile.chapterStars[planNext.ch] ?? 0) > 0)}
+                </div>
               </div>
               <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: '#2BB673', border: '3px solid #1e9e5f', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Continue ▶</span>
             </div>
           </button>
+        )}
+
+        {/**
+          * ── The check, offered a second and FINAL time ──────────────────────────────────────
+          *
+          * ⚠️ ONCE. A parent who skipped at signup has now watched their child finish a chapter and
+          * enjoy it, so the ask finally has evidence behind it — but an offer that keeps returning
+          * is not an offer, it is nagging with a dismiss button, and it teaches people to ignore
+          * the surface it lives on. The second "Not now" retires it to the parent dashboard's
+          * "Find starting point", which is always there and never interrupts.
+          *
+          * ⚠️ IT IS A CARD, NOT A MODAL. It sits BELOW the plan, so the child's next chapter is
+          * still the first thing on screen. Anything that covers the play button to ask a parent a
+          * question has made the product worse for the child in order to sell to the adult.
+          */}
+        {reoffer && (
+          <div className="milo-card" style={{
+            width: '100%', maxWidth: 700, padding: '14px 20px', textAlign: 'left',
+            background: 'linear-gradient(135deg, #EEF4FF 0%, #fff 100%)', border: '3px solid #6C8FE8',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
+              <div style={{ fontSize: 36 }}>🔍</div>
+              <div style={{ flex: 1, minWidth: 150 }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18 }}>Want a plan built around {childName || 'your child'}?</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
+                  Milo can find the one thing worth fixing first, instead of starting from the top.
+                  About ten minutes — you can stop and pick up where you left off.
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+                <button onClick={() => {
+                  track('checkup_offer', { action: 'taken', at: 'reoffer', band: ageGroup })
+                  router.push(`/diagnostic?band=${ageGroup}`)
+                }} style={{ minHeight: 44, background: '#6C8FE8', border: '3px solid #4A6FD0', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff', cursor: 'pointer' }}>Find it ▶</button>
+                <button onClick={() => {
+                  if (learnerId) recordCheckupSkip(learnerId)   // → 2: retired to the parent dashboard
+                  track('checkup_offer', { action: 'skipped', at: 'reoffer', band: ageGroup })
+                  setReoffer(false)
+                }} style={{ minHeight: 44, background: 'transparent', border: '2px solid var(--ink-mute, #bbb)', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink-soft)', cursor: 'pointer' }}>Not now</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/**
+          * ⚠️⚠️ THE CHILD'S OWN DOOR TO THE CHECK — PERMANENT, AND THE POINT IS THAT IT NEVER CLOSES.
+          * Founder's call, 2026-08-31: *"mein chahata hu ki bacche ka jab mann kare woh diagnostic
+          * kare — woh chiz bann naii hona chahiye."* Until now the only permanent door was on the
+          * PARENT dashboard (`findStartingPoint`); on the child's own screen the check existed as an
+          * offer made at most twice, which then retired. Optional was never meant to mean
+          * unavailable — a child who wants to find out where they stand had no way to say so.
+          *
+          * ⚠️ NEVER TOGETHER WITH THE RE-OFFER ABOVE. That card is the same action with an argument
+          * attached; two cards asking one thing on one screen is the duplicate this repo keeps
+          * paying for. While the offer is up it owns the ask, and this is hidden.
+          *
+          * ⚠️ IT SITS BELOW THE PLAN, like the offer, so the child's next chapter is still the first
+          * thing on screen. A door, not a suggestion — no badge, no pulse, nothing competing with
+          * playing.
+          */}
+        {!reoffer && (
+          <CheckDoor onOpen={() => {
+            track('checkup_offer', { action: 'taken', at: 'menu_door', band: ageGroup })
+            router.push(`/diagnostic?band=${ageGroup}`)
+          }} />
         )}
 
         {/* ── Story Mode — the 3–5 storyline adventure ── */}

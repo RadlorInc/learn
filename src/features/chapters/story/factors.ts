@@ -3,7 +3,7 @@
  *
  * Everything the AR chapter renders and grades from lives here, outside React, because the
  * chapter's answering surface is a WEBCAM and a webcam cannot be driven by a gate. The scene is
- * eyeball-only; this file is where the maths, the question ladder and the grader are held to
+ * eyeball-only; this file is where the math, the question ladder and the grader are held to
  * account (see __tests__/factorLabAr.test.ts).
  *
  * THE GESTURE: the child's FINGERS ARE THE DIVISOR. Milo puts n units on the bench, the child
@@ -68,7 +68,7 @@ export const ANCHOR = 'A hall set out for an exam: the desks go in equal rows, n
  */
 export const padChoices = (): number[] => Array.from({ length: MAX_FINGERS + 1 }, (_, i) => i)
 
-// ─── maths (moved here from the deleted FactorsLesson, its only consumer) ───────────────
+// ─── math (moved here from the deleted FactorsLesson, its only consumer) ───────────────
 export function isPrime(n: number): boolean {
   if (n < 2) return false
   for (let i = 2; i * i <= n; i++) if (n % i === 0) return false
@@ -220,7 +220,18 @@ export function makeRound(d: Tier, asked: readonly string[] = []): FlRound {
   if (t === 'evenOdd') return mkEvenOdd(d === 1 ? rint(4, 11) : rint(8, 21))
   if (t === 'multiple') {
     const base = pick(d === 1 ? [2, 5] : d === 2 ? [2, 3, 4, 5, 10] : [2, 3, 4, 5, 6, 7, 8, 9, 10])
-    return mkMultiple(base, rint(2, d === 1 ? 6 : MAX_FINGERS))
+    const top = d === 1 ? 6 : MAX_FINGERS
+    /**
+     * ⚠️ NEVER base × base. Measured 2026-08-20: k === base on 14.4% of multiple rounds, and there
+     * the crate size the prompt states IS the number of crates — so the miss line ("keep counting
+     * up in 8s") and the redirect ("Count up in 8s…") both name the answer to a child who has just
+     * been told they are wrong. `verdictFor` below already refuses to print a figure that could be
+     * the answer by coincidence; this is the same rule reached through the generator instead of
+     * through the wording, which is cheaper and cannot be argued with.
+     */
+    let k = rint(2, top)
+    for (let i = 0; i < 20 && k === base; i++) k = rint(2, top)
+    return mkMultiple(base, k)
   }
   return mkSplit(pick(t === 'prime' ? PRIMES[d] : COMPOSITES[d]))
 }
@@ -400,7 +411,7 @@ export const benchLabel = (r: FlRound): { word: string; per: number } =>
  * at ten viewport sizes in four separate gates. GameShell owns the bands now and `FitSlot` scales the
  * instrument into whatever is left, so all of it went with the bespoke scene (2026-08-14).
  *
- * What did NOT go is everything above: the ladder, the grader and the words. That split — maths and
+ * What did NOT go is everything above: the ladder, the grader and the words. That split — math and
  * words in the module, layout in the shell — is the whole reason ten chapters can share one engine.
  */
 export {}

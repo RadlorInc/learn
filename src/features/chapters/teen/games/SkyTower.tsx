@@ -429,7 +429,7 @@ function MoneyScene({ palette: P, task, value }: { palette: Palette; task: Task;
   )
 }
 
-const CONFIG: GameConfig<SV, Task> = {
+export const CONFIG: GameConfig<SV, Task> = {
   chapterId: 'signedRationalOps',
   title: 'MONEY LAB',
   ticketLabel: 'money log',
