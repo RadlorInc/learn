@@ -210,3 +210,119 @@ Why this shape rather than the alternatives:
 ⚠️ **Not implemented, deliberately.** It changes what "pushed to main" means, and that is the
 founder's call. Until it is, assume every commit on `main` is live within about two minutes,
 whatever CI says.
+
+## When a critical advisory is published at 3am, what tells us — and how fast?
+
+⚠️ **Measured 2026-09-09, on the day it happened.** Overnight a **critical unauthenticated RCE**
+advisory landed on `next` (GHSA-p293-qw3h-jr36, plus an AVIF image-optimization RCE
+GHSA-2xp9-vwfh-vxw4) covering `16.0.0 – 16.3.2`; production was on **16.3.1**. High advisories landed
+on `sharp` and `js-yaml` the same night.
+
+**What told us: `npm audit --audit-level=high`, the last step of `ci / verify`.** It did its job —
+`verify` went red, `promote` (`needs: ci`) skipped, and nothing shipped. That is the gate working.
+
+⚠️⚠️ **AND THAT IS THE WHOLE ANSWER, WHICH IS THE PROBLEM: IT ONLY RUNS BECAUSE SOMEBODY PUSHED.**
+`ci.yml` triggers on **`pull_request`** and on **`workflow_call`** (reused by `deploy.yml` on push to
+`main`, which is how the double-run is avoided). There is **no `schedule:` in it at all**. So on a
+quiet week nobody opens a PR and nobody pushes, `verify` never runs, and a critical RCE sits in
+production undetected for as long as the quiet lasts. **The detector is real; its schedule is
+"whenever a human happens to type `git push`."**
+
+⚠️ **The second answer is worse: nothing else was watching at all.** Measured against the GitHub API
+on 2026-09-09 with `admin: true`, so these are readings and not inferences:
+
+```
+GET /repos/RadlorInc/learn/vulnerability-alerts      -> 404          (Dependabot ALERTS: disabled)
+GET /repos/RadlorInc/learn/dependabot/alerts         -> 403 "Dependabot alerts are disabled"
+GET /repos/RadlorInc/learn/automated-security-fixes  -> {"enabled": false}
+    .security_and_analysis.dependabot_security_updates -> "disabled"
+    .security_and_analysis.secret_scanning             -> "disabled"
+```
+
+**So no Dependabot security PR could ever have been opened for that advisory, because the feature
+that opens them is switched off, and the feature that detects advisories is switched off too.**
+
+### Why the nine open Dependabot PRs did not contain the fix
+
+This is the part worth keeping, because "nine untriaged PRs" reads as untidy and the truth was
+worse. **Two independent mechanisms had to fail, and both did.**
+
+1. **`dependabot.yml` configures VERSION updates only.** Its `updates:` block cannot enable security
+   updates — that is a repository setting (above), and it is off. All nine PRs were scheduled version
+   bumps. **Not one of them was a security update.**
+2. **Even the version-update path was blocked by the queue itself.** `dependabot.yml` sets
+   `open-pull-requests-limit: 5` for npm, and there were **exactly five npm PRs open**
+   (#47 #45 #44 #42 #33 — the other four were `github-actions`, a separate limit). `next`
+   16.3.1 → 16.3.4 was an ordinary in-range bump Dependabot would normally have proposed, and it had
+   no slot to propose it in. The last npm PR was #47 on 2026-08-21, i.e. **~19 days of a weekly
+   schedule producing nothing.**
+
+⚠️ **That is the dangerous shape: the untriaged queue was not merely untidy, it was the thing
+holding the gate shut.** A full `open-pull-requests-limit` silently converts "we have not got round
+to these" into "we can no longer be told about new ones."
+
+⚠️ **A third, quieter finding:** `dependabot.yml` asks for labels `dependencies` and `security`, and
+**neither label exists in the repository** (the label set is still GitHub's default: bug,
+documentation, duplicate, enhancement, good first issue, help wanted, invalid, question, wontfix).
+Dependabot drops labels it cannot apply, without complaining — which is why all nine PRs carried
+`labels: []` and why you cannot filter this queue by `security`. Create the two labels or delete the
+config lines; a label rule that silently does nothing is the decorative-check class in another
+costume.
+
+### Known gaps this left behind, recorded rather than fixed
+
+- **CI runs Node 20** (`ci.yml`, `node-version: 20`) while `@supabase/supabase-js@2.112.3` and its
+  five sub-packages declare `engines.node: ">=22.0.0"`. npm treats `engines` as advisory with no
+  `.npmrc` `engine-strict`, and CI on Node 20 built and tested it cleanly — **measured on merge
+  commit `dfd15a1f`, not assumed**. But a runtime dependency now asks for a newer Node than CI runs.
+- **GitHub annotates every run**: *"Node.js 20 is deprecated … `actions/checkout@v4`,
+  `actions/setup-node@v4`, `supabase/setup-cli@v1` are being forced to run on Node.js 24."* The four
+  major action bumps (#28 #37 #38 #43) were closed as planned work rather than triage; **this
+  deprecation is their real driver** and they should be done as one change across every workflow.
+- **`react` and `react-dom` are both exact-pinned** (`19.2.4`). Dependabot bumps them separately, so
+  a `react-dom`-only PR cannot install: `react-dom@19.2.8` has `peer react@"^19.2.8"` and `npm ci`
+  fails `ERESOLVE`. PR #42 was red on that step from 2026-08-25 and was closed. **Bump the pair
+  together, by hand, as one edit.**
+
+### ⚠️ And a trap in the merge procedure itself, found while clearing the queue
+
+**`gh pr checks <n>` can report a PASS belonging to a different commit.** Merging `main` into PR #44
+and re-checking returned green from run `33925723584` — created **2026-09-04, for head
+`101cc2aa`** — while the actual merge commit `fa45232b` was still building. A stale green describing
+some other commit is exactly the artefact-under-test failure this repo keeps paying for.
+**Resolve the head SHA and read the run for that SHA** before believing any pre-merge green:
+
+```bash
+sha=$(gh pr view "$N" --json headRefOid --jq .headRefOid)
+run=$(gh run list --commit "$sha" --limit 1 --json databaseId --jq '.[0].databaseId')
+gh run watch "$run" --exit-status
+gh run view "$run" --json headSha,conclusion   # confirm headSha is the one you pushed
+```
+
+### 📋 PROPOSAL — a scheduled audit. Costed, NOT implemented (founder's call)
+
+The gap is narrow and precise: **the detector exists and is correct; it just needs a clock.** Three
+options, cheapest first.
+
+| # | change | detection latency | cost | risk |
+|---|---|---|---|---|
+| **A** | Add an `npm audit --audit-level=high` step to the existing **`red-main.yml`** daily cron (already runs `37 6 * * *`) | ≤ 24 h | ~15 lines in a workflow that already has `issues: write`, `checkout`, and a proven issue-filing path. **No new workflow, no new secret, no new permission.** | Lowest. Reuses a notifier already driven and trusted. Slight muddying: that file's stated job is *"is the deploy gate working"*, and this is *"is a dependency vulnerable"* |
+| **B** | A small standalone `security-audit.yml` on its own cron, filing its own issue | ≤ 24 h (tunable) | ~40 lines, one new workflow, `issues: write`. Needs its own dedup so it does not open an issue a day | Low, but it is a **new check, and a new check must be watched going red on a real advisory and green on a clean tree before it is trusted** — otherwise it joins the Nightly-E2E class |
+| **C** | Turn on **Dependabot alerts + security updates** in repo settings | minutes-to-hours, from GitHub's own advisory feed | Two toggles, no code. ⚠️ **Requires raising `open-pull-requests-limit`, or the queue blocks security PRs exactly as it did this week** | Lowest engineering risk, highest process risk: it generates PRs, and an unattended queue is what caused this |
+
+**Recommendation: C and A together, in that order.** C is the only one that reacts in *minutes* and
+it needs no code, but it is a setting only the founder can flip, and it is worthless while the PR
+limit is full. A is the belt-and-braces that keeps working if a GitHub feature is off, misconfigured,
+or rate-limited — and it is the one this repo can actually gate, because `npm audit` is already the
+thing that caught the real event.
+
+⚠️ **Whichever is chosen, it is ONE change**, and the new check must be **watched going red against
+a real vulnerable lockfile and green against a clean one** before it is believed. A scheduled job
+that has never been seen failing is the `Nightly E2E` row of `CLAUDE.md` waiting to happen: twelve
+red runs from the day it was created, and a real regression sitting inside it in the open for seven
+nights.
+
+⚠️ **Pre-registered, so the number cannot be read to taste later:** if option A or B fires on a run
+where nothing is wrong, that is not "tune the threshold" — `--audit-level=high` is the same
+predicate `ci / verify` already enforces on every push, so a disagreement between them means the
+*instrument* is wrong, not the level.
