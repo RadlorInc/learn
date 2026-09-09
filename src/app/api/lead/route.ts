@@ -42,7 +42,12 @@ export async function POST(req: Request) {
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !key) return NextResponse.json({ ok: true })   // misconfigured ≠ break the checkup
+  // ⚠️ WAS `return NextResponse.json({ ok: true })` — "misconfigured ≠ break the checkup". The first
+  // half is right (the checkup must not stop) and the second half was a LIE: nothing downstream
+  // reads this, so the only thing `ok: true` bought was hiding a dead funnel. See the note below.
+  if (!url || !key) {
+    return NextResponse.json({ ok: false, error: 'not_configured' }, { status: 503 })
+  }
 
   // ⚠️ `fetch` DOES NOT THROW ON 4xx/5xx, so a bare `await fetch(...)` inside try/catch reports a
   // 403 as success and the lead is gone with no signal anywhere. That is not hypothetical here: the
@@ -50,6 +55,10 @@ export async function POST(req: Request) {
   // `20260823221818_leads_server_only.sql` revokes the anon INSERT grant every capture starts
   // 403ing. Silent is the one thing this must not be — a lead we never knew we lost is worse than
   // an error we can see. Still best-effort for the CALLER: it never throws and never returns non-ok.
+  // Whether the row actually landed. The caller does not read this — `captureDiagnosticLead` does
+  // `await fetch(...)` and never inspects the response — so reporting the truth costs the funnel
+  // nothing and buys a real signal in the logs and in any uptime check pointed here.
+  let recorded = false
   try {
     const res = await fetch(`${url}/rest/v1/diagnostic_leads`, {
       method: 'POST',
@@ -61,6 +70,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({ email, band }),
     })
+    recorded = res.ok
     if (!res.ok) {
       // Body, not just the status: PostgREST puts the actual reason (RLS, grant, constraint) there.
       const detail = await res.text().catch(() => '')
@@ -79,5 +89,15 @@ export async function POST(req: Request) {
       routePath: '/api/lead',
     }).catch(() => {})
   }
-  return NextResponse.json({ ok: true })
+  // ⚠️⚠️ THIS USED TO BE AN UNCONDITIONAL `{ ok: true }`, AND THAT IS THE DEFECT THE WHOLE FILE
+  // WARNS ABOUT, ONE LAYER UP. The route carefully checked `res.ok`, carefully logged the failure —
+  // and then told the caller it had succeeded anyway. A revoked grant, an absent service-role key
+  // and a PostgREST outage all looked identical to a captured lead from outside, which is exactly
+  // how a dead funnel stays dead quietly. Same family as V14, which this file's own comment
+  // describes.
+  //
+  // Still best-effort FOR THE CHILD: the client swallows this and the checkup continues either way.
+  return recorded
+    ? NextResponse.json({ ok: true })
+    : NextResponse.json({ ok: false, error: 'not_recorded' }, { status: 502 })
 }
