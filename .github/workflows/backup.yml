@@ -48,29 +48,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Inert until configured, exactly like the RLS job in ci.yml: a workflow that fails red every
-      # night for a missing secret trains everyone to ignore the red.
+      # ⚠️⚠️ THIS STEP USED TO WARN AND SKIP, AND THE JOB WENT GREEN HAVING WRITTEN ZERO BYTES.
+      # 30 nightly runs, 30 green ticks, `Dump schema + data: skipped` on every one — found
+      # 2026-09-03 while planning a region move whose first step was a dump. The old comment here
+      # read "a workflow that fails red every night for a missing secret trains everyone to ignore
+      # the red", which is a real concern and the WRONG trade: a green tick that means nothing is
+      # worse, because it is the thing that stops anyone looking. There is no restorable copy of
+      # the children's data that the founder controls, and this job said "success" about that
+      # nightly for a month.
+      #
+      # It now FAILS when it cannot run, and names exactly which secrets are missing so the red is
+      # actionable rather than ambient. Founder's call, 2026-09-09, for launch week.
+      #
+      # ⚠️ PROD_DB_PASSWORD IS CHECKED HERE NOW AND WAS NOT BEFORE. The dump step consumes it
+      # (`SUPABASE_DB_PASSWORD`), so the old gate could pass on three secrets and then fail in the
+      # dump on the fourth — a config check that did not check the whole config.
       - name: Check configuration
-        id: cfg
         env:
           TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
           REF: ${{ vars.PROD_PROJECT_REF }}
         run: |
-          if [ -z "$TOKEN" ] || [ -z "$PASSPHRASE" ] || [ -z "$REF" ]; then
-            echo "::warning::Backup not configured (needs SUPABASE_ACCESS_TOKEN, BACKUP_PASSPHRASE, PROD_PROJECT_REF). See docs/devops.md."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+          set -uo pipefail
+          missing=""
+          if [ -z "${TOKEN}" ];       then missing="${missing} secrets.SUPABASE_ACCESS_TOKEN"; fi
+          if [ -z "${PASSPHRASE}" ];  then missing="${missing} secrets.BACKUP_PASSPHRASE"; fi
+          if [ -z "${DB_PASSWORD}" ]; then missing="${missing} secrets.PROD_DB_PASSWORD"; fi
+          if [ -z "${REF}" ];         then missing="${missing} vars.PROD_PROJECT_REF"; fi
+          if [ -n "${missing}" ]; then
+            echo "::error title=Backup did not run::No dump was taken. Missing:${missing}. There is NO restorable copy of production from this run. Configure these in repo Settings -> Secrets and variables -> Actions, then re-run. See docs/devops.md."
+            echo "--- missing:${missing}"
+            exit 1
           fi
+          echo "all four configured — proceeding to dump"
 
       - uses: supabase/setup-cli@v1
-        if: steps.cfg.outputs.ready == 'true'
         with:
           version: latest
 
       - name: Dump schema + data
-        if: steps.cfg.outputs.ready == 'true'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
@@ -91,7 +108,6 @@ jobs:
           rm -f schema.sql data.sql
 
       - name: Encrypt
-        if: steps.cfg.outputs.ready == 'true'
         env:
           BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
@@ -108,7 +124,6 @@ jobs:
           fi
 
       - name: Upload
-        if: steps.cfg.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: milo-db-backup-${{ github.run_id }}
