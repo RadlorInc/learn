@@ -11,7 +11,7 @@
 
 | input | kind | holder | status |
 |---|---|---|---|
-| `PROD_PROJECT_REF` | repo **variable** | — | ✅ set 2026-09-03 → `qaymxunzlarwusogwyak` |
+| `PROD_PROJECT_REF` | repo **variable** | — | ✅ set → **`wrnjqjhrbnqxornmfisf`** (verified live 2026-09-09; the `qaymxunzlarwusogwyak` value here was the decommissioned Sydney project) |
 | `SUPABASE_ACCESS_TOKEN` | repo **secret** | your Supabase account | ❌ not set |
 | `PROD_DB_PASSWORD` | repo **secret** | Database → Settings (reset it; nobody has it) | ❌ not set |
 | `BACKUP_PASSPHRASE` | repo **secret** | generate it once, keep it in your password manager | ❌ not set |

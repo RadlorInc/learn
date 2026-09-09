@@ -40,7 +40,7 @@ Three environments, identical topology, isolated data:
 |-----|----------|----------|---------|
 | **preview** | Vercel preview URL (per-PR) | Supabase preview branch (throwaway) | open a PR |
 | **staging** | Vercel staging env | dedicated Supabase "staging" project | merge to `main` |
-| **prod** | Vercel production | Supabase prod (`qaymxunzlarwusogwyak`) | approval gate in `deploy.yml` |
+| **prod** | Vercel production | Supabase prod (**`wrnjqjhrbnqxornmfisf`**, us-east-1) | approval gate in `deploy.yml` |
 
 ## CI/CD
 
@@ -133,7 +133,7 @@ single biggest availability risk this app has:
 ### GitHub (repo → Settings)
 - [ ] **Environments**: create `staging` and `production`; add a **required reviewer** on `production` (this is the prod migration approval gate).
 - [ ] **Secrets**: `SUPABASE_ACCESS_TOKEN`, `STAGING_DB_PASSWORD`, `PROD_DB_PASSWORD`, `STAGING_DB_URL` (pooler URL for the RLS suite), and (existing) `SUPABASE_DB_URL`.
-- [ ] **Variables**: `STAGING_PROJECT_REF`, `PROD_PROJECT_REF` (= `qaymxunzlarwusogwyak`).
+- [ ] **Variables**: `STAGING_PROJECT_REF`, `PROD_PROJECT_REF` (= **`wrnjqjhrbnqxornmfisf`**; asserted by `scripts/assert-prod-ref.sh`).
 
 ## Scaling notes (specific to this stack)
 
@@ -402,3 +402,41 @@ exact *and* a tight peer range, which only the React pair has.
 while `next` itself is at **16.3.4** — the Next lint config is two minors behind the Next it lints.
 It sits in the `dev-tooling` group, so a bump will be proposed there; it is a staleness, not the
 peer trap.
+
+## ⚠️ What 1,833 green tests do NOT tell you
+
+**Measured 2026-09-09. Read this before believing a green suite about a runtime dependency.**
+
+The suite is large and it is overwhelmingly **pure logic** — generators, graders, layout arithmetic,
+policy shapes. Only **7 of 98 test files render React at all**:
+
+| | file | what it proves |
+|---|---|---|
+| **mounts the client runtime** (`react-dom/client` + `act`, so hooks and effects really run) | `chapterGate.test.ts` | |
+| | `chapterGateOff.test.ts` | |
+| | `authEventLogger.test.ts` | |
+| | `_voiceCorpus68.test.ts` | |
+| **server-renders** (`react-dom/server`) | `consentLine.test.ts` | |
+| | `legalDocs.test.ts` | |
+| | `arLoadEscape.test.ts` | |
+| | `chapterGate.test.ts` (both) | |
+
+**So a green suite is close to silent about what a child sees.** Nothing in those 1,833 tests opens a
+chapter, paints a sprite, runs a walk cycle, or checks that a tap lands on the thing under the
+finger. A React, Next or `motion` bump can be entirely green here and still be broken on screen.
+
+⚠️ **The load-bearing evidence is elsewhere, and it is what to actually run:**
+
+1. **`npm run test:chapters`** — 211 checks that drive real chapters in a browser. This is the only
+   gate that sees rendering, layout and console errors on the screens children use.
+2. **`next build`** — prerenders **38/38** static pages through `react-dom/server`. A server-render
+   regression shows up here and nowhere in vitest.
+3. **A browser drive.** For anything touching the renderer, open the app and walk a multi-step flow
+   (the diagnostic's age picker → intro → email step exercises state, effects and handlers) and read
+   the console — ⚠️ with a **positive control**, because "no console errors" and "the console reader
+   is not attached" look identical.
+
+⚠️ **This paragraph exists because of a specific failure mode**: the next person to bump a runtime
+dependency will see `1833 passed` and merge with a confidence the number has not earned. It has
+already nearly happened once — the React 19.2.8 pair bump on 2026-09-09 was green in vitest before
+anyone had rendered a single chapter with it.
