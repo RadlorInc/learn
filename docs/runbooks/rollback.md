@@ -45,5 +45,9 @@ Migrations are expand/contract + backward-compatible, so **code rollback alone f
 
 - Vercel status: https://www.vercel-status.com
 - Supabase status: https://status.supabase.com
-- Prod project ref: `qaymxunzlarwusogwyak`
+- Prod project ref: **`wrnjqjhrbnqxornmfisf`** (us-east-1)
+  ⚠️ Corrected 2026-09-09. This line said `qaymxunzlarwusogwyak` — the **decommissioned Sydney**
+  project — for four days after the region move. At 2am that is a connection to the wrong
+  database, and a wrong ref does not fail, it SUCCEEDS against the wrong data.
+  Authority is `scripts/assert-prod-ref.sh`, not this line; prefer running it to trusting prose.
 - (Fill in) on-call, escalation, and the Supabase/Vercel account owners.

@@ -111,14 +111,89 @@ Then, **after** the deploy has landed:
 
 ## If you have to roll back
 
-```bash
-# Vercel dashboard → Deployments → the previous good one → Promote to Production
+⚠️⚠️ **REHEARSED IN DAYLIGHT 2026-09-09, AND ONE ASSUMED MECHANISM DOES NOT WORK. READ THE FIRST
+ROW BEFORE YOU TOUCH ANYTHING.**
+
+| route | works? | measured |
+|---|---|---|
+| **Move `release` backwards** (force-push it at an older commit) | ❌ **NO** | force-push succeeded, `release` moved, **production unchanged after 395s** |
+| **Vercel → promote a previous deployment** | ✅ (Vercel's own feature) | **not exercised by me** — see the caveat below |
+| **Revert the commit and push forward** | ✅ **YES** | **280s** from `git push` to production serving it |
+
+### ⚠️ Why moving `release` backwards does nothing
+
+Vercel builds a **commit**, not a branch pointer. It had already built the older commit, so pointing
+`release` back at it produced **no new deployment at all** — the production alias simply stayed on
+the most recent production build. Verified against the Vercel API: after the force-push there was no
+new deployment, and the newest `target: "production"` entry was still the bad one.
+
+**So the sentence "rolling back = pointing `release` at the previous good commit" is false.** It is
+the natural reading of how `promote` works (it pushes `main` → `release`), and it is exactly the
+thing that would have been discovered at 9pm on launch night.
+
+### The two routes that do work
+
+**A — FASTEST, and what to reach for first (Vercel Instant Rollback).**
+
+```
+Vercel dashboard → adaptivelearn → Deployments
+  → the last known-good deployment with target "production"
+  → ⋯ menu → "Promote to Production"      (instant, no rebuild)
 ```
 
-Then: bump `public/sw.js` VERSION **again** on the way back, or returning users keep caching the
-broken shell. Full procedure and the data/migration half: [rollback.md](rollback.md).
+⚠️ **CAVEAT, stated plainly: I could not exercise this.** It needs dashboard access or the `vercel`
+CLI, neither of which this session had. What IS confirmed is that Vercel considers the previous
+production deployments eligible — the API reports `isRollbackCandidate: true` on them. **Treat route
+A as documented-but-unproven and route B as the one with a stopwatch on it.** If A is ever used for
+real, record the wall-clock here.
 
----
+**B — PROVEN, ~5 minutes, needs nothing but git.**
+
+```bash
+# 1. revert the bad commit (creates a NEW commit — that is the point)
+git checkout main && git pull --ff-only origin main
+git revert --no-edit <bad-sha>
+
+# 2. ⚠️ MOVE THE SERVICE WORKER VERSION *FORWARD*, never back.
+#    public/sw.js keys its caches off VERSION. Reusing a version a browser has already cached
+#    leaves that browser on the old shell. Rollback by version number is not a thing.
+#    e.g. if the bad build was v180, the revert ships v181 — NOT v179.
+$EDITOR public/sw.js      # bump VERSION forward
+git add public/sw.js && git commit --amend --no-edit
+
+# 3. push. deploy.yml runs CI, then `promote` pushes main -> release, then Vercel builds.
+git push origin main
+
+# 4. watch the run FOR THAT SHA (gh pr checks / gh run list can hand you an older run)
+sha=$(git rev-parse HEAD)
+run=$(gh run list --commit "$sha" --workflow=Deploy --limit 1 --json databaseId --jq '.[0].databaseId')
+gh run watch "$run" --exit-status
+gh run view "$run" --json headSha,conclusion   # confirm headSha is the sha you pushed
+
+# 5. confirm production actually serves it — by service worker version
+curl -s -H 'Cache-Control: no-cache' https://adaptivelearn.radlor.com/sw.js | head -1
+git ls-remote origin refs/heads/main refs/heads/release   # must be equal
+```
+
+⚠️ **Route B is gated by CI.** If CI is red, `promote` skips and the rollback does not ship. That is
+the gate working, and on launch night it is also a trap: if you must ship past a red CI, route A is
+the only option, because it needs no build at all.
+
+### Can we close the doors?
+
+**No. There is no maintenance mode, no holding page and no kill switch.** Checked 2026-09-09:
+
+- there is **no `middleware.ts`** anywhere in the repo, so nothing intercepts every request;
+- the only app-wide flag is `PAYWALL_ENABLED` in `useChapterGate`, which gates chapter access and
+  is currently `false` — it is not a door;
+- no env var, header or route serves a holding page.
+
+**So "stopping" today means taking the site down** — removing the production domain in Vercel, or
+pointing DNS away. Both are blunt, and both are slower to undo than route A.
+
+⚠️ **Stated as a known gap, not built.** A holding page is a real piece of work (a middleware plus a
+flag plus a way to let yourself back in) and launch week is the wrong week to add a new
+request-intercepting layer. If Rafi wants one, it is a deliberate decision with its own gates.
 
 ## Who does what
 
