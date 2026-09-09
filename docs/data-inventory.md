@@ -15,7 +15,7 @@ document: *a plausible column name is not evidence, and neither is a non-null va
 | trap | what it looks like | what it is |
 |---|---|---|
 | `sessions.started_at` | a start timestamp, never null | the row's INSERT time. Both it and `completed_at` mark the END. **All 49 rows had a NEGATIVE duration** (median −1s, min −22s) |
-| `diagnostic_sessions.completed_at` | a completion time | `NOT NULL DEFAULT now()`, and the row is only inserted **on completion** — all 13 rows have `completed_at = started_at` exactly. **A started-and-abandoned probe writes nothing**, so "how many start it" has no denominator |
+| `diagnostic_sessions.completed_at` | a completion time | ~~`NOT NULL DEFAULT now()`, row inserted only **on completion** — all 13 rows have `completed_at = started_at` exactly, so "how many start it" had no denominator and could only return 100%~~ **FIXED 2026-09-05** (`20260905140000`): `start_diagnostic` opens the row at `status='in_progress'` with a NULL `completed_at`, and `sync_diagnostic` completes it. ⚠️ Every read meaning "the latest diagnosis" must now require `status = 'completed'` — a NULL sorts **first** under `DESC` |
 | `auth_events` | a login history | **1 row**, against ≥18 real logins since it was created. Logins happen and are not recorded |
 
 None of these throws. None shows up in a type-check. Each would have produced a confident,
@@ -26,8 +26,9 @@ plausible-looking number on a dashboard.
 ## 1. Timezone — the good news
 
 **Every timestamp in the database is `timestamptz`.** There is not one naive `timestamp` column
-anywhere. So timezone is purely a *presentation* choice; Sydney and India never enter it, and a
-dashboard may declare US Eastern freely.
+anywhere. So timezone is purely a *presentation* choice; the database's own region (us-east-1 since
+the 2026-09-03 move) and the reader's location never enter it, and a dashboard declares US Eastern
+freely.
 
 The real timezone trap is a different one:
 
@@ -115,7 +116,7 @@ real data-rights export. Changing retention means changing both, in the same com
 |---|---|---|
 | session length | §0 — both timestamps mark the end | a real `started_at` (done 2026-09-05) |
 | question-level accuracy | no per-question row exists | an `answer` event: chapter + question id + correct |
-| diagnostic **starts** | row inserted on completion only | insert on start; set `completed_at` on finish |
+| ~~diagnostic **starts**~~ | **fixed 2026-09-05** — `start_diagnostic` | — |
 | logins over time | `auth_events` not firing | see §4 |
 | retention beyond ~13 weeks | the 90-day purge | a rollup that survives it |
 
@@ -124,6 +125,58 @@ real data-rights export. Changing retention means changing both, in the same com
 with a 2.9-hour abandoned session already in the data. Usable, but it is a proxy with a known bias:
 it ends at the last *recorded* event, so it systematically **under-measures the tail**. Label it
 event-span wherever it is shown; do not call it session length.
+
+---
+
+## 3a. The rollup — decided 2026-09-05, id-free, not yet built
+
+`learner_events` dies at 90 days, so any event-derived metric needs a rollup that runs before the
+purge. **The identity model was decided before building it, because it is irreversible.**
+
+⚠️ **A `learner_id`-keyed rollup that survives the purge is gameplay analytics retained
+indefinitely** — re-identifiable by joining `learners`. That makes the published sentence
+("gameplay analytics ... deleted automatically after 90 days") false in exactly the way a retention
+extension would have, only less visibly. **Rejected on that ground, not on cost.**
+
+**What is built: id-free aggregates. And it is cheaper than it looks, because most metrics never
+touch it** — `sessions`, `learners`, `learner_progress`, `diagnostic_sessions` and `profiles` are
+never purged. Only four things are event-derived: DAU/WAU, `chapter_open` counts (the
+started-vs-finished ranking), event-span session length, and the funnel's *first chapter opened*.
+
+**Store the MARGINS, not the cross-product.** Founder's rule, and it is the mechanism that replaces
+a judgement call about "keeping dimensions coarse", which erodes. Separate tables:
+
+    (day)                     -> distinct_learners, session_starts, chapter_opens, completes
+    (cohort_week, active_week)-> count
+    (day, age_band)           -> count
+    (day, chapter_id)         -> opens
+
+not one table keyed on all of them at once. **Identifiability comes almost entirely from the
+cross-product**: `(day, age_band, cohort_week, distinct = 1)` is a fact about one person even with
+no id, and with three testers most cross-product buckets would be 1. Margins answer everything the
+dashboard asks and a bucket of one is far harder to produce.
+
+**Suppress at WRITE time, not display time.** A row below the threshold is never stored.
+Display-time suppression leaves the fact in the database, which is the thing being avoided.
+
+Three constraints that fall out, all accepted:
+
+1. **Distinct counts do not re-aggregate.** Daily distinct learners cannot be summed into weekly — a
+   learner active on three days would count three times. Every grain (day / week / month) is its own
+   precomputed row.
+2. **Store histograms, not just medians**, so quartiles stay recomputable. This is the cheap hedge
+   against A's one real cost: a definition (a histogram's buckets, the 30-minute inactivity timeout)
+   can never be changed retroactively once the raw rows are gone.
+3. **Re-aggregate a trailing window every night, not just yesterday.** Max observed late-flush is
+   **8.9 days** (§1), so a rollup that only computes "yesterday" silently under-counts every child
+   who was offline. The window is a named constant, and a check fires when any event arrives with a
+   skew greater than it — otherwise a growing tail looks exactly like a slow week.
+
+⚠️ **Verification, when it is built:** reconstruct one known day's numbers from raw events by an
+independent path and assert the rollup row equals it. If the check computes the expected value with
+the rollup's own query it asserts that the code equals itself. This matters more than the other
+checks in this repo, because **the raw rows are gone afterwards** and a wrong rollup is not
+correctable.
 
 ---
 

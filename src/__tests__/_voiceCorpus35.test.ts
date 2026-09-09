@@ -120,7 +120,7 @@ it('builds the 3–5 corpus', () => {
       if (h > t) add('redirect', 'matchingQuantities', `That is ${h} — too many! Milo needs ${t}. Tap one to send it back.`)
     }
     add('reteach', 'matchingQuantities', `${HOME_WORDS[t]}.`, `That is ${t}. Milo has enough — so he STOPS, even though there are more.`, `${t}! Just right. Off we go!`)
-    for (const k of CAST) add('reteach', 'matchingQuantities', `Milo needs exactly ${t} ${k.plural} to walk home.`,
+    for (const k of CAST) add('reteach', 'matchingQuantities', `Milo needs exactly ${t} ${t === 1 ? k.little : k.plural} to walk home.`,
       `Now you! Milo needs exactly ${t} ${t === 1 ? k.little : k.plural}.`)
   }
 

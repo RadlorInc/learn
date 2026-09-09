@@ -89,6 +89,83 @@ is CAPABLE of returning** — if the answer is "one", it is decoration with a pe
 
 Everything below is a corollary of that one sentence:
 
+- ⚠️⚠️ **A CHECK THAT CRIES WOLF IS SPENT EXACTLY LIKE ONE THAT NEVER FIRES.** Founder's line,
+  2026-09-05. This file is mostly about checks that cannot fail; this is the other end of the same
+  axis, and it costs the same thing — **the reader's attention**. A gate that goes red on correct
+  code teaches people to re-run it, then to skim it, then to ignore the run where it was right.
+  The `Nightly E2E` row above is this failure at scale: 12 red runs from the day it was created, so
+  its output became noise and a real regression sat inside it in the open for seven nights.
+  It arrives in small ways constantly, and every one was found by watching a check on a run where
+  nothing was wrong: a cleanup that compared the tree against its starting state **after** deleting
+  the directory it was standing in, so every git command died and it shouted "YOUR TREE CHANGED" on
+  a clean run; a `SECURITY DEFINER` drift gate keyed on a function NAME rather than its signature,
+  reporting a deliberately-INVOKER forwarding shim as drift; a service-role gate matching
+  `/SERVICE_ROLE/` and firing on the comment saying the key is never read there; a sweep reporting
+  12 unpinned `search_path` functions because its regex knew `SET search_path TO` and not `= `.
+  **So a new check is not finished when it goes red on the defect. It is finished when it has ALSO
+  been watched staying green on a run where nothing is wrong** — and when its failure message names
+  something a reader can act on, rather than a symptom of the check's own plumbing.
+- ⚠️⚠️ **A GATE IS NOT WORTH A CAPABILITY MORE DANGEROUS THAN WHAT IT DETECTS.** Founder's rule,
+  2026-09-05. A check is a cost as well as a benefit, and the cost is not only the reader's
+  attention — it is whatever the check has to be GIVEN in order to see. Weigh the thing you are
+  about to create against the thing you are trying to notice, and if the instrument is the larger
+  exposure, build a smaller instrument.
+  The instance: `radlor-site` needed to assert that the public waitlist endpoint's anon grant is
+  column-scoped to `(email, age_band, source)` rather than table-wide. The obvious route was to read
+  `information_schema` — which meant adding an `exec_sql` RPC to production so an npm script could
+  run catalog queries through PostgREST. **That is a general SQL-execution endpoint on a live
+  database, created to detect an over-broad grant.** It would have been, by a wide margin, the most
+  dangerous object in the project — added in the name of security.
+  The smaller instrument was already available: the property is observable from OUTSIDE. A
+  column-scoped grant and a table-wide one are indistinguishable to every ordinary probe — the form
+  works either way, reads are refused either way — and differ ONLY in whether the caller may name
+  `id` and `created_at`. Two INSERTs that try, plus a positive control proving `service_role` CAN
+  write the same body, assert the whole property with nothing added to the database at all.
+  ⚠️ **The tell is when a check needs new permissions, a new endpoint, a new key, or a new role.**
+  That is the moment to ask what the check could observe instead of what it would like to query.
+  Read-only introspection is not automatically safe either: the question is not "does this write?"
+  but "what could hold this, and what would they reach?" See also **@docs/security.md** — the
+  `SECURITY DEFINER` inventory exists precisely because objects created for good reasons accumulate
+  reach nobody re-examines.
+- ⚠️⚠️ **"I CANNOT SEE" AND "THERE IS NOTHING TO SEE" MUST NEVER RENDER AS THE SAME RESULT.**
+  Founder's line, 2026-09-05, called out as the most reusable of the day. This is the root the
+  positive-control rule grows from, and it is worth stating above that rule rather than under it:
+  a blind instrument and a clean subject produce identical output unless you deliberately make
+  them different. Every "no rows", "no matches", "no cookies", "no third-party requests", "0
+  findings" is two states wearing one face.
+  ⚠️ **AND THE FIX IS NOT ONLY A POSITIVE CONTROL — IT IS ALSO A DISTINCT EXIT AND A DISTINCT
+  MESSAGE.** A control tells YOU the probe was live; the exit code and the wording tell whatever
+  reads the run next. So: exit **2** for "could not look", **1** for "looked and found a defect",
+  **0** only for "looked and it was clean" — three states, three codes, never two.
+  The instance that earned the third clause: `check:migrations` compares a production ledger
+  against files on disk, and its positive control is "at least one ledger row resolved to a local
+  file". In a repo owning ONE such file, deleting that file zeroes the control — so a real deletion
+  printed `PROBE VOID` and nothing else. Honest, and useless: the message named no migration, and
+  the branch a genuine deletion lands in is exactly the branch that said the least. **A void
+  result still has to say what it failed to resolve.** It now lists them, and names the missing
+  migration. ⚠️ When a check reports "I cannot see", ask what it would have needed to see and print
+  THAT — the blind branch is not an excuse to stop being useful, it is the branch a reader is most
+  likely to meet on a bad day.
+- ⚠️⚠️ **A MEASUREMENT WRITTEN INTO PROSE IS TRUE ONLY ON THE DAY IT WAS TAKEN.** Founder's rule,
+  2026-09-05, after **four instances surfaced in a single day**: a migration comment stating "RLS is
+  on and there are deliberately no policies — do not add one" four days after production got the
+  policy the live form depends on; two paragraphs in `radlor-site/handoff.md` describing the
+  waitlist as "0 policies, no grants, 0 rows" and "empty and ready" when it had all three and a real
+  signup; and the retention number repeated in three files.
+  A measured fact written in the present tense **reads as a current fact for as long as nobody
+  re-measures**, and prose has no mechanism that can go red. The danger is not that it is wrong —
+  it is that it is wrong AND authoritative, and the next reader obeys it. The migration comment was
+  an instruction to revoke the grant the signup form depends on.
+  ⚠️ **SO, WHERE A DOCUMENT STATES A FACT ABOUT THE LIVE SYSTEM, IT MUST EITHER BE GATED AGAINST
+  THAT SYSTEM OR REPLACED WITH A POINTER TO THE CHECK THAT RE-MEASURES IT.** Both halves are real
+  moves. Gated: `/privacy` claims no analytics and no cookies, and `check:site-claims` loads the
+  live pages and fails if that stops being true. Pointed: the waitlist paragraph in that handoff now
+  says *"`npm run check:waitlist-rls` is what tells you the live posture; prefer running it to
+  trusting this paragraph."* **The pointer is the standard move, not a one-off** — it is cheap,
+  it never goes stale, and it moves the authority to the thing that can fail.
+  ⚠️ If you cannot gate it and cannot point at a check, **date it in the sentence itself** and write
+  it in the past tense: "as measured 2026-09-05" is honest; the same words in the present tense are
+  a claim about tomorrow that nobody has the means to keep.
 - **Make it fail before you believe it.** Plant the defect it exists for, or point it at a known
   past one. A new check's green first run is the least informative result there is — equally
   consistent with "nothing is wrong" and "this cannot see anything".
@@ -153,6 +230,74 @@ Everything below is a corollary of that one sentence:
   function, no offending pattern in the source: run the same search against something you KNOW is
   present and watch it come back. A silent search and a broken search look identical from outside,
   and the broken one reads as good news.
+- ⚠️⚠️ **A FUNCTION DEFINITION IS `pg_get_functiondef` OUTPUT WITH NAMED LINES CHANGED. NEVER
+  RETYPED, NEVER RECONSTRUCTED FROM A PARTIAL READ — AND THE REASON IS PRIVILEGE, NOT TIDINESS.**
+  Founder's rule, 2026-09-05, after I rebuilt `get_insights_rollup` from a truncated read while
+  changing one WHERE clause: the retype silently dropped `active_days`, `accuracy`, `event_counts`
+  and `daily_days` from the return shape **and added a `SECURITY DEFINER` the original does not
+  have.** The shape was the visible half. The dangerous half is the one word.
+  **`SECURITY DEFINER` makes a function run as its OWNER, and the owner owns the tables, so RLS is
+  not applied.** In an app whose entire protection of children's data is RLS — one family cannot
+  read another's — that is the most expensive single word that can be introduced by accident, and
+  it arrives looking like boilerplate you copied because every neighbouring function has it.
+  So the rule has two halves, and the second is the point:
+  - **the mechanism** — copy the definition from the live database and change only lines you can
+    name. If you cannot say which lines you changed, you have not made an edit, you have made a
+    replacement;
+  - **the privilege rule it protects** — any diff that ADDS OR REMOVES `SECURITY DEFINER`, changes
+    `SET search_path`, or changes an owner **is a security change and must be called out as one in
+    the commit message and the review**, never a side effect of retyping. A migration that alters
+    one of those without saying so is indistinguishable from an attack, and it will pass every test
+    in this repo, because the tests run as a role that was never going to be stopped anyway.
+  ⚠️ And the ambient pressure runs the wrong way: most RPCs here genuinely need DEFINER, so the
+  word looks right everywhere. Check what the ORIGINAL had, not what its neighbours have.
+- ⚠️⚠️ **THE SCHEMA AND THE CODE THAT USES IT MUST NEVER BE APART IN EITHER DIRECTION — AND ON THIS
+  REPO THE CLIENT HALF DEPLOYS THE INSTANT YOU PUSH.** Founder's rule, extended 2026-09-05 after
+  being bitten by both halves of it in one day. There is one rule with two faces, and having
+  written down the first face I shipped the second four hours later:
+  - **schema ahead of code** — a migration that changes what running code READS ships in the same
+    commit as its readers, or after them. Making `sessions.started_at` nullable while six readers
+    still assumed it was always set would have taken DAU/WAU silently downward and read as a slow
+    week.
+  - **code ahead of schema** — a client that CALLS something the database does not have yet is the
+    identical defect running the other way. The commit that started sending `p_started_at` went
+    live before anyone applied the migration creating the 12-argument `sync_session`; PostgREST
+    resolves an RPC by parameter NAMES, so it answered `PGRST202 / HTTP 404` and every completion
+    fell to the offline queue. Measured, not guessed — a read-only RPC called with a bogus
+    parameter returns exactly that.
+  ⚠️⚠️ **AND THE THING THAT MAKES THE SECOND FACE THE DEFAULT HERE: `main` AUTO-DEPLOYS TO VERCEL.**
+  There is no separate "deploy" step to forget, so the client half of any expand/contract pair goes
+  live **the moment it is pushed, whether or not you intended to deploy anything**. Migrations, by
+  contrast, are applied by hand. So on this repo the natural order is always code-first, i.e.
+  always the wrong way round, unless you do something about it.
+  **What to do about it: make the CLIENT tolerate both shapes, rather than documenting an order
+  somebody has to remember.** `syncSession` retries without the new argument on `PGRST202`; that
+  removes the constraint instead of writing it down, and it is the only version that also survives
+  a browser still running yesterday's bundle. Expand → migrate → contract, with the expand step
+  doing real work rather than being a comment.
+  ⚠️ A deploy-order constraint you cannot design away belongs **at the top of the migration file
+  and in the deploy runbook** — never only in a report or a chat message, because the person
+  applying it in six weeks is reading the file, not the conversation.
+
+- ⚠️ **(the original half, kept because its example is the sharper one) A MIGRATION THAT CHANGES
+  WHAT RUNNING CODE READS SHIPS IN THE SAME COMMIT AS ITS READERS, OR AFTER THEM — NEVER BEFORE.** Founder's rule, 2026-09-05. Making `sessions.started_at` nullable
+  and fixing the six readers that assumed it was always set went in as two commits, so for a while
+  `main` held a migration that would have taken DAU/WAU silently downward the moment anyone applied
+  it. Nothing auto-applies here, so nothing broke — but the window existed, and "nothing applies
+  automatically" is a fact about today's CI, not a property of the repo. **Expand, migrate,
+  contract**: the readers tolerate both shapes first, the data moves second, the old shape is
+  removed third. A deploy-order constraint discovered while writing a migration belongs **at the
+  top of that migration file and in the deploy runbook** — never only in a report or a chat
+  message, because the person applying it in six weeks is reading the file, not the conversation.
+- ⚠️ **ASSERT WHICH DATABASE YOU ARE ABOUT TO WRITE TO, IN THE REPO, AS A LITERAL.** A wrong
+  connection target is worse than a missing one: a missing one fails, and a wrong one **succeeds
+  against the wrong database and reports green**. `PROD_PROJECT_REF` pointed at the decommissioned
+  Sydney project for two days after the region move, and `migrate-prod` was inert only because
+  three unrelated things happened to be absent — one of which was on the roadmap to be created
+  deliberately. **An inert landmine with a scheduled step-on date is not a noted risk, it is a
+  countdown.** `scripts/assert-prod-ref.sh` refuses unless the configured ref equals a literal in
+  the repo, so changing which database is production takes a reviewed commit rather than a
+  dashboard edit that leaves no diff.
 - **Query the thing, not the description of it.** Reading the repo answers *what did we intend*;
   querying production answers *what is true*. Only the second is a check. The reverted V5 payload
   bounds were invisible to the repo grep — it was case-sensitive — and took `pg_get_functiondef`
@@ -220,6 +365,83 @@ Everything below is a corollary of that one sentence:
   Found by the suite going red on correct code during the sweep that removed the character windows —
   the sweep paying for itself inside itself. Where you cannot name such a character, walk the
   delimiters (`src/__tests__/_window.ts`).
+- ⚠️⚠️ **A COLUMN A CLIENT CAN WRITE MUST NEVER BE READ AS AN AUTHORISATION DECISION — AND AN RLS
+  `with check` CONSTRAINS WHICH *ROW*, NEVER WHICH *COLUMN*.** Founder's catch, 2026-09-05, one
+  step before it reached production. A draft of the /admin gate added `'admin'` to the `user_role`
+  enum and had `admin_assert()` read `profiles.role`. Reproduced against production's verbatim
+  policy and grants:
+
+      policy[ALL] "profiles: own row"  USING auth.uid()=id  WITH CHECK auth.uid()=id
+      ACL: authenticated = arwdDxtm
+
+      acting as authenticated · role before: parent
+      update public.profiles set role='admin' where id=auth.uid();   -> ACCEPTED
+      role after: admin
+
+  **Every signed-in parent could have granted themselves the dashboard.** And the policy is not a
+  bug: `setMyRole()` exists deliberately, because the one-time Teacher/Parent picker is MEANT to let
+  a user write their own role. ⚠️ **It is a FEATURE that stops being safe the moment a privileged
+  value joins the same column** — which is why reviewing the policy alone would never have found it.
+  The question is not "is this policy correct" but **"is anything privileged now being decided by a
+  column the user owns"**.
+  **The fix is structural, not a tighter predicate.** A `with check` cannot express "any column but
+  this one", and a column-level `GRANT` would have broken the picker. So the privileged fact moved
+  to its own table with **RLS enabled and NO policies at all** — under RLS, no policy means no row
+  is visible or writable, so there is no predicate to get wrong; **the absence IS the mechanism** —
+  plus every privilege revoked from `public`/`anon`/`authenticated` so it is unreachable before RLS
+  is even consulted. `profiles.role` keeps only parent/learner/teacher: there is nothing to
+  escalate TO.
+  ⚠️ **Sweep this whenever you add a privileged read.** Cross every table a client can write
+  (`pg_policies` with `cmd in ('ALL','INSERT','UPDATE')` and a client role) against every column
+  read by an RLS predicate or a SECURITY DEFINER guard. Done 2026-09-05: the entitlement chain is
+  closed (`billing_config`, `chapters`, `diagnostic_plans`, `subscriptions`, `subscription_seats`
+  all have **0** client write policies), and the one live example is `profiles.is_internal` — a
+  user can hide their own account from /admin metrics. That grants nothing, so it is recorded
+  rather than fixed, but it is the same shape.
+  ⚠️ **And assert BOTH halves.** A build that refused every profile update would pass a
+  refusal-only check and silently break the picker.
+
+- ⚠️⚠️ **A FIXTURE IS DERIVED ENTIRELY, OR THE UN-DERIVED PART IS NAMED AND GATED. "MOSTLY
+  DERIVED" IS UNDERIVED AT EXACTLY THE POINT WHERE THE TWO SCHEMAS CAN DISAGREE.** Founder's rule,
+  2026-09-05. `adminMetrics.test.ts` built its tables by generating DDL from production's
+  `information_schema` — and then hand-wrote one line, the enum: `create type public.profile_role`.
+  There is no such type; production calls it `user_role`. So the migration's
+  `alter type public.profile_role add value 'admin'` succeeded against the fixture and failed
+  against every real database with `type "public.profile_role" does not exist`, and **`ci /
+  rls-tests` was red on main for five commits while the local suite passed every time.**
+  **The hand-written part is BY DEFINITION where drift lives** — everything derived is correct by
+  construction, so the one line somebody typed is the only place the two schemas can differ, and it
+  is the last place anyone looks because the fixture "came from production". A fixture that invents
+  the schema agrees with the bug it exists to catch.
+  So: derive all of it, or **name the un-derived part and gate it against the same source the real
+  environment uses.** The repair here reads the enum name out of `supabase/schema/baseline_schema.sql`
+  — the file CI stages as its own first migration — and requires the migration to alter that name;
+  it cannot drift with either side, and it has a positive control so a moved `profiles` block cannot
+  make it vacuous. ⚠️ The corrected fixture now reproduces the CI failure locally, byte-identical,
+  in 1.35s instead of a CI round trip — which is the test the fixture should always have been.
+
+- ⚠️⚠️ **CI IS NOT A GATE UNLESS SOMETHING STOPS A RED COMMIT. MEASURE WHETHER IT DOES BEFORE
+  TRUSTING IT.** Measured 2026-09-05, after five red commits went unnoticed for a day: `main` has
+  **no branch protection, no required status check, and no workflow reacting to a failed run** —
+  and Vercel builds on push independently of GitHub Actions, so **all five red commits reached
+  production with state READY.** A red CI run stopped nothing and told nobody. Two separate
+  failures that compound into "nothing at all stands between a broken commit and production".
+  ⚠️ And the resolution that does NOT work is "I will check CI after pushing" — a promise to
+  remember. This repo has swapped several of those for mechanisms and **only the mechanisms held**
+  (`red-main.yml` files an issue on a red main; the real gate is moving the production deploy behind
+  CI, which is one Vercel setting). **Local gates green is not the same claim as "this works":** the
+  difference is precisely the environment that rebuilds the schema from scratch instead of already
+  carrying it.
+
+- ⚠️ **A TIMEOUT FAILURE IS NOT AN ASSERTION FAILURE — ASK WHAT ELSE WAS RUNNING BEFORE BELIEVING
+  IT.** Three tests "failed" at 112s, 49s and 31s and were reported as regressions; on a settled
+  machine the same three take **16.8s, 1.9s and 4.6s against budgets of 60s, 20s and 30s — 28%, 9%
+  and 15%**. The machine was at load average 20.6 with 18 vitest processes, most of them mine, from
+  running concurrent suites. ⚠️ **AND THE MARGIN MUST BE READ AGAINST THE TEST'S OWN TIMEOUT, NOT
+  THE GLOBAL DEFAULT.** I reported one as "84% of budget, dangerously close" by dividing by the
+  20,000 default while the test carries its own `{ timeout: 60000 }` — a wrong number that nearly
+  bought a pointless refactor. Read the override before quoting a percentage.
+
 - ⚠️ **A FIXTURE IS A SECOND COPY OF THE SCHEMA. DERIVE IT.** A hand-written seed drifts from the
   shape the app actually stores, and then the gate reports on a state the app can never be in —
   failing about a world that does not exist. Where a fixture must exist, build it with the same

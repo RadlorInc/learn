@@ -118,3 +118,16 @@ the `pg_cron` / `pg_stat_statements` / `supabase_vault` extensions if not enable
 `auth.*` rows if the dump excluded them (see the table). Report each as found or not found.
 
 ## 4 · Only then: the region move (docs/… in the 2026-09-03 handoff block) — not before Rafi says.
+
+## ⚠️ Pending migrations with a deploy-order constraint
+
+A migration that changes what *running* code reads must not be applied before that code is
+deployed. Check this list before any `supabase db push`.
+
+| migration | constraint |
+|---|---|
+| `20260905130000_activity_time_is_completed_at.sql` | **Deploy the client first.** It backfills `sessions.started_at` to NULL, and a pre-2026-09-05 bundle renders those rows as **1/1/1970** on the parent dashboard (`new Date(null)` is the epoch). The corrected client reads `completed_at` and falls back to '—'. |
+| `20260905120000_session_started_at.sql` | Must be applied **after** `...130000`'s readers exist, or a NULL start silently drops sessions from DAU/WAU/MAU and the insights rollup (measured: 1 of 2 learners instead of 2). Filename order already guarantees this within one `db push`. |
+
+**The general rule** (CLAUDE.md): a migration that changes what running code reads ships in the same
+commit as its readers, or after them, never before. Expand → migrate → contract.

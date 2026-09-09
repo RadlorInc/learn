@@ -17,6 +17,22 @@
 -- ============================================================================
 
 -- ==== TABLES: RLS status — every data table has rls=t AND >=1 policy ====
+--   admin_users                rls=t  policies=0   ⚠️ ZERO POLICIES IS DELIBERATE AND IS THE MECHANISM.
+--                                                    Under RLS, no policy means no row is visible or
+--                                                    writable to any non-superuser, so there is no
+--                                                    WHERE clause to get wrong. ALL privileges are
+--                                                    revoked from public/anon/authenticated as well,
+--                                                    so it is unreachable before RLS is even
+--                                                    consulted. Reached only by admin_assert()
+--                                                    (SECURITY DEFINER) and by a human in the
+--                                                    dashboard. ⚠️ This replaces putting 'admin' in
+--                                                    profiles.role, which was a REPRODUCED
+--                                                    privilege escalation: the `profiles: own row`
+--                                                    policy is FOR ALL with `with check auth.uid()
+--                                                    = id`, constraining WHICH ROW and never WHICH
+--                                                    COLUMN, so a signed-in parent could run
+--                                                    `update profiles set role='admin'` and it was
+--                                                    ACCEPTED (measured 2026-09-05).
 --   auth_events                rls=t  policies=1   (V-audit 2026-07-21: INSERT-only, own rows; no read)
 --   chapters                   rls=t  policies=1   (public catalog: SELECT using(true) — intentional)
 --   diagnostic_items           rls=t  policies=1

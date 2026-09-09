@@ -51,9 +51,12 @@ begin
   -- ── Setup (as the migration role; RLS bypassed here) ──────────────────────
   select id into v_chapter from public.chapters limit 1;   -- a real chapter (sessions.chapter is FK'd)
 
-  insert into auth.users (id, email) values
-    (v_owner,    'owner.rlstest@milo.invalid'),
-    (v_attacker, 'attacker.rlstest@milo.invalid');
+  -- email_confirmed_at set: both are CONFIRMED accounts, so handle_new_user() creates their
+  -- profiles (it defers profile creation to confirmation as of 20260908120000). Without it the
+  -- learners insert below fails learners_created_by_fkey — there is no owner profile to point at.
+  insert into auth.users (id, email, email_confirmed_at) values
+    (v_owner,    'owner.rlstest@milo.invalid',    now()),
+    (v_attacker, 'attacker.rlstest@milo.invalid', now());
 
   -- Owner creates a learner. The grant_owner_access trigger gives the owner a
   -- learner_access row; init_learner_stats seeds learner_stats.

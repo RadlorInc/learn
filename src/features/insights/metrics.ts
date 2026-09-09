@@ -11,8 +11,10 @@ export const DAY = 86_400_000
 // Rolling window so the unpaginated fallback reads don't grow unbounded as an account accumulates history.
 export const WINDOW_DAYS = 90
 
-// NOTE: `sessions` has no created_at — it uses started_at (always set) + completed_at (nullable).
-export type Sess = { learner_id: string; phase: string; correct_count: number; wrong_count: number; completed_at: string | null; started_at: string }
+// ⚠️ CORRECTED 2026-09-05: started_at is NOT "always set" and was never a start — it held the row's
+// INSERT time and is nullable now. The activity time is completed_at; started_at is the fallback
+// for legacy rows only. See docs/data-inventory.md.
+export type Sess = { learner_id: string; phase: string; correct_count: number; wrong_count: number; completed_at: string | null; started_at: string | null }
 export type Evt = { learner_id: string; event: string; created_at: string }
 
 const ms = (s: string) => new Date(s).getTime()
@@ -24,7 +26,12 @@ export function computeMetrics(learners: Learner[], sessions: Sess[], events: Ev
   const now = Date.now()
   const byLearner = new Map<string, number[]>()  // learner_id → session timestamps
   for (const s of sessions) {
-    const t = ms(s.completed_at ?? s.started_at)
+    // ⚠️ SKIP, never coerce. Both columns are nullable, and `new Date(null).getTime()` is 0 — a
+    // session with no timestamp would otherwise report the learner as first active in 1970 and
+    // drag `firstMs` to the epoch. No timestamp is not evidence of activity.
+    const at = s.completed_at ?? s.started_at
+    if (!at) continue
+    const t = ms(at)
     if (!byLearner.has(s.learner_id)) byLearner.set(s.learner_id, [])
     byLearner.get(s.learner_id)!.push(t)
   }

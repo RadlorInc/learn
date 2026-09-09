@@ -30,7 +30,7 @@ import { markCheckupDone, recordCheckupSkip } from '@/infra/storage/checkup'
 import { setLeadEmail, getLeadEmail } from '@/infra/storage/leadEmail'
 import { kv } from '@/infra/storage/kv'
 import { saveResume, readResume, clearResume, resumable, sameTab, type DiagResume } from '@/infra/storage/diagResume'
-import { captureDiagnosticLead } from '@/data/repositories'
+import { captureDiagnosticLead, startDiagnostic } from '@/data/repositories'
 
 // UUID v4 dedupe key (matches the session-sync clientId pattern) — makes the save idempotent so a
 // queue re-flush can never duplicate the diagnosis. Generated ONCE per completed diagnosis.
@@ -44,6 +44,7 @@ import { PT, ACCENTS, LabBackdrop, BackChip, ChoiceButton, PtMilo, IntroCard, ty
 import { useViewport } from '@/shared/hooks/useViewport'
 import { DiagVisualView } from '@/features/diagnostic/DiagVisual'
 import { DiagPad } from '@/features/diagnostic/DiagPad'
+import { EmailGate } from '@/features/diagnostic/EmailGate'
 
 const BANDS: Band[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
 const accentFor = (band: Band): Accent => band === '3-5' ? ACCENTS.lime : ACCENTS.cyan
@@ -84,7 +85,9 @@ function buildContext(attempt: number): DiagContext {
   const seed = l?.id || 'anon'
   return { name: l?.name || l?.display_name, theme: l?.theme || pickThemeFor(seed), seed, nonce: attempt }
 }
-function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis): Promise<void> {
+/** @param clientId the id generated when the probe STARTED, so this completion updates the
+ *  `diagnostic_sessions` row `start_diagnostic` opened instead of inserting a second one. */
+function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis, clientId: string): Promise<void> {
   const id = activeLearner()?.id
   if (!id) return Promise.resolve()   // preview run, no learner context — nothing to persist to
   markCheckupDone(id)   // this child has now completed their mandatory checkup → passes the play gate
@@ -96,7 +99,7 @@ function persistDiagnosis(band: Band, s: ProbeState, dx: Diagnosis): Promise<voi
     blocked: dx.blockedSkills, strengths: dx.strengths, workingLevel: dx.workingLevel,
     planSkills: dx.planSkills, planChapters: dx.planChapters,
     items: s.asked.map(sk => ({ skill: sk, correct: s.passed.includes(sk) })),
-    clientId: newClientId(),
+    clientId,   // ⚠️ the START's id, not a new one — see startProbeNow
   })
   return flushDiagnosticQueue().then(() => {}).catch(() => {})
 }
@@ -160,6 +163,10 @@ export default function DiagnosticPage() {
   const ctxRef = useRef<DiagContext>({})
   const finalStateRef = useRef<ProbeState | null>(null)   // probe state at report time (for capture/save)
   const persistRef = useRef<Promise<void> | null>(null)   // the in-flight DB save (awaited before we navigate away)
+  /** This attempt's dedupe key, generated when the probe starts. The START row and the COMPLETION
+   *  must carry the same one, or `diagnostic_sessions` gets two rows and "how many finished" is
+   *  wrong in the flattering direction. Survives a reload via the resume record. */
+  const attemptIdRef = useRef<string | null>(null)
   /**
    * ⚠️ A CHILD CAN START THIS CHECK WHENEVER THEY LIKE NOW (the menu carries its own door), so
    * finishing one is no longer always a FIRST check — it can land on a plan somebody is four
@@ -196,6 +203,10 @@ export default function DiagnosticPage() {
   }, [])
 
   const applyResume = (r: DiagResume) => {
+    // Same attempt continuing, so the same dedupe key — otherwise a reload mid-probe would open a
+    // SECOND start row and inflate the "started" count with the child's own refreshes. A resume
+    // written before 2026-09-05 has none; that attempt simply has no start row to update.
+    attemptIdRef.current = r.clientId ?? newClientId()
     ctxRef.current = buildContext(r.attempt)
     setBand(r.band); setBandKnown(true); setAttempt(r.attempt); setPending(null)
     setSlot(resolve(r.s, r.band, ctxRef.current)); setPhase('probe')
@@ -227,7 +238,18 @@ export default function DiagnosticPage() {
   const startProbeNow = (seed?: string[]) => {
     ctxRef.current = buildContext(attempt)          // Phase 4: seed the probe for this child + attempt
     const s = startProbe(band, undefined, seed)     // undefined config → the band's default
-    saveResume(activeLearner()?.id ?? null, band, s, attempt)
+    /**
+     * ⚠️ RECORD THAT THIS STARTED. Until 2026-09-05 nothing did: `diagnostic_sessions` was written
+     * only at completion, so every row had `completed_at = started_at` and "how many start the
+     * check vs finish it" could only ever answer 100%. Fire-and-forget on purpose — a child must
+     * not wait on a network call to reach question one — but NOT swallowed: `startDiagnostic`
+     * logs its own failure.
+     */
+    const cid = newClientId()
+    attemptIdRef.current = cid
+    const lid = activeLearner()?.id
+    if (lid) void startDiagnostic(lid, band, cid)   // logged-out visitors have no learner to attach to
+    saveResume(lid ?? null, band, s, attempt, undefined, cid)
     setSlot(resolve(s, band, ctxRef.current)); setPhase('probe')
   }
   // Where the intro and the email gate both hand off to. 17–18 is asked which strand first; every
@@ -355,7 +377,7 @@ export default function DiagnosticPage() {
         finalStateRef.current = next.s
         clearResume(activeLearner()?.id ?? null)   // finished: the report owns the run now, and a resume would re-open the probe
         setResult(dx); setPhase('report')
-        persistRef.current = persistDiagnosis(band, next.s, dx)   // signed-in → saves; cold/preview → skips cleanly
+        persistRef.current = persistDiagnosis(band, next.s, dx, attemptIdRef.current ?? newClientId())   // signed-in → saves; cold/preview → skips cleanly
       } else { saveResume(activeLearner()?.id ?? null, band, next.s, attempt); setSlot(next) }
     }, 320)
   }
@@ -708,31 +730,6 @@ function ReportShell({ accent, subtitle, heading = "Here's what we found", cta, 
 }
 
 // ── Required email gate (cold traffic): capture a lead before the checkup, prefill signup later ──
-function EmailGate({ accent, short, onSubmit }: { accent: Accent; short?: boolean; onSubmit: (email: string) => void }) {
-  const [email, setEmail] = useState(() => getLeadEmail() ?? '')
-  const [err, setErr] = useState<string | null>(null)
-  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-  const submit = () => { if (!valid) { setErr('Please enter a valid email'); return } onSubmit(email.trim()) }
-  return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 440, background: PT.panel, backdropFilter: 'blur(8px)', border: `1px solid ${accent.base}66`, borderRadius: 20, padding: short ? '22px 20px' : '30px 28px', boxShadow: `0 0 30px ${accent.base}22, 0 18px 40px rgba(0,0,0,0.5)`, textAlign: 'center' }}>
-        <div style={{ fontFamily: PT.mono, fontSize: 11, letterSpacing: 2.5, color: accent.base, textTransform: 'uppercase', marginBottom: 10 }}>One quick thing</div>
-        <h1 style={{ margin: '0 0 8px', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 22 : 26, color: PT.ink }}>Where should we send the results?</h1>
-        <p style={{ margin: '0 0 20px', fontFamily: PT.sans, fontSize: 14.5, lineHeight: 1.5, color: PT.inkMute }}>Enter your email so we can save your child&apos;s starting point and plan. No spam — just the results.</p>
-        <input
-          type="email" inputMode="email" autoFocus value={email} placeholder="you@example.com"
-          onChange={e => { setEmail(e.target.value); if (err) setErr(null) }}
-          onKeyDown={e => { if (e.key === 'Enter') submit() }}
-          style={{ width: '100%', boxSizing: 'border-box', padding: '15px 16px', borderRadius: 12, border: `1.5px solid ${err ? '#e0483f' : PT.lineStrong}`, background: 'rgba(255,255,255,0.06)', color: PT.ink, fontFamily: PT.sans, fontSize: 17, outline: 'none', textAlign: 'center' }}
-        />
-        {err && <div style={{ marginTop: 8, fontFamily: PT.sans, fontSize: 13, color: '#ff8a80' }}>{err}</div>}
-        <button onClick={submit} disabled={!valid} style={{ marginTop: 16, width: '100%', padding: 16, borderRadius: 50, border: 'none', cursor: valid ? 'pointer' : 'not-allowed', background: valid ? accent.base : PT.line, color: valid ? '#06121f' : PT.inkMute, fontFamily: PT.sans, fontWeight: 800, fontSize: 17, boxShadow: valid ? `0 0 22px ${accent.base}66` : 'none', transition: 'all .16s ease' }}>Start the check →</button>
-        <p style={{ margin: '12px 0 0', fontFamily: PT.sans, fontSize: 11.5, color: PT.inkMute }}>Free · takes about ten minutes</p>
-      </div>
-    </div>
-  )
-}
-
 // ── Cold-traffic age picker (the front door self-select) ───────────────────────────────
 function AgePicker({ accent, onPick }: { accent: Accent; onPick: (b: Band) => void }) {
   return (

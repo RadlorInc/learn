@@ -18,7 +18,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { EmailOtpType } from '@supabase/supabase-js'
-import { getCurrentSession, verifyEmailToken, setPassword, logAuthEvent } from '@/data/auth'
+import { getCurrentSession, verifyEmailToken, setPassword } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
 
 const MIN = 6
@@ -75,7 +75,7 @@ function SetPasswordForm() {
     try {
       const { data, error } = await setPassword(password)
       if (error) { setError(error.message); setLoading(false); return }
-      if (data.user) void logAuthEvent('login', data.user.id)
+      // logged by the global listener (infra/AuthEventLogger) — see auth.ts
       router.replace(homeForRole(await getMyRole()))
     } catch {
       setError("Couldn't connect — check your connection and try again")

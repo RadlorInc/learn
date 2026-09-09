@@ -155,392 +155,230 @@
 > _(Everything below is the running session history — newest first, most recent ~5 sessions only.
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
-> letting it grow. The craft rules live in chapter-craft.md, not here.)_
+> letting it grow. The craft rules live in chapter-craft.md, not here.
+> ⚠️ **AT 2026-09-09 THIS FILE IS AT ITS CEILING: four blocks, against a ~60 KB budget.**
+> Adding the 🎙️ Chatterbox block moved the 🔊 2026-09-04 and 🧪 2026-09-05 blocks to the archive;
+> 🔊's live ▶ OPEN was lifted into the 🎙️ block, and 🧪 (Chatterbox eval) is superseded by it.
+> **Adding a block means moving one out first** — the next out is 🗣️ 2026-09-04/05, whose voice-cutoff
+> gate is a standing rule, so lift that reference before archiving it.
+> ⚠️ Count the blocks by eye rather than by grepping one set of emoji: the 🗣️ block was invisible
+> to a `^> [⚖️📊🧪🔊]` sweep on the day it landed, and a miscount here is a miscounted budget.)_
 
-> 🔊 **2026-09-04 — THE VOICE WAS ON THE CDN THE WHOLE TIME AND NOBODY WAS ASKING FOR IT. THREE SILENT DEFECTS IN ONE CHAIN, ALL DEPLOYED AND VERIFIED FROM THE RUNNING SITE — THEN THE FIRST HONEST ACCOUNTING OF WHAT THE REST COSTS, AND THE STITCHER THAT WAS GOING TO PAY FOR IT FAILED ITS LISTENING TEST.** `tsc` 0 · **1710 passed, 1 skipped by design** · `next build` 0 · **NINE commits, all pushed and live**: `590232b` `9eb78bd` `33bb2cf` `aec3ee0` `31437c2` `cce03b2` `9385aa1` `dbe7508` `fada6d8` · sw v153 → **v160**. **EVERY STATIC LINE IN THE APP NOW HAS A CLIP, IN BOTH VOICES.**
-## ① 🔇 THE CHAIN, AND WHY EVERY LINK REPORTED SUCCESS
-The founder: *"3–5 aur 17–18 mein voice hi naii aa rahi"*, then *"12–14, 15–16 Chrome mein theek
-hai, 17–18 nahi"*, then *"Safari mein Stevie aati hai, Chrome mein kuch nahi"*. Three different
-faults wearing one symptom, each measured rather than reasoned about:
-1. **Nothing was deployed.** Prod's Stevie manifest held **433** keys (0 of 70 sampled 17–18
-   lines) and `/audio/XjGY…/manifest.json` answered **404** — the 3–5 voice folder did not exist
-   there. 1,109 clips and the band routing had sat uncommitted since the previous session.
-2. **`sw.js` had no `/audio/` branch**, so the manifest fell to the app-pages case —
-   stale-while-revalidate — and a device that had loaded the app kept the old key list. Measured
-   live: `caches.match(manifest)` in `milo-shell-v154` → **true**.
-3. **The 30-day header.** `/audio/:path*` served `max-age=2592000, stale-while-revalidate=31536000`,
-   right for a clip and wrong for the index. Read out of the founder's own Chrome: plain `fetch()`
-   → **433 keys**, `fetch(…{cache:'no-cache'})` → **670**, with the new service worker already
-   active. That is why 12–14/15–16 played (their keys were in the stale copy) and 17–18 did not.
+> 🎙️ **2026-09-07→09 — CHATTERBOX IS IN PRODUCTION AND FOUR OF SIX BANDS ARE FULLY VOICED. Plus: the nightly went red from a login-counter that fired on every page load, a confirm-password field, profile creation deferred to email confirmation, the paywall switched OFF, and the discovery that prod deploy sits behind CI — which held four green-looking commits back until one rls_regression fix unblocked them.** `tsc` 0 · **1825 passed, 2 skipped** · `next build` 0 · sw v167 → **v176** · commits `3cee430`…`ee852a2f` (17), all pushed · two migrations written, NOT yet applied to prod.
 
-⚠️ **THE WHOLE CLASS IS "A STALE INDEX IS NOT AN ERROR, IT IS A SHORTER LIST."** Every dropped key
-is a clean miss, every miss falls back to browser speech, and Chrome ships no usable voice on most
-machines — so the app, the CDN, the build and every log reported success while a child heard
-silence. **Anything that GATES a lookup must revalidate even when the things it gates may not.**
-Both halves shipped: the header (`max-age=0, must-revalidate` on `manifest.json`/`fragments.json`,
-placed AFTER the general rule because the last match wins — above it, it is inert, which is the
-version I wrote first and `assetCacheHeaders.test.ts` caught), and `cache: 'no-cache'` on the two
-fetches, because a header cannot reach a browser that already holds the 30-day copy.
+## ① 🗣️ CHATTERBOX TTS SHIPPED — THE WHOLE-LINE REMAINDER, ON A FREE GPU
+Founder A/B'd Chatterbox Turbo (MIT) clones against the ElevenLabs originals and approved, with one note — **volume** — so every clip is levelled to the EL loudness (compressor → `loudnorm=I=-14`, because short exclamations are peak-bound and loudnorm alone leaves them 4 dB quiet). The two voices are **zero-shot clones from ~30 s of their own existing EL clips** (`scripts/chatterbox-ref/<id>.wav`, committed), so a chapter mixes recorded and cloned lines in one voice. **Bands COMPLETE: 3-5 (Teddy 1,411), 6-8 (4,006), 9-11 (7,889), 12-14 (1,661).** In progress: **17-18 1,656/8,502**, **15-16 343/11,945**. Stevie 16,496 clips on disk.
+- **`scripts/chatterbox-render.py`** (committed): CUDA-first, `--band` to split the teen corpus, resumable (skips what is on disk, rebuilds `manifest.json` from disk so a crash unlists nothing), releases the MPS cache per line, exits early when there is nothing to render.
+- **`scripts/chatterbox-kaggle.ipynb`** (committed): one account, a `PLAN` of bands in order (9-11 → 6-8 → 12-14 → 17-18 → 15-16), 50-line chunks each in a **fresh venv-built process**, zip refreshed per chunk. On Colab the zip goes to Google Drive. The corpus JSONs (`.voice-corpus-{6-8,9-11,teen}.json`) were committed so the notebook is just `git clone` + run; 3-5 stays gitignored (complete).
+- ⚠️ **Kaggle T4: RTF ~0.5 — ~12× this laptop.** The laptop run (RTF 3-6, 20 GB swap thrash) was killed once Kaggle proved faster. Merge flow per zip: verify (0 empty, 0 low-ratio truncation outliers, loudness −14…−17), `rsync` merge (NOT `cp *` — 12k args overflow), rebuild manifest, gates, commit, watch **Deploy** (not just sw).
+- ⚠️ **Traps paid for:** `setsid` absent on macOS (use `nohup caffeinate -i`); MPS OOMs at ~40 lines/process on 8 GB (hence 35-50 line chunks, fresh process each); Kaggle's python has no `ensurepip` (build the venv with `uv`); chatterbox pins torch 2.6 which breaks Kaggle's torchvision (its OWN venv, no torchvision); the notebook's chunk counter is **cumulative across bands** ("chunk 80" ≠ 80 in that band).
+- ⚠️ **The un-downloaded final zip lost ~700 17-18 clips (~33 min GPU) — cumulative zips mean only the delta since the last merge is at risk.** Kaggle saves `/kaggle/working` to the notebook Output, so a network-dropped session may still be recoverable there.
 
-## ② ⚠️ CLIP-ONLY WITHOUT A STITCHER IS SILENCE, NOT FALLBACK — AND THE NOTE IS AT THE SWITCH
-`setClipOnly` does not mean "prefer clips": it suppresses the browser fallback, so a line with no
-clip is **silent**, and nothing logs it. 12–14 survives it ONLY because its templated lines are
-stitched from `frag/`. The next person to reason *"12–14 works fine, turn it on for 3–5"* ships a
-child a silent chapter. Written on `setClipOnly` itself and on the GameShell effect that flips it —
-where somebody stands when they widen that band check — not in a doc.
+## ② 🔇 THE NIGHTLY WENT RED FROM A LOGIN COUNTER ON EVERY PAGE LOAD
+`AuthEventLogger` (added 2026-09-05) treated supabase-js's `SIGNED_IN` as a login — but that event ALSO fires from `_recoverAndRefresh` on **every page load that finds a stored session**. So production inserted a `login` row per hard reload (the /admin panel was counting page loads), and the nightly E2E + weekly sweep went red on all 216 chapter loads (placeholder Supabase host → `ERR_NAME_NOT_RESOLVED` on the POST). Fix (`93e25ab`): a login counts only if **no session existed in storage at page load** (`hadSessionAtLoad()`), cleared by `SIGNED_OUT`. Gated by `authEventLogger.test.ts`, watched red on the old listener; placeholder-build probe now makes 0 failed requests across three chapter loads, positive control confirms it still sees a real one. **Both scheduled gates green again** (dispatched by hand on the fix commit — nightly 218 passed).
 
-## ③ 💸 THE MISS LINE WAS BEING RECORDED TEN TIMES OVER
-GameShell spoke `It was X. <encouragement>` as ONE utterance, so the clip layer saw one line and
-every reveal needed recording once per encouragement — and there are ten. **3,640 lines / 114,506
-chars as one utterance against 374 / ~4,600 split**, for audio nobody can tell apart. Now two
-utterances, and 9–11's whole wrong-answer bucket is **374/374** for the price of a rounding error.
-⚠️ `speakSteps`, never `speak` + `speakAfterCurrent`: `_speaking` only turns true at the clip's
-`onStart`, so a synchronous second call takes the else branch and `_doSpeak` **cancels** the line
-still loading — the first half vanishes on exactly the machines that have clips.
-⚠️ And `voice-generate.mts` could lose a whole run to one bad packet: an uncaught `fetch` rejection
-(`ETIMEDOUT`, twice) threw out of the render loop and killed the process **before the manifest
-write**, leaving hundreds of clips on disk and unlisted — ① in miniature. One retry, then skip.
+## ③ 🔐 CONFIRM-PASSWORD, AND PROFILE CREATION DEFERRED TO CONFIRMATION
+- **Confirm-password field on email signup** (`19337fc`, sw v171): signup only, compared before anything is sent, tab-switch clears it. Driven against a placeholder build — mismatch shows the error with 0 Supabase requests, matching sends exactly one `POST /auth/v1/signup`.
+- **Profile-on-confirmation** (`95c21c4`, migrations `20260908120000` + `20260908120100`): founder noticed a "Waiting for verification" account already had a `profiles` row. Cause: the dashboard trigger `on_auth_user_created` fired `after insert on auth.users` (i.e. at signup, before the email is clicked). Now `handle_new_user()` creates the profile only when `email_confirmed_at` is set, and the trigger also fires on the confirm-link UPDATE — copied from the live definition with ONLY the guard added (still `security definer`, `search_path 'public'`; OAuth unaffected). Plus `prune_unconfirmed_users()` (one-time sweep + 03:37 pg_cron) deletes never-confirmed accounts >3 days old. Verified in pglite; watched red on the old trigger. ⚠️⚠️ **THESE TWO MIGRATIONS ARE NOT APPLIED TO PROD — the founder applies auth-schema DDL by hand.** Safe before or after the client (getMyRole tolerates a missing profile → role picker).
 
-## ④ 📊 WHAT IS RENDERED, AND WHAT THE REST COSTS
-Live on prod, verified from the running deployment: Stevie **2,912 keys** (was 433 this morning),
-Teddy **927**. 9–11 `teach` 69/69 · `miss` 374/374 · `scored` 1590/3172 · `reteach` 0. **All 265
-number-free lines across every band are rendered, plus 6–8's 56-line walkthrough.**
-Rendered cheapest-first *within* each value bucket — measured, that buys 1,361 lines against 719.
-⚠️ **The API key carried its own 40,000 cap** while the plan showed 121,022, so a run 401'd at a
-third of the month. Raised; check it before concluding a month is spent.
-⚠️ **Characters are NOT credits at a fixed ratio.** ~1:1 on long lines, **~0.6:1** on short ones
-(15,705 predicted, 7,775 billed). Size a run, then let the API stop it; do not plan to the count.
-
-**The whole-line remainder, re-measured at 12,000 draws instead of 1,500 — and it MOVED:**
-
-| band | corpus @1.5k | @12k | growth | rendered | remaining credits |
-|---|---|---|---|---|---|
-| 3–5 | 1,411 | 1,411 | **1.00×** | 927 | **26,088** — a real total |
-| 12–14 | 1,666 | 1,687 | **1.01×** | — | **112,683** — a real total |
-| 6–8 | 2,602 | 7,294 | 2.80× | 56 | ≥424,073 |
-| 9–11 | 7,904 | 15,969 | 2.02× | 1,946 | ≥1,152,964 |
-| 15–16 | 11,858 | 28,467 | 2.40× | — | ≥2,560,133 |
-| 17–18 | 8,638 | 28,620 | 3.31× | — | ≥1,785,722 |
-| **total** | | | | | **≥6,061,663 — 50 months** |
-
-**≥2,343,335 at 1,500 draws became ≥6,061,663 at 12,000.** Only 3–5 and 12–14 converge; their
-vocabularies are small. For the other four, whole-line voice is not a project with a price, it is a
-**subscription** — and every new chapter adds to it.
-⚠️ **THE EXPENSIVE PART IS NOT THE EXPLANATION — THE FOUNDER'S READ, AND IT HELD.** The walkthrough
-is static and was already almost entirely recorded (15–16 and 17–18 sat at **zero** remaining,
-because those lines are literals the grep corpus took months ago). What costs is the **re-teach**,
-which `explainBeats(r)` rebuilds from each round's numbers: 9–11 has 554 number-free re-teach lines
-against **6,265** numbered; 15–16 has 6 against **14,134**.
-⚠️⚠️ **AND A CORRECTION THAT TRAVELLED TWO MESSAGES BEFORE IT WAS CHECKED.** I put the static
-remainder at **113,063** credits by testing for a DIGIT. In 3–5 and 6–8 the numbers are spelled as
-WORDS — *"four and seven. Which sign is right?"* — so **98%** of that band's "no digit" lines were
-per-round lines the test could not see. Counting number-words as numbers took the static remainder
-to **16,009** and 6–8's share from 259,510 to **1,391**. Same class as the "nearly flat" wording
-below: **a proxy quietly standing in for the property it approximates.**
-
-## ⑤ 🔬 THE MEASUREMENT THE WHOLE STITCHER DECISION RESTS ON — AND ITS HONEST WORDING
-Founder's challenge: *"our questions aren't limited, they're adaptive — did generating audio for a
-limited set break that?"* No: the wiring is one-way (the chapter builds its line, the player hashes
-it, a miss falls back) and the corpus is built by DRIVING the real generators. But the second half
-of his question was right and cost me a claim. Escalating the sweep:
-
-| chapter | whole lines 1.5k→24k | templates | literal runs |
-|---|---|---|---|
-| goingViral 15–16 | 821 → **1,299** | **13** flat | **34** flat |
-| coinTray 9–11 | 920 → **1,653** | 391 → **425 flat at 6k** | 434 |
-| packingShed 9–11 | 1,839 → **2,501** | 706 → **848 flat** | 819 |
-| walkHome 17–18 | 1,562 → **9,123** ↑ | 301 → **513** ↑ | 121 → 137 |
-
-Pushed the worst case further, runs only — **1.5k/6k/24k/48k/96k → 125, 130, 138, 140, 144**
-(+4.0%, +6.2%, +1.4%, +2.9%). Over **64× the draws: lines 17×, templates 1.9×, runs 1.15×**.
-⚠️ **So the right words are "bounded in practice, still creeping" — NOT "saturated".** I first
-wrote *"nearly flat"*, and the founder's correction is the rule worth keeping: **a word like
-"nearly flat" does the work of "saturated" without having measured it.** Quote a run count with the
-draw count it was measured at. The argument survives its own worst case — walkHome's NEW templates
-are new combinations of runs it already has — but it is a working ceiling (~150 runs), not a proof.
-⚠️ **And every whole-line figure in this repo is now a FLOOR and must travel as `>=`** — the
-drivers sample 1,500 draws, which is not a generator's space. Written into all three corpus
-drivers' headers so the next reader cannot pick the number up as a total.
+## ④ 🔓 PAYWALL OFF, AND CI GATES THE DEPLOY
+- **`PAYWALL_ENABLED = false`** in `useChapterGate` (`8a73733`, sw v172): no chapter is gated until Stripe ships. Independent of `billing_config.enforced` — the hook never asks the DB and can never return `locked`. Re-enable = flip it AND set `enforced`; `gateVerdict` stays pure and unit-tested, the hook-driven locked-WIRING test is `skipIf(!PAYWALL_ENABLED)`. Guarded by `chapterGateOff.test.ts`, watched red with the flag on.
+- ⚠️⚠️ **PROD DEPLOY IS BEHIND CI NOW (the 2026-09-05 gating), AND IT WORKS.** The migrations commit broke `ci / rls-tests` — its `rls_regression.sql` seeded owners into `auth.users` with no `email_confirmed_at` and relied on the OLD trigger to make their profiles, so the next `learners` insert failed `learners_created_by_fkey`. **Four green-looking commits (migrations, paywall-off, two voice batches) never reached production — prod sat at v171 for hours** while `promote` (`needs: ci`) skipped. `a944caf4` fixed the suite (confirmed owners); green there promoted all four at once. **The lesson: after every push, watch the Deploy run, not just the sw version** — a red CI now silently holds work back, which is the gate working as designed.
 
 ## ▶ OPEN
-1. 🔴 **THE STITCHER FAILED ITS LISTENING TEST, AND THAT IS THE OPEN QUESTION.** One real 12–14
-   line was assembled from its six existing fragments and put beside the whole-line recording of
-   the same sentence: *"Fly the drone to the halfway point between 2, 2 and 4, 6."* Founder, on
-   the pair: *"B natural lagg raha hai."* Measured alongside: stitched ran **7.84s against 5.65s**;
-   silence-trimming each fragment took it to 6.38s (+14%), and the residue is **delivery, not
-   padding** — a lone `"2"` is 0.85s after trimming because it was recorded as its own sentence.
-   Playing it through the real `<audio>` + `playbackRate` + `preservesPitch` path added a further
-   **~120ms per join** that no trimming can reach (`/tmp/abtest/rate-test.html`, the harness).
-   ⚠️ Note what this rules out: **the founder's own fallback — "record whole templates, stitch only
-   the numbers" — IS what was tested.** The run *"Fly the drone to the halfway point between"* is a
-   single recording. So that option is not a way out; it is the thing that failed.
-   The one cheap experiment left is **prosody-in-context**: fragments were recorded in isolation, so
-   each ends on a falling tone. Re-render the number clips with list intonation (`"2,"` `"4,"` `"6."`)
-   — about 20 credits — and listen again. If that fails, whole-line is the answer and the cost above
-   is the cost.
-2. ⏭️ **The best remaining spend is 3–5** (539 lines, ~26k, and the band is measured saturated so it
-   never asks again). 26,072 credits are left this month; billing has run ~60% of the estimate.
-3. 🔴 **6–8 has no per-round clips at all** (only its 56 walkthrough lines). 4 of its 12 chapters
-   still cannot be enumerated from the beat surface: `placeValue`, `additionTo100`,
-   `subtractionTo100` and `money` return an empty `prompt` and speak from their own components.
-4. ⏭️ 15–16 and 17–18 now play a clip for the encouragement and browser speech for `It was X.` —
-   mixed within one breath. Their reveal halves need the 37 configs (exported this session) driven.
-5. 🕒 **Nightly E2E has still never gone green on a SCHEDULED run against a main containing the fix.**
-   `gh run list --workflow "Nightly E2E"`, look for `schedule` + `success` at or after `22d75fb`.
-6. 🔴 **The hull silence is still unmeasured** — `docs/voice-check-for-tester.md` ready to forward.
-7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky.
-8. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase is deferred with a hard
-   deadline BEFORE STAGE 4 ([docs/billing-stage-3.md](docs/billing-stage-3.md) §0) · B12 Supabase Pro
-   before any live key · **`DRAFT = true` — the privacy policy and ToS are still placeholders, and you
-   cannot charge a parent under one** · the free chapter set is still a PROPOSAL · **nine Dependabot
-   PRs open and untriaged (#28–#47)**, do not merge as a batch · Vercel Web Analytics still off · two
-   prose-drift notes (the `error_events` fkey comment, the anon-INSERT comments).
-9. ⏭️ **Nobody has HEARD any of the rendered clips on a real device** beyond the A/B pair above.
-   Every other check is a network request plus a patched `play()`.
-10. ⏭️ **`OrderDesk` and `LevelRun` — the two 9–11 storybook chapters — have no clips** and are in no
-   corpus: they run `SkillBeat`, not GameShell.
-11. ⏭️ The ElevenLabs **MCP** still holds the rotated key; measure the key with `curl`, never it.
-12. ⏭️ Uncommitted and untouched all session: the `/menu` 6→2 RPC half (`menu/page.tsx`, the three
-   repositories) — deliberately kept out of the voice deploys.
+1. 🔴 **VOICE REMAINING: 17-18 (6,846 left) and 15-16 (11,602 left)** — the two biggest bands, next Kaggle sittings (account quota 30 GPU-h/week, so 2-3 sessions). The `PLAN` renders 17-18 then 15-16. Merge each zip here.
+2. 🟡 **Nobody has HEARD the rendered clips on a real device beyond the founder's A/B pairs.** Every other check is a network request + duration/loudness sweep.
+3. 🟡 **6-8 corpus (4,006) reads complete, but 4 chapters speak from their own components** (`placeValue`, `additionTo100`, `subtractionTo100`, `money` return an empty `prompt`) — confirm their per-round lines are actually covered, not just the beat surface.
+4. ⏭️ **The stitcher is dead — whole-line via GPU replaced it.** The 🔊-block stitcher listening-test question is moot: Chatterbox renders whole lines cheaply, so nothing is stitched.
+5. 🟡 **Nightly E2E green was by MANUAL dispatch** on the fix commit; a green SCHEDULED run against a main containing the fix still worth confirming.
+6. ⏭️ `OrderDesk` and `LevelRun` (the two 9-11 storybook chapters) have no clips and are in no corpus — they run `SkillBeat`, not GameShell.
+7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky; the hull silence is still unmeasured (`docs/voice-check-for-tester.md`); the ElevenLabs MCP still holds the rotated key (measure with `curl`); the `/menu` 6→2 RPC half is still uncommitted.
+8. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase (deadline before Stage 4) · B12 Supabase Pro before any live key · **`DRAFT = true` — privacy policy and ToS still placeholders, and §8's refund sentence is unwritten and LIVE** · the free chapter set is a PROPOSAL · nine Dependabot PRs (#28–#47) · Vercel Web Analytics off. ⚠️ Paywall being OFF does not change these — it just means nothing is gated *yet*.
+9. 🔴 **Carried from ⚖️ 2026-09-06**: account deletion never executed (founder's throwaway-account test); Stripe cancellation not wired; `migrate-prod` inert; Sydney still the rollback (~$10/mo); `entitled_chapters` has no caller; and the two migrations in ③ awaiting a hand-apply.
+10. 🟡 **`/auth`'s consent line measures 4.16:1** (`#8a7a63` on the white card, WCAG formula, 2026-09-09) — UNDER the 4.5:1 floor for 12px text; the link `#F26B2C` is 3.04:1. Found while wiring `ConsentLine` into the lead capture (`consentLine.test.ts` pins the number). Not changed — the brief was /auth byte-identical; founder's call whether to darken it.
 
-> ✅ **2026-09-03 (evening) — THE REGION MOVE RAN. THE NEW us-east-1 DATABASE IS A VERIFIED COPY OF SYDNEY, AND NOTHING IS POINTED AT IT YET.** Eleven dispatches, ten red, and **every red was a real defect in the workflow I wrote — not one in production, and not one "just re-run it"**. Sydney was READ ONLY throughout: zero writes, all day. Green run **33783519089**: `✓ posture + fingerprint identical` · **RLS suite 74 assertions, all pass** on the new project. Verified again independently (I queried BOTH databases myself rather than reading the workflow's own diff): users 11/11 · identities 12/12 · profiles 11/11 · learners 19/19 · chapters 72/72 · learner_progress 31/31 · ledger 77/77 · cron jobs 4/4 · policies 35/35 · `on_auth_user_created` present on both.
+> ⚖️ **2026-09-06 — THE TERMS SAID THINGS THE PRODUCT DOES NOT DO, AND THE BIGGEST ONE — "delete your account at any time from your account settings" — HAD NOTHING BEHIND IT AT ALL. Both legal documents placed behind the draft banner; account deletion built, and PROVEN not to orphan before a line of it was written.** `tsc` 0 · **1817 passed, 1 skipped** · `next build` 0 · **four commits, CI green on `a9d638d`** · sw v163 → **v167** · one migration written here and applied by the founder, verified present in production.
 
-## ⚠️ THE ONE THAT WOULD HAVE SHIPPED SILENTLY, AND WHAT CAUGHT IT
-The restore completed, the posture diff said **identical**, and the RLS suite then failed inserting a
-learner whose owner had no `profiles` row. Measured on both: production has one non-internal trigger
-in the `auth` schema — `on_auth_user_created` → `public.handle_new_user` — and the restored project
-had **none**. **A schema dump does not carry triggers defined on a MANAGED schema's tables.**
-**What it would have cost:** existing profiles ride in the data dump, so all 11 accounts look
-perfect and every count matches. It is every **FUTURE** parent who breaks — an auth row, no profile,
-and `learners.created_by` references `profiles`, so they cannot add a child. Nothing errors.
-⚠️⚠️ **And the fingerprint said "identical" while that was true of one side.** It counted tables,
-functions, policies, rows and cron jobs — and **no triggers**, i.e. it agreed about everything except
-the thing that differed. Both trigger counts are in `security_posture.sql` now. The RLS suite is what
-actually caught this; that file is why it will not have to next time.
+## ① 📄 THE APP'S TERMS ARE ON `/legal/terms`, AND EVERY PLACEHOLDER STILL SHOWS
+Pasted **verbatim** from `docs/app-terms-of-service.md` (in the repo, because the gate compares against it), minus only its markdown H1 and its "Last updated" line — both of which the page renders from `title`/`updated`. Linked from **signup (above the button — it was below it), the parent dashboard footer, checkout (above Continue), and the landing footer**.
+**`DRAFT` is true and the banner is up.** ⚠️ **The date is 6 September 2026 — founder's call, 2026-09-06, and it is NOT a review.** `[DATE]` marked *"nobody has decided"*, not *"a lawyer must decide"*. **Four markers are still open and still render to every visitor:** nine `[LAWYER REVIEW]`, §3's and §15's `[NN]` windows, §15's `[URL]`, and §8's refund sentence — which is not waiting on counsel, it is **unwritten**, and its own text says *"Do not publish with a placeholder."*
+⚠️ **`PLACEHOLDERS` vs `OPEN` is the distinction that took two passes to see.** The first is the REFUSAL list and never shrinks (a resolved `[DATE]` coming back still blocks publication); the second is what is unresolved TODAY, written by hand, so resolving one is a diff somebody reviews rather than a gate quietly finding less to complain about. Both directions are asserted.
 
-## 🧨 THE TEN REDS, BECAUSE THE LIST IS THE POINT
-| # | died at | the actual mechanism |
-|---|---|---|
-| 1 | guard | `NEW_DB_URL` password (Session pooler needs `postgres.<ref>`, and a symbol in the password breaks URI parsing) |
-| 2 | dump | my grep was `^COPY auth.users `; pg_dump writes `COPY "auth"."users"`. **A correct dump reported as missing** |
-| 3 | restore | the ledger table was hand-written `(version, statements, name)` — production also has `created_by`. A second copy of a schema we do not own |
-| 4–6 | restore | **three dispatches in two minutes, two of them six seconds apart on ONE database.** One dropped schema public while the other created types in it. No concurrency group; `deploy.yml` has had one since it was written |
-| 7 | restore | `data.sql` already carries all 22 auth tables → loading `auth.sql` too sent every auth row twice (`duplicate key … flow_state_pkey`) |
-| 8 | restore | `data.sql` also carries 7 `storage` tables, owned by `supabase_storage_admin`: `permission denied for table buckets_vectors`. All seven measured **0 rows** on production, so they are filtered out of the dump |
-| 9 | dump | the CLI's own `-x 'storage.*'` **left every storage table in and silently dropped the ledger block** — the exclusion excluded only the thing we needed |
-| 10 | verify | the auth trigger, above |
+## ② 🚨 WHAT THE DOCUMENT CLAIMED AND THE CODE DID NOT DO
+Four findings, each measured. **The first is why the rest of the day happened.**
+- **§11: "delete your account at any time from your account settings."** The only occurrence of that phrase in the whole repository **was the sentence itself.** No control, no route, no RPC.
+- **§8: "You may cancel at any time from your account settings."** No billing portal, no cancel route. `cancel_at_period_end` is READ and never written. Still true today.
+- **§6 contradicts the Privacy Policy**, and §6's own `[LAWYER REVIEW]` note says it must not: it promises *"placement results … kept while the profile exists"* while `prune-diagnostic-items` deletes `diagnostic_items` at 90 days and the Privacy Policy says so out loud.
+- **The camera is not in the document at all.** Eight live 9–11 chapters ask a child to turn it on; §3 enumerates *"what a child never gives us"* including *"a photograph"* and never mentions it.
+⚠️ And two §6 claims are **true in code and never once observed in production** — `sessions.started_at` and `auth_events` — i.e. the 📊 block's own open items 2 and 3.
 
-## ⚠️ AND ONE OF THOSE TEN WAS MY MEASUREMENT, NOT THE CODE — WORTH MORE THAN THE OTHER NINE
-I reported *"data.sql carries the ledger"* and deleted the separate ledger dump on the strength of it.
-It came from `grep -A80 'COPY blocks in data.sql'`, whose window ran **past the end of that inventory
-and into the `ledger.sql` inventory printed right after it** — so a line belonging to one file was
-read as belonging to another. **A byte-count window crossing the boundary it was meant to respect**,
-which [CLAUDE.md](CLAUDE.md) already records as a technique that does not work — used here on a LOG
-rather than on source, which is why it did not look like that rule. Two commits acted on it before
-the workflow printed `data.sql`'s own structure and settled it.
-⚠️ **The auth half of the same reading was right, and the difference is the lesson:** it had TWO
-instruments behind it (data.sql's own inventory, and the duplicate-key error). The ledger half had one.
-⚠️ A second one, caught before it shipped: the first control on the storage filter ran `awk` against a
-fixture that was not named `data.sql`, wrote a zero-byte file, and three greps read the empty output
-and reported *"storage gone, rows gone"*. It survived only because *"ledger lost"* was in the same
-batch and could not be true. **The re-run asserts the output is non-empty before believing any of it.**
+## ③ 🗺️ THE FK MAP, READ OFF `pg_constraint` — AND THE `RESTRICT` THAT WAS PROTECTING US
+Milo production is not reachable from the MCP (only `radlor-site` is), so the schema was built in **pglite from `baseline_schema.sql` + all 81 migrations** — the sequence `ci / rls-tests` stages — and the catalog queried. That fixture is now [src/__tests__/_schema.ts](src/__tests__/_schema.ts) and is reusable.
+⚠️⚠️ **`learners.created_by -> profiles` is ON DELETE **RESTRICT**, and `profiles.id -> auth.users` is CASCADE. So deleting an auth row for any parent who had ever added a child RAISED**, measured by running it:
+`update or delete on table "profiles" violates RESTRICT setting of foreign key constraint "learners_created_by_fkey"` — auth user, profile and learner all still present afterwards.
+**Deletion was not un-surfaced, it was impossible** — and that RESTRICT is the reason no half-deleted family exists, and why the function deletes learners FIRST in the same transaction.
+⚠️ **`error_events.learner_id` has NO foreign key at all** — the one orphan this schema can produce, since no cascade reaches it. Cleared explicitly.
+⚠️ **`billing_events.account_id` is SET NULL** — the one deliberate survivor. **`diagnostic_leads` is not reachable by deletion at all** (keyed on the email, no user id): a parent who used the free check, signed up with the same address and then deleted still has that row for 24 months. A real gap in the promise, recorded not fixed.
 
-## 🧰 WHAT THE WORKFLOW IS NOW
-Guard (4 ref checks → optional `wipe_target` → target must be empty) → dump Sydney read-only
-(`schema` · `data`, storage blocks cut out by an awk range · `ledger` · `ledger_schema` · the auth
-triggers via `pg_get_triggerdef`), each with its own positive control → restore (default privileges
-revoked FIRST → 5 extensions → schema → ledger DDL → ledger rows → data → **auth triggers** → 4 cron
-jobs) → verify (`security_posture.sql` on BOTH databases, diffed; then the RLS suite on the new one).
-`concurrency: migrate-region-<ref>`. No artifact is ever uploaded — the repo is public and the dump
-carries children's data; every diagnostic prints table NAMES only, never a row.
+## ④ 🔐 `delete_my_account` — ONE TRANSACTION, AND `amr` RATHER THAN `iat`
+SECURITY DEFINER, revoked from `public`/`anon`, granted to `authenticated` only; subject from `auth.uid()`, so a caller can only delete themselves. No service-role key and no API route. **One function, therefore one transaction:** a partial failure is an untouched account and an error the parent is told about. No soft delete, no grace window.
+⚠️⚠️ **THE RE-AUTH GUARD READS `amr`, NOT `iat`, AND I WROTE `iat` FIRST.** supabase-js refreshes the access token roughly hourly, minting a **new `iat` while nobody has proved anything** — so an `iat` check is satisfied by a tablet left open on a kitchen table, which is exactly the child this exists to stop. `amr` carries the moment the human authenticated and does not move on refresh; absent `amr` is a refusal. **Reverting to `iat` makes the refreshed-token and no-`amr` cases both pass**, which is the hole.
+The page is `/parent/account`, reached only from a small link at the very bottom of `/parent`, with the **export offered above the confirm**; a gate asserts nothing under `/game`, `/menu` or `/shop` links to it.
 
-## ✅ AND THEN THE CUTOVER RAN THE SAME EVENING — PRODUCTION IS NOW us-east-1
-Google redirect URI added (old one kept) · Google provider enabled on the new project with the SAME
-client · URL configuration copied · migration re-run for a fresh snapshot (green, `wipe_target=true`)
-· **three** Vercel env vars repointed (§7 said two; `SUPABASE_SERVICE_ROLE_KEY` is the third) ·
-redeployed on `6c80255`.
-**Verified from the RUNNING deployment, not the settings page:** the live bundle carries the new ref
-and the new publishable key, and **zero** occurrences of the old ref (positive control: 72 mentions
-of "supabase" in 871 KB across 13 chunks — the first attempt fetched 0 chunks because the path is
-`/_next/static/immutable/chunks/`, and its "old ref: 0" looked exactly like the real answer).
-**Verified on both databases, two-sided:** new project 1 session in 30 min, last sign-in 17:51:18;
-Sydney 0 new sessions, last sign-in the previous day.
-⚠️ **And the check that mattered most: users stayed 11 and profiles stayed 11.** Had
-`auth.identities` not come across intact, Google would have made a TWELFTH user and the parent's own
-children would have been invisible to them, with nothing erroring.
+## ⑤ 🧪 THE GATES, AND THE NINE REDS THAT PAID FOR THEM
+`accountDeletion.test.ts` counts **every reachable table before and after**, with the table list DERIVED from the FK graph — a table with no census clause throws rather than being skipped.
+⚠️ **The break that changed the design:** my per-account census counted by ownership column (`created_by = A`) and was **BLIND** to a stranded row. Whole-table counts against a second family are what binds — *"public.learners holds 3 rows; family B has 1. 2 row(s) survived, possibly with a nulled owner."* The census alone passed on that build.
+Others watched red: `error_events` cleanup removed · re-auth guard removed · guard reverted to `iat` · a new `learner_id` table added (*"is reachable from an account and this census has no clause for it"*) · `DRAFT = false` (kills **`next build`**, not just vitest) · the refund sentence quietly resolved · `[DATE]` put back after resolution · the date drifting between the .md and the page header.
+⚠️ **CI caught a defect in my own gate that local green could not:** it compared against `app-terms-of-service.md` while that file was **untracked** — green on one machine, ENOENT everywhere else. The document is committed now. *Local gates green is not the same claim as "this works."*
 
-## ▶ OPEN — what is left after the cutover
-1. 🔴 **`SUPABASE_SERVICE_ROLE_KEY` IS THE ONE THING STILL UNVERIFIED.** It is server-side, so it
-   is not in the bundle and no browser check can see it. It is read by `errorSink`, `/api/lead` and
-   **the Stripe webhook** — and `errorSink` swallows its own errors by design, so a wrong value there
-   is silent. Its first real proof is a webhook turning a payment into seats, or an `error_events`
-   row appearing on the new project. Do not record it as working until one of those is seen.
-2. 🔴 **The other ten accounts are still logged out** and have to sign in again (per-project JWT
-   keys). If any of them cannot, it is the Google config, not the data.
-3. ⚠️ **Sydney stays for a week as the rollback**, then delete it (~$10/mo back). Rolling back is the
-   same three env vars in reverse — but anything played on the new project after the flip would not
-   be in it, so after a day or so the rollback stops being free.
-4. ✅ DONE: Google redirect URI added (old kept), Google provider on the new project using the SAME
-   OAuth client, URL configuration copied, three Vercel env vars, redeploy, real Google sign-in.
-5. ✅ **BOTH PENDING MIGRATIONS APPLIED** to the new production (2026-09-03 ~17:58), and committed
-   FIRST (`c7c2a43`) so the ledger could not record a version whose file is not in the repo.
-   Before/after, measured on the catalog either side: `is_chapter_entitled` `sql` → **plpgsql**;
-   `entitled_chapters` **did not exist** → exists; `get_learner_bootstrap`'s definition now contains
-   `recheck_closed`, which is what proves the new BODY landed rather than a function of that name.
-   Grants on all three: `authenticated` + `service_role`, nothing for `anon`/`public`.
-   ⚠️ **NOTHING HAS BEEN EXECUTED.** That is a catalog reading, not a run: the MCP role is read-only
-   and not `authenticated`, so calling them returns `permission denied` (correct, per those grants).
-   `is_chapter_entitled` exercises itself — the `sessions` INSERT policy calls it, so the next
-   gameplay session is its test. **`entitled_chapters` has no caller at all** until the client code
-   in ⑧ lands, so it is written and never once run. Do not read "applied" as "working".
-   ⚠️ **And the `pg_stat_statements` after-number the morning block promised cannot exist yet** for
-   the same reason — an unexecuted function has no row there.
-6. ⚠️ **Ledger drift, +2 rows.** `apply_migration` stamps its OWN timestamp, so the two canonical
-   versions went in by an explicit insert in the same migration AND the MCP wrote
-   `20260903175820` / `20260903175833`, which have no file in the repo. Harmless — the DDL is
-   `create or replace` — and it is the same drift this repo already carries two rows of. Clean with
-   `supabase migration repair --status reverted 20260903175820 20260903175833`.
-7. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`, or a push to `main` migrates production unreviewed.
-8. ⏭️ `backup.yml` still unconfigured (managed backups make `BACKUP_PASSPHRASE` optional). The
-   morning block's uncommitted pile is now **the client half only** — `menu/page.tsx`, the three
-   repositories, `useAdaptive`, the voice files. The two migrations are committed and applied; the
-   code that calls `entitled_chapters` and reads the bootstrap's new keys is not, which is why ⑤
-   says that function has never run. Landing it is what turns /menu's six round trips into two.
-9. ⏭️ `supabase/config.toml` says `major_version = 17` now; `.gitignore` gained `supabase/.temp/`.
+## ⑥ 🌐 THE MARKETING SITE — MEASURED, WITH POSITIVE CONTROLS
+**radlor.com runs NO analytics and sets NO cookie of any kind**, not even strictly necessary. Four pages: 0 off-origin hosts, 0 `Set-Cookie` **headers** (checked at the header, since HttpOnly is invisible to `document.cookie`), 0 storage keys, no `/_vercel/insights`. ⚠️ Both instruments positive-controlled: the same `curl` grep found 3 `Set-Cookie` on google.com, and the same JS found `upload.wikimedia.org` and a 105-char cookie on Wikipedia. So the zeros are measurements.
+**The waitlist `service_role` finding is FIXED.** Verified against production, not the repo: `anon` holds **column-level INSERT on `email`, `age_band`, `source` only**, one INSERT policy, no SELECT/UPDATE/DELETE; live `/api/health` says `anon_key_configured: true`. Table is `id, email(citext unique), age_band, source, created_at` — **1 row, 2026-08-31**. ⚠️ **But `supabase/migrations/20260830000000_waitlist.sql` is the repo's only waitlist migration and it says RLS on with NO policies, `revoke all from anon`, and *"Do not add one"* — production has the policy and the grants, applied with no migration file.** The file now states the opposite of production and tells the next reader to delete what the live form depends on.
 
-> 🚀 **2026-09-03 (later) — PRO IS ON, THE REGION MOVE IS GO, AND THE MECHANISM IS A ONE-JOB WORKFLOW THAT DIFFS THE SAME QUERY ON BOTH DATABASES.** ⚠️ **ITEMS 1–5 OF ITS ▶ OPEN ARE SUPERSEDED BY THE ✅ BLOCK ABOVE — the workflow HAS since run and the copy is verified. Kept for the pre-flight measurements.** The block below was written BEFORE any of it ran: **NOTHING HAS RUN YET — it waits on two connection-string secrets and a push.** Pre-flight only: `migrate-region.yml` YAML parses · `security_posture.sql` validated on PG 17 against production · `verify-backup.sh` re-proven **1 positive + 5 negative, exit codes read** · new project verified empty on 17.6 · **NOTHING committed, NOTHING dispatched, NOTHING applied.** `tsc`/`npm test` not run (no TS touched).
+## ▶ OPEN
+1. 🔴 **§8's refund sentence is unwritten and LIVE on the page.** The only open marker that is not a lawyer question. One sentence from the founder closes it.
+2. 🔴 **UNANSWERED, ASKED TWICE: was radlor.com's Terms of Use actually reviewed by an attorney?** Another session committed `38588b7 terms: publish as live, reviewed terms — banner off, dated 6 September 2026`, claiming founder confirmation. **It is live now with the banner off and `[DATE]` resolved.** If the review happened, nothing to do. If it did not, unreviewed terms are presented as binding on a public site. Not touched either way — reverting a published legal document is as much the founder's call as publishing it was.
+3. 🔴 **Account deletion has never been executed.** The migration is applied (three-way probe: `delete_my_account` → 42501/401 *exists, anon refused*; a nonexistent name → PGRST202/404; `is_chapter_entitled` → 42501/401 as the control). ⚠️ **That is the NEGATIVE half only.** *"Nobody unauthorised can call it"* and *"nobody at all can call it"* are the same green — the M6 trap this repo already has a row for. The founder's throwaway-account test is what proves `authenticated` can execute it, and that the DEFINER owner may `delete from auth.users` at all (if not, the transaction rolls back and nothing is deleted — it fails safe).
+4. 🔴 **§11 has not been rewritten around what survives.** [src/core/accountDeletion.ts](src/core/accountDeletion.ts) is the one declaration, rendered into the page and asserted against the running delete: `billing_events` stripped of its owner, Stripe's own copy, and `diagnostic_leads` named as unreachable.
+5. ⏭️ **Stripe cancellation is not wired**, and must be before the first live purchase or a deleted account keeps being charged. Harmless today: zero subscriptions exist.
+6. ⏭️ **`migrate-prod` is inert** — no `production-db` environment, no `STAGING_PROJECT_REF`, no Supabase secrets — so `promote` ships client code while migrations wait. The client names that state (`PGRST202` → `not_deployed`) and tells the parent to email support instead of showing a shrug.
+7. ⏭️ Carried from the archived region-move block: **Sydney is still the rollback and costs ~$10/mo** (the window has long passed); **`SUPABASE_SERVICE_ROLE_KEY` has never once been exercised** on the new project; the **`/menu` 6→2 RPC client half is still uncommitted**; **`entitled_chapters` still has no caller**, so it has never run.
+8. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase · B12 Supabase Pro before any live key · **the app's Terms and Privacy Policy are both still DRAFT** · the free chapter set is a PROPOSAL · nine Dependabot PRs · Vercel Web Analytics off.
 
-## ① ✅ PRO — QUERIED, AND THE FIRST TWO THINGS I SAID ABOUT IT WERE WRONG
-`get_organization` → the **`Radlor`** org (`nwhbiwrglymeittzjvph`, which holds production) reads `plan: pro`; the personal org `MohammedRafiquekuwari` is still `free` — the plan string is per-org. Dashboard shows **seven daily physical backups, 27 Aug → 02 Sep**, so a restorable copy of the children's data now exists.
-⚠️ Two corrections, both mine: (a) I inferred "Pro since the 27th" from the backup dates — the invoice (`RSEBPT-00001`, $25, paid) is dated **today**; physical backups are taken on every project regardless of plan and Pro only unlocked *seeing* them. (b) I said a new project is "$0/mo, confirmed by API" — `get_cost` answered the wrong question. The Pro credit covers ONE Micro and production spends it; **each additional Micro is ~$9.81/mo** (`$0.01344/h`), charged in arrears. The founder's "$43.46 projected" is exactly $25 + three Micros − $10 credit.
+> 📊 **2026-09-05 — /admin SHIPPED, AND THE FOUR THINGS IT WAS ASKED TO MEASURE WERE ALL LYING. Then a privilege escalation caught one step before production, a funnel that was not a funnel, and the discovery that CI has never gated anything on this repo.** `tsc` 0 · **1794 passed, 1 skipped** · `next build` 0 · **fifteen commits, all pushed, CI green on `7772729`** · sw v162 → **v163** · four migrations applied to production and verified.
 
-## ② 🧭 THE DECISION: MIGRATE, NOT REPLICATE; AND THE MIGRATION IS THE REHEARSAL
-Read replica in `us-east-1` was priced from the docs (~+$20/mo: primary must go Micro→Small, replica inherits; fixes `GET` reads only; **all Auth and every write stay in Sydney**; async lag on a local-first reconcile path this repo has already been burned by) and **rejected** — eleven users is the cheapest a migration will ever be. **The same-region "Restore to new project (BETA)" clone was skipped**: the docs say it restores into the *same region* (data residency), so it is not the move, and a migration IS a restore into a fresh project — doing both is the same operation twice. Sydney stays live and untouched until two Vercel env vars change, and for a week after as rollback.
+## ① 🔎 THE INVENTORY CAME FIRST, AND FOUR PANELS COULD NOT HAVE BEEN HONEST
+Founder's order: inventory before UI. It paid for itself four times — [docs/data-inventory.md](docs/data-inventory.md) is the record.
+- **`sessions.started_at` was never a start time.** The RPC never supplied it, so it took the column default `now()` at INSERT while `completed_at` is a CLIENT stamp. Both marked the END: **49 of 49 rows had a NEGATIVE duration** (median −1s). A dashboard subtracting one from the other would have shown a confident plausible number for a quantity never recorded.
+- **`diagnostic_sessions` was written only at completion** — all 13 rows have `completed_at = started_at` exactly, so "how many start the check" had **no denominator** and could only ever return 100%.
+- **`auth_events` held ONE row against ≥18 real logins** in six weeks.
+- **No per-question record exists at all.** The complete prop corpus is `action, ageGroup, at, band, chapter, correct, mastered, wrong`.
+⚠️ **Every timestamp in the database is `timestamptz`** — timezone is purely presentation. The real trap is `client_ts` vs `created_at`: they diverge by up to **8.9 days**, and the skew is `created_at > client_ts` in **28 of 28** cases — pure late upload from the offline queue, never a fast clock. `client_ts` is the honest event time.
 
-## ③ 🧰 WHAT WAS BUILT (uncommitted)
-- **`.github/workflows/migrate-region.yml`** — ONE job, **no artifact** (the repo is public; a dump with child data must never be uploaded). Refuses if `new_ref == PROD_PROJECT_REF`, if `NEW_DB_URL` contains the prod ref, or if the target has any public table. Dumps Sydney read-only (`schema` · `data --use-copy` · `auth -x auth.schema_migrations` · `supabase_migrations` ledger), asserts the `COPY auth.users` and ledger blocks are present (the CLI treats both schemas as managed and MAY silently skip them), restores in §4's order — **default privileges revoked FIRST** (or V12/V19 silently reopen with every policy reading correct) → 5 extensions → schema → ledger → auth → data, the last three under `session_replication_role = replica` — re-creates the **4** cron jobs, then runs `security_posture.sql` on BOTH databases and **diffs the output**, then the RLS regression suite on the new one.
-  ⚠️ **No access token needed**: `supabase db dump --db-url …` was measured to fail on *Docker*, not auth — it bypasses the platform. Docker IS still required on CLI 2.116.0 (measured), which is why this runs on `ubuntu-latest` and not a Mac. Two secrets total: `OLD_DB_URL`, `NEW_DB_URL`, both **Session pooler, port 5432** (runners have no IPv6; the direct host will not connect).
-  ⚠️ Three faults found reviewing my own first draft, all fixed and all confirmed necessary by probing the new project: `auth.schema_migrations` already has 77 rows there (duplicate-key red if copied); the `supabase_migrations` schema does not exist there (would have failed the ledger restore; without the ledger the next `db push` replays all 77 files); and the fingerprint excluded `sessions`/`learner_events`, which grow on their own — a strict diff on them turns a correct restore red if a child is playing.
-- **`supabase/tests/security_posture.sql`** — `docs/security.md`'s four drift queries as a runnable file (they had been prose for six weeks, which is how the baseline went stale) plus a stable fingerprint. Run on PG 17 against production: valid.
-- **`supabase/config.toml`** `major_version` 15 → **17** (production runs 17; the doc had flagged it).
-- **`docs/supabase-region-migration.md`** — STATUS DEFERRED → **GO**; §0 re-measured; §1b, §4①, §5, §6 corrected (below).
-- **`docs/backup-restore-runbook.md`** — the $0 claim corrected; the one-click clone path recorded with its same-region caveat; the positive twin added (§④).
-- `.gitignore` +`supabase/.temp/` (the CLI wrote it during a `--dry-run`).
+## ② 🚨 A PRIVILEGE ESCALATION, CAUGHT ONE STEP BEFORE PRODUCTION — FOUNDER'S CATCH
+A draft of the gate added `'admin'` to the `user_role` enum and had `admin_assert()` read `profiles.role`. Reproduced against production's verbatim policy and grants:
 
-## ④ 🔬 WHAT THE PRE-FLIGHT CORRECTED IN THE DOCS — every 2026-08-19 number was stale
-| doc said | measured 2026-09-03 |
-|---|---|
-| 2 cron jobs | **4** — `prune-diagnostic-items` (03:22) and `prune-diagnostic-leads` (03:32) were added since |
-| the purge job has `and event <> 'daily_complete'` | **production's job does NOT** — the workflow copies what runs, not what the doc remembered |
-| 5 of 8 users on Google | **7 of 11** (12 identities: 7 google, 5 email) — §5 is now the highest-risk step |
-| 8 users · 17 learners · 20 tables · 17 functions | **11 · 19 · 24 · 25**, 35 policies |
-| ledger 66 files / 65 rows, 62+59 mismatched | **77 / 77, 75 match.** `20260629023502` and `20260702113253` applied with no file; `20260903100000/100100` are files not yet applied. Conclusion unchanged: dump the real schema |
-| `verify-backup.sh` "3 controls, 3 red" | **three NEGATIVE controls and no positive twin** — a script that refuses everything reads identically. Re-run with exit codes: valid artifact → **0**; unencrypted / wrong passphrase / no-`COPY` / garbage / unset passphrase → **1**. Now it discriminates |
+    policy[ALL] "profiles: own row"  USING auth.uid()=id  WITH CHECK auth.uid()=id
+    ACL: authenticated = arwdDxtm
+    update public.profiles set role='admin' where id=auth.uid();   -> ACCEPTED
 
-## ⑤ 🆕 THE TARGET PROJECT — created by the founder in the dashboard (so the real price was on screen)
-**`Radlor_app`** · ref **`wrnjqjhrbnqxornmfisf`** · `us-east-1` (same region as Vercel's `iad1`) · Micro · PG **17.6.1.166** · `ACTIVE_HEALTHY` · **0 public tables** · `pg_cron` available-not-installed · MCP can reach it. `Interactive_learn` (`qaymxunzlarwusogwyak`) is untouched.
+**Every signed-in parent could have granted themselves the dashboard.** ⚠️ **The `with check` constrains WHICH ROW, never WHICH COLUMN** — and the policy is not a bug: `setMyRole()` exists on purpose for the Teacher/Parent picker. **It is a FEATURE that stops being safe the moment a privileged value joins the same column**, which is why reviewing the policy alone would never have found it.
+Fixed structurally: `admin_users` is its own table, **RLS on with ZERO policies** (no policy means no row is readable or writable — the absence IS the mechanism), all privileges revoked from client roles, and the migration alters **no enum**, so there is nothing to escalate TO. Verified on prod: `policies=0`, `ACL={postgres,service_role}`, enum still `(parent,learner,teacher)`.
+⚠️ **The sweep that follows it**: everything `is_chapter_entitled` trusts has **0 client write policies**. The one live example of the same shape is `profiles.is_internal` — a user can hide their own account from metrics. Recorded, not fixed; it grants nothing.
 
-## ⑥ 💸 BILLING, EXPLAINED ONCE SO IT IS NOT RE-DERIVED
-Three Micros now (`Interactive_learn`, `radlor-site`, `Radlor_app`) → ~$19/mo over the $25 plan. Deleting Sydney a week after cutover → ~$10. **`radlor-site` is $10/mo for a waitlist form**; project transfer to the free personal org is self-serve (Settings → General → Transfer; ref/URL/keys unchanged; 1–2 min downtime paid→free) — ⚠️ but on free it **pauses after 7 quiet days, and `/api/waitlist` answers 303 either way**, so a paused DB would look healthy while every signup was lost. Founder's call; I leaned keep-it. Spend cap is ON, so the failure mode above quota is read-only, not a bill.
+## ③ ⚠️⚠️ THE FUNNEL WAS NOT A FUNNEL, AND A HAND-COMPUTED FIXTURE COULD NOT SEE IT
+Its four steps were **independent predicates**, not nested, so a later step could exceed an earlier one. It did: flagging two internal accounts took production to **9 → 6 → 3 → 4**. Arithmetically impossible, and every "lost here" figure was wrong.
+⚠️ **IT SURVIVED THE HAND-COMPUTED FIXTURE — because whoever computed the expected values by hand used the SAME wrong definition the code did.** Both sides inherited the error, so the test could only confirm it. It then survived two more populations by coincidence (11→7→5→5, 10→6→4→4 are both monotonic) and was exposed by an unrelated change.
+**The patch for that blind spot is invariants**: a value test says *this input gives that output*; an invariant says *no input may give an output of this shape*. [src/features/admin/invariants.ts](src/features/admin/invariants.ts) holds them once and runs in **both the tests and the browser** — the bug was on screen and nobody was looking. A violating payload now renders a banner naming the invariant and reports server-side.
+⚠️ **Two proposed invariants were FALSE and the fix was the code, not the assertion:** `finished <= started` and `rate ∈ [0,1]`. `chapter_open` lives in `learner_events` (**purged at 90 days**); `sessions` are kept for ever, so a completion whose open has aged out gives a rate above 100%. None in production today **only because the oldest event is 78 days old — the first purge is 2026-09-27.** `started` is now OPENED **OR** COMPLETED, true by construction.
 
-## ▶ OPEN — ⚠️ **1–5 SUPERSEDED 2026-09-03 evening: the secrets are set, the push happened, the workflow ran green. Read the ✅ block's ▶ OPEN instead.**
-1. ✅ **DONE — Founder: two secrets, own terminal** — `gh secret set OLD_DB_URL` (Interactive_learn → Connect → Session pooler) and `NEW_DB_URL` (Radlor_app, same). Not through chat.
-2. 🔴 **Founder: yes to a push.** `workflow_dispatch` needs the file on a ref. Plan: branch `region-migration` with ONLY this session's five files, then `gh workflow run migrate-region.yml --ref region-migration -f new_ref=wrnjqjhrbnqxornmfisf`. **Expect the first run red** — most likely the `supabase_migrations` schema dump (the CLI may refuse a managed schema → fallback is `supabase migration repair --status applied` per version) or an extension line. That is the rehearsal.
-3. 🔴 **Founder: the Google OAuth Editor check** — [console.cloud.google.com/apis/credentials?project=12513320995](https://console.cloud.google.com/apis/credentials?project=12513320995): can `admin@radlor.com` (Editor) save a redirect URI? If not, get Owner **before** cutover. Not blocking the dispatch; blocking §5.
-4. After green: apply `20260903100000` + `20260903100100` to **Radlor_app** (`supabase db push` — the ledger rides across, so only those two apply), then read `pg_stat_statements` there for the after-number ④ of the morning block promised.
-5. Cutover (§5 ADD the redirect URI, §4③ auth config on the new project, §7 two Vercel env vars, a real Google sign-in, `auth_logs`) — all founder-only. Then a week, then delete Sydney.
-6. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`; `SUPABASE_ACCESS_TOKEN` + `PROD_DB_PASSWORD` are `deploy.yml`'s, not the migration's — whenever.
-7. ⏭️ `backup.yml` kept, founder's call; still unconfigured. With managed backups real, `BACKUP_PASSPHRASE` is optional.
-8. ⏭️ Last session's uncommitted pile (③④⑤ of the morning block — `menu/page.tsx`, the RPC, the two migrations) is **still uncommitted and still untouched**; it lands on whichever project is production, i.e. Radlor_app after ④.
+## ④ 🚦 CI HAS NEVER GATED ANYTHING ON THIS REPO
+`ci / rls-tests` failed on **five consecutive commits** and nobody noticed. Measured: **no branch protection, no required status check, no workflow reading a CI result** — and Vercel builds on push independently, so **all five red commits reached production READY**. A red CI stopped nothing and told nobody.
+Fixed with a mechanism, not a resolution: Vercel's Production Branch is **`release`**, and `deploy.yml`'s `promote` job (`needs: ci`) is the only thing that moves it. `red-main.yml` covers **three** cases and names which — CI red, **promote red** (working code silently NOT live, the mirror defect), and **drift** (main >2 commits ahead, the one that hides). All four paths driven by hand before being trusted; the first version of the notifier **could not have fired at all** (`gh` needs `-R` with no checkout), and the drift check's `$(cmd || echo SENTINEL)` was broken because **`gh api` prints its errors to stdout**.
 
-> 🌏 **2026-09-03 — WHERE MILO BREAKS UNDER LOAD, STEP 1: MEASURED WITHOUT LOAD. THE HEADLINE IS NOT A QUERY — THE DATABASE IS IN SYDNEY AND EVERY USER IS IN THE US — AND THE THING THAT HAS TO HAPPEN BEFORE THE MOVE IS A BACKUP, BECAUSE THE NIGHTLY ONE HAD NEVER RUN.** `tsc` 0 · **1704 passed, 1 skipped by design** · `next build` 0 · gate `menuRoundTrips` **12/12, 3 mutations planted, 3 caught** · both new migrations driven on PG 17 (PGlite), **3 SQL mutations planted, 3 caught** · `scripts/verify-backup.sh` **3 controls, 3 red** · **NOTHING committed, NOTHING applied, NOT deployed** — founder's order is backup → restore rehearsal → region move, and the move waits for his Pro decision.
+## ⑤ 🧯 THE OTHER SESSION'S WORK WAS DESTROYED AND RECOVERED
+Two sessions ran in this repo at once. The other ran `scripts/break-check.sh`, which parks the tree with `git stash --include-untracked` — my uncommitted migration, four pages, a 302-line test and a runbook were swept into a stash and dropped. Recovered from `git fsck --unreachable`, anchored as pushed tags `recovered/menu-rpc-work` and `recovered/admin-dashboard`. ⚠️ **A header note describing this hazard had been written into that file the same morning and the work was destroyed that afternoon.** Written-down care is not a mechanism. `break-check.sh` now runs the break in a **`git worktree`** — the tree you stand in is never touched, so there is no stash to lose.
+⚠️ **`src/__tests__/menuRoundTrips.test.ts` is the one unrecovered loss.** Rewrite it with the `/menu` work, not before — see [docs/recovered-menu-rpc-work.patch](docs/recovered-menu-rpc-work.patch).
 
-## ① 🌏 THE REGION, READ OFF THE DASHBOARD, NOT INFERRED
-Settings → General → *Project region: Oceania (Sydney) · ap-southeast-2*. Every edge-log request in
-24 h came from the US (EWR); the fastest origin time was **212 ms**, the average **344 ms**, on
-queries that execute in 0.1–9 ms. The other free slot is `radlor-site` (us-west-2, the waitlist).
-**A region cannot be changed in place** (Supabase docs): it is a CLI dump → new project → psql
-restore. What that involves and what breaks is in the 2026-09-03 report; the short form: ~2–3 h of
-work, Docker + Supabase CLI (neither on this machine), **all users re-login** (per-project JWT keys),
-Google OAuth callback re-registered, 4 cron jobs re-created, both Vercel projects' env repointed,
-the MCP token re-issued, and **the two-project cap blocks creating the third** — pause `radlor-site`
-for the hour, or go Pro.
+## ⑥ 📈 WHAT /admin ACTUALLY SAYS TODAY
+Aggregate-only by construction (`group by` + aggregates, so a per-child row is not expressible), read-only, no per-user view, no export. Suppression happens **in SQL** so a suppressed number never reaches the browser. From the deployed definitions, with both founder accounts excluded:
+**funnel 9 → 6 → 3 → 3** (monotonic), 1 account returned without ever finishing · mean **1.48** chapters/learner, **median 0** · 10 of 21 learners ever completed one.
+⚠️ **The completions question is answered: it was onboarding, not failure.** 4 learners created in 7 days by one account, opening chapters and finishing none. Ruled out "failing to record" with a clean discriminator worth keeping — **`practice_complete` fires client-side BEFORE the network call while the `sessions` row is written BY it**, so a completion that happened but failed to sync leaves the event with no row. 4 and 4, newest of each at the identical timestamp.
 
-## ② 🔴 THE NIGHTLY BACKUP HAS NEVER BACKED ANYTHING UP — GREEN, 30 DAYS OF RUNS, ZERO DUMPS
-`backup.yml` is *"inert until configured"*: `PROD_PROJECT_REF` and `BACKUP_PASSPHRASE` were never
-set as GitHub variables/secrets, so every run prints a `::warning::` and exits 0 with the dump step
-**skipped**. `gh run list` shows success × 30; `gh run view` shows `Dump schema + data: skipped`.
-And the dashboard says *"Free Plan does not include project backups"*. **So there is no recoverable
-copy of production anywhere**, and the region move needs one as its first step. Row 1 of the
-CLAUDE.md table (a skip path) recurring by design; written down, not fixed — the secrets are yours.
+## ▶ OPEN
+1. 🔴 **THE `answer` EVENT AWAITS THE FOUNDER'S APPROVAL — do not wire it first.** Proposed shape: `{ chapter, item, correct, tier, ordinal }`, five keys, no free text, nothing identifying, riding the existing offline queue. ⚠️ **`item` is the hard part, not the shape**: most chapters GENERATE questions, so a stable id must come from the generator's KIND (`op.subtract`), never the drawn numbers. And it is a ~10× rise in event rows, inside the 90-day purge.
+2. 🔴 **Two sign-ins (one Google, one email) then read `auth_events`.** Fix #3 shipped: one global `onAuthStateChange` listener replaces three scattered call sites, and a failed write now reaches the error sink. ⚠️ **Both causes had to go** — the swallow AND the OAuth callback's early return, which usually won because supabase-js processes the hash during client construction.
+3. 🔴 **Play one chapter** — the first real session duration. `started_at` is applied; nothing has been completed since.
+4. 🔴 **Founder-only:** `ADMIN_MIN_COHORT=1` in Vercel (it defaults to 5, which suppresses nearly everything — the threshold is now always shown so it cannot read as broken), Vercel Production Branch → `release` (**the gate is inert until this**), and the rest of the internal-account list.
+5. ⏭️ **The rollup (option A)** — id-free, **margins not the cross-product**, suppression at WRITE time. Design in data-inventory.md §3a. The purge cliff is **2026-09-27**, when 520 events (31% of all history) go in one night.
+6. ⏭️ `profiles.is_internal` is client-writable — same shape as the escalation, grants nothing.
+7. ⏭️ **Storage: no exposure.** Supabase Storage is **empty** (0 buckets, 0 objects). The 4,011 voice clips / 96 MB are in **git**, present in the pushed tree and served by Vercel — three copies, better protected than the database.
+8. ⏭️ Ledger repaired: the four filenames are recorded and the synthetic rows are gone. `apply_migration` stamps its own timestamps, so this recurs — one tidy-up row may remain, harmless (push applies files MISSING from the ledger; an extra row is ignored).
+9. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase · B12 Supabase Pro before any live key · **`DRAFT = true` — the privacy policy is still a placeholder, and it publishes a 90-day retention promise the rollup must not contradict** · the free chapter set is a PROPOSAL · **nine Dependabot PRs open** · Vercel Web Analytics off.
+10. ⏭️ `backup.yml` still reports success while its dump step is skipped — filed, not fixed. Supabase Pro daily backups are real, so it is not a data-loss risk; it is a green tick that means nothing.
 
-## ③ 📉 THE PARENT DASHBOARD N+1 → ONE RPC
-`entitled_chapters(learner, chapters[])` — one round trip, calls `is_chapter_entitled` per chapter
-server-side so the ONE definition stays one. `entitledChapters()` uses it; a failed call is `null`
-for every chapter (not found out ≠ refused). RLS suite gained **B13h** (seated + unseated agreement).
 
-## ④ ⏱️ `is_chapter_entitled` PLANNING — MEASURED, AND MY FIRST NUMBER WAS WRONG
-I reported *"11 ms to plan, 0.13 ms to execute"*. The 11 ms was MY reader connection planning the
-hand-inlined body cold (568 catalog buffers). Production's own figure for the RPC is **2.6 ms mean,
-0.5 ms min**. The mechanism is real, though: on PG 17 a SQL-language function's body is re-planned
-on every call and a SECURITY DEFINER one cannot be inlined. In-database on PG 17.5, 2000 calls × 5:
-**SQL 190 µs · plpgsql 34 µs · plpgsql with `discard plans` forced per call 218 µs** — the whole gap
-IS the plan cache. Migration `20260903100000` makes it plpgsql, same body. **The after-number comes
-from `extensions.pg_stat_statements` once applied** — nothing here can produce it.
+> 🗣️ **2026-09-04/05 — NOTHING MILO SAYS IS CUT OFF BY THE NEXT THING, IN ANY BAND — AND THE AUDIT THAT PROVED IT WAS ONLY HALF DONE THE FIRST TIME.** `tsc` 0 · **1743 passed, 1 skipped** · `next build` 0 · five commits pushed: `0dee8a2` `95db59e` `70ec4ee` `191918e` `2e43ffd` · sw v160 → **v162**.
+>
+> Founder, across every band: *"voice aane lagti hai aur next chiz aa jaati hai toh woh cut ho jaati
+> hai"*. Two mechanisms, each correct-looking in isolation. **`speak()` SUPERSEDES** — right for a
+> tap, wrong for every round boundary, where a verdict, praise and the next question land on
+> 1300–1800ms timers shorter than any of them takes to say. And **`speakAfterCurrent` could not
+> work**: it waited on `_speaking`, which only turns true at the clip's `onStart` — one async
+> manifest lookup later — so a round advance calling it in the SAME TICK read "nothing is playing"
+> about a line already on its way. It only ever worked on a device with **no clips**, which is why
+> every drive here showed it working. Its queue was also one-deep: one callback per waiter meant the
+> first line's end released all of them and the last to wake cancelled the rest.
+>
+> Engine (`useMiloSpeaker.ts`): a real FIFO waiting on IN-FLIGHT, **bounded to two** (a queue is a
+> way of running late); `afterSpeech(cb, ceilingMs)`; and `speakPaced`, whose visuals keep their OWN
+> timer (a walkthrough hung off `onstart` freezes for ever — shipped once) while each step ends at the
+> LATER of its dwell and Milo finishing. The price written down for the cut was never acceptable.
+> Full rule in chapter-craft.md §3.
+>
+> ⚠️⚠️ **THE FIRST AUDIT WAS (b), NOT (a) — TRACED FROM THE SHELLS OUTWARD, NOT ENUMERATED — AND I
+> REPORTED IT AS COVERAGE.** Founder caught the sentence. The real enumeration found **141 direct
+> emission sites in 35 files plus 23 more reached only through local wrappers** (`say()`, `tell()`),
+> of which **35 fired a cancelling verb from a deferred path**. It found two chapters still broken
+> while the report said fixed: **BuildingBlocks and BlockYard speak the ROUND'S OWN QUESTION from a
+> timer 400ms in**, through `say()`, invisible to any `speak(` grep. Also settled: **the 72 chapter
+> ids are not 72 speech surfaces** — `teen/games/*.tsx` build `say:` STRINGS and never call the
+> speech layer, so GameShell is the sole emitter for every chapter it backs. That assumption is what
+> made the first audit feel complete.
+>
+> ✅ **Gated, not remembered: `src/__tests__/voiceBoundaryVerb.test.ts`** fails if any file under the
+> chapter directories fires a cancelling verb from a deferred path (a `useEffect` body, or a
+> scheduler callback) unless it is in an ALLOW list **with a written reason**. Asserted EXACTLY, so a
+> new chapter cannot reintroduce it and a stale exception cannot sit there being a rule about
+> nothing. It counts local wrappers and carries a **positive control**, because a finder that has
+> stopped finding reports every chapter clean. Eleven deferred sites remain, each reasoned.
+>
+> 🔧 **`scripts/break-check.sh` ported from `video_reviewer`** after a stray `git checkout` reverted a
+> fix twice in one session. ⚠️ **It exists in TWO repos with different runners now** (playwright there,
+> vitest here) — a fix to one will not reach the other; both CLAUDE.mds say so. Its live-break suite
+> paid for itself at once: the exit-5 case came back as 4, because **vitest reports a broken SETUP file
+> byte-identically to a broken SOURCE file**, so the reader stopped claiming to tell them apart.
+>
+> 🎙️ **THE AUDIO ACCOUNTING THE FOUNDER ASKED FOR, measured against the live manifest — do not re-derive:**
+>
+> | | corpus | rendered | left | note |
+> |---|---|---|---|---|
+> | 3–5 | 1,411 | 927 | **484** (17k chars) | ⭐ **a REAL total** — saturated at 12k draws (1.00×) |
+> | 6–8 | 4,006 | 57 | **3,949** (170k chars) | a floor; corpus grows 2.80× at 12k |
+> | 9–11 | 7,904 | 2,075 | **5,829** (397k chars) | a floor; grows 2.02× |
+>
+> **Static is DONE** (210/210 Stevie + 55/55 Teddy + 56/56 6–8 walkthrough + 69/69 9–11 teach + 374/374
+> 9–11 miss). ⚠️ But the static corpus is built from CHAPTER surfaces only, so **the app's own screens
+> were never counted**: 76 lines / 2,148 chars at **0 rendered** (72 × `"Let's play {chapter}!"`, two
+> celebration lines, shop, voice picker), and that is a FLOOR — shop item lines, world labels and
+> MasteryState headlines are still uncounted. Needed in BOTH voices (menu obeys `BAND_VOICE`), so
+> ~152 clips, ~2k–4k credits. They are not silent today: `clipOnly` is only flipped by GameShell, so
+> outside a chapter a miss falls back to browser speech.
+>
+> **Explanation: walkthrough yes, re-teach no.** `teach` 126/126 (3–5), 69/69 (9–11), 522/535 (12–18 —
+> the 13 missing are all the guided coach line, ~1k credits). `reteach` **93/577 · 26/4,289 ·
+> 82/10,912** — ~15,577 lines, ~925k chars, and that is the FLOOR.
+>
+> 🛠️ **`_voiceCorpus68.test.ts` never counted the explanation at all** — it drove `beat.say` and
+> stopped, so 6–8 read as complete when it had never been measured. Now RENDERS `beat.Reteach` with a
+> stubbed speaker: no app change, no template copy to drift. ⚠️ The obvious fix (extract each
+> chapter's lines into a pure function) was built for four chapters and **thrown away** — the
+> component pairs `lines[i]` with `steps[i]`, so splitting them lets words and visuals drift apart
+> silently in twelve chapters to make a reporting script easier. First run: three chapters yielded
+> NOTHING (`ResizeObserver is not defined`; jsdom has none, FitBox/FitSlot need one) and a `catch {}`
+> made that identical to "says nothing" — **a quarter of the band missing from a run reporting
+> success**. A hole is now a RED.
+>
+> ⚠️⚠️ **TWO SESSIONS RAN IN THIS ONE WORKING TREE AND ONE `git reset --hard` DESTROYED THE OTHER'S
+> UNCOMMITTED WORK.** Recovered via `git fsck --unreachable` (my own `git add` had written the blobs);
+> `break-check.sh` was then MERGED rather than overwritten, since the other session had edited it too.
+> **Use `git worktree` for the second session.** Watch for `src/__tests__/adminMetrics.test.ts` —
+> untracked and missing its vitest imports, so it reds the suite in the working tree while a clean
+> checkout of `main` is green.
+>
+> ▶ **OPEN from this work:** ① **nothing has been verified BY EAR** — every check is a mock or a
+> network request. ② 6–8's `scored` half still reaches only 9 of 12 chapters (four return an empty
+> `prompt`); the re-teach half reaches all twelve. ③ the 76+ app-chrome lines are unrendered and
+> uncounted past that floor. ④ `OrderDesk`/`LevelRun` still have no clips and are in no corpus.
 
-## ⑤ 🍽️ `/menu` 6 → 2
-The check-up trio (`auth/v1/user` + 2 selects) and the plan select ride inside
-`get_learner_bootstrap` (migration `20260903100100`); the 6-week rule is one pure function
-`checkupStatus` shared with the parent dashboard; `getCheckupStatus` reads the local session instead
-of GoTrue. ⚠️ Found while doing it: the *"offline half"* the pointer comment promised did not exist —
-the local-stars derivation sat in the catch of a fetch that ran only after the bootstrap succeeded.
-It now runs on the real no-server-data paths (offline · no session · thrown bootstrap), and the
-existing gate that names `applyPlan(localPlayed(), [])` guards a branch that is finally reachable.
-
-## ⑥ 💾 THE BACKUP, STEP 1 — AS FAR AS IT GOES WITHOUT THE FOUNDER'S CREDENTIALS
-The repo held **zero** secrets and **zero** variables, so all FOUR inputs `backup.yml` names were
-missing, not three. What exists now: `PROD_PROJECT_REF` is set (a repo variable, 2026-09-03);
-[docs/backup-restore-runbook.md](docs/backup-restore-runbook.md) carries the exact `gh secret set`
-lines for `SUPABASE_ACCESS_TOKEN`, `PROD_DB_PASSWORD` and a generated `BACKUP_PASSPHRASE` (**his to
-type — credentials never go through a chat**); `scripts/verify-backup.sh` verifies an artifact FROM
-ITS CONTENTS (sizes, table/function/policy counts, rows per `COPY` block, the `counting` row) and
-was watched going red on an unencrypted tarball, a wrong passphrase and a no-`COPY` dump; the
-runbook holds production's row-count fingerprint of 2026-09-02 to compare against (72 chapters ·
-19 learners · 49 sessions · 1,631 events · 11 auth users …).
-⚠️ **Setting `PROD_PROJECT_REF` also arms `deploy.yml`'s `migrate-prod`** the moment the two
-Supabase secrets exist. It stays skipped only because `migrate-staging` is skipped
-(`STAGING_PROJECT_REF` unset). **Create the `production-db` environment WITH its required-reviewer
-rule before anyone sets a staging ref**, or a push to `main` migrates production unreviewed.
-⚠️ Expect the dump to be missing the 4 `pg_cron` jobs (extension schema, excluded by `db dump`);
-whether `auth.users` rides in `data.sql` is what the script's row table settles — the CLI reference
-and the restore guide say different things. No custom login roles exist, so no `roles.sql` needed.
-
-## ⑦ ❓ A REQUEST THAT DOES NOT BELONG TO THIS REPO
-The founder's last message asked for a combobox on an issue form's `area`/`type` fields
-(`/tester`, "the sheet's Issue Category", `check-tester-cannot-read-admin.mjs`, an admin with 13
-rows). **None of that exists in `milo-story-mode` or `../radlor-site`** — a wider search was
-interrupted before it ran. Most likely the video-reviewer repo CLAUDE.md's table cites. Not done;
-ask which repo before touching anything.
-
-## ▶ OPEN — in the founder's order, and each one stops before the next
-⚠️ **Items 1–4 SUPERSEDED the same afternoon — see the 🚀 block above.** Pro landed, managed backups exist, the clone was skipped as redundant, and the region move is GO with its own workflow. Kept for the record.
-1. 🔴 **BACKUP, MADE REAL.** He sets the three secrets (runbook §1); then trigger `backup.yml`,
-   download the artifact, run `scripts/verify-backup.sh`, compare to the fingerprint (runbook §2).
-   Green is not the evidence — it has been green thirty times; the artifact is.
-2. 🔴 **RESTORE IT ONCE, somewhere disposable** (runbook §3). Only a real Supabase project can find
-   a missing role/extension/cron job — which is the Pro decision (third project = staging too).
-   Report what was missing; something usually is.
-3. 🔴 **THE REGION MOVE — not before Rafi says.** Sydney → a US region; the checklist is in ①.
-   Nothing in ③–⑤ deploys to Sydney first: apply `20260903100000` then `20260903100100` in whichever
-   project is going to be production, then read `pg_stat_statements` for the `is_chapter_entitled`
-   RPC and the edge logs for `/menu` (expect 2 requests: `learner_events` + `get_learner_bootstrap`).
-   The client fails open if it lands first (batch RPC 404 → all `null`).
-4. 🎯 **Load-test step 2** waits for all three, on the staging project — the founder refused
-   `loadtest-` rows in production on the strength of "someone will delete them".
-5. ⏭️ `saveLearnerState` still calls `auth.getUser()` (conditional, rare) with the same "forces
-   hydration" comment — same shape as ⑤, not touched.
-6. ⏭️ Lint on `menu/page.tsx` reports two `set-state-in-effect` errors — **pre-existing on `main`**,
-   identical before and after this session's edits.
-7. 🎙️ Voice clips — superseded by the 🎙️ 2026-09-03/04 block above (17–18 done on Stevie; 3–5 on Teddy, resume after 2026-09-06).
-
-_Older sessions (2026-06-15 → **2026-09-04**, including 🎙️ **the first voice-rendering session** (17–18 got its 161 clips, 3–5 got Teddy Twinkle and 872 of 1,411 lines), moved 2026-09-04 the same day it was superseded — ⚠️ everything it left uncommitted was committed and deployed in the 🔊 block above, and its still-live items (nobody has heard it on a device, OrderDesk/LevelRun have no clips, the MCP key) are carried there; including 🌙 **the nightly-E2E day** (12 runs red since the day it was created, the AR escape hatch half off a 640×320 screen, and the CI-only text-metric difference), moved 2026-09-04 — ⚠️ its still-live items (the scheduled-run green, the hull silence, the `counting` flake, and every launch blocker in its ▶ OPEN) are carried in the 🔊 2026-09-04 block above; including 🗒️ **the second tester pass** (Great job!, the hull silence diary, the typed directions line in all 72 chapters), moved 2026-09-04 — ⚠️ its still-live items (the hull silence, the `counting` flake) are carried in the 🌙 block's ▶ OPEN, and its "PR #69 is open" line was already stale when archived (merged 2026-08-31 as `9a4bcc3`); including 📏🎓 **the student-review days** (the run resumes, Ready everywhere, praise to 6–8, the number-tag overhang) and 🐇 **the line behind mother** (even spacing for one species, and the tautology guarding the approved picture), all moved 2026-09-03 — ⚠️ their still-live items (recorded clips for 3–11, the `counting` flake in `ready-bar.spec.ts`) are already carried in the 🌙 block's ▶ OPEN and the 🎙️ 2026-09-03/04 block; including 🔒 **Stage 3** (the chapter gate and the screens — a lock that names what is behind it, and a paywall built inert but tested refusing), moved 2026-08-31 — ⚠️ its still-live items (the deferred watched purchase, B12, `DRAFT = true`, the free-set pick, the nine Dependabot PRs, Vercel Analytics, the prose drift) were lifted into the 🌙 block's ▶ OPEN rather than archived with it; including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-09-05**, including 🔊 **the voice-on-the-CDN day** (three silent defects in one chain, the first honest cost accounting, and the stitcher that failed its listening test) and 🧪 **the Chatterbox evaluation** (Resemble AI TTS in a scratch venv, Nano off the table, the GPU-cost argument), both moved 2026-09-09 — ⚠️ 🔊's live ▶ OPEN was lifted into the 🎙️ 2026-09-07→09 block (the stitcher is now moot — whole-line via GPU replaced it) and 🧪 is superseded by that block; including ✅ **the region-move CUTOVER day** (eleven dispatches, ten red, every red a real defect in the workflow — and the auth trigger a schema dump does not carry), moved 2026-09-06 — ⚠️ its still-live items (the Sydney rollback, `SUPABASE_SERVICE_ROLE_KEY` never exercised, the missing `production-db` environment, the uncommitted /menu RPC half, `entitled_chapters` with no caller) are carried in the ⚖️ 2026-09-06 block's ▶ OPEN item 7; including 🚀 **the Pro / region-move GO day** (the one-job workflow that diffs the same query on both databases) and 🌏 **the load-measurement day** (the database was in Sydney while every user was in the US, and the nightly backup had never run), both moved 2026-09-05 — ⚠️ their still-live items are carried in the ✅ region-move block above and in the 📊 2026-09-05 block's ▶ OPEN (`backup.yml` green while skipping, the `production-db` environment, and the two Supabase secrets); including 🎙️ **the first voice-rendering session** (17–18 got its 161 clips, 3–5 got Teddy Twinkle and 872 of 1,411 lines), moved 2026-09-04 the same day it was superseded — ⚠️ everything it left uncommitted was committed and deployed in the 🔊 block above, and its still-live items (nobody has heard it on a device, OrderDesk/LevelRun have no clips, the MCP key) are carried there; including 🌙 **the nightly-E2E day** (12 runs red since the day it was created, the AR escape hatch half off a 640×320 screen, and the CI-only text-metric difference), moved 2026-09-04 — ⚠️ its still-live items (the scheduled-run green, the hull silence, the `counting` flake, and every launch blocker in its ▶ OPEN) are carried in the 🔊 2026-09-04 block above; including 🗒️ **the second tester pass** (Great job!, the hull silence diary, the typed directions line in all 72 chapters), moved 2026-09-04 — ⚠️ its still-live items (the hull silence, the `counting` flake) are carried in the 🌙 block's ▶ OPEN, and its "PR #69 is open" line was already stale when archived (merged 2026-08-31 as `9a4bcc3`); including 📏🎓 **the student-review days** (the run resumes, Ready everywhere, praise to 6–8, the number-tag overhang) and 🐇 **the line behind mother** (even spacing for one species, and the tautology guarding the approved picture), all moved 2026-09-03 — ⚠️ their still-live items (recorded clips for 3–11, the `counting` flake in `ready-bar.spec.ts`) are already carried in the 🌙 block's ▶ OPEN and the 🎙️ 2026-09-03/04 block; including 🔒 **Stage 3** (the chapter gate and the screens — a lock that names what is behind it, and a paywall built inert but tested refusing), moved 2026-08-31 — ⚠️ its still-live items (the deferred watched purchase, B12, `DRAFT = true`, the free-set pick, the nine Dependabot PRs, Vercel Analytics, the prose drift) were lifted into the 🌙 block's ▶ OPEN rather than archived with it; including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._

@@ -36,6 +36,11 @@ export const resumeKey = (learnerId: string | null) => `milo-diag-resume-${learn
 
 export interface DiagResume {
   band: Band; s: ProbeState; attempt: number; learner: string | null; savedAt: number
+  /** The attempt's dedupe key, generated when the probe STARTS. Carried here so a mid-probe reload
+   *  resumes the SAME attempt rather than opening a second `diagnostic_sessions` row — the start
+   *  row and the completion must share one client_id or "how many started" over-counts reloads.
+   *  Optional: a resume written by a bundle from before 2026-09-05 has none. */
+  clientId?: string
 }
 
 /** Is THIS tab the one that was mid-run? */
@@ -43,9 +48,9 @@ export function sameTab(): boolean {
   try { return sessionStorage.getItem(TAB_KEY) === '1' } catch { return false }
 }
 
-export function saveResume(learnerId: string | null, band: Band, s: ProbeState, attempt: number, now = Date.now()): void {
+export function saveResume(learnerId: string | null, band: Band, s: ProbeState, attempt: number, now = Date.now(), clientId?: string): void {
   try {
-    kv.set(resumeKey(learnerId), JSON.stringify({ band, s, attempt, learner: learnerId, savedAt: now }))
+    kv.set(resumeKey(learnerId), JSON.stringify({ band, s, attempt, learner: learnerId, savedAt: now, clientId }))
     sessionStorage.setItem(TAB_KEY, '1')
   } catch { /* private mode / quota: a resume is a nicety, never a blocker */ }
 }

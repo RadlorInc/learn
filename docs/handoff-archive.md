@@ -1,3 +1,248 @@
+> ✅ **2026-09-03 (evening) — THE REGION MOVE RAN. THE NEW us-east-1 DATABASE IS A VERIFIED COPY OF SYDNEY, AND NOTHING IS POINTED AT IT YET.** Eleven dispatches, ten red, and **every red was a real defect in the workflow I wrote — not one in production, and not one "just re-run it"**. Sydney was READ ONLY throughout: zero writes, all day. Green run **33783519089**: `✓ posture + fingerprint identical` · **RLS suite 74 assertions, all pass** on the new project. Verified again independently (I queried BOTH databases myself rather than reading the workflow's own diff): users 11/11 · identities 12/12 · profiles 11/11 · learners 19/19 · chapters 72/72 · learner_progress 31/31 · ledger 77/77 · cron jobs 4/4 · policies 35/35 · `on_auth_user_created` present on both.
+
+## ⚠️ THE ONE THAT WOULD HAVE SHIPPED SILENTLY, AND WHAT CAUGHT IT
+The restore completed, the posture diff said **identical**, and the RLS suite then failed inserting a
+learner whose owner had no `profiles` row. Measured on both: production has one non-internal trigger
+in the `auth` schema — `on_auth_user_created` → `public.handle_new_user` — and the restored project
+had **none**. **A schema dump does not carry triggers defined on a MANAGED schema's tables.**
+**What it would have cost:** existing profiles ride in the data dump, so all 11 accounts look
+perfect and every count matches. It is every **FUTURE** parent who breaks — an auth row, no profile,
+and `learners.created_by` references `profiles`, so they cannot add a child. Nothing errors.
+⚠️⚠️ **And the fingerprint said "identical" while that was true of one side.** It counted tables,
+functions, policies, rows and cron jobs — and **no triggers**, i.e. it agreed about everything except
+the thing that differed. Both trigger counts are in `security_posture.sql` now. The RLS suite is what
+actually caught this; that file is why it will not have to next time.
+
+## 🧨 THE TEN REDS, BECAUSE THE LIST IS THE POINT
+| # | died at | the actual mechanism |
+|---|---|---|
+| 1 | guard | `NEW_DB_URL` password (Session pooler needs `postgres.<ref>`, and a symbol in the password breaks URI parsing) |
+| 2 | dump | my grep was `^COPY auth.users `; pg_dump writes `COPY "auth"."users"`. **A correct dump reported as missing** |
+| 3 | restore | the ledger table was hand-written `(version, statements, name)` — production also has `created_by`. A second copy of a schema we do not own |
+| 4–6 | restore | **three dispatches in two minutes, two of them six seconds apart on ONE database.** One dropped schema public while the other created types in it. No concurrency group; `deploy.yml` has had one since it was written |
+| 7 | restore | `data.sql` already carries all 22 auth tables → loading `auth.sql` too sent every auth row twice (`duplicate key … flow_state_pkey`) |
+| 8 | restore | `data.sql` also carries 7 `storage` tables, owned by `supabase_storage_admin`: `permission denied for table buckets_vectors`. All seven measured **0 rows** on production, so they are filtered out of the dump |
+| 9 | dump | the CLI's own `-x 'storage.*'` **left every storage table in and silently dropped the ledger block** — the exclusion excluded only the thing we needed |
+| 10 | verify | the auth trigger, above |
+
+## ⚠️ AND ONE OF THOSE TEN WAS MY MEASUREMENT, NOT THE CODE — WORTH MORE THAN THE OTHER NINE
+I reported *"data.sql carries the ledger"* and deleted the separate ledger dump on the strength of it.
+It came from `grep -A80 'COPY blocks in data.sql'`, whose window ran **past the end of that inventory
+and into the `ledger.sql` inventory printed right after it** — so a line belonging to one file was
+read as belonging to another. **A byte-count window crossing the boundary it was meant to respect**,
+which [CLAUDE.md](CLAUDE.md) already records as a technique that does not work — used here on a LOG
+rather than on source, which is why it did not look like that rule. Two commits acted on it before
+the workflow printed `data.sql`'s own structure and settled it.
+⚠️ **The auth half of the same reading was right, and the difference is the lesson:** it had TWO
+instruments behind it (data.sql's own inventory, and the duplicate-key error). The ledger half had one.
+⚠️ A second one, caught before it shipped: the first control on the storage filter ran `awk` against a
+fixture that was not named `data.sql`, wrote a zero-byte file, and three greps read the empty output
+and reported *"storage gone, rows gone"*. It survived only because *"ledger lost"* was in the same
+batch and could not be true. **The re-run asserts the output is non-empty before believing any of it.**
+
+## 🧰 WHAT THE WORKFLOW IS NOW
+Guard (4 ref checks → optional `wipe_target` → target must be empty) → dump Sydney read-only
+(`schema` · `data`, storage blocks cut out by an awk range · `ledger` · `ledger_schema` · the auth
+triggers via `pg_get_triggerdef`), each with its own positive control → restore (default privileges
+revoked FIRST → 5 extensions → schema → ledger DDL → ledger rows → data → **auth triggers** → 4 cron
+jobs) → verify (`security_posture.sql` on BOTH databases, diffed; then the RLS suite on the new one).
+`concurrency: migrate-region-<ref>`. No artifact is ever uploaded — the repo is public and the dump
+carries children's data; every diagnostic prints table NAMES only, never a row.
+
+## ✅ AND THEN THE CUTOVER RAN THE SAME EVENING — PRODUCTION IS NOW us-east-1
+Google redirect URI added (old one kept) · Google provider enabled on the new project with the SAME
+client · URL configuration copied · migration re-run for a fresh snapshot (green, `wipe_target=true`)
+· **three** Vercel env vars repointed (§7 said two; `SUPABASE_SERVICE_ROLE_KEY` is the third) ·
+redeployed on `6c80255`.
+**Verified from the RUNNING deployment, not the settings page:** the live bundle carries the new ref
+and the new publishable key, and **zero** occurrences of the old ref (positive control: 72 mentions
+of "supabase" in 871 KB across 13 chunks — the first attempt fetched 0 chunks because the path is
+`/_next/static/immutable/chunks/`, and its "old ref: 0" looked exactly like the real answer).
+**Verified on both databases, two-sided:** new project 1 session in 30 min, last sign-in 17:51:18;
+Sydney 0 new sessions, last sign-in the previous day.
+⚠️ **And the check that mattered most: users stayed 11 and profiles stayed 11.** Had
+`auth.identities` not come across intact, Google would have made a TWELFTH user and the parent's own
+children would have been invisible to them, with nothing erroring.
+
+## ▶ OPEN — what is left after the cutover
+1. 🔴 **`SUPABASE_SERVICE_ROLE_KEY` IS THE ONE THING STILL UNVERIFIED.** It is server-side, so it
+   is not in the bundle and no browser check can see it. It is read by `errorSink`, `/api/lead` and
+   **the Stripe webhook** — and `errorSink` swallows its own errors by design, so a wrong value there
+   is silent. Its first real proof is a webhook turning a payment into seats, or an `error_events`
+   row appearing on the new project. Do not record it as working until one of those is seen.
+2. 🔴 **The other ten accounts are still logged out** and have to sign in again (per-project JWT
+   keys). If any of them cannot, it is the Google config, not the data.
+3. ⚠️ **Sydney stays for a week as the rollback**, then delete it (~$10/mo back). Rolling back is the
+   same three env vars in reverse — but anything played on the new project after the flip would not
+   be in it, so after a day or so the rollback stops being free.
+4. ✅ DONE: Google redirect URI added (old kept), Google provider on the new project using the SAME
+   OAuth client, URL configuration copied, three Vercel env vars, redeploy, real Google sign-in.
+5. ✅ **BOTH PENDING MIGRATIONS APPLIED** to the new production (2026-09-03 ~17:58), and committed
+   FIRST (`c7c2a43`) so the ledger could not record a version whose file is not in the repo.
+   Before/after, measured on the catalog either side: `is_chapter_entitled` `sql` → **plpgsql**;
+   `entitled_chapters` **did not exist** → exists; `get_learner_bootstrap`'s definition now contains
+   `recheck_closed`, which is what proves the new BODY landed rather than a function of that name.
+   Grants on all three: `authenticated` + `service_role`, nothing for `anon`/`public`.
+   ⚠️ **NOTHING HAS BEEN EXECUTED.** That is a catalog reading, not a run: the MCP role is read-only
+   and not `authenticated`, so calling them returns `permission denied` (correct, per those grants).
+   `is_chapter_entitled` exercises itself — the `sessions` INSERT policy calls it, so the next
+   gameplay session is its test. **`entitled_chapters` has no caller at all** until the client code
+   in ⑧ lands, so it is written and never once run. Do not read "applied" as "working".
+   ⚠️ **And the `pg_stat_statements` after-number the morning block promised cannot exist yet** for
+   the same reason — an unexecuted function has no row there.
+6. ⚠️ **Ledger drift, +2 rows.** `apply_migration` stamps its OWN timestamp, so the two canonical
+   versions went in by an explicit insert in the same migration AND the MCP wrote
+   `20260903175820` / `20260903175833`, which have no file in the repo. Harmless — the DDL is
+   `create or replace` — and it is the same drift this repo already carries two rows of. Clean with
+   `supabase migration repair --status reverted 20260903175820 20260903175833`.
+7. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`, or a push to `main` migrates production unreviewed.
+8. ⏭️ `backup.yml` still unconfigured (managed backups make `BACKUP_PASSPHRASE` optional). The
+   morning block's uncommitted pile is now **the client half only** — `menu/page.tsx`, the three
+   repositories, `useAdaptive`, the voice files. The two migrations are committed and applied; the
+   code that calls `entitled_chapters` and reads the bootstrap's new keys is not, which is why ⑤
+   says that function has never run. Landing it is what turns /menu's six round trips into two.
+9. ⏭️ `supabase/config.toml` says `major_version = 17` now; `.gitignore` gained `supabase/.temp/`.
+
+_(Moved out of handoff.md on 2026-09-06 to keep that file inside its size budget. Its still-live
+items — the Sydney rollback window, `SUPABASE_SERVICE_ROLE_KEY` never once exercised, the missing
+`production-db` environment, the uncommitted /menu RPC client half, and `entitled_chapters` having
+no caller — were lifted into the ⚖️ 2026-09-06 block's ▶ OPEN rather than archived with it.)_
+
+> 🚀 **2026-09-03 (later) — PRO IS ON, THE REGION MOVE IS GO, AND THE MECHANISM IS A ONE-JOB WORKFLOW THAT DIFFS THE SAME QUERY ON BOTH DATABASES.** ⚠️ **ITEMS 1–5 OF ITS ▶ OPEN ARE SUPERSEDED BY THE ✅ BLOCK ABOVE — the workflow HAS since run and the copy is verified. Kept for the pre-flight measurements.** The block below was written BEFORE any of it ran: **NOTHING HAS RUN YET — it waits on two connection-string secrets and a push.** Pre-flight only: `migrate-region.yml` YAML parses · `security_posture.sql` validated on PG 17 against production · `verify-backup.sh` re-proven **1 positive + 5 negative, exit codes read** · new project verified empty on 17.6 · **NOTHING committed, NOTHING dispatched, NOTHING applied.** `tsc`/`npm test` not run (no TS touched).
+
+## ① ✅ PRO — QUERIED, AND THE FIRST TWO THINGS I SAID ABOUT IT WERE WRONG
+`get_organization` → the **`Radlor`** org (`nwhbiwrglymeittzjvph`, which holds production) reads `plan: pro`; the personal org `MohammedRafiquekuwari` is still `free` — the plan string is per-org. Dashboard shows **seven daily physical backups, 27 Aug → 02 Sep**, so a restorable copy of the children's data now exists.
+⚠️ Two corrections, both mine: (a) I inferred "Pro since the 27th" from the backup dates — the invoice (`RSEBPT-00001`, $25, paid) is dated **today**; physical backups are taken on every project regardless of plan and Pro only unlocked *seeing* them. (b) I said a new project is "$0/mo, confirmed by API" — `get_cost` answered the wrong question. The Pro credit covers ONE Micro and production spends it; **each additional Micro is ~$9.81/mo** (`$0.01344/h`), charged in arrears. The founder's "$43.46 projected" is exactly $25 + three Micros − $10 credit.
+
+## ② 🧭 THE DECISION: MIGRATE, NOT REPLICATE; AND THE MIGRATION IS THE REHEARSAL
+Read replica in `us-east-1` was priced from the docs (~+$20/mo: primary must go Micro→Small, replica inherits; fixes `GET` reads only; **all Auth and every write stay in Sydney**; async lag on a local-first reconcile path this repo has already been burned by) and **rejected** — eleven users is the cheapest a migration will ever be. **The same-region "Restore to new project (BETA)" clone was skipped**: the docs say it restores into the *same region* (data residency), so it is not the move, and a migration IS a restore into a fresh project — doing both is the same operation twice. Sydney stays live and untouched until two Vercel env vars change, and for a week after as rollback.
+
+## ③ 🧰 WHAT WAS BUILT (uncommitted)
+- **`.github/workflows/migrate-region.yml`** — ONE job, **no artifact** (the repo is public; a dump with child data must never be uploaded). Refuses if `new_ref == PROD_PROJECT_REF`, if `NEW_DB_URL` contains the prod ref, or if the target has any public table. Dumps Sydney read-only (`schema` · `data --use-copy` · `auth -x auth.schema_migrations` · `supabase_migrations` ledger), asserts the `COPY auth.users` and ledger blocks are present (the CLI treats both schemas as managed and MAY silently skip them), restores in §4's order — **default privileges revoked FIRST** (or V12/V19 silently reopen with every policy reading correct) → 5 extensions → schema → ledger → auth → data, the last three under `session_replication_role = replica` — re-creates the **4** cron jobs, then runs `security_posture.sql` on BOTH databases and **diffs the output**, then the RLS regression suite on the new one.
+  ⚠️ **No access token needed**: `supabase db dump --db-url …` was measured to fail on *Docker*, not auth — it bypasses the platform. Docker IS still required on CLI 2.116.0 (measured), which is why this runs on `ubuntu-latest` and not a Mac. Two secrets total: `OLD_DB_URL`, `NEW_DB_URL`, both **Session pooler, port 5432** (runners have no IPv6; the direct host will not connect).
+  ⚠️ Three faults found reviewing my own first draft, all fixed and all confirmed necessary by probing the new project: `auth.schema_migrations` already has 77 rows there (duplicate-key red if copied); the `supabase_migrations` schema does not exist there (would have failed the ledger restore; without the ledger the next `db push` replays all 77 files); and the fingerprint excluded `sessions`/`learner_events`, which grow on their own — a strict diff on them turns a correct restore red if a child is playing.
+- **`supabase/tests/security_posture.sql`** — `docs/security.md`'s four drift queries as a runnable file (they had been prose for six weeks, which is how the baseline went stale) plus a stable fingerprint. Run on PG 17 against production: valid.
+- **`supabase/config.toml`** `major_version` 15 → **17** (production runs 17; the doc had flagged it).
+- **`docs/supabase-region-migration.md`** — STATUS DEFERRED → **GO**; §0 re-measured; §1b, §4①, §5, §6 corrected (below).
+- **`docs/backup-restore-runbook.md`** — the $0 claim corrected; the one-click clone path recorded with its same-region caveat; the positive twin added (§④).
+- `.gitignore` +`supabase/.temp/` (the CLI wrote it during a `--dry-run`).
+
+## ④ 🔬 WHAT THE PRE-FLIGHT CORRECTED IN THE DOCS — every 2026-08-19 number was stale
+| doc said | measured 2026-09-03 |
+|---|---|
+| 2 cron jobs | **4** — `prune-diagnostic-items` (03:22) and `prune-diagnostic-leads` (03:32) were added since |
+| the purge job has `and event <> 'daily_complete'` | **production's job does NOT** — the workflow copies what runs, not what the doc remembered |
+| 5 of 8 users on Google | **7 of 11** (12 identities: 7 google, 5 email) — §5 is now the highest-risk step |
+| 8 users · 17 learners · 20 tables · 17 functions | **11 · 19 · 24 · 25**, 35 policies |
+| ledger 66 files / 65 rows, 62+59 mismatched | **77 / 77, 75 match.** `20260629023502` and `20260702113253` applied with no file; `20260903100000/100100` are files not yet applied. Conclusion unchanged: dump the real schema |
+| `verify-backup.sh` "3 controls, 3 red" | **three NEGATIVE controls and no positive twin** — a script that refuses everything reads identically. Re-run with exit codes: valid artifact → **0**; unencrypted / wrong passphrase / no-`COPY` / garbage / unset passphrase → **1**. Now it discriminates |
+
+## ⑤ 🆕 THE TARGET PROJECT — created by the founder in the dashboard (so the real price was on screen)
+**`Radlor_app`** · ref **`wrnjqjhrbnqxornmfisf`** · `us-east-1` (same region as Vercel's `iad1`) · Micro · PG **17.6.1.166** · `ACTIVE_HEALTHY` · **0 public tables** · `pg_cron` available-not-installed · MCP can reach it. `Interactive_learn` (`qaymxunzlarwusogwyak`) is untouched.
+
+## ⑥ 💸 BILLING, EXPLAINED ONCE SO IT IS NOT RE-DERIVED
+Three Micros now (`Interactive_learn`, `radlor-site`, `Radlor_app`) → ~$19/mo over the $25 plan. Deleting Sydney a week after cutover → ~$10. **`radlor-site` is $10/mo for a waitlist form**; project transfer to the free personal org is self-serve (Settings → General → Transfer; ref/URL/keys unchanged; 1–2 min downtime paid→free) — ⚠️ but on free it **pauses after 7 quiet days, and `/api/waitlist` answers 303 either way**, so a paused DB would look healthy while every signup was lost. Founder's call; I leaned keep-it. Spend cap is ON, so the failure mode above quota is read-only, not a bill.
+
+## ▶ OPEN — ⚠️ **1–5 SUPERSEDED 2026-09-03 evening: the secrets are set, the push happened, the workflow ran green. Read the ✅ block's ▶ OPEN instead.**
+1. ✅ **DONE — Founder: two secrets, own terminal** — `gh secret set OLD_DB_URL` (Interactive_learn → Connect → Session pooler) and `NEW_DB_URL` (Radlor_app, same). Not through chat.
+2. 🔴 **Founder: yes to a push.** `workflow_dispatch` needs the file on a ref. Plan: branch `region-migration` with ONLY this session's five files, then `gh workflow run migrate-region.yml --ref region-migration -f new_ref=wrnjqjhrbnqxornmfisf`. **Expect the first run red** — most likely the `supabase_migrations` schema dump (the CLI may refuse a managed schema → fallback is `supabase migration repair --status applied` per version) or an extension line. That is the rehearsal.
+3. 🔴 **Founder: the Google OAuth Editor check** — [console.cloud.google.com/apis/credentials?project=12513320995](https://console.cloud.google.com/apis/credentials?project=12513320995): can `admin@radlor.com` (Editor) save a redirect URI? If not, get Owner **before** cutover. Not blocking the dispatch; blocking §5.
+4. After green: apply `20260903100000` + `20260903100100` to **Radlor_app** (`supabase db push` — the ledger rides across, so only those two apply), then read `pg_stat_statements` there for the after-number ④ of the morning block promised.
+5. Cutover (§5 ADD the redirect URI, §4③ auth config on the new project, §7 two Vercel env vars, a real Google sign-in, `auth_logs`) — all founder-only. Then a week, then delete Sydney.
+6. ⏭️ `production-db` GitHub environment (404 today) **before** anyone sets `STAGING_PROJECT_REF`; `SUPABASE_ACCESS_TOKEN` + `PROD_DB_PASSWORD` are `deploy.yml`'s, not the migration's — whenever.
+7. ⏭️ `backup.yml` kept, founder's call; still unconfigured. With managed backups real, `BACKUP_PASSPHRASE` is optional.
+8. ⏭️ Last session's uncommitted pile (③④⑤ of the morning block — `menu/page.tsx`, the RPC, the two migrations) is **still uncommitted and still untouched**; it lands on whichever project is production, i.e. Radlor_app after ④.
+
+> 🌏 **2026-09-03 — WHERE MILO BREAKS UNDER LOAD, STEP 1: MEASURED WITHOUT LOAD. THE HEADLINE IS NOT A QUERY — THE DATABASE IS IN SYDNEY AND EVERY USER IS IN THE US — AND THE THING THAT HAS TO HAPPEN BEFORE THE MOVE IS A BACKUP, BECAUSE THE NIGHTLY ONE HAD NEVER RUN.** `tsc` 0 · **1704 passed, 1 skipped by design** · `next build` 0 · gate `menuRoundTrips` **12/12, 3 mutations planted, 3 caught** · both new migrations driven on PG 17 (PGlite), **3 SQL mutations planted, 3 caught** · `scripts/verify-backup.sh` **3 controls, 3 red** · **NOTHING committed, NOTHING applied, NOT deployed** — founder's order is backup → restore rehearsal → region move, and the move waits for his Pro decision.
+
+## ① 🌏 THE REGION, READ OFF THE DASHBOARD, NOT INFERRED
+Settings → General → *Project region: Oceania (Sydney) · ap-southeast-2*. Every edge-log request in
+24 h came from the US (EWR); the fastest origin time was **212 ms**, the average **344 ms**, on
+queries that execute in 0.1–9 ms. The other free slot is `radlor-site` (us-west-2, the waitlist).
+**A region cannot be changed in place** (Supabase docs): it is a CLI dump → new project → psql
+restore. What that involves and what breaks is in the 2026-09-03 report; the short form: ~2–3 h of
+work, Docker + Supabase CLI (neither on this machine), **all users re-login** (per-project JWT keys),
+Google OAuth callback re-registered, 4 cron jobs re-created, both Vercel projects' env repointed,
+the MCP token re-issued, and **the two-project cap blocks creating the third** — pause `radlor-site`
+for the hour, or go Pro.
+
+## ② 🔴 THE NIGHTLY BACKUP HAS NEVER BACKED ANYTHING UP — GREEN, 30 DAYS OF RUNS, ZERO DUMPS
+`backup.yml` is *"inert until configured"*: `PROD_PROJECT_REF` and `BACKUP_PASSPHRASE` were never
+set as GitHub variables/secrets, so every run prints a `::warning::` and exits 0 with the dump step
+**skipped**. `gh run list` shows success × 30; `gh run view` shows `Dump schema + data: skipped`.
+And the dashboard says *"Free Plan does not include project backups"*. **So there is no recoverable
+copy of production anywhere**, and the region move needs one as its first step. Row 1 of the
+CLAUDE.md table (a skip path) recurring by design; written down, not fixed — the secrets are yours.
+
+## ③ 📉 THE PARENT DASHBOARD N+1 → ONE RPC
+`entitled_chapters(learner, chapters[])` — one round trip, calls `is_chapter_entitled` per chapter
+server-side so the ONE definition stays one. `entitledChapters()` uses it; a failed call is `null`
+for every chapter (not found out ≠ refused). RLS suite gained **B13h** (seated + unseated agreement).
+
+## ④ ⏱️ `is_chapter_entitled` PLANNING — MEASURED, AND MY FIRST NUMBER WAS WRONG
+I reported *"11 ms to plan, 0.13 ms to execute"*. The 11 ms was MY reader connection planning the
+hand-inlined body cold (568 catalog buffers). Production's own figure for the RPC is **2.6 ms mean,
+0.5 ms min**. The mechanism is real, though: on PG 17 a SQL-language function's body is re-planned
+on every call and a SECURITY DEFINER one cannot be inlined. In-database on PG 17.5, 2000 calls × 5:
+**SQL 190 µs · plpgsql 34 µs · plpgsql with `discard plans` forced per call 218 µs** — the whole gap
+IS the plan cache. Migration `20260903100000` makes it plpgsql, same body. **The after-number comes
+from `extensions.pg_stat_statements` once applied** — nothing here can produce it.
+
+## ⑤ 🍽️ `/menu` 6 → 2
+The check-up trio (`auth/v1/user` + 2 selects) and the plan select ride inside
+`get_learner_bootstrap` (migration `20260903100100`); the 6-week rule is one pure function
+`checkupStatus` shared with the parent dashboard; `getCheckupStatus` reads the local session instead
+of GoTrue. ⚠️ Found while doing it: the *"offline half"* the pointer comment promised did not exist —
+the local-stars derivation sat in the catch of a fetch that ran only after the bootstrap succeeded.
+It now runs on the real no-server-data paths (offline · no session · thrown bootstrap), and the
+existing gate that names `applyPlan(localPlayed(), [])` guards a branch that is finally reachable.
+
+## ⑥ 💾 THE BACKUP, STEP 1 — AS FAR AS IT GOES WITHOUT THE FOUNDER'S CREDENTIALS
+The repo held **zero** secrets and **zero** variables, so all FOUR inputs `backup.yml` names were
+missing, not three. What exists now: `PROD_PROJECT_REF` is set (a repo variable, 2026-09-03);
+[docs/backup-restore-runbook.md](docs/backup-restore-runbook.md) carries the exact `gh secret set`
+lines for `SUPABASE_ACCESS_TOKEN`, `PROD_DB_PASSWORD` and a generated `BACKUP_PASSPHRASE` (**his to
+type — credentials never go through a chat**); `scripts/verify-backup.sh` verifies an artifact FROM
+ITS CONTENTS (sizes, table/function/policy counts, rows per `COPY` block, the `counting` row) and
+was watched going red on an unencrypted tarball, a wrong passphrase and a no-`COPY` dump; the
+runbook holds production's row-count fingerprint of 2026-09-02 to compare against (72 chapters ·
+19 learners · 49 sessions · 1,631 events · 11 auth users …).
+⚠️ **Setting `PROD_PROJECT_REF` also arms `deploy.yml`'s `migrate-prod`** the moment the two
+Supabase secrets exist. It stays skipped only because `migrate-staging` is skipped
+(`STAGING_PROJECT_REF` unset). **Create the `production-db` environment WITH its required-reviewer
+rule before anyone sets a staging ref**, or a push to `main` migrates production unreviewed.
+⚠️ Expect the dump to be missing the 4 `pg_cron` jobs (extension schema, excluded by `db dump`);
+whether `auth.users` rides in `data.sql` is what the script's row table settles — the CLI reference
+and the restore guide say different things. No custom login roles exist, so no `roles.sql` needed.
+
+## ⑦ ❓ A REQUEST THAT DOES NOT BELONG TO THIS REPO
+The founder's last message asked for a combobox on an issue form's `area`/`type` fields
+(`/tester`, "the sheet's Issue Category", `check-tester-cannot-read-admin.mjs`, an admin with 13
+rows). **None of that exists in `milo-story-mode` or `../radlor-site`** — a wider search was
+interrupted before it ran. Most likely the video-reviewer repo CLAUDE.md's table cites. Not done;
+ask which repo before touching anything.
+
+## ▶ OPEN — in the founder's order, and each one stops before the next
+⚠️ **Items 1–4 SUPERSEDED the same afternoon — see the 🚀 block above.** Pro landed, managed backups exist, the clone was skipped as redundant, and the region move is GO with its own workflow. Kept for the record.
+1. 🔴 **BACKUP, MADE REAL.** He sets the three secrets (runbook §1); then trigger `backup.yml`,
+   download the artifact, run `scripts/verify-backup.sh`, compare to the fingerprint (runbook §2).
+   Green is not the evidence — it has been green thirty times; the artifact is.
+2. 🔴 **RESTORE IT ONCE, somewhere disposable** (runbook §3). Only a real Supabase project can find
+   a missing role/extension/cron job — which is the Pro decision (third project = staging too).
+   Report what was missing; something usually is.
+3. 🔴 **THE REGION MOVE — not before Rafi says.** Sydney → a US region; the checklist is in ①.
+   Nothing in ③–⑤ deploys to Sydney first: apply `20260903100000` then `20260903100100` in whichever
+   project is going to be production, then read `pg_stat_statements` for the `is_chapter_entitled`
+   RPC and the edge logs for `/menu` (expect 2 requests: `learner_events` + `get_learner_bootstrap`).
+   The client fails open if it lands first (batch RPC 404 → all `null`).
+4. 🎯 **Load-test step 2** waits for all three, on the staging project — the founder refused
+   `loadtest-` rows in production on the strength of "someone will delete them".
+5. ⏭️ `saveLearnerState` still calls `auth.getUser()` (conditional, rare) with the same "forces
+   hydration" comment — same shape as ⑤, not touched.
+6. ⏭️ Lint on `menu/page.tsx` reports two `set-state-in-effect` errors — **pre-existing on `main`**,
+   identical before and after this session's edits.
+7. 🎙️ Voice clips — superseded by the 🎙️ 2026-09-03/04 block above (17–18 done on Stevie; 3–5 on Teddy, resume after 2026-09-06).
+
 > 🎙️ **2026-09-03/04 — THE VOICE SESSION: 17–18 GETS ITS CLIPS (IT HAD ZERO), AND 3–5 GETS ITS OWN VOICE — TEDDY TWINKLE, FOUNDER'S PICK — WITH 872 OF 1,411 LINES RENDERED BEFORE THE MONTHLY QUOTA RAN OUT. BOTH WATCHED PLAYING, AND BOTH WATCHED FALLING BACK.** `tsc` 0 · **1705 passed, 1 skipped by design** · `next build` **NOT run** · **NOTHING committed, NOT deployed.**
 
 ## ① 🔑 THE KEY WAS NOT DEAD — THE HANDOFF WAS STALE
@@ -14679,3 +14924,188 @@ auto-memory `project-milo-{12-14,15-16,17-18}-curriculum`, `project-milo-teen-fr
     chapter, so a portrait screenshot is not evidence of anything.
 - **Repo:** github.com/Rafiquekuwari/milo — `main` auto-deploys to Vercel production (project `milo-story-mode`, team `team_HQsF3tfxAuGgZi7CcdhSdN7Y`).
 - **Detail:** the auto-memory `project-milo-*` files (one per chapter + sync/scaling/voice/launch-readiness).
+
+
+<!-- moved from handoff.md 2026-09-09 -->
+> 🔊 **2026-09-04 — THE VOICE WAS ON THE CDN THE WHOLE TIME AND NOBODY WAS ASKING FOR IT. THREE SILENT DEFECTS IN ONE CHAIN, ALL DEPLOYED AND VERIFIED FROM THE RUNNING SITE — THEN THE FIRST HONEST ACCOUNTING OF WHAT THE REST COSTS, AND THE STITCHER THAT WAS GOING TO PAY FOR IT FAILED ITS LISTENING TEST.** `tsc` 0 · **1710 passed, 1 skipped by design** · `next build` 0 · **NINE commits, all pushed and live**: `590232b` `9eb78bd` `33bb2cf` `aec3ee0` `31437c2` `cce03b2` `9385aa1` `dbe7508` `fada6d8` · sw v153 → **v160**. **EVERY STATIC LINE IN THE APP NOW HAS A CLIP, IN BOTH VOICES.**
+## ① 🔇 THE CHAIN, AND WHY EVERY LINK REPORTED SUCCESS
+The founder: *"3–5 aur 17–18 mein voice hi naii aa rahi"*, then *"12–14, 15–16 Chrome mein theek
+hai, 17–18 nahi"*, then *"Safari mein Stevie aati hai, Chrome mein kuch nahi"*. Three different
+faults wearing one symptom, each measured rather than reasoned about:
+1. **Nothing was deployed.** Prod's Stevie manifest held **433** keys (0 of 70 sampled 17–18
+   lines) and `/audio/XjGY…/manifest.json` answered **404** — the 3–5 voice folder did not exist
+   there. 1,109 clips and the band routing had sat uncommitted since the previous session.
+2. **`sw.js` had no `/audio/` branch**, so the manifest fell to the app-pages case —
+   stale-while-revalidate — and a device that had loaded the app kept the old key list. Measured
+   live: `caches.match(manifest)` in `milo-shell-v154` → **true**.
+3. **The 30-day header.** `/audio/:path*` served `max-age=2592000, stale-while-revalidate=31536000`,
+   right for a clip and wrong for the index. Read out of the founder's own Chrome: plain `fetch()`
+   → **433 keys**, `fetch(…{cache:'no-cache'})` → **670**, with the new service worker already
+   active. That is why 12–14/15–16 played (their keys were in the stale copy) and 17–18 did not.
+
+⚠️ **THE WHOLE CLASS IS "A STALE INDEX IS NOT AN ERROR, IT IS A SHORTER LIST."** Every dropped key
+is a clean miss, every miss falls back to browser speech, and Chrome ships no usable voice on most
+machines — so the app, the CDN, the build and every log reported success while a child heard
+silence. **Anything that GATES a lookup must revalidate even when the things it gates may not.**
+Both halves shipped: the header (`max-age=0, must-revalidate` on `manifest.json`/`fragments.json`,
+placed AFTER the general rule because the last match wins — above it, it is inert, which is the
+version I wrote first and `assetCacheHeaders.test.ts` caught), and `cache: 'no-cache'` on the two
+fetches, because a header cannot reach a browser that already holds the 30-day copy.
+
+## ② ⚠️ CLIP-ONLY WITHOUT A STITCHER IS SILENCE, NOT FALLBACK — AND THE NOTE IS AT THE SWITCH
+`setClipOnly` does not mean "prefer clips": it suppresses the browser fallback, so a line with no
+clip is **silent**, and nothing logs it. 12–14 survives it ONLY because its templated lines are
+stitched from `frag/`. The next person to reason *"12–14 works fine, turn it on for 3–5"* ships a
+child a silent chapter. Written on `setClipOnly` itself and on the GameShell effect that flips it —
+where somebody stands when they widen that band check — not in a doc.
+
+## ③ 💸 THE MISS LINE WAS BEING RECORDED TEN TIMES OVER
+GameShell spoke `It was X. <encouragement>` as ONE utterance, so the clip layer saw one line and
+every reveal needed recording once per encouragement — and there are ten. **3,640 lines / 114,506
+chars as one utterance against 374 / ~4,600 split**, for audio nobody can tell apart. Now two
+utterances, and 9–11's whole wrong-answer bucket is **374/374** for the price of a rounding error.
+⚠️ `speakSteps`, never `speak` + `speakAfterCurrent`: `_speaking` only turns true at the clip's
+`onStart`, so a synchronous second call takes the else branch and `_doSpeak` **cancels** the line
+still loading — the first half vanishes on exactly the machines that have clips.
+⚠️ And `voice-generate.mts` could lose a whole run to one bad packet: an uncaught `fetch` rejection
+(`ETIMEDOUT`, twice) threw out of the render loop and killed the process **before the manifest
+write**, leaving hundreds of clips on disk and unlisted — ① in miniature. One retry, then skip.
+
+## ④ 📊 WHAT IS RENDERED, AND WHAT THE REST COSTS
+Live on prod, verified from the running deployment: Stevie **2,912 keys** (was 433 this morning),
+Teddy **927**. 9–11 `teach` 69/69 · `miss` 374/374 · `scored` 1590/3172 · `reteach` 0. **All 265
+number-free lines across every band are rendered, plus 6–8's 56-line walkthrough.**
+Rendered cheapest-first *within* each value bucket — measured, that buys 1,361 lines against 719.
+⚠️ **The API key carried its own 40,000 cap** while the plan showed 121,022, so a run 401'd at a
+third of the month. Raised; check it before concluding a month is spent.
+⚠️ **Characters are NOT credits at a fixed ratio.** ~1:1 on long lines, **~0.6:1** on short ones
+(15,705 predicted, 7,775 billed). Size a run, then let the API stop it; do not plan to the count.
+
+**The whole-line remainder, re-measured at 12,000 draws instead of 1,500 — and it MOVED:**
+
+| band | corpus @1.5k | @12k | growth | rendered | remaining credits |
+|---|---|---|---|---|---|
+| 3–5 | 1,411 | 1,411 | **1.00×** | 927 | **26,088** — a real total |
+| 12–14 | 1,666 | 1,687 | **1.01×** | — | **112,683** — a real total |
+| 6–8 | 2,602 | 7,294 | 2.80× | 56 | ≥424,073 |
+| 9–11 | 7,904 | 15,969 | 2.02× | 1,946 | ≥1,152,964 |
+| 15–16 | 11,858 | 28,467 | 2.40× | — | ≥2,560,133 |
+| 17–18 | 8,638 | 28,620 | 3.31× | — | ≥1,785,722 |
+| **total** | | | | | **≥6,061,663 — 50 months** |
+
+**≥2,343,335 at 1,500 draws became ≥6,061,663 at 12,000.** Only 3–5 and 12–14 converge; their
+vocabularies are small. For the other four, whole-line voice is not a project with a price, it is a
+**subscription** — and every new chapter adds to it.
+⚠️ **THE EXPENSIVE PART IS NOT THE EXPLANATION — THE FOUNDER'S READ, AND IT HELD.** The walkthrough
+is static and was already almost entirely recorded (15–16 and 17–18 sat at **zero** remaining,
+because those lines are literals the grep corpus took months ago). What costs is the **re-teach**,
+which `explainBeats(r)` rebuilds from each round's numbers: 9–11 has 554 number-free re-teach lines
+against **6,265** numbered; 15–16 has 6 against **14,134**.
+⚠️⚠️ **AND A CORRECTION THAT TRAVELLED TWO MESSAGES BEFORE IT WAS CHECKED.** I put the static
+remainder at **113,063** credits by testing for a DIGIT. In 3–5 and 6–8 the numbers are spelled as
+WORDS — *"four and seven. Which sign is right?"* — so **98%** of that band's "no digit" lines were
+per-round lines the test could not see. Counting number-words as numbers took the static remainder
+to **16,009** and 6–8's share from 259,510 to **1,391**. Same class as the "nearly flat" wording
+below: **a proxy quietly standing in for the property it approximates.**
+
+## ⑤ 🔬 THE MEASUREMENT THE WHOLE STITCHER DECISION RESTS ON — AND ITS HONEST WORDING
+Founder's challenge: *"our questions aren't limited, they're adaptive — did generating audio for a
+limited set break that?"* No: the wiring is one-way (the chapter builds its line, the player hashes
+it, a miss falls back) and the corpus is built by DRIVING the real generators. But the second half
+of his question was right and cost me a claim. Escalating the sweep:
+
+| chapter | whole lines 1.5k→24k | templates | literal runs |
+|---|---|---|---|
+| goingViral 15–16 | 821 → **1,299** | **13** flat | **34** flat |
+| coinTray 9–11 | 920 → **1,653** | 391 → **425 flat at 6k** | 434 |
+| packingShed 9–11 | 1,839 → **2,501** | 706 → **848 flat** | 819 |
+| walkHome 17–18 | 1,562 → **9,123** ↑ | 301 → **513** ↑ | 121 → 137 |
+
+Pushed the worst case further, runs only — **1.5k/6k/24k/48k/96k → 125, 130, 138, 140, 144**
+(+4.0%, +6.2%, +1.4%, +2.9%). Over **64× the draws: lines 17×, templates 1.9×, runs 1.15×**.
+⚠️ **So the right words are "bounded in practice, still creeping" — NOT "saturated".** I first
+wrote *"nearly flat"*, and the founder's correction is the rule worth keeping: **a word like
+"nearly flat" does the work of "saturated" without having measured it.** Quote a run count with the
+draw count it was measured at. The argument survives its own worst case — walkHome's NEW templates
+are new combinations of runs it already has — but it is a working ceiling (~150 runs), not a proof.
+⚠️ **And every whole-line figure in this repo is now a FLOOR and must travel as `>=`** — the
+drivers sample 1,500 draws, which is not a generator's space. Written into all three corpus
+drivers' headers so the next reader cannot pick the number up as a total.
+
+## ▶ OPEN
+1. 🔴 **THE STITCHER FAILED ITS LISTENING TEST, AND THAT IS THE OPEN QUESTION.** One real 12–14
+   line was assembled from its six existing fragments and put beside the whole-line recording of
+   the same sentence: *"Fly the drone to the halfway point between 2, 2 and 4, 6."* Founder, on
+   the pair: *"B natural lagg raha hai."* Measured alongside: stitched ran **7.84s against 5.65s**;
+   silence-trimming each fragment took it to 6.38s (+14%), and the residue is **delivery, not
+   padding** — a lone `"2"` is 0.85s after trimming because it was recorded as its own sentence.
+   Playing it through the real `<audio>` + `playbackRate` + `preservesPitch` path added a further
+   **~120ms per join** that no trimming can reach (`/tmp/abtest/rate-test.html`, the harness).
+   ⚠️ Note what this rules out: **the founder's own fallback — "record whole templates, stitch only
+   the numbers" — IS what was tested.** The run *"Fly the drone to the halfway point between"* is a
+   single recording. So that option is not a way out; it is the thing that failed.
+   The one cheap experiment left is **prosody-in-context**: fragments were recorded in isolation, so
+   each ends on a falling tone. Re-render the number clips with list intonation (`"2,"` `"4,"` `"6."`)
+   — about 20 credits — and listen again. If that fails, whole-line is the answer and the cost above
+   is the cost.
+2. ⏭️ **The best remaining spend is 3–5** (539 lines, ~26k, and the band is measured saturated so it
+   never asks again). 26,072 credits are left this month; billing has run ~60% of the estimate.
+3. 🔴 **6–8 has no per-round clips at all** (only its 56 walkthrough lines). 4 of its 12 chapters
+   still cannot be enumerated from the beat surface: `placeValue`, `additionTo100`,
+   `subtractionTo100` and `money` return an empty `prompt` and speak from their own components.
+4. ⏭️ 15–16 and 17–18 now play a clip for the encouragement and browser speech for `It was X.` —
+   mixed within one breath. Their reveal halves need the 37 configs (exported this session) driven.
+5. 🕒 **Nightly E2E has still never gone green on a SCHEDULED run against a main containing the fix.**
+   `gh run list --workflow "Nightly E2E"`, look for `schedule` + `success` at or after `22d75fb`.
+6. 🔴 **The hull silence is still unmeasured** — `docs/voice-check-for-tester.md` ready to forward.
+7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky.
+8. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase is deferred with a hard
+   deadline BEFORE STAGE 4 ([docs/billing-stage-3.md](docs/billing-stage-3.md) §0) · B12 Supabase Pro
+   before any live key · **`DRAFT = true` — the privacy policy and ToS are still placeholders, and you
+   cannot charge a parent under one** · the free chapter set is still a PROPOSAL · **nine Dependabot
+   PRs open and untriaged (#28–#47)**, do not merge as a batch · Vercel Web Analytics still off · two
+   prose-drift notes (the `error_events` fkey comment, the anon-INSERT comments).
+9. ⏭️ **Nobody has HEARD any of the rendered clips on a real device** beyond the A/B pair above.
+   Every other check is a network request plus a patched `play()`.
+10. ⏭️ **`OrderDesk` and `LevelRun` — the two 9–11 storybook chapters — have no clips** and are in no
+   corpus: they run `SkillBeat`, not GameShell.
+11. ⏭️ The ElevenLabs **MCP** still holds the rotated key; measure the key with `curl`, never it.
+12. ⏭️ Uncommitted and untouched all session: the `/menu` 6→2 RPC half (`menu/page.tsx`, the three
+   repositories) — deliberately kept out of the voice deploys.
+
+> 🧪 **2026-09-05 — CHATTERBOX TTS (Resemble AI, MIT) EVALUATED IN A SCRATCH VENV. Founder's reason: 6–8 and 9–11 corpora are UNBOUNDED, so whole-line rendering on a per-character API is a subscription, not a project. Nothing installed into this repo; nothing integrated; `voice-generate.mts` untouched. Turbo English rendered five lines with the BUILT-IN voice — our ElevenLabs voice was deliberately NOT cloned, so no provider-terms question sits in the middle of the evaluation. Decision is by ear and is the founder's.**
+>
+> ⚠️ **THE TIMINGS FROM THIS MACHINE ARE ABOUT THIS MACHINE.** M1, **8 GB**. Measured mid-render:
+> **7.60 GB of 9.22 GB swap in use, 11% memory free** — and RTF climbed **16.4 → 35.7 → 41.6** across
+> lines 1–3, which is thrashing, not the model. Founder's call, and it is the right one: *"every
+> timing number from this machine is about the laptop and none of it informs the decision"*, so Nano
+> was dropped rather than measured (it shrinks only T3; the 1,015 MB vocoder is unchanged, so it
+> would not escape swap either). **Do not quote these seconds as Chatterbox's speed.**
+>
+> ⚠️⚠️ **`chatterbox-tts` CRASHES ON IMPORT IN A FRESH VENV WITH A MESSAGE THAT NAMES NOTHING TRUE:**
+> `TypeError: 'NoneType' object is not callable` from `perth.PerthImplicitWatermarker()`. The real
+> cause is `resemble-perth` importing **`pkg_resources`**, which setuptools removed in 81 — and a
+> modern venv ships no setuptools at all. Fix: **`pip install "setuptools<81"`**. Another error
+> message that lies about its own cause; the class was `None` because a nested import had failed
+> silently. ⚠️ **The watermarker was NOT disabled to get past it** — that changes the output, and an
+> evaluation of audio you have altered is not an evaluation.
+>
+> ⚠️ **LOADED SIZE ≠ DOWNLOAD SIZE. Size a machine from the loaded figure.** Both repos ship a
+> **1,007 MB `s3gen.safetensors` the loader never touches** (it uses the meanflow variant):
+>
+> | | download | actually loaded |
+> |---|---|---|
+> | Turbo | 3,857 MB | **2,847 MB** (t3 1,826 · s3gen_meanflow 1,015 · ve 5) |
+> | Nano | 2,860 MB | **1,850 MB** (t3 **829** · s3gen_meanflow 1,015 · ve 5) |
+>
+> 🚫 **NANO IS OFF THE TABLE FOR PRODUCTION UNTIL UPSTREAM SHIPS A LOADER.** `chatterbox-tts 0.1.7`
+> (latest) has none — `chatterbox.tts_turbo` hardcodes `t3_turbo_v1.safetensors` and Turbo's
+> hyper-parameters. A hand-written adapter loads it (the architecture is already in the package;
+> four values come off `t3_nano_v1.yaml`), which is fine for an evaluation and is an unsupported path
+> against moving upstream code. Founder: revisit if upstream ships one.
+>
+> 🎯 **THE MEASUREMENT THAT WOULD ACTUALLY DECIDE IT, AND IT IS NOT ON A MAC: rendering cost on a
+> RENTED GPU.** Rough shape from the founder: ~20,000 lines at ~3 s each is ~17 hours of audio, which
+> at better-than-realtime is single-digit dollars of compute — against the ≥6,061,663 credits (~50
+> months) the whole-line remainder costs on ElevenLabs. **Not chased now.** Scratch venv, script and
+> the five wavs: `scratchpad/chatterbox/` (session-local, will not survive).

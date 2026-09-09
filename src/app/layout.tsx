@@ -5,6 +5,7 @@ import StorageGate from '@/shared/ui/StorageGate'
 import { SITE_URL } from './site'
 
 import { OfflineBanner } from '@/infra/useOfflineSync'
+import AuthEventLogger from '@/infra/AuthEventLogger'
 import './globals.css'
 import { ToastProvider } from '@/shared/ui/Toast'
 
@@ -133,6 +134,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <MiloErrorBoundary>
           <StorageGate>
+            {/* One listener for the whole app: every sign-in, every provider, every route. */}
+            <AuthEventLogger />
             {children}
             <OfflineBanner />
           </StorageGate>

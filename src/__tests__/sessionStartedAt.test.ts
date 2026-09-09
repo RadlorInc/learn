@@ -207,3 +207,63 @@ describe('the start clock is armed at every site that can write a session', () =
     expect(hook).toMatch(/startedAt:\s*startRef\.current\?\.chapter === chapter/)
   })
 })
+
+/**
+ * The readers. Making `started_at` nullable is only honest if everything reading it handles NULL —
+ * and it did not. Measured 2026-09-05 before the fix: a NULL start silently DROPPED the row from
+ * DAU/WAU/MAU and the insights rollup (1 of 2 learners instead of 2), and rendered as 1/1/1970 on
+ * the parent dashboard, because `new Date(null)` is the epoch. A dropped row is not an error; it
+ * reads as a quiet week.
+ */
+describe('a NULL start must not erase a session from activity', () => {
+  let d: PGlite
+  beforeAll(async () => {
+    d = await PGlite.create()
+    await d.exec(`create table sessions (learner_id int, started_at timestamptz, completed_at timestamptz);
+      insert into sessions values
+        (1, now() - interval '5 min', now()),   -- a real measurement
+        (2, null,                     now());   -- an older bundle: start unknown, but it HAPPENED`)
+  }, 60_000)
+
+  it('the OLD rule loses the NULL-start learner', async () => {
+    // known-bad control: this is what founder_metrics.sql and get_insights_rollup did.
+    const r = await d.query<{ n: number }>(
+      `select count(distinct learner_id)::int n from sessions where started_at > now() - interval '1 day'`)
+    expect(Number(r.rows[0].n)).toBe(1)      // ← 1 of 2. The defect, reproduced.
+  })
+
+  it('the NEW rule keeps both', async () => {
+    const r = await d.query<{ n: number }>(
+      `select count(distinct learner_id)::int n from sessions
+       where coalesce(completed_at, started_at) > now() - interval '1 day'`)
+    expect(Number(r.rows[0].n)).toBe(2)
+  })
+})
+
+/**
+ * The backfill. The 49 production rows hold their INSERT time in a column named `started_at`; it
+ * looks like data and is known-false. Its guard is what makes it safe to re-run — and what stops it
+ * eating a real measurement.
+ */
+describe('the backfill nulls only the known-false rows', () => {
+  it('erases a fake start, keeps a real one, and is idempotent', async () => {
+    const d2 = await PGlite.create()
+    await d2.exec(`create table sessions (id int, started_at timestamptz, completed_at timestamptz);
+      insert into sessions values
+        (1, now(),                     now() - interval '1 s'),  -- legacy: start AFTER end (all 49)
+        (2, now() - interval '1 s',    now() - interval '1 s'),  -- legacy: start == end
+        (3, now() - interval '7 min',  now()),                   -- a REAL measurement
+        (4, null,                      now());                   -- already unknown`)
+    const BACKFILL = `update sessions set started_at = null
+      where started_at is not null and completed_at is not null and started_at >= completed_at`
+    await d2.exec(BACKFILL)
+    let r = await d2.query<{ id: number }>(`select id from sessions where started_at is null order by id`)
+    // Worked out by hand: rows 1 and 2 are provably not starts; 4 was already null; 3 must survive.
+    expect(r.rows.map(x => x.id)).toEqual([1, 2, 4])
+
+    const before = await d2.query(`select id, started_at from sessions order by id`)
+    await d2.exec(BACKFILL)                                  // re-running must change nothing
+    const after = await d2.query(`select id, started_at from sessions order by id`)
+    expect(after.rows).toEqual(before.rows)
+  }, 60_000)
+})
