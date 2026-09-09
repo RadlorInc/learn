@@ -1,4 +1,5 @@
-const VERSION      = 'v179'
+// ROLLBACK-DRILL-20260909-A1 — temporary marker for the rollback drill; removed by the next commit.
+const VERSION      = 'v180'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
