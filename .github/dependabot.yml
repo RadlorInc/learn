@@ -1,11 +1,34 @@
 version: 2
+
+# ⚠️ WHY THIS FILE LOOKS THE WAY IT DOES — measured 2026-09-09, after a critical `next` RCE advisory
+# (GHSA-p293-qw3h-jr36) sat unnoticed and NO Dependabot PR existed for it.
+#
+# Two separate mechanisms were involved, and only ONE of them lives in this file:
+#
+#   · Dependabot ALERTS and SECURITY UPDATES were switched off at the REPOSITORY level. Nothing in
+#     this file can turn those on — the `updates:` block below governs VERSION updates only. They
+#     are now enabled (Settings -> Advanced Security).
+#   · The npm VERSION-update path was blocked by `open-pull-requests-limit`, which sat full at 5/5
+#     for 19 days, so an ordinary in-range 16.3.1 -> 16.3.4 bump had no slot to appear in.
+#
+# ⚠️⚠️ AND THE THING THAT IS EASY TO GET WRONG, BECAUSE IT IS INTUITIVE AND FALSE:
+# `open-pull-requests-limit` DOES NOT APPLY TO SECURITY UPDATES. GitHub's options reference:
+#   "Security update pull requests are not subject to this limit and do not count toward it."
+#   "There is no limit on the number of open pull requests for security updates."
+# So a full queue can starve you of version bumps — which is what happened — but it can NEVER block
+# a security PR. Raising the limit below is about keeping routine bumps flowing, and buys exactly
+# nothing in the security path. Do not let it be described as a security fix.
+
 updates:
   # npm dependencies — weekly, so a patched release for a new CVE lands as a PR promptly.
   - package-ecosystem: npm
     directory: "/"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    # ⚠️ 5 was too tight for this dependency count on a weekly schedule: the queue sat full for 19
+    # days and the newest bump had nowhere to go. 10 is the trade — see the PR for the review-load
+    # arithmetic. This governs VERSION updates only (see the note above).
+    open-pull-requests-limit: 10
     groups:
       # Batch low-risk dev/tooling bumps into one PR to cut noise.
       dev-tooling:
@@ -17,9 +40,16 @@ updates:
           - "jsdom"
           - "tailwindcss"
           - "@tailwindcss/*"
+    # ⚠️ `security` WAS LISTED HERE AND HAS BEEN REMOVED — it was a lie about what these PRs are.
+    # `labels:` applies to security update PRs as well as version ones ("Setting this option will
+    # also affect pull requests for security updates to the manifest files of this package
+    # manager"), so there is NO way to express "label only the security ones" here. Listing
+    # `security` therefore stamped it on every routine "a new version exists" bump, which is a
+    # filter that matches everything, i.e. not a filter.
+    # ⚠️ Nothing applies a `security` label automatically, so no such label exists in this repo by
+    # design. A security PR is identified by its Dependabot ALERT, not by a label.
     labels:
       - dependencies
-      - security
 
   # Keep GitHub Actions (checkout, setup-node, …) patched too.
   - package-ecosystem: github-actions

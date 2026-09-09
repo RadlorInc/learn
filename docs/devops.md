@@ -257,17 +257,54 @@ worse. **Two independent mechanisms had to fail, and both did.**
    no slot to propose it in. The last npm PR was #47 on 2026-08-21, i.e. **~19 days of a weekly
    schedule producing nothing.**
 
-⚠️ **That is the dangerous shape: the untriaged queue was not merely untidy, it was the thing
-holding the gate shut.** A full `open-pull-requests-limit` silently converts "we have not got round
-to these" into "we can no longer be told about new ones."
+⚠️ **That is the dangerous shape for VERSION updates: the untriaged queue was not merely untidy,
+it was the thing holding that path shut.** A full `open-pull-requests-limit` silently converts "we
+have not got round to these" into "no new version bump can be proposed."
 
-⚠️ **A third, quieter finding:** `dependabot.yml` asks for labels `dependencies` and `security`, and
-**neither label exists in the repository** (the label set is still GitHub's default: bug,
-documentation, duplicate, enhancement, good first issue, help wanted, invalid, question, wontfix).
-Dependabot drops labels it cannot apply, without complaining — which is why all nine PRs carried
-`labels: []` and why you cannot filter this queue by `security`. Create the two labels or delete the
-config lines; a label rule that silently does nothing is the decorative-check class in another
-costume.
+⚠️⚠️ **AND HERE IS WHERE I GOT IT WRONG THE FIRST TIME, CORRECTED 2026-09-09 THE SAME DAY.** I wrote
+that raising the limit was a *precondition* for enabling security updates — that a full queue "blocks
+security PRs exactly as it did this week." **That is false**, and it is the more expensive kind of
+error, because it is a belief that would have shaped the next decision. GitHub's options reference is
+explicit:
+
+> "Security update pull requests are not subject to this limit and do not count toward it."
+> "There is no limit on the number of open pull requests for security updates."
+
+So the limit constrains **version updates only**. The full queue starved us of the routine
+16.3.1 → 16.3.4 bump, which is real and is why it is raised to 10 — but it could never have blocked
+a security PR, and no security PR was ever attempted anyway, because the feature was off. **The two
+failures were independent, and only one of them was the queue.** Raising the limit buys nothing in
+the security path and must not be described as a security fix.
+
+⚠️ **A third, quieter finding, RESOLVED 2026-09-09:** `dependabot.yml` asked for labels
+`dependencies` and `security`, and **neither existed in the repository** (the label set was still
+GitHub's default: bug, documentation, duplicate, …). Three documented behaviours compound here, and
+the third is the one that made it silent:
+
+> "The labels specified are used instead of the default labels."
+> "If any of these labels is not defined in the repository, it is ignored."
+> "Setting this option will also affect pull requests for security updates to the manifest files of
+> this package manager…"
+
+The custom list **replaced** the defaults Dependabot would otherwise have created for itself, and
+every label in it was then **ignored** for not existing — so all nine PRs carried `labels: []` and
+the queue could not be filtered at all. A label rule that silently does nothing is the
+decorative-check class in another costume.
+
+**What was done:** the `dependencies` label was created in the repository, so the config's request
+can now actually land. **`security` was removed from the npm block and deliberately NOT created.**
+Because `labels:` applies to security *and* version PRs alike, there is no way to express "label
+only the security ones" — listing it stamped `security` on every routine "a new version exists"
+bump, which is a filter that matches everything. **Nothing in Dependabot applies a security-specific
+label automatically**, so a label for it would be one nothing ever sets.
+
+⚠️ **So: a security PR here is identified by its ALERT, not by a label.** Look at
+`/repos/RadlorInc/learn/dependabot/alerts` or the Security tab, not at a label filter.
+
+⚠️ A cheaper alternative was available and not taken: **deleting the `labels:` key entirely** makes
+Dependabot fall back to its defaults, which it *creates automatically as necessary* — so it cannot
+fail this way again. The explicit list was kept because it is what the founder asked for and it is
+now backed by a label that exists; if this ever breaks again, prefer deleting the key.
 
 ### Known gaps this left behind, recorded rather than fixed
 
@@ -308,7 +345,7 @@ options, cheapest first.
 |---|---|---|---|---|
 | **A** | Add an `npm audit --audit-level=high` step to the existing **`red-main.yml`** daily cron (already runs `37 6 * * *`) | ≤ 24 h | ~15 lines in a workflow that already has `issues: write`, `checkout`, and a proven issue-filing path. **No new workflow, no new secret, no new permission.** | Lowest. Reuses a notifier already driven and trusted. Slight muddying: that file's stated job is *"is the deploy gate working"*, and this is *"is a dependency vulnerable"* |
 | **B** | A small standalone `security-audit.yml` on its own cron, filing its own issue | ≤ 24 h (tunable) | ~40 lines, one new workflow, `issues: write`. Needs its own dedup so it does not open an issue a day | Low, but it is a **new check, and a new check must be watched going red on a real advisory and green on a clean tree before it is trusted** — otherwise it joins the Nightly-E2E class |
-| **C** | Turn on **Dependabot alerts + security updates** in repo settings | minutes-to-hours, from GitHub's own advisory feed | Two toggles, no code. ⚠️ **Requires raising `open-pull-requests-limit`, or the queue blocks security PRs exactly as it did this week** | Lowest engineering risk, highest process risk: it generates PRs, and an unattended queue is what caused this |
+| **C** | Turn on **Dependabot alerts + security updates** in repo settings | minutes-to-hours, from GitHub's own advisory feed | Two toggles, no code, no precondition | Lowest engineering risk, highest process risk: it generates PRs, and an unattended queue is what caused this |
 
 **Recommendation: C and A together, in that order.** C is the only one that reacts in *minutes* and
 it needs no code, but it is a setting only the founder can flip, and it is worthless while the PR
