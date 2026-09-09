@@ -156,13 +156,146 @@
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
 > letting it grow. The craft rules live in chapter-craft.md, not here.
-> ⚠️ **AT 2026-09-09 THIS FILE IS AT ITS CEILING: four blocks, against a ~60 KB budget.**
-> Adding the 🎙️ Chatterbox block moved the 🔊 2026-09-04 and 🧪 2026-09-05 blocks to the archive;
-> 🔊's live ▶ OPEN was lifted into the 🎙️ block, and 🧪 (Chatterbox eval) is superseded by it.
-> **Adding a block means moving one out first** — the next out is 🗣️ 2026-09-04/05, whose voice-cutoff
-> gate is a standing rule, so lift that reference before archiving it.
+> ⚠️ **AT 2026-09-10 THIS FILE IS OVER BUDGET: four blocks, 64 KB against a ~60 KB target.**
+> **The next session moves 📊 2026-09-05 (/admin) out BEFORE adding anything** — lift its live items
+> first (the `answer` event, the rollup, the 2026-09-27 purge cliff). ⚠️ The block after it,
+> ⚖️ 2026-09-06, carries **account deletion, still never executed end to end**: carry that forward,
+> do not drop it.
+> ⚠️ Measure with `wc -c`, NOT a character count — the emoji here are multi-byte and python's `len()`
+> under-reports this file by ~1.6 KB, which is how the figure in this very note was wrong once.
+> Adding the 🚀 launch-week block moved 🗣️ 2026-09-04/05 to the archive. ⚠️ Its standing rule did NOT
+> go with it: the speak-verb contract (`speak()` supersedes, `speakAfterCurrent()` queues,
+> `speakPaced()` for a lesson) and its gate `src/__tests__/voiceBoundaryVerb.test.ts` live permanently
+> in **docs/chapter-craft.md §3**, which is where to read them.
 > ⚠️ Count the blocks by eye rather than by grepping one set of emoji: the 🗣️ block was invisible
 > to a `^> [⚖️📊🧪🔊]` sweep on the day it landed, and a miscount here is a miscounted budget.)_
+
+> 🚀 **2026-09-09/10 — LAUNCH WEEK. THE ROLLBACK MECHANISM EVERYONE ASSUMED DOES NOT WORK, `/api/lead` REPORTED SUCCESS ON A FAILED WRITE, DEPENDABOT'S ALERTS HAD NEVER BEEN ON, AND 17-18 IS NOW FULLY VOICED.** `tsc` 0 · **1837 passed, 2 skipped (99 files)** · `next build` 0 · sw v176 → **v181** · PRs #80 #81 #89 #91 #92 #93 #94 merged, plus #44/#45; six Dependabot PRs closed with reasons.
+>
+> **Founder's calls this week, and they narrow the scope:** ① **nothing is charged on Friday, the
+> paywall stays off** — every Stripe item (the watched test purchase, cancellation, §8's refund
+> sentence, deleted-account-still-charged) is OUT of scope; ② **the legal pages keep the DRAFT
+> banner, `DRAFT` stays `true`** — do not flip it, the invite email says so.
+>
+> ## ① ⚠️⚠️ ROLLBACK: MOVING `release` BACKWARDS DOES NOTHING. REHEARSED IN DAYLIGHT
+> "Rolling back = point `release` at the previous good commit" was the working assumption and it is
+> **false**. Measured with a marker string in `sw.js` (served verbatim) plus a version bump:
+> force-push succeeded, `release` moved, **production unchanged after 395s**. Vercel builds a
+> **COMMIT, not a branch pointer** — it had already built that commit, so the push created **no
+> deployment at all** (confirmed against the Vercel API: newest `target:"production"` was still the
+> bad build). ✅ **Revert-and-push-forward WORKS: 280s** push → live. Vercel's dashboard
+> "Promote to Production" is what `runbooks/rollback.md` already prescribed and is almost certainly
+> right, but it needs dashboard/CLI access this session lacked — written up as **documented-but-
+> unproven** (`isRollbackCandidate: true` is the only supporting evidence). Full commands in
+> [docs/runbooks/launch-day.md](docs/runbooks/launch-day.md).
+> ⚠️ **The sw VERSION must go FORWARD on a rollback, never back** — it keys the caches, so reusing a
+> cached version strands that browser on the old shell.
+> ⚠️ **THERE IS NO WAY TO CLOSE THE DOORS.** No `middleware.ts` anywhere, so nothing intercepts a
+> request; `PAYWALL_ENABLED` gates chapters and is not a door. **Stopping means taking the site
+> down.** Known, not built — launch week is the wrong week to add a request-intercepting layer.
+>
+> ## ② 🔴 LEAD CAPTURE IS ALIVE — AND THE ROUTE WAS LYING ABOUT IT
+> ⚠️ **Correction: Milo production IS reachable from the Supabase MCP.** `list_projects` omits it,
+> but `execute_sql` against `wrnjqjhrbnqxornmfisf` works (read-only). A previous session recorded the
+> opposite and that was wrong — **use it rather than re-deriving from a pglite fixture.**
+> Measured, control first (an equality read that finds a known row, and 0 for a known-absent one):
+> probe POSTed through the live route **landed**, 14 → 15 rows; `anon` INSERT is `false`,
+> `service_role` `true`, so it could only have come from the service-role key — **that key IS bound
+> in production**. Second independent proof: `error_events` has rows at all and `sinkError` has no
+> anon fallback. **0 `lead insert failed` rows, ever.**
+> ⚠️ **The defect underneath:** the route checked `res.ok`, logged the failure — and returned
+> `{ok:true}` 200 anyway, so a revoked grant, a missing key and a PostgREST outage were all
+> indistinguishable from a captured lead. **Watched lying first**, then fixed: refused/threw → 502
+> `not_recorded`, url/key missing → 503 `not_configured`. Safe by measurement — the only caller
+> never reads the response. ⚠️ **The old gate could not have caught it**: `security.test.ts` greps the
+> source for `/res\.ok/`, true of the broken version, which read the flag and ignored it.
+> `leadRouteHonest.test.ts` DRIVES the handler; mutation-tested.
+> 🔴 **Two probe rows to delete:** `select public.delete_lead_by_email('probe-lead-alive-20260909@example.invalid');`
+> and the same for `probe-postfix-20260909@example.invalid`.
+>
+> ## ③ 🔴 DEPENDABOT: THE ALERTS HAD NEVER BEEN ON, AND THE QUEUE WAS THE SECOND LOCK
+> The critical `next` RCE (GHSA-p293-qw3h-jr36, 16.0.0–16.3.2; prod was on 16.3.1) had **no
+> Dependabot PR**, and **two independent mechanisms** had to fail: alerts AND security updates were
+> **disabled at the repo level** (`403 Dependabot alerts are disabled`), so no security PR could ever
+> open; and the version path was blocked because `open-pull-requests-limit: 5` sat **full at 5/5 for
+> 19 days**. `npm audit` in `ci / verify` is what actually caught it — and `ci.yml` has **no
+> `schedule:`**, so it only ever runs on a push or a PR.
+> ⚠️⚠️ **A WRONG CLAIM I MADE AND THEN CORRECTED IN THE SAME FILE:** I wrote that raising the limit
+> was a *precondition* for security updates. **False** — *"Security update pull requests are not
+> subject to this limit and do not count toward it."* The limit constrains VERSION updates only.
+> Corrected in `docs/devops.md`; a wrong belief outlives a wrong config.
+> Now: alerts + security updates **ON** (0 open alerts, positive-controlled against a 558-package
+> SBOM reporting the patched versions), npm limit **10**, a **`react` group**, and `security` removed
+> from the labels — `labels:` applies to security *and* version PRs alike, so it stamped every
+> routine bump; nothing applies a security label automatically, so **none was created**. A security
+> PR is identified by its ALERT, not a label. `dependencies` created — and the proof arrived on its
+> own: raising the limit released **7 PRs within minutes, 7 of 7 labelled**, where 9 of 9 had carried
+> none. **Six Dependabot PRs closed with reasons**, incl. one that was a **downgrade back into the
+> vulnerable `sharp` range** and looked like the other eight.
+>
+> ## ④ 🎙️ 17-18 IS COMPLETE — FIVE OF SIX BANDS FULLY VOICED
+> Merged `clips-IvUJ-20260909-0617.zip` (253 MB, **11,246 clips**). **17-18 8,393/8,393 ✅** (+6,846,
+> closed by this batch) · 15-16 **4,646/11,848** (+4,400, **7,202 left**) · 12-14 complete. Stevie
+> 16,496 → **27,742** clips, 373 → 666 MB.
+> Verified before merging: 0 zero-byte, **0 overlap** (all new), **11,246/11,246 keys matched a real
+> corpus line**, **0 truncation outliers** (16.1 c/s median, max 1.8×), format identical to the store
+> (CBR 56 kbps @ 22050 Hz, read from real mp3 frame headers).
+> ⚠️ **LOUDNESS NOT INDEPENDENTLY VERIFIED** — no ffmpeg/ffprobe on this machine and no pure-python
+> mp3 decoder. Applied upstream at render time; that is the pipeline's claim, not a measurement.
+> ⚠️ **Stale comment, not fixed:** `chatterbox-render.py` says "32 kbps"; the real output is **56**.
+> **"Are they attached in their places?"** — key derivation proven: the runtime's own `clipKey()`
+> reproduces **20,447 of 20,447** stored keys, 0 mismatches (one function, imported by both player and
+> corpus builder). The corpus is DERIVED by driving each chapter's `CONFIG`, so its lines *are* what
+> the chapter speaks. All 11,246 in the live manifest (27,742); sampled TwoReceipts lines serve 200,
+> a nonexistent key 404s. A browser drive showed the player fetching the manifest and streaming a clip
+> by key. ⚠️ **What is NOT proven: no browser request for a NEW clip was ever caught** — they are
+> `scored`/`miss`/`reteach` lines needing real answers (and 3 wrong for a re-teach), which the drive
+> could not reach. Proven by construction and by serving, **not by ear**.
+>
+> ## ⑤ 🧯 BACKUP, DOCS, AND REACT
+> `backup.yml` **now fails when unconfigured** — it warned-and-skipped while going green, **22 of 22
+> recent runs `success` with 0 bytes written**. Watched red before trusting it; the error names the
+> missing secrets, and it now checks `PROD_DB_PASSWORD` too (the old gate checked 3 of the 4 it
+> needs). ⚠️ Reported not fixed: it does **not** call `scripts/assert-prod-ref.sh`.
+> ⚠️⚠️ **THREE OPERATIONAL DOCS NAMED THE DECOMMISSIONED SYDNEY PROJECT AS PRODUCTION** four days
+> after the region move — including `runbooks/rollback.md`, the page you read at 2am. Corrected to
+> `wrnjqjhrbnqxornmfisf` against three sources (the GitHub variable, the literal in
+> `assert-prod-ref.sh`, and the Supabase URL in the **served** bundle).
+> **React `19.2.8`**: both pins moved in ONE commit — exact-pinned + `peer react@"^X"` means a
+> react-dom-only PR **cannot `npm ci`** (#42 was red on that from 2026-08-25; #85 was the mirror).
+> A `react` dependabot group now stops the split. **The pins STAY and the group is the price of
+> keeping them** — remove the group and they must go caret in the same change (`docs/devops.md`).
+> ⚠️ **New in `docs/devops.md`: only 7 of 98 test files render React** (4 mount, 4 server-render). A
+> green suite is close to silent about what a child sees; the load-bearing evidence is
+> `test:chapters` (211), the 38 prerendered pages, and a browser drive with a positive control.
+>
+> ## ▶ OPEN
+> 1. 🔴 **NOT REACHED this week: the throttled performance measurement** (first load / TTI / bytes on
+>    `/`, `/diagnostic`, one chapter; largest asset; what one session pulls from the voice clips;
+>    whether a first visitor waits on the worker). Partial down payment: **the AR dependency is
+>    18.38 MB** (7.45 model + 10.63 wasm + 0.30 js, measured) against a **20s `LOAD_TIMEOUT_MS`, so
+>    anything under ~7.4 Mbit/s ALWAYS times out on first use**. Not a dead end — "Tap instead →" is
+>    offered from the first frame and is gated by `arLoadEscape.test.ts`. ⚠️ The signed-in camera path
+>    was never driven: a logged-out visitor is stopped by the consent gate and never fetches MediaPipe
+>    at all (0 requests, measured).
+> 2. 🔴 **NOT REACHED: the `counting` flake in `ready-bar.spec.ts`** (fix or quarantine) and **the
+>    accessibility pass** over /auth, /parent, /diagnostic, /help, legal. Known already: /auth's
+>    consent line **4.16:1** against a 4.5 floor, its link **3.04:1** — recorded, deliberately unfixed.
+> 3. 🔴 **Nobody has HEARD any clip.** The one action that closes it and ① together: play a 17-18
+>    chapter, get one wrong on purpose, listen to the re-teach.
+> 4. 🟡 **Voice remaining: 15-16, 7,202 lines.** The Kaggle `PLAN` renders it next; merge the zip here.
+> 5. 🟡 **Nightly E2E: the handoff's claim was STALE — two consecutive green SCHEDULED runs already
+>    exist** (08 and 09 Sep, `event: schedule`, on `main`). Historically 7 green / 15 red.
+> 6. ⏭️ **Six Dependabot PRs open**, all labelled, none a security update (0 open alerts). They wait
+>    until after launch. ⚠️ #85's successor will split react/react-dom again only if the new group is
+>    removed.
+> 7. 🔴 **Launch blockers, NARROWED by the founder's two calls**: B12 Supabase Pro before any live key
+>    (moot while nothing is charged) · **`DRAFT = true` deliberately, banner stays** · the free chapter
+>    set is a PROPOSAL · Vercel Web Analytics off. **Every Stripe item is out of scope this week.**
+> 8. ⏭️ Carried: account deletion never executed end-to-end; `migrate-prod` inert; Sydney still the
+>    rollback (~$10/mo); `entitled_chapters` has no caller; the `/menu` 6→2 RPC half uncommitted; the
+>    two auth migrations (`20260908120000`, `20260908120100`) still awaiting a hand-apply.
+
 
 > 🎙️ **2026-09-07→09 — CHATTERBOX IS IN PRODUCTION AND FOUR OF SIX BANDS ARE FULLY VOICED. Plus: the nightly went red from a login-counter that fired on every page load, a confirm-password field, profile creation deferred to email confirmation, the paywall switched OFF, and the discovery that prod deploy sits behind CI — which held four green-looking commits back until one rls_regression fix unblocked them.** `tsc` 0 · **1825 passed, 2 skipped** · `next build` 0 · sw v167 → **v176** · commits `3cee430`…`ee852a2f` (17), all pushed · two migrations written, NOT yet applied to prod.
 
@@ -186,11 +319,11 @@ Founder A/B'd Chatterbox Turbo (MIT) clones against the ElevenLabs originals and
 - ⚠️⚠️ **PROD DEPLOY IS BEHIND CI NOW (the 2026-09-05 gating), AND IT WORKS.** The migrations commit broke `ci / rls-tests` — its `rls_regression.sql` seeded owners into `auth.users` with no `email_confirmed_at` and relied on the OLD trigger to make their profiles, so the next `learners` insert failed `learners_created_by_fkey`. **Four green-looking commits (migrations, paywall-off, two voice batches) never reached production — prod sat at v171 for hours** while `promote` (`needs: ci`) skipped. `a944caf4` fixed the suite (confirmed owners); green there promoted all four at once. **The lesson: after every push, watch the Deploy run, not just the sw version** — a red CI now silently holds work back, which is the gate working as designed.
 
 ## ▶ OPEN
-1. 🔴 **VOICE REMAINING: 17-18 (6,846 left) and 15-16 (11,602 left)** — the two biggest bands, next Kaggle sittings (account quota 30 GPU-h/week, so 2-3 sessions). The `PLAN` renders 17-18 then 15-16. Merge each zip here.
+1. ⏭️ ~~**VOICE REMAINING: 17-18 (6,846 left) and 15-16 (11,602 left)**~~ **SUPERSEDED 2026-09-10 — 17-18 is COMPLETE; only 15-16 remains, 7,202 lines. See the 🚀 block.** Original text: — the two biggest bands, next Kaggle sittings (account quota 30 GPU-h/week, so 2-3 sessions). The `PLAN` renders 17-18 then 15-16. Merge each zip here.
 2. 🟡 **Nobody has HEARD the rendered clips on a real device beyond the founder's A/B pairs.** Every other check is a network request + duration/loudness sweep.
 3. 🟡 **6-8 corpus (4,006) reads complete, but 4 chapters speak from their own components** (`placeValue`, `additionTo100`, `subtractionTo100`, `money` return an empty `prompt`) — confirm their per-round lines are actually covered, not just the beat surface.
 4. ⏭️ **The stitcher is dead — whole-line via GPU replaced it.** The 🔊-block stitcher listening-test question is moot: Chatterbox renders whole lines cheaply, so nothing is stitched.
-5. 🟡 **Nightly E2E green was by MANUAL dispatch** on the fix commit; a green SCHEDULED run against a main containing the fix still worth confirming.
+5. ✅ ~~**Nightly E2E green was by MANUAL dispatch**~~ **CLOSED 2026-09-10 — two consecutive green SCHEDULED runs on `main` (08 + 09 Sep) measured.** Original note: on the fix commit; a green SCHEDULED run against a main containing the fix still worth confirming.
 6. ⏭️ `OrderDesk` and `LevelRun` (the two 9-11 storybook chapters) have no clips and are in no corpus — they run `SkillBeat`, not GameShell.
 7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky; the hull silence is still unmeasured (`docs/voice-check-for-tester.md`); the ElevenLabs MCP still holds the rotated key (measure with `curl`); the `/menu` 6→2 RPC half is still uncommitted.
 8. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase (deadline before Stage 4) · B12 Supabase Pro before any live key · **`DRAFT = true` — privacy policy and ToS still placeholders, and §8's refund sentence is unwritten and LIVE** · the free chapter set is a PROPOSAL · nine Dependabot PRs (#28–#47) · Vercel Web Analytics off. ⚠️ Paywall being OFF does not change these — it just means nothing is gated *yet*.
@@ -295,90 +428,7 @@ Aggregate-only by construction (`group by` + aggregates, so a per-child row is n
 7. ⏭️ **Storage: no exposure.** Supabase Storage is **empty** (0 buckets, 0 objects). The 4,011 voice clips / 96 MB are in **git**, present in the pushed tree and served by Vercel — three copies, better protected than the database.
 8. ⏭️ Ledger repaired: the four filenames are recorded and the synthetic rows are gone. `apply_migration` stamps its own timestamps, so this recurs — one tidy-up row may remain, harmless (push applies files MISSING from the ledger; an extra row is ignored).
 9. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase · B12 Supabase Pro before any live key · **`DRAFT = true` — the privacy policy is still a placeholder, and it publishes a 90-day retention promise the rollup must not contradict** · the free chapter set is a PROPOSAL · **nine Dependabot PRs open** · Vercel Web Analytics off.
-10. ⏭️ `backup.yml` still reports success while its dump step is skipped — filed, not fixed. Supabase Pro daily backups are real, so it is not a data-loss risk; it is a green tick that means nothing.
+10. ✅ ~~`backup.yml` still reports success while its dump step is skipped — filed, not fixed.~~ **FIXED 2026-09-09 (PR #91): it now FAILS and names the missing secrets; watched red before being trusted.** Original note: Supabase Pro daily backups are real, so it is not a data-loss risk; it is a green tick that means nothing.
 
 
-> 🗣️ **2026-09-04/05 — NOTHING MILO SAYS IS CUT OFF BY THE NEXT THING, IN ANY BAND — AND THE AUDIT THAT PROVED IT WAS ONLY HALF DONE THE FIRST TIME.** `tsc` 0 · **1743 passed, 1 skipped** · `next build` 0 · five commits pushed: `0dee8a2` `95db59e` `70ec4ee` `191918e` `2e43ffd` · sw v160 → **v162**.
->
-> Founder, across every band: *"voice aane lagti hai aur next chiz aa jaati hai toh woh cut ho jaati
-> hai"*. Two mechanisms, each correct-looking in isolation. **`speak()` SUPERSEDES** — right for a
-> tap, wrong for every round boundary, where a verdict, praise and the next question land on
-> 1300–1800ms timers shorter than any of them takes to say. And **`speakAfterCurrent` could not
-> work**: it waited on `_speaking`, which only turns true at the clip's `onStart` — one async
-> manifest lookup later — so a round advance calling it in the SAME TICK read "nothing is playing"
-> about a line already on its way. It only ever worked on a device with **no clips**, which is why
-> every drive here showed it working. Its queue was also one-deep: one callback per waiter meant the
-> first line's end released all of them and the last to wake cancelled the rest.
->
-> Engine (`useMiloSpeaker.ts`): a real FIFO waiting on IN-FLIGHT, **bounded to two** (a queue is a
-> way of running late); `afterSpeech(cb, ceilingMs)`; and `speakPaced`, whose visuals keep their OWN
-> timer (a walkthrough hung off `onstart` freezes for ever — shipped once) while each step ends at the
-> LATER of its dwell and Milo finishing. The price written down for the cut was never acceptable.
-> Full rule in chapter-craft.md §3.
->
-> ⚠️⚠️ **THE FIRST AUDIT WAS (b), NOT (a) — TRACED FROM THE SHELLS OUTWARD, NOT ENUMERATED — AND I
-> REPORTED IT AS COVERAGE.** Founder caught the sentence. The real enumeration found **141 direct
-> emission sites in 35 files plus 23 more reached only through local wrappers** (`say()`, `tell()`),
-> of which **35 fired a cancelling verb from a deferred path**. It found two chapters still broken
-> while the report said fixed: **BuildingBlocks and BlockYard speak the ROUND'S OWN QUESTION from a
-> timer 400ms in**, through `say()`, invisible to any `speak(` grep. Also settled: **the 72 chapter
-> ids are not 72 speech surfaces** — `teen/games/*.tsx` build `say:` STRINGS and never call the
-> speech layer, so GameShell is the sole emitter for every chapter it backs. That assumption is what
-> made the first audit feel complete.
->
-> ✅ **Gated, not remembered: `src/__tests__/voiceBoundaryVerb.test.ts`** fails if any file under the
-> chapter directories fires a cancelling verb from a deferred path (a `useEffect` body, or a
-> scheduler callback) unless it is in an ALLOW list **with a written reason**. Asserted EXACTLY, so a
-> new chapter cannot reintroduce it and a stale exception cannot sit there being a rule about
-> nothing. It counts local wrappers and carries a **positive control**, because a finder that has
-> stopped finding reports every chapter clean. Eleven deferred sites remain, each reasoned.
->
-> 🔧 **`scripts/break-check.sh` ported from `video_reviewer`** after a stray `git checkout` reverted a
-> fix twice in one session. ⚠️ **It exists in TWO repos with different runners now** (playwright there,
-> vitest here) — a fix to one will not reach the other; both CLAUDE.mds say so. Its live-break suite
-> paid for itself at once: the exit-5 case came back as 4, because **vitest reports a broken SETUP file
-> byte-identically to a broken SOURCE file**, so the reader stopped claiming to tell them apart.
->
-> 🎙️ **THE AUDIO ACCOUNTING THE FOUNDER ASKED FOR, measured against the live manifest — do not re-derive:**
->
-> | | corpus | rendered | left | note |
-> |---|---|---|---|---|
-> | 3–5 | 1,411 | 927 | **484** (17k chars) | ⭐ **a REAL total** — saturated at 12k draws (1.00×) |
-> | 6–8 | 4,006 | 57 | **3,949** (170k chars) | a floor; corpus grows 2.80× at 12k |
-> | 9–11 | 7,904 | 2,075 | **5,829** (397k chars) | a floor; grows 2.02× |
->
-> **Static is DONE** (210/210 Stevie + 55/55 Teddy + 56/56 6–8 walkthrough + 69/69 9–11 teach + 374/374
-> 9–11 miss). ⚠️ But the static corpus is built from CHAPTER surfaces only, so **the app's own screens
-> were never counted**: 76 lines / 2,148 chars at **0 rendered** (72 × `"Let's play {chapter}!"`, two
-> celebration lines, shop, voice picker), and that is a FLOOR — shop item lines, world labels and
-> MasteryState headlines are still uncounted. Needed in BOTH voices (menu obeys `BAND_VOICE`), so
-> ~152 clips, ~2k–4k credits. They are not silent today: `clipOnly` is only flipped by GameShell, so
-> outside a chapter a miss falls back to browser speech.
->
-> **Explanation: walkthrough yes, re-teach no.** `teach` 126/126 (3–5), 69/69 (9–11), 522/535 (12–18 —
-> the 13 missing are all the guided coach line, ~1k credits). `reteach` **93/577 · 26/4,289 ·
-> 82/10,912** — ~15,577 lines, ~925k chars, and that is the FLOOR.
->
-> 🛠️ **`_voiceCorpus68.test.ts` never counted the explanation at all** — it drove `beat.say` and
-> stopped, so 6–8 read as complete when it had never been measured. Now RENDERS `beat.Reteach` with a
-> stubbed speaker: no app change, no template copy to drift. ⚠️ The obvious fix (extract each
-> chapter's lines into a pure function) was built for four chapters and **thrown away** — the
-> component pairs `lines[i]` with `steps[i]`, so splitting them lets words and visuals drift apart
-> silently in twelve chapters to make a reporting script easier. First run: three chapters yielded
-> NOTHING (`ResizeObserver is not defined`; jsdom has none, FitBox/FitSlot need one) and a `catch {}`
-> made that identical to "says nothing" — **a quarter of the band missing from a run reporting
-> success**. A hole is now a RED.
->
-> ⚠️⚠️ **TWO SESSIONS RAN IN THIS ONE WORKING TREE AND ONE `git reset --hard` DESTROYED THE OTHER'S
-> UNCOMMITTED WORK.** Recovered via `git fsck --unreachable` (my own `git add` had written the blobs);
-> `break-check.sh` was then MERGED rather than overwritten, since the other session had edited it too.
-> **Use `git worktree` for the second session.** Watch for `src/__tests__/adminMetrics.test.ts` —
-> untracked and missing its vitest imports, so it reds the suite in the working tree while a clean
-> checkout of `main` is green.
->
-> ▶ **OPEN from this work:** ① **nothing has been verified BY EAR** — every check is a mock or a
-> network request. ② 6–8's `scored` half still reaches only 9 of 12 chapters (four return an empty
-> `prompt`); the re-teach half reaches all twelve. ③ the 76+ app-chrome lines are unrendered and
-> uncounted past that floor. ④ `OrderDesk`/`LevelRun` still have no clips and are in no corpus.
-
-_Older sessions (2026-06-15 → **2026-09-05**, including 🔊 **the voice-on-the-CDN day** (three silent defects in one chain, the first honest cost accounting, and the stitcher that failed its listening test) and 🧪 **the Chatterbox evaluation** (Resemble AI TTS in a scratch venv, Nano off the table, the GPU-cost argument), both moved 2026-09-09 — ⚠️ 🔊's live ▶ OPEN was lifted into the 🎙️ 2026-09-07→09 block (the stitcher is now moot — whole-line via GPU replaced it) and 🧪 is superseded by that block; including ✅ **the region-move CUTOVER day** (eleven dispatches, ten red, every red a real defect in the workflow — and the auth trigger a schema dump does not carry), moved 2026-09-06 — ⚠️ its still-live items (the Sydney rollback, `SUPABASE_SERVICE_ROLE_KEY` never exercised, the missing `production-db` environment, the uncommitted /menu RPC half, `entitled_chapters` with no caller) are carried in the ⚖️ 2026-09-06 block's ▶ OPEN item 7; including 🚀 **the Pro / region-move GO day** (the one-job workflow that diffs the same query on both databases) and 🌏 **the load-measurement day** (the database was in Sydney while every user was in the US, and the nightly backup had never run), both moved 2026-09-05 — ⚠️ their still-live items are carried in the ✅ region-move block above and in the 📊 2026-09-05 block's ▶ OPEN (`backup.yml` green while skipping, the `production-db` environment, and the two Supabase secrets); including 🎙️ **the first voice-rendering session** (17–18 got its 161 clips, 3–5 got Teddy Twinkle and 872 of 1,411 lines), moved 2026-09-04 the same day it was superseded — ⚠️ everything it left uncommitted was committed and deployed in the 🔊 block above, and its still-live items (nobody has heard it on a device, OrderDesk/LevelRun have no clips, the MCP key) are carried there; including 🌙 **the nightly-E2E day** (12 runs red since the day it was created, the AR escape hatch half off a 640×320 screen, and the CI-only text-metric difference), moved 2026-09-04 — ⚠️ its still-live items (the scheduled-run green, the hull silence, the `counting` flake, and every launch blocker in its ▶ OPEN) are carried in the 🔊 2026-09-04 block above; including 🗒️ **the second tester pass** (Great job!, the hull silence diary, the typed directions line in all 72 chapters), moved 2026-09-04 — ⚠️ its still-live items (the hull silence, the `counting` flake) are carried in the 🌙 block's ▶ OPEN, and its "PR #69 is open" line was already stale when archived (merged 2026-08-31 as `9a4bcc3`); including 📏🎓 **the student-review days** (the run resumes, Ready everywhere, praise to 6–8, the number-tag overhang) and 🐇 **the line behind mother** (even spacing for one species, and the tautology guarding the approved picture), all moved 2026-09-03 — ⚠️ their still-live items (recorded clips for 3–11, the `counting` flake in `ready-bar.spec.ts`) are already carried in the 🌙 block's ▶ OPEN and the 🎙️ 2026-09-03/04 block; including 🔒 **Stage 3** (the chapter gate and the screens — a lock that names what is behind it, and a paywall built inert but tested refusing), moved 2026-08-31 — ⚠️ its still-live items (the deferred watched purchase, B12, `DRAFT = true`, the free-set pick, the nine Dependabot PRs, Vercel Analytics, the prose drift) were lifted into the 🌙 block's ▶ OPEN rather than archived with it; including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
+_Older sessions (2026-06-15 → **2026-09-05**, including 🗣️ **the voice-cutoff day** (nothing Milo says is cut off by the next thing, in any band — and the audit that proved it was only half done the first time), moved 2026-09-10 — ⚠️ **its rule is NOT archived with it**: the speak-verb contract and `voiceBoundaryVerb.test.ts` are written up in **docs/chapter-craft.md §3**, and `scripts/break-check.sh` (ported there from `video_reviewer`, and existing in BOTH repos with different runners) is described in CLAUDE.md; including 🔊 **the voice-on-the-CDN day** (three silent defects in one chain, the first honest cost accounting, and the stitcher that failed its listening test) and 🧪 **the Chatterbox evaluation** (Resemble AI TTS in a scratch venv, Nano off the table, the GPU-cost argument), both moved 2026-09-09 — ⚠️ 🔊's live ▶ OPEN was lifted into the 🎙️ 2026-09-07→09 block (the stitcher is now moot — whole-line via GPU replaced it) and 🧪 is superseded by that block; including ✅ **the region-move CUTOVER day** (eleven dispatches, ten red, every red a real defect in the workflow — and the auth trigger a schema dump does not carry), moved 2026-09-06 — ⚠️ its still-live items (the Sydney rollback, `SUPABASE_SERVICE_ROLE_KEY` never exercised, the missing `production-db` environment, the uncommitted /menu RPC half, `entitled_chapters` with no caller) are carried in the ⚖️ 2026-09-06 block's ▶ OPEN item 7; including 🚀 **the Pro / region-move GO day** (the one-job workflow that diffs the same query on both databases) and 🌏 **the load-measurement day** (the database was in Sydney while every user was in the US, and the nightly backup had never run), both moved 2026-09-05 — ⚠️ their still-live items are carried in the ✅ region-move block above and in the 📊 2026-09-05 block's ▶ OPEN (`backup.yml` green while skipping, the `production-db` environment, and the two Supabase secrets); including 🎙️ **the first voice-rendering session** (17–18 got its 161 clips, 3–5 got Teddy Twinkle and 872 of 1,411 lines), moved 2026-09-04 the same day it was superseded — ⚠️ everything it left uncommitted was committed and deployed in the 🔊 block above, and its still-live items (nobody has heard it on a device, OrderDesk/LevelRun have no clips, the MCP key) are carried there; including 🌙 **the nightly-E2E day** (12 runs red since the day it was created, the AR escape hatch half off a 640×320 screen, and the CI-only text-metric difference), moved 2026-09-04 — ⚠️ its still-live items (the scheduled-run green, the hull silence, the `counting` flake, and every launch blocker in its ▶ OPEN) are carried in the 🔊 2026-09-04 block above; including 🗒️ **the second tester pass** (Great job!, the hull silence diary, the typed directions line in all 72 chapters), moved 2026-09-04 — ⚠️ its still-live items (the hull silence, the `counting` flake) are carried in the 🌙 block's ▶ OPEN, and its "PR #69 is open" line was already stale when archived (merged 2026-08-31 as `9a4bcc3`); including 📏🎓 **the student-review days** (the run resumes, Ready everywhere, praise to 6–8, the number-tag overhang) and 🐇 **the line behind mother** (even spacing for one species, and the tautology guarding the approved picture), all moved 2026-09-03 — ⚠️ their still-live items (recorded clips for 3–11, the `counting` flake in `ready-bar.spec.ts`) are already carried in the 🌙 block's ▶ OPEN and the 🎙️ 2026-09-03/04 block; including 🔒 **Stage 3** (the chapter gate and the screens — a lock that names what is behind it, and a paywall built inert but tested refusing), moved 2026-08-31 — ⚠️ its still-live items (the deferred watched purchase, B12, `DRAFT = true`, the free-set pick, the nine Dependabot PRs, Vercel Analytics, the prose drift) were lifted into the 🌙 block's ▶ OPEN rather than archived with it; including 💳 **Stage 2b** (the price ladder, checkout and the webhook — and the finding I published without measuring it), 🧾 **Stage 2a** (the seat materialiser) and 🚪 **the funnel day** (the check became optional, the demo route, and the `onComplete` corpse), all moved 2026-08-30 — ⚠️ their still-live items (B12, `DRAFT = true`, the nine Dependabot PRs, Vercel Analytics, the anon-INSERT prose drift) were checked against the 🔒 Stage 3 block first and are all recorded there; including 💳 **the billing-schema apply day** (applied to production and completely inert, and the rollback capture that caught a migration silently reverting a security fix), moved 2026-08-28 — ⚠️ its still-live items (B12, the nine untriaged Dependabot PRs, and RLS gating the RECORD rather than chapter CONTENT) were checked against the newer blocks first and are all still recorded there; including 🧾💳 **the Stage-1 billing schema day** (RLS, entitlement, the guard at all three write paths), moved 2026-08-27; including 🧾 **the ledger-repair day** (58 repo migrations relabelled to the versions production recorded, `perf_advisors` applied, and the dry-run computed rather than credentialled), moved 2026-08-25 — ⚠️ its one still-live item (the anon-INSERT prose drift) was lifted into the current ▶ OPEN rather than archived with it; including 🔐 **the road-to-a-paywall day** (the RLS suite that had never run once, three privacy gaps between the published copy and the system, the anon INSERT closed, and the security regression caught four minutes after shipping), moved 2026-08-25 — ⚠️ its still-live blockers (B1/B2 `DRAFT = true`) were lifted into the current ▶ OPEN rather than archived with it; including 🚦 **the production-readiness day** (three workflows green while doing nothing, the dead error sink, eight chapters unstartable on a landscape phone), moved 2026-08-25; including 🔬 the seven-learner-models day (moved 2026-08-24), 🕸️ the skill-graph sensitivity audit and 🎯 the diagnostic's 96–98% rebuild, both moved 2026-08-24; plus 🇺🇸 the US-spelling / SEO / region-migration day, 🔗 the social-handles day, ❓ the question-quality sweep and 🎚️ the adaptive-loop day, all moved 2026-08-22) live in [docs/handoff-archive.md](docs/handoff-archive.md) — not loaded at session start. `grep` it for a chapter or a decision. Moved there to keep this file inside its size budget: the two 2026-08-14 blocks (🧱 all six neon chapters onto GameShell · 🎛️ the band moving onto the 12–18 engine) on 2026-08-16, 🏗️ **The Empty Plot** (the last neon chapter + the 3D deletion + the explainer-film pipeline) on 2026-08-17, 📊 **The Loading Bay** (the first storybook chapter onto GameShell, and the mastery exit finally seen to fire) and 🚀 **the first launch-hardening day** (0 security advisories, crash screens, self-hosted fonts, the enforced CSP, legal plumbing, the launch runbook) both on 2026-08-17, and 🔒 **launch hardening round two** (the walkthrough dead end, the CSP gate that had been red for a day, `media-src` silently killing the recorded voice on mobile) on 2026-08-18, and 🕳️ **the plan-pointer P0** (`ChapterPortal` dropping `onComplete`, so no child's diagnostic plan advanced for three months — plus the one-emoji-to-crawlers SEO fix and the inert short-landscape gate) on 2026-08-18, and 🧭 **the 2026-08-18 architecture/security/devops day** (the layering refactor, V13–V20, the two vacuous scheduled sweeps) on 2026-08-19, and ⚡ **the performance pass** (57 MB of art revalidated on every request, every backdrop shipped as full-size PNG, every creature journey relaying out the document — plus the /game fit controller that turned out to be dead code) on 2026-08-19, and 🛡️ **the five-role red-team day** (the AR camera door that could strand a child for ever, the placement check dying on one Back press, and the regression I shipped inside my own fix) on 2026-08-20, and — moved 2026-08-24 — 🚚 **The Packing Shed + The Minibus Run** (the two 9–11 chapters that closed the multiplication/division content hole) and 🎯 **the diagnostic rebuild** (26–34% → 81–87%, the answer-surface fix and the first accuracy gate), and — moved 2026-08-23 — 📐 **the tester's-four-bugs / responsiveness-sweep / `useOnceGuard` day** (the StrictMode ref guard that froze ten chapters' demos in dev only, 683 → 2 sub-44px tap targets, and 20/20 storybook coverage), and — on 2026-08-21 — ⚡ **the font pass** (Gaegu preloading 90 subsets), 🔎 **the public-SEO pass**, 🏷️ **the AdaptiveLearn rename**, and 🏗️ **the move onto the company account** (whose still-open items were carried forward into the 🧭 block rather than archived with it)._
