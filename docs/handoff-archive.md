@@ -14924,3 +14924,188 @@ auto-memory `project-milo-{12-14,15-16,17-18}-curriculum`, `project-milo-teen-fr
     chapter, so a portrait screenshot is not evidence of anything.
 - **Repo:** github.com/Rafiquekuwari/milo — `main` auto-deploys to Vercel production (project `milo-story-mode`, team `team_HQsF3tfxAuGgZi7CcdhSdN7Y`).
 - **Detail:** the auto-memory `project-milo-*` files (one per chapter + sync/scaling/voice/launch-readiness).
+
+
+<!-- moved from handoff.md 2026-09-09 -->
+> 🔊 **2026-09-04 — THE VOICE WAS ON THE CDN THE WHOLE TIME AND NOBODY WAS ASKING FOR IT. THREE SILENT DEFECTS IN ONE CHAIN, ALL DEPLOYED AND VERIFIED FROM THE RUNNING SITE — THEN THE FIRST HONEST ACCOUNTING OF WHAT THE REST COSTS, AND THE STITCHER THAT WAS GOING TO PAY FOR IT FAILED ITS LISTENING TEST.** `tsc` 0 · **1710 passed, 1 skipped by design** · `next build` 0 · **NINE commits, all pushed and live**: `590232b` `9eb78bd` `33bb2cf` `aec3ee0` `31437c2` `cce03b2` `9385aa1` `dbe7508` `fada6d8` · sw v153 → **v160**. **EVERY STATIC LINE IN THE APP NOW HAS A CLIP, IN BOTH VOICES.**
+## ① 🔇 THE CHAIN, AND WHY EVERY LINK REPORTED SUCCESS
+The founder: *"3–5 aur 17–18 mein voice hi naii aa rahi"*, then *"12–14, 15–16 Chrome mein theek
+hai, 17–18 nahi"*, then *"Safari mein Stevie aati hai, Chrome mein kuch nahi"*. Three different
+faults wearing one symptom, each measured rather than reasoned about:
+1. **Nothing was deployed.** Prod's Stevie manifest held **433** keys (0 of 70 sampled 17–18
+   lines) and `/audio/XjGY…/manifest.json` answered **404** — the 3–5 voice folder did not exist
+   there. 1,109 clips and the band routing had sat uncommitted since the previous session.
+2. **`sw.js` had no `/audio/` branch**, so the manifest fell to the app-pages case —
+   stale-while-revalidate — and a device that had loaded the app kept the old key list. Measured
+   live: `caches.match(manifest)` in `milo-shell-v154` → **true**.
+3. **The 30-day header.** `/audio/:path*` served `max-age=2592000, stale-while-revalidate=31536000`,
+   right for a clip and wrong for the index. Read out of the founder's own Chrome: plain `fetch()`
+   → **433 keys**, `fetch(…{cache:'no-cache'})` → **670**, with the new service worker already
+   active. That is why 12–14/15–16 played (their keys were in the stale copy) and 17–18 did not.
+
+⚠️ **THE WHOLE CLASS IS "A STALE INDEX IS NOT AN ERROR, IT IS A SHORTER LIST."** Every dropped key
+is a clean miss, every miss falls back to browser speech, and Chrome ships no usable voice on most
+machines — so the app, the CDN, the build and every log reported success while a child heard
+silence. **Anything that GATES a lookup must revalidate even when the things it gates may not.**
+Both halves shipped: the header (`max-age=0, must-revalidate` on `manifest.json`/`fragments.json`,
+placed AFTER the general rule because the last match wins — above it, it is inert, which is the
+version I wrote first and `assetCacheHeaders.test.ts` caught), and `cache: 'no-cache'` on the two
+fetches, because a header cannot reach a browser that already holds the 30-day copy.
+
+## ② ⚠️ CLIP-ONLY WITHOUT A STITCHER IS SILENCE, NOT FALLBACK — AND THE NOTE IS AT THE SWITCH
+`setClipOnly` does not mean "prefer clips": it suppresses the browser fallback, so a line with no
+clip is **silent**, and nothing logs it. 12–14 survives it ONLY because its templated lines are
+stitched from `frag/`. The next person to reason *"12–14 works fine, turn it on for 3–5"* ships a
+child a silent chapter. Written on `setClipOnly` itself and on the GameShell effect that flips it —
+where somebody stands when they widen that band check — not in a doc.
+
+## ③ 💸 THE MISS LINE WAS BEING RECORDED TEN TIMES OVER
+GameShell spoke `It was X. <encouragement>` as ONE utterance, so the clip layer saw one line and
+every reveal needed recording once per encouragement — and there are ten. **3,640 lines / 114,506
+chars as one utterance against 374 / ~4,600 split**, for audio nobody can tell apart. Now two
+utterances, and 9–11's whole wrong-answer bucket is **374/374** for the price of a rounding error.
+⚠️ `speakSteps`, never `speak` + `speakAfterCurrent`: `_speaking` only turns true at the clip's
+`onStart`, so a synchronous second call takes the else branch and `_doSpeak` **cancels** the line
+still loading — the first half vanishes on exactly the machines that have clips.
+⚠️ And `voice-generate.mts` could lose a whole run to one bad packet: an uncaught `fetch` rejection
+(`ETIMEDOUT`, twice) threw out of the render loop and killed the process **before the manifest
+write**, leaving hundreds of clips on disk and unlisted — ① in miniature. One retry, then skip.
+
+## ④ 📊 WHAT IS RENDERED, AND WHAT THE REST COSTS
+Live on prod, verified from the running deployment: Stevie **2,912 keys** (was 433 this morning),
+Teddy **927**. 9–11 `teach` 69/69 · `miss` 374/374 · `scored` 1590/3172 · `reteach` 0. **All 265
+number-free lines across every band are rendered, plus 6–8's 56-line walkthrough.**
+Rendered cheapest-first *within* each value bucket — measured, that buys 1,361 lines against 719.
+⚠️ **The API key carried its own 40,000 cap** while the plan showed 121,022, so a run 401'd at a
+third of the month. Raised; check it before concluding a month is spent.
+⚠️ **Characters are NOT credits at a fixed ratio.** ~1:1 on long lines, **~0.6:1** on short ones
+(15,705 predicted, 7,775 billed). Size a run, then let the API stop it; do not plan to the count.
+
+**The whole-line remainder, re-measured at 12,000 draws instead of 1,500 — and it MOVED:**
+
+| band | corpus @1.5k | @12k | growth | rendered | remaining credits |
+|---|---|---|---|---|---|
+| 3–5 | 1,411 | 1,411 | **1.00×** | 927 | **26,088** — a real total |
+| 12–14 | 1,666 | 1,687 | **1.01×** | — | **112,683** — a real total |
+| 6–8 | 2,602 | 7,294 | 2.80× | 56 | ≥424,073 |
+| 9–11 | 7,904 | 15,969 | 2.02× | 1,946 | ≥1,152,964 |
+| 15–16 | 11,858 | 28,467 | 2.40× | — | ≥2,560,133 |
+| 17–18 | 8,638 | 28,620 | 3.31× | — | ≥1,785,722 |
+| **total** | | | | | **≥6,061,663 — 50 months** |
+
+**≥2,343,335 at 1,500 draws became ≥6,061,663 at 12,000.** Only 3–5 and 12–14 converge; their
+vocabularies are small. For the other four, whole-line voice is not a project with a price, it is a
+**subscription** — and every new chapter adds to it.
+⚠️ **THE EXPENSIVE PART IS NOT THE EXPLANATION — THE FOUNDER'S READ, AND IT HELD.** The walkthrough
+is static and was already almost entirely recorded (15–16 and 17–18 sat at **zero** remaining,
+because those lines are literals the grep corpus took months ago). What costs is the **re-teach**,
+which `explainBeats(r)` rebuilds from each round's numbers: 9–11 has 554 number-free re-teach lines
+against **6,265** numbered; 15–16 has 6 against **14,134**.
+⚠️⚠️ **AND A CORRECTION THAT TRAVELLED TWO MESSAGES BEFORE IT WAS CHECKED.** I put the static
+remainder at **113,063** credits by testing for a DIGIT. In 3–5 and 6–8 the numbers are spelled as
+WORDS — *"four and seven. Which sign is right?"* — so **98%** of that band's "no digit" lines were
+per-round lines the test could not see. Counting number-words as numbers took the static remainder
+to **16,009** and 6–8's share from 259,510 to **1,391**. Same class as the "nearly flat" wording
+below: **a proxy quietly standing in for the property it approximates.**
+
+## ⑤ 🔬 THE MEASUREMENT THE WHOLE STITCHER DECISION RESTS ON — AND ITS HONEST WORDING
+Founder's challenge: *"our questions aren't limited, they're adaptive — did generating audio for a
+limited set break that?"* No: the wiring is one-way (the chapter builds its line, the player hashes
+it, a miss falls back) and the corpus is built by DRIVING the real generators. But the second half
+of his question was right and cost me a claim. Escalating the sweep:
+
+| chapter | whole lines 1.5k→24k | templates | literal runs |
+|---|---|---|---|
+| goingViral 15–16 | 821 → **1,299** | **13** flat | **34** flat |
+| coinTray 9–11 | 920 → **1,653** | 391 → **425 flat at 6k** | 434 |
+| packingShed 9–11 | 1,839 → **2,501** | 706 → **848 flat** | 819 |
+| walkHome 17–18 | 1,562 → **9,123** ↑ | 301 → **513** ↑ | 121 → 137 |
+
+Pushed the worst case further, runs only — **1.5k/6k/24k/48k/96k → 125, 130, 138, 140, 144**
+(+4.0%, +6.2%, +1.4%, +2.9%). Over **64× the draws: lines 17×, templates 1.9×, runs 1.15×**.
+⚠️ **So the right words are "bounded in practice, still creeping" — NOT "saturated".** I first
+wrote *"nearly flat"*, and the founder's correction is the rule worth keeping: **a word like
+"nearly flat" does the work of "saturated" without having measured it.** Quote a run count with the
+draw count it was measured at. The argument survives its own worst case — walkHome's NEW templates
+are new combinations of runs it already has — but it is a working ceiling (~150 runs), not a proof.
+⚠️ **And every whole-line figure in this repo is now a FLOOR and must travel as `>=`** — the
+drivers sample 1,500 draws, which is not a generator's space. Written into all three corpus
+drivers' headers so the next reader cannot pick the number up as a total.
+
+## ▶ OPEN
+1. 🔴 **THE STITCHER FAILED ITS LISTENING TEST, AND THAT IS THE OPEN QUESTION.** One real 12–14
+   line was assembled from its six existing fragments and put beside the whole-line recording of
+   the same sentence: *"Fly the drone to the halfway point between 2, 2 and 4, 6."* Founder, on
+   the pair: *"B natural lagg raha hai."* Measured alongside: stitched ran **7.84s against 5.65s**;
+   silence-trimming each fragment took it to 6.38s (+14%), and the residue is **delivery, not
+   padding** — a lone `"2"` is 0.85s after trimming because it was recorded as its own sentence.
+   Playing it through the real `<audio>` + `playbackRate` + `preservesPitch` path added a further
+   **~120ms per join** that no trimming can reach (`/tmp/abtest/rate-test.html`, the harness).
+   ⚠️ Note what this rules out: **the founder's own fallback — "record whole templates, stitch only
+   the numbers" — IS what was tested.** The run *"Fly the drone to the halfway point between"* is a
+   single recording. So that option is not a way out; it is the thing that failed.
+   The one cheap experiment left is **prosody-in-context**: fragments were recorded in isolation, so
+   each ends on a falling tone. Re-render the number clips with list intonation (`"2,"` `"4,"` `"6."`)
+   — about 20 credits — and listen again. If that fails, whole-line is the answer and the cost above
+   is the cost.
+2. ⏭️ **The best remaining spend is 3–5** (539 lines, ~26k, and the band is measured saturated so it
+   never asks again). 26,072 credits are left this month; billing has run ~60% of the estimate.
+3. 🔴 **6–8 has no per-round clips at all** (only its 56 walkthrough lines). 4 of its 12 chapters
+   still cannot be enumerated from the beat surface: `placeValue`, `additionTo100`,
+   `subtractionTo100` and `money` return an empty `prompt` and speak from their own components.
+4. ⏭️ 15–16 and 17–18 now play a clip for the encouragement and browser speech for `It was X.` —
+   mixed within one breath. Their reveal halves need the 37 configs (exported this session) driven.
+5. 🕒 **Nightly E2E has still never gone green on a SCHEDULED run against a main containing the fix.**
+   `gh run list --workflow "Nightly E2E"`, look for `schedule` + `success` at or after `22d75fb`.
+6. 🔴 **The hull silence is still unmeasured** — `docs/voice-check-for-tester.md` ready to forward.
+7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky.
+8. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase is deferred with a hard
+   deadline BEFORE STAGE 4 ([docs/billing-stage-3.md](docs/billing-stage-3.md) §0) · B12 Supabase Pro
+   before any live key · **`DRAFT = true` — the privacy policy and ToS are still placeholders, and you
+   cannot charge a parent under one** · the free chapter set is still a PROPOSAL · **nine Dependabot
+   PRs open and untriaged (#28–#47)**, do not merge as a batch · Vercel Web Analytics still off · two
+   prose-drift notes (the `error_events` fkey comment, the anon-INSERT comments).
+9. ⏭️ **Nobody has HEARD any of the rendered clips on a real device** beyond the A/B pair above.
+   Every other check is a network request plus a patched `play()`.
+10. ⏭️ **`OrderDesk` and `LevelRun` — the two 9–11 storybook chapters — have no clips** and are in no
+   corpus: they run `SkillBeat`, not GameShell.
+11. ⏭️ The ElevenLabs **MCP** still holds the rotated key; measure the key with `curl`, never it.
+12. ⏭️ Uncommitted and untouched all session: the `/menu` 6→2 RPC half (`menu/page.tsx`, the three
+   repositories) — deliberately kept out of the voice deploys.
+
+> 🧪 **2026-09-05 — CHATTERBOX TTS (Resemble AI, MIT) EVALUATED IN A SCRATCH VENV. Founder's reason: 6–8 and 9–11 corpora are UNBOUNDED, so whole-line rendering on a per-character API is a subscription, not a project. Nothing installed into this repo; nothing integrated; `voice-generate.mts` untouched. Turbo English rendered five lines with the BUILT-IN voice — our ElevenLabs voice was deliberately NOT cloned, so no provider-terms question sits in the middle of the evaluation. Decision is by ear and is the founder's.**
+>
+> ⚠️ **THE TIMINGS FROM THIS MACHINE ARE ABOUT THIS MACHINE.** M1, **8 GB**. Measured mid-render:
+> **7.60 GB of 9.22 GB swap in use, 11% memory free** — and RTF climbed **16.4 → 35.7 → 41.6** across
+> lines 1–3, which is thrashing, not the model. Founder's call, and it is the right one: *"every
+> timing number from this machine is about the laptop and none of it informs the decision"*, so Nano
+> was dropped rather than measured (it shrinks only T3; the 1,015 MB vocoder is unchanged, so it
+> would not escape swap either). **Do not quote these seconds as Chatterbox's speed.**
+>
+> ⚠️⚠️ **`chatterbox-tts` CRASHES ON IMPORT IN A FRESH VENV WITH A MESSAGE THAT NAMES NOTHING TRUE:**
+> `TypeError: 'NoneType' object is not callable` from `perth.PerthImplicitWatermarker()`. The real
+> cause is `resemble-perth` importing **`pkg_resources`**, which setuptools removed in 81 — and a
+> modern venv ships no setuptools at all. Fix: **`pip install "setuptools<81"`**. Another error
+> message that lies about its own cause; the class was `None` because a nested import had failed
+> silently. ⚠️ **The watermarker was NOT disabled to get past it** — that changes the output, and an
+> evaluation of audio you have altered is not an evaluation.
+>
+> ⚠️ **LOADED SIZE ≠ DOWNLOAD SIZE. Size a machine from the loaded figure.** Both repos ship a
+> **1,007 MB `s3gen.safetensors` the loader never touches** (it uses the meanflow variant):
+>
+> | | download | actually loaded |
+> |---|---|---|
+> | Turbo | 3,857 MB | **2,847 MB** (t3 1,826 · s3gen_meanflow 1,015 · ve 5) |
+> | Nano | 2,860 MB | **1,850 MB** (t3 **829** · s3gen_meanflow 1,015 · ve 5) |
+>
+> 🚫 **NANO IS OFF THE TABLE FOR PRODUCTION UNTIL UPSTREAM SHIPS A LOADER.** `chatterbox-tts 0.1.7`
+> (latest) has none — `chatterbox.tts_turbo` hardcodes `t3_turbo_v1.safetensors` and Turbo's
+> hyper-parameters. A hand-written adapter loads it (the architecture is already in the package;
+> four values come off `t3_nano_v1.yaml`), which is fine for an evaluation and is an unsupported path
+> against moving upstream code. Founder: revisit if upstream ships one.
+>
+> 🎯 **THE MEASUREMENT THAT WOULD ACTUALLY DECIDE IT, AND IT IS NOT ON A MAC: rendering cost on a
+> RENTED GPU.** Rough shape from the founder: ~20,000 lines at ~3 s each is ~17 hours of audio, which
+> at better-than-realtime is single-digit dollars of compute — against the ≥6,061,663 credits (~50
+> months) the whole-line remainder costs on ElevenLabs. **Not chased now.** Scratch venv, script and
+> the five wavs: `scratchpad/chatterbox/` (session-local, will not survive).
