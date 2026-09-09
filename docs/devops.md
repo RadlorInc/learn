@@ -363,3 +363,42 @@ nights.
 where nothing is wrong, that is not "tune the threshold" — `--audit-level=high` is the same
 predicate `ci / verify` already enforces on every push, so a disagreement between them means the
 *instrument* is wrong, not the level.
+
+### Are the exact pins on `react` / `react-dom` earning their keep?
+
+**Decision 2026-09-09: keep the exact pins, and keep the Dependabot group that makes them workable.
+The two are now one decision, not two.**
+
+`package.json` pins both exactly (`"react": "19.2.8"`, `"react-dom": "19.2.8"`) while everything else
+in the app floats on a caret. That is defensible on its own terms: React is the renderer, a patch
+release can change reconciliation or effect timing in ways no test here would catch, and this repo's
+React-rendering coverage is genuinely thin — **7 of 98 test files render React at all** (4 mount via
+`react-dom/client` + `act`, 4 server-render via `react-dom/server`), so the suite going green says far
+less about a React bump than it does about a `zustand` one. The strongest automated evidence is
+`next build` prerendering **38/38 static pages**, which is `react-dom/server` executing every static
+route. An exact pin means the version only moves when someone decides it moves.
+
+⚠️ **But the pin is precisely what creates the split.** Because both halves are exact, Dependabot
+raises them as two PRs, and `react-dom@X` declares `peer react@"^X"`, so the react-dom half can never
+install alone. That cost two PRs and two separate investigations — #42 (react-dom moved, react left
+behind, red on `npm ci` from 2026-08-25) and #85 three weeks later, the same fault mirrored.
+
+**So the honest statement of the trade is: we are paying for the pin with a grouping rule.** Keeping
+the pin without the `react` group in `.github/dependabot.yml` is not "keeping the pin", it is
+choosing to receive a broken PR every few weeks and rediscover why. If the group is ever removed,
+the pins must go caret in the same change.
+
+⚠️ **Not re-litigated here, deliberately.** Moving to `^19.2.8` would delete the split at the cost of
+letting the renderer move on its own — that is a separate decision, and it should be made with this
+paragraph in front of you rather than as a side effect of a dependency PR.
+
+**Scanned for a second pair with the same shape: there is none.** Only three packages are
+exact-pinned — `react`, `react-dom`, and `eslint-config-next` (16.2.6). The last one peers on
+`eslint >=9.0.0` and `typescript >=3.3.1`, and **both of those float** (`^9`, `^5`) against
+wide open-ended ranges, so neither half can be stranded by the other. The trap needs *both* sides
+exact *and* a tight peer range, which only the React pair has.
+
+⚠️ Worth noting while looking, and **not fixed here**: `eslint-config-next` is pinned at **16.2.6**
+while `next` itself is at **16.3.4** — the Next lint config is two minors behind the Next it lints.
+It sits in the `dev-tooling` group, so a bump will be proposed there; it is a staleness, not the
+peer trap.

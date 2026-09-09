@@ -30,6 +30,21 @@ updates:
     # arithmetic. This governs VERSION updates only (see the note above).
     open-pull-requests-limit: 10
     groups:
+      # ⚠️ THE REACT PAIR MUST ARRIVE AS ONE PR OR IT CANNOT INSTALL AT ALL.
+      # `react` and `react-dom` are both EXACT-pinned, so Dependabot raises them separately — and
+      # `react-dom@X` declares `peer react@"^X"`, so the react-dom half alone dies:
+      #     npm error While resolving: react-dom@19.2.8
+      #     npm error Found: react@19.2.4
+      #     npm error Conflicting peer dependency: react@19.2.8
+      # That is not hypothetical. PR #42 (react-dom moved, react left behind) was red on `npm ci`
+      # from 2026-08-25 until it was closed, and PR #85 was the SAME failure mirrored (react moved,
+      # react-dom left behind) three weeks later. Grouping them is what stops a third round.
+      # ⚠️ Deliberately narrow: `react` and `react-dom` ONLY. `@types/react*` float on `^19` and are
+      # already caught by dev-tooling below, so adding them here would just move noise around.
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
       # Batch low-risk dev/tooling bumps into one PR to cut noise.
       dev-tooling:
         patterns:
