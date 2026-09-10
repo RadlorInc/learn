@@ -10,6 +10,18 @@ import {
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
 
+/* The adult surface's palette, from globals.css — same tokens as the other parent screens. */
+const P = {
+  page:   'var(--paper)',
+  card:   'var(--paper-soft)',
+  edge:   'var(--card-border)',
+  ink:    'var(--ink)',
+  ink2:   'var(--ink-soft)',
+  ink3:   'var(--ink-muted)',
+  accent: 'var(--milo-orange)',
+} as const
+
+
 export default function GradesPage() {
   const router = useRouter()
   const [grades,    setGrades]    = useState<GradeSummary[]>([])
@@ -33,11 +45,11 @@ export default function GradesPage() {
   }
 
   if (loading) return (
-    <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#FCEAB6', fontSize:48 }}>🎓</div>
+    <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:P.page, fontSize:48 }}>🎓</div>
   )
 
   return (
-    <div style={{ minHeight:'100dvh', background:'linear-gradient(180deg,#FFF4D6 0%,#f9f9f9 40%)', fontFamily:'var(--font-body)' }}>
+    <div style={{ minHeight:'100dvh', background:P.page, fontFamily:'var(--font-body)' }}>
 
       {/* Top bar */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px', background:'#fff', boxShadow:'0 1px 8px rgba(0,0,0,0.06)', position:'sticky', top:0, zIndex:10 }}>
@@ -46,9 +58,9 @@ export default function GradesPage() {
         <div style={{ width:64 }} />
       </div>
 
-      <div style={{ padding:'20px 16px', maxWidth:480, margin:'0 auto' }}>
+      <div className="adult-shell">
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-          <p style={{ fontSize:14, color:'#6b7280', margin:0, lineHeight:1.4, maxWidth:300 }}>
+          <p style={{ fontSize:14, color:P.ink2, margin:0, lineHeight:1.4, maxWidth:340 }}>
             A grade picks one age band and the chapters it includes. Add children to a grade to scope what they see.
           </p>
           <button onClick={() => setEditing('new')} style={{ flexShrink:0, background:'#F26B2C', color:'#fff', border:'none', borderRadius:50, padding:'9px 16px', fontSize:13, fontWeight:700, cursor:'pointer' }}>+ New</button>
@@ -58,7 +70,7 @@ export default function GradesPage() {
           <div style={{ textAlign:'center', padding:'48px 24px', display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
             <div style={{ fontSize:56 }}>🎓</div>
             <h2 style={{ fontSize:20, fontWeight:800, color:'#1a1a1a', margin:0 }}>No grades yet</h2>
-            <p style={{ fontSize:14, color:'#888', margin:0, maxWidth:280, lineHeight:1.5 }}>
+            <p style={{ fontSize:14, color:P.ink2, margin:0, maxWidth:340, lineHeight:1.5 }}>
               Create a grade, pick its age band, and choose which chapters it includes.
             </p>
             <button onClick={() => setEditing('new')} style={{ marginTop:4, background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', color:'#fff', border:'none', borderRadius:50, padding:'14px 30px', fontSize:16, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 20px rgba(242,107,44,0.3)' }}>
@@ -66,15 +78,15 @@ export default function GradesPage() {
             </button>
           </div>
         ) : (
-          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          <div className="card-grid">
             {grades.map(g => {
               const total = chaptersForAge(g.age_group).length
               return (
-                <div key={g.id} style={{ background:'#fff', borderRadius:18, padding:'16px', boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>
+                <div key={g.id} style={{ background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:18, padding:'16px', boxShadow:'0 2px 12px rgba(61,37,22,0.05)' }}>
                   <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:10 }}>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:17, fontWeight:800, color:'#1a1a1a' }}>{g.name}</div>
-                      <div style={{ fontSize:13, color:'#6b7280', marginTop:3 }}>
+                      <div style={{ fontSize:17, fontWeight:800, color:P.ink }}>{g.name}</div>
+                      <div style={{ fontSize:13, color:P.ink2, marginTop:3 }}>
                         {AGE_GROUP_LABELS[g.age_group]} · {g.chapterCount}/{total} chapters · {g.learnerCount} {g.learnerCount === 1 ? 'child' : 'children'}
                       </div>
                     </div>
@@ -175,9 +187,11 @@ function GradeModal({ grade, onClose, onSaved }: {
 
   const allSelected = bandChapters.length > 0 && bandChapters.every(c => selected.has(c.id))
 
+  /* Bottom sheet on a phone, centred dialog above 768px — the same `.sheet-wrap`/`.sheet-card`
+     pair the add-learner form uses, so the two sheets in the parent surface behave alike. */
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:50, background:'rgba(0,0,0,0.45)', display:'flex', alignItems:'flex-end', justifyContent:'center' }} onClick={onClose}>
-      <div style={{ background:'#fff', borderRadius:'24px 24px 0 0', padding:'24px 20px 40px', width:'100%', maxWidth:480, maxHeight:'90dvh', overflowY:'auto', animation:'slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1)' }} onClick={e => e.stopPropagation()}>
+    <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label="New grade" style={{ position:'fixed', inset:0, zIndex:50, background:'rgba(61,37,22,0.45)' }} onClick={onClose}>
+      <div className="sheet-card" style={{ background:P.card, padding:'24px 20px 40px', overflowY:'auto', boxSizing:'border-box' }} onClick={e => e.stopPropagation()}>
         <h3 style={{ fontSize:20, fontWeight:800, margin:'0 0 18px', color:'#1a1a1a' }}>{isEdit ? 'Edit grade' : 'New grade'}</h3>
 
         <p style={{ fontSize:13, fontWeight:700, color:'#6b7280', margin:'0 0 8px' }}>Grade name</p>
@@ -236,7 +250,6 @@ function GradeModal({ grade, onClose, onSaved }: {
           {loading ? 'Saving…' : isEdit ? 'Save changes' : 'Create grade 🎓'}
         </button>
       </div>
-      <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
     </div>
   )
 }

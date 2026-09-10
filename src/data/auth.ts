@@ -38,6 +38,20 @@ export function verifyEmailToken(tokenHash: string, type: EmailOtpType) {
   return createClient().auth.verifyOtp({ token_hash: tokenHash, type })
 }
 
+/**
+ * Mail a password-reset link. The link lands on `/auth/set-password` carrying
+ * `type=recovery`, which that page ALREADY handles — its own header comment says
+ * `type` is read from the query "so the same page serves a `recovery` link if a
+ * reset flow is ever added". This is that flow; nothing new receives it.
+ *
+ * ⚠️ The caller must NOT branch its message on the result. Supabase returns success
+ * for an address that has no account, and that is the behaviour we want: telling a
+ * caller "no such account" is the account-enumeration leak V10 closed on signup.
+ */
+export function sendPasswordReset(email: string, redirectTo: string) {
+  return createClient().auth.resetPasswordForEmail(email, { redirectTo })
+}
+
 /** Set the signed-in user's password. Requires a session (from an invite link or a sign-in). */
 export function setPassword(password: string) {
   return createClient().auth.updateUser({ password })

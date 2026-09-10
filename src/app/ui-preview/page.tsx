@@ -21,6 +21,7 @@ import { notFound } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import CheckDoor from '@/shared/ui/CheckDoor'
+import { RolePicker, EmptyDashboard, AddLearnerModal } from '@/app/parent/page'
 import { planLine, swapCopy } from '@/core/planCopy'
 
 function Surfaces() {
@@ -54,6 +55,48 @@ function Surfaces() {
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button style={{ minHeight: 44, borderRadius: 50, padding: '10px 20px', border: 'none', background: '#F26B2C', color: '#fff', fontWeight: 800 }}>{swap.cta}</button>
             <button style={{ minHeight: 44, borderRadius: 50, padding: '10px 20px', border: '2px solid #bbb', background: 'transparent', fontWeight: 700 }}>{swap.alt}</button>
+          </div>
+        </div>
+      )}
+      {/* ⚠️ THE THREE PARENT SURFACES A HARNESS CANNOT OTHERWISE REACH, and each for its own
+          reason: the role picker needs an account whose `profiles.role` is still null, the empty
+          dashboard needs one with zero learners, and the add-learner sheet needs a tap inside a
+          signed-in dashboard. A planted JWT does not get you there — the RLS reads 401 and the
+          page renders its loadError branch instead, which is this repo's own
+          "a check pointed at a world where the bug cannot occur".
+
+          ⚠️ These render the REAL components, imported. What they prove is LAYOUT at a size —
+          nothing here says the screens are reachable, that `setMyRole` fires, or that the
+          dashboard around them agrees. `onPick`/`onAdd` are deliberately inert. */}
+      {p === 'role'  && <div data-t="role" style={{ width: '100%' }}><RolePicker name="Sarah" onPick={() => {}} /></div>}
+      {p === 'empty' && <div data-t="empty" className="adult-shell"><EmptyDashboard onAdd={() => {}} /></div>}
+      {p === 'sheet' && <div data-t="sheet"><AddLearnerModal onClose={() => {}} onAdded={() => {}} /></div>}
+
+      {/* The `.card-grid` used by the grade list, the invite lists and class triage. ⚠️ SAME NARROW
+          CLAIM AS `?p=cols`: this is the CLASS with placeholder children, not those pages — it
+          catches the breakpoints regressing and cannot catch a page stopping using the class.
+          Those three pages are not reachable from a harness at all (a planted JWT is refused by
+          `getCurrentSession`, so each one bounces to /auth or sits on its loading splash), which
+          is exactly why their own appearance is source-verified rather than driven. */}
+      {p === 'cards' && (
+        <div data-t="cards" className="adult-shell">
+          <div className="card-grid">
+            {[1, 2, 3, 4, 5].map(n => (
+              <div key={n} style={{ background: 'var(--paper-soft)', border: '1.5px solid var(--card-border)', borderRadius: 18, padding: 16 }}>card {n}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* The dashboard's two-column grid. ⚠️ STATED NARROWLY ON PURPOSE: this is the `.dash-cols`
+          CLASS at a size, with placeholder children — NOT the dashboard, which needs a learner's
+          data to render at all. It catches the breakpoint regressing; it cannot catch the
+          dashboard stopping using the class. Read it as "the grid still switches", nothing more. */}
+      {p === 'cols' && (
+        <div data-t="cols" className="adult-shell">
+          <div className="dash-cols">
+            <div className="dash-rail" data-t="cols-rail" style={{ background: 'var(--paper-soft)', border: '2px solid var(--card-border)', borderRadius: 20, padding: 20 }}>rail</div>
+            <div data-t="cols-body" style={{ background: 'var(--paper-soft)', border: '2px solid var(--card-border)', borderRadius: 20, padding: 20 }}>body</div>
           </div>
         </div>
       )}
