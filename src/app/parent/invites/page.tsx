@@ -10,6 +10,18 @@ import {
 } from '@/data/repositories'
 import type { Learner, InviteWithLearner } from '@/data/supabase/types'
 
+/* The adult surface's palette, from globals.css — same tokens as the other parent screens. */
+const P = {
+  page:   'var(--paper)',
+  card:   'var(--paper-soft)',
+  edge:   'var(--card-border)',
+  ink:    'var(--ink)',
+  ink2:   'var(--ink-soft)',
+  ink3:   'var(--ink-muted)',
+  accent: 'var(--milo-orange)',
+} as const
+
+
 export default function InvitesPage() {
   const router = useRouter()
   const [learners,   setLearners]   = useState<Learner[]>([])
@@ -75,7 +87,7 @@ export default function InvitesPage() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FCEAB6', fontSize: 36 }}>🦊</div>
+    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: P.page, fontSize: 36 }}>🦊</div>
   )
 
   const selectedLearner = learners.find(l => l.id === selectedId)
@@ -97,11 +109,11 @@ export default function InvitesPage() {
         <BackButton href='/parent' label='← Dashboard' />
         <div>
           <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-dark)' }}>Share Access</div>
-          <div style={{ fontSize: 12, color: '#888' }}>Invite anyone to view a learner&apos;s progress</div>
+          <div style={{ fontSize: 12, color: P.ink2 }}>Invite anyone to view a learner&apos;s progress</div>
         </div>
       </div>
 
-      <div style={{ padding: '20px 16px', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="adult-shell" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Received invites */}
         {received.length > 0 && (
@@ -109,7 +121,8 @@ export default function InvitesPage() {
             <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 14px', color: 'var(--text-dark)' }}>
               📬 Invites waiting for you
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* A grid once two invite cards fit side by side — this was one column at 1280px. */}
+            <div className="card-grid">
               {received.map(inv => (
                 <div key={inv.id} style={{
                   display: 'flex', alignItems: 'center', gap: 12,
@@ -226,7 +239,7 @@ export default function InvitesPage() {
             <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 14px', color: 'var(--text-dark)' }}>
               Pending invites sent
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="card-grid">
               {sentInvites.map(inv => (
                 <div key={inv.id} style={{
                   display: 'flex', alignItems: 'center', gap: 10,

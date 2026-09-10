@@ -16,6 +16,20 @@ import Link from 'next/link'
 import { createClient } from '@/data/supabase/client'
 import { LADDER, MAX_SEATS, totalCents, type Cadence } from '@/core/billing'
 
+/* The adult surface's palette, from globals.css — same tokens the other parent screens use.
+   These pages previously mixed ad-hoc greys (#888 / #6b7280 / #1a1a1a / #f7f8fa) with the brand
+   colours, so each one read as a slightly different product. */
+const P = {
+  page:   'var(--paper)',
+  card:   'var(--paper-soft)',
+  edge:   'var(--card-border)',
+  ink:    'var(--ink)',
+  ink2:   'var(--ink-soft)',
+  ink3:   'var(--ink-muted)',
+  accent: 'var(--milo-orange)',
+} as const
+
+
 const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`
 const SEATS = Array.from({ length: MAX_SEATS }, (_, i) => i + 1)
 
@@ -52,11 +66,11 @@ export default function PlanPage() {
   }
 
   return (
-    <main style={{ minHeight: '100dvh', background: '#FCEAB6', padding: '24px 16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto' }}>
-        <Link href="/parent" style={{ fontSize: 13, fontWeight: 700, color: '#8a7a63', textDecoration: 'none' }}>← Back</Link>
-        <h1 style={{ fontSize: 24, margin: '12px 0 6px', color: '#3c2a14' }}>Milo for your family</h1>
-        <p style={{ fontSize: 14, lineHeight: 1.55, color: '#6b5a42', margin: '0 0 20px' }}>
+    <main style={{ minHeight: '100dvh', background: P.page, fontFamily: 'var(--font-body)' }}>
+      <div className="adult-doc">
+        <Link href="/parent" style={{ fontSize: 13, fontWeight: 700, color: P.ink2, textDecoration: 'none' }}>← Back</Link>
+        <h1 style={{ fontSize: 26, margin: '12px 0 6px', color: P.ink, fontFamily: 'var(--font-display)', fontWeight: 900 }}>Milo for your family</h1>
+        <p style={{ fontSize: 14, lineHeight: 1.55, color: P.ink2, margin: '0 0 20px' }}>
           One subscription covers up to {MAX_SEATS} children. The check that finds your child&rsquo;s
           starting point is always free, and so is the first chapter of every level.
         </p>

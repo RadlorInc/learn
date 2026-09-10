@@ -31,6 +31,20 @@ const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/ass
 const CH_LABELS: Record<string, string> = { ...CHAPTER_PARENT_LABELS }
 const LEVEL_NAMES = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
 
+/* The adult surface's palette, from globals.css. Same values the Stitch parent-suite designs use;
+   this page previously mixed them with ad-hoc greys (#888 / #e5e7eb / #1a1a1a) that belong to no
+   token, which is why the dashboard read as a different product from the rest of the app. */
+const P = {
+  page:   'var(--paper)',
+  card:   'var(--paper-soft)',
+  edge:   'var(--card-border)',
+  ink:    'var(--ink)',
+  ink2:   'var(--ink-soft)',
+  ink3:   'var(--ink-muted)',
+  accent: 'var(--milo-orange)',
+  hover:  'var(--milo-orange-hover)',
+} as const
+
 interface LearnerData {
   learner:     Learner
   stats:       LearnerStats | null
@@ -258,31 +272,39 @@ export default function ParentDashboard() {
   )
 
   return (
-    <div style={{ minHeight:'100dvh', background:'linear-gradient(180deg,#FFF4D6 0%,#f9f9f9 40%)', fontFamily:'var(--font-body)' }}>
+    <div style={{ minHeight:'100dvh', background:P.page, fontFamily:'var(--font-body)' }}>
 
       {/* Top bar */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px', background:'#fff', boxShadow:'0 1px 8px rgba(0,0,0,0.06)', position:'sticky', top:0, zIndex:10 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ fontSize:28 }}>🦊</span>
-          <div>
-            <div style={{ fontSize:13, color:'#888', fontWeight:500 }}>Welcome back</div>
-            <div style={{ fontSize:16, fontWeight:800, color:'#1a1a1a' }}>{parentName}</div>
+      {/* ⚠️ `flexWrap` + a scrolling control group. At 390px the three pills plus the greeting
+          overflowed a 16px-padded row, and an overflowing sticky bar is the one thing on the page a
+          reader cannot scroll away from. The greeting yields its width first; the controls keep
+          their 44px tap height at every size. */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', padding:'12px 16px', background:P.card, borderBottom:`1.5px solid ${P.edge}`, position:'sticky', top:0, zIndex:10 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
+          <span style={{ fontSize:26, flexShrink:0 }}>🦊</span>
+          <div style={{ minWidth:0 }}>
+            <div style={{ fontSize:12, color:P.ink3, fontWeight:600 }}>Welcome back</div>
+            <div style={{ fontSize:16, fontWeight:800, color:P.ink, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{parentName}</div>
           </div>
         </div>
-        <div style={{ display:'flex', gap:8 }}>
-          <button onClick={() => router.push('/parent/grades')} style={{ background:'none', border:'1.5px solid #e5e7eb', borderRadius:50, padding:'8px 14px', fontSize:13, fontWeight:600, color:'#888', cursor:'pointer' }}>🎓 Grades</button>
-          <button onClick={() => router.push('/parent/invites')} style={{ background:'none', border:'1.5px solid #e5e7eb', borderRadius:50, padding:'8px 14px', fontSize:13, fontWeight:600, color:'#888', cursor:'pointer' }}>✉️ Share</button>
-          <button onClick={signOut} style={{ background:'none', border:'1.5px solid #e5e7eb', borderRadius:50, padding:'8px 14px', fontSize:13, fontWeight:600, color:'#888', cursor:'pointer' }}>Sign out</button>
+        <div className="chip-scroll" style={{ marginLeft:'auto' }}>
+          {[
+            { label:'🎓 Grades', act: () => router.push('/parent/grades') },
+            { label:'✉️ Share',  act: () => router.push('/parent/invites') },
+            { label:'Sign out',  act: signOut },
+          ].map(b => (
+            <button key={b.label} onClick={b.act} style={{ background:'none', border:`1.5px solid ${P.edge}`, borderRadius:50, padding:'10px 14px', minHeight:44, fontSize:13, fontWeight:700, color:P.ink2, cursor:'pointer', whiteSpace:'nowrap' }}>{b.label}</button>
+          ))}
         </div>
       </div>
 
-      <div style={{ padding:'20px 16px', maxWidth:480, margin:'0 auto' }}>
+      <div className="adult-shell">
 
         {/* Action message */}
         {actionMsg && (
           <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:16, fontSize:14, fontWeight:600, color:'#166534', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             ✅ {actionMsg}
-            <button onClick={() => setActionMsg(null)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:18, color:'#888' }}>×</button>
+            <button onClick={() => setActionMsg(null)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:18, color:P.ink3 }}>×</button>
           </div>
         )}
 
@@ -299,8 +321,8 @@ export default function ParentDashboard() {
                 <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
                   <div style={{ width:44, height:44, borderRadius:12, background:'#FFF4D6', fontSize:24, display:'flex', alignItems:'center', justifyContent:'center' }}>📬</div>
                   <div>
-                    <div style={{ fontSize:15, fontWeight:800, color:'#1a1a1a' }}>You&apos;ve been invited!</div>
-                    <div style={{ fontSize:13, color:'#888', marginTop:2 }}>
+                    <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>You&apos;ve been invited!</div>
+                    <div style={{ fontSize:13, color:P.ink3, marginTop:2 }}>
                       Access to: <strong>{inv.learner_name ?? 'a learner'}</strong>
                     </div>
                   </div>
@@ -318,140 +340,141 @@ export default function ParentDashboard() {
           </div>
         )}
 
-        {/* Empty state */}
-        {learners.length === 0 && (
-          <div style={{ textAlign:'center', padding:'60px 24px', display:'flex', flexDirection:'column', alignItems:'center', gap:16 }}>
-            <div style={{ fontSize:64 }}>🦊</div>
-            <h2 style={{ fontSize:22, fontWeight:800, color:'#1a1a1a', margin:0 }}>Welcome to Milo!</h2>
-            <p style={{ fontSize:15, color:'#888', margin:0, maxWidth:280, lineHeight:1.5 }}>
-              Add your first learner to get started, or wait for someone to share access with you.
-            </p>
-            <button onClick={() => setShowAddModal(true)} style={{ marginTop:8, background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', color:'#fff', border:'none', borderRadius:50, padding:'16px 36px', fontSize:17, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 20px rgba(242,107,44,0.3)' }}>
-              + Add your first learner
-            </button>
-          </div>
-        )}
+        {learners.length === 0 && <EmptyDashboard onAdd={() => setShowAddModal(true)} />}
 
-        {/* Learner selector */}
-        {learners.length > 0 && (
-          <div style={{ marginBottom:20 }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-              <h2 style={{ fontSize:16, fontWeight:800, margin:0, color:'#1a1a1a' }}>Your learners</h2>
-              <button onClick={() => setShowAddModal(true)} style={{ background:'#F26B2C', color:'#fff', border:'none', borderRadius:50, padding:'7px 16px', fontSize:13, fontWeight:700, cursor:'pointer' }}>+ Add child</button>
-            </div>
-            <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-              {learners.map(({ learner }) => (
-                <button key={learner.id} onClick={() => setSelected(learner.id)} style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 16px', borderRadius:50, border:'2px solid', borderColor:selected === learner.id ? '#F26B2C' : '#e5e7eb', background:selected === learner.id ? '#FFF4D6' : '#fff', cursor:'pointer', fontSize:14, fontWeight:700, transition:'all 0.15s' }}>
-                  <img src={AVATAR_SRCS[learner.avatar_index]} alt="avatar" loading="lazy" decoding="async" style={{width:28,height:28,objectFit:'cover',borderRadius:'50%',border:'2px solid var(--outline)'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
-                  {learner.display_name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* ⚠️ TWO COLUMNS ABOVE 1024px, ONE BELOW — and the whole page was capped at 480px before,
+            so a laptop rendered a phone column with ~800px of empty paper either side. The rail
+            holds WHO is being looked at (the picker, their stats, their data controls); the wide
+            column holds WHAT they have done. `.dash-cols` is a plain CSS grid, so the single-column
+            phone layout is the default and needs no JS to be correct. */}
+        <div className="dash-cols">
+          <div className="dash-rail">
 
-        {/* Active learner detail */}
-        {active && (
-          <>
-            {/* Stats card */}
-            <div style={{ background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', borderRadius:20, padding:'20px 20px 24px', color:'#fff', marginBottom:16, boxShadow:'0 4px 20px rgba(242,107,44,0.3)' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
-                <div style={{ width:52, height:52, borderRadius:14, background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>
-                  <img src={['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png'][active.learner.avatar_index]} alt="avatar" loading="lazy" decoding="async" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:12}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
-                </div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:20, fontWeight:800 }}>{active.learner.display_name}</div>
-                  <div style={{ fontSize:13, opacity:0.85 }}>
-                    {LEVEL_NAMES[Math.min((active.stats?.current_level ?? 1) - 1, 7)]} · Level {active.stats?.current_level ?? 1}
-                    {' · '}
-                    <span style={{ opacity:0.7, fontSize:11, textTransform:'uppercase', letterSpacing:0.5 }}>
-                      {active.accessRole === 'owner' ? '👑 Owner' : '👁 Viewer'}
-                    </span>
-                  </div>
-                </div>
+          {/* Learner selector */}
+          {learners.length > 0 && (
+            <div style={{ marginBottom:20 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                <h2 style={{ fontSize:16, fontWeight:800, margin:0, color:P.ink }}>Your learners</h2>
+                <button onClick={() => setShowAddModal(true)} style={{ background:P.accent, color:'#fff', border:'none', borderRadius:50, padding:'10px 16px', minHeight:44, fontSize:13, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>+ Add child</button>
               </div>
-
-              <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-                {[
-                  { label:'XP',     value: active.stats?.total_xp ?? 0 },
-                  { label:'Coins',  value: active.stats?.total_coins ?? 0 },
-                ].map(s => (
-                  <div key={s.label} style={{ flex:1, background:'rgba(255,255,255,0.15)', borderRadius:12, padding:'10px 8px', textAlign:'center' }}>
-                    <div style={{ fontSize:20, fontWeight:800 }}>{s.value}</div>
-                    <div style={{ fontSize:11, opacity:0.8, marginTop:2 }}>{s.label}</div>
-                  </div>
+              <div className="chip-scroll">
+                {learners.map(({ learner }) => (
+                  <button key={learner.id} onClick={() => setSelected(learner.id)} style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 16px', borderRadius:50, border:'2px solid', borderColor:selected === learner.id ? P.accent : P.edge, background:selected === learner.id ? 'var(--milo-orange-soft)' : P.card, cursor:'pointer', fontSize:14, fontWeight:700, transition:'all 0.15s' }}>
+                    <img src={AVATAR_SRCS[learner.avatar_index]} alt="avatar" loading="lazy" decoding="async" style={{width:28,height:28,objectFit:'cover',borderRadius:'50%',border:'2px solid var(--outline)'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+                    {learner.display_name}
+                  </button>
                 ))}
               </div>
-
-              {recheckDue && !LEGACY_CHAPTERS_HIDDEN && (
-                <button onClick={() => recheckGap(active.learner)} style={{ width:'100%', padding:'13px 14px', marginBottom:10, background:'rgba(255,255,255,0.95)', color:'#B45309', border:'2px solid #F6C453', borderRadius:16, fontSize:14, fontWeight:800, cursor:'pointer', textAlign:'left', lineHeight:1.35 }}>
-                  🔔 It&apos;s been {recheckDue.weeks} weeks — time to re-check {active.learner.display_name}&apos;s gap →
-                </button>
-              )}
-              <button onClick={() => launchGame(active)} style={{ width:'100%', padding:'14px', background:'#fff', color:'#F26B2C', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>
-                ▶ Start learning
-              </button>
-              {LEGACY_CHAPTERS_HIDDEN && active.accessRole === 'owner' && (
-                <button onClick={() => router.push(`/parent/topics?learner=${active.learner.id}`)} style={{ width:'100%', marginTop:10, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
-                  📚 Choose topics{active.learner.lesson_ids?.length ? ` · ${active.learner.lesson_ids.length} chosen` : ' · every topic'}
-                </button>
-              )}
-              {!LEGACY_CHAPTERS_HIDDEN && <div style={{ display:'flex', gap:10, marginTop:10 }}>
-                <button onClick={() => findStartingPoint(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
-                  🔍 Find starting point
-                </button>
-                <button onClick={() => recheckGap(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
-                  🔁 Re-check the gap
-                </button>
-              </div>}
             </div>
+          )}
 
-            {/* COPPA: a parent may SEE what is stored and have it DELETED. Both live under one
-                heading so they are findable — the export is new, the delete control below is the
-                existing one, reused rather than re-implemented. */}
-            <DataRights
-              name={active.learner.display_name}
-              learnerId={active.learner.id}
-              bundle={{ learner: active.learner, stats: active.stats, progress: active.progress, sessions: active.sessions }}
-            >
-            {confirming === active.learner.id ? (
-              <div style={{ background:'#FEF2F2', border:'1.5px solid #FCA5A5', borderRadius:16, padding:'16px', marginBottom:16 }}>
-                <p style={{ fontSize:14, fontWeight:700, color:'#991B1B', margin:'0 0 12px' }}>
-                  {active.accessRole === 'owner'
-                    ? `⚠️ Permanently delete ${active.learner.display_name}? This cannot be undone. All progress, sessions and data will be lost.`
-                    : `Remove yourself from ${active.learner.display_name}'s profile? You will lose access.`}
-                </p>
-                <div style={{ display:'flex', gap:10 }}>
-                  <button
-                    onClick={() => active.accessRole === 'owner' ? handleDelete(active.learner.id) : handleRemoveSelf(active.learner.id)}
-                    style={{ flex:1, padding:'12px', background:'#DC2626', color:'#fff', border:'none', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}
-                  >
-                    {active.accessRole === 'owner' ? 'Yes, delete' : 'Yes, remove me'}
-                  </button>
-                  <button onClick={() => setConfirming(null)} style={{ flex:1, padding:'12px', background:'#fff', color:'#888', border:'1.5px solid #e5e7eb', borderRadius:50, fontSize:14, fontWeight:700, cursor:'pointer' }}>
-                    Cancel
-                  </button>
+            {active && (
+              <>
+              {/* Stats card */}
+              <div style={{ background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', borderRadius:20, padding:'20px 20px 24px', color:'#fff', marginBottom:16, boxShadow:'0 4px 20px rgba(242,107,44,0.3)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+                  <div style={{ width:52, height:52, borderRadius:14, background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>
+                    <img src={['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png'][active.learner.avatar_index]} alt="avatar" loading="lazy" decoding="async" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:12}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:20, fontWeight:800 }}>{active.learner.display_name}</div>
+                    <div style={{ fontSize:13, opacity:0.85 }}>
+                      {LEVEL_NAMES[Math.min((active.stats?.current_level ?? 1) - 1, 7)]} · Level {active.stats?.current_level ?? 1}
+                      {' · '}
+                      <span style={{ opacity:0.7, fontSize:11, textTransform:'uppercase', letterSpacing:0.5 }}>
+                        {active.accessRole === 'owner' ? '👑 Owner' : '👁 Viewer'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setConfirming(active.learner.id)}
-                style={{ width:'100%', padding:'12px', background:'none', border:'1.5px solid #FCA5A5', borderRadius:50, fontSize:13, fontWeight:700, color:'#DC2626', cursor:'pointer', marginBottom:16 }}
-              >
-                {active.accessRole === 'owner'
-                  ? `🗑 Delete ${active.learner.display_name}'s profile`
-                  : `✕ Remove myself from ${active.learner.display_name}'s profile`}
-              </button>
-            )}
-            </DataRights>
 
+                <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                  {[
+                    { label:'XP',     value: active.stats?.total_xp ?? 0 },
+                    { label:'Coins',  value: active.stats?.total_coins ?? 0 },
+                  ].map(s => (
+                    <div key={s.label} style={{ flex:1, background:'rgba(255,255,255,0.15)', borderRadius:12, padding:'10px 8px', textAlign:'center' }}>
+                      <div style={{ fontSize:20, fontWeight:800 }}>{s.value}</div>
+                      <div style={{ fontSize:11, opacity:0.8, marginTop:2 }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {recheckDue && !LEGACY_CHAPTERS_HIDDEN && (
+                  <button onClick={() => recheckGap(active.learner)} style={{ width:'100%', padding:'13px 14px', marginBottom:10, background:'rgba(255,255,255,0.95)', color:'#B45309', border:'2px solid #F6C453', borderRadius:16, fontSize:14, fontWeight:800, cursor:'pointer', textAlign:'left', lineHeight:1.35 }}>
+                    🔔 It&apos;s been {recheckDue.weeks} weeks — time to re-check {active.learner.display_name}&apos;s gap →
+                  </button>
+                )}
+                <button onClick={() => launchGame(active)} style={{ width:'100%', padding:'14px', background:'#fff', color:'#F26B2C', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>
+                  ▶ Start learning
+                </button>
+                {LEGACY_CHAPTERS_HIDDEN && active.accessRole === 'owner' && (
+                  <button onClick={() => router.push(`/parent/topics?learner=${active.learner.id}`)} style={{ width:'100%', marginTop:10, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
+                    📚 Choose topics{active.learner.lesson_ids?.length ? ` · ${active.learner.lesson_ids.length} chosen` : ' · every topic'}
+                  </button>
+                )}
+                {!LEGACY_CHAPTERS_HIDDEN && <div style={{ display:'flex', gap:10, marginTop:10 }}>
+                  <button onClick={() => findStartingPoint(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
+                    🔍 Find starting point
+                  </button>
+                  <button onClick={() => recheckGap(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
+                    🔁 Re-check the gap
+                  </button>
+                </div>}
+              </div>
+
+              {/* COPPA: a parent may SEE what is stored and have it DELETED. Both live under one
+                  heading so they are findable — the export is new, the delete control below is the
+                  existing one, reused rather than re-implemented. */}
+              <DataRights
+                name={active.learner.display_name}
+                learnerId={active.learner.id}
+                bundle={{ learner: active.learner, stats: active.stats, progress: active.progress, sessions: active.sessions }}
+              >
+              {confirming === active.learner.id ? (
+                <div style={{ background:'#FEF2F2', border:'1.5px solid #FCA5A5', borderRadius:16, padding:'16px', marginBottom:16 }}>
+                  <p style={{ fontSize:14, fontWeight:700, color:'#991B1B', margin:'0 0 12px' }}>
+                    {active.accessRole === 'owner'
+                      ? `⚠️ Permanently delete ${active.learner.display_name}? This cannot be undone. All progress, sessions and data will be lost.`
+                      : `Remove yourself from ${active.learner.display_name}'s profile? You will lose access.`}
+                  </p>
+                  <div style={{ display:'flex', gap:10 }}>
+                    <button
+                      onClick={() => active.accessRole === 'owner' ? handleDelete(active.learner.id) : handleRemoveSelf(active.learner.id)}
+                      style={{ flex:1, padding:'12px', background:'#DC2626', color:'#fff', border:'none', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}
+                    >
+                      {active.accessRole === 'owner' ? 'Yes, delete' : 'Yes, remove me'}
+                    </button>
+                    <button onClick={() => setConfirming(null)} style={{ flex:1, padding:'12px', background:'#fff', color:'#888', border:'1.5px solid #e5e7eb', borderRadius:50, fontSize:14, fontWeight:700, cursor:'pointer' }}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirming(active.learner.id)}
+                  style={{ width:'100%', padding:'12px', background:'none', border:'1.5px solid #FCA5A5', borderRadius:50, fontSize:13, fontWeight:700, color:'#DC2626', cursor:'pointer', marginBottom:16 }}
+                >
+                  {active.accessRole === 'owner'
+                    ? `🗑 Delete ${active.learner.display_name}'s profile`
+                    : `✕ Remove myself from ${active.learner.display_name}'s profile`}
+                </button>
+              )}
+              </DataRights>
+
+              </>
+            )}
+          </div>
+
+          {active && (
+            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
             {/* Chapter progress */}
-            <div style={{ background:'#fff', borderRadius:20, padding:'18px 16px', marginBottom:16, boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>
+            <div style={{ background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:20, padding:'18px 16px', boxShadow:'0 2px 12px rgba(61,37,22,0.05)' }}>
               <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'0 0 14px' }}>
-                <h3 style={{ fontSize:15, fontWeight:800, margin:0, color:'#1a1a1a' }}>Chapter progress</h3>
+                <h3 style={{ fontSize:15, fontWeight:800, margin:0, color:P.ink }}>Chapter progress</h3>
                 {/* Findable without hitting a wall first — pricing is a thing a parent may want to
                     read before anything is locked, and it lives on this side of the product only. */}
-                <button onClick={() => router.push('/parent/plan')} style={{ background:'none', border:'none', padding:0, fontSize:12, fontWeight:700, color:'#F26B2C', cursor:'pointer' }}>Plan &amp; billing →</button>
+                <button onClick={() => router.push('/parent/plan')} style={{ background:'none', border:'none', padding:0, fontSize:12, fontWeight:700, color:P.accent, cursor:'pointer' }}>Plan &amp; billing →</button>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 {activeChapterIds.map(ch => {
@@ -459,14 +482,14 @@ export default function ParentDashboard() {
                   const stars = prog?.best_stars ?? 0
                   return (
                     <div key={ch} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      <div style={{ fontSize:13, fontWeight:600, flex:1, color:'#1a1a1a', opacity:stars > 0 ? 1 : 0.4 }}>
+                      <div style={{ fontSize:13, fontWeight:600, flex:1, color:P.ink, opacity:stars > 0 ? 1 : 0.4 }}>
                         {CH_LABELS[ch]}
                       </div>
                       <div style={{ fontSize:16 }}>
                         {[1,2,3].map(i => <span key={i} style={{ opacity: i <= stars ? 1 : 0.2 }}>⭐</span>)}
                       </div>
                       {prog?.total_sessions ? (
-                        <div style={{ fontSize:11, color:'#888', fontWeight:600, minWidth:32, textAlign:'right' }}>{prog.total_sessions}x</div>
+                        <div style={{ fontSize:11, color:P.ink3, fontWeight:600, minWidth:32, textAlign:'right' }}>{prog.total_sessions}x</div>
                       ) : null}
                       {/* ⚠️ THE PARENT SIDE IS THE ONLY SIDE THAT ROUTES TO CHECKOUT. The child's
                           lock card carries no price and no way to pay; this one does, because a
@@ -486,22 +509,22 @@ export default function ParentDashboard() {
 
             {/* Recent sessions */}
             {active.sessions.length > 0 && (
-              <div style={{ background:'#fff', borderRadius:20, padding:'18px 16px', boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>
-                <h3 style={{ fontSize:15, fontWeight:800, margin:'0 0 14px', color:'#1a1a1a' }}>Recent activity</h3>
+              <div style={{ background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:20, padding:'18px 16px', boxShadow:'0 2px 12px rgba(61,37,22,0.05)' }}>
+                <h3 style={{ fontSize:15, fontWeight:800, margin:'0 0 14px', color:P.ink }}>Recent activity</h3>
                 {active.sessions.length === 0 ? (
                   <div style={{ textAlign:'center', padding:'20px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
                     <div style={{ fontSize:36 }}>🎮</div>
-                    <div style={{ fontSize:14, color:'#888', fontWeight:500 }}>No sessions yet — time to start playing!</div>
+                    <div style={{ fontSize:14, color:P.ink2, fontWeight:600 }}>No sessions yet — time to start playing!</div>
                     <button onClick={() => launchGame(active)} style={{ marginTop:4, background:'#F26B2C', color:'#fff', border:'none', borderRadius:50, padding:'10px 20px', fontSize:13, fontWeight:700, cursor:'pointer' }}>▶ Start first session</button>
                   </div>
                 ) : (
                   <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                     {active.sessions.map(s => (
-                      <div key={s.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', background:'#f9fafb', borderRadius:12 }}>
+                      <div key={s.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', background:P.page, borderRadius:12 }}>
                         <div style={{ fontSize:24 }}>{s.stars_earned === 3 ? '🌟' : s.stars_earned === 2 ? '⭐' : '✨'}</div>
                         <div style={{ flex:1 }}>
-                          <div style={{ fontSize:13, fontWeight:700, color:'#1a1a1a' }}>{CH_LABELS[s.chapter] ?? s.chapter}</div>
-                          <div style={{ fontSize:11, color:'#888', marginTop:2 }}>{s.correct_count} correct · +{s.xp_earned} XP · {(a => a ? new Date(a).toLocaleDateString() : '—')(s.completed_at ?? s.started_at)}</div>
+                          <div style={{ fontSize:13, fontWeight:700, color:P.ink }}>{CH_LABELS[s.chapter] ?? s.chapter}</div>
+                          <div style={{ fontSize:11, color:P.ink3, marginTop:2 }}>{s.correct_count} correct · +{s.xp_earned} XP · {(a => a ? new Date(a).toLocaleDateString() : '—')(s.completed_at ?? s.started_at)}</div>
                         </div>
                         <div style={{ fontSize:12, fontWeight:700, color:'#16a34a' }}>+{s.coins_earned} 🪙</div>
                       </div>
@@ -510,8 +533,9 @@ export default function ParentDashboard() {
                 )}
               </div>
             )}
-          </>
-        )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Support footer. Deliberately the LAST thing on the page and visually quiet — a parent
@@ -549,49 +573,141 @@ export default function ParentDashboard() {
   )
 }
 
+/**
+ * The dashboard with nobody in it yet. Lifted out of `ParentDashboard`'s JSX so `/ui-preview` can
+ * render it: inline, it was reachable only by signing in with an account that has zero learners,
+ * i.e. never in any harness — and this repo's own note on that route is that layout is exactly
+ * where the misses live.
+ */
+export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div style={{
+        background:P.card, border:`2px solid ${P.edge}`, borderRadius:24,
+        boxShadow:'0 6px 28px rgba(61,37,22,0.08)',
+        padding:'44px 24px', margin:'8px auto 0', maxWidth:520,
+        textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:14,
+      }}>
+        <div style={{ fontSize:60 }}>🦊</div>
+        <h2 style={{ fontSize:23, fontWeight:900, color:P.ink, margin:0, fontFamily:'var(--font-display)' }}>Welcome to AdaptiveLearn!</h2>
+        <p style={{ fontSize:15, color:P.ink2, margin:0, maxWidth:340, lineHeight:1.5 }}>
+          Add your first learner and we&apos;ll find where to start.
+        </p>
+        <button onClick={onAdd} style={{ marginTop:4, background:P.accent, color:'#fff', border:'none', borderRadius:50, padding:'16px 34px', minHeight:44, fontSize:17, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 16px rgba(242,107,44,0.28)' }}>
+          + Add your first learner
+        </button>
+        {/* ⚠️ BOTH OF THESE ARE TRUE AS OF 2026-08-25 AND ONLY BECAUSE OF THAT DATE. The check
+            became OPTIONAL then (a one-tap "Skip for now" issues a grade-start plan), so
+            "no diagnostic tests required" is a fact about the product, not reassuring copy —
+            and the ~2 minutes is the ADD-LEARNER form, never the check itself, which the intro
+            copy correctly calls "about ten minutes". If the check is ever re-forced, the first
+            of these two chips becomes a lie and has to come out with it. */}
+        <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center', marginTop:2 }}>
+          {['Takes about 2 minutes', 'No diagnostic tests required'].map(t => (
+            <span key={t} style={{ background:P.page, border:`1.5px solid ${P.edge}`, borderRadius:999, padding:'7px 13px', fontSize:12, fontWeight:700, color:P.ink2 }}>{t}</span>
+          ))}
+        </div>
+        <p style={{ fontSize:12.5, color:P.ink3, margin:'6px 0 0', lineHeight:1.5 }}>
+          …or wait for someone to share access with you.
+        </p>
+      </div>
+  )
+}
+
 // One-time Teacher/Parent picker shown on first login (profiles.role still null). The choice is
 // persisted on the profile; teachers then land on Grades, parents on the learner dashboard.
-function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRole) => void }) {
-  const [busy, setBusy] = useState<UserRole | null>(null)
-  const choose = (r: UserRole) => { if (busy) return; setBusy(r); onPick(r) }
-  const cards: { role: UserRole; emoji: string; title: string; sub: string; bg: string; border: string }[] = [
-    { role: 'parent',  emoji: '👪', title: "I'm a Parent",  sub: 'Set up your children and follow their progress.',        bg: '#FFF4D6', border: '#F6C453' },
-    { role: 'teacher', emoji: '🎓', title: "I'm a Teacher", sub: 'Create grades and choose what each class works on.',       bg: '#E7F3FF', border: '#8EC5FF' },
+//
+// ⚠️ A TAP CHOOSES; "CONTINUE" COMMITS. It used to write the role on the first tap, which makes a
+// mis-tap an unannounced, irreversible account change on the very first screen — and the copy
+// underneath ("you can change this later") was not true of anything on screen. Two steps means the
+// choice is visible, re-tappable, and the reader can see what they picked before it is saved.
+export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRole) => void }) {
+  const [picked, setPicked] = useState<UserRole | null>(null)
+  const [busy,   setBusy]   = useState(false)
+  function commit() { if (busy || !picked) return; setBusy(true); onPick(picked) }
+
+  const cards: { role: UserRole; emoji: string; title: string; sub: string }[] = [
+    { role: 'parent',  emoji: '👪', title: "I'm a Parent",  sub: 'One or two children at home.' },
+    { role: 'teacher', emoji: '🎓', title: "I'm a Teacher", sub: 'A class or several groups.' },
   ]
+
   return (
-    <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20, padding:'32px 20px', background:'linear-gradient(180deg,#FFF4D6 0%,#f9f9f9 45%)', fontFamily:'var(--font-body)' }}>
-      <div style={{ fontSize:56 }}>🦊</div>
+    <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20, padding:'32px 20px', background:P.page, fontFamily:'var(--font-body)' }}>
+      <div style={{ fontSize:52 }}>🦊</div>
       <div style={{ textAlign:'center' }}>
-        <h1 style={{ fontSize:26, fontWeight:900, color:'#3D2516', margin:'0 0 6px' }}>Welcome{name && name !== 'there' ? `, ${name}` : ''}!</h1>
-        <p style={{ fontSize:15, color:'#7a6a55', margin:0 }}>How will you be using Milo?</p>
+        <h1 style={{ fontSize:28, fontWeight:900, color:P.ink, margin:'0 0 6px', fontFamily:'var(--font-display)' }}>Welcome{name && name !== 'there' ? `, ${name}` : ''}!</h1>
+        <p style={{ fontSize:15, color:P.ink2, margin:0 }}>How will you be using AdaptiveLearn?</p>
       </div>
-      <div style={{ display:'flex', flexDirection:'column', gap:14, width:'100%', maxWidth:380, marginTop:6 }}>
-        {cards.map(c => (
-          <button
-            key={c.role}
-            onClick={() => choose(c.role)}
-            disabled={!!busy}
-            style={{
-              display:'flex', alignItems:'center', gap:16, textAlign:'left',
-              padding:'18px 20px', background:c.bg, border:`3px solid ${c.border}`, borderRadius:22,
-              cursor: busy ? 'default' : 'pointer', opacity: busy && busy !== c.role ? 0.5 : 1,
-              boxShadow:'0 4px 0 rgba(61,37,22,0.10)', transition:'opacity 150ms ease',
-            }}
-          >
-            <span style={{ fontSize:40, flexShrink:0 }}>{c.emoji}</span>
-            <span>
-              <span style={{ display:'block', fontSize:18, fontWeight:900, color:'#3D2516' }}>{busy === c.role ? 'Setting up…' : c.title}</span>
-              <span style={{ display:'block', fontSize:13, color:'#7a6a55', marginTop:2, lineHeight:1.35 }}>{c.sub}</span>
-            </span>
-          </button>
-        ))}
+
+      {/* `.role-cards` stacks under 720px and sits the two side by side above it. */}
+      <div className="role-cards">
+        {cards.map(c => {
+          const on = picked === c.role
+          return (
+            <button
+              key={c.role}
+              onClick={() => setPicked(c.role)}
+              disabled={busy}
+              aria-pressed={on}
+              style={{
+                display:'flex', flexDirection:'column', alignItems:'flex-start', gap:6, textAlign:'left',
+                padding:'18px 20px', minHeight:44, background:P.card,
+                border:`2px solid ${on ? P.accent : P.edge}`, borderRadius:20,
+                cursor: busy ? 'default' : 'pointer', opacity: busy && !on ? 0.55 : 1,
+                boxShadow: on ? '0 4px 16px rgba(242,107,44,0.18)' : '0 2px 10px rgba(61,37,22,0.06)',
+                transition:'border-color 150ms ease, box-shadow 150ms ease, opacity 150ms ease',
+                position:'relative', width:'100%', boxSizing:'border-box',
+              }}
+            >
+              {/* The chosen mark is a RING plus a tick, never a green fill — green is the verdict
+                  colour everywhere else in this app and nothing here is being marked correct. */}
+              <span aria-hidden="true" style={{
+                position:'absolute', top:14, right:14,
+                width:22, height:22, borderRadius:'50%',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                background: on ? P.accent : 'transparent',
+                border: on ? 'none' : `2px solid ${P.edge}`,
+                color:'#fff', fontSize:12, fontWeight:900, lineHeight:1,
+              }}>{on ? '✓' : ''}</span>
+              <span style={{ fontSize:34 }}>{c.emoji}</span>
+              <span style={{ display:'block', fontSize:18, fontWeight:900, color:P.ink }}>{c.title}</span>
+              <span style={{ display:'block', fontSize:13, color:P.ink2, lineHeight:1.35 }}>{c.sub}</span>
+            </button>
+          )
+        })}
       </div>
-      <p style={{ fontSize:12, color:'#9a8b78', margin:'6px 0 0', textAlign:'center' }}>You can add children either way — this just tailors your home screen.</p>
+
+      <p style={{ fontSize:12, color:P.ink3, margin:0, textAlign:'center' }}>
+        You can change this later — it just tailors your home screen.
+      </p>
+
+      <button
+        onClick={commit}
+        disabled={!picked || busy}
+        style={{
+          width:'100%', maxWidth:340, padding:'15px', minHeight:44,
+          background: !picked || busy ? P.edge : P.accent,
+          color: !picked || busy ? P.ink3 : '#fff',
+          border:'none', borderRadius:50, fontSize:16, fontWeight:800,
+          cursor: busy ? 'wait' : picked ? 'pointer' : 'default',
+          boxShadow: !picked || busy ? 'none' : '0 4px 14px rgba(242,107,44,0.28)',
+          transition:'all 200ms ease',
+        }}
+      >{busy ? 'Setting up…' : 'Continue →'}</button>
+
+      {/* The same quiet footer the rest of the adult surface carries, so a reader stuck on the
+          first screen of the product can still reach help and the documents they just agreed to. */}
+      <p style={{ margin:'10px 0 0', fontSize:12, color:P.ink3, textAlign:'center' }}>
+        <Link href="/help" style={{ color:P.ink2, fontWeight:700, textDecoration:'none' }}>Need help?</Link>
+        <span style={{ margin:'0 8px', opacity:0.5 }}>·</span>
+        <Link href="/legal/terms" style={{ color:P.ink2, fontWeight:700, textDecoration:'none' }}>Terms of Service</Link>
+        <span style={{ margin:'0 8px', opacity:0.5 }}>·</span>
+        <Link href="/legal/privacy" style={{ color:P.ink2, fontWeight:700, textDecoration:'none' }}>Privacy Policy</Link>
+      </p>
     </div>
   )
 }
 
-function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
   const router = useRouter()
   const [name,        setName]        = useState('')
   const [avatarIndex, setAvatarIndex] = useState(0)
@@ -669,37 +785,49 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
     onAdded()
   }
 
+  /* ⚠️ ONE COMPONENT, TWO SHAPES, DECIDED IN CSS — a bottom sheet under 768px (thumb reach on a
+     phone) and a centred dialog above it. Rendering the sheet shape on a 1280px frame put a
+     480px-wide form flush against the bottom edge of a mostly-empty screen. `.sheet-wrap` /
+     `.sheet-card` carry the switch, including the two entrance animations and the
+     `prefers-reduced-motion` opt-out. */
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:50, background:'rgba(0,0,0,0.45)', display:'flex', alignItems:'flex-end', justifyContent:'center' }} onClick={onClose}>
-      <div style={{ background:'#fff', borderRadius:'24px 24px 0 0', padding:'28px 24px 48px', width:'100%', maxWidth:480, maxHeight:'92dvh', overflowY:'auto', WebkitOverflowScrolling:'touch', animation:'slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1)' }} onClick={e => e.stopPropagation()}>
-        <h3 style={{ fontSize:20, fontWeight:800, margin:'0 0 20px', color:'#1a1a1a' }}>Add a learner</h3>
+    <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label="Add a learner" style={{ position:'fixed', inset:0, zIndex:50, background:'rgba(61,37,22,0.45)' }} onClick={onClose}>
+      <div className="sheet-card" style={{ background:P.card, padding:'28px 24px 40px', overflowY:'auto', WebkitOverflowScrolling:'touch', boxSizing:'border-box' }} onClick={e => e.stopPropagation()}>
+        <h3 style={{ fontSize:20, fontWeight:800, margin:'0 0 4px', color:P.ink, fontFamily:'var(--font-display)' }}>Add a learner</h3>
+        <p style={{ fontSize:13, color:P.ink2, margin:'0 0 18px', lineHeight:1.45 }}>Quiet, private progress tracking for home or class.</p>
         <div style={{ display:'flex', gap:12, marginBottom:20, justifyContent:'center' }}>
           {AVATARS.map((emoji, i) => (
-            <button key={i} onClick={() => setAvatarIndex(i)} style={{ width:64, height:64, fontSize:32, borderRadius:16, border:'none', cursor:'pointer', background:avatarIndex===i?'#FFF4D6':'#f3f4f6', outline:avatarIndex===i?'3px solid #F26B2C':'2px solid transparent', transition:'all 0.15s', transform:avatarIndex===i?'scale(1.1)':'scale(1)' }}>{emoji}</button>
+            <button key={i} onClick={() => setAvatarIndex(i)} aria-pressed={avatarIndex===i} aria-label={`Avatar ${i + 1}`} style={{ position:'relative', width:64, height:64, fontSize:32, borderRadius:16, cursor:'pointer', background:avatarIndex===i?'var(--milo-orange-soft)':P.page, border:avatarIndex===i?`3px solid ${P.accent}`:`2px solid ${P.edge}`, transition:'border-color 0.15s, background 0.15s' }}>
+              {emoji}
+              {avatarIndex===i && (
+                <span aria-hidden="true" style={{ position:'absolute', top:-4, right:-4, width:20, height:20, borderRadius:'50%', background:P.accent, color:'#fff', fontSize:11, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' }}>✓</span>
+              )}
+            </button>
           ))}
         </div>
-        <input type="text" placeholder="Child's name" value={name} onChange={e => { setName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleAdd()} maxLength={30} autoFocus style={{ width:'100%', padding:'14px 16px', fontSize:16, fontWeight:600, border:`2px solid ${error?'#FCA5A5':'#e5e7eb'}`, borderRadius:14, outline:'none', boxSizing:'border-box', marginBottom:6 }} />
-        {error && <p style={{ fontSize:13, color:'#EF4444', margin:'0 0 12px' }}>{error}</p>}
+        <label htmlFor="learner-name" style={{ display:'block', fontSize:13, fontWeight:700, color:P.ink2, margin:'0 0 6px' }}>Child&apos;s name</label>
+        <input id="learner-name" type="text" placeholder="First name is plenty" value={name} onChange={e => { setName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleAdd()} maxLength={30} autoFocus style={{ width:'100%', padding:'14px 16px', minHeight:44, fontSize:16, fontWeight:600, color:P.ink, background:P.page, border:`2px solid ${error?'#F0B4AE':P.edge}`, borderRadius:14, outline:'none', boxSizing:'border-box', marginBottom:6 }} />
+        {error && <p role="alert" style={{ fontSize:13, color:'#93000A', fontWeight:600, margin:'0 0 12px' }}>{error}</p>}
 
         {/* Grade (optional) — shown once this account has created grades. Choosing
             one scopes the child to that grade's chapters and fixes the band. */}
         {grades.length > 0 && (
           <>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', margin:'10px 0 8px' }}>
-              <p style={{ fontSize:13, fontWeight:700, color:'#6b7280', margin:0 }}>Grade</p>
-              <button onClick={() => router.push('/parent/grades')} style={{ background:'none', border:'none', color:'#F26B2C', fontSize:12, fontWeight:700, cursor:'pointer' }}>Manage</button>
+              <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:0 }}>Grade <span style={{ fontWeight:500, color:P.ink3 }}>(optional)</span></p>
+              <button onClick={() => router.push('/parent/grades')} style={{ background:'none', border:'none', color:P.accent, fontSize:12, fontWeight:700, cursor:'pointer' }}>Manage</button>
             </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:14 }}>
-              <button onClick={() => pickGrade(null)} style={{ textAlign:'left', padding:'12px 14px', borderRadius:14, cursor:'pointer', background:!gradeId?'#FFF4D6':'#f3f4f6', border:!gradeId?'3px solid #F26B2C':'2px solid transparent' }}>
-                <div style={{ fontSize:15, fontWeight:800, color:'#1a1a1a' }}>No grade</div>
-                <div style={{ fontSize:11, color:'#6b7280', lineHeight:1.3, marginTop:2 }}>Pick an age band directly — all its chapters.</div>
+            <div className="opt-grid" style={{ marginBottom:14 }}>
+              <button onClick={() => pickGrade(null)} aria-pressed={!gradeId} style={{ textAlign:'left', padding:'12px 14px', minHeight:44, borderRadius:14, cursor:'pointer', background:!gradeId?'var(--milo-orange-soft)':P.page, border:!gradeId?`3px solid ${P.accent}`:`2px solid ${P.edge}` }}>
+                <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>No grade</div>
+                <div style={{ fontSize:11, color:P.ink2, lineHeight:1.3, marginTop:2 }}>Pick an age band directly — all its chapters.</div>
               </button>
               {grades.map(g => {
                 const on = gradeId === g.id
                 return (
-                  <button key={g.id} onClick={() => pickGrade(g)} style={{ textAlign:'left', padding:'12px 14px', borderRadius:14, cursor:'pointer', background:on?'#FFF4D6':'#f3f4f6', border:on?'3px solid #F26B2C':'2px solid transparent' }}>
-                    <div style={{ fontSize:15, fontWeight:800, color:'#1a1a1a' }}>🎓 {g.name}</div>
-                    <div style={{ fontSize:11, color:'#6b7280', lineHeight:1.3, marginTop:2 }}>{AGE_GROUP_LABELS[g.age_group]} · {g.chapterCount} chapter{g.chapterCount === 1 ? '' : 's'}</div>
+                  <button key={g.id} onClick={() => pickGrade(g)} aria-pressed={on} style={{ textAlign:'left', padding:'12px 14px', minHeight:44, borderRadius:14, cursor:'pointer', background:on?'var(--milo-orange-soft)':P.page, border:on?`3px solid ${P.accent}`:`2px solid ${P.edge}` }}>
+                    <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>🎓 {g.name}</div>
+                    <div style={{ fontSize:11, color:P.ink2, lineHeight:1.3, marginTop:2 }}>{AGE_GROUP_LABELS[g.age_group]} · {g.chapterCount} chapter{g.chapterCount === 1 ? '' : 's'}</div>
                   </button>
                 )
               })}
@@ -710,14 +838,15 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
         {/* Age band — only when no grade is chosen (a grade already fixes the band) */}
         {!gradeId && (
           <>
-            <p style={{ fontSize:13, fontWeight:700, color:'#6b7280', margin:'10px 0 8px' }}>Age group</p>
-            <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:4 }}>
+            <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 4px' }}>Age group</p>
+            <p style={{ fontSize:11.5, color:P.ink3, margin:'0 0 8px', lineHeight:1.4 }}>Sets where the check starts. It is not a grade and nobody else sees it.</p>
+            <div className="opt-grid" style={{ marginBottom:4 }}>
               {AGE_GROUP_OPTIONS.map(opt => {
                 const selected = ageGroup === opt.value
                 return (
-                  <button key={opt.value} onClick={() => setAgeGroup(opt.value)} style={{ flex:1, textAlign:'left', padding:'12px 14px', borderRadius:14, cursor:'pointer', background:selected?'#FFF4D6':'#f3f4f6', border:selected?'3px solid #F26B2C':'2px solid transparent', transition:'all 0.15s' }}>
-                    <div style={{ fontSize:15, fontWeight:800, color:'#1a1a1a' }}>{opt.label}</div>
-                    <div style={{ fontSize:11, color:'#6b7280', lineHeight:1.3, marginTop:2 }}>{opt.hint}</div>
+                  <button key={opt.value} onClick={() => setAgeGroup(opt.value)} aria-pressed={selected} style={{ textAlign:'left', padding:'12px 14px', minHeight:44, borderRadius:14, cursor:'pointer', background:selected?'var(--milo-orange-soft)':P.page, border:selected?`3px solid ${P.accent}`:`2px solid ${P.edge}`, transition:'border-color 0.15s, background 0.15s' }}>
+                    <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>{opt.label}</div>
+                    <div style={{ fontSize:11, color:P.ink2, lineHeight:1.3, marginTop:2 }}>{opt.hint}</div>
                   </button>
                 )
               })}
@@ -725,11 +854,13 @@ function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: (
           </>
         )}
 
-        <button onClick={handleAdd} disabled={loading} style={{ width:'100%', padding:'16px', marginTop:12, background:loading?'#e5e7eb':'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', color:loading?'#9ca3af':'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':'pointer' }}>
+        <p style={{ fontSize:11.5, color:P.ink3, margin:'14px 0 0', lineHeight:1.45 }}>
+          Progress is private to this account. No public profiles and no comparisons with other children.
+        </p>
+        <button onClick={handleAdd} disabled={loading} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading?P.edge:P.accent, color:loading?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':'pointer', boxShadow:loading?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
           {loading ? 'Adding...' : 'Add learner 🎉'}
         </button>
       </div>
-      <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
     </div>
   )
 }
