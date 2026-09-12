@@ -14,6 +14,7 @@ export function getLevelFromXP(xp: number): number {
   }
   return 1
 }
+/** The badge a level is worth. Clamps past the top so a level beyond the table still names something. */
 export function getLevelName(level: number): string {
   return LEVEL_NAMES[Math.min(level - 1, LEVEL_NAMES.length - 1)]
 }

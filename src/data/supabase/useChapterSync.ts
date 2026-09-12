@@ -9,6 +9,8 @@ import { useCallback, useRef } from 'react'
 import { ChapterType } from '@/data/supabase/types'
 import { useMiloStore } from '@/state/store'
 import { getChapterLevel } from '@/infra/storage/chapterLevel'
+import { recordExerciseResult } from '@/data/repositories'
+import { takePendingExercise } from '@/infra/storage/pendingExercise'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { syncSession } from '@/data/repositories'
 import { enqueueSession, flushQueue } from '@/infra/useOfflineSync'
@@ -82,6 +84,23 @@ export function useChapterSync(chapter?: ChapterType) {
         const moved = advanceAfterChapter(learner.id, chapter, correct, wrong, mastered, deeperChapter)
         if (moved?.kind === 'revised') track('plan_revised_deeper', { from: chapter, to: moved.to, correct, wrong })
       } catch { /* scoring already landed; never let bookkeeping undo it */ }
+
+      /**
+       * ⚠️ SET WORK IS FILED HERE FOR THE SAME REASON THE PLAN POINTER IS — this is the one function
+       * every completion path reaches. The obvious home looks like `/game`'s `handleComplete`, and
+       * that is the exact trap this repo already paid three months for: both registry factories in
+       * `ChapterPortal` discard `ChapterProps.onComplete`, so a teacher's exercise would have been
+       * marked done by nobody while the chapter scored perfectly.
+       *
+       * Read-once (`takePendingExercise` clears as it reads), so replaying the chapter afterwards
+       * for fun is free play and not a second submission. Best-effort and after the pointer: a
+       * failed filing must never cost the child their score.
+       */
+      const exerciseId = takePendingExercise()
+      if (exerciseId) {
+        recordExerciseResult(exerciseId, learner.id, correct, wrong)
+          .catch(() => { /* the child's score is already written; the teacher's tally can lag */ })
+      }
     }
 
     const payload = {

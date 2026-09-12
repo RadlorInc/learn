@@ -25,11 +25,12 @@ import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner
 import { CHAPTER_PARENT_LABELS, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
+import { getLevelName } from '@/core/leveling'
+import { ChildChapters } from '@/features/chapters/ChildChapters'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
 const CH_LABELS: Record<string, string> = { ...CHAPTER_PARENT_LABELS }
-const LEVEL_NAMES = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
 
 /* The adult surface's palette, from globals.css. Same values the Stitch parent-suite designs use;
    this page previously mixed them with ad-hoc greys (#888 / #e5e7eb / #1a1a1a) that belong to no
@@ -50,7 +51,7 @@ interface LearnerData {
   stats:       LearnerStats | null
   progress:    LearnerProgress[]
   sessions:    Session[]
-  accessRole:  'owner' | 'viewer' | null
+  accessRole:  'owner' | 'viewer' | 'self' | null
 }
 
 export default function ParentDashboard() {
@@ -378,7 +379,7 @@ export default function ParentDashboard() {
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:20, fontWeight:800 }}>{active.learner.display_name}</div>
                     <div style={{ fontSize:13, opacity:0.85 }}>
-                      {LEVEL_NAMES[Math.min((active.stats?.current_level ?? 1) - 1, 7)]} · Level {active.stats?.current_level ?? 1}
+                      {getLevelName(active.stats?.current_level ?? 1)} · Level {active.stats?.current_level ?? 1}
                       {' · '}
                       <span style={{ opacity:0.7, fontSize:11, textTransform:'uppercase', letterSpacing:0.5 }}>
                         {active.accessRole === 'owner' ? '👑 Owner' : '👁 Viewer'}
@@ -462,6 +463,28 @@ export default function ParentDashboard() {
 
           {active && (
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+
+            {/* ⚠️ SHOWN TO A VIEWER ONLY — a parent who arrived through a teacher's invite and can
+                read this child's progress but owns nothing. They are the one audience with no other
+                route to the product, and the dashboard previously offered them only a "Plan &
+                billing" link buried in a card header. An owner already has the whole app and does
+                not need selling to. */}
+            {active.accessRole === 'viewer' && (
+              <div style={{ background:'linear-gradient(135deg,#FFF4D6 0%,#FFE8CC 100%)', border:`1.5px solid ${P.accent}`, borderRadius:20, padding:'18px 16px' }}>
+                <h3 style={{ fontSize:16, fontWeight:900, margin:'0 0 6px', color:P.ink }}>
+                  Give {active.learner.display_name} the whole app
+                </h3>
+                <p style={{ fontSize:13.5, lineHeight:1.55, color:P.ink2, margin:'0 0 14px' }}>
+                  You can see how {active.learner.display_name} is doing in class. A subscription adds
+                  the 72 chapters at home — their teacher&apos;s work still arrives either way.
+                </p>
+                <button onClick={() => router.push('/parent/plan')} style={{
+                  background:P.accent, color:'#fff', border:'none', borderRadius:50,
+                  padding:'12px 22px', fontSize:14.5, fontWeight:800, cursor:'pointer',
+                }}>See plans →</button>
+              </div>
+            )}
+
             {/* Chapter progress */}
             <div style={{ background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:20, padding:'18px 16px', boxShadow:'0 2px 12px rgba(61,37,22,0.05)' }}>
               <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'0 0 14px' }}>
@@ -470,6 +493,22 @@ export default function ParentDashboard() {
                     read before anything is locked, and it lives on this side of the product only. */}
                 <button onClick={() => router.push('/parent/plan')} style={{ background:'none', border:'none', padding:0, fontSize:12, fontWeight:700, color:P.accent, cursor:'pointer' }}>Plan &amp; billing →</button>
               </div>
+
+              {/* ⚠️ THE PARENT'S LIST, AND THE ONLY ONE THAT DECIDES WHAT THE CHILD SEES. A teacher's
+                  class chapters are her syllabus and deliberately do not appear here. Owner only —
+                  a parent who is merely a viewer on a teacher's pupil may read, not re-plan. */}
+              {active.accessRole === 'owner' && (
+                <div style={{ margin:'0 0 14px' }}>
+                  <ChildChapters
+                    learnerId={active.learner.id}
+                    ageGroup={active.learner.age_group}
+                    current={active.learner.chapter_ids}
+                    onSaved={next => setLearners(ls => ls.map(d => d.learner.id === active.learner.id
+                      ? { ...d, learner: { ...d.learner, chapter_ids: next } } : d))}
+                    tokens={{ ink:P.ink, ink2:P.ink2, ink3:P.ink3, edge:P.edge, accent:P.accent, card:P.page }}
+                  />
+                </div>
+              )}
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 {activeChapterIds.map(ch => {
                   const prog  = active.progress.find(p => p.chapter === ch)

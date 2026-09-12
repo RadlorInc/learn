@@ -201,7 +201,6 @@ export function enterDigit(l: Label, n: number): Label {
 }
 /** Take the last digit back. A child who mistypes must not have to start the number again. */
 export const backspace = (l: Label): Label => ({ digits: l.digits.slice(0, -1) })
-export const clearLabel = (): Label => EMPTY_LABEL
 
 export const graded = (r: PkRound, l: Label) => labelValue(l) === r.answer
 

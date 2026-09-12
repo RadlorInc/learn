@@ -54,6 +54,9 @@ export function buildExport(name: string, b: ExportBundle, extra?: ExportExtras)
     learningPlans:          extra?.diagnosticPlans         ?? [],
     learningPlanProgress:   extra?.diagnosticPlanProgress  ?? [],
     gapRechecks:            extra?.diagnosticRechecks      ?? [],
+    // A child's marks on their teacher's set work. Named for the parent reading the file, not
+    // for the table it came from.
+    teacherExercises:       extra?.exerciseResults         ?? [],
     // ⚠️ SAYS WHAT IT RETURNED. Empty on the normal path; populated when a section was capped or
     // could not be read. A "download everything" file that quietly holds less is worse than one
     // that returns slightly less and tells the parent so — they can act on the second.

@@ -206,6 +206,8 @@ you typed.
 - placement checks: which questions were asked, whether each was answered
   correctly, and the resulting suggested starting point and practice plan;
 - in-app items bought with earned coins;
+- work set by a teacher: which exercise, how many answers were right and wrong,
+  and when it was finished. Their teacher can see this for their own class;
 - **usage events** — that the app was opened, that a chapter was opened, that a
   practice run finished, and similar. These carry no free text and no
   identifying information beyond the profile they belong to.
@@ -400,11 +402,6 @@ United States
 export const DOCS: LegalDoc[] = [PRIVACY, TERMS]
 
 /**
- * The one-line consent shown where an adult signs up and where the cold funnel captures an email.
- * ⚠️ It links rather than asserts: a checkbox claiming someone "agreed" to a policy they were never
- * shown is worth nothing, and an attorney will say so.
- */
-export const CONSENT_LINE = 'By continuing you agree to our Terms and Privacy Policy.'
 
 /**
  * ⚠️ THE MARKS OF A DECISION NOBODY HAS MADE. Each one is a hole a human has to fill: a date, a

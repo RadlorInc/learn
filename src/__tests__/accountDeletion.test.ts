@@ -99,6 +99,11 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.admin_users':              `public.admin_users where user_id = '${uid}'`,
     'public.auth_events':              `public.auth_events where user_id = '${uid}'`,
     'public.billing_events':           `public.billing_events where account_id = '${uid}'`,
+    // The classroom tables. Neither is cleared by a line in `delete_my_account`: exercise_results
+    // cascades from learners (deleted first, same transaction) and exercises cascades from grades
+    // -> profiles -> auth.users. The census still has to name them, which is what this gate is for.
+    'public.exercises':                `public.exercises where created_by = '${uid}'`,
+    'public.exercise_results':         `public.exercise_results where learner_id in (${ls})`,
   }
   const out: Record<string, number> = { 'auth.users': await count(db, `auth.users where id = '${uid}'`) }
   for (const t of tables) {
@@ -112,7 +117,12 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
 
 async function seedFamily(db: PGlite, uid: string, learners: string[], email: string) {
   await db.exec(`insert into auth.users (id, email, email_confirmed_at) values ('${uid}', '${email}', now())`)   // a confirmed account → trigger makes the profile
-  await db.exec(`insert into public.grades (id, created_by, name, age_group) values (gen_random_uuid(), '${uid}', 'Class', '3-5')`)
+  const gradeId = `${uid.slice(0, 8)}-0000-4000-8000-00000000c1a5`
+  await db.exec(`insert into public.grades (id, created_by, name, age_group) values ('${gradeId}', '${uid}', 'Class', '3-5')`)
+  // A teacher's set work, and it must be in the fixture or the census below proves nothing.
+  const exId = `${uid.slice(0, 8)}-0000-4000-8000-0000000000e5`
+  await db.exec(`insert into public.exercises (id, grade_id, created_by, topic, question_count, difficulty, unlocked_at)
+                 values ('${exId}', '${gradeId}', '${uid}', 'counting', 10, 1, now())`)
   await db.exec(`insert into public.auth_events (user_id, event) values ('${uid}', 'login')`)
   // An admin deleting their own account is a real case, and admin_users is the table whose
   // survival would leave a dead uuid holding dashboard access.
@@ -133,6 +143,7 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
       insert into public.sessions (learner_id, chapter, correct_count) values ('${l}', 'counting', 7);
       insert into public.learner_events (learner_id, event) values ('${l}', 'chapter_open');
       insert into public.error_events (learner_id, source, message) values ('${l}', 'client', 'boom');
+      insert into public.exercise_results (exercise_id, learner_id, correct_count, wrong_count) values ('${exId}', '${l}', 8, 2);
       insert into public.learner_invites (learner_id, invited_by, invited_email)
         values ('${l}', '${uid}', 'friend@example.com');
       insert into public.subscription_seats (subscription_id, learner_id, seat_index)

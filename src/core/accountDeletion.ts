@@ -46,7 +46,7 @@ export const HELD_ELSEWHERE = [
   },
 ] as const
 
-/**
+/*
  * ⚠️ NOT A SURVIVOR, AND WORTH SAYING SO. `diagnostic_leads` holds an email address given to the
  * logged-out placement check BEFORE any account existed. It is keyed on the address, has no
  * user_id and no learner_id, so nothing links it to an account and account deletion cannot find
@@ -54,5 +54,7 @@ export const HELD_ELSEWHERE = [
  * free check and then signed up with the same address still has that row after deleting their
  * account, and they can only get rid of it by writing in. That is a real gap in the promise; it is
  * recorded here rather than silently ignored.
+ *
+ * Deliberately prose and not a constant: nothing reads it, and an exported string nobody
+ * imports reads as wiring. The record is the point.
  */
-export const NOT_REACHABLE_BY_DELETION = 'public.diagnostic_leads' as const

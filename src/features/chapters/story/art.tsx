@@ -197,17 +197,6 @@ export const COUNT_EMOJI: Record<CountKind, string> = {
   chick: '🐤', lamb: '🐑', duckling: '🐥', pear: '🍐', frog: '🐸', dragonfly: '🪰',
   rocket: '🚀', star: '⭐', cloud: '☁️', planet: '🪐', comet: '☄️', satellite: '🛰️', astronaut: '👨‍🚀', moonRock: '🌑', alien: '👽',
 }
-export const COUNT_LABEL: Record<CountKind, string> = {
-  firefly: 'firefly', butterfly: 'butterfly',
-  duck: 'duck', fish: 'fish', turtle: 'turtle',
-  pigeon: 'bird', bee: 'bee', eagle: 'eagle',
-  snail: 'snail', squirrel: 'squirrel', ant: 'ant',
-  mushroom: 'mushroom', apple: 'apple', flower: 'flower',
-  octopus: 'octopus', crab: 'crab', rabbit: 'rabbit',
-  shark: 'shark', ladybug: 'ladybug',
-  chick: 'chick', lamb: 'lamb', duckling: 'duckling', pear: 'pear', frog: 'frog', dragonfly: 'dragonfly',
-  rocket: 'rocket', star: 'star', cloud: 'cloud', planet: 'planet', comet: 'comet', satellite: 'satellite', astronaut: 'astronaut', moonRock: 'moon rock', alien: 'alien',
-}
 export const COUNT_PLURAL: Record<CountKind, string> = {
   firefly: 'fireflies', butterfly: 'butterflies',
   duck: 'ducks', fish: 'fish', turtle: 'turtles',
@@ -298,70 +287,13 @@ export function CountItem({ kind, on, size = 56, variant = 0, blend = false, sid
   )
 }
 
-// Places the count items in a fitting setting so counting always has context:
-// apples grow ON the tree, mushrooms/flowers sit on the grass, fireflies float.
-const STAGE_TREE = '/assets/objects/tree_5.png'   // the bare apple tree
-export function CountStage({ kind, children }: { kind: CountKind; children: React.ReactNode }) {
-  if (kind === 'apple') {
-    return (
-      <div style={{ position: 'relative', width: 250, height: 250, margin: '0 auto', display: 'flex', justifyContent: 'center' }}>
-        <img src={STAGE_TREE} alt="" aria-hidden draggable={false} decoding="async" loading="lazy"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
-        {/* apples clustered over the canopy */}
-        <div style={{ position: 'absolute', top: 26, left: '50%', transform: 'translateX(-50%)', width: 170,
-          display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center', zIndex: 1 }}>
-          {children}
-        </div>
-      </div>
-    )
-  }
-  if (kind === 'mushroom' || kind === 'flower') {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', maxWidth: 320 }}>{children}</div>
-        <div style={{ width: 260, height: 16, borderRadius: '50%', background: 'radial-gradient(ellipse at center,#86ca63 0%,rgba(134,202,99,0) 70%)' }} />
-      </div>
-    )
-  }
-  return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 320 }}>{children}</div>
-}
 
-export function DoorArt({ n, highlight }: { n: number; highlight?: boolean }) {
-  return (
-    <svg viewBox="0 0 90 120" width="100%" height="100%">
-      <rect x="6" y="14" width="78" height="102" rx="10" fill="#b07a4f" stroke="#8b5a2b" strokeWidth="3" />
-      <path d="M6 24 Q45 -6 84 24" fill="#c98f5e" stroke="#8b5a2b" strokeWidth="3" />
-      <rect x="18" y="34" width="54" height="74" rx="8" fill={highlight ? '#dff3cf' : '#f4e3c8'} stroke="#8b5a2b" strokeWidth="2.5" />
-      <circle cx="62" cy="72" r="4" fill="#8b5a2b" />
-      <text x="45" y="84" textAnchor="middle" fontFamily="var(--font-display)" fontWeight="900" fontSize="40" fill="#5a3d2b">{n}</text>
-    </svg>
-  )
-}
 
 export function Apple({ size = 44 }: { size?: number }) {
   return <img src="/assets/objects/apple.png" alt="apple" draggable={false} decoding="async" loading="lazy" width={size} height={size} style={{ objectFit: 'contain' }} />
 }
 
-export function Berry({ size = 26 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 30 30" width={size} height={size}>
-      <circle cx="15" cy="17" r="11" fill="#6a5acd" stroke="#4b3f9e" strokeWidth="2" />
-      <circle cx="11" cy="13" r="3" fill="#fff" opacity="0.5" />
-      <path d="M9 8 L15 12 L21 8" fill="none" stroke="#4caf50" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
-  )
-}
 
-export function Stone({ n, stepped, size = 66 }: { n: number; stepped?: boolean; size?: number }) {
-  return (
-    <svg viewBox="0 0 70 70" width={size} height={size}>
-      <ellipse cx="35" cy="58" rx="30" ry="9" fill="#5a4a3a" opacity="0.2" />
-      <path d="M8 40 Q6 22 35 20 Q64 22 62 40 Q64 54 35 56 Q6 54 8 40 Z" fill={stepped ? '#a6dd84' : '#c9bca8'} stroke={stepped ? '#6fbe3f' : '#9c8f7a'} strokeWidth="3" />
-      <ellipse cx="26" cy="32" rx="8" ry="4" fill="#fff" opacity="0.3" />
-      <text x="35" y="48" textAnchor="middle" fontFamily="var(--font-display)" fontWeight="900" fontSize="26" fill="#5a4a3a">{n}</text>
-    </svg>
-  )
-}
 
 export function Basket({ count }: { count: number }) {
   return (

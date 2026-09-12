@@ -135,6 +135,8 @@ you typed.
 - placement checks: which questions were asked, whether each was answered
   correctly, and the resulting suggested starting point and practice plan;
 - in-app items bought with earned coins;
+- work set by a teacher: which exercise, how many answers were right and wrong,
+  and when it was finished. Their teacher can see this for their own class;
 - **usage events** — that the app was opened, that a chapter was opened, that a
   practice run finished, and similar. These carry no free text and no
   identifying information beyond the profile they belong to.

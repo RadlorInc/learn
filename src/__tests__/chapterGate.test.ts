@@ -179,7 +179,14 @@ describe('⚠️ the gate is at chapter entry, and nowhere else', () => {
   it('⚠️ THE DIAGNOSTIC IS NEVER GATED — counted, not eyeballed', () => {
     // It is how a parent decides to buy. Counting the call sites is the check: asserting the
     // diagnostic "does not import it" passes just as happily when a third route starts to.
-    const callers = ['src/app/game/page.tsx', 'src/app/parent/page.tsx']
+    // ⚠️ `/menu` READS ENTITLEMENT BUT DOES NOT GATE A CHAPTER, and that distinction is why it is
+    // listed here with a reason rather than quietly allowed. It picks which of the child's two home
+    // screens to render — the full app, or only the teacher's set work for a family that has not
+    // subscribed. It cannot lock a chapter: `/game` takes its own verdict at entry regardless, and
+    // `childMode` fails OPEN on an unknown answer, so the worst this read can do is show a child a
+    // chapter the real gate then refuses. If it ever starts deciding whether a chapter OPENS,
+    // that belongs in `useChapterGate` and this entry should go.
+    const callers = ['src/app/game/page.tsx', 'src/app/menu/page.tsx', 'src/app/parent/page.tsx']
     const all = [
       'src/app/game/page.tsx', 'src/app/parent/page.tsx', 'src/app/diagnostic/page.tsx',
       'src/app/demo/page.tsx', 'src/app/teen-preview/page.tsx', 'src/app/menu/page.tsx',

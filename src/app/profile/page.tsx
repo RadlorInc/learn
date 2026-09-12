@@ -7,13 +7,12 @@ import BackButton from '@/shared/ui/BackButton'
 import VoicePicker from '@/shared/ui/VoicePicker'
 import { useMiloStore } from '@/state/store'
 import { CHAPTER_ORDER, CHAPTER_NAMES } from '@/core/chapters'
-import { getLevelProgress, getNextLevelXP } from '@/core/leveling'
+import { getLevelName, getLevelProgress, getNextLevelXP } from '@/core/leveling'
 import { getLearnerStats, getLearnerProgress } from '@/data/repositories'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import type { LearnerStats, LearnerProgress } from '@/data/supabase/types'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
-const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
 
 const CHAPTER_EMOJIS: Record<string, string> = {
   counting:'⭐', numberOrdering:'🔢', numberRecognition:'🚪',
@@ -45,7 +44,7 @@ export default function ProfilePage() {
   const totalCoins   = stats?.total_coins   ?? profile.totalCoins
   const currentLevel = stats?.current_level ?? profile.currentLevel
 
-  const levelName   = LEVEL_NAMES[Math.min(currentLevel - 1, LEVEL_NAMES.length - 1)]
+  const levelName   = getLevelName(currentLevel)
   const levelPct    = Math.round(getLevelProgress(totalXP, currentLevel) * 100)
   const nextXP      = getNextLevelXP(currentLevel)
   const thresholds  = [0,500,1200,2500,4500,7000,10000,14000]

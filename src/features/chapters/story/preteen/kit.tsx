@@ -8,7 +8,6 @@
  * into the pre-teen look.
  */
 import React, { useState } from 'react'
-import { speak, unlockSpeech } from '@/infra/useMiloSpeaker'
 
 export const PT = {
   bg0: '#0a1026', bg1: '#111a3c',
@@ -42,15 +41,13 @@ export const ACCENTS: Record<string, Accent> = {
 }
 
 /**
- * Panel widths. A hard px cap (`min(94vw, 520px)`) is a PHONE size that never grows, so on a laptop
+ * Card width. A hard px cap (`min(94vw, 520px)`) is a PHONE size that never grows, so on a laptop
  * the chapter renders at ~21% of the screen with 380px of dead navy either side and Milo/Continue
  * stranded in opposite corners. The teen band fixed this in July with a vw term; the fix never
  * reached this kit. `min(<vw guard>, clamp(<old cap>, <vw>, <max>))` keeps small frames BYTE-IDENTICAL
  * (the old cap is the clamp floor) and only lets a roomy frame use the room it has.
  */
-export const PANEL_W = 'min(94vw, clamp(520px, 52vw, 860px))'
 export const CARD_W = 'min(92vw, clamp(460px, 42vw, 700px))'
-export const PROMPT_W = 'min(92vw, clamp(660px, 54vw, 1000px))'
 
 export const PT_CSS = `@keyframes pt_float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes pt_pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
@@ -84,59 +81,6 @@ export function Brackets({ color, gap = -6 }: { color: string; gap?: number }) {
   </>)
 }
 
-// ─── HUD task banner ────────────────────────────────────────────────────────────────────
-// `big` opts into a larger, more prominent prompt (used by the checkup/diagnostic, where the question
-// is the focus). Regular chapters leave it off and keep the compact HUD pill.
-/**
- * The question card. Pass `text` alone for the original one-line form, or add `instruction` to get
- * the QUESTION-CLARITY three zones the 12–14 band settled on (docs/teen-12-14-math-audit.md §1):
- *
- *   1. CONTEXT     what the numbers ARE, plus the rule that applies. Plain language, no UI verbs.
- *   2. THE MATH    the hero — usually the instrument itself, not text.
- *   3. INSTRUCTION one verb-led action, in its own chip so it never blends into the story.
- *
- * ⚠️ WHY: a single prose line that fuses story + math + "what to do with your hands" is the exact
- * thing a struggling child cannot parse — it was the partner's "confusing" complaint, measured as
- * systemic across 11 of 12 chapters in that band. Optional and backward-compatible: a caller that
- * passes no `instruction` renders exactly as before.
- */
-/**
- * ⚠️ `solid` IS FOR A CHAPTER DRAWN OVER A LIVE CAMERA PICTURE. `PT.panel` is 72% opaque and the
- * full-screen scrim passes about two thirds of whatever room the child is sitting in, so against a
- * window the question — the one thing that must be readable — is lifted off its own background.
- * `backdropFilter` does not help: blur preserves mean luminance.
- */
-export function PromptCard({ tag = 'Task', text, instruction, accent, short, big, solid, onMeasure }: { tag?: string; text: string; instruction?: string; accent: Accent; short?: boolean; big?: boolean; solid?: boolean; onMeasure?: (bottomPx: number) => void }) {
-  /**
-   * ⚠️ REPORT THE REAL BOTTOM EDGE. This card is TEXT and it WRAPS, so its height depends on the
-   * question in front of you — measured, 36px on a one-line pair test and 265px on a three-line
-   * split context with an action chip. Anything below it that reserves a CONSTANT is guessing at a
-   * variable gap and will eventually be sat on: that happened twice here before this existed.
-   * useLayoutEffect, not a ResizeObserver — RO callbacks ride the rendering steps and are frozen
-   * in a backgrounded tab, so the reserve would silently be stale exactly where nobody is looking.
-   */
-  const cardRef = React.useRef<HTMLDivElement | null>(null)
-  const cb = React.useRef(onMeasure); cb.current = onMeasure
-  React.useLayoutEffect(() => {
-    if (cardRef.current) cb.current?.(Math.round(cardRef.current.getBoundingClientRect().bottom))
-  })
-  const textSize = big
-    ? (short ? 'clamp(18px,4.8vh,24px)' : 'clamp(22px,3.4vh,32px)')
-    : (short ? 'clamp(14px,3.6vh,17px)' : 'clamp(16px,2.3vh,20px)')
-  return (
-    <div style={{ position: 'fixed', top: short ? 46 : 66, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-      <div ref={cardRef} style={{ maxWidth: big ? 'min(94vw,720px)' : PROMPT_W, display: 'flex', flexDirection: big ? 'column' : 'row', alignItems: big ? 'flex-start' : 'center', gap: big ? 8 : 12, background: solid ? PT.panelSolid : PT.panel, backdropFilter: 'blur(8px)', borderRadius: 15, border: `1px solid ${accent.base}66`, padding: big ? (short ? '12px 16px' : '16px 22px') : (short ? '7px 8px 7px 14px' : '10px 12px 10px 18px'), boxShadow: `0 0 20px ${accent.base}33, 0 8px 22px rgba(0,0,0,0.4)` }}>
-        <span style={{ fontFamily: PT.mono, fontWeight: 700, fontSize: big ? 11.5 : 10.5, color: accent.base, background: accent.soft, borderRadius: 6, padding: '3px 8px', letterSpacing: 1, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{tag}</span>
-        <span style={{ display: 'flex', flexDirection: 'column', gap: short ? 4 : 6, minWidth: 0 }}>
-          <span style={{ fontFamily: PT.sans, fontWeight: big ? 700 : 600, fontSize: textSize, lineHeight: big ? 1.32 : 1.25, color: PT.ink }}>{text}</span>
-          {instruction && (
-            <span style={{ alignSelf: 'flex-start', fontFamily: PT.sans, fontWeight: 800, fontSize: short ? 'clamp(13px,3.2vh,15px)' : 'clamp(14px,2.1vh,18px)', lineHeight: 1.25, color: accent.base, background: accent.soft, border: `1px solid ${accent.base}55`, borderRadius: 999, padding: short ? '3px 11px' : '5px 14px' }}>{instruction}</span>
-          )}
-        </span>
-      </div>
-    </div>
-  )
-}
 
 // ─── Answer chip (mono) ────────────────────────────────────────────────────────────────
 export type ChoiceState = 'idle' | 'right' | 'wrong' | 'dim'
@@ -169,61 +113,6 @@ export function PtMilo({ left = 9 }: { left?: number }) {
   )
 }
 
-// ─── Mission picker ────────────────────────────────────────────────────────────────────
-export interface Mission { id: string; label: string; tag: string; accent: Accent; glyph: React.ReactNode }
-
-// ─── Explore-phase primitives (interactive "play with it first" sim) ────────────────────
-// A HUD range slider: label · neon track · mono value readout. Touch-friendly + testable.
-export function PtSlider({ label, value, min, max, step = 1, accent, fmt, onChange }: {
-  label: string; value: number; min: number; max: number; step?: number; accent: Accent; fmt?: (n: number) => string; onChange: (n: number) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', fontFamily: PT.sans }}>
-      <span style={{ minWidth: 62, fontSize: 13, color: PT.inkSoft }}>{label}</span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} aria-label={label}
-        style={{ flex: 1, minWidth: 0, accentColor: accent.base, cursor: 'pointer' }} />
-      <span style={{ minWidth: 44, textAlign: 'right', fontFamily: PT.mono, fontWeight: 700, fontSize: 16, color: accent.base }}>{fmt ? fmt(value) : String(value)}</span>
-    </label>
-  )
-}
-
-// A mono readout tile (label + value) for live sim outputs.
-export function PtReadout({ label, value, accent, warn }: { label: string; value: string; accent: Accent; warn?: boolean }) {
-  const c = warn ? PT.warn : accent.base
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 90 }}>
-      <span style={{ fontFamily: PT.mono, fontSize: 10, letterSpacing: .8, textTransform: 'uppercase', color: PT.inkMute, whiteSpace: 'nowrap' }}>{label}</span>
-      <span style={{ fontFamily: PT.mono, fontWeight: 800, fontSize: 23, color: c, textShadow: `0 0 14px ${c}66` }}>{value}</span>
-    </div>
-  )
-}
-
-// The Explore-phase scaffold: eyebrow header (top) · sim in a scrollable dark-glass panel (center) ·
-// neon Continue (bottom-right, clear of Milo). Renders over the chapter's LabBackdrop/BackChip/PtMilo.
-export function ExploreScaffold({ title, intro, accent, short, onContinue, continueLabel = 'Continue', children }: {
-  title: string; intro?: string; accent: Accent; short?: boolean; onContinue: () => void; continueLabel?: string; children: React.ReactNode
-}) {
-  return (
-    <>
-      <div style={{ position: 'absolute', top: 12, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
-        <div style={{ maxWidth: 'min(92vw,560px)', textAlign: 'center', background: PT.panel, backdropFilter: 'blur(6px)', border: `1px solid ${accent.base}66`, borderRadius: 14, padding: short ? '5px 16px' : '8px 20px', boxShadow: `0 0 16px ${accent.base}33` }}>
-          <div style={{ fontFamily: PT.mono, fontSize: 10, letterSpacing: 2, color: accent.base, textTransform: 'uppercase' }}>Explore</div>
-          <div style={{ fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 14 : 17, color: PT.ink }}>{title}</div>
-        </div>
-      </div>
-      <div style={{ position: 'absolute', left: 0, right: 0, top: short ? 62 : 90, bottom: short ? 58 : 92, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4vw', overflowY: 'auto' }}>
-        <div style={{ position: 'relative', width: PANEL_W, background: PT.panel, backdropFilter: 'blur(10px)', border: `1px solid ${accent.base}55`, borderRadius: 18, boxShadow: `0 0 30px ${accent.base}22, 0 18px 40px rgba(0,0,0,0.5)`, padding: short ? '16px 16px' : '22px 24px' }}>
-          <Brackets color={accent.base} />
-          {intro && <p style={{ margin: '0 0 14px', fontFamily: PT.sans, fontSize: short ? 13 : 14.5, lineHeight: 1.5, color: PT.inkSoft, textAlign: 'center' }}>{intro}</p>}
-          {children}
-        </div>
-      </div>
-      <div style={{ position: 'absolute', right: 16, bottom: short ? 12 : '3.5%', zIndex: 46 }}>
-        <button onClick={onContinue} style={{ padding: short ? '10px 22px' : '12px 30px', borderRadius: 13, border: `1px solid ${accent.base}`, cursor: 'pointer', background: accent.base, color: '#06121f', fontFamily: PT.sans, fontWeight: 700, fontSize: short ? 15 : 17, boxShadow: `0 0 22px ${accent.base}88` }}>{continueLabel} →</button>
-      </div>
-    </>
-  )
-}
 
 // ─── Intro splash ──────────────────────────────────────────────────────────────────────
 /**

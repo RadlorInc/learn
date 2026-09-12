@@ -269,6 +269,7 @@ describe('the terms still agree with the schema they were written against', () =
       diagnostic_plans:    'suggested starting point and practice plan',
       diagnostic_rechecks: 'placement checks',
       error_events:        '**Error reports.**',
+      exercise_results:    'work set by a teacher',
       subscription_seats:  'how many seats you have paid for',
       // Adult-to-adult authorisation rather than data about the child — §5, not §6.
       learner_access:      'You may invite another parent or guardian',

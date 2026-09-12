@@ -28,6 +28,8 @@ export interface ExportExtras {
   diagnosticPlans:    unknown[]
   diagnosticPlanProgress: unknown[]
   diagnosticRechecks: unknown[]
+  /** A child's marks on their teacher's set work, with the exercise joined in. */
+  exerciseResults:    unknown[]
   /** Empty when everything came back whole. Anything in here is printed IN the file. */
   notes:             string[]
 }
@@ -54,7 +56,7 @@ const EVENTS_CAP = 5000
 /** Empty-but-shaped, so a failed fetch still produces a valid file rather than nothing. */
 const EMPTY: ExportExtras = {
   learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
-  diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [],
+  diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], exerciseResults: [],
   notes: ['We could not read part of this data. Nothing has been deleted — please try again, or write to us and we will send it.'],
 }
 
@@ -68,12 +70,19 @@ const EMPTY: ExportExtras = {
 export async function getLearnerExportExtras(learnerId: string): Promise<ExportExtras> {
   const supabase = db()
   try {
-    const [state, events, sessions, plans, rechecks] = await Promise.all([
+    const [state, events, sessions, plans, rechecks, exResults] = await Promise.all([
       supabase.from('learner_state').select('*').eq('learner_id', learnerId).maybeSingle(),
       supabase.from('learner_events').select('*').eq('learner_id', learnerId).order('created_at').limit(EVENTS_CAP),
       supabase.from('diagnostic_sessions').select('*').eq('learner_id', learnerId).order('started_at'),
       supabase.from('diagnostic_plans').select('*').eq('learner_id', learnerId).order('created_at'),
       supabase.from('diagnostic_rechecks').select('*').eq('learner_id', learnerId).order('created_at'),
+      // ⚠️ A child's marks on a teacher's set work are the child's data as much as anything else
+      // here, so they are in the file a parent can download. The exercise itself (the topic and
+      // difficulty the teacher chose) is joined in, because a row of bare scores with no idea what
+      // the questions were is not an answer to "what do you hold about my child".
+      supabase.from('exercise_results')
+        .select('*, exercises(topic, question_count, difficulty)')
+        .eq('learner_id', learnerId).order('completed_at'),
     ])
 
     const sessionIds = (sessions.data ?? []).map((s: { id: string }) => s.id)
@@ -105,6 +114,7 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       diagnosticPlans:        plans.data ?? [],
       diagnosticPlanProgress: planProgress.data ?? [],
       diagnosticRechecks:     rechecks.data ?? [],
+      exerciseResults:        exResults.data ?? [],
     }
   } catch {
     // A parent exercising a data right must still get a file. An empty section is visibly

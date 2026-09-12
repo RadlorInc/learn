@@ -70,7 +70,6 @@ export const WELLS: readonly Well[] = ['dimes', 'pennies']
 
 export const dimesOf = (cents: number) => Math.floor(cents / 10)
 export const penniesOf = (cents: number) => cents % 10
-export const wantOf = (cents: number, w: Well) => (w === 'dimes' ? dimesOf(cents) : penniesOf(cents))
 
 /**
  * Every answer the TAP path offers, per well — the same span a well can hold.

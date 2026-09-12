@@ -62,5 +62,5 @@ export const PUBLIC_ROUTES = ['/', '/diagnostic', '/help', '/legal/privacy', '/l
  *  noise for everyone. */
 export const PRIVATE_ROUTES = [
   '/api/', '/parent', '/insights', '/profile', '/shop', '/menu', '/game', '/story',
-  '/name-entry', '/auth', '/teen-preview', '/sim-preview',
+  '/auth', '/teen-preview', '/sim-preview',
 ] as const

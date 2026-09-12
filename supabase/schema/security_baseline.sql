@@ -77,6 +77,14 @@
 --                                                  that fails closed breaks a working product, one
 --                                                  that fails open costs money. No grant at all, so
 --                                                  a client can neither read nor flip it.
+--   exercises                  rls=t  policies=2   A teacher's set work. The owning teacher has ALL
+--                                                  via grades.created_by; a roster child/parent gets
+--                                                  SELECT only, and ONLY where unlocked_at is not
+--                                                  null — locked work is invisible, not disabled.
+--   exercise_results           rls=t  policies=2   A child's marks on that work. ALL via
+--                                                  learner_access (which now includes the child's
+--                                                  own 'self' row), plus a teacher SELECT through
+--                                                  the exercise's class.
 --   billing_events             rls=t  policies=0   INTENTIONAL, the error_events precedent: RLS on
 --                                                  with ZERO policies = deny-all, service-role only.
 --                                                  Holds Stripe customer ids, event types and
@@ -96,6 +104,10 @@
 --   chapters: select        SELECT  using(true)                          [public catalog]
 --   diagnostic_*            SELECT  using(learner_access join, parent_id = auth.uid())   [owner-scoped, read-only; writes via SECURITY DEFINER RPC]
 --   grades / grade_chapters SELECT/INSERT/UPDATE/DELETE scoped to grades.created_by = auth.uid() (+ learner_access for read)
+--   exercises: owner                    ALL     using+check(exists grades where created_by = auth.uid())
+--   exercises: roster reads unlocked    SELECT  using(unlocked_at is not null AND learner_access join on grade)
+--   exercise_results: own learner       ALL     using+check(exists learner_access where parent_id = auth.uid())
+--   exercise_results: teacher reads     SELECT  using(exists exercises join grades where created_by = auth.uid())
 --   subscriptions: owner can read       SELECT  using(account_id = auth.uid())          [no write policy exists]
 --   subscription_seats: owner can read  SELECT  using(exists subscriptions where account_id = auth.uid())
 --   sessions: parent can insert         INSERT  check(learner_access AND is_chapter_entitled(learner_id, chapter))

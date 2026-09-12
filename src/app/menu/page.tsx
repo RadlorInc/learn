@@ -11,9 +11,11 @@ import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 import BackButton from '@/shared/ui/BackButton'
 import ChapterPicker from '@/shared/ui/ChapterPicker'
 import PWAInstallBanner from '@/shared/ui/PWAInstallBanner'
-import { getActiveLearner, clearActiveLearner } from '@/data/supabase/useLearnerSession'
+import { getActiveLearner, setActiveLearner, clearActiveLearner } from '@/data/supabase/useLearnerSession'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
-import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds, getActivePlanChapters } from '@/data/repositories'
+import { getLearnerBootstrap, saveLearnerState, getActivePlanChapters, getSelfLearner, entitledChapters } from '@/data/repositories'
+import { childMode } from '@/features/billing/childMode'
+import { ExerciseList } from '@/features/chapters/ExerciseList'
 import type { LearnerState } from '@/data/supabase/types'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
 import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
@@ -22,9 +24,9 @@ import { currentPlanChapter, planProgress, reconcilePlan, planSource } from '@/i
 import { planLine } from '@/core/planCopy'
 import CheckDoor from '@/shared/ui/CheckDoor'
 import { getCheckupStatus } from '@/data/repositories'
+import { getLevelName } from '@/core/leveling'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
-const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
 
 // True when this device's shop state equals what's on the server, so we can skip
 // the write-back on a plain menu visit. (After applyServerProgress merges the
@@ -69,6 +71,9 @@ export default function MainMenu() {
   const [learnerId,    setLearnerId]    = useState<string | null>(null)
   const [ageGroup,     setAgeGroup]     = useState<AgeGroup>('3-5')
   const [chapterIds,   setChapterIds]   = useState<ChapterType[]>([])
+  /** The ROSTER link — which class's set work reaches this child. NOT what they may play. */
+  const [gradeId,      setGradeId]      = useState<string | null>(null)
+  const [entitledCount, setEntitledCount] = useState<number | null | undefined>(undefined)
   const [lastPlayed,   setLastPlayedState] = useState<ChapterType | null>(null)
   const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number; source: string } | null>(null)
   const [reoffer,      setReoffer]      = useState(false)
@@ -120,19 +125,20 @@ export default function MainMenu() {
     if (learner) {
       loadLearner(learner.id, learner.display_name, learner.avatar_index)
       setLearnerId(learner.id)
+      setGradeId(learner.grade_id ?? null)
       // Fall back to 3–5 for learner records cached before age_group existed.
       const band = learner.age_group ?? '3-5'
       setAgeGroup(band)
-      // Show the band's chapters immediately; if the learner is in a grade,
-      // refine to that grade's hand-picked subset once it loads.
-      setChapterIds(chaptersForAge(band).map(c => c.id))
-      if (learner.grade_id) {
-        getGradeChapterIds(learner.grade_id).then(ids => {
-          const fallback = chaptersForAge(band).map(c => c.id)
-          const valid = ids.filter(id => fallback.includes(id))
-          if (valid.length) setChapterIds(valid)
-        }).catch(() => { /* keep the band fallback */ })
-      }
+      // ⚠️⚠️ THE PARENT'S LIST, NEVER THE TEACHER'S — and this used to read the other one.
+      // `grade_id` says which class the child is on the ROSTER of, which decides which exercises
+      // reach them and nothing else. What they may PLAY is `chapter_ids`, set by the parent.
+      // Until 2026-09-12 this narrowed the menu to `grade_chapters`, so the moment a teacher added
+      // a child to her class HER syllabus silently became that child's whole app. Two jobs, one
+      // column. Unset `chapter_ids` falls through to the band's standard set, which is also the
+      // entire implementation of the parent's "I don't know which chapters to pick" door.
+      const standard = chaptersForAge(band).map(c => c.id)
+      const chosen = (learner.chapter_ids ?? []).filter(id => standard.includes(id as ChapterType)) as ChapterType[]
+      setChapterIds(chosen.length ? chosen : standard)
       const lp = getLastPlayed(learner.id)?.chapter ?? null
       setLastPlayedState(lp)
       setReady(true)
@@ -264,11 +270,48 @@ export default function MainMenu() {
       return
     }
 
-    router.replace('/parent')
+    // ⚠️ A CHILD SIGNED IN AS THEMSELVES HAS NOBODY TO PICK THEM. Every other route into this
+    // screen goes through an adult choosing a child on the dashboard, which is what fills session
+    // storage; a child's own account arrives here with it empty and would be bounced to /parent —
+    // a dashboard they are not allowed to read. Adopt their own learner instead, and only then
+    // fall back. Adults get null here, so their path is unchanged.
+    getSelfLearner().then(self => {
+      if (!self) { router.replace('/parent'); return }
+      setActiveLearner(self)
+      // Re-run the effect body by reloading rather than duplicating the whole bootstrap: this
+      // happens once per sign-in, and a second copy of that logic is how the two drift apart.
+      window.location.reload()
+    }).catch(() => router.replace('/parent'))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const levelName   = LEVEL_NAMES[Math.min(profile.currentLevel - 1, LEVEL_NAMES.length - 1)]
+  useEffect(() => {
+    if (!learnerId) return
+    let cancelled = false
+    if (!chapterIds.length) return
+    entitledChapters(learnerId, chapterIds)
+      .then(v => {
+        if (cancelled) return
+        const vals = Object.values(v)
+        // ⚠️ `null` from the entitlement check means "could not find out", and one unknown makes
+        // the whole answer unknown — `childMode` then fails open. Counting an unknown as "not
+        // entitled" would strip the app off a paying child whose network blinked.
+        setEntitledCount(vals.some(x => x === null) ? null : vals.filter(Boolean).length)
+      })
+      .catch(() => { if (!cancelled) setEntitledCount(null) })
+    return () => { cancelled = true }
+  }, [learnerId, chapterIds])
+
+  /**
+   * ⚠️ THE CHILD'S TWO HOMES. A child reached through a classroom whose family has not subscribed
+   * gets set work and nothing else; everyone else gets the app. `childMode` keys that on the
+   * paywall's OWN entitlement signal rather than a second "is subscribed" lookup, so the two can
+   * never disagree — and while `PAYWALL_ENABLED` is false it always answers `full`, which is
+   * correct, because nothing is gated yet.
+   */
+  const mode = childMode(entitledCount)
+
+  const levelName   = getLevelName(profile.currentLevel)
   const avatarSrc = AVATAR_SRCS[profile.avatarIndex] ?? AVATAR_SRCS[0]
   const childName   = profile.childName
 
@@ -303,6 +346,22 @@ export default function MainMenu() {
 
   const resumeStars = resumeChapter ? (profile.chapterStars[resumeChapter] ?? 0) : 0
 
+  // ⚠️ EXERCISES ONLY. No chapter grid, no shop, no wallet — a child whose family has not
+  // subscribed sees the teacher's set work and nothing that would advertise what they cannot open.
+  // The chapter gate still refuses those chapters underneath; this is so nobody is offered them.
+  if (ready && mode === 'exercises' && learnerId) {
+    return (
+      <div className="kit-screen" style={{ background: 'var(--bg-page)', padding: '24px 18px' }}>
+        <div style={{ maxWidth: 520, margin: '0 auto' }}>
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#1a1a1a', margin: '8px 0 18px' }}>
+            Hi {childName}!
+          </h1>
+          <ExerciseList learnerId={learnerId} gradeId={gradeId} only />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="kit-screen" style={{ background: 'var(--bg-page)' }}>
       <div className="kit-cloud" style={{ width: 140, height: 56, top: 40,  left: 60 }} />
@@ -326,6 +385,14 @@ export default function MainMenu() {
           <BackButton href='/parent' label='← Switch' size='sm' />
         </div>
       </div>
+
+      {/* The teacher's set work, above the child's own chapters. Renders nothing at all when there
+          is none, which is every family that never met a teacher. */}
+      {learnerId && (
+        <div style={{ padding: '0 28px', maxWidth: 720, margin: '0 auto', width: '100%' }}>
+          <ExerciseList learnerId={learnerId} gradeId={gradeId} />
+        </div>
+      )}
 
       <div style={{
         flex: 1, display: 'flex', flexDirection: 'column',
