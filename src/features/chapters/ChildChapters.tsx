@@ -23,7 +23,7 @@ export function ChildChapters({ learnerId, ageGroup, current, onSaved, tokens }:
   learnerId: string
   ageGroup: AgeGroup
   /** What is stored today. `null` = unset, i.e. the band's standard set. */
-  current: string[] | null
+  current: string[] | null | undefined
   onSaved: (next: string[] | null) => void
   tokens: { ink: string; ink2: string; ink3: string; edge: string; accent: string; card: string }
 }) {
@@ -32,7 +32,9 @@ export function ChildChapters({ learnerId, ageGroup, current, onSaved, tokens }:
   const [picked, setPick] = useState<Set<string>>(new Set(current ?? all))
   const [busy, setBusy]   = useState(false)
 
-  const usingStandard = current === null || current.length === 0
+  // `!current?.length`, not `=== null`: before 20260912100000_classroom is applied the column does
+  // not exist and the field arrives `undefined`, which crashed the whole parent dashboard.
+  const usingStandard = !current?.length
 
   async function save(next: string[] | null) {
     setBusy(true)
