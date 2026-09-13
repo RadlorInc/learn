@@ -10,14 +10,10 @@
 > can go live and waits on the founder's landing-page copy; `adult-surface-responsive` carries the
 > same commits plus the classroom work, whose migration is still applied nowhere.
 
-> 📐 **READ [docs/chapter-craft.md](docs/chapter-craft.md) FIRST, EVERY SESSION, BEFORE TOUCHING ANY 3–11 STORY CHAPTER.**
-> It is the standing answer to *how we want the animation, the art and the voice* — the shape of a
-> chapter, how cycles and travel must agree, what may be an answer object, how to choose a backdrop,
-> how to generate a new drawn cycle, how Milo speaks, and how to verify any of it.
-> Everything in it was paid for by a founder catching it on a screenshot. **Most of those rules were
-> already learned in chapter 1, forgotten, and re-learned the hard way in a later chapter** — that
-> file exists so the next session starts from them instead of rediscovering them.
-> When a new correction lands, put the GENERAL rule there, not just the fix.
+> 🗑️ **2026-09-13: the old chapter design docs were DELETED** (chapter-craft ×3, the story/curriculum
+> plans, diagnostic-engine, skill-graph ×3 and related). Everything below about the legacy chapters
+> and the diagnostic is history; the code is hidden, not deleted. `git log --diff-filter=D -- docs/`
+> recovers any of them.
 >
 > ---
 >
@@ -92,7 +88,7 @@
 > **96–98%** of the time (was **26–34%**), telling a child with a real gap they are on track **0%**
 > of the time (was 10–38%). The contract is `src/__tests__/diagnosticAccuracy.test.ts` — it plants a
 > gap, answers with each item's REAL guess rate, and gates exact-root, missed-gap, false-alarm,
-> route and LENGTH. Spec: [docs/diagnostic-engine.md](docs/diagnostic-engine.md).
+> route and LENGTH. Spec: `docs/diagnostic-engine.md` (deleted 2026-09-13, in git history).
 >
 > ⚠️ **THE PRICE IS LENGTH, AND IT IS NOT SMALL.** Every answer is confirmed (a lead of two to pass,
 > **three** to fail), so a child with a gap answers **29–50** questions and a child with NO gap still
@@ -108,7 +104,7 @@
 > 130 prerequisite edges, none teacher-validated, and its own header says *"a wrong edge = a wrong
 > root gap; do not ship the guarantee on a band until that band's spine edges are validated."* All
 > 130 were measured on 2026-08-22 — **twelve decide a gap, twenty-one decide nothing** →
-> [docs/skill-graph-audit.md](docs/skill-graph-audit.md) §1 is the teacher's one-hour list.
+> `docs/skill-graph-audit.md` §1 (deleted 2026-09-13, in git history) is the teacher's one-hour list.
 > **Until that hour happens, 96–98% means "the engine finds what the graph says", NOT "the engine
 > finds the child's real gap."**
 >
@@ -165,7 +161,7 @@
 > _(Everything below is the running session history — newest first, most recent ~5 sessions only.
 > Older blocks are in [docs/handoff-archive.md](docs/handoff-archive.md), which is NOT auto-loaded —
 > `grep` it. This file is inlined into every session's context, so move blocks out rather than
-> letting it grow. The craft rules live in chapter-craft.md, not here.
+> letting it grow.
 > ⚠️ **AT 2026-09-10, AFTER THE 🧹 BLOCK LANDED: four blocks, 63.5 KB against a ~60 KB target.**
 > 📊 2026-09-05 (/admin) **was moved out** as the previous note instructed, and its live items were
 > lifted first — they are ▶ OPEN items 3–9 of the 🧹 block, not lost.
@@ -189,7 +185,7 @@
 > Adding the 🚀 launch-week block moved 🗣️ 2026-09-04/05 to the archive. ⚠️ Its standing rule did NOT
 > go with it: the speak-verb contract (`speak()` supersedes, `speakAfterCurrent()` queues,
 > `speakPaced()` for a lesson) and its gate `src/__tests__/voiceBoundaryVerb.test.ts` live permanently
-> in **docs/chapter-craft.md §3**, which is where to read them.
+> in `docs/chapter-craft.md` §3 (deleted 2026-09-13, in git history).
 > ⚠️ Count the blocks by eye rather than by grepping one set of emoji: the 🗣️ block was invisible
 > to a `^> [⚖️📊🧪🔊]` sweep on the day it landed, and a miscount here is a miscounted budget.)_
 
@@ -443,7 +439,7 @@ Founder A/B'd Chatterbox Turbo (MIT) clones against the ElevenLabs originals and
 4. ⏭️ **The stitcher is dead — whole-line via GPU replaced it.** The 🔊-block stitcher listening-test question is moot: Chatterbox renders whole lines cheaply, so nothing is stitched.
 5. ✅ ~~**Nightly E2E green was by MANUAL dispatch**~~ **CLOSED 2026-09-10 — two consecutive green SCHEDULED runs on `main` (08 + 09 Sep) measured.** Original note: on the fix commit; a green SCHEDULED run against a main containing the fix still worth confirming.
 6. ⏭️ `OrderDesk` and `LevelRun` (the two 9-11 storybook chapters) have no clips and are in no corpus — they run `SkillBeat`, not GameShell.
-7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky; the hull silence is still unmeasured (`docs/voice-check-for-tester.md`); the ElevenLabs MCP still holds the rotated key (measure with `curl`); the `/menu` 6→2 RPC half is still uncommitted.
+7. ⏭️ The `counting` case of `ready-bar.spec.ts` is still flaky; the hull silence is still unmeasured (`docs/voice-check-for-tester.md`, deleted 2026-09-13); the ElevenLabs MCP still holds the rotated key (measure with `curl`); the `/menu` 6→2 RPC half is still uncommitted.
 8. 🔴 **Launch blockers, unchanged**: the watched test-mode Stripe purchase (deadline before Stage 4) · B12 Supabase Pro before any live key · **`DRAFT = true` — privacy policy and ToS still placeholders, and §8's refund sentence is unwritten and LIVE** · the free chapter set is a PROPOSAL · nine Dependabot PRs (#28–#47) · Vercel Web Analytics off. ⚠️ Paywall being OFF does not change these — it just means nothing is gated *yet*.
 9. 🔴 **Carried from ⚖️ 2026-09-06**: account deletion never executed (founder's throwaway-account test); Stripe cancellation not wired; `migrate-prod` inert; Sydney still the rollback (~$10/mo); `entitled_chapters` has no caller; and the two migrations in ③ awaiting a hand-apply.
 10. 🟡 **`/auth`'s consent line measures 4.16:1** (`#8a7a63` on the white card, WCAG formula, 2026-09-09) — UNDER the 4.5:1 floor for 12px text; the link `#F26B2C` is 3.04:1. Found while wiring `ConsentLine` into the lead capture (`consentLine.test.ts` pins the number). Not changed — the brief was /auth byte-identical; founder's call whether to darken it.
