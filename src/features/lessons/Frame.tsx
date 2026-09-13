@@ -10,11 +10,11 @@ import { pill, INK, TEAL, GOOD, LESSON_KEYFRAMES, PAGE_BG, shell, topBar } from 
 
 export const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
-export function Frame({ crumb, exit, audio, title, picture, words, action, at, total, stack }: {
+export function Frame({ crumb, exit, audio, title, picture, words, action, back, at, total, stack }: {
   crumb: string
   exit: { label: string; onClick: () => void }
   audio?: { on: boolean; toggle: () => void }
-  title: ReactNode; picture: ReactNode; words: ReactNode; action: ReactNode
+  title: ReactNode; picture: ReactNode; words: ReactNode; action: ReactNode; back?: ReactNode
   at: number; total: number; stack?: boolean
 }) {
   return (
@@ -35,7 +35,7 @@ export function Frame({ crumb, exit, audio, title, picture, words, action, at, t
             <div className="lp-words">{words}</div>
           </div>
           <div className="lp-foot">
-            <span />
+            <div className="lp-back">{back}</div>
             <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }} aria-hidden>
               {Array.from({ length: total }, (_, k) => <i key={k} style={{ width: 13, height: 13, borderRadius: '50%', border: `2px solid ${INK}`, background: k <= at ? TEAL : '#fff' }} />)}
             </div>
@@ -68,7 +68,7 @@ export const right: CSSProperties = { ...hint, display: 'flex', alignItems: 'cen
 export const answerInput: CSSProperties = { width: 110, height: 60, fontSize: 30, fontWeight: 800, textAlign: 'center', borderRadius: 12, border: `4px solid ${INK}`, color: INK, background: '#fff' }
 
 // Portrait: everything stacks. Landscape (tablet sideways, laptop, desktop): picture left, words right, like the template.
-// Footer is three slots — nothing left, dots centred, the button right; in portrait the button takes its own full-width row.
+// Footer is three slots — Back left, dots centred, the button right; in portrait the dots take their own row above Back + the button.
 const LAYOUT = `
 .lp-wrap { max-width: 760px }
 .lp-row { flex: 1; display: flex; flex-direction: column; gap: 16px; --lp-u: clamp(20px, 5.5vw, 44px) }
@@ -78,9 +78,12 @@ const LAYOUT = `
 .lp-foot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px }
 .lp-action { justify-self: end; display: flex }
 @media not all and ${LANDSCAPE} {
-  .lp-foot { grid-template-columns: 1fr }
-  .lp-foot > span { display: none }
-  .lp-action { justify-self: stretch }
+  .lp-foot { grid-template-columns: auto 1fr; grid-template-areas: 'dots dots' 'back act' }
+  .lp-foot > :nth-child(2) { grid-area: dots }
+  .lp-back { grid-area: back }
+  .lp-action { grid-area: act; justify-self: stretch }
+  .lp-back:empty { display: none }
+  .lp-back:empty ~ .lp-action { grid-column: 1 / -1 }
   .lp-action > * { flex: 1; max-width: none !important }
 }
 @media ${LANDSCAPE} {

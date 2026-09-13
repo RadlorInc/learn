@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { GRADE3_MODULE1 } from '@/features/lessons/grade3Module1'
 import {
-  answerOf, START, next, check, afterWorked, nextPractice, replayLesson, hintsFor, wonFor, scratchLineMax, type Op, type FlowState, type Picture,
+  answerOf, START, next, back, check, afterWorked, nextPractice, replayLesson, hintsFor, wonFor, scratchLineMax, type Op, type FlowState, type Picture,
 } from '@/features/lessons/script'
 
 // [your turn, twin, practice 1–5] — copied from the "Answers:" lines of the approved scripts.
@@ -180,5 +180,18 @@ describe('the flow', () => {
     expect(s.solo).toEqual([0])
     for (let k = 0; k < 4; k++) s = nextPractice(s)
     expect(s.mode).toBe('finish')
+  })
+  it('Back on Screen 8 goes to Screen 7, and Next returns to the same problem (the twin stays the twin)', () => {
+    const l = GRADE3_MODULE1[0]
+    let s: FlowState = { ...START, mode: 'turn' }
+    for (let k = 0; k < 3; k++) s = check(l, s, 999)
+    s = afterWorked(s)                          // now on the twin
+    s = check(l, s, 999)                        // one miss on the twin
+    const b = back(s)
+    expect([b.mode, b.screen, b.twin, b.misses, b.feedback]).toEqual(['lesson', 6, true, 1, null])
+    const n = next(b)
+    expect([n.mode, n.twin, n.misses]).toEqual(['turn', true, 1])
+    expect(back({ ...START, screen: 3 })).toEqual({ ...START, screen: 2 })   // Screens 2–7 go one back
+    expect(back(START)).toEqual(START)                                     // Screen 1 has nowhere to go
   })
 })
