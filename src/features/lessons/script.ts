@@ -48,6 +48,7 @@ export interface Screen {
   title: string
   text: string
   pictures: Picture[]
+  scene?: 'table'         // a drawn backdrop behind the pictures (public/assets/lessons/<scene>.webp)
 }
 
 export interface Lesson {
@@ -165,6 +166,12 @@ export function next(s: FlowState): FlowState {
   if (s.replayFrom !== null) return { ...s, mode: 'practice', practice: s.replayFrom, replayFrom: null, misses: 2, feedback: null }
   return { ...s, mode: 'turn' }
 }
+
+/** Back one screen on Screens 2–8. From Screen 8, twin and misses are kept, so Next returns to the same problem, not a fresh first try. */
+export const back = (s: FlowState): FlowState =>
+  s.mode === 'turn' ? { ...s, mode: 'lesson', screen: 6, feedback: null }
+  : s.mode === 'lesson' && s.screen > 0 ? { ...s, screen: s.screen - 1 }
+  : s
 
 export const currentProblem = (l: Lesson, s: FlowState): Problem | null =>
   s.mode === 'turn' ? (s.twin ? l.turn.twin : l.turn)

@@ -9,7 +9,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import {
-  START, next, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, answerOf, workedSteps,
+  START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, answerOf, workedSteps,
   type FlowState, type Lesson, type Screen,
 } from './script'
 import { Pic, tapCue, pill, INK } from './Pictures'
@@ -127,7 +127,7 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
           </div>
         )}
         <div className="pr-foot">
-          <span />
+          <button type="button" style={hintBtn} onClick={() => go(back(s), screenSay(lesson.screens[6]))}>← Back</button>
           {worked
             ? <button type="button" style={primary} onClick={() => {
                 const n = afterWorked(s)
@@ -140,7 +140,7 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   }
 
   // The parts every screen fills in.
-  let crumb: string, title: ReactNode, picture: ReactNode, words: ReactNode, action: ReactNode = null, at: number, stack = false
+  let crumb: string, title: ReactNode, picture: ReactNode, words: ReactNode, action: ReactNode = null, backBtn: ReactNode = null, at: number, stack = false
 
   if (s.mode === 'lesson') {
     const sc = lesson.screens[s.screen]
@@ -153,7 +153,7 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
     title = sc.title
     picture = stack
       ? <div key={`${s.screen}-${replay}`} style={{ flex: 1 }}>{sc.pictures.map((p, k) => <Pic key={k} p={p} />)}</div>
-      : <div key={`${s.screen}-${replay}`} style={stage}>
+      : <div key={`${s.screen}-${replay}`} style={sc.scene ? { ...stage, background: `center / cover url(/assets/lessons/${sc.scene}.webp)`, borderRadius: 20, padding: '24px 12px' } : stage}>
         {sc.pictures.map((p, k) => <Pic key={k} p={p} />)}
         {moving && <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => setReplay(r => r + 1)}>↻ Watch again</button>}
       </div>
@@ -162,16 +162,20 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
       const n = next(s)
       go(n, n.mode === 'lesson' ? screenSay(lesson.screens[n.screen]) : n.mode === 'turn' ? `Now you try. ${lesson.turn.text} ${lesson.turn.prompt}` : undefined)
     }}>{ask ? <><span>{ask[2]}</span><span style={{ fontSize: 16, opacity: 0.95 }}>Let&apos;s see ▶</span></> : 'Next'}</button>
+    if (s.screen > 0) backBtn = <button type="button" style={hintBtn} onClick={() => go(back(s), screenSay(lesson.screens[s.screen - 1]))}>← Back</button>
   } else if (s.mode === 'won') {
     const w = wonFor(lesson, s)
     crumb = 'Screen 9 of 9'; at = 8
     title = <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><span style={{ ...tick, width: 44, height: 44, fontSize: 26 }} aria-hidden>✓</span>{w.title}</span>
     picture = <div style={stage}>
       {w.helped && <p style={idea}>{lesson.bigIdea}</p>}
-      <span style={sticker}>
-        <small style={{ display: 'block', fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', color: '#6d4c3d' }}>Math word sticker</small>
-        {w.sticker}
-      </span>
+      <div style={{ alignSelf: 'center', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <img src="/assets/lessons/badge.webp" alt="" width={96} height={112} style={{ flexShrink: 0, animation: 'lp-pop .4s ease-out' }} />
+        <span style={sticker}>
+          <small style={{ display: 'block', fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', color: '#6d4c3d' }}>Math word sticker</small>
+          {w.sticker}
+        </span>
+      </div>
     </div>
     words = <p style={bubble}>{w.text}</p>
     action = <button type="button" style={primary} onClick={() => go(toPractice(s))}>Keep practicing</button>
@@ -184,7 +188,7 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   }
 
   return (
-    <Frame crumb={crumb} at={at} total={9} stack={stack} title={title} picture={picture} words={words} action={action}
+    <Frame crumb={crumb} at={at} total={9} stack={stack} title={title} picture={picture} words={words} action={action} back={backBtn}
       exit={{ label: '← Topics', onClick: () => { stopSpeech(); onExit() } }}
       audio={{ on: audio, toggle: toggleAudio }} />
   )

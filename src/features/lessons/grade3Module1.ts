@@ -14,7 +14,7 @@ export const GRADE3_MODULE1: Lesson[] = [
     bigIdea: 'When every group has the same number, count by groups. Multiplication means equal groups.',
     screens: [
       { title: 'Cookies on plates', text: 'There are 4 plates. Each plate has 3 cookies. How many cookies are there?',
-        pictures: [{ kind: 'groups', groups: 4, each: 3, obj: 'cookie' }] },
+        pictures: [{ kind: 'groups', groups: 4, each: 3, obj: 'cookie' }], scene: 'table' },
       { title: 'Counting one by one is slow', text: 'You could count every cookie. That works, but it is slow, and it is easy to lose your place.',
         pictures: [{ kind: 'groups', groups: 4, each: 3, obj: 'cookie', show: 'count' }] },
       { title: 'The big idea', text: 'When every group has the same number, count by groups. Multiplication means equal groups.',

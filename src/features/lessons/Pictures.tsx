@@ -44,14 +44,26 @@ const TAP_CUE: Partial<Record<Picture['kind'], string>> = {
   rings: 'Tap the picture to circle one.',
 }
 
+// Drawn art (Higgsfield, public/assets/lessons). An Obj without art keeps its code-drawn shape above.
+const ART: Partial<Record<Obj, string>> = {
+  cookie: '/assets/lessons/cookie.webp',
+  dot: '/assets/lessons/marble.webp',
+  sticker: '/assets/lessons/star.webp',
+}
+
 const anim = (delay: number, motion?: boolean): CSSProperties =>
   motion ? { opacity: 0, animation: `lp-in .35s ease-out ${delay}ms forwards` } : {}
 
 export function Thing({ obj, empty, n, style }: { obj: Obj; empty?: boolean; n?: number; style?: CSSProperties }) {
+  const art = !empty && ART[obj]
   return (
     <span style={{ position: 'relative', display: 'inline-block', width: u(1), height: u(1), flexShrink: 0,
-      ...(empty ? { border: `2px dashed ${LINE}`, borderRadius: '50%', background: 'transparent' } : OBJ[obj]), ...style }}>
-      {n !== undefined && <b style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', fontSize: 11, color: INK }}>{n}</b>}
+      ...(empty ? { border: `2px dashed ${LINE}`, borderRadius: '50%', background: 'transparent' }
+        : art ? { background: `center / contain no-repeat url(${art})` } : OBJ[obj]), ...style }}>
+      {n !== undefined && <b style={{ position: 'absolute', left: '50%', color: INK,
+        // On drawn art the number sits ON the object in a chip; above it, a neighbour would cover it.
+        ...(art ? { top: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, background: CARD, borderRadius: 999, padding: '0 4px', fontSize: 12, lineHeight: '16px' }
+          : { top: -16, transform: 'translateX(-50%)', fontSize: 11 }) }}>{n}</b>}
     </span>
   )
 }
@@ -97,12 +109,16 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
           {Array.from({ length: p.groups }, (_, g) => (
             <div key={g} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               {p.show === 'running' && <span style={{ ...label, fontSize: 18, ...anim(g * 700, p.motion ?? true) }}>{(g + 1) * p.each}</span>}
-              <div style={{ ...box, borderRadius: 999, minWidth: u(3.2), minHeight: `calc(${u(1)} + 24px)`, paddingTop: p.show === 'count' ? 22 : 12,
-                ...(p.show === 'rings' ? { borderColor: ACCENT, boxShadow: `0 0 0 3px ${ACCENT}33`, ...anim(g * 600, p.motion) } : {}) }}>
+              <div style={{ ...box, borderRadius: 999, minWidth: u(3.2), minHeight: `calc(${u(1)} + 24px)`, padding: `${p.show === 'count' ? 22 : 12}px 10px 10px`,
+                // Cookies sit on a drawn plate; the plate grows with the count so they never spill off it.
+                ...(p.obj === 'cookie' ? { width: u(2.6 + p.each * 0.5), height: u(2.6 + p.each * 0.5), padding: u(0.6), gap: 2, border: 'none', alignContent: 'center',
+                  background: 'center / contain no-repeat url(/assets/lessons/plate.webp)' } : {}),
+                ...(p.show === 'rings' ? p.obj === 'cookie' ? { boxShadow: `0 0 0 4px ${ACCENT}`, ...anim(g * 600, p.motion) }
+                  : { borderColor: ACCENT, boxShadow: `0 0 0 3px ${ACCENT}33`, ...anim(g * 600, p.motion) } : {}) }}>
                 {Array.from({ length: p.each }, () => {
                   const i = k++
                   // Scratch: an empty plate fills as the child taps — no dashed slot per item, which would be the answer drawn to count.
-                  return scratch && i >= Math.min(taps, p.groups * p.each) ? null : <Thing key={i} obj={p.obj} n={p.show === 'count' ? i + 1 : undefined} />
+                  return scratch && i >= Math.min(taps, p.groups * p.each) ? null : <Thing key={i} obj={p.obj} n={p.show === 'count' ? i + 1 : undefined} style={p.obj === 'cookie' ? { width: u(1.1), height: u(1.1) } : undefined} />
                 })}
               </div>
             </div>
