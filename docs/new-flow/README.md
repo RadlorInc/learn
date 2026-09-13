@@ -17,7 +17,7 @@ template of **"Math Problem Exp and Exercise Format.docx"**:
 | 4 · 5 · 6 | the idea shown step by step with one picture | at least one step animates |
 | 7 One thing not to do | the one common mistake: wrong card ✕ / right card ✓ | one warning only |
 | 8 Now you try | almost a copy of the example, one number changed | hint after 1 miss · hint after 2 · then worked steps + a twin |
-| 9 You got it | one sentence + "math word" sticker | the math word appears ONLY here |
+| 9 You got it | one sentence + "math word" sticker | the math word appears ONLY here. After the twin it uses the twin's numbers ("Text after the twin"); if the twin was also missed 3 times it becomes "Let's keep practicing" with the big idea — never "You got it" |
 | Practice | 5 problems: copy · new numbers · same idea · a little harder · word problem | miss → big idea; 2nd miss → worked steps + "watch the lesson again" |
 
 Designer rules from the docs: one idea per screen, short sentences, one picture, small numbers,
@@ -42,7 +42,7 @@ no extra characters talking, read-aloud optional, **7 taps before Screen 8**, ~9
 | file | what |
 |---|---|
 | `src/features/lessons/script.ts` | the flow (pure) + `Picture` / `Op` types + `answerOf` / `workedSteps`. Shared — only add a new `Picture` kind or `Op` type if a module needs one |
-| `src/features/lessons/grade3Module1.ts` | **copy this shape** to `grade3ModuleN.ts`: one `Lesson` per topic, text copied verbatim from the approved doc |
+| `src/features/lessons/grade3Module1.ts` | **copy this shape** to `grade3ModuleN.ts`: one `Lesson` per topic, text copied verbatim from the approved doc. Each needs `won` AND `twinWon` (only the twin's numbers); the twin's hints are derived (`hintsFor`) |
 | `src/features/lessons/Pictures.tsx` | the code-drawn pictures; add a renderer here for any new `Picture` kind |
 | `src/features/lessons/LessonList.tsx` · `LessonPlayer.tsx` · `src/app/lesson/page.tsx` | list, player, route. ⚠️ List and route currently know only `GRADE3_MODULE1` — a second module means turning that into a list of modules |
 | `src/__tests__/lessonsGrade3Module1.test.ts` | **copy this** per module |

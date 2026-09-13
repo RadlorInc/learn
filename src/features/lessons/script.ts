@@ -58,6 +58,7 @@ export interface Lesson {
   screens: Screen[]                           // exactly 7
   turn: YourTurn                              // Screen 8
   won: { text: string; sticker: string }      // Screen 9
+  twinWon: { text: string; sticker: string }  // Screen 9 when the child solved the TWIN (only the twin's numbers)
   practice: { problem: Problem; why: string }[] // exactly 5
 }
 
@@ -129,6 +130,19 @@ export function hintsFor(l: Lesson, s: FlowState): [string, string] {
   }
 }
 
+/** Screen 9 after a twin that was missed 3 times: the child did not get it, so it must not say so. */
+export const KEEP_GOING = {
+  title: "Let's keep practicing",
+  text: 'You watched how it works, step by step. The practice problems will help it stick.',
+}
+
+/** What Screen 9 shows: the first problem solved, the twin solved, or the twin missed three times. */
+export function wonFor(l: Lesson, s: FlowState): { title: string; text: string; sticker: string; helped: boolean } {
+  if (!s.twin) return { title: 'You got it', ...l.won, helped: false }
+  if (s.misses >= 3) return { ...KEEP_GOING, sticker: l.twinWon.sticker, helped: true }
+  return { title: 'You got it', ...l.twinWon, helped: false }
+}
+
 // ── The flow ───────────────────────────────────────────────────────────────────────────────────
 export type Feedback = null | 'hint1' | 'hint2' | 'worked' | 'idea' | 'right'
 
@@ -171,9 +185,10 @@ export function check(l: Lesson, s: FlowState, value: number): FlowState {
   return { ...s, misses, feedback: misses === 1 ? 'idea' : 'worked' }
 }
 
-/** After the worked steps on Screen 8: the new twin (or, if the twin was also missed, on to practice). */
+/** After the worked steps on Screen 8: the new twin — or, if the twin was also missed, Screen 9 (its
+ *  "keep practicing" version: `misses` stays at 3 so wonFor knows the child did not solve it). */
 export const afterWorked = (s: FlowState): FlowState =>
-  s.twin ? toPractice(s) : { ...s, twin: true, misses: 0, feedback: null }
+  s.twin ? { ...s, mode: 'won', feedback: null } : { ...s, twin: true, misses: 0, feedback: null }
 
 export const toPractice = (s: FlowState): FlowState => ({ ...s, mode: 'practice', practice: 0, misses: 0, feedback: null })
 

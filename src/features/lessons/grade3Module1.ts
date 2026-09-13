@@ -38,6 +38,7 @@ export const GRADE3_MODULE1: Lesson[] = [
         picture: { kind: 'groups', groups: 5, each: 2, obj: 'cookie' } },
     },
     won: { text: 'You counted by groups instead of one by one. That is multiplication.', sticker: 'Equal groups = multiplication. 3 × 5 means 3 groups of 5.' },
+    twinWon: { text: 'You counted by groups instead of one by one. That is multiplication.', sticker: 'Equal groups = multiplication. 5 × 2 means 5 groups of 2.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: '2 plates, 3 cookies on each. How many cookies?', op: { t: 'mul', a: 2, b: 3 }, picture: { kind: 'groups', groups: 2, each: 3, obj: 'cookie' } } },
       { why: 'Same idea, new numbers', problem: { text: '5 plates, 2 cookies on each. How many cookies?', op: { t: 'mul', a: 5, b: 2 }, picture: { kind: 'groups', groups: 5, each: 2, obj: 'cookie' } } },
@@ -77,6 +78,7 @@ export const GRADE3_MODULE1: Lesson[] = [
         picture: { kind: 'array', rows: 2, cols: 5, obj: 'plant' } },
     },
     won: { text: 'You counted the rows and one row, then multiplied. That is the whole trick.', sticker: 'Equal rows = an array.' },
+    twinWon: { text: 'You counted the rows and one row, then multiplied. That is the whole trick.', sticker: 'Equal rows = an array.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: 'A muffin tray has 3 rows, 4 muffins in each row. How many muffins?', op: { t: 'mul', a: 3, b: 4 }, picture: { kind: 'array', rows: 3, cols: 4, obj: 'muffin' } } },
       { why: 'Same idea, new numbers', problem: { text: 'A building has 5 rows of windows, 2 windows in each row. How many windows?', op: { t: 'mul', a: 5, b: 2 }, picture: { kind: 'array', rows: 5, cols: 2, obj: 'dot' } } },
@@ -116,6 +118,7 @@ export const GRADE3_MODULE1: Lesson[] = [
         picture: { kind: 'array', rows: 3, cols: 5, obj: 'dot', turn: true } },
     },
     won: { text: 'You turned the rows around and the total stayed the same. That is the whole trick.', sticker: 'Turn-around facts = the commutative property.' },
+    twinWon: { text: 'You turned the rows around and the total stayed the same. That is the whole trick.', sticker: 'Turn-around facts = the commutative property.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: '2 × 4 = 8. What is 4 × 2?', op: { t: 'turn', a: 2, b: 4 }, picture: { kind: 'array', rows: 2, cols: 4, obj: 'dot', turn: true } } },
       { why: 'Same idea, new numbers', problem: { text: '3 × 10 = 30. What is 10 × 3?', op: { t: 'turn', a: 3, b: 10 }, picture: { kind: 'array', rows: 3, cols: 10, obj: 'dot', turn: true } } },
@@ -155,6 +158,7 @@ export const GRADE3_MODULE1: Lesson[] = [
         picture: { kind: 'line', step: 10, jumps: 0 } },
     },
     won: { text: 'You jumped a whole group at a time. Counting by jumps is multiplying.', sticker: 'Skip counting by 5 = the 5 times table.' },
+    twinWon: { text: 'You jumped a whole group at a time. Counting by jumps is multiplying.', sticker: 'Skip counting by 10 = the 10 times table.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: '4 pairs of shoes. How many shoes?', op: { t: 'mul', a: 4, b: 2 }, picture: { kind: 'line', step: 2, jumps: 0 } } },
       { why: 'Same idea, new numbers', problem: { text: '5 bundles of 10 straws. How many straws?', op: { t: 'mul', a: 5, b: 10 }, picture: { kind: 'line', step: 10, jumps: 0 } } },
@@ -194,6 +198,7 @@ export const GRADE3_MODULE1: Lesson[] = [
         picture: { kind: 'line', step: 3, jumps: 0 } },
     },
     won: { text: 'You added the same group every jump. That is the whole trick.', sticker: 'Counting by 3s and 4s = the 3 and 4 times tables.' },
+    twinWon: { text: 'You added the same group every jump. That is the whole trick.', sticker: 'Counting by 3s = the 3 times table.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: '3 tricycles. How many wheels?', op: { t: 'mul', a: 3, b: 3 }, picture: { kind: 'line', step: 3, jumps: 0 } } },
       { why: 'Same idea, new numbers', problem: { text: '4 cars. How many wheels?', op: { t: 'mul', a: 4, b: 4 }, picture: { kind: 'line', step: 4, jumps: 0 } } },
@@ -233,6 +238,7 @@ export const GRADE3_MODULE1: Lesson[] = [
         picture: { kind: 'share', total: 15, groups: 5, state: 'start', obj: 'sticker' } },
     },
     won: { text: 'You shared the total fairly. That is division.', sticker: '÷ means share into equal groups.' },
+    twinWon: { text: 'You shared the total fairly. That is division.', sticker: '÷ means share into equal groups.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: '8 apples shared by 2 friends. How many each?', op: { t: 'div', total: 8, by: 2, mode: 'share' }, picture: { kind: 'share', total: 8, groups: 2, state: 'start', obj: 'apple' } } },
       { why: 'Same idea, new numbers', problem: { text: '20 pencils shared by 4 kids. How many each?', op: { t: 'div', total: 20, by: 4, mode: 'share' }, picture: { kind: 'share', total: 20, groups: 4, state: 'start', obj: 'crayon' } } },
@@ -272,6 +278,7 @@ export const GRADE3_MODULE1: Lesson[] = [
         picture: { kind: 'rings', total: 20, size: 4, obj: 'wheel', state: 'start' } },
     },
     won: { text: 'You made groups of the same size and counted them. Check it: 3 packs of 5 is 15.', sticker: 'Division also means: how many groups?' },
+    twinWon: { text: 'You made groups of the same size and counted them. Check it: 5 cars with 4 wheels each is 20.', sticker: 'Division also means: how many groups?' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: '10 apples, 2 in each bag. How many bags?', op: { t: 'div', total: 10, by: 2, mode: 'group' }, picture: { kind: 'rings', total: 10, size: 2, obj: 'apple', state: 'start' } } },
       { why: 'Same idea, new numbers', problem: { text: '20 pencils, 10 in each box. How many boxes?', op: { t: 'div', total: 20, by: 10, mode: 'group' }, picture: { kind: 'rings', total: 20, size: 10, obj: 'crayon', state: 'start' } } },
@@ -311,6 +318,7 @@ export const GRADE3_MODULE1: Lesson[] = [
         picture: { kind: 'triangle', total: 15, a: 5, b: null } },
     },
     won: { text: 'You used a times fact to find the missing number. That is the whole trick.', sticker: '3 numbers, 4 facts = a fact family.' },
+    twinWon: { text: 'You used a times fact to find the missing number. That is the whole trick.', sticker: 'Numbers that go together, like 5, 3 and 15 = a fact family.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: '2 × ? = 10', op: { t: 'missing', a: 2, total: 10 }, picture: { kind: 'triangle', total: 10, a: 2, b: null } } },
       { why: 'Same idea, new numbers', problem: { text: '4 × ? = 12', op: { t: 'missing', a: 4, total: 12 }, picture: { kind: 'triangle', total: 12, a: 4, b: null } } },
