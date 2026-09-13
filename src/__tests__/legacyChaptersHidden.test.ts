@@ -36,7 +36,7 @@ describe('legacy chapters are hidden', () => {
     ['src/features/chapters/GuardedChapter.tsx', /!isChapterVisible\(id\)\) return <NewLessonsSoon/],
     ['src/app/story/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <NewLessonsSoon/],
     ['src/app/demo/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <NewLessonsSoon/],
-    ['src/app/menu/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <NewLessonsSoon/],
+    ['src/app/menu/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <LessonList/],
     ['src/app/diagnostic/layout.tsx', /LEGACY_CHAPTERS_HIDDEN \? <NewLessonsSoon/],
   ])('%s refuses a hidden chapter', (file, gate) => {
     expect(readFileSync(file, 'utf8')).toMatch(gate)
