@@ -1,3 +1,133 @@
+> ⬆️ **MOVED OUT OF handoff.md 2026-09-13** — the 🚀 2026-09-09/10 launch-week block. ⚠️ Its live items (the two
+> probe rows, /auth contrast, six Dependabot PRs, `backup.yml` without `assert-prod-ref.sh`, the rollback rule)
+> were lifted into the 🎨 2026-09-13 (evening) block's ▶ OPEN first.
+
+> 🚀 **2026-09-09/10 — LAUNCH WEEK. THE ROLLBACK MECHANISM EVERYONE ASSUMED DOES NOT WORK, `/api/lead` REPORTED SUCCESS ON A FAILED WRITE, DEPENDABOT'S ALERTS HAD NEVER BEEN ON, AND 17-18 IS NOW FULLY VOICED.** `tsc` 0 · **1837 passed, 2 skipped (99 files)** · `next build` 0 · sw v176 → **v181** · PRs #80 #81 #89 #91 #92 #93 #94 merged, plus #44/#45; six Dependabot PRs closed with reasons.
+>
+> **Founder's calls this week, and they narrow the scope:** ① **nothing is charged on Friday, the
+> paywall stays off** — every Stripe item (the watched test purchase, cancellation, §8's refund
+> sentence, deleted-account-still-charged) is OUT of scope; ② **the legal pages keep the DRAFT
+> banner, `DRAFT` stays `true`** — do not flip it, the invite email says so.
+>
+> ## ① ⚠️⚠️ ROLLBACK: MOVING `release` BACKWARDS DOES NOTHING. REHEARSED IN DAYLIGHT
+> "Rolling back = point `release` at the previous good commit" was the working assumption and it is
+> **false**. Measured with a marker string in `sw.js` (served verbatim) plus a version bump:
+> force-push succeeded, `release` moved, **production unchanged after 395s**. Vercel builds a
+> **COMMIT, not a branch pointer** — it had already built that commit, so the push created **no
+> deployment at all** (confirmed against the Vercel API: newest `target:"production"` was still the
+> bad build). ✅ **Revert-and-push-forward WORKS: 280s** push → live. Vercel's dashboard
+> "Promote to Production" is what `runbooks/rollback.md` already prescribed and is almost certainly
+> right, but it needs dashboard/CLI access this session lacked — written up as **documented-but-
+> unproven** (`isRollbackCandidate: true` is the only supporting evidence). Full commands in
+> [docs/runbooks/launch-day.md](docs/runbooks/launch-day.md).
+> ⚠️ **The sw VERSION must go FORWARD on a rollback, never back** — it keys the caches, so reusing a
+> cached version strands that browser on the old shell.
+> ⚠️ **THERE IS NO WAY TO CLOSE THE DOORS.** No `middleware.ts` anywhere, so nothing intercepts a
+> request; `PAYWALL_ENABLED` gates chapters and is not a door. **Stopping means taking the site
+> down.** Known, not built — launch week is the wrong week to add a request-intercepting layer.
+>
+> ## ② 🔴 LEAD CAPTURE IS ALIVE — AND THE ROUTE WAS LYING ABOUT IT
+> ⚠️ **Correction: Milo production IS reachable from the Supabase MCP.** `list_projects` omits it,
+> but `execute_sql` against `wrnjqjhrbnqxornmfisf` works (read-only). A previous session recorded the
+> opposite and that was wrong — **use it rather than re-deriving from a pglite fixture.**
+> Measured, control first (an equality read that finds a known row, and 0 for a known-absent one):
+> probe POSTed through the live route **landed**, 14 → 15 rows; `anon` INSERT is `false`,
+> `service_role` `true`, so it could only have come from the service-role key — **that key IS bound
+> in production**. Second independent proof: `error_events` has rows at all and `sinkError` has no
+> anon fallback. **0 `lead insert failed` rows, ever.**
+> ⚠️ **The defect underneath:** the route checked `res.ok`, logged the failure — and returned
+> `{ok:true}` 200 anyway, so a revoked grant, a missing key and a PostgREST outage were all
+> indistinguishable from a captured lead. **Watched lying first**, then fixed: refused/threw → 502
+> `not_recorded`, url/key missing → 503 `not_configured`. Safe by measurement — the only caller
+> never reads the response. ⚠️ **The old gate could not have caught it**: `security.test.ts` greps the
+> source for `/res\.ok/`, true of the broken version, which read the flag and ignored it.
+> `leadRouteHonest.test.ts` DRIVES the handler; mutation-tested.
+> 🔴 **Two probe rows to delete:** `select public.delete_lead_by_email('probe-lead-alive-20260909@example.invalid');`
+> and the same for `probe-postfix-20260909@example.invalid`.
+>
+> ## ③ 🔴 DEPENDABOT: THE ALERTS HAD NEVER BEEN ON, AND THE QUEUE WAS THE SECOND LOCK
+> The critical `next` RCE (GHSA-p293-qw3h-jr36, 16.0.0–16.3.2; prod was on 16.3.1) had **no
+> Dependabot PR**, and **two independent mechanisms** had to fail: alerts AND security updates were
+> **disabled at the repo level** (`403 Dependabot alerts are disabled`), so no security PR could ever
+> open; and the version path was blocked because `open-pull-requests-limit: 5` sat **full at 5/5 for
+> 19 days**. `npm audit` in `ci / verify` is what actually caught it — and `ci.yml` has **no
+> `schedule:`**, so it only ever runs on a push or a PR.
+> ⚠️⚠️ **A WRONG CLAIM I MADE AND THEN CORRECTED IN THE SAME FILE:** I wrote that raising the limit
+> was a *precondition* for security updates. **False** — *"Security update pull requests are not
+> subject to this limit and do not count toward it."* The limit constrains VERSION updates only.
+> Corrected in `docs/devops.md`; a wrong belief outlives a wrong config.
+> Now: alerts + security updates **ON** (0 open alerts, positive-controlled against a 558-package
+> SBOM reporting the patched versions), npm limit **10**, a **`react` group**, and `security` removed
+> from the labels — `labels:` applies to security *and* version PRs alike, so it stamped every
+> routine bump; nothing applies a security label automatically, so **none was created**. A security
+> PR is identified by its ALERT, not a label. `dependencies` created — and the proof arrived on its
+> own: raising the limit released **7 PRs within minutes, 7 of 7 labelled**, where 9 of 9 had carried
+> none. **Six Dependabot PRs closed with reasons**, incl. one that was a **downgrade back into the
+> vulnerable `sharp` range** and looked like the other eight.
+>
+> ## ④ 🎙️ 17-18 IS COMPLETE — FIVE OF SIX BANDS FULLY VOICED
+> Merged `clips-IvUJ-20260909-0617.zip` (253 MB, **11,246 clips**). **17-18 8,393/8,393 ✅** (+6,846,
+> closed by this batch) · 15-16 **4,646/11,848** (+4,400, **7,202 left**) · 12-14 complete. Stevie
+> 16,496 → **27,742** clips, 373 → 666 MB.
+> Verified before merging: 0 zero-byte, **0 overlap** (all new), **11,246/11,246 keys matched a real
+> corpus line**, **0 truncation outliers** (16.1 c/s median, max 1.8×), format identical to the store
+> (CBR 56 kbps @ 22050 Hz, read from real mp3 frame headers).
+> ⚠️ **LOUDNESS NOT INDEPENDENTLY VERIFIED** — no ffmpeg/ffprobe on this machine and no pure-python
+> mp3 decoder. Applied upstream at render time; that is the pipeline's claim, not a measurement.
+> ⚠️ **Stale comment, not fixed:** `chatterbox-render.py` says "32 kbps"; the real output is **56**.
+> **"Are they attached in their places?"** — key derivation proven: the runtime's own `clipKey()`
+> reproduces **20,447 of 20,447** stored keys, 0 mismatches (one function, imported by both player and
+> corpus builder). The corpus is DERIVED by driving each chapter's `CONFIG`, so its lines *are* what
+> the chapter speaks. All 11,246 in the live manifest (27,742); sampled TwoReceipts lines serve 200,
+> a nonexistent key 404s. A browser drive showed the player fetching the manifest and streaming a clip
+> by key. ⚠️ **What is NOT proven: no browser request for a NEW clip was ever caught** — they are
+> `scored`/`miss`/`reteach` lines needing real answers (and 3 wrong for a re-teach), which the drive
+> could not reach. Proven by construction and by serving, **not by ear**.
+>
+> ## ⑤ 🧯 BACKUP, DOCS, AND REACT
+> `backup.yml` **now fails when unconfigured** — it warned-and-skipped while going green, **22 of 22
+> recent runs `success` with 0 bytes written**. Watched red before trusting it; the error names the
+> missing secrets, and it now checks `PROD_DB_PASSWORD` too (the old gate checked 3 of the 4 it
+> needs). ⚠️ Reported not fixed: it does **not** call `scripts/assert-prod-ref.sh`.
+> ⚠️⚠️ **THREE OPERATIONAL DOCS NAMED THE DECOMMISSIONED SYDNEY PROJECT AS PRODUCTION** four days
+> after the region move — including `runbooks/rollback.md`, the page you read at 2am. Corrected to
+> `wrnjqjhrbnqxornmfisf` against three sources (the GitHub variable, the literal in
+> `assert-prod-ref.sh`, and the Supabase URL in the **served** bundle).
+> **React `19.2.8`**: both pins moved in ONE commit — exact-pinned + `peer react@"^X"` means a
+> react-dom-only PR **cannot `npm ci`** (#42 was red on that from 2026-08-25; #85 was the mirror).
+> A `react` dependabot group now stops the split. **The pins STAY and the group is the price of
+> keeping them** — remove the group and they must go caret in the same change (`docs/devops.md`).
+> ⚠️ **New in `docs/devops.md`: only 7 of 98 test files render React** (4 mount, 4 server-render). A
+> green suite is close to silent about what a child sees; the load-bearing evidence is
+> `test:chapters` (211), the 38 prerendered pages, and a browser drive with a positive control.
+>
+> ## ▶ OPEN
+> 1. 🔴 **NOT REACHED this week: the throttled performance measurement** (first load / TTI / bytes on
+>    `/`, `/diagnostic`, one chapter; largest asset; what one session pulls from the voice clips;
+>    whether a first visitor waits on the worker). Partial down payment: **the AR dependency is
+>    18.38 MB** (7.45 model + 10.63 wasm + 0.30 js, measured) against a **20s `LOAD_TIMEOUT_MS`, so
+>    anything under ~7.4 Mbit/s ALWAYS times out on first use**. Not a dead end — "Tap instead →" is
+>    offered from the first frame and is gated by `arLoadEscape.test.ts`. ⚠️ The signed-in camera path
+>    was never driven: a logged-out visitor is stopped by the consent gate and never fetches MediaPipe
+>    at all (0 requests, measured).
+> 2. 🔴 **NOT REACHED: the `counting` flake in `ready-bar.spec.ts`** (fix or quarantine) and **the
+>    accessibility pass** over /auth, /parent, /diagnostic, /help, legal. Known already: /auth's
+>    consent line **4.16:1** against a 4.5 floor, its link **3.04:1** — recorded, deliberately unfixed.
+> 3. 🔴 **Nobody has HEARD any clip.** The one action that closes it and ① together: play a 17-18
+>    chapter, get one wrong on purpose, listen to the re-teach.
+> 4. 🟡 **Voice remaining: 15-16, 7,202 lines.** The Kaggle `PLAN` renders it next; merge the zip here.
+> 5. 🟡 **Nightly E2E: the handoff's claim was STALE — two consecutive green SCHEDULED runs already
+>    exist** (08 and 09 Sep, `event: schedule`, on `main`). Historically 7 green / 15 red.
+> 6. ⏭️ **Six Dependabot PRs open**, all labelled, none a security update (0 open alerts). They wait
+>    until after launch. ⚠️ #85's successor will split react/react-dom again only if the new group is
+>    removed.
+> 7. 🔴 **Launch blockers, NARROWED by the founder's two calls**: B12 Supabase Pro before any live key
+>    (moot while nothing is charged) · **`DRAFT = true` deliberately, banner stays** · the free chapter
+>    set is a PROPOSAL · Vercel Web Analytics off. **Every Stripe item is out of scope this week.**
+> 8. ⏭️ Carried: account deletion never executed end-to-end; `migrate-prod` inert; Sydney still the
+>    rollback (~$10/mo); `entitled_chapters` has no caller; the `/menu` 6→2 RPC half uncommitted; the
+>    two auth migrations (`20260908120000`, `20260908120100`) still awaiting a hand-apply.
+
 > ⬆️ **MOVED OUT OF handoff.md 2026-09-13** — the 🎙️ 2026-09-07→09 block.
 
 > 🎙️ **2026-09-07→09 — CHATTERBOX IS IN PRODUCTION AND FOUR OF SIX BANDS ARE FULLY VOICED. Plus: the nightly went red from a login-counter that fired on every page load, a confirm-password field, profile creation deferred to email confirmation, the paywall switched OFF, and the discovery that prod deploy sits behind CI — which held four green-looking commits back until one rls_regression fix unblocked them.** `tsc` 0 · **1825 passed, 2 skipped** · `next build` 0 · sw v167 → **v176** · commits `3cee430`…`ee852a2f` (17), all pushed · two migrations written, NOT yet applied to prod.
