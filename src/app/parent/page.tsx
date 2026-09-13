@@ -174,7 +174,8 @@ export default function ParentDashboard() {
   async function launchGame(d: LearnerData) {
     const learner = d.learner
     setActiveLearner(learner)
-    if (isEstablished(d) || checkupSkips(learner.id) > 0 || await hasCheckup(learner.id)) router.push('/menu')
+    // While legacy chapters are hidden the check is off, so every child goes straight to the lesson list.
+    if (LEGACY_CHAPTERS_HIDDEN || isEstablished(d) || checkupSkips(learner.id) > 0 || await hasCheckup(learner.id)) router.push('/menu')
     else router.push(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
   }
 
