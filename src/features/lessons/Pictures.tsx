@@ -9,7 +9,16 @@
 import type { CSSProperties } from 'react'
 import { scratchLineMax, type Obj, type Picture } from './script'
 
-export const INK = '#3d2516', SOFT = '#7a6450', ACCENT = '#F26B2C', GOOD = '#1F9D62', BAD = '#D1483A', CARD = '#FFFFFF', LINE = '#E7D6B8'
+export const INK = '#2a1c14', SOFT = '#6d4c3d', ACCENT = '#ff6b4a', TEAL = '#0f8a7a', GOOD = '#1f7a43', BAD = '#c1121f', CARD = '#FFFFFF', LINE = '#d9c3a0'
+
+// The frame from the founder's SampleUI template, shared by the topic path and the lesson player.
+export const PAGE_BG = 'radial-gradient(circle at 12% 20%, #ffe08a 0 90px, transparent 91px), radial-gradient(circle at 88% 10%, #ffb3a3 0 70px, transparent 71px), radial-gradient(circle at 80% 85%, #9cf0d8 0 110px, transparent 111px), #f3c98b'
+export const shell: CSSProperties = { width: '100%', background: '#fff6e8', borderRadius: 28, border: `6px solid ${INK}`, boxShadow: `10px 10px 0 ${INK}`,
+  overflow: 'hidden', display: 'flex', flexDirection: 'column', color: INK }
+export const topBar: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#ff8a65', color: INK, fontWeight: 800 }
+
+/** One object's size. The player sets `--lp-u` from the viewport so the picture grows on a tablet; 20px is the phone size. */
+const u = (k: number) => `calc(var(--lp-u, 20px) * ${k})`
 
 const OBJ: Record<Obj, CSSProperties> = {
   cookie:  { background: '#C98B4A', borderRadius: '50%' },
@@ -17,29 +26,41 @@ const OBJ: Record<Obj, CSSProperties> = {
   chair:   { background: '#5B7FD1', borderRadius: 4 },
   plant:   { background: '#3FA56B', borderRadius: '50% 50% 10% 10%' },
   dot:     { background: '#2F6FDB', borderRadius: '50%' },
-  sock:    { background: '#D16BA5', borderRadius: '6px 6px 10px 10px', width: 14 },
-  finger:  { background: '#E9B38A', borderRadius: 8, width: 10 },
-  straw:   { background: '#E0A21B', borderRadius: 3, width: 5, height: 26 },
-  wheel:   { background: '#2B2B2B', borderRadius: '50%', boxShadow: 'inset 0 0 0 5px #2B2B2B, inset 0 0 0 8px #9aa0a6' },
+  sock:    { background: '#D16BA5', borderRadius: '6px 6px 10px 10px', width: u(0.7) },
+  finger:  { background: '#E9B38A', borderRadius: 8, width: u(0.5) },
+  straw:   { background: '#E0A21B', borderRadius: 3, width: u(0.25), height: u(1.3) },
+  wheel:   { background: '#2B2B2B', borderRadius: '50%', boxShadow: 'inset 0 0 0 calc(var(--lp-u, 20px) * .25) #2B2B2B, inset 0 0 0 calc(var(--lp-u, 20px) * .4) #9aa0a6' },
   apple:   { background: '#D6423A', borderRadius: '45% 45% 50% 50%' },
   sticker: { background: '#F2B33D', borderRadius: 5, transform: 'rotate(45deg)' },
-  crayon:  { background: '#7B4FD1', borderRadius: 3, width: 8, height: 24 },
+  crayon:  { background: '#7B4FD1', borderRadius: 3, width: u(0.4), height: u(1.2) },
+}
+
+/** What a tap does on each scratch picture, said in the child's words (a turned tray has its own Turn button). */
+const TAP_CUE: Partial<Record<Picture['kind'], string>> = {
+  groups: 'Tap the picture to add one.',
+  array: 'Tap the picture to fill the next spot.',
+  line: 'Tap the picture to make a jump.',
+  share: 'Tap the basket to share one out.',
+  rings: 'Tap the picture to circle one.',
 }
 
 const anim = (delay: number, motion?: boolean): CSSProperties =>
   motion ? { opacity: 0, animation: `lp-in .35s ease-out ${delay}ms forwards` } : {}
 
-function Thing({ obj, empty, n, style }: { obj: Obj; empty?: boolean; n?: number; style?: CSSProperties }) {
+export function Thing({ obj, empty, n, style }: { obj: Obj; empty?: boolean; n?: number; style?: CSSProperties }) {
   return (
-    <span style={{ position: 'relative', display: 'inline-block', width: 20, height: 20, flexShrink: 0,
+    <span style={{ position: 'relative', display: 'inline-block', width: u(1), height: u(1), flexShrink: 0,
       ...(empty ? { border: `2px dashed ${LINE}`, borderRadius: '50%', background: 'transparent' } : OBJ[obj]), ...style }}>
       {n !== undefined && <b style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', fontSize: 11, color: INK }}>{n}</b>}
     </span>
   )
 }
 
-const box: CSSProperties = { background: CARD, border: `2px solid ${LINE}`, borderRadius: 14, padding: 10, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', justifyContent: 'center' }
+const box: CSSProperties = { background: '#fff6e8', border: `3px solid ${INK}`, borderRadius: 16, padding: 10, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', justifyContent: 'center' }
 const label: CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 800, color: INK }
+
+/** The tap cue for a scratch picture, or null when a tap does nothing (or has its own labelled button). */
+export const tapCue = (p: Picture) => (p.kind === 'array' && p.turn ? null : TAP_CUE[p.kind] ?? null)
 
 export interface Scratch { taps: number; onTap: () => void }
 
@@ -52,13 +73,18 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
       return <div style={{ ...label, fontSize: 'clamp(26px, 5vw, 36px)', textAlign: 'center' }}>{p.text}</div>
 
     case 'cards':
+      // "One thing not to do": a big Not this card beside a big Do this card (the template's Trap door).
       return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-          {[[p.wrong, false], [p.right, true]].map(([t, ok]) => (
-            <div key={String(ok)} style={{ ...box, justifyContent: 'space-between', flexWrap: 'nowrap', padding: '14px 18px',
-              borderColor: ok ? GOOD : BAD, background: ok ? '#E2F4EB' : '#FBE7E4' }}>
-              <span style={{ ...label, fontSize: 22 }}>{t as string}</span>
-              <span style={{ ...label, fontSize: 30, color: ok ? GOOD : BAD }} aria-label={ok ? 'right' : 'wrong'}>{ok ? '✓' : '✕'}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+          {([[p.wrong, false], [p.right, true]] as const).map(([t, ok]) => (
+            <div key={String(ok)} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '18px 22px', borderRadius: 22,
+              border: `4px solid ${INK}`, background: ok ? '#b7f0c6' : '#ffb4b4' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800, fontSize: 'clamp(20px, 2.4vw, 26px)', color: INK }}>
+                <span aria-hidden style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: ok ? GOOD : BAD, border: `3px solid ${INK}`, color: '#fff', fontSize: 20, fontWeight: 900 }}>{ok ? '✓' : '✕'}</span>
+                {ok ? 'Do this' : 'Not this'}
+              </span>
+              <span style={{ ...label, fontSize: 'clamp(28px, 3.6vw, 38px)' }}>{t}</span>
             </div>
           ))}
         </div>
@@ -71,7 +97,7 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
           {Array.from({ length: p.groups }, (_, g) => (
             <div key={g} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               {p.show === 'running' && <span style={{ ...label, fontSize: 18, ...anim(g * 700, p.motion ?? true) }}>{(g + 1) * p.each}</span>}
-              <div style={{ ...box, borderRadius: 999, minWidth: 64, paddingTop: p.show === 'count' ? 22 : 12,
+              <div style={{ ...box, borderRadius: 999, minWidth: u(3.2), minHeight: `calc(${u(1)} + 24px)`, paddingTop: p.show === 'count' ? 22 : 12,
                 ...(p.show === 'rings' ? { borderColor: ACCENT, boxShadow: `0 0 0 3px ${ACCENT}33`, ...anim(g * 600, p.motion) } : {}) }}>
                 {Array.from({ length: p.each }, () => {
                   const i = k++
@@ -87,7 +113,7 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
 
     case 'scatter':
       return (
-        <div style={{ position: 'relative', width: 220, height: 120, margin: '0 auto', ...box, display: 'block' }}>
+        <div style={{ position: 'relative', width: u(11), height: u(6), margin: '0 auto', ...box, display: 'block' }}>
           {Array.from({ length: p.n }, (_, i) => (
             <Thing key={i} obj={p.obj} style={{ position: 'absolute', left: `${(i * 37) % 86 + 4}%`, top: `${(i * 53) % 70 + 8}%`, transform: `rotate(${(i * 47) % 60 - 30}deg)` }} />
           ))}
@@ -98,10 +124,10 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
       const cells = p.rows * p.cols
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div {...(p.turn ? {} : tap)} style={{ ...box, display: 'grid', gridTemplateColumns: `${p.show === 'rows' ? 'auto ' : ''}repeat(${p.cols}, 22px)${p.show === 'running' ? ' auto' : ''}`,
+          <div {...(p.turn ? {} : tap)} style={{ ...box, display: 'grid', gridTemplateColumns: `${p.show === 'rows' ? 'auto ' : ''}repeat(${p.cols}, calc(var(--lp-u, 20px) + 2px))${p.show === 'running' ? ' auto' : ''}`,
             gap: 6, alignItems: 'center', justifyItems: 'center',
-            // A rotation does not change layout size: reserve the height the turned tray will need (28px per item).
-            ...(p.turn ? { margin: `${Math.max(0, (p.cols - p.rows) * 14)}px 0` } : {}),
+            // A rotation does not change layout size: reserve the height the turned tray will need (one column pitch per item).
+            ...(p.turn ? { margin: `calc((var(--lp-u, 20px) + 8px) * ${Math.max(0, p.cols - p.rows) / 2}) 0` } : {}),
             ...(p.turn && p.motion ? { animation: 'lp-turn 1.4s ease-in-out .4s forwards' } : {}),
             ...(p.turn && scratch && taps % 2 ? { transform: 'rotate(90deg)' } : {}), transition: 'transform .8s', ...(p.turn ? {} : tap.style) }}>
             {Array.from({ length: p.rows }, (_, r) => [
@@ -146,7 +172,6 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
               )
             })}
           </svg>
-          {scratch && <p style={{ margin: 0, fontSize: 13, color: SOFT, textAlign: 'center' }}>Tap to make a jump.</p>}
         </div>
       )
     }
@@ -222,12 +247,16 @@ export function unevenSplit(total: number, groups: number): number[] {
 }
 
 export const pill: CSSProperties = {
-  minHeight: 44, padding: '8px 16px', borderRadius: 999, border: `2px solid ${LINE}`, background: CARD,
-  fontWeight: 800, color: INK, cursor: 'pointer',
+  minHeight: 44, padding: '8px 14px', borderRadius: 14, border: `3px solid ${INK}`, background: CARD, boxShadow: `3px 3px 0 ${INK}`,
+  fontWeight: 800, fontSize: 16, color: INK, cursor: 'pointer', whiteSpace: 'nowrap',
 }
 
 export const LESSON_KEYFRAMES = `
 @keyframes lp-in { to { opacity: 1 } }
 @keyframes lp-turn { to { transform: rotate(90deg) } }
+@keyframes lp-pop { from { transform: scale(.85) rotate(var(--lp-tilt, 0deg)); opacity: 0 } to { transform: scale(1) rotate(var(--lp-tilt, 0deg)); opacity: 1 } }
+@keyframes lp-nudge { 50% { transform: scale(1.06) } }
+button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #2a1c14 !important }
+button:disabled { opacity: .5; box-shadow: none !important; cursor: default }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; animation-delay: 0ms !important } }
 `
