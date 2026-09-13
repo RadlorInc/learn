@@ -37,7 +37,32 @@ on:
         default: ''
 
 jobs:
+  # ⚠️ PAUSED WHILE LEGACY CHAPTERS ARE HIDDEN (src/core/chapters.ts, founder's call 2026-09-13).
+  # This sweep drives the legacy chapters; with them hidden it could only go red every run, and a
+  # permanently-red scheduled job is noise nobody reads. The pause is LOUD, not silent: this job
+  # writes a warning and a summary line on every run, and the sweep job shows as skipped.
+  legacy-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.flag.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: flag
+        run: |
+          if grep -q 'export const LEGACY_CHAPTERS_HIDDEN = true' src/core/chapters.ts; then
+            echo "::warning::Legacy chapters are hidden (src/core/chapters.ts) — this chapter sweep is PAUSED and tested nothing."
+            echo "### ⏸ Paused: legacy chapters hidden — sweep did not run" >> "$GITHUB_STEP_SUMMARY"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          elif grep -q 'export const LEGACY_CHAPTERS_HIDDEN = false' src/core/chapters.ts; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::could not read LEGACY_CHAPTERS_HIDDEN in src/core/chapters.ts — refusing to guess"
+            exit 2
+          fi
+
   layout:
+    needs: legacy-gate
+    if: needs.legacy-gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90 # ~57 min observed; headroom for a slower runner, capped so a hang cannot idle
     env:

@@ -7,6 +7,7 @@ import { signUpWithEmail, signInWithEmail, signInWithGoogleOAuth } from '@/data/
 import { getMyRole, homeForRole } from '@/data/repositories'
 import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
+import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 
 type Mode = 'login' | 'signup'
 
@@ -319,14 +320,14 @@ export default function AuthPage() {
       </div>
 
       {/* Front door for cold traffic: try the diagnostic before making an account. */}
-      <a href="/diagnostic" style={{
+      {!LEGACY_CHAPTERS_HIDDEN && <a href="/diagnostic" style={{
         width: '100%', maxWidth: 380, textAlign: 'center', textDecoration: 'none',
         background: '#fff', border: '2px dashed rgba(242,107,44,0.5)', borderRadius: 18,
         padding: '14px 18px', color: '#F26B2C', fontWeight: 700, fontSize: 15,
       }}>
         🔍 Not sure where they are? Take the free check →
         <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#9ca3af', marginTop: 3 }}>No account needed to start</span>
-      </a>
+      </a>}
     </div>
   )
 }

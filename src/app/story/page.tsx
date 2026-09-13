@@ -18,6 +18,8 @@ import WorldSelect from '@/features/chapters/story/WorldSelect'
 import { makeCountingChapter } from '@/features/chapters/story/chapters'
 import { COUNTING_WORLDS, storytellingById } from '@/features/chapters/story/biomes'
 import { STORY_CHAPTERS, type StorySkill } from '@/features/chapters/storyChapters'
+import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
+import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
 import type { ChapterType } from '@/core/chapters'
 import TasteBanner from '@/features/chapters/story/TasteBanner'
@@ -105,6 +107,7 @@ export default function StoryPage() {
   return <>{renderChapter()}{taste && <TasteBanner />}</>
 
   function renderChapter() {
+    if (LEGACY_CHAPTERS_HIDDEN) return <NewLessonsSoon back="/menu" />
     const skill = PREVIEW[ch]
     // The card the portal draws in the real game, so this preview shows what a child sees.
     if (skill) { const View = VIEWS[skill]; return <><View world={orderWorld} /><DirectionsCard chapter={skill as ChapterType} /></> }

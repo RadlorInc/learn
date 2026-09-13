@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useMiloStore } from '@/state/store'
 import { type ChapterType } from '@/core/chapters'
-import { CHAPTER_NAMES, CHAPTER_EMOJIS, chaptersForAge, type AgeGroup } from '@/core/chapters'
+import { CHAPTER_NAMES, CHAPTER_EMOJIS, LEGACY_CHAPTERS_HIDDEN, chaptersForAge, type AgeGroup } from '@/core/chapters'
+import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 import { shouldReoffer, recordCheckupSkip } from '@/infra/storage/checkup'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 import BackButton from '@/shared/ui/BackButton'
@@ -300,6 +301,9 @@ export default function MainMenu() {
       background: '#FCEAB6', fontSize: 48,
     }}>🦊</div>
   )
+
+  // Every card below (plan, resume, story, check door, picker) opens a legacy chapter.
+  if (LEGACY_CHAPTERS_HIDDEN) return <NewLessonsSoon back="/parent" label="← Switch" />
 
   const resumeStars = resumeChapter ? (profile.chapterStars[resumeChapter] ?? 0) : 0
 

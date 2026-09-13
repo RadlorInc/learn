@@ -16,7 +16,8 @@
  */
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
 import { useChapterAccess, CameraConsentCard } from '@/shared/ui/CameraConsentGate'
-import type { ChapterType } from '@/core/chapters'
+import { isChapterVisible, type ChapterType } from '@/core/chapters'
+import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 
 export function GuardedChapter({ id, onComplete, onExit, childName = 'Sam' }: {
   id: string
@@ -33,6 +34,7 @@ export function GuardedChapter({ id, onComplete, onExit, childName = 'Sam' }: {
   // renders and React tears the page into the error boundary — the rule `RotateGate` carries too.
   const access = useChapterAccess(id)
   const Chapter = CHAPTER_COMPONENTS[id as ChapterType]
+  if (!isChapterVisible(id)) return <NewLessonsSoon back="/" label="Home" />
   if (!Chapter) return <div style={{ padding: 24, fontFamily: 'sans-serif' }}>Unknown chapter: {id}</div>
   if (access === 'checking') return null
   if (access === 'blocked') return <CameraConsentCard />

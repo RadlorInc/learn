@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
+import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 
 /**
  * ⚠️ `diagnostic/page.tsx` IS `'use client'`, AND A CLIENT COMPONENT CANNOT EXPORT `metadata`.
@@ -15,5 +17,6 @@ export const metadata: Metadata = {
 }
 
 export default function DiagnosticLayout({ children }: { children: React.ReactNode }) {
-  return children
+  // The check routes into legacy chapters, so it is off while they are hidden (covers /recheck too).
+  return LEGACY_CHAPTERS_HIDDEN ? <NewLessonsSoon back="/" label="Home" /> : children
 }
