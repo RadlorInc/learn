@@ -36,7 +36,7 @@ describe('legacy chapters are hidden', () => {
     ['src/features/chapters/GuardedChapter.tsx', /!isChapterVisible\(id\)\) return <NewLessonsSoon/],
     ['src/app/story/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <NewLessonsSoon/],
     ['src/app/demo/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <NewLessonsSoon/],
-    ['src/app/menu/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <LessonList/],
+    ['src/app/menu/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <ModuleHome/],
     ['src/app/diagnostic/layout.tsx', /LEGACY_CHAPTERS_HIDDEN \? <NewLessonsSoon/],
     // "Start learning" for a brand-new child used to open the (now blocked) check instead of the lessons.
     ['src/app/parent/page.tsx', /if \(LEGACY_CHAPTERS_HIDDEN \|\| isEstablished\(d\)/],

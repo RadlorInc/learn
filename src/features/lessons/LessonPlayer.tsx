@@ -1,15 +1,20 @@
 'use client'
 /**
  * Plays one new-flow lesson (see ./script.ts for the flow). Every transition is a pure function
- * from script.ts; this file only draws the state and speaks on the child's own taps.
+ * from script.ts; this file only draws the state (in ./Frame) and speaks on the child's own taps.
+ *
+ * Look: the founder's SampleUI template. Its red wrong-answer banners, locks, emoji and scores are deliberately NOT
+ * carried over (a wrong answer is never marked wrong; difficulty and scores stay invisible).
  */
-import { useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import {
   START, next, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, answerOf, workedSteps,
   type FlowState, type Lesson, type Screen,
 } from './script'
-import { Pic, pill, INK, SOFT, ACCENT, GOOD, CARD, LINE, LESSON_KEYFRAMES } from './Pictures'
+import { Pic, tapCue, pill, INK } from './Pictures'
+import { Frame, stage, bubble, primary, hint, idea, cue, tick, right, answerInput } from './Frame'
+import { PracticeLayout, hintBtn } from './PracticeLayout'
 
 export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onFinish: () => void; onExit: () => void }) {
   const [s, setS] = useState<FlowState>(START)
@@ -17,10 +22,11 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   const [value, setValue] = useState('')
   const [replay, setReplay] = useState(0)
   const [audio, setAudio] = useState(false)
+  const [asked, setAsked] = useState(false)   // Hint tapped on a practice problem
 
   const say = (text: string, on = audio) => { if (on) speak(text) }
   const go = (n: FlowState, spoken?: string) => {
-    if (n.mode !== s.mode || n.screen !== s.screen || n.twin !== s.twin || n.practice !== s.practice) { setTaps(0); setValue('') }
+    if (n.mode !== s.mode || n.screen !== s.screen || n.twin !== s.twin || n.practice !== s.practice) { setTaps(0); setValue(''); setAsked(false) }
     setS(n)
     if (spoken) say(spoken)
     if (n.mode === 'finish' && s.mode !== 'finish') onFinish()
@@ -28,142 +34,162 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   const screenSay = (sc: Screen) => `${sc.title}. ${sc.text}`
 
   const problem = currentProblem(lesson, s)
-  const dots = (active: number) => (
-    <div style={{ display: 'flex', gap: 6 }} aria-label={`Screen ${active + 1} of 9`}>
-      {Array.from({ length: 9 }, (_, k) => <i key={k} style={{ width: 9, height: 9, borderRadius: '50%', background: k <= active ? ACCENT : LINE }} />)}
-    </div>
-  )
 
-  let body: React.ReactNode
-  if (s.mode === 'lesson') {
-    const sc = lesson.screens[s.screen]
-    const moving = sc.pictures.some(p => 'motion' in p && p.motion)
-    body = <>
-      <p style={eyebrow}>Screen {s.screen + 1} of 9</p>
-      <h1 style={h1}>{sc.title}</h1>
-      <div key={`${s.screen}-${replay}`} style={pic}>
-        {sc.pictures.map((p, k) => <Pic key={k} p={p} />)}
-        {moving && <button type="button" style={{ ...pill, alignSelf: 'flex-start', fontSize: 14 }} onClick={() => setReplay(r => r + 1)}>↻ Watch again</button>}
-      </div>
-      <p style={text}>{sc.text}</p>
-      <div style={foot}>{dots(s.screen)}
-        <button type="button" style={go_} onClick={() => {
-          const n = next(s)
-          go(n, n.mode === 'lesson' ? screenSay(lesson.screens[n.screen]) : n.mode === 'turn' ? `Now you try. ${lesson.turn.text} ${lesson.turn.prompt}` : undefined)
-        }}>Next</button>
-      </div>
-    </>
-  } else if ((s.mode === 'turn' || s.mode === 'practice') && problem) {
+  const toggleAudio = () => {
+    const on = !audio
+    setAudio(on)
+    if (!on) stopSpeech()
+    else if (s.mode === 'lesson') say(screenSay(lesson.screens[s.screen]), true)
+  }
+
+  // A lesson's 5 practice problems: the practice screen (problem left, scratch pad right), shared with mixed practice.
+  // Hint shows the big idea without counting as a miss; a miss shows it too; a second miss shows the worked steps.
+  if (s.mode === 'practice' && problem) {
+    const worked = s.feedback === 'worked', answering = s.feedback !== 'right' && !worked
+    const submit = () => {
+      if (value.trim() === '') return
+      const n = check(lesson, s, Number(value))
+      go(n, n.feedback === 'idea' ? lesson.bigIdea : n.feedback === 'right' ? 'Right!' : n.feedback === 'worked' ? 'Here is how this one works.' : undefined)
+      if (n.feedback !== 'right') setValue('')   // a wrong answer must not sit there to be re-submitted
+    }
+    return (
+      <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1} of 5`} title={`Problem ${s.practice + 1} of 5`}
+        onExit={() => { stopSpeech(); onExit() }} audio={{ on: audio, toggle: toggleAudio }} pad padKey={s.practice}>
+        <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
+        <div style={stage}>
+          <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
+          {tapCue(problem.picture) && <p style={{ ...cue, ...(taps === 0 ? { animation: 'lp-nudge 1.6s ease-in-out 3' } : {}) }}>{tapCue(problem.picture)}</p>}
+          {taps > 0 && <button type="button" style={{ ...pill, alignSelf: 'center' }} onClick={() => setTaps(0)}>Clear picture</button>}
+        </div>
+        {answering && (
+          <form id="lp-answer" onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+            <b style={{ fontSize: 22 }}>Your answer</b>
+            <input aria-label="Your answer" inputMode="numeric" pattern="[0-9]*" maxLength={3} value={value}
+              onChange={e => setValue(e.target.value.replace(/\D/g, ''))} style={answerInput} />
+          </form>
+        )}
+        {(s.feedback === 'idea' || (asked && answering)) && <p style={idea}>{lesson.bigIdea}</p>}
+        {s.feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right! The answer is {answerOf(problem.op)}.</p>}
+        {worked && <>
+          <div style={hint}>
+            <b>Here&apos;s how this one works:</b>
+            <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{workedSteps(problem.op).map(t => <li key={t}>{t}</li>)}</ol>
+          </div>
+          <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => go(replayLesson(s), screenSay(lesson.screens[0]))}>Watch the lesson again</button>
+        </>}
+        <div className="pr-foot">
+          {answering ? <button type="button" style={hintBtn} onClick={() => setAsked(true)} disabled={asked || s.feedback === 'idea'}>Hint</button> : <span />}
+          {answering
+            ? <button type="submit" form="lp-answer" style={primary} disabled={value === ''}>Check</button>
+            : <button type="button" style={primary} onClick={() => go(nextPractice(s))}>{s.practice === 4 ? 'Finish' : 'Next problem'}</button>}
+        </div>
+      </PracticeLayout>
+    )
+  }
+
+  // Screen 8 "Now you try": the practice screen too (problem left, scratch pad right), but with the approved script's own
+  // help — hint 1 after a miss, hint 2 after a second, then the worked steps and a look-alike twin. No Hint button: it
+  // would skip that order. The pad wipes when the twin appears.
+  if (s.mode === 'turn' && problem) {
     const worked = s.feedback === 'worked'
     const submit = () => {
       if (value.trim() === '') return
       const n = check(lesson, s, Number(value))
       const fb = n.mode === 'won' ? wonFor(lesson, n).text
         : n.feedback === 'hint1' ? hintsFor(lesson, n)[0] : n.feedback === 'hint2' ? hintsFor(lesson, n)[1]
-        : n.feedback === 'idea' ? lesson.bigIdea : n.feedback === 'right' ? 'Right!' : n.feedback === 'worked' ? 'Here is how this one works.' : undefined
+        : n.feedback === 'worked' ? 'Here is how this one works.' : undefined
       go(n, fb)
-      if (n.feedback !== 'right' && n.mode !== 'won') setValue('')   // a wrong answer must not sit there to be re-submitted
+      if (n.mode !== 'won') setValue('')   // a wrong answer must not sit there to be re-submitted
     }
-    body = <>
-      {s.mode === 'turn'
-        ? <><p style={eyebrow}>Screen 8 of 9</p><h1 style={h1}>Now you try</h1></>
-        : <>
-          <p style={eyebrow}>Practice {s.practice + 1} of 5 · {lesson.practice[s.practice].why}</p>
-          <h1 style={h1}>Keep practicing</h1>
-        </>}
-      <div style={pic}>
-        <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
-        {taps > 0 && <button type="button" style={{ ...pill, alignSelf: 'center', fontSize: 13 }} onClick={() => setTaps(0)}>Clear picture</button>}
-      </div>
-      <p style={{ ...text, fontWeight: 700 }}>{problem.text}</p>
-      {s.mode === 'turn' && <p style={{ ...text, color: SOFT, fontSize: 17 }}>{lesson.turn.prompt}</p>}
-
-      {s.feedback !== 'right' && !worked && (
-        <form onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <input aria-label="Your answer" inputMode="numeric" pattern="[0-9]*" maxLength={3} value={value}
-            onChange={e => setValue(e.target.value.replace(/\D/g, ''))}
-            style={{ width: 100, height: 56, fontSize: 28, fontWeight: 800, textAlign: 'center', borderRadius: 12, border: `2px solid ${LINE}`, color: INK, background: CARD }} />
-          <button type="submit" style={go_} disabled={value === ''}>Check</button>
-        </form>
-      )}
-
-      {s.feedback === 'hint1' && <p style={note}>{hintsFor(lesson, s)[0]}</p>}
-      {s.feedback === 'hint2' && <p style={note}>{hintsFor(lesson, s)[1]}</p>}
-      {s.feedback === 'idea' && <p style={{ ...note, fontWeight: 800 }}>{lesson.bigIdea}</p>}
-      {s.feedback === 'right' && <p style={{ ...note, borderColor: GOOD, background: '#E2F4EB' }}>Right! The answer is {answerOf(problem.op)}.</p>}
-      {worked && (
-        <div style={note}>
-          <b>Here&apos;s how this one works:</b>
-          <ol style={{ margin: '6px 0 0', paddingLeft: 20 }}>{workedSteps(problem.op).map(t => <li key={t}>{t}</li>)}</ol>
+    return (
+      <PracticeLayout corner={lesson.title} crumb="Screen 8 of 9" title="Now you try" exitLabel="Exit lesson"
+        onExit={() => { stopSpeech(); onExit() }} audio={{ on: audio, toggle: toggleAudio }} pad padKey={s.twin ? 'twin' : 'first'}>
+        <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
+        <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: INK }}>{lesson.turn.prompt}</p>
+        <div style={stage}>
+          <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
+          {tapCue(problem.picture) && <p style={{ ...cue, ...(taps === 0 ? { animation: 'lp-nudge 1.6s ease-in-out 3' } : {}) }}>{tapCue(problem.picture)}</p>}
+          {taps > 0 && <button type="button" style={{ ...pill, alignSelf: 'center' }} onClick={() => setTaps(0)}>Clear picture</button>}
         </div>
-      )}
+        {!worked && (
+          <form id="lp-turn" onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+            <b style={{ fontSize: 22 }}>Your answer</b>
+            <input aria-label="Your answer" inputMode="numeric" pattern="[0-9]*" maxLength={3} value={value}
+              onChange={e => setValue(e.target.value.replace(/\D/g, ''))} style={answerInput} />
+          </form>
+        )}
+        {s.feedback === 'hint1' && <p style={hint}>{hintsFor(lesson, s)[0]}</p>}
+        {s.feedback === 'hint2' && <p style={hint}>{hintsFor(lesson, s)[1]}</p>}
+        {worked && (
+          <div style={hint}>
+            <b>Here&apos;s how this one works:</b>
+            <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{workedSteps(problem.op).map(t => <li key={t}>{t}</li>)}</ol>
+          </div>
+        )}
+        <div className="pr-foot">
+          <span />
+          {worked
+            ? <button type="button" style={primary} onClick={() => {
+                const n = afterWorked(s)
+                go(n, n.mode === 'turn' ? `Try a new one. ${lesson.turn.twin.text}` : wonFor(lesson, n).text)
+              }}>{s.twin ? 'Next' : 'Try a new one'}</button>
+            : <button type="submit" form="lp-turn" style={primary} disabled={value === ''}>Check</button>}
+        </div>
+      </PracticeLayout>
+    )
+  }
 
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        {s.mode === 'turn' && worked && (
-          <button type="button" style={go_} onClick={() => {
-            const n = afterWorked(s)
-            go(n, n.mode === 'turn' ? `Try a new one. ${lesson.turn.twin.text}` : wonFor(lesson, n).text)
-          }}>{s.twin ? 'Next' : 'Try a new one'}</button>
-        )}
-        {s.mode === 'practice' && worked && (
-          <button type="button" style={pill} onClick={() => go(replayLesson(s), screenSay(lesson.screens[0]))}>Watch the lesson again</button>
-        )}
-        {s.mode === 'practice' && (s.feedback === 'right' || worked) && (
-          <button type="button" style={go_} onClick={() => go(nextPractice(s))}>{s.practice === 4 ? 'Finish' : 'Next problem'}</button>
-        )}
+  // The parts every screen fills in.
+  let crumb: string, title: ReactNode, picture: ReactNode, words: ReactNode, action: ReactNode = null, at: number, stack = false
+
+  if (s.mode === 'lesson') {
+    const sc = lesson.screens[s.screen]
+    const moving = sc.pictures.some(p => 'motion' in p && p.motion)
+    // ponytail: on Screen 1 the closing question becomes the button ("How many…? Let's see"), split out of the approved text.
+    const ask = s.screen === 0 ? sc.text.match(/^([\s\S]*?[.!])\s+([^.!?]+\?)$/) : null
+    // "One thing not to do": the Not this / Do this cards run full width, the explanation underneath (the template's Trap door).
+    stack = sc.pictures.length > 0 && sc.pictures.every(p => p.kind === 'cards')
+    crumb = `Screen ${s.screen + 1} of 9`; at = s.screen
+    title = sc.title
+    picture = stack
+      ? <div key={`${s.screen}-${replay}`} style={{ flex: 1 }}>{sc.pictures.map((p, k) => <Pic key={k} p={p} />)}</div>
+      : <div key={`${s.screen}-${replay}`} style={stage}>
+        {sc.pictures.map((p, k) => <Pic key={k} p={p} />)}
+        {moving && <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => setReplay(r => r + 1)}>↻ Watch again</button>}
       </div>
-      <div style={foot}>{dots(7)}<span /></div>
-    </>
+    words = <p style={bubble}>{ask ? ask[1] : sc.text}</p>
+    action = <button type="button" style={ask ? askBtn : primary} onClick={() => {
+      const n = next(s)
+      go(n, n.mode === 'lesson' ? screenSay(lesson.screens[n.screen]) : n.mode === 'turn' ? `Now you try. ${lesson.turn.text} ${lesson.turn.prompt}` : undefined)
+    }}>{ask ? <><span>{ask[2]}</span><span style={{ fontSize: 16, opacity: 0.95 }}>Let&apos;s see ▶</span></> : 'Next'}</button>
   } else if (s.mode === 'won') {
     const w = wonFor(lesson, s)
-    body = <>
-      <p style={eyebrow}>Screen 9 of 9</p>
-      <h1 style={h1}>{w.title}</h1>
-      <div style={pic}>
-        {w.helped && <p style={{ ...note, fontWeight: 800 }}>{lesson.bigIdea}</p>}
-        <span style={{ alignSelf: 'center', border: `2px dashed ${ACCENT}`, borderRadius: 12, padding: '10px 16px', fontWeight: 800, color: INK }}>
-          <small style={{ display: 'block', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: SOFT }}>Math word</small>
-          {w.sticker}
-        </span>
-      </div>
-      <p style={text}>{w.text}</p>
-      <div style={foot}>{dots(8)}<button type="button" style={go_} onClick={() => go(toPractice(s))}>Keep practicing</button></div>
-    </>
+    crumb = 'Screen 9 of 9'; at = 8
+    title = <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><span style={{ ...tick, width: 44, height: 44, fontSize: 26 }} aria-hidden>✓</span>{w.title}</span>
+    picture = <div style={stage}>
+      {w.helped && <p style={idea}>{lesson.bigIdea}</p>}
+      <span style={sticker}>
+        <small style={{ display: 'block', fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', color: '#6d4c3d' }}>Math word sticker</small>
+        {w.sticker}
+      </span>
+    </div>
+    words = <p style={bubble}>{w.text}</p>
+    action = <button type="button" style={primary} onClick={() => go(toPractice(s))}>Keep practicing</button>
   } else {
-    body = <>
-      <p style={eyebrow}>Finished</p>
-      <h1 style={h1}>{lesson.title}: done!</h1>
-      <div style={pic}><p style={{ ...note, fontWeight: 800 }}>{lesson.bigIdea}</p></div>
-      <p style={text}>You got {s.solo.length} of 5 practice problems on your own.</p>
-      <div style={foot}>{dots(8)}<button type="button" style={go_} onClick={onExit}>Back to topics</button></div>
-    </>
+    crumb = 'Done!'; at = 8
+    title = `${lesson.title}: done!`
+    picture = <div style={stage}><p style={idea}>{lesson.bigIdea}</p></div>
+    words = <p style={bubble}>You worked through all 5 practice problems. Nice work sticking with it!</p>
+    action = <button type="button" style={primary} onClick={onExit}>Back to topics</button>
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#FCEAB6', padding: '16px 14px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <style>{LESSON_KEYFRAMES}</style>
-      <div style={{ width: '100%', maxWidth: 760, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" style={pill} onClick={() => { stopSpeech(); onExit() }}>← Topics</button>
-          <button type="button" style={{ ...pill, background: audio ? '#FFE3D1' : CARD }} aria-pressed={audio} onClick={() => {
-            const on = !audio
-            setAudio(on)
-            if (!on) stopSpeech()
-            else if (s.mode === 'lesson') say(screenSay(lesson.screens[s.screen]), true)
-          }}>{audio ? '🔊 Reading aloud' : '🔈 Read it to me'}</button>
-        </div>
-        <main style={{ background: CARD, borderRadius: 22, border: `1px solid ${LINE}`, padding: 'clamp(18px, 4vw, 32px)', display: 'flex', flexDirection: 'column', gap: 16, minHeight: 480 }}>
-          {body}
-        </main>
-      </div>
-    </div>
+    <Frame crumb={crumb} at={at} total={9} stack={stack} title={title} picture={picture} words={words} action={action}
+      exit={{ label: '← Topics', onClick: () => { stopSpeech(); onExit() } }}
+      audio={{ on: audio, toggle: toggleAudio }} />
   )
 }
 
-const eyebrow: CSSProperties = { margin: 0, fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: SOFT }
-const h1: CSSProperties = { margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(26px, 4.5vw, 36px)', color: INK, lineHeight: 1.15 }
-const pic: CSSProperties = { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16, minHeight: 160 }
-const text: CSSProperties = { margin: 0, fontSize: 'clamp(18px, 2.4vw, 21px)', lineHeight: 1.5, color: INK, maxWidth: '60ch' }
-const foot: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 'auto' }
-const note: CSSProperties = { margin: 0, borderLeft: `4px solid ${ACCENT}`, background: '#FFF4E8', borderRadius: 12, padding: '12px 16px', fontSize: 17, color: INK }
-const go_: CSSProperties = { minHeight: 52, padding: '12px 28px', borderRadius: 14, border: 'none', background: ACCENT, color: '#fff', fontWeight: 900, fontSize: 19, cursor: 'pointer' }
+const sticker = { alignSelf: 'center', maxWidth: 460, textAlign: 'center', padding: '14px 22px', borderRadius: 20, background: '#ffd166', border: `4px solid ${INK}`,
+  boxShadow: `5px 5px 0 ${INK}`, fontWeight: 800, fontSize: 20, color: INK, '--lp-tilt': '-2deg', transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' } as CSSProperties
+const askBtn: CSSProperties = { ...primary, flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', padding: '12px 22px', maxWidth: 440 }
