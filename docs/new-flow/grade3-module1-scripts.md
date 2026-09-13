@@ -559,7 +559,7 @@ Answers: 4 · 5 · 3 · 6 · 4
 - **Buttons:** Check
 - **Hint after 1 miss:** "Ring 5 stickers to make one pack. Keep going until none are left."
 - **Hint after 2 misses:** "2 packs of 5 use 10 stickers. 5 are left. That makes one more pack."
-- **If still wrong:** Show the worked steps for this problem, then give a new twin: 16 wheels, 4 wheels on each car. How many cars?
+- **If still wrong:** Show the worked steps for this problem, then give a new twin: 20 wheels, 4 wheels on each car. How many cars?
 
 **Screen 9 — If they get Screen 8 right**
 - **Title:** You got it

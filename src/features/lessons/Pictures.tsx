@@ -7,7 +7,7 @@
  * deals to the next plate, rings the next object, makes the next jump). It never grades anything.
  */
 import type { CSSProperties } from 'react'
-import type { Obj, Picture } from './script'
+import { scratchLineMax, type Obj, type Picture } from './script'
 
 export const INK = '#3d2516', SOFT = '#7a6450', ACCENT = '#F26B2C', GOOD = '#1F9D62', BAD = '#D1483A', CARD = '#FFFFFF', LINE = '#E7D6B8'
 
@@ -75,7 +75,8 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
                 ...(p.show === 'rings' ? { borderColor: ACCENT, boxShadow: `0 0 0 3px ${ACCENT}33`, ...anim(g * 600, p.motion) } : {}) }}>
                 {Array.from({ length: p.each }, () => {
                   const i = k++
-                  return <Thing key={i} obj={p.obj} empty={!!scratch && i >= taps} n={p.show === 'count' ? i + 1 : undefined} />
+                  // Scratch: an empty plate fills as the child taps — no dashed slot per item, which would be the answer drawn to count.
+                  return scratch && i >= Math.min(taps, p.groups * p.each) ? null : <Thing key={i} obj={p.obj} n={p.show === 'count' ? i + 1 : undefined} />
                 })}
               </div>
             </div>
@@ -122,19 +123,20 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
     }
 
     case 'line': {
-      const W = 420, x0 = 18, span = W - 36, y = 78, px = (v: number) => x0 + (v / p.max) * span
+      const max = scratch ? scratchLineMax(p.step) : (p.max ?? scratchLineMax(p.step))
+      const W = 420, x0 = 18, span = W - 36, y = 78, px = (v: number) => x0 + (v / max) * span
       const jumps = scratch ? taps : p.jumps
       return (
         <div {...tap} style={{ overflowX: 'auto', ...tap.style }}>
-          <svg viewBox={`0 0 ${W} 120`} style={{ width: '100%', minWidth: 300, height: 'auto', display: 'block' }} role="img" aria-label={`Number line from 0 to ${p.max}`}>
+          <svg viewBox={`0 0 ${W} 120`} style={{ width: '100%', minWidth: 300, height: 'auto', display: 'block' }} role="img" aria-label={`Number line from 0 to ${max}`}>
             <line x1={x0} y1={y} x2={x0 + span} y2={y} stroke={INK} strokeWidth={3} />
-            {Array.from({ length: Math.floor(p.max / p.step) + 1 }, (_, k) => k * p.step).map(v => (
+            {Array.from({ length: Math.floor(max / p.step) + 1 }, (_, k) => k * p.step).map(v => (
               <g key={v}>
                 <line x1={px(v)} y1={y - 8} x2={px(v)} y2={y + 8} stroke={INK} strokeWidth={2} />
-                <text x={px(v)} y={y + 30} textAnchor="middle" fontSize={p.max / p.step > 10 ? 14 : 19} fontWeight={700} fill={INK}>{v}</text>
+                <text x={px(v)} y={y + 30} textAnchor="middle" fontSize={max / p.step > 10 ? 14 : 19} fontWeight={700} fill={INK}>{v}</text>
               </g>
             ))}
-            {Array.from({ length: Math.min(jumps, Math.floor(p.max / p.step)) }, (_, k) => {
+            {Array.from({ length: Math.min(jumps, Math.floor(max / p.step)) }, (_, k) => {
               const a = px(k * p.step), b = px((k + 1) * p.step), m = (a + b) / 2
               return (
                 <g key={k} style={p.motion && !scratch ? { opacity: 0, animation: `lp-in .35s ease-out ${k * 600}ms forwards` } : undefined}>
