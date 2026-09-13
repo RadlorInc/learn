@@ -440,3 +440,91 @@ finger. A React, Next or `motion` bump can be entirely green here and still be b
 dependency will see `1833 passed` and merge with a confidence the number has not earned. It has
 already nearly happened once — the React 19.2.8 pair bump on 2026-09-09 was green in vitest before
 anyone had rendered a single chapter with it.
+
+## Deployment storage — measured 2026-09-10, and the option that is NOT this week's change
+
+**State on the day: `Deployment Storage 53.43 GB / 10 GB` (Hobby), 5.3× over.** Bandwidth
+(1.95 GB / 100 GB) and edge requests (137K / 1M) are nowhere near their limits — storage is the
+only line over, and if Vercel blocks new deployments it takes the **rollback path with it**, because
+the only proven rollback here is revert-and-push-forward, which needs a build
+(see [runbooks/launch-day.md](runbooks/launch-day.md)).
+
+### Where it actually is — 350 deployments, attributed
+
+`public/audio` is **694 MB / 29,325 mp3** in the working tree, and it ships inside every deployment.
+It is not evenly spread: measured with `git ls-tree -r -l <sha> -- public/audio`, the audio in a
+deployment's own commit went **15 MB (to 2026-09-01) → 88 MB (09-04) → 259 → 349 → 365 (09-09 am)
+→ 636 MB (09-09 pm)**. So storage is concentrated in the last ~48 hours, and the OLD deployments
+everyone reaches for first are the small ones.
+
+| class | n | ~share of 53.43 GB |
+|---|---|---|
+| production (`target: production`) | 194 | ~46% |
+| previews, **newer** than 7 days | 76 | ~44% |
+| previews, **older** than 7 days | 80 | **~10%** |
+
+⚠️ **The `main`-branch previews are ~23%, and every one of them is less than 7 days old** — the
+branch-preview-on-`main` behaviour only began on **2026-09-05**, when the production branch moved to
+`release`. Before that `main` builds carried `target: production`. So a "delete previews older than
+7 days" sweep cannot touch a single one of them.
+⚠️ **These shares are an ESTIMATE**, from per-commit audio size plus a non-audio baseline calibrated
+to make the model reproduce the dashboard's 53.43 GB (~57 MB/deployment). A bigger baseline plus
+Vercel file-level dedup fits the same total, and the two are not distinguishable from outside. Treat
+the ordering as sound and the absolute figures as indicative.
+
+### ⚠️ The usage number is not readable on Hobby — so the delete-then-measure loop cannot be run
+
+`GET /v1/usage` answers **`plan_upgrade_required: This API endpoint is only available to Teams on
+the Pro or Enterprise plan`**. Measured, not inferred. The dashboard is the only source of the
+storage figure, so *"delete a batch, re-read the number, stop if it did not fall"* is unexecutable
+by a script on this plan. **Deleting under a rule set that protects production and anything under
+7 days recovers ~10% and leaves the project ~4.8× over — it does not unblock anything. The upgrade
+is the fix; deletion is tidying.**
+
+### Stopping the waste — `vercel.json`, not a dashboard edit
+
+Every merge produced **three** deployments: the PR-branch preview, a `main` preview, and the
+`release` production build — each carrying the full audio. Nothing reads the `main` one
+(`adaptivelearn-git-main-….vercel.app` is an auto-assigned branch alias; production is
+`adaptivelearn.radlor.com` off `release`).
+
+```json
+{ "git": { "deploymentEnabled": { "main": false } } }
+```
+
+Unspecified branches default to `true`, so **`release` and every PR preview are untouched** — PR
+previews are load-bearing for review and must not be disabled. This is in the repo rather than in
+the dashboard on purpose: it is a reviewable diff, per the same argument as `assert-prod-ref.sh`.
+⚠️ It takes effect only once the file is **on `main`**, and the verification is *the next merge
+produces two deployments, not three* — that has not been observed yet, so this is
+**shipped-but-unverified** until it has been.
+
+### 📌 The root cause, and the option — NOT a launch-week change
+
+694 MB of audio lives in git and therefore in every build output. The right home is object storage
+(**Supabase Storage** — already in the stack, currently 0 buckets/0 objects — or **Cloudflare R2**),
+fetched at runtime the way clips already are by `clipKey()`. Rough shape: ~694 MB moved out,
+deployment size drops to ~60 MB, and the storage line stops growing per-merge.
+
+⚠️ **Risks, which are why this is not a this-week change:**
+- the clip player currently swallows its own errors by design (a missing clip must fall back, not
+  throw) — so a misconfigured bucket is **silent**, in exactly the way `media-src` was;
+- the **CSP** `connect-src`/`media-src` must gain the bucket origin, and this repo has broken three
+  separate things with a CSP change that no gate could see (fonts, MediaPipe, `media-src`);
+- the three-copies-in-git property noted in the 📊 2026-09-05 block is a real backup that object
+  storage does not replace;
+- `clipKey()` is shared by the build script and the runtime, and a drift there misses **silently**.
+
+**A retention policy is the smaller, structural alternative** to ever doing this sweep by hand
+again (`vercel list --policy …`); check its plan availability on Pro before relying on it.
+
+### 📌 `RadlorInc/learn` is a PUBLIC repo — the reason for it expires with the upgrade
+
+Confirmed from two independent sources: the deployment metadata reports
+`githubRepoVisibility: public`, and `gh repo view` reports `isPrivate: false`. This is **not a
+discovery** — handoff.md records it as deliberate: *"Both repos must stay PUBLIC until Vercel is
+Pro — Hobby refuses a private org-owned repo through the Git integration."*
+⚠️ **The point is that its stated cause is being removed.** Once the team is on Pro, the constraint
+that forced a children's product's source public no longer applies, and staying public becomes a
+fresh decision rather than an inherited one. Recorded for the founder to make knowingly; **nothing
+changed here.**
