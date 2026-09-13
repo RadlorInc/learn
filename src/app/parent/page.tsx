@@ -22,7 +22,7 @@ import { setActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
-import { CHAPTER_PARENT_LABELS, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
+import { CHAPTER_PARENT_LABELS, LEGACY_CHAPTERS_HIDDEN, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { getLevelName } from '@/core/leveling'
@@ -400,7 +400,7 @@ export default function ParentDashboard() {
                   ))}
                 </div>
 
-                {recheckDue && (
+                {recheckDue && !LEGACY_CHAPTERS_HIDDEN && (
                   <button onClick={() => recheckGap(active.learner)} style={{ width:'100%', padding:'13px 14px', marginBottom:10, background:'rgba(255,255,255,0.95)', color:'#B45309', border:'2px solid #F6C453', borderRadius:16, fontSize:14, fontWeight:800, cursor:'pointer', textAlign:'left', lineHeight:1.35 }}>
                     🔔 It&apos;s been {recheckDue.weeks} weeks — time to re-check {active.learner.display_name}&apos;s gap →
                   </button>
@@ -408,14 +408,14 @@ export default function ParentDashboard() {
                 <button onClick={() => launchGame(active)} style={{ width:'100%', padding:'14px', background:'#fff', color:'#F26B2C', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>
                   ▶ Start learning
                 </button>
-                <div style={{ display:'flex', gap:10, marginTop:10 }}>
+                {!LEGACY_CHAPTERS_HIDDEN && <div style={{ display:'flex', gap:10, marginTop:10 }}>
                   <button onClick={() => findStartingPoint(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
                     🔍 Find starting point
                   </button>
                   <button onClick={() => recheckGap(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
                     🔁 Re-check the gap
                   </button>
-                </div>
+                </div>}
               </div>
 
               {/* COPPA: a parent may SEE what is stored and have it DELETED. Both live under one

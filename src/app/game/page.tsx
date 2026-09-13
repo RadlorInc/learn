@@ -15,6 +15,8 @@ import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
 import { track } from '@/infra/analytics'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
+import { isChapterVisible } from '@/core/chapters'
+import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 import { useChapterGate } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 
@@ -111,6 +113,8 @@ export default function GamePage() {
 
   // ⚠️ BEFORE the chapter is rendered, not beside it: a locked chapter must not mount at all, the
   // same way the camera guard refuses the render rather than disabling a control.
+  if (playingChapter && !isChapterVisible(playingChapter)) return <NewLessonsSoon back="/menu" />
+
   if (playingChapter && gate === 'locked') {
     return <LockedChapterCard chapterId={playingChapter} onBack={() => router.replace('/menu')} />
   }

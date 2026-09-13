@@ -17,7 +17,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { GuardedChapter } from '@/features/chapters/GuardedChapter'
-import { CHAPTER_NAMES, type AgeGroup } from '@/core/chapters'
+import { CHAPTER_NAMES, LEGACY_CHAPTERS_HIDDEN, type AgeGroup } from '@/core/chapters'
+import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 import { PT, ACCENTS, LabBackdrop, PtMilo, type Accent } from '@/features/chapters/story/preteen/kit'
 import { kv } from '@/infra/storage/kv'
 import { track } from '@/infra/analytics'
@@ -49,6 +50,7 @@ export default function DemoPage() {
     return () => { dead = true }
   }, [])
 
+  if (LEGACY_CHAPTERS_HIDDEN) return <NewLessonsSoon back="/" label="Home" />
   if (!ready) return null
 
   // ── PLAYING ──────────────────────────────────────────────────────────────────────
