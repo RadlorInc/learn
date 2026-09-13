@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { GRADE3_MODULE1 } from '@/features/lessons/grade3Module1'
 import {
-  answerOf, START, next, check, afterWorked, nextPractice, replayLesson, hintsFor, scratchLineMax, type Op, type FlowState, type Picture,
+  answerOf, START, next, check, afterWorked, nextPractice, replayLesson, hintsFor, wonFor, scratchLineMax, type Op, type FlowState, type Picture,
 } from '@/features/lessons/script'
 
 // [your turn, twin, practice 1–5] — copied from the "Answers:" lines of the approved scripts.
@@ -85,6 +85,22 @@ describe('Grade 3 · Module 1 scripts', () => {
     }
   })
 
+  it('Screen 9 after the twin only uses numbers from the twin (never the first problem\'s)', () => {
+    const nums = (t: string) => new Set(t.match(/\d+/g) ?? [])
+    for (const l of GRADE3_MODULE1) {
+      const allowed = new Set([...nums(l.turn.twin.text), String(answerOf(l.turn.twin.op))])
+      const solved = wonFor(l, { ...START, mode: 'won', twin: true, misses: 0 })
+      const helped = wonFor(l, { ...START, mode: 'won', twin: true, misses: 3 })
+      for (const w of [solved, helped]) for (const n of nums(`${w.title} ${w.text} ${w.sticker}`)) {
+        expect(allowed.has(n), `${l.id}: "${n}" in "${w.text} / ${w.sticker}" is not from the twin`).toBe(true)
+      }
+      expect(solved).toMatchObject({ title: 'You got it', helped: false })
+      expect(helped.title).not.toBe('You got it')
+      expect(helped.helped).toBe(true)
+      expect(wonFor(l, { ...START, mode: 'won' })).toMatchObject({ title: 'You got it', ...l.won })
+    }
+  })
+
   it('every Title, Text, Prompt, Hint and Sticker in the approved document is in the app word for word', () => {
     const doc = readFileSync('docs/new-flow/grade3-module1-scripts.md', 'utf8')
     const topics = doc.split(/\n## Topic /).slice(1)
@@ -93,7 +109,7 @@ describe('Grade 3 · Module 1 scripts', () => {
     let checked = 0
     topics.forEach((t, i) => {
       const data = JSON.stringify(GRADE3_MODULE1[i])
-      for (const [, field, raw] of t.matchAll(/- \*\*(Title|Text|Prompt|Hint after 1 miss|Hint after 2 misses|Math word sticker):\*\* (.+)/g)) {
+      for (const [, field, raw] of t.matchAll(/- \*\*(Title|Text|Prompt|Hint after 1 miss|Hint after 2 misses|Math word sticker|Text after the twin|Math word sticker after the twin):\*\* (.+)/g)) {
         const want = raw.trim().replace(/^"(.*)"$/, '$1')
         if (want === 'Now you try' || want === 'You got it') continue   // Screen 8/9 titles live in LessonPlayer
         checked++
@@ -128,6 +144,15 @@ describe('the flow', () => {
     s = check(l, s, 8);  expect(s.feedback).toBe('worked')
     s = afterWorked(s);  expect(s).toMatchObject({ mode: 'turn', twin: true, misses: 0, feedback: null })
     s = check(l, s, 10); expect(s.mode).toBe('won')
+  })
+
+  it('a twin missed 3 times still reaches Screen 9 — as "keep practicing", never "you got it" — then practice', () => {
+    let s = afterWorked({ ...seven(START), feedback: 'worked', misses: 3 })
+    for (let k = 0; k < 3; k++) s = check(l, s, 1)
+    expect(s.feedback).toBe('worked')
+    s = afterWorked(s)
+    expect(s.mode).toBe('won')
+    expect(wonFor(l, s).helped).toBe(true)
   })
 
   it('practice: a miss shows the big idea, a second shows the worked steps, and the lesson replay comes back to the same problem', () => {

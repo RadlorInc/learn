@@ -16,6 +16,8 @@ Click-by-click scripts, one per topic, written in exactly the structure of **"St
   **"math word" sticker** on Screen 9.
 - Total taps before practice: **7**. Time: about **90 seconds** before they try it themselves.
 - In practice: **if they miss, show the big idea again. Do not replay Screens 1–7 unless they miss twice.**
+- **Screen 9 after the twin** uses the twin's own numbers ("Text after the twin" / "Math word sticker after the twin").
+- **If the twin is also missed 3 times**, Screen 9 still appears, but as **"Let's keep practicing"** — *"You watched how it works, step by step. The practice problems will help it stick."* — with the big idea and the math word, never "You got it". (Added 2026-09-13 at the founder's request; the source doc does not cover this case.)
 
 Module 1 only uses the units **2, 3, 4, 5 and 10**.
 
@@ -85,6 +87,8 @@ Module 1 only uses the units **2, 3, 4, 5 and 10**.
 - **Title:** You got it
 - **Text:** You counted by groups instead of one by one. That is multiplication.
 - **Math word sticker:** "Equal groups = multiplication. 3 × 5 means 3 groups of 5."
+- **Text after the twin:** You counted by groups instead of one by one. That is multiplication.
+- **Math word sticker after the twin:** "Equal groups = multiplication. 5 × 2 means 5 groups of 2."
 - **Button:** Keep practicing
 
 **Practice**
@@ -165,6 +169,8 @@ Answers: 6 · 10 · 20 · 20 · 12
 - **Title:** You got it
 - **Text:** You counted the rows and one row, then multiplied. That is the whole trick.
 - **Math word sticker:** "Equal rows = an array."
+- **Text after the twin:** You counted the rows and one row, then multiplied. That is the whole trick.
+- **Math word sticker after the twin:** "Equal rows = an array."
 - **Button:** Keep practicing
 
 **Practice**
@@ -245,6 +251,8 @@ Answers: 12 · 10 · 20 · 25 · 16
 - **Title:** You got it
 - **Text:** You turned the rows around and the total stayed the same. That is the whole trick.
 - **Math word sticker:** "Turn-around facts = the commutative property."
+- **Text after the twin:** You turned the rows around and the total stayed the same. That is the whole trick.
+- **Math word sticker after the twin:** "Turn-around facts = the commutative property."
 - **Button:** Keep practicing
 
 **Practice**
@@ -325,6 +333,8 @@ Answers: 8 · 30 · 20 · 2 · 12
 - **Title:** You got it
 - **Text:** You jumped a whole group at a time. Counting by jumps is multiplying.
 - **Math word sticker:** "Skip counting by 5 = the 5 times table."
+- **Text after the twin:** You jumped a whole group at a time. Counting by jumps is multiplying.
+- **Math word sticker after the twin:** "Skip counting by 10 = the 10 times table."
 - **Button:** Keep practicing
 
 **Practice**
@@ -405,6 +415,8 @@ Answers: 8 · 50 · 40 · 18 · 30
 - **Title:** You got it
 - **Text:** You added the same group every jump. That is the whole trick.
 - **Math word sticker:** "Counting by 3s and 4s = the 3 and 4 times tables."
+- **Text after the twin:** You added the same group every jump. That is the whole trick.
+- **Math word sticker after the twin:** "Counting by 3s = the 3 times table."
 - **Button:** Keep practicing
 
 **Practice**
@@ -485,6 +497,8 @@ Answers: 9 · 16 · 24 · 21 · 20
 - **Title:** You got it
 - **Text:** You shared the total fairly. That is division.
 - **Math word sticker:** "÷ means share into equal groups."
+- **Text after the twin:** You shared the total fairly. That is division.
+- **Math word sticker after the twin:** "÷ means share into equal groups."
 - **Button:** Keep practicing
 
 **Practice**
@@ -565,6 +579,8 @@ Answers: 4 · 5 · 3 · 6 · 4
 - **Title:** You got it
 - **Text:** You made groups of the same size and counted them. Check it: 3 packs of 5 is 15.
 - **Math word sticker:** "Division also means: how many groups?"
+- **Text after the twin:** You made groups of the same size and counted them. Check it: 5 cars with 4 wheels each is 20.
+- **Math word sticker after the twin:** "Division also means: how many groups?"
 - **Button:** Keep practicing
 
 **Practice**
@@ -645,6 +661,8 @@ Answers: 5 · 2 · 3 · 6 · 5
 - **Title:** You got it
 - **Text:** You used a times fact to find the missing number. That is the whole trick.
 - **Math word sticker:** "3 numbers, 4 facts = a fact family."
+- **Text after the twin:** You used a times fact to find the missing number. That is the whole trick.
+- **Math word sticker after the twin:** "Numbers that go together, like 5, 3 and 15 = a fact family."
 - **Button:** Keep practicing
 
 **Practice**

@@ -6,7 +6,7 @@
 import { useState, type CSSProperties } from 'react'
 import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import {
-  START, next, check, hintsFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, answerOf, workedSteps,
+  START, next, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, answerOf, workedSteps,
   type FlowState, type Lesson, type Screen,
 } from './script'
 import { Pic, pill, INK, SOFT, ACCENT, GOOD, CARD, LINE, LESSON_KEYFRAMES } from './Pictures'
@@ -58,7 +58,7 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
     const submit = () => {
       if (value.trim() === '') return
       const n = check(lesson, s, Number(value))
-      const fb = n.mode === 'won' ? lesson.won.text
+      const fb = n.mode === 'won' ? wonFor(lesson, n).text
         : n.feedback === 'hint1' ? hintsFor(lesson, n)[0] : n.feedback === 'hint2' ? hintsFor(lesson, n)[1]
         : n.feedback === 'idea' ? lesson.bigIdea : n.feedback === 'right' ? 'Right!' : n.feedback === 'worked' ? 'Here is how this one works.' : undefined
       go(n, fb)
@@ -102,8 +102,8 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
         {s.mode === 'turn' && worked && (
           <button type="button" style={go_} onClick={() => {
             const n = afterWorked(s)
-            go(n, n.mode === 'turn' ? `Try a new one. ${lesson.turn.twin.text}` : undefined)
-          }}>{s.twin ? 'Keep practicing' : 'Try a new one'}</button>
+            go(n, n.mode === 'turn' ? `Try a new one. ${lesson.turn.twin.text}` : wonFor(lesson, n).text)
+          }}>{s.twin ? 'Next' : 'Try a new one'}</button>
         )}
         {s.mode === 'practice' && worked && (
           <button type="button" style={pill} onClick={() => go(replayLesson(s), screenSay(lesson.screens[0]))}>Watch the lesson again</button>
@@ -115,16 +115,18 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
       <div style={foot}>{dots(7)}<span /></div>
     </>
   } else if (s.mode === 'won') {
+    const w = wonFor(lesson, s)
     body = <>
       <p style={eyebrow}>Screen 9 of 9</p>
-      <h1 style={h1}>You got it</h1>
+      <h1 style={h1}>{w.title}</h1>
       <div style={pic}>
+        {w.helped && <p style={{ ...note, fontWeight: 800 }}>{lesson.bigIdea}</p>}
         <span style={{ alignSelf: 'center', border: `2px dashed ${ACCENT}`, borderRadius: 12, padding: '10px 16px', fontWeight: 800, color: INK }}>
           <small style={{ display: 'block', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: SOFT }}>Math word</small>
-          {lesson.won.sticker}
+          {w.sticker}
         </span>
       </div>
-      <p style={text}>{lesson.won.text}</p>
+      <p style={text}>{w.text}</p>
       <div style={foot}>{dots(8)}<button type="button" style={go_} onClick={() => go(toPractice(s))}>Keep practicing</button></div>
     </>
   } else {
