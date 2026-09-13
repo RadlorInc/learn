@@ -1,5 +1,15 @@
 # Session Handoff — Milo Story Mode
 
+> 🆕 **THE NEW TEACHING FLOW (2026-09-13) — READ [docs/new-flow/README.md](docs/new-flow/README.md) BEFORE ANY LESSON WORK.**
+> Every legacy chapter is hidden (`LEGACY_CHAPTERS_HIDDEN` in `src/core/chapters.ts`) and lessons are
+> being rebuilt one module at a time in the founder's 9-screen "Step By Step Script" format.
+> **Grade 3 · Module 1 (8 topics) is scripted, approved and built** (`src/features/lessons/`, `/lesson`).
+> The README holds the process (split → script doc → founder approval → build → verify) and the
+> **approved topic split for Modules 2–6** — use it, do not re-split. Next: Module 2 scripts for review.
+> ⚠️ Not pushed. `new-flow-hide-legacy` (built on `main`, worktree `../milo-newflow`) is the branch that
+> can go live and waits on the founder's landing-page copy; `adult-surface-responsive` carries the
+> same commits plus the classroom work, whose migration is still applied nowhere.
+
 > 📐 **READ [docs/chapter-craft.md](docs/chapter-craft.md) FIRST, EVERY SESSION, BEFORE TOUCHING ANY 3–11 STORY CHAPTER.**
 > It is the standing answer to *how we want the animation, the art and the voice* — the shape of a
 > chapter, how cycles and travel must agree, what may be an answer object, how to choose a backdrop,
