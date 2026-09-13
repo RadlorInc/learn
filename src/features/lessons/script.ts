@@ -16,7 +16,9 @@ export type Picture =
   | { kind: 'groups'; groups: number; each: number; obj: Obj; show?: 'count' | 'running' | 'rings'; motion?: boolean }
   | { kind: 'scatter'; n: number; obj: Obj }
   | { kind: 'array'; rows: number; cols: number; obj: Obj; missing?: boolean; show?: 'rows' | 'oneRow' | 'running'; turn?: boolean; motion?: boolean }
-  | { kind: 'line'; max: number; step: number; jumps: number; show?: 'count'; motion?: boolean }
+  // `max` only on a teaching screen: a scratch line (Screen 8 / practice) is always scratchLineMax(step) long,
+  // so no data entry can make its last tick sit on the answer.
+  | { kind: 'line'; max?: number; step: number; jumps: number; show?: 'count'; motion?: boolean }
   | { kind: 'share'; total: number; groups: number; state: 'start' | 'uneven' | 'deal' | 'done'; obj: Obj; motion?: boolean }
   | { kind: 'rings'; total: number; size: number; obj: Obj; state: 'start' | 'one' | 'all'; motion?: boolean }
   | { kind: 'triangle'; total: number; a: number; b: number | null; facts?: boolean }
@@ -98,11 +100,32 @@ export function workedSteps(op: Op): string[] {
     case 'missing': {
       const q = op.total / op.a
       return [
-        `Think: ${op.a} groups of what make ${op.total}?`,
+        `Think: ${op.a} × what number makes ${op.total}?`,
         `Count by ${op.a}s until you reach ${op.total}: ${countBy(op.a, q)}. That is ${q} jumps.`,
         `So the missing number is ${q}.`,
       ]
     }
+  }
+}
+
+/** A scratch number line always has 12 jumps, so its last ticks never sit on (or just past) the answer. */
+export const scratchLineMax = (step: number) => step * 12
+
+/** Screen 8 hints. The approved doc writes hints for the first problem only; the twin's are derived
+ *  from its own operation so they can never name the first problem's numbers. */
+export function hintsFor(l: Lesson, s: FlowState): [string, string] {
+  if (!s.twin) return [l.turn.hint1, l.turn.hint2]
+  // Same shape as the doc's hints: hint 1 asks the question, hint 2 starts the count and stops ("…").
+  const op = l.turn.twin.op
+  // Start the count, but stop before it could reach the answer: with 2 groups the second number IS the answer.
+  const start = (step: number, groups: number) => groups > 2 ? `${step}, ${step * 2} …` : `${step} …`
+  switch (op.t) {
+    case 'mul':  return ['How many groups are there? How many are in each group?', `There are ${op.a} groups of ${op.b}. Count by ${op.b}s: ${start(op.b, op.a)}`]
+    case 'turn': return ['Turn the rows around. Were any added or taken away?', `${op.b} × ${op.a} is the same rows as ${op.a} × ${op.b}, turned around.`]
+    case 'div':  return op.mode === 'share'
+      ? ['Give one to each group. Then go round again until none are left.', `Share ${op.total} into ${op.by} equal groups. How many does each group get?`]
+      : [`Make a group of ${op.by}. Keep going until none are left.`, `Count by ${op.by}s until you reach ${op.total}: ${start(op.by, op.total / op.by)} How many groups?`]
+    case 'missing': return [`${op.a} × what number makes ${op.total}?`, `Count by ${op.a}s until you reach ${op.total}. How many jumps did you make?`]
   }
 }
 
@@ -125,7 +148,7 @@ export const START: FlowState = { mode: 'lesson', screen: 0, twin: false, misses
 export function next(s: FlowState): FlowState {
   if (s.mode !== 'lesson') return s
   if (s.screen < 6) return { ...s, screen: s.screen + 1 }
-  if (s.replayFrom !== null) return { ...s, mode: 'practice', practice: s.replayFrom, replayFrom: null, misses: 0, feedback: null }
+  if (s.replayFrom !== null) return { ...s, mode: 'practice', practice: s.replayFrom, replayFrom: null, misses: 2, feedback: null }
   return { ...s, mode: 'turn' }
 }
 

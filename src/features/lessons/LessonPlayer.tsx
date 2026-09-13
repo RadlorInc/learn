@@ -6,7 +6,7 @@
 import { useState, type CSSProperties } from 'react'
 import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import {
-  START, next, check, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, answerOf, workedSteps,
+  START, next, check, hintsFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, answerOf, workedSteps,
   type FlowState, type Lesson, type Screen,
 } from './script'
 import { Pic, pill, INK, SOFT, ACCENT, GOOD, CARD, LINE, LESSON_KEYFRAMES } from './Pictures'
@@ -59,9 +59,10 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
       if (value.trim() === '') return
       const n = check(lesson, s, Number(value))
       const fb = n.mode === 'won' ? lesson.won.text
-        : n.feedback === 'hint1' ? lesson.turn.hint1 : n.feedback === 'hint2' ? lesson.turn.hint2
+        : n.feedback === 'hint1' ? hintsFor(lesson, n)[0] : n.feedback === 'hint2' ? hintsFor(lesson, n)[1]
         : n.feedback === 'idea' ? lesson.bigIdea : n.feedback === 'right' ? 'Right!' : n.feedback === 'worked' ? 'Here is how this one works.' : undefined
       go(n, fb)
+      if (n.feedback !== 'right' && n.mode !== 'won') setValue('')   // a wrong answer must not sit there to be re-submitted
     }
     body = <>
       {s.mode === 'turn'
@@ -86,8 +87,8 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
         </form>
       )}
 
-      {s.feedback === 'hint1' && <p style={note}>{lesson.turn.hint1}</p>}
-      {s.feedback === 'hint2' && <p style={note}>{lesson.turn.hint2}</p>}
+      {s.feedback === 'hint1' && <p style={note}>{hintsFor(lesson, s)[0]}</p>}
+      {s.feedback === 'hint2' && <p style={note}>{hintsFor(lesson, s)[1]}</p>}
       {s.feedback === 'idea' && <p style={{ ...note, fontWeight: 800 }}>{lesson.bigIdea}</p>}
       {s.feedback === 'right' && <p style={{ ...note, borderColor: GOOD, background: '#E2F4EB' }}>Right! The answer is {answerOf(problem.op)}.</p>}
       {worked && (
