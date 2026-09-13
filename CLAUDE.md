@@ -471,23 +471,15 @@ Everything below is a corollary of that one sentence:
   here carries its interpretation in the same commit as its query.**
 
 ⚠️ **This is not a chapter rule.** It governs every grep, gate, migration, catalog query and audit
-in the repo. [docs/chapter-craft.md](docs/chapter-craft.md) §4 carries the chapter-shaped costumes
-of the same class — a tautological check, a gate that re-implements the rule it guards, a sweep
-that exempts the whole world. Put new ones of that kind there, and the general form here.
+in the repo. Put new instances of the class here, in their general form.
 
 # Project Context
 
 ## Session Continuity
 At the start of every session, read @handoff.md to load the current state, recent decisions, and what was in progress. Treat it as the source of truth for where work left off, then continue from there.
 
-## How chapters must look, move and sound
-@docs/chapter-craft.md is the standing spec for the 3–11 story chapters — the animation, the art and the voice. **Read it before building or changing any of them.** It covers the shape of a chapter, how a walk cycle and its travel must agree, what may be an answer object, how to choose a backdrop, how to generate a new drawn cycle, how Milo speaks, and how to verify any of it.
-
-Every rule in it was paid for by a founder catching a fault on a screenshot, and most were learned in chapter 1, forgotten, then re-learned the hard way in a later chapter. It exists so a new session starts from them instead of rediscovering them. When a correction lands, write the GENERAL rule there — not just the fix.
-
-Two job-specific halves are NOT auto-loaded, to keep the standing spec small. Read the one the job calls for, and put new rules of that kind in it rather than back in chapter-craft.md:
-- `docs/chapter-craft-ar.md` — **before building or changing any AR (camera) chapter.**
-- `docs/chapter-craft-art.md` — **before generating any new art** (sprite, walk cycle, backdrop, line art) **or touching the code-drawn 3D scene.**
+## How lessons are made
+**Read [docs/new-flow/README.md](docs/new-flow/README.md) before writing or building any lesson.** Since 2026-09-13 every lesson follows the founder's 9-screen "Step By Step Script" format, one module at a time: topic split → script doc → founder approval → build → verify. The old chapters are hidden (`LEGACY_CHAPTERS_HIDDEN`) and their design docs were deleted; `git log --diff-filter=D -- docs/` recovers them if ever needed.
 
 ## Updating the Handoff
 When I type `/handoff`, or when the session is wrapping up, update handoff.md with:

@@ -45,13 +45,10 @@ Next.js 16 · React 19 · TypeScript · Supabase. ~76k lines under `src/`, 18 ro
 **The maths and the words live in the pure modules; the layout lives in the shell.** That split is
 why one engine runs ~40 chapters, and it is the first thing to understand before changing any of them.
 
-## Before you change a chapter
+## Before you change a lesson
 
-Read **[docs/chapter-craft.md](docs/chapter-craft.md)** — the standing spec for how a chapter must
-look, move and sound. Every rule in it was paid for by a fault someone caught on a screenshot, so it
-is much cheaper to read than to rediscover. Its two job-specific halves are
-[chapter-craft-ar.md](docs/chapter-craft-ar.md) (answering with the camera) and
-[chapter-craft-art.md](docs/chapter-craft-art.md) (generating art).
+Read **[docs/new-flow/README.md](docs/new-flow/README.md)** — how a lesson is scripted, approved,
+built and verified. The old chapters are hidden while lessons are rebuilt in this format.
 
 [handoff.md](handoff.md) is the current state of the work; older sessions are in
 [docs/handoff-archive.md](docs/handoff-archive.md), which is not loaded by default — grep it.

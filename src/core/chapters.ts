@@ -136,6 +136,17 @@ export const CHAPTERS: ChapterMeta[] = [
   { id: 'introCalculus',        name: 'Intro to Calculus',       parentLabel: 'Calculus',     emoji: '♾️', asset: '/assets/objects/star.png', hint: 'Limits, rates of change & the derivative.', ageGroups: ['17-18'] },
 ]
 
+/**
+ * ⚠️ NEW TEACHING FLOW — founder's call, 2026-09-13: every chapter above is hidden while the
+ * new-flow lessons are built, and will be deleted later. Hidden = absent from every LIST
+ * (`chaptersForAge`, `CHAPTER_ORDER`) and refused at play (`GuardedChapter`, `/game`, `/story`).
+ * `CHAPTER_IDS` / `CHAPTER_NAMES` stay complete so saved stars, past sessions and /admin still
+ * resolve. Flip to `false` to bring every chapter back.
+ */
+export const LEGACY_CHAPTERS_HIDDEN = true
+export const isChapterVisible = (_id: string): boolean => !LEGACY_CHAPTERS_HIDDEN
+const VISIBLE = CHAPTERS.filter(c => isChapterVisible(c.id))
+
 // ── Lookups ──────────────────────────────────────────────────────────────
 const BY_ID: Record<ChapterType, ChapterMeta> =
   Object.fromEntries(CHAPTERS.map(c => [c.id, c])) as Record<ChapterType, ChapterMeta>
@@ -148,7 +159,7 @@ export function getChapter(id: ChapterType): ChapterMeta {
 
 /** Chapters belonging to an age group, in play order. */
 export function chaptersForAge(age: AgeGroup): ChapterMeta[] {
-  return CHAPTERS.filter(c => c.ageGroups.includes(age))
+  return VISIBLE.filter(c => c.ageGroups.includes(age))
 }
 
 /**
@@ -166,7 +177,7 @@ export function chaptersForAge(age: AgeGroup): ChapterMeta[] {
 export const gradeStartPlan = (age: AgeGroup): ChapterType[] => chaptersForAge(age).map(c => c.id)
 
 // ── Back-compat derived maps (so existing imports keep working) ────────────
-export const CHAPTER_ORDER: ChapterType[] = CHAPTER_IDS
+export const CHAPTER_ORDER: ChapterType[] = VISIBLE.map(c => c.id)
 
 export const CHAPTER_NAMES = Object.fromEntries(
   CHAPTERS.map(c => [c.id, c.name]),

@@ -25,6 +25,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import ResumeSignedIn from './ResumeSignedIn'
+import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 
 export const metadata: Metadata = {
   // The root inherits the layout's title/description; only the canonical is page-specific.
@@ -118,6 +119,17 @@ export default function RootPage() {
           that, then builds a plan that fixes it. Ages 3 to 18.
         </p>
 
+        {/* ⚠️ Check + demo are off while legacy chapters are hidden (src/core/chapters.ts). The
+            heading and paragraph above still describe the check — new copy pending from the founder. */}
+        {LEGACY_CHAPTERS_HIDDEN ? (
+          <Link href="/auth" style={{
+            minHeight: 56, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            background: 'linear-gradient(135deg, #F26B2C 0%, #e05a1f 100%)', color: '#fff',
+            borderRadius: 50, padding: '16px 36px', fontSize: 18, fontWeight: 800, textDecoration: 'none', marginBottom: 34,
+          }}>
+            Sign up free
+          </Link>
+        ) : <>
         <Link href="/diagnostic" style={{
           minHeight: 56, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           background: 'linear-gradient(135deg, #F26B2C 0%, #e05a1f 100%)', color: '#fff',
@@ -142,6 +154,7 @@ export default function RootPage() {
         }}>
           Or just try two chapters first →
         </Link>
+        </>}
 
         {POINTS.map(({ h, p }) => (
           <section key={h} style={{
