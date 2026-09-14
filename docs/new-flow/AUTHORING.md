@@ -183,3 +183,9 @@ allowed. For a "what time will it be after 20 minutes?" question, the picture sh
 3. Before you finish, check every answer by hand, twice, and read every Screen 8 / practice picture asking "does
    this show the answer?". Then report: the file path, anything you could not draw, and any topic you think is
    pitched wrong for the grade.
+
+## Drawn backdrops (Screen 1)
+A topic's Screen 1 may carry `scene: '<topic id>'`, drawn behind its picture from `public/assets/lessons/<topic id>.webp`
+(Grade 3 Topic 1 uses `table`; every Grade 5 topic has its own, 2026-09-14). Made with Higgsfield Nano Banana 2 at 1k 16:9,
+`table.webp` as the style reference, objects at the sides and bottom and a plain centre so the diagram stays readable;
+saved at 1200 px wide, WebP q72 (~30 KB). `lessonScenes.test.ts` fails if a named scene has no file.

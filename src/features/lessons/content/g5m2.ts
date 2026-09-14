@@ -21,7 +21,7 @@ export const G5M2: Lesson[] = [
     id: 'g5m2-t1', title: 'Different-size pieces', skill: 'Add two fractions whose pieces are different sizes',
     bigIdea: 'Make the pieces the same size first. Then add how many pieces you have.',
     screens: [
-      { title: 'Adding different-size pieces', text: 'You run 1/2 mile. Then you run 1/4 mile. How far did you run in all?',
+      { scene: 'g5m2-t1', title: 'Adding different-size pieces', text: 'You run 1/2 mile. Then you run 1/4 mile. How far did you run in all?',
         pictures: [two(2, 1, 4, 1)] },
       { title: "The pieces don't match", text: 'These pieces are not the same size. A half is bigger than a fourth. We cannot add them yet.',
         pictures: [two(2, 1, 4, 1)] },
@@ -72,7 +72,7 @@ export const G5M2: Lesson[] = [
     id: 'g5m2-t2', title: 'Make the pieces match', skill: 'Find a common denominator for two fractions',
     bigIdea: 'Count by each bottom number. The first number in both lists is a piece size both fractions can use.',
     screens: [
-      { title: 'Two pans of cornbread', text: 'You have 2/3 of one pan of cornbread and 1/4 of another pan. You want all the pieces the same size. What size works?',
+      { scene: 'g5m2-t2', title: 'Two pans of cornbread', text: 'You have 2/3 of one pan of cornbread and 1/4 of another pan. You want all the pieces the same size. What size works?',
         pictures: [two(3, 2, 4, 1)] },
       { title: 'Thirds and fourths do not fit', text: 'Cut a third in half and you get sixths. But fourths never turn into sixths. We need a size both can make.',
         pictures: [two(3, 2, 4, 1)] },
@@ -128,7 +128,7 @@ export const G5M2: Lesson[] = [
     id: 'g5m2-t3', title: 'Take away different-size pieces', skill: 'Subtract fractions with unlike denominators',
     bigIdea: 'Make the pieces the same size first. Then take away pieces.',
     screens: [
-      { title: 'Pizza left over', text: 'You have 3/4 of a pizza. You eat 1/2 of a pizza. How much pizza is left?',
+      { scene: 'g5m2-t3', title: 'Pizza left over', text: 'You have 3/4 of a pizza. You eat 1/2 of a pizza. How much pizza is left?',
         pictures: [two(4, 3, 2, 1)] },
       { title: "The pieces don't match", text: 'Fourths and halves are different sizes. 3 pieces take away 1 piece does not tell us how much is left.',
         pictures: [two(4, 3, 2, 1)] },
@@ -179,7 +179,7 @@ export const G5M2: Lesson[] = [
     id: 'g5m2-t4', title: 'Add mixed numbers', skill: 'Add mixed numbers, trading pieces for a whole when needed',
     bigIdea: 'Add the wholes, then add the pieces. If the pieces make a whole, trade them for 1 more whole.',
     screens: [
-      { title: 'Two hikes', text: 'You hike 1 1/2 miles in the morning. You hike 1 3/4 miles after lunch. How far did you hike in all?',
+      { scene: 'g5m2-t4', title: 'Two hikes', text: 'You hike 1 1/2 miles in the morning. You hike 1 3/4 miles after lunch. How far did you hike in all?',
         pictures: [bars([b(1, 1, '1'), b(2, 1, '1/2'), b(1, 1, '1'), b(4, 3, '3/4')])] },
       { title: 'Wholes and pieces', text: 'There are wholes and there are pieces, and the pieces are different sizes. Adding it all at once is hard to keep straight.',
         pictures: [bars([b(1, 1, '1'), b(2, 1, '1/2'), b(1, 1, '1'), b(4, 3, '3/4')])] },
@@ -230,7 +230,7 @@ export const G5M2: Lesson[] = [
     id: 'g5m2-t5', title: 'Take away mixed numbers (break a whole)', skill: 'Subtract mixed numbers by breaking a whole into pieces',
     bigIdea: 'If there are not enough pieces to take away, break 1 whole into pieces first.',
     screens: [
-      { title: 'Cutting ribbon', text: 'You have 3 1/4 feet of ribbon. You cut off 1 3/4 feet. How much ribbon is left?',
+      { scene: 'g5m2-t5', title: 'Cutting ribbon', text: 'You have 3 1/4 feet of ribbon. You cut off 1 3/4 feet. How much ribbon is left?',
         pictures: [bars([b(1, 1, '1'), b(1, 1, '1'), b(1, 1, '1'), b(4, 1, '1/4')])] },
       { title: 'Not enough pieces', text: 'You need to take away 3 fourths, but you only have 1 fourth. You cannot take 3 pieces from 1 piece.',
         pictures: [bars([b(4, 1, '1/4')])] },
@@ -281,7 +281,7 @@ export const G5M2: Lesson[] = [
     id: 'g5m2-t6', title: 'Is it more or less than 1?', skill: 'Estimate a sum of fractions by comparing each to 1/2',
     bigIdea: 'Compare each fraction to 1/2. Two parts more than 1/2 make more than 1, and two parts less than 1/2 make less than 1.',
     screens: [
-      { title: 'Enough paint?', text: 'You need 1 can of paint. You have 3/5 of a can and 4/7 of a can. Do you have more than 1 can?',
+      { scene: 'g5m2-t6', title: 'Enough paint?', text: 'You need 1 can of paint. You have 3/5 of a can and 4/7 of a can. Do you have more than 1 can?',
         pictures: [two(5, 3, 7, 4)] },
       { title: 'Hard to add', text: 'Fifths and sevenths are hard to match. You would need 35 tiny pieces. But the question only asks: more or less than 1?',
         pictures: [two(5, 3, 7, 4)] },
@@ -332,7 +332,7 @@ export const G5M2: Lesson[] = [
     id: 'g5m2-t7', title: 'Fraction stories', skill: 'Solve word problems that add or subtract fractions',
     bigIdea: 'Draw the story as bars. Then decide: put the parts together, or find the gap.',
     screens: [
-      { title: 'Who ran farther?', text: 'Max runs 3/4 mile. Lee runs 1/2 mile. How much farther does Max run?',
+      { scene: 'g5m2-t7', title: 'Who ran farther?', text: 'Max runs 3/4 mile. Lee runs 1/2 mile. How much farther does Max run?',
         pictures: [{ kind: 'tape', rows: [{ label: 'Max', cells: [{ w: 3, text: '3/4', shade: true }] }, { label: 'Lee', cells: [{ w: 2, text: '1/2', shade: true }] }] }] },
       { title: 'Add or take away?', text: 'There are two numbers, but the story does not say add or take away. If you just add, you answer a different question.',
         pictures: [{ kind: 'tape', rows: [{ label: 'Max', cells: [{ w: 3, text: '3/4', shade: true }] }, { label: 'Lee', cells: [{ w: 2, text: '1/2', shade: true }] }] }] },
@@ -393,7 +393,7 @@ export const G5M2: Lesson[] = [
     id: 'g5m2-t8', title: 'Line plot with fractions', skill: 'Read fraction measurements on a line plot and add or subtract them',
     bigIdea: 'Each ✕ is one thing, measured by the number under it. Read the numbers, then add or take away.',
     screens: [
-      { title: 'Bean plants', text: 'Your class measured how much 6 bean plants grew in one week. How much more did the plant that grew the most grow than one that grew the least?',
+      { scene: 'g5m2-t8', title: 'Bean plants', text: 'Your class measured how much 6 bean plants grew in one week. How much more did the plant that grew the most grow than one that grew the least?',
         pictures: [dot(['1/4', '2/4', '3/4'], [2, 3, 1], 'inches grown')] },
       { title: 'Just marks', text: 'The chart has ✕ marks, not a list of numbers. Before you can take away, you need to know what each ✕ means.',
         pictures: [dot(['1/4', '2/4', '3/4'], [2, 3, 1], 'inches grown')] },

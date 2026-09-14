@@ -21,7 +21,7 @@ export const G5M1: Lesson[] = [
     id: 'g5m1-t1', title: 'Ten times bigger, ten times smaller', skill: 'A digit is worth 10 times as much one place to the left, and 1/10 as much one place to the right',
     bigIdea: 'Move a digit one place to the left and it is worth 10 times as much. One place to the right, it is worth 1/10 as much.',
     screens: [
-      { title: 'A carton of pencils', text: 'A box holds 40 pencils. A carton holds 10 boxes. How many pencils are in a carton?',
+      { scene: 'g5m1-t1', title: 'A carton of pencils', text: 'A box holds 40 pencils. A carton holds 10 boxes. How many pencils are in a carton?',
         pictures: [pv4([['', '', '4', '0']])] },
       { title: 'Adding takes too long', text: 'You could add 40 ten times. That is slow, and it is easy to lose count. The place chart shows a faster way.',
         pictures: [pv4([['', '', '4', '0']])] },
@@ -75,7 +75,7 @@ export const G5M1: Lesson[] = [
     id: 'g5m1-t2', title: 'Powers of ten', skill: 'Write 10 with a small raised number as a 1 followed by that many zeros',
     bigIdea: 'The small number up top says how many 10s to multiply. 10³ = 10 × 10 × 10 = 1,000.',
     screens: [
-      { title: 'A lot of zeros', text: 'A big city has 1,000,000 people. That is a lot of zeros to write. Is there a shorter way?',
+      { scene: 'g5m1-t2', title: 'A lot of zeros', text: 'A big city has 1,000,000 people. That is a lot of zeros to write. Is there a shorter way?',
         pictures: [eq('1,000,000')] },
       { title: 'Zeros are easy to miscount', text: 'With so many zeros, it is easy to write one too many or one too few. We need a short way to say "a 1 with 6 zeros".',
         pictures: [eq('1,000,000')] },
@@ -129,7 +129,7 @@ export const G5M1: Lesson[] = [
     id: 'g5m1-t3', title: 'Multiply by a power of ten', skill: 'Multiply a whole number by 10, 100, 1,000 written with a small raised number',
     bigIdea: 'To multiply by 10³, slide every digit 3 places to the left. Zeros fill the empty places.',
     screens: [
-      { title: 'Boxes of beads', text: 'A box holds 37 beads. A store has 1,000 boxes. How many beads is that?',
+      { scene: 'g5m1-t3', title: 'Boxes of beads', text: 'A box holds 37 beads. A store has 1,000 boxes. How many beads is that?',
         pictures: [pv5([['', '', '', '3', '7']]), eq('37 × 1,000 = ?')] },
       { title: 'Too many to add', text: 'Adding 37 a thousand times would take all day. There is a much faster way.',
         pictures: [pv5([['', '', '', '3', '7']])] },
@@ -183,7 +183,7 @@ export const G5M1: Lesson[] = [
     id: 'g5m1-t4', title: 'Estimate a product', skill: 'Round each number to its biggest place, then multiply to find about how much',
     bigIdea: 'Round each number to its biggest place. Then multiply the round numbers in your head.',
     screens: [
-      { title: 'Eggs on a farm', text: 'A farm packs 412 eggs a day for 28 days. About how many eggs is that?',
+      { scene: 'g5m1-t4', title: 'Eggs on a farm', text: 'A farm packs 412 eggs a day for 28 days. About how many eggs is that?',
         pictures: [eq('28 × 412')] },
       { title: 'The exact way takes time', text: 'Working out 28 × 412 exactly takes many steps. Sometimes you only need to know about how many. Is it near 1,000? 10,000? 100,000?',
         pictures: [eq('28 × 412')] },
@@ -237,7 +237,7 @@ export const G5M1: Lesson[] = [
     id: 'g5m1-t5', title: 'Multi-digit multiplication', skill: 'Multiply a three-digit number by a two-digit number, one row for the ones and one for the tens',
     bigIdea: 'Multiply by the ones digit, then by the tens digit. Then add the two rows.',
     screens: [
-      { title: 'Chairs in a hall', text: 'A hall has 23 rows of chairs. Each row has 124 chairs. How many chairs are there?',
+      { scene: 'g5m1-t5', title: 'Chairs in a hall', text: 'A hall has 23 rows of chairs. Each row has 124 chairs. How many chairs are there?',
         pictures: [{ kind: 'columns', rows: ['124', '23'], op: '×' }] },
       { title: 'About is not enough', text: 'Rounding tells you about how many. But to put out a card for every chair, you need the exact number.',
         pictures: [{ kind: 'columns', rows: ['124', '23'], op: '×' }] },
@@ -291,7 +291,7 @@ export const G5M1: Lesson[] = [
     id: 'g5m1-t6', title: 'Divide by a two-digit number (break it apart)', skill: 'Divide by a two-digit number by breaking the big number into friendly parts',
     bigIdea: 'Break the big number into parts that are easy to share. Divide each part, then add the answers.',
     screens: [
-      { title: 'Sharing stickers', text: '736 stickers are shared equally by 23 kids. How many stickers does each kid get?',
+      { scene: 'g5m1-t6', title: 'Sharing stickers', text: '736 stickers are shared equally by 23 kids. How many stickers does each kid get?',
         pictures: [{ kind: 'area', cols: ['?'], rows: ['23'], cells: [['736']] }] },
       { title: 'Too big to share one by one', text: 'You do not know 736 ÷ 23 by heart. Handing out 736 stickers one at a time would take far too long.',
         pictures: [{ kind: 'area', cols: ['?'], rows: ['23'], cells: [['736']] }] },
@@ -346,7 +346,7 @@ export const G5M1: Lesson[] = [
     id: 'g5m1-t7', title: 'Long division by a two-digit number', skill: 'Long division by a two-digit number, guessing each digit with round numbers and checking it',
     bigIdea: 'Use a round number to guess how many times it fits, and check the guess. Then divide, multiply, take away and bring down, one place at a time.',
     screens: [
-      { title: 'Cartons of eggs', text: '312 eggs go into cartons that hold 13 eggs each. How many cartons can be filled?',
+      { scene: 'g5m1-t7', title: 'Cartons of eggs', text: '312 eggs go into cartons that hold 13 eggs each. How many cartons can be filled?',
         pictures: [eggs()] },
       { title: 'Two digits outside', text: 'You know long division by one digit. Now the number outside has two digits, and nobody knows the 13 times table by heart.',
         pictures: [eggs()] },
@@ -402,7 +402,7 @@ export const G5M1: Lesson[] = [
     id: 'g5m1-t8', title: 'Parentheses come first', skill: 'Work out what is inside parentheses first, then the rest',
     bigIdea: 'Do what is inside the ( ) first. Then multiply and divide, and add and subtract last.',
     screens: [
-      { title: 'Bags of fruit', text: 'You buy 3 bags of fruit. Each bag has 4 apples and 2 pears. How many pieces of fruit is that?',
+      { scene: 'g5m1-t8', title: 'Bags of fruit', text: 'You buy 3 bags of fruit. Each bag has 4 apples and 2 pears. How many pieces of fruit is that?',
         pictures: [eq('3 × (4 + 2)')] },
       { title: 'Two ways, two answers', text: 'Going left to right, 3 × 4 = 12 and 12 + 2 = 14. But that adds only 2 pears in all. The ( ) tell you which part to do first.',
         pictures: [eq('3 × (4 + 2)', ['14 or 18?'])] },
