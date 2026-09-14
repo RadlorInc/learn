@@ -9,6 +9,7 @@
  * SHARED NEED — never a student-vs-student ranking (docs/ux-invariants.md #26, #23).
  * Reached from /parent/grades via ?g=<gradeId>.
  */
+import { RoleGate } from '@/shared/ui/RoleGate'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/data/auth'
@@ -31,6 +32,10 @@ const P = {
 
 
 export default function TriagePage() {
+  return <RoleGate role="teacher"><TriageInner /></RoleGate>
+}
+
+function TriageInner() {
   const router = useRouter()
   const [gradeId, setGradeId] = useState<string | null>(null)
   const [authed, setAuthed] = useState<boolean | null>(null)

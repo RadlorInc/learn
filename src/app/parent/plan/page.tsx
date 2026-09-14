@@ -11,6 +11,7 @@
  * contain no timer at all (`chapterGate.test.ts`). A product for children does not manufacture
  * urgency at their parents.
  */
+import { RoleGate } from '@/shared/ui/RoleGate'
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/data/supabase/client'
@@ -34,6 +35,10 @@ const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`
 const SEATS = Array.from({ length: MAX_SEATS }, (_, i) => i + 1)
 
 export default function PlanPage() {
+  return <RoleGate role="parent"><PlanInner /></RoleGate>
+}
+
+function PlanInner() {
   const [cadence, setCadence] = useState<Cadence>('monthly')
   const [seats, setSeats] = useState(1)
   const [busy, setBusy] = useState(false)
