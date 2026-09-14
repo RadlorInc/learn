@@ -30,7 +30,7 @@ export interface Database {
           avatar_index:  number
           age_group:     AgeGroup
           grade_id:      string | null
-          /** New-flow lesson ids the parent chose; null/absent = every topic (absent until migration 20260914120000 is applied). */
+          /** New-flow lesson ids the parent chose; null/absent = every topic (absent until migration 20260914015455 is applied). */
           lesson_ids?:   string[] | null
           created_by:    string
           created_at:    string

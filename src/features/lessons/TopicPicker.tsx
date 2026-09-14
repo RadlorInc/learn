@@ -2,7 +2,7 @@
 /**
  * The parent chooses which topics a child sees (founder's call, 2026-09-14). Every grade's modules are listed; a parent
  * ticks whole modules or single topics. "Every topic" stores null, which is also what a child with no choice gets.
- * Saved to `learners.lesson_ids` (migration 20260914120000). Only the parent who created the child can save — the
+ * Saved to `learners.lesson_ids` (migration 20260914015455). Only the parent who created the child can save — the
  * database refuses anyone else, and this screen says so rather than pretending.
  */
 import { useState, type CSSProperties } from 'react'

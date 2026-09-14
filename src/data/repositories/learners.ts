@@ -90,7 +90,7 @@ export async function createLearner(
 /**
  * Choose the new-flow topics a child sees (null = every topic). Only the parent who created the child can write it
  * (the "learners: update" policy). 'not_ready' = the database does not have the column yet (migration
- * 20260914120000 not applied) — reported, never a silent failure.
+ * 20260914015455 not applied) — reported, never a silent failure.
  */
 export async function setLearnerLessons(learnerId: string, lessonIds: string[] | null): Promise<'ok' | 'not_ready' | 'error'> {
   const { data, error } = await db()
