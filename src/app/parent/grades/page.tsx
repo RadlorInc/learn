@@ -1,5 +1,6 @@
 'use client'
 
+import { RoleGate } from '@/shared/ui/RoleGate'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/data/auth'
@@ -23,6 +24,10 @@ const P = {
 
 
 export default function GradesPage() {
+  return <RoleGate role="teacher"><GradesInner /></RoleGate>
+}
+
+function GradesInner() {
   const router = useRouter()
   const [grades,    setGrades]    = useState<GradeSummary[]>([])
   const [loading,   setLoading]   = useState(true)

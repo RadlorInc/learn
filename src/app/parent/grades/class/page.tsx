@@ -10,6 +10,7 @@
  * that child's whole app with the teacher's list. Do not reconnect them.
  */
 
+import { RoleGate } from '@/shared/ui/RoleGate'
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CHAPTER_NAMES, CHAPTER_EMOJIS, chaptersForAge, type ChapterType, type AgeGroup } from '@/core/chapters'
@@ -26,7 +27,7 @@ const P = {
 const DIFFICULTY = ['Easy', 'Medium', 'Hard'] as const
 
 export default function ClassPage() {
-  return <Suspense fallback={null}><ClassInner /></Suspense>
+  return <RoleGate role="teacher"><Suspense fallback={null}><ClassInner /></Suspense></RoleGate>
 }
 
 function ClassInner() {

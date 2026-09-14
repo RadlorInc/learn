@@ -27,6 +27,8 @@ import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { getLevelName } from '@/core/leveling'
 import { ChildChapters } from '@/features/chapters/ChildChapters'
+import { GRADE3_MODULE1, MODULE_1_TITLE } from '@/features/lessons/grade3Module1'
+import { lessonDone } from '@/infra/storage/lessonProgress'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -45,6 +47,31 @@ const P = {
   accent: 'var(--milo-orange)',
   hover:  'var(--milo-orange-hover)',
 } as const
+
+/* The sidebar, item for item from the MathPath home mockup. `href` = a real page; `view` = shown in
+   place on this page; `soon` = not built yet, so it renders a placeholder (with the nearest real page
+   linked where one exists). Swap `soon` for `href` as each screen ships. */
+type NavItem = { label: string; href?: string; view?: string; soon?: { text: string; link?: { href: string; label: string } } }
+const FAMILY_NAV: NavItem[] = [
+  { label: 'Home', view: 'home' },
+  { label: 'Learners', view: 'learners' },
+  { label: 'Lesson library', view: 'library' },
+  { label: 'Assign lessons', view: 'assign', soon: { text: 'Pick a learner, a lesson and a due date. Until then, children choose from their own lesson list.' } },
+  { label: 'Performance', view: 'dash', soon: { text: 'Time practised, skills mastered and where each learner is stuck, per learner.' } },
+  { label: 'Plan & billing', href: '/parent/plan' },
+  { label: 'Settings', view: 'settings', soon: { text: 'Your account name and preferences.', link: { href: '/parent/account', label: 'Close your account' } } },
+  { label: 'Help', href: '/help' },
+]
+const TEACHER_NAV: NavItem[] = [
+  { label: 'Class Home', view: 'thome', soon: { text: 'A summary of your class: who practised this week, who is stuck, and this week’s assignment. Your classes and class codes are ready now.', link: { href: '/parent/grades', label: 'Open your classes' } } },
+  { label: 'Roster', view: 'roster', soon: { text: 'Every student across your classes in one list. For now, each class shows its own roster.', link: { href: '/parent/grades', label: 'Open your classes' } } },
+  { label: 'Groups', view: 'groups', soon: { text: 'Small groups built from the stuck list, so you can assign one rescue lesson to a few students at once.' } },
+  { label: 'Lesson library', view: 'library' },
+  { label: 'Assign', view: 'tassign', soon: { text: 'Assign to the whole class, a group or one student, with a due date. Set work already lives inside each class.', link: { href: '/parent/grades', label: 'Open your classes' } } },
+  { label: 'Class dashboard', view: 'tclass', soon: { text: 'Finished, in progress and not started for each assignment, with skill bars for the class.' } },
+  { label: 'Classroom plan', view: 'tplan', soon: { text: 'What the teacher classroom includes, and school or district options.' } },
+  { label: 'Help', href: '/help' },
+]
 
 interface LearnerData {
   learner:     Learner
@@ -71,6 +98,7 @@ export default function ParentDashboard() {
   const [chapterLocks, setChapterLocks] = useState<Record<string, boolean | null>>({})
   const [recheckDue, setRecheckDue] = useState<{ weeks: number } | null>(null)   // week-6 nudge for the active learner
   const [role, setRole] = useState<UserRole | null | 'loading'>('loading')       // null = show the one-time Teacher/Parent picker
+  const [picked, setView] = useState<string | null>(null)             // null = that role's home
 
   async function loadAll() {
     setLoading(true)
@@ -272,34 +300,132 @@ export default function ParentDashboard() {
     </div>
   )
 
-  return (
-    <div style={{ minHeight:'100dvh', background:P.page, fontFamily:'var(--font-body)' }}>
+  // Home summary. ⚠️ Lesson progress is per-device (lessonProgress.ts), so that number is labelled
+  // "on this device" — on a parent's phone it reads 0 for a child who played on the tablet.
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  const rows = learners.map(d => {
+    const done = GRADE3_MODULE1.filter(l => lessonDone(d.learner.id, l.id)).length
+    const next = GRADE3_MODULE1.find(l => !lessonDone(d.learner.id, l.id))
+    return { d, done, next }
+  })
+  const lessonsDone = rows.reduce((n, r) => n + r.done, 0)
+  const totalXp = learners.reduce((n, d) => n + (d.stats?.total_xp ?? 0), 0)
+  const card = { background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:16, padding:16 } as const
+  const btn = { background:P.accent, color:'#fff', border:'none', borderRadius:10, padding:'10px 14px', minHeight:44, fontSize:14, fontWeight:800, cursor:'pointer', textDecoration:'none', display:'inline-flex', alignItems:'center' } as const
+  const ghost = { ...btn, background:P.card, color:P.ink, border:`1.5px solid ${P.edge}` } as const
+  function openLearner(id: string) {
+    setSelected(id)
+    document.getElementById('learner-detail')?.scrollIntoView({ behavior:'smooth', block:'start' })
+  }
 
-      {/* Top bar */}
-      {/* ⚠️ `flexWrap` + a scrolling control group. At 390px the three pills plus the greeting
-          overflowed a 16px-padded row, and an overflowing sticky bar is the one thing on the page a
-          reader cannot scroll away from. The greeting yields its width first; the controls keep
-          their 44px tap height at every size. */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', padding:'12px 16px', background:P.card, borderBottom:`1.5px solid ${P.edge}`, position:'sticky', top:0, zIndex:10 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
-          <span style={{ fontSize:26, flexShrink:0 }}>🦊</span>
-          <div style={{ minWidth:0 }}>
-            <div style={{ fontSize:12, color:P.ink3, fontWeight:600 }}>Welcome back</div>
-            <div style={{ fontSize:16, fontWeight:800, color:P.ink, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{parentName}</div>
+  // The menu is decided by the account's role alone — a teacher never sees the family menu, and back.
+  const tea = role === 'teacher'
+  const nav = tea ? TEACHER_NAV : FAMILY_NAV
+  const view = picked ?? (tea ? 'thome' : 'home')
+  const current = nav.find(i => i.view === view)
+
+  return (
+    <div className="home-app" style={{ fontFamily:'var(--font-body)' }}>
+
+      {/* Sidebar on a laptop, a sideways-scrolling bar on a phone (`.home-nav` in globals.css). */}
+      <nav className="home-nav" aria-label="Dashboard">
+        <span className="home-logo">🦊 AdaptiveLearn</span>
+        {nav.map(i => i.href
+          ? <Link key={i.label} href={i.href}>{i.label}</Link>
+          : <button key={i.label} className={view === i.view ? 'on' : ''} onClick={() => {
+              setView(i.view!)
+              if (i.label === 'Learners') setTimeout(() => document.getElementById('learner-detail')?.scrollIntoView({ behavior:'smooth' }))
+            }}>{i.label}</button>)}
+        <button onClick={signOut} className="home-nav-end">Sign out</button>
+      </nav>
+
+      <div style={{ minWidth:0 }}>
+      <div className="adult-shell">
+        {view === 'library' ? (
+          <>
+            <h1 style={{ margin:'0 0 4px', fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>Lesson library</h1>
+            <p style={{ margin:'0 0 18px', color:P.ink2, fontSize:14 }}>Grade 3 · {MODULE_1_TITLE}</p>
+            <div className="card-grid">
+              {GRADE3_MODULE1.map(l => (
+                <div key={l.id} style={card}>
+                  <div style={{ fontSize:12, color:P.ink3, fontWeight:700 }}>Grade 3 · Module 1</div>
+                  <h3 style={{ margin:'4px 0', fontSize:17, color:P.ink }}>{l.title}</h3>
+                  <p style={{ margin:'0 0 12px', fontSize:14, color:P.ink2 }}>{l.skill}</p>
+                  <button onClick={() => setView(tea ? 'tassign' : 'assign')} style={btn}>Assign</button>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : current?.soon ? (
+          <>
+            <h1 style={{ margin:'0 0 18px', fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>{current.label}</h1>
+            <div style={{ ...card, maxWidth:560 }}>
+              <span className="home-pill" style={{ background:'var(--milo-orange-soft)', color:P.ink }}>Coming soon</span>
+              <p style={{ margin:'12px 0 0', fontSize:15, color:P.ink2, lineHeight:1.5 }}>{current.soon.text}</p>
+              {current.soon.link && <p style={{ margin:'14px 0 0' }}><Link href={current.soon.link.href} style={btn}>{current.soon.link.label}</Link></p>}
+            </div>
+          </>
+        ) : (<>
+
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:18 }}>
+          <div>
+            <h1 style={{ margin:0, fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>{greeting}, {parentName}</h1>
+            <div style={{ color:P.ink2, fontSize:14, marginTop:2 }}>{learners.length} learner{learners.length === 1 ? '' : 's'}{invites.length > 0 ? ` · ${invites.length} invite${invites.length === 1 ? '' : 's'} waiting` : ''}</div>
+          </div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            <button onClick={() => setShowAddModal(true)} style={ghost}>+ Add learner</button>
+            {active && <button onClick={() => launchGame(active)} style={btn}>▶ Start learning</button>}
           </div>
         </div>
-        <div className="chip-scroll" style={{ marginLeft:'auto' }}>
-          {[
-            { label:'🎓 Grades', act: () => router.push('/parent/grades') },
-            { label:'✉️ Share',  act: () => router.push('/parent/invites') },
-            { label:'Sign out',  act: signOut },
-          ].map(b => (
-            <button key={b.label} onClick={b.act} style={{ background:'none', border:`1.5px solid ${P.edge}`, borderRadius:50, padding:'10px 14px', minHeight:44, fontSize:13, fontWeight:700, color:P.ink2, cursor:'pointer', whiteSpace:'nowrap' }}>{b.label}</button>
-          ))}
-        </div>
-      </div>
 
-      <div className="adult-shell">
+        {learners.length > 0 && (
+          <>
+            <div className="home-stats">
+              {[
+                { num: learners.length, label: 'Learners' },
+                { num: lessonsDone,     label: 'Lessons finished · this device' },
+                { num: totalXp,         label: 'XP earned, all time' },
+              ].map(s => (
+                <div key={s.label} style={card}>
+                  <div style={{ fontSize:32, fontWeight:900, color:P.ink }}>{s.num}</div>
+                  <div style={{ fontSize:13, color:P.ink3, fontWeight:600 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="home-two" style={{ margin:'14px 0 24px' }}>
+              <div style={card}>
+                <h3 style={{ margin:'0 0 10px', fontSize:16, fontWeight:800, color:P.ink }}>{MODULE_1_TITLE}</h3>
+                <div style={{ overflowX:'auto' }}>
+                  <table className="home-table">
+                    <thead><tr><th>Learner</th><th>Next lesson</th><th>Done</th><th>Last played</th></tr></thead>
+                    <tbody>
+                      {rows.map(({ d, done, next }) => (
+                        <tr key={d.learner.id} onClick={() => openLearner(d.learner.id)} style={{ cursor:'pointer' }}>
+                          <td style={{ fontWeight:700 }}>{d.learner.display_name}</td>
+                          <td>{next?.title ?? 'Module finished 🎉'}</td>
+                          <td>
+                            <span className="home-pill" style={{ background: done === GRADE3_MODULE1.length ? '#d9f7e6' : 'var(--milo-orange-soft)', color: done === GRADE3_MODULE1.length ? '#157347' : P.ink }}>
+                              {done} of {GRADE3_MODULE1.length}
+                            </span>
+                          </td>
+                          <td style={{ color:P.ink3 }}>{d.stats?.last_played_at ? new Date(d.stats.last_played_at).toLocaleDateString() : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div style={{ ...card, display:'flex', flexDirection:'column', gap:10, alignItems:'flex-start' }}>
+                <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:P.ink }}>Quick actions</h3>
+                {active && <button onClick={() => launchGame(active)} style={btn}>▶ Start learning with {active.learner.display_name}</button>}
+                <button onClick={() => setShowAddModal(true)} style={ghost}>+ Add learner</button>
+                <Link href="/parent/invites" style={ghost}>✉️ Share access</Link>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Action message */}
         {actionMsg && (
@@ -348,7 +474,7 @@ export default function ParentDashboard() {
             holds WHO is being looked at (the picker, their stats, their data controls); the wide
             column holds WHAT they have done. `.dash-cols` is a plain CSS grid, so the single-column
             phone layout is the default and needs no JS to be correct. */}
-        <div className="dash-cols">
+        <div className="dash-cols" id="learner-detail" style={{ scrollMarginTop:72 }}>
           <div className="dash-rail">
 
           {/* Learner selector */}
@@ -570,6 +696,7 @@ export default function ParentDashboard() {
             </div>
           )}
         </div>
+        </>)}
       </div>
 
       {/* Support footer. Deliberately the LAST thing on the page and visually quiet — a parent
@@ -594,6 +721,7 @@ export default function ParentDashboard() {
           <span style={{ margin:'0 8px', opacity:0.5 }}>·</span>
           <Link href="/legal/privacy" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>Privacy Policy</Link>
         </p>
+      </div>
       </div>
 
       {/* Add child modal */}
@@ -849,7 +977,6 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
           <>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', margin:'10px 0 8px' }}>
               <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:0 }}>Grade <span style={{ fontWeight:500, color:P.ink3 }}>(optional)</span></p>
-              <button onClick={() => router.push('/parent/grades')} style={{ background:'none', border:'none', color:P.accent, fontSize:12, fontWeight:700, cursor:'pointer' }}>Manage</button>
             </div>
             <div className="opt-grid" style={{ marginBottom:14 }}>
               <button onClick={() => pickGrade(null)} aria-pressed={!gradeId} style={{ textAlign:'left', padding:'12px 14px', minHeight:44, borderRadius:14, cursor:'pointer', background:!gradeId?'var(--milo-orange-soft)':P.page, border:!gradeId?`3px solid ${P.accent}`:`2px solid ${P.edge}` }}>
