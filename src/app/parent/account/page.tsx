@@ -32,6 +32,18 @@ import { DataRights } from '@/shared/ui/DataRights'
 import { SURVIVORS, HELD_ELSEWHERE } from '@/core/accountDeletion'
 import type { Learner, LearnerStats, LearnerProgress, Session } from '@/data/supabase/types'
 
+/* The adult surface's palette, from globals.css — same tokens as the other parent screens. */
+const P = {
+  page:   'var(--paper)',
+  card:   'var(--paper-soft)',
+  edge:   'var(--card-border)',
+  ink:    'var(--ink)',
+  ink2:   'var(--ink-soft)',
+  ink3:   'var(--ink-muted)',
+  accent: 'var(--milo-orange)',
+} as const
+
+
 interface Owned { learner: Learner; stats: LearnerStats | null; progress: LearnerProgress[]; sessions: Session[] }
 
 export default function AccountPage() {
@@ -171,8 +183,8 @@ export default function AccountPage() {
 
 function Shell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <main style={{ minHeight: '100dvh', background: '#FCEAB6', padding: '24px 16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <div style={{ maxWidth: 620, margin: '0 auto' }}>
+    <main style={{ minHeight: '100dvh', background: P.page, fontFamily: 'var(--font-body)' }}>
+      <div className="adult-doc">
         <h1 style={{ fontSize: 24, margin: '0 0 10px', color: '#3c2a14' }}>{title}</h1>
         {children}
       </div>

@@ -14,6 +14,20 @@ import { SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+/* The adult surface's palette, from globals.css — same tokens the other parent screens use.
+   These pages previously mixed ad-hoc greys (#888 / #6b7280 / #1a1a1a / #f7f8fa) with the brand
+   colours, so each one read as a slightly different product. */
+const P = {
+  page:   'var(--paper)',
+  card:   'var(--paper-soft)',
+  edge:   'var(--card-border)',
+  ink:    'var(--ink)',
+  ink2:   'var(--ink-soft)',
+  ink3:   'var(--ink-muted)',
+  accent: 'var(--milo-orange)',
+} as const
+
+
 export const metadata: Metadata = {
   title: 'Help',
   description:
@@ -112,12 +126,12 @@ function HelpJsonLd() {
 export default function HelpPage() {
   return (
     <main style={{
-      minHeight: '100dvh', background: 'linear-gradient(180deg, #FFF4D6 0%, #FCEAB6 100%)',
+      minHeight: '100dvh', background: P.page,
       padding: '28px 20px 60px',
     }}>
-      <div style={{ maxWidth: 680, margin: '0 auto' }}>
+      <div className="adult-doc">
         <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← AdaptiveLearn</Link>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#3d2516', margin: '14px 0 20px' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: P.ink, margin: '14px 0 20px' }}>
           Help
         </h1>
 
@@ -126,12 +140,12 @@ export default function HelpPage() {
             background: 'rgba(255,255,255,.65)', border: '2px solid rgba(61,37,22,.10)',
             borderRadius: 16, padding: '14px 16px', marginBottom: 12,
           }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: '#3d2516', margin: '0 0 6px' }}>{q}</h2>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: '#5b4c39' }}>{a}</p>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: P.ink, margin: '0 0 6px' }}>{q}</h2>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: P.ink2 }}>{a}</p>
           </section>
         ))}
 
-        <p style={{ marginTop: 24, fontSize: 15, color: '#5b4c39' }}>
+        <p style={{ marginTop: 24, fontSize: 15, color: P.ink2 }}>
           Still stuck? Email{' '}
           <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#F26B2C', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>
           {' '}— tell us the device and browser, and we will come back to you.

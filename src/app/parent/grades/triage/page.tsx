@@ -9,6 +9,7 @@
  * SHARED NEED — never a student-vs-student ranking (docs/ux-invariants.md #26, #23).
  * Reached from /parent/grades via ?g=<gradeId>.
  */
+import { RoleGate } from '@/shared/ui/RoleGate'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/data/auth'
@@ -16,7 +17,25 @@ import { useGradeTriage } from '@/features/triage/useGradeTriage'
 import { getChapter } from '@/core/chapters'
 import type { TriageGroup } from '@/features/triage/groupByRootGap'
 
+/* The adult surface's palette, from globals.css — same tokens the other parent screens use.
+   These pages previously mixed ad-hoc greys (#888 / #6b7280 / #1a1a1a / #f7f8fa) with the brand
+   colours, so each one read as a slightly different product. */
+const P = {
+  page:   'var(--paper)',
+  card:   'var(--paper-soft)',
+  edge:   'var(--card-border)',
+  ink:    'var(--ink)',
+  ink2:   'var(--ink-soft)',
+  ink3:   'var(--ink-muted)',
+  accent: 'var(--milo-orange)',
+} as const
+
+
 export default function TriagePage() {
+  return <RoleGate role="teacher"><TriageInner /></RoleGate>
+}
+
+function TriageInner() {
   const router = useRouter()
   const [gradeId, setGradeId] = useState<string | null>(null)
   const [authed, setAuthed] = useState<boolean | null>(null)
@@ -34,7 +53,7 @@ export default function TriagePage() {
   if (authed === null) return <Splash>Loading…</Splash>
   if (!gradeId) return (
     <Splash>
-      <p style={{ margin: '0 0 14px', color: '#888' }}>No grade selected.</p>
+      <p style={{ margin: '0 0 14px', color: P.ink2 }}>No grade selected.</p>
       <BackBtn onClick={() => router.push('/parent/grades')} />
     </Splash>
   )
@@ -45,23 +64,23 @@ function TriageBoard({ gradeId, onBack }: { gradeId: string; onBack: () => void 
   const { state, gradeName, groups, total, checked, reload } = useGradeTriage(gradeId)
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#f7f8fa', padding: '20px 16px 60px' }}>
-      <div style={{ maxWidth: 620, margin: '0 auto' }}>
+    <div style={{ minHeight: '100dvh', background: P.page, paddingBottom: 60, fontFamily: 'var(--font-body)' }}>
+      <div className="adult-shell">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <BackBtn onClick={onBack} />
         </div>
 
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: '10px 0 2px' }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: P.ink, margin: '10px 0 2px', fontFamily: 'var(--font-display)' }}>
           Class triage{gradeName ? ` · ${gradeName}` : ''}
         </h1>
-        <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 18px', lineHeight: 1.5 }}>
+        <p style={{ fontSize: 14, color: P.ink2, margin: '0 0 18px', lineHeight: 1.5 }}>
           Each child grouped by the one skill they&apos;re stuck on — a ready-made plan for small-group teaching.
           {state === 'ready' && total > 0 && (
-            <> <strong style={{ color: '#374151' }}>{checked}/{total}</strong> checked.</>
+            <> <strong style={{ color: P.ink }}>{checked}/{total}</strong> checked.</>
           )}
         </p>
 
-        {state === 'loading' && <Card><p style={{ color: '#888', margin: 0 }}>Loading the class…</p></Card>}
+        {state === 'loading' && <Card><p style={{ color: P.ink2, margin: 0 }}>Loading the class…</p></Card>}
 
         {state === 'error' && (
           <Card>
@@ -71,10 +90,17 @@ function TriageBoard({ gradeId, onBack }: { gradeId: string; onBack: () => void 
         )}
 
         {state === 'ready' && total === 0 && (
-          <Card><p style={{ color: '#888', margin: 0 }}>No children in this grade yet. Add children to it from the parent dashboard.</p></Card>
+          <Card><p style={{ color: P.ink2, margin: 0 }}>No children in this grade yet. Add children to it from the parent dashboard.</p></Card>
         )}
 
-        {state === 'ready' && total > 0 && groups.map(g => <GroupCard key={g.key} g={g} />)}
+        {/* ⚠️ A GRID, NOT A COLUMN — and `marginBottom` came OFF the card when this changed, or the
+            grid's own `gap` doubles it. A triage list of one card per gap-group was a single column
+            at 1280px, so each card ran the full width of the page for a two-line summary. */}
+        {state === 'ready' && total > 0 && (
+          <div className="card-grid">
+            {groups.map(g => <GroupCard key={g.key} g={g} />)}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -86,28 +112,28 @@ function GroupCard({ g }: { g: TriageGroup }) {
   const chapterName = g.chapter ? getChapter(g.chapter)?.name : undefined
 
   return (
-    <div style={{ background: '#fff', border: '1px solid #eef0f3', borderLeft: `4px solid ${accent}`, borderRadius: 14, padding: '16px 18px', marginBottom: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+    <div style={{ background: P.card, border: `1.5px solid ${P.edge}`, borderLeft: `4px solid ${accent}`, borderRadius: 14, padding: '16px 18px', boxShadow: '0 1px 3px rgba(61,37,22,0.04)' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 22 }}>{g.emoji}</span>
-        <span style={{ fontSize: 17, fontWeight: 800, color: '#1a1a1a' }}>{g.label}</span>
+        <span style={{ fontSize: 17, fontWeight: 800, color: P.ink }}>{g.label}</span>
         <span style={{ fontSize: 13, fontWeight: 700, color: accent }}>
           {g.learners.length} {g.learners.length === 1 ? 'child' : 'children'}
         </span>
       </div>
 
       {g.skillLabel && (
-        <p style={{ fontSize: 13, color: '#6b7280', margin: '6px 0 0' }}>{g.skillLabel}</p>
+        <p style={{ fontSize: 13, color: P.ink2, margin: '6px 0 0' }}>{g.skillLabel}</p>
       )}
 
       {isGap && chapterName && (
-        <p style={{ fontSize: 13, color: '#374151', margin: '8px 0 0' }}>
+        <p style={{ fontSize: 13, color: P.ink2, margin: '8px 0 0' }}>
           <strong>Focus:</strong> {g.emoji} {chapterName}
         </p>
       )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
         {g.learners.map(l => (
-          <span key={l.learnerId} style={{ background: '#f3f4f6', borderRadius: 40, padding: '5px 12px', fontSize: 13, fontWeight: 600, color: '#374151' }}>
+          <span key={l.learnerId} style={{ background: P.page, border: `1px solid ${P.edge}`, borderRadius: 40, padding: '5px 12px', fontSize: 13, fontWeight: 600, color: P.ink2 }}>
             {l.name}
           </span>
         ))}
@@ -117,19 +143,19 @@ function GroupCard({ g }: { g: TriageGroup }) {
 }
 
 // ── small shared bits ─────────────────────────────────────────────────────────
-const pillBtn: React.CSSProperties = { background: '#F26B2C', color: '#fff', border: 'none', borderRadius: 40, padding: '9px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }
+const pillBtn: React.CSSProperties = { background: P.accent, color: '#fff', border: 'none', borderRadius: 40, padding: '11px 18px', minHeight: 44, fontSize: 13, fontWeight: 700, cursor: 'pointer' }
 
 function BackBtn({ onClick }: { onClick: () => void }) {
-  return <button onClick={onClick} style={{ background: 'none', border: '1.5px solid #e5e7eb', borderRadius: 50, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: '#888', cursor: 'pointer' }}>← Grades</button>
+  return <button onClick={onClick} style={{ background: 'none', border: `1.5px solid ${P.edge}`, borderRadius: 50, padding: '11px 14px', minHeight: 44, fontSize: 13, fontWeight: 700, color: P.ink2, cursor: 'pointer' }}>← Grades</button>
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: '#fff', border: '1px solid #eef0f3', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>{children}</div>
+  return <div style={{ background: P.card, border: `1.5px solid ${P.edge}`, borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 3px rgba(61,37,22,0.04)' }}>{children}</div>
 }
 
 function Splash({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ minHeight: '100dvh', background: '#f7f8fa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
+    <div style={{ minHeight: '100dvh', background: P.page, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: 'var(--font-body)' }}>
       {children}
     </div>
   )

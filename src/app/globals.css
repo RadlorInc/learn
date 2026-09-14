@@ -57,6 +57,11 @@
   --ink-soft:           #6F4E36;
   --ink-muted:          #A0856E;
   --outline:            #2A1A0F;
+  /* The adult surface's card edge and the accent's pressed state. Both come from the Stitch
+     parent-suite designs (`cardBorder` / `accentHover`); the rest of that palette was already
+     here under different names, which is why only two tokens were missing. */
+  --card-border:        #E7D8BE;
+  --milo-orange-hover:  #DD5D22;
 
   /* Semantic fg/bg */
   --fg-1:               var(--ink);
@@ -832,3 +837,100 @@ summary.plan-toggle,
  * other thing people expect this rule to do; it does not.
  */
 input[type="range"] { height: 44px; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   THE ADULT SURFACE'S RESPONSIVE LAYER  (/auth, /auth/set-password, /parent)
+
+   ⚠️ REAL MEDIA QUERIES, DELIBERATELY, NOT `useViewport`. That hook is
+   rAF-throttled, and this repo has already recorded (chapter-craft §4) that rAF
+   is frozen outright in a backgrounded tab — so a JS-measured layout renders at
+   its fallback size in exactly the situation every automated drive runs in, and
+   needs a hydration pass it can get wrong. CSS needs neither. The one thing JS
+   would buy — branching on height — none of these screens want.
+
+   ⚠️ These three pages had ZERO media queries and were capped at
+   `maxWidth: 380/480`, so a 1280px desktop rendered a phone column in the
+   middle of the frame. That cap is what the breakpoints below undo.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* A page-wide column that stops being a phone column on a real screen. */
+.adult-shell { width: 100%; max-width: 520px; margin: 0 auto; padding: 20px 16px; box-sizing: border-box; }
+@media (min-width: 1024px) { .adult-shell { max-width: 1180px; padding: 28px 32px; } }
+
+/* Sign-in / set-password: form alone on a phone, form + panel on a laptop. */
+.adult-split { display: grid; grid-template-columns: 1fr; gap: 28px; width: 100%; max-width: 460px; align-items: center; }
+@media (min-width: 900px) {
+  .adult-split { grid-template-columns: 1fr 420px; gap: 48px; max-width: 1060px; }
+}
+/* The marketing half carries nothing the form needs, so it is the half that goes. */
+.adult-aside { display: none; }
+@media (min-width: 900px) { .adult-aside { display: block; } }
+
+/* Dashboard: one column on a phone, a learner rail beside the detail on a laptop. */
+.dash-cols { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+@media (min-width: 1024px) { .dash-cols { grid-template-columns: minmax(300px, 360px) 1fr; gap: 24px; } }
+/* The rail follows the page on a phone and stays put once there is room beside it. */
+@media (min-width: 1024px) { .dash-rail { position: sticky; top: 88px; } }
+
+/* Parent home: a dark sidebar beside the page on a laptop, a sideways-scrolling top bar on a phone. */
+.home-app { display: grid; grid-template-columns: 1fr; min-height: 100dvh; background: var(--paper); }
+.home-nav { background: #10232b; padding: 8px 12px; display: flex; align-items: center; gap: 4px; overflow-x: auto; min-width: 0; position: sticky; top: 0; z-index: 10; }
+.home-nav a, .home-nav button { color: #d5e6e3; background: transparent; border: 0; border-radius: 10px; padding: 11px 12px; min-height: 44px; font: inherit; font-size: 14px; font-weight: 700; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.home-nav a.on, .home-nav a:hover, .home-nav button:hover { background: #1c3d46; color: #fff; }
+.home-nav button.on { background: #1c3d46; color: #fff; }
+.home-logo { font-weight: 900; font-size: 18px; color: #ffb4a2; margin: 0 10px 0 4px; white-space: nowrap; }
+.home-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+.home-two { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.home-two > * { min-width: 0; }
+.home-table { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--ink); }
+.home-table th, .home-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--card-border); white-space: nowrap; }
+.home-table th { color: var(--ink-muted); font-weight: 700; }
+.home-table tbody tr:hover { background: var(--paper); }
+.home-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+@media (min-width: 1024px) {
+  .home-app { grid-template-columns: 240px 1fr; }
+  .home-nav { flex-direction: column; align-items: stretch; height: 100dvh; padding: 20px 14px; }
+  .home-logo { margin: 0 12px 16px; font-size: 20px; }
+  .home-nav-end { margin-top: auto; }
+  .home-two { grid-template-columns: 1.35fr 0.65fr; }
+}
+
+/* Role picker: stacked, then side by side once two cards fit without cramping. */
+.role-cards { display: grid; grid-template-columns: 1fr; gap: 14px; width: 100%; max-width: 380px; }
+@media (min-width: 720px) { .role-cards { grid-template-columns: 1fr 1fr; max-width: 720px; gap: 20px; } }
+
+/* Add-learner: a bottom sheet on a phone (thumb reach), a centred dialog above it. */
+.sheet-wrap { display: flex; align-items: flex-end; justify-content: center; }
+.sheet-card { border-radius: 24px 24px 0 0; max-height: 92dvh; width: 100%; max-width: 480px; animation: sheetUp .3s var(--ease-bounce); }
+@media (min-width: 768px) {
+  .sheet-wrap { align-items: center; padding: 24px; }
+  .sheet-card { border-radius: 24px; max-height: 88dvh; max-width: 560px; animation: sheetIn .22s var(--ease-smooth); }
+}
+@keyframes sheetUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+@keyframes sheetIn { from { transform: scale(.96); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+
+/* A READING column. ⚠️ DELIBERATELY NOT `.adult-shell`: prose does not want 1180px — a line of
+   text past roughly 75 characters is harder to read, not easier, so this one widens its PADDING on
+   a laptop and keeps its measure. Help, pricing and the account page are documents; the dashboard
+   and the grade lists are not. Using the wrong one of these two is a real mistake in both
+   directions, which is why they have different names rather than one class with an override. */
+.adult-doc { width: 100%; max-width: 720px; margin: 0 auto; padding: 22px 16px; box-sizing: border-box; }
+@media (min-width: 1024px) { .adult-doc { padding: 36px 32px; } }
+
+/* A list of cards that becomes a grid once cards would otherwise be absurdly wide. Used by the
+   grade list and the pending-invite list, both of which were a single column at every width. */
+.card-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 768px)  { .card-grid { grid-template-columns: 1fr 1fr; gap: 14px; } }
+@media (min-width: 1280px) { .card-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+/* A row of chips that scrolls sideways rather than wrapping into a tall stack. */
+.chip-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.chip-scroll > * { flex: 0 0 auto; }
+
+/* Age/grade options: a list on a phone, two per row once the sheet is a dialog. */
+.opt-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+@media (min-width: 768px) { .opt-grid { grid-template-columns: 1fr 1fr; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-card { animation: none; }
+}
