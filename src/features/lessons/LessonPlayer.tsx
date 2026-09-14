@@ -9,11 +9,12 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
 import {
-  START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, answerOf, workedSteps,
+  START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer,
   type FlowState, type Lesson, type Screen,
 } from './script'
 import { Pic, tapCue, pill, INK } from './Pictures'
-import { Frame, stage, bubble, primary, hint, idea, cue, tick, right, answerInput } from './Frame'
+import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
+import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn } from './PracticeLayout'
 
 export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onFinish: () => void; onExit: () => void }) {
@@ -34,6 +35,9 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   const screenSay = (sc: Screen) => `${sc.title}. ${sc.text}`
 
   const problem = currentProblem(lesson, s)
+  // The answer box's shape is the lesson's, never the problem's (see AnswerInput).
+  const all = [lesson.turn, lesson.turn.twin, ...lesson.practice.map(x => x.problem)].map(solutionOf)
+  const box = problem && <AnswerInput answer={solutionOf(problem)} value={value} onChange={setValue} signed={needsSign(all)} mixed={needsWhole(all)} />
 
   const toggleAudio = () => {
     const on = !audio
@@ -47,8 +51,8 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   if (s.mode === 'practice' && problem) {
     const worked = s.feedback === 'worked', answering = s.feedback !== 'right' && !worked
     const submit = () => {
-      if (value.trim() === '') return
-      const n = check(lesson, s, Number(value))
+      if (!ready(solutionOf(problem), value)) return
+      const n = check(lesson, s, value)
       go(n, n.feedback === 'idea' ? lesson.bigIdea : n.feedback === 'right' ? 'Right!' : n.feedback === 'worked' ? 'Here is how this one works.' : undefined)
       if (n.feedback !== 'right') setValue('')   // a wrong answer must not sit there to be re-submitted
     }
@@ -64,23 +68,22 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
         {answering && (
           <form id="lp-answer" onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
             <b style={{ fontSize: 22 }}>Your answer</b>
-            <input aria-label="Your answer" inputMode="numeric" pattern="[0-9]*" maxLength={3} value={value}
-              onChange={e => setValue(e.target.value.replace(/\D/g, ''))} style={answerInput} />
+            {box}
           </form>
         )}
         {(s.feedback === 'idea' || (asked && answering)) && <p style={idea}>{lesson.bigIdea}</p>}
-        {s.feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right! The answer is {answerOf(problem.op)}.</p>}
+        {s.feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right! The answer is {showAnswer(solutionOf(problem))}.</p>}
         {worked && <>
           <div style={hint}>
             <b>Here&apos;s how this one works:</b>
-            <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{workedSteps(problem.op).map(t => <li key={t}>{t}</li>)}</ol>
+            <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{stepsOf(problem).map(t => <li key={t}>{t}</li>)}</ol>
           </div>
           <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => go(replayLesson(s), screenSay(lesson.screens[0]))}>Watch the lesson again</button>
         </>}
         <div className="pr-foot">
           {answering ? <button type="button" style={hintBtn} onClick={() => setAsked(true)} disabled={asked || s.feedback === 'idea'}>Hint</button> : <span />}
           {answering
-            ? <button type="submit" form="lp-answer" style={primary} disabled={value === ''}>Check</button>
+            ? <button type="submit" form="lp-answer" style={primary} disabled={!ready(solutionOf(problem), value)}>Check</button>
             : <button type="button" style={primary} onClick={() => go(nextPractice(s))}>{s.practice === 4 ? 'Finish' : 'Next problem'}</button>}
         </div>
       </PracticeLayout>
@@ -93,8 +96,8 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   if (s.mode === 'turn' && problem) {
     const worked = s.feedback === 'worked'
     const submit = () => {
-      if (value.trim() === '') return
-      const n = check(lesson, s, Number(value))
+      if (!ready(solutionOf(problem), value)) return
+      const n = check(lesson, s, value)
       const fb = n.mode === 'won' ? wonFor(lesson, n).text
         : n.feedback === 'hint1' ? hintsFor(lesson, n)[0] : n.feedback === 'hint2' ? hintsFor(lesson, n)[1]
         : n.feedback === 'worked' ? 'Here is how this one works.' : undefined
@@ -114,8 +117,7 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
         {!worked && (
           <form id="lp-turn" onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
             <b style={{ fontSize: 22 }}>Your answer</b>
-            <input aria-label="Your answer" inputMode="numeric" pattern="[0-9]*" maxLength={3} value={value}
-              onChange={e => setValue(e.target.value.replace(/\D/g, ''))} style={answerInput} />
+            {box}
           </form>
         )}
         {s.feedback === 'hint1' && <p style={hint}>{hintsFor(lesson, s)[0]}</p>}
@@ -123,7 +125,7 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
         {worked && (
           <div style={hint}>
             <b>Here&apos;s how this one works:</b>
-            <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{workedSteps(problem.op).map(t => <li key={t}>{t}</li>)}</ol>
+            <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{stepsOf(problem).map(t => <li key={t}>{t}</li>)}</ol>
           </div>
         )}
         <div className="pr-foot">
@@ -133,7 +135,7 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
                 const n = afterWorked(s)
                 go(n, n.mode === 'turn' ? `Try a new one. ${lesson.turn.twin.text}` : wonFor(lesson, n).text)
               }}>{s.twin ? 'Next' : 'Try a new one'}</button>
-            : <button type="submit" form="lp-turn" style={primary} disabled={value === ''}>Check</button>}
+            : <button type="submit" form="lp-turn" style={primary} disabled={!ready(solutionOf(problem), value)}>Check</button>}
         </div>
       </PracticeLayout>
     )

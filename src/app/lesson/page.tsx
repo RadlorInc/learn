@@ -1,9 +1,9 @@
 'use client'
-/** /lesson?id=g3m1-t1 — plays one new-flow lesson. Without a valid id, shows the topic list. */
+/** /lesson?id=g3m1-t1 plays one new-flow lesson; /lesson?module=g3m2 shows that module's topic path (Module 1 without either). */
 import { Suspense, useSyncExternalStore } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
-import { GRADE3_MODULE1 } from '@/features/lessons/grade3Module1'
+import { findLesson, chosenModules } from '@/features/lessons/modules'
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { LessonList } from '@/features/lessons/LessonList'
 import { markLessonDone } from '@/infra/storage/lessonProgress'
@@ -19,21 +19,27 @@ function Lesson() {
   const router = useRouter()
   // NOT window.location: on an in-app navigation that is read before the URL changes, so arriving from another page
   // showed the wrong screen. useSearchParams is the router's own value.
-  const id = useSearchParams().get('id')
+  const params = useSearchParams(), id = params.get('id'), moduleId = params.get('module')
   // Progress lives in kv, which only exists in the browser.
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false)
   if (!mounted) return null
 
-  const learnerId = getActiveLearner()?.id ?? null
-  const lesson = GRADE3_MODULE1.find(l => l.id === id)
-  if (!lesson) return <LessonList learnerId={learnerId} back={{ href: '/modules', label: '← Modules' }} />
+  const learner = getActiveLearner(), learnerId = learner?.id ?? null
+  const found = findLesson(id)
+  if (!found) {
+    // The topic path shows only the topics the parent chose (all of them when no choice was made).
+    const mods = chosenModules(learner?.lesson_ids)
+    const module = mods.find(x => x.id === moduleId && x.lessons.length > 0) ?? mods.find(x => x.lessons.length > 0)!
+    return <LessonList module={module} learnerId={learnerId} back={{ href: `/modules?grade=${module.grade}`, label: '← Modules' }} />
+  }
+  const { lesson, module } = found
 
   return (
     <LessonPlayer
       key={lesson.id}
       lesson={lesson}
       onFinish={() => markLessonDone(learnerId, lesson.id)}
-      onExit={() => router.push('/lesson')}
+      onExit={() => router.push(`/lesson?module=${module.id}`)}
     />
   )
 }

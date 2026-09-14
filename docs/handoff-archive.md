@@ -1,3 +1,66 @@
+> ⬆️ **MOVED OUT OF handoff.md 2026-09-14** — the 🧹 2026-09-10 deployment-storage block. ⚠️ Its live items were lifted
+> into the 📚 2026-09-14 block's ▶ OPEN (item 6) first.
+
+> 🧹 **2026-09-10 — DEPLOYMENT STORAGE WAS 5.3× OVER ITS LIMIT, AND A BLOCK WOULD HAVE TAKEN THE ROLLBACK PATH WITH IT. Every merge was building `main` for nobody; 80 dead previews deleted; and the number that would have told us whether it worked turns out to be Pro-only.** `tsc` 0 · no source touched (one config file + two docs) · **PR [#95](https://github.com/RadlorInc/learn/pull/95) open, NOT merged** · production `dpl_31ez…` untouched, site 200 throughout.
+>
+> ⚠️ **This is a Hobby-plan problem and Rafi is upgrading to Pro.** Everything below is the other half — stop the waste, reclaim what is spent — and none of it is a substitute for the upgrade.
+
+## ① 📉 WHERE THE 53.43 GB ACTUALLY IS — AND TWO CORRECTIONS TO THE BRIEF
+**Deployment Storage 53.43 GB / 10 GB**; Functions 7.32/10, Fast Data Transfer **1.95**/100 GB, Edge Requests 137K/1M — storage is the only line over. It matters because **a block takes the rollback with it**: the only proven rollback here is revert-and-push-forward (280s), which needs a build.
+**Confirmed as briefed:** every merge produced **three** deployments (PR preview → `main` preview → `release` production), and across all **350** deployments — not just the last 40 — exactly **two** carry `isRollbackCandidate: true`.
+⚠️⚠️ **CORRECTED, and it inverts the plan: the `main` previews are ~23% of storage, not a third, AND EVERY ONE OF THEM IS UNDER 7 DAYS OLD.** The branch-preview-on-`main` behaviour only began **2026-09-05**, when production moved to `release`; before that `main` built as `target: production`. So a *"delete previews older than 7 days"* sweep — the safe rule — **cannot touch a single one of the deployments identified as the waste.**
+⚠️ **And storage is concentrated in the last 48 hours, so the old deployments everyone reaches for first are the thin ones.** Measured per commit with `git ls-tree -r -l <sha> -- public/audio`: **15 MB (to 09-01) → 88 (09-04) → 259 → 349 → 365 (09-09 am) → 636 MB (09-09 pm)**.
+
+| class | n | ~share of 53.43 GB |
+|---|---|---|
+| production (`target: production`) | 194 | ~46% — rules forbid |
+| previews **newer** than 7 days | 76 | ~44% — rules forbid; **all 44 `main` previews live here** |
+| previews **older** than 7 days | 80 | **~10% — the entire deletable set** |
+
+⚠️ **Those shares are an ESTIMATE and are labelled as one in `docs/devops.md`.** They come from per-commit audio size plus a non-audio baseline *calibrated to make the model reproduce 53.43 GB* (~57 MB/deployment). A larger baseline plus Vercel file-level dedup fits the same total and is not distinguishable from outside. The ORDERING is sound; the absolute figures are indicative.
+
+## ② ⚠️⚠️ THE STORAGE NUMBER IS NOT READABLE ON HOBBY, SO "DELETE, THEN MEASURE" CANNOT BE RUN
+`GET /v1/usage` answers **`plan_upgrade_required: This API endpoint is only available to Teams on the Pro or Enterprise plan`**. Measured, with the error naming its own reason — not inferred from a doc.
+The brief's safety valve was *"batch of 20, then re-read the storage number; if it does not fall, stop"* — a good rule, and **inert here**. ⚠️ **A stop-condition keyed on a value you cannot read is not a stop-condition.** What was done instead: audit against what IS readable — the **deployment list**, which cannot say how many bytes came back but says exactly which deployments went.
+
+## ③ 🗑️ 80 PREVIEWS DELETED, AND AUDITED AFTERWARDS RATHER THAN TRUSTED
+Founder's call, asked and answered: *delete all 80*. Result **deleted=80 failed=0 refused=0**. The audit re-read all 350→270 and compared sets:
+
+| check | result |
+|---|---|
+| gone set == the intended 80 | ✅ exact; **nothing extra gone, nothing on the list left behind** |
+| production surviving | ✅ **194 of 194** |
+| rollback candidates surviving | ✅ both — `dpl_31ez…` (production) + `dpl_6QrK…` |
+| previews surviving | ✅ 76, incl. **all 44 `main`** |
+| production live | ✅ `READY`, adaptivelearn.radlor.com **HTTP 200** |
+
+⚠️⚠️ **AND THE GUARD I WROTE TO PROTECT THAT DELETION HAD A HOLE OF EXACTLY THE KIND THIS REPO KEEPS PAYING FOR.** The loop re-fetched each deployment and refused if `target == production` or `isRollbackCandidate == true`. Some deployments' metadata **fails `jq` parsing** (control characters in commit messages), and on those `TGT`/`RBK` came back **empty** — neither `production` nor `true`, so **the guard passed**. Nothing was harmed (the list was already correct; the post-hoc set comparison is what actually proves it), but **the protection was weaker than it read**. Straight out of CLAUDE.md: *"I cannot see" and "there is nothing to see" must never render as the same result* — **a parse failure in a guard is a REFUSAL, never a pass.**
+
+## ④ 🛑 STOPPING THE WASTE — `vercel.json`, AND IT IS NOT VERIFIED
+```json
+{ "git": { "deploymentEnabled": { "main": false } } }
+```
+Unspecified branches default to `true`, so **`release` and every PR preview are untouched** — PR previews are load-bearing for review and were deliberately kept; the docs were checked *specifically* because stopping `release` would take production and the rollback path together. In the repo rather than the dashboard so it leaves a reviewable diff, per the same argument as `assert-prod-ref.sh`.
+⚠️⚠️ **IT IS SHIPPED-BUT-UNVERIFIED AND MUST NOT BE READ AS DONE.** It takes effect only once the file is **on `main`**, and the proof is *the next merge produces two deployments, not three*. **Merging #95 itself will still produce a `main` preview** — the merge AFTER it is the first that should not. Nobody has watched that yet.
+
+## ⑤ 📌 REPORT-ONLY — **written up in [docs/devops.md](docs/devops.md); read it there, not here**
+- **Root cause: 694 MB / 29,325 mp3 in `public/audio`, in git, therefore in every build output.** Object storage (Supabase Storage — in the stack, still 0 buckets — or R2) is the right home. ⚠️ **Explicitly NOT a launch-week change**; devops.md names the risks, and the sharpest is that the clip player **swallows its own errors by design**, so a misconfigured bucket is *silent* — the `media-src` shape exactly. A **retention policy** (`vercel list --policy …`) is the structural version of §③; check its Pro availability and prefer it to ever sweeping by hand again.
+- **`RadlorInc/learn` is PUBLIC** — confirmed twice (deployment metadata; `gh repo view` → `isPrivate: false`). **Not a discovery**: this file already records it as deliberate. ⚠️ **The point is its stated cause — *"must stay PUBLIC until Vercel is Pro"* — expires with the upgrade**, so a children's product's source being public stops being inherited and becomes a live decision. Recorded; **changed nothing.**
+- ⚠️ **UNSETTLED: docs say `vercel rollback <url>` is Pro/Enterprise only.** `rollback status` runs on Hobby but is a status query and proves **nothing** about the action, which could not be tested without a real production rollback in launch week. **Doc-sourced, not measured** — flagged rather than repeated as fact. If true it explains the 🚀 block's *"documented but unproven"* dashboard rollback: it may never have been available. One cheap check once Pro lands.
+
+## ▶ OPEN
+1. 🔴 **Read the dashboard storage figure.** Nothing in this session could. Expect ~5.6 GB freed → **~47–48 GB**, still ~4.8× over 10 GB. If it did NOT fall, the dedup theory in ① is right and per-deployment attribution is wrong — say so, because the object-storage case then gets stronger, not weaker.
+2. 🔴 **Merge [#95](https://github.com/RadlorInc/learn/pull/95), then watch the NEXT merge produce two deployments, not three.** Until that is seen, ④ is a claim.
+3. 🔴 **LIFTED from 📊 2026-09-05 — the `answer` event AWAITS THE FOUNDER'S APPROVAL; do not wire it first.** Proposed `{ chapter, item, correct, tier, ordinal }`, nothing identifying, on the existing offline queue. ⚠️ `item` is the hard part: chapters GENERATE questions, so a stable id must come from the generator's KIND (`op.subtract`), never the drawn numbers. ~10× more event rows, inside the 90-day purge.
+4. 🔴 **LIFTED — two sign-ins (one Google, one email), then read `auth_events`.** The fix shipped; it has never been observed working.
+5. 🔴 **LIFTED — play one chapter.** `started_at` is applied and nothing has been completed since, so there is still **no real session duration in the database**.
+6. 🔴 **LIFTED, PARTLY RESOLVED — founder-only: `ADMIN_MIN_COHORT=1` in Vercel** (defaults to 5, suppressing nearly everything), plus the internal-account list. ⚠️ **The other half was already DONE and its note stale**: `productionBranch` measured **`release`**, so the CI deploy gate is live. Do not re-do it.
+7. ⏭️ **LIFTED — the rollup (option A)**, id-free, margins not the cross-product, suppression at WRITE time (`data-inventory.md` §3a). ⚠️ **The purge cliff is 2026-09-27**, when 520 events (31% of all history) go in one night. That is 17 days out.
+8. ⏭️ **LIFTED — `profiles.is_internal` is client-writable**, same shape as the September escalation; grants nothing, recorded not fixed.
+9. ⏭️ **Supabase Storage is still empty** (0 buckets, 0 objects) — which is why it is the obvious destination in ⑤.
+10. 🔴 **Launch blockers, unchanged from the 🚀 block** — nothing here touched them, and the founder's two calls still narrow the scope: **nothing is charged Friday** (every Stripe item out of scope) and **`DRAFT = true`, banner stays**.
+11. ⏭️ **Carried:** account deletion **still never executed end to end**; `migrate-prod` inert; Sydney still the rollback (~$10/mo); `entitled_chapters` has no caller; the `/menu` 6→2 RPC half uncommitted; the two auth migrations (`20260908120000`, `20260908120100`) still awaiting a hand-apply; the `counting` flake in `ready-bar.spec.ts`; **nobody has HEARD a voice clip**; 15-16 voice remaining (7,202 lines).
+
 > ⬆️ **MOVED OUT OF handoff.md 2026-09-13** — the 🚀 2026-09-09/10 launch-week block. ⚠️ Its live items (the two
 > probe rows, /auth contrast, six Dependabot PRs, `backup.yml` without `assert-prod-ref.sh`, the rollback rule)
 > were lifted into the 🎨 2026-09-13 (evening) block's ▶ OPEN first.

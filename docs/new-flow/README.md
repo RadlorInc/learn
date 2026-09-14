@@ -23,52 +23,40 @@ template of **"Math Problem Exp and Exercise Format.docx"**:
 Designer rules from the docs: one idea per screen, short sentences, one picture, small numbers,
 no extra characters talking, read-aloud optional, **7 taps before Screen 8**, ~90 seconds.
 
-## The process — always in this order, with a founder check between steps
+## The process (changed 2026-09-14)
 
-1. **Topic split.** Split the module into single-skill topics a Grade 3 child can hold — one idea
-   each, picture before number, each topic built on the one before, nothing above grade level.
-   The approved split for Grade 3 is below; use it, do not re-split.
-2. **Write the scripts** as a document for review: `docs/new-flow/grade3-moduleN-scripts.md`,
-   copying the exact layout of [grade3-module1-scripts.md](grade3-module1-scripts.md) (Skill/Grade/
-   Time header, Screens 1–9 with Title/Picture/Text/Button/Motion/Note, practice table with
-   "Why it's here", an **Answers:** line). Mark at the top that every number was written for the
-   draft. Check every answer, hint and twin by hand; keep numbers inside that module's range.
-   **Stop and get the founder's approval.**
-3. **Build** only after approval (see "Building" below).
-4. **Verify** (see "Checks").
+⚠️ **For Grade 3 Modules 2–6 and Grades 4–8 the founder chose "no review, build all"** — no script document, no
+approval step. The topic split for every grade is in [curriculum.md](curriculum.md); every module is written straight
+into data following [AUTHORING.md](AUTHORING.md), which is the complete brief (rules, answer types, every picture kind).
+Module 1 below keeps its approved script document and its own test.
 
-## Building a module (Module 1 is the reference implementation)
+1. **Write** `src/features/lessons/content/<moduleId>.ts` (e.g. `g4m2.ts`) exactly per AUTHORING.md, and register it in
+   `content/index.ts`. Data only — the engine (`script.ts`, `Pictures.tsx`, `Diagrams.tsx`, the player) is shared.
+2. **Answer key, independently.** Someone who has NOT written the module runs `node scripts/lesson-questions.mjs <moduleId>`
+   (questions + pictures, no answers) and writes `src/__tests__/answerKeys/<moduleId>.ts`. A module without a key fails.
+3. **Gate:** `src/__tests__/lessonsAllModules.test.ts` — titles match curriculum.md, the 9-screen structure, well-formed
+   answers whose last worked step states them, hints/Screen 9 that don't leak numbers, every picture renders, and the
+   key agrees. Where lesson and key disagree, re-solve by hand; do not "fix" whichever is inconvenient.
+4. **Look:** `/lesson-preview?module=<moduleId>` (dev only) shows every screen, Screen 8, twin and practice picture with
+   its answer. Read every Screen 8 / practice picture asking "does this show the answer?".
+
+## Building (where things live)
 
 | file | what |
 |---|---|
-| `src/features/lessons/script.ts` | the flow (pure) + `Picture` / `Op` types + `answerOf` / `workedSteps`. Shared — only add a new `Picture` kind or `Op` type if a module needs one |
-| `src/features/lessons/grade3Module1.ts` | **copy this shape** to `grade3ModuleN.ts`: one `Lesson` per topic, text copied verbatim from the approved doc. Each needs `won` AND `twinWon` (only the twin's numbers); the twin's hints are derived (`hintsFor`) |
-| `src/features/lessons/Pictures.tsx` | the code-drawn pictures; add a renderer here for any new `Picture` kind |
-| `src/features/lessons/LessonList.tsx` · `LessonPlayer.tsx` · `src/app/lesson/page.tsx` | list, player, route. ⚠️ List and route currently know only `GRADE3_MODULE1` — a second module means turning that into a list of modules |
-| `src/__tests__/lessonsGrade3Module1.test.ts` | **copy this** per module |
+| `src/features/lessons/script.ts` | the flow (pure), `Picture` / `Answer` types, `isCorrect`, `showAnswer` |
+| `src/features/lessons/Diagrams.tsx` | every Grades 3–8 diagram (bars, number lines, clocks, rulers, grids, shapes, graphs, coordinate plane…) |
+| `src/features/lessons/AnswerInput.tsx` | number / fraction / time / choice answer boxes (shape decided per lesson, never per problem) |
+| `src/features/lessons/modules.ts` | every grade's modules (titles from the curriculum PDFs), `findLesson`, `mixedPractice` |
+| `src/features/lessons/grade3Module1.ts` + `lessonsGrade3Module1.test.ts` | Module 1 (uses `op`, derived answers; its test reads the approved script doc word for word) |
+| `/modules?grade=N` · `/lesson?module=…` · `/lesson?id=…` · `/practice?module=…` | grade tabs home, topic path, player, mixed practice |
 
-- Lesson ids: `g3m<module>-t<topic>` (e.g. `g3m2-t4`).
-- **Answers are derived** from each problem's `op`, never typed into the lesson data. Where a
-  problem is not multiplication/division (time, rounding, fractions, area…), add an `Op` type with
-  its own `answerOf` and `workedSteps` case.
-- ⚠️ **The test's expected answers are WRITTEN OUT from the approved doc's "Answers:" lines**, not
-  imported — a check that derives its expectation from the lesson data passes on any typo. Plant
-  one wrong number and watch the test go red before trusting it.
-
-## Checks before calling a module done
-
-- `npx tsc --noEmit` · `npm test` · `npx next build`, then bump `public/sw.js` VERSION.
-- **Play it in the browser**: one topic through every branch (3 misses → twin → practice misses →
-  replay → finish), every other topic straight through, and LOOK at every picture — Module 1's two
-  display bugs (rows wrapping into a line, a turned tray overlapping a button) were visible only on
-  screen. CSS animations freeze in a background tab; read `getAnimations()` rather than trusting a
-  screenshot taken mid-animation.
-
-## Open limits (as of 2026-09-13)
+## Open limits (as of 2026-09-14)
 
 - Progress is per-device (`src/infra/storage/lessonProgress.ts`), not synced; parents/teachers
   cannot pick topics yet. Both need a `chapters` row per lesson id (a migration).
-- Lessons are shown to every age band. Objects are simple code-drawn shapes, not art.
+- Every child sees grade tabs 3–8 (no grade is assigned yet). Founder's call 2026-09-14: parents will see all modules and pick the topics — not built yet.
+- Objects are simple code-drawn shapes; Topic 1 of Module 1 has drawn art (Higgsfield).
 - The legacy chapters are hidden behind `LEGACY_CHAPTERS_HIDDEN` in `src/core/chapters.ts`.
 
 ## The approved Grade 3 topic split (founder-approved 2026-09-13)
