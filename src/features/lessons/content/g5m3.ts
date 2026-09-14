@@ -32,7 +32,7 @@ export const G5M3: Lesson[] = [
     id: 'g5m3-t1', title: 'A fraction is a division', skill: 'Write a division as a fraction (3 ÷ 4 = 3/4)',
     bigIdea: 'A fraction is a share. 3 ÷ 4 is the same as 3/4.',
     screens: [
-      { title: 'Pizza for four', text: '3 pizzas are shared equally by 4 friends. How much pizza does each friend get?',
+      { scene: 'g5m3-t1', title: 'Pizza for four', text: '3 pizzas are shared equally by 4 friends. How much pizza does each friend get?',
         pictures: [wholes(3)] },
       { title: 'Not even one each', text: 'There are fewer pizzas than friends. Nobody gets a whole pizza. So the answer is not a whole number.',
         pictures: [wholes(3)] },
@@ -88,7 +88,7 @@ export const G5M3: Lesson[] = [
     id: 'g5m3-t2', title: 'A fraction of a whole number', skill: 'Find a fraction of a whole number (2/3 of 12)',
     bigIdea: 'To find 2/3 of 12, cut 12 into 3 equal parts and take 2 of them.',
     screens: [
-      { title: 'Sharing stickers', text: 'You have 12 stickers. You give 2/3 of them to your sister. How many stickers is that?',
+      { scene: 'g5m3-t2', title: 'Sharing stickers', text: 'You have 12 stickers. You give 2/3 of them to your sister. How many stickers is that?',
         pictures: [tape(1, '12 stickers')] },
       { title: 'Not 2, and not 3', text: '2/3 is not a number of stickers. You cannot just give 2 or 3. First you need to know how big one third of 12 is.',
         pictures: [tape(1, '12 stickers')] },
@@ -144,7 +144,7 @@ export const G5M3: Lesson[] = [
     id: 'g5m3-t3', title: 'A fraction of a fraction', skill: 'Multiply a fraction by a fraction with an area picture',
     bigIdea: 'You are taking a piece of a piece. The answer is a smaller piece of the whole pan.',
     screens: [
-      { title: 'Half a pan', text: 'You have half a pan of brownies. You eat 1/3 of that half. How much of the whole pan did you eat?',
+      { scene: 'g5m3-t3', title: 'Half a pan', text: 'You have half a pan of brownies. You eat 1/3 of that half. How much of the whole pan did you eat?',
         pictures: [pan(2, 3, 1)] },
       { title: 'A third of what?', text: 'The 1/3 is a third of the half, not of the whole pan. So we have to see your piece on the whole pan.',
         pictures: [pan(2, 3, 1)] },
@@ -200,7 +200,7 @@ export const G5M3: Lesson[] = [
     id: 'g5m3-t4', title: 'Area with fraction sides', skill: 'Find the area of a rectangle with fraction side lengths',
     bigIdea: 'Put the rectangle on one square meter. Count the pieces it covers out of all the pieces.',
     screens: [
-      { title: 'A small rug', text: 'A rug is 1/2 meter wide and 3/4 meter long. How much floor does it cover?',
+      { scene: 'g5m3-t4', title: 'A small rug', text: 'A rug is 1/2 meter wide and 3/4 meter long. How much floor does it cover?',
         pictures: [meter(2, 4, 1, 3)] },
       { title: 'No whole squares to count', text: 'With whole-number sides you count square meters. This rug is smaller than one square meter, so there is not even one to count.',
         pictures: [meter(2, 4, 1, 3)] },
@@ -256,7 +256,7 @@ export const G5M3: Lesson[] = [
     id: 'g5m3-t5', title: 'Times less than 1 makes it smaller', skill: 'Tell if a product is bigger or smaller than a number without working it out',
     bigIdea: 'Times a number less than 1 gives less than you started with. Times more than 1 gives more.',
     screens: [
-      { title: 'Part of a recipe', text: 'A recipe uses 8 cups of flour. You make 3/4 of the recipe. Will you use more than 8 cups, or less?',
+      { scene: 'g5m3-t5', title: 'Part of a recipe', text: 'A recipe uses 8 cups of flour. You make 3/4 of the recipe. Will you use more than 8 cups, or less?',
         pictures: [{ kind: 'tape', rows: [{ label: 'Recipe', cells: [{ w: 8, text: '8 cups' }] }] }] },
       { title: 'Times used to mean more', text: 'Before, times always made a number bigger: 3 × 8 = 24. But 3 is more than 1. A fraction can be less than 1.',
         pictures: [{ kind: 'tape', rows: [{ label: 'Recipe', cells: [{ w: 8, text: '8 cups' }] }] }] },
@@ -312,7 +312,7 @@ export const G5M3: Lesson[] = [
     id: 'g5m3-t6', title: 'How many small pieces fit?', skill: 'Divide a whole number by a unit fraction',
     bigIdea: 'Dividing by a small piece means: how many of these little pieces fit?',
     screens: [
-      { title: 'Making bows', text: 'You have 2 yards of ribbon. Each bow uses 1/4 yard. How many bows can you make?',
+      { scene: 'g5m3-t6', title: 'Making bows', text: 'You have 2 yards of ribbon. Each bow uses 1/4 yard. How many bows can you make?',
         pictures: [wholes(2)] },
       { title: 'Sharing does not fit', text: 'You cannot share 2 yards among 1/4 of a friend. So dividing by 1/4 needs a different question.',
         pictures: [wholes(2)] },
@@ -368,7 +368,7 @@ export const G5M3: Lesson[] = [
     id: 'g5m3-t7', title: 'Share a small piece', skill: 'Divide a unit fraction by a whole number',
     bigIdea: 'Sharing a piece makes smaller pieces. Cut it up, then see how big one share is in the whole.',
     screens: [
-      { title: 'Leftover pie', text: 'Half of a pie is left. 3 friends share it equally. How much of the whole pie does each friend get?',
+      { scene: 'g5m3-t7', title: 'Leftover pie', text: 'Half of a pie is left. 3 friends share it equally. How much of the whole pie does each friend get?',
         pictures: [piece(2, 1)] },
       { title: 'A third of what?', text: 'Each friend gets 1 of 3 pieces of the half. But the question asks how much of the whole pie that is.',
         pictures: [piece(2, 1)] },
@@ -424,7 +424,7 @@ export const G5M3: Lesson[] = [
     id: 'g5m3-t8', title: 'Fraction times-and-share stories', skill: 'Choose fraction multiplication or division to solve a story',
     bigIdea: 'Draw the story first. Are you taking part of an amount, or counting how many pieces fit?',
     screens: [
-      { title: 'A walk on the trail', text: 'A trail is 4 miles long. You walk 3/4 of it before lunch. How far do you walk before lunch?',
+      { scene: 'g5m3-t8', title: 'A walk on the trail', text: 'A trail is 4 miles long. You walk 3/4 of it before lunch. How far do you walk before lunch?',
         pictures: [tape(4, '4 miles', 0, '1 mile')] },
       { title: 'Same numbers, two questions', text: 'A story can use a fraction to take part of an amount. Or it can say how big each piece is. The words tell you which.',
         pictures: [tape(4, '4 miles', 0, '1 mile')] },

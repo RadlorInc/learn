@@ -21,7 +21,7 @@ export const G5M6: Lesson[] = [
     id: 'g5m6-t1', title: 'Points on a grid', skill: 'Read where a point is on a grid: across first, then up',
     bigIdea: 'Go across first, then up. 3 across and 5 up is the point (3, 5).',
     screens: [
-      { title: 'Find the treasure', text: 'A treasure map is a grid. The treasure is at point A. How can you tell a friend exactly where it is?',
+      { scene: 'g5m6-t1', title: 'Find the treasure', text: 'A treasure map is a grid. The treasure is at point A. How can you tell a friend exactly where it is?',
         pictures: [grid(6, [{ x: 3, y: 5, label: 'A' }])] },
       { title: 'Pointing is not enough', text: '"Up there, near the middle" could mean lots of spots. You need two numbers, and an order to read them in.',
         pictures: [grid(6, [{ x: 3, y: 5, label: 'A' }])] },
@@ -76,7 +76,7 @@ export const G5M6: Lesson[] = [
     id: 'g5m6-t2', title: 'Plot a point', skill: 'Find the spot on a grid for a pair of numbers',
     bigIdea: 'To find (4, 2), start at 0. Go 4 across, then 2 up. Put the dot there.',
     screens: [
-      { title: 'Where does the flag go?', text: 'Your friend says, "Put the flag at (4, 2)." Where on the grid does it go?',
+      { scene: 'g5m6-t2', title: 'Where does the flag go?', text: 'Your friend says, "Put the flag at (4, 2)." Where on the grid does it go?',
         pictures: [grid(6)] },
       { title: 'Two numbers, two moves', text: 'The grid has lots of spots. The pair (4, 2) tells you which one, but only if you make the moves in the right order.',
         pictures: [grid(6)] },
@@ -131,7 +131,7 @@ export const G5M6: Lesson[] = [
     id: 'g5m6-t3', title: 'Two number patterns', skill: 'Make two number patterns from two rules and compare them',
     bigIdea: 'Follow each rule one step at a time. Then line the two patterns up and compare the numbers in each column.',
     screens: [
-      { title: 'Two piggy banks', text: 'Mia and Leo both start with 0 dollars. Each week Mia puts in 2 dollars and Leo puts in 6. How do their savings compare?',
+      { scene: 'g5m6-t3', title: 'Two piggy banks', text: 'Mia and Leo both start with 0 dollars. Each week Mia puts in 2 dollars and Leo puts in 6. How do their savings compare?',
         pictures: [pat(NTH.slice(0, 5), ['0', '?', '?', '?', '?'], ['0', '?', '?', '?', '?'])] },
       { title: 'A guess can fool you', text: 'You might guess Leo always has 4 dollars more. But Leo gets further ahead every week. You need to write both lists out.',
         pictures: [pat(NTH.slice(0, 5), ['0', '?', '?', '?', '?'], ['0', '?', '?', '?', '?'])] },
@@ -187,7 +187,7 @@ export const G5M6: Lesson[] = [
     id: 'g5m6-t4', title: 'Graph the pattern pairs', skill: 'Turn two patterns into pairs and plot them as points',
     bigIdea: 'Take the two numbers in each column as a pair. The top number goes across, the bottom number goes up.',
     screens: [
-      { title: 'Two patterns', text: 'Pattern A: start at 0, add 1. Pattern B: start at 0, add 2. What do the two patterns look like on a grid?',
+      { scene: 'g5m6-t4', title: 'Two patterns', text: 'Pattern A: start at 0, add 1. Pattern B: start at 0, add 2. What do the two patterns look like on a grid?',
         pictures: [pat(NTH.slice(0, 4), ['0', '1', '2', '3'], ['0', '2', '4', '6'])] },
       { title: 'Lists are not dots', text: 'A grid does not take a list of numbers. Every dot needs two numbers: one across and one up.',
         pictures: [pat(NTH.slice(0, 4), ['0', '1', '2', '3'], ['0', '2', '4', '6']), grid(8)] },
@@ -243,7 +243,7 @@ export const G5M6: Lesson[] = [
     id: 'g5m6-t5', title: 'Distance along a grid line', skill: 'Find how far apart two points are when they share a number',
     bigIdea: 'When two points share one number, they are on the same straight line. Subtract the other two numbers.',
     screens: [
-      { title: 'A walk in the park', text: 'A path runs straight across a park grid. A bench is at point A and a tree is at point B. How many units apart are they?',
+      { scene: 'g5m6-t5', title: 'A walk in the park', text: 'A path runs straight across a park grid. A bench is at point A and a tree is at point B. How many units apart are they?',
         pictures: [grid(8, [{ x: 2, y: 3, label: 'A' }, { x: 7, y: 3, label: 'B' }])] },
       { title: 'Counting is slow', text: 'You could count every step. But on a big grid that takes a long time, and it is easy to lose count.',
         pictures: [grid(8, [{ x: 2, y: 3, label: 'A' }, { x: 7, y: 3, label: 'B' }])] },
@@ -299,7 +299,7 @@ export const G5M6: Lesson[] = [
     id: 'g5m6-t6', title: 'Maps on a grid', skill: 'Use a grid map to find places and count blocks between them',
     bigIdea: 'On a map grid, every place has a pair: across first, then up. Along one straight street, subtract to count the blocks.',
     screens: [
-      { title: 'Your town map', text: 'This town map is a grid, and each line is a street. How many blocks is it from the school to the park?',
+      { scene: 'g5m6-t6', title: 'Your town map', text: 'This town map is a grid, and each line is a street. How many blocks is it from the school to the park?',
         pictures: [grid(10, [{ x: 2, y: 3, label: 'School' }, { x: 2, y: 8, label: 'Park' }, { x: 6, y: 1, label: 'Library' }])] },
       { title: 'Easy to lose count', text: 'You could trace the street with your finger and count. On a busy map, it is easy to skip a block or count one twice.',
         pictures: [grid(10, [{ x: 2, y: 3, label: 'School' }, { x: 2, y: 8, label: 'Park' }, { x: 6, y: 1, label: 'Library' }])] },

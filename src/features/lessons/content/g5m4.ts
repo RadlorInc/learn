@@ -42,7 +42,7 @@ export const G5M4: Lesson[] = [
     id: 'g5m4-t1', title: 'Thousandths', skill: 'Read and write thousandths, and name the value of a digit',
     bigIdea: 'The third place after the point is thousandths. So 47 thousandths is 0.047.',
     screens: [
-      { title: 'A tiny seed', text: 'A seed is so light it weighs 47 thousandths of a gram. How do you write that with a point?',
+      { scene: 'g5m4-t1', title: 'A tiny seed', text: 'A seed is so light it weighs 47 thousandths of a gram. How do you write that with a point?',
         pictures: [{ kind: 'eq', text: '47 thousandths of a gram' }] },
       { title: 'Hundredths are too big', text: 'You know tenths and hundredths. But a hundredth of a gram is still too big for this seed. We need smaller pieces.',
         pictures: [{ kind: 'table', head: ['Ones', 'Tenths', 'Hundredths'], rows: [['0', '?', '?']] }] },
@@ -96,7 +96,7 @@ export const G5M4: Lesson[] = [
     id: 'g5m4-t2', title: 'Compare decimals to thousandths', skill: 'Compare two decimals to thousandths with <, > or =',
     bigIdea: 'Line up the places and compare from the left. The first place that is different decides.',
     screens: [
-      { title: 'A snail race', text: 'Two snails race. One crawls 0.4 meters. The other crawls 0.389 meters. Which one crawls farther?',
+      { scene: 'g5m4-t2', title: 'A snail race', text: 'Two snails race. One crawls 0.4 meters. The other crawls 0.389 meters. Which one crawls farther?',
         pictures: [cmp([['0.4', '0', '4', '', ''], ['0.389', '0', '3', '8', '9']])] },
       { title: 'Longer is not bigger', text: '0.389 has more digits, and 389 is much more than 4. So it looks bigger. But the digits after the point are not whole numbers.',
         pictures: [{ kind: 'eq', text: '0.4 ? 0.389' }] },
@@ -150,7 +150,7 @@ export const G5M4: Lesson[] = [
     id: 'g5m4-t3', title: 'Round decimals', skill: 'Round a decimal to the nearest whole, tenth or hundredth',
     bigIdea: 'Find the two numbers it sits between, then pick the closer one. Halfway or past it rounds up.',
     screens: [
-      { title: 'How long is the ribbon?', text: 'A ribbon is 3.27 meters long. The shop only writes tenths of a meter on the tag. What should the tag say?',
+      { scene: 'g5m4-t3', title: 'How long is the ribbon?', text: 'A ribbon is 3.27 meters long. The shop only writes tenths of a meter on the tag. What should the tag say?',
         pictures: [{ kind: 'numline', min: 3.2, max: 3.3, ticks: 10, labels: 'ends', points: [{ at: 3.27 }] }] },
       { title: 'Too many places', text: 'A tenth is one place after the point. 3.27 has two places. So we need a number with one place: 3.2 or 3.3?',
         pictures: [{ kind: 'numline', min: 3.2, max: 3.3, ticks: 10, labels: 'ends', points: [{ at: 3.27 }] }] },
@@ -206,7 +206,7 @@ export const G5M4: Lesson[] = [
     id: 'g5m4-t4', title: 'Add decimals (line up the point)', skill: 'Add decimals to hundredths and thousandths by lining up the points',
     bigIdea: 'Line up the points, so each place sits under the same place. Then add like whole numbers and bring the point straight down.',
     screens: [
-      { title: 'Two bags of apples', text: 'One bag of apples weighs 12.45 pounds. Another bag weighs 3.7 pounds. How much do they weigh together?',
+      { scene: 'g5m4-t4', title: 'Two bags of apples', text: 'One bag of apples weighs 12.45 pounds. Another bag weighs 3.7 pounds. How much do they weigh together?',
         pictures: [{ kind: 'eq', text: '12.45 + 3.7' }] },
       { title: 'The last digits trick you', text: 'If you line up the last digits, the 7 tenths sits under the 5 hundredths. Different places get mixed together.',
         pictures: [{ kind: 'columns', rows: ['12.45', '3.7'], op: '+' }] },
@@ -260,7 +260,7 @@ export const G5M4: Lesson[] = [
     id: 'g5m4-t5', title: 'Take away decimals', skill: 'Subtract decimals to hundredths by lining up the points',
     bigIdea: 'Line up the points and fill any empty place with a 0. Then take away like whole numbers.',
     screens: [
-      { title: 'Juice left over', text: 'A jug holds 5.2 liters of juice. You pour out 1.35 liters. How much juice is left?',
+      { scene: 'g5m4-t5', title: 'Juice left over', text: 'A jug holds 5.2 liters of juice. You pour out 1.35 liters. How much juice is left?',
         pictures: [{ kind: 'eq', text: '5.2 − 1.35' }] },
       { title: 'A place is empty', text: '5.2 has nothing in the hundredths place, but 1.35 has 5 hundredths. It looks like there is nothing to take the 5 from.',
         pictures: [{ kind: 'columns', rows: ['5.2 ', '1.35'], op: '−' }] },
@@ -314,7 +314,7 @@ export const G5M4: Lesson[] = [
     id: 'g5m4-t6', title: 'Multiply a decimal by a whole number', skill: 'Multiply a decimal to hundredths by a one-digit whole number',
     bigIdea: 'Break the decimal into wholes, tenths and hundredths. Multiply each part, then add.',
     screens: [
-      { title: 'Three smoothies', text: 'One smoothie costs $1.25. You buy 3 smoothies. How much do you pay?',
+      { scene: 'g5m4-t6', title: 'Three smoothies', text: 'One smoothie costs $1.25. You buy 3 smoothies. How much do you pay?',
         pictures: [{ kind: 'eq', text: '3 × $1.25' }] },
       { title: 'Adding again is slow', text: 'You could add 1.25 + 1.25 + 1.25. But for 8 or 9 smoothies, that takes a long time.',
         pictures: [{ kind: 'eq', text: '1.25 + 1.25 + 1.25' }] },
@@ -369,7 +369,7 @@ export const G5M4: Lesson[] = [
     id: 'g5m4-t7', title: 'Multiply and divide by 10, 100, 1,000', skill: 'Multiply and divide decimals by 10, 100 and 1,000 by moving the digits',
     bigIdea: 'Multiply by 10 and every digit moves one place left. Divide by 10 and every digit moves one place right; 100 is two places and 1,000 is three.',
     screens: [
-      { title: 'A store full of rice', text: 'One bag of rice weighs 2.36 kilograms. A store has 100 bags. How many kilograms is that?',
+      { scene: 'g5m4-t7', title: 'A store full of rice', text: 'One bag of rice weighs 2.36 kilograms. A store has 100 bags. How many kilograms is that?',
         pictures: [shift([['', '', '2', '3', '6']])] },
       { title: 'Adding zeros does not work', text: 'For whole numbers, times 100 puts two zeros on the end. But 2.3600 is still just 2.36. Zeros after the point change nothing.',
         pictures: [{ kind: 'eq', text: '2.3600 = 2.36' }] },
@@ -423,7 +423,7 @@ export const G5M4: Lesson[] = [
     id: 'g5m4-t8', title: 'Divide a decimal by a whole number', skill: 'Divide a decimal to hundredths by a one-digit whole number',
     bigIdea: 'Count the decimal in tenths. Share the tenths equally, then write the answer with a point again.',
     screens: [
-      { title: 'Share a ribbon', text: 'A ribbon is 7.2 meters long. You cut it into 3 equal pieces. How long is each piece?',
+      { scene: 'g5m4-t8', title: 'Share a ribbon', text: 'A ribbon is 7.2 meters long. You cut it into 3 equal pieces. How long is each piece?',
         pictures: [share(3, '7.2 m')] },
       { title: 'It does not share evenly', text: '7 whole meters do not share into 3 equal pieces: 3 pieces of 2 is 6, and 1 meter is left over. And there is still the 0.2.',
         pictures: [share(3, '7.2 m')] },
@@ -477,7 +477,7 @@ export const G5M4: Lesson[] = [
     id: 'g5m4-t9', title: 'Change metric units', skill: 'Convert km/m, m/cm, kg/g and L/mL by multiplying or dividing by 10, 100 or 1,000',
     bigIdea: 'To change to a smaller unit, multiply, because you need more of them. To change to a bigger unit, divide, because you need fewer.',
     screens: [
-      { title: 'A long trail', text: 'A trail is 2.5 kilometers long. The sign at the start counts in meters. How many meters long is the trail?',
+      { scene: 'g5m4-t9', title: 'A long trail', text: 'A trail is 2.5 kilometers long. The sign at the start counts in meters. How many meters long is the trail?',
         pictures: [units('Kilometers', 'Meters', [['2.5', '?']])] },
       { title: 'Two sizes of unit', text: 'A kilometer is much longer than a meter. So the same trail is a small number of kilometers, but a big number of meters.',
         pictures: [{ kind: 'eq', text: '1 kilometer = 1,000 meters' }] },

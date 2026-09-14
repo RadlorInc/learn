@@ -23,7 +23,7 @@ export const G5M5: Lesson[] = [
     id: 'g5m5-t1', title: 'Volume is counting cubes', skill: 'The space inside a box is the number of unit cubes that fill it',
     bigIdea: 'To find how much space is inside a box, count the small cubes that fill it, with no gaps.',
     screens: [
-      { title: 'A box of blocks', text: 'A toy box is packed with small blocks, all the same size. How much space is inside the box?',
+      { scene: 'g5m5-t1', title: 'A box of blocks', text: 'A toy box is packed with small blocks, all the same size. How much space is inside the box?',
         pictures: [{ kind: 'cubes', l: 3, w: 2, h: 2 }] },
       { title: 'Flat tiles are not enough', text: 'Tiles cover a flat floor. But a box has space going up too. Flat tiles can never fill it.',
         pictures: [{ kind: 'cubes', l: 3, w: 2, h: 2, layers: 1 }] },
@@ -76,7 +76,7 @@ export const G5M5: Lesson[] = [
     id: 'g5m5-t2', title: 'One layer times how many layers', skill: 'Volume of a box: cubes in one layer × number of layers',
     bigIdea: 'Volume is how many cubes fill the inside. Find one layer, then multiply by how many layers.',
     screens: [
-      { title: 'A box to pack', text: 'A box is packed with little cubes. It is 4 cubes long, 3 cubes wide and 2 layers high. How many cubes are inside?',
+      { scene: 'g5m5-t2', title: 'A box to pack', text: 'A box is packed with little cubes. It is 4 cubes long, 3 cubes wide and 2 layers high. How many cubes are inside?',
         pictures: [{ kind: 'cubes', l: 4, w: 3, h: 2 }] },
       { title: 'Too many to count', text: 'Many cubes hide at the back and underneath. If you count them one by one, you may miss some.',
         pictures: [{ kind: 'cubes', l: 4, w: 3, h: 2 }] },
@@ -129,7 +129,7 @@ export const G5M5: Lesson[] = [
     id: 'g5m5-t3', title: 'Length × width × height', skill: 'Volume of a box = length × width × height',
     bigIdea: 'Multiply the length, the width and the height. That gives the volume of a box.',
     screens: [
-      { title: 'A fish tank', text: 'A fish tank is 5 feet long, 2 feet wide and 3 feet tall. How much water can fit inside?',
+      { scene: 'g5m5-t3', title: 'A fish tank', text: 'A fish tank is 5 feet long, 2 feet wide and 3 feet tall. How much water can fit inside?',
         pictures: [{ kind: 'solid', shape: 'prism', labels: { l: '5 ft', w: '2 ft', h: '3 ft' } }] },
       { title: 'No cubes to count', text: 'There are no cubes drawn inside the tank. But you do know how long each edge is.',
         pictures: [{ kind: 'solid', shape: 'prism', labels: { l: '5 ft', w: '2 ft', h: '3 ft' } }] },
@@ -183,7 +183,7 @@ export const G5M5: Lesson[] = [
     id: 'g5m5-t4', title: 'Two boxes joined together', skill: 'Volume of a solid made of two boxes: find each box, then add',
     bigIdea: 'When two boxes are joined, find the volume of each box, then add them.',
     screens: [
-      { title: 'A toy chest', text: 'A toy chest is a big box with a small box joined on top. How much space is inside it all?',
+      { scene: 'g5m5-t4', title: 'A toy chest', text: 'A toy chest is a big box with a small box joined on top. How much space is inside it all?',
         pictures: [{ kind: 'solid', shape: 'prism', labels: { l: '4 ft', w: '2 ft', h: '3 ft' } }, { kind: 'solid', shape: 'prism', labels: { l: '2 ft', w: '2 ft', h: '1 ft' } }] },
       { title: 'It is not one box', text: 'You cannot use one length, one width and one height. The two boxes are different sizes.',
         pictures: [boxes(['4 ft', '2 ft', '3 ft'], ['2 ft', '2 ft', '1 ft'], ['big box', 'small box'])] },
@@ -237,7 +237,7 @@ export const G5M5: Lesson[] = [
     id: 'g5m5-t5', title: 'Tiles with fraction sides', skill: 'Area of a rectangle with fraction side lengths, with unit fraction tiles',
     bigIdea: 'Cut the sides into halves and count the small tiles. It takes 4 small tiles to make 1 square foot.',
     screens: [
-      { title: 'A rug with fraction sides', text: 'A rug is 2 1/2 feet long and 1 1/2 feet wide. How many square feet does it cover?',
+      { scene: 'g5m5-t5', title: 'A rug with fraction sides', text: 'A rug is 2 1/2 feet long and 1 1/2 feet wide. How many square feet does it cover?',
         pictures: [{ kind: 'grid', rows: 3, cols: 5, top: '2 1/2 ft', left: '1 1/2 ft' }] },
       { title: 'Big tiles do not fit', text: 'A 1-foot square tile does not fit the rug. Put tiles along the side, and half a tile is left over.',
         pictures: [{ kind: 'grid', rows: 3, cols: 5, top: '2 1/2 ft', left: '1 1/2 ft', shade: [{ r: 0, c: 0, h: 2, w: 2, tone: 2 }, { r: 0, c: 2, h: 2, w: 2, tone: 2 }] }] },
@@ -296,7 +296,7 @@ export const G5M5: Lesson[] = [
     id: 'g5m5-t6', title: 'Sort four-sided shapes into families', skill: 'Four-sided shapes belong to families inside families (square, rectangle, rhombus, parallelogram)',
     bigIdea: 'A shape can belong to more than one family. If it follows a family’s rule, that name fits it too.',
     screens: [
-      { title: 'The tile shop bins', text: 'A tile shop sorts four-sided tiles into bins: parallelograms, rectangles, rhombuses and squares. Which bin does a square tile go in?',
+      { scene: 'g5m5-t6', title: 'The tile shop bins', text: 'A tile shop sorts four-sided tiles into bins: parallelograms, rectangles, rhombuses and squares. Which bin does a square tile go in?',
         pictures: [FAMILY] },
       { title: 'More than one bin fits', text: 'A square has 4 square corners, so it fits the rectangle bin. It has 4 equal sides, so it fits the rhombus bin too.',
         pictures: [{ kind: 'poly', shapes: [{ pts: sq, tone: 1, right: ALL4, ticks: ALL4 }, { pts: rect, tone: 2 }, { pts: rhom, tone: 3 }, { pts: lean, tone: 4 }] }] },
@@ -357,7 +357,7 @@ export const G5M5: Lesson[] = [
     id: 'g5m5-t7', title: 'Cubic units', skill: 'Volume is measured in cubic units; pick a cube size that fits the thing',
     bigIdea: 'Space inside is measured with cubes, so its unit is a cube: a cubic inch, a cubic foot, a cubic meter.',
     screens: [
-      { title: 'A lunch box and a truck', text: 'A lunch box and a moving truck both have space inside. Would you measure them with the same size cube?',
+      { scene: 'g5m5-t7', title: 'A lunch box and a truck', text: 'A lunch box and a moving truck both have space inside. Would you measure them with the same size cube?',
         pictures: [{ kind: 'cubes', l: 3, w: 2, h: 2 }] },
       { title: 'Flat squares cannot fill it', text: 'A square unit is flat, like a sticker. It covers a floor, but it has no height, so it cannot fill a box.',
         pictures: [{ kind: 'cubes', l: 3, w: 2, h: 2, layers: 1 }] },

@@ -94,7 +94,7 @@ export interface Screen {
   title: string
   text: string
   pictures: Picture[]
-  scene?: 'table'         // a drawn backdrop behind the pictures (public/assets/lessons/<scene>.webp)
+  scene?: string          // a drawn backdrop behind the pictures (public/assets/lessons/<scene>.webp); lessonScenes.test.ts checks the file exists
 }
 
 export interface Lesson {
