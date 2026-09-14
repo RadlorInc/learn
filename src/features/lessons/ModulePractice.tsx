@@ -9,9 +9,10 @@
  */
 import Link from 'next/link'
 import { useState } from 'react'
-import { answerOf, workedSteps } from './script'
+import { solutionOf, stepsOf, showAnswer, isCorrect } from './script'
+import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { Pic, tapCue, pill } from './Pictures'
-import { stage, bubble, primary, hint, idea, cue, tick, right, answerInput } from './Frame'
+import { stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { PracticeLayout, hintBtn } from './PracticeLayout'
 import { mixedPractice, type Module } from './modules'
 
@@ -41,8 +42,8 @@ export function ModulePractice({ module, onExit }: { module: Module; onExit: () 
 
   const { problem, lesson } = items[i]
   const submit = () => {
-    if (value === '') return
-    if (Number(value) === answerOf(problem.op)) { setFeedback('right'); return }
+    if (!ready(solutionOf(problem), value)) return
+    if (isCorrect(solutionOf(problem), value)) { setFeedback('right'); return }
     const m = misses + 1
     setMisses(m); setFeedback(m === 1 ? 'idea' : 'worked'); setValue('')   // a wrong answer must not sit there to be re-submitted
   }
@@ -60,17 +61,17 @@ export function ModulePractice({ module, onExit }: { module: Module; onExit: () 
     {answering && (
       <form id="pr-answer" onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
         <b style={{ fontSize: 22 }}>Your answer</b>
-        <input aria-label="Your answer" inputMode="numeric" pattern="[0-9]*" maxLength={3} value={value}
-          onChange={e => setValue(e.target.value.replace(/\D/g, ''))} style={answerInput} />
+        <AnswerInput answer={solutionOf(problem)} value={value} onChange={setValue}
+          signed={needsSign(items.map(x => solutionOf(x.problem)))} mixed={needsWhole(items.map(x => solutionOf(x.problem)))} />
       </form>
     )}
 
     {(feedback === 'idea' || (asked && answering)) && <p style={idea}>{lesson.bigIdea}</p>}
-    {feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right! The answer is {answerOf(problem.op)}.</p>}
+    {feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right! The answer is {showAnswer(solutionOf(problem))}.</p>}
     {feedback === 'worked' && <>
       <div style={hint}>
         <b>Here&apos;s how this one works:</b>
-        <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{workedSteps(problem.op).map(t => <li key={t}>{t}</li>)}</ol>
+        <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{stepsOf(problem).map(t => <li key={t}>{t}</li>)}</ol>
       </div>
       <Link href={`/lesson?id=${lesson.id}`} style={{ ...pill, alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
         Watch the lesson: {lesson.title}
@@ -82,7 +83,7 @@ export function ModulePractice({ module, onExit }: { module: Module; onExit: () 
         ? <button type="button" style={hintBtn} onClick={() => setAsked(true)} disabled={asked || feedback === 'idea'}>Hint</button>
         : <span />}
       {answering
-        ? <button type="submit" form="pr-answer" style={primary} disabled={value === ''}>Check</button>
+        ? <button type="submit" form="pr-answer" style={primary} disabled={!ready(solutionOf(problem), value)}>Check</button>
         : <button type="button" style={primary} onClick={nextProblem}>{i === items.length - 1 ? 'Finish' : 'Next problem'}</button>}
     </div>
   </>, true)

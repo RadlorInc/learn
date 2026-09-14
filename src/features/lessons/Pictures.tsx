@@ -8,6 +8,7 @@
  */
 import type { CSSProperties } from 'react'
 import { scratchLineMax, type Obj, type Picture } from './script'
+import { Diagram } from './Diagrams'
 
 export const INK = '#2a1c14', SOFT = '#6d4c3d', ACCENT = '#ff6b4a', TEAL = '#0f8a7a', GOOD = '#1f7a43', BAD = '#c1121f', CARD = '#FFFFFF', LINE = '#d9c3a0'
 
@@ -82,7 +83,12 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
 
   switch (p.kind) {
     case 'eq':
-      return <div style={{ ...label, fontSize: 'clamp(26px, 5vw, 36px)', textAlign: 'center' }}>{p.text}</div>
+      return (
+        <div style={{ ...label, fontSize: 'clamp(26px, 5vw, 36px)', textAlign: 'center', lineHeight: 1.35 }}>
+          {p.text}
+          {p.lines?.map((l, i) => <div key={i} style={{ fontSize: 'clamp(22px, 4vw, 30px)', ...anim(i * 700, true) }}>{l}</div>)}
+        </div>
+      )
 
     case 'cards':
       // "One thing not to do": a big Not this card beside a big Do this card (the template's Trap door).
@@ -250,6 +256,9 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
         </div>
       )
     }
+
+    default:
+      return <Diagram p={p} />
   }
 }
 

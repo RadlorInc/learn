@@ -391,6 +391,11 @@ export default function ParentDashboard() {
               <button onClick={() => launchGame(active)} style={{ width:'100%', padding:'14px', background:'#fff', color:'#F26B2C', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>
                 ▶ Start learning
               </button>
+              {LEGACY_CHAPTERS_HIDDEN && active.accessRole === 'owner' && (
+                <button onClick={() => router.push(`/parent/topics?learner=${active.learner.id}`)} style={{ width:'100%', marginTop:10, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
+                  📚 Choose topics{active.learner.lesson_ids?.length ? ` · ${active.learner.lesson_ids.length} chosen` : ' · every topic'}
+                </button>
+              )}
               {!LEGACY_CHAPTERS_HIDDEN && <div style={{ display:'flex', gap:10, marginTop:10 }}>
                 <button onClick={() => findStartingPoint(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
                   🔍 Find starting point

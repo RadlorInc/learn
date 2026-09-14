@@ -1,12 +1,12 @@
 'use client'
 /**
- * The new-flow topic list, drawn as a winding path: Grade 3 · Module 1 in teaching order, one stop per topic.
+ * The new-flow topic list, drawn as a winding path: one module's topics in teaching order, one stop per topic.
  * Portrait (phone): the path runs top to bottom. Landscape (tablet sideways, laptop): it runs left to right.
  * The first unfinished topic is "Next up"; nothing is locked (a child may replay or jump ahead).
  */
 import Link from 'next/link'
 import { useSyncExternalStore, type CSSProperties } from 'react'
-import { GRADE3_MODULE1, MODULE_1_TITLE } from './grade3Module1'
+import type { Module } from './modules'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { Thing, INK, TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
 import type { Lesson, Obj } from './script'
@@ -24,12 +24,13 @@ const objOf = (l: Lesson): Obj | null => {
   return p && 'obj' in p ? p.obj : null
 }
 
-export function LessonList({ learnerId, back }: { learnerId: string | null; back?: { href: string; label: string } }) {
+export function LessonList({ module, learnerId, back }: { module: Module; learnerId: string | null; back?: { href: string; label: string } }) {
+  const lessons = module.lessons
   const across = useSyncExternalStore(subscribe, () => matchMedia(LANDSCAPE).matches, () => false)
   // Read during render: both callers mount this on the client only, after kv has hydrated.
-  const done = GRADE3_MODULE1.filter(l => lessonDone(learnerId, l.id)).map(l => l.id)
-  const nextUp = GRADE3_MODULE1.find(l => !done.includes(l.id))?.id
-  const n = GRADE3_MODULE1.length
+  const done = lessons.filter(l => lessonDone(learnerId, l.id)).map(l => l.id)
+  const nextUp = lessons.find(l => !done.includes(l.id))?.id
+  const n = lessons.length
 
   // Stop i's position. Vertical: left in %, top in px. Horizontal: both in px (the map scrolls sideways if it is wider than the screen).
   const along = (i: number) => STEP / 2 + i * STEP
@@ -50,25 +51,25 @@ export function LessonList({ learnerId, back }: { learnerId: string | null; back
       <div style={{ ...shell, maxWidth: across ? 1180 : 620, alignSelf: 'flex-start' }}>
         <div style={topBar}>
           {back ? <Link href={back.href} style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>{back.label}</Link> : <span />}
-          <span style={{ fontSize: 'clamp(15px, 3.6vw, 18px)', textAlign: 'center' }}>Grade 3 · Module 1</span>
+          <span style={{ fontSize: 'clamp(15px, 3.6vw, 18px)', textAlign: 'center' }}>Grade {module.grade} · Module {module.n}</span>
           <span style={{ background: '#ffd166', border: `3px solid ${INK}`, borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap' }}>{done.length} of {n} done</span>
         </div>
         <div style={{ padding: 'clamp(14px, 3vw, 24px)' }}>
-          <h1 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(26px, 4.5vw, 36px)', color: INK, lineHeight: 1.1 }}>{MODULE_1_TITLE}</h1>
+          <h1 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(26px, 4.5vw, 36px)', color: INK, lineHeight: 1.1 }}>{module.title}</h1>
 
           <div style={{ overflowX: across ? 'auto' : 'visible', paddingBottom: across ? 8 : 0 }}>
             <div style={{ position: 'relative', margin: '0 auto', ...(across ? { width: W, height: H } : { height: n * STEP }) }}>
               {/* The trail. Vertical: stretched to the box (non-scaling strokes keep an even width). A segment turns solid teal once its topic is done. */}
               <svg viewBox={`0 0 ${W} ${across ? H : n * STEP}`} preserveAspectRatio="none" aria-hidden
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}>
-                {GRADE3_MODULE1.slice(0, -1).map((l, i) => (
+                {lessons.slice(0, -1).map((l, i) => (
                   <path key={l.id} d={trail(i)} fill="none" strokeLinecap="round" vectorEffect="non-scaling-stroke"
                     stroke={done.includes(l.id) ? TEAL : INK} strokeWidth={done.includes(l.id) ? 12 : 5} strokeDasharray={done.includes(l.id) ? undefined : '2 14'} />
                 ))}
               </svg>
 
               <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                {GRADE3_MODULE1.map((l, i) => {
+                {lessons.map((l, i) => {
                   const isDone = done.includes(l.id), isNext = l.id === nextUp
                   const obj = objOf(l), size = isNext ? 84 : 68, { x, y } = pos(i)
                   const gap = size / 2 + 12

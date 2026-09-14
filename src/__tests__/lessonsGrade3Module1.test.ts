@@ -25,7 +25,7 @@ const MODULE_UNITS = [2, 3, 4, 5, 10]
 
 const opsOf = (id: string) => {
   const l = GRADE3_MODULE1.find(x => x.id === id)!
-  return [l.turn.op, l.turn.twin.op, ...l.practice.map(p => p.problem.op)]
+  return [l.turn.op!, l.turn.twin.op!, ...l.practice.map(p => p.problem.op!)]
 }
 
 describe('Grade 3 · Module 1 scripts', () => {
@@ -62,7 +62,7 @@ describe('Grade 3 · Module 1 scripts', () => {
     for (const l of GRADE3_MODULE1) {
       const problems = [l.turn, l.turn.twin, ...l.practice.map(p => p.problem)]
       for (const p of problems) {
-        const pic: Picture = p.picture, ans = answerOf(p.op)
+        const pic: Picture = p.picture, ans = answerOf(p.op!)
         if (pic.kind === 'line') {
           expect(pic.max, `${l.id}: a scratch line must not carry its own length`).toBeUndefined()
           const max = scratchLineMax(pic.step)
@@ -80,7 +80,7 @@ describe('Grade 3 · Module 1 scripts', () => {
       const s = { ...START, mode: 'turn' as const, twin: true }
       const hints = hintsFor(l, s).join(' ')
       expect(hints, l.id).not.toBe(`${l.turn.hint1} ${l.turn.hint2}`)
-      expect(tokens(hints), `${l.id}: ${hints}`).not.toContain(answerOf(l.turn.twin.op))
+      expect(tokens(hints), `${l.id}: ${hints}`).not.toContain(answerOf(l.turn.twin.op!))
       expect(hintsFor(l, { ...s, twin: false })).toEqual([l.turn.hint1, l.turn.hint2])
     }
   })
@@ -88,7 +88,7 @@ describe('Grade 3 · Module 1 scripts', () => {
   it('Screen 9 after the twin only uses numbers from the twin (never the first problem\'s)', () => {
     const nums = (t: string) => new Set(t.match(/\d+/g) ?? [])
     for (const l of GRADE3_MODULE1) {
-      const allowed = new Set([...nums(l.turn.twin.text), String(answerOf(l.turn.twin.op))])
+      const allowed = new Set([...nums(l.turn.twin.text), String(answerOf(l.turn.twin.op!))])
       const solved = wonFor(l, { ...START, mode: 'won', twin: true, misses: 0 })
       const helped = wonFor(l, { ...START, mode: 'won', twin: true, misses: 3 })
       for (const w of [solved, helped]) for (const n of nums(`${w.title} ${w.text} ${w.sticker}`)) {

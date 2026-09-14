@@ -23,7 +23,37 @@ export type Picture =
   | { kind: 'rings'; total: number; size: number; obj: Obj; state: 'start' | 'one' | 'all'; motion?: boolean }
   | { kind: 'triangle'; total: number; a: number; b: number | null; facts?: boolean }
   | { kind: 'cards'; wrong: string; right: string }
-  | { kind: 'eq'; text: string }
+  | { kind: 'eq'; text: string; lines?: string[] }
+  // ── Grades 3–8 diagrams (drawn in ./Diagrams.tsx; every field is documented in docs/new-flow/AUTHORING.md) ──
+  | { kind: 'bars'; bars: { parts: number; shaded: number; shade2?: number; split?: number; label?: string }[]; motion?: boolean }
+  | { kind: 'tape'; rows: { label?: string; cells: { w: number; text?: string; shade?: boolean }[]; brace?: string }[]; motion?: boolean }
+  | { kind: 'numline'; min: number; max: number; ticks: number; labels?: (string | null)[] | 'ends' | 'none';
+      points?: { at: number; label?: string; open?: boolean }[]; jumps?: { from: number; to: number; label?: string }[];
+      ray?: { from: number; dir: 'left' | 'right'; open: boolean }; motion?: boolean }
+  | { kind: 'clock'; h: number; m: number; hands?: boolean; fives?: boolean }
+  | { kind: 'measure'; tool: 'ruler' | 'scale' | 'jug' | 'thermometer'; min?: number; max: number; step: number; labelEvery?: number; value?: number | null; unit: string }
+  | { kind: 'blocks'; hundreds: number; tens: number; ones: number; trade?: 'ones' | 'tens'; motion?: boolean }
+  | { kind: 'columns'; rows: string[]; op?: '+' | '−' | '×'; carry?: string; places?: string[]; answer?: string | null; motion?: boolean }
+  | { kind: 'longdiv'; divisor: string; dividend: string; quotient?: string; work?: string[] }
+  | { kind: 'grid'; rows: number; cols: number; shade?: { r: number; c: number; h: number; w: number; tone?: 1 | 2 | 3 | 4 }[];
+      hide?: { r: number; c: number; h: number; w: number }[]; top?: string; left?: string; split?: { col?: number; row?: number }; motion?: boolean }
+  | { kind: 'area'; cols: string[]; rows: string[]; cells?: (string | null)[][]; widths?: number[]; heights?: number[]; motion?: boolean }
+  | { kind: 'poly'; grid?: boolean; motion?: boolean
+      shapes: { pts: [number, number][]; sides?: (string | null)[]; angles?: (string | null)[]; names?: (string | null)[]; right?: number[]; ticks?: number[]; tone?: 0 | 1 | 2 | 3 | 4; dashed?: boolean; open?: boolean }[]
+      segs?: { a: [number, number]; b: [number, number]; label?: string; dashed?: boolean; arrow?: 'end' | 'both'; dots?: boolean; tone?: 1 | 2 }[]
+      circles?: { c: [number, number]; r: number; label?: string; show?: 'r' | 'd' }[]
+      labels?: { at: [number, number]; text: string; size?: number; tone?: 1 | 2 }[] }
+  | { kind: 'angle'; deg: number; parts?: number[]; partLabels?: (string | null)[]; protractor?: boolean; label?: string; motion?: boolean }
+  | { kind: 'chart'; type: 'bar' | 'picture' | 'dot' | 'hist'; labels: string[]; values: number[]; scale?: number; max?: number; unit?: string; key?: string; xLabel?: string; yLabel?: string; motion?: boolean }
+  | { kind: 'plot'; points: [number, number][]; xMax: number; yMax: number; xStep?: number; yStep?: number; fit?: [[number, number], [number, number]]; xLabel?: string; yLabel?: string; motion?: boolean }
+  | { kind: 'coord'; min: number; max: number; step?: number; points?: { x: number; y: number; label?: string }[];
+      lines?: { a: [number, number]; b: [number, number]; extend?: boolean; dashed?: boolean; label?: string; tone?: 1 | 2 }[]; motion?: boolean }
+  | { kind: 'table'; head?: string[]; rows: string[][]; rowHead?: boolean; mark?: [number, number][]; motion?: boolean }
+  | { kind: 'cubes'; l: number; w: number; h: number; layers?: number; motion?: boolean }
+  | { kind: 'solid'; shape: 'prism' | 'cylinder' | 'cone' | 'sphere' | 'pyramid'; labels?: { r?: string; h?: string; l?: string; w?: string } }
+  | { kind: 'chips'; pos: number; neg: number; pairs?: number; motion?: boolean }
+  | { kind: 'balance'; left: string; right: string }
+  | { kind: 'spinner'; parts: string[]; tones?: (1 | 2 | 3 | 4)[] }
 
 export type Op =
   | { t: 'mul'; a: number; b: number }                       // a groups of b
@@ -31,17 +61,33 @@ export type Op =
   | { t: 'div'; total: number; by: number; mode: 'share' | 'group' }
   | { t: 'missing'; a: number; total: number }               // a × ? = total
 
+/**
+ * What the child must give. A plain number (whole, decimal or negative), a fraction (any equal value is right —
+ * 2/4 for 1/2 — unless `exact`), a clock time, or one of a few choices.
+ */
+export type Answer =
+  | number
+  | { frac: [number, number]; whole?: number; exact?: boolean }
+  | { time: [number, number] }
+  | { choices: string[]; correct: number }
+
+/**
+ * Either `op` (Module 1: the answer, worked steps and twin hints are derived from it) or `answer` + `steps`
+ * (every later module: written in the data, and the independent answer key in the tests checks them).
+ */
 export interface Problem {
   text: string
-  op: Op
-  picture: Picture        // interactive scratch picture on Screen 8 / practice
+  op?: Op
+  answer?: Answer
+  steps?: string[]
+  picture: Picture        // Screen 8 / practice picture: it must not show the answer
 }
 
 export interface YourTurn extends Problem {
   prompt: string
   hint1: string
   hint2: string
-  twin: Problem
+  twin: Problem & { hint1?: string; hint2?: string }   // hints are required when the twin has no `op`
 }
 
 export interface Screen {
@@ -70,6 +116,53 @@ export const answerOf = (op: Op): number => {
     case 'div':     return op.total / op.by
     case 'missing': return op.total / op.a
   }
+}
+
+/** The answer to a problem, whichever way it is given. */
+export const solutionOf = (p: Problem): Answer => p.op ? answerOf(p.op) : p.answer!
+
+/** The worked steps for a problem. */
+export const stepsOf = (p: Problem): string[] => p.op ? workedSteps(p.op) : p.steps!
+
+const fmtNum = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 6 })
+
+/** How an answer is written back to the child ("Right! The answer is …"). */
+export function showAnswer(a: Answer): string {
+  if (typeof a === 'number') return fmtNum(a).replace('-', '−')
+  if ('frac' in a) return `${a.whole ? `${a.whole} ` : ''}${a.frac[0]}/${a.frac[1]}`.replace('-', '−')
+  if ('time' in a) return `${a.time[0]}:${String(a.time[1]).padStart(2, '0')}`
+  return a.choices[a.correct]
+}
+
+/** A typed number: "1,250", "−3", "0.5", "3/4", "1 1/2". Null when it is not one. As [numerator, denominator]. */
+export function parseRational(raw: string): [number, number] | null {
+  const t = raw.trim().replace(/,/g, '').replace(/[−–]/g, '-').replace(/\s+/g, ' ')
+  let m = t.match(/^(-)?(\d+) (\d+)\/(\d+)$/)
+  if (m) { const w = +m[2], n = +m[3], d = +m[4]; if (!d) return null; return [(m[1] ? -1 : 1) * (w * d + n), d] }
+  m = t.match(/^(-?\d+)\/(\d+)$/)
+  if (m) return +m[2] ? [+m[1], +m[2]] : null
+  m = t.match(/^(-?)(\d*)\.?(\d*)$/)
+  if (m && (m[2] || m[3])) { const d = 10 ** m[3].length; return [(m[1] ? -1 : 1) * (Number(m[2] || 0) * d + Number(m[3] || 0)), d] }
+  return null
+}
+
+/** Is what the child typed (or picked) right? Choices arrive as the index; a time as "h:mm". */
+export function isCorrect(a: Answer, raw: string): boolean {
+  if (raw.trim() === '') return false
+  if (typeof a === 'object' && 'choices' in a) return raw === String(a.correct)
+  if (typeof a === 'object' && 'time' in a) {
+    const m = raw.trim().match(/^(\d{1,2}):(\d{1,2})$/)
+    return !!m && +m[1] === a.time[0] && +m[2] === a.time[1]
+  }
+  const got = parseRational(raw)
+  if (!got) return false
+  if (typeof a === 'number') return Math.abs(got[0] / got[1] - a) < 1e-9
+  const d = a.frac[1], n = (a.whole ?? 0) * d + a.frac[0]
+  if (a.exact) {
+    const t = raw.trim().replace(/\s+/g, ' ')
+    return t === showAnswer(a)
+  }
+  return got[0] * d === n * got[1]
 }
 
 const countBy = (step: number, n: number) => Array.from({ length: n }, (_, k) => step * (k + 1)).join(', ')
@@ -117,8 +210,10 @@ export const scratchLineMax = (step: number) => step * 12
  *  from its own operation so they can never name the first problem's numbers. */
 export function hintsFor(l: Lesson, s: FlowState): [string, string] {
   if (!s.twin) return [l.turn.hint1, l.turn.hint2]
+  const t = l.turn.twin
+  if (t.hint1 && t.hint2) return [t.hint1, t.hint2]
   // Same shape as the doc's hints: hint 1 asks the question, hint 2 starts the count and stops ("…").
-  const op = l.turn.twin.op
+  const op = t.op!
   // Start the count, but stop before it could reach the answer: with 2 groups the second number IS the answer.
   const start = (step: number, groups: number) => groups > 2 ? `${step}, ${step * 2} …` : `${step} …`
   switch (op.t) {
@@ -178,10 +273,10 @@ export const currentProblem = (l: Lesson, s: FlowState): Problem | null =>
   : s.mode === 'practice' ? l.practice[s.practice].problem
   : null
 
-export function check(l: Lesson, s: FlowState, value: number): FlowState {
+export function check(l: Lesson, s: FlowState, given: string | number): FlowState {
   const p = currentProblem(l, s)
   if (!p || s.feedback === 'right') return s
-  const ok = value === answerOf(p.op)
+  const ok = isCorrect(solutionOf(p), String(given))
   if (s.mode === 'turn') {
     if (ok) return { ...s, mode: 'won', misses: 0, feedback: null }
     const misses = s.misses + 1

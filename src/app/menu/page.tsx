@@ -304,7 +304,7 @@ export default function MainMenu() {
 
   // Every card below (plan, resume, story, check door, picker) opens a legacy chapter, so while they
   // are hidden the child's home is the new-flow topic list instead.
-  if (LEGACY_CHAPTERS_HIDDEN) return <ModuleHome learnerId={learnerId} back={{ href: '/parent', label: '← Switch' }} />
+  if (LEGACY_CHAPTERS_HIDDEN) return <ModuleHome learnerId={learnerId} lessonIds={getActiveLearner()?.lesson_ids} back={{ href: '/parent', label: '← Switch' }} />
 
   const resumeStars = resumeChapter ? (profile.chapterStars[resumeChapter] ?? 0) : 0
 

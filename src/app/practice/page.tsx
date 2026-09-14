@@ -2,7 +2,8 @@
 /** /practice?module=g3m1 — mixed practice across every topic of one module. Without a built module, back to /modules. */
 import { Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { GRADE3_MODULES } from '@/features/lessons/modules'
+import { chosenModules } from '@/features/lessons/modules'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { ModulePractice } from '@/features/lessons/ModulePractice'
 
 export default function PracticePage() {
@@ -15,9 +16,9 @@ function Practice() {
   // NOT window.location: on an in-app navigation it is read before the URL changes, which sent every Practice tap
   // straight back to /modules. useSearchParams is the router's own value.
   const id = useSearchParams().get('module')
-  const picked = GRADE3_MODULES.find(m => m.id === id && m.lessons.length > 0)
+  const picked = chosenModules(getActiveLearner()?.lesson_ids).find(m => m.id === id && m.lessons.length > 0)
   useEffect(() => { if (!picked) router.replace('/modules') }, [picked, router])
 
   if (!picked) return null
-  return <ModulePractice module={picked} onExit={() => router.push('/modules')} />
+  return <ModulePractice module={picked} onExit={() => router.push(`/modules?grade=${picked.grade}`)} />
 }

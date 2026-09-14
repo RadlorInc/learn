@@ -87,6 +87,25 @@ export async function createLearner(
   return data as Learner
 }
 
+/**
+ * Choose the new-flow topics a child sees (null = every topic). Only the parent who created the child can write it
+ * (the "learners: update" policy). 'not_ready' = the database does not have the column yet (migration
+ * 20260914120000 not applied) — reported, never a silent failure.
+ */
+export async function setLearnerLessons(learnerId: string, lessonIds: string[] | null): Promise<'ok' | 'not_ready' | 'error'> {
+  const { data, error } = await db()
+    .from('learners')
+    .update({ lesson_ids: lessonIds } as never)
+    .eq('id', learnerId)
+    .select('id')
+  if (error) {
+    console.error('[setLearnerLessons]', error.code, error.message)
+    return error.code === 'PGRST204' || /lesson_ids/.test(error.message) ? 'not_ready' : 'error'
+  }
+  // RLS refuses an update by returning no rows, not an error: a viewer parent lands here.
+  return data && data.length > 0 ? 'ok' : 'error'
+}
+
 /** Move an existing learner into a grade (or clear it with null). */
 export async function setLearnerGrade(learnerId: string, gradeId: string | null): Promise<boolean> {
   const supabase = db()
