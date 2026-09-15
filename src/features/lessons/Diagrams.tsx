@@ -7,7 +7,7 @@
  *
  * `motion` reveals the parts one after another (bars shading, jumps, points, cubes), the "picture that moves" of Screens 4–6.
  */
-import type { CSSProperties, ReactNode } from 'react'
+import { useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import type { Picture } from './script'
 import { INK, TEAL, ACCENT } from './Pictures'
 
@@ -627,11 +627,31 @@ function Coord({ p }: { p: P<'coord'> }) {
 // ── Table ─────────────────────────────────────────────────────────────────────────────────────
 function Table({ p }: { p: P<'table'> }) {
   const marked = (r: number, c: number) => p.mark?.some(([mr, mc]) => mr === r && mc === c)
-  const cell: CSSProperties = { border: `3px solid ${INK}`, padding: '8px 14px', textAlign: 'center', fontSize: 'clamp(17px, 2.2vw, 22px)', fontWeight: 700, color: INK }
+  const cell: CSSProperties = { border: `3px solid ${INK}`, padding: '8px clamp(5px, 1.4vw, 14px)', textAlign: 'center', fontSize: 'clamp(17px, 2.2vw, 22px)', fontWeight: 700, color: INK }
+  // A wide table (a 5-place chart is ~470px) does not fit a phone's picture (~275px). Shrink it to fit rather than cut it off
+  // or make the child scroll to find a digit. CSS zoom shrinks the layout box too, so nothing under the table moves.
+  const box = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const el = box.current, table = el?.firstElementChild as HTMLElement | null
+    if (!el || !table) return
+    const fit = () => {
+      if (!el.clientWidth) return
+      table.style.zoom = ''
+      const k = el.clientWidth / table.offsetWidth   // offsetWidth is the unzoomed width
+      table.style.zoom = k < 1 ? String(k) : ''
+    }
+    fit()
+    // Not a ResizeObserver: the zoom changes the box's height, which would re-trigger it. The width only changes with the
+    // window, and the table's own width changes when the display font finishes loading (it is wider than the fallback).
+    addEventListener('resize', fit)
+    document.fonts?.addEventListener('loadingdone', fit)
+    return () => { removeEventListener('resize', fit); document.fonts?.removeEventListener('loadingdone', fit) }
+  }, [p])
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ borderCollapse: 'collapse', margin: '0 auto', background: '#fff', fontFamily: F }}>
-        {p.head && <thead><tr>{p.head.map((h, i) => <th key={i} style={{ ...cell, background: TONE[2], fontWeight: 900 }}>{h}</th>)}</tr></thead>}
+    <div ref={box} style={{ overflowX: 'auto' }}>
+      <table style={{ borderCollapse: 'collapse', margin: '0 auto', background: '#fff', fontFamily: F, maxWidth: '100%' }}>
+        {/* On a phone the headings get smaller than the digits under them: the digits are what the child reads. */}
+        {p.head && <thead><tr>{p.head.map((h, i) => <th key={i} style={{ ...cell, fontSize: 'clamp(13px, 2.2vw, 22px)', background: TONE[2], fontWeight: 900 }}>{h}</th>)}</tr></thead>}
         <tbody>{p.rows.map((r, i) => <tr key={i}>{r.map((c, j) => (
           <td key={j} style={{ ...cell, ...(p.rowHead && j === 0 ? { background: TONE[2], fontWeight: 900 } : {}), ...(marked(i, j) ? { background: TONE[1] } : {}), ...reveal(i, p.motion, 400) }}>{c}</td>
         ))}</tr>)}</tbody>

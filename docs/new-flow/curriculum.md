@@ -74,10 +74,19 @@ Lesson ids are `g<grade>m<module>-t<topic>`. Content lives in `src/features/less
 
 ## Grade 5
 
-**Module 1 · Place value for multiplication and division of whole numbers**
-1 Ten times bigger, ten times smaller · 2 Powers of ten · 3 Multiply by a power of ten · 4 Estimate a product ·
-5 Multi-digit multiplication · 6 Divide by a two-digit number (break it apart) · 7 Long division by a two-digit number ·
-8 Parentheses come first
+**Module 1 · Place value concepts for multiplication and division with whole numbers**
+1 Relate place value neighbors · 2 Multiply and divide by 10, 100, 1,000 · 3 Exponents and powers of 10 ·
+4 Estimate products and quotients · 5 Convert metric units · 6 Metric word problems · 7 Multiply with methods you know ·
+8 Multiply by breaking a number apart · 9 Standard way: 2 or 3 digits × 2 digits · 10 Standard way: 3 or 4 digits × 3 digits ·
+11 Multiply two big numbers · 12 Divide by multiples of 10 · 13 2-digit ÷ 2-digit, one-digit answer ·
+14 3-digit ÷ 2-digit, one-digit answer · 15 3-digit ÷ 2-digit, two-digit answer · 16 4-digit ÷ 2-digit ·
+17 Write, read and compare expressions · 18 Make a story for an expression · 19 Multi-step stories with × and ÷ ·
+20 Multi-step stories with all four operations
+
+⚠️ Module 1 was re-split on 2026-09-15 to the 20 lessons of the textbook contents page the founder photographed —
+**lesson and part names only; every screen, story and number is ours.** Built without script review, like Grades 4–8.
+Its four parts: 1–6 Place value understanding for whole numbers · 7–11 Multiplication of whole numbers ·
+12–16 Division of whole numbers · 17–20 Multi-step problems with whole numbers. (The 8-topic version is in git history.)
 
 **Module 2 · Addition and subtraction with fractions**
 1 Different-size pieces · 2 Make the pieces match · 3 Take away different-size pieces · 4 Add mixed numbers ·

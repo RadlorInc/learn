@@ -52,7 +52,8 @@ const h1: CSSProperties = { margin: 0, fontFamily: 'var(--font-display)', fontWe
 
 // ── Shared pieces a screen fills the frame with ───────────────────────────────────────────────
 // The picture sits on a white "stage". --lp-u (set by the layout) sizes every object in it.
-export const stage: CSSProperties = { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16, minHeight: 200, padding: 14,
+// minWidth 0: in a row the stage would otherwise grow to its widest picture and the frame would cut the rest off.
+export const stage: CSSProperties = { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16, minHeight: 200, padding: 14,
   background: '#fff', border: `4px solid ${INK}`, borderRadius: 22 }
 export const bubble: CSSProperties = { margin: 0, background: '#fff', border: `4px solid ${INK}`, borderRadius: 22, padding: '14px 18px',
   fontSize: 'clamp(20px, 2.6vw, 25px)', lineHeight: 1.3, color: INK, boxShadow: `5px 5px 0 ${INK}` }

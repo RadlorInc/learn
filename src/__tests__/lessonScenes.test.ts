@@ -18,7 +18,7 @@ describe('lesson backdrops', () => {
 
   it('every Grade 5 topic has its own backdrop on Screen 1', () => {
     const g5 = MODULES.filter(m => m.grade === 5).flatMap(m => m.lessons)
-    expect(g5.length).toBe(46)
+    expect(g5.length).toBe(58)   // Module 1 re-split 8 → 20 topics on 2026-09-15
     expect(g5.filter(l => l.screens[0].scene !== l.id).map(l => l.id)).toEqual([])
   })
 })

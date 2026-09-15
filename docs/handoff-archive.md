@@ -1,3 +1,78 @@
+> ⬆️ **MOVED OUT OF handoff.md 2026-09-15 (second move that day)** — the 🧭 2026-09-13 pivot block. Its live items (landing
+> copy, browser-only read-aloud, PR #95) were lifted into the 🔢 2026-09-15 block's ▶ OPEN first; its branch item was already stale.
+
+> 🧭 **2026-09-13 — THE PIVOT: EVERY OLD CHAPTER HIDDEN, THE NEW 9-SCREEN TEACHING FLOW LIVE WITH GRADE 3 · MODULE 1, THE VOICE CLIPS DELETED, AND VERCEL FROM 272 DEPLOYMENTS TO 2.** PR [#97](https://github.com/RadlorInc/learn/pull/97) + [#98](https://github.com/RadlorInc/learn/pull/98) merged and LIVE (production `dpl_31kg…` = `4e28e34`) · `tsc` 0 · vitest 101 files, 1858 passed, 20 skipped · `next build` 0 · sw v183.
+
+## ① 🧭 WHAT THE FOUNDER DECIDED, IN ORDER
+From two founder docs ("Math Problem Exp and Exercise Format", "Step By Step Script" — adding fractions with different bottom numbers): **(a)** a standalone demo of the script, published at https://fraction-lesson-demo.vercel.app (its own Vercel project); **(b)** hide every existing chapter now, delete them later, live even while empty; **(c)** the check and the demo turned OFF; **(d)** Grade 3 modules split into single-skill topics pitched at a Grade 3 child (45 topics, approved — in the README); **(e)** Module 1's 8 scripts written as a review doc, approved, built; **(f)** 19 old-flow docs deleted (chapter-craft ×3, story/curriculum plans, diagnostic + skill-graph docs); **(g)** voice clips deleted and old deployments cleared.
+
+## ② 🧩 WHAT IS LIVE
+- **One switch** `LEGACY_CHAPTERS_HIDDEN` hides every legacy chapter from every LIST and refuses it at every PLAY route (`/game`, `GuardedChapter` → `/teen-preview` + `/demo`, `/story`, `/diagnostic` layout incl. recheck) with `NewLessonsSoon`. `CHAPTER_IDS`/`CHAPTER_NAMES` stay whole so history and /admin resolve. **Nothing deleted; flip to `false` restores it all.**
+- **The child's home `/menu` is `LessonList`** (Grade 3 · Module 1, "Next up" = first unfinished). ⚠️ "Start learning" on `/parent` used to send a brand-new child to the (blocked) check — fixed: while hidden, every child goes to `/menu`. The landing page's button is "Sign up free" → `/auth`.
+- **The lesson engine** (`src/features/lessons/`): `script.ts` is the pure flow (7 Next-only screens → Screen 8 hint/hint/worked+twin → Screen 9 → 5 practice; practice miss = big idea, 2nd miss = worked steps + replay that returns to the same problem). Answers and worked steps are DERIVED from each problem's `op`. Screen 9 after a solved twin uses `twinWon`; a twin missed 3× shows "Let's keep practicing", never "You got it". Scratch number lines have NO length in the data (`scratchLineMax`) because every one of them had ended on or one jump past the answer.
+- **Nightly E2E + weekly layout sweeps are PAUSED** by a `legacy-gate` job that warns on every run (exit 2 if the flag is unreadable) — they play legacy chapters.
+
+## ③ 🔎 VERIFIED, AND WHAT CAUGHT WHAT
+- `lessonsGrade3Module1.test.ts`: answers WRITTEN OUT from the doc's "Answers:" lines; all doc Title/Text/Prompt/Hint/Sticker lines word-for-word (168+); no scratch picture gives the answer away; twin hints + twin Screen 9 use only the twin's numbers. Every new check watched red on its planted defect.
+- **An independent code review found two real bugs 25 green tests could not see** — the twin showed the FIRST problem's hints (Topic 4 twin hinted 35 for an answer of 60), and the number-line leak above. Both fixed. Looking at the screen found two more (rows wrapping into a line; a turned tray overlapping a button).
+- ⚠️ **One approved-script CHANGE, called out:** Topic 7's twin was 16 wheels ÷ 4 = 4 (answer = given); now 20 ÷ 4 = 5, doc and app.
+- Driven on production: `/lesson?id=g3m1-t1` Screens 1–8, 0 console errors. **NOT driven: the signed-in `/menu` and `/parent`** (needs a real account).
+
+## ④ 🚚 DEPLOY — GITHUB WAS FLAKY, AND WHAT THAT COST
+GitHub 502'd PR creation and merges repeatedly (both PRs were created despite the 502 — check before retrying, never duplicate). Deploy #97: `rls-tests` "failed to be acquired (5 attempts)" — never started; a full re-run passed. Deploy #98: CI green but `promote` was rejected twice by GitHub (`fatal error in commit_refs`, then `Internal Server Error`); **`release` was fast-forwarded by hand** to the CI-passed `4e28e34` (`git push origin origin/main:refs/heads/release`), and that Deploy run still reads "failure" — `red-main.yml` may have opened an issue; it is safe to close.
+
+## ⑤ 🗑️ VOICE + VERCEL STORAGE
+- `public/audio` (694 MB, 29,329 files) deleted — it was copied into every deployment. The player falls back to browser speech when the manifest 404s (measured on prod). Clips remain in git history. Render scripts left in place.
+- Vercel `adaptivelearn`: **272 deployments → 2** (live `dpl_31kg…` + previous `dpl_EYZw…` for rollback, which still carries the clips ~735 MB). The 45 "milo-story-mode" deployments were the SAME project from before the rename. ⚠️ **A guard lesson:** old production deployments list `adaptivelearn.radlor.com` in `alias` HISTORICALLY — the guard refused all 143; the correct check is the live lookup `/v13/deployments/adaptivelearn.radlor.com`. Other Vercel projects untouched.
+
+## ▶ OPEN
+1. 🔴 **Landing copy**: the heading/paragraph still describe the placement check, which is off. Founder to send copy.
+2. 🔴 **Read the storage figure** once Vercel's usage refreshes (expect ~1 GB). Delete `dpl_EYZw…` once the current build is trusted. PR [#95](https://github.com/RadlorInc/learn/pull/95) (stop `main` previews) still open — founder did not pick it.
+3. 🔴 **Module 2 scripts** for review (README process). Then turn `GRADE3_MODULE1` in `LessonList`/`/lesson` into a list of modules.
+4. ⏭️ Lesson progress is per-device only; parents/teachers cannot pick topics; every age band sees Grade 3 — all need a `chapters` row per lesson id (a migration) and a decision.
+5. ⏭️ Pictures are code-drawn shapes, not art. "Read it to me" is now browser speech only.
+6. ⏭️ **Branches:** `main` = live. `adult-surface-responsive` (this folder) carries the classroom work + cherry-picks of the new flow but NOT PR #98's clip deletion or the merge commits — rebase/merge from `main` before continuing there; its classroom migration is still applied nowhere. Worktree `../milo-newflow` can be removed.
+7. ⏭️ Carried: everything in the 🎓 and 🧹 blocks' ▶ OPEN (Terms §8/§11, attorney question, Stripe cancellation, account deletion never executed, `migrate-prod` inert, Sydney rollback).
+
+> ⬆️ **MOVED OUT OF handoff.md 2026-09-15** — the 🎓 2026-09-11/12 classroom block. ⚠️ Its code is PARKED on branch
+> `classroom-parked` (commit `cc9d31aa`, never merged, migration `20260912100000_classroom.sql` applied nowhere), and its
+> live legal items (4–7) were lifted into the 🧩 2026-09-14/15 block's ▶ OPEN first.
+
+> 🎓 **2026-09-11/12 — THE CLASSROOM, BUILT IN ONE GO: a teacher's syllabus, her set work, and children who sign in as themselves. The headline finding is a LIVE BUG it fixes — a teacher adding a child to her class silently replaced that child's whole app with her own chapter list. Plus a repo-wide over-engineering pass that deleted 193 lines.** `tsc` 0 · **1862 passed, 2 skipped (101 files)** · `next build` 0, 40 pages (was 37) · eslint **373**, down from 375 · ⚠️ **NOTHING COMMITTED, and the migration is applied NOWHERE.**
+
+## ① 🔀 ONE COLUMN WAS DOING TWO JOBS, AND THE SECOND JOB WAS NOBODY'S INTENTION
+`learners.grade_id` meant *which class this child is on the roster of* AND — via `grade_chapters` — *which chapters this child may play*: `/menu` looked up the grade and narrowed the menu to it. So the moment a teacher put a child on a roster, **her syllabus became that child's app.** Nothing failed, both halves were individually correct, and no gate could see it. Founder's rule, stated on 2026-09-12: *the teacher's topics stay in her account; the chapters a child sees come from the parent.*
+**The fix removes code.** `/menu` no longer reads `grade_chapters`; the child's list is a new nullable `learners.chapter_ids` set by the parent. ⚠️ **The "I don't know which chapters to pick" door needed NO code** — unset already falls through to `chaptersForAge(band)`. `grade_chapters` keeps working untouched as the syllabus and as the topic menu for exercises.
+
+## ② 🧒 CHILD LOGINS TURNED OUT CHEAP, AND THE REASON IS WORTH KNOWING BEFORE YOU TOUCH IT
+Estimated as weeks and a security-model change. It is neither, because of one property nobody had written down: **every policy protecting a child reads `learner_access.parent_id = auth.uid()`** — the column is named for a parent but means *a principal who may act on this learner*. Give the CHILD's own auth uid a row there (new `access_role` **`self`**) and sessions, progress, stats, state, events and diagnostics all admit them **with no policy rewritten.**
+Accounts are created at **`/api/child/signup`**, server-side with the service role, because a child has no email: the address is synthesized and created pre-confirmed (`handle_new_user` only makes a profile once `email_confirmed_at` is set, and nobody can confirm a `.invalid`). ⚠️ **A draft `claim_learner` SECURITY DEFINER RPC was written and then DELETED** — the route needs the service role regardless, so the RPC was a second, weaker door onto the same room. **The migration adds no definer function and changes no existing policy.**
+⚠️ **THE RESIDUAL RISK, WHICH CANNOT BE CODED AWAY:** anyone holding a class code can claim any UNCLAIMED child by typing their name. A name is a username, not a secret — that was the ask. What limits it: a claim is one-shot, the teacher can see it, the code rotates. **A duplicate name REFUSES rather than guessing** (guessing hands one child the other's account). If a real school needs more, the answer is a per-child PIN, not a longer code.
+
+## ③ 📝 EXERCISES — A ROW AND A BUTTON, NOT A QUESTION ENGINE
+`exercises` (class · topic · count · difficulty · `unlocked_at`) + `exercise_results`. **Topic is a chapter id; difficulty is that chapter's own 1–3 tier, applied through the EXISTING `setChapterLevel` store — so no chapter changed.** Locked is **invisible, not disabled**: RLS refuses to SELECT a locked row to anyone but the owning teacher.
+⚠️ **A NAMED CEILING: question COUNT is stored and displayed but not enforced.** `SkillBeat.rounds` is per-beat chapter data, so a real override would touch every chapter. Upgrade path is a rounds override threaded through `SkillBeat`/`GameShell`.
+⚠️ Results are filed in **`finishAndSync`**, not `/game`'s `handleComplete` — the documented dead wire both registry factories discard. Filing there would have been the plan-pointer P0 all over again.
+
+## ④ 🛡️ FOUR GATES CAUGHT ME, ALL CORRECTLY — THIS IS THE SYSTEM WORKING
+A new table holding children's data owes four things, and each went red before it went green: the **deletion census** (threw on a table with no clause, then again because the fixture did not SEED it), the **data export** (`exercise_results` → `teacherExercises` in the download), **§6 of the Terms**, and the **security baseline**. `/menu` reading entitlement also tripped the chapter-gate call-site count and is now listed there **with a written reason** — it picks which home screen to render and cannot lock a chapter.
+⚠️⚠️ **AND MY OWN RLS HARNESS WAS BLIND FIRST.** Written with `set local role` the settings are TRANSACTION-scoped and were gone by the next query, so everything ran as superuser with RLS off — and the *"the teacher can see her own exercise"* **positive control passed happily while measuring nothing.** Caught only because two NEGATIVE cases went red. A blind probe and a broken policy are the same result unless something is expected to be refused. ⚠️ It then went red a second time for a second real reason: `authenticated` had no table GRANT, because I was leaning on a Supabase default privilege — the M6 trap. Granted explicitly now.
+Six mutations planted and each caught by exactly its own assertion. ⚠️ **NOT via `scripts/break-check.sh`** — it stashes untracked files, and all of this is uncommitted, which its own header warns costs you a confusing exit 3. Used the sanctioned fallback: file copy + `trap … EXIT INT TERM`, no git.
+
+## ⑤ 🧹 AND A DELETION PASS: −193 LINES
+`preteen/kit.tsx` was **44% dead** (chapter-era leftovers; the 9–11 band moved to `kidKit.tsx`), plus five `art.tsx` exports the archive had **already recorded as stranded and nobody had cut**, `CONSENT_LINE` (a stale pre-component duplicate), `/name-entry`, and three dead singles. ⚠️ **One "dead" finding was wrong in an instructive way: `getLevelName` was not dead, it was BYPASSED** — `menu`, `parent` and `profile` had each hand-inlined the same 8-name array. An unreferenced-export scan cannot tell *nobody needs this* from *everybody reimplemented it*. Consolidated: 4 definitions → 1.
+
+## ▶ OPEN
+1. 🔴 **APPLY `20260912100000_classroom.sql` — it is applied NOWHERE and the client half is uncommitted.** It is EXPAND-ONLY (every object new, the one added column nullable), so it is safe to apply BEFORE the client, which is the order this repo needs since `main` auto-deploys. ⚠️ Two auth migrations (`20260908120000`, `20260908120100`) are still queued ahead of it.
+2. 🔴 **NOTHING ABOUT THE CHILD FLOW HAS RUN AGAINST A REAL DATABASE.** Local dev has no `SUPABASE_SERVICE_ROLE_KEY`, so `/api/child/signup` returned `not_configured` 503 — correct behaviour (no anon fallback, deliberately) and it means the create-and-link path is proven only against a stubbed fetch (`childSignupRoute.test.ts`, 9 tests, 3 mutation-tested). **No child has ever signed in.** The RLS half IS proven, in pglite.
+3. 🔴 **Child logins are a security-model change and this is launch week.** The founder asked for everything in one go and it is built; shipping order is a separate call.
+4. 🔴 **LIFTED from ⚖️ 2026-09-06 — §8's refund sentence is unwritten and LIVE on the page.** The only open Terms marker that is not a lawyer question. One sentence from the founder closes it.
+5. 🔴 **LIFTED — UNANSWERED, ASKED TWICE: was radlor.com's Terms of Use actually reviewed by an attorney?** It is live with the banner off and `[DATE]` resolved. If the review happened, nothing to do; if not, unreviewed terms are presented as binding on a public site.
+6. 🔴 **LIFTED — §11 has not been rewritten around what survives.** `src/core/accountDeletion.ts` is the one declaration; `diagnostic_leads` is named there as unreachable by deletion.
+7. ⏭️ **LIFTED — Stripe cancellation is not wired**, and must be before the first live purchase or a deleted account keeps being charged. Harmless today: zero subscriptions exist.
+8. ⏭️ **Question count is not enforced** (see ③); the teacher's number is displayed, the chapter runs its own loop.
+9. ⏭️ Carried, unchanged: everything in the 🧹 block's ▶ OPEN (PR #95 unmerged, the storage figure unread, account deletion never executed, `migrate-prod` inert, Sydney ~$10/mo, the `/menu` 6→2 RPC half) and the 🚀 block's launch blockers. **Nobody has HEARD a voice clip**; 15-16 voice remaining (7,202 lines).
+
 > ⬆️ **MOVED OUT OF handoff.md 2026-09-14** — the 🧹 2026-09-10 deployment-storage block. ⚠️ Its live items were lifted
 > into the 📚 2026-09-14 block's ▶ OPEN (item 6) first.
 
